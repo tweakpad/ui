@@ -1,0 +1,719 @@
+import { css, html, nothing } from 'lit';
+import { TpElement } from '../foundation/element.js';
+import { controlStyles } from './shared.js';
+
+export class TpAlert extends TpElement {
+  static tagName = 'tp-alert';
+  static override properties = {
+    ...TpElement.properties,
+    severity: { type: String, reflect: true },
+    title: { type: String },
+    dismissible: { type: Boolean },
+  };
+  static override styles = [
+    TpElement.styles,
+    controlStyles,
+    css`
+      :host {
+        display: block;
+      }
+
+      .alert {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 0.75rem;
+        align-items: start;
+        border-inline-start: 4px solid var(--tp-alert-color, var(--tp-color-accent));
+      }
+
+      :host([severity='danger']) {
+        --tp-alert-color: var(--tp-color-danger);
+      }
+
+      :host([severity='warning']) {
+        --tp-alert-color: #d97706;
+      }
+
+      :host([severity='success']) {
+        --tp-alert-color: #16a34a;
+      }
+
+      .title {
+        font-weight: 700;
+      }
+    `,
+  ];
+  severity: 'info' | 'success' | 'warning' | 'danger' = 'info';
+  title = '';
+  dismissible = false;
+  protected override render() {
+    const title = this.title ? html`<div class="title" part="title">${this.title}</div>` : nothing;
+    const closeButton = this.dismissible
+      ? html`
+          <button
+            class="control"
+            part="close focusable"
+            type="button"
+            aria-label="Dismiss"
+            @click=${() => this.remove()}
+          >
+            ×
+          </button>
+        `
+      : nothing;
+    return html`<div
+      class="surface alert"
+      part="root"
+      role=${this.severity === 'danger' ? 'alert' : 'status'}
+    >
+      <span part="icon"><slot name="icon"></slot></span>
+      <div part="content">${title}<slot></slot></div>
+      ${closeButton}
+    </div>`;
+  }
+}
+
+export class TpAspectRatio extends TpElement {
+  static tagName = 'tp-aspect-ratio';
+  static override properties = { ...TpElement.properties, ratio: { type: Number } };
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: block;
+      }
+
+      .box {
+        position: relative;
+        width: 100%;
+        aspect-ratio: var(--tp-aspect-ratio, 1.7778);
+        overflow: hidden;
+      }
+
+      ::slotted(*) {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    `,
+  ];
+  ratio = 16 / 9;
+  protected override render() {
+    return html`<div
+      class="box"
+      part="root"
+      style=${`--tp-aspect-ratio:${Math.max(0.01, this.ratio)}`}
+    >
+      <slot></slot>
+    </div>`;
+  }
+}
+
+export class TpAttachment extends TpElement {
+  static tagName = 'tp-attachment';
+  static override properties = {
+    ...TpElement.properties,
+    filename: { type: String },
+    href: { type: String },
+    size: { type: Number },
+    status: { type: String, reflect: true },
+    removable: { type: Boolean },
+  };
+  static override styles = [
+    TpElement.styles,
+    controlStyles,
+    css`
+      :host {
+        display: block;
+      }
+
+      .attachment {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+      }
+
+      .meta {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .name {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .size {
+        color: var(--tp-color-muted);
+        font-size: 0.875em;
+      }
+    `,
+  ];
+  filename = '';
+  href = '';
+  size = 0;
+  status: 'ready' | 'uploading' | 'error' = 'ready';
+  removable = false;
+  protected override render() {
+    const name = this.href
+      ? html`<a class="name" part="name" href=${this.href}>${this.filename}</a>`
+      : html`<span class="name" part="name">${this.filename}</span>`;
+    const size = this.size
+      ? html`<span class="size" part="size">${formatBytes(this.size)}</span>`
+      : nothing;
+    const spinner =
+      this.status === 'uploading' ? html`<tp-spinner part="spinner"></tp-spinner>` : nothing;
+    const removeButton = this.removable
+      ? html`
+          <button
+            class="control"
+            part="remove focusable"
+            type="button"
+            aria-label=${`Remove ${this.filename}`}
+            @click=${(event: Event) =>
+              this.emit('tp-remove', { filename: this.filename, sourceEvent: event })}
+          >
+            ×
+          </button>
+        `
+      : nothing;
+    return html`<div class="surface attachment" part="root">
+      <span part="preview"><slot name="preview">📎</slot></span>
+      <div class="meta" part="meta">${name}${size}<slot></slot></div>
+      ${spinner}${removeButton}
+    </div>`;
+  }
+}
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 ** 2) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / 1024 ** 2).toFixed(1)} MB`;
+}
+
+export class TpBadge extends TpElement {
+  static tagName = 'tp-badge';
+  static override properties = {
+    ...TpElement.properties,
+    variant: { type: String, reflect: true },
+  };
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: inline-flex;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        border-radius: 999px;
+        padding: 0.15rem 0.5rem;
+        font-size: 0.75em;
+        font-weight: 650;
+        background: var(--tp-color-surface-raised);
+        border: 1px solid var(--tp-color-border);
+      }
+
+      :host([variant='accent']) .badge {
+        background: var(--tp-color-accent);
+        color: var(--tp-color-accent-contrast);
+        border-color: transparent;
+      }
+    `,
+  ];
+  variant = 'neutral';
+  protected override render() {
+    return html`<span class="badge" part="root"><slot></slot></span>`;
+  }
+}
+
+export class TpBubble extends TpElement {
+  static tagName = 'tp-bubble';
+  static override properties = {
+    ...TpElement.properties,
+    side: { type: String, reflect: true },
+    label: { type: String },
+  };
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: block;
+      }
+
+      .bubble {
+        max-width: 75%;
+        width: fit-content;
+        border-radius: var(--tp-radius-md);
+        padding: 0.6rem 0.8rem;
+        background: var(--tp-color-surface-raised);
+      }
+
+      :host([side='end']) .bubble {
+        margin-inline-start: auto;
+        background: var(--tp-color-accent);
+        color: var(--tp-color-accent-contrast);
+      }
+    `,
+  ];
+  side: 'start' | 'end' = 'start';
+  label = 'Message';
+  protected override render() {
+    return html`<div class="bubble" part="root" aria-label=${this.label}><slot></slot></div>`;
+  }
+}
+
+export class TpButtonGroup extends TpElement {
+  static tagName = 'tp-button-group';
+  static override properties = { ...TpElement.properties, label: { type: String } };
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: inline-flex;
+      }
+
+      [part='root'] {
+        display: flex;
+      }
+
+      :host([orientation='vertical']) [part='root'] {
+        flex-direction: column;
+      }
+
+      ::slotted(*) {
+        border-radius: 0 !important;
+      }
+
+      ::slotted(:first-child) {
+        border-start-start-radius: var(--tp-radius-sm) !important;
+        border-end-start-radius: var(--tp-radius-sm) !important;
+      }
+
+      ::slotted(:last-child) {
+        border-start-end-radius: var(--tp-radius-sm) !important;
+        border-end-end-radius: var(--tp-radius-sm) !important;
+      }
+    `,
+  ];
+  label = 'Actions';
+  protected override render() {
+    return html`<div part="root" role="group" aria-label=${this.label}><slot></slot></div>`;
+  }
+}
+
+export class TpCard extends TpElement {
+  static tagName = 'tp-card';
+  static override properties = {
+    ...TpElement.properties,
+    interactive: { type: Boolean, reflect: true },
+  };
+  static override styles = [
+    TpElement.styles,
+    controlStyles,
+    css`
+      :host {
+        display: block;
+      }
+
+      .card {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      :host([interactive]) .card {
+        cursor: pointer;
+        transition:
+          translate var(--tp-duration-fast),
+          box-shadow var(--tp-duration-fast);
+      }
+
+      :host([interactive]) .card:hover {
+        translate: 0 -2px;
+      }
+    `,
+  ];
+  interactive = false;
+  protected override render() {
+    return html`<article
+      class="surface card"
+      part="root"
+      tabindex=${this.interactive ? '0' : nothing}
+    >
+      <header part="header"><slot name="header"></slot></header>
+      <div part="content"><slot></slot></div>
+      <footer part="footer"><slot name="footer"></slot></footer>
+    </article>`;
+  }
+}
+
+export class TpEmptyState extends TpElement {
+  static tagName = 'tp-empty-state';
+  static override properties = {
+    ...TpElement.properties,
+    title: { type: String },
+    description: { type: String },
+  };
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: block;
+      }
+
+      .root {
+        display: grid;
+        justify-items: center;
+        gap: 0.6rem;
+        text-align: center;
+        padding: 2rem;
+      }
+
+      .description {
+        max-width: 36rem;
+        color: var(--tp-color-muted);
+      }
+    `,
+  ];
+  title = 'Nothing here';
+  description = '';
+  protected override render() {
+    const description = this.description
+      ? html`
+          <p class="description" part="description">
+            <slot name="description">${this.description}</slot>
+          </p>
+        `
+      : nothing;
+    return html`<section class="root" part="root">
+      <slot name="icon"></slot>
+      <h2 part="title"><slot name="title">${this.title}</slot></h2>
+      ${description}
+      <div part="actions"><slot name="actions"></slot></div>
+    </section>`;
+  }
+}
+
+export class TpKeyHint extends TpElement {
+  static tagName = 'tp-key-hint';
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: inline-flex;
+      }
+
+      kbd {
+        display: inline-flex;
+        align-items: center;
+        min-width: 1.5rem;
+        min-height: 1.5rem;
+        justify-content: center;
+        padding: 0 0.35rem;
+        border: 1px solid var(--tp-color-border);
+        border-bottom-width: 2px;
+        border-radius: 0.3rem;
+        background: var(--tp-color-surface-raised);
+        font: inherit;
+        font-size: 0.78em;
+      }
+    `,
+  ];
+  protected override render() {
+    return html`<kbd part="root"><slot></slot></kbd>`;
+  }
+}
+
+export class TpLabel extends TpElement {
+  static tagName = 'tp-label';
+  static override properties = {
+    ...TpElement.properties,
+    for: { type: String },
+    optional: { type: Boolean },
+  };
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: inline-flex;
+        font-weight: 600;
+      }
+
+      .optional {
+        font-weight: 400;
+        color: var(--tp-color-muted);
+        margin-inline-start: 0.35rem;
+      }
+    `,
+  ];
+  for = '';
+  optional = false;
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.addEventListener('click', this.#focusControl);
+    this.#associate();
+  }
+  override disconnectedCallback(): void {
+    this.removeEventListener('click', this.#focusControl);
+    super.disconnectedCallback();
+  }
+  protected override updated(): void {
+    this.#associate();
+  }
+  #associate(): void {
+    if (!this.for) return;
+    if (!this.id) this.id = `tp-label-${Math.random().toString(36).slice(2)}`;
+    const control = document.getElementById(this.for);
+    if (control) control.setAttribute('aria-labelledby', this.id);
+  }
+  #focusControl = (): void => document.getElementById(this.for)?.focus();
+  protected override render() {
+    return html`<label part="root">
+      <slot></slot>
+      ${this.optional ? html`<span class="optional" part="optional">Optional</span>` : nothing}
+    </label>`;
+  }
+}
+
+export class TpListItem extends TpElement {
+  static tagName = 'tp-list-item';
+  static override properties = {
+    ...TpElement.properties,
+    selected: { type: Boolean, reflect: true },
+    value: { type: String },
+    description: { type: String },
+  };
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: block;
+      }
+
+      .item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.5rem 0.65rem;
+        border-radius: 0.35rem;
+      }
+
+      :host([selected]) .item {
+        background: var(--tp-color-surface-raised);
+      }
+
+      .description {
+        display: block;
+        color: var(--tp-color-muted);
+        font-size: 0.875em;
+      }
+    `,
+  ];
+  selected = false;
+  value = '';
+  description = '';
+  protected override render() {
+    const description = this.description
+      ? html`<span class="description" part="description">${this.description}</span>`
+      : nothing;
+    return html`<div
+      class="item"
+      part="root"
+      role="group"
+      aria-current=${this.selected ? 'true' : nothing}
+    >
+      <slot name="leading"></slot>
+      <span part="content"><slot></slot>${description}</span>
+      <slot name="trailing"></slot>
+    </div>`;
+  }
+}
+
+export class TpMarker extends TpElement {
+  static tagName = 'tp-marker';
+  static override properties = {
+    ...TpElement.properties,
+    tone: { type: String, reflect: true },
+    label: { type: String },
+  };
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: inline-flex;
+        width: 0.625rem;
+        height: 0.625rem;
+        border-radius: 50%;
+        background: var(--tp-marker-color, var(--tp-color-muted));
+      }
+
+      :host([tone='accent']) {
+        --tp-marker-color: var(--tp-color-accent);
+      }
+
+      :host([tone='danger']) {
+        --tp-marker-color: var(--tp-color-danger);
+      }
+
+      :host([tone='success']) {
+        --tp-marker-color: #16a34a;
+      }
+    `,
+  ];
+  tone = 'neutral';
+  label = '';
+  protected override render() {
+    return this.label ? html`<span class="visually-hidden">${this.label}</span>` : nothing;
+  }
+}
+
+export class TpMessage extends TpElement {
+  static tagName = 'tp-message';
+  static override properties = {
+    ...TpElement.properties,
+    author: { type: String },
+    timestamp: { type: String },
+    pending: { type: Boolean, reflect: true },
+    failed: { type: Boolean, reflect: true },
+  };
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: block;
+      }
+
+      .message {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.65rem;
+      }
+
+      .meta {
+        display: flex;
+        gap: 0.5rem;
+        align-items: baseline;
+      }
+
+      .time {
+        color: var(--tp-color-muted);
+        font-size: 0.8em;
+      }
+
+      .status {
+        color: var(--tp-color-muted);
+        font-size: 0.8em;
+      }
+    `,
+  ];
+  author = '';
+  timestamp = '';
+  pending = false;
+  failed = false;
+  protected override render() {
+    const author = this.author ? html`<strong part="author">${this.author}</strong>` : nothing;
+    const timestamp = this.timestamp
+      ? html`<time class="time" part="timestamp">${this.timestamp}</time>`
+      : nothing;
+    const status =
+      this.pending || this.failed
+        ? html`
+            <div class="status" part="status" role=${this.failed ? 'alert' : 'status'}>
+              ${this.failed ? 'Failed to send' : 'Sending'}
+            </div>
+          `
+        : nothing;
+    return html`<article class="message" part="root">
+      <slot name="avatar"></slot>
+      <div part="body">
+        <header class="meta" part="meta">${author}${timestamp}</header>
+        <div part="content"><slot></slot></div>
+        ${status}
+      </div>
+    </article>`;
+  }
+}
+
+export class TpSkeleton extends TpElement {
+  static tagName = 'tp-skeleton';
+  static override properties = {
+    ...TpElement.properties,
+    label: { type: String },
+    animated: { type: Boolean, reflect: true },
+  };
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: block;
+        min-height: 1rem;
+        border-radius: 0.3rem;
+        background: var(--tp-color-surface-raised);
+        overflow: hidden;
+      }
+
+      :host([animated])::after {
+        content: '';
+        display: block;
+        width: 45%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgb(255 255 255 / 30%), transparent);
+        animation: shimmer 1.4s infinite;
+      }
+
+      @keyframes shimmer {
+        from {
+          translate: -100% 0;
+        }
+
+        to {
+          translate: 300% 0;
+        }
+      }
+    `,
+  ];
+  label = 'Loading';
+  animated = true;
+  protected override render() {
+    return html`<span class="visually-hidden" role="status">${this.label}</span>`;
+  }
+}
+
+export class TpTable extends TpElement {
+  static tagName = 'tp-table';
+  static override properties = { ...TpElement.properties, label: { type: String } };
+  static override styles = [
+    TpElement.styles,
+    css`
+      :host {
+        display: block;
+        overflow: auto;
+      }
+
+      .root {
+        min-width: 100%;
+      }
+
+      ::slotted(table) {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      ::slotted(table) :is(th, td) {
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid var(--tp-color-border);
+        text-align: start;
+      }
+    `,
+  ];
+  label = 'Data table';
+  protected override render() {
+    return html`<div class="root" part="root" role="region" aria-label=${this.label} tabindex="0">
+      <slot></slot>
+    </div>`;
+  }
+}
