@@ -39,4 +39,41 @@ describe('definition registry', () => {
     ).toThrow(/Duplicate/);
     expect(Object.isFrozen(registry.get('Button'))).toBe(true);
   });
+
+  it('validates closed motion-role inventories against public parts', () => {
+    const registry = new DefinitionRegistry();
+    registry.register({
+      name: 'Panel',
+      tagName: 'tp-panel',
+      kind: 'compound-reexport',
+      parts: [{ name: 'content' }],
+      motionRoles: [
+        {
+          name: 'surface',
+          target: 'content',
+          kind: 'presence',
+          phases: ['enter', 'exit'],
+          completion: 'blocking',
+        },
+      ],
+    });
+    expect(registry.get('Panel')?.motionRoles?.[0]?.name).toBe('surface');
+    expect(() =>
+      registry.register({
+        name: 'Broken panel',
+        tagName: 'tp-broken-panel',
+        kind: 'compound-reexport',
+        parts: [{ name: 'content' }],
+        motionRoles: [
+          {
+            name: 'surface',
+            target: 'private-node',
+            kind: 'presence',
+            phases: ['enter'],
+            completion: 'blocking',
+          },
+        ],
+      }),
+    ).toThrow(/Unknown motion target/);
+  });
 });

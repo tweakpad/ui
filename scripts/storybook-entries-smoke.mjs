@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { chromium } from 'playwright';
 import { catalogEntries } from '../dist/index.js';
 
-const baseUrl = process.env.STORYBOOK_URL ?? 'http://127.0.0.1:6106';
+const baseUrl = process.env.STORYBOOK_URL ?? 'http://localhost:6106';
 const indexResponse = await fetch(`${baseUrl}/index.json`);
 if (!indexResponse.ok) throw new Error(`Storybook index returned ${indexResponse.status}`);
 const index = await indexResponse.json();
@@ -39,42 +39,61 @@ try {
       );
     }
   }
-  const customFadeStory = entries.find(
-    (entry) => entry.title === 'Components/Accordion' && entry.name === 'Custom Fade Duration',
+  const lineByLineStory = entries.find(
+    (entry) =>
+      entry.title === 'Components/Accordion' && entry.name === 'External Line By Line Motion',
   );
-  if (!customFadeStory) throw new Error('Missing Custom Fade Duration Accordion story');
-  await page.goto(`${baseUrl}/iframe.html?id=${customFadeStory.id}&viewMode=story`, {
+  if (!lineByLineStory) throw new Error('Missing External Line By Line Motion Accordion story');
+  await page.goto(`${baseUrl}/iframe.html?id=${lineByLineStory.id}&viewMode=story`, {
     waitUntil: 'networkidle',
   });
-  const customFade = await page.evaluate(async () => {
+  const lineByLine = await page.evaluate(async () => {
     const items = [...document.querySelectorAll('tp-accordion-item')];
     const account = items.find((item) => item.value === 'account');
     const security = items.find((item) => item.value === 'security');
-    const body = account?.bodyElement;
-    if (!account || !security || !body) return null;
+    const accordion = document.querySelector('tp-accordion');
+    if (!accordion || !account || !security) return null;
     const paragraphs = items.map((item) => item.querySelectorAll('p').length);
     const textLengths = items.flatMap((item) =>
       [...item.querySelectorAll('p')].map((paragraph) => paragraph.textContent.trim().length),
     );
-    const property = getComputedStyle(body).transitionProperty;
-    const duration = getComputedStyle(body).transitionDuration;
+    const requests = [];
+    accordion.addEventListener('tp-motion-request', (event) => {
+      requests.push({
+        role: event.request.role,
+        phase: event.request.phase,
+        claimed: event.claimed,
+      });
+    });
     security.triggerElement?.click();
     await new Promise(requestAnimationFrame);
     await new Promise(requestAnimationFrame);
-    const activeFade = account.panelElement
-      ?.getAnimations({ subtree: true })
-      .some((animation) => animation.effect?.getKeyframes().some((frame) => frame.opacity === '0'));
-    return { paragraphs, textLengths, property, duration, activeFade };
+    const animations = [...account.querySelectorAll('p'), ...security.querySelectorAll('p')]
+      .flatMap((paragraph) => paragraph.getAnimations())
+      .filter((animation) => animation.playState !== 'idle');
+    const delays = animations.map((animation) => animation.effect?.getComputedTiming().delay ?? 0);
+    return {
+      paragraphs,
+      textLengths,
+      contentRequests: requests.filter((request) => request.role === 'content'),
+      animations: animations.length,
+      staggered: new Set(delays).size > 1,
+      driven:
+        account.bodyElement.hasAttribute('data-tp-motion-driven') ||
+        security.bodyElement.hasAttribute('data-tp-motion-driven'),
+    };
   });
   if (
-    !customFade ||
-    customFade.paragraphs.some((count) => count < 2) ||
-    Math.max(...customFade.textLengths) - Math.min(...customFade.textLengths) < 80 ||
-    customFade.property !== 'opacity' ||
-    customFade.duration !== '0.32s' ||
-    !customFade.activeFade
+    !lineByLine ||
+    lineByLine.paragraphs.some((count) => count < 2) ||
+    Math.max(...lineByLine.textLengths) - Math.min(...lineByLine.textLengths) < 80 ||
+    lineByLine.contentRequests.length < 2 ||
+    lineByLine.contentRequests.some((request) => !request.claimed) ||
+    lineByLine.animations < 2 ||
+    !lineByLine.staggered ||
+    !lineByLine.driven
   ) {
-    throw new Error(`Custom Fade Duration story produced ${JSON.stringify(customFade)}`);
+    throw new Error(`External line-by-line story produced ${JSON.stringify(lineByLine)}`);
   }
   const disabledItemStory = entries.find(
     (entry) => entry.title === 'Components/Accordion' && entry.name === 'Disabled Item',

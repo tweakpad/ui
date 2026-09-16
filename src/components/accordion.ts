@@ -3,6 +3,11 @@ import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import { TpOpenChangeEvent, TpValueChangeEvent } from '../foundation/events.js';
 import { createId } from '../foundation/id.js';
+import {
+  prepareMotion,
+  type MotionHandle,
+  type MotionRoleDefinition,
+} from '../foundation/motion.js';
 import { PresenceController } from '../foundation/presence.js';
 import type { PresenceState } from '../foundation/types.js';
 import { assignedElements } from './shared.js';
@@ -31,7 +36,32 @@ interface AccordionItemRecord {
   presence: PresenceController;
   resizeObserver: ResizeObserver | null;
   cleanups: Array<() => void>;
+  pendingEnter: MotionHandle[];
+  pendingExit: MotionHandle[];
+  indicatorMotion: MotionHandle | null;
+  open: boolean | null;
 }
+
+export const accordionMotionRoles = {
+  disclosure: {
+    name: 'disclosure',
+    kind: 'presence',
+    phases: ['enter', 'exit'],
+    completion: 'blocking',
+  },
+  content: {
+    name: 'content',
+    kind: 'presence',
+    phases: ['enter', 'exit'],
+    completion: 'blocking',
+  },
+  indicator: {
+    name: 'indicator',
+    kind: 'state',
+    phases: ['change'],
+    completion: 'non-blocking',
+  },
+} as const satisfies Record<string, MotionRoleDefinition>;
 
 function sameAccordionValue(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((value, index) => value === b[index]);
@@ -181,7 +211,16 @@ export class TpAccordion extends TpElement {
   }
 
   #createRecord(
-    input: Omit<AccordionItemRecord, 'presence' | 'resizeObserver' | 'cleanups'>,
+    input: Omit<
+      AccordionItemRecord,
+      | 'presence'
+      | 'resizeObserver'
+      | 'cleanups'
+      | 'pendingEnter'
+      | 'pendingExit'
+      | 'indicatorMotion'
+      | 'open'
+    >,
   ): AccordionItemRecord {
     const reference: { current?: AccordionItemRecord } = {};
     const presence = new PresenceController(this, {
@@ -206,7 +245,16 @@ export class TpAccordion extends TpElement {
         );
       },
     });
-    const record = { ...input, presence, resizeObserver: null, cleanups: [] };
+    const record = {
+      ...input,
+      presence,
+      resizeObserver: null,
+      cleanups: [],
+      pendingEnter: [],
+      pendingExit: [],
+      indicatorMotion: null,
+      open: null,
+    };
     reference.current = record;
     this.#configureRecord(record);
     return record;
@@ -234,12 +282,14 @@ export class TpAccordion extends TpElement {
     trigger.tabIndex = unavailable ? -1 : 0;
     panel.style.overflow = 'clip';
     panel.style.transitionProperty = 'block-size';
-    panel.style.transitionDuration = 'var(--tp-duration-normal, 180ms)';
+    panel.style.transitionDuration =
+      'calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1))';
     panel.style.transitionTimingFunction = 'var(--tp-easing-standard, cubic-bezier(0.2, 0, 0, 1))';
     body.style.display ||= 'flow-root';
     indicator.style.display ||= 'inline-block';
     indicator.style.transitionProperty = 'rotate';
-    indicator.style.transitionDuration = 'var(--tp-duration-normal, 180ms)';
+    indicator.style.transitionDuration =
+      'calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1))';
     indicator.style.transitionTimingFunction =
       'var(--tp-easing-standard, cubic-bezier(0.2, 0, 0, 1))';
     const focus = (): void => {
@@ -357,8 +407,23 @@ export class TpAccordion extends TpElement {
       record.panel.toggleAttribute('data-open', open);
       record.panel.toggleAttribute('data-closed', !open);
       record.trigger.setAttribute('aria-expanded', String(open));
+      if (record.open !== null && record.open !== open) {
+        record.indicatorMotion = prepareMotion(
+          record.item,
+          record.indicator,
+          accordionMotionRoles.indicator,
+          {
+            phase: 'change',
+            fromState: record.open,
+            toState: open,
+            context: { value: record.value, index: record.index },
+          },
+        );
+      }
       record.indicator.style.rotate = open ? '90deg' : '0deg';
-      record.presence.setPresent(open, 180);
+      record.indicatorMotion?.start();
+      record.open = open;
+      record.presence.setPresent(open);
       if (!open && (record.presence.state === 'absent' || record.presence.state === 'retained')) {
         this.#syncPresence(record, record.presence.state);
       }
@@ -366,7 +431,26 @@ export class TpAccordion extends TpElement {
   }
 
   #syncPresence(record: AccordionItemRecord, state: PresenceState): void {
-    const { item, panel } = record;
+    const { item, panel, body } = record;
+    const phase = state === 'starting' ? 'enter' : state === 'ending' ? 'exit' : null;
+    if (phase) {
+      const handles = [
+        prepareMotion(item, panel, accordionMotionRoles.disclosure, {
+          phase,
+          fromState: phase === 'enter' ? 'closed' : 'open',
+          toState: phase === 'enter' ? 'open' : 'closed',
+          context: { value: record.value, index: record.index },
+        }),
+        prepareMotion(item, body, accordionMotionRoles.content, {
+          phase,
+          fromState: phase === 'enter' ? 'closed' : 'open',
+          toState: phase === 'enter' ? 'open' : 'closed',
+          context: { value: record.value, index: record.index },
+        }),
+      ];
+      if (phase === 'enter') record.pendingEnter = handles;
+      else record.pendingExit = handles;
+    }
     panel.dataset.state = state;
     panel.toggleAttribute('data-starting-style', state === 'starting');
     panel.toggleAttribute('data-ending-style', state === 'ending');
@@ -375,6 +459,14 @@ export class TpAccordion extends TpElement {
       this.#measure(record);
     }
     panel.style.blockSize = state === 'open' ? 'var(--accordion-panel-height)' : '0px';
+    const handles =
+      state === 'open' ? record.pendingEnter : state === 'ending' ? record.pendingExit : [];
+    for (const handle of handles) {
+      handle.start();
+      record.presence.trackCompletion(handle.finished);
+    }
+    if (state === 'open') record.pendingEnter = [];
+    if (state === 'ending') record.pendingExit = [];
     if (state === 'absent') {
       panel.hidden = true;
     } else if (state === 'retained') {
@@ -404,6 +496,8 @@ export class TpAccordion extends TpElement {
 
   #disposeRecords(): void {
     for (const record of this.#records) {
+      for (const handle of [...record.pendingEnter, ...record.pendingExit]) handle.cancel();
+      record.indicatorMotion?.cancel();
       record.presence.destroy();
       record.resizeObserver?.disconnect();
       for (const cleanup of record.cleanups) cleanup();

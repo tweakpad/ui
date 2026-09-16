@@ -85,19 +85,36 @@ accordion.addEventListener('tp-value-change', (event) => {
 
 The public parts are `accordion` on the Root, `accordion-item` on the Item host, and `accordion-heading`, `accordion-trigger`, `accordion-indicator`, `accordion-content`, and `accordion-content-body` inside the Item's shadow root. Style inner Item parts with `tp-accordion-item::part(...)`. The measured content panel publishes `--accordion-panel-height` and `--accordion-panel-width`; its presence state is available through `data-state`, `data-starting-style`, and `data-ending-style`. The ContentBody separates content from the animated panel extent.
 
-The outer Content panel animates its measured height while ContentBody fades in and out. The fade uses `--tp-content-fade-duration`, falling back to `--tp-duration-normal` (`180ms` in the default stylesheet). Set the variable on `<tp-accordion>` for every Item or on one `<tp-accordion-item>` for an individual duration:
+The default `disclosure` role animates the outer Content panel's measured height. The `indicator` role rotates the Indicator. The `content` role targets ContentBody but deliberately has no default visual motion: a fade is one possible presentation, not part of Accordion behavior.
 
-```css
-tp-accordion-item[value='billing'] {
-  --tp-content-fade-duration: 300ms;
-}
+Each role is requested from its `<tp-accordion-item>`, so a listener on one Item can claim motion for that Item only. A listener on the Accordion or document can provide a broader policy through event bubbling. The first synchronous claim wins.
+
+```js
+item.addEventListener('tp-motion-request', (event) => {
+  if (event.request.role !== 'content') return;
+  event.respondWith({
+    play(request) {
+      const lines = [...request.owner.querySelectorAll('p')];
+      const animations = lines.map((line, index) =>
+        line.animate(
+          request.phase === 'enter'
+            ? [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }]
+            : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-4px)' }],
+          { duration: 180, delay: index * 45, fill: 'both' },
+        ),
+      );
+      return {
+        finished: Promise.all(animations.map((animation) => animation.finished)).then(() => {}),
+        cancel: () => animations.forEach((animation) => animation.cancel()),
+      };
+    },
+  });
+});
 ```
 
-By default, the shared duration token becomes `0ms` under reduced motion. An explicit item value overrides that inherited default. The fade runs on ContentBody rather than slotted content, so multi-line content is animated as one unit and does not change the panel's measured extent.
+The **External line-by-line motion** story uses this pattern with paragraphs of different lengths. Accordion continues to own selection, measurement, presence, and final hiding. See the [Motion guide](motion.md) for the full driver lifecycle, reduced-motion policy, and tween-library adapters.
 
-Storybook's **Custom Fade Duration** example sets this variable through a presentation control. Its multi-paragraph panels make both the fade and height transition visible.
-
-Entry and exit follow the shared presence lifecycle. With reduced motion, starting and ending are still published, but completion advances at the next scheduling checkpoint. A normally closed panel reaches `absent`; `keepMounted` or `hiddenUntilFound` produces `retained`.
+Entry and exit follow the shared presence lifecycle. With reduced motion, starting and ending are still published, but finite motion completes at the next scheduling checkpoint. A normally closed panel reaches `absent`; `keepMounted` or `hiddenUntilFound` produces `retained`.
 
 ## Current implementation limits
 

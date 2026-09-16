@@ -33,7 +33,7 @@ export class TpCollapsible extends TpElement {
   });
   protected override firstUpdated(): void {
     if (!this.hasAttribute('open') && this.defaultOpen) this.open = true;
-    this.#presence.setPresent(this.open, 180);
+    this.#presence.setPresent(this.open);
   }
   protected override render() {
     return html`<div part="collapsible">
@@ -64,6 +64,6 @@ export class TpCollapsible extends TpElement {
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    if (changed.has('open')) this.#presence.setPresent(this.open, 180);
+    if (changed.has('open')) this.#presence.setPresent(this.open);
   }
 }

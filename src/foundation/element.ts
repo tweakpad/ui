@@ -1,6 +1,7 @@
 import { LitElement, css } from 'lit';
 import type { CSSResultGroup, PropertyDeclarations, PropertyValues } from 'lit';
 import type { Direction, Orientation } from './types.js';
+import type { MotionPolicy } from './motion.js';
 import { createId } from './id.js';
 
 export class TpElement extends LitElement {
@@ -10,6 +11,7 @@ export class TpElement extends LitElement {
     invalid: { type: Boolean, reflect: true },
     required: { type: Boolean, reflect: true },
     orientation: { type: String, reflect: true },
+    motionPolicy: { type: String, attribute: 'motion-policy', reflect: true },
   };
 
   static styles: CSSResultGroup = css`
@@ -17,6 +19,26 @@ export class TpElement extends LitElement {
       box-sizing: border-box;
       color: inherit;
       font: inherit;
+
+      --tp-motion-scale: 1;
+      --tp-motion-play-state: running;
+    }
+
+    :host([motion-policy='reduce']) {
+      --tp-motion-scale: 0;
+      --tp-motion-play-state: paused;
+    }
+
+    :host([motion-policy='normal']) {
+      --tp-motion-scale: 1;
+      --tp-motion-play-state: running;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      :host(:not([motion-policy='normal'])) {
+        --tp-motion-scale: 0;
+        --tp-motion-play-state: paused;
+      }
     }
 
     :host([hidden]) {
@@ -57,6 +79,7 @@ export class TpElement extends LitElement {
   invalid = false;
   required = false;
   orientation: Orientation = 'horizontal';
+  motionPolicy: MotionPolicy = 'inherit';
 
   get direction(): Direction {
     const own = this.getAttribute('dir');

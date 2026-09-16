@@ -8,6 +8,7 @@ export * from './events.js';
 export * from './focus.js';
 export * from './floating-tree.js';
 export * from './id.js';
+export * from './motion.js';
 export * from './positioning.js';
 export * from './presence.js';
 export * from './services.js';

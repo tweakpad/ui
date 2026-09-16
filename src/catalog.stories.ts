@@ -93,8 +93,8 @@ export const Overview: Story = {
               <span slot="label">Section</span>
               <p>Here is the short summary.</p>
               <p>
-                Open another item to watch this longer paragraph fade while the panel contracts
-                around its measured content.
+                Open another item to watch the panel contract around content with a different text
+                length.
               </p>
             </tp-accordion-item>
             <tp-accordion-item value="unavailable" heading-level="3" disabled>

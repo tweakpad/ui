@@ -5,6 +5,8 @@
   "type": "module",
   "sideEffects": [
     "**/*.css",
+    "./src/register.ts",
+    "./src/register/icon.ts",
     "./dist/register.js",
     "./dist/register/icon.js"
   ],

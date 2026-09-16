@@ -2,7 +2,40 @@ import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import { TpOpenChangeEvent, TpValueChangeEvent } from '../foundation/events.js';
+import {
+  prepareMotion,
+  resolvesReducedMotion,
+  type MotionHandle,
+  type MotionRoleDefinition,
+} from '../foundation/motion.js';
 import { assignedElements, controlStyles, eventReason } from './shared.js';
+
+export const displayMotionRoles = {
+  carouselTrack: {
+    name: 'track',
+    kind: 'state',
+    phases: ['change'],
+    completion: 'non-blocking',
+  },
+  progressValue: {
+    name: 'value',
+    kind: 'state',
+    phases: ['change'],
+    completion: 'non-blocking',
+  },
+  progressIndeterminate: {
+    name: 'indeterminate',
+    kind: 'ambient',
+    phases: ['start', 'stop'],
+    completion: 'non-blocking',
+  },
+  spinnerRotation: {
+    name: 'rotation',
+    kind: 'ambient',
+    phases: ['start', 'stop'],
+    completion: 'non-blocking',
+  },
+} as const satisfies Record<string, MotionRoleDefinition>;
 
 export class TpAvatar extends TpElement {
   static tagName = 'tp-avatar';
@@ -84,8 +117,12 @@ export class TpCarousel extends TpElement {
 
       .track {
         display: flex;
-        transition: transform var(--tp-duration-normal);
+        transition: transform calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
         transform: translateX(calc(var(--tp-carousel-index, 0) * -100%));
+      }
+
+      .track[data-tp-motion-driven] {
+        transition: none !important;
       }
 
       ::slotted(*) {
@@ -104,6 +141,25 @@ export class TpCarousel extends TpElement {
   autoplay = 0;
   #slides: HTMLElement[] = [];
   #timer: number | undefined;
+  #trackMotion: MotionHandle | null = null;
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    const previous = changed.get('index');
+    if (previous === undefined || previous === this.index) return;
+    this.#trackMotion = prepareMotion(
+      this,
+      this.renderRoot.querySelector<HTMLElement>('.track'),
+      displayMotionRoles.carouselTrack,
+      { phase: 'change', fromState: Number(previous), toState: this.index },
+    );
+  }
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    if (changed.has('index')) {
+      this.#trackMotion?.start();
+      this.#trackMotion = null;
+    }
+  }
   protected override render() {
     return html`<section
       part="root"
@@ -186,7 +242,7 @@ export class TpCarousel extends TpElement {
   };
   #schedule = (): void => {
     this.#pause();
-    if (this.autoplay > 0 && !matchMedia('(prefers-reduced-motion: reduce)').matches)
+    if (this.autoplay > 0 && !resolvesReducedMotion(this))
       this.#timer = window.setTimeout(() => this.#move(1), this.autoplay);
   };
   override disconnectedCallback(): void {
@@ -322,12 +378,18 @@ export class TpProgress extends TpElement {
       .indicator {
         height: 100%;
         background: var(--tp-color-accent);
-        transition: width var(--tp-duration-normal);
+        transition: width calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
       }
 
-      :host(:not([value])) .indicator {
+      .indicator[data-indeterminate] {
         width: 35%;
         animation: indeterminate 1.2s ease-in-out infinite;
+        animation-play-state: var(--tp-motion-play-state, running);
+      }
+
+      .indicator[data-tp-motion-driven] {
+        transition: none !important;
+        animation: none !important;
       }
 
       @keyframes indeterminate {
@@ -344,6 +406,59 @@ export class TpProgress extends TpElement {
   value = Number.NaN;
   max = 100;
   label = 'Progress';
+  #valueMotion: MotionHandle | null = null;
+  #ambientMotion: MotionHandle | null = null;
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    if (!changed.has('value') || changed.get('value') === undefined) return;
+    const previous = Number(changed.get('value'));
+    const indicator = this.renderRoot.querySelector<HTMLElement>('.indicator');
+    if (Number.isFinite(this.value)) {
+      this.#valueMotion = prepareMotion(this, indicator, displayMotionRoles.progressValue, {
+        phase: 'change',
+        fromState: Number.isFinite(previous) ? previous : null,
+        toState: this.value,
+        context: { max: this.max },
+      });
+    }
+    if (Number.isFinite(previous) !== Number.isFinite(this.value)) {
+      this.#ambientMotion = prepareMotion(
+        this,
+        indicator,
+        displayMotionRoles.progressIndeterminate,
+        {
+          phase: Number.isFinite(this.value) ? 'stop' : 'start',
+          fromState: Number.isFinite(previous) ? 'determinate' : 'indeterminate',
+          toState: Number.isFinite(this.value) ? 'determinate' : 'indeterminate',
+        },
+      );
+    }
+  }
+  protected override firstUpdated(changed: PropertyValues<this>): void {
+    super.firstUpdated(changed);
+    if (!Number.isFinite(this.value)) {
+      this.#ambientMotion = prepareMotion(
+        this,
+        this.renderRoot.querySelector<HTMLElement>('.indicator'),
+        displayMotionRoles.progressIndeterminate,
+        { phase: 'start', fromState: null, toState: 'indeterminate' },
+      );
+      this.#ambientMotion.start();
+    }
+  }
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    if (changed.has('value')) {
+      this.#valueMotion?.start();
+      this.#ambientMotion?.start();
+      this.#valueMotion = null;
+    }
+  }
+  override disconnectedCallback(): void {
+    this.#valueMotion?.cancel();
+    this.#ambientMotion?.cancel();
+    super.disconnectedCallback();
+  }
   protected override render() {
     const determinate = Number.isFinite(this.value);
     const percent = determinate
@@ -361,6 +476,7 @@ export class TpProgress extends TpElement {
         <div
           class="indicator"
           part="indicator"
+          ?data-indeterminate=${!determinate}
           style=${determinate ? `width:${percent}%` : ''}
         ></div>
       </div>
@@ -594,6 +710,11 @@ export class TpSpinner extends TpElement {
         border-right-color: transparent;
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
+        animation-play-state: var(--tp-motion-play-state, running);
+      }
+
+      :host([data-tp-motion-driven]) {
+        animation: none !important;
       }
 
       @keyframes spin {
@@ -604,6 +725,28 @@ export class TpSpinner extends TpElement {
     `,
   ];
   label = 'Loading';
+  #rotationMotion: MotionHandle | null = null;
+  protected override firstUpdated(changed: PropertyValues<this>): void {
+    super.firstUpdated(changed);
+    this.#rotationMotion = prepareMotion(this, this, displayMotionRoles.spinnerRotation, {
+      phase: 'start',
+      fromState: null,
+      toState: 'loading',
+    });
+    this.#rotationMotion.start();
+  }
+  override disconnectedCallback(): void {
+    if (this.#rotationMotion) {
+      const stop = prepareMotion(this, this, displayMotionRoles.spinnerRotation, {
+        phase: 'stop',
+        fromState: 'loading',
+        toState: 'idle',
+      });
+      stop.start();
+      this.#rotationMotion = null;
+    }
+    super.disconnectedCallback();
+  }
   protected override render() {
     return html`<span class="visually-hidden" role="status">${this.label}</span>`;
   }

@@ -4,6 +4,11 @@ import { TpElement } from '../foundation/element.js';
 import { TpOpenChangeEvent } from '../foundation/events.js';
 import { focusableElements, restoreFocus, trapTabKey } from '../foundation/focus.js';
 import { createId } from '../foundation/id.js';
+import {
+  prepareMotion,
+  type MotionHandle,
+  type MotionRoleDefinition,
+} from '../foundation/motion.js';
 import type { ChangeReason } from '../foundation/types.js';
 import {
   positionSurface,
@@ -12,6 +17,21 @@ import {
 } from '../foundation/positioning.js';
 import { PresenceController } from '../foundation/presence.js';
 import { assignedElements, controlStyles, eventReason } from './shared.js';
+
+export const overlayMotionRoles = {
+  backdrop: {
+    name: 'backdrop',
+    kind: 'presence',
+    phases: ['enter', 'exit'],
+    completion: 'blocking',
+  },
+  surface: {
+    name: 'surface',
+    kind: 'presence',
+    phases: ['enter', 'exit'],
+    completion: 'blocking',
+  },
+} as const satisfies Record<string, MotionRoleDefinition>;
 
 abstract class TpDialogBase extends TpElement {
   static override properties = {
@@ -41,7 +61,7 @@ abstract class TpDialogBase extends TpElement {
         padding: 1rem;
         background: rgb(0 0 0 / 48%);
         opacity: 1;
-        transition: opacity var(--tp-duration-normal);
+        transition: opacity calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
       }
 
       .dialog {
@@ -61,6 +81,10 @@ abstract class TpDialogBase extends TpElement {
       .backdrop[data-state='ending'] {
         opacity: 0;
       }
+
+      .backdrop[data-tp-motion-driven] {
+        transition: none !important;
+      }
     `,
   ];
   open = false;
@@ -72,7 +96,10 @@ abstract class TpDialogBase extends TpElement {
   description = '';
   protected readonly presence = new PresenceController(this, {
     surface: () => this.renderRoot.querySelector('.backdrop'),
+    onStateChange: (state) => this.motionStateChanged(state),
   });
+  protected pendingEnterMotion: MotionHandle[] = [];
+  protected pendingExitMotion: MotionHandle[] = [];
   protected trigger: HTMLElement | null = null;
   readonly #titleId = createId('tp-dialog-title');
   readonly #descriptionId = createId('tp-dialog-description');
@@ -85,6 +112,41 @@ abstract class TpDialogBase extends TpElement {
   }
   protected get closePart(): string {
     return `${this.partPrefix}-close`;
+  }
+  protected motionTargets(): Array<{ target: HTMLElement | null; role: MotionRoleDefinition }> {
+    return [
+      {
+        target: this.renderRoot.querySelector<HTMLElement>('.backdrop'),
+        role: overlayMotionRoles.backdrop,
+      },
+    ];
+  }
+  protected motionStateChanged(
+    state: 'absent' | 'starting' | 'open' | 'ending' | 'retained',
+  ): void {
+    const phase = state === 'starting' ? 'enter' : state === 'ending' ? 'exit' : null;
+    if (phase) {
+      const handles = this.motionTargets().map(({ target, role }) =>
+        prepareMotion(this, target, role, {
+          phase,
+          fromState: phase === 'enter' ? 'closed' : 'open',
+          toState: phase === 'enter' ? 'open' : 'closed',
+          context: { component: this.tagName.toLowerCase() },
+        }),
+      );
+      if (phase === 'enter') this.pendingEnterMotion = handles;
+      else this.pendingExitMotion = handles;
+    }
+    const handles =
+      state === 'open' ? this.pendingEnterMotion : state === 'ending' ? this.pendingExitMotion : [];
+    void this.updateComplete.then(() => {
+      for (const handle of handles) {
+        handle.start();
+        this.presence.trackCompletion(handle.finished);
+      }
+    });
+    if (state === 'open') this.pendingEnterMotion = [];
+    if (state === 'ending') this.pendingExitMotion = [];
   }
 
   protected override render() {
@@ -163,7 +225,7 @@ abstract class TpDialogBase extends TpElement {
     if (this.open === open) return;
     if (!this.dispatchEvent(new TpOpenChangeEvent(open, this.open, reason, sourceEvent))) return;
     this.open = open;
-    this.presence.setPresent(open, 180);
+    this.presence.setPresent(open);
     this.trigger?.setAttribute('aria-expanded', String(open));
     if (open) {
       if (this.modality === 'modal') this.#setOutsideInert(true);
@@ -181,7 +243,7 @@ abstract class TpDialogBase extends TpElement {
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     if (changed.has('open')) {
-      this.presence.setPresent(this.open, 180);
+      this.presence.setPresent(this.open);
       this.trigger?.setAttribute('aria-expanded', String(this.open));
       if (this.open) {
         if (this.modality === 'modal') this.#setOutsideInert(true);
@@ -268,7 +330,7 @@ export class TpDrawer extends TpDialogBase {
         max-height: none;
         border-radius: 0;
         transform: translateX(0);
-        transition: transform var(--tp-duration-normal);
+        transition: transform calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
       }
 
       .backdrop[data-state='starting'] .dialog,
@@ -284,9 +346,25 @@ export class TpDrawer extends TpDialogBase {
       :host([side='left']) .backdrop[data-state='ending'] .dialog {
         transform: translateX(-100%);
       }
+
+      .dialog[data-tp-motion-driven] {
+        transition: none !important;
+      }
     `,
   ];
   side: 'left' | 'right' = 'right';
+  protected override motionTargets(): Array<{
+    target: HTMLElement | null;
+    role: MotionRoleDefinition;
+  }> {
+    return [
+      ...super.motionTargets(),
+      {
+        target: this.renderRoot.querySelector<HTMLElement>('.dialog'),
+        role: overlayMotionRoles.surface,
+      },
+    ];
+  }
   protected override get partPrefix(): string {
     return 'drawer';
   }
@@ -322,8 +400,8 @@ abstract class TpAnchoredOverlay extends TpElement {
         max-height: var(--tp-available-height, 24rem);
         overflow: auto;
         transition:
-          opacity var(--tp-duration-fast),
-          transform var(--tp-duration-fast);
+          opacity calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1)),
+          transform calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1));
         transform-origin: var(--tp-transform-origin, center);
       }
 
@@ -336,6 +414,10 @@ abstract class TpAnchoredOverlay extends TpElement {
         opacity: 0;
         transform: scale(0.98);
       }
+
+      .surface[data-tp-motion-driven] {
+        transition: none !important;
+      }
     `,
   ];
   open = false;
@@ -347,7 +429,10 @@ abstract class TpAnchoredOverlay extends TpElement {
   protected surface: HTMLElement | null = null;
   protected readonly presence = new PresenceController(this, {
     surface: () => this.renderRoot.querySelector('.surface'),
+    onStateChange: (state) => this.#motionStateChanged(state),
   });
+  #pendingEnterMotion: MotionHandle | null = null;
+  #pendingExitMotion: MotionHandle | null = null;
   protected readonly contentId = createId('tp-overlay-content');
   #position: PositioningHandle | null = null;
   protected get overlayRole(): string {
@@ -355,6 +440,34 @@ abstract class TpAnchoredOverlay extends TpElement {
   }
   protected get partPrefix(): string {
     return 'popover';
+  }
+  #motionStateChanged(state: 'absent' | 'starting' | 'open' | 'ending' | 'retained'): void {
+    const surface = this.renderRoot.querySelector<HTMLElement>('.surface');
+    if (state === 'starting' || state === 'ending') {
+      const phase = state === 'starting' ? 'enter' : 'exit';
+      const handle = prepareMotion(this, surface, overlayMotionRoles.surface, {
+        phase,
+        fromState: phase === 'enter' ? 'closed' : 'open',
+        toState: phase === 'enter' ? 'open' : 'closed',
+        context: { placement: this.placement },
+      });
+      if (phase === 'enter') this.#pendingEnterMotion = handle;
+      else this.#pendingExitMotion = handle;
+    }
+    const handle =
+      state === 'open'
+        ? this.#pendingEnterMotion
+        : state === 'ending'
+          ? this.#pendingExitMotion
+          : null;
+    if (handle) {
+      void this.updateComplete.then(() => {
+        handle.start();
+        this.presence.trackCompletion(handle.finished);
+      });
+    }
+    if (state === 'open') this.#pendingEnterMotion = null;
+    if (state === 'ending') this.#pendingExitMotion = null;
   }
   protected override render() {
     return html`<div part=${this.partPrefix}>
@@ -414,7 +527,7 @@ abstract class TpAnchoredOverlay extends TpElement {
     if (this.open === open) return;
     if (!this.dispatchEvent(new TpOpenChangeEvent(open, this.open, reason, sourceEvent))) return;
     this.open = open;
-    this.presence.setPresent(open, 120);
+    this.presence.setPresent(open);
     this.trigger?.setAttribute('aria-expanded', String(open));
     if (open) {
       document.addEventListener('pointerdown', this.#outside, true);
@@ -446,7 +559,7 @@ abstract class TpAnchoredOverlay extends TpElement {
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     if (changed.has('open')) {
-      this.presence.setPresent(this.open, 120);
+      this.presence.setPresent(this.open);
       if (this.open) void this.updateComplete.then(() => this.#startPosition());
     }
   }

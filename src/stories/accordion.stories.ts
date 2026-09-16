@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { useArgs } from 'storybook/preview-api';
-import { html, nothing } from 'lit';
+import { html } from 'lit';
 import accordionDocumentation from '../../docs/accordion.md?raw';
 import type { AccordionValue } from '../components/accordion.js';
 import type { AccordionIndicatorPosition } from '../components/accordion-item.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
+import type { MotionPlayback, MotionRequest, TpMotionRequestEvent } from '../foundation/motion.js';
 import { plusIcon } from '../icons/plus.js';
 
 interface AccordionStoryArgs {
@@ -20,7 +21,7 @@ interface AccordionStoryArgs {
   billingIndicatorPosition: AccordionIndicatorPosition;
   itemDisabled: boolean;
   headingLevel: number;
-  fadeDuration: string;
+  contentMotion: 'none' | 'line-by-line';
   onValueChange?: (event: TpValueChangeEvent<AccordionValue>) => void;
 }
 
@@ -49,7 +50,7 @@ const meta: Meta<AccordionStoryArgs> = {
     billingIndicatorPosition: 'trailing',
     itemDisabled: false,
     headingLevel: 2,
-    fadeDuration: '',
+    contentMotion: 'none',
   },
   argTypes: {
     selectionMode: {
@@ -136,14 +137,15 @@ const meta: Meta<AccordionStoryArgs> = {
       description: 'Semantic heading level of each Item; choose to fit the surrounding page.',
       table: { category: 'Item', type: { summary: '1–6' }, defaultValue: { summary: '2' } },
     },
-    fadeDuration: {
-      control: 'text',
+    contentMotion: {
+      control: 'radio',
+      options: ['none', 'line-by-line'],
       description:
-        'Optional --tp-content-fade-duration CSS value for this Accordion. Leave empty to use the shared motion token; set the same variable on an individual Item to override it.',
+        'Story-only driver selection. line-by-line claims each Item content role; none leaves the role unclaimed.',
       table: {
-        category: 'Presentation',
-        type: { summary: 'CSS time' },
-        defaultValue: { summary: 'var(--tp-duration-normal)' },
+        category: 'Demo',
+        type: { summary: "'none' | 'line-by-line'" },
+        defaultValue: { summary: 'none' },
       },
     },
   },
@@ -152,6 +154,10 @@ const meta: Meta<AccordionStoryArgs> = {
     const handleValueChange = (event: TpValueChangeEvent<AccordionValue>): void => {
       updateArgs({ value: [...event.detail.value] });
       args.onValueChange?.(event);
+    };
+    const handleMotionRequest = (event: TpMotionRequestEvent): void => {
+      if (args.contentMotion !== 'line-by-line' || event.request.role !== 'content') return;
+      event.respondWith({ play: playLineByLine });
     };
     return html`
       <style>
@@ -182,7 +188,6 @@ const meta: Meta<AccordionStoryArgs> = {
         <h1>Accordion</h1>
         <tp-accordion
           selection-mode=${args.selectionMode}
-          style=${args.fadeDuration ? `--tp-content-fade-duration: ${args.fadeDuration}` : nothing}
           .value=${args.value}
           .defaultValue=${args.defaultValue}
           ?collapsible=${args.collapsible}
@@ -190,6 +195,7 @@ const meta: Meta<AccordionStoryArgs> = {
           ?keep-mounted=${args.keepMounted}
           ?hidden-until-found=${args.hiddenUntilFound}
           @tp-value-change=${handleValueChange}
+          @tp-motion-request=${handleMotionRequest}
         >
           <tp-accordion-item
             value="account"
@@ -239,17 +245,46 @@ type Story = StoryObj<AccordionStoryArgs>;
 
 export const Default: Story = {};
 
-export const CustomFadeDuration: Story = {
-  args: { fadeDuration: '320ms' },
+export const ExternalLineByLineMotion: Story = {
+  args: { contentMotion: 'line-by-line' },
   parameters: {
     docs: {
       description: {
         story:
-          'Sets --tp-content-fade-duration for this Accordion; the same variable can be set on a single Item for a local override.',
+          'Claims only the per-Item content role and staggers the Item paragraphs. Accordion still owns disclosure measurement, presence, and selection.',
       },
     },
   },
 };
+
+function playLineByLine(request: MotionRequest): MotionPlayback {
+  const lines = [...request.owner.querySelectorAll<HTMLElement>('p')];
+  const exiting = request.phase === 'exit';
+  const ordered = exiting ? [...lines].reverse() : lines;
+  const animations = ordered.map((line, index) =>
+    line.animate(
+      exiting
+        ? [
+            { opacity: 1, transform: 'translateY(0)' },
+            { opacity: 0, transform: 'translateY(-6px)' },
+          ]
+        : [
+            { opacity: 0, transform: 'translateY(8px)' },
+            { opacity: 1, transform: 'translateY(0)' },
+          ],
+      {
+        duration: 380,
+        delay: index * 100,
+        easing: 'cubic-bezier(0.2, 0, 0, 1)',
+        fill: 'both',
+      },
+    ),
+  );
+  return {
+    finished: Promise.all(animations.map((animation) => animation.finished)).then(() => undefined),
+    cancel: () => animations.forEach((animation) => animation.cancel()),
+  };
+}
 
 export const Multiple: Story = {
   args: { selectionMode: 'multiple', value: ['account', 'security'] },

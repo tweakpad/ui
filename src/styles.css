@@ -18,6 +18,8 @@
   --tp-duration-fast: 120ms;
   --tp-duration-normal: 180ms;
   --tp-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --tp-motion-scale: 1;
+  --tp-motion-play-state: running;
 }
 
 body {
@@ -30,7 +32,17 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --tp-duration-fast: 0ms;
-    --tp-duration-normal: 0ms;
+    --tp-motion-scale: 0;
+    --tp-motion-play-state: paused;
   }
+}
+
+[motion-policy='normal'] {
+  --tp-motion-scale: 1;
+  --tp-motion-play-state: running;
+}
+
+[motion-policy='reduce'] {
+  --tp-motion-scale: 0;
+  --tp-motion-play-state: paused;
 }

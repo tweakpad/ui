@@ -3,7 +3,7 @@ import { chromium, firefox, webkit } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
 import { catalogEntries } from '../dist/index.js';
 
-const baseUrl = process.env.STORYBOOK_URL ?? 'http://127.0.0.1:6106';
+const baseUrl = process.env.STORYBOOK_URL ?? 'http://localhost:6106';
 const browserName = process.env.BROWSER ?? 'chromium';
 const browserType = { chromium, firefox, webkit }[browserName];
 if (!browserType) throw new Error(`Unsupported browser: ${browserName}`);
@@ -74,21 +74,185 @@ try {
       'Complete catalog does not demonstrate an individually disabled Accordion Item',
     );
   }
-  const reducedAccordionFade = await page
+  const reducedAccordionMotion = await page
     .locator('.catalog tp-accordion-item[value="section"]')
     .evaluate((item) => ({
       paragraphs: item.querySelectorAll('p').length,
-      property: getComputedStyle(item.bodyElement).transitionProperty,
-      duration: getComputedStyle(item.bodyElement).transitionDuration,
+      panelDuration: getComputedStyle(item.panelElement).transitionDuration,
+      contentAnimations: item.bodyElement.getAnimations({ subtree: true }).length,
     }));
   if (
-    reducedAccordionFade.paragraphs < 2 ||
-    reducedAccordionFade.property !== 'opacity' ||
-    reducedAccordionFade.duration !== '0s'
+    reducedAccordionMotion.paragraphs < 2 ||
+    reducedAccordionMotion.panelDuration !== '0s' ||
+    reducedAccordionMotion.contentAnimations !== 0
   ) {
-    throw new Error(
-      `Reduced-motion Accordion fade produced ${JSON.stringify(reducedAccordionFade)}`,
+    throw new Error(`Reduced-motion Accordion produced ${JSON.stringify(reducedAccordionMotion)}`);
+  }
+
+  const motionContract = await page.evaluate(async () => {
+    const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    const until = async (predicate, label) => {
+      for (let index = 0; index < 20; index += 1) {
+        if (predicate()) return;
+        await frame();
+      }
+      throw new Error(`Motion fixture did not reach ${label}`);
+    };
+    const accordion = document.createElement('tp-accordion');
+    accordion.collapsible = true;
+    accordion.motionPolicy = 'normal';
+    accordion.style.setProperty('--tp-duration-normal', '40ms');
+    accordion.innerHTML = `
+      <tp-accordion-item value="motion">
+        <span slot="label">Motion</span>
+        <p>First line</p><p>A longer second line for staggered content</p>
+      </tp-accordion-item>
+    `;
+    document.body.append(accordion);
+    const item = accordion.querySelector('tp-accordion-item');
+    await item.updateComplete;
+    await accordion.updateComplete;
+    await frame();
+    await frame();
+
+    const requests = [];
+    const playbacks = [];
+    const diagnostics = [];
+    let firstClaim = false;
+    let laterClaim = true;
+    let playCount = 0;
+    let completionCount = 0;
+    item.addEventListener('tp-open-change-complete', () => {
+      completionCount += 1;
+    });
+    item.addEventListener('tp-diagnostic', (event) => diagnostics.push(event.detail.code));
+    item.addEventListener('tp-motion-request', (event) => {
+      requests.push({
+        role: event.request.role,
+        phase: event.request.phase,
+        reduced: event.request.reducedMotion,
+      });
+      if (event.request.role !== 'content') return;
+      firstClaim = event.respondWith({
+        play(request) {
+          playCount += 1;
+          let resolve;
+          let cancelled = 0;
+          const finished = new Promise((done) => {
+            resolve = done;
+          });
+          const record = {
+            phase: request.phase,
+            signal: request.signal,
+            resolve,
+            get cancelled() {
+              return cancelled;
+            },
+          };
+          playbacks.push(record);
+          return {
+            finished,
+            cancel() {
+              cancelled += 1;
+              resolve();
+            },
+          };
+        },
+      });
+    });
+    accordion.addEventListener('tp-motion-request', (event) => {
+      if (event.request.role === 'content') {
+        laterClaim = event.respondWith({
+          play: () => ({ finished: Promise.resolve(), cancel() {} }),
+        });
+      }
+    });
+
+    item.triggerElement.click();
+    await until(() => playbacks.length === 1, 'external enter playback');
+    const presenceBlocked = completionCount === 0 && item.panelElement.dataset.state === 'open';
+    const drivenWhilePlaying = item.bodyElement.hasAttribute('data-tp-motion-driven');
+    playbacks[0].resolve();
+    await until(() => completionCount === 1, 'external enter completion');
+
+    item.triggerElement.click();
+    await until(
+      () => playbacks.some((playback) => playback.phase === 'exit'),
+      'external exit playback',
     );
+    const exit = playbacks.find((playback) => playback.phase === 'exit');
+    item.triggerElement.click();
+    await until(
+      () => playbacks.filter((playback) => playback.phase === 'enter').length === 2,
+      'replacement enter playback',
+    );
+    const replacement = playbacks.at(-1);
+    const cancelledOnce = exit.cancelled === 1;
+    const aborted = exit.signal.aborted;
+    replacement.resolve();
+    await until(() => completionCount === 2, 'replacement completion');
+
+    const playCountBeforeReduce = playCount;
+    item.motionPolicy = 'reduce';
+    item.triggerElement.click();
+    await until(() => item.panelElement.dataset.state === 'absent', 'reduced-motion completion');
+    const reducedRequest = requests.at(-2)?.reduced || requests.at(-1)?.reduced;
+    const reducedSkippedDriver = playCount === playCountBeforeReduce;
+
+    const fallback = document.createElement('tp-accordion');
+    fallback.collapsible = true;
+    fallback.motionPolicy = 'normal';
+    fallback.style.setProperty('--tp-duration-normal', '80ms');
+    fallback.innerHTML = `<tp-accordion-item value="fallback"><span slot="label">Fallback</span><p>Body</p></tp-accordion-item>`;
+    document.body.append(fallback);
+    const fallbackItem = fallback.querySelector('tp-accordion-item');
+    const fallbackRequests = [];
+    fallbackItem.addEventListener('tp-motion-request', (event) => {
+      fallbackRequests.push({ role: event.request.role, claimed: event.claimed });
+    });
+    await fallbackItem.updateComplete;
+    await fallback.updateComplete;
+    await frame();
+    fallbackItem.triggerElement.click();
+    await frame();
+    await frame();
+    const fallbackDuration = getComputedStyle(fallbackItem.panelElement).transitionDuration;
+    const fallbackUnclaimed = fallbackRequests.some(
+      (request) => request.role === 'disclosure' && !request.claimed,
+    );
+
+    accordion.remove();
+    fallback.remove();
+    return {
+      roles: [...new Set(requests.map((request) => request.role))].sort(),
+      firstClaim,
+      laterClaim,
+      duplicateDiagnostic: diagnostics.includes('motion-already-claimed'),
+      presenceBlocked,
+      drivenWhilePlaying,
+      cancelledOnce,
+      aborted,
+      reducedRequest,
+      reducedSkippedDriver,
+      fallbackDuration,
+      fallbackUnclaimed,
+    };
+  });
+  if (
+    motionContract.roles.join(' ') !== 'content disclosure indicator' ||
+    !motionContract.firstClaim ||
+    motionContract.laterClaim ||
+    !motionContract.duplicateDiagnostic ||
+    !motionContract.presenceBlocked ||
+    !motionContract.drivenWhilePlaying ||
+    !motionContract.cancelledOnce ||
+    !motionContract.aborted ||
+    !motionContract.reducedRequest ||
+    !motionContract.reducedSkippedDriver ||
+    motionContract.fallbackDuration !== '0.08s' ||
+    !motionContract.fallbackUnclaimed
+  ) {
+    throw new Error(`Motion contract produced ${JSON.stringify(motionContract)}`);
   }
 
   const checkbox = page.locator('tp-checkbox').first();

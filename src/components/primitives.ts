@@ -2,7 +2,27 @@ import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import { createId } from '../foundation/id.js';
+import {
+  prepareMotion,
+  type MotionHandle,
+  type MotionRoleDefinition,
+} from '../foundation/motion.js';
 import { activateLabeledControl, controlStyles } from './shared.js';
+
+export const primitiveMotionRoles = {
+  cardInteraction: {
+    name: 'interaction',
+    kind: 'state',
+    phases: ['change'],
+    completion: 'non-blocking',
+  },
+  skeletonLoading: {
+    name: 'loading',
+    kind: 'ambient',
+    phases: ['start', 'stop'],
+    completion: 'non-blocking',
+  },
+} as const satisfies Record<string, MotionRoleDefinition>;
 
 export class TpAlert extends TpElement {
   static tagName = 'tp-alert';
@@ -329,21 +349,45 @@ export class TpCard extends TpElement {
       :host([interactive]) .card {
         cursor: pointer;
         transition:
-          translate var(--tp-duration-fast),
-          box-shadow var(--tp-duration-fast);
+          translate calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1)),
+          box-shadow calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1));
       }
 
       :host([interactive]) .card:hover {
         translate: 0 -2px;
       }
+
+      .card[data-tp-motion-driven] {
+        transition: none !important;
+      }
     `,
   ];
   interactive = false;
+  #interactionMotion: MotionHandle | null = null;
+  #setInteraction(active: boolean, input: 'pointer' | 'focus'): void {
+    if (!this.interactive) return;
+    this.#interactionMotion = prepareMotion(
+      this,
+      this.renderRoot.querySelector<HTMLElement>('.card'),
+      primitiveMotionRoles.cardInteraction,
+      {
+        phase: 'change',
+        fromState: !active,
+        toState: active,
+        context: { input },
+      },
+    );
+    this.#interactionMotion.start();
+  }
   protected override render() {
     return html`<article
       class="surface card"
       part="root"
       tabindex=${this.interactive ? '0' : nothing}
+      @pointerenter=${() => this.#setInteraction(true, 'pointer')}
+      @pointerleave=${() => this.#setInteraction(false, 'pointer')}
+      @focusin=${() => this.#setInteraction(true, 'focus')}
+      @focusout=${() => this.#setInteraction(false, 'focus')}
     >
       <header part="header"><slot name="header"></slot></header>
       <div part="content"><slot></slot></div>
@@ -730,6 +774,11 @@ export class TpSkeleton extends TpElement {
         height: 100%;
         background: linear-gradient(90deg, transparent, rgb(255 255 255 / 30%), transparent);
         animation: shimmer 1.4s infinite;
+        animation-play-state: var(--tp-motion-play-state, running);
+      }
+
+      :host([data-tp-motion-driven])::after {
+        animation: none !important;
       }
 
       @keyframes shimmer {
@@ -745,6 +794,45 @@ export class TpSkeleton extends TpElement {
   ];
   label = 'Loading';
   animated = true;
+  #loadingMotion: MotionHandle | null = null;
+  protected override firstUpdated(changed: PropertyValues<this>): void {
+    super.firstUpdated(changed);
+    if (this.animated) this.#startLoadingMotion('start', null, 'loading');
+  }
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    const previous = changed.get('animated');
+    if (previous === undefined || Boolean(previous) === this.animated) return;
+    this.#startLoadingMotion(
+      this.animated ? 'start' : 'stop',
+      this.animated ? 'idle' : 'loading',
+      this.animated ? 'loading' : 'idle',
+    );
+  }
+  override disconnectedCallback(): void {
+    if (this.#loadingMotion) {
+      const stop = prepareMotion(this, this, primitiveMotionRoles.skeletonLoading, {
+        phase: 'stop',
+        fromState: 'loading',
+        toState: 'idle',
+      });
+      stop.start();
+      this.#loadingMotion = null;
+    }
+    super.disconnectedCallback();
+  }
+  #startLoadingMotion(
+    phase: 'start' | 'stop',
+    fromState: 'loading' | 'idle' | null,
+    toState: 'loading' | 'idle',
+  ): void {
+    this.#loadingMotion = prepareMotion(this, this, primitiveMotionRoles.skeletonLoading, {
+      phase,
+      fromState,
+      toState,
+    });
+    this.#loadingMotion.start();
+  }
   protected override render() {
     return html`<span class="visually-hidden" role="status">${this.label}</span>`;
   }

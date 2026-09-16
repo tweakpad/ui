@@ -33,7 +33,7 @@ defineElement(TpButton.tagName, TpButton);
 - Open-state controls dispatch cancellable `tp-open-change` events.
 - Form controls participate in native forms through `ElementInternals`.
 - Direction follows the nearest `dir` boundary. Keyboard navigation accounts for RTL where horizontal direction matters.
-- Motion uses shared duration tokens and becomes immediate under `prefers-reduced-motion: reduce`.
+- Motion uses CSS defaults, inherited `motion-policy`, and semantic `tp-motion-request` hooks for optional external drivers.
 
 ## Commands
 
@@ -57,5 +57,7 @@ standalone CSS, and CSS embedded in Lit `css` templates.
 The Storybook overview renders all 62 public catalog identities. The browser smoke suite checks registration, interaction, native form behavior, keyboard navigation, console errors, and Axe accessibility results.
 
 Accordion has a maintained [component guide](docs/accordion.md) and a Storybook Docs page with property controls, examples, events, styling hooks, and current implementation limits.
+
+The [motion guide](docs/motion.md) documents CSS defaults, reduced-motion boundaries, role inventories, and adapters for Web Animations or third-party tween libraries.
 
 Icon has a maintained [component guide](docs/icon.md). Import only the definitions you use from `@tweakpad/ui/icons/<name>`; the optional `@tweakpad/ui/register/icon` entry registers `tp-icon` without registering the whole library.

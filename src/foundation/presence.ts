@@ -20,6 +20,7 @@ export class PresenceController implements ReactiveController {
   #pendingCompletion: boolean | null = null;
   #completionStartedFor = -1;
   #destroyed = false;
+  #trackedCompletions = new Set<PromiseLike<void>>();
 
   constructor(host: ReactiveControllerHost, options: PresenceControllerOptions = {}) {
     this.#host = host;
@@ -35,7 +36,7 @@ export class PresenceController implements ReactiveController {
     return this.#state !== 'absent';
   }
 
-  setPresent(present: boolean, fallbackDuration = 0): void {
+  setPresent(present: boolean): void {
     if (this.#destroyed) return;
     if (present === this.#requested) {
       if (!present && this.#state === 'absent' && this.#options.keepMounted?.()) {
@@ -44,9 +45,10 @@ export class PresenceController implements ReactiveController {
       return;
     }
     this.#requested = present;
-    this.#fallbackDuration = Math.max(0, fallbackDuration);
+    this.#fallbackDuration = 0;
     this.#generation += 1;
     this.#cancelWait();
+    this.#trackedCompletions.clear();
     if (present) {
       this.#setState('starting');
       return;
@@ -60,6 +62,10 @@ export class PresenceController implements ReactiveController {
     this.#generation += 1;
     this.#cancelWait();
     this.#finish(false, this.#generation);
+  }
+
+  trackCompletion(completion: PromiseLike<void>): void {
+    this.#trackedCompletions.add(completion);
   }
 
   hostUpdated(): void {
@@ -121,7 +127,8 @@ export class PresenceController implements ReactiveController {
               (animation) => animation.playState !== 'finished' && animation.playState !== 'idle',
             )
         : [];
-      if (!animations.length) {
+      const completions = [...this.#trackedCompletions];
+      if (!animations.length && !completions.length) {
         queueMicrotask(() => this.#finish(present, generation));
         return;
       }
@@ -129,11 +136,15 @@ export class PresenceController implements ReactiveController {
         const endTime = Number(animation.effect?.getComputedTiming().endTime);
         return Number.isFinite(endTime) ? Math.max(maximum, endTime) : maximum;
       }, 0);
-      const fallback = Math.min(10_000, Math.max(this.#fallbackDuration, renderedDuration + 100));
-      this.#timer = window.setTimeout(() => this.#finish(present, generation), fallback);
-      void Promise.allSettled(animations.map((animation) => animation.finished)).then(() =>
-        this.#finish(present, generation),
+      const fallback = Math.min(
+        10_000,
+        Math.max(this.#fallbackDuration, renderedDuration + 100, completions.length ? 10_000 : 0),
       );
+      this.#timer = window.setTimeout(() => this.#finish(present, generation), fallback);
+      void Promise.allSettled([
+        ...animations.map((animation) => animation.finished),
+        ...completions.map((completion) => Promise.resolve(completion)),
+      ]).then(() => this.#finish(present, generation));
     });
   }
 
@@ -146,6 +157,7 @@ export class PresenceController implements ReactiveController {
 
   #cancelWait(): void {
     this.#pendingCompletion = null;
+    this.#trackedCompletions.clear();
     this.#completionStartedFor = -1;
     if (this.#frame !== undefined) {
       cancelAnimationFrame(this.#frame);

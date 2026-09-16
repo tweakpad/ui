@@ -13,6 +13,15 @@ export interface PartDefinition {
   presentationKeys?: readonly string[];
 }
 
+export interface ComponentMotionRoleDefinition {
+  name: string;
+  target: string;
+  kind: 'presence' | 'state' | 'ambient';
+  phases: readonly ('enter' | 'exit' | 'change' | 'start' | 'stop')[];
+  completion: 'blocking' | 'non-blocking';
+  context?: readonly string[];
+}
+
 export interface ComponentDefinition {
   name: string;
   tagName: `tp-${string}`;
@@ -21,6 +30,7 @@ export interface ComponentDefinition {
   variants?: Readonly<Record<string, readonly string[]>>;
   states?: readonly string[];
   fixedProperties?: Readonly<Record<string, unknown>>;
+  motionRoles?: readonly ComponentMotionRoleDefinition[];
 }
 
 export class DefinitionRegistry {
@@ -60,6 +70,16 @@ export function validateDefinition(definition: ComponentDefinition): void {
       throw new Error(`Invalid public part name: ${part.name}`);
     if (part.slot && !/^[a-z][a-z0-9-]*$/.test(part.slot))
       throw new Error(`Invalid public slot name: ${part.slot}`);
+  }
+  const roleNames = definition.motionRoles?.map((role) => role.name) ?? [];
+  if (roleNames.length !== new Set(roleNames).size)
+    throw new Error(`Duplicate motion role in ${definition.name}`);
+  for (const role of definition.motionRoles ?? []) {
+    if (!/^[a-z][a-z0-9-]*$/.test(role.name))
+      throw new Error(`Invalid motion role name: ${role.name}`);
+    if (!definition.parts.some((part) => part.name === role.target))
+      throw new Error(`Unknown motion target in ${definition.name}: ${role.target}`);
+    if (!role.phases.length) throw new Error(`Motion role ${role.name} has no phases`);
   }
 }
 
