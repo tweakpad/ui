@@ -2,6 +2,7 @@ import { html } from 'lit';
 import type { TemplateResult } from 'lit';
 import { catalogEntries } from '../catalog.js';
 import type { catalog } from '../catalog.js';
+import { plusIcon } from '../icons/plus.js';
 
 export type CatalogTag = (typeof catalog)[number][1];
 
@@ -40,10 +41,14 @@ const questionnaireQuestions = [
 const examples = {
   'tp-accordion': () => html`
     <tp-accordion>
-      <details open>
-        <summary>Account settings</summary>
+      <tp-accordion-item value="account" heading-level="2">
+        <span slot="label">Account settings</span>
         <p>Manage profile and security preferences.</p>
-      </details>
+      </tp-accordion-item>
+      <tp-accordion-item value="unavailable" heading-level="2" disabled>
+        <span slot="label">Unavailable section</span>
+        <p>This section is not available yet.</p>
+      </tp-accordion-item>
     </tp-accordion>
   `,
   'tp-button': () => html`<tp-button>Continue</tp-button>`,
@@ -321,6 +326,7 @@ const examples = {
       <tp-button slot="actions">Clear filters</tp-button>
     </tp-empty-state>
   `,
+  'tp-icon': () => html`<tp-icon .icon=${plusIcon} label="Add"></tp-icon>`,
   'tp-key-hint': () => html`<tp-key-hint>⌘ K</tp-key-hint>`,
   'tp-label': () => html`
     <div class="stack">

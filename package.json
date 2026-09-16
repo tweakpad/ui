@@ -5,7 +5,8 @@
   "type": "module",
   "sideEffects": [
     "**/*.css",
-    "./src/register.ts"
+    "./dist/register.js",
+    "./dist/register/icon.js"
   ],
   "files": [
     "dist"
@@ -22,18 +23,26 @@
       "types": "./dist/register.d.ts",
       "import": "./dist/register.js"
     },
+    "./register/icon": {
+      "types": "./dist/register/icon.d.ts",
+      "import": "./dist/register/icon.js"
+    },
+    "./icons/*": {
+      "types": "./dist/icons/*.d.ts",
+      "import": "./dist/icons/*.js"
+    },
     "./styles.css": "./dist/styles.css"
   },
   "scripts": {
     "dev": "vite",
     "build": "npm run clean && tsc -p tsconfig.build.json && vite build",
     "clean": "node scripts/clean.mjs",
-    "format": "prettier --write \"src/**/*.{ts,css}\" \".storybook/**/*.ts\" \"scripts/**/*.mjs\" \"*.{js,ts,json,css,html,md}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,css}\" \".storybook/**/*.ts\" \"scripts/**/*.mjs\" \"*.{js,ts,json,css,html,md}\"",
+    "format": "prettier --write \"src/**/*.{ts,css}\" \".storybook/**/*.{ts,css}\" \"scripts/**/*.mjs\" \"*.{js,ts,json,css,html,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,css}\" \".storybook/**/*.{ts,css}\" \"scripts/**/*.mjs\" \"*.{js,ts,json,css,html,md}\"",
     "stories:generate": "node scripts/generate-component-stories.mjs && npm run format",
     "lint": "npm run format:check && npm run lint:ts && npm run lint:css",
     "lint:ts": "eslint .",
-    "lint:css": "stylelint \"src/**/*.{css,ts}\"",
+    "lint:css": "stylelint \"src/**/*.{css,ts}\" \".storybook/**/*.css\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:browser": "BROWSER=chromium node scripts/browser-smoke.mjs && BROWSER=firefox node scripts/browser-smoke.mjs && BROWSER=webkit node scripts/browser-smoke.mjs",
@@ -50,6 +59,7 @@
     "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
     "@storybook/addon-a11y": "^10.6.0",
+    "@storybook/addon-docs": "10.6.0",
     "@storybook/web-components-vite": "^10.6.0",
     "@types/node": "^22.20.3",
     "eslint": "^10.10.0",

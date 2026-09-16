@@ -1,0 +1,5 @@
+/* Storybook Docs uses a white canvas even when the system prefers dark colors. */
+.sbdocs {
+  color-scheme: light;
+  color: var(--tp-color-text);
+}

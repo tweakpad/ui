@@ -1,13 +1,16 @@
-import type { Preview } from '@storybook/web-components-vite';
+import { definePreview } from '@storybook/web-components-vite';
+import addonDocs from '@storybook/addon-docs';
 import '../src/styles.css';
+import './docs.css';
 import '../src/register.js';
 
-const preview: Preview = {
+const preview = definePreview({
+  addons: [addonDocs()],
   parameters: {
     a11y: { test: 'error' },
     controls: { expanded: true },
     layout: 'centered',
   },
-};
+});
 
 export default preview;

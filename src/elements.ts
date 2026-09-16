@@ -1,6 +1,8 @@
 import type { TpAccordion } from './components/accordion.js';
+import type { TpAccordionItem } from './components/accordion-item.js';
 import type { TpButton } from './components/button.js';
 import type { TpCheckbox } from './components/checkbox.js';
+import type { TpIcon } from './components/icon.js';
 import type { TpCombobox, TpCommandPalette, TpSelect } from './components/choices.js';
 import type { TpCollapsible } from './components/collapsible.js';
 import type {
@@ -71,6 +73,7 @@ import type { TpToggleGroup } from './components/toggle-group.js';
 declare global {
   interface HTMLElementTagNameMap {
     'tp-accordion': TpAccordion;
+    'tp-accordion-item': TpAccordionItem;
     'tp-alert': TpAlert;
     'tp-alert-dialog': TpAlertDialog;
     'tp-aspect-ratio': TpAspectRatio;
@@ -97,6 +100,7 @@ declare global {
     'tp-form': TpForm;
     'tp-input': TpInput;
     'tp-input-group': TpInputGroup;
+    'tp-icon': TpIcon;
     'tp-key-hint': TpKeyHint;
     'tp-label': TpLabel;
     'tp-list-item': TpListItem;

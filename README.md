@@ -1,6 +1,6 @@
 # Tweakpad UI
 
-LitElement web components implementing the UI Foundation and UI Component Library specifications at source version 0.2.62.
+LitElement web components guided by the UI Foundation and UI Component Library specifications.
 
 ## Install and register
 
@@ -54,4 +54,8 @@ npm run build-storybook
 `npm run lint` checks Prettier formatting, TypeScript and Lit templates, Lit accessibility,
 standalone CSS, and CSS embedded in Lit `css` templates.
 
-The Storybook overview renders all 61 public catalog identities. The browser smoke suite checks registration, interaction, native form behavior, keyboard navigation, console errors, and Axe accessibility results.
+The Storybook overview renders all 62 public catalog identities. The browser smoke suite checks registration, interaction, native form behavior, keyboard navigation, console errors, and Axe accessibility results.
+
+Accordion has a maintained [component guide](docs/accordion.md) and a Storybook Docs page with property controls, examples, events, styling hooks, and current implementation limits.
+
+Icon has a maintained [component guide](docs/icon.md). Import only the definitions you use from `@tweakpad/ui/icons/<name>`; the optional `@tweakpad/ui/register/icon` entry registers `tp-icon` without registering the whole library.

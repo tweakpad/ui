@@ -39,9 +39,40 @@ try {
   if (missingRegistrations.length)
     throw new Error(`Missing registrations: ${missingRegistrations.join(', ')}`);
 
+  const iconContract = await page.evaluate(async () => {
+    const icon = document.createElement('tp-icon');
+    document.body.append(icon);
+    await icon.updateComplete;
+    const absent = icon.hasAttribute('data-empty') && getComputedStyle(icon).display === 'none';
+    icon.icon = { viewBox: '0 0 24 24', paths: [{ d: 'M1 2L3 4' }] };
+    await icon.updateComplete;
+    const decorative = icon.getAttribute('aria-hidden') === 'true' && !icon.hasAttribute('role');
+    const artwork = icon.shadowRoot.querySelector('svg[part="graphic"] path')?.getAttribute('d');
+    const svgNamespace =
+      icon.shadowRoot.querySelector('svg path')?.namespaceURI === 'http://www.w3.org/2000/svg';
+    icon.label = 'Custom mark';
+    icon.size = '2rem';
+    await icon.updateComplete;
+    const named =
+      icon.getAttribute('role') === 'img' &&
+      icon.getAttribute('aria-label') === 'Custom mark' &&
+      !icon.hasAttribute('aria-hidden');
+    const sized = getComputedStyle(icon).width === '32px';
+    icon.remove();
+    return { absent, decorative, artwork: artwork === 'M1 2L3 4', svgNamespace, named, sized };
+  });
+  if (Object.values(iconContract).some((value) => value !== true)) {
+    throw new Error(`Icon contract produced ${JSON.stringify(iconContract)}`);
+  }
+
   for (const entry of catalogEntries) {
     const count = await page.locator(entry.tagName).count();
     if (count < 1) throw new Error(`Storybook does not render ${entry.tagName}`);
+  }
+  if ((await page.locator('.catalog tp-accordion-item[disabled]').count()) !== 1) {
+    throw new Error(
+      'Complete catalog does not demonstrate an individually disabled Accordion Item',
+    );
   }
 
   const checkbox = page.locator('tp-checkbox').first();
@@ -84,7 +115,7 @@ try {
             () =>
               reject(
                 new Error(
-                  `Accordion did not complete ${label ?? (open ? 'open' : 'close')}: ${item.querySelector('[data-tp-accordion-content]')?.dataset.state}`,
+                  `Accordion did not complete ${label ?? (open ? 'open' : 'close')}: ${item.panelElement?.dataset.state}`,
                 ),
               ),
             1_000,
@@ -95,18 +126,19 @@ try {
     accordion.collapsible = true;
     accordion.style.setProperty('--tp-duration-normal', '40ms');
     accordion.innerHTML = `
-      <details value="one"><summary>One</summary><p>First panel</p></details>
-      <details value="two"><summary>Two</summary><p>Second panel</p></details>
+      <tp-accordion-item value="one"><span slot="label">One</span><p>First panel</p></tp-accordion-item>
+      <tp-accordion-item value="two"><span slot="label">Two</span><p>Second panel</p></tp-accordion-item>
     `;
     document.body.append(accordion);
+    const [first, second] = accordion.querySelectorAll('tp-accordion-item');
+    await Promise.all([first.updateComplete, second.updateComplete]);
     await accordion.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    const [first, second] = accordion.querySelectorAll('details');
-    const firstTrigger = first.querySelector('summary');
-    const secondTrigger = second.querySelector('summary');
-    const firstPanel = first.querySelector('[data-tp-accordion-content]');
-    const secondPanel = second.querySelector('[data-tp-accordion-content]');
-    const firstBody = firstPanel.querySelector('[data-tp-accordion-content-body]');
+    const firstTrigger = first.triggerElement;
+    const secondTrigger = second.triggerElement;
+    const firstPanel = first.panelElement;
+    const secondPanel = second.panelElement;
+    const firstBody = first.bodyElement;
 
     const firstOpen = waitForCompletion(first, true);
     firstTrigger.click();
@@ -186,14 +218,12 @@ try {
       hiddenUntilFound,
       revealReason,
       arrowPrevented: arrow.defaultPrevented,
-      focusStayedSequential: document.activeElement === firstTrigger,
+      focusStayedSequential: first.shadowRoot.activeElement === firstTrigger,
       measuredHeight: firstPanel.style.getPropertyValue('--accordion-panel-height'),
       measuredWidth: firstPanel.style.getPropertyValue('--accordion-panel-width'),
       contentPart: firstPanel.getAttribute('part'),
       bodyPart: firstBody.getAttribute('part'),
-      indicatorPart: firstTrigger
-        .querySelector('[data-tp-accordion-indicator]')
-        ?.getAttribute('part'),
+      indicatorPart: first.indicatorElement.getAttribute('part'),
       labelledByTrigger: firstPanel.getAttribute('aria-labelledby') === firstTrigger.id,
       controlledByTrigger: firstTrigger.getAttribute('aria-controls') === firstPanel.id,
     };
@@ -224,6 +254,132 @@ try {
   ) {
     throw new Error(`Accordion contract produced ${JSON.stringify(accordionContract)}`);
   }
+
+  const accordionItemContract = await page.evaluate(async () => {
+    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    const accordion = document.createElement('tp-accordion');
+    accordion.selectionMode = 'multiple';
+    accordion.style.setProperty('--tp-duration-normal', '0ms');
+    accordion.innerHTML = `
+      <tp-accordion-item value="first" indicator-position="trailing" heading-level="2">
+        <span slot="label">First item</span><p>First content</p>
+      </tp-accordion-item>
+      <div value="ignored">Not an Accordion Item</div>
+      <tp-accordion-item value="second" indicator-position="leading" heading-level="2">
+        <span slot="label">Second item</span>
+        <span slot="indicator" aria-hidden="true">+</span>
+        <p>Second content</p>
+      </tp-accordion-item>
+    `;
+    document.body.append(accordion);
+    const [first, second] = accordion.querySelectorAll('tp-accordion-item');
+    const ignored = accordion.querySelector('div[value="ignored"]');
+    await Promise.all([accordion.updateComplete, first.updateComplete, second.updateComplete]);
+    await nextFrame();
+    await nextFrame();
+
+    const firstTrigger = first.triggerElement;
+    const firstPanel = first.panelElement;
+    const secondTrigger = second.triggerElement;
+    const secondIndicator = second.indicatorElement;
+    const firstIndicator = first.indicatorElement;
+    const defaultIcon = first.shadowRoot.querySelector('slot[name="indicator"] tp-icon');
+    const firstLabel = first.shadowRoot.querySelector('.label');
+    const secondLabel = second.shadowRoot.querySelector('.label');
+    const initialPlacement =
+      firstIndicator.getBoundingClientRect().left > firstLabel.getBoundingClientRect().left &&
+      secondIndicator.getBoundingClientRect().left < secondLabel.getBoundingClientRect().left;
+    const projection =
+      first.shadowRoot.querySelector('slot[name="label"]').assignedElements()[0]?.textContent ===
+        'First item' &&
+      second.shadowRoot.querySelector('slot[name="indicator"]').assignedElements()[0]
+        ?.textContent === '+' &&
+      second.bodyElement.querySelector('slot').assignedElements()[0]?.textContent ===
+        'Second content';
+    const semanticParts =
+      first.shadowRoot.querySelector('[part="accordion-heading"]').getAttribute('role') ===
+        'heading' &&
+      first.shadowRoot.querySelector('[part="accordion-heading"]').getAttribute('aria-level') ===
+        '2' &&
+      firstTrigger.tagName === 'BUTTON' &&
+      firstPanel.getAttribute('aria-labelledby') === firstTrigger.id &&
+      firstTrigger.getAttribute('aria-controls') === firstPanel.id;
+
+    let callbackCount = 0;
+    first.onOpenChange = () => callbackCount++;
+    firstTrigger.click();
+    const firstOpened =
+      accordion.value.join(' ') === 'first' &&
+      firstTrigger.getAttribute('aria-expanded') === 'true';
+    secondTrigger.click();
+    const independentSelection = accordion.value.join(' ') === 'first second';
+    const preventClose = (event) => event.preventDefault();
+    first.addEventListener('tp-open-change', preventClose, { once: true });
+    firstTrigger.click();
+    const cancellation = accordion.value.join(' ') === 'first second' && callbackCount === 1;
+
+    first.indicatorPosition = 'leading';
+    await first.updateComplete;
+    const positionChangePreservedValue =
+      accordion.value.join(' ') === 'first second' &&
+      first.dataset.iconEdge === 'leading' &&
+      firstIndicator.dataset.iconEdge === 'leading';
+    accordion.dir = 'rtl';
+    await nextFrame();
+    const rtlPlacement =
+      firstIndicator.getBoundingClientRect().left > firstLabel.getBoundingClientRect().left &&
+      secondIndicator.getBoundingClientRect().left > secondLabel.getBoundingClientRect().left;
+    second.disabled = true;
+    await second.updateComplete;
+    secondTrigger.click();
+    const disabledStayedOpen = accordion.value.join(' ') === 'first second';
+    accordion.remove();
+    return {
+      registered: Boolean(customElements.get('tp-accordion-item')),
+      defaultIcon:
+        defaultIcon?.shadowRoot?.querySelector('svg path')?.namespaceURI ===
+        'http://www.w3.org/2000/svg',
+      unregisteredDiv: !ignored.hasAttribute('part') && ignored.dataset.index === undefined,
+      initialPlacement,
+      projection,
+      semanticParts,
+      firstOpened,
+      independentSelection,
+      cancellation,
+      positionChangePreservedValue,
+      rtlPlacement,
+      disabledStayedOpen,
+    };
+  });
+  if (Object.values(accordionItemContract).some((value) => value !== true)) {
+    throw new Error(`Accordion Item contract produced ${JSON.stringify(accordionItemContract)}`);
+  }
+
+  await page.evaluate(async () => {
+    const accordion = document.createElement('tp-accordion');
+    accordion.id = 'keyboard-accordion-fixture';
+    accordion.collapsible = true;
+    accordion.value = ['account'];
+    accordion.innerHTML = `
+      <tp-accordion-item value="account">
+        <span slot="label">Keyboard item</span><p>Content</p>
+      </tp-accordion-item>
+    `;
+    document.body.append(accordion);
+    await accordion.querySelector('tp-accordion-item').updateComplete;
+    await accordion.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  });
+  const keyboardAccordion = page.locator('#keyboard-accordion-fixture');
+  const itemButton = keyboardAccordion.locator('tp-accordion-item').locator('button');
+  await itemButton.focus();
+  await page.keyboard.press('Enter');
+  if ((await keyboardAccordion.evaluate((element) => element.value.length)) !== 0)
+    throw new Error('Accordion Item Enter did not close the open item');
+  await page.keyboard.press('Space');
+  if ((await keyboardAccordion.evaluate((element) => element.value.join(' '))) !== 'account')
+    throw new Error('Accordion Item Space did not reopen the item');
+  await keyboardAccordion.evaluate((element) => element.remove());
 
   const tabs = page.locator('tp-tabs').first();
   await tabs.locator('[slot="tab"]').nth(1).click();

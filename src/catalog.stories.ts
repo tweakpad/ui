@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
+import { plusIcon } from './icons/plus.js';
 
 const questionnaireQuestions = [
   {
@@ -87,16 +88,24 @@ export const Overview: Story = {
       <div class="catalog">
         <section class="example">
           <h2>Accordion</h2>
-          <tp-accordion
-            ><details>
-              <summary>Section</summary>
+          <tp-accordion>
+            <tp-accordion-item value="section" heading-level="3">
+              <span slot="label">Section</span>
               <p>Accordion content</p>
-            </details></tp-accordion
-          >
+            </tp-accordion-item>
+            <tp-accordion-item value="unavailable" heading-level="3" disabled>
+              <span slot="label">Unavailable section</span>
+              <p>This section is not available yet.</p>
+            </tp-accordion-item>
+          </tp-accordion>
         </section>
         <section class="example">
           <h2>Button</h2>
           <tp-button>Continue</tp-button>
+        </section>
+        <section class="example">
+          <h2>Icon</h2>
+          <tp-icon .icon=${plusIcon} label="Add"></tp-icon>
         </section>
         <section class="example">
           <h2>Checkbox</h2>

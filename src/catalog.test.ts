@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { catalogEntries } from './catalog.js';
 
 describe('public catalog', () => {
-  it('contains all 61 unique public controls', () => {
-    expect(catalogEntries).toHaveLength(61);
-    expect(new Set(catalogEntries.map((entry) => entry.name)).size).toBe(61);
-    expect(new Set(catalogEntries.map((entry) => entry.tagName)).size).toBe(61);
+  it('contains all 62 unique public controls', () => {
+    expect(catalogEntries).toHaveLength(62);
+    expect(new Set(catalogEntries.map((entry) => entry.name)).size).toBe(62);
+    expect(new Set(catalogEntries.map((entry) => entry.tagName)).size).toBe(62);
   });
 
   it('uses the public tp custom-element namespace', () => {
