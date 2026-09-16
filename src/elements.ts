@@ -1,14 +1,8 @@
+import type { TpAccordion } from './components/accordion.js';
 import type { TpButton } from './components/button.js';
+import type { TpCheckbox } from './components/checkbox.js';
 import type { TpCombobox, TpCommandPalette, TpSelect } from './components/choices.js';
-import type {
-  TpAccordion,
-  TpCheckbox,
-  TpCollapsible,
-  TpSwitch,
-  TpTabs,
-  TpToggle,
-  TpToggleGroup,
-} from './components/discrete.js';
+import type { TpCollapsible } from './components/collapsible.js';
 import type {
   TpAvatar,
   TpCarousel,
@@ -69,6 +63,10 @@ import type {
   TpSkeleton,
   TpTable,
 } from './components/primitives.js';
+import type { TpSwitch } from './components/switch.js';
+import type { TpTabs } from './components/tabs.js';
+import type { TpToggle } from './components/toggle.js';
+import type { TpToggleGroup } from './components/toggle-group.js';
 
 declare global {
   interface HTMLElementTagNameMap {

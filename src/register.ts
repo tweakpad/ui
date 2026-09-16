@@ -1,15 +1,9 @@
 import { defineElement } from './foundation/define.js';
+import { TpAccordion } from './components/accordion.js';
 import { TpButton } from './components/button.js';
+import { TpCheckbox } from './components/checkbox.js';
 import { TpCombobox, TpCommandPalette, TpSelect } from './components/choices.js';
-import {
-  TpAccordion,
-  TpCheckbox,
-  TpCollapsible,
-  TpSwitch,
-  TpTabs,
-  TpToggle,
-  TpToggleGroup,
-} from './components/discrete.js';
+import { TpCollapsible } from './components/collapsible.js';
 import {
   TpCalendar,
   TpField,
@@ -70,6 +64,10 @@ import {
   TpSkeleton,
   TpTable,
 } from './components/primitives.js';
+import { TpSwitch } from './components/switch.js';
+import { TpTabs } from './components/tabs.js';
+import { TpToggle } from './components/toggle.js';
+import { TpToggleGroup } from './components/toggle-group.js';
 
 defineElement(TpAccordion.tagName, TpAccordion);
 defineElement(TpButton.tagName, TpButton);

@@ -54,11 +54,11 @@ abstract class TpDialogBase extends TpElement {
         display: none;
       }
 
-      .backdrop[data-state='entering'] {
+      .backdrop[data-state='starting'] {
         opacity: 0;
       }
 
-      .backdrop[data-state='exiting'] {
+      .backdrop[data-state='ending'] {
         opacity: 0;
       }
     `,
@@ -70,7 +70,9 @@ abstract class TpDialogBase extends TpElement {
   showCloseControl = true;
   label = '';
   description = '';
-  protected readonly presence = new PresenceController(this);
+  protected readonly presence = new PresenceController(this, {
+    surface: () => this.renderRoot.querySelector('.backdrop'),
+  });
   protected trigger: HTMLElement | null = null;
   readonly #titleId = createId('tp-dialog-title');
   readonly #descriptionId = createId('tp-dialog-description');
@@ -269,8 +271,8 @@ export class TpDrawer extends TpDialogBase {
         transition: transform var(--tp-duration-normal);
       }
 
-      .backdrop[data-state='entering'] .dialog,
-      .backdrop[data-state='exiting'] .dialog {
+      .backdrop[data-state='starting'] .dialog,
+      .backdrop[data-state='ending'] .dialog {
         transform: translateX(100%);
       }
 
@@ -278,8 +280,8 @@ export class TpDrawer extends TpDialogBase {
         place-items: stretch start;
       }
 
-      :host([side='left']) .backdrop[data-state='entering'] .dialog,
-      :host([side='left']) .backdrop[data-state='exiting'] .dialog {
+      :host([side='left']) .backdrop[data-state='starting'] .dialog,
+      :host([side='left']) .backdrop[data-state='ending'] .dialog {
         transform: translateX(-100%);
       }
     `,
@@ -329,8 +331,8 @@ abstract class TpAnchoredOverlay extends TpElement {
         display: none;
       }
 
-      .surface[data-state='entering'],
-      .surface[data-state='exiting'] {
+      .surface[data-state='starting'],
+      .surface[data-state='ending'] {
         opacity: 0;
         transform: scale(0.98);
       }
@@ -343,7 +345,9 @@ abstract class TpAnchoredOverlay extends TpElement {
   label = '';
   protected trigger: HTMLElement | null = null;
   protected surface: HTMLElement | null = null;
-  protected readonly presence = new PresenceController(this);
+  protected readonly presence = new PresenceController(this, {
+    surface: () => this.renderRoot.querySelector('.surface'),
+  });
   protected readonly contentId = createId('tp-overlay-content');
   #position: PositioningHandle | null = null;
   protected get overlayRole(): string {

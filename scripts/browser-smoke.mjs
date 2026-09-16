@@ -68,6 +68,163 @@ try {
   if ((await checkbox.evaluate((element) => element.checked)) !== checkedBeforeCancellation)
     throw new Error('Checkbox committed a cancelled value request');
 
+  const accordionContract = await page.evaluate(async () => {
+    const waitForCompletion = (item, open, label) =>
+      Promise.race([
+        new Promise((resolve) => {
+          const listener = (event) => {
+            if (event.detail.open !== open) return;
+            item.removeEventListener('tp-open-change-complete', listener);
+            resolve(event.detail);
+          };
+          item.addEventListener('tp-open-change-complete', listener);
+        }),
+        new Promise((_, reject) =>
+          setTimeout(
+            () =>
+              reject(
+                new Error(
+                  `Accordion did not complete ${label ?? (open ? 'open' : 'close')}: ${item.querySelector('[data-tp-accordion-content]')?.dataset.state}`,
+                ),
+              ),
+            1_000,
+          ),
+        ),
+      ]);
+    const accordion = document.createElement('tp-accordion');
+    accordion.collapsible = true;
+    accordion.style.setProperty('--tp-duration-normal', '40ms');
+    accordion.innerHTML = `
+      <details value="one"><summary>One</summary><p>First panel</p></details>
+      <details value="two"><summary>Two</summary><p>Second panel</p></details>
+    `;
+    document.body.append(accordion);
+    await accordion.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const [first, second] = accordion.querySelectorAll('details');
+    const firstTrigger = first.querySelector('summary');
+    const secondTrigger = second.querySelector('summary');
+    const firstPanel = first.querySelector('[data-tp-accordion-content]');
+    const secondPanel = second.querySelector('[data-tp-accordion-content]');
+    const firstBody = firstPanel.querySelector('[data-tp-accordion-content-body]');
+
+    const firstOpen = waitForCompletion(first, true);
+    firstTrigger.click();
+    const publishedStarting = firstPanel.hasAttribute('data-starting-style');
+    await firstOpen;
+
+    const firstClose = waitForCompletion(first, false, 'first close during selection change');
+    const secondOpen = waitForCompletion(second, true);
+    secondTrigger.click();
+    const atomicSelection = first.hasAttribute('data-closed') && second.hasAttribute('data-open');
+    await Promise.all([firstClose, secondOpen]);
+
+    const reversalCompletions = [];
+    const reversalListener = (event) => reversalCompletions.push(event.detail.open);
+    second.addEventListener('tp-open-change-complete', reversalListener);
+    secondTrigger.click();
+    const publishedEnding = secondPanel.hasAttribute('data-ending-style');
+    const reopened = waitForCompletion(second, true);
+    secondTrigger.click();
+    await reopened;
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    second.removeEventListener('tp-open-change-complete', reversalListener);
+
+    accordion.style.setProperty('--tp-duration-normal', '0ms');
+    const reducedClose = waitForCompletion(second, false, 'reduced-motion close');
+    secondTrigger.click();
+    const reducedPublishedEnding = secondPanel.hasAttribute('data-ending-style');
+    await reducedClose;
+    const reducedTerminalState = secondPanel.dataset.state;
+
+    accordion.keepMounted = true;
+    await accordion.updateComplete;
+    const retainedOpen = waitForCompletion(first, true);
+    firstTrigger.click();
+    await retainedOpen;
+    const retainedClose = waitForCompletion(first, false, 'retained close');
+    firstTrigger.click();
+    await retainedClose;
+    const retainedState = firstPanel.dataset.state;
+    const retainedHidden = firstPanel.hidden;
+
+    accordion.keepMounted = false;
+    accordion.hiddenUntilFound = true;
+    await accordion.updateComplete;
+    const hiddenUntilFound = firstPanel.getAttribute('hidden');
+    const revealOpen = waitForCompletion(first, true);
+    let revealReason = null;
+    accordion.addEventListener(
+      'tp-value-change',
+      (event) => {
+        revealReason = event.detail.reason;
+      },
+      { once: true },
+    );
+    firstPanel.dispatchEvent(new Event('beforematch'));
+    await revealOpen;
+
+    firstTrigger.focus();
+    const arrow = new KeyboardEvent('keydown', {
+      key: 'ArrowDown',
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+    firstTrigger.dispatchEvent(arrow);
+
+    const result = {
+      valueIsList: Array.isArray(accordion.value),
+      publishedStarting,
+      publishedEnding,
+      atomicSelection,
+      staleCloseCompletion: reversalCompletions.includes(false),
+      reducedPublishedEnding,
+      reducedTerminalState,
+      retainedState,
+      retainedHidden,
+      hiddenUntilFound,
+      revealReason,
+      arrowPrevented: arrow.defaultPrevented,
+      focusStayedSequential: document.activeElement === firstTrigger,
+      measuredHeight: firstPanel.style.getPropertyValue('--accordion-panel-height'),
+      measuredWidth: firstPanel.style.getPropertyValue('--accordion-panel-width'),
+      contentPart: firstPanel.getAttribute('part'),
+      bodyPart: firstBody.getAttribute('part'),
+      indicatorPart: firstTrigger
+        .querySelector('[data-tp-accordion-indicator]')
+        ?.getAttribute('part'),
+      labelledByTrigger: firstPanel.getAttribute('aria-labelledby') === firstTrigger.id,
+      controlledByTrigger: firstTrigger.getAttribute('aria-controls') === firstPanel.id,
+    };
+    accordion.remove();
+    return result;
+  });
+  if (
+    !accordionContract.valueIsList ||
+    !accordionContract.publishedStarting ||
+    !accordionContract.publishedEnding ||
+    !accordionContract.atomicSelection ||
+    accordionContract.staleCloseCompletion ||
+    !accordionContract.reducedPublishedEnding ||
+    accordionContract.reducedTerminalState !== 'absent' ||
+    accordionContract.retainedState !== 'retained' ||
+    !accordionContract.retainedHidden ||
+    accordionContract.hiddenUntilFound !== 'until-found' ||
+    accordionContract.revealReason !== 'programmatic' ||
+    accordionContract.arrowPrevented ||
+    !accordionContract.focusStayedSequential ||
+    !accordionContract.measuredHeight.endsWith('px') ||
+    !accordionContract.measuredWidth.endsWith('px') ||
+    accordionContract.contentPart !== 'accordion-content' ||
+    accordionContract.bodyPart !== 'accordion-content-body' ||
+    accordionContract.indicatorPart !== 'accordion-indicator' ||
+    !accordionContract.labelledByTrigger ||
+    !accordionContract.controlledByTrigger
+  ) {
+    throw new Error(`Accordion contract produced ${JSON.stringify(accordionContract)}`);
+  }
+
   const tabs = page.locator('tp-tabs').first();
   await tabs.locator('[slot="tab"]').nth(1).click();
   if (

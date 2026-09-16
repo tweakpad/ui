@@ -48,7 +48,7 @@ export type ChangeReason =
   | 'selection'
   | 'dismiss';
 
-export type PresenceState = 'entering' | 'present' | 'exiting' | 'unmounted';
+export type PresenceState = 'absent' | 'starting' | 'open' | 'ending' | 'retained';
 
 export interface ValueChangeDetail<T> {
   value: T;
