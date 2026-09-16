@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { useArgs } from 'storybook/preview-api';
-import { html } from 'lit';
+import { html, nothing } from 'lit';
 import accordionDocumentation from '../../docs/accordion.md?raw';
 import type { AccordionValue } from '../components/accordion.js';
 import type { AccordionIndicatorPosition } from '../components/accordion-item.js';
@@ -20,6 +20,7 @@ interface AccordionStoryArgs {
   billingIndicatorPosition: AccordionIndicatorPosition;
   itemDisabled: boolean;
   headingLevel: number;
+  fadeDuration: string;
   onValueChange?: (event: TpValueChangeEvent<AccordionValue>) => void;
 }
 
@@ -48,6 +49,7 @@ const meta: Meta<AccordionStoryArgs> = {
     billingIndicatorPosition: 'trailing',
     itemDisabled: false,
     headingLevel: 2,
+    fadeDuration: '',
   },
   argTypes: {
     selectionMode: {
@@ -134,6 +136,16 @@ const meta: Meta<AccordionStoryArgs> = {
       description: 'Semantic heading level of each Item; choose to fit the surrounding page.',
       table: { category: 'Item', type: { summary: '1–6' }, defaultValue: { summary: '2' } },
     },
+    fadeDuration: {
+      control: 'text',
+      description:
+        'Optional --tp-content-fade-duration CSS value for this Accordion. Leave empty to use the shared motion token; set the same variable on an individual Item to override it.',
+      table: {
+        category: 'Presentation',
+        type: { summary: 'CSS time' },
+        defaultValue: { summary: 'var(--tp-duration-normal)' },
+      },
+    },
   },
   render: (args: AccordionStoryArgs) => {
     const [, updateArgs] = useArgs<AccordionStoryArgs>();
@@ -170,6 +182,7 @@ const meta: Meta<AccordionStoryArgs> = {
         <h1>Accordion</h1>
         <tp-accordion
           selection-mode=${args.selectionMode}
+          style=${args.fadeDuration ? `--tp-content-fade-duration: ${args.fadeDuration}` : nothing}
           .value=${args.value}
           .defaultValue=${args.defaultValue}
           ?collapsible=${args.collapsible}
@@ -184,7 +197,12 @@ const meta: Meta<AccordionStoryArgs> = {
             heading-level=${args.headingLevel}
           >
             <span slot="label">Account settings</span>
-            <p>Manage your profile and password.</p>
+            <p>Your public profile starts here.</p>
+            <p>
+              Choose how your name appears to your team, update the email used for account notices,
+              and review the recovery options you would need if you lost access to your usual
+              device.
+            </p>
           </tp-accordion-item>
           <tp-accordion-item
             value="security"
@@ -193,7 +211,8 @@ const meta: Meta<AccordionStoryArgs> = {
             ?disabled=${args.itemDisabled}
           >
             <span slot="label">Security</span>
-            <p>Configure sign-in and recovery options.</p>
+            <p>Require a second step when signing in from a new device or location.</p>
+            <p>Save your backup codes offline.</p>
           </tp-accordion-item>
           <tp-accordion-item
             value="billing"
@@ -202,7 +221,12 @@ const meta: Meta<AccordionStoryArgs> = {
           >
             <span slot="label">Billing</span>
             <tp-icon slot="indicator" .icon=${plusIcon}></tp-icon>
-            <p>View invoices and payment methods.</p>
+            <p>
+              Review every invoice from the current subscription, download receipts for your
+              records, and compare charges across billing periods before making a change.
+            </p>
+            <p>Update the payment method used for future charges.</p>
+            <p>Changes apply to your next invoice.</p>
           </tp-accordion-item>
         </tp-accordion>
       </main>
@@ -214,6 +238,18 @@ export default meta;
 type Story = StoryObj<AccordionStoryArgs>;
 
 export const Default: Story = {};
+
+export const CustomFadeDuration: Story = {
+  args: { fadeDuration: '320ms' },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Sets --tp-content-fade-duration for this Accordion; the same variable can be set on a single Item for a local override.',
+      },
+    },
+  },
+};
 
 export const Multiple: Story = {
   args: { selectionMode: 'multiple', value: ['account', 'security'] },

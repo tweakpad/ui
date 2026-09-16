@@ -43,7 +43,10 @@ const examples = {
     <tp-accordion>
       <tp-accordion-item value="account" heading-level="2">
         <span slot="label">Account settings</span>
-        <p>Manage profile and security preferences.</p>
+        <p>Your profile starts here.</p>
+        <p>
+          Manage the details shown to your team and review the recovery options for your account.
+        </p>
       </tp-accordion-item>
       <tp-accordion-item value="unavailable" heading-level="2" disabled>
         <span slot="label">Unavailable section</span>

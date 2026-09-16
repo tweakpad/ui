@@ -39,6 +39,43 @@ try {
       );
     }
   }
+  const customFadeStory = entries.find(
+    (entry) => entry.title === 'Components/Accordion' && entry.name === 'Custom Fade Duration',
+  );
+  if (!customFadeStory) throw new Error('Missing Custom Fade Duration Accordion story');
+  await page.goto(`${baseUrl}/iframe.html?id=${customFadeStory.id}&viewMode=story`, {
+    waitUntil: 'networkidle',
+  });
+  const customFade = await page.evaluate(async () => {
+    const items = [...document.querySelectorAll('tp-accordion-item')];
+    const account = items.find((item) => item.value === 'account');
+    const security = items.find((item) => item.value === 'security');
+    const body = account?.bodyElement;
+    if (!account || !security || !body) return null;
+    const paragraphs = items.map((item) => item.querySelectorAll('p').length);
+    const textLengths = items.flatMap((item) =>
+      [...item.querySelectorAll('p')].map((paragraph) => paragraph.textContent.trim().length),
+    );
+    const property = getComputedStyle(body).transitionProperty;
+    const duration = getComputedStyle(body).transitionDuration;
+    security.triggerElement?.click();
+    await new Promise(requestAnimationFrame);
+    await new Promise(requestAnimationFrame);
+    const activeFade = account.panelElement
+      ?.getAnimations({ subtree: true })
+      .some((animation) => animation.effect?.getKeyframes().some((frame) => frame.opacity === '0'));
+    return { paragraphs, textLengths, property, duration, activeFade };
+  });
+  if (
+    !customFade ||
+    customFade.paragraphs.some((count) => count < 2) ||
+    Math.max(...customFade.textLengths) - Math.min(...customFade.textLengths) < 80 ||
+    customFade.property !== 'opacity' ||
+    customFade.duration !== '0.32s' ||
+    !customFade.activeFade
+  ) {
+    throw new Error(`Custom Fade Duration story produced ${JSON.stringify(customFade)}`);
+  }
   const disabledItemStory = entries.find(
     (entry) => entry.title === 'Components/Accordion' && entry.name === 'Disabled Item',
   );
@@ -69,9 +106,24 @@ try {
   if ((await accordion.evaluate((element) => element.value.join(' '))) !== 'billing') {
     throw new Error('Enabled Billing item did not remain interactive');
   }
+  await page.waitForFunction(() => {
+    const accountItem = document.querySelector('tp-accordion-item[value="account"]');
+    const billingItem = document.querySelector('tp-accordion-item[value="billing"]');
+    return (
+      accountItem?.panelElement?.dataset.state === 'absent' &&
+      billingItem?.panelElement?.dataset.state === 'open' &&
+      billingItem.panelElement
+        .getAnimations({ subtree: true })
+        .every((animation) => animation.playState === 'finished' || animation.playState === 'idle')
+    );
+  });
   const disabledItemAccessibility = await new AxeBuilder({ page }).analyze();
   if (disabledItemAccessibility.violations.length) {
-    throw new Error('Disabled Item story has accessibility violations');
+    throw new Error(
+      `Disabled Item story accessibility violations:\n${disabledItemAccessibility.violations
+        .map((violation) => `${violation.id}: ${violation.nodes.length}`)
+        .join('\n')}`,
+    );
   }
   const accordionDocs = entries.find(
     (entry) => entry.title === 'Components/Accordion' && entry.type === 'docs',

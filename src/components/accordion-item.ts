@@ -66,6 +66,18 @@ export class TpAccordionItem extends TpElement {
       :host([data-icon-edge='leading']) [part~='accordion-indicator'] {
         order: -1;
       }
+
+      [part~='accordion-content-body'] {
+        opacity: 1;
+        transition-property: opacity;
+        transition-duration: var(--tp-content-fade-duration, var(--tp-duration-normal, 180ms));
+        transition-timing-function: var(--tp-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+      }
+
+      [part~='accordion-content'][data-starting-style] [part~='accordion-content-body'],
+      [part~='accordion-content'][data-ending-style] [part~='accordion-content-body'] {
+        opacity: 0;
+      }
     `,
   ];
 

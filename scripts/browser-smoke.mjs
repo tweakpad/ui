@@ -74,6 +74,22 @@ try {
       'Complete catalog does not demonstrate an individually disabled Accordion Item',
     );
   }
+  const reducedAccordionFade = await page
+    .locator('.catalog tp-accordion-item[value="section"]')
+    .evaluate((item) => ({
+      paragraphs: item.querySelectorAll('p').length,
+      property: getComputedStyle(item.bodyElement).transitionProperty,
+      duration: getComputedStyle(item.bodyElement).transitionDuration,
+    }));
+  if (
+    reducedAccordionFade.paragraphs < 2 ||
+    reducedAccordionFade.property !== 'opacity' ||
+    reducedAccordionFade.duration !== '0s'
+  ) {
+    throw new Error(
+      `Reduced-motion Accordion fade produced ${JSON.stringify(reducedAccordionFade)}`,
+    );
+  }
 
   const checkbox = page.locator('tp-checkbox').first();
   await checkbox.locator('label').click();

@@ -91,7 +91,11 @@ export const Overview: Story = {
           <tp-accordion>
             <tp-accordion-item value="section" heading-level="3">
               <span slot="label">Section</span>
-              <p>Accordion content</p>
+              <p>Here is the short summary.</p>
+              <p>
+                Open another item to watch this longer paragraph fade while the panel contracts
+                around its measured content.
+              </p>
             </tp-accordion-item>
             <tp-accordion-item value="unavailable" heading-level="3" disabled>
               <span slot="label">Unavailable section</span>

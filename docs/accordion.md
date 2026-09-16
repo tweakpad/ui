@@ -10,7 +10,8 @@ The normative contracts are UI Foundation §13.2 and UI Component Library §16.1
 <tp-accordion value="account">
   <tp-accordion-item value="account">
     <span slot="label">Account settings</span>
-    <p>Profile and security preferences.</p>
+    <p>Update your profile details.</p>
+    <p>Review security preferences and recovery options.</p>
   </tp-accordion-item>
   <tp-accordion-item value="billing" indicator-position="leading">
     <span slot="label">Billing</span>
@@ -83,6 +84,18 @@ accordion.addEventListener('tp-value-change', (event) => {
 ## Styling and motion
 
 The public parts are `accordion` on the Root, `accordion-item` on the Item host, and `accordion-heading`, `accordion-trigger`, `accordion-indicator`, `accordion-content`, and `accordion-content-body` inside the Item's shadow root. Style inner Item parts with `tp-accordion-item::part(...)`. The measured content panel publishes `--accordion-panel-height` and `--accordion-panel-width`; its presence state is available through `data-state`, `data-starting-style`, and `data-ending-style`. The ContentBody separates content from the animated panel extent.
+
+The outer Content panel animates its measured height while ContentBody fades in and out. The fade uses `--tp-content-fade-duration`, falling back to `--tp-duration-normal` (`180ms` in the default stylesheet). Set the variable on `<tp-accordion>` for every Item or on one `<tp-accordion-item>` for an individual duration:
+
+```css
+tp-accordion-item[value='billing'] {
+  --tp-content-fade-duration: 300ms;
+}
+```
+
+By default, the shared duration token becomes `0ms` under reduced motion. An explicit item value overrides that inherited default. The fade runs on ContentBody rather than slotted content, so multi-line content is animated as one unit and does not change the panel's measured extent.
+
+Storybook's **Custom Fade Duration** example sets this variable through a presentation control. Its multi-paragraph panels make both the fade and height transition visible.
 
 Entry and exit follow the shared presence lifecycle. With reduced motion, starting and ending are still published, but completion advances at the next scheduling checkpoint. A normally closed panel reaches `absent`; `keepMounted` or `hiddenUntilFound` produces `retained`.
 

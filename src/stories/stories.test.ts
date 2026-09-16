@@ -36,6 +36,7 @@ describe('Storybook catalog entries', () => {
     expect(accordionStory).toContain("tags: ['autodocs']");
     expect(accordionStory).toContain('export const DisabledItem: Story');
     expect(accordionStory).toContain('args: { itemDisabled: true }');
+    expect(accordionStory).toContain('export const CustomFadeDuration: Story');
     for (const property of [
       'selectionMode',
       'value',
@@ -50,6 +51,7 @@ describe('Storybook catalog entries', () => {
       'billingIndicatorPosition',
       'itemDisabled',
       'headingLevel',
+      'fadeDuration',
     ]) {
       expect(accordionStory).toContain(`    ${property}: {`);
     }
