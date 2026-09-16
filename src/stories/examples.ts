@@ -5,6 +5,38 @@ import type { catalog } from '../catalog.js';
 
 export type CatalogTag = (typeof catalog)[number][1];
 
+const questionnaireQuestions = [
+  {
+    name: 'role',
+    title: 'What is your role?',
+    description: 'Choose the option that best matches your work.',
+    kind: 'single' as const,
+    required: true,
+    choices: [
+      { value: 'design', label: 'Design' },
+      { value: 'engineering', label: 'Engineering' },
+    ],
+  },
+  {
+    name: 'tools',
+    title: 'Which tools do you use?',
+    kind: 'multiple' as const,
+    skippable: true,
+    choices: [
+      { value: 'editor', label: 'Editor' },
+      { value: 'terminal', label: 'Terminal' },
+    ],
+  },
+  {
+    name: 'name',
+    title: 'What should we call you?',
+    kind: 'text' as const,
+    required: true,
+    minLength: 2,
+    placeholder: 'Name',
+  },
+];
+
 const examples = {
   'tp-accordion': () => html`
     <tp-accordion>
@@ -46,7 +78,17 @@ const examples = {
       <button value="right">Right</button>
     </tp-toggle-group>
   `,
-  'tp-calendar': () => html`<tp-calendar label="Appointment date"></tp-calendar>`,
+  'tp-calendar': () => html`
+    <tp-calendar
+      label="Appointment date"
+      name="appointment"
+      default-value="2026-09-15"
+      default-displayed-month="2026-09-01"
+      min="2026-09-01"
+      max="2026-10-31"
+      week-starts-on="1"
+    ></tp-calendar>
+  `,
   'tp-field': () => html`
     <tp-field label="Email" description="Used for receipts">
       <tp-input name="email" type="email"></tp-input>
@@ -55,7 +97,8 @@ const examples = {
   'tp-form': () => html`
     <tp-form>
       <tp-field label="Name"><tp-input name="name" required></tp-input></tp-field>
-      <tp-button type="submit">Save</tp-button>
+      <tp-button type="submit" name="intent" value="save">Save</tp-button>
+      <tp-button type="reset">Reset</tp-button>
     </tp-form>
   `,
   'tp-input': () => html`<tp-input label="Search" placeholder="Search projects"></tp-input>`,
@@ -68,20 +111,26 @@ const examples = {
   `,
   'tp-native-select': () => html`
     <tp-native-select label="Team">
-      <option value="design">Design</option>
-      <option value="engineering">Engineering</option>
+      <optgroup label="Product">
+        <option value="design">Design</option>
+        <option value="engineering">Engineering</option>
+      </optgroup>
+      <optgroup label="Operations" disabled>
+        <option value="finance">Finance</option>
+      </optgroup>
     </tp-native-select>
   `,
   'tp-otp-field': () => html`<tp-otp-field value="123" length="6"></tp-otp-field>`,
   'tp-questionnaire': () => html`
-    <tp-questionnaire>
-      <strong slot="title">Profile survey</strong>
-      <span slot="description">Tell us about yourself.</span>
-      <tp-field label="Role"><tp-input></tp-input></tp-field>
-      <tp-button slot="actions">Submit</tp-button>
-    </tp-questionnaire>
+    <tp-questionnaire
+      shortcut-mode="letters"
+      .questions=${questionnaireQuestions}
+      .defaultValue=${{ role: 'design' }}
+    ></tp-questionnaire>
   `,
-  'tp-slider': () => html`<tp-slider label="Volume" value="40"></tp-slider>`,
+  'tp-slider': () => html`
+    <tp-slider label="Budget" name="budget" default-value="20 60"></tp-slider>
+  `,
   'tp-text-area': () => html`
     <tp-text-area label="Message" placeholder="Write a message"></tp-text-area>
   `,
@@ -93,13 +142,10 @@ const examples = {
     </tp-combobox>
   `,
   'tp-command-palette': () => html`
-    <div class="stack">
-      <p>Press <tp-key-hint>⌘ K</tp-key-hint> to toggle.</p>
-      <tp-command-palette label="Commands">
-        <span value="new">New document</span>
-        <span value="open">Open document</span>
-      </tp-command-palette>
-    </div>
+    <tp-command-palette label="Commands" open>
+      <span value="new">New document</span>
+      <span value="open">Open document</span>
+    </tp-command-palette>
   `,
   'tp-select': () => html`
     <tp-select label="Size" placeholder="Choose a size">
@@ -279,7 +325,7 @@ const examples = {
   'tp-label': () => html`
     <div class="stack">
       <tp-label id="story-name-label" for="story-name">Name</tp-label>
-      <input id="story-name" aria-labelledby="story-name-label" />
+      <tp-input id="story-name"></tp-input>
     </div>
   `,
   'tp-list-item': () => html`

@@ -1,7 +1,52 @@
-export type Orientation = 'horizontal' | 'vertical';
+export type Orientation = 'horizontal' | 'vertical' | 'responsive';
 export type Direction = 'ltr' | 'rtl';
 export type ChangeReason =
-  'programmatic' | 'pointer' | 'keyboard' | 'input' | 'selection' | 'dismiss' | 'form-reset';
+  | 'programmatic'
+  | 'initial'
+  | 'missing'
+  | 'disabled'
+  | 'trigger-press'
+  | 'trigger-hover'
+  | 'trigger-focus'
+  | 'input-press'
+  | 'item-press'
+  | 'link-press'
+  | 'close-action'
+  | 'clear'
+  | 'chip-remove-press'
+  | 'track-press'
+  | 'increment'
+  | 'decrement'
+  | 'input'
+  | 'input-clear'
+  | 'input-blur'
+  | 'input-paste'
+  | 'focus-outside'
+  | 'escape-key'
+  | 'close-watcher'
+  | 'list-navigation'
+  | 'keyboard'
+  | 'pointer'
+  | 'drag'
+  | 'wheel'
+  | 'scrub'
+  | 'cancel-open'
+  | 'sibling-open'
+  | 'imperative-action'
+  | 'swipe'
+  | 'window-resize'
+  | 'outside-press'
+  | 'ancestor-scroll'
+  | 'reference-press'
+  | 'click'
+  | 'hover'
+  | 'focus'
+  | 'safe-polygon'
+  | 'form-reset'
+  | 'submit'
+  | 'anchor-removed'
+  | 'selection'
+  | 'dismiss';
 
 export type PresenceState = 'entering' | 'present' | 'exiting' | 'unmounted';
 
@@ -9,7 +54,11 @@ export interface ValueChangeDetail<T> {
   value: T;
   previousValue: T;
   reason: ChangeReason;
-  sourceEvent?: Event;
+  sourceEvent: Event;
+  trigger?: Element;
+  cancelled: boolean;
+  allowPropagation: boolean;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ValidationState {

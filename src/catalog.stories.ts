@@ -1,6 +1,38 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 
+const questionnaireQuestions = [
+  {
+    name: 'role',
+    title: 'What is your role?',
+    description: 'Choose the option that best matches your work.',
+    kind: 'single' as const,
+    required: true,
+    choices: [
+      { value: 'design', label: 'Design' },
+      { value: 'engineering', label: 'Engineering' },
+    ],
+  },
+  {
+    name: 'tools',
+    title: 'Which tools do you use?',
+    kind: 'multiple' as const,
+    skippable: true,
+    choices: [
+      { value: 'editor', label: 'Editor' },
+      { value: 'terminal', label: 'Terminal' },
+    ],
+  },
+  {
+    name: 'name',
+    title: 'What should we call you?',
+    kind: 'text' as const,
+    required: true,
+    minLength: 2,
+    placeholder: 'Name',
+  },
+];
+
 const meta = {
   title: 'Tweakpad UI/Complete catalog',
   parameters: { layout: 'padded' },
@@ -108,7 +140,15 @@ export const Overview: Story = {
         </section>
         <section class="example">
           <h2>Calendar</h2>
-          <tp-calendar></tp-calendar>
+          <tp-calendar
+            label="Appointment date"
+            name="appointment"
+            default-value="2026-09-15"
+            default-displayed-month="2026-09-01"
+            min="2026-09-01"
+            max="2026-10-31"
+            week-starts-on="1"
+          ></tp-calendar>
         </section>
         <section class="example">
           <h2>Field</h2>
@@ -119,13 +159,14 @@ export const Overview: Story = {
         <section class="example">
           <h2>Form</h2>
           <tp-form
-            ><tp-input name="name" placeholder="Name"></tp-input
-            ><tp-button type="submit">Submit</tp-button></tp-form
+            ><tp-input name="name" label="Name" placeholder="Name"></tp-input
+            ><tp-button type="submit" name="intent" value="save">Submit</tp-button
+            ><tp-button type="reset">Reset</tp-button></tp-form
           >
         </section>
         <section class="example">
           <h2>Input</h2>
-          <tp-input placeholder="Search"></tp-input>
+          <tp-input label="Search" placeholder="Search"></tp-input>
         </section>
         <section class="example">
           <h2>Input group</h2>
@@ -137,8 +178,13 @@ export const Overview: Story = {
         <section class="example">
           <h2>Native select</h2>
           <tp-native-select
-            ><option value="one">One</option>
-            <option value="two">Two</option></tp-native-select
+            ><optgroup label="Product">
+              <option value="design">Design</option>
+              <option value="engineering">Engineering</option>
+            </optgroup>
+            <optgroup label="Operations" disabled>
+              <option value="finance">Finance</option>
+            </optgroup></tp-native-select
           >
         </section>
         <section class="example">
@@ -148,17 +194,18 @@ export const Overview: Story = {
         <section class="example">
           <h2>Questionnaire</h2>
           <tp-questionnaire
-            ><strong slot="title">Survey</strong
-            ><tp-field label="Name"><tp-input></tp-input></tp-field
+            shortcut-mode="letters"
+            .questions=${questionnaireQuestions}
+            .defaultValue=${{ role: 'design' }}
           ></tp-questionnaire>
         </section>
         <section class="example">
           <h2>Slider</h2>
-          <tp-slider value="40"></tp-slider>
+          <tp-slider label="Budget" name="budget" default-value="20 60"></tp-slider>
         </section>
         <section class="example">
           <h2>Text area</h2>
-          <tp-text-area placeholder="Write a message"></tp-text-area>
+          <tp-text-area label="Message" placeholder="Write a message"></tp-text-area>
         </section>
         <section class="example">
           <h2>Combobox</h2>
@@ -375,7 +422,7 @@ export const Overview: Story = {
         <section class="example">
           <h2>Label</h2>
           <tp-label id="catalog-name-label" for="catalog-name">Name</tp-label
-          ><input id="catalog-name" aria-labelledby="catalog-name-label" />
+          ><tp-input id="catalog-name"></tp-input>
         </section>
         <section class="example">
           <h2>List item</h2>
@@ -438,7 +485,7 @@ export const StatesAndMotion: Story = {
       <h1>Component states and motion</h1>
       <div class="matrix">
         <tp-button>Default</tp-button><tp-button disabled>Disabled</tp-button
-        ><tp-button loading>Loading</tp-button>
+        ><tp-button aria-busy="true">Loading</tp-button>
         <tp-input label="Valid value" value="Valid"></tp-input
         ><tp-input label="Read-only value" value="Read only" readonly></tp-input
         ><tp-input label="Invalid value" value="Invalid" invalid></tp-input>

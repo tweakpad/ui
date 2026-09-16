@@ -252,11 +252,13 @@ export class TpCombobox extends TpFormElement {
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    if (changed.has('required') || changed.has('value'))
+    if (changed.has('required') || changed.has('value') || changed.has('disabled')) {
+      this.setFormValue(this.disabled ? null : this.value || null);
       this.setValidity(
         this.required && !this.value ? { valueMissing: true } : {},
         this.required && !this.value ? 'Please select an option.' : '',
       );
+    }
   }
   protected resetFormValue(): void {
     this.value = this.defaultValue;
@@ -278,7 +280,10 @@ export class TpSelect extends TpCombobox {
 
 export class TpCommandPalette extends TpCombobox {
   static tagName = 'tp-command-palette';
-  static override properties = { ...TpCombobox.properties, shortcut: { type: String } };
+  static override properties = {
+    ...TpCombobox.properties,
+    loopNavigation: { type: Boolean, attribute: 'loop-navigation' },
+  };
   static override styles = [
     TpCombobox.styles,
     css`
@@ -301,24 +306,10 @@ export class TpCommandPalette extends TpCombobox {
       }
     `,
   ];
-  shortcut = 'k';
-  override connectedCallback(): void {
-    super.connectedCallback();
-    window.addEventListener('keydown', this.#globalKey);
+  loopNavigation = false;
+  protected override selectOption(option: ChoiceOption, event: Event): void {
+    if (option.disabled || this.disabled) return;
+    this.emit('tp-execute', { commandId: option.value, sourceEvent: event });
+    this.setOpen(false, eventReason(event), event);
   }
-  override disconnectedCallback(): void {
-    window.removeEventListener('keydown', this.#globalKey);
-    super.disconnectedCallback();
-  }
-  #globalKey = (event: KeyboardEvent): void => {
-    if (
-      (event.metaKey || event.ctrlKey) &&
-      event.key.toLocaleLowerCase() === this.shortcut.toLocaleLowerCase()
-    ) {
-      event.preventDefault();
-      this.setOpen(!this.open, 'keyboard', event);
-      if (this.open)
-        void this.updateComplete.then(() => this.renderRoot.querySelector('input')?.focus());
-    }
-  };
 }

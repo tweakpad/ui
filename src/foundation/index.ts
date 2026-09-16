@@ -1,4 +1,6 @@
 export * from './collection.js';
+export * from './calendar.js';
+export * from './questionnaire.js';
 export * from './controllable-state.js';
 export * from './define.js';
 export * from './element.js';
@@ -9,6 +11,7 @@ export * from './id.js';
 export * from './positioning.js';
 export * from './presence.js';
 export * from './services.js';
+export * from './slider.js';
 export * from './store.js';
 export * from './typeahead.js';
 export * from './types.js';

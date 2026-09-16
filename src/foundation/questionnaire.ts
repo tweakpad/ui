@@ -1,0 +1,140 @@
+export type QuestionnaireFlow = 'linear' | 'free';
+export type QuestionnaireChoiceMode = 'single' | 'multiple';
+export type QuestionnaireQuestionKind = QuestionnaireChoiceMode | 'text';
+export type QuestionnaireAnswer = string | string[];
+export type QuestionnaireAnswers = Record<string, QuestionnaireAnswer>;
+export type QuestionnaireStatus = 'unanswered' | 'answered' | 'skipped';
+export type QuestionnaireShortcutMode = 'none' | 'letters' | 'numbers';
+
+export interface QuestionnaireChoice {
+  value: string;
+  label: string;
+  description?: string;
+  disabled?: boolean;
+  defaultChecked?: boolean;
+  shortcut?: string;
+}
+
+export interface QuestionnaireQuestion {
+  name: string;
+  title: string;
+  description?: string;
+  kind?: QuestionnaireQuestionKind;
+  required?: boolean;
+  skippable?: boolean;
+  disabled?: boolean;
+  choices?: readonly QuestionnaireChoice[];
+  defaultValue?: QuestionnaireAnswer;
+  inputType?: string;
+  placeholder?: string;
+  pattern?: string;
+  minLength?: number;
+  maxLength?: number;
+  validate?: (answer: QuestionnaireAnswer | undefined) => string | null;
+}
+
+export function questionnaireQuestionKind(
+  question: QuestionnaireQuestion,
+  defaultChoiceMode: QuestionnaireChoiceMode = 'single',
+): QuestionnaireQuestionKind {
+  return question.kind ?? (question.choices ? defaultChoiceMode : 'text');
+}
+
+export function normalizeQuestionnaireAnswer(
+  question: QuestionnaireQuestion,
+  answer: QuestionnaireAnswer | undefined,
+  defaultChoiceMode: QuestionnaireChoiceMode = 'single',
+): QuestionnaireAnswer | undefined {
+  const kind = questionnaireQuestionKind(question, defaultChoiceMode);
+  if (kind === 'multiple') {
+    if (answer === undefined) return undefined;
+    const candidates = Array.isArray(answer) ? answer : typeof answer === 'string' ? [answer] : [];
+    const allowed = new Set(question.choices?.map((choice) => choice.value) ?? []);
+    return [...new Set(candidates.filter((value) => !allowed.size || allowed.has(value)))];
+  }
+  const candidate = typeof answer === 'string' ? answer : undefined;
+  if (kind === 'single' && candidate !== undefined && question.choices?.length) {
+    return question.choices.some((choice) => choice.value === candidate) ? candidate : undefined;
+  }
+  return candidate;
+}
+
+export function normalizeQuestionnaireAnswers(
+  questions: readonly QuestionnaireQuestion[],
+  answers: Readonly<QuestionnaireAnswers> | undefined,
+  defaultChoiceMode: QuestionnaireChoiceMode = 'single',
+): QuestionnaireAnswers {
+  const normalized: QuestionnaireAnswers = {};
+  if (!answers) return normalized;
+  for (const question of questions) {
+    if (!question.name || !(question.name in answers)) continue;
+    const answer = normalizeQuestionnaireAnswer(
+      question,
+      answers[question.name],
+      defaultChoiceMode,
+    );
+    if (answer !== undefined) normalized[question.name] = answer;
+  }
+  return normalized;
+}
+
+export function questionnaireDefaultAnswers(
+  questions: readonly QuestionnaireQuestion[],
+  defaults: Readonly<QuestionnaireAnswers> | undefined,
+  defaultChoiceMode: QuestionnaireChoiceMode = 'single',
+): QuestionnaireAnswers {
+  const result: QuestionnaireAnswers = {};
+  for (const question of questions) {
+    const kind = questionnaireQuestionKind(question, defaultChoiceMode);
+    let candidate = defaults?.[question.name] ?? question.defaultValue;
+    if (candidate === undefined && question.choices?.length) {
+      const checked = question.choices
+        .filter((choice) => choice.defaultChecked)
+        .map((choice) => choice.value);
+      if (checked.length) candidate = kind === 'multiple' ? checked : checked[0];
+    }
+    const answer = normalizeQuestionnaireAnswer(question, candidate, defaultChoiceMode);
+    if (answer !== undefined) result[question.name] = answer;
+  }
+  return result;
+}
+
+export function questionnaireAnswered(answer: QuestionnaireAnswer | undefined): boolean {
+  return Array.isArray(answer) ? answer.length > 0 : Boolean(answer?.trim());
+}
+
+export function questionnaireStatus(
+  answer: QuestionnaireAnswer | undefined,
+  skipped: boolean,
+): QuestionnaireStatus {
+  if (questionnaireAnswered(answer)) return 'answered';
+  return skipped ? 'skipped' : 'unanswered';
+}
+
+export function sameQuestionnaireAnswers(
+  left: Readonly<QuestionnaireAnswers>,
+  right: Readonly<QuestionnaireAnswers>,
+): boolean {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) return false;
+  return leftKeys.every((key) => {
+    const leftValue = left[key];
+    const rightValue = right[key];
+    return Array.isArray(leftValue) && Array.isArray(rightValue)
+      ? leftValue.length === rightValue.length &&
+          leftValue.every((value, index) => value === rightValue[index])
+      : leftValue === rightValue;
+  });
+}
+
+export function questionnaireRemovalFallback(
+  previousOrder: readonly string[],
+  nextOrder: readonly string[],
+  active: string,
+): string {
+  if (nextOrder.includes(active)) return active;
+  const previousIndex = previousOrder.indexOf(active);
+  if (previousIndex < 0) return nextOrder[0] ?? '';
+  return nextOrder[previousIndex] ?? nextOrder[previousIndex - 1] ?? '';
+}

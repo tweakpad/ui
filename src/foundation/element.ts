@@ -1,9 +1,10 @@
 import { LitElement, css } from 'lit';
-import type { CSSResultGroup, PropertyValues } from 'lit';
+import type { CSSResultGroup, PropertyDeclarations, PropertyValues } from 'lit';
 import type { Direction, Orientation } from './types.js';
+import { createId } from './id.js';
 
 export class TpElement extends LitElement {
-  static properties = {
+  static properties: PropertyDeclarations = {
     disabled: { type: Boolean, reflect: true },
     readOnly: { type: Boolean, attribute: 'readonly', reflect: true },
     invalid: { type: Boolean, reflect: true },
@@ -83,18 +84,26 @@ export class TpElement extends LitElement {
   }
 }
 
-export abstract class TpFormElement extends TpElement {
+export abstract class TpFormElement<TValue = string> extends TpElement {
   static formAssociated = true;
 
-  static override properties = {
+  static override properties: PropertyDeclarations = {
     ...TpElement.properties,
     name: { type: String, reflect: true },
     value: { type: String },
   };
 
   name = '';
-  value = '';
+  value = '' as TValue;
   protected readonly internals: ElementInternals | null;
+  readonly #fieldDescriptionId = createId('tp-field-description');
+  readonly #fieldErrorId = createId('tp-field-error');
+  #fieldLabel = '';
+  #hasFieldLabel = false;
+  #fieldDescription = '';
+  #fieldError = '';
+  #descriptionNode: HTMLSpanElement | null = null;
+  #errorNode: HTMLSpanElement | null = null;
 
   constructor() {
     super();
@@ -117,6 +126,45 @@ export abstract class TpFormElement extends TpElement {
     return this.internals?.validationMessage ?? '';
   }
 
+  protected focusTarget(): HTMLElement | null {
+    return (
+      this.renderRoot.querySelector<HTMLElement>('[part~="focusable"]:not([disabled])') ??
+      this.querySelector<HTMLElement>(
+        ':not([disabled])[tabindex], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])',
+      )
+    );
+  }
+
+  protected associationTarget(): HTMLElement | null {
+    return this.focusTarget();
+  }
+
+  setFieldAssociation(association: { label?: string; description?: string; error?: string }): void {
+    if ('label' in association) {
+      this.#fieldLabel = association.label ?? '';
+      this.#hasFieldLabel = true;
+    }
+    if ('description' in association) this.#fieldDescription = association.description ?? '';
+    if ('error' in association) this.#fieldError = association.error ?? '';
+    this.requestUpdate();
+  }
+
+  override focus(options?: FocusOptions): void {
+    const target = this.focusTarget();
+    if (target) target.focus(options);
+    else super.focus(options);
+  }
+
+  override blur(): void {
+    const target = this.focusTarget();
+    if (target) target.blur();
+    else super.blur();
+  }
+
+  activateFromLabel(): void {
+    if (!this.disabled) this.focus();
+  }
+
   checkValidity(): boolean {
     return this.internals?.checkValidity() ?? true;
   }
@@ -135,6 +183,55 @@ export abstract class TpFormElement extends TpElement {
   protected setValidity(flags: ValidityStateFlags = {}, message = '', anchor?: HTMLElement): void {
     this.internals?.setValidity(flags, message, anchor);
     this.invalid = Object.values(flags).some(Boolean);
+  }
+
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    this.#syncFieldAssociation();
+  }
+
+  #syncFieldAssociation(): void {
+    const target = this.associationTarget();
+    if (!target) return;
+    if (this.#hasFieldLabel) {
+      if (this.#fieldLabel) target.setAttribute('aria-label', this.#fieldLabel);
+      else target.removeAttribute('aria-label');
+    }
+
+    this.#descriptionNode = this.#syncAssociationNode(
+      this.#descriptionNode,
+      this.#fieldDescriptionId,
+      this.#fieldDescription,
+    );
+    this.#errorNode = this.#syncAssociationNode(
+      this.#errorNode,
+      this.#fieldErrorId,
+      this.#fieldError,
+    );
+
+    if (this.#descriptionNode) target.setAttribute('aria-describedby', this.#fieldDescriptionId);
+    else target.removeAttribute('aria-describedby');
+    if (this.#errorNode) target.setAttribute('aria-errormessage', this.#fieldErrorId);
+    else target.removeAttribute('aria-errormessage');
+    if (this.#fieldError || this.invalid) target.setAttribute('aria-invalid', 'true');
+    else target.removeAttribute('aria-invalid');
+  }
+
+  #syncAssociationNode(
+    node: HTMLSpanElement | null,
+    id: string,
+    text: string,
+  ): HTMLSpanElement | null {
+    if (!text) {
+      node?.remove();
+      return null;
+    }
+    const next = node ?? document.createElement('span');
+    next.id = id;
+    next.className = 'visually-hidden';
+    next.textContent = text;
+    if (!next.isConnected) this.renderRoot.append(next);
+    return next;
   }
 
   formDisabledCallback(disabled: boolean): void {

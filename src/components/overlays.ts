@@ -3,6 +3,8 @@ import type { CSSResultGroup, PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import { TpOpenChangeEvent } from '../foundation/events.js';
 import { focusableElements, restoreFocus, trapTabKey } from '../foundation/focus.js';
+import { createId } from '../foundation/id.js';
+import type { ChangeReason } from '../foundation/types.js';
 import {
   positionSurface,
   type Placement,
@@ -15,9 +17,12 @@ abstract class TpDialogBase extends TpElement {
   static override properties = {
     ...TpElement.properties,
     open: { type: Boolean, reflect: true },
-    modal: { type: Boolean, reflect: true },
-    dismissible: { type: Boolean, reflect: true },
+    modality: { type: String, reflect: true },
+    closeOnOutsideInteraction: { type: Boolean, attribute: 'close-on-outside-interaction' },
+    closeOnEscape: { type: Boolean, attribute: 'close-on-escape' },
+    showCloseControl: { type: Boolean, attribute: 'show-close-control' },
     label: { type: String },
+    description: { type: String },
   };
   static override styles: CSSResultGroup = [
     TpElement.styles,
@@ -59,77 +64,165 @@ abstract class TpDialogBase extends TpElement {
     `,
   ];
   open = false;
-  modal = true;
-  dismissible = true;
+  modality: 'modal' | 'non-modal' | 'trap-focus-only' = 'modal';
+  closeOnOutsideInteraction = true;
+  closeOnEscape = true;
+  showCloseControl = true;
   label = '';
+  description = '';
   protected readonly presence = new PresenceController(this);
   protected trigger: HTMLElement | null = null;
+  readonly #titleId = createId('tp-dialog-title');
+  readonly #descriptionId = createId('tp-dialog-description');
+  readonly #inerted = new Map<HTMLElement, boolean>();
   protected get dialogRole(): 'dialog' | 'alertdialog' {
     return 'dialog';
   }
+  protected get partPrefix(): string {
+    return 'dialog';
+  }
+  protected get closePart(): string {
+    return `${this.partPrefix}-close`;
+  }
 
   protected override render() {
-    return html`<slot name="trigger" @slotchange=${this.#trigger}></slot>
+    return html`<div part=${this.partPrefix}>
+      <slot name="trigger" @slotchange=${this.#trigger}></slot>
       <div
         class="backdrop"
-        part="backdrop"
+        part=${`${this.partPrefix}-overlay`}
         ?hidden=${!this.presence.mounted}
         data-state=${this.presence.state}
         @pointerdown=${this.#backdrop}
       >
         <section
           class="surface dialog"
-          part="surface"
+          part=${`${this.partPrefix}-content`}
           role=${this.dialogRole}
-          aria-modal=${String(this.modal)}
-          aria-label=${this.label || undefined}
+          aria-modal=${this.modality === 'modal' ? 'true' : 'false'}
+          aria-labelledby=${this.#titleId}
+          aria-describedby=${this.description ? this.#descriptionId : undefined}
           tabindex="-1"
           @keydown=${this.#key}
         >
+          <header part=${`${this.partPrefix}-header`}>
+            <span
+              id=${this.#titleId}
+              part=${`${this.partPrefix}-title`}
+              class=${this.label ? 'visually-hidden' : ''}
+              ><slot name="title">${this.label}</slot></span
+            >
+            ${
+              this.description
+                ? html`<span id=${this.#descriptionId} part=${`${this.partPrefix}-description`}
+                    ><slot name="description">${this.description}</slot></span
+                  >`
+                : null
+            }
+          </header>
           <slot></slot>
+          <footer part=${`${this.partPrefix}-footer`}><slot name="footer"></slot></footer>
+          ${
+            this.showCloseControl
+              ? html`<button
+                  part=${`${this.closePart} focusable`}
+                  type="button"
+                  aria-label="Close"
+                  @click=${(event: Event) => this.setOpen(false, 'close-action', event)}
+                >
+                  ×
+                </button>`
+              : null
+          }
         </section>
-      </div>`;
+      </div>
+    </div>`;
   }
   #trigger = (event: Event): void => {
     this.trigger = assignedElements(event.currentTarget as HTMLSlotElement)[0] ?? null;
     if (this.trigger) {
+      this.trigger.setAttribute('part', `${this.partPrefix}-trigger`);
       this.trigger.setAttribute('aria-haspopup', 'dialog');
       this.trigger.setAttribute('aria-expanded', String(this.open));
       this.trigger.onclick = (e) => this.setOpen(!this.open, eventReason(e), e);
     }
   };
   #backdrop = (event: PointerEvent): void => {
-    if (event.target === event.currentTarget && this.dismissible)
-      this.setOpen(false, 'dismiss', event);
+    if (event.target === event.currentTarget && this.closeOnOutsideInteraction)
+      this.setOpen(false, 'outside-press', event);
   };
   #key = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape' && this.dismissible) {
+    if (event.key === 'Escape' && this.closeOnEscape) {
       event.preventDefault();
-      this.setOpen(false, 'dismiss', event);
-    } else if (this.modal) trapTabKey(event, this.renderRoot);
+      this.setOpen(false, 'escape-key', event);
+    } else if (this.modality !== 'non-modal') trapTabKey(event, this.renderRoot);
   };
-  setOpen(
-    open: boolean,
-    reason: 'keyboard' | 'pointer' | 'input' | 'dismiss' | 'programmatic',
-    sourceEvent?: Event,
-  ): void {
+  setOpen(open: boolean, reason: ChangeReason, sourceEvent?: Event): void {
     if (this.open === open) return;
     if (!this.dispatchEvent(new TpOpenChangeEvent(open, this.open, reason, sourceEvent))) return;
     this.open = open;
     this.presence.setPresent(open, 180);
     this.trigger?.setAttribute('aria-expanded', String(open));
     if (open) {
+      if (this.modality === 'modal') this.#setOutsideInert(true);
       void this.updateComplete.then(() => {
         const target =
           focusableElements(this.renderRoot)[0] ??
           this.renderRoot.querySelector<HTMLElement>('.dialog');
         target?.focus();
       });
-    } else restoreFocus(this.trigger);
+    } else {
+      this.#setOutsideInert(false);
+      restoreFocus(this.trigger);
+    }
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    if (changed.has('open')) this.presence.setPresent(this.open, 180);
+    if (changed.has('open')) {
+      this.presence.setPresent(this.open, 180);
+      this.trigger?.setAttribute('aria-expanded', String(this.open));
+      if (this.open) {
+        if (this.modality === 'modal') this.#setOutsideInert(true);
+        void this.updateComplete.then(() => {
+          const target =
+            focusableElements(this.renderRoot)[0] ??
+            this.renderRoot.querySelector<HTMLElement>('.dialog');
+          target?.focus();
+        });
+      } else {
+        this.#setOutsideInert(false);
+      }
+    }
+    if (changed.has('modality') && this.open) {
+      this.#setOutsideInert(this.modality === 'modal');
+    }
+  }
+  override disconnectedCallback(): void {
+    this.#setOutsideInert(false);
+    super.disconnectedCallback();
+  }
+  #setOutsideInert(inert: boolean): void {
+    if (!inert) {
+      for (const [element, previous] of this.#inerted) element.inert = previous;
+      this.#inerted.clear();
+      return;
+    }
+    this.#inertOutsideBranch(this);
+  }
+  #inertOutsideBranch(branch: Node): void {
+    const parent = branch.parentNode;
+    if (!parent) return;
+    const siblings =
+      parent instanceof Document || parent instanceof DocumentFragment || parent instanceof Element
+        ? parent.children
+        : [];
+    for (const sibling of siblings) {
+      if (sibling === branch || !(sibling instanceof HTMLElement)) continue;
+      if (!this.#inerted.has(sibling)) this.#inerted.set(sibling, sibling.inert);
+      sibling.inert = true;
+    }
+    if (parent instanceof ShadowRoot) this.#inertOutsideBranch(parent.host);
+    else if (parent instanceof HTMLElement) this.#inertOutsideBranch(parent);
   }
 }
 
@@ -138,8 +231,18 @@ export class TpDialog extends TpDialogBase {
 }
 export class TpAlertDialog extends TpDialogBase {
   static tagName = 'tp-alert-dialog';
+  constructor() {
+    super();
+    this.closeOnOutsideInteraction = false;
+  }
   protected override get dialogRole() {
     return 'alertdialog' as const;
+  }
+  protected override get partPrefix(): string {
+    return 'alert-dialog';
+  }
+  protected override get closePart(): string {
+    return 'alert-dialog-cancel';
   }
 }
 
@@ -182,10 +285,16 @@ export class TpDrawer extends TpDialogBase {
     `,
   ];
   side: 'left' | 'right' = 'right';
+  protected override get partPrefix(): string {
+    return 'drawer';
+  }
 }
 
 export class TpSidePanel extends TpDrawer {
   static tagName = 'tp-side-panel';
+  protected override get partPrefix(): string {
+    return 'side-panel';
+  }
 }
 
 abstract class TpAnchoredOverlay extends TpElement {
@@ -235,15 +344,21 @@ abstract class TpAnchoredOverlay extends TpElement {
   protected trigger: HTMLElement | null = null;
   protected surface: HTMLElement | null = null;
   protected readonly presence = new PresenceController(this);
+  protected readonly contentId = createId('tp-overlay-content');
   #position: PositioningHandle | null = null;
   protected get overlayRole(): string {
     return 'dialog';
   }
+  protected get partPrefix(): string {
+    return 'popover';
+  }
   protected override render() {
-    return html`<slot name="trigger" @slotchange=${this.#trigger}></slot>
+    return html`<div part=${this.partPrefix}>
+      <slot name="trigger" @slotchange=${this.#trigger}></slot>
       <div
+        id=${this.contentId}
         class="surface"
-        part="surface"
+        part=${`${this.partPrefix}-content ${this.partPrefix}-positioner`}
         role=${this.overlayRole}
         aria-label=${this.label || undefined}
         ?hidden=${!this.presence.mounted}
@@ -251,7 +366,8 @@ abstract class TpAnchoredOverlay extends TpElement {
         @keydown=${this.#key}
       >
         <slot></slot>
-      </div>`;
+      </div>
+    </div>`;
   }
   #trigger = (event: Event): void => {
     this.trigger = assignedElements(event.currentTarget as HTMLSlotElement)[0] ?? null;
@@ -259,7 +375,9 @@ abstract class TpAnchoredOverlay extends TpElement {
   };
   protected bindTrigger(): void {
     if (!this.trigger) return;
+    this.trigger.setAttribute('part', `${this.partPrefix}-trigger`);
     this.trigger.setAttribute('aria-expanded', String(this.open));
+    this.trigger.setAttribute('aria-controls', this.contentId);
     this.trigger.onclick = (e) => this.setOpen(!this.open, eventReason(e), e);
   }
   #key = (event: KeyboardEvent): void => {
@@ -269,7 +387,7 @@ abstract class TpAnchoredOverlay extends TpElement {
     }
   };
   #documentKey = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape' && this.open && this.dismissible) {
+    if (event.key === 'Escape' && this.open) {
       event.preventDefault();
       this.setOpen(false, 'dismiss', event);
     }
@@ -303,6 +421,11 @@ abstract class TpAnchoredOverlay extends TpElement {
       document.removeEventListener('keydown', this.#documentKey, true);
       this.#position?.destroy();
       this.#position = null;
+      const active =
+        this.renderRoot instanceof ShadowRoot
+          ? this.renderRoot.activeElement
+          : document.activeElement;
+      if (active && this.surface?.contains(active)) restoreFocus(this.trigger);
     }
   }
   #startPosition(): void {
@@ -340,6 +463,12 @@ export class TpPreviewCard extends TpAnchoredOverlay {
   static override properties = { ...TpAnchoredOverlay.properties, delay: { type: Number } };
   delay = 400;
   #timer: number | undefined;
+  protected override get overlayRole(): string {
+    return 'group';
+  }
+  protected override get partPrefix(): string {
+    return 'preview-card';
+  }
   protected override bindTrigger(): void {
     if (!this.trigger) return;
     this.trigger.setAttribute('aria-expanded', String(this.open));
@@ -355,11 +484,38 @@ export class TpPreviewCard extends TpAnchoredOverlay {
       open ? this.delay : 100,
     );
   }
+  protected override firstUpdated(changed: PropertyValues<this>): void {
+    super.firstUpdated(changed);
+    const surface = this.renderRoot.querySelector<HTMLElement>('.surface');
+    if (!surface) return;
+    surface.addEventListener('pointerenter', () => {
+      if (this.#timer !== undefined) clearTimeout(this.#timer);
+    });
+    surface.addEventListener('pointerleave', (event) => this.#schedule(false, event));
+    surface.addEventListener('focusin', () => {
+      if (this.#timer !== undefined) clearTimeout(this.#timer);
+    });
+    surface.addEventListener('focusout', (event) => {
+      if (!(event.relatedTarget instanceof Node) || !surface.contains(event.relatedTarget))
+        this.#schedule(false, event);
+    });
+  }
 }
 
 export class TpTooltip extends TpPreviewCard {
   static tagName = 'tp-tooltip';
+  static override styles = [
+    TpPreviewCard.styles,
+    css`
+      .surface {
+        pointer-events: none;
+      }
+    `,
+  ];
   protected override get overlayRole() {
+    return 'tooltip';
+  }
+  protected override get partPrefix(): string {
     return 'tooltip';
   }
   constructor() {
@@ -370,8 +526,9 @@ export class TpTooltip extends TpPreviewCard {
   protected override bindTrigger(): void {
     super.bindTrigger();
     if (this.trigger) {
-      const id = this.id || (this.id = `tp-tooltip-${Math.random().toString(36).slice(2)}`);
-      this.trigger.setAttribute('aria-describedby', id);
+      this.trigger.removeAttribute('aria-controls');
+      this.trigger.removeAttribute('aria-expanded');
+      this.trigger.setAttribute('aria-describedby', this.contentId);
     }
   }
 }

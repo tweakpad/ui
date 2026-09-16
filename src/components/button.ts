@@ -1,5 +1,4 @@
 import { css, html } from 'lit';
-import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import { controlStyles } from './shared.js';
 
@@ -8,8 +7,9 @@ export class TpButton extends TpElement {
   static override properties = {
     ...TpElement.properties,
     type: { type: String, reflect: true },
-    pressed: { type: Boolean, reflect: true },
-    loading: { type: Boolean, reflect: true },
+    variant: { type: String, reflect: true },
+    size: { type: String, reflect: true },
+    name: { type: String, reflect: true },
     value: { type: String },
   };
 
@@ -29,53 +29,106 @@ export class TpButton extends TpElement {
         cursor: pointer;
       }
 
-      button[data-pressed] {
-        color: var(--tp-color-accent-contrast, #fff);
-        background: var(--tp-color-accent, Highlight);
+      :host([size='xs']) button,
+      :host([size='icon-xs']) button {
+        min-height: 1.75rem;
+        padding: 0.25rem 0.5rem;
       }
 
-      [part='spinner'] {
-        width: 1em;
-        height: 1em;
-        border: 2px solid currentcolor;
-        border-right-color: transparent;
-        border-radius: 50%;
-        animation: spin var(--tp-duration-normal, 180ms) linear infinite;
+      :host([size='sm']) button,
+      :host([size='icon-sm']) button {
+        min-height: 2rem;
+        padding: 0.35rem 0.625rem;
       }
 
-      @keyframes spin {
-        to {
-          transform: rotate(1turn);
-        }
+      :host([size='lg']) button,
+      :host([size='icon-lg']) button {
+        min-height: 2.75rem;
+        padding: 0.625rem 1rem;
+      }
+
+      :host([size^='icon']) button {
+        aspect-ratio: 1;
+        padding-inline: 0;
+      }
+
+      :host([variant='secondary']) button {
+        background: var(--tp-color-surface-raised, ButtonFace);
+      }
+
+      :host([variant='destructive']) button {
+        color: var(--tp-color-danger-contrast, Canvas);
+        background: var(--tp-color-danger, Mark);
+        border-color: var(--tp-color-danger, Mark);
+      }
+
+      :host([variant='ghost']) button,
+      :host([variant='link']) button {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      :host([variant='link']) button {
+        min-height: auto;
+        padding: 0;
+        text-decoration: underline;
       }
     `,
   ];
 
   type: 'button' | 'submit' | 'reset' = 'button';
-  pressed = false;
-  loading = false;
+  variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link' = 'default';
+  size: 'xs' | 'sm' | 'default' | 'lg' | 'icon-xs' | 'icon-sm' | 'icon' | 'icon-lg' = 'default';
+  name = '';
   value = '';
 
   protected override render() {
     return html`
       <button
         class="control"
-        part="control focusable"
+        part="button focusable"
         type=${this.type}
         .value=${this.value}
-        ?disabled=${this.disabled || this.loading}
-        ?data-pressed=${this.pressed}
-        aria-pressed=${this.hasAttribute('pressed') ? String(this.pressed) : undefined}
-        aria-busy=${this.loading ? 'true' : undefined}
+        ?disabled=${this.disabled}
+        @click=${this.#action}
       >
-        ${this.loading ? html`<span part="spinner" aria-hidden="true"></span>` : null}
-        <slot name="icon-start"></slot><slot></slot><slot name="icon-end"></slot>
+        <span part="button-leading-mark"><slot name="icon-start"></slot></span>
+        <span part="button-label"><slot></slot></span>
+        <span part="button-trailing-mark"><slot name="icon-end"></slot></span>
       </button>
     `;
   }
 
-  protected override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
-    if (changed.has('pressed')) this.setAttribute('aria-pressed', String(this.pressed));
+  override focus(options?: FocusOptions): void {
+    this.renderRoot.querySelector<HTMLButtonElement>('button')?.focus(options);
+  }
+
+  override blur(): void {
+    this.renderRoot.querySelector<HTMLButtonElement>('button')?.blur();
+  }
+
+  #action = (): void => {
+    if (this.disabled || this.type === 'button') return;
+    const owner = this.closest('tp-form') as
+      | (HTMLElement & { requestSubmit: (submitter?: HTMLElement) => void; reset: () => void })
+      | null;
+    if (this.type === 'submit') {
+      if (owner) owner.requestSubmit(this);
+      else this.#requestNativeSubmit();
+    } else if (owner) owner.reset();
+    else this.closest('form')?.reset();
+  };
+
+  #requestNativeSubmit(): void {
+    const form = this.closest('form');
+    if (!form) return;
+    const proxy = document.createElement('button');
+    proxy.type = 'submit';
+    proxy.hidden = true;
+    proxy.name = this.name;
+    proxy.value = this.value;
+    form.append(proxy);
+    form.requestSubmit(proxy);
+    proxy.remove();
   }
 }
