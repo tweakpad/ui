@@ -43,6 +43,7 @@ npm run storybook
 npm run format
 npm test
 npm run test:browser
+npm run test:stories
 npm run test:package
 npm run verify:phase-1
 npm run lint
