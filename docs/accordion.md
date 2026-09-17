@@ -18,7 +18,7 @@ Each Item renders one internal `<tp-collapsible>`. Collapsible owns the Triggerâ
   </tp-accordion-item>
   <tp-accordion-item value="billing" indicator-position="leading">
     <span slot="label">Billing</span>
-    <span slot="trailing" class="status-badge">Current plan</span>
+    <tp-badge slot="trailing">Current plan</tp-badge>
     <p>Payment methods and invoices.</p>
   </tp-accordion-item>
   <tp-accordion-item value="enterprise" disabled>

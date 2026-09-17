@@ -179,7 +179,11 @@ const meta: Meta<CollapsibleStoryArgs> = {
         @tp-open-change=${handleOpenChange}
         @tp-motion-request=${handleMotionRequest}
       >
-        ${args.showLeadingContent ? html`<span slot="leading">New</span>` : null}
+        ${
+          args.showLeadingContent
+            ? html`<tp-badge slot="leading" variant="accent">New</tp-badge>`
+            : null
+        }
         <span slot="label">Project details</span>
         ${args.showTrailingContent ? html`<tp-icon slot="trailing" .icon=${plusIcon}></tp-icon>` : null}
         <p>Created today and shared with three collaborators.</p>

@@ -40,7 +40,7 @@ The Trigger exposes content-agnostic `leading` and `trailing` slots around its `
 ```html
 <tp-collapsible indicator-position="trailing">
   <tp-icon slot="leading" id="settings-icon" aria-hidden="true"></tp-icon>
-  <span slot="leading" class="status-badge">New</span>
+  <tp-badge slot="leading" variant="accent">New</tp-badge>
   <span slot="label">Advanced options</span>
   <p>Additional settings.</p>
 </tp-collapsible>

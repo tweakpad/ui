@@ -75,6 +75,8 @@ describe('Storybook catalog entries', () => {
     expect(collapsibleStory).toContain('export const FindInPage: Story');
     expect(collapsibleStory).toContain('export const LeadingIndicator: Story');
     expect(collapsibleStory).toContain('export const LeadingContent: Story');
+    expect(collapsibleStory).toContain('<tp-badge slot="leading" variant="accent">New</tp-badge>');
+    expect(collapsibleStory).not.toContain('<span slot="leading">New</span>');
     expect(collapsibleStory).toContain('export const LabelAlignedContent: Story');
     expect(collapsibleStory).toContain('export const TrailingContent: Story');
     expect(collapsibleStory).toContain('export const ExternalLineByLineMotion: Story');
