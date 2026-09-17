@@ -2,11 +2,11 @@ import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import type { TpOpenChangeEvent } from '../foundation/events.js';
-import { chevronRightIcon } from '../icons/chevron-right.js';
+import type { CollapsibleIndicatorPosition, TpCollapsible } from './collapsible.js';
 
-export type AccordionIndicatorPosition = 'leading' | 'trailing';
+export type AccordionIndicatorPosition = CollapsibleIndicatorPosition;
 
-/** A public Accordion Item host. Its Root owns selection and presence. */
+/** A public Accordion Item host. Its Root owns selection; Collapsible owns disclosure behavior. */
 export class TpAccordionItem extends TpElement {
   static tagName = 'tp-accordion-item';
   static override properties = {
@@ -35,15 +35,11 @@ export class TpAccordionItem extends TpElement {
         border-block-start-width: var(--_tp-accordion-item-border-width);
       }
 
-      [part~='accordion-heading'] {
-        margin: 0;
-        font: inherit;
+      tp-collapsible[disabled] {
+        opacity: 1 !important;
       }
 
-      [part~='accordion-trigger'] {
-        display: flex;
-        align-items: center;
-        gap: var(--tp-space-3);
+      tp-collapsible::part(collapsible-trigger) {
         width: 100%;
         padding: var(--tp-space-3) var(--tp-space-4);
         border: 0;
@@ -54,33 +50,17 @@ export class TpAccordionItem extends TpElement {
         cursor: pointer;
       }
 
-      [part~='accordion-trigger'][data-disabled] {
+      tp-collapsible::part(collapsible-trigger):disabled {
         cursor: not-allowed;
       }
 
-      [part~='accordion-trigger']:focus-visible {
+      tp-collapsible::part(collapsible-trigger):focus-visible {
         outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
         outline-offset: calc(-1 * var(--tp-ring-width));
       }
 
       .label {
-        flex: 1;
-        min-width: 0;
-      }
-
-      [part~='accordion-indicator'] {
-        flex: none;
-        pointer-events: none;
-        line-height: 1;
-      }
-
-      :host([data-icon-edge='leading']) [part~='accordion-indicator'] {
-        order: -1;
-      }
-
-      [part~='accordion-content'][data-tp-motion-driven],
-      [part~='accordion-indicator'][data-tp-motion-driven] {
-        transition: none !important;
+        display: contents;
       }
     `,
   ];
@@ -91,20 +71,24 @@ export class TpAccordionItem extends TpElement {
   onOpenChange: ((event: TpOpenChangeEvent) => void) | undefined;
   override orientation = 'vertical' as const;
 
+  get collapsibleElement(): TpCollapsible | null {
+    return this.renderRoot.querySelector<TpCollapsible>('tp-collapsible');
+  }
+
   get triggerElement(): HTMLButtonElement | null {
-    return this.renderRoot.querySelector<HTMLButtonElement>('[part~="accordion-trigger"]');
+    return this.collapsibleElement?.triggerElement ?? null;
   }
 
   get panelElement(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[part~="accordion-content"]');
+    return this.collapsibleElement?.panelElement ?? null;
   }
 
   get bodyElement(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[part~="accordion-content-body"]');
+    return this.collapsibleElement?.bodyElement ?? null;
   }
 
   get indicatorElement(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[part~="accordion-indicator"]');
+    return this.collapsibleElement?.indicatorElement ?? null;
   }
 
   override focus(options?: FocusOptions): void {
@@ -112,26 +96,25 @@ export class TpAccordionItem extends TpElement {
   }
 
   protected override render() {
-    const position = this.indicatorPosition === 'leading' ? 'leading' : 'trailing';
-    const level = Math.min(6, Math.max(1, Math.trunc(this.headingLevel) || 2));
-    return html`
-      <div part="accordion-heading" role="heading" aria-level=${level}>
-        <button part="accordion-trigger" type="button">
-          <span class="label"><slot name="label"></slot></span>
-          <span part="accordion-indicator" data-icon-edge=${position} aria-hidden="true">
-            <slot name="indicator"><tp-icon .icon=${chevronRightIcon}></tp-icon></slot>
-          </span>
-        </button>
-      </div>
-      <div part="accordion-content" hidden>
-        <div part="accordion-content-body"><slot></slot></div>
-      </div>
-    `;
+    return html`<tp-collapsible
+      .indicatorPosition=${this.indicatorPosition}
+      .headingLevel=${this.headingLevel}
+      exportparts="collapsible-heading: accordion-heading, collapsible-trigger: accordion-trigger, collapsible-indicator: accordion-indicator, collapsible-content: accordion-content, collapsible-content-body: accordion-content-body"
+    >
+      <span slot="trigger" class="label"><slot name="label"></slot></span>
+      <slot
+        name="indicator"
+        slot="indicator"
+        @slotchange=${() => this.collapsibleElement?.refreshIndicator()}
+      ></slot>
+      <slot></slot>
+    </tp-collapsible>`;
   }
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     const position = this.indicatorPosition === 'leading' ? 'leading' : 'trailing';
     this.setAttribute('data-icon-edge', position);
+    this.collapsibleElement?.refreshIndicator();
   }
 }

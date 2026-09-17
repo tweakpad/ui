@@ -625,12 +625,17 @@ try {
 
     const firstOpen = waitForCompletion(first, true);
     firstTrigger.click();
+    await first.collapsibleElement.updateComplete;
     const publishedStarting = firstPanel.hasAttribute('data-starting-style');
     await firstOpen;
 
     const firstClose = waitForCompletion(first, false, 'first close during selection change');
     const secondOpen = waitForCompletion(second, true);
     secondTrigger.click();
+    await Promise.all([
+      first.collapsibleElement.updateComplete,
+      second.collapsibleElement.updateComplete,
+    ]);
     const atomicSelection = first.hasAttribute('data-closed') && second.hasAttribute('data-open');
     await Promise.all([firstClose, secondOpen]);
 
@@ -638,6 +643,7 @@ try {
     const reversalListener = (event) => reversalCompletions.push(event.detail.open);
     second.addEventListener('tp-open-change-complete', reversalListener);
     secondTrigger.click();
+    await second.collapsibleElement.updateComplete;
     const publishedEnding = secondPanel.hasAttribute('data-ending-style');
     const reopened = waitForCompletion(second, true);
     secondTrigger.click();
@@ -648,6 +654,7 @@ try {
     accordion.style.setProperty('--tp-duration-normal', '0ms');
     const reducedClose = waitForCompletion(second, false, 'reduced-motion close');
     secondTrigger.click();
+    await second.collapsibleElement.updateComplete;
     const reducedPublishedEnding = secondPanel.hasAttribute('data-ending-style');
     await reducedClose;
     const reducedTerminalState = secondPanel.dataset.state;
@@ -666,6 +673,10 @@ try {
     accordion.keepMounted = false;
     accordion.hiddenUntilFound = true;
     await accordion.updateComplete;
+    await Promise.all([
+      first.collapsibleElement.updateComplete,
+      second.collapsibleElement.updateComplete,
+    ]);
     const hiddenUntilFound = firstPanel.getAttribute('hidden');
     const revealOpen = waitForCompletion(first, true);
     let revealReason = null;
@@ -701,9 +712,9 @@ try {
       hiddenUntilFound,
       revealReason,
       arrowPrevented: arrow.defaultPrevented,
-      focusStayedSequential: first.shadowRoot.activeElement === firstTrigger,
-      measuredHeight: firstPanel.style.getPropertyValue('--accordion-panel-height'),
-      measuredWidth: firstPanel.style.getPropertyValue('--accordion-panel-width'),
+      focusStayedSequential: first.collapsibleElement.shadowRoot.activeElement === firstTrigger,
+      measuredHeight: firstPanel.style.getPropertyValue('--collapsible-panel-height'),
+      measuredWidth: firstPanel.style.getPropertyValue('--collapsible-panel-width'),
       contentPart: firstPanel.getAttribute('part'),
       bodyPart: firstBody.getAttribute('part'),
       indicatorPart: first.indicatorElement.getAttribute('part'),
@@ -729,9 +740,9 @@ try {
     !accordionContract.focusStayedSequential ||
     !accordionContract.measuredHeight.endsWith('px') ||
     !accordionContract.measuredWidth.endsWith('px') ||
-    accordionContract.contentPart !== 'accordion-content' ||
-    accordionContract.bodyPart !== 'accordion-content-body' ||
-    accordionContract.indicatorPart !== 'accordion-indicator' ||
+    accordionContract.contentPart !== 'collapsible-content' ||
+    accordionContract.bodyPart !== 'collapsible-content-body' ||
+    accordionContract.indicatorPart !== 'collapsible-indicator' ||
     !accordionContract.labelledByTrigger ||
     !accordionContract.controlledByTrigger
   ) {
@@ -766,9 +777,11 @@ try {
     const secondTrigger = second.triggerElement;
     const secondIndicator = second.indicatorElement;
     const firstIndicator = first.indicatorElement;
-    const defaultIcon = first.shadowRoot.querySelector('slot[name="indicator"] tp-icon');
-    const firstLabel = first.shadowRoot.querySelector('.label');
-    const secondLabel = second.shadowRoot.querySelector('.label');
+    const defaultIcon = first.collapsibleElement.shadowRoot.querySelector(
+      '[part~="collapsible-indicator"] tp-icon',
+    );
+    const firstLabel = first.querySelector('[slot="label"]');
+    const secondLabel = second.querySelector('[slot="label"]');
     const initialPlacement =
       firstIndicator.getBoundingClientRect().left > firstLabel.getBoundingClientRect().left &&
       secondIndicator.getBoundingClientRect().left < secondLabel.getBoundingClientRect().left;
@@ -777,13 +790,15 @@ try {
         'First item' &&
       second.shadowRoot.querySelector('slot[name="indicator"]').assignedElements()[0]
         ?.textContent === '+' &&
-      second.bodyElement.querySelector('slot').assignedElements()[0]?.textContent ===
+      second.shadowRoot.querySelector('slot:not([name])').assignedElements()[0]?.textContent ===
         'Second content';
     const semanticParts =
-      first.shadowRoot.querySelector('[part="accordion-heading"]').getAttribute('role') ===
-        'heading' &&
-      first.shadowRoot.querySelector('[part="accordion-heading"]').getAttribute('aria-level') ===
-        '2' &&
+      first.collapsibleElement.shadowRoot
+        .querySelector('[part="collapsible-heading"]')
+        .getAttribute('role') === 'heading' &&
+      first.collapsibleElement.shadowRoot
+        .querySelector('[part="collapsible-heading"]')
+        .getAttribute('aria-level') === '2' &&
       firstTrigger.tagName === 'BUTTON' &&
       firstPanel.getAttribute('aria-labelledby') === firstTrigger.id &&
       firstTrigger.getAttribute('aria-controls') === firstPanel.id;
@@ -791,10 +806,15 @@ try {
     let callbackCount = 0;
     first.onOpenChange = () => callbackCount++;
     firstTrigger.click();
+    await first.collapsibleElement.updateComplete;
     const firstOpened =
       accordion.value.join(' ') === 'first' &&
       firstTrigger.getAttribute('aria-expanded') === 'true';
     secondTrigger.click();
+    await Promise.all([
+      first.collapsibleElement.updateComplete,
+      second.collapsibleElement.updateComplete,
+    ]);
     const independentSelection = accordion.value.join(' ') === 'first second';
     const preventClose = (event) => event.preventDefault();
     first.addEventListener('tp-open-change', preventClose, { once: true });
@@ -803,6 +823,7 @@ try {
 
     first.indicatorPosition = 'leading';
     await first.updateComplete;
+    await first.collapsibleElement.updateComplete;
     const positionChangePreservedValue =
       accordion.value.join(' ') === 'first second' &&
       first.dataset.iconEdge === 'leading' &&

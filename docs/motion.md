@@ -91,7 +91,7 @@ const gsapDriver = {
 
 Web Animations and third-party tween libraries do not inherit a component's CSS transition declaration. Resolve a shared custom-property value as shown when the driver should follow the Tweakpad motion theme. Application-specific drivers may instead use an easing from their own centralized motion system.
 
-The library does not split text, construct timelines, or define choreography between arbitrary descendants. A consumer may do that inside `play()` using its own light-DOM content. The Accordion **External line-by-line motion** story demonstrates this boundary by claiming only each Item's `content` role and staggering its paragraphs; panel measurement and presence remain owned by Accordion.
+The library does not split text, construct timelines, or define choreography between arbitrary descendants. A consumer may do that inside `play()` using its own light-DOM content. The Collapsible and Accordion **External line-by-line motion** stories demonstrate this boundary by claiming only the `content` role and staggering their paragraphs; panel measurement and presence remain owned by Collapsible.
 
 ## Current role inventory
 
@@ -99,9 +99,9 @@ Public context lists only stable values supplied by the component in addition to
 
 | Component                      | Role              | Public target             | Kind and phases                                     | Public context   | Completion   |
 | ------------------------------ | ----------------- | ------------------------- | --------------------------------------------------- | ---------------- | ------------ |
-| Accordion Item                 | `disclosure`      | Content                   | presence: `enter`, `exit`                           | `value`, `index` | blocking     |
-| Accordion Item                 | `content`         | ContentBody               | presence: `enter`, `exit`; no default visual motion | `value`, `index` | blocking     |
-| Accordion Item                 | `indicator`       | Indicator                 | state: `change`                                     | `value`, `index` | non-blocking |
+| Collapsible; Accordion Item    | `disclosure`      | Content                   | presence: `enter`, `exit`                           | `value`, `index` only in Accordion | blocking     |
+| Collapsible; Accordion Item    | `content`         | ContentBody               | presence: `enter`, `exit`; no default visual motion | `value`, `index` only in Accordion | blocking     |
+| Collapsible; Accordion Item    | `indicator`       | Indicator                 | state: `change`                                     | `value`, `index` only in Accordion | non-blocking |
 | Dialog, Alert dialog           | `backdrop`        | Overlay                   | presence: `enter`, `exit`                           | —                | blocking     |
 | Drawer, Side panel             | `backdrop`        | Overlay                   | presence: `enter`, `exit`                           | —                | blocking     |
 | Drawer, Side panel             | `surface`         | Surface or Content        | presence: `enter`, `exit`                           | —                | blocking     |

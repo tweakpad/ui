@@ -206,6 +206,91 @@ try {
       );
     }
   }
+  const collapsibleStory = entries.find(
+    (entry) => entry.title === 'Components/Collapsible' && entry.name === 'Default',
+  );
+  if (!collapsibleStory) throw new Error('Missing Default Collapsible story');
+  await page.goto(`${baseUrl}/iframe.html?id=${collapsibleStory.id}&viewMode=story`, {
+    waitUntil: 'networkidle',
+  });
+  const collapsible = page.locator('tp-collapsible');
+  const collapsibleTrigger = collapsible.locator('button');
+  const initialCollapsible = await collapsible.evaluate((element) => {
+    const trigger = element.shadowRoot?.querySelector('[part~="collapsible-trigger"]');
+    const content = element.shadowRoot?.querySelector('[part~="collapsible-content"]');
+    return {
+      open: element.open,
+      expanded: trigger?.getAttribute('aria-expanded'),
+      associated:
+        Boolean(trigger?.id) &&
+        trigger?.getAttribute('aria-controls') === content?.id &&
+        content?.getAttribute('aria-labelledby') === trigger?.id,
+      state: content?.getAttribute('data-state'),
+    };
+  });
+  if (
+    !initialCollapsible.open ||
+    initialCollapsible.expanded !== 'true' ||
+    !initialCollapsible.associated ||
+    initialCollapsible.state !== 'open'
+  ) {
+    throw new Error(`Initial Collapsible contract produced ${JSON.stringify(initialCollapsible)}`);
+  }
+  await collapsibleTrigger.click();
+  await page.waitForFunction(() => {
+    const element = document.querySelector('tp-collapsible');
+    const content = element?.shadowRoot?.querySelector('[part~="collapsible-content"]');
+    return !element?.open && content?.getAttribute('data-state') === 'absent';
+  });
+  const closedCollapsible = await collapsible.evaluate((element) => {
+    const trigger = element.shadowRoot?.querySelector('[part~="collapsible-trigger"]');
+    const content = element.shadowRoot?.querySelector('[part~="collapsible-content"]');
+    return {
+      expanded: trigger?.getAttribute('aria-expanded'),
+      closed: element.hasAttribute('data-closed') && trigger?.hasAttribute('data-closed'),
+      hidden: content?.hasAttribute('hidden'),
+    };
+  });
+  if (
+    closedCollapsible.expanded !== 'false' ||
+    !closedCollapsible.closed ||
+    !closedCollapsible.hidden
+  ) {
+    throw new Error(`Closed Collapsible contract produced ${JSON.stringify(closedCollapsible)}`);
+  }
+  const retainedStory = entries.find(
+    (entry) => entry.title === 'Components/Collapsible' && entry.name === 'Retained',
+  );
+  if (!retainedStory) throw new Error('Missing Retained Collapsible story');
+  await page.goto(`${baseUrl}/iframe.html?id=${retainedStory.id}&viewMode=story`, {
+    waitUntil: 'networkidle',
+  });
+  const retainedState = await page.locator('tp-collapsible').evaluate((element) => {
+    const content = element.shadowRoot?.querySelector('[part~="collapsible-content"]');
+    return { state: content?.getAttribute('data-state'), hidden: content?.hasAttribute('hidden') };
+  });
+  if (retainedState.state !== 'retained' || !retainedState.hidden) {
+    throw new Error(`Retained Collapsible contract produced ${JSON.stringify(retainedState)}`);
+  }
+  const findInPageStory = entries.find(
+    (entry) => entry.title === 'Components/Collapsible' && entry.name === 'Find In Page',
+  );
+  if (!findInPageStory) throw new Error('Missing Find In Page Collapsible story');
+  await page.goto(`${baseUrl}/iframe.html?id=${findInPageStory.id}&viewMode=story`, {
+    waitUntil: 'networkidle',
+  });
+  const revealableState = await page.locator('tp-collapsible').evaluate((element) => {
+    const content = element.shadowRoot?.querySelector('[part~="collapsible-content"]');
+    return {
+      state: content?.getAttribute('data-state'),
+      hidden: content?.getAttribute('hidden'),
+    };
+  });
+  if (revealableState.state !== 'retained' || revealableState.hidden !== 'until-found') {
+    throw new Error(
+      `Find-in-page Collapsible contract produced ${JSON.stringify(revealableState)}`,
+    );
+  }
   const accordionDocs = entries.find(
     (entry) => entry.title === 'Components/Accordion' && entry.type === 'docs',
   );
@@ -234,6 +319,31 @@ try {
       throw new Error(`Accordion Docs page omits ${property}`);
     }
   }
+  const collapsibleDocs = entries.find(
+    (entry) => entry.title === 'Components/Collapsible' && entry.type === 'docs',
+  );
+  if (!collapsibleDocs) throw new Error('Missing Collapsible Docs page');
+  await page.goto(`${baseUrl}/iframe.html?id=${collapsibleDocs.id}&viewMode=docs`, {
+    waitUntil: 'networkidle',
+  });
+  await page.getByRole('heading', { name: 'Properties' }).waitFor();
+  for (const property of [
+    'open',
+    'defaultOpen',
+    'disabled',
+    'keepMounted',
+    'hiddenUntilFound',
+    'motionPolicy',
+    'indicatorPosition',
+    'headingLevel',
+    'customIndicator',
+    'contentMotion',
+    'onOpenChange',
+  ]) {
+    if (!(await page.getByRole('cell', { name: property, exact: true }).count())) {
+      throw new Error(`Collapsible Docs page omits ${property}`);
+    }
+  }
   const iconDocs = entries.find(
     (entry) => entry.title === 'Components/Icon' && entry.type === 'docs',
   );
@@ -253,7 +363,7 @@ try {
       indexedStories: entries.length,
       componentStories: catalogEntries.length,
       renderedStories: catalogEntries.length,
-      documentationPages: 2,
+      documentationPages: 3,
       accessibilityViolations: 0,
       errors: 0,
     }),

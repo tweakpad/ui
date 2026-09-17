@@ -3,15 +3,9 @@ import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import { TpOpenChangeEvent, TpValueChangeEvent } from '../foundation/events.js';
 import { createId } from '../foundation/id.js';
-import {
-  prepareMotion,
-  type MotionHandle,
-  type MotionRoleDefinition,
-} from '../foundation/motion.js';
-import { PresenceController } from '../foundation/presence.js';
-import type { PresenceState } from '../foundation/types.js';
 import { assignedElements } from './shared.js';
 import { TpAccordionItem } from './accordion-item.js';
+import type { TpCollapsible } from './collapsible.js';
 
 export type AccordionValue = string[];
 export type AccordionVariant = 'plain' | 'line' | 'outline' | 'separated';
@@ -27,42 +21,13 @@ const accordionValueConverter = {
 
 interface AccordionItemRecord {
   item: TpAccordionItem;
+  collapsible: TpCollapsible;
   trigger: HTMLElement;
-  panel: HTMLElement;
-  body: HTMLElement;
-  indicator: HTMLElement;
   value: string;
   index: number;
   duplicate: boolean;
-  presence: PresenceController;
-  resizeObserver: ResizeObserver | null;
   cleanups: Array<() => void>;
-  pendingEnter: MotionHandle[];
-  pendingExit: MotionHandle[];
-  indicatorMotion: MotionHandle | null;
-  open: boolean | null;
 }
-
-export const accordionMotionRoles = {
-  disclosure: {
-    name: 'disclosure',
-    kind: 'presence',
-    phases: ['enter', 'exit'],
-    completion: 'blocking',
-  },
-  content: {
-    name: 'content',
-    kind: 'presence',
-    phases: ['enter', 'exit'],
-    completion: 'blocking',
-  },
-  indicator: {
-    name: 'indicator',
-    kind: 'state',
-    phases: ['change'],
-    completion: 'non-blocking',
-  },
-} as const satisfies Record<string, MotionRoleDefinition>;
 
 function sameAccordionValue(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((value, index) => value === b[index]);
@@ -215,24 +180,18 @@ export class TpAccordion extends TpElement {
       values.add(value);
       item.dataset.value = value;
       item.setAttribute('part', 'accordion-item');
+      const collapsible = item.collapsibleElement;
       const trigger = item.triggerElement;
-      if (!trigger) {
-        void item.updateComplete.then(() => this.#scheduleRebuild());
-        continue;
-      }
-      const panel = item.panelElement;
-      const body = item.bodyElement;
-      const indicator = item.indicatorElement;
-      if (!panel || !body || !indicator) {
-        void item.updateComplete.then(() => this.#scheduleRebuild());
+      if (!collapsible || !trigger) {
+        void Promise.all([item.updateComplete, collapsible?.updateComplete]).then(() =>
+          this.#scheduleRebuild(),
+        );
         continue;
       }
       const record = this.#createRecord({
         item,
+        collapsible,
         trigger,
-        panel,
-        body,
-        indicator,
         value,
         index,
         duplicate,
@@ -260,111 +219,45 @@ export class TpAccordion extends TpElement {
     this.#applyValue();
   }
 
-  #createRecord(
-    input: Omit<
-      AccordionItemRecord,
-      | 'presence'
-      | 'resizeObserver'
-      | 'cleanups'
-      | 'pendingEnter'
-      | 'pendingExit'
-      | 'indicatorMotion'
-      | 'open'
-    >,
-  ): AccordionItemRecord {
-    const reference: { current?: AccordionItemRecord } = {};
-    const presence = new PresenceController(this, {
-      surface: () => reference.current?.panel ?? null,
-      keepMounted: () => {
-        const current = reference.current;
-        return current
-          ? this.#itemPolicy(current.item, 'keep-mounted', this.keepMounted) ||
-              this.#itemPolicy(current.item, 'hidden-until-found', this.hiddenUntilFound)
-          : false;
-      },
-      onStateChange: (state) => {
-        if (reference.current) this.#syncPresence(reference.current, state);
-      },
-      onComplete: (open) => {
-        reference.current?.item.dispatchEvent(
-          new CustomEvent('tp-open-change-complete', {
-            bubbles: true,
-            composed: true,
-            detail: { value: reference.current?.value, open },
-          }),
-        );
-      },
-    });
-    const record = {
-      ...input,
-      presence,
-      resizeObserver: null,
-      cleanups: [],
-      pendingEnter: [],
-      pendingExit: [],
-      indicatorMotion: null,
-      open: null,
-    };
-    reference.current = record;
+  #createRecord(input: Omit<AccordionItemRecord, 'cleanups'>): AccordionItemRecord {
+    const record: AccordionItemRecord = { ...input, cleanups: [] };
     this.#configureRecord(record);
     return record;
   }
 
   #configureRecord(record: AccordionItemRecord): void {
-    const { item, trigger, panel, body, indicator, index, duplicate } = record;
-    trigger.id ||= createId('tp-accordion-trigger');
-    panel.id ||= createId('tp-accordion-content');
-    trigger.setAttribute('aria-controls', panel.id);
-    panel.setAttribute('aria-labelledby', trigger.id);
-    panel.setAttribute('role', 'region');
-    indicator.setAttribute('aria-hidden', 'true');
+    const { item, collapsible, trigger, index, value } = record;
     item.dataset.index = String(index);
     item.dataset.orientation = 'vertical';
     trigger.dataset.index = String(index);
     trigger.dataset.orientation = 'vertical';
-    panel.dataset.index = String(index);
-    panel.dataset.orientation = 'vertical';
-    const unavailable = this.disabled || item.hasAttribute('disabled') || duplicate;
-    item.toggleAttribute('data-disabled', unavailable);
-    trigger.toggleAttribute('data-disabled', unavailable);
-    panel.toggleAttribute('data-disabled', unavailable);
-    trigger.setAttribute('aria-disabled', String(unavailable));
-    trigger.tabIndex = unavailable ? -1 : 0;
-    panel.style.overflow = 'clip';
-    panel.style.transitionProperty = 'block-size';
-    panel.style.transitionDuration = 'calc(var(--tp-duration-normal) * var(--tp-motion-scale))';
-    panel.style.transitionTimingFunction = 'var(--tp-easing-standard)';
-    body.style.display ||= 'flow-root';
-    indicator.style.display ||= 'inline-block';
-    indicator.style.transitionProperty = 'rotate';
-    indicator.style.transitionDuration = 'calc(var(--tp-duration-normal) * var(--tp-motion-scale))';
-    indicator.style.transitionTimingFunction = 'var(--tp-easing-standard)';
-    const focus = (): void => {
-      trigger.toggleAttribute('data-focus-visible', trigger.matches(':focus-visible'));
-    };
-    const blur = (): void => trigger.removeAttribute('data-focus-visible');
-    const press = (event: MouseEvent): void => {
+    collapsible.setMotionScope(item, { value, index });
+
+    const handleOpenChange = (event: Event): void => {
+      if (!(event instanceof TpOpenChangeEvent) || event.target !== collapsible) return;
       event.preventDefault();
-      const open = this.#derivedValue().includes(record.value);
-      this.#requestItem(record, !open, 'trigger-press', event);
+      event.stopPropagation();
+      const reason = event.detail.reason === 'trigger-press' ? 'trigger-press' : 'programmatic';
+      this.#requestItem(record, event.detail.value, reason, event.detail.sourceEvent);
     };
-    const reveal = (event: Event): void => this.#requestItem(record, true, 'programmatic', event);
-    trigger.addEventListener('click', press);
-    trigger.addEventListener('focus', focus);
-    trigger.addEventListener('blur', blur);
-    panel.addEventListener('beforematch', reveal);
+    const handleOpenComplete = (event: Event): void => {
+      if (event.target !== collapsible) return;
+      event.stopPropagation();
+      const open = Boolean((event as CustomEvent<{ open: boolean }>).detail?.open);
+      item.dispatchEvent(
+        new CustomEvent('tp-open-change-complete', {
+          bubbles: true,
+          composed: true,
+          detail: { value, open },
+        }),
+      );
+    };
+    collapsible.addEventListener('tp-open-change', handleOpenChange);
+    collapsible.addEventListener('tp-open-change-complete', handleOpenComplete);
     record.cleanups.push(
-      () => trigger.removeEventListener('click', press),
-      () => trigger.removeEventListener('focus', focus),
-      () => trigger.removeEventListener('blur', blur),
-      () => panel.removeEventListener('beforematch', reveal),
+      () => collapsible.removeEventListener('tp-open-change', handleOpenChange),
+      () => collapsible.removeEventListener('tp-open-change-complete', handleOpenComplete),
     );
-    if (typeof ResizeObserver !== 'undefined') {
-      record.resizeObserver = new ResizeObserver(() => this.#measure(record));
-      record.resizeObserver.observe(body);
-    }
-    this.#measure(record);
-    this.#syncPresence(record, record.presence.state);
   }
 
   #requestItem(
@@ -441,99 +334,17 @@ export class TpAccordion extends TpElement {
     for (const record of this.#records) {
       const open = !record.duplicate && selected.has(record.value);
       const unavailable = this.disabled || record.item.hasAttribute('disabled') || record.duplicate;
-      record.item.toggleAttribute('data-disabled', unavailable);
-      record.trigger.toggleAttribute('data-disabled', unavailable);
-      record.panel.toggleAttribute('data-disabled', unavailable);
-      record.trigger.setAttribute('aria-disabled', String(unavailable));
-      record.trigger.tabIndex = unavailable ? -1 : 0;
-      record.item.toggleAttribute('data-open', open);
-      record.item.toggleAttribute('data-closed', !open);
-      record.trigger.toggleAttribute('data-open', open);
-      record.trigger.toggleAttribute('data-closed', !open);
-      record.trigger.toggleAttribute('data-panel-open', open);
-      record.panel.toggleAttribute('data-open', open);
-      record.panel.toggleAttribute('data-closed', !open);
-      record.trigger.setAttribute('aria-expanded', String(open));
-      if (record.open !== null && record.open !== open) {
-        record.indicatorMotion = prepareMotion(
-          record.item,
-          record.indicator,
-          accordionMotionRoles.indicator,
-          {
-            phase: 'change',
-            fromState: record.open,
-            toState: open,
-            context: { value: record.value, index: record.index },
-          },
-        );
-      }
-      record.indicator.style.rotate = open ? '90deg' : '0deg';
-      record.indicatorMotion?.start();
-      record.open = open;
-      record.presence.setPresent(open);
-      if (!open && (record.presence.state === 'absent' || record.presence.state === 'retained')) {
-        this.#syncPresence(record, record.presence.state);
-      }
+      record.collapsible.disabled = unavailable;
+      record.collapsible.keepMounted =
+        this.#itemPolicy(record.item, 'keep-mounted', this.keepMounted) ||
+        this.#itemPolicy(record.item, 'hidden-until-found', this.hiddenUntilFound);
+      record.collapsible.hiddenUntilFound = this.#itemPolicy(
+        record.item,
+        'hidden-until-found',
+        this.hiddenUntilFound,
+      );
+      record.collapsible.open = open;
     }
-  }
-
-  #syncPresence(record: AccordionItemRecord, state: PresenceState): void {
-    const { item, panel, body } = record;
-    const phase = state === 'starting' ? 'enter' : state === 'ending' ? 'exit' : null;
-    if (phase) {
-      const handles = [
-        prepareMotion(item, panel, accordionMotionRoles.disclosure, {
-          phase,
-          fromState: phase === 'enter' ? 'closed' : 'open',
-          toState: phase === 'enter' ? 'open' : 'closed',
-          context: { value: record.value, index: record.index },
-        }),
-        prepareMotion(item, body, accordionMotionRoles.content, {
-          phase,
-          fromState: phase === 'enter' ? 'closed' : 'open',
-          toState: phase === 'enter' ? 'open' : 'closed',
-          context: { value: record.value, index: record.index },
-        }),
-      ];
-      if (phase === 'enter') record.pendingEnter = handles;
-      else record.pendingExit = handles;
-    }
-    panel.dataset.state = state;
-    panel.toggleAttribute('data-starting-style', state === 'starting');
-    panel.toggleAttribute('data-ending-style', state === 'ending');
-    if (state === 'starting' || state === 'open' || state === 'ending') {
-      panel.removeAttribute('hidden');
-      this.#measure(record);
-    }
-    panel.style.blockSize = state === 'open' ? 'var(--accordion-panel-height)' : '0px';
-    const handles =
-      state === 'open' ? record.pendingEnter : state === 'ending' ? record.pendingExit : [];
-    for (const handle of handles) {
-      handle.start();
-      record.presence.trackCompletion(handle.finished);
-    }
-    if (state === 'open') record.pendingEnter = [];
-    if (state === 'ending') record.pendingExit = [];
-    if (state === 'absent') {
-      panel.hidden = true;
-    } else if (state === 'retained') {
-      if (this.#itemPolicy(item, 'hidden-until-found', this.hiddenUntilFound)) {
-        panel.setAttribute('hidden', 'until-found');
-      } else {
-        panel.hidden = true;
-      }
-    }
-  }
-
-  #measure(record: AccordionItemRecord): void {
-    record.panel.style.setProperty(
-      '--accordion-panel-height',
-      `${Math.max(0, record.body.scrollHeight)}px`,
-    );
-    record.panel.style.setProperty(
-      '--accordion-panel-width',
-      `${Math.max(0, record.body.scrollWidth)}px`,
-    );
   }
 
   #itemPolicy(item: HTMLElement, name: string, inherited: boolean): boolean {
@@ -543,10 +354,6 @@ export class TpAccordion extends TpElement {
 
   #disposeRecords(): void {
     for (const record of this.#records) {
-      for (const handle of [...record.pendingEnter, ...record.pendingExit]) handle.cancel();
-      record.indicatorMotion?.cancel();
-      record.presence.destroy();
-      record.resizeObserver?.disconnect();
       for (const cleanup of record.cleanups) cleanup();
     }
     this.#records = [];

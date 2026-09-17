@@ -13,7 +13,7 @@ if (entries.length !== 62) {
 }
 
 const outputDirectory = join(root, 'src/stories/generated');
-const authoredStories = new Set(['tp-accordion', 'tp-icon']);
+const authoredStories = new Set(['tp-accordion', 'tp-collapsible', 'tp-icon']);
 await rm(outputDirectory, { recursive: true, force: true });
 await mkdir(outputDirectory, { recursive: true });
 

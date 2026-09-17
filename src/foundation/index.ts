@@ -1,5 +1,6 @@
 export * from './collection.js';
 export * from './calendar.js';
+export * from './collapsible.js';
 export * from './questionnaire.js';
 export * from './controllable-state.js';
 export * from './define.js';

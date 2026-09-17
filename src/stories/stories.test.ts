@@ -7,6 +7,10 @@ describe('Storybook catalog entries', () => {
   const storyDirectory = new URL('./generated/', import.meta.url);
   const storyFiles = readdirSync(storyDirectory).filter((file) => file.endsWith('.stories.ts'));
   const accordionStory = readFileSync(new URL('./accordion.stories.ts', import.meta.url), 'utf8');
+  const collapsibleStory = readFileSync(
+    new URL('./collapsible.stories.ts', import.meta.url),
+    'utf8',
+  );
   const iconStory = readFileSync(new URL('./icon.stories.ts', import.meta.url), 'utf8');
 
   it('has one type-checked fixture for every public control', () => {
@@ -16,10 +20,11 @@ describe('Storybook catalog entries', () => {
   });
 
   it('has one statically indexed Default story for every public control', () => {
-    expect(storyFiles).toHaveLength(catalogEntries.length - 2);
+    expect(storyFiles).toHaveLength(catalogEntries.length - 3);
     const sources = [
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
       accordionStory,
+      collapsibleStory,
       iconStory,
     ];
     for (const entry of catalogEntries) {
@@ -29,6 +34,30 @@ describe('Storybook catalog entries', () => {
       expect(
         sources.filter((source) => source.includes(`title: 'Components/${entry.name}'`)),
       ).toHaveLength(1);
+    }
+  });
+
+  it('documents Collapsible state and presence properties in a maintained controls story', () => {
+    expect(collapsibleStory).toContain("tags: ['autodocs']");
+    expect(collapsibleStory).toContain('export const Retained: Story');
+    expect(collapsibleStory).toContain('export const FindInPage: Story');
+    expect(collapsibleStory).toContain('export const LeadingIndicator: Story');
+    expect(collapsibleStory).toContain('export const CustomIndicator: Story');
+    expect(collapsibleStory).toContain('export const ExternalLineByLineMotion: Story');
+    for (const property of [
+      'open',
+      'defaultOpen',
+      'disabled',
+      'keepMounted',
+      'hiddenUntilFound',
+      'motionPolicy',
+      'indicatorPosition',
+      'headingLevel',
+      'customIndicator',
+      'contentMotion',
+      'onOpenChange',
+    ]) {
+      expect(collapsibleStory).toContain(`    ${property}: {`);
     }
   });
 

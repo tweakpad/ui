@@ -4,6 +4,8 @@ Accordion groups related disclosures in a vertical stack. `<tp-accordion>` coord
 
 The normative contracts are UI Foundation §13.2 and UI Component Library §16.1. This page documents the Lit custom-element mapping. The Storybook Controls panel exposes Root properties and independently configurable Item examples.
 
+Each Item renders one internal `<tp-collapsible>`. Collapsible owns the Trigger–Content association, Heading wrapper, Indicator and placement, measured presence lifecycle, motion roles, and cleanup. Accordion remains the single owner of group selection and only drives each internal Collapsible's derived state and composition context.
+
 ## Basic use
 
 ```html
@@ -78,7 +80,7 @@ The variant belongs to the Root because it describes the visual relationship amo
 
 Use `slot="label"` for the Trigger's accessible name. Unslotted children go into ContentBody; put meaningful panel content there. The default chevron is rendered by `tp-icon`. `slot="indicator"` replaces it with consumer-owned content such as another `tp-icon`; an unlabeled `tp-icon` is decorative by default. The Indicator wrapper is non-interactive and non-shrinking. See the [Icon guide](icon.md) for supplying artwork and selective imports.
 
-`indicatorPosition` is presentational. `leading` and `trailing` follow writing direction, so a leading indicator is on the right in RTL. The Item publishes `data-icon-edge` on its host and Indicator wrapper. Changing it does not alter selection, activation, focus, or the Trigger–Content accessibility relationship. The default icon is replaceable in this Lit mapping through the `indicator` slot; the Foundation describes the host-independent replacement capability through delegation.
+`indicatorPosition` is presentational. `leading` and `trailing` follow writing direction, so a leading indicator is on the right in RTL. The Item forwards this value to its internal Collapsible, which publishes `data-icon-edge` and performs placement. Changing it does not alter selection, activation, focus, or the Trigger–Content accessibility relationship. The default icon and its replacement slot also come directly from Collapsible.
 
 The Foundation's Item is a generic public part, not necessarily this custom tag. A bare `<div>` directly inside this Lit Root is not registered as an Item. This implementation registers direct `<tp-accordion-item>` children; it does not yet implement arbitrary delegated Item hosts.
 
@@ -98,11 +100,11 @@ accordion.addEventListener('tp-value-change', (event) => {
 
 ## Styling and motion
 
-The public parts are `accordion` on the Root, `accordion-item` on the Item host, and `accordion-heading`, `accordion-trigger`, `accordion-indicator`, `accordion-content`, and `accordion-content-body` inside the Item's shadow root. Style inner Item parts with `tp-accordion-item::part(...)`. The measured content panel publishes `--accordion-panel-height` and `--accordion-panel-width`; its presence state is available through `data-state`, `data-starting-style`, and `data-ending-style`. The ContentBody separates content from the animated panel extent.
+The public parts are `accordion` on the Root, `accordion-item` on the Item host, and `accordion-heading`, `accordion-trigger`, `accordion-indicator`, `accordion-content`, and `accordion-content-body` forwarded from the internal Collapsible. Style them with `tp-accordion-item::part(...)`; no private nested selector is required. The measured content panel publishes `--collapsible-panel-height` and `--collapsible-panel-width`, and its presence state is available through `data-state`, `data-starting-style`, and `data-ending-style`. The ContentBody separates content padding from the animated panel extent.
 
-The default `disclosure` role animates the outer Content panel's measured height. The `indicator` role rotates the Indicator. The `content` role targets ContentBody but deliberately has no default visual motion: a fade is one possible presentation, not part of Accordion behavior.
+The internal Collapsible publishes the standard `disclosure`, `content`, and `indicator` roles. The default `disclosure` role animates the outer Content panel's measured height. The `indicator` role rotates the Indicator. The `content` role targets ContentBody but deliberately has no default visual motion: a fade is one possible presentation, not part of disclosure behavior.
 
-Each role is requested from its `<tp-accordion-item>`, so a listener on one Item can claim motion for that Item only. A listener on the Accordion or document can provide a broader policy through event bubbling. The first synchronous claim wins.
+For Accordion composition, Collapsible scopes each request to its public `<tp-accordion-item>` owner and adds that Item's stable `value` and `index` context. A listener on one Item can therefore claim motion for that Item only, while a listener on the Accordion or document can provide a broader policy through event bubbling. The first synchronous claim wins.
 
 ```js
 item.addEventListener('tp-motion-request', (event) => {
@@ -136,7 +138,7 @@ item.addEventListener('tp-motion-request', (event) => {
 });
 ```
 
-The **External line-by-line motion** story uses this pattern with paragraphs of different lengths. Accordion continues to own selection, measurement, presence, and final hiding. See the [Motion guide](motion.md) for the full driver lifecycle, reduced-motion policy, and tween-library adapters.
+The **External line-by-line motion** story uses this pattern with paragraphs of different lengths. Accordion continues to own selection; its internal Collapsible owns measurement, presence, motion completion, and final hiding. See the [Motion guide](motion.md) for the full driver lifecycle, reduced-motion policy, and tween-library adapters.
 
 Entry and exit follow the shared presence lifecycle. With reduced motion, starting and ending are still published, but finite motion completes at the next scheduling checkpoint. A normally closed panel reaches `absent`; `keepMounted` or `hiddenUntilFound` produces `retained`.
 
