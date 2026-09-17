@@ -282,16 +282,13 @@ export class TpAccordion extends TpElement {
     trigger.tabIndex = unavailable ? -1 : 0;
     panel.style.overflow = 'clip';
     panel.style.transitionProperty = 'block-size';
-    panel.style.transitionDuration =
-      'calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1))';
-    panel.style.transitionTimingFunction = 'var(--tp-easing-standard, cubic-bezier(0.2, 0, 0, 1))';
+    panel.style.transitionDuration = 'calc(var(--tp-duration-normal) * var(--tp-motion-scale))';
+    panel.style.transitionTimingFunction = 'var(--tp-easing-standard)';
     body.style.display ||= 'flow-root';
     indicator.style.display ||= 'inline-block';
     indicator.style.transitionProperty = 'rotate';
-    indicator.style.transitionDuration =
-      'calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1))';
-    indicator.style.transitionTimingFunction =
-      'var(--tp-easing-standard, cubic-bezier(0.2, 0, 0, 1))';
+    indicator.style.transitionDuration = 'calc(var(--tp-duration-normal) * var(--tp-motion-scale))';
+    indicator.style.transitionTimingFunction = 'var(--tp-easing-standard)';
     const focus = (): void => {
       trigger.toggleAttribute('data-focus-visible', trigger.matches(':focus-visible'));
     };

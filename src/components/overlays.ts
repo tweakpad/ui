@@ -61,7 +61,8 @@ abstract class TpDialogBase extends TpElement {
         padding: var(--tp-space-4);
         background: transparent;
         opacity: 1;
-        transition: opacity calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
+        transition: opacity calc(var(--tp-duration-normal) * var(--tp-motion-scale))
+          var(--tp-easing-standard);
       }
 
       .backdrop::before {
@@ -339,7 +340,8 @@ export class TpDrawer extends TpDialogBase {
         max-height: none;
         border-radius: 0;
         transform: translateX(0);
-        transition: transform calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
+        transition: transform calc(var(--tp-duration-normal) * var(--tp-motion-scale))
+          var(--tp-easing-standard);
       }
 
       .backdrop[data-state='starting'] .dialog,
@@ -409,8 +411,8 @@ abstract class TpAnchoredOverlay extends TpElement {
         max-height: var(--tp-available-height, 24rem);
         overflow: auto;
         transition:
-          opacity calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1)),
-          transform calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1));
+          opacity calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard),
+          transform calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard);
         transform-origin: var(--tp-transform-origin, center);
       }
 

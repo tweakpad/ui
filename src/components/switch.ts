@@ -50,7 +50,8 @@ export class TpSwitch extends TpCheckbox {
         padding: calc(var(--tp-space-1) / 2);
         border-radius: var(--tp-radius-full);
         background: var(--tp-border);
-        transition: background calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1));
+        transition: background calc(var(--tp-duration-fast) * var(--tp-motion-scale))
+          var(--tp-easing-standard);
       }
 
       .thumb {
@@ -59,7 +60,8 @@ export class TpSwitch extends TpCheckbox {
         border-radius: var(--tp-radius-full);
         background: var(--tp-background);
         box-shadow: var(--tp-shadow-sm);
-        transition: transform calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1));
+        transition: transform calc(var(--tp-duration-fast) * var(--tp-motion-scale))
+          var(--tp-easing-standard);
       }
 
       .root[data-checked] .track {

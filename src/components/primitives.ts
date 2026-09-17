@@ -350,8 +350,9 @@ export class TpCard extends TpElement {
       :host([interactive]) .card {
         cursor: pointer;
         transition:
-          translate calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1)),
-          box-shadow calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1));
+          translate calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard),
+          box-shadow calc(var(--tp-duration-fast) * var(--tp-motion-scale))
+            var(--tp-easing-standard);
       }
 
       :host([interactive]) .card:hover {

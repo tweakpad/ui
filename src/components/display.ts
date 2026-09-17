@@ -127,7 +127,8 @@ export class TpCarousel extends TpElement {
 
       .track {
         display: flex;
-        transition: transform calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
+        transition: transform calc(var(--tp-duration-normal) * var(--tp-motion-scale))
+          var(--tp-easing-standard);
         transform: translateX(calc(var(--tp-carousel-index, 0) * -100%));
       }
 
@@ -388,7 +389,8 @@ export class TpProgress extends TpElement {
       .indicator {
         height: 100%;
         background: var(--tp-accent);
-        transition: width calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
+        transition: width calc(var(--tp-duration-normal) * var(--tp-motion-scale))
+          var(--tp-easing-standard);
       }
 
       .indicator[data-indeterminate] {

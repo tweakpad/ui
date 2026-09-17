@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DefinitionRegistry } from './definition.js';
 import { mergePresentation, presentationStyle } from './dictionary.js';
@@ -97,6 +97,15 @@ describe('foundational styling tokens', () => {
     for (const role of REQUIRED_TOKEN_ROLES) {
       expect(styles, role).toMatch(new RegExp(`--tp-${role.replaceAll('-', '\\-')}\\s*:`));
     }
+  });
+
+  it('keeps bezier definitions out of component transition declarations', () => {
+    const componentDirectory = new URL('../components/', import.meta.url);
+    for (const file of readdirSync(componentDirectory).filter((name) => name.endsWith('.ts'))) {
+      const source = readFileSync(new URL(file, componentDirectory), 'utf8');
+      expect(source, file).not.toContain('cubic-bezier(');
+    }
+    expect(styles).toMatch(/--tp-easing-standard:\s*cubic-bezier\(/u);
   });
 
   it('rejects incomplete and mode-incompatible token sets', () => {

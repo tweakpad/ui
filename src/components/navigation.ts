@@ -378,14 +378,16 @@ export class TpNavigationPanel extends TpElement {
         transition:
           width
             calc(
-              var(--tp-duration-normal, 180ms) *
-                var(--tp-navigation-collapse-motion-scale, var(--tp-motion-scale, 1))
-            ),
+              var(--tp-duration-normal) *
+                var(--tp-navigation-collapse-motion-scale, var(--tp-motion-scale))
+            )
+            var(--tp-easing-standard),
           transform
             calc(
-              var(--tp-duration-normal, 180ms) *
-                var(--tp-navigation-compact-motion-scale, var(--tp-motion-scale, 1))
-            );
+              var(--tp-duration-normal) *
+                var(--tp-navigation-compact-motion-scale, var(--tp-motion-scale))
+            )
+            var(--tp-easing-standard);
       }
 
       :host([collapsed]) .panel {

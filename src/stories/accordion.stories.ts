@@ -292,6 +292,7 @@ function playLineByLine(request: MotionRequest): MotionPlayback {
   const lines = [...request.owner.querySelectorAll<HTMLElement>('p')];
   const exiting = request.phase === 'exit';
   const ordered = exiting ? [...lines].reverse() : lines;
+  const easing = getComputedStyle(request.owner).getPropertyValue('--tp-easing-standard').trim();
   const animations = ordered.map((line, index) =>
     line.animate(
       exiting
@@ -306,7 +307,7 @@ function playLineByLine(request: MotionRequest): MotionPlayback {
       {
         duration: 380,
         delay: index * 100,
-        easing: 'cubic-bezier(0.2, 0, 0, 1)',
+        easing,
         fill: 'both',
       },
     ),
