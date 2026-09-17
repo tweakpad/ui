@@ -5,7 +5,8 @@ import { renderComponentExample } from '../examples.js';
 const meta = {
   title: 'Components/Side panel',
   component: 'tp-side-panel',
-  parameters: { layout: 'centered' },
+  tags: ['autodocs'],
+  parameters: { layout: 'padded' },
   render: () => renderComponentExample('tp-side-panel'),
 } satisfies Meta;
 

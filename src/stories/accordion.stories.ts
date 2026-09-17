@@ -3,7 +3,10 @@ import { useArgs } from 'storybook/preview-api';
 import { html } from 'lit';
 import accordionDocumentation from '../../docs/accordion.md?raw';
 import type { AccordionValue, AccordionVariant } from '../components/accordion.js';
-import type { AccordionIndicatorPosition } from '../components/accordion-item.js';
+import type {
+  AccordionContentAlignment,
+  AccordionIndicatorPosition,
+} from '../components/accordion-item.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import type {
   MotionPlayback,
@@ -11,7 +14,6 @@ import type {
   MotionRequest,
   TpMotionRequestEvent,
 } from '../foundation/motion.js';
-import { plusIcon } from '../icons/plus.js';
 
 interface AccordionStoryArgs {
   selectionMode: 'single' | 'multiple';
@@ -23,11 +25,14 @@ interface AccordionStoryArgs {
   keepMounted: boolean;
   hiddenUntilFound: boolean;
   motionPolicy: MotionPolicy;
+  contentAlignment: AccordionContentAlignment;
+  accountContentAlignment: AccordionContentAlignment | 'inherit';
   indicatorPosition: AccordionIndicatorPosition;
   securityIndicatorPosition: AccordionIndicatorPosition;
   billingIndicatorPosition: AccordionIndicatorPosition;
   itemDisabled: boolean;
   headingLevel: number;
+  showLeadingContent: boolean;
   contentMotion: 'none' | 'line-by-line';
   onValueChange?: (event: TpValueChangeEvent<AccordionValue>) => void;
 }
@@ -37,7 +42,7 @@ const meta: Meta<AccordionStoryArgs> = {
   component: 'tp-accordion',
   tags: ['autodocs'],
   parameters: {
-    layout: 'centered',
+    layout: 'padded',
     docs: {
       description: {
         component: accordionDocumentation.replace(/^# Accordion\n/u, ''),
@@ -47,18 +52,21 @@ const meta: Meta<AccordionStoryArgs> = {
   args: {
     selectionMode: 'single',
     variant: 'plain',
-    value: ['account'],
+    value: [],
     defaultValue: [],
     collapsible: false,
     disabled: false,
     keepMounted: false,
     hiddenUntilFound: false,
     motionPolicy: 'inherit',
+    contentAlignment: 'edge',
+    accountContentAlignment: 'inherit',
     indicatorPosition: 'trailing',
     securityIndicatorPosition: 'trailing',
     billingIndicatorPosition: 'trailing',
     itemDisabled: false,
     headingLevel: 2,
+    showLeadingContent: false,
     contentMotion: 'none',
   },
   argTypes: {
@@ -126,6 +134,27 @@ const meta: Meta<AccordionStoryArgs> = {
         defaultValue: { summary: 'inherit' },
       },
     },
+    contentAlignment: {
+      control: 'radio',
+      options: ['edge', 'label'],
+      description:
+        'Default logical inline-start alignment for every Item’s ContentBody; label follows arbitrary Leading content.',
+      table: {
+        category: 'Root',
+        type: { summary: "'edge' | 'label'" },
+        defaultValue: { summary: 'edge' },
+      },
+    },
+    accountContentAlignment: {
+      control: 'radio',
+      options: ['inherit', 'edge', 'label'],
+      description: 'Per-Item override for Account settings; inherit uses the Root policy.',
+      table: {
+        category: 'Item · Account',
+        type: { summary: "'inherit' | 'edge' | 'label'" },
+        defaultValue: { summary: 'inherit' },
+      },
+    },
     onValueChange: {
       control: false,
       description: 'Property-only callback invoked after an accepted tp-value-change proposal.',
@@ -139,7 +168,7 @@ const meta: Meta<AccordionStoryArgs> = {
       control: 'radio',
       options: ['leading', 'trailing'],
       description:
-        'Logical edge of the Account item’s decorative indicator; independent of other items.',
+        'Logical position whose empty slot renders the Account item’s default disclosure indicator.',
       table: {
         category: 'Item · Account',
         type: { summary: "'leading' | 'trailing'" },
@@ -149,13 +178,15 @@ const meta: Meta<AccordionStoryArgs> = {
     securityIndicatorPosition: {
       control: 'radio',
       options: ['leading', 'trailing'],
-      description: 'Logical edge of the Security item’s decorative indicator.',
+      description:
+        'Logical position whose empty slot renders the Security item’s default disclosure indicator.',
       table: { category: 'Item · Security', type: { summary: "'leading' | 'trailing'" } },
     },
     billingIndicatorPosition: {
       control: 'radio',
       options: ['leading', 'trailing'],
-      description: 'Logical edge of the Billing item’s decorative indicator.',
+      description:
+        'Logical position whose empty slot renders the Billing item’s default disclosure indicator.',
       table: { category: 'Item · Billing', type: { summary: "'leading' | 'trailing'" } },
     },
     itemDisabled: {
@@ -167,6 +198,11 @@ const meta: Meta<AccordionStoryArgs> = {
       control: { type: 'range', min: 1, max: 6, step: 1 },
       description: 'Semantic heading level of each Item; choose to fit the surrounding page.',
       table: { category: 'Item', type: { summary: '1–6' }, defaultValue: { summary: '2' } },
+    },
+    showLeadingContent: {
+      control: 'boolean',
+      description: 'Demo content assigned to each Item’s generic leading position.',
+      table: { category: 'Demo', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     contentMotion: {
       control: 'radio',
@@ -191,74 +227,82 @@ const meta: Meta<AccordionStoryArgs> = {
       event.respondWith({ play: playLineByLine });
     };
     return html`
-      <style>
-        .accordion-story {
-          width: min(36rem, calc(100vw - 2rem));
-        }
-
-        .accordion-story h1 {
-          margin: 0 0 1rem;
-          font-size: 1.25rem;
-        }
-
-        .accordion-story tp-accordion-item::part(accordion-content-body) {
-          padding: 0 var(--tp-space-4) var(--tp-space-4);
-        }
-      </style>
-      <main class="story accordion-story">
-        <h1>Accordion</h1>
-        <tp-accordion
-          .variant=${args.variant}
-          selection-mode=${args.selectionMode}
-          .value=${args.value}
-          .defaultValue=${args.defaultValue}
-          ?collapsible=${args.collapsible}
-          ?disabled=${args.disabled}
-          ?keep-mounted=${args.keepMounted}
-          ?hidden-until-found=${args.hiddenUntilFound}
-          .motionPolicy=${args.motionPolicy}
-          @tp-value-change=${handleValueChange}
-          @tp-motion-request=${handleMotionRequest}
+      <tp-accordion
+        .variant=${args.variant}
+        selection-mode=${args.selectionMode}
+        .value=${args.value}
+        .defaultValue=${args.defaultValue}
+        ?collapsible=${args.collapsible}
+        ?disabled=${args.disabled}
+        ?keep-mounted=${args.keepMounted}
+        ?hidden-until-found=${args.hiddenUntilFound}
+        .motionPolicy=${args.motionPolicy}
+        .contentAlignment=${args.contentAlignment}
+        @tp-value-change=${handleValueChange}
+        @tp-motion-request=${handleMotionRequest}
+      >
+        <tp-accordion-item
+          value="account"
+          indicator-position=${args.indicatorPosition}
+          .contentAlignment=${
+            args.accountContentAlignment === 'inherit' ? undefined : args.accountContentAlignment
+          }
+          heading-level=${args.headingLevel}
         >
-          <tp-accordion-item
-            value="account"
-            indicator-position=${args.indicatorPosition}
-            heading-level=${args.headingLevel}
-          >
-            <span slot="label">Account settings</span>
-            <p>Your public profile starts here.</p>
-            <p>
-              Choose how your name appears to your team, update the email used for account notices,
-              and review the recovery options you would need if you lost access to your usual
-              device.
-            </p>
-          </tp-accordion-item>
-          <tp-accordion-item
-            value="security"
-            indicator-position=${args.securityIndicatorPosition}
-            heading-level=${args.headingLevel}
-            ?disabled=${args.itemDisabled}
-          >
-            <span slot="label">Security</span>
-            <p>Require a second step when signing in from a new device or location.</p>
-            <p>Save your backup codes offline.</p>
-          </tp-accordion-item>
-          <tp-accordion-item
-            value="billing"
-            indicator-position=${args.billingIndicatorPosition}
-            heading-level=${args.headingLevel}
-          >
-            <span slot="label">Billing</span>
-            <tp-icon slot="indicator" .icon=${plusIcon}></tp-icon>
-            <p>
-              Review every invoice from the current subscription, download receipts for your
-              records, and compare charges across billing periods before making a change.
-            </p>
-            <p>Update the payment method used for future charges.</p>
-            <p>Changes apply to your next invoice.</p>
-          </tp-accordion-item>
-        </tp-accordion>
-      </main>
+          ${
+            args.showLeadingContent
+              ? html`<span slot=${args.indicatorPosition === 'leading' ? 'trailing' : 'leading'}
+                  >01</span
+                >`
+              : null
+          }
+          <span slot="label">Account settings</span>
+          <p>Your public profile starts here.</p>
+          <p>
+            Choose how your name appears to your team, update the email used for account notices,
+            and review the recovery options you would need if you lost access to your usual device.
+          </p>
+        </tp-accordion-item>
+        <tp-accordion-item
+          value="security"
+          indicator-position=${args.securityIndicatorPosition}
+          heading-level=${args.headingLevel}
+          ?disabled=${args.itemDisabled}
+        >
+          ${
+            args.showLeadingContent
+              ? html`<span
+                  slot=${args.securityIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
+                  >02</span
+                >`
+              : null
+          }
+          <span slot="label">Security</span>
+          <p>Require a second step when signing in from a new device or location.</p>
+          <p>Save your backup codes offline.</p>
+        </tp-accordion-item>
+        <tp-accordion-item
+          value="billing"
+          indicator-position=${args.billingIndicatorPosition}
+          heading-level=${args.headingLevel}
+        >
+          ${
+            args.showLeadingContent
+              ? html`<span
+                  slot=${args.billingIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
+                  >03</span
+                >`
+              : null
+          }
+          <span slot="label">Billing</span>
+          <p>
+            Review every invoice from the current subscription, download receipts for your records,
+            and compare charges across billing periods before making a change.
+          </p>
+          <p>Update the payment method used for future charges.</p>
+          <p>Changes apply to your next invoice.</p>
+        </tp-accordion-item>
+      </tp-accordion>
     `;
   },
 };
@@ -296,6 +340,30 @@ export const Separated: Story = {
     docs: {
       description: {
         story: 'Independent bordered Item surfaces separated by the shared spacing scale.',
+      },
+    },
+  },
+};
+
+export const PositionalContent: Story = {
+  args: { variant: 'separated', contentAlignment: 'label', showLeadingContent: true },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Adds numbered content through the generic positional slots while the built-in indicator remains in the opposite position.',
+      },
+    },
+  },
+};
+
+export const LabelAlignedContent: Story = {
+  args: { contentAlignment: 'label', showLeadingContent: true },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Aligns each ContentBody to its Label’s logical inline start without assuming what occupies Leading.',
       },
     },
   },
@@ -426,8 +494,7 @@ export const MixedIndicatorPositions: Story = {
   parameters: {
     docs: {
       description: {
-        story:
-          'Each Item chooses its own logical icon edge; the Billing item also replaces the default indicator.',
+        story: 'Each Item configures which logical position receives its built-in indicator.',
       },
     },
   },

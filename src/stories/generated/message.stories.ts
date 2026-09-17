@@ -5,7 +5,8 @@ import { renderComponentExample } from '../examples.js';
 const meta = {
   title: 'Components/Message',
   component: 'tp-message',
-  parameters: { layout: 'centered' },
+  tags: ['autodocs'],
+  parameters: { layout: 'padded' },
   render: () => renderComponentExample('tp-message'),
 } satisfies Meta;
 

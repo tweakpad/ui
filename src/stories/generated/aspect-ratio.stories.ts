@@ -5,7 +5,8 @@ import { renderComponentExample } from '../examples.js';
 const meta = {
   title: 'Components/Aspect-ratio box',
   component: 'tp-aspect-ratio',
-  parameters: { layout: 'centered' },
+  tags: ['autodocs'],
+  parameters: { layout: 'padded' },
   render: () => renderComponentExample('tp-aspect-ratio'),
 } satisfies Meta;
 

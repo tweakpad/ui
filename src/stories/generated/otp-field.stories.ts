@@ -5,7 +5,8 @@ import { renderComponentExample } from '../examples.js';
 const meta = {
   title: 'Components/One-time code field',
   component: 'tp-otp-field',
-  parameters: { layout: 'centered' },
+  tags: ['autodocs'],
+  parameters: { layout: 'padded' },
   render: () => renderComponentExample('tp-otp-field'),
 } satisfies Meta;
 

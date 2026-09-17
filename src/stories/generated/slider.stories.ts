@@ -5,7 +5,8 @@ import { renderComponentExample } from '../examples.js';
 const meta = {
   title: 'Components/Slider',
   component: 'tp-slider',
-  parameters: { layout: 'centered' },
+  tags: ['autodocs'],
+  parameters: { layout: 'padded' },
   render: () => renderComponentExample('tp-slider'),
 } satisfies Meta;
 

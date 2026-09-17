@@ -1,4 +1,4 @@
-import { css, html } from 'lit';
+import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { CollapsibleController } from '../foundation/collapsible.js';
@@ -14,6 +14,7 @@ import type { PresenceState } from '../foundation/types.js';
 import { chevronRightIcon } from '../icons/chevron-right.js';
 
 export type CollapsibleIndicatorPosition = 'leading' | 'trailing';
+export type CollapsibleContentAlignment = 'edge' | 'label';
 
 export const collapsibleMotionRoles = {
   disclosure: {
@@ -45,6 +46,7 @@ export class TpCollapsible extends TpElement {
     keepMounted: { type: Boolean, attribute: 'keep-mounted', reflect: true },
     hiddenUntilFound: { type: Boolean, attribute: 'hidden-until-found', reflect: true },
     indicatorPosition: { type: String, attribute: 'indicator-position', reflect: true },
+    contentAlignment: { type: String, attribute: 'content-alignment', reflect: true },
     headingLevel: { type: Number, attribute: 'heading-level', reflect: true },
     onOpenChange: { attribute: false },
   };
@@ -55,23 +57,76 @@ export class TpCollapsible extends TpElement {
         display: block;
       }
 
+      [part~='collapsible'] {
+        display: grid;
+        grid-template-columns: max-content minmax(0, 1fr) max-content;
+      }
+
       [part~='collapsible-heading'] {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: subgrid;
         margin: 0;
         font: inherit;
       }
 
       [part~='collapsible-trigger'] {
-        display: flex;
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: subgrid;
         align-items: center;
-        gap: var(--tp-space-3);
+        width: 100%;
+        padding: var(--tp-space-3) var(--tp-space-4);
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: start;
+        cursor: pointer;
       }
 
-      .label {
-        flex: 1;
+      [part~='collapsible-trigger']:disabled {
+        cursor: not-allowed;
+      }
+
+      [part~='collapsible-trigger']:focus-visible {
+        outline-offset: calc(-1 * var(--tp-ring-width));
+      }
+
+      [part~='collapsible-leading'],
+      [part~='collapsible-trailing'] {
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        gap: var(--tp-space-2);
         min-width: 0;
+        color: var(--tp-muted-foreground);
+        pointer-events: none;
       }
 
-      [part~='collapsible-indicator'] {
+      [part~='collapsible-leading'] {
+        grid-column: 1;
+        margin-inline-end: var(--tp-space-3);
+      }
+
+      [part~='collapsible-trailing'] {
+        grid-column: 3;
+        margin-inline-start: var(--tp-space-3);
+      }
+
+      [part~='collapsible-leading'][hidden],
+      [part~='collapsible-trailing'][hidden] {
+        display: none;
+        margin-inline: 0;
+      }
+
+      [part~='collapsible-label'] {
+        grid-column: 2;
+        min-width: 0;
+        font-weight: var(--tp-font-semibold);
+      }
+
+      [data-default-indicator] {
         display: inline-block;
         flex: none;
         line-height: 1;
@@ -82,11 +137,14 @@ export class TpCollapsible extends TpElement {
         transition-timing-function: var(--tp-easing-standard);
       }
 
-      :host([data-icon-edge='leading']) [part~='collapsible-indicator'] {
-        order: -1;
+      [data-default-indicator][hidden] {
+        display: none;
       }
 
       [part~='collapsible-content'] {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: subgrid;
         overflow: clip;
         block-size: 0;
         transition-property: block-size;
@@ -100,10 +158,18 @@ export class TpCollapsible extends TpElement {
 
       [part~='collapsible-content-body'] {
         display: flow-root;
+        grid-column: 1 / -1;
+        min-width: 0;
+        padding: 0 var(--tp-space-4) var(--tp-space-4);
+      }
+
+      :host([data-content-alignment='label']) [part~='collapsible-content-body'] {
+        grid-column-start: 2;
+        padding-inline-start: 0;
       }
 
       [part~='collapsible-content'][data-tp-motion-driven~='disclosure'],
-      [part~='collapsible-indicator'][data-tp-motion-driven~='indicator'] {
+      [data-default-indicator][data-tp-motion-driven~='indicator'] {
         transition: none !important;
       }
 
@@ -117,6 +183,7 @@ export class TpCollapsible extends TpElement {
   keepMounted = false;
   hiddenUntilFound = false;
   indicatorPosition: CollapsibleIndicatorPosition = 'trailing';
+  contentAlignment: CollapsibleContentAlignment = 'edge';
   headingLevel = 0;
   onOpenChange: ((event: TpOpenChangeEvent) => void) | undefined;
   #motionOwner: HTMLElement = this;
@@ -130,7 +197,14 @@ export class TpCollapsible extends TpElement {
     owner: this,
     trigger: () => this.triggerElement,
     content: () => this.panelElement,
-    markers: () => [this.#motionOwner, this.rootElement, this.indicatorElement],
+    markers: () => [
+      this.#motionOwner,
+      this.rootElement,
+      this.leadingElement,
+      this.labelElement,
+      this.trailingElement,
+      this.#defaultIndicatorElement,
+    ],
     keepMounted: () => this.keepMounted,
     hiddenUntilFound: () => this.hiddenUntilFound,
     onOpenRequest: (open, reason, sourceEvent) => this.#requestOpen(open, reason, sourceEvent),
@@ -162,8 +236,23 @@ export class TpCollapsible extends TpElement {
     return this.renderRoot.querySelector<HTMLElement>('[part~="collapsible-content-body"]');
   }
 
-  get indicatorElement(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[part~="collapsible-indicator"]');
+  get leadingElement(): HTMLElement | null {
+    return this.renderRoot.querySelector<HTMLElement>('[part~="collapsible-leading"]');
+  }
+
+  get labelElement(): HTMLElement | null {
+    return this.renderRoot.querySelector<HTMLElement>('[part~="collapsible-label"]');
+  }
+
+  get trailingElement(): HTMLElement | null {
+    return this.renderRoot.querySelector<HTMLElement>('[part~="collapsible-trailing"]');
+  }
+
+  get #defaultIndicatorElement(): HTMLElement | null {
+    const position = this.#resolvedIndicatorPosition();
+    const slot = this.#positionSlot(position);
+    if (this.#hasAssignedPositionContent(slot)) return null;
+    return this.#positionIndicator(position);
   }
 
   /** Supplies composition-owned event scope without transferring disclosure state ownership. */
@@ -176,18 +265,23 @@ export class TpCollapsible extends TpElement {
     if (this.#collapsible.initialized) this.#collapsible.update(this.open, this.disabled);
   }
 
-  /** Re-evaluates a forwarded indicator slot after its outer assignment changes. */
-  refreshIndicator(): void {
-    const slot = this.renderRoot.querySelector<HTMLSlotElement>('slot[name="indicator"]');
-    const hasCustomIndicator = Boolean(
-      slot?.assignedNodes({ flatten: true }).some((node) => {
-        if (node.nodeType === Node.TEXT_NODE) return Boolean(node.textContent?.trim());
-        return node.nodeType === Node.ELEMENT_NODE;
-      }),
-    );
-    this.renderRoot
-      .querySelector<HTMLElement>('[data-default-indicator]')
-      ?.toggleAttribute('hidden', hasCustomIndicator);
+  /** Re-evaluates forwarded positional slots after their outer assignments change. */
+  refreshPositions(): void {
+    const selected = this.#resolvedIndicatorPosition();
+    for (const position of ['leading', 'trailing'] as const) {
+      const slot = this.#positionSlot(position);
+      const region = position === 'leading' ? this.leadingElement : this.trailingElement;
+      const assigned = this.#hasAssignedPositionContent(slot);
+      region?.toggleAttribute('hidden', !assigned && position !== selected);
+      this.#positionIndicator(position)?.toggleAttribute('hidden', assigned);
+    }
+    const indicator = this.#defaultIndicatorElement;
+    if (!indicator) {
+      this.#indicatorMotion?.cancel();
+      this.#indicatorMotion = null;
+      return;
+    }
+    indicator.style.rotate = this.open ? '90deg' : '0deg';
   }
 
   override connectedCallback(): void {
@@ -213,25 +307,23 @@ export class TpCollapsible extends TpElement {
   }
 
   protected override firstUpdated(): void {
-    this.refreshIndicator();
+    this.refreshPositions();
     this.#observeBody();
     queueMicrotask(() => {
       if (!this.isConnected) return;
       this.#collapsible.update(this.open, this.disabled);
-      const indicator = this.indicatorElement;
+      const indicator = this.#defaultIndicatorElement;
       if (indicator) indicator.style.rotate = this.open ? '90deg' : '0deg';
     });
   }
 
   protected override render() {
-    const position = this.indicatorPosition === 'leading' ? 'leading' : 'trailing';
+    const position = this.#resolvedIndicatorPosition();
     const level = Math.min(6, Math.max(0, Math.trunc(this.headingLevel) || 0));
     const trigger = html`<button part="collapsible-trigger focusable" type="button">
-      <span class="label"><slot name="trigger">Toggle</slot></span>
-      <span part="collapsible-indicator" data-icon-edge=${position} aria-hidden="true">
-        <slot name="indicator" @slotchange=${this.refreshIndicator}></slot>
-        <tp-icon data-default-indicator .icon=${chevronRightIcon}></tp-icon>
-      </span>
+      ${this.#renderPosition('leading', position)}
+      <span part="collapsible-label"><slot name="label">Toggle</slot></span>
+      ${this.#renderPosition('trailing', position)}
     </button>`;
     return html`<div part="collapsible">
       <div
@@ -318,7 +410,7 @@ export class TpCollapsible extends TpElement {
     if (changed.has('open') && this.#collapsible.initialized) {
       this.#indicatorMotion = prepareMotion(
         this.#motionOwner,
-        this.indicatorElement,
+        this.#defaultIndicatorElement,
         collapsibleMotionRoles.indicator,
         {
           phase: 'change',
@@ -337,7 +429,7 @@ export class TpCollapsible extends TpElement {
       this.#collapsible.update(this.open, this.disabled);
     }
     if (changed.has('open')) {
-      const indicator = this.indicatorElement;
+      const indicator = this.#defaultIndicatorElement;
       if (indicator) indicator.style.rotate = this.open ? '90deg' : '0deg';
       this.#indicatorMotion?.start();
     }
@@ -345,9 +437,59 @@ export class TpCollapsible extends TpElement {
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    const position = this.indicatorPosition === 'leading' ? 'leading' : 'trailing';
-    this.setAttribute('data-icon-edge', position);
-    this.refreshIndicator();
+    const position = this.#resolvedIndicatorPosition();
+    this.dataset.indicatorPosition = position;
+    this.dataset.contentAlignment = this.#resolvedContentAlignment();
+    this.refreshPositions();
     this.#measure();
+  }
+
+  #renderPosition(
+    position: CollapsibleIndicatorPosition,
+    indicatorPosition: CollapsibleIndicatorPosition,
+  ) {
+    const fallback =
+      position === indicatorPosition
+        ? html`<span data-default-indicator aria-hidden="true">
+            <tp-icon .icon=${chevronRightIcon}></tp-icon>
+          </span>`
+        : nothing;
+    return html`<span part=${`collapsible-${position}`} data-position=${position}>
+      <slot name=${position} @slotchange=${this.refreshPositions}></slot>${fallback}
+    </span>`;
+  }
+
+  #resolvedIndicatorPosition(): CollapsibleIndicatorPosition {
+    return this.indicatorPosition === 'leading' ? 'leading' : 'trailing';
+  }
+
+  #resolvedContentAlignment(): CollapsibleContentAlignment {
+    return this.contentAlignment === 'label' ? 'label' : 'edge';
+  }
+
+  #positionSlot(position: CollapsibleIndicatorPosition): HTMLSlotElement | null {
+    return this.renderRoot.querySelector<HTMLSlotElement>(`slot[name="${position}"]`);
+  }
+
+  #positionIndicator(position: CollapsibleIndicatorPosition): HTMLElement | null {
+    const region = position === 'leading' ? this.leadingElement : this.trailingElement;
+    return region?.querySelector<HTMLElement>(':scope > [data-default-indicator]') ?? null;
+  }
+
+  #hasAssignedPositionContent(slot: HTMLSlotElement | null): boolean {
+    if (!slot) return false;
+    const visited = new Set<HTMLSlotElement>();
+    const hasConsumerNode = (candidate: HTMLSlotElement): boolean => {
+      if (visited.has(candidate)) return false;
+      visited.add(candidate);
+      return candidate.assignedNodes().some((node) => {
+        if (node instanceof HTMLSlotElement && node.getRootNode() instanceof ShadowRoot) {
+          return hasConsumerNode(node);
+        }
+        if (node.nodeType === Node.TEXT_NODE) return Boolean(node.textContent?.trim());
+        return node.nodeType === Node.ELEMENT_NODE;
+      });
+    };
+    return hasConsumerNode(slot);
   }
 }

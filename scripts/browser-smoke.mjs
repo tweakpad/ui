@@ -717,7 +717,20 @@ try {
       measuredWidth: firstPanel.style.getPropertyValue('--collapsible-panel-width'),
       contentPart: firstPanel.getAttribute('part'),
       bodyPart: firstBody.getAttribute('part'),
-      indicatorPart: first.indicatorElement.getAttribute('part'),
+      leadingPart: first.collapsibleElement.leadingElement.getAttribute('part'),
+      labelPart: first.collapsibleElement.labelElement.getAttribute('part'),
+      trailingPart: first.collapsibleElement.trailingElement.getAttribute('part'),
+      labelWeight: getComputedStyle(first.collapsibleElement.labelElement).fontWeight,
+      triggerUsesBaselineInset:
+        Number.parseFloat(getComputedStyle(firstTrigger).paddingInlineStart) > 0,
+      contentUsesBaselineInset:
+        Number.parseFloat(getComputedStyle(firstBody).paddingInlineStart) > 0 &&
+        Number.parseFloat(getComputedStyle(firstBody).paddingBlockEnd) > 0,
+      contentTextAlignsWithLabel:
+        Math.abs(
+          first.querySelector('p').getBoundingClientRect().left -
+            first.querySelector('[slot="label"]').getBoundingClientRect().left,
+        ) < 0.5,
       labelledByTrigger: firstPanel.getAttribute('aria-labelledby') === firstTrigger.id,
       controlledByTrigger: firstTrigger.getAttribute('aria-controls') === firstPanel.id,
     };
@@ -742,7 +755,13 @@ try {
     !accordionContract.measuredWidth.endsWith('px') ||
     accordionContract.contentPart !== 'collapsible-content' ||
     accordionContract.bodyPart !== 'collapsible-content-body' ||
-    accordionContract.indicatorPart !== 'collapsible-indicator' ||
+    accordionContract.leadingPart !== 'collapsible-leading' ||
+    accordionContract.labelPart !== 'collapsible-label' ||
+    accordionContract.trailingPart !== 'collapsible-trailing' ||
+    accordionContract.labelWeight !== '600' ||
+    !accordionContract.triggerUsesBaselineInset ||
+    !accordionContract.contentUsesBaselineInset ||
+    !accordionContract.contentTextAlignsWithLabel ||
     !accordionContract.labelledByTrigger ||
     !accordionContract.controlledByTrigger
   ) {
@@ -753,15 +772,18 @@ try {
     const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
     const accordion = document.createElement('tp-accordion');
     accordion.selectionMode = 'multiple';
+    accordion.contentAlignment = 'label';
     accordion.style.setProperty('--tp-duration-normal', '0ms');
     accordion.innerHTML = `
       <tp-accordion-item value="first" indicator-position="trailing" heading-level="2">
+        <span slot="leading" aria-hidden="true">01</span>
+        <span slot="leading" aria-hidden="true">New</span>
         <span slot="label">First item</span><p>First content</p>
       </tp-accordion-item>
       <div value="ignored">Not an Accordion Item</div>
-      <tp-accordion-item value="second" indicator-position="leading" heading-level="2">
+      <tp-accordion-item value="second" indicator-position="leading" content-alignment="edge" heading-level="2">
         <span slot="label">Second item</span>
-        <span slot="indicator" aria-hidden="true">+</span>
+        <span slot="trailing">Healthy</span>
         <p>Second content</p>
       </tp-accordion-item>
     `;
@@ -775,10 +797,14 @@ try {
     const firstTrigger = first.triggerElement;
     const firstPanel = first.panelElement;
     const secondTrigger = second.triggerElement;
-    const secondIndicator = second.indicatorElement;
-    const firstIndicator = first.indicatorElement;
+    const firstIndicator = first.collapsibleElement.shadowRoot.querySelector(
+      '[data-default-indicator]',
+    );
+    const secondIndicator = second.collapsibleElement.shadowRoot.querySelector(
+      '[data-default-indicator]',
+    );
     const defaultIcon = first.collapsibleElement.shadowRoot.querySelector(
-      '[part~="collapsible-indicator"] tp-icon',
+      '[data-default-indicator] tp-icon',
     );
     const firstLabel = first.querySelector('[slot="label"]');
     const secondLabel = second.querySelector('[slot="label"]');
@@ -788,10 +814,15 @@ try {
     const projection =
       first.shadowRoot.querySelector('slot[name="label"]').assignedElements()[0]?.textContent ===
         'First item' &&
-      second.shadowRoot.querySelector('slot[name="indicator"]').assignedElements()[0]
-        ?.textContent === '+' &&
+      first.shadowRoot.querySelector('slot[name="leading"]').assignedElements().length === 2 &&
+      second.shadowRoot.querySelector('slot[name="trailing"]').assignedElements()[0]
+        ?.textContent === 'Healthy' &&
       second.shadowRoot.querySelector('slot:not([name])').assignedElements()[0]?.textContent ===
         'Second content';
+    const positionParts =
+      first.collapsibleElement.leadingElement.getAttribute('part') === 'collapsible-leading' &&
+      first.collapsibleElement.labelElement.getAttribute('part') === 'collapsible-label' &&
+      first.collapsibleElement.trailingElement.getAttribute('part') === 'collapsible-trailing';
     const semanticParts =
       first.collapsibleElement.shadowRoot
         .querySelector('[part="collapsible-heading"]')
@@ -810,29 +841,87 @@ try {
     const firstOpened =
       accordion.value.join(' ') === 'first' &&
       firstTrigger.getAttribute('aria-expanded') === 'true';
+    const assignedContentRemainsNeutral = [...first.querySelectorAll('[slot="leading"]')].every(
+      (element) => !element.hasAttribute('data-open') && !element.hasAttribute('data-closed'),
+    );
     secondTrigger.click();
     await Promise.all([
       first.collapsibleElement.updateComplete,
       second.collapsibleElement.updateComplete,
     ]);
     const independentSelection = accordion.value.join(' ') === 'first second';
+    await nextFrame();
+    const closeEnough = (firstValue, secondValue) => Math.abs(firstValue - secondValue) < 0.5;
+    const inheritedLabelAlignment =
+      first.dataset.contentAlignment === 'label' &&
+      first.collapsibleElement.dataset.contentAlignment === 'label' &&
+      closeEnough(
+        first.bodyElement.getBoundingClientRect().left,
+        firstLabel.getBoundingClientRect().left,
+      );
+    const itemEdgeOverride =
+      second.dataset.contentAlignment === 'edge' &&
+      second.collapsibleElement.dataset.contentAlignment === 'edge' &&
+      closeEnough(
+        second.bodyElement.getBoundingClientRect().left,
+        second.collapsibleElement.rootElement.getBoundingClientRect().left,
+      );
+    first.querySelector('[slot="leading"]').textContent = 'A wider leading value';
+    await nextFrame();
+    const respondsToLeadingLayout = closeEnough(
+      first.bodyElement.getBoundingClientRect().left,
+      firstLabel.getBoundingClientRect().left,
+    );
     const preventClose = (event) => event.preventDefault();
     first.addEventListener('tp-open-change', preventClose, { once: true });
     firstTrigger.click();
     const cancellation = accordion.value.join(' ') === 'first second' && callbackCount === 1;
 
+    accordion.contentAlignment = 'edge';
+    await accordion.updateComplete;
+    await first.collapsibleElement.updateComplete;
+    await nextFrame();
+    const inheritedRootChange =
+      accordion.value.join(' ') === 'first second' &&
+      first.dataset.contentAlignment === 'edge' &&
+      closeEnough(
+        first.bodyElement.getBoundingClientRect().left,
+        first.collapsibleElement.rootElement.getBoundingClientRect().left,
+      );
+    first.contentAlignment = 'label';
+    await first.updateComplete;
+    await first.collapsibleElement.updateComplete;
+    await nextFrame();
+    const perItemAlignmentOverride =
+      accordion.value.join(' ') === 'first second' &&
+      first.dataset.contentAlignment === 'label' &&
+      closeEnough(
+        first.bodyElement.getBoundingClientRect().left,
+        firstLabel.getBoundingClientRect().left,
+      );
+
     first.indicatorPosition = 'leading';
     await first.updateComplete;
     await first.collapsibleElement.updateComplete;
+    await nextFrame();
+    const selectedFallback = first.collapsibleElement.shadowRoot.querySelector(
+      '[data-default-indicator]',
+    );
     const positionChangePreservedValue =
       accordion.value.join(' ') === 'first second' &&
-      first.dataset.iconEdge === 'leading' &&
-      firstIndicator.dataset.iconEdge === 'leading';
+      first.dataset.indicatorPosition === 'leading' &&
+      first.collapsibleElement.dataset.indicatorPosition === 'leading' &&
+      selectedFallback.getClientRects().length === 0;
     accordion.dir = 'rtl';
     await nextFrame();
     const rtlPlacement =
-      firstIndicator.getBoundingClientRect().left > firstLabel.getBoundingClientRect().left &&
+      first.querySelector('[slot="leading"]').getBoundingClientRect().left >
+        firstLabel.getBoundingClientRect().left &&
       secondIndicator.getBoundingClientRect().left > secondLabel.getBoundingClientRect().left;
+    const rtlLabelAlignment = closeEnough(
+      first.bodyElement.getBoundingClientRect().right,
+      firstLabel.getBoundingClientRect().right,
+    );
     second.disabled = true;
     await second.updateComplete;
     secondTrigger.click();
@@ -846,12 +935,20 @@ try {
       unregisteredDiv: !ignored.hasAttribute('part') && ignored.dataset.index === undefined,
       initialPlacement,
       projection,
+      positionParts,
       semanticParts,
       firstOpened,
+      assignedContentRemainsNeutral,
       independentSelection,
+      inheritedLabelAlignment,
+      itemEdgeOverride,
+      respondsToLeadingLayout,
       cancellation,
+      inheritedRootChange,
+      perItemAlignmentOverride,
       positionChangePreservedValue,
       rtlPlacement,
+      rtlLabelAlignment,
       disabledStayedOpen,
     };
   });

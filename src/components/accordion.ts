@@ -4,7 +4,7 @@ import { TpElement } from '../foundation/element.js';
 import { TpOpenChangeEvent, TpValueChangeEvent } from '../foundation/events.js';
 import { createId } from '../foundation/id.js';
 import { assignedElements } from './shared.js';
-import { TpAccordionItem } from './accordion-item.js';
+import { TpAccordionItem, type AccordionContentAlignment } from './accordion-item.js';
 import type { TpCollapsible } from './collapsible.js';
 
 export type AccordionValue = string[];
@@ -44,6 +44,7 @@ export class TpAccordion extends TpElement {
     collapsible: { type: Boolean, reflect: true },
     keepMounted: { type: Boolean, attribute: 'keep-mounted', reflect: true },
     hiddenUntilFound: { type: Boolean, attribute: 'hidden-until-found', reflect: true },
+    contentAlignment: { type: String, attribute: 'content-alignment', reflect: true },
     onValueChange: { attribute: false },
   };
   static override styles = [
@@ -108,6 +109,7 @@ export class TpAccordion extends TpElement {
   collapsible = false;
   keepMounted = false;
   hiddenUntilFound = false;
+  contentAlignment: AccordionContentAlignment = 'edge';
   onValueChange: ((event: TpValueChangeEvent<AccordionValue>) => void) | undefined;
   override orientation = 'vertical' as const;
   #records: AccordionItemRecord[] = [];
@@ -343,6 +345,7 @@ export class TpAccordion extends TpElement {
         'hidden-until-found',
         this.hiddenUntilFound,
       );
+      record.item.setInheritedContentAlignment(this.#resolvedContentAlignment());
       record.collapsible.open = open;
     }
   }
@@ -350,6 +353,10 @@ export class TpAccordion extends TpElement {
   #itemPolicy(item: HTMLElement, name: string, inherited: boolean): boolean {
     const value = item.getAttribute(name);
     return value === null ? inherited : value !== 'false';
+  }
+
+  #resolvedContentAlignment(): AccordionContentAlignment {
+    return this.contentAlignment === 'label' ? 'label' : 'edge';
   }
 
   #disposeRecords(): void {
@@ -374,7 +381,8 @@ export class TpAccordion extends TpElement {
       changed.has('collapsible') ||
       changed.has('disabled') ||
       changed.has('keepMounted') ||
-      changed.has('hiddenUntilFound')
+      changed.has('hiddenUntilFound') ||
+      changed.has('contentAlignment')
     ) {
       this.#applyValue();
     }

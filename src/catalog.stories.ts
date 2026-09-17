@@ -118,7 +118,7 @@ export const Overview: Story = {
         <section class="example">
           <h2>Collapsible</h2>
           <tp-collapsible
-            ><span slot="trigger">Details</span>
+            ><span slot="label">Details</span>
             <p>Collapsible content</p></tp-collapsible
           >
         </section>

@@ -1,6 +1,5 @@
 import { html } from 'lit';
 import type { TemplateResult } from 'lit';
-import { catalogEntries } from '../catalog.js';
 import type { catalog } from '../catalog.js';
 import { plusIcon } from '../icons/plus.js';
 
@@ -58,7 +57,7 @@ const examples = {
   'tp-checkbox': () => html`<tp-checkbox checked>Remember me</tp-checkbox>`,
   'tp-collapsible': () => html`
     <tp-collapsible open>
-      <span slot="trigger">Project details</span>
+      <span slot="label">Project details</span>
       <p>Created today and shared with three collaborators.</p>
     </tp-collapsible>
   `,
@@ -216,7 +215,7 @@ const examples = {
     </tp-breadcrumb>
   `,
   'tp-context-menu': () => html`
-    <div class="surface-demo">
+    <div>
       Right-click this area
       <tp-context-menu>
         <button value="copy">Copy</button>
@@ -248,14 +247,14 @@ const examples = {
   'tp-avatar': () => html`<tp-avatar fallback="IV" alt="Ivan V." size="48"></tp-avatar>`,
   'tp-carousel': () => html`
     <tp-carousel label="Featured projects">
-      <div class="surface-demo">Project one</div>
-      <div class="surface-demo">Project two</div>
-      <div class="surface-demo">Project three</div>
+      <div>Project one</div>
+      <div>Project two</div>
+      <div>Project three</div>
     </tp-carousel>
   `,
   'tp-data-visualization': () => html`
     <tp-data-visualization label="Quarterly trend" description="Values increased each quarter">
-      <div class="chart-demo" aria-hidden="true">▁ ▃ ▅ █</div>
+      <div aria-hidden="true">▁ ▃ ▅ █</div>
       <table slot="table">
         <caption>
           Quarterly values
@@ -284,13 +283,13 @@ const examples = {
   `,
   'tp-progress': () => html`<tp-progress label="Upload progress" value="65"></tp-progress>`,
   'tp-resizable-panel-group': () => html`
-    <tp-resizable-panel-group class="panel-demo">
-      <div class="surface-demo">Explorer</div>
-      <div class="surface-demo">Editor</div>
+    <tp-resizable-panel-group>
+      <div>Explorer</div>
+      <div>Editor</div>
     </tp-resizable-panel-group>
   `,
   'tp-scroll-area': () => html`
-    <tp-scroll-area class="scroll-demo">
+    <tp-scroll-area>
       <p>Scrollable content</p>
       <p>More content</p>
       <p>More content</p>
@@ -299,16 +298,14 @@ const examples = {
     </tp-scroll-area>
   `,
   'tp-separator': () => html`
-    <div class="stack"><span>Above</span><tp-separator></tp-separator><span>Below</span></div>
+    <div><span>Above</span><tp-separator></tp-separator><span>Below</span></div>
   `,
   'tp-spinner': () => html`<tp-spinner label="Loading projects"></tp-spinner>`,
   'tp-toast': () => html`<tp-toast open duration="0" dismissible>Changes saved</tp-toast>`,
   'tp-alert': () => html`
     <tp-alert title="Update available" dismissible>Restart to install it.</tp-alert>
   `,
-  'tp-aspect-ratio': () => html`
-    <tp-aspect-ratio><div class="surface-demo centered">16:9</div></tp-aspect-ratio>
-  `,
+  'tp-aspect-ratio': () => html` <tp-aspect-ratio><div>16:9</div></tp-aspect-ratio> `,
   'tp-attachment': () => html`
     <tp-attachment filename="report.pdf" size="245760" removable></tp-attachment>
   `,
@@ -332,7 +329,7 @@ const examples = {
   'tp-icon': () => html`<tp-icon .icon=${plusIcon} label="Add"></tp-icon>`,
   'tp-key-hint': () => html`<tp-key-hint>⌘ K</tp-key-hint>`,
   'tp-label': () => html`
-    <div class="stack">
+    <div>
       <tp-label id="story-name-label" for="story-name">Name</tp-label>
       <tp-input id="story-name"></tp-input>
     </div>
@@ -344,7 +341,7 @@ const examples = {
   'tp-message': () => html`
     <tp-message author="Ada" timestamp="10:42">A complete message.</tp-message>
   `,
-  'tp-skeleton': () => html`<tp-skeleton class="skeleton-demo" animated></tp-skeleton>`,
+  'tp-skeleton': () => html`<tp-skeleton animated></tp-skeleton>`,
   'tp-table': () => html`
     <tp-table>
       <table>
@@ -367,7 +364,7 @@ const examples = {
     </tp-table>
   `,
   'tp-navigation-panel': () => html`
-    <tp-navigation-panel class="navigation-demo">
+    <tp-navigation-panel>
       <strong slot="header">Tweakpad</strong>
       <a href="#home">Home</a>
       <a href="#settings">Settings</a>
@@ -377,64 +374,7 @@ const examples = {
 } satisfies Record<CatalogTag, () => TemplateResult>;
 
 export function renderComponentExample(tagName: CatalogTag): TemplateResult {
-  const entry = catalogEntries.find((candidate) => candidate.tagName === tagName);
-  return html`
-    <style>
-      .story {
-        display: grid;
-        gap: 1rem;
-        width: min(42rem, calc(100vw - 4rem));
-      }
-
-      .story > h1 {
-        margin: 0;
-        font-size: 1.25rem;
-      }
-
-      .stack {
-        display: grid;
-        gap: 0.75rem;
-      }
-
-      .surface-demo {
-        min-height: 5rem;
-        padding: 0.75rem;
-        border-radius: var(--tp-radius-sm);
-        background: var(--tp-card);
-      }
-
-      .centered {
-        display: grid;
-        place-items: center;
-      }
-
-      .chart-demo {
-        font-size: 3rem;
-        letter-spacing: 0.2em;
-      }
-
-      .panel-demo {
-        height: 12rem;
-      }
-
-      .scroll-demo {
-        height: 10rem;
-      }
-
-      .skeleton-demo {
-        width: 18rem;
-        height: 1.25rem;
-      }
-
-      .navigation-demo {
-        height: 18rem;
-      }
-    </style>
-    <main class="story">
-      <h1>${entry?.name ?? tagName}</h1>
-      ${examples[tagName]()}
-    </main>
-  `;
+  return examples[tagName]();
 }
 
 export const componentStoryTags = Object.keys(examples) as CatalogTag[];

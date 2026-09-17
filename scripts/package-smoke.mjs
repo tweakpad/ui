@@ -34,7 +34,7 @@ const pageHtml = `<!doctype html>
   <body>
     <tp-button>Publish</tp-button>
     <tp-input name="title" value="Phase 1" label="Title"></tp-input>
-    <tp-accordion value="account">
+    <tp-accordion value="account" content-alignment="label">
       <tp-accordion-item value="account" indicator-position="leading">
         <span slot="label">Account</span>
         <p>Profile</p>
@@ -113,7 +113,13 @@ try {
   if (
     !(await accordionItem.evaluate(
       (element) =>
-        element.dataset.iconEdge === 'leading' &&
+        element.dataset.indicatorPosition === 'leading' &&
+        element.dataset.contentAlignment === 'label' &&
+        element.collapsibleElement?.dataset.contentAlignment === 'label' &&
+        Math.abs(
+          element.bodyElement.getBoundingClientRect().left -
+            element.querySelector('[slot="label"]').getBoundingClientRect().left,
+        ) < 0.5 &&
         element.triggerElement?.getAttribute('aria-controls') === element.panelElement?.id,
     ))
   )

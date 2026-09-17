@@ -2,7 +2,10 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { useArgs } from 'storybook/preview-api';
 import { html } from 'lit';
 import collapsibleDocumentation from '../../docs/collapsible.md?raw';
-import type { CollapsibleIndicatorPosition } from '../components/collapsible.js';
+import type {
+  CollapsibleContentAlignment,
+  CollapsibleIndicatorPosition,
+} from '../components/collapsible.js';
 import type { TpOpenChangeEvent } from '../foundation/events.js';
 import type {
   MotionPlayback,
@@ -19,9 +22,11 @@ interface CollapsibleStoryArgs {
   keepMounted: boolean;
   hiddenUntilFound: boolean;
   motionPolicy: MotionPolicy;
+  contentAlignment: CollapsibleContentAlignment;
   indicatorPosition: CollapsibleIndicatorPosition;
   headingLevel: number;
-  customIndicator: boolean;
+  showLeadingContent: boolean;
+  showTrailingContent: boolean;
   contentMotion: 'none' | 'line-by-line';
   onOpenChange?: (event: TpOpenChangeEvent) => void;
 }
@@ -31,7 +36,7 @@ const meta: Meta<CollapsibleStoryArgs> = {
   component: 'tp-collapsible',
   tags: ['autodocs'],
   parameters: {
-    layout: 'centered',
+    layout: 'padded',
     docs: {
       description: {
         component: collapsibleDocumentation.replace(/^# Collapsible\n/u, ''),
@@ -39,15 +44,17 @@ const meta: Meta<CollapsibleStoryArgs> = {
     },
   },
   args: {
-    open: true,
+    open: false,
     defaultOpen: false,
     disabled: false,
     keepMounted: false,
     hiddenUntilFound: false,
     motionPolicy: 'inherit',
+    contentAlignment: 'edge',
     indicatorPosition: 'trailing',
     headingLevel: 0,
-    customIndicator: false,
+    showLeadingContent: false,
+    showTrailingContent: false,
     contentMotion: 'none',
   },
   argTypes: {
@@ -86,10 +93,22 @@ const meta: Meta<CollapsibleStoryArgs> = {
         defaultValue: { summary: 'inherit' },
       },
     },
+    contentAlignment: {
+      control: 'radio',
+      options: ['edge', 'label'],
+      description:
+        'Aligns ContentBody’s logical inline start to the component edge or the Label position.',
+      table: {
+        category: 'Root',
+        type: { summary: "'edge' | 'label'" },
+        defaultValue: { summary: 'edge' },
+      },
+    },
     indicatorPosition: {
       control: 'radio',
       options: ['leading', 'trailing'],
-      description: 'Logical inline edge of this Collapsible’s Indicator.',
+      description:
+        'Logical position whose empty slot renders this Collapsible’s default disclosure indicator.',
       table: {
         category: 'Root',
         type: { summary: "'leading' | 'trailing'" },
@@ -105,9 +124,15 @@ const meta: Meta<CollapsibleStoryArgs> = {
         defaultValue: { summary: '0' },
       },
     },
-    customIndicator: {
+    showLeadingContent: {
       control: 'boolean',
-      description: 'Demo control that replaces the default chevron through the indicator slot.',
+      description: 'Demo content assigned to the generic leading position.',
+      table: { category: 'Demo', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
+    },
+    showTrailingContent: {
+      control: 'boolean',
+      description:
+        'Demo content assigned to the generic trailing position; it suppresses the fallback when trailing is selected.',
       table: { category: 'Demo', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     contentMotion: {
@@ -140,71 +165,29 @@ const meta: Meta<CollapsibleStoryArgs> = {
       event.respondWith({ play: playLineByLine });
     };
     return html`
-      <style>
-        .collapsible-story {
-          width: min(34rem, calc(100vw - 2rem));
-        }
-
-        .collapsible-story h1 {
-          margin: 0 0 var(--tp-space-4);
-          font-size: var(--tp-text-xl);
-        }
-
-        .collapsible-story tp-collapsible::part(collapsible) {
-          overflow: clip;
-          border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
-          border-radius: var(--tp-radius-lg);
-          background: var(--tp-background);
-        }
-
-        .collapsible-story tp-collapsible::part(collapsible-trigger) {
-          width: 100%;
-          padding: var(--tp-space-3) var(--tp-space-4);
-          border: 0;
-          color: inherit;
-          background: transparent;
-          font: inherit;
-          font-weight: var(--tp-font-medium);
-          text-align: start;
-          cursor: pointer;
-        }
-
-        .collapsible-story tp-collapsible::part(collapsible-content-body) {
-          padding: 0 var(--tp-space-4) var(--tp-space-4);
-        }
-
-        .collapsible-story p {
-          margin-block: var(--tp-space-2) 0;
-        }
-      </style>
-      <main class="story collapsible-story">
-        <h1>Collapsible</h1>
-        <tp-collapsible
-          .open=${args.open}
-          .defaultOpen=${args.defaultOpen}
-          ?disabled=${args.disabled}
-          ?keep-mounted=${args.keepMounted}
-          ?hidden-until-found=${args.hiddenUntilFound}
-          .motionPolicy=${args.motionPolicy}
-          .indicatorPosition=${args.indicatorPosition}
-          .headingLevel=${args.headingLevel}
-          .onOpenChange=${args.onOpenChange}
-          @tp-open-change=${handleOpenChange}
-          @tp-motion-request=${handleMotionRequest}
-        >
-          <span slot="trigger">Project details</span>
-          ${
-            args.customIndicator
-              ? html`<tp-icon slot="indicator" .icon=${plusIcon}></tp-icon>`
-              : null
-          }
-          <p>Created today and shared with three collaborators.</p>
-          <p>
-            Review ownership, access rules, and the longer description associated with this project
-            without navigating away from the current view.
-          </p>
-        </tp-collapsible>
-      </main>
+      <tp-collapsible
+        .open=${args.open}
+        .defaultOpen=${args.defaultOpen}
+        ?disabled=${args.disabled}
+        ?keep-mounted=${args.keepMounted}
+        ?hidden-until-found=${args.hiddenUntilFound}
+        .motionPolicy=${args.motionPolicy}
+        .contentAlignment=${args.contentAlignment}
+        .indicatorPosition=${args.indicatorPosition}
+        .headingLevel=${args.headingLevel}
+        .onOpenChange=${args.onOpenChange}
+        @tp-open-change=${handleOpenChange}
+        @tp-motion-request=${handleMotionRequest}
+      >
+        ${args.showLeadingContent ? html`<span slot="leading">New</span>` : null}
+        <span slot="label">Project details</span>
+        ${args.showTrailingContent ? html`<tp-icon slot="trailing" .icon=${plusIcon}></tp-icon>` : null}
+        <p>Created today and shared with three collaborators.</p>
+        <p>
+          Review ownership, access rules, and the longer description associated with this project
+          without navigating away from the current view.
+        </p>
+      </tp-collapsible>
     `;
   },
 };
@@ -213,6 +196,10 @@ export default meta;
 type Story = StoryObj<CollapsibleStoryArgs>;
 
 export const Default: Story = {};
+
+export const Open: Story = {
+  args: { open: true },
+};
 
 export const Disabled: Story = {
   args: { disabled: true },
@@ -230,12 +217,20 @@ export const LeadingIndicator: Story = {
   args: { indicatorPosition: 'leading' },
 };
 
-export const CustomIndicator: Story = {
-  args: { customIndicator: true },
+export const LeadingContent: Story = {
+  args: { showLeadingContent: true },
+};
+
+export const LabelAlignedContent: Story = {
+  args: { open: true, contentAlignment: 'label', showLeadingContent: true },
+};
+
+export const TrailingContent: Story = {
+  args: { showTrailingContent: true },
 };
 
 export const ExternalLineByLineMotion: Story = {
-  args: { contentMotion: 'line-by-line' },
+  args: { open: true, contentMotion: 'line-by-line' },
 };
 
 function playLineByLine(request: MotionRequest): MotionPlayback {

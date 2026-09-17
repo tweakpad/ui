@@ -16,7 +16,7 @@ const meta: Meta<IconStoryArgs> = {
   component: 'tp-icon',
   tags: ['autodocs'],
   parameters: {
-    layout: 'centered',
+    layout: 'padded',
     docs: { description: { component: iconDocumentation.replace(/^# Icon\n/u, '') } },
   },
   args: { icon: plusIcon, label: 'Add', size: '2rem' },
@@ -38,12 +38,8 @@ const meta: Meta<IconStoryArgs> = {
       table: { type: { summary: 'CSS length' }, defaultValue: { summary: '1em' } },
     },
   },
-  render: (args) => html`
-    <main class="story">
-      <h1>Icon</h1>
-      <tp-icon .icon=${args.icon} label=${args.label} size=${args.size}></tp-icon>
-    </main>
-  `,
+  render: (args) =>
+    html`<tp-icon .icon=${args.icon} label=${args.label} size=${args.size}></tp-icon>`,
 };
 
 export default meta;

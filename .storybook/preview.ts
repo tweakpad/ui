@@ -1,5 +1,6 @@
 import { definePreview } from '@storybook/web-components-vite';
 import addonDocs from '@storybook/addon-docs';
+import DocumentationPage from './docs-page.mdx';
 import '../src/styles.css';
 import './docs.css';
 import '../src/register.js';
@@ -9,6 +10,7 @@ const preview = definePreview({
   parameters: {
     a11y: { test: 'error' },
     controls: { expanded: true },
+    docs: { page: DocumentationPage, source: { format: false } },
     layout: 'centered',
   },
 });

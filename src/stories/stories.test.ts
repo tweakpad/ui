@@ -12,6 +12,8 @@ describe('Storybook catalog entries', () => {
     'utf8',
   );
   const iconStory = readFileSync(new URL('./icon.stories.ts', import.meta.url), 'utf8');
+  const examplesSource = readFileSync(new URL('./examples.ts', import.meta.url), 'utf8');
+  const docsPage = readFileSync(new URL('../../.storybook/docs-page.mdx', import.meta.url), 'utf8');
 
   it('has one type-checked fixture for every public control', () => {
     expect([...componentStoryTags].sort()).toEqual(
@@ -37,12 +39,44 @@ describe('Storybook catalog entries', () => {
     }
   });
 
+  it('puts an unstyled Default example before public-API configurations', () => {
+    const sources = [
+      ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
+      accordionStory,
+      collapsibleStory,
+      iconStory,
+    ];
+
+    expect(docsPage.indexOf('## Default')).toBeLessThan(docsPage.indexOf('<Primary />'));
+    expect(docsPage.indexOf('<Primary />')).toBeLessThan(docsPage.indexOf('<Controls />'));
+    expect(docsPage.indexOf('<Controls />')).toBeLessThan(
+      docsPage.indexOf('<Stories title="Configurations"'),
+    );
+    expect(docsPage.indexOf('<Stories title="Configurations"')).toBeLessThan(
+      docsPage.indexOf('<Description />'),
+    );
+
+    for (const source of sources) {
+      expect(source.match(/export const \w+: Story/u)?.[0]).toBe('export const Default: Story');
+      expect(source).toContain("tags: ['autodocs']");
+      expect(source).not.toMatch(/<style(?:\s|>)/u);
+      expect(source).not.toMatch(/\sstyle=/u);
+      expect(source).not.toContain('::part(');
+    }
+    expect(examplesSource).not.toMatch(/<style(?:\s|>)/u);
+    expect(examplesSource).not.toMatch(/\sstyle=/u);
+    expect(examplesSource).not.toContain('::part(');
+  });
+
   it('documents Collapsible state and presence properties in a maintained controls story', () => {
     expect(collapsibleStory).toContain("tags: ['autodocs']");
+    expect(collapsibleStory).toContain('export const Open: Story');
     expect(collapsibleStory).toContain('export const Retained: Story');
     expect(collapsibleStory).toContain('export const FindInPage: Story');
     expect(collapsibleStory).toContain('export const LeadingIndicator: Story');
-    expect(collapsibleStory).toContain('export const CustomIndicator: Story');
+    expect(collapsibleStory).toContain('export const LeadingContent: Story');
+    expect(collapsibleStory).toContain('export const LabelAlignedContent: Story');
+    expect(collapsibleStory).toContain('export const TrailingContent: Story');
     expect(collapsibleStory).toContain('export const ExternalLineByLineMotion: Story');
     for (const property of [
       'open',
@@ -51,9 +85,11 @@ describe('Storybook catalog entries', () => {
       'keepMounted',
       'hiddenUntilFound',
       'motionPolicy',
+      'contentAlignment',
       'indicatorPosition',
       'headingLevel',
-      'customIndicator',
+      'showLeadingContent',
+      'showTrailingContent',
       'contentMotion',
       'onOpenChange',
     ]) {
@@ -69,6 +105,8 @@ describe('Storybook catalog entries', () => {
     expect(accordionStory).toContain('export const Line: Story');
     expect(accordionStory).toContain('export const Outline: Story');
     expect(accordionStory).toContain('export const Separated: Story');
+    expect(accordionStory).toContain('export const PositionalContent: Story');
+    expect(accordionStory).toContain('export const LabelAlignedContent: Story');
     for (const property of [
       'variant',
       'selectionMode',
@@ -78,12 +116,15 @@ describe('Storybook catalog entries', () => {
       'disabled',
       'keepMounted',
       'hiddenUntilFound',
+      'contentAlignment',
+      'accountContentAlignment',
       'onValueChange',
       'indicatorPosition',
       'securityIndicatorPosition',
       'billingIndicatorPosition',
       'itemDisabled',
       'headingLevel',
+      'showLeadingContent',
       'contentMotion',
     ]) {
       expect(accordionStory).toContain(`    ${property}: {`);

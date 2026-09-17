@@ -18,7 +18,7 @@ icon.icon = plusIcon;
 
 Importing `@tweakpad/ui/icons/plus` selects only the plus definition. Do not import an all-icons registry; none is provided. The `register/icon` entry registers only `tp-icon`, while `register` opts into every component. The main entry exports the `TpIcon` class and `IconDefinition` type but does not re-export artwork. Bundlers can therefore omit definitions that are never imported.
 
-Accordion uses `chevronRightIcon` for its fallback Indicator. Replacing an Item's `indicator` slot with another `<tp-icon>` changes only that Item's artwork; `indicator-position="leading"` or `"trailing"` independently chooses its logical edge.
+Accordion uses `chevronRightIcon` for its default disclosure indicator. `indicator-position="leading"` or `"trailing"` selects the positional slot whose fallback renders that icon. Assigning any consumer content to the selected `leading` or `trailing` slot suppresses the fallback; the assigned content keeps its own semantics and does not automatically receive indicator motion.
 
 ## Properties
 

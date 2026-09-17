@@ -1,14 +1,15 @@
 # Collapsible
 
-Collapsible is the library's standalone disclosure element and the disclosure primitive used by Accordion Item. `<tp-collapsible>` owns its Trigger–Content relationship, Indicator and icon placement, measured presence transition, motion-role requests, disabled handling, and cleanup. Accordion adds group selection by driving the `open` state of a Collapsible inside each Item; it does not reproduce those behaviors.
+Collapsible is the library's standalone disclosure element and the disclosure primitive used by Accordion Item. `<tp-collapsible>` owns its Trigger–Content relationship, positional presentation regions, default disclosure indicator, measured presence transition, motion-role requests, disabled handling, and cleanup. Accordion adds group selection by driving the `open` state of a Collapsible inside each Item; it does not reproduce those behaviors.
 
 The normative contract is UI Foundation §13.3 and UI Component Library §16.4.
 
 ## Basic use
 
 ```html
-<tp-collapsible open indicator-position="trailing">
-  <span slot="trigger">Project details</span>
+<tp-collapsible open indicator-position="trailing" content-alignment="label">
+  <span slot="leading" aria-hidden="true">01</span>
+  <span slot="label">Project details</span>
   <p>Created today and shared with three collaborators.</p>
 </tp-collapsible>
 ```
@@ -24,27 +25,43 @@ The Trigger is a native button. Its `aria-expanded` and `aria-controls` values a
 | `disabled`          | `disabled`           | `boolean`                            | `false`      | Prevents Trigger activation without changing the current open state.                      |
 | `keepMounted`       | `keep-mounted`       | `boolean`                            | `false`      | Ends closed Content in the retained presence state.                                       |
 | `hiddenUntilFound`  | `hidden-until-found` | `boolean`                            | `false`      | Retains closed Content with `hidden="until-found"` for browser search and reveal.         |
-| `indicatorPosition` | `indicator-position` | `'leading' \| 'trailing'`           | `'trailing'` | Places this Collapsible's Indicator at a logical inline edge.                             |
+| `indicatorPosition` | `indicator-position` | `'leading' \| 'trailing'`            | `'trailing'` | Selects the empty positional slot that renders the default disclosure indicator.          |
+| `contentAlignment`  | `content-alignment`  | `'edge' \| 'label'`                  | `'edge'`     | Aligns ContentBody's logical inline start to the component edge or Label.                 |
 | `headingLevel`      | `heading-level`      | `0`–`6`                              | `0`          | Gives the Trigger wrapper heading semantics; `0` omits them.                              |
-| `motionPolicy`      | `motion-policy`      | `'inherit' \| 'normal' \| 'reduce'` | `'inherit'`  | Resolves motion policy for the Collapsible subtree.                                       |
+| `motionPolicy`      | `motion-policy`      | `'inherit' \| 'normal' \| 'reduce'`  | `'inherit'`  | Resolves motion policy for the Collapsible subtree.                                       |
 | `onOpenChange`      | —                    | `(event: TpOpenChangeEvent) => void` | `undefined`  | Property-only callback after an open-change proposal is accepted.                         |
 
 `hiddenUntilFound` implies retained presence even when `keepMounted` is false. A matching `beforematch` request proposes opening the disclosure before the browser reveals its Content.
 
-`indicatorPosition` affects only presentation. `leading` and `trailing` follow writing direction, and the resolved edge is published as `data-icon-edge`. The default chevron is rendered by `tp-icon`; replace it per Collapsible through the `indicator` slot without changing activation or accessibility:
+## Positional slots
+
+The Trigger exposes content-agnostic `leading` and `trailing` slots around its `label`. Both positions accept zero or more consumer-supplied, non-interactive nodes in consumer order. They do not infer icon, indicator, badge, status, or motion behavior from their contents.
 
 ```html
-<tp-collapsible indicator-position="leading">
-  <span slot="trigger">Advanced options</span>
-  <tp-icon id="advanced-indicator" slot="indicator"></tp-icon>
+<tp-collapsible indicator-position="trailing">
+  <tp-icon slot="leading" id="settings-icon" aria-hidden="true"></tp-icon>
+  <span slot="leading" class="status-badge">New</span>
+  <span slot="label">Advanced options</span>
   <p>Additional settings.</p>
 </tp-collapsible>
 
 <script type="module">
   import { plusIcon } from '@tweakpad/ui/icons/plus';
-  document.querySelector('#advanced-indicator').icon = plusIcon;
+  document.querySelector('#settings-icon').icon = plusIcon;
 </script>
 ```
+
+`indicatorPosition` affects only presentation. `leading` and `trailing` follow writing direction, and the resolved selection is published as `data-indicator-position`. The selected position renders the built-in `tp-icon` chevron as fallback content only while that slot is empty. Assigning any content to the selected position suppresses the fallback; the assigned nodes retain their own semantics and never acquire disclosure-indicator state or motion automatically.
+
+Positional content is inside the native button Trigger, so it must not contain links, buttons, inputs, or other interactive descendants. Mark decorative text and graphics with `aria-hidden="true"`; leave meaningful status text exposed when it should contribute to the Trigger's accessible name.
+
+## Content alignment
+
+`contentAlignment="edge"` starts ContentBody at the component's logical inline edge and applies the standard inline content inset. `contentAlignment="label"` starts it at the Label position and removes the redundant logical inline-start inset. Both modes therefore align content text with the default Trigger label. Label alignment follows writing direction and the actual Leading layout, so arbitrary icons, badges, text, or multiple nodes do not require a hard-coded indent.
+
+The alignment applies to the ContentBody box. Consumer padding applied through that part overrides or extends the baseline token-based inset without changing the alignment contract.
+
+The resolved value is available as `data-content-alignment`. Changing alignment does not change disclosure state, activation, focus, presence, motion, or accessibility relationships.
 
 ## Events
 
@@ -62,23 +79,13 @@ collapsible.addEventListener('tp-open-change', (event) => {
 
 ## Styling
 
-The public parts are `collapsible`, `collapsible-heading`, `collapsible-trigger`, `collapsible-indicator`, `collapsible-content`, and `collapsible-content-body`. Root, Trigger, Indicator, and Content publish the applicable `data-open`, `data-closed`, `data-disabled`, and `data-icon-edge` markers. Content also publishes `data-state`, `data-starting-style`, and `data-ending-style` from the shared presence lifecycle.
+The public parts are `collapsible`, `collapsible-heading`, `collapsible-trigger`, `collapsible-leading`, `collapsible-label`, `collapsible-trailing`, `collapsible-content`, and `collapsible-content-body`. Root, Trigger, Leading, Label, Trailing, and Content publish the applicable `data-open`, `data-closed`, and `data-disabled` markers. The host publishes `data-indicator-position` and `data-content-alignment`; each positional part publishes its fixed `data-position`. Content also publishes `data-state`, `data-starting-style`, and `data-ending-style` from the shared presence lifecycle.
 
-The measured panel exposes `--collapsible-panel-height` and `--collapsible-panel-width`. Put content padding on ContentBody, not Content, so padding is included in the measured animated extent.
+The measured panel exposes `--collapsible-panel-height` and `--collapsible-panel-width`. Its default Trigger, Label, positional content, focus ring, and ContentBody inset are token-based baseline presentation shared by standalone Collapsible and Accordion Item. Override those public parts when a product needs a different treatment. Put content padding on ContentBody, not Content, so padding is included in the measured animated extent.
 
 ```css
-tp-collapsible::part(collapsible-trigger) {
-  width: 100%;
-  padding: var(--tp-space-3) var(--tp-space-4);
-  border: 0;
-  color: var(--tp-foreground);
-  background: transparent;
-  font: inherit;
-  text-align: start;
-}
-
 tp-collapsible::part(collapsible-content-body) {
-  padding: 0 var(--tp-space-4) var(--tp-space-4);
+  padding-block-end: var(--tp-space-6);
 }
 ```
 
@@ -86,11 +93,11 @@ tp-collapsible::part(collapsible-content-body) {
 
 Collapsible publishes three standard roles from its public host:
 
-| Role         | Target      | Phases          | Completion   | Default presentation                                  |
-| ------------ | ----------- | --------------- | ------------ | ----------------------------------------------------- |
-| `disclosure` | Content     | `enter`, `exit` | blocking     | Transitions the measured block size.                  |
-| `content`    | ContentBody | `enter`, `exit` | blocking     | None; available for consumer choreography.            |
-| `indicator`  | Indicator   | `change`        | non-blocking | Rotates the default or consumer-supplied presentation. |
+| Role         | Target                                      | Phases          | Completion   | Default presentation                       |
+| ------------ | ------------------------------------------- | --------------- | ------------ | ------------------------------------------ |
+| `disclosure` | Content                                     | `enter`, `exit` | blocking     | Transitions the measured block size.       |
+| `content`    | ContentBody                                 | `enter`, `exit` | blocking     | None; available for consumer choreography. |
+| `indicator`  | Default disclosure indicator, when rendered | `change`        | non-blocking | Rotates only the built-in fallback.        |
 
 Claim a role synchronously from `tp-motion-request` to replace only that role's CSS presentation. Semantic state, measurement, presence, hiding, and cancellation remain owned by Collapsible. This allows application-specific choreography without requiring private selectors:
 
@@ -121,6 +128,6 @@ See the **External line-by-line motion** story and the [Motion guide](motion.md)
 
 ## Composition with Accordion
 
-Each `<tp-accordion-item>` renders one internal `<tp-collapsible>`. The Item maps Collapsible's Heading, Trigger, Indicator, Content, and ContentBody through its Accordion part names and forwards the label, indicator, and content slots. The Accordion Root supplies derived `open`, `disabled`, retention policies, and stable `value`/`index` motion context. Collapsible remains the only disclosure and motion implementation, while Accordion remains the only selection owner.
+Each `<tp-accordion-item>` renders one internal `<tp-collapsible>`. The Item maps Collapsible's Heading, Trigger, Leading, Label, Trailing, Content, and ContentBody through its Accordion part names and forwards the `leading`, `label`, `trailing`, and content slots. The Accordion Root supplies derived `open`, `disabled`, retention and content-alignment policies, and stable `value`/`index` motion context. An Item may override `contentAlignment`; Collapsible remains the only disclosure, layout-alignment, and motion implementation, while Accordion remains the only selection owner.
 
 Use `<tp-collapsible>` for one independent disclosure. Use `<tp-accordion>` with `<tp-accordion-item>` when several disclosures need coordinated single or multiple selection.
