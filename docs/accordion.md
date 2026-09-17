@@ -45,6 +45,7 @@ Set `disabled` on one `<tp-accordion-item>` to prevent that Item from opening or
 | `disabled`         | `disabled`           | `boolean`                                       | `false`     | Prevents activation of every item.                                                                       |
 | `keepMounted`      | `keep-mounted`       | `boolean`                                       | `false`     | Ends a closed panel in the retained presence state after its exit transition.                            |
 | `hiddenUntilFound` | `hidden-until-found` | `boolean`                                       | `false`     | Retains closed content with `hidden="until-found"` so browser find-in-page can reveal it.                |
+| `motionPolicy`     | `motion-policy`      | `'inherit' \| 'normal' \| 'reduce'`            | `'inherit'` | Resolves motion for the Accordion subtree from this boundary, its ancestors, or the environment.          |
 | `onValueChange`    | —                    | `(event: TpValueChangeEvent<string[]>) => void` | `undefined` | Callback after an accepted root value-change proposal. Property only; not an HTML attribute.             |
 
 `orientation` is fixed to vertical for Accordion. In this custom-element API, `selectionMode="multiple"` corresponds to the Foundation's `multiple` behavior.
@@ -103,8 +104,11 @@ item.addEventListener('tp-motion-request', (event) => {
           { duration: 180, delay: index * 45, fill: 'both' },
         ),
       );
+      const finished = Promise.all(animations.map((animation) => animation.finished)).then(() => {
+        animations.forEach((animation) => animation.cancel());
+      });
       return {
-        finished: Promise.all(animations.map((animation) => animation.finished)).then(() => {}),
+        finished,
         cancel: () => animations.forEach((animation) => animation.cancel()),
       };
     },

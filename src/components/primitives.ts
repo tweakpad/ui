@@ -795,9 +795,13 @@ export class TpSkeleton extends TpElement {
   label = 'Loading';
   animated = true;
   #loadingMotion: MotionHandle | null = null;
-  protected override firstUpdated(changed: PropertyValues<this>): void {
-    super.firstUpdated(changed);
-    if (this.animated) this.#startLoadingMotion('start', null, 'loading');
+  override connectedCallback(): void {
+    super.connectedCallback();
+    void this.updateComplete.then(() => {
+      if (this.isConnected && this.animated && !this.#loadingMotion) {
+        this.#startLoadingMotion('start', null, 'loading');
+      }
+    });
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
@@ -810,15 +814,7 @@ export class TpSkeleton extends TpElement {
     );
   }
   override disconnectedCallback(): void {
-    if (this.#loadingMotion) {
-      const stop = prepareMotion(this, this, primitiveMotionRoles.skeletonLoading, {
-        phase: 'stop',
-        fromState: 'loading',
-        toState: 'idle',
-      });
-      stop.start();
-      this.#loadingMotion = null;
-    }
+    this.#loadingMotion = null;
     super.disconnectedCallback();
   }
   #startLoadingMotion(

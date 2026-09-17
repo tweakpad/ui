@@ -387,8 +387,11 @@ export class TpProgress extends TpElement {
         animation-play-state: var(--tp-motion-play-state, running);
       }
 
-      .indicator[data-tp-motion-driven] {
+      .indicator[data-tp-motion-driven~='value'] {
         transition: none !important;
+      }
+
+      .indicator[data-tp-motion-driven~='indeterminate'] {
         animation: none !important;
       }
 
@@ -408,6 +411,19 @@ export class TpProgress extends TpElement {
   label = 'Progress';
   #valueMotion: MotionHandle | null = null;
   #ambientMotion: MotionHandle | null = null;
+  override connectedCallback(): void {
+    super.connectedCallback();
+    void this.updateComplete.then(() => {
+      if (!this.isConnected || Number.isFinite(this.value) || this.#ambientMotion) return;
+      this.#ambientMotion = prepareMotion(
+        this,
+        this.renderRoot.querySelector<HTMLElement>('.indicator'),
+        displayMotionRoles.progressIndeterminate,
+        { phase: 'start', fromState: null, toState: 'indeterminate' },
+      );
+      this.#ambientMotion.start();
+    });
+  }
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
     if (!changed.has('value') || changed.get('value') === undefined) return;
@@ -434,18 +450,6 @@ export class TpProgress extends TpElement {
       );
     }
   }
-  protected override firstUpdated(changed: PropertyValues<this>): void {
-    super.firstUpdated(changed);
-    if (!Number.isFinite(this.value)) {
-      this.#ambientMotion = prepareMotion(
-        this,
-        this.renderRoot.querySelector<HTMLElement>('.indicator'),
-        displayMotionRoles.progressIndeterminate,
-        { phase: 'start', fromState: null, toState: 'indeterminate' },
-      );
-      this.#ambientMotion.start();
-    }
-  }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     if (changed.has('value')) {
@@ -457,6 +461,8 @@ export class TpProgress extends TpElement {
   override disconnectedCallback(): void {
     this.#valueMotion?.cancel();
     this.#ambientMotion?.cancel();
+    this.#valueMotion = null;
+    this.#ambientMotion = null;
     super.disconnectedCallback();
   }
   protected override render() {
@@ -726,25 +732,20 @@ export class TpSpinner extends TpElement {
   ];
   label = 'Loading';
   #rotationMotion: MotionHandle | null = null;
-  protected override firstUpdated(changed: PropertyValues<this>): void {
-    super.firstUpdated(changed);
-    this.#rotationMotion = prepareMotion(this, this, displayMotionRoles.spinnerRotation, {
-      phase: 'start',
-      fromState: null,
-      toState: 'loading',
+  override connectedCallback(): void {
+    super.connectedCallback();
+    void this.updateComplete.then(() => {
+      if (!this.isConnected || this.#rotationMotion) return;
+      this.#rotationMotion = prepareMotion(this, this, displayMotionRoles.spinnerRotation, {
+        phase: 'start',
+        fromState: null,
+        toState: 'loading',
+      });
+      this.#rotationMotion.start();
     });
-    this.#rotationMotion.start();
   }
   override disconnectedCallback(): void {
-    if (this.#rotationMotion) {
-      const stop = prepareMotion(this, this, displayMotionRoles.spinnerRotation, {
-        phase: 'stop',
-        fromState: 'loading',
-        toState: 'idle',
-      });
-      stop.start();
-      this.#rotationMotion = null;
-    }
+    this.#rotationMotion = null;
     super.disconnectedCallback();
   }
   protected override render() {

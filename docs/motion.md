@@ -29,9 +29,12 @@ const driver: MotionDriver = {
         : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-4px)' }],
       { duration: 220, easing: 'cubic-bezier(.2, 0, 0, 1)', fill: 'both' },
     );
+    const finished = animation.finished.then(() => {
+      animation.cancel();
+    });
 
     return {
-      finished: animation.finished.then(() => undefined),
+      finished,
       cancel: () => animation.cancel(),
     };
   },
@@ -83,18 +86,26 @@ The library does not split text, construct timelines, or define choreography bet
 
 ## Current role inventory
 
-| Component | Roles |
-| --- | --- |
-| Accordion Item | `disclosure` (blocking presence), `content` (blocking presence, no default visual motion), `indicator` (state) |
-| Dialog, Alert dialog | `backdrop` (blocking presence) |
-| Drawer, Side panel | `backdrop`, `surface` (blocking presence) |
-| Popover, Preview card, Tooltip | `surface` (blocking presence) |
-| Navigation panel | `collapse`, `compact-surface` (state) |
-| Switch | `track`, `thumb` (state) |
-| Carousel | `track` (state) |
-| Progress | `value` (state), `indeterminate` (ambient) |
-| Spinner | `rotation` (ambient) |
-| Card | `interaction` (state) |
-| Skeleton | `loading` (ambient) |
+Public context lists only stable values supplied by the component in addition to the request's standard fields. `—` means that the role has no additional context.
+
+| Component | Role | Public target | Kind and phases | Public context | Completion |
+| --- | --- | --- | --- | --- | --- |
+| Accordion Item | `disclosure` | Content | presence: `enter`, `exit` | `value`, `index` | blocking |
+| Accordion Item | `content` | ContentBody | presence: `enter`, `exit`; no default visual motion | `value`, `index` | blocking |
+| Accordion Item | `indicator` | Indicator | state: `change` | `value`, `index` | non-blocking |
+| Dialog, Alert dialog | `backdrop` | Overlay | presence: `enter`, `exit` | — | blocking |
+| Drawer, Side panel | `backdrop` | Overlay | presence: `enter`, `exit` | — | blocking |
+| Drawer, Side panel | `surface` | Surface or Content | presence: `enter`, `exit` | — | blocking |
+| Popover, Preview card, Tooltip | `surface` | Content | presence: `enter`, `exit` | `placement` | blocking |
+| Navigation panel | `collapse` | Panel | state: `change` | — | non-blocking |
+| Navigation panel | `compact-surface` | Panel | state: `change` | — | non-blocking |
+| Switch | `track` | Track presentation target | state: `change` | — | non-blocking |
+| Switch | `thumb` | Thumb | state: `change` | — | non-blocking |
+| Carousel | `track` | Track | state: `change` | — | non-blocking |
+| Progress | `value` | Indicator | state: `change` | `max` | non-blocking |
+| Progress | `indeterminate` | Indicator | ambient: `start`, `stop` | — | non-blocking |
+| Spinner | `rotation` | Indicator or Root | ambient: `start`, `stop` | — | non-blocking |
+| Card | `interaction` | Root | state: `change` | `input` | non-blocking |
+| Skeleton | `loading` | Placeholder | ambient: `start`, `stop` | — | non-blocking |
 
 State and ambient roles are non-blocking. Presence roles above are blocking, so their actual playback completion controls the stable open/closed completion notification. Driver errors, rejected finite playback, missing targets, duplicate claims, and bounded-completion failures emit `tp-diagnostic` and cannot leave lifecycle completion pending forever.

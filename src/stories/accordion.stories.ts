@@ -5,7 +5,12 @@ import accordionDocumentation from '../../docs/accordion.md?raw';
 import type { AccordionValue } from '../components/accordion.js';
 import type { AccordionIndicatorPosition } from '../components/accordion-item.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import type { MotionPlayback, MotionRequest, TpMotionRequestEvent } from '../foundation/motion.js';
+import type {
+  MotionPlayback,
+  MotionPolicy,
+  MotionRequest,
+  TpMotionRequestEvent,
+} from '../foundation/motion.js';
 import { plusIcon } from '../icons/plus.js';
 
 interface AccordionStoryArgs {
@@ -16,6 +21,7 @@ interface AccordionStoryArgs {
   disabled: boolean;
   keepMounted: boolean;
   hiddenUntilFound: boolean;
+  motionPolicy: MotionPolicy;
   indicatorPosition: AccordionIndicatorPosition;
   securityIndicatorPosition: AccordionIndicatorPosition;
   billingIndicatorPosition: AccordionIndicatorPosition;
@@ -45,6 +51,7 @@ const meta: Meta<AccordionStoryArgs> = {
     disabled: false,
     keepMounted: false,
     hiddenUntilFound: false,
+    motionPolicy: 'inherit',
     indicatorPosition: 'trailing',
     securityIndicatorPosition: 'trailing',
     billingIndicatorPosition: 'trailing',
@@ -94,6 +101,17 @@ const meta: Meta<AccordionStoryArgs> = {
       control: 'boolean',
       description: 'Retains closed content as hidden-until-found for browser search and reveal.',
       table: { category: 'Root', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
+    },
+    motionPolicy: {
+      control: 'radio',
+      options: ['inherit', 'normal', 'reduce'],
+      description:
+        'Resolves motion for this Accordion subtree; inherit defers to the nearest policy boundary or environment preference.',
+      table: {
+        category: 'Root',
+        type: { summary: "'inherit' | 'normal' | 'reduce'" },
+        defaultValue: { summary: 'inherit' },
+      },
     },
     onValueChange: {
       control: false,
@@ -194,6 +212,7 @@ const meta: Meta<AccordionStoryArgs> = {
           ?disabled=${args.disabled}
           ?keep-mounted=${args.keepMounted}
           ?hidden-until-found=${args.hiddenUntilFound}
+          .motionPolicy=${args.motionPolicy}
           @tp-value-change=${handleValueChange}
           @tp-motion-request=${handleMotionRequest}
         >
@@ -257,6 +276,18 @@ export const ExternalLineByLineMotion: Story = {
   },
 };
 
+export const ReducedMotion: Story = {
+  args: { motionPolicy: 'reduce', contentMotion: 'line-by-line', collapsible: true },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Keeps the same semantic and presence lifecycle while completing finite motion at the next checkpoint and skipping the external line-by-line driver.',
+      },
+    },
+  },
+};
+
 function playLineByLine(request: MotionRequest): MotionPlayback {
   const lines = [...request.owner.querySelectorAll<HTMLElement>('p')];
   const exiting = request.phase === 'exit';
@@ -280,8 +311,11 @@ function playLineByLine(request: MotionRequest): MotionPlayback {
       },
     ),
   );
+  const finished = Promise.all(animations.map((animation) => animation.finished)).then(() => {
+    animations.forEach((animation) => animation.cancel());
+  });
   return {
-    finished: Promise.all(animations.map((animation) => animation.finished)).then(() => undefined),
+    finished,
     cancel: () => animations.forEach((animation) => animation.cancel()),
   };
 }

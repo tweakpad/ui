@@ -57,6 +57,13 @@ const ACTIVE_MOTION = new WeakMap<HTMLElement, Map<string, MotionHandle>>();
 const DRIVEN_ROLES = new WeakMap<HTMLElement, Set<string>>();
 const MAX_PLAYBACK_DURATION = 10_000;
 
+export function cancelMotions(owner: HTMLElement): void {
+  const active = ACTIVE_MOTION.get(owner);
+  if (!active) return;
+  for (const handle of [...active.values()]) handle.cancel();
+  ACTIVE_MOTION.delete(owner);
+}
+
 export class TpMotionRequestEvent extends Event {
   readonly request: MotionRequest;
   #driver: MotionDriver | null = null;
@@ -149,6 +156,8 @@ export function prepareMotion(
   owner.dispatchEvent(event);
   const driver = event.finishDispatch();
   let playback: MotionPlayback | null = null;
+  let targetObserver: MutationObserver | null = null;
+  let timeout: number | undefined;
   let started = false;
   let cancelled = false;
   let resolveFinished!: () => void;
@@ -166,7 +175,23 @@ export function prepareMotion(
     start() {
       if (started || cancelled || !driver) return playback;
       started = true;
+      if (!owner.isConnected || !target.isConnected) {
+        cancelled = true;
+        controller.abort();
+        reportMotionDiagnostic(
+          owner,
+          'motion-target-destroyed',
+          `Motion role "${role.name}" cannot start because its owner or target is no longer mounted.`,
+        );
+        finish();
+        return null;
+      }
       setDriven(target, role.name, true);
+      const targetRoot = target.getRootNode();
+      targetObserver = new MutationObserver(() => {
+        if (!target.isConnected || target.getRootNode() !== targetRoot) handle.cancel();
+      });
+      targetObserver.observe(targetRoot, { childList: true, subtree: true });
       if (request.reducedMotion) {
         queueMicrotask(finish);
         return null;
@@ -176,7 +201,7 @@ export function prepareMotion(
         if (!isPlayback(playback)) {
           throw new TypeError('MotionDriver.play() must return a MotionPlayback.');
         }
-        const timeout =
+        timeout =
           role.kind === 'ambient' && options.phase === 'start'
             ? undefined
             : window.setTimeout(() => {
@@ -185,21 +210,22 @@ export function prepareMotion(
                   'motion-playback-timeout',
                   `Motion role "${role.name}" did not settle within ${MAX_PLAYBACK_DURATION}ms.`,
                 );
+                controller.abort();
                 cancelPlayback();
                 finish();
               }, MAX_PLAYBACK_DURATION);
         void Promise.resolve(playback.finished).then(
           () => {
-            if (timeout !== undefined) window.clearTimeout(timeout);
             finish();
           },
           (error: unknown) => {
-            if (timeout !== undefined) window.clearTimeout(timeout);
-            reportMotionDiagnostic(
-              owner,
-              'motion-playback-rejected',
-              `Motion role "${role.name}" rejected: ${errorMessage(error)}.`,
-            );
+            if (!controller.signal.aborted && !finishedOnce) {
+              reportMotionDiagnostic(
+                owner,
+                'motion-playback-rejected',
+                `Motion role "${role.name}" rejected: ${errorMessage(error)}.`,
+              );
+            }
             finish();
           },
         );
@@ -240,8 +266,15 @@ export function prepareMotion(
   const finish = (): void => {
     if (finishedOnce) return;
     finishedOnce = true;
+    targetObserver?.disconnect();
+    targetObserver = null;
+    if (timeout !== undefined) {
+      window.clearTimeout(timeout);
+      timeout = undefined;
+    }
     setDriven(target, role.name, false);
     if (active.get(role.name) === handle) active.delete(role.name);
+    if (!active.size) ACTIVE_MOTION.delete(owner);
     resolveFinished();
   };
 

@@ -375,7 +375,17 @@ export class TpNavigationPanel extends TpElement {
         height: 100%;
         border-inline-end: 1px solid var(--tp-color-border);
         background: var(--tp-color-surface);
-        transition: width calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
+        transition:
+          width
+            calc(
+              var(--tp-duration-normal, 180ms) *
+                var(--tp-navigation-collapse-motion-scale, var(--tp-motion-scale, 1))
+            ),
+          transform
+            calc(
+              var(--tp-duration-normal, 180ms) *
+                var(--tp-navigation-compact-motion-scale, var(--tp-motion-scale, 1))
+            );
       }
 
       :host([collapsed]) .panel {
@@ -387,18 +397,23 @@ export class TpNavigationPanel extends TpElement {
           position: fixed;
           z-index: 1050;
           inset: 0 auto 0 0;
-          transform: translateX(-100%);
-          transition: transform calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
         }
 
-        :host([open]) {
+        .panel {
+          transform: translateX(-100%);
+        }
+
+        :host([open]) .panel {
           transform: translateX(0);
         }
       }
 
-      .panel[data-tp-motion-driven],
-      :host([data-tp-motion-driven]) {
-        transition: none !important;
+      .panel[data-tp-motion-driven~='collapse'] {
+        --tp-navigation-collapse-motion-scale: 0;
+      }
+
+      .panel[data-tp-motion-driven~='compact-surface'] {
+        --tp-navigation-compact-motion-scale: 0;
       }
     `,
   ];
@@ -427,12 +442,16 @@ export class TpNavigationPanel extends TpElement {
     const previousOpen = changed.get('open');
     if (previousOpen !== undefined && previousOpen !== this.open) {
       this.#motion.push(
-        prepareMotion(this, this, navigationPanelMotionRoles.compactSurface, {
-          phase: 'change',
-          fromState: Boolean(previousOpen),
-          toState: this.open,
-          context: { breakpoint: '48rem' },
-        }),
+        prepareMotion(
+          this,
+          this.renderRoot.querySelector<HTMLElement>('.panel'),
+          navigationPanelMotionRoles.compactSurface,
+          {
+            phase: 'change',
+            fromState: Boolean(previousOpen),
+            toState: this.open,
+          },
+        ),
       );
     }
   }

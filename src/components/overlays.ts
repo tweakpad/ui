@@ -131,7 +131,6 @@ abstract class TpDialogBase extends TpElement {
           phase,
           fromState: phase === 'enter' ? 'closed' : 'open',
           toState: phase === 'enter' ? 'open' : 'closed',
-          context: { component: this.tagName.toLowerCase() },
         }),
       );
       if (phase === 'enter') this.pendingEnterMotion = handles;

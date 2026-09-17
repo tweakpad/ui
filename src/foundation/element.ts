@@ -1,7 +1,7 @@
 import { LitElement, css } from 'lit';
 import type { CSSResultGroup, PropertyDeclarations, PropertyValues } from 'lit';
 import type { Direction, Orientation } from './types.js';
-import type { MotionPolicy } from './motion.js';
+import { cancelMotions, type MotionPolicy } from './motion.js';
 import { createId } from './id.js';
 
 export class TpElement extends LitElement {
@@ -19,9 +19,6 @@ export class TpElement extends LitElement {
       box-sizing: border-box;
       color: inherit;
       font: inherit;
-
-      --tp-motion-scale: 1;
-      --tp-motion-play-state: running;
     }
 
     :host([motion-policy='reduce']) {
@@ -32,13 +29,6 @@ export class TpElement extends LitElement {
     :host([motion-policy='normal']) {
       --tp-motion-scale: 1;
       --tp-motion-play-state: running;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      :host(:not([motion-policy='normal'])) {
-        --tp-motion-scale: 0;
-        --tp-motion-play-state: paused;
-      }
     }
 
     :host([hidden]) {
@@ -85,6 +75,11 @@ export class TpElement extends LitElement {
     const own = this.getAttribute('dir');
     if (own === 'rtl' || own === 'ltr') return own;
     return getComputedStyle(this).direction === 'rtl' ? 'rtl' : 'ltr';
+  }
+
+  override disconnectedCallback(): void {
+    cancelMotions(this);
+    super.disconnectedCallback();
   }
 
   protected emit<T>(type: string, detail: T, init: CustomEventInit<T> = {}): boolean {

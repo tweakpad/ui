@@ -194,6 +194,7 @@ try {
 
     const playCountBeforeReduce = playCount;
     item.motionPolicy = 'reduce';
+    await item.updateComplete;
     item.triggerElement.click();
     await until(() => item.panelElement.dataset.state === 'absent', 'reduced-motion completion');
     const reducedRequest = requests.at(-2)?.reduced || requests.at(-1)?.reduced;
@@ -253,6 +254,308 @@ try {
     !motionContract.fallbackUnclaimed
   ) {
     throw new Error(`Motion contract produced ${JSON.stringify(motionContract)}`);
+  }
+
+  const motionLifecycleContract = await page.evaluate(async () => {
+    const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    const until = async (predicate, label) => {
+      for (let index = 0; index < 20; index += 1) {
+        if (predicate()) return;
+        await frame();
+      }
+      throw new Error(`Motion lifecycle fixture did not reach ${label}`);
+    };
+    const createCard = async () => {
+      const card = document.createElement('tp-card');
+      card.interactive = true;
+      card.motionPolicy = 'normal';
+      card.textContent = 'Motion target';
+      document.body.append(card);
+      await card.updateComplete;
+      return card;
+    };
+    const startCardMotion = (card) => {
+      card.shadowRoot
+        .querySelector('.card')
+        .dispatchEvent(new PointerEvent('pointerenter', { composed: true }));
+    };
+
+    const ownerCard = await createCard();
+    let ownerCancelCount = 0;
+    let ownerSignal;
+    let rejectOwnerPlayback;
+    const ownerDiagnostics = [];
+    ownerCard.addEventListener('tp-diagnostic', (event) => {
+      ownerDiagnostics.push(event.detail.code);
+    });
+    ownerCard.addEventListener('tp-motion-request', (event) => {
+      event.respondWith({
+        play(request) {
+          ownerSignal = request.signal;
+          return {
+            finished: new Promise((_, reject) => {
+              rejectOwnerPlayback = reject;
+            }),
+            cancel() {
+              ownerCancelCount += 1;
+              rejectOwnerPlayback(new Error('expected cancellation'));
+            },
+          };
+        },
+      });
+    });
+    startCardMotion(ownerCard);
+    await until(() => ownerSignal, 'owner playback');
+    ownerCard.remove();
+    await until(() => ownerCancelCount === 1, 'owner cancellation');
+    await frame();
+
+    const targetCard = await createCard();
+    let targetCancelCount = 0;
+    let targetSignal;
+    targetCard.addEventListener('tp-motion-request', (event) => {
+      event.respondWith({
+        play(request) {
+          targetSignal = request.signal;
+          return {
+            finished: new Promise(() => {}),
+            cancel() {
+              targetCancelCount += 1;
+            },
+          };
+        },
+      });
+    });
+    startCardMotion(targetCard);
+    await until(() => targetSignal, 'target playback');
+    targetCard.shadowRoot.querySelector('.card').remove();
+    await until(() => targetCancelCount === 1, 'target cancellation');
+
+    const lateCard = await createCard();
+    const lateDiagnostics = [];
+    let lateClaim;
+    lateCard.addEventListener('tp-diagnostic', (event) => {
+      lateDiagnostics.push(event.detail.code);
+    });
+    lateCard.addEventListener('tp-motion-request', (event) => {
+      queueMicrotask(() => {
+        lateClaim = event.respondWith({
+          play: () => ({ finished: Promise.resolve(), cancel() {} }),
+        });
+      });
+    });
+    startCardMotion(lateCard);
+    await until(
+      () => lateClaim === false && lateDiagnostics.includes('motion-claim-too-late'),
+      'late-claim diagnostic',
+    );
+
+    const failureCard = await createCard();
+    const failureDiagnostics = [];
+    let failure = 'throw';
+    failureCard.addEventListener('tp-diagnostic', (event) => {
+      failureDiagnostics.push(event.detail.code);
+    });
+    failureCard.addEventListener('tp-motion-request', (event) => {
+      event.respondWith({
+        play() {
+          if (failure === 'throw') throw new Error('driver fixture');
+          return { finished: Promise.reject(new Error('playback fixture')), cancel() {} };
+        },
+      });
+    });
+    startCardMotion(failureCard);
+    await until(
+      () => failureDiagnostics.includes('motion-driver-error'),
+      'driver-error diagnostic',
+    );
+    failure = 'reject';
+    failureCard.shadowRoot
+      .querySelector('.card')
+      .dispatchEvent(new PointerEvent('pointerleave', { composed: true }));
+    await until(
+      () => failureDiagnostics.includes('motion-playback-rejected'),
+      'playback-rejection diagnostic',
+    );
+
+    const timeoutCard = await createCard();
+    const timeoutDiagnostics = [];
+    let timeoutCancelCount = 0;
+    let timeoutSignal;
+    timeoutCard.addEventListener('tp-diagnostic', (event) => {
+      timeoutDiagnostics.push(event.detail.code);
+    });
+    timeoutCard.addEventListener('tp-motion-request', (event) => {
+      event.respondWith({
+        play(request) {
+          timeoutSignal = request.signal;
+          return {
+            finished: new Promise(() => {}),
+            cancel() {
+              timeoutCancelCount += 1;
+            },
+          };
+        },
+      });
+    });
+    const nativeSetTimeout = window.setTimeout;
+    window.setTimeout = (callback, delay, ...parameters) =>
+      nativeSetTimeout.call(window, callback, delay === 10_000 ? 0 : delay, ...parameters);
+    startCardMotion(timeoutCard);
+    window.setTimeout = nativeSetTimeout;
+    await until(
+      () => timeoutDiagnostics.includes('motion-playback-timeout'),
+      'playback-timeout diagnostic',
+    );
+
+    const missingTargetCarousel = document.createElement('tp-carousel');
+    const missingTargetDiagnostics = [];
+    missingTargetCarousel.addEventListener('tp-diagnostic', (event) => {
+      missingTargetDiagnostics.push(event.detail.code);
+    });
+    document.body.append(missingTargetCarousel);
+    await missingTargetCarousel.updateComplete;
+    missingTargetCarousel.shadowRoot.querySelector('.track').remove();
+    missingTargetCarousel.index = 1;
+    await missingTargetCarousel.updateComplete;
+    await until(
+      () => missingTargetDiagnostics.includes('motion-target-missing'),
+      'missing-target diagnostic',
+    );
+
+    const progress = document.createElement('tp-progress');
+    progress.motionPolicy = 'normal';
+    let resolveProgressStop;
+    progress.addEventListener('tp-motion-request', (event) => {
+      if (event.request.role !== 'indeterminate' || event.request.phase !== 'stop') return;
+      event.respondWith({
+        play() {
+          return {
+            finished: new Promise((resolve) => {
+              resolveProgressStop = resolve;
+            }),
+            cancel() {
+              resolveProgressStop();
+            },
+          };
+        },
+      });
+    });
+    document.body.append(progress);
+    await progress.updateComplete;
+    progress.value = 50;
+    await progress.updateComplete;
+    await until(() => resolveProgressStop, 'progress ambient-stop playback');
+    const progressIndicator = progress.shadowRoot.querySelector('.indicator');
+    const siblingDefaultRetained =
+      progressIndicator.getAttribute('data-tp-motion-driven') === 'indeterminate' &&
+      getComputedStyle(progressIndicator).transitionDuration === '0.18s';
+    resolveProgressStop();
+
+    const navigation = document.createElement('tp-navigation-panel');
+    navigation.motionPolicy = 'normal';
+    let resolveNavigationCollapse;
+    let navigationTargetsMatch = true;
+    navigation.addEventListener('tp-motion-request', (event) => {
+      navigationTargetsMatch &&=
+        event.request.target === navigation.shadowRoot.querySelector('.panel');
+      if (event.request.role !== 'collapse') return;
+      event.respondWith({
+        play() {
+          return {
+            finished: new Promise((resolve) => {
+              resolveNavigationCollapse = resolve;
+            }),
+            cancel() {
+              resolveNavigationCollapse();
+            },
+          };
+        },
+      });
+    });
+    document.body.append(navigation);
+    await navigation.updateComplete;
+    navigation.collapsed = true;
+    navigation.open = true;
+    await navigation.updateComplete;
+    await until(() => resolveNavigationCollapse, 'navigation collapse playback');
+    const navigationPanel = navigation.shadowRoot.querySelector('.panel');
+    const navigationDurations = getComputedStyle(navigationPanel)
+      .transitionDuration.split(',')
+      .map((value) => value.trim());
+    const navigationSiblingDefaultRetained =
+      navigationPanel.getAttribute('data-tp-motion-driven') === 'collapse' &&
+      navigationDurations[0] === '0s' &&
+      navigationDurations[1] === '0.18s';
+    resolveNavigationCollapse();
+
+    const spinner = document.createElement('tp-spinner');
+    spinner.motionPolicy = 'normal';
+    const spinnerPhases = [];
+    const spinnerSignals = [];
+    const spinnerDiagnostics = [];
+    let spinnerCancelCount = 0;
+    spinner.addEventListener('tp-diagnostic', (event) => {
+      spinnerDiagnostics.push(event.detail.code);
+    });
+    spinner.addEventListener('tp-motion-request', (event) => {
+      spinnerPhases.push(event.request.phase);
+      event.respondWith({
+        play(request) {
+          spinnerSignals.push(request.signal);
+          return {
+            finished: new Promise(() => {}),
+            cancel() {
+              spinnerCancelCount += 1;
+            },
+          };
+        },
+      });
+    });
+    document.body.append(spinner);
+    await until(() => spinnerSignals.length === 1, 'spinner initial start');
+    spinner.remove();
+    await until(() => spinnerCancelCount === 1, 'spinner initial cancellation');
+    document.body.append(spinner);
+    await until(() => spinnerSignals.length === 2, 'spinner reconnect start');
+    spinner.remove();
+    await until(() => spinnerCancelCount === 2, 'spinner reconnect cancellation');
+
+    targetCard.remove();
+    lateCard.remove();
+    failureCard.remove();
+    timeoutCard.remove();
+    missingTargetCarousel.remove();
+    progress.remove();
+    navigation.remove();
+    return {
+      ownerCancelledOnce: ownerCancelCount === 1,
+      ownerAborted: ownerSignal.aborted,
+      ownerCancellationIgnored: !ownerDiagnostics.includes('motion-playback-rejected'),
+      targetCancelledOnce: targetCancelCount === 1,
+      targetAborted: targetSignal.aborted,
+      lateClaimRejected: lateClaim === false,
+      lateDiagnostic: lateDiagnostics.includes('motion-claim-too-late'),
+      driverError: failureDiagnostics.includes('motion-driver-error'),
+      playbackRejected: failureDiagnostics.includes('motion-playback-rejected'),
+      playbackTimedOut:
+        timeoutDiagnostics.includes('motion-playback-timeout') &&
+        timeoutCancelCount === 1 &&
+        timeoutSignal.aborted,
+      missingTarget: missingTargetDiagnostics.includes('motion-target-missing'),
+      siblingDefaultRetained,
+      navigationTargetsMatch,
+      navigationSiblingDefaultRetained,
+      ambientReconnect:
+        spinnerPhases.join(' ') === 'start start' &&
+        spinnerSignals.every((signal) => signal.aborted) &&
+        !spinnerDiagnostics.includes('motion-target-destroyed'),
+    };
+  });
+  if (Object.values(motionLifecycleContract).some((value) => value !== true)) {
+    throw new Error(
+      `Motion lifecycle contract produced ${JSON.stringify(motionLifecycleContract)}`,
+    );
   }
 
   const checkbox = page.locator('tp-checkbox').first();
