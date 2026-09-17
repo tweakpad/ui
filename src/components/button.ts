@@ -25,26 +25,29 @@ export class TpButton extends TpElement {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
+        gap: var(--tp-space-2);
         cursor: pointer;
+        color: var(--tp-primary-foreground);
+        background: var(--tp-primary);
+        border-color: var(--tp-primary);
       }
 
       :host([size='xs']) button,
       :host([size='icon-xs']) button {
-        min-height: 1.75rem;
-        padding: 0.25rem 0.5rem;
+        min-height: var(--tp-control-height-sm);
+        padding: var(--tp-space-1) var(--tp-space-2);
       }
 
       :host([size='sm']) button,
       :host([size='icon-sm']) button {
-        min-height: 2rem;
-        padding: 0.35rem 0.625rem;
+        min-height: var(--tp-control-height-sm);
+        padding: var(--tp-space-1) var(--tp-space-3);
       }
 
       :host([size='lg']) button,
       :host([size='icon-lg']) button {
-        min-height: 2.75rem;
-        padding: 0.625rem 1rem;
+        min-height: var(--tp-control-height-lg);
+        padding: var(--tp-space-3) var(--tp-space-4);
       }
 
       :host([size^='icon']) button {
@@ -53,17 +56,25 @@ export class TpButton extends TpElement {
       }
 
       :host([variant='secondary']) button {
-        background: var(--tp-color-surface-raised, ButtonFace);
+        color: var(--tp-secondary-foreground);
+        background: var(--tp-secondary);
+      }
+
+      :host([variant='outline']) button {
+        color: var(--tp-foreground);
+        background: var(--tp-background);
+        border-color: var(--tp-border);
       }
 
       :host([variant='destructive']) button {
-        color: var(--tp-color-danger-contrast, Canvas);
-        background: var(--tp-color-danger, Mark);
-        border-color: var(--tp-color-danger, Mark);
+        color: var(--tp-destructive-foreground);
+        background: var(--tp-destructive);
+        border-color: var(--tp-destructive);
       }
 
       :host([variant='ghost']) button,
       :host([variant='link']) button {
+        color: var(--tp-foreground);
         background: transparent;
         border-color: transparent;
       }

@@ -3,35 +3,30 @@ import { css } from 'lit';
 export const controlStyles = css`
   .control {
     appearance: none;
-    border: 1px solid var(--tp-color-border, currentcolor);
-    border-radius: var(--tp-radius-sm, 0.375rem);
-    color: inherit;
-    background: var(--tp-color-surface, Canvas);
+    min-height: var(--tp-control-height-md);
+    padding: var(--tp-space-2) var(--tp-space-3);
+    border: var(--tp-border-width) var(--tp-border-style) var(--tp-input);
+    border-radius: var(--tp-radius-sm);
+    color: var(--tp-foreground);
+    background: var(--tp-background);
     font: inherit;
-    min-height: 2.25rem;
-    padding: 0.45rem 0.75rem;
   }
 
   .control:disabled {
     cursor: not-allowed;
-    opacity: 0.55;
   }
 
   .control:not(:disabled):hover {
-    border-color: color-mix(
-      in srgb,
-      var(--tp-color-accent, Highlight) 65%,
-      var(--tp-color-border, currentcolor)
-    );
+    border-color: var(--tp-accent);
   }
 
   .surface {
-    border: 1px solid var(--tp-color-border, currentcolor);
-    border-radius: var(--tp-radius-md, 0.625rem);
-    color: var(--tp-color-text, CanvasText);
-    background: var(--tp-color-surface, Canvas);
-    box-shadow: var(--tp-shadow-overlay, 0 12px 40px rgb(0 0 0 / 20%));
-    padding: 0.75rem;
+    padding: var(--tp-space-3);
+    border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+    border-radius: var(--tp-radius-lg);
+    color: var(--tp-popover-foreground);
+    background: var(--tp-popover);
+    box-shadow: var(--tp-shadow-lg);
   }
 
   .visually-hidden {

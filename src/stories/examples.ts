@@ -400,7 +400,7 @@ export function renderComponentExample(tagName: CatalogTag): TemplateResult {
         min-height: 5rem;
         padding: 0.75rem;
         border-radius: var(--tp-radius-sm);
-        background: var(--tp-color-surface-raised);
+        background: var(--tp-card);
       }
 
       .centered {

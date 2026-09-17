@@ -120,7 +120,7 @@ try {
     throw new Error('Published Accordion Item did not initialize its position or relationships');
   const accent = await page
     .locator('tp-button')
-    .evaluate((element) => getComputedStyle(element).getPropertyValue('--tp-color-accent').trim());
+    .evaluate((element) => getComputedStyle(element).getPropertyValue('--tp-accent').trim());
   if (!accent) throw new Error('Published stylesheet did not load');
   await page.goto(`http://127.0.0.1:${address.port}/__icon-package-smoke`, {
     waitUntil: 'networkidle',

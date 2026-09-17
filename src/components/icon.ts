@@ -15,8 +15,8 @@ export class TpIcon extends LitElement {
     :host {
       display: inline-flex;
       box-sizing: border-box;
-      inline-size: var(--tp-icon-size, 1em);
-      block-size: var(--tp-icon-size, 1em);
+      inline-size: var(--tp-icon-size, var(--tp-icon-size-md));
+      block-size: var(--tp-icon-size, var(--tp-icon-size-md));
       flex: none;
       color: inherit;
       pointer-events: none;
@@ -41,11 +41,11 @@ export class TpIcon extends LitElement {
 
   icon: IconDefinition | undefined;
   label = '';
-  size = '1em';
+  size = '';
 
   protected override willUpdate(): void {
     // Direct width/height rules on the host can still override this default extent.
-    this.style.setProperty('--tp-icon-size', this.size || '1em');
+    this.style.setProperty('--tp-icon-size', this.size || 'var(--tp-icon-size-md)');
     this.toggleAttribute('data-empty', !this.icon);
     if (this.icon && this.label.trim()) {
       this.setAttribute('role', 'img');

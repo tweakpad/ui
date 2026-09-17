@@ -24,7 +24,7 @@ export class TpToggleGroup extends TpFormElement {
 
       [part='toggle-group'] {
         display: flex;
-        gap: calc(var(--tp-space-unit, 0.125rem) * var(--tp-toggle-group-spacing, 2));
+        gap: calc(var(--tp-spacing) * var(--tp-toggle-group-spacing, 2));
       }
     `,
   ];

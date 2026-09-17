@@ -58,15 +58,25 @@ abstract class TpDialogBase extends TpElement {
         inset: 0;
         display: grid;
         place-items: center;
-        padding: 1rem;
-        background: rgb(0 0 0 / 48%);
+        padding: var(--tp-space-4);
+        background: transparent;
         opacity: 1;
         transition: opacity calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
       }
 
+      .backdrop::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--tp-foreground);
+        opacity: var(--tp-opacity-backdrop);
+        pointer-events: none;
+      }
+
       .dialog {
+        position: relative;
         width: min(32rem, 100%);
-        max-height: calc(100vh - 2rem);
+        max-height: calc(100vh - var(--tp-space-8));
         overflow: auto;
       }
 

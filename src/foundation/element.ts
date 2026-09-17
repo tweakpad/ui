@@ -17,8 +17,12 @@ export class TpElement extends LitElement {
   static styles: CSSResultGroup = css`
     :host {
       box-sizing: border-box;
-      color: inherit;
-      font: inherit;
+      color: var(--tp-foreground);
+      font-family: var(--tp-font-sans);
+      font-size: var(--tp-text-base);
+      font-weight: var(--tp-font-normal);
+      line-height: var(--tp-leading-normal);
+      letter-spacing: var(--tp-tracking-normal);
     }
 
     :host([motion-policy='reduce']) {
@@ -37,7 +41,7 @@ export class TpElement extends LitElement {
 
     :host([disabled]) {
       cursor: not-allowed;
-      opacity: 0.55;
+      opacity: var(--tp-opacity-disabled);
     }
 
     *,
@@ -47,8 +51,16 @@ export class TpElement extends LitElement {
     }
 
     [part~='focusable']:focus-visible {
-      outline: 2px solid var(--tp-color-accent, Highlight);
-      outline-offset: 2px;
+      outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
+      outline-offset: var(--tp-ring-offset);
+    }
+
+    :host([invalid]) [part~='focusable'] {
+      border-color: var(--tp-destructive);
+    }
+
+    :host([invalid]) [part~='focusable']:focus-visible {
+      outline-color: var(--tp-destructive);
     }
 
     .visually-hidden {

@@ -51,11 +51,21 @@ export class TpAvatar extends TpElement {
     css`
       :host {
         display: inline-grid;
-        width: var(--tp-avatar-size, 2.5rem);
-        height: var(--tp-avatar-size, 2.5rem);
-        border-radius: 50%;
+        width: var(--tp-control-height-lg);
+        height: var(--tp-control-height-lg);
+        border-radius: var(--tp-radius-full);
         overflow: hidden;
-        background: var(--tp-color-surface-raised);
+        background: var(--tp-card);
+      }
+
+      :host([size='sm']) {
+        width: var(--tp-control-height-md);
+        height: var(--tp-control-height-md);
+      }
+
+      :host([size='lg']) {
+        width: var(--tp-space-16);
+        height: var(--tp-space-16);
       }
 
       img,
@@ -65,7 +75,7 @@ export class TpAvatar extends TpElement {
         object-fit: cover;
         display: grid;
         place-items: center;
-        font-weight: 600;
+        font-weight: var(--tp-font-semibold);
       }
     `,
   ];
@@ -132,7 +142,7 @@ export class TpCarousel extends TpElement {
       .controls {
         display: flex;
         justify-content: space-between;
-        margin-top: 0.5rem;
+        margin-top: var(--tp-space-2);
       }
     `,
   ];
@@ -270,11 +280,11 @@ export class TpDataVisualization extends TpElement {
       }
 
       .description {
-        color: var(--tp-color-muted);
+        color: var(--tp-muted-foreground);
       }
 
       .table {
-        margin-top: 0.75rem;
+        margin-top: var(--tp-space-3);
       }
     `,
   ];
@@ -369,15 +379,15 @@ export class TpProgress extends TpElement {
       }
 
       .track {
-        height: 0.5rem;
-        border-radius: 999px;
+        height: var(--tp-space-2);
+        border-radius: var(--tp-radius-full);
         overflow: hidden;
-        background: var(--tp-color-surface-raised);
+        background: var(--tp-card);
       }
 
       .indicator {
         height: 100%;
-        background: var(--tp-color-accent);
+        background: var(--tp-accent);
         transition: width calc(var(--tp-duration-normal, 180ms) * var(--tp-motion-scale, 1));
       }
 
@@ -516,21 +526,22 @@ export class TpResizablePanelGroup extends TpElement {
         z-index: 1;
         top: 0;
         bottom: 0;
-        width: 0.4rem;
+        width: var(--tp-space-2);
         translate: -50% 0;
-        background: var(--tp-color-border);
+        background: var(--tp-border);
         cursor: col-resize;
       }
 
       .handle:focus-visible {
-        outline: 2px solid var(--tp-color-accent);
+        outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
+        outline-offset: var(--tp-ring-offset);
       }
 
       :host([orientation='vertical']) .handle {
         inset-inline: 0;
         bottom: auto;
         width: auto;
-        height: 0.4rem;
+        height: var(--tp-space-2);
         translate: 0 -50%;
         cursor: row-resize;
       }
@@ -650,7 +661,7 @@ export class TpScrollArea extends TpElement {
         height: 100%;
         overflow: auto;
         overscroll-behavior: contain;
-        scrollbar-color: var(--tp-color-muted) transparent;
+        scrollbar-color: var(--tp-muted-foreground) transparent;
       }
 
       :host([axis='x']) .viewport {
@@ -681,14 +692,14 @@ export class TpSeparator extends TpElement {
     css`
       :host {
         display: block;
-        background: var(--tp-color-border);
-        height: 1px;
+        background: var(--tp-border);
+        height: var(--tp-border-width);
         width: 100%;
       }
 
       :host([orientation='vertical']) {
         height: 100%;
-        width: 1px;
+        width: var(--tp-border-width);
       }
     `,
   ];
@@ -710,11 +721,11 @@ export class TpSpinner extends TpElement {
     css`
       :host {
         display: inline-block;
-        width: 1.25rem;
-        height: 1.25rem;
-        border: 2px solid currentcolor;
+        width: var(--tp-icon-size-md);
+        height: var(--tp-icon-size-md);
+        border: var(--tp-border-width-strong) var(--tp-border-style) currentcolor;
         border-right-color: transparent;
-        border-radius: 50%;
+        border-radius: var(--tp-radius-full);
         animation: spin 0.8s linear infinite;
         animation-play-state: var(--tp-motion-play-state, running);
       }
@@ -773,7 +784,7 @@ export class TpToast extends TpElement {
       .toast {
         display: flex;
         align-items: start;
-        gap: 0.75rem;
+        gap: var(--tp-space-3);
         min-width: 16rem;
       }
 

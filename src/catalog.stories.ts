@@ -62,18 +62,18 @@ export const Overview: Story = {
         gap: 0.65rem;
         align-content: start;
         padding: 1rem;
-        border: 1px solid var(--tp-color-border);
+        border: 1px solid var(--tp-border);
         border-radius: var(--tp-radius-md);
       }
       .example > h2 {
         margin: 0;
         font-size: 0.9rem;
-        color: var(--tp-color-muted);
+        color: var(--tp-muted-foreground);
       }
       .surface-demo {
         min-height: 5rem;
         padding: 0.75rem;
-        background: var(--tp-color-surface-raised);
+        background: var(--tp-card);
         border-radius: var(--tp-radius-sm);
       }
       tp-skeleton {

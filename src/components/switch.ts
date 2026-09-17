@@ -39,31 +39,31 @@ export class TpSwitch extends TpCheckbox {
       .root {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: var(--tp-space-2);
         cursor: pointer;
       }
 
       .track {
         display: flex;
-        width: 2.25rem;
-        height: 1.25rem;
-        padding: 0.125rem;
-        border-radius: 999px;
-        background: var(--tp-color-border);
+        width: var(--tp-control-height-md);
+        height: var(--tp-icon-size-md);
+        padding: calc(var(--tp-space-1) / 2);
+        border-radius: var(--tp-radius-full);
+        background: var(--tp-border);
         transition: background calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1));
       }
 
       .thumb {
-        width: 1rem;
-        height: 1rem;
-        border-radius: 50%;
-        background: var(--tp-color-surface);
-        box-shadow: 0 1px 3px rgb(0 0 0 / 35%);
+        width: var(--tp-icon-size-sm);
+        height: var(--tp-icon-size-sm);
+        border-radius: var(--tp-radius-full);
+        background: var(--tp-background);
+        box-shadow: var(--tp-shadow-sm);
         transition: transform calc(var(--tp-duration-fast, 120ms) * var(--tp-motion-scale, 1));
       }
 
       .root[data-checked] .track {
-        background: var(--tp-color-accent);
+        background: var(--tp-accent);
       }
 
       .root[data-checked] .thumb {

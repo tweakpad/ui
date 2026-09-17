@@ -32,9 +32,9 @@ export class TpAccordionItem extends TpElement {
       [part~='accordion-trigger'] {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: var(--tp-space-3);
         width: 100%;
-        padding: 0.85rem 1rem;
+        padding: var(--tp-space-3) var(--tp-space-4);
         border: 0;
         background: transparent;
         color: inherit;
@@ -48,8 +48,8 @@ export class TpAccordionItem extends TpElement {
       }
 
       [part~='accordion-trigger']:focus-visible {
-        outline: 2px solid var(--tp-color-accent, Highlight);
-        outline-offset: -2px;
+        outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
+        outline-offset: calc(-1 * var(--tp-ring-width));
       }
 
       .label {

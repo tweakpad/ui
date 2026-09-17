@@ -198,7 +198,7 @@ export class TpTextArea extends TpTextControl {
 
       textarea {
         width: 100%;
-        min-height: 4.5rem;
+        min-height: calc(var(--tp-control-height-md) * 2);
         resize: var(--tp-text-area-resize, vertical);
       }
     `,
@@ -272,12 +272,12 @@ export class TpNativeSelect extends TpFormElement {
 
       select {
         width: 100%;
-        padding-right: 2rem;
+        padding-right: var(--tp-space-8);
       }
 
       .icon {
         position: absolute;
-        right: 0.6rem;
+        right: var(--tp-space-3);
         top: 50%;
         translate: 0 -50%;
         pointer-events: none;
@@ -449,23 +449,23 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
 
       .root {
         display: grid;
-        gap: 0.375rem;
+        gap: var(--tp-space-2);
       }
 
       .header {
         display: flex;
         align-items: baseline;
         justify-content: space-between;
-        gap: 1rem;
+        gap: var(--tp-space-4);
       }
 
       .control {
-        --tp-slider-thumb-size: 1.25rem;
+        --tp-slider-thumb-size: var(--tp-icon-size-md);
         --tp-slider-thumb-radius: calc(var(--tp-slider-thumb-size) / 2);
 
         position: relative;
         min-inline-size: 10rem;
-        min-block-size: 1.5rem;
+        min-block-size: var(--tp-icon-size-lg);
         touch-action: none;
         user-select: none;
       }
@@ -473,25 +473,22 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
       .track,
       .range {
         position: absolute;
-        border-radius: 999px;
+        border-radius: var(--tp-radius-full);
         pointer-events: none;
       }
 
       .track {
-        background: var(
-          --tp-color-surface-raised,
-          color-mix(in srgb, currentcolor 18%, transparent)
-        );
+        background: var(--tp-card, color-mix(in srgb, currentcolor 18%, transparent));
       }
 
       .range {
-        background: var(--tp-color-accent, Highlight);
+        background: var(--tp-accent);
       }
 
       :host([orientation='horizontal']) .track,
       :host(:not([orientation])) .track {
         inset: 50% 0 auto;
-        block-size: 0.375rem;
+        block-size: var(--tp-space-2);
         translate: 0 -50%;
       }
 
@@ -503,17 +500,17 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
       }
 
       :host([orientation='vertical']) {
-        min-inline-size: 3rem;
+        min-inline-size: var(--tp-space-12);
       }
 
       :host([orientation='vertical']) .control {
-        min-inline-size: 1.5rem;
+        min-inline-size: var(--tp-icon-size-lg);
         min-block-size: 10rem;
       }
 
       :host([orientation='vertical']) .track {
         inset: 0 auto 0 50%;
-        inline-size: 0.375rem;
+        inline-size: var(--tp-space-2);
         translate: -50% 0;
       }
 
@@ -558,18 +555,18 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
         width: var(--tp-slider-thumb-size);
         height: var(--tp-slider-thumb-size);
         appearance: none;
-        border: 2px solid var(--tp-color-accent, Highlight);
-        border-radius: 50%;
-        background: var(--tp-color-surface, Canvas);
+        border: var(--tp-border-width-strong) var(--tp-border-style) var(--tp-accent);
+        border-radius: var(--tp-radius-full);
+        background: var(--tp-background);
       }
 
       input[type='range']::-moz-range-thumb {
         box-sizing: border-box;
         width: var(--tp-slider-thumb-size);
         height: var(--tp-slider-thumb-size);
-        border: 2px solid var(--tp-color-accent, Highlight);
-        border-radius: 50%;
-        background: var(--tp-color-surface, Canvas);
+        border: var(--tp-border-width-strong) var(--tp-border-style) var(--tp-accent);
+        border-radius: var(--tp-radius-full);
+        background: var(--tp-background);
       }
 
       input[type='range']:focus-visible {
@@ -577,11 +574,11 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
       }
 
       input[type='range']:focus-visible::-webkit-slider-thumb {
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--tp-color-accent, Highlight) 35%, transparent);
+        box-shadow: 0 0 0 var(--tp-ring-width) var(--tp-ring);
       }
 
       input[type='range']:focus-visible::-moz-range-thumb {
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--tp-color-accent, Highlight) 35%, transparent);
+        box-shadow: 0 0 0 var(--tp-ring-width) var(--tp-ring);
       }
 
       :host([orientation='vertical']) input[type='range'] {
@@ -1406,7 +1403,7 @@ export class TpOtpField extends TpFormElement {
 
       [part='group'] {
         display: flex;
-        gap: 0.4rem;
+        gap: var(--tp-space-2);
       }
 
       .editor {
@@ -1426,18 +1423,18 @@ export class TpOtpField extends TpFormElement {
       .slot {
         display: grid;
         place-items: center;
-        width: 2.5rem;
-        min-height: 2.5rem;
+        width: var(--tp-target-size-min);
+        min-height: var(--tp-target-size-min);
         text-align: center;
-        padding: 0.4rem;
-        border: 1px solid var(--tp-color-border, currentcolor);
-        border-radius: var(--tp-radius-sm, 0.375rem);
-        background: var(--tp-color-surface, Canvas);
+        padding: var(--tp-space-2);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-input);
+        border-radius: var(--tp-radius-sm);
+        background: var(--tp-background);
       }
 
       .slot[data-active] {
-        outline: 2px solid var(--tp-color-accent, Highlight);
-        outline-offset: 2px;
+        outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
+        outline-offset: var(--tp-ring-offset);
       }
     `,
   ];
@@ -1610,7 +1607,7 @@ export class TpField extends TpElement {
 
       [part='field'] {
         display: grid;
-        gap: 0.35rem;
+        gap: var(--tp-space-1);
         min-width: 0;
         padding: 0;
         margin: 0;
@@ -1620,7 +1617,7 @@ export class TpField extends TpElement {
       :host([orientation='horizontal']) [part='field-field'] {
         display: grid;
         grid-template-columns: minmax(8rem, 0.35fr) minmax(0, 1fr);
-        gap: 0.35rem 0.75rem;
+        gap: var(--tp-space-1) var(--tp-space-3);
         align-items: start;
       }
 
@@ -1628,23 +1625,23 @@ export class TpField extends TpElement {
         :host([orientation='responsive']) [part='field-field'] {
           display: grid;
           grid-template-columns: minmax(8rem, 0.35fr) minmax(0, 1fr);
-          gap: 0.35rem 0.75rem;
+          gap: var(--tp-space-1) var(--tp-space-3);
           align-items: start;
         }
       }
 
       [part='field-label'] {
-        font-weight: 600;
+        font-weight: var(--tp-font-semibold);
       }
 
       [part='field-description'] {
-        color: var(--tp-color-muted);
-        font-size: 0.875em;
+        color: var(--tp-muted-foreground);
+        font-size: var(--tp-text-sm);
       }
 
       [part='field-error'] {
-        color: var(--tp-color-danger);
-        font-size: 0.875em;
+        color: var(--tp-destructive);
+        font-size: var(--tp-text-sm);
       }
     `,
   ];
@@ -2011,7 +2008,7 @@ export class TpInputGroup extends TpElement {
     css`
       :host {
         display: inline-flex;
-        border: 1px solid var(--tp-color-border);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
         border-radius: var(--tp-radius-sm);
         overflow: hidden;
         align-items: stretch;
@@ -2025,8 +2022,8 @@ export class TpInputGroup extends TpElement {
       [part='input-group-addon'] {
         display: flex;
         align-items: center;
-        padding: 0 0.6rem;
-        background: var(--tp-color-surface-raised);
+        padding: 0 var(--tp-space-3);
+        background: var(--tp-card);
       }
     `,
   ];
@@ -2142,7 +2139,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
 
       .root {
         display: grid;
-        gap: 0.75rem;
+        gap: var(--tp-space-3);
         min-inline-size: 17rem;
       }
 
@@ -2150,39 +2147,39 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
         display: grid;
         grid-template-columns: auto 1fr auto;
         align-items: center;
-        gap: 0.5rem;
+        gap: var(--tp-space-2);
       }
 
       .caption {
-        font-weight: 600;
+        font-weight: var(--tp-font-semibold);
         text-align: center;
       }
 
       .navigation {
         display: grid;
         place-items: center;
-        min-width: 2rem;
-        min-height: 2rem;
-        padding: 0.25rem;
-        border: 1px solid var(--tp-color-border, currentcolor);
-        border-radius: var(--tp-radius-sm, 0.375rem);
-        color: inherit;
-        background: var(--tp-color-surface, Canvas);
+        min-width: var(--tp-control-height-sm);
+        min-height: var(--tp-control-height-sm);
+        padding: var(--tp-space-1);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+        border-radius: var(--tp-radius-sm);
+        color: var(--tp-foreground);
+        background: var(--tp-background);
       }
 
       .months {
         display: grid;
         grid-template-columns: repeat(var(--tp-calendar-visible-months), minmax(15rem, 1fr));
-        gap: 1rem;
+        gap: var(--tp-space-4);
       }
 
       .month {
         display: grid;
-        gap: 0.375rem;
+        gap: var(--tp-space-2);
       }
 
       .month-caption {
-        font-weight: 600;
+        font-weight: var(--tp-font-semibold);
         text-align: center;
       }
 
@@ -2193,9 +2190,9 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
       }
 
       .weekday {
-        padding: 0.25rem;
-        color: var(--tp-color-muted, CanvasText);
-        font-size: 0.8em;
+        padding: var(--tp-space-1);
+        color: var(--tp-muted-foreground);
+        font-size: var(--tp-text-xs);
         text-align: center;
       }
 
@@ -2203,47 +2200,47 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
         display: grid;
         place-items: stretch;
         min-width: 0;
-        min-height: 2rem;
+        min-height: var(--tp-target-size-min);
       }
 
       .day {
-        min-width: 2rem;
-        min-height: 2rem;
-        padding: 0.25rem;
+        min-width: var(--tp-target-size-min);
+        min-height: var(--tp-target-size-min);
+        padding: var(--tp-space-1);
         border: 0;
-        border-radius: var(--tp-radius-sm, 0.375rem);
+        border-radius: var(--tp-radius-sm);
         color: inherit;
         background: transparent;
       }
 
       .day[data-outside] {
-        color: var(--tp-color-muted, CanvasText);
+        color: var(--tp-muted-foreground);
       }
 
       .day[data-range-middle] {
         border-radius: 0;
-        background: color-mix(in srgb, var(--tp-color-accent, Highlight) 16%, transparent);
+        background: var(--tp-accent);
       }
 
       .day[data-selected] {
-        color: var(--tp-color-accent-contrast, HighlightText);
-        background: var(--tp-color-accent, Highlight);
+        color: var(--tp-accent-foreground);
+        background: var(--tp-accent);
       }
 
       .day[data-today] {
-        box-shadow: inset 0 0 0 1px currentcolor;
+        box-shadow: inset 0 0 0 var(--tp-border-width) currentcolor;
       }
 
       .day:focus-visible {
         position: relative;
         z-index: 1;
-        outline: 2px solid var(--tp-color-accent, Highlight);
-        outline-offset: 1px;
+        outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
+        outline-offset: var(--tp-ring-offset);
       }
 
       .day:disabled {
         cursor: not-allowed;
-        opacity: 0.45;
+        opacity: var(--tp-opacity-disabled);
       }
 
       @media (width <= 42rem) {
@@ -3033,18 +3030,18 @@ export class TpQuestionnaire extends TpElement {
 
       form {
         display: grid;
-        gap: 1rem;
+        gap: var(--tp-space-4);
         min-width: 0;
       }
 
       [part='questionnaire-progress'] {
-        color: var(--tp-color-muted, CanvasText);
-        font-size: 0.875rem;
+        color: var(--tp-muted-foreground);
+        font-size: var(--tp-text-sm);
       }
 
       fieldset {
         display: grid;
-        gap: 0.75rem;
+        gap: var(--tp-space-3);
         min-width: 0;
         padding: 0;
         margin: 0;
@@ -3053,49 +3050,50 @@ export class TpQuestionnaire extends TpElement {
 
       [part='questionnaire-title'] {
         padding: 0;
-        font-weight: 650;
+        font-weight: var(--tp-font-semibold);
       }
 
       [part='questionnaire-description'] {
-        color: var(--tp-color-muted, CanvasText);
+        color: var(--tp-muted-foreground);
       }
 
       [part='questionnaire-choices'] {
         display: grid;
-        gap: 0.5rem;
+        gap: var(--tp-space-2);
       }
 
       [part='questionnaire-choice'] {
         display: grid;
         grid-template-columns: auto minmax(0, 1fr) auto;
-        gap: 0.5rem;
+        gap: var(--tp-space-2);
         align-items: start;
-        padding: 0.55rem 0.65rem;
-        border: 1px solid var(--tp-color-border, currentcolor);
-        border-radius: var(--tp-radius-sm, 0.375rem);
+        padding: var(--tp-space-2) var(--tp-space-3);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+        border-radius: var(--tp-radius-sm);
       }
 
       [part='questionnaire-choice']:has(input:checked) {
-        border-color: var(--tp-color-accent, Highlight);
+        border-color: var(--tp-accent);
       }
 
       .choice-copy {
         display: grid;
-        gap: 0.15rem;
+        gap: var(--tp-space-1);
       }
 
       .choice-description {
-        color: var(--tp-color-muted, CanvasText);
-        font-size: 0.875rem;
+        color: var(--tp-muted-foreground);
+        font-size: var(--tp-text-sm);
       }
 
       .shortcut {
-        min-width: 1.5rem;
-        padding: 0.05rem 0.3rem;
-        border: 1px solid var(--tp-color-border, currentcolor);
-        border-radius: 0.25rem;
-        color: var(--tp-color-muted, CanvasText);
-        font-size: 0.75rem;
+        min-width: var(--tp-icon-size-lg);
+        padding: 0 var(--tp-space-1);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+        border-radius: var(--tp-radius-sm);
+        color: var(--tp-muted-foreground);
+        font-family: var(--tp-font-mono);
+        font-size: var(--tp-text-xs);
         text-align: center;
       }
 
@@ -3104,31 +3102,31 @@ export class TpQuestionnaire extends TpElement {
       }
 
       [part='questionnaire-error'] {
-        color: var(--tp-color-danger, #b91c1c);
-        font-size: 0.875rem;
+        color: var(--tp-destructive);
+        font-size: var(--tp-text-sm);
       }
 
       [part='questionnaire-actions'] {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: var(--tp-space-2);
         justify-content: flex-end;
       }
 
       [part='questionnaire-actions'] button {
-        min-height: 2.25rem;
-        padding: 0.45rem 0.75rem;
-        border: 1px solid var(--tp-color-border, currentcolor);
-        border-radius: var(--tp-radius-sm, 0.375rem);
-        color: inherit;
-        background: var(--tp-color-surface, Canvas);
+        min-height: var(--tp-control-height-md);
+        padding: var(--tp-space-2) var(--tp-space-3);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+        border-radius: var(--tp-radius-sm);
+        color: var(--tp-foreground);
+        background: var(--tp-background);
         font: inherit;
       }
 
       [part='questionnaire-actions'] button.primary {
-        border-color: var(--tp-color-accent, Highlight);
-        color: var(--tp-color-accent-contrast, HighlightText);
-        background: var(--tp-color-accent, Highlight);
+        border-color: var(--tp-primary);
+        color: var(--tp-primary-foreground);
+        background: var(--tp-primary);
       }
     `,
   ];

@@ -43,25 +43,26 @@ export class TpAlert extends TpElement {
       .alert {
         display: grid;
         grid-template-columns: auto 1fr auto;
-        gap: 0.75rem;
+        gap: var(--tp-space-3);
         align-items: start;
-        border-inline-start: 4px solid var(--tp-alert-color, var(--tp-color-accent));
+        border-inline-start: var(--tp-border-width-strong) var(--tp-border-style)
+          var(--tp-alert-color, var(--tp-primary));
       }
 
       :host([severity='danger']) {
-        --tp-alert-color: var(--tp-color-danger);
+        --tp-alert-color: var(--tp-destructive);
       }
 
       :host([severity='warning']) {
-        --tp-alert-color: #d97706;
+        --tp-alert-color: var(--tp-warning);
       }
 
       :host([severity='success']) {
-        --tp-alert-color: #16a34a;
+        --tp-alert-color: var(--tp-success);
       }
 
       .title {
-        font-weight: 700;
+        font-weight: var(--tp-font-bold);
       }
     `,
   ];
@@ -152,7 +153,7 @@ export class TpAttachment extends TpElement {
       .attachment {
         display: flex;
         align-items: center;
-        gap: 0.65rem;
+        gap: var(--tp-space-3);
       }
 
       .meta {
@@ -168,8 +169,8 @@ export class TpAttachment extends TpElement {
       }
 
       .size {
-        color: var(--tp-color-muted);
-        font-size: 0.875em;
+        color: var(--tp-muted-foreground);
+        font-size: var(--tp-text-sm);
       }
     `,
   ];
@@ -230,18 +231,18 @@ export class TpBadge extends TpElement {
       .badge {
         display: inline-flex;
         align-items: center;
-        gap: 0.25rem;
-        border-radius: 999px;
-        padding: 0.15rem 0.5rem;
-        font-size: 0.75em;
-        font-weight: 650;
-        background: var(--tp-color-surface-raised);
-        border: 1px solid var(--tp-color-border);
+        gap: var(--tp-space-1);
+        padding: var(--tp-space-1) var(--tp-space-2);
+        border-radius: var(--tp-radius-full);
+        font-size: var(--tp-text-xs);
+        font-weight: var(--tp-font-semibold);
+        background: var(--tp-card);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
       }
 
       :host([variant='accent']) .badge {
-        background: var(--tp-color-accent);
-        color: var(--tp-color-accent-contrast);
+        background: var(--tp-accent);
+        color: var(--tp-accent-foreground);
         border-color: transparent;
       }
     `,
@@ -270,14 +271,14 @@ export class TpBubble extends TpElement {
         max-width: 75%;
         width: fit-content;
         border-radius: var(--tp-radius-md);
-        padding: 0.6rem 0.8rem;
-        background: var(--tp-color-surface-raised);
+        padding: var(--tp-space-3);
+        background: var(--tp-card);
       }
 
       :host([side='end']) .bubble {
         margin-inline-start: auto;
-        background: var(--tp-color-accent);
-        color: var(--tp-color-accent-contrast);
+        background: var(--tp-accent);
+        color: var(--tp-accent-foreground);
       }
     `,
   ];
@@ -343,7 +344,7 @@ export class TpCard extends TpElement {
 
       .card {
         display: grid;
-        gap: 0.75rem;
+        gap: var(--tp-space-3);
       }
 
       :host([interactive]) .card {
@@ -413,14 +414,14 @@ export class TpEmptyState extends TpElement {
       .root {
         display: grid;
         justify-items: center;
-        gap: 0.6rem;
+        gap: var(--tp-space-3);
         text-align: center;
-        padding: 2rem;
+        padding: var(--tp-space-8);
       }
 
       .description {
         max-width: 36rem;
-        color: var(--tp-color-muted);
+        color: var(--tp-muted-foreground);
       }
     `,
   ];
@@ -455,16 +456,17 @@ export class TpKeyHint extends TpElement {
       kbd {
         display: inline-flex;
         align-items: center;
-        min-width: 1.5rem;
-        min-height: 1.5rem;
+        min-width: var(--tp-icon-size-lg);
+        min-height: var(--tp-icon-size-lg);
         justify-content: center;
-        padding: 0 0.35rem;
-        border: 1px solid var(--tp-color-border);
-        border-bottom-width: 2px;
-        border-radius: 0.3rem;
-        background: var(--tp-color-surface-raised);
+        padding: 0 var(--tp-space-1);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+        border-bottom-width: var(--tp-border-width-strong);
+        border-radius: var(--tp-radius-sm);
+        background: var(--tp-card);
         font: inherit;
-        font-size: 0.78em;
+        font-family: var(--tp-font-mono);
+        font-size: var(--tp-text-xs);
       }
     `,
   ];
@@ -485,13 +487,13 @@ export class TpLabel extends TpElement {
     css`
       :host {
         display: inline-flex;
-        font-weight: 600;
+        font-weight: var(--tp-font-semibold);
       }
 
       .optional {
-        font-weight: 400;
-        color: var(--tp-color-muted);
-        margin-inline-start: 0.35rem;
+        font-weight: var(--tp-font-normal);
+        color: var(--tp-muted-foreground);
+        margin-inline-start: var(--tp-space-1);
       }
     `,
   ];
@@ -608,19 +610,19 @@ export class TpListItem extends TpElement {
         display: grid;
         grid-template-columns: auto 1fr auto;
         align-items: center;
-        gap: 0.65rem;
-        padding: 0.5rem 0.65rem;
-        border-radius: 0.35rem;
+        gap: var(--tp-space-3);
+        padding: var(--tp-space-2) var(--tp-space-3);
+        border-radius: var(--tp-radius-sm);
       }
 
       :host([selected]) .item {
-        background: var(--tp-color-surface-raised);
+        background: var(--tp-card);
       }
 
       .description {
         display: block;
-        color: var(--tp-color-muted);
-        font-size: 0.875em;
+        color: var(--tp-muted-foreground);
+        font-size: var(--tp-text-sm);
       }
     `,
   ];
@@ -656,22 +658,22 @@ export class TpMarker extends TpElement {
     css`
       :host {
         display: inline-flex;
-        width: 0.625rem;
-        height: 0.625rem;
-        border-radius: 50%;
-        background: var(--tp-marker-color, var(--tp-color-muted));
+        width: var(--tp-space-3);
+        height: var(--tp-space-3);
+        border-radius: var(--tp-radius-full);
+        background: var(--tp-marker-color, var(--tp-muted-foreground));
       }
 
       :host([tone='accent']) {
-        --tp-marker-color: var(--tp-color-accent);
+        --tp-marker-color: var(--tp-accent);
       }
 
       :host([tone='danger']) {
-        --tp-marker-color: var(--tp-color-danger);
+        --tp-marker-color: var(--tp-destructive);
       }
 
       :host([tone='success']) {
-        --tp-marker-color: #16a34a;
+        --tp-marker-color: var(--tp-success);
       }
     `,
   ];
@@ -701,23 +703,23 @@ export class TpMessage extends TpElement {
       .message {
         display: grid;
         grid-template-columns: auto 1fr;
-        gap: 0.65rem;
+        gap: var(--tp-space-3);
       }
 
       .meta {
         display: flex;
-        gap: 0.5rem;
+        gap: var(--tp-space-2);
         align-items: baseline;
       }
 
       .time {
-        color: var(--tp-color-muted);
-        font-size: 0.8em;
+        color: var(--tp-muted-foreground);
+        font-size: var(--tp-text-xs);
       }
 
       .status {
-        color: var(--tp-color-muted);
-        font-size: 0.8em;
+        color: var(--tp-muted-foreground);
+        font-size: var(--tp-text-xs);
       }
     `,
   ];
@@ -761,9 +763,9 @@ export class TpSkeleton extends TpElement {
     css`
       :host {
         display: block;
-        min-height: 1rem;
-        border-radius: 0.3rem;
-        background: var(--tp-color-surface-raised);
+        min-height: var(--tp-icon-size-sm);
+        border-radius: var(--tp-radius-sm);
+        background: var(--tp-card);
         overflow: hidden;
       }
 
@@ -772,7 +774,8 @@ export class TpSkeleton extends TpElement {
         display: block;
         width: 45%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgb(255 255 255 / 30%), transparent);
+        background: linear-gradient(90deg, transparent, var(--tp-muted-foreground), transparent);
+        opacity: var(--tp-opacity-disabled);
         animation: shimmer 1.4s infinite;
         animation-play-state: var(--tp-motion-play-state, running);
       }
@@ -855,8 +858,8 @@ export class TpTable extends TpElement {
       }
 
       ::slotted(table) :is(th, td) {
-        padding: 0.55rem 0.7rem;
-        border-bottom: 1px solid var(--tp-color-border);
+        padding: var(--tp-space-2) var(--tp-space-3);
+        border-bottom: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
         text-align: start;
       }
     `,

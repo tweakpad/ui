@@ -61,3 +61,5 @@ Accordion has a maintained [component guide](docs/accordion.md) and a Storybook 
 The [motion guide](docs/motion.md) documents CSS defaults, reduced-motion boundaries, role inventories, and adapters for Web Animations or third-party tween libraries.
 
 Icon has a maintained [component guide](docs/icon.md). Import only the definitions you use from `@tweakpad/ui/icons/<name>`; the optional `@tweakpad/ui/register/icon` entry registers `tp-icon` without registering the whole library.
+
+The [styling guide](docs/styling.md) documents the foundational token families, the default typography tuple, mode replacement rules, and the supported override boundary.

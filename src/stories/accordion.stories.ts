@@ -190,12 +190,12 @@ const meta: Meta<AccordionStoryArgs> = {
 
         .accordion-story tp-accordion {
           display: block;
-          border: 1px solid var(--tp-color-border);
+          border: 1px solid var(--tp-border);
           border-radius: var(--tp-radius-md);
         }
 
         .accordion-story tp-accordion-item + tp-accordion-item {
-          border-top: 1px solid var(--tp-color-border);
+          border-top: 1px solid var(--tp-border);
         }
 
         .accordion-story tp-accordion-item::part(accordion-content-body) {

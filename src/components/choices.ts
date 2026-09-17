@@ -38,12 +38,12 @@ export class TpCombobox extends TpFormElement {
 
       .control {
         width: 100%;
-        padding-right: 2rem;
+        padding-right: var(--tp-space-8);
       }
 
       .toggle {
         position: absolute;
-        right: 0.25rem;
+        right: var(--tp-space-1);
         top: 50%;
         translate: 0 -50%;
         border: 0;
@@ -55,30 +55,30 @@ export class TpCombobox extends TpFormElement {
         position: absolute;
         z-index: 1000;
         inset-inline: 0;
-        top: calc(100% + 0.25rem);
+        top: calc(100% + var(--tp-space-1));
         max-height: var(--tp-available-height, 18rem);
         overflow: auto;
       }
 
       .option {
         display: flex;
-        padding: 0.45rem 0.6rem;
-        border-radius: 0.25rem;
+        padding: var(--tp-space-2) var(--tp-space-3);
+        border-radius: var(--tp-radius-sm);
         cursor: pointer;
       }
 
       .option[data-active] {
-        outline: 2px solid var(--tp-color-accent);
-        outline-offset: -2px;
+        outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
+        outline-offset: calc(-1 * var(--tp-ring-width));
       }
 
       .option[aria-selected='true'] {
-        color: var(--tp-color-accent-contrast);
-        background: var(--tp-color-accent);
+        color: var(--tp-accent-foreground);
+        background: var(--tp-accent);
       }
 
       .option[aria-disabled='true'] {
-        opacity: 0.5;
+        opacity: var(--tp-opacity-disabled);
         cursor: not-allowed;
       }
     `,
@@ -302,7 +302,7 @@ export class TpCommandPalette extends TpCombobox {
 
       .listbox {
         position: static;
-        margin-top: 0.35rem;
+        margin-top: var(--tp-space-1);
       }
     `,
   ];

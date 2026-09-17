@@ -43,7 +43,7 @@ export class TpBreadcrumb extends TpElement {
       .list {
         display: flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: var(--tp-space-2);
       }
 
       ::slotted(*) {
@@ -53,8 +53,8 @@ export class TpBreadcrumb extends TpElement {
 
       ::slotted(*:not(:last-child))::after {
         content: var(--tp-breadcrumb-separator, '/');
-        margin-inline-start: 0.4rem;
-        color: var(--tp-color-muted);
+        margin-inline-start: var(--tp-space-2);
+        color: var(--tp-muted-foreground);
       }
     `,
   ];
@@ -97,23 +97,23 @@ export class TpMenu extends TpElement {
 
       .root {
         display: grid;
-        gap: 0.125rem;
+        gap: calc(var(--tp-space-1) / 2);
       }
 
       ::slotted(*) {
-        padding: 0.45rem 0.6rem;
-        border-radius: 0.25rem;
+        padding: var(--tp-space-2) var(--tp-space-3);
+        border-radius: var(--tp-radius-sm);
         cursor: pointer;
       }
 
       ::slotted([aria-checked='true']),
       ::slotted([aria-selected='true']) {
-        background: var(--tp-color-accent);
-        color: var(--tp-color-accent-contrast);
+        background: var(--tp-accent);
+        color: var(--tp-accent-foreground);
       }
 
       ::slotted([disabled]) {
-        opacity: 0.5;
+        opacity: var(--tp-opacity-disabled);
         cursor: not-allowed;
       }
     `,
@@ -281,12 +281,12 @@ export class TpPagination extends TpElement {
       .root {
         display: flex;
         align-items: center;
-        gap: 0.25rem;
+        gap: var(--tp-space-1);
       }
 
       button[aria-current='page'] {
-        color: var(--tp-color-accent-contrast);
-        background: var(--tp-color-accent);
+        color: var(--tp-accent-foreground);
+        background: var(--tp-accent);
       }
     `,
   ];
@@ -373,8 +373,8 @@ export class TpNavigationPanel extends TpElement {
         grid-template-rows: auto 1fr auto;
         width: var(--tp-navigation-width, 17rem);
         height: 100%;
-        border-inline-end: 1px solid var(--tp-color-border);
-        background: var(--tp-color-surface);
+        border-inline-end: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+        background: var(--tp-background);
         transition:
           width
             calc(

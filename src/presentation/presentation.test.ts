@@ -1,22 +1,33 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DefinitionRegistry } from './definition.js';
 import { mergePresentation, presentationStyle } from './dictionary.js';
+import {
+  assertCompatibleTokenModes,
+  assertCompleteStylingCoverage,
+  assertCompleteTokenSet,
+  REQUIRED_TOKEN_ROLES,
+  STYLING_CATEGORIES,
+} from './tokens.js';
 
 describe('presentation dictionary', () => {
   it('applies layers in order and replaces conflict groups atomically', () => {
     const result = mergePresentation([
-      { tokens: { color: 'red' }, parts: { root: { padding: 4, compact: true } } },
       {
-        tokens: { color: 'blue' },
+        tokens: { background: 'var(--tp-background)' },
+        parts: { root: { padding: 'var(--tp-space-1)', compact: true } },
+      },
+      {
+        tokens: { background: 'var(--tp-card)' },
         parts: { root: { spacious: true } },
         conflicts: { density: ['compact', 'spacious'] },
       },
     ]);
     expect(result).toEqual({
-      tokens: { color: 'blue' },
-      parts: { root: { padding: 4, spacious: true } },
+      tokens: { background: 'var(--tp-card)' },
+      parts: { root: { padding: 'var(--tp-space-1)', spacious: true } },
     });
-    expect(presentationStyle(result.tokens)).toBe('--tp-color:blue');
+    expect(presentationStyle(result.tokens)).toBe('--tp-background:var(--tp-card)');
   });
 });
 
@@ -75,5 +86,38 @@ describe('definition registry', () => {
         ],
       }),
     ).toThrow(/Unknown motion target/);
+  });
+});
+
+describe('foundational styling tokens', () => {
+  const styles = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+  const complete = Object.fromEntries(REQUIRED_TOKEN_ROLES.map((role) => [role, role]));
+
+  it('defines every required role in the shipped default token set', () => {
+    for (const role of REQUIRED_TOKEN_ROLES) {
+      expect(styles, role).toMatch(new RegExp(`--tp-${role.replaceAll('-', '\\-')}\\s*:`));
+    }
+  });
+
+  it('rejects incomplete and mode-incompatible token sets', () => {
+    expect(() => assertCompleteTokenSet({ background: 'white' })).toThrow(/missing:/);
+    expect(() =>
+      assertCompatibleTokenModes({
+        light: complete,
+        dark: { ...complete, extension: 'value' },
+      }),
+    ).toThrow(/does not match/);
+    expect(() =>
+      assertCompatibleTokenModes({ light: complete, dark: { ...complete } }),
+    ).not.toThrow();
+  });
+
+  it('requires every styling category to be classified', () => {
+    expect(() => assertCompleteStylingCoverage({ color: 'token-bound' })).toThrow(/missing:/);
+    expect(() =>
+      assertCompleteStylingCoverage(
+        Object.fromEntries(STYLING_CATEGORIES.map((category) => [category, 'token-bound'])),
+      ),
+    ).not.toThrow();
   });
 });

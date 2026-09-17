@@ -26,8 +26,8 @@ export class TpToggle extends TpFormElement {
       }
 
       [aria-pressed='true'] {
-        background: var(--tp-color-accent);
-        color: var(--tp-color-accent-contrast);
+        background: var(--tp-accent);
+        color: var(--tp-accent-foreground);
       }
     `,
   ];

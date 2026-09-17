@@ -21,24 +21,24 @@ export class TpCheckbox extends TpFormElement {
       .root {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: var(--tp-space-2);
         cursor: pointer;
       }
 
       .indicator {
         display: grid;
         place-items: center;
-        width: 1.125rem;
-        height: 1.125rem;
-        border: 1px solid var(--tp-color-border);
-        border-radius: 0.25rem;
+        width: var(--tp-icon-size-md);
+        height: var(--tp-icon-size-md);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+        border-radius: var(--tp-radius-sm);
       }
 
       .root[data-checked] .indicator,
       .root[data-indeterminate] .indicator {
-        color: var(--tp-color-accent-contrast);
-        background: var(--tp-color-accent);
-        border-color: var(--tp-color-accent);
+        color: var(--tp-accent-foreground);
+        background: var(--tp-accent);
+        border-color: var(--tp-accent);
       }
     `,
   ];
