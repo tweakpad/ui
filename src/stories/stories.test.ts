@@ -37,7 +37,11 @@ describe('Storybook catalog entries', () => {
     expect(accordionStory).toContain('export const DisabledItem: Story');
     expect(accordionStory).toContain('args: { itemDisabled: true }');
     expect(accordionStory).toContain('export const ExternalLineByLineMotion: Story');
+    expect(accordionStory).toContain('export const Line: Story');
+    expect(accordionStory).toContain('export const Outline: Story');
+    expect(accordionStory).toContain('export const Separated: Story');
     for (const property of [
+      'variant',
       'selectionMode',
       'value',
       'defaultValue',

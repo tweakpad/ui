@@ -40,7 +40,7 @@ const questionnaireQuestions = [
 
 const examples = {
   'tp-accordion': () => html`
-    <tp-accordion>
+    <tp-accordion variant="outline">
       <tp-accordion-item value="account" heading-level="2">
         <span slot="label">Account settings</span>
         <p>Your profile starts here.</p>

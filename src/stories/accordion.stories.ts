@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { useArgs } from 'storybook/preview-api';
 import { html } from 'lit';
 import accordionDocumentation from '../../docs/accordion.md?raw';
-import type { AccordionValue } from '../components/accordion.js';
+import type { AccordionValue, AccordionVariant } from '../components/accordion.js';
 import type { AccordionIndicatorPosition } from '../components/accordion-item.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import type {
@@ -15,6 +15,7 @@ import { plusIcon } from '../icons/plus.js';
 
 interface AccordionStoryArgs {
   selectionMode: 'single' | 'multiple';
+  variant: AccordionVariant;
   value: AccordionValue;
   defaultValue: AccordionValue;
   collapsible: boolean;
@@ -45,6 +46,7 @@ const meta: Meta<AccordionStoryArgs> = {
   },
   args: {
     selectionMode: 'single',
+    variant: 'plain',
     value: ['account'],
     defaultValue: [],
     collapsible: false,
@@ -60,6 +62,17 @@ const meta: Meta<AccordionStoryArgs> = {
     contentMotion: 'none',
   },
   argTypes: {
+    variant: {
+      control: 'radio',
+      options: ['plain', 'line', 'outline', 'separated'],
+      description:
+        'Predefined visual recipe for the Accordion container and the relationship between Items.',
+      table: {
+        category: 'Root',
+        type: { summary: "'plain' | 'line' | 'outline' | 'separated'" },
+        defaultValue: { summary: 'plain' },
+      },
+    },
     selectionMode: {
       control: 'radio',
       options: ['single', 'multiple'],
@@ -188,23 +201,14 @@ const meta: Meta<AccordionStoryArgs> = {
           font-size: 1.25rem;
         }
 
-        .accordion-story tp-accordion {
-          display: block;
-          border: 1px solid var(--tp-border);
-          border-radius: var(--tp-radius-md);
-        }
-
-        .accordion-story tp-accordion-item + tp-accordion-item {
-          border-top: 1px solid var(--tp-border);
-        }
-
         .accordion-story tp-accordion-item::part(accordion-content-body) {
-          padding: 0 1rem 1rem;
+          padding: 0 var(--tp-space-4) var(--tp-space-4);
         }
       </style>
       <main class="story accordion-story">
         <h1>Accordion</h1>
         <tp-accordion
+          .variant=${args.variant}
           selection-mode=${args.selectionMode}
           .value=${args.value}
           .defaultValue=${args.defaultValue}
@@ -263,6 +267,39 @@ export default meta;
 type Story = StoryObj<AccordionStoryArgs>;
 
 export const Default: Story = {};
+
+export const Line: Story = {
+  args: { variant: 'line' },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Horizontal separators divide adjacent Items without adding outer container chrome.',
+      },
+    },
+  },
+};
+
+export const Outline: Story = {
+  args: { variant: 'outline' },
+  parameters: {
+    docs: {
+      description: {
+        story: 'One rounded outer border with token-governed separators between Items.',
+      },
+    },
+  },
+};
+
+export const Separated: Story = {
+  args: { variant: 'separated' },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Independent bordered Item surfaces separated by the shared spacing scale.',
+      },
+    },
+  },
+};
 
 export const ExternalLineByLineMotion: Story = {
   args: { contentMotion: 'line-by-line' },

@@ -14,6 +14,7 @@ import { assignedElements } from './shared.js';
 import { TpAccordionItem } from './accordion-item.js';
 
 export type AccordionValue = string[];
+export type AccordionVariant = 'plain' | 'line' | 'outline' | 'separated';
 
 const accordionValueConverter = {
   fromAttribute(value: string | null): AccordionValue {
@@ -72,6 +73,7 @@ export class TpAccordion extends TpElement {
   static override properties = {
     ...TpElement.properties,
     selectionMode: { type: String, attribute: 'selection-mode', reflect: true },
+    variant: { type: String, reflect: true },
     value: { converter: accordionValueConverter, reflect: true },
     defaultValue: { converter: accordionValueConverter, attribute: 'default-value' },
     collapsible: { type: Boolean, reflect: true },
@@ -84,10 +86,58 @@ export class TpAccordion extends TpElement {
     css`
       :host {
         display: block;
+
+        --_tp-accordion-container-background: transparent;
+        --_tp-accordion-container-border-width: 0px;
+        --_tp-accordion-container-radius: 0px;
+        --_tp-accordion-container-overflow: visible;
+        --_tp-accordion-item-background: transparent;
+        --_tp-accordion-item-border-width: 0px;
+        --_tp-accordion-item-border-block-start-width: 0px;
+        --_tp-accordion-item-radius: 0px;
+        --_tp-accordion-item-overflow: visible;
+        --_tp-accordion-gap: 0px;
+      }
+
+      :host([variant='outline']) {
+        --_tp-accordion-container-background: var(--tp-background);
+        --_tp-accordion-container-border-width: var(--tp-border-width);
+        --_tp-accordion-container-radius: var(--tp-radius-lg);
+        --_tp-accordion-container-overflow: clip;
+        --_tp-accordion-item-border-block-start-width: var(--tp-border-width);
+      }
+
+      :host([variant='line']) {
+        --_tp-accordion-item-border-block-start-width: var(--tp-border-width);
+      }
+
+      :host([variant='separated']) {
+        --_tp-accordion-item-background: var(--tp-background);
+        --_tp-accordion-item-border-width: var(--tp-border-width);
+        --_tp-accordion-item-border-block-start-width: var(--tp-border-width);
+        --_tp-accordion-item-radius: var(--tp-radius-lg);
+        --_tp-accordion-item-overflow: clip;
+        --_tp-accordion-gap: var(--tp-space-2);
+      }
+
+      [part~='accordion'] {
+        display: grid;
+        gap: var(--_tp-accordion-gap);
+        overflow: var(--_tp-accordion-container-overflow);
+        border-width: var(--_tp-accordion-container-border-width);
+        border-style: var(--tp-border-style);
+        border-color: var(--tp-border);
+        border-radius: var(--_tp-accordion-container-radius);
+        background: var(--_tp-accordion-container-background);
+      }
+
+      slot {
+        display: contents;
       }
     `,
   ];
   selectionMode: 'single' | 'multiple' = 'single';
+  variant: AccordionVariant = 'plain';
   value: AccordionValue = [];
   defaultValue: AccordionValue = [];
   collapsible = false;

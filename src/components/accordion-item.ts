@@ -22,6 +22,17 @@ export class TpAccordionItem extends TpElement {
     css`
       :host {
         display: block;
+        overflow: var(--_tp-accordion-item-overflow);
+        border-width: var(--_tp-accordion-item-border-width);
+        border-block-start-width: var(--_tp-accordion-item-border-block-start-width);
+        border-style: var(--tp-border-style);
+        border-color: var(--tp-border);
+        border-radius: var(--_tp-accordion-item-radius);
+        background: var(--_tp-accordion-item-background);
+      }
+
+      :host([data-index='0']) {
+        border-block-start-width: var(--_tp-accordion-item-border-width);
       }
 
       [part~='accordion-heading'] {

@@ -7,7 +7,7 @@ The normative contracts are UI Foundation §13.2 and UI Component Library §16.1
 ## Basic use
 
 ```html
-<tp-accordion value="account">
+<tp-accordion variant="outline" value="account">
   <tp-accordion-item value="account">
     <span slot="label">Account settings</span>
     <p>Update your profile details.</p>
@@ -38,6 +38,7 @@ Set `disabled` on one `<tp-accordion-item>` to prevent that Item from opening or
 
 | Property           | Attribute            | Type                                            | Default     | Behavior                                                                                                 |
 | ------------------ | -------------------- | ----------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
+| `variant`          | `variant`            | `'plain' \| 'line' \| 'outline' \| 'separated'` | `'plain'`   | Selects a predefined visual recipe without changing behavior or structure.                               |
 | `selectionMode`    | `selection-mode`     | `'single' \| 'multiple'`                        | `'single'`  | Opens one item at a time or allows several.                                                              |
 | `value`            | `value`              | `string[]`                                      | `[]`        | Current ordered list of open item values. The element updates it after an accepted interaction.          |
 | `defaultValue`     | `default-value`      | `string[]`                                      | `[]`        | Initial selection when `value` is empty on first registration. Later changes do not reset the selection. |
@@ -45,10 +46,23 @@ Set `disabled` on one `<tp-accordion-item>` to prevent that Item from opening or
 | `disabled`         | `disabled`           | `boolean`                                       | `false`     | Prevents activation of every item.                                                                       |
 | `keepMounted`      | `keep-mounted`       | `boolean`                                       | `false`     | Ends a closed panel in the retained presence state after its exit transition.                            |
 | `hiddenUntilFound` | `hidden-until-found` | `boolean`                                       | `false`     | Retains closed content with `hidden="until-found"` so browser find-in-page can reveal it.                |
-| `motionPolicy`     | `motion-policy`      | `'inherit' \| 'normal' \| 'reduce'`            | `'inherit'` | Resolves motion for the Accordion subtree from this boundary, its ancestors, or the environment.          |
+| `motionPolicy`     | `motion-policy`      | `'inherit' \| 'normal' \| 'reduce'`             | `'inherit'` | Resolves motion for the Accordion subtree from this boundary, its ancestors, or the environment.         |
 | `onValueChange`    | —                    | `(event: TpValueChangeEvent<string[]>) => void` | `undefined` | Callback after an accepted root value-change proposal. Property only; not an HTML attribute.             |
 
 `orientation` is fixed to vertical for Accordion. In this custom-element API, `selectionMode="multiple"` corresponds to the Foundation's `multiple` behavior.
+
+## Visual variants
+
+Variants are closed, predefined recipes assembled from the foundational border, radius, color, and spacing tokens. `plain` adds no container chrome. `line` adds only horizontal separators between adjacent Items. `outline` draws one rounded outer container with separators between Items. `separated` renders each Item as an independent rounded, bordered surface with token-scaled gaps.
+
+```html
+<tp-accordion variant="plain">…</tp-accordion>
+<tp-accordion variant="line">…</tp-accordion>
+<tp-accordion variant="outline">…</tp-accordion>
+<tp-accordion variant="separated">…</tp-accordion>
+```
+
+The variant belongs to the Root because it describes the visual relationship among Items. It does not alter selection, presence, focus, indicator placement, or motion. Use the public parts for changes that do not fit one of the predefined recipes.
 
 ## Item properties and slots
 
@@ -99,8 +113,14 @@ item.addEventListener('tp-motion-request', (event) => {
       const animations = lines.map((line, index) =>
         line.animate(
           request.phase === 'enter'
-            ? [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }]
-            : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-4px)' }],
+            ? [
+                { opacity: 0, transform: 'translateY(6px)' },
+                { opacity: 1, transform: 'none' },
+              ]
+            : [
+                { opacity: 1, transform: 'none' },
+                { opacity: 0, transform: 'translateY(-4px)' },
+              ],
           { duration: 180, delay: index * 45, fill: 'both' },
         ),
       );

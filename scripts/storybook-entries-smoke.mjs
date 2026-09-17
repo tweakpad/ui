@@ -144,6 +144,68 @@ try {
         .join('\n')}`,
     );
   }
+  const variantExpectations = {
+    Default: {
+      hasRootBorder: false,
+      hasRootGap: false,
+      hasItemBorder: false,
+      hasItemRadius: false,
+    },
+    Line: {
+      hasRootBorder: false,
+      hasRootGap: false,
+      hasItemBorder: false,
+      hasItemRadius: false,
+      hasSecondItemStartBorder: true,
+    },
+    Outline: {
+      hasRootBorder: true,
+      hasRootGap: false,
+      hasItemBorder: false,
+      hasItemRadius: false,
+      hasSecondItemStartBorder: true,
+    },
+    Separated: {
+      hasRootBorder: false,
+      hasRootGap: true,
+      hasItemBorder: true,
+      hasItemRadius: true,
+      hasSecondItemStartBorder: true,
+    },
+  };
+  for (const [storyName, expected] of Object.entries(variantExpectations)) {
+    const story = entries.find(
+      (entry) => entry.title === 'Components/Accordion' && entry.name === storyName,
+    );
+    if (!story) throw new Error(`Missing ${storyName} Accordion story`);
+    await page.goto(`${baseUrl}/iframe.html?id=${story.id}&viewMode=story`, {
+      waitUntil: 'networkidle',
+    });
+    const appearance = await page.evaluate(() => {
+      const accordion = document.querySelector('tp-accordion');
+      const root = accordion?.shadowRoot?.querySelector('[part~="accordion"]');
+      const items = accordion ? [...accordion.querySelectorAll('tp-accordion-item')] : [];
+      if (!(root instanceof HTMLElement) || items.length < 2) return null;
+      const rootStyle = getComputedStyle(root);
+      const itemStyle = getComputedStyle(items[0]);
+      const secondItemStyle = getComputedStyle(items[1]);
+      return {
+        hasRootBorder: Number.parseFloat(rootStyle.borderTopWidth) > 0,
+        hasRootGap: Number.parseFloat(rootStyle.rowGap) > 0,
+        hasItemBorder: Number.parseFloat(itemStyle.borderInlineStartWidth) > 0,
+        hasItemRadius: Number.parseFloat(itemStyle.borderStartStartRadius) > 0,
+        hasSecondItemStartBorder: Number.parseFloat(secondItemStyle.borderBlockStartWidth) > 0,
+      };
+    });
+    if (
+      !appearance ||
+      Object.entries(expected).some(([property, value]) => appearance[property] !== value)
+    ) {
+      throw new Error(
+        `${storyName} Accordion variant produced ${JSON.stringify(appearance)}; expected ${JSON.stringify(expected)}`,
+      );
+    }
+  }
   const accordionDocs = entries.find(
     (entry) => entry.title === 'Components/Accordion' && entry.type === 'docs',
   );
@@ -153,6 +215,7 @@ try {
   });
   await page.getByRole('heading', { name: 'Root properties' }).waitFor();
   for (const property of [
+    'variant',
     'selectionMode',
     'value',
     'defaultValue',
