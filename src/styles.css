@@ -52,10 +52,10 @@
   --tp-font-mono: ui-monospace, sfmono-regular, menlo, monaco, consolas, monospace;
   --tp-text-xs: 0.75rem;
   --tp-text-sm: 0.875rem;
-  --tp-text-base: 1rem;
-  --tp-text-lg: 1.125rem;
-  --tp-text-xl: 1.25rem;
-  --tp-text-2xl: 1.5rem;
+  --tp-text-base: 0.9375rem;
+  --tp-text-lg: 1rem;
+  --tp-text-xl: 1.125rem;
+  --tp-text-2xl: 1.25rem;
   --tp-font-normal: 400;
   --tp-font-medium: 500;
   --tp-font-semibold: 600;
