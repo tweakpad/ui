@@ -37,16 +37,52 @@ export class TpButton extends TpElement {
     controlStyles,
     css`
       :host {
+        --_tp-button-control-block-size: var(--tp-control-height-md);
+        --_tp-button-control-inline-size: auto;
+
         display: inline-block;
+      }
+
+      :host([size='xs']),
+      :host([size='icon-xs']),
+      :host([size='sm']),
+      :host([size='icon-sm']) {
+        --_tp-button-control-block-size: var(--tp-control-height-sm);
+      }
+
+      :host([size='lg']),
+      :host([size='icon-lg']) {
+        --_tp-button-control-block-size: var(--tp-control-height-lg);
+      }
+
+      :host([size^='icon']) {
+        --_tp-button-control-inline-size: var(--_tp-button-control-block-size);
       }
 
       .control {
         position: relative;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
         gap: var(--tp-space-2);
-        min-height: var(--tp-control-height-md);
+        inline-size: var(
+          --_tp-button-group-control-inline-size,
+          var(--_tp-button-control-inline-size)
+        );
+        block-size: var(--_tp-button-control-block-size);
+        min-block-size: var(--_tp-button-control-block-size);
+        border-block-start-width: var(
+          --_tp-button-group-border-block-start-width,
+          var(--tp-border-width)
+        );
+        border-inline-start-width: var(
+          --_tp-button-group-border-inline-start-width,
+          var(--tp-border-width)
+        );
+        border-start-start-radius: var(--_tp-button-group-radius-start-start, var(--tp-radius-sm));
+        border-start-end-radius: var(--_tp-button-group-radius-start-end, var(--tp-radius-sm));
+        border-end-start-radius: var(--_tp-button-group-radius-end-start, var(--tp-radius-sm));
+        border-end-end-radius: var(--_tp-button-group-radius-end-end, var(--tp-radius-sm));
         cursor: pointer;
         color: var(--tp-primary-foreground);
         background: var(--tp-primary);
@@ -86,41 +122,24 @@ export class TpButton extends TpElement {
 
       :host([size='xs']) .control,
       :host([size='icon-xs']) .control {
-        min-height: var(--tp-control-height-sm);
         padding: var(--tp-space-1) var(--tp-space-2);
         font-size: var(--tp-text-xs);
       }
 
       :host([size='sm']) .control,
       :host([size='icon-sm']) .control {
-        min-height: var(--tp-control-height-sm);
         padding: var(--tp-space-1) var(--tp-space-3);
         font-size: var(--tp-text-sm);
       }
 
       :host([size='lg']) .control,
       :host([size='icon-lg']) .control {
-        min-height: var(--tp-control-height-lg);
         padding: var(--tp-space-3) var(--tp-space-4);
         font-size: var(--tp-text-lg);
       }
 
       :host([size^='icon']) .control {
-        aspect-ratio: 1;
         padding-inline: 0;
-      }
-
-      :host([size='icon-xs']) .control,
-      :host([size='icon-sm']) .control {
-        width: var(--tp-control-height-sm);
-      }
-
-      :host([size='icon']) .control {
-        width: var(--tp-control-height-md);
-      }
-
-      :host([size='icon-lg']) .control {
-        width: var(--tp-control-height-lg);
       }
 
       :host([variant='secondary']) .control {
@@ -149,7 +168,8 @@ export class TpButton extends TpElement {
       }
 
       :host([variant='link']) .control {
-        min-height: auto;
+        block-size: auto;
+        min-block-size: auto;
         padding: 0;
       }
 

@@ -106,7 +106,7 @@
   --tp-motion-play-state: running;
 
   font-family: var(--tp-font-sans);
-  font-size: var(--tp-text-base);
+  font-size: 100%;
   font-weight: var(--tp-font-normal);
   line-height: var(--tp-leading-normal);
   letter-spacing: var(--tp-tracking-normal);
@@ -118,6 +118,7 @@ body {
   min-height: 100vh;
   color: var(--tp-foreground);
   background: var(--tp-background);
+  font-size: var(--tp-text-base);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -312,7 +312,10 @@ const examples = {
   'tp-badge': () => html`<tp-badge variant="accent">New</tp-badge>`,
   'tp-bubble': () => html`<tp-bubble side="end">Hello there</tp-bubble>`,
   'tp-button-group': () => html`
-    <tp-button-group><tp-button>Back</tp-button><tp-button>Next</tp-button></tp-button-group>
+    <tp-button-group>
+      <tp-button variant="outline">Back</tp-button>
+      <tp-button variant="outline">Next</tp-button>
+    </tp-button-group>
   `,
   'tp-card': () => html`
     <tp-card>

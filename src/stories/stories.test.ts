@@ -8,6 +8,10 @@ describe('Storybook catalog entries', () => {
   const storyFiles = readdirSync(storyDirectory).filter((file) => file.endsWith('.stories.ts'));
   const accordionStory = readFileSync(new URL('./accordion.stories.ts', import.meta.url), 'utf8');
   const buttonStory = readFileSync(new URL('./button.stories.ts', import.meta.url), 'utf8');
+  const buttonGroupStory = readFileSync(
+    new URL('./button-group.stories.ts', import.meta.url),
+    'utf8',
+  );
   const collapsibleStory = readFileSync(
     new URL('./collapsible.stories.ts', import.meta.url),
     'utf8',
@@ -23,11 +27,12 @@ describe('Storybook catalog entries', () => {
   });
 
   it('has one statically indexed Default story for every public control', () => {
-    expect(storyFiles).toHaveLength(catalogEntries.length - 4);
+    expect(storyFiles).toHaveLength(catalogEntries.length - 5);
     const sources = [
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
       accordionStory,
       buttonStory,
+      buttonGroupStory,
       collapsibleStory,
       iconStory,
     ];
@@ -46,6 +51,7 @@ describe('Storybook catalog entries', () => {
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
       accordionStory,
       buttonStory,
+      buttonGroupStory,
       collapsibleStory,
       iconStory,
     ];
@@ -185,5 +191,16 @@ describe('Storybook catalog entries', () => {
     ]) {
       expect(buttonStory).toContain(`export const ${configuration}: Story`);
     }
+  });
+
+  it('documents Button group layout while reusing Button members', () => {
+    for (const property of ['orientation', 'joined', 'label']) {
+      expect(buttonGroupStory).toContain(`    ${property}: {`);
+    }
+    for (const configuration of ['Sizes', 'Vertical', 'MultipleGroups', 'Unjoined']) {
+      expect(buttonGroupStory).toContain(`export const ${configuration}: Story`);
+    }
+    expect(buttonGroupStory).toContain('<tp-button variant="outline"');
+    expect(buttonGroupStory).not.toContain('<button');
   });
 });

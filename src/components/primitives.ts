@@ -291,40 +291,83 @@ export class TpBubble extends TpElement {
 
 export class TpButtonGroup extends TpElement {
   static tagName = 'tp-button-group';
-  static override properties = { ...TpElement.properties, label: { type: String } };
+  static override properties = {
+    ...TpElement.properties,
+    joined: { type: Boolean, reflect: true },
+    label: { type: String },
+  };
   static override styles = [
     TpElement.styles,
     css`
       :host {
         display: inline-flex;
+        vertical-align: middle;
       }
 
-      [part='root'] {
+      [part~='button-group'] {
         display: flex;
+        align-items: stretch;
       }
 
-      :host([orientation='vertical']) [part='root'] {
+      :host([orientation='vertical']) [part~='button-group'] {
         flex-direction: column;
       }
 
-      ::slotted(*) {
-        border-radius: 0 !important;
+      :host(:not([joined])) [part~='button-group'] {
+        gap: var(--tp-space-2);
       }
 
-      ::slotted(:first-child) {
-        border-start-start-radius: var(--tp-radius-sm) !important;
-        border-end-start-radius: var(--tp-radius-sm) !important;
+      :host([joined]) ::slotted(tp-button) {
+        --_tp-button-group-radius-start-start: 0px;
+        --_tp-button-group-radius-start-end: 0px;
+        --_tp-button-group-radius-end-start: 0px;
+        --_tp-button-group-radius-end-end: 0px;
       }
 
-      ::slotted(:last-child) {
-        border-start-end-radius: var(--tp-radius-sm) !important;
-        border-end-end-radius: var(--tp-radius-sm) !important;
+      :host([joined]:not([orientation='vertical'])) ::slotted(tp-button:first-child) {
+        --_tp-button-group-radius-start-start: var(--tp-radius-sm);
+        --_tp-button-group-radius-end-start: var(--tp-radius-sm);
+      }
+
+      :host([joined]:not([orientation='vertical'])) ::slotted(tp-button:last-child) {
+        --_tp-button-group-radius-start-end: var(--tp-radius-sm);
+        --_tp-button-group-radius-end-end: var(--tp-radius-sm);
+      }
+
+      :host([joined]:not([orientation='vertical'])) ::slotted(tp-button:not(:first-child)) {
+        --_tp-button-group-border-inline-start-width: 0px;
+      }
+
+      :host([joined][orientation='vertical']) ::slotted(tp-button) {
+        --_tp-button-group-control-inline-size: 100%;
+      }
+
+      :host([joined][orientation='vertical']) ::slotted(tp-button:first-child) {
+        --_tp-button-group-radius-start-start: var(--tp-radius-sm);
+        --_tp-button-group-radius-start-end: var(--tp-radius-sm);
+      }
+
+      :host([joined][orientation='vertical']) ::slotted(tp-button:last-child) {
+        --_tp-button-group-radius-end-start: var(--tp-radius-sm);
+        --_tp-button-group-radius-end-end: var(--tp-radius-sm);
+      }
+
+      :host([joined][orientation='vertical']) ::slotted(tp-button:not(:first-child)) {
+        --_tp-button-group-border-block-start-width: 0px;
+      }
+
+      ::slotted(tp-button:focus-within) {
+        z-index: 1;
       }
     `,
   ];
+  override orientation: 'horizontal' | 'vertical' = 'horizontal';
+  joined = true;
   label = 'Actions';
   protected override render() {
-    return html`<div part="root" role="group" aria-label=${this.label}><slot></slot></div>`;
+    return html`<div part="button-group" role="group" aria-label=${this.label}>
+      <slot></slot>
+    </div>`;
   }
 }
 
