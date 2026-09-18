@@ -142,7 +142,6 @@ export class TpButton extends TpElement {
       :host([variant='link']) .control {
         min-height: auto;
         padding: 0;
-        text-decoration: underline;
       }
 
       .control:not(:disabled, [aria-disabled='true']):hover {
@@ -154,6 +153,10 @@ export class TpButton extends TpElement {
           var(--tp-primary) 80%,
           light-dark(var(--tp-foreground), var(--tp-background))
         );
+      }
+
+      .control:not(:disabled, [aria-disabled='true']):active {
+        transform: translateY(1px);
       }
 
       :host([variant='secondary']) .control:not(:disabled, [aria-disabled='true']):hover {
@@ -193,9 +196,11 @@ export class TpButton extends TpElement {
         opacity: 1;
       }
 
-      :host([variant='link']) .control:not(:disabled, [aria-disabled='true']):hover {
+      :host([variant='link'])
+        .control:not(:disabled, [aria-disabled='true']):is(:hover, :focus-visible) {
         border-color: transparent;
         background-color: transparent;
+        text-decoration: underline;
       }
 
       [part~='button-leading-mark'],

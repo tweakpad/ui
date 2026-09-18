@@ -24,6 +24,29 @@ try {
   if ((await page.locator('tp-button').getAttribute('data-activations')) !== '2') {
     throw new Error('Native Button keyboard gestures did not activate exactly once each');
   }
+  const defaultControl = page.locator('tp-button').locator('button');
+  const defaultControlBox = await defaultControl.boundingBox();
+  if (!defaultControlBox) throw new Error('Default Button has no pointer target');
+  const restingTop = await defaultControl.evaluate(
+    (element) => element.getBoundingClientRect().top,
+  );
+  await page.mouse.move(
+    defaultControlBox.x + defaultControlBox.width / 2,
+    defaultControlBox.y + defaultControlBox.height / 2,
+  );
+  await page.mouse.down();
+  const pressedTop = await defaultControl.evaluate(
+    (element) => element.getBoundingClientRect().top,
+  );
+  await page.mouse.up();
+  const releasedTop = await defaultControl.evaluate(
+    (element) => element.getBoundingClientRect().top,
+  );
+  if (pressedTop !== restingTop + 1 || releasedTop !== restingTop) {
+    throw new Error(
+      `Button pressed displacement was not 1px: ${JSON.stringify({ restingTop, pressedTop, releasedTop })}`,
+    );
+  }
   const result = await page.evaluate(async () => {
     const form = document.createElement('form');
     const button = document.createElement('tp-button');
@@ -355,6 +378,7 @@ try {
       colors: [style.backgroundColor, style.backgroundImage, style.borderColor],
       backgroundAlpha: context.getImageData(0, 0, 1, 1).data[3],
       layer: getComputedStyle(element, '::before').content,
+      decoration: style.textDecorationLine,
     };
   });
   await linkControl.hover();
@@ -369,11 +393,14 @@ try {
       colors: [style.backgroundColor, style.backgroundImage, style.borderColor],
       backgroundAlpha: context.getImageData(0, 0, 1, 1).data[3],
       layer: getComputedStyle(element, '::before').content,
+      decoration: style.textDecorationLine,
     };
   });
   if (
     linkBefore.backgroundAlpha !== 0 ||
     linkAfter.backgroundAlpha !== 0 ||
+    linkBefore.decoration !== 'none' ||
+    linkAfter.decoration !== 'underline' ||
     linkBefore.layer !== 'none' ||
     linkAfter.layer !== 'none' ||
     linkBefore.colors[1] !== 'none' ||
@@ -381,6 +408,17 @@ try {
     linkBefore.colors.some((value, index) => value !== linkAfter.colors[index])
   ) {
     throw new Error('Link Button unexpectedly received a hover mix');
+  }
+  await page.mouse.move(0, 0);
+  await linkControl.focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  const linkFocus = await linkControl.evaluate((element) => ({
+    focusVisible: element.matches(':focus-visible'),
+    decoration: getComputedStyle(element).textDecorationLine,
+  }));
+  if (!linkFocus.focusVisible || linkFocus.decoration !== 'underline') {
+    throw new Error(`Link Button focus underline failed: ${JSON.stringify(linkFocus)}`);
   }
   const reducedMotion = await page.evaluate(async () => {
     const region = document.createElement('div');

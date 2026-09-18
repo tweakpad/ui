@@ -33,7 +33,7 @@
   --tp-chart-5: #db2777;
 
   /* One spacing seed and its closed derived scale. */
-  --tp-spacing: 0.25rem;
+  --tp-spacing: 0.2rem;
   --tp-space-0: 0;
   --tp-space-1: calc(var(--tp-spacing) * 1);
   --tp-space-2: calc(var(--tp-spacing) * 2);
@@ -99,8 +99,8 @@
   --tp-opacity-backdrop: 0.48;
 
   /* Motion remains a separate, replaceable contract. */
-  --tp-duration-fast: 160ms;
-  --tp-duration-normal: 220ms;
+  --tp-duration-fast: 200ms;
+  --tp-duration-normal: 280ms;
   --tp-easing-standard: cubic-bezier(0.2, 0, 0, 1);
   --tp-motion-scale: 1;
   --tp-motion-play-state: running;
