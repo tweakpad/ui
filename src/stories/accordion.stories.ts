@@ -26,16 +26,30 @@ interface AccordionStoryArgs {
   hiddenUntilFound: boolean;
   motionPolicy: MotionPolicy;
   contentAlignment: AccordionContentAlignment;
+  onValueChange?: (event: TpValueChangeEvent<AccordionValue>) => void;
+}
+
+interface AccordionFixtureOptions {
   accountContentAlignment: AccordionContentAlignment | 'inherit';
-  indicatorPosition: AccordionIndicatorPosition;
+  accountIndicatorPosition: AccordionIndicatorPosition;
   securityIndicatorPosition: AccordionIndicatorPosition;
   billingIndicatorPosition: AccordionIndicatorPosition;
   itemDisabled: boolean;
   headingLevel: number;
   showLeadingContent: boolean;
   contentMotion: 'none' | 'line-by-line';
-  onValueChange?: (event: TpValueChangeEvent<AccordionValue>) => void;
 }
+
+const defaultAccordionFixture: AccordionFixtureOptions = {
+  accountContentAlignment: 'inherit',
+  accountIndicatorPosition: 'trailing',
+  securityIndicatorPosition: 'trailing',
+  billingIndicatorPosition: 'trailing',
+  itemDisabled: false,
+  headingLevel: 2,
+  showLeadingContent: false,
+  contentMotion: 'none',
+};
 
 const meta: Meta<AccordionStoryArgs> = {
   title: 'Components/Accordion',
@@ -60,14 +74,6 @@ const meta: Meta<AccordionStoryArgs> = {
     hiddenUntilFound: false,
     motionPolicy: 'inherit',
     contentAlignment: 'edge',
-    accountContentAlignment: 'inherit',
-    indicatorPosition: 'trailing',
-    securityIndicatorPosition: 'trailing',
-    billingIndicatorPosition: 'trailing',
-    itemDisabled: false,
-    headingLevel: 2,
-    showLeadingContent: false,
-    contentMotion: 'none',
   },
   argTypes: {
     variant: {
@@ -145,16 +151,6 @@ const meta: Meta<AccordionStoryArgs> = {
         defaultValue: { summary: 'edge' },
       },
     },
-    accountContentAlignment: {
-      control: 'radio',
-      options: ['inherit', 'edge', 'label'],
-      description: 'Per-Item override for Account settings; inherit uses the Root policy.',
-      table: {
-        category: 'Item · Account',
-        type: { summary: "'inherit' | 'edge' | 'label'" },
-        defaultValue: { summary: 'inherit' },
-      },
-    },
     onValueChange: {
       control: false,
       description: 'Property-only callback invoked after an accepted tp-value-change proposal.',
@@ -164,148 +160,103 @@ const meta: Meta<AccordionStoryArgs> = {
         defaultValue: { summary: 'undefined' },
       },
     },
-    indicatorPosition: {
-      control: 'radio',
-      options: ['leading', 'trailing'],
-      description:
-        'Logical position whose empty slot renders the Account item’s default disclosure indicator.',
-      table: {
-        category: 'Item · Account',
-        type: { summary: "'leading' | 'trailing'" },
-        defaultValue: { summary: 'trailing' },
-      },
-    },
-    securityIndicatorPosition: {
-      control: 'radio',
-      options: ['leading', 'trailing'],
-      description:
-        'Logical position whose empty slot renders the Security item’s default disclosure indicator.',
-      table: { category: 'Item · Security', type: { summary: "'leading' | 'trailing'" } },
-    },
-    billingIndicatorPosition: {
-      control: 'radio',
-      options: ['leading', 'trailing'],
-      description:
-        'Logical position whose empty slot renders the Billing item’s default disclosure indicator.',
-      table: { category: 'Item · Billing', type: { summary: "'leading' | 'trailing'" } },
-    },
-    itemDisabled: {
-      control: 'boolean',
-      description: 'Prevents activation of the Security item only.',
-      table: { category: 'Item · Security', type: { summary: 'boolean' } },
-    },
-    headingLevel: {
-      control: { type: 'range', min: 1, max: 6, step: 1 },
-      description: 'Semantic heading level of each Item; choose to fit the surrounding page.',
-      table: { category: 'Item', type: { summary: '1–6' }, defaultValue: { summary: '2' } },
-    },
-    showLeadingContent: {
-      control: 'boolean',
-      description: 'Demo content assigned to each Item’s generic leading position.',
-      table: { category: 'Demo', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
-    },
-    contentMotion: {
-      control: 'radio',
-      options: ['none', 'line-by-line'],
-      description:
-        'Story-only driver selection. line-by-line claims each Item content role; none leaves the role unclaimed.',
-      table: {
-        category: 'Demo',
-        type: { summary: "'none' | 'line-by-line'" },
-        defaultValue: { summary: 'none' },
-      },
-    },
   },
-  render: (args: AccordionStoryArgs) => {
-    const [, updateArgs] = useArgs<AccordionStoryArgs>();
-    const handleValueChange = (event: TpValueChangeEvent<AccordionValue>): void => {
-      updateArgs({ value: [...event.detail.value] });
-      args.onValueChange?.(event);
-    };
-    const handleMotionRequest = (event: TpMotionRequestEvent): void => {
-      if (args.contentMotion !== 'line-by-line' || event.request.role !== 'content') return;
-      event.respondWith({ play: playLineByLine });
-    };
-    return html`
-      <tp-accordion
-        .variant=${args.variant}
-        selection-mode=${args.selectionMode}
-        .value=${args.value}
-        .defaultValue=${args.defaultValue}
-        ?collapsible=${args.collapsible}
-        ?disabled=${args.disabled}
-        ?keep-mounted=${args.keepMounted}
-        ?hidden-until-found=${args.hiddenUntilFound}
-        .motionPolicy=${args.motionPolicy}
-        .contentAlignment=${args.contentAlignment}
-        @tp-value-change=${handleValueChange}
-        @tp-motion-request=${handleMotionRequest}
-      >
-        <tp-accordion-item
-          value="account"
-          indicator-position=${args.indicatorPosition}
-          .contentAlignment=${
-            args.accountContentAlignment === 'inherit' ? undefined : args.accountContentAlignment
+  render: (args) => renderAccordion(args),
+};
+
+function renderAccordion(args: AccordionStoryArgs, options: Partial<AccordionFixtureOptions> = {}) {
+  const fixture = { ...defaultAccordionFixture, ...options };
+  const [, updateArgs] = useArgs<AccordionStoryArgs>();
+  const handleValueChange = (event: TpValueChangeEvent<AccordionValue>): void => {
+    updateArgs({ value: [...event.detail.value] });
+    args.onValueChange?.(event);
+  };
+  const handleMotionRequest = (event: TpMotionRequestEvent): void => {
+    if (fixture.contentMotion !== 'line-by-line' || event.request.role !== 'content') return;
+    event.respondWith({ play: playLineByLine });
+  };
+  return html`
+    <tp-accordion
+      .variant=${args.variant}
+      selection-mode=${args.selectionMode}
+      .value=${args.value}
+      .defaultValue=${args.defaultValue}
+      ?collapsible=${args.collapsible}
+      ?disabled=${args.disabled}
+      ?keep-mounted=${args.keepMounted}
+      ?hidden-until-found=${args.hiddenUntilFound}
+      .motionPolicy=${args.motionPolicy}
+      .contentAlignment=${args.contentAlignment}
+      @tp-value-change=${handleValueChange}
+      @tp-motion-request=${handleMotionRequest}
+    >
+      <tp-accordion-item
+        value="account"
+        indicator-position=${fixture.accountIndicatorPosition}
+        .contentAlignment=${
+            fixture.accountContentAlignment === 'inherit'
+              ? undefined
+              : fixture.accountContentAlignment
           }
-          heading-level=${args.headingLevel}
-        >
-          ${
-            args.showLeadingContent
-              ? html`<span slot=${args.indicatorPosition === 'leading' ? 'trailing' : 'leading'}
+        heading-level=${fixture.headingLevel}
+      >
+        ${
+            fixture.showLeadingContent
+              ? html`<span
+                  slot=${fixture.accountIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
                   >01</span
                 >`
               : null
           }
-          <span slot="label">Account settings</span>
-          <p>Your public profile starts here.</p>
-          <p>
-            Choose how your name appears to your team, update the email used for account notices,
-            and review the recovery options you would need if you lost access to your usual device.
-          </p>
-        </tp-accordion-item>
-        <tp-accordion-item
-          value="security"
-          indicator-position=${args.securityIndicatorPosition}
-          heading-level=${args.headingLevel}
-          ?disabled=${args.itemDisabled}
-        >
-          ${
-            args.showLeadingContent
+        <span slot="label">Account settings</span>
+        <p>Your public profile starts here.</p>
+        <p>
+          Choose how your name appears to your team, update the email used for account notices, and
+          review the recovery options you would need if you lost access to your usual device.
+        </p>
+      </tp-accordion-item>
+      <tp-accordion-item
+        value="security"
+        indicator-position=${fixture.securityIndicatorPosition}
+        heading-level=${fixture.headingLevel}
+        ?disabled=${fixture.itemDisabled}
+      >
+        ${
+            fixture.showLeadingContent
               ? html`<span
-                  slot=${args.securityIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
+                  slot=${fixture.securityIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
                   >02</span
                 >`
               : null
           }
-          <span slot="label">Security</span>
-          <p>Require a second step when signing in from a new device or location.</p>
-          <p>Save your backup codes offline.</p>
-        </tp-accordion-item>
-        <tp-accordion-item
-          value="billing"
-          indicator-position=${args.billingIndicatorPosition}
-          heading-level=${args.headingLevel}
-        >
-          ${
-            args.showLeadingContent
+        <span slot="label">Security</span>
+        <p>Require a second step when signing in from a new device or location.</p>
+        <p>Save your backup codes offline.</p>
+      </tp-accordion-item>
+      <tp-accordion-item
+        value="billing"
+        indicator-position=${fixture.billingIndicatorPosition}
+        heading-level=${fixture.headingLevel}
+      >
+        ${
+            fixture.showLeadingContent
               ? html`<span
-                  slot=${args.billingIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
+                  slot=${fixture.billingIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
                   >03</span
                 >`
               : null
           }
-          <span slot="label">Billing</span>
-          <p>
-            Review every invoice from the current subscription, download receipts for your records,
-            and compare charges across billing periods before making a change.
-          </p>
-          <p>Update the payment method used for future charges.</p>
-          <p>Changes apply to your next invoice.</p>
-        </tp-accordion-item>
-      </tp-accordion>
-    `;
-  },
-};
+        <span slot="label">Billing</span>
+        <p>
+          Review every invoice from the current subscription, download receipts for your records,
+          and compare charges across billing periods before making a change.
+        </p>
+        <p>Update the payment method used for future charges.</p>
+        <p>Changes apply to your next invoice.</p>
+      </tp-accordion-item>
+    </tp-accordion>
+  `;
+}
 
 export default meta;
 type Story = StoryObj<AccordionStoryArgs>;
@@ -346,7 +297,8 @@ export const Separated: Story = {
 };
 
 export const PositionalContent: Story = {
-  args: { variant: 'separated', contentAlignment: 'label', showLeadingContent: true },
+  args: { variant: 'separated', contentAlignment: 'label' },
+  render: (args) => renderAccordion(args, { showLeadingContent: true }),
   parameters: {
     docs: {
       description: {
@@ -358,7 +310,8 @@ export const PositionalContent: Story = {
 };
 
 export const LabelAlignedContent: Story = {
-  args: { contentAlignment: 'label', showLeadingContent: true },
+  args: { contentAlignment: 'label' },
+  render: (args) => renderAccordion(args, { showLeadingContent: true }),
   parameters: {
     docs: {
       description: {
@@ -370,7 +323,7 @@ export const LabelAlignedContent: Story = {
 };
 
 export const ExternalLineByLineMotion: Story = {
-  args: { contentMotion: 'line-by-line' },
+  render: (args) => renderAccordion(args, { contentMotion: 'line-by-line' }),
   parameters: {
     docs: {
       description: {
@@ -382,7 +335,8 @@ export const ExternalLineByLineMotion: Story = {
 };
 
 export const ReducedMotion: Story = {
-  args: { motionPolicy: 'reduce', contentMotion: 'line-by-line', collapsible: true },
+  args: { motionPolicy: 'reduce', collapsible: true },
+  render: (args) => renderAccordion(args, { contentMotion: 'line-by-line' }),
   parameters: {
     docs: {
       description: {
@@ -459,7 +413,7 @@ export const Disabled: Story = {
 };
 
 export const DisabledItem: Story = {
-  args: { itemDisabled: true },
+  render: (args) => renderAccordion(args, { itemDisabled: true }),
   parameters: {
     docs: {
       description: {
@@ -490,7 +444,11 @@ export const FindInPage: Story = {
 };
 
 export const MixedIndicatorPositions: Story = {
-  args: { indicatorPosition: 'leading', billingIndicatorPosition: 'leading' },
+  render: (args) =>
+    renderAccordion(args, {
+      accountIndicatorPosition: 'leading',
+      billingIndicatorPosition: 'leading',
+    }),
   parameters: {
     docs: {
       description: {

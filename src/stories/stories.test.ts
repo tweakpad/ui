@@ -49,6 +49,8 @@ describe('Storybook catalog entries', () => {
 
     expect(docsPage.indexOf('## Default')).toBeLessThan(docsPage.indexOf('<Primary />'));
     expect(docsPage.indexOf('<Primary />')).toBeLessThan(docsPage.indexOf('<Controls />'));
+    expect(docsPage).toContain('## Public properties');
+    expect(docsPage).toContain('fixture setup is not a component\nproperty');
     expect(docsPage.indexOf('<Controls />')).toBeLessThan(
       docsPage.indexOf('<Stories title="Configurations"'),
     );
@@ -68,7 +70,7 @@ describe('Storybook catalog entries', () => {
     expect(examplesSource).not.toContain('::part(');
   });
 
-  it('documents Collapsible state and presence properties in a maintained controls story', () => {
+  it('keeps Collapsible controls limited to its public properties', () => {
     expect(collapsibleStory).toContain("tags: ['autodocs']");
     expect(collapsibleStory).toContain('export const Open: Story');
     expect(collapsibleStory).toContain('export const Retained: Story');
@@ -90,19 +92,19 @@ describe('Storybook catalog entries', () => {
       'contentAlignment',
       'indicatorPosition',
       'headingLevel',
-      'showLeadingContent',
-      'showTrailingContent',
-      'contentMotion',
       'onOpenChange',
     ]) {
       expect(collapsibleStory).toContain(`    ${property}: {`);
     }
+    for (const fixtureProperty of ['showLeadingContent', 'showTrailingContent', 'contentMotion']) {
+      expect(collapsibleStory).not.toContain(`    ${fixtureProperty}: {`);
+    }
   });
 
-  it('documents Accordion Root and per-Item properties in a maintained controls story', () => {
+  it('keeps Accordion controls limited to its public Root properties', () => {
     expect(accordionStory).toContain("tags: ['autodocs']");
     expect(accordionStory).toContain('export const DisabledItem: Story');
-    expect(accordionStory).toContain('args: { itemDisabled: true }');
+    expect(accordionStory).toContain('renderAccordion(args, { itemDisabled: true })');
     expect(accordionStory).toContain('export const ExternalLineByLineMotion: Story');
     expect(accordionStory).toContain('export const Line: Story');
     expect(accordionStory).toContain('export const Outline: Story');
@@ -118,9 +120,14 @@ describe('Storybook catalog entries', () => {
       'disabled',
       'keepMounted',
       'hiddenUntilFound',
+      'motionPolicy',
       'contentAlignment',
-      'accountContentAlignment',
       'onValueChange',
+    ]) {
+      expect(accordionStory).toContain(`    ${property}: {`);
+    }
+    for (const fixtureProperty of [
+      'accountContentAlignment',
       'indicatorPosition',
       'securityIndicatorPosition',
       'billingIndicatorPosition',
@@ -129,7 +136,7 @@ describe('Storybook catalog entries', () => {
       'showLeadingContent',
       'contentMotion',
     ]) {
-      expect(accordionStory).toContain(`    ${property}: {`);
+      expect(accordionStory).not.toContain(`    ${fixtureProperty}: {`);
     }
   });
 

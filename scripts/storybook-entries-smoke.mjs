@@ -368,7 +368,10 @@ try {
   await page.goto(`${baseUrl}/iframe.html?id=${accordionDocs.id}&viewMode=docs`, {
     waitUntil: 'networkidle',
   });
-  await page.getByRole('heading', { name: 'Root properties' }).waitFor();
+  await page
+    .locator('h2')
+    .filter({ hasText: /^Root properties$/u })
+    .waitFor();
   await assertDocsOrder(page, 'Accordion');
   for (const property of [
     'variant',
@@ -379,18 +382,26 @@ try {
     'disabled',
     'keepMounted',
     'hiddenUntilFound',
+    'motionPolicy',
     'contentAlignment',
-    'accountContentAlignment',
     'onValueChange',
     'indicatorPosition',
-    'securityIndicatorPosition',
-    'billingIndicatorPosition',
-    'itemDisabled',
     'headingLevel',
-    'showLeadingContent',
   ]) {
     if (!(await page.getByRole('cell', { name: property, exact: true }).count())) {
       throw new Error(`Accordion Docs page omits ${property}`);
+    }
+  }
+  for (const fixtureProperty of [
+    'accountContentAlignment',
+    'securityIndicatorPosition',
+    'billingIndicatorPosition',
+    'itemDisabled',
+    'showLeadingContent',
+    'contentMotion',
+  ]) {
+    if (await page.getByRole('cell', { name: fixtureProperty, exact: true }).count()) {
+      throw new Error(`Accordion Docs exposes fixture-only control ${fixtureProperty}`);
     }
   }
   await assertDocsSourceExpands(page, 'Accordion', '<tp-accordion');
@@ -401,7 +412,10 @@ try {
   await page.goto(`${baseUrl}/iframe.html?id=${collapsibleDocs.id}&viewMode=docs`, {
     waitUntil: 'networkidle',
   });
-  await page.getByRole('heading', { name: 'Properties' }).waitFor();
+  await page
+    .locator('h2')
+    .filter({ hasText: /^Properties$/u })
+    .waitFor();
   await assertDocsOrder(page, 'Collapsible');
   for (const property of [
     'open',
@@ -413,13 +427,15 @@ try {
     'contentAlignment',
     'indicatorPosition',
     'headingLevel',
-    'showLeadingContent',
-    'showTrailingContent',
-    'contentMotion',
     'onOpenChange',
   ]) {
     if (!(await page.getByRole('cell', { name: property, exact: true }).count())) {
       throw new Error(`Collapsible Docs page omits ${property}`);
+    }
+  }
+  for (const fixtureProperty of ['showLeadingContent', 'showTrailingContent', 'contentMotion']) {
+    if (await page.getByRole('cell', { name: fixtureProperty, exact: true }).count()) {
+      throw new Error(`Collapsible Docs exposes fixture-only control ${fixtureProperty}`);
     }
   }
   await assertDocsSourceExpands(page, 'Collapsible', '<tp-collapsible');

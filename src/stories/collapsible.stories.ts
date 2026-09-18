@@ -25,11 +25,20 @@ interface CollapsibleStoryArgs {
   contentAlignment: CollapsibleContentAlignment;
   indicatorPosition: CollapsibleIndicatorPosition;
   headingLevel: number;
+  onOpenChange?: (event: TpOpenChangeEvent) => void;
+}
+
+interface CollapsibleFixtureOptions {
   showLeadingContent: boolean;
   showTrailingContent: boolean;
   contentMotion: 'none' | 'line-by-line';
-  onOpenChange?: (event: TpOpenChangeEvent) => void;
 }
+
+const defaultCollapsibleFixture: CollapsibleFixtureOptions = {
+  showLeadingContent: false,
+  showTrailingContent: false,
+  contentMotion: 'none',
+};
 
 const meta: Meta<CollapsibleStoryArgs> = {
   title: 'Components/Collapsible',
@@ -53,9 +62,6 @@ const meta: Meta<CollapsibleStoryArgs> = {
     contentAlignment: 'edge',
     indicatorPosition: 'trailing',
     headingLevel: 0,
-    showLeadingContent: false,
-    showTrailingContent: false,
-    contentMotion: 'none',
   },
   argTypes: {
     open: {
@@ -124,27 +130,6 @@ const meta: Meta<CollapsibleStoryArgs> = {
         defaultValue: { summary: '0' },
       },
     },
-    showLeadingContent: {
-      control: 'boolean',
-      description: 'Demo content assigned to the generic leading position.',
-      table: { category: 'Demo', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
-    },
-    showTrailingContent: {
-      control: 'boolean',
-      description:
-        'Demo content assigned to the generic trailing position; it suppresses the fallback when trailing is selected.',
-      table: { category: 'Demo', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
-    },
-    contentMotion: {
-      control: 'radio',
-      options: ['none', 'line-by-line'],
-      description: 'Demo driver that claims only the content motion role.',
-      table: {
-        category: 'Demo',
-        type: { summary: "'none' | 'line-by-line'" },
-        defaultValue: { summary: 'none' },
-      },
-    },
     onOpenChange: {
       control: false,
       description: 'Property-only callback invoked after an accepted tp-open-change proposal.',
@@ -155,46 +140,56 @@ const meta: Meta<CollapsibleStoryArgs> = {
       },
     },
   },
-  render: (args: CollapsibleStoryArgs) => {
-    const [, updateArgs] = useArgs<CollapsibleStoryArgs>();
-    const handleOpenChange = (event: TpOpenChangeEvent): void => {
-      updateArgs({ open: event.detail.value });
-    };
-    const handleMotionRequest = (event: TpMotionRequestEvent): void => {
-      if (args.contentMotion !== 'line-by-line' || event.request.role !== 'content') return;
-      event.respondWith({ play: playLineByLine });
-    };
-    return html`
-      <tp-collapsible
-        .open=${args.open}
-        .defaultOpen=${args.defaultOpen}
-        ?disabled=${args.disabled}
-        ?keep-mounted=${args.keepMounted}
-        ?hidden-until-found=${args.hiddenUntilFound}
-        .motionPolicy=${args.motionPolicy}
-        .contentAlignment=${args.contentAlignment}
-        .indicatorPosition=${args.indicatorPosition}
-        .headingLevel=${args.headingLevel}
-        .onOpenChange=${args.onOpenChange}
-        @tp-open-change=${handleOpenChange}
-        @tp-motion-request=${handleMotionRequest}
-      >
-        ${
-          args.showLeadingContent
+  render: (args) => renderCollapsible(args),
+};
+
+function renderCollapsible(
+  args: CollapsibleStoryArgs,
+  options: Partial<CollapsibleFixtureOptions> = {},
+) {
+  const fixture = { ...defaultCollapsibleFixture, ...options };
+  const [, updateArgs] = useArgs<CollapsibleStoryArgs>();
+  const handleOpenChange = (event: TpOpenChangeEvent): void => {
+    updateArgs({ open: event.detail.value });
+  };
+  const handleMotionRequest = (event: TpMotionRequestEvent): void => {
+    if (fixture.contentMotion !== 'line-by-line' || event.request.role !== 'content') return;
+    event.respondWith({ play: playLineByLine });
+  };
+  return html`
+    <tp-collapsible
+      .open=${args.open}
+      .defaultOpen=${args.defaultOpen}
+      ?disabled=${args.disabled}
+      ?keep-mounted=${args.keepMounted}
+      ?hidden-until-found=${args.hiddenUntilFound}
+      .motionPolicy=${args.motionPolicy}
+      .contentAlignment=${args.contentAlignment}
+      .indicatorPosition=${args.indicatorPosition}
+      .headingLevel=${args.headingLevel}
+      .onOpenChange=${args.onOpenChange}
+      @tp-open-change=${handleOpenChange}
+      @tp-motion-request=${handleMotionRequest}
+    >
+      ${
+          fixture.showLeadingContent
             ? html`<tp-badge slot="leading" variant="accent">New</tp-badge>`
             : null
         }
-        <span slot="label">Project details</span>
-        ${args.showTrailingContent ? html`<tp-icon slot="trailing" .icon=${plusIcon}></tp-icon>` : null}
-        <p>Created today and shared with three collaborators.</p>
-        <p>
-          Review ownership, access rules, and the longer description associated with this project
-          without navigating away from the current view.
-        </p>
-      </tp-collapsible>
-    `;
-  },
-};
+      <span slot="label">Project details</span>
+      ${
+          fixture.showTrailingContent
+            ? html`<tp-icon slot="trailing" .icon=${plusIcon}></tp-icon>`
+            : null
+        }
+      <p>Created today and shared with three collaborators.</p>
+      <p>
+        Review ownership, access rules, and the longer description associated with this project
+        without navigating away from the current view.
+      </p>
+    </tp-collapsible>
+  `;
+}
 
 export default meta;
 type Story = StoryObj<CollapsibleStoryArgs>;
@@ -222,19 +217,21 @@ export const LeadingIndicator: Story = {
 };
 
 export const LeadingContent: Story = {
-  args: { showLeadingContent: true },
+  render: (args) => renderCollapsible(args, { showLeadingContent: true }),
 };
 
 export const LabelAlignedContent: Story = {
-  args: { open: true, contentAlignment: 'label', showLeadingContent: true },
+  args: { open: true, contentAlignment: 'label' },
+  render: (args) => renderCollapsible(args, { showLeadingContent: true }),
 };
 
 export const TrailingContent: Story = {
-  args: { showTrailingContent: true },
+  render: (args) => renderCollapsible(args, { showTrailingContent: true }),
 };
 
 export const ExternalLineByLineMotion: Story = {
-  args: { open: true, contentMotion: 'line-by-line' },
+  args: { open: true },
+  render: (args) => renderCollapsible(args, { contentMotion: 'line-by-line' }),
 };
 
 function playLineByLine(request: MotionRequest): MotionPlayback {
