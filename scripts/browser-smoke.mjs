@@ -65,6 +65,108 @@ try {
     throw new Error(`Icon contract produced ${JSON.stringify(iconContract)}`);
   }
 
+  const cardContract = await page.evaluate(async () => {
+    const card = document.createElement('tp-card');
+    const title = document.createElement('h2');
+    title.slot = 'header';
+    title.textContent = 'Project access';
+    const description = document.createElement('p');
+    description.slot = 'description';
+    description.textContent = 'Review permissions before sharing.';
+    const content = document.createElement('p');
+    content.textContent = 'Invite your teammates.';
+    const action = document.createElement('tp-button');
+    action.slot = 'footer';
+    action.textContent = 'Continue';
+    card.append(title, description, content, action);
+    document.body.append(card);
+    await Promise.all([card.updateComplete, action.updateComplete]);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    const surface = card.shadowRoot.querySelector('[part="root"]');
+    const header = card.shadowRoot.querySelector('[part="header"]');
+    const body = card.shadowRoot.querySelector('[part="content"]');
+    const footer = card.shadowRoot.querySelector('[part="footer"]');
+    const sectionBackgrounds = () =>
+      [header, body, footer].map((section) => getComputedStyle(section).backgroundColor);
+    const distinctSections = () => new Set(sectionBackgrounds()).size === 3;
+    const uniformSections = () =>
+      new Set([getComputedStyle(surface).backgroundColor, ...sectionBackgrounds()]).size === 1;
+    const bordersVisible = () =>
+      [
+        getComputedStyle(surface).borderTopWidth,
+        getComputedStyle(header).borderBottomWidth,
+        getComputedStyle(footer).borderTopWidth,
+      ].every((width) => parseFloat(width) > 0);
+    const bordersAbsent = () =>
+      [
+        getComputedStyle(surface).borderTopWidth,
+        getComputedStyle(header).borderBottomWidth,
+        getComputedStyle(footer).borderTopWidth,
+      ].every((width) => width === '0px');
+    const defaultSections =
+      card.elevated === false &&
+      card.borders === 'on' &&
+      card.sectionColors === 'on' &&
+      getComputedStyle(surface).boxShadow === 'none' &&
+      !header.hidden &&
+      !footer.hidden &&
+      distinctSections() &&
+      bordersVisible() &&
+      getComputedStyle(footer).justifyContent === 'flex-end' &&
+      parseFloat(getComputedStyle(body).gap) > 0;
+    const namedSlots =
+      card.shadowRoot.querySelector('slot[name="header"]').assignedElements()[0] === title &&
+      card.shadowRoot.querySelector('slot[name="description"]').assignedElements()[0] ===
+        description &&
+      card.shadowRoot.querySelector('slot[name="footer"]').assignedElements()[0] === action;
+
+    card.borders = 'off';
+    await card.updateComplete;
+    const colorsWithoutBorders = distinctSections() && bordersAbsent();
+    card.sectionColors = 'off';
+    await card.updateComplete;
+    const neither = uniformSections() && bordersAbsent();
+    card.borders = 'on';
+    await card.updateComplete;
+    const bordersWithoutColors = uniformSections() && bordersVisible();
+    card.sectionColors = 'on';
+    await card.updateComplete;
+
+    card.elevated = true;
+    await card.updateComplete;
+    const elevatedSections =
+      card.hasAttribute('elevated') &&
+      !card.hasAttribute('variant') &&
+      distinctSections() &&
+      bordersVisible() &&
+      getComputedStyle(surface).boxShadow !== 'none';
+    card.elevated = false;
+    await card.updateComplete;
+    const elevationReset =
+      !card.hasAttribute('elevated') && getComputedStyle(surface).boxShadow === 'none';
+
+    title.remove();
+    description.remove();
+    action.remove();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const absentSections = header.hidden && footer.hidden;
+    card.remove();
+    return {
+      defaultSections,
+      namedSlots,
+      colorsWithoutBorders,
+      neither,
+      bordersWithoutColors,
+      elevatedSections,
+      elevationReset,
+      absentSections,
+    };
+  });
+  if (Object.values(cardContract).some((value) => value !== true)) {
+    throw new Error(`Card contract produced ${JSON.stringify(cardContract)}`);
+  }
+
   for (const entry of catalogEntries) {
     const count = await page.locator(entry.tagName).count();
     if (count < 1) throw new Error(`Storybook does not render ${entry.tagName}`);

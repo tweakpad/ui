@@ -1,0 +1,95 @@
+import type { Meta, StoryObj } from '@storybook/web-components-vite';
+import { html } from 'lit';
+import cardDocumentation from '../../docs/card.md?raw';
+import './card.stories.css';
+
+interface CardStoryArgs {
+  elevated: boolean;
+  borders: 'on' | 'off';
+  sectionColors: 'on' | 'off';
+  interactive: boolean;
+}
+
+const meta: Meta<CardStoryArgs> = {
+  title: 'Components/Card',
+  component: 'tp-card',
+  tags: ['autodocs'],
+  parameters: {
+    layout: 'centered',
+    docs: { description: { component: cardDocumentation.replace(/^# Card\n/u, '') } },
+  },
+  args: {
+    elevated: false,
+    borders: 'on',
+    sectionColors: 'on',
+    interactive: false,
+  },
+  argTypes: {
+    elevated: {
+      control: 'boolean',
+      description: 'Applies shared surface elevation independently of borders and section colors.',
+      table: { category: 'Presentation', defaultValue: { summary: 'false' } },
+    },
+    borders: {
+      control: 'radio',
+      options: ['on', 'off'],
+      description: 'Shows or removes the outer outline and header/footer dividers together.',
+      table: { category: 'Presentation', defaultValue: { summary: 'on' } },
+    },
+    sectionColors: {
+      control: 'radio',
+      options: ['on', 'off'],
+      description:
+        'Uses distinct solid fills for header, content, and footer, or one uniform fill.',
+      table: { category: 'Presentation', defaultValue: { summary: 'on' } },
+    },
+    interactive: {
+      control: 'boolean',
+      description: 'Adds the existing focusable hover treatment; actions remain separate controls.',
+      table: { category: 'Interaction', defaultValue: { summary: 'false' } },
+    },
+  },
+  render: (args) => html`
+    <tp-card
+      class="card-story"
+      ?elevated=${args.elevated}
+      borders=${args.borders}
+      section-colors=${args.sectionColors}
+      ?interactive=${args.interactive}
+    >
+      <h2 slot="header">Project access</h2>
+      <p slot="description">Review how your team will use this workspace.</p>
+      <p>
+        Invited teammates can view shared plans, project files, and recent activity across the
+        workspace.
+      </p>
+      <p>
+        Choose who can make changes before sending an invitation. You can update permissions later
+        as your team grows.
+      </p>
+      <tp-button slot="footer" variant="outline" size="sm">Not now</tp-button>
+      <tp-button slot="footer" size="sm">Continue</tp-button>
+    </tp-card>
+  `,
+};
+
+export default meta;
+type Story = StoryObj<CardStoryArgs>;
+
+export const Default: Story = {};
+
+export const Elevated: Story = { args: { elevated: true } };
+
+export const BordersOff: Story = { args: { borders: 'off' } };
+
+export const SectionColorsOff: Story = { args: { sectionColors: 'off' } };
+
+export const BothOff: Story = { args: { borders: 'off', sectionColors: 'off' } };
+
+export const ContentOnly: Story = {
+  render: () => html`
+    <tp-card class="card-story">
+      <p>Your project summary is ready to share.</p>
+    </tp-card>
+  `,
+};

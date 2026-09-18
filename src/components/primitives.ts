@@ -7,7 +7,12 @@ import {
   type MotionHandle,
   type MotionRoleDefinition,
 } from '../foundation/motion.js';
-import { activateLabeledControl, controlStyles } from './shared.js';
+import {
+  activateLabeledControl,
+  controlStyles,
+  elevatedProperty,
+  elevationStyles,
+} from './shared.js';
 
 export const primitiveMotionRoles = {
   cardInteraction: {
@@ -375,19 +380,101 @@ export class TpCard extends TpElement {
   static tagName = 'tp-card';
   static override properties = {
     ...TpElement.properties,
+    elevated: elevatedProperty,
+    borders: { type: String, reflect: true },
+    sectionColors: { type: String, attribute: 'section-colors', reflect: true },
     interactive: { type: Boolean, reflect: true },
   };
   static override styles = [
     TpElement.styles,
-    controlStyles,
+    elevationStyles,
     css`
       :host {
         display: block;
+
+        --_tp-card-base: var(--tp-card);
+        --_tp-card-header-background: var(--_tp-card-base);
+        --_tp-card-content-background: color-mix(in oklab, var(--tp-card) 50%, var(--tp-muted));
+        --_tp-card-footer-background: var(--tp-muted);
+        --_tp-card-border-width: var(--tp-border-width);
+        --_tp-card-border: var(--tp-border);
+      }
+
+      :host([elevated]) {
+        /* Elevation softens the border to 70% of its shared role; shadow remains primary. */
+        --_tp-card-border: color-mix(in oklab, var(--tp-border) 70%, transparent);
+      }
+
+      :host([borders='off']) {
+        --_tp-card-border-width: 0px;
+      }
+
+      :host([section-colors='off']) {
+        --_tp-card-content-background: var(--_tp-card-base);
+        --_tp-card-footer-background: var(--_tp-card-base);
       }
 
       .card {
         display: grid;
-        gap: var(--tp-space-3);
+        overflow: clip;
+        border: var(--_tp-card-border-width) var(--tp-border-style) var(--_tp-card-border);
+        border-radius: var(--tp-radius-lg);
+        color: var(--tp-card-foreground);
+        background: var(--_tp-card-base);
+        box-shadow: var(--_tp-elevation-shadow);
+      }
+
+      .card > header {
+        display: grid;
+        gap: var(--tp-space-1);
+        padding: var(--tp-space-5);
+        border-block-end: var(--_tp-card-border-width) var(--tp-border-style) var(--_tp-card-border);
+        background: var(--_tp-card-header-background);
+      }
+
+      .card > .content {
+        display: grid;
+        gap: var(--tp-space-5);
+        padding: var(--tp-space-5);
+        line-height: var(--tp-leading-normal);
+        background: var(--_tp-card-content-background);
+      }
+
+      .card > footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--tp-space-2);
+        padding: var(--tp-space-5);
+        border-block-start: var(--_tp-card-border-width) var(--tp-border-style)
+          var(--_tp-card-border);
+        background: var(--_tp-card-footer-background);
+      }
+
+      .card > [hidden] {
+        display: none;
+      }
+
+      slot {
+        display: contents;
+      }
+
+      slot[name='header']::slotted(*) {
+        margin: 0;
+        font-size: var(--tp-text-lg);
+        font-weight: var(--tp-font-semibold);
+        line-height: var(--tp-leading-normal);
+      }
+
+      slot[name='description']::slotted(*) {
+        margin: 0;
+        color: var(--tp-muted-foreground);
+        font-size: var(--tp-text-sm);
+        line-height: var(--tp-leading-normal);
+      }
+
+      .content > slot::slotted(p) {
+        margin: 0;
       }
 
       :host([interactive]) .card {
@@ -407,8 +494,20 @@ export class TpCard extends TpElement {
       }
     `,
   ];
+  elevated = false;
+  borders: 'on' | 'off' = 'on';
+  sectionColors: 'on' | 'off' = 'on';
   interactive = false;
   #interactionMotion: MotionHandle | null = null;
+  #syncSection = (event: Event): void => {
+    const section = (event.currentTarget as HTMLSlotElement).parentElement;
+    if (!section) return;
+    section.hidden = ![...section.querySelectorAll('slot')].some((slot) =>
+      slot
+        .assignedNodes({ flatten: true })
+        .some((node) => node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim())),
+    );
+  };
   #setInteraction(active: boolean, input: 'pointer' | 'focus'): void {
     if (!this.interactive) return;
     this.#interactionMotion = prepareMotion(
@@ -434,9 +533,14 @@ export class TpCard extends TpElement {
       @focusin=${() => this.#setInteraction(true, 'focus')}
       @focusout=${() => this.#setInteraction(false, 'focus')}
     >
-      <header part="header"><slot name="header"></slot></header>
-      <div part="content"><slot></slot></div>
-      <footer part="footer"><slot name="footer"></slot></footer>
+      <header part="header" hidden>
+        <slot name="header" @slotchange=${this.#syncSection}></slot>
+        <slot name="description" @slotchange=${this.#syncSection}></slot>
+      </header>
+      <div class="content" part="content"><slot></slot></div>
+      <footer part="footer" hidden>
+        <slot name="footer" @slotchange=${this.#syncSection}></slot>
+      </footer>
     </article>`;
   }
 }

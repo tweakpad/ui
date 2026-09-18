@@ -418,11 +418,12 @@ export const Overview: Story = {
         </section>
         <section class="example">
           <h2>Card</h2>
-          <tp-card
-            ><strong slot="header">Card title</strong>
-            <p>Card content</p>
-            <tp-button slot="footer">Action</tp-button></tp-card
-          >
+          <tp-card>
+            <h3 slot="header">Project access</h3>
+            <p slot="description">Review permissions before sharing.</p>
+            <p>Invite your teammates to collaborate on this project.</p>
+            <tp-button slot="footer" size="sm">Continue</tp-button>
+          </tp-card>
         </section>
         <section class="example">
           <h2>Empty state</h2>

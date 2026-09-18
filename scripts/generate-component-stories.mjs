@@ -17,6 +17,7 @@ const authoredStories = new Set([
   'tp-accordion',
   'tp-button',
   'tp-button-group',
+  'tp-card',
   'tp-collapsible',
   'tp-icon',
 ]);

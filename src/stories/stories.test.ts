@@ -12,6 +12,7 @@ describe('Storybook catalog entries', () => {
     new URL('./button-group.stories.ts', import.meta.url),
     'utf8',
   );
+  const cardStory = readFileSync(new URL('./card.stories.ts', import.meta.url), 'utf8');
   const collapsibleStory = readFileSync(
     new URL('./collapsible.stories.ts', import.meta.url),
     'utf8',
@@ -27,12 +28,13 @@ describe('Storybook catalog entries', () => {
   });
 
   it('has one statically indexed Default story for every public control', () => {
-    expect(storyFiles).toHaveLength(catalogEntries.length - 5);
+    expect(storyFiles).toHaveLength(catalogEntries.length - 6);
     const sources = [
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
       accordionStory,
       buttonStory,
       buttonGroupStory,
+      cardStory,
       collapsibleStory,
       iconStory,
     ];
@@ -52,6 +54,7 @@ describe('Storybook catalog entries', () => {
       accordionStory,
       buttonStory,
       buttonGroupStory,
+      cardStory,
       collapsibleStory,
       iconStory,
     ];
@@ -202,5 +205,26 @@ describe('Storybook catalog entries', () => {
     }
     expect(buttonGroupStory).toContain('<tp-button variant="outline"');
     expect(buttonGroupStory).not.toContain('<button');
+  });
+
+  it('shows Card sections and independent presentation properties', () => {
+    expect(cardStory).toContain("component: 'tp-card'");
+    expect(cardStory).not.toContain("options: ['default', 'elevated']");
+    for (const property of ['elevated', 'borders', 'sectionColors', 'interactive']) {
+      expect(cardStory).toContain(`    ${property}: {`);
+    }
+    for (const configuration of [
+      'Elevated',
+      'BordersOff',
+      'SectionColorsOff',
+      'BothOff',
+      'ContentOnly',
+    ]) {
+      expect(cardStory).toContain(`export const ${configuration}: Story`);
+    }
+    for (const slot of ['header', 'description', 'footer']) {
+      expect(cardStory).toContain(`slot="${slot}"`);
+    }
+    expect(cardStory).toContain('<tp-button slot="footer"');
   });
 });
