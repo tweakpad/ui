@@ -24,7 +24,19 @@ Default content is the visible label. Optional `icon-start` and `icon-end` slots
 
 The public shadow parts are `button`, `button-leading-mark`, `button-label`, and `button-trailing-mark`. Each part also receives its `-variant-*` and `-size-*` presentation keys. The host publishes `data-disabled` and `data-focus-visible` state markers.
 
-The enabled outline variant adds a hover layer made from `color-mix(in oklab, var(--tp-input) 50%, transparent)` over its `--tp-background` fill. Its text remains `--tp-foreground` and its boundary remains `--tp-border`; a disabled Button does not receive the hover layer. No hover-specific color token is needed.
+## Hover colors
+
+Enabled Buttons derive hover color from existing roles, without hover-specific tokens. For filled variants, `light-dark(var(--tp-foreground), var(--tp-background))` is the mode-aware second operand; the variant keeps its paired foreground and boundary role.
+
+| Variant | OKLab hover mix |
+| --- | --- |
+| `default` | `primary` 80% with the mode-aware operand |
+| `secondary` | `secondary` 80% with the mode-aware operand |
+| `destructive` | `destructive` 85% with the mode-aware operand |
+| `outline` | `input` 50% with `transparent`, layered over `background` |
+| `ghost` | `input` 50% with `transparent`, layered over `background` |
+
+Outline and ghost share the same hovered background and `--tp-foreground` content color; only outline paints the `--tp-border` boundary. Hover colors transition with the library's fast motion role and become instant under reduced motion. `link` has no painted background at rest or on hover, and disabled Buttons receive no hover mix.
 
 ## Actions and forms
 

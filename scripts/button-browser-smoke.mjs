@@ -137,7 +137,8 @@ try {
     throw new Error(`Button browser contract produced ${JSON.stringify(result)}`);
   }
 
-  await page.evaluate(async () => {
+  const hoverVariants = ['default', 'secondary', 'destructive', 'outline', 'ghost'];
+  await page.evaluate(async (variants) => {
     for (const [name, colorScheme, overrides] of [
       ['light', 'light', {}],
       ['dark', 'dark', {}],
@@ -147,6 +148,13 @@ try {
         {
           '--tp-background': '#f6f2e8',
           '--tp-foreground': '#24201c',
+          '--tp-primary': '#4b3dad',
+          '--tp-primary-foreground': '#fff',
+          '--tp-secondary': '#d7e7d2',
+          '--tp-secondary-foreground': '#24201c',
+          '--tp-destructive': '#a52626',
+          '--tp-destructive-foreground': '#fff',
+          '--tp-accent': '#d7d0ea',
           '--tp-input': '#b67724',
           '--tp-border': '#85612c',
         },
@@ -160,132 +168,252 @@ try {
       for (const [role, value] of Object.entries(overrides)) {
         region.style.setProperty(role, value);
       }
-      const button = document.createElement('tp-button');
-      button.variant = 'outline';
-      button.textContent = `${name} outline`;
-      region.append(button);
+      const buttons = variants.map((variant) => {
+        const button = document.createElement('tp-button');
+        button.variant = variant;
+        button.dataset.hoverVariant = variant;
+        button.textContent = `${name} ${variant}`;
+        region.append(button);
+        return button;
+      });
       document.body.append(region);
-      await button.updateComplete;
+      await Promise.all(buttons.map((button) => button.updateComplete));
     }
-  });
+  }, hoverVariants);
 
-  const hoverColors = [];
+  const hoverColors = new Map(hoverVariants.map((variant) => [variant, []]));
+  const layeredHover = new Map();
   for (const name of ['light', 'dark', 'scoped']) {
-    const control = page.locator(`[data-color-case="${name}"] tp-button`).locator('button');
+    for (const variant of hoverVariants) {
+      const control = page
+        .locator(`[data-color-case="${name}"] tp-button[data-hover-variant="${variant}"]`)
+        .locator('button');
+      const before = await control.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          background: style.backgroundColor,
+          image: style.backgroundImage,
+          foreground: style.color,
+          border: style.borderColor,
+          overlayOpacity: getComputedStyle(element, '::before').opacity,
+        };
+      });
+      await control.hover();
+      await page.waitForTimeout(200);
+      const after = await control.evaluate((element, currentVariant) => {
+        const style = getComputedStyle(element);
+        const layer = getComputedStyle(element, '::before');
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 1;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        const sample = (colors) => {
+          context.clearRect(0, 0, 1, 1);
+          for (const color of colors) {
+            context.fillStyle = color;
+            context.fillRect(0, 0, 1, 1);
+          }
+          return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+        };
+        const overlay =
+          currentVariant === 'outline' || currentVariant === 'ghost' ? layer.backgroundColor : null;
+        const base = sample([style.backgroundColor]);
+        const mixed = sample(overlay ? [style.backgroundColor, overlay] : [style.backgroundColor]);
+        const foreground = sample([style.color]);
+        const luminance = (rgb) => {
+          const [red, green, blue] = rgb.map((value) => {
+            const channel = value / 255;
+            return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+          });
+          return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+        };
+        const foregroundLuminance = luminance(foreground);
+        const backgroundLuminance = luminance(mixed);
+        return {
+          background: style.backgroundColor,
+          image: style.backgroundImage,
+          foreground: style.color,
+          border: style.borderColor,
+          overlay,
+          overlayOpacity: layer.opacity,
+          backgroundTransition:
+            style.transitionProperty.includes('background-color') &&
+            style.transitionDuration.split(',').some((duration) => parseFloat(duration) > 0),
+          overlayTransition:
+            layer.transitionProperty.includes('opacity') &&
+            layer.transitionDuration.split(',').some((duration) => parseFloat(duration) > 0),
+          mixed,
+          overlayChanged: base.some((value, index) => value !== mixed[index]),
+          contrast:
+            (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) /
+            (Math.min(foregroundLuminance, backgroundLuminance) + 0.05),
+        };
+      }, variant);
+      const layered = variant === 'outline' || variant === 'ghost';
+      if (
+        before.image !== 'none' ||
+        before.foreground !== after.foreground ||
+        before.border !== after.border ||
+        after.contrast < 4.5 ||
+        after.image !== 'none' ||
+        !after.backgroundTransition ||
+        (layered &&
+          (!after.overlayTransition ||
+            before.overlayOpacity !== '0' ||
+            after.overlayOpacity !== '1' ||
+            !after.overlayChanged)) ||
+        (!layered && before.background === after.background) ||
+        (variant === 'outline' && before.background !== after.background) ||
+        (variant === 'ghost' && before.background === after.background)
+      ) {
+        throw new Error(
+          `${variant} hover colors failed for ${name}: ${JSON.stringify({ before, after })}`,
+        );
+      }
+      hoverColors.get(variant).push(`${after.background}:${after.mixed.join(',')}`);
+      if (layered) {
+        const fills = layeredHover.get(name) ?? new Map();
+        fills.set(variant, after);
+        layeredHover.set(name, fills);
+      }
+    }
+  }
+  for (const [name, fills] of layeredHover) {
+    const outline = fills.get('outline');
+    const ghost = fills.get('ghost');
+    if (
+      outline.background !== ghost.background ||
+      outline.foreground !== ghost.foreground ||
+      outline.overlay !== ghost.overlay ||
+      outline.mixed.join() !== ghost.mixed.join() ||
+      outline.border === ghost.border
+    ) {
+      throw new Error(`Outline and ghost hover surfaces diverged for ${name}`);
+    }
+  }
+  for (const [variant, colors] of hoverColors) {
+    if (new Set(colors).size !== 3) {
+      throw new Error(`${variant} hover did not respond to light, dark, and scoped tokens`);
+    }
+  }
+
+  await page.evaluate(async (variants) => {
+    const region = document.querySelector('[data-color-case="light"]');
+    const buttons = variants.map((variant) => {
+      const button = document.createElement('tp-button');
+      button.variant = variant;
+      button.dataset.disabledCase = variant;
+      button.disabled = true;
+      button.focusableWhenDisabled = true;
+      button.textContent = `${variant} disabled`;
+      region.append(button);
+      return button;
+    });
+    await Promise.all(buttons.map((button) => button.updateComplete));
+  }, hoverVariants);
+  for (const variant of hoverVariants) {
+    const control = page.locator(`[data-disabled-case="${variant}"]`).locator('button');
     const before = await control.evaluate((element) => {
       const style = getComputedStyle(element);
-      return {
-        background: style.backgroundColor,
-        image: style.backgroundImage,
-        foreground: style.color,
-        border: style.borderColor,
-      };
+      return [
+        style.backgroundColor,
+        style.backgroundImage,
+        style.borderColor,
+        getComputedStyle(element, '::before').opacity,
+      ];
     });
     await control.hover();
     const after = await control.evaluate((element) => {
       const style = getComputedStyle(element);
-      const host = element.getRootNode().host;
-      const probe = document.createElement('span');
-      probe.style.backgroundColor = 'color-mix(in oklab, var(--tp-input) 50%, transparent)';
-      host.parentElement.append(probe);
-      const overlay = getComputedStyle(probe).backgroundColor;
-      probe.remove();
-
-      const canvas = document.createElement('canvas');
-      canvas.width = canvas.height = 1;
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-      const sample = (colors) => {
-        context.clearRect(0, 0, 1, 1);
-        for (const color of colors) {
-          context.fillStyle = color;
-          context.fillRect(0, 0, 1, 1);
-        }
-        return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
-      };
-      const base = sample([style.backgroundColor]);
-      const mixed = sample([style.backgroundColor, overlay]);
-      const foreground = sample([style.color]);
-      const luminance = (rgb) => {
-        const [red, green, blue] = rgb.map((value) => {
-          const channel = value / 255;
-          return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-        });
-        return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-      };
-      const foregroundLuminance = luminance(foreground);
-      const backgroundLuminance = luminance(mixed);
-      return {
-        background: style.backgroundColor,
-        image: style.backgroundImage,
-        foreground: style.color,
-        border: style.borderColor,
-        changed: base.some((value, index) => value !== mixed[index]),
-        contrast:
-          (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) /
-          (Math.min(foregroundLuminance, backgroundLuminance) + 0.05),
-      };
+      return [
+        style.backgroundColor,
+        style.backgroundImage,
+        style.borderColor,
+        getComputedStyle(element, '::before').opacity,
+      ];
     });
-    if (
-      before.image !== 'none' ||
-      !after.image.includes('linear-gradient') ||
-      before.background !== after.background ||
-      before.foreground !== after.foreground ||
-      before.border !== after.border ||
-      !after.changed ||
-      after.contrast < 4.5
-    ) {
-      throw new Error(
-        `Outline hover colors failed for ${name}: ${JSON.stringify({ before, after })}`,
-      );
+    if (before.some((value, index) => value !== after[index])) {
+      throw new Error(`Disabled ${variant} Button received a hover mix`);
     }
-    hoverColors.push(after.image);
   }
-  if (new Set(hoverColors).size !== 3) {
-    throw new Error(
-      `Light, dark, and scoped hover layers did not resolve distinctly: ${hoverColors}`,
-    );
-  }
-
-  const inertHover = await page.evaluate(async () => {
-    const region = document.querySelector('[data-color-case="light"]');
-    const disabled = document.createElement('tp-button');
-    disabled.variant = 'outline';
-    disabled.disabled = true;
-    disabled.focusableWhenDisabled = true;
-    disabled.textContent = 'Disabled';
-    const secondary = document.createElement('tp-button');
-    secondary.variant = 'secondary';
-    secondary.textContent = 'Secondary';
-    region.append(disabled, secondary);
-    await Promise.all([disabled.updateComplete, secondary.updateComplete]);
+  await page.evaluate(async () => {
+    const link = document.createElement('tp-button');
+    link.variant = 'link';
+    link.dataset.linkHoverCase = '';
+    link.textContent = 'Link appearance';
+    document.querySelector('[data-color-case="light"]').append(link);
+    await link.updateComplete;
+  });
+  const linkControl = page.locator('[data-link-hover-case] button');
+  const linkBefore = await linkControl.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.fillStyle = style.backgroundColor;
+    context.fillRect(0, 0, 1, 1);
     return {
-      disabled: getComputedStyle(disabled.shadowRoot.querySelector('button')).borderColor,
-      secondary: getComputedStyle(secondary.shadowRoot.querySelector('button')).borderColor,
+      colors: [style.backgroundColor, style.backgroundImage, style.borderColor],
+      backgroundAlpha: context.getImageData(0, 0, 1, 1).data[3],
+      layer: getComputedStyle(element, '::before').content,
     };
   });
-  const disabledControl = page
-    .locator('[data-color-case="light"] tp-button')
-    .nth(1)
-    .locator('button');
-  await disabledControl.hover();
-  const disabledAfter = await disabledControl.evaluate((element) => ({
-    border: getComputedStyle(element).borderColor,
-    image: getComputedStyle(element).backgroundImage,
-  }));
-  const secondaryControl = page
-    .locator('[data-color-case="light"] tp-button')
-    .nth(2)
-    .locator('button');
-  await secondaryControl.hover();
-  const secondaryAfter = await secondaryControl.evaluate(
-    (element) => getComputedStyle(element).borderColor,
-  );
+  await linkControl.hover();
+  const linkAfter = await linkControl.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.fillStyle = style.backgroundColor;
+    context.fillRect(0, 0, 1, 1);
+    return {
+      colors: [style.backgroundColor, style.backgroundImage, style.borderColor],
+      backgroundAlpha: context.getImageData(0, 0, 1, 1).data[3],
+      layer: getComputedStyle(element, '::before').content,
+    };
+  });
   if (
-    disabledAfter.border !== inertHover.disabled ||
-    disabledAfter.image !== 'none' ||
-    secondaryAfter !== inertHover.secondary
+    linkBefore.backgroundAlpha !== 0 ||
+    linkAfter.backgroundAlpha !== 0 ||
+    linkBefore.layer !== 'none' ||
+    linkAfter.layer !== 'none' ||
+    linkBefore.colors[1] !== 'none' ||
+    linkAfter.colors[1] !== 'none' ||
+    linkBefore.colors.some((value, index) => value !== linkAfter.colors[index])
   ) {
-    throw new Error('Disabled hover or secondary variant border changed unexpectedly');
+    throw new Error('Link Button unexpectedly received a hover mix');
+  }
+  const reducedMotion = await page.evaluate(async () => {
+    const region = document.createElement('div');
+    region.setAttribute('motion-policy', 'reduce');
+    const buttons = ['default', 'outline', 'ghost'].map((variant) => {
+      const button = document.createElement('tp-button');
+      button.variant = variant;
+      button.textContent = variant;
+      region.append(button);
+      return button;
+    });
+    document.body.append(region);
+    await Promise.all(buttons.map((button) => button.updateComplete));
+    const durations = buttons.map((button) => {
+      const control = button.shadowRoot.querySelector('button');
+      return {
+        fill: getComputedStyle(control).transitionDuration,
+        layer: getComputedStyle(control, '::before').transitionDuration,
+      };
+    });
+    region.remove();
+    return durations;
+  });
+  if (
+    reducedMotion.some(({ fill, layer }) =>
+      [fill, layer].some((durations) =>
+        durations.split(',').some((duration) => parseFloat(duration) > 0),
+      ),
+    )
+  ) {
+    throw new Error(
+      `Reduced-motion Button hover was not instant: ${JSON.stringify(reducedMotion)}`,
+    );
   }
   console.log(`Button browser contract passed in ${browserName}`);
 } finally {

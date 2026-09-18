@@ -116,7 +116,7 @@ describe('foundational styling tokens', () => {
       .map((name) => readFileSync(new URL(name, componentDirectory), 'utf8'));
     const sources = [styles, ...componentStyles];
     const validMix =
-      /color-mix\(\s*in\s+oklab\s*,\s*var\(--tp-[a-z0-9-]+\)\s+\d+(?:\.\d+)?%\s*,\s*(?:transparent|var\(--tp-[a-z0-9-]+\)(?:\s+\d+(?:\.\d+)?%)?)\s*\)/gu;
+      /color-mix\(\s*in\s+oklab\s*,\s*var\(--tp-[a-z0-9-]+\)\s+\d+(?:\.\d+)?%\s*,\s*(?:transparent|var\(--tp-[a-z0-9-]+\)(?:\s+\d+(?:\.\d+)?%)?|light-dark\(\s*var\(--tp-[a-z0-9-]+\)\s*,\s*var\(--tp-[a-z0-9-]+\)\s*\))\s*\)/gu;
     const colorRoles: readonly string[] = TOKEN_FAMILIES.color;
 
     for (const source of sources) {

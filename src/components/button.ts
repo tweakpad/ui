@@ -32,6 +32,7 @@ export class TpButton extends TpElement {
       }
 
       .control {
+        position: relative;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -43,6 +44,31 @@ export class TpButton extends TpElement {
         border-color: var(--tp-primary);
         font-weight: var(--tp-font-medium);
         text-decoration: none;
+        transition:
+          color calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard),
+          background-color calc(var(--tp-duration-fast) * var(--tp-motion-scale))
+            var(--tp-easing-standard),
+          border-color calc(var(--tp-duration-fast) * var(--tp-motion-scale))
+            var(--tp-easing-standard);
+      }
+
+      .control > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      :host([variant='outline']) .control::before,
+      :host([variant='ghost']) .control::before {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        border-radius: inherit;
+        background-color: color-mix(in oklab, var(--tp-input) 50%, transparent);
+        content: '';
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity calc(var(--tp-duration-fast) * var(--tp-motion-scale))
+          var(--tp-easing-standard);
       }
 
       .control[aria-disabled='true'] {
@@ -121,29 +147,55 @@ export class TpButton extends TpElement {
 
       .control:not(:disabled, [aria-disabled='true']):hover {
         border-color: var(--tp-primary);
+
+        /* 80% primary keeps the paired foreground legible in both modes. */
+        background-color: color-mix(
+          in oklab,
+          var(--tp-primary) 80%,
+          light-dark(var(--tp-foreground), var(--tp-background))
+        );
       }
 
       :host([variant='secondary']) .control:not(:disabled, [aria-disabled='true']):hover {
         border-color: var(--tp-secondary);
+
+        /* 80% secondary uses the same mode-aware contrastward mix. */
+        background-color: color-mix(
+          in oklab,
+          var(--tp-secondary) 80%,
+          light-dark(var(--tp-foreground), var(--tp-background))
+        );
       }
 
       :host([variant='outline']) .control:not(:disabled, [aria-disabled='true']):hover {
         border-color: var(--tp-border);
-
-        /* The 50% input layer retains the opaque background/foreground pair. */
-        background-image: linear-gradient(
-          color-mix(in oklab, var(--tp-input) 50%, transparent),
-          color-mix(in oklab, var(--tp-input) 50%, transparent)
-        );
+        background-color: var(--tp-background);
       }
 
       :host([variant='destructive']) .control:not(:disabled, [aria-disabled='true']):hover {
         border-color: var(--tp-destructive);
+
+        /* 85% destructive retains its paired foreground. */
+        background-color: color-mix(
+          in oklab,
+          var(--tp-destructive) 85%,
+          light-dark(var(--tp-foreground), var(--tp-background))
+        );
       }
 
-      :host([variant='ghost']) .control:not(:disabled, [aria-disabled='true']):hover,
+      :host([variant='ghost']) .control:not(:disabled, [aria-disabled='true']):hover {
+        border-color: transparent;
+        background-color: var(--tp-background);
+      }
+
+      :host([variant='outline']) .control:not(:disabled, [aria-disabled='true']):hover::before,
+      :host([variant='ghost']) .control:not(:disabled, [aria-disabled='true']):hover::before {
+        opacity: 1;
+      }
+
       :host([variant='link']) .control:not(:disabled, [aria-disabled='true']):hover {
         border-color: transparent;
+        background-color: transparent;
       }
 
       [part~='button-leading-mark'],

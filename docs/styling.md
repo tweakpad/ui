@@ -31,7 +31,7 @@ The default typography tuple is `font-sans`, `text-base`, `font-normal`, `leadin
 
 Library-authored percentage variations use existing semantic color roles with `color-mix(in oklab, …)`. The mix percentage is documented where the interaction rule is defined; it is not a new token such as `--tp-input-hover`. Base role values can still use any valid CSS color notation.
 
-For example, the outline Button's hover recipe is `color-mix(in oklab, var(--tp-input) 50%, transparent)`. That translucent layer sits over the opaque `--tp-background` fill, while text keeps `--tp-foreground` and the boundary keeps `--tp-border`. `transparent` is an alpha operand or a no-paint value, not a replacement for a content-bearing surface role. Selected and focused states continue to use their semantic `accent` and `ring` roles; `--tp-opacity-disabled` remains a non-color state token.
+For example, outline and ghost Buttons share the hover recipe `color-mix(in oklab, var(--tp-input) 50%, transparent)`. That translucent layer transitions over the opaque `--tp-background` fill, while text keeps `--tp-foreground`; outline alone paints the `--tp-border` boundary. Filled Button variants instead mix their paired base role toward a mode-aware contrast role. The link appearance never paints a background. `transparent` is an alpha operand or a no-paint value, not a replacement for a content-bearing surface role. Selected and focused states continue to use their semantic `accent` and `ring` roles; `--tp-opacity-disabled` remains a non-color state token.
 
 ## Complete themes and modes
 
