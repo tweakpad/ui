@@ -16,7 +16,7 @@ export const controlStyles = css`
     cursor: not-allowed;
   }
 
-  .control:not(:disabled):hover {
+  .control:not(:disabled, [aria-disabled='true']):hover {
     border-color: var(--tp-accent);
   }
 

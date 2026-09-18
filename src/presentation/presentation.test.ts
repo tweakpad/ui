@@ -8,6 +8,7 @@ import {
   assertCompleteTokenSet,
   REQUIRED_TOKEN_ROLES,
   STYLING_CATEGORIES,
+  TOKEN_FAMILIES,
 } from './tokens.js';
 
 describe('presentation dictionary', () => {
@@ -106,6 +107,37 @@ describe('foundational styling tokens', () => {
       expect(source, file).not.toContain('cubic-bezier(');
     }
     expect(styles).toMatch(/--tp-easing-standard:\s*cubic-bezier\(/u);
+  });
+
+  it('uses semantic roles and OKLab for every percentage-derived color', () => {
+    const componentDirectory = new URL('../components/', import.meta.url);
+    const componentStyles = readdirSync(componentDirectory)
+      .filter((name) => name.endsWith('.ts'))
+      .map((name) => readFileSync(new URL(name, componentDirectory), 'utf8'));
+    const sources = [styles, ...componentStyles];
+    const validMix =
+      /color-mix\(\s*in\s+oklab\s*,\s*var\(--tp-[a-z0-9-]+\)\s+\d+(?:\.\d+)?%\s*,\s*(?:transparent|var\(--tp-[a-z0-9-]+\)(?:\s+\d+(?:\.\d+)?%)?)\s*\)/gu;
+    const colorRoles: readonly string[] = TOKEN_FAMILIES.color;
+
+    for (const source of sources) {
+      const mixes = source.match(/color-mix\(/gu) ?? [];
+      const validMixes = source.match(validMix) ?? [];
+      expect(validMixes.length).toBe(mixes.length);
+      for (const mix of validMixes) {
+        for (const [, role] of mix.matchAll(/var\(--tp-([a-z0-9-]+)\)/gu)) {
+          expect(colorRoles, mix).toContain(role);
+        }
+      }
+
+      for (const [, token] of source.matchAll(/--tp-([a-z0-9-]+)\s*:/gu)) {
+        const isStateColor = colorRoles.some(
+          (role) =>
+            token.startsWith(`${role}-`) &&
+            /-(?:hover|pressed|selected|focused?|active|disabled)$/u.test(token),
+        );
+        expect(isStateColor, token).toBe(false);
+      }
+    }
   });
 
   it('rejects incomplete and mode-incompatible token sets', () => {

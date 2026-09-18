@@ -24,6 +24,8 @@ Default content is the visible label. Optional `icon-start` and `icon-end` slots
 
 The public shadow parts are `button`, `button-leading-mark`, `button-label`, and `button-trailing-mark`. Each part also receives its `-variant-*` and `-size-*` presentation keys. The host publishes `data-disabled` and `data-focus-visible` state markers.
 
+The enabled outline variant adds a hover layer made from `color-mix(in oklab, var(--tp-input) 50%, transparent)` over its `--tp-background` fill. Its text remains `--tp-foreground` and its boundary remains `--tp-border`; a disabled Button does not receive the hover layer. No hover-specific color token is needed.
+
 ## Actions and forms
 
 Each completed pointer or keyboard gesture activates at most once. A consumer may cancel the initiating `click` with `preventDefault()` before a submit or reset action runs. `type="button"` has no form action. A named submit button contributes its `name` and `value` as the submitter.

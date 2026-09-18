@@ -27,6 +27,12 @@ Every CSS custom property uses the `--tp-` prefix. For example, the `primary` ro
 
 The default typography tuple is `font-sans`, `text-base`, `font-normal`, `leading-normal`, and `tracking-normal`. Text-bearing components inherit that tuple and change individual dimensions only through another role in the same family.
 
+## Derived interaction colors
+
+Library-authored percentage variations use existing semantic color roles with `color-mix(in oklab, …)`. The mix percentage is documented where the interaction rule is defined; it is not a new token such as `--tp-input-hover`. Base role values can still use any valid CSS color notation.
+
+For example, the outline Button's hover recipe is `color-mix(in oklab, var(--tp-input) 50%, transparent)`. That translucent layer sits over the opaque `--tp-background` fill, while text keeps `--tp-foreground` and the boundary keeps `--tp-border`. `transparent` is an alpha operand or a no-paint value, not a replacement for a content-bearing surface role. Selected and focused states continue to use their semantic `accent` and `ring` roles; `--tp-opacity-disabled` remains a non-color state token.
+
 ## Complete themes and modes
 
 Applications may override a few inherited roles for a scoped brand region. A named replacement theme or mode must provide every required role and must keep the same role set as every other mode. The exported `REQUIRED_TOKEN_ROLES`, `assertCompleteTokenSet`, and `assertCompatibleTokenModes` utilities validate that contract.

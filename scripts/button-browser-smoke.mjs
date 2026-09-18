@@ -1,6 +1,9 @@
-import { chromium } from 'playwright';
+import { chromium, firefox, webkit } from 'playwright';
 
-const browser = await chromium.launch({ headless: true });
+const browserName = process.env.BROWSER ?? 'chromium';
+const browserType = { chromium, firefox, webkit }[browserName];
+if (!browserType) throw new Error(`Unsupported browser: ${browserName}`);
+const browser = await browserType.launch({ headless: true });
 const page = await browser.newPage();
 
 try {
@@ -133,7 +136,158 @@ try {
   if (Object.values(result).some((value) => value !== true)) {
     throw new Error(`Button browser contract produced ${JSON.stringify(result)}`);
   }
-  console.log('Button browser contract passed');
+
+  await page.evaluate(async () => {
+    for (const [name, colorScheme, overrides] of [
+      ['light', 'light', {}],
+      ['dark', 'dark', {}],
+      [
+        'scoped',
+        'light',
+        {
+          '--tp-background': '#f6f2e8',
+          '--tp-foreground': '#24201c',
+          '--tp-input': '#b67724',
+          '--tp-border': '#85612c',
+        },
+      ],
+    ]) {
+      const region = document.createElement('div');
+      region.dataset.colorCase = name;
+      region.style.colorScheme = colorScheme;
+      region.style.background = 'var(--tp-background)';
+      region.style.padding = '1rem';
+      for (const [role, value] of Object.entries(overrides)) {
+        region.style.setProperty(role, value);
+      }
+      const button = document.createElement('tp-button');
+      button.variant = 'outline';
+      button.textContent = `${name} outline`;
+      region.append(button);
+      document.body.append(region);
+      await button.updateComplete;
+    }
+  });
+
+  const hoverColors = [];
+  for (const name of ['light', 'dark', 'scoped']) {
+    const control = page.locator(`[data-color-case="${name}"] tp-button`).locator('button');
+    const before = await control.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        background: style.backgroundColor,
+        image: style.backgroundImage,
+        foreground: style.color,
+        border: style.borderColor,
+      };
+    });
+    await control.hover();
+    const after = await control.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const host = element.getRootNode().host;
+      const probe = document.createElement('span');
+      probe.style.backgroundColor = 'color-mix(in oklab, var(--tp-input) 50%, transparent)';
+      host.parentElement.append(probe);
+      const overlay = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      const sample = (colors) => {
+        context.clearRect(0, 0, 1, 1);
+        for (const color of colors) {
+          context.fillStyle = color;
+          context.fillRect(0, 0, 1, 1);
+        }
+        return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+      };
+      const base = sample([style.backgroundColor]);
+      const mixed = sample([style.backgroundColor, overlay]);
+      const foreground = sample([style.color]);
+      const luminance = (rgb) => {
+        const [red, green, blue] = rgb.map((value) => {
+          const channel = value / 255;
+          return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+      };
+      const foregroundLuminance = luminance(foreground);
+      const backgroundLuminance = luminance(mixed);
+      return {
+        background: style.backgroundColor,
+        image: style.backgroundImage,
+        foreground: style.color,
+        border: style.borderColor,
+        changed: base.some((value, index) => value !== mixed[index]),
+        contrast:
+          (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) /
+          (Math.min(foregroundLuminance, backgroundLuminance) + 0.05),
+      };
+    });
+    if (
+      before.image !== 'none' ||
+      !after.image.includes('linear-gradient') ||
+      before.background !== after.background ||
+      before.foreground !== after.foreground ||
+      before.border !== after.border ||
+      !after.changed ||
+      after.contrast < 4.5
+    ) {
+      throw new Error(
+        `Outline hover colors failed for ${name}: ${JSON.stringify({ before, after })}`,
+      );
+    }
+    hoverColors.push(after.image);
+  }
+  if (new Set(hoverColors).size !== 3) {
+    throw new Error(
+      `Light, dark, and scoped hover layers did not resolve distinctly: ${hoverColors}`,
+    );
+  }
+
+  const inertHover = await page.evaluate(async () => {
+    const region = document.querySelector('[data-color-case="light"]');
+    const disabled = document.createElement('tp-button');
+    disabled.variant = 'outline';
+    disabled.disabled = true;
+    disabled.focusableWhenDisabled = true;
+    disabled.textContent = 'Disabled';
+    const secondary = document.createElement('tp-button');
+    secondary.variant = 'secondary';
+    secondary.textContent = 'Secondary';
+    region.append(disabled, secondary);
+    await Promise.all([disabled.updateComplete, secondary.updateComplete]);
+    return {
+      disabled: getComputedStyle(disabled.shadowRoot.querySelector('button')).borderColor,
+      secondary: getComputedStyle(secondary.shadowRoot.querySelector('button')).borderColor,
+    };
+  });
+  const disabledControl = page
+    .locator('[data-color-case="light"] tp-button')
+    .nth(1)
+    .locator('button');
+  await disabledControl.hover();
+  const disabledAfter = await disabledControl.evaluate((element) => ({
+    border: getComputedStyle(element).borderColor,
+    image: getComputedStyle(element).backgroundImage,
+  }));
+  const secondaryControl = page
+    .locator('[data-color-case="light"] tp-button')
+    .nth(2)
+    .locator('button');
+  await secondaryControl.hover();
+  const secondaryAfter = await secondaryControl.evaluate(
+    (element) => getComputedStyle(element).borderColor,
+  );
+  if (
+    disabledAfter.border !== inertHover.disabled ||
+    disabledAfter.image !== 'none' ||
+    secondaryAfter !== inertHover.secondary
+  ) {
+    throw new Error('Disabled hover or secondary variant border changed unexpectedly');
+  }
+  console.log(`Button browser contract passed in ${browserName}`);
 } finally {
   await browser.close();
 }

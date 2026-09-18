@@ -119,6 +119,33 @@ export class TpButton extends TpElement {
         text-decoration: underline;
       }
 
+      .control:not(:disabled, [aria-disabled='true']):hover {
+        border-color: var(--tp-primary);
+      }
+
+      :host([variant='secondary']) .control:not(:disabled, [aria-disabled='true']):hover {
+        border-color: var(--tp-secondary);
+      }
+
+      :host([variant='outline']) .control:not(:disabled, [aria-disabled='true']):hover {
+        border-color: var(--tp-border);
+
+        /* The 50% input layer retains the opaque background/foreground pair. */
+        background-image: linear-gradient(
+          color-mix(in oklab, var(--tp-input) 50%, transparent),
+          color-mix(in oklab, var(--tp-input) 50%, transparent)
+        );
+      }
+
+      :host([variant='destructive']) .control:not(:disabled, [aria-disabled='true']):hover {
+        border-color: var(--tp-destructive);
+      }
+
+      :host([variant='ghost']) .control:not(:disabled, [aria-disabled='true']):hover,
+      :host([variant='link']) .control:not(:disabled, [aria-disabled='true']):hover {
+        border-color: transparent;
+      }
+
       [part~='button-leading-mark'],
       [part~='button-trailing-mark'] {
         display: inline-flex;

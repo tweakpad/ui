@@ -478,7 +478,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
       }
 
       .track {
-        background: var(--tp-card, color-mix(in srgb, currentcolor 18%, transparent));
+        background: var(--tp-card);
       }
 
       .range {
