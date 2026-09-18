@@ -1,6 +1,8 @@
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
+import type { LogicalPosition } from '../foundation/types.js';
+import type { IconDefinition } from '../icons/types.js';
 import { controlStyles } from './shared.js';
 
 type ButtonType = 'button' | 'submit' | 'reset';
@@ -14,6 +16,13 @@ export class TpButton extends TpElement {
     size: { type: String, reflect: true },
     name: { type: String, reflect: true },
     value: { type: String, reflect: true },
+    icon: { attribute: false },
+    iconPosition: { type: String, attribute: 'icon-position', reflect: true },
+    loadingPosition: { type: String, attribute: 'loading-position', reflect: true },
+    href: { type: String, reflect: true },
+    target: { type: String, reflect: true },
+    rel: { type: String, reflect: true },
+    download: { type: String, reflect: true },
     nativeAction: { type: Boolean, attribute: 'native-action', reflect: true },
     focusableWhenDisabled: {
       type: Boolean,
@@ -212,6 +221,13 @@ export class TpButton extends TpElement {
         font-size: var(--tp-icon-size-md);
       }
 
+      [part~='button-leading-mark'] tp-spinner,
+      [part~='button-trailing-mark'] tp-spinner {
+        width: 1em;
+        height: 1em;
+        color: inherit;
+      }
+
       .control > [hidden] {
         display: none;
       }
@@ -245,6 +261,13 @@ export class TpButton extends TpElement {
   size: 'xs' | 'sm' | 'default' | 'lg' | 'icon-xs' | 'icon-sm' | 'icon' | 'icon-lg' = 'default';
   name = '';
   value = '';
+  icon: IconDefinition | undefined;
+  iconPosition: LogicalPosition = 'leading';
+  loadingPosition: LogicalPosition | null = null;
+  href: string | null = null;
+  target: string | null = null;
+  rel: string | null = null;
+  download: string | null = null;
   nativeAction = true;
   focusableWhenDisabled = false;
   declare ariaLabel: string | null;
@@ -254,15 +277,27 @@ export class TpButton extends TpElement {
   protected override render() {
     const parts = (part: string) =>
       `${part} ${part}-variant-${this.variant} ${part}-size-${this.size}`;
-    const content = html`
-      <span part=${parts('button-leading-mark')} hidden
-        ><slot name="icon-start" @slotchange=${this.#syncMark}></slot
-      ></span>
-      <span part=${parts('button-label')}><slot @slotchange=${this.#checkName}></slot></span>
-      <span part=${parts('button-trailing-mark')} hidden
-        ><slot name="icon-end" @slotchange=${this.#syncMark}></slot
-      ></span>
-    `;
+    const content = this.#content(parts);
+    const loading = this.#resolvedLoadingPosition() !== null;
+    if (this.href !== null) {
+      return html`<a
+        class="control"
+        part=${`${parts('button')} focusable`}
+        href=${this.href}
+        target=${this.target ?? nothing}
+        rel=${this.rel ?? nothing}
+        download=${this.download ?? nothing}
+        tabindex=${this.disabled && !this.focusableWhenDisabled ? '-1' : nothing}
+        aria-disabled=${this.disabled ? 'true' : nothing}
+        aria-busy=${loading ? 'true' : nothing}
+        aria-label=${this.ariaLabel || nothing}
+        @click=${this.#activate}
+        @focusin=${this.#focusIn}
+        @focusout=${this.#focusOut}
+      >
+        ${content}
+      </a>`;
+    }
     return this.nativeAction
       ? html`<button
           class="control"
@@ -271,6 +306,7 @@ export class TpButton extends TpElement {
           .value=${this.value}
           ?disabled=${this.disabled && !this.focusableWhenDisabled}
           aria-disabled=${this.disabled ? 'true' : nothing}
+          aria-busy=${loading ? 'true' : nothing}
           aria-label=${this.ariaLabel || nothing}
           @click=${this.#activate}
           @focusin=${this.#focusIn}
@@ -284,6 +320,7 @@ export class TpButton extends TpElement {
           role="button"
           tabindex=${this.disabled && !this.focusableWhenDisabled ? '-1' : '0'}
           aria-disabled=${this.disabled ? 'true' : nothing}
+          aria-busy=${loading ? 'true' : nothing}
           aria-label=${this.ariaLabel || nothing}
           @click=${this.#activate}
           @keydown=${this.#keyDown}
@@ -292,6 +329,54 @@ export class TpButton extends TpElement {
           @focusout=${this.#focusOut}
           >${content}</span
         >`;
+  }
+
+  #content(parts: (part: string) => string) {
+    const loadingPosition = this.#resolvedLoadingPosition();
+    if (loadingPosition) {
+      return html`
+        <span part=${parts('button-leading-mark')} ?hidden=${loadingPosition !== 'leading'}>
+          ${loadingPosition === 'leading' ? html`<tp-spinner aria-hidden="true"></tp-spinner>` : nothing}
+        </span>
+        <span part=${parts('button-label')}><slot @slotchange=${this.#checkName}></slot></span>
+        <span part=${parts('button-trailing-mark')} ?hidden=${loadingPosition !== 'trailing'}>
+          ${
+            loadingPosition === 'trailing'
+              ? html`<tp-spinner aria-hidden="true"></tp-spinner>`
+              : nothing
+          }
+        </span>
+      `;
+    }
+    if (this.icon) {
+      const iconPosition = this.#resolvedIconPosition();
+      return html`
+        <span part=${parts('button-leading-mark')} ?hidden=${iconPosition !== 'leading'}>
+          ${
+            iconPosition === 'leading'
+              ? html`<tp-icon .icon=${this.icon} size="1em"></tp-icon>`
+              : nothing
+          }
+        </span>
+        <span part=${parts('button-label')}><slot @slotchange=${this.#checkName}></slot></span>
+        <span part=${parts('button-trailing-mark')} ?hidden=${iconPosition !== 'trailing'}>
+          ${
+            iconPosition === 'trailing'
+              ? html`<tp-icon .icon=${this.icon} size="1em"></tp-icon>`
+              : nothing
+          }
+        </span>
+      `;
+    }
+    return html`
+      <span part=${parts('button-leading-mark')} hidden
+        ><slot name="icon-start" @slotchange=${this.#syncMark}></slot
+      ></span>
+      <span part=${parts('button-label')}><slot @slotchange=${this.#checkName}></slot></span>
+      <span part=${parts('button-trailing-mark')} hidden
+        ><slot name="icon-end" @slotchange=${this.#syncMark}></slot
+      ></span>
+    `;
   }
 
   override focus(options?: FocusOptions): void {
@@ -312,6 +397,16 @@ export class TpButton extends TpElement {
 
   #type(): ButtonType {
     return this.type === 'submit' || this.type === 'reset' ? this.type : 'button';
+  }
+
+  #resolvedIconPosition(): LogicalPosition {
+    return this.iconPosition === 'trailing' ? 'trailing' : 'leading';
+  }
+
+  #resolvedLoadingPosition(): LogicalPosition | null {
+    return this.loadingPosition === 'leading' || this.loadingPosition === 'trailing'
+      ? this.loadingPosition
+      : null;
   }
 
   #syncMark = (event: Event): void => {
@@ -379,6 +474,7 @@ export class TpButton extends TpElement {
       event.stopImmediatePropagation();
       return;
     }
+    if (this.href !== null) return;
     if (this.#type() === 'button') return;
     // Consumer click handlers must be able to cancel the initiating event first.
     queueMicrotask(() => {

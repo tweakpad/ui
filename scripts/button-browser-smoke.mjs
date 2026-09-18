@@ -160,6 +160,146 @@ try {
     throw new Error(`Button browser contract produced ${JSON.stringify(result)}`);
   }
 
+  const composition = await page.evaluate(async () => {
+    const icon = {
+      viewBox: '0 0 24 24',
+      paths: [{ d: 'M12 5v14M5 12h14', strokeWidth: 2 }],
+    };
+    const button = document.createElement('tp-button');
+    button.innerHTML =
+      '<span slot="icon-start" aria-hidden="true">S</span>Compose<span slot="icon-end" aria-hidden="true">E</span>';
+    button.icon = icon;
+    button.iconPosition = 'trailing';
+    document.body.append(button);
+    await button.updateComplete;
+
+    const marks = () => ({
+      leading: button.shadowRoot.querySelector('[part~="button-leading-mark"]'),
+      trailing: button.shadowRoot.querySelector('[part~="button-trailing-mark"]'),
+    });
+    let current = marks();
+    const trailingIcon =
+      current.leading.hidden &&
+      !current.trailing.hidden &&
+      !current.leading.querySelector('tp-icon') &&
+      Boolean(current.trailing.querySelector('tp-icon'));
+
+    button.loadingPosition = 'leading';
+    await button.updateComplete;
+    current = marks();
+    const native = button.shadowRoot.querySelector('button');
+    const loadingWins =
+      !current.leading.hidden &&
+      current.trailing.hidden &&
+      Boolean(current.leading.querySelector('tp-spinner')) &&
+      !button.shadowRoot.querySelector('tp-icon') &&
+      native.getAttribute('aria-busy') === 'true' &&
+      !button.disabled &&
+      !native.disabled;
+
+    button.disabled = true;
+    await button.updateComplete;
+    const disabledIsExplicit = native.disabled && native.getAttribute('aria-busy') === 'true';
+    button.disabled = false;
+    button.loadingPosition = null;
+    await button.updateComplete;
+    current = marks();
+    const iconRestored =
+      current.leading.hidden && Boolean(current.trailing.querySelector('tp-icon'));
+
+    button.icon = undefined;
+    await button.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    current = marks();
+    const slotsRestored =
+      !current.leading.hidden &&
+      !current.trailing.hidden &&
+      button.querySelector('[slot="icon-start"]')?.textContent === 'S' &&
+      button.querySelector('[slot="icon-end"]')?.textContent === 'E';
+
+    button.icon = icon;
+    button.iconPosition = 'leading';
+    button.dir = 'rtl';
+    await button.updateComplete;
+    current = marks();
+    const label = button.shadowRoot.querySelector('[part~="button-label"]');
+    const logicalRtl =
+      current.leading.getBoundingClientRect().left > label.getBoundingClientRect().left;
+    button.remove();
+
+    const colorButtons = ['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'].map(
+      (variant) => {
+        const candidate = document.createElement('tp-button');
+        candidate.variant = variant;
+        candidate.loadingPosition = 'leading';
+        candidate.textContent = variant;
+        document.body.append(candidate);
+        return candidate;
+      },
+    );
+    await Promise.all(colorButtons.map((candidate) => candidate.updateComplete));
+    const spinnerMatchesText = colorButtons.every((candidate) => {
+      const control = candidate.shadowRoot.querySelector('.control');
+      const spinner = candidate.shadowRoot.querySelector('tp-spinner');
+      return getComputedStyle(spinner).color === getComputedStyle(control).color;
+    });
+    colorButtons.forEach((candidate) => candidate.remove());
+
+    const link = document.createElement('tp-button');
+    link.href = '#disabled-link';
+    link.target = '_self';
+    link.rel = 'next';
+    link.download = '';
+    link.type = 'submit';
+    link.nativeAction = false;
+    link.disabled = true;
+    link.textContent = 'Navigate';
+    document.body.append(link);
+    await link.updateComplete;
+    const anchor = link.shadowRoot.querySelector('a');
+    location.hash = '';
+    link.click();
+    await Promise.resolve();
+    const disabledLink =
+      !link.shadowRoot.querySelector('button') &&
+      anchor.getAttribute('href') === '#disabled-link' &&
+      anchor.getAttribute('target') === '_self' &&
+      anchor.getAttribute('rel') === 'next' &&
+      anchor.getAttribute('download') === '' &&
+      anchor.getAttribute('aria-disabled') === 'true' &&
+      anchor.tabIndex === -1 &&
+      location.hash === '';
+
+    link.focusableWhenDisabled = true;
+    await link.updateComplete;
+    const focusableDisabledLink = anchor.tabIndex === 0;
+    link.disabled = false;
+    link.download = null;
+    link.href = '#enabled-link';
+    await link.updateComplete;
+    link.click();
+    await new Promise((resolve) => setTimeout(resolve));
+    const enabledLink = location.hash === '#enabled-link';
+    link.remove();
+    history.replaceState(null, '', location.pathname + location.search);
+
+    return {
+      trailingIcon,
+      loadingWins,
+      disabledIsExplicit,
+      iconRestored,
+      slotsRestored,
+      logicalRtl,
+      spinnerMatchesText,
+      disabledLink,
+      focusableDisabledLink,
+      enabledLink,
+    };
+  });
+  if (Object.values(composition).some((value) => value !== true)) {
+    throw new Error(`Button composition contract produced ${JSON.stringify(composition)}`);
+  }
+
   const hoverVariants = ['default', 'secondary', 'destructive', 'outline', 'ghost'];
   await page.evaluate(async (variants) => {
     for (const [name, colorScheme, overrides] of [
@@ -222,7 +362,7 @@ try {
         };
       });
       await control.hover();
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(350);
       const after = await control.evaluate((element, currentVariant) => {
         const style = getComputedStyle(element);
         const layer = getComputedStyle(element, '::before');
@@ -410,9 +550,8 @@ try {
     throw new Error('Link Button unexpectedly received a hover mix');
   }
   await page.mouse.move(0, 0);
-  await linkControl.focus();
-  await page.keyboard.press('Shift+Tab');
   await page.keyboard.press('Tab');
+  await linkControl.focus();
   const linkFocus = await linkControl.evaluate((element) => ({
     focusVisible: element.matches(':focus-visible'),
     decoration: getComputedStyle(element).textDecorationLine,

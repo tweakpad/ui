@@ -10,10 +10,10 @@ import {
   type MotionRoleDefinition,
   type MotionValue,
 } from '../foundation/motion.js';
-import type { PresenceState } from '../foundation/types.js';
+import type { LogicalPosition, PresenceState } from '../foundation/types.js';
 import { chevronRightIcon } from '../icons/chevron-right.js';
 
-export type CollapsibleIndicatorPosition = 'leading' | 'trailing';
+export type CollapsibleIndicatorPosition = LogicalPosition;
 export type CollapsibleContentAlignment = 'edge' | 'label';
 
 export const collapsibleMotionRoles = {

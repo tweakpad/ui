@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import buttonDocumentation from '../../docs/button.md?raw';
+import { chevronRightIcon } from '../icons/chevron-right.js';
+import { plusIcon } from '../icons/plus.js';
+import type { IconDefinition } from '../icons/types.js';
 
 interface ButtonStoryArgs {
   variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link';
@@ -12,6 +15,13 @@ interface ButtonStoryArgs {
   ariaLabel: string;
   name: string;
   value: string;
+  icon: IconDefinition | undefined;
+  iconPosition: 'leading' | 'trailing';
+  loadingPosition: 'leading' | 'trailing' | null;
+  href: string;
+  target: string;
+  rel: string;
+  download: string;
 }
 
 const meta: Meta<ButtonStoryArgs> = {
@@ -32,12 +42,19 @@ const meta: Meta<ButtonStoryArgs> = {
     ariaLabel: '',
     name: '',
     value: '',
+    icon: undefined,
+    iconPosition: 'leading',
+    loadingPosition: null,
+    href: '',
+    target: '',
+    rel: '',
+    download: '',
   },
   argTypes: {
     variant: {
       control: 'select',
       options: ['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'],
-      description: 'Visual emphasis only; link appearance does not change button semantics.',
+      description: 'Visual emphasis only; href independently selects native link semantics.',
       table: { category: 'Presentation', defaultValue: { summary: 'default' } },
     },
     size: {
@@ -82,6 +99,43 @@ const meta: Meta<ButtonStoryArgs> = {
       description: 'Submitter value when type is submit.',
       table: { category: 'Form', defaultValue: { summary: "''" } },
     },
+    icon: {
+      control: 'object',
+      description: 'Shared Icon definition used as the convenience mark.',
+      table: { category: 'Content', defaultValue: { summary: 'undefined' } },
+    },
+    iconPosition: {
+      control: 'radio',
+      options: ['leading', 'trailing'],
+      description: 'Logical position of the convenience icon.',
+      table: { category: 'Content', defaultValue: { summary: 'leading' } },
+    },
+    loadingPosition: {
+      control: 'select',
+      options: [null, 'leading', 'trailing'],
+      description: 'Logical Spinner position; exposes busy semantics without setting disabled.',
+      table: { category: 'Content', defaultValue: { summary: 'null' } },
+    },
+    href: {
+      control: 'text',
+      description: 'Navigation target; when present, Button renders a native anchor.',
+      table: { category: 'Navigation', defaultValue: { summary: 'null' } },
+    },
+    target: {
+      control: 'text',
+      description: 'Native anchor browsing-context target.',
+      table: { category: 'Navigation', defaultValue: { summary: 'null' } },
+    },
+    rel: {
+      control: 'text',
+      description: 'Native anchor link-type relationship.',
+      table: { category: 'Navigation', defaultValue: { summary: 'null' } },
+    },
+    download: {
+      control: 'text',
+      description: 'Native anchor download filename hint.',
+      table: { category: 'Navigation', defaultValue: { summary: 'null' } },
+    },
   },
   render: (args) => html`
     <tp-button
@@ -92,6 +146,13 @@ const meta: Meta<ButtonStoryArgs> = {
       .focusableWhenDisabled=${args.focusableWhenDisabled}
       .nativeAction=${args.nativeAction}
       .ariaLabel=${args.ariaLabel || null}
+      .icon=${args.icon}
+      .iconPosition=${args.iconPosition}
+      .loadingPosition=${args.loadingPosition}
+      .href=${args.href || null}
+      .target=${args.target || null}
+      .rel=${args.rel || null}
+      .download=${args.download || null}
       name=${args.name}
       value=${args.value}
       >Continue</tp-button
@@ -112,16 +173,31 @@ export const ExtraSmall: Story = { args: { size: 'xs' } };
 export const Small: Story = { args: { size: 'sm' } };
 export const Large: Story = { args: { size: 'lg' } };
 export const IconOnly: Story = {
-  args: { size: 'icon', ariaLabel: 'Add' },
-  render: (args) => html`
-    <tp-button size=${args.size} variant=${args.variant} .ariaLabel=${args.ariaLabel || null}>
-      <span slot="icon-start" aria-hidden="true">+</span>
-    </tp-button>
-  `,
+  args: { size: 'icon', ariaLabel: 'Add', icon: plusIcon },
 };
-export const IconExtraSmall: Story = { ...IconOnly, args: { size: 'icon-xs', ariaLabel: 'Add' } };
-export const IconSmall: Story = { ...IconOnly, args: { size: 'icon-sm', ariaLabel: 'Add' } };
-export const IconLarge: Story = { ...IconOnly, args: { size: 'icon-lg', ariaLabel: 'Add' } };
+export const IconExtraSmall: Story = {
+  ...IconOnly,
+  args: { size: 'icon-xs', ariaLabel: 'Add', icon: plusIcon },
+};
+export const IconSmall: Story = {
+  ...IconOnly,
+  args: { size: 'icon-sm', ariaLabel: 'Add', icon: plusIcon },
+};
+export const IconLarge: Story = {
+  ...IconOnly,
+  args: { size: 'icon-lg', ariaLabel: 'Add', icon: plusIcon },
+};
+export const IconLeading: Story = { args: { icon: plusIcon, iconPosition: 'leading' } };
+export const IconTrailing: Story = {
+  args: { icon: chevronRightIcon, iconPosition: 'trailing' },
+};
+export const LoadingLeading: Story = {
+  args: { loadingPosition: 'leading', disabled: true, focusableWhenDisabled: true },
+};
+export const LoadingTrailing: Story = {
+  args: { loadingPosition: 'trailing', disabled: true, focusableWhenDisabled: true },
+};
+export const AsLink: Story = { args: { variant: 'link', href: '#button-link-target' } };
 export const WithMarks: Story = {
   render: (args) => html`
     <tp-button variant=${args.variant} size=${args.size}>

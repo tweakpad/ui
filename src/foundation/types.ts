@@ -1,5 +1,6 @@
 export type Orientation = 'horizontal' | 'vertical' | 'responsive';
 export type Direction = 'ltr' | 'rtl';
+export type LogicalPosition = 'leading' | 'trailing';
 export type ChangeReason =
   | 'programmatic'
   | 'initial'

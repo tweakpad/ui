@@ -161,11 +161,23 @@ describe('Storybook catalog entries', () => {
       'ariaLabel',
       'name',
       'value',
+      'icon',
+      'iconPosition',
+      'loadingPosition',
+      'href',
+      'target',
+      'rel',
+      'download',
     ]) {
       expect(buttonStory).toContain(`    ${property}: {`);
     }
     for (const configuration of [
       'IconOnly',
+      'IconLeading',
+      'IconTrailing',
+      'LoadingLeading',
+      'LoadingTrailing',
+      'AsLink',
       'WithMarks',
       'FocusableDisabled',
       'SyntheticAction',
