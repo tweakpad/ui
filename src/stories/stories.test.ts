@@ -7,6 +7,7 @@ describe('Storybook catalog entries', () => {
   const storyDirectory = new URL('./generated/', import.meta.url);
   const storyFiles = readdirSync(storyDirectory).filter((file) => file.endsWith('.stories.ts'));
   const accordionStory = readFileSync(new URL('./accordion.stories.ts', import.meta.url), 'utf8');
+  const buttonStory = readFileSync(new URL('./button.stories.ts', import.meta.url), 'utf8');
   const collapsibleStory = readFileSync(
     new URL('./collapsible.stories.ts', import.meta.url),
     'utf8',
@@ -22,10 +23,11 @@ describe('Storybook catalog entries', () => {
   });
 
   it('has one statically indexed Default story for every public control', () => {
-    expect(storyFiles).toHaveLength(catalogEntries.length - 3);
+    expect(storyFiles).toHaveLength(catalogEntries.length - 4);
     const sources = [
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
       accordionStory,
+      buttonStory,
       collapsibleStory,
       iconStory,
     ];
@@ -43,6 +45,7 @@ describe('Storybook catalog entries', () => {
     const sources = [
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
       accordionStory,
+      buttonStory,
       collapsibleStory,
       iconStory,
     ];
@@ -144,6 +147,31 @@ describe('Storybook catalog entries', () => {
     expect(iconStory).toContain("tags: ['autodocs']");
     for (const property of ['icon', 'label', 'size']) {
       expect(iconStory).toContain(`    ${property}: {`);
+    }
+  });
+
+  it('exposes the Button contract in a maintained controls story', () => {
+    for (const property of [
+      'variant',
+      'size',
+      'type',
+      'disabled',
+      'focusableWhenDisabled',
+      'nativeAction',
+      'ariaLabel',
+      'name',
+      'value',
+    ]) {
+      expect(buttonStory).toContain(`    ${property}: {`);
+    }
+    for (const configuration of [
+      'IconOnly',
+      'WithMarks',
+      'FocusableDisabled',
+      'SyntheticAction',
+      'FormActions',
+    ]) {
+      expect(buttonStory).toContain(`export const ${configuration}: Story`);
     }
   });
 });

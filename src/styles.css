@@ -99,8 +99,8 @@
   --tp-opacity-backdrop: 0.48;
 
   /* Motion remains a separate, replaceable contract. */
-  --tp-duration-fast: 120ms;
-  --tp-duration-normal: 180ms;
+  --tp-duration-fast: 160ms;
+  --tp-duration-normal: 220ms;
   --tp-easing-standard: cubic-bezier(0.2, 0, 0, 1);
   --tp-motion-scale: 1;
   --tp-motion-play-state: running;

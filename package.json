@@ -48,6 +48,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:browser": "BROWSER=chromium node scripts/browser-smoke.mjs && BROWSER=firefox node scripts/browser-smoke.mjs && BROWSER=webkit node scripts/browser-smoke.mjs",
+    "test:button:browser": "node scripts/button-browser-smoke.mjs",
     "test:stories": "node scripts/storybook-entries-smoke.mjs",
     "test:package": "npm run build && node scripts/package-smoke.mjs",
     "verify:phase-1": "node scripts/verify-phase-1.mjs",

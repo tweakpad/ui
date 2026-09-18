@@ -2395,6 +2395,101 @@ try {
     throw new Error(`Button public contract produced ${JSON.stringify(buttonContract)}`);
   }
 
+  const buttonBehavior = await page.evaluate(async () => {
+    const button = document.createElement('tp-button');
+    button.innerHTML = '<span slot="icon-start" aria-hidden="true">+</span>Save';
+    button.type = 'submit';
+    button.name = 'intent';
+    button.value = 'save';
+    button.variant = 'outline';
+    button.size = 'sm';
+    const form = document.createElement('form');
+    const submissions = [];
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      submissions.push({
+        intent: new FormData(form, event.submitter).get('intent'),
+        submitterType: event.submitter?.type,
+      });
+    });
+    form.append(button);
+    document.body.append(form);
+    await button.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const control = button.shadowRoot.querySelector('button');
+    const leading = button.shadowRoot.querySelector('[part~="button-leading-mark"]');
+    const label = button.shadowRoot.querySelector('[part~="button-label"]');
+    const trailing = button.shadowRoot.querySelector('[part~="button-trailing-mark"]');
+    const parts =
+      control.part.contains('button-variant-outline') &&
+      control.part.contains('button-size-sm') &&
+      leading.part.contains('button-leading-mark-variant-outline') &&
+      label.part.contains('button-label-size-sm') &&
+      trailing.part.contains('button-trailing-mark-size-sm');
+    const marks = !leading.hidden && trailing.hidden;
+    let clicks = 0;
+    button.addEventListener('click', () => {
+      clicks += 1;
+    });
+    button.click();
+    await Promise.resolve();
+    const submitted = submissions.length === 1 && submissions[0].intent === 'save';
+    const once = clicks === 1;
+    const cancel = (event) => event.preventDefault();
+    button.addEventListener('click', cancel);
+    button.click();
+    await Promise.resolve();
+    const cancelled = submissions.length === 1;
+    button.removeEventListener('click', cancel);
+    button.disabled = true;
+    button.focusableWhenDisabled = true;
+    await button.updateComplete;
+    button.focus();
+    const focusableDisabled =
+      button.shadowRoot.activeElement === control &&
+      !control.disabled &&
+      control.getAttribute('aria-disabled') === 'true';
+    button.click();
+    await Promise.resolve();
+    const blocked = clicks === 2 && submissions.length === 1;
+    button.disabled = false;
+    button.nativeAction = false;
+    await button.updateComplete;
+    const synthetic = button.shadowRoot.querySelector('[role="button"]');
+    synthetic.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    synthetic.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+    await Promise.resolve();
+    const syntheticOnce = clicks === 3 && submissions.length === 2;
+    const syntheticSemantics =
+      synthetic.tabIndex === 0 && synthetic.getAttribute('role') === 'button';
+    button.size = 'icon';
+    button.ariaLabel = 'Save';
+    await button.updateComplete;
+    const iconName = synthetic.getAttribute('aria-label') === 'Save';
+    form.remove();
+    return {
+      parts,
+      marks,
+      submitted,
+      once,
+      cancelled,
+      focusableDisabled,
+      blocked,
+      syntheticOnce,
+      syntheticSemantics,
+      iconName,
+      submissions,
+      clicks,
+    };
+  });
+  if (
+    Object.entries(buttonBehavior).some(
+      ([key, value]) => key !== 'submissions' && key !== 'clicks' && value !== true,
+    )
+  ) {
+    throw new Error(`Button behavior produced ${JSON.stringify(buttonBehavior)}`);
+  }
+
   const accessibility = await new AxeBuilder({ page }).analyze();
   if (accessibility.violations.length) {
     throw new Error(
