@@ -49,17 +49,54 @@ For a whole-library review or completeness claim:
 5. Compare implemented APIs and observable capabilities, then doc/test coverage.
    Registration and a default story alone do not establish parity.
 
-For an assigned component, perform the same mapping for its whole capability
-surface and dependencies. Do not turn every component task into a new full-library
-audit; maintain any existing inventory and verify changed mappings. Do not claim
-full-library coverage from representative trials.
+For a full assigned-component implementation, perform the same mapping for its
+whole capability surface and dependencies. For an explicitly bounded fix, map the
+affected capabilities and dependency impact, keeping older unrelated gaps separate.
+Do not turn every component task into a new full-library audit; maintain any
+existing inventory and verify changed mappings. Do not claim full-library coverage
+from representative trials.
 
 ## Component folders and behavioral layers
+
+### Establish family ownership before choosing files
+
+Start at upstream public exports and follow reexports, imports, root hooks,
+controllers and constituent implementations until the shared owners are explicit.
+Then inspect the related local component implementations, not only `foundation/`.
+Populate the checklist's family dependency map with source path/symbol, existing
+local owner, proposed reuse/repair, variant-specific policy, actual consumers and
+regression scenarios. A module name or a claim that code is "shared" is not evidence
+that those consumers use it.
+
+If the sibling owner is deficient, improve that owner or extract a common owner
+and migrate the affected siblings together. Keep public identities and differences
+in policy/presentation intact. Do not improve only the new component behind a new
+parallel state/focus/modal implementation. Do not blindly inherit an unsuitable
+class: select composition, a shared controller or inheritance according to the
+actual responsibility. The dependency map must account for the old implementation
+that would otherwise remain duplicated.
+
+If required generic infrastructure is missing, record the smallest shared owner and
+affected consumers needed to deliver the assigned component. Implement those
+prerequisites within the task; do not expand into every unrelated Foundation or
+catalog gap. A cross-cutting dependency is a design item to resolve, not permission
+to omit the capability or silently turn the task into a whole-library rewrite.
+
+For Dialog-family work, inspect Base UI `alert-dialog/index.parts.ts`,
+`alert-dialog/root/AlertDialogRoot.tsx`, `dialog/root/useRenderDialogRoot.tsx`, and
+the corresponding local Dialog implementation. These are locators, not frozen
+contracts. Alert Dialog's family behavior must use the same owner as Dialog;
+required modal policy, safe decision focus and action semantics remain distinct.
+Do not interpret reuse as merely importing a Button or a focus utility. Apply this
+dependency-tracing procedure to every component family, not just Dialog.
 
 New and substantially implemented components belong in
 `src/components/<component>/`. Migrate the assigned implementation out of grouped
 files when implementing it; preserve unrelated implementations and supported
 exports. Update importers, registration, types, stories and tests together.
+This is a file-organization rule, not permission to sever the family ownership
+established above. A component folder can contain a thin policy binding to a shared
+owner; the shared owner need not be copied into each component folder.
 
 Organize by real ownership: an entrypoint, host/root coordination, constituent
 units, state/controllers, structural styles, local types and tests as needed.
@@ -81,16 +118,17 @@ capability rather than React syntax.
 
 ## Reuse investigation
 
-| Responsibility            | Existing places to inspect                                                                               |
-| ------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Lit lifecycle and forms   | `foundation/element.ts`: `TpElement`, `TpFormElement`; check inherited API exposure as well as behavior. |
-| State and notifications   | `foundation/controllable-state.ts`, `store.ts`, `events.ts`, `types.ts`.                                 |
-| Collections and focus     | `foundation/collection.ts`, `focus.ts`, `typeahead.ts`, `id.ts`.                                         |
-| Environment and cleanup   | `foundation/services.ts`: `EnvironmentService`, `Scheduler`, `CleanupScope`.                             |
-| Positioning and dismissal | `foundation/positioning.ts`, `floating-dismiss.ts`, `floating-tree.ts`, `safe-corridor.ts`.              |
-| Presence and motion       | `foundation/presence.ts`, `motion.ts`, `collapsible.ts`.                                                 |
-| Domain behavior           | `foundation/validation.ts`, `calendar.ts`, `slider.ts`, `questionnaire.ts`.                              |
-| Component helpers         | `components/shared.ts`: assignment, label activation, event reasons and shared styles.                   |
+| Responsibility            | Existing places to inspect                                                                                |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Lit lifecycle and forms   | `foundation/element.ts`: `TpElement`, `TpFormElement`; check inherited API exposure as well as behavior.  |
+| State and notifications   | `foundation/controllable-state.ts`, `store.ts`, `events.ts`, `types.ts`.                                  |
+| Collections and focus     | `foundation/collection.ts`, `focus.ts`, `typeahead.ts`, `id.ts`.                                          |
+| Environment and cleanup   | `foundation/services.ts`: `EnvironmentService`, `Scheduler`, `CleanupScope`.                              |
+| Positioning and dismissal | `foundation/positioning.ts`, `floating-dismiss.ts`, `floating-tree.ts`, `safe-corridor.ts`.               |
+| Presence and motion       | `foundation/presence.ts`, `motion.ts`, `collapsible.ts`.                                                  |
+| Domain behavior           | `foundation/validation.ts`, `calendar.ts`, `slider.ts`, `questionnaire.ts`.                               |
+| Component helpers         | `components/shared.ts`: assignment, label activation, event reasons and shared styles.                    |
+| Related components        | The actual local components corresponding to upstream imported/reexported owners; follow their consumers. |
 
 Paths in this table are under `src/`. Search consumers before changing a shared
 module. Existing helpers must still meet the current contract: reuse does not
@@ -104,6 +142,38 @@ remain possible without duplicated generic code. Avoid hidden class coupling,
 circular component imports, and shared mutable state leaking between instances.
 
 ## Names and presentation
+
+### Trace the complete presentation source
+
+1. Record the applicable shadcn registry base(s) and style preset(s). Start with
+   the current library theme and live presentation contract. When variants differ,
+   record which behavior and appearance are adopted and why; do not silently choose
+   whichever source is easiest to copy. Ask only if the remaining choice materially
+   changes an unspecified product requirement.
+2. Read the component and composition source. Follow classes such as `cn-*` into
+   `../specification/external/ui/apps/v4/registry/styles/`, then inspect the relevant
+   tokens, selectors, variants and responsive rules. JSX class names and inline
+   layout utilities alone are not the complete visual source.
+3. For each meaningful region (surface, header, body, footer/actions, media and
+   controls), map source selectors/declarations to the existing library component
+   or dictionary recipe. Record intentional contract/theme adaptations. Reuse or
+   extract the actual recipe where presentation is shared; using the same spacing
+   tokens while independently restyling the region does not establish reuse.
+4. Treat interactive roles, visual regions and layout as separate decisions.
+   Compose the existing component when it owns the role. Share a presentation
+   recipe when only the appearance is common. Native semantic/layout elements are
+   legitimate, but their paint must use the mapped presentation owner. Do not wrap
+   every panel in Card simply because it has a similar footer.
+
+The following is an investigation example, not a mandated preset or an instruction
+to add Dialog-only APIs to Alert Dialog. Shadcn's base Dialog Content has an independent
+`showCloseButton` option; its Footer has another optional close button. Inspect
+both defaults and the styles that position the corner control. In the local Nova
+preset, `.cn-dialog-footer`, `.cn-alert-dialog-footer` and `.cn-card-footer` share
+muted, bordered footer presentation. Trace and reconcile that relationship with
+Tweakpad's Card recipe. This does not prescribe Nova for every component or imply
+that shadcn imports Card into Dialog. It does prohibit omitting the stylesheet or
+conflating Cancel semantics with footer-only placement.
 
 Resolve public language from live shared vocabulary and owning contracts, then
 check peer components for implementation consistency. Do not introduce synonyms
@@ -125,10 +195,10 @@ into a replaceable theme. Reuse color pairs, typography, spacing and motion role
 avoid ad hoc colors, dimensions or animation values for which a role already
 exists. A justified extension requires contract/naming review and documentation.
 
-## Demo and composition reuse
+## Implementation and composition reuse
 
-This applies to all stories, Docs, example renderers, copyable snippets, test
-fixtures and composed component content, regardless of the enclosing component.
+This applies to component internals, stories, Docs, example renderers, copyable
+snippets, test fixtures and composed content, regardless of the enclosing component.
 
 1. List nested UI roles before writing markup. Search the catalog and existing
    public component APIs for each role.
@@ -140,7 +210,7 @@ fixtures and composed component content, regardless of the enclosing component.
    Storybook's global registration to work as documented.
 4. If the component lacks needed behavior, fix the appropriate shared component
    within the authorized scope or record the blocking gap. Do not create a
-   demo-local substitute or private-selector workaround.
+   implementation-local substitute, demo-local substitute or private-selector workaround.
 
 For example, content that calls for a library status badge should render
 `<tp-badge>New</tp-badge>`, not a styled `<span class="demo-badge">New</span>` or a

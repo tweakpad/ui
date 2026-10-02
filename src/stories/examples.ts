@@ -161,17 +161,29 @@ const examples = {
     </tp-select>
   `,
   'tp-alert-dialog': () => html`
-    <tp-alert-dialog label="Delete project">
-      <tp-button slot="trigger">Delete project</tp-button>
-      <h2>Delete project?</h2>
-      <p>This action cannot be undone.</p>
+    <tp-alert-dialog
+      label="Delete project?"
+      description="This permanently deletes the project and its files. This action cannot be undone."
+    >
+      <tp-button slot="trigger" variant="outline">Delete project</tp-button>
+      <tp-button slot="cancel" variant="outline">Cancel</tp-button>
+      <tp-button
+        slot="confirm"
+        variant="destructive"
+        @click=${(event: Event) => {
+          const dialog = (event.currentTarget as HTMLElement).closest('tp-alert-dialog');
+          (
+            dialog as HTMLElement & { setOpen(open: boolean, reason: string, event: Event): void }
+          ).setOpen(false, 'close-action', event);
+        }}
+        >Delete project</tp-button
+      >
     </tp-alert-dialog>
   `,
   'tp-dialog': () => html`
-    <tp-dialog label="Settings">
-      <tp-button slot="trigger">Open settings</tp-button>
-      <h2>Settings</h2>
-      <p>Update project preferences.</p>
+    <tp-dialog label="Settings" description="Review your workspace settings.">
+      <tp-button slot="trigger" variant="outline">Open settings</tp-button>
+      <tp-button slot="close" variant="outline">Close settings</tp-button>
     </tp-dialog>
   `,
   'tp-drawer': () => html`

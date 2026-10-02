@@ -3,6 +3,10 @@
 Copy to `plans/components/<component>/implementation-checklist.md`. Replace
 bracketed fields and expand the tables for the actual task. Keep this file updated
 through the gates; do not check boxes merely because code was written.
+Keep the named sections, table columns and IDs below: the skill's record checker
+uses them. Add rows and detail, not replacement prose. Keep status cells to the
+documented status vocabulary and put reasons/evidence in their own cells. Escape
+literal pipes inside table cells. A recorded defect does not clear a gate.
 For a read-only review, use these fields in the response or an authorized report;
 do not create a checklist file unless writing one is in scope.
 
@@ -10,6 +14,7 @@ do not create a checklist file unless writing one is in scope.
 
 - Component(s) / public identity: [identity and tag(s)]
 - Requested work / claim: [complete component, bounded fix, review, or docs change]
+- Scope source: [user instruction establishing that scope; no self-assigned reduced delivery]
 - In-scope changes and existing gaps: [boundary]
 - Repository baseline / unrelated changes: [revision and changes to preserve]
 - Live project / document IDs and revisions: [fresh direct MCP reads]
@@ -26,10 +31,14 @@ do not create a checklist file unless writing one is in scope.
 Use one row per capability, not merely one row per component. Include properties,
 attributes, defaults, methods, events/cancellation, slots/parts, state hooks,
 composition, behavior, accessibility, presentation and customization.
+Include the exact constituent and source symbol, its defaults and independently
+configurable options. Do not merge placement, visibility and action semantics into
+one "actions" row. Every C-ID must link to existing V-IDs. Before implementation,
+the mapping must be complete even though implementation/test statuses are pending.
 
-| ID   | Requirement / capability | Live authority | Local upstream evidence | Lit interface / implementation | Docs location | Scenario IDs | Status / gap |
-| ---- | ------------------------ | -------------- | ----------------------- | ------------------------------ | ------------- | ------------ | ------------ |
-| C-01 | [requirement]            | [source]       | [source/test]           | [mapping]                      | [reference]   | [IDs]        | pending      |
+| ID   | Requirement / capability and defaults | Live authority | Local upstream path / symbol | Lit interface / implementation | Docs location | Scenario IDs | Status  | Evidence / gap   |
+| ---- | ------------------------------------- | -------------- | ---------------------------- | ------------------------------ | ------------- | ------------ | ------- | ---------------- |
+| C-01 | [constituent capability and defaults] | [source]       | [source/test symbol]         | [mapping]                      | [reference]   | V-01         | pending | [remaining work] |
 
 Record spec/upstream conflicts here before dependent implementation:
 
@@ -46,13 +55,32 @@ inventory; matching names or catalog totals do not prove coverage.
 - Supported exports / registration / constituent API impact: [changes or none]
 - Public vocabulary / tokens / parts / presentation review: [source-backed choices]
 
-| Responsibility           | Existing owner investigated | Reuse / extension / justified local logic | Affected consumers and regression scenarios |
-| ------------------------ | --------------------------- | ----------------------------------------- | ------------------------------------------- |
-| [behavior or appearance] | [module]                    | [decision]                                | [consumers / IDs]                           |
+### Family dependency map
 
-### Demo and composition reuse map
+Trace upstream reexports/imports to implementation owners and inspect corresponding
+local components. Name both the old owner and the planned shared owner if extracting
+one; list the actual consumers that will use it. Low-level utility reuse alone is
+insufficient. For a primitive without family dependencies, record the inspected
+sources and concrete reason instead of omitting this map.
 
-List nested UI roles in stories, examples, docs, copyable snippets and fixtures.
+| Responsibility | Upstream dependency path / symbol          | Existing local owner investigated | Reuse / repair and component-specific differences | Actual consumers / regression scenario IDs |
+| -------------- | ------------------------------------------ | --------------------------------- | ------------------------------------------------- | ------------------------------------------ |
+| [behavior]     | [dependency edge, not only component name] | [path and symbol]                 | [shared owner and policy differences]             | [consumer paths / V-IDs]                   |
+
+### Presentation source map
+
+Follow the selected registry base and preset through external stylesheets, tokens
+and responsive selectors. Map every meaningful region to a library component or
+recipe. Record contract/theme adaptations and absent optional regions explicitly.
+For a change without presentation impact, document the dependency evidence here.
+
+| Region / public part | Registry base / style preset | Source component + stylesheet / selectors | Existing library component / recipe | Decision / contract adaptations        | Scenario IDs |
+| -------------------- | ---------------------------- | ----------------------------------------- | ----------------------------------- | -------------------------------------- | ------------ |
+| [region]             | [base and preset]            | [paths, selectors and declarations]       | [existing owner]                    | [reuse/repair and allowed differences] | V-01         |
+
+### Implementation and composition reuse map
+
+List nested UI roles in component internals, stories, docs, snippets and fixtures.
 Use existing library components; record the contract or deliberate test purpose
 for native anatomy that could otherwise look like a substitute.
 
@@ -67,9 +95,9 @@ implementation; add newly discovered cases. Status vocabulary: `pending`,
 `passed`, `failed`, `blocked`, `not applicable`. Non-applicability requires
 source/capability evidence. Tool limitations are blocked, not passed or N/A.
 
-| ID   | Capability IDs / evidence category                      | Setup and input     | Expected result     | Actual result | Tool/command and evidence | Status / justification |
-| ---- | ------------------------------------------------------- | ------------------- | ------------------- | ------------- | ------------------------- | ---------------------- |
-| V-01 | [IDs; behavior/a11y/visual/docs/reuse/regression/build] | [steps/environment] | [observable result] | [not run]     | [MCP/command/path]        | pending                |
+| ID   | Capability IDs / evidence category | Setup and input     | Expected result     | Actual result | Tool/command and evidence  | Status  | Justification / gap |
+| ---- | ---------------------------------- | ------------------- | ------------------- | ------------- | -------------------------- | ------- | ------------------- |
+| V-01 | C-01; [category]                   | [steps/environment] | [observable result] | not run       | [planned MCP/command/path] | pending | [remaining work]    |
 
 Record viewport, theme, direction, motion conditions and relevant browser features
 for visual/interaction rows. Record what was visually inspected as well as the
@@ -77,19 +105,37 @@ screenshot path. Distinguish API evaluation, real input, accessibility tree,
 automated analysis and screen-reader evidence. Do not reuse stale passes after
 changes that affect them.
 
+## Early integration checkpoint
+
+Complete after the first integration, before exhaustive browser verification.
+Inspect the actual diff and first rendered composition; do not infer these passes
+from planned architecture, tokens, utility imports or accessibility results.
+
+| ID   | Check                                                                                             | Status  | Evidence / unresolved finding                               |
+| ---- | ------------------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------- |
+| I-01 | Shared owners are actually used by related consumers; old duplicate behavior is removed/delegated | pending | [diff paths, call relationships and consumer evidence]      |
+| I-02 | Default visual regions match traced source and shared library recipes                             | pending | [MCP comparison, source selectors and observed differences] |
+| I-03 | Independent constituent options work, including placement separately from action behavior         | pending | [C/V-IDs and actual results for supported combinations]     |
+
 ## Gate record
 
-| Gate                                  | Status  | Required exit evidence / remaining work                                           |
-| ------------------------------------- | ------- | --------------------------------------------------------------------------------- |
-| 0. Sources and scope                  | pending | Fresh authority and explicit delivery boundary.                                   |
-| 1. Capability mapping                 | pending | Complete applicable matrix; dependent semantic gaps resolved.                     |
-| 2. Architecture and composition reuse | pending | Responsibilities, shared owners, nested controls and affected consumers mapped.   |
-| 3. Behavior                           | pending | Required state, event, input, lifecycle and composition scenarios pass.           |
-| 4. Presentation and customization     | pending | Canonical names and public overrides work without behavioral damage.              |
-| 5. Accessibility                      | pending | Semantic, keyboard/focus and automated results separately evidenced.              |
-| 6. Visual and interaction inspection  | pending | States, themes, layouts, motion and integration inspected.                        |
-| 7. Documentation and demo reuse       | pending | Base example, complete API, curated Docs and real component composition verified. |
-| 8. Regression and reconciliation      | pending | Target, affected consumers, build/package boundaries and final records reconcile. |
+Keep every gate, including pending later gates. Replace the exit descriptions with
+concrete evidence when passing them. Any failed dependency reopens affected gates.
+Use `not applicable` only with contract/scope evidence, never for an unimplemented
+requirement. Run the checker with `--stage implement`, then `verify`, then `complete`
+at the work boundaries specified in SKILL.md.
+
+| Gate                                  | Status  | Required exit evidence / remaining work                                               |
+| ------------------------------------- | ------- | ------------------------------------------------------------------------------------- |
+| 0. Sources and scope                  | pending | Fresh authority and explicit delivery boundary.                                       |
+| 1. Capability mapping                 | pending | Complete applicable matrix; dependent semantic gaps resolved.                         |
+| 2. Architecture and composition reuse | pending | Family dependencies, actual local owners, full presentation sources and reuse mapped. |
+| 3. Behavior                           | pending | Required state, event, input, lifecycle and composition scenarios pass.               |
+| 4. Presentation and customization     | pending | Canonical names and public overrides work without behavioral damage.                  |
+| 5. Accessibility                      | pending | Semantic, keyboard/focus and automated results separately evidenced.                  |
+| 6. Visual and interaction inspection  | pending | States, themes, layouts, motion and integration inspected.                            |
+| 7. Documentation and demo reuse       | pending | Base example, complete API, curated Docs and real component composition verified.     |
+| 8. Regression and reconciliation      | pending | Target, affected consumers, build/package boundaries and final records reconcile.     |
 
 ## Documentation synchronization
 
@@ -104,6 +150,7 @@ changes that affect them.
 
 - Change summary: [what and why]
 - Actual delivery claim: [precise verified scope]
+- Record checker: [stage, command, result; no failed boundary treated as cleared]
 - Non-browser checks: [commands and actual outcomes]
 - Behavior: [evidence and outcome]
 - Accessibility: [tree, keyboard/focus, automation, and any actual AT evidence]

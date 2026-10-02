@@ -7,6 +7,11 @@ describe('Storybook catalog entries', () => {
   const storyDirectory = new URL('./generated/', import.meta.url);
   const storyFiles = readdirSync(storyDirectory).filter((file) => file.endsWith('.stories.ts'));
   const accordionStory = readFileSync(new URL('./accordion.stories.ts', import.meta.url), 'utf8');
+  const alertDialogStory = readFileSync(
+    new URL('./alert-dialog.stories.ts', import.meta.url),
+    'utf8',
+  );
+  const dialogStory = readFileSync(new URL('./dialog.stories.ts', import.meta.url), 'utf8');
   const buttonStory = readFileSync(new URL('./button.stories.ts', import.meta.url), 'utf8');
   const buttonGroupStory = readFileSync(
     new URL('./button-group.stories.ts', import.meta.url),
@@ -28,10 +33,12 @@ describe('Storybook catalog entries', () => {
   });
 
   it('has one statically indexed Default story for every public control', () => {
-    expect(storyFiles).toHaveLength(catalogEntries.length - 6);
+    expect(storyFiles).toHaveLength(catalogEntries.length - 8);
     const sources = [
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
       accordionStory,
+      alertDialogStory,
+      dialogStory,
       buttonStory,
       buttonGroupStory,
       cardStory,
@@ -52,6 +59,8 @@ describe('Storybook catalog entries', () => {
     const sources = [
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
       accordionStory,
+      alertDialogStory,
+      dialogStory,
       buttonStory,
       buttonGroupStory,
       cardStory,

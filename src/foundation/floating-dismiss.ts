@@ -1,4 +1,5 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
+import { composedContains } from './focus.js';
 
 type Host = HTMLElement & ReactiveControllerHost;
 interface DismissOptions {
@@ -6,6 +7,7 @@ interface DismissOptions {
   anchor?: () => HTMLElement | null;
   outside: () => boolean;
   escape: () => boolean;
+  topmostOnly?: boolean;
   dismiss: (event: Event) => void;
 }
 const stacks = new WeakMap<Document, FloatingDismissController[]>();
@@ -44,6 +46,12 @@ export class FloatingDismissController implements ReactiveController {
     this.#document.removeEventListener('keydown', this.#key);
     this.#document = undefined;
   }
+  get isTopmost(): boolean {
+    return (
+      (stacks.get(this.host.ownerDocument) ?? []).filter((item) => item.options.open()).at(-1) ===
+      this
+    );
+  }
   #contains(path: EventTarget[]): boolean {
     if (path.includes(this.host) || path.includes(this.options.anchor?.() as EventTarget))
       return true;
@@ -51,7 +59,7 @@ export class FloatingDismissController implements ReactiveController {
     return (stacks.get(this.host.ownerDocument) ?? []).some(
       (child) =>
         child !== this &&
-        this.host.contains(child.options.anchor?.() ?? child.host) &&
+        composedContains(this.host, child.options.anchor?.() ?? child.host) &&
         (path.includes(child.host) || path.includes(child.options.anchor?.() as EventTarget)),
     );
   }
@@ -59,6 +67,7 @@ export class FloatingDismissController implements ReactiveController {
     if (
       !event.defaultPrevented &&
       this.options.open() &&
+      (!this.options.topmostOnly || this.isTopmost) &&
       this.options.outside() &&
       !this.#contains(event.composedPath())
     )
@@ -72,8 +81,8 @@ export class FloatingDismissController implements ReactiveController {
       !this.options.escape()
     )
       return;
-    const eligible = (stacks.get(this.host.ownerDocument) ?? []).filter(
-      (item) => item.options.open() && item.options.escape(),
+    const eligible = (stacks.get(this.host.ownerDocument) ?? []).filter((item) =>
+      item.options.open(),
     );
     if (eligible.at(-1) !== this) return;
     event.preventDefault();

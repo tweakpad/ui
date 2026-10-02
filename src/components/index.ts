@@ -14,3 +14,5 @@ export * from './switch.js';
 export * from './tabs.js';
 export * from './toggle.js';
 export * from './toggle-group.js';
+export * from './alert-dialog/index.js';
+export * from './dialog/index.js';

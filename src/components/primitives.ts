@@ -255,9 +255,11 @@ export class TpBubble extends TpElement {
         display: flex;
         justify-content: end;
       }
+
       :host([reactions-align='start']) [part='bubble-reactions'] {
         justify-content: start;
       }
+
       :host([reaction-side='block-start']) [part='bubble-reactions'] {
         order: -1;
       }
@@ -652,9 +654,11 @@ export class TpListItem extends TpElement {
       [part='list-item-footer'] {
         grid-column: 1 / -1;
       }
+
       [part='list-item-media'] {
         align-self: start;
       }
+
       [hidden] {
         display: none;
       }

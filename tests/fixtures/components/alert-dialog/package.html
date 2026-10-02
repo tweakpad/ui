@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Built Alert Dialog</title>
+    <link rel="stylesheet" href="/dist/styles.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Built package verification</h1>
+      <tp-alert-dialog
+        label="Delete project?"
+        description="This permanently deletes the project and its files."
+      >
+        <tp-button slot="trigger" variant="outline">Open built dialog</tp-button>
+        <tp-button slot="cancel" variant="outline">Cancel</tp-button>
+        <tp-button slot="confirm" variant="destructive">Delete project</tp-button>
+      </tp-alert-dialog>
+    </main>
+    <script type="module">
+      import '/dist/register.js';
+      import { TpAlertDialog, createAlertDialogHandle } from '/dist/index.js';
+      window.builtExports = { class: TpAlertDialog.name, handle: typeof createAlertDialogHandle };
+      const dialog = document.querySelector('tp-alert-dialog');
+      dialog
+        .querySelector('[slot=confirm]')
+        .addEventListener('click', (event) => dialog.setOpen(false, 'close-action', event));
+    </script>
+  </body>
+</html>

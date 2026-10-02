@@ -284,6 +284,43 @@ for (const part of [
 ])
   sharedPresentation[part] = surfaceAppearance;
 
+// Card and dialog-family footers share section paint; each owner supplies layout.
+const sectionFooterAppearance = [
+  rule({
+    background: 'var(--tp-muted)',
+    'border-block-start': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
+  }),
+];
+for (const prefix of ['dialog', 'alert-dialog', 'drawer', 'side-panel']) {
+  sharedPresentation[`${prefix}-content`] = [...surfaceAppearance, rule({ padding: '0' })];
+  sharedPresentation[`${prefix}-title`] = [
+    rule({
+      'font-size': 'var(--tp-text-lg)',
+      'font-weight': 'var(--tp-font-semibold)',
+      'line-height': 'var(--tp-leading-tight)',
+    }),
+  ];
+  sharedPresentation[`${prefix}-description`] = [
+    rule({
+      color: 'var(--tp-muted-foreground)',
+      'font-size': 'var(--tp-text-sm)',
+    }),
+  ];
+  sharedPresentation[`${prefix}-${prefix === 'alert-dialog' ? 'actions' : 'footer'}`] =
+    sectionFooterAppearance;
+  sharedPresentation[`${prefix}-overlay`] = [
+    rule({
+      background:
+        'color-mix(in srgb, light-dark(var(--tp-foreground), var(--tp-background)) calc(var(--tp-opacity-backdrop) * 100%), transparent)',
+      opacity: '1',
+      transition:
+        'opacity calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+    }),
+    rule({ opacity: '0' }, '&:is([data-starting-style], [data-ending-style])'),
+    rule({ transition: 'none' }, '&[data-tp-motion-driven]'),
+  ];
+}
+
 const corePresentationDictionary: PresentationDictionary = {
   ...menus,
   ...accordion,
@@ -393,10 +430,7 @@ const corePresentationDictionary: PresentationDictionary = {
     rule({ background: 'var(--tp-card)' }, ':host([section-colors="off"]) &'),
   ],
   'card-footer': [
-    rule({
-      background: 'var(--tp-muted)',
-      'border-block-start': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-    }),
+    ...sectionFooterAppearance,
     rule({ 'border-width': '0' }, ':host([borders="off"]) &'),
     rule({ background: 'var(--tp-card)' }, ':host([section-colors="off"]) &'),
   ],

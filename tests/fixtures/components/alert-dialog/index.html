@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alert Dialog verification fixture</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 1rem;
+      }
+      #transformed {
+        transform: translateZ(0);
+        overflow: hidden;
+        height: 5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Alert Dialog verification</h1>
+      <tp-button id="outside" variant="outline">Outside action</tp-button>
+      <div id="transformed">
+        <tp-alert-dialog id="basic" label="Delete project?">
+          <tp-button slot="trigger" variant="outline" part="authored-trigger"
+            >Open decision</tp-button
+          >
+          <p slot="description">This permanently deletes the project and its files.</p>
+          <tp-alert-dialog
+            id="nested"
+            label="Discard the backup too?"
+            description="The backup cannot be recovered."
+          >
+            <tp-button slot="trigger" variant="outline">Nested decision</tp-button>
+            <tp-button slot="cancel" variant="outline">Keep backup</tp-button>
+            <tp-button slot="confirm" variant="destructive">Discard backup</tp-button>
+          </tp-alert-dialog>
+          <tp-button slot="cancel" variant="outline">Cancel</tp-button>
+          <tp-button slot="confirm" variant="destructive">Delete project</tp-button>
+        </tp-alert-dialog>
+      </div>
+      <tp-alert-dialog id="controlled" label="Controlled decision">
+        <tp-button slot="trigger" variant="outline">Open controlled</tp-button>
+        <tp-button slot="cancel" variant="outline">Cancel controlled</tp-button>
+      </tp-alert-dialog>
+      <tp-dialog id="legacy" label="Dialog regression">
+        <tp-button slot="trigger" variant="outline">Open Dialog</tp-button>
+        <tp-button slot="footer" variant="outline">Dialog action</tp-button>
+      </tp-dialog>
+      <tp-drawer id="drawer" label="Drawer regression">
+        <tp-button slot="trigger" variant="outline">Open Drawer</tp-button>
+        <tp-button slot="footer" variant="outline">Drawer action</tp-button>
+      </tp-drawer>
+      <tp-side-panel id="side" label="Side panel regression">
+        <tp-button slot="trigger" variant="outline">Open Side panel</tp-button>
+        <tp-button slot="footer" variant="outline">Side panel action</tp-button>
+      </tp-side-panel>
+      <tp-popover id="popover" label="Popover regression">
+        <tp-button slot="trigger" variant="outline">Open Popover</tp-button>
+        <tp-button variant="outline">Popover action</tp-button>
+      </tp-popover>
+      <tp-collapsible id="disclosure"
+        ><span slot="label">Disclosure regression</span>
+        <p>Retained lifecycle check.</p></tp-collapsible
+      >
+      <div id="tokens">
+        <tp-button>Primary action</tp-button>
+        <tp-button variant="destructive">Destructive action</tp-button>
+        <tp-badge variant="default">Primary badge</tp-badge>
+      </div>
+    </main>
+    <script>
+      document.getElementById('controlled').open = false;
+    </script>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

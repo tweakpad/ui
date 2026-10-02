@@ -13,8 +13,12 @@ Apply it to every existing and future component; examples do not restrict scope.
   upstream runtime dependencies.
 - Use Google Chrome DevTools MCP exclusively for browser verification. Existing
   Playwright smoke scripts do not override this requirement.
-- Reuse existing library components in demos, stories, documentation examples,
-  copyable snippets and fixtures. Do not create local visual substitutes such as
-  a styled badge span when the library Badge provides the role.
+- Reuse existing component-family behavior, components and presentation recipes
+  in implementations, demos, stories, documentation examples and fixtures. Trace
+  upstream imports/reexports and external styles before choosing local owners.
+  Do not create parallel implementations or local visual substitutes.
+- Pass the skill's source, capability and reuse gates before implementation, then
+  its early integration checkpoint before exhaustive verification. Preserve the
+  gate record and run its checker; recording gaps does not authorize reducing scope.
 - Preserve unrelated work. Record evidence and gaps through the skill's checklist;
   a build, default story or accessibility pass alone does not prove completeness.

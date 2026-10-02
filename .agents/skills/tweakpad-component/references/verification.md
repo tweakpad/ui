@@ -6,6 +6,36 @@ transitions and interactions from live contracts and upstream tests. Add cases
 discovered during implementation. No default-only sample, screenshot count, code
 coverage percentage or accessibility score substitutes for requirement coverage.
 
+## Early integration checkpoint
+
+Before production edits, pass gates 0–2 and the `implement` record check described
+in SKILL.md. After the first working integration, complete I-01 through I-03 in the
+checklist and pass the `verify` record check before expanding into exhaustive
+browser scenarios. Focused tests and exploratory browser inspection needed to
+reach this checkpoint are appropriate.
+
+- **I-01 — actual shared ownership:** inspect the diff and call/import relationships.
+  Verify that both the assigned component and its related existing consumers use
+  the chosen owner. Check that old duplicate behavior was removed or delegated.
+  A new folder, shared utility imports, an owner table or passing tests do not
+  establish this result by themselves.
+- **I-02 — sourced default presentation:** inspect a representative composition
+  through Chrome DevTools MCP and compare its regions with the recorded source
+  selectors and library recipes. Include footer treatment, surface/header spacing,
+  optional media and control placement where applicable. Record concrete matches
+  and differences; "looks good", token usage and a screenshot path are insufficient.
+- **I-03 — independent composition options:** exercise each distinct constituent
+  option in the capability map. For Dialog-family work, distinguish a corner close
+  control from footer close/actions, including supported hidden/shown combinations,
+  accessible names, actual position and dismissal behavior. Confirm/Cancel policy
+  is checked separately. Do not invent Alert Dialog options from Dialog defaults;
+  reconcile each public binding against its owning live contract.
+
+A failed checkpoint reopens the affected source/design gate. Repair it before
+continuing the large verification matrix. Unsupported required inspection is
+blocked. A bounded change may mark an unaffected checkpoint not applicable only
+with a concrete scope/dependency reason; this cannot excuse missing implementation.
+
 ## Tool and environment boundary
 
 1. Discover registered `mcp__chrome_devtools__*` tools and inspect their current
@@ -52,6 +82,9 @@ built graph statically and exercise a served built-package fixture through MCP.
 - Reconcile properties and attributes with types, defaults, converters,
   reflection, removal, programmatic updates and inherited public API. Test
   meaningful invalid/boundary values where specified.
+- Map and test constituent options independently: visibility, placement, rendering
+  and action semantics are not interchangeable. A default Cancel in Actions does
+  not verify a separately configurable corner close control or footer treatment.
 - Test initial/default state, controlled state, external updates, repeated
   transitions, cancellation/rejection, reset, and no-op behavior as specified.
   Inspect observable state and event order/details, not only event counts.
@@ -187,3 +220,5 @@ failed, pending or blocked.
 At handoff, reconcile the checklist with the actual diff, current source revisions,
 evidence and generated artifacts. State command outcomes, observed browser
 results, local evidence availability, and unresolved limitations independently.
+Preserve capability/scenario IDs and the gate record. Run the `complete` record
+check; do not rewrite failed requirements as an unrequested reduced delivery.

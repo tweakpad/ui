@@ -10,7 +10,7 @@
   --tp-popover: light-dark(#fff, #202024);
   --tp-popover-foreground: var(--tp-foreground);
   --tp-primary: light-dark(#6d5dfc, #8b7cff);
-  --tp-primary-foreground: #fff;
+  --tp-primary-foreground: light-dark(#fff, #18181b);
   --tp-secondary: light-dark(#e4e4e7, #3f3f46);
   --tp-secondary-foreground: var(--tp-foreground);
   --tp-muted: light-dark(#f4f4f5, #27272a);
@@ -18,7 +18,7 @@
   --tp-accent: light-dark(#ede9fe, #4c1d95);
   --tp-accent-foreground: light-dark(#3b197a, #f5f3ff);
   --tp-destructive: light-dark(#dc2626, #ef4444);
-  --tp-destructive-foreground: #fff;
+  --tp-destructive-foreground: light-dark(#fff, #18181b);
   --tp-success: light-dark(#15803d, #22c55e);
   --tp-success-foreground: #fff;
   --tp-warning: light-dark(#b45309, #f59e0b);

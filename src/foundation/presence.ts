@@ -20,6 +20,8 @@ export class PresenceController implements ReactiveController {
   #pendingCompletion: boolean | null = null;
   #completionStartedFor = -1;
   #destroyed = false;
+  #connected = true;
+  #completedGeneration = -1;
   #trackedCompletions = new Set<PromiseLike<void>>();
 
   constructor(host: ReactiveControllerHost, options: PresenceControllerOptions = {}) {
@@ -41,6 +43,8 @@ export class PresenceController implements ReactiveController {
     if (present === this.#requested) {
       if (!present && this.#state === 'absent' && this.#options.keepMounted?.()) {
         this.#setState('retained');
+      } else if (!present && this.#state === 'retained' && !this.#options.keepMounted?.()) {
+        this.#setState('absent');
       }
       return;
     }
@@ -96,8 +100,22 @@ export class PresenceController implements ReactiveController {
     }
   }
 
+  hostConnected(): void {
+    this.#connected = true;
+    const requested = this.#requested;
+    this.#requested = false;
+    this.setPresent(requested);
+  }
+
   hostDisconnected(): void {
+    this.#connected = false;
+    this.#generation += 1;
     this.#cancelWait();
+    this.#state = 'absent';
+  }
+
+  releaseRetained(): void {
+    if (!this.#requested && this.#state === 'retained') this.#setState('absent');
   }
 
   destroy(): void {
@@ -149,7 +167,14 @@ export class PresenceController implements ReactiveController {
   }
 
   #finish(present: boolean, generation: number): void {
-    if (generation !== this.#generation || present !== this.#requested) return;
+    if (
+      !this.#connected ||
+      generation !== this.#generation ||
+      present !== this.#requested ||
+      this.#completedGeneration === generation
+    )
+      return;
+    this.#completedGeneration = generation;
     this.#cancelWait();
     if (!present) this.#setState(this.#options.keepMounted?.() ? 'retained' : 'absent');
     this.#options.onComplete?.(present);

@@ -41,6 +41,48 @@ Read [architecture.md](references/architecture.md) during investigation and desi
 Read [verification.md](references/verification.md) when building the acceptance
 matrix, then use its applicable sections during each verification gate.
 
+### Required execution boundaries
+
+These are internal work gates, not requests for user approval. Resolve them through
+source investigation and authorized shared repairs; ask only for a material
+unresolved product/contract decision. Apply them to component internals as well as
+stories and examples.
+
+1. **Preserve the requested scope.** An implementation request covers the assigned
+   component's applicable contract and dependencies. Do not relabel it a "core",
+   "initial", or "bounded" implementation to defer required capabilities. A
+   bounded delivery must come from the user's request, not from implementation
+   difficulty, elapsed time, or a list of acknowledged gaps. Recording a failure
+   does not clear it or authorize stopping work that can still be completed.
+2. **Reuse the component family, not just utilities.** Trace upstream imports,
+   reexports and shared owners to the corresponding local components. When two
+   components share a behavioral implementation upstream, preserve that ownership
+   in the Lit binding: reuse/repair the existing component or an actual common
+   owner consumed by both. Sharing focus or event helpers while duplicating the
+   surrounding state, lifecycle, rendering and coordination is not sufficient.
+3. **Trace presentation to its source.** Record the relevant registry base and
+   style preset; follow external class names into their stylesheets/recipes. Map
+   each visual region to an existing component or shared presentation recipe.
+   Ordinary native layout is allowed; independently recreating an existing
+   component's appearance is not. Reconcile source variants with the live contract
+   and local theme instead of silently mixing them.
+4. **Inventory constituent options separately.** Defaults, independent visibility
+   controls, placement, composition and dismissal/action semantics each need a
+   source-backed mapping. A footer action does not implement a corner close
+   control. Shared behavior does not transfer every sibling's API or defaults;
+   reconcile each option with the assigned component's contract. A rendered
+   default does not establish the configurable surface.
+5. **Pass design gates before production edits.** Gates 0–2 require a complete
+   capability plan, family dependency map, presentation source map and resolved
+   dependent design decisions. Pending execution tests are expected at this point;
+   missing mappings or unjustified parallel owners are not. Folder extraction
+   never authorizes breaking an existing shared implementation.
+6. **Check the first integration before expanding verification.** Inspect the
+   actual diff for shared ownership and one representative rendered composition
+   against the traced presentation source. Exercise independent constituent
+   options. If these fail, repair the design and reopen the affected gates before
+   spending time on the exhaustive browser matrix.
+
 For implementation work, copy [component-checklist.md](assets/component-checklist.md) to
 `plans/components/<component>/implementation-checklist.md`, or update the existing
 record. Use a stable component slug. Record source revisions, contract references,
@@ -55,6 +97,23 @@ or claiming unexecuted checks passed. Honor the task's restrictions on commands,
 servers and browser interactions. A preflight can finish with findings and tool
 limitations; do not wait for a connection or imply component conformance to call
 the preflight complete.
+
+Preserve the template's capability IDs, scenario IDs, source/reuse maps, early
+integration checkpoint and gate table. Do not replace them with a retrospective
+summary of the code. Run the record checker at each work boundary:
+
+```sh
+node .agents/skills/tweakpad-component/scripts/check-gates.mjs plans/components/<component>/implementation-checklist.md --stage implement
+node .agents/skills/tweakpad-component/scripts/check-gates.mjs plans/components/<component>/implementation-checklist.md --stage verify
+node .agents/skills/tweakpad-component/scripts/check-gates.mjs plans/components/<component>/implementation-checklist.md --stage complete
+```
+
+`implement` requires gates 0–2; `verify` additionally requires the early integration
+checkpoint before exhaustive browser verification; `complete` requires all gates,
+capabilities and scenarios to be resolved. A nonzero result blocks that boundary;
+correct the work and record, never mark a row passed merely to satisfy the script.
+The checker validates record structure and statuses, not the truth or completeness
+of source evidence. Read-only reviews use the same criteria without creating files.
 
 Statuses are `pending`, `passed`, `failed`, `blocked`, and `not applicable`.
 `not applicable` needs contract/capability evidence; unsupported required tests
@@ -84,6 +143,10 @@ Inventory all properties/attributes, types/defaults, methods, events and
 cancellation, slots/parts, states/markers, composition, lifecycle, forms,
 accessibility, interaction, motion, and presentation/customization requirements.
 Read upstream tests and constituent units, not just the showcase component.
+Include related components and independently configured regions. Record exact
+upstream paths/symbols and defaults; a whole-family prose row cannot replace
+individual capabilities. Follow the presentation source chain defined in the
+architecture reference before choosing the visual baseline.
 
 Map each capability to its live authority, local reference evidence, Lit/public
 interface, implementation, documentation, and test scenario. Translate React
@@ -94,6 +157,7 @@ composition/Foundation exposure as described in the architecture reference.
 
 **Exit:** all applicable requirements have a disposition and verification plan;
 material spec/parity conflicts are resolved before dependent implementation.
+"Pending implementation" is valid in a complete plan; "not mapped" is not.
 
 ### 2. Design composition and shared ownership
 
@@ -108,8 +172,15 @@ A bounded fix or documentation-only task assesses the same architecture but does
 not force unrelated folder migration; record existing structural gaps and the
 limited delivery claim.
 
-**Mandatory demo/composition reuse:** for every nested UI role in stories,
-documentation, examples, and fixtures, find and use the existing library
+Complete the family dependency and presentation source maps before editing. Name
+the upstream relationship, existing local owner, reuse/repair decision, component-
+specific differences and actual consumers. A new "shared" module used only by the
+new component does not prove reuse when an existing sibling retains the duplicate
+implementation. Composition, inheritance and controllers are possible mechanisms;
+the required result is one coherent owner for the shared responsibility.
+
+**Mandatory implementation/composition reuse:** for every nested UI role in
+component internals, stories, documentation, examples, and fixtures, use the existing library
 component. A custom badge-looking span, demo-local Button, or recreated input,
 switch, spinner, icon, or menu is an antipattern when the library provides the
 role. Compose public APIs and supported styling hooks. Native content, layout,
@@ -118,7 +189,13 @@ valid; record the reason when they could be confused with a component substitute
 Do not hide a deficient existing component behind a local replacement.
 
 **Exit:** module responsibilities, shared owners, affected consumers, and a
-composition reuse map are recorded. No unjustified parallel implementation exists.
+composition reuse map are recorded. The proposed design has no unjustified parallel
+owner. If existing code violates this, pass the design gate only after specifying
+the concrete shared repair and affected consumers; implement that repair next.
+The early integration checkpoint then checks actual adoption in the code. This
+distinction permits repairing bad existing code without treating it as conforming.
+Run the `implement` record check. If a design changes during coding, reopen this gate
+rather than carrying forward its old pass.
 
 ### 3. Implement and verify behavior
 
@@ -139,6 +216,11 @@ attributes, slots, parts, classes, markers, dictionary keys, or CSS variables.
 Reuse semantic tokens and shared recipes. Prove token overrides, scoped themes,
 dictionary replacement, and applicable public part/per-instance hooks work,
 including compound and shadow-boundary cases, without resetting state or focus.
+Compare the first rendered result to the selected source and sibling presentation
+recipes, including optional regions and independently placed controls. Record the
+early integration checkpoint and run the `verify` record check before the full
+browser matrix. Token usage or successful overrides alone do not prove the correct
+default appearance or reuse.
 
 **Exit:** supported customization works through public boundaries; local CSS and
 demo substitutes do not conceal missing presentation integration.
@@ -193,6 +275,12 @@ carry an earlier pass across a change that invalidates its evidence.
 scoped fix must report its exact verified boundary and any older outstanding
 gaps; it does not certify the entire component. Never expand a fix into an
 unrequested library rewrite just to clear unrelated gaps.
+Run the `complete` record check. Keep unresolved in-scope work active when progress
+is possible; explain genuine blockers without redefining the requested delivery.
+
+When maintaining this skill, use the behavioral cases in
+[skill-regressions.md](references/skill-regressions.md) and run the checker tests.
+Those cases test decisions and rejected work boundaries, not wording compliance.
 
 ## Browser tool boundary and final report
 

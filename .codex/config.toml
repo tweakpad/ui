@@ -1,0 +1,8 @@
+[mcp_servers.spec-blocks]
+command = "/opt/homebrew/bin/node"
+args = [
+  "--env-file=/Volumes/Development/code/tweakpad/.env",
+  "/Volumes/Development/code/tweakpad/spec-mcp/spec-blocks-mcp.mjs",
+  "--api-url",
+  "http://spec-blocks.localhost",
+]
