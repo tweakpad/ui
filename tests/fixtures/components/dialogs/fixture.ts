@@ -3,7 +3,9 @@ import type { TpDialog } from '../../../../src/components/dialog/index.js';
 const controlled = document.querySelector<TpDialog>('#controlled')!;
 controlled.open = false;
 const events: unknown[] = [];
-for (const dialog of document.querySelectorAll<TpDialog>('tp-alert-dialog, tp-dialog, tp-drawer, tp-side-panel')) {
+for (const dialog of document.querySelectorAll<TpDialog>(
+  'tp-alert-dialog, tp-dialog, tp-drawer, tp-side-panel',
+)) {
   dialog.addEventListener('tp-open-change', (event: Event) => {
     if (event.target !== dialog) return;
     const detail = (event as CustomEvent).detail;
@@ -19,4 +21,10 @@ for (const dialog of document.querySelectorAll<TpDialog>('tp-alert-dialog, tp-di
 }
 Object.assign(window, { fixtureEvents: events });
 
-document.querySelector('#save')!.addEventListener('click', (event) => document.querySelector<TpDialog>('#legacy')!.setOpen(false, 'close-action', event));
+document
+  .querySelector('#save')!
+  .addEventListener('click', (event) =>
+    document.querySelector<TpDialog>('#legacy')!.setOpen(false, 'close-action', event),
+  );
+import { setPresentationDictionary, defaultPresentationDictionary } from '../../../../src/index.js';
+Object.assign(window, { fixtureAPI: { setPresentationDictionary, defaultPresentationDictionary } });

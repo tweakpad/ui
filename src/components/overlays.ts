@@ -64,6 +64,9 @@ export class TpDrawer extends TpDialog {
     `,
   ];
   side: 'left' | 'right' = 'right';
+  protected override get animateDefaultExit(): boolean {
+    return true;
+  }
   protected override motionTargets(): Array<{
     target: HTMLElement | null;
     role: MotionRoleDefinition;

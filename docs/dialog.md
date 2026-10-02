@@ -62,3 +62,9 @@ Public parts and dictionary keys: dialog, dialog-trigger, dialog-portal, dialog-
 Root/Content/Overlay expose data-open, data-closed, data-starting-style and data-ending-style. Content exposes data-nested/data-nested-dialog-open; triggers expose data-popup-open. Presence states: absent, starting, open, ending, retained. The backdrop motion role targets Overlay with enter/exit phases and blocking completion. Drawer and Side Panel reuse this owner and retain their additional surface motion.
 
 The native top layer escapes clipping while preserving slots and inherited themes. Dialog and Alert Dialog currently do not expose the complete Foundation custom portal-target, renderDelegate, hostProperties and elementReference channels. These existing parity gaps remain tracked separately; this shared-owner correction does not establish complete library conformance.
+
+Default motion runs on opening only. Accepted closing removes the surface and
+backdrop immediately, without waiting for an exit transition. A consumer may
+explicitly claim the backdrop exit through `tp-motion-request` to provide its
+own animation and completion. The portal wrapper contributes no layout box
+beside the trigger.

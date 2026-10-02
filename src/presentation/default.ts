@@ -317,6 +317,9 @@ for (const prefix of ['dialog', 'alert-dialog', 'drawer', 'side-panel']) {
         'opacity calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
     }),
     rule({ opacity: '0' }, '&:is([data-starting-style], [data-ending-style])'),
+    ...(prefix === 'dialog' || prefix === 'alert-dialog'
+      ? [rule({ transition: 'none' }, '&[data-ending-style]')]
+      : []),
     rule({ transition: 'none' }, '&[data-tp-motion-driven]'),
   ];
 }

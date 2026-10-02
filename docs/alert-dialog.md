@@ -69,3 +69,9 @@ Root/Content/Overlay publish open/closed and starting/ending markers (`data-open
 The `backdrop` motion role targets Overlay, supports enter/exit, and participates in Presence completion. It has no extra context fields. Claimed motion replaces that role's default opacity transition; it does not take ownership of focus, state or mounting.
 
 The current Lit binding uses a native dialog in the browser top layer to preserve slot ownership and inherited tokens while escaping clipping and transformed ancestors. It has no custom portal-target binding. Generic renderDelegate/hostProperties/elementReference channels are not yet exposed by this binding; slotted action association preserves the supplied control and its native semantics. These remain parity gaps against the complete Foundation surface contract.
+
+Default motion runs on opening only. Accepted closing removes the surface and
+backdrop immediately, without waiting for an exit transition. A consumer may
+explicitly claim the backdrop exit through `tp-motion-request` to provide its
+own animation and completion. The portal wrapper contributes no layout box
+beside the trigger.

@@ -2,7 +2,8 @@ import { css } from 'lit';
 
 /** Layout, containment, and hit regions. Appearance belongs to the dictionary. */
 export const dialogStyles = css`
-  :host {
+  :host,
+  .portal {
     display: contents;
   }
 

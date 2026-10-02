@@ -193,6 +193,9 @@ export class TpDialog extends TpElement {
   protected get contentElement(): HTMLDialogElement | null {
     return this.#layer;
   }
+  protected get animateDefaultExit(): boolean {
+    return false;
+  }
   protected motionTargets(): Array<{ target: HTMLElement | null; role: MotionRoleDefinition }> {
     return [
       { target: this.renderRoot.querySelector('.overlay'), role: dialogMotionRoles.backdrop },
@@ -733,7 +736,18 @@ export class TpDialog extends TpElement {
     this.#treeCleanup = undefined;
     this.#scrollCleanup?.();
     this.#scrollCleanup = undefined;
-    if (this.#activeModality === 'modal') this.#layer?.close();
+    const layer = this.#layer;
+    if (this.#activeModality === 'modal') {
+      layer?.close();
+      // Release native modality immediately, but keep the exiting surface above
+      // its backdrop. Reopening only the `open` attribute paints it underneath
+      // the top layer for a frame and makes the content flash on close.
+      if (layer && this.isConnected && this.#presence.state === 'ending') {
+        layer.setAttribute('popover', 'manual');
+        layer.setAttribute('open', '');
+        layer.showPopover();
+      }
+    }
     this.#activeModality = undefined;
     if (restore && this.finalFocus === false) {
       const body = this.ownerDocument.body;
@@ -800,7 +814,13 @@ export class TpDialog extends TpElement {
     if (event.key === 'Tab' && this.#content) trapTabKey(event, this.#content);
   };
   #focusIn = (event: FocusEvent): void => {
-    if (!this.open || !this.dismissController.isTopmost || !this.#content) return;
+    if (
+      !this.open ||
+      !this.dismissController.isTopmost ||
+      !this.#content ||
+      this.#activeModality !== this.modality
+    )
+      return;
     const active = deepActiveElement(this.ownerDocument);
     if (composedContains(this.#content, active)) return;
     if (this.modality === 'non-modal') {
@@ -883,6 +903,14 @@ export class TpDialog extends TpElement {
           toState: this.open ? 'open' : 'closed',
         }),
       );
+      if (
+        state === 'ending' &&
+        !this.animateDefaultExit &&
+        !this.#motion.some((motion) => motion.claimed)
+      ) {
+        this.#presence.completeExit();
+        return;
+      }
     }
     if (state === 'open' || state === 'ending') {
       for (const motion of this.#motion) {
