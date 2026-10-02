@@ -16,6 +16,7 @@ const outputDirectory = join(root, 'src/stories/generated');
 const authoredStories = new Set([
   'tp-alert-dialog',
   'tp-dialog',
+  'tp-tooltip',
   'tp-accordion',
   'tp-button',
   'tp-button-group',

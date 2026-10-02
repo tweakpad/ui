@@ -76,9 +76,11 @@ export type CollisionBoundary = 'clipping-ancestors' | Element | Element[] | Rec
 export interface PositioningOptions {
   boundary?: CollisionBoundary;
   constrainSize?: boolean;
+  sticky?: boolean;
   onPosition?: (result: PositioningResult) => void;
   onInvalid?: () => void;
   placement?: Placement;
+  resolvePlacement?: () => Placement;
   offset?: number | { mainAxis?: number; crossAxis?: number; alignmentAxis?: number };
   strategy?: PositioningStrategy;
   automatic?: boolean;
@@ -325,11 +327,26 @@ export function computeSurfacePosition(
   const alignPolicy = policy.align ?? 'flip';
   const vertical = ['top', 'bottom'].includes(placementParts(selected.placement).side);
   const shiftAlignment = alignPolicy === 'shift' || (alignPolicy === 'flip' && firstFit < 0);
-  const shiftSide = sidePolicy === 'shift';
+  const shiftSide = sidePolicy === 'shift' || (options.sticky === true && alignPolicy !== 'none');
   if (vertical ? shiftAlignment : shiftSide)
     x = Math.min(Math.max(x, usableLeft), Math.max(usableLeft, usableRight - surface.width));
   if (vertical ? shiftSide : shiftAlignment)
     y = Math.min(Math.max(y, usableTop), Math.max(usableTop, usableBottom - surface.height));
+  // Match the default anchored shift limiter: retain an overlap with the anchor.
+  if (options.sticky === false && shiftAlignment) {
+    const arrowLength = options.arrow
+      ? vertical
+        ? options.arrow.offsetWidth
+        : options.arrow.offsetHeight
+      : 0;
+    const limit = arrowLength
+      ? arrowLength / 2 +
+        (vertical ? padding.left + padding.right : padding.top + padding.bottom) / 2
+      : 0;
+    if (vertical)
+      x = Math.max(anchor.left - surface.width + limit, Math.min(x, anchor.right - limit));
+    else y = Math.max(anchor.top - surface.height + limit, Math.min(y, anchor.bottom - limit));
+  }
   const positionedSurface = rect(x, y, surface.width, surface.height);
   const anchorOverflow = detectOverflow(anchor, clipping, 0);
   const surfaceOverflow = detectOverflow(positionedSurface, clipping, 0);
@@ -348,19 +365,23 @@ export function computeSurfacePosition(
     typeof options.offset === 'number' ? options.offset : (options.offset?.mainAxis ?? 8);
   const availableWidth = Math.max(
     0,
-    side === 'left'
-      ? anchor.left - usableLeft - distance
-      : side === 'right'
-        ? usableRight - anchor.right - distance
-        : usableRight - usableLeft,
+    shiftSide && !vertical
+      ? usableRight - usableLeft
+      : side === 'left'
+        ? anchor.left - usableLeft - distance
+        : side === 'right'
+          ? usableRight - anchor.right - distance
+          : usableRight - usableLeft,
   );
   const availableHeight = Math.max(
     0,
-    side === 'top'
-      ? anchor.top - usableTop - distance
-      : side === 'bottom'
-        ? usableBottom - anchor.bottom - distance
-        : usableBottom - usableTop,
+    shiftSide && vertical
+      ? usableBottom - usableTop
+      : side === 'top'
+        ? anchor.top - usableTop - distance
+        : side === 'bottom'
+          ? usableBottom - anchor.bottom - distance
+          : usableBottom - usableTop,
   );
   const candidateData = evaluated.map((candidate) => ({
     placement: candidate.placement,
@@ -583,8 +604,17 @@ export function positionSurface(
       );
     }
     const surfaceRect = rect(0, 0, surface.offsetWidth, surface.offsetHeight);
+    const currentOptions = options.resolvePlacement
+      ? { ...options, placement: options.resolvePlacement() }
+      : options;
     const direction = ownerWindow.getComputedStyle(context).direction === 'rtl' ? 'rtl' : 'ltr';
-    let result = computeSurfacePosition(anchorRect, surfaceRect, clipping, options, direction);
+    let result = computeSurfacePosition(
+      anchorRect,
+      surfaceRect,
+      clipping,
+      currentOptions,
+      direction,
+    );
     if (pass !== generation || destroyed) return null;
     if (!result) {
       current = null;
@@ -700,15 +730,31 @@ export function positionSurface(
   const cleanups: Array<() => void> = [];
   if (policy) {
     if (policy.ancestorScroll ?? true) {
-      for (const target of new Set([
-        ...overflowAncestors(context),
-        ownerWindow,
-        ...(ownerWindow.visualViewport ? [ownerWindow.visualViewport] : []),
-        ...overflowAncestors(surface),
-      ])) {
-        target.addEventListener('scroll', schedule, { passive: true });
-        cleanups.push(() => target.removeEventListener('scroll', schedule));
-      }
+      let targets = new Set<EventTarget>();
+      const bind = () => {
+        const next = new Set<EventTarget>([
+          ...overflowAncestors(context),
+          ...overflowAncestors(surface),
+          ownerWindow,
+          ...(ownerWindow.visualViewport ? [ownerWindow.visualViewport] : []),
+        ]);
+        for (const target of targets)
+          if (!next.has(target)) target.removeEventListener('scroll', schedule);
+        for (const target of next)
+          if (!targets.has(target)) target.addEventListener('scroll', schedule, { passive: true });
+        targets = next;
+      };
+      bind();
+      const observer = new ownerWindow.MutationObserver(() => {
+        bind();
+        schedule();
+      });
+      observer.observe(context.ownerDocument, { childList: true, subtree: true });
+      cleanups.push(() => {
+        observer.disconnect();
+        for (const target of targets) target.removeEventListener('scroll', schedule);
+        targets.clear();
+      });
     }
     if (policy.ancestorResize ?? true) {
       ownerWindow.addEventListener('resize', schedule, { passive: true });
@@ -745,6 +791,7 @@ export function positionSurface(
           b.width,
           b.height,
           ownerWindow.getComputedStyle(context).direction,
+          ownerWindow.getComputedStyle(context).writingMode,
         ].join(',');
         if (sample !== previous || policy.frameSynchronized) schedule();
         previous = sample;

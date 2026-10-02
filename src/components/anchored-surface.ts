@@ -90,6 +90,7 @@ export abstract class TpAnchoredSurface extends TpElement {
       .portal {
         display: contents;
       }
+
       .positioner {
         position: fixed;
         inset: auto;
@@ -103,52 +104,69 @@ export abstract class TpAnchoredSurface extends TpElement {
         max-inline-size: var(--tp-available-width, calc(100vw - 10px));
         max-block-size: var(--tp-available-height, calc(100dvh - 10px));
       }
+
       .positioner:not([data-positioned]),
       .positioner[data-anchor-hidden] {
         visibility: hidden;
         pointer-events: none;
       }
+
       .popup {
         position: relative;
+        display: flex;
+        flex-direction: column;
         max-inline-size: inherit;
         max-block-size: inherit;
         overflow-wrap: anywhere;
         transform-origin: var(--tp-transform-origin);
       }
+
       .body {
+        min-block-size: 0;
+        flex: 1 1 auto;
         max-block-size: inherit;
         overflow: auto;
       }
+
       .arrow {
         position: absolute;
         pointer-events: none;
       }
+
       .arrow svg {
         display: block;
         inline-size: 100%;
         block-size: 100%;
       }
+
       .arrow[data-side='top'] {
         top: 100%;
       }
+
       .arrow[data-side='bottom'] {
         bottom: 100%;
       }
+
       .arrow[data-side='left'] {
         left: 100%;
       }
+
       .arrow[data-side='right'] {
         right: 100%;
       }
+
       .arrow[data-side='bottom'] svg {
         rotate: 180deg;
       }
+
       .arrow[data-side='left'] svg {
         rotate: 270deg;
       }
+
       .arrow[data-side='right'] svg {
         rotate: 90deg;
       }
+
       [hidden] {
         display: none !important;
       }
@@ -363,7 +381,8 @@ export abstract class TpAnchoredSurface extends TpElement {
     this.state.sync();
     if (this.disabled && this.state.open) this.state.request(false, 'disabled');
     if (this.open) {
-      const desired = this.triggerIdentifier ?? this.defaultTriggerIdentifier;
+      const desired =
+        this.triggerIdentifier ?? (this.trigger ? undefined : this.defaultTriggerIdentifier);
       const selected = desired
         ? [...this.records].find(([, r]) => r.identifier === desired)?.[0]
         : (this.trigger ?? this.#slotTrigger);
@@ -495,12 +514,19 @@ export abstract class TpAnchoredSurface extends TpElement {
     let target: HTMLElement | undefined,
       bridge: HTMLElement | undefined,
       unregister: (() => void) | undefined;
+    let controls: readonly Element[] | null = null;
+    let controlsAttribute: string | null = null;
     const originals = new Map<string, string | null>();
     const applied = new Map<string, string | null>();
     const part = this.partName('trigger'),
       hadPart = element.part.contains(part);
     element.part.add(part);
     const restore = () => {
+      if (target && !this.isTooltip && target.ariaControlsElements?.includes(this)) {
+        target.ariaControlsElements = controls;
+        if (controlsAttribute !== null) target.setAttribute('aria-controls', controlsAttribute);
+        else if (!controls?.length) target.removeAttribute('aria-controls');
+      }
       if (target)
         for (const [name, value] of originals)
           if (target.getAttribute(name) === applied.get(name)) {
@@ -524,7 +550,16 @@ export abstract class TpAnchoredSurface extends TpElement {
       if (next !== target) {
         restore();
         target = next;
+        controls = target.ariaControlsElements;
+        controlsAttribute = target.getAttribute('aria-controls');
         unregister = this.presentationController.registerPart(part, target);
+      }
+      const actualDescription = target.getAttribute('aria-describedby');
+      if (
+        applied.has('aria-describedby') &&
+        actualDescription !== applied.get('aria-describedby')
+      ) {
+        originals.set('aria-describedby', actualDescription);
       }
       const active =
         this.trigger === element && this.open && !this.triggerDisabled(element, options);
@@ -560,8 +595,7 @@ export abstract class TpAnchoredSurface extends TpElement {
       } else {
         write('aria-expanded', String(active));
         write('aria-haspopup', 'dialog');
-        if (!this.id) this.id = createId('tp-surface');
-        write('aria-controls', this.id);
+        target.ariaControlsElements = [...(controls ?? []), this];
       }
     };
     const removeListeners = this.bindInteraction(element, options);
@@ -693,13 +727,22 @@ export abstract class TpAnchoredSurface extends TpElement {
       placement = (this.align === 'center' ? side : `${side}-${this.align}`) as Placement;
     this.#position = positionSurface(anchor, surface, {
       placement,
-      offset: { mainAxis: this.sideOffset, crossAxis: this.alignOffset },
+      resolvePlacement: () => {
+        const currentSide = resolveSide(this.side, context);
+        return (
+          this.align === 'center' ? currentSide : `${currentSide}-${this.align}`
+        ) as Placement;
+      },
+      offset: {
+        mainAxis: this.sideOffset,
+        crossAxis: this.alignOffset,
+        alignmentAxis: this.alignOffset,
+      },
       strategy: 'fixed',
       padding: this.collisionPadding,
       boundary: this.collisionBoundary,
-      collision: this.sticky
-        ? { ...this.collisionAvoidance, align: 'shift' }
-        : this.collisionAvoidance,
+      collision: this.collisionAvoidance,
+      sticky: this.sticky,
       constrainSize: true,
       arrow: this.showArrow ? this.renderRoot.querySelector('.arrow') : null,
       arrowPadding: this.arrowPadding,
@@ -729,6 +772,9 @@ export abstract class TpAnchoredSurface extends TpElement {
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    if (this.shadowRoot && 'referenceTarget' in this.shadowRoot)
+      (this.shadowRoot as ShadowRoot & { referenceTarget: string }).referenceTarget =
+        this.contentId;
     if (!this.isConnected) return;
     if (changed.has('handle')) {
       this.#handleCleanup?.();

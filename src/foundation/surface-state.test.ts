@@ -91,4 +91,16 @@ describe('surface state', () => {
     expect(f.state.open).toBe(false);
     expect(f.diagnostic).toHaveBeenCalledOnce();
   });
+  it('proposes same-open trigger reassociation and preserves the accepted association on veto', () => {
+    const f = fixture(true);
+    const accept = vi.fn();
+    f.listen((event) => event.preventDefault());
+    f.state.request(true, 'trigger-hover', undefined, undefined, accept, true);
+    expect(accept).not.toHaveBeenCalled();
+    expect(f.events).toHaveLength(1);
+    f.listen(() => {});
+    f.state.request(true, 'trigger-hover', undefined, undefined, accept, true);
+    expect(accept).toHaveBeenCalledOnce();
+    expect(f.state.open).toBe(true);
+  });
 });
