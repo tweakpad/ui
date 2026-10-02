@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Selection controls verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 24px;
+        font-family: var(--tp-font-sans);
+        color: var(--tp-foreground);
+        background: var(--tp-background);
+      }
+      main {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+        gap: 24px;
+      }
+      section {
+        min-width: 0;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+      tp-checkbox,
+      tp-switch {
+        margin-block: 8px;
+      }
+      tp-field {
+        margin-block: 12px;
+      }
+      fieldset {
+        border: 0;
+        padding: 0;
+        margin: 0;
+      }
+      #checkbox-parent,
+      #logical-children {
+        display: grid;
+        gap: 8px;
+      }
+      #narrow {
+        max-width: 240px;
+      }
+      .indicator-motion::part(checkbox-indicator),
+      .indicator-motion::part(radio-group-indicator) {
+        transition: opacity 0.15s;
+      }
+      .indicator-motion::part(checkbox-indicator):is([data-starting-style], [data-ending-style]),
+      .indicator-motion::part(radio-group-indicator):is(
+          [data-starting-style],
+          [data-ending-style]
+        ) {
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Checkbox, Radio Group and Toggle Group</h1>
+    <main>
+      <section>
+        <h2>Checkbox forms and Field</h2>
+        <form id="check-form">
+          <tp-field id="check-field" label="Accept terms" description="Required for this example"
+            ><tp-checkbox id="check" name="terms" value="accepted" required></tp-checkbox
+          ></tp-field>
+          <tp-checkbox id="mixed" name="mixed" value="mixed-value" indeterminate
+            >Mixed selection</tp-checkbox
+          >
+          <tp-checkbox id="readonly-check" name="readonly" readonly default-checked
+            >Read-only setting</tp-checkbox
+          >
+          <tp-checkbox id="unchecked" name="unchecked" unchecked-value="off"
+            >Unchecked value</tp-checkbox
+          >
+          <tp-checkbox id="retained" keep-mounted>Retained indicator</tp-checkbox>
+          <tp-button id="check-submit" type="submit">Submit choices</tp-button
+          ><tp-button id="check-reset" type="reset" variant="outline">Reset choices</tp-button>
+        </form>
+        <fieldset disabled>
+          <legend>Disabled native fieldset</legend>
+          <tp-checkbox id="fieldset-check" name="disabled" default-checked
+            >Disabled checkbox</tp-checkbox
+          >
+        </fieldset>
+        <div id="checkbox-controlled"></div>
+        <tp-switch id="switch" name="switch">Switch regression</tp-switch>
+      </section>
+      <section>
+        <h2>Checkbox logical group</h2>
+        <form id="parent-form">
+          <fieldset id="checkbox-parent">
+            <legend>Project permissions</legend>
+            <tp-checkbox id="parent" parent>All permissions</tp-checkbox>
+            <div id="logical-children">
+              <tp-checkbox id="child-a" name="permission" value="read">Read</tp-checkbox>
+              <tp-checkbox id="child-b" name="permission" value="write">Write</tp-checkbox>
+              <tp-checkbox id="child-disabled" name="permission" value="locked" disabled
+                >Locked permission</tp-checkbox
+              >
+            </div>
+          </fieldset>
+          <tp-button id="parent-reset" type="reset" variant="outline">Reset permissions</tp-button>
+        </form>
+      </section>
+      <section>
+        <h2>Radio Group forms</h2>
+        <form id="radio-form">
+          <tp-field id="radio-field" label="Delivery" description="Choose one delivery option"
+            ><tp-radio-group id="radio" name="delivery" default-value="standard" required>
+              <tp-radio-group-item id="radio-standard" value="standard"
+                >Standard</tp-radio-group-item
+              >
+              <tp-radio-group-item id="radio-express" value="express">Express</tp-radio-group-item>
+              <tp-radio-group-item id="radio-unavailable" value="unavailable" disabled
+                >Unavailable</tp-radio-group-item
+              >
+            </tp-radio-group></tp-field
+          ><tp-button id="radio-submit" type="submit">Submit delivery</tp-button
+          ><tp-button id="radio-reset" type="reset" variant="outline">Reset delivery</tp-button>
+        </form>
+        <tp-radio-group id="radio-horizontal" orientation="horizontal" label="Horizontal plan"
+          ><tp-radio-group-item value="basic">Basic</tp-radio-group-item
+          ><tp-radio-group-item value="pro">Pro</tp-radio-group-item></tp-radio-group
+        >
+      </section>
+      <section>
+        <h2>Toggle Group actions</h2>
+        <tp-toggle-group id="toggle-single" label="Text alignment"
+          ><tp-toggle value="start">Start</tp-toggle><tp-toggle value="center">Center</tp-toggle
+          ><tp-toggle value="end" disabled>End unavailable</tp-toggle></tp-toggle-group
+        >
+        <tp-toggle-group
+          id="toggle-multiple"
+          label="Text formatting"
+          multiple
+          default-value='["bold"]'
+          variant="outline"
+          spacing="0"
+          ><tp-toggle value="bold">Bold</tp-toggle><tp-toggle value="italic">Italic</tp-toggle
+          ><tp-toggle value="under line">Underline</tp-toggle></tp-toggle-group
+        >
+        <div id="narrow" dir="rtl">
+          <h3>Vertical RTL</h3>
+          <tp-toggle-group
+            id="toggle-vertical"
+            label="Layers"
+            orientation="vertical"
+            variant="outline"
+            spacing="0"
+            ><tp-toggle value="front">Front layer with long wrapping text</tp-toggle
+            ><tp-toggle value="back">Back layer</tp-toggle></tp-toggle-group
+          >
+        </div>
+        <tp-toggle id="standalone-toggle">Standalone toggle</tp-toggle>
+      </section>
+      <section>
+        <h2>Public part customization</h2>
+        <tp-checkbox id="custom-check" class="indicator-motion">Custom checkbox</tp-checkbox>
+        <tp-radio-group id="custom-radio" label="Custom radio"
+          ><tp-radio-group-item class="indicator-motion" value="one">One</tp-radio-group-item
+          ><tp-radio-group-item value="two">Two</tp-radio-group-item></tp-radio-group
+        >
+      </section>
+      <section>
+        <h2>API cases</h2>
+        <div id="dynamic"></div>
+      </section>
+      <section>
+        <h2>Toggle icons and content</h2>
+        <div id="toggle-icon-cases"></div>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

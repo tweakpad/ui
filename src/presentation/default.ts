@@ -104,6 +104,22 @@ export function controlSizePresentation(size: string): readonly PresentationRule
   ];
 }
 
+/** Toggle retains shared control heights with its sourced Nova typography and spacing. */
+function toggleSizePresentation(size: string): readonly PresentationRule[] {
+  return controlSizePresentation(size).map((entry, index) =>
+    index === 0
+      ? {
+          ...entry,
+          declarations: {
+            ...entry.declarations,
+            padding: '0 calc(var(--tp-spacing) * 2.5)',
+            'font-size': `var(--tp-text-${size === 'sm' ? 'xs' : 'sm'})`,
+          },
+        }
+      : entry,
+  );
+}
+
 const button: Record<string, readonly PresentationRule[]> = {
   button: [
     rule({
@@ -430,7 +446,7 @@ const corePresentationDictionary: PresentationDictionary = {
   toggle: [
     ...button.button!,
     rule(
-      { background: 'var(--tp-accent)', color: 'var(--tp-accent-foreground)' },
+      { background: 'var(--tp-muted)', color: 'var(--tp-foreground)' },
       '&[aria-pressed="true"]',
     ),
   ],
@@ -443,7 +459,7 @@ const corePresentationDictionary: PresentationDictionary = {
       ]),
       ...['sm', 'default', 'lg'].map((size) => [
         `${part}-size-${size}`,
-        part === 'toggle' ? controlSizePresentation(size) : [],
+        part === 'toggle' ? toggleSizePresentation(size) : [],
       ]),
     ]),
   ),

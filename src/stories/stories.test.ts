@@ -6,6 +6,16 @@ import { componentStoryTags } from './examples.js';
 describe('Storybook catalog entries', () => {
   const storyDirectory = new URL('./generated/', import.meta.url);
   const storyFiles = readdirSync(storyDirectory).filter((file) => file.endsWith('.stories.ts'));
+  const newlyAuthoredStories = [
+    'toggle',
+    'toast',
+    'toggle-group',
+    'text-area',
+    'radio-group',
+    'input',
+    'field',
+    'checkbox',
+  ].map((name) => readFileSync(new URL(`./${name}.stories.ts`, import.meta.url), 'utf8'));
   const accordionStory = readFileSync(new URL('./accordion.stories.ts', import.meta.url), 'utf8');
   const alertDialogStory = readFileSync(
     new URL('./alert-dialog.stories.ts', import.meta.url),
@@ -36,8 +46,9 @@ describe('Storybook catalog entries', () => {
   });
 
   it('has one statically indexed Default story for every public control', () => {
-    expect(storyFiles).toHaveLength(catalogEntries.length - 11);
+    expect(storyFiles).toHaveLength(catalogEntries.length - 19);
     const sources = [
+      ...newlyAuthoredStories,
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
       accordionStory,
       alertDialogStory,
@@ -63,6 +74,7 @@ describe('Storybook catalog entries', () => {
 
   it('puts an unstyled Default example before public-API configurations', () => {
     const sources = [
+      ...newlyAuthoredStories,
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
       accordionStory,
       alertDialogStory,

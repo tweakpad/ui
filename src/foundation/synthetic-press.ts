@@ -1,9 +1,12 @@
 /** Native-equivalent Enter/Space activation for a non-native action host. */
 export class SyntheticPress {
   #spacePressed = false;
-  constructor(private activate: (event: KeyboardEvent) => void) {}
+  constructor(
+    private activate: (event: KeyboardEvent) => void,
+    private respectNativeDefault = true,
+  ) {}
   readonly keyDown = (event: KeyboardEvent): void => {
-    if (event.defaultPrevented) return;
+    if (this.respectNativeDefault && event.defaultPrevented) return;
     if (event.key === ' ') {
       event.preventDefault();
       this.#spacePressed = true;
@@ -15,7 +18,7 @@ export class SyntheticPress {
   readonly keyUp = (event: KeyboardEvent): void => {
     if (event.key !== ' ' || !this.#spacePressed) return;
     this.#spacePressed = false;
-    if (event.defaultPrevented) return;
+    if (this.respectNativeDefault && event.defaultPrevented) return;
     event.preventDefault();
     this.activate(event);
   };

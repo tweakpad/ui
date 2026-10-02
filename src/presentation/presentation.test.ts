@@ -130,6 +130,7 @@ describe('foundational styling tokens', () => {
       }
 
       for (const [, token] of source.matchAll(/--tp-([a-z0-9-]+)\s*:/gu)) {
+        if (token === undefined) throw new Error('Missing token name in matched declaration');
         const isStateColor = colorRoles.some(
           (role) =>
             token.startsWith(`${role}-`) &&

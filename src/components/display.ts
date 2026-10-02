@@ -1,7 +1,7 @@
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
-import { TpOpenChangeEvent, TpValueChangeEvent } from '../foundation/events.js';
+import { TpValueChangeEvent } from '../foundation/events.js';
 import {
   prepareMotion,
   resolvesReducedMotion,
@@ -740,91 +740,4 @@ export class TpSpinner extends TpElement {
   }
 }
 
-export class TpToast extends TpElement {
-  static tagName = 'tp-toast';
-  static override properties = {
-    ...TpElement.properties,
-    open: { type: Boolean, reflect: true },
-    duration: { type: Number },
-    priority: { type: String, reflect: true },
-    dismissible: { type: Boolean },
-  };
-  static override styles = [
-    TpElement.styles,
-    controlStyles,
-    css`
-      :host {
-        display: block;
-      }
-
-      .toast {
-        display: flex;
-        align-items: start;
-        min-width: 16rem;
-      }
-
-      .content {
-        flex: 1;
-      }
-
-      .toast[hidden] {
-        display: none;
-      }
-    `,
-  ];
-  open = false;
-  duration = 5000;
-  priority: 'polite' | 'assertive' = 'polite';
-  dismissible = true;
-  #timer: number | undefined;
-  protected override render() {
-    const closeButton = this.dismissible
-      ? html`
-          <button
-            class="control"
-            part="close focusable"
-            type="button"
-            aria-label="Dismiss"
-            @click=${(event: Event) => this.setOpen(false, 'dismiss', event)}
-          >
-            ×
-          </button>
-        `
-      : nothing;
-    return html`<div
-      class="surface toast"
-      part="root"
-      role=${this.priority === 'assertive' ? 'alert' : 'status'}
-      aria-live=${this.priority}
-      ?hidden=${!this.open}
-      @pointerenter=${this.#pause}
-      @pointerleave=${this.#schedule}
-    >
-      <div class="content" part="content"><slot></slot></div>
-      ${closeButton}
-    </div>`;
-  }
-  setOpen(open: boolean, reason: 'programmatic' | 'dismiss' = 'programmatic', event?: Event): void {
-    if (this.open === open) return;
-    if (this.dispatchEvent(new TpOpenChangeEvent(open, this.open, reason, event))) {
-      this.open = open;
-      this.#schedule();
-    }
-  }
-  #pause = (): void => {
-    if (this.#timer !== undefined) clearTimeout(this.#timer);
-  };
-  #schedule = (): void => {
-    this.#pause();
-    if (this.open && this.duration > 0)
-      this.#timer = window.setTimeout(() => this.setOpen(false, 'dismiss'), this.duration);
-  };
-  protected override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
-    if (changed.has('open') || changed.has('duration')) this.#schedule();
-  }
-  override disconnectedCallback(): void {
-    this.#pause();
-    super.disconnectedCallback();
-  }
-}
+export { TpToast } from './toast/index.js';

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Toast verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        max-width: 760px;
+        margin: 24px auto;
+        padding: 16px;
+        display: grid;
+        gap: 20px;
+      }
+      h1 {
+        font-size: 1.25rem;
+        margin: 0;
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      #container {
+        position: relative;
+        min-block-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Toast verification</h1>
+      <p>Notifications leave the current task available. Press F6 to inspect keyboard access.</p>
+      <div class="controls">
+        <tp-button id="add" variant="outline">Show notification</tp-button>
+        <tp-button id="stack" variant="outline">Create stack</tp-button>
+        <tp-button id="promise" variant="outline">Start operation</tp-button>
+        <tp-button id="anchored" variant="outline">Show anchored toast</tp-button>
+        <tp-button id="reset" variant="ghost">Clear notifications</tp-button>
+      </div>
+      <tp-input id="editor" placeholder="Continue working" aria-label="Task notes"></tp-input>
+      <tp-button id="outside">Outside action</tp-button>
+      <tp-toast id="toaster" timeout="0"></tp-toast>
+      <div id="container"></div>
+      <div id="dynamic"></div>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

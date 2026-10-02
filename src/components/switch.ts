@@ -142,7 +142,7 @@ export class TpSwitch extends TpCheckbox {
         type="checkbox"
         role="switch"
         .checked=${this.checked}
-        ?disabled=${this.disabled}
+        ?disabled=${this.checkboxDisabled}
         ?required=${this.required}
         aria-checked=${String(this.checked)}
         @change=${this.handleChange}

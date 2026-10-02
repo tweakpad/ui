@@ -162,7 +162,7 @@ export class TpCombobox extends TpFormElement {
                 aria-label=${this.label}
                 .value=${display}
                 .placeholder=${this.placeholder}
-                ?disabled=${this.disabled}
+                ?disabled=${this.effectiveDisabled}
                 ?readonly=${!this.searchable || this.readOnly}
                 aria-expanded=${String(this.open)}
                 aria-controls="listbox"
@@ -177,7 +177,7 @@ export class TpCombobox extends TpFormElement {
                 part="toggle"
                 type="button"
                 tabindex="-1"
-                ?disabled=${this.disabled}
+                ?disabled=${this.effectiveDisabled}
                 aria-label="Toggle options"
                 @click=${this.#toggle}
               >
@@ -194,7 +194,7 @@ export class TpCombobox extends TpFormElement {
               aria-controls="listbox"
               aria-haspopup="listbox"
               aria-activedescendant=${this.open && this.activeIndex >= 0 ? `option-${this.activeIndex}` : nothing}
-              ?disabled=${this.disabled}
+              ?disabled=${this.effectiveDisabled}
               @click=${this.#toggle}
               @keydown=${this.#key}
             >
@@ -264,7 +264,7 @@ export class TpCombobox extends TpFormElement {
   }
 
   #focus = (): void => {
-    if (!this.disabled && this.searchable) this.setOpen(true, 'input');
+    if (!this.effectiveDisabled && this.searchable) this.setOpen(true, 'input');
   };
   #input = (event: Event): void => {
     this.query = (event.currentTarget as HTMLInputElement).value;
@@ -329,7 +329,7 @@ export class TpCombobox extends TpFormElement {
   }
 
   protected selectOption(option: ChoiceOption, event: Event): void {
-    if (option.disabled || this.disabled || this.readOnly) return;
+    if (option.disabled || this.effectiveDisabled || this.readOnly) return;
     const previous = this.value;
     if (this.dispatchEvent(new TpValueChangeEvent(option.value, previous, 'selection', event))) {
       this.value = option.value;
@@ -345,7 +345,7 @@ export class TpCombobox extends TpFormElement {
     reason: 'keyboard' | 'pointer' | 'input' | 'dismiss',
     event?: Event,
   ): void {
-    if (this.open === open || (open && this.disabled)) return;
+    if (this.open === open || (open && this.effectiveDisabled)) return;
     if (this.dispatchEvent(new TpOpenChangeEvent(open, this.open, reason, event))) {
       this.open = open;
       if (open)
@@ -377,7 +377,7 @@ export class TpCombobox extends TpFormElement {
         });
     }
     if (changed.has('required') || changed.has('value') || changed.has('disabled')) {
-      this.setFormValue(this.disabled ? null : this.value || null);
+      this.setFormValue(this.effectiveDisabled ? null : this.value || null);
       this.setValidity(
         this.required && !this.value ? { valueMissing: true } : {},
         this.required && !this.value ? 'Please select an option.' : '',
@@ -438,7 +438,7 @@ export class TpCommandPalette extends TpCombobox {
   ];
   loopNavigation = false;
   protected override selectOption(option: ChoiceOption, event: Event): void {
-    if (option.disabled || this.disabled) return;
+    if (option.disabled || this.effectiveDisabled) return;
     this.emit('tp-execute', { commandId: option.value, sourceEvent: event });
     this.setOpen(false, eventReason(event), event);
   }

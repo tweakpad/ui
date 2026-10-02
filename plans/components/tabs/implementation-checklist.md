@@ -18,18 +18,18 @@
 
 | ID | Requirement / capability and defaults | Live authority | Local upstream path / symbol | Lit interface / implementation | Docs location | Scenario IDs | Status | Evidence / gap |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| C-01 | Comparable value/defaultValue; controlled mode; callback/cancellation | Foundation 13.4,5.2 | TabsRoot value/defaultValue/onValueChange and tests | Foundation TabsSelection owner; value/defaultValue, onValueChange, setValue; string attributes, comparable properties | docs/tabs.md | V-01 | pending | Mode frozen at initialization |
-| C-02 | Initial/missing/disabled fallback, explicit disabled defaults, duplicate exclusion | Foundation 13.4 | TabsRoot dynamic/disabled tests | Nearest successor then predecessor; noncancelable structural events; controlled missing selects nothing | docs/tabs.md | V-01,V-02 | pending | Ordered registry |
-| C-03 | Manual/automatic activation; loopFocus true; horizontal/vertical/RTL | Foundation 13.4,19.7 | TabsList and tests | Existing CollectionRegistry opt-in loop/disabled policy; activation + activateOnFocus alias | docs/tabs.md | V-03,V-04 | pending | Roving entry separate from selection |
-| C-04 | Tab disabled false/nativeAction true; keyboard and no form submit | Foundation 13.4 | TabsTab -> useButton | Native button tab anatomy; aria-disabled discoverability; shared synthetic Press extracted from Button | docs/tabs.md | V-05 | pending | Native action contract |
-| C-05 | Same-tree Tab/Panel relations and stable names/IDs | Foundation 13.4,7 | TabsTab/TabsPanel relationship tests | Register native parts; preserve authored references/restore ownership; one tab stop | docs/tabs.md | V-02,V-06 | pending | No cross-shadow IDREF break |
-| C-06 | Panel keepMounted false, transitions/reversal/cleanup | Foundation 13.4,6 | TabsPanel and tests | Shared PresenceController per panel; inactive panel detached at stable placeholder into owned storage; same node restored | docs/tabs.md | V-07 | pending | Observe storage removal and restore on disconnect |
-| C-07 | Optional Indicator; renderBeforeActivation false; offsets/size | Foundation 13.4,B.7 | TabsIndicator and geometry/resize tests | Indicator slot; geometry owner tracks all tab/list sizes, scroll, direction, transforms and selected tab | docs/tabs.md | V-08 | pending | No duplicate selection paint |
-| C-08 | Rich labels and nested composition | ucl16-tabs | shadcn Tabs examples | Icon/Badge in labels; Card/Button/Input in panels; direct membership scope | docs/tabs.md | V-09 | pending | Native tab is contract anatomy |
-| C-09 | Dynamic membership, values, IDs, cleanup/reconnect | Foundation 13.4,6 | Root dynamic tests and List observers | Owned registrations/attributes and observer cleanup | docs/tabs.md | V-02,V-07 | pending | No leaked identity/state |
-| C-10 | Enclosed/underline and five replaceable parts | ucl16-tabs, dictionary | base/ui/tabs.tsx + Nova selectors | All paint in existing recipes, geometry structural; tokens/dictionary/part hooks | docs/tabs.md | V-09,V-10 | pending | No invented axes/keys |
-| C-11 | Complete authored Docs and real Controls | skill gate7 | base/examples/tabs-example.tsx | Canonical story, docs/tabs.md, generator exclusion, correct examples | docs/tabs.md | V-11 | pending | Fixture options outside Controls |
-| C-12 | Package and shared-consumer compatibility | Existing public surface | Tabs, CompositeRoot, useButton | Folder with tabs.ts reexport; Button and Collection regression checks | docs/tabs.md | V-12 | pending | No package dependency added |
+| C-01 | Comparable value/defaultValue; controlled mode; callback/cancellation | Foundation 13.4,5.2 | TabsRoot value/defaultValue/onValueChange and tests | Foundation TabsSelection owner; value/defaultValue, onValueChange, setValue; string attributes, comparable properties | docs/tabs.md | V-01 | passed | TabsSelection unit coverage and source/built controlled acceptance, cancellation, null/comparable values; browser-api.json |
+| C-02 | Initial/missing/disabled fallback, explicit disabled defaults, duplicate exclusion | Foundation 13.4 | TabsRoot dynamic/disabled tests | Nearest successor then predecessor; noncancelable structural events; controlled missing selects nothing | docs/tabs.md | V-01,V-02 | passed | Unit initial/no-op/fallback coverage; Chrome successor/predecessor/all-disabled and duplicate checks |
+| C-03 | Manual/automatic activation; loopFocus true; horizontal/vertical/RTL | Foundation 13.4,19.7 | TabsList and tests | Existing CollectionRegistry opt-in loop/disabled policy; activation + activateOnFocus alias | docs/tabs.md | V-03,V-04 | passed | Chrome real manual/automatic keys, disabled discovery, wrap/clamp, RTL/vertical and focus preservation |
+| C-04 | Tab disabled false/nativeAction true; keyboard and no form submit | Foundation 13.4 | TabsTab -> useButton | Native button tab anatomy; aria-disabled discoverability; shared synthetic Press extracted from Button | docs/tabs.md | V-05 | passed | Chrome native/synthetic Enter/Space, disabled semantics and zero form submits; shared Button three-click regression |
+| C-05 | Same-tree Tab/Panel relations and stable names/IDs | Foundation 13.4,7 | TabsTab/TabsPanel relationship tests | Register native parts; preserve authored IDs/restore owned attributes; one tab stop | docs/tabs.md | V-02,V-06 | passed | Chrome AX plus ID/pairing assertions; zero axe violations in both themes and Docs |
+| C-06 | Panel keepMounted false, transitions/reversal/cleanup | Foundation 13.4,6 | TabsPanel and tests | Shared PresenceController per panel; inactive panel detached at stable placeholder into owned storage; same node restored | docs/tabs.md | V-07 | passed | Chrome actual CSS transition exit/reversal, retained/unmounted identity, completion and disconnect checks |
+| C-07 | Optional Indicator; renderBeforeActivation false; offsets/size | Foundation 13.4,B.7 | TabsIndicator and geometry/resize tests | Indicator slot; geometry owner tracks all tab/list sizes, scroll, direction, transforms and selected tab | docs/tabs.md | V-08 | passed | 13 presentation checks including hidden reveal, scroll, scale, rotation, inherited RTL and label growth |
+| C-08 | Rich labels and nested composition | ucl16-tabs | shadcn Tabs examples | Icon/Badge in labels; Card/Button/Input in panels; direct membership scope | docs/tabs.md | V-09 | passed | Rich Icon/Badge labels, Card/Button/Input panels and independent nested Tabs inspected |
+| C-09 | Dynamic membership, values, IDs, cleanup/reconnect | Foundation 13.4,6 | Root dynamic tests and List observers | Owned registrations/attributes and observer cleanup | docs/tabs.md | V-02,V-07 | passed | Browser removal/rename/reorder/duplicate/reconnect and attribute restoration checks |
+| C-10 | Enclosed/underline and five replaceable parts | ucl16-tabs, dictionary | base/ui/tabs.tsx + Nova selectors | All paint in existing recipes, geometry structural; tokens/dictionary/part hooks | docs/tabs.md | V-09,V-10 | passed | All five dictionary parts and per-instance hooks replaced; tokens and missing-key behavior verified |
+| C-11 | Complete authored Docs and real Controls | skill gate7 | base/examples/tabs-example.tsx | Canonical story, docs/tabs.md, generator exclusion, correct examples | docs/tabs.md | V-11 | passed | Authored Default/Docs, working genuine Controls, imports, complete constituent API; generator exclusion and story tests |
+| C-12 | Package and shared-consumer compatibility | Existing public surface | Tabs, CompositeRoot, useButton | Folder with tabs.ts reexport; Button and Collection regression checks | docs/tabs.md | V-12 | passed | 87 tests, lint, library and Storybook builds passed; actual built exports/registration, Button/Toggle/Radio regressions |
 
 | Issue | Concrete missing/conflicting contract | Affected dependencies | Proposed resolution | Authority / resolution evidence | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -75,18 +75,18 @@
 
 | ID | Capability IDs / evidence category | Setup and input | Expected result | Actual result | Tool/command and evidence | Status | Justification / gap |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| V-01 | C-01,C-02; state | Controlled rejection/acceptance; null/object/default; cancel/reentrancy; explicit disabled | Correct frozen ownership and notifications | not run | Unit + Chrome API | pending | Required |
-| V-02 | C-02,C-05,C-09; dynamic | Remove/disable/rename/reorder/duplicate/all-disabled/reconnect | Valid fallback, stable relations and cleanup | not run | Unit + Chrome | pending | Required |
-| V-03 | C-03; keyboard | Tab/arrows/Home/End/Enter/Space, manual/auto, loop on/off | Correct selection vs focus | not run | Chrome real keys | pending | Required |
-| V-04 | C-03; direction | Vertical, RTL, wrong-axis and external selection | Correct movement and retained focus | not run | Chrome real keys | pending | Required |
-| V-05 | C-04,C-12; actions | Native form, synthetic press, canceled/disabled; Button regression | No implicit submit, no duplicate activation | not run | Chrome input/unit | pending | Required |
-| V-06 | C-05; accessibility | Names/relations/tabstops/hidden; light and dark | Correct tree and zero axe violations | not run | Chrome AX + axe | pending | No spoken AT claim |
-| V-07 | C-06,C-09; lifecycle | Detached vs retained, transitions/reversal, removal/reconnect | Correct presence with original node identity | not run | Chrome + Presence tests | pending | Required |
-| V-08 | C-07; geometry | Selection/resize/scroll/RTL/vertical/scale/rotation/hidden reveal | Indicator tracks active bounds, no stale geometry | not run | Chrome geometry/screenshots | pending | Required |
-| V-09 | C-08,C-10; visual | Both variants/orientations/themes; rich labels, narrow, nested | Sourced appearance and containment | not run | Chrome screenshots | pending | Required |
-| V-10 | C-10; customization | All hooks/tokens/dictionaries/missing keys | Overrides preserve state/focus and structure | not run | Chrome API | pending | Required |
-| V-11 | C-11; docs | Default, genuine Controls and complete API/source/generator | Maintained canonical documentation | not run | Chrome + story tests | pending | Required |
-| V-12 | C-12; regression | Unit/lint/tsc/build/Storybook/package/Button/Collection consumers | Supported exports and consumers preserved | not run | Commands + Chrome | pending | Required |
+| V-01 | C-01,C-02; state | Controlled rejection/acceptance; null/object/default; cancel/reentrancy; explicit disabled | Correct frozen ownership and notifications | Passed controlled/default/null/object/no-op/cancel/reentrant/disabled-default cases; 11 focused unit tests plus browser API | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
+| V-02 | C-02,C-05,C-09; dynamic | Remove/disable/rename/reorder/duplicate/all-disabled/reconnect | Valid fallback, stable relations and cleanup | Passed ordered fallback, removal, rename/reorder, duplicates, IDs and reconnect/cleanup | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
+| V-03 | C-03; keyboard | Tab/arrows/Home/End/Enter/Space, manual/auto, loop on/off | Correct selection vs focus | Passed real Tab/arrows/Home/End/Enter/Space; manual versus auto, disabled discovery, wrap versus clamp | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
+| V-04 | C-03; direction | Vertical, RTL, wrong-axis and external selection | Correct movement and retained focus | Passed vertical and horizontal RTL; wrong axis ignored; controlled external updates retained focused entry | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
+| V-05 | C-04,C-12; actions | Native form, synthetic press, canceled/disabled; Button regression | No implicit submit, no duplicate activation | Passed native/synthetic activation, pointer cancellation, root disabling, no form submission; Button three clicks | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
+| V-06 | C-05; accessibility | Names/relations/tabstops/hidden; light and dark | Correct tree and zero axe violations | Named AX tabs/panels and real focus verified; zero axe violations in light/dark Overview/Activity, narrow and Docs | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
+| V-07 | C-06,C-09; lifecycle | Detached vs retained, transitions/reversal, removal/reconnect | Correct presence with original node identity | Passed actual-motion exit, reversal, retained/unmounted identity, complete-once and disconnect checks | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
+| V-08 | C-07; geometry | Selection/resize/scroll/RTL/vertical/scale/rotation/hidden reveal | Indicator tracks active bounds, no stale geometry | Passed active bounds under scroll/resize, inherited RTL, vertical, scale/rotation and hidden reveal; less than 1px error | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
+| V-09 | C-08,C-10; visual | Both variants/orientations/themes; rich labels, narrow, nested | Sourced appearance and containment | Inspected four screenshots: Nova treatment, rich composition, focus, both themes, orientations/RTL, narrow and long text; nested API isolated | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
+| V-10 | C-10; customization | All hooks/tokens/dictionaries/missing keys | Overrides preserve state/focus and structure | Passed alternate dictionary for five parts, all class/style hooks, scoped token and missing-key reset; state/focus preserved | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
+| V-11 | C-11; docs | Default, genuine Controls and complete API/source/generator | Maintained canonical documentation | Default and full Docs inspected; pointer and actual variant/orientation/activation Controls worked; one canonical story, real reuse | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
+| V-12 | C-12; regression | Unit/lint/tsc/build/Storybook/package/Button/Collection consumers | Supported exports and consumers preserved | 87 unit tests, lint, library build and Storybook build passed; source and built 38 browser assertions each, Button/Toggle/Radio regressions | Chrome DevTools MCP; tmp/component-verification/tabs/2026-10-02/browser-evidence.md and adjacent logs/screenshots | passed | No unresolved in-scope gap |
 
 ## Early integration checkpoint
 
@@ -103,20 +103,26 @@
 | 0. Sources and scope | passed | Fresh authority, local sources, clean baseline |
 | 1. Capability mapping | passed | C-01 through C-12 mapped before code |
 | 2. Architecture and composition reuse | passed | Complete family/presentation/composition maps |
-| 3. Behavior | pending | State, keyboard, fallback and lifecycle |
-| 4. Presentation and customization | pending | Five public parts |
-| 5. Accessibility | pending | Keys, tree, axe |
-| 6. Visual and interaction inspection | pending | Variants, orientations, themes, indicator |
-| 7. Documentation and demo reuse | pending | Authored API/Controls |
-| 8. Regression and reconciliation | pending | Tests/builds/package |
+| 3. Behavior | passed | V-01 through V-05/V-07 passed; source and built API plus real keys |
+| 4. Presentation and customization | passed | V-08 through V-10 passed; five parts and sourced visuals |
+| 5. Accessibility | passed | V-06 passed: real keyboard, AX and unsuppressed axe separate |
+| 6. Visual and interaction inspection | passed | Four inspected screenshots; themes, RTL, orientation, focus, constrained layout and motion |
+| 7. Documentation and demo reuse | passed | V-11 passed; complete docs and one canonical story, actual library compositions |
+| 8. Regression and reconciliation | passed | V-12 passed; 87 tests, lint/build/Storybook, built package and shared consumers |
 
 ## Documentation synchronization
 
-- [ ] Base example and actual Controls agree with public API.
-- [ ] Constituent properties, events, slots, methods and geometry documented.
-- [ ] Fixtures separate from Docs and nested roles reuse library components.
-- [ ] Registration, generator and tests reconcile.
+- [x] Base example and actual Controls agree with public API.
+- [x] Constituent properties, events, slots, methods and geometry documented.
+- [x] Fixtures separate from Docs and nested roles reuse library components.
+- [x] Registration, generator and tests reconcile.
 
 ## Completion / handoff
 
-- Pending implementation and verification; no incomplete scope relabeling.
+- All C-01–C-12, V-01–V-12 and gates 0–8 passed. Source revisions are recorded above.
+- Detailed evidence: tmp/component-verification/tabs/2026-10-02/browser-evidence.md, browser-api.json, unit.log, lint.log, build.log, storybook.log and four PNGs. These artifacts are local only.
+- Durable API/layout checks live beside the HTML fixture and are executed through Chrome DevTools MCP; they do not drive a browser or simulate input.
+- Resolved rejected-proposal direction, inherited RTL geometry, initial no-op notification, synthetic/root disabled semantics and a fixture Input label. Browser assertions wait for actual transition completion.
+- No unresolved Tabs capability gap. No spoken AT, cross-browser or OS reduced-motion emulation claim; Tabs imposes no default panel animation.
+- Existing exports preserved; no dependency added. Shared changes keep existing defaults, with actual Button/Toggle Group/Radio Group checks. Source-mode Lit presence/dev warnings and standard Storybook chunk warning are recorded in the evidence.
+- Existing Vite/Storybook stopped during work; confirmed vacant ports and restarted at localhost:5173/6006 without killing any existing process. Unrelated changes and the user's index staging were preserved.

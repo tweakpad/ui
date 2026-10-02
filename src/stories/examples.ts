@@ -54,7 +54,7 @@ const examples = {
     </tp-accordion>
   `,
   'tp-button': () => html`<tp-button>Continue</tp-button>`,
-  'tp-checkbox': () => html`<tp-checkbox checked>Remember me</tp-checkbox>`,
+  'tp-checkbox': () => html`<tp-checkbox default-checked>Remember me</tp-checkbox>`,
   'tp-collapsible': () => html`
     <tp-collapsible open>
       <span slot="label">Project details</span>
@@ -62,13 +62,13 @@ const examples = {
     </tp-collapsible>
   `,
   'tp-radio-group': () => html`
-    <tp-radio-group value="weekly" aria-label="Digest frequency">
-      <button value="daily">Daily</button>
-      <button value="weekly">Weekly</button>
-      <button value="never">Never</button>
+    <tp-radio-group default-value="weekly" aria-label="Digest frequency">
+      <tp-radio-group-item value="daily">Daily</tp-radio-group-item>
+      <tp-radio-group-item value="weekly">Weekly</tp-radio-group-item>
+      <tp-radio-group-item value="never">Never</tp-radio-group-item>
     </tp-radio-group>
   `,
-  'tp-switch': () => html`<tp-switch checked>Notifications</tp-switch>`,
+  'tp-switch': () => html`<tp-switch default-checked>Notifications</tp-switch>`,
   'tp-tabs': () => html`
     <tp-tabs default-value="overview">
       <button slot="tab" value="overview">Overview</button>
@@ -77,9 +77,9 @@ const examples = {
       <div slot="panel" value="activity">Recent activity</div>
     </tp-tabs>
   `,
-  'tp-toggle': () => html`<tp-toggle pressed>Bold</tp-toggle>`,
+  'tp-toggle': () => html`<tp-toggle default-pressed>Bold</tp-toggle>`,
   'tp-toggle-group': () => html`
-    <tp-toggle-group value="center">
+    <tp-toggle-group default-value='["center"]'>
       <tp-toggle value="left">Left</tp-toggle>
       <tp-toggle value="center">Center</tp-toggle>
       <tp-toggle value="right">Right</tp-toggle>
@@ -323,7 +323,7 @@ const examples = {
     <div><span>Above</span><tp-separator></tp-separator><span>Below</span></div>
   `,
   'tp-spinner': () => html`<tp-spinner label="Loading projects"></tp-spinner>`,
-  'tp-toast': () => html`<tp-toast open duration="0" dismissible>Changes saved</tp-toast>`,
+  'tp-toast': () => html`<tp-toast open duration="persistent" dismissible>Changes saved</tp-toast>`,
   'tp-alert': () => html` <tp-alert title="Update available">Restart to install it.</tp-alert> `,
   'tp-aspect-ratio': () => html` <tp-aspect-ratio><div>16:9</div></tp-aspect-ratio> `,
   'tp-attachment': () => html`

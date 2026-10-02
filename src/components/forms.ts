@@ -5,7 +5,6 @@ import type { PropertyValues, TemplateResult } from 'lit';
 import { createId } from '../foundation/id.js';
 import { TpElement, TpFormElement } from '../foundation/element.js';
 import { TpValueChangeEvent, TpValueCommitEvent } from '../foundation/events.js';
-import { CollectionRegistry } from '../foundation/collection.js';
 import {
   calendarGridDates,
   calendarSelectionProposal,
@@ -48,192 +47,12 @@ import {
 } from '../foundation/slider.js';
 import type { SliderCrossing } from '../foundation/slider.js';
 import type { ChangeReason } from '../foundation/types.js';
-import { ValidationController, ValidationRun } from '../foundation/validation.js';
-import { activateLabeledControl, assignedElements, controlStyles, eventReason } from './shared.js';
+import { ValidationRun } from '../foundation/validation.js';
+import { assignedElements, controlStyles, eventReason } from './shared.js';
 
-abstract class TpTextControl extends TpFormElement {
-  static override properties = {
-    ...TpFormElement.properties,
-    defaultValue: { type: String, attribute: 'default-value' },
-    placeholder: { type: String },
-    autocomplete: { type: String },
-    minLength: { type: Number, attribute: 'minlength' },
-    maxLength: { type: Number, attribute: 'maxlength' },
-    pattern: { type: String },
-    label: { type: String },
-  };
-
-  defaultValue = '';
-  placeholder = '';
-  autocomplete = '';
-  minLength = -1;
-  maxLength = -1;
-  pattern = '';
-  label = '';
-
-  protected commitInput(input: HTMLInputElement | HTMLTextAreaElement, event: Event): void {
-    const previous = this.value;
-    const next = input.value;
-    if (!this.dispatchEvent(new TpValueChangeEvent(next, previous, 'input', event))) {
-      input.value = previous;
-      return;
-    }
-    this.value = next;
-    this.syncForm(input);
-  }
-
-  protected syncForm(input?: HTMLInputElement | HTMLTextAreaElement): void {
-    this.setFormValue(this.disabled ? null : this.value);
-    if (!input) return;
-    this.setValidity(
-      input.validity.valid ? {} : validityFlags(input.validity),
-      input.validationMessage,
-      input,
-    );
-  }
-
-  protected override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
-    if (
-      changed.has('value') ||
-      changed.has('disabled') ||
-      changed.has('required') ||
-      changed.has('readOnly') ||
-      changed.has('pattern') ||
-      changed.has('minLength') ||
-      changed.has('maxLength')
-    ) {
-      this.syncForm(
-        this.renderRoot.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea') ??
-          undefined,
-      );
-    }
-  }
-
-  protected resetFormValue(): void {
-    this.value = this.defaultValue;
-    this.setFormValue(this.value);
-  }
-}
-
-function validityFlags(validity: ValidityState): ValidityStateFlags {
-  return {
-    badInput: validity.badInput,
-    customError: validity.customError,
-    patternMismatch: validity.patternMismatch,
-    rangeOverflow: validity.rangeOverflow,
-    rangeUnderflow: validity.rangeUnderflow,
-    stepMismatch: validity.stepMismatch,
-    tooLong: validity.tooLong,
-    tooShort: validity.tooShort,
-    typeMismatch: validity.typeMismatch,
-    valueMissing: validity.valueMissing,
-  };
-}
-
-export class TpInput extends TpTextControl {
-  static tagName = 'tp-input';
-  static override properties = {
-    ...TpTextControl.properties,
-    type: { type: String },
-    min: { type: String },
-    max: { type: String },
-    step: { type: String },
-  };
-  static override styles = [
-    TpElement.styles,
-    controlStyles,
-    css`
-      :host {
-        display: inline-block;
-      }
-
-      input {
-        width: 100%;
-      }
-    `,
-  ];
-  type = 'text';
-  min = '';
-  max = '';
-  step = '';
-
-  protected override render() {
-    return html`<input
-      class="control"
-      part="input focusable"
-      .type=${this.type}
-      .name=${this.name}
-      .value=${this.value}
-      .placeholder=${this.placeholder}
-      .autocomplete=${this.autocomplete}
-      .min=${this.min}
-      .max=${this.max}
-      .step=${this.step}
-      pattern=${this.pattern || nothing}
-      minlength=${this.minLength >= 0 ? String(this.minLength) : nothing}
-      maxlength=${this.maxLength >= 0 ? String(this.maxLength) : nothing}
-      ?disabled=${this.disabled}
-      ?readonly=${this.readOnly}
-      ?required=${this.required}
-      aria-invalid=${this.invalid ? 'true' : nothing}
-      aria-label=${this.label || nothing}
-      @input=${(event: Event) => this.commitInput(event.currentTarget as HTMLInputElement, event)}
-    />`;
-  }
-}
-
-export class TpTextArea extends TpTextControl {
-  static tagName = 'tp-text-area';
-  static override properties = {
-    ...TpTextControl.properties,
-    rows: { type: Number },
-    resize: { type: String, reflect: true },
-  };
-  static override styles = [
-    TpElement.styles,
-    controlStyles,
-    css`
-      :host {
-        display: inline-block;
-      }
-
-      textarea {
-        width: 100%;
-        min-height: calc(var(--tp-control-height-md) * 2);
-        resize: var(--tp-text-area-resize, vertical);
-      }
-    `,
-  ];
-  rows = 3;
-  resize: 'none' | 'block' | 'inline' | 'both' = 'block';
-  protected override render() {
-    const resize = {
-      none: 'none',
-      block: 'vertical',
-      inline: 'horizontal',
-      both: 'both',
-    }[this.resize];
-    return html`<textarea
-      class="control"
-      part="text-area focusable"
-      .name=${this.name}
-      .value=${this.value}
-      .placeholder=${this.placeholder}
-      .autocomplete=${this.autocomplete}
-      .rows=${this.rows}
-      minlength=${this.minLength >= 0 ? String(this.minLength) : nothing}
-      maxlength=${this.maxLength >= 0 ? String(this.maxLength) : nothing}
-      ?disabled=${this.disabled}
-      ?readonly=${this.readOnly}
-      ?required=${this.required}
-      aria-invalid=${this.invalid ? 'true' : nothing}
-      aria-label=${this.label || nothing}
-      style=${`--tp-text-area-resize:${resize}`}
-      @input=${(event: Event) => this.commitInput(event.currentTarget as HTMLTextAreaElement, event)}
-    ></textarea>`;
-  }
-}
+import { nativeValidityFlags as validityFlags } from './field/text-control.js';
+export { TpInput } from './input/index.js';
+export { TpTextArea } from './text-area/index.js';
 
 type NativeSelectOption = {
   kind: 'option';
@@ -303,9 +122,9 @@ export class TpNativeSelect extends TpFormElement {
         class="control"
         part="native-select-control focusable"
         aria-label=${this.label}
-        .name=${this.name}
+        .name=${this.effectiveName}
         .value=${this.value}
-        ?disabled=${this.disabled}
+        ?disabled=${this.effectiveDisabled}
         ?required=${this.required}
         @change=${this.#change}
       >
@@ -379,7 +198,7 @@ export class TpNativeSelect extends TpFormElement {
     super.updated(changed);
     if (changed.has('value') || changed.has('disabled') || changed.has('required')) {
       const select = this.renderRoot.querySelector<HTMLSelectElement>('select');
-      this.setFormValue(this.disabled ? null : this.value);
+      this.setFormValue(this.effectiveDisabled ? null : this.value);
       if (select)
         this.setValidity(
           select.validity.valid ? {} : validityFlags(select.validity),
@@ -427,7 +246,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
   static tagName = 'tp-slider';
   static override properties = {
     ...TpFormElement.properties,
-    value: { converter: sliderValueConverter },
+    value: { converter: sliderValueConverter, noAccessor: true },
     min: { type: Number },
     max: { type: Number },
     step: { type: Number },
@@ -565,7 +384,13 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
       }
     `,
   ];
-  override value: SliderValue | undefined = undefined;
+  override get value(): SliderValue | undefined {
+    const value = super.value;
+    return value === ('' as unknown as SliderValue) ? undefined : value;
+  }
+  override set value(value: SliderValue | undefined) {
+    super.value = value;
+  }
   min = 0;
   max = 100;
   step = 1;
@@ -643,14 +468,14 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
 
   protected override render() {
     const configurationError = this.#configurationError();
-    const unavailable = this.disabled || this.readOnly || Boolean(configurationError);
+    const unavailable = this.effectiveDisabled || this.readOnly || Boolean(configurationError);
     const focused = this.activeThumbIndex >= 0;
     const dirty = !sameSliderValues(this.#values, this.#defaultValues);
     const start = this.#values.length > 1 ? (this.#values[0] ?? this.min) : this.min;
     const end = this.#values.at(-1) ?? this.min;
     const orientationPart = `slider-orientation-${this.orientation}`;
     const state = {
-      disabled: this.disabled,
+      disabled: this.effectiveDisabled,
       dragging: this.dragging,
       focused,
       invalid: this.invalid,
@@ -1021,7 +846,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
   }
 
   #keyDown = (event: KeyboardEvent): void => {
-    if (this.disabled || this.readOnly || this.#configurationError()) return;
+    if (this.effectiveDisabled || this.readOnly || this.#configurationError()) return;
     const input = event.currentTarget as HTMLInputElement;
     const index = Number(input.dataset.index);
     const current = this.#values[index];
@@ -1044,7 +869,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
   };
 
   #nativeInput = (event: Event): void => {
-    if (this.disabled || this.readOnly || this.#configurationError()) return;
+    if (this.effectiveDisabled || this.readOnly || this.#configurationError()) return;
     const input = event.currentTarget as HTMLInputElement;
     const index = Number(input.dataset.index);
     this.#nativeInputStart ??= [...this.#values];
@@ -1061,7 +886,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
   #pointerDown = (event: PointerEvent): void => {
     if (
       event.button !== 0 ||
-      this.disabled ||
+      this.effectiveDisabled ||
       this.readOnly ||
       this.#configurationError() ||
       !this.#values.length
@@ -1168,7 +993,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
       this.setValidity({ valueMissing: true }, 'A value is required.', anchor);
     else this.setValidity();
 
-    if (this.disabled || !this.name || !this.#values.length) {
+    if (this.effectiveDisabled || !this.name || !this.#values.length) {
       this.setFormValue(null);
       return;
     }
@@ -1254,93 +1079,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
   }
 }
 
-export class TpRadioGroup extends TpFormElement {
-  static tagName = 'tp-radio-group';
-  static override properties = {
-    ...TpFormElement.properties,
-    defaultValue: { type: String, attribute: 'default-value' },
-    label: { type: String },
-  };
-  defaultValue = '';
-  label = '';
-  override orientation: 'horizontal' | 'vertical' = 'vertical';
-  #items: HTMLElement[] = [];
-  #registry = new CollectionRegistry();
-  protected override associationTarget(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[role="radiogroup"]');
-  }
-  protected override render() {
-    return html`<div
-      part="radio-group"
-      role="radiogroup"
-      aria-orientation=${this.orientation}
-      aria-required=${String(this.required)}
-      aria-label=${this.label || this.getAttribute('aria-label') || nothing}
-      @click=${this.#click}
-      @keydown=${this.#key}
-    >
-      <slot @slotchange=${this.#sync}></slot>
-    </div>`;
-  }
-  #sync = (event?: Event): void => {
-    if (event) this.#items = assignedElements(event.currentTarget as HTMLSlotElement);
-    this.#registry = new CollectionRegistry();
-    for (const item of this.#items) {
-      const selected = (item.getAttribute('value') ?? '') === this.value;
-      item.setAttribute('role', 'radio');
-      item.setAttribute('part', 'radio-group-item');
-      item.setAttribute('aria-checked', String(selected));
-      item.tabIndex =
-        selected || (!this.value && item === this.#items.find((x) => !x.hasAttribute('disabled')))
-          ? 0
-          : -1;
-      this.#registry.register({ element: item, disabled: item.hasAttribute('disabled') });
-    }
-    this.setFormValue(this.value || null);
-    this.setValidity(
-      this.required && !this.value ? { valueMissing: true } : {},
-      this.required && !this.value ? 'Please select an option.' : '',
-    );
-  };
-  #click(event: Event): void {
-    const item = (event.target as Element).closest<HTMLElement>('[value]');
-    if (!item || this.disabled || this.readOnly || item.hasAttribute('disabled')) return;
-    this.#select(item, event);
-  }
-  #select(item: HTMLElement, event: Event): void {
-    const next = item.getAttribute('value') ?? '',
-      previous = this.value;
-    if (next === previous) return;
-    if (this.dispatchEvent(new TpValueChangeEvent(next, previous, eventReason(event), event))) {
-      this.value = next;
-      this.#sync();
-    }
-  }
-  #key(event: KeyboardEvent): void {
-    if (this.disabled || this.readOnly) return;
-    const next = this.#registry.handleArrowKey(
-      event,
-      event.target instanceof HTMLElement ? event.target : null,
-      this.orientation,
-      this.direction,
-    );
-    if (next) this.#select(next, event);
-  }
-  protected override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
-    if (
-      changed.has('value') ||
-      changed.has('disabled') ||
-      changed.has('readOnly') ||
-      changed.has('required')
-    )
-      this.#sync();
-  }
-  protected resetFormValue(): void {
-    this.value = this.defaultValue;
-    this.#sync();
-  }
-}
+export { TpRadioGroup, TpRadioGroupItem } from './radio-group/index.js';
 
 export class TpOtpField extends TpFormElement {
   static tagName = 'tp-otp-field';
@@ -1421,7 +1160,7 @@ export class TpOtpField extends TpFormElement {
         inputmode=${this.inputMode}
         autocomplete=${this.autoComplete}
         maxlength=${String(this.length)}
-        ?disabled=${this.disabled}
+        ?disabled=${this.effectiveDisabled}
         ?readonly=${this.readOnly}
         ?required=${this.required}
         @beforeinput=${this.#beforeInput}
@@ -1490,7 +1229,7 @@ export class TpOtpField extends TpFormElement {
     }
   }
   #beforeInput = (event: InputEvent): void => {
-    if (this.disabled || this.readOnly) event.preventDefault();
+    if (this.effectiveDisabled || this.readOnly) event.preventDefault();
   };
   #input = (event: Event): void => {
     if (this.#composing) return;
@@ -1530,7 +1269,7 @@ export class TpOtpField extends TpFormElement {
       changed.has('length')
     ) {
       const complete = this.value.length === this.length;
-      this.setFormValue(this.disabled ? null : this.value || null);
+      this.setFormValue(this.effectiveDisabled ? null : this.value || null);
       this.setValidity(
         this.required && !complete ? { valueMissing: true } : {},
         this.required && !complete ? 'Complete the code.' : '',
@@ -1543,198 +1282,67 @@ export class TpOtpField extends TpFormElement {
   }
 }
 
-export class TpField extends TpElement {
-  static tagName = 'tp-field';
-  static override properties = {
-    ...TpElement.properties,
-    label: { type: String },
-    description: { type: String },
-    error: { type: String },
-    errors: { attribute: false },
-    legend: { type: String },
-    legendScale: { type: String, attribute: 'legend-scale', reflect: true },
-  };
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: block;
-        container-type: inline-size;
-      }
-
-      [part='field'] {
-        display: grid;
-        min-width: 0;
-        margin: 0;
-      }
-
-      :host([orientation='horizontal']) [part='field-field'] {
-        display: grid;
-        grid-template-columns: minmax(8rem, 0.35fr) minmax(0, 1fr);
-        gap: var(--tp-space-1) var(--tp-space-3);
-        align-items: start;
-      }
-
-      @container (min-width: 32rem) {
-        :host([orientation='responsive']) [part='field-field'] {
-          display: grid;
-          grid-template-columns: minmax(8rem, 0.35fr) minmax(0, 1fr);
-          gap: var(--tp-space-1) var(--tp-space-3);
-          align-items: start;
-        }
-      }
-    `,
-  ];
-  label = '';
-  description = '';
-  error = '';
-  errors: string[] = [];
-  legend = '';
-  legendScale: 'section' | 'field' = 'section';
-  override orientation: 'horizontal' | 'vertical' | 'responsive' = 'vertical';
-  readonly #labelId = createId('tp-label');
-  readonly #descriptionId = createId('tp-description');
-  readonly #errorId = createId('tp-error');
-  #control: HTMLElement | null = null;
-  readonly #validation = new ValidationController<void>([
-    () => {
-      const errors = this.#errorMessages;
-      if (errors.length) return errors;
-      const control = this.#control as
-        (HTMLElement & { checkValidity?: () => boolean; validationMessage?: string }) | null;
-      if (!control?.checkValidity || control.checkValidity()) return null;
-      return control.validationMessage || 'Invalid value.';
-    },
-  ]);
-  protected override firstUpdated(): void {
-    this.renderRoot.querySelector('label')?.addEventListener('click', this.#activateControl);
-  }
-  protected override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
-    if (
-      changed.has('label') ||
-      changed.has('description') ||
-      changed.has('error') ||
-      changed.has('errors') ||
-      changed.has('disabled')
-    )
-      this.#applyAssociation();
-  }
-  protected override render() {
-    const errors = this.#errorMessages;
-    const description = this.description
-      ? html`
-          <div id=${this.#descriptionId} part="field-description">
-            <slot name="description">${this.description}</slot>
-          </div>
-        `
-      : nothing;
-    const error = errors.length
-      ? html`
-          <div id=${this.#errorId} part="field-error" role="alert">
-            <slot name="error"
-              >${
-                errors.length === 1
-                  ? errors[0]
-                  : html`<ul>
-                      ${errors.map((message) => html`<li>${message}</li>`)}
-                    </ul>`
-              }</slot
-            >
-          </div>
-        `
-      : nothing;
-    return html`<fieldset part="field" ?disabled=${this.disabled}>
-      ${
-        this.legend
-          ? html`<legend part="field-legend"><slot name="legend">${this.legend}</slot></legend>`
-          : nothing
-      }
-      <div part="field-field">
-        <label id=${this.#labelId} part="field-label"
-          ><slot name="label">${this.label}</slot></label
-        >
-        <div part="field-control-region">
-          <slot @slotchange=${this.#associate}></slot>
-        </div>
-        ${description}${error}
-      </div>
-    </fieldset>`;
-  }
-  #associate = (event: Event): void => {
-    const control = assignedElements(event.currentTarget as HTMLSlotElement)[0] ?? null;
-    if (this.#control && this.#control !== control && 'setFieldAssociation' in this.#control) {
-      (
-        this.#control as HTMLElement & {
-          setFieldAssociation: (association: {
-            label: string;
-            description: string;
-            error: string;
-          }) => void;
-        }
-      ).setFieldAssociation({ label: '', description: '', error: '' });
-    }
-    this.#control = control;
-    this.#applyAssociation();
-  };
-  #applyAssociation(): void {
-    const control = this.#control;
-    if (!control) return;
-    if ('setFieldAssociation' in control) {
-      (
-        control as HTMLElement & {
-          setFieldAssociation: (association: {
-            label: string;
-            description: string;
-            error: string;
-          }) => void;
-        }
-      ).setFieldAssociation({
-        label: this.label,
-        description: this.description,
-        error: this.#errorMessages.join('. '),
-      });
-    } else {
-      control.setAttribute('aria-labelledby', this.#labelId);
-      const described = [
-        this.description && this.#descriptionId,
-        this.#errorMessages.length && this.#errorId,
-      ]
-        .filter(Boolean)
-        .join(' ');
-      if (described) control.setAttribute('aria-describedby', described);
-      else control.removeAttribute('aria-describedby');
-      control.setAttribute('aria-label', this.label);
-    }
-    if ('disabled' in control)
-      (control as HTMLElement & { disabled: boolean }).disabled = this.disabled;
-    control.toggleAttribute('invalid', this.#errorMessages.length > 0);
-  }
-  get #errorMessages(): string[] {
-    return [
-      ...new Set([this.error, ...this.errors].map((message) => message.trim()).filter(Boolean)),
-    ];
-  }
-  #activateControl = (): void => activateLabeledControl(this.#control);
-  validate(): ValidationRun {
-    const control = this.#control;
-    const identity =
-      (control && 'name' in control && String((control as HTMLElement & { name: string }).name)) ||
-      control?.id ||
-      this.id ||
-      'field';
-    return this.#validation.validate(undefined, identity);
-  }
-}
+import type { TpField } from './field/index.js';
+import { fieldSubmission } from './field/field.js';
+import { fieldValues } from './field/field-state.js';
+export { TpField } from './field/index.js';
 
 export class TpForm extends TpElement {
   static tagName = 'tp-form';
+  static override properties = {
+    ...TpElement.properties,
+    onFormSubmit: { attribute: false },
+    errors: { attribute: false, noAccessor: true },
+  };
+  #errors: Record<string, string | readonly string[]> = {};
+  get errors(): Record<string, string | readonly string[]> {
+    return this.#errors;
+  }
+  set errors(value: Record<string, string | readonly string[]>) {
+    this.#errors = value ?? {};
+    for (const field of this.querySelectorAll<TpField>('tp-field'))
+      if (field.closest('tp-form') === this && !field.fieldSet) field.requestUpdate();
+  }
+  onFormSubmit:
+    | ((
+        values: Record<string, unknown>,
+        details: {
+          sourceEvent: SubmitEvent;
+          form: HTMLFormElement;
+          data: FormData;
+          submitter: HTMLElement | null;
+          validationRun: ValidationRun | null;
+        },
+      ) => void)
+    | undefined;
+  readonly actions = { validate: (name?: string) => this.validate(name) };
+  get values(): Record<string, unknown> {
+    return fieldValues(
+      [...this.querySelectorAll<TpField>('tp-field')]
+        .filter((field) => field.closest('tp-form') === this && !field.fieldSet)
+        .map((field) => ({ name: field.effectiveName, value: field.value })),
+    );
+  }
+  get validationMode(): 'on-submit' | 'on-blur' | 'on-change' {
+    const value = this.getAttribute('validation-mode');
+    return value === 'on-blur' || value === 'on-change'
+      ? value
+      : value === 'on-submit'
+        ? 'on-submit'
+        : this.validationTiming;
+  }
+  set validationMode(value: 'on-submit' | 'on-blur' | 'on-change') {
+    this.setAttribute('validation-mode', value);
+    for (const field of this.querySelectorAll<TpField>('tp-field')) field.requestUpdate();
+  }
   #form: HTMLFormElement | null = null;
   #observer: MutationObserver | null = null;
   #submitter: HTMLElement | null = null;
   #invalidFocusScheduled = false;
   #validationGeneration = 0;
   #validationRun: ValidationRun | null = null;
+  #submissionValidation = false;
+  #prevalidated = false;
   get validationTiming(): 'on-submit' | 'on-blur' | 'on-change' {
     const value = this.getAttribute('validation-timing');
     return value === 'on-blur' || value === 'on-change' ? value : 'on-submit';
@@ -1781,7 +1389,7 @@ export class TpForm extends TpElement {
     const existing = [...this.childNodes];
     super.connectedCallback();
     if (!this.#form) {
-      const form = document.createElement('form');
+      const form = this.ownerDocument.createElement('form');
       form.setAttribute('part', 'form');
       form.noValidate = this.novalidate || this.nativeValidation === 'suppressed';
       for (const node of existing) form.append(node);
@@ -1792,23 +1400,31 @@ export class TpForm extends TpElement {
       form.addEventListener('invalid', this.#invalid, true);
       form.addEventListener('input', this.#updateActions);
       form.addEventListener('change', this.#updateActions);
-      this.#observer = new MutationObserver((records) => {
-        for (const record of records)
-          for (const node of record.addedNodes)
-            if (node !== form && node.parentNode === this) form.append(node);
-        this.#updateActions();
-      });
-      this.#observer.observe(this, { childList: true });
-      queueMicrotask(this.#updateActions);
     }
+    const form = this.#form;
+    for (const node of [...this.childNodes]) if (node !== form) form.append(node);
+    this.#observer = new MutationObserver((records) => {
+      for (const record of records)
+        for (const node of record.addedNodes)
+          if (node !== form && node.parentNode === this) form.append(node);
+      this.#updateActions();
+    });
+    this.#observer.observe(this, { childList: true });
+    queueMicrotask(this.#updateActions);
   }
   override disconnectedCallback(): void {
     this.#observer?.disconnect();
+    this.#observer = null;
+    this.#validationRun?.cancel();
     super.disconnectedCallback();
   }
   requestSubmit(submitter?: HTMLElement): void {
     if (!this.#form) return;
     if (!this.#acceptSubmission(new Event('submit', { cancelable: true }))) return;
+    this.#prevalidated = true;
+    queueMicrotask(() => {
+      this.#prevalidated = false;
+    });
     if (submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement) {
       this.#form.requestSubmit(submitter);
       return;
@@ -1842,12 +1458,18 @@ export class TpForm extends TpElement {
     this.#validationRun?.cancel();
     const run = new ValidationRun(++this.#validationGeneration);
     this.#validationRun = run;
-    const fields = [...this.querySelectorAll<TpField>('tp-field')].filter((field) => {
-      if (!name) return true;
-      const control = field.querySelector<HTMLElement>('[name]');
-      return control?.getAttribute('name') === name;
-    });
-    void Promise.all(fields.map((field) => field.validate().completion)).then((snapshots) => {
+    const fields = [...this.querySelectorAll<TpField>('tp-field')].filter(
+      (field) =>
+        field.closest('tp-form') === this &&
+        !field.fieldSet &&
+        (!name || field.effectiveName === name),
+    );
+    void Promise.all(
+      fields.map(
+        (field) =>
+          (this.#submissionValidation ? field[fieldSubmission]() : field.validate()).completion,
+      ),
+    ).then((snapshots) => {
       if (run.signal.aborted) return;
       const fieldResults = snapshots.flatMap((snapshot) => snapshot.fieldResults);
       const status = fieldResults.some((result) => result.status === 'failed')
@@ -1865,7 +1487,9 @@ export class TpForm extends TpElement {
       return;
     }
     const form = event.currentTarget as HTMLFormElement;
-    if (!this.#acceptSubmission(event)) {
+    const accepted = this.#prevalidated || this.#acceptSubmission(event);
+    this.#prevalidated = false;
+    if (!accepted) {
       event.preventDefault();
       return;
     }
@@ -1879,7 +1503,8 @@ export class TpForm extends TpElement {
           form,
           data,
           submitter: this.#submitter ?? event.submitter,
-          validationRun: this.validate(),
+          validationRun: this.#validationRun,
+          values: this.values,
           reason: 'submit',
           sourceEvent: event,
         },
@@ -1887,11 +1512,35 @@ export class TpForm extends TpElement {
       )
     )
       event.preventDefault();
+    if (this.onFormSubmit && !event.defaultPrevented) {
+      event.preventDefault();
+      this.onFormSubmit(this.values, {
+        sourceEvent: event,
+        form,
+        data,
+        submitter: this.#submitter ?? event.submitter,
+        validationRun: this.#validationRun,
+      });
+    }
   };
   #acceptSubmission(sourceEvent: Event): boolean {
     const form = this.#form;
-    if (!form || form.checkValidity()) return true;
-    const validationRun = this.validate();
+    if (!form) return true;
+    this.#submissionValidation = true;
+    let validationRun: ValidationRun;
+    try {
+      validationRun = this.validate();
+    } finally {
+      this.#submissionValidation = false;
+    }
+    const fields = [...this.querySelectorAll<TpField>('tp-field')].filter(
+      (field) => field.closest('tp-form') === this && !field.fieldSet,
+    );
+    const invalid = fields.find(
+      (field) => !field.effectiveDisabled && field.validityState.validity.valid === false,
+    );
+    if (!invalid && form.checkValidity()) return true;
+    if (!sourceEvent.defaultPrevented) invalid?.control?.focus();
     this.emit('tp-invalid', { form, validationRun, reason: 'submit', sourceEvent });
     return false;
   }
@@ -2317,7 +1966,13 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
       }
     `,
   ];
-  override value: CalendarValue = undefined;
+  override get value(): CalendarValue {
+    const value = super.value;
+    return value === ('' as unknown as CalendarValue) ? undefined : value;
+  }
+  override set value(value: CalendarValue) {
+    super.value = value;
+  }
   selectionMode: CalendarSelectionMode = 'single';
   min = '';
   max = '';
@@ -2392,7 +2047,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
       role="group"
       aria-label=${this.label}
       style=${`--tp-calendar-visible-months:${this.visibleMonths}`}
-      ?data-disabled=${this.disabled}
+      ?data-disabled=${this.effectiveDisabled}
       ?data-readonly=${this.readOnly}
       ?data-required=${this.required}
       ?data-invalid=${this.invalid}
@@ -2406,7 +2061,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
                 part="calendar-previous focusable"
                 type="button"
                 aria-label=${this.#navigationLabel('previous')}
-                ?disabled=${this.disabled || !previousAvailable}
+                ?disabled=${this.effectiveDisabled || !previousAvailable}
                 @click=${this.#previousMonth}
               >
                 ‹
@@ -2421,7 +2076,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
                 part="calendar-next focusable"
                 type="button"
                 aria-label=${this.#navigationLabel('next')}
-                ?disabled=${this.disabled || !nextAvailable}
+                ?disabled=${this.effectiveDisabled || !nextAvailable}
                 @click=${this.#nextMonth}
               >
                 ›
@@ -2473,7 +2128,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
     const unavailable = this.#matches(this.unavailableDates, date);
     const disabledDate =
       this.#matches(this.disabledDates, date) || !this.#withinSelectionBounds(date);
-    const disabled = this.disabled || unavailable || disabledDate;
+    const disabled = this.effectiveDisabled || unavailable || disabledDate;
     const selected = this.#isSelected(date);
     const range = isCalendarRange(this.#selection) ? this.#selection : undefined;
     const rangeStart = range?.from === date;
@@ -2650,7 +2305,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
   }
 
   #activateDate(date: string, reason: ChangeReason, sourceEvent: Event): void {
-    if (this.disabled || this.readOnly || this.#configurationError()) return;
+    if (this.effectiveDisabled || this.readOnly || this.#configurationError()) return;
     const proposal = calendarSelectionProposal({
       mode: this.selectionMode,
       current: this.#selection,
@@ -2674,7 +2329,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
   };
 
   #dayKeyDown = (event: KeyboardEvent): void => {
-    if (this.disabled || this.#configurationError()) return;
+    if (this.effectiveDisabled || this.#configurationError()) return;
     const current = (event.currentTarget as HTMLButtonElement).dataset.date;
     if (!current) return;
     let target: string | null = null;
@@ -2877,7 +2532,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
   }
 
   #isDateFocusable(date: string): boolean {
-    return this.#isDateSelectable(date) && !this.disabled;
+    return this.#isDateSelectable(date) && !this.effectiveDisabled;
   }
 
   #isDateSelectable(date: string): boolean {
@@ -3004,7 +2659,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
       this.setValidity({ valueMissing: true }, 'Select a date.', anchor);
     else this.setValidity();
 
-    if (this.disabled || !this.name || !dates.length) {
+    if (this.effectiveDisabled || !this.name || !dates.length) {
       this.setFormValue(null);
       return;
     }

@@ -15,6 +15,12 @@ const dictionaries = new WeakMap<Document, PresentationDictionary>();
 const subscribers = new WeakMap<Document, Set<PresentationController>>();
 const compositions = new WeakMap<HTMLElement, Map<object, PartPresentation>>();
 let registrationId = 0;
+const isDocument = (node: Node): node is Document => node.nodeType === 9;
+const isShadowRoot = (node: Node): node is ShadowRoot => node.nodeType === 11 && 'host' in node;
+const createSheet = (ownerDocument: Document): CSSStyleSheet | undefined => {
+  const Sheet = ownerDocument.defaultView?.CSSStyleSheet;
+  return Sheet ? new Sheet() : undefined;
+};
 
 /** A compound's contribution precedes the member's terminal consumer overrides. */
 export function setPartComposition(
@@ -43,8 +49,11 @@ export class PresentationController implements ReactiveController {
   #registered = new Map<string, Set<HTMLElement>>();
   #registeredStyles = new Map<Document | ShadowRoot, HTMLStyleElement>();
   #registeredSheets = new Map<ShadowRoot, CSSStyleSheet>();
-  #style?: HTMLStyleElement;
+  #style: HTMLStyleElement | undefined;
   #sheet: CSSStyleSheet | undefined;
+  #structuralSheets: CSSStyleSheet[] = [];
+  #structuralStyles: HTMLStyleElement[] = [];
+  #sheetDocuments = new WeakMap<CSSStyleSheet, Document>();
   #document?: Document;
   #lastMissing = '';
   #refreshQueued = false;
@@ -88,6 +97,44 @@ export class PresentationController implements ReactiveController {
     };
   }
   hostConnected(): void {
+    if (this.#document && this.#document !== this.host.ownerDocument) {
+      const root = this.host.renderRoot;
+      if (root && isShadowRoot(root) && 'adoptedStyleSheets' in root) {
+        root.adoptedStyleSheets = root.adoptedStyleSheets.filter(
+          (sheet) => sheet !== this.#sheet && !this.#structuralSheets.includes(sheet),
+        );
+        this.#structuralSheets = [];
+        for (const style of this.#structuralStyles) style.remove();
+        this.#structuralStyles = [];
+        // Chrome removes constructed sheets on adoption. Recreate only Lit's
+        // finalized structural styles, never take ownership of consumer sheets.
+        const styles =
+          (
+            this.host.constructor as {
+              elementStyles?: ReadonlyArray<{ cssText?: string; cssRules?: CSSRuleList }>;
+            }
+          ).elementStyles ?? [];
+        for (const style of styles) {
+          const css =
+            style.cssText ?? [...(style.cssRules ?? [])].map((rule) => rule.cssText).join('\n');
+          const sheet = createSheet(this.host.ownerDocument);
+          if (sheet) {
+            sheet.replaceSync(css);
+            this.#structuralSheets.push(sheet);
+          } else {
+            const element = this.host.ownerDocument.createElement('style');
+            element.textContent = css;
+            root.append(element);
+            this.#structuralStyles.push(element);
+          }
+        }
+        root.adoptedStyleSheets = [...root.adoptedStyleSheets, ...this.#structuralSheets];
+      }
+      this.#sheet = undefined;
+      this.#style?.remove();
+      this.#style = undefined;
+      this.host.requestUpdate();
+    }
     this.#document = this.host.ownerDocument;
     let listeners = subscribers.get(this.#document);
     if (!listeners) subscribers.set(this.#document, (listeners = new Set()));
@@ -106,7 +153,11 @@ export class PresentationController implements ReactiveController {
     this.refresh();
   }
   refresh(): void {
-    const definition = componentDefinitions.find((item) => item.tagName === this.host.localName);
+    // A public constituent consumes its family's definition and dictionary, not
+    // a second visual catalog identity.
+    const definitionTag =
+      this.host.localName === 'tp-radio-group-item' ? 'tp-radio-group' : this.host.localName;
+    const definition = componentDefinitions.find((item) => item.tagName === definitionTag);
     if (!definition || !this.host.renderRoot) return;
     for (const [selector, part] of Object.entries(partBindings[this.host.localName] ?? {})) {
       if (selector === ':host') {
@@ -121,7 +172,11 @@ export class PresentationController implements ReactiveController {
     const axes = Object.fromEntries(
       (definition.axes ?? []).map((axis) => [
         axis.name,
-        (this.host as unknown as Record<string, unknown>)[axis.name],
+        (
+          (this.host.localName === 'tp-radio-group-item'
+            ? this.host.closest('tp-radio-group')
+            : null) as unknown as Record<string, unknown> | null
+        )?.[axis.name] ?? (this.host as unknown as Record<string, unknown>)[axis.name],
       ]),
     );
     const resolved = resolveComponentPresentation(definition, axes, dictionary);
@@ -144,10 +199,10 @@ export class PresentationController implements ReactiveController {
       )
       .join('\n');
     if (
-      this.host.renderRoot instanceof ShadowRoot &&
-      'adoptedStyleSheets' in this.host.renderRoot
+      isShadowRoot(this.host.renderRoot) &&
+      'adoptedStyleSheets' in this.host.renderRoot &&
+      (this.#sheet ??= createSheet(this.host.ownerDocument))
     ) {
-      this.#sheet ??= new CSSStyleSheet();
       if (this.#style.textContent !== css) {
         this.#sheet.replaceSync(css);
         this.#style.textContent = css;
@@ -169,7 +224,7 @@ export class PresentationController implements ReactiveController {
       for (const [part, elements] of this.#registered) {
         const partRoots = new Set([...elements].map((element) => element.getRootNode()));
         for (const root of partRoots) {
-          if (!(root instanceof Document || root instanceof ShadowRoot)) continue;
+          if (!(isDocument(root) || isShadowRoot(root))) continue;
           const rules = roots.get(root) ?? [];
           roots.set(root, rules);
           for (const rule of mergedParts[part] ?? []) {
@@ -195,7 +250,7 @@ export class PresentationController implements ReactiveController {
         if (!roots.has(root)) {
           style.remove();
           this.#registeredStyles.delete(root);
-          if (root instanceof ShadowRoot) {
+          if (isShadowRoot(root)) {
             const sheet = this.#registeredSheets.get(root);
             root.adoptedStyleSheets = root.adoptedStyleSheets.filter((entry) => entry !== sheet);
             this.#registeredSheets.delete(root);
@@ -204,23 +259,34 @@ export class PresentationController implements ReactiveController {
       for (const [root, rules] of roots) {
         let style = this.#registeredStyles.get(root);
         if (!style) {
-          style = this.host.ownerDocument.createElement('style');
+          style = (isDocument(root) ? root : root.ownerDocument).createElement('style');
           this.#registeredStyles.set(root, style);
         }
         const nativeCss = rules.join('\n');
-        if (root instanceof ShadowRoot && 'adoptedStyleSheets' in root) {
+        if (isShadowRoot(root) && 'adoptedStyleSheets' in root) {
           let sheet = this.#registeredSheets.get(root);
-          if (!sheet) {
-            sheet = new CSSStyleSheet();
-            this.#registeredSheets.set(root, sheet);
-            root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+          if (sheet && this.#sheetDocuments.get(sheet) !== root.ownerDocument) {
+            root.adoptedStyleSheets = root.adoptedStyleSheets.filter((entry) => entry !== sheet);
+            this.#registeredSheets.delete(root);
+            sheet = undefined;
           }
-          if (style.textContent !== nativeCss) sheet.replaceSync(nativeCss);
-          style.textContent = nativeCss;
-          continue;
+          if (!sheet) {
+            sheet = createSheet(root.ownerDocument);
+            if (sheet) {
+              this.#registeredSheets.set(root, sheet);
+              this.#sheetDocuments.set(sheet, root.ownerDocument);
+              sheet.replaceSync(nativeCss);
+              root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+            }
+          }
+          if (sheet) {
+            if (style.textContent !== nativeCss) sheet.replaceSync(nativeCss);
+            style.textContent = nativeCss;
+            continue;
+          }
         }
         if (style.textContent !== nativeCss) style.textContent = nativeCss;
-        const parent = root instanceof Document ? root.head : root;
+        const parent = isDocument(root) ? root.head : root;
         if (style.parentNode !== parent) parent.appendChild(style);
       }
     }

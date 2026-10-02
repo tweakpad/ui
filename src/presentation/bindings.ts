@@ -73,6 +73,12 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
     "input[type='range']": 'slider-thumb',
   },
   'tp-field': {
+    "[part='field-legend']": 'field-legend',
+    "[part='field-field-group']": 'field-field-group',
+    "[part='field-field']": 'field-field',
+    "[part='field-control-region']": 'field-control-region',
+    "[part='field-title']": 'field-title',
+    "[part='field-separator']": 'field-separator',
     "[part='field']": 'field',
     "[part='field-label']": 'field-label',
     "[part='field-description']": 'field-description',

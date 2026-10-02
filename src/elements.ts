@@ -69,6 +69,7 @@ import type { TpSwitch } from './components/switch.js';
 import type { TpTabs } from './components/tabs.js';
 import type { TpToggle } from './components/toggle.js';
 import type { TpToggleGroup } from './components/toggle-group.js';
+import type { TpRadioGroupItem } from './components/radio-group/index.js';
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -119,6 +120,7 @@ declare global {
     'tp-progress': TpProgress;
     'tp-questionnaire': TpQuestionnaire;
     'tp-radio-group': TpRadioGroup;
+    'tp-radio-group-item': TpRadioGroupItem;
     'tp-resizable-panel-group': TpResizablePanelGroup;
     'tp-scroll-area': TpScrollArea;
     'tp-select': TpSelect;

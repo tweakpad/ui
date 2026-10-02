@@ -54,13 +54,15 @@ import { defaultPresentationDictionary, setPresentationDictionary } from '@tweak
 
 setPresentationDictionary({
   ...defaultPresentationDictionary,
-  'button-variant-default': [{
-    declarations: {
-      background: 'var(--tp-primary)',
-      color: 'var(--tp-primary-foreground)',
-      'border-color': 'var(--tp-primary)',
+  'button-variant-default': [
+    {
+      declarations: {
+        background: 'var(--tp-primary)',
+        color: 'var(--tp-primary-foreground)',
+        'border-color': 'var(--tp-primary)',
+      },
     },
-  }],
+  ],
 });
 
 card.partPresentation = {
@@ -76,3 +78,21 @@ Dictionary replacement is document-scoped and does not remount controls or reset
 Compounds contribute through `setPartComposition` before consumer hooks. Native light-DOM parts can be registered with the presentation adapter, preserving their original elements and semantics. Hooks are keyed by stable part names, not generated variant keys.
 
 Migration is partial: consult [the repair ledger](./first-pass-conformance.md) before relying on dictionary-only customization for a control. In particular, the remaining component-local appearance and cross-shadow compound overrides have not yet been fully migrated.
+
+## Constituent rendering contracts
+
+Components that document `partContracts` support Foundation rendering contracts in addition to presentation hooks. Each key is a stable public part name. `classHook`, `styleHook` and `content` can resolve from the committed state; `elementReference` receives the host and `null` when it is replaced or disconnected. `hostProperties` merges neutral attributes, classes and styles while retaining behavior-owned semantics.
+
+```ts
+import { html } from 'lit';
+
+input.partContracts = {
+  input: {
+    renderDelegate: ({ bind }) => html`<input ${bind} />`,
+    hostProperties: { spellcheck: false },
+    classHook: (state) => (state.invalid ? 'invalid-editor' : 'editor'),
+  },
+};
+```
+
+Put `bind` on the delegate's compatible semantic host to retain handlers, state, accessibility and reference cleanup. Host properties use attribute names, `.property` for explicit property bindings and `@event` for handlers. Consumer handlers run first. Calling `event.preventComponentHandling()` suppresses the component action through a separate channel from native `preventDefault()`; controls retain required native-state reconciliation. Rendering customization does not transfer value or validation ownership. Consult each component's documentation for its supported hosts, parts and constituent scope.

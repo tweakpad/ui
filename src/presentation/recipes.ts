@@ -1,4 +1,7 @@
 import type { PresentationDictionary } from './resolver.js';
+import { toastAppearance } from './recipes/toast.js';
+import { textControlAppearance, fieldAppearance } from './recipes/text-controls.js';
+import { selectionControlAppearance } from './recipes/selection-controls.js';
 
 // Existing appearance values moved without changing layout, behavior, or token choices.
 export const componentAppearance: PresentationDictionary = {
@@ -1081,4 +1084,8 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
   ],
+  ...toastAppearance,
+  ...textControlAppearance,
+  ...fieldAppearance,
+  ...selectionControlAppearance,
 };

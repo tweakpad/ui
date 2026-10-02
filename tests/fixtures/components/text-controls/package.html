@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Text controls verification</title>
+    <link rel="stylesheet" href="/dist/styles.css" />
+    <style>
+      body {
+        margin: 24px;
+        font-family: var(--tp-font-sans);
+        color: var(--tp-foreground);
+        background: var(--tp-background);
+      }
+      main {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+        gap: 24px;
+      }
+      section {
+        min-width: 0;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+      tp-input,
+      tp-text-area {
+        inline-size: 100%;
+      }
+      tp-field {
+        margin-block: 12px;
+      }
+      #narrow {
+        max-width: 240px;
+      }
+      .motions::part(field-error) {
+        transition: opacity calc(100ms * var(--tp-motion-scale));
+      }
+      .motions::part(field-error):is([data-starting-style], [data-ending-style]) {
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header><h1>Input, Text Area and Field</h1></header>
+    <main>
+      <section>
+        <h2>Native form</h2>
+        <form id="native-form">
+          <tp-field id="email-field" label="Email" description="Used for receipts"
+            ><tp-input
+              id="email"
+              name="email"
+              type="email"
+              default-value="hello@example.com"
+              required
+            ></tp-input
+          ></tp-field>
+          <tp-field id="message-field" label="Message"
+            ><tp-text-area
+              id="message"
+              name="message"
+              default-value="First line&#10;Second line"
+            ></tp-text-area
+          ></tp-field>
+          <tp-button id="submit" type="submit" name="action" value="save">Save</tp-button
+          ><tp-button id="reset" type="reset" variant="outline">Reset</tp-button>
+        </form>
+      </section>
+      <section>
+        <h2>Independent parts</h2>
+        <tp-field id="rich" orientation="horizontal"
+          ><span slot="label">Rich <tp-badge variant="secondary">label</tp-badge></span>
+          <div><tp-input id="rich-input" name="rich" default-value="content"></tp-input></div>
+          <span slot="description">Rich <tp-icon id="description-icon"></tp-icon>description</span
+          ><span slot="error">Custom error</span></tp-field
+        >
+        <tp-field id="errors" label="Multiple errors" error="Repeated"
+          ><tp-input id="errors-input" name="errors"></tp-input
+        ></tp-field>
+        <tp-field id="optional" legend="Section title" title="Grouped name"
+          ><tp-input id="optional-input" label="Optional control"></tp-input
+          ><span slot="separator">More settings</span></tp-field
+        >
+        <tp-field id="no-label-forward" label="No forwarding"
+          ><tp-input
+            id="no-forward-input"
+            label="Explicit label"
+            readOnly
+            default-value="Copy this"
+          ></tp-input
+        ></tp-field>
+      </section>
+      <section>
+        <h2>Controlled, disabled and read-only</h2>
+        <div id="controlled-owner"></div>
+        <tp-field id="disabled-field" label="Disabled Field" disabled
+          ><tp-input id="disabled-input" default-value="disabled"></tp-input
+        ></tp-field>
+        <tp-field id="authored-disabled" label="Authored disabled"
+          ><tp-input id="authored-disabled-input" disabled default-value="preserved"></tp-input
+        ></tp-field>
+        <tp-input
+          id="readonly"
+          label="Read-only"
+          readonly
+          default-value="Selectable read-only"
+        ></tp-input>
+        <fieldset id="native-disabled" disabled>
+          <legend>Disabled native group</legend>
+          <tp-input
+            id="fieldset-input"
+            label="Fieldset input"
+            name="fieldset"
+            default-value="omit"
+          ></tp-input>
+        </fieldset>
+      </section>
+      <section id="narrow" dir="rtl">
+        <h2>RTL and constrained layout</h2>
+        <tp-field
+          id="narrow-field"
+          orientation="responsive"
+          label="A long label that should wrap safely"
+          description="https://example.com/a/long/path/that/should/wrap/without/losing/relationships"
+          ><tp-text-area
+            id="narrow-area"
+            name="narrow"
+            rows="4"
+            default-value="A multiline note that can grow in this constrained field."
+          ></tp-text-area
+        ></tp-field>
+      </section>
+      <section>
+        <h2>Native type affordances</h2>
+        <tp-input
+          id="number"
+          type="number"
+          label="Quantity"
+          name="quantity"
+          min="1"
+          max="10"
+          step="2"
+          default-value="3"
+        ></tp-input
+        ><tp-input id="file" type="file" label="Attachment" name="attachment"></tp-input
+        ><tp-input id="search" type="search" label="Search" default-value="Search text"></tp-input>
+      </section>
+      <section>
+        <h2>Validation</h2>
+        <form id="validation-form">
+          <tp-field id="validation" label="Project name" class="motions"
+            ><tp-input id="validation-input" name="project" required></tp-input></tp-field
+          ><tp-field id="duplicate" label="Another project"
+            ><tp-input name="project" default-value="second"></tp-input></tp-field
+          ><tp-button type="submit">Validate</tp-button>
+        </form>
+        <div id="dynamic"></div>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>
