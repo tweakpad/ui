@@ -24,3 +24,7 @@ export * from './text-area/index.js';
 export * from './radio-group/index.js';
 export * from './checkbox/index.js';
 export * from './toggle-group/index.js';
+export * from './progress/index.js';
+export * from './select/index.js';
+export * from './native-select/index.js';
+export * from './slider/index.js';

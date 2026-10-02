@@ -113,7 +113,9 @@ export class TpElement extends LitElement {
   get direction(): Direction {
     const own = this.getAttribute('dir');
     if (own === 'rtl' || own === 'ltr') return own;
-    return getComputedStyle(this).direction === 'rtl' ? 'rtl' : 'ltr';
+    return this.ownerDocument.defaultView?.getComputedStyle(this).direction === 'rtl'
+      ? 'rtl'
+      : 'ltr';
   }
 
   override disconnectedCallback(): void {

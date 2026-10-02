@@ -1,5 +1,9 @@
 import type { PresentationDictionary } from './resolver.js';
 import { toastAppearance } from './recipes/toast.js';
+import { progressAppearance } from './recipes/progress.js';
+import { nativeSelectAppearance } from './recipes/native-select.js';
+import { sliderAppearance } from './recipes/slider.js';
+import { selectAppearance } from './recipes/select.js';
 import { textControlAppearance, fieldAppearance } from './recipes/text-controls.js';
 import { selectionControlAppearance } from './recipes/selection-controls.js';
 
@@ -486,113 +490,6 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
   ],
-  'native-select-control': [
-    {
-      selector: '&',
-      declarations: {
-        'padding-inline-end': 'var(--tp-space-8)',
-      },
-    },
-    {
-      selector: ":host([size='sm']) &",
-      declarations: {
-        'padding-block': 'var(--tp-space-1)',
-        'font-size': 'var(--tp-text-sm)',
-      },
-    },
-  ],
-  slider: [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-2)',
-      },
-    },
-  ],
-  'slider-track': [
-    {
-      selector: '&',
-      declarations: {
-        'border-radius': 'var(--tp-radius-full)',
-      },
-    },
-    {
-      selector: '&',
-      declarations: {
-        background: 'var(--tp-card)',
-      },
-    },
-  ],
-  'slider-range': [
-    {
-      selector: '&',
-      declarations: {
-        'border-radius': 'var(--tp-radius-full)',
-      },
-    },
-    {
-      selector: '&',
-      declarations: {
-        background: 'var(--tp-accent)',
-      },
-    },
-  ],
-  'slider-thumb': [
-    {
-      selector: '&',
-      declarations: {
-        padding: '0',
-        color: 'inherit',
-        background: 'transparent',
-      },
-    },
-    {
-      selector: '&::-webkit-slider-runnable-track',
-      declarations: {
-        background: 'transparent',
-      },
-    },
-    {
-      selector: '&::-moz-range-track',
-      declarations: {
-        background: 'transparent',
-      },
-    },
-    {
-      selector: '&::-webkit-slider-thumb',
-      declarations: {
-        border: 'var(--tp-border-width-strong) var(--tp-border-style) var(--tp-accent)',
-        'border-radius': 'var(--tp-radius-full)',
-        background: 'var(--tp-background)',
-      },
-    },
-    {
-      selector: '&::-moz-range-thumb',
-      declarations: {
-        border: 'var(--tp-border-width-strong) var(--tp-border-style) var(--tp-accent)',
-        'border-radius': 'var(--tp-radius-full)',
-        background: 'var(--tp-background)',
-      },
-    },
-    {
-      selector: '&:focus-visible',
-      declarations: {
-        outline: 'none',
-      },
-    },
-    {
-      selector: '&:focus-visible::-webkit-slider-thumb',
-      declarations: {
-        'box-shadow': '0 0 0 var(--tp-ring-width) var(--tp-ring)',
-      },
-    },
-    {
-      selector: '&:focus-visible::-moz-range-thumb',
-      declarations: {
-        'box-shadow': '0 0 0 var(--tp-ring-width) var(--tp-ring)',
-      },
-    },
-  ],
   field: [
     {
       selector: '&',
@@ -820,23 +717,6 @@ export const componentAppearance: PresentationDictionary = {
       selector: '&',
       declarations: {
         gap: 'var(--tp-space-2)',
-      },
-    },
-  ],
-  'progress-track': [
-    {
-      selector: '&',
-      declarations: {
-        'border-radius': 'var(--tp-radius-full)',
-        background: 'var(--tp-card)',
-      },
-    },
-  ],
-  'progress-indicator': [
-    {
-      selector: '&',
-      declarations: {
-        background: 'var(--tp-accent)',
       },
     },
   ],
@@ -1088,4 +968,8 @@ export const componentAppearance: PresentationDictionary = {
   ...textControlAppearance,
   ...fieldAppearance,
   ...selectionControlAppearance,
+  ...progressAppearance,
+  ...nativeSelectAppearance,
+  ...sliderAppearance,
+  ...selectAppearance,
 };

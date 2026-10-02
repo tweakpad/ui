@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Native Select verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 24px;
+        color: var(--tp-foreground);
+        background: var(--tp-background);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+      }
+      section {
+        min-width: 0;
+      }
+      tp-native-select {
+        margin-block: 8px;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <header><h1>Native Select verification</h1></header>
+    <main>
+      <section>
+        <h2>Grouped picker</h2>
+        <form id="form">
+          <tp-field
+            id="field"
+            label="Favorite food"
+            description="Pick from the browser's grouped options."
+            ><span slot="label">Favorite food</span
+            ><tp-native-select id="main" name="food" default-value="apple"
+              ><optgroup label="Fruit">
+                <option value="apple">Apple</option>
+                <option value="banana">Banana</option>
+                <option value="orange" disabled>Orange</option>
+              </optgroup>
+              <optgroup label="Vegetables">
+                <option value="carrot">Carrot</option>
+                <option value="spinach">Spinach</option>
+              </optgroup></tp-native-select
+            ></tp-field
+          ><tp-button id="submit" type="submit">Submit selection</tp-button
+          ><tp-button id="reset" type="reset">Reset selection</tp-button>
+        </form>
+      </section>
+      <section>
+        <h2>Small and independent arrow</h2>
+        <tp-native-select id="small" size="sm" label="Small picker"
+          ><option value="one">One</option>
+          <option value="two">Two</option></tp-native-select
+        ><tp-native-select id="no-indicator" label="Native arrow picker"
+          ><option>Native arrow</option>
+          <option>Another choice</option></tp-native-select
+        ><tp-native-select id="rich-indicator" label="Consumer icon picker"
+          ><option>Custom indicator</option>
+          <option>Another choice</option>
+          <tp-icon slot="indicator" id="custom-icon"></tp-icon
+        ></tp-native-select>
+      </section>
+      <section>
+        <h2>Multiple selection</h2>
+        <form id="multiple-form">
+          <tp-native-select id="multiple" multiple name="foods" label="Multiple foods"
+            ><optgroup label="Fruit">
+              <option value="apple" selected>Apple</option>
+              <option value="banana">Banana</option>
+            </optgroup>
+            <optgroup label="Vegetables">
+              <option value="carrot" selected>Carrot</option>
+              <option value="spinach">Spinach</option>
+            </optgroup></tp-native-select
+          >
+        </form>
+      </section>
+      <section>
+        <h2>Native states</h2>
+        <tp-field label="Disabled picker" disabled
+          ><tp-native-select id="disabled"><option>Disabled</option></tp-native-select></tp-field
+        ><tp-field label="Read only picker"
+          ><tp-native-select id="readonly" readonly default-value="fixed"
+            ><option value="fixed">Fixed choice</option>
+            <option value="other">Other choice</option></tp-native-select
+          ></tp-field
+        ><tp-field label="Required choice"
+          ><tp-native-select id="required" required placeholder="Choose a food"
+            ><option value="apple">Apple</option>
+            <option value="banana">Banana</option></tp-native-select
+          ></tp-field
+        >
+      </section>
+      <section>
+        <h2>Controlled picker</h2>
+        <div id="controlled-owner"></div>
+      </section>
+      <section>
+        <h2>Shared form owners</h2>
+        <form id="text-form">
+          <tp-field label="Name"
+            ><tp-input id="input" name="name" default-value="Ada"></tp-input></tp-field
+          ><tp-field label="Notes"
+            ><tp-text-area id="area" name="notes" default-value="Two lines"></tp-text-area
+          ></tp-field>
+        </form>
+      </section>
+    </main>
+    <div id="dynamic"></div>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

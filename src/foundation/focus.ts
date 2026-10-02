@@ -1,8 +1,8 @@
 /** The rendered parent, including slot assignment and open shadow boundaries. */
 export function composedParent(node: Node): Node | null {
-  if (node instanceof Element && node.assignedSlot) return node.assignedSlot;
+  if (node.nodeType === 1 && (node as Element).assignedSlot) return (node as Element).assignedSlot;
   const parent = node.parentNode;
-  return parent instanceof ShadowRoot ? parent.host : parent;
+  return parent?.nodeType === 11 && 'host' in parent ? (parent as ShadowRoot).host : parent;
 }
 
 export function composedContains(root: Node, node: Node | null): boolean {
@@ -19,12 +19,15 @@ export function deepActiveElement(document: Document): Element | null {
 
 export function isAvailable(element: Element): element is HTMLElement {
   const view = element.ownerDocument.defaultView;
-  if (!view || !(element instanceof HTMLElement) || !element.isConnected) return false;
+  if (!view || element.namespaceURI !== 'http://www.w3.org/1999/xhtml' || !element.isConnected)
+    return false;
   for (let node: Node | null = element; node; node = composedParent(node)) {
-    if (!(node instanceof HTMLElement)) continue;
-    if (node.hidden || node.inert || node.matches('[disabled], [aria-disabled="true"]'))
+    if (node.nodeType !== 1) continue;
+    const current = node as HTMLElement;
+    if (current.hidden || current.inert || current.matches('[disabled], [aria-disabled="true"]'))
       return false;
-    const style = view.getComputedStyle(node);
+    const style = current.ownerDocument.defaultView?.getComputedStyle(current);
+    if (!style) return false;
     if (
       style.display === 'none' ||
       style.visibility === 'hidden' ||
@@ -46,15 +49,19 @@ export function focusableElements(root: ParentNode): HTMLElement[] {
   const visit = (node: Node): void => {
     if (visited.has(node)) return;
     visited.add(node);
-    if (node instanceof Element && isFocusable(node)) result.push(node);
-    const children =
-      node instanceof HTMLSlotElement
-        ? node.assignedNodes({ flatten: true }).length
-          ? node.assignedNodes({ flatten: true })
-          : [...node.childNodes]
-        : node instanceof Element && node.shadowRoot
-          ? [...node.shadowRoot.childNodes]
-          : [...node.childNodes];
+    const element = node.nodeType === 1 ? (node as Element) : null;
+    if (element && isFocusable(element)) result.push(element);
+    const slot =
+      element?.localName === 'slot' && 'assignedNodes' in element
+        ? (element as HTMLSlotElement)
+        : null;
+    const children = slot
+      ? slot.assignedNodes({ flatten: true }).length
+        ? slot.assignedNodes({ flatten: true })
+        : [...slot.childNodes]
+      : element?.shadowRoot
+        ? [...element.shadowRoot.childNodes]
+        : [...node.childNodes];
     children.forEach(visit);
   };
   [...root.childNodes].forEach(visit);

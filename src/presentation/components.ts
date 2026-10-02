@@ -964,7 +964,7 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'native-select-option-group-size-default',
         ],
         cardinality:
-          'zero or one descendant of Wrapper; cited behavior sets any required-presence condition',
+          'zero or more descendants of Wrapper; cited behavior sets any required-presence condition',
       },
       {
         name: 'native-select-option',

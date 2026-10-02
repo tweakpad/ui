@@ -70,6 +70,7 @@ import type { TpTabs } from './components/tabs.js';
 import type { TpToggle } from './components/toggle.js';
 import type { TpToggleGroup } from './components/toggle-group.js';
 import type { TpRadioGroupItem } from './components/radio-group/index.js';
+import type { TpSliderThumb } from './components/slider/index.js';
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -128,6 +129,7 @@ declare global {
     'tp-side-panel': TpSidePanel;
     'tp-skeleton': TpSkeleton;
     'tp-slider': TpSlider;
+    'tp-slider-thumb': TpSliderThumb;
     'tp-spinner': TpSpinner;
     'tp-switch': TpSwitch;
     'tp-table': TpTable;

@@ -71,6 +71,7 @@ import { TpTabs } from './components/tabs.js';
 import { TpToggle } from './components/toggle.js';
 import { TpToggleGroup } from './components/toggle-group.js';
 import { TpRadioGroupItem } from './components/radio-group/index.js';
+import { TpSliderThumb } from './components/slider/index.js';
 
 defineElement(TpAccordion.tagName, TpAccordion);
 defineElement(TpAccordionItem.tagName, TpAccordionItem);
@@ -96,6 +97,7 @@ defineElement(TpQuestionnaire.tagName, TpQuestionnaire);
 defineElement(TpRadioGroup.tagName, TpRadioGroup);
 defineElement(TpRadioGroupItem.tagName, TpRadioGroupItem);
 defineElement(TpSlider.tagName, TpSlider);
+defineElement(TpSliderThumb.tagName, TpSliderThumb);
 defineElement(TpTextArea.tagName, TpTextArea);
 defineElement(TpAlertDialog.tagName, TpAlertDialog);
 defineElement(TpDialog.tagName, TpDialog);

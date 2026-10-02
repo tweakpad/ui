@@ -134,6 +134,37 @@ describe('ControllableState', () => {
     expect(c.state.controlled).toBe(true);
   });
 
+  it('preserves source and thumb metadata for queued proposals and canceled commits', () => {
+    const t = setup(0);
+    const source = new Event('pointermove');
+    const proposals: Array<{ value: number; previous: number; index: unknown; source: Event }> = [];
+    t.host.addEventListener('tp-value-change', (event) => {
+      const detail = (
+        event as CustomEvent<{
+          value: number;
+          previousValue: number;
+          metadata: Record<string, unknown>;
+          sourceEvent: Event;
+        }>
+      ).detail;
+      proposals.push({
+        value: detail.value,
+        previous: detail.previousValue,
+        index: detail.metadata.activeThumbIndex,
+        source: detail.sourceEvent,
+      });
+      if (detail.value === 1) t.state.set(2, 'drag', source, { metadata: { activeThumbIndex: 1 } });
+      if (detail.value === 2) event.preventDefault();
+    });
+    t.state.set(1, 'drag', source, { metadata: { activeThumbIndex: 0 } });
+    expect(proposals).toEqual([
+      { value: 1, previous: 0, index: 0, source },
+      { value: 2, previous: 1, index: 1, source },
+    ]);
+    expect(t.state.value).toBe(1);
+    expect(t.onCommit.mock.calls).toEqual([[1, 0, 'drag']]);
+  });
+
   it('resets only uncontrolled values with form-reset and latest default', () => {
     const t = setup('empty', undefined, 'first');
     t.state.hostUpdate();

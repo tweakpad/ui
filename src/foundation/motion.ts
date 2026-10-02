@@ -1,3 +1,5 @@
+import { composedParent } from './focus.js';
+
 export type MotionKind = 'presence' | 'state' | 'ambient';
 
 export type MotionPhase = 'enter' | 'exit' | 'change' | 'start' | 'stop';
@@ -119,7 +121,6 @@ export function prepareMotion(
   options: MotionRequestOptions,
 ): MotionHandle {
   const active = ACTIVE_MOTION.get(owner) ?? new Map<string, MotionHandle>();
-  ACTIVE_MOTION.set(owner, active);
   active.get(role.name)?.cancel();
 
   if (!target) {
@@ -139,7 +140,9 @@ export function prepareMotion(
     return settledHandle();
   }
 
-  const controller = new AbortController();
+  const ownerWindow = owner.ownerDocument.defaultView;
+  if (!ownerWindow) return settledHandle();
+  const controller = new ownerWindow.AbortController();
   const request: MotionRequest = Object.freeze({
     role: role.name,
     kind: role.kind,
@@ -188,10 +191,13 @@ export function prepareMotion(
       }
       setDriven(target, role.name, true);
       const targetRoot = target.getRootNode();
-      targetObserver = new MutationObserver(() => {
-        if (!target.isConnected || target.getRootNode() !== targetRoot) handle.cancel();
-      });
-      targetObserver.observe(targetRoot, { childList: true, subtree: true });
+      const Observer = target.ownerDocument.defaultView?.MutationObserver;
+      targetObserver = Observer
+        ? new Observer(() => {
+            if (!target.isConnected || target.getRootNode() !== targetRoot) handle.cancel();
+          })
+        : null;
+      targetObserver?.observe(targetRoot, { childList: true, subtree: true });
       if (request.reducedMotion) {
         queueMicrotask(finish);
         return null;
@@ -204,7 +210,7 @@ export function prepareMotion(
         timeout =
           role.kind === 'ambient' && options.phase === 'start'
             ? undefined
-            : window.setTimeout(() => {
+            : ownerWindow.setTimeout(() => {
                 reportMotionDiagnostic(
                   owner,
                   'motion-playback-timeout',
@@ -269,7 +275,7 @@ export function prepareMotion(
     targetObserver?.disconnect();
     targetObserver = null;
     if (timeout !== undefined) {
-      window.clearTimeout(timeout);
+      ownerWindow.clearTimeout(timeout);
       timeout = undefined;
     }
     setDriven(target, role.name, false);
@@ -278,21 +284,25 @@ export function prepareMotion(
     resolveFinished();
   };
 
+  // Canceling the previous last role removes the owner entry. Register the
+  // replacement after cancellation so every later reversal can still find it.
+  ACTIVE_MOTION.set(owner, active);
   active.set(role.name, handle);
   if (!driver) queueMicrotask(finish);
   return handle;
 }
 
 export function resolvesReducedMotion(element: Element): boolean {
-  let current: Element | null = element;
-  while (current) {
-    const value = current.getAttribute('motion-policy');
+  for (let current: Node | null = element; current; current = composedParent(current)) {
+    if (current.nodeType !== 1) continue;
+    const value = (current as Element).getAttribute('motion-policy');
     if (value === 'reduce') return true;
     if (value === 'normal') return false;
-    const root = current.getRootNode();
-    current = current.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
   }
-  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return (
+    element.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches ??
+    false
+  );
 }
 
 export function reportMotionDiagnostic(owner: HTMLElement, code: string, message: string): void {

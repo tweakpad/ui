@@ -39,8 +39,10 @@ export class SurfaceState {
   #initialized = false;
   #controlled = false;
   #open = false;
+  #lastRead: boolean | undefined;
   #pending: { open: boolean; retain: boolean; accept?: () => void } | undefined;
   #publishing = false;
+  #committing = false;
   #queue: Array<() => void> = [];
   retained = false;
   constructor(private options: SurfaceStateOptions) {}
@@ -53,10 +55,12 @@ export class SurfaceState {
   initialize(): void {
     if (this.#initialized) return;
     this.#initialized = true;
-    this.#controlled = this.options.read() !== undefined;
-    this.#open = this.options.read() ?? this.options.defaultOpen();
+    this.#lastRead = this.options.read();
+    this.#controlled = this.#lastRead !== undefined;
+    this.#open = this.#lastRead ?? this.options.defaultOpen();
   }
-  sync(): void {
+  /** Explicit setters may republish a value consumed by a previously vetoed proposal. */
+  sync(explicit = false): void {
     this.initialize();
     const input = this.options.read();
     if ((input !== undefined) !== this.#controlled) {
@@ -65,13 +69,33 @@ export class SurfaceState {
       );
       return;
     }
-    if (!this.#controlled || input === this.#open) return;
+    if (!this.#controlled || (!explicit && input === this.#lastRead)) return;
+    this.#lastRead = input;
+    if (this.#publishing) {
+      if (this.#committing) this.#queue.push(() => this.sync(true));
+      return;
+    }
+    if (input === this.#open) return;
+    this.#publishing = true;
+    try {
+      this.#commit(input!);
+    } finally {
+      this.#publishing = false;
+      this.#drain();
+    }
+  }
+  #commit(input: boolean): void {
     const pending = this.#pending?.open === input ? this.#pending : undefined;
     this.#pending = undefined;
     this.retained = !input && (pending?.retain ?? false);
-    this.#open = input!;
-    pending?.accept?.();
-    this.options.commit(this.#open);
+    this.#open = input;
+    this.#committing = true;
+    try {
+      pending?.accept?.();
+      this.options.commit(this.#open);
+    } finally {
+      this.#committing = false;
+    }
   }
   request(
     open: boolean,
@@ -88,6 +112,7 @@ export class SurfaceState {
       );
       return;
     }
+    this.sync();
     if (open === this.#open && !associationChanged) {
       if (open) accept?.();
       return;
@@ -97,19 +122,21 @@ export class SurfaceState {
     try {
       const event = new TpSurfaceOpenChangeEvent(open, this.#open, reason, sourceEvent, trigger);
       this.options.dispatch(event);
+      // Consume owner writes even when a later listener vetoes. Automatic render sync
+      // must not replay them; a later explicit property publication is still allowed.
+      const ownerValue = this.options.read();
+      if (this.#controlled) this.#lastRead = ownerValue;
       if (event.defaultPrevented || event.detail.cancelled) return;
       this.#pending = { open, retain: event.retainOnClose, ...(accept ? { accept } : {}) };
-      if (this.#controlled && open !== this.#open) this.sync();
-      else {
-        this.retained = !open && event.retainOnClose;
-        this.#open = open;
-        this.#pending = undefined;
-        accept?.();
-        this.options.commit(open);
-      }
+      if (!this.#controlled) this.#commit(open);
+      else if (ownerValue !== undefined && ownerValue !== this.#open) this.#commit(ownerValue);
+      else if (open === this.#open) this.#commit(open);
     } finally {
       this.#publishing = false;
-      this.#queue.splice(0).forEach((request) => request());
+      this.#drain();
     }
+  }
+  #drain(): void {
+    while (!this.#publishing && this.#queue.length) this.#queue.shift()!();
   }
 }

@@ -1,13 +1,27 @@
 import { describe, expect, it } from 'vitest';
 import {
+  bindPart,
   componentHandlingPrevented,
   mergePartProperties,
   preventComponentHandling,
   renderPart,
 } from './part.js';
 import { nothing } from 'lit';
+import { getDirectiveClass } from 'lit/directive-helpers.js';
+import { PartType, type ElementPart } from 'lit/directive.js';
 
 describe('ComponentPartContract behavior bundle', () => {
+  it('binds a native host without an optional reference list and reconciles later writes', () => {
+    const result = bindPart({ '.value': 'first' });
+    const Directive = getDirectiveClass(result)!;
+    const instance = new Directive({ type: PartType.ELEMENT });
+    const element = { value: '' };
+    const part = { element } as unknown as ElementPart;
+    expect(instance.update(part, [{ '.value': 'first' }])).toBe(nothing);
+    expect(element.value).toBe('first');
+    expect(instance.update(part, [{ '.value': 'second' }])).toBe(nothing);
+    expect(element.value).toBe('second');
+  });
   it('protects owned semantics across attribute, property and boolean aliases', () => {
     const internal = {
       role: 'button',

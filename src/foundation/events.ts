@@ -16,10 +16,9 @@ function changeDetail<T>(
   options: TpChangeEventOptions = {},
 ): ValueChangeDetail<T> {
   const origin = sourceEvent ?? new Event('tp-programmatic-source');
+  // Source targets can belong to another owner window after adoption.
   const eventTrigger =
-    typeof Element === 'undefined' || !(origin.target instanceof Element)
-      ? undefined
-      : origin.target;
+    (origin.target as Node | null)?.nodeType === 1 ? (origin.target as Element) : undefined;
   const trigger = options.trigger ?? eventTrigger;
   return {
     value,

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Select verification</title>
+    <style>
+      body {
+        margin: 24px;
+        color: var(--tp-foreground);
+        background: var(--tp-background);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+      }
+      section {
+        min-width: 0;
+      }
+      tp-select {
+        min-inline-size: min(100%, 180px);
+        max-inline-size: 100%;
+      }
+      tp-field {
+        max-inline-size: 320px;
+      }
+      .actions {
+        display: flex;
+        gap: 12px;
+        margin-block: 16px;
+      }
+      #portal-target {
+        position: relative;
+      }
+      #test-host {
+        margin-block: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Select verification</h1>
+    <main>
+      <section>
+        <h2>Single + Field</h2>
+        <form id="single-form">
+          <tp-field label="Fruit" description="Choose a fruit"
+            ><tp-select id="single" name="fruit" required placeholder="Choose a fruit"></tp-select
+          ></tp-field>
+          <div class="actions">
+            <tp-button type="reset" variant="outline">Reset fruit</tp-button
+            ><tp-button id="after-single" variant="outline">After fruit</tp-button>
+          </div>
+        </form>
+      </section>
+      <section>
+        <h2>Rich groups</h2>
+        <tp-select id="rich" label="Chart type" placeholder="Choose a chart"></tp-select>
+      </section>
+      <section>
+        <h2>Multiple</h2>
+        <form id="multi-form">
+          <tp-field label="Formatting"
+            ><tp-select
+              id="multiple"
+              name="format"
+              multiple
+              placeholder="Choose formatting"
+            ></tp-select
+          ></tp-field>
+        </form>
+      </section>
+      <section>
+        <h2>Long list and scroll controls</h2>
+        <tp-select id="long" label="Country" placeholder="Choose country"></tp-select>
+      </section>
+      <section>
+        <h2>Independent geometry</h2>
+        <tp-select id="offset" label="Offset option" placeholder="Offset popup"></tp-select>
+      </section>
+      <section>
+        <h2>Native options</h2>
+        <tp-select id="native" label="Native source" value="express"
+          ><optgroup label="Delivery">
+            <option value="standard">Standard</option>
+            <option value="express">Express</option>
+            <option disabled value="priority">Priority</option>
+          </optgroup></tp-select
+        >
+      </section>
+      <section>
+        <h2>Explicit portal</h2>
+        <tp-select id="portal" label="Portaled option" placeholder="Portal"></tp-select>
+        <div id="portal-target"></div>
+      </section>
+      <section>
+        <h2>Existing shared owners</h2>
+        <tp-combobox id="combo" label="Search fruit"
+          ><option value="apple">Apple</option>
+          <option value="banana">Banana</option>
+          <option value="cherry">Cherry</option></tp-combobox
+        >
+      </section>
+    </main>
+    <div id="test-host"></div>
+    <div id="dialog-host"></div>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

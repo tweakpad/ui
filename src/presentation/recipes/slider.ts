@@ -1,0 +1,61 @@
+import type { PresentationDictionary } from '../resolver.js';
+
+// shadcn Base slider.tsx → style-nova.css .cn-slider*; geometry belongs to the family.
+export const sliderAppearance: PresentationDictionary = {
+  slider: [{ declarations: { gap: 'var(--tp-space-2)' } }],
+  'slider-track': [
+    {
+      declarations: {
+        'border-radius': 'var(--tp-radius-full)',
+        background: 'var(--tp-muted)',
+        height: 'var(--tp-spacing)',
+        width: '100%',
+      },
+    },
+    {
+      selector: '&[data-orientation="vertical"]',
+      declarations: { width: 'var(--tp-spacing)', height: '100%' },
+    },
+  ],
+  'slider-range': [
+    { declarations: { 'border-radius': 'var(--tp-radius-full)', background: 'var(--tp-primary)' } },
+  ],
+  'slider-thumb': [
+    {
+      declarations: {
+        width: 'calc(var(--tp-spacing) * 3)',
+        height: 'calc(var(--tp-spacing) * 3)',
+        border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-ring)',
+        'border-radius': 'var(--tp-radius-full)',
+        background: 'var(--tp-background)',
+        transition:
+          'box-shadow calc(var(--tp-duration-fast) * var(--tp-motion-scale, 1)) var(--tp-easing-standard), border-color calc(var(--tp-duration-fast) * var(--tp-motion-scale, 1)) var(--tp-easing-standard)',
+      },
+    },
+    {
+      selector:
+        '&:hover:not([data-disabled]), &:has(input:focus-visible), &[data-active]:not([data-disabled])',
+      declarations: {
+        'box-shadow':
+          '0 0 0 calc(var(--tp-spacing) * .75) color-mix(in oklab, var(--tp-ring) 50%, transparent)',
+      },
+    },
+    {
+      selector: '&[data-disabled]',
+      declarations: { opacity: 'var(--tp-opacity-disabled)', cursor: 'not-allowed' },
+    },
+    { selector: '&[data-invalid]', declarations: { 'border-color': 'var(--tp-destructive)' } },
+  ],
+  'slider-label': [
+    { declarations: { 'font-size': 'var(--tp-text-sm)', 'font-weight': 'var(--tp-font-medium)' } },
+  ],
+  'slider-output': [
+    {
+      declarations: {
+        'font-size': 'var(--tp-text-sm)',
+        color: 'var(--tp-muted-foreground)',
+        'font-variant-numeric': 'tabular-nums',
+      },
+    },
+  ],
+};

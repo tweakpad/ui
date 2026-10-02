@@ -1,4 +1,5 @@
 import type { Direction } from './types.js';
+import { composedParent } from './focus.js';
 
 export class CleanupScope {
   readonly #cleanups = new Set<() => void>();
@@ -109,4 +110,14 @@ export class LocaleService {
   compare(a: string, b: string, options?: Intl.CollatorOptions): number {
     return new Intl.Collator(this.locale, options).compare(a, b);
   }
+}
+
+/** The closest rendered language owner, including slots and shadow hosts. */
+export function resolveLocale(element: Element): string | undefined {
+  for (let node: Node | null = element; node; node = composedParent(node)) {
+    if (node.nodeType !== 1) continue;
+    const language = (node as Element).getAttribute('lang');
+    if (language !== null && language.trim()) return language;
+  }
+  return element.ownerDocument.documentElement.lang || undefined;
 }

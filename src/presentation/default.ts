@@ -264,9 +264,7 @@ const sharedPresentation: Record<string, readonly PresentationRule[]> = {};
 for (const part of [
   'input',
   'text-area',
-  'native-select-control',
   'combobox-anchor',
-  'select-trigger',
   'command-palette-input-wrapper',
   'carousel-previous',
   'carousel-next',

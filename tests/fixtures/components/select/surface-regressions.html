@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Select shared surface regressions</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        padding: 40px;
+        display: grid;
+        gap: 24px;
+      }
+      .row {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Select shared surface regressions</h1>
+      <p>
+        Controlled callback publication, event cancellation, later owner publication, and focus
+        restoration.
+      </p>
+      <tp-button id="outside" variant="outline">Outside action</tp-button>
+      <div id="cases" class="row"></div>
+    </main>
+    <script type="module">
+      const built = new URL(location.href).searchParams.has('package');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      await import(built ? '/dist/register.js' : '/src/register.ts');
+      const kinds = ['dialog', 'alert-dialog', 'popover', 'tooltip'];
+      const cases = new Map();
+      for (const kind of kinds) {
+        const host = document.createElement(`tp-${kind}`);
+        host.id = kind;
+        host.label = `${kind} regression`;
+        host.open = false;
+        host.openDelay = 0;
+        host.closeDelay = 0;
+        const trigger = document.createElement('tp-button');
+        trigger.slot = 'trigger';
+        trigger.variant = 'outline';
+        trigger.textContent = `Open ${kind}`;
+        host.append(trigger);
+        if (kind === 'tooltip') host.append('Controlled tooltip content');
+        else {
+          const action = document.createElement('tp-button');
+          action.variant = 'outline';
+          action.textContent = `${kind} content action`;
+          host.append(action);
+        }
+        const record = {
+          host,
+          trigger,
+          veto: true,
+          proposals: [],
+          completions: [],
+          callbackReads: [],
+        };
+        host.onOpenChange = (event) => {
+          record.callbackReads.push({
+            stage: 'before',
+            open: host.open,
+            proposed: event.detail.value,
+          });
+          host.open = event.detail.value;
+          record.callbackReads.push({
+            stage: 'after',
+            open: host.open,
+            proposed: event.detail.value,
+          });
+        };
+        host.addEventListener('tp-open-change', (event) => {
+          record.proposals.push({
+            value: event.detail.value,
+            previous: event.detail.previousValue,
+            reason: event.detail.reason,
+            sourceType: event.detail.sourceEvent.type,
+            openDuringDispatch: host.open,
+          });
+          if (record.veto) event.preventDefault();
+        });
+        host.onOpenChangeComplete = (open) => record.completions.push(open);
+        document.querySelector('#cases').append(host);
+        cases.set(kind, record);
+      }
+      await Promise.all([...cases.values()].map(({ host }) => host.updateComplete));
+      for (const kind of ['menu', 'context-menu']) {
+        const host = document.createElement(`tp-${kind}`);
+        host.id = `typeahead-${kind}`;
+        host.setAttribute('aria-label', `${kind} typeahead regression`);
+        const trigger = document.createElement('tp-button');
+        trigger.variant = 'outline';
+        trigger.textContent = `Open ${kind} typeahead`;
+        if (kind === 'menu') {
+          trigger.slot = 'trigger';
+          host.append(trigger);
+        } else {
+          trigger.id = 'context-typeahead-target';
+          host.for = trigger.id;
+          document.querySelector('#cases').append(trigger);
+        }
+        for (const label of ['Apple', 'Apricot', 'Banana', 'Éclair']) {
+          const item = document.createElement('tp-button');
+          item.variant = 'ghost';
+          item.setAttribute('value', label);
+          item.textContent = label;
+          host.append(item);
+        }
+        document.querySelector('#cases').append(host);
+        await host.updateComplete;
+      }
+      window.typeaheadCases = {
+        inspect(kind) {
+          const host = document.querySelector(`#typeahead-${kind}`);
+          return {
+            open: host.open,
+            value: host.value,
+            highlighted: host.querySelector('[data-highlighted]')?.textContent,
+            active: document.activeElement?.textContent,
+          };
+        },
+      };
+      window.surfaceCases = {
+        kinds,
+        configure(kind, veto) {
+          const record = cases.get(kind);
+          record.veto = veto;
+          record.proposals.length = record.completions.length = record.callbackReads.length = 0;
+        },
+        async propose(kind, open) {
+          const record = cases.get(kind);
+          record.host.setOpen(open);
+          await record.host.updateComplete;
+          return this.inspect(kind);
+        },
+        async publish(kind, open) {
+          const record = cases.get(kind);
+          record.host.open = open;
+          await record.host.updateComplete;
+          return this.inspect(kind);
+        },
+        inspect(kind) {
+          const record = cases.get(kind);
+          const content = record.host.shadowRoot?.querySelector(
+            '[part~="dialog-content"], [part~="alert-dialog-content"], [part~="popover-content"], [part~="tooltip-content"]',
+          );
+          return {
+            open: record.host.open,
+            proposals: [...record.proposals],
+            callbackReads: [...record.callbackReads],
+            completions: [...record.completions],
+            hidden: content?.hidden ?? true,
+            visible: content?.checkVisibility() ?? false,
+            inert: content?.inert ?? true,
+            nativeOpen:
+              content?.localName === 'dialog'
+                ? content.open
+                : (content?.closest('[popover]')?.matches(':popover-open') ?? false),
+            display: content ? getComputedStyle(content).display : 'absent',
+          };
+        },
+      };
+    </script>
+  </body>
+</html>

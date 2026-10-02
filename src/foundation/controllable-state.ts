@@ -1,5 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import { TpValueChangeEvent } from './events.js';
+import type { TpChangeEventOptions } from './events.js';
 import type { ChangeReason } from './types.js';
 
 export interface ControllableStateOptions<T> {
@@ -98,16 +99,21 @@ export class ControllableState<T> implements ReactiveController {
     }
   }
 
-  set(value: T, reason: ChangeReason, sourceEvent?: Event): boolean {
+  set(
+    value: T,
+    reason: ChangeReason,
+    sourceEvent?: Event,
+    eventOptions?: TpChangeEventOptions,
+  ): boolean {
     this.initialize();
     if (this.#publishing) {
-      this.#queue.push(() => this.set(value, reason, sourceEvent));
+      this.#queue.push(() => this.set(value, reason, sourceEvent, eventOptions));
       return false;
     }
     this.#sync(false);
     const previousValue = this.#value;
     if (this.#equals(previousValue, value)) return false;
-    const event = new TpValueChangeEvent(value, previousValue, reason, sourceEvent);
+    const event = new TpValueChangeEvent(value, previousValue, reason, sourceEvent, eventOptions);
     this.#publishing = true;
     this.#pendingExternal = undefined;
     let accepted: boolean;

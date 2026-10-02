@@ -2,6 +2,7 @@ import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import { TpValueChangeEvent } from '../foundation/events.js';
+import { progressMotionRoles } from './progress/motion.js';
 import {
   prepareMotion,
   resolvesReducedMotion,
@@ -17,18 +18,8 @@ export const displayMotionRoles = {
     phases: ['change'],
     completion: 'non-blocking',
   },
-  progressValue: {
-    name: 'value',
-    kind: 'state',
-    phases: ['change'],
-    completion: 'non-blocking',
-  },
-  progressIndeterminate: {
-    name: 'indeterminate',
-    kind: 'ambient',
-    phases: ['start', 'stop'],
-    completion: 'non-blocking',
-  },
+  progressValue: progressMotionRoles.value,
+  progressIndeterminate: progressMotionRoles.indeterminate,
   spinnerRotation: {
     name: 'rotation',
     kind: 'ambient',
@@ -349,140 +340,7 @@ export class TpMessageScroller extends TpElement {
   }
 }
 
-export class TpProgress extends TpElement {
-  static tagName = 'tp-progress';
-  static override properties = {
-    ...TpElement.properties,
-    value: { type: Number },
-    max: { type: Number },
-    label: { type: String },
-  };
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: block;
-      }
-
-      .track {
-        height: var(--tp-space-2);
-        overflow: hidden;
-      }
-
-      .indicator {
-        height: 100%;
-        transition: width calc(var(--tp-duration-normal) * var(--tp-motion-scale))
-          var(--tp-easing-standard);
-      }
-
-      .indicator[data-indeterminate] {
-        width: 35%;
-        animation: indeterminate 1.2s ease-in-out infinite;
-        animation-play-state: var(--tp-motion-play-state, running);
-      }
-
-      .indicator[data-tp-motion-driven~='value'] {
-        transition: none !important;
-      }
-
-      .indicator[data-tp-motion-driven~='indeterminate'] {
-        animation: none !important;
-      }
-
-      @keyframes indeterminate {
-        from {
-          translate: -100% 0;
-        }
-
-        to {
-          translate: 300% 0;
-        }
-      }
-    `,
-  ];
-  value = Number.NaN;
-  max = 100;
-  label = 'Progress';
-  #valueMotion: MotionHandle | null = null;
-  #ambientMotion: MotionHandle | null = null;
-  override connectedCallback(): void {
-    super.connectedCallback();
-    void this.updateComplete.then(() => {
-      if (!this.isConnected || Number.isFinite(this.value) || this.#ambientMotion) return;
-      this.#ambientMotion = prepareMotion(
-        this,
-        this.renderRoot.querySelector<HTMLElement>('.indicator'),
-        displayMotionRoles.progressIndeterminate,
-        { phase: 'start', fromState: null, toState: 'indeterminate' },
-      );
-      this.#ambientMotion.start();
-    });
-  }
-  protected override willUpdate(changed: PropertyValues<this>): void {
-    super.willUpdate(changed);
-    if (!changed.has('value') || changed.get('value') === undefined) return;
-    const previous = Number(changed.get('value'));
-    const indicator = this.renderRoot.querySelector<HTMLElement>('.indicator');
-    if (Number.isFinite(this.value)) {
-      this.#valueMotion = prepareMotion(this, indicator, displayMotionRoles.progressValue, {
-        phase: 'change',
-        fromState: Number.isFinite(previous) ? previous : null,
-        toState: this.value,
-        context: { max: this.max },
-      });
-    }
-    if (Number.isFinite(previous) !== Number.isFinite(this.value)) {
-      this.#ambientMotion = prepareMotion(
-        this,
-        indicator,
-        displayMotionRoles.progressIndeterminate,
-        {
-          phase: Number.isFinite(this.value) ? 'stop' : 'start',
-          fromState: Number.isFinite(previous) ? 'determinate' : 'indeterminate',
-          toState: Number.isFinite(this.value) ? 'determinate' : 'indeterminate',
-        },
-      );
-    }
-  }
-  protected override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
-    if (changed.has('value')) {
-      this.#valueMotion?.start();
-      this.#ambientMotion?.start();
-      this.#valueMotion = null;
-    }
-  }
-  override disconnectedCallback(): void {
-    this.#valueMotion?.cancel();
-    this.#ambientMotion?.cancel();
-    this.#valueMotion = null;
-    this.#ambientMotion = null;
-    super.disconnectedCallback();
-  }
-  protected override render() {
-    const determinate = Number.isFinite(this.value);
-    const percent = determinate
-      ? Math.max(0, Math.min(100, (this.value / Math.max(1, this.max)) * 100))
-      : 0;
-    return html`<div
-      part="root"
-      role="progressbar"
-      aria-label=${this.label}
-      aria-valuemin="0"
-      aria-valuemax=${String(this.max)}
-      aria-valuenow=${determinate ? String(this.value) : nothing}
-    >
-      <div class="track" part="track">
-        <div
-          class="indicator"
-          part="indicator"
-          ?data-indeterminate=${!determinate}
-          style=${determinate ? `width:${percent}%` : ''}
-        ></div>
-      </div>
-    </div>`;
-  }
-}
+export { TpProgress } from './progress/index.js';
 
 export class TpResizablePanelGroup extends TpElement {
   static tagName = 'tp-resizable-panel-group';

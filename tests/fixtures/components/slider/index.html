@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Slider verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 700px;
+        display: grid;
+        gap: 24px;
+      }
+      #dynamic {
+        display: grid;
+        gap: 24px;
+      }
+      #vertical {
+        block-size: 220px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Slider verification</h1>
+      <tp-button id="before" variant="outline">Before slider</tp-button>
+      <form id="form">
+        <tp-slider id="scalar" label="Volume" name="volume" default-value="40"></tp-slider>
+        <tp-slider
+          id="range"
+          label="Budget"
+          name="budget"
+          default-value="20 60"
+          min-steps-between-values="5"
+          thumb-alignment="edge"
+        >
+          <tp-slider-thumb index="0"></tp-slider-thumb>
+          <tp-slider-thumb index="1"></tp-slider-thumb>
+        </tp-slider>
+        <tp-slider
+          id="barrier"
+          label="Fixed midpoint"
+          name="barrier"
+          default-value="20 50 80"
+          min-steps-between-values="5"
+        >
+          <tp-slider-thumb index="0"></tp-slider-thumb>
+          <tp-slider-thumb index="1" disabled></tp-slider-thumb>
+          <tp-slider-thumb index="2"></tp-slider-thumb>
+        </tp-slider>
+        <tp-button id="reset" type="reset" variant="outline">Reset values</tp-button>
+      </form>
+      <tp-slider
+        id="vertical"
+        label="Temperature"
+        default-value="50"
+        orientation="vertical"
+      ></tp-slider>
+      <tp-slider
+        id="delayed"
+        label="Delayed alignment"
+        default-value="0"
+        thumb-alignment="delayed-edge"
+      ></tp-slider>
+      <tp-button id="after" variant="outline">After slider</tp-button>
+      <div id="dynamic"></div>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

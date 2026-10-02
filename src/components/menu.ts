@@ -10,6 +10,7 @@ import {
   type PositioningHandle,
 } from '../foundation/positioning.js';
 import { TypeaheadController } from '../foundation/typeahead.js';
+import { resolveLocale } from '../foundation/services.js';
 import { createId } from '../foundation/id.js';
 import { safeCorridor } from '../foundation/safe-corridor.js';
 import type { ChangeReason } from '../foundation/types.js';
@@ -72,7 +73,7 @@ export class TpMenu extends TpElement {
         this.trigger?.focus();
     },
   });
-  readonly #typeahead = new TypeaheadController();
+  readonly #typeahead = new TypeaheadController(undefined, () => resolveLocale(this));
   #observer: MutationObserver | null = null;
   #partCleanups: Array<() => void> = [];
   #hoverTimer: number | undefined;
@@ -349,7 +350,7 @@ export class TpMenu extends TpElement {
       this.setOpen(false, 'keyboard', event);
       return;
     }
-    if (event.key === 'Enter' || event.key === ' ') {
+    if (event.key === 'Enter' || (event.key === ' ' && !this.#typeahead.typing)) {
       if (current) {
         event.preventDefault();
         current.click();
@@ -393,6 +394,7 @@ export class TpMenu extends TpElement {
   };
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    if (changed.has('open') && this.open) this.#typeahead.reset();
     this.syncItems();
     if (changed.has('open') || changed.has('placement')) {
       this.presence.setPresent(this.open);

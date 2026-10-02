@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Progress verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 24px;
+        color: var(--tp-foreground);
+        background: var(--tp-background);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+      }
+      section {
+        min-width: 0;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+      tp-progress {
+        margin-block: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <header><h1>Progress verification</h1></header>
+    <main>
+      <section>
+        <h2>Task progress</h2>
+        <tp-progress id="main" label="Upload progress" value="56"
+          ><span slot="label">Upload progress <tp-badge>Live</tp-badge></span></tp-progress
+        >
+        <tp-button id="advance" type="button">Advance progress</tp-button>
+        <tp-button id="unknown" type="button">Indeterminate progress</tp-button>
+        <tp-button id="reset" type="button">Reset progress</tp-button>
+      </section>
+      <section>
+        <h2>Indeterminate</h2>
+        <tp-progress id="waiting" label="Waiting for server"
+          ><span slot="label">Waiting for server</span></tp-progress
+        >
+      </section>
+      <section>
+        <h2>Custom range</h2>
+        <tp-progress id="range" label="Transferred amount" value="30" minimum="20" maximum="40"
+          ><span slot="label">Transferred amount</span></tp-progress
+        >
+      </section>
+      <section>
+        <h2>Independent consumer name</h2>
+        <span id="external-label">External operation</span
+        ><tp-progress id="external" aria-labelledby="external-label" value="75"></tp-progress>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

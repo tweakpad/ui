@@ -1,10 +1,12 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
-import { composedContains } from './focus.js';
+import { composedContains, composedParent } from './focus.js';
 
 type Host = HTMLElement & ReactiveControllerHost;
 interface DismissOptions {
   open: () => boolean;
   anchor?: () => HTMLElement | null;
+  /** Owned content rendered outside the host, including explicit portal containers. */
+  insideElements?: () => readonly Element[];
   outside: () => boolean;
   escape: () => boolean;
   topmostOnly?: boolean;
@@ -52,16 +54,30 @@ export class FloatingDismissController implements ReactiveController {
       this
     );
   }
+  /** Whether a node belongs to this live floating branch, including nested portals. */
+  contains(node: Node | null): boolean {
+    const path: EventTarget[] = [];
+    for (let current = node; current; current = composedParent(current)) path.push(current);
+    return this.#contains(path);
+  }
   #contains(path: EventTarget[]): boolean {
-    if (path.includes(this.host) || path.includes(this.options.anchor?.() as EventTarget))
-      return true;
-    // A nested popup can be anchored inside this branch while rendered elsewhere.
-    return (stacks.get(this.host.ownerDocument) ?? []).some(
-      (child) =>
-        child !== this &&
-        composedContains(this.host, child.options.anchor?.() ?? child.host) &&
-        (path.includes(child.host) || path.includes(child.options.anchor?.() as EventTarget)),
-    );
+    const visited = new Set<FloatingDismissController>();
+    const contains = (owner: FloatingDismissController): boolean => {
+      if (visited.has(owner)) return false;
+      visited.add(owner);
+      const roots: Element[] = [owner.host, ...(owner.options.insideElements?.() ?? [])];
+      const anchor = owner.options.anchor?.();
+      if (anchor) roots.push(anchor);
+      if (roots.some((root) => path.includes(root))) return true;
+      // Both a child anchor and its content may be portaled out of its logical host.
+      return (stacks.get(this.host.ownerDocument) ?? []).some(
+        (child) =>
+          child !== owner &&
+          roots.some((root) => composedContains(root, child.options.anchor?.() ?? child.host)) &&
+          contains(child),
+      );
+    };
+    return contains(this);
   }
   #pointer = (event: PointerEvent): void => {
     if (

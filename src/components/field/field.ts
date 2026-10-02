@@ -152,6 +152,8 @@ export class TpField extends TpElement {
   #lastValue: unknown;
   #initial: unknown;
   #initialCaptured = false;
+  #initialControl: FieldControl | null = null;
+  #initialRebased = false;
   #focused = false;
   #touched = false;
   #dirty = false;
@@ -444,6 +446,7 @@ export class TpField extends TpElement {
         this.#initial = this.value;
         this.#lastValue = this.value;
         this.#initialCaptured = true;
+        this.#initialControl = next;
       }
     }
     const control = this.#control;
@@ -692,8 +695,28 @@ export class TpField extends TpElement {
       if (!event.defaultPrevented) this.#changed();
     });
   };
-  #changed = (): void => {
+  #changed = (event?: Event): void => {
     if (!this.#control || !this.isConnected) return;
+    const detail = (event as CustomEvent<{ reason?: string; previousValue?: unknown }> | undefined)
+      ?.detail;
+    if (
+      event?.type === 'tp-field-value' &&
+      detail?.reason === 'initial' &&
+      event.composedPath()[0] === this.#control &&
+      this.#initialControl === this.#control &&
+      !this.#initialRebased &&
+      !this.#touched &&
+      !this.#submitted &&
+      equivalent(this.#lastValue, this.#initial) &&
+      equivalent(detail.previousValue, this.#initial)
+    ) {
+      this.#initial = this.value;
+      this.#lastValue = this.value;
+      this.#initialRebased = true;
+      this.#dirty = false;
+      this.requestUpdate();
+      return;
+    }
     if (equivalent(this.value, this.#lastValue)) return;
     this.#lastValue = this.value;
     this.#dirty = !equivalent(this.value, this.#initial);

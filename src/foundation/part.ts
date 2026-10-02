@@ -133,7 +133,7 @@ class BindPartDirective extends AsyncDirective {
   }
   override update(
     part: ElementPart,
-    [properties, references]: [HostProperties, (ElementReference | undefined)[]],
+    [properties, references = []]: [HostProperties, (ElementReference | undefined)[]?],
   ): unknown {
     const element = part.element as HTMLElement;
     if (this.#element !== element) {

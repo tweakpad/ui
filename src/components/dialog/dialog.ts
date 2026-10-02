@@ -164,6 +164,7 @@ export class TpDialog extends TpElement {
     this.#providedOpen = value === undefined ? undefined : Boolean(value);
     this.requestUpdate('open', previous);
     this.requestUpdate();
+    if (this.hasUpdated) this.#state.sync(true);
   }
   get modality(): 'modal' | 'non-modal' | 'trap-focus-only' {
     return this.#modality;

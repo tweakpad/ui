@@ -31,6 +31,20 @@ describe('change events', () => {
     expect(event.cancelable).toBe(false);
     expect(event.detail.metadata).toEqual({ activeThumbIndex: 0 });
   });
+
+  it('retains an element source target from a different realm', () => {
+    const target = { nodeType: 1 } as Element;
+    const source = new Event('change');
+    Object.defineProperty(source, 'target', { value: target });
+    const event = new TpValueChangeEvent('next', 'previous', 'input', source);
+    expect(event.detail.sourceEvent).toBe(source);
+    expect(event.detail.trigger).toBe(target);
+    const explicit = { nodeType: 1 } as Element;
+    expect(
+      new TpValueChangeEvent('next', 'previous', 'input', source, { trigger: explicit }).detail
+        .trigger,
+    ).toBe(explicit);
+  });
 });
 
 describe('ObservableStore', () => {

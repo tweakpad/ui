@@ -156,7 +156,11 @@ export class PresentationController implements ReactiveController {
     // A public constituent consumes its family's definition and dictionary, not
     // a second visual catalog identity.
     const definitionTag =
-      this.host.localName === 'tp-radio-group-item' ? 'tp-radio-group' : this.host.localName;
+      this.host.localName === 'tp-radio-group-item'
+        ? 'tp-radio-group'
+        : this.host.localName === 'tp-slider-thumb'
+          ? 'tp-slider'
+          : this.host.localName;
     const definition = componentDefinitions.find((item) => item.tagName === definitionTag);
     if (!definition || !this.host.renderRoot) return;
     for (const [selector, part] of Object.entries(partBindings[this.host.localName] ?? {})) {

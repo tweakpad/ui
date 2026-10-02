@@ -271,6 +271,7 @@ export abstract class TpAnchoredSurface extends TpElement {
     this.#providedOpen = value === undefined ? undefined : Boolean(value);
     this.requestUpdate('open', previous);
     this.requestUpdate();
+    if (this.hasUpdated) this.state.sync(true);
   }
   get placement(): string {
     return this.align === 'center' ? this.side : `${this.side}-${this.align}`;

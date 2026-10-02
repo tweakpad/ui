@@ -1,13 +1,15 @@
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpFormElement, TpElement } from '../foundation/element.js';
-import { TpOpenChangeEvent, TpValueChangeEvent } from '../foundation/events.js';
+import { TpOpenChangeEvent } from '../foundation/events.js';
 import { assignedElements, controlStyles, eventReason } from './shared.js';
 import { chevronRightIcon } from '../icons/chevron-right.js';
 import { PresenceController } from '../foundation/presence.js';
 import { FloatingDismissController } from '../foundation/floating-dismiss.js';
 import { positionSurface, type PositioningHandle } from '../foundation/positioning.js';
-import { TypeaheadController } from '../foundation/typeahead.js';
+import { ChoiceCollectionController } from '../foundation/choice-collection.js';
+import { ControllableState } from '../foundation/controllable-state.js';
+import { resolveLocale } from '../foundation/services.js';
 
 interface ChoiceOption {
   element: HTMLElement;
@@ -20,6 +22,7 @@ export class TpCombobox extends TpFormElement {
   static tagName = 'tp-combobox';
   static override properties = {
     ...TpFormElement.properties,
+    value: { type: String, noAccessor: true },
     open: { type: Boolean, reflect: true },
     placeholder: { type: String },
     query: { type: String },
@@ -126,10 +129,41 @@ export class TpCombobox extends TpFormElement {
   defaultValue = '';
   searchable = true;
   label = 'Options';
-  protected options: ChoiceOption[] = [];
-  protected activeIndex = -1;
+  #providedValue: string | undefined;
+  override get value(): string {
+    return this.selection.value;
+  }
+  override set value(value: string) {
+    const previous = this.#providedValue;
+    this.#providedValue = value;
+    this.requestUpdate('value', previous);
+    if (this.hasUpdated) this.selection.sync();
+  }
+  protected readonly selection = new ControllableState<string>({
+    host: this,
+    initialValue: '',
+    readControlledValue: () => this.#providedValue,
+    readDefaultValue: () => this.defaultValue,
+    onCommit: () => {
+      this.requestUpdate();
+    },
+  });
+  protected readonly collection = new ChoiceCollectionController<string, ChoiceOption>({
+    locale: () => resolveLocale(this),
+  });
+  protected get options(): ChoiceOption[] {
+    return [...this.collection.source];
+  }
+  protected set options(options: ChoiceOption[]) {
+    this.collection.setSource(options);
+  }
+  protected get activeIndex(): number {
+    return this.collection.activeIndex;
+  }
+  protected set activeIndex(index: number) {
+    this.collection.activeIndex = index;
+  }
   #position: PositioningHandle | null = null;
-  #typeahead = new TypeaheadController();
   readonly presence = new PresenceController(this, {
     surface: () => this.renderRoot.querySelector('.listbox'),
   });
@@ -142,9 +176,10 @@ export class TpCombobox extends TpFormElement {
 
   protected get visibleOptions(): ChoiceOption[] {
     const query = this.query.trim().toLocaleLowerCase();
-    return this.options.filter(
+    this.collection.setFilter(
       (option) => !query || option.label.toLocaleLowerCase().includes(query),
     );
+    return [...this.collection.visible];
   }
 
   protected override render() {
@@ -275,17 +310,14 @@ export class TpCombobox extends TpFormElement {
   #key(event: KeyboardEvent): void {
     if (event.defaultPrevented || event.isComposing || event.keyCode === 229) return;
     const options = this.visibleOptions;
-    const enabled = options.flatMap((option, index) => (option.disabled ? [] : [index]));
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       const wasOpen = this.open;
       this.setOpen(true, 'keyboard', event);
       if (!this.open) return;
       const delta = event.key === 'ArrowDown' ? 1 : -1;
-      this.activeIndex = !wasOpen
-        ? ((delta > 0 ? enabled[0] : enabled.at(-1)) ?? -1)
-        : (enabled[(enabled.indexOf(this.activeIndex) + delta + enabled.length) % enabled.length] ??
-          -1);
+      if (!wasOpen) this.collection.boundary(delta < 0);
+      else this.collection.move(delta);
       this.requestUpdate();
     } else if (event.key === 'Enter' && this.open && this.activeIndex >= 0) {
       event.preventDefault();
@@ -296,11 +328,11 @@ export class TpCombobox extends TpFormElement {
       this.setOpen(false, 'dismiss', event);
     } else if (event.key === 'Home' && this.open) {
       event.preventDefault();
-      this.activeIndex = enabled[0] ?? -1;
+      this.collection.boundary();
       this.requestUpdate();
     } else if (event.key === 'End' && this.open) {
       event.preventDefault();
-      this.activeIndex = enabled.at(-1) ?? -1;
+      this.collection.boundary(true);
       this.requestUpdate();
     } else if (event.key === 'Tab' && this.open) {
       this.setOpen(false, 'keyboard', event);
@@ -318,11 +350,11 @@ export class TpCombobox extends TpFormElement {
       !event.metaKey &&
       !event.altKey
     ) {
-      const next = this.#typeahead.search(options, event.key, this.activeIndex);
-      if (next >= 0 && !options[next]?.disabled) {
+      const next = this.collection.search(event.key);
+      if (next) {
         event.preventDefault();
         this.setOpen(true, 'keyboard', event);
-        this.activeIndex = next;
+        this.activeIndex = this.visibleOptions.indexOf(next);
         this.requestUpdate();
       }
     }
@@ -330,9 +362,7 @@ export class TpCombobox extends TpFormElement {
 
   protected selectOption(option: ChoiceOption, event: Event): void {
     if (option.disabled || this.effectiveDisabled || this.readOnly) return;
-    const previous = this.value;
-    if (this.dispatchEvent(new TpValueChangeEvent(option.value, previous, 'selection', event))) {
-      this.value = option.value;
+    if (this.selection.set(option.value, 'selection', event)) {
       this.query = '';
       this.setFormValue(this.value || null);
       this.setValidity({});
@@ -348,12 +378,10 @@ export class TpCombobox extends TpFormElement {
     if (this.open === open || (open && this.effectiveDisabled)) return;
     if (this.dispatchEvent(new TpOpenChangeEvent(open, this.open, reason, event))) {
       this.open = open;
-      if (open)
-        this.activeIndex = this.visibleOptions.findIndex(
-          (option) => option.value === this.value && !option.disabled,
-        );
-      if (open && this.activeIndex < 0)
-        this.activeIndex = this.visibleOptions.findIndex((option) => !option.disabled);
+      if (open) {
+        void this.visibleOptions;
+        this.collection.openAt([this.value]);
+      }
     }
   }
 
@@ -385,28 +413,19 @@ export class TpCombobox extends TpFormElement {
     }
   }
   protected resetFormValue(): void {
-    this.value = this.defaultValue;
+    this.selection.reset();
     this.query = '';
     this.setFormValue(this.value || null);
   }
   override disconnectedCallback(): void {
-    this.#typeahead.reset();
+    this.collection.disconnect();
     this.#position?.destroy();
     this.#position = null;
     super.disconnectedCallback();
   }
 }
 
-export class TpSelect extends TpCombobox {
-  static tagName = 'tp-select';
-  constructor() {
-    super();
-    this.searchable = false;
-  }
-  protected override render() {
-    return super.render();
-  }
-}
+export { TpSelect } from './select/index.js';
 
 export class TpCommandPalette extends TpCombobox {
   static tagName = 'tp-command-palette';
