@@ -7,7 +7,7 @@ interface CardStoryArgs {
   elevated: boolean;
   borders: 'on' | 'off';
   sectionColors: 'on' | 'off';
-  interactive: boolean;
+  size: 'sm' | 'default';
 }
 
 const meta: Meta<CardStoryArgs> = {
@@ -22,7 +22,7 @@ const meta: Meta<CardStoryArgs> = {
     elevated: false,
     borders: 'on',
     sectionColors: 'on',
-    interactive: false,
+    size: 'default',
   },
   argTypes: {
     elevated: {
@@ -43,10 +43,11 @@ const meta: Meta<CardStoryArgs> = {
         'Uses distinct solid fills for header, content, and footer, or one uniform fill.',
       table: { category: 'Presentation', defaultValue: { summary: 'on' } },
     },
-    interactive: {
-      control: 'boolean',
-      description: 'Adds the existing focusable hover treatment; actions remain separate controls.',
-      table: { category: 'Interaction', defaultValue: { summary: 'false' } },
+    size: {
+      control: 'radio',
+      options: ['sm', 'default'],
+      description: 'Controls section padding without changing the content or actions.',
+      table: { category: 'Presentation', defaultValue: { summary: 'default' } },
     },
   },
   render: (args) => html`
@@ -55,7 +56,7 @@ const meta: Meta<CardStoryArgs> = {
       ?elevated=${args.elevated}
       borders=${args.borders}
       section-colors=${args.sectionColors}
-      ?interactive=${args.interactive}
+      size=${args.size}
     >
       <h2 slot="header">Project access</h2>
       <p slot="description">Review how your team will use this workspace.</p>

@@ -11,6 +11,9 @@ export interface PartDefinition {
   required?: boolean;
   multiple?: boolean;
   presentationKeys?: readonly string[];
+  /** Stable public name from the framework-neutral contract. */
+  publicName?: string;
+  cardinality?: string;
 }
 
 export interface ComponentMotionRoleDefinition {
@@ -28,6 +31,10 @@ export interface ComponentDefinition {
   kind: DefinitionKind;
   parts: readonly PartDefinition[];
   variants?: Readonly<Record<string, readonly string[]>>;
+  /** Declaration order is resolution order; defaults do not become state. */
+  axes?: readonly { name: string; values: readonly string[]; default: string }[];
+  sourceNode?: string;
+  nonVisualParts?: readonly string[];
   states?: readonly string[];
   fixedProperties?: Readonly<Record<string, unknown>>;
   motionRoles?: readonly ComponentMotionRoleDefinition[];

@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { CollectionRegistry } from '../foundation/collection.js';
 import { TpElement } from '../foundation/element.js';
@@ -18,8 +18,71 @@ export class TpTabs extends TpElement {
   value = '';
   defaultValue = '';
   activation: 'automatic' | 'manual' = 'manual';
-  variant: 'enclosed' | 'line' = 'enclosed';
+  variant: 'enclosed' | 'underline' = 'enclosed';
+  static override styles = [
+    TpElement.styles,
+    css`
+      [part='tabs'] {
+        display: flex;
+        flex-direction: column;
+      }
+
+      [part='tabs-list'] {
+        display: flex;
+      }
+
+      :host([orientation='vertical']) [part='tabs'] {
+        flex-direction: row;
+      }
+
+      :host([orientation='vertical']) [part='tabs-list'] {
+        flex-direction: column;
+      }
+
+      ::slotted([slot='tab']) {
+        appearance: none;
+        cursor: pointer;
+      }
+
+      ::slotted([slot='tab']:focus-visible) {
+        outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
+        outline-offset: var(--tp-ring-offset);
+      }
+
+      :host([variant='enclosed']) ::slotted([aria-selected='true']) {
+        background: var(--tp-background);
+        border-radius: var(--tp-radius-sm);
+      }
+
+      :host([variant='underline']) ::slotted([aria-selected='true']) {
+        border-block-end-color: var(--tp-primary);
+      }
+
+      :host([variant='underline'][orientation='vertical']) ::slotted([aria-selected='true']) {
+        border-inline-end-color: var(--tp-primary);
+      }
+    `,
+  ];
   #tabs: HTMLElement[] = [];
+  #parts: Array<() => void> = [];
+  #observer: MutationObserver | undefined;
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.#observer = new MutationObserver(() => this.#sync());
+    this.#observer.observe(this, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['value', 'disabled'],
+    });
+    if (this.hasUpdated) this.#sync();
+  }
+  override disconnectedCallback(): void {
+    this.#observer?.disconnect();
+    for (const cleanup of this.#parts) cleanup();
+    this.#parts = [];
+    super.disconnectedCallback();
+  }
   readonly #tabIds = new WeakMap<HTMLElement, string>();
   readonly #panelIds = new WeakMap<HTMLElement, string>();
   protected override render() {
@@ -29,6 +92,7 @@ export class TpTabs extends TpElement {
         role="tablist"
         aria-orientation=${this.orientation}
         @keydown=${this.#key}
+        @click=${this.#click}
       >
         <slot name="tab" @slotchange=${this.#sync}></slot>
       </div>
@@ -36,22 +100,42 @@ export class TpTabs extends TpElement {
     </div>`;
   }
   #sync = (): void => {
-    this.#tabs = [...this.querySelectorAll<HTMLElement>('[slot="tab"]')];
-    const panels = [...this.querySelectorAll<HTMLElement>('[slot="panel"]')];
+    for (const cleanup of this.#parts) cleanup();
+    this.#parts = [];
+    const seen = new Set<string>();
+    this.#tabs = [...this.querySelectorAll<HTMLElement>(':scope > [slot="tab"]')].filter((tab) => {
+      const value = tab.getAttribute('value') ?? '';
+      if (seen.has(value)) {
+        tab.tabIndex = -1;
+        tab.setAttribute('aria-disabled', 'true');
+        tab.setAttribute('aria-selected', 'false');
+        tab.removeAttribute('aria-controls');
+        return false;
+      }
+      seen.add(value);
+      return true;
+    });
+    const panels = [...this.querySelectorAll<HTMLElement>(':scope > [slot="panel"]')];
     if (!this.value)
       this.value =
         this.defaultValue ||
         this.#tabs.find((tab) => !tab.hasAttribute('disabled'))?.getAttribute('value') ||
         '';
-    this.#tabs.forEach((tab, i) => {
+    panels.forEach((panel) => {
+      panel.hidden = true;
+    });
+    this.#tabs.forEach((tab) => {
       const selected = (tab.getAttribute('value') ?? '') === this.value;
       tab.setAttribute('role', 'tab');
-      tab.setAttribute('part', 'tabs-trigger');
+      tab.part.add('tabs-trigger');
+      this.#parts.push(this.presentationController.registerPart('tabs-trigger', tab));
       tab.setAttribute('aria-selected', String(selected));
       tab.setAttribute('aria-disabled', String(tab.hasAttribute('disabled')));
       tab.tabIndex = selected ? 0 : -1;
-      tab.onclick = (e) => this.#select(tab, e);
-      const panel = panels[i];
+      const panel = panels.find(
+        (candidate) => candidate.getAttribute('value') === tab.getAttribute('value'),
+      );
+      tab.removeAttribute('aria-controls');
       if (panel) {
         const id = panel.id || this.#panelIds.get(panel) || createId('tp-tab-panel');
         const tabId = tab.id || this.#tabIds.get(tab) || createId('tp-tab');
@@ -61,11 +145,20 @@ export class TpTabs extends TpElement {
         tab.id = tabId;
         tab.setAttribute('aria-controls', id);
         panel.setAttribute('role', 'tabpanel');
-        panel.setAttribute('part', 'tabs-content');
+        panel.part.add('tabs-content');
+        this.#parts.push(this.presentationController.registerPart('tabs-content', panel));
         panel.setAttribute('aria-labelledby', tabId);
         panel.hidden = !selected;
       }
     });
+  };
+  #click = (event: MouseEvent): void => {
+    const tab = event
+      .composedPath()
+      .find(
+        (node): node is HTMLElement => node instanceof HTMLElement && this.#tabs.includes(node),
+      );
+    if (tab && !event.defaultPrevented) this.#select(tab, event);
   };
   #select(tab: HTMLElement, event: Event): void {
     if (this.disabled || tab.hasAttribute('disabled')) return;

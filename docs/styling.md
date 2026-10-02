@@ -44,3 +44,35 @@ assertCompatibleTokenModes({ light: lightTokens, dark: darkTokens });
 ```
 
 Component-specific styling belongs in a documented presentation dictionary, public property, or justified token extension. Internal shadow elements and unpublished selectors are not a supported override surface. Motion remains governed by the separate motion-role and driver contract.
+
+## Presentation resolution and overrides
+
+`componentDefinitions` contains the cataloged ordered axes/defaults and canonical public part keys. `resolveComponentPresentation(definition, axes, dictionary)` resolves base keys followed by axes in declaration order. Its `missingKeys` diagnostic means no appearance was supplied for that contribution; it never silently reads another dictionary.
+
+```js
+import { defaultPresentationDictionary, setPresentationDictionary } from '@tweakpad/ui';
+
+setPresentationDictionary({
+  ...defaultPresentationDictionary,
+  'button-variant-default': [{
+    declarations: {
+      background: 'var(--tp-primary)',
+      color: 'var(--tp-primary-foreground)',
+      'border-color': 'var(--tp-primary)',
+    },
+  }],
+});
+
+card.partPresentation = {
+  'card-content': {
+    classHook: 'my-content',
+    styleHook: { 'padding-inline-start': 'var(--tp-space-8)' },
+  },
+};
+```
+
+Dictionary replacement is document-scoped and does not remount controls or reset state. Token variables remain inherited and separate from dictionary definitions. A class hook adds a class at the real part; it does not let document styles cross a shadow boundary. Use style hooks, public `::part`, or dictionary rules for that boundary.
+
+Compounds contribute through `setPartComposition` before consumer hooks. Native light-DOM parts can be registered with the presentation adapter, preserving their original elements and semantics. Hooks are keyed by stable part names, not generated variant keys.
+
+Migration is partial: consult [the repair ledger](./first-pass-conformance.md) before relying on dictionary-only customization for a control. In particular, the remaining component-local appearance and cross-shadow compound overrides have not yet been fully migrated.

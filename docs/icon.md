@@ -28,7 +28,7 @@ Accordion uses `chevronRightIcon` for its default disclosure indicator. `indicat
 | `label`  | `label`   | `string`                      | `''`        | Non-empty text makes the host `role="img"` with that accessible name. Empty means decorative and `aria-hidden="true"`. |
 | `size`   | `size`    | CSS length                    | `'1em'`     | Sets the preferred square extent. CSS `width`/`height` rules on the host can override it.                              |
 
-The host is non-focusable, non-interactive, `pointer-events: none`, and does not shrink in flex layouts. The SVG inherits `currentColor`. `part="graphic"` exposes it for styling; `--tp-icon-size` holds the preferred extent.
+The host is non-focusable, non-interactive, `pointer-events: none`, and does not shrink in flex layouts. The SVG inherits `currentColor`. `part="icon-graphic"` exposes it for styling; `--tp-icon-size` holds the preferred extent. The shared presentation adapter registers the host as `icon` without changing its semantics.
 
 ## Custom definitions
 

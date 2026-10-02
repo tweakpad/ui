@@ -136,8 +136,8 @@ export const Overview: Story = {
           <h2>Tabs</h2>
           <tp-tabs value="one"
             ><button slot="tab" value="one">One</button><button slot="tab" value="two">Two</button>
-            <div slot="panel">First panel</div>
-            <div slot="panel">Second panel</div></tp-tabs
+            <div slot="panel" value="one">First panel</div>
+            <div slot="panel" value="two">Second panel</div></tp-tabs
           >
         </section>
         <section class="example">
@@ -147,8 +147,8 @@ export const Overview: Story = {
         <section class="example">
           <h2>Toggle group</h2>
           <tp-toggle-group
-            ><button value="left">Left</button
-            ><button value="center">Center</button></tp-toggle-group
+            ><tp-toggle value="left">Left</tp-toggle
+            ><tp-toggle value="center">Center</tp-toggle></tp-toggle-group
           >
         </section>
         <section class="example">
@@ -306,20 +306,25 @@ export const Overview: Story = {
         <section class="example">
           <h2>Menu</h2>
           <tp-menu
+            ><tp-button slot="trigger" variant="outline">Actions</tp-button
             ><button value="edit">Edit</button><button value="duplicate">Duplicate</button></tp-menu
           >
         </section>
         <section class="example">
           <h2>Menubar</h2>
           <tp-menubar
-            ><button value="file">File</button><button value="edit">Edit</button></tp-menubar
+            ><tp-menu value="file"
+              ><button slot="trigger">File</button><button value="new">New</button></tp-menu
+            ><tp-menu value="edit"
+              ><button slot="trigger">Edit</button><button value="copy">Copy</button></tp-menu
+            ></tp-menubar
           >
         </section>
         <section class="example">
           <h2>Navigation menu</h2>
           <tp-navigation-menu
-            ><a value="docs" href="#docs">Docs</a
-            ><a value="examples" href="#examples">Examples</a></tp-navigation-menu
+            ><li value="docs"><a href="#docs">Docs</a></li>
+            <li value="examples"><a href="#examples">Examples</a></li></tp-navigation-menu
           >
         </section>
         <section class="example">
@@ -402,15 +407,15 @@ export const Overview: Story = {
         </section>
         <section class="example">
           <h2>Attachment</h2>
-          <tp-attachment filename="report.pdf" size="245760" removable></tp-attachment>
+          <tp-attachment filename="report.pdf" file-size="245760" removable></tp-attachment>
         </section>
         <section class="example">
           <h2>Badge</h2>
-          <tp-badge variant="accent">New</tp-badge>
+          <tp-badge variant="default">New</tp-badge>
         </section>
         <section class="example">
           <h2>Bubble</h2>
-          <tp-bubble side="end">Hello there</tp-bubble>
+          <tp-bubble align="end">Hello there</tp-bubble>
         </section>
         <section class="example">
           <h2>Button group</h2>

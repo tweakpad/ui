@@ -16,30 +16,10 @@ export const elevationStyles = css`
 export const controlStyles = css`
   .control {
     appearance: none;
-    min-height: var(--tp-control-height-md);
-    padding: var(--tp-space-2) var(--tp-space-3);
-    border: var(--tp-border-width) var(--tp-border-style) var(--tp-input);
-    border-radius: var(--tp-radius-sm);
-    color: var(--tp-foreground);
-    background: var(--tp-background);
-    font: inherit;
   }
 
   .control:disabled {
     cursor: not-allowed;
-  }
-
-  .control:not(:disabled, [aria-disabled='true']):hover {
-    border-color: var(--tp-accent);
-  }
-
-  .surface {
-    padding: var(--tp-space-3);
-    border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
-    border-radius: var(--tp-radius-lg);
-    color: var(--tp-popover-foreground);
-    background: var(--tp-popover);
-    box-shadow: var(--tp-shadow-lg);
   }
 
   .visually-hidden {

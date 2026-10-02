@@ -16,6 +16,7 @@ import {
   type PositioningHandle,
 } from '../foundation/positioning.js';
 import { PresenceController } from '../foundation/presence.js';
+import { FloatingDismissController } from '../foundation/floating-dismiss.js';
 import { assignedElements, controlStyles, eventReason } from './shared.js';
 
 export const overlayMotionRoles = {
@@ -446,6 +447,22 @@ abstract class TpAnchoredOverlay extends TpElement {
   #pendingExitMotion: MotionHandle | null = null;
   protected readonly contentId = createId('tp-overlay-content');
   #position: PositioningHandle | null = null;
+  protected triggerCleanup: (() => void) | undefined;
+  override connectedCallback(): void {
+    super.connectedCallback();
+    if (this.hasUpdated) {
+      this.bindTrigger();
+      this.requestUpdate();
+      void this.updateComplete.then(() => this.#startPosition());
+    }
+  }
+  readonly dismissController = new FloatingDismissController(this, {
+    open: () => this.open,
+    anchor: () => this.trigger,
+    outside: () => this.dismissible,
+    escape: () => this.dismissible || this.overlayRole === 'tooltip',
+    dismiss: (event) => this.setOpen(false, 'dismiss', event),
+  });
   protected get overlayRole(): string {
     return 'dialog';
   }
@@ -491,45 +508,31 @@ abstract class TpAnchoredOverlay extends TpElement {
         aria-label=${this.label || undefined}
         ?hidden=${!this.presence.mounted}
         data-state=${this.presence.state}
-        @keydown=${this.#key}
       >
         <slot></slot>
       </div>
     </div>`;
   }
   #trigger = (event: Event): void => {
+    this.triggerCleanup?.();
     this.trigger = assignedElements(event.currentTarget as HTMLSlotElement)[0] ?? null;
     this.bindTrigger();
+    this.#position?.destroy();
+    this.#position = null;
+    if (this.open) this.#startPosition();
   };
   protected bindTrigger(): void {
     if (!this.trigger) return;
     this.trigger.setAttribute('part', `${this.partPrefix}-trigger`);
     this.trigger.setAttribute('aria-expanded', String(this.open));
     this.trigger.setAttribute('aria-controls', this.contentId);
-    this.trigger.onclick = (e) => this.setOpen(!this.open, eventReason(e), e);
+    const trigger = this.trigger;
+    const click = (e: MouseEvent): void => {
+      if (!e.defaultPrevented) this.setOpen(!this.open, eventReason(e), e);
+    };
+    trigger.addEventListener('click', click);
+    this.triggerCleanup = () => trigger.removeEventListener('click', click);
   }
-  #key = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape' && this.dismissible) {
-      event.preventDefault();
-      this.setOpen(false, 'dismiss', event);
-    }
-  };
-  #documentKey = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape' && this.open) {
-      event.preventDefault();
-      this.setOpen(false, 'dismiss', event);
-    }
-  };
-  #outside = (event: PointerEvent): void => {
-    const path = event.composedPath();
-    if (
-      this.open &&
-      this.dismissible &&
-      !path.includes(this) &&
-      (!this.trigger || !path.includes(this.trigger))
-    )
-      this.setOpen(false, 'dismiss', event);
-  };
   setOpen(
     open: boolean,
     reason: 'keyboard' | 'pointer' | 'input' | 'dismiss' | 'programmatic',
@@ -540,23 +543,19 @@ abstract class TpAnchoredOverlay extends TpElement {
     this.open = open;
     this.presence.setPresent(open);
     this.trigger?.setAttribute('aria-expanded', String(open));
-    if (open) {
-      document.addEventListener('pointerdown', this.#outside, true);
-      document.addEventListener('keydown', this.#documentKey, true);
-      void this.updateComplete.then(() => this.#startPosition());
-    } else {
-      document.removeEventListener('pointerdown', this.#outside, true);
-      document.removeEventListener('keydown', this.#documentKey, true);
+    if (!open) {
       this.#position?.destroy();
       this.#position = null;
       const active =
         this.renderRoot instanceof ShadowRoot
           ? this.renderRoot.activeElement
-          : document.activeElement;
-      if (active && this.surface?.contains(active)) restoreFocus(this.trigger);
+          : this.ownerDocument.activeElement;
+      if (this.overlayRole !== 'tooltip' && active && this.surface?.contains(active))
+        restoreFocus(this.trigger);
     }
   }
   #startPosition(): void {
+    if (!this.open || !this.isConnected) return;
     this.surface = this.renderRoot.querySelector('.surface');
     if (this.trigger && this.surface) {
       this.#position?.destroy();
@@ -569,14 +568,20 @@ abstract class TpAnchoredOverlay extends TpElement {
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    if (changed.has('open')) {
+    if (changed.has('open') || changed.has('placement') || changed.has('offset')) {
       this.presence.setPresent(this.open);
+      if (this.overlayRole !== 'tooltip')
+        this.trigger?.setAttribute('aria-expanded', String(this.open));
       if (this.open) void this.updateComplete.then(() => this.#startPosition());
+      else {
+        this.#position?.destroy();
+        this.#position = null;
+      }
     }
   }
   override disconnectedCallback(): void {
-    document.removeEventListener('pointerdown', this.#outside, true);
-    document.removeEventListener('keydown', this.#documentKey, true);
+    this.triggerCleanup?.();
+    this.triggerCleanup = undefined;
     this.#position?.destroy();
     super.disconnectedCallback();
   }
@@ -600,14 +605,28 @@ export class TpPreviewCard extends TpAnchoredOverlay {
   protected override bindTrigger(): void {
     if (!this.trigger) return;
     this.trigger.setAttribute('aria-expanded', String(this.open));
-    this.trigger.onpointerenter = (e) => this.#schedule(true, e);
-    this.trigger.onpointerleave = (e) => this.#schedule(false, e);
-    this.trigger.onfocus = (e) => this.#schedule(true, e);
-    this.trigger.onblur = (e) => this.#schedule(false, e);
+    const trigger = this.trigger;
+    const enter = (e: Event): void => this.#schedule(true, e);
+    const leave = (e: Event): void => this.#schedule(false, e);
+    trigger.addEventListener('pointerenter', enter);
+    trigger.addEventListener('pointerleave', leave);
+    trigger.addEventListener('focus', enter);
+    trigger.addEventListener('blur', leave);
+    this.triggerCleanup = () => {
+      if (this.#timer !== undefined) this.ownerDocument.defaultView?.clearTimeout(this.#timer);
+      trigger.removeEventListener('pointerenter', enter);
+      trigger.removeEventListener('pointerleave', leave);
+      trigger.removeEventListener('focus', enter);
+      trigger.removeEventListener('blur', leave);
+    };
+  }
+  override disconnectedCallback(): void {
+    if (this.#timer !== undefined) this.ownerDocument.defaultView?.clearTimeout(this.#timer);
+    super.disconnectedCallback();
   }
   #schedule(open: boolean, event: Event): void {
-    if (this.#timer !== undefined) clearTimeout(this.#timer);
-    this.#timer = window.setTimeout(
+    if (this.#timer !== undefined) this.ownerDocument.defaultView?.clearTimeout(this.#timer);
+    this.#timer = this.ownerDocument.defaultView?.setTimeout(
       () => this.setOpen(open, open ? 'pointer' : 'dismiss', event),
       open ? this.delay : 100,
     );
@@ -654,9 +673,33 @@ export class TpTooltip extends TpPreviewCard {
   protected override bindTrigger(): void {
     super.bindTrigger();
     if (this.trigger) {
+      const trigger = this.trigger;
+      const cleanup = this.triggerCleanup;
+      this.triggerCleanup = () => {
+        cleanup?.();
+        const ids = (trigger.getAttribute('aria-describedby') ?? '')
+          .split(/\s+/)
+          .filter((id) => id && id !== this.contentId);
+        if (ids.length) trigger.setAttribute('aria-describedby', ids.join(' '));
+        else trigger.removeAttribute('aria-describedby');
+      };
       this.trigger.removeAttribute('aria-controls');
       this.trigger.removeAttribute('aria-expanded');
-      this.trigger.setAttribute('aria-describedby', this.contentId);
+      this.#syncDescription();
     }
+  }
+  #syncDescription(): void {
+    if (!this.trigger) return;
+    const ids = new Set(
+      (this.trigger.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean),
+    );
+    if (this.presence.mounted) ids.add(this.contentId);
+    else ids.delete(this.contentId);
+    if (ids.size) this.trigger.setAttribute('aria-describedby', [...ids].join(' '));
+    else this.trigger.removeAttribute('aria-describedby');
+  }
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    this.#syncDescription();
   }
 }

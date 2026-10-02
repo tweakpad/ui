@@ -33,21 +33,31 @@ export class TpSwitch extends TpCheckbox {
     TpElement.styles,
     css`
       :host {
+        --_tp-switch-width: var(--tp-control-height-md);
+        --_tp-switch-height: var(--tp-icon-size-md);
+        --_tp-switch-thumb: var(--tp-icon-size-sm);
+        --_tp-switch-padding: calc(var(--tp-space-1) / 2);
+
         display: inline-flex;
+      }
+
+      :host([size='sm']) {
+        --_tp-switch-width: var(--tp-control-height-sm);
+        --_tp-switch-height: var(--tp-icon-size-sm);
+        --_tp-switch-thumb: calc(var(--tp-icon-size-sm) - var(--tp-space-1));
       }
 
       .root {
         display: inline-flex;
         align-items: center;
-        gap: var(--tp-space-2);
         cursor: pointer;
       }
 
       .track {
         display: flex;
-        width: var(--tp-control-height-md);
-        height: var(--tp-icon-size-md);
-        padding: calc(var(--tp-space-1) / 2);
+        width: var(--_tp-switch-width);
+        height: var(--_tp-switch-height);
+        padding: var(--_tp-switch-padding);
         border-radius: var(--tp-radius-full);
         background: var(--tp-border);
         transition: background calc(var(--tp-duration-fast) * var(--tp-motion-scale))
@@ -55,12 +65,12 @@ export class TpSwitch extends TpCheckbox {
       }
 
       .thumb {
-        width: var(--tp-icon-size-sm);
-        height: var(--tp-icon-size-sm);
-        border-radius: var(--tp-radius-full);
-        background: var(--tp-background);
-        box-shadow: var(--tp-shadow-sm);
-        transition: transform calc(var(--tp-duration-fast) * var(--tp-motion-scale))
+        position: relative;
+        inset-inline-start: 0;
+        width: var(--_tp-switch-thumb);
+        height: var(--_tp-switch-thumb);
+        flex: none;
+        transition: inset-inline-start calc(var(--tp-duration-fast) * var(--tp-motion-scale))
           var(--tp-easing-standard);
       }
 
@@ -69,11 +79,18 @@ export class TpSwitch extends TpCheckbox {
       }
 
       .root[data-checked] .thumb {
-        transform: translateX(1rem);
+        inset-inline-start: calc(
+          var(--_tp-switch-width) - var(--_tp-switch-thumb) - 2 * var(--_tp-switch-padding)
+        );
       }
 
-      :host-context([dir='rtl']) .root[data-checked] .thumb {
-        transform: translateX(-1rem);
+      .root input:focus-visible + .track {
+        outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
+        outline-offset: var(--tp-ring-offset);
+      }
+
+      :host([invalid]) input:focus-visible + .track {
+        outline-color: var(--tp-destructive);
       }
 
       [data-tp-motion-driven] {

@@ -9,9 +9,9 @@
 | `elevated`      | `elevated`       | Boolean     | `false` |
 | `borders`       | `borders`        | `on`, `off` | `on`    |
 | `sectionColors` | `section-colors` | `on`, `off` | `on`    |
-| `interactive`   | `interactive`    | Boolean     | `false` |
+| `size`          | `size`           | `sm`, `default` | `default` |
 
-`elevated` is a shared, opt-in presentation property, not a Card variant. When true, the Card uses the shared medium shadow role and softens its border; when false, it uses the shared no-shadow role. It does not change Card semantics or interaction. The elevation property and shadow-role mapping are reusable by other bounded surfaces and buttons that explicitly expose elevation, without defining new `elevated` variants.
+`elevated` changes only the shadow: medium when true, none when false. Borders, colors, spacing, dimensions, and semantics do not change. Card is the only control exposing this property in this pass.
 
 `borders` controls the outer outline and both section dividers, while `sectionColors` controls whether header, content, and footer have distinct solid fills or share the base surface fill. Both are `on` by default, and all four combinations work with or without elevation.
 
@@ -28,12 +28,13 @@ The three section fills derive from the shared card and muted color roles. There
 
 | Slot          | Purpose                                              | Shadow part |
 | ------------- | ---------------------------------------------------- | ----------- |
-| `header`      | Heading content, ideally a heading element           | `header`    |
-| `description` | Muted supporting text in the header                  | `header`    |
-| default       | Main content                                         | `content`   |
-| `footer`      | Actions in reading order, aligned to the logical end | `footer`    |
+| `header`      | Heading content, ideally a heading element           | `card-title` |
+| `description` | Muted supporting text in the header                  | `card-description` |
+| `action`      | Consumer-owned header action                        | `card-action` |
+| default       | Main content                                         | `card-content` |
+| `footer`      | Actions in reading order, aligned to the logical end | `card-footer` |
 
-The surface exposes `root`. Empty header and footer sections are omitted from layout. Card does not create actions or alter Button variants; use `<tp-button>` in the footer when actions are needed.
+The surface exposes `card`; the header exposes `card-header`. Empty header and footer sections are omitted from layout. Card does not create actions or alter Button variants; use `<tp-button>` in the footer when actions are needed.
 
 ```html
 <tp-card>
@@ -45,4 +46,12 @@ The surface exposes `root`. Empty header and footer sections are omitted from la
 </tp-card>
 ```
 
-`interactive` preserves the existing focus and hover motion treatment for a selectable surface. It does not turn the Card into a button or replace the semantics of actions inside it.
+Card has no `interactive` shortcut or whole-card activation delegation. Compose semantic links and buttons inside it. `size="sm"` uses shared space-3 section padding; `default` preserves space-5.
+
+Use inherited tokens for theming, the shared presentation dictionary for reusable recipes, and `.partPresentation` for instance overrides:
+
+```js
+card.partPresentation = {
+  'card-content': { styleHook: { 'padding-inline-start': 'var(--tp-space-8)' } },
+};
+```

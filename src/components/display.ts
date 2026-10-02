@@ -51,21 +51,7 @@ export class TpAvatar extends TpElement {
     css`
       :host {
         display: inline-grid;
-        width: var(--tp-control-height-lg);
-        height: var(--tp-control-height-lg);
-        border-radius: var(--tp-radius-full);
         overflow: hidden;
-        background: var(--tp-card);
-      }
-
-      :host([size='sm']) {
-        width: var(--tp-control-height-md);
-        height: var(--tp-control-height-md);
-      }
-
-      :host([size='lg']) {
-        width: var(--tp-space-16);
-        height: var(--tp-space-16);
       }
 
       img,
@@ -75,14 +61,13 @@ export class TpAvatar extends TpElement {
         object-fit: cover;
         display: grid;
         place-items: center;
-        font-weight: var(--tp-font-semibold);
       }
     `,
   ];
   src = '';
   alt = '';
   fallback = '';
-  size = 'md';
+  size: 'sm' | 'default' | 'lg' = 'default';
   #failed = false;
   protected override render() {
     return this.src && !this.#failed
@@ -381,14 +366,11 @@ export class TpProgress extends TpElement {
 
       .track {
         height: var(--tp-space-2);
-        border-radius: var(--tp-radius-full);
         overflow: hidden;
-        background: var(--tp-card);
       }
 
       .indicator {
         height: 100%;
-        background: var(--tp-accent);
         transition: width calc(var(--tp-duration-normal) * var(--tp-motion-scale))
           var(--tp-easing-standard);
       }
@@ -530,13 +512,7 @@ export class TpResizablePanelGroup extends TpElement {
         bottom: 0;
         width: var(--tp-space-2);
         translate: -50% 0;
-        background: var(--tp-border);
         cursor: col-resize;
-      }
-
-      .handle:focus-visible {
-        outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
-        outline-offset: var(--tp-ring-offset);
       }
 
       :host([orientation='vertical']) .handle {
@@ -663,7 +639,6 @@ export class TpScrollArea extends TpElement {
         height: 100%;
         overflow: auto;
         overscroll-behavior: contain;
-        scrollbar-color: var(--tp-muted-foreground) transparent;
       }
 
       :host([axis='x']) .viewport {
@@ -694,7 +669,6 @@ export class TpSeparator extends TpElement {
     css`
       :host {
         display: block;
-        background: var(--tp-border);
         height: var(--tp-border-width);
         width: 100%;
       }
@@ -705,7 +679,7 @@ export class TpSeparator extends TpElement {
       }
     `,
   ];
-  decorative = false;
+  decorative = true;
   protected override render() {
     return html`<div
       part="root"
@@ -717,17 +691,16 @@ export class TpSeparator extends TpElement {
 
 export class TpSpinner extends TpElement {
   static tagName = 'tp-spinner';
-  static override properties = { ...TpElement.properties, label: { type: String } };
+  static override properties = {
+    ...TpElement.properties,
+    label: { type: String },
+    size: { type: String, reflect: true },
+  };
   static override styles = [
     TpElement.styles,
     css`
       :host {
         display: inline-block;
-        width: var(--tp-icon-size-md);
-        height: var(--tp-icon-size-md);
-        border: var(--tp-border-width-strong) var(--tp-border-style) currentcolor;
-        border-right-color: transparent;
-        border-radius: var(--tp-radius-full);
         animation: spin 0.8s linear infinite;
         animation-play-state: var(--tp-motion-play-state, running);
       }
@@ -744,6 +717,7 @@ export class TpSpinner extends TpElement {
     `,
   ];
   label = 'Loading';
+  size: 'sm' | 'default' | 'lg' = 'default';
   #rotationMotion: MotionHandle | null = null;
   override connectedCallback(): void {
     super.connectedCallback();
@@ -786,7 +760,6 @@ export class TpToast extends TpElement {
       .toast {
         display: flex;
         align-items: start;
-        gap: var(--tp-space-3);
         min-width: 16rem;
       }
 

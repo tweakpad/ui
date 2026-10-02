@@ -3,6 +3,8 @@ import type { CSSResultGroup, PropertyDeclarations, PropertyValues } from 'lit';
 import type { Direction, Orientation } from './types.js';
 import { cancelMotions, type MotionPolicy } from './motion.js';
 import { createId } from './id.js';
+import { PresentationController } from '../presentation/controller.js';
+import type { PartPresentation } from '../presentation/resolver.js';
 
 export class TpElement extends LitElement {
   static properties: PropertyDeclarations = {
@@ -12,6 +14,7 @@ export class TpElement extends LitElement {
     required: { type: Boolean, reflect: true },
     orientation: { type: String, reflect: true },
     motionPolicy: { type: String, attribute: 'motion-policy', reflect: true },
+    partPresentation: { attribute: false },
   };
 
   static styles: CSSResultGroup = css`
@@ -82,6 +85,15 @@ export class TpElement extends LitElement {
   required = false;
   orientation: Orientation = 'horizontal';
   motionPolicy: MotionPolicy = 'inherit';
+  partPresentation: PartPresentation = {};
+  readonly presentationController = new PresentationController(this);
+  /** Captured before Lit reflects defaults; compounds use this to preserve authored attributes. */
+  readonly authoredAttributes = new Set<string>();
+  override connectedCallback(): void {
+    if (!this.hasUpdated)
+      for (const attribute of this.attributes) this.authoredAttributes.add(attribute.name);
+    super.connectedCallback();
+  }
 
   get direction(): Direction {
     const own = this.getAttribute('dir');

@@ -3,7 +3,6 @@ import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import type { LogicalPosition } from '../foundation/types.js';
 import type { IconDefinition } from '../icons/types.js';
-import { controlStyles } from './shared.js';
 
 type ButtonType = 'button' | 'submit' | 'reset';
 
@@ -34,29 +33,9 @@ export class TpButton extends TpElement {
 
   static override styles = [
     TpElement.styles,
-    controlStyles,
     css`
       :host {
-        --_tp-button-control-block-size: var(--tp-control-height-md);
-        --_tp-button-control-inline-size: auto;
-
         display: inline-block;
-      }
-
-      :host([size='xs']),
-      :host([size='icon-xs']),
-      :host([size='sm']),
-      :host([size='icon-sm']) {
-        --_tp-button-control-block-size: var(--tp-control-height-sm);
-      }
-
-      :host([size='lg']),
-      :host([size='icon-lg']) {
-        --_tp-button-control-block-size: var(--tp-control-height-lg);
-      }
-
-      :host([size^='icon']) {
-        --_tp-button-control-inline-size: var(--_tp-button-control-block-size);
       }
 
       .control {
@@ -64,31 +43,7 @@ export class TpButton extends TpElement {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: var(--tp-space-2);
-        inline-size: var(
-          --_tp-button-group-control-inline-size,
-          var(--_tp-button-control-inline-size)
-        );
-        block-size: var(--_tp-button-control-block-size);
-        min-block-size: var(--_tp-button-control-block-size);
-        border-block-start-width: var(
-          --_tp-button-group-border-block-start-width,
-          var(--tp-border-width)
-        );
-        border-inline-start-width: var(
-          --_tp-button-group-border-inline-start-width,
-          var(--tp-border-width)
-        );
-        border-start-start-radius: var(--_tp-button-group-radius-start-start, var(--tp-radius-sm));
-        border-start-end-radius: var(--_tp-button-group-radius-start-end, var(--tp-radius-sm));
-        border-end-start-radius: var(--_tp-button-group-radius-end-start, var(--tp-radius-sm));
-        border-end-end-radius: var(--_tp-button-group-radius-end-end, var(--tp-radius-sm));
         cursor: pointer;
-        color: var(--tp-primary-foreground);
-        background: var(--tp-primary);
-        border-color: var(--tp-primary);
-        font-weight: var(--tp-font-medium);
-        text-decoration: none;
         transition:
           color calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard),
           background-color calc(var(--tp-duration-fast) * var(--tp-motion-scale))
@@ -97,139 +52,17 @@ export class TpButton extends TpElement {
             var(--tp-easing-standard);
       }
 
+      .control[aria-disabled='true'] {
+        cursor: not-allowed;
+      }
+
       .control > * {
         position: relative;
         z-index: 1;
       }
 
-      :host([variant='outline']) .control::before,
-      :host([variant='ghost']) .control::before {
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        border-radius: inherit;
-        background-color: color-mix(in oklab, var(--tp-input) 50%, transparent);
-        content: '';
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity calc(var(--tp-duration-fast) * var(--tp-motion-scale))
-          var(--tp-easing-standard);
-      }
-
-      .control[aria-disabled='true'] {
-        cursor: not-allowed;
-      }
-
-      :host([size='xs']) .control,
-      :host([size='icon-xs']) .control {
-        padding: var(--tp-space-1) var(--tp-space-2);
-        font-size: var(--tp-text-xs);
-      }
-
-      :host([size='sm']) .control,
-      :host([size='icon-sm']) .control {
-        padding: var(--tp-space-1) var(--tp-space-3);
-        font-size: var(--tp-text-sm);
-      }
-
-      :host([size='lg']) .control,
-      :host([size='icon-lg']) .control {
-        padding: var(--tp-space-3) var(--tp-space-4);
-        font-size: var(--tp-text-lg);
-      }
-
-      :host([size^='icon']) .control {
-        padding-inline: 0;
-      }
-
-      :host([variant='secondary']) .control {
-        color: var(--tp-secondary-foreground);
-        background: var(--tp-secondary);
-        border-color: var(--tp-secondary);
-      }
-
-      :host([variant='outline']) .control {
-        color: var(--tp-foreground);
-        background: var(--tp-background);
-        border-color: var(--tp-border);
-      }
-
-      :host([variant='destructive']) .control {
-        color: var(--tp-destructive-foreground);
-        background: var(--tp-destructive);
-        border-color: var(--tp-destructive);
-      }
-
-      :host([variant='ghost']) .control,
-      :host([variant='link']) .control {
-        color: var(--tp-foreground);
-        background: transparent;
-        border-color: transparent;
-      }
-
-      :host([variant='link']) .control {
-        block-size: auto;
-        min-block-size: auto;
-        padding: 0;
-      }
-
-      .control:not(:disabled, [aria-disabled='true']):hover {
-        border-color: var(--tp-primary);
-
-        /* 80% primary keeps the paired foreground legible in both modes. */
-        background-color: color-mix(
-          in oklab,
-          var(--tp-primary) 80%,
-          light-dark(var(--tp-foreground), var(--tp-background))
-        );
-      }
-
       .control:not(:disabled, [aria-disabled='true']):active {
         transform: translateY(1px);
-      }
-
-      :host([variant='secondary']) .control:not(:disabled, [aria-disabled='true']):hover {
-        border-color: var(--tp-secondary);
-
-        /* 80% secondary uses the same mode-aware contrastward mix. */
-        background-color: color-mix(
-          in oklab,
-          var(--tp-secondary) 80%,
-          light-dark(var(--tp-foreground), var(--tp-background))
-        );
-      }
-
-      :host([variant='outline']) .control:not(:disabled, [aria-disabled='true']):hover {
-        border-color: var(--tp-border);
-        background-color: var(--tp-background);
-      }
-
-      :host([variant='destructive']) .control:not(:disabled, [aria-disabled='true']):hover {
-        border-color: var(--tp-destructive);
-
-        /* 85% destructive retains its paired foreground. */
-        background-color: color-mix(
-          in oklab,
-          var(--tp-destructive) 85%,
-          light-dark(var(--tp-foreground), var(--tp-background))
-        );
-      }
-
-      :host([variant='ghost']) .control:not(:disabled, [aria-disabled='true']):hover {
-        border-color: transparent;
-        background-color: var(--tp-background);
-      }
-
-      :host([variant='outline']) .control:not(:disabled, [aria-disabled='true']):hover::before,
-      :host([variant='ghost']) .control:not(:disabled, [aria-disabled='true']):hover::before {
-        opacity: 1;
-      }
-
-      :host([variant='link'])
-        .control:not(:disabled, [aria-disabled='true']):is(:hover, :focus-visible) {
-        border-color: transparent;
-        background-color: transparent;
-        text-decoration: underline;
       }
 
       [part~='button-leading-mark'],
@@ -238,7 +71,6 @@ export class TpButton extends TpElement {
         align-items: center;
         justify-content: center;
         flex: none;
-        font-size: var(--tp-icon-size-md);
       }
 
       [part~='button-leading-mark'] tp-spinner,
@@ -250,24 +82,6 @@ export class TpButton extends TpElement {
 
       .control > [hidden] {
         display: none;
-      }
-
-      :host([size='xs']) [part~='button-leading-mark'],
-      :host([size='xs']) [part~='button-trailing-mark'],
-      :host([size='icon-xs']) [part~='button-leading-mark'],
-      :host([size='icon-xs']) [part~='button-trailing-mark'],
-      :host([size='sm']) [part~='button-leading-mark'],
-      :host([size='sm']) [part~='button-trailing-mark'],
-      :host([size='icon-sm']) [part~='button-leading-mark'],
-      :host([size='icon-sm']) [part~='button-trailing-mark'] {
-        font-size: var(--tp-icon-size-sm);
-      }
-
-      :host([size='lg']) [part~='button-leading-mark'],
-      :host([size='lg']) [part~='button-trailing-mark'],
-      :host([size='icon-lg']) [part~='button-leading-mark'],
-      :host([size='icon-lg']) [part~='button-trailing-mark'] {
-        font-size: var(--tp-icon-size-lg);
       }
 
       :host([size^='icon']) [part~='button-label'] {

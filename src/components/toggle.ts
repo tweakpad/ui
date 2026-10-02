@@ -2,7 +2,7 @@ import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement, TpFormElement } from '../foundation/element.js';
 import { TpValueChangeEvent } from '../foundation/events.js';
-import { controlStyles, eventReason } from './shared.js';
+import { eventReason } from './shared.js';
 
 export class TpToggle extends TpFormElement {
   static tagName = 'tp-toggle';
@@ -15,26 +15,32 @@ export class TpToggle extends TpFormElement {
   };
   static override styles = [
     TpElement.styles,
-    controlStyles,
     css`
       :host {
         display: inline-block;
       }
 
       button {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--tp-space-2);
         cursor: pointer;
       }
 
-      [aria-pressed='true'] {
-        background: var(--tp-accent);
-        color: var(--tp-accent-foreground);
+      button > * {
+        position: relative;
+        z-index: 1;
       }
     `,
   ];
   pressed = false;
   defaultPressed = false;
-  variant: 'default' | 'outline' = 'default';
+  variant: 'ghost' | 'outline' = 'ghost';
   size: 'sm' | 'default' | 'lg' = 'default';
+  /** Compound ownership is separate from the consumer's disabled and readonly inputs. */
+  selectionOwner: HTMLElement | null = null;
 
   protected override render() {
     return html`<button
@@ -56,6 +62,7 @@ export class TpToggle extends TpFormElement {
   }
   #activate(event: Event): void {
     if (this.disabled || this.readOnly) return;
+    if (this.selectionOwner) return;
     const previous = this.pressed;
     const next = !previous;
     if (this.dispatchEvent(new TpValueChangeEvent(next, previous, eventReason(event), event))) {

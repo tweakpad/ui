@@ -67,7 +67,6 @@ export class TpCollapsible extends TpElement {
         grid-column: 1 / -1;
         grid-template-columns: subgrid;
         margin: 0;
-        font: inherit;
       }
 
       [part~='collapsible-trigger'] {
@@ -76,11 +75,6 @@ export class TpCollapsible extends TpElement {
         grid-template-columns: subgrid;
         align-items: center;
         width: 100%;
-        padding: var(--tp-space-3) var(--tp-space-4);
-        border: 0;
-        background: transparent;
-        color: inherit;
-        font: inherit;
         text-align: start;
         cursor: pointer;
       }
@@ -89,18 +83,12 @@ export class TpCollapsible extends TpElement {
         cursor: not-allowed;
       }
 
-      [part~='collapsible-trigger']:focus-visible {
-        outline-offset: calc(-1 * var(--tp-ring-width));
-      }
-
       [part~='collapsible-leading'],
       [part~='collapsible-trailing'] {
         display: inline-flex;
         flex: none;
         align-items: center;
-        gap: var(--tp-space-2);
         min-width: 0;
-        color: var(--tp-muted-foreground);
         pointer-events: none;
       }
 
@@ -123,7 +111,6 @@ export class TpCollapsible extends TpElement {
       [part~='collapsible-label'] {
         grid-column: 2;
         min-width: 0;
-        font-weight: var(--tp-font-semibold);
       }
 
       [data-default-indicator] {
@@ -160,12 +147,10 @@ export class TpCollapsible extends TpElement {
         display: flow-root;
         grid-column: 1 / -1;
         min-width: 0;
-        padding: 0 var(--tp-space-4) var(--tp-space-4);
       }
 
       :host([data-content-alignment='label']) [part~='collapsible-content-body'] {
         grid-column-start: 2;
-        padding-inline-start: 0;
       }
 
       [part~='collapsible-content'][data-tp-motion-driven~='disclosure'],

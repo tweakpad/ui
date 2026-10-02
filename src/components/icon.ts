@@ -1,6 +1,8 @@
 import { LitElement, css, html, nothing, svg } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import type { IconDefinition } from '../icons/types.js';
+import { PresentationController } from '../presentation/controller.js';
+import type { PartPresentation } from '../presentation/resolver.js';
 
 /** Non-interactive SVG presentation for a consumer-supplied icon definition. */
 export class TpIcon extends LitElement {
@@ -9,16 +11,14 @@ export class TpIcon extends LitElement {
     icon: { attribute: false },
     label: { type: String },
     size: { type: String },
+    partPresentation: { attribute: false },
   };
 
   static styles = css`
     :host {
       display: inline-flex;
       box-sizing: border-box;
-      inline-size: var(--tp-icon-size, var(--tp-icon-size-md));
-      block-size: var(--tp-icon-size, var(--tp-icon-size-md));
       flex: none;
-      color: inherit;
       pointer-events: none;
       vertical-align: middle;
     }
@@ -42,6 +42,17 @@ export class TpIcon extends LitElement {
   icon: IconDefinition | undefined;
   label = '';
   size = '';
+  partPresentation: PartPresentation = {};
+  readonly presentationController = new PresentationController(this);
+  #rootPartCleanup: (() => void) | undefined;
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.#rootPartCleanup = this.presentationController.registerPart('icon', this);
+  }
+  override disconnectedCallback(): void {
+    this.#rootPartCleanup?.();
+    super.disconnectedCallback();
+  }
 
   protected override willUpdate(): void {
     // Direct width/height rules on the host can still override this default extent.
@@ -61,7 +72,7 @@ export class TpIcon extends LitElement {
   protected override render() {
     if (!this.icon) return nothing;
     return html`<svg
-      part="graphic"
+      part="icon-graphic"
       viewBox=${this.icon.viewBox}
       fill="none"
       stroke="currentColor"

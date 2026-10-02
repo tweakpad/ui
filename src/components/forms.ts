@@ -1,4 +1,6 @@
 import { css, html, nothing } from 'lit';
+import { setPartComposition } from '../presentation/controller.js';
+import { chevronRightIcon } from '../icons/chevron-right.js';
 import type { PropertyValues, TemplateResult } from 'lit';
 import { createId } from '../foundation/id.js';
 import { TpElement, TpFormElement } from '../foundation/element.js';
@@ -272,12 +274,15 @@ export class TpNativeSelect extends TpFormElement {
 
       select {
         width: 100%;
-        padding-right: var(--tp-space-8);
+      }
+
+      :host([size='sm']) select {
+        min-height: var(--tp-control-height-sm);
       }
 
       .icon {
         position: absolute;
-        right: var(--tp-space-3);
+        inset-inline-end: var(--tp-space-3);
         top: 50%;
         translate: 0 -50%;
         pointer-events: none;
@@ -305,7 +310,8 @@ export class TpNativeSelect extends TpFormElement {
         @change=${this.#change}
       >
         ${placeholder}${this.#items.map((item) => this.#renderItem(item))}</select
-      ><span class="icon" part="native-select-indicator" aria-hidden="true">⌄</span
+      ><span class="icon" part="native-select-indicator" aria-hidden="true"
+        ><tp-icon .icon=${chevronRightIcon} style="rotate:90deg"></tp-icon></span
       ><slot hidden @slotchange=${this.#readOptions}></slot
     ></span>`;
   }
@@ -449,7 +455,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
 
       .root {
         display: grid;
-        gap: var(--tp-space-2);
       }
 
       .header {
@@ -473,16 +478,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
       .track,
       .range {
         position: absolute;
-        border-radius: var(--tp-radius-full);
         pointer-events: none;
-      }
-
-      .track {
-        background: var(--tp-card);
-      }
-
-      .range {
-        background: var(--tp-accent);
       }
 
       :host([orientation='horizontal']) .track,
@@ -534,20 +530,9 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
         inset: 0;
         width: 100%;
         height: 100%;
-        padding: 0;
         margin: 0;
         appearance: none;
-        color: inherit;
-        background: transparent;
         pointer-events: none;
-      }
-
-      input[type='range']::-webkit-slider-runnable-track {
-        background: transparent;
-      }
-
-      input[type='range']::-moz-range-track {
-        background: transparent;
       }
 
       input[type='range']::-webkit-slider-thumb {
@@ -555,30 +540,12 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> {
         width: var(--tp-slider-thumb-size);
         height: var(--tp-slider-thumb-size);
         appearance: none;
-        border: var(--tp-border-width-strong) var(--tp-border-style) var(--tp-accent);
-        border-radius: var(--tp-radius-full);
-        background: var(--tp-background);
       }
 
       input[type='range']::-moz-range-thumb {
         box-sizing: border-box;
         width: var(--tp-slider-thumb-size);
         height: var(--tp-slider-thumb-size);
-        border: var(--tp-border-width-strong) var(--tp-border-style) var(--tp-accent);
-        border-radius: var(--tp-radius-full);
-        background: var(--tp-background);
-      }
-
-      input[type='range']:focus-visible {
-        outline: none;
-      }
-
-      input[type='range']:focus-visible::-webkit-slider-thumb {
-        box-shadow: 0 0 0 var(--tp-ring-width) var(--tp-ring);
-      }
-
-      input[type='range']:focus-visible::-moz-range-thumb {
-        box-shadow: 0 0 0 var(--tp-ring-width) var(--tp-ring);
       }
 
       :host([orientation='vertical']) input[type='range'] {
@@ -1403,7 +1370,6 @@ export class TpOtpField extends TpFormElement {
 
       [part='group'] {
         display: flex;
-        gap: var(--tp-space-2);
       }
 
       .editor {
@@ -1426,15 +1392,6 @@ export class TpOtpField extends TpFormElement {
         width: var(--tp-target-size-min);
         min-height: var(--tp-target-size-min);
         text-align: center;
-        padding: var(--tp-space-2);
-        border: var(--tp-border-width) var(--tp-border-style) var(--tp-input);
-        border-radius: var(--tp-radius-sm);
-        background: var(--tp-background);
-      }
-
-      .slot[data-active] {
-        outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
-        outline-offset: var(--tp-ring-offset);
       }
     `,
   ];
@@ -1607,11 +1564,8 @@ export class TpField extends TpElement {
 
       [part='field'] {
         display: grid;
-        gap: var(--tp-space-1);
         min-width: 0;
-        padding: 0;
         margin: 0;
-        border: 0;
       }
 
       :host([orientation='horizontal']) [part='field-field'] {
@@ -1628,20 +1582,6 @@ export class TpField extends TpElement {
           gap: var(--tp-space-1) var(--tp-space-3);
           align-items: start;
         }
-      }
-
-      [part='field-label'] {
-        font-weight: var(--tp-font-semibold);
-      }
-
-      [part='field-description'] {
-        color: var(--tp-muted-foreground);
-        font-size: var(--tp-text-sm);
-      }
-
-      [part='field-error'] {
-        color: var(--tp-destructive);
-        font-size: var(--tp-text-sm);
       }
     `,
   ];
@@ -2004,26 +1944,76 @@ export class TpInputGroup extends TpElement {
   };
   static override styles = [
     TpElement.styles,
-    controlStyles,
     css`
       :host {
-        display: inline-flex;
-        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
-        border-radius: var(--tp-radius-sm);
-        overflow: hidden;
+        display: inline-block;
+      }
+
+      [part='input-group'] {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
         align-items: stretch;
       }
 
-      ::slotted(*) {
-        border: 0 !important;
-        border-radius: 0 !important;
+      .editor {
+        grid-column: 2;
+        min-inline-size: 0;
+        display: flex;
       }
 
-      [part='input-group-addon'] {
+      .actions {
+        grid-column: 3;
         display: flex;
         align-items: center;
-        padding: 0 var(--tp-space-3);
-        background: var(--tp-card);
+      }
+
+      .addon {
+        display: flex;
+        align-items: center;
+      }
+
+      .prefix {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .suffix {
+        grid-column: 4;
+        grid-row: 1;
+      }
+
+      :host([addon-position='inline-end']) .prefix {
+        grid-column: 4;
+      }
+
+      :host([addon-position='inline-end']) .suffix {
+        grid-column: 5;
+      }
+
+      :host([addon-position='block-start']) .prefix {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
+
+      :host([addon-position='block-start']) .editor,
+      :host([addon-position='block-start']) .actions,
+      :host([addon-position='block-start']) .suffix {
+        grid-row: 2;
+      }
+
+      :host([addon-position='block-end']) .prefix {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+
+      .addon[hidden] {
+        display: none;
+      }
+
+      ::slotted(tp-input),
+      ::slotted(tp-text-area) {
+        flex: 1;
+        min-inline-size: 0;
       }
     `,
   ];
@@ -2031,35 +2021,140 @@ export class TpInputGroup extends TpElement {
   actionSize: 'xs' | 'sm' | 'icon-xs' | 'icon-sm' = 'xs';
   actionVariant: 'ghost' | 'default' | 'secondary' | 'destructive' | 'outline' | 'link' = 'ghost';
   #control: HTMLElement | null = null;
+  #controlCleanup: (() => void) | undefined;
+  #inherited = new Map<HTMLElement, Map<string, { original: string | null; applied: string }>>();
+  #syncAddon = (event: Event): void => {
+    const slot = event.currentTarget as HTMLSlotElement;
+    if (slot.parentElement)
+      slot.parentElement.hidden = !slot
+        .assignedNodes()
+        .some((node) => node.nodeType !== Node.TEXT_NODE || node.textContent?.trim());
+  };
   protected override render() {
     return html`<span part="input-group" @pointerdown=${this.#focusFromAddon}>
-      <span part="input-group-addon input-group-text"><slot name="prefix"></slot></span>
-      <slot @slotchange=${this.#readControl}></slot>
-      <slot name="action" @slotchange=${this.#readActions}></slot>
-      <span part="input-group-addon input-group-text"><slot name="suffix"></slot></span>
+      <span class="addon prefix" part="input-group-addon input-group-text" hidden
+        ><slot name="prefix" @slotchange=${this.#syncAddon}></slot
+      ></span>
+      <span class="editor"><slot @slotchange=${this.#readControl}></slot></span>
+      <span class="actions"><slot name="action" @slotchange=${this.#syncActions}></slot></span>
+      <span class="addon suffix" part="input-group-addon input-group-text" hidden
+        ><slot name="suffix" @slotchange=${this.#syncAddon}></slot
+      ></span>
     </span>`;
   }
-  #readControl = (event: Event): void => {
-    const candidates = assignedElements(event.currentTarget as HTMLSlotElement).filter((element) =>
+  #readControl = (event?: Event): void => {
+    this.#controlCleanup?.();
+    if (this.#control instanceof TpElement) setPartComposition(this.#control, this);
+    const slot =
+      (event?.currentTarget as HTMLSlotElement | undefined) ??
+      this.renderRoot.querySelector<HTMLSlotElement>('slot:not([name])');
+    const candidates = assignedElements(slot).filter((element) =>
       element.matches('tp-input, tp-text-area, input, textarea, [contenteditable="true"]'),
     );
-    this.#control = candidates[0] ?? null;
-    for (const candidate of candidates) candidate.setAttribute('part', 'input-group-control');
+    this.#control = candidates.length === 1 ? candidates[0]! : null;
     this.toggleAttribute('data-invalid-composition', candidates.length !== 1);
+    if (candidates.length !== 1)
+      this.emit('tp-composition-diagnostic', {
+        component: 'Input group',
+        expected: 'exactly one editor',
+        actual: candidates.length,
+      });
+    const control = this.#control;
+    if (control instanceof TpElement)
+      setPartComposition(control, this, {
+        [control.localName === 'tp-input' ? 'input' : 'text-area']: {
+          styleHook: { border: '0', 'border-radius': '0', outline: '0' },
+        },
+      });
+    else if (control)
+      this.#controlCleanup = this.presentationController.registerPart(
+        'input-group-control',
+        control,
+      );
   };
-  #readActions = (event: Event): void => {
-    for (const action of assignedElements(event.currentTarget as HTMLSlotElement)) {
-      action.setAttribute('part', 'input-group-action');
-      if (!action.hasAttribute('size')) action.setAttribute('size', this.actionSize);
-      if (!action.hasAttribute('variant')) action.setAttribute('variant', this.actionVariant);
+  #syncActions = (): void => {
+    const actions = [...this.querySelectorAll<HTMLElement>(':scope > [slot="action"]')];
+    for (const [action, inherited] of this.#inherited)
+      if (!actions.includes(action)) {
+        for (const [key, value] of inherited)
+          if (action.getAttribute(key) === value.applied) {
+            if (value.original === null) action.removeAttribute(key);
+            else action.setAttribute(key, value.original);
+          }
+        this.#inherited.delete(action);
+      }
+    for (const action of actions) {
+      const inherited =
+        this.#inherited.get(action) ??
+        new Map<string, { original: string | null; applied: string }>();
+      for (const [key, next] of [
+        ['size', this.actionSize],
+        ['variant', this.actionVariant],
+      ]) {
+        const previous = inherited.get(key!);
+        const authored =
+          action instanceof TpElement
+            ? action.authoredAttributes.has(key!)
+            : action.hasAttribute(key!);
+        const property = (action as unknown as Record<string, unknown>)[key!];
+        const nonDefaultProperty =
+          action.localName === 'tp-button' &&
+          typeof property === 'string' &&
+          property !== 'default';
+        if (!previous && (authored || nonDefaultProperty)) continue;
+        if (previous && action.getAttribute(key!) !== previous.applied) {
+          inherited.delete(key!);
+          if (action instanceof TpElement) action.authoredAttributes.add(key!);
+          continue;
+        }
+        inherited.set(key!, {
+          original: previous ? previous.original : action.getAttribute(key!),
+          applied: next!,
+        });
+        action.setAttribute(key!, next!);
+      }
+      this.#inherited.set(action, inherited);
     }
   };
   #focusFromAddon = (event: PointerEvent): void => {
     const path = event.composedPath();
-    if (path.some((target) => target instanceof HTMLElement && target.matches('button, a, input')))
+    if (!path.some((target) => target instanceof HTMLElement && target.classList.contains('addon')))
+      return;
+    if (
+      path.some(
+        (target) =>
+          target instanceof HTMLElement &&
+          target.matches(
+            'button, a[href], input, textarea, select, [contenteditable], [role="button"], tp-button, tp-toggle',
+          ),
+      )
+    )
       return;
     this.#control?.focus();
   };
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    if (changed.has('actionSize') || changed.has('actionVariant')) this.#syncActions();
+  }
+  override disconnectedCallback(): void {
+    this.#controlCleanup?.();
+    if (this.#control instanceof TpElement) setPartComposition(this.#control, this);
+    for (const [action, inherited] of this.#inherited)
+      for (const [key, value] of inherited)
+        if (action.getAttribute(key) === value.applied) {
+          if (value.original === null) action.removeAttribute(key);
+          else action.setAttribute(key, value.original);
+        }
+    this.#inherited.clear();
+    super.disconnectedCallback();
+  }
+  override connectedCallback(): void {
+    super.connectedCallback();
+    if (this.hasUpdated) {
+      this.#readControl();
+      this.#syncActions();
+    }
+  }
 }
 
 const calendarValueConverter = {
@@ -2139,7 +2234,6 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
 
       .root {
         display: grid;
-        gap: var(--tp-space-3);
         min-inline-size: 17rem;
       }
 
@@ -2147,7 +2241,6 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
         display: grid;
         grid-template-columns: auto 1fr auto;
         align-items: center;
-        gap: var(--tp-space-2);
       }
 
       .caption {
@@ -2170,7 +2263,6 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
       .months {
         display: grid;
         grid-template-columns: repeat(var(--tp-calendar-visible-months), minmax(15rem, 1fr));
-        gap: var(--tp-space-4);
       }
 
       .month {
@@ -2206,36 +2298,11 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
       .day {
         min-width: var(--tp-target-size-min);
         min-height: var(--tp-target-size-min);
-        padding: var(--tp-space-1);
-        border: 0;
-        border-radius: var(--tp-radius-sm);
-        color: inherit;
-        background: transparent;
-      }
-
-      .day[data-outside] {
-        color: var(--tp-muted-foreground);
-      }
-
-      .day[data-range-middle] {
-        border-radius: 0;
-        background: var(--tp-accent);
-      }
-
-      .day[data-selected] {
-        color: var(--tp-accent-foreground);
-        background: var(--tp-accent);
-      }
-
-      .day[data-today] {
-        box-shadow: inset 0 0 0 var(--tp-border-width) currentcolor;
       }
 
       .day:focus-visible {
         position: relative;
         z-index: 1;
-        outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
-        outline-offset: var(--tp-ring-offset);
       }
 
       .day:disabled {
@@ -3030,50 +3097,23 @@ export class TpQuestionnaire extends TpElement {
 
       form {
         display: grid;
-        gap: var(--tp-space-4);
         min-width: 0;
-      }
-
-      [part='questionnaire-progress'] {
-        color: var(--tp-muted-foreground);
-        font-size: var(--tp-text-sm);
       }
 
       fieldset {
         display: grid;
-        gap: var(--tp-space-3);
         min-width: 0;
-        padding: 0;
         margin: 0;
-        border: 0;
-      }
-
-      [part='questionnaire-title'] {
-        padding: 0;
-        font-weight: var(--tp-font-semibold);
-      }
-
-      [part='questionnaire-description'] {
-        color: var(--tp-muted-foreground);
       }
 
       [part='questionnaire-choices'] {
         display: grid;
-        gap: var(--tp-space-2);
       }
 
       [part='questionnaire-choice'] {
         display: grid;
         grid-template-columns: auto minmax(0, 1fr) auto;
-        gap: var(--tp-space-2);
         align-items: start;
-        padding: var(--tp-space-2) var(--tp-space-3);
-        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
-        border-radius: var(--tp-radius-sm);
-      }
-
-      [part='questionnaire-choice']:has(input:checked) {
-        border-color: var(--tp-accent);
       }
 
       .choice-copy {
@@ -3101,15 +3141,9 @@ export class TpQuestionnaire extends TpElement {
         width: 100%;
       }
 
-      [part='questionnaire-error'] {
-        color: var(--tp-destructive);
-        font-size: var(--tp-text-sm);
-      }
-
       [part='questionnaire-actions'] {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--tp-space-2);
         justify-content: flex-end;
       }
 

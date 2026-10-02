@@ -73,16 +73,16 @@ const examples = {
     <tp-tabs value="overview">
       <button slot="tab" value="overview">Overview</button>
       <button slot="tab" value="activity">Activity</button>
-      <div slot="panel">Project overview</div>
-      <div slot="panel">Recent activity</div>
+      <div slot="panel" value="overview">Project overview</div>
+      <div slot="panel" value="activity">Recent activity</div>
     </tp-tabs>
   `,
   'tp-toggle': () => html`<tp-toggle pressed>Bold</tp-toggle>`,
   'tp-toggle-group': () => html`
     <tp-toggle-group value="center">
-      <button value="left">Left</button>
-      <button value="center">Center</button>
-      <button value="right">Right</button>
+      <tp-toggle value="left">Left</tp-toggle>
+      <tp-toggle value="center">Center</tp-toggle>
+      <tp-toggle value="right">Right</tp-toggle>
     </tp-toggle-group>
   `,
   'tp-calendar': () => html`
@@ -225,26 +225,36 @@ const examples = {
   `,
   'tp-menu': () => html`
     <tp-menu aria-label="Document actions">
+      <tp-button slot="trigger" variant="outline">Document actions</tp-button>
       <button value="edit">Edit</button>
       <button value="duplicate">Duplicate</button>
     </tp-menu>
   `,
   'tp-menubar': () => html`
     <tp-menubar aria-label="Application menu">
-      <button value="file">File</button>
-      <button value="edit">Edit</button>
-      <button value="view">View</button>
+      <tp-menu value="file"
+        ><button slot="trigger">File</button><button value="new">New</button
+        ><button value="open">Open</button></tp-menu
+      >
+      <tp-menu value="edit"
+        ><button slot="trigger">Edit</button><button value="copy">Copy</button
+        ><button value="paste">Paste</button></tp-menu
+      >
+      <tp-menu value="view"
+        ><button slot="trigger">View</button
+        ><button role="menuitemcheckbox" aria-checked="false" value="grid">Grid</button></tp-menu
+      >
     </tp-menubar>
   `,
   'tp-navigation-menu': () => html`
     <tp-navigation-menu aria-label="Primary navigation">
-      <a value="docs" href="#docs">Docs</a>
-      <a value="examples" href="#examples">Examples</a>
+      <li value="docs"><a href="#docs">Docs</a></li>
+      <li value="examples"><a href="#examples">Examples</a></li>
     </tp-navigation-menu>
   `,
   'tp-pagination': () =>
     html`<tp-pagination label="Results pages" page="4" pages="12"></tp-pagination>`,
-  'tp-avatar': () => html`<tp-avatar fallback="IV" alt="Ivan V." size="48"></tp-avatar>`,
+  'tp-avatar': () => html`<tp-avatar fallback="IV" alt="Ivan V." size="default"></tp-avatar>`,
   'tp-carousel': () => html`
     <tp-carousel label="Featured projects">
       <div>Project one</div>
@@ -307,10 +317,10 @@ const examples = {
   `,
   'tp-aspect-ratio': () => html` <tp-aspect-ratio><div>16:9</div></tp-aspect-ratio> `,
   'tp-attachment': () => html`
-    <tp-attachment filename="report.pdf" size="245760" removable></tp-attachment>
+    <tp-attachment filename="report.pdf" file-size="245760" removable></tp-attachment>
   `,
-  'tp-badge': () => html`<tp-badge variant="accent">New</tp-badge>`,
-  'tp-bubble': () => html`<tp-bubble side="end">Hello there</tp-bubble>`,
+  'tp-badge': () => html`<tp-badge variant="default">New</tp-badge>`,
+  'tp-bubble': () => html`<tp-bubble align="end">Hello there</tp-bubble>`,
   'tp-button-group': () => html`
     <tp-button-group>
       <tp-button variant="outline">Back</tp-button>

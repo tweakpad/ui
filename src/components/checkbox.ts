@@ -21,7 +21,6 @@ export class TpCheckbox extends TpFormElement {
       .root {
         display: inline-flex;
         align-items: center;
-        gap: var(--tp-space-2);
         cursor: pointer;
       }
 
@@ -30,15 +29,6 @@ export class TpCheckbox extends TpFormElement {
         place-items: center;
         width: var(--tp-icon-size-md);
         height: var(--tp-icon-size-md);
-        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
-        border-radius: var(--tp-radius-sm);
-      }
-
-      .root[data-checked] .indicator,
-      .root[data-indeterminate] .indicator {
-        color: var(--tp-accent-foreground);
-        background: var(--tp-accent);
-        border-color: var(--tp-accent);
       }
     `,
   ];
@@ -72,6 +62,7 @@ export class TpCheckbox extends TpFormElement {
   }
   protected handleChange(event: Event): void {
     const input = event.currentTarget as HTMLInputElement;
+    input.indeterminate = this.indeterminate;
     const previous = this.checked;
     if (this.readOnly) {
       input.checked = previous;
@@ -82,7 +73,6 @@ export class TpCheckbox extends TpFormElement {
       return;
     }
     this.checked = input.checked;
-    this.indeterminate = false;
     this.#syncForm();
   }
   override activateFromLabel(): void {
@@ -110,7 +100,6 @@ export class TpCheckbox extends TpFormElement {
   }
   protected resetFormValue(): void {
     this.checked = this.defaultChecked;
-    this.indeterminate = false;
     this.#syncForm();
   }
 }

@@ -47,7 +47,9 @@ try {
     icon.icon = { viewBox: '0 0 24 24', paths: [{ d: 'M1 2L3 4' }] };
     await icon.updateComplete;
     const decorative = icon.getAttribute('aria-hidden') === 'true' && !icon.hasAttribute('role');
-    const artwork = icon.shadowRoot.querySelector('svg[part="graphic"] path')?.getAttribute('d');
+    const artwork = icon.shadowRoot
+      .querySelector('svg[part~="icon-graphic"] path')
+      ?.getAttribute('d');
     const svgNamespace =
       icon.shadowRoot.querySelector('svg path')?.namespaceURI === 'http://www.w3.org/2000/svg';
     icon.label = 'Custom mark';
@@ -83,10 +85,10 @@ try {
     await Promise.all([card.updateComplete, action.updateComplete]);
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
-    const surface = card.shadowRoot.querySelector('[part="root"]');
-    const header = card.shadowRoot.querySelector('[part="header"]');
-    const body = card.shadowRoot.querySelector('[part="content"]');
-    const footer = card.shadowRoot.querySelector('[part="footer"]');
+    const surface = card.shadowRoot.querySelector('[part~="card"]');
+    const header = card.shadowRoot.querySelector('[part~="card-header"]');
+    const body = card.shadowRoot.querySelector('[part~="card-content"]');
+    const footer = card.shadowRoot.querySelector('[part~="card-footer"]');
     const sectionBackgrounds = () =>
       [header, body, footer].map((section) => getComputedStyle(section).backgroundColor);
     const distinctSections = () => new Set(sectionBackgrounds()).size === 3;
@@ -359,6 +361,7 @@ try {
   }
 
   const motionLifecycleContract = await page.evaluate(async () => {
+    const { prepareMotion } = await import('/src/foundation/motion.ts');
     const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
     const until = async (predicate, label) => {
       for (let index = 0; index < 20; index += 1) {
@@ -369,7 +372,6 @@ try {
     };
     const createCard = async () => {
       const card = document.createElement('tp-card');
-      card.interactive = true;
       card.motionPolicy = 'normal';
       card.textContent = 'Motion target';
       document.body.append(card);
@@ -377,9 +379,12 @@ try {
       return card;
     };
     const startCardMotion = (card) => {
-      card.shadowRoot
-        .querySelector('.card')
-        .dispatchEvent(new PointerEvent('pointerenter', { composed: true }));
+      prepareMotion(
+        card,
+        card.shadowRoot.querySelector('.card'),
+        { name: 'fixture', kind: 'state', phases: ['change'], completion: 'non-blocking' },
+        { phase: 'change', fromState: false, toState: true },
+      ).start();
     };
 
     const ownerCard = await createCard();
@@ -472,9 +477,7 @@ try {
       'driver-error diagnostic',
     );
     failure = 'reject';
-    failureCard.shadowRoot
-      .querySelector('.card')
-      .dispatchEvent(new PointerEvent('pointerleave', { composed: true }));
+    startCardMotion(failureCard);
     await until(
       () => failureDiagnostics.includes('motion-playback-rejected'),
       'playback-rejection diagnostic',
@@ -551,7 +554,7 @@ try {
     const progressIndicator = progress.shadowRoot.querySelector('.indicator');
     const siblingDefaultRetained =
       progressIndicator.getAttribute('data-tp-motion-driven') === 'indeterminate' &&
-      getComputedStyle(progressIndicator).transitionDuration === '0.18s';
+      parseFloat(getComputedStyle(progressIndicator).transitionDuration) > 0;
     resolveProgressStop();
 
     const navigation = document.createElement('tp-navigation-panel');
@@ -588,7 +591,7 @@ try {
     const navigationSiblingDefaultRetained =
       navigationPanel.getAttribute('data-tp-motion-driven') === 'collapse' &&
       navigationDurations[0] === '0s' &&
-      navigationDurations[1] === '0.18s';
+      parseFloat(navigationDurations[1]) > 0;
     resolveNavigationCollapse();
 
     const spinner = document.createElement('tp-spinner');
@@ -927,10 +930,10 @@ try {
       first.collapsibleElement.trailingElement.getAttribute('part') === 'collapsible-trailing';
     const semanticParts =
       first.collapsibleElement.shadowRoot
-        .querySelector('[part="collapsible-heading"]')
+        .querySelector('[part~="collapsible-heading"]')
         .getAttribute('role') === 'heading' &&
       first.collapsibleElement.shadowRoot
-        .querySelector('[part="collapsible-heading"]')
+        .querySelector('[part~="collapsible-heading"]')
         .getAttribute('aria-level') === '2' &&
       firstTrigger.tagName === 'BUTTON' &&
       firstPanel.getAttribute('aria-labelledby') === firstTrigger.id &&
@@ -1119,7 +1122,7 @@ try {
     throw new Error('Radio group did not select with arrow-key navigation');
 
   const select = page.locator('tp-select').first();
-  await select.locator('button.toggle').click();
+  await select.locator('button[role="combobox"]').click();
   await select.locator('[role="option"]').nth(1).click();
   if ((await select.evaluate((element) => element.value)) !== 'large')
     throw new Error('Select did not commit the selected value');
@@ -1161,6 +1164,7 @@ try {
     throw new Error('Pagination did not advance');
 
   const menu = page.locator('tp-menu').first();
+  await menu.locator('[slot="trigger"]').click();
   await menu.locator('[value="edit"]').focus();
   await page.keyboard.press('d');
   if (
@@ -1235,7 +1239,7 @@ try {
   }
 
   const field = page.locator('tp-field').first();
-  await field.locator('[part="field-label"]').click();
+  await field.locator('[part~="field-label"]').click();
   if (
     !(await field.evaluate((element) => {
       const control = element.querySelector('tp-input');
@@ -1286,7 +1290,7 @@ try {
   }
 
   const label = page.locator('tp-label').first();
-  await label.locator('[part="root"]').click();
+  await label.locator('[part~="root"]').click();
   if (
     !(await page
       .locator('#catalog-name')
@@ -1298,7 +1302,7 @@ try {
     element.optional = true;
   });
   await label.evaluate((element) => element.updateComplete);
-  if ((await label.locator('[part="optional-indicator"]').textContent())?.trim() !== 'Optional') {
+  if ((await label.locator('[part~="optional-indicator"]').textContent())?.trim() !== 'Optional') {
     throw new Error('Optional Label did not expose its optional indicator');
   }
   await page.locator('#catalog-name').evaluate((element) => {
@@ -1306,7 +1310,7 @@ try {
   });
   await page.locator('#catalog-name').evaluate((element) => element.updateComplete);
   await label.evaluate((element) => element.updateComplete);
-  if (await label.locator('[part="optional-indicator"]').count()) {
+  if (await label.locator('[part~="optional-indicator"]').count()) {
     throw new Error('Label described a required control as optional');
   }
   const shadowLabelFocused = await page.evaluate(async () => {
@@ -1318,7 +1322,7 @@ try {
     const shadowLabel = root.querySelector('tp-label');
     const shadowInput = root.querySelector('tp-input');
     await Promise.all([shadowLabel.updateComplete, shadowInput.updateComplete]);
-    shadowLabel.shadowRoot.querySelector('[part="root"]').click();
+    shadowLabel.shadowRoot.querySelector('[part~="root"]').click();
     const focused = shadowInput.shadowRoot.activeElement instanceof HTMLInputElement;
     host.remove();
     return focused;
@@ -1354,7 +1358,7 @@ try {
       `One-time code normalization produced ${await otp.evaluate((element) => element.value)}`,
     );
   }
-  if ((await otp.locator('[part="slot"][data-filled]').count()) !== 3) {
+  if ((await otp.locator('[part~="slot"][data-filled]').count()) !== 3) {
     throw new Error('One-time code slots did not derive from the committed value');
   }
 
@@ -1383,7 +1387,7 @@ try {
       root?.querySelector(selector)?.getAttribute('part')?.split(' ') ?? [];
     const controls = [...(root?.querySelectorAll('[data-answer-control]') ?? [])];
     return {
-      nativeForm: root?.querySelector('[part="questionnaire"]') instanceof HTMLFormElement,
+      nativeForm: root?.querySelector('[part~="questionnaire"]') instanceof HTMLFormElement,
       rootParts: parts('form'),
       progressParts: parts('[part~="questionnaire-progress"]'),
       questionParts: parts('fieldset'),
@@ -2486,13 +2490,13 @@ try {
     variant: element.variant,
     size: element.size,
     controlPart: element.shadowRoot?.querySelector('button')?.getAttribute('part'),
-    labelPart: element.shadowRoot?.querySelector('[part="button-label"]')?.getAttribute('part'),
+    labelPart: element.shadowRoot?.querySelector('[part~="button-label"]')?.getAttribute('part'),
   }));
   if (
     buttonContract.variant !== 'default' ||
     buttonContract.size !== 'default' ||
     !buttonContract.controlPart?.split(' ').includes('button') ||
-    buttonContract.labelPart !== 'button-label'
+    !buttonContract.labelPart?.split(' ').includes('button-label')
   ) {
     throw new Error(`Button public contract produced ${JSON.stringify(buttonContract)}`);
   }

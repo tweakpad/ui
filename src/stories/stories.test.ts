@@ -210,7 +210,7 @@ describe('Storybook catalog entries', () => {
   it('shows Card sections and independent presentation properties', () => {
     expect(cardStory).toContain("component: 'tp-card'");
     expect(cardStory).not.toContain("options: ['default', 'elevated']");
-    for (const property of ['elevated', 'borders', 'sectionColors', 'interactive']) {
+    for (const property of ['elevated', 'borders', 'sectionColors', 'size']) {
       expect(cardStory).toContain(`    ${property}: {`);
     }
     for (const configuration of [

@@ -52,49 +52,10 @@ export class TpAccordion extends TpElement {
     css`
       :host {
         display: block;
-
-        --_tp-accordion-container-background: transparent;
-        --_tp-accordion-container-border-width: 0px;
-        --_tp-accordion-container-radius: 0px;
-        --_tp-accordion-container-overflow: visible;
-        --_tp-accordion-item-background: transparent;
-        --_tp-accordion-item-border-width: 0px;
-        --_tp-accordion-item-border-block-start-width: 0px;
-        --_tp-accordion-item-radius: 0px;
-        --_tp-accordion-item-overflow: visible;
-        --_tp-accordion-gap: 0px;
-      }
-
-      :host([variant='outline']) {
-        --_tp-accordion-container-background: var(--tp-background);
-        --_tp-accordion-container-border-width: var(--tp-border-width);
-        --_tp-accordion-container-radius: var(--tp-radius-lg);
-        --_tp-accordion-container-overflow: clip;
-        --_tp-accordion-item-border-block-start-width: var(--tp-border-width);
-      }
-
-      :host([variant='line']) {
-        --_tp-accordion-item-border-block-start-width: var(--tp-border-width);
-      }
-
-      :host([variant='separated']) {
-        --_tp-accordion-item-background: var(--tp-background);
-        --_tp-accordion-item-border-width: var(--tp-border-width);
-        --_tp-accordion-item-border-block-start-width: var(--tp-border-width);
-        --_tp-accordion-item-radius: var(--tp-radius-lg);
-        --_tp-accordion-item-overflow: clip;
-        --_tp-accordion-gap: var(--tp-space-2);
       }
 
       [part~='accordion'] {
         display: grid;
-        gap: var(--_tp-accordion-gap);
-        overflow: var(--_tp-accordion-container-overflow);
-        border-width: var(--_tp-accordion-container-border-width);
-        border-style: var(--tp-border-style);
-        border-color: var(--tp-border);
-        border-radius: var(--_tp-accordion-container-radius);
-        background: var(--_tp-accordion-container-background);
       }
 
       slot {
@@ -144,6 +105,7 @@ export class TpAccordion extends TpElement {
       attributes: true,
       attributeFilter: ['value', 'disabled', 'keep-mounted', 'hidden-until-found'],
     });
+    if (this.hasUpdated) this.#scheduleRebuild();
   }
 
   override disconnectedCallback(): void {
@@ -234,6 +196,24 @@ export class TpAccordion extends TpElement {
     trigger.dataset.index = String(index);
     trigger.dataset.orientation = 'vertical';
     collapsible.setMotionScope(item, { value, index });
+    record.cleanups.push(this.presentationController.registerPart('accordion-item', item));
+    for (const part of [
+      'heading',
+      'trigger',
+      'leading',
+      'label',
+      'trailing',
+      'content',
+      'content-body',
+    ]) {
+      const element = collapsible.renderRoot.querySelector<HTMLElement>(
+        `[part~="collapsible-${part}"]`,
+      );
+      if (element)
+        record.cleanups.push(
+          this.presentationController.registerPart(`accordion-${part}`, element),
+        );
+    }
 
     const handleOpenChange = (event: Event): void => {
       if (!(event instanceof TpOpenChangeEvent) || event.target !== collapsible) return;

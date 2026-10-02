@@ -1,9 +1,7 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
-import { CollectionRegistry } from '../foundation/collection.js';
 import { TpValueChangeEvent } from '../foundation/events.js';
-import { TypeaheadController } from '../foundation/typeahead.js';
 import {
   prepareMotion,
   type MotionHandle,
@@ -43,7 +41,6 @@ export class TpBreadcrumb extends TpElement {
       .list {
         display: flex;
         align-items: center;
-        gap: var(--tp-space-2);
       }
 
       ::slotted(*) {
@@ -79,188 +76,7 @@ export class TpBreadcrumb extends TpElement {
   }
 }
 
-export class TpMenu extends TpElement {
-  static tagName = 'tp-menu';
-  static override properties = {
-    ...TpElement.properties,
-    value: { type: String, reflect: true },
-    loop: { type: Boolean },
-  };
-  static override styles = [
-    TpElement.styles,
-    controlStyles,
-    css`
-      :host {
-        display: block;
-        min-width: 10rem;
-      }
-
-      .root {
-        display: grid;
-        gap: calc(var(--tp-space-1) / 2);
-      }
-
-      ::slotted(*) {
-        padding: var(--tp-space-2) var(--tp-space-3);
-        border-radius: var(--tp-radius-sm);
-        cursor: pointer;
-      }
-
-      ::slotted([aria-checked='true']),
-      ::slotted([aria-selected='true']) {
-        background: var(--tp-accent);
-        color: var(--tp-accent-foreground);
-      }
-
-      ::slotted([disabled]) {
-        opacity: var(--tp-opacity-disabled);
-        cursor: not-allowed;
-      }
-    `,
-  ];
-  value = '';
-  loop = true;
-  protected items: HTMLElement[] = [];
-  protected registry = new CollectionRegistry();
-  readonly #typeahead = new TypeaheadController();
-  protected get menuRole(): string {
-    return 'menu';
-  }
-  protected override render() {
-    return html`<div
-      class="root"
-      part="root"
-      role=${this.menuRole}
-      aria-orientation=${this.orientation}
-      @click=${this.#click}
-      @keydown=${this.#key}
-    >
-      <slot @slotchange=${this.syncItems}></slot>
-    </div>`;
-  }
-  protected syncItems = (event?: Event): void => {
-    if (event) this.items = assignedElements(event.currentTarget as HTMLSlotElement);
-    this.registry = new CollectionRegistry();
-    this.items.forEach((item, index) => {
-      const value = item.getAttribute('value') ?? '';
-      item.setAttribute('role', item.getAttribute('role') || 'menuitem');
-      item.tabIndex = index === 0 ? 0 : -1;
-      item.toggleAttribute('data-selected', value === this.value);
-      if (item.getAttribute('role') === 'menuitemradio')
-        item.setAttribute('aria-checked', String(value === this.value));
-      this.registry.register({ element: item, disabled: item.hasAttribute('disabled'), value });
-    });
-  };
-  #click(event: Event): void {
-    const item = (event.target as Element).closest<HTMLElement>('[value], [role^="menuitem"]');
-    if (item) this.selectItem(item, event);
-  }
-  protected selectItem(item: HTMLElement, event: Event): void {
-    if (this.disabled || item.hasAttribute('disabled')) return;
-    const next = item.getAttribute('value') ?? '',
-      previous = this.value;
-    if (this.dispatchEvent(new TpValueChangeEvent(next, previous, eventReason(event), event))) {
-      this.value = next;
-      this.syncItems();
-      this.emit('tp-action', { value: next, item, sourceEvent: event });
-    }
-  }
-  #key(event: KeyboardEvent): void {
-    const current = event.target instanceof HTMLElement ? event.target : null;
-    if (event.key === 'Enter' || event.key === ' ') {
-      if (current) {
-        event.preventDefault();
-        this.selectItem(current, event);
-      }
-    } else if (event.key === 'Escape') this.emit('tp-dismiss', { sourceEvent: event });
-    else if (event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
-      const index = this.#typeahead.search(
-        this.items.map((item) => ({
-          value: item.getAttribute('value') ?? '',
-          label: item.textContent?.trim() ?? '',
-          disabled: item.hasAttribute('disabled'),
-        })),
-        event.key,
-        this.items.indexOf(current as HTMLElement),
-      );
-      if (index >= 0) {
-        event.preventDefault();
-        this.items[index]?.focus();
-      }
-    } else this.registry.handleArrowKey(event, current, this.orientation, this.direction);
-  }
-}
-
-export class TpContextMenu extends TpMenu {
-  static tagName = 'tp-context-menu';
-  static override properties = { ...TpMenu.properties, open: { type: Boolean, reflect: true } };
-  static override styles = [
-    TpMenu.styles,
-    css`
-      :host {
-        position: fixed;
-        z-index: 1200;
-        display: none;
-      }
-
-      :host([open]) {
-        display: block;
-      }
-    `,
-  ];
-  open = false;
-  override connectedCallback(): void {
-    super.connectedCallback();
-    const targetId = this.getAttribute('for');
-    const target = targetId ? document.getElementById(targetId) : this.parentElement;
-    target?.addEventListener('contextmenu', this.#open);
-    document.addEventListener('pointerdown', this.#outside, true);
-  }
-  override disconnectedCallback(): void {
-    const targetId = this.getAttribute('for');
-    const target = targetId ? document.getElementById(targetId) : this.parentElement;
-    target?.removeEventListener('contextmenu', this.#open);
-    document.removeEventListener('pointerdown', this.#outside, true);
-    super.disconnectedCallback();
-  }
-  #open = (event: Event): void => {
-    if (!(event instanceof MouseEvent)) return;
-    event.preventDefault();
-    this.style.left = `${event.clientX}px`;
-    this.style.top = `${event.clientY}px`;
-    this.open = true;
-    void this.updateComplete.then(() =>
-      this.items.find((item) => !item.hasAttribute('disabled'))?.focus(),
-    );
-  };
-  #outside = (event: PointerEvent): void => {
-    if (this.open && !event.composedPath().includes(this)) this.open = false;
-  };
-}
-
-export class TpMenubar extends TpMenu {
-  static tagName = 'tp-menubar';
-  static override styles = [
-    TpMenu.styles,
-    css`
-      .root {
-        display: flex;
-        flex-wrap: wrap;
-      }
-    `,
-  ];
-  constructor() {
-    super();
-    this.orientation = 'horizontal';
-  }
-  protected override get menuRole(): string {
-    return 'menubar';
-  }
-}
-
-export class TpNavigationMenu extends TpMenubar {
-  static tagName = 'tp-navigation-menu';
-}
+export { TpMenu, TpContextMenu, TpMenubar, TpNavigationMenu } from './menu.js';
 
 export class TpPagination extends TpElement {
   static tagName = 'tp-pagination';
@@ -281,7 +97,6 @@ export class TpPagination extends TpElement {
       .root {
         display: flex;
         align-items: center;
-        gap: var(--tp-space-1);
       }
 
       button[aria-current='page'] {
@@ -373,8 +188,6 @@ export class TpNavigationPanel extends TpElement {
         grid-template-rows: auto 1fr auto;
         width: var(--tp-navigation-width, 17rem);
         height: 100%;
-        border-inline-end: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
-        background: var(--tp-background);
         transition:
           width
             calc(

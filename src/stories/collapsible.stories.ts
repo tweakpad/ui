@@ -172,16 +172,16 @@ function renderCollapsible(
       @tp-motion-request=${handleMotionRequest}
     >
       ${
-          fixture.showLeadingContent
-            ? html`<tp-badge slot="leading" variant="accent">New</tp-badge>`
-            : null
-        }
+        fixture.showLeadingContent
+          ? html`<tp-badge slot="leading" variant="accent">New</tp-badge>`
+          : null
+      }
       <span slot="label">Project details</span>
       ${
-          fixture.showTrailingContent
-            ? html`<tp-icon slot="trailing" .icon=${plusIcon}></tp-icon>`
-            : null
-        }
+        fixture.showTrailingContent
+          ? html`<tp-icon slot="trailing" .icon=${plusIcon}></tp-icon>`
+          : null
+      }
       <p>Created today and shared with three collaborators.</p>
       <p>
         Review ownership, access rules, and the longer description associated with this project

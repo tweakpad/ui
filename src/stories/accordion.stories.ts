@@ -194,20 +194,20 @@ function renderAccordion(args: AccordionStoryArgs, options: Partial<AccordionFix
         value="account"
         indicator-position=${fixture.accountIndicatorPosition}
         .contentAlignment=${
-            fixture.accountContentAlignment === 'inherit'
-              ? undefined
-              : fixture.accountContentAlignment
-          }
+          fixture.accountContentAlignment === 'inherit'
+            ? undefined
+            : fixture.accountContentAlignment
+        }
         heading-level=${fixture.headingLevel}
       >
         ${
-            fixture.showLeadingContent
-              ? html`<span
-                  slot=${fixture.accountIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
-                  >01</span
-                >`
-              : null
-          }
+          fixture.showLeadingContent
+            ? html`<span
+                slot=${fixture.accountIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
+                >01</span
+              >`
+            : null
+        }
         <span slot="label">Account settings</span>
         <p>Your public profile starts here.</p>
         <p>
@@ -222,13 +222,13 @@ function renderAccordion(args: AccordionStoryArgs, options: Partial<AccordionFix
         ?disabled=${fixture.itemDisabled}
       >
         ${
-            fixture.showLeadingContent
-              ? html`<span
-                  slot=${fixture.securityIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
-                  >02</span
-                >`
-              : null
-          }
+          fixture.showLeadingContent
+            ? html`<span
+                slot=${fixture.securityIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
+                >02</span
+              >`
+            : null
+        }
         <span slot="label">Security</span>
         <p>Require a second step when signing in from a new device or location.</p>
         <p>Save your backup codes offline.</p>
@@ -239,13 +239,13 @@ function renderAccordion(args: AccordionStoryArgs, options: Partial<AccordionFix
         heading-level=${fixture.headingLevel}
       >
         ${
-            fixture.showLeadingContent
-              ? html`<span
-                  slot=${fixture.billingIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
-                  >03</span
-                >`
-              : null
-          }
+          fixture.showLeadingContent
+            ? html`<span
+                slot=${fixture.billingIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
+                >03</span
+              >`
+            : null
+        }
         <span slot="label">Billing</span>
         <p>
           Review every invoice from the current subscription, download receipts for your records,

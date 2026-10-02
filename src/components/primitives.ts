@@ -1,4 +1,6 @@
 import { css, html, nothing } from 'lit';
+import { setPartComposition } from '../presentation/controller.js';
+import { joinedControlPresentation } from '../presentation/composition.js';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import { createId } from '../foundation/id.js';
@@ -7,20 +9,9 @@ import {
   type MotionHandle,
   type MotionRoleDefinition,
 } from '../foundation/motion.js';
-import {
-  activateLabeledControl,
-  controlStyles,
-  elevatedProperty,
-  elevationStyles,
-} from './shared.js';
+import { activateLabeledControl, controlStyles, elevatedProperty } from './shared.js';
 
 export const primitiveMotionRoles = {
-  cardInteraction: {
-    name: 'interaction',
-    kind: 'state',
-    phases: ['change'],
-    completion: 'non-blocking',
-  },
   skeletonLoading: {
     name: 'loading',
     kind: 'ambient',
@@ -35,7 +26,7 @@ export class TpAlert extends TpElement {
     ...TpElement.properties,
     severity: { type: String, reflect: true },
     title: { type: String },
-    dismissible: { type: Boolean },
+    announcement: { type: String, reflect: true },
   };
   static override styles = [
     TpElement.styles,
@@ -48,10 +39,7 @@ export class TpAlert extends TpElement {
       .alert {
         display: grid;
         grid-template-columns: auto 1fr auto;
-        gap: var(--tp-space-3);
         align-items: start;
-        border-inline-start: var(--tp-border-width-strong) var(--tp-border-style)
-          var(--tp-alert-color, var(--tp-primary));
       }
 
       :host([severity='danger']) {
@@ -65,38 +53,27 @@ export class TpAlert extends TpElement {
       :host([severity='success']) {
         --tp-alert-color: var(--tp-success);
       }
-
-      .title {
-        font-weight: var(--tp-font-bold);
-      }
     `,
   ];
-  severity: 'info' | 'success' | 'warning' | 'danger' = 'info';
+  severity: 'informational' | 'success' | 'warning' | 'danger' = 'informational';
   title = '';
-  dismissible = false;
+  announcement: 'off' | 'polite' | 'assertive' = 'off';
   protected override render() {
-    const title = this.title ? html`<div class="title" part="title">${this.title}</div>` : nothing;
-    const closeButton = this.dismissible
-      ? html`
-          <button
-            class="control"
-            part="close focusable"
-            type="button"
-            aria-label="Dismiss"
-            @click=${() => this.remove()}
-          >
-            ×
-          </button>
-        `
+    const title = this.title
+      ? html`<div class="title" part="alert-title">${this.title}</div>`
       : nothing;
     return html`<div
       class="surface alert"
-      part="root"
-      role=${this.severity === 'danger' ? 'alert' : 'status'}
+      part="alert"
+      role=${this.announcement === 'assertive' ? 'alert' : this.announcement === 'polite' ? 'status' : nothing}
+      aria-live=${this.announcement}
     >
-      <span part="icon"><slot name="icon"></slot></span>
-      <div part="content">${title}<slot></slot></div>
-      ${closeButton}
+      <span part="alert-mark"><slot name="icon"></slot></span>
+      <div>
+        ${title}
+        <div part="alert-description"><slot></slot></div>
+      </div>
+      <span part="alert-action"><slot name="actions"></slot></span>
     </div>`;
   }
 }
@@ -143,7 +120,8 @@ export class TpAttachment extends TpElement {
     ...TpElement.properties,
     filename: { type: String },
     href: { type: String },
-    size: { type: Number },
+    fileSize: { type: Number, attribute: 'file-size' },
+    size: { type: String, reflect: true },
     status: { type: String, reflect: true },
     removable: { type: Boolean },
   };
@@ -158,7 +136,11 @@ export class TpAttachment extends TpElement {
       .attachment {
         display: flex;
         align-items: center;
-        gap: var(--tp-space-3);
+      }
+
+      :host([orientation='vertical']) .attachment {
+        flex-direction: column;
+        align-items: stretch;
       }
 
       .meta {
@@ -172,24 +154,20 @@ export class TpAttachment extends TpElement {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-
-      .size {
-        color: var(--tp-muted-foreground);
-        font-size: var(--tp-text-sm);
-      }
     `,
   ];
   filename = '';
   href = '';
-  size = 0;
-  status: 'ready' | 'uploading' | 'error' = 'ready';
+  fileSize = 0;
+  size: 'xs' | 'sm' | 'default' = 'default';
+  status: 'idle' | 'uploading' | 'processing' | 'error' | 'complete' = 'idle';
   removable = false;
   protected override render() {
     const name = this.href
       ? html`<a class="name" part="name" href=${this.href}>${this.filename}</a>`
       : html`<span class="name" part="name">${this.filename}</span>`;
-    const size = this.size
-      ? html`<span class="size" part="size">${formatBytes(this.size)}</span>`
+    const size = this.fileSize
+      ? html`<span class="size" part="size">${formatBytes(this.fileSize)}</span>`
       : nothing;
     const spinner =
       this.status === 'uploading' ? html`<tp-spinner part="spinner"></tp-spinner>` : nothing;
@@ -208,9 +186,9 @@ export class TpAttachment extends TpElement {
         `
       : nothing;
     return html`<div class="surface attachment" part="root">
-      <span part="preview"><slot name="preview">📎</slot></span>
+      <span part="attachment-media"><slot name="preview"></slot></span>
       <div class="meta" part="meta">${name}${size}<slot></slot></div>
-      ${spinner}${removeButton}
+      ${spinner}<span part="attachment-actions">${removeButton}<slot name="actions"></slot></span>
     </div>`;
   }
 }
@@ -236,25 +214,12 @@ export class TpBadge extends TpElement {
       .badge {
         display: inline-flex;
         align-items: center;
-        gap: var(--tp-space-1);
-        padding: var(--tp-space-1) var(--tp-space-2);
-        border-radius: var(--tp-radius-full);
-        font-size: var(--tp-text-xs);
-        font-weight: var(--tp-font-semibold);
-        background: var(--tp-card);
-        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
-      }
-
-      :host([variant='accent']) .badge {
-        background: var(--tp-accent);
-        color: var(--tp-accent-foreground);
-        border-color: transparent;
       }
     `,
   ];
-  variant = 'neutral';
+  variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link' = 'default';
   protected override render() {
-    return html`<span class="badge" part="root"><slot></slot></span>`;
+    return html`<span class="badge" part="badge"><slot></slot></span>`;
   }
 }
 
@@ -262,7 +227,10 @@ export class TpBubble extends TpElement {
   static tagName = 'tp-bubble';
   static override properties = {
     ...TpElement.properties,
-    side: { type: String, reflect: true },
+    align: { type: String, reflect: true },
+    variant: { type: String, reflect: true },
+    reactionSide: { type: String, attribute: 'reaction-side', reflect: true },
+    reactionsAlign: { type: String, attribute: 'reactions-align', reflect: true },
     label: { type: String },
   };
   static override styles = [
@@ -273,24 +241,39 @@ export class TpBubble extends TpElement {
       }
 
       .bubble {
+        display: flex;
+        flex-direction: column;
         max-width: 75%;
         width: fit-content;
-        border-radius: var(--tp-radius-md);
-        padding: var(--tp-space-3);
-        background: var(--tp-card);
       }
 
-      :host([side='end']) .bubble {
+      :host([align='end']) .bubble {
         margin-inline-start: auto;
-        background: var(--tp-accent);
-        color: var(--tp-accent-foreground);
+      }
+
+      [part='bubble-reactions'] {
+        display: flex;
+        justify-content: end;
+      }
+      :host([reactions-align='start']) [part='bubble-reactions'] {
+        justify-content: start;
+      }
+      :host([reaction-side='block-start']) [part='bubble-reactions'] {
+        order: -1;
       }
     `,
   ];
-  side: 'start' | 'end' = 'start';
+  align: 'start' | 'end' = 'start';
+  reactionSide: 'block-start' | 'block-end' = 'block-end';
+  reactionsAlign: 'start' | 'end' = 'end';
+  variant: 'default' | 'secondary' | 'subdued' | 'tinted' | 'outline' | 'ghost' | 'destructive' =
+    'secondary';
   label = 'Message';
   protected override render() {
-    return html`<div class="bubble" part="root" aria-label=${this.label}><slot></slot></div>`;
+    return html`<div class="bubble" part="bubble-root" aria-label=${this.label}>
+      <div part="bubble-content"><slot></slot></div>
+      <div part="bubble-reactions"><slot name="reactions"></slot></div>
+    </div>`;
   }
 }
 
@@ -318,49 +301,6 @@ export class TpButtonGroup extends TpElement {
         flex-direction: column;
       }
 
-      :host(:not([joined])) [part~='button-group'] {
-        gap: var(--tp-space-2);
-      }
-
-      :host([joined]) ::slotted(tp-button) {
-        --_tp-button-group-radius-start-start: 0px;
-        --_tp-button-group-radius-start-end: 0px;
-        --_tp-button-group-radius-end-start: 0px;
-        --_tp-button-group-radius-end-end: 0px;
-      }
-
-      :host([joined]:not([orientation='vertical'])) ::slotted(tp-button:first-child) {
-        --_tp-button-group-radius-start-start: var(--tp-radius-sm);
-        --_tp-button-group-radius-end-start: var(--tp-radius-sm);
-      }
-
-      :host([joined]:not([orientation='vertical'])) ::slotted(tp-button:last-child) {
-        --_tp-button-group-radius-start-end: var(--tp-radius-sm);
-        --_tp-button-group-radius-end-end: var(--tp-radius-sm);
-      }
-
-      :host([joined]:not([orientation='vertical'])) ::slotted(tp-button:not(:first-child)) {
-        --_tp-button-group-border-inline-start-width: 0px;
-      }
-
-      :host([joined][orientation='vertical']) ::slotted(tp-button) {
-        --_tp-button-group-control-inline-size: 100%;
-      }
-
-      :host([joined][orientation='vertical']) ::slotted(tp-button:first-child) {
-        --_tp-button-group-radius-start-start: var(--tp-radius-sm);
-        --_tp-button-group-radius-start-end: var(--tp-radius-sm);
-      }
-
-      :host([joined][orientation='vertical']) ::slotted(tp-button:last-child) {
-        --_tp-button-group-radius-end-start: var(--tp-radius-sm);
-        --_tp-button-group-radius-end-end: var(--tp-radius-sm);
-      }
-
-      :host([joined][orientation='vertical']) ::slotted(tp-button:not(:first-child)) {
-        --_tp-button-group-border-block-start-width: 0px;
-      }
-
       ::slotted(tp-button:focus-within) {
         z-index: 1;
       }
@@ -369,9 +309,39 @@ export class TpButtonGroup extends TpElement {
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   joined = true;
   label = 'Actions';
+  #members: TpElement[] = [];
+  #sync = (): void => {
+    const members = [...this.children].filter(
+      (child): child is TpElement => child instanceof TpElement && child.localName === 'tp-button',
+    );
+    for (const member of this.#members)
+      if (!members.includes(member)) setPartComposition(member, this);
+    this.#members = members;
+    members.forEach((member, index) =>
+      setPartComposition(
+        member,
+        this,
+        this.joined
+          ? {
+              button: {
+                styleHook: joinedControlPresentation(index, members.length, this.orientation),
+              },
+            }
+          : undefined,
+      ),
+    );
+  };
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    if (changed.has('joined') || changed.has('orientation')) this.#sync();
+  }
+  override disconnectedCallback(): void {
+    for (const member of this.#members) setPartComposition(member, this);
+    super.disconnectedCallback();
+  }
   protected override render() {
     return html`<div part="button-group" role="group" aria-label=${this.label}>
-      <slot></slot>
+      <slot @slotchange=${this.#sync}></slot>
     </div>`;
   }
 }
@@ -383,72 +353,32 @@ export class TpCard extends TpElement {
     elevated: elevatedProperty,
     borders: { type: String, reflect: true },
     sectionColors: { type: String, attribute: 'section-colors', reflect: true },
-    interactive: { type: Boolean, reflect: true },
+    size: { type: String, reflect: true },
   };
   static override styles = [
     TpElement.styles,
-    elevationStyles,
     css`
       :host {
         display: block;
-
-        --_tp-card-base: var(--tp-card);
-        --_tp-card-header-background: var(--_tp-card-base);
-        --_tp-card-content-background: color-mix(in oklab, var(--tp-card) 50%, var(--tp-muted));
-        --_tp-card-footer-background: var(--tp-muted);
-        --_tp-card-border-width: var(--tp-border-width);
-        --_tp-card-border: var(--tp-border);
-      }
-
-      :host([elevated]) {
-        /* Elevation softens the border to 70% of its shared role; shadow remains primary. */
-        --_tp-card-border: color-mix(in oklab, var(--tp-border) 70%, transparent);
-      }
-
-      :host([borders='off']) {
-        --_tp-card-border-width: 0px;
-      }
-
-      :host([section-colors='off']) {
-        --_tp-card-content-background: var(--_tp-card-base);
-        --_tp-card-footer-background: var(--_tp-card-base);
       }
 
       .card {
         display: grid;
         overflow: clip;
-        border: var(--_tp-card-border-width) var(--tp-border-style) var(--_tp-card-border);
-        border-radius: var(--tp-radius-lg);
-        color: var(--tp-card-foreground);
-        background: var(--_tp-card-base);
-        box-shadow: var(--_tp-elevation-shadow);
       }
 
       .card > header {
         display: grid;
-        gap: var(--tp-space-1);
-        padding: var(--tp-space-5);
-        border-block-end: var(--_tp-card-border-width) var(--tp-border-style) var(--_tp-card-border);
-        background: var(--_tp-card-header-background);
       }
 
       .card > .content {
         display: grid;
-        gap: var(--tp-space-5);
-        padding: var(--tp-space-5);
-        line-height: var(--tp-leading-normal);
-        background: var(--_tp-card-content-background);
       }
 
       .card > footer {
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        gap: var(--tp-space-2);
-        padding: var(--tp-space-5);
-        border-block-start: var(--_tp-card-border-width) var(--tp-border-style)
-          var(--_tp-card-border);
-        background: var(--_tp-card-footer-background);
       }
 
       .card > [hidden] {
@@ -459,86 +389,51 @@ export class TpCard extends TpElement {
         display: contents;
       }
 
-      slot[name='header']::slotted(*) {
+      slot::slotted(p),
+      slot::slotted(h2) {
         margin: 0;
-        font-size: var(--tp-text-lg);
-        font-weight: var(--tp-font-semibold);
-        line-height: var(--tp-leading-normal);
-      }
-
-      slot[name='description']::slotted(*) {
-        margin: 0;
-        color: var(--tp-muted-foreground);
-        font-size: var(--tp-text-sm);
-        line-height: var(--tp-leading-normal);
-      }
-
-      .content > slot::slotted(p) {
-        margin: 0;
-      }
-
-      :host([interactive]) .card {
-        cursor: pointer;
-        transition:
-          translate calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard),
-          box-shadow calc(var(--tp-duration-fast) * var(--tp-motion-scale))
-            var(--tp-easing-standard);
-      }
-
-      :host([interactive]) .card:hover {
-        translate: 0 -2px;
-      }
-
-      .card[data-tp-motion-driven] {
-        transition: none !important;
       }
     `,
   ];
   elevated = false;
   borders: 'on' | 'off' = 'on';
   sectionColors: 'on' | 'off' = 'on';
-  interactive = false;
-  #interactionMotion: MotionHandle | null = null;
+  size: 'sm' | 'default' = 'default';
   #syncSection = (event: Event): void => {
-    const section = (event.currentTarget as HTMLSlotElement).parentElement;
+    const slot = event.currentTarget as HTMLSlotElement;
+    const wrapper = slot.parentElement;
+    if (
+      wrapper &&
+      wrapper.matches('[part="card-title"], [part="card-description"], [part="card-action"]')
+    )
+      wrapper.hidden = !slot
+        .assignedNodes({ flatten: true })
+        .some((node) => node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()));
+    const section = (event.currentTarget as HTMLSlotElement).parentElement?.closest(
+      'header, footer',
+    );
     if (!section) return;
-    section.hidden = ![...section.querySelectorAll('slot')].some((slot) =>
+    (section as HTMLElement).hidden = ![...section.querySelectorAll('slot')].some((slot) =>
       slot
         .assignedNodes({ flatten: true })
         .some((node) => node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim())),
     );
   };
-  #setInteraction(active: boolean, input: 'pointer' | 'focus'): void {
-    if (!this.interactive) return;
-    this.#interactionMotion = prepareMotion(
-      this,
-      this.renderRoot.querySelector<HTMLElement>('.card'),
-      primitiveMotionRoles.cardInteraction,
-      {
-        phase: 'change',
-        fromState: !active,
-        toState: active,
-        context: { input },
-      },
-    );
-    this.#interactionMotion.start();
-  }
   protected override render() {
-    return html`<article
-      class="surface card"
-      part="root"
-      tabindex=${this.interactive ? '0' : nothing}
-      @pointerenter=${() => this.#setInteraction(true, 'pointer')}
-      @pointerleave=${() => this.#setInteraction(false, 'pointer')}
-      @focusin=${() => this.#setInteraction(true, 'focus')}
-      @focusout=${() => this.#setInteraction(false, 'focus')}
-    >
-      <header part="header" hidden>
-        <slot name="header" @slotchange=${this.#syncSection}></slot>
-        <slot name="description" @slotchange=${this.#syncSection}></slot>
+    return html`<article class="card" part="card">
+      <header part="card-header" hidden>
+        <div part="card-title" hidden>
+          <slot name="header" @slotchange=${this.#syncSection}></slot>
+        </div>
+        <div part="card-description" hidden>
+          <slot name="description" @slotchange=${this.#syncSection}></slot>
+        </div>
+        <div part="card-action" hidden>
+          <slot name="action" @slotchange=${this.#syncSection}></slot>
+        </div>
       </header>
-      <div class="content" part="content"><slot></slot></div>
-      <footer part="footer" hidden>
+      <div class="content" part="card-content"><slot></slot></div>
+      <footer part="card-footer" hidden>
         <slot name="footer" @slotchange=${this.#syncSection}></slot>
       </footer>
     </article>`;
@@ -562,14 +457,11 @@ export class TpEmptyState extends TpElement {
       .root {
         display: grid;
         justify-items: center;
-        gap: var(--tp-space-3);
         text-align: center;
-        padding: var(--tp-space-8);
       }
 
       .description {
         max-width: 36rem;
-        color: var(--tp-muted-foreground);
       }
     `,
   ];
@@ -607,14 +499,6 @@ export class TpKeyHint extends TpElement {
         min-width: var(--tp-icon-size-lg);
         min-height: var(--tp-icon-size-lg);
         justify-content: center;
-        padding: 0 var(--tp-space-1);
-        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
-        border-bottom-width: var(--tp-border-width-strong);
-        border-radius: var(--tp-radius-sm);
-        background: var(--tp-card);
-        font: inherit;
-        font-family: var(--tp-font-mono);
-        font-size: var(--tp-text-xs);
       }
     `,
   ];
@@ -639,8 +523,6 @@ export class TpLabel extends TpElement {
       }
 
       .optional {
-        font-weight: var(--tp-font-normal);
-        color: var(--tp-muted-foreground);
         margin-inline-start: var(--tp-space-1);
       }
     `,
@@ -746,6 +628,8 @@ export class TpListItem extends TpElement {
     selected: { type: Boolean, reflect: true },
     value: { type: String },
     description: { type: String },
+    variant: { type: String, reflect: true },
+    size: { type: String, reflect: true },
   };
   static override styles = [
     TpElement.styles,
@@ -758,38 +642,57 @@ export class TpListItem extends TpElement {
         display: grid;
         grid-template-columns: auto 1fr auto;
         align-items: center;
-        gap: var(--tp-space-3);
-        padding: var(--tp-space-2) var(--tp-space-3);
-        border-radius: var(--tp-radius-sm);
-      }
-
-      :host([selected]) .item {
-        background: var(--tp-card);
       }
 
       .description {
         display: block;
-        color: var(--tp-muted-foreground);
-        font-size: var(--tp-text-sm);
+      }
+
+      [part='list-item-header'],
+      [part='list-item-footer'] {
+        grid-column: 1 / -1;
+      }
+      [part='list-item-media'] {
+        align-self: start;
+      }
+      [hidden] {
+        display: none;
       }
     `,
   ];
   selected = false;
   value = '';
   description = '';
+  variant: 'ghost' | 'outline' | 'subdued' = 'ghost';
+  size: 'xs' | 'sm' | 'default' = 'default';
+  #region = (event: Event): void => {
+    const slot = event.currentTarget as HTMLSlotElement;
+    if (slot.parentElement)
+      slot.parentElement.hidden = !slot
+        .assignedNodes()
+        .some((node) => node.nodeType !== Node.TEXT_NODE || Boolean(node.textContent?.trim()));
+  };
   protected override render() {
     const description = this.description
-      ? html`<span class="description" part="description">${this.description}</span>`
+      ? html`<span class="description" part="list-item-description">${this.description}</span>`
       : nothing;
     return html`<div
       class="item"
-      part="root"
+      part="list-item-root"
       role="group"
       aria-current=${this.selected ? 'true' : nothing}
     >
-      <slot name="leading"></slot>
-      <span part="content"><slot></slot>${description}</span>
-      <slot name="trailing"></slot>
+      <div part="list-item-header" hidden>
+        <slot name="header" @slotchange=${this.#region}></slot>
+      </div>
+      <span part="list-item-media"><slot name="leading"></slot></span>
+      <span part="list-item-content"
+        ><span part="list-item-title"><slot></slot></span>${description}</span
+      >
+      <span part="list-item-actions"><slot name="trailing"></slot></span>
+      <div part="list-item-footer" hidden>
+        <slot name="footer" @slotchange=${this.#region}></slot>
+      </div>
     </div>`;
   }
 }
@@ -806,10 +709,6 @@ export class TpMarker extends TpElement {
     css`
       :host {
         display: inline-flex;
-        width: var(--tp-space-3);
-        height: var(--tp-space-3);
-        border-radius: var(--tp-radius-full);
-        background: var(--tp-marker-color, var(--tp-muted-foreground));
       }
 
       :host([tone='accent']) {
@@ -851,12 +750,10 @@ export class TpMessage extends TpElement {
       .message {
         display: grid;
         grid-template-columns: auto 1fr;
-        gap: var(--tp-space-3);
       }
 
       .meta {
         display: flex;
-        gap: var(--tp-space-2);
         align-items: baseline;
       }
 
@@ -912,8 +809,6 @@ export class TpSkeleton extends TpElement {
       :host {
         display: block;
         min-height: var(--tp-icon-size-sm);
-        border-radius: var(--tp-radius-sm);
-        background: var(--tp-card);
         overflow: hidden;
       }
 
@@ -922,7 +817,6 @@ export class TpSkeleton extends TpElement {
         display: block;
         width: 45%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, var(--tp-muted-foreground), transparent);
         opacity: var(--tp-opacity-disabled);
         animation: shimmer 1.4s infinite;
         animation-play-state: var(--tp-motion-play-state, running);
@@ -1004,18 +898,45 @@ export class TpTable extends TpElement {
         width: 100%;
         border-collapse: collapse;
       }
-
-      ::slotted(table) :is(th, td) {
-        padding: var(--tp-space-2) var(--tp-space-3);
-        border-bottom: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
-        text-align: start;
-      }
     `,
   ];
   label = 'Data table';
+  #registrations: Array<() => void> = [];
+  #observer = new MutationObserver(() => this.#registerParts());
+  #registerParts = (): void => {
+    for (const cleanup of this.#registrations.splice(0)) cleanup();
+    const table = this.querySelector('table');
+    if (!table) return;
+    const parts: Record<string, string> = {
+      table: 'table-table',
+      caption: 'table-caption',
+      thead: 'table-header',
+      tbody: 'table-body',
+      tfoot: 'table-footer',
+      tr: 'table-row',
+      th: 'table-column-header',
+      td: 'table-cell',
+    };
+    for (const element of [
+      table,
+      ...table.querySelectorAll<HTMLElement>('caption, thead, tbody, tfoot, tr, th, td'),
+    ]) {
+      const part = parts[element.localName]!;
+      this.#registrations.push(this.presentationController.registerPart(part, element));
+    }
+  };
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.#observer.observe(this, { childList: true, subtree: true });
+  }
+  override disconnectedCallback(): void {
+    this.#observer.disconnect();
+    for (const cleanup of this.#registrations.splice(0)) cleanup();
+    super.disconnectedCallback();
+  }
   protected override render() {
-    return html`<div class="root" part="root" role="region" aria-label=${this.label} tabindex="0">
-      <slot></slot>
+    return html`<div class="root" part="table" role="region" aria-label=${this.label} tabindex="0">
+      <slot @slotchange=${this.#registerParts}></slot>
     </div>`;
   }
 }

@@ -505,6 +505,8 @@ export function positionSurface(
     if (options.matchReferenceWidth) surface.style.minWidth = `${result.anchorWidth}px`;
     if (options.arrow && result.stageData.arrow) {
       const arrow = result.stageData.arrow;
+      options.arrow.style.removeProperty('left');
+      options.arrow.style.removeProperty('top');
       if (arrow.x !== undefined) options.arrow.style.left = `${arrow.x}px`;
       if (arrow.y !== undefined) options.arrow.style.top = `${arrow.y}px`;
       options.arrow.toggleAttribute('data-uncentered', arrow.centerOffset !== 0);
@@ -580,6 +582,12 @@ export function positionSurface(
       if (scheduledFrame) ownerWindow.cancelAnimationFrame(scheduledFrame);
       for (const cleanup of cleanups.splice(0)) cleanup();
       clearPosition(surface);
+      if (options.arrow) {
+        options.arrow.style.removeProperty('left');
+        options.arrow.style.removeProperty('top');
+        options.arrow.removeAttribute('data-uncentered');
+      }
+      if (options.matchReferenceWidth) surface.style.removeProperty('min-width');
       current = null;
     },
   };

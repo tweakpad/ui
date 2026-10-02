@@ -1,0 +1,187 @@
+/** Component-owned associations between existing hosts and their published part slots. */
+export const partBindings: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  'tp-checkbox': {
+    '.root': 'checkbox',
+    '.indicator': 'checkbox-indicator',
+  },
+  'tp-button': {
+    '.control': 'button',
+    "[part~='button-leading-mark']": 'button-leading-mark',
+    "[part~='button-trailing-mark']": 'button-trailing-mark',
+  },
+  'tp-tabs': {
+    "[part='tabs']": 'tabs',
+    "[part='tabs-list']": 'tabs-list',
+  },
+  'tp-alert': {
+    '.alert': 'alert',
+    '.title': 'alert-title',
+  },
+  'tp-attachment': {
+    '.attachment': 'attachment-root',
+    '.meta': 'attachment-content',
+    '.name': 'attachment-title',
+    '.size': 'attachment-description',
+    '[part="remove focusable"]': 'attachment-action',
+  },
+  'tp-badge': {
+    '.badge': 'badge',
+  },
+  'tp-bubble': {
+    '.bubble': 'bubble-root',
+  },
+  'tp-button-group': {
+    "[part~='button-group']": 'button-group',
+  },
+  'tp-card': {
+    '.card > header': 'card-header',
+    '.card > .content': 'card-content',
+    '.card > footer': 'card-footer',
+  },
+  'tp-empty-state': {
+    '.root': 'empty-state',
+    '.description': 'empty-state-description',
+  },
+  'tp-key-hint': {
+    kbd: 'key-hint',
+  },
+  'tp-label': {
+    '.optional': 'label-optional-indicator',
+  },
+  'tp-list-item': {
+    '.item': 'list-item-root',
+    '.description': 'list-item-description',
+  },
+  'tp-message': {
+    '.message': 'message-root',
+    '.meta': 'message-header',
+  },
+  'tp-input': {
+    input: 'input',
+  },
+  'tp-text-area': {
+    textarea: 'text-area',
+  },
+  'tp-native-select': {
+    select: 'native-select-control',
+    '.icon': 'native-select-indicator',
+  },
+  'tp-slider': {
+    '.root': 'slider',
+    '.track': 'slider-track',
+    '.range': 'slider-range',
+    "input[type='range']": 'slider-thumb',
+  },
+  'tp-field': {
+    "[part='field']": 'field',
+    "[part='field-label']": 'field-label',
+    "[part='field-description']": 'field-description',
+    "[part='field-error']": 'field-error',
+  },
+  'tp-input-group': {
+    "[part='input-group']": 'input-group',
+    '.addon': 'input-group-addon',
+  },
+  'tp-calendar': {
+    '.root': 'calendar',
+    '.header': 'calendar-header',
+    '.months': 'calendar-month-grid',
+    '.day': 'calendar-day',
+  },
+  'tp-questionnaire': {
+    form: 'questionnaire',
+    fieldset: 'questionnaire-question',
+    "[part='questionnaire-progress']": 'questionnaire-progress',
+    "[part='questionnaire-title']": 'questionnaire-title',
+    "[part='questionnaire-description']": 'questionnaire-description',
+    "[part='questionnaire-choices']": 'questionnaire-choices',
+    "[part='questionnaire-choice']": 'questionnaire-choice',
+    "[part='questionnaire-error']": 'questionnaire-error',
+    "[part='questionnaire-actions']": 'questionnaire-actions',
+  },
+  'tp-progress': {
+    '.track': 'progress-track',
+    '.indicator': 'progress-indicator',
+  },
+  'tp-resizable-panel-group': {
+    '.handle': 'resizable-panel-group-separator',
+  },
+  'tp-scroll-area': {
+    '.viewport': 'scroll-area-viewport',
+  },
+  'tp-toast': {
+    '.toast': 'toast-toast',
+    '.content': 'toast-content',
+    '[part="close focusable"]': 'toast-close',
+  },
+  'tp-breadcrumb': {
+    '.list': 'breadcrumb-ordered-list',
+  },
+  'tp-pagination': {
+    '.root': 'pagination',
+    '[part="previous focusable"]': 'pagination-previous',
+    '[part="next focusable"]': 'pagination-next',
+    '[part="page focusable"]': 'pagination-page-link',
+  },
+  'tp-navigation-panel': {
+    '.panel': 'navigation-panel',
+  },
+  'tp-combobox': {
+    '.root': 'combobox',
+    '.control': 'combobox-anchor',
+    '.editor': 'combobox-input',
+    '.toggle': 'combobox-trigger',
+    '.listbox': 'combobox-content',
+    '.option': 'combobox-option',
+    '[part="empty"]': 'combobox-empty-state',
+  },
+  'tp-select': {
+    '.root': 'select',
+    '.control': 'select-trigger',
+    '.label': 'select-value',
+    '.listbox': 'select-content',
+    '.option': 'select-option',
+  },
+  'tp-command-palette': {
+    '.root': 'command-palette',
+    '.control': 'command-palette-input-wrapper',
+    '.editor': 'command-palette-input',
+    '.listbox': 'command-palette-list',
+    '.option': 'command-palette-item',
+    '[part="empty"]': 'command-palette-empty-state',
+  },
+  'tp-carousel': {
+    '[part="previous focusable"]': 'carousel-previous',
+    '[part="next focusable"]': 'carousel-next',
+    '[part="root"]': 'carousel',
+    '.viewport': 'carousel-viewport',
+    '.track': 'carousel-track',
+  },
+  'tp-avatar': {
+    ':host': 'avatar',
+    img: 'avatar-image',
+    "[part='fallback']": 'avatar-fallback',
+  },
+  'tp-spinner': {
+    ':host': 'spinner',
+    '.visually-hidden': 'spinner-accessible-label',
+  },
+  'tp-separator': {
+    ':host': 'separator',
+  },
+  'tp-marker': {
+    ':host': 'marker',
+  },
+  'tp-skeleton': {
+    ':host': 'skeleton',
+  },
+  'tp-switch': {
+    '.root': 'switch',
+    '.thumb': 'switch-thumb',
+  },
+  'tp-otp-field': {
+    '.root': 'one-time-code-field',
+    "[part='group']": 'one-time-code-field-group',
+    '.slot': 'one-time-code-field-slot',
+  },
+};
