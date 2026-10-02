@@ -1,0 +1,16 @@
+import { html } from 'lit';
+const built = new URLSearchParams(location.search).has('built');
+const api = await import(/* @vite-ignore */ built ? '/dist/index.js' : '/src/index.ts');
+await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+const { plusIcon } = await import(/* @vite-ignore */ built ? '/dist/icons/plus.js' : '/src/icons/plus.ts');
+(document.querySelector('#tip-icon') as any).icon = plusIcon;
+const provider = new api.TooltipProvider({ openDelay: 200 });
+for (const id of ['basic', 'second']) (document.getElementById(id) as any).provider = provider;
+const handle = api.createTooltipHandle();
+const detached = document.getElementById('detached') as any;
+detached.handle = handle;
+detached.content = (payload: unknown) => html`Payload: ${String(payload)}`;
+handle.registerTrigger(document.getElementById('detached-a'), { identifier: 'a', payload: 'Alpha' });
+handle.registerTrigger(document.getElementById('detached-b'), { identifier: 'b', payload: 'Beta' });
+Object.assign(window, { tooltipAPI: api, tooltipProvider: provider, tooltipHandle: handle });
+document.documentElement.dataset.ready = '';

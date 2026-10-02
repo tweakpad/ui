@@ -1,4 +1,6 @@
+import { composedParent } from './focus.js';
 export type Side = 'top' | 'right' | 'bottom' | 'left';
+export type LogicalSide = Side | 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
 export type Alignment = 'start' | 'center' | 'end';
 export type Placement = Side | `${Side}-${Alignment}`;
 export type PositioningStrategy = 'absolute' | 'fixed';
@@ -65,7 +67,17 @@ export interface AutoUpdatePolicy {
   frameSynchronized?: boolean;
 }
 
+export interface VirtualAnchor {
+  getBoundingRectangle(): Rect;
+  contextElement?: Element;
+}
+export type AnchorGeometry = Element | VirtualAnchor;
+export type CollisionBoundary = 'clipping-ancestors' | Element | Element[] | Rect;
 export interface PositioningOptions {
+  boundary?: CollisionBoundary;
+  constrainSize?: boolean;
+  onPosition?: (result: PositioningResult) => void;
+  onInvalid?: () => void;
   placement?: Placement;
   offset?: number | { mainAxis?: number; crossAxis?: number; alignmentAxis?: number };
   strategy?: PositioningStrategy;
@@ -73,6 +85,7 @@ export interface PositioningOptions {
   allowedPlacements?: Placement[];
   arrow?: HTMLElement | null;
   arrowPadding?: number;
+  arrowStaticOffset?: number | string;
   matchReferenceWidth?: boolean;
   collision?: CollisionPolicy;
   padding?: number | Partial<Record<Side, number>>;
@@ -220,7 +233,11 @@ function applyOffset(
   return { x: coordinates.x + dx, y: coordinates.y + dy, dx, dy };
 }
 
-function candidatePlacements(initial: Placement, policy: CollisionPolicy): Placement[] {
+function candidatePlacements(
+  initial: Placement,
+  policy: CollisionPolicy,
+  direction: 'ltr' | 'rtl',
+): Placement[] {
   const { side, alignment } = placementParts(initial);
   const result = [initial];
   if ((policy.align ?? 'flip') === 'flip' && alignment !== 'center') {
@@ -236,7 +253,11 @@ function candidatePlacements(initial: Placement, policy: CollisionPolicy): Place
   if (policy.fallbackAxisSide && policy.fallbackAxisSide !== 'none') {
     const perpendicular: Side[] =
       side === 'top' || side === 'bottom' ? ['left', 'right'] : ['top', 'bottom'];
-    if (policy.fallbackAxisSide === 'end') perpendicular.reverse();
+    if (
+      (policy.fallbackAxisSide === 'end') !==
+      (direction === 'rtl' && (side === 'top' || side === 'bottom'))
+    )
+      perpendicular.reverse();
     for (const fallback of perpendicular) result.push(serializePlacement(fallback, alignment));
   }
   return [...new Set(result)];
@@ -272,7 +293,7 @@ export function computeSurfacePosition(
     ? options.allowedPlacements?.length
       ? options.allowedPlacements
       : allPlacements
-    : candidatePlacements(initial, policy);
+    : candidatePlacements(initial, policy, direction);
   const evaluated = candidates.map((placement) => {
     const base = baseCoordinates(anchor, surface, placement, direction);
     const offset = applyOffset(base, placement, options.offset ?? 8, direction);
@@ -302,11 +323,13 @@ export function computeSurfacePosition(
   const usableBottom = clipping.bottom - padding.bottom;
   const sidePolicy = policy.side ?? 'flip';
   const alignPolicy = policy.align ?? 'flip';
-  const allowShift = sidePolicy === 'shift' || alignPolicy === 'shift' || firstFit < 0;
-  if (allowShift) {
+  const vertical = ['top', 'bottom'].includes(placementParts(selected.placement).side);
+  const shiftAlignment = alignPolicy === 'shift' || (alignPolicy === 'flip' && firstFit < 0);
+  const shiftSide = sidePolicy === 'shift';
+  if (vertical ? shiftAlignment : shiftSide)
     x = Math.min(Math.max(x, usableLeft), Math.max(usableLeft, usableRight - surface.width));
+  if (vertical ? shiftSide : shiftAlignment)
     y = Math.min(Math.max(y, usableTop), Math.max(usableTop, usableBottom - surface.height));
-  }
   const positionedSurface = rect(x, y, surface.width, surface.height);
   const anchorOverflow = detectOverflow(anchor, clipping, 0);
   const surfaceOverflow = detectOverflow(positionedSurface, clipping, 0);
@@ -321,13 +344,22 @@ export function computeSurfacePosition(
     surfaceOverflow.left >= surface.width ||
     surfaceOverflow.right >= surface.width;
   const { side } = placementParts(selected.placement);
-  const availableWidth = Math.max(0, usableRight - usableLeft);
+  const distance =
+    typeof options.offset === 'number' ? options.offset : (options.offset?.mainAxis ?? 8);
+  const availableWidth = Math.max(
+    0,
+    side === 'left'
+      ? anchor.left - usableLeft - distance
+      : side === 'right'
+        ? usableRight - anchor.right - distance
+        : usableRight - usableLeft,
+  );
   const availableHeight = Math.max(
     0,
     side === 'top'
-      ? anchor.top - usableTop
+      ? anchor.top - usableTop - distance
       : side === 'bottom'
-        ? usableBottom - anchor.bottom
+        ? usableBottom - anchor.bottom - distance
         : usableBottom - usableTop,
   );
   const candidateData = evaluated.map((candidate) => ({
@@ -340,7 +372,12 @@ export function computeSurfacePosition(
       y: selected.coordinates.dy,
       placement: selected.placement,
     },
-    shift: { x: x - beforeShift.x, y: y - beforeShift.y, mainAxis: true, crossAxis: true },
+    shift: {
+      x: x - beforeShift.x,
+      y: y - beforeShift.y,
+      mainAxis: shiftAlignment,
+      crossAxis: shiftSide,
+    },
     hide: { strategy: 'reference-hidden', offsets: anchorOverflow, referenceHidden, escaped },
   };
   if (options.automatic)
@@ -349,8 +386,19 @@ export function computeSurfacePosition(
     stageData.flip = { index: selectedIndex, candidates: candidateData };
 
   if (options.arrow) {
-    const arrowRect = fromDomRect(options.arrow.getBoundingClientRect());
-    const arrowPadding = options.arrowPadding ?? 0;
+    const measured = options.arrow.getBoundingClientRect();
+    const arrowRect = rect(
+      0,
+      0,
+      options.arrow.offsetWidth || measured.width,
+      options.arrow.offsetHeight || measured.height,
+    );
+    const length = side === 'top' || side === 'bottom' ? surface.width : surface.height;
+    const arrowLength = side === 'top' || side === 'bottom' ? arrowRect.width : arrowRect.height;
+    const arrowPadding = Math.min(
+      Math.max(0, options.arrowPadding ?? 0),
+      Math.max(0, (length - arrowLength) / 2),
+    );
     if (side === 'top' || side === 'bottom') {
       const ideal = anchor.left + anchor.width / 2 - x - arrowRect.width / 2;
       const arrowX = Math.max(
@@ -392,22 +440,77 @@ function viewportRect(ownerWindow: Window): Rect {
   );
 }
 
-function overflowAncestors(element: Element): EventTarget[] {
-  const result: EventTarget[] = [];
-  let current = element.parentElement;
-  while (current) {
-    const style = getComputedStyle(current);
+export function resolveSide(side: LogicalSide, element: Element): Side {
+  const style = element.ownerDocument.defaultView!.getComputedStyle(element);
+  const vertical = style.writingMode.startsWith('vertical');
+  const inlineStart: Side = vertical
+    ? style.direction === 'rtl'
+      ? 'bottom'
+      : 'top'
+    : style.direction === 'rtl'
+      ? 'right'
+      : 'left';
+  const blockStart: Side = vertical
+    ? style.writingMode === 'vertical-rl'
+      ? 'right'
+      : 'left'
+    : 'top';
+  if (side === 'inline-start') return inlineStart;
+  if (side === 'inline-end') return oppositeSide(inlineStart);
+  if (side === 'block-start') return blockStart;
+  if (side === 'block-end') return oppositeSide(blockStart);
+  return side;
+}
+function overflowAncestors(element: Element): Element[] {
+  const result: Element[] = [];
+  for (let current = composedParent(element); current; current = composedParent(current)) {
+    if (!(current instanceof Element)) continue;
+    const style = element.ownerDocument.defaultView!.getComputedStyle(current);
     if (
       /(auto|scroll|overlay|hidden|clip)/.test(
         `${style.overflow}${style.overflowX}${style.overflowY}`,
       )
     )
       result.push(current);
-    current = current.parentElement;
   }
-  const ownerWindow = element.ownerDocument.defaultView;
-  if (ownerWindow) result.push(ownerWindow);
   return result;
+}
+function intersect(a: Rect, b: Rect): Rect {
+  const x = Math.max(a.left, b.left),
+    y = Math.max(a.top, b.top);
+  return rect(
+    x,
+    y,
+    Math.max(0, Math.min(a.right, b.right) - x),
+    Math.max(0, Math.min(a.bottom, b.bottom) - y),
+  );
+}
+function innerRect(element: Element): Rect {
+  const box = element.getBoundingClientRect();
+  const html = element as HTMLElement;
+  const scaleX = html.offsetWidth ? box.width / html.offsetWidth : 1;
+  const scaleY = html.offsetHeight ? box.height / html.offsetHeight : 1;
+  return rect(
+    box.left + element.clientLeft * scaleX,
+    box.top + element.clientTop * scaleY,
+    element.clientWidth * scaleX,
+    element.clientHeight * scaleY,
+  );
+}
+function clippingRect(
+  element: Element,
+  root: Rect,
+  boundary: CollisionBoundary = 'clipping-ancestors',
+): Rect {
+  if (typeof boundary === 'object' && !Array.isArray(boundary) && 'x' in boundary)
+    return intersect(root, boundary);
+  const elements =
+    boundary === 'clipping-ancestors'
+      ? overflowAncestors(element)
+      : Array.isArray(boundary)
+        ? boundary
+        : [boundary];
+  return elements.reduce((result, ancestor) => intersect(result, innerRect(ancestor)), root);
 }
 
 function roundToDevicePixel(value: number, ownerWindow: Window): number {
@@ -418,6 +521,9 @@ function roundToDevicePixel(value: number, ownerWindow: Window): number {
 function clearPosition(surface: HTMLElement): void {
   surface.removeAttribute('data-positioned');
   surface.removeAttribute('data-placement');
+  surface.removeAttribute('data-side');
+  surface.removeAttribute('data-align');
+  surface.removeAttribute('data-anchor-hidden');
   surface.removeAttribute('data-reference-hidden');
   surface.removeAttribute('data-escaped');
   surface.style.removeProperty('translate');
@@ -435,7 +541,7 @@ function clearPosition(surface: HTMLElement): void {
 }
 
 export function positionSurface(
-  reference: Element,
+  reference: AnchorGeometry,
   surface: HTMLElement,
   options: PositioningOptions = {},
 ): PositioningHandle {
@@ -443,33 +549,82 @@ export function positionSurface(
   let generation = 0;
   let current: PositioningResult | null = null;
   let scheduledFrame = 0;
-  const ownerWindow = reference.ownerDocument.defaultView ?? window;
+  const context =
+    'getBoundingRectangle' in reference ? (reference.contextElement ?? surface) : reference;
+  const ownerWindow = context.ownerDocument.defaultView ?? window;
 
   const update = async (): Promise<PositioningResult | null> => {
     const pass = ++generation;
-    if (destroyed || !reference.isConnected || !surface.isConnected) {
+    if (destroyed || !context.isConnected || !surface.isConnected) {
       current = null;
       clearPosition(surface);
+      options.onInvalid?.();
       return null;
     }
-    const anchorRect = fromDomRect(reference.getBoundingClientRect());
-    const surfaceRect = fromDomRect(surface.getBoundingClientRect());
-    const direction = getComputedStyle(reference).direction === 'rtl' ? 'rtl' : 'ltr';
-    let result = computeSurfacePosition(
-      anchorRect,
-      surfaceRect,
-      viewportRect(ownerWindow),
-      options,
-      direction,
-    );
+    const anchorRect =
+      'getBoundingRectangle' in reference
+        ? reference.getBoundingRectangle()
+        : fromDomRect(reference.getBoundingClientRect());
+    const root = viewportRect(ownerWindow);
+    const topLayer = surface.matches(':popover-open, :modal');
+    const clipping =
+      topLayer && (!options.boundary || options.boundary === 'clipping-ancestors')
+        ? root
+        : clippingRect(surface, root, options.boundary);
+    if (options.constrainSize) {
+      const padding = paddingRecord(options.padding);
+      surface.style.setProperty(
+        '--tp-available-width',
+        `${Math.max(0, clipping.width - padding.left - padding.right)}px`,
+      );
+      surface.style.setProperty(
+        '--tp-available-height',
+        `${Math.max(0, clipping.height - padding.top - padding.bottom)}px`,
+      );
+    }
+    const surfaceRect = rect(0, 0, surface.offsetWidth, surface.offsetHeight);
+    const direction = ownerWindow.getComputedStyle(context).direction === 'rtl' ? 'rtl' : 'ltr';
+    let result = computeSurfacePosition(anchorRect, surfaceRect, clipping, options, direction);
     if (pass !== generation || destroyed) return null;
     if (!result) {
       current = null;
       clearPosition(surface);
       surface.dataset.positioningDiagnostic = 'invalid-geometry';
+      options.onInvalid?.();
       return null;
     }
     surface.removeAttribute('data-positioning-diagnostic');
+    const anchorClip = clippingRect(context, root);
+    result.stageData.hide.referenceHidden =
+      anchorRect.bottom <= anchorClip.top ||
+      anchorRect.top >= anchorClip.bottom ||
+      anchorRect.right <= anchorClip.left ||
+      anchorRect.left >= anchorClip.right;
+    if (options.constrainSize) {
+      surface.style.setProperty('--tp-available-width', `${result.availableWidth}px`);
+      surface.style.setProperty('--tp-available-height', `${result.availableHeight}px`);
+      if (
+        surface.offsetWidth !== surfaceRect.width ||
+        surface.offsetHeight !== surfaceRect.height
+      ) {
+        const resized = computeSurfacePosition(
+          anchorRect,
+          rect(0, 0, surface.offsetWidth, surface.offsetHeight),
+          clipping,
+          { ...options, placement: result.placement, collision: { side: 'none', align: 'shift' } },
+          direction,
+        );
+        if (resized)
+          result = {
+            ...resized,
+            stageData: {
+              ...resized.stageData,
+              hide: result.stageData.hide,
+              ...(result.stageData.flip ? { flip: result.stageData.flip } : {}),
+            },
+          };
+      }
+    }
     if (options.strategy !== 'fixed') {
       const offsetParent = surface.offsetParent;
       if (offsetParent instanceof HTMLElement) {
@@ -495,6 +650,10 @@ export function positionSurface(
     }
     surface.dataset.positioned = '';
     surface.dataset.placement = result.placement;
+    const resolved = placementParts(result.placement);
+    surface.dataset.side = resolved.side;
+    surface.dataset.align = resolved.alignment;
+    surface.toggleAttribute('data-anchor-hidden', result.stageData.hide.referenceHidden);
     surface.toggleAttribute('data-reference-hidden', result.stageData.hide.referenceHidden);
     surface.toggleAttribute('data-escaped', result.stageData.hide.escaped);
     surface.style.setProperty('--tp-anchor-width', `${result.anchorWidth}px`);
@@ -507,11 +666,25 @@ export function positionSurface(
       const arrow = result.stageData.arrow;
       options.arrow.style.removeProperty('left');
       options.arrow.style.removeProperty('top');
-      if (arrow.x !== undefined) options.arrow.style.left = `${arrow.x}px`;
-      if (arrow.y !== undefined) options.arrow.style.top = `${arrow.y}px`;
-      options.arrow.toggleAttribute('data-uncentered', arrow.centerOffset !== 0);
+      const vertical = resolved.side === 'top' || resolved.side === 'bottom';
+      const shifted = vertical ? result.stageData.shift.x !== 0 : result.stageData.shift.y !== 0;
+      const staticOffset = !shifted ? options.arrowStaticOffset : undefined;
+      const offset =
+        staticOffset === undefined
+          ? undefined
+          : typeof staticOffset === 'number'
+            ? `${staticOffset}px`
+            : /^-?\d+(?:\.\d+)?(?:%|px)$/.test(staticOffset)
+              ? staticOffset
+              : undefined;
+      if (arrow.x !== undefined) options.arrow.style.left = offset ?? `${arrow.x}px`;
+      if (arrow.y !== undefined) options.arrow.style.top = offset ?? `${arrow.y}px`;
+      options.arrow.toggleAttribute('data-uncentered', Math.abs(arrow.centerOffset) > 0.5);
+      options.arrow.dataset.side = resolved.side;
+      options.arrow.dataset.align = resolved.alignment;
     }
     current = { ...result, x, y };
+    options.onPosition?.(current);
     return current;
   };
 
@@ -528,7 +701,9 @@ export function positionSurface(
   if (policy) {
     if (policy.ancestorScroll ?? true) {
       for (const target of new Set([
-        ...overflowAncestors(reference),
+        ...overflowAncestors(context),
+        ownerWindow,
+        ...(ownerWindow.visualViewport ? [ownerWindow.visualViewport] : []),
         ...overflowAncestors(surface),
       ])) {
         target.addEventListener('scroll', schedule, { passive: true });
@@ -546,7 +721,7 @@ export function positionSurface(
       'ResizeObserver' in ownerWindow
     ) {
       const observer = new ownerWindow.ResizeObserver(schedule);
-      observer.observe(reference);
+      observer.observe(context);
       observer.observe(surface);
       cleanups.push(() => observer.disconnect());
     }
@@ -555,13 +730,24 @@ export function positionSurface(
       'IntersectionObserver' in ownerWindow
     ) {
       const observer = new ownerWindow.IntersectionObserver(schedule);
-      observer.observe(reference);
+      observer.observe(context);
       cleanups.push(() => observer.disconnect());
     }
-    if (policy.frameSynchronized) {
+    if (policy.frameSynchronized || (policy.anchorLayoutShift ?? true)) {
       let frame = 0;
+      let previous = '';
       const tick = (): void => {
-        schedule();
+        const b = context.getBoundingClientRect();
+        const sample = [
+          context.isConnected,
+          b.x,
+          b.y,
+          b.width,
+          b.height,
+          ownerWindow.getComputedStyle(context).direction,
+        ].join(',');
+        if (sample !== previous || policy.frameSynchronized) schedule();
+        previous = sample;
         frame = ownerWindow.requestAnimationFrame(tick);
       };
       frame = ownerWindow.requestAnimationFrame(tick);

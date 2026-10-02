@@ -284,6 +284,47 @@ for (const part of [
 ])
   sharedPresentation[part] = surfaceAppearance;
 
+// Shared anchored presence recipe; positioner geometry remains in Foundation.
+for (const prefix of ['popover', 'preview-card', 'tooltip']) {
+  sharedPresentation[`${prefix}-content`] = [
+    ...surfaceAppearance,
+    rule({
+      opacity: '1',
+      transform: 'scale(1) translate(0, 0)',
+      transition:
+        'opacity calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard), transform calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+    }),
+    rule(
+      {
+        opacity: '0',
+        transform:
+          'scale(.96) translate(var(--tp-surface-enter-x, 0px), var(--tp-surface-enter-y, 0px))',
+      },
+      '&:is([data-starting-style], [data-ending-style])',
+    ),
+    rule({ '--tp-surface-enter-y': '4px' }, '&[data-side="top"]'),
+    rule({ '--tp-surface-enter-y': '-4px' }, '&[data-side="bottom"]'),
+    rule({ '--tp-surface-enter-x': '4px' }, '&[data-side="left"]'),
+    rule({ '--tp-surface-enter-x': '-4px' }, '&[data-side="right"]'),
+    rule({ transition: 'none' }, '&:is([data-instant], [data-tp-motion-driven])'),
+  ];
+}
+sharedPresentation['tooltip-content'] = [
+  ...sharedPresentation['tooltip-content']!,
+  rule({
+    'max-inline-size': 'min(20rem, var(--tp-available-width))',
+    padding: 'calc(var(--tp-space-1) * 1.5) var(--tp-space-3)',
+    border: '0',
+    'border-radius': 'var(--tp-radius-md)',
+    background: 'var(--tp-foreground)',
+    color: 'var(--tp-background)',
+    'font-size': 'var(--tp-text-xs)',
+    'line-height': 'var(--tp-leading-normal)',
+    'box-shadow': 'none',
+  }),
+];
+sharedPresentation['tooltip-arrow'] = [rule({ fill: 'var(--tp-foreground)' })];
+
 // Card and dialog-family footers share section paint; each owner supplies layout.
 const sectionFooterAppearance = [
   rule({

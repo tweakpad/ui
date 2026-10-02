@@ -61,7 +61,7 @@ export class SurfaceState {
     const input = this.options.read();
     if ((input !== undefined) !== this.#controlled) {
       this.options.diagnostic(
-        'Keep the initial controlled/uncontrolled mode. Use setOpen() for an uncontrolled dialog.',
+        'Keep the initial controlled/uncontrolled mode. Use setOpen() for an uncontrolled surface.',
       );
       return;
     }
@@ -79,13 +79,16 @@ export class SurfaceState {
     sourceEvent?: Event,
     trigger?: Element,
     accept?: () => void,
+    associationChanged = false,
   ): void {
     this.initialize();
     if (this.#publishing) {
-      this.#queue.push(() => this.request(open, reason, sourceEvent, trigger, accept));
+      this.#queue.push(() =>
+        this.request(open, reason, sourceEvent, trigger, accept, associationChanged),
+      );
       return;
     }
-    if (open === this.#open) {
+    if (open === this.#open && !associationChanged) {
       if (open) accept?.();
       return;
     }
@@ -96,7 +99,7 @@ export class SurfaceState {
       this.options.dispatch(event);
       if (event.defaultPrevented || event.detail.cancelled) return;
       this.#pending = { open, retain: event.retainOnClose, ...(accept ? { accept } : {}) };
-      if (this.#controlled) this.sync();
+      if (this.#controlled && open !== this.#open) this.sync();
       else {
         this.retained = !open && event.retainOnClose;
         this.#open = open;
