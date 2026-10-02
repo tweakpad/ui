@@ -1,6 +1,8 @@
 import type { ChangeReason, ValueChangeDetail } from './types.js';
 
 export interface TpChangeEventOptions {
+  /** Structural invariant repairs notify after commit and cannot be canceled. */
+  cancelable?: boolean;
   allowPropagation?: boolean;
   metadata?: Record<string, unknown>;
   trigger?: Element;
@@ -44,14 +46,14 @@ export class TpValueChangeEvent<T> extends CustomEvent<ValueChangeDetail<T>> {
     super(TpValueChangeEvent.eventName, {
       bubbles: true,
       composed: true,
-      cancelable: true,
+      cancelable: options.cancelable ?? true,
       detail: changeDetail(value, previousValue, reason, sourceEvent, options),
     });
   }
 
   override preventDefault(): void {
     super.preventDefault();
-    this.detail.cancelled = true;
+    if (this.cancelable) this.detail.cancelled = true;
   }
 }
 

@@ -1,6 +1,7 @@
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
+import { SyntheticPress } from '../foundation/synthetic-press.js';
 import type { LogicalPosition } from '../foundation/types.js';
 import type { IconDefinition } from '../icons/types.js';
 
@@ -106,7 +107,7 @@ export class TpButton extends TpElement {
   nativeAction = true;
   focusableWhenDisabled = false;
   declare ariaLabel: string | null;
-  #spacePressed = false;
+  readonly #press = new SyntheticPress(() => this.click());
   #unnamedReported = false;
 
   protected override render() {
@@ -158,8 +159,8 @@ export class TpButton extends TpElement {
           aria-busy=${loading ? 'true' : nothing}
           aria-label=${this.ariaLabel || nothing}
           @click=${this.#activate}
-          @keydown=${this.#keyDown}
-          @keyup=${this.#keyUp}
+          @keydown=${this.#press.keyDown}
+          @keyup=${this.#press.keyUp}
           @focusin=${this.#focusIn}
           @focusout=${this.#focusOut}
           >${content}</span
@@ -282,25 +283,8 @@ export class TpButton extends TpElement {
   };
 
   #focusOut = (): void => {
-    this.#spacePressed = false;
+    this.#press.reset();
     this.removeAttribute('data-focus-visible');
-  };
-
-  #keyDown = (event: KeyboardEvent): void => {
-    if (event.key === ' ') {
-      event.preventDefault();
-      this.#spacePressed = true;
-    } else if (event.key === 'Enter' && !event.repeat) {
-      event.preventDefault();
-      this.click();
-    }
-  };
-
-  #keyUp = (event: KeyboardEvent): void => {
-    if (event.key !== ' ' || !this.#spacePressed) return;
-    event.preventDefault();
-    this.#spacePressed = false;
-    this.click();
   };
 
   #activate = (event: MouseEvent): void => {

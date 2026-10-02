@@ -70,7 +70,7 @@ const examples = {
   `,
   'tp-switch': () => html`<tp-switch checked>Notifications</tp-switch>`,
   'tp-tabs': () => html`
-    <tp-tabs value="overview">
+    <tp-tabs default-value="overview">
       <button slot="tab" value="overview">Overview</button>
       <button slot="tab" value="activity">Activity</button>
       <div slot="panel" value="overview">Project overview</div>
