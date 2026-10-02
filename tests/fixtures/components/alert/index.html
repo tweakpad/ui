@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Alert verification</title>
+    <link rel="stylesheet" href="/src/styles.css">
+    <style>
+      body { margin: 0; background: var(--tp-background); color: var(--tp-foreground); font-family: var(--tp-font-sans); }
+      main { max-width: 760px; margin: 24px auto; padding: 16px; display: grid; gap: 20px; }
+      h1 { font-size: 1.25rem; margin: 0; }
+      #narrow, #rtl { inline-size: 280px; max-inline-size: 100%; }
+      #empty { inline-size: 280px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Alert verification</h1>
+      <tp-alert id="plain" title="Information: update available">Review the release notes before updating.</tp-alert>
+      <tp-alert id="success" severity="success" announcement="polite" title="Fallback title">
+        <tp-icon slot="icon" size="1rem"></tp-icon>
+        <span slot="title">Changes <strong>saved</strong> <tp-badge variant="secondary">Synced</tp-badge></span>
+        Your work is stored. <a href="#history">View history</a>.
+      </tp-alert>
+      <tp-alert id="warning" severity="warning" title="Warning: storage almost full">
+        <tp-icon slot="icon" size="1rem"></tp-icon>
+        Remove unused files to make room.
+        <tp-button id="action" slot="actions" size="sm" variant="outline">Manage storage</tp-button>
+      </tp-alert>
+      <tp-alert id="narrow" severity="danger" announcement="assertive" title="Could not connect">
+        <tp-icon slot="icon" size="1rem"></tp-icon>
+        Unable to reach https://example.com/verylongunbrokensessionidentifier123456789012345678901234567890
+        <tp-button slot="actions" size="sm" variant="outline">Retry</tp-button>
+      </tp-alert>
+      <tp-alert id="rtl" dir="rtl" severity="warning" title="تحذير: تعذر حفظ التغييرات">
+        <tp-icon slot="icon" size="1rem"></tp-icon>
+        راجع الاتصال ثم حاول مرة أخرى.
+        <tp-button slot="actions" size="sm" variant="outline">إعادة المحاولة</tp-button>
+      </tp-alert>
+      <tp-alert id="title-only" title="Success! Changes saved."></tp-alert>
+      <tp-alert id="description-only">Information: no title or icon is required.</tp-alert>
+      <tp-alert id="empty"></tp-alert>
+      <tp-button id="outside" variant="outline">Outside action</tp-button>
+      <div id="dynamic"></div>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

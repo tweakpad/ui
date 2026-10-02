@@ -14,6 +14,7 @@ if (entries.length !== 62) {
 
 const outputDirectory = join(root, 'src/stories/generated');
 const authoredStories = new Set([
+  'tp-alert',
   'tp-alert-dialog',
   'tp-dialog',
   'tp-tooltip',

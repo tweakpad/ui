@@ -324,9 +324,7 @@ const examples = {
   `,
   'tp-spinner': () => html`<tp-spinner label="Loading projects"></tp-spinner>`,
   'tp-toast': () => html`<tp-toast open duration="0" dismissible>Changes saved</tp-toast>`,
-  'tp-alert': () => html`
-    <tp-alert title="Update available" dismissible>Restart to install it.</tp-alert>
-  `,
+  'tp-alert': () => html` <tp-alert title="Update available">Restart to install it.</tp-alert> `,
   'tp-aspect-ratio': () => html` <tp-aspect-ratio><div>16:9</div></tp-aspect-ratio> `,
   'tp-attachment': () => html`
     <tp-attachment filename="report.pdf" file-size="245760" removable></tp-attachment>

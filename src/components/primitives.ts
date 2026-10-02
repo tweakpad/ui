@@ -20,63 +20,8 @@ export const primitiveMotionRoles = {
   },
 } as const satisfies Record<string, MotionRoleDefinition>;
 
-export class TpAlert extends TpElement {
-  static tagName = 'tp-alert';
-  static override properties = {
-    ...TpElement.properties,
-    severity: { type: String, reflect: true },
-    title: { type: String },
-    announcement: { type: String, reflect: true },
-  };
-  static override styles = [
-    TpElement.styles,
-    controlStyles,
-    css`
-      :host {
-        display: block;
-      }
-
-      .alert {
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        align-items: start;
-      }
-
-      :host([severity='danger']) {
-        --tp-alert-color: var(--tp-destructive);
-      }
-
-      :host([severity='warning']) {
-        --tp-alert-color: var(--tp-warning);
-      }
-
-      :host([severity='success']) {
-        --tp-alert-color: var(--tp-success);
-      }
-    `,
-  ];
-  severity: 'informational' | 'success' | 'warning' | 'danger' = 'informational';
-  title = '';
-  announcement: 'off' | 'polite' | 'assertive' = 'off';
-  protected override render() {
-    const title = this.title
-      ? html`<div class="title" part="alert-title">${this.title}</div>`
-      : nothing;
-    return html`<div
-      class="surface alert"
-      part="alert"
-      role=${this.announcement === 'assertive' ? 'alert' : this.announcement === 'polite' ? 'status' : nothing}
-      aria-live=${this.announcement}
-    >
-      <span part="alert-mark"><slot name="icon"></slot></span>
-      <div>
-        ${title}
-        <div part="alert-description"><slot></slot></div>
-      </div>
-      <span part="alert-action"><slot name="actions"></slot></span>
-    </div>`;
-  }
-}
+export { TpAlert } from './alert/index.js';
+export type { AlertSeverity, AlertAnnouncement } from './alert/index.js';
 
 export class TpAspectRatio extends TpElement {
   static tagName = 'tp-aspect-ratio';

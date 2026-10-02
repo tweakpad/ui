@@ -266,7 +266,6 @@ sharedPresentation['questionnaire-input-region'] = fieldAppearance.map((entry) =
   selector: (entry.selector ?? '&').replace('&', '& .control'),
 }));
 for (const part of [
-  'alert',
   'attachment-root',
   'toast-toast',
   'combobox-content',
