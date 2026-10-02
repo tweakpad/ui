@@ -1,0 +1,7 @@
+interface:
+  display_name: 'Tweakpad Component'
+  short_description: 'Implement cohesive, spec-governed Lit components'
+  default_prompt: 'Use $tweakpad-component to implement the requested Tweakpad component and complete its contract, reuse, documentation, and Chrome DevTools MCP verification checkpoints.'
+
+policy:
+  allow_implicit_invocation: true
