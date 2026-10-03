@@ -74,12 +74,29 @@ export class PopupViewportController implements ReactiveController {
     this.#observer?.disconnect();
     this.#currentElement = current;
     const view = current?.ownerDocument.defaultView;
-    this.#observer = view && current ? new view.ResizeObserver(() => this.#measure()) : null;
+    this.#observer =
+      view && current ? new view.ResizeObserver(([entry]) => this.#measure(entry)) : null;
     if (current) this.#observer?.observe(current);
     this.#measure();
   }
-  #measure(): void {
-    const box = this.#currentElement?.getBoundingClientRect();
+  #measure(entry?: ResizeObserverEntry): void {
+    const element = this.#currentElement;
+    // Presence transforms change painted bounds, not the layout space required
+    // by the content. Measuring them here clips the settled viewport.
+    const size = entry?.borderBoxSize[0];
+    const vertical =
+      element &&
+      element.ownerDocument.defaultView
+        ?.getComputedStyle(element)
+        .writingMode.startsWith('vertical');
+    const box = size
+      ? {
+          width: vertical ? size.blockSize : size.inlineSize,
+          height: vertical ? size.inlineSize : size.blockSize,
+        }
+      : element
+        ? { width: element.offsetWidth, height: element.offsetHeight }
+        : null;
     if (!box || (!box.width && !box.height)) return;
     if (box.width === this.#width && box.height === this.#height) return;
     this.#width = box.width;

@@ -656,7 +656,9 @@ export function positionSurface(
       topLayer && (!options.boundary || options.boundary === 'clipping-ancestors')
         ? root
         : clippingRect(surface, root, options.boundary);
-    if (options.constrainSize) {
+    // Seed the first measurement only. Expanding an already constrained popup
+    // clamps its scroller to zero before the final available size is restored.
+    if (options.constrainSize && !current) {
       const padding = paddingRecord(options.padding);
       surface.style.setProperty(
         '--tp-available-width',

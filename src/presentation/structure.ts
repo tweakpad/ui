@@ -48,6 +48,7 @@ export const registeredPartStructure: PresentationDictionary = {
               'inline-size': '100%',
               'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
               'text-align': 'start',
+              'justify-content': 'start',
               cursor: 'pointer',
             },
           },

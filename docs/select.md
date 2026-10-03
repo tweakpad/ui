@@ -18,6 +18,10 @@
 </tp-field>
 ```
 
+The default selected-item alignment is established when the popup opens. Hovering
+an option changes its highlight without moving the popup or scrolling the list.
+Keyboard navigation reveals the focused option within the list.
+
 Native `option` and `optgroup` children are source declarations. Select renders
 their text and values through its own semantic option parts. `items` supports
 rich labels and arbitrary values. Import Lit's `html` for rich content and use

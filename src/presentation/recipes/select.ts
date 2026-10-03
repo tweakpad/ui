@@ -1,5 +1,9 @@
 import type { PresentationDictionary } from '../resolver.js';
-import { popupSpacingAppearance, popupItemSpacingAppearance } from './command-surface.js';
+import {
+  popupSpacingAppearance,
+  popupItemSpacingAppearance,
+  commandSeparatorAppearance,
+} from './command-surface.js';
 import { textControlAppearance } from './text-controls.js';
 
 /** shadcn bases/base Select, style-nova.css cn-select-*; shared field/surface base remains. */
@@ -107,14 +111,7 @@ export const selectAppearance: PresentationDictionary = {
       declarations: { opacity: 'var(--tp-opacity-disabled)', cursor: 'not-allowed' },
     },
   ],
-  'select-separator': [
-    {
-      declarations: {
-        background: 'var(--tp-border)',
-        margin: 'var(--tp-space-1) calc(-1 * var(--tp-space-1))',
-      },
-    },
-  ],
+  'select-separator': commandSeparatorAppearance,
   'select-scroll-up-button': [
     {
       declarations: {

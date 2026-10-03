@@ -120,7 +120,7 @@ export const navigationMenuAppearance: PresentationDictionary = {
       declarations: {
         display: 'flex',
         'align-items': 'center',
-        'border-radius': 'var(--tp-radius-lg)',
+        'border-radius': 'var(--tp-radius-md)',
         'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
         'font-size': 'var(--tp-text-sm)',
         'text-decoration': 'none',

@@ -1,25 +1,12 @@
 # Menubar
 
+The base example includes icons, KeyHint shortcuts, grouped commands, a Share
+submenu, disabled commands, checkboxes, and radio choices. Menubar reuses Menu's
+surface inset, separator rhythm, and item radius; spacing comes from the theme.
+Shortcut hints are labels and do not install keyboard shortcuts.
+
 `tp-menubar` coordinates real Menu children using one active-menu value. It is an
 application command bar, not a site-navigation container.
-
-```html
-<script type="module">
-  import '@tweakpad/ui/register';
-  import '@tweakpad/ui/styles.css';
-</script>
-<tp-menubar aria-label="Editor">
-  <tp-menu value="file" label="File actions">
-    <tp-button slot="trigger" variant="ghost">File</tp-button>
-    <tp-menu-item>New document</tp-menu-item>
-    <tp-menu-item>Open</tp-menu-item>
-  </tp-menu>
-  <tp-menu value="view" label="View actions">
-    <tp-button slot="trigger" variant="ghost">View</tp-button>
-    <tp-menu-checkbox-item>Show ruler</tp-menu-checkbox-item>
-  </tp-menu>
-</tp-menubar>
-```
 
 | Root property / attribute      | Type                        | Default                       | Behavior                                                           |
 | ------------------------------ | --------------------------- | ----------------------------- | ------------------------------------------------------------------ |

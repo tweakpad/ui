@@ -822,7 +822,7 @@ export const componentAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        background: 'var(--tp-border)',
+        'background-color': 'var(--tp-border)',
       },
     },
   ],

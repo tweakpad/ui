@@ -788,6 +788,7 @@ export class TpSelect extends TpFormElement<unknown> {
     });
   }
   protected override updated(changed: PropertyValues<this>): void {
+    if (changed.has('alignItemWithTrigger')) this.#alignedItemOffset = undefined;
     if (this.container) this.#portal.update(this.container, this.#popup());
     else this.#portal.clear();
     super.updated(changed);
@@ -951,11 +952,12 @@ export class TpSelect extends TpFormElement<unknown> {
       },
     });
   }
+  #alignedItemOffset: number | undefined;
   #alignSelectedItem(): void {
     if (!this.alignItemWithTrigger || !this.#trigger || !this.#content || !this.#list) return;
     const item = this.#collection.element(
-      this.#collection.highlighted ??
-        this.#collection.source.find((record) => this.#selected(record.value)),
+      this.#collection.source.find((record) => this.#selected(record.value)) ??
+        this.#collection.highlighted,
     );
     if (!item) return;
     const trigger = this.#trigger.getBoundingClientRect(),
@@ -968,14 +970,17 @@ export class TpSelect extends TpFormElement<unknown> {
         : (this.collisionPadding.top ?? themeSpacing(this, 3));
     if (content.height > view.innerHeight - padding * 2 || option.height > trigger.height * 2)
       return;
-    const desired =
-      trigger.top + trigger.height / 2 - (option.top - content.top + option.height / 2);
+    const initialAlignment = this.#alignedItemOffset === undefined;
+    this.#alignedItemOffset ??= option.top - content.top + option.height / 2;
+    const desired = trigger.top + trigger.height / 2 - this.#alignedItemOffset;
     const top = Math.max(padding, Math.min(view.innerHeight - padding - content.height, desired));
     const delta = top - content.top;
     const current = this.#position?.current;
     if (current) this.#content.style.translate = `${current.x}px ${current.y + delta}px`;
     const scroll = top - desired;
-    if (scroll) this.#list.scrollTop = Math.max(0, this.#list.scrollTop + scroll);
+    if (initialAlignment && scroll) {
+      this.#list.scrollTop = Math.max(0, this.#list.scrollTop + scroll);
+    }
   }
   #triggerPointerDown(event: PointerEvent): void {
     this.#preventTriggerClick = false;
@@ -1107,7 +1112,8 @@ export class TpSelect extends TpFormElement<unknown> {
       if (!this.open) return;
       const element = this.#collection.element(this.#collection.highlighted);
       element?.focus({ preventScroll: true });
-      element?.scrollIntoView({ block: 'nearest' });
+      const scrollOptions = { block: 'nearest', inline: 'nearest', container: 'nearest' } as const;
+      element?.scrollIntoView(scrollOptions);
     });
   }
   #initialFocus(): void {
@@ -1116,6 +1122,7 @@ export class TpSelect extends TpFormElement<unknown> {
     if (element && isAvailable(element)) element.focus({ preventScroll: true });
   }
   #openCommitted(open: boolean): void {
+    this.#alignedItemOffset = undefined;
     this.#wasOpen = open;
     this.#space = false;
     if (open) {

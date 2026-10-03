@@ -1,6 +1,7 @@
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import {
   commandSurfaceAppearance,
+  popupSpacingAppearance,
   commandItemAppearance,
   commandLabelAppearance,
   commandSeparatorAppearance,
@@ -66,9 +67,9 @@ export const menuFamilyAppearance: PresentationDictionary = {
         gap: 'calc(var(--tp-spacing) / 2)',
         'border-radius': 'var(--tp-radius-lg)',
         border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-        padding: 'calc(var(--tp-spacing) * .75)',
       },
     },
+    ...popupSpacingAppearance,
   ],
   'menubar-menu': [],
   'menubar-trigger': [
@@ -77,9 +78,9 @@ export const menuFamilyAppearance: PresentationDictionary = {
         background: 'transparent',
         color: 'var(--tp-foreground)',
         border: '0',
-        'border-radius': 'var(--tp-radius-sm)',
-        'padding-block': 'calc(var(--tp-spacing) / 2)',
-        'padding-inline': 'calc(var(--tp-spacing) * 1.5)',
+        'border-radius': 'var(--tp-radius-md)',
+        // Include the control's minimum height in the horizontal inset too.
+        padding: 'max(var(--tp-space-2), calc((var(--tp-control-height-md) - 1lh) / 2))',
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
       },

@@ -45,7 +45,7 @@ export class TpMenuItem extends TpElement {
       .label {
         display: flex;
         align-items: center;
-        gap: var(--tp-space-2);
+        gap: inherit;
         min-inline-size: 0;
         flex: 1 1 auto;
       }

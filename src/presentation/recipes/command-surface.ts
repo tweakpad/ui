@@ -2,7 +2,12 @@ import type { PresentationRule } from '../resolver.js';
 
 /** One default inset for command, navigation and selection popup surfaces. */
 export const popupSpacingAppearance: readonly PresentationRule[] = [
-  { declarations: { padding: 'var(--tp-space-2)' } },
+  {
+    declarations: {
+      '--_tp-popup-spacing': 'var(--tp-space-2)',
+      padding: 'var(--_tp-popup-spacing)',
+    },
+  },
 ];
 
 /** Default row rhythm shared by command, navigation and selection popup items. */
@@ -10,8 +15,7 @@ export const popupItemSpacingAppearance: readonly PresentationRule[] = [
   {
     declarations: {
       gap: 'var(--tp-space-3)',
-      'padding-block': 'var(--tp-space-1)',
-      'padding-inline': 'var(--tp-space-2)',
+      padding: 'var(--tp-space-2)',
     },
   },
 ];
@@ -134,10 +138,16 @@ export const commandLabelAppearance: readonly PresentationRule[] = [
 export const commandSeparatorAppearance: readonly PresentationRule[] = [
   {
     declarations: {
-      background: 'color-mix(in oklab, var(--tp-foreground) 5%, transparent)',
+      'background-color': 'var(--tp-border)',
       border: '0',
-      'margin-block': 'var(--tp-space-1)',
-      'margin-inline': 'calc(var(--tp-space-1) * -1)',
+      // The separator owns its internal whitespace, using the surface inset.
+      // Content-box paint keeps the line thin without sibling margins.
+      'box-sizing': 'content-box',
+      'block-size': 'var(--tp-border-width)',
+      'padding-block': 'var(--_tp-popup-spacing, var(--tp-space-2))',
+      'background-clip': 'content-box',
+      margin: '0',
+      flex: 'none',
     },
   },
 ];
