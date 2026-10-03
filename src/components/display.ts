@@ -46,7 +46,7 @@ export class TpAvatar extends TpElement {
       }
 
       img,
-      [part='fallback'] {
+      [part~='fallback'] {
         width: 100%;
         height: 100%;
         object-fit: cover;

@@ -6,7 +6,12 @@ import { ControllableState } from '../../foundation/controllable-state.js';
 import { TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import { OwnedPortal } from '../../foundation/owned-portal.js';
-import { composedContains, deepActiveElement, focusableElements } from '../../foundation/focus.js';
+import {
+  composedContains,
+  deepActiveElement,
+  focusableElements,
+  shadowReferenceTarget,
+} from '../../foundation/focus.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import { createId } from '../../foundation/id.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
@@ -57,7 +62,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
 
       .list[data-orientation='vertical'] {
         flex-direction: column;
-        align-items: start;
+        align-items: stretch;
       }
 
       .popup {
@@ -65,6 +70,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
       }
 
       .viewport {
+        box-sizing: content-box;
         overflow: hidden;
         inline-size: var(--tp-popup-width, auto);
         block-size: var(--tp-popup-height, auto);
@@ -72,6 +78,11 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
 
       .body {
         overflow: visible;
+      }
+
+      .viewport-entry {
+        inline-size: max-content;
+        max-inline-size: var(--tp-available-width, calc(100vw - 10px));
       }
 
       .navigation-entry {
@@ -92,7 +103,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
   override openOnHover = true;
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   override align: Alignment = 'center';
-  override sideOffset: GeometryOffset = 0;
+  override sideOffset: GeometryOffset = 8;
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
   #provided: string | undefined;
@@ -376,10 +387,13 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
         {
           properties: {
             class: 'navigation-content',
+            role: 'group',
             '.ariaLabelledByElements': member.trigger
               ? [
-                  member.trigger.shadowRoot?.querySelector('button,a[href],[role="button"]') ??
-                    member.trigger,
+                  shadowReferenceTarget(
+                    member.trigger.shadowRoot?.querySelector('button,a[href],[role="button"]') ??
+                      member.trigger,
+                  ),
                 ]
               : [],
             '.inert': !open,
@@ -452,9 +466,16 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
     if (controls[next]) {
       event.preventDefault();
       controls[next]!.focus();
-    } else if (event.key === 'ArrowDown' && this.orientation === 'horizontal') {
+    } else if (
+      (event.key === 'ArrowDown' && this.orientation === 'horizontal') ||
+      (this.orientation === 'vertical' &&
+        event.key === (this.direction === 'rtl' ? 'ArrowLeft' : 'ArrowRight'))
+    ) {
       const member = this.#members.find((member) => member.trigger === controls[index]);
-      if (member && this.#select(member.value, 'list-navigation', event)) {
+      if (
+        member &&
+        (member.value === this.value || this.#select(member.value, 'list-navigation', event))
+      ) {
         event.preventDefault();
         void this.updateComplete.then(() => focusableElements(this.popupElement!)[0]?.focus());
       }
@@ -464,10 +485,41 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
     // The default is no focus movement; an explicit shared focus policy still applies.
     super.focusOnOpen();
   }
+  protected override surfaceKeydown = (event: KeyboardEvent): void => {
+    if (
+      event.key !== 'Tab' ||
+      event.defaultPrevented ||
+      componentHandlingPrevented(event) ||
+      !this.portal ||
+      !this.popupElement
+    )
+      return;
+    // Item portals introduce separate focus scopes. Keep sequential navigation
+    // within the flattened content; shared surface policy owns leaving it.
+    const items = focusableElements(this.popupElement);
+    const index = items.indexOf(deepActiveElement(this.ownerDocument) as HTMLElement);
+    const next = index < 0 ? undefined : items[index + (event.shiftKey ? -1 : 1)];
+    if (index >= 0) {
+      event.preventDefault();
+      if (next) next.focus();
+      else if (event.shiftKey) this.triggerElement?.focus();
+      else {
+        const controls = focusableElements(this.renderRoot);
+        const triggerIndex = controls.indexOf(this.triggerElement!);
+        const following = triggerIndex < 0 ? undefined : controls[triggerIndex + 1];
+        if (following) {
+          following.focus();
+          this.setOpen(false, 'focus-outside', event);
+        } else this.focusOutside(1);
+      }
+    }
+  };
   protected override popupProperties(): Record<string, unknown> {
     return {
       ...super.popupProperties(),
-      '.ariaLabelledByElements': this.triggerElement ? [this.triggerElement] : [],
+      '.ariaLabelledByElements': this.triggerElement
+        ? [shadowReferenceTarget(this.triggerElement)]
+        : [],
     };
   }
   protected override focusOnClose(): void {
@@ -494,6 +546,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
             tag: 'ul',
             properties: {
               class: 'list',
+              role: 'list',
               'data-orientation': this.orientation,
               '@keydown': this.#listKey,
             },

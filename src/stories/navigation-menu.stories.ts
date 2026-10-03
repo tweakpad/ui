@@ -37,7 +37,6 @@ const meta: Meta<Args> = {
     docs: {
       description: { component: documentation },
       source: {
-        code: source,
         transform: (_code: string, context: { args: Args }) =>
           configuredSource(source, context.args, 'value'),
       },
@@ -52,7 +51,7 @@ const meta: Meta<Args> = {
     showViewport: true,
     showArrow: false,
     placement: 'bottom center',
-    sideOffset: 0,
+    sideOffset: 8,
     alignOffset: 0,
     keepMounted: false,
     portal: true,
@@ -127,4 +126,9 @@ export const Default: Story = {
       <tp-navigation-menu-item><a href="#documentation">Documentation</a></tp-navigation-menu-item>
     </tp-navigation-menu>`;
   },
+};
+/** Vertical navigation opens beside the list so its remaining destinations stay reachable. */
+export const Vertical: Story = {
+  ...Default,
+  args: { orientation: 'vertical', placement: 'inline-end start', sideOffset: 8 },
 };

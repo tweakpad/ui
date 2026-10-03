@@ -1,4 +1,4 @@
-import { html, render } from 'lit';
+import { html, nothing, render } from 'lit';
 import type { PropertyValues, RootPart } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import { TpElement } from '../../foundation/element.js';
@@ -94,6 +94,8 @@ export class TpNavigationPanel extends TpElement {
   #viewPart: RootPart | undefined;
   #mountedCompact = false;
   #observer: MutationObserver | undefined;
+  #headerResize: ResizeObserver | undefined;
+  #toolbarHeader: HTMLElement | null = null;
   #controls = new Map<HTMLElement, ControlRecord>();
   #partReferences = new Map<string, (element: HTMLElement | null) => void>();
   #partRegistrations = new Map<string, () => void>();
@@ -172,16 +174,24 @@ export class TpNavigationPanel extends TpElement {
     this.#environment.connect();
     const Observer = this.ownerDocument.defaultView?.MutationObserver;
     if (Observer) {
-      this.#observer = new Observer(() => {
-        if (this.#collectAuthoredContent()) this.requestUpdate();
+      this.#observer = new Observer((records) => {
+        if (
+          this.#collectAuthoredContent() ||
+          records.some((record) => record.target === this.#view)
+        )
+          this.requestUpdate();
       });
       this.#observer.observe(this, { childList: true });
+      if (this.#view) this.#observer.observe(this.#view, { childList: true });
     }
   }
   override disconnectedCallback(): void {
     this.#viewPart?.setConnected(false);
     this.#observer?.disconnect();
     this.#observer = undefined;
+    this.#headerResize?.disconnect();
+    this.#headerResize = undefined;
+    this.#toolbarHeader = null;
     this.#environment.disconnect();
     for (const record of this.#controls.values()) record.activationCleanup?.();
     for (const unregister of this.#partRegistrations.values()) unregister();
@@ -248,21 +258,31 @@ export class TpNavigationPanel extends TpElement {
         ?data-collapsed=${state.collapsed}
         data-collapse-mode=${state.collapseMode}
         data-side=${state.side}
+        data-variant=${state.variant}
       >
         <slot class="projection" name="__navigation-view" ${ref(this.#projectionReference)}></slot>
+      </div>
+      <div
+        class="rail-mount"
+        ?hidden=${state.compact || !this.querySelector('[slot="resize-rail"]')}
+        ?data-collapsed=${state.collapsed}
+        data-collapse-mode=${state.collapseMode}
+        data-side=${state.side}
+      >
+        ${
+          state.compact
+            ? nothing
+            : html`<slot name="resize-rail" @slotchange=${this.#syncSlottedControls}></slot>`
+        }
       </div>
       <div class="primary">
         <div class="toolbar">
           <slot name="trigger" @slotchange=${this.#syncSlottedControls}></slot>
-          <div
-            class="rail-mount"
-            ?data-compact=${state.compact}
-            ?data-collapsed=${state.collapsed}
-            data-collapse-mode=${state.collapseMode}
-            data-side=${state.side}
-          >
-            <slot name="resize-rail" @slotchange=${this.#syncSlottedControls}></slot>
-          </div>
+          ${
+            state.compact
+              ? html`<slot name="resize-rail" @slotchange=${this.#syncSlottedControls}></slot>`
+              : nothing
+          }
         </div>
         <slot name="inset"></slot>
       </div>
@@ -286,6 +306,7 @@ export class TpNavigationPanel extends TpElement {
     this.#renderView();
     this.#syncMode();
     this.#syncSlottedControls();
+    this.#syncToolbarHeader();
     for (const record of this.#controls.values()) this.#syncControl(record);
     const state = this.provider.state;
     if (this.#view) {
@@ -300,7 +321,10 @@ export class TpNavigationPanel extends TpElement {
       if (hidden) this.#view.setAttribute('aria-hidden', 'true');
       else this.#view.removeAttribute('aria-hidden');
     }
-    for (const [member, part] of this.#members) this.#syncComposition(member, part);
+    for (const [member, part] of this.#members) {
+      this.#syncComposition(member, part);
+      if (changed.has('partContracts')) member.requestUpdate();
+    }
     if (
       !state.compact &&
       this.#lastExpanded !== undefined &&
@@ -379,6 +403,34 @@ export class TpNavigationPanel extends TpElement {
     if (hidden && composedContains(view, deepActiveElement(this.ownerDocument)))
       this.#restoreControlFocus();
   }
+  #syncToolbarHeader(): void {
+    const header = this.provider.compact
+      ? null
+      : (this.#view?.shadowRoot?.querySelector<HTMLElement>('[part~="navigation-panel-header"]') ??
+        this.#view?.querySelector<HTMLElement>(':scope > tp-navigation-panel-header') ??
+        null);
+    if (header !== this.#toolbarHeader || !this.#headerResize) {
+      this.#headerResize?.disconnect();
+      this.#toolbarHeader = header;
+      const Observer = this.ownerDocument.defaultView?.ResizeObserver;
+      this.#headerResize = header && Observer ? new Observer(this.#alignToolbar) : undefined;
+      if (header) this.#headerResize?.observe(header);
+      if (this.#wideMount) this.#headerResize?.observe(this.#wideMount);
+    }
+    this.#alignToolbar();
+  }
+  readonly #alignToolbar = (): void => {
+    const toolbar = this.shadowRoot?.querySelector<HTMLElement>('.toolbar');
+    const frame = this.shadowRoot?.querySelector<HTMLElement>('.frame');
+    const header = this.#toolbarHeader;
+    if (!toolbar || !frame || !this.isConnected) return;
+    if (!header?.isConnected || this.provider.compact || !header.getBoundingClientRect().width) {
+      toolbar.style.removeProperty('min-block-size');
+      return;
+    }
+    const box = header.getBoundingClientRect();
+    toolbar.style.minBlockSize = `${Math.max(0, box.height + 2 * (box.top - frame.getBoundingClientRect().top))}px`;
+  };
   #markers(part: string): Record<string, unknown> {
     const state = this.provider.state;
     return {
@@ -618,10 +670,11 @@ export class TpNavigationPanel extends TpElement {
           current.some((value, index) => value !== appliedControls[index])
         )
           return;
-        if (controlsAttribute !== null) element.setAttribute('aria-controls', controlsAttribute);
+        if (controlsAttribute) element.setAttribute('aria-controls', controlsAttribute);
         else {
           element.ariaControlsElements = controls;
-          if (!controls?.length) element.removeAttribute('aria-controls');
+          if (controlsAttribute === null && !controls?.length)
+            element.removeAttribute('aria-controls');
         }
       },
     };

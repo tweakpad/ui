@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Navigation Menu geometry regression</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        min-height: 80vh;
+        display: grid;
+        place-items: center;
+      }
+      .links {
+        width: 300px;
+        max-width: 100%;
+      }
+      .wide-links {
+        width: 500px;
+        max-width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <template id="composition">
+        <tp-navigation-menu aria-label="Resources" id="navigation">
+          <tp-navigation-menu-item value="learn"
+            ><tp-button slot="trigger" variant="ghost">Learn</tp-button>
+            <div slot="content" class="links" style="inline-size: 300px; max-inline-size: 100%">
+              <a href="#overview" active>Overview</a><a href="#guides">Guides</a
+              ><a href="#examples" close-on-click>Examples</a>
+            </div></tp-navigation-menu-item
+          >
+          <tp-navigation-menu-item value="tools"
+            ><tp-button slot="trigger" variant="ghost">Tools</tp-button>
+            <div
+              slot="content"
+              class="wide-links"
+              style="inline-size: 500px; max-inline-size: 100%"
+            >
+              <a href="#editor">Editor with a longer destination label</a
+              ><a href="#inspector">Inspector</a>
+            </div></tp-navigation-menu-item
+          >
+          <tp-navigation-menu-item
+            ><a href="#documentation">Documentation</a></tp-navigation-menu-item
+          >
+        </tp-navigation-menu>
+      </template>
+    </main>
+    <script type="module" src="./fixture.js"></script>
+  </body>
+</html>

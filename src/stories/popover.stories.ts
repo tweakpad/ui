@@ -44,6 +44,7 @@ const meta: Meta<Args> = {
   },
   args: {
     ...surfaceArgs,
+    placement: 'block-end center',
     label: 'Document settings',
     preserveOnTriggerHover: false,
     modal: false,

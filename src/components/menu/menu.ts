@@ -92,7 +92,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   override modal = true;
   override openOnHover = false;
   override align: Alignment = 'center';
-  override sideOffset: GeometryOffset = 0;
+  override sideOffset: GeometryOffset = 8;
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
   #bar: MenuBarOwner | null = null;

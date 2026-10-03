@@ -1,4 +1,4 @@
-import { html, render } from 'lit';
+import { html } from 'lit';
 import documentation from '../../../../docs/navigation-panel.md?raw';
 import type {
   TpNavigationPanel,
@@ -19,6 +19,9 @@ const { chevronRightIcon } = await import(
 );
 const { plusIcon } = await import(
   /* @vite-ignore */ built ? '/dist/icons/plus.js' : '/src/icons/plus.ts'
+);
+const { navigationIcons } = await import(
+  /* @vite-ignore */ built ? '/dist/icons/navigation.js' : '/src/icons/navigation.ts'
 );
 const panel = document.querySelector<TpNavigationPanel>('#panel')!;
 const dynamic = document.querySelector<HTMLElement>('#dynamic')!;
@@ -546,25 +549,24 @@ async function assertCopiedDocumentation() {
   records.length = 0;
   const copied = documentation.match(/```js\n([\s\S]*?)\n```/)?.[1];
   if (!copied) throw new Error('Missing executable documentation source');
-  const script = copied.slice(copied.indexOf('const example ='));
-  const container = Function(
-    'html',
-    'render',
-    'chevronRightIcon',
+  const script = copied.replace(/^import[^\n]*;\n/gm, '');
+  const container = (await Function(
+    'navigationIcons',
     'plusIcon',
-    `${script}\nreturn example;`,
-  )(html, render, chevronRightIcon, plusIcon) as HTMLElement;
+    `return (async () => { ${script}\nreturn example; })();`,
+  )(navigationIcons, plusIcon)) as HTMLElement;
   const target = container.querySelector<TpNavigationPanel>('tp-navigation-panel')!;
   await settle(target);
   check(
     'C30 copied complete public composition mounts actual Root and constituent controls',
     target.provider.state.expanded &&
       !target.provider.compact &&
-      target.querySelectorAll('tp-navigation-panel-link').length === 2 &&
-      target.querySelector('tp-navigation-panel-badge')?.textContent === '3' &&
-      target.querySelector('tp-navigation-panel-input') !== null &&
-      target.querySelector('tp-navigation-panel-group-action') !== null &&
-      target.querySelector('tp-navigation-panel-action')?.textContent === 'Create project',
+      target.querySelectorAll('tp-navigation-panel-link').length === 3 &&
+      target.querySelectorAll('tp-collapsible').length === 4 &&
+      target.querySelectorAll('tp-menu').length === 5 &&
+      target.querySelectorAll('tp-avatar').length === 2 &&
+      target.querySelector('tp-navigation-panel-footer tp-menu')?.getAttribute('label') ===
+        'Account',
     {
       state: target.provider.state,
       count: target.querySelectorAll('tp-navigation-panel-link').length,
@@ -712,7 +714,9 @@ async function assertControlsRelationships() {
   dynamic.append(trigger);
   await trigger.updateComplete;
   const control = semantic(trigger, 'button');
-  control.setAttribute('aria-controls', authored.id);
+  // The controlled target is outside Button's shadow root. Use the explicit
+  // element relationship rather than an unresolved shadow-scoped IDREF.
+  control.ariaControlsElements = [authored];
   control.setAttribute('aria-expanded', 'authored');
   control.setAttribute('aria-haspopup', 'menu');
   target.append(trigger);
@@ -750,9 +754,13 @@ async function assertControlsRelationships() {
   );
   trigger.remove();
   await settle(target);
+  // Explicit relationship getters filter targets outside the current scope
+  // while disconnected. Reconnect outside Provider to inspect restored metadata.
+  dynamic.append(trigger);
+  await trigger.updateComplete;
   check(
     'C28 removal restores authored controls attribute and relationship metadata',
-    control.getAttribute('aria-controls') === authored.id &&
+    control.ariaControlsElements?.includes(authored) === true &&
       control.getAttribute('aria-expanded') === 'authored' &&
       control.getAttribute('aria-haspopup') === 'menu',
     control.outerHTML,
@@ -800,3 +808,4 @@ Object.assign(window, {
     assertControlsRelationships,
   },
 });
+await import('./review.js');

@@ -5,6 +5,7 @@ import { PresenceController } from '../../foundation/presence.js';
 import { createId } from '../../foundation/id.js';
 import { chevronDownIcon } from '../../icons/chevron-down.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
+import { shadowReferenceTarget } from '../../foundation/focus.js';
 
 export interface NavigationMenuOwner extends HTMLElement {
   readonly value: string;
@@ -36,6 +37,15 @@ export class TpNavigationMenuItem extends TpElement {
         display: flex;
         position: relative;
         align-items: center;
+      }
+
+      .item[data-orientation='vertical'] {
+        inline-size: 100%;
+      }
+
+      .item[data-orientation='vertical'] ::slotted([slot='trigger']),
+      .item[data-orientation='vertical'] ::slotted(a[href]) {
+        inline-size: 100%;
       }
 
       .content {
@@ -174,10 +184,13 @@ export class TpNavigationMenuItem extends TpElement {
         enabled: this.#presence.mounted,
         properties: {
           class: 'content',
+          role: 'group',
           '.ariaLabelledByElements': this.triggerElement
             ? [
-                this.triggerElement.shadowRoot?.querySelector('button,a[href],[role="button"]') ??
-                  this.triggerElement,
+                shadowReferenceTarget(
+                  this.triggerElement.shadowRoot?.querySelector('button,a[href],[role="button"]') ??
+                    this.triggerElement,
+                ),
               ]
             : [],
           '.inert': !this.active,
@@ -297,6 +310,8 @@ export class TpNavigationMenuItem extends TpElement {
         reference: this.#reference('navigation-menu-item'),
         properties: {
           class: 'item',
+          role: 'listitem',
+          'data-orientation': this.#owner?.orientation ?? 'horizontal',
           '@click': this.#link,
           'data-open': this.active,
           'data-closed': !this.active,

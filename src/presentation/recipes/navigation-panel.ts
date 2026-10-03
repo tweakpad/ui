@@ -1,4 +1,100 @@
-import type { PresentationDictionary } from '../resolver.js';
+import type { PresentationDictionary, PresentationRule } from '../resolver.js';
+
+/** SidebarMenuButton paint shared by actions, destinations and composed disclosures. */
+const navigationRow: readonly PresentationRule[] = [
+  {
+    declarations: {
+      gap: 'var(--tp-space-2)',
+      padding: 'var(--tp-space-2)',
+      'border-radius': 'var(--tp-radius-md)',
+      background: 'transparent',
+      color: 'var(--tp-foreground)',
+      'font-size': 'var(--tp-text-sm)',
+      'font-weight': 'var(--tp-font-normal)',
+      'text-align': 'start',
+      'min-block-size': 'var(--tp-target-size-min)',
+    },
+  },
+  {
+    selector: '&:hover:not([data-disabled], :disabled), &[data-active]',
+    declarations: {
+      background: 'var(--tp-accent)',
+      color: 'var(--tp-accent-foreground)',
+    },
+  },
+];
+// Root-projected rules target the native Button, rather than the Panel host.
+const iconAction =
+  '&:is([part~="button-size-icon-xs"], [part~="button-size-icon-sm"], [part~="button-size-icon"], [part~="button-size-icon-lg"])';
+const collapsedRow = '&[data-collapsed]:not([data-compact])[data-collapse-mode="compact"]';
+const largeAction =
+  '&[part~="button-size-lg"]:not([data-collapsed]:not([data-compact])[data-collapse-mode="compact"])';
+const disclosureContext = ':host-context(tp-navigation-panel-item) ';
+const collapsedContext =
+  ':host-context(tp-navigation-panel-item[data-collapsed]:not([data-compact])[data-collapse-mode="compact"]) ';
+/** Composes the real Collapsible with SidebarMenuButton paint; no second disclosure owner. */
+export const navigationPanelDisclosureAppearance: PresentationDictionary = {
+  'collapsible-trigger': [
+    ...navigationRow.map((rule) => ({
+      ...rule,
+      selector: disclosureContext + (rule.selector ?? '&'),
+    })),
+    { selector: collapsedContext + '&', declarations: { padding: '0' } },
+  ],
+  'collapsible-label': [
+    { selector: disclosureContext + '&', declarations: { 'font-weight': 'inherit' } },
+  ],
+  'collapsible-leading': [
+    {
+      selector: disclosureContext + '&',
+      declarations: { color: 'inherit', 'margin-inline-end': 'var(--tp-space-2)' },
+    },
+  ],
+  'collapsible-trailing': [
+    {
+      selector: disclosureContext + '&',
+      declarations: { color: 'inherit', 'margin-inline-start': 'var(--tp-space-2)' },
+    },
+  ],
+  'collapsible-content-body': [
+    { selector: disclosureContext + '&', declarations: { padding: '0' } },
+  ],
+};
+export const navigationPanelDisclosureStructure: PresentationDictionary = {
+  'collapsible-trigger': [
+    {
+      selector: disclosureContext + '&',
+      declarations: { 'box-sizing': 'border-box', 'min-inline-size': '0' },
+    },
+    {
+      selector: collapsedContext + '&',
+      declarations: { display: 'flex', 'justify-content': 'center' },
+    },
+  ],
+  'collapsible-label': [
+    {
+      selector: disclosureContext + '&',
+      declarations: { overflow: 'hidden', 'text-overflow': 'ellipsis', 'white-space': 'nowrap' },
+    },
+    {
+      selector: collapsedContext + '&',
+      declarations: {
+        position: 'absolute',
+        'inline-size': '1px',
+        'block-size': '1px',
+        padding: '0',
+        overflow: 'hidden',
+        'clip-path': 'inset(50%)',
+        'white-space': 'nowrap',
+      },
+    },
+  ],
+  'collapsible-content': [{ selector: collapsedContext + '&', declarations: { display: 'none' } }],
+  'collapsible-trailing': [{ selector: collapsedContext + '&', declarations: { display: 'none' } }],
+  'collapsible-leading': [
+    { selector: collapsedContext + '&', declarations: { 'margin-inline': '0' } },
+  ],
+};
 const parts = [
   'navigation-panel',
   'navigation-panel-trigger',
@@ -31,7 +127,19 @@ export const navigationPanelAppearance: PresentationDictionary = {
     ),
   ),
   'navigation-panel': [
-    { declarations: { background: 'var(--tp-background)', color: 'var(--tp-foreground)' } },
+    { declarations: { background: 'var(--tp-muted)', color: 'var(--tp-foreground)' } },
+    {
+      selector: '&[data-side="inline-start"]',
+      declarations: {
+        'border-inline-end': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
+      },
+    },
+    {
+      selector: '&[data-side="inline-end"]',
+      declarations: {
+        'border-inline-start': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
+      },
+    },
   ],
   'navigation-panel-variant-floating': [
     {
@@ -42,12 +150,12 @@ export const navigationPanelAppearance: PresentationDictionary = {
       },
     },
   ],
-  'navigation-panel-variant-inset': [{ declarations: { background: 'var(--tp-background)' } }],
+  'navigation-panel-variant-inset': [],
   'navigation-panel-trigger': [
     {
       declarations: {
-        'min-inline-size': 'var(--tp-target-min)',
-        'min-block-size': 'var(--tp-target-min)',
+        'min-inline-size': 'var(--tp-target-size-min)',
+        'min-block-size': 'var(--tp-target-size-min)',
       },
     },
   ],
@@ -56,14 +164,16 @@ export const navigationPanelAppearance: PresentationDictionary = {
       declarations: {
         'border-radius': '0',
         padding: '0',
-        'min-inline-size': 'var(--tp-target-min)',
+        'min-inline-size': 'var(--tp-target-size-min)',
         background: 'transparent',
         'block-size': '100%',
         cursor: 'ew-resize',
       },
     },
   ],
-  'navigation-panel-inset': [{ declarations: { background: 'var(--tp-background)' } }],
+  'navigation-panel-inset': [
+    { declarations: { background: 'var(--tp-background)', padding: 'var(--tp-space-4)' } },
+  ],
   'navigation-panel-inset-variant-inset': [
     {
       declarations: {
@@ -84,7 +194,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
   'navigation-panel-group-label': [
     {
       declarations: {
-        height: 'calc(var(--tp-spacing) * 8)',
+        height: 'max(calc(var(--tp-spacing) * 8), var(--tp-target-size-min))',
         padding: '0 var(--tp-space-2)',
         'font-size': 'var(--tp-text-xs)',
         'font-weight': 'var(--tp-font-medium)',
@@ -93,14 +203,14 @@ export const navigationPanelAppearance: PresentationDictionary = {
     },
     {
       selector: '&[data-collapsed]:not([data-compact])[data-collapse-mode="compact"]',
-      declarations: { 'margin-block-start': 'calc(var(--tp-spacing) * -8)', opacity: '0' },
+      declarations: { opacity: '0' },
     },
   ],
   'navigation-panel-group-action': [
     {
       declarations: {
-        'min-inline-size': 'var(--tp-target-min)',
-        'min-block-size': 'var(--tp-target-min)',
+        'min-inline-size': 'var(--tp-target-size-min)',
+        'min-block-size': 'var(--tp-target-size-min)',
         background: 'transparent',
         color: 'var(--tp-foreground)',
       },
@@ -114,15 +224,10 @@ export const navigationPanelAppearance: PresentationDictionary = {
   'navigation-panel-menu': [{ declarations: { gap: '0' } }],
   'navigation-panel-item': [],
   'navigation-panel-link': [
+    ...navigationRow,
     {
       declarations: {
-        gap: 'var(--tp-space-2)',
-        padding: 'var(--tp-space-2)',
-        'border-radius': 'var(--tp-radius-md)',
-        background: 'transparent',
-        color: 'var(--tp-foreground)',
-        'font-size': 'var(--tp-text-sm)',
-        'min-block-size': 'var(--tp-target-min)',
+        'padding-inline-end': 'var(--navigation-panel-trailing-space, var(--tp-space-2))',
       },
     },
     {
@@ -130,22 +235,25 @@ export const navigationPanelAppearance: PresentationDictionary = {
       declarations: { background: 'var(--tp-accent)', color: 'var(--tp-accent-foreground)' },
     },
     { selector: '&[data-active]', declarations: { 'font-weight': 'var(--tp-font-medium)' } },
+    { selector: collapsedRow, declarations: { padding: '0' } },
   ],
   'navigation-panel-action': [
+    ...navigationRow,
     {
       declarations: {
-        gap: 'var(--tp-space-2)',
-        padding: 'var(--tp-space-2)',
-        'border-radius': 'var(--tp-radius-md)',
-        background: 'transparent',
-        color: 'var(--tp-foreground)',
-        'min-block-size': 'var(--tp-target-min)',
+        'padding-inline-end': 'var(--navigation-panel-trailing-space, var(--tp-space-2))',
       },
     },
     {
       selector: '&:hover:not([data-disabled]), &[data-active]',
       declarations: { background: 'var(--tp-accent)', color: 'var(--tp-accent-foreground)' },
     },
+    {
+      selector: iconAction,
+      declarations: { padding: '0' },
+    },
+    { selector: largeAction, declarations: { 'padding-block': 'var(--tp-space-3)' } },
+    { selector: collapsedRow, declarations: { padding: '0' } },
   ],
   'navigation-panel-badge': [
     {
@@ -177,7 +285,10 @@ export const navigationPanelAppearance: PresentationDictionary = {
   'navigation-panel-submenu': [
     {
       declarations: {
-        margin: '0 var(--tp-space-3)',
+        'margin-block': '0',
+        'margin-inline-start':
+          'calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - var(--tp-border-width) / 2)',
+        'margin-inline-end': 'var(--tp-space-3)',
         padding: 'var(--tp-space-1) var(--tp-space-2)',
         'border-inline-start': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
       },
@@ -195,7 +306,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
         color: 'var(--tp-foreground)',
         padding: '0 var(--tp-space-2)',
         'border-radius': 'var(--tp-radius-md)',
-        'min-block-size': 'var(--tp-target-min)',
+        'min-block-size': 'var(--tp-target-size-min)',
       },
     },
     {
@@ -277,9 +388,24 @@ export const navigationPanelStructure: PresentationDictionary = {
         'text-overflow': 'ellipsis',
       },
     },
+    { selector: collapsedRow, declarations: { 'justify-content': 'center' } },
+    {
+      selector: collapsedRow + ' > [part~="button-label"]',
+      declarations: { position: 'absolute' },
+    },
   ],
   'navigation-panel-action': [
     { declarations: { 'inline-size': '100%', 'justify-content': 'start' } },
+    { selector: largeAction, declarations: { 'block-size': 'auto' } },
+    {
+      selector: iconAction,
+      declarations: { 'justify-content': 'center' },
+    },
+    { selector: collapsedRow, declarations: { 'justify-content': 'center' } },
+    {
+      selector: collapsedRow + ' > [part~="button-label"]',
+      declarations: { position: 'absolute' },
+    },
   ],
   'navigation-panel-loading-placeholder': [
     { declarations: { display: 'flex', 'align-items': 'center' } },

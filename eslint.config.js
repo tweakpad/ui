@@ -9,7 +9,12 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['tests/fixtures/components/progress/copied-example.js'],
+    files: [
+      'tests/fixtures/components/progress/copied-example.js',
+      'tests/fixtures/components/navigation-menu-geometry/fixture.js',
+      'tests/fixtures/components/popover-placement/fixture.js',
+      'src/stories/navigation-panel-example.js',
+    ],
     languageOptions: { globals: globals.browser },
   },
   {

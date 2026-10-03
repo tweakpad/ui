@@ -38,6 +38,15 @@ const parts = [
 const axes: Record<string, readonly PresentationRule[]> = {};
 for (const part of parts)
   for (const axis of ['horizontal', 'vertical']) axes[`${part}-orientation-${axis}`] = [];
+axes['navigation-menu-trigger-orientation-vertical'] = [
+  { declarations: { 'justify-content': 'start' } },
+];
+/** Native anchors do not receive Button's shadow reset when projected into a portal. */
+export const navigationMenuStructure: PresentationDictionary = {
+  'navigation-menu-link': [
+    { declarations: { 'box-sizing': 'border-box', 'min-inline-size': '0' } },
+  ],
+};
 /** Base navigation composition plus its optional new-york viewport; native link roles are retained. */
 export const navigationMenuAppearance: PresentationDictionary = {
   ...axes,
@@ -53,6 +62,7 @@ export const navigationMenuAppearance: PresentationDictionary = {
         'border-radius': 'var(--tp-radius-lg)',
         'padding-inline': 'calc(var(--tp-spacing) * 2.5)',
         'padding-block': 'calc(var(--tp-spacing) * 1.5)',
+        'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
         transition:
@@ -107,7 +117,9 @@ export const navigationMenuAppearance: PresentationDictionary = {
         'align-items': 'center',
         gap: 'var(--tp-space-2)',
         'border-radius': 'var(--tp-radius-lg)',
-        padding: 'var(--tp-space-2)',
+        'padding-inline': 'calc(var(--tp-spacing) * 2.5)',
+        'padding-block': 'calc(var(--tp-spacing) * 1.5)',
+        'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
         'font-size': 'var(--tp-text-sm)',
         'text-decoration': 'none',
         color: 'var(--tp-foreground)',

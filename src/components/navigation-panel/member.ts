@@ -36,14 +36,17 @@ export class NavigationPanelMember implements ReactiveController {
       return;
     }
     this.#unsubscribe = this.owner.provider.subscribe(() => this.host.requestUpdate());
+    this.host.requestUpdate();
   }
   hostDisconnected(): void {
     this.#unsubscribe?.();
     this.#unregister?.();
     this.#unsubscribe = this.#unregister = undefined;
     this.#element = null;
+    this.owner = undefined;
   }
   hostUpdated(): void {
+    if (!this.host.isConnected || !this.owner) return;
     const element = this.host.renderRoot.querySelector<HTMLElement>(`[part~="${this.nativePart}"]`);
     if (element !== this.#element) {
       this.#unregister?.();
@@ -54,8 +57,9 @@ export class NavigationPanelMember implements ReactiveController {
           : undefined;
     }
     if (element && this.owner) {
-      this.owner.registerNavigationPart(this.part, element, this.host);
       const state = this.owner.provider.state;
+      for (const token of [...element.part])
+        if (token.startsWith(`${this.part}-variant-`)) element.part.remove(token);
       element.part.add(this.part, `${this.part}-variant-${state.variant}`);
       for (const [name, value] of Object.entries({
         expanded: state.expanded,

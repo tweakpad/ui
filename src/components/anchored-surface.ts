@@ -9,9 +9,11 @@ import { PresenceController } from '../foundation/presence.js';
 import { FloatingDismissController } from '../foundation/floating-dismiss.js';
 import {
   composedContains,
+  composedParent,
   deepActiveElement,
   focusableElements,
   restoreFocus,
+  shadowReferenceTarget,
   trapTabKey,
 } from '../foundation/focus.js';
 import { OwnedPortal, type OwnedPortalContainer } from '../foundation/owned-portal.js';
@@ -382,9 +384,11 @@ export abstract class TpAnchoredSurface extends TpElement {
     return this.align === 'center' ? this.side : `${this.side}-${this.align}`;
   }
   set placement(value: string) {
-    const match = value.match(
-      /^(top|right|bottom|left|inline-start|inline-end|block-start|block-end)(?:-(start|center|end))?$/,
-    );
+    const match = value
+      ?.trim()
+      .match(
+        /^(top|right|bottom|left|inline-start|inline-end|block-start|block-end)(?:(?:-|\s+)(start|center|end))?$/,
+      );
     if (match) {
       this.side = match[1] as LogicalSide;
       this.align = (match[2] ?? 'center') as Alignment;
@@ -532,6 +536,12 @@ export abstract class TpAnchoredSurface extends TpElement {
     super.willUpdate(changed);
     if (!this.openCoordinator) this.state.sync();
     if (this.surfaceDisabled && this.state.open) this.state.request(false, 'disabled');
+    // Restore while the owned popup still contains focus. Rendering the closed
+    // portal makes it inert (or removes it), which otherwise blurs to body first.
+    if (!this.open && this.#wasOpen && !this.isTooltip) {
+      this.#releaseLayers();
+      this.focusOnClose();
+    }
     if (this.open) {
       const desired =
         this.triggerIdentifier ?? (this.trigger ? undefined : this.defaultTriggerIdentifier);
@@ -874,8 +884,9 @@ export abstract class TpAnchoredSurface extends TpElement {
     const restore = () => {
       if (target && !this.isTooltip) {
         target.ariaControlsElements = controls;
-        if (controlsAttribute !== null) target.setAttribute('aria-controls', controlsAttribute);
-        else if (!controls?.length) target.removeAttribute('aria-controls');
+        if (controlsAttribute) target.setAttribute('aria-controls', controlsAttribute);
+        else if (controlsAttribute === null && !controls?.length)
+          target.removeAttribute('aria-controls');
       }
       if (target)
         for (const [name, value] of originals)
@@ -957,7 +968,7 @@ export abstract class TpAnchoredSurface extends TpElement {
         write('aria-expanded', String(active));
         write('aria-haspopup', this.triggerHasPopup);
         target.ariaControlsElements = this.popup
-          ? [...(controls ?? []), this.popup]
+          ? [...(controls ?? []), shadowReferenceTarget(this.popup)]
           : [...(controls ?? []), this];
       }
     };
@@ -1060,6 +1071,8 @@ export abstract class TpAnchoredSurface extends TpElement {
       }
       this.#openingEvent = event;
       this.#forceUnmount = false;
+      // The existing positioner tracks its original anchor until recreated.
+      if (target !== this.trigger) this.stopPosition();
       this.trigger = target;
       this.payloadValue = target ? this.records.get(target)?.options.payload : undefined;
     } else this.#closingEvent = event;
@@ -1200,10 +1213,21 @@ export abstract class TpAnchoredSurface extends TpElement {
     this.#position = null;
     this.#positionResult = null;
   }
+  #defaultPortalContainer(): HTMLElement {
+    // Native modal dialogs make body portals inert, including top-layer popovers.
+    // Keep the shared surface in its anchor's actual composed modal branch.
+    const anchor = this.anchorGeometry();
+    const context = anchor && 'getBoundingRectangle' in anchor ? anchor.contextElement : anchor;
+    for (let node: Node | null = context ?? this; node; node = composedParent(node))
+      if (node.nodeType === 1 && (node as Element).matches('dialog:modal'))
+        return node as HTMLElement;
+    return this.ownerDocument.body;
+  }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    if (!this.isConnected) return;
     if (this.portal) {
-      this.#portal.update(this.container ?? this.ownerDocument.body, this.renderLayer(), {
+      this.#portal.update(this.container ?? this.#defaultPortalContainer(), this.renderLayer(), {
         projectedNodes: this.contentNodes,
         ...(this.portalIdentifier ? { identifier: this.portalIdentifier } : {}),
       });
@@ -1224,7 +1248,6 @@ export abstract class TpAnchoredSurface extends TpElement {
     if (this.shadowRoot && 'referenceTarget' in this.shadowRoot)
       (this.shadowRoot as ShadowRoot & { referenceTarget: string }).referenceTarget =
         this.contentId;
-    if (!this.isConnected) return;
     if (changed.has('handle')) {
       this.#handleCleanup?.();
       this.#handleCleanup = this.handle?.attach(this);
@@ -1261,7 +1284,6 @@ export abstract class TpAnchoredSurface extends TpElement {
       this.#focusPending = false;
       this.focusOnOpen();
     }
-    if (!this.open && this.#wasOpen && !this.isTooltip) this.focusOnClose();
     this.#wasOpen = this.open;
     const state = this.presence.state;
     if (state !== this.#phase) {

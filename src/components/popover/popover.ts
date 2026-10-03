@@ -7,6 +7,7 @@ import type {
   Alignment,
   CollisionPolicy,
   GeometryOffset,
+  LogicalSide,
   PositioningStrategy,
 } from '../../foundation/positioning.js';
 
@@ -20,6 +21,7 @@ export class TpPopover extends TpHoverSurface {
   override portal = true;
   override modal = false;
   override openOnHover = false;
+  override side: LogicalSide = 'block-end';
   override align: Alignment = 'center';
   override sideOffset: GeometryOffset = 0;
   override positionMethod: PositioningStrategy = 'absolute';

@@ -62,3 +62,5 @@ actual child controller; that child's terminal hooks still win. Use child
 partContracts for child render delegates and references. The Root's `menubar`
 contract controls the semantic bar itself. Replacing a child target updates
 registration rather than retaining a detached styling target.
+
+Popup menus use an 8px side offset by default to separate the surface from its anchor. Set `side-offset="0"` on the Menu/Context Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the existing positioning API.

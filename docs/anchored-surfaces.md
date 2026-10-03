@@ -7,13 +7,21 @@ change those policies. Menubar configures these options on its child Menu.
 
 ## Positioner, Portal, Arrow and Backdrop
 
+`placement` accepts a side and optional alignment separated by a space (for example,
+`top start` or `block-end center`) or a hyphen (`top-start`, `block-end-center`).
+Reading it returns the hyphenated form, omitting the suffix for center alignment.
+`side` and `align` can also be configured independently.
+
+Absolute positioning accounts for document scroll; fixed positioning uses viewport
+coordinates. Both strategies track the anchor while open unless tracking is disabled.
+
 Properties with a kebab-case attribute are shown as `property / attribute`.
 Function, element, ref, record and callback values are JavaScript properties.
 
 | Property / attribute                                     | Type                                               | Menu / Context / Popover / Navigation default | Meaning                                                                                                                              |
 | -------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `placement`                                              | string                                             | `bottom center`                               | Compatibility pair of side and alignment.                                                                                            |
-| `side`                                                   | physical or logical side                           | `bottom`                                      | top, right, bottom, left, inline-start, inline-end, block-start or block-end. Nested Menu uses inline-end.                           |
+| `placement`                                              | string                                             | `bottom center`; Popover: `block-end center`   | Compatibility pair of side and alignment.                                                                                            |
+| `side`                                                   | physical or logical side                           | `bottom`; Popover: `block-end`                | top, right, bottom, left, inline-start, inline-end, block-start or block-end. Nested Menu uses inline-end.                           |
 | `align`                                                  | start / center / end                               | center                                        | Independent alignment; nested Menu uses start.                                                                                       |
 | `sideOffset / side-offset`, `alignOffset / align-offset` | number or geometry resolver                        | 0                                             | Main-axis gap and alignment shift.                                                                                                   |
 | `offset`                                                 | number or geometry resolver                        | alias of sideOffset                           | Compatibility alias.                                                                                                                 |

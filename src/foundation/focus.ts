@@ -1,3 +1,5 @@
+import { createId } from './id.js';
+
 /** The rendered parent, including slot assignment and open shadow boundaries. */
 export function composedParent(node: Node): Node | null {
   if (node.nodeType === 1 && (node as Element).assignedSlot) return (node as Element).assignedSlot;
@@ -83,4 +85,22 @@ export function restoreFocus(target: Element | null): boolean {
   if (!target || !isAvailable(target)) return false;
   target.focus({ preventScroll: true });
   return composedContains(target, deepActiveElement(target.ownerDocument));
+}
+
+/** Reference a semantic target through its public shadow hosts using valid ARIA scopes. */
+export function shadowReferenceTarget(element: Element): Element {
+  let target = element;
+  for (
+    let root = target.getRootNode();
+    root.nodeType === 11 && 'host' in root;
+    root = target.getRootNode()
+  ) {
+    const shadow = root as ShadowRoot & { referenceTarget?: string };
+    if ('referenceTarget' in shadow) {
+      if (!target.id) target.id = createId('tp-reference');
+      shadow.referenceTarget = target.id;
+    }
+    target = shadow.host;
+  }
+  return target;
 }

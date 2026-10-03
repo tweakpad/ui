@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Popover placement regression</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: var(--tp-font-sans);
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+      }
+      main {
+        padding: 32px;
+      }
+      #stage {
+        position: absolute;
+        left: 720px;
+        top: 450px;
+      }
+      #anchor {
+        position: fixed;
+        left: 750px;
+        top: 400px;
+        width: 80px;
+        height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Popover placement regression</h1>
+      <p>Public API checks run through Chrome DevTools MCP.</p>
+    </main>
+    <div id="stage">
+      <tp-popover id="subject" label="Placement settings">
+        <tp-button slot="trigger" variant="outline">Placement settings</tp-button>
+        <span slot="title">Placement settings</span>
+        <span slot="description">Choose where this panel appears.</span>
+        <tp-button slot="close">Done</tp-button>
+      </tp-popover>
+    </div>
+    <script type="module" src="./fixture.js"></script>
+  </body>
+</html>

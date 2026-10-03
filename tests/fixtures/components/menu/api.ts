@@ -1,3 +1,4 @@
+import { shadowReferenceTarget } from '../../../../src/foundation/focus.js';
 import { html } from 'lit';
 import type * as PublicLibrary from '../../../../src/index.js';
 import type { TpMenu } from '../../../../src/components/menu/index.js';
@@ -552,7 +553,7 @@ export function installFamilyAPI(library: Library, built: boolean): void {
           const trigger = root.triggerElement;
           assert(
             trigger?.getAttribute('aria-expanded') === 'true' &&
-              !!trigger.ariaControlsElements?.includes(root.popupElement!),
+              !!trigger.ariaControlsElements?.includes(shadowReferenceTarget(root.popupElement!)),
             'Navigation Trigger relationships absent',
           );
           assert(
@@ -560,7 +561,9 @@ export function installFamilyAPI(library: Library, built: boolean): void {
             'Navigation acquired command popup semantics',
           );
           assert(
-            items[0]!.item.contentElement?.ariaLabelledByElements?.includes(trigger!),
+            items[0]!.item.contentElement?.ariaLabelledByElements?.includes(
+              shadowReferenceTarget(trigger!),
+            ),
             'Item Content not labelled by actual Trigger',
           );
           assert(

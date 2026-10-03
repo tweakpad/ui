@@ -20,6 +20,13 @@ const contextStyles = css`
     display: block;
     min-inline-size: 0;
   }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   :host([hidden]) {
     display: none;
   }
@@ -43,7 +50,7 @@ export class NavigationPanelLayoutPart extends TpElement {
   readonly #reference = (element: HTMLElement | null): void => {
     this.#unregister?.();
     this.#unregister = undefined;
-    if (element && this.#owner)
+    if (element && this.isConnected && this.#owner)
       this.#unregister = this.#owner.registerNavigationPart(
         definition(this).partName,
         element,
@@ -62,15 +69,32 @@ export class NavigationPanelLayoutPart extends TpElement {
       return;
     }
     this.#unsubscribe = this.#owner.provider.subscribe(() => this.requestUpdate());
+    this.requestUpdate();
   }
   override disconnectedCallback(): void {
     this.#unsubscribe?.();
     this.#unregister?.();
     this.#unsubscribe = this.#unregister = undefined;
+    this.#owner = undefined;
     super.disconnectedCallback();
+  }
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    if (!this.#owner) return;
+    if (!this.#unregister)
+      this.#reference(
+        this.renderRoot.querySelector<HTMLElement>(`[part~="${definition(this).partName}"]`),
+      );
+    const state = this.#owner.provider.state;
+    this.toggleAttribute('data-collapsed', state.collapsed);
+    this.toggleAttribute('data-compact', state.compact);
+    this.setAttribute('data-collapse-mode', state.collapseMode);
   }
   protected defaultPartContent(): unknown {
     return html`<slot></slot>`;
+  }
+  protected layoutProperties(): Record<string, unknown> {
+    return {};
   }
   protected override render() {
     if (!this.#owner) return html`<slot></slot>`;
@@ -89,6 +113,7 @@ export class NavigationPanelLayoutPart extends TpElement {
         properties: {
           part: `${partName} ${partName}-variant-${state.variant}`,
           ...(role ? { role } : {}),
+          ...this.layoutProperties(),
           ...markers(this.#owner),
         },
         content: this.defaultPartContent(),
@@ -107,6 +132,20 @@ function markers(owner: NavigationPanelOwner): Record<string, unknown> {
   };
 }
 export class TpNavigationPanelInset extends NavigationPanelLayoutPart {
+  static override styles = [
+    NavigationPanelLayoutPart.styles,
+    css`
+      :host {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      [part~='navigation-panel-inset'] {
+        flex: 1;
+      }
+    `,
+  ];
   static override tagName = 'tp-navigation-panel-inset';
   static override partName = 'navigation-panel-inset';
   static override nativeTag = 'main';
@@ -117,6 +156,22 @@ export class TpNavigationPanelHeader extends NavigationPanelLayoutPart {
   static override nativeTag = 'header';
 }
 export class TpNavigationPanelContent extends NavigationPanelLayoutPart {
+  static override styles = [
+    NavigationPanelLayoutPart.styles,
+    css`
+      :host {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-block-size: 0;
+        overflow: auto;
+      }
+
+      [part~='navigation-panel-content'] {
+        flex: 1;
+      }
+    `,
+  ];
   static override tagName = 'tp-navigation-panel-content';
   static override partName = 'navigation-panel-content';
 }
@@ -126,10 +181,26 @@ export class TpNavigationPanelFooter extends NavigationPanelLayoutPart {
   static override nativeTag = 'footer';
 }
 export class TpNavigationPanelGroup extends NavigationPanelLayoutPart {
+  static override styles = [
+    NavigationPanelLayoutPart.styles,
+    css`
+      :host {
+        position: relative;
+      }
+    `,
+  ];
   static override tagName = 'tp-navigation-panel-group';
   static override partName = 'navigation-panel-group';
 }
 export class TpNavigationPanelGroupLabel extends NavigationPanelLayoutPart {
+  static override styles = [
+    NavigationPanelLayoutPart.styles,
+    css`
+      :host([data-collapsed]:not([data-compact])[data-collapse-mode='compact']) {
+        margin-block-start: calc(-1 * max(var(--tp-spacing) * 8, var(--tp-target-size-min)));
+      }
+    `,
+  ];
   static override tagName = 'tp-navigation-panel-group-label';
   static override partName = 'navigation-panel-group-label';
   static override nativeTag = 'span';
@@ -144,9 +215,116 @@ export class TpNavigationPanelMenu extends NavigationPanelLayoutPart {
   static override nativeTag = 'ul';
 }
 export class TpNavigationPanelItem extends NavigationPanelLayoutPart {
+  static override styles = [
+    NavigationPanelLayoutPart.styles,
+    css`
+      :host {
+        position: relative;
+      }
+
+      [part~='navigation-panel-item'] {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        align-items: center;
+      }
+
+      slot {
+        display: contents;
+      }
+
+      ::slotted(tp-navigation-panel-link),
+      ::slotted(tp-navigation-panel-action:not([data-navigation-trailing])) {
+        grid-area: 1 / 1 / 2 / -1;
+        min-inline-size: 0;
+      }
+
+      ::slotted(tp-navigation-panel-badge) {
+        grid-area: 1 / 2;
+        justify-self: end;
+        margin-inline-end: var(--tp-space-2);
+      }
+
+      ::slotted(tp-navigation-panel-action[data-navigation-trailing]) {
+        --navigation-panel-trailing-space: var(--tp-space-2);
+
+        grid-area: 1 / 3;
+        inline-size: var(--tp-target-size-min);
+        margin-inline-end: var(--tp-space-2);
+      }
+
+      ::slotted(tp-navigation-panel-submenu) {
+        grid-column: 1 / -1;
+      }
+
+      ::slotted(tp-collapsible) {
+        grid-column: 1 / -1;
+        min-inline-size: 0;
+      }
+
+      ::slotted(tp-menu) {
+        grid-area: 1 / 3;
+        display: block;
+        inline-size: var(--tp-target-size-min);
+        margin-inline-end: var(--tp-space-2);
+      }
+
+      ::slotted(tp-menu[data-navigation-menu-primary]) {
+        grid-area: 1 / 1 / 2 / -1;
+        inline-size: 100%;
+        margin-inline-end: 0;
+      }
+
+      :host([data-collapsed]:not([data-compact])[data-collapse-mode='compact'])
+        ::slotted(tp-navigation-panel-action[data-navigation-trailing]),
+      :host([data-collapsed]:not([data-compact])[data-collapse-mode='compact'])
+        ::slotted(tp-navigation-panel-badge) {
+        display: none;
+      }
+
+      :host([data-collapsed]:not([data-compact])[data-collapse-mode='compact'])
+        ::slotted(tp-menu:not([data-navigation-menu-primary])) {
+        display: none;
+      }
+    `,
+  ];
   static override tagName = 'tp-navigation-panel-item';
   static override partName = 'navigation-panel-item';
   static override nativeTag = 'li';
+  readonly #syncRow = (): void => {
+    const primary = [...this.children].find((child) =>
+      child.matches('tp-navigation-panel-link,tp-navigation-panel-action'),
+    );
+    for (const child of this.children)
+      if (child.matches('tp-navigation-panel-action'))
+        child.toggleAttribute('data-navigation-trailing', child !== primary);
+      else if (child.matches('tp-menu'))
+        child.toggleAttribute('data-navigation-menu-primary', !primary);
+    this.requestUpdate();
+  };
+  protected override defaultPartContent(): unknown {
+    return html`<slot @slotchange=${this.#syncRow}></slot>`;
+  }
+  protected override layoutProperties(): Record<string, unknown> {
+    const state = navigationPanelOwner(this)?.provider.state;
+    const primary = [...this.children].find((child) =>
+      child.matches('tp-navigation-panel-link,tp-navigation-panel-action'),
+    );
+    const accessories = [...this.children].filter(
+      (child) =>
+        child.matches('tp-navigation-panel-badge') ||
+        (child.matches('tp-menu') && !!primary) ||
+        (child.matches('tp-navigation-panel-action') && child !== primary),
+    ).length;
+    const collapsed = state?.collapsed && !state.compact && state.collapseMode === 'compact';
+    return {
+      style: {
+        '--navigation-panel-trailing-space':
+          accessories && !collapsed
+            ? `calc(var(--tp-target-size-min) * ${accessories} + var(--tp-space-2))`
+            : 'var(--tp-space-2)',
+      },
+    };
+  }
 }
 export class TpNavigationPanelSubmenu extends NavigationPanelLayoutPart {
   static override tagName = 'tp-navigation-panel-submenu';
@@ -165,19 +343,31 @@ export class NavigationPanelButtonPart extends TpButton {
   static override styles = [
     TpButton.styles,
     css`
-      :host([show-on-hover]) {
-        position: absolute;
-        inset-block-start: var(--tp-space-1);
-        inset-inline-end: var(--tp-space-1);
+      [part~='button-label'] {
+        flex: 1;
+        min-inline-size: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
-      :host([show-on-hover]) [part~='button']:not([data-compact]) {
+
+      [part~='button'][data-collapsed]:not([data-compact])[data-collapse-mode='compact']:has(
+          > [part~='button-leading-mark']:not([hidden])
+        )
+        > [part~='button-trailing-mark'] {
+        display: none;
+      }
+
+      :host([show-on-hover]) :where([part~='button']:not([data-compact])) {
         opacity: 0;
       }
-      :host([show-on-hover]):hover [part~='button'],
-      :host([show-on-hover]):focus-within [part~='button'],
+
+      :host([active]) [part~='button'],
+      [part~='button'][aria-expanded='true'],
       :host-context(tp-navigation-panel-item:hover) [part~='button'],
       :host-context(tp-navigation-panel-item:focus-within) [part~='button'],
-      :host([active]) [part~='button'] {
+      :host([show-on-hover]):hover [part~='button'],
+      :host([show-on-hover]):focus-within [part~='button'] {
         opacity: 1;
       }
     `,
@@ -212,7 +402,7 @@ export class NavigationPanelButtonPart extends TpButton {
   }
   protected override render() {
     const state = this.#member.owner?.provider.state;
-    return html`${super.render()}${this.tooltip === undefined || this.tooltip === null ? nothing : html`<tp-tooltip ${ref(this.#tooltipReference)} side="inline-end" align="center" .content=${this.tooltip} .disabled=${!state || state.compact || state.expanded || state.collapseMode !== 'compact'}></tp-tooltip>`}`;
+    return html`${super.render()}${this.tooltip === undefined || this.tooltip === null ? nothing : html`<tp-tooltip ${ref(this.#tooltipReference)} side="inline-end" align="center" .content=${() => this.tooltip} .disabled=${!state || state.compact || state.expanded || state.collapseMode !== 'compact'}></tp-tooltip>`}`;
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
@@ -243,6 +433,10 @@ export class TpNavigationPanelTrigger extends NavigationPanelButtonPart {
   }
 }
 export class TpNavigationPanelResizeRail extends NavigationPanelButtonPart {
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    this.renderRoot.querySelector('[part~="button-label"]')?.classList.add('visually-hidden');
+  }
   protected override buttonTabIndex(): string | null {
     return '-1';
   }
@@ -274,6 +468,15 @@ export class TpNavigationPanelGroupAction extends NavigationPanelButtonPart {
   }
 }
 export class TpNavigationPanelLink extends NavigationPanelButtonPart {
+  static override styles = [
+    NavigationPanelButtonPart.styles,
+    css`
+      :host {
+        display: block;
+        inline-size: 100%;
+      }
+    `,
+  ];
   static override tagName = 'tp-navigation-panel-link';
   static override partName = 'navigation-panel-link';
   constructor() {
@@ -282,6 +485,15 @@ export class TpNavigationPanelLink extends NavigationPanelButtonPart {
   }
 }
 export class TpNavigationPanelAction extends NavigationPanelButtonPart {
+  static override styles = [
+    NavigationPanelButtonPart.styles,
+    css`
+      :host {
+        display: block;
+        inline-size: 100%;
+      }
+    `,
+  ];
   static override tagName = 'tp-navigation-panel-action';
   static override partName = 'navigation-panel-action';
   constructor() {
@@ -312,9 +524,7 @@ export class TpNavigationPanelBadge extends TpBadge {
     TpBadge.styles,
     css`
       :host {
-        position: absolute;
-        inset-block-start: var(--tp-space-2);
-        inset-inline-end: var(--tp-space-1);
+        position: relative;
         pointer-events: none;
       }
     `,

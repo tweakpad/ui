@@ -181,7 +181,7 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
   'tp-avatar': {
     ':host': 'avatar',
     img: 'avatar-image',
-    "[part='fallback']": 'avatar-fallback',
+    "[part~='fallback']": 'avatar-fallback',
   },
   'tp-spinner': {
     ':host': 'spinner',

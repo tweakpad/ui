@@ -1,9 +1,21 @@
-import { navigationPanelStructure } from './recipes/navigation-panel.js';
+import {
+  navigationPanelStructure,
+  navigationPanelDisclosureStructure,
+} from './recipes/navigation-panel.js';
+import { navigationMenuStructure } from './recipes/navigation-menu.js';
 import type { PresentationDictionary } from './resolver.js';
 
 // Arrangement of registered parts. These are not replaceable dictionary appearance.
 export const registeredPartStructure: PresentationDictionary = {
   ...navigationPanelStructure,
+  ...navigationPanelDisclosureStructure,
+  ...navigationMenuStructure,
+  ...Object.fromEntries(
+    ['menu', 'context-menu', 'menubar'].flatMap((prefix) => [
+      [`${prefix}-label`, [{ declarations: { display: 'block' } }]],
+      [`${prefix}-shortcut`, [{ declarations: { 'margin-inline-start': 'auto', flex: 'none' } }]],
+    ]),
+  ),
   'tabs-trigger': [
     {
       declarations: {
@@ -34,6 +46,7 @@ export const registeredPartStructure: PresentationDictionary = {
               display: 'flex',
               'align-items': 'center',
               'inline-size': '100%',
+              'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
               'text-align': 'start',
               cursor: 'pointer',
             },

@@ -54,6 +54,7 @@ const meta: Meta<Args> = {
   },
   args: {
     ...surfaceArgs,
+    sideOffset: 8,
     label: 'Context actions',
     loopFocus: true,
     highlightItemOnHover: true,

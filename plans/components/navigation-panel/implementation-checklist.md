@@ -1,5 +1,7 @@
 # Navigation Panel implementation and evidence record
 
+This is the preserved full-implementation inventory from the earlier component work. Its original delivery/source notes and pending C/V rows are historical, not a statement that today's repair was untested. The current review, verified repairs, evidence and remaining baseline issues are consolidated in [Navigation review and repair](../navigation-review/implementation-checklist.md). This full-component record remains uncertified until its complete matrix is independently reconciled.
+
 ## Delivery and source record
 
 - Component(s) / public identity: Navigation Panel / tp-navigation-panel and source-backed constituents; Provider is a transparent logical service, not an additional rendered public host.
@@ -128,8 +130,8 @@
 | ID | Check | Status | Evidence / unresolved finding |
 | --- | --- | --- | --- |
 | I-01 | Actual shared owners and legacy extraction | passed | Source read confirmed navigation.ts compatibility reexport replaces old Root/state/motion; Provider uses actual ControllableState/SurfaceState; permanent Drawer inherits actual Drawer/Dialog; controls/fields/visual constituents inherit real owners; root registers21 constituents/private Drawer and replaces appearance/structure contributions. Browser I02/I03 remain blocked. |
-| I-02 | Source presentation representative | blocked | Registered Chrome MCP became unresponsive during root fresh page/select/evaluate requests (>30–60s); no Navigation screenshot was obtained. Must inspect real source/built representative against Nova before full matrix. |
-| I-03 | Independent constituent options | blocked | Actual Drawer/Trigger/Rail/parts/native-hook/optional-loading suites prepared; Chrome client calls currently stall, so none executed. No option capability is waived. |
+| I-02 | Source presentation representative | passed | Current Chrome MCP pages 41/42 inspected repaired panel geometry and stable menu viewport against traced Base/Nova source. Panel rows now fill; footer at viewport bottom; compact Drawer grid assigned to its full body. Screenshots inspected inline; durable matrix follows. |
+| I-03 | Independent constituent options | passed | Public compact/expanded/side/partContracts and independent viewport exercised via Chrome MCP; actual compact toggle and Escape used; root delegates reach current layout and native field targets. Wider matrix remains required. |
 
 ## Gate record
 
@@ -230,3 +232,38 @@ The eleven Navigation fixture suites prepare55 bounded API assertions (6 Provide
 Source audit correction: the initial off-canvas concern overlooked #renderView's existing protected hidden/.inert properties. No prior AX exposure is claimed; the approved View-level state is redundant protection rather than a browser-observed repair. Protected semantic roles for nav/main/ul/li now flow through the actual shared part owner, and slotted standard Button replacement is observed and rebound through the existing activation owner. Their durable assertions remain unexecuted.
 
 Final ARIA source adaptation: wide Trigger and actual compact Drawer registration reference the same persistent View in Root light DOM through ariaControlsElements, rather than private sibling-shadow ids/hosts. Actual Dialog has a protected triggerControlsTarget seam defaulting to itself; only the private Navigation Drawer overrides its target. Authored references and metadata are restored only while they still match the owner's writes, preserving later consumer changes. Six bounded public-fixture assertions cover ancestor-scope identity, authored references, compact/wide continuity and cleanup. Source review establishes the relationship mapping; actual AX/browser validation remains blocked at I02/I03. Production source frozen after this repair; parent owns the final integrated typecheck/build. Final owned formatting and diff whitespace checks exited0. Earlier focused27 tests/4 files passed (10 Provider,2 context,6 part,9 stories); these establish unit/source behavior, not browser completeness.
+
+## Review and repair checkpoint — 2026-10-03
+
+User request: review and fix Navigation Panel and Navigation Menu, including widths shrinking over time. Fresh direct Spec Blocks project and both complete document ASTs reread: version 0.3.15, head 8440bff24a97dbbc5c762ebf4bd6baa958b305e1. Local source pins unchanged; Chrome MCP now responds. Preserve the existing Popover repair and all prior capability/scenario IDs. Existing early/browser blockers are historical and will be replaced only by current evidence.
+
+Design gate reopened and resolved from inspection: keep the existing Provider, Drawer, Button/Input/Badge/Separator/Tooltip, part composition and PopupViewport owners. Repair structural geometry across the custom-element boundaries; propagate root part-contract changes to current constituents; remove repeated member registration and stale variant tokens. Navigation viewport entries must size from current content independently of the animated viewport and viewport CSS size variables must describe its content box. Native links and list anatomy remain intact. No new runtime dependency or parallel behavior owner.
+
+Source and presentation map refinements: Base sidebar.tsx SidebarHeader/Content/Footer/MenuButton and Nova cn-sidebar-inner/header/content/footer/menu-button; geometry resides in Navigation Panel styles and constituent classes, appearance remains navigation-panel dictionary. Navigation Base NavigationMenuContent/Popup/Positioner use content size outputs; PopupViewportController remains the sole measurement/lifetime owner, with intrinsic entry geometry in Navigation Menu. Actual consumers remain the recorded family.
+
+Initial investigation evidence: Chrome pages 41/42 show short panel rows, footer near top and Navigation viewport measurement decaying from 62.703125px to zero while still open. Existing panel fixture API probes exposed root part-contract propagation failures. These are diagnostic review probes, not acceptance passes. Required C/V mappings remain in force; independent real input, visual, accessibility, docs and package execution follow repaired early integration.
+
+Design refinement: live Chrome revealed that direct ARIA element references into a sibling portal ShadowRoot are invalid (expanded=true, controls=[]), and Navigation Content lost its Trigger name. Existing composed focus/reference infrastructure now forwards references through public shadow hosts using native ShadowRoot.referenceTarget, assigns a stable generated ID only when absent, and retains actual semantic targets. TpAnchoredSurface remains the single trigger relationship owner for Menu/Context/Popover/Navigation/Preview; Navigation item/native Content keeps its source-owned labeling policy and exposes a named group. The recorded family regression includes these shared consumers and both portal modes. Explicit list/listitem roles preserve native ul/li anatomy across slots. The source map and gates 0–2 are reopened and resolved on this concrete common-owner repair; no duplicate surface implementation introduced.
+
+
+### Current review outcome
+
+The 2026-10-03 user review/fix request is now implemented and tested. See
+[the current repair delivery record](../navigation-review/implementation-checklist.md)
+for source/capability/reuse mapping, actual source/built results and gate evidence.
+The full inventories above retain their original IDs and pending statuses rather
+than misrepresenting today's repair as complete component certification.
+
+Current checks: Panel 176 review assertions and 55 existing API assertions per
+source/built fixture; Navigation 39 geometry assertions per source/built fixture.
+Real Chrome MCP click/Enter/Space/Tab/ShiftTab/ArrowDown/Escape/hover, AX and target
+axe checks are separately recorded. Unit262, production build, Storybook build and
+changed-file ESLint/Stylelint pass. Full lint retains24 existing Combobox style
+errors. Six broader family failures reproduce on archived unchanged HEAD;
+Navigation A14/A15/A16/A22 pass source and built. No stage/commit action.
+
+Chrome is now operational; earlier browser-unavailable prose records the original
+implementation handoff only. Current local evidence directories end in
+`navigation-panel/review-fix/` and `navigation-menu/review-fix/`. Existing source
+5173 and Storybook6006 plus freshly rebuilt dist were verified; artifacts are
+workspace-local and not published.

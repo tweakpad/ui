@@ -169,6 +169,8 @@ export class PresentationController implements ReactiveController {
     let listeners = subscribers.get(this.#document);
     if (!listeners) subscribers.set(this.#document, (listeners = new Set()));
     listeners.add(this);
+    // Projection can reconnect an unchanged element without another Lit update.
+    this.#scheduleRefresh();
   }
   hostDisconnected(): void {
     if (this.#document) subscribers.get(this.#document)?.delete(this);

@@ -2,6 +2,7 @@ import type { PresentationDictionary, PresentationRule } from './resolver.js';
 import { componentDefinitions } from './components.js';
 import { componentAppearance } from './recipes.js';
 import { anchoredPresenceAppearance } from './recipes/command-surface.js';
+import { navigationPanelDisclosureAppearance } from './recipes/navigation-panel.js';
 
 const rule = (
   declarations: PresentationRule['declarations'],
@@ -486,6 +487,7 @@ export const defaultPresentationDictionary: PresentationDictionary = Object.from
       ...(sharedPresentation[key] ?? []),
       ...(componentAppearance[key] ?? []),
       ...(corePresentationDictionary[key] ?? []),
+      ...(navigationPanelDisclosureAppearance[key] ?? []),
     ],
   ]),
 );

@@ -46,3 +46,5 @@ Context Menu family of presentation keys from their nearest actual owner.
 Configure constituent partContracts on those constituent instances. Target
 customization uses its actual Button/native owner; Root partPresentation projects
 Context target presentation to that target.
+
+Popup menus use an 8px side offset by default to separate the surface from its anchor. Set `side-offset="0"` on the Menu/Context Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the existing positioning API.

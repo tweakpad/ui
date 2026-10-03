@@ -105,3 +105,5 @@ constituent's hidden `indicator` contract. Item hooks include data-highlighted,
 data-focus-visible, data-disabled, data-checked/data-unchecked and data-variant;
 Indicators also publish presence markers. See the shared reference for delegate,
 reference, theme and positioning hooks.
+
+Popup menus use an 8px side offset by default to separate the surface from its anchor. Set `side-offset="0"` on the Menu/Context Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the existing positioning API.

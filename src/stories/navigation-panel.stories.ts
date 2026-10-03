@@ -1,8 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
-import { chevronRightIcon } from '../icons/chevron-right.js';
-import { plusIcon } from '../icons/plus.js';
+import { ref } from 'lit/directives/ref.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import {
+  navigationPanelExampleMarkup,
+  setupNavigationPanelExample,
+} from './navigation-panel-example.js';
+import exampleSource from './navigation-panel-example.js?raw';
 import documentation from '../../docs/navigation-panel.md?raw';
 import type { TpNavigationPanel } from '../components/navigation-panel/index.js';
 interface Args {
@@ -12,48 +17,27 @@ interface Args {
   side: 'inline-start' | 'inline-end';
   collapseMode: 'off-canvas' | 'compact' | 'none';
   label: string;
-  showLoading: boolean;
-  showLoadingIcon: boolean;
   motionPolicy: 'inherit' | 'normal' | 'reduce';
 }
 function source(args: Args): string {
-  return `import { html, render } from 'lit';
-import '@tweakpad/ui/register';
+  const module = exampleSource
+    .replaceAll("'../icons/navigation.js'", "'@tweakpad/ui/icons/navigation'")
+    .replaceAll("'../icons/plus.js'", "'@tweakpad/ui/icons/plus'")
+    .replaceAll('export ', '');
+  return `import '@tweakpad/ui/register';
 import '@tweakpad/ui/styles.css';
-import { chevronRightIcon } from '@tweakpad/ui/icons/chevron-right';
-import { plusIcon } from '@tweakpad/ui/icons/plus';
+${module}
 const example = document.createElement('div');
 document.body.append(example);
-render(html\`<tp-navigation-panel
-  .expanded=\${${args.expanded}} .compact=\${${args.compact}}
-  .variant=\${${JSON.stringify(args.variant)}} .side=\${${JSON.stringify(args.side)}}
-  .collapseMode=\${${JSON.stringify(args.collapseMode)}} .label=\${${JSON.stringify(args.label)}}
-  .motionPolicy=\${${JSON.stringify(args.motionPolicy)}}
-  @tp-value-change=\${event => {
-    if (event.target !== event.currentTarget || event.defaultPrevented || event.detail.cancelled) return;
-    event.currentTarget.expanded = event.detail.value;
-  }}>
-  <tp-navigation-panel-trigger .icon=\${chevronRightIcon}></tp-navigation-panel-trigger>
-  <tp-navigation-panel-header><h2>Workspace</h2></tp-navigation-panel-header>
-  <tp-navigation-panel-content><tp-navigation-panel-group>
-    <tp-navigation-panel-group-label>Projects</tp-navigation-panel-group-label>
-    <tp-navigation-panel-group-action aria-label="Add project" .icon=\${plusIcon}></tp-navigation-panel-group-action>
-    <tp-navigation-panel-group-content><tp-navigation-panel-menu>
-      <tp-navigation-panel-item><tp-navigation-panel-link href="#overview" active .icon=\${chevronRightIcon} tooltip="Overview">Overview</tp-navigation-panel-link><tp-navigation-panel-badge>3</tp-navigation-panel-badge></tp-navigation-panel-item>
-      <tp-navigation-panel-item><tp-navigation-panel-link href="#activity" .icon=\${chevronRightIcon} tooltip="Activity">Activity</tp-navigation-panel-link></tp-navigation-panel-item>
-      <tp-navigation-panel-item><tp-navigation-panel-action .icon=\${plusIcon}>Create project</tp-navigation-panel-action></tp-navigation-panel-item>
-    </tp-navigation-panel-menu></tp-navigation-panel-group-content>
-  </tp-navigation-panel-group><tp-navigation-panel-separator></tp-navigation-panel-separator>
-  <tp-navigation-panel-input label="Filter projects" placeholder="Filter projects"></tp-navigation-panel-input>
-  ${args.showLoading ? `<tp-navigation-panel-loading-placeholder .showIcon=\${${args.showLoadingIcon}}></tp-navigation-panel-loading-placeholder>` : ''}
-  </tp-navigation-panel-content>
-  <tp-navigation-panel-footer><tp-button variant="ghost">Account settings</tp-button></tp-navigation-panel-footer>
-  <tp-navigation-panel-inset><div>
-    <h1 id="overview">Project overview</h1>
-    <p>Persistent navigation stays beside your content and becomes a modal Drawer in compact mode.</p>
-    <tp-button variant="outline">Create a task</tp-button>
-  </div></tp-navigation-panel-inset>
-</tp-navigation-panel>\`, example);`;
+example.innerHTML = navigationPanelExampleMarkup;
+const panel = example.querySelector('tp-navigation-panel');
+Object.assign(panel, ${JSON.stringify(args)});
+await panel.updateComplete;
+setupNavigationPanelExample(panel);
+panel.addEventListener('tp-value-change', event => {
+  if (event.target === panel && !event.defaultPrevented && !event.detail.cancelled)
+    panel.expanded = event.detail.value;
+});`;
 }
 const meta: Meta<Args> = {
   title: 'Components/Navigation panel',
@@ -76,8 +60,6 @@ const meta: Meta<Args> = {
     side: 'inline-start',
     collapseMode: 'compact',
     label: 'Workspace navigation',
-    showLoading: false,
-    showLoadingIcon: false,
     motionPolicy: 'inherit',
   },
   argTypes: {
@@ -87,85 +69,40 @@ const meta: Meta<Args> = {
     side: { control: 'select', options: ['inline-start', 'inline-end'] },
     collapseMode: { control: 'select', options: ['off-canvas', 'compact', 'none'] },
     label: { control: 'text' },
-    showLoading: { control: 'boolean' },
-    showLoadingIcon: { control: 'boolean' },
     motionPolicy: { control: 'select', options: ['inherit', 'normal', 'reduce'] },
   },
   render: (args) => {
     const [, updateArgs] = useArgs<Args>();
-    return html`<tp-navigation-panel
-      .expanded=${args.expanded}
-      .compact=${args.compact}
-      .variant=${args.variant}
-      .side=${args.side}
-      .collapseMode=${args.collapseMode}
-      .label=${args.label}
-      .motionPolicy=${args.motionPolicy}
-      @tp-value-change=${(event: CustomEvent) => {
-        const panel = event.currentTarget as TpNavigationPanel;
-        if (event.target !== panel || event.defaultPrevented || event.detail.cancelled) return;
-        panel.expanded = event.detail.value;
-        queueMicrotask(() => {
-          if (!event.defaultPrevented && !event.detail.cancelled && panel.isConnected)
-            updateArgs({ expanded: panel.expanded });
-        });
-      }}
-    >
-      <tp-navigation-panel-trigger .icon=${chevronRightIcon}></tp-navigation-panel-trigger>
-      <tp-navigation-panel-header><h2>Workspace</h2></tp-navigation-panel-header>
-      <tp-navigation-panel-content
-        ><tp-navigation-panel-group
-          ><tp-navigation-panel-group-label>Projects</tp-navigation-panel-group-label
-          ><tp-navigation-panel-group-action
-            aria-label="Add project"
-            .icon=${plusIcon}
-          ></tp-navigation-panel-group-action
-          ><tp-navigation-panel-group-content
-            ><tp-navigation-panel-menu>
-              <tp-navigation-panel-item
-                ><tp-navigation-panel-link
-                  href="#overview"
-                  active
-                  .icon=${chevronRightIcon}
-                  tooltip="Overview"
-                  >Overview</tp-navigation-panel-link
-                ><tp-navigation-panel-badge>3</tp-navigation-panel-badge></tp-navigation-panel-item
-              >
-              <tp-navigation-panel-item
-                ><tp-navigation-panel-link
-                  href="#activity"
-                  .icon=${chevronRightIcon}
-                  tooltip="Activity"
-                  >Activity</tp-navigation-panel-link
-                ></tp-navigation-panel-item
-              >
-              <tp-navigation-panel-item
-                ><tp-navigation-panel-action .icon=${plusIcon}
-                  >Create project</tp-navigation-panel-action
-                ></tp-navigation-panel-item
-              >
-            </tp-navigation-panel-menu></tp-navigation-panel-group-content
-          ></tp-navigation-panel-group
-        ><tp-navigation-panel-separator></tp-navigation-panel-separator
-        ><tp-navigation-panel-input
-          label="Filter projects"
-          placeholder="Filter projects"
-        ></tp-navigation-panel-input
-        >${args.showLoading ? html`<tp-navigation-panel-loading-placeholder .showIcon=${args.showLoadingIcon}></tp-navigation-panel-loading-placeholder>` : ''}</tp-navigation-panel-content
-      >
-      <tp-navigation-panel-footer
-        ><tp-button variant="ghost">Account settings</tp-button></tp-navigation-panel-footer
-      ><tp-navigation-panel-inset
-        ><div>
-          <h1 id="overview">Project overview</h1>
-          <p>
-            Persistent navigation stays beside your content and becomes a modal Drawer in compact
-            mode.
-          </p>
-          <tp-button variant="outline">Create a task</tp-button>
-        </div></tp-navigation-panel-inset
-      >
-    </tp-navigation-panel>`;
+    let cleanup: (() => void) | undefined;
+    let connected = false;
+    const mount = (container: Element | undefined): void => {
+      cleanup?.();
+      connected = !!container;
+      if (!container) return;
+      queueMicrotask(async () => {
+        const panel = container.querySelector<TpNavigationPanel>('tp-navigation-panel');
+        if (!connected || !panel?.isConnected) return;
+        Object.assign(panel, args);
+        await panel.updateComplete;
+        if (!connected || !panel.isConnected) return;
+        const release = setupNavigationPanelExample(panel);
+        const change = (event: Event): void => {
+          const proposal = event as CustomEvent;
+          if (event.target !== panel || event.defaultPrevented || proposal.detail.cancelled) return;
+          panel.expanded = proposal.detail.value;
+          queueMicrotask(() => {
+            if (!event.defaultPrevented && panel.isConnected)
+              updateArgs({ expanded: panel.expanded });
+          });
+        };
+        panel.addEventListener('tp-value-change', change);
+        cleanup = () => {
+          release();
+          panel.removeEventListener('tp-value-change', change);
+        };
+      });
+    };
+    return html`<div ${ref(mount)}>${unsafeHTML(navigationPanelExampleMarkup)}</div>`;
   },
 };
 export default meta;

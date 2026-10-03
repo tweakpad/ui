@@ -699,8 +699,11 @@ export function positionSurface(
           };
       }
     }
-    if (options.strategy !== 'fixed') {
-      const offsetParent = surface.offsetParent;
+    // Resolve the containing block using the requested strategy, including when
+    // changing from fixed to absolute while the surface is already open.
+    surface.style.position = result.strategy;
+    if (result.strategy !== 'fixed') {
+      const offsetParent = topLayer ? null : surface.offsetParent;
       if (offsetParent instanceof HTMLElement) {
         const parentRect = offsetParent.getBoundingClientRect();
         result = {
@@ -708,11 +711,18 @@ export function positionSurface(
           x: result.x - parentRect.left + offsetParent.scrollLeft - offsetParent.clientLeft,
           y: result.y - parentRect.top + offsetParent.scrollTop - offsetParent.clientTop,
         };
+      } else {
+        // Native top-layer elements have no element offset parent. Absolute
+        // coordinates still use the initial containing block, not the viewport.
+        result = {
+          ...result,
+          x: result.x + ownerWindow.scrollX,
+          y: result.y + ownerWindow.scrollY,
+        };
       }
     }
     const x = roundToDevicePixel(result.x, ownerWindow);
     const y = roundToDevicePixel(result.y, ownerWindow);
-    surface.style.position = result.strategy;
     if (options.transformPositioning ?? true) {
       surface.style.left = '0px';
       surface.style.top = '0px';

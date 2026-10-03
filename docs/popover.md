@@ -4,6 +4,10 @@
 Anchor. It uses the same surface/portal/focus infrastructure as Tooltip while
 keeping explicit interactive Popover behavior.
 
+The default placement is `block-end center`: below the anchor in horizontal writing,
+to its left in `vertical-rl`, and to its right in `vertical-lr`. Use `bottom center`
+for an explicitly physical bottom placement.
+
 ```html
 <script type="module">
   import '@tweakpad/ui/register';

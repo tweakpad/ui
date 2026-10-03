@@ -46,11 +46,12 @@ A later veto discards provisional callback publication. Unknown controlled value
 render no active content; later duplicate Item values are diagnosed and excluded.
 
 Navigation uses the [shared positioning, portal, Arrow, Backdrop, focus and
-customization API](anchored-surfaces.md), with bottom/center, zero offsets and
+customization API](anchored-surfaces.md), with bottom/center, an 8px side offset, zero alignment offset and
 absolute positioning. It remains nonmodal, and open is derived from value rather
 than an independent Boolean ownership lane. Trigger focus does not copy Tooltip's
 focus-open policy. Hover/press can open; ArrowDown enters an active horizontal
-panel; Escape returns focus only when focus was in content. Native links continue
+panel; the logical forward arrow enters a vertical panel (Right in LTR, Left in RTL).
+Escape returns focus only when focus was in content. Native links continue
 to use ordinary Tab navigation. Outside focus/press closes without a focus trap.
 
 ## Item, Trigger, Content and Link
@@ -76,6 +77,8 @@ nodes. `viewportState` is the current read-only snapshot and CSS uses
 `--tp-popup-width`/`--tp-popup-height`. Geometry follows RTL/writing mode and owner
 changes. Links do not become commands because they are inside a popup.
 
+Triggers and direct links use the same box model, padding and minimum target height. Vertical Lists stretch their top-level controls to a shared width; popup links retain their authored layout, including grids. Orientation chooses the List arrangement independently of placement. For a vertical navigation list, use `placement="inline-end start"` and a positive `side-offset` to open beside the remaining destinations, as shown in the Vertical story. The default placement remains bottom/center with an 8px trigger gap and zero alignment offset. Set `side-offset="0"` for a flush popup or supply a custom offset.
+
 Public parts: `navigation-menu`, `navigation-menu-list`, `navigation-menu-item`,
 `navigation-menu-trigger`, `navigation-menu-content`, `navigation-menu-link`,
 `navigation-menu-indicator`, `navigation-menu-viewport`,
@@ -85,3 +88,5 @@ partContracts on that Item. The flattened root Popup uses hidden contract key
 `content`; it is distinct from the public per-Item Content. Root partPresentation
 flows through the Item controller before terminal instance overrides. All nine
 public parts support horizontal/vertical dictionary contributions.
+
+The viewport measures each active panel at its intrinsic size, independently of the animated viewport. Its width and height variables describe the content box; padding and borders are added outside those dimensions. Repeated switching, opening, or resizing content does not progressively reduce panel width. Trigger and content associations forward through shadow hosts to the actual named semantic targets.
