@@ -1,5 +1,5 @@
 import { css, html } from 'lit';
-import type { PropertyValues } from 'lit';
+import type { PropertyValues, PropertyDeclarations } from 'lit';
 import { TpElement, TpFormElement } from '../../foundation/element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
@@ -7,15 +7,32 @@ import type { CheckboxGroupController } from '../../foundation/checkbox-group.js
 import { nearestCheckboxGroup } from '../../foundation/checkbox-group.js';
 import { PresenceController } from '../../foundation/presence.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
+import type { HostProperties } from '../../foundation/part.js';
 import { createId } from '../../foundation/id.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { checkIcon } from '../../icons/check.js';
 import { minusIcon } from '../../icons/minus.js';
 
+/** One committed Boolean snapshot shared by Checkbox and Switch render bindings. */
+export interface BooleanControlState extends Readonly<Record<string, unknown>> {
+  checked: boolean;
+  indeterminate: boolean;
+  disabled: boolean;
+  readOnly: boolean;
+  required: boolean;
+  invalid: boolean;
+  valid: boolean | null;
+  focusVisible: boolean;
+  touched: boolean;
+  dirty: boolean;
+  filled: boolean;
+  focused: boolean;
+}
+
 /** Checkbox state/form owner, also consumed by the Switch family. */
 export class TpCheckbox extends TpFormElement {
   static tagName = 'tp-checkbox';
-  static override properties = {
+  static override properties: PropertyDeclarations = {
     ...TpFormElement.properties,
     checked: { type: Boolean, noAccessor: true },
     defaultChecked: { type: Boolean, attribute: 'default-checked' },
@@ -81,13 +98,30 @@ export class TpCheckbox extends TpFormElement {
   #space = false;
   #lastChecked: boolean | undefined;
   #focusVisible = false;
+  #nativeLabelText = '';
+  #nativeLabelObserver: MutationObserver | null = null;
   #presence = new PresenceController(this, {
     surface: () => this.renderRoot.querySelector('[part~="checkbox-indicator"]'),
     keepMounted: () => this.keepMounted,
   });
+  protected get supportsIndeterminate(): boolean {
+    return true;
+  }
+  protected get supportsCheckboxGroup(): boolean {
+    return true;
+  }
+  protected get activatesOnEnter(): boolean {
+    return false;
+  }
+  protected get usesIndicatorPresence(): boolean {
+    return true;
+  }
+  protected get checkboxParent(): boolean {
+    return this.supportsCheckboxGroup && this.parent;
+  }
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
-    this.#presence.setPresent(this.checked || this.indeterminate);
+    if (this.usesIndicatorPresence) this.#presence.setPresent(this.checked || this.indeterminate);
   }
   #identifier = createId('tp-checkbox');
   defaultChecked: boolean | undefined;
@@ -122,17 +156,27 @@ export class TpCheckbox extends TpFormElement {
     this.requestUpdate('checked', previous);
   }
   get indeterminate(): boolean {
-    return this.#group && this.parent ? this.#group.isIndeterminate(this) : this.#indeterminate;
+    return (
+      this.supportsIndeterminate &&
+      (this.#group && this.checkboxParent ? this.#group.isIndeterminate(this) : this.#indeterminate)
+    );
   }
   set indeterminate(value: boolean) {
     const previous = this.indeterminate;
-    this.#indeterminate = Boolean(value);
+    if (!this.supportsIndeterminate && value) {
+      this.emit('tp-diagnostic', {
+        code: 'switch-indeterminate',
+        message: 'Switch has binary checked state and does not support indeterminate.',
+      });
+    }
+    this.#indeterminate = this.supportsIndeterminate && Boolean(value);
     this.requestUpdate('indeterminate', previous);
   }
   get checkboxGroup(): CheckboxGroupController | null {
     return this.#group;
   }
   set checkboxGroup(value: CheckboxGroupController | null) {
+    if (!this.supportsCheckboxGroup) value = null;
     if (this.#group === value) return;
     this.#group = value;
     this.requestUpdate();
@@ -150,17 +194,8 @@ export class TpCheckbox extends TpFormElement {
     return this.controlElement;
   }
   protected override render() {
-    const checked = this.checked,
-      mixed = this.indeterminate,
-      disabled = this.checkboxDisabled;
-    const state = {
-      checked,
-      indeterminate: mixed,
-      disabled,
-      readOnly: this.readOnly,
-      required: this.required,
-      invalid: this.effectiveInvalid,
-    };
+    const state = this.booleanControlState();
+    const { checked, indeterminate: mixed } = state;
     const indicator = this.renderPart('checkbox-indicator', state, {
       tag: 'span',
       enabled: this.#presence.mounted,
@@ -176,23 +211,58 @@ export class TpCheckbox extends TpFormElement {
       },
       content: html`<tp-icon .icon=${mixed ? minusIcon : checkIcon}></tp-icon>`,
     });
-    return html`${this.renderPart('checkbox', state, {
+    return this.renderBooleanControl(
+      state,
+      html`<span class="box" aria-hidden="true">${indicator}</span><span><slot></slot></span>`,
+    );
+  }
+  protected get booleanControlIdentifier(): string {
+    return this.identifier || this.#identifier;
+  }
+  protected booleanControlState(): BooleanControlState {
+    return Object.freeze({
+      checked: this.checked,
+      indeterminate: this.indeterminate,
+      disabled: this.checkboxDisabled,
+      readOnly: this.readOnly,
+      required: this.required,
+      invalid: this.effectiveInvalid,
+      valid: this.effectiveInvalid ? false : this.fieldStateMarkers.valid ? true : null,
+      focusVisible: this.#focusVisible,
+      touched: Boolean(this.fieldStateMarkers.touched),
+      dirty: Boolean(this.fieldStateMarkers.dirty),
+      filled: this.checked,
+      focused: Boolean(this.fieldStateMarkers.focused),
+    });
+  }
+  /** Common semantic/action/native binding; sibling policies supply only role and content. */
+  protected renderBooleanControl(
+    state: BooleanControlState,
+    content: unknown,
+    part = 'checkbox',
+    role = 'checkbox',
+    properties: HostProperties = {},
+  ): unknown {
+    const { checked, indeterminate: mixed, disabled } = state;
+    return html`${this.renderPart(part, state, {
         tag: this.nativeAction ? 'button' : 'span',
         protectedProperties: ['.ariaControlsElements'],
         reference: this.#reference,
         onHandlerPrevented: {
           '@keydown': () => {
             this.#space = false;
+            this.#syncFocusVisible();
           },
           '@keyup': () => {
             this.#space = false;
+            this.#syncFocusVisible();
           },
         },
         properties: {
           class: 'root',
-          part: 'checkbox focusable',
-          id: this.identifier || this.#identifier,
-          role: 'checkbox',
+          part: `${part} focusable`,
+          id: this.booleanControlIdentifier,
+          role,
           type: this.nativeAction ? 'button' : undefined,
           '.disabled': this.nativeAction ? disabled : undefined,
           tabindex: disabled ? -1 : 0,
@@ -201,7 +271,9 @@ export class TpCheckbox extends TpFormElement {
           'aria-readonly': this.readOnly ? 'true' : undefined,
           'aria-required': this.required ? 'true' : undefined,
           'aria-invalid': this.effectiveInvalid ? 'true' : undefined,
-          '.ariaControlsElements': this.parent ? (this.#group?.controlledElements() ?? []) : [],
+          '.ariaControlsElements': this.checkboxParent
+            ? (this.#group?.controlledElements() ?? [])
+            : [],
           'data-checked': checked,
           'data-unchecked': !checked,
           'data-indeterminate': mixed,
@@ -210,8 +282,13 @@ export class TpCheckbox extends TpFormElement {
           'data-required': this.required,
           'data-focus-visible': this.#focusVisible,
           'data-invalid': this.effectiveInvalid,
-          'data-valid': !this.effectiveInvalid,
-          'data-parent': this.parent,
+          'data-valid': state.valid === true,
+          'data-parent': this.checkboxParent,
+          'data-touched': state.touched,
+          'data-dirty': state.dirty,
+          'data-filled': state.filled,
+          'data-focused': state.focused,
+          'data-readonly': this.readOnly,
           '@click': this.#click,
           '@keydown': this.#keyDown,
           '@keyup': this.#keyUp,
@@ -224,9 +301,10 @@ export class TpCheckbox extends TpFormElement {
             this.#focusVisible = false;
             this.requestUpdate();
           },
+          ...properties,
+          ...(this.#nativeLabelText ? { 'aria-label': this.#nativeLabelText } : {}),
         },
-        content: html`<span class="box" aria-hidden="true">${indicator}</span
-          ><span><slot></slot></span>`,
+        content,
       })}<input
         class="visually-hidden"
         type="checkbox"
@@ -240,14 +318,33 @@ export class TpCheckbox extends TpFormElement {
         @change=${this.handleChange}
       />`;
   }
+  // A native label activates its FACE owner host, outside the internal semantic part.
+  #hostClick = (event: Event): void => {
+    if (event.composedPath()[0] !== this) return;
+    if (!this.checkboxDisabled && !this.readOnly) this.focus();
+    this.#click(event);
+  };
+  #syncNativeLabels = (): void => {
+    const text = [...(this.labels ?? [])]
+      .map((label) => label.textContent?.trim() ?? '')
+      .filter(Boolean)
+      .join(' ');
+    if (text === this.#nativeLabelText) return;
+    this.#nativeLabelText = text;
+    this.requestUpdate();
+  };
   #click = (event: Event): void => {
+    this.#syncFocusVisible();
     queueMicrotask(() => {
       if (this.isConnected && !componentHandlingPrevented(event)) this.#request(event);
     });
   };
   #keyDown = (event: KeyboardEvent): void => {
+    this.#syncFocusVisible();
     if (event.key === 'Enter') {
       event.preventDefault();
+      if (this.activatesOnEnter && !event.repeat && !componentHandlingPrevented(event))
+        this.#request(event);
       return;
     }
     if (
@@ -261,12 +358,19 @@ export class TpCheckbox extends TpFormElement {
     this.#space = true;
   };
   #keyUp = (event: KeyboardEvent): void => {
+    this.#syncFocusVisible();
     if (event.key !== ' ' || !this.#space) return;
     this.#space = false;
     if (componentHandlingPrevented(event)) return;
     event.preventDefault();
     this.#request(event);
   };
+  #syncFocusVisible(): void {
+    const visible = this.controlElement?.matches(':focus-visible') ?? false;
+    if (visible === this.#focusVisible) return;
+    this.#focusVisible = visible;
+    this.requestUpdate();
+  }
   #request(source: Event): void {
     if (this.checkboxDisabled || this.readOnly) return;
     const next = this.indeterminate ? true : !this.checked;
@@ -277,7 +381,12 @@ export class TpCheckbox extends TpFormElement {
   /** Protected compatibility lane consumed by Switch's native checkbox. */
   protected handleChange = (event: Event): void => {
     const input = event.currentTarget as HTMLInputElement;
-    if (!this.checkboxDisabled && !this.readOnly) {
+    if (
+      !this.checkboxDisabled &&
+      !this.readOnly &&
+      !event.defaultPrevented &&
+      !componentHandlingPrevented(event)
+    ) {
       const next = this.indeterminate ? true : input.checked;
       if (this.#group) this.#group.request(this, next, event);
       else this.#state.set(next, 'trigger-press', event);
@@ -307,14 +416,15 @@ export class TpCheckbox extends TpFormElement {
   }
   protected syncCheckboxForm(): void {
     this.setFormValue(
-      this.checkboxDisabled || this.parent
+      this.checkboxDisabled || this.checkboxParent
         ? null
         : this.checked
           ? this.value
           : (this.uncheckedValue ?? null),
       String(this.checked),
     );
-    const missing = !this.checkboxDisabled && !this.parent && this.required && !this.checked;
+    const missing =
+      !this.checkboxDisabled && !this.checkboxParent && this.required && !this.checked;
     this.setValidity(
       missing ? { valueMissing: true } : {},
       missing ? 'Please select this option.' : '',
@@ -323,8 +433,30 @@ export class TpCheckbox extends TpFormElement {
   }
   override connectedCallback(): void {
     super.connectedCallback();
+    this.addEventListener('click', this.#hostClick);
+    this.#syncNativeLabels();
+    const Observer = this.ownerDocument.defaultView?.MutationObserver;
+    if (Observer) {
+      this.#nativeLabelObserver = new Observer((records) => {
+        this.#syncNativeLabels();
+        if (
+          records.some((record) => record.target === this && record.attributeName === 'aria-label')
+        )
+          this.requestUpdate();
+      });
+      this.#nativeLabelObserver.observe(this.getRootNode(), {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ['for', 'id', 'aria-label'],
+      });
+    }
     // Switch reuses Boolean/form behavior, but is not a CheckboxGroup constituent.
-    this.checkboxGroup = this.localName === 'tp-checkbox' ? nearestCheckboxGroup(this) : null;
+    this.checkboxGroup =
+      this.supportsCheckboxGroup && this.localName === 'tp-checkbox'
+        ? nearestCheckboxGroup(this)
+        : null;
     this.#group?.refresh();
   }
   protected override updated(changed: PropertyValues<this>): void {
@@ -360,6 +492,9 @@ export class TpCheckbox extends TpFormElement {
     }
   }
   override disconnectedCallback(): void {
+    this.removeEventListener('click', this.#hostClick);
+    this.#nativeLabelObserver?.disconnect();
+    this.#nativeLabelObserver = null;
     const owner = this.#group;
     this.checkboxGroup = null;
     this.#space = false;

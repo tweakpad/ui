@@ -1,9 +1,45 @@
+import type {
+  TpMenuItem,
+  TpMenuCheckboxItem,
+  TpMenuRadioGroup,
+  TpMenuRadioItem,
+} from './components/menu/index.js';
+import type { TpNavigationMenuItem } from './components/navigation-menu/index.js';
+import type {
+  TpNavigationPanelInset,
+  TpNavigationPanelHeader,
+  TpNavigationPanelContent,
+  TpNavigationPanelFooter,
+  TpNavigationPanelGroup,
+  TpNavigationPanelGroupLabel,
+  TpNavigationPanelGroupContent,
+  TpNavigationPanelMenu,
+  TpNavigationPanelItem,
+  TpNavigationPanelSubmenu,
+  TpNavigationPanelSubitem,
+  TpNavigationPanelTrigger,
+  TpNavigationPanelResizeRail,
+  TpNavigationPanelGroupAction,
+  TpNavigationPanelLink,
+  TpNavigationPanelAction,
+  TpNavigationPanelSublink,
+  TpNavigationPanelInput,
+  TpNavigationPanelBadge,
+  TpNavigationPanelSeparator,
+  TpNavigationPanelLoadingPlaceholder,
+} from './components/navigation-panel/index.js';
 import type { TpAccordion } from './components/accordion.js';
 import type { TpAccordionItem } from './components/accordion-item.js';
 import type { TpButton } from './components/button.js';
 import type { TpCheckbox } from './components/checkbox.js';
 import type { TpIcon } from './components/icon.js';
 import type { TpCombobox, TpCommandPalette, TpSelect } from './components/choices.js';
+import type {
+  TpComboboxTrigger,
+  TpComboboxClear,
+  TpComboboxChipRemove,
+  TpComboboxOption,
+} from './components/combobox/index.js';
 import type { TpCollapsible } from './components/collapsible.js';
 import type {
   TpAvatar,
@@ -74,6 +110,12 @@ import type { TpSliderThumb } from './components/slider/index.js';
 
 declare global {
   interface HTMLElementTagNameMap {
+    'tp-menu-item': TpMenuItem;
+    'tp-menu-checkbox-item': TpMenuCheckboxItem;
+    'tp-menu-radio-group': TpMenuRadioGroup;
+    'tp-menu-radio-item': TpMenuRadioItem;
+    'tp-navigation-menu-item': TpNavigationMenuItem;
+
     'tp-accordion': TpAccordion;
     'tp-accordion-item': TpAccordionItem;
     'tp-alert': TpAlert;
@@ -92,6 +134,10 @@ declare global {
     'tp-checkbox': TpCheckbox;
     'tp-collapsible': TpCollapsible;
     'tp-combobox': TpCombobox;
+    'tp-combobox-trigger': TpComboboxTrigger;
+    'tp-combobox-clear': TpComboboxClear;
+    'tp-combobox-chip-remove': TpComboboxChipRemove;
+    'tp-combobox-option': TpComboboxOption;
     'tp-command-palette': TpCommandPalette;
     'tp-context-menu': TpContextMenu;
     'tp-data-visualization': TpDataVisualization;
@@ -114,6 +160,28 @@ declare global {
     'tp-native-select': TpNativeSelect;
     'tp-navigation-menu': TpNavigationMenu;
     'tp-navigation-panel': TpNavigationPanel;
+    'tp-navigation-panel-inset': TpNavigationPanelInset;
+    'tp-navigation-panel-header': TpNavigationPanelHeader;
+    'tp-navigation-panel-content': TpNavigationPanelContent;
+    'tp-navigation-panel-footer': TpNavigationPanelFooter;
+    'tp-navigation-panel-group': TpNavigationPanelGroup;
+    'tp-navigation-panel-group-label': TpNavigationPanelGroupLabel;
+    'tp-navigation-panel-group-content': TpNavigationPanelGroupContent;
+    'tp-navigation-panel-menu': TpNavigationPanelMenu;
+    'tp-navigation-panel-item': TpNavigationPanelItem;
+    'tp-navigation-panel-submenu': TpNavigationPanelSubmenu;
+    'tp-navigation-panel-subitem': TpNavigationPanelSubitem;
+    'tp-navigation-panel-trigger': TpNavigationPanelTrigger;
+    'tp-navigation-panel-resize-rail': TpNavigationPanelResizeRail;
+    'tp-navigation-panel-group-action': TpNavigationPanelGroupAction;
+    'tp-navigation-panel-link': TpNavigationPanelLink;
+    'tp-navigation-panel-action': TpNavigationPanelAction;
+    'tp-navigation-panel-sublink': TpNavigationPanelSublink;
+    'tp-navigation-panel-input': TpNavigationPanelInput;
+    'tp-navigation-panel-badge': TpNavigationPanelBadge;
+    'tp-navigation-panel-separator': TpNavigationPanelSeparator;
+    'tp-navigation-panel-loading-placeholder': TpNavigationPanelLoadingPlaceholder;
+
     'tp-otp-field': TpOtpField;
     'tp-pagination': TpPagination;
     'tp-popover': TpPopover;

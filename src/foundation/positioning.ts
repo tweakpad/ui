@@ -73,6 +73,27 @@ export interface VirtualAnchor {
 }
 export type AnchorGeometry = Element | VirtualAnchor;
 export type CollisionBoundary = 'clipping-ancestors' | Element | Element[] | Rect;
+export interface PositioningOffsetContext {
+  side: Side;
+  align: Alignment;
+  anchor: { width: number; height: number };
+  positioner: { width: number; height: number };
+}
+export type GeometryOffset = number | ((context: PositioningOffsetContext) => number);
+export type PositioningOffset =
+  number | { mainAxis?: number; crossAxis?: number; alignmentAxis?: number };
+export type PositioningOffsetResolver = (context: PositioningOffsetContext) => PositioningOffset;
+/** High-level Positioner offsets feed the actual common placement stage. */
+export function geometryOffsets(
+  side: GeometryOffset,
+  align: GeometryOffset,
+): PositioningOffsetResolver {
+  return (context) => {
+    const mainAxis = typeof side === 'function' ? side(context) : side;
+    const crossAxis = typeof align === 'function' ? align(context) : align;
+    return { mainAxis, crossAxis, alignmentAxis: crossAxis };
+  };
+}
 export interface PositioningOptions {
   boundary?: CollisionBoundary;
   constrainSize?: boolean;
@@ -81,7 +102,7 @@ export interface PositioningOptions {
   onInvalid?: () => void;
   placement?: Placement;
   resolvePlacement?: () => Placement;
-  offset?: number | { mainAxis?: number; crossAxis?: number; alignmentAxis?: number };
+  offset?: PositioningOffset | PositioningOffsetResolver;
   strategy?: PositioningStrategy;
   automatic?: boolean;
   allowedPlacements?: Placement[];
@@ -214,7 +235,7 @@ function overflowScore(overflow: SideOverflow): number {
 function applyOffset(
   coordinates: { x: number; y: number },
   placement: Placement,
-  value: PositioningOptions['offset'],
+  value: PositioningOffset,
   direction: 'ltr' | 'rtl',
 ): { x: number; y: number; dx: number; dy: number } {
   const { side, alignment } = placementParts(placement);
@@ -298,7 +319,17 @@ export function computeSurfacePosition(
     : candidatePlacements(initial, policy, direction);
   const evaluated = candidates.map((placement) => {
     const base = baseCoordinates(anchor, surface, placement, direction);
-    const offset = applyOffset(base, placement, options.offset ?? 8, direction);
+    const parts = placementParts(placement);
+    const value =
+      typeof options.offset === 'function'
+        ? options.offset({
+            side: parts.side,
+            align: parts.alignment,
+            anchor: { width: anchor.width, height: anchor.height },
+            positioner: { width: surface.width, height: surface.height },
+          })
+        : (options.offset ?? 8);
+    const offset = applyOffset(base, placement, value, direction);
     const candidateRect = rect(offset.x, offset.y, surface.width, surface.height);
     return {
       placement,
@@ -306,6 +337,13 @@ export function computeSurfacePosition(
       overflow: detectOverflow(candidateRect, clipping, options.padding),
     };
   });
+  if (
+    evaluated.some(
+      (candidate) =>
+        !Number.isFinite(candidate.coordinates.x) || !Number.isFinite(candidate.coordinates.y),
+    )
+  )
+    return null;
   const firstFit = evaluated.findIndex((candidate) => overflowScore(candidate.overflow) === 0);
   const selectedIndex =
     firstFit >= 0
@@ -362,7 +400,13 @@ export function computeSurfacePosition(
     surfaceOverflow.right >= surface.width;
   const { side } = placementParts(selected.placement);
   const distance =
-    typeof options.offset === 'number' ? options.offset : (options.offset?.mainAxis ?? 8);
+    side === 'top'
+      ? -selected.coordinates.dy
+      : side === 'bottom'
+        ? selected.coordinates.dy
+        : side === 'left'
+          ? -selected.coordinates.dx
+          : selected.coordinates.dx;
   const availableWidth = Math.max(
     0,
     shiftSide && !vertical

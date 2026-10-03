@@ -778,6 +778,29 @@ async function apiChecks() {
     });
     target.head.append(css);
     await bounded(loaded, 'adoption style');
+    const freshIcon = document.createElement('tp-icon') as HTMLElement & {
+      updateComplete: Promise<boolean>;
+    };
+    const freshButton = document.createElement('tp-button') as HTMLElement & {
+      updateComplete: Promise<boolean>;
+    };
+    Object.assign(freshIcon, { icon: boldIcon, size: 'var(--tp-icon-size-sm)' });
+    freshButton.textContent = 'Fresh foreign button';
+    target.body.append(freshIcon, freshButton);
+    await Promise.all([
+      bounded(freshIcon.updateComplete, 'fresh foreign Icon first update'),
+      bounded(freshButton.updateComplete, 'fresh foreign TpElement first update'),
+    ]);
+    const freshControl = freshButton.shadowRoot!.querySelector<HTMLElement>('[part~=button]')!;
+    assertion(
+      freshIcon.shadowRoot!.querySelector('svg') &&
+        Math.abs(freshIcon.getBoundingClientRect().width - 16) < 0.5 &&
+        target.defaultView!.getComputedStyle(freshControl).alignItems === 'center' &&
+        freshControl.getBoundingClientRect().height > 0,
+      'first foreign constituent structural/recipe paint',
+    );
+    freshIcon.remove();
+    freshButton.remove();
     target.body.append(host);
     await wait(host);
     host.setOpen(true, 'keyboard', new KeyboardEvent('keydown', { key: 'ArrowDown' }));

@@ -48,6 +48,74 @@ function setup() {
   };
 }
 describe('presence lifecycle', () => {
+  it('schedules and cancels with the allocating owner window across adoption', async () => {
+    const makeWindow = () => {
+      let id = 0;
+      const frames = new Map<number, FrameRequestCallback>();
+      const timers = new Map<number, () => void>();
+      const view = {
+        requestAnimationFrame: vi.fn((callback: FrameRequestCallback) => {
+          frames.set(++id, callback);
+          return id;
+        }),
+        cancelAnimationFrame: vi.fn((key: number) => frames.delete(key)),
+        setTimeout: vi.fn((callback: () => void) => {
+          timers.set(++id, callback);
+          return id;
+        }),
+        clearTimeout: vi.fn((key: number) => timers.delete(key)),
+      };
+      return {
+        view,
+        frames,
+        timers,
+        frame: () => {
+          const pending = [...frames.values()];
+          frames.clear();
+          pending.forEach((callback) => callback(0));
+        },
+      };
+    };
+    const first = makeWindow();
+    const second = makeWindow();
+    const host = {
+      addController: vi.fn(),
+      removeController: vi.fn(),
+      requestUpdate: vi.fn(),
+      ownerDocument: { defaultView: first.view },
+    };
+    const completed = vi.fn();
+    const controller = new PresenceController(host as unknown as ReactiveControllerHost, {
+      onComplete: completed,
+    });
+    controller.setPresent(true);
+    controller.hostUpdated();
+    host.ownerDocument = { defaultView: second.view };
+    controller.hostDisconnected();
+    expect(first.view.cancelAnimationFrame).toHaveBeenCalledOnce();
+    expect(first.frames.size).toBe(0);
+    expect(second.view.cancelAnimationFrame).not.toHaveBeenCalled();
+    controller.hostConnected();
+    controller.hostUpdated();
+    second.frame();
+    const unfinished = new Promise<void>(() => {});
+    controller.trackCompletion(unfinished);
+    controller.hostUpdated();
+    second.frame();
+    expect(second.timers.size).toBe(1);
+    host.ownerDocument = { defaultView: first.view };
+    controller.hostDisconnected();
+    expect(second.view.clearTimeout).toHaveBeenCalledOnce();
+    expect(second.timers.size).toBe(0);
+    expect(completed).not.toHaveBeenCalled();
+    controller.hostConnected();
+    controller.hostUpdated();
+    first.frame();
+    controller.hostUpdated();
+    first.frame();
+    await Promise.resolve();
+    expect(completed.mock.calls).toEqual([[true]]);
+  });
   it('completes each stable cycle once even after unrelated host updates', async () => {
     const f = setup();
     f.controller.setPresent(true);

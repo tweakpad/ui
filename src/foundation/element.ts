@@ -102,6 +102,9 @@ export class TpElement extends LitElement {
     return renderPart(name, state, this.partContracts[name], options);
   }
   readonly presentationController = new PresentationController(this);
+  protected override createRenderRoot(): HTMLElement | DocumentFragment {
+    return this.presentationController.createRenderRoot();
+  }
   /** Captured before Lit reflects defaults; compounds use this to preserve authored attributes. */
   readonly authoredAttributes = new Set<string>();
   override connectedCallback(): void {
@@ -232,6 +235,10 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
   }
   get effectiveInvalid(): boolean {
     return this.invalid || !!this.#fieldContext.invalid || this.#nativeInvalid;
+  }
+  /** Current Field ownership, available during render before host marker reflection. */
+  protected get fieldStateMarkers(): Readonly<Record<string, boolean>> {
+    return this.#fieldContext.markers ?? {};
   }
   get inputElement(): HTMLElement | null {
     return this.renderRoot?.querySelector<HTMLElement>('input,textarea,select') ?? null;

@@ -53,6 +53,9 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
     this.requestUpdate('tabIndex', previous);
   }
   #owner: SliderThumbOwner | null = null;
+  #canceledAdjustmentKey: string | undefined;
+  #canceledAdjustmentTimer: number | undefined;
+  #canceledAdjustmentWindow: Window | undefined;
   #visual: HTMLElement | null = null;
   #reference = (node: HTMLElement | null): void => {
     this.#visual = node;
@@ -121,21 +124,35 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
         'aria-required': state.required ? 'true' : undefined,
         'aria-invalid': state.invalid ? 'true' : undefined,
         '@input': (event: Event) => {
-          this.#owner?.requestThumbValue(
-            this,
-            Number((event.currentTarget as HTMLInputElement).value),
-            'input',
-            event,
-          );
+          if (!this.#canceledAdjustmentKey)
+            this.#owner?.requestThumbValue(
+              this,
+              Number((event.currentTarget as HTMLInputElement).value),
+              'input',
+              event,
+            );
           this.#restoreInput();
         },
-        '@keydown': (event: KeyboardEvent) => this.#owner?.thumbKey(this, event),
+        '@keydown': (event: KeyboardEvent) => {
+          this.#clearCanceledAdjustment();
+          this.#owner?.thumbKey(this, event);
+        },
+        '@keyup': (event: KeyboardEvent) => {
+          if (event.key === this.#canceledAdjustmentKey) this.#clearCanceledAdjustment();
+        },
         '@focus': () => this.#owner?.thumbFocus(this, true),
-        '@blur': () => this.#owner?.thumbFocus(this, false),
+        '@blur': () => {
+          this.#clearCanceledAdjustment();
+          this.#owner?.thumbFocus(this, false);
+        },
       },
       nativeProperties,
       ['min', 'max', 'step', 'id'],
-      { '@input': () => this.#restoreInput(), '@keydown': () => this.#restoreInput() },
+      {
+        '@input': () => this.#restoreInput(),
+        '@keydown': (event) => this.#cancelAdjustmentInput(event as KeyboardEvent),
+        '@blur': () => this.#clearCanceledAdjustment(),
+      },
     );
     // tabIndex is an authored host property in the upstream Thumb contract.
     const authoredTabIndex =
@@ -174,6 +191,36 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
       'data-dirty': state.dirty,
     };
   }
+  #cancelAdjustmentInput(event: KeyboardEvent): void {
+    // A canceled component key still has its independent native default. Ignore
+    // that key's range-input default update rather than publishing a new proposal.
+    if (
+      [
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown',
+        'PageUp',
+        'PageDown',
+        'Home',
+        'End',
+      ].includes(event.key)
+    ) {
+      this.#clearCanceledAdjustment();
+      this.#canceledAdjustmentKey = event.key;
+      const window = this.ownerDocument.defaultView!;
+      this.#canceledAdjustmentWindow = window;
+      this.#canceledAdjustmentTimer = window.setTimeout(() => this.#clearCanceledAdjustment(), 0);
+    }
+    this.#restoreInput();
+  }
+  #clearCanceledAdjustment(): void {
+    if (this.#canceledAdjustmentTimer !== undefined)
+      this.#canceledAdjustmentWindow?.clearTimeout(this.#canceledAdjustmentTimer);
+    this.#canceledAdjustmentKey = undefined;
+    this.#canceledAdjustmentTimer = undefined;
+    this.#canceledAdjustmentWindow = undefined;
+  }
   #restoreInput(): void {
     const input = this.inputElement as HTMLInputElement | null;
     if (input) input.value = String(this.value ?? 0);
@@ -204,6 +251,7 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
     /* Root owns restoration. */
   }
   override disconnectedCallback(): void {
+    this.#clearCanceledAdjustment();
     this.#owner?.registerThumb(this, null);
     super.disconnectedCallback();
   }

@@ -22,6 +22,7 @@ export class ChoiceCollectionController<T, R extends ChoiceRecord<T> = ChoiceRec
   #source: readonly R[] = [];
   #visible: readonly R[] = [];
   #filter: (record: R) => boolean = () => true;
+  #visibleOrder: readonly R[] | undefined;
   #highlight: R | undefined;
   #unregister: Array<() => void> = [];
   #mounted = new Map<R, HTMLElement>();
@@ -60,8 +61,9 @@ export class ChoiceCollectionController<T, R extends ChoiceRecord<T> = ChoiceRec
     this.#source = unique;
     this.#refresh();
   }
-  setFilter(filter: (record: R) => boolean): void {
+  setFilter(filter: (record: R) => boolean, order?: readonly R[]): void {
     this.#filter = filter;
+    this.#visibleOrder = order;
     this.#refresh();
   }
   mount(record: R, element: HTMLElement | null): void {
@@ -137,7 +139,9 @@ export class ChoiceCollectionController<T, R extends ChoiceRecord<T> = ChoiceRec
   }
   #refresh(): void {
     const previous = this.#highlight;
-    this.#visible = this.#source.filter(this.#filter);
+    this.#visible = (this.#visibleOrder ?? this.#source).filter(
+      (record) => this.#source.includes(record) && this.#filter(record),
+    );
     this.#highlight = previous
       ? (this.#visible.find(
           (record) => !record.disabled && this.equal(record.value, previous.value),

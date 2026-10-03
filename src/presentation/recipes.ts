@@ -1,9 +1,15 @@
+import { menuFamilyAppearance } from './recipes/menu-family.js';
+import { popoverAppearance } from './recipes/popover.js';
+import { navigationMenuAppearance } from './recipes/navigation-menu.js';
+import { navigationPanelAppearance } from './recipes/navigation-panel.js';
 import type { PresentationDictionary } from './resolver.js';
 import { toastAppearance } from './recipes/toast.js';
 import { progressAppearance } from './recipes/progress.js';
 import { nativeSelectAppearance } from './recipes/native-select.js';
 import { sliderAppearance } from './recipes/slider.js';
 import { selectAppearance } from './recipes/select.js';
+import { switchAppearance } from './recipes/switch.js';
+import { comboboxAppearance } from './recipes/combobox.js';
 import { textControlAppearance, fieldAppearance } from './recipes/text-controls.js';
 import { selectionControlAppearance } from './recipes/selection-controls.js';
 
@@ -530,15 +536,19 @@ export const componentAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-        'border-radius': 'var(--tp-radius-sm)',
+        border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-input)',
+        'border-radius': 'var(--tp-radius-lg)',
+        'min-block-size': 'var(--tp-control-height-sm)',
+        background:
+          'light-dark(transparent, color-mix(in oklab, var(--tp-input) 30%, transparent))',
       },
     },
     {
       selector: '&:focus-within',
       declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
+        'border-color': 'var(--tp-ring)',
+        'box-shadow':
+          '0 0 0 var(--tp-ring-width) color-mix(in oklab, var(--tp-ring) 50%, transparent)',
       },
     },
     {
@@ -767,15 +777,6 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
   ],
-  'navigation-panel': [
-    {
-      selector: '&',
-      declarations: {
-        'border-inline-end': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-        background: 'var(--tp-background)',
-      },
-    },
-  ],
   avatar: [
     {
       selector: '&',
@@ -888,24 +889,6 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
   ],
-  switch: [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-2)',
-      },
-    },
-  ],
-  'switch-thumb': [
-    {
-      selector: '&',
-      declarations: {
-        'border-radius': 'var(--tp-radius-full)',
-        background: 'var(--tp-background)',
-        'box-shadow': 'var(--tp-shadow-sm)',
-      },
-    },
-  ],
   'collapsible-heading': [
     {
       selector: '&',
@@ -972,4 +955,10 @@ export const componentAppearance: PresentationDictionary = {
   ...nativeSelectAppearance,
   ...sliderAppearance,
   ...selectAppearance,
+  ...switchAppearance,
+  ...comboboxAppearance,
+  ...navigationPanelAppearance,
+  ...menuFamilyAppearance,
+  ...popoverAppearance,
+  ...navigationMenuAppearance,
 };

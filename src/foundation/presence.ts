@@ -16,7 +16,9 @@ export class PresenceController implements ReactiveController {
   #generation = 0;
   #fallbackDuration = 0;
   #frame: number | undefined;
+  #frameWindow: Window | undefined;
   #timer: number | undefined;
+  #timerWindow: Window | undefined;
   #pendingCompletion: boolean | null = null;
   #completionStartedFor = -1;
   #destroyed = false;
@@ -76,8 +78,7 @@ export class PresenceController implements ReactiveController {
     if (this.#destroyed) return;
     const generation = this.#generation;
     if (this.#state === 'starting' && this.#frame === undefined) {
-      this.#frame = requestAnimationFrame(() => {
-        this.#frame = undefined;
+      this.#scheduleFrame(() => {
         if (generation !== this.#generation || !this.#requested || this.#state !== 'starting')
           return;
         this.#pendingCompletion = true;
@@ -133,9 +134,7 @@ export class PresenceController implements ReactiveController {
   }
 
   #waitForRenderedTransition(present: boolean, generation: number): void {
-    if (this.#frame !== undefined) cancelAnimationFrame(this.#frame);
-    this.#frame = requestAnimationFrame(() => {
-      this.#frame = undefined;
+    this.#scheduleFrame(() => {
       if (generation !== this.#generation || present !== this.#requested) return;
       const surface = this.#options.surface?.();
       const animations = surface
@@ -158,11 +157,35 @@ export class PresenceController implements ReactiveController {
         10_000,
         Math.max(this.#fallbackDuration, renderedDuration + 100, completions.length ? 10_000 : 0),
       );
-      this.#timer = window.setTimeout(() => this.#finish(present, generation), fallback);
+      this.#timerWindow = this.#ownerWindow();
+      this.#timer = this.#timerWindow?.setTimeout(
+        () => this.#finish(present, generation),
+        fallback,
+      );
       void Promise.allSettled([
         ...animations.map((animation) => animation.finished),
         ...completions.map((completion) => Promise.resolve(completion)),
       ]).then(() => this.#finish(present, generation));
+    });
+  }
+
+  #ownerWindow(): Window | undefined {
+    const document =
+      this.#options.surface?.()?.ownerDocument ??
+      (this.#host as ReactiveControllerHost & { ownerDocument?: Document }).ownerDocument;
+    if (document) return document.defaultView ?? undefined;
+    // Non-DOM controller hosts are supported by the pure lifecycle tests.
+    return typeof window === 'undefined' ? undefined : window;
+  }
+
+  #scheduleFrame(callback: FrameRequestCallback): void {
+    if (this.#frame !== undefined) this.#frameWindow?.cancelAnimationFrame(this.#frame);
+    this.#frameWindow = this.#ownerWindow();
+    if (!this.#frameWindow) return;
+    this.#frame = this.#frameWindow.requestAnimationFrame((time) => {
+      this.#frame = undefined;
+      this.#frameWindow = undefined;
+      callback(time);
     });
   }
 
@@ -185,12 +208,14 @@ export class PresenceController implements ReactiveController {
     this.#trackedCompletions.clear();
     this.#completionStartedFor = -1;
     if (this.#frame !== undefined) {
-      cancelAnimationFrame(this.#frame);
+      this.#frameWindow?.cancelAnimationFrame(this.#frame);
       this.#frame = undefined;
     }
+    this.#frameWindow = undefined;
     if (this.#timer !== undefined) {
-      window.clearTimeout(this.#timer);
+      this.#timerWindow?.clearTimeout(this.#timer);
       this.#timer = undefined;
     }
+    this.#timerWindow = undefined;
   }
 }

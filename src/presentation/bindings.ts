@@ -145,9 +145,7 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
   },
   'tp-combobox': {
     '.root': 'combobox',
-    '.control': 'combobox-anchor',
     '.editor': 'combobox-input',
-    '.toggle': 'combobox-trigger',
     '.listbox': 'combobox-content',
     '.option': 'combobox-option',
     '[part="empty"]': 'combobox-empty-state',
@@ -196,7 +194,7 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
     ':host': 'marker',
   },
   'tp-skeleton': {
-    ':host': 'skeleton',
+    "[part~='skeleton']": 'skeleton',
   },
   'tp-switch': {
     '.root': 'switch',

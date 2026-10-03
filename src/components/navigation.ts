@@ -1,28 +1,7 @@
 import { css, html } from 'lit';
-import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import { TpValueChangeEvent } from '../foundation/events.js';
-import {
-  prepareMotion,
-  type MotionHandle,
-  type MotionRoleDefinition,
-} from '../foundation/motion.js';
 import { assignedElements, controlStyles, eventReason } from './shared.js';
-
-export const navigationPanelMotionRoles = {
-  collapse: {
-    name: 'collapse',
-    kind: 'state',
-    phases: ['change'],
-    completion: 'non-blocking',
-  },
-  compactSurface: {
-    name: 'compact-surface',
-    kind: 'state',
-    phases: ['change'],
-    completion: 'non-blocking',
-  },
-} as const satisfies Record<string, MotionRoleDefinition>;
 
 export class TpBreadcrumb extends TpElement {
   static tagName = 'tp-breadcrumb';
@@ -76,7 +55,7 @@ export class TpBreadcrumb extends TpElement {
   }
 }
 
-export { TpMenu, TpContextMenu, TpMenubar, TpNavigationMenu } from './menu.js';
+export * from './menu.js';
 
 export class TpPagination extends TpElement {
   static tagName = 'tp-pagination';
@@ -168,120 +147,4 @@ function pageWindow(current: number, total: number): (number | null)[] {
   return result;
 }
 
-export class TpNavigationPanel extends TpElement {
-  static tagName = 'tp-navigation-panel';
-  static override properties = {
-    ...TpElement.properties,
-    open: { type: Boolean, reflect: true },
-    collapsed: { type: Boolean, reflect: true },
-    label: { type: String },
-  };
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: block;
-      }
-
-      .panel {
-        display: grid;
-        grid-template-rows: auto 1fr auto;
-        width: var(--tp-navigation-width, 17rem);
-        height: 100%;
-        transition:
-          width
-            calc(
-              var(--tp-duration-normal) *
-                var(--tp-navigation-collapse-motion-scale, var(--tp-motion-scale))
-            )
-            var(--tp-easing-standard),
-          transform
-            calc(
-              var(--tp-duration-normal) *
-                var(--tp-navigation-compact-motion-scale, var(--tp-motion-scale))
-            )
-            var(--tp-easing-standard);
-      }
-
-      :host([collapsed]) .panel {
-        width: var(--tp-navigation-collapsed-width, 4rem);
-      }
-
-      @media (width <= 48rem) {
-        :host {
-          position: fixed;
-          z-index: 1050;
-          inset: 0 auto 0 0;
-        }
-
-        .panel {
-          transform: translateX(-100%);
-        }
-
-        :host([open]) .panel {
-          transform: translateX(0);
-        }
-      }
-
-      .panel[data-tp-motion-driven~='collapse'] {
-        --tp-navigation-collapse-motion-scale: 0;
-      }
-
-      .panel[data-tp-motion-driven~='compact-surface'] {
-        --tp-navigation-compact-motion-scale: 0;
-      }
-    `,
-  ];
-  open = false;
-  collapsed = false;
-  label = 'Primary';
-  #motion: MotionHandle[] = [];
-  protected override willUpdate(changed: PropertyValues<this>): void {
-    super.willUpdate(changed);
-    this.#motion = [];
-    const previousCollapsed = changed.get('collapsed');
-    if (previousCollapsed !== undefined && previousCollapsed !== this.collapsed) {
-      this.#motion.push(
-        prepareMotion(
-          this,
-          this.renderRoot.querySelector<HTMLElement>('.panel'),
-          navigationPanelMotionRoles.collapse,
-          {
-            phase: 'change',
-            fromState: Boolean(previousCollapsed),
-            toState: this.collapsed,
-          },
-        ),
-      );
-    }
-    const previousOpen = changed.get('open');
-    if (previousOpen !== undefined && previousOpen !== this.open) {
-      this.#motion.push(
-        prepareMotion(
-          this,
-          this.renderRoot.querySelector<HTMLElement>('.panel'),
-          navigationPanelMotionRoles.compactSurface,
-          {
-            phase: 'change',
-            fromState: Boolean(previousOpen),
-            toState: this.open,
-          },
-        ),
-      );
-    }
-  }
-  protected override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
-    if (changed.has('collapsed') || changed.has('open')) {
-      for (const handle of this.#motion) handle.start();
-      this.#motion = [];
-    }
-  }
-  protected override render() {
-    return html`<nav class="panel" part="root" aria-label=${this.label}>
-      <header part="header"><slot name="header"></slot></header>
-      <div part="content"><slot></slot></div>
-      <footer part="footer"><slot name="footer"></slot></footer>
-    </nav>`;
-  }
-}
+export * from './navigation-panel/index.js';

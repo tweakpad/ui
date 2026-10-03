@@ -986,6 +986,149 @@ async function assertEnvironment() {
     inputClaims: 'Owner environment mutation/DOM geometry only',
   };
 }
+async function assertKeyboardDefaultProtocol() {
+  records.length = 0;
+  const slider = await create({
+    defaultValue: 40,
+    partContracts: {
+      'slider-thumb': {
+        hostProperties: {
+          '@keydown': (event: KeyboardEvent & { preventComponentHandling(): void }) =>
+            event.preventComponentHandling(),
+        },
+      },
+    },
+  });
+  const input = slider.inputElement as HTMLInputElement;
+  const key = new KeyboardEvent('keydown', {
+    key: 'ArrowRight',
+    bubbles: true,
+    composed: true,
+    cancelable: true,
+  });
+  input.dispatchEvent(key);
+  check(
+    'C11 component key cancellation remains distinct from native default prevention',
+    !key.defaultPrevented,
+    key.defaultPrevented,
+  );
+  input.value = '41';
+  input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  check(
+    'C05 canceled key default input cannot create a second value proposal',
+    slider.value === 40 && input.value === '40',
+    { value: slider.value, input: input.value },
+  );
+  input.dispatchEvent(
+    new KeyboardEvent('keyup', { key: 'ArrowRight', bubbles: true, composed: true }),
+  );
+  input.value = '50';
+  input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  check(
+    'C11 keyup releases suppression for an independent input',
+    slider.value === 50,
+    slider.value,
+  );
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: 'ArrowRight',
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    }),
+  );
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  input.value = '60';
+  input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  check(
+    'C08 missing keyup cannot leave native input suppression beyond its task',
+    slider.value === 60,
+    slider.value,
+  );
+  slider.remove();
+  return {
+    checks: records.length,
+    records: [...records],
+    inputClaims:
+      'Synthetic KeyboardEvent/native input protocol only; actual browser key default retry required',
+  };
+}
+async function assertConstituents() {
+  records.length = 0;
+  const slider = await create(
+    {
+      defaultValue: [20, 60],
+      getAccessibleLabel: (index: number) => `Root purpose ${index}`,
+      getAccessibleValueText: (formatted: string) => `${formatted} root units`,
+    },
+    [{ index: 0 }, { index: 1 }],
+  );
+  const thumbs = [...slider.querySelectorAll<TpSliderThumb>('tp-slider-thumb')];
+  const inputs = thumbs.map((thumb) => thumb.inputElement as HTMLInputElement);
+  check(
+    'C10 Root resolvers describe each actual native Thumb',
+    inputs[0]!.getAttribute('aria-label') === 'Root purpose 0' &&
+      inputs[1]!.getAttribute('aria-valuetext') === '60 root units',
+    inputs.map((input) => ({
+      label: input.getAttribute('aria-label'),
+      valueText: input.getAttribute('aria-valuetext'),
+    })),
+  );
+  thumbs[0]!.getAccessibleLabel = (index) => `Constituent purpose ${index}`;
+  thumbs[0]!.getAccessibleValueText = (formatted) => `${formatted} constituent units`;
+  await settle(slider);
+  check(
+    'C10 constituent resolvers override only their Thumb',
+    inputs[0]!.getAttribute('aria-label') === 'Constituent purpose 0' &&
+      inputs[0]!.getAttribute('aria-valuetext') === '20 constituent units' &&
+      inputs[1]!.getAttribute('aria-label') === 'Root purpose 1',
+    inputs.map((input) => ({
+      label: input.getAttribute('aria-label'),
+      valueText: input.getAttribute('aria-valuetext'),
+    })),
+  );
+  thumbs[0]!.valueText = 'Direct accessible text';
+  await settle(slider);
+  check(
+    'C10 direct valueText takes precedence over resolvers',
+    inputs[0]!.getAttribute('aria-valuetext') === 'Direct accessible text',
+    inputs[0]!.outerHTML,
+  );
+  thumbs[0]!.setAttribute('tabindex', '-1');
+  await settle(slider);
+  check(
+    'C11 authored tabIndex targets native input without a host tab stop',
+    inputs[0]!.tabIndex === -1 && !thumbs[0]!.hasAttribute('tabindex'),
+    { input: inputs[0]!.tabIndex, hostAttribute: thumbs[0]!.getAttribute('tabindex') },
+  );
+  slider.remove();
+  const currency = await create({
+    defaultValue: 12,
+    locale: 'en-US',
+    format: { style: 'currency', currency: 'USD' },
+    partContracts: { 'slider-output': {} },
+  });
+  const output = () =>
+    currency.shadowRoot!.querySelector('[part~="slider-output"]')!.textContent?.trim();
+  check(
+    'C16 currency formatting uses shared locale service',
+    output() === '$12.00' && currency.inputElement!.getAttribute('aria-valuetext') === '$12.00',
+    { output: output(), valueText: currency.inputElement!.getAttribute('aria-valuetext') },
+  );
+  currency.locale = 'de-DE';
+  await settle(currency);
+  check(
+    'C16 dynamic locale preserves number formatting options and committed value',
+    output()?.replace(/\s/g, ' ') === '12,00 $' && currency.value === 12,
+    { output: output(), value: currency.value },
+  );
+  currency.remove();
+  return {
+    checks: records.length,
+    records: [...records],
+    inputClaims: 'Public resolver/attribute/format API only; real Tab input is separate',
+  };
+}
 async function assertInteractionProtocol() {
   records.length = 0;
   const dispatch = (
@@ -1039,6 +1182,27 @@ async function assertInteractionProtocol() {
   );
   inner.remove();
   outer.remove();
+  const stacked = await create({ defaultValue: [100, 100, 100] }, [
+    { index: 0 },
+    { index: 1 },
+    { index: 2 },
+  ]);
+  const stackedThumbs = [...stacked.querySelectorAll<TpSliderThumb>('tp-slider-thumb')];
+  dispatch(stacked, 'pointerdown', 1, 98, stackedThumbs[2]!.inputElement!);
+  dispatch(stacked, 'pointermove', 0.5, 98);
+  await settle(stacked);
+  check(
+    'C07 maximum stack selects its first eligible Thumb despite topmost pressed host',
+    JSON.stringify(stacked.values) === '[50,100,100]' && stacked.activeThumbIndex === 0,
+    { values: stacked.values, active: stacked.activeThumbIndex },
+  );
+  dispatch(stacked, 'pointerup', 0.5, 98);
+  await settle(stacked);
+  check('C08 stacked drag releases to idle', stacked.activeThumbIndex === -1 && !stacked.dragging, {
+    active: stacked.activeThumbIndex,
+    dragging: stacked.dragging,
+  });
+  stacked.remove();
   const canceled = await create({ value: 40, defaultValue: undefined });
   const canceledCommits: unknown[] = [];
   canceled.onValueChange = () => {};
@@ -1142,6 +1306,8 @@ Object.assign(window, {
     assertField,
     assertGeometry,
     assertEnvironment,
+    assertKeyboardDefaultProtocol,
+    assertConstituents,
     assertInteractionProtocol,
     html,
     snapshot(slider = scalar) {

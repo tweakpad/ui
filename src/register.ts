@@ -1,3 +1,10 @@
+import {
+  TpMenuItem,
+  TpMenuCheckboxItem,
+  TpMenuRadioGroup,
+  TpMenuRadioItem,
+} from './components/menu/index.js';
+import { TpNavigationMenuItem } from './components/navigation-menu/index.js';
 import { defineElement } from './foundation/define.js';
 import { TpAccordion } from './components/accordion.js';
 import { TpAccordionItem } from './components/accordion-item.js';
@@ -5,6 +12,12 @@ import { TpButton } from './components/button.js';
 import { TpCheckbox } from './components/checkbox.js';
 import { TpIcon } from './components/icon.js';
 import { TpCombobox, TpCommandPalette, TpSelect } from './components/choices.js';
+import {
+  TpComboboxTrigger,
+  TpComboboxClear,
+  TpComboboxChipRemove,
+  TpComboboxOption,
+} from './components/combobox/index.js';
 import { TpCollapsible } from './components/collapsible.js';
 import {
   TpCalendar,
@@ -66,6 +79,30 @@ import {
   TpSkeleton,
   TpTable,
 } from './components/primitives.js';
+import {
+  TpNavigationPanelInset,
+  TpNavigationPanelHeader,
+  TpNavigationPanelContent,
+  TpNavigationPanelFooter,
+  TpNavigationPanelGroup,
+  TpNavigationPanelGroupLabel,
+  TpNavigationPanelGroupContent,
+  TpNavigationPanelMenu,
+  TpNavigationPanelItem,
+  TpNavigationPanelSubmenu,
+  TpNavigationPanelSubitem,
+  TpNavigationPanelTrigger,
+  TpNavigationPanelResizeRail,
+  TpNavigationPanelGroupAction,
+  TpNavigationPanelLink,
+  TpNavigationPanelAction,
+  TpNavigationPanelSublink,
+  TpNavigationPanelInput,
+  TpNavigationPanelBadge,
+  TpNavigationPanelSeparator,
+  TpNavigationPanelLoadingPlaceholder,
+} from './components/navigation-panel/index.js';
+import { NavigationPanelDrawer } from './components/navigation-panel/drawer.js';
 import { TpSwitch } from './components/switch.js';
 import { TpTabs } from './components/tabs.js';
 import { TpToggle } from './components/toggle.js';
@@ -78,6 +115,10 @@ defineElement(TpAccordionItem.tagName, TpAccordionItem);
 defineElement(TpIcon.tagName, TpIcon);
 defineElement(TpButton.tagName, TpButton);
 defineElement(TpCombobox.tagName, TpCombobox);
+defineElement(TpComboboxTrigger.tagName, TpComboboxTrigger);
+defineElement(TpComboboxClear.tagName, TpComboboxClear);
+defineElement(TpComboboxChipRemove.tagName, TpComboboxChipRemove);
+defineElement(TpComboboxOption.tagName, TpComboboxOption);
 defineElement(TpCommandPalette.tagName, TpCommandPalette);
 defineElement(TpSelect.tagName, TpSelect);
 defineElement(TpCheckbox.tagName, TpCheckbox);
@@ -140,3 +181,32 @@ defineElement(TpSkeleton.tagName, TpSkeleton);
 defineElement(TpTable.tagName, TpTable);
 
 export * from './index.js';
+
+defineElement(TpNavigationPanelInset.tagName, TpNavigationPanelInset);
+defineElement(TpNavigationPanelHeader.tagName, TpNavigationPanelHeader);
+defineElement(TpNavigationPanelContent.tagName, TpNavigationPanelContent);
+defineElement(TpNavigationPanelFooter.tagName, TpNavigationPanelFooter);
+defineElement(TpNavigationPanelGroup.tagName, TpNavigationPanelGroup);
+defineElement(TpNavigationPanelGroupLabel.tagName, TpNavigationPanelGroupLabel);
+defineElement(TpNavigationPanelGroupContent.tagName, TpNavigationPanelGroupContent);
+defineElement(TpNavigationPanelMenu.tagName, TpNavigationPanelMenu);
+defineElement(TpNavigationPanelItem.tagName, TpNavigationPanelItem);
+defineElement(TpNavigationPanelSubmenu.tagName, TpNavigationPanelSubmenu);
+defineElement(TpNavigationPanelSubitem.tagName, TpNavigationPanelSubitem);
+defineElement(TpNavigationPanelTrigger.tagName, TpNavigationPanelTrigger);
+defineElement(TpNavigationPanelResizeRail.tagName, TpNavigationPanelResizeRail);
+defineElement(TpNavigationPanelGroupAction.tagName, TpNavigationPanelGroupAction);
+defineElement(TpNavigationPanelLink.tagName, TpNavigationPanelLink);
+defineElement(TpNavigationPanelAction.tagName, TpNavigationPanelAction);
+defineElement(TpNavigationPanelSublink.tagName, TpNavigationPanelSublink);
+defineElement(TpNavigationPanelInput.tagName, TpNavigationPanelInput);
+defineElement(TpNavigationPanelBadge.tagName, TpNavigationPanelBadge);
+defineElement(TpNavigationPanelSeparator.tagName, TpNavigationPanelSeparator);
+defineElement(TpNavigationPanelLoadingPlaceholder.tagName, TpNavigationPanelLoadingPlaceholder);
+defineElement(NavigationPanelDrawer.tagName, NavigationPanelDrawer);
+
+defineElement(TpMenuItem.tagName, TpMenuItem);
+defineElement(TpMenuCheckboxItem.tagName, TpMenuCheckboxItem);
+defineElement(TpMenuRadioGroup.tagName, TpMenuRadioGroup);
+defineElement(TpMenuRadioItem.tagName, TpMenuRadioItem);
+defineElement(TpNavigationMenuItem.tagName, TpNavigationMenuItem);

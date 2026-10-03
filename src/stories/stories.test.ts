@@ -7,6 +7,14 @@ describe('Storybook catalog entries', () => {
   const storyDirectory = new URL('./generated/', import.meta.url);
   const storyFiles = readdirSync(storyDirectory).filter((file) => file.endsWith('.stories.ts'));
   const newlyAuthoredStories = [
+    'menu',
+    'context-menu',
+    'menubar',
+    'navigation-menu',
+    'popover',
+    'combobox',
+    'navigation-panel',
+    'switch',
     'slider',
     'select',
     'native-select',
@@ -50,7 +58,7 @@ describe('Storybook catalog entries', () => {
   });
 
   it('has one statically indexed Default story for every public control', () => {
-    expect(storyFiles).toHaveLength(catalogEntries.length - 23);
+    expect(storyFiles).toHaveLength(catalogEntries.length - 31);
     const sources = [
       ...newlyAuthoredStories,
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),

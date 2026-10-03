@@ -22,9 +22,10 @@ import {
   type PartRenderOptions,
   type PartState,
 } from '../../foundation/part.js';
-import { positionSurface, resolveSide } from '../../foundation/positioning.js';
+import { positionSurface, resolveSide, geometryOffsets } from '../../foundation/positioning.js';
 import type {
   Alignment,
+  GeometryOffset,
   CollisionBoundary,
   CollisionPolicy,
   LogicalSide,
@@ -33,6 +34,7 @@ import type {
 } from '../../foundation/positioning.js';
 import { prepareMotion, type MotionHandle } from '../../foundation/motion.js';
 import { createId } from '../../foundation/id.js';
+import { resolveSurfaceFocus } from '../../foundation/surface-focus.js';
 import { resolveLocale } from '../../foundation/services.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
@@ -121,8 +123,8 @@ export class TpSelect extends TpFormElement<unknown> {
   placement = 'block-end start';
   side: LogicalSide | undefined;
   align: Alignment | undefined;
-  sideOffset = 0;
-  alignOffset = 0;
+  sideOffset: GeometryOffset = 0;
+  alignOffset: GeometryOffset = 0;
   anchor: SelectAnchor = null;
   disableAnchorTracking = false;
   collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip', fallbackAxisSide: 'none' };
@@ -742,6 +744,10 @@ export class TpSelect extends TpFormElement<unknown> {
         this.#releaseModal = acquireOutsideInert(this.ownerDocument, () => [
           this,
           ...(this.#portal.host ? [this.#portal.host] : []),
+          ...this.#dismiss.branchElements.filter(
+            (element): element is HTMLElement =>
+              element.namespaceURI === 'http://www.w3.org/1999/xhtml',
+          ),
         ]);
         if (
           this.#openingEvent?.type !== 'touchstart' &&
@@ -840,8 +846,11 @@ export class TpSelect extends TpFormElement<unknown> {
       this.#positionBoundary === this.collisionBoundary &&
       this.#positionArrow === this.#arrow &&
       this.#positionTarget === this.#content
-    )
+    ) {
+      if (typeof this.sideOffset === 'function' || typeof this.alignOffset === 'function')
+        void this.#position.update();
       return;
+    }
     this.#position?.destroy();
     this.#positionKey = key;
     this.#positionAnchor = anchor;
@@ -852,7 +861,7 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#position = positionSurface(anchor, this.#content, {
       resolvePlacement: () =>
         `${resolveSide(this.side ?? (side as LogicalSide), this)}-${this.align ?? (align as Alignment)}`,
-      offset: { mainAxis: this.sideOffset, alignmentAxis: this.alignOffset },
+      offset: (context) => geometryOffsets(this.sideOffset, this.alignOffset)(context),
       strategy: this.positionMethod,
       collision: this.collisionAvoidance,
       boundary: this.collisionBoundary,
@@ -1064,27 +1073,24 @@ export class TpSelect extends TpFormElement<unknown> {
         : 'pointerType' in event && ['touch', 'pen'].includes(String(event.pointerType))
           ? (event.pointerType as 'touch' | 'pen')
           : 'mouse';
-    const resolved =
-      typeof target === 'function'
-        ? target(interaction)
-        : target && typeof target === 'object' && 'current' in target
-          ? target.current
-          : target;
-    if (resolved === false || resolved === 'none' || resolved === undefined) return null;
-    if (resolved === true || resolved === null || resolved === 'trigger')
-      return initial && interaction === 'keyboard'
+    return resolveSurfaceFocus(target, {
+      event,
+      defaultTarget: () =>
+        initial && interaction === 'keyboard'
+          ? (this.#collection.element(this.#collection.highlighted) ?? this.#trigger)
+          : this.#trigger,
+      trigger:
+        initial && interaction === 'keyboard'
+          ? (this.#collection.element(this.#collection.highlighted) ?? this.#trigger)
+          : this.#trigger,
+      first: initial
         ? (this.#collection.element(this.#collection.highlighted) ?? this.#trigger)
-        : this.#trigger;
-    if (resolved === 'first')
-      return initial
-        ? (this.#collection.element(this.#collection.highlighted) ?? this.#trigger)
-        : this.#trigger;
-    if (resolved === 'popup') return this.#content;
-    if (resolved === 'previous') return this.#previousFocus as HTMLElement | null;
-    if (typeof resolved === 'number')
-      return this.#content ? (focusableElements(this.#content)[resolved] ?? null) : null;
-    return resolved;
+        : this.#trigger,
+      popup: this.#content,
+      previous: this.#previousFocus,
+    });
   }
+
   #focusOut(): void {
     queueMicrotask(() => {
       if (!this.open) return;

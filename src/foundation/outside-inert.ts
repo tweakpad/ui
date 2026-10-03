@@ -38,9 +38,30 @@ export function acquireOutsideInert(
             .at(-1)
             ?.inside()
             .filter((element) => element.isConnected) ?? [];
-        const visit = (parent: ParentNode): void => {
+        // Live announcements remain available while surrounding interaction is
+        // inert. Observe open shadow scopes too, including currently outside
+        // branches, so later inserted or reconfigured live regions are preserved.
+        const collectLive = (parent: ParentNode): void => {
           for (const element of parent.children) {
-            if (!(element instanceof view.HTMLElement)) continue;
+            if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml') continue;
+            const live = element.getAttribute('aria-live');
+            const implicit = ['alert', 'status', 'log'].includes(
+              element.getAttribute('role') ?? '',
+            );
+            if ((live !== null && live !== 'off') || (live === null && implicit))
+              allowed.push(element as HTMLElement);
+            collectLive(element);
+            if (element.shadowRoot) {
+              observedRoots.add(element.shadowRoot);
+              collectLive(element.shadowRoot);
+            }
+          }
+        };
+        if (created.leases.length) collectLive(document.body);
+        const visit = (parent: ParentNode): void => {
+          for (const child of parent.children) {
+            if (child.namespaceURI !== 'http://www.w3.org/1999/xhtml') continue;
+            const element = child as HTMLElement;
             if (allowed.some((root) => root === element || composedContains(root, element)))
               continue;
             if (allowed.some((root) => composedContains(element, root))) {
@@ -62,7 +83,7 @@ export function acquireOutsideInert(
               childList: true,
               subtree: true,
               attributes: true,
-              attributeFilter: ['inert'],
+              attributeFilter: ['inert', 'aria-live', 'role'],
             });
       },
     };

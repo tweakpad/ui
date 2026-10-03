@@ -44,6 +44,9 @@ export class TpIcon extends LitElement {
   size = '';
   partPresentation: PartPresentation = {};
   readonly presentationController = new PresentationController(this);
+  protected override createRenderRoot(): ShadowRoot {
+    return this.presentationController.createRenderRoot();
+  }
   #rootPartCleanup: (() => void) | undefined;
   override connectedCallback(): void {
     super.connectedCallback();

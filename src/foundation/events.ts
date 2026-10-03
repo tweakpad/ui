@@ -41,8 +41,9 @@ export class TpValueChangeEvent<T> extends CustomEvent<ValueChangeDetail<T>> {
     reason: ChangeReason,
     sourceEvent?: Event,
     options: TpChangeEventOptions = {},
+    eventName: string = TpValueChangeEvent.eventName,
   ) {
-    super(TpValueChangeEvent.eventName, {
+    super(eventName, {
       bubbles: true,
       composed: true,
       cancelable: options.cancelable ?? true,

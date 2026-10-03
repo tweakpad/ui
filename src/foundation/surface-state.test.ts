@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SurfaceState, type TpSurfaceOpenChangeEvent } from './surface-state.js';
+import { SurfaceState, TpSurfaceOpenChangeEvent } from './surface-state.js';
 
 function fixture(initial?: boolean) {
   let value = initial;
@@ -32,6 +32,97 @@ function fixture(initial?: boolean) {
   };
 }
 describe('surface state', () => {
+  it.each([false, true])(
+    'diagnoses an explicitly supplied default alongside controlled %s once',
+    (value) => {
+      const diagnostic = vi.fn();
+      const state = new SurfaceState({
+        read: () => value,
+        defaultOpen: () => !value,
+        hasDefaultOpen: () => true,
+        dispatch: vi.fn(),
+        commit: vi.fn(),
+        diagnostic,
+      });
+      state.initialize();
+      state.initialize();
+      state.sync();
+      expect(state.open).toBe(value);
+      expect(state.controlled).toBe(true);
+      expect(diagnostic).toHaveBeenCalledExactlyOnceWith(
+        expect.stringContaining('either open or defaultOpen'),
+      );
+    },
+  );
+  it('preserves old consumers that have no explicit-default predicate', () => {
+    const f = fixture(false);
+    f.state.sync(true);
+    expect(f.diagnostic).not.toHaveBeenCalled();
+    expect(f.state.controlled).toBe(true);
+  });
+  it.each([undefined, false, true])(
+    'adopts an accepted parent commit without changing standalone ownership mode (%s)',
+    (initial) => {
+      const f = fixture(initial);
+      const controlled = f.state.controlled;
+      let association = 'first';
+      const event = new TpSurfaceOpenChangeEvent(true, f.state.open, 'programmatic');
+      expect(
+        f.state.acceptCoordinated(event, () => {
+          association = 'second';
+        }),
+      ).toBe(true);
+      expect(f.state.open).toBe(true);
+      expect(association).toBe('second');
+      expect(f.state.controlled).toBe(controlled);
+      expect(f.events).toEqual([]);
+      f.state.sync();
+      expect(f.state.open).toBe(true);
+      expect(f.diagnostic).not.toHaveBeenCalled();
+      if (controlled) {
+        f.set(false);
+        f.state.sync(true);
+        expect(f.state.open).toBe(false);
+      }
+    },
+  );
+  it('keeps association and retention unchanged when the staged parent event was vetoed', () => {
+    const f = fixture(true);
+    const association = vi.fn();
+    const close = new TpSurfaceOpenChangeEvent(false, true, 'programmatic');
+    close.detail.preventUnmountOnClose();
+    close.detail.cancelled = true;
+    expect(f.state.acceptCoordinated(close, association)).toBe(false);
+    expect(f.state.open).toBe(true);
+    expect(f.state.retained).toBe(false);
+    expect(association).not.toHaveBeenCalled();
+    expect(f.commit).not.toHaveBeenCalled();
+  });
+  it('retains a coordinated close and clears it on a later coordinated association', () => {
+    const f = fixture(true);
+    const close = new TpSurfaceOpenChangeEvent(false, true, 'programmatic');
+    close.detail.preventUnmountOnClose();
+    f.state.acceptCoordinated(close);
+    expect(f.state.retained).toBe(true);
+    f.state.acceptCoordinated(new TpSurfaceOpenChangeEvent(true, false, 'trigger-press'));
+    expect(f.state.retained).toBe(false);
+    expect(f.events).toHaveLength(0);
+  });
+  it('queues a coordinated change requested by a current commit callback', () => {
+    const f = fixture();
+    const snapshots: boolean[] = [];
+    f.commit.mockImplementation((open: boolean) => {
+      snapshots.push(open);
+      if (open) {
+        f.state.acceptCoordinated(new TpSurfaceOpenChangeEvent(false, true, 'programmatic'));
+        expect(f.state.open).toBe(true);
+      }
+    });
+    f.state.acceptCoordinated(new TpSurfaceOpenChangeEvent(true, false, 'programmatic'));
+    expect(snapshots).toEqual([true, false]);
+    expect(f.events).toHaveLength(0);
+    expect(f.state.open).toBe(false);
+  });
   it('does not expose a synchronous controlled write before a later veto resolves', () => {
     const f = fixture(false);
     f.listen((event) => {

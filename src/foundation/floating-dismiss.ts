@@ -60,24 +60,30 @@ export class FloatingDismissController implements ReactiveController {
     for (let current = node; current; current = composedParent(current)) path.push(current);
     return this.#contains(path);
   }
-  #contains(path: EventTarget[]): boolean {
+  /** Actual live branch roots, shared by dismissal, focus boundaries and inert leases. */
+  get branchElements(): readonly Element[] {
+    const result = new Set<Element>();
     const visited = new Set<FloatingDismissController>();
-    const contains = (owner: FloatingDismissController): boolean => {
-      if (visited.has(owner)) return false;
+    const visit = (owner: FloatingDismissController): void => {
+      if (visited.has(owner) || !owner.options.open()) return;
       visited.add(owner);
       const roots: Element[] = [owner.host, ...(owner.options.insideElements?.() ?? [])];
       const anchor = owner.options.anchor?.();
       if (anchor) roots.push(anchor);
-      if (roots.some((root) => path.includes(root))) return true;
-      // Both a child anchor and its content may be portaled out of its logical host.
-      return (stacks.get(this.host.ownerDocument) ?? []).some(
-        (child) =>
+      roots.forEach((root) => result.add(root));
+      for (const child of stacks.get(this.host.ownerDocument) ?? []) {
+        if (
           child !== owner &&
-          roots.some((root) => composedContains(root, child.options.anchor?.() ?? child.host)) &&
-          contains(child),
-      );
+          roots.some((root) => composedContains(root, child.options.anchor?.() ?? child.host))
+        )
+          visit(child);
+      }
     };
-    return contains(this);
+    visit(this);
+    return [...result];
+  }
+  #contains(path: EventTarget[]): boolean {
+    return this.branchElements.some((root) => path.includes(root));
   }
   #pointer = (event: PointerEvent): void => {
     if (

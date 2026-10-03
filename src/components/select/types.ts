@@ -1,5 +1,6 @@
 import type { ComponentPartContract } from '../../foundation/part.js';
 import type { AnchorGeometry } from '../../foundation/positioning.js';
+import type { SurfaceFocusTarget } from '../../foundation/surface-focus.js';
 
 export type SelectValue = unknown;
 export interface SelectOption {
@@ -35,19 +36,7 @@ export type SelectContainer =
   | null;
 export type SelectAnchor =
   AnchorGeometry | { current: AnchorGeometry | null } | (() => AnchorGeometry | null) | null;
-export type SelectFocusTarget =
-  | HTMLElement
-  | { current: HTMLElement | null }
-  | ((
-      interaction: 'mouse' | 'touch' | 'pen' | 'keyboard' | '',
-    ) => HTMLElement | boolean | null | void)
-  | 'trigger'
-  | 'first'
-  | 'popup'
-  | 'previous'
-  | 'none'
-  | number
-  | boolean;
+export type SelectFocusTarget = SurfaceFocusTarget;
 export interface SelectActions {
   open(): void;
   close(): void;

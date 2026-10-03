@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Navigation Panel verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      .primary-content {
+        padding: 24px;
+      }
+      #dynamic {
+        padding: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="native-form">
+      <tp-navigation-panel id="panel" collapse-mode="compact" label="Workspace navigation">
+        <tp-navigation-panel-trigger id="trigger">Toggle navigation</tp-navigation-panel-trigger>
+        <tp-navigation-panel-resize-rail id="rail"
+          >Toggle navigation rail</tp-navigation-panel-resize-rail
+        >
+        <tp-navigation-panel-header><h2>Workspace</h2></tp-navigation-panel-header>
+        <tp-navigation-panel-content>
+          <tp-navigation-panel-group
+            ><tp-navigation-panel-group-label>Projects</tp-navigation-panel-group-label
+            ><tp-navigation-panel-group-action
+              id="group-action"
+              aria-label="Add project"
+            ></tp-navigation-panel-group-action>
+            <tp-navigation-panel-group-content
+              ><tp-navigation-panel-menu>
+                <tp-navigation-panel-item
+                  ><tp-navigation-panel-link id="overview" href="#overview-content" active
+                    >Overview</tp-navigation-panel-link
+                  ><tp-navigation-panel-badge id="badge"
+                    >3</tp-navigation-panel-badge
+                  ></tp-navigation-panel-item
+                >
+                <tp-navigation-panel-item
+                  ><tp-navigation-panel-link href="#activity-content"
+                    >Activity</tp-navigation-panel-link
+                  ><tp-navigation-panel-submenu
+                    ><tp-navigation-panel-subitem
+                      ><tp-navigation-panel-sublink href="#recent-content"
+                        >Recent changes</tp-navigation-panel-sublink
+                      ></tp-navigation-panel-subitem
+                    ></tp-navigation-panel-submenu
+                  ></tp-navigation-panel-item
+                >
+                <tp-navigation-panel-item
+                  ><tp-navigation-panel-action id="command"
+                    >Create project</tp-navigation-panel-action
+                  ></tp-navigation-panel-item
+                >
+              </tp-navigation-panel-menu></tp-navigation-panel-group-content
+            ></tp-navigation-panel-group
+          >
+          <tp-navigation-panel-separator id="separator"></tp-navigation-panel-separator>
+          <tp-navigation-panel-input
+            id="filter"
+            label="Filter projects"
+            name="filter"
+            default-value="planning"
+          ></tp-navigation-panel-input>
+          <tp-navigation-panel-loading-placeholder
+            id="loading"
+          ></tp-navigation-panel-loading-placeholder>
+        </tp-navigation-panel-content>
+        <tp-navigation-panel-footer
+          ><tp-button variant="ghost">Account settings</tp-button></tp-navigation-panel-footer
+        >
+        <tp-navigation-panel-inset
+          ><div class="primary-content">
+            <h1 id="overview-content">Project overview</h1>
+            <p>Persistent navigation stays beside this content in wide mode.</p>
+            <tp-input
+              id="external"
+              label="Project title"
+              name="title"
+              default-value="Planning"
+            ></tp-input
+            ><tp-button id="compact-probe" variant="outline">Toggle responsive mode</tp-button>
+          </div></tp-navigation-panel-inset
+        >
+      </tp-navigation-panel>
+    </form>
+    <div id="dynamic"></div>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

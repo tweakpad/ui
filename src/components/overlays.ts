@@ -1,6 +1,6 @@
 import { css } from 'lit';
 import type { MotionRoleDefinition } from '../foundation/motion.js';
-import { TpAnchoredSurface, TpHoverSurface } from './anchored-surface.js';
+import { TpHoverSurface } from './anchored-surface.js';
 import { TpDialog, dialogMotionRoles as overlayMotionRoles } from './dialog/dialog.js';
 export { TpDialog, overlayMotionRoles };
 export { TpAlertDialog } from './alert-dialog/index.js';
@@ -74,9 +74,7 @@ export class TpSidePanel extends TpDrawer {
   }
 }
 
-export class TpPopover extends TpAnchoredSurface {
-  static tagName = 'tp-popover';
-}
+export * from './popover/index.js';
 export class TpPreviewCard extends TpHoverSurface {
   static tagName = 'tp-preview-card';
   protected override get overlayRole(): string {

@@ -100,6 +100,7 @@ export class EnvironmentService {
 }
 
 export class LocaleService {
+  readonly #collators = new Map<string, Intl.Collator>();
   constructor(readonly locale: string | string[] | undefined = undefined) {}
   number(value: number, options?: Intl.NumberFormatOptions): string {
     return new Intl.NumberFormat(this.locale, options).format(value);
@@ -108,7 +109,16 @@ export class LocaleService {
     return new Intl.DateTimeFormat(this.locale, options).format(value);
   }
   compare(a: string, b: string, options?: Intl.CollatorOptions): number {
-    return new Intl.Collator(this.locale, options).compare(a, b);
+    return this.collator(options).compare(a, b);
+  }
+  collator(options?: Intl.CollatorOptions): Intl.Collator {
+    const key = JSON.stringify(options ?? {});
+    let collator = this.#collators.get(key);
+    if (!collator) {
+      collator = new Intl.Collator(this.locale, options);
+      this.#collators.set(key, collator);
+    }
+    return collator;
   }
 }
 

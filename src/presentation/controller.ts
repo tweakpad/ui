@@ -1,4 +1,4 @@
-import type { ReactiveController, ReactiveControllerHost } from 'lit';
+import type { ReactiveController, ReactiveControllerHost, RenderOptions } from 'lit';
 import { componentDefinitions } from './components.js';
 import { partBindings } from './bindings.js';
 import { registeredPartStructure } from './structure.js';
@@ -9,7 +9,11 @@ import type { PartPresentation, PresentationDictionary } from './resolver.js';
 type Host = HTMLElement &
   ReactiveControllerHost & {
     renderRoot: HTMLElement | DocumentFragment;
+    renderOptions: RenderOptions;
     partPresentation: PartPresentation;
+    readonly presentationTagName?: string;
+    readonly presentationOwner?: HTMLElement | null;
+    readonly presentationFamilyTagNames?: readonly string[];
   };
 const dictionaries = new WeakMap<Document, PresentationDictionary>();
 const subscribers = new WeakMap<Document, Set<PresentationController>>();
@@ -73,6 +77,54 @@ export class PresentationController implements ReactiveController {
   constructor(private host: Host) {
     host.addController(this);
   }
+  /** Lit's structural styles must belong to the document of first connection too. */
+  createRenderRoot(): ShadowRoot {
+    const options = (this.host.constructor as { shadowRootOptions?: ShadowRootInit })
+      .shadowRootOptions;
+    const root = this.host.shadowRoot ?? this.host.attachShadow(options ?? { mode: 'open' });
+    this.#installStructuralStyles(root);
+    // Match LitElement: template styles precede shimmed structural style nodes.
+    this.host.renderOptions.renderBefore ??= root.firstChild;
+    return root;
+  }
+  #installStructuralStyles(root: ShadowRoot): void {
+    const styles =
+      (
+        this.host.constructor as {
+          elementStyles?: ReadonlyArray<{ cssText?: string; cssRules?: CSSRuleList }>;
+        }
+      ).elementStyles ?? [];
+    if ('adoptedStyleSheets' in root) {
+      root.adoptedStyleSheets = root.adoptedStyleSheets.filter(
+        (sheet) => !this.#structuralSheets.includes(sheet),
+      );
+    }
+    this.#structuralSheets = [];
+    for (const [index, result] of styles.entries()) {
+      const css =
+        result.cssText ?? [...(result.cssRules ?? [])].map((rule) => rule.cssText).join('\n');
+      const sheet = 'adoptedStyleSheets' in root ? createSheet(this.host.ownerDocument) : undefined;
+      if (sheet) {
+        sheet.replaceSync(css);
+        this.#structuralSheets.push(sheet);
+        if (this.#structuralStyles[index]) this.#structuralStyles[index]!.textContent = '';
+      } else {
+        // Keep fallback nodes across adoption: Lit's render boundary may refer
+        // to the first one, and an HTML style node adopts with its shadow root.
+        const style =
+          this.#structuralStyles[index] ?? this.host.ownerDocument.createElement('style');
+        style.textContent = css;
+        const nonce = (
+          this.host.ownerDocument.defaultView as (Window & { litNonce?: string }) | null
+        )?.litNonce;
+        if (nonce !== undefined) style.setAttribute('nonce', nonce);
+        if (style.parentNode !== root) root.append(style);
+        this.#structuralStyles[index] = style;
+      }
+    }
+    if ('adoptedStyleSheets' in root)
+      root.adoptedStyleSheets = [...root.adoptedStyleSheets, ...this.#structuralSheets];
+  }
   /** Register consumer-owned native parts without wrapping or replacing them. */
   registerPart(name: string, element: HTMLElement): () => void {
     if (!/^[a-z][a-z0-9-]*$/.test(name)) throw new Error('Invalid presentation part name');
@@ -99,36 +151,14 @@ export class PresentationController implements ReactiveController {
   hostConnected(): void {
     if (this.#document && this.#document !== this.host.ownerDocument) {
       const root = this.host.renderRoot;
-      if (root && isShadowRoot(root) && 'adoptedStyleSheets' in root) {
-        root.adoptedStyleSheets = root.adoptedStyleSheets.filter(
-          (sheet) => sheet !== this.#sheet && !this.#structuralSheets.includes(sheet),
-        );
-        this.#structuralSheets = [];
-        for (const style of this.#structuralStyles) style.remove();
-        this.#structuralStyles = [];
-        // Chrome removes constructed sheets on adoption. Recreate only Lit's
-        // finalized structural styles, never take ownership of consumer sheets.
-        const styles =
-          (
-            this.host.constructor as {
-              elementStyles?: ReadonlyArray<{ cssText?: string; cssRules?: CSSRuleList }>;
-            }
-          ).elementStyles ?? [];
-        for (const style of styles) {
-          const css =
-            style.cssText ?? [...(style.cssRules ?? [])].map((rule) => rule.cssText).join('\n');
-          const sheet = createSheet(this.host.ownerDocument);
-          if (sheet) {
-            sheet.replaceSync(css);
-            this.#structuralSheets.push(sheet);
-          } else {
-            const element = this.host.ownerDocument.createElement('style');
-            element.textContent = css;
-            root.append(element);
-            this.#structuralStyles.push(element);
-          }
-        }
-        root.adoptedStyleSheets = [...root.adoptedStyleSheets, ...this.#structuralSheets];
+      if (root && isShadowRoot(root)) {
+        if ('adoptedStyleSheets' in root)
+          root.adoptedStyleSheets = root.adoptedStyleSheets.filter(
+            (sheet) => sheet !== this.#sheet,
+          );
+        // Chrome clears constructed sheets on adoption. Restore only this
+        // controller's finalized Lit styles; consumer sheets remain untouched.
+        this.#installStructuralStyles(root);
       }
       this.#sheet = undefined;
       this.#style?.remove();
@@ -155,15 +185,21 @@ export class PresentationController implements ReactiveController {
   refresh(): void {
     // A public constituent consumes its family's definition and dictionary, not
     // a second visual catalog identity.
+    const inheritedTag =
+      this.host.presentationTagName ??
+      (this.host.constructor as { presentationTagName?: string }).presentationTagName;
     const definitionTag =
-      this.host.localName === 'tp-radio-group-item'
+      inheritedTag ??
+      (this.host.localName === 'tp-radio-group-item'
         ? 'tp-radio-group'
         : this.host.localName === 'tp-slider-thumb'
           ? 'tp-slider'
-          : this.host.localName;
+          : this.host.localName);
     const definition = componentDefinitions.find((item) => item.tagName === definitionTag);
     if (!definition || !this.host.renderRoot) return;
-    for (const [selector, part] of Object.entries(partBindings[this.host.localName] ?? {})) {
+    for (const [selector, part] of Object.entries(
+      partBindings[inheritedTag ?? this.host.localName] ?? {},
+    )) {
       if (selector === ':host') {
         this.host.part.add(part);
         if (!this.#hostParts.has(part))
@@ -177,13 +213,30 @@ export class PresentationController implements ReactiveController {
       (definition.axes ?? []).map((axis) => [
         axis.name,
         (
-          (this.host.localName === 'tp-radio-group-item'
-            ? this.host.closest('tp-radio-group')
-            : null) as unknown as Record<string, unknown> | null
+          (this.host.presentationOwner ??
+            (this.host.localName === 'tp-radio-group-item'
+              ? this.host.closest('tp-radio-group')
+              : null)) as unknown as Record<string, unknown> | null
         )?.[axis.name] ?? (this.host as unknown as Record<string, unknown>)[axis.name],
       ]),
     );
-    const resolved = resolveComponentPresentation(definition, axes, dictionary);
+    let resolved = resolveComponentPresentation(definition, axes, dictionary);
+    // A reused control can expose its compound's canonical parts through this
+    // same controller, keeping recipe and terminal hook ownership together.
+    const familyTags =
+      this.host.presentationFamilyTagNames ??
+      (this.host.constructor as { presentationFamilyTagNames?: readonly string[] })
+        .presentationFamilyTagNames ??
+      [];
+    for (const tagName of familyTags) {
+      const family = componentDefinitions.find((item) => item.tagName === tagName);
+      if (!family) continue;
+      const contribution = resolveComponentPresentation(family, axes, dictionary);
+      resolved = {
+        parts: { ...resolved.parts, ...contribution.parts },
+        missingKeys: [...new Set([...resolved.missingKeys, ...contribution.missingKeys])],
+      };
+    }
     const mergedParts = Object.fromEntries(
       Object.entries(resolved.parts).map(([part, rules]) => [
         part,

@@ -164,7 +164,15 @@ export class TpBadge extends TpElement {
   ];
   variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link' = 'default';
   protected override render() {
-    return html`<span class="badge" part="badge"><slot></slot></span>`;
+    return this.renderPart(
+      'badge',
+      Object.freeze({ variant: this.variant, disabled: this.disabled }),
+      {
+        tag: 'span',
+        properties: { class: 'badge', part: 'badge' },
+        content: html`<slot></slot>`,
+      },
+    );
   }
 }
 
@@ -761,7 +769,7 @@ export class TpSkeleton extends TpElement {
         overflow: hidden;
       }
 
-      :host([animated])::after {
+      [part~='skeleton'][animated]::after {
         content: '';
         display: block;
         width: 45%;
@@ -771,8 +779,16 @@ export class TpSkeleton extends TpElement {
         animation-play-state: var(--tp-motion-play-state, running);
       }
 
-      :host([data-tp-motion-driven])::after {
+      [part~='skeleton'][data-tp-motion-driven]::after {
         animation: none !important;
+      }
+
+      [part~='skeleton'] {
+        display: block;
+        inline-size: 100%;
+        block-size: 100%;
+        min-block-size: inherit;
+        overflow: hidden;
       }
 
       @keyframes shimmer {
@@ -789,6 +805,18 @@ export class TpSkeleton extends TpElement {
   label = 'Loading';
   animated = true;
   #loadingMotion: MotionHandle | null = null;
+  #surface: HTMLElement | null = null;
+  readonly #surfaceReference = (element: HTMLElement | null): void => {
+    if (element === this.#surface) return;
+    this.#loadingMotion?.cancel();
+    this.#loadingMotion = null;
+    this.#surface = element;
+    if (element && this.isConnected && this.hasUpdated && this.animated)
+      queueMicrotask(() => {
+        if (this.#surface === element && this.isConnected && this.animated)
+          this.#startLoadingMotion('start', null, 'loading');
+      });
+  };
   override connectedCallback(): void {
     super.connectedCallback();
     void this.updateComplete.then(() => {
@@ -816,7 +844,7 @@ export class TpSkeleton extends TpElement {
     fromState: 'loading' | 'idle' | null,
     toState: 'loading' | 'idle',
   ): void {
-    this.#loadingMotion = prepareMotion(this, this, primitiveMotionRoles.skeletonLoading, {
+    this.#loadingMotion = prepareMotion(this, this.#surface, primitiveMotionRoles.skeletonLoading, {
       phase,
       fromState,
       toState,
@@ -824,7 +852,16 @@ export class TpSkeleton extends TpElement {
     this.#loadingMotion.start();
   }
   protected override render() {
-    return html`<span class="visually-hidden" role="status">${this.label}</span>`;
+    return this.renderPart(
+      'skeleton',
+      Object.freeze({ animated: this.animated, motionPolicy: this.motionPolicy }),
+      {
+        tag: 'div',
+        reference: this.#surfaceReference,
+        properties: { part: 'skeleton', animated: this.animated, 'aria-hidden': 'true' },
+        protectedProperties: ['animated'],
+      },
+    );
   }
 }
 

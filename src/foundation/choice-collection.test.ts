@@ -2,6 +2,23 @@ import { describe, expect, it, vi } from 'vitest';
 import { ChoiceCollectionController } from './choice-collection.js';
 
 describe('shared finite choice collection', () => {
+  it('keeps authoritative visible order separate from the complete source and restores source order', () => {
+    const owner = new ChoiceCollectionController<string>();
+    const a = { value: 'a', label: 'Alpha' },
+      b = { value: 'b', label: 'Beta' },
+      c = { value: 'c', label: 'Cherry' };
+    owner.setSource([a, b, c]);
+    owner.setFilter(() => true, [c, a]);
+    expect(owner.source).toEqual([a, b, c]);
+    expect(owner.visible).toEqual([c, a]);
+    owner.boundary();
+    expect(owner.move(1)?.value).toBe('a');
+    owner.setSource([a, b]);
+    expect(owner.visible).toEqual([a]);
+    owner.setFilter(() => true);
+    expect(owner.visible).toEqual([a, b]);
+    owner.disconnect();
+  });
   it('preserves highlighted identity across source reorder/removal and excludes duplicates', () => {
     const diagnostic = vi.fn();
     const owner = new ChoiceCollectionController<string>({ diagnostic });

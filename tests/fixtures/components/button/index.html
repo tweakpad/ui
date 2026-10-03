@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Button part verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Button part verification</h1>
+      <tp-button id="native">Native action</tp-button
+      ><tp-button id="custom">Custom action</tp-button
+      ><tp-button id="link" href="#button-target" variant="outline">Native link</tp-button>
+      <div id="button-target">Link destination</div>
+      <div id="dynamic"></div>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

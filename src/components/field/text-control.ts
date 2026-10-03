@@ -5,7 +5,7 @@ import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { renderPart } from '../../foundation/part.js';
-import type { HostProperties } from '../../foundation/part.js';
+import type { ComponentPartContract, HostProperties } from '../../foundation/part.js';
 const textValue = (value: unknown): string =>
   value == null ? '' : Array.isArray(value) ? value.join(',') : String(value);
 interface TextState {
@@ -178,8 +178,12 @@ export abstract class TpTextControl extends TpFormElement {
       input,
     );
   }
-  protected renderControl(part: string, tag: string, properties: HostProperties): unknown {
+  /** Composable native part contract, retaining both legacy and per-part host properties. */
+  protected controlPartContract(part: string): ComponentPartContract {
     const contract = this.partContracts[part] ?? {};
+    return { ...contract, hostProperties: { ...this.hostProperties, ...contract.hostProperties } };
+  }
+  protected renderControl(part: string, tag: string, properties: HostProperties): unknown {
     return renderPart(
       part,
       {
@@ -190,7 +194,7 @@ export abstract class TpTextControl extends TpFormElement {
         invalid: this.effectiveInvalid,
         filled: this.value !== '',
       },
-      { ...contract, hostProperties: { ...this.hostProperties, ...contract.hostProperties } },
+      this.controlPartContract(part),
       {
         tag,
         properties,

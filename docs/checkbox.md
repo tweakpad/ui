@@ -31,6 +31,7 @@
 ## Interaction, forms and methods
 
 Pointer and Space propose `trigger-press`; Enter does not toggle. Read-only and disabled suppress interaction. Checked values serialize once; unchecked values serialize only when supplied. Disabled values and aggregate parents are omitted. Required validity requires checked true. Native reset restores the latest uncontrolled default with `form-reset`; controlled reset does not change or notify the owner.
+Native HTML labels activate this same Boolean owner: use a wrapping label or a `for` matching the Checkbox host's `id`. Associated label text supplies a fallback accessible name, follows text updates, and clears when retargeted. Field and authored host names retain priority. Disabled and read-only label activation cannot change checked state.
 
 `setChecked(boolean, reason?, sourceEvent?)` proposes a standalone change. `focus(options?)`, `blur()`, `activateFromLabel()`, `checkValidity()`, and `reportValidity()` are public methods. Read-only channels include `inputElement`, `controlElement`, `form`, `labels`, `validity`, `validationMessage`, `effectiveDisabled`, `effectiveName`, `effectiveInvalid`, and `checkboxDisabled`. Field uses shared `setFieldContext()` and `setFieldAssociation()`.
 
@@ -85,3 +86,5 @@ Event detail includes `value`, `previousValue`, `reason`, `sourceEvent`, optiona
 import '@tweakpad/ui/register';
 import '@tweakpad/ui/styles.css';
 ```
+
+Field validation state `valid` is `true`, `false`, or `null` (unknown) in the shared immutable part snapshot. `data-valid` appears only for known-valid state; an independently authored invalid flag has priority. Unknown validity never creates a valid marker.

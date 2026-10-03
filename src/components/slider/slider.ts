@@ -289,7 +289,10 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     this.#activeProposal = undefined;
     if (proposal) {
       if (proposal.identities.length === values.length) this.#identities = [...proposal.identities];
-      if (!proposal.interaction || proposal.interaction === this.#drag) {
+      if (
+        (!proposal.interaction || proposal.interaction === this.#drag) &&
+        (proposal.index >= 0 || !this.#drag)
+      ) {
         this.#activeIdentity = proposal.identities[proposal.index] ?? null;
         if (this.#activeIdentity) this.#lastUsedIdentity = this.#activeIdentity;
       }
@@ -629,6 +632,12 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     const eligible = this.#orderedThumbs().filter(
       (thumb) => !this.thumbState(thumb).disabled && !this.thumbState(thumb).readOnly,
     );
+    // The topmost maximum Thumb must not trap a coincident range stack.
+    // Select its first eligible logical member, matching the Control owner.
+    const pressedTarget =
+      pressed && eligible.includes(pressed) && this.thumbState(pressed).value === this.maximum
+        ? (eligible.find((member) => this.thumbState(member).value === this.maximum) ?? pressed)
+        : pressed;
     const coordinate = this.orientation === 'horizontal' ? event.clientX : event.clientY;
     const center = (thumb: TpSliderThumb): number => {
       const rect = thumb.visualElement?.getBoundingClientRect();
@@ -639,9 +648,9 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
         : coordinate;
     };
     const thumb =
-      pressed && eligible.includes(pressed)
-        ? pressed
-        : pressed
+      pressedTarget && eligible.includes(pressedTarget)
+        ? pressedTarget
+        : pressedTarget
           ? undefined
           : eligible.reduce<TpSliderThumb | undefined>(
               (closest, current) =>

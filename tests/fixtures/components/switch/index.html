@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Switch verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      html body {
+        margin: 24px;
+        color: var(--tp-foreground);
+        background: var(--tp-background);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+      }
+      section {
+        min-width: 0;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <header><h1>Switch verification</h1></header>
+    <main>
+      <section>
+        <h2>Setting</h2>
+        <form id="form">
+          <tp-field
+            id="main-field"
+            name="notifications"
+            label="Notifications"
+            description="Receive project updates."
+            orientation="horizontal"
+            ><span slot="label">Notifications <tp-badge>New</tp-badge></span
+            ><tp-switch id="main"></tp-switch></tp-field
+          ><tp-button type="submit">Save settings</tp-button
+          ><tp-button type="reset" variant="outline">Reset settings</tp-button>
+        </form>
+      </section>
+      <section>
+        <h2>Sizes and states</h2>
+        <div class="row">
+          <tp-switch id="small" size="sm">Small setting</tp-switch
+          ><tp-switch id="checked" default-checked>On setting</tp-switch
+          ><tp-switch id="disabled" disabled>Disabled setting</tp-switch
+          ><tp-switch id="readonly" readonly default-checked>Read only setting</tp-switch>
+        </div>
+      </section>
+      <section>
+        <h2>Native action</h2>
+        <label for="native-label">Native label setting</label
+        ><tp-switch id="native-label"></tp-switch>
+        <tp-field label="Native button setting" orientation="horizontal"
+          ><tp-switch id="native" native-action></tp-switch></tp-field
+        ><tp-field label="Required setting" orientation="horizontal"
+          ><tp-switch id="required" required></tp-switch
+        ></tp-field>
+      </section>
+      <section>
+        <h2>Optional and rich Thumb</h2>
+        <tp-switch id="no-thumb">Setting without Thumb</tp-switch
+        ><tp-switch id="rich">Decorated setting</tp-switch>
+        <div dir="rtl"><tp-switch id="rtl" default-checked>RTL setting</tp-switch></div>
+      </section>
+      <section>
+        <h2>Long label</h2>
+        <tp-field
+          label="Automatically synchronize project notifications and local changes across all connected devices"
+          description="A long description wraps while preserving a compact control."
+          orientation="horizontal"
+          ><tp-switch id="long"></tp-switch
+        ></tp-field>
+      </section>
+      <section>
+        <h2>Checkbox family</h2>
+        <tp-checkbox id="peer" default-checked>Checkbox peer</tp-checkbox>
+        <fieldset id="group">
+          <legend>Permissions</legend>
+          <tp-checkbox parent value="all">All permissions</tp-checkbox
+          ><tp-checkbox value="read">Read</tp-checkbox><tp-checkbox value="write">Write</tp-checkbox
+          ><tp-switch id="independent" name="independent-setting" default-checked
+            >Independent setting</tp-switch
+          >
+        </fieldset>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

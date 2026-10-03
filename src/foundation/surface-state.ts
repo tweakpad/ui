@@ -29,6 +29,7 @@ export class TpSurfaceOpenChangeEvent extends TpOpenChangeEvent {
 interface SurfaceStateOptions {
   read: () => boolean | undefined;
   defaultOpen: () => boolean;
+  hasDefaultOpen?: () => boolean;
   dispatch: (event: TpSurfaceOpenChangeEvent) => void;
   commit: (open: boolean) => void;
   diagnostic: (message: string) => void;
@@ -57,6 +58,10 @@ export class SurfaceState {
     this.#initialized = true;
     this.#lastRead = this.options.read();
     this.#controlled = this.#lastRead !== undefined;
+    if (this.#controlled && this.options.hasDefaultOpen?.())
+      this.options.diagnostic(
+        'Supply either open or defaultOpen, not both. The initial controlled open owner is preserved.',
+      );
     this.#open = this.#lastRead ?? this.options.defaultOpen();
   }
   /** Explicit setters may republish a value consumed by a previously vetoed proposal. */
@@ -95,6 +100,35 @@ export class SurfaceState {
       this.options.commit(this.#open);
     } finally {
       this.#committing = false;
+    }
+  }
+  /**
+   * Adopt an already accepted parent transaction without proposing a second lane.
+   * The coordinating owner must publish its scalar value before calling this;
+   * participating component getters derive from that owner, not this passive view.
+   */
+  acceptCoordinated(event: TpSurfaceOpenChangeEvent, accept?: () => void): boolean {
+    this.initialize();
+    if (event.defaultPrevented || event.detail.cancelled) return false;
+    if (this.#publishing) {
+      this.#queue.push(() => this.acceptCoordinated(event, accept));
+      return false;
+    }
+    this.#publishing = true;
+    try {
+      this.#pending = {
+        open: event.detail.value,
+        retain: event.retainOnClose,
+        ...(accept ? { accept } : {}),
+      };
+      // Consume the current external input; ordinary render sync must not replay
+      // a stale standalone value after a parent-coordinated commit.
+      this.#lastRead = this.options.read();
+      this.#commit(event.detail.value);
+      return true;
+    } finally {
+      this.#publishing = false;
+      this.#drain();
     }
   }
   request(

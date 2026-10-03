@@ -2,6 +2,8 @@ import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import { SyntheticPress } from '../foundation/synthetic-press.js';
+import { componentHandlingPrevented, renderPart } from '../foundation/part.js';
+import type { ComponentPartContract } from '../foundation/part.js';
 import type { LogicalPosition } from '../foundation/types.js';
 import type { IconDefinition } from '../icons/types.js';
 
@@ -110,109 +112,177 @@ export class TpButton extends TpElement {
   readonly #press = new SyntheticPress(() => this.click());
   #unnamedReported = false;
 
-  protected override render() {
-    const parts = (part: string) =>
-      `${part} ${part}-variant-${this.variant} ${part}-size-${this.size}`;
-    const content = this.#content(parts);
-    const loading = this.#resolvedLoadingPosition() !== null;
-    if (this.href !== null) {
-      return html`<a
-        class="control"
-        part=${`${parts('button')} focusable`}
-        href=${this.href}
-        target=${this.target ?? nothing}
-        rel=${this.rel ?? nothing}
-        download=${this.download ?? nothing}
-        tabindex=${this.disabled && !this.focusableWhenDisabled ? '-1' : nothing}
-        aria-disabled=${this.disabled ? 'true' : nothing}
-        aria-busy=${loading ? 'true' : nothing}
-        aria-label=${this.ariaLabel || nothing}
-        @click=${this.#activate}
-        @focusin=${this.#focusIn}
-        @focusout=${this.#focusOut}
-      >
-        ${content}
-      </a>`;
+  #slottedMarks = new Set<LogicalPosition>();
+  #controlElement: HTMLElement | null = null;
+  #invalidLinkDelegate: ComponentPartContract['renderDelegate'];
+  #controlReference = (element: HTMLElement | null): void => {
+    if (element === this.#controlElement) return;
+    this.#controlElement?.removeEventListener('click', this.#blockDisabledActivation, true);
+    this.#press.reset();
+    this.#controlElement = element;
+    element?.addEventListener('click', this.#blockDisabledActivation, true);
+    if (!element) return;
+    this.#syncControl();
+    if (this.href !== null && element.localName !== 'a') {
+      const delegate = this.buttonPartContract()?.renderDelegate;
+      if (delegate && this.#invalidLinkDelegate !== delegate) {
+        this.#invalidLinkDelegate = delegate;
+        queueMicrotask(() => {
+          if (!this.isConnected || this.buttonPartContract()?.renderDelegate !== delegate) return;
+          this.emit('tp-diagnostic', {
+            code: 'button-native-link-required',
+            message:
+              'A Button with href requires a native anchor delegate; using the native anchor.',
+            severity: 'warning' as const,
+          });
+          this.requestUpdate();
+        });
+      }
     }
-    return this.nativeAction
-      ? html`<button
-          class="control"
-          part=${`${parts('button')} focusable`}
-          type=${this.#type()}
-          .value=${this.value}
-          ?disabled=${this.disabled && !this.focusableWhenDisabled}
-          aria-disabled=${this.disabled ? 'true' : nothing}
-          aria-busy=${loading ? 'true' : nothing}
-          aria-label=${this.ariaLabel || nothing}
-          @click=${this.#activate}
-          @focusin=${this.#focusIn}
-          @focusout=${this.#focusOut}
-        >
-          ${content}
-        </button>`
-      : html`<span
-          class="control"
-          part=${`${parts('button')} focusable`}
-          role="button"
-          tabindex=${this.disabled && !this.focusableWhenDisabled ? '-1' : '0'}
-          aria-disabled=${this.disabled ? 'true' : nothing}
-          aria-busy=${loading ? 'true' : nothing}
-          aria-label=${this.ariaLabel || nothing}
-          @click=${this.#activate}
-          @keydown=${this.#press.keyDown}
-          @keyup=${this.#press.keyUp}
-          @focusin=${this.#focusIn}
-          @focusout=${this.#focusOut}
-          >${content}</span
-        >`;
+  };
+
+  protected buttonPartContract(): ComponentPartContract | undefined {
+    return this.partContracts.button;
   }
 
-  #content(parts: (part: string) => string) {
+  protected buttonTabIndex(): string | null {
+    return this.disabled && !this.focusableWhenDisabled
+      ? '-1'
+      : this.href !== null || this.nativeAction
+        ? null
+        : '0';
+  }
+
+  protected override render() {
+    const state = Object.freeze({
+      disabled: this.disabled,
+      focusableWhenDisabled: this.focusableWhenDisabled,
+      nativeAction: this.nativeAction,
+      variant: this.variant,
+      size: this.size,
+      type: this.#type(),
+      href: this.href,
+      loadingPosition: this.#resolvedLoadingPosition(),
+      iconPosition: this.#resolvedIconPosition(),
+    });
+    const parts = (part: string) =>
+      `${part} ${part}-variant-${this.variant} ${part}-size-${this.size}`;
     const loadingPosition = this.#resolvedLoadingPosition();
-    if (loadingPosition) {
-      return html`
-        <span part=${parts('button-leading-mark')} ?hidden=${loadingPosition !== 'leading'}>
-          ${loadingPosition === 'leading' ? html`<tp-spinner aria-hidden="true"></tp-spinner>` : nothing}
-        </span>
-        <span part=${parts('button-label')}><slot @slotchange=${this.#checkName}></slot></span>
-        <span part=${parts('button-trailing-mark')} ?hidden=${loadingPosition !== 'trailing'}>
-          ${
-            loadingPosition === 'trailing'
-              ? html`<tp-spinner aria-hidden="true"></tp-spinner>`
-              : nothing
-          }
-        </span>
-      `;
+    const iconPosition = this.#resolvedIconPosition();
+    const mark = (position: LogicalPosition): unknown => {
+      if (loadingPosition)
+        return loadingPosition === position
+          ? html`<tp-spinner aria-hidden="true"></tp-spinner>`
+          : nothing;
+      if (this.icon)
+        return iconPosition === position
+          ? html`<tp-icon .icon=${this.icon} size="1em"></tp-icon>`
+          : nothing;
+      return html`<slot
+        name=${position === 'leading' ? 'icon-start' : 'icon-end'}
+        @slotchange=${this.#syncMark}
+      ></slot>`;
+    };
+    const hiddenMark = (position: LogicalPosition): boolean =>
+      loadingPosition
+        ? loadingPosition !== position
+        : this.icon
+          ? iconPosition !== position
+          : !this.#slottedMarks.has(position) &&
+            !('content' in (this.partContracts[`button-${position}-mark`] ?? {}));
+    const content = html`${this.renderPart('button-leading-mark', state, {
+      tag: 'span',
+      properties: { part: parts('button-leading-mark'), hidden: hiddenMark('leading') },
+      protectedProperties: ['hidden'],
+      content: mark('leading'),
+    })}${this.renderPart('button-label', state, {
+      tag: 'span',
+      properties: { part: parts('button-label') },
+      content: html`<slot @slotchange=${this.#checkName}></slot>`,
+    })}${this.renderPart('button-trailing-mark', state, {
+      tag: 'span',
+      properties: { part: parts('button-trailing-mark'), hidden: hiddenMark('trailing') },
+      protectedProperties: ['hidden'],
+      content: mark('trailing'),
+    })}`;
+    const link = this.href !== null;
+    const contract = this.buttonPartContract();
+    let safeContract = contract;
+    if (link && contract?.renderDelegate && contract.renderDelegate === this.#invalidLinkDelegate) {
+      safeContract = { ...contract };
+      delete safeContract.renderDelegate;
     }
-    if (this.icon) {
-      const iconPosition = this.#resolvedIconPosition();
-      return html`
-        <span part=${parts('button-leading-mark')} ?hidden=${iconPosition !== 'leading'}>
-          ${
-            iconPosition === 'leading'
-              ? html`<tp-icon .icon=${this.icon} size="1em"></tp-icon>`
-              : nothing
-          }
-        </span>
-        <span part=${parts('button-label')}><slot @slotchange=${this.#checkName}></slot></span>
-        <span part=${parts('button-trailing-mark')} ?hidden=${iconPosition !== 'trailing'}>
-          ${
-            iconPosition === 'trailing'
-              ? html`<tp-icon .icon=${this.icon} size="1em"></tp-icon>`
-              : nothing
-          }
-        </span>
-      `;
+    return renderPart('button', state, safeContract, {
+      tag: link ? 'a' : this.nativeAction ? 'button' : 'span',
+      reference: this.#controlReference,
+      properties: {
+        class: 'control',
+        part: `${parts('button')} focusable`,
+        role: link ? 'link' : 'button',
+        ...(link
+          ? { href: this.href, target: this.target, rel: this.rel, download: this.download }
+          : {
+              type: this.#type(),
+              '.value': this.value,
+              disabled: this.disabled && !this.focusableWhenDisabled,
+            }),
+        tabindex: this.buttonTabIndex(),
+        'aria-disabled': this.disabled ? 'true' : null,
+        'aria-busy': loadingPosition ? 'true' : null,
+        'aria-label': this.ariaLabel || null,
+        'data-disabled': this.disabled,
+        '@click': this.#activate,
+        '@keydown': this.#keyDown,
+        '@keyup': this.#keyUp,
+        '@focusin': this.#focusIn,
+        '@focusout': this.#focusOut,
+      },
+      protectedProperties: ['href', 'target', 'rel', 'download'],
+      onHandlerPrevented: {
+        '@click': (event) => {
+          if (this.href !== null) event.preventDefault();
+        },
+        '@keydown': () => this.#press.reset(),
+        '@keyup': () => this.#press.reset(),
+        '@focusout': this.#focusOut,
+      },
+      content,
+    });
+  }
+
+  #syncControl(): void {
+    const element = this.#controlElement;
+    if (!element || this.href !== null) return;
+    if (element.localName !== 'button') {
+      element.removeAttribute('disabled');
+      element.tabIndex = Number(this.buttonTabIndex() ?? '0');
     }
-    return html`
-      <span part=${parts('button-leading-mark')} hidden
-        ><slot name="icon-start" @slotchange=${this.#syncMark}></slot
-      ></span>
-      <span part=${parts('button-label')}><slot @slotchange=${this.#checkName}></slot></span>
-      <span part=${parts('button-trailing-mark')} hidden
-        ><slot name="icon-end" @slotchange=${this.#syncMark}></slot
-      ></span>
-    `;
+  }
+
+  #blockDisabledActivation = (event: MouseEvent): void => {
+    if (!this.disabled) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  };
+
+  #keyDown = (event: KeyboardEvent): void => {
+    if (this.disabled || this.href !== null) return;
+    if (!this.nativeAction || this.#controlElement?.localName !== 'button')
+      this.#press.keyDown(event);
+  };
+
+  #keyUp = (event: KeyboardEvent): void => {
+    if (this.disabled || this.href !== null) {
+      this.#press.reset();
+      return;
+    }
+    if (!this.nativeAction || this.#controlElement?.localName !== 'button')
+      this.#press.keyUp(event);
+  };
+
+  override disconnectedCallback(): void {
+    this.#press.reset();
+    super.disconnectedCallback();
   }
 
   override focus(options?: FocusOptions): void {
@@ -228,7 +298,7 @@ export class TpButton extends TpElement {
   }
 
   #control(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[part~="button"]');
+    return this.#controlElement;
   }
 
   #type(): ButtonType {
@@ -247,22 +317,28 @@ export class TpButton extends TpElement {
 
   #syncMark = (event: Event): void => {
     const slot = event.currentTarget as HTMLSlotElement;
-    const wrapper = slot.parentElement;
-    if (wrapper) wrapper.hidden = slot.assignedNodes({ flatten: true }).length === 0;
+    const position = slot.name === 'icon-end' ? 'trailing' : 'leading';
+    const visible = slot.assignedNodes({ flatten: true }).length > 0;
+    if (visible === this.#slottedMarks.has(position)) return;
+    if (visible) this.#slottedMarks.add(position);
+    else this.#slottedMarks.delete(position);
+    this.requestUpdate();
   };
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    this.#syncControl();
     this.#checkName();
   }
 
   #checkName = (): void => {
     const slot = this.renderRoot.querySelector<HTMLSlotElement>('slot:not([name])');
-    const visibleText = slot
-      ?.assignedNodes({ flatten: true })
-      .map((node) => node.textContent ?? '')
-      .join('')
-      .trim();
+    const visibleText =
+      slot
+        ?.assignedNodes({ flatten: true })
+        .map((node) => node.textContent ?? '')
+        .join('')
+        .trim() || this.renderRoot.querySelector('[part~="button-label"]')?.textContent?.trim();
     const unnamed = !this.ariaLabel && (this.size.startsWith('icon') || !visibleText);
     if (!unnamed) {
       this.#unnamedReported = false;
@@ -297,7 +373,13 @@ export class TpButton extends TpElement {
     if (this.#type() === 'button') return;
     // Consumer click handlers must be able to cancel the initiating event first.
     queueMicrotask(() => {
-      if (!this.isConnected || this.disabled || event.defaultPrevented) return;
+      if (
+        !this.isConnected ||
+        this.disabled ||
+        event.defaultPrevented ||
+        componentHandlingPrevented(event)
+      )
+        return;
       const owner = this.closest('tp-form') as
         | (HTMLElement & { requestSubmit: (submitter?: HTMLElement) => void; reset: () => void })
         | null;
@@ -321,7 +403,7 @@ export class TpButton extends TpElement {
   #requestNativeSubmit(): void {
     const form = this.#nativeForm();
     if (!form) return;
-    const proxy = document.createElement('button');
+    const proxy = this.ownerDocument.createElement('button');
     proxy.type = 'submit';
     proxy.hidden = true;
     proxy.name = this.name;

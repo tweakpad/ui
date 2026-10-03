@@ -10,9 +10,29 @@ export interface ControllableStateOptions<T> {
   readDefaultValue?: () => T | undefined;
   hasDefaultValue?: () => boolean;
   onChange?: (event: TpValueChangeEvent<T>) => void;
+  /** Separate channels (for example editable text) retain the same proposal protocol. */
+  eventFactory?: (
+    value: T,
+    previousValue: T,
+    reason: ChangeReason,
+    sourceEvent?: Event,
+    options?: TpChangeEventOptions,
+  ) => TpValueChangeEvent<T>;
   onCommit?: (value: T, previousValue: T, reason: ChangeReason) => void;
   equals?: (a: T, b: T) => boolean;
   diagnostic?: (message: string) => void;
+}
+
+const transactionProposal = Symbol('ControllableState transaction proposal');
+/** Opaque, typed at construction; only ControllableState publishes the participating lanes. */
+export interface StateTransactionProposal {
+  readonly [transactionProposal]: {
+    state: ControllableState<unknown>;
+    value: unknown;
+    reason: ChangeReason;
+    sourceEvent?: Event;
+    eventOptions?: TpChangeEventOptions;
+  };
 }
 
 /** Ordered equality without coercing identifiers or mutating consumer arrays. */
@@ -113,7 +133,7 @@ export class ControllableState<T> implements ReactiveController {
     this.#sync(false);
     const previousValue = this.#value;
     if (this.#equals(previousValue, value)) return false;
-    const event = new TpValueChangeEvent(value, previousValue, reason, sourceEvent, eventOptions);
+    const event = this.#event(value, previousValue, reason, sourceEvent, eventOptions);
     this.#publishing = true;
     this.#pendingExternal = undefined;
     let accepted: boolean;
@@ -139,6 +159,113 @@ export class ControllableState<T> implements ReactiveController {
       this.#drain();
     }
     return accepted;
+  }
+
+  /** A proposal keeps its value type without exposing a second state owner. */
+  proposal(
+    value: T,
+    reason: ChangeReason,
+    sourceEvent?: Event,
+    eventOptions?: TpChangeEventOptions,
+  ): StateTransactionProposal {
+    return {
+      [transactionProposal]: {
+        state: this as unknown as ControllableState<unknown>,
+        value,
+        reason,
+        ...(sourceEvent ? { sourceEvent } : {}),
+        ...(eventOptions ? { eventOptions } : {}),
+      },
+    };
+  }
+
+  /** Propose every lane against the old snapshot, then publish all or none. */
+  static transaction(proposals: readonly StateTransactionProposal[]): boolean {
+    const updates = proposals.map((proposal) => proposal[transactionProposal]);
+    const states = [...new Set(updates.map((update) => update.state))];
+    if (states.length !== updates.length)
+      throw new Error('A transaction may update each lane once.');
+    const busy = states.find((state) => state.#publishing);
+    if (busy) {
+      busy.#queue.push(() => ControllableState.transaction(proposals));
+      return false;
+    }
+    for (const state of states) state.#sync(false);
+    const stages = updates.map((update) => ({
+      ...update,
+      previous: update.state.#value,
+      changed: !update.state.#equals(update.state.#value, update.value),
+      event: update.state.#equals(update.state.#value, update.value)
+        ? undefined
+        : update.state.#event(
+            update.value,
+            update.state.#value,
+            update.reason,
+            update.sourceEvent,
+            update.eventOptions,
+          ),
+      next: update.value,
+    }));
+    if (!stages.some((stage) => stage.changed)) return false;
+    for (const state of states) {
+      state.#publishing = true;
+      state.#pendingExternal = undefined;
+    }
+    try {
+      for (const stage of stages) {
+        if (!stage.event) continue;
+        stage.state.options.onChange?.(stage.event);
+        stage.state.options.host.dispatchEvent(stage.event);
+      }
+      let accepted = true;
+      for (const stage of stages) {
+        const state = stage.state;
+        const owner = state.options.readControlledValue?.();
+        if (state.#controlled && owner !== undefined) {
+          if (state.#lastRead === undefined || !state.#equals(owner, state.#lastRead))
+            state.#pendingExternal = { value: owner };
+          // A veto consumes synchronous owner writes just as set() does.
+          state.#lastRead = owner;
+        }
+        if (stage.event?.defaultPrevented || stage.event?.detail.cancelled) accepted = false;
+        if (!stage.changed) {
+          stage.next = stage.previous;
+        } else if (state.#controlled) {
+          if (!state.#pendingExternal) accepted = false;
+          stage.next = state.#pendingExternal ? state.#pendingExternal.value : stage.previous;
+          if (state.#equals(stage.next, stage.previous)) accepted = false;
+        }
+      }
+      if (!accepted) return false;
+      // All getters must reflect the new snapshot before any commit callback runs.
+      for (const stage of stages) stage.state.#value = stage.next;
+      for (const state of states) state.#committing = true;
+      for (const stage of stages) {
+        if (!stage.state.#equals(stage.previous, stage.next))
+          stage.state.options.onCommit?.(stage.next, stage.previous, stage.reason);
+      }
+      return true;
+    } finally {
+      for (const state of states) {
+        state.#committing = false;
+        state.#pendingExternal = undefined;
+        state.#publishing = false;
+        state.options.host.requestUpdate();
+      }
+      for (const state of states) state.#drain();
+    }
+  }
+
+  #event(
+    value: T,
+    previous: T,
+    reason: ChangeReason,
+    sourceEvent?: Event,
+    options?: TpChangeEventOptions,
+  ): TpValueChangeEvent<T> {
+    return this.options.eventFactory
+      ? this.options.eventFactory(value, previous, reason, sourceEvent, options)
+      : new TpValueChangeEvent(value, previous, reason, sourceEvent, options);
   }
 
   /** Native resets never fabricate a proposal for a controlled owner. */

@@ -295,7 +295,12 @@ export function prepareMotion(
 export function resolvesReducedMotion(element: Element): boolean {
   for (let current: Node | null = element; current; current = composedParent(current)) {
     if (current.nodeType !== 1) continue;
-    const value = (current as Element).getAttribute('motion-policy');
+    const owner = current as Element & { motionPolicy?: unknown };
+    // Lit reflects after willUpdate; motion must use the already authored property.
+    const value =
+      typeof owner.motionPolicy === 'string'
+        ? owner.motionPolicy
+        : owner.getAttribute('motion-policy');
     if (value === 'reduce') return true;
     if (value === 'normal') return false;
   }

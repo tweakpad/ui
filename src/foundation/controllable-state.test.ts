@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ControllableState, orderedValuesEqual } from './controllable-state.js';
+import { TpValueChangeEvent } from './events.js';
 
 function setup<T>(initialValue: T, controlled?: T, defaultValue?: T) {
   let input = controlled;
@@ -40,6 +41,99 @@ function setup<T>(initialValue: T, controlled?: T, defaultValue?: T) {
 }
 
 describe('ControllableState', () => {
+  it('publishes transactions atomically after every proposal sees the old snapshot', () => {
+    const selection = setup<string | null>('selected');
+    const input = setup('query');
+    const snapshots: unknown[] = [];
+    for (const lane of [selection, input]) {
+      lane.onChange.mockImplementation(() =>
+        snapshots.push([selection.state.value, input.state.value]),
+      );
+      lane.onCommit.mockImplementation(() =>
+        snapshots.push([selection.state.value, input.state.value]),
+      );
+    }
+    expect(
+      ControllableState.transaction([
+        selection.state.proposal(null, 'clear'),
+        input.state.proposal('', 'clear'),
+      ]),
+    ).toBe(true);
+    expect(snapshots).toEqual([
+      ['selected', 'query'],
+      ['selected', 'query'],
+      [null, ''],
+      [null, ''],
+    ]);
+  });
+
+  it('requires every controlled lane to accept and consumes owner writes on an atomic veto', () => {
+    const selection = setup<string | null>(null, 'selected');
+    const input = setup('', 'query');
+    selection.onChange.mockImplementation(() => selection.owner(null));
+    const clear = () =>
+      ControllableState.transaction([
+        selection.state.proposal(null, 'clear'),
+        input.state.proposal('', 'clear'),
+      ]);
+    expect(clear()).toBe(false);
+    selection.state.hostUpdate();
+    expect(selection.state.value).toBe('selected');
+    expect(input.state.value).toBe('query');
+    input.onChange.mockImplementation(() => input.owner(''));
+    expect(clear()).toBe(true);
+    expect(selection.state.value).toBe(null);
+    expect(input.state.value).toBe('');
+  });
+
+  it('a canceled lane prevents uncontrolled commits and serializes reentrant work after publication', () => {
+    const a = setup(1),
+      b = setup(2);
+    b.onChange.mockImplementation((event) => event.preventDefault());
+    expect(
+      ControllableState.transaction([a.state.proposal(0, 'input'), b.state.proposal(0, 'input')]),
+    ).toBe(false);
+    expect([a.state.value, b.state.value]).toEqual([1, 2]);
+    b.onChange.mockImplementation(() => a.state.set(3, 'input'));
+    expect(
+      ControllableState.transaction([a.state.proposal(0, 'input'), b.state.proposal(0, 'input')]),
+    ).toBe(true);
+    expect([a.state.value, b.state.value]).toEqual([3, 0]);
+    expect(a.onCommit.mock.calls.map((call) => call[0])).toEqual([0, 3]);
+  });
+
+  it('unchanged lanes do not propose and commit callbacks observe normalized owner values together', () => {
+    const a = setup('same'),
+      b = setup('', 'before');
+    b.onChange.mockImplementation(() => b.owner('normalized'));
+    b.onCommit.mockImplementation(() =>
+      expect([a.state.value, b.state.value]).toEqual(['same', 'normalized']),
+    );
+    expect(
+      ControllableState.transaction([
+        a.state.proposal('same', 'input'),
+        b.state.proposal('raw', 'input'),
+      ]),
+    ).toBe(true);
+    expect(a.onChange).not.toHaveBeenCalled();
+    expect(a.onCommit).not.toHaveBeenCalled();
+  });
+
+  it('uses a distinct text event channel with the common cancellation protocol', () => {
+    const t = setup('before');
+    const valueListener = vi.fn();
+    t.host.addEventListener('tp-value-change', valueListener);
+    t.host.addEventListener('tp-input-value-change', (event) => event.preventDefault());
+    const text = new ControllableState({
+      host: t.host,
+      initialValue: 'before',
+      eventFactory: (value, previous, reason, source, options) =>
+        new TpValueChangeEvent(value, previous, reason, source, options, 'tp-input-value-change'),
+    });
+    expect(text.set('after', 'input')).toBe(false);
+    expect(text.value).toBe('before');
+    expect(valueListener).not.toHaveBeenCalled();
+  });
   it('preserves a controlled null and serializes owner publication from onCommit', () => {
     const t = setup<string | null>('fallback', null);
     expect(t.state.value).toBe(null);

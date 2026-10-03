@@ -72,3 +72,22 @@ Set `href` to make the Button render a native `<a>` while retaining any visual `
 ```
 
 `variant="link"` alone changes appearance only, so an action can still use link styling without becoming navigation. A disabled link retains its `href` for inspection but prevents navigation; `focusableWhenDisabled` controls whether it remains in the tab order.
+
+## Part customization
+
+`partContracts` configures each of `button`, `button-label`, `button-leading-mark`, and `button-trailing-mark`. Contracts accept `hostProperties`, `classHook`, `styleHook`, `content`, `elementReference`, and `renderDelegate`. The reference receives the actual rendered element and becomes `null` when it is replaced or disconnected. `focus()`, `blur()`, and `click()` follow the actual control.
+
+A delegate must apply its supplied `bind` to the semantic host. A substituted action host retains Button semantics and receives synthesized Enter/Space activation. A Button with `href` requires an actual anchor; a non-anchor delegate emits a diagnostic and falls back to the native anchor. Owned action type, disabled/focus policy, ARIA, state and part markers survive neutral property and appearance overrides.
+
+```js
+import { html } from 'lit';
+button.partContracts = {
+  button: {
+    hostProperties: { title: 'Save changes' },
+    renderDelegate: ({ bind, content }) => html`<span ${bind}>${content}</span>`,
+    elementReference: (element) => console.log(element),
+  },
+};
+```
+
+Consumer handlers run before the corresponding Button handler. Call `event.preventComponentHandling()` to suppress that component action while preserving native default prevention as a separate channel. `preventDefault()` still cancels a queued submit/reset. Disabled controls block activation before consumer click handlers. For a link, suppressing its click action also prevents navigation.

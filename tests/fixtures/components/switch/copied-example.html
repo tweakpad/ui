@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Switch copied example</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main><h1>Switch copied example</h1></main>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      await import(built ? '/dist/register.js' : '/src/register.ts');
+      const { TpField, TpSwitch } = await import(built ? '/dist/index.js' : '/src/index.ts');
+      document.querySelector('link').href = built ? '/dist/styles.css' : '/src/styles.css';
+
+      const field = new TpField();
+      field.orientation = 'horizontal';
+      field.label = 'Project sync';
+      const setting = new TpSwitch();
+      setting.name = 'notifications';
+      setting.size = 'sm';
+      setting.checked = false;
+      setting.disabled = false;
+      setting.readOnly = false;
+      setting.required = false;
+      setting.nativeAction = true;
+      setting.onCheckedChange = (event) => {
+        if (!event.defaultPrevented && !event.detail.cancelled)
+          setting.checked = event.detail.value;
+      };
+      field.append(setting);
+      document.body.append(field);
+    </script>
+  </body>
+</html>

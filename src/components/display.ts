@@ -539,11 +539,18 @@ export class TpSeparator extends TpElement {
   ];
   decorative = true;
   protected override render() {
-    return html`<div
-      part="root"
-      role=${this.decorative ? 'none' : 'separator'}
-      aria-orientation=${this.decorative ? nothing : this.orientation}
-    ></div>`;
+    return this.renderPart(
+      'root',
+      Object.freeze({ decorative: this.decorative, orientation: this.orientation }),
+      {
+        tag: 'div',
+        properties: {
+          part: 'root',
+          role: this.decorative ? 'none' : 'separator',
+          'aria-orientation': this.decorative ? nothing : this.orientation,
+        },
+      },
+    );
   }
 }
 

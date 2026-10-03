@@ -3,11 +3,13 @@ import { acquireOutsideInert } from './outside-inert.js';
 
 class ElementStub {
   nodeType = 1;
+  namespaceURI = 'http://www.w3.org/1999/xhtml';
   isConnected = true;
   children: ElementStub[] = [];
   parentNode: ElementStub | ShadowStub | null = null;
   shadowRoot: ShadowStub | null = null;
   #inert: string | null = null;
+  attributes = new Map<string, string>();
   append(...elements: ElementStub[]): void {
     for (const element of elements) {
       element.parentNode = this;
@@ -20,11 +22,12 @@ class ElementStub {
   set inert(value: boolean) {
     this.#inert = value ? '' : null;
   }
-  getAttribute(): string | null {
-    return this.#inert;
+  getAttribute(name = 'inert'): string | null {
+    return name === 'inert' ? this.#inert : (this.attributes.get(name) ?? null);
   }
-  setAttribute(_name: string, value: string): void {
-    this.#inert = value;
+  setAttribute(name: string, value: string): void {
+    if (name === 'inert') this.#inert = value;
+    else this.attributes.set(name, value);
   }
   removeAttribute(): void {
     this.#inert = null;
@@ -68,6 +71,36 @@ function fixture() {
   return { document, outer, inner, other, authored, inside };
 }
 describe('owner-document outside inert leases', () => {
+  it('preserves explicit and implicit live regions through nested leases and shadow insertion', () => {
+    const f = fixture();
+    const shadow = new ShadowStub(f.other);
+    f.other.shadowRoot = shadow;
+    const unrelated = new ElementStub();
+    shadow.append(unrelated);
+    const releaseOuter = acquireOutsideInert(f.document, () => f.inside(f.outer));
+    expect(f.other.inert).toBe(true);
+    expect(ObserverStub.current!.roots.has(shadow)).toBe(true);
+    const live = new ElementStub();
+    live.setAttribute('role', 'status');
+    shadow.append(live);
+    ObserverStub.current!.notify();
+    expect(f.other.inert).toBe(false);
+    expect(live.inert).toBe(false);
+    expect(unrelated.inert).toBe(true);
+    const releaseInner = acquireOutsideInert(f.document, () => f.inside(f.inner));
+    expect(live.inert).toBe(false);
+    live.setAttribute('aria-live', 'off');
+    ObserverStub.current!.notify();
+    expect(f.other.inert).toBe(true);
+    live.setAttribute('aria-live', 'polite');
+    ObserverStub.current!.notify();
+    expect(f.other.inert).toBe(false);
+    releaseInner();
+    expect(live.inert).toBe(false);
+    releaseOuter();
+    expect(unrelated.inert).toBe(false);
+    expect(f.authored.inert).toBe(true);
+  });
   it('observes traversed shadow boundaries and inerts newly inserted outside siblings', () => {
     const f = fixture();
     const shadow = new ShadowStub(f.outer),

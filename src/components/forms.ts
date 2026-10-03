@@ -716,7 +716,9 @@ export class TpInputGroup extends TpElement {
             : action.hasAttribute(key!);
         const property = (action as unknown as Record<string, unknown>)[key!];
         const nonDefaultProperty =
-          action.localName === 'tp-button' &&
+          (action.localName === 'tp-button' ||
+            (action.constructor as { presentationTagName?: string }).presentationTagName ===
+              'tp-button') &&
           typeof property === 'string' &&
           property !== 'default';
         if (!previous && (authored || nonDefaultProperty)) continue;

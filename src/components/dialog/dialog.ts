@@ -468,6 +468,9 @@ export class TpDialog extends TpElement {
       element.shadowRoot?.querySelector<HTMLElement>('button, a[href], [role="button"]') ?? element
     );
   }
+  protected triggerControlsTarget(): HTMLElement {
+    return this;
+  }
   registerTrigger(element: HTMLElement, options: DialogTriggerOptions = {}): () => void {
     if (this.#triggers.has(element)) return () => {};
     if (element.ownerDocument !== this.ownerDocument) {
@@ -490,6 +493,7 @@ export class TpDialog extends TpElement {
     const applied = new Map<string, string | null>();
     let controls: readonly Element[] | null = null;
     let controlsAttribute: string | null = null;
+    let appliedControls: readonly Element[] = [];
     const restore = (): void => {
       if (!target) return;
       for (const [name, value] of original)
@@ -498,8 +502,11 @@ export class TpDialog extends TpElement {
           else target.setAttribute(name, value);
         }
       if (
-        target.ariaControlsElements?.includes(this) ||
-        (target.getAttribute('aria-controls') === '' && !target.ariaControlsElements?.length)
+        target.getAttribute('aria-controls') === '' &&
+        (target.ariaControlsElements ?? []).length === appliedControls.length &&
+        (target.ariaControlsElements ?? []).every(
+          (element, index) => element === appliedControls[index],
+        )
       ) {
         if (controlsAttribute) target.setAttribute('aria-controls', controlsAttribute);
         else {
@@ -529,7 +536,10 @@ export class TpDialog extends TpElement {
       };
       write('aria-haspopup', 'dialog');
       write('aria-expanded', String(this.open));
-      target.ariaControlsElements = [...(controls ?? []), this];
+      target.ariaControlsElements = [
+        ...new Set([...(controls ?? []), this.triggerControlsTarget()]),
+      ];
+      appliedControls = target.ariaControlsElements ?? [];
       write('data-popup-open', this.open ? '' : null);
       write(
         'data-disabled',

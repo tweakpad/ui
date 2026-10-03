@@ -1,6 +1,7 @@
 import type { PresentationDictionary, PresentationRule } from './resolver.js';
 import { componentDefinitions } from './components.js';
 import { componentAppearance } from './recipes.js';
+import { anchoredPresenceAppearance } from './recipes/command-surface.js';
 
 const rule = (
   declarations: PresentationRule['declarations'],
@@ -206,37 +207,6 @@ for (const definition of componentDefinitions.filter((item) =>
 ))
   for (const part of definition.parts)
     for (const key of part.presentationKeys ?? [part.name]) menus[key] = [];
-for (const prefix of ['menu', 'context-menu', 'menubar'])
-  for (const suffix of ['item', 'checkbox-item', 'radio-item', 'sub-trigger']) {
-    menus[`${prefix}-${suffix}`] = [
-      rule({
-        padding: 'var(--tp-space-2) var(--tp-space-3)',
-        border: 'var(--tp-border-width) var(--tp-border-style) transparent',
-        'border-radius': 'var(--tp-radius-sm)',
-        background: 'transparent',
-        color: 'var(--tp-foreground)',
-        font: 'inherit',
-        'text-decoration': 'none',
-      }),
-      rule(
-        { background: 'color-mix(in oklab, var(--tp-input) 50%, var(--tp-background))' },
-        '&[data-highlighted]:not([aria-disabled="true"])',
-      ),
-      ...variantPresentation('destructive').map((entry) => ({
-        ...entry,
-        selector: '&[variant="destructive"]',
-      })),
-      rule(
-        {
-          background:
-            'color-mix(in oklab, var(--tp-destructive) 85%, light-dark(var(--tp-foreground), var(--tp-background)))',
-        },
-        '&[variant="destructive"][data-highlighted]:not([aria-disabled="true"])',
-      ),
-      rule({ opacity: 'var(--tp-opacity-disabled)' }, '&[aria-disabled="true"]'),
-    ];
-  }
-menus['navigation-menu-list'] = [rule({ margin: '0', padding: '0', 'list-style': 'none' })];
 
 const fieldAppearance = [
   rule({
@@ -264,7 +234,6 @@ const sharedPresentation: Record<string, readonly PresentationRule[]> = {};
 for (const part of [
   'input',
   'text-area',
-  'combobox-anchor',
   'command-palette-input-wrapper',
   'carousel-previous',
   'carousel-next',
@@ -289,38 +258,14 @@ for (const part of [
   'alert-dialog-content',
   'drawer-content',
   'side-panel-content',
-  'popover-content',
   'preview-card-content',
   'tooltip-content',
-  'menu-content',
-  'context-menu-content',
 ])
   sharedPresentation[part] = surfaceAppearance;
 
 // Shared anchored presence recipe; positioner geometry remains in Foundation.
-for (const prefix of ['popover', 'preview-card', 'tooltip']) {
-  sharedPresentation[`${prefix}-content`] = [
-    ...surfaceAppearance,
-    rule({
-      opacity: '1',
-      transform: 'scale(1) translate(0, 0)',
-      transition:
-        'opacity calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard), transform calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard)',
-    }),
-    rule(
-      {
-        opacity: '0',
-        transform:
-          'scale(.96) translate(var(--tp-surface-enter-x, 0px), var(--tp-surface-enter-y, 0px))',
-      },
-      '&:is([data-starting-style], [data-ending-style])',
-    ),
-    rule({ '--tp-surface-enter-y': '4px' }, '&[data-side="top"]'),
-    rule({ '--tp-surface-enter-y': '-4px' }, '&[data-side="bottom"]'),
-    rule({ '--tp-surface-enter-x': '4px' }, '&[data-side="left"]'),
-    rule({ '--tp-surface-enter-x': '-4px' }, '&[data-side="right"]'),
-    rule({ transition: 'none' }, '&:is([data-instant], [data-tp-motion-driven])'),
-  ];
+for (const prefix of ['preview-card', 'tooltip']) {
+  sharedPresentation[`${prefix}-content`] = [...surfaceAppearance, ...anchoredPresenceAppearance];
 }
 sharedPresentation['tooltip-content'] = [
   ...sharedPresentation['tooltip-content']!,
