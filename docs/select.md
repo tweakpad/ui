@@ -106,30 +106,30 @@ The Library flattens Foundation Positioner, Portal, Arrow, Backdrop and Indicato
 configuration onto their nearest public owners. These options preserve their
 behavior without adding catalog identities.
 
-| Root property / attribute                           | Type                                                                | Default                |
-| --------------------------------------------------- | ------------------------------------------------------------------- | ---------------------- |
-| `placement`                                         | logical side and alignment separated by a space                     | `'block-end start'`    |
-| `side`                                              | top/right/bottom/left/inline-start/inline-end/block-start/block-end | placement side         |
-| `align`                                             | start/center/end                                                    | placement alignment    |
-| `sideOffset` / `side-offset`                        | number                                                              | 0                      |
-| `alignOffset` / `align-offset`                      | number                                                              | 0                      |
-| `alignItemWithTrigger` / `align-item-with-trigger`  | boolean                                                             | `true`                 |
-| `anchor`                                            | element, virtual anchor, ref, resolver or null                      | Trigger                |
-| `disableAnchorTracking` / `disable-anchor-tracking` | boolean                                                             | `false`                |
-| `collisionAvoidance`                                | `{side, align, fallbackAxisSide}`                                   | flip, flip, none       |
-| `collisionBoundary`                                 | clipping ancestors, element(s), rectangle                           | `'clipping-ancestors'` |
-| `collisionPadding`                                  | number or per-side record                                           | 5                      |
-| `sticky`                                            | boolean                                                             | `false`                |
-| `positionMethod` / `position-method`                | absolute/fixed                                                      | `'absolute'`           |
-| `showArrow` / `show-arrow`                          | boolean                                                             | `false`                |
-| `arrowPadding` / `arrow-padding`                    | number                                                              | 5                      |
-| `arrowWidth` / `arrow-width`                        | number                                                              | 14                     |
-| `arrowHeight` / `arrow-height`                      | number                                                              | 7                      |
-| `arrowTipRadius` / `arrow-tip-radius`               | number                                                              | 0                      |
-| `arrowPath` / `arrow-path`                          | SVG path string                                                     | generated triangle     |
-| `arrowBorderColor` / `arrow-border-color`           | CSS color                                                           | none                   |
-| `arrowBorderWidth` / `arrow-border-width`           | number                                                              | 0                      |
-| `showBackdrop` / `show-backdrop`                    | boolean                                                             | `false`                |
+| Root property / attribute                           | Type                                                                | Default                   |
+| --------------------------------------------------- | ------------------------------------------------------------------- | ------------------------- |
+| `placement`                                         | logical side and alignment separated by a space                     | `'block-end start'`       |
+| `side`                                              | top/right/bottom/left/inline-start/inline-end/block-start/block-end | placement side            |
+| `align`                                             | start/center/end                                                    | placement alignment       |
+| `sideOffset` / `side-offset`                        | number                                                              | three theme spacing units |
+| `alignOffset` / `align-offset`                      | number                                                              | 0                         |
+| `alignItemWithTrigger` / `align-item-with-trigger`  | boolean                                                             | `true`                    |
+| `anchor`                                            | element, virtual anchor, ref, resolver or null                      | Trigger                   |
+| `disableAnchorTracking` / `disable-anchor-tracking` | boolean                                                             | `false`                   |
+| `collisionAvoidance`                                | `{side, align, fallbackAxisSide}`                                   | flip, flip, none          |
+| `collisionBoundary`                                 | clipping ancestors, element(s), rectangle                           | `'clipping-ancestors'`    |
+| `collisionPadding`                                  | number or per-side record                                           | three theme spacing units |
+| `sticky`                                            | boolean                                                             | `false`                   |
+| `positionMethod` / `position-method`                | absolute/fixed                                                      | `'absolute'`              |
+| `showArrow` / `show-arrow`                          | boolean                                                             | `false`                   |
+| `arrowPadding` / `arrow-padding`                    | number                                                              | two theme spacing units   |
+| `arrowWidth` / `arrow-width`                        | number                                                              | four theme spacing units  |
+| `arrowHeight` / `arrow-height`                      | number                                                              | two theme spacing units   |
+| `arrowTipRadius` / `arrow-tip-radius`               | number                                                              | 0                         |
+| `arrowPath` / `arrow-path`                          | SVG path string                                                     | generated triangle        |
+| `arrowBorderColor` / `arrow-border-color`           | CSS color                                                           | none                      |
+| `arrowBorderWidth` / `arrow-border-width`           | number                                                              | 0                         |
+| `showBackdrop` / `show-backdrop`                    | boolean                                                             | `false`                   |
 
 Item alignment attempts to place the selected/highlighted option against the
 Trigger. Collision correction also adjusts list scroll; unusable items or

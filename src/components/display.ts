@@ -295,7 +295,7 @@ export class TpMessageScroller extends TpElement {
 
       .viewport {
         overflow: auto;
-        max-height: var(--tp-message-scroller-height, 24rem);
+        max-height: var(--tp-message-scroller-height, calc(var(--tp-spacing) * 120));
         overscroll-behavior: contain;
       }
     `,

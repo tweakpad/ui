@@ -1,3 +1,4 @@
+import { anchoredArrowStyles } from '../shared.js';
 import { html, nothing } from 'lit';
 import type { CSSResultGroup, PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
@@ -22,7 +23,12 @@ import {
   type PartRenderOptions,
   type PartState,
 } from '../../foundation/part.js';
-import { positionSurface, resolveSide, geometryOffsets } from '../../foundation/positioning.js';
+import {
+  positionSurface,
+  themeSpacing,
+  resolveSide,
+  geometryOffsets,
+} from '../../foundation/positioning.js';
 import type {
   Alignment,
   GeometryOffset,
@@ -76,13 +82,13 @@ export class TpSelect extends TpFormElement<unknown> {
     placement: { type: String },
     side: { type: String },
     align: { type: String },
-    sideOffset: { type: Number, attribute: 'side-offset' },
+    sideOffset: { type: Number, attribute: 'side-offset', noAccessor: true },
     alignOffset: { type: Number, attribute: 'align-offset' },
     anchor: { attribute: false },
     disableAnchorTracking: { type: Boolean, attribute: 'disable-anchor-tracking' },
     collisionAvoidance: { attribute: false },
     collisionBoundary: { attribute: false },
-    collisionPadding: { attribute: false },
+    collisionPadding: { attribute: false, noAccessor: true },
     sticky: { type: Boolean },
     positionMethod: { type: String, attribute: 'position-method' },
     initialFocus: { attribute: false },
@@ -90,9 +96,9 @@ export class TpSelect extends TpFormElement<unknown> {
     scrollUpKeepMounted: { type: Boolean, attribute: 'scroll-up-keep-mounted' },
     scrollDownKeepMounted: { type: Boolean, attribute: 'scroll-down-keep-mounted' },
     showArrow: { type: Boolean, attribute: 'show-arrow' },
-    arrowPadding: { type: Number, attribute: 'arrow-padding' },
-    arrowWidth: { type: Number, attribute: 'arrow-width' },
-    arrowHeight: { type: Number, attribute: 'arrow-height' },
+    arrowPadding: { type: Number, attribute: 'arrow-padding', noAccessor: true },
+    arrowWidth: { type: Number, attribute: 'arrow-width', noAccessor: true },
+    arrowHeight: { type: Number, attribute: 'arrow-height', noAccessor: true },
     arrowTipRadius: { type: Number, attribute: 'arrow-tip-radius' },
     arrowPath: { type: String, attribute: 'arrow-path' },
     arrowBorderColor: { type: String, attribute: 'arrow-border-color' },
@@ -105,7 +111,7 @@ export class TpSelect extends TpFormElement<unknown> {
     onOpenChange: { attribute: false },
     onOpenChangeComplete: { attribute: false },
   };
-  static override styles: CSSResultGroup = [TpElement.styles, selectStyles];
+  static override styles: CSSResultGroup = [TpElement.styles, anchoredArrowStyles, selectStyles];
   defaultValue: unknown = undefined;
   defaultOpen = false;
   multiple = false;
@@ -123,13 +129,32 @@ export class TpSelect extends TpFormElement<unknown> {
   placement = 'block-end start';
   side: LogicalSide | undefined;
   align: Alignment | undefined;
-  sideOffset: GeometryOffset = 0;
+  #sideOffset: GeometryOffset | undefined;
+  get sideOffset(): GeometryOffset {
+    return this.#sideOffset ?? themeSpacing(this, 3);
+  }
+  set sideOffset(value: GeometryOffset | undefined) {
+    const previous = this.#sideOffset;
+    this.#sideOffset = value ?? undefined;
+    this.requestUpdate('sideOffset', previous);
+  }
   alignOffset: GeometryOffset = 0;
   anchor: SelectAnchor = null;
   disableAnchorTracking = false;
   collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip', fallbackAxisSide: 'none' };
   collisionBoundary: CollisionBoundary = 'clipping-ancestors';
-  collisionPadding: number | Partial<Record<'top' | 'bottom' | 'left' | 'right', number>> = 5;
+  #collisionPadding:
+    number | Partial<Record<'top' | 'bottom' | 'left' | 'right', number>> | undefined;
+  get collisionPadding(): number | Partial<Record<'top' | 'bottom' | 'left' | 'right', number>> {
+    return this.#collisionPadding ?? themeSpacing(this, 3);
+  }
+  set collisionPadding(
+    value: number | Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>,
+  ) {
+    const previous = this.#collisionPadding;
+    this.#collisionPadding = value ?? undefined;
+    this.requestUpdate('collisionPadding', previous);
+  }
   sticky = false;
   positionMethod: PositioningStrategy = 'absolute';
   initialFocus: SelectFocusTarget = 'trigger';
@@ -137,9 +162,39 @@ export class TpSelect extends TpFormElement<unknown> {
   scrollUpKeepMounted = false;
   scrollDownKeepMounted = false;
   showArrow = false;
-  arrowPadding = 5;
-  arrowWidth = 14;
-  arrowHeight = 7;
+  #arrowPadding: number | undefined;
+  get arrowPadding(): number {
+    return this.#arrowPadding ?? themeSpacing(this, 2);
+  }
+  set arrowPadding(value: number) {
+    const previous = this.#arrowPadding;
+    this.#arrowPadding = value ?? undefined;
+    this.requestUpdate('arrowPadding', previous);
+  }
+  protected get defaultArrowWidthUnits(): number {
+    return 4;
+  }
+  protected get defaultArrowHeightUnits(): number {
+    return 2;
+  }
+  #arrowWidth: number | undefined;
+  get arrowWidth(): number {
+    return this.#arrowWidth ?? themeSpacing(this, this.defaultArrowWidthUnits);
+  }
+  set arrowWidth(value: number) {
+    const previous = this.#arrowWidth;
+    this.#arrowWidth = value ?? undefined;
+    this.requestUpdate('arrowWidth', previous);
+  }
+  #arrowHeight: number | undefined;
+  get arrowHeight(): number {
+    return this.#arrowHeight ?? themeSpacing(this, this.defaultArrowHeightUnits);
+  }
+  set arrowHeight(value: number) {
+    const previous = this.#arrowHeight;
+    this.#arrowHeight = value ?? undefined;
+    this.requestUpdate('arrowHeight', previous);
+  }
   arrowTipRadius = 0;
   arrowPath = '';
   arrowBorderColor = '';
@@ -709,7 +764,16 @@ export class TpSelect extends TpFormElement<unknown> {
       properties: {
         class: 'select-arrow',
         'aria-hidden': 'true',
-        style: { width: `${width}px`, height: `${height}px` },
+        style: {
+          '--_tp-arrow-width':
+            this.#arrowWidth === undefined
+              ? `calc(var(--tp-spacing) * ${this.defaultArrowWidthUnits})`
+              : `${width}px`,
+          '--_tp-arrow-height':
+            this.#arrowHeight === undefined
+              ? `calc(var(--tp-spacing) * ${this.defaultArrowHeightUnits})`
+              : `${height}px`,
+        },
       },
       reference: this.#ref('arrow', '', (element) => {
         this.#arrow = element;
@@ -858,6 +922,8 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#positionArrow = this.#arrow;
     this.#positionTarget = this.#content;
     const [side = 'block-end', align = 'start'] = this.placement.trim().split(/\s+/);
+    const padding = () => this.collisionPadding;
+    const arrowPadding = () => this.arrowPadding;
     this.#position = positionSurface(anchor, this.#content, {
       resolvePlacement: () =>
         `${resolveSide(this.side ?? (side as LogicalSide), this)}-${this.align ?? (align as Alignment)}`,
@@ -865,12 +931,16 @@ export class TpSelect extends TpFormElement<unknown> {
       strategy: this.positionMethod,
       collision: this.collisionAvoidance,
       boundary: this.collisionBoundary,
-      padding: this.collisionPadding,
+      get padding() {
+        return padding();
+      },
       sticky: this.sticky,
       constrainSize: true,
       matchReferenceWidth: true,
       arrow: this.#arrow,
-      arrowPadding: this.arrowPadding,
+      get arrowPadding() {
+        return arrowPadding();
+      },
       tracking: this.disableAnchorTracking ? false : {},
       onInvalid: () => {
         if (this.open) this.setOpen(false, 'anchor-removed');
@@ -895,7 +965,7 @@ export class TpSelect extends TpFormElement<unknown> {
     const padding =
       typeof this.collisionPadding === 'number'
         ? this.collisionPadding
-        : (this.collisionPadding.top ?? 5);
+        : (this.collisionPadding.top ?? themeSpacing(this, 3));
     if (content.height > view.innerHeight - padding * 2 || option.height > trigger.height * 2)
       return;
     const desired =

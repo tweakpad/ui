@@ -15,7 +15,7 @@ interface Args {
   showViewport: boolean;
   showArrow: boolean;
   placement: string;
-  sideOffset: number;
+  sideOffset: number | undefined;
   alignOffset: number;
   keepMounted: boolean;
   portal: boolean;
@@ -51,7 +51,7 @@ const meta: Meta<Args> = {
     showViewport: true,
     showArrow: false,
     placement: 'bottom center',
-    sideOffset: 8,
+    sideOffset: undefined,
     alignOffset: 0,
     keepMounted: false,
     portal: true,
@@ -130,5 +130,5 @@ export const Default: Story = {
 /** Vertical navigation opens beside the list so its remaining destinations stay reachable. */
 export const Vertical: Story = {
   ...Default,
-  args: { orientation: 'vertical', placement: 'inline-end start', sideOffset: 8 },
+  args: { orientation: 'vertical', placement: 'inline-end start' },
 };

@@ -1,6 +1,7 @@
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import {
   commandSurfaceAppearance,
+  popupSpacingAppearance,
   commandItemAppearance,
   commandLabelAppearance,
   commandSeparatorAppearance,
@@ -46,9 +47,9 @@ export const comboboxAppearance: PresentationDictionary = {
     },
   ],
   'combobox-list': [
+    ...popupSpacingAppearance,
     {
       declarations: {
-        padding: 'var(--tp-space-1)',
         'max-block-size':
           'min(calc(var(--tp-spacing) * 63), calc(var(--tp-available-height) - var(--tp-spacing) * 9))',
         'scroll-padding-block': 'var(--tp-space-1)',
@@ -60,7 +61,6 @@ export const comboboxAppearance: PresentationDictionary = {
     ...commandItemAppearance,
     {
       declarations: {
-        gap: 'var(--tp-space-2)',
         'padding-inline-end': 'calc(var(--tp-spacing) * 8)',
       },
     },
@@ -95,7 +95,6 @@ export const comboboxAppearance: PresentationDictionary = {
         border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-input)',
         'border-radius': 'var(--tp-radius-lg)',
         gap: 'var(--tp-space-1)',
-        padding: 'var(--tp-space-1)',
         'min-block-size': 'var(--tp-control-height-sm)',
         'font-size': 'var(--tp-text-sm)',
       },

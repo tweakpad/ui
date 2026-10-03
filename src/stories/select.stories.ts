@@ -22,7 +22,7 @@ interface Args {
   keepMounted: boolean;
   alignItemWithTrigger: boolean;
   placement: string;
-  sideOffset: number;
+  sideOffset: number | undefined;
   alignOffset: number;
   scrollUpKeepMounted: boolean;
   scrollDownKeepMounted: boolean;
@@ -99,7 +99,7 @@ const meta: Meta<Args> = {
     keepMounted: false,
     alignItemWithTrigger: true,
     placement: 'block-end start',
-    sideOffset: 0,
+    sideOffset: undefined,
     alignOffset: 0,
     scrollUpKeepMounted: false,
     scrollDownKeepMounted: false,

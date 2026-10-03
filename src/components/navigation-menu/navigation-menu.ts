@@ -18,7 +18,6 @@ import { componentHandlingPrevented } from '../../foundation/part.js';
 import type {
   Alignment,
   CollisionPolicy,
-  GeometryOffset,
   PositioningStrategy,
 } from '../../foundation/positioning.js';
 import type { ChangeReason } from '../../foundation/types.js';
@@ -82,12 +81,12 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
 
       .viewport-entry {
         inline-size: max-content;
-        max-inline-size: var(--tp-available-width, calc(100vw - 10px));
+        max-inline-size: var(--tp-available-width, calc(100vw - var(--tp-space-3) * 2));
       }
 
       .navigation-entry {
         inline-size: max-content;
-        max-inline-size: var(--tp-available-width, calc(100vw - 10px));
+        max-inline-size: var(--tp-available-width, calc(100vw - var(--tp-space-3) * 2));
       }
 
       .navigation-content {
@@ -103,7 +102,6 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
   override openOnHover = true;
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   override align: Alignment = 'center';
-  override sideOffset: GeometryOffset = 8;
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
   #provided: string | undefined;

@@ -38,7 +38,7 @@ const meta: Meta<Args> = {
       .announcement=${args.announcement}
       .title=${args.title}
     >
-      <tp-icon slot="icon" .icon=${plusIcon} size="1rem"></tp-icon>
+      <tp-icon slot="icon" .icon=${plusIcon} size="var(--tp-icon-size-sm)"></tp-icon>
       A new version is ready. Review the changes before updating.
       <tp-button slot="actions" variant="outline" size="sm" href="#release-notes"
         >Release notes</tp-button

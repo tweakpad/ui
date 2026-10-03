@@ -17,7 +17,7 @@ export class TpDrawer extends TpDialog {
       .content {
         inset: 0 0 0 auto;
         margin: 0;
-        inline-size: min(26rem, 90vw);
+        inline-size: min(calc(var(--tp-spacing) * 130), 90vw);
         block-size: 100%;
         max-block-size: none;
         grid-template-rows: auto 1fr auto;

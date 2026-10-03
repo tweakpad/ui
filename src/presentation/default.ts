@@ -271,7 +271,7 @@ for (const prefix of ['preview-card', 'tooltip']) {
 sharedPresentation['tooltip-content'] = [
   ...sharedPresentation['tooltip-content']!,
   rule({
-    'max-inline-size': 'min(20rem, var(--tp-available-width))',
+    'max-inline-size': 'min(calc(var(--tp-spacing) * 100), var(--tp-available-width))',
     padding: 'calc(var(--tp-space-1) * 1.5) var(--tp-space-3)',
     border: '0',
     'border-radius': 'var(--tp-radius-md)',

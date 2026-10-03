@@ -28,7 +28,7 @@ export const dialogStyles = css`
     inset: 0;
     margin: auto;
     gap: 0;
-    inline-size: min(32rem, calc(100% - var(--tp-space-8)));
+    inline-size: min(calc(var(--tp-spacing) * 160), calc(100% - var(--tp-space-8)));
     max-inline-size: none;
     max-block-size: calc(100dvh - var(--tp-space-8));
     min-inline-size: 0;

@@ -16,7 +16,6 @@ import type {
   Alignment,
   CollisionPolicy,
   PositioningStrategy,
-  GeometryOffset,
 } from '../../foundation/positioning.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { TpElement } from '../../foundation/element.js';
@@ -92,7 +91,6 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   override modal = true;
   override openOnHover = false;
   override align: Alignment = 'center';
-  override sideOffset: GeometryOffset = 8;
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
   #bar: MenuBarOwner | null = null;
@@ -433,8 +431,11 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     this.#keyboard = keyboard;
     this.#collection.activeIndex = record ? this.#items.indexOf(record) : -1;
     this.#syncHighlight();
-    if (keyboard) record?.element.focus({ preventScroll: true });
-    record?.element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (keyboard) {
+      record?.element.focus({ preventScroll: true });
+      const scrollOptions = { block: 'nearest', inline: 'nearest', container: 'nearest' } as const;
+      record?.element.scrollIntoView(scrollOptions);
+    }
   }
   requestItem(item: TpMenuItem, event: Event, commit: () => boolean): void {
     const record = this.#items.find((record) => record.item === item);

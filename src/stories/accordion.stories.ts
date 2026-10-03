@@ -357,10 +357,10 @@ function playLineByLine(request: MotionRequest): MotionPlayback {
       exiting
         ? [
             { opacity: 1, transform: 'translateY(0)' },
-            { opacity: 0, transform: 'translateY(-6px)' },
+            { opacity: 0, transform: 'translateY(calc(var(--tp-space-2) * -1))' },
           ]
         : [
-            { opacity: 0, transform: 'translateY(8px)' },
+            { opacity: 0, transform: 'translateY(var(--tp-space-3))' },
             { opacity: 1, transform: 'translateY(0)' },
           ],
       {

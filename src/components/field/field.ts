@@ -61,7 +61,11 @@ export class TpField extends TpElement {
       :host {
         display: block;
         min-inline-size: 0;
+      }
+
+      :host([orientation='responsive']) {
         container-type: inline-size;
+        inline-size: 100%;
       }
 
       fieldset {
@@ -107,22 +111,26 @@ export class TpField extends TpElement {
 
       :host([orientation='horizontal']) .field {
         flex-direction: row;
-        align-items: flex-start;
+        align-items: center;
       }
 
       :host([orientation='horizontal']) .label {
-        flex: 0 1 35%;
+        flex: none;
       }
 
       @container (min-width:32rem) {
         :host([orientation='responsive']) .field {
           flex-direction: row;
-          align-items: flex-start;
+          align-items: center;
         }
 
         :host([orientation='responsive']) .label {
-          flex: 0 1 35%;
+          flex: none;
         }
+      }
+
+      ::slotted(*) {
+        max-inline-size: 100%;
       }
 
       ::slotted([hidden]) {

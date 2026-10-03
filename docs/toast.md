@@ -129,7 +129,6 @@ notifications.add({
   positionerProperties: {
     anchor: copyButton,
     side: 'top',
-    sideOffset: 8,
     showArrow: true,
   },
 });

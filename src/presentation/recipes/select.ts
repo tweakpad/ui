@@ -1,4 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { popupSpacingAppearance, popupItemSpacingAppearance } from './command-surface.js';
 import { textControlAppearance } from './text-controls.js';
 
 /** shadcn bases/base Select, style-nova.css cn-select-*; shared field/surface base remains. */
@@ -70,7 +71,7 @@ export const selectAppearance: PresentationDictionary = {
     { selector: '& .select-item-text', declarations: { gap: 'calc(var(--tp-spacing) * 1.5)' } },
     { selector: '& .select-arrow', declarations: { color: 'var(--tp-popover)' } },
   ],
-  'select-list': [{ declarations: { padding: 'var(--tp-space-1)' } }],
+  'select-list': popupSpacingAppearance,
   'select-group': [{ declarations: { padding: '0' } }],
   'select-label': [
     {
@@ -82,6 +83,7 @@ export const selectAppearance: PresentationDictionary = {
     },
   ],
   'select-option': [
+    ...popupItemSpacingAppearance,
     {
       declarations: {
         color: 'var(--tp-popover-foreground)',
@@ -91,9 +93,6 @@ export const selectAppearance: PresentationDictionary = {
         'font-family': 'inherit',
         'font-size': 'var(--tp-text-sm)',
         'line-height': 'var(--tp-leading-normal)',
-        gap: 'calc(var(--tp-spacing) * 1.5)',
-        'padding-block': 'var(--tp-space-1)',
-        'padding-inline-start': 'calc(var(--tp-spacing) * 1.5)',
         'padding-inline-end': 'calc(var(--tp-spacing) * 8)',
         'text-align': 'start',
         outline: '0',

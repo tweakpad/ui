@@ -416,7 +416,7 @@ export class TpEmptyState extends TpElement {
       }
 
       .description {
-        max-width: 36rem;
+        max-width: calc(var(--tp-spacing) * 180);
       }
     `,
   ];

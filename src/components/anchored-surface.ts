@@ -1,3 +1,4 @@
+import { anchoredArrowStyles } from './shared.js';
 import { css, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { PopupViewportController } from '../foundation/popup-viewport.js';
@@ -31,6 +32,7 @@ import { createId } from '../foundation/id.js';
 import { prepareMotion, type MotionHandle } from '../foundation/motion.js';
 import {
   positionSurface,
+  themeSpacing,
   geometryOffsets,
   type GeometryOffset,
   resolveSide,
@@ -87,9 +89,9 @@ export abstract class TpAnchoredSurface extends TpElement {
     side: { type: String },
     align: { type: String },
     offset: { type: Number, noAccessor: true },
-    sideOffset: { type: Number, attribute: 'side-offset' },
+    sideOffset: { type: Number, attribute: 'side-offset', noAccessor: true },
     alignOffset: { type: Number, attribute: 'align-offset' },
-    collisionPadding: { attribute: false },
+    collisionPadding: { attribute: false, noAccessor: true },
     collisionBoundary: { attribute: false },
     collisionAvoidance: { attribute: false },
     sticky: { type: Boolean },
@@ -99,10 +101,10 @@ export abstract class TpAnchoredSurface extends TpElement {
     label: { type: String },
     keepMounted: { type: Boolean, attribute: 'keep-mounted' },
     showArrow: { type: Boolean, attribute: 'show-arrow' },
-    arrowPadding: { type: Number, attribute: 'arrow-padding' },
+    arrowPadding: { type: Number, attribute: 'arrow-padding', noAccessor: true },
     arrowStaticOffset: { attribute: 'arrow-static-offset' },
-    arrowWidth: { type: Number, attribute: 'arrow-width' },
-    arrowHeight: { type: Number, attribute: 'arrow-height' },
+    arrowWidth: { type: Number, attribute: 'arrow-width', noAccessor: true },
+    arrowHeight: { type: Number, attribute: 'arrow-height', noAccessor: true },
     arrowTipRadius: { type: Number, attribute: 'arrow-tip-radius' },
     arrowPath: { type: String, attribute: 'arrow-path' },
     arrowBorderColor: { type: String, attribute: 'arrow-border-color' },
@@ -127,6 +129,7 @@ export abstract class TpAnchoredSurface extends TpElement {
   };
   static override styles: CSSResultGroup = [
     TpElement.styles,
+    anchoredArrowStyles,
     css`
       :host,
       .portal {
@@ -143,8 +146,8 @@ export abstract class TpAnchoredSurface extends TpElement {
         color: inherit;
         overflow: visible;
         inline-size: max-content;
-        max-inline-size: var(--tp-available-width, calc(100vw - 10px));
-        max-block-size: var(--tp-available-height, calc(100dvh - 10px));
+        max-inline-size: var(--tp-available-width, calc(100vw - var(--tp-space-3) * 2));
+        max-block-size: var(--tp-available-height, calc(100dvh - var(--tp-space-3) * 2));
       }
 
       .positioner:not([data-positioned]),
@@ -164,6 +167,9 @@ export abstract class TpAnchoredSurface extends TpElement {
       }
 
       .body {
+        display: flex;
+        flex-direction: column;
+        gap: inherit;
         min-block-size: 0;
         flex: 1 1 auto;
         max-block-size: inherit;
@@ -187,45 +193,6 @@ export abstract class TpAnchoredSurface extends TpElement {
         pointer-events: none;
       }
 
-      .arrow {
-        position: absolute;
-        pointer-events: none;
-      }
-
-      .arrow svg {
-        display: block;
-        inline-size: 100%;
-        block-size: 100%;
-      }
-
-      .arrow[data-side='top'] {
-        top: 100%;
-      }
-
-      .arrow[data-side='bottom'] {
-        bottom: 100%;
-      }
-
-      .arrow[data-side='left'] {
-        left: 100%;
-      }
-
-      .arrow[data-side='right'] {
-        right: 100%;
-      }
-
-      .arrow[data-side='bottom'] svg {
-        rotate: 180deg;
-      }
-
-      .arrow[data-side='left'] svg {
-        rotate: 270deg;
-      }
-
-      .arrow[data-side='right'] svg {
-        rotate: 90deg;
-      }
-
       [hidden] {
         display: none !important;
       }
@@ -244,9 +211,28 @@ export abstract class TpAnchoredSurface extends TpElement {
   }
   side: LogicalSide = 'bottom';
   align: Alignment = 'start';
-  sideOffset: GeometryOffset = 8;
+  #sideOffset: GeometryOffset | undefined;
+  get sideOffset(): GeometryOffset {
+    return this.#sideOffset ?? themeSpacing(this, 3);
+  }
+  set sideOffset(value: GeometryOffset | undefined) {
+    const previous = this.#sideOffset;
+    this.#sideOffset = value ?? undefined;
+    this.requestUpdate('sideOffset', previous);
+  }
   alignOffset: GeometryOffset = 0;
-  collisionPadding: number | Partial<Record<'top' | 'right' | 'bottom' | 'left', number>> = 5;
+  #collisionPadding:
+    number | Partial<Record<'top' | 'right' | 'bottom' | 'left', number>> | undefined;
+  get collisionPadding(): number | Partial<Record<'top' | 'right' | 'bottom' | 'left', number>> {
+    return this.#collisionPadding ?? themeSpacing(this, 3);
+  }
+  set collisionPadding(
+    value: number | Partial<Record<'top' | 'right' | 'bottom' | 'left', number>>,
+  ) {
+    const previous = this.#collisionPadding;
+    this.#collisionPadding = value ?? undefined;
+    this.requestUpdate('collisionPadding', previous);
+  }
   collisionBoundary: CollisionBoundary = 'clipping-ancestors';
   collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'shift' };
   sticky = false;
@@ -257,10 +243,40 @@ export abstract class TpAnchoredSurface extends TpElement {
   label = '';
   keepMounted = false;
   showArrow = false;
-  arrowPadding = 5;
+  #arrowPadding: number | undefined;
+  get arrowPadding(): number {
+    return this.#arrowPadding ?? themeSpacing(this, 2);
+  }
+  set arrowPadding(value: number) {
+    const previous = this.#arrowPadding;
+    this.#arrowPadding = value ?? undefined;
+    this.requestUpdate('arrowPadding', previous);
+  }
   arrowStaticOffset: number | string | undefined;
-  arrowWidth = 14;
-  arrowHeight = 7;
+  protected get defaultArrowWidthUnits(): number {
+    return 4;
+  }
+  protected get defaultArrowHeightUnits(): number {
+    return 2;
+  }
+  #arrowWidth: number | undefined;
+  get arrowWidth(): number {
+    return this.#arrowWidth ?? themeSpacing(this, this.defaultArrowWidthUnits);
+  }
+  set arrowWidth(value: number) {
+    const previous = this.#arrowWidth;
+    this.#arrowWidth = value ?? undefined;
+    this.requestUpdate('arrowWidth', previous);
+  }
+  #arrowHeight: number | undefined;
+  get arrowHeight(): number {
+    return this.#arrowHeight ?? themeSpacing(this, this.defaultArrowHeightUnits);
+  }
+  set arrowHeight(value: number) {
+    const previous = this.#arrowHeight;
+    this.#arrowHeight = value ?? undefined;
+    this.requestUpdate('arrowHeight', previous);
+  }
   arrowTipRadius = 0;
   arrowPath = '';
   arrowBorderColor = '';
@@ -666,7 +682,16 @@ export abstract class TpAnchoredSurface extends TpElement {
               properties: {
                 class: 'arrow',
                 'aria-hidden': 'true',
-                style: { width: `${w}px`, height: `${h}px` },
+                style: {
+                  '--_tp-arrow-width':
+                    this.#arrowWidth === undefined
+                      ? `calc(var(--tp-spacing) * ${this.defaultArrowWidthUnits})`
+                      : `${w}px`,
+                  '--_tp-arrow-height':
+                    this.#arrowHeight === undefined
+                      ? `calc(var(--tp-spacing) * ${this.defaultArrowHeightUnits})`
+                      : `${h}px`,
+                },
               },
               content: html`<svg viewBox=${`0 0 ${w} ${h}`} aria-hidden="true">
                 <path
@@ -926,7 +951,9 @@ export abstract class TpAnchoredSurface extends TpElement {
       const active =
         this.trigger === element && this.open && !this.triggerDisabled(element, options);
       write('data-popup-open', active ? '' : null);
-      write('data-disabled', this.triggerDisabled(element, options) ? '' : null);
+      // Tooltip availability does not disable the control it describes.
+      if (!this.isTooltip)
+        write('data-disabled', this.triggerDisabled(element, options) ? '' : null);
       if (
         options.nativeAction === false &&
         !target.matches('button,a[href],input,select,textarea')
@@ -1172,6 +1199,8 @@ export abstract class TpAnchoredSurface extends TpElement {
     const context = 'getBoundingRectangle' in anchor ? (anchor.contextElement ?? this) : anchor;
     const side = resolveSide(this.side, context),
       placement = (this.align === 'center' ? side : `${side}-${this.align}`) as Placement;
+    const padding = () => this.collisionPadding;
+    const arrowPadding = () => this.arrowPadding;
     this.#position = positionSurface(anchor, surface, {
       placement,
       resolvePlacement: () => {
@@ -1182,13 +1211,17 @@ export abstract class TpAnchoredSurface extends TpElement {
       },
       offset: (context) => geometryOffsets(this.sideOffset, this.alignOffset)(context),
       strategy: this.positionMethod,
-      padding: this.collisionPadding,
+      get padding() {
+        return padding();
+      },
       boundary: this.collisionBoundary,
       collision: this.collisionAvoidance,
       sticky: this.sticky,
       constrainSize: true,
       arrow: this.showArrow ? (this.#partElements.get('arrow') ?? null) : null,
-      arrowPadding: this.arrowPadding,
+      get arrowPadding() {
+        return arrowPadding();
+      },
       ...(this.arrowStaticOffset !== undefined
         ? { arrowStaticOffset: this.arrowStaticOffset }
         : {}),

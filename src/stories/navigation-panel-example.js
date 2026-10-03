@@ -7,7 +7,7 @@ export const navigationPanelExampleMarkup = `
   <tp-navigation-panel-trigger data-example-icon="panel"></tp-navigation-panel-trigger>
   <tp-navigation-panel-header>
     <tp-navigation-panel-menu><tp-navigation-panel-item>
-      <tp-menu data-example-menu="teams" label="Teams" side-offset="16">
+      <tp-menu data-example-menu="teams" label="Teams">
         <tp-navigation-panel-action slot="trigger" size="lg" tooltip="Switch team" aria-label="Switch team">
           <tp-avatar slot="icon-start" size="sm" fallback="AC" alt="Acme Inc" data-team-avatar></tp-avatar>
           <span data-team-name>Acme Inc</span><br><small data-team-plan>Enterprise</small>
@@ -96,7 +96,7 @@ export const navigationPanelExampleMarkup = `
   </tp-navigation-panel-content>
   <tp-navigation-panel-footer>
     <tp-navigation-panel-menu><tp-navigation-panel-item>
-      <tp-menu data-example-menu="account" label="Account" side-offset="16">
+      <tp-menu data-example-menu="account" label="Account">
         <tp-navigation-panel-action slot="trigger" size="lg" tooltip="Account" aria-label="Account: Alex Morgan">
           <tp-avatar slot="icon-start" size="sm" fallback="AM" alt="Alex Morgan"></tp-avatar>
           <span>Alex Morgan</span><br><small>alex@example.com</small>

@@ -19,7 +19,7 @@ const meta: Meta<IconStoryArgs> = {
     layout: 'padded',
     docs: { description: { component: iconDocumentation.replace(/^# Icon\n/u, '') } },
   },
-  args: { icon: plusIcon, label: 'Add', size: '2rem' },
+  args: { icon: plusIcon, label: 'Add', size: 'var(--tp-space-10)' },
   argTypes: {
     icon: {
       control: 'object',

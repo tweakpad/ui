@@ -19,7 +19,7 @@ export class TpCommandPalette extends TpCombobox {
         z-index: 1200;
         inset: 15vh auto auto 50%;
         translate: -50% 0;
-        width: min(36rem, calc(100vw - 2rem));
+        width: min(calc(var(--tp-spacing) * 180), calc(100vw - calc(var(--tp-spacing) * 10)));
         display: none;
       }
 

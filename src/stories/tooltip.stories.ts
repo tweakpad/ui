@@ -10,7 +10,7 @@ interface Args {
   label: string;
   side: TooltipSide;
   align: TooltipAlign;
-  sideOffset: number;
+  sideOffset: number | undefined;
   alignOffset: number;
   showArrow: boolean;
   openDelay: number;
@@ -31,7 +31,7 @@ const meta: Meta<Args> = {
     label: 'Save changes',
     side: 'block-start',
     align: 'center',
-    sideOffset: 6,
+    sideOffset: undefined,
     alignOffset: 0,
     showArrow: true,
     openDelay: 600,
@@ -107,7 +107,7 @@ export const RichContent: Story = {
   render: () =>
     html`<tp-tooltip
       ><tp-button slot="trigger" variant="outline">Add item</tp-button
-      ><tp-icon .icon=${plusIcon} size="0.875rem"></tp-icon> Add item
+      ><tp-icon .icon=${plusIcon} size="var(--tp-icon-size-sm)"></tp-icon> Add item
       <tp-key-hint>⌘ K</tp-key-hint></tp-tooltip
     >`,
 };

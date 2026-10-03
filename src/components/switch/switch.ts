@@ -33,15 +33,14 @@ export class TpSwitch extends TpCheckbox {
         align-items: center;
         gap: var(--tp-space-2);
 
-        --_tp-switch-width: 2rem;
-        --_tp-switch-height: 1.15rem;
-        --_tp-switch-thumb: var(--tp-space-4);
+        --_tp-switch-spacing: var(--tp-space-4);
+        --_tp-switch-width: calc(var(--_tp-switch-spacing) * 2);
+        --_tp-switch-height: calc(var(--_tp-switch-spacing) * 1.15);
+        --_tp-switch-thumb: var(--_tp-switch-spacing);
       }
 
       :host([size='sm']) {
-        --_tp-switch-width: 1.5rem;
-        --_tp-switch-height: 0.875rem;
-        --_tp-switch-thumb: var(--tp-space-3);
+        --_tp-switch-spacing: var(--tp-space-3);
       }
 
       .root {

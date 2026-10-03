@@ -78,7 +78,7 @@ export const fieldAppearance: PresentationDictionary = {
   ],
   'field-field-group': [{ declarations: { gap: 'var(--tp-space-5)' } }],
   'field-field': [{ declarations: { gap: 'var(--tp-space-2)' } }],
-  'field-control-region': [{ declarations: { gap: 'calc(var(--tp-spacing) * .5)' } }],
+  'field-control-region': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'field-label': [
     {
       declarations: {

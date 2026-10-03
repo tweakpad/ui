@@ -854,7 +854,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
 
       .root {
         display: grid;
-        min-inline-size: 17rem;
+        min-inline-size: calc(var(--tp-spacing) * 85);
       }
 
       .header {
@@ -882,7 +882,10 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
 
       .months {
         display: grid;
-        grid-template-columns: repeat(var(--tp-calendar-visible-months), minmax(15rem, 1fr));
+        grid-template-columns: repeat(
+          var(--tp-calendar-visible-months),
+          minmax(calc(var(--tp-spacing) * 75), 1fr)
+        );
       }
 
       .month {
@@ -898,7 +901,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
       .weekdays,
       .week {
         display: grid;
-        grid-template-columns: repeat(7, minmax(2rem, 1fr));
+        grid-template-columns: repeat(7, minmax(calc(var(--tp-spacing) * 10), 1fr));
       }
 
       .weekday {

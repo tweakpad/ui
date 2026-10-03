@@ -1,5 +1,21 @@
 import type { PresentationRule } from '../resolver.js';
 
+/** One default inset for command, navigation and selection popup surfaces. */
+export const popupSpacingAppearance: readonly PresentationRule[] = [
+  { declarations: { padding: 'var(--tp-space-2)' } },
+];
+
+/** Default row rhythm shared by command, navigation and selection popup items. */
+export const popupItemSpacingAppearance: readonly PresentationRule[] = [
+  {
+    declarations: {
+      gap: 'var(--tp-space-3)',
+      'padding-block': 'var(--tp-space-1)',
+      'padding-inline': 'var(--tp-space-2)',
+    },
+  },
+];
+
 /** Actual shared anchored Presence recipe; geometry remains in the surface owner. */
 export const anchoredPresenceAppearance: readonly PresentationRule[] = [
   {
@@ -57,10 +73,10 @@ export const commandSurfaceAppearance: readonly PresentationRule[] = [
       border:
         'var(--tp-border-width) var(--tp-border-style) color-mix(in oklab, var(--tp-foreground) 10%, transparent)',
       'box-shadow': 'var(--tp-shadow-md)',
-      padding: 'var(--tp-space-1)',
       'font-size': 'var(--tp-text-sm)',
     },
   },
+  ...popupSpacingAppearance,
   // The Library anchored-motion contract governs over Nova's animate-none override.
   ...anchoredPresenceAppearance,
 ];
@@ -76,11 +92,9 @@ export const commandItemAppearance: readonly PresentationRule[] = [
       'font-family': 'inherit',
       'line-height': 'inherit',
       'text-decoration': 'none',
-      gap: 'calc(var(--tp-spacing) * 1.5)',
-      'padding-block': 'var(--tp-space-1)',
-      'padding-inline': 'calc(var(--tp-spacing) * 1.5)',
     },
   },
+  ...popupItemSpacingAppearance,
   {
     selector:
       '&:is(:focus, [data-highlighted], [data-open], [aria-expanded="true"]):not([data-disabled], [aria-disabled="true"])',
@@ -109,7 +123,7 @@ export const commandLabelAppearance: readonly PresentationRule[] = [
       'font-size': 'var(--tp-text-xs)',
       'font-weight': 'var(--tp-font-medium)',
       'padding-block': 'var(--tp-space-1)',
-      'padding-inline': 'calc(var(--tp-spacing) * 1.5)',
+      'padding-inline': 'var(--tp-space-2)',
     },
   },
   {

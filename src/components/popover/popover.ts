@@ -1,4 +1,4 @@
-import { html, nothing, type PropertyValues } from 'lit';
+import { css, html, nothing, type PropertyValues } from 'lit';
 import { TpHoverSurface } from '../anchored-surface.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { createId } from '../../foundation/id.js';
@@ -6,7 +6,6 @@ import { composedContains, deepActiveElement } from '../../foundation/focus.js';
 import type {
   Alignment,
   CollisionPolicy,
-  GeometryOffset,
   LogicalSide,
   PositioningStrategy,
 } from '../../foundation/positioning.js';
@@ -14,6 +13,14 @@ import type {
 /** Interactive Popover policy on the same surface/hover owners as Tooltip and Menu. */
 export class TpPopover extends TpHoverSurface {
   static tagName = 'tp-popover';
+  static override styles = [
+    TpHoverSurface.styles,
+    css`
+      .body > slot[name='close']::slotted(*) {
+        align-self: flex-start;
+      }
+    `,
+  ];
   static override properties = {
     ...TpHoverSurface.properties,
     preserveOnTriggerHover: { type: Boolean, attribute: 'preserve-on-trigger-hover' },
@@ -23,7 +30,6 @@ export class TpPopover extends TpHoverSurface {
   override openOnHover = false;
   override side: LogicalSide = 'block-end';
   override align: Alignment = 'center';
-  override sideOffset: GeometryOffset = 0;
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
   preserveOnTriggerHover = false;

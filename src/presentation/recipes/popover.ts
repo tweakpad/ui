@@ -1,5 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
-import { anchoredPresenceAppearance } from './command-surface.js';
+import { anchoredPresenceAppearance, popupSpacingAppearance } from './command-surface.js';
 
 /** Base Popover, Nova cn-popover-*; placement/presence comes from the shared owner. */
 export const popoverAppearance: PresentationDictionary = {
@@ -9,12 +9,12 @@ export const popoverAppearance: PresentationDictionary = {
   'popover-positioner': [],
   'popover-portal': [],
   'popover-content': [
+    ...popupSpacingAppearance,
     {
       declarations: {
         background: 'var(--tp-popover)',
         color: 'var(--tp-popover-foreground)',
-        gap: 'calc(var(--tp-spacing) * 2.5)',
-        padding: 'calc(var(--tp-spacing) * 2.5)',
+        gap: 'var(--tp-space-2)',
         'border-radius': 'var(--tp-radius-lg)',
         border:
           'var(--tp-border-width) var(--tp-border-style) color-mix(in oklab, var(--tp-foreground) 10%, transparent)',

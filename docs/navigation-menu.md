@@ -46,7 +46,7 @@ A later veto discards provisional callback publication. Unknown controlled value
 render no active content; later duplicate Item values are diagnosed and excluded.
 
 Navigation uses the [shared positioning, portal, Arrow, Backdrop, focus and
-customization API](anchored-surfaces.md), with bottom/center, an 8px side offset, zero alignment offset and
+customization API](anchored-surfaces.md), with bottom/center, a three-theme-unit side offset, zero alignment offset and
 absolute positioning. It remains nonmodal, and open is derived from value rather
 than an independent Boolean ownership lane. Trigger focus does not copy Tooltip's
 focus-open policy. Hover/press can open; ArrowDown enters an active horizontal

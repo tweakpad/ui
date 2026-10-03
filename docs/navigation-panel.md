@@ -14,7 +14,7 @@ const navigationPanelExampleMarkup = `
   <tp-navigation-panel-trigger data-example-icon="panel"></tp-navigation-panel-trigger>
   <tp-navigation-panel-header>
     <tp-navigation-panel-menu><tp-navigation-panel-item>
-      <tp-menu data-example-menu="teams" label="Teams" side-offset="16">
+      <tp-menu data-example-menu="teams" label="Teams">
         <tp-navigation-panel-action slot="trigger" size="lg" tooltip="Switch team" aria-label="Switch team">
           <tp-avatar slot="icon-start" size="sm" fallback="AC" alt="Acme Inc" data-team-avatar></tp-avatar>
           <span data-team-name>Acme Inc</span><br><small data-team-plan>Enterprise</small>
@@ -103,7 +103,7 @@ const navigationPanelExampleMarkup = `
   </tp-navigation-panel-content>
   <tp-navigation-panel-footer>
     <tp-navigation-panel-menu><tp-navigation-panel-item>
-      <tp-menu data-example-menu="account" label="Account" side-offset="16">
+      <tp-menu data-example-menu="account" label="Account">
         <tp-navigation-panel-action slot="trigger" size="lg" tooltip="Account" aria-label="Account: Alex Morgan">
           <tp-avatar slot="icon-start" size="sm" fallback="AM" alt="Alex Morgan"></tp-avatar>
           <span>Alex Morgan</span><br><small>alex@example.com</small>
@@ -299,7 +299,9 @@ Wide navigation stays in document flow and sticks to the viewport while the prim
 
 Large Actions fit two-line team and user labels with balanced vertical padding, centering the text, Avatar and trailing Icon within the highlighted row. Collapsed rail icons and Avatars share a horizontal center. Header/footer and Action spacing remain customizable through their existing presentation keys.
 
-In wide mode, the toolbar Toggle centers vertically with the actual Header, including changes to its height. Expanded Submenu borders follow the center of their parent leading Icon in both directions. The example's team and account menus use a 16px trigger gap to clear the panel edge.
+Large Action labels use `--tp-leading-tight` to keep both identity lines close together at the row's vertical center.
+
+In wide mode, the toolbar Toggle centers vertically with the actual Header, including changes to its height. Expanded Submenu borders follow the center of their parent leading Icon in both directions. Team and account menus use the shared theme-derived popup separation. Invisible collapsed group labels do not intercept pointer input.
 
 An Item aligns its badge and trailing actions with the primary row, even when a Submenu follows it. The first Link or Action is the primary target; additional Actions are trailing controls. `showOnHover` controls visibility independently of placement. Long primary labels reserve accessory space and truncate without shrinking their clickable target. Links and commands share the same text size. The optional ResizeRail occupies its own minimum-size lane between navigation and primary content so it cannot intercept either region's controls. Inset supplies default content padding through its replaceable recipe.
 

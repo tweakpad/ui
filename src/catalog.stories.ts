@@ -46,41 +46,44 @@ export const Overview: Story = {
   render: () => html`
     <style>
       main {
-        width: min(90rem, 100%);
+        width: min(calc(var(--tp-spacing) * 450), 100%);
+        display: flex;
+        flex-direction: column;
+        gap: var(--tp-space-6);
       }
       h1 {
-        margin: 0 0 1.25rem;
-        font-size: 1.5rem;
+        margin: 0;
+        font-size: calc(var(--tp-text-lg) * 1.5);
       }
       .catalog {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(calc(var(--tp-spacing) * 90), 1fr));
+        gap: calc(var(--tp-spacing) * 5);
       }
       .example {
         display: grid;
-        gap: 0.65rem;
+        gap: calc(var(--tp-spacing) * 3.25);
         align-content: start;
-        padding: 1rem;
-        border: 1px solid var(--tp-border);
+        padding: calc(var(--tp-spacing) * 5);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
         border-radius: var(--tp-radius-md);
       }
       .example > h2 {
         margin: 0;
-        font-size: 0.9rem;
+        font-size: var(--tp-text-sm);
         color: var(--tp-muted-foreground);
       }
       .surface-demo {
-        min-height: 5rem;
-        padding: 0.75rem;
+        min-height: calc(var(--tp-spacing) * 25);
+        padding: calc(var(--tp-spacing) * 3.75);
         background: var(--tp-card);
         border-radius: var(--tp-radius-sm);
       }
       tp-skeleton {
-        height: 1.25rem;
+        height: calc(var(--tp-spacing) * 6.25);
       }
       tp-scroll-area {
-        height: 8rem;
+        height: calc(var(--tp-spacing) * 40);
       }
     </style>
     <main>
@@ -371,7 +374,7 @@ export const Overview: Story = {
         </section>
         <section class="example">
           <h2>Resizable panel group</h2>
-          <tp-resizable-panel-group style="height:8rem"
+          <tp-resizable-panel-group style="height:calc(var(--tp-spacing) * 40)"
             ><div class="surface-demo">A</div>
             <div class="surface-demo">B</div></tp-resizable-panel-group
           >
@@ -480,7 +483,7 @@ export const Overview: Story = {
         </section>
         <section class="example">
           <h2>Navigation panel</h2>
-          <tp-navigation-panel style="height:12rem"
+          <tp-navigation-panel style="height:calc(var(--tp-spacing) * 60)"
             ><strong slot="header">Tweakpad</strong><a href="#home">Home</a
             ><a href="#settings">Settings</a></tp-navigation-panel
           >
@@ -495,8 +498,8 @@ export const StatesAndMotion: Story = {
     <style>
       .matrix {
         display: grid;
-        grid-template-columns: repeat(3, minmax(10rem, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(3, minmax(calc(var(--tp-spacing) * 50), 1fr));
+        gap: calc(var(--tp-spacing) * 5);
         align-items: center;
       }
     </style>

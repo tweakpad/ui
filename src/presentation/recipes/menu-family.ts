@@ -7,8 +7,18 @@ import {
   commandShortcutAppearance,
 } from './command-surface.js';
 
+const menuSurface: readonly PresentationRule[] = [
+  ...commandSurfaceAppearance,
+  {
+    declarations: {
+      'min-inline-size': 'min(var(--tp-anchor-width, 0px), var(--tp-available-width, 100vw))',
+    },
+  },
+];
+const menuItem: readonly PresentationRule[] = [...commandItemAppearance];
+
 const choiceItem: readonly PresentationRule[] = [
-  ...commandItemAppearance,
+  ...menuItem,
   { declarations: { 'padding-inline-end': 'calc(var(--tp-spacing) * 8)' } },
   {
     selector: '& .indicator',
@@ -27,8 +37,8 @@ const destructive: readonly PresentationRule[] = [
 const root = (prefix: 'menu' | 'context-menu'): Record<string, readonly PresentationRule[]> => ({
   [prefix]: [],
   [`${prefix}-${prefix === 'menu' ? 'trigger' : 'target'}`]: [],
-  [`${prefix}-content`]: commandSurfaceAppearance,
-  [`${prefix}-item`]: commandItemAppearance,
+  [`${prefix}-content`]: menuSurface,
+  [`${prefix}-item`]: menuItem,
   [`${prefix}-item-variant-ghost`]: ghost,
   [`${prefix}-item-variant-destructive`]: destructive,
   [`${prefix}-checkbox-item`]: choiceItem,
@@ -36,9 +46,9 @@ const root = (prefix: 'menu' | 'context-menu'): Record<string, readonly Presenta
   [`${prefix}-radio-item`]: choiceItem,
   [`${prefix}-group`]: [],
   [`${prefix}-label`]: commandLabelAppearance,
-  [`${prefix}-sub-trigger`]: commandItemAppearance,
+  [`${prefix}-sub-trigger`]: menuItem,
   [`${prefix}-sub-content`]: [
-    ...commandSurfaceAppearance,
+    ...menuSurface,
     { declarations: { 'box-shadow': 'var(--tp-shadow-lg)' } },
   ],
   [`${prefix}-separator`]: commandSeparatorAppearance,
@@ -80,11 +90,11 @@ export const menuFamilyAppearance: PresentationDictionary = {
     },
   ],
   'menubar-content': [
-    ...commandSurfaceAppearance,
+    ...menuSurface,
     { declarations: { 'min-inline-size': 'calc(var(--tp-spacing) * 36)' } },
   ],
   'menubar-item': [
-    ...commandItemAppearance,
+    ...menuItem,
     {
       selector: '&:is([role="menuitemcheckbox"],[role="menuitemradio"])',
       declarations: {
@@ -104,9 +114,9 @@ export const menuFamilyAppearance: PresentationDictionary = {
     },
   ],
   'menubar-group': [],
-  'menubar-sub-trigger': commandItemAppearance,
+  'menubar-sub-trigger': menuItem,
   'menubar-sub-content': [
-    ...commandSurfaceAppearance,
+    ...menuSurface,
     { declarations: { 'box-shadow': 'var(--tp-shadow-lg)' } },
   ],
   'menubar-separator': commandSeparatorAppearance,

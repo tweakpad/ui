@@ -1,5 +1,7 @@
 Tooltip adds a brief description to a focusable trigger. Hover opens after 600 ms; keyboard focus opens immediately. Escape closes without moving focus. Pointer movement from the trigger into the content keeps it open. Touch does not create a persistent tooltip.
 
+Disabling a Tooltip suppresses its description and opening behavior; it does not disable or change the hover appearance of the control it describes.
+
 ```ts
 import { html } from 'lit';
 import '@tweakpad/ui/register';
@@ -16,52 +18,52 @@ Supply meaningful text. Icons and keyboard hints are supported; links, inputs an
 
 ### Root and trigger properties
 
-| Property / attribute | Type; default | Behavior |
-| --- | --- | --- |
-| `open` | boolean; uncontrolled unless supplied initially | Controlled when initially supplied. Accept `tp-open-change` proposals by assigning their value; otherwise use `setOpen()` for uncontrolled instances. |
-| `defaultOpen` / `default-open` | boolean; false | Initial uncontrolled state. |
-| `disabled` | boolean; false | Cancels pending work, closes and removes the description. Trigger-level disabled state also prevents opening. |
-| `label` | string; empty | Default-slot text fallback. |
-| `openDelay` / `open-delay` | number; 600 | Pointer delay in ms; explicit trigger options override the root, which overrides Provider. Focus has no delay. |
-| `closeDelay` / `close-delay` | number; 0 | Delay after leaving the trigger/content. |
-| `delay` | number | Compatibility alias of `openDelay`. |
-| `closeOnClick` / `close-on-click` | boolean; true | Close after accepted trigger activation. Set the property to false to disable. |
-| `disableHoverablePopup` / `disable-hoverable-popup` | boolean; false | Disable popup hit testing and the safe hover corridor. |
-| `trackCursorAxis` / `track-cursor-axis` | none, horizontal, vertical, both; none | Use pointer coordinates on selected axes. Focus opening uses the trigger rectangle. Both-axis tracking disables popup hit testing. |
-| `keepMounted` / `keep-mounted` | boolean; false | Retain closed DOM hidden and inert after the exit completes. |
-| `provider` | `TooltipProvider`; private service by default | Shared delay and sibling coordination, with no wrapper element. |
-| `handle` | `TooltipHandle`; undefined | Detached trigger association. |
-| `triggerIdentifier` / `trigger-identifier` | string; undefined | Controlled trigger association. |
-| `defaultTriggerIdentifier` / `default-trigger-identifier` | string; undefined | Initial uncontrolled trigger association. |
-| `content` | `(payload: unknown) => TemplateResult \| unknown`; undefined | Rich content resolver for the active accepted trigger payload. Alternative to default slot. |
-| `onOpenChange` | callback; undefined | Receives the same cancelable proposal event as the DOM listener. |
-| `onOpenChangeComplete` | `(open: boolean) => void`; undefined | Runs after each completed entry/exit. |
+| Property / attribute                                      | Type; default                                                | Behavior                                                                                                                                              |
+| --------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `open`                                                    | boolean; uncontrolled unless supplied initially              | Controlled when initially supplied. Accept `tp-open-change` proposals by assigning their value; otherwise use `setOpen()` for uncontrolled instances. |
+| `defaultOpen` / `default-open`                            | boolean; false                                               | Initial uncontrolled state.                                                                                                                           |
+| `disabled`                                                | boolean; false                                               | Cancels pending work, closes and removes the description. Trigger-level disabled state also prevents opening.                                         |
+| `label`                                                   | string; empty                                                | Default-slot text fallback.                                                                                                                           |
+| `openDelay` / `open-delay`                                | number; 600                                                  | Pointer delay in ms; explicit trigger options override the root, which overrides Provider. Focus has no delay.                                        |
+| `closeDelay` / `close-delay`                              | number; 0                                                    | Delay after leaving the trigger/content.                                                                                                              |
+| `delay`                                                   | number                                                       | Compatibility alias of `openDelay`.                                                                                                                   |
+| `closeOnClick` / `close-on-click`                         | boolean; true                                                | Close after accepted trigger activation. Set the property to false to disable.                                                                        |
+| `disableHoverablePopup` / `disable-hoverable-popup`       | boolean; false                                               | Disable popup hit testing and the safe hover corridor.                                                                                                |
+| `trackCursorAxis` / `track-cursor-axis`                   | none, horizontal, vertical, both; none                       | Use pointer coordinates on selected axes. Focus opening uses the trigger rectangle. Both-axis tracking disables popup hit testing.                    |
+| `keepMounted` / `keep-mounted`                            | boolean; false                                               | Retain closed DOM hidden and inert after the exit completes.                                                                                          |
+| `provider`                                                | `TooltipProvider`; private service by default                | Shared delay and sibling coordination, with no wrapper element.                                                                                       |
+| `handle`                                                  | `TooltipHandle`; undefined                                   | Detached trigger association.                                                                                                                         |
+| `triggerIdentifier` / `trigger-identifier`                | string; undefined                                            | Controlled trigger association.                                                                                                                       |
+| `defaultTriggerIdentifier` / `default-trigger-identifier` | string; undefined                                            | Initial uncontrolled trigger association.                                                                                                             |
+| `content`                                                 | `(payload: unknown) => TemplateResult \| unknown`; undefined | Rich content resolver for the active accepted trigger payload. Alternative to default slot.                                                           |
+| `onOpenChange`                                            | callback; undefined                                          | Receives the same cancelable proposal event as the DOM listener.                                                                                      |
+| `onOpenChangeComplete`                                    | `(open: boolean) => void`; undefined                         | Runs after each completed entry/exit.                                                                                                                 |
 
 ### Positioner and arrow
 
-| Property / attribute | Type; default | Behavior |
-| --- | --- | --- |
-| `side` | top, right, bottom, left, inline-start, inline-end, block-start, block-end; block-start | Requested side. Logical values follow the anchor's writing mode and direction. Collisions may change the resolved side. |
-| `align` | start, center, end; center | Requested alignment; horizontal start/end follow direction. |
-| `sideOffset` / `side-offset` | number; 6 | Gap from the anchor in CSS pixels. Default arrow extends five pixels into the six-pixel gap. |
-| `alignOffset` / `align-offset` | number; 0 | Alignment-axis spacing. |
-| `placement` | string | Compatibility alias combining side and alignment, e.g. `bottom-start`. |
-| `offset` | number | Compatibility alias of `sideOffset`. |
-| `collisionPadding` | number or `{top,right,bottom,left}`; 5 | Minimum viewport/boundary inset. Property only. |
-| `collisionBoundary` | Element, Element[], rectangle or `clipping-ancestors`; clipping-ancestors | Boundary intersected with the visual viewport. Native top-layer positioning escapes ancestor clipping; hidden-anchor detection still respects anchor clipping. |
-| `collisionAvoidance` | `{side, align, fallbackAxisSide?}`; `{side:'flip',align:'shift'}` | Side/align accept flip, shift or none. Fallback axis accepts start/end/none. None preserves requested overflow. Property only. |
-| `sticky` | boolean; false | Allow side-axis shifting to stay in the boundary. False keeps shifted alignment attached to the anchor. Explicit collision none still disables shifting. |
-| `disableAnchorTracking` / `disable-anchor-tracking` | boolean; false | Disable scroll/resize/layout tracking; call `updatePosition()` manually. |
-| `anchor` | Element or virtual anchor; active trigger | Virtual anchor has `getBoundingRectangle()` and optional `contextElement`. A context element supplies clipping and owner-environment tracking. Property only. |
-| `showArrow` / `show-arrow` | boolean; true | Render the source-pointing arrow. Set property false to hide. |
-| `arrowPadding` / `arrow-padding` | number; 5 | Keep the arrow away from rounded corners. |
-| `arrowStaticOffset` / `arrow-static-offset` | number or CSS px/% string; undefined | Override arrow alignment unless collision shifting moved the popup. |
-| `arrowWidth` / `arrow-width` | number; 10 | Arrow cross-axis extent. |
-| `arrowHeight` / `arrow-height` | number; 5 | Arrow protrusion. Adjust sideOffset when changing this. |
-| `arrowTipRadius` / `arrow-tip-radius` | number; 0 | Rounded arrow tip. |
-| `arrowPath` / `arrow-path` | SVG path string; generated triangle | Custom path within a square viewBox of arrowWidth. |
-| `arrowBorderColor` / `arrow-border-color` | CSS color; empty | Optional SVG stroke. |
-| `arrowBorderWidth` / `arrow-border-width` | number; 0 | Optional stroke width. |
+| Property / attribute                                | Type; default                                                                           | Behavior                                                                                                                                                       |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `side`                                              | top, right, bottom, left, inline-start, inline-end, block-start, block-end; block-start | Requested side. Logical values follow the anchor's writing mode and direction. Collisions may change the resolved side.                                        |
+| `align`                                             | start, center, end; center                                                              | Requested alignment; horizontal start/end follow direction.                                                                                                    |
+| `sideOffset` / `side-offset`                        | number; three theme spacing units                                                       | Gap from the anchor in CSS pixels. The default arrow protrudes 1.5 theme spacing units into the three-unit gap.                                                |
+| `alignOffset` / `align-offset`                      | number; 0                                                                               | Alignment-axis spacing.                                                                                                                                        |
+| `placement`                                         | string                                                                                  | Compatibility alias combining side and alignment, e.g. `bottom-start`.                                                                                         |
+| `offset`                                            | number                                                                                  | Compatibility alias of `sideOffset`.                                                                                                                           |
+| `collisionPadding`                                  | number or `{top,right,bottom,left}`; three theme spacing units                          | Minimum viewport/boundary inset. Property only.                                                                                                                |
+| `collisionBoundary`                                 | Element, Element[], rectangle or `clipping-ancestors`; clipping-ancestors               | Boundary intersected with the visual viewport. Native top-layer positioning escapes ancestor clipping; hidden-anchor detection still respects anchor clipping. |
+| `collisionAvoidance`                                | `{side, align, fallbackAxisSide?}`; `{side:'flip',align:'shift'}`                       | Side/align accept flip, shift or none. Fallback axis accepts start/end/none. None preserves requested overflow. Property only.                                 |
+| `sticky`                                            | boolean; false                                                                          | Allow side-axis shifting to stay in the boundary. False keeps shifted alignment attached to the anchor. Explicit collision none still disables shifting.       |
+| `disableAnchorTracking` / `disable-anchor-tracking` | boolean; false                                                                          | Disable scroll/resize/layout tracking; call `updatePosition()` manually.                                                                                       |
+| `anchor`                                            | Element or virtual anchor; active trigger                                               | Virtual anchor has `getBoundingRectangle()` and optional `contextElement`. A context element supplies clipping and owner-environment tracking. Property only.  |
+| `showArrow` / `show-arrow`                          | boolean; true                                                                           | Render the source-pointing arrow. Set property false to hide.                                                                                                  |
+| `arrowPadding` / `arrow-padding`                    | number; two theme spacing units                                                         | Keep the arrow away from rounded corners.                                                                                                                      |
+| `arrowStaticOffset` / `arrow-static-offset`         | number or CSS px/% string; undefined                                                    | Override arrow alignment unless collision shifting moved the popup.                                                                                            |
+| `arrowWidth` / `arrow-width`                        | number; three theme spacing units                                                       | Arrow cross-axis extent.                                                                                                                                       |
+| `arrowHeight` / `arrow-height`                      | number; 1.5 theme spacing units                                                         | Arrow protrusion. Adjust sideOffset when changing this.                                                                                                        |
+| `arrowTipRadius` / `arrow-tip-radius`               | number; 0                                                                               | Rounded arrow tip.                                                                                                                                             |
+| `arrowPath` / `arrow-path`                          | SVG path string; generated triangle                                                     | Custom path within a square viewBox of arrowWidth.                                                                                                             |
+| `arrowBorderColor` / `arrow-border-color`           | CSS color; empty                                                                        | Optional SVG stroke.                                                                                                                                           |
+| `arrowBorderWidth` / `arrow-border-width`           | number; 0                                                                               | Optional stroke width.                                                                                                                                         |
 
 The positioner uses the browser top layer without moving authored content out of its theme or slot context. Flip, shift, available-size constraints, arrow placement and anchor visibility are recomputed on scroll, resize, content changes and layout movement. Hidden or disconnected anchors cannot leave a visible stale popup.
 
@@ -77,10 +79,14 @@ secondTooltip.provider = provider;
 const handle = createTooltipHandle();
 tooltip.handle = handle;
 const unregister = handle.registerTrigger(button, {
-  identifier: 'save', payload: 'Save this document',
-  openDelay: 200, closeDelay: 0, closeOnClick: true, disabled: false,
+  identifier: 'save',
+  payload: 'Save this document',
+  openDelay: 200,
+  closeDelay: 0,
+  closeOnClick: true,
+  disabled: false,
 });
-tooltip.content = payload => html`${payload}`;
+tooltip.content = (payload) => html`${payload}`;
 handle.open('save');
 handle.close();
 unregister();

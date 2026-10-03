@@ -29,7 +29,12 @@ import {
   type PartState,
   componentHandlingPrevented,
 } from '../../foundation/part.js';
-import { positionSurface, resolveSide, geometryOffsets } from '../../foundation/positioning.js';
+import {
+  positionSurface,
+  themeSpacing,
+  resolveSide,
+  geometryOffsets,
+} from '../../foundation/positioning.js';
 import type {
   Alignment,
   CollisionBoundary,
@@ -109,19 +114,19 @@ export class TpCombobox extends TpFormElement<unknown> {
     placement: { type: String },
     side: { type: String },
     align: { type: String },
-    sideOffset: { type: Number, attribute: 'side-offset' },
+    sideOffset: { type: Number, attribute: 'side-offset', noAccessor: true },
     alignOffset: { type: Number, attribute: 'align-offset' },
     anchor: { attribute: false },
     disableAnchorTracking: { type: Boolean, attribute: 'disable-anchor-tracking' },
     collisionAvoidance: { attribute: false },
     collisionBoundary: { attribute: false },
-    collisionPadding: { attribute: false },
+    collisionPadding: { attribute: false, noAccessor: true },
     sticky: { type: Boolean },
     positionMethod: { type: String, attribute: 'position-method' },
     initialFocus: { attribute: false },
     finalFocus: { attribute: false },
     showArrow: { type: Boolean, attribute: 'show-arrow' },
-    arrowPadding: { type: Number, attribute: 'arrow-padding' },
+    arrowPadding: { type: Number, attribute: 'arrow-padding', noAccessor: true },
     showBackdrop: { type: Boolean, attribute: 'show-backdrop' },
     isItemEqual: { attribute: false },
     itemToText: { attribute: false },
@@ -192,19 +197,46 @@ export class TpCombobox extends TpFormElement<unknown> {
   placement = 'bottom center';
   side: LogicalSide | undefined;
   align: Alignment | undefined;
-  sideOffset: GeometryOffset = 0;
+  #sideOffset: GeometryOffset | undefined;
+  get sideOffset(): GeometryOffset {
+    return this.#sideOffset ?? themeSpacing(this, 3);
+  }
+  set sideOffset(value: GeometryOffset | undefined) {
+    const previous = this.#sideOffset;
+    this.#sideOffset = value ?? undefined;
+    this.requestUpdate('sideOffset', previous);
+  }
   alignOffset: GeometryOffset = 0;
   anchor: ComboboxAnchor = null;
   disableAnchorTracking = false;
   collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip', fallbackAxisSide: 'none' };
   collisionBoundary: CollisionBoundary = 'clipping-ancestors';
-  collisionPadding: number | Partial<Record<'top' | 'bottom' | 'left' | 'right', number>> = 5;
+  #collisionPadding:
+    number | Partial<Record<'top' | 'bottom' | 'left' | 'right', number>> | undefined;
+  get collisionPadding(): number | Partial<Record<'top' | 'bottom' | 'left' | 'right', number>> {
+    return this.#collisionPadding ?? themeSpacing(this, 3);
+  }
+  set collisionPadding(
+    value: number | Partial<Record<'top' | 'bottom' | 'left' | 'right', number>>,
+  ) {
+    const previous = this.#collisionPadding;
+    this.#collisionPadding = value ?? undefined;
+    this.requestUpdate('collisionPadding', previous);
+  }
   sticky = false;
   positionMethod: PositioningStrategy = 'absolute';
   initialFocus: ComboboxFocusTarget = true;
   finalFocus: ComboboxFocusTarget = true;
   showArrow = false;
-  arrowPadding = 5;
+  #arrowPadding: number | undefined;
+  get arrowPadding(): number {
+    return this.#arrowPadding ?? themeSpacing(this, 2);
+  }
+  set arrowPadding(value: number) {
+    const previous = this.#arrowPadding;
+    this.#arrowPadding = value ?? undefined;
+    this.requestUpdate('arrowPadding', previous);
+  }
   showBackdrop = false;
   isItemEqual: ((a: unknown, b: unknown) => boolean) | undefined;
   itemToText: ((value: unknown) => string) | undefined;
@@ -1210,6 +1242,8 @@ export class TpCombobox extends TpFormElement<unknown> {
     this.#positionBoundary = this.collisionBoundary;
     this.#positionArrow = this.#arrow;
     const [side = 'bottom', align = 'center'] = this.placement.split(/\s+/);
+    const padding = () => this.collisionPadding;
+    const arrowPadding = () => this.arrowPadding;
     this.#position = positionSurface(anchor, this.#content, {
       resolvePlacement: () =>
         `${resolveSide(this.side ?? (side as LogicalSide), this)}-${this.align ?? (align as Alignment)}`,
@@ -1217,12 +1251,16 @@ export class TpCombobox extends TpFormElement<unknown> {
       strategy: this.positionMethod,
       collision: this.collisionAvoidance,
       boundary: this.collisionBoundary,
-      padding: this.collisionPadding,
+      get padding() {
+        return padding();
+      },
       sticky: this.sticky,
       constrainSize: true,
       matchReferenceWidth: true,
       arrow: this.#arrow,
-      arrowPadding: this.arrowPadding,
+      get arrowPadding() {
+        return arrowPadding();
+      },
       tracking: this.disableAnchorTracking ? false : {},
       onInvalid: () => this.setOpen(false, 'anchor-removed'),
     });

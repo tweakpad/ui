@@ -58,7 +58,7 @@ const meta: Meta<Args> = {
   },
   args: {
     ...surfaceArgs,
-    sideOffset: 8,
+    sideOffset: undefined,
     label: 'Document actions',
     loopFocus: true,
     highlightItemOnHover: true,

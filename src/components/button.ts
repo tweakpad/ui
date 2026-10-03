@@ -66,7 +66,7 @@ export class TpButton extends TpElement {
       }
 
       .control:not(:disabled, [aria-disabled='true']):active {
-        transform: translateY(1px);
+        transform: translateY(calc(var(--tp-spacing) / 4));
       }
 
       [part~='button-leading-mark'],

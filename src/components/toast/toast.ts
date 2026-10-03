@@ -14,6 +14,7 @@ import { mergePartProperties, renderPart } from '../../foundation/part.js';
 import { resolvesReducedMotion } from '../../foundation/motion.js';
 import {
   positionSurface,
+  themeSpacing,
   resolveSide,
   type PositioningResult,
   type Placement,
@@ -87,7 +88,7 @@ export class TpToast extends TpElement {
         background: transparent;
         color: inherit;
         overflow: visible;
-        inline-size: min(24rem, calc(100vw - var(--tp-space-4) * 2));
+        inline-size: min(calc(var(--tp-spacing) * 120), calc(100vw - var(--tp-space-4) * 2));
         max-block-size: calc(100dvh - var(--tp-space-4) * 2);
         block-size: var(--tp-toast-frontmost-height, 0);
         pointer-events: none;
@@ -192,14 +193,14 @@ export class TpToast extends TpElement {
       .viewport .anchored > .toast {
         position: relative;
         inset: auto;
-        inline-size: min(24rem, calc(100vw - var(--tp-space-4) * 2));
+        inline-size: min(calc(var(--tp-spacing) * 120), calc(100vw - var(--tp-space-4) * 2));
         block-size: auto;
       }
 
       .arrow {
         position: absolute;
-        inline-size: 10px;
-        block-size: 10px;
+        inline-size: var(--tp-space-3);
+        block-size: var(--tp-space-3);
         pointer-events: none;
         rotate: 45deg;
         background: inherit;
@@ -208,19 +209,19 @@ export class TpToast extends TpElement {
       }
 
       .arrow[data-side='top'] {
-        top: calc(100% - 5px);
+        top: calc(100% - var(--tp-space-3) / 2);
       }
 
       .arrow[data-side='bottom'] {
-        bottom: calc(100% - 5px);
+        bottom: calc(100% - var(--tp-space-3) / 2);
       }
 
       .arrow[data-side='left'] {
-        left: calc(100% - 5px);
+        left: calc(100% - var(--tp-space-3) / 2);
       }
 
       .arrow[data-side='right'] {
-        right: calc(100% - 5px);
+        right: calc(100% - var(--tp-space-3) / 2);
       }
 
       [hidden] {
@@ -673,7 +674,7 @@ export class TpToast extends TpElement {
       toast.type === 'loading'
         ? html`<tp-spinner aria-hidden="true" label=""></tp-spinner>`
         : icon
-          ? html`<tp-icon .icon=${icon} size="1rem"></tp-icon>`
+          ? html`<tp-icon .icon=${icon} size="calc(var(--tp-spacing) * 5)"></tp-icon>`
           : nothing;
     const content = this.renderPart(
       'toast-content',
@@ -911,12 +912,15 @@ export class TpToast extends TpElement {
       placement:
         `${resolveSide(properties.side ?? 'top', anchor)}${properties.align && properties.align !== 'center' ? `-${properties.align}` : ''}` as Placement,
       strategy: properties.positionMethod ?? 'absolute',
-      offset: { mainAxis: properties.sideOffset ?? 0, crossAxis: properties.alignOffset ?? 0 },
+      offset: () => ({
+        mainAxis: properties.sideOffset ?? themeSpacing(this, 3),
+        crossAxis: properties.alignOffset ?? 0,
+      }),
       boundary: properties.collisionBoundary ?? 'clipping-ancestors',
-      padding: properties.collisionPadding ?? 5,
+      padding: properties.collisionPadding ?? themeSpacing(this, 3),
       collision: properties.collisionAvoidance ?? { side: 'flip', align: 'shift' },
       arrow: element.querySelector('.arrow'),
-      arrowPadding: properties.arrowPadding ?? 5,
+      arrowPadding: properties.arrowPadding ?? themeSpacing(this, 2),
       sticky: properties.sticky ?? false,
       tracking: properties.disableAnchorTracking
         ? false

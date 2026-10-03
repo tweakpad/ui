@@ -1,5 +1,9 @@
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
-import { anchoredPresenceAppearance } from './command-surface.js';
+import {
+  anchoredPresenceAppearance,
+  popupSpacingAppearance,
+  popupItemSpacingAppearance,
+} from './command-surface.js';
 
 const focus: readonly PresentationRule[] = [
   {
@@ -77,9 +81,9 @@ export const navigationMenuAppearance: PresentationDictionary = {
     ...focus,
   ],
   'navigation-menu-content': [
+    ...popupSpacingAppearance,
     {
       declarations: {
-        padding: 'var(--tp-space-1)',
         transition:
           'opacity calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard), transform calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard), translate calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
       },
@@ -111,14 +115,12 @@ export const navigationMenuAppearance: PresentationDictionary = {
     })),
   ],
   'navigation-menu-link': [
+    ...popupItemSpacingAppearance,
     {
       declarations: {
         display: 'flex',
         'align-items': 'center',
-        gap: 'var(--tp-space-2)',
         'border-radius': 'var(--tp-radius-lg)',
-        'padding-inline': 'calc(var(--tp-spacing) * 2.5)',
-        'padding-block': 'calc(var(--tp-spacing) * 1.5)',
         'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
         'font-size': 'var(--tp-text-sm)',
         'text-decoration': 'none',

@@ -253,6 +253,10 @@ export const navigationPanelAppearance: PresentationDictionary = {
       declarations: { padding: '0' },
     },
     { selector: largeAction, declarations: { 'padding-block': 'var(--tp-space-3)' } },
+    {
+      selector: largeAction + ' > [part~="button-label"]',
+      declarations: { 'line-height': 'var(--tp-leading-tight)' },
+    },
     { selector: collapsedRow, declarations: { padding: '0' } },
   ],
   'navigation-panel-badge': [

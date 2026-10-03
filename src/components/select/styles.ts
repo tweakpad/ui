@@ -78,7 +78,7 @@ export const selectStyles = css`
     overscroll-behavior: contain;
     scroll-padding-block: var(--_tp-select-scroll-up-height, 0)
       var(--_tp-select-scroll-down-height, 0);
-    max-block-size: min(var(--tp-available-height, 80vh), 24rem);
+    max-block-size: min(var(--tp-available-height, 80vh), calc(var(--tp-spacing) * 120));
     outline: 0;
   }
 
@@ -146,42 +146,6 @@ export const selectStyles = css`
     inset: 0;
     border: 0;
     background: transparent;
-  }
-
-  .select-arrow {
-    position: absolute;
-    pointer-events: none;
-  }
-
-  .select-arrow[data-side='bottom'] {
-    top: 0;
-    translate: 0 -100%;
-    rotate: 180deg;
-  }
-
-  .select-arrow[data-side='top'] {
-    bottom: 0;
-    translate: 0 100%;
-  }
-
-  .select-arrow[data-side='left'] {
-    right: 0;
-    translate: 100% 0;
-    rotate: -90deg;
-  }
-
-  .select-arrow[data-side='right'] {
-    left: 0;
-    translate: -100% 0;
-    rotate: 90deg;
-  }
-
-  .select-arrow svg {
-    display: block;
-    inline-size: 100%;
-    block-size: 100%;
-    overflow: visible;
-    fill: currentcolor;
   }
 
   .select-separator {

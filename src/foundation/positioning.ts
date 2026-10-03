@@ -79,6 +79,24 @@ export interface PositioningOffsetContext {
   anchor: { width: number; height: number };
   positioner: { width: number; height: number };
 }
+/** Resolve the theme spacing seed for the numeric positioning API, including calc()/rem. */
+export function themeSpacing(element: HTMLElement, units = 1): number {
+  const document = element.ownerDocument;
+  const view = document.defaultView;
+  if (!view || !document.body) return 0;
+  const style = view.getComputedStyle(element);
+  const probe = document.createElement('span');
+  probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;contain:strict;';
+  probe.style.inlineSize = `calc(${style.getPropertyValue('--tp-spacing').trim() || '0px'} * ${units})`;
+  probe.style.fontSize = style.fontSize;
+  document.body.append(probe);
+  try {
+    return probe.getBoundingClientRect().width;
+  } finally {
+    probe.remove();
+  }
+}
+
 export type GeometryOffset = number | ((context: PositioningOffsetContext) => number);
 export type PositioningOffset =
   number | { mainAxis?: number; crossAxis?: number; alignmentAxis?: number };
@@ -451,6 +469,8 @@ export function computeSurfacePosition(
     stageData.flip = { index: selectedIndex, candidates: candidateData };
 
   if (options.arrow) {
+    // Directional Arrow styles must settle before measuring cross-axis/depth extents.
+    options.arrow.dataset.side = side;
     const measured = options.arrow.getBoundingClientRect();
     const arrowRect = rect(
       0,

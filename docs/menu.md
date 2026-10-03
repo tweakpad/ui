@@ -106,4 +106,10 @@ data-focus-visible, data-disabled, data-checked/data-unchecked and data-variant;
 Indicators also publish presence markers. See the shared reference for delegate,
 reference, theme and positioning hooks.
 
-Popup menus use an 8px side offset by default to separate the surface from its anchor. Set `side-offset="0"` on the Menu/Context Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the existing positioning API.
+Popup menus derive their default anchor separation from three `--tp-spacing` units. Set `side-offset="0"` on the Menu/Context Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the existing positioning API.
+
+Menu, Context Menu, Menubar, Navigation Menu and selection lists share `--tp-space-2` popup padding on every edge. Menu item gaps use `--tp-space-3`; these defaults scale with the theme.
+
+Menu popups are at least as wide as their anchor, within the available viewport width. Longer content can widen the popup through the existing intrinsic layout.
+
+Pointer highlighting preserves the current scroll position. Keyboard navigation brings the active item into the nearest scroll container without scrolling outer documentation or application regions.

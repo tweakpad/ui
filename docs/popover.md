@@ -74,3 +74,5 @@ current Trigger/Anchor/content targets. Portal placement preserves projected nod
 and reference identity; changing content, theme, placement or Arrow does not
 recreate the controlling state owner. Popover exposes the shared
 `surface` motion role with enter/exit phases and reversible presence completion.
+
+Default content padding is the shared two-unit popup inset. The header, form content and close action use real flex gaps, and the close action retains its intrinsic width. Default trigger separation uses three theme spacing units. No spacing attribute is needed in the example.

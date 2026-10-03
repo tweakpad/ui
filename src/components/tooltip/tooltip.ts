@@ -10,12 +10,15 @@ export class TpTooltip extends TpHoverSurface {
     super();
     this.side = 'block-start';
     this.align = 'center';
-    this.sideOffset = 6;
     this.showArrow = true;
-    this.arrowWidth = 10;
-    this.arrowHeight = 5;
     this.dismissible = false;
     this.closeOnClick = true;
+  }
+  protected override get defaultArrowWidthUnits(): number {
+    return 3;
+  }
+  protected override get defaultArrowHeightUnits(): number {
+    return 1.5;
   }
   protected override get partPrefix(): string {
     return 'tooltip';
