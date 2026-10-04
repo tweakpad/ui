@@ -98,7 +98,8 @@ export class KeyboardSensor implements Sensor {
         // A custom element handle can delegate focus to its own native button.
         const actualHandle =
           effective === target ||
-          (target.shadowRoot?.contains(effective as Node) &&
+          (source.handle === target &&
+            target.shadowRoot?.contains(effective as Node) &&
             (effective as Element).matches('button'));
         if (!actualHandle) return;
         try {

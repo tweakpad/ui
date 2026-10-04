@@ -228,6 +228,13 @@ export class DragDropManager {
     }
     if (this.dragOperation.source === entity && (entity.disabled || !entity.element?.isConnected))
       void this.#stop({ canceled: true });
+    if (this.dragOperation.source === entity && this.dragOperation.status === 'dragging') {
+      try {
+        this.feedback.reconfigure();
+      } catch (error) {
+        this.reportError(error);
+      }
+    }
     this.registry.coordinator.changed();
   }
   #bind(source: Draggable): void {
@@ -272,7 +279,10 @@ export class DragDropManager {
     for (const source of this.registry.draggables) this.#bind(source);
     const operation = this.dragOperation,
       generation = operation.id;
-    if (operation.status === 'idle') return;
+    if (operation.status === 'idle') {
+      this.sorting.changed();
+      return;
+    }
     const id = operation.sourceId;
     if (id !== undefined) {
       const replacement = this.registry.draggables.get(id);
@@ -584,7 +594,8 @@ export class DragDropManager {
       return { prevented: true, changed: false };
     }
     if (target === operation.target) return { prevented: false, changed: false };
-    const revision = ++this.#targetRevision;
+    const revision = ++this.#targetRevision,
+      members = this.sorting.capture();
     operation.target = target;
     this.publish();
     try {
@@ -596,7 +607,6 @@ export class DragDropManager {
         (target && this.registry.droppables.get(target.id) !== target)
       )
         return { prevented: true, changed: true };
-      const members = this.sorting.capture();
       const event = this.dispatch('dragover', {}, true);
       await this.sorting.project(event, members);
       return { prevented: event.defaultPrevented, changed: true };
@@ -724,7 +734,14 @@ export class DragDropManager {
   #finish(id: number, outcome: DragOutcome): void {
     if (this.dragOperation.id !== id || this.dragOperation.status === 'idle') return;
     const snapshot = this.dragOperation.snapshot();
-    if (outcome !== 'committed') this.#rollback();
+    if (outcome !== 'committed') {
+      this.#rollback();
+      try {
+        this.sorting.settle(outcome);
+      } catch (error) {
+        this.reportError(error);
+      }
+    }
     this.sorting.reset();
     this.feedback.dispose();
     this.scrolling.dispose();
@@ -747,6 +764,7 @@ export class DragDropManager {
     this.#terminal = undefined;
     const controller = this.dragOperation.controller;
     this.dragOperation.reset();
+    this.sorting.changed();
     controller?.abort();
     this.publish();
     this.dispatch(

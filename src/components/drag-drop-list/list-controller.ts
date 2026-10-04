@@ -201,6 +201,7 @@ export class ListNetwork {
     );
     this.#releases.push(manager.addCompletion((snapshot) => this.#complete(snapshot)));
     const previousPreview = manager.feedback.createPreview,
+      previousMotionOwner = manager.feedback.resolveMotionOwner,
       previousContent = manager.accessibility.renderContent;
     manager.accessibility.renderContent = (source, part, element, text) => {
       const owner = source.data.list as AnyList | undefined;
@@ -210,8 +211,13 @@ export class ListNetwork {
     };
     this.#releases.push(() => {
       manager.feedback.createPreview = previousPreview;
+      manager.feedback.resolveMotionOwner = previousMotionOwner;
       manager.accessibility.renderContent = previousContent;
     });
+    manager.feedback.resolveMotionOwner = (source) => {
+      const owner = source.data.list as AnyList | undefined;
+      return owner?.network === this ? owner.host : previousMotionOwner?.(source);
+    };
     manager.feedback.createPreview = (source) => {
       const owner = source.data.list as AnyList | undefined;
       if (!owner || owner.network !== this) return previousPreview?.(source);

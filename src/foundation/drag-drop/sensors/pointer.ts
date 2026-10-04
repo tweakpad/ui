@@ -271,16 +271,27 @@ export class PointerSensor implements Sensor {
       }
     };
     const branches: ActivationBranch[] = [];
-    const custom = constraints.filter((constraint): constraint is ActivationConstraint<PointerEvent> => typeof constraint !== 'function' && !('create' in constraint));
+    const custom = constraints.filter(
+      (constraint): constraint is ActivationConstraint<PointerEvent> =>
+        typeof constraint !== 'function' && !('create' in constraint),
+    );
     const customController = new ActivationController(custom, activate);
     activation.add(() => customController.abort());
     try {
       for (const constraint of constraints) {
-        const branch = 'create' in constraint ? (constraint as ActivationDescriptor).create({
-          initial,
-          scheduler,
-          activate,
-        }) : { move: (_point: Coordinates, move?: PointerEvent) => { if (move) (constraint as ActivationConstraint<PointerEvent>).onEvent(move); }, dispose: () => (constraint as ActivationConstraint<PointerEvent>).abort() };
+        const branch =
+          'create' in constraint
+            ? (constraint as ActivationDescriptor).create({
+                initial,
+                scheduler,
+                activate,
+              })
+            : {
+                move: (_point: Coordinates, move?: PointerEvent) => {
+                  if (move) (constraint as ActivationConstraint<PointerEvent>).onEvent(move);
+                },
+                dispose() {},
+              };
         branches.push(branch);
         activation.add(() => branch.dispose());
       }
@@ -302,7 +313,18 @@ export class PointerSensor implements Sensor {
           });
           if (!validCoordinates(coordinates)) return;
           latest = { coordinates, event: move };
-          if (!gesture.active) for (const branch of branches) branch.move(coordinates, move);
+          if (!gesture.active) {
+            try {
+              for (const branch of branches) {
+                if (gesture.active || ended) break;
+                branch.move(coordinates, move);
+              }
+            } catch (error) {
+              this.manager.reportError(error);
+              end(true, move);
+              return;
+            }
+          }
           if (gesture.active) {
             move.preventDefault();
             if (!cancelFrame)
@@ -369,7 +391,14 @@ export class PointerSensor implements Sensor {
       { capture: true },
     );
     scope.listen(view, 'blur', () => end(true));
-    if (custom.length) customController.onEvent(event);
+    if (custom.length) {
+      try {
+        customController.onEvent(event);
+      } catch (error) {
+        this.manager.reportError(error);
+        cleanup();
+      }
+    }
     if (!constraints.length) activate();
   }
   destroy(): void {

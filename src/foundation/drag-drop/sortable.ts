@@ -35,7 +35,12 @@ export class SortableDroppable extends Droppable {
 export function isSortable(entity: unknown): entity is SortableDraggable | SortableDroppable {
   return entity instanceof SortableDraggable || entity instanceof SortableDroppable;
 }
-export function isSortableOperation(operation: { source: unknown; target: unknown }): boolean {
+export function isSortableOperation<T extends { source: unknown; target: unknown }>(
+  operation: T,
+): operation is T & {
+  source: SortableDraggable | SortableDroppable;
+  target: SortableDraggable | SortableDroppable;
+} {
   return isSortable(operation.source) && isSortable(operation.target);
 }
 
@@ -115,8 +120,19 @@ export class Sortable {
   }
   set manager(value: DragDropManager | undefined) {
     const previous = this.manager;
-    if (value && (value.destroyed || (value.registry.draggables.has(this.id) && value.registry.draggables.get(this.id) !== this.draggable) || (value.registry.droppables.has(this.id) && value.registry.droppables.get(this.id) !== this.droppable))) {
-      reportDragDropDiagnostic('manager', 'Manager replacement rejected; both sortable lanes retain their previous owner.'); return;
+    if (
+      value &&
+      (value.destroyed ||
+        (value.registry.draggables.has(this.id) &&
+          value.registry.draggables.get(this.id) !== this.draggable) ||
+        (value.registry.droppables.has(this.id) &&
+          value.registry.droppables.get(this.id) !== this.droppable))
+    ) {
+      reportDragDropDiagnostic(
+        'manager',
+        'Manager replacement rejected; both sortable lanes retain their previous owner.',
+      );
+      return;
     }
     const change = () => {
       this.draggable.manager = value;

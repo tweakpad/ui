@@ -42,3 +42,46 @@ it('normalizes logical aliases without requiring physical event codes', () => {
   ])
     expect(isKeyboardKey({ key: key! }, [configured!])).toBe(true);
 });
+
+it('supports controller-owned custom constraints and first activation wins', async () => {
+  const { ActivationController, ActivationConstraint } = await import('./activation.js');
+  let aborted = 0,
+    activated = 0;
+  class Custom extends ActivationConstraint<Event> {
+    onEvent(event: Event): void {
+      if (event.type === 'activate') this.activate(event);
+    }
+    abort(): void {
+      aborted++;
+    }
+  }
+  const constraint = new Custom({});
+  const controller = new ActivationController([constraint], () => {
+    activated++;
+  });
+  controller.onEvent(new Event('waiting'));
+  expect(activated).toBe(0);
+  controller.onEvent(new Event('activate'));
+  controller.onEvent(new Event('activate'));
+  expect(activated).toBe(1);
+  controller.abort();
+  controller.abort();
+  expect(aborted).toBe(1);
+});
+
+it('releases every custom constraint even when one abort throws', async () => {
+  const { ActivationController, ActivationConstraint } = await import('./activation.js');
+  const released: number[] = [];
+  class Custom extends ActivationConstraint<Event, number> {
+    onEvent(): void {}
+    abort(): void {
+      released.push(this.configuration);
+      if (this.configuration === 1) throw new Error('consumer cleanup');
+    }
+  }
+  const controller = new ActivationController([new Custom(1), new Custom(2)], () => {});
+  expect(() => controller.abort()).toThrow(AggregateError);
+  expect(released).toEqual([1, 2]);
+  controller.abort();
+  expect(released).toEqual([1, 2]);
+});

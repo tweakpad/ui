@@ -22,6 +22,55 @@ type Membership = Map<Sortable['id'], Member>;
 export class OptimisticSorting {
   readonly #owners = new Set<(source: Draggable) => boolean>();
   readonly #motions = new Map<Element, MotionHandle>();
+  #idleRects = new Map<Sortable, ReturnType<typeof measureElement>>();
+  #idleRevision = 0;
+  changed(): void {
+    if (this.manager.dragOperation.status !== 'idle' || this.manager.destroyed) return;
+    const revision = ++this.#idleRevision;
+    void this.manager.renderer.rendering
+      .then(() => {
+        if (
+          revision !== this.#idleRevision ||
+          this.manager.destroyed ||
+          this.manager.dragOperation.status !== 'idle'
+        )
+          return;
+        const nextRects = new Map<Sortable, ReturnType<typeof measureElement>>();
+        for (const member of this.capture().values()) {
+          const sortable = member.sortable,
+            element = sortable.element;
+          if (!element || [...this.#owners].some((owns) => owns(sortable.draggable))) continue;
+          cancelGeometryTransitions(element);
+          const next = measureElement(element),
+            old = this.#idleRects.get(sortable);
+          nextRects.set(sortable, next);
+          const transition = sortable.transition;
+          if (!next || !old || !transition?.idle) continue;
+          const x = old.left - next.left,
+            y = old.top - next.top;
+          if (!x && !y) continue;
+          this.#motions.get(element)?.cancel();
+          const base = parseTransform({
+            translate: element.ownerDocument.defaultView!.getComputedStyle(element).translate,
+          });
+          const bx = base?.x ?? 0,
+            by = base?.y ?? 0;
+          this.#motions.set(
+            element,
+            dragMotion(
+              element as HTMLElement,
+              element as HTMLElement,
+              'sort-displacement',
+              [{ translate: `${bx + x}px ${by + y}px` }, { translate: `${bx}px ${by}px` }],
+              transition,
+              { itemId: sortable.id, x, y },
+            ),
+          );
+        }
+        this.#idleRects = nextRects;
+      })
+      .catch((error) => this.manager.reportError(error));
+  }
   #initial: Membership | undefined;
   #last: Membership | undefined;
   constructor(readonly manager: DragDropManager) {}
@@ -164,7 +213,7 @@ export class OptimisticSorting {
       release();
     }
   }
-  async settle(outcome: DragOutcome): Promise<void> {
+  settle(outcome: DragOutcome): void {
     if (outcome === 'committed' || !this.#initial || !this.#last) return;
     if (!this.#last || !this.#unchanged(this.#last)) return;
     const initial = this.#initial;
@@ -183,6 +232,8 @@ export class OptimisticSorting {
     });
   }
   reset(): void {
+    this.#idleRevision++;
+    this.#idleRects.clear();
     this.#initial = this.#last = undefined;
     for (const motion of this.#motions.values()) motion.cancel();
     this.#motions.clear();

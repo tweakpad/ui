@@ -163,7 +163,6 @@ export class OwnedPortal {
       this.#styleResource.setText(cssText(this.styles));
       target.append(this.#host);
     }
-    if (options.projectedNodes) this.#project(options.projectedNodes, options.externalProjection);
     const computed = this.owner.ownerDocument.defaultView!.getComputedStyle(this.owner);
     const nextTokens = new Set<string>();
     for (let index = 0; index < computed.length; index++) {
@@ -178,6 +177,9 @@ export class OwnedPortal {
     this.#tokens = nextTokens;
     this.#host!.style.colorScheme = computed.colorScheme;
     this.#host!.dir = computed.direction;
+    // External projection can move the owner itself out of its styled shadow
+    // tree. Snapshot inherited tokens/direction before changing that ancestry.
+    if (options.projectedNodes) this.#project(options.projectedNodes, options.externalProjection);
     render(content, this.root!, { host: this.owner });
     return true;
   }

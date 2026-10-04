@@ -73,7 +73,8 @@ abstract class Entity {
     }
     if (this.#destroyed) return;
     if (!this.#manager) {
-      this.#id = value; this.options.id = value;
+      this.#id = value;
+      this.options.id = value;
       this.version++;
       return;
     }

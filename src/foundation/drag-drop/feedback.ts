@@ -25,6 +25,7 @@ export class DragFeedback {
   #placeholder: HTMLElement | undefined;
   #styles: OwnedStyles | undefined;
   #source: Draggable | undefined;
+  #motionOwner: HTMLElement | undefined;
   #options: FeedbackOptions = {};
   #translate: Coordinates = { x: 0, y: 0 };
   #initialTranslate: Coordinates = { x: 0, y: 0 };
@@ -34,6 +35,8 @@ export class DragFeedback {
   constructor(readonly manager: DragDropManager) {}
   /** List adapter supplies a real component composition for opaque shadow content. */
   createPreview: ((source: Draggable) => HTMLElement | undefined) | undefined;
+  /** A renderer adapter keeps public motion ownership on its composed control. */
+  resolveMotionOwner: ((source: Draggable) => HTMLElement | undefined) | undefined;
   get element(): HTMLElement | undefined {
     return this.#element;
   }
@@ -80,6 +83,7 @@ export class DragFeedback {
     const parsedTranslate = parseTransform({ translate });
     this.#initialTranslate = { x: parsedTranslate?.x ?? 0, y: parsedTranslate?.y ?? 0 };
     this.#source = source;
+    this.#motionOwner = this.resolveMotionOwner?.(source) ?? original;
     this.#original = original;
     this.#element = element;
     this.#origin = initial;
@@ -88,6 +92,20 @@ export class DragFeedback {
       styles = (this.#styles = new OwnedStyles(element));
     scope.add(() => styles.dispose());
     scope.add(() => attributes.dispose());
+    // A projected source can leave selectors in its original shadow root.
+    // Keep its row and inherited text presentation through the owned style scope.
+    if (!overlay) {
+      for (const property of [
+        'display',
+        'list-style',
+        'direction',
+        'font',
+        'color',
+        'text-align',
+        'letter-spacing',
+      ])
+        styles.set(property, computed.getPropertyValue(property));
+    }
     attributes.set('data-dragging', '');
     if (overlay) {
       scope.add(markFeedbackRoot(element));
@@ -177,6 +195,7 @@ export class DragFeedback {
       )
         throw new Error('Unsupported feedback root realm.');
       this.#portalHost = portal.host;
+      this.#root = root ?? original.ownerDocument.body;
       scope.add(() => {
         portal.clear();
         this.#portal = undefined;
@@ -196,7 +215,8 @@ export class DragFeedback {
     styles.set('margin', '0');
     styles.set('box-sizing', 'border-box');
     styles.set('pointer-events', 'none');
-    styles.set('inset', 'auto');
+    styles.set('right', 'auto');
+    styles.set('bottom', 'auto');
     styles.set('left', `${(initial.left - frame.x) / frame.scaleX}px`);
     styles.set('top', `${(initial.top - frame.y) / frame.scaleY}px`);
     styles.set(
@@ -258,7 +278,89 @@ export class DragFeedback {
     }
     this.update();
   }
+  #root: Element | null = null;
   #portal: OwnedPortal | undefined;
+  reconfigure(): void {
+    const element = this.#element,
+      original = this.#original,
+      styles = this.#styles,
+      source = this.manager.dragOperation.source;
+    if (
+      !element ||
+      !original ||
+      !styles ||
+      !source ||
+      this.manager.dragOperation.status !== 'dragging'
+    )
+      return;
+    const options = this.manager.effectiveOptions;
+    if (options.rootElement === undefined && this.#root === null) return;
+    const root =
+      (typeof options.rootElement === 'function'
+        ? options.rootElement(source)
+        : options.rootElement) ?? original.ownerDocument.body;
+    if (root === this.#root) return;
+    if (!root.isConnected || root.nodeType !== 1)
+      throw new Error('Feedback root must remain connected.');
+    const before = measureElement(element),
+      oldFrame = getFrameTransform(element),
+      oldAncestors = ancestorScale(element);
+    const independent = parseTransform({
+      scale: element.ownerDocument.defaultView!.getComputedStyle(element).scale,
+    });
+    if (!before) return;
+    if (element.matches(':popover-open')) element.hidePopover();
+    let portal = this.#portal;
+    if (!portal) {
+      portal = this.#portal = new OwnedPortal(
+        original,
+        css`
+          :host {
+            position: fixed;
+            inset: 0 auto auto 0;
+            pointer-events: none;
+            z-index: 2147483647;
+          }
+        `,
+      );
+      this.#scope?.add(() => {
+        portal!.clear();
+        this.#portal = undefined;
+        this.#portalHost = null;
+      });
+    }
+    if (
+      !portal.update(root as HTMLElement, html`<slot></slot>`, {
+        projectedNodes: [element],
+        externalProjection: true,
+        allowSameOriginDocument: true,
+      })
+    )
+      throw new Error('Unsupported feedback root realm.');
+    this.#root = root;
+    this.#portalHost = portal.host;
+    const frame = getFrameTransform(element),
+      ancestors = ancestorScale(element);
+    const sx = frame.scaleX * ancestors.x,
+      sy = frame.scaleY * ancestors.y;
+    styles.set(
+      'scale',
+      `${((independent?.scaleX ?? 1) * oldFrame.scaleX * oldAncestors.x) / sx} ${((independent?.scaleY ?? 1) * oldFrame.scaleY * oldAncestors.y) / sy}`,
+    );
+    this.update();
+    const after = measureElement(element);
+    if (after) {
+      styles.set(
+        'left',
+        `${Number.parseFloat(element.style.left) + (before.left - after.left) / sx}px`,
+      );
+      styles.set(
+        'top',
+        `${Number.parseFloat(element.style.top) + (before.top - after.top) / sy}px`,
+      );
+    }
+    this.#options = options;
+  }
   #portalHost: HTMLElement | null = null;
   syncPlacement(): void {
     if (!this.#placeholder || !this.#original) return;
@@ -285,7 +387,7 @@ export class DragFeedback {
     if (operation.input === 'keyboard' && this.#options.keyboardTransition !== null) {
       this.#motion?.cancel();
       this.#motion = dragMotion(
-        this.#original!,
+        this.#motionOwner!,
         element,
         'keyboard-feedback',
         [
@@ -306,7 +408,8 @@ export class DragFeedback {
       source.feedbackOptions.dropAnimation !== undefined
         ? source.feedbackOptions.dropAnimation
         : this.#options.dropAnimation;
-    if (animation === null || !element.isConnected || resolvesReducedMotion(original)) return;
+    const motionOwner = this.#motionOwner ?? original;
+    if (animation === null || !element.isConnected || resolvesReducedMotion(motionOwner)) return;
     this.#motion?.cancel();
     const attributes = new OwnedAttributes(element);
     attributes.set('data-dropping', '');
@@ -315,7 +418,7 @@ export class DragFeedback {
       // The shared motion owner bounds custom visual work separately from decision suspension.
       const { prepareMotion } = await import('../motion.js');
       const motion = (this.#motion = prepareMotion(
-        original,
+        motionOwner,
         element,
         { name: 'drop-settlement', kind: 'state', phases: ['change'], completion: 'blocking' },
         { phase: 'change', context: { itemId: source.id } },
@@ -353,7 +456,7 @@ export class DragFeedback {
       y: this.#translate.y + delta.y / frame.scaleY,
     };
     this.#motion = dragMotion(
-      original,
+      motionOwner,
       element,
       'drop-settlement',
       [
@@ -375,6 +478,7 @@ export class DragFeedback {
   }
   dispose(): void {
     this.mode = 'none';
+    this.#root = null;
     this.#motion?.cancel();
     this.#motion = undefined;
     this.#scope?.dispose();
@@ -382,6 +486,7 @@ export class DragFeedback {
     this.#element = this.#original = this.#placeholder = undefined;
     this.#styles = undefined;
     this.#source = undefined;
+    this.#motionOwner = undefined;
     this.#origin = undefined;
     this.#translate = { x: 0, y: 0 };
   }
