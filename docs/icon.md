@@ -44,3 +44,5 @@ document.querySelector('tp-icon').icon = customIcon;
 ```
 
 Definitions contain paths, not HTML strings. Paths default to no fill and a `currentColor` stroke; each path can override `fill`, `stroke`, `strokeWidth`, `fillRule`, and `clipRule`. For filled artwork, set `fill: 'currentColor'` and `stroke: 'none'`. This data shape keeps custom and offered icons on the same rendering path.
+
+The default theme uses the shared medium icon extent (`1rem`, normally 16 CSS pixels). Small icons use `0.875rem`; large icons use `1.25rem`. These extents derive from the rem-based `--tp-spacing` seed, so changing the theme’s root spacing seed keeps them proportional. Override the icon-size roles directly for a scoped icon scale. Explicit `size` still overrides the shared extent; hit targets are unchanged.

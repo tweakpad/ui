@@ -72,6 +72,28 @@ export class TpCard extends TpElement {
 
       .card > header {
         display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+      }
+
+      [part='card-title'],
+      [part='card-description'] {
+        grid-column: 1;
+        min-inline-size: 0;
+      }
+
+      [part='card-description'] {
+        grid-row: 2;
+      }
+
+      [part='card-action'] {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+      }
+
+      .card [hidden] {
+        display: none;
       }
 
       .card > .content {
@@ -286,70 +308,7 @@ export { TpListItem, TpListItemGroup, TpListItemSeparator } from './list-item/in
 
 export { TpMarker } from './marker/index.js';
 
-export class TpMessage extends TpElement {
-  static tagName = 'tp-message';
-  static override properties = {
-    ...TpElement.properties,
-    author: { type: String },
-    timestamp: { type: String },
-    pending: { type: Boolean, reflect: true },
-    failed: { type: Boolean, reflect: true },
-  };
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: block;
-      }
-
-      .message {
-        display: grid;
-        grid-template-columns: auto 1fr;
-      }
-
-      .meta {
-        display: flex;
-        align-items: baseline;
-      }
-
-      .time {
-        color: var(--tp-muted-foreground);
-        font-size: var(--tp-text-xs);
-      }
-
-      .status {
-        color: var(--tp-muted-foreground);
-        font-size: var(--tp-text-xs);
-      }
-    `,
-  ];
-  author = '';
-  timestamp = '';
-  pending = false;
-  failed = false;
-  protected override render() {
-    const author = this.author ? html`<strong part="author">${this.author}</strong>` : nothing;
-    const timestamp = this.timestamp
-      ? html`<time class="time" part="timestamp">${this.timestamp}</time>`
-      : nothing;
-    const status =
-      this.pending || this.failed
-        ? html`
-            <div class="status" part="status" role=${this.failed ? 'alert' : 'status'}>
-              ${this.failed ? 'Failed to send' : 'Sending'}
-            </div>
-          `
-        : nothing;
-    return html`<article class="message" part="root">
-      <slot name="avatar"></slot>
-      <div part="body">
-        <header class="meta" part="meta">${author}${timestamp}</header>
-        <div part="content"><slot></slot></div>
-        ${status}
-      </div>
-    </article>`;
-  }
-}
+export { TpMessage } from './message/index.js';
 
 export { TpSkeleton, primitiveMotionRoles } from './skeleton/index.js';
 

@@ -439,7 +439,10 @@ export class TpNavigationPanel extends TpElement {
       return;
     }
     const box = header.getBoundingClientRect();
-    toolbar.style.minBlockSize = `${Math.max(0, box.height + 2 * (box.top - frame.getBoundingClientRect().top))}px`;
+    // Measure within the sticky panel, not the scrolling document frame. Using
+    // the frame makes the toolbar grow by twice scrollY after every resize.
+    const panelTop = this.#wideMount?.getBoundingClientRect().top ?? box.top;
+    toolbar.style.minBlockSize = `${Math.max(0, box.height + 2 * (box.top - panelTop))}px`;
   };
   #markers(part: string): Record<string, unknown> {
     const state = this.provider.state;

@@ -263,9 +263,21 @@ const examples = {
   'tp-data-visualization': () => dataVisualizationExample(),
   'tp-message-scroller': () => html`
     <tp-message-scroller>
-      <tp-message author="Ada">Hello</tp-message>
-      <tp-message author="Lin">Welcome</tp-message>
-      <tp-message author="Ada">Ready to begin?</tp-message>
+      <tp-message-scroller-item message-id="1"
+        ><tp-message author="Ada"
+          ><tp-bubble>Hello</tp-bubble></tp-message
+        ></tp-message-scroller-item
+      >
+      <tp-message-scroller-item message-id="2"
+        ><tp-message align="end" author="Lin"
+          ><tp-bubble align="end">Welcome</tp-bubble></tp-message
+        ></tp-message-scroller-item
+      >
+      <tp-message-scroller-item message-id="3"
+        ><tp-message author="Ada"
+          ><tp-bubble>Ready to begin?</tp-bubble></tp-message
+        ></tp-message-scroller-item
+      >
     </tp-message-scroller>
   `,
   'tp-progress': () => html`<tp-progress label="Upload progress" value="65"></tp-progress>`,

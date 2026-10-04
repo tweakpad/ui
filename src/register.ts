@@ -61,6 +61,7 @@ import {
   TpCarousel,
   TpDataVisualization,
   TpMessageScroller,
+  TpMessageScrollerItem,
   TpProgress,
   TpResizablePanelGroup,
   TpResizablePanel,
@@ -179,6 +180,7 @@ defineElement(TpAvatarGroup.tagName, TpAvatarGroup);
 defineElement(TpCarousel.tagName, TpCarousel);
 defineElement(TpDataVisualization.tagName, TpDataVisualization);
 defineElement(TpMessageScroller.tagName, TpMessageScroller);
+defineElement(TpMessageScrollerItem.tagName, TpMessageScrollerItem);
 defineElement(TpProgress.tagName, TpProgress);
 defineElement(TpResizablePanel.tagName, TpResizablePanel);
 defineElement(TpResizableHandle.tagName, TpResizableHandle);

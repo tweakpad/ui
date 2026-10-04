@@ -34,7 +34,6 @@ export class TpAttachment extends TpElement {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
-        inline-size: fit-content;
         min-inline-size: 0;
         max-inline-size: 100%;
       }

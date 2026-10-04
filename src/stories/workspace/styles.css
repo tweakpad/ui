@@ -17,9 +17,11 @@ catalog-workspace {
   justify-content: space-between;
   gap: var(--tp-space-4);
   box-sizing: border-box;
-  min-height: calc(var(--tp-spacing) * 18);
-  padding: var(--tp-space-4) var(--tp-space-6);
-  border-bottom: var(--tp-border-width) solid var(--tp-border);
+  width: 100%;
+  min-height: var(--tp-target-size-min);
+  padding-inline: var(--tp-space-6);
+  align-self: stretch;
+  box-shadow: 0 var(--tp-border-width) 0 var(--tp-border);
 }
 
 .workspace-content {
@@ -141,20 +143,6 @@ catalog-workspace {
   width: calc(var(--tp-spacing) * 42);
 }
 
-.workspace-activity {
-  height: calc(var(--tp-spacing) * 87);
-}
-
-.workspace-activity tp-list-item {
-  margin-block-end: var(--tp-space-3);
-}
-
-.workspace-messages {
-  display: grid;
-  gap: var(--tp-space-6);
-  padding: var(--tp-space-4);
-}
-
 .workspace-art {
   height: 100%;
   display: flex;
@@ -183,19 +171,43 @@ catalog-workspace {
 }
 
 .workspace-editor {
-  min-height: calc(var(--tp-spacing) * 110);
+  height: calc(var(--tp-spacing) * 140);
 }
 
 .workspace-editor-pane {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--tp-space-4);
+  height: 100%;
+  box-sizing: border-box;
   padding: var(--tp-space-4);
 }
 
+.workspace-editor-heading {
+  min-height: var(--tp-target-size-min);
+}
+
+.workspace-editor-pane tp-text-area,
+.workspace-editor-pane tp-text-area::part(text-area),
 .workspace-editor-scroll {
-  height: calc(var(--tp-spacing) * 95);
+  height: 100%;
+  min-height: 0;
+}
+
+.workspace-member::part(button) {
+  justify-content: flex-start;
+}
+
+.workspace-profile {
+  display: grid;
+  gap: var(--tp-space-3);
+}
+
+.workspace-profile p {
+  margin: 0;
 }
 
 .workspace-preview {
-  min-height: calc(var(--tp-spacing) * 70);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -255,6 +267,22 @@ catalog-workspace {
   }
 
   .workspace-editor {
-    min-height: calc(var(--tp-spacing) * 160);
+    height: calc(var(--tp-spacing) * 240);
   }
+}
+
+.workspace-profile-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--tp-space-3);
+}
+
+.workspace-profile-heading > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.workspace-history {
+  display: flex;
+  justify-content: center;
 }

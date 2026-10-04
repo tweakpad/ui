@@ -299,6 +299,13 @@ sharedPresentation['tooltip-content'] = [
 ];
 sharedPresentation['tooltip-arrow'] = [rule({ fill: 'var(--tp-foreground)' })];
 
+// Surface and backdrop begin and finish together; no static popup during backdrop exit.
+const surfaceFadeAppearance = [
+  rule({ opacity: '1', transition: motionTransition(['opacity'], 'fast') }),
+  rule({ opacity: '0' }, '&:is([data-starting-style], [data-ending-style])'),
+  rule({ transition: 'none' }, '&[data-tp-motion-driven]'),
+];
+
 // Card and dialog-family footers share section paint; each owner supplies layout.
 const sectionFooterAppearance = [
   rule({
@@ -309,6 +316,7 @@ const sectionFooterAppearance = [
 for (const prefix of ['dialog', 'alert-dialog', 'drawer', 'side-panel']) {
   sharedPresentation[`${prefix}-${prefix === 'drawer' ? 'surface' : 'content'}`] = [
     ...surfaceAppearance,
+    ...(['dialog', 'alert-dialog'].includes(prefix) ? surfaceFadeAppearance : []),
     rule({ padding: '0' }),
   ];
   sharedPresentation[`${prefix}-title`] = [
@@ -330,11 +338,8 @@ for (const prefix of ['dialog', 'alert-dialog', 'drawer', 'side-panel']) {
     rule({
       background:
         'color-mix(in srgb, light-dark(var(--tp-foreground), var(--tp-background)) calc(var(--tp-opacity-backdrop) * 100%), transparent)',
-      opacity: '1',
-      transition: motionTransition(['opacity']),
     }),
-    rule({ opacity: '0' }, '&:is([data-starting-style], [data-ending-style])'),
-    rule({ transition: 'none' }, '&[data-tp-motion-driven]'),
+    ...surfaceFadeAppearance,
   ];
 }
 

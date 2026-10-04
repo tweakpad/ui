@@ -195,66 +195,7 @@ export class TpCarousel extends TpElement {
 
 export * from './data-visualization/index.js';
 
-export class TpMessageScroller extends TpElement {
-  static tagName = 'tp-message-scroller';
-  static override properties = {
-    ...TpElement.properties,
-    follow: { type: Boolean, reflect: true },
-    threshold: { type: Number },
-  };
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: block;
-      }
-
-      .viewport {
-        overflow: auto;
-        max-height: var(--tp-message-scroller-height, calc(var(--tp-spacing) * 120));
-        overscroll-behavior: contain;
-      }
-    `,
-  ];
-  follow = true;
-  threshold = 24;
-  #viewport: HTMLElement | null = null;
-  #observer: MutationObserver | null = null;
-  protected override render() {
-    return html`<div
-      class="viewport"
-      part="viewport"
-      role="log"
-      aria-live="polite"
-      @scroll=${this.#scroll}
-    >
-      <slot></slot>
-    </div>`;
-  }
-  protected override firstUpdated(): void {
-    this.#viewport = this.renderRoot.querySelector('.viewport');
-    this.#observer = new MutationObserver(() => this.#content());
-    this.#observer.observe(this, { childList: true, subtree: true });
-    this.#content();
-  }
-  #scroll = (): void => {
-    if (!this.#viewport) return;
-    const distance =
-      this.#viewport.scrollHeight - this.#viewport.scrollTop - this.#viewport.clientHeight;
-    this.follow = distance <= this.threshold;
-  };
-  #content(): void {
-    if (this.follow && this.#viewport) this.#viewport.scrollTop = this.#viewport.scrollHeight;
-  }
-  scrollToEnd(): void {
-    this.follow = true;
-    this.#content();
-  }
-  override disconnectedCallback(): void {
-    this.#observer?.disconnect();
-    super.disconnectedCallback();
-  }
-}
+export * from './message-scroller/index.js';
 
 export { TpProgress } from './progress/index.js';
 

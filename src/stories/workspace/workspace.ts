@@ -2,6 +2,9 @@ import { LitElement, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { keyed } from 'lit/directives/keyed.js';
 import { navigationIcons } from '../../icons/navigation.js';
+import { refreshIcon } from '../../icons/refresh.js';
+import { downloadIcon } from '../../icons/download.js';
+import { fileTextIcon } from '../../icons/file-text.js';
 import { plusIcon } from '../../icons/plus.js';
 import {
   quarterlyRenderer,
@@ -69,6 +72,7 @@ export class CatalogWorkspace extends LitElement {
     draftDue: { state: true },
     projectSettings: { state: true },
     memberAccess: { state: true },
+    historyLoaded: { state: true },
   };
   section: Section = 'overview';
   tasks = initialTasks.map((task) => ({ ...task }));
@@ -140,6 +144,7 @@ export class CatalogWorkspace extends LitElement {
   draftDue = '2026-10-16';
   goal = '';
   theme = 'system';
+  historyLoaded = false;
   projectSettings = { timezone: 'paris', cadence: 'Weekly', visibility: 'team', capacity: 40 };
   memberAccess: Record<string, string> = {};
   mobile = false;
@@ -273,80 +278,80 @@ export class CatalogWorkspace extends LitElement {
         wide-width="calc(var(--tp-spacing) * 62)"
       >
         ${this.#sidebar()}
+        <header slot="trigger" class="workspace-topbar">
+          <div class="workspace-row">
+            <tp-navigation-panel-trigger
+              .icon=${navigationIcons.panel}
+            ></tp-navigation-panel-trigger>
+            <tp-breadcrumb aria-label="Workspace location"
+              ><span>Studio North</span><span>${this.projectName}</span></tp-breadcrumb
+            >
+          </div>
+          <div class="workspace-row">
+            <tp-navigation-menu class="workspace-resources" aria-label="Project resources">
+              <tp-navigation-menu-item value="resources"
+                ><tp-button slot="trigger" variant="ghost" size="sm">Resources</tp-button>
+                <div slot="content">
+                  <a
+                    href="#brief"
+                    @click=${(e: Event) => {
+                      e.preventDefault();
+                      this.#go('brief');
+                    }}
+                    close-on-click
+                    >Release brief</a
+                  >
+                  <a
+                    href="#files"
+                    @click=${(e: Event) => {
+                      e.preventDefault();
+                      this.#go('files');
+                    }}
+                    close-on-click
+                    >Project files</a
+                  >
+                  <a
+                    href="#settings"
+                    @click=${(e: Event) => {
+                      e.preventDefault();
+                      this.#go('settings');
+                    }}
+                    close-on-click
+                    >Workspace settings</a
+                  >
+                </div></tp-navigation-menu-item
+              >
+            </tp-navigation-menu>
+            <tp-tooltip
+              ><tp-button
+                slot="trigger"
+                variant="ghost"
+                size="icon"
+                .icon=${navigationIcons.search}
+                aria-label="Search workspace"
+                @click=${() => {
+                  this.overlay = 'commands';
+                }}
+                >${icon('search')}</tp-button
+              >Search workspace · ⌘K / Ctrl K</tp-tooltip
+            >
+            <tp-tooltip
+              ><tp-button
+                slot="trigger"
+                variant="ghost"
+                size="icon"
+                .icon=${navigationIcons.bell}
+                aria-label="Open recent activity"
+                @click=${() => {
+                  this.overlay = 'updates';
+                }}
+                >${icon('bell')}</tp-button
+              >Recent activity</tp-tooltip
+            >
+            <tp-avatar fallback="AM" size="sm" alt="Alex Morgan"></tp-avatar>
+          </div>
+        </header>
         <tp-navigation-panel-inset>
-          <header class="workspace-topbar">
-            <div class="workspace-row">
-              <tp-navigation-panel-trigger
-                .icon=${navigationIcons.panel}
-              ></tp-navigation-panel-trigger>
-              <tp-breadcrumb aria-label="Workspace location"
-                ><span>Studio North</span><span>${this.projectName}</span></tp-breadcrumb
-              >
-            </div>
-            <div class="workspace-row">
-              <tp-navigation-menu class="workspace-resources" aria-label="Project resources">
-                <tp-navigation-menu-item value="resources"
-                  ><tp-button slot="trigger" variant="ghost" size="sm">Resources</tp-button>
-                  <div slot="content">
-                    <a
-                      href="#brief"
-                      @click=${(e: Event) => {
-                        e.preventDefault();
-                        this.#go('brief');
-                      }}
-                      close-on-click
-                      >Release brief</a
-                    >
-                    <a
-                      href="#files"
-                      @click=${(e: Event) => {
-                        e.preventDefault();
-                        this.#go('files');
-                      }}
-                      close-on-click
-                      >Project files</a
-                    >
-                    <a
-                      href="#settings"
-                      @click=${(e: Event) => {
-                        e.preventDefault();
-                        this.#go('settings');
-                      }}
-                      close-on-click
-                      >Workspace settings</a
-                    >
-                  </div></tp-navigation-menu-item
-                >
-              </tp-navigation-menu>
-              <tp-tooltip
-                ><tp-button
-                  slot="trigger"
-                  variant="ghost"
-                  size="icon"
-                  .icon=${navigationIcons.search}
-                  aria-label="Search workspace"
-                  @click=${() => {
-                    this.overlay = 'commands';
-                  }}
-                  >${icon('search')}</tp-button
-                >Search workspace · ⌘K / Ctrl K</tp-tooltip
-              >
-              <tp-tooltip
-                ><tp-button
-                  slot="trigger"
-                  variant="ghost"
-                  size="icon"
-                  .icon=${navigationIcons.bell}
-                  aria-label="Open recent activity"
-                  @click=${() => {
-                    this.overlay = 'updates';
-                  }}
-                  >${icon('bell')}</tp-button
-                >Recent activity</tp-tooltip
-              >
-              <tp-avatar fallback="AM" size="sm" alt="Alex Morgan"></tp-avatar>
-            </div>
-          </header>
           <section class="workspace-content" aria-label="Project workspace">
             <div class="workspace-row workspace-between workspace-heading">
               <div class="workspace-stack">
@@ -654,11 +659,12 @@ export class CatalogWorkspace extends LitElement {
           <tp-button
             slot="action"
             variant="ghost"
-            size="sm"
+            size="icon-sm"
+            aria-label="Refresh activity"
+            .icon=${refreshIcon}
             .disabled=${this.refreshing}
             @click=${this.#refresh}
-            >${this.refreshing ? html`<tp-spinner size="sm"></tp-spinner>` : nothing}Refresh</tp-button
-          >
+          ></tp-button>
           ${this.refreshing ? html`<div class="workspace-stack" aria-label="Refreshing activity" aria-busy="true"><tp-skeleton class="workspace-skeleton-line" animated></tp-skeleton><tp-skeleton class="workspace-skeleton-line" animated></tp-skeleton><tp-skeleton class="workspace-skeleton-line" animated></tp-skeleton></div>` : html`<div class="workspace-stack">${this.messages.slice(-3).map((message) => html`<tp-list-item .description=${message.text}><tp-avatar slot="leading" size="sm" .fallback=${initials(message.author)} .alt=${message.author}></tp-avatar>${message.author}</tp-list-item>`)}</div>`}
           <tp-button slot="footer" variant="link" @click=${() => this.#go('activity')}
             >Join the conversation</tp-button
@@ -941,20 +947,23 @@ export class CatalogWorkspace extends LitElement {
               (file) =>
                 html`<tp-attachment
                   .filename=${file.filename}
+                  status="complete"
                   .fileSize=${new Blob([file.text]).size}
                   removable
                   @tp-remove=${() => {
                     this.files = this.files.filter((f) => f.id !== file.id);
                     this.#notify(`${file.filename} removed`);
                   }}
+                  ><tp-icon slot="media" .icon=${fileTextIcon}></tp-icon
                   ><tp-button
                     slot="actions"
                     variant="ghost"
-                    size="sm"
+                    size="icon-sm"
+                    .ariaLabel=${`Download ${file.filename}`}
+                    .icon=${downloadIcon}
                     @click=${() => this.#download(file.filename, file.text, file.type)}
-                    >Download</tp-button
-                  ></tp-attachment
-                >`,
+                  ></tp-button
+                ></tp-attachment>`,
             )}
             ${!this.files.length ? html`<tp-empty-state title="No shared files" description="Add the first reference for your team."><tp-button slot="actions" variant="outline" @click=${() => this.querySelector<HTMLInputElement>('#workspace-upload')?.click()}>Add files</tp-button></tp-empty-state>` : nothing}
           </div></tp-card
@@ -964,7 +973,7 @@ export class CatalogWorkspace extends LitElement {
   }
   #brief() {
     return html`<div class="workspace-stack">
-      <div class="workspace-row workspace-between">
+      <div class="workspace-row">
         <tp-menubar
           aria-label="Brief actions"
           @tp-action=${(e: CustomEvent<{ value: string }>) => this.#command(e.detail.value)}
@@ -1027,27 +1036,25 @@ export class CatalogWorkspace extends LitElement {
         .orientation=${this.mobile ? 'vertical' : 'horizontal'}
       >
         <tp-resizable-panel default-size="50%" min-size="25%"
-          ><div class="workspace-editor-pane workspace-stack">
-            <tp-label for="workspace-brief-input">Release brief</tp-label
-            ><tp-text-area
+          ><div class="workspace-editor-pane">
+            <div class="workspace-editor-heading workspace-row">
+              <tp-label for="workspace-brief-input">Release brief</tp-label>
+            </div>
+            <tp-text-area
               id="workspace-brief-input"
               label="Release brief"
-              rows="17"
+              resize="none"
               .value=${this.brief}
               @tp-value-change=${(e: TpValueChangeEvent<string>) =>
                 this.#value(e, (value) => {
                   this.brief = value;
                 })}
-            ></tp-text-area
-            ><span class="workspace-muted workspace-small"
-              >Edits stay in this preview session. Download a copy from File.</span
-            >
-          </div></tp-resizable-panel
-        >
+            ></tp-text-area></div
+        ></tp-resizable-panel>
         <tp-resizable-handle label="Resize editor and preview" with-handle></tp-resizable-handle>
         <tp-resizable-panel min-size="25%"
-          ><div class="workspace-editor-pane workspace-stack">
-            <div class="workspace-row workspace-between">
+          ><div class="workspace-editor-pane">
+            <div class="workspace-editor-heading workspace-row workspace-between">
               <strong>Preview</strong><tp-badge variant="outline">Live</tp-badge>
             </div>
             <tp-scroll-area class="workspace-editor-scroll" aria-label="Brief preview"
@@ -1056,13 +1063,14 @@ export class CatalogWorkspace extends LitElement {
                 ?data-bold=${this.bold}
                 ?data-italic=${this.italic}
                 data-align=${this.alignment}
-              >
-                ${this.brief}
-              </article></tp-scroll-area
-            >
-          </div></tp-resizable-panel
-        >
+                .textContent=${this.brief}
+              ></article
+            ></tp-scroll-area></div
+        ></tp-resizable-panel>
       </tp-resizable-panel-group>
+      <p class="workspace-muted workspace-small">
+        Edits stay in this preview session. Download a copy from File.
+      </p>
       <tp-collapsible
         ><span slot="label">Release criteria</span>
         <p class="workspace-muted">
@@ -1077,13 +1085,54 @@ export class CatalogWorkspace extends LitElement {
       <tp-card
         ><h2 slot="header">Team conversation</h2>
         <p slot="description">Decisions and updates for this release</p>
-        <tp-message-scroller aria-label="Team conversation"
-          ><div class="workspace-messages">
-            ${repeat(
-              this.messages,
-              (message) => message.id,
-              (message) =>
-                html`<tp-message .author=${message.author} .timestamp=${message.time}
+        <tp-message-scroller label="Team conversation">
+          <tp-message-scroller-item message-id="history-control"
+            ><div class="workspace-history">
+              <tp-button
+                size="sm"
+                variant="ghost"
+                ?disabled=${this.historyLoaded}
+                @click=${() => {
+            this.messages = [
+              {
+                id: -2,
+                author: 'Sam Rivera',
+                time: 'Yesterday · 16:20',
+                text: 'The pilot team can start on Friday. Are we ready to share the new onboarding flow?',
+                own: false,
+              },
+              {
+                id: -1,
+                author: 'Alex Morgan',
+                time: 'Yesterday · 16:24',
+                text: 'Yes. Let’s finish the accessibility review first and share the release brief with everyone.',
+                own: true,
+              },
+              {
+                id: 0,
+                author: 'Jamie Chen',
+                time: 'Yesterday · 16:31',
+                text: 'I’ll collect the final copy and the launch checklist in Files.',
+                own: false,
+              },
+              ...this.messages,
+            ];
+            this.historyLoaded = true;
+          }}
+                >${this.historyLoaded ? 'Beginning of conversation' : 'Load earlier messages'}</tp-button
+              >
+            </div></tp-message-scroller-item
+          >
+
+          ${repeat(
+            this.messages,
+            (message) => message.id,
+            (message) =>
+              html`<tp-message-scroller-item .messageId=${String(message.id)}
+                ><tp-message
+                  .align=${message.own ? 'end' : 'start'}
+                  .author=${message.author}
+                  .timestamp=${message.time}
                   ><tp-avatar
                     slot="avatar"
                     size="sm"
@@ -1095,10 +1144,10 @@ export class CatalogWorkspace extends LitElement {
                     .variant=${message.own ? 'default' : 'secondary'}
                     >${message.text}</tp-bubble
                   ></tp-message
-                >`,
-            )}
-          </div></tp-message-scroller
-        >
+                ></tp-message-scroller-item
+              >`,
+          )}
+        </tp-message-scroller>
         <tp-form
           slot="footer"
           class="workspace-grow"
@@ -1143,8 +1192,8 @@ export class CatalogWorkspace extends LitElement {
         <div class="workspace-stack">
           ${this.members.map(
             (name) =>
-              html`<tp-preview-card .label=${name}
-                ><tp-button slot="trigger" variant="ghost"
+              html`<tp-preview-card .label=${name} placement="bottom-start"
+                ><tp-button class="workspace-member" slot="trigger" variant="ghost"
                   ><tp-avatar
                     slot="icon-start"
                     size="sm"
@@ -1153,10 +1202,17 @@ export class CatalogWorkspace extends LitElement {
                   ></tp-avatar
                   >${name}</tp-button
                 >
-                <div class="workspace-overlay">
-                  <tp-avatar size="lg" .fallback=${initials(name)} .alt=${name}></tp-avatar
-                  ><strong>${name}</strong>
-                  <p>Product team · Studio North · ${this.memberAccess[name] ?? 'Can edit'}</p>
+                <div class="workspace-profile">
+                  <div class="workspace-profile-heading">
+                    <tp-avatar .fallback=${initials(name)} .alt=${name}></tp-avatar>
+                    <div>
+                      <strong>${name}</strong>
+                      <p class="workspace-muted workspace-small">Product team · Studio North</p>
+                    </div>
+                  </div>
+                  <p class="workspace-muted workspace-small">
+                    ${this.memberAccess[name] ?? 'Can edit'}
+                  </p>
                   <tp-marker tone="success" label="Available for review"></tp-marker></div
               ></tp-preview-card>`,
           )}
@@ -1198,11 +1254,16 @@ export class CatalogWorkspace extends LitElement {
           ></tp-field>
           <div class="workspace-grid">
             <tp-field label="Timezone"
-              ><tp-native-select name="timezone" label="Project timezone"
-                ><option value="paris">Paris · CET</option>
-                <option value="london">London · GMT</option>
-                <option value="new-york">New York · ET</option></tp-native-select
-              ></tp-field
+              ><tp-select
+                name="timezone"
+                label="Project timezone"
+                default-value="paris"
+                .items=${[
+                  { value: 'paris', label: 'Paris · CET' },
+                  { value: 'london', label: 'London · GMT' },
+                  { value: 'new-york', label: 'New York · ET' },
+                ]}
+              ></tp-select></tp-field
             ><tp-field label="Review cadence"
               ><tp-select
                 name="cadence"
@@ -1540,9 +1601,10 @@ export class CatalogWorkspace extends LitElement {
         .open=${this.overlay === 'updates'}
         @tp-open-change=${this.#open('updates')}
       >
-        <tp-scroll-area class="workspace-activity" aria-label="Project updates"
-          >${this.messages.map((message) => html`<tp-list-item .description=${message.text}><tp-avatar slot="leading" size="sm" .fallback=${initials(message.author)} .alt=${message.author}></tp-avatar>${message.author} · ${message.time}</tp-list-item>`)}</tp-scroll-area
-        ><tp-button
+        <div class="workspace-stack">
+          ${this.messages.map((message) => html`<tp-list-item .description=${message.text}><tp-avatar slot="leading" size="sm" .fallback=${initials(message.author)} .alt=${message.author}></tp-avatar>${message.author} · ${message.time}</tp-list-item>`)}
+        </div>
+        <tp-button
           slot="footer"
           @click=${() => {
             this.overlay = '';

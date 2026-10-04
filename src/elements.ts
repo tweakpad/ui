@@ -48,6 +48,7 @@ import type {
   TpCarousel,
   TpDataVisualization,
   TpMessageScroller,
+  TpMessageScrollerItem,
   TpProgress,
   TpResizablePanelGroup,
   TpResizablePanel,
@@ -182,6 +183,7 @@ declare global {
     'tp-menubar': TpMenubar;
     'tp-message': TpMessage;
     'tp-message-scroller': TpMessageScroller;
+    'tp-message-scroller-item': TpMessageScrollerItem;
     'tp-native-select': TpNativeSelect;
     'tp-navigation-menu': TpNavigationMenu;
     'tp-navigation-panel': TpNavigationPanel;

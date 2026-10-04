@@ -71,9 +71,9 @@
   --tp-control-height-sm: calc(var(--tp-spacing) * 10);
   --tp-control-height-md: calc(var(--tp-spacing) * 11.25);
   --tp-control-height-lg: calc(var(--tp-spacing) * 13.75);
-  --tp-icon-size-sm: calc(var(--tp-spacing) * 5);
-  --tp-icon-size-md: calc(var(--tp-spacing) * 6.25);
-  --tp-icon-size-lg: calc(var(--tp-spacing) * 7.5);
+  --tp-icon-size-sm: calc(var(--tp-spacing) * 4.375);
+  --tp-icon-size-md: calc(var(--tp-spacing) * 5);
+  --tp-icon-size-lg: calc(var(--tp-spacing) * 6.25);
   --tp-target-size-min: 2.75rem;
 
   /* Lines, shape, elevation, and state opacity. */

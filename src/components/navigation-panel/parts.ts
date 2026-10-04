@@ -545,7 +545,17 @@ export class TpNavigationPanelBadge extends TpBadge {
   }
 }
 export class TpNavigationPanelSeparator extends TpSeparator {
+  // The panel projects its recipe onto Separator's root, not a second host rule.
   static presentationTagName = 'tp-separator';
+  static override styles = [
+    TpSeparator.styles,
+    css`
+      :host {
+        display: flow-root;
+        height: auto;
+      }
+    `,
+  ];
   static override tagName = 'tp-navigation-panel-separator';
   readonly #member = new NavigationPanelMember(this, 'navigation-panel-separator', 'root');
   override renderPart(name: string, state: PartState, options: PartRenderOptions = {}): unknown {

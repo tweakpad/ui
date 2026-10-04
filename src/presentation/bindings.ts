@@ -61,6 +61,9 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
   'tp-message': {
     '.message': 'message-root',
     '.meta': 'message-header',
+    '.avatar': 'message-avatar',
+    '.content': 'message-content',
+    '.footer': 'message-footer',
   },
   'tp-input': {
     input: 'input',
@@ -187,6 +190,8 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
     ':host': 'spinner',
     '.visually-hidden': 'spinner-accessible-label',
   },
+  // Navigation Panel projects its separator recipe onto the inherited root.
+  'tp-navigation-panel-separator': {},
   'tp-separator': {
     ':host': 'separator',
   },

@@ -524,20 +524,32 @@ export const componentAppearance: PresentationDictionary = {
   ],
   ...listItemAppearance,
   'message-root': [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-3)',
-      },
-    },
+    { declarations: { gap: 'var(--tp-space-2)', 'font-size': 'var(--tp-text-sm)' } },
   ],
   'message-header': [
     {
-      selector: '&',
       declarations: {
         gap: 'var(--tp-space-2)',
+        color: 'var(--tp-muted-foreground)',
+        'font-size': 'var(--tp-text-xs)',
+        'padding-inline': 'var(--tp-space-3)',
+        'margin-block-end': 'var(--tp-space-2)',
       },
     },
+  ],
+  'message-footer': [
+    {
+      declarations: {
+        gap: 'var(--tp-space-2)',
+        color: 'var(--tp-muted-foreground)',
+        'font-size': 'var(--tp-text-xs)',
+        'padding-inline': 'var(--tp-space-3)',
+        'margin-block-start': 'var(--tp-space-2)',
+      },
+    },
+  ],
+  'message-scroller-content': [
+    { declarations: { gap: 'var(--tp-space-6)', padding: 'var(--tp-space-3)' } },
   ],
   field: [
     {
