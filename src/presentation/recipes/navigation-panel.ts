@@ -17,7 +17,8 @@ const navigationRow: readonly PresentationRule[] = [
     },
   },
   {
-    selector: '&:hover:not([data-disabled], :disabled), &[data-active]',
+    selector:
+      '&:is(:hover, [data-popup-open]):not([data-disabled], :disabled, [aria-disabled="true"]), &[data-active]',
     declarations: {
       background: 'var(--tp-accent)',
       color: 'var(--tp-accent-foreground)',

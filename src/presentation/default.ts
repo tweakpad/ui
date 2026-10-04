@@ -61,6 +61,9 @@ export function variantPresentation(
         color: 'var(--tp-foreground)',
         background: variant === 'outline' ? 'var(--tp-background)' : 'transparent',
         'border-color': variant === 'outline' ? 'var(--tp-border)' : 'transparent',
+        ...(isInteractive && variant !== 'link'
+          ? { transition: motionTransition(['color', 'background-color', 'border-color'], 'fast') }
+          : {}),
       }),
     ];
     if (isInteractive && variant === 'link')
@@ -74,20 +77,10 @@ export function variantPresentation(
       rules.push(
         rule(
           {
-            position: 'absolute',
-            inset: '0',
-            'z-index': '0',
-            'border-radius': 'inherit',
-            'background-color': 'color-mix(in oklab, var(--tp-input) 50%, transparent)',
-            content: "''",
-            opacity: '0',
-            'pointer-events': 'none',
-            transition: motionTransition(['opacity'], 'fast'),
+            'background-color': 'color-mix(in oklab, var(--tp-input) 50%, var(--tp-background))',
           },
-          '&::before',
+          interactive,
         ),
-        rule({ 'background-color': 'var(--tp-background)' }, interactive),
-        rule({ opacity: '1' }, `${interactive}::before`),
       );
     return rules;
   }
