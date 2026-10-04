@@ -150,7 +150,15 @@ export class OwnedPortal {
       }
       this.#host = target.ownerDocument.createElement('div');
       this.#host.setAttribute(`data-${this.owner.localName.replace(/^tp-/, '')}-portal`, '');
-      setLogicalPortalOwner(this.#host, this.owner);
+      // When the owner is itself projected, retain its former ancestry rather
+      // than creating a logical owner cycle between it and the portal host.
+      const originRoot = this.owner.getRootNode();
+      const logicalOwner =
+        options.externalProjection && options.projectedNodes?.includes(this.owner)
+          ? (this.owner.parentElement ??
+            ('host' in originRoot ? (originRoot.host as HTMLElement) : this.owner))
+          : this.owner;
+      setLogicalPortalOwner(this.#host, logicalOwner);
       const root = this.#host.attachShadow({ mode: 'open' });
       const cssText = (result: CSSResultGroup): string => {
         if (Array.isArray(result)) return result.map(cssText).join('\n');

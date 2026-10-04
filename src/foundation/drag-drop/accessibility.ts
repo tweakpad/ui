@@ -40,6 +40,7 @@ export class DragAccessibility {
   >();
   readonly #scope = new CleanupScope();
   #terminalOptions: ManagerOptions | undefined;
+  #terminalEvent: DragEvent | undefined;
   #source: Draggable | undefined;
   renderContent:
     | ((
@@ -70,7 +71,8 @@ export class DragAccessibility {
         }),
       );
     this.#scope.add(
-      manager.monitor.addEventListener('dragend', () => {
+      manager.monitor.addEventListener('dragend', (event) => {
+        this.#terminalEvent = event;
         for (const root of this.#roots.values()) {
           root.cancel?.();
           root.cancel = undefined;
@@ -79,11 +81,17 @@ export class DragAccessibility {
     );
     this.#scope.add(
       manager.monitor.addEventListener('settled', (event) => {
-        this.#announce('dragend', { ...event, canceled: event.outcome !== 'committed' });
+        this.announceTerminal(event.outcome!);
         this.#terminalOptions = undefined;
         this.#source = undefined;
       }),
     );
+  }
+  /** Announce the validated decision before optional visual drop completion. */
+  announceTerminal(outcome: NonNullable<DragEvent['outcome']>): void {
+    const event = this.#terminalEvent;
+    this.#terminalEvent = undefined;
+    if (event) this.#announce('dragend', { ...event, outcome, canceled: outcome !== 'committed' });
   }
   bind(source: Draggable, sensors: readonly Sensor[]): () => void {
     const options = mergeConfiguration(this.manager.options, source.serviceOptions).accessibility;

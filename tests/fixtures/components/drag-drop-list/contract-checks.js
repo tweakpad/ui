@@ -12,6 +12,7 @@ import {
 import { cloneFeedback } from '../../../../src/foundation/drag-drop/clone.ts';
 import { OwnedStyles, leaseStyle } from '../../../../src/foundation/owned-styles.ts';
 import { OwnedPortal } from '../../../../src/foundation/owned-portal.ts';
+import { logicalPortalOwner } from '../../../../src/foundation/portal-ownership.ts';
 import {
   measureElement,
   frameCoordinates,
@@ -909,6 +910,34 @@ export async function runContractChecks() {
       );
       send(body, 'lostpointercapture');
       await waitFor(() => manager.dragOperation.status === 'idle', 'lost capture stranded drag');
+      send(element, 'pointerdown');
+      await delay(150);
+      assert(manager.dragOperation.status === 'idle', 'ordinary delay activated before 200ms');
+      await delay(75);
+      assert(manager.dragOperation.status === 'dragging', 'ordinary 200ms delay did not activate');
+      send(document, 'pointercancel');
+      await waitFor(() => manager.dragOperation.status === 'idle', 'ordinary cancel');
+      const input = document.createElement('input');
+      parent.append(input);
+      const inputSource = new Draggable(
+        { id: 'input', element: input, sensors: [PointerSensor.configure()] },
+        manager,
+      );
+      inputSource.register();
+      send(input, 'pointerdown');
+      await delay(150);
+      assert(manager.dragOperation.status === 'idle', 'eligible input activated early');
+      await delay(75);
+      assert(
+        manager.dragOperation.source === inputSource && manager.dragOperation.status === 'dragging',
+        'eligible input delay failed',
+      );
+      send(document, 'pointercancel');
+      await waitFor(() => manager.dragOperation.status === 'idle', 'input cancel');
+      send(input, 'pointerdown');
+      inputSource.destroy();
+      await delay(225);
+      assert(manager.dragOperation.status === 'idle', 'destroyed pending input activated later');
       body.setPointerCapture = () => {
         throw new Error('capture failure');
       };
@@ -1248,6 +1277,8 @@ export async function runContractChecks() {
       let release;
       const manager = createManager({
         feedback: 'clone',
+        accessibility: { debounce: 10 },
+        announcements: { dragend: () => 'Decision completed before animation' },
         dropAnimation: () =>
           new Promise((r) => {
             release = r;
@@ -1262,6 +1293,12 @@ export async function runContractChecks() {
       await manager.actions.setDropTarget(target.id);
       const stopping = manager.actions.stop();
       await waitFor(() => !!release, 'custom animation did not start');
+      assert(
+        [...document.querySelectorAll('[role=status]')].some(
+          (e) => e.textContent === 'Decision completed before animation',
+        ),
+        'terminal announcement waited for visual completion',
+      );
       element.remove();
       source.destroy();
       release();
@@ -1287,6 +1324,61 @@ export async function runContractChecks() {
         'stale announcement callback',
       );
       await a11y.actions.stop({ canceled: true });
+    },
+  );
+  await check(
+    'V-39,V-60,V-62,V-71',
+    'RTL portal inheritance, scoped tokens and public reduced-motion ownership',
+    async (parent, own) => {
+      const manager = createManager({ feedback: 'default', dropAnimation: { duration: 9000 } });
+      own(() => manager.destroy());
+      const list = await addList(parent, {
+        manager,
+        defaultValue: ['One', 'Two'],
+        dir: 'rtl',
+        motionPolicy: 'reduce',
+        size: 'default',
+      });
+      list.style.setProperty('--tp-space-2', '17px');
+      const source = manager.registry.draggables.get('One'),
+        original = source.element,
+        originParent = original.parentElement;
+      const originalStyle = original.getAttribute('style');
+      const roles = [];
+      list.addEventListener('tp-motion-request', (e) =>
+        roles.push({
+          role: e.request.role,
+          reduced: e.request.reducedMotion,
+          owner: e.request.owner,
+        }),
+      );
+      const bounds = measureElement(original);
+      manager.actions.start({ source, coordinates: bounds.center, input: 'keyboard' });
+      await waitFor(() => manager.dragOperation.status === 'dragging', 'list start');
+      assert(
+        getComputedStyle(original).direction === 'rtl' &&
+          getComputedStyle(original).listStyleType === 'none',
+        'portal lost RTL or row appearance',
+      );
+      assert(
+        getComputedStyle(original).getPropertyValue('--tp-space-2').trim() === '17px',
+        'portal lost scoped token',
+      );
+      assert(logicalPortalOwner(original) === originParent, 'portal logical ancestry cycle');
+      manager.actions.move({ by: { x: 0, y: 20 } });
+      assert(
+        roles.some((r) => r.role === 'keyboard-feedback' && r.reduced && r.owner === list),
+        'public motion owner lost',
+      );
+      await manager.actions.setDropTarget('Two');
+      const before = performance.now();
+      await manager.actions.stop();
+      assert(performance.now() - before < 500, 'list inherited reduced motion ignored');
+      assert(!original.style.inset, 'feedback leaked shorthand declarations');
+      assert(
+        !originalStyle || original.getAttribute('style') === originalStyle,
+        'feedback changed authored style',
+      );
     },
   );
   root.remove();

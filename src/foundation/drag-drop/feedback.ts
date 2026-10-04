@@ -107,10 +107,12 @@ export class DragFeedback {
         styles.set(property, computed.getPropertyValue(property));
     }
     attributes.set('data-dragging', '');
+    // The moving projection is visual feedback, including when it retains the
+    // original node. Input is owned by the sensor and focus returns after settle.
+    attributes.set('inert', '');
+    attributes.set('aria-hidden', 'true');
     if (overlay) {
       scope.add(markFeedbackRoot(element));
-      attributes.set('inert', '');
-      attributes.set('aria-hidden', 'true');
       attributes.set('data-preview', '');
     } else if (mode !== 'move') {
       const preview = this.createPreview?.(source);

@@ -723,6 +723,7 @@ export class DragDropManager {
         try {
           if (outcome !== 'committed') this.#rollback();
           await this.sorting.settle(outcome);
+          this.accessibility.announceTerminal(outcome);
           if (outcome === 'committed') await this.feedback.settle();
         } catch (error) {
           this.reportError(error);

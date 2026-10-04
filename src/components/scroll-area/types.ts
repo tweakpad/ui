@@ -1,4 +1,5 @@
-export type ScrollbarVisibility = 'automatic' | 'always' | 'while-scrolling' | 'on-hover';
+import type { ScrollbarVisibility } from '../../foundation/scrollbar.js';
+export type { ScrollbarVisibility } from '../../foundation/scrollbar.js';
 export interface ScrollbarOptions {
   orientation: 'horizontal' | 'vertical';
   keepMounted?: boolean;

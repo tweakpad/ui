@@ -352,4 +352,31 @@ describe('manager generation and terminal boundaries', () => {
     manager.destroy();
     expect(managed.destroy).toHaveBeenCalledOnce();
   });
+  it('publishes current late subscriptions and uses stable monitor listener snapshots', async () => {
+    const { manager, source } = setup();
+    manager.actions.start({ source, coordinates: { x: 0, y: 0 } });
+    await tick();
+    const snapshots: string[] = [];
+    const off = manager.subscribe((snapshot) => snapshots.push(snapshot.status), true);
+    expect(snapshots).toEqual(['dragging']);
+    const calls: string[] = [];
+    const second = () => calls.push('second'),
+      third = () => calls.push('third');
+    manager.monitor.addEventListener('dragmove', () => {
+      calls.push('first');
+      manager.monitor.removeEventListener('dragmove', second);
+      manager.monitor.addEventListener('dragmove', third);
+    });
+    manager.monitor.addEventListener('dragmove', second);
+    manager.actions.move({ by: { x: 1, y: 1 } });
+    expect(calls).toEqual(['first', 'second']);
+    manager.actions.move({ by: { x: 1, y: 1 } });
+    expect(calls).toEqual(['first', 'second', 'first', 'third']);
+    off();
+    off();
+    const count = snapshots.length;
+    await manager.actions.stop({ canceled: true });
+    expect(snapshots).toHaveLength(count);
+    manager.destroy();
+  });
 });

@@ -1,6 +1,7 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
+import { renderScrollbar, scrollbarStyles } from '../shared-scrollbar.js';
 import { ScrollAreaController } from './controller.js';
 import {
   initialScrollAreaState,
@@ -24,6 +25,7 @@ export class TpScrollArea extends TpElement {
   };
   static override styles = [
     TpElement.styles,
+    scrollbarStyles,
     css`
       :host {
         display: block;
@@ -68,9 +70,6 @@ export class TpScrollArea extends TpElement {
       .track {
         position: absolute;
         z-index: 1;
-        touch-action: none;
-        user-select: none;
-        direction: ltr;
       }
 
       .track[data-orientation='vertical'] {
@@ -91,24 +90,6 @@ export class TpScrollArea extends TpElement {
       :host(:dir(rtl)) .track[data-orientation='vertical'] {
         right: auto;
         left: 0;
-      }
-
-      .thumb {
-        display: block;
-        position: relative;
-      }
-
-      .track[data-orientation='vertical'] .thumb {
-        inline-size: 100%;
-      }
-
-      .track[data-orientation='horizontal'] .thumb {
-        block-size: 100%;
-      }
-
-      .track[data-visible='false'] {
-        opacity: 0;
-        pointer-events: none;
       }
 
       .corner {
@@ -186,6 +167,7 @@ export class TpScrollArea extends TpElement {
   #hover = (event: PointerEvent): void => {
     if (event.pointerType === 'touch') return;
     this.#hovering = event.type === 'pointerenter';
+    this.#controller.hover(this.#hovering);
     this.requestUpdate();
   };
   override connectedCallback(): void {
@@ -194,6 +176,7 @@ export class TpScrollArea extends TpElement {
     void this.updateComplete.then(() => {
       if (this.isConnected) {
         this.#hovering = this.matches(':hover');
+        this.#controller.hover(this.#hovering);
         this.#controller.sync();
         this.requestUpdate();
       }
@@ -212,14 +195,6 @@ export class TpScrollArea extends TpElement {
     const overflow = horizontal ? this.#state.x : this.#state.y;
     const scrolling = horizontal ? this.#state.scrollingX : this.#state.scrollingY;
     const visibility = bar.visibility ?? this.scrollbarVisibility;
-    const visible =
-      visibility === 'always' ||
-      (overflow &&
-        (visibility === 'while-scrolling'
-          ? scrolling
-          : visibility === 'on-hover'
-            ? this.#hovering
-            : true));
     const state = {
       orientation: bar.orientation,
       scrolling,
@@ -228,31 +203,15 @@ export class TpScrollArea extends TpElement {
       disabled: this.disabled,
       visibility,
     };
-    return this.renderPart('scroll-area-scrollbar', state, {
+    return renderScrollbar(this, this.#controller.scrollbar(horizontal ? 'x' : 'y'), state, {
+      trackPart: 'scroll-area-scrollbar',
+      thumbPart: 'scroll-area-thumb',
       properties: {
-        class: 'track',
-        'data-orientation': bar.orientation,
-        'data-scrolling': scrolling,
         'data-hovering': this.#hovering,
-        'data-visible': String(visible),
-        'data-disabled': this.disabled,
         'aria-hidden':
           this.partContracts['scroll-area-scrollbar']?.hostProperties?.['aria-hidden'] ?? 'true',
-        '@pointerdown': this.#controller.pointerDown,
-        '@pointermove': this.#controller.pointerMove,
-        '@pointerup': this.#controller.pointerEnd,
-        '@pointercancel': this.#controller.pointerEnd,
-        '@lostpointercapture': this.#controller.pointerEnd,
         '@wheel': this.#controller.wheel,
       },
-      content: this.renderPart('scroll-area-thumb', state, {
-        properties: {
-          class: 'thumb',
-          'data-orientation': bar.orientation,
-          'data-scrolling': scrolling,
-          'aria-hidden': 'true',
-        },
-      }),
     });
   }
   protected override render() {
