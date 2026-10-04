@@ -740,6 +740,17 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
     {
+      selector: '&::after',
+      declarations: {
+        content: "''",
+        position: 'absolute',
+        inset: '0',
+        border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
+        'border-radius': 'inherit',
+        'pointer-events': 'none',
+      },
+    },
+    {
       selector: "&[size='sm']",
       declarations: {
         width: 'var(--tp-control-height-md)',

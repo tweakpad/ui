@@ -49,7 +49,16 @@ export class TpCommandPalette extends TpDialog {
       }
 
       .body:has(~ .corner-close) tp-command-list::part(command-palette-input-wrapper) {
-        padding-inline-end: calc(var(--tp-spacing) * 8 + var(--tp-space-4));
+        padding-inline-end: calc(var(--tp-control-height-md) + var(--tp-space-2) * 2);
+      }
+
+      .corner-close {
+        inline-size: var(--tp-control-height-md);
+        block-size: var(--tp-control-height-md);
+      }
+
+      .corner-close::part(button) {
+        block-size: 100%;
       }
 
       .body {

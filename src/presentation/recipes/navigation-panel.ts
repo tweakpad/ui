@@ -165,7 +165,13 @@ export const navigationPanelAppearance: PresentationDictionary = {
     },
   ],
   'navigation-panel-inset': [
-    { declarations: { background: 'var(--tp-background)', padding: 'var(--tp-space-4)' } },
+    {
+      declarations: {
+        background: 'var(--tp-background)',
+        'padding-block': 'var(--tp-space-2)',
+        'padding-inline': 'var(--tp-space-4)',
+      },
+    },
   ],
   'navigation-panel-inset-variant-inset': [
     {

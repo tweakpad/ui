@@ -1093,32 +1093,32 @@ export class CatalogWorkspace extends LitElement {
                 variant="ghost"
                 ?disabled=${this.historyLoaded}
                 @click=${() => {
-            this.messages = [
-              {
-                id: -2,
-                author: 'Sam Rivera',
-                time: 'Yesterday · 16:20',
-                text: 'The pilot team can start on Friday. Are we ready to share the new onboarding flow?',
-                own: false,
-              },
-              {
-                id: -1,
-                author: 'Alex Morgan',
-                time: 'Yesterday · 16:24',
-                text: 'Yes. Let’s finish the accessibility review first and share the release brief with everyone.',
-                own: true,
-              },
-              {
-                id: 0,
-                author: 'Jamie Chen',
-                time: 'Yesterday · 16:31',
-                text: 'I’ll collect the final copy and the launch checklist in Files.',
-                own: false,
-              },
-              ...this.messages,
-            ];
-            this.historyLoaded = true;
-          }}
+                  this.messages = [
+                    {
+                      id: -2,
+                      author: 'Sam Rivera',
+                      time: 'Yesterday · 16:20',
+                      text: 'The pilot team can start on Friday. Are we ready to share the new onboarding flow?',
+                      own: false,
+                    },
+                    {
+                      id: -1,
+                      author: 'Alex Morgan',
+                      time: 'Yesterday · 16:24',
+                      text: 'Yes. Let’s finish the accessibility review first and share the release brief with everyone.',
+                      own: true,
+                    },
+                    {
+                      id: 0,
+                      author: 'Jamie Chen',
+                      time: 'Yesterday · 16:31',
+                      text: 'I’ll collect the final copy and the launch checklist in Files.',
+                      own: false,
+                    },
+                    ...this.messages,
+                  ];
+                  this.historyLoaded = true;
+                }}
                 >${this.historyLoaded ? 'Beginning of conversation' : 'Load earlier messages'}</tp-button
               >
             </div></tp-message-scroller-item

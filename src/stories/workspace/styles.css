@@ -27,7 +27,6 @@ catalog-workspace {
 .workspace-content {
   box-sizing: border-box;
   width: 100%;
-  padding: var(--tp-space-6);
   max-width: calc(var(--tp-spacing) * 400);
   margin-inline: auto;
   min-width: 0;
@@ -254,10 +253,6 @@ catalog-workspace {
 }
 
 @media (width <= 40rem) {
-  .workspace-content {
-    padding: var(--tp-space-4);
-  }
-
   .workspace-topbar {
     padding-inline-end: var(--tp-space-4);
   }
