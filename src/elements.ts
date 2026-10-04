@@ -1,3 +1,4 @@
+import type { TpDragDropList } from './components/drag-drop-list/index.js';
 import type {
   TpSelectTrigger,
   TpSelectClear,
@@ -131,6 +132,7 @@ import type { TpSliderThumb } from './components/slider/index.js';
 
 declare global {
   interface HTMLElementTagNameMap {
+    'tp-drag-drop-list': TpDragDropList;
     'tp-menu-item': TpMenuItem;
     'tp-menu-checkbox-item': TpMenuCheckboxItem;
     'tp-menu-radio-group': TpMenuRadioGroup;

@@ -57,6 +57,7 @@ const authoredStories = new Set([
   'tp-input',
   'tp-field',
   'tp-checkbox',
+  'tp-drag-drop-list',
   'tp-tabs',
   'tp-alert',
   'tp-alert-dialog',

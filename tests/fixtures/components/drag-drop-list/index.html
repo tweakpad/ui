@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Drag Drop List verification</title>
+<style>body{margin:0;padding:32px;font-family:system-ui;background:var(--tp-background);color:var(--tp-foreground)}main{max-width:960px;margin:auto}section{margin-block:24px}.columns{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr));gap:24px}h1{font-size:24px}h2{font-size:16px}</style></head>
+<body><main><h1>Drag Drop List</h1><p>Move items by handle, keyboard, or the public action.</p><section class="columns"><div><h2>Backlog</h2><tp-drag-drop-list id="backlog" label="Backlog" variant="outline"></tp-drag-drop-list></div><div><h2>Ready</h2><tp-drag-drop-list id="ready" label="Ready" variant="outline"></tp-drag-drop-list></div></section><tp-button id="move" type="button">Move first item to Ready</tp-button><p id="result" aria-live="polite"></p><section><h2>Horizontal</h2><tp-drag-drop-list id="horizontal" label="Priority" orientation="horizontal" variant="subdued"></tp-drag-drop-list></section></main>
+<script type="module">
+const built = new URL(location.href).searchParams.has('package');
+const styles = document.createElement('link'); styles.rel = 'stylesheet'; styles.href = built ? '/dist/styles.css' : '/src/styles.css'; document.head.append(styles);
+const { DragDropManager } = await import(/* @vite-ignore */ built ? '/dist/drag-drop.js' : '/src/foundation/drag-drop/manager.ts');
+const manager = new DragDropManager();
+const backlog = document.querySelector('#backlog'), ready = document.querySelector('#ready'), horizontal = document.querySelector('#horizontal');
+backlog.manager = ready.manager = manager; backlog.group = 'backlog'; ready.group = 'ready';
+backlog.defaultValue = Object.freeze([{id:'a',label:'Research'}, {id:'b',label:'Design'}, {id:'c',label:'Review'}]); ready.defaultValue = Object.freeze([]);
+horizontal.defaultValue = Object.freeze(['First', 'Second', 'Third']);
+await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+const events = []; for(const type of ['tp-before-drag-start','tp-drag-start','tp-drag-over','tp-drag-end','tp-drag-settled','tp-value-change','tp-value-commit']) document.addEventListener(type,event=>{events.push({type,list:event.target.id,value:event.detail.value?.map(x=>x.id??x),outcome:event.detail.outcome});});
+document.querySelector('#move').addEventListener('click',()=>{document.querySelector('#result').textContent=backlog.moveItem(backlog.value[0]?.id,{list:ready,index:ready.value.length});});
+window.dragFixture = {manager,backlog,ready,horizontal,events};
+</script></body></html>

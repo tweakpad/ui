@@ -7,14 +7,32 @@ export class CleanupScope {
   readonly #cleanups = new Set<() => void>();
   #disposed = false;
 
+  constructor(
+    private readonly onError: (error: unknown) => void = (error) =>
+      console.error('Tweakpad cleanup failed; remaining resources were released.', error),
+  ) {}
+
+  #release(cleanup: () => void): void {
+    try {
+      cleanup();
+    } catch (error) {
+      // Reporting is consumer code too; it cannot interrupt mandatory release.
+      try {
+        this.onError(error);
+      } catch {
+        // Continue releasing this scope even when its diagnostic sink throws.
+      }
+    }
+  }
+
   add(cleanup: () => void): () => void {
     if (this.#disposed) {
-      cleanup();
+      this.#release(cleanup);
       return () => undefined;
     }
     this.#cleanups.add(cleanup);
     return () => {
-      if (this.#cleanups.delete(cleanup)) cleanup();
+      if (this.#cleanups.delete(cleanup)) this.#release(cleanup);
     };
   }
 
@@ -32,32 +50,68 @@ export class CleanupScope {
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
-    for (const cleanup of [...this.#cleanups].reverse()) cleanup();
+    const cleanups = [...this.#cleanups].reverse();
     this.#cleanups.clear();
+    for (const cleanup of cleanups) this.#release(cleanup);
   }
 }
 
 export class Scheduler {
   readonly #scope = new CleanupScope();
 
+  constructor(private readonly owner: Window | undefined = globalThis.window) {}
+
   microtask(callback: () => void): () => void {
     let active = true;
-    queueMicrotask(() => {
-      if (active) callback();
-    });
-    return this.#scope.add(() => {
+    const release = this.#scope.add(() => {
       active = false;
     });
+    queueMicrotask(() => {
+      if (!active) return;
+      release();
+      callback();
+    });
+    return release;
   }
 
   timeout(callback: () => void, delay: number): () => void {
-    const id = window.setTimeout(callback, delay);
-    return this.#scope.add(() => window.clearTimeout(id));
+    if (this.owner) {
+      const owner = this.owner;
+      const id = owner.setTimeout(() => {
+        release();
+        callback();
+      }, delay);
+      const release = this.#scope.add(() => owner.clearTimeout(id));
+      return release;
+    }
+    const id = globalThis.setTimeout(() => {
+      release();
+      callback();
+    }, delay);
+    const release = this.#scope.add(() => globalThis.clearTimeout(id));
+    return release;
+  }
+
+  interval(callback: () => void, delay: number): () => void {
+    if (this.owner) {
+      const owner = this.owner;
+      const id = owner.setInterval(callback, delay);
+      return this.#scope.add(() => owner.clearInterval(id));
+    }
+    const id = globalThis.setInterval(callback, delay);
+    return this.#scope.add(() => globalThis.clearInterval(id));
   }
 
   animationFrame(callback: FrameRequestCallback): () => void {
-    const id = requestAnimationFrame(callback);
-    return this.#scope.add(() => cancelAnimationFrame(id));
+    const owner = this.owner;
+    if (!owner?.requestAnimationFrame)
+      throw new Error('A presentation frame requires an owner window with requestAnimationFrame.');
+    const id = owner.requestAnimationFrame((time) => {
+      release();
+      callback(time);
+    });
+    const release = this.#scope.add(() => owner.cancelAnimationFrame(id));
+    return release;
   }
 
   dispose(): void {

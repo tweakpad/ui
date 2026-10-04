@@ -1,5 +1,6 @@
 import { motionTransition } from './motion.js';
 import { listItemAppearance } from './recipes/list-item.js';
+import { dragDropListAppearance } from './recipes/drag-drop-list.js';
 import { dataVisualizationAppearance } from './recipes/data-visualization.js';
 import { questionnaireAppearance } from './recipes/questionnaire.js';
 import { drawerAppearance } from './recipes/drawer.js';
@@ -30,6 +31,7 @@ import { selectionControlAppearance } from './recipes/selection-controls.js';
 
 // Existing appearance values moved without changing layout, behavior, or token choices.
 export const componentAppearance: PresentationDictionary = {
+  ...dragDropListAppearance,
   ...dataVisualizationAppearance,
   form: fieldAppearance['field-field-group']!,
   'form-actions': [{ declarations: { gap: 'var(--tp-space-2)' } }],

@@ -1,4 +1,5 @@
 export * from './accordion.js';
+export * from './drag-drop-list/index.js';
 export * from './accordion-item.js';
 export * from './button.js';
 export * from './checkbox.js';

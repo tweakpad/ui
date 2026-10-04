@@ -65,6 +65,7 @@ export const catalog = [
   ['Key hint', 'tp-key-hint', 'presentational-primitive'],
   ['Label', 'tp-label', 'preset-composition'],
   ['List item', 'tp-list-item', 'preset-composition'],
+  ['Drag Drop List', 'tp-drag-drop-list', 'preset-composition'],
   ['Marker', 'tp-marker', 'presentational-primitive'],
   ['Message', 'tp-message', 'presentational-primitive'],
   ['Skeleton', 'tp-skeleton', 'thin-wrapper'],

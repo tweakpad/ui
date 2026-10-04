@@ -1,4 +1,5 @@
 import { TpCommandList } from './components/command-palette/index.js';
+import { TpDragDropList } from './components/drag-drop-list/index.js';
 import {
   TpSelectTrigger,
   TpSelectClear,
@@ -259,3 +260,4 @@ defineElement(TpTableHead.tagName, TpTableHead);
 defineElement(TpTableCell.tagName, TpTableCell);
 
 defineElement(TpTableCaption.tagName, TpTableCaption);
+defineElement(TpDragDropList.tagName, TpDragDropList);

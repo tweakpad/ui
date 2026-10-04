@@ -1,5 +1,12 @@
 /** Component-owned associations between existing hosts and their published part slots. */
 export const partBindings: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  'tp-drag-drop-list': {
+    ':host': 'drag-drop-list-root',
+    '.list': 'drag-drop-list-list',
+    '.item': 'drag-drop-list-item',
+    '.handle': 'drag-drop-list-handle',
+    '.empty': 'drag-drop-list-empty',
+  },
   'tp-form': {
     form: 'form',
     'form > [slot="actions"]': 'form-actions',

@@ -46,6 +46,12 @@ const questionnaireQuestions = [
 ];
 
 const examples = {
+  'tp-drag-drop-list': () =>
+    html`<tp-drag-drop-list
+      label="Project stages"
+      .defaultValue=${['Research', 'Design', 'Review']}
+      variant="outline"
+    ></tp-drag-drop-list>`,
   'tp-accordion': () => html`
     <tp-accordion variant="outline">
       <tp-accordion-item value="account" heading-level="2">

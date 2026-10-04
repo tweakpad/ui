@@ -2,6 +2,7 @@ import { css, html } from 'lit';
 import { CleanupScope } from '../services.js';
 import { OwnedPortal } from '../owned-portal.js';
 import { OwnedAttributes } from '../owned-attributes.js';
+import { OwnedStyles } from '../owned-styles.js';
 import { componentHandlingPrevented } from '../part.js';
 import type { NumberFieldState } from './state.js';
 
@@ -24,7 +25,7 @@ interface Ports {
 export class NumberFieldScrub {
   readonly #scope = new CleanupScope();
   readonly #attributes: OwnedAttributes;
-  readonly #styles = new Map<string, { original: string; applied: string; priority: string }>();
+  readonly #styles: OwnedStyles;
   #gesture: CleanupScope | undefined;
   #pointer: number | undefined;
   #options: NumberFieldScrubOptions;
@@ -47,17 +48,13 @@ export class NumberFieldScrub {
     this.#validate(options);
     this.#options = { ...options };
     this.#attributes = new OwnedAttributes(element);
+    this.#styles = new OwnedStyles(element);
     this.#attributes.set('role', 'presentation');
     for (const [property, value] of [
       ['touch-action', 'none'],
       ['user-select', 'none'],
     ] as const) {
-      this.#styles.set(property, {
-        original: element.style.getPropertyValue(property),
-        priority: element.style.getPropertyPriority(property),
-        applied: value,
-      });
-      element.style.setProperty(property, value);
+      this.#styles.set(property, value);
     }
     this.#scope.listen(element, 'pointerdown', this.#down);
   }
@@ -133,12 +130,7 @@ export class NumberFieldScrub {
       this.#cursor = undefined;
     }
     this.#attributes.dispose();
-    for (const [property, value] of this.#styles)
-      if (this.element.style.getPropertyValue(property) === value.applied) {
-        if (value.original)
-          this.element.style.setProperty(property, value.original, value.priority);
-        else this.element.style.removeProperty(property);
-      }
+    this.#styles.dispose();
   }
   #validate(options: NumberFieldScrubOptions): void {
     if (options.direction !== undefined && !['horizontal', 'vertical'].includes(options.direction))

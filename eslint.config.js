@@ -5,7 +5,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'storybook-static/**', 'node_modules/**', 'tmp/**'] },
+  { ignores: ['dist/**', 'storybook-static/**', 'node_modules/**', 'tmp/**', 'external/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -14,6 +14,8 @@ export default tseslint.config(
       'tests/fixtures/components/navigation-menu-geometry/fixture.js',
       'tests/fixtures/components/popover-placement/fixture.js',
       'src/stories/navigation-panel-example.js',
+      'src/stories/drag-drop-list-example.js',
+      'tests/fixtures/components/drag-drop-list/*.js',
     ],
     languageOptions: { globals: globals.browser },
   },

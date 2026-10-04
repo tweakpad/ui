@@ -119,6 +119,7 @@ export function prepareMotion(
   target: HTMLElement | null,
   role: MotionRoleDefinition,
   options: MotionRequestOptions,
+  fallbackDriver?: MotionDriver,
 ): MotionHandle {
   const active = ACTIVE_MOTION.get(owner) ?? new Map<string, MotionHandle>();
   active.get(role.name)?.cancel();
@@ -157,7 +158,8 @@ export function prepareMotion(
   });
   const event = new TpMotionRequestEvent(request);
   owner.dispatchEvent(event);
-  const driver = event.finishDispatch();
+  const claimedDriver = event.finishDispatch();
+  const driver = claimedDriver ?? fallbackDriver;
   let playback: MotionPlayback | null = null;
   let targetObserver: MutationObserver | null = null;
   let timeout: number | undefined;
@@ -169,7 +171,7 @@ export function prepareMotion(
   });
 
   const handle: MotionHandle = {
-    claimed: driver !== null,
+    claimed: claimedDriver !== null,
     request,
     get playback() {
       return playback;

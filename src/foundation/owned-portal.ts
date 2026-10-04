@@ -14,6 +14,10 @@ export type OwnedPortalContainer =
 export interface OwnedPortalOptions {
   projectedNodes?: readonly Node[];
   identifier?: string;
+  /** Explicit Foundation projection from another parent, with an owned return marker. */
+  externalProjection?: boolean;
+  /** Connected same-origin document targets; the default remains the owner document. */
+  allowSameOriginDocument?: boolean;
 }
 const namedContainers = new WeakMap<HTMLElement, number>();
 /** An owned Lit root preserves actual part bindings when a consumer selects a portal. */
@@ -60,17 +64,28 @@ export class OwnedPortal {
     else marker.remove();
     this.#projected.delete(node);
   }
-  #project(nodes: readonly Node[]): void {
+  #project(nodes: readonly Node[], external = false): void {
     this.#pruneProjection();
     const wanted = new Set(nodes);
     for (const node of this.#projected.keys()) if (!wanted.has(node)) this.#restoreNode(node);
     for (const node of nodes) {
-      if (this.#projected.has(node) || node.parentNode !== this.owner) continue;
+      if (
+        this.#projected.has(node) ||
+        !node.parentNode ||
+        (!external && node.parentNode !== this.owner)
+      )
+        continue;
       const marker = this.owner.ownerDocument.createComment('tp-portal-projection');
-      this.owner.replaceChild(marker, node);
+      node.parentNode.replaceChild(marker, node);
       this.#projected.set(node, marker);
       this.#host!.append(node);
     }
+  }
+  /** Relocate an externally projected node's owned return marker after layout movement. */
+  relocateProjection(node: Node, before: Node): void {
+    const marker = this.#projected.get(node);
+    if (marker && before.parentNode && node.parentNode === this.#host)
+      before.parentNode.insertBefore(marker, before);
   }
   update(
     container: OwnedPortalContainer,
@@ -95,7 +110,34 @@ export class OwnedPortal {
         target = named;
       }
     }
-    if (!target || target.ownerDocument !== this.owner.ownerDocument) {
+    let compatibleDocument = target?.ownerDocument === this.owner.ownerDocument;
+    if (target && options.allowSameOriginDocument && !compatibleDocument) {
+      try {
+        const targetView = target.ownerDocument.defaultView,
+          ownerView = this.owner.ownerDocument.defaultView;
+        const accessibleRoot = (view: Window | null): Window | null => {
+          try {
+            while (view?.parent && view.parent !== view) {
+              void view.parent.document;
+              view = view.parent;
+            }
+          } catch {
+            /* Protected boundary. */
+          }
+          return view;
+        };
+        compatibleDocument =
+          !!target.isConnected &&
+          !!ownerView &&
+          !!targetView &&
+          (accessibleRoot(ownerView) === accessibleRoot(targetView) ||
+            (ownerView.location.origin !== 'null' &&
+              targetView.location.origin === ownerView.location.origin));
+      } catch {
+        compatibleDocument = false;
+      }
+    }
+    if (!target || !compatibleDocument) {
       this.clear();
       return false;
     }
@@ -106,7 +148,7 @@ export class OwnedPortal {
         this.#namedContainer = target as HTMLElement;
         namedContainers.set(this.#namedContainer, namedContainers.get(this.#namedContainer)! + 1);
       }
-      this.#host = this.owner.ownerDocument.createElement('div');
+      this.#host = target.ownerDocument.createElement('div');
       this.#host.setAttribute(`data-${this.owner.localName.replace(/^tp-/, '')}-portal`, '');
       setLogicalPortalOwner(this.#host, this.owner);
       const root = this.#host.attachShadow({ mode: 'open' });
@@ -121,7 +163,7 @@ export class OwnedPortal {
       this.#styleResource.setText(cssText(this.styles));
       target.append(this.#host);
     }
-    if (options.projectedNodes) this.#project(options.projectedNodes);
+    if (options.projectedNodes) this.#project(options.projectedNodes, options.externalProjection);
     const computed = this.owner.ownerDocument.defaultView!.getComputedStyle(this.owner);
     const nextTokens = new Set<string>();
     for (let index = 0; index < computed.length; index++) {

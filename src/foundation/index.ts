@@ -1,4 +1,7 @@
 export * from './collection.js';
+export * from './drag-drop/index.js';
+export type { Alignment as DragAlignment } from './drag-drop/geometry.js';
+export type { Alignment } from './positioning.js';
 export * from './calendar.js';
 export * from './collapsible.js';
 export * from './questionnaire.js';
