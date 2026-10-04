@@ -1,3 +1,4 @@
+import { transitionCss } from '../presentation/motion.js';
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { compositeControl } from '../foundation/composite-control.js';
@@ -120,9 +121,7 @@ export class TpCollapsible extends TpElement {
         line-height: 1;
         pointer-events: none;
         rotate: 0deg;
-        transition-property: rotate;
-        transition-duration: calc(var(--tp-duration-normal) * var(--tp-motion-scale));
-        transition-timing-function: var(--tp-easing-standard);
+        transition: ${transitionCss(['rotate'])};
       }
 
       [data-default-indicator][hidden] {
@@ -135,9 +134,7 @@ export class TpCollapsible extends TpElement {
         grid-template-columns: subgrid;
         overflow: clip;
         block-size: 0;
-        transition-property: block-size;
-        transition-duration: calc(var(--tp-duration-normal) * var(--tp-motion-scale));
-        transition-timing-function: var(--tp-easing-standard);
+        transition: ${transitionCss(['block-size'])};
       }
 
       [part~='collapsible-content'][data-state='open'] {

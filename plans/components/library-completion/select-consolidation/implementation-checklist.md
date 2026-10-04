@@ -100,3 +100,11 @@ Active full scope; no completion claim.
 ## Reconciled execution status — 2026-10-04
 
 Implementation and documentation for this workstream are delivered. The scenario table above supersedes earlier prospective statements below/above that say implementation or final checks are pending. Required unavailable browser/runtime evidence remains explicitly blocked; no full conformance claim is made. See [final verification results](../verification-results.md) for shared fixes, commands, package evidence and tool boundaries.
+
+### 2026-10-04 scroll-arrow corrective review
+
+Fresh direct Foundation sec-154-select and Library ucl18-select reread. Base UI SelectPositioner separates aligned-item geometry from transient highlight; SelectScrollArrow owns repeat scrolling. Existing owners remain TpSelect, collection, Presence and positionSurface. No new API, tokens, or positioning owner. Reproduced on Large List through Chrome76: opening y434.203125, hovering real down-arrow y486; clearing activeIndex causes alignSelectedItem to return before applying its cached opening offset. Repair plan: require an item only to establish alignment, preserve the cached offset during scrolling, retain collision clamping. C-01/C-12 and V-01/V-06 reopened for this defect; prior passes do not cover arrow hover. Verify actual up/down hover, appearance/disappearance, keyboard after scroll, and nonaligned mode. No change to repeat scrolling or shared popup lifecycle is needed.
+
+Corrective early integration passed: the same Large List actual down-arrow hover scrolls0→2584 while popup y remains434.203125 and height386 in every frame. Previously y jumped to486. Existing collection/Presence/positionSurface remain owners, only cached alignment guard changed. Theme geometry and public modes preserved. I-01/I-02 pass for this repair; broader option checks follow.
+
+Corrective verification: actual up-arrow hover retains y434.203125/height386 while scrolling back to424.5; End reaches Country100 at scroll3008.5 with unchanged popup y; Escape closes. Nonaligned public mode retains y486 before/after scrollTop500 and updatePosition. Source TypeScript/ESLint and production/Storybook builds pass. No new spacing constants or unit suite. Reopened arrow-position scenario resolved; whole-library goal remains active.

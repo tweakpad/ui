@@ -4,7 +4,26 @@ Tweakpad components provide CSS motion by default and publish semantic hooks for
 
 ## Default CSS motion
 
-Default transitions use `--tp-duration-fast`, `--tp-duration-normal`, and `--tp-easing-standard`. Their effective duration is multiplied by the inherited motion scale. Ambient animations use the inherited play state. Default timing curves are declared only in the root token set; component transition declarations consume the semantic easing token without restating its curve or supplying a local fallback.
+Default motion is constructed in one shared presentation module. Feedback (color,
+track and thumb changes) uses `--tp-duration-fast`; surfaces, panel movement and
+layout changes use `--tp-duration-normal`. Every finite transition multiplies its
+duration by `--tp-motion-scale` and uses `--tp-easing-standard`. Focus rings appear
+immediately. Component recipes list the properties they animate; none use
+`transition: all`.
+
+Menu, Popover, Preview Card, Tooltip, Navigation Menu popup and ordinary Select
+popup share opacity, scale and side-relative entry/exit. Select's inline and
+item-aligned layouts preserve their anchoring geometry. Drawer and Side Panel
+slide from their attached viewport edge; their backdrop fades independently.
+Dialog and Alert Dialog use the same backdrop exit lifetime instead of closing
+it instantly. Existing semantic motion roles remain the driver boundary.
+
+Spinner and indeterminate Progress share a continuous activity cadence derived
+from the normal duration; Skeleton placeholders use twice that period. Rotation
+and sweep remain linear, while pulse and progress use the standard easing.
+All ambient motion observes the inherited play state. Gesture-driven surfaces
+remain directly coupled to the pointer, then derive release timing from their
+published strength and the same normal duration.
 
 Set `motion-policy="reduce"` on any Tweakpad component or ancestor Tweakpad component to suppress nonessential motion in that subtree. `motion-policy="normal"` opts a subtree back into normal motion. `inherit` is the property default. When no explicit boundary applies, `prefers-reduced-motion` supplies the policy.
 

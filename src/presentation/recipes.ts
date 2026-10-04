@@ -1,3 +1,4 @@
+import { motionTransition } from './motion.js';
 import { listItemAppearance } from './recipes/list-item.js';
 import { dataVisualizationAppearance } from './recipes/data-visualization.js';
 import { questionnaireAppearance } from './recipes/questionnaire.js';
@@ -396,7 +397,10 @@ export const componentAppearance: PresentationDictionary = {
         'font-size': 'var(--tp-text-sm)',
       },
     },
-    { selector: '&[data-controls]', declarations: { padding: '0' } },
+    {
+      selector: '&[data-controls]',
+      declarations: { padding: '0', 'border-radius': 'var(--tp-radius-lg)' },
+    },
   ],
   'button-group': [
     {
@@ -667,7 +671,7 @@ export const componentAppearance: PresentationDictionary = {
       declarations: {
         color: 'inherit',
         'text-decoration': 'none',
-        transition: 'color var(--tp-duration-fast) var(--tp-easing-standard)',
+        transition: motionTransition(['color'], 'fast'),
       },
     },
     { selector: '&:hover', declarations: { color: 'var(--tp-foreground)' } },

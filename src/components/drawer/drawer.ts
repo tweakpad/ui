@@ -152,9 +152,6 @@ export class TpDrawer extends TpDialog {
   protected override get surfacePartName(): string {
     return 'surface';
   }
-  protected override get animateDefaultExit(): boolean {
-    return true;
-  }
   protected override get previewPresent(): boolean {
     return this.#output.swiping && this.#output.opening;
   }

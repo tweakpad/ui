@@ -1,3 +1,4 @@
+import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 /** Base/Nova scroll anatomy; thickness, padding, radius and motion share theme roles. */
 export const scrollAreaAppearance: PresentationDictionary = {
@@ -16,8 +17,7 @@ export const scrollAreaAppearance: PresentationDictionary = {
     {
       declarations: {
         padding: 'calc(var(--tp-spacing) / 4)',
-        transition:
-          'opacity calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['opacity'], 'fast'),
       },
     },
     {

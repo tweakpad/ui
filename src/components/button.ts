@@ -1,3 +1,4 @@
+import { transitionCss } from '../presentation/motion.js';
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
@@ -49,12 +50,7 @@ export class TpButton extends TpElement {
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition:
-          color calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard),
-          background-color calc(var(--tp-duration-fast) * var(--tp-motion-scale))
-            var(--tp-easing-standard),
-          border-color calc(var(--tp-duration-fast) * var(--tp-motion-scale))
-            var(--tp-easing-standard);
+        transition: ${transitionCss(['color', 'background-color', 'border-color'], 'fast')};
       }
 
       .control[aria-disabled='true'] {

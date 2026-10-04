@@ -1,11 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { attachmentExamples } from './attachment.examples.js';
 import { html } from 'lit';
-import { ref } from 'lit/directives/ref.js';
 import documentation from '../../docs/attachment.md?raw';
 import { navigationIcons } from '../icons/navigation.js';
 import type { AttachmentStatus } from '../components/attachment/index.js';
-import type { TpDialog } from '../components/dialog/index.js';
 interface Args {
   filename: string;
   description: string;
@@ -38,17 +36,7 @@ const meta = {
     docs: {
       description: { component: documentation },
       source: { code: source, language: 'javascript' },
-      examples: [
-        ...attachmentExamples,
-        {
-          title: 'Preview trigger',
-          render: () => Preview.render(),
-          get code() {
-            return Preview.parameters.docs.source.code;
-          },
-          language: 'javascript',
-        },
-      ],
+      examples: attachmentExamples,
     },
   },
   args: {
@@ -79,70 +67,9 @@ const meta = {
       .orientation=${args.orientation}
       .removable=${args.removable}
       .disabled=${args.disabled}
-      ><tp-icon
-        slot="media"
-        .icon=${navigationIcons.folder}
-        size="var(--tp-icon-size-sm)"
-        aria-hidden="true"
-      ></tp-icon
+      ><tp-icon slot="media" .icon=${navigationIcons.folder} aria-hidden="true"></tp-icon
     ></tp-attachment>`,
 } satisfies Meta<Args>;
 export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
-const Preview = {
-  parameters: {
-    controls: { disable: true },
-    docs: {
-      source: {
-        code: `const attachment = document.createElement('tp-attachment');
-attachment.filename = 'research-summary.pdf';
-attachment.description = 'Open preview';
-attachment.status = 'complete';
-const trigger = document.createElement('tp-button');
-trigger.slot = 'trigger';
-trigger.ariaLabel = 'Preview research summary';
-attachment.append(trigger);
-const dialog = document.createElement('tp-dialog');
-dialog.label = 'Research summary';
-dialog.description = 'Attachment preview';
-dialog.textContent = 'The document is ready for review.';
-document.body.append(attachment, dialog);
-const release = dialog.registerTrigger(trigger);
-// Call release() when removing this composition.`,
-      },
-    },
-  },
-  render: () => {
-    let trigger: HTMLElement | undefined,
-      dialog: TpDialog | undefined,
-      release: (() => void) | undefined;
-    const bind = () => {
-      release?.();
-      release = trigger && dialog ? dialog.registerTrigger(trigger) : undefined;
-    };
-    return html`<tp-attachment
-        filename="research-summary.pdf"
-        description="Open preview"
-        status="complete"
-        removable
-        ><tp-icon slot="media" .icon=${navigationIcons.folder} aria-hidden="true"></tp-icon
-        ><tp-button
-          slot="trigger"
-          aria-label="Preview research summary"
-          ${ref((element) => {
-            trigger = element as HTMLElement | undefined;
-            bind();
-          })}
-        ></tp-button></tp-attachment
-      ><tp-dialog
-        label="Research summary"
-        description="Attachment preview"
-        ${ref((element) => {
-          dialog = element as TpDialog | undefined;
-          bind();
-        })}
-        >The document is ready for review.</tp-dialog
-      >`;
-  },
-};

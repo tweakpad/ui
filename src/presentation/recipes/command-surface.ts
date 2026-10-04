@@ -1,3 +1,4 @@
+import { motionTransition } from '../motion.js';
 import type { PresentationRule } from '../resolver.js';
 
 /** One default inset for command, navigation and selection popup surfaces. */
@@ -26,8 +27,7 @@ export const anchoredPresenceAppearance: readonly PresentationRule[] = [
     declarations: {
       opacity: '1',
       transform: 'scale(1) translate(0, 0)',
-      transition:
-        'opacity calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard), transform calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+      transition: motionTransition(['opacity', 'transform']),
     },
   },
   {

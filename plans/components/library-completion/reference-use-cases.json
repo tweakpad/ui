@@ -177,22 +177,22 @@
           "title": "Files",
           "symbol": "AttachmentFiles",
           "line": 49,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
-            "implementation": "src/stories/attachment.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "implementation": "src/stories/attachment.examples.ts + attachment-example.js",
+            "reviewRecord": "plans/components/library-completion/attachment/implementation-checklist.md",
+            "verification": "2026-10-04 Chrome76: all eight groups share rendered/copied markup and setup. Horizontal/vertical files/images/states, content-only and links, three densities, mixed scrolling groups, actual retry/remove/restore/preview/copy-link verified. Narrow scoped dark RTL, theme scale, code explorer Copied and axe0. Built package vertical media24px and shared200ms feedback. Distinct source compositions reconciled; app-owned actions and actual public controls preserved."
           }
         },
         {
           "title": "Content Only",
           "symbol": "AttachmentContentOnly",
           "line": 278,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
-            "implementation": "src/stories/attachment.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "implementation": "src/stories/attachment.examples.ts + attachment-example.js",
+            "reviewRecord": "plans/components/library-completion/attachment/implementation-checklist.md",
+            "verification": "2026-10-04 Chrome76: all eight groups share rendered/copied markup and setup. Horizontal/vertical files/images/states, content-only and links, three densities, mixed scrolling groups, actual retry/remove/restore/preview/copy-link verified. Narrow scoped dark RTL, theme scale, code explorer Copied and axe0. Built package vertical media24px and shared200ms feedback. Distinct source compositions reconciled; app-owned actions and actual public controls preserved."
           }
         },
         {
@@ -201,20 +201,20 @@
           "line": 398,
           "status": "pending",
           "localEvidence": {
-            "implementation": "src/stories/attachment.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "implementation": "src/stories/attachment.examples.ts + attachment-example.js",
+            "reviewRecord": "plans/components/library-completion/attachment/implementation-checklist.md",
+            "verification": "2026-10-04 Chrome76: all eight groups share rendered/copied markup and setup. Horizontal/vertical files/images/states, content-only and links, three densities, mixed scrolling groups, actual retry/remove/restore/preview/copy-link verified. Narrow scoped dark RTL, theme scale, code explorer Copied and axe0. Built package vertical media24px and shared200ms feedback. Busy-title shimmer remains an explicit shared Marker/Attachment motion-contract gap; no complete source-case claim."
           }
         },
         {
           "title": "Images",
           "symbol": "AttachmentImages",
           "line": 687,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
-            "implementation": "src/stories/attachment.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "implementation": "src/stories/attachment.examples.ts + attachment-example.js",
+            "reviewRecord": "plans/components/library-completion/attachment/implementation-checklist.md",
+            "verification": "2026-10-04 Chrome76: all eight groups share rendered/copied markup and setup. Horizontal/vertical files/images/states, content-only and links, three densities, mixed scrolling groups, actual retry/remove/restore/preview/copy-link verified. Narrow scoped dark RTL, theme scale, code explorer Copied and axe0. Built package vertical media24px and shared200ms feedback. Distinct source compositions reconciled; app-owned actions and actual public controls preserved."
           }
         },
         {
@@ -223,42 +223,42 @@
           "line": 972,
           "status": "pending",
           "localEvidence": {
-            "implementation": "src/stories/attachment.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "implementation": "src/stories/attachment.examples.ts + attachment-example.js",
+            "reviewRecord": "plans/components/library-completion/attachment/implementation-checklist.md",
+            "verification": "2026-10-04 Chrome76: all eight groups share rendered/copied markup and setup. Horizontal/vertical files/images/states, content-only and links, three densities, mixed scrolling groups, actual retry/remove/restore/preview/copy-link verified. Narrow scoped dark RTL, theme scale, code explorer Copied and axe0. Built package vertical media24px and shared200ms feedback. Busy-title shimmer remains an explicit shared Marker/Attachment motion-contract gap; no complete source-case claim."
           }
         },
         {
           "title": "Sizes",
           "symbol": "AttachmentSizes",
           "line": 1241,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
-            "implementation": "src/stories/attachment.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "implementation": "src/stories/attachment.examples.ts + attachment-example.js",
+            "reviewRecord": "plans/components/library-completion/attachment/implementation-checklist.md",
+            "verification": "2026-10-04 Chrome76: all eight groups share rendered/copied markup and setup. Horizontal/vertical files/images/states, content-only and links, three densities, mixed scrolling groups, actual retry/remove/restore/preview/copy-link verified. Narrow scoped dark RTL, theme scale, code explorer Copied and axe0. Built package vertical media24px and shared200ms feedback. Distinct source compositions reconciled; app-owned actions and actual public controls preserved."
           }
         },
         {
           "title": "Scrollable Group",
           "symbol": "AttachmentScrollableGroup",
           "line": 1292,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
-            "implementation": "src/stories/attachment.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "implementation": "src/stories/attachment.examples.ts + attachment-example.js",
+            "reviewRecord": "plans/components/library-completion/attachment/implementation-checklist.md",
+            "verification": "2026-10-04 Chrome76: all eight groups share rendered/copied markup and setup. Horizontal/vertical files/images/states, content-only and links, three densities, mixed scrolling groups, actual retry/remove/restore/preview/copy-link verified. Narrow scoped dark RTL, theme scale, code explorer Copied and axe0. Built package vertical media24px and shared200ms feedback. Distinct source compositions reconciled; app-owned actions and actual public controls preserved."
           }
         },
         {
           "title": "Triggers",
           "symbol": "AttachmentTriggers",
           "line": 1530,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
-            "implementation": "src/stories/attachment.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "implementation": "src/stories/attachment.examples.ts + attachment-example.js",
+            "reviewRecord": "plans/components/library-completion/attachment/implementation-checklist.md",
+            "verification": "2026-10-04 Chrome76: all eight groups share rendered/copied markup and setup. Horizontal/vertical files/images/states, content-only and links, three densities, mixed scrolling groups, actual retry/remove/restore/preview/copy-link verified. Narrow scoped dark RTL, theme scale, code explorer Copied and axe0. Built package vertical media24px and shared200ms feedback. Distinct source compositions reconciled; app-owned actions and actual public controls preserved."
           }
         }
       ]

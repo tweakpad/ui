@@ -1,5 +1,6 @@
 import type { PresentationDictionary } from '../resolver.js';
 import {
+  anchoredPresenceAppearance,
   popupSpacingAppearance,
   popupItemSpacingAppearance,
   commandSeparatorAppearance,
@@ -99,6 +100,10 @@ export const selectAppearance: PresentationDictionary = {
   })),
   'select-value': [{ declarations: { gap: 'calc(var(--tp-spacing) * 1.5)' } }],
   'select-content': [
+    ...anchoredPresenceAppearance.map((rule) => ({
+      ...rule,
+      selector: (rule.selector ?? '&').replaceAll('&', '&:not([data-inline], [data-align-item])'),
+    })),
     {
       selector: '&[data-inline]',
       declarations: {
@@ -106,7 +111,6 @@ export const selectAppearance: PresentationDictionary = {
         'box-shadow': 'none',
         background: 'transparent',
         'min-inline-size': '0',
-        scale: '1',
         opacity: '1',
       },
     },
@@ -118,15 +122,8 @@ export const selectAppearance: PresentationDictionary = {
         'border-radius': 'var(--tp-radius-lg)',
         'min-inline-size': 'max(var(--tp-anchor-width, 0px), calc(var(--tp-spacing) * 36))',
         opacity: '1',
-        scale: '1',
         'transform-origin': 'var(--tp-transform-origin)',
-        transition:
-          'opacity calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard), scale calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard)',
       },
-    },
-    {
-      selector: '&:is([data-starting-style], [data-ending-style]):not([data-align-item])',
-      declarations: { opacity: '0', scale: '.95' },
     },
     { selector: '&[data-tp-motion-driven]', declarations: { transition: 'none' } },
     { selector: '& .select-item-text', declarations: { gap: 'calc(var(--tp-spacing) * 1.5)' } },

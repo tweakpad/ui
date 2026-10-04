@@ -1,3 +1,4 @@
+import { ambientAnimation, motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 
 /** shadcn base registry + Nova selectors947–965; invariant containment lives in TpProgress. */
@@ -35,15 +36,17 @@ export const progressAppearance: PresentationDictionary = {
     {
       declarations: {
         background: 'var(--tp-primary)',
-        transition:
-          'inline-size calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['inline-size']),
       },
     },
     {
       selector: '&[data-indeterminate]',
       declarations: {
-        animation:
-          'tp-progress-indeterminate calc(var(--tp-duration-normal) * 4) var(--tp-easing-standard) infinite',
+        animation: ambientAnimation(
+          'tp-progress-indeterminate',
+          'continuous',
+          'var(--tp-easing-standard)',
+        ),
         'animation-play-state': 'var(--tp-motion-play-state, running)',
       },
     },

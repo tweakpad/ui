@@ -89,19 +89,19 @@ export const anchoredArrowStyles = css`
   }
 
   :is(.arrow, .select-arrow)[data-side='top'] {
-    top: 100%;
+    top: calc(100% - var(--tp-border-width));
   }
 
   :is(.arrow, .select-arrow)[data-side='bottom'] {
-    bottom: 100%;
+    bottom: calc(100% - var(--tp-border-width));
   }
 
   :is(.arrow, .select-arrow)[data-side='left'] {
-    left: 100%;
+    left: calc(100% - var(--tp-border-width));
   }
 
   :is(.arrow, .select-arrow)[data-side='right'] {
-    right: 100%;
+    right: calc(100% - var(--tp-border-width));
   }
 
   :is(.arrow, .select-arrow)[data-side='bottom'] svg {

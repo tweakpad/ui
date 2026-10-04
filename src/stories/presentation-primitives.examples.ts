@@ -8,14 +8,16 @@ export interface BubbleArgs {
   label: string;
 }
 export const bubbleDefaults: BubbleArgs = {
-  variant: 'secondary',
+  variant: 'default',
   align: 'end',
   reactionSide: 'block-end',
   reactionsAlign: 'end',
   label: 'Reply',
 };
 export function renderBubbleExample(args: BubbleArgs = bubbleDefaults) {
-  return html`<tp-bubble-group>
+  return html`<tp-bubble-group
+    style="inline-size:100%;max-inline-size:calc(var(--tp-spacing) * 140);margin-inline:auto;padding-block:var(--tp-space-6)"
+  >
     <tp-bubble label="Question">Can you send the updated design?</tp-bubble>
     <tp-bubble
       .variant=${args.variant}
@@ -25,13 +27,7 @@ export function renderBubbleExample(args: BubbleArgs = bubbleDefaults) {
       .label=${args.label}
     >
       The updated design is ready for review.
-      <tp-button
-        slot="reactions"
-        size="xs"
-        variant="secondary"
-        aria-label="Like this message; 2 likes"
-        >Like · 2</tp-button
-      >
+      <span slot="reactions" role="img" aria-label="2 thumbs-up reactions">👍 2</span>
     </tp-bubble>
   </tp-bubble-group>`;
 }

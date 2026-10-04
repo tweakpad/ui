@@ -1,3 +1,4 @@
+import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 const invalidPaint = {
   'border-color':
@@ -14,8 +15,7 @@ export const switchAppearance: PresentationDictionary = {
           'light-dark(var(--tp-input), color-mix(in oklab, var(--tp-input) 80%, transparent))',
         border: 'var(--tp-border-width) var(--tp-border-style) transparent',
         'border-radius': 'var(--tp-radius-full)',
-        transition:
-          'background-color calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['background-color'], 'fast'),
       },
     },
     { selector: '&[data-checked]', declarations: { background: 'var(--tp-primary)' } },
@@ -49,8 +49,7 @@ export const switchAppearance: PresentationDictionary = {
       declarations: {
         background: 'light-dark(var(--tp-background), var(--tp-foreground))',
         'border-radius': 'var(--tp-radius-full)',
-        transition:
-          'transform calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['transform'], 'fast'),
       },
     },
     {

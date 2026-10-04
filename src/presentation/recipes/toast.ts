@@ -1,3 +1,4 @@
+import { motionDuration, motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 
 /** Shadcn base Toast and Nova paint; shared surface contribution supplies popover colors. */
@@ -12,8 +13,7 @@ export const toastAppearance: PresentationDictionary = {
         'block-size': 'var(--tp-toast-frontmost-height, var(--tp-toast-height))',
         transform:
           'translateX(var(--tp-toast-swipe-movement-x)) translateY(calc(var(--tp-toast-swipe-movement-y) + var(--tp-toast-stack-sign) * var(--tp-toast-index) * var(--tp-space-3))) scale(max(0, calc(1 - var(--tp-toast-index) * 0.1)))',
-        transition:
-          'transform calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard), opacity calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard), block-size calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['transform', 'opacity', 'block-size']),
       },
     },
     {
@@ -49,6 +49,15 @@ export const toastAppearance: PresentationDictionary = {
       selector: '&[data-ending-style][data-swipe-direction="down"]:not([data-tp-motion-driven])',
       declarations: { transform: 'translateY(150%)' },
     },
+    {
+      selector: '&[data-ending-style][data-swipe-direction]',
+      declarations: {
+        'transition-duration': motionDuration(
+          'normal',
+          'max(.1, calc(1 - var(--tp-swipe-strength, 0)))',
+        ),
+      },
+    },
     { selector: '&[data-tp-motion-driven]', declarations: { transition: 'none' } },
     {
       selector: '&:focus-visible',
@@ -66,8 +75,7 @@ export const toastAppearance: PresentationDictionary = {
         gap: 'var(--tp-space-3)',
         'border-radius': 'inherit',
         opacity: '1',
-        transition:
-          'opacity calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['opacity'], 'fast'),
       },
     },
     { selector: '&[data-behind]:not([data-expanded])', declarations: { opacity: '0' } },

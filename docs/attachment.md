@@ -6,36 +6,36 @@ presentation. `tp-attachment-group` arranges attachments in a native, horizontal
 scrollable group with snap alignment.
 
 All surfaces, density, media, spacing and radii use the library theme. Actions are
-real Button controls. Busy states use Spinner. A trigger is a sibling of the
+real Button controls. Busy states without authored media use Spinner; supplied marks and thumbnails remain visible. A trigger is a sibling of the
 independent actions; activating Remove or Download cannot bubble into the trigger.
 
 ## Properties
 
-| Property / attribute | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `filename` | string | `''` | Resource title and generated action names. Supply a meaningful name. |
-| `description` | string | `''` | Type, size, status or other detail. |
-| `fileSize` / `file-size` | number | `0` | Optional byte count; formatted when no description is supplied. |
-| `status` | `idle`, `uploading`, `processing`, `error`, `complete` | `idle` | Application-owned status. Idle has a dashed border; busy states show Spinner; error exposes explanatory text. |
-| `errorMessage` / `error-message` | string | `''` | Error/recovery explanation. Falls back to description, then “This attachment could not be processed.” |
-| `size` | `xs`, `sm`, `default` | `default` | Theme-proportional density. |
-| `orientation` | `horizontal`, `vertical` | `horizontal` | File row or image card arrangement. |
-| `mediaTreatment` / `media-treatment` | `mark`, `image` | `mark` | File mark or image presentation. Media remains optional. |
-| `href`, `target` | string | `''` | Optional generated native link through Button. An authored trigger takes precedence. |
-| `removable` | boolean | `false` | Adds the standard Remove Button. |
-| `disabled` | boolean | `false` | Disables generated link/remove controls. Author-supplied controls retain their own disabled policy. |
+| Property / attribute                 | Type                                                   | Default      | Meaning                                                                                                                              |
+| ------------------------------------ | ------------------------------------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `filename`                           | string                                                 | `''`         | Resource title and generated action names. Supply a meaningful name.                                                                 |
+| `description`                        | string                                                 | `''`         | Type, size, status or other detail.                                                                                                  |
+| `fileSize` / `file-size`             | number                                                 | `0`          | Optional byte count; formatted when no description is supplied.                                                                      |
+| `status`                             | `idle`, `uploading`, `processing`, `error`, `complete` | `idle`       | Application-owned status. Idle has a dashed border; busy states without authored media show Spinner; error exposes explanatory text. |
+| `errorMessage` / `error-message`     | string                                                 | `''`         | Error/recovery explanation. Falls back to description, then “This attachment could not be processed.”                                |
+| `size`                               | `xs`, `sm`, `default`                                  | `default`    | Theme-proportional density.                                                                                                          |
+| `orientation`                        | `horizontal`, `vertical`                               | `horizontal` | File row or image card arrangement.                                                                                                  |
+| `mediaTreatment` / `media-treatment` | `mark`, `image`                                        | `mark`       | File mark or image presentation. Media remains optional.                                                                             |
+| `href`, `target`                     | string                                                 | `''`         | Optional generated native link through Button. An authored trigger takes precedence.                                                 |
+| `removable`                          | boolean                                                | `false`      | Adds the standard Remove Button.                                                                                                     |
+| `disabled`                           | boolean                                                | `false`      | Disables generated link/remove controls. Author-supplied controls retain their own disabled policy.                                  |
 
 ## Composition
 
-| Slot | Role |
-| --- | --- |
-| `media` | Icon or image; omitted without content. Busy states temporarily show Spinner in this region. |
-| `preview` | Compatibility alias for media when no `media` node is supplied. |
-| `title` | Resource title; falls back to `filename`. Keep `filename` for generated action names. |
-| `description` | Description/status content; must explain failure or recovery for error status. |
-| default | Additional ordinary resource content. |
-| `actions` | Independent public Buttons; configure variants and names on each Button. |
-| `trigger` | Optional public Button (including Button `href` for links). Can be registered with Dialog via its public trigger API. |
+| Slot          | Role                                                                                                                  |
+| ------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `media`       | Icon or image; omitted without content. Busy states supply Spinner only when no media is authored.                    |
+| `preview`     | Compatibility alias for media when no `media` node is supplied.                                                       |
+| `title`       | Resource title; falls back to `filename`. Keep `filename` for generated action names.                                 |
+| `description` | Description/status content; must explain failure or recovery for error status.                                        |
+| default       | Additional ordinary resource content.                                                                                 |
+| `actions`     | Independent public Buttons; configure variants and names on each Button.                                              |
+| `trigger`     | Optional public Button (including Button `href` for links). Can be registered with Dialog via its public trigger API. |
 
 `tp-attachment-group` accepts attachments in its default slot and an optional
 `aria-label`. The group is keyboard focusable for native scrolling; child links and

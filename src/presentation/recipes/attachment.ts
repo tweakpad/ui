@@ -1,4 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { motionTransition } from '../motion.js';
 /** Base Attachment + Nova cn-attachment-* mapped to shared theme roles. */
 export const attachmentAppearance: PresentationDictionary = {
   attachment: [
@@ -22,6 +23,7 @@ export const attachmentAppearance: PresentationDictionary = {
         color: 'var(--tp-card-foreground)',
         'box-shadow': 'none',
         'font-size': 'var(--tp-text-sm)',
+        transition: motionTransition(['background-color', 'border-color'], 'fast'),
       },
     },
     {
@@ -101,6 +103,16 @@ export const attachmentAppearance: PresentationDictionary = {
       declarations: { 'inline-size': 'calc(var(--tp-spacing) * 7)' },
     },
     { selector: ":host([orientation='vertical']) &", declarations: { 'inline-size': '100%' } },
+    {
+      selector:
+        ":host([orientation='vertical']) & ::slotted(tp-icon), :host([orientation='vertical']) & > tp-spinner",
+      declarations: {
+        'min-inline-size': 'var(--tp-icon-size-lg)',
+        'max-inline-size': 'var(--tp-icon-size-lg)',
+        'min-block-size': 'var(--tp-icon-size-lg)',
+        'max-block-size': 'var(--tp-icon-size-lg)',
+      },
+    },
     {
       selector: ":host([status='error']) &",
       declarations: {

@@ -108,9 +108,6 @@ export class TpSidePanel extends TpDialog {
   protected override get partPrefix(): string {
     return 'side-panel';
   }
-  protected override get animateDefaultExit(): boolean {
-    return true;
-  }
   protected override motionTargets() {
     return [
       ...super.motionTargets(),

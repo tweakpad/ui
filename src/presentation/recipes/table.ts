@@ -1,3 +1,4 @@
+import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 const cells = [
   {
@@ -55,8 +56,7 @@ export const tableAppearance: PresentationDictionary = {
     {
       declarations: {
         background: 'inherit',
-        transition:
-          'background-color calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['background-color'], 'fast'),
       },
     },
     {

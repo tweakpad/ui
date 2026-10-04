@@ -1218,23 +1218,27 @@ export class TpSelect extends TpFormElement<unknown> {
       !this.#list
     )
       return;
-    const item = this.#collection.element(
-      this.#collection.source.find((record) => this.#selected(record.value)) ??
-        this.#collection.highlighted,
-    );
-    if (!item) return;
     const trigger = this.#trigger.getBoundingClientRect(),
-      content = this.#content.getBoundingClientRect(),
-      option = item.getBoundingClientRect();
+      content = this.#content.getBoundingClientRect();
     const view = this.ownerDocument.defaultView!;
     const padding =
       typeof this.collisionPadding === 'number'
         ? this.collisionPadding
         : (this.collisionPadding.top ?? themeSpacing(this, 3));
-    if (content.height > view.innerHeight - padding * 2 || option.height > trigger.height * 2)
-      return;
+    if (content.height > view.innerHeight - padding * 2) return;
     const initialAlignment = this.#alignedItemOffset === undefined;
-    this.#alignedItemOffset ??= option.top - content.top + option.height / 2;
+    if (this.#alignedItemOffset === undefined) {
+      const item = this.#collection.element(
+        this.#collection.source.find((record) => this.#selected(record.value)) ??
+          this.#collection.highlighted,
+      );
+      if (!item) return;
+      const option = item.getBoundingClientRect();
+      if (option.height > trigger.height * 2) return;
+      this.#alignedItemOffset = option.top - content.top + option.height / 2;
+    }
+    // Scroll arrows intentionally clear the highlight. The established opening
+    // alignment belongs to the popup lifecycle, not to that transient highlight.
     const desired = trigger.top + trigger.height / 2 - this.#alignedItemOffset;
     const top = Math.max(padding, Math.min(view.innerHeight - padding - content.height, desired));
     const delta = top - content.top;

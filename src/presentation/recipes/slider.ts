@@ -1,3 +1,4 @@
+import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 
 // shadcn Base slider.tsx → style-nova.css .cn-slider*; geometry belongs to the family.
@@ -28,8 +29,7 @@ export const sliderAppearance: PresentationDictionary = {
         border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-ring)',
         'border-radius': 'var(--tp-radius-full)',
         background: 'var(--tp-background)',
-        transition:
-          'box-shadow calc(var(--tp-duration-fast) * var(--tp-motion-scale, 1)) var(--tp-easing-standard), border-color calc(var(--tp-duration-fast) * var(--tp-motion-scale, 1)) var(--tp-easing-standard)',
+        transition: motionTransition(['border-color'], 'fast'),
       },
     },
     {

@@ -1,3 +1,4 @@
+import { ambientCss, transitionCss } from '../presentation/motion.js';
 import { bindPart } from '../foundation/part.js';
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
@@ -54,8 +55,7 @@ export class TpCarousel extends TpElement {
 
       .track {
         display: flex;
-        transition: transform calc(var(--tp-duration-normal) * var(--tp-motion-scale))
-          var(--tp-easing-standard);
+        transition: ${transitionCss(['transform'])};
         transform: translateX(calc(var(--tp-carousel-index, 0) * -100%));
       }
 
@@ -312,7 +312,7 @@ export class TpSpinner extends TpElement {
     css`
       :host {
         display: inline-block;
-        animation: spin calc(var(--tp-duration-fast) * 5) linear infinite;
+        animation: ${ambientCss('spin')};
         animation-play-state: var(--tp-motion-play-state, running);
       }
 

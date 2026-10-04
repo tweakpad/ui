@@ -264,9 +264,6 @@ export class TpDialog extends TpElement {
   protected get contentElement(): HTMLElement | null {
     return this.#content;
   }
-  protected get animateDefaultExit(): boolean {
-    return false;
-  }
   protected motionTargets(): Array<{ target: HTMLElement | null; role: MotionRoleDefinition }> {
     return [
       { target: this.surfaceRoot.querySelector('.overlay'), role: dialogMotionRoles.backdrop },
@@ -1100,14 +1097,6 @@ export class TpDialog extends TpElement {
           toState: this.open ? 'open' : 'closed',
         }),
       );
-      if (
-        state === 'ending' &&
-        !this.animateDefaultExit &&
-        !this.#motion.some((motion) => motion.claimed)
-      ) {
-        this.#presence.completeExit();
-        return;
-      }
     }
     if (state === 'open' || state === 'ending') {
       for (const motion of this.#motion) {

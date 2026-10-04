@@ -1,36 +1,21 @@
+import { edgeSurfaceAppearance } from './edge-surface.js';
+import { motionDuration, motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 export const drawerAppearance: PresentationDictionary = {
   'drawer-surface': [
+    ...edgeSurfaceAppearance({
+      bottom: '&[data-swipe-direction="down"]',
+      top: '&[data-swipe-direction="up"]',
+      left: '&[data-swipe-direction="left"]',
+      right: '&[data-swipe-direction="right"]',
+    }),
     {
       declarations: {
-        'border-radius': '0',
-        border: '0',
-        transition:
-          'transform calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['transform']),
       },
     },
     ...(['down', 'up', 'left', 'right'] as const).flatMap((direction) => {
-      const edge = ({ down: 'top', up: 'bottom', left: 'right', right: 'left' } as const)[
-        direction
-      ];
-      const corners = (
-        {
-          down: ['top-left', 'top-right'],
-          up: ['bottom-left', 'bottom-right'],
-          left: ['top-right', 'bottom-right'],
-          right: ['top-left', 'bottom-left'],
-        } as const
-      )[direction];
       return [
-        {
-          selector: `&[data-swipe-direction="${direction}"]`,
-          declarations: {
-            [`border-${edge}`]: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-            ...Object.fromEntries(
-              corners.map((corner) => [`border-${corner}-radius`, 'var(--tp-radius-xl)']),
-            ),
-          },
-        },
         {
           selector: `&[data-swipe-direction="${direction}"]:is([data-starting-style]:not([data-opening-swipe]),[data-ending-style])`,
           declarations: {
@@ -56,13 +41,27 @@ export const drawerAppearance: PresentationDictionary = {
         },
       };
     }),
+    {
+      selector: '&[data-ending-style][data-swipe-dismiss]',
+      declarations: {
+        'transition-duration': motionDuration('normal', 'var(--drawer-swipe-strength, 1)'),
+      },
+    },
     { selector: '&[data-swiping], &[data-tp-motion-driven]', declarations: { transition: 'none' } },
+  ],
+  'drawer-overlay': [
+    {
+      selector: '&[data-ending-style][data-swipe-dismiss]',
+      declarations: {
+        'transition-duration': motionDuration('normal', 'var(--drawer-swipe-strength, 1)'),
+      },
+    },
+    { selector: '&[data-swiping]', declarations: { transition: 'none' } },
   ],
   'drawer-content': [
     {
       declarations: {
-        transition:
-          'opacity calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['opacity']),
       },
     },
     { selector: '[data-nested-drawer-open] > &', declarations: { opacity: '0' } },

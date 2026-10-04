@@ -1,3 +1,4 @@
+import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 import { nativeChoiceAppearance } from './selection-controls.js';
 import { textControlAppearance } from './text-controls.js';
@@ -43,7 +44,7 @@ export const questionnaireAppearance: PresentationDictionary = {
         'border-radius': 'var(--tp-radius-lg)',
         'font-size': 'var(--tp-text-sm)',
         background: 'light-dark(transparent,color-mix(in oklab,var(--tp-input) 20%,transparent))',
-        transition: 'background-color var(--tp-duration-fast) var(--tp-easing-standard)',
+        transition: motionTransition(['background-color'], 'fast'),
       },
     },
     {

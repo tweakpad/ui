@@ -1,3 +1,4 @@
+import { motionTransition } from './motion.js';
 import type { PresentationDictionary, PresentationRule } from './resolver.js';
 import { componentDefinitions } from './components.js';
 import { componentAppearance } from './recipes.js';
@@ -81,8 +82,7 @@ export function variantPresentation(
             content: "''",
             opacity: '0',
             'pointer-events': 'none',
-            transition:
-              'opacity calc(var(--tp-duration-fast) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+            transition: motionTransition(['opacity'], 'fast'),
           },
           '&::before',
         ),
@@ -331,13 +331,9 @@ for (const prefix of ['dialog', 'alert-dialog', 'drawer', 'side-panel']) {
       background:
         'color-mix(in srgb, light-dark(var(--tp-foreground), var(--tp-background)) calc(var(--tp-opacity-backdrop) * 100%), transparent)',
       opacity: '1',
-      transition:
-        'opacity calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+      transition: motionTransition(['opacity']),
     }),
     rule({ opacity: '0' }, '&:is([data-starting-style], [data-ending-style])'),
-    ...(prefix === 'dialog' || prefix === 'alert-dialog'
-      ? [rule({ transition: 'none' }, '&[data-ending-style]')]
-      : []),
     rule({ transition: 'none' }, '&[data-tp-motion-driven]'),
   ];
 }

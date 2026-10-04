@@ -1,3 +1,4 @@
+import { motionTransition } from '../motion.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import {
   anchoredPresenceAppearance,
@@ -69,8 +70,7 @@ export const navigationMenuAppearance: PresentationDictionary = {
         'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
-        transition:
-          'background-color calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['background-color'], 'fast'),
       },
     },
     {
@@ -84,8 +84,7 @@ export const navigationMenuAppearance: PresentationDictionary = {
     ...popupSpacingAppearance,
     {
       declarations: {
-        transition:
-          'opacity calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard), transform calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard), translate calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['opacity', 'transform', 'translate']),
       },
     },
     { selector: '&:is([data-starting-style],[data-ending-style])', declarations: { opacity: '0' } },
@@ -140,8 +139,7 @@ export const navigationMenuAppearance: PresentationDictionary = {
       declarations: {
         'margin-inline-start': 'var(--tp-space-1)',
         transform: 'translateY(var(--tp-border-width))',
-        transition:
-          'rotate calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['rotate']),
       },
     },
     { selector: '&[data-open]', declarations: { rotate: '180deg' } },
@@ -150,16 +148,14 @@ export const navigationMenuAppearance: PresentationDictionary = {
     ...popup,
     {
       declarations: {
-        transition:
-          'inline-size calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard), block-size calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard), opacity calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard), transform calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['inline-size', 'block-size', 'opacity', 'transform']),
       },
     },
   ],
   'navigation-menu-positioner': [
     {
       declarations: {
-        transition:
-          'left calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard), top calc(var(--tp-duration-normal) * var(--tp-motion-scale)) var(--tp-easing-standard)',
+        transition: motionTransition(['left', 'top']),
       },
     },
   ],

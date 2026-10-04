@@ -102,3 +102,12 @@ Put `bind` on the delegate's compatible semantic host to retain handlers, state,
 Change `--tp-spacing` in the theme to scale library padding, gaps, control/icon extents and default anchored-surface geometry. Popup menus, navigation menus, selection lists and Popover use the same two-unit outer inset. Anchored surfaces use a three-unit default trigger separation and collision inset; explicit numeric positioning overrides remain available for deliberate geometry. Popover content uses real flex gaps, including the close action. Switch derives track and thumb extents from one size-dependent spacing value. Example stories leave positioning overrides unset so they use these defaults.
 
 Typography, line widths, shape seeds, responsive query thresholds and minimum accessible targets retain their independent roles. Screen-reader-only clipping dimensions and runtime-measured pixel coordinates are geometry, not visible spacing. Scoped complete themes should provide their derived `space-*` roles consistently with their spacing seed.
+
+## Shared surface corners
+
+Drawer, Side Panel and Navigation Panel use one exposed-edge corner recipe. The
+viewport-attached edge stays flush; the two free corners use `--tp-radius-lg`.
+Floating panels and inset content use that same radius on all four corners.
+Logical navigation sides follow writing direction. Change the shared theme role
+or use the existing presentation dictionary/part hooks; no panel-specific radius
+or spacing attribute is needed.

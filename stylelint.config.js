@@ -5,6 +5,10 @@ export default {
     {
       files: ['**/*.ts'],
       customSyntax: 'postcss-lit',
+      rules: {
+        // postcss-lit represents interpolated CSSResults with uppercase sentinels.
+        'value-keyword-case': ['lower', { ignoreKeywords: [/^POSTCSS_LIT_\d+$/] }],
+      },
     },
   ],
   rules: {

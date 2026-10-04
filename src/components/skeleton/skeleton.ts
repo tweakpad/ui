@@ -1,3 +1,4 @@
+import { ambientCss } from '../../presentation/motion.js';
 import { css, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import {
@@ -33,7 +34,7 @@ export class TpSkeleton extends TpElement {
       }
 
       [part~='skeleton'][animated][data-motion='pulse'] {
-        animation: pulse calc(var(--tp-duration-fast) * 10) var(--tp-easing-standard) infinite;
+        animation: ${ambientCss('pulse', 'placeholder', 'var(--tp-easing-standard)')};
         animation-play-state: var(--tp-motion-play-state, running);
       }
 
@@ -43,7 +44,7 @@ export class TpSkeleton extends TpElement {
         width: 45%;
         height: 100%;
         opacity: var(--tp-opacity-disabled);
-        animation: shimmer calc(var(--tp-duration-fast) * 10) linear infinite;
+        animation: ${ambientCss('shimmer', 'placeholder')};
         animation-play-state: var(--tp-motion-play-state, running);
       }
 

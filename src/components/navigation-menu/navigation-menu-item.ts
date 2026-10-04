@@ -318,7 +318,7 @@ export class TpNavigationMenuItem extends TpElement {
         },
         content: html`<slot name="trigger" @slotchange=${this.#changed}></slot
           ><slot @slotchange=${this.#changed}></slot
-          >${this.#container ? nothing : this.#renderContent()}`,
+          >${this.#container || this.#owner ? nothing : this.#renderContent()}`,
       },
     );
   }

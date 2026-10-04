@@ -1,3 +1,4 @@
+import { edgeSurfaceAppearance } from './edge-surface.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 
 /** SidebarMenuButton paint shared by actions, destinations and composed disclosures. */
@@ -127,19 +128,11 @@ export const navigationPanelAppearance: PresentationDictionary = {
     ),
   ),
   'navigation-panel': [
+    ...edgeSurfaceAppearance({
+      'inline-start': '&[data-side="inline-start"]',
+      'inline-end': '&[data-side="inline-end"]',
+    }),
     { declarations: { background: 'var(--tp-muted)', color: 'var(--tp-foreground)' } },
-    {
-      selector: '&[data-side="inline-start"]',
-      declarations: {
-        'border-inline-end': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-      },
-    },
-    {
-      selector: '&[data-side="inline-end"]',
-      declarations: {
-        'border-inline-start': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-      },
-    },
   ],
   'navigation-panel-variant-floating': [
     {
@@ -178,7 +171,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
     {
       declarations: {
         margin: 'var(--tp-space-2)',
-        'border-radius': 'var(--tp-radius-xl)',
+        'border-radius': 'var(--tp-radius-lg)',
         'box-shadow': 'var(--tp-shadow-sm)',
       },
     },

@@ -1,3 +1,4 @@
+import { transitionCss } from '../../presentation/motion.js';
 import { css } from 'lit';
 /** Placement and flow only; appearance is supplied by the replaceable family dictionary. */
 export const navigationPanelStyles = css`
@@ -21,8 +22,7 @@ export const navigationPanelStyles = css`
     inline-size: var(--navigation-wide-extent);
     block-size: 100svh;
     min-inline-size: 0;
-    transition: inline-size calc(var(--tp-duration-normal) * var(--tp-motion-scale, 1))
-      var(--tp-easing-standard);
+    transition: ${transitionCss(['inline-size'])};
   }
 
   .wide[data-tp-motion-driven] {
