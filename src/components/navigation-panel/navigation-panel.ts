@@ -429,7 +429,12 @@ export class TpNavigationPanel extends TpElement {
     const frame = this.shadowRoot?.querySelector<HTMLElement>('.frame');
     const header = this.#toolbarHeader;
     if (!toolbar || !frame || !this.isConnected) return;
-    if (!header?.isConnected || this.provider.compact || !header.getBoundingClientRect().width) {
+    if (
+      !this.querySelector(':scope > [slot="trigger"]') ||
+      !header?.isConnected ||
+      this.provider.compact ||
+      !header.getBoundingClientRect().width
+    ) {
       toolbar.style.removeProperty('min-block-size');
       return;
     }

@@ -281,6 +281,9 @@ export class TpCollapsible extends TpElement {
 
   /** Re-evaluates forwarded positional slots after their outer assignments change. */
   refreshPositions(): void {
+    // A composition may forward slots before this nested element first connects.
+    // firstUpdated/updated refresh them again once its render root exists.
+    if (!this.renderRoot) return;
     const selected = this.#resolvedIndicatorPosition();
     for (const position of ['leading', 'trailing'] as const) {
       const slot = this.#positionSlot(position);

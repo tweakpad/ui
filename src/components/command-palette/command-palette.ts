@@ -132,7 +132,9 @@ export class TpCommandPalette extends TpDialog {
     return this.#noExecutableMatch;
   }
   get #list(): TpCommandList | null {
-    return this.renderRoot.querySelector<TpCommandList>('tp-command-list');
+    return (this.inline ? this.renderRoot : this.surfaceRoot).querySelector<TpCommandList>(
+      'tp-command-list',
+    );
   }
   protected override hasBodyContent(): boolean {
     return true;
@@ -256,6 +258,28 @@ export class TpCommandPalette extends TpDialog {
     this.toggleAttribute('data-empty', !this.#visible.length);
     this.toggleAttribute('data-no-executable-match', this.#noExecutableMatch);
     if (changed.has('inline') && this.inline && this.open) this.setOpen(false, 'programmatic');
+  }
+  constructor() {
+    super();
+    this.addEventListener('tp-open-change-complete', (event) => {
+      if (event.target !== this || !this.open || this.inline || this.initialFocus !== 'first')
+        return;
+      const content = this.contentElement;
+      const active = deepActiveElement(this.ownerDocument);
+      const corner = content?.querySelector('.corner-close');
+      const close = this.ownedChildren.find(
+        (node) => node instanceof HTMLElement && node.slot === 'close',
+      );
+      // Dialog may initially focus its close fallback before Select's input renders.
+      // Retry at the shared presence boundary without stealing a user's moved focus.
+      if (
+        content &&
+        (active === content ||
+          (corner && composedContains(corner, active)) ||
+          (close instanceof HTMLElement && composedContains(close, active)))
+      )
+        this.inputElement?.focus({ preventScroll: true });
+    });
   }
   override connectedCallback(): void {
     super.connectedCallback();
