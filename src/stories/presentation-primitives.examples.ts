@@ -58,7 +58,7 @@ export interface AspectRatioArgs {
   ratio: number;
   fit: 'fill' | 'contain' | 'cover' | 'none';
 }
-export const aspectRatioDefaults: AspectRatioArgs = { ratio: 16 / 9, fit: 'cover' };
+export const aspectRatioDefaults: AspectRatioArgs = { ratio: 16 / 9, fit: 'fill' };
 export function renderAspectRatioExample(args: AspectRatioArgs = aspectRatioDefaults) {
   return html`<tp-aspect-ratio .ratio=${args.ratio} .fit=${args.fit}>
     <div style="inline-size:100%;block-size:100%;background:var(--tp-muted)"></div>

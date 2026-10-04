@@ -1,32 +1,53 @@
-import { html } from 'lit';
-import { navigationIcons } from '../icons/navigation.js';
-import { markupExample } from './documentation-examples.js';
+import { interactiveMarkupExample, markupExample } from './documentation-examples.js';
+import { setupAvatarExample } from './avatar-example.js';
+import setupSource from './avatar-example.js?raw';
 
 const sizes = ['sm', 'default', 'lg'] as const;
 const row = (content: string) =>
-  `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-4)">${content}</div>`;
-const members = (
-  size: string,
-) => `<tp-avatar size="${size}" fallback="AM" alt="Alex Morgan"></tp-avatar>
-  <tp-avatar size="${size}" fallback="JD" alt="Jordan Doe"></tp-avatar>
-  <tp-avatar size="${size}" fallback="SK" alt="Sam Kim"></tp-avatar>`;
-const groups = (omitted: number) =>
+  `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-2)">${content}</div>`;
+const people = [
+  ['shadcn', 'CN'],
+  ['maxleiter', 'LR'],
+  ['evilrabbit', 'ER'],
+] as const;
+const members = (size: string, grayscale = false) =>
+  people
+    .map(
+      ([name, fallback]) =>
+        `<tp-avatar size="${size}" src="https://github.com/${name}.png" fallback="${fallback}" alt="@${name}"${grayscale ? ' data-grayscale' : ''}></tp-avatar>`,
+    )
+    .join('\n');
+const groups = (omitted: number, icon = false) =>
   row(
     sizes
       .map(
         (size) =>
-          `<tp-avatar-group size="${size}" omitted="${omitted}">${members(size)}</tp-avatar-group>`,
+          `<tp-avatar-group size="${size}" omitted="${omitted}"${icon ? ' data-icon-count' : ''}>${members(size, icon && size === 'lg')}</tp-avatar-group>`,
       )
       .join('\n'),
   );
-const badgeContract = {
-  'avatar-badge': { hostProperties: { role: 'img', 'aria-label': 'Available' } },
-};
-const countContract = {
-  'avatar-overflow-count': {
-    content: html`<tp-icon .icon=${navigationIcons.more} size="var(--tp-icon-size-sm)"></tp-icon>`,
-  },
-};
+function example(title: string, id: string, markup: string, description?: string) {
+  return interactiveMarkupExample(
+    title,
+    `<div id="${id}" style="display:grid;gap:var(--tp-space-4)">${markup}</div>`,
+    setupAvatarExample,
+    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nsetupAvatarExample(document.getElementById('${id}'));`,
+    description,
+  );
+}
+function statuses(images: boolean, icon = false) {
+  return row(
+    sizes
+      .map(
+        (
+          size,
+        ) => `<tp-avatar size="${size}" fallback="JZ" alt="@jorgezreik" data-status="Available"${images ? ' src="https://github.com/jorgezreik.png"' : ''}>
+  ${icon ? `<tp-icon slot="badge" data-icon="${images ? 'plus' : 'check'}"></tp-icon>` : '<span slot="badge"></span>'}
+</tp-avatar>`,
+      )
+      .join('\n'),
+  );
+}
 
 export const avatarExamples = [
   markupExample(
@@ -43,59 +64,39 @@ export const avatarExamples = [
       sizes
         .map(
           (size) =>
-            `<tp-avatar size="${size}" src="https://github.com/shadcn.png" fallback="CN" alt="shadcn"></tp-avatar>`,
+            `<tp-avatar size="${size}" src="https://github.com/shadcn.png" fallback="CN" alt="@shadcn"></tp-avatar>`,
         )
         .join('\n'),
     ),
   ),
-  markupExample(
-    'Status badge',
-    row(
-      sizes
-        .map(
-          (size) =>
-            `<tp-avatar size="${size}" fallback="AM" alt="Alex Morgan"><span slot="badge" role="img" aria-label="Available"></span></tp-avatar>`,
-        )
-        .join('\n'),
-    ),
+  example('Status badge', 'avatar-status', statuses(true) + statuses(false)),
+  example(
+    'Badge with an icon',
+    'avatar-status-icons',
+    statuses(true, true) + statuses(false, true),
   ),
-  {
-    title: 'Badge with an icon',
-    language: 'javascript',
-    code: `import { html } from 'lit';
-import { navigationIcons } from '@tweakpad/ui/icons/navigation';
-const status = { 'avatar-badge': { hostProperties: { role: 'img', 'aria-label': 'Available' } } };
-html\`<tp-avatar fallback="AM" alt="Alex Morgan" .partContracts=\${status}>
-  <tp-icon slot="badge" .icon=\${navigationIcons.sparkle}></tp-icon>
-</tp-avatar>\`;`,
-    render: () =>
-      html`<div style="display:flex;align-items:center;gap:var(--tp-space-4)">
-        ${sizes.map((size) => html`<tp-avatar .size=${size} fallback="AM" alt="Alex Morgan" .partContracts=${badgeContract}><tp-icon slot="badge" .icon=${navigationIcons.sparkle}></tp-icon></tp-avatar>`)}
-      </div>`,
-  },
   markupExample('Groups', groups(0)),
   markupExample('Groups with an omitted count', groups(3)),
-  {
-    title: 'Group with an icon count',
-    description:
-      'The count part still names the three omitted participants when its visible content is an icon.',
-    language: 'javascript',
-    code: `import { html } from 'lit';
-import { navigationIcons } from '@tweakpad/ui/icons/navigation';
-group.omitted = 3;
-group.partContracts = {
-  'avatar-overflow-count': { content: html\`<tp-icon .icon=\${navigationIcons.more} size="var(--tp-icon-size-sm)"></tp-icon>\` },
-};`,
-    render: () =>
-      html`<div style="display:flex;align-items:center;gap:var(--tp-space-4)">
-        ${sizes.map((size) => html`<tp-avatar-group .size=${size} omitted="3" .partContracts=${countContract}><tp-avatar .size=${size} fallback="AM" alt="Alex Morgan"></tp-avatar><tp-avatar .size=${size} fallback="JD" alt="Jordan Doe"></tp-avatar></tp-avatar-group>`)}
-      </div>`,
-  },
-  markupExample(
+  example(
+    'Group with an icon count',
+    'avatar-icon-counts',
+    groups(3, true),
+    'The count part still names the three omitted participants when its visible content is an icon.',
+  ),
+  example(
     'In an empty state',
-    `<tp-empty-state title="No team members" description="Invite your team to collaborate on this project.">
-  <tp-avatar-group slot="media" size="lg" omitted="3">${members('lg')}</tp-avatar-group>
-  <tp-button>Invite members</tp-button>
+    'avatar-empty',
+    `<tp-empty-state data-bordered title="No team members" description="Invite your team to collaborate on this project.">
+  <tp-avatar-group slot="media" size="lg" omitted="3" data-icon-count>${members('lg', true)}</tp-avatar-group>
+  <tp-button href="#invite-members"><tp-icon slot="icon-start" data-icon="plus"></tp-icon>Invite members</tp-button>
 </tp-empty-state>`,
+  ),
+  example(
+    'Custom shape and grayscale images',
+    'avatar-custom-shape',
+    row(`<tp-avatar src="https://github.com/shadcn.png" fallback="CN" alt="@shadcn"></tp-avatar>
+<tp-avatar src="https://github.com/evilrabbit.png" fallback="ER" alt="@evilrabbit" style="border-radius:var(--tp-radius-lg)"></tp-avatar>
+<tp-avatar-group>${members('default', true)}</tp-avatar-group>`),
+    'A shared radius token customizes the viewport; the public image part applies grayscale without affecting status or fallback colors.',
   ),
 ];

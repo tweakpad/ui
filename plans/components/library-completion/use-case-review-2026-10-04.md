@@ -135,3 +135,15 @@ Chrome verifies optional content, part references/delegation/reconnect, owned ro
 ## List Item native row actions
 
 Canonical native Root and trailing Actions now occupy sibling grid regions; actual Share click/Enter never activates the link, and native button Root supports independent Space activation. No click forwarding, event suppression, new spacing attribute or component token. All three source link treatments include their fifth Share composition. Existing theme/dictionary/part hooks retain nodes and focus; missing dictionary keys remove appearance. Marker Drawer consumer and served built package verified;35 existing focused tests and both builds pass. Standalone source compositions and full source-case reconciliation remain pending in the List Item record.
+
+## List Item reference reconciliation
+
+All24base and10standalone Item source cases map to Default/API and14curated shared-explorer compositions. Added actual AvatarGroup/invite rows, Menu/MenuItem people commands, square AspectRatio image headers, media-link metadata, native external/navigation links and security actions. Shared MenuItem owns the outer inset and releases/reapplies its inner ListItem composition correctly; CSS preserves decorative Icon pass-through while trailing controls remain independent. Source treatment/density matrix and actual pointer/keyboard/AX/copy/package checks are recorded in plans/components/list-item/implementation-checklist.md. Existing25focused tests and both builds pass; whole-library completion remains unproven and active.
+
+## Aspect Ratio source cases
+
+Reconciled all four base ratios and legacy16:9 demo against real Docs geometry, narrow layouts, shared-theme overrides and actual explorer/Controls interaction. Three proportional container sizes are present. Source photos remain solid muted fills per the user. Corrected Default fit from cover to fill and unified copy/live markup through existing markupExample. Evidence and separate API/platform concerns remain in presentation-primitives/implementation-checklist.md.
+
+## Avatar source cases and fallback repair
+
+All seven base examples and legacy shape demo are now accounted for through the shared explorer. Added missing image/status combinations, full image groups, custom shape/grayscale and complete copied setup. Shared count recipe scales icons through existing theme roles. Visual verification found a runtime defect: formatting whitespace around named badge content suppressed initials. Avatar now distinguishes meaningful default content, observes dynamic changes and disconnects its observer; authored content and image lifecycle retain their owners. Verified light/darkRTL/narrow layouts, image recovery, copied code, AX/axe and built package. Detailed boundaries and remaining platform gaps stay in presentation-primitives/implementation-checklist.md.

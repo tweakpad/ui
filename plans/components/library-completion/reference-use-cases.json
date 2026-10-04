@@ -128,44 +128,44 @@
           "title": "16:9",
           "symbol": "AspectRatio16x9",
           "line": 22,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
             "implementation": "src/stories/aspect-ratio.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "reviewRecord": "plans/components/library-completion/presentation-primitives/implementation-checklist.md",
+            "verification": "16:9: mapped to matching ratio Docs composition (legacy demo to16:9). Chrome76 verified320px width with180/137.14/320/568.88px heights, all five previews fit248px at390 viewport. Three widths128/192/256 preserve16:9; scoped spacing5/radius12/darkRTL gives200/248/248 constrained widths with proportional heights. Solid muted fill intentionally replaces source photos per user request. Shared Show/Copy preserves instances and copies exact markup; ratio2/fitcontain Controls update actual component. Source cases only; no whole-component or native-platform certification."
           }
         },
         {
           "title": "1:1",
           "symbol": "AspectRatio1x1",
           "line": 40,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
             "implementation": "src/stories/aspect-ratio.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "reviewRecord": "plans/components/library-completion/presentation-primitives/implementation-checklist.md",
+            "verification": "1:1: mapped to matching ratio Docs composition (legacy demo to16:9). Chrome76 verified320px width with180/137.14/320/568.88px heights, all five previews fit248px at390 viewport. Three widths128/192/256 preserve16:9; scoped spacing5/radius12/darkRTL gives200/248/248 constrained widths with proportional heights. Solid muted fill intentionally replaces source photos per user request. Shared Show/Copy preserves instances and copies exact markup; ratio2/fitcontain Controls update actual component. Source cases only; no whole-component or native-platform certification."
           }
         },
         {
           "title": "9:16",
           "symbol": "AspectRatio9x16",
           "line": 58,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
             "implementation": "src/stories/aspect-ratio.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "reviewRecord": "plans/components/library-completion/presentation-primitives/implementation-checklist.md",
+            "verification": "9:16: mapped to matching ratio Docs composition (legacy demo to16:9). Chrome76 verified320px width with180/137.14/320/568.88px heights, all five previews fit248px at390 viewport. Three widths128/192/256 preserve16:9; scoped spacing5/radius12/darkRTL gives200/248/248 constrained widths with proportional heights. Solid muted fill intentionally replaces source photos per user request. Shared Show/Copy preserves instances and copies exact markup; ratio2/fitcontain Controls update actual component. Source cases only; no whole-component or native-platform certification."
           }
         },
         {
           "title": "21:9",
           "symbol": "AspectRatio21x9",
           "line": 76,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
             "implementation": "src/stories/aspect-ratio.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "reviewRecord": "plans/components/library-completion/presentation-primitives/implementation-checklist.md",
+            "verification": "21:9: mapped to matching ratio Docs composition (legacy demo to16:9). Chrome76 verified320px width with180/137.14/320/568.88px heights, all five previews fit248px at390 viewport. Three widths128/192/256 preserve16:9; scoped spacing5/radius12/darkRTL gives200/248/248 constrained widths with proportional heights. Solid muted fill intentionally replaces source photos per user request. Shared Show/Copy preserves instances and copies exact markup; ratio2/fitcontain Controls update actual component. Source cases only; no whole-component or native-platform certification."
           }
         }
       ]
@@ -270,78 +270,50 @@
           "title": "Sizes",
           "symbol": "AvatarSizes",
           "line": 40,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/avatar.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Sizes and Images and fallback show all three sizes; actual source image loaded and fallback-only initials centered in light/dark. Chrome76 source-case evidence in presentation-primitives/implementation-checklist.md; nine previews fit248px at390, axe0/20rules. This is source-case reconciliation, not unavailable native-platform certification."
         },
         {
           "title": "Badge",
           "symbol": "AvatarWithBadge",
           "line": 72,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/avatar.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Status badge includes loaded and fallback-only rows at three sizes; named Available part and colored badge survive formatting whitespace. Chrome76 source-case evidence in presentation-primitives/implementation-checklist.md; nine previews fit248px at390, axe0/20rules. This is source-case reconciliation, not unavailable native-platform certification."
         },
         {
           "title": "Badge with Icon",
           "symbol": "AvatarWithBadgeIcon",
           "line": 119,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/avatar.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Image plus and fallback check icons at three sizes; small icon hidden while Available name remains, default/large bounded by shared badge recipe. Chrome76 source-case evidence in presentation-primitives/implementation-checklist.md; nine previews fit248px at390, axe0/20rules. This is source-case reconciliation, not unavailable native-platform certification."
         },
         {
           "title": "Group",
           "symbol": "AvatarGroupExample",
           "line": 214,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/avatar.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Groups shows three loaded source participants at each size with logical overlap and shared ring; fits narrow RTL. Chrome76 source-case evidence in presentation-primitives/implementation-checklist.md; nine previews fit248px at390, axe0/20rules. This is source-case reconciliation, not unavailable native-platform certification."
         },
         {
           "title": "Group with Count",
           "symbol": "AvatarGroupWithCount",
           "line": 281,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/avatar.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Groups with an omitted count shows three loaded members and named +3 counters at each size; textual omitted identity retained. Chrome76 source-case evidence in presentation-primitives/implementation-checklist.md; nine previews fit248px at390, axe0/20rules. This is source-case reconciliation, not unavailable native-platform certification."
         },
         {
           "title": "Group with Icon Count",
           "symbol": "AvatarGroupWithIconCount",
           "line": 351,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/avatar.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Group with an icon count has three loaded participants, plus marks and textual omitted names; shared recipe extents9.6/12.8/16 become15/20/25 with shared roles. Copy includes complete same markup/setup. Chrome76 source-case evidence in presentation-primitives/implementation-checklist.md; nine previews fit248px at390, axe0/20rules. This is source-case reconciliation, not unavailable native-platform certification."
         },
         {
           "title": "In Empty",
           "symbol": "AvatarInEmpty",
           "line": 451,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/avatar.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Bordered real EmptyState contains grayscale large image group plus named icon counter and real Button/Icon Invite link; actual click navigates to invite-members. Chrome76 source-case evidence in presentation-primitives/implementation-checklist.md; nine previews fit248px at390, axe0/20rules. This is source-case reconciliation, not unavailable native-platform certification."
         }
       ]
     },
@@ -1944,168 +1916,168 @@
           "symbol": "DefaultVariantItems",
           "line": 55,
           "status": "passed",
-          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
+          "localEvidence": "Content/actions plus Treatments/density: all nine source content combinations tested across all3treatments x3sizes (81row states), no overflow;5action regions/4media regions, collapsed empty regions, density/typography follow theme. Source primary/outline and default/sm Button distinctions retained; narrow screenshot inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Outline",
           "symbol": "OutlineVariantItems",
           "line": 177,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Content/actions plus Treatments/density: all nine source content combinations tested across all3treatments x3sizes (81row states), no overflow;5action regions/4media regions, collapsed empty regions, density/typography follow theme. Source primary/outline and default/sm Button distinctions retained; narrow screenshot inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Muted",
           "symbol": "MutedVariantItems",
           "line": 299,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Content/actions plus Treatments/density: all nine source content combinations tested across all3treatments x3sizes (81row states), no overflow;5action regions/4media regions, collapsed empty regions, density/typography follow theme. Source primary/outline and default/sm Button distinctions retained; narrow screenshot inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Small",
           "symbol": "DefaultVariantItemsSmall",
           "line": 421,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Content/actions plus Treatments/density: all nine source content combinations tested across all3treatments x3sizes (81row states), no overflow;5action regions/4media regions, collapsed empty regions, density/typography follow theme. Source primary/outline and default/sm Button distinctions retained; narrow screenshot inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Outline - Small",
           "symbol": "OutlineVariantItemsSmall",
           "line": 547,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Content/actions plus Treatments/density: all nine source content combinations tested across all3treatments x3sizes (81row states), no overflow;5action regions/4media regions, collapsed empty regions, density/typography follow theme. Source primary/outline and default/sm Button distinctions retained; narrow screenshot inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Muted - Small",
           "symbol": "MutedVariantItemsSmall",
           "line": 673,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Content/actions plus Treatments/density: all nine source content combinations tested across all3treatments x3sizes (81row states), no overflow;5action regions/4media regions, collapsed empty regions, density/typography follow theme. Source primary/outline and default/sm Button distinctions retained; narrow screenshot inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Extra Small",
           "symbol": "DefaultVariantItemsExtraSmall",
           "line": 799,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Content/actions plus Treatments/density: all nine source content combinations tested across all3treatments x3sizes (81row states), no overflow;5action regions/4media regions, collapsed empty regions, density/typography follow theme. Source primary/outline and default/sm Button distinctions retained; narrow screenshot inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Outline - Extra Small",
           "symbol": "OutlineVariantItemsExtraSmall",
           "line": 925,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Content/actions plus Treatments/density: all nine source content combinations tested across all3treatments x3sizes (81row states), no overflow;5action regions/4media regions, collapsed empty regions, density/typography follow theme. Source primary/outline and default/sm Button distinctions retained; narrow screenshot inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Muted - Extra Small",
           "symbol": "MutedVariantItemsExtraSmall",
           "line": 1051,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Content/actions plus Treatments/density: all nine source content combinations tested across all3treatments x3sizes (81row states), no overflow;5action regions/4media regions, collapsed empty regions, density/typography follow theme. Source primary/outline and default/sm Button distinctions retained; narrow screenshot inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "asChild",
           "symbol": "DefaultLinkItems",
           "line": 1177,
           "status": "passed",
-          "localEvidence": "List Item Docs Links: all five source combinations per treatment, native Root with sibling Share; Chrome pointer/Tab/Enter and source copy verified. plans/components/list-item/implementation-checklist.md Native action execution."
+          "localEvidence": "Links Docs: all five source combinations for each treatment, including sibling Share. Native pointer/Tab/Enter, cancellation, bubbling, no nested interactive hosts and shared explorer copy verified. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Outline - asChild",
           "symbol": "OutlineLinkItems",
           "line": 1243,
           "status": "passed",
-          "localEvidence": "List Item Docs Links: all five source combinations per treatment, native Root with sibling Share; Chrome pointer/Tab/Enter and source copy verified. plans/components/list-item/implementation-checklist.md Native action execution."
+          "localEvidence": "Links Docs: all five source combinations for each treatment, including sibling Share. Native pointer/Tab/Enter, cancellation, bubbling, no nested interactive hosts and shared explorer copy verified. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Muted - asChild",
           "symbol": "MutedLinkItems",
           "line": 1309,
           "status": "passed",
-          "localEvidence": "List Item Docs Links: all five source combinations per treatment, native Root with sibling Share; Chrome pointer/Tab/Enter and source copy verified. plans/components/list-item/implementation-checklist.md Native action execution."
+          "localEvidence": "Links Docs: all five source combinations for each treatment, including sibling Share. Native pointer/Tab/Enter, cancellation, bubbling, no nested interactive hosts and shared explorer copy verified. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "ItemGroup",
           "symbol": "DefaultItemGroup",
           "line": 1375,
           "status": "passed",
-          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
+          "localEvidence": "Grouped items Docs: three groups of three rows, outline media and subdued actions; native named list/listitem semantics and owned role release/reconnect verified. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Outline - ItemGroup",
           "symbol": "OutlineItemGroup",
           "line": 1402,
           "status": "passed",
-          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
+          "localEvidence": "Grouped items Docs: three groups of three rows, outline media and subdued actions; native named list/listitem semantics and owned role release/reconnect verified. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Muted - ItemGroup",
           "symbol": "MutedItemGroup",
           "line": 1456,
           "status": "passed",
-          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
+          "localEvidence": "Grouped items Docs: three groups of three rows, outline media and subdued actions; native named list/listitem semantics and owned role release/reconnect verified. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "ItemSeparator",
           "symbol": "ItemSeparatorExample",
           "line": 1498,
           "status": "passed",
-          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
+          "localEvidence": "Separators Docs: four mail rows with three actual ListItemSeparator constituents composing decorative horizontal TpSeparator; canonical ref and copy verified. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "ItemHeader",
           "symbol": "ItemHeaderExamples",
           "line": 1570,
           "status": "passed",
-          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
+          "localEvidence": "Headers/footers Docs: each source treatment independently renders header-only, footer-only and both; source screenshot, optional slot removal, full-width row geometry and body/action alignment verified. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "ItemFooter",
           "symbol": "ItemFooterExamples",
           "line": 1613,
           "status": "passed",
-          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
+          "localEvidence": "Headers/footers Docs: each source treatment independently renders header-only, footer-only and both; source screenshot, optional slot removal, full-width row geometry and body/action alignment verified. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "ItemHeader + ItemFooter",
           "symbol": "ItemHeaderAndFooterExamples",
           "line": 1660,
           "status": "passed",
-          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
+          "localEvidence": "Headers/footers Docs: each source treatment independently renders header-only, footer-only and both; source screenshot, optional slot removal, full-width row geometry and body/action alignment verified. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Default - ItemMedia image",
           "symbol": "DefaultVariantItemsWithImage",
           "line": 1718,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Image media Docs: five source treatment/size groups, each Project(no action), Document(View), File(Download);15images loaded; media extents32/25.6/19.2 from shared roles. Screenshots/geometry/optional actions inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Outline - ItemMedia image",
           "symbol": "OutlineVariantItemsWithImage",
           "line": 1782,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Image media Docs: five source treatment/size groups, each Project(no action), Document(View), File(Download);15images loaded; media extents32/25.6/19.2 from shared roles. Screenshots/geometry/optional actions inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Outline - ItemMedia image - Small",
           "symbol": "OutlineVariantItemsWithImageSmall",
           "line": 1846,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Image media Docs: five source treatment/size groups, each Project(no action), Document(View), File(Download);15images loaded; media extents32/25.6/19.2 from shared roles. Screenshots/geometry/optional actions inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Outline - ItemMedia image - Extra Small",
           "symbol": "OutlineVariantItemsWithImageExtraSmall",
           "line": 1910,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Image media Docs: five source treatment/size groups, each Project(no action), Document(View), File(Download);15images loaded; media extents32/25.6/19.2 from shared roles. Screenshots/geometry/optional actions inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         },
         {
           "title": "Muted - ItemMedia image",
           "symbol": "MutedVariantItemsWithImage",
           "line": 1967,
-          "status": "pending",
-          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
+          "status": "passed",
+          "localEvidence": "Image media Docs: five source treatment/size groups, each Project(no action), Document(View), File(Download);15images loaded; media extents32/25.6/19.2 from shared roles. Screenshots/geometry/optional actions inspected. Detailed evidence: plans/components/list-item/implementation-checklist.md."
         }
       ]
     },
@@ -3682,8 +3654,12 @@
           "title": "aspect-ratio-demo",
           "symbol": "AspectRatioDemo",
           "line": 5,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": {
+            "implementation": "src/stories/aspect-ratio.examples.ts",
+            "reviewRecord": "plans/components/library-completion/presentation-primitives/implementation-checklist.md",
+            "verification": "aspect-ratio-demo: mapped to matching ratio Docs composition (legacy demo to16:9). Chrome76 verified320px width with180/137.14/320/568.88px heights, all five previews fit248px at390 viewport. Three widths128/192/256 preserve16:9; scoped spacing5/radius12/darkRTL gives200/248/248 constrained widths with proportional heights. Solid muted fill intentionally replaces source photos per user request. Shared Show/Copy preserves instances and copies exact markup; ratio2/fitcontain Controls update actual component. Source cases only; no whole-component or native-platform certification."
+          }
         }
       ]
     },
@@ -3694,8 +3670,8 @@
           "title": "avatar-demo",
           "symbol": "AvatarDemo",
           "line": 7,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Custom shape and grayscale images includes circular image, radius-lg rounded image and three-member grayscale group; public image hooks preserve identity and names. Chrome76 source-case evidence in presentation-primitives/implementation-checklist.md; nine previews fit248px at390, axe0/20rules. This is source-case reconciliation, not unavailable native-platform certification."
         }
       ]
     },
@@ -5522,8 +5498,8 @@
           "title": "item-avatar",
           "symbol": "ItemAvatar",
           "line": 18,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "People and invitations: actual Avatar and AvatarGroup, image/fallback names, round existing Button, responsive secondary members; Invite click shows Toast. Uses Base/Nova shared presentation instead of copying a second style preset. Evidence: plans/components/list-item/implementation-checklist.md."
         }
       ]
     },
@@ -5534,8 +5510,8 @@
           "title": "item-demo",
           "symbol": "ItemDemo",
           "line": 13,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Content/actions and Navigation: outline title/description action plus compact verified-profile native link with actual mark and trailing chevron. Uses Base/Nova shared presentation instead of copying a second style preset. Evidence: plans/components/list-item/implementation-checklist.md."
         }
       ]
     },
@@ -5546,8 +5522,8 @@
           "title": "item-dropdown",
           "symbol": "ItemDropdown",
           "line": 43,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "People menu: actual Menu/MenuItem/Avatar/ListItem composition; shared outer padding only, pointer and ArrowDown/Enter select maxleiter and dismiss once; Escape, cleanup/reconnect and open-menu axe0 verified. Uses Base/Nova shared presentation instead of copying a second style preset. Evidence: plans/components/list-item/implementation-checklist.md."
         }
       ]
     },
@@ -5558,8 +5534,8 @@
           "title": "item-group",
           "symbol": "ItemGroupExample",
           "line": 39,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "People group: three actual Avatar rows, named Invite Buttons and two real ListItemSeparator constituents; ordered listitem roles and source screenshot verified. Uses Base/Nova shared presentation instead of copying a second style preset. Evidence: plans/components/list-item/implementation-checklist.md."
         }
       ]
     },
@@ -5570,8 +5546,8 @@
           "title": "item-header",
           "symbol": "ItemHeaderDemo",
           "line": 36,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Image headers: three models, loaded native images inside actual square AspectRatio with cover; public Group grid part yields three columns normally and one at390px. Uses Base/Nova shared presentation instead of copying a second style preset. Evidence: plans/components/list-item/implementation-checklist.md."
         }
       ]
     },
@@ -5582,8 +5558,8 @@
           "title": "item-icon",
           "symbol": "ItemIcon",
           "line": 13,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Security alert: actual shared shield Icon and Button; Review click invokes existing Toast. Uses Base/Nova shared presentation instead of copying a second style preset. Evidence: plans/components/list-item/implementation-checklist.md."
         }
       ]
     },
@@ -5594,8 +5570,8 @@
           "title": "item-image",
           "symbol": "ItemImage",
           "line": 33,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Media links and metadata: three song rows, native link Roots, loaded square art, title/album, artist and independent duration column through canonical Content delegate. Narrow dark RTL screenshot and no overflow. Uses Base/Nova shared presentation instead of copying a second style preset. Evidence: plans/components/list-item/implementation-checklist.md."
         }
       ]
     },
@@ -5606,8 +5582,8 @@
           "title": "item-link",
           "symbol": "ItemLink",
           "line": 11,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Navigation/external links: native href/target=_blank/rel=noopener noreferrer; actual click on trailing Icon reaches underlying Root once. No synthetic forwarding. Uses Base/Nova shared presentation instead of copying a second style preset. Evidence: plans/components/list-item/implementation-checklist.md."
         }
       ]
     },
@@ -5618,8 +5594,8 @@
           "title": "item-size",
           "symbol": "ItemSizeDemo",
           "line": 13,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Treatments/density plus compact verified-profile link cover the default/compact source compositions using actual Button and Icon; public size Controls and geometry verified. Uses Base/Nova shared presentation instead of copying a second style preset. Evidence: plans/components/list-item/implementation-checklist.md."
         }
       ]
     },
@@ -5630,8 +5606,8 @@
           "title": "item-variant",
           "symbol": "ItemVariant",
           "line": 10,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Treatments/density shows ghost/outline/subdued with actual child actions; shared theme paints, source screenshots and full9-content x3-size x3-treatment geometry verified. Uses Base/Nova shared presentation instead of copying a second style preset. Evidence: plans/components/list-item/implementation-checklist.md."
         }
       ]
     },

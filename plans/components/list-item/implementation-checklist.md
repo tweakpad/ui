@@ -21,7 +21,7 @@
 | C-05 | Group list semantics/order and decorative Separator | ucl22-list-item; sec-71 | ItemGroup; ItemSeparator reexport | TpListItemGroup with existing OwnedAttributes for direct row roles; actual TpSeparator registered to canonical separator key | docs/list-item.md | V-02 V-04 | passed | Named list and ordered listitem AX; owned role released/rejoined and authored article preserved; canonical Separator reuses actual decorative TpSeparator. |
 | C-06 | Native delegated whole-row link/action semantics; independent trailing actions | audit-sec-1918 | Item render anchor + Share Button source | Native root delegate supported for standalone actions. Root native delegate and independently rendered Actions are sibling grid regions; native activation stays with each host | docs/list-item.md | V-04 | passed | Native Root and Actions are sibling hosts; actual pointer, Tab/Enter/Space and cancellation verified. |
 | C-07 | Public appearance/dictionary; selected/value compatibility | ucl22-list-item; inherited presentation | useRender state; existing local selected/value | All canonical bindings; selected remains aria-current metadata, no selection state machine | docs/list-item.md | V-03 | passed | Scoped spacing/radius, selected/value, native disabled state, alternate dictionary/removal, public hooks and retained focus verified. |
-| C-08 | Complete distinct source compositions and copied executable source | skill/user full scope | item-example.tsx24 cases plus standalone examples in parent inventory | One authored Default/API and Docs compositions; verification permutations stay outside curated sidebar | list-item.stories.ts/examples.ts | V-05 | pending | Full case matrix stays pending until individually observed |
+| C-08 | Complete distinct source compositions and copied executable source | skill/user full scope | item-example.tsx24 cases plus standalone examples in parent inventory | One authored Default/API and Docs compositions; verification permutations stay outside curated sidebar | list-item.stories.ts/examples.ts | V-05 | passed | All24base and10standalone source cases mapped to14curated Docs compositions; actual input/source copy and scoped matrix evidence below. |
 | C-09 | Package/cleanup/affected Marker consumer and shared variants | skill/inherited lifecycle | existing primitives export; Marker Drawer | Preserve export/registration; exact shared consumers; no duplicate role leaks after reconnect | docs/list-item.md | V-06 | passed | Marker Drawer retains flex/padding6.4 and optional regions; served built exports/registration match; build and checks pass. |
 
 Independent presentational capabilities C-01–05/C-07 can be implemented without introducing whole-row interaction behavior. C-06 native delegation is existing public Part semantics; independent trailing interaction must use non-nested hosts and remains explicitly required. No href/click proxy API or nested-action workaround is introduced in the presentation batch.
@@ -61,45 +61,45 @@ Component folder owns row/group binding only. Existing TpElement/Part/Presentati
 
 | ID | Capability IDs / evidence category | Setup and input | Expected result | Actual result | Tool/command and evidence | Status | Justification / gap |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| V-01 | C-01 C-03 C-04; visual | Optional slots independently; variants/sizes/media; long title/description | Correct layout and first-line media; no empty gaps | not run | Chrome76 | pending | Light/dark/narrow/RTL |
+| V-01 | C-01 C-03 C-04; visual | Optional slots independently; variants/sizes/media; long title/description | Correct layout and first-line media; no empty gaps | Optional regions,81density/content states, images and14narrow previews verified | Chrome76 screenshots/geometry | passed | Light/dark/RTL/narrow; detailed results below |
 | V-02 | C-02 C-03 C-05; lifecycle | Public refs/delegates and dynamic membership | No stale refs or roles | All eight refs clear/reconnect, same title native h3 retained, slots and role ownership restore correctly | Chrome76 public APIs | passed | Actual lifecycle, not simulated input |
 | V-03 | C-04 C-07; theming | Scoped spacing/radius/icons and dictionary overrides | All canonical parts resolve; same nodes/focus | Token and dictionary changes repaint existing parts; missing keys remove appearance; same anchor/focus | Chrome76 source Docs | passed | Detailed scoped results below |
 | V-04 | C-05 C-06; semantics/input | Group/Separator AX; real Tab/Enter link and trailing actions | Native names, independent action semantics and no nested hosts | Share never activates Root; Tab reaches each native action; native button Space and link cancellation work | Chrome76 keyboard/AX/axe | passed | No synthetic click routing or propagation suppression |
-| V-05 | C-08; docs | Controls, all distinct source use cases, Show/Copy | Same executable setup, no remount; no permutation sidebar | not run | Chrome/Storybook | pending | Source case inventory in parent record |
+| V-05 | C-08; docs | Controls, all distinct source use cases, Show/Copy | Same executable setup, no remount; no permutation sidebar | Controls update real props; shared Canvas copies executable setup and retains Menu/row instances | Chrome76/Storybook | passed | All34source cases individually reconciled in parent inventory |
 | V-06 | C-09; regression/package | Marker Drawer and built exports | Shared owners preserved | Marker rows keep6.4px padding; actual drawer opens/Escape closes; three built classes exported and registered | Chrome76 +35existing tests/lint/build | passed | See execution below |
 
 ## Early integration checkpoint
 
 | ID | Check | Status | Evidence / unresolved finding |
 | --- | --- | --- | --- |
-| I-01 | Shared owners actually consumed | pending | Extracted owner keeps primitives reexport; actual Part/OwnedAttributes/Separator/Button used; no duplicate row class. |
-| I-02 | Sourced representative appearance | pending | Chrome rich/image rows match first-line media, supporting text and shared actions; missing subdued repaired through shared variant owner. |
-| I-03 | Independent constituent options | pending | Rich row slot-only description, actual Badge/Avatar/Button; empty header/footer hidden; independent regions rendered through canonical parts. |
+| I-01 | Shared owners actually consumed | passed | Extracted owner keeps primitives reexport; actual Part/OwnedAttributes/Separator/Button used; no duplicate row class. |
+| I-02 | Sourced representative appearance | passed | Chrome rich/image rows match first-line media, supporting text and shared actions; missing subdued repaired through shared variant owner. |
+| I-03 | Independent constituent options | passed | Rich row slot-only description, actual Badge/Avatar/Button; empty header/footer hidden; independent regions rendered through canonical parts. |
 
 ## Gate record
 
 | Gate | Status | Required exit evidence / remaining work |
 | --- | --- | --- |
 | 0. Sources and scope | passed | Live contracts and upstream source chain read; complete component remains scope |
-| 1. Capability mapping | passed | C-01–09 account for API/regions/source combinations; independent presentation batch does not claim unresolved C-06 composition |
+| 1. Capability mapping | passed | C-01–09 account for API/regions/source combinations; native composition and all34source cases reconciled |
 | 2. Architecture and composition reuse | passed | Existing renderPart/OwnedAttributes/Separator/Button ownership mapped; no new interaction engine |
-| 3. Behavior | pending | Dynamic regions, refs, group cleanup and independent actions |
-| 4. Presentation and customization | pending | Public hooks/theme/dictionary |
-| 5. Accessibility | pending | Native AX/real keyboard/axe |
-| 6. Visual and interaction inspection | pending | Source/light/dark/RTL/narrow |
-| 7. Documentation and demo reuse | pending | API/source/copy coverage |
-| 8. Regression and reconciliation | pending | Shared consumers/builds/package and remaining cases |
+| 3. Behavior | passed | Native links/buttons/independent actions, cancellation and composed lifecycle verified; Menu remains shared command owner |
+| 4. Presentation and customization | passed | Shared density/typography/media roles, scoped tokens/dictionary replacement and canonical hooks preserve nodes/focus |
+| 5. Accessibility | passed | Native tree/Tab/Enter/Space and axe0 over examples and actual open Menu; OS/screen-reader limits stated below |
+| 6. Visual and interaction inspection | passed | Light/dark/RTL/narrow, source screenshots,81row states and image/header/indicator geometry reviewed |
+| 7. Documentation and demo reuse | passed | Default/API plus14shared explorer compositions cover24base and10standalone examples; exact copy/Controls verified |
+| 8. Regression and reconciliation | passed | Built native row/Menu composition and icon exports, Marker consumer, focused tests and production/Storybook builds pass |
 
 ## Documentation synchronization
 
-- [ ] Default/API/constituent docs reconcile.
-- [ ] All slots/parts/state hooks documented.
-- [ ] Source cases and copied/live compositions reconciled individually.
-- [ ] Generator and catalog tests preserve authored entry.
+- [x] Default/API/constituent docs reconcile.
+- [x] All slots/parts/state hooks documented.
+- [x] Source cases and copied/live compositions reconciled individually.
+- [x] Generator and catalog tests preserve authored entry.
 
 ## Completion / handoff
 
-Implementation and required verification remain pending. This record does not certify List Item or the library. Native forced-colors/OS input media are not available through current Chrome tools; no synthetic substitute claimed.
+List Item implementation, live contract mapping and reference-use-case reconciliation are complete for the recorded Chrome/source/package checks. The whole-library goal remains active. Native forced-colors/OS input media and real screen readers were not available/exercised; this record makes no claim about those environments. Historical pending notes below describe earlier checkpoints; current capability/scenario/gate tables and final reconciliation supersede them.
 
 ## First integration — 2026-10-04
 
@@ -164,3 +164,23 @@ Menu composition: actual TpMenuItem owns all command selection/focus/highlight. 
 Trailing decorative Icon currently sits above Root in Actions' grid cell. Keep Actions container transparent to hit testing; restore pointer targets for its slotted content except the actual decorative Icon, and preserve native/semantic delegated Actions hosts. This uses CSS hit testing, not forwarding clicks. Native Icon remains noninteractive. Explicit action controls keep their targets and tab behavior. Verify actual pointer on an indicator as well as Share. Source metadata belongs within canonical Content, not an extra unsupported Content constituent.
 
 Early integration reopens for native indicator/Share, actual person Menu and header geometry before broad reference reconciliation.
+
+C-08 early integration: actual Menu/TpMenuItem/TpAvatar/TpListItem render, with outer command padding6.4px and inner Root padding0 via shared composition. Clicking maxleiter selects once, closes Menu and shows existing Toast. Source menu trigger now uses ordinary justify-self:start application layout to avoid stretching the anchor. Image headers load three actual images and use square AspectRatio; default grid renders three columns. Real Chrome click at the temporarily accessible (public Icon label) indicator UID follows its underlying native link once; hit test reports A, Icon and Actions container pointer-events none. Label removed after probe. Share still activates its Button alone and leaves hash unchanged. No runtime click forwarding. Same registered controls own all roles. Early checkpoint passes.
+
+## Reference composition completion — 2026-10-04
+
+Fresh live authority remains the recorded head/state. Local shadcn reference is still clean63c1308d112b6b1205d86244a156cca1abef5087. During this work the library HEAD advanced externally to a6504d5, incorporating prior work; later changes preserve that baseline. No commit/reset/staging performed by this agent.
+
+Six additional Docs compositions (14total) reconcile all ten standalone Item references with existing base cases. Actual AvatarGroup owns overlap; two secondary avatars hide below40rem as source application behavior, then return when resized. Invite actions use actual Button/icon; actual Invite Evil Rabbit click shows Toast. Person list has three listitem roles and two real separators. Header grid uses public Group rendering/presentation and three actual square AspectRatio boxes with cover images; all three images loaded640wide. Default squares130.28px, narrow226.81px, equal widths/heights; three columns collapse to one. Music metadata stays in canonical Content via a public delegate; titles/album, artist and duration remain readable at248px in RTL. Native external links retain target/rel; actual Icon hit follows its underlying anchor. Security Review click shows Toast. Icons are shared exported definitions, not locally painted control substitutes.
+
+Shared MenuItem now contributes zero inner ListItem padding through existing setPartComposition, retaining the command's6.4px default inset. This owner serves Menu/Menubar/context modes. Rows detached from the command restore3.2px/6.4px xs padding; rejoin and MenuItem disconnect/reconnect restore0px with the same Root node and owner. Reconnection requests an update so this also works without a new slot assignment. An initial lifecycle probe ran on closed/detached content and yielded empty styles; only the open, connected rerun is evidence. Pointer maxleiter selection and real ArrowDown/Enter select/dismiss once; Escape returns to trigger. No new command or positioning owner. Source trigger uses justify-self:start on the actual Button (138.56px), not the display:contents Menu host; popup content sizes intrinsically (193.83px).
+
+Source density reconciliation exercised all nine content combinations for each treatment and size,81row states. Each retains five nonempty Actions and four Media regions, with no overflow. Root padding default6.4/9.6,sm6.4,xs3.2/6.4; gaps9.6/6.4/3.2. XS Description now uses existing text-xs12 to match Nova, other sizes14. Source child Button primary/outline and default/sm distinctions retained, including primary Confirm. Final narrow screenshot after this correction reviewed; width/scroll248. Fifteen image-media rows cover all five source groups, all loaded; media widths32/25.6/19.2 and no-action/View/Download combinations inspected.
+
+At390px all14preview scroll/client widths are248px. Light/default and dark/RTL images, avatars, metadata and menu inspected. Default view restores secondary avatars. Source Controls actual fill changes variant=subdued/size=xs, reflected attrs and actual muted paint/text-xs, then restores defaults. Menu Show/Copy reports Copied and contains actual MenuItem markup, common setup, registered package/icon imports and correct application alignment; same Menu instance remains.
+
+Axe:0violations/22passing rules across usage previews; separately0violations/18passing rules on the actual open menu popup. A document-wide role query initially missed the popup's shadow scope and was not counted; rerun uses the actual popup element. Native accessibility tree exposes three named menuitems and independent row actions. No actual screen-reader/OS forced-colors claim.
+
+Served built-package fixture imports both new icons, renders actual MenuItem/ListItem/Avatar, measures outer6.4px/inner0 and handles real ArrowDown/Enter with exactly one alex action then close. Existing choice-collection/synthetic-press/menu-family-controls/structural/stories suites25tests pass. Focused TypeScript, ESLint, Stylelint, Prettier and diff check pass. Production and final Storybook builds pass; local logs tmp/component-verification/list-item-compositions/2026-10-04/{build,storybook-build}.log. Screenshots inspected inline. Previous native row/package/Marker regression results remain applicable: the later changes target decorative Icons, xs descriptions (Marker has none), and direct MenuItem composition.
+
+Parent reference-use-cases.json now individually maps all24base and10standalone Item cases. This closes List Item's source reconciliation, not the whole library. Other component records and the full-library inventory retain their unresolved requirements.

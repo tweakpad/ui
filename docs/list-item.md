@@ -46,6 +46,15 @@ operable when Root is a link or button. Put independent controls in `actions` (o
 `trailing`), not in the title, description, media, header or footer of an interactive
 Root. Native Tab order reaches Root before its actions; activating an action does
 not activate Root. The default row is presentational and has no activation handler.
+Decorative `tp-icon` content in Actions lets pointer input reach the native Root;
+real action controls retain their own pointer targets.
+
+For a rich command, place a presentational List Item directly inside `tp-menu-item`.
+Menu Item owns command semantics, keyboard navigation, highlighting and the outer
+inset. Its shared composition removes the inner row's padding and restores it if
+the row leaves the command. Do not add a second link or button inside that row.
+Avatar groups, square image headers and metadata use the existing Avatar Group,
+Aspect Ratio and public content rendering contracts, as shown in the examples.
 
 Group owns a list role and supplies `listitem` to direct rows without an authored
 role. Detaching a row or group releases only its owned roles. Authored roles are

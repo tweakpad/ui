@@ -81,6 +81,7 @@ export const listItemAppearance: PresentationDictionary = {
         'font-size': 'var(--tp-text-sm)',
       },
     },
+    { selector: ':host([size="xs"]) &', declarations: { 'font-size': 'var(--tp-text-xs)' } },
   ],
 
   'list-item-content': [

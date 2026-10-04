@@ -37,7 +37,9 @@ invalidates outstanding callbacks. A fallback already shown is not hidden by a
 later delay change. `keep-mounted` preserves the native image for lazy loading;
 while unavailable it is visually and accessibility hidden, with fallback active.
 
-Slots: default fallback content and optional `badge` status content. Supply a
+Slots: default fallback content and optional `badge` status content. Formatting
+whitespace around named content does not suppress the fallback text; meaningful
+default-slot text or an element overrides it, including dynamic changes. Supply a
 fallback whenever image loading may fail. Give status marks a textual accessible
 name; color alone is insufficient. `aria-hidden="true"` on the Avatar makes the
 whole composition decorative when an adjacent name already identifies the entity.
@@ -64,3 +66,11 @@ icon badges, groups, numeric and icon overflow counts, and Avatar inside Empty
 State. The badge enclosure owns its theme colors, ring and icon bounds; an icon
 inside it does not need a separate spacing or size adjustment. Small avatars hide
 the icon while retaining the badge's accessible status name.
+
+Image and fallback badge rows use the same named status part. Group examples show
+loaded images at each size; overflow icons scale through the shared count recipe,
+while their accessible name still communicates the omitted number. The custom
+shape example uses the shared radius token on the viewport and the public image
+part for grayscale. These are compositions, not extra Avatar variants. Interactive
+examples copy their complete markup, registration, imports and setup from the same
+source that renders them.

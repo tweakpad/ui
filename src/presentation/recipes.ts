@@ -757,6 +757,17 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
   ],
+  'avatar-overflow-count': [
+    ...(['sm', 'default', 'lg'] as const).map((size, index) => ({
+      selector: `:host([size="${size}"]) & > tp-icon`,
+      declarations: {
+        'min-inline-size': `var(--tp-space-${index + 3})`,
+        'max-inline-size': `var(--tp-space-${index + 3})`,
+        'min-block-size': `var(--tp-space-${index + 3})`,
+        'max-block-size': `var(--tp-space-${index + 3})`,
+      },
+    })),
+  ],
   'avatar-badge': [
     {
       declarations: {

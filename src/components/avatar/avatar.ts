@@ -87,15 +87,28 @@ export class TpAvatar extends TpElement {
   #cancelDelay: (() => void) | undefined;
   #fallbackReady = false;
   #needsLoad = true;
+  #contentObserver: MutationObserver | undefined;
   get imageLoadingStatus(): AvatarLoadingStatus {
     return this.#status;
   }
   override connectedCallback(): void {
     super.connectedCallback();
+    this.#contentObserver = new this.ownerDocument.defaultView!.MutationObserver(
+      this.#slotsChanged,
+    );
+    this.#contentObserver.observe(this, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['slot'],
+    });
     this.#needsLoad = true;
     this.requestUpdate();
   }
   override disconnectedCallback(): void {
+    this.#contentObserver?.disconnect();
+    this.#contentObserver = undefined;
     ++this.#generation;
     this.#clearLoad();
     this.#cancelDelay?.();
@@ -183,6 +196,11 @@ export class TpAvatar extends TpElement {
     const generation = this.#generation;
     const loaded = this.#status === 'loaded';
     const name = this.alt || this.fallback;
+    const suppliedFallback = Array.from(this.childNodes).some((node) =>
+      node.nodeType === Node.ELEMENT_NODE
+        ? !(node as Element).getAttribute('slot')
+        : node.nodeType === Node.TEXT_NODE && Boolean(node.textContent?.trim()),
+    );
     const badge = Array.from(this.children).some((child) => child.slot === 'badge');
     return html`
       ${
@@ -224,7 +242,11 @@ export class TpAvatar extends TpElement {
                 role: name ? 'img' : undefined,
                 'aria-label': name || undefined,
               },
-              content: html`<slot>${this.fallback}</slot>`,
+              content: html`<slot
+                  ?hidden=${!suppliedFallback}
+                  @slotchange=${this.#slotsChanged}
+                ></slot
+                >${suppliedFallback ? nothing : this.fallback}`,
             })
           : nothing
       }

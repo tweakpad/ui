@@ -5,8 +5,8 @@ import setupSource from './list-item-example.js?raw';
 const layout =
   'display:grid;gap:var(--tp-space-4);max-inline-size:calc(var(--tp-spacing) * 150);min-inline-size:0';
 const icon = '<tp-icon slot="media" data-icon="folder"></tp-icon>';
-const button = (label = 'Action') =>
-  `<tp-button slot="actions" variant="outline" size="sm" data-feedback>${label}</tp-button>`;
+const button = (label = 'Action', variant = 'outline', size = 'sm') =>
+  `<tp-button slot="actions" variant="${variant}" size="${size}" data-feedback>${label}</tp-button>`;
 function example(title: string, id: string, markup: string) {
   return interactiveMarkupExample(
     title,
@@ -27,14 +27,14 @@ export const listItemExamples = [
     'list-item-content-example',
     `
 <tp-list-item>Title only</tp-list-item>
-<tp-list-item>Title with action${button()}</tp-list-item>
+<tp-list-item>Title with action${button('Action', 'outline', 'default')}</tp-list-item>
 <tp-list-item description="Additional context for this item.">Title and description</tp-list-item>
-<tp-list-item description="The action stays separately operable.">Description and action${button()}</tp-list-item>
+<tp-list-item description="The action stays separately operable.">Description and action${button('Action', 'outline', 'default')}</tp-list-item>
 <tp-list-item media-treatment="icon">${icon}Media and title</tp-list-item>
-<tp-list-item media-treatment="icon">${icon}Media and action${button()}</tp-list-item>
+<tp-list-item media-treatment="icon">${icon}Media and action${button('Action', 'default')}</tp-list-item>
 <tp-list-item media-treatment="icon" description="Media aligns with the first line of content.">${icon}Media and description</tp-list-item>
-<tp-list-item media-treatment="icon" description="A complete row with media, title, description and action.">${icon}Complete item${button()}</tp-list-item>
-<tp-list-item description="Choose an action for this item.">Multiple actions${button('Cancel')}${button('Confirm')}</tp-list-item>`,
+<tp-list-item media-treatment="icon" description="A complete row with media, title, description and action.">${icon}Complete item${button('Action', 'default')}</tp-list-item>
+<tp-list-item description="Choose an action for this item.">Multiple actions${button('Cancel')}${button('Confirm', 'default')}</tp-list-item>`,
   ),
   example(
     'Treatments and density',
@@ -121,7 +121,7 @@ export const listItemExamples = [
     'People menu',
     'list-item-menu-example',
     `<tp-menu label="People" placement="block-end start" data-people>
-  <tp-button slot="trigger" variant="outline" size="sm">Select person<tp-icon slot="icon-end" data-icon="chevronDown"></tp-icon></tp-button>
+  <tp-button slot="trigger" variant="outline" size="sm" style="justify-self:start">Select person<tp-icon slot="icon-end" data-icon="chevronDown"></tp-icon></tp-button>
   ${people.map((person) => `<tp-menu-item value="${person}" label="${person}"><tp-list-item size="xs" description="${person}@vercel.com">${avatar(person)}${person}</tp-list-item></tp-menu-item>`).join('\n  ')}
 </tp-menu>`,
   ),

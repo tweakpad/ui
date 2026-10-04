@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { markupExample } from './documentation-examples.js';
 
 /** Base registry aspect-ratio-example.tsx: preserve all four reference use cases. */
 const ratios = [
@@ -9,31 +9,20 @@ const ratios = [
 ] as const;
 const surface = 'inline-size:100%;block-size:100%;background:var(--tp-muted)';
 export const aspectRatioExamples = [
-  ...ratios.map(({ title, ratio }) => ({
-    title,
-    description: `A ${title} box that follows its available width.`,
-    code: `<tp-aspect-ratio ratio="${ratio}" style="inline-size:100%;max-inline-size:calc(var(--tp-spacing) * 100);border-radius:var(--tp-radius-lg)">
+  ...ratios.map(({ title, ratio }) =>
+    markupExample(
+      title,
+      `<tp-aspect-ratio ratio="${ratio}" style="inline-size:100%;max-inline-size:calc(var(--tp-spacing) * 100);border-radius:var(--tp-radius-lg)">
   <div style="${surface}"></div>
 </tp-aspect-ratio>`,
-    render: () =>
-      html`<tp-aspect-ratio
-        .ratio=${ratio}
-        style="inline-size:100%;max-inline-size:calc(var(--tp-spacing) * 100);border-radius:var(--tp-radius-lg)"
-        ><div style=${surface}></div
-      ></tp-aspect-ratio>`,
-  })),
-  {
-    title: 'Different container sizes',
-    description:
-      'The same 16:9 ratio at three widths. Each box shrinks with its container; dimensions and spacing follow the theme.',
-    code: `<div style="display:flex;align-items:start;flex-wrap:wrap;gap:var(--tp-space-4)">
-  <tp-aspect-ratio ratio="1.7777777777777777" style="inline-size:calc(var(--tp-spacing) * 40);max-inline-size:100%;border-radius:var(--tp-radius-lg)"><div style="${surface}"></div></tp-aspect-ratio>
-  <tp-aspect-ratio ratio="1.7777777777777777" style="inline-size:calc(var(--tp-spacing) * 60);max-inline-size:100%;border-radius:var(--tp-radius-lg)"><div style="${surface}"></div></tp-aspect-ratio>
-  <tp-aspect-ratio ratio="1.7777777777777777" style="inline-size:calc(var(--tp-spacing) * 80);max-inline-size:100%;border-radius:var(--tp-radius-lg)"><div style="${surface}"></div></tp-aspect-ratio>
+      `A ${title} box that follows its available width.`,
+    ),
+  ),
+  markupExample(
+    'Different container sizes',
+    `<div style="display:flex;align-items:start;flex-wrap:wrap;gap:var(--tp-space-4)">
+  ${[40, 60, 80].map((width) => `<tp-aspect-ratio ratio="${16 / 9}" style="inline-size:calc(var(--tp-spacing) * ${width});max-inline-size:100%;border-radius:var(--tp-radius-lg)"><div style="${surface}"></div></tp-aspect-ratio>`).join('\n  ')}
 </div>`,
-    render: () =>
-      html`<div style="display:flex;align-items:start;flex-wrap:wrap;gap:var(--tp-space-4)">
-        ${[40, 60, 80].map((width) => html`<tp-aspect-ratio .ratio=${16 / 9} style=${`inline-size:calc(var(--tp-spacing) * ${width});max-inline-size:100%;border-radius:var(--tp-radius-lg)`}><div style=${surface}></div></tp-aspect-ratio>`)}
-      </div>`,
-  },
+    'The same 16:9 ratio at three widths. Each box shrinks with its container; dimensions and spacing follow the theme.',
+  ),
 ];

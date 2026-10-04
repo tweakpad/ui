@@ -228,6 +228,10 @@ export class TpMenuItem extends TpElement {
     if (changed.has('disabled') || changed.has('label') || changed.has('value'))
       this.#owner?.itemChanged();
   }
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.requestUpdate();
+  }
   override disconnectedCallback(): void {
     for (const row of this.#rows) setPartComposition(row, this);
     this.#rows.clear();
