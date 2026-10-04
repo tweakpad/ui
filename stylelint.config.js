@@ -1,4 +1,5 @@
 export default {
+  ignoreFiles: ['**/*.d.ts'],
   extends: ['stylelint-config-standard'],
   overrides: [
     {

@@ -1,3 +1,4 @@
+import { bindPart } from '../foundation/part.js';
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
@@ -28,58 +29,8 @@ export const displayMotionRoles = {
   },
 } as const satisfies Record<string, MotionRoleDefinition>;
 
-export class TpAvatar extends TpElement {
-  static tagName = 'tp-avatar';
-  static override properties = {
-    ...TpElement.properties,
-    src: { type: String },
-    alt: { type: String },
-    fallback: { type: String },
-    size: { type: String, reflect: true },
-  };
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: inline-grid;
-        overflow: hidden;
-      }
-
-      img,
-      [part~='fallback'] {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: grid;
-        place-items: center;
-      }
-    `,
-  ];
-  src = '';
-  alt = '';
-  fallback = '';
-  size: 'sm' | 'default' | 'lg' = 'default';
-  #failed = false;
-  protected override render() {
-    return this.src && !this.#failed
-      ? html`<img
-          part="image"
-          src=${this.src}
-          alt=${this.alt}
-          @error=${() => {
-            this.#failed = true;
-            this.requestUpdate();
-          }}
-        />`
-      : html`<span part="fallback" role="img" aria-label=${this.alt || this.fallback}
-          ><slot>${this.fallback}</slot></span
-        >`;
-  }
-  protected override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
-    if (changed.has('src')) this.#failed = false;
-  }
-}
+export { TpAvatar, TpAvatarGroup } from './avatar/index.js';
+export type { AvatarLoadingStatus } from './avatar/index.js';
 
 export class TpCarousel extends TpElement {
   static tagName = 'tp-carousel';
@@ -156,7 +107,11 @@ export class TpCarousel extends TpElement {
       @pointerleave=${this.#schedule}
     >
       <div class="viewport" part="viewport">
-        <div class="track" part="track" style=${`--tp-carousel-index:${this.index}`}>
+        <div
+          class="track"
+          part="track"
+          ${bindPart({ style: { '--tp-carousel-index': this.index } })}
+        >
           <slot @slotchange=${this.#sync}></slot>
         </div>
       </div>
@@ -238,46 +193,7 @@ export class TpCarousel extends TpElement {
   }
 }
 
-export class TpDataVisualization extends TpElement {
-  static tagName = 'tp-data-visualization';
-  static override properties = {
-    ...TpElement.properties,
-    label: { type: String },
-    description: { type: String },
-  };
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: block;
-      }
-
-      figure {
-        margin: 0;
-      }
-
-      .description {
-        color: var(--tp-muted-foreground);
-      }
-
-      .table {
-        margin-top: var(--tp-space-3);
-      }
-    `,
-  ];
-  label = 'Data visualization';
-  description = '';
-  protected override render() {
-    const description = this.description
-      ? html` <figcaption class="description" part="description">${this.description}</figcaption> `
-      : nothing;
-    return html`<figure part="root" aria-label=${this.label}>
-      <div part="visual"><slot></slot></div>
-      ${description}
-      <div class="table" part="table"><slot name="table"></slot></div>
-    </figure>`;
-  }
-}
+export * from './data-visualization/index.js';
 
 export class TpMessageScroller extends TpElement {
   static tagName = 'tp-message-scroller';
@@ -342,179 +258,9 @@ export class TpMessageScroller extends TpElement {
 
 export { TpProgress } from './progress/index.js';
 
-export class TpResizablePanelGroup extends TpElement {
-  static tagName = 'tp-resizable-panel-group';
-  static override properties = { ...TpElement.properties, min: { type: Number } };
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: flex;
-        position: relative;
-        width: 100%;
-        height: 100%;
-      }
+export * from './resizable-panel-group/index.js';
 
-      :host([orientation='vertical']) {
-        flex-direction: column;
-      }
-
-      ::slotted(*) {
-        overflow: auto;
-      }
-
-      .handle {
-        position: absolute;
-        z-index: 1;
-        top: 0;
-        bottom: 0;
-        width: var(--tp-space-2);
-        translate: -50% 0;
-        cursor: col-resize;
-      }
-
-      :host([orientation='vertical']) .handle {
-        inset-inline: 0;
-        bottom: auto;
-        width: auto;
-        height: var(--tp-space-2);
-        translate: 0 -50%;
-        cursor: row-resize;
-      }
-    `,
-  ];
-  min = 10;
-  #panels: HTMLElement[] = [];
-  #start = 0;
-  #sizes: number[] = [];
-  protected override render() {
-    return html`
-      <slot @slotchange=${this.#sync}></slot>
-      ${this.#panels.slice(1).map((_, index) => this.#renderHandle(index))}
-    `;
-  }
-  #renderHandle(index: number) {
-    const percentage = ((index + 1) / this.#panels.length) * 100;
-    const position =
-      this.orientation === 'horizontal' ? `left:${percentage}%` : `top:${percentage}%`;
-    return html`
-      <div
-        class="handle"
-        style=${position}
-        part="handle"
-        role="separator"
-        tabindex="0"
-        aria-orientation=${this.orientation}
-        aria-valuemin=${String(this.min)}
-        aria-valuemax=${String(100 - this.min)}
-        aria-valuenow=${String(Math.round(percentage))}
-        @pointerdown=${(event: PointerEvent) => this.#down(index, event)}
-        @keydown=${(event: KeyboardEvent) => this.#key(index, event)}
-      ></div>
-    `;
-  }
-  #sync = (event: Event): void => {
-    this.#panels = assignedElements(event.currentTarget as HTMLSlotElement);
-    const size = 100 / Math.max(1, this.#panels.length);
-    this.#panels.forEach((panel) => (panel.style.flex = `0 0 ${size}%`));
-    this.requestUpdate();
-  };
-  #down(index: number, event: PointerEvent): void {
-    const before = this.#panels[index],
-      after = this.#panels[index + 1];
-    if (!before || !after) return;
-    this.#start = this.orientation === 'horizontal' ? event.clientX : event.clientY;
-    this.#sizes = [
-      before.getBoundingClientRect()[this.orientation === 'horizontal' ? 'width' : 'height'],
-      after.getBoundingClientRect()[this.orientation === 'horizontal' ? 'width' : 'height'],
-    ];
-    const move = (e: PointerEvent) =>
-      this.#resize(
-        index,
-        (this.orientation === 'horizontal' ? e.clientX : e.clientY) - this.#start,
-      );
-    const up = () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-  }
-  #resize(index: number, delta: number): void {
-    const before = this.#panels[index],
-      after = this.#panels[index + 1],
-      total = this.#sizes[0]! + this.#sizes[1]!;
-    if (!before || !after) return;
-    const first = Math.max(
-      (total * this.min) / 100,
-      Math.min((total * (100 - this.min)) / 100, this.#sizes[0]! + delta),
-    );
-    before.style.flex = `0 0 ${first}px`;
-    after.style.flex = `0 0 ${total - first}px`;
-    this.emit('tp-resize', { index, sizes: [first, total - first] });
-  }
-  #key(index: number, event: KeyboardEvent): void {
-    const decrease =
-      this.orientation === 'horizontal'
-        ? this.direction === 'rtl'
-          ? 'ArrowRight'
-          : 'ArrowLeft'
-        : 'ArrowUp';
-    const increase =
-      this.orientation === 'horizontal'
-        ? this.direction === 'rtl'
-          ? 'ArrowLeft'
-          : 'ArrowRight'
-        : 'ArrowDown';
-    if (event.key === decrease || event.key === increase) {
-      event.preventDefault();
-      const before = this.#panels[index],
-        after = this.#panels[index + 1];
-      if (!before || !after) return;
-      this.#sizes = [
-        before.getBoundingClientRect()[this.orientation === 'horizontal' ? 'width' : 'height'],
-        after.getBoundingClientRect()[this.orientation === 'horizontal' ? 'width' : 'height'],
-      ];
-      this.#resize(index, event.key === increase ? 10 : -10);
-    }
-  }
-}
-
-export class TpScrollArea extends TpElement {
-  static tagName = 'tp-scroll-area';
-  static override properties = { ...TpElement.properties, axis: { type: String, reflect: true } };
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: block;
-        min-width: 0;
-        min-height: 0;
-      }
-
-      .viewport {
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        overscroll-behavior: contain;
-      }
-
-      :host([axis='x']) .viewport {
-        overflow-y: hidden;
-      }
-
-      :host([axis='y']) .viewport {
-        overflow-x: hidden;
-      }
-    `,
-  ];
-  axis: 'x' | 'y' | 'both' = 'both';
-  protected override render() {
-    return html`<div class="viewport" part="viewport" tabindex="0">
-      <div part="content"><slot></slot></div>
-    </div>`;
-  }
-}
+export * from './scroll-area/index.js';
 
 export class TpSeparator extends TpElement {
   static tagName = 'tp-separator';
@@ -566,7 +312,7 @@ export class TpSpinner extends TpElement {
     css`
       :host {
         display: inline-block;
-        animation: spin 0.8s linear infinite;
+        animation: spin calc(var(--tp-duration-fast) * 5) linear infinite;
         animation-play-state: var(--tp-motion-play-state, running);
       }
 
@@ -601,7 +347,9 @@ export class TpSpinner extends TpElement {
     super.disconnectedCallback();
   }
   protected override render() {
-    return html`<span class="visually-hidden" role="status">${this.label}</span>`;
+    return this.label
+      ? html`<span class="visually-hidden" role="status">${this.label}</span>`
+      : nothing;
   }
 }
 

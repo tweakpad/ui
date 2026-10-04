@@ -11,21 +11,20 @@ export const nativeSelectAppearance: PresentationDictionary = {
     ...textControlAppearance.input!,
     {
       declarations: {
-        height: 'var(--tp-space-8)',
-        'min-height': 'var(--tp-space-8)',
+        height: 'var(--tp-control-height-md)',
+        'min-height': 'var(--tp-control-height-md)',
         'padding-inline-start': 'calc(var(--tp-spacing) * 2.5)',
         'padding-inline-end': 'var(--tp-space-8)',
         'padding-block': 'var(--tp-space-1)',
-        // A native select centers its own text. Shared Input's 1.5 line box
-        // exceeds Nova h-8 at the library spacing seed and clips that content.
+        // Native text alignment remains native while extent follows shared control sizes.
         'line-height': 'normal',
       },
     },
     {
       selector: '&[data-size="sm"]',
       declarations: {
-        height: 'calc(var(--tp-spacing) * 7)',
-        'min-height': 'calc(var(--tp-spacing) * 7)',
+        height: 'var(--tp-control-height-sm)',
+        'min-height': 'var(--tp-control-height-sm)',
         'padding-block': 'calc(var(--tp-spacing) * .5)',
         'border-radius': 'min(var(--tp-radius-md), calc(var(--tp-spacing) * 2.5))',
       },

@@ -10,6 +10,9 @@ import documentation from '../../docs/select.md?raw';
 
 interface Args {
   value: unknown;
+  searchable: boolean;
+  inputValue: string;
+  showClear: boolean;
   open: boolean;
   placeholder: string;
   label: string;
@@ -47,6 +50,15 @@ function control(args: Args, items: readonly SelectEntry[] = fruits) {
   return html`<tp-select
     ${ref(owner)}
     .items=${items}
+    .searchable=${args.searchable}
+    .inputValue=${args.inputValue}
+    .showClear=${args.showClear}
+    .onInputValueChange=${(event: TpValueChangeEvent<string>) => {
+      if (!event.defaultPrevented && !event.detail.cancelled && owner.value) {
+        owner.value.inputValue = event.detail.value;
+        queueMicrotask(() => updateArgs({ inputValue: owner.value!.inputValue }));
+      }
+    }}
     .value=${args.value}
     .open=${args.open}
     .placeholder=${args.placeholder}
@@ -86,6 +98,9 @@ const meta: Meta<Args> = {
     docs: { description: { component: documentation }, source: { code: basicSource } },
   },
   args: {
+    searchable: false,
+    inputValue: '',
+    showClear: false,
     value: null,
     open: false,
     placeholder: 'Choose a fruit',
@@ -106,6 +121,9 @@ const meta: Meta<Args> = {
     showArrow: false,
   },
   argTypes: {
+    searchable: { control: 'boolean' },
+    inputValue: { control: 'text', description: 'Independent editable query in searchable mode.' },
+    showClear: { control: 'boolean' },
     value: {
       control: 'object',
       description:
@@ -236,6 +254,43 @@ export const InDialog: Story = {
     docs: {
       source: {
         code: `<script type="module">\n  ${sourceImports.replaceAll('\n', '\n  ')}\n</script>\n<tp-dialog label="Choose delivery fruit">\n  <tp-button slot="trigger" variant="outline">Choose fruit</tp-button>\n  <tp-field label="Fruit" description="The Select popup belongs to this dialog">\n    <tp-select placeholder="Choose a fruit">\n      <option value="apple">Apple</option>\n      <option value="banana">Banana</option>\n      <option value="cherry">Cherry</option>\n    </tp-select>\n  </tp-field>\n  <tp-button data-dialog-close variant="outline">Done</tp-button>\n</tp-dialog>`,
+      },
+    },
+  },
+};
+
+export const Searchable: Story = {
+  args: { searchable: true, modal: false, alignItemWithTrigger: false, showClear: true },
+  parameters: {
+    docs: {
+      source: { code: basicSource.replace('<tp-select ', '<tp-select searchable show-clear ') },
+    },
+  },
+};
+export const SearchableMultiple: Story = {
+  args: {
+    searchable: true,
+    modal: false,
+    alignItemWithTrigger: false,
+    showClear: true,
+    multiple: true,
+    value: [],
+    label: 'Team members',
+    placeholder: 'Find members',
+  },
+  render: (args) => control(args, ['Alex Morgan', 'Jordan Doe', 'Sam Rivera', 'Taylor Kim']),
+  parameters: {
+    docs: {
+      source: {
+        code: `${sourceImports}
+const members = document.createElement('tp-select');
+members.searchable = true;
+members.multiple = true;
+members.showClear = true;
+members.label = 'Team members';
+members.placeholder = 'Find members';
+members.items = ['Alex Morgan', 'Jordan Doe', 'Sam Rivera', 'Taylor Kim'];
+document.body.append(members);`,
       },
     },
   },

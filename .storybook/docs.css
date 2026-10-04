@@ -3,3 +3,12 @@
   color-scheme: light;
   color: var(--tp-foreground);
 }
+
+.tp-docs-example {
+  margin-block: var(--tp-space-8);
+}
+
+.tp-docs-example-preview {
+  background: var(--tp-background);
+  color: var(--tp-foreground);
+}

@@ -1,0 +1,47 @@
+import React from 'react';
+import { render, nothing } from 'lit';
+import { Canvas, useOf } from '@storybook/addon-docs/blocks';
+import { MDXProvider } from '@storybook/addon-docs/mdx-react-shim';
+
+export function ExampleContent({ example }) {
+  const host = React.useRef(null);
+  React.useEffect(() => {
+    render(example.render(), host.current);
+    const node = host.current;
+    return () => render(nothing, node);
+  }, [example]);
+  return <div className="tp-docs-example-preview" ref={host} />;
+}
+
+export function Example({ example }) {
+  const components = React.useMemo(
+    () => ({ Story: () => <ExampleContent example={example} /> }),
+    [example],
+  );
+  return (
+    <section className="tp-docs-example">
+      <h3>{example.title}</h3>
+      {example.description && <p>{example.description}</p>}
+      <MDXProvider components={components}>
+        <Canvas
+          layout="padded"
+          withToolbar={false}
+          source={{ code: example.code, language: example.language || 'html', format: false }}
+        />
+      </MDXProvider>
+    </section>
+  );
+}
+
+export function Examples() {
+  const resolved = useOf('meta', ['meta']);
+  const examples = resolved.preparedMeta.parameters.docs?.examples || [];
+  return examples.length ? (
+    <>
+      <h2>Usage examples</h2>
+      {examples.map((example) => (
+        <Example key={example.title} example={example} />
+      ))}
+    </>
+  ) : null;
+}

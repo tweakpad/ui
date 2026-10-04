@@ -42,6 +42,7 @@ describe('anchored collision policy', () => {
   });
   it('measures untransformed arrows and reports clamp displacement', () => {
     const arrow = {
+      dataset: {},
       offsetWidth: 10,
       offsetHeight: 10,
       getBoundingClientRect: () => rect(0, 0, 2, 2),

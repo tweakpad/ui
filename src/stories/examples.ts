@@ -1,3 +1,11 @@
+import { dataVisualizationExample } from './data-visualization.examples.js';
+import { renderFormExample } from './form.examples.js';
+import { skeletonProfile } from './skeleton.examples.js';
+import {
+  renderBubbleExample,
+  renderEmptyStateExample,
+  renderAspectRatioExample,
+} from './presentation-primitives.examples.js';
 import { html } from 'lit';
 import type { TemplateResult } from 'lit';
 import type { catalog } from '../catalog.js';
@@ -101,13 +109,7 @@ const examples = {
       <tp-input name="email" type="email"></tp-input>
     </tp-field>
   `,
-  'tp-form': () => html`
-    <tp-form>
-      <tp-field label="Name"><tp-input name="name" required></tp-input></tp-field>
-      <tp-button type="submit" name="intent" value="save">Save</tp-button>
-      <tp-button type="reset">Reset</tp-button>
-    </tp-form>
-  `,
+  'tp-form': () => renderFormExample(),
   'tp-input': () => html`<tp-input label="Search" placeholder="Search projects"></tp-input>`,
   'tp-input-group': () => html`
     <tp-input-group>
@@ -141,17 +143,10 @@ const examples = {
   'tp-text-area': () => html`
     <tp-text-area label="Message" placeholder="Write a message"></tp-text-area>
   `,
-  'tp-combobox': () => html`
-    <tp-combobox label="Framework" placeholder="Choose a framework">
-      <span value="lit">Lit</span>
-      <span value="react">React</span>
-      <span value="vue">Vue</span>
-    </tp-combobox>
-  `,
   'tp-command-palette': () => html`
-    <tp-command-palette label="Commands" open>
-      <span value="new">New document</span>
-      <span value="open">Open document</span>
+    <tp-command-palette label="Commands" inline>
+      <option value="new">New document</option>
+      <option value="open">Open document</option>
     </tp-command-palette>
   `,
   'tp-select': () => html`
@@ -226,15 +221,6 @@ const examples = {
       <span>Current</span>
     </tp-breadcrumb>
   `,
-  'tp-context-menu': () => html`
-    <div>
-      Right-click this area
-      <tp-context-menu>
-        <button value="copy">Copy</button>
-        <button value="paste">Paste</button>
-      </tp-context-menu>
-    </div>
-  `,
   'tp-menu': () => html`
     <tp-menu aria-label="Document actions">
       <tp-button slot="trigger" variant="outline">Document actions</tp-button>
@@ -274,28 +260,7 @@ const examples = {
       <div>Project three</div>
     </tp-carousel>
   `,
-  'tp-data-visualization': () => html`
-    <tp-data-visualization label="Quarterly trend" description="Values increased each quarter">
-      <div aria-hidden="true">▁ ▃ ▅ █</div>
-      <table slot="table">
-        <caption>
-          Quarterly values
-        </caption>
-        <thead>
-          <tr>
-            <th>Quarter</th>
-            <th>Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Q4</td>
-            <td>80</td>
-          </tr>
-        </tbody>
-      </table>
-    </tp-data-visualization>
-  `,
+  'tp-data-visualization': () => dataVisualizationExample(),
   'tp-message-scroller': () => html`
     <tp-message-scroller>
       <tp-message author="Ada">Hello</tp-message>
@@ -325,12 +290,12 @@ const examples = {
   'tp-spinner': () => html`<tp-spinner label="Loading projects"></tp-spinner>`,
   'tp-toast': () => html`<tp-toast open duration="persistent" dismissible>Changes saved</tp-toast>`,
   'tp-alert': () => html` <tp-alert title="Update available">Restart to install it.</tp-alert> `,
-  'tp-aspect-ratio': () => html` <tp-aspect-ratio><div>16:9</div></tp-aspect-ratio> `,
+  'tp-aspect-ratio': () => renderAspectRatioExample(),
   'tp-attachment': () => html`
     <tp-attachment filename="report.pdf" file-size="245760" removable></tp-attachment>
   `,
   'tp-badge': () => html`<tp-badge variant="default">New</tp-badge>`,
-  'tp-bubble': () => html`<tp-bubble align="end">Hello there</tp-bubble>`,
+  'tp-bubble': () => renderBubbleExample(),
   'tp-button-group': () => html`
     <tp-button-group>
       <tp-button variant="outline">Back</tp-button>
@@ -345,11 +310,7 @@ const examples = {
       <tp-button slot="footer" size="sm">Continue</tp-button>
     </tp-card>
   `,
-  'tp-empty-state': () => html`
-    <tp-empty-state title="No results" description="Try a different query.">
-      <tp-button slot="actions">Clear filters</tp-button>
-    </tp-empty-state>
-  `,
+  'tp-empty-state': () => renderEmptyStateExample(),
   'tp-icon': () => html`<tp-icon .icon=${plusIcon} label="Add"></tp-icon>`,
   'tp-key-hint': () => html`<tp-key-hint>⌘ K</tp-key-hint>`,
   'tp-label': () => html`
@@ -365,7 +326,7 @@ const examples = {
   'tp-message': () => html`
     <tp-message author="Ada" timestamp="10:42">A complete message.</tp-message>
   `,
-  'tp-skeleton': () => html`<tp-skeleton animated></tp-skeleton>`,
+  'tp-skeleton': skeletonProfile,
   'tp-table': () => html`
     <tp-table>
       <table>

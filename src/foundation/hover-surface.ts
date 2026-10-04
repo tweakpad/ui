@@ -22,6 +22,7 @@ export interface HoverSurfaceOptions {
   disabled: (element: HTMLElement, options: HoverTriggerOptions) => boolean;
   enabled: () => boolean;
   focusOpens: () => boolean;
+  delayedKeyboardFocus?: () => boolean;
   pressToggles: () => boolean;
   closeOnClick: () => boolean;
   hoverable: () => boolean;
@@ -113,8 +114,9 @@ export class HoverSurfaceController {
     };
     const leave = (event: PointerEvent) => {
       if (!enabled()) return;
+      if (this.#focusOpened) return;
       this.cancel();
-      if (this.#pinned || this.#focusOpened || this.#focusedInside()) return;
+      if (this.#pinned || this.#focusedInside()) return;
       const popup = this.options.popup();
       if (this.options.open() && this.options.hoverable() && popup)
         this.#corridor = safeCorridor(
@@ -138,10 +140,17 @@ export class HoverSurfaceController {
     };
     const focus = (event: FocusEvent) => {
       if (touch || !this.options.focusOpens() || this.options.disabled(element, config)) return;
+      const delayed = this.options.delayedKeyboardFocus?.() ?? false;
+      if (delayed && !(event.composedPath()[0] as Element)?.matches(':focus-visible')) return;
       this.cancel();
       this.#focusOpened = true;
-      this.instant = 'focus';
-      this.options.request(true, 'trigger-focus', event, element);
+      this.instant = delayed ? undefined : 'focus';
+      if (delayed)
+        this.#schedule(
+          () => this.options.request(true, 'trigger-focus', event, element),
+          config.openDelay ?? this.options.openDelay(),
+        );
+      else this.options.request(true, 'trigger-focus', event, element);
     };
     const blur = (event: FocusEvent) => {
       resetPress();

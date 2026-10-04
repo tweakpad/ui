@@ -95,9 +95,9 @@ try {
       !tabs.querySelector('[slot="panel"][value="a"]').hidden &&
       tabs.querySelector('[slot="panel"][value="b"]').hidden;
 
-    host.innerHTML = `<tp-select><span value="a" disabled>A</span><span value="b">B</span><span value="c">C</span></tp-select><tp-combobox><span value="a" disabled>A</span><span value="b">B</span></tp-combobox>`;
+    host.innerHTML = `<tp-select><span value="a" disabled>A</span><span value="b">B</span><span value="c">C</span></tp-select><tp-select searchable><span value="a" disabled>A</span><span value="b">B</span></tp-select>`;
     const select = host.querySelector('tp-select');
-    const combo = host.querySelector('tp-combobox');
+    const combo = host.querySelector('tp-select[searchable]');
     await settle(select, combo);
     results.selectNativeTrigger =
       !!select.shadowRoot.querySelector('button[role="combobox"]') &&

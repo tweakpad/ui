@@ -7,11 +7,15 @@ import type { PresentationDictionary } from './resolver.js';
 
 // Arrangement of registered parts. These are not replaceable dictionary appearance.
 export const registeredPartStructure: PresentationDictionary = {
+  form: [{ declarations: { display: 'flex', 'flex-direction': 'column', 'min-inline-size': '0' } }],
+  'form-actions': [
+    { declarations: { display: 'flex', 'flex-wrap': 'wrap', 'align-items': 'center' } },
+  ],
   ...navigationPanelStructure,
   ...navigationPanelDisclosureStructure,
   ...navigationMenuStructure,
   ...Object.fromEntries(
-    ['menu', 'context-menu', 'menubar'].flatMap((prefix) => [
+    ['menu', 'menubar'].flatMap((prefix) => [
       [`${prefix}-label`, [{ declarations: { display: 'block' } }]],
       [`${prefix}-shortcut`, [{ declarations: { 'margin-inline-start': 'auto', flex: 'none' } }]],
     ]),
@@ -37,7 +41,7 @@ export const registeredPartStructure: PresentationDictionary = {
     { selector: '&[hidden]', declarations: { display: 'none' } },
   ],
   ...Object.fromEntries(
-    ['menu', 'context-menu', 'menubar'].flatMap((prefix) =>
+    ['menu', 'menubar'].flatMap((prefix) =>
       ['item', 'checkbox-item', 'radio-item', 'sub-trigger'].map((suffix) => [
         `${prefix}-${suffix}`,
         [

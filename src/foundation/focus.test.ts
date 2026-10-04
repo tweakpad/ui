@@ -44,6 +44,7 @@ describe('focus across owner realms', () => {
   it('detects hidden and inert composed ancestors without ambient constructors', () => {
     const host = element();
     const child = element();
+    Object.assign(host, { matches: () => host.inert || host.hidden === true });
     Object.assign(child, { parentNode: { nodeType: 11, host } });
     expect(isAvailable(child)).toBe(true);
     host.inert = true;
@@ -51,6 +52,15 @@ describe('focus across owner realms', () => {
     host.inert = false;
     host.hidden = true;
     expect(isAvailable(child)).toBe(false);
+  });
+
+  it('does not interpret native form named controls as hidden or inert state', () => {
+    const form = element();
+    const input = element();
+    // HTMLFormElement exposes controls by name ahead of HTMLElement properties.
+    Object.assign(form, { hidden: input, inert: input });
+    Object.assign(input, { parentNode: form });
+    expect(isAvailable(input)).toBe(true);
   });
 
   it('visits distributed children and sorts positive tab order before zero', () => {

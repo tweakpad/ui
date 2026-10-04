@@ -6,6 +6,7 @@ const outline = (...paths: string[]): IconDefinition => ({
 });
 
 export const navigationIcons = {
+  search: outline('M21 21l-5-5', 'M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15'),
   panel: outline('M9 3v18', 'M4 3h16v18H4z'),
   selector: outline('m9 9 3-3 3 3', 'm9 15 3 3 3-3'),
   terminal: outline('M3 4h18v16H3z', 'm7 8 3 3-3 3', 'M13 14h4'),

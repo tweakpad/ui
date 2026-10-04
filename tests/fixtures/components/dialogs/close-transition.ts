@@ -35,21 +35,30 @@ async function waitUntil(predicate: () => boolean): Promise<void> {
   }
 }
 
-/** Native focus restoration during a modality handoff must not propose closing. */
+/** Modality handoff preserves the surface and applies actual background isolation. */
 export async function inspectModalityChanges(dialog: TpDialog) {
   dialog.setOpen(true);
   await dialog.updateComplete;
+  const background = document.createElement('button');
+  background.textContent = 'Background action';
+  document.body.append(background);
   const results = [];
   for (const modality of ['non-modal', 'trap-focus-only', 'modal'] as const) {
     dialog.modality = modality;
     await dialog.updateComplete;
+    await new Promise(requestAnimationFrame);
     const layer = dialog.shadowRoot!.querySelector('dialog')!;
     results.push({
       modality,
-      pass: dialog.open && layer.matches(':modal') === (modality === 'modal'),
+      pass:
+        dialog.open &&
+        layer.matches(':popover-open') &&
+        background.inert === (modality === 'modal') &&
+        (document.documentElement.style.overflow === 'hidden') === (modality === 'modal'),
     });
   }
   dialog.close();
+  background.remove();
   return results;
 }
 

@@ -1,6 +1,6 @@
 # Menu
 
-`tp-menu` presents commands, checks, radio choices and nested submenus. Use
+`tp-menu` presents commands, checks, radio choices and nested submenus. Trigger and context invocation use the same component. Use
 Navigation Menu for real site navigation. Use the actual Menu constituents for
 stateful command semantics; native anchors remain valid link interoperability.
 
@@ -34,6 +34,8 @@ Viewport, methods and customization. Menu's defaults and additional properties a
 
 | Property / attribute                                 | Type                  | Default            | Meaning                                                                                    |
 | ---------------------------------------------------- | --------------------- | ------------------ | ------------------------------------------------------------------------------------------ |
+| `invocation` | trigger / context | trigger | Choose ordinary trigger activation or context invocation. |
+| `for` | string | empty | Context target ID; otherwise the trigger slot, then parent region. |
 | `value`                                              | string                | empty              | Standalone legacy last-command value; inside Menubar this is the Menu's stable identifier. |
 | `itemVariant / item-variant`                         | ghost / destructive   | ghost              | Default visual treatment for Items without their own variant.                              |
 | `orientation`                                        | horizontal / vertical | vertical           | Direction of list navigation.                                                              |
@@ -51,6 +53,32 @@ contract. Inline-forward opens a submenu; inline-backward returns to its parent.
 Escape closes the top applicable branch; Tab closes and continues outside rather
 than trapping command focus. Disabled entries are excluded. Pointer highlighting
 never selects a check or radio by itself.
+
+## Context invocation
+
+Use `<tp-menu invocation="context">` with the same command tree shown above.
+The trigger slot becomes a context target: ordinary clicks retain the target's
+behavior and no button role or expanded state is added. An external target can
+be associated with `for="target-id"`. The target must be keyboard-focusable when
+keyboard invocation is required; Menu does not change its native semantics.
+
+Secondary pointer invocation opens at the pointer. ContextMenu or Shift+F10
+opens at the target's lower start corner and focuses the first enabled command.
+A single-touch hold opens after 500 ms; movement beyond 10 coordinate units,
+a second touch, release, or cancellation cancels the hold. Those thresholds
+belong to the interaction policy, not theme spacing.
+
+Opening uses the same cancelable `tp-open-change` proposal with reason
+`trigger-press`. The native context action is prevented only after acceptance.
+Another context invocation moves the anchor without closing and reopening.
+Escape restores the invoking target only for keyboard opening when focus is in
+the menu. Removing/replacing the target closes its anchored menu and cleans up
+listeners. Detached handles and registered triggers apply only to trigger mode.
+
+There is no separate `tp-context-menu` element or presentation namespace. Migrate
+it to `tp-menu invocation="context"`; its commands, groups, shortcuts, separators,
+checks, radio choices and any number of nested Menu levels remain unchanged.
+Each nested Menu retains its own ordinary submenu trigger and chevron.
 
 ## Command constituents
 
@@ -73,7 +101,7 @@ never selects a check or radio by itself.
 | `onCheckedChange`                      | Boolean value event callback    | Same cancelable proposal as tp-value-change.                                                       |
 | Checkbox `keepMounted / keep-mounted`  | boolean                         | false; retain the inactive Indicator only.                                                         |
 | `tp-menu-radio-group.value`            | unknown                         | Optional controlled selection; values use Object.is identity.                                      |
-| RadioGroup `defaultValue`              | unknown property                | undefined; uncontrolled initial selection.                                                         |
+| RadioGroup `defaultValue / default-value`              | unknown property; string attribute | undefined; uncontrolled initial selection.                                                         |
 | RadioGroup `disabled`, `onValueChange` | boolean, value event callback   | false; group proposal callback.                                                                    |
 | `tp-menu-radio-item.value`             | unknown; string attribute       | Required, unique in nearest RadioGroup. Missing/later duplicate values are diagnosed and excluded. |
 | RadioItem `checked`                    | read-only boolean               | Derived from RadioGroup; activating the selected choice does not clear it.                         |
@@ -88,15 +116,15 @@ independent from Item mounting. No checkbox/radio here is a standalone form fiel
 
 `slot="trigger"` uses a real Button or native action host; default content holds
 the command tree. Native `role="group"` plus an authored accessible name groups
-commands. A child with `data-menu-label` is Label, `data-menu-shortcut` is Shortcut,
-and the existing `tp-separator` is Separator. A nested `tp-menu` supplies the
+commands. A child with `data-menu-label` is Label, `tp-key-hint data-menu-shortcut` is Shortcut,
+and the existing `tp-separator` is Separator. Use `tp-icon` for icons; nested trigger icons use Button's `icon-start` slot. A nested `tp-menu` supplies the
 SubTrigger/SubContent binding. Label text does not invent a keyboard shortcut.
 Native `[value]`/menuitem-role children remain a compatibility adapter; prefer the
 public constituents for controlled state and generic render contracts.
 
 ## Parts and state
 
-Public parts: `menu`, `menu-trigger`, `menu-content`, `menu-item`,
+Public parts: `menu`, `menu-trigger`, `menu-target`, `menu-content`, `menu-item`,
 `menu-checkbox-item`, `menu-radio-group`, `menu-radio-item`, `menu-group`,
 `menu-label`, `menu-sub-trigger`, `menu-sub-content`, `menu-separator`,
 `menu-shortcut`. Item contracts live on the respective constituent; Root
@@ -106,9 +134,9 @@ data-focus-visible, data-disabled, data-checked/data-unchecked and data-variant;
 Indicators also publish presence markers. See the shared reference for delegate,
 reference, theme and positioning hooks.
 
-Popup menus derive their default anchor separation from three `--tp-spacing` units. Set `side-offset="0"` on the Menu/Context Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the existing positioning API.
+Popup menus derive their default anchor separation from three `--tp-spacing` units. Set `side-offset="0"` on the Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the existing positioning API.
 
-Menu, Context Menu, Menubar, Navigation Menu and selection lists share `--tp-space-2` popup padding on every edge. Menu item gaps use `--tp-space-3`; these defaults scale with the theme.
+Menu, Menubar, Navigation Menu and selection lists share `--tp-space-2` popup padding on every edge. Menu item gaps use `--tp-space-3`; these defaults scale with the theme.
 
 Menu popups are at least as wide as their anchor, within the available viewport width. Longer content can widen the popup through the existing intrinsic layout.
 

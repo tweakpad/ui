@@ -1,3 +1,4 @@
+import { Examples } from './docs-examples.mdx';
 import { Controls, Description, Primary, Stories, Title } from '@storybook/addon-docs/blocks';
 
 <Title />
@@ -8,12 +9,12 @@ import { Controls, Description, Primary, Stories, Title } from '@storybook/addon
 
 ## Public properties
 
-These controls map directly to the component's public API. Configuration stories may compose other
-library components or attach demonstration behavior; that fixture setup is not a component
-property.
+These controls map directly to the component's public API. Usage examples compose public library components; example setup is not a component property.
 
 <Controls />
 
-<Stories title="Configurations" includePrimary={false} />
+<Stories title="Examples" includePrimary={false} />
 
 <Description />
+
+<Examples />

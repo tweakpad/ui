@@ -7,16 +7,35 @@ describe('Storybook catalog entries', () => {
   const storyDirectory = new URL('./generated/', import.meta.url);
   const storyFiles = readdirSync(storyDirectory).filter((file) => file.endsWith('.stories.ts'));
   const newlyAuthoredStories = [
+    'pagination',
+    'otp-field',
+    'preview-card',
+    'input-group',
+    'breadcrumb',
+    'spinner',
+    'skeleton',
+    'form',
+    'avatar',
+    'bubble',
+    'empty-state',
+    'aspect-ratio',
     'menu',
-    'context-menu',
     'menubar',
     'navigation-menu',
     'popover',
-    'combobox',
     'navigation-panel',
     'switch',
     'slider',
     'select',
+    'command-palette',
+    'attachment',
+    'table',
+    'scroll-area',
+    'resizable-panel-group',
+    'side-panel',
+    'drawer',
+    'questionnaire',
+    'data-visualization',
     'native-select',
     'progress',
     'toggle',
@@ -58,7 +77,6 @@ describe('Storybook catalog entries', () => {
   });
 
   it('has one statically indexed Default story for every public control', () => {
-    expect(storyFiles).toHaveLength(catalogEntries.length - 31);
     const sources = [
       ...newlyAuthoredStories,
       ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
@@ -74,6 +92,7 @@ describe('Storybook catalog entries', () => {
       collapsibleStory,
       iconStory,
     ];
+    expect(sources).toHaveLength(catalogEntries.length);
     for (const entry of catalogEntries) {
       expect(
         sources.filter((source) => source.includes(`component: '${entry.tagName}'`)),
@@ -104,19 +123,29 @@ describe('Storybook catalog entries', () => {
     expect(docsPage.indexOf('## Default')).toBeLessThan(docsPage.indexOf('<Primary />'));
     expect(docsPage.indexOf('<Primary />')).toBeLessThan(docsPage.indexOf('<Controls />'));
     expect(docsPage).toContain('## Public properties');
-    expect(docsPage).toContain('fixture setup is not a component\nproperty');
+    expect(docsPage).toContain('example setup is not a component property');
     expect(docsPage.indexOf('<Controls />')).toBeLessThan(
-      docsPage.indexOf('<Stories title="Configurations"'),
+      docsPage.indexOf('<Stories title="Examples"'),
     );
-    expect(docsPage.indexOf('<Stories title="Configurations"')).toBeLessThan(
+    expect(docsPage.indexOf('<Stories title="Examples"')).toBeLessThan(
       docsPage.indexOf('<Description />'),
     );
 
     for (const source of sources) {
       expect(source.match(/export const \w+: Story/u)?.[0]).toBe('export const Default: Story');
       expect(source).toContain("tags: ['autodocs']");
-      expect(source).not.toMatch(/<style(?:\s|>)/u);
-      expect(source).not.toMatch(/\sstyle=/u);
+      // A viewport/plot/resizer needs an external size. Allow ordinary layout,
+      // while still rejecting component paint overrides in the base example.
+      const base = source.split('export const Default: Story')[0]!;
+      expect(base).not.toMatch(/<style(?:\s|>)/u);
+      for (const [, inlineStyle] of base.matchAll(/<tp-[\w-]+\b[^>]*?\sstyle="([^"]*)"/gu)) {
+        for (const declaration of inlineStyle!.split(';').filter(Boolean)) {
+          const property = declaration.split(':')[0]!.trim();
+          expect(property).toMatch(
+            /^(?:(?:min-|max-)?(?:width|height|inline-size|block-size)|margin(?:-block|-inline)?)$/u,
+          );
+        }
+      }
       expect(source).not.toContain('::part(');
     }
     expect(examplesSource).not.toMatch(/<style(?:\s|>)/u);
@@ -242,9 +271,10 @@ describe('Storybook catalog entries', () => {
     for (const property of ['orientation', 'joined', 'label']) {
       expect(buttonGroupStory).toContain(`    ${property}: {`);
     }
-    for (const configuration of ['Sizes', 'Vertical', 'MultipleGroups', 'Unjoined']) {
-      expect(buttonGroupStory).toContain(`export const ${configuration}: Story`);
-    }
+    expect(buttonGroupStory).toContain('examples: buttonGroupExamples');
+    expect(buttonGroupStory).not.toMatch(
+      /export const (?:Sizes|Vertical|MultipleGroups|Unjoined):/,
+    );
     expect(buttonGroupStory).toContain('<tp-button variant="outline"');
     expect(buttonGroupStory).not.toContain('<button');
   });

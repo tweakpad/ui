@@ -1,3 +1,5 @@
+import { GeneratedStyleResource } from '../../foundation/generated-style.js';
+import { setLogicalPortalOwner } from '../../foundation/portal-ownership.js';
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
@@ -252,7 +254,7 @@ export class TpToast extends TpElement {
   #parts = new Map<HTMLElement, () => void>();
   #viewport: HTMLElement | null = null;
   #portalParent: HTMLElement | null = null;
-  #portalStyles: HTMLStyleElement | null = null;
+  #portalStyles: GeneratedStyleResource | null = null;
   #portalTheme: HTMLDivElement | null = null;
   #observer: MutationObserver | null = null;
   #themeObserver: MutationObserver | null = null;
@@ -976,18 +978,20 @@ export class TpToast extends TpElement {
     this.#viewport.removeAttribute('popover');
     this.#portalTheme = this.ownerDocument.createElement('div');
     this.#portalTheme.style.display = 'contents';
+    setLogicalPortalOwner(this.#portalTheme, this);
     const layerRoot = this.#portalTheme.attachShadow({ mode: 'open' });
     layerRoot.append(this.#viewport);
     this.container.append(this.#portalTheme);
-    this.#portalStyles = this.ownerDocument.createElement('style');
-    this.#portalStyles.textContent = TpToast.elementStyles
-      .map((style) =>
-        'cssText' in style
-          ? style.cssText
-          : [...style.cssRules].map((rule) => rule.cssText).join('\n'),
-      )
-      .join('\n');
-    layerRoot.append(this.#portalStyles);
+    this.#portalStyles = new GeneratedStyleResource(this, layerRoot);
+    this.#portalStyles.setText(
+      TpToast.elementStyles
+        .map((style) =>
+          'cssText' in style
+            ? style.cssText
+            : [...style.cssRules].map((rule) => rule.cssText).join('\n'),
+        )
+        .join('\n'),
+    );
     this.#inheritPortalTheme();
   }
   #inheritPortalTheme(): void {
@@ -1011,8 +1015,9 @@ export class TpToast extends TpElement {
     if (this.#viewport && this.#portalParent && this.#viewport.parentElement !== this.#portalParent)
       this.#portalParent.append(this.#viewport);
     this.#viewport?.setAttribute('popover', 'manual');
-    this.#portalStyles?.remove();
+    this.#portalStyles?.dispose();
     this.#portalStyles = null;
+    if (this.#portalTheme) setLogicalPortalOwner(this.#portalTheme, null);
     this.#portalTheme?.remove();
     this.#portalTheme = null;
   }

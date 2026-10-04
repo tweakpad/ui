@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { acquireOutsideInert } from './outside-inert.js';
+import { acquireOutsideInert, refreshOutsideInert } from './outside-inert.js';
 
 class ElementStub {
   nodeType = 1;
@@ -9,6 +9,7 @@ class ElementStub {
   parentNode: ElementStub | ShadowStub | null = null;
   shadowRoot: ShadowStub | null = null;
   #inert: string | null = null;
+  inertWrites = 0;
   attributes = new Map<string, string>();
   append(...elements: ElementStub[]): void {
     for (const element of elements) {
@@ -20,16 +21,20 @@ class ElementStub {
     return this.#inert !== null;
   }
   set inert(value: boolean) {
+    this.inertWrites++;
     this.#inert = value ? '' : null;
   }
   getAttribute(name = 'inert'): string | null {
     return name === 'inert' ? this.#inert : (this.attributes.get(name) ?? null);
   }
   setAttribute(name: string, value: string): void {
-    if (name === 'inert') this.#inert = value;
-    else this.attributes.set(name, value);
+    if (name === 'inert') {
+      this.inertWrites++;
+      this.#inert = value;
+    } else this.attributes.set(name, value);
   }
   removeAttribute(): void {
+    this.inertWrites++;
     this.#inert = null;
   }
 }
@@ -71,6 +76,16 @@ function fixture() {
   return { document, outer, inner, other, authored, inside };
 }
 describe('owner-document outside inert leases', () => {
+  it('does not republish unchanged inert attributes on an observer refresh', () => {
+    const f = fixture();
+    const release = acquireOutsideInert(f.document, () => f.inside(f.outer));
+    const writes = f.other.inertWrites;
+    ObserverStub.current!.notify();
+    ObserverStub.current!.notify();
+    expect(f.other.inertWrites).toBe(writes);
+    release();
+    expect(f.other.inert).toBe(false);
+  });
   it('preserves explicit and implicit live regions through nested leases and shadow insertion', () => {
     const f = fixture();
     const shadow = new ShadowStub(f.other);
@@ -116,6 +131,17 @@ describe('owner-document outside inert leases', () => {
     expect(inserted.inert).toBe(true);
     release();
     expect(inserted.inert).toBe(false);
+  });
+  it('releases a newly admitted portal synchronously before focus', () => {
+    const f = fixture();
+    let active = f.outer;
+    const release = acquireOutsideInert(f.document, () => f.inside(active));
+    expect(f.other.inert).toBe(true);
+    active = f.other;
+    refreshOutsideInert(f.document);
+    expect(f.other.inert).toBe(false);
+    expect(f.outer.inert).toBe(true);
+    release();
   });
   it('restores only lease-owned flags and preserves preexisting inertness', () => {
     const f = fixture();

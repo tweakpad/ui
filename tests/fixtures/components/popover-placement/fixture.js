@@ -223,10 +223,12 @@ window.placementChecks = {
     const results = [];
     document.body.style.minHeight = '2400px';
     scrollTo(0, 1000);
-    for (const tag of ['tp-select', 'tp-combobox']) {
+    for (const searchable of [false, true]) {
+      const tag = 'tp-select';
       const p = document.createElement(tag);
+      p.searchable = searchable;
       p.label = `${tag} placement`;
-      p.items = tag === 'tp-select' ? [{ value: 'one', label: 'One' }] : ['One'];
+      p.items = ['One'];
       p.anchor = anchor;
       p.alignItemWithTrigger = false;
       p.placement = 'bottom start';
@@ -281,12 +283,13 @@ window.placementChecks = {
     const results = [];
     for (const tag of [
       'tp-menu',
-      'tp-context-menu',
+      'menu-context',
       'tp-navigation-menu',
       'tp-tooltip',
       'tp-preview-card',
     ]) {
-      const p = document.createElement(tag);
+      const p = document.createElement(tag === 'menu-context' ? 'tp-menu' : tag);
+      if (tag === 'menu-context') p.invocation = 'context';
       p.label = `${tag} placement`;
       p.innerHTML = `<tp-button slot="trigger">${tag}</tp-button>${tag.includes('menu') ? '<tp-menu-item>Action</tp-menu-item>' : tag === 'tp-tooltip' ? 'Description' : '<tp-button>Action</tp-button>'}`;
       if (tag === 'tp-navigation-menu')
@@ -294,7 +297,7 @@ window.placementChecks = {
           '<tp-navigation-menu-item value="sample"><tp-button slot="trigger">Navigation</tp-button><div slot="content"><a href="#sample">Sample</a></div></tp-navigation-menu-item>';
       if (tag === 'tp-navigation-menu') p.value = '';
       stage.append(p);
-      if (tag === 'tp-context-menu') p.for = anchor.id;
+      if (tag === 'menu-context') p.for = anchor.id;
       p.anchor = anchor;
       p.sideOffset = 0;
       p.showArrow = false;

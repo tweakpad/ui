@@ -19,7 +19,7 @@ import {
 } from '../foundation/focus.js';
 import { OwnedPortal, type OwnedPortalContainer } from '../foundation/owned-portal.js';
 import { ComposedEnvironmentObserver } from '../foundation/composed-environment.js';
-import { acquireOutsideInert } from '../foundation/outside-inert.js';
+import { acquireOutsideInert, refreshOutsideInert } from '../foundation/outside-inert.js';
 import { acquireScrollLock } from '../foundation/scroll-lock.js';
 import { resolveSurfaceFocus, type SurfaceFocusTarget } from '../foundation/surface-focus.js';
 import {
@@ -449,6 +449,9 @@ export abstract class TpAnchoredSurface extends TpElement {
   protected get isTooltip(): boolean {
     return false;
   }
+  protected get describesTrigger(): boolean {
+    return this.isTooltip;
+  }
   protected get surfaceDisabled(): boolean {
     return this.disabled;
   }
@@ -639,7 +642,9 @@ export abstract class TpAnchoredSurface extends TpElement {
   protected popupViewContent(payload: unknown): unknown {
     return this.content
       ? this.content(payload)
-      : html`<slot @slotchange=${this.contentChanged}>${this.label}</slot>`;
+      : html`<slot @slotchange=${this.contentChanged}
+          >${this.isTooltip ? this.label : nothing}</slot
+        >`;
   }
   get viewportState() {
     return this.#viewport.state;
@@ -849,7 +854,18 @@ export abstract class TpAnchoredSurface extends TpElement {
     this.syncTriggers();
     void this.updatePosition();
   };
-  protected syncSlot = (): void => {
+  protected syncSlot = (): void => this.syncSlotTriggers();
+  protected resetTriggerRegistrations(): void {
+    this.#handleCleanup?.();
+    this.#handleCleanup = undefined;
+    for (const cleanup of this.#slotTriggers.values()) cleanup();
+    this.#slotTriggers.clear();
+    for (const record of this.records.values()) record.cleanup();
+    this.records.clear();
+    this.#handleCleanup = this.handle?.attach(this);
+    this.syncSlot();
+  }
+  protected syncSlotTriggers(): void {
     const next = new Set(
       this.ownedChildren.filter(
         (node): node is HTMLElement =>
@@ -864,7 +880,7 @@ export abstract class TpAnchoredSurface extends TpElement {
     for (const element of next)
       if (!this.#slotTriggers.has(element))
         this.#slotTriggers.set(element, this.registerTrigger(element));
-  };
+  }
   protected syncTriggers(): void {
     for (const r of this.records.values()) r.sync();
   }
@@ -907,7 +923,7 @@ export abstract class TpAnchoredSurface extends TpElement {
       hadPart = element.part.contains(part);
     element.part.add(part);
     const restore = () => {
-      if (target && !this.isTooltip) {
+      if (target && !this.describesTrigger) {
         target.ariaControlsElements = controls;
         if (controlsAttribute) target.setAttribute('aria-controls', controlsAttribute);
         else if (controlsAttribute === null && !controls?.length)
@@ -951,8 +967,8 @@ export abstract class TpAnchoredSurface extends TpElement {
       const active =
         this.trigger === element && this.open && !this.triggerDisabled(element, options);
       write('data-popup-open', active ? '' : null);
-      // Tooltip availability does not disable the control it describes.
-      if (!this.isTooltip)
+      // Supplementary surface availability does not disable its subject.
+      if (!this.describesTrigger)
         write('data-disabled', this.triggerDisabled(element, options) ? '' : null);
       if (
         options.nativeAction === false &&
@@ -962,11 +978,11 @@ export abstract class TpAnchoredSurface extends TpElement {
         write('tabindex', this.triggerDisabled(element, options) ? '-1' : '0');
         write('aria-disabled', this.triggerDisabled(element, options) ? 'true' : null);
       }
-      if (this.isTooltip) {
+      if (this.describesTrigger) {
         if (active) {
           if (!bridge) {
             bridge = this.ownerDocument.createElement('span');
-            bridge.id = createId('tp-tooltip-description');
+            bridge.id = createId(`tp-${this.partPrefix}-description`);
             bridge.hidden = true;
             const root = target.getRootNode();
             (root.nodeType === 11 && 'host' in root ? root : this.ownerDocument.body).appendChild(
@@ -1314,6 +1330,9 @@ export abstract class TpAnchoredSurface extends TpElement {
       this.startPosition();
     this.#syncLayers();
     if (this.open && (!this.#wasOpen || this.#focusPending) && this.popup && this.#position) {
+      // A nested portal may still carry the parent's previous outside-inert
+      // lease until its observer runs. Refresh the shared branch before focus.
+      refreshOutsideInert(this.ownerDocument);
       this.#focusPending = false;
       this.focusOnOpen();
     }
@@ -1382,6 +1401,7 @@ export abstract class TpHoverSurface extends TpAnchoredSurface {
     disabled: (element, options) => this.triggerDisabled(element, options),
     enabled: () => this.openOnHover,
     focusOpens: () => this.focusOpens,
+    delayedKeyboardFocus: () => this.delayedKeyboardFocus,
     pressToggles: () => this.pressToggles,
     closeOnClick: () => this.closeOnClick,
     hoverable: () => !this.disableHoverablePopup && this.trackCursorAxis !== 'both',
@@ -1401,6 +1421,9 @@ export abstract class TpHoverSurface extends TpAnchoredSurface {
   }
   protected get defaultCloseDelay(): number {
     return this.isTooltip ? 0 : 100;
+  }
+  protected get delayedKeyboardFocus(): boolean {
+    return false;
   }
   protected get focusOpens(): boolean {
     return true;

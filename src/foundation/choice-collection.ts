@@ -15,7 +15,7 @@ export interface ChoiceCollectionOptions<T> {
   locale?: () => string | undefined;
 }
 
-/** The common finite-choice owner. Editing/filter policy stays with Combobox. */
+/** The common finite-choice owner. Editing/filter policy stays with searchable Select. */
 export class ChoiceCollectionController<T, R extends ChoiceRecord<T> = ChoiceRecord<T>> {
   readonly registry = new CollectionRegistry();
   readonly typeahead: TypeaheadController;

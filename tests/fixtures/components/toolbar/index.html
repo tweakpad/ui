@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Toolbar Foundation verification</title>
+<style>
+body.fixture { background: var(--tp-background); color: var(--tp-foreground); font-family: var(--tp-font-family); margin: var(--tp-space-6); }
+main { justify-items: start; display: grid; gap: var(--tp-space-6); }
+.toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--tp-space-2); }
+.toolbar[data-orientation="vertical"] { flex-direction: column; align-items: start; }
+.toolbar tp-input { inline-size: calc(var(--tp-spacing) * 45); }
+.toolbar tp-separator[orientation="vertical"] { block-size: var(--tp-control-height-md); }
+</style></head>
+<body class="fixture"><main>
+<h1>Toolbar Foundation verification</h1>
+<tp-button id="before" variant="outline">Before toolbar</tp-button>
+<form id="form"><div id="toolbar" class="toolbar" aria-label="Document tools">
+<tp-button id="save">Save</tp-button>
+<tp-button-group id="group" label="History"><tp-button id="undo" variant="outline">Undo</tp-button><tp-button id="redo" variant="outline" disabled>Redo</tp-button></tp-button-group>
+<tp-separator id="separator"></tp-separator>
+<tp-input id="search" name="search" label="Find in document" default-value="Notes"></tp-input>
+<tp-button id="help" href="#help" variant="link">Help</tp-button>
+</div></form>
+<tp-button id="after" variant="outline">After toolbar</tp-button>
+<section aria-label="Standalone regression"><tp-button id="plain">Standalone action</tp-button><tp-input id="plain-input" label="Standalone input" default-value="Independent"></tp-input></section>
+<section id="native" aria-label="Native interoperability"></section>
+<output id="events" aria-live="polite">No action</output>
+</main><script type="module" src="./fixture.ts"></script></body></html>

@@ -50,4 +50,4 @@ partContracts for child render delegates and references. The Root's `menubar`
 contract controls the semantic bar itself. Replacing a child target updates
 registration rather than retaining a detached styling target.
 
-Popup menus derive their default anchor separation from three theme spacing units. Set `side-offset="0"` on the Menu/Context Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the existing positioning API.
+Popup menus derive their default anchor separation from three theme spacing units. Set `side-offset="0"` on the Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the existing positioning API.

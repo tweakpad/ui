@@ -1,3 +1,4 @@
+import { bindPart } from '../../foundation/part.js';
 import { css, html, nothing } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { renderPart } from '../../foundation/part.js';
@@ -563,9 +564,9 @@ export class TpNavigationPanelLoadingPlaceholder extends NavigationPanelLayoutPa
   showIcon = false;
   readonly textWidth = `${50 + Math.floor(Math.random() * 41)}%`;
   protected override defaultPartContent(): unknown {
-    return html`${this.showIcon ? html`<tp-skeleton aria-hidden="true" style="inline-size:var(--tp-icon-size-sm);block-size:var(--tp-icon-size-sm)"></tp-skeleton>` : ''}<tp-skeleton
+    return html`${this.showIcon ? html`<tp-skeleton aria-hidden="true" ${bindPart({ style: { inlineSize: 'var(--tp-icon-size-sm)', blockSize: 'var(--tp-icon-size-sm)' } })}></tp-skeleton>` : ''}<tp-skeleton
         label="Loading navigation"
-        style=${`inline-size:${this.textWidth};block-size:var(--tp-icon-size-sm)`}
+        ${bindPart({ style: { inlineSize: this.textWidth, blockSize: 'var(--tp-icon-size-sm)' } })}
       ></tp-skeleton>`;
   }
 }

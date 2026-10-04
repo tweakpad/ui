@@ -60,7 +60,7 @@ export class TpMenuRadioItem extends TpMenuItem {
         group = node as TpMenuRadioGroup;
         break;
       }
-      if (['tp-menu', 'tp-context-menu'].includes((node as Element).localName)) break;
+      if ((node as Element).localName === 'tp-menu') break;
     }
     if (group === this.#group) return;
     this.#release?.();

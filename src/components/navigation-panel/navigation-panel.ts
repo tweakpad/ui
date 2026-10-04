@@ -1,3 +1,5 @@
+import { bindPart } from '../../foundation/part.js';
+import { GeneratedStyleResource } from '../../foundation/generated-style.js';
 import { html, nothing, render } from 'lit';
 import type { PropertyValues, RootPart } from 'lit';
 import { ref } from 'lit/directives/ref.js';
@@ -88,6 +90,7 @@ export class TpNavigationPanel extends TpElement {
   readonly #environment = new ComposedEnvironmentObserver(this, () => this.requestUpdate());
   readonly #navigationId = createId('tp-navigation-panel');
   #view: HTMLDivElement | undefined;
+  #viewStyle?: GeneratedStyleResource;
   #projection: HTMLSlotElement | undefined;
   #wideMount: HTMLDivElement | undefined;
   #drawer: NavigationPanelDrawer | undefined;
@@ -169,6 +172,7 @@ export class TpNavigationPanel extends TpElement {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#ensureView();
+    this.#viewStyle?.connect();
     this.#viewPart?.setConnected(true);
     this.#collectAuthoredContent();
     this.#environment.connect();
@@ -187,6 +191,7 @@ export class TpNavigationPanel extends TpElement {
   }
   override disconnectedCallback(): void {
     this.#viewPart?.setConnected(false);
+    this.#viewStyle?.disconnect();
     this.#observer?.disconnect();
     this.#observer = undefined;
     this.#headerResize?.disconnect();
@@ -209,7 +214,9 @@ export class TpNavigationPanel extends TpElement {
     view.dataset.tpNavigationView = '';
     view.id = this.#navigationId;
     view.slot = '__navigation-view';
-    view.attachShadow({ mode: 'open' });
+    const root = view.attachShadow({ mode: 'open' });
+    this.#viewStyle = new GeneratedStyleResource(this, root);
+    this.#viewStyle.setText(navigationViewStyles.cssText);
     this.#view = view;
     this.append(view);
   }
@@ -249,7 +256,7 @@ export class TpNavigationPanel extends TpElement {
     const state = this.provider.state;
     return html`<div
       class="frame"
-      style=${`--navigation-wide-extent:${this.#extent(this.wideWidth, 64)}`}
+      ${bindPart({ style: { '--navigation-wide-extent': this.#extent(this.wideWidth, 64) } })}
     >
       <div
         class="wide"
@@ -382,22 +389,20 @@ export class TpNavigationPanel extends TpElement {
         });
     const hidden = !state.compact && state.collapsed && state.collapseMode === 'off-canvas';
     this.#viewPart = render(
-      html`<style>
-          ${navigationViewStyles.cssText}</style
-        >${this.renderPart('navigation-panel', state, {
-          tag: 'nav',
-          reference: this.#partReference('navigation-panel'),
-          properties: {
-            ...this.#markers('navigation-panel'),
-            role: 'navigation',
-            id: this.#navigationId,
-            'aria-label': this.label,
-            hidden,
-            '.inert': hidden,
-          },
-          protectedProperties: ['hidden', 'inert', 'id'],
-          content: html`${region('header')}${content}${region('footer')}`,
-        })}`,
+      html`${this.renderPart('navigation-panel', state, {
+        tag: 'nav',
+        reference: this.#partReference('navigation-panel'),
+        properties: {
+          ...this.#markers('navigation-panel'),
+          role: 'navigation',
+          id: this.#navigationId,
+          'aria-label': this.label,
+          hidden,
+          '.inert': hidden,
+        },
+        protectedProperties: ['hidden', 'inert', 'id'],
+        content: html`${region('header')}${content}${region('footer')}`,
+      })}`,
       view.shadowRoot,
     );
     if (hidden && composedContains(view, deepActiveElement(this.ownerDocument)))

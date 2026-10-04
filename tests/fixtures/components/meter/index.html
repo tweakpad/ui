@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <title>Meter Foundation verification</title>
+    <style>
+      body { background: var(--tp-background); color: var(--tp-foreground); font-family: var(--tp-font-family); margin: var(--tp-space-6); }
+      main { display: grid; gap: var(--tp-space-6); max-inline-size: calc(var(--tp-spacing) * 100); }
+      section { display: grid; gap: var(--tp-space-3); }
+      meter { inline-size: 100%; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Meter Foundation verification</h1>
+      <section><span id="storage-label">Storage used</span><meter id="storage"></meter><span id="storage-value"></span><tp-button id="increase">Increase storage</tp-button></section>
+      <section><tp-progress id="progress" value="30" minimum="20" maximum="40" label="Transfer progress"><span slot="label">Transfer progress</span><span slot="output">Halfway</span></tp-progress></section>
+      <section id="sandbox" aria-label="Constituent verification"></section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

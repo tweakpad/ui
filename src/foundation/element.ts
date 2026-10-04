@@ -234,7 +234,9 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     return this.#fieldContext.name ?? this.name;
   }
   get effectiveInvalid(): boolean {
-    return this.invalid || !!this.#fieldContext.invalid || this.#nativeInvalid;
+    // Field owns when computed validity is exposed. Native constraints still
+    // participate in form submission while the Field is pristine/unvalidated.
+    return this.invalid || (this.#fieldContext.invalid ?? this.#nativeInvalid);
   }
   /** Current Field ownership, available during render before host marker reflection. */
   protected get fieldStateMarkers(): Readonly<Record<string, boolean>> {

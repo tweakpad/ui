@@ -105,7 +105,7 @@ selected paint, contrast and source spacing. Store screenshots and conclusions.
 
 ## Docs and copy (V14)
 
-Docs IDs: `components-menu--docs`, `components-context-menu--docs`,
+Docs IDs: `components-menu--docs`, `components-menu--context`,
 `components-menubar--docs`, `components-navigation-menu--docs`,
 `components-popover--docs` on Storybook localhost:6006. One canonical Default per
 component. All copied sources import Lit/register/styles and render current
@@ -124,7 +124,7 @@ screenshots. Keep fixture setup out of the public API table.
 
 Parent owns final package/typecheck/lint/unit/Storybook/build checks and built
 exports. Actual changed shared consumers include Tooltip/Preview hover/focus,
-Dialog/AlertDialog SurfaceState, Select/Combobox positioning/portal/branch/inert,
+Dialog/AlertDialog SurfaceState, plain/searchable Select positioning/portal/branch/inert,
 Button native and synthetic press, and Presence/foreign-document style ownership.
 Existing focused unit results do not replace these source and built browser
 regressions. Preserve the other agents' pages and the user-owned index state.

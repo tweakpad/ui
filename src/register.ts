@@ -1,3 +1,10 @@
+import { TpCommandList } from './components/command-palette/index.js';
+import {
+  TpSelectTrigger,
+  TpSelectClear,
+  TpSelectChipRemove,
+  TpSelectOption,
+} from './components/select/index.js';
 import {
   TpMenuItem,
   TpMenuCheckboxItem,
@@ -11,13 +18,7 @@ import { TpAccordionItem } from './components/accordion-item.js';
 import { TpButton } from './components/button.js';
 import { TpCheckbox } from './components/checkbox.js';
 import { TpIcon } from './components/icon.js';
-import { TpCombobox, TpCommandPalette, TpSelect } from './components/choices.js';
-import {
-  TpComboboxTrigger,
-  TpComboboxClear,
-  TpComboboxChipRemove,
-  TpComboboxOption,
-} from './components/combobox/index.js';
+import { TpCommandPalette, TpSelect } from './components/choices.js';
 import { TpCollapsible } from './components/collapsible.js';
 import {
   TpCalendar,
@@ -36,6 +37,11 @@ import {
   TpAlertDialog,
   TpDialog,
   TpDrawer,
+  TpDrawerProvider,
+  TpDrawerIndent,
+  TpDrawerIndentBackground,
+  TpDrawerVirtualKeyboardProvider,
+  TpDrawerSwipeArea,
   TpPopover,
   TpPreviewCard,
   TpSidePanel,
@@ -43,7 +49,6 @@ import {
 } from './components/overlays.js';
 import {
   TpBreadcrumb,
-  TpContextMenu,
   TpMenu,
   TpMenubar,
   TpNavigationMenu,
@@ -52,11 +57,14 @@ import {
 } from './components/navigation.js';
 import {
   TpAvatar,
+  TpAvatarGroup,
   TpCarousel,
   TpDataVisualization,
   TpMessageScroller,
   TpProgress,
   TpResizablePanelGroup,
+  TpResizablePanel,
+  TpResizableHandle,
   TpScrollArea,
   TpSeparator,
   TpSpinner,
@@ -66,9 +74,12 @@ import {
   TpAlert,
   TpAspectRatio,
   TpAttachment,
+  TpAttachmentGroup,
   TpBadge,
   TpBubble,
+  TpBubbleGroup,
   TpButtonGroup,
+  TpButtonGroupText,
   TpCard,
   TpEmptyState,
   TpKeyHint,
@@ -78,6 +89,13 @@ import {
   TpMessage,
   TpSkeleton,
   TpTable,
+  TpTableHeader,
+  TpTableBody,
+  TpTableFooter,
+  TpTableRow,
+  TpTableHead,
+  TpTableCell,
+  TpTableCaption,
 } from './components/primitives.js';
 import {
   TpNavigationPanelInset,
@@ -114,11 +132,7 @@ defineElement(TpAccordion.tagName, TpAccordion);
 defineElement(TpAccordionItem.tagName, TpAccordionItem);
 defineElement(TpIcon.tagName, TpIcon);
 defineElement(TpButton.tagName, TpButton);
-defineElement(TpCombobox.tagName, TpCombobox);
-defineElement(TpComboboxTrigger.tagName, TpComboboxTrigger);
-defineElement(TpComboboxClear.tagName, TpComboboxClear);
-defineElement(TpComboboxChipRemove.tagName, TpComboboxChipRemove);
-defineElement(TpComboboxOption.tagName, TpComboboxOption);
+defineElement(TpCommandList.tagName, TpCommandList);
 defineElement(TpCommandPalette.tagName, TpCommandPalette);
 defineElement(TpSelect.tagName, TpSelect);
 defineElement(TpCheckbox.tagName, TpCheckbox);
@@ -143,22 +157,29 @@ defineElement(TpTextArea.tagName, TpTextArea);
 defineElement(TpAlertDialog.tagName, TpAlertDialog);
 defineElement(TpDialog.tagName, TpDialog);
 defineElement(TpDrawer.tagName, TpDrawer);
+defineElement(TpDrawerProvider.tagName, TpDrawerProvider);
+defineElement(TpDrawerIndent.tagName, TpDrawerIndent);
+defineElement(TpDrawerIndentBackground.tagName, TpDrawerIndentBackground);
+defineElement(TpDrawerVirtualKeyboardProvider.tagName, TpDrawerVirtualKeyboardProvider);
+defineElement(TpDrawerSwipeArea.tagName, TpDrawerSwipeArea);
 defineElement(TpPopover.tagName, TpPopover);
 defineElement(TpPreviewCard.tagName, TpPreviewCard);
 defineElement(TpSidePanel.tagName, TpSidePanel);
 defineElement(TpTooltip.tagName, TpTooltip);
 defineElement(TpBreadcrumb.tagName, TpBreadcrumb);
-defineElement(TpContextMenu.tagName, TpContextMenu);
 defineElement(TpMenu.tagName, TpMenu);
 defineElement(TpMenubar.tagName, TpMenubar);
 defineElement(TpNavigationMenu.tagName, TpNavigationMenu);
 defineElement(TpNavigationPanel.tagName, TpNavigationPanel);
 defineElement(TpPagination.tagName, TpPagination);
 defineElement(TpAvatar.tagName, TpAvatar);
+defineElement(TpAvatarGroup.tagName, TpAvatarGroup);
 defineElement(TpCarousel.tagName, TpCarousel);
 defineElement(TpDataVisualization.tagName, TpDataVisualization);
 defineElement(TpMessageScroller.tagName, TpMessageScroller);
 defineElement(TpProgress.tagName, TpProgress);
+defineElement(TpResizablePanel.tagName, TpResizablePanel);
+defineElement(TpResizableHandle.tagName, TpResizableHandle);
 defineElement(TpResizablePanelGroup.tagName, TpResizablePanelGroup);
 defineElement(TpScrollArea.tagName, TpScrollArea);
 defineElement(TpSeparator.tagName, TpSeparator);
@@ -167,9 +188,12 @@ defineElement(TpToast.tagName, TpToast);
 defineElement(TpAlert.tagName, TpAlert);
 defineElement(TpAspectRatio.tagName, TpAspectRatio);
 defineElement(TpAttachment.tagName, TpAttachment);
+defineElement(TpAttachmentGroup.tagName, TpAttachmentGroup);
 defineElement(TpBadge.tagName, TpBadge);
 defineElement(TpBubble.tagName, TpBubble);
+defineElement(TpBubbleGroup.tagName, TpBubbleGroup);
 defineElement(TpButtonGroup.tagName, TpButtonGroup);
+defineElement(TpButtonGroupText.tagName, TpButtonGroupText);
 defineElement(TpCard.tagName, TpCard);
 defineElement(TpEmptyState.tagName, TpEmptyState);
 defineElement(TpKeyHint.tagName, TpKeyHint);
@@ -210,3 +234,22 @@ defineElement(TpMenuCheckboxItem.tagName, TpMenuCheckboxItem);
 defineElement(TpMenuRadioGroup.tagName, TpMenuRadioGroup);
 defineElement(TpMenuRadioItem.tagName, TpMenuRadioItem);
 defineElement(TpNavigationMenuItem.tagName, TpNavigationMenuItem);
+
+defineElement(TpSelectTrigger.tagName, TpSelectTrigger);
+defineElement(TpSelectClear.tagName, TpSelectClear);
+defineElement(TpSelectChipRemove.tagName, TpSelectChipRemove);
+defineElement(TpSelectOption.tagName, TpSelectOption);
+
+defineElement(TpTableHeader.tagName, TpTableHeader);
+
+defineElement(TpTableBody.tagName, TpTableBody);
+
+defineElement(TpTableFooter.tagName, TpTableFooter);
+
+defineElement(TpTableRow.tagName, TpTableRow);
+
+defineElement(TpTableHead.tagName, TpTableHead);
+
+defineElement(TpTableCell.tagName, TpTableCell);
+
+defineElement(TpTableCaption.tagName, TpTableCaption);

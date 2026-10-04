@@ -5,6 +5,8 @@ import type { SurfaceFocusTarget } from '../../foundation/surface-focus.js';
 export type SelectValue = unknown;
 export interface SelectOption {
   value: unknown;
+  index?: number;
+  row?: number;
   label?: unknown;
   text?: string;
   disabled?: boolean;

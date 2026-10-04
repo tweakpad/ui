@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Button Group integration</title>
+<link rel="stylesheet" href="/src/styles.css"><script type="module" src="/src/register.ts"></script>
+<style>body{font-family:var(--tp-font-sans);background:var(--tp-background);color:var(--tp-foreground);margin:var(--tp-space-8)}main{display:grid;gap:var(--tp-space-6);max-inline-size:calc(var(--tp-spacing)*140)}section{display:grid;gap:var(--tp-space-3)}h1,h2{font-size:var(--tp-text-lg);margin:0}</style></head><body><main>
+<h1>Button Group integration</h1>
+<section><h2>Mixed controls</h2><tp-button-group id="mixed" label="Amount"><tp-button-group-text>$</tp-button-group-text><tp-input label="Amount" default-value="25"></tp-input><tp-button variant="outline">Send</tp-button></tp-button-group></section>
+<section><h2>Separator</h2><tp-button-group id="split" label="Edit"><tp-button variant="secondary">Copy</tp-button><tp-separator></tp-separator><tp-button variant="secondary">Paste</tp-button></tp-button-group></section>
+<section><h2>Popup trigger</h2><tp-button-group id="menu-group" label="Document"><tp-button variant="outline">Update</tp-button><tp-menu label="More actions"><tp-button slot="trigger" variant="outline">More</tp-button><tp-menu-item value="archive">Archive</tp-menu-item></tp-menu></tp-button-group></section>
+<section><h2>Nested groups</h2><tp-button-group id="nested" label="Nested"><tp-button-group label="Pages"><tp-button variant="outline">One</tp-button><tp-button variant="outline">Two</tp-button></tp-button-group><tp-button-group label="Paging"><tp-button variant="outline">Next</tp-button></tp-button-group></tp-button-group></section>
+<section><h2>Input Group</h2><tp-button-group id="input-group" label="Search actions"><tp-input-group><span slot="inline-start">@</span><tp-input label="Username" default-value="alex"></tp-input></tp-input-group><tp-button variant="outline">Search</tp-button></tp-button-group></section>
+<section><h2>Select</h2><tp-button-group id="select-group" label="Payment"><tp-select label="Currency" default-value="usd"></tp-select><tp-input label="Payment amount" placeholder="0.00"></tp-input><tp-button variant="outline">Pay</tp-button></tp-button-group></section>
+<section><h2>Text label</h2><tp-button-group id="label-group" label="GPU"><tp-button-group-text><tp-label for="gpu">GPU size</tp-label></tp-button-group-text><tp-input id="gpu"></tp-input></tp-button-group></section>
+<section><h2>Existing Toggle Group</h2><tp-toggle-group label="Text alignment" spacing="0"><tp-toggle value="left">Left</tp-toggle><tp-toggle value="right">Right</tp-toggle></tp-toggle-group></section>
+<output aria-live="polite"></output>
+</main><script type="module">await customElements.whenDefined('tp-select');document.querySelector('tp-select').items=[{value:'usd',label:'USD'},{value:'eur',label:'EUR'},{value:'gbp',label:'GBP'}];document.querySelector('tp-menu').addEventListener('tp-action',e=>document.querySelector('output').textContent=e.detail.value);</script></body></html>

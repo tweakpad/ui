@@ -6,6 +6,41 @@ export const selectStyles = css`
     min-inline-size: 0;
   }
 
+  .select-anchor {
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+
+  .select-editor-contents {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    min-inline-size: 0;
+    inline-size: 100%;
+  }
+
+  .select-editor {
+    flex: 1;
+    min-inline-size: calc(var(--tp-spacing) * 16);
+    inline-size: 100%;
+  }
+
+  .select-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .select-row {
+    display: flex;
+  }
+
+  .select-content[data-inline] {
+    position: static;
+    visibility: visible;
+    inline-size: 100%;
+  }
+
   .select-root {
     display: inline-flex;
     min-inline-size: 0;
@@ -63,7 +98,7 @@ export const selectStyles = css`
     border-radius: inherit;
   }
 
-  .select-content:not([data-positioned]) {
+  .select-content:not([data-positioned], [data-inline]) {
     visibility: hidden;
   }
 
@@ -82,6 +117,11 @@ export const selectStyles = css`
     outline: 0;
   }
 
+  .select-option[hidden],
+  .select-group[hidden] {
+    display: none;
+  }
+
   .select-option {
     position: relative;
     display: flex;
@@ -90,6 +130,10 @@ export const selectStyles = css`
     min-inline-size: 0;
     cursor: default;
     user-select: none;
+  }
+
+  .select-row > .select-option {
+    flex: 1;
   }
 
   .select-item-text {

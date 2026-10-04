@@ -1,6 +1,9 @@
 import { css, type PropertyValues } from 'lit';
 import { TpHoverSurface, type AnchoredTriggerOptions } from '../anchored-surface.js';
 import { TpMenuItem, type MenuItemOwner } from './menu-item.js';
+import { chevronRightIcon } from '../../icons/chevron-right.js';
+import type { TpIcon } from '../icon.js';
+import { ContextInvocation } from './context-invocation.js';
 import { TpMenuRadioGroup } from './menu-radio-group.js';
 import {
   ChoiceCollectionController,
@@ -13,6 +16,7 @@ import { setPartComposition } from '../../presentation/controller.js';
 import { resolveLocale } from '../../foundation/services.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type {
+  AnchorGeometry,
   Alignment,
   CollisionPolicy,
   PositioningStrategy,
@@ -41,8 +45,7 @@ export function nearestMenu(node: Node | null): TpMenu | null {
   const visited = new Set<Node>();
   for (let current = node; current && !visited.has(current);) {
     visited.add(current);
-    if (['tp-menu', 'tp-context-menu'].includes((current as Element).localName))
-      return current as TpMenu;
+    if ((current as Element).localName === 'tp-menu') return current as TpMenu;
     const parent = composedParent(current);
     const portal = logicalPortalOwner(current);
     current = portal && logicalPortalOwner(parent) !== portal ? portal : parent;
@@ -56,12 +59,14 @@ function semanticTarget(element: HTMLElement): HTMLElement {
   );
 }
 
-/** Actual command-menu owner, also consumed by Context Menu, nested Menu and Menubar. */
+/** Actual command-menu owner, with trigger/context invocation, nested Menu and Menubar. */
 export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   static tagName = 'tp-menu';
   static override properties = {
     ...TpHoverSurface.properties,
     value: { type: String },
+    invocation: { type: String, reflect: true },
+    for: { type: String },
     itemVariant: { type: String, attribute: 'item-variant' },
     loopFocus: { type: Boolean, attribute: 'loop-focus' },
     highlightItemOnHover: { type: Boolean, attribute: 'highlight-item-on-hover' },
@@ -82,6 +87,8 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     `,
   ];
   value = '';
+  invocation: 'trigger' | 'context' = 'trigger';
+  for = '';
   itemVariant: 'ghost' | 'destructive' = 'ghost';
   loopFocus = true;
   highlightItemOnHover = true;
@@ -94,6 +101,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
   #bar: MenuBarOwner | null = null;
+  #indicators = new Map<HTMLElement, TpIcon>();
   #keyboard = false;
   #lastOpening = false;
   #openingLast = false;
@@ -111,6 +119,54 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   readonly #collection = new ChoiceCollectionController<HTMLElement, CommandRecord>({
     locale: () => resolveLocale(this),
   });
+  readonly #context = new ContextInvocation({
+    document: () => this.ownerDocument,
+    targetId: () => this.for,
+    children: () => this.ownedChildren,
+    parent: () => this.parentElement,
+    disabled: () => this.surfaceDisabled,
+    isOpen: () => this.open,
+    setTarget: (target) => {
+      this.trigger = target;
+    },
+    targetRemoved: () => {
+      this.setOpen(false, 'anchor-removed');
+    },
+    registerTarget: (target) => this.presentationController.registerPart('menu-target', target),
+    requestOpen: (event, target) => this.requestOpen(true, 'trigger-press', event, target),
+    reposition: () => {
+      this.requestUpdate();
+      void this.updateComplete.then(() => {
+        if (this.isConnected && this.invocation === 'context') this.startPosition();
+      });
+    },
+  });
+  protected override get triggerHasPopup(): string | null {
+    return this.invocation === 'context' ? null : super.triggerHasPopup;
+  }
+  protected override anchorGeometry(): AnchorGeometry | null {
+    return this.invocation === 'context' ? this.#context.anchor : super.anchorGeometry();
+  }
+  protected override syncSlotTriggers(): void {
+    if (this.invocation === 'context') this.#context.bindTarget();
+    else super.syncSlotTriggers();
+  }
+  override registerTrigger(element: HTMLElement, options: AnchoredTriggerOptions = {}): () => void {
+    if (this.invocation !== 'context') return super.registerTrigger(element, options);
+    this.diagnostic(
+      'context-target',
+      'Menu context invocation uses one target and does not support detached triggers or handles.',
+    );
+    return () => {};
+  }
+  protected override focusOnClose(): void {
+    if (this.invocation !== 'context' || this.#context.shouldRestoreFocus(this.popupElement))
+      super.focusOnClose();
+  }
+  protected override closed(): void {
+    super.closed();
+    this.#context.closed();
+  }
   protected override get partPrefix(): string {
     return this.#parent?.itemPartPrefix ?? 'menu';
   }
@@ -216,8 +272,9 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     });
   };
   override connectedCallback(): void {
-    super.connectedCallback();
     this.#parent = nearestMenu(composedParent(this));
+    super.connectedCallback();
+    if (this.invocation === 'context') this.#context.connect();
     if (this.#parent) {
       // The same Root is a submenu; these are the source SubmenuRoot policies.
       this.openOnHover = true;
@@ -284,8 +341,11 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
         });
       }
     }
-    for (const record of previous)
-      if (!records.some((next) => next.value === record.value)) this.#releaseItem(record);
+    for (const record of previous) {
+      const replacement = records.find((next) => next.value === record.value);
+      if (!replacement) this.#releaseItem(record);
+      else if (replacement.element !== record.element) this.#restoreNative(record.element);
+    }
     this.#items = records;
     for (const [owner, state] of this.#nativeStates) {
       if (
@@ -314,7 +374,11 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
               ),
             ),
           );
-        if (!element.hasAttribute('role')) element.setAttribute('role', 'menuitem');
+        if (
+          !element.hasAttribute('role') ||
+          ['button', 'link'].includes(element.getAttribute('role')!)
+        )
+          element.setAttribute('role', 'menuitem');
         element.tabIndex = -1;
       }
       const suffix = record.submenu
@@ -371,12 +435,15 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
       record.item.menuOwner = null;
       setPartComposition(record.item, this);
     }
-    const original = this.#native.get(record.element);
+    this.#restoreNative(record.element);
+  }
+  #restoreNative(element: HTMLElement): void {
+    const original = this.#native.get(element);
     for (const [name, value] of original ?? []) {
-      if (value === null) record.element.removeAttribute(name);
-      else record.element.setAttribute(name, value);
+      if (value === null) element.removeAttribute(name);
+      else element.setAttribute(name, value);
     }
-    this.#native.delete(record.element);
+    this.#native.delete(element);
   }
   #restoreGroupLabel(group: HTMLElement): void {
     const record = this.#groupLabels.get(group);
@@ -626,7 +693,10 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   protected override accepted(open: boolean, reason: ChangeReason, event?: Event): void {
     super.accepted(open, reason);
     if (open) {
-      this.#lastOpening = surfaceInteraction(event) === 'keyboard' || reason === 'list-navigation';
+      this.#lastOpening =
+        surfaceInteraction(event) === 'keyboard' ||
+        reason === 'list-navigation' ||
+        (this.invocation === 'context' && this.#context.keyboardOpening);
       this.#collection.typeahead.reset();
       if (this.parentMenu)
         for (const sibling of this.parentMenu.#items)
@@ -653,12 +723,52 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
       if (this.closeParentOnEscape) this.parentMenu?.closeBranch('escape-key', event);
     } else this.closeBranch('outside-press', event);
   }
+  #syncSubmenuIndicators(): void {
+    for (const [target, icon] of this.#indicators) {
+      if (
+        !this.#parent ||
+        !this.records.has(target) ||
+        [...target.children].some(
+          (child) => child !== icon && child.getAttribute('slot') === 'icon-end',
+        )
+      ) {
+        icon.remove();
+        this.#indicators.delete(target);
+      }
+    }
+    if (!this.#parent) return;
+    for (const target of this.records.keys()) {
+      if (!this.#indicators.has(target) && !target.querySelector('[slot="icon-end"]')) {
+        const icon = this.ownerDocument.createElement('tp-icon') as TpIcon;
+        icon.icon = chevronRightIcon;
+        icon.size = 'var(--tp-icon-size-sm)';
+        icon.slot = 'icon-end';
+        icon.style.marginInlineStart = 'auto';
+        icon.style.pointerEvents = 'none';
+        this.#indicators.set(target, icon);
+        target.append(icon);
+      }
+      const icon = this.#indicators.get(target);
+      if (icon) icon.style.rotate = this.direction === 'rtl' ? '180deg' : '0deg';
+    }
+  }
   protected override updated(changed: PropertyValues<this>): void {
+    if (changed.has('invocation') && changed.get('invocation') !== undefined) {
+      if (this.open) this.setOpen(false, 'anchor-removed');
+      this.#context.disconnect();
+      this.resetTriggerRegistrations();
+      if (this.invocation === 'context') this.#context.connect();
+    }
+    if (changed.has('for') && this.invocation === 'context') this.#context.bindTarget();
     super.updated(changed);
+    this.#syncSubmenuIndicators();
     this.#syncItems();
     this.rootMenu.#bar?.itemChanged();
   }
   override disconnectedCallback(): void {
+    this.#context.disconnect();
+    for (const icon of this.#indicators.values()) icon.remove();
+    this.#indicators.clear();
     for (const child of this.#items)
       if (child.submenu?.open) child.submenu.setOpen(false, 'anchor-removed');
     for (const record of this.#items) this.#releaseItem(record);

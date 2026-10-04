@@ -6,7 +6,7 @@ import { resolveComponentPresentation, serializeDeclarations } from './resolver.
 
 describe('cataloged component presentation', () => {
   it('covers every catalog identity with source-linked public parts', () => {
-    expect(componentDefinitions).toHaveLength(62);
+    expect(componentDefinitions).toHaveLength(catalogEntries.length);
     expect(new Set(componentDefinitions.map((d) => d.tagName))).toEqual(
       new Set(catalogEntries.map((d) => d.tagName)),
     );
@@ -42,9 +42,13 @@ describe('cataloged component presentation', () => {
       'padding:12px;padding-left:20px',
     );
   });
-  it('does not infer hover for passive parts or fill for unresolved variants', () => {
+  it('keeps passive variants noninteractive and resolves shared subdued and tinted roles', () => {
     expect(variantPresentation('default').some((r) => r.selector?.includes('hover'))).toBe(false);
-    expect(variantPresentation('subdued')).toEqual([]);
-    expect(variantPresentation('tinted')).toEqual([]);
+    for (const variant of ['subdued', 'tinted']) {
+      const rules = variantPresentation(variant);
+      expect(rules.some((rule) => rule.declarations.background)).toBe(true);
+      expect(rules.some((rule) => rule.selector?.includes('hover'))).toBe(false);
+    }
+    expect(variantPresentation('unresolved')).toEqual([]);
   });
 });

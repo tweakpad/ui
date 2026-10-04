@@ -1,0 +1,257 @@
+{
+  "attachment": {
+    "verify": [],
+    "complete": [
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete"
+    ]
+  },
+  "command-palette": {
+    "verify": [],
+    "complete": [
+      "Gate 3: blocked blocks complete",
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete",
+      "V-99: blocked blocks complete"
+    ]
+  },
+  "data-visualization": {
+    "verify": [],
+    "complete": [
+      "Gate 3: blocked blocks complete",
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete",
+      "V-99: blocked blocks complete"
+    ]
+  },
+  "drawer": {
+    "verify": [],
+    "complete": [
+      "Gate 3: blocked blocks complete",
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-07: blocked blocks complete",
+      "C-08: blocked blocks complete",
+      "C-09: blocked blocks complete",
+      "C-10: blocked blocks complete",
+      "C-11: blocked blocks complete",
+      "C-12: blocked blocks complete",
+      "C-14: blocked blocks complete",
+      "C-15: blocked blocks complete",
+      "C-16: blocked blocks complete",
+      "C-18: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-04: blocked blocks complete",
+      "V-05: blocked blocks complete",
+      "V-98: blocked blocks complete",
+      "V-99: blocked blocks complete"
+    ]
+  },
+  "form": {
+    "verify": [],
+    "complete": [
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete"
+    ]
+  },
+  "input-group": {
+    "verify": [],
+    "complete": [
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete"
+    ]
+  },
+  "menu-consolidation": {
+    "verify": [],
+    "complete": [
+      "Gate 3: blocked blocks complete",
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-04: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-03: blocked blocks complete",
+      "V-98: blocked blocks complete",
+      "V-99: blocked blocks complete"
+    ]
+  },
+  "navigation-primitives": {
+    "verify": [],
+    "complete": [
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete"
+    ]
+  },
+  "one-time-code": {
+    "verify": [],
+    "complete": [
+      "Gate 3: blocked blocks complete",
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete",
+      "V-99: blocked blocks complete"
+    ]
+  },
+  "presentation-primitives": {
+    "verify": [],
+    "complete": [
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete"
+    ]
+  },
+  "preview-card": {
+    "verify": [],
+    "complete": [
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete"
+    ]
+  },
+  "questionnaire": {
+    "verify": [],
+    "complete": [
+      "Gate 3: blocked blocks complete",
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete",
+      "V-99: blocked blocks complete"
+    ]
+  },
+  "resizable-panel-group": {
+    "verify": [],
+    "complete": [
+      "Gate 3: blocked blocks complete",
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-02: blocked blocks complete",
+      "C-06: blocked blocks complete",
+      "C-07: blocked blocks complete",
+      "C-08: blocked blocks complete",
+      "C-09: blocked blocks complete",
+      "C-13: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-03: blocked blocks complete",
+      "V-98: blocked blocks complete",
+      "V-99: blocked blocks complete"
+    ]
+  },
+  "scroll-area": {
+    "verify": [],
+    "complete": [
+      "Gate 3: blocked blocks complete",
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-01: blocked blocks complete",
+      "C-02: blocked blocks complete",
+      "C-04: blocked blocks complete",
+      "C-05: blocked blocks complete",
+      "C-06: blocked blocks complete",
+      "C-07: blocked blocks complete",
+      "C-10: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-01: blocked blocks complete",
+      "V-03: blocked blocks complete",
+      "V-98: blocked blocks complete",
+      "V-99: blocked blocks complete"
+    ]
+  },
+  "select-consolidation": {
+    "verify": [],
+    "complete": [
+      "Gate 3: blocked blocks complete",
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete",
+      "V-99: blocked blocks complete"
+    ]
+  },
+  "side-panel": {
+    "verify": [],
+    "complete": [
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete"
+    ]
+  },
+  "table": {
+    "verify": [],
+    "complete": [
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-99: blocked blocks complete",
+      "V-98: blocked blocks complete"
+    ]
+  },
+  "meter": {
+    "verify": [],
+    "complete": []
+  },
+  "toolbar": {
+    "verify": [],
+    "complete": [
+      "Gate 4: blocked blocks complete",
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-10: blocked blocks complete",
+      "V-05: blocked blocks complete"
+    ]
+  },
+  "number-field": {
+    "verify": [],
+    "complete": [
+      "Gate 3: blocked blocks complete",
+      "Gate 5: blocked blocks complete",
+      "Gate 6: blocked blocks complete",
+      "Gate 8: blocked blocks complete",
+      "C-03: blocked blocks complete",
+      "C-07: blocked blocks complete",
+      "C-09: blocked blocks complete",
+      "C-10: blocked blocks complete",
+      "C-12: blocked blocks complete",
+      "V-02: blocked blocks complete",
+      "V-03: blocked blocks complete",
+      "V-05: blocked blocks complete",
+      "V-06: blocked blocks complete"
+    ]
+  },
+  "content-security": {
+    "verify": [],
+    "complete": []
+  }
+}

@@ -142,3 +142,20 @@ export function toggleGroupJoinedPresentation(
     'padding-inline-end': `calc(var(--tp-spacing) * ${trailingIcon ? 1.5 : 2})`,
   };
 }
+
+/** Required native ChoiceInput anatomy consumes the same indicator paint. */
+export function nativeChoiceAppearance(type: 'radio' | 'checkbox'): readonly PresentationRule[] {
+  const key = type === 'radio' ? 'radio-group-item' : 'checkbox';
+  return (selectionControlAppearance[key] ?? [])
+    .filter(
+      (rule) =>
+        rule.selector &&
+        (rule.selector.includes('.box') || rule.selector.includes('data-disabled')),
+    )
+    .map((rule) => ({
+      ...rule,
+      selector: rule
+        .selector!.replaceAll('&', `&[data-type="${type}"]`)
+        .replaceAll(':focus-visible', ':has(> input:focus-visible)'),
+    }));
+}

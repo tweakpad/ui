@@ -16,6 +16,22 @@ export function variantPresentation(
   variant: string,
   isInteractive = false,
 ): readonly PresentationRule[] {
+  if (variant === 'subdued')
+    return [
+      rule({
+        background: 'var(--tp-muted)',
+        color: 'var(--tp-foreground)',
+        'border-color': 'transparent',
+      }),
+    ];
+  if (variant === 'tinted')
+    return [
+      rule({
+        background: 'color-mix(in oklab, var(--tp-primary) 15%, var(--tp-background))',
+        color: 'var(--tp-foreground)',
+        'border-color': 'transparent',
+      }),
+    ];
   if (variant === 'plain')
     return [rule({ background: 'transparent', 'border-color': 'transparent', color: 'inherit' })];
   if (['default', 'secondary', 'destructive'].includes(variant)) {
@@ -127,7 +143,7 @@ const button: Record<string, readonly PresentationRule[]> = {
     rule({
       appearance: 'none',
       border: 'var(--tp-border-width) var(--tp-border-style) transparent',
-      'border-radius': 'var(--tp-radius-sm)',
+      'border-radius': 'var(--tp-radius-lg)',
       font: 'inherit',
       'font-weight': 'var(--tp-font-medium)',
       'text-decoration': 'none',
@@ -148,15 +164,22 @@ for (const part of Object.keys(button)) {
 const passive: Record<string, readonly PresentationRule[]> = {};
 for (const [name, paintedPart] of [
   ['Badge', 'badge'],
-  ['Bubble', 'bubble-root'],
+  ['Bubble', 'bubble-content'],
   ['List item', 'list-item-root'],
 ]) {
   const definition = componentDefinitions.find((item) => item.name === name)!;
   for (const part of definition.parts)
     for (const key of part.presentationKeys ?? []) {
-      if (/-variant-(subdued|tinted)$/.test(key)) continue;
+      if (name !== 'Bubble' && /-variant-(subdued|tinted)$/.test(key)) continue;
       const variant = key.split('-variant-')[1];
-      passive[key] = variant && part.name === paintedPart ? variantPresentation(variant) : [];
+      passive[key] =
+        variant && part.name === paintedPart
+          ? variantPresentation(variant, name === 'Bubble').map((entry) =>
+              name === 'Bubble' && entry.selector
+                ? { ...entry, selector: entry.selector.replaceAll('&', '&:is(button,a)') }
+                : entry,
+            )
+          : [];
     }
 }
 
@@ -232,32 +255,14 @@ const surfaceAppearance = [
   }),
 ];
 const sharedPresentation: Record<string, readonly PresentationRule[]> = {};
-for (const part of [
-  'input',
-  'text-area',
-  'command-palette-input-wrapper',
-  'carousel-previous',
-  'carousel-next',
-  'pagination-previous',
-  'pagination-next',
-  'pagination-page-link',
-  'attachment-action',
-  'toast-close',
-])
+for (const part of ['input', 'text-area', 'carousel-previous', 'carousel-next', 'toast-close'])
   sharedPresentation[part] = fieldAppearance;
-sharedPresentation['questionnaire-input-region'] = fieldAppearance.map((entry) => ({
-  ...entry,
-  selector: (entry.selector ?? '&').replace('&', '& .control'),
-}));
 for (const part of [
   'attachment-root',
   'toast-toast',
-  'combobox-content',
   'select-content',
-  'command-palette-list',
   'dialog-content',
   'alert-dialog-content',
-  'drawer-content',
   'side-panel-content',
   'preview-card-content',
   'tooltip-content',
@@ -268,6 +273,16 @@ for (const part of [
 for (const prefix of ['preview-card', 'tooltip']) {
   sharedPresentation[`${prefix}-content`] = [...surfaceAppearance, ...anchoredPresenceAppearance];
 }
+sharedPresentation['preview-card-content'] = [
+  ...sharedPresentation['preview-card-content']!,
+  rule({ fill: 'var(--tp-popover)' }, '& > .arrow'),
+  rule({
+    'inline-size': 'min(calc(var(--tp-spacing) * 64), var(--tp-available-width))',
+    padding: 'calc(var(--tp-spacing) * 2.5)',
+    gap: 'var(--tp-space-2)',
+    'font-size': 'var(--tp-text-sm)',
+  }),
+];
 sharedPresentation['tooltip-content'] = [
   ...sharedPresentation['tooltip-content']!,
   rule({
@@ -292,7 +307,10 @@ const sectionFooterAppearance = [
   }),
 ];
 for (const prefix of ['dialog', 'alert-dialog', 'drawer', 'side-panel']) {
-  sharedPresentation[`${prefix}-content`] = [...surfaceAppearance, rule({ padding: '0' })];
+  sharedPresentation[`${prefix}-${prefix === 'drawer' ? 'surface' : 'content'}`] = [
+    ...surfaceAppearance,
+    rule({ padding: '0' }),
+  ];
   sharedPresentation[`${prefix}-title`] = [
     rule({
       'font-size': 'var(--tp-text-lg)',
@@ -364,27 +382,6 @@ const corePresentationDictionary: PresentationDictionary = {
       font: 'inherit',
       color: 'inherit',
       background: 'transparent',
-    }),
-  ],
-  table: [],
-  'table-table': [rule({ width: '100%', 'border-collapse': 'collapse' })],
-  'table-caption': [],
-  'table-header': [],
-  'table-body': [],
-  'table-footer': [],
-  'table-row': [],
-  'table-column-header': [
-    rule({
-      padding: 'var(--tp-space-2) var(--tp-space-3)',
-      'border-block-end': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-      'text-align': 'start',
-    }),
-  ],
-  'table-cell': [
-    rule({
-      padding: 'var(--tp-space-2) var(--tp-space-3)',
-      'border-block-end': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-      'text-align': 'start',
     }),
   ],
   toggle: [

@@ -1,0 +1,1053 @@
+{
+  "purpose": "Whole-library completion audit; enumeration is not proof of implementation or conformance.",
+  "source": {
+    "projectId": "prj_c5a403a0-d1d5-4487-ac78-f4e545f46483",
+    "documentId": "doc_cd3c4721-9f9b-4531-abab-a8bfdbac75f1",
+    "nodeId": "sec-a3-public-component-and-part-coverage",
+    "headOid": "8440bff24a97dbbc5c762ebf4bd6baa958b305e1",
+    "stateVersion": "5daad6324d67f008ae378650a86e7e961fc91a1025d6107c89be7002caecdfe1"
+  },
+  "foundation": [
+    {
+      "component": "Accordion",
+      "sourceRow": "node-012316",
+      "contract": "sec-132-accordion",
+      "parts": [
+        "Root",
+        "Item",
+        "Header",
+        "Trigger",
+        "Panel"
+      ],
+      "otherPublicSurface": "value and change-detail types",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Collapsible",
+      "sourceRow": "node-012335",
+      "contract": "sec-133-collapsible",
+      "parts": [
+        "Root",
+        "Trigger",
+        "Panel"
+      ],
+      "otherPublicSurface": "state and change-detail types",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Tabs",
+      "sourceRow": "node-012354",
+      "contract": "sec-134-tabs",
+      "parts": [
+        "Root",
+        "Tab",
+        "Indicator",
+        "Panel",
+        "List"
+      ],
+      "otherPublicSurface": "value and orientation types",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Button",
+      "sourceRow": "node-012371",
+      "contract": "sec-135-button",
+      "parts": [
+        "Button"
+      ],
+      "otherPublicSurface": "Part state and properties",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Toggle",
+      "sourceRow": "node-012388",
+      "contract": "sec-136-toggle",
+      "parts": [
+        "Toggle"
+      ],
+      "otherPublicSurface": "pressed change details",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "ToggleGroup",
+      "sourceRow": "node-012404",
+      "contract": "sec-137-togglegroup",
+      "parts": [
+        "ToggleGroup"
+      ],
+      "otherPublicSurface": "value change details",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Checkbox",
+      "sourceRow": "node-012420",
+      "contract": "sec-138-checkbox",
+      "parts": [
+        "Root",
+        "Indicator"
+      ],
+      "otherPublicSurface": "checked change details",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "CheckboxGroup",
+      "sourceRow": "node-012437",
+      "contract": "sec-139-checkboxgroup",
+      "parts": [
+        "CheckboxGroup"
+      ],
+      "otherPublicSurface": "value change details",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Radio",
+      "sourceRow": "node-012453",
+      "contract": "sec-1310-radio",
+      "parts": [
+        "Root",
+        "Indicator"
+      ],
+      "otherPublicSurface": "radio state",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "RadioGroup",
+      "sourceRow": "node-012470",
+      "contract": "sec-1311-radiogroup",
+      "parts": [
+        "RadioGroup"
+      ],
+      "otherPublicSurface": "value change details",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Switch",
+      "sourceRow": "node-012486",
+      "contract": "sec-1312-switch",
+      "parts": [
+        "Root",
+        "Thumb"
+      ],
+      "otherPublicSurface": "checked change details",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Input",
+      "sourceRow": "node-012503",
+      "contract": "sec-142-input",
+      "parts": [
+        "Input"
+      ],
+      "otherPublicSurface": "change details",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Field",
+      "sourceRow": "node-012519",
+      "contract": "sec-143-field",
+      "parts": [
+        "Root",
+        "Label",
+        "Error",
+        "Description",
+        "Control",
+        "Validity",
+        "Item"
+      ],
+      "otherPublicSurface": "ValidityData; Root actions",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Fieldset",
+      "sourceRow": "node-012540",
+      "contract": "sec-144-fieldset",
+      "parts": [
+        "Root",
+        "Legend"
+      ],
+      "otherPublicSurface": "Part states",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Form",
+      "sourceRow": "node-012558",
+      "contract": "sec-145-form",
+      "parts": [
+        "Form"
+      ],
+      "otherPublicSurface": "actions, values, errors, submit details",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "NumberField",
+      "sourceRow": "node-012574",
+      "contract": "sec-146-numberfield",
+      "parts": [
+        "Root",
+        "Group",
+        "Increment",
+        "Decrement",
+        "Input",
+        "ScrubArea",
+        "ScrubAreaCursor"
+      ],
+      "otherPublicSurface": "change and commit details",
+      "coverage": "implemented Foundation composition; native input and OS verification gaps remain",
+      "evidence": [
+        "number-field/implementation-checklist.md",
+        "number-field/execution-evidence.md",
+        "../../../../docs/number-field.md"
+      ]
+    },
+    {
+      "component": "OTPField",
+      "sourceRow": "node-012591",
+      "contract": "sec-147-otpfield",
+      "parts": [
+        "Root",
+        "Input",
+        "Separator"
+      ],
+      "otherPublicSurface": "validation, change, complete, invalid details",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Slider",
+      "sourceRow": "node-012608",
+      "contract": "sec-148-slider",
+      "parts": [
+        "Root",
+        "Label",
+        "Value",
+        "Control",
+        "Track",
+        "Thumb",
+        "Indicator"
+      ],
+      "otherPublicSurface": "thumb metadata; change and commit details",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Autocomplete",
+      "sourceRow": "node-012625",
+      "contract": "sec-152-autocomplete",
+      "parts": [
+        "Root",
+        "Value",
+        "Trigger",
+        "Input",
+        "InputGroup",
+        "Icon",
+        "Clear",
+        "List",
+        "Status",
+        "Portal",
+        "Backdrop",
+        "Positioner",
+        "Popup",
+        "Arrow",
+        "Group",
+        "GroupLabel",
+        "Item",
+        "Row",
+        "Collection",
+        "Empty",
+        "Separator"
+      ],
+      "otherPublicSurface": "filter accessor; filtered-items accessor",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Combobox",
+      "sourceRow": "node-012652",
+      "contract": "sec-153-combobox",
+      "parts": [
+        "Root",
+        "Label",
+        "Value",
+        "Input",
+        "InputGroup",
+        "Trigger",
+        "List",
+        "Status",
+        "Portal",
+        "Backdrop",
+        "Positioner",
+        "Popup",
+        "Arrow",
+        "Icon",
+        "Group",
+        "GroupLabel",
+        "Item",
+        "ItemIndicator",
+        "Chips",
+        "Chip",
+        "ChipRemove",
+        "Row",
+        "Collection",
+        "Empty",
+        "Clear",
+        "Separator"
+      ],
+      "otherPublicSurface": "filter accessor; filtered-items accessor; item-collection factory",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Select",
+      "sourceRow": "node-012679",
+      "contract": "sec-154-select",
+      "parts": [
+        "Root",
+        "Label",
+        "Trigger",
+        "Value",
+        "Icon",
+        "Portal",
+        "Backdrop",
+        "Positioner",
+        "Popup",
+        "List",
+        "Item",
+        "ItemIndicator",
+        "ItemText",
+        "Arrow",
+        "ScrollDownArrow",
+        "ScrollUpArrow",
+        "Group",
+        "GroupLabel",
+        "Separator"
+      ],
+      "otherPublicSurface": "value and open change details",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "AlertDialog",
+      "sourceRow": "node-012704",
+      "contract": "sec-162-alertdialog",
+      "parts": [
+        "Root",
+        "Backdrop",
+        "Close",
+        "Description",
+        "Popup",
+        "Portal",
+        "Title",
+        "Trigger",
+        "Viewport"
+      ],
+      "otherPublicSurface": "Handle; createHandle; Root actions",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Dialog",
+      "sourceRow": "node-012730",
+      "contract": "sec-163-dialog",
+      "parts": [
+        "Backdrop",
+        "Close",
+        "Description",
+        "Popup",
+        "Portal",
+        "Root",
+        "Viewport",
+        "Title",
+        "Trigger"
+      ],
+      "otherPublicSurface": "Handle; createHandle; Root actions",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Drawer",
+      "sourceRow": "node-012756",
+      "contract": "sec-164-drawer",
+      "parts": [
+        "Backdrop",
+        "Close",
+        "Content",
+        "Description",
+        "Indent",
+        "IndentBackground",
+        "Popup",
+        "Portal",
+        "Provider",
+        "Root",
+        "SwipeArea",
+        "Title",
+        "Trigger",
+        "Viewport",
+        "VirtualKeyboardProvider"
+      ],
+      "otherPublicSurface": "Handle; createHandle; Root actions",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Popover",
+      "sourceRow": "node-012783",
+      "contract": "sec-165-popover",
+      "parts": [
+        "Root",
+        "Trigger",
+        "Portal",
+        "Positioner",
+        "Popup",
+        "Arrow",
+        "Backdrop",
+        "Title",
+        "Description",
+        "Close",
+        "Viewport"
+      ],
+      "otherPublicSurface": "Handle; createHandle; Root actions",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "PreviewCard",
+      "sourceRow": "node-012811",
+      "contract": "sec-166-previewcard",
+      "parts": [
+        "Root",
+        "Portal",
+        "Trigger",
+        "Positioner",
+        "Popup",
+        "Arrow",
+        "Backdrop",
+        "Viewport"
+      ],
+      "otherPublicSurface": "Handle; createHandle; Root actions",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Tooltip",
+      "sourceRow": "node-012839",
+      "contract": "sec-167-tooltip",
+      "parts": [
+        "Root",
+        "Trigger",
+        "Portal",
+        "Positioner",
+        "Popup",
+        "Arrow",
+        "Provider",
+        "Viewport"
+      ],
+      "otherPublicSurface": "Handle; createHandle; Root actions",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Menu",
+      "sourceRow": "node-012867",
+      "contract": "sec-172-menu",
+      "parts": [
+        "Arrow",
+        "Backdrop",
+        "CheckboxItem",
+        "CheckboxItemIndicator",
+        "Group",
+        "GroupLabel",
+        "Item",
+        "LinkItem",
+        "Popup",
+        "Portal",
+        "Positioner",
+        "RadioGroup",
+        "RadioItem",
+        "RadioItemIndicator",
+        "Root",
+        "SubmenuRoot",
+        "Trigger",
+        "Viewport",
+        "Separator",
+        "SubmenuTrigger"
+      ],
+      "otherPublicSurface": "Handle; createHandle; Root actions",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "ContextMenu",
+      "sourceRow": "node-012896",
+      "contract": "sec-173-contextmenu",
+      "parts": [
+        "Root",
+        "Trigger",
+        "Backdrop",
+        "Portal",
+        "Positioner",
+        "Popup",
+        "Arrow",
+        "Group",
+        "GroupLabel",
+        "Item",
+        "CheckboxItem",
+        "CheckboxItemIndicator",
+        "LinkItem",
+        "RadioGroup",
+        "RadioItem",
+        "RadioItemIndicator",
+        "SubmenuRoot",
+        "SubmenuTrigger",
+        "Separator"
+      ],
+      "otherPublicSurface": "Root actions",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Menubar",
+      "sourceRow": "node-012922",
+      "contract": "sec-174-menubar",
+      "parts": [
+        "Menubar"
+      ],
+      "otherPublicSurface": "composite state",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "NavigationMenu",
+      "sourceRow": "node-012938",
+      "contract": "sec-175-navigationmenu",
+      "parts": [
+        "Root",
+        "List",
+        "Item",
+        "Content",
+        "Trigger",
+        "Portal",
+        "Positioner",
+        "Viewport",
+        "Backdrop",
+        "Popup",
+        "Arrow",
+        "Link",
+        "Icon"
+      ],
+      "otherPublicSurface": "Root actions",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Toolbar",
+      "sourceRow": "node-012964",
+      "contract": "sec-176-toolbar",
+      "parts": [
+        "Separator",
+        "Root",
+        "Group",
+        "Button",
+        "Link",
+        "Input"
+      ],
+      "otherPublicSurface": "Orientation; composite state",
+      "coverage": "implemented; source/built behavior verified; shared Button hover contract conflict pending",
+      "evidence": [
+        "toolbar/implementation-checklist.md",
+        "toolbar/hover-contract-gap.md",
+        "docs/toolbar.md"
+      ]
+    },
+    {
+      "component": "Avatar",
+      "sourceRow": "node-012982",
+      "contract": "sec-181-avatar",
+      "parts": [
+        "Root",
+        "Image",
+        "Fallback"
+      ],
+      "otherPublicSurface": "ImageLoadingStatus",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Meter",
+      "sourceRow": "node-012999",
+      "contract": "sec-182-meter",
+      "parts": [
+        "Root",
+        "Track",
+        "Indicator",
+        "Value",
+        "Label"
+      ],
+      "otherPublicSurface": "formatted-value state",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Progress",
+      "sourceRow": "node-013016",
+      "contract": "sec-183-progress",
+      "parts": [
+        "Root",
+        "Track",
+        "Indicator",
+        "Value",
+        "Label"
+      ],
+      "otherPublicSurface": "Status",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "ScrollArea",
+      "sourceRow": "node-013033",
+      "contract": "sec-184-scrollarea",
+      "parts": [
+        "Root",
+        "Viewport",
+        "Scrollbar",
+        "Content",
+        "Thumb",
+        "Corner"
+      ],
+      "otherPublicSurface": "coordinates, size, hidden state, overflow edges",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Separator",
+      "sourceRow": "node-013050",
+      "contract": "sec-185-separator",
+      "parts": [
+        "Separator"
+      ],
+      "otherPublicSurface": "Orientation",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    },
+    {
+      "component": "Toast",
+      "sourceRow": "node-013066",
+      "contract": "sec-186-toast",
+      "parts": [
+        "Provider",
+        "Viewport",
+        "Root",
+        "Content",
+        "Description",
+        "Title",
+        "Close",
+        "Action",
+        "Portal",
+        "Positioner",
+        "Arrow"
+      ],
+      "otherPublicSurface": "ToastManager; toast-manager factory; toast-manager accessor; toast records",
+      "coverage": "pending capability-by-capability verification",
+      "evidence": []
+    }
+  ],
+  "unresolved": [
+    "Complete actual implementation and evidence mapping for each part and public helper.",
+    "Reconcile stale 61-control count and Autocomplete destination with authorized Combobox/ContextMenu removals.",
+    "NumberField and Toolbar ownership implementations missing; free-text Autocomplete capability not yet proven.",
+    "CSP provider must be reconciled against current Foundation security services and upstream provider."
+  ],
+  "status": "active",
+  "catalog": [
+    {
+      "name": "Accordion",
+      "tagName": "tp-accordion",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Button",
+      "tagName": "tp-button",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Checkbox",
+      "tagName": "tp-checkbox",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Collapsible",
+      "tagName": "tp-collapsible",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Radio group",
+      "tagName": "tp-radio-group",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Switch",
+      "tagName": "tp-switch",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Tabs",
+      "tagName": "tp-tabs",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Toggle",
+      "tagName": "tp-toggle",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Toggle group",
+      "tagName": "tp-toggle-group",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Calendar",
+      "tagName": "tp-calendar",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Field",
+      "tagName": "tp-field",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Form",
+      "tagName": "tp-form",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Input",
+      "tagName": "tp-input",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Input group",
+      "tagName": "tp-input-group",
+      "kind": "preset-composition",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Native select",
+      "tagName": "tp-native-select",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "One-time code field",
+      "tagName": "tp-otp-field",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Questionnaire",
+      "tagName": "tp-questionnaire",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Slider",
+      "tagName": "tp-slider",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Text area",
+      "tagName": "tp-text-area",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Command palette",
+      "tagName": "tp-command-palette",
+      "kind": "preset-composition",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Select",
+      "tagName": "tp-select",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Alert dialog",
+      "tagName": "tp-alert-dialog",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Dialog",
+      "tagName": "tp-dialog",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Drawer",
+      "tagName": "tp-drawer",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Popover",
+      "tagName": "tp-popover",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Preview card",
+      "tagName": "tp-preview-card",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Side panel",
+      "tagName": "tp-side-panel",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Tooltip",
+      "tagName": "tp-tooltip",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Breadcrumb",
+      "tagName": "tp-breadcrumb",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Menu",
+      "tagName": "tp-menu",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Menubar",
+      "tagName": "tp-menubar",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Navigation menu",
+      "tagName": "tp-navigation-menu",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Pagination",
+      "tagName": "tp-pagination",
+      "kind": "flattening-compound",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Avatar",
+      "tagName": "tp-avatar",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Carousel",
+      "tagName": "tp-carousel",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Data visualization",
+      "tagName": "tp-data-visualization",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Message scroller",
+      "tagName": "tp-message-scroller",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Progress",
+      "tagName": "tp-progress",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Resizable panel group",
+      "tagName": "tp-resizable-panel-group",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Scroll area",
+      "tagName": "tp-scroll-area",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Separator",
+      "tagName": "tp-separator",
+      "kind": "thin-wrapper",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Spinner",
+      "tagName": "tp-spinner",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Toast",
+      "tagName": "tp-toast",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Alert",
+      "tagName": "tp-alert",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Aspect-ratio box",
+      "tagName": "tp-aspect-ratio",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Attachment",
+      "tagName": "tp-attachment",
+      "kind": "preset-composition",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Badge",
+      "tagName": "tp-badge",
+      "kind": "thin-wrapper",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Bubble",
+      "tagName": "tp-bubble",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Button group",
+      "tagName": "tp-button-group",
+      "kind": "preset-composition",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Card",
+      "tagName": "tp-card",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Empty state",
+      "tagName": "tp-empty-state",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Icon",
+      "tagName": "tp-icon",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Key hint",
+      "tagName": "tp-key-hint",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Label",
+      "tagName": "tp-label",
+      "kind": "preset-composition",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "List item",
+      "tagName": "tp-list-item",
+      "kind": "preset-composition",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Marker",
+      "tagName": "tp-marker",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Message",
+      "tagName": "tp-message",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Skeleton",
+      "tagName": "tp-skeleton",
+      "kind": "thin-wrapper",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Table",
+      "tagName": "tp-table",
+      "kind": "presentational-primitive",
+      "coverage": "pending current source and evidence reconciliation"
+    },
+    {
+      "name": "Navigation panel",
+      "tagName": "tp-navigation-panel",
+      "kind": "compound-reexport",
+      "coverage": "pending current source and evidence reconciliation"
+    }
+  ],
+  "foundationServices": [
+    {
+      "service": "ContentSecurity",
+      "upstream": "CSPProvider",
+      "contract": [
+        "sec-123-environment-and-interaction-services",
+        "sec-d3-foundation-services-outside-the-38-component-catalog"
+      ],
+      "implementation": "src/foundation/content-security.ts",
+      "coverage": "implemented and verified shared generated-resource policy; complete service gate record passes",
+      "evidence": [
+        "plans/components/library-completion/content-security/implementation-checklist.md",
+        "plans/components/library-completion/content-security/execution-evidence.md"
+      ]
+    }
+  ]
+}

@@ -1,4 +1,11 @@
 import type {
+  TpSelectTrigger,
+  TpSelectClear,
+  TpSelectChipRemove,
+  TpSelectOption,
+} from './components/select/index.js';
+import type { TpCommandList } from './components/command-palette/index.js';
+import type {
   TpMenuItem,
   TpMenuCheckboxItem,
   TpMenuRadioGroup,
@@ -33,21 +40,18 @@ import type { TpAccordionItem } from './components/accordion-item.js';
 import type { TpButton } from './components/button.js';
 import type { TpCheckbox } from './components/checkbox.js';
 import type { TpIcon } from './components/icon.js';
-import type { TpCombobox, TpCommandPalette, TpSelect } from './components/choices.js';
-import type {
-  TpComboboxTrigger,
-  TpComboboxClear,
-  TpComboboxChipRemove,
-  TpComboboxOption,
-} from './components/combobox/index.js';
+import type { TpCommandPalette, TpSelect } from './components/choices.js';
 import type { TpCollapsible } from './components/collapsible.js';
 import type {
   TpAvatar,
+  TpAvatarGroup,
   TpCarousel,
   TpDataVisualization,
   TpMessageScroller,
   TpProgress,
   TpResizablePanelGroup,
+  TpResizablePanel,
+  TpResizableHandle,
   TpScrollArea,
   TpSeparator,
   TpSpinner,
@@ -68,7 +72,6 @@ import type {
 } from './components/forms.js';
 import type {
   TpBreadcrumb,
-  TpContextMenu,
   TpMenu,
   TpMenubar,
   TpNavigationMenu,
@@ -79,6 +82,11 @@ import type {
   TpAlertDialog,
   TpDialog,
   TpDrawer,
+  TpDrawerProvider,
+  TpDrawerIndent,
+  TpDrawerIndentBackground,
+  TpDrawerVirtualKeyboardProvider,
+  TpDrawerSwipeArea,
   TpPopover,
   TpPreviewCard,
   TpSidePanel,
@@ -88,9 +96,12 @@ import type {
   TpAlert,
   TpAspectRatio,
   TpAttachment,
+  TpAttachmentGroup,
   TpBadge,
   TpBubble,
+  TpBubbleGroup,
   TpButtonGroup,
+  TpButtonGroupText,
   TpCard,
   TpEmptyState,
   TpKeyHint,
@@ -100,6 +111,13 @@ import type {
   TpMessage,
   TpSkeleton,
   TpTable,
+  TpTableHeader,
+  TpTableBody,
+  TpTableFooter,
+  TpTableRow,
+  TpTableHead,
+  TpTableCell,
+  TpTableCaption,
 } from './components/primitives.js';
 import type { TpSwitch } from './components/switch.js';
 import type { TpTabs } from './components/tabs.js';
@@ -122,27 +140,30 @@ declare global {
     'tp-alert-dialog': TpAlertDialog;
     'tp-aspect-ratio': TpAspectRatio;
     'tp-attachment': TpAttachment;
+    'tp-attachment-group': TpAttachmentGroup;
     'tp-avatar': TpAvatar;
+    'tp-avatar-group': TpAvatarGroup;
     'tp-badge': TpBadge;
     'tp-breadcrumb': TpBreadcrumb;
     'tp-bubble': TpBubble;
+    'tp-bubble-group': TpBubbleGroup;
     'tp-button': TpButton;
     'tp-button-group': TpButtonGroup;
+    'tp-button-group-text': TpButtonGroupText;
     'tp-calendar': TpCalendar;
     'tp-card': TpCard;
     'tp-carousel': TpCarousel;
     'tp-checkbox': TpCheckbox;
     'tp-collapsible': TpCollapsible;
-    'tp-combobox': TpCombobox;
-    'tp-combobox-trigger': TpComboboxTrigger;
-    'tp-combobox-clear': TpComboboxClear;
-    'tp-combobox-chip-remove': TpComboboxChipRemove;
-    'tp-combobox-option': TpComboboxOption;
     'tp-command-palette': TpCommandPalette;
-    'tp-context-menu': TpContextMenu;
     'tp-data-visualization': TpDataVisualization;
     'tp-dialog': TpDialog;
     'tp-drawer': TpDrawer;
+    'tp-drawer-provider': TpDrawerProvider;
+    'tp-drawer-indent': TpDrawerIndent;
+    'tp-drawer-indent-background': TpDrawerIndentBackground;
+    'tp-drawer-virtual-keyboard-provider': TpDrawerVirtualKeyboardProvider;
+    'tp-drawer-swipe-area': TpDrawerSwipeArea;
     'tp-empty-state': TpEmptyState;
     'tp-field': TpField;
     'tp-form': TpForm;
@@ -191,8 +212,15 @@ declare global {
     'tp-radio-group': TpRadioGroup;
     'tp-radio-group-item': TpRadioGroupItem;
     'tp-resizable-panel-group': TpResizablePanelGroup;
+    'tp-resizable-panel': TpResizablePanel;
+    'tp-resizable-handle': TpResizableHandle;
     'tp-scroll-area': TpScrollArea;
     'tp-select': TpSelect;
+    'tp-select-trigger': TpSelectTrigger;
+    'tp-select-clear': TpSelectClear;
+    'tp-select-chip-remove': TpSelectChipRemove;
+    'tp-select-option': TpSelectOption;
+    'tp-command-list': TpCommandList;
     'tp-separator': TpSeparator;
     'tp-side-panel': TpSidePanel;
     'tp-skeleton': TpSkeleton;
@@ -200,6 +228,13 @@ declare global {
     'tp-slider-thumb': TpSliderThumb;
     'tp-spinner': TpSpinner;
     'tp-switch': TpSwitch;
+    'tp-table-header': TpTableHeader;
+    'tp-table-body': TpTableBody;
+    'tp-table-footer': TpTableFooter;
+    'tp-table-row': TpTableRow;
+    'tp-table-head': TpTableHead;
+    'tp-table-cell': TpTableCell;
+    'tp-table-caption': TpTableCaption;
     'tp-table': TpTable;
     'tp-tabs': TpTabs;
     'tp-text-area': TpTextArea;

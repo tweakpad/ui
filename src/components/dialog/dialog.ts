@@ -1,3 +1,4 @@
+import { CloseWatcherController } from '../../foundation/close-watcher.js';
 import { html, nothing } from 'lit';
 import type { CSSResultGroup, PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
@@ -16,12 +17,21 @@ import { prepareMotion, type MotionHandle } from '../../foundation/motion.js';
 import type { MotionRoleDefinition } from '../../foundation/motion.js';
 import { xIcon } from '../../icons/x.js';
 import { SurfaceState, type TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
+import { acquireOutsideInert } from '../../foundation/outside-inert.js';
+import type { HostProperties } from '../../foundation/part.js';
 import { acquireScrollLock } from '../../foundation/scroll-lock.js';
 import { FloatingDismissController } from '../../foundation/floating-dismiss.js';
 import { globalFloatingTree } from '../../foundation/floating-tree.js';
 import type { ChangeReason, PresenceState } from '../../foundation/types.js';
 import type { DialogHandle, DialogTriggerOptions } from './handle.js';
 import { dialogStyles } from './styles.js';
+import type { PartRenderOptions } from '../../foundation/part.js';
+import {
+  OwnedPortal,
+  logicalPortalOwner,
+  type OwnedPortalContainer,
+} from '../../foundation/owned-portal.js';
+import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
 
 export type DialogInitialFocus =
   'first' | 'cancel' | 'confirm' | 'popup' | string | HTMLElement | (() => HTMLElement | null);
@@ -62,6 +72,11 @@ export class TpDialog extends TpElement {
       noAccessor: true,
     },
     showCloseControl: { type: Boolean, attribute: 'show-close-control' },
+    portal: { type: Boolean },
+    container: { attribute: false },
+    portalIdentifier: { type: String, attribute: 'portal-identifier' },
+    showHeader: { type: Boolean, attribute: 'show-header' },
+    showFooter: { type: Boolean, attribute: 'show-footer' },
     initialFocus: { attribute: 'initial-focus' },
     finalFocus: { attribute: false },
     label: { type: String },
@@ -83,6 +98,11 @@ export class TpDialog extends TpElement {
   description = '';
   forceRender = false;
   showCloseControl = true;
+  portal = false;
+  container: OwnedPortalContainer = null;
+  portalIdentifier: string | undefined;
+  showHeader = true;
+  showFooter = true;
   #modality: 'modal' | 'non-modal' | 'trap-focus-only' = 'modal';
   #outsideDismissal = true;
   onOpenChange: ((event: TpSurfaceOpenChangeEvent) => void) | undefined;
@@ -109,6 +129,7 @@ export class TpDialog extends TpElement {
   #handleCleanup: (() => void) | undefined;
   #treeCleanup: (() => void) | undefined;
   #scrollCleanup: (() => void) | undefined;
+  #inertCleanup: (() => void) | undefined;
   #parent: TpDialog | null = null;
   #children = new Set<TpDialog>();
   #active = false;
@@ -120,6 +141,45 @@ export class TpDialog extends TpElement {
   #restoreOnClose = true;
   #diagnosed = new Set<string>();
   #observer: MutationObserver | undefined;
+  #portal = new OwnedPortal(this, (this.constructor as typeof TpDialog).styles);
+  #portalFallback = false;
+  readonly #environment = new ComposedEnvironmentObserver(this, () => this.requestUpdate());
+  protected get surfaceRoot(): ParentNode {
+    return this.#portal.root ?? this.renderRoot;
+  }
+  protected get ownedChildren(): readonly Node[] {
+    return this.#portal.ownedChildren;
+  }
+  get #usesPortal(): boolean {
+    return !this.#portalFallback && Boolean(this.portal || this.container || this.portalIdentifier);
+  }
+  #partRefs = new Map<string, (element: HTMLElement | null) => void>();
+  #partElements = new Map<string, HTMLElement>();
+  #partReleases = new Map<string, () => void>();
+  protected dialogPart(suffix: string, options: PartRenderOptions = {}): unknown {
+    const name = this.partName(suffix);
+    let reference = this.#partRefs.get(suffix);
+    if (!reference) {
+      reference = (element) => {
+        if (element === this.#partElements.get(suffix)) return;
+        this.#partReleases.get(suffix)?.();
+        this.#partReleases.delete(suffix);
+        if (element) {
+          this.#partElements.set(suffix, element);
+          this.#partReleases.set(suffix, this.presentationController.registerPart(name, element));
+        } else this.#partElements.delete(suffix);
+      };
+      this.#partRefs.set(suffix, reference);
+    }
+    return this.renderPart(
+      name,
+      { open: this.open, presence: this.presenceState, payload: this.payload },
+      { ...options, reference },
+    );
+  }
+  protected get surfaceState(): SurfaceState {
+    return this.#state;
+  }
   #state = new SurfaceState({
     read: () => this.#providedOpen,
     defaultOpen: () => this.defaultOpen,
@@ -131,13 +191,14 @@ export class TpDialog extends TpElement {
     diagnostic: (message) => this.#diagnostic('state-mode', message),
   });
   #presence = new PresenceController(this, {
-    surface: () => this.renderRoot.querySelector('.portal'),
-    keepMounted: () => !this.#forceUnmount && (this.keepMounted || this.#state.retained),
+    surface: () => this.surfaceRoot.querySelector('.portal'),
+    keepMounted: () =>
+      this.previewPresent || (!this.#forceUnmount && (this.keepMounted || this.#state.retained)),
     onStateChange: () => this.requestUpdate(),
     onComplete: (open) => {
       if (!this.isConnected) return;
       if (!open) {
-        this.renderRoot.querySelector<HTMLElement>('.overlay')?.hidePopover();
+        this.surfaceRoot.querySelector<HTMLElement>('.overlay')?.hidePopover();
         if (this.#layer?.matches(':popover-open')) this.#layer.hidePopover();
         this.#layer?.removeAttribute('open');
         this.#activeTrigger = null;
@@ -150,12 +211,21 @@ export class TpDialog extends TpElement {
   readonly dismissController = new FloatingDismissController(this, {
     open: () => this.open,
     anchor: () => this.#activeTrigger,
+    insideElements: () => (this.#content ? [this.#content] : []),
     outside: () => this.modality !== 'modal' && this.closeOnOutsideInteraction,
     escape: () => this.closeOnEscape,
     topmostOnly: true,
     dismiss: (event) =>
       this.setOpen(false, event.type === 'keydown' ? 'escape-key' : 'outside-press', event),
   });
+  readonly #closeWatcher = new CloseWatcherController(this, {
+    enabled: () => this.open && this.dismissController.isTopmost,
+    allowed: () => this.allowSystemDismissal,
+    close: (event) => this.setOpen(false, 'close-watcher', event),
+  });
+  protected get allowSystemDismissal(): boolean {
+    return this.closeOnEscape;
+  }
   get open(): boolean {
     return this.#state.open;
   }
@@ -191,15 +261,15 @@ export class TpDialog extends TpElement {
   protected partName(name: string): string {
     return `${this.partPrefix}-${name}`;
   }
-  protected get contentElement(): HTMLDialogElement | null {
-    return this.#layer;
+  protected get contentElement(): HTMLElement | null {
+    return this.#content;
   }
   protected get animateDefaultExit(): boolean {
     return false;
   }
   protected motionTargets(): Array<{ target: HTMLElement | null; role: MotionRoleDefinition }> {
     return [
-      { target: this.renderRoot.querySelector('.overlay'), role: dialogMotionRoles.backdrop },
+      { target: this.surfaceRoot.querySelector('.overlay'), role: dialogMotionRoles.backdrop },
     ];
   }
   #hasCloseAlternative(): boolean {
@@ -207,6 +277,14 @@ export class TpDialog extends TpElement {
       if (!element || !this.#content || !composedContains(this.#content, element)) return false;
       for (let node = composedParent(element); node && node !== this; node = composedParent(node))
         if (node instanceof TpDialog) return false;
+      if (
+        !this.showFooter &&
+        ['actions', 'footer', 'cancel', 'confirm', 'close'].some((name) => {
+          const region = this.#assigned(name);
+          return region && composedContains(region, element);
+        })
+      )
+        return false;
       const target = this.#actionTarget(element);
       return (
         target.tabIndex >= 0 &&
@@ -227,15 +305,16 @@ export class TpDialog extends TpElement {
   get presenceState(): PresenceState {
     return this.#presence.state;
   }
-  get #layer(): HTMLDialogElement | null {
-    return this.renderRoot.querySelector('dialog');
+  get #layer(): HTMLElement | null {
+    return this.surfaceRoot.querySelector('[data-dialog-layer]');
   }
   get #content(): HTMLElement | null {
-    return this.renderRoot.querySelector('.content');
+    return this.surfaceRoot.querySelector('.content');
   }
 
   override connectedCallback(): void {
     super.connectedCallback();
+    this.#environment.connect();
     this.part.add(this.partPrefix);
     if (!this.id) this.id = this.#nodeId;
     if (this.shadowRoot && 'referenceTarget' in this.shadowRoot)
@@ -258,8 +337,10 @@ export class TpDialog extends TpElement {
   }
   override disconnectedCallback(): void {
     this.#observer?.disconnect();
+    this.#closeWatcher.hostDisconnected();
+    this.#environment.disconnect();
     this.#deactivate(false);
-    this.renderRoot.querySelector<HTMLElement>('.overlay')?.hidePopover();
+    this.surfaceRoot.querySelector<HTMLElement>('.overlay')?.hidePopover();
     this.#slotTriggerCleanup?.();
     this.#slotTriggerCleanup = undefined;
     this.#slotTrigger = null;
@@ -275,119 +356,159 @@ export class TpDialog extends TpElement {
     this.#motion.forEach((motion) => motion.cancel());
     this.#motion = [];
     this.#phase = 'absent';
+    this.#portal.clear();
     super.disconnectedCallback();
   }
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
+    if (changed.has('portal') || changed.has('container') || changed.has('portalIdentifier'))
+      this.#portalFallback = false;
     this.#state.sync();
     this.#presence.setPresent(this.isConnected && this.open);
   }
   protected override render() {
-    const present = this.#presence.mounted;
-    const open = this.open;
-    const state = this.#presence.state;
+    return html`<slot name="trigger" @slotchange=${this.#syncParts}></slot
+      >${this.#usesPortal ? nothing : this.renderLayer()}`;
+  }
+  protected get previewPresent(): boolean {
+    return false;
+  }
+  protected get surfacePartName(): string {
+    return 'content';
+  }
+  protected renderSurfaceChildren(content: unknown): unknown {
+    return content;
+  }
+  protected renderSurface(properties: HostProperties, content: unknown): unknown {
+    return this.dialogPart(this.surfacePartName, {
+      tag: 'dialog',
+      protectedProperties: ['id', 'data-dialog-layer'],
+      properties: { ...properties, 'data-dialog-layer': '', popover: 'manual' },
+      content,
+    });
+  }
+  protected renderLayer(): unknown {
+    if (!this.#presence.mounted) return nothing;
+    const open = this.open,
+      state = this.#presence.state;
     const described = Boolean(
       this.description || this.#assigned('description')?.textContent?.trim(),
     );
-    return html` <slot name="trigger" @slotchange=${this.#syncParts}></slot>
-      ${
-        present
-          ? html` <div class="portal" part=${this.partName('portal')} data-state=${state}>
-              <div
-                class="overlay"
-                popover="manual"
-                part=${this.partName('overlay')}
-                aria-hidden="true"
-                ?hidden=${Boolean(this.#parent) && !this.forceRender}
-                data-state=${state}
-                ?data-open=${open}
-                ?data-closed=${!open}
-                ?data-starting-style=${state === 'starting'}
-                ?data-ending-style=${state === 'ending'}
-              ></div>
-              <dialog
-                class="content"
-                role=${this.isAlertDialog ? 'alertdialog' : 'dialog'}
-                aria-modal=${this.modality === 'modal' ? 'true' : 'false'}
-                aria-labelledby=${this.#titleId}
-                aria-describedby=${described ? this.#descriptionId : nothing}
-                aria-hidden=${open ? nothing : 'true'}
-                .inert=${!open}
-                @cancel=${this.#cancelNative}
-                @pointerdown=${this.#outside}
-                part=${this.partName('content')}
-                id=${this.#contentId}
-                tabindex="-1"
-                data-state=${state}
-                ?data-open=${open}
-                ?data-closed=${!open}
-                ?data-starting-style=${state === 'starting'}
-                ?data-ending-style=${state === 'ending'}
-                ?data-nested=${Boolean(this.#parent)}
-                ?data-nested-dialog-open=${this.#children.size > 0}
-                @keydown=${this.#key}
-              >
-                <div class="header" part=${this.partName('header')}>
-                  ${
-                    this.isAlertDialog
-                      ? html`<div
-                          class="media"
-                          part=${this.partName('media')}
-                          ?hidden=${!this.#assigned('media')}
-                        >
-                          <slot name="media" @slotchange=${this.#syncParts}></slot>
-                        </div>`
-                      : nothing
-                  }
-                  <h2 class="title" part=${this.partName('title')} id=${this.#titleId}>
-                    <slot name="title" @slotchange=${this.#syncParts}>${this.label}</slot>
-                  </h2>
-                  <div
-                    class="description"
-                    part=${this.partName('description')}
-                    id=${this.#descriptionId}
-                    ?hidden=${!described}
-                  >
-                    <slot name="description" @slotchange=${this.#syncParts}
-                      >${this.description}</slot
-                    >
-                  </div>
-                </div>
-                <div class="body" ?hidden=${!this.#hasBody()}>
-                  <slot @slotchange=${this.#syncParts}></slot>
-                </div>
-                <div
-                  class="footer"
-                  part=${this.partName(this.isAlertDialog ? 'actions' : 'footer')}
-                  ?hidden=${!['actions', 'footer', 'cancel', 'confirm', 'close'].some((name) => this.#assigned(name))}
-                >
-                  <slot name="actions" @slotchange=${this.#syncParts}></slot>
-                  <slot name="footer" @slotchange=${this.#syncParts}></slot>
-                  <slot name="cancel" @slotchange=${this.#syncParts}></slot>
-                  <slot name="confirm" @slotchange=${this.#syncParts}></slot>
-                  <slot name="close" @slotchange=${this.#syncParts}></slot>
-                </div>
-                ${
-                  this.#showCornerClose
-                    ? html`<tp-button
-                        class="corner-close"
-                        part=${this.partName('close')}
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Close"
-                        .icon=${xIcon}
-                        @click=${this.#cornerClose}
-                      ></tp-button>`
-                    : nothing
-                }
-              </dialog>
-            </div>`
-          : nothing
-      }`;
+    const markers = {
+      'data-state': state,
+      'data-open': open,
+      'data-closed': !open,
+      'data-starting-style': state === 'starting',
+      'data-ending-style': state === 'ending',
+    };
+    const header = this.dialogPart('header', {
+      properties: { class: 'header', hidden: !this.showHeader },
+      content: html`${this.isAlertDialog ? this.dialogPart('media', { properties: { class: 'media', hidden: !this.#assigned('media') }, content: html`<slot name="media" @slotchange=${this.#syncParts}></slot>` }) : nothing}
+      ${this.dialogPart('title', { tag: 'h2', protectedProperties: ['id'], properties: { class: 'title', id: this.#titleId }, content: html`<slot name="title" @slotchange=${this.#syncParts}>${this.label}</slot>` })}
+      ${this.dialogPart('description', { protectedProperties: ['id'], properties: { class: 'description', id: this.#descriptionId, hidden: !described }, content: html`<slot name="description" @slotchange=${this.#syncParts}>${this.description}</slot>` })}`,
+    });
+    const footer = this.dialogPart(this.isAlertDialog ? 'actions' : 'footer', {
+      properties: {
+        class: 'footer',
+        hidden:
+          (!this.showFooter && !this.isAlertDialog) ||
+          !['actions', 'footer', 'cancel', 'confirm', 'close'].some((name) => this.#assigned(name)),
+      },
+      content: html`<slot name="actions" @slotchange=${this.#syncParts}></slot
+        ><slot name="footer" @slotchange=${this.#syncParts}></slot
+        ><slot name="cancel" @slotchange=${this.#syncParts}></slot
+        ><slot name="confirm" @slotchange=${this.#syncParts}></slot
+        ><slot name="close" @slotchange=${this.#syncParts}></slot>`,
+    });
+    const close = this.#showCornerClose
+      ? this.dialogPart('close', {
+          tag: 'tp-button',
+          properties: {
+            class: 'corner-close',
+            variant: 'ghost',
+            size: 'icon-sm',
+            'aria-label': 'Close',
+            '.icon': xIcon,
+            '@click': this.#cornerClose,
+          },
+        })
+      : nothing;
+    return this.dialogPart('portal', {
+      properties: { class: 'portal', 'data-state': state },
+      content: html` ${this.dialogPart('overlay', { properties: { class: 'overlay', popover: 'manual', 'aria-hidden': 'true', hidden: (Boolean(this.#parent) && !this.forceRender) || this.modality !== 'modal', '@pointerdown': this.#outside, ...markers } })}
+      ${this.renderSurface(
+        {
+          class: 'content',
+          role: this.isAlertDialog ? 'alertdialog' : 'dialog',
+          'aria-modal': String(this.modality === 'modal'),
+          'aria-labelledby': this.#titleId,
+          'aria-describedby': described ? this.#descriptionId : undefined,
+          'aria-hidden': open ? undefined : 'true',
+          '.inert': !open,
+          '@cancel': this.#cancelNative,
+          '@pointerdown': this.#outside,
+          '@keydown': this.#key,
+          id: this.#contentId,
+          tabindex: -1,
+          ...markers,
+          'data-nested': Boolean(this.#parent),
+          'data-nested-dialog-open': this.#children.size > 0,
+          'data-header-hidden': !this.showHeader,
+        },
+        this.renderSurfaceChildren(
+          html`${header}
+            <div class="body" ?hidden=${!this.hasBodyContent()}>${this.renderBody()}</div>
+            ${footer}${close}`,
+        ),
+      )}`,
+    });
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     if (!this.isConnected) return;
+    const previousRoot = this.#portal.root;
+    const previousFocus = deepActiveElement(this.ownerDocument);
+    if (this.#usesPortal && this.#presence.mounted) {
+      const mounted = this.#portal.update(
+        this.container ?? this.ownerDocument.body,
+        this.renderLayer(),
+        {
+          projectedNodes: this.ownedChildren.filter((node) => this.projectSurfaceNode(node)),
+          ...(this.portalIdentifier ? { identifier: this.portalIdentifier } : {}),
+        },
+      );
+      if (!mounted) {
+        this.#portalFallback = true;
+        this.#diagnostic(
+          'portal-container',
+          'Portal container must belong to the owner document; using the native top layer.',
+        );
+        this.requestUpdate();
+      }
+      if (this.#portal.root && 'referenceTarget' in this.#portal.root)
+        (this.#portal.root as ShadowRoot & { referenceTarget: string }).referenceTarget =
+          this.#contentId;
+      if (this.#portal.host) {
+        this.#portal.host.addEventListener('click', this.#cancelAction);
+        this.#observer?.observe(this.#portal.host, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+          attributes: true,
+          attributeFilter: [
+            'slot',
+            'disabled',
+            'aria-disabled',
+            'aria-label',
+            'hidden',
+            'inert',
+            'id',
+          ],
+        });
+      }
+    } else this.#portal.clear();
+    const relocated = previousRoot !== this.#portal.root;
+    if (relocated && this.#active) this.#deactivate(false, false);
     if (changed.has('handle')) {
       this.#handleCleanup?.();
       this.#handleCleanup = this.handle?.attach(this);
@@ -396,23 +517,74 @@ export class TpDialog extends TpElement {
     if (this.open && !this.#active) this.#activate();
     else if (!this.open && this.#active) this.#deactivate(this.#restoreOnClose);
     else if (this.open && this.#activeModality !== this.modality) this.#applyModality();
-    if (!this.open && this.#layer && this.#presence.state === 'ending' && !this.#layer.open)
+    if (!this.open && this.previewPresent && this.#layer) {
+      const overlay = this.surfaceRoot.querySelector<HTMLElement>('.overlay');
+      if (this.modality === 'modal' && overlay && !overlay.matches(':popover-open'))
+        overlay.showPopover();
       this.#layer.setAttribute('open', '');
+      if (!this.#layer.matches(':popover-open')) this.#layer.showPopover();
+    } else if (!this.open && this.#presence.state !== 'ending') {
+      this.surfaceRoot.querySelector<HTMLElement>('.overlay')?.hidePopover();
+      if (this.#layer?.matches(':popover-open')) this.#layer.hidePopover();
+      this.#layer?.removeAttribute('open');
+    }
     this.#syncMotion();
     this.#markers();
     if (this.#focusPending && this.open) {
       this.#focusPending = false;
-      this.#initialFocus();
+      if (!(
+        relocated &&
+        previousFocus &&
+        this.#content &&
+        composedContains(this.#content, previousFocus) &&
+        restoreFocus(previousFocus)
+      )) {
+        this.#initialFocus();
+        // A newly connected composed control may not have rendered its native
+        // focus target yet. Retry only while focus remains on our fallback.
+        const content = this.#content;
+        void Promise.all(
+          this.ownedChildren.map((node) =>
+            'updateComplete' in node ? node.updateComplete : undefined,
+          ),
+        ).then(() => {
+          if (
+            this.isConnected &&
+            this.open &&
+            this.dismissController.isTopmost &&
+            content === this.#content &&
+            deepActiveElement(this.ownerDocument) === content
+          )
+            this.#initialFocus();
+        });
+      }
+    }
+    if (this.open && this.modality !== 'non-modal' && this.#content) {
+      const active = deepActiveElement(this.ownerDocument);
+      if (
+        active &&
+        composedContains(this.#content, active) &&
+        active instanceof HTMLElement &&
+        !isAvailable(active)
+      )
+        this.#initialFocus();
     }
   }
   #assigned(name: string): HTMLElement | null {
     return (
-      ([...this.children].find((element) => element.getAttribute('slot') === name) as
-        HTMLElement | undefined) ?? null
+      (this.ownedChildren.find(
+        (element) => element instanceof HTMLElement && element.getAttribute('slot') === name,
+      ) as HTMLElement | undefined) ?? null
     );
   }
-  #hasBody(): boolean {
-    return [...this.childNodes].some((node) =>
+  protected projectSurfaceNode(node: Node): boolean {
+    return !(node instanceof Element) || node.getAttribute('slot') !== 'trigger';
+  }
+  protected renderBody(): unknown {
+    return html`<slot @slotchange=${this.#syncParts}></slot>`;
+  }
+  protected hasBodyContent(): boolean {
+    return this.ownedChildren.some((node) =>
       node instanceof Element ? !node.hasAttribute('slot') : Boolean(node.textContent?.trim()),
     );
   }
@@ -432,7 +604,7 @@ export class TpDialog extends TpElement {
       this.#slotClose = close;
       this.#slotCloseCleanup = close ? this.registerCloseAction(close) : undefined;
     }
-    const corner = this.renderRoot.querySelector<HTMLElement>('.corner-close');
+    const corner = this.surfaceRoot.querySelector<HTMLElement>('.corner-close');
     if (corner)
       this.#actionCleanups.push(
         this.presentationController.registerPart(
@@ -469,7 +641,7 @@ export class TpDialog extends TpElement {
     );
   }
   protected triggerControlsTarget(): HTMLElement {
-    return this;
+    return this.#portal.host ?? this;
   }
   registerTrigger(element: HTMLElement, options: DialogTriggerOptions = {}): () => void {
     if (this.#triggers.has(element)) return () => {};
@@ -613,6 +785,8 @@ export class TpDialog extends TpElement {
       'escape-key',
       'focus-outside',
       'outside-press',
+      'close-watcher',
+      ...(this.partPrefix === 'drawer' ? ['swipe'] : []),
     ];
     if (!allowed.includes(reason)) {
       this.#diagnostic('change-reason', `Dialog does not accept the reason ${reason}.`);
@@ -627,7 +801,7 @@ export class TpDialog extends TpElement {
   }
   unmount(): void {
     if (this.open) {
-      this.#state.request(false, 'imperative-action', undefined, undefined, () => {
+      this.requestSurfaceChange(false, 'imperative-action', undefined, undefined, () => {
         this.#forceUnmount = true;
         this.#state.retained = false;
       });
@@ -648,6 +822,15 @@ export class TpDialog extends TpElement {
       trigger?.[1].payload ?? payload,
     );
   }
+  protected requestSurfaceChange(
+    open: boolean,
+    reason: ChangeReason,
+    sourceEvent?: Event,
+    trigger?: HTMLElement,
+    accept?: () => void,
+  ): void {
+    this.#state.request(open, reason, sourceEvent, trigger, accept);
+  }
   #request(
     open: boolean,
     reason: ChangeReason,
@@ -656,7 +839,7 @@ export class TpDialog extends TpElement {
     payload?: unknown,
   ): void {
     const previous = deepActiveElement(this.ownerDocument);
-    this.#state.request(
+    this.requestSurfaceChange(
       open,
       reason,
       event,
@@ -694,8 +877,8 @@ export class TpDialog extends TpElement {
         this.#slotTrigger;
     }
     for (let node = composedParent(this); node; node = composedParent(node))
-      if (node instanceof TpDialog) {
-        this.#parent = node;
+      if (node instanceof TpDialog || logicalPortalOwner(node) instanceof TpDialog) {
+        this.#parent = node instanceof TpDialog ? node : (logicalPortalOwner(node) as TpDialog);
         break;
       }
     if (this.#parent) {
@@ -719,46 +902,48 @@ export class TpDialog extends TpElement {
     const active = deepActiveElement(this.ownerDocument);
     this.#scrollCleanup?.();
     this.#scrollCleanup = undefined;
+    this.#inertCleanup?.();
+    this.#inertCleanup = undefined;
+    const overlay = this.surfaceRoot.querySelector<HTMLElement>('.overlay');
     if (layer.matches(':popover-open')) layer.hidePopover();
-    if (layer.open) layer.close();
-    const overlay = this.renderRoot.querySelector<HTMLElement>('.overlay');
     overlay?.hidePopover();
     this.#activeModality = this.modality;
     if (this.modality === 'modal') {
       if ((!this.#parent || this.forceRender) && overlay) overlay.showPopover();
-      layer.removeAttribute('popover');
-      layer.showModal();
       this.#scrollCleanup = acquireScrollLock(this.ownerDocument);
-    } else {
-      layer.setAttribute('popover', 'manual');
-      layer.setAttribute('open', '');
-      layer.showPopover();
     }
-    if (active && composedContains(layer, active)) restoreFocus(active);
+    layer.setAttribute('popover', 'manual');
+    layer.setAttribute('open', '');
+    layer.showPopover();
+    if (this.modality === 'modal')
+      this.#inertCleanup = acquireOutsideInert(this.ownerDocument, () => [
+        layer,
+        ...(overlay ? [overlay] : []),
+        ...this.dismissController.branchElements.filter(
+          (element): element is HTMLElement =>
+            element instanceof HTMLElement && element !== this && element !== this.#activeTrigger,
+        ),
+      ]);
+    if (active && this.#content && composedContains(this.#content, active)) restoreFocus(active);
   }
-  #deactivate(restore: boolean): void {
+  #deactivate(restore: boolean, closeChildren = true): void {
     if (!this.#active) return;
     this.#active = false;
     this.ownerDocument.removeEventListener('focusin', this.#focusIn);
     this.removeEventListener('click', this.#cancelAction);
-    for (const child of this.#children) child.close();
-    this.#children.clear();
+    if (closeChildren) {
+      for (const child of this.#children) child.close();
+      this.#children.clear();
+    }
     this.#treeCleanup?.();
     this.#treeCleanup = undefined;
     this.#scrollCleanup?.();
     this.#scrollCleanup = undefined;
-    const layer = this.#layer;
-    if (this.#activeModality === 'modal') {
-      layer?.close();
-      // Release native modality immediately, but keep the exiting surface above
-      // its backdrop. Reopening only the `open` attribute paints it underneath
-      // the top layer for a frame and makes the content flash on close.
-      if (layer && this.isConnected && this.#presence.state === 'ending') {
-        layer.setAttribute('popover', 'manual');
-        layer.setAttribute('open', '');
-        layer.showPopover();
-      }
-    }
+    this.#inertCleanup?.();
+    this.#inertCleanup = undefined;
+    // Keep the common top layer alive only for an actual exit animation.
+    if (this.#layer?.matches(':popover-open') && this.#presence.state !== 'ending')
+      this.#layer.hidePopover();
     this.#activeModality = undefined;
     if (restore && this.finalFocus === false) {
       const body = this.ownerDocument.body;
@@ -806,9 +991,10 @@ export class TpDialog extends TpElement {
           ? content
           : policy === 'cancel' || policy === 'confirm'
             ? this.#assigned(policy)
-            : [...this.querySelectorAll<HTMLElement>('[id]')].find(
-                (element) => element.id === policy,
-              );
+            : [
+                ...this.querySelectorAll<HTMLElement>('[id]'),
+                ...(this.#portal.host?.querySelectorAll<HTMLElement>('[id]') ?? []),
+              ].find((element) => element.id === policy);
     const target = named ? this.#actionTarget(named) : null;
     if (target && composedContains(content, target) && isAvailable(target))
       target.focus({ preventScroll: true });
@@ -889,8 +1075,8 @@ export class TpDialog extends TpElement {
     event.preventDefault();
   };
   #outside = (event: PointerEvent): void => {
-    if (event.target !== this.#layer || !this.dismissController.isTopmost) return;
-    const bounds = this.#layer!.getBoundingClientRect();
+    if (!this.#content || !this.dismissController.isTopmost) return;
+    const bounds = this.#content.getBoundingClientRect();
     if (
       event.clientX >= bounds.left &&
       event.clientX <= bounds.right &&
@@ -933,7 +1119,7 @@ export class TpDialog extends TpElement {
   #markers(): void {
     this.#content?.toggleAttribute('data-nested', Boolean(this.#parent));
     this.#content?.toggleAttribute('data-nested-dialog-open', this.#children.size > 0);
-    const overlay = this.renderRoot.querySelector<HTMLElement>('.overlay');
+    const overlay = this.surfaceRoot.querySelector<HTMLElement>('.overlay');
     if (overlay)
       overlay.hidden = this.modality !== 'modal' || (Boolean(this.#parent) && !this.forceRender);
     this.#content?.style.setProperty('--nested-dialogs', String(this.#children.size));

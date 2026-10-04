@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="style-src 'self' 'nonce-tweakpad-csp-test'"
+    />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Content security verification</title>
+    <link rel="stylesheet" href="./fixture.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Content security verification</h1>
+      <form id="form">
+        <tp-input id="input" label="Notes" name="notes" default-value="Notes"></tp-input>
+        <tp-select
+          id="select"
+          searchable
+          label="Fruit"
+          name="fruit"
+          placeholder="Choose fruit"
+        ></tp-select>
+        <tp-button id="action" variant="outline">Action</tp-button>
+        <tp-button type="reset" variant="outline">Reset</tp-button>
+      </form>
+      <section id="scope">
+        <h2>Scoped portal</h2>
+        <tp-select
+          id="portal"
+          searchable
+          label="Portaled fruit"
+          placeholder="Choose fruit"
+        ></tp-select>
+      </section>
+      <div id="portal-target"></div>
+      <output id="result">No actions</output>
+      <section id="special">
+        <h2>Additional style owners</h2>
+        <tp-button id="notify" variant="outline">Show notification</tp-button>
+        <tp-toast id="toast" timeout="0"></tp-toast>
+        <div id="toast-target"></div>
+        <tp-resizable-panel-group id="resize">
+          <tp-resizable-panel id="left" default-size="50%" min-size="20%"
+            >Left panel</tp-resizable-panel
+          >
+          <tp-resizable-handle label="Resize panels" with-handle></tp-resizable-handle>
+          <tp-resizable-panel id="right" min-size="20%">Right panel</tp-resizable-panel>
+        </tp-resizable-panel-group>
+        <tp-navigation-panel
+          id="navigation"
+          label="Security fixture navigation"
+          collapse-mode="compact"
+        >
+          <tp-navigation-panel-trigger></tp-navigation-panel-trigger>
+          <tp-navigation-panel-header>Workspace</tp-navigation-panel-header>
+          <tp-navigation-panel-content>
+            <tp-navigation-panel-menu
+              ><tp-navigation-panel-item>
+                <tp-navigation-panel-link href="#result">Activity</tp-navigation-panel-link>
+              </tp-navigation-panel-item></tp-navigation-panel-menu
+            >
+          </tp-navigation-panel-content>
+          <tp-navigation-panel-inset>Workspace content</tp-navigation-panel-inset>
+        </tp-navigation-panel>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

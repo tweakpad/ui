@@ -19,14 +19,19 @@ export function deepActiveElement(document: Document): Element | null {
   return active;
 }
 
-export function isAvailable(element: Element): element is HTMLElement {
+export function isAvailable(element: Element, includeDisabled = false): element is HTMLElement {
   const view = element.ownerDocument.defaultView;
   if (!view || element.namespaceURI !== 'http://www.w3.org/1999/xhtml' || !element.isConnected)
     return false;
   for (let node: Node | null = element; node; node = composedParent(node)) {
     if (node.nodeType !== 1) continue;
     const current = node as HTMLElement;
-    if (current.hidden || current.inert || current.matches('[disabled], [aria-disabled="true"]'))
+    // Native form named properties can shadow .hidden/.inert with a control.
+    // These platform booleans reflect attributes; inspect that source directly.
+    if (
+      current.matches('[hidden], [inert]') ||
+      (!includeDisabled && current.matches('[disabled], [aria-disabled="true"]'))
+    )
       return false;
     const style = current.ownerDocument.defaultView?.getComputedStyle(current);
     if (!style) return false;
@@ -44,15 +49,16 @@ export function isFocusable(element: Element): element is HTMLElement {
   return isAvailable(element) && element.tabIndex >= 0 && !element.matches('input[type="hidden"]');
 }
 
-/** Visit the flattened tree once, in browser tab order, including library controls. */
-export function focusableElements(root: ParentNode): HTMLElement[] {
+/** Visit each rendered element once, including slots and open shadow roots. */
+export function composedElements(root: ParentNode): HTMLElement[] {
   const result: HTMLElement[] = [];
   const visited = new Set<Node>();
   const visit = (node: Node): void => {
     if (visited.has(node)) return;
     visited.add(node);
     const element = node.nodeType === 1 ? (node as Element) : null;
-    if (element && isFocusable(element)) result.push(element);
+    if (element?.namespaceURI === 'http://www.w3.org/1999/xhtml')
+      result.push(element as HTMLElement);
     const slot =
       element?.localName === 'slot' && 'assignedNodes' in element
         ? (element as HTMLSlotElement)
@@ -66,8 +72,16 @@ export function focusableElements(root: ParentNode): HTMLElement[] {
         : [...node.childNodes];
     children.forEach(visit);
   };
-  [...root.childNodes].forEach(visit);
-  return result.sort((a, b) => (a.tabIndex || Infinity) - (b.tabIndex || Infinity));
+  const renderedRoot = (root as Element).shadowRoot ?? root;
+  [...renderedRoot.childNodes].forEach(visit);
+  return result;
+}
+
+/** Visit the flattened tree in browser tab order, including library controls. */
+export function focusableElements(root: ParentNode): HTMLElement[] {
+  return composedElements(root)
+    .filter(isFocusable)
+    .sort((a, b) => (a.tabIndex || Infinity) - (b.tabIndex || Infinity));
 }
 
 export function trapTabKey(event: KeyboardEvent, root: ParentNode): void {

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>NumberField Foundation verification</title>
+    <style>
+      body.fixture {
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-family);
+        margin: var(--tp-space-6);
+      }
+      main,
+      #number,
+      form,
+      section {
+        display: grid;
+        gap: var(--tp-space-4);
+        justify-items: start;
+      }
+      tp-field,
+      tp-input-group {
+        inline-size: calc(var(--tp-spacing) * 80);
+      }
+    </style>
+  </head>
+  <body class="fixture">
+    <main>
+      <h1>NumberField Foundation verification</h1>
+      <form id="form">
+        <tp-field id="field" label="Quantity" name="quantity"
+          ><div id="number">
+            <tp-input-group id="group" action-size="icon-xs" aria-label="Quantity controls">
+              <tp-input id="editor"></tp-input>
+              <tp-button id="decrement" slot="action" aria-label="Decrease quantity"
+                ><tp-icon slot="icon-start"></tp-icon
+              ></tp-button>
+              <tp-button id="increment" slot="action" aria-label="Increase quantity"
+                ><tp-icon slot="icon-start"></tp-icon
+              ></tp-button>
+            </tp-input-group></div
+        ></tp-field>
+        <tp-button id="after" variant="outline">After numeric field</tp-button>
+        <tp-input
+          id="standalone"
+          label="Standalone text"
+          name="notes"
+          default-value="Notes"
+        ></tp-input>
+        <tp-button type="reset" variant="outline">Reset</tp-button>
+      </form>
+      <output id="events">No changes</output>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

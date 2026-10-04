@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
+import type { TpDialog } from '../components/dialog/index.js';
 import documentation from '../../docs/dialog.md?raw';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
 
@@ -10,6 +11,9 @@ interface Args {
   description: string;
   modality: 'modal' | 'non-modal' | 'trap-focus-only';
   showCloseControl: boolean;
+  showHeader: boolean;
+  showFooter: boolean;
+  portal: boolean;
   closeOnOutsideInteraction: boolean;
   closeOnEscape: boolean;
   keepMounted: boolean;
@@ -25,6 +29,9 @@ const meta: Meta<Args> = {
     description: 'Make changes to your profile. Close when you are done.',
     modality: 'modal',
     showCloseControl: true,
+    showHeader: true,
+    showFooter: true,
+    portal: false,
     closeOnOutsideInteraction: true,
     closeOnEscape: true,
     keepMounted: false,
@@ -46,6 +53,9 @@ const meta: Meta<Args> = {
       description: 'Outside pointer dismissal; also focus outside in non-modal mode.',
     },
     closeOnEscape: { control: 'boolean' },
+    showHeader: { control: 'boolean' },
+    showFooter: { control: 'boolean' },
+    portal: { control: 'boolean' },
     keepMounted: { control: 'boolean' },
   },
   render: (args) => {
@@ -56,10 +66,17 @@ const meta: Meta<Args> = {
       .description=${args.description}
       .modality=${args.modality}
       .showCloseControl=${args.showCloseControl}
+      .showHeader=${args.showHeader}
+      .showFooter=${args.showFooter}
+      .portal=${args.portal}
       .closeOnOutsideInteraction=${args.closeOnOutsideInteraction}
       .closeOnEscape=${args.closeOnEscape}
       .keepMounted=${args.keepMounted}
-      @tp-open-change=${(event: TpSurfaceOpenChangeEvent) => updateArgs({ open: event.detail.value })}
+      @tp-open-change=${(event: TpSurfaceOpenChangeEvent) => {
+        if (event.defaultPrevented || event.detail.cancelled) return;
+        (event.currentTarget as TpDialog).open = event.detail.value;
+        updateArgs({ open: event.detail.value });
+      }}
     >
       <tp-button slot="trigger" variant="outline">Edit profile</tp-button>
       <tp-button slot="close" variant="outline">Close editor</tp-button>

@@ -1,3 +1,4 @@
+import type { TpValueChangeEvent } from './events.js';
 export type QuestionnaireFlow = 'linear' | 'free';
 export type QuestionnaireChoiceMode = 'single' | 'multiple';
 export type QuestionnaireQuestionKind = QuestionnaireChoiceMode | 'text';
@@ -12,9 +13,32 @@ export interface QuestionnaireChoice {
   description?: string;
   disabled?: boolean;
   defaultChecked?: boolean;
+  checked?: boolean;
+  onCheckedChange?: (event: TpValueChangeEvent<boolean>) => void;
   shortcut?: string;
 }
 
+export interface QuestionnaireInput {
+  label?: string;
+  value?: string;
+  defaultValue?: string;
+  disabled?: boolean;
+  type?: string;
+  placeholder?: string;
+  pattern?: string;
+  minLength?: number;
+  maxLength?: number;
+  min?: string | number;
+  max?: string | number;
+  step?: string | number;
+  autocomplete?: string;
+  inputMode?: string;
+  enterKeyHint?: string;
+  autocapitalize?: string;
+  spellcheck?: boolean;
+  readOnly?: boolean;
+  onValueChange?: (event: TpValueChangeEvent<string>) => void;
+}
 export interface QuestionnaireQuestion {
   name: string;
   title: string;
@@ -24,6 +48,10 @@ export interface QuestionnaireQuestion {
   skippable?: boolean;
   disabled?: boolean;
   choices?: readonly QuestionnaireChoice[];
+  input?: QuestionnaireInput;
+  invalid?: boolean;
+  error?: string;
+  onStatusChange?: (status: QuestionnaireStatus) => void;
   defaultValue?: QuestionnaireAnswer;
   inputType?: string;
   placeholder?: string;
@@ -49,12 +77,32 @@ export function normalizeQuestionnaireAnswer(
   if (kind === 'multiple') {
     if (answer === undefined) return undefined;
     const candidates = Array.isArray(answer) ? answer : typeof answer === 'string' ? [answer] : [];
-    const allowed = new Set(question.choices?.map((choice) => choice.value) ?? []);
-    return [...new Set(candidates.filter((value) => !allowed.size || allowed.has(value)))];
+    const allowed = new Set(
+      question.choices?.filter((choice) => !choice.disabled).map((choice) => choice.value) ?? [],
+    );
+    return [
+      ...new Set(
+        candidates.filter((value) =>
+          question.input
+            ? !question.choices?.some((choice) => choice.disabled && choice.value === value)
+            : allowed.has(value),
+        ),
+      ),
+    ];
   }
-  const candidate = typeof answer === 'string' ? answer : undefined;
-  if (kind === 'single' && candidate !== undefined && question.choices?.length) {
-    return question.choices.some((choice) => choice.value === candidate) ? candidate : undefined;
+  const candidate =
+    typeof answer === 'string' ? answer : Array.isArray(answer) ? answer[0] : undefined;
+  if (
+    kind === 'single' &&
+    candidate !== undefined &&
+    candidate !== '' &&
+    question.choices?.length
+  ) {
+    return question.choices.some((choice) => choice.value === candidate && choice.disabled)
+      ? undefined
+      : question.input || question.choices.some((choice) => choice.value === candidate)
+        ? candidate
+        : undefined;
   }
   return candidate;
 }
@@ -89,9 +137,21 @@ export function questionnaireDefaultAnswers(
     let candidate = defaults?.[question.name] ?? question.defaultValue;
     if (candidate === undefined && question.choices?.length) {
       const checked = question.choices
-        .filter((choice) => choice.defaultChecked)
+        .filter((choice) => choice.defaultChecked && !choice.disabled)
         .map((choice) => choice.value);
       if (checked.length) candidate = kind === 'multiple' ? checked : checked[0];
+    }
+    if (
+      question.input?.defaultValue?.trim() &&
+      defaults?.[question.name] === undefined &&
+      question.defaultValue === undefined
+    ) {
+      if (kind === 'multiple')
+        candidate = [
+          ...(Array.isArray(candidate) ? candidate : candidate ? [candidate] : []),
+          question.input.defaultValue,
+        ];
+      else candidate ??= question.input.defaultValue;
     }
     const answer = normalizeQuestionnaireAnswer(question, candidate, defaultChoiceMode);
     if (answer !== undefined) result[question.name] = answer;

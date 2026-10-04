@@ -1249,120 +1249,58 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
         cardinality:
           'zero or one descendant of Root; cited behavior sets any required-presence condition',
       },
-    ],
-  },
-  {
-    name: 'Combobox',
-    tagName: 'tp-combobox',
-    kind: 'flattening-compound',
-    sourceNode: 'ucl18-combobox',
-    axes: [],
-    parts: [
       {
-        name: 'combobox',
-        publicName: 'Root',
-        presentationKeys: ['combobox'],
-        cardinality: 'exactly one public owner host per control instance',
-      },
-      {
-        name: 'combobox-anchor',
+        name: 'select-anchor',
         publicName: 'Anchor',
-        presentationKeys: ['combobox-anchor'],
+        presentationKeys: ['select-anchor'],
         cardinality:
           'zero or one descendant of Root; cited behavior sets any required-presence condition',
       },
       {
-        name: 'combobox-input',
+        name: 'select-input',
         publicName: 'Input',
-        presentationKeys: ['combobox-input'],
+        presentationKeys: ['select-input'],
         cardinality:
           'zero or one descendant of Root; cited behavior sets any required-presence condition',
       },
       {
-        name: 'combobox-trigger',
-        publicName: 'Trigger',
-        presentationKeys: ['combobox-trigger'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-      {
-        name: 'combobox-clear',
+        name: 'select-clear',
         publicName: 'Clear',
-        presentationKeys: ['combobox-clear'],
+        presentationKeys: ['select-clear'],
         cardinality:
           'zero or one descendant of Root; cited behavior sets any required-presence condition',
       },
       {
-        name: 'combobox-content',
-        publicName: 'Content',
-        presentationKeys: ['combobox-content'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-      {
-        name: 'combobox-list',
-        publicName: 'List',
-        presentationKeys: ['combobox-list'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-      {
-        name: 'combobox-collection',
+        name: 'select-collection',
         publicName: 'Collection',
-        presentationKeys: ['combobox-collection'],
+        presentationKeys: ['select-collection'],
         cardinality:
           'zero or one descendant of Root; cited behavior sets any required-presence condition',
       },
       {
-        name: 'combobox-option',
-        publicName: 'Option',
-        presentationKeys: ['combobox-option'],
-        cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
-      },
-      {
-        name: 'combobox-group',
-        publicName: 'Group',
-        presentationKeys: ['combobox-group'],
-        cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
-      },
-      {
-        name: 'combobox-label',
-        publicName: 'Label',
-        presentationKeys: ['combobox-label'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-      {
-        name: 'combobox-separator',
-        publicName: 'Separator',
-        presentationKeys: ['combobox-separator'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-      {
-        name: 'combobox-empty-state',
+        name: 'select-empty-state',
         publicName: 'Empty state',
-        presentationKeys: ['combobox-empty-state'],
+        presentationKeys: ['select-empty-state'],
         cardinality:
           'zero or one descendant of Root; cited behavior sets any required-presence condition',
       },
       {
-        name: 'combobox-chip-list',
+        name: 'select-chip-list',
         publicName: 'ChipList',
-        presentationKeys: ['combobox-chip-list'],
+        presentationKeys: ['select-chip-list'],
         cardinality:
           'zero or one descendant of Root; cited behavior sets any required-presence condition',
       },
       {
-        name: 'combobox-chip',
+        name: 'select-chip',
         publicName: 'Chip',
-        presentationKeys: ['combobox-chip'],
+        presentationKeys: ['select-chip'],
         cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
       },
       {
-        name: 'combobox-chip-remove',
+        name: 'select-chip-remove',
         publicName: 'Chip remove',
-        presentationKeys: ['combobox-chip-remove'],
+        presentationKeys: ['select-chip-remove'],
         cardinality:
           'zero or one descendant of Root; cited behavior sets any required-presence condition',
       },
@@ -2008,110 +1946,6 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
     ],
   },
   {
-    name: 'Context menu',
-    tagName: 'tp-context-menu',
-    kind: 'flattening-compound',
-    sourceNode: 'ucl20-context-menu',
-    axes: [
-      {
-        name: 'itemVariant',
-        values: ['ghost', 'destructive'],
-        default: 'ghost',
-      },
-    ],
-    parts: [
-      {
-        name: 'context-menu',
-        publicName: 'Root',
-        presentationKeys: ['context-menu'],
-        cardinality: 'exactly one public owner host per control instance',
-      },
-      {
-        name: 'context-menu-target',
-        publicName: 'Target',
-        presentationKeys: ['context-menu-target'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-      {
-        name: 'context-menu-content',
-        publicName: 'Content',
-        presentationKeys: ['context-menu-content'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-      {
-        name: 'context-menu-item',
-        publicName: 'Item',
-        presentationKeys: [
-          'context-menu-item',
-          'context-menu-item-variant-ghost',
-          'context-menu-item-variant-destructive',
-        ],
-        cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
-      },
-      {
-        name: 'context-menu-checkbox-item',
-        publicName: 'CheckboxItem',
-        presentationKeys: ['context-menu-checkbox-item'],
-        cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
-      },
-      {
-        name: 'context-menu-radio-item',
-        publicName: 'RadioItem',
-        presentationKeys: ['context-menu-radio-item'],
-        cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
-      },
-      {
-        name: 'context-menu-radio-group',
-        publicName: 'Radio group',
-        presentationKeys: ['context-menu-radio-group'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-      {
-        name: 'context-menu-group',
-        publicName: 'Group',
-        presentationKeys: ['context-menu-group'],
-        cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
-      },
-      {
-        name: 'context-menu-label',
-        publicName: 'Label',
-        presentationKeys: ['context-menu-label'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-      {
-        name: 'context-menu-sub-trigger',
-        publicName: 'SubTrigger',
-        presentationKeys: ['context-menu-sub-trigger'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-      {
-        name: 'context-menu-sub-content',
-        publicName: 'SubContent',
-        presentationKeys: ['context-menu-sub-content'],
-        cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
-      },
-      {
-        name: 'context-menu-separator',
-        publicName: 'Separator',
-        presentationKeys: ['context-menu-separator'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-      {
-        name: 'context-menu-shortcut',
-        publicName: 'Shortcut',
-        presentationKeys: ['context-menu-shortcut'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
-      },
-    ],
-  },
-  {
     name: 'Menu',
     tagName: 'tp-menu',
     kind: 'flattening-compound',
@@ -2136,6 +1970,12 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
         presentationKeys: ['menu-trigger'],
         cardinality:
           'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      },
+      {
+        name: 'menu-target',
+        publicName: 'Context target',
+        presentationKeys: ['menu-target'],
+        cardinality: 'one invoking region in context invocation mode',
       },
       {
         name: 'menu-content',

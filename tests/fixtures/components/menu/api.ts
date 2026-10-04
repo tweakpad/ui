@@ -112,7 +112,6 @@ export function installFamilyAPI(library: Library, built: boolean): void {
       async run() {
         for (const name of [
           'TpMenu',
-          'TpContextMenu',
           'TpMenubar',
           'TpNavigationMenu',
           'TpPopover',
@@ -312,7 +311,8 @@ export function installFamilyAPI(library: Library, built: boolean): void {
       id: 'A08-context-family-and-target',
       scenarios: 'V-01,V-09,V-12',
       async run() {
-        const root = new library.TpContextMenu();
+        const root = new library.TpMenu();
+        root.invocation = 'context';
         root.label = 'Context';
         root.motionPolicy = 'reduce';
         const target = button('Native target');
@@ -329,12 +329,11 @@ export function installFamilyAPI(library: Library, built: boolean): void {
           await open(root);
           await updated(group, item);
           assert(
-            item.presentationTagName === 'tp-context-menu' &&
-              group.presentationTagName === 'tp-context-menu',
+            item.presentationTagName === 'tp-menu' && group.presentationTagName === 'tp-menu',
             'Context constituent family alias lost',
           );
           assert(
-            group.controlElement?.part.contains('context-menu-radio-group'),
+            group.controlElement?.part.contains('menu-radio-group'),
             'Context RadioGroup semantic part missing',
           );
           assert(
@@ -655,6 +654,8 @@ export function installFamilyAPI(library: Library, built: boolean): void {
         root.showBackdrop = true;
         root.sideOffset = ({ anchor }) => anchor.height / 2;
         root.align = 'end';
+        // Leave room for end alignment; otherwise collision flipping is correct.
+        root.style.cssText = 'display:block;margin-inline-start:40vw';
         let target: HTMLElement | null = null;
         root.partContracts = {
           'popover-content': {
@@ -672,7 +673,7 @@ export function installFamilyAPI(library: Library, built: boolean): void {
             'Popup delegate/ref mismatch',
           );
           assert(root.resolvedAlign === 'end', 'Independent alignment ignored');
-          const nodes = allElements(root.portalElement!);
+          const nodes = allElements(root.popupElement!.getRootNode() as ParentNode);
           assert(
             nodes.some((element) => element.part.contains('arrow')) &&
               nodes.some((element) => element.part.contains('backdrop')),
@@ -836,7 +837,8 @@ export function installFamilyAPI(library: Library, built: boolean): void {
       id: 'A23-group-label-and-context-sub-parts',
       scenarios: 'V-09,V-11,V-12',
       async run() {
-        const root = new library.TpContextMenu();
+        const root = new library.TpMenu();
+        root.invocation = 'context';
         root.motionPolicy = 'reduce';
         root.label = 'Context';
         root.append(button('Target'));
@@ -859,8 +861,8 @@ export function installFamilyAPI(library: Library, built: boolean): void {
             'Native Group not named by actual Label',
           );
           assert(
-            sub.presentationTagName === 'tp-context-menu' &&
-              sub.popupElement?.part.contains('context-menu-sub-content'),
+            sub.presentationTagName === 'tp-menu' &&
+              sub.popupElement?.part.contains('menu-sub-content'),
             'Nested Context content uses the wrong public family',
           );
           label.remove();
@@ -916,7 +918,7 @@ export function installFamilyAPI(library: Library, built: boolean): void {
             );
             assert(root.open, 'Dictionary replacement reset state');
             const diagnostics: string[] = [];
-            root.addEventListener('tp-diagnostic', (event) =>
+            root.addEventListener('tp-presentation-diagnostic', (event) =>
               diagnostics.push(JSON.stringify((event as CustomEvent).detail)),
             );
             const missing = { ...dictionary };
@@ -1000,7 +1002,8 @@ export function installFamilyAPI(library: Library, built: boolean): void {
       first.id = `context-api-${Date.now()}`;
       const second = button('Replacement target');
       second.id = first.id;
-      const root = new library.TpContextMenu();
+      const root = new library.TpMenu();
+      root.invocation = 'context';
       root.for = first.id;
       root.label = 'Replacement commands';
       root.motionPolicy = 'reduce';

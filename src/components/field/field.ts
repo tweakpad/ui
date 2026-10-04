@@ -31,7 +31,7 @@ const markers = [
   'pending',
 ] as const;
 const controls =
-  'tp-input,tp-text-area,tp-native-select,tp-number-field,tp-otp-field,tp-slider,tp-checkbox,tp-radio-group,tp-switch,tp-combobox,tp-select,tp-toggle-group,tp-calendar,input,textarea,select,[data-field-control]';
+  'tp-input,tp-text-area,tp-native-select,tp-number-field,tp-otp-field,tp-slider,tp-checkbox,tp-radio-group,tp-switch,tp-select,tp-toggle-group,tp-calendar,input,textarea,select,[data-field-control]';
 
 export const fieldSubmission = Symbol('Field submission');
 export class TpField extends TpElement {
@@ -206,6 +206,7 @@ export class TpField extends TpElement {
     return this.#control;
   }
   get value(): unknown {
+    if (this.#control && 'fieldValue' in this.#control) return this.#control.fieldValue;
     if (this.#control && ['tp-checkbox', 'tp-switch'].includes(this.#control.localName))
       return this.#control.checked;
     if (this.#control?.localName === 'tp-toggle') return this.#control.pressed;
@@ -824,11 +825,14 @@ export class TpField extends TpElement {
       this.requestUpdate();
       return run;
     }
-    const native = control.inputElement?.validity ?? control.validity;
+    // A composed control can impose constraints beyond its inner editor (for
+    // example a complete code). Its public form validity is authoritative.
+    const validityOwner = control.validity ? control : control.inputElement;
+    const native = validityOwner?.validity;
     this.#nativeFlags = native ? nativeValidityFlags(native) : {};
     const nativeError =
       native?.valid === false
-        ? control.inputElement?.validationMessage || control.validationMessage || 'Invalid value.'
+        ? validityOwner?.validationMessage || 'Invalid value.'
         : '';
     this.#computedErrors = nativeError ? [nativeError] : [];
     this.#customErrors = [];

@@ -11,6 +11,11 @@ interface InertState {
 }
 const documents = new WeakMap<Document, InertState>();
 
+/** Refresh newly mounted branch portals before synchronous focus placement. */
+export function refreshOutsideInert(document: Document): void {
+  documents.get(document)?.update();
+}
+
 /** One owner-document stack. Only the innermost live modal defines the active branch. */
 export function acquireOutsideInert(
   document: Document,
@@ -26,12 +31,7 @@ export function acquireOutsideInert(
       observer: new view.MutationObserver(() => created.update()),
       update: () => {
         created.observer.disconnect();
-        for (const [element, previous] of created.applied) {
-          if (element.getAttribute('inert') !== '') continue;
-          if (previous === null) element.removeAttribute('inert');
-          else element.setAttribute('inert', previous);
-        }
-        created.applied.clear();
+        const desired = new Set<HTMLElement>();
         const observedRoots = new Set<ParentNode>([document.body]);
         const allowed =
           created.leases
@@ -70,13 +70,25 @@ export function acquireOutsideInert(
                 observedRoots.add(element.shadowRoot);
                 visit(element.shadowRoot);
               }
-            } else if (!element.inert) {
-              created.applied.set(element, element.getAttribute('inert'));
-              element.inert = true;
-            }
+            } else if (!element.inert || created.applied.has(element)) desired.add(element);
           }
         };
         if (allowed.length) visit(document.body);
+        // Apply only the difference. Restoring and reapplying unchanged inert
+        // attributes wakes component observers and can create a render loop.
+        for (const [element, previous] of created.applied) {
+          if (desired.has(element)) continue;
+          if (element.getAttribute('inert') === '') {
+            if (previous === null) element.removeAttribute('inert');
+            else element.setAttribute('inert', previous);
+          }
+          created.applied.delete(element);
+        }
+        for (const element of desired) {
+          if (created.applied.has(element)) continue;
+          created.applied.set(element, element.getAttribute('inert'));
+          element.inert = true;
+        }
         if (created.leases.length)
           for (const root of observedRoots)
             created.observer.observe(root, {

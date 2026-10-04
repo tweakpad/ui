@@ -97,7 +97,8 @@
       }
       await Promise.all([...cases.values()].map(({ host }) => host.updateComplete));
       for (const kind of ['menu', 'context-menu']) {
-        const host = document.createElement(`tp-${kind}`);
+        const host = document.createElement('tp-menu');
+        host.invocation = kind === 'context-menu' ? 'context' : 'trigger';
         host.id = `typeahead-${kind}`;
         host.setAttribute('aria-label', `${kind} typeahead regression`);
         const trigger = document.createElement('tp-button');

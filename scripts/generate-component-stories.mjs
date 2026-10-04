@@ -8,22 +8,41 @@ const entries = [...catalogSource.matchAll(/\['([^']+)',\s*'(tp-[^']+)',\s*'[^']
   ([, name, tagName]) => ({ name, tagName }),
 );
 
-if (entries.length !== 62) {
-  throw new Error(`Expected 62 catalog entries, found ${entries.length}`);
+if (entries.length === 0) {
+  throw new Error(`No catalog entries parsed, found ${entries.length}`);
 }
 
 const outputDirectory = join(root, 'src/stories/generated');
 const authoredStories = new Set([
+  'tp-otp-field',
+  'tp-preview-card',
+  'tp-input-group',
+  'tp-pagination',
+  'tp-breadcrumb',
+  'tp-spinner',
+  'tp-skeleton',
+  'tp-form',
+  'tp-avatar',
+  'tp-bubble',
+  'tp-empty-state',
+  'tp-aspect-ratio',
   'tp-menu',
-  'tp-context-menu',
   'tp-menubar',
   'tp-navigation-menu',
   'tp-popover',
-  'tp-combobox',
   'tp-navigation-panel',
   'tp-switch',
   'tp-slider',
   'tp-select',
+  'tp-command-palette',
+  'tp-attachment',
+  'tp-table',
+  'tp-scroll-area',
+  'tp-resizable-panel-group',
+  'tp-side-panel',
+  'tp-drawer',
+  'tp-questionnaire',
+  'tp-data-visualization',
   'tp-native-select',
   'tp-progress',
   'tp-toggle',

@@ -9,12 +9,55 @@ import { textControlAppearance } from './text-controls.js';
 /** shadcn bases/base Select, style-nova.css cn-select-*; shared field/surface base remains. */
 export const selectAppearance: PresentationDictionary = {
   select: [],
+  'select-anchor': [],
+  'select-input': [
+    {
+      declarations: {
+        font: 'inherit',
+        'font-size': 'var(--tp-text-sm)',
+        color: 'var(--tp-foreground)',
+        background: 'transparent',
+        border: '0',
+        outline: '0',
+        padding: 'var(--tp-space-1) calc(var(--tp-spacing) * 2.5)',
+        'min-block-size': 'var(--tp-control-height-md)',
+      },
+    },
+  ],
+  'select-clear': [],
+  'select-chip-remove': [],
+  'select-chip-list': [
+    { declarations: { gap: 'var(--tp-space-1)', padding: 'var(--tp-space-1)' } },
+  ],
+  'select-chip': [
+    {
+      selector: '&::part(badge)',
+      declarations: {
+        'border-radius': 'var(--tp-radius-md)',
+        gap: 'var(--tp-space-1)',
+        'padding-block': '0',
+        'padding-inline': 'var(--tp-space-1)',
+      },
+    },
+  ],
+  'select-empty-state': [
+    {
+      declarations: {
+        padding: 'var(--tp-space-2)',
+        color: 'var(--tp-muted-foreground)',
+        'font-size': 'var(--tp-text-sm)',
+        'text-align': 'center',
+      },
+    },
+  ],
+  'select-collection': [],
+  'select-row': [],
   'select-trigger': [
     ...textControlAppearance.input!,
     {
       declarations: {
-        'min-block-size': 'var(--tp-control-height-sm)',
-        'block-size': 'var(--tp-control-height-sm)',
+        'min-block-size': 'var(--tp-control-height-md)',
+        'block-size': 'var(--tp-control-height-md)',
         'padding-block': 'var(--tp-space-2)',
         'padding-inline-start': 'calc(var(--tp-spacing) * 2.5)',
         'padding-inline-end': 'var(--tp-space-2)',
@@ -50,9 +93,23 @@ export const selectAppearance: PresentationDictionary = {
       },
     },
     { selector: '&[data-disabled]', declarations: { cursor: 'not-allowed' } },
-  ],
+  ].map((rule) => ({
+    ...rule,
+    selector: (rule.selector ?? '&').replaceAll('&', '&:not([data-searchable])'),
+  })),
   'select-value': [{ declarations: { gap: 'calc(var(--tp-spacing) * 1.5)' } }],
   'select-content': [
+    {
+      selector: '&[data-inline]',
+      declarations: {
+        border: '0',
+        'box-shadow': 'none',
+        background: 'transparent',
+        'min-inline-size': '0',
+        scale: '1',
+        opacity: '1',
+      },
+    },
     {
       declarations: {
         padding: '0',

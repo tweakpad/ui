@@ -205,7 +205,7 @@ export const Overview: Story = {
         </section>
         <section class="example">
           <h2>One-time code field</h2>
-          <tp-otp-field value="123"></tp-otp-field>
+          <tp-otp-field value="123" length="6"></tp-otp-field>
         </section>
         <section class="example">
           <h2>Questionnaire</h2>
@@ -224,9 +224,9 @@ export const Overview: Story = {
           <tp-text-area label="Message" placeholder="Write a message"></tp-text-area>
         </section>
         <section class="example">
-          <h2>Combobox</h2>
-          <tp-combobox placeholder="Choose"
-            ><span value="alpha">Alpha</span><span value="beta">Beta</span></tp-combobox
+          <h2>Searchable Select</h2>
+          <tp-select searchable placeholder="Choose"
+            ><span value="alpha">Alpha</span><span value="beta">Beta</span></tp-select
           >
         </section>
         <section class="example">
@@ -298,11 +298,11 @@ export const Overview: Story = {
           >
         </section>
         <section class="example">
-          <h2>Context menu</h2>
+          <h2>Menu context invocation</h2>
           <div class="surface-demo">
-            Right-click this area<tp-context-menu
-              ><button value="copy">Copy</button
-              ><button value="paste">Paste</button></tp-context-menu
+            Right-click this area<tp-menu invocation="context"
+              ><tp-menu-item value="copy">Copy</tp-menu-item
+              ><tp-menu-item value="paste">Paste</tp-menu-item></tp-menu
             >
           </div>
         </section>
@@ -319,7 +319,8 @@ export const Overview: Story = {
             ><tp-menu value="file"
               ><button slot="trigger">File</button><button value="new">New</button></tp-menu
             ><tp-menu value="edit"
-              ><button slot="trigger">Edit</button><button value="copy">Copy</button></tp-menu
+              ><button slot="trigger">Edit</button
+              ><tp-menu-item value="copy">Copy</tp-menu-item></tp-menu
             ></tp-menubar
           >
         </section>

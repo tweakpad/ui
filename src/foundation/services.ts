@@ -1,5 +1,7 @@
 import type { Direction } from './types.js';
 import { composedParent } from './focus.js';
+import { NumberLocale, numberFormatter } from './number-locale.js';
+import type { NumericText } from './number-locale.js';
 
 export class CleanupScope {
   readonly #cleanups = new Set<() => void>();
@@ -103,7 +105,13 @@ export class LocaleService {
   readonly #collators = new Map<string, Intl.Collator>();
   constructor(readonly locale: string | string[] | undefined = undefined) {}
   number(value: number, options?: Intl.NumberFormatOptions): string {
-    return new Intl.NumberFormat(this.locale, options).format(value);
+    return numberFormatter(this.locale, options).format(value);
+  }
+  numberLocale(options?: Intl.NumberFormatOptions): NumberLocale {
+    return new NumberLocale(this.locale, options);
+  }
+  parseNumber(text: string, options?: Intl.NumberFormatOptions, committed = false): NumericText {
+    return this.numberLocale(options).parse(text, committed);
   }
   date(value: Date | number, options?: Intl.DateTimeFormatOptions): string {
     return new Intl.DateTimeFormat(this.locale, options).format(value);

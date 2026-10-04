@@ -3,6 +3,7 @@ import {
   commandSurfaceAppearance,
   popupSpacingAppearance,
   commandItemAppearance,
+  commandItemHighlightAppearance,
   commandLabelAppearance,
   commandSeparatorAppearance,
   commandShortcutAppearance,
@@ -16,8 +17,22 @@ const menuSurface: readonly PresentationRule[] = [
     },
   },
 ];
-const menuItem: readonly PresentationRule[] = [...commandItemAppearance];
+const menuItem: readonly PresentationRule[] = [
+  ...commandItemAppearance,
+  {
+    selector:
+      '&:is([data-open], [aria-expanded="true"]):not([data-disabled], [aria-disabled="true"])',
+    declarations: commandItemHighlightAppearance,
+  },
+];
 
+const subTrigger: readonly PresentationRule[] = [
+  ...menuItem,
+  {
+    selector: '& > [part~="button-trailing-mark"]',
+    declarations: { 'margin-inline-start': 'auto' },
+  },
+];
 const choiceItem: readonly PresentationRule[] = [
   ...menuItem,
   { declarations: { 'padding-inline-end': 'calc(var(--tp-spacing) * 8)' } },
@@ -35,9 +50,9 @@ const ghost: readonly PresentationRule[] = [];
 const destructive: readonly PresentationRule[] = [
   { declarations: { color: 'var(--tp-accent-foreground)' } },
 ];
-const root = (prefix: 'menu' | 'context-menu'): Record<string, readonly PresentationRule[]> => ({
+const root = (prefix: 'menu'): Record<string, readonly PresentationRule[]> => ({
   [prefix]: [],
-  [`${prefix}-${prefix === 'menu' ? 'trigger' : 'target'}`]: [],
+  [`${prefix}-trigger`]: [],
   [`${prefix}-content`]: menuSurface,
   [`${prefix}-item`]: menuItem,
   [`${prefix}-item-variant-ghost`]: ghost,
@@ -47,7 +62,7 @@ const root = (prefix: 'menu' | 'context-menu'): Record<string, readonly Presenta
   [`${prefix}-radio-item`]: choiceItem,
   [`${prefix}-group`]: [],
   [`${prefix}-label`]: commandLabelAppearance,
-  [`${prefix}-sub-trigger`]: menuItem,
+  [`${prefix}-sub-trigger`]: subTrigger,
   [`${prefix}-sub-content`]: [
     ...menuSurface,
     { declarations: { 'box-shadow': 'var(--tp-shadow-lg)' } },
@@ -59,7 +74,7 @@ const root = (prefix: 'menu' | 'context-menu'): Record<string, readonly Presenta
 /** Base Menu/Context reexports and the shared Nova translucent command surface. */
 export const menuFamilyAppearance: PresentationDictionary = {
   ...root('menu'),
-  ...root('context-menu'),
+  'menu-target': [],
   menubar: [
     {
       declarations: {
@@ -115,7 +130,7 @@ export const menuFamilyAppearance: PresentationDictionary = {
     },
   ],
   'menubar-group': [],
-  'menubar-sub-trigger': menuItem,
+  'menubar-sub-trigger': subTrigger,
   'menubar-sub-content': [
     ...menuSurface,
     { declarations: { 'box-shadow': 'var(--tp-shadow-lg)' } },

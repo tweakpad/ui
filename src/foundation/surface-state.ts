@@ -1,3 +1,4 @@
+import { ControllableState, type StateTransactionProposal } from './controllable-state.js';
 import { TpOpenChangeEvent } from './events.js';
 import type { ChangeReason, ValueChangeDetail } from './types.js';
 
@@ -169,6 +170,70 @@ export class SurfaceState {
       this.#publishing = false;
       this.#drain();
     }
+  }
+  /** Join value lanes while keeping this SurfaceState as the sole open/retention owner. */
+  requestTogether(
+    proposals: readonly StateTransactionProposal[],
+    open: boolean,
+    reason: ChangeReason,
+    sourceEvent?: Event,
+    trigger?: Element,
+    accept?: () => void,
+  ): boolean {
+    this.initialize();
+    if (this.#publishing) {
+      this.#queue.push(() =>
+        this.requestTogether(proposals, open, reason, sourceEvent, trigger, accept),
+      );
+      return false;
+    }
+    this.sync();
+    const isChanged = () => this.#open !== open;
+    let changed = this.#open !== open;
+    let event = new TpSurfaceOpenChangeEvent(open, this.#open, reason, sourceEvent, trigger);
+    return ControllableState.transaction(proposals, {
+      get changed() {
+        return isChanged();
+      },
+      begin: (retry) => {
+        if (this.#publishing) {
+          this.#queue.push(retry);
+          return false;
+        }
+        this.sync();
+        changed = this.#open !== open;
+        event = new TpSurfaceOpenChangeEvent(open, this.#open, reason, sourceEvent, trigger);
+        this.#publishing = true;
+        this.#pending = undefined;
+        return true;
+      },
+      dispatch: () => {
+        if (changed) this.options.dispatch(event);
+      },
+      resolve: () => {
+        const owner = this.options.read();
+        if (this.#controlled) this.#lastRead = owner;
+        return (
+          !event.defaultPrevented &&
+          !event.detail.cancelled &&
+          (!changed || !this.#controlled || owner === open)
+        );
+      },
+      publish: () => {
+        this.#committing = true;
+        this.#open = open;
+        if (changed) this.retained = !open && event.retainOnClose;
+      },
+      notify: () => {
+        accept?.();
+        if (changed) this.options.commit(open);
+      },
+      end: () => {
+        this.#committing = false;
+        this.#publishing = false;
+        this.#drain();
+      },
+    });
   }
   #drain(): void {
     while (!this.#publishing && this.#queue.length) this.#queue.shift()!();

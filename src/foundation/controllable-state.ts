@@ -35,6 +35,17 @@ export interface StateTransactionProposal {
   };
 }
 
+/** An existing state owner may join the same atomic publication protocol. */
+export interface StateTransactionParticipant {
+  changed: boolean;
+  begin(retry: () => void): boolean;
+  dispatch(): void;
+  resolve(): boolean;
+  publish(): void;
+  notify(): void;
+  end(): void;
+}
+
 /** Ordered equality without coercing identifiers or mutating consumer arrays. */
 export function orderedValuesEqual<T>(a: readonly T[], b: readonly T[]): boolean {
   return a.length === b.length && a.every((value, index) => Object.is(value, b[index]));
@@ -180,14 +191,17 @@ export class ControllableState<T> implements ReactiveController {
   }
 
   /** Propose every lane against the old snapshot, then publish all or none. */
-  static transaction(proposals: readonly StateTransactionProposal[]): boolean {
+  static transaction(
+    proposals: readonly StateTransactionProposal[],
+    participant?: StateTransactionParticipant,
+  ): boolean {
     const updates = proposals.map((proposal) => proposal[transactionProposal]);
     const states = [...new Set(updates.map((update) => update.state))];
     if (states.length !== updates.length)
       throw new Error('A transaction may update each lane once.');
     const busy = states.find((state) => state.#publishing);
     if (busy) {
-      busy.#queue.push(() => ControllableState.transaction(proposals));
+      busy.#queue.push(() => ControllableState.transaction(proposals, participant));
       return false;
     }
     for (const state of states) state.#sync(false);
@@ -206,18 +220,24 @@ export class ControllableState<T> implements ReactiveController {
           ),
       next: update.value,
     }));
-    if (!stages.some((stage) => stage.changed)) return false;
+    if (!stages.some((stage) => stage.changed) && !participant?.changed) return false;
+    if (
+      participant &&
+      !participant.begin(() => ControllableState.transaction(proposals, participant))
+    )
+      return false;
     for (const state of states) {
       state.#publishing = true;
       state.#pendingExternal = undefined;
     }
     try {
+      participant?.dispatch();
       for (const stage of stages) {
         if (!stage.event) continue;
         stage.state.options.onChange?.(stage.event);
         stage.state.options.host.dispatchEvent(stage.event);
       }
-      let accepted = true;
+      let accepted = participant?.resolve() ?? true;
       for (const stage of stages) {
         const state = stage.state;
         const owner = state.options.readControlledValue?.();
@@ -240,6 +260,8 @@ export class ControllableState<T> implements ReactiveController {
       // All getters must reflect the new snapshot before any commit callback runs.
       for (const stage of stages) stage.state.#value = stage.next;
       for (const state of states) state.#committing = true;
+      participant?.publish();
+      participant?.notify();
       for (const stage of stages) {
         if (!stage.state.#equals(stage.previous, stage.next))
           stage.state.options.onCommit?.(stage.next, stage.previous, stage.reason);
@@ -252,6 +274,7 @@ export class ControllableState<T> implements ReactiveController {
         state.#publishing = false;
         state.options.host.requestUpdate();
       }
+      participant?.end();
       for (const state of states) state.#drain();
     }
   }

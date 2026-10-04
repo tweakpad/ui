@@ -1,3 +1,10 @@
+import { SelectQueryController } from './query.js';
+import { renderQuery } from './query-view.js';
+import { SelectSource } from './source.js';
+import { isSelectItemCollection, type SelectItemCollection } from './items.js';
+import type { SelectClearBehavior, SelectCompletionMode } from './query-types.js';
+import { selectStateMarkers } from './state.js';
+import { composedParent } from '../../foundation/focus.js';
 import { anchoredArrowStyles } from '../shared.js';
 import { html, nothing } from 'lit';
 import type { CSSResultGroup, PropertyValues } from 'lit';
@@ -63,6 +70,33 @@ export class TpSelect extends TpFormElement<unknown> {
   static tagName = 'tp-select';
   static override properties = {
     ...TpFormElement.properties,
+    searchable: { type: Boolean, reflect: true },
+    inputValue: { type: String, attribute: 'input-value', noAccessor: true },
+    defaultInputValue: { type: String, attribute: 'default-input-value' },
+    query: { type: String, noAccessor: true },
+    filteredItems: { attribute: false },
+    filter: { attribute: false },
+    limit: { type: Number },
+    locale: { type: String },
+    completionMode: { type: String, attribute: 'completion-mode' },
+    clearBehavior: { type: String, attribute: 'clear-behavior' },
+    autoHighlight: { attribute: false },
+    keepHighlight: { type: Boolean, attribute: 'keep-highlight' },
+    loopFocus: { type: Boolean, attribute: 'loop-focus' },
+    grid: { type: Boolean },
+    inline: { type: Boolean },
+    virtualized: { type: Boolean },
+    mountedItems: { attribute: false },
+    loading: { type: Boolean },
+    openOnInputClick: { type: Boolean, attribute: 'open-on-input-click' },
+    closeOnSelect: { type: Boolean, attribute: 'close-on-select' },
+    showTrigger: { type: Boolean, attribute: 'show-trigger' },
+    showClear: { type: Boolean, attribute: 'show-clear' },
+    showChipRemove: { type: Boolean, attribute: 'show-chip-remove' },
+    clearKeepMounted: { type: Boolean, attribute: 'clear-keep-mounted' },
+    onInputValueChange: { attribute: false },
+    onItemHighlighted: { attribute: false },
+
     value: { type: String, noAccessor: true },
     defaultValue: { type: String, attribute: 'default-value' },
     open: { type: Boolean, noAccessor: true },
@@ -74,11 +108,11 @@ export class TpSelect extends TpFormElement<unknown> {
     identifier: { type: String },
     autoComplete: { type: String, attribute: 'autocomplete' },
     nativeAction: { type: Boolean, attribute: 'native-action' },
-    modal: { type: Boolean },
+    modal: { type: Boolean, noAccessor: true },
     highlightItemOnHover: { type: Boolean, attribute: 'highlight-item-on-hover' },
     keepMounted: { type: Boolean, attribute: 'keep-mounted' },
     container: { attribute: false },
-    alignItemWithTrigger: { type: Boolean, attribute: 'align-item-with-trigger' },
+    alignItemWithTrigger: { type: Boolean, attribute: 'align-item-with-trigger', noAccessor: true },
     placement: { type: String },
     side: { type: String },
     align: { type: String },
@@ -115,17 +149,83 @@ export class TpSelect extends TpFormElement<unknown> {
   defaultValue: unknown = undefined;
   defaultOpen = false;
   multiple = false;
-  items: readonly SelectEntry[] | undefined;
+  items: readonly SelectEntry[] | SelectItemCollection<unknown> | undefined;
+  searchable = false;
+  defaultInputValue: string | undefined;
+  filteredItems: readonly unknown[] | undefined;
+  filter:
+    ((item: unknown, query: string, text: (item: unknown) => string) => boolean) | null | undefined;
+  limit = -1;
+  locale: string | undefined;
+  completionMode: SelectCompletionMode = 'list';
+  clearBehavior: SelectClearBehavior = 'contextual';
+  autoHighlight: boolean | 'always' = false;
+  keepHighlight = false;
+  loopFocus = true;
+  grid = false;
+  inline = false;
+  virtualized = false;
+  mountedItems: readonly unknown[] | undefined;
+  loading = false;
+  openOnInputClick = true;
+  closeOnSelect: boolean | undefined;
+  showTrigger = true;
+  showClear = false;
+  showChipRemove = true;
+  clearKeepMounted = false;
+  onInputValueChange: ((event: TpValueChangeEvent<string>) => void) | undefined;
+  onItemHighlighted:
+    ((value: unknown, details: { index: number; reason: ChangeReason }) => void) | undefined;
+  get inputValue(): string {
+    return this.#query.value;
+  }
+  set inputValue(value: string | undefined) {
+    const before = this.#query.providedValue;
+    this.#query.providedValue = value;
+    this.requestUpdate('inputValue', before);
+    if (this.hasUpdated) this.#query.state.sync();
+  }
+  get query(): string {
+    return this.inputValue;
+  }
+  set query(value: string | undefined) {
+    this.inputValue = value;
+  }
+  clear(event?: Event): void {
+    this.#query.clear(event);
+  }
+  removeChip(value: unknown, event?: Event): void {
+    this.#query.remove(value, event);
+  }
+  override get inputElement(): HTMLInputElement | null {
+    return this.#query.editor;
+  }
   placeholder = '';
   label = 'Options';
   identifier = createId('tp-select');
   autoComplete = '';
   nativeAction = true;
-  modal = true;
+  #providedModal: boolean | undefined;
+  get modal(): boolean {
+    return this.#providedModal ?? !this.searchable;
+  }
+  set modal(value: boolean | undefined) {
+    const before = this.#providedModal;
+    this.#providedModal = value;
+    this.requestUpdate('modal', before);
+  }
   highlightItemOnHover = true;
   keepMounted = false;
   container: SelectContainer = null;
-  alignItemWithTrigger = true;
+  #providedAlignment: boolean | undefined;
+  get alignItemWithTrigger(): boolean {
+    return this.#providedAlignment ?? !this.searchable;
+  }
+  set alignItemWithTrigger(value: boolean | undefined) {
+    const before = this.#providedAlignment;
+    this.#providedAlignment = value;
+    this.requestUpdate('alignItemWithTrigger', before);
+  }
   placement = 'block-end start';
   side: LogicalSide | undefined;
   align: Alignment | undefined;
@@ -218,7 +318,7 @@ export class TpSelect extends TpFormElement<unknown> {
     if (this.hasUpdated) this.#selection.sync();
   }
   get open(): boolean {
-    return this.#surface.open;
+    return this.searchable && this.inline ? !this.effectiveDisabled : this.#surface.open;
   }
   set open(value: boolean | undefined) {
     const previous = this.#providedOpen;
@@ -232,7 +332,7 @@ export class TpSelect extends TpFormElement<unknown> {
     unmount: () => this.unmount(),
   };
   readonly #collection = new ChoiceCollectionController<unknown, SelectRecord>({
-    locale: () => resolveLocale(this),
+    locale: () => this.locale ?? resolveLocale(this),
     equals: (a, b) => this.isItemEqual?.(a, b) ?? Object.is(a, b),
     diagnostic: (message) => this.#diagnose(message),
   });
@@ -258,6 +358,29 @@ export class TpSelect extends TpFormElement<unknown> {
     },
     diagnostic: (message) => this.#diagnose(message),
   });
+  readonly #source = new SelectSource();
+  readonly #query = new SelectQueryController(this, {
+    collection: this.#collection,
+    selection: this.#selection,
+    values: (value) => this.#values(value),
+    text: (value) => this.#text(value),
+    select: (record, event) => this.selectOption(record, event),
+    metadata: (record) => ({
+      source: this.#source.sources.get(record.option) ?? record.value,
+      logicalIndex: record.option.index ?? this.#collection.source.indexOf(record),
+      row: Number(
+        (record.option as { row?: number }).row ??
+          (this.#source.sources.get(record.option) as { row?: number } | undefined)?.row ??
+          this.#collection.source.indexOf(record),
+      ),
+    }),
+  });
+  #clear: HTMLElement | null = null;
+  readonly #clearPresence = new PresenceController(this, {
+    surface: () => this.#clear,
+    keepMounted: () => this.clearKeepMounted,
+  });
+  #outer: HTMLElement | null = null;
   readonly #surface = new SurfaceState({
     read: () => this.#providedOpen,
     defaultOpen: () => this.defaultOpen,
@@ -275,7 +398,7 @@ export class TpSelect extends TpFormElement<unknown> {
     onComplete: (open) => {
       this.onOpenChangeComplete?.(open);
       if (!open) {
-        this.#content?.hidePopover();
+        if (!this.inline) this.#content?.hidePopover();
       }
     },
   });
@@ -288,11 +411,11 @@ export class TpSelect extends TpFormElement<unknown> {
     keepMounted: () => this.scrollDownKeepMounted,
   });
   readonly #dismiss = new FloatingDismissController(this, {
-    open: () => this.open,
+    open: () => this.open && !this.inline,
     anchor: () => this.#trigger,
     insideElements: () => (this.#content ? [this.#content] : []),
     outside: () => true,
-    escape: () => true,
+    escape: () => !this.#query.completion,
     topmostOnly: true,
     dismiss: (event) =>
       this.setOpen(false, event.type === 'keydown' ? 'escape-key' : 'outside-press', event),
@@ -362,7 +485,11 @@ export class TpSelect extends TpFormElement<unknown> {
     return this.#trigger;
   }
   setOpen(open: boolean, reason: ChangeReason = 'imperative-action', event?: Event): void {
-    if (open && this.effectiveDisabled) return;
+    if (this.searchable && this.inline) {
+      if (!open) this.#query.resetTransient(event);
+      return;
+    }
+    if (open && (this.effectiveDisabled || (this.searchable && this.readOnly))) return;
     if (open) this.#openingEvent = event;
     else this.#closingEvent = event;
     this.#surface.request(open, reason, event, this.#trigger ?? undefined);
@@ -398,6 +525,7 @@ export class TpSelect extends TpFormElement<unknown> {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#environment.connect();
+    this.addEventListener('tp-select-source-change', this.#sourceChanged);
     this.#nativeEntries = nativeSelectEntries(this);
     this.#observer = new this.ownerDocument.defaultView!.MutationObserver(() => {
       this.#nativeEntries = nativeSelectEntries(this);
@@ -408,12 +536,16 @@ export class TpSelect extends TpFormElement<unknown> {
       subtree: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ['value', 'label', 'disabled', 'selected'],
+      attributeFilter: ['value', 'label', 'disabled', 'selected', 'index', 'native-action'],
     });
   }
   override disconnectedCallback(): void {
     this.#observer?.disconnect();
     this.#observer = null;
+    this.removeEventListener('tp-select-source-change', this.#sourceChanged);
+    this.#outer?.removeEventListener('tp-open-change', this.#outerChange);
+    this.#outer = null;
+    this.#query.disconnect();
     this.#environment.disconnect();
     this.#cleanupSurface();
     this.#portal.clear();
@@ -425,6 +557,7 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#releases.clear();
     super.disconnectedCallback();
   }
+  readonly #sourceChanged = (): void => this.requestUpdate();
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
     this.#surface.sync();
@@ -433,27 +566,75 @@ export class TpSelect extends TpFormElement<unknown> {
     const focusedOption = this.#collection.source.find(
       (record) => this.#collection.element(record) === active,
     );
+    const previousHighlight = this.#collection.highlighted;
     this.#model.update(
-      this.items ?? this.#nativeEntries,
+      isSelectItemCollection(this.items)
+        ? this.#source.normalize(this.items, [])
+        : (this.items ??
+            (this.querySelector('tp-select-option')
+              ? this.#source.normalize(
+                  undefined,
+                  [...this.children].filter((node) =>
+                    node.matches('option,optgroup,hr,tp-select-option'),
+                  ),
+                )
+              : this.searchable && this.filteredItems !== undefined
+                ? this.#source.normalize(this.filteredItems, [])
+                : this.#nativeEntries)),
       (value) => this.#text(value),
       (value) => this.itemToLabel?.(value) ?? this.#text(value),
     );
     this.#collection.setSource(this.#model.records);
+    this.#query.sync(previousHighlight);
+    if (this.searchable && this.virtualized && !this.items)
+      this.#diagnose('virtualized requires the complete ordered source items.');
+    this.#clearPresence.setPresent(
+      this.searchable && this.showClear && (!!this.inputValue || !!this.#values(this.value).length),
+    );
     this.#repairFocus =
       !!focusedOption &&
       (!this.#collection.source.includes(focusedOption) || !!focusedOption.disabled);
     if (this.open && !this.#wasOpen) {
       this.#pointer.opened();
-      this.#collection.openAt(this.#values(this.value));
-      this.#focusPending = true;
+      if (!this.searchable) this.#collection.openAt(this.#values(this.value));
+      this.#focusPending = !this.inline;
     }
     this.#wasOpen = this.open;
     this.#presence.setPresent(this.open && this.isConnected);
     for (const record of this.#model.records)
       record.presence.setPresent(this.#selected(record.value));
   }
+  protected renderQueryPrefix(): unknown {
+    return nothing;
+  }
   protected override render() {
     const state = this.#state();
+    if (this.searchable)
+      return html`${this.#part('select', state, {
+          properties: { class: 'select-root', 'data-open': this.open, 'data-closed': !this.open },
+          content: renderQuery(this, this.#query, {
+            part: (name, state, options, contract) => this.#part(name, state, options, contract),
+            ref: (key, part, commit) => this.#ref(key, part, commit),
+            values: () => this.#values(this.value),
+            text: (value) => this.#text(value),
+            state,
+            prefix: this.renderQueryPrefix(),
+            focusOut: () => this.#focusOut(),
+            clearMounted: this.#clearPresence.mounted,
+            clearVisible: this.#clearPresence.mounted && this.#clearPresence.state !== 'retained',
+            bindClear: (element) => {
+              this.#clear = element;
+            },
+            bindEditor: (element) => {
+              this.#query.editor = element as HTMLInputElement | null;
+              this.#trigger = element;
+            },
+          }),
+        })}${!this.container || this.inline ? this.#popup() : nothing}
+        <div class="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
+          ${this.open ? this.#query.status : ''}
+        </div>
+        <slot hidden></slot>`;
     const selected = this.#values(this.value).map(
       (value) =>
         this.#collection.selected(value)?.label ?? this.itemToLabel?.(value) ?? this.#text(value),
@@ -539,7 +720,7 @@ export class TpSelect extends TpFormElement<unknown> {
       <slot hidden></slot>${this.container ? nothing : this.#popup()}`;
   }
   #popup(): unknown {
-    if (!this.#presence.mounted) return nothing;
+    if (!this.#presence.mounted && !this.inline) return nothing;
     const state = this.#state(),
       phase = this.#presence.state;
     const list = this.#part('select-list', state, {
@@ -550,6 +731,7 @@ export class TpSelect extends TpFormElement<unknown> {
         tabindex: -1,
         'aria-label': this.label || this.placeholder || 'Options',
         'aria-multiselectable': this.multiple ? 'true' : undefined,
+        'aria-busy': this.loading ? 'true' : undefined,
         '@keydown': (event: KeyboardEvent) => {
           if (event.target === event.currentTarget) this.#keyDown(event, false);
         },
@@ -561,16 +743,13 @@ export class TpSelect extends TpFormElement<unknown> {
       reference: this.#ref('list', 'select-list', (element) => {
         this.#list = element;
       }),
-      content: repeat(
-        this.#model.nodes,
-        (node) => node.id,
-        (node) => this.#node(node),
-      ),
+      content: html`${this.searchable ? this.#part('select-collection', state, { content: this.#nodes(this.#model.nodes) }) : this.#nodes(this.#model.nodes)}${this.searchable && !this.#collection.visible.length && !this.loading ? this.#part('select-empty-state', state, { properties: { role: 'presentation' }, content: html`<slot name="empty">No results found.</slot>` }) : nothing}`,
     });
     const content = this.#part('select-content', state, {
       properties: {
         class: 'select-content',
-        popover: 'manual',
+        popover: this.inline ? undefined : 'manual',
+        'data-inline': this.inline,
         tabindex: -1,
         '.inert': !this.open,
         'aria-hidden': this.open ? undefined : 'true',
@@ -579,7 +758,7 @@ export class TpSelect extends TpFormElement<unknown> {
         'data-presence': phase,
         'data-starting-style': phase === 'starting',
         'data-ending-style': phase === 'ending',
-        'data-align-item': this.alignItemWithTrigger,
+        'data-align-item': this.alignItemWithTrigger && !this.searchable,
         '@focusout': () => this.#focusOut(),
       },
       reference: this.#ref('content', 'select-content', (element) => {
@@ -590,9 +769,67 @@ export class TpSelect extends TpFormElement<unknown> {
         </div>
         ${this.#renderArrow()}`,
     });
-    return html`${this.showBackdrop ? this.#part('backdrop', state, { properties: { class: 'select-backdrop', 'aria-hidden': 'true', 'data-open': this.open, 'data-closed': !this.open, '@pointerdown': (event: Event) => this.setOpen(false, 'outside-press', event) } }) : nothing}${content}`;
+    return html`${this.showBackdrop && !this.inline ? this.#part('backdrop', state, { properties: { class: 'select-backdrop', 'aria-hidden': 'true', 'data-open': this.open, 'data-closed': !this.open, '@pointerdown': (event: Event) => this.setOpen(false, 'outside-press', event) } }) : nothing}${content}`;
+  }
+  #nodes(nodes: readonly SelectNode[]): unknown {
+    if (this.searchable && this.filteredItems) {
+      const positions = (node: SelectNode): number[] =>
+        'children' in node
+          ? node.children.flatMap(positions)
+          : 'value' in node && this.#collection.visible.includes(node)
+            ? [this.#collection.visible.indexOf(node)]
+            : [];
+      const ranked = nodes.flatMap((node, index): Array<{ node: SelectNode; rank: number }> => {
+        if ('type' in node && node.type === 'separator') {
+          const before = nodes.slice(0, index).flatMap(positions),
+            after = nodes.slice(index + 1).flatMap(positions);
+          return before.length && after.length
+            ? [{ node, rank: (Math.max(...before) + Math.min(...after)) / 2 }]
+            : [];
+        }
+        const rank = positions(node);
+        return [{ node, rank: rank.length ? Math.min(...rank) : Infinity }];
+      });
+      nodes = ranked.sort((a, b) => a.rank - b.rank).map((entry) => entry.node);
+    }
+    if (!this.searchable || !this.grid)
+      return repeat(
+        nodes,
+        (node) => node.id,
+        (node) => this.#node(node),
+      );
+    const rows: Array<{ id: string; row?: number | undefined; nodes: SelectNode[] }> = [];
+    for (const node of nodes) {
+      const row = 'value' in node ? this.#query.owner.metadata(node).row : undefined;
+      const previous = rows.at(-1);
+      if (row !== undefined && previous?.row === row) previous.nodes.push(node);
+      else rows.push({ id: node.id, row, nodes: [node] });
+    }
+    return repeat(
+      rows,
+      (row) => row.id,
+      (row) =>
+        row.row === undefined
+          ? this.#node(row.nodes[0]!)
+          : this.#part('select-row', this.#state(), {
+              properties: { class: 'select-row' },
+              content: row.nodes.map((node) => this.#node(node)),
+            }),
+    );
+  }
+  #visibleNode(node: SelectNode): boolean {
+    return 'children' in node
+      ? node.children.some((child) => this.#visibleNode(child))
+      : 'value' in node && this.#collection.visible.includes(node);
   }
   #node(node: SelectNode): unknown {
+    if (
+      this.searchable &&
+      'children' in node &&
+      !this.#visibleNode(node) &&
+      !(node as { forceMount?: boolean }).forceMount
+    )
+      return nothing;
     if ('type' in node && node.type === 'group')
       return this.#part(
         'select-group',
@@ -600,15 +837,12 @@ export class TpSelect extends TpFormElement<unknown> {
         {
           properties: {
             class: 'select-group',
+            hidden: this.searchable && !this.#visibleNode(node),
             role: 'group',
             'aria-labelledby': node.label ? `${node.id}-label` : undefined,
           },
           reference: this.#ref(node.id, 'select-group'),
-          content: html`${node.label ? this.#part('select-label', this.#state(), { properties: { class: 'select-label', id: `${node.id}-label` }, reference: this.#ref(`${node.id}-label`, 'select-label'), content: node.label }, node.labelContract) : nothing}${repeat(
-            node.children,
-            (child) => child.id,
-            (child) => this.#node(child),
-          )}`,
+          content: html`${node.label ? this.#part('select-label', this.#state(), { properties: { class: 'select-label', id: `${node.id}-label` }, reference: this.#ref(`${node.id}-label`, 'select-label'), content: node.label }, node.labelContract) : nothing}${this.#nodes(node.children)}`,
         },
         node.partContract,
       );
@@ -627,7 +861,12 @@ export class TpSelect extends TpFormElement<unknown> {
         node.partContract,
       );
     const record = node as SelectRecord;
-    if (!this.#collection.source.includes(record)) return nothing;
+    if (
+      (!this.#collection.visible.includes(record) &&
+        !(record.option as { forceMount?: boolean }).forceMount) ||
+      (this.searchable && !this.#query.mounted(record))
+    )
+      return nothing;
     const selected = this.#selected(record.value),
       highlighted = this.#collection.highlighted === record;
     const disabled = this.effectiveDisabled || !!record.disabled;
@@ -679,12 +918,14 @@ export class TpSelect extends TpFormElement<unknown> {
         },
         properties: {
           class: 'select-option',
+          hidden: !this.#collection.visible.includes(record),
           id: record.id,
           role: 'option',
           type: record.option.nativeAction ? 'button' : undefined,
           '.disabled': record.option.nativeAction ? disabled : undefined,
-          tabindex: this.open && highlighted ? 0 : -1,
-          'aria-selected': String(selected),
+          tabindex: !this.searchable && this.open && highlighted ? 0 : -1,
+          'aria-selected': String(this.optionAriaSelected(record)),
+          'aria-label': this.optionAccessibleName(record),
           'aria-disabled': disabled ? 'true' : undefined,
           'aria-setsize': this.#collection.source.length,
           'aria-posinset': this.#collection.source.indexOf(record) + 1,
@@ -699,15 +940,17 @@ export class TpSelect extends TpFormElement<unknown> {
           },
           '@pointerdown': (event: PointerEvent) => {
             if (event.button !== 0 || disabled) return;
+            if (this.searchable) event.preventDefault();
             this.#pointer.down(record, event.pointerType);
             this.#highlight(record, false);
           },
           '@pointerup': (event: PointerEvent) => {
-            if (!disabled && this.#pointer.release(record, selected)) this.#select(record, event);
+            if (!disabled && this.#pointer.release(record, selected))
+              this.selectOption(record, event);
           },
           '@pointercancel': () => this.#pointer.reset(),
           '@click': (event: MouseEvent) => {
-            if (this.#pointer.click(record, event, highlighted)) this.#select(record, event);
+            if (this.#pointer.click(record, event, highlighted)) this.selectOption(record, event);
           },
           '@keydown': (event: KeyboardEvent) => this.#keyDown(event, false),
           '@keyup': (event: KeyboardEvent) => this.#keyUp(event),
@@ -789,7 +1032,7 @@ export class TpSelect extends TpFormElement<unknown> {
   }
   protected override updated(changed: PropertyValues<this>): void {
     if (changed.has('alignItemWithTrigger')) this.#alignedItemOffset = undefined;
-    if (this.container) this.#portal.update(this.container, this.#popup());
+    if (this.container && !this.inline) this.#portal.update(this.container, this.#popup());
     else this.#portal.clear();
     super.updated(changed);
     if (this.open && this.#repairFocus) {
@@ -801,11 +1044,24 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#syncForm();
     this.toggleAttribute('data-open', this.open);
     this.toggleAttribute('data-closed', !this.open);
+    this.toggleAttribute('data-searchable', this.searchable);
+    if (this.searchable && this.#query.editor) {
+      this.#query.editor.ariaActiveDescendantElement = this.open
+        ? this.#collection.element(this.#collection.highlighted)
+        : null;
+      this.#query.restore();
+    }
+    if (this.inline) this.#syncOuter();
     if (this.#trigger && this.#list) this.#trigger.ariaControlsElements = [this.#list];
     if (this.open && this.#content) {
-      if (!this.#content.matches(':popover-open')) this.#content.showPopover();
-      this.#setupPosition();
-      if (this.modal && !this.#releaseModal) {
+      if (!this.inline && !this.#content.matches(':popover-open')) this.#content.showPopover();
+      if (!this.inline) this.#setupPosition();
+      else {
+        this.#position?.destroy();
+        this.#position = null;
+        this.#content.style.removeProperty('translate');
+      }
+      if (this.modal && !this.inline && !this.#releaseModal) {
         this.#releaseModal = acquireOutsideInert(this.ownerDocument, () => [
           this,
           ...(this.#portal.host ? [this.#portal.host] : []),
@@ -823,7 +1079,7 @@ export class TpSelect extends TpFormElement<unknown> {
           )
         )
           this.#releaseScroll = acquireScrollLock(this.ownerDocument);
-      } else if (!this.modal) this.#releaseModality();
+      } else if (!this.modal || this.inline) this.#releaseModality();
       if (this.#focusPending) {
         this.#focusPending = false;
         void this.updatePosition().then(() => this.#initialFocus());
@@ -888,7 +1144,7 @@ export class TpSelect extends TpFormElement<unknown> {
         : this.anchor && 'current' in this.anchor
           ? this.anchor.current
           : this.anchor;
-    const anchor = configured ?? this.#trigger;
+    const anchor = configured ?? (this.searchable ? this.#query.anchor : null) ?? this.#trigger;
     if (!anchor || !this.#content) return;
     const key = JSON.stringify([
       this.placement,
@@ -954,7 +1210,14 @@ export class TpSelect extends TpFormElement<unknown> {
   }
   #alignedItemOffset: number | undefined;
   #alignSelectedItem(): void {
-    if (!this.alignItemWithTrigger || !this.#trigger || !this.#content || !this.#list) return;
+    if (
+      this.searchable ||
+      !this.alignItemWithTrigger ||
+      !this.#trigger ||
+      !this.#content ||
+      !this.#list
+    )
+      return;
     const item = this.#collection.element(
       this.#collection.source.find((record) => this.#selected(record.value)) ??
         this.#collection.highlighted,
@@ -1046,10 +1309,10 @@ export class TpSelect extends TpFormElement<unknown> {
       if (!this.open) this.setOpen(true, 'keyboard', event);
       else if (!trigger || !this.nativeAction) {
         const record = this.#collection.highlighted;
-        if (record) this.#select(record, event);
+        if (record) this.selectOption(record, event);
       } else {
         const record = this.#collection.highlighted;
-        if (record) this.#select(record, event);
+        if (record) this.selectOption(record, event);
       }
     } else if (event.key === ' ') {
       event.preventDefault();
@@ -1080,10 +1343,10 @@ export class TpSelect extends TpFormElement<unknown> {
     if (!this.open) this.setOpen(true, 'keyboard', event);
     else {
       const record = this.#collection.highlighted;
-      if (record) this.#select(record, event);
+      if (record) this.selectOption(record, event);
     }
   }
-  #select(record: SelectRecord, event: Event): void {
+  protected selectOption(record: SelectRecord, event: Event): void {
     if (
       !this.open ||
       record.disabled ||
@@ -1097,15 +1360,25 @@ export class TpSelect extends TpFormElement<unknown> {
       : record.value;
     const unchanged = !this.multiple && this.#collection.equal(next, this.value);
     const accepted = unchanged || this.#selection.set(next, 'item-press', event);
-    if (accepted && !this.multiple && this.#collection.equal(this.value, next))
-      this.setOpen(false, 'item-press', event);
+    const committed = this.multiple
+      ? this.#values(next).length === this.#values(this.value).length &&
+        this.#values(next).every((value, index) =>
+          this.#collection.equal(value, this.#values(this.value)[index]),
+        )
+      : this.#collection.equal(this.value, next);
+    if (accepted && committed) {
+      if (this.searchable) this.#query.selected(record, event);
+      if (this.searchable ? (this.closeOnSelect ?? !this.multiple) : !this.multiple)
+        this.setOpen(false, 'item-press', event);
+    }
     this.requestUpdate();
   }
   #highlight(record: SelectRecord, focus: boolean): void {
     if (record.disabled) return;
     this.#collection.activeIndex = this.#collection.visible.indexOf(record);
     this.requestUpdate();
-    if (focus) this.#focusHighlight();
+    if (this.searchable) this.#query.highlight(focus ? 'list-navigation' : 'pointer');
+    else if (focus) this.#focusHighlight();
   }
   #focusHighlight(): void {
     void this.updateComplete.then(() => {
@@ -1122,6 +1395,7 @@ export class TpSelect extends TpFormElement<unknown> {
     if (element && isAvailable(element)) element.focus({ preventScroll: true });
   }
   #openCommitted(open: boolean): void {
+    this.#query.completion = '';
     this.#alignedItemOffset = undefined;
     this.#wasOpen = open;
     this.#space = false;
@@ -1129,15 +1403,25 @@ export class TpSelect extends TpFormElement<unknown> {
       this.#forceUnmount = false;
       this.#pointer.opened();
       this.#previousFocus = deepActiveElement(this.ownerDocument);
-      this.#collection.openAt(this.#values(this.value));
-      this.#focusPending = true;
+      if (!this.searchable) this.#collection.openAt(this.#values(this.value));
+      this.#focusPending = !this.inline;
     } else {
       this.#pointer.reset();
       this.#openingPointerCleanup?.();
       this.#releaseModality();
       this.#stopScroll();
       this.#collection.typeahead.reset();
-      restoreFocus(this.#focusTarget(this.finalFocus, false));
+      // Editable lists must not pull focus back after the user entered another
+      // control. Explicit final-focus resolvers still own their chosen target.
+      const active = deepActiveElement(this.ownerDocument);
+      if (
+        !this.searchable ||
+        this.finalFocus !== 'trigger' ||
+        !active ||
+        active === this.ownerDocument.body ||
+        this.#dismiss.contains(active)
+      )
+        restoreFocus(this.#focusTarget(this.finalFocus, false));
     }
     this.requestUpdate();
   }
@@ -1153,16 +1437,17 @@ export class TpSelect extends TpFormElement<unknown> {
     return resolveSurfaceFocus(target, {
       event,
       defaultTarget: () =>
-        initial && interaction === 'keyboard'
+        initial && !this.searchable && interaction === 'keyboard'
           ? (this.#collection.element(this.#collection.highlighted) ?? this.#trigger)
           : this.#trigger,
       trigger:
-        initial && interaction === 'keyboard'
+        initial && !this.searchable && interaction === 'keyboard'
           ? (this.#collection.element(this.#collection.highlighted) ?? this.#trigger)
           : this.#trigger,
-      first: initial
-        ? (this.#collection.element(this.#collection.highlighted) ?? this.#trigger)
-        : this.#trigger,
+      first:
+        initial && !this.searchable
+          ? (this.#collection.element(this.#collection.highlighted) ?? this.#trigger)
+          : this.#trigger,
       popup: this.#content,
       previous: this.#previousFocus,
     });
@@ -1170,7 +1455,7 @@ export class TpSelect extends TpFormElement<unknown> {
 
   #focusOut(): void {
     queueMicrotask(() => {
-      if (!this.open) return;
+      if (!this.open || this.inline) return;
       const active = deepActiveElement(this.ownerDocument);
       if (active && !this.#dismiss.contains(active)) this.setOpen(false, 'focus-outside');
     });
@@ -1257,6 +1542,8 @@ export class TpSelect extends TpFormElement<unknown> {
   }
   protected override resetFormValue(): void {
     this.#selection.reset();
+    this.#query.state.reset();
+    this.#query.completion = '';
     this.close();
     this.#syncForm();
   }
@@ -1299,6 +1586,9 @@ export class TpSelect extends TpFormElement<unknown> {
   #state(): PartState {
     return {
       open: this.open,
+      searchable: this.searchable,
+      inputValue: this.inputValue,
+      loading: this.loading,
       value: this.value,
       multiple: this.multiple,
       disabled: this.effectiveDisabled,
@@ -1308,12 +1598,57 @@ export class TpSelect extends TpFormElement<unknown> {
       presence: this.#presence.state,
     };
   }
+  protected get choiceCollection() {
+    return this.#collection;
+  }
+  protected choicePart(name: string): string {
+    return name;
+  }
+  protected choiceState(state: PartState): PartState {
+    return state;
+  }
+  protected optionAccessibleName(record: SelectRecord): string | undefined {
+    void record;
+    return undefined;
+  }
+  protected optionAriaSelected(record: SelectRecord): boolean {
+    return this.#selected(record.value);
+  }
   #part(
     name: string,
     state: PartState,
     options: PartRenderOptions,
     contract?: ComponentPartContract,
   ): unknown {
+    name = this.choicePart(name);
+    state = this.choiceState(state);
+    options = { ...options, properties: { ...options.properties, ...selectStateMarkers(state) } };
+    const actionTag = (
+      {
+        'select-trigger': 'tp-select-trigger',
+        'select-clear': 'tp-select-clear',
+        'select-chip-remove': 'tp-select-chip-remove',
+      } as Record<string, string>
+    )[name];
+    if (actionTag && options.tag === 'tp-button') {
+      const properties = { ...options.properties };
+      for (const [key, handler] of Object.entries(properties))
+        if (key.startsWith('@') && typeof handler === 'function')
+          properties[key] = (event: Event) => {
+            if (!componentHandlingPrevented(event)) handler(event);
+          };
+      return renderPart('select-action-host', state, undefined, {
+        ...Object.fromEntries(Object.entries(options).filter(([key]) => key !== 'reference')),
+        tag: actionTag,
+        properties: {
+          ...properties,
+          '.selectState': state,
+          '.selectPresentation': this.partPresentation,
+          '.selectContract': { ...this.partContracts[name], ...contract },
+          '.selectReference': options.reference ?? this.#ref(name, name),
+        },
+      });
+    }
     return renderPart(name, state, { ...this.partContracts[name], ...contract }, options);
   }
   #ref(
@@ -1326,14 +1661,51 @@ export class TpSelect extends TpFormElement<unknown> {
       reference = (element) => {
         this.#releases.get(key)?.();
         this.#releases.delete(key);
-        if (element && part)
-          this.#releases.set(key, this.presentationController.registerPart(part, element));
+        if (
+          element &&
+          part &&
+          !(
+            this.searchable &&
+            ['select-trigger', 'select-clear', 'select-chip-remove'].includes(part)
+          )
+        )
+          this.#releases.set(
+            key,
+            this.presentationController.registerPart(this.choicePart(part), element),
+          );
         commit?.(element);
       };
       this.#refs.set(key, reference);
     }
     return reference;
   }
+  #syncOuter(): void {
+    let outer: HTMLElement | null = null;
+    for (let node = composedParent(this); node; node = composedParent(node))
+      if (
+        node.nodeType === 1 &&
+        (node as Element).matches(
+          'tp-dialog,tp-alert-dialog,tp-popover,tp-drawer,tp-command-palette',
+        )
+      ) {
+        outer = node as HTMLElement;
+        break;
+      }
+    if (outer === this.#outer) return;
+    this.#outer?.removeEventListener('tp-open-change', this.#outerChange);
+    this.#outer = outer;
+    outer?.addEventListener('tp-open-change', this.#outerChange);
+  }
+  readonly #outerChange = (event: Event): void => {
+    if (event.target !== this.#outer) return;
+    queueMicrotask(() => {
+      if (
+        !(event as TpSurfaceOpenChangeEvent).defaultPrevented &&
+        !(this.#outer as HTMLElement & { open?: boolean })?.open
+      )
+        this.#query.resetTransient(event);
+    });
+  };
   #diagnose(message: string): void {
     if (this.#diagnostics.has(message)) return;
     this.#diagnostics.add(message);

@@ -550,8 +550,12 @@ function overflowAncestors(element: Element): Element[] {
   const result: Element[] = [];
   for (let current = composedParent(element); current; current = composedParent(current)) {
     if (!(current instanceof Element)) continue;
+    // The document root clips to the viewport, not its scrolled client box.
+    if (current === element.ownerDocument.documentElement) break;
     const style = element.ownerDocument.defaultView!.getComputedStyle(current);
     if (
+      style.display !== 'inline' &&
+      style.display !== 'contents' &&
       /(auto|scroll|overlay|hidden|clip)/.test(
         `${style.overflow}${style.overflowX}${style.overflowY}`,
       )
@@ -591,7 +595,7 @@ function clippingRect(
     return intersect(root, boundary);
   const elements =
     boundary === 'clipping-ancestors'
-      ? overflowAncestors(element)
+      ? overflowAncestors(element).filter((ancestor) => ancestor !== element.ownerDocument.body)
       : Array.isArray(boundary)
         ? boundary
         : [boundary];

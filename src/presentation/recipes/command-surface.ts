@@ -66,7 +66,7 @@ export const anchoredPresenceAppearance: readonly PresentationRule[] = [
   },
 ];
 
-/** Nova cn-menu-target + cn-menu-translucent, shared by Menu family and Combobox. */
+/** Nova cn-menu-target + cn-menu-translucent, shared by Menu family and Select. */
 export const commandSurfaceAppearance: readonly PresentationRule[] = [
   {
     declarations: {
@@ -85,6 +85,12 @@ export const commandSurfaceAppearance: readonly PresentationRule[] = [
   ...anchoredPresenceAppearance,
 ];
 
+export const commandItemHighlightAppearance = {
+  background: 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)',
+  color: 'var(--tp-accent-foreground)',
+  outline: 'none',
+};
+
 export const commandItemAppearance: readonly PresentationRule[] = [
   {
     declarations: {
@@ -100,13 +106,8 @@ export const commandItemAppearance: readonly PresentationRule[] = [
   },
   ...popupItemSpacingAppearance,
   {
-    selector:
-      '&:is(:focus, [data-highlighted], [data-open], [aria-expanded="true"]):not([data-disabled], [aria-disabled="true"])',
-    declarations: {
-      background: 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)',
-      color: 'var(--tp-accent-foreground)',
-      outline: 'none',
-    },
+    selector: '&:is(:focus, [data-highlighted]):not([data-disabled], [aria-disabled="true"])',
+    declarations: commandItemHighlightAppearance,
   },
   // cn-menu-translucent explicitly overrides the destructive descendant text.
   { selector: '&[variant="destructive"]', declarations: { color: 'var(--tp-accent-foreground)' } },

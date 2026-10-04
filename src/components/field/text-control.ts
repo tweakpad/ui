@@ -1,11 +1,13 @@
 import { css } from 'lit';
 import type { PropertyValues } from 'lit';
+import { CompositeControlController } from '../../foundation/composite-control.js';
 import { TpFormElement } from '../../foundation/element.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { renderPart } from '../../foundation/part.js';
 import type { ComponentPartContract, HostProperties } from '../../foundation/part.js';
+import { textEditingModel } from '../../foundation/text-editing.js';
 const textValue = (value: unknown): string =>
   value == null ? '' : Array.isArray(value) ? value.join(',') : String(value);
 interface TextState {
@@ -58,16 +60,44 @@ export abstract class TpTextControl extends TpFormElement {
   minLength = -1;
   maxLength = -1;
   label = '';
+  #composite = new CompositeControlController(
+    this,
+    () => this.inputElement,
+    () => super.effectiveDisabled,
+  );
+  override get effectiveDisabled(): boolean {
+    return this.inheritedDisabled || !!textEditingModel(this)?.disabled;
+  }
+  /** Disabled context before an optional semantic editing model contributes its policy. */
+  get inheritedDisabled(): boolean {
+    return super.effectiveDisabled || !!this.#composite.state?.disabled;
+  }
+  get effectiveReadOnly(): boolean {
+    return this.readOnly || !!textEditingModel(this)?.readOnly;
+  }
+  get effectiveRequired(): boolean {
+    return this.required || !!textEditingModel(this)?.required;
+  }
+  get fieldValue(): unknown {
+    const model = textEditingModel(this);
+    return model ? model.fieldValue : this.value;
+  }
   #composing = false;
   #paste: ClipboardEvent | undefined;
   #customValidity = '';
   #files: FileList | null = null;
 
   override get value(): string {
+    const model = textEditingModel(this);
+    if (model) return model.text;
     const value = state(this);
     return value.controller?.value ?? value.input ?? textValue(this.defaultValue);
   }
   override set value(value: string | number | readonly string[] | undefined) {
+    if (textEditingModel(this)) {
+      this.#request(textValue(value), 'programmatic');
+      return;
+    }
     const owner = state(this);
     const previous = this.value;
     owner.input = value == null ? undefined : textValue(value);
@@ -76,7 +106,11 @@ export abstract class TpTextControl extends TpFormElement {
   }
 
   get controlled(): boolean {
-    return state(this).controller?.controlled ?? state(this).input !== undefined;
+    return (
+      textEditingModel(this)?.controlled ??
+      state(this).controller?.controlled ??
+      state(this).input !== undefined
+    );
   }
   override get inputElement(): HTMLInputElement | HTMLTextAreaElement | null {
     return (
@@ -119,7 +153,7 @@ export abstract class TpTextControl extends TpFormElement {
     return this.#request(textValue(value), 'programmatic');
   }
   clear(sourceEvent?: Event): boolean {
-    if (this.effectiveDisabled || this.readOnly) return false;
+    if (this.effectiveDisabled || this.effectiveReadOnly) return false;
     return this.#request('', 'input-clear', sourceEvent);
   }
   setCustomValidity(message: string): void {
@@ -158,11 +192,24 @@ export abstract class TpTextControl extends TpFormElement {
       this.toggleAttribute('data-filled', this.value !== '');
     }
     super.updated(changed);
+    this.toggleAttribute('data-readonly', this.effectiveReadOnly);
+    textEditingModel(this)?.updated?.();
+  }
+  override disconnectedCallback(): void {
+    textEditingModel(this)?.disconnected?.();
+    super.disconnectedCallback();
   }
   protected syncForm(): void {
     const input = this.inputElement;
     if (!input) return;
     input.setCustomValidity(this.#customValidity);
+    const model = textEditingModel(this);
+    if (model) {
+      this.setFormValue(this.effectiveDisabled ? null : model.formValue, model.formValue);
+      const flags = { ...model.validity, ...(this.#customValidity ? { customError: true } : {}) };
+      this.setValidity(flags, this.#customValidity || model.validationMessage, input);
+      return;
+    }
     if (input.localName === 'input' && (input as HTMLInputElement).type === 'file') {
       const data = new FormData();
       if (this.effectiveName) {
@@ -184,13 +231,33 @@ export abstract class TpTextControl extends TpFormElement {
     return { ...contract, hostProperties: { ...this.hostProperties, ...contract.hostProperties } };
   }
   protected renderControl(part: string, tag: string, properties: HostProperties): unknown {
+    const model = textEditingModel(this);
+    if (model)
+      properties = {
+        ...properties,
+        ...model.properties,
+        '.value': this.editingValue,
+        '.disabled': this.effectiveDisabled,
+        '.readOnly': this.effectiveReadOnly,
+        '.required': this.effectiveRequired,
+      };
+    const composite = this.#composite.state;
+    if (composite)
+      properties = {
+        ...properties,
+        '.disabled': this.effectiveDisabled && !composite.focusableWhenDisabled,
+        '.readOnly': this.effectiveReadOnly || this.effectiveDisabled,
+        'aria-disabled': this.effectiveDisabled ? 'true' : null,
+        'data-disabled': this.effectiveDisabled,
+        tabindex: composite.tabIndex,
+      };
     return renderPart(
       part,
       {
         value: this.value,
         disabled: this.effectiveDisabled,
-        readOnly: this.readOnly,
-        required: this.required,
+        readOnly: this.effectiveReadOnly,
+        required: this.effectiveRequired,
         invalid: this.effectiveInvalid,
         filled: this.value !== '',
       },
@@ -206,7 +273,15 @@ export abstract class TpTextControl extends TpFormElement {
     );
   }
   #request(value: string, reason: ChangeReason, sourceEvent?: Event): boolean {
-    const owner = state(this).controller;
+    const model = textEditingModel(this);
+    const owner = model
+      ? {
+          get value() {
+            return model.text;
+          },
+          set: (next: string, why: ChangeReason, event?: Event) => model.input(next, why, event),
+        }
+      : state(this).controller;
     if (!owner) return false;
     const previous = owner.value;
     const input = this.inputElement;
@@ -247,7 +322,7 @@ export abstract class TpTextControl extends TpFormElement {
   }
   protected inputChanged = (event: Event): void => {
     const input = event.currentTarget as HTMLInputElement | HTMLTextAreaElement;
-    if (this.effectiveDisabled || this.readOnly) {
+    if (this.effectiveDisabled || this.effectiveReadOnly) {
       input.value = this.value;
       return;
     }
@@ -300,11 +375,23 @@ export abstract class TpTextControl extends TpFormElement {
   protected inputFocused = (): void => {
     this.toggleAttribute('data-focused', true);
   };
-  protected inputBlurred = (): void => {
+  protected inputBlurred = (event: FocusEvent): void => {
     this.toggleAttribute('data-focused', false);
     this.toggleAttribute('data-touched', true);
+    const model = textEditingModel(this);
+    if (model) {
+      model.blur(event);
+      this.rollbackInput();
+    }
   };
   protected inputKeyDown = (event: KeyboardEvent): void => {
+    if (
+      !this.#composing &&
+      !event.isComposing &&
+      !event.defaultPrevented &&
+      !this.effectiveDisabled
+    )
+      textEditingModel(this)?.keyDown(event);
     if (
       event.key !== 'Enter' ||
       this.#composing ||
@@ -332,6 +419,13 @@ export abstract class TpTextControl extends TpFormElement {
     });
   };
   protected override resetFormValue(): void {
+    const model = textEditingModel(this);
+    if (model) {
+      model.reset();
+      this.rollbackInput();
+      this.removeAttribute('data-touched');
+      return;
+    }
     if (this.controlled) {
       this.requestUpdate();
       return;
@@ -344,6 +438,12 @@ export abstract class TpTextControl extends TpFormElement {
     this.removeAttribute('data-touched');
   }
   override formStateRestoreCallback(value: string | File | FormData | null): void {
+    const model = textEditingModel(this);
+    if (model) {
+      if (!model.controlled && typeof value === 'string') model.restore(value);
+      this.rollbackInput();
+      return;
+    }
     if (!this.controlled && typeof value === 'string') this.#request(value, 'programmatic');
   }
 }

@@ -20,6 +20,7 @@ export interface FieldValidity {
 }
 export type FieldControl = HTMLElement & {
   value?: unknown;
+  readonly fieldValue?: unknown;
   checked?: boolean;
   pressed?: boolean;
   name?: string;

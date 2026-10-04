@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Searchable Select verification</title>
+    <style>
+      html body {
+        margin: var(--tp-space-6);
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: var(--tp-space-6);
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--tp-spacing) * 70)), 1fr));
+      }
+      section {
+        min-width: 0;
+      }
+      tp-select {
+        width: 100%;
+        max-width: calc(var(--tp-spacing) * 90);
+      }
+      #sandbox {
+        margin-top: var(--tp-space-6);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Searchable Select verification</h1>
+    <main>
+      <section>
+        <h2>Single selection</h2>
+        <form id="single-form">
+          <tp-field label="Fruit" description="Search or select a fruit"
+            ><tp-select searchable
+              id="single"
+              name="fruit"
+              placeholder="Choose fruit"
+              required
+            ></tp-select></tp-field
+          ><tp-button type="reset" variant="outline">Reset fruit</tp-button>
+        </form>
+      </section>
+      <section>
+        <h2>Multiple values</h2>
+        <form id="multi-form">
+          <tp-field label="Contributors"
+            ><tp-select searchable id="multi" name="people" multiple placeholder="Add people"></tp-select
+          ></tp-field>
+        </form>
+      </section>
+      <section>
+        <h2>Rich groups</h2>
+        <tp-select searchable id="rich" label="Formatting" placeholder="Search formatting"></tp-select>
+      </section>
+      <section>
+        <h2>Native registered items</h2>
+        <tp-select searchable id="native" label="Shipping"
+          ><optgroup label="Shipping options">
+            <option value="standard">Standard</option>
+            <option value="express">Express</option>
+            <option value="overnight" disabled>Overnight</option>
+          </optgroup></tp-select
+        >
+      </section>
+      <section>
+        <h2>Collection factory</h2>
+        <tp-select searchable id="factory" label="Country" placeholder="Search country"></tp-select>
+      </section>
+      <section>
+        <h2>Independent controls</h2>
+        <tp-select searchable
+          id="options"
+          label="Optional controls"
+          placeholder="Query or selection"
+          show-clear
+        ></tp-select>
+      </section>
+      <section>
+        <h2>Explicit portal</h2>
+        <tp-select searchable id="portal" label="Portaled options" placeholder="Search"></tp-select>
+        <div id="portal-target"></div>
+      </section>
+      <section>
+        <h2>Inline in Dialog</h2>
+        <tp-dialog id="dialog" label="Choose fruit"
+          ><tp-button slot="trigger" variant="outline">Open inline search</tp-button
+          ><tp-select searchable id="inline" label="Inline fruit" inline></tp-select
+          ><tp-button data-dialog-close variant="outline">Close dialog</tp-button></tp-dialog
+        >
+      </section>
+    </main>
+    <tp-button id="after" variant="outline">After controls</tp-button>
+    <div id="sandbox"></div>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

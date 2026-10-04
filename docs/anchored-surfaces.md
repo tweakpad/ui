@@ -1,6 +1,6 @@
 # Shared anchored surface API
 
-Menu, Context Menu, Popover and Navigation Menu use the same positioning,
+Menu (including context invocation), Popover and Navigation Menu use the same positioning,
 portal, presence and dismissal owners. Their individual references define the
 state, focus, modality and trigger policies; sharing these options does not
 change those policies. Menubar configures these options on its child Menu.
@@ -57,7 +57,7 @@ nearest composed environment, including after adoption.
 
 ## State, focus and methods
 
-For Menu, Context Menu and Popover, `open` is optional controlled Boolean state;
+For Menu and Popover, `open` is optional controlled Boolean state;
 `defaultOpen / default-open` is false for uncontrolled initialization.
 Configure one ownership mode before connection. Do not supply both modes.
 Navigation Menu uses its `value` instead. A Menubar child derives open state from
@@ -99,7 +99,7 @@ Focus options accept an element, `{current: element}`, resolver, `'trigger'`,
 receives `'mouse'`, `'touch'`, `'pen'`, `'keyboard'` or `''` for a programmatic
 change. Returning false/undefined suppresses focus; true/null chooses the
 component default. Final focus uses the closing interaction and does not steal
-focus already moved outside the surface. Context Menu restores its target only
+focus already moved outside the surface. context-invoked Menu restores its target only
 for a keyboard opening that moved focus into content. Navigation remains nonmodal
 and preserves ordinary native-link Tab behavior.
 
@@ -116,7 +116,7 @@ an optional payload-to-Lit-content resolver. Unknown explicit identifiers do not
 silently choose another trigger. A handle operates its most recently attached
 live Root and keeps detached triggers inert while no Root is attached.
 
-Context Menu owns a single context target, and Navigation associates each trigger
+context-invoked Menu owns a single context target, and Navigation associates each trigger
 with its Item. Do not use detached trigger registration or a surface handle for
 those component policies.
 
@@ -129,7 +129,7 @@ that content. Pressing a hover-open interactive surface can pin it open.
 close-on-click=false`, `trackCursorAxis / track-cursor-axis='none'` (horizontal,
 vertical, both) and `provider` (DelayGroup) are shared compatibility controls;
 only use them where the owning component's trigger policy applies. They do not
-turn Context Menu into Tooltip or change Navigation's link semantics.
+turn context-invoked Menu into Tooltip or change Navigation's link semantics.
 
 ## Parts, rendering and theming
 
@@ -164,7 +164,7 @@ removes stale copied token overrides. Observable hooks include `data-open`,
 publishes `--tp-popup-width` and `--tp-popup-height`.
 
 Popover participates in the shared `surface` motion role with enter/exit phases.
-Menu, Context Menu, Menubar and Navigation Menu use the shared presence lifecycle
+Menu (including context invocation), Menubar and Navigation Menu use the shared presence lifecycle
 and sourced presentation transitions; they do not publish additional motion
 roles. `motionPolicy` is inherit/normal/reduce. The bubbling `tp-motion-request` event
 allows a consumer to supply an external driver; see [Motion](motion.md).

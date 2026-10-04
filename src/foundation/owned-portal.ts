@@ -1,7 +1,9 @@
 import { render, nothing } from 'lit';
 import type { CSSResultGroup } from 'lit';
 import { getCompatibleStyle } from '@lit/reactive-element/css-tag.js';
-import { composedParent } from './focus.js';
+import { setLogicalPortalOwner } from './portal-ownership.js';
+import { GeneratedStyleResource } from './generated-style.js';
+export { logicalPortalOwner } from './portal-ownership.js';
 
 export type OwnedPortalContainer =
   | HTMLElement
@@ -14,19 +16,10 @@ export interface OwnedPortalOptions {
   identifier?: string;
 }
 const namedContainers = new WeakMap<HTMLElement, number>();
-const owners = new WeakMap<Node, HTMLElement>();
-/** The logical owner of a physically relocated composed subtree. */
-export function logicalPortalOwner(node: Node | null): HTMLElement | null {
-  for (let current = node; current; current = composedParent(current)) {
-    const owner = owners.get(current);
-    if (owner) return owner;
-  }
-  return null;
-}
-
 /** An owned Lit root preserves actual part bindings when a consumer selects a portal. */
 export class OwnedPortal {
   #host: HTMLElement | null = null;
+  #styleResource: GeneratedStyleResource | undefined;
   #container: HTMLElement | ShadowRoot | null = null;
   #tokens = new Set<string>();
   #projected = new Map<Node, Comment>();
@@ -115,22 +108,17 @@ export class OwnedPortal {
       }
       this.#host = this.owner.ownerDocument.createElement('div');
       this.#host.setAttribute(`data-${this.owner.localName.replace(/^tp-/, '')}-portal`, '');
-      owners.set(this.#host, this.owner);
+      setLogicalPortalOwner(this.#host, this.owner);
       const root = this.#host.attachShadow({ mode: 'open' });
-      const appendStyles = (result: CSSResultGroup): void => {
-        if (Array.isArray(result)) {
-          for (const child of result) appendStyles(child);
-          return;
-        }
-        const style = this.owner.ownerDocument.createElement('style');
+      const cssText = (result: CSSResultGroup): string => {
+        if (Array.isArray(result)) return result.map(cssText).join('\n');
         const compatible = getCompatibleStyle(result);
-        style.textContent =
-          'cssText' in compatible
-            ? compatible.cssText
-            : [...compatible.cssRules].map((rule) => rule.cssText).join('\n');
-        root.append(style);
+        return 'cssText' in compatible
+          ? compatible.cssText
+          : [...compatible.cssRules].map((rule) => rule.cssText).join('\n');
       };
-      appendStyles(this.styles);
+      this.#styleResource = new GeneratedStyleResource(this.owner, root);
+      this.#styleResource.setText(cssText(this.styles));
       target.append(this.#host);
     }
     if (options.projectedNodes) this.#project(options.projectedNodes);
@@ -153,7 +141,9 @@ export class OwnedPortal {
   }
   clear(): void {
     for (const node of [...this.#projected.keys()]) this.#restoreNode(node);
-    if (this.#host) owners.delete(this.#host);
+    if (this.#host) setLogicalPortalOwner(this.#host, null);
+    this.#styleResource?.dispose();
+    this.#styleResource = undefined;
     if (this.root) render(nothing, this.root);
     this.#host?.remove();
     if (this.#namedContainer) {

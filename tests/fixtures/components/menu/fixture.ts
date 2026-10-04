@@ -80,9 +80,9 @@ render(
       <section>
         <h2>Context Menu</h2>
         <tp-button id="context-target" variant="outline">Context target</tp-button>
-        <tp-context-menu id="context" for="context-target" label="Context actions"
+        <tp-menu invocation="context" id="context" for="context-target" label="Context actions"
           ><tp-menu-item>Inspect</tp-menu-item
-          ><tp-menu-checkbox-item>Pin</tp-menu-checkbox-item></tp-context-menu
+          ><tp-menu-checkbox-item>Pin</tp-menu-checkbox-item></tp-menu
         >
       </section>
       <section>

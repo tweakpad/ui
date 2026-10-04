@@ -1,4 +1,4 @@
-/** Compatibility path; Select and Combobox consume one source lifecycle owner. */
+/** Compatibility path; Plain and searchable Select consume one source lifecycle owner. */
 export {
   ChoiceModel as SelectModel,
   nativeChoiceEntries as nativeSelectEntries,

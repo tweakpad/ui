@@ -1,4 +1,4 @@
-import { LocaleService } from '../../foundation/services.js';
+import { numericRange, formatNumericRange } from '../../foundation/numeric-range.js';
 
 export type ProgressStatus = 'indeterminate' | 'progressing' | 'complete';
 export type AccessibleProgressText = (formattedValue: string, rawValue: number | null) => string;
@@ -32,40 +32,17 @@ export interface ProgressStateOptions {
 /** A single immutable semantic/format/geometry publication for all progress parts. */
 export function progressState(options: ProgressStateOptions): ProgressState {
   const { value } = options;
-  const invalidRange =
-    !Number.isFinite(options.minimum) ||
-    !Number.isFinite(options.maximum) ||
-    !Number.isFinite(options.maximum - options.minimum) ||
-    options.minimum >= options.maximum;
-  if (invalidRange)
-    options.diagnostic?.('range', 'Progress minimum must be finite and less than maximum.');
-  const minimum = invalidRange ? 0 : options.minimum;
-  const maximum = invalidRange ? 100 : options.maximum;
+  const range = numericRange(value ?? Number.NaN, options);
+  const { minimum, maximum, invalidRange } = range;
   const indeterminate = value === null || !Number.isFinite(value);
-  const clampedValue = indeterminate
-    ? null
-    : invalidRange
-      ? minimum
-      : Math.max(minimum, Math.min(maximum, value));
-  const percentage =
-    clampedValue === null ? null : ((clampedValue - minimum) / (maximum - minimum)) * 100;
+  const clampedValue = indeterminate ? null : range.clampedValue;
+  const percentage = indeterminate ? null : range.percentage;
   const status: ProgressStatus = indeterminate
     ? 'indeterminate'
     : clampedValue === maximum
       ? 'complete'
       : 'progressing';
-  let formattedValue = '';
-  if (clampedValue !== null && percentage !== null) {
-    try {
-      formattedValue = new LocaleService(options.locale).number(
-        options.format ? clampedValue : percentage / 100,
-        options.format ?? { style: 'percent' },
-      );
-    } catch {
-      options.diagnostic?.('format', 'Progress locale or number format is invalid; using percent.');
-      formattedValue = new LocaleService().number(percentage / 100, { style: 'percent' });
-    }
-  }
+  const formattedValue = indeterminate ? '' : formatNumericRange(range, options);
   const accessibleValueText =
     options.valueText ??
     options.getAccessibleValueText?.(formattedValue, value) ??

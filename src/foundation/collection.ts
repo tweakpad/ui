@@ -4,6 +4,10 @@ export interface CollectionItem {
   element: HTMLElement;
   disabled?: boolean;
   value?: string;
+  /** Explicit composite policy, including focusable disabled entries. */
+  eligible?: () => boolean;
+  /** Flattened-tree order for composites spanning multiple shadow roots. */
+  order?: () => number;
 }
 
 export class CollectionRegistry {
@@ -24,7 +28,9 @@ export class CollectionRegistry {
   }
 
   enabled(): CollectionItem[] {
-    return this.items.filter((item) => !item.disabled && !item.element.hasAttribute('disabled'));
+    return this.items.filter(
+      (item) => item.eligible?.() ?? (!item.disabled && !item.element.hasAttribute('disabled')),
+    );
   }
 
   move(
@@ -79,6 +85,7 @@ export class CollectionRegistry {
   #sort(): void {
     this.#items.sort((a, b) => {
       if (a.element === b.element) return 0;
+      if (a.order && b.order) return a.order() - b.order();
       return a.element.compareDocumentPosition(b.element) & Node.DOCUMENT_POSITION_FOLLOWING
         ? -1
         : 1;

@@ -15,7 +15,7 @@ export const dialogStyles = css`
     border: 0;
     inline-size: 100%;
     block-size: 100%;
-    pointer-events: none;
+    pointer-events: auto;
   }
 
   .overlay::backdrop,
@@ -37,10 +37,15 @@ export const dialogStyles = css`
     overscroll-behavior: contain;
   }
 
+  .content:has(.header[hidden]):has(.body[hidden]):has(.footer[hidden]) {
+    min-block-size: calc(var(--tp-control-height-sm) + var(--tp-space-4));
+  }
+
   .content[open] {
     display: grid;
   }
 
+  .overlay[data-closed],
   .content[aria-hidden='true'] {
     pointer-events: none;
   }
@@ -53,6 +58,14 @@ export const dialogStyles = css`
 
   .body {
     padding-block-start: 0;
+  }
+
+  .content[data-header-hidden] .body {
+    padding-block-start: var(--tp-space-5);
+  }
+
+  .content[data-header-hidden]:has(.corner-close) .body {
+    padding-block-start: calc(var(--tp-control-height-sm) + var(--tp-space-4));
   }
 
   .header {

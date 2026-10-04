@@ -1,5 +1,10 @@
 /** Component-owned associations between existing hosts and their published part slots. */
 export const partBindings: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  'tp-form': {
+    form: 'form',
+    'form > [slot="actions"]': 'form-actions',
+    'form > [slot="error-summary"]': 'form-error-summary',
+  },
   'tp-checkbox': {
     '.root': 'checkbox',
     '.indicator': 'checkbox-indicator',
@@ -16,13 +21,6 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
   'tp-alert': {
     '.alert': 'alert',
     '.title': 'alert-title',
-  },
-  'tp-attachment': {
-    '.attachment': 'attachment-root',
-    '.meta': 'attachment-content',
-    '.name': 'attachment-title',
-    '.size': 'attachment-description',
-    '[part="remove focusable"]': 'attachment-action',
   },
   'tp-badge': {
     '.badge': 'badge',
@@ -120,37 +118,24 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
     '[part~="progress-track"]': 'progress-track',
     '[part~="progress-indicator"]': 'progress-indicator',
   },
-  'tp-resizable-panel-group': {
-    '.handle': 'resizable-panel-group-separator',
-  },
-  'tp-scroll-area': {
-    '.viewport': 'scroll-area-viewport',
-  },
   'tp-toast': {
     '.toast': 'toast-toast',
     '.content': 'toast-content',
     '[part="close focusable"]': 'toast-close',
   },
-  'tp-breadcrumb': {
-    '.list': 'breadcrumb-ordered-list',
-  },
-  'tp-pagination': {
-    '.root': 'pagination',
-    '[part="previous focusable"]': 'pagination-previous',
-    '[part="next focusable"]': 'pagination-next',
-    '[part="page focusable"]': 'pagination-page-link',
-  },
   'tp-navigation-panel': {
     '.panel': 'navigation-panel',
   },
-  'tp-combobox': {
-    '.root': 'combobox',
-    '.editor': 'combobox-input',
-    '.listbox': 'combobox-content',
-    '.option': 'combobox-option',
-    '[part="empty"]': 'combobox-empty-state',
-  },
   'tp-select': {
+    '[part~="select-anchor"]': 'select-anchor',
+    '[part~="select-input"]': 'select-input',
+    '[part~="select-clear"]': 'select-clear',
+    '[part~="select-chip-list"]': 'select-chip-list',
+    '[part~="select-chip"]': 'select-chip',
+    '[part~="select-chip-remove"]': 'select-chip-remove',
+    '[part~="select-collection"]': 'select-collection',
+    '[part~="select-empty-state"]': 'select-empty-state',
+    '[part~="select-row"]': 'select-row',
     '[part~="select"]': 'select',
     '[part~="select-trigger"]': 'select-trigger',
     '[part~="select-value"]': 'select-value',
@@ -164,12 +149,15 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
     '[part~="select-scroll-down-button"]': 'select-scroll-down-button',
   },
   'tp-command-palette': {
-    '.root': 'command-palette',
-    '.control': 'command-palette-input-wrapper',
-    '.editor': 'command-palette-input',
-    '.listbox': 'command-palette-list',
-    '.option': 'command-palette-item',
-    '[part="empty"]': 'command-palette-empty-state',
+    '[part~="command-palette"]': 'command-palette',
+    '[part~="command-palette-input-wrapper"]': 'command-palette-input-wrapper',
+    '[part~="command-palette-input"]': 'command-palette-input',
+    '[part~="command-palette-list"]': 'command-palette-list',
+    '[part~="command-palette-group"]': 'command-palette-group',
+    '[part~="command-palette-item"]': 'command-palette-item',
+    '[part~="command-palette-empty-state"]': 'command-palette-empty-state',
+    '[part~="command-palette-separator"]': 'command-palette-separator',
+    '[part~="command-palette-shortcut-hint"]': 'command-palette-shortcut-hint',
   },
   'tp-carousel': {
     '[part="previous focusable"]': 'carousel-previous',
@@ -182,6 +170,10 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
     ':host': 'avatar',
     img: 'avatar-image',
     "[part~='fallback']": 'avatar-fallback',
+  },
+  'tp-avatar-group': {
+    '.group': 'avatar-group',
+    '.count': 'avatar-overflow-count',
   },
   'tp-spinner': {
     ':host': 'spinner',
@@ -202,7 +194,7 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
   },
   'tp-otp-field': {
     '.root': 'one-time-code-field',
-    "[part='group']": 'one-time-code-field-group',
+    '.group': 'one-time-code-field-group',
     '.slot': 'one-time-code-field-slot',
   },
 };

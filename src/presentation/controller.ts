@@ -1,3 +1,4 @@
+import { GeneratedStyleResource } from '../foundation/generated-style.js';
 import type { ReactiveController, ReactiveControllerHost, RenderOptions } from 'lit';
 import { componentDefinitions } from './components.js';
 import { partBindings } from './bindings.js';
@@ -21,10 +22,6 @@ const compositions = new WeakMap<HTMLElement, Map<object, PartPresentation>>();
 let registrationId = 0;
 const isDocument = (node: Node): node is Document => node.nodeType === 9;
 const isShadowRoot = (node: Node): node is ShadowRoot => node.nodeType === 11 && 'host' in node;
-const createSheet = (ownerDocument: Document): CSSStyleSheet | undefined => {
-  const Sheet = ownerDocument.defaultView?.CSSStyleSheet;
-  return Sheet ? new Sheet() : undefined;
-};
 
 /** A compound's contribution precedes the member's terminal consumer overrides. */
 export function setPartComposition(
@@ -51,17 +48,14 @@ export function setPresentationDictionary(
 export class PresentationController implements ReactiveController {
   readonly #id = `tp-presentation-${++registrationId}`;
   #registered = new Map<string, Set<HTMLElement>>();
-  #registeredStyles = new Map<Document | ShadowRoot, HTMLStyleElement>();
-  #registeredSheets = new Map<ShadowRoot, CSSStyleSheet>();
-  #style: HTMLStyleElement | undefined;
-  #sheet: CSSStyleSheet | undefined;
-  #structuralSheets: CSSStyleSheet[] = [];
-  #structuralStyles: HTMLStyleElement[] = [];
-  #sheetDocuments = new WeakMap<CSSStyleSheet, Document>();
+  #registeredResources = new Map<Document | ShadowRoot, GeneratedStyleResource>();
+  #recipeResource?: GeneratedStyleResource;
+  #structuralResource?: GeneratedStyleResource;
   #document?: Document;
   #lastMissing = '';
   #refreshQueued = false;
   #hostParts = new Map<string, () => void>();
+  #lightParts = new Map<HTMLElement, Map<string, () => void>>();
   #scheduleRefresh(): void {
     if (this.#refreshQueued) return;
     this.#refreshQueued = true;
@@ -82,48 +76,26 @@ export class PresentationController implements ReactiveController {
     const options = (this.host.constructor as { shadowRootOptions?: ShadowRootInit })
       .shadowRootOptions;
     const root = this.host.shadowRoot ?? this.host.attachShadow(options ?? { mode: 'open' });
-    this.#installStructuralStyles(root);
-    // Match LitElement: template styles precede shimmed structural style nodes.
-    this.host.renderOptions.renderBefore ??= root.firstChild;
-    return root;
-  }
-  #installStructuralStyles(root: ShadowRoot): void {
-    const styles =
-      (
-        this.host.constructor as {
-          elementStyles?: ReadonlyArray<{ cssText?: string; cssRules?: CSSRuleList }>;
-        }
-      ).elementStyles ?? [];
-    if ('adoptedStyleSheets' in root) {
-      root.adoptedStyleSheets = root.adoptedStyleSheets.filter(
-        (sheet) => !this.#structuralSheets.includes(sheet),
+    if (!this.#structuralResource) {
+      this.#structuralResource = new GeneratedStyleResource(this.host, root);
+      const styles =
+        (
+          this.host.constructor as {
+            elementStyles?: ReadonlyArray<{ cssText?: string; cssRules?: CSSRuleList }>;
+          }
+        ).elementStyles ?? [];
+      this.#structuralResource.setText(
+        styles
+          .map(
+            (result) =>
+              result.cssText ?? [...(result.cssRules ?? [])].map((rule) => rule.cssText).join('\n'),
+          )
+          .join('\n'),
       );
     }
-    this.#structuralSheets = [];
-    for (const [index, result] of styles.entries()) {
-      const css =
-        result.cssText ?? [...(result.cssRules ?? [])].map((rule) => rule.cssText).join('\n');
-      const sheet = 'adoptedStyleSheets' in root ? createSheet(this.host.ownerDocument) : undefined;
-      if (sheet) {
-        sheet.replaceSync(css);
-        this.#structuralSheets.push(sheet);
-        if (this.#structuralStyles[index]) this.#structuralStyles[index]!.textContent = '';
-      } else {
-        // Keep fallback nodes across adoption: Lit's render boundary may refer
-        // to the first one, and an HTML style node adopts with its shadow root.
-        const style =
-          this.#structuralStyles[index] ?? this.host.ownerDocument.createElement('style');
-        style.textContent = css;
-        const nonce = (
-          this.host.ownerDocument.defaultView as (Window & { litNonce?: string }) | null
-        )?.litNonce;
-        if (nonce !== undefined) style.setAttribute('nonce', nonce);
-        if (style.parentNode !== root) root.append(style);
-        this.#structuralStyles[index] = style;
-      }
-    }
-    if ('adoptedStyleSheets' in root)
-      root.adoptedStyleSheets = [...root.adoptedStyleSheets, ...this.#structuralSheets];
+    // This boundary survives nonce changes, suppression, and document adoption.
+    this.host.renderOptions.renderBefore ??= this.#structuralResource.boundary;
+    return root;
   }
   /** Register consumer-owned native parts without wrapping or replacing them. */
   registerPart(name: string, element: HTMLElement): () => void {
@@ -149,22 +121,9 @@ export class PresentationController implements ReactiveController {
     };
   }
   hostConnected(): void {
-    if (this.#document && this.#document !== this.host.ownerDocument) {
-      const root = this.host.renderRoot;
-      if (root && isShadowRoot(root)) {
-        if ('adoptedStyleSheets' in root)
-          root.adoptedStyleSheets = root.adoptedStyleSheets.filter(
-            (sheet) => sheet !== this.#sheet,
-          );
-        // Chrome clears constructed sheets on adoption. Restore only this
-        // controller's finalized Lit styles; consumer sheets remain untouched.
-        this.#installStructuralStyles(root);
-      }
-      this.#sheet = undefined;
-      this.#style?.remove();
-      this.#style = undefined;
-      this.host.requestUpdate();
-    }
+    if (this.#document && this.#document !== this.host.ownerDocument) this.host.requestUpdate();
+    this.#structuralResource?.connect();
+    this.#recipeResource?.connect();
     this.#document = this.host.ownerDocument;
     let listeners = subscribers.get(this.#document);
     if (!listeners) subscribers.set(this.#document, (listeners = new Set()));
@@ -174,11 +133,12 @@ export class PresentationController implements ReactiveController {
   }
   hostDisconnected(): void {
     if (this.#document) subscribers.get(this.#document)?.delete(this);
-    for (const style of this.#registeredStyles.values()) style.remove();
-    this.#registeredStyles.clear();
-    for (const [root, sheet] of this.#registeredSheets)
-      root.adoptedStyleSheets = root.adoptedStyleSheets.filter((entry) => entry !== sheet);
-    this.#registeredSheets.clear();
+    this.#structuralResource?.disconnect();
+    this.#recipeResource?.disconnect();
+    for (const resource of this.#registeredResources.values()) resource.dispose();
+    this.#registeredResources.clear();
+    for (const parts of this.#lightParts.values()) for (const cleanup of parts.values()) cleanup();
+    this.#lightParts.clear();
     this.#restoreHooks();
   }
   hostUpdated(): void {
@@ -199,16 +159,46 @@ export class PresentationController implements ReactiveController {
           : this.host.localName);
     const definition = componentDefinitions.find((item) => item.tagName === definitionTag);
     if (!definition || !this.host.renderRoot) return;
+    const lightParts = new Map<HTMLElement, Map<string, boolean>>();
     for (const [selector, part] of Object.entries(
-      partBindings[inheritedTag ?? this.host.localName] ?? {},
+      partBindings[this.host.localName] ?? partBindings[inheritedTag ?? this.host.localName] ?? {},
     )) {
       if (selector === ':host') {
         this.host.part.add(part);
         if (!this.#hostParts.has(part))
           this.#hostParts.set(part, this.registerPart(part, this.host));
       } else
-        for (const element of this.host.renderRoot.querySelectorAll<HTMLElement>(selector))
+        for (const element of this.host.renderRoot.querySelectorAll<HTMLElement>(selector)) {
+          const authoredPart = element.part.contains(part);
           element.part.add(part);
+          if (!isShadowRoot(this.host.renderRoot)) {
+            const names = lightParts.get(element) ?? new Map<string, boolean>();
+            names.set(part, authoredPart);
+            lightParts.set(element, names);
+          }
+        }
+    }
+    // Light-DOM parts need the same scoped, policy-aware resource transport as
+    // explicitly registered native parts; bare part names are not CSS scopes.
+    for (const [element, parts] of this.#lightParts) {
+      for (const [name, cleanup] of parts)
+        if (!lightParts.get(element)?.has(name)) {
+          cleanup();
+          parts.delete(name);
+        }
+      if (!parts.size) this.#lightParts.delete(element);
+    }
+    for (const [element, names] of lightParts) {
+      const parts = this.#lightParts.get(element) ?? new Map<string, () => void>();
+      for (const [name, authoredPart] of names)
+        if (!parts.has(name)) {
+          const unregister = this.registerPart(name, element);
+          parts.set(name, () => {
+            unregister();
+            if (!authoredPart) element.part.remove(name);
+          });
+        }
+      this.#lightParts.set(element, parts);
     }
     const dictionary = dictionaries.get(this.host.ownerDocument) ?? defaultPresentationDictionary;
     const axes = Object.fromEntries(
@@ -245,7 +235,6 @@ export class PresentationController implements ReactiveController {
         [...rules, ...(registeredPartStructure[part] ?? [])],
       ]),
     );
-    this.#style ??= this.host.ownerDocument.createElement('style');
     const css = Object.entries(mergedParts)
       .flatMap(([part, rules]) =>
         rules.map((rule) => {
@@ -257,24 +246,9 @@ export class PresentationController implements ReactiveController {
         }),
       )
       .join('\n');
-    if (
-      isShadowRoot(this.host.renderRoot) &&
-      'adoptedStyleSheets' in this.host.renderRoot &&
-      (this.#sheet ??= createSheet(this.host.ownerDocument))
-    ) {
-      if (this.#style.textContent !== css) {
-        this.#sheet.replaceSync(css);
-        this.#style.textContent = css;
-      }
-      if (!this.host.renderRoot.adoptedStyleSheets.includes(this.#sheet))
-        this.host.renderRoot.adoptedStyleSheets = [
-          ...this.host.renderRoot.adoptedStyleSheets,
-          this.#sheet,
-        ];
-    } else {
-      if (this.#style.textContent !== css) this.#style.textContent = css;
-      if (this.#style.parentNode !== this.host.renderRoot)
-        this.host.renderRoot.appendChild(this.#style);
+    if (isShadowRoot(this.host.renderRoot)) {
+      this.#recipeResource ??= new GeneratedStyleResource(this.host, this.host.renderRoot);
+      this.#recipeResource.setText(css);
     }
     const missing = resolved.missingKeys.join(',');
     if (this.host.isConnected) {
@@ -305,50 +279,21 @@ export class PresentationController implements ReactiveController {
           }
         }
       }
-      for (const [root, style] of this.#registeredStyles)
+      for (const [root, resource] of this.#registeredResources)
         if (!roots.has(root)) {
-          style.remove();
-          this.#registeredStyles.delete(root);
-          if (isShadowRoot(root)) {
-            const sheet = this.#registeredSheets.get(root);
-            root.adoptedStyleSheets = root.adoptedStyleSheets.filter((entry) => entry !== sheet);
-            this.#registeredSheets.delete(root);
-          }
+          resource.dispose();
+          this.#registeredResources.delete(root);
         }
       for (const [root, rules] of roots) {
-        let style = this.#registeredStyles.get(root);
-        if (!style) {
-          style = (isDocument(root) ? root : root.ownerDocument).createElement('style');
-          this.#registeredStyles.set(root, style);
+        let resource = this.#registeredResources.get(root);
+        if (!resource) {
+          resource = new GeneratedStyleResource(this.host, root);
+          this.#registeredResources.set(root, resource);
         }
-        const nativeCss = rules.join('\n');
-        if (isShadowRoot(root) && 'adoptedStyleSheets' in root) {
-          let sheet = this.#registeredSheets.get(root);
-          if (sheet && this.#sheetDocuments.get(sheet) !== root.ownerDocument) {
-            root.adoptedStyleSheets = root.adoptedStyleSheets.filter((entry) => entry !== sheet);
-            this.#registeredSheets.delete(root);
-            sheet = undefined;
-          }
-          if (!sheet) {
-            sheet = createSheet(root.ownerDocument);
-            if (sheet) {
-              this.#registeredSheets.set(root, sheet);
-              this.#sheetDocuments.set(sheet, root.ownerDocument);
-              sheet.replaceSync(nativeCss);
-              root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
-            }
-          }
-          if (sheet) {
-            if (style.textContent !== nativeCss) sheet.replaceSync(nativeCss);
-            style.textContent = nativeCss;
-            continue;
-          }
-        }
-        if (style.textContent !== nativeCss) style.textContent = nativeCss;
-        const parent = isDocument(root) ? root.head : root;
-        if (style.parentNode !== parent) parent.appendChild(style);
+        resource.setText(rules.join('\n'));
       }
     }
+
     if (missing && missing !== this.#lastMissing)
       this.host.dispatchEvent(
         new CustomEvent('tp-presentation-diagnostic', {

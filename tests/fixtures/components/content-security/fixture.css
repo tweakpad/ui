@@ -1,0 +1,25 @@
+body {
+  margin: var(--tp-space-6);
+  color: var(--tp-foreground);
+  background: var(--tp-background);
+  font-family: var(--tp-font-sans);
+}
+main,
+form,
+section {
+  display: grid;
+  gap: var(--tp-space-4);
+  justify-items: start;
+}
+tp-input,
+tp-select {
+  inline-size: calc(var(--tp-spacing) * 80);
+}
+tp-resizable-panel-group,
+tp-navigation-panel {
+  inline-size: calc(var(--tp-spacing) * 140);
+  block-size: calc(var(--tp-spacing) * 50);
+}
+tp-resizable-panel {
+  padding: var(--tp-space-4);
+}

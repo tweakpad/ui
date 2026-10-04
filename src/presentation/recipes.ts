@@ -1,3 +1,11 @@
+import { dataVisualizationAppearance } from './recipes/data-visualization.js';
+import { questionnaireAppearance } from './recipes/questionnaire.js';
+import { drawerAppearance } from './recipes/drawer.js';
+import { sidePanelAppearance } from './recipes/side-panel.js';
+import { resizablePanelGroupAppearance } from './recipes/resizable-panel-group.js';
+import { scrollAreaAppearance } from './recipes/scroll-area.js';
+import { tableAppearance } from './recipes/table.js';
+import { attachmentAppearance } from './recipes/attachment.js';
 import { menuFamilyAppearance } from './recipes/menu-family.js';
 import { popoverAppearance } from './recipes/popover.js';
 import { navigationMenuAppearance } from './recipes/navigation-menu.js';
@@ -9,12 +17,23 @@ import { nativeSelectAppearance } from './recipes/native-select.js';
 import { sliderAppearance } from './recipes/slider.js';
 import { selectAppearance } from './recipes/select.js';
 import { switchAppearance } from './recipes/switch.js';
-import { comboboxAppearance } from './recipes/combobox.js';
-import { textControlAppearance, fieldAppearance } from './recipes/text-controls.js';
+import { commandPaletteAppearance } from './recipes/command-palette.js';
+import {
+  textControlAppearance,
+  inputGroupAppearance,
+  oneTimeCodeAppearance,
+  fieldAppearance,
+} from './recipes/text-controls.js';
 import { selectionControlAppearance } from './recipes/selection-controls.js';
 
 // Existing appearance values moved without changing layout, behavior, or token choices.
 export const componentAppearance: PresentationDictionary = {
+  ...dataVisualizationAppearance,
+  form: fieldAppearance['field-field-group']!,
+  'form-actions': [{ declarations: { gap: 'var(--tp-space-2)' } }],
+  'form-error-summary': [
+    { declarations: { color: 'var(--tp-destructive)', 'font-size': 'var(--tp-text-sm)' } },
+  ],
   checkbox: [
     {
       selector: '&',
@@ -319,37 +338,6 @@ export const componentAppearance: PresentationDictionary = {
     { selector: '&', declarations: { 'padding-block-start': 'calc(var(--tp-space-1) / 2)' } },
   ],
   'alert-action': [{ selector: '&', declarations: { gap: 'var(--tp-space-2)' } }],
-  'attachment-root': [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-3)',
-      },
-    },
-    {
-      selector: ":host([size='xs']) &",
-      declarations: {
-        padding: 'var(--tp-space-1) var(--tp-space-2)',
-        gap: 'var(--tp-space-1)',
-      },
-    },
-    {
-      selector: ":host([size='sm']) &",
-      declarations: {
-        padding: 'var(--tp-space-2) var(--tp-space-3)',
-        gap: 'var(--tp-space-2)',
-      },
-    },
-  ],
-  'attachment-description': [
-    {
-      selector: '&',
-      declarations: {
-        color: 'var(--tp-muted-foreground)',
-        'font-size': 'var(--tp-text-sm)',
-      },
-    },
-  ],
   badge: [
     {
       selector: '&',
@@ -363,24 +351,75 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
   ],
-  'bubble-root': [
+  bubble: [{ selector: '&', declarations: { gap: 'var(--tp-space-2)' } }],
+  'bubble-root': [{ selector: '&', declarations: { gap: 'var(--tp-space-1)' } }],
+  'bubble-content': [
     {
       selector: '&',
       declarations: {
-        'border-radius': 'var(--tp-radius-md)',
-        padding: 'var(--tp-space-3)',
+        'border-radius': 'var(--tp-radius-lg)',
+        padding: 'var(--tp-space-2) var(--tp-space-3)',
         border: 'var(--tp-border-width) var(--tp-border-style) transparent',
+        'font-size': 'var(--tp-text-sm)',
+        'line-height': 'var(--tp-leading-relaxed)',
+        'font-family': 'inherit',
+        'text-align': 'start',
+        'text-decoration': 'none',
+      },
+    },
+    {
+      selector: '&:is(button,a)',
+      declarations: { cursor: 'pointer' },
+    },
+    {
+      selector: ':host([variant="ghost"]) &',
+      declarations: { padding: '0', 'border-radius': '0', border: '0' },
+    },
+    {
+      selector: '&:is(button,a):focus-visible',
+      declarations: {
+        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
+        'outline-offset': 'var(--tp-ring-offset)',
       },
     },
   ],
+  'bubble-reactions': [
+    {
+      selector: '&',
+      declarations: {
+        gap: 'var(--tp-space-1)',
+        padding: 'calc(var(--tp-spacing) * 0.5) calc(var(--tp-spacing) * 1.5)',
+        'border-radius': 'var(--tp-radius-full)',
+        background: 'var(--tp-muted)',
+        'box-shadow': '0 0 0 var(--tp-border-width-strong) var(--tp-background)',
+        'font-size': 'var(--tp-text-sm)',
+      },
+    },
+    { selector: '&[data-controls]', declarations: { padding: '0' } },
+  ],
   'button-group': [
     {
-      selector: ':host(:not([joined])) &',
+      selector: ':host(:not([joined])) &, &[data-nested]',
       declarations: {
         gap: 'var(--tp-space-2)',
       },
     },
   ],
+  'button-group-text-segment': [
+    {
+      declarations: {
+        gap: 'var(--tp-space-2)',
+        padding: '0 calc(var(--tp-spacing) * 2.5)',
+        background: 'var(--tp-muted)',
+        color: 'var(--tp-foreground)',
+        border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-input)',
+        'border-radius': 'var(--tp-radius-lg)',
+        'font-size': 'var(--tp-text-sm)',
+        'font-weight': 'var(--tp-font-medium)',
+      },
+    },
+  ],
+  'button-group-separator': [{ declarations: { background: 'var(--tp-input)' } }],
   'card-header': [
     {
       selector: '&',
@@ -409,8 +448,34 @@ export const componentAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        gap: 'var(--tp-space-3)',
-        padding: 'var(--tp-space-8)',
+        gap: 'var(--tp-space-4)',
+        padding: 'var(--tp-space-6)',
+        'border-radius': 'var(--tp-radius-lg)',
+      },
+    },
+  ],
+  'empty-state-header': [{ selector: '&', declarations: { gap: 'var(--tp-space-2)' } }],
+  'empty-state-media': [
+    { selector: '&', declarations: { 'margin-block-end': 'var(--tp-space-2)' } },
+    {
+      selector: ':host([media-treatment="icon"]) &',
+      declarations: {
+        background: 'var(--tp-muted)',
+        color: 'var(--tp-foreground)',
+        'inline-size': 'var(--tp-space-8)',
+        'block-size': 'var(--tp-space-8)',
+        'border-radius': 'var(--tp-radius-md)',
+      },
+    },
+  ],
+  'empty-state-title': [
+    {
+      selector: '&',
+      declarations: {
+        margin: '0',
+        'font-size': 'var(--tp-text-sm)',
+        'font-weight': 'var(--tp-font-medium)',
+        'letter-spacing': 'var(--tp-tracking-tight)',
       },
     },
   ],
@@ -419,8 +484,14 @@ export const componentAppearance: PresentationDictionary = {
       selector: '&',
       declarations: {
         color: 'var(--tp-muted-foreground)',
+        margin: '0',
+        'font-size': 'var(--tp-text-sm)',
+        'line-height': 'var(--tp-leading-relaxed)',
       },
     },
+  ],
+  'empty-state-content': [
+    { selector: '&', declarations: { gap: 'var(--tp-space-2)', 'font-size': 'var(--tp-text-sm)' } },
   ],
   'key-hint': [
     {
@@ -532,49 +603,6 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
   ],
-  'input-group': [
-    {
-      selector: '&',
-      declarations: {
-        border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-input)',
-        'border-radius': 'var(--tp-radius-lg)',
-        'min-block-size': 'var(--tp-control-height-sm)',
-        background:
-          'light-dark(transparent, color-mix(in oklab, var(--tp-input) 30%, transparent))',
-      },
-    },
-    {
-      selector: '&:focus-within',
-      declarations: {
-        'border-color': 'var(--tp-ring)',
-        'box-shadow':
-          '0 0 0 var(--tp-ring-width) color-mix(in oklab, var(--tp-ring) 50%, transparent)',
-      },
-    },
-    {
-      selector: ':host([invalid]) &',
-      declarations: {
-        'border-color': 'var(--tp-destructive)',
-        'outline-color': 'var(--tp-destructive)',
-      },
-    },
-    {
-      selector: ':host(:has([invalid])) &',
-      declarations: {
-        'border-color': 'var(--tp-destructive)',
-        'outline-color': 'var(--tp-destructive)',
-      },
-    },
-  ],
-  'input-group-addon': [
-    {
-      selector: '&',
-      declarations: {
-        'padding-inline': 'var(--tp-space-3)',
-        background: 'var(--tp-card)',
-      },
-    },
-  ],
   calendar: [
     {
       selector: '&',
@@ -644,115 +672,7 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
   ],
-  questionnaire: [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-4)',
-      },
-    },
-  ],
-  'questionnaire-progress': [
-    {
-      selector: '&',
-      declarations: {
-        color: 'var(--tp-muted-foreground)',
-        'font-size': 'var(--tp-text-sm)',
-      },
-    },
-  ],
-  'questionnaire-question': [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-3)',
-        padding: '0',
-        border: '0',
-      },
-    },
-  ],
-  'questionnaire-title': [
-    {
-      selector: '&',
-      declarations: {
-        padding: '0',
-        'font-weight': 'var(--tp-font-semibold)',
-      },
-    },
-  ],
-  'questionnaire-description': [
-    {
-      selector: '&',
-      declarations: {
-        color: 'var(--tp-muted-foreground)',
-      },
-    },
-  ],
-  'questionnaire-choices': [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-2)',
-      },
-    },
-  ],
-  'questionnaire-choice': [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-2)',
-        padding: 'var(--tp-space-2) var(--tp-space-3)',
-        border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-        'border-radius': 'var(--tp-radius-sm)',
-      },
-    },
-    {
-      selector: '&:has(input:checked)',
-      declarations: {
-        'border-color': 'var(--tp-accent)',
-      },
-    },
-  ],
-  'questionnaire-error': [
-    {
-      selector: '&',
-      declarations: {
-        color: 'var(--tp-destructive)',
-        'font-size': 'var(--tp-text-sm)',
-      },
-    },
-  ],
-  'questionnaire-actions': [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-2)',
-      },
-    },
-  ],
-  'resizable-panel-group-separator': [
-    {
-      selector: '&',
-      declarations: {
-        background: 'var(--tp-border)',
-      },
-    },
-    {
-      selector: '&:focus-visible',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
-      },
-    },
-  ],
-  'scroll-area-viewport': [
-    {
-      selector: '&',
-      declarations: {
-        'scrollbar-color': 'var(--tp-muted-foreground) transparent',
-      },
-    },
-  ],
+  ...questionnaireAppearance,
   'toast-toast': [
     {
       selector: '&',
@@ -763,17 +683,65 @@ export const componentAppearance: PresentationDictionary = {
   ],
   'breadcrumb-ordered-list': [
     {
-      selector: '&',
       declarations: {
-        gap: 'var(--tp-space-2)',
+        margin: '0',
+        padding: '0',
+        'list-style': 'none',
+        gap: 'calc(var(--tp-spacing) * 1.5)',
+        color: 'var(--tp-muted-foreground)',
+        'font-size': 'var(--tp-text-sm)',
       },
     },
   ],
-  pagination: [
+  'breadcrumb-item': [{ declarations: { gap: 'var(--tp-space-1)' } }],
+  'breadcrumb-link': [
     {
-      selector: '&',
       declarations: {
-        gap: 'var(--tp-space-1)',
+        color: 'inherit',
+        'text-decoration': 'none',
+        transition: 'color var(--tp-duration-fast) var(--tp-easing-standard)',
+      },
+    },
+    { selector: '&:hover', declarations: { color: 'var(--tp-foreground)' } },
+  ],
+  'breadcrumb-current-page': [
+    { declarations: { color: 'var(--tp-foreground)', 'font-weight': 'var(--tp-font-normal)' } },
+  ],
+  'breadcrumb-ellipsis': [
+    {
+      declarations: {
+        'inline-size': 'var(--tp-space-5)',
+        'block-size': 'var(--tp-space-5)',
+        display: 'inline-flex',
+        'align-items': 'center',
+        'justify-content': 'center',
+      },
+    },
+  ],
+  'pagination-list': [
+    {
+      declarations: {
+        margin: '0',
+        padding: '0',
+        'list-style': 'none',
+        gap: 'calc(var(--tp-spacing) / 2)',
+      },
+    },
+  ],
+  'pagination-page-link-variant-icon': [
+    {
+      declarations: {
+        'inline-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
+        'padding-inline': '0',
+        'justify-content': 'center',
+      },
+    },
+  ],
+  'pagination-ellipsis': [
+    {
+      declarations: {
+        'inline-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
+        'block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
       },
     },
   ],
@@ -784,7 +752,7 @@ export const componentAppearance: PresentationDictionary = {
         width: 'var(--tp-control-height-lg)',
         height: 'var(--tp-control-height-lg)',
         'border-radius': 'var(--tp-radius-full)',
-        background: 'var(--tp-card)',
+        background: 'transparent',
       },
     },
     {
@@ -815,7 +783,41 @@ export const componentAppearance: PresentationDictionary = {
       selector: '&',
       declarations: {
         'font-weight': 'var(--tp-font-semibold)',
+        background: 'var(--tp-muted)',
+        color: 'var(--tp-muted-foreground)',
+        'border-radius': 'inherit',
       },
+    },
+  ],
+  'avatar-badge': [
+    {
+      declarations: {
+        'inline-size': 'calc(var(--tp-spacing) * 2.5)',
+        'block-size': 'calc(var(--tp-spacing) * 2.5)',
+        'border-radius': 'var(--tp-radius-full)',
+        background: 'var(--tp-primary)',
+        color: 'var(--tp-primary-foreground)',
+        'box-shadow': '0 0 0 var(--tp-border-width-strong) var(--tp-background)',
+      },
+    },
+    {
+      selector: ':host([size="sm"]) &',
+      declarations: { 'inline-size': 'var(--tp-space-2)', 'block-size': 'var(--tp-space-2)' },
+    },
+    {
+      selector: ':host([size="lg"]) &',
+      declarations: { 'inline-size': 'var(--tp-space-3)', 'block-size': 'var(--tp-space-3)' },
+    },
+    {
+      selector: '& ::slotted(tp-icon)',
+      declarations: {
+        'max-inline-size': 'var(--tp-space-2)',
+        'max-block-size': 'var(--tp-space-2)',
+      },
+    },
+    {
+      selector: ':host([size="sm"]) & ::slotted(tp-icon)',
+      declarations: { visibility: 'hidden' },
     },
   ],
   separator: [
@@ -868,12 +870,12 @@ export const componentAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        'border-radius': 'var(--tp-radius-sm)',
-        background: 'var(--tp-card)',
+        'border-radius': 'inherit',
+        background: 'var(--tp-muted)',
       },
     },
     {
-      selector: '&[animated]::after',
+      selector: '&[animated][data-motion="sweep"]::after',
       declarations: {
         background: 'linear-gradient(90deg, transparent, var(--tp-muted-foreground), transparent)',
       },
@@ -921,34 +923,10 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
   ],
-  'one-time-code-field-group': [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-2)',
-      },
-    },
-  ],
-  'one-time-code-field-slot': [
-    {
-      selector: '&',
-      declarations: {
-        padding: 'var(--tp-space-2)',
-        border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-input)',
-        'border-radius': 'var(--tp-radius-sm)',
-        background: 'var(--tp-background)',
-      },
-    },
-    {
-      selector: '&[data-active]',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
-      },
-    },
-  ],
   ...toastAppearance,
   ...textControlAppearance,
+  ...inputGroupAppearance,
+  ...oneTimeCodeAppearance,
   ...fieldAppearance,
   ...selectionControlAppearance,
   ...progressAppearance,
@@ -956,7 +934,13 @@ export const componentAppearance: PresentationDictionary = {
   ...sliderAppearance,
   ...selectAppearance,
   ...switchAppearance,
-  ...comboboxAppearance,
+  ...commandPaletteAppearance,
+  ...attachmentAppearance,
+  ...tableAppearance,
+  ...scrollAreaAppearance,
+  ...sidePanelAppearance,
+  ...drawerAppearance,
+  ...resizablePanelGroupAppearance,
   ...navigationPanelAppearance,
   ...menuFamilyAppearance,
   ...popoverAppearance,

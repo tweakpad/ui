@@ -1,6 +1,7 @@
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
+import { CompositeControlController } from '../foundation/composite-control.js';
 import { SyntheticPress } from '../foundation/synthetic-press.js';
 import { componentHandlingPrevented, renderPart } from '../foundation/part.js';
 import type { ComponentPartContract } from '../foundation/part.js';
@@ -141,12 +142,27 @@ export class TpButton extends TpElement {
     }
   };
 
+  #composite = new CompositeControlController(
+    this,
+    () => this.#controlElement,
+    () => this.disabled,
+  );
+
+  protected get effectiveDisabled(): boolean {
+    return this.disabled || !!this.#composite.state?.disabled;
+  }
+
+  protected get effectiveFocusableWhenDisabled(): boolean {
+    return this.#composite.state?.focusableWhenDisabled ?? this.focusableWhenDisabled;
+  }
+
   protected buttonPartContract(): ComponentPartContract | undefined {
     return this.partContracts.button;
   }
 
   protected buttonTabIndex(): string | null {
-    return this.disabled && !this.focusableWhenDisabled
+    if (this.#composite.state) return String(this.#composite.state.tabIndex);
+    return this.effectiveDisabled && !this.effectiveFocusableWhenDisabled
       ? '-1'
       : this.href !== null || this.nativeAction
         ? null
@@ -155,8 +171,8 @@ export class TpButton extends TpElement {
 
   protected override render() {
     const state = Object.freeze({
-      disabled: this.disabled,
-      focusableWhenDisabled: this.focusableWhenDisabled,
+      disabled: this.effectiveDisabled,
+      focusableWhenDisabled: this.effectiveFocusableWhenDisabled,
       nativeAction: this.nativeAction,
       variant: this.variant,
       size: this.size,
@@ -224,13 +240,13 @@ export class TpButton extends TpElement {
           : {
               type: this.#type(),
               '.value': this.value,
-              disabled: this.disabled && !this.focusableWhenDisabled,
+              disabled: this.effectiveDisabled && !this.effectiveFocusableWhenDisabled,
             }),
         tabindex: this.buttonTabIndex(),
-        'aria-disabled': this.disabled ? 'true' : null,
+        'aria-disabled': this.effectiveDisabled ? 'true' : null,
         'aria-busy': loadingPosition ? 'true' : null,
         'aria-label': this.ariaLabel || null,
-        'data-disabled': this.disabled,
+        'data-disabled': this.effectiveDisabled,
         '@click': this.#activate,
         '@keydown': this.#keyDown,
         '@keyup': this.#keyUp,
@@ -260,19 +276,19 @@ export class TpButton extends TpElement {
   }
 
   #blockDisabledActivation = (event: MouseEvent): void => {
-    if (!this.disabled) return;
+    if (!this.effectiveDisabled) return;
     event.preventDefault();
     event.stopImmediatePropagation();
   };
 
   #keyDown = (event: KeyboardEvent): void => {
-    if (this.disabled || this.href !== null) return;
+    if (this.effectiveDisabled || this.href !== null) return;
     if (!this.nativeAction || this.#controlElement?.localName !== 'button')
       this.#press.keyDown(event);
   };
 
   #keyUp = (event: KeyboardEvent): void => {
-    if (this.disabled || this.href !== null) {
+    if (this.effectiveDisabled || this.href !== null) {
       this.#press.reset();
       return;
     }
@@ -327,6 +343,7 @@ export class TpButton extends TpElement {
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    this.toggleAttribute('data-disabled', this.effectiveDisabled);
     this.#syncControl();
     this.#checkName();
   }
@@ -364,7 +381,7 @@ export class TpButton extends TpElement {
   };
 
   #activate = (event: MouseEvent): void => {
-    if (this.disabled) {
+    if (this.effectiveDisabled) {
       event.preventDefault();
       event.stopImmediatePropagation();
       return;
@@ -375,7 +392,7 @@ export class TpButton extends TpElement {
     queueMicrotask(() => {
       if (
         !this.isConnected ||
-        this.disabled ||
+        this.effectiveDisabled ||
         event.defaultPrevented ||
         componentHandlingPrevented(event)
       )
