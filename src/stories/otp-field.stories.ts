@@ -35,16 +35,7 @@ const meta = {
     docs: {
       description: { component: documentation },
       source: { code: source },
-      examples: [
-        ...codeExamples,
-        {
-          title: 'Verification form',
-          render: () => VerificationForm.render(),
-          get code() {
-            return VerificationForm.parameters.docs.source.code;
-          },
-        },
-      ],
+      examples: codeExamples,
     },
   },
   args: {
@@ -105,61 +96,3 @@ const meta = {
 export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
-const VerificationForm = {
-  parameters: {
-    docs: {
-      source: {
-        code: `${source.slice(0, source.indexOf('<tp-field'))}
-<tp-form>
-  <tp-field label="Verification code" description="Use the code from your email.">
-    <tp-otp-field length="6" name="code" group-lengths="[3,3]" required auto-submit></tp-otp-field>
-  </tp-field>
-  <div slot="actions">
-    <tp-button type="reset" variant="outline">Reset</tp-button>
-    <tp-button type="submit">Verify</tp-button>
-  </div>
-</tp-form>
-<script type="module">
-  const form = document.querySelector('tp-form');
-  form.addEventListener('tp-submit', event => {
-    event.preventDefault();
-    document.querySelector('output').textContent = 'Submitted code: ' + event.detail.values.code;
-  });
-  form.addEventListener('tp-reset', () => {
-    document.querySelector('output').textContent = '';
-  });
-</script>
-<output aria-live="polite"></output>`,
-      },
-    },
-  },
-  render: () =>
-    html`<tp-form
-        @tp-reset=${(event: Event) => {
-          const output = (event.currentTarget as HTMLElement).parentElement?.querySelector(
-            'output',
-          );
-          if (output) output.textContent = '';
-        }}
-        @tp-submit=${(event: CustomEvent<{ values: Record<string, unknown> }>) => {
-          event.preventDefault();
-          const output = (event.currentTarget as HTMLElement).parentElement?.querySelector(
-            'output',
-          );
-          if (output) output.textContent = 'Submitted code: ' + String(event.detail.values.code);
-        }}
-        ><tp-field label="Verification code" description="Use the code from your email."
-          ><tp-otp-field
-            length="6"
-            name="code"
-            .groupLengths=${[3, 3]}
-            required
-            auto-submit
-          ></tp-otp-field
-        ></tp-field>
-        <div slot="actions">
-          <tp-button type="reset" variant="outline">Reset</tp-button
-          ><tp-button type="submit">Verify</tp-button>
-        </div></tp-form
-      ><output aria-live="polite"></output>`,
-};

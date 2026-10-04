@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { navigationIcons } from '../icons/navigation.js';
+import { breadcrumbExamples } from './breadcrumb.examples.js';
 import documentation from '../../docs/breadcrumb.md?raw';
 interface Args {
   label: string;
@@ -22,7 +22,11 @@ const meta = {
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
-    docs: { description: { component: documentation }, source: { code: source } },
+    docs: {
+      description: { component: documentation },
+      source: { code: source },
+      examples: breadcrumbExamples,
+    },
   },
   args: { label: 'Breadcrumb', separator: '' },
   argTypes: { label: { control: 'text' }, separator: { control: 'text' } },
@@ -34,37 +38,3 @@ const meta = {
 export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
-export const Collapsed: Story = {
-  parameters: {
-    docs: {
-      source: {
-        code: `${imports.replace('</script>', "  import { navigationIcons } from '@tweakpad/ui/icons/navigation';\n  document.querySelector('#ancestors').icon = navigationIcons.more;\n</script>")}
-<tp-breadcrumb>
-  <a href="#home">Home</a>
-  <tp-menu label="Ancestor pages">
-    <tp-button id="ancestors" slot="trigger" variant="ghost" size="icon-sm" aria-label="Show omitted ancestors"></tp-button>
-    <a href="#documentation">Documentation</a>
-    <a href="#themes">Themes</a>
-  </tp-menu>
-  <a href="#components">Components</a>
-  <span>Breadcrumb</span>
-</tp-breadcrumb>`,
-      },
-    },
-  },
-  render: (args) =>
-    html`<tp-breadcrumb .label=${args.label} .separator=${args.separator}>
-      <a href="#home">Home</a>
-      <tp-menu label="Ancestor pages">
-        <tp-button
-          slot="trigger"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Show omitted ancestors"
-          .icon=${navigationIcons.more}
-        ></tp-button>
-        <a href="#documentation">Documentation</a><a href="#themes">Themes</a>
-      </tp-menu>
-      <a href="#components">Components</a><span>Breadcrumb</span>
-    </tp-breadcrumb>`,
-};

@@ -35,7 +35,7 @@ export function skeletonProfile(args: SkeletonArgs = defaults) {
   </div>`;
 }
 export const skeletonSource = `<div aria-busy="true" aria-label="Loading profile" style="display:flex;align-items:center;gap:var(--tp-space-4)">
-  <tp-skeleton style="inline-size:var(--tp-space-10);block-size:var(--tp-space-10);border-radius:var(--tp-radius-full)"></tp-skeleton>
+  <tp-skeleton style="inline-size:var(--tp-space-10);block-size:var(--tp-space-10);border-radius:var(--tp-radius-full);flex:none"></tp-skeleton>
   <div style="display:grid;gap:var(--tp-space-2)">
     <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 38);block-size:var(--tp-space-4)"></tp-skeleton>
     <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 25);block-size:var(--tp-space-4)"></tp-skeleton>
@@ -53,6 +53,19 @@ const row = `<div style="display:flex;gap:var(--tp-space-4)">
   ${line('calc(var(--tp-spacing) * 20)')}
 </div>`;
 export const skeletonExamples = [
+  markupExample(
+    'Media preview',
+    `<div aria-busy="true" style="display:grid;gap:var(--tp-space-3);max-inline-size:calc(var(--tp-spacing) * 64)">
+  <tp-aspect-ratio ratio="2" style="border-radius:var(--tp-radius-xl)">
+    <tp-skeleton style="border-radius:inherit"></tp-skeleton>
+  </tp-aspect-ratio>
+  <div style="display:grid;gap:var(--tp-space-2)">
+    ${line('100%')}
+    ${line('80%')}
+  </div>
+</div>`,
+    'Reserve a two-to-one media region and its captions while content loads.',
+  ),
   markupExample(
     'Card',
     `<tp-card aria-busy="true" style="max-inline-size:calc(var(--tp-spacing) * 80)">

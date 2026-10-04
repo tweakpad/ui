@@ -29,6 +29,4 @@ Public parts are `one-time-code-field`, `one-time-code-field-group`, `one-time-c
 
 Grouping is structural; spacing, borders, focus, invalid paint and radius come from the shared theme and field recipes. Separators use the public Icon. A visible caret indicates the empty active position without requiring animation. Invalid group lengths or a missing predicate set `data-invalid-composition`, emit `tp-composition-diagnostic`, and prevent completion. The form value is never split into one participant per slot.
 
-## Usage examples
-
-The rendered Docs demonstrate simple codes, numeric filtering, separators, alphanumeric codes, disabled and invalid states, four-digit codes, masking, and form submission. Examples compose existing public controls and are not extra catalog variants.
+The rendered Docs demonstrate simple codes, numeric filtering, separators, alphanumeric codes, disabled and invalid states, four-digit codes, masking, controlled value feedback, a login Card, and explicit or automatic form submission. Examples compose existing public controls and are not extra catalog variants. The grouped case demonstrates three pairs of characters. The invalid case uses Field error content. Interactive examples share their live setup with the code explorer, including event cleanup. The login Card’s Resend action reports the application request; an application supplies its own delivery service.

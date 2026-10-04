@@ -102,11 +102,14 @@ export function restoreFocus(target: Element | null): boolean {
 }
 
 /** Reference a semantic target through its public shadow hosts using valid ARIA scopes. */
-export function shadowReferenceTarget(element: Element): Element {
+export function shadowReferenceTarget(
+  element: Element,
+  scope: Node = element.ownerDocument,
+): Element {
   let target = element;
   for (
     let root = target.getRootNode();
-    root.nodeType === 11 && 'host' in root;
+    root !== scope && root.nodeType === 11 && 'host' in root;
     root = target.getRootNode()
   ) {
     const shadow = root as ShadowRoot & { referenceTarget?: string };

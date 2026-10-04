@@ -107,6 +107,8 @@ import type {
   TpKeyHint,
   TpLabel,
   TpListItem,
+  TpListItemGroup,
+  TpListItemSeparator,
   TpMarker,
   TpMessage,
   TpSkeleton,
@@ -173,6 +175,8 @@ declare global {
     'tp-key-hint': TpKeyHint;
     'tp-label': TpLabel;
     'tp-list-item': TpListItem;
+    'tp-list-item-group': TpListItemGroup;
+    'tp-list-item-separator': TpListItemSeparator;
     'tp-marker': TpMarker;
     'tp-menu': TpMenu;
     'tp-menubar': TpMenubar;

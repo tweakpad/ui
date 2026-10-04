@@ -30,6 +30,9 @@ Alternatively use `partPresentation.skeleton.styleHook` with shared radius token
 spacing attributes, interaction events, form value or focus behavior are added.
 Export: `TpSkeleton`. `primitiveMotionRoles.skeletonLoading` remains exported.
 
-Docs include the reference avatar, card, text, form and table loading layouts.
+Docs include the reference avatar, media preview, card, text, form and table loading layouts.
 All use the same Skeleton primitive with ordinary theme-relative layout; no new
-shape or spacing attributes are introduced.
+shape or spacing attributes are introduced. The media preview composes Aspect Ratio
+to reserve its two-to-one region; Card supplies the separate card composition's
+sections. Form and table placeholders are decorative layout, not empty interactive
+controls or fake table data. Each example uses the shared code explorer.

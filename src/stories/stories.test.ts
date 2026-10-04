@@ -17,6 +17,8 @@ describe('Storybook catalog entries', () => {
     'form',
     'avatar',
     'bubble',
+    'marker',
+    'list-item',
     'empty-state',
     'aspect-ratio',
     'menu',

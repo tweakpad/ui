@@ -65,6 +65,14 @@ export class TpPagination extends TpElement {
       tp-icon[slot='icon-start']:dir(rtl) {
         rotate: 0deg;
       }
+
+      /* Both reference registries retain named icon links below the sm breakpoint. */
+      @media (width < 40rem) {
+        tp-button[part~='pagination-previous']::part(button-label),
+        tp-button[part~='pagination-next']::part(button-label) {
+          display: none;
+        }
+      }
     `,
   ];
   page = 1;

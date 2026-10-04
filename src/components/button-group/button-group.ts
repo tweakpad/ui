@@ -50,6 +50,11 @@ export class TpButtonGroup extends TpElement {
         flex: 1;
       }
 
+      ::slotted(tp-pagination),
+      ::slotted(tp-button-group) {
+        flex-shrink: 0;
+      }
+
       ::slotted(tp-separator) {
         flex: none;
         align-self: stretch;
@@ -145,6 +150,12 @@ export class TpButtonGroup extends TpElement {
                 'align-items': 'stretch',
                 'flex-wrap': 'nowrap',
               },
+            },
+            'pagination-page-item': {
+              styleHook: { 'flex-direction': 'column', 'align-items': 'stretch' },
+            },
+            'pagination-page-link': {
+              styleHook: this.orientation === 'vertical' ? { 'inline-size': '100%' } : {},
             },
           });
         }

@@ -406,22 +406,22 @@
           "title": "Basic",
           "symbol": "BreadcrumbBasic",
           "line": 36,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Canonical Default: native ordered trail, ancestor destinations and plain aria-current terminal item; Chrome76 rendered semantics inspected. Shared Canvas/copy source; five examples axe0 and narrow RTL client248/scroll248. See navigation-primitives/implementation-checklist.md, Breadcrumb continuation results (2026-10-04). Source-case evidence only, not whole-component certification."
         },
         {
           "title": "With Dropdown",
           "symbol": "BreadcrumbWithDropdown",
           "line": 58,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Collapsed ancestors: real named Button/Menu, start alignment, explicit close-on-click native destinations; actual Home/Enter navigates to #documentation and closes. Shared Canvas/copy source; five examples axe0 and narrow RTL client248/scroll248. See navigation-primitives/implementation-checklist.md, Breadcrumb continuation results (2026-10-04). Source-case evidence only, not whole-component certification."
         },
         {
           "title": "With Link",
           "symbol": "BreadcrumbWithLink",
           "line": 96,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Consumer-owned links and decorative ellipsis: original anchors/listeners retained, actual Components hash and destination output; decorative Icon hidden from AX. Shared Canvas/copy source; five examples axe0 and narrow RTL client248/scroll248. See navigation-primitives/implementation-checklist.md, Breadcrumb continuation results (2026-10-04). Source-case evidence only, not whole-component certification."
         }
       ]
     },
@@ -432,89 +432,57 @@
           "title": "Variants",
           "symbol": "BubbleVariants",
           "line": 41,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/bubble.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Mapped to shared live/copy Bubble Docs composition; Chrome76 verifies lengths, separate3+2 groups, nine placements, named reaction Buttons with Toast, logical alignment and native action/link/quick replies. Narrow248px, RTL, screenshots and axe0; exact per-case evidence in presentation-primitives/implementation-checklist.md, Bubble and Marker continuation results2026-10-04. Source-case evidence only."
         },
         {
           "title": "Sizes",
           "symbol": "BubbleSizes",
           "line": 97,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/bubble.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Mapped to shared live/copy Bubble Docs composition; Chrome76 verifies lengths, separate3+2 groups, nine placements, named reaction Buttons with Toast, logical alignment and native action/link/quick replies. Narrow248px, RTL, screenshots and axe0; exact per-case evidence in presentation-primitives/implementation-checklist.md, Bubble and Marker continuation results2026-10-04. Source-case evidence only."
         },
         {
           "title": "Grouped",
           "symbol": "BubbleGrouped",
           "line": 125,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/bubble.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Mapped to shared live/copy Bubble Docs composition; Chrome76 verifies lengths, separate3+2 groups, nine placements, named reaction Buttons with Toast, logical alignment and native action/link/quick replies. Narrow248px, RTL, screenshots and axe0; exact per-case evidence in presentation-primitives/implementation-checklist.md, Bubble and Marker continuation results2026-10-04. Source-case evidence only."
         },
         {
           "title": "Collapsible",
           "symbol": "BubbleCollapsible",
           "line": 169,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/bubble.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Public Collapsible root/trigger/body contracts compose actual Bubble and link Button; closed180character preview replaced by four-paragraph full body, Show more/less and chevron derived from disclosure state, ghost body retained. Chrome76 actual click/Enter, same focused semantic Button, labelled region, cancellation/disabled, replacement/reconnect, narrowRTL248px, shared Copy explorer, axe0 and builds. See presentation-primitives/implementation-checklist.md, Collapsible composition results2026-10-04. Source-case evidence only; full library remains active."
         },
         {
           "title": "Reaction Placement",
           "symbol": "BubbleWithReactions",
           "line": 217,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/bubble.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Mapped to shared live/copy Bubble Docs composition; Chrome76 verifies lengths, separate3+2 groups, nine placements, named reaction Buttons with Toast, logical alignment and native action/link/quick replies. Narrow248px, RTL, screenshots and axe0; exact per-case evidence in presentation-primitives/implementation-checklist.md, Bubble and Marker continuation results2026-10-04. Source-case evidence only."
         },
         {
           "title": "Reactions Buttons",
           "symbol": "BubbleReactionsButtons",
           "line": 366,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/bubble.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Mapped to shared live/copy Bubble Docs composition; Chrome76 verifies lengths, separate3+2 groups, nine placements, named reaction Buttons with Toast, logical alignment and native action/link/quick replies. Narrow248px, RTL, screenshots and axe0; exact per-case evidence in presentation-primitives/implementation-checklist.md, Bubble and Marker continuation results2026-10-04. Source-case evidence only."
         },
         {
           "title": "Alignment",
           "symbol": "BubbleAlignment",
           "line": 436,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/bubble.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Mapped to shared live/copy Bubble Docs composition; Chrome76 verifies lengths, separate3+2 groups, nine placements, named reaction Buttons with Toast, logical alignment and native action/link/quick replies. Narrow248px, RTL, screenshots and axe0; exact per-case evidence in presentation-primitives/implementation-checklist.md, Bubble and Marker continuation results2026-10-04. Source-case evidence only."
         },
         {
           "title": "Button & Links",
           "symbol": "BubbleButtonLinks",
           "line": 480,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/bubble.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Mapped to shared live/copy Bubble Docs composition; Chrome76 verifies lengths, separate3+2 groups, nine placements, named reaction Buttons with Toast, logical alignment and native action/link/quick replies. Narrow248px, RTL, screenshots and axe0; exact per-case evidence in presentation-primitives/implementation-checklist.md, Bubble and Marker continuation results2026-10-04. Source-case evidence only."
         }
       ]
     },
@@ -576,7 +544,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -587,7 +555,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -598,7 +566,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -609,7 +577,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -620,7 +588,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -631,7 +599,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -642,7 +610,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -653,7 +621,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -664,7 +632,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -675,7 +643,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -686,7 +654,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -697,7 +665,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Docs Pagination now composes actual Pagination links. Chrome76: real Page3 activation updates page and aria-current without leaving Docs; joined/unjoined, ellipsis-window seams, vertical equal widths and removal/reinsertion restoration verified. Follow-up: selected destination uses existing Button secondary through public rendering contract; narrow nested groups do not shrink/overlap and use existing ScrollArea, actual keyboard focus scrolling and Next activation verified. Wide composition has no overflow; light/dark/RTL and axe0 verified."
           }
         },
         {
@@ -708,7 +676,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Docs Split pagination uses two Pagination instances inside nested Button Groups. Actual Page1 activation synchronizes both and disables Previous. Separate seams, RTL outer corners and root spacing/radius changes verified. Follow-up: selected destination uses existing Button secondary through public rendering contract; narrow nested groups do not shrink/overlap and use existing ScrollArea, actual keyboard focus scrolling and Next activation verified. Wide composition has no overflow; light/dark/RTL and axe0 verified."
           }
         },
         {
@@ -719,7 +687,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -730,7 +698,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Docs Text alignment uses existing Field/ToggleGroup/Toggle. Actual Center click then ArrowRight/Space selects Right and updates paragraph alignment; AX pressed state and example axe pass. No local selection owner."
           }
         },
         {
@@ -741,7 +709,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         },
         {
@@ -752,7 +720,7 @@
           "localEvidence": {
             "implementation": "src/stories/button-group.examples.ts",
             "reviewRecord": "plans/components/button-group/implementation-checklist.md",
-            "verification": "Ten composition sections and shared-owner integration verified. Joined pagination, text alignment and complete source-case reconciliation remain pending."
+            "verification": "Existing composition remains implemented; complete per-source-case reconciliation is still pending. See the implementation checklist for concrete earlier integration evidence."
           }
         }
       ]
@@ -1914,89 +1882,57 @@
           "title": "Simple",
           "symbol": "InputOTPSimple",
           "line": 50,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/one-time-code.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Canonical Default supplies source3/3 grouping; Simple Docs also demonstrates an ungrouped six-character editor. Exactly one named native editor and six visual slots. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         },
         {
           "title": "Digits Only",
           "symbol": "InputOTPPattern",
           "line": 73,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/one-time-code.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Digits only: actual input12a34!567 normalizes to123456, numeric inputmode and six rendered characters. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         },
         {
           "title": "With Separator",
           "symbol": "InputOTPWithSeparator",
           "line": 95,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/one-time-code.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Grouped code: initialized controlled123456, three2/2/2 groups with two decorative Icons; actual deletion and subsequent987654 entry update accepted value/output. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         },
         {
           "title": "Alphanumeric",
           "symbol": "InputOTPAlphanumeric",
           "line": 126,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/one-time-code.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Alphanumeric: actualA1b2\u00e93 accepted with text mode and3/3 groups; Unicode letters follow live library policy. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         },
         {
           "title": "Disabled",
           "symbol": "InputOTPDisabled",
           "line": 154,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/one-time-code.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Disabled: native editor disabled with initial123456 and3/3 groups; no editable slot substitutes. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         },
         {
           "title": "4 Digits",
           "symbol": "InputOTPFourDigits",
           "line": 177,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/one-time-code.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Four digits: actual123456 normalizes to1234, exactly four slots and numeric inputmode. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         },
         {
           "title": "Invalid State",
           "symbol": "InputOTPInvalid",
           "line": 198,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/one-time-code.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Invalid code:000000 in2/2/2 groups, actual Field error content and invalid textbox description; shared invalid styling. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         },
         {
           "title": "Form",
           "symbol": "InputOTPForm",
           "line": 228,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/one-time-code.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Verify your login: real Card/Form/Field/OTP/Button and resend Icon; empty Verify focuses sole editor without submission, valid123456 submits one code. Resend reports request, recovery/support retain links. Existing separate automatic form retains completion submission/reset. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         }
       ]
     },
@@ -2007,169 +1943,169 @@
           "title": "Default",
           "symbol": "DefaultVariantItems",
           "line": 55,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
         },
         {
           "title": "Outline",
           "symbol": "OutlineVariantItems",
           "line": 177,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "Muted",
           "symbol": "MutedVariantItems",
           "line": 299,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "Small",
           "symbol": "DefaultVariantItemsSmall",
           "line": 421,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "Outline - Small",
           "symbol": "OutlineVariantItemsSmall",
           "line": 547,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "Muted - Small",
           "symbol": "MutedVariantItemsSmall",
           "line": 673,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "Extra Small",
           "symbol": "DefaultVariantItemsExtraSmall",
           "line": 799,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "Outline - Extra Small",
           "symbol": "OutlineVariantItemsExtraSmall",
           "line": 925,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "Muted - Extra Small",
           "symbol": "MutedVariantItemsExtraSmall",
           "line": 1051,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "asChild",
           "symbol": "DefaultLinkItems",
           "line": 1177,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "List Item Docs Links: all five source combinations per treatment, native Root with sibling Share; Chrome pointer/Tab/Enter and source copy verified. plans/components/list-item/implementation-checklist.md Native action execution."
         },
         {
           "title": "Outline - asChild",
           "symbol": "OutlineLinkItems",
           "line": 1243,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "List Item Docs Links: all five source combinations per treatment, native Root with sibling Share; Chrome pointer/Tab/Enter and source copy verified. plans/components/list-item/implementation-checklist.md Native action execution."
         },
         {
           "title": "Muted - asChild",
           "symbol": "MutedLinkItems",
           "line": 1309,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "List Item Docs Links: all five source combinations per treatment, native Root with sibling Share; Chrome pointer/Tab/Enter and source copy verified. plans/components/list-item/implementation-checklist.md Native action execution."
         },
         {
           "title": "ItemGroup",
           "symbol": "DefaultItemGroup",
           "line": 1375,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
         },
         {
           "title": "Outline - ItemGroup",
           "symbol": "OutlineItemGroup",
           "line": 1402,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
         },
         {
           "title": "Muted - ItemGroup",
           "symbol": "MutedItemGroup",
           "line": 1456,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
         },
         {
           "title": "ItemSeparator",
           "symbol": "ItemSeparatorExample",
           "line": 1498,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
         },
         {
           "title": "ItemHeader",
           "symbol": "ItemHeaderExamples",
           "line": 1570,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
         },
         {
           "title": "ItemFooter",
           "symbol": "ItemFooterExamples",
           "line": 1613,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
         },
         {
           "title": "ItemHeader + ItemFooter",
           "symbol": "ItemHeaderAndFooterExamples",
           "line": 1660,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Source static composition mapped and rendered: nine default content/action combinations; three3-row groups; four mail rows with three actual Separator constituents; independently shown header/footer/both across three treatments. Chrome76 source screenshot/AX/dynamic roles/narrow RTL and shared copy source. Exact component/source-case boundary in ../list-item/implementation-checklist.md; this does not close whole-row link+independent trailing action or all variant permutations."
         },
         {
           "title": "Default - ItemMedia image",
           "symbol": "DefaultVariantItemsWithImage",
           "line": 1718,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "Outline - ItemMedia image",
           "symbol": "OutlineVariantItemsWithImage",
           "line": 1782,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "Outline - ItemMedia image - Small",
           "symbol": "OutlineVariantItemsWithImageSmall",
           "line": 1846,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "Outline - ItemMedia image - Extra Small",
           "symbol": "OutlineVariantItemsWithImageExtraSmall",
           "line": 1910,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         },
         {
           "title": "Muted - ItemMedia image",
           "symbol": "MutedVariantItemsWithImage",
           "line": 1967,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Authored List Item Default/API and eight live/copy Docs compositions now use actual Group/Separator/Icon/Avatar/Badge/Button. Chrome76 verifies dynamic slots, part refs, native link/action, named list roles, narrow dark RTL, theme extents and axe0/22rules. See ../list-item/implementation-checklist.md. Full combination reconciliation remains pending; link-with-independent-trailing-action must use non-nested hosts."
         }
       ]
     },
@@ -2282,35 +2218,35 @@
           "symbol": "MarkerExample",
           "line": 48,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Static combinations now include leading/trailing actual Icons, native button/link, centered/vertical text, separator inline link and icon Button. Chrome76 actions/theme/RTL/copy verified. Pending source shimmer from packages/shadcn/src/tailwind.css, also used by AttachmentTitle; current closed motion-role contract has no Marker/Attachment shimmer. Shared design and contract reconciliation required, not a local demo animation. See presentation-primitives/implementation-checklist.md."
         },
         {
           "title": "Border",
           "symbol": "MarkerBorder",
           "line": 158,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Detailed source compositions reconciled: branch/search/file border rows with shared gap3; actual Accordion with clock Marker label; actual Drawer search trigger, three outline ListItem file/status rows and footer Close. Chrome76 pointer/keyboard, light/dark narrow RTL, optional row regions, shared token scaling, focus restoration, same live/copy setup and axe0/19rules. See presentation-primitives/implementation-checklist.md Marker detailed source reconciliation 2026-10-04. Source-case evidence only."
         },
         {
           "title": "Separator",
           "symbol": "MarkerSeparator",
           "line": 201,
           "status": "pending",
-          "localEvidence": null
+          "localEvidence": "Static combinations now include leading/trailing actual Icons, native button/link, centered/vertical text, separator inline link and icon Button. Chrome76 actions/theme/RTL/copy verified. Pending source shimmer from packages/shadcn/src/tailwind.css, also used by AttachmentTitle; current closed motion-role contract has no Marker/Attachment shimmer. Shared design and contract reconciliation required, not a local demo animation. See presentation-primitives/implementation-checklist.md."
         },
         {
           "title": "Accordion",
           "symbol": "MarkerAccordion",
           "line": 251,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Detailed source compositions reconciled: branch/search/file border rows with shared gap3; actual Accordion with clock Marker label; actual Drawer search trigger, three outline ListItem file/status rows and footer Close. Chrome76 pointer/keyboard, light/dark narrow RTL, optional row regions, shared token scaling, focus restoration, same live/copy setup and axe0/19rules. See presentation-primitives/implementation-checklist.md Marker detailed source reconciliation 2026-10-04. Source-case evidence only."
         },
         {
           "title": "Drawer",
           "symbol": "MarkerDrawer",
           "line": 283,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Detailed source compositions reconciled: branch/search/file border rows with shared gap3; actual Accordion with clock Marker label; actual Drawer search trigger, three outline ListItem file/status rows and footer Close. Chrome76 pointer/keyboard, light/dark narrow RTL, optional row regions, shared token scaling, focus restoration, same live/copy setup and axe0/19rules. See presentation-primitives/implementation-checklist.md Marker detailed source reconciliation 2026-10-04. Source-case evidence only."
         }
       ]
     },
@@ -2542,33 +2478,33 @@
           "title": "Basic",
           "symbol": "PaginationBasic",
           "line": 38,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
-            "implementation": "src/stories/pagination.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "implementation": "src/stories/pagination.stories.ts",
+            "reviewRecord": "plans/components/library-completion/navigation-primitives/implementation-checklist.md",
+            "verification": "Default reproduces native destination/current-page/ellipsis/direction composition. Chrome76 actual Next click and Enter change4 to6, one current6, two decorative ellipses; current source URL retained by example handler. Reference responsive label behavior now implemented without remounting anchors."
           }
         },
         {
           "title": "Simple",
           "symbol": "PaginationSimple",
           "line": 69,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
             "implementation": "src/stories/pagination.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "reviewRecord": "plans/components/library-completion/navigation-primitives/implementation-checklist.md",
+            "verification": "Simple shows5 numbered links, no directions. Actual Page3 click updates current; shared code explorer includes the same application handler and Copy returns Copied. Narrow390 screenshot fits; native landmark name unique."
           }
         },
         {
           "title": "With Select",
           "symbol": "PaginationIconsOnly",
           "line": 97,
-          "status": "pending",
+          "status": "passed",
           "localEvidence": {
             "implementation": "src/stories/pagination.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
+            "reviewRecord": "plans/components/library-completion/navigation-primitives/implementation-checklist.md",
+            "verification": "Rows per page uses actual Field/Select/Pagination. Actual Next2 then Select50 resets page1/pages10. Direction labels compact below40rem while accessible names, native anchors and page state remain; narrow and wide inspected. Shared live/copy setup, axe0 after unique landmark-name fix."
           }
         }
       ]
@@ -2780,23 +2716,15 @@
           "title": "Vertical",
           "symbol": "ScrollAreaVertical",
           "line": 41,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/scroll-area.stories.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Canonical Default: bounded native vertical viewport with real Separator rows. Actual PageDown moves0\u2192252 and retains focus. Canonical uses unmodified primitive presentation; source demo-only frame intentionally remains a composed-example treatment. Both-axis offsets100/250 persist through corner removal/restoration. Visibility policies preserve150offset and native identity. Actual hover enter/leave toggles only on-hover track visibility while offset120 persists; automatic remains visible. Narrow RTL-125, client248/scroll248 and axe0 verified. See scroll-area/implementation-checklist.md continuation2026-10-04. Physical wheel/touch/drag-cancel and OS media evidence remain separate."
         },
         {
           "title": "Horizontal",
           "symbol": "ScrollAreaHorizontal",
           "line": 59,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/scroll-area.stories.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Horizontal scrolling: source3/4 artwork and captions with actual AspectRatio/ScrollArea. All3reference images loaded at240\u00d7320, native viewport384 with771content before source-frame addition; current border consumes2px as expected. Actual ArrowRight scrolls40; Show/Copy preserves viewport and40offset. Both-axis offsets100/250 persist through corner removal/restoration. Visibility policies preserve150offset and native identity. Actual hover enter/leave toggles only on-hover track visibility while offset120 persists; automatic remains visible. Narrow RTL-125, client248/scroll248 and axe0 verified. See scroll-area/implementation-checklist.md continuation2026-10-04. Physical wheel/touch/drag-cancel and OS media evidence remain separate."
         }
       ]
     },
@@ -3024,56 +2952,36 @@
           "title": "Avatar",
           "symbol": "SkeletonAvatar",
           "line": 22,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/skeleton.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Default: circular profile placeholder and two caption lines; copied flex behavior reconciled with live. Chrome76 host/paint geometry, narrow fit, decorative AX, axe0, actual shared explorer Copy, pulse/sweep/none and explicit reduce verified. See presentation-primitives/implementation-checklist.md Skeleton continuation2026-10-04. OS media remains separately blocked."
         },
         {
           "title": "Card",
           "symbol": "SkeletonCard",
           "line": 36,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/skeleton.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Card: actual shared Card sections with two header Skeletons and square body Skeleton. Chrome76 host/paint geometry, narrow fit, decorative AX, axe0, actual shared explorer Copy, pulse/sweep/none and explicit reduce verified. See presentation-primitives/implementation-checklist.md Skeleton continuation2026-10-04. OS media remains separately blocked."
         },
         {
           "title": "Text",
           "symbol": "SkeletonText",
           "line": 52,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/skeleton.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Text: three decorative lines with final75percent extent. Chrome76 host/paint geometry, narrow fit, decorative AX, axe0, actual shared explorer Copy, pulse/sweep/none and explicit reduce verified. See presentation-primitives/implementation-checklist.md Skeleton continuation2026-10-04. OS media remains separately blocked."
         },
         {
           "title": "Form",
           "symbol": "SkeletonForm",
           "line": 64,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/skeleton.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Form: label/input shapes and submit shape using shared spacing/control height, no fake interactive controls. Chrome76 host/paint geometry, narrow fit, decorative AX, axe0, actual shared explorer Copy, pulse/sweep/none and explicit reduce verified. See presentation-primitives/implementation-checklist.md Skeleton continuation2026-10-04. OS media remains separately blocked."
         },
         {
           "title": "Table",
           "symbol": "SkeletonTable",
           "line": 82,
-          "status": "pending",
-          "localEvidence": {
-            "implementation": "src/stories/skeleton.examples.ts",
-            "reviewRecord": "plans/components/library-completion/use-case-review-2026-10-04.md",
-            "verification": "Integration evidence only; full source-case reconciliation remains pending."
-          }
+          "status": "passed",
+          "localEvidence": "Table: three decorative rows with flexible first and theme-sized trailing columns, no fake data semantics. Chrome76 host/paint geometry, narrow fit, decorative AX, axe0, actual shared explorer Copy, pulse/sweep/none and explicit reduce verified. See presentation-primitives/implementation-checklist.md Skeleton continuation2026-10-04. OS media remains separately blocked."
         }
       ]
     },
@@ -3846,8 +3754,8 @@
           "title": "breadcrumb-demo",
           "symbol": "BreadcrumbDemo",
           "line": 19,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Collapsed ancestors: existing Button/Menu/Icon; actual native link activation and dismissal, source start alignment. Shared Canvas/copy source; five examples axe0 and narrow RTL client248/scroll248. See navigation-primitives/implementation-checklist.md, Breadcrumb continuation results (2026-10-04). Source-case evidence only, not whole-component certification."
         }
       ]
     },
@@ -3858,8 +3766,8 @@
           "title": "breadcrumb-dropdown",
           "symbol": "BreadcrumbWithDropdown",
           "line": 19,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Ancestor menu: named Components Button with real down Icon, slash separators and start-aligned Menu; actual Escape restores trigger focus. Shared Canvas/copy source; five examples axe0 and narrow RTL client248/scroll248. See navigation-primitives/implementation-checklist.md, Breadcrumb continuation results (2026-10-04). Source-case evidence only, not whole-component certification."
         }
       ]
     },
@@ -3870,8 +3778,8 @@
           "title": "breadcrumb-ellipsis",
           "symbol": "BreadcrumbCollapsed",
           "line": 13,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Consumer-owned links and decorative ellipsis: hidden decorative Icon between native ancestors, terminal plain current text. Shared Canvas/copy source; five examples axe0 and narrow RTL client248/scroll248. See navigation-primitives/implementation-checklist.md, Breadcrumb continuation results (2026-10-04). Source-case evidence only, not whole-component certification."
         }
       ]
     },
@@ -3882,8 +3790,8 @@
           "title": "breadcrumb-link",
           "symbol": "BreadcrumbWithCustomSeparator",
           "line": 12,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Default and Consumer-owned links: preserved native destinations and authored click listener; Next Link dependency translates to consumer-owned anchors. Shared Canvas/copy source; five examples axe0 and narrow RTL client248/scroll248. See navigation-primitives/implementation-checklist.md, Breadcrumb continuation results (2026-10-04). Source-case evidence only, not whole-component certification."
         }
       ]
     },
@@ -3894,8 +3802,8 @@
           "title": "breadcrumb-responsive",
           "symbol": "BreadcrumbResponsive",
           "line": 44,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Responsive ancestor navigation: source48rem application policy switches existing Menu/Drawer. Actual open-surface resize both directions releases modal ownership and focuses replacement trigger; Drawer Close/Escape, named header/description/footer, native links verified. Full labels wrap under the existing Breadcrumb contract rather than adopting the alternate preset truncation. Shared Canvas/copy source; five examples axe0 and narrow RTL client248/scroll248. See navigation-primitives/implementation-checklist.md, Breadcrumb continuation results (2026-10-04). Source-case evidence only, not whole-component certification."
         }
       ]
     },
@@ -3906,8 +3814,8 @@
           "title": "breadcrumb-separator",
           "symbol": "BreadcrumbWithCustomSeparator",
           "line": 13,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Custom separator: decorative slash text through public separator API, ordered native trail and plain current README.md. Icon-shaped separator translates to supported decorative text; custom-content public part remains documented. Shared Canvas/copy source; five examples axe0 and narrow RTL client248/scroll248. See navigation-primitives/implementation-checklist.md, Breadcrumb continuation results (2026-10-04). Source-case evidence only, not whole-component certification."
         }
       ]
     },
@@ -5530,8 +5438,8 @@
           "title": "input-otp-controlled",
           "symbol": "InputOTPControlled",
           "line": 11,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Controlled code: synchronous accepted owner publication; actualA1b2C3 then ArrowLeft/Backspace yieldsA1b23/caret4 and matching output. Show/Copy code retains identical editor/value and uses shared setup module. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         }
       ]
     },
@@ -5542,8 +5450,8 @@
           "title": "input-otp-demo",
           "symbol": "InputOTPDemo",
           "line": 8,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Canonical Default and alphanumeric/form examples preserve source3/3 group shape and decorative separator using real shared Icon. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         }
       ]
     },
@@ -5554,8 +5462,8 @@
           "title": "input-otp-pattern",
           "symbol": "InputOTPPattern",
           "line": 11,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Digits-only and alphanumeric examples cover character policy; live policy supports Unicode letters. Single native editor/normalization owner retained. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         }
       ]
     },
@@ -5566,8 +5474,8 @@
           "title": "input-otp-separator",
           "symbol": "InputOTPWithSeparator",
           "line": 10,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Grouped code: source2/2/2 shape with two decorative separators and six indexed slots, actual controlled editing. All11 Docs examples fit248px at390 viewport after shared geometry repair; axe0, shared explorer and copied setup verified. See one-time-code/implementation-checklist.md continuation results2026-10-04. This is source-case evidence; native IME/autofill/clipboard and OS media remain separate blocked checks."
         }
       ]
     },
@@ -5986,8 +5894,8 @@
           "title": "scroll-area-demo",
           "symbol": "ScrollAreaDemo",
           "line": 10,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Same vertical canonical source-case mapping: native list, Separator composition, native keyboard focus/scroll, no parallel scroll position. Both-axis offsets100/250 persist through corner removal/restoration. Visibility policies preserve150offset and native identity. Actual hover enter/leave toggles only on-hover track visibility while offset120 persists; automatic remains visible. Narrow RTL-125, client248/scroll248 and axe0 verified. See scroll-area/implementation-checklist.md continuation2026-10-04. Physical wheel/touch/drag-cancel and OS media evidence remain separate."
         }
       ]
     },
@@ -5998,8 +5906,8 @@
           "title": "scroll-area-horizontal-demo",
           "symbol": "ScrollAreaHorizontalDemo",
           "line": 26,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Same source portrait-artwork gallery: source-provided image URLs/attribution, shared AspectRatio and native viewport, thin shared track/thumb. Live and copied markup share one definition. Both-axis offsets100/250 persist through corner removal/restoration. Visibility policies preserve150offset and native identity. Actual hover enter/leave toggles only on-hover track visibility while offset120 persists; automatic remains visible. Narrow RTL-125, client248/scroll248 and axe0 verified. See scroll-area/implementation-checklist.md continuation2026-10-04. Physical wheel/touch/drag-cancel and OS media evidence remain separate."
         }
       ]
     },
@@ -6070,8 +5978,8 @@
           "title": "skeleton-card",
           "symbol": "SkeletonCard",
           "line": 3,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Media preview: existing AspectRatio ratio2 and three Skeletons for media and captions; token-relative layout instead of fixed source pixels. Chrome76 host/paint geometry, narrow fit, decorative AX, axe0, actual shared explorer Copy, pulse/sweep/none and explicit reduce verified. See presentation-primitives/implementation-checklist.md Skeleton continuation2026-10-04. OS media remains separately blocked."
         }
       ]
     },
@@ -6082,8 +5990,8 @@
           "title": "skeleton-demo",
           "symbol": "SkeletonDemo",
           "line": 3,
-          "status": "pending",
-          "localEvidence": null
+          "status": "passed",
+          "localEvidence": "Default profile: circular shape and captions, base/Nova scale retained instead of alternate preset sizes. Chrome76 host/paint geometry, narrow fit, decorative AX, axe0, actual shared explorer Copy, pulse/sweep/none and explicit reduce verified. See presentation-primitives/implementation-checklist.md Skeleton continuation2026-10-04. OS media remains separately blocked."
         }
       ]
     },

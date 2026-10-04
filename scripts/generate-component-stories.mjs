@@ -24,6 +24,8 @@ const authoredStories = new Set([
   'tp-form',
   'tp-avatar',
   'tp-bubble',
+  'tp-marker',
+  'tp-list-item',
   'tp-empty-state',
   'tp-aspect-ratio',
   'tp-menu',

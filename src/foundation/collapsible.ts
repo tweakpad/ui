@@ -1,4 +1,7 @@
-import type { ReactiveControllerHost } from 'lit';
+import type { ReactiveController, ReactiveControllerHost } from 'lit';
+import { shadowReferenceTarget } from './focus.js';
+import { componentHandlingPrevented } from './part.js';
+import { OwnedAttributes } from './owned-attributes.js';
 import { createId } from './id.js';
 import { PresenceController } from './presence.js';
 import type { PresenceState } from './types.js';
@@ -8,6 +11,8 @@ export type CollapsibleRequestReason = 'trigger-press' | 'programmatic';
 export interface CollapsibleControllerOptions {
   owner: HTMLElement;
   trigger: () => HTMLElement | null;
+  /** Public rendered host; event hooks run here before component handling. */
+  activation?: () => HTMLElement | null;
   content: () => HTMLElement | null;
   markers?: () => Iterable<HTMLElement | null>;
   keepMounted?: () => boolean;
@@ -24,19 +29,27 @@ export interface CollapsibleControllerOptions {
  * Trigger–Content relationship, activation, disabled state, presence, and
  * cleanup to that externally supplied state.
  */
-export class CollapsibleController {
+export class CollapsibleController implements ReactiveController {
+  readonly #host: ReactiveControllerHost;
   readonly #options: CollapsibleControllerOptions;
   readonly #presence: PresenceController;
   readonly #triggerId = createId('tp-collapsible-trigger');
   readonly #contentId = createId('tp-collapsible-content');
   #trigger: HTMLElement | null = null;
+  #activation: HTMLElement | null = null;
   #content: HTMLElement | null = null;
   #open = false;
   #disabled = false;
   #initialized = false;
   #destroyed = false;
+  #restoreTrigger: (() => void) | undefined;
+  #triggerAttributes: OwnedAttributes | undefined;
+  #appliedControls: readonly Element[] | null = null;
+  #appliedControlsAttribute: string | null = null;
 
   constructor(host: ReactiveControllerHost, options: CollapsibleControllerOptions) {
+    this.#host = host;
+    host.addController(this);
     this.#options = options;
     this.#presence = new PresenceController(host, {
       surface: () => this.#content,
@@ -93,20 +106,30 @@ export class CollapsibleController {
     this.#unbindTrigger();
     this.#unbindContent();
     this.#presence.destroy();
+    this.#host.removeController(this);
+  }
+
+  hostDisconnected(): void {
+    this.#unbindTrigger();
+    this.#unbindContent();
   }
 
   readonly #handlePress = (event: Event): void => {
+    if (componentHandlingPrevented(event)) return;
     event.preventDefault();
     if (this.#disabled) return;
     this.#options.onOpenRequest?.(!this.#open, 'trigger-press', event);
   };
 
   readonly #handleFocus = (): void => {
-    this.#trigger?.toggleAttribute('data-focus-visible', this.#trigger.matches(':focus-visible'));
+    this.#triggerAttributes?.set(
+      'data-focus-visible',
+      this.#trigger?.matches(':focus-visible') ? '' : null,
+    );
   };
 
   readonly #handleBlur = (): void => {
-    this.#trigger?.removeAttribute('data-focus-visible');
+    this.#triggerAttributes?.set('data-focus-visible', null);
   };
 
   readonly #handleBeforeMatch = (event: Event): void => {
@@ -119,10 +142,33 @@ export class CollapsibleController {
     if (trigger !== this.#trigger) {
       this.#unbindTrigger();
       this.#trigger = trigger;
-      this.#trigger?.addEventListener('click', this.#handlePress);
+      if (trigger) {
+        this.#triggerAttributes = new OwnedAttributes(trigger);
+        const controlsAttribute = trigger.getAttribute('aria-controls');
+        const controls = trigger.ariaControlsElements;
+        this.#restoreTrigger = () => {
+          this.#triggerAttributes?.dispose();
+          this.#triggerAttributes = undefined;
+          const current = trigger.ariaControlsElements;
+          if (
+            trigger.getAttribute('aria-controls') !== this.#appliedControlsAttribute ||
+            (current?.length ?? 0) !== (this.#appliedControls?.length ?? 0) ||
+            current?.some((element, index) => element !== this.#appliedControls?.[index])
+          )
+            return;
+          if (controlsAttribute === '' && controls?.length) trigger.ariaControlsElements = controls;
+          else if (controlsAttribute === null) trigger.removeAttribute('aria-controls');
+          else trigger.setAttribute('aria-controls', controlsAttribute);
+        };
+      }
       this.#trigger?.addEventListener('focus', this.#handleFocus);
       this.#trigger?.addEventListener('blur', this.#handleBlur);
     }
+    const activation = trigger ? (this.#options.activation?.() ?? trigger) : null;
+    // Part hooks are rebound during render. Keep their handlers before ours.
+    this.#activation?.removeEventListener('click', this.#handlePress);
+    this.#activation = activation;
+    this.#activation?.addEventListener('click', this.#handlePress);
 
     const content = this.#options.content();
     if (content !== this.#content) {
@@ -133,9 +179,12 @@ export class CollapsibleController {
   }
 
   #unbindTrigger(): void {
-    this.#trigger?.removeEventListener('click', this.#handlePress);
+    this.#activation?.removeEventListener('click', this.#handlePress);
+    this.#activation = null;
     this.#trigger?.removeEventListener('focus', this.#handleFocus);
     this.#trigger?.removeEventListener('blur', this.#handleBlur);
+    this.#restoreTrigger?.();
+    this.#restoreTrigger = undefined;
     this.#trigger = null;
   }
 
@@ -148,26 +197,38 @@ export class CollapsibleController {
     const trigger = this.#trigger;
     const content = this.#content;
     if (trigger) {
-      trigger.id ||= this.#triggerId;
-      trigger.setAttribute('aria-expanded', String(this.#open));
-      trigger.setAttribute('aria-disabled', String(this.#disabled));
-      trigger.tabIndex = this.#disabled ? -1 : 0;
-      trigger.toggleAttribute('data-panel-open', this.#open);
-      if (trigger instanceof HTMLButtonElement) trigger.disabled = this.#disabled;
+      const attributes = this.#triggerAttributes!;
+      attributes.set('id', trigger.id || this.#triggerId);
+      attributes.set('aria-expanded', String(this.#open));
+      attributes.set('aria-disabled', String(this.#disabled));
+      attributes.set('tabindex', this.#disabled ? '-1' : '0');
+      attributes.set('data-panel-open', this.#open ? '' : null);
+      if (trigger.localName === 'button') attributes.set('disabled', this.#disabled ? '' : null);
       if (content) {
         content.id ||= this.#contentId;
         trigger.setAttribute('aria-controls', content.id);
         content.setAttribute('aria-labelledby', trigger.id);
+        if (trigger.getRootNode() !== content.getRootNode()) {
+          trigger.ariaControlsElements = [content];
+          content.ariaLabelledByElements = [shadowReferenceTarget(trigger, content.getRootNode())];
+        }
       } else {
         trigger.removeAttribute('aria-controls');
       }
     }
 
     for (const marker of this.#markers()) {
-      marker.toggleAttribute('data-open', this.#open);
-      marker.toggleAttribute('data-closed', !this.#open);
-      marker.toggleAttribute('data-disabled', this.#disabled);
+      for (const [name, active] of [
+        ['data-open', this.#open],
+        ['data-closed', !this.#open],
+        ['data-disabled', this.#disabled],
+      ] as const) {
+        if (marker === trigger) this.#triggerAttributes?.set(name, active ? '' : null);
+        else marker.toggleAttribute(name, active);
+      }
     }
+    this.#appliedControls = trigger?.ariaControlsElements ?? null;
+    this.#appliedControlsAttribute = trigger?.getAttribute('aria-controls') ?? null;
   }
 
   #applyPresenceState(state: PresenceState): void {

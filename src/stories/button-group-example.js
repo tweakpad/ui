@@ -2,6 +2,7 @@ import { navigationIcons } from '../icons/navigation.js';
 import { plusIcon } from '../icons/plus.js';
 import { chevronDownIcon } from '../icons/chevron-down.js';
 import { chevronRightIcon } from '../icons/chevron-right.js';
+import { html } from 'lit';
 
 export function setupButtonGroupExample(root) {
   const cleanup = [];
@@ -32,7 +33,13 @@ export function setupButtonGroupExample(root) {
     pagination.partContracts = Object.fromEntries(
       ['pagination-page-link', 'pagination-previous', 'pagination-next'].map((part) => [
         part,
-        { hostProperties: { '.variant': 'outline' } },
+        {
+          renderDelegate: ({ state, properties, bind, content }) => {
+            // Change appearance only; bind retains Pagination's complete link behavior.
+            properties['.variant'] = state.current ? 'secondary' : 'outline';
+            return html`<tp-button ${bind}>${content}</tp-button>`;
+          },
+        },
       ]),
     );
     listen(pagination, 'tp-value-change', (event) => {

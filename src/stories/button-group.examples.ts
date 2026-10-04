@@ -9,6 +9,8 @@ const iconButton = (name: string, label: string) =>
   button(icon(name), `size="icon" aria-label="${label}" data-echo`);
 const group = (label: string, content: string, attributes = '') =>
   `<tp-button-group label="${label}" ${attributes}>${content}</tp-button-group>`;
+const scrollable = (label: string, content: string) =>
+  `<tp-scroll-area label="${label}" orientation="horizontal"><div style="box-sizing:border-box;inline-size:max-content;min-inline-size:100%;padding:var(--tp-space-2)">${content}</div></tp-scroll-area>`;
 const input = (label: string, attributes = '') =>
   `<tp-input label="${label}" ${attributes}></tp-input>`;
 const options = (values: string[]) =>
@@ -139,21 +141,27 @@ export const buttonGroupExamples = [
   ),
   example(
     'Pagination',
-    group('Result pages', '<tp-pagination label="Results" pages="5" page="2"></tp-pagination>'),
+    scrollable(
+      'Result page controls',
+      group('Result pages', '<tp-pagination label="Results" pages="5" page="2"></tp-pagination>'),
+    ),
     'Pagination retains destination links and current-page semantics. The application accepts page changes without leaving this example.',
   ),
   example(
     'Split pagination',
-    group(
-      'Result navigation',
+    scrollable(
+      'Split result page controls',
       group(
-        'Page numbers',
-        '<tp-pagination label="Result pages" pages="5" page="2" data-pages-only></tp-pagination>',
-      ) +
+        'Result navigation',
         group(
-          'Direction links',
-          '<tp-pagination label="Previous and next results" pages="5" page="2" data-directions-only></tp-pagination>',
-        ),
+          'Page numbers',
+          '<tp-pagination label="Result pages" pages="5" page="2" data-pages-only></tp-pagination>',
+        ) +
+          group(
+            'Direction links',
+            '<tp-pagination label="Previous and next results" pages="5" page="2" data-directions-only></tp-pagination>',
+          ),
+      ),
     ),
     'Both Pagination instances share the same application page. Nested groups retain their separate seams.',
   ),

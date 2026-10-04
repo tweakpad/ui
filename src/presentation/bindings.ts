@@ -46,9 +46,17 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
   'tp-label': {
     '.optional': 'label-optional-indicator',
   },
+  'tp-list-item-separator': { '.separator': 'list-item-separator' },
+  'tp-list-item-group': { '.group': 'list-item' },
   'tp-list-item': {
     '.item': 'list-item-root',
     '.description': 'list-item-description',
+    '.media': 'list-item-media',
+    '.content': 'list-item-content',
+    '.title': 'list-item-title',
+    '.actions': 'list-item-actions',
+    '.header': 'list-item-header',
+    '.footer': 'list-item-footer',
   },
   'tp-message': {
     '.message': 'message-root',
@@ -183,7 +191,9 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
     ':host': 'separator',
   },
   'tp-marker': {
-    ':host': 'marker',
+    '.root': 'marker',
+    '.icon': 'marker-icon',
+    '.content': 'marker-content',
   },
   'tp-skeleton': {
     "[part~='skeleton']": 'skeleton',

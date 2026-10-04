@@ -3,6 +3,7 @@ import { TpElement } from '../../foundation/element.js';
 import { SyntheticPress } from '../../foundation/synthetic-press.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
+import { setPartComposition } from '../../presentation/controller.js';
 
 export interface MenuItemOwner extends HTMLElement {
   readonly menuDisabled: boolean;
@@ -54,6 +55,10 @@ export class TpMenuItem extends TpElement {
         display: contents;
       }
 
+      .label ::slotted(tp-list-item) {
+        flex: 1;
+      }
+
       .indicator {
         display: inline-flex;
         align-items: center;
@@ -79,6 +84,20 @@ export class TpMenuItem extends TpElement {
   #control: HTMLElement | null = null;
   #highlighted = false;
   #keyboardHighlight = false;
+  #rows = new Set<TpElement>();
+  #syncRows = (): void => {
+    const rows = new Set(this.querySelectorAll<TpElement>(':scope > tp-list-item'));
+    for (const row of this.#rows) if (!rows.has(row)) setPartComposition(row, this);
+    for (const row of rows) {
+      if (this.#rows.has(row)) continue;
+      // The command owns the outer inset; the composed row owns its content layout.
+      setPartComposition(row, this, {
+        'list-item-root': { styleHook: { padding: '0' } },
+        'list-item-actions': { styleHook: { 'padding-inline-end': 'var(--tp-border-width)' } },
+      });
+    }
+    this.#rows = rows;
+  };
   #reference = (element: HTMLElement | null): void => {
     if (this.#control === element) return;
     this.#control = element;
@@ -128,7 +147,7 @@ export class TpMenuItem extends TpElement {
     return undefined;
   }
   protected get itemContent(): unknown {
-    return html`<span class="label"><slot></slot></span>`;
+    return html`<span class="label"><slot @slotchange=${this.#syncRows}></slot></span>`;
   }
   protected itemSelection(_event: Event, _reason: ChangeReason): boolean {
     void _event;
@@ -203,12 +222,15 @@ export class TpMenuItem extends TpElement {
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    this.#syncRows();
     this.toggleAttribute('data-disabled', this.itemDisabled);
     this.toggleAttribute('data-highlighted', this.highlighted);
     if (changed.has('disabled') || changed.has('label') || changed.has('value'))
       this.#owner?.itemChanged();
   }
   override disconnectedCallback(): void {
+    for (const row of this.#rows) setPartComposition(row, this);
+    this.#rows.clear();
     const owner = this.#owner;
     this.#owner = null;
     this.#press.reset();

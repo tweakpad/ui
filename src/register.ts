@@ -85,6 +85,8 @@ import {
   TpKeyHint,
   TpLabel,
   TpListItem,
+  TpListItemGroup,
+  TpListItemSeparator,
   TpMarker,
   TpMessage,
   TpSkeleton,
@@ -199,6 +201,8 @@ defineElement(TpEmptyState.tagName, TpEmptyState);
 defineElement(TpKeyHint.tagName, TpKeyHint);
 defineElement(TpLabel.tagName, TpLabel);
 defineElement(TpListItem.tagName, TpListItem);
+defineElement(TpListItemGroup.tagName, TpListItemGroup);
+defineElement(TpListItemSeparator.tagName, TpListItemSeparator);
 defineElement(TpMarker.tagName, TpMarker);
 defineElement(TpMessage.tagName, TpMessage);
 defineElement(TpSkeleton.tagName, TpSkeleton);

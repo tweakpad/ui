@@ -1,6 +1,7 @@
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
-import { ifDefined } from 'lit/directives/if-defined.js';
+import { compositeControl } from '../foundation/composite-control.js';
+import type { PartRenderOptions, PartState } from '../foundation/part.js';
 import { CollapsibleController } from '../foundation/collapsible.js';
 import { TpElement } from '../foundation/element.js';
 import { TpOpenChangeEvent } from '../foundation/events.js';
@@ -159,7 +160,7 @@ export class TpCollapsible extends TpElement {
       }
 
       [part~='collapsible-content'][hidden]:not([hidden='until-found']) {
-        display: none;
+        display: none !important;
       }
     `,
   ];
@@ -174,6 +175,33 @@ export class TpCollapsible extends TpElement {
   #motionOwner: HTMLElement = this;
   #motionContext: Readonly<Record<string, MotionValue>> = Object.freeze({});
   #resizeObserver: ResizeObserver | null = null;
+  #observedBody: HTMLElement | null = null;
+  #parts = new Map<string, HTMLElement>();
+  #references = new Map<string, (element: HTMLElement | null) => void>();
+  #composedTrigger: ReturnType<typeof compositeControl>;
+  readonly #refreshController = (): void => {
+    if (this.isConnected) this.#collapsible.update(this.open, this.disabled);
+  };
+  #part(name: string, state: PartState, options: PartRenderOptions = {}): unknown {
+    let reference = this.#references.get(name);
+    if (!reference) {
+      reference = (element) => {
+        if (element) this.#parts.set(name, element);
+        else this.#parts.delete(name);
+      };
+      this.#references.set(name, reference);
+    }
+    return this.renderPart(name, state, {
+      ...options,
+      reference,
+      properties: {
+        'data-open': this.open,
+        'data-closed': !this.open,
+        'data-disabled': this.disabled,
+        ...options.properties,
+      },
+    });
+  }
   #pendingEnter: MotionHandle[] = [];
   #pendingExit: MotionHandle[] = [];
   #indicatorMotion: MotionHandle | null = null;
@@ -181,6 +209,7 @@ export class TpCollapsible extends TpElement {
   readonly #collapsible = new CollapsibleController(this, {
     owner: this,
     trigger: () => this.triggerElement,
+    activation: () => this.#parts.get('collapsible-trigger') ?? null,
     content: () => this.panelElement,
     markers: () => [
       this.#motionOwner,
@@ -206,31 +235,34 @@ export class TpCollapsible extends TpElement {
   });
 
   get rootElement(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[part~="collapsible"]');
+    return this.#parts.get('collapsible') ?? null;
   }
 
   get triggerElement(): HTMLButtonElement | null {
-    return this.renderRoot.querySelector<HTMLButtonElement>('[part~="collapsible-trigger"]');
+    const host = this.#parts.get('collapsible-trigger');
+    if (!host) return null;
+    const control = compositeControl(host);
+    return (control ? control.target() : host) as HTMLButtonElement | null;
   }
 
   get panelElement(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[part~="collapsible-content"]');
+    return this.#parts.get('collapsible-content') ?? null;
   }
 
   get bodyElement(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[part~="collapsible-content-body"]');
+    return this.#parts.get('collapsible-content-body') ?? null;
   }
 
   get leadingElement(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[part~="collapsible-leading"]');
+    return this.#parts.get('collapsible-leading') ?? null;
   }
 
   get labelElement(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[part~="collapsible-label"]');
+    return this.#parts.get('collapsible-label') ?? null;
   }
 
   get trailingElement(): HTMLElement | null {
-    return this.renderRoot.querySelector<HTMLElement>('[part~="collapsible-trailing"]');
+    return this.#parts.get('collapsible-trailing') ?? null;
   }
 
   get #defaultIndicatorElement(): HTMLElement | null {
@@ -287,6 +319,9 @@ export class TpCollapsible extends TpElement {
   override disconnectedCallback(): void {
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = null;
+    this.#observedBody = null;
+    this.#composedTrigger?.release(this);
+    this.#composedTrigger = undefined;
     this.#cancelPendingMotion();
     super.disconnectedCallback();
   }
@@ -305,23 +340,43 @@ export class TpCollapsible extends TpElement {
   protected override render() {
     const position = this.#resolvedIndicatorPosition();
     const level = Math.min(6, Math.max(0, Math.trunc(this.headingLevel) || 0));
-    const trigger = html`<button part="collapsible-trigger focusable" type="button">
-      ${this.#renderPosition('leading', position)}
-      <span part="collapsible-label"><slot name="label">Toggle</slot></span>
-      ${this.#renderPosition('trailing', position)}
-    </button>`;
-    return html`<div part="collapsible">
-      <div
-        part="collapsible-heading"
-        role=${ifDefined(level ? 'heading' : undefined)}
-        aria-level=${ifDefined(level || undefined)}
-      >
-        ${trigger}
-      </div>
-      <div part="collapsible-content" role="region" data-state="absent" hidden>
-        <div part="collapsible-content-body"><slot></slot></div>
-      </div>
-    </div>`;
+    const state = Object.freeze({
+      open: this.open,
+      disabled: this.disabled,
+      indicatorPosition: position,
+      contentAlignment: this.#resolvedContentAlignment(),
+    });
+    const trigger = this.#part('collapsible-trigger', state, {
+      tag: 'button',
+      properties: { part: 'collapsible-trigger focusable', type: 'button' },
+      content: html`${this.#renderPosition('leading', position, state)}${this.#part(
+        'collapsible-label',
+        state,
+        {
+          tag: 'span',
+          content: html`<slot name="label">Toggle</slot>`,
+        },
+      )}${this.#renderPosition('trailing', position, state)}`,
+    });
+    const presence = this.#collapsible.state;
+    return this.#part('collapsible', state, {
+      content: html`${this.#part('collapsible-heading', state, {
+        properties: { role: level ? 'heading' : null, 'aria-level': level || null },
+        content: trigger,
+      })}${this.#part('collapsible-content', state, {
+        properties: {
+          role: 'region',
+          'data-state': presence,
+          hidden:
+            presence === 'absent' || presence === 'retained'
+              ? this.hiddenUntilFound
+                ? 'until-found'
+                : true
+              : false,
+        },
+        content: this.#part('collapsible-content-body', state, { content: html`<slot></slot>` }),
+      })}`,
+    });
   }
 
   #requestOpen(open: boolean, reason: 'trigger-press' | 'programmatic', sourceEvent: Event): void {
@@ -368,7 +423,11 @@ export class TpCollapsible extends TpElement {
 
   #observeBody(): void {
     const body = this.bodyElement;
-    if (!body || typeof ResizeObserver === 'undefined' || this.#resizeObserver) return;
+    if (body === this.#observedBody) return;
+    this.#resizeObserver?.disconnect();
+    this.#resizeObserver = null;
+    this.#observedBody = body;
+    if (!body || typeof ResizeObserver === 'undefined') return;
     this.#resizeObserver = new ResizeObserver(() => this.#measure());
     this.#resizeObserver.observe(body);
     this.#measure();
@@ -426,12 +485,26 @@ export class TpCollapsible extends TpElement {
     this.dataset.indicatorPosition = position;
     this.dataset.contentAlignment = this.#resolvedContentAlignment();
     this.refreshPositions();
+    const triggerHost = this.#parts.get('collapsible-trigger');
+    const composed = triggerHost ? compositeControl(triggerHost) : undefined;
+    if (composed !== this.#composedTrigger) {
+      this.#composedTrigger?.release(this);
+      this.#composedTrigger = composed;
+    }
+    composed?.apply(
+      this,
+      { disabled: this.disabled, focusableWhenDisabled: false, tabIndex: this.disabled ? -1 : 0 },
+      this.#refreshController,
+    );
+    this.#refreshController();
+    this.#observeBody();
     this.#measure();
   }
 
   #renderPosition(
     position: CollapsibleIndicatorPosition,
     indicatorPosition: CollapsibleIndicatorPosition,
+    state: PartState,
   ) {
     const fallback =
       position === indicatorPosition
@@ -439,9 +512,11 @@ export class TpCollapsible extends TpElement {
             <tp-icon .icon=${chevronRightIcon}></tp-icon>
           </span>`
         : nothing;
-    return html`<span part=${`collapsible-${position}`} data-position=${position}>
-      <slot name=${position} @slotchange=${this.refreshPositions}></slot>${fallback}
-    </span>`;
+    return this.#part(`collapsible-${position}`, state, {
+      tag: 'span',
+      properties: { 'data-position': position },
+      content: html`<slot name=${position} @slotchange=${this.refreshPositions}></slot>${fallback}`,
+    });
   }
 
   #resolvedIndicatorPosition(): CollapsibleIndicatorPosition {

@@ -50,10 +50,12 @@ export class TpOtpField extends TpFormElement {
         position: relative;
         display: inline-flex;
         align-items: center;
+        max-inline-size: 100%;
       }
 
       .group {
         display: flex;
+        min-inline-size: 0;
       }
 
       .editor {
@@ -75,7 +77,8 @@ export class TpOtpField extends TpFormElement {
         position: relative;
         display: grid;
         place-items: center;
-        flex: none;
+        flex: 0 1 auto;
+        min-inline-size: 0;
       }
 
       .slot[data-active] {

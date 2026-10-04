@@ -45,3 +45,17 @@ Decorative separators are hidden from assistive technology and mirror in RTL.
 The list wraps at constrained widths. Typography, link treatment, gaps and icon
 size use shared theme variables. Breadcrumb has no value, change event or form
 ownership; native links and nested controls retain their own events.
+
+The Docs examples cover a collapsed ancestor Menu, a named ancestor Menu with a
+chevron, decorative ellipsis with consumer-owned links, custom separator text
+and responsive ancestor navigation.
+Each uses the shared code explorer with the same markup and setup as its live
+preview. Native anchors are intentional: they retain destinations, modified-click
+behavior and caller listeners without requiring a router dependency.
+
+Responsive collapse is an application composition, not an implicit Breadcrumb
+breakpoint. The example follows the reference's 48rem policy: Menu on wide screens,
+Drawer on small screens, with the same ancestor destinations. It closes and removes
+the inactive surface and moves focus to the replacement trigger when the previous
+surface was open. Menu and Drawer continue to own their modal, keyboard, dismissal
+and focus behavior. The media listener is released when the example is removed.

@@ -33,7 +33,7 @@ page does not reload the same destination.
 | `showPrevious / show-previous` | boolean | true | Render the previous link. |
 | `showNext / show-next` | boolean | true | Render the next link. |
 | `showPageLinks / show-page-links` | boolean | true | Render numeric links and omitted ranges. |
-| `showLabels / show-labels` | boolean | true | Show direction text; false retains named icon links. |
+| `showLabels / show-labels` | boolean | true | Include direction text, compacted below 40rem; false retains named icon links at every width. |
 | `disabled` | boolean | false | Disable all links through Button's shared native-link policy. |
 | `onPageChange` | value-change callback | undefined | Same cancelable navigation intent as `tp-value-change`. |
 
@@ -59,3 +59,8 @@ outline use the shared theme and Button recipes; there is no spacing attribute.
 
 The Simple example omits both direction links. With Select composes actual Field
 and Select controls for page size; the application updates `pages` and `page`.
+Both examples use the same setup code in the live preview and code explorer,
+including accepting navigation, canceling the browser's default route and updating
+the current page. Below the reference's 40rem breakpoint, Previous and Next retain
+their accessible names and icons while their visible labels are hidden. Resizing
+does not replace links or reset the current page.

@@ -43,6 +43,6 @@ render delegates, element references, host properties, and class/style hooks. A
 render delegate must apply its supplied `bind` directive to the semantic host and
 render the supplied `content`; this preserves component state and slot behavior.
 
-## Usage examples
+## Compositions
 
-The rendered Docs demonstrate all reference treatments, content lengths, grouped messages, expandable content, reaction placement, interactive reactions, sender alignment, and native button/link bodies. Examples compose existing public controls and are not extra catalog variants.
+The rendered Docs include seven treatments, short/wrapping/multiparagraph bodies, separate sender groups, reaction summaries and actions, logical alignment, and native button/link bodies with quick replies. The expandable example replaces its preview with the full message using Collapsible and an existing link Button, with Show more/Show less derived from the shared disclosure state. Examples compose existing public controls and are not extra catalog variants.

@@ -131,3 +131,25 @@ See the **External line-by-line motion** story and the [Motion guide](motion.md)
 Each `<tp-accordion-item>` renders one internal `<tp-collapsible>`. The Item maps Collapsible's Heading, Trigger, Leading, Label, Trailing, Content, and ContentBody through its Accordion part names and forwards the `leading`, `label`, `trailing`, and content slots. The Accordion Root supplies derived `open`, `disabled`, retention and content-alignment policies, and stable `value`/`index` motion context. An Item may override `contentAlignment`; Collapsible remains the only disclosure, layout-alignment, and motion implementation, while Accordion remains the only selection owner.
 
 Use `<tp-collapsible>` for one independent disclosure. Use `<tp-accordion>` with `<tp-accordion-item>` when several disclosures need coordinated single or multiple selection.
+
+### Public rendering contracts
+
+All eight parts accept the inherited `partContracts` interface, including content,
+host properties, render delegates and element references. A delegate must retain
+its supplied `bind` and `content`. The default Trigger is a native button; it may
+also delegate to the existing `tp-button`. Collapsible resolves that component's
+registered native action for disabled state, focus and Trigger–Panel relationships.
+Consumer trigger event hooks run before disclosure handling and may call
+`preventComponentHandling()`; the cancellable `tp-open-change` proposal remains
+available independently.
+
+Changing a delegate releases the former trigger's listeners and composed control
+policy. Content measurement follows the current ContentBody. Disconnecting removes
+trigger listeners and measurement observation; reconnecting restores current state.
+Layout hooks may rearrange regions, but cannot make a normally hidden closed Panel
+visible by overriding its display. `hidden-until-found` retains its native reveal
+semantics.
+
+Bubble's expandable-message Docs example demonstrates a root rendered as Bubble,
+a link Button trigger, preview replacement and the existing measured panel. It
+keeps all disclosure state in Collapsible and derives its label from that state.

@@ -59,3 +59,19 @@ Use the existing `<tp-separator>` between members. The group supplies a perpendi
 Nested Button Groups remain separate sets with the standard theme gap. Each nested group owns its own orientation and seams. Hidden members do not participate. Reordering, removing, reconnecting or replacing a Button's native button with a link updates group membership without replacing other controls.
 
 The group exposes `button-group-control` on actual interactive boundaries and `button-group-separator` on actual Separator hosts through the shared part registration system. Root `partPresentation` can address those aliases; each member's own terminal presentation overrides remain authoritative. `aria-label` and `aria-labelledby` on the group supply authored naming; `label` is the fallback. Grouping adds no roving focus or selection state.
+
+## Pagination and selection
+
+A direct `<tp-pagination>` participates through its existing page and direction links. Pagination retains its navigation region, native list, destinations, current-page relationship and value-change events. Button Group supplies the orientation and joined seams; ellipses separate independent runs. Removing Pagination from the group restores its standalone spacing and corners.
+
+```html
+<tp-button-group label="Result pages">
+  <tp-pagination label="Results" pages="5" page="2"></tp-pagination>
+</tp-button-group>
+```
+
+For separate numbered and direction groups, nest two Button Groups containing Pagination instances. Configure `showPrevious`/`showNext` on the numbered instance and `showPageLinks`/`showLabels` on the direction instance, and bind both to the same application page. The Docs example includes the complete event wiring and public part customization for outlined links with the current destination using Button's secondary variant.
+
+For text alignment or another selected value, use `<tp-toggle-group>` with actual `<tp-toggle>` members. Its single-selection state and keyboard behavior remain owned by Toggle Group. Its documented `spacing="0"` uses the shared joined-seam treatment; ordinary gaps and control appearance continue to follow theme tokens.
+
+Joined controls keep one continuous row; nested groups and Pagination do not shrink their hit regions into each other. When that row is wider than its container, compose the existing horizontal Scroll Area, as in the Pagination examples. Its native viewport preserves keyboard access and scrolling without changing the group's control sizes or selection behavior.

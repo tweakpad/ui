@@ -170,7 +170,7 @@ for (const [name, paintedPart] of [
   const definition = componentDefinitions.find((item) => item.name === name)!;
   for (const part of definition.parts)
     for (const key of part.presentationKeys ?? []) {
-      if (name !== 'Bubble' && /-variant-(subdued|tinted)$/.test(key)) continue;
+      if (name === 'Badge' && /-variant-(subdued|tinted)$/.test(key)) continue;
       const variant = key.split('-variant-')[1];
       passive[key] =
         variant && part.name === paintedPart

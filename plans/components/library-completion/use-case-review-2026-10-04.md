@@ -79,3 +79,59 @@ The exact OTP Simple example was rechecked after the builds: actual123456 entry 
 The direct-Button-only implementation has been replaced by the same ButtonGroup owner extracted into its own folder, composing existing Button/Input/TextArea/Select/NativeSelect/InputGroup/Toggle boundaries and popup triggers. New governed Text constituent uses the family dictionary; Separator remains existing TpSeparator. Nested group gap and member cleanup are centralized. The shared seam helper preserves member outer radii for ButtonGroup while keeping ToggleGroup's existing default.
 
 Integration exposed and repaired shared defaults: Button radius now uses radius-lg, Select/NativeSelect default heights use control-height-md (NativeSelect small uses sm), and InputGroup's single-line editor subtracts its parent's boundary widths. These are source-backed common roles, not story attributes or new per-control spacing tokens. Ten ButtonGroup Docs composition sections reuse real controls/shared Canvas, and InputGroup's missing ButtonGroup composition is added. Detailed actual interactions, lifecycle, theme/RTL/narrow/axe evidence and passing builds are in plans/components/button-group/implementation-checklist.md. Joined pagination/text-alignment source cases and complete capability reconciliation remain open.
+
+
+## Button Group Pagination and Text Alignment continuation
+
+Added the three remaining base-reference composition entries using actual Pagination and ToggleGroup. ButtonGroup reaches Pagination's public list/control parts through its existing presentation controller, retaining nav/ul/li and actual Button links; container/member contributions release on removal. Pagination owns destinations, page windows and events; ToggleGroup owns selection/keyboard behavior. Fixed vertical numbered-link stretching during early integration. Chrome actual page activation/split synchronization, selection via pointer+keyboard, lifecycle/ellipsis windows, light/dark/RTL and token roles verified; axe0 across examples, focused11tests and both builds pass. Exact evidence and pending cases remain in ../button-group/implementation-checklist.md. All-outline active-page visual distinction, narrow pagination and scoped spacing seed propagation remain explicit follow-ups, not cleared by the example count.
+
+
+## Pagination source cases reconciled
+
+Basic, Simple and With Select now map to the canonical Default and two Docs compositions with passing actual pointer/keyboard, current-page, page-size, narrow-label and copied-source evidence. Corrected missing Simple copied handler by sharing setup code. Added the source40rem visible-label treatment without replacing native links. Repaired duplicate Docs landmark names. Joined ButtonGroup examples now distinguish current pages using existing secondary Buttons and use existing ScrollArea for narrow intrinsic groups; no parallel state, paint or scroll behavior. Exact results are in navigation-primitives/implementation-checklist.md and button-group/implementation-checklist.md. Earlier notes listing these specific current-page/narrow follow-ups as pending are superseded by this observed evidence; unrelated catalog and native-media gaps remain open.
+
+## Breadcrumb source cases and shared native menu geometry
+
+Reconciled the nine inventoried Breadcrumb cases against Default plus five Docs compositions: collapsed ancestors, named ancestor Menu, consumer links/decorative ellipsis, custom separator, responsive Menu/Drawer. Existing shared components own interactions and presentation, and Canvas owns live/copy examples. Source start alignment is explicit; responsive48rem choice belongs to the application. Exact source adaptations and pointer/keyboard/modal/RTL/axe evidence are in navigation-primitives/implementation-checklist.md.
+
+Rendered comparison found native Menu links were56.78125px tall while custom MenuItems were44px: projected native nodes missed the shadow box-sizing reset. Added border-box to the existing shared registered Menu/Menubar item structure, retaining all spacing and separator recipes. Native/custom/submenu items now measure equal44px, removal releases styles/roles, actual native link navigation/dismissal and Select selection pass. Focused16tests, type/lint/format checks and both builds pass. Other catalog cases and unavailable platform checks remain open.
+
+## One-time Code reference cases and narrow form geometry
+
+Twelve inventoried reference cases now map to Default and11 Docs compositions. Added controlled feedback and the Card/login/resend/support flow; restored source2/2/2 grouping, initialized/disabled groups and Field error content. Automatic submission/reset remains available. Interactive copied source uses the same scoped setup as the live preview and the shared Canvas explorer.
+
+The narrow audit exposed fixed visual OTP slot overflow and the Form light-DOM wrapper's automatic grid minimum. Existing OTP flex geometry now shrinks within available width while retaining the44px editor height and wide slot extent; registered Form structure allows its wrapper to shrink. All11 examples fit248px, including Card content214px. Actual editing/filtering/masking/submission/reset, source identity, dark RTL screenshot, axe0, Form default regression, focused20tests and both builds pass. Details and native-platform evidence limits remain in one-time-code/implementation-checklist.md.
+
+## Skeleton reference-case reconciliation
+
+Seven inventoried source cases now map to Default and five Docs compositions. Added the missing two-to-one media/captions layout using actual AspectRatio and Skeleton; copied profile flex behavior now matches the live composition. Existing Card/Text/Form/Table layouts remain shared-component/decorative compositions. No runtime Skeleton behavior or theme recipe changed. Chrome76 inspected host/paint extents, narrow geometry, dark RTL scoped spacing/radius, motion pulse/sweep/none/animatedfalse/explicitreduce and decorative AX; usage axe0 and shared Show/Copy pass. Type/lint/format and existing stories9tests pass; Storybook log: tmp/component-verification/skeleton/2026-10-04/storybook-build.log. OS-media/native-platform gaps remain distinct from these passing use-case rows.
+
+## Scroll Area source-case reconciliation
+
+Four inventoried reference cases now map to canonical vertical Default and horizontal gallery, with both-axis composition retained. Gallery matches reference portrait artwork/captions through actual AspectRatio; shared markupExample supplies live/copy HTML. Docs frames use existing theme border/radius roles; canonical Default preserves the primitive's default presentation. No runtime scroll behavior changed.
+
+Actual PageDown/ArrowRight, source expansion/copy, hover enter/leave and public visibility/corner/RTL changes preserve the native viewport and appropriate offsets. Two narrow previews fit248px; axe0; type/lint/format, corrected existing stories9tests and Storybook build pass. Exact measurements/adaptations and unavailable native-input boundaries are in scroll-area/implementation-checklist.md. Broader catalog work remains active.
+
+## Bubble and shared Marker continuation
+
+Bubble's live/copy compositions now cover the missing message lengths, sender groups, reaction placements/actions, native bodies and quick replies. Seven source cases have scoped Chrome/visual/AX evidence. Expandable content remains pending the shared Collapsible rendering-hook repair. Marker was a dot-only placeholder despite its live contract; repaired existing owner/recipes to text/icon/default/separator/border and public native delegates, reused from Bubble and five Marker Docs compositions. Full Marker source cases remain pending (including shimmer), not certified from the new examples. Details, builds and actual interactions: presentation-primitives/implementation-checklist.md, Bubble and Marker continuation results.
+
+## Shared Collapsible composition repair
+
+Completed Bubble's remaining expansion case through the existing Collapsible, Button and Bubble owners: public part contracts, full/preview replacement, Show more/less and chevron, current Body measurement, shadow-scoped ARIA relationships and delegate cleanup. Default Collapsible and Accordion Tab/Enter/indicator regressions verified. Eight Bubble source cases now have scoped evidence; Marker and the broader library remain active. See presentation-primitives/implementation-checklist.md, Collapsible composition results, and tmp/component-verification/collapsible-composition/2026-10-04 build logs.
+
+## Marker detail reconciliation and List Item shared layout
+
+Restored reference clock/branch/file icons, trailing native-action chevron, icon-bearing Accordion/Drawer/Button compositions and three framed file/status rows through actual ListItem. The rendered composition exposed empty ListItem media/action grid tracks and unspaced trailing content; repaired its existing owner to source wrapping flex, full-width header/footer, optional-region hiding and shared Actions gap. Marker icons now match their theme-sized canonical region at both default16 and scoped24. No component-specific spacing attributes or local painted rows.
+
+Chrome76 verifies actions, drawer closure/focus, dynamic row regions, dark narrow RTL, source/copy identity, axe0 and served built-package geometry. Existing29tests, lint/type/style/format and builds pass. MarkerBorder/Accordion/Drawer source rows now reconciled. MarkerExample/Separator still lack source shimmer: traced to shadcn shared tailwind.css and AttachmentTitle, but missing from live closed motion roles. Shared contract/presentation design remains required; no local animation inserted. Full catalog objective remains active.
+
+## List Item public composition repair
+
+List Item now uses its own preserved owner folder with canonical public part rendering, optional semantic slots, media treatments, named list Group and a Separator constituent composing the existing Separator. Corrected missing subdued paint through the shared variant builder. Authored Default/API plus eight Docs compositions replace the generated placeholder, using the same executable setup for preview/copy. Legacy leading/trailing/default slots and Marker Drawer retain the shared layout.
+
+Chrome verifies optional content, part references/delegation/reconnect, owned role release, native link/action, dark narrow RTL, token-scaled media, copy identity and axe0/22rules. Existing35tests and both builds pass; built classes exported/registered. Eight static source cases have scoped evidence. Whole-row action with independent trailing controls, remaining complete source combinations and full customization matrix remain open in plans/components/list-item/implementation-checklist.md. No complete List Item/library claim.
+
+## List Item native row actions
+
+Canonical native Root and trailing Actions now occupy sibling grid regions; actual Share click/Enter never activates the link, and native button Root supports independent Space activation. No click forwarding, event suppression, new spacing attribute or component token. All three source link treatments include their fifth Share composition. Existing theme/dictionary/part hooks retain nodes and focus; missing dictionary keys remove appearance. Marker Drawer consumer and served built package verified;35 existing focused tests and both builds pass. Standalone source compositions and full source-case reconciliation remain pending in the List Item record.

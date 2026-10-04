@@ -29,3 +29,9 @@ Root, viewport and content expose `data-has-overflow-x/y`, `data-overflow-x-star
 Measured outputs are `--tp-scroll-area-overflow-x-start/end` and `--tp-scroll-area-overflow-y-start/end` on the viewport, `--tp-scroll-area-corner-width/height` on the host, and `--tp-scroll-area-thumb-width/height` on each track. These are geometry outputs, not spacing controls. Track padding and thickness, thumb radius, focus and motion consume the shared theme. A thumb never exceeds its usable track; the Foundation's 16-unit minimum is a functional drag bound when enough track space exists.
 
 The native viewport is keyboard focusable. Tracks, thumbs and the corner are accessibility-hidden mirrors. A scrollbar contract may explicitly override `aria-hidden`; doing so makes the consumer responsible for complete scrollbar semantics. Track clicks and drags preserve keyboard focus, temporarily suspend scroll snapping, and restore it on release, cancellation, disabling, removal or disconnection. Track wheel input leaves reached edges unconsumed for ancestor scrolling; control-wheel zoom is untouched.
+
+The canonical example shows a vertical release list with shared Separators. Docs
+also includes the reference portrait-artwork gallery and a two-axis region. Both
+use the same markup for the preview and code explorer. Gallery photographs use the
+reference's public image URLs; image loading does not change the reserved 3:4
+Aspect Ratio region or replace the native viewport.

@@ -7,7 +7,11 @@ import type { PresentationDictionary } from './resolver.js';
 
 // Arrangement of registered parts. These are not replaceable dictionary appearance.
 export const registeredPartStructure: PresentationDictionary = {
-  form: [{ declarations: { display: 'flex', 'flex-direction': 'column', 'min-inline-size': '0' } }],
+  form: [
+    { declarations: { display: 'flex', 'flex-direction': 'column', 'min-inline-size': '0' } },
+    // Form owns light DOM, so its host does not receive a shadow-root reset.
+    { selector: 'tp-form:has(> &)', declarations: { 'min-inline-size': '0' } },
+  ],
   'form-actions': [
     { declarations: { display: 'flex', 'flex-wrap': 'wrap', 'align-items': 'center' } },
   ],
@@ -47,6 +51,8 @@ export const registeredPartStructure: PresentationDictionary = {
         [
           {
             declarations: {
+              // Registered native items do not inherit TpElement's shadow reset.
+              'box-sizing': 'border-box',
               display: 'flex',
               'align-items': 'center',
               'inline-size': '100%',
