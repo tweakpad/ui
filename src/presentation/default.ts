@@ -167,10 +167,15 @@ for (const [name, paintedPart] of [
       const variant = key.split('-variant-')[1];
       passive[key] =
         variant && part.name === paintedPart
-          ? variantPresentation(variant, name === 'Bubble').map((entry) =>
+          ? variantPresentation(variant, name === 'Bubble' || name === 'Badge').map((entry) =>
               name === 'Bubble' && entry.selector
                 ? { ...entry, selector: entry.selector.replaceAll('&', '&:is(button,a)') }
-                : entry,
+                : name === 'Badge' && entry.selector
+                  ? {
+                      ...entry,
+                      selector: `:host([interactive]) ${entry.selector.replaceAll('&', '&:is(button,a)')}`,
+                    }
+                  : entry,
             )
           : [];
     }

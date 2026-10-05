@@ -12,38 +12,7 @@ export { TpAspectRatio } from './aspect-ratio/index.js';
 export { TpAttachment, TpAttachmentGroup } from './attachment/index.js';
 export type { AttachmentStatus } from './attachment/index.js';
 
-export class TpBadge extends TpElement {
-  static tagName = 'tp-badge';
-  static override properties = {
-    ...TpElement.properties,
-    variant: { type: String, reflect: true },
-  };
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: inline-flex;
-      }
-
-      .badge {
-        display: inline-flex;
-        align-items: center;
-      }
-    `,
-  ];
-  variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link' = 'default';
-  protected override render() {
-    return this.renderPart(
-      'badge',
-      Object.freeze({ variant: this.variant, disabled: this.disabled }),
-      {
-        tag: 'span',
-        properties: { class: 'badge', part: 'badge' },
-        content: html`<slot></slot>`,
-      },
-    );
-  }
-}
+export { TpBadge } from './badge/index.js';
 
 export { TpBubble, TpBubbleGroup } from './bubble/index.js';
 
