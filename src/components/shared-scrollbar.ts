@@ -46,16 +46,20 @@ export const scrollbarStyles = css`
     user-select: none;
     direction: ltr;
   }
+
   .tp-scrollbar-thumb {
     display: block;
     position: relative;
   }
+
   .tp-scrollbar[data-orientation='vertical'] .tp-scrollbar-thumb {
     inline-size: 100%;
   }
+
   .tp-scrollbar[data-orientation='horizontal'] .tp-scrollbar-thumb {
     block-size: 100%;
   }
+
   .tp-scrollbar[data-visible='false'] {
     opacity: 0;
     pointer-events: none;

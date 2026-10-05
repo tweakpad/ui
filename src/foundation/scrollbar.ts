@@ -75,19 +75,21 @@ interface Geometry {
 /** One capture, coordinate, visibility and owned-style owner for both consumers.
  * The adapter alone decides continuous scrolling versus snap-on-release. */
 export class ScrollbarController {
-  #geometry: (Geometry) | undefined;
-  #styles: (OwnedStyles) | undefined;
-  #trackStyles: (OwnedStyles) | undefined;
-  #scheduler: (Scheduler) | undefined;
+  #geometry: Geometry | undefined;
+  #styles: OwnedStyles | undefined;
+  #trackStyles: OwnedStyles | undefined;
+  #scheduler: Scheduler | undefined;
   #activityCancel: (() => void) | undefined;
-  #gesture: {
-    id: number;
-    geometry: Geometry;
-    grab: number;
-    scope: CleanupScope;
-    event: PointerEvent;
-    reason: 'drag' | 'track-press';
-  } | undefined;
+  #gesture:
+    | {
+        id: number;
+        geometry: Geometry;
+        grab: number;
+        scope: CleanupScope;
+        event: PointerEvent;
+        reason: 'drag' | 'track-press';
+      }
+    | undefined;
   #scrolling = false;
   #hovered = false;
   #focused = false;

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Carousel verification</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        font-family: system-ui;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+      }
+      main {
+        max-width: 780px;
+        margin: auto;
+      }
+      section {
+        margin-block: 32px;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+      tp-carousel {
+        width: 100%;
+      }
+      tp-card {
+        min-height: 180px;
+      }
+      tp-card h3 {
+        margin-top: 0;
+      }
+      .vertical {
+        height: 360px;
+        width: 360px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Carousel verification</h1>
+      <section>
+        <h2>Slotted content</h2>
+        <tp-carousel id="slots" label="Project stages"
+          ><tp-card
+            ><h3>Research</h3>
+            <p>Understand the people using the product.</p>
+            <tp-button type="button">Read research</tp-button></tp-card
+          ><tp-card
+            ><h3>Design</h3>
+            <p>Explore and refine the interaction.</p>
+            <tp-button type="button">Open designs</tp-button></tp-card
+          ><tp-card
+            ><h3>Review</h3>
+            <p>Test the complete experience.</p>
+            <tp-button type="button">Start review</tp-button></tp-card
+          ></tp-carousel
+        >
+      </section>
+      <section>
+        <h2>Data and shared scrollbar</h2>
+        <tp-carousel id="data" label="Collection"></tp-carousel>
+      </section>
+      <section>
+        <h2>Virtual data</h2>
+        <tp-carousel id="virtual" label="Virtual collection"></tp-carousel>
+      </section>
+    </main>
+    <script type="module">
+      const built = new URL(location.href).searchParams.has('package');
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = built ? '/dist/styles.css' : '/src/styles.css';
+      document.head.append(link);
+      const { html } = await import('/node_modules/lit/index.js');
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      const slots = document.querySelector('#slots'),
+        data = document.querySelector('#data'),
+        virtual = document.querySelector('#virtual');
+      data.items = Array.from({ length: 8 }, (_, id) => ({ id, label: `Item ${id + 1}` }));
+      data.renderItem = (item) =>
+        html`<tp-card
+          ><h3>${item.label}</h3>
+          <p>A real Card inside a keyed slide shell.</p></tp-card
+        >`;
+      data.options = {
+        layout: { itemsPerView: 2.5, gap: 16 },
+        scrollbar: { draggable: true },
+        indicators: { type: 'bullets', clickable: true },
+      };
+      virtual.items = Array.from({ length: 100 }, (_, id) => ({ id, label: `Record ${id + 1}` }));
+      virtual.renderItem = data.renderItem;
+      virtual.options = {
+        layout: { itemsPerView: 2, gap: 16 },
+        virtual: {},
+        scrollbar: { draggable: true },
+      };
+      const events = [];
+      for (const type of [
+        'tp-value-change',
+        'tp-value-commit',
+        'tp-carousel-settled',
+        'tp-diagnostic',
+      ])
+        document.addEventListener(type, (e) =>
+          events.push({
+            type,
+            target: e.target.id,
+            value: e.detail.value,
+            message: e.detail.message,
+          }),
+        );
+      window.carouselFixture = { slots, data, virtual, events };
+    </script>
+  </body>
+</html>

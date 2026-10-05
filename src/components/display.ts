@@ -1,17 +1,12 @@
-import { ambientCss, transitionCss } from '../presentation/motion.js';
-import { bindPart } from '../foundation/part.js';
+import { ambientCss } from '../presentation/motion.js';
 import { css, html, nothing } from 'lit';
-import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
-import { TpValueChangeEvent } from '../foundation/events.js';
 import { progressMotionRoles } from './progress/motion.js';
 import {
   prepareMotion,
-  resolvesReducedMotion,
   type MotionHandle,
   type MotionRoleDefinition,
 } from '../foundation/motion.js';
-import { assignedElements, controlStyles, eventReason } from './shared.js';
 
 export const displayMotionRoles = {
   carouselTrack: {
@@ -33,165 +28,8 @@ export const displayMotionRoles = {
 export { TpAvatar, TpAvatarGroup } from './avatar/index.js';
 export type { AvatarLoadingStatus } from './avatar/index.js';
 
-export class TpCarousel extends TpElement {
-  static tagName = 'tp-carousel';
-  static override properties = {
-    ...TpElement.properties,
-    index: { type: Number, reflect: true },
-    loop: { type: Boolean },
-    autoplay: { type: Number },
-  };
-  static override styles = [
-    TpElement.styles,
-    controlStyles,
-    css`
-      :host {
-        display: block;
-      }
-
-      .viewport {
-        overflow: hidden;
-      }
-
-      .track {
-        display: flex;
-        transition: ${transitionCss(['transform'])};
-        transform: translateX(calc(var(--tp-carousel-index, 0) * -100%));
-      }
-
-      .track[data-tp-motion-driven] {
-        transition: none !important;
-      }
-
-      ::slotted(*) {
-        flex: 0 0 100%;
-      }
-
-      .controls {
-        display: flex;
-        justify-content: space-between;
-        margin-top: var(--tp-space-2);
-      }
-    `,
-  ];
-  index = 0;
-  loop = false;
-  autoplay = 0;
-  #slides: HTMLElement[] = [];
-  #timer: number | undefined;
-  #trackMotion: MotionHandle | null = null;
-  protected override willUpdate(changed: PropertyValues<this>): void {
-    super.willUpdate(changed);
-    const previous = changed.get('index');
-    if (previous === undefined || previous === this.index) return;
-    this.#trackMotion = prepareMotion(
-      this,
-      this.renderRoot.querySelector<HTMLElement>('.track'),
-      displayMotionRoles.carouselTrack,
-      { phase: 'change', fromState: Number(previous), toState: this.index },
-    );
-  }
-  protected override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
-    if (changed.has('index')) {
-      this.#trackMotion?.start();
-      this.#trackMotion = null;
-    }
-  }
-  protected override render() {
-    return html`<section
-      part="root"
-      aria-roledescription="carousel"
-      @keydown=${this.#key}
-      @pointerenter=${this.#pause}
-      @pointerleave=${this.#schedule}
-    >
-      <div class="viewport" part="viewport">
-        <div
-          class="track"
-          part="track"
-          ${bindPart({ style: { '--tp-carousel-index': this.index } })}
-        >
-          <slot @slotchange=${this.#sync}></slot>
-        </div>
-      </div>
-      <div class="controls" part="controls">
-        <button
-          class="control"
-          part="previous focusable"
-          type="button"
-          ?disabled=${this.disabled || (!this.loop && this.index <= 0)}
-          @click=${(e: Event) => this.#move(-1, e)}
-          aria-label="Previous slide"
-        >
-          ‹</button
-        ><span part="status" aria-live="polite"
-          >${this.#slides.length ? `${this.index + 1} of ${this.#slides.length}` : '0 of 0'}</span
-        ><button
-          class="control"
-          part="next focusable"
-          type="button"
-          ?disabled=${this.disabled || (!this.loop && this.index >= this.#slides.length - 1)}
-          @click=${(e: Event) => this.#move(1, e)}
-          aria-label="Next slide"
-        >
-          ›
-        </button>
-      </div>
-    </section>`;
-  }
-  #sync = (event: Event): void => {
-    this.#slides = assignedElements(event.currentTarget as HTMLSlotElement);
-    this.#slides.forEach((slide, i) => {
-      slide.setAttribute('role', 'group');
-      slide.setAttribute('aria-roledescription', 'slide');
-      slide.setAttribute('aria-label', `${i + 1} of ${this.#slides.length}`);
-      slide.toggleAttribute('inert', i !== this.index);
-    });
-    this.index = Math.max(0, Math.min(this.index, this.#slides.length - 1));
-    this.#schedule();
-    this.requestUpdate();
-  };
-  #move(delta: number, event?: Event): void {
-    if (!this.#slides.length) return;
-    let next = this.index + delta;
-    if (this.loop) next = (next + this.#slides.length) % this.#slides.length;
-    else next = Math.max(0, Math.min(this.#slides.length - 1, next));
-    const previous = this.index;
-    if (
-      next !== previous &&
-      this.dispatchEvent(
-        new TpValueChangeEvent(next, previous, event ? eventReason(event) : 'programmatic', event),
-      )
-    ) {
-      this.index = next;
-      this.#syncSlides();
-    }
-  }
-  #syncSlides(): void {
-    this.#slides.forEach((slide, i) => slide.toggleAttribute('inert', i !== this.index));
-    this.#schedule();
-  }
-  #key(event: KeyboardEvent): void {
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-      event.preventDefault();
-      const rtl = this.direction === 'rtl';
-      this.#move((event.key === 'ArrowRight') !== rtl ? 1 : -1, event);
-    }
-  }
-  #pause = (): void => {
-    if (this.#timer !== undefined) clearTimeout(this.#timer);
-  };
-  #schedule = (): void => {
-    this.#pause();
-    if (this.autoplay > 0 && !resolvesReducedMotion(this))
-      this.#timer = window.setTimeout(() => this.#move(1), this.autoplay);
-  };
-  override disconnectedCallback(): void {
-    this.#pause();
-    super.disconnectedCallback();
-  }
-}
+export { TpCarousel } from './carousel/index.js';
+export type * from './carousel/index.js';
 
 export * from './data-visualization/index.js';
 

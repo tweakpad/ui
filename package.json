@@ -17,6 +17,10 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
+    "./carousel": {
+      "types": "./dist/foundation/carousel/index.d.ts",
+      "import": "./dist/carousel.js"
+    },
     "./drag-drop": {
       "types": "./dist/foundation/drag-drop/index.d.ts",
       "import": "./dist/drag-drop.js"

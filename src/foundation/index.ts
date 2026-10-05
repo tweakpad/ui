@@ -31,3 +31,5 @@ export type { ToolbarOptions, ToolbarItemOptions, ToolbarRegistration } from './
 
 export { ContentSecurityService } from './content-security.js';
 export type { ContentSecurityOptions, ContentSecurityScope } from './content-security.js';
+
+export * from './carousel/index.js';

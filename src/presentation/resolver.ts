@@ -38,7 +38,10 @@ export function resolveComponentPresentation(
       if (!axis.values.includes(String(value))) continue;
       // Scoped axes are represented by their cataloged part-key inventory.
       if (axis.name.startsWith('reactions') && !part.name.endsWith('-reactions')) continue;
-      const suffix = axis.name.replace(/^(?:item|action|pageLink|reactions)(?=[A-Z])/, '');
+      const suffix = axis.name.replace(
+        /^(?:item|action|pageLink|reactions|indicator|controls)(?=[A-Z])/,
+        '',
+      );
       const key = `${part.name}-${suffix[0]?.toLowerCase()}${suffix.slice(1)}-${String(value)}`;
       if (inventory.includes(key)) keys.push(key);
     }

@@ -261,9 +261,18 @@ const examples = {
   'tp-avatar': () => html`<tp-avatar fallback="IV" alt="Ivan V." size="default"></tp-avatar>`,
   'tp-carousel': () => html`
     <tp-carousel label="Featured projects">
-      <div>Project one</div>
-      <div>Project two</div>
-      <div>Project three</div>
+      <tp-card
+        ><h3>Project one</h3>
+        <p>Research the opportunity.</p></tp-card
+      >
+      <tp-card
+        ><h3>Project two</h3>
+        <p>Develop the interaction.</p></tp-card
+      >
+      <tp-card
+        ><h3>Project three</h3>
+        <p>Review the experience.</p></tp-card
+      >
     </tp-carousel>
   `,
   'tp-data-visualization': () => dataVisualizationExample(),

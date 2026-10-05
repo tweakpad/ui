@@ -248,7 +248,7 @@ const surfaceAppearance = [
   }),
 ];
 const sharedPresentation: Record<string, readonly PresentationRule[]> = {};
-for (const part of ['input', 'text-area', 'carousel-previous', 'carousel-next', 'toast-close'])
+for (const part of ['input', 'text-area', 'toast-close'])
   sharedPresentation[part] = fieldAppearance;
 for (const part of [
   'attachment-root',

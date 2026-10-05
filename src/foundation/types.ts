@@ -3,6 +3,7 @@ export type Direction = 'ltr' | 'rtl';
 export type LogicalPosition = 'leading' | 'trailing';
 export type ChangeReason =
   | 'programmatic'
+  | 'automatic-advance'
   | 'initial'
   | 'missing'
   | 'disabled'

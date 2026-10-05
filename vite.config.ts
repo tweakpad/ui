@@ -1,4 +1,4 @@
-import { readdirSync, copyFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
@@ -12,12 +12,18 @@ const iconEntries = Object.fromEntries(
 export default defineConfig({
   plugins: [
     {
-      name: 'drag-drop-license',
-      closeBundle() {
-        copyFileSync(
-          resolve(import.meta.dirname, 'src/foundation/drag-drop/LICENSE.dnd-kit'),
-          resolve(import.meta.dirname, 'dist/LICENSE.dnd-kit'),
-        );
+      name: 'bundled-source-licenses',
+      generateBundle() {
+        for (const [source, fileName] of [
+          ['src/foundation/carousel/LICENSE', 'LICENSE.swiper'],
+          ['src/foundation/drag-drop/LICENSE.dnd-kit', 'LICENSE.dnd-kit'],
+        ] as const) {
+          this.emitFile({
+            type: 'asset',
+            fileName,
+            source: readFileSync(resolve(import.meta.dirname, source)),
+          });
+        }
       },
     },
   ],
@@ -27,6 +33,7 @@ export default defineConfig({
       entry: {
         index: resolve(import.meta.dirname, 'src/index.ts'),
         'drag-drop': resolve(import.meta.dirname, 'src/foundation/drag-drop/index.ts'),
+        carousel: resolve(import.meta.dirname, 'src/foundation/carousel/index.ts'),
         register: resolve(import.meta.dirname, 'src/register.ts'),
         'register/icon': resolve(import.meta.dirname, 'src/register/icon.ts'),
         ...iconEntries,
