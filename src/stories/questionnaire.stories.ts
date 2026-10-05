@@ -2,33 +2,9 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import type { QuestionnaireQuestion } from '../foundation/questionnaire.js';
 import documentation from '../../docs/questionnaire.md?raw';
-const questions: readonly QuestionnaireQuestion[] = [
-  {
-    name: 'prototype',
-    title: 'What should we prototype next?',
-    description: 'Choose a direction or write your own.',
-    required: true,
-    choices: [
-      {
-        value: 'delegation',
-        label: 'Delegation',
-        description: 'Show how work moves to a specialist.',
-      },
-      { value: 'questions', label: 'Question prompts' },
-    ],
-    input: { label: 'Another answer', placeholder: 'Type another answer…' },
-  },
-  {
-    name: 'detail',
-    title: 'How much detail?',
-    description: 'Skip this if you are not sure yet.',
-    skippable: true,
-    choices: [
-      { value: 'focused', label: 'Focused' },
-      { value: 'complete', label: 'Complete flow' },
-    ],
-  },
-];
+import { questionnaireData } from './questionnaire-data.js';
+import { questionnaireExamples } from './questionnaire.examples.js';
+const questions = questionnaireData.default.questions as readonly QuestionnaireQuestion[];
 interface Args {
   flow: 'linear' | 'free';
   choiceMode: 'single' | 'multiple';
@@ -43,6 +19,7 @@ const source = `<tp-questionnaire label="Project questionnaire" shortcut-mode="l
 <script>
   const questionnaire = document.querySelector('tp-questionnaire');
   questionnaire.questions = ${JSON.stringify(questions, null, 2)};
+  questionnaire.actions = { submit: { label: 'Save plan' } };
   questionnaire.addEventListener('tp-submit', event => {
     event.preventDefault();
     console.log(event.detail.answers, [...event.detail.data]);
@@ -54,7 +31,11 @@ const meta = {
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
-    docs: { description: { component: documentation }, source: { code: source } },
+    docs: {
+      examples: questionnaireExamples,
+      description: { component: documentation },
+      source: { code: source },
+    },
   },
   args: {
     flow: 'linear',
@@ -77,9 +58,10 @@ const meta = {
     label: { control: 'text' },
   },
   render: (args) =>
-    html`<div style="max-inline-size:calc(var(--tp-spacing) * 160);margin-inline:auto">
+    html`<div style="max-inline-size:28rem;margin-inline:auto">
       <tp-questionnaire
         .questions=${questions}
+        .actions=${{ submit: { label: 'Save plan' } }}
         .flow=${args.flow}
         .choiceMode=${args.choiceMode}
         .skippable=${args.skippable}

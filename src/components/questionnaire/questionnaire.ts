@@ -1,4 +1,6 @@
 import { html, nothing, type PropertyValues, type TemplateResult } from 'lit';
+import { keyed } from 'lit/directives/keyed.js';
+import type { TpButton } from '../button.js';
 import { createId } from '../../foundation/id.js';
 import { TpElement } from '../../foundation/element.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
@@ -26,6 +28,16 @@ import { type PartRenderOptions } from '../../foundation/part.js';
 import { checkIcon } from '../../icons/check.js';
 import { questionnaireStyles } from './styles.js';
 
+export type QuestionnaireAction = 'previous' | 'skip' | 'next' | 'submit';
+export interface QuestionnaireActionOptions {
+  label?: string;
+  variant?: TpButton['variant'];
+  size?: TpButton['size'];
+  disabled?: boolean;
+  hidden?: boolean;
+}
+export type QuestionnaireActions = Partial<Record<QuestionnaireAction, QuestionnaireActionOptions>>;
+
 export interface QuestionnaireItemChangeDetail {
   value: string;
   previousValue: string;
@@ -51,6 +63,7 @@ export class TpQuestionnaire extends TpElement {
   static override properties = {
     ...TpElement.properties,
     questions: { attribute: false },
+    actions: { attribute: false },
     flow: { type: String, reflect: true },
     choiceMode: { type: String, attribute: 'choice-mode', reflect: true },
     skippable: { type: Boolean },
@@ -67,6 +80,7 @@ export class TpQuestionnaire extends TpElement {
   static override styles = [TpElement.styles, questionnaireStyles];
 
   questions: readonly QuestionnaireQuestion[] = [];
+  actions: QuestionnaireActions = {};
   flow: QuestionnaireFlow = 'linear';
   choiceMode: QuestionnaireChoiceMode = 'single';
   skippable = false;
@@ -201,7 +215,7 @@ export class TpQuestionnaire extends TpElement {
     this.#form()?.reset();
   }
 
-  #part(name: string, options: PartRenderOptions): unknown {
+  #part(name: string, options: PartRenderOptions, state: Record<string, unknown> = {}): unknown {
     return this.renderPart(
       name === 'root' ? 'questionnaire' : `questionnaire-${name}`,
       {
@@ -211,6 +225,8 @@ export class TpQuestionnaire extends TpElement {
         last: this.last,
         status: this.status,
         disabled: this.disabled,
+        name: this.currentItem,
+        ...state,
       },
       options,
     );
@@ -229,25 +245,62 @@ export class TpQuestionnaire extends TpElement {
     const described = [active?.description && descriptionId, error && errorId]
       .filter(Boolean)
       .join(' ');
-    return this.#part('root', {
-      tag: 'form',
+    const progress = this.#part('progress', {
       properties: {
-        'aria-label': this.label,
-        novalidate: true,
+        role: 'progressbar',
+        'aria-label': 'Questionnaire progress',
+        'aria-valuemin': 0,
+        'aria-valuemax': total,
+        'aria-valuenow': current,
+        'aria-valuetext': `Question ${current} of ${total}`,
         'data-current': current,
         'data-total': total,
         'data-first': this.first,
         'data-last': this.last,
-        '@submit': this.#submit,
-        '@reset': this.#reset,
-        '@keydown': this.#keyDown,
       },
-      content: html`
-        ${this.#part('progress', { properties: { role: 'status', 'aria-live': 'polite', 'data-current': current, 'data-total': total, 'data-first': this.first, 'data-last': this.last }, content: total ? `Question ${current} of ${total} · ${this.#logicalQuestions().filter((q) => this.#questionStatus(q) !== 'unanswered').length} completed` : '0 of 0' })}
-        ${this.#renderHiddenAnswers(active?.name ?? '')}
-        ${
-          active
-            ? this.#part('question', {
+      content: `Question ${current} of ${total}`,
+    });
+    const actions = this.#renderActions(active, current - 1, total);
+    const input =
+      active && (active.input || questionnaireQuestionKind(active, this.choiceMode) === 'text')
+        ? this.#renderTextQuestion(active, descriptionId, errorId, Boolean(error))
+        : nothing;
+    const regions = active
+      ? {
+          title: this.#part('title', {
+            tag: 'legend',
+            properties: { id: titleId },
+            protectedProperties: ['id'],
+            content: active.title,
+          }),
+          description: active.description
+            ? this.#part('description', {
+                properties: { id: descriptionId },
+                content: active.description,
+              })
+            : nothing,
+          choices: active.choices?.length
+            ? this.#renderChoiceQuestion(active, descriptionId, errorId, Boolean(error), input)
+            : this.#part('choices', { content: input }, { shortcuts: this.shortcutMode }),
+          input,
+          error: error
+            ? this.#part(
+                'error',
+                { properties: { id: errorId, role: 'alert' }, content: error },
+                { invalid: true },
+              )
+            : nothing,
+          progress,
+          actions,
+        }
+      : undefined;
+    const question =
+      active && regions
+        ? keyed(
+            active.name,
+            this.#part(
+              'question',
+              {
                 tag: 'fieldset',
                 properties: {
                   'data-name': active.name,
@@ -256,24 +309,45 @@ export class TpQuestionnaire extends TpElement {
                   'data-invalid': Boolean(error),
                   'data-required': Boolean(active.required),
                   tabindex: -1,
+                  'aria-labelledby': titleId,
                   'aria-describedby': described || undefined,
                   'aria-invalid': error ? 'true' : undefined,
                   disabled: this.disabled,
                 },
-                content: html`
-                  ${this.#part('title', { tag: 'legend', properties: { id: titleId }, protectedProperties: ['id'], content: active.title })}
-                  ${active.description ? this.#part('description', { properties: { id: descriptionId }, content: active.description }) : nothing}
-                  ${active.choices?.length ? this.#renderChoiceQuestion(active, descriptionId, errorId, Boolean(error)) : nothing}
-                  ${active.input || questionnaireQuestionKind(active, this.choiceMode) === 'text' ? this.#renderTextQuestion(active, descriptionId, errorId, Boolean(error)) : nothing}
-                  ${error ? this.#part('error', { properties: { id: errorId, role: 'alert' }, content: error }) : nothing}
-                `,
-              })
-            : nothing
-        }
-        ${this.#renderActions(active, current - 1, total)}
-      `,
-    });
+                content: html`${regions.title}${regions.description}${regions.choices}${regions.error}`,
+              },
+              {
+                active: true,
+                invalid: Boolean(error),
+                required: Boolean(active.required),
+                multiple: questionnaireQuestionKind(active, this.choiceMode) === 'multiple',
+                regions,
+              },
+            ),
+          )
+        : nothing;
+    const answers = this.#renderHiddenAnswers(active?.name ?? '');
+    return this.#part(
+      'root',
+      {
+        tag: 'form',
+        properties: {
+          'aria-label': this.label,
+          novalidate: true,
+          'data-current': current,
+          'data-total': total,
+          'data-first': this.first,
+          'data-last': this.last,
+          '@submit': this.#submit,
+          '@reset': this.#reset,
+          '@keydown': this.#keyDown,
+        },
+        content: html`${progress}${answers}${question}${actions}`,
+      },
+      { regions: { progress, answers, question, actions } },
+    );
   }
+
   #renderTextQuestion(
     question: QuestionnaireQuestion,
     descriptionId: string,
@@ -284,90 +358,114 @@ export class TpQuestionnaire extends TpElement {
     const value = this.#state.inputValue(question);
     const answer = this.#answers[question.name];
     const selected = Array.isArray(answer) ? answer.includes(value) : answer === value;
-    return this.#part('input-region', {
-      content: html`<input
-        class="free-answer"
-        data-answer-control
-        .type=${question.input?.type ?? question.inputType ?? 'text'}
-        name=${selected && !this.#skipped.has(question.name) ? question.name : nothing}
-        .value=${value}
-        .placeholder=${config.placeholder ?? ''}
-        aria-label=${question.input?.label ?? question.title}
-        pattern=${config.pattern ?? nothing}
-        minlength=${config.minLength ?? nothing}
-        maxlength=${config.maxLength ?? nothing}
-        min=${question.input?.min ?? nothing}
-        max=${question.input?.max ?? nothing}
-        step=${question.input?.step ?? nothing}
-        autocomplete=${question.input?.autocomplete ?? nothing}
-        inputmode=${question.input?.inputMode ?? nothing}
-        enterkeyhint=${question.input?.enterKeyHint ?? nothing}
-        autocapitalize=${question.input?.autocapitalize ?? nothing}
-        spellcheck=${question.input?.spellcheck === undefined ? nothing : String(question.input.spellcheck)}
-        ?required=${question.required && !question.choices?.length}
-        ?disabled=${this.disabled || question.input?.disabled}
-        ?readonly=${this.readOnly || question.input?.readOnly}
-        aria-invalid=${invalid ? 'true' : nothing}
-        aria-describedby=${[question.description && descriptionId, invalid && errorId].filter(Boolean).join(' ') || nothing}
-        aria-keyshortcuts=${selected && value.trim() ? 'Enter' : nothing}
-        @input=${this.#textInput}
-      />`,
-    });
+    return this.#part(
+      'input-region',
+      {
+        content: html`<input
+          class="free-answer"
+          data-answer-control
+          .type=${question.input?.type ?? question.inputType ?? 'text'}
+          name=${selected && !this.#skipped.has(question.name) ? question.name : nothing}
+          .value=${value}
+          .placeholder=${config.placeholder ?? ''}
+          aria-label=${question.input?.label ?? question.title}
+          pattern=${config.pattern ?? nothing}
+          minlength=${config.minLength ?? nothing}
+          maxlength=${config.maxLength ?? nothing}
+          min=${question.input?.min ?? nothing}
+          max=${question.input?.max ?? nothing}
+          step=${question.input?.step ?? nothing}
+          autocomplete=${question.input?.autocomplete ?? nothing}
+          inputmode=${question.input?.inputMode ?? nothing}
+          enterkeyhint=${question.input?.enterKeyHint ?? nothing}
+          autocapitalize=${question.input?.autocapitalize ?? nothing}
+          spellcheck=${question.input?.spellcheck === undefined ? nothing : String(question.input.spellcheck)}
+          ?required=${question.required && !question.choices?.length}
+          ?disabled=${this.disabled || question.input?.disabled}
+          ?readonly=${this.readOnly || question.input?.readOnly}
+          aria-invalid=${invalid ? 'true' : nothing}
+          aria-describedby=${[question.description && descriptionId, invalid && errorId].filter(Boolean).join(' ') || nothing}
+          aria-keyshortcuts=${selected && value.trim() ? 'Enter' : nothing}
+          @input=${this.#textInput}
+        />`,
+      },
+      {
+        disabled: this.disabled || Boolean(question.input?.disabled),
+        filled: Boolean(value.trim()),
+        invalid,
+      },
+    );
   }
   #renderChoiceQuestion(
     question: QuestionnaireQuestion,
     descriptionId: string,
     errorId: string,
     invalid: boolean,
+    input: unknown,
   ): unknown {
     const kind = questionnaireQuestionKind(question, this.choiceMode),
       answer = this.#answers[question.name];
     const selected = new Set(Array.isArray(answer) ? answer : answer ? [answer] : []),
       shortcuts = this.#choiceShortcuts(question);
-    return this.#part('choices', {
-      content: (question.choices ?? []).map((choice, index) => {
-        const checked = selected.has(choice.value),
-          shortcut = shortcuts[index] ?? '',
-          type = kind === 'multiple' ? 'checkbox' : 'radio';
-        return this.#part('choice', {
-          tag: 'label',
-          properties: {
-            'data-type': type,
-            'data-disabled': Boolean(this.disabled || choice.disabled),
-            'data-checked': checked,
-            'data-invalid': invalid,
-            'data-shortcut': shortcut || undefined,
-          },
-          content: html`
-            <input
-              class="choice-native"
-              data-answer-control
-              data-choice-value=${choice.value}
-              type=${type}
-              name=${this.#skipped.has(question.name) ? nothing : question.name}
-              .value=${choice.value}
-              .checked=${checked}
-              ?required=${kind === 'single' && question.required && !question.input}
-              ?disabled=${this.disabled || choice.disabled}
-              aria-readonly=${this.readOnly ? 'true' : nothing}
-              aria-keyshortcuts=${[shortcut, checked ? 'Enter' : ''].filter(Boolean).join(' ') || nothing}
-              aria-describedby=${[question.description && descriptionId, invalid && errorId].filter(Boolean).join(' ') || nothing}
-              aria-invalid=${invalid ? 'true' : nothing}
-              @click=${this.#choiceClick}
-              @change=${this.#choiceChange}
-            />
-            <span class="box" aria-hidden="true"
-              >${checked ? (type === 'checkbox' ? html`<tp-icon .icon=${checkIcon} size="sm"></tp-icon>` : html`<span class="dot"></span>`) : nothing}</span
-            >
-            <span class="choice-copy"
-              ><span>${choice.label}</span
-              >${choice.description ? html`<span class="choice-description">${choice.description}</span>` : nothing}</span
-            >
-            ${shortcut ? html`<tp-key-hint class="shortcut" aria-hidden="true">${shortcut}</tp-key-hint>` : nothing}
-          `,
-        });
-      }),
-    });
+    return this.#part(
+      'choices',
+      {
+        content: html`${(question.choices ?? []).map((choice, index) => {
+          const checked = selected.has(choice.value),
+            shortcut = shortcuts[index] ?? '',
+            type = kind === 'multiple' ? 'checkbox' : 'radio';
+          return this.#part(
+            'choice',
+            {
+              tag: 'label',
+              properties: {
+                'data-type': type,
+                'data-disabled': Boolean(this.disabled || choice.disabled),
+                'data-checked': checked,
+                'data-invalid': invalid,
+                'data-shortcut': shortcut || undefined,
+              },
+              content: html`
+                <input
+                  class="choice-native"
+                  data-answer-control
+                  data-choice-value=${choice.value}
+                  type=${type}
+                  name=${this.#skipped.has(question.name) ? nothing : question.name}
+                  .value=${choice.value}
+                  .checked=${checked}
+                  ?required=${kind === 'single' && question.required && !question.input}
+                  ?disabled=${this.disabled || choice.disabled}
+                  aria-readonly=${this.readOnly ? 'true' : nothing}
+                  aria-keyshortcuts=${[shortcut, checked ? 'Enter' : ''].filter(Boolean).join(' ') || nothing}
+                  aria-describedby=${[question.description && descriptionId, invalid && errorId].filter(Boolean).join(' ') || nothing}
+                  aria-invalid=${invalid ? 'true' : nothing}
+                  @click=${this.#choiceClick}
+                  @change=${this.#choiceChange}
+                />
+                <span class="box" aria-hidden="true"
+                  >${checked ? (type === 'checkbox' ? html`<tp-icon .icon=${checkIcon} size="var(--tp-icon-size-sm)"></tp-icon>` : html`<span class="dot"></span>`) : nothing}</span
+                >
+                <span class="choice-copy"
+                  ><span>${choice.label}</span
+                  >${choice.description ? html`<span class="choice-description">${choice.description}</span>` : nothing}</span
+                >
+                ${shortcut ? html`<tp-key-hint class="shortcut" aria-hidden="true">${shortcut}</tp-key-hint>` : nothing}
+              `,
+            },
+            {
+              value: choice.value,
+              type,
+              checked,
+              disabled: this.disabled || Boolean(choice.disabled),
+              invalid,
+              shortcut,
+            },
+          );
+        })}${input}`,
+      },
+      { shortcuts: this.shortcutMode },
+    );
   }
   #renderHiddenAnswers(activeName: string): TemplateResult {
     return html`<div hidden>
@@ -378,26 +476,30 @@ export class TpQuestionnaire extends TpElement {
     const status = active ? this.#questionStatus(active) : 'unanswered',
       skip = Boolean(active && !active.required && (active.skippable ?? this.skippable));
     const action = (
-      name: string,
+      name: QuestionnaireAction,
       label: string,
       visible: boolean,
       handler: ((event: MouseEvent) => void) | undefined,
       shortcut?: string,
-    ) =>
-      html`<tp-button
+    ) => {
+      const config = this.actions[name];
+      visible &&= !config?.hidden;
+      return html`<tp-button
         type=${name === 'submit' ? 'submit' : 'button'}
-        variant=${name === 'previous' || name === 'skip' ? 'outline' : 'default'}
+        variant=${config?.variant ?? (name === 'previous' || name === 'skip' ? 'outline' : 'default')}
+        size=${config?.size ?? 'default'}
         data-action=${name}
         data-status=${status}
         ?data-visible=${visible}
         ?data-hidden=${!visible}
         ?hidden=${!visible}
-        ?disabled=${this.disabled || !visible || (name === 'skip' && this.readOnly)}
+        ?disabled=${this.disabled || !visible || config?.disabled || (name === 'skip' && this.readOnly)}
         data-shortcut=${shortcut ?? nothing}
         aria-keyshortcuts=${shortcut ?? nothing}
         @click=${handler}
-        >${label}</tp-button
+        >${config?.label ?? label}</tp-button
       >`;
+    };
     return this.#part('actions', {
       content: html`${action('previous', 'Previous', index > 0, this.#previous, 'ArrowLeft')}${action('skip', 'Skip', skip, this.#skip)}${action('next', 'Next', index >= 0 && index < total - 1, this.#next, status === 'answered' ? 'Enter' : undefined)}${action('submit', 'Submit', index >= 0 && index === total - 1, undefined, status === 'answered' ? 'Enter' : undefined)}`,
     });
@@ -669,6 +771,13 @@ export class TpQuestionnaire extends TpElement {
     if (event.defaultPrevented || event.isComposing || event.repeat || this.disabled) return;
     const target = event.composedPath()[0];
     if (!(target instanceof HTMLElement)) return;
+    // Real buttons own Enter/Space, including Previous, Skip, Reset and host actions.
+    if (
+      event
+        .composedPath()
+        .some((node) => node instanceof HTMLElement && node.matches('button,tp-button,a[href]'))
+    )
+      return;
     const textEntry = target.matches(
       'input:not([type=radio]):not([type=checkbox]):not([type=hidden]),textarea,[contenteditable]:not([contenteditable=false])',
     );
@@ -703,6 +812,11 @@ export class TpQuestionnaire extends TpElement {
     ) {
       event.preventDefault();
       this.#advance('keyboard', event);
+      return;
+    }
+    // Prevent the browser's implicit form submit from an unfilled answer.
+    if (event.key === 'Enter') {
+      event.preventDefault();
       return;
     }
     if (textEntry || event.altKey || event.ctrlKey || event.metaKey) return;

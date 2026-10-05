@@ -42,6 +42,8 @@ export const questionnaireStyles = css`
     inline-size: var(--tp-icon-size-md);
     block-size: var(--tp-icon-size-md);
     flex: none;
+    /* Align to the first text line even when the label or description wraps. */
+    margin-block-start: calc((1lh - var(--tp-icon-size-md)) / 2);
     pointer-events: none;
   }
 
@@ -59,6 +61,9 @@ export const questionnaireStyles = css`
   }
 
   .shortcut {
+    font: inherit;
+    block-size: 1lh;
+    align-items: center;
     pointer-events: none;
   }
 
@@ -68,7 +73,12 @@ export const questionnaireStyles = css`
     min-inline-size: 0;
   }
 
+  [part~='questionnaire-progress'] {
+    display: grid;
+  }
+
   [part~='questionnaire-actions'] {
+    inline-size: 100%;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;

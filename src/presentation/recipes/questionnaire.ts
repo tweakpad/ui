@@ -8,6 +8,7 @@ export const questionnaireAppearance: PresentationDictionary = {
   'questionnaire-progress': [
     {
       declarations: {
+        gap: 'var(--tp-space-2)',
         color: 'var(--tp-muted-foreground)',
         'font-size': 'var(--tp-text-xs)',
         'font-weight': 'var(--tp-font-medium)',
@@ -19,13 +20,13 @@ export const questionnaireAppearance: PresentationDictionary = {
     { declarations: { gap: 'var(--tp-space-4)', padding: '0', border: '0' } },
   ],
   'questionnaire-title': [
+    { selector: '&:is(legend)', declarations: { 'margin-block-end': 'var(--tp-space-4)' } },
     {
       declarations: {
         padding: '0',
         'font-size': 'var(--tp-text-base)',
         'font-weight': 'var(--tp-font-medium)',
-        'line-height': 'var(--tp-leading-snug)',
-        'margin-block-end': 'var(--tp-space-4)',
+        'line-height': 'var(--tp-leading-normal)',
       },
     },
   ],
@@ -71,7 +72,7 @@ export const questionnaireAppearance: PresentationDictionary = {
       selector: '& .choice-copy',
       declarations: {
         gap: 'calc(var(--tp-spacing) * .5)',
-        'line-height': 'var(--tp-leading-snug)',
+        'line-height': 'var(--tp-leading-normal)',
       },
     },
     { selector: '& .choice-description', declarations: { color: 'var(--tp-muted-foreground)' } },

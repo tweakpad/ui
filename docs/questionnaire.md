@@ -8,30 +8,80 @@ import '@tweakpad/ui/register';
 const questionnaire = document.querySelector('tp-questionnaire');
 questionnaire.questions = [
   {
-    name: 'prototype',
-    title: 'What should we prototype next?',
-    required: true,
-    description: 'Choose a direction or write your own.',
     choices: [
       {
-        value: 'delegation',
-        label: 'Delegation',
-        description: 'Show how work moves to a specialist.',
+        description: 'Show what the agent ran and what came back.',
+        label: 'Tool call timeline',
+        value: 'tool-calls',
       },
-      { value: 'questions', label: 'Question prompts' },
+      {
+        description: 'Ask before sensitive or destructive actions.',
+        label: 'Approval checkpoints',
+        value: 'approvals',
+      },
+      {
+        description: 'Make delegated work and results easier to follow.',
+        label: 'Sub-agent handoffs',
+        value: 'handoffs',
+      },
     ],
-    input: { label: 'Another answer', placeholder: 'Type another answer…' },
+    description: 'Choose a direction or describe another task.',
+    input: {
+      label: 'Another agent feature',
+      placeholder: 'Describe another feature…',
+    },
+    name: 'direction',
+    required: true,
+    title: 'What should the agent build next?',
   },
   {
-    name: 'detail',
-    title: 'How much detail?',
-    skippable: true,
     choices: [
-      { value: 'focused', label: 'Focused' },
-      { value: 'complete', label: 'Complete flow' },
+      {
+        label: 'Progress',
+        value: 'progress',
+      },
+      {
+        label: 'Decisions',
+        value: 'decisions',
+      },
+      {
+        label: 'Risks',
+        value: 'risks',
+      },
+      {
+        label: 'Next step',
+        value: 'next-step',
+      },
     ],
+    description: 'Select all that apply, or skip this question.',
+    name: 'signals',
+    required: false,
+    title: 'What should every progress update include?',
+    kind: 'multiple',
+    skippable: true,
+  },
+  {
+    choices: [
+      {
+        label: 'Start now',
+        value: 'now',
+      },
+      {
+        label: 'Next development cycle',
+        value: 'next-cycle',
+      },
+      {
+        label: 'Add it to the backlog',
+        value: 'backlog',
+      },
+    ],
+    description: 'Choose when the agent should begin the work.',
+    name: 'timing',
+    required: true,
+    title: 'When should work begin?',
   },
 ];
+questionnaire.actions = { submit: { label: 'Save plan' } };
 questionnaire.addEventListener('tp-submit', (event) => {
   event.preventDefault(); // Handle submission instead of native form navigation.
   console.log(event.detail.answers, [...event.detail.data]);
@@ -100,3 +150,113 @@ and `readOnly`. Numeric/date bounds participate in validation. Root/question
 identity, required state, and submission names remain owned by Questionnaire.
 `requestSubmit()` waits for the current render so same-turn programmatic answer
 changes are present in native FormData.
+
+## Navigation controls
+
+`actions` is a property-only record keyed by `previous`, `skip`, `next`, and
+`submit`. Each entry accepts `label`, `variant`, `size`, `disabled`, and `hidden`.
+The latter two default to false and can further restrict the component's own
+availability; they cannot enable an inapplicable action. Labels default to
+Previous, Skip, Next, and Submit. Size defaults to Button's `default`; Previous
+and Skip use `outline`, Next and Submit use `default`. Values for size and
+variant are the existing Button API. Replace the record to update it.
+
+```js
+questionnaire.actions = {
+  next: { variant: 'secondary', disabled: questionnaire.status !== 'answered' },
+  submit: { label: 'Save plan' },
+};
+```
+
+Use each question's `onStatusChange` and the committed item after
+`tp-item-change` to derive application navigation availability. Disabled buttons
+remain disabled; this does not change the validation or programmatic navigation
+policy. Enter/Space on an actual button activate that button, so Previous, Skip,
+Reset, and host actions retain their own behavior.
+
+## Constituent coverage and composition
+
+Tweakpad exposes the reference's constituents through ordered question definitions,
+the ten canonical public parts, and existing Button instances. It does not require
+separate custom elements for every React export.
+
+| Reference constituent           | Tweakpad public interface                                                                   | Render state / behavior                                                                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Root                            | `tp-questionnaire`, `questions`, `value`, `item`, form methods/events; `questionnaire` part | `current`, `total`, `first`, `last`, `status`, `disabled`, active `name`; `regions`                                           |
+| Progress                        | `questionnaire-progress` part                                                               | Common state; named progressbar with current/total and value text                                                             |
+| Item                            | Question definition; `questionnaire-question` part                                          | Common state plus `active`, `required`, `multiple`, `invalid`, `regions`; native fieldset                                     |
+| Title                           | `question.title`; `questionnaire-title` part                                                | Native legend with stable ID; fieldset uses that ID for its accessible name                                                   |
+| Description                     | `question.description`; `questionnaire-description` part                                    | Independently optional text associated with the fieldset and controls                                                         |
+| Choices                         | `question.choices`; `questionnaire-choices` part                                            | Common state plus `shortcuts`; groups fixed choices and freeform input                                                        |
+| Choice                          | Choice definition; `questionnaire-choice` part                                              | Common state plus choice `value`, `type`, `checked`, `disabled`, `invalid`, `shortcut`                                        |
+| ChoiceInput                     | Generated native radio/checkbox                                                             | Cardinality, name, checked, required, disabled, invalid and shortcut are owned by Questionnaire                               |
+| ChoiceLabel / ChoiceDescription | `choice.label` / `choice.description`                                                       | Independently authored native label text and description                                                                      |
+| ChoiceShortcut                  | `shortcutMode`, optional `choice.shortcut`                                                  | Generated KeyHint and native `aria-keyshortcuts`                                                                              |
+| Input                           | `question.input`; `questionnaire-input-region` part                                         | Common state plus `filled`, `disabled`, `invalid`; native input with documented constraints                                   |
+| Error                           | `invalid`, `error`, `validate`; `questionnaire-error` part                                  | Active invalid message is announced with `role=alert` and associated with controls                                            |
+| Actions                         | `questionnaire-actions` part, `actions` record                                              | Shared action layout; content can include host-owned controls while preserving the supplied buttons                           |
+| Previous / Skip / Next / Submit | Corresponding `actions` entry                                                               | Actual Buttons publish `data-action`, `data-status`, `data-visible`/`data-hidden`, `data-shortcut`, hidden and disabled state |
+
+Every part supports the shared `partContracts` options: `content`, `hostProperties`,
+`classHook`, `styleHook`, `elementReference`, and `renderDelegate`. A delegate must
+bind the supplied `bind` directive to the semantic host and preserve supplied
+content unless deliberately recomposing it. State callbacks receive committed
+values. Keep native inputs in the form's DOM tree; don't move them into a new
+shadow root or a second form.
+
+Root's `state.regions` contains `progress`, `answers` (hidden successful controls),
+`question`, and `actions`. Question's regions contain `title`, `description`,
+`choices`, `input`, `error`, `progress`, and `actions`. `choices` already includes
+`input`; render `input` separately only when replacing the default Choices
+composition. Render each region once. For example, a Card delegate can place
+Title/Description/Progress into its header/description/action slots, Choices and
+Error into its content, and Actions into its footer. Root then renders only hidden
+answers and the composed Question. The provided fieldset `aria-labelledby`
+preserves naming when Title is rendered as a span in Card's header.
+
+```js
+questionnaire.partContracts = {
+  'questionnaire-progress': {
+    content: ({ current, total }) => `Checkpoint ${current} of ${total}`,
+  },
+};
+```
+
+Question nodes are keyed by question name. An entrance animation attached through
+Question's `elementReference` runs on item changes without replacing Progress or
+Actions. Cancel animation when the reference becomes null and honor the inherited
+`--tp-motion-scale` (including `motion-policy="reduce"` and OS reduced motion).
+Do not animate each answer update or delay focus until the animation finishes.
+
+## Usage examples
+
+The documentation demos follow the [shadcn base Questionnaire use cases](https://ui.shadcn.com/docs/components/base/questionnaire)
+and their prompts, choices, and flow:
+
+| Use case           | What to try                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------- |
+| Default            | Plan the next agent feature, choose optional progress signals, then save its start time.        |
+| Multiple selection | Select several context sources; submission retains every selected value.                        |
+| Freeform answer    | Enter another refactoring approach or select one of the fixed choices.                          |
+| Explicit skip      | Skip optional implementation constraints; skipped data is omitted.                              |
+| Shortcuts          | Switch letters/numbers with Select, activate an answer, and confirm with Enter.                 |
+| Custom validation  | Concise summary + Public audience returns to detail with an error; Complete answer resolves it. |
+| Controlled         | Host accepts item proposals and displays the current checkpoint.                                |
+| Resume             | Start at the saved second question, edit answers, then restore saved defaults.                  |
+| Conditional items  | Cloud enables the environment question; Local excludes it from progress, validation and data.   |
+| Navigation state   | Derive independent Next/Submit disabled state from the active item's status.                    |
+| Custom progress    | Compose the library Progress from the Progress part's state.                                    |
+| Animated items     | Animate only the entering fieldset, respecting reduced motion.                                  |
+| Card               | Recompose the original bound parts into the existing Card's slots.                              |
+| Dialog             | Host owns cancel, close and focus return; successful submission closes the dialog.              |
+
+Examples include copyable markup and setup/cleanup code using the same public
+controls. Configure `questions`, controlled values and defaults **before first
+connection/render**. A restored active item alone does not create saved answers;
+supply `defaultValue`, per-question defaults, or per-answer defaults as appropriate.
+Custom validation can be any host validator; the example uses a dependency-free
+cross-answer predicate instead of adding a schema runtime to the library.
+
+The host owns transport, persistence, completion feedback, cancellation, and
+conditional question definitions. Questionnaire does not save or send responses
+itself. It must not be nested inside another native form.

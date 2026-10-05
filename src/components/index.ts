@@ -29,3 +29,5 @@ export * from './progress/index.js';
 export * from './select/index.js';
 export * from './native-select/index.js';
 export * from './slider/index.js';
+
+export * from './questionnaire/index.js';
