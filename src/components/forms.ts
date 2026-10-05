@@ -138,7 +138,6 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
         place-items: center;
         min-width: var(--tp-control-height-sm);
         min-height: var(--tp-control-height-sm);
-        padding: var(--tp-space-1);
         border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
         border-radius: var(--tp-radius-sm);
         color: var(--tp-foreground);
@@ -155,7 +154,6 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
 
       .month {
         display: grid;
-        gap: var(--tp-space-2);
       }
 
       .month-caption {
@@ -170,7 +168,6 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
       }
 
       .weekday {
-        padding: var(--tp-space-1);
         color: var(--tp-muted-foreground);
         font-size: var(--tp-text-xs);
         text-align: center;

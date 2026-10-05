@@ -860,6 +860,20 @@ async function assertGeometry() {
       near(rects.range.top, rects.last.top + rects.last.height / 2),
     rects.range.toJSON(),
   );
+  slider.style.height = '';
+  await settle(slider);
+  rects = geometry();
+  const track = slider
+    .shadowRoot!.querySelector<HTMLElement>('[part~="slider-track"]')!
+    .getBoundingClientRect();
+  check(
+    'Vertical auto extent keeps Track and Range visible without consumer sizing',
+    rects.control.height > 0 &&
+      near(track.height, rects.control.height) &&
+      near(rects.range.bottom, rects.first.top + rects.first.height / 2) &&
+      near(rects.range.top, rects.last.top + rects.last.height / 2),
+    { track: track.toJSON(), control: rects.control.toJSON(), range: rects.range.toJSON() },
+  );
   slider.orientation = 'horizontal';
   slider.style.height = '';
   slider.setValue([0, 100]);

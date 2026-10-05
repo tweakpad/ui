@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Catalog spacing review</title>
+  </head>
+  <body>
+    <main>
+      <h1>Catalog spacing review</h1>
+      <label
+        >Use case
+        <select id="case"></select
+      ></label>
+      <div id="sample"></div>
+    </main>
+    <script type="module">
+      import '/src/register.ts';
+      import '/src/styles.css';
+      import { render } from 'lit';
+      import { catalog } from '/src/catalog.ts';
+      import { renderComponentExample } from '/src/stories/examples.ts';
+      const modules = import.meta.glob('/src/stories/*.examples.ts', { eager: true });
+      window.cases = catalog.map(([name, tag]) => ({
+        title: name,
+        tag,
+        render: () => renderComponentExample(tag),
+      }));
+      for (const [path, module] of Object.entries(modules))
+        for (const [key, entries] of Object.entries(module))
+          if (Array.isArray(entries) && key.endsWith('Examples'))
+            for (const e of entries)
+              if (typeof e.render === 'function') window.cases.push({ ...e, source: path });
+      const select = document.querySelector('select');
+      select.style.maxWidth = '100%';
+      select.innerHTML = window.cases
+        .map(
+          (e, i) =>
+            `<option value="${i}">${e.source?.split('/').at(-1).replace('.examples.ts', '') || e.tag}: ${e.title}</option>`,
+        )
+        .join('');
+      window.showCase = async (i) => {
+        select.value = String(i);
+        render(window.cases[i].render(), document.querySelector('#sample'));
+        for (let n = 0; n < 5; n++)
+          await Promise.all(
+            [...document.querySelector('#sample').querySelectorAll('*')].map(
+              (e) => e.updateComplete,
+            ),
+          );
+        return window.cases[i].title;
+      };
+      select.onchange = () => window.showCase(Number(select.value));
+      document.querySelector('main').style.cssText = 'max-width:900px;margin:auto;padding:24px';
+      document.querySelector('#sample').style.cssText = 'margin-top:32px;min-width:0';
+      window.showCase(0);
+    </script>
+  </body>
+</html>

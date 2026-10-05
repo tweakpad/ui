@@ -5,6 +5,7 @@ import { plusIcon } from '../icons/plus.js';
 import { refreshIcon } from '../icons/refresh.js';
 
 export function setupEmptyStateExample(root) {
+  for (const group of root.querySelectorAll('tp-button-group[data-actions]')) group.joined = false;
   const icons = {
     ...navigationIcons,
     ...emptyStateIcons,

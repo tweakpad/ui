@@ -111,3 +111,24 @@ Floating panels and inset content use that same radius on all four corners.
 Logical navigation sides follow writing direction. Change the shared theme role
 or use the existing presentation dictionary/part hooks; no panel-specific radius
 or spacing attribute is needed.
+
+### Composition owns spacing
+
+Use each control's existing regions for related content: Slider Label/Output,
+Field Label/Description/Error, Form actions, InputGroup addons, Card Action/Footer,
+Bubble Content/Reactions, and unjoined ButtonGroup actions. Their structural layout
+arranges the children, and the active presentation dictionary selects token-based
+gaps and padding. Do not add a sibling readout or a locally spaced wrapper to
+repair a missing control relationship.
+
+Slider's output-only horizontal composition includes endpoint clearance. Bubble
+Content spaces direct paragraphs without author margins. Card actions and footers
+arrange multiple controls and wrap at constrained widths. Dialog and Calendar
+region spacing comes from their presentation recipes rather than implementation
+styles, so replacing the dictionary replaces that density as well.
+
+Application page grids, document content, media dimensions and scroll viewport
+sizes remain application layout. They do not replace internal control spacing.
+An explicit public geometry option such as Carousel's item gap remains distinct
+from a component's default presentation. Changing default density belongs in the
+owning dictionary; global sibling margins and demo-only CSS are not substitutes.

@@ -21,10 +21,11 @@ export function setupSliderExample(root) {
     slider.onValueChange = (event) => {
       if (!event.defaultPrevented && !event.detail.cancelled) slider.value = event.detail.value;
     };
-  if (!slider.closest('tp-field')) slider.getAccessibleLabel = (index) =>
-    slider.values.length > 1
-      ? `${slider.label || 'Range'} ${slider.values.length === 2 ? (index === 0 ? 'minimum' : 'maximum') : `point ${index + 1}`}`
-      : slider.label || slider.getAttribute('aria-label') || 'Value';
+  if (!slider.closest('tp-field'))
+    slider.getAccessibleLabel = (index) =>
+      slider.values.length > 1
+        ? `${slider.label || 'Range'} ${slider.values.length === 2 ? (index === 0 ? 'minimum' : 'maximum') : `point ${index + 1}`}`
+        : slider.label || slider.getAttribute('aria-label') || 'Value';
   const status = root.querySelector('[data-status]');
   listen(slider, 'tp-value-change', (event) => {
     if (slider.hasAttribute('data-limit') && Number(event.detail.value) > 80) {
@@ -40,7 +41,7 @@ export function setupSliderExample(root) {
   });
   listen(root.querySelector('[data-add]'), 'click', () => {
     if (slider.querySelectorAll('tp-slider-thumb').length > 1) return;
-    const thumb = document.createElement('tp-slider-thumb');
+    const thumb = root.ownerDocument.createElement('tp-slider-thumb');
     thumb.index = 1;
     slider.append(thumb);
     slider.setValue([25, 75]);
@@ -50,9 +51,10 @@ export function setupSliderExample(root) {
     if (thumbs.length > 1) thumbs[thumbs.length - 1].remove();
   });
   const form = root.querySelector('tp-form');
-  if (form) form.onFormSubmit = (values) => {
-    if (status) status.textContent = JSON.stringify(values);
-  };
+  if (form)
+    form.onFormSubmit = (values) => {
+      if (status) status.textContent = JSON.stringify(values);
+    };
   return () => {
     cleanup.forEach((release) => release());
     slider.onValueChange = undefined;

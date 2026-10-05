@@ -145,7 +145,7 @@ export class TpButtonGroup extends TpElement {
           setPartComposition(child, this, {
             'pagination-list': {
               styleHook: {
-                gap: this.joined ? '0' : 'var(--tp-space-2)',
+                ...(this.joined ? { gap: '0' } : {}),
                 'flex-direction': this.orientation === 'vertical' ? 'column' : 'row',
                 'align-items': 'stretch',
                 'flex-wrap': 'nowrap',

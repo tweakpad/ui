@@ -42,11 +42,11 @@ export const bubbleExamples = [
     'Content sizes',
     wrap(`<tp-bubble variant="default">This is a one line bubble.</tp-bubble>
 <tp-bubble variant="default">This longer message wraps naturally within the available space and retains the shared padding and typography.</tp-bubble>
-<tp-bubble variant="default"><div style="display:grid;gap:var(--tp-space-3)">
-  <p style="margin:0">This bubble has multiple paragraphs.</p>
-  <p style="margin:0">Each paragraph wraps within the same message body, including at narrow conversation widths.</p>
-  <p style="margin:0">Here is some more text to show how it wraps.</p>
-</div></tp-bubble>`),
+<tp-bubble variant="default">
+  <p>This bubble has multiple paragraphs.</p>
+  <p>Each paragraph wraps within the same message body, including at narrow conversation widths.</p>
+  <p>Here is some more text to show how it wraps.</p>
+</tp-bubble>`),
     'Short, wrapping and multiparagraph bodies use content layout, without a separate size API.',
   ),
   markupExample(
@@ -71,11 +71,11 @@ I checked the dialog, menu, and drawer paths because each one renders focusable 
 The dialog and drawer are fine. The menu needs the hover and focus tokens split so keyboard focus stays visible when the pointer is not involved.
 
 Keep the change in the shared style owner so themes can choose their own focus treatment.</tp-collapsible>
-<tp-bubble variant="ghost"><div style="display:grid;gap:var(--tp-space-3)">
-  <p style="margin:0">Ghost bubbles work for assistant text and other content that should not be framed.</p>
-  <p style="margin:0">They can take the full width of the conversation.</p>
-  <p style="margin:0">Use this for content that needs the whole row.</p>
-</div></tp-bubble>`,
+<tp-bubble variant="ghost">
+  <p>Ghost bubbles work for assistant text and other content that should not be framed.</p>
+  <p>They can take the full width of the conversation.</p>
+  <p>Use this for content that needs the whole row.</p>
+</tp-bubble>`,
     'Collapsible owns expansion and panel presence. Its public parts compose the existing Bubble and Button; preview text is replaced by the full body.',
   ),
   markupExample(

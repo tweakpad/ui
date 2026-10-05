@@ -15,19 +15,6 @@ export const sliderStyles = css`
     display: flex;
     align-items: center;
     justify-content: space-between;
-  }
-
-  /* Value-only controls form an inline readout; labels retain the stacked header. */
-  .root:not([data-orientation='vertical']):has(.header):not(:has([part~='slider-label'])) {
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .root:not([data-orientation='vertical']):has(.header):not(:has([part~='slider-label'])) .control {
-    flex: 1;
-  }
-
-  .header {
     min-inline-size: 0;
     flex-wrap: wrap;
   }
@@ -57,6 +44,12 @@ export const sliderStyles = css`
     block-size: 100%;
   }
 
+  :host([orientation='vertical']) {
+    display: inline-flex;
+    inline-size: fit-content;
+    max-inline-size: 100%;
+  }
+
   :host([orientation='vertical']) .control {
     flex-direction: column;
     justify-content: center;
@@ -67,16 +60,30 @@ export const sliderStyles = css`
   }
 
   :host([orientation='vertical']) .root {
+    align-items: center;
     block-size: 100%;
   }
 
   :host([orientation='vertical']) .track {
-    block-size: 100%;
+    /* Fill the actual Control, including when only its minimum extent is set. */
+    position: absolute;
+    inset-block: 0;
+    block-size: auto;
   }
 
   :host([orientation='vertical']) .range {
     inline-size: 100%;
     block-size: auto;
+  }
+
+  /* Value-only controls form an inline readout; labels retain the stacked header. */
+  .root:not([data-orientation='vertical']):has(.header):not(:has([part~='slider-label'])) {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .root:not([data-orientation='vertical']):has(.header):not(:has([part~='slider-label'])) .control {
+    flex: 1;
   }
 
   ::slotted(tp-slider-thumb) {

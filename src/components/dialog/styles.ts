@@ -50,36 +50,13 @@ export const dialogStyles = css`
     pointer-events: none;
   }
 
-  .header,
-  .body,
-  .footer {
-    padding: var(--tp-space-5);
-  }
-
-  .body {
-    padding-block-start: 0;
-  }
-
-  .content[data-header-hidden] .body {
-    padding-block-start: var(--tp-space-5);
-  }
-
-  .content[data-header-hidden]:has(.corner-close) .body {
-    padding-block-start: calc(var(--tp-control-height-sm) + var(--tp-space-4));
-  }
-
   .header {
     display: grid;
-    gap: var(--tp-space-2);
   }
 
   .media {
     justify-self: start;
     display: flex;
-  }
-
-  .header:has(~ .corner-close) {
-    padding-inline-end: calc(var(--tp-space-5) + var(--tp-space-8));
   }
 
   .corner-close {
@@ -97,7 +74,6 @@ export const dialogStyles = css`
     display: flex;
     flex-wrap: wrap;
     justify-content: end;
-    gap: var(--tp-space-2);
   }
 
   .footer slot {

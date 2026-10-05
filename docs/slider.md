@@ -102,3 +102,80 @@ Every public part accepts the shared `renderDelegate`, `hostProperties`, `conten
 Thumb focus, blur, keydown and tabIndex host properties target the native input. Neutral properties, pointer handlers, class/style hooks and `elementReference` target the visual Thumb; `inputElementReference` targets its input. The native input remains present when Thumb content is customized. A Root Thumb contract supplies defaults; a constituent contract can override them.
 
 Presentation uses the existing dictionary, part composition and token system. The default appearance follows the local shadcn Base + Nova Slider styles. Nova's white Thumb fill resolves through the shared background role: it is white in the default light theme and follows the consumer's background token in alternate themes. Geometry and native input binding remain independent of paint overrides. Motion respects the shared motion policy and reduced-motion tokens.
+
+## Usage guide
+
+The live examples cover scalar, range, multiple-thumb, vertical, controlled, disabled and RTL usage, plus the library's additional composition and form features. Each example includes registration and complete setup code.
+
+| Use case                    | Composition / API                                                    |
+| --------------------------- | -------------------------------------------------------------------- |
+| One value                   | `default-value="40"`; automatic Thumb                                |
+| Fine-grained adjustment     | `step="0.1"`, `large-step="1"`; 1,000 intervals across 0–100         |
+| Range / multiple values     | `default-value="25 50"` or `"10 20 70"`; one Thumb per value         |
+| Label and live readout      | `label` with `partContracts['slider-output']`                        |
+| Compact inline readout      | Output without a visible Label; name through `aria-label` or Field   |
+| Vertical / vertical range   | `orientation="vertical"`; same constituents and value model          |
+| Controlled decimal range    | `value`, synchronous `onValueChange` acceptance, `step`, `largeStep` |
+| Currency / percentage       | `locale`, `format`; raw numbers remain unchanged                     |
+| Disabled / read-only        | `disabled` prevents focus and submission; `readonly` preserves both  |
+| Independent thumbs          | `tp-slider-thumb` with index, disabled state and accessible text     |
+| Neighbor interaction        | `thumbCollisionBehavior`: push, swap, none; `minStepsBetweenValues`  |
+| Endpoint geometry           | `thumbAlignment`: center, edge, delayed-edge                         |
+| RTL                         | `dir="rtl"`; logical layout and horizontal arrow mapping             |
+| Field / submit / reset      | `tp-field` and `tp-form`, named Slider, actual Button actions        |
+| Rejecting changes / commits | Cancel `tp-value-change`; observe `tp-value-commit`                  |
+| Dynamic composition         | Add/remove authored Thumbs; update values through the Root           |
+
+### Step size and drag smoothness
+
+The Thumb follows accepted stepped values during dragging. With a 0–100 range and the default `step="1"`, it has 100 intervals: on a 1,000px travel distance, each interval spans 10px. A wide track can therefore feel jumpy even when updates reach the next frame. Choose a smaller positive step when the value domain permits finer precision; `step="0.1"` gives 1,000 intervals and about 1px movement at that width. The numeric value, Output and Thumb remain synchronized. Slider does not animate between discrete values or accept `step="any"`.
+
+```html
+<tp-slider
+  label="Fine level"
+  default-value="40"
+  minimum="0"
+  maximum="100"
+  step="0.1"
+  large-step="1"
+></tp-slider>
+```
+
+For controlled sliders, accept proposals synchronously through `value`, as shown above. Debouncing that acceptance introduces an actual delay; defer expensive work separately or use `tp-value-commit` for work needed only after release.
+
+### Label and output spacing
+
+Use Slider's existing parts for both the label and formatted value. With a Label, the readout shares a header above the Track. Without a visible Label, horizontal Slider places Output beside the Track with endpoint clearance. Vertical Slider retains a stacked header. Slider owns this layout; its active presentation dictionary supplies the gaps. No sibling output, local margin, or demo gap is required.
+
+```html
+<tp-slider aria-label="Previous context" minimum="64" maximum="128" default-value="64"></tp-slider>
+```
+
+```js
+const slider = document.querySelector('tp-slider');
+slider.partContracts = {
+  'slider-output': { content: (state) => `${state.values[0]}px` },
+};
+```
+
+Static `slot="value"` content remains consumer-owned and is not automatically rewritten. Use a content resolver when the displayed value must follow the Thumb. `aria-label` names the control without enabling the visible Label. A wrapping Field supplies naming and descriptions.
+
+### Attribute and property channels
+
+| JavaScript property                                | HTML attribute / channel                                                       |
+| -------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `value`, `defaultValue`                            | `value`, `default-value`; scalar or space/comma-separated numbers              |
+| `largeStep`                                        | `large-step`                                                                   |
+| `minStepsBetweenValues`                            | `min-steps-between-values`                                                     |
+| `thumbAlignment`                                   | `thumb-alignment`                                                              |
+| `thumbCollisionBehavior`                           | `thumb-collision-behavior`                                                     |
+| `thumbCrossing`                                    | `thumb-crossing`; legacy compatibility                                         |
+| `readOnly`                                         | `readonly`                                                                     |
+| `formOwner`                                        | `form`; ID or element via property                                             |
+| `format`                                           | Property only; `Intl.NumberFormatOptions`                                      |
+| `onValueChange`, `onValueCommitted`                | Callback properties; DOM events also available                                 |
+| `getAccessibleLabel`, `getAccessibleValueText`     | Resolver properties; Root defaults or per-Thumb overrides                      |
+| Thumb `valueText`, `tabIndex`                      | `value-text`, `tabindex`; tab index forwards to the native input               |
+| `partContracts`, `partPresentation`, motion policy | Inherited customization; see [Styling](./styling.md) and [Motion](./motion.md) |
+
+`minimum`, `maximum`, `min`, `max`, `step`, `orientation`, `disabled`, `required`, `label`, `name` and `locale` use their same-spelled attributes. Root `inputElement` exposes the first Thumb input; `thumbMetadata` and each Thumb's `inputElement` expose all inputs. Do not assign independent values to Thumbs.

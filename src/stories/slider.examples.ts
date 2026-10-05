@@ -19,6 +19,11 @@ export const sliderExamples = [
     'Label and Output belong to Slider. Their spacing and endpoint clearance come from its shared layout and presentation recipe.',
   ),
   example(
+    'Fine-grained adjustment',
+    '<tp-slider label="Fine level" default-value="40" minimum="0" maximum="100" step="0.1" large-step="1" data-output></tp-slider>',
+    'A fractional step gives a wide track more positions: 1,000 intervals instead of 100. Values and the Thumb still snap together to the configured precision; large-step keeps keyboard adjustments convenient.',
+  ),
+  example(
     'Compact value readout',
     '<tp-slider aria-label="Previous context" minimum="64" maximum="128" default-value="64" data-output data-unit="px"></tp-slider>',
     'Omit the visible Label to place the existing Output beside the track. No external output, wrapper gap, or local spacing override is needed.',

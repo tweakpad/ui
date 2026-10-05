@@ -10,6 +10,10 @@ const invalidPaint = {
 export const switchAppearance: PresentationDictionary = {
   switch: [
     {
+      selector: '& ~ tp-label:not([hidden])',
+      declarations: { 'padding-inline-start': 'var(--tp-space-2)' },
+    },
+    {
       declarations: {
         background:
           'light-dark(var(--tp-input), color-mix(in oklab, var(--tp-input) 80%, transparent))',

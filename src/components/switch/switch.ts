@@ -31,7 +31,6 @@ export class TpSwitch extends TpCheckbox {
       :host {
         display: inline-flex;
         align-items: center;
-        gap: var(--tp-space-2);
 
         --_tp-switch-spacing: var(--tp-space-4);
         --_tp-switch-width: calc(var(--_tp-switch-spacing) * 2);

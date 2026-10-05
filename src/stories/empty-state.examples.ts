@@ -7,10 +7,10 @@ const icon = (name: string, slot = '') =>
 const feedback = (text: string, iconName = '', variant = 'outline') =>
   `<tp-button variant="${variant}" data-feedback="Demo: ${text}">${iconName ? icon(iconName, 'icon-start') : ''}${text}</tp-button>`;
 const help = `<tp-button variant="link" href="#empty-state-help">Learn more${icon('external', 'icon-end')}</tp-button>`;
-const actions = `<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:var(--tp-space-2)">
+const actions = `<tp-button-group data-actions label="Project actions">
   <tp-button href="#new-project">Create project</tp-button>
   ${feedback('Import project')}
-</div>
+</tp-button-group>
 ${help}`;
 const project = (
   media = '',

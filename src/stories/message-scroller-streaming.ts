@@ -77,10 +77,6 @@ export class MessageScrollerDemo extends LitElement {
       border-radius: min(var(--tp-radius-4xl), 1.5rem);
     }
 
-    tp-card::part(card-header) {
-      padding: var(--tp-space-5);
-    }
-
     tp-card::part(card-title) {
       font-size: var(--tp-text-base);
       font-weight: var(--tp-font-medium);
@@ -98,7 +94,6 @@ export class MessageScrollerDemo extends LitElement {
     }
 
     tp-card::part(card-footer) {
-      padding: 0 var(--tp-space-5) var(--tp-space-5);
       border: 0;
     }
 
@@ -112,16 +107,11 @@ export class MessageScrollerDemo extends LitElement {
       border-radius: var(--tp-radius-3xl);
     }
 
-    tp-input-group::part(input-group-addon) {
-      padding: var(--tp-space-1) var(--tp-space-2) var(--tp-space-2);
-    }
-
     tp-text-area::part(text-area) {
       box-sizing: border-box;
       block-size: 3.5rem;
       min-block-size: 0;
       overflow: hidden;
-      padding: var(--tp-space-2) var(--tp-space-3);
     }
 
     .composer-actions {
@@ -129,7 +119,7 @@ export class MessageScrollerDemo extends LitElement {
       align-items: center;
       justify-content: space-between;
       inline-size: 100%;
-      gap: var(--tp-space-2);
+      gap: inherit;
     }
 
     tp-button::part(button) {
@@ -140,10 +130,6 @@ export class MessageScrollerDemo extends LitElement {
       display: grid;
       place-items: center;
       min-block-size: 0;
-    }
-
-    tp-empty-state::part(empty-state) {
-      padding: var(--tp-space-8);
     }
 
     tp-empty-state::part(empty-state-title) {
@@ -162,21 +148,12 @@ export class MessageScrollerDemo extends LitElement {
       --tp-message-scroller-height: 100%;
     }
 
-    tp-message-scroller-content::part(message-scroller-content) {
-      padding: var(--tp-space-5);
-    }
-
     tp-bubble::part(bubble) {
       border-radius: var(--tp-radius-4xl);
     }
 
     tp-bubble p {
-      margin: 0;
       white-space: pre-wrap;
-    }
-
-    tp-bubble p + p {
-      margin-block-start: var(--tp-space-2);
     }
 
     .note {

@@ -316,6 +316,22 @@ for (const prefix of ['dialog', 'alert-dialog', 'drawer', 'side-panel']) {
     ...surfaceAppearance,
     ...(['dialog', 'alert-dialog'].includes(prefix) ? surfaceFadeAppearance : []),
     rule({ padding: '0' }),
+    ...(['dialog', 'alert-dialog'].includes(prefix)
+      ? [
+          rule({ padding: 'var(--tp-space-5)' }, '& > :is(.header,.body,.footer)'),
+          rule({ 'padding-block-start': '0' }, '& > .body'),
+          rule({ 'padding-block-start': 'var(--tp-space-5)' }, '&[data-header-hidden] > .body'),
+          rule(
+            { 'padding-block-start': 'calc(var(--tp-control-height-sm) + var(--tp-space-4))' },
+            '&[data-header-hidden]:has(.corner-close) > .body',
+          ),
+          rule({ gap: 'var(--tp-space-2)' }, '& > :is(.header,.footer)'),
+          rule(
+            { 'padding-inline-end': 'calc(var(--tp-space-5) + var(--tp-space-8))' },
+            '& > .header:has(~ .corner-close)',
+          ),
+        ]
+      : []),
   ];
   sharedPresentation[`${prefix}-title`] = [
     rule({
@@ -449,7 +465,7 @@ const corePresentationDictionary: PresentationDictionary = {
       'line-height': 'var(--tp-leading-normal)',
     }),
   ],
-  'card-action': [],
+  'card-action': [rule({ gap: 'var(--tp-space-2)' })],
   ...Object.fromEntries(
     [
       'card',

@@ -383,6 +383,8 @@ export const componentAppearance: PresentationDictionary = {
   bubble: [{ selector: '&', declarations: { gap: 'var(--tp-space-2)' } }],
   'bubble-root': [{ selector: '&', declarations: { gap: 'var(--tp-space-1)' } }],
   'bubble-content': [
+    { declarations: { gap: 'var(--tp-space-2)' } },
+    { selector: '& > slot::slotted(:is(p,ul,ol,pre,blockquote))', declarations: { margin: '0' } },
     {
       selector: '&',
       declarations: {
@@ -650,6 +652,8 @@ export const componentAppearance: PresentationDictionary = {
         gap: 'var(--tp-space-3)',
       },
     },
+    { selector: '& .month', declarations: { gap: 'var(--tp-space-2)' } },
+    { selector: '& :is(.navigation,.weekday)', declarations: { padding: 'var(--tp-space-1)' } },
   ],
   'calendar-header': [
     {

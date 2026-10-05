@@ -189,7 +189,7 @@ export class MessageScrollerUseCase extends MessageScrollerDemo {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: var(--tp-space-2);
+        gap: inherit;
         inline-size: 100%;
         min-inline-size: 0;
       }
@@ -213,7 +213,6 @@ export class MessageScrollerUseCase extends MessageScrollerDemo {
       }
 
       tp-card[data-divider]::part(card-footer) {
-        padding: var(--tp-space-4) var(--tp-space-5);
         border-block-start: var(--tp-border-width) solid var(--tp-border);
       }
 
@@ -385,14 +384,14 @@ export class MessageScrollerUseCase extends MessageScrollerDemo {
       align="center"
       label="Transcript outline"
       .sideOffset=${-28}
-      .partPresentation=${{ 'preview-card-content': { styleHook: { 'inline-size': '16rem', padding: 'var(--tp-space-1)' } } }}
+      .partPresentation=${{ 'preview-card-content': { styleHook: { 'inline-size': '16rem' } } }}
     >
       <tp-button slot="trigger" size="icon-sm" variant="ghost" aria-label="Open transcript outline">
         <tp-icon
           .icon=${{ viewBox: '0 0 24 24', paths: turns.map((row, i) => ({ d: `M4 ${5 + i * 5}h16`, strokeWidth: 2, stroke: row.id === this.currentAnchor ? 'var(--tp-foreground)' : 'var(--tp-muted-foreground)' })) }}
         ></tp-icon>
       </tp-button>
-      ${turns.map((row) => html`<tp-button variant="ghost" .partContracts=${{ button: { hostProperties: { 'aria-current': row.id === this.currentAnchor ? 'location' : undefined }, styleHook: { 'inline-size': '100%', 'justify-content': 'start', 'text-align': 'start', 'white-space': 'normal', height: 'auto', padding: 'var(--tp-space-2)', background: row.id === this.currentAnchor ? 'var(--tp-accent)' : undefined } } }} @click=${() => this.#jump(row.id)}>${row.text}</tp-button>`)}
+      ${turns.map((row) => html`<tp-button variant="ghost" .partContracts=${{ button: { hostProperties: { 'aria-current': row.id === this.currentAnchor ? 'location' : undefined }, styleHook: { 'inline-size': '100%', 'justify-content': 'start', 'text-align': 'start', 'white-space': 'normal', height: 'auto', background: row.id === this.currentAnchor ? 'var(--tp-accent)' : undefined } } }} @click=${() => this.#jump(row.id)}>${row.text}</tp-button>`)}
     </tp-preview-card>`;
   }
   protected override render() {
@@ -484,12 +483,12 @@ export class MessageScrollerUseCase extends MessageScrollerDemo {
             .step=${1}
             ?disabled=${this.streaming}
             @tp-value-change=${(event: CustomEvent<{ value: number | number[] }>) => {
-                (event.currentTarget as HTMLElement & { value: number | number[] }).value =
-                  event.detail.value;
-                this.peek = Number(
-                  Array.isArray(event.detail.value) ? event.detail.value[0] : event.detail.value,
-                );
-              }}
+              (event.currentTarget as HTMLElement & { value: number | number[] }).value =
+                event.detail.value;
+              this.peek = Number(
+                Array.isArray(event.detail.value) ? event.detail.value[0] : event.detail.value,
+              );
+            }}
           ></tp-slider>`,
         );
         break;

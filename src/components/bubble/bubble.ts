@@ -63,12 +63,18 @@ export class TpBubble extends TpElement {
       }
 
       .content {
+        display: flex;
+        flex-direction: column;
         position: relative;
         inline-size: fit-content;
         max-inline-size: 100%;
         min-inline-size: 0;
         overflow: hidden;
         overflow-wrap: anywhere;
+      }
+
+      slot {
+        display: contents;
       }
 
       .reactions {

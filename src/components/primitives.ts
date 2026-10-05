@@ -56,6 +56,9 @@ export class TpCard extends TpElement {
       }
 
       [part='card-action'] {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
         grid-column: 2;
         grid-row: 1;
         justify-self: end;
@@ -71,6 +74,7 @@ export class TpCard extends TpElement {
 
       .card > footer {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: flex-end;
       }
