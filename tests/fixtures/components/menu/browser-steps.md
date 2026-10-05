@@ -153,3 +153,10 @@ Repeat with a nested Share submenu open. Click outside; all menus close and idle
 hover must no longer open them. Check a disabled sibling and canceled value-change
 keep the active menu. A12 asserts modal sibling reachability and rejects queued
 close requests from inactive members; run in source and package fixtures.
+
+Navigation direct-link regression: hover Tools, then Editor (panel stays open),
+then Documentation (panel closes without navigation). Repeat after clicking
+Tools. Clicking Documentation still follows its native href. ArrowLeft from the
+link then ArrowDown reopens Tools and focuses Editor. A30 separately checks event
+policy for touch, disabled items, veto and native li/anchor composition; run source
+and package fixtures. These synthetic policy checks do not replace real hover.

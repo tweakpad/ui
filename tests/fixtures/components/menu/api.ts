@@ -1140,6 +1140,65 @@ export function installFamilyAPI(library: Library, built: boolean): void {
       });
     },
   });
+  cases.push({
+    id: 'A30-navigation-direct-link-hover-policy',
+    scenarios: 'navigation-link-hover/V-02',
+    async run() {
+      const { root, items } = navigation();
+      root.defaultValue = 'first';
+      const direct = new library.TpNavigationMenuItem();
+      direct.value = 'docs';
+      const link = document.createElement('a');
+      link.href = '#documentation';
+      link.textContent = 'Documentation';
+      direct.append(link);
+      root.append(direct);
+      // Event-policy assertions only; actual hover is verified through Chrome MCP.
+      const enter = (target: Element, pointerType = 'mouse') =>
+        target.dispatchEvent(
+          new PointerEvent('pointerover', { bubbles: true, composed: true, pointerType }),
+        );
+      await mounted(root, async () => {
+        await until(() => root.open && !!items[0]!.item.contentElement, 'default navigation panel');
+        enter(items[0]!.link);
+        await updated(root);
+        assert(root.open, 'Content link hover closed its panel');
+        enter(link, 'touch');
+        await updated(root);
+        assert(root.open, 'Touch pointerover closed panel');
+        direct.disabled = true;
+        await updated(direct, root);
+        enter(link);
+        assert(root.open, 'Disabled direct item dismissed panel');
+        direct.disabled = false;
+        await updated(direct, root);
+        const veto = (event: Event) => event.preventDefault();
+        root.addEventListener('tp-value-change', veto);
+        enter(link);
+        await updated(root);
+        assert(root.open && root.value === 'first', 'Hover bypassed value cancellation');
+        root.removeEventListener('tp-value-change', veto);
+        enter(link);
+        await updated(root);
+        assert(!root.open && root.value === '', 'Direct link did not close panel');
+        assert(link.getAttribute('href') === '#documentation', 'Hover changed native navigation');
+        const nativeItem = document.createElement('li');
+        const nativeLink = document.createElement('a');
+        nativeLink.href = '#native-documentation';
+        nativeLink.textContent = 'Native documentation';
+        nativeItem.append(nativeLink);
+        root.append(nativeItem);
+        root.onValueChange = (event) => {
+          root.value = event.detail.value;
+        };
+        root.value = 'first';
+        await updated(root);
+        enter(nativeLink);
+        await updated(root);
+        assert(!root.open, 'Native direct-link composition did not dismiss panel');
+      });
+    },
+  });
   Object.assign(window, {
     familyAPIManifest: cases.map(({ id, scenarios }) => ({ id, scenarios })),
     async runFamilyAPI(start = 0, count = 4) {

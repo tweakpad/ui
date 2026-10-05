@@ -424,6 +424,26 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
           this.closeFromLink(event);
       });
   };
+  #listPointerOver = (event: PointerEvent): void => {
+    if (
+      this.disabled ||
+      event.pointerType === 'touch' ||
+      event.defaultPrevented ||
+      componentHandlingPrevented(event)
+    )
+      return;
+    const path = event.composedPath();
+    if (path.find((node) => node instanceof TpNavigationMenu) !== this) return;
+    const member = this.#members.find((entry) => !entry.trigger && path.includes(entry.host));
+    if (
+      !member ||
+      member.host.matches('[disabled]') ||
+      !path.some((node) => (node as Element).matches?.('a[href]:not([aria-disabled="true"])'))
+    )
+      return;
+    this.cancelPending();
+    this.#select('', 'trigger-hover', event);
+  };
   #listKey = (event: KeyboardEvent): void => {
     if (event.defaultPrevented || componentHandlingPrevented(event)) return;
     const controls = this.#members
@@ -547,6 +567,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
               role: 'list',
               'data-orientation': this.orientation,
               '@keydown': this.#listKey,
+              '@pointerover': this.#listPointerOver,
             },
             content: html`<slot @slotchange=${this.itemChanged}></slot>`,
           },

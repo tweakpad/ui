@@ -90,3 +90,5 @@ flows through the Item controller before terminal instance overrides. All nine
 public parts support horizontal/vertical dictionary contributions.
 
 The viewport measures each active panel at its intrinsic size, independently of the animated viewport. Its width and height variables describe the content box; padding and borders are added outside those dimensions. Repeated switching, opening, or resizing content does not progressively reduce panel width. Trigger and content associations forward through shadow hosts to the actual named semantic targets.
+
+Hovering a top-level direct link closes the active panel without activating the link. Links inside an open panel keep it open on hover. Direct-link dismissal uses the normal cancelable value-change event; native link navigation and `closeOnClick` remain unchanged.
