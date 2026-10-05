@@ -575,6 +575,35 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
   ],
+  'message-scroller-viewport': [
+    {
+      declarations: {
+        'mask-image':
+          'linear-gradient(to bottom, #000 0, #000 calc(100% - var(--_tp-message-scroller-fade, 0px)), transparent 100%)',
+        'mask-repeat': 'no-repeat',
+        animation: 'tp-message-scroller-fade-end 1ms ease-in-out both',
+        'animation-timeline': 'scroll(self y)',
+        'animation-range': 'calc(100% - var(--tp-spacing) * 24) 100%',
+      },
+    },
+  ],
+  'message-scroller-return-control': [
+    {
+      declarations: {
+        background: 'var(--tp-background)',
+        color: 'var(--tp-foreground)',
+        'border-color': 'var(--tp-border)',
+        'border-radius': 'var(--tp-radius-full)',
+        transition: motionTransition(['opacity', 'translate'], 'fast'),
+        opacity: '1',
+        translate: '0 0',
+      },
+    },
+    {
+      selector: '&[data-active="false"]',
+      declarations: { opacity: '0', translate: '0 var(--tp-space-1)' },
+    },
+  ],
   'message-scroller-content': [
     { declarations: { gap: 'var(--tp-space-6)', padding: 'var(--tp-space-3)' } },
   ],

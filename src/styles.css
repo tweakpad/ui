@@ -137,3 +137,11 @@ body {
   --tp-motion-scale: 0;
   --tp-motion-play-state: paused;
 }
+
+/* Scroll-aware edge mask adapted from shadcn's scroll-fade-b utility.
+   Private interpolation state; the viewport recipe owns its application. */
+@property --_tp-message-scroller-fade {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 0%;
+}

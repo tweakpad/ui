@@ -1,136 +1,88 @@
-import { LitElement, html } from 'lit';
-import { repeat } from 'lit/directives/repeat.js';
-import type { TpMessageScroller } from '../components/message-scroller/index.js';
+import { html } from 'lit';
+import { markupExample, interactiveMarkupExample } from './documentation-examples.js';
+import './message-scroller-streaming.js';
+import streamingSource from './message-scroller-streaming.ts?raw';
+import { setupMessageScrollerExample } from './message-scroller-example.js';
+import setupSource from './message-scroller-example.js?raw';
 
-const history = [
-  'Could you help me prepare the pilot launch?',
-  'Of course. Start with the launch checklist, then confirm the people who will review it.',
-  'The design review is done. We still have one keyboard navigation issue.',
-  'Keep that issue in the release criteria so it cannot be lost among the smaller tasks.',
-  'I have shared the checklist with the team. What should I check next?',
-  'Review the first ten minutes of the experience with someone who has not used it before. Watch where they hesitate, then simplify that step.',
+const turns = [
+  ['turn-1', 'First turn', 'Start with a small pilot and a clear review checklist.'],
+  [
+    'reply-1',
+    'Alex',
+    'Review the first ten minutes with someone who has not used the product. Notice where they hesitate and record the result.',
+  ],
+  ['turn-2', 'Second turn', 'What should we check before releasing?'],
+  [
+    'reply-2',
+    'Alex',
+    'Check keyboard navigation, clear names for actions, and how errors are explained. Keep each finding with its acceptance criteria.',
+  ],
+  ['turn-3', 'Third turn', 'The checklist is ready.'],
+  [
+    'reply-3',
+    'Alex',
+    'Invite the pilot group, collect feedback, and review the findings together.',
+  ],
+]
+  .map(
+    ([id, author, text]) =>
+      `<tp-message-scroller-item message-id="${id}"${id?.startsWith('turn') ? ' scroll-anchor' : ''}><tp-message author="${author}"><tp-bubble>${text}</tp-bubble></tp-message></tp-message-scroller-item>`,
+  )
+  .join('\n');
+const anatomy = (
+  attributes = '',
+  control = '<tp-message-scroller-return-control></tp-message-scroller-return-control>',
+) => `<tp-message-scroller ${attributes} style="max-inline-size:40rem;--tp-message-scroller-height:18rem">
+  <tp-message-scroller-viewport>
+    <tp-message-scroller-content>${turns}</tp-message-scroller-content>
+  </tp-message-scroller-viewport>
+  ${control}
+</tp-message-scroller>`;
+
+export const messageScrollerExamples = [
+  markupExample(
+    'Turn anchors and previous context',
+    anatomy('label="Turn anchors" initial-position="last-anchor" previous-item-peek="32"'),
+    'Mark the start of each turn with scroll-anchor. A short last turn opens at the end; a long turn opens at its reading line. Newly appended turns reserve space while their replies grow.',
+  ),
+  {
+    title: 'Streaming replies and earlier history',
+    description:
+      'Application-owned data and scripted replies. Send a prompt, scroll away while its reply arrives, or load earlier messages. Content is aria-busy during the reply; Stop reply cancels the demo timer.',
+    code: `import '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\n${streamingSource.replace('../components/message-scroller/index.js', '@tweakpad/ui')}\n// Mount <message-scroller-demo></message-scroller-demo>`,
+    render: () => html`<message-scroller-demo></message-scroller-demo>`,
+  },
+  interactiveMarkupExample(
+    'External commands and a reading outline',
+    `<div id="message-scroller-outline">
+  <div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-2);margin-block-end:var(--tp-space-3)">
+    <tp-button variant="outline" size="sm" data-action="start">First message</tp-button>
+    <tp-button variant="outline" size="sm" data-action="turn">Second turn</tp-button>
+    <tp-button variant="outline" size="sm" data-action="end">Latest message</tp-button>
+    <tp-button variant="ghost" size="sm" data-action="history">Load earlier</tp-button>
+  </div>
+  ${anatomy('label="Reading outline" initial-position="start"')}
+  <output style="display:block;margin-block-start:var(--tp-space-3)">Waiting for visible rows…</output>
+</div>`,
+    setupMessageScrollerExample,
+    `${setupSource}\nsetupMessageScrollerExample(document.getElementById('message-scroller-outline'));`,
+    'Commands and lazy visibility subscriptions work outside the viewport. Unsubscribe when removing the surrounding UI. Prepending a stable row preserves the current reading position.',
+  ),
+  markupExample(
+    'Return to the beginning',
+    anatomy(
+      'label="Return to beginning" initial-position="end"',
+      '<tp-message-scroller-return-control return-direction="start" size="sm" style="inset-inline-start:50%">First message</tp-message-scroller-return-control>',
+    ),
+    'Return control is a real Button. Configure its direction, size, label, icon and behavior independently. Omit it entirely in explicit composition when external controls are sufficient.',
+  ),
+  markupExample(
+    'Shorthand composition',
+    `<tp-message-scroller label="Short conversation" style="--tp-message-scroller-height:12rem;max-inline-size:40rem">
+  <tp-message-scroller-item message-id="hello"><tp-message author="Sam"><tp-bubble>Ready to review?</tp-bubble></tp-message></tp-message-scroller-item>
+  <tp-message-scroller-item message-id="answer"><tp-message author="Alex"><tp-bubble>Yes, let’s begin.</tp-bubble></tp-message></tp-message-scroller-item>
+</tp-message-scroller>`,
+    'Direct Items remain supported. Root supplies the same public Viewport, Content and Return control used by explicit composition.',
+  ),
 ];
-export class MessageScrollerDemo extends LitElement {
-  static properties = {
-    rows: { state: true },
-    text: { state: true },
-    streaming: { state: true },
-    loaded: { state: true },
-    initialPosition: {},
-    follow: { type: Boolean },
-  };
-  rows = history.map((text, i) => ({ id: String(i), text, own: i % 2 === 0 }));
-  text = '';
-  streaming = false;
-  loaded = false;
-  initialPosition: TpMessageScroller['initialPosition'] = 'end';
-  follow = true;
-  #timer: ReturnType<typeof setInterval> | undefined;
-  protected override createRenderRoot() {
-    return this;
-  }
-  override disconnectedCallback() {
-    clearInterval(this.#timer);
-    super.disconnectedCallback();
-  }
-  #send(values: Record<string, unknown>, details: { form: HTMLFormElement }) {
-    const text = String(values.message ?? '').trim();
-    if (!text || this.streaming) return;
-    const id = String(Date.now());
-    this.rows = [...this.rows, { id, text, own: true }];
-    details.form.reset();
-    this.streaming = true;
-    let index = 0;
-    const reply =
-      'This is a local streamed reply. You can scroll back through the conversation while it arrives. The scroller keeps your reading position and offers Jump to latest when you want to return. Older messages can be loaded without moving the message you are reading.';
-    this.#timer = setInterval(() => {
-      index += 7;
-      const next = { id: `${id}-reply`, text: reply.slice(0, index), own: false };
-      this.rows = this.rows.some((row) => row.id === next.id)
-        ? this.rows.map((row) => (row.id === next.id ? next : row))
-        : [...this.rows, next];
-      if (index >= reply.length) {
-        clearInterval(this.#timer);
-        this.streaming = false;
-      }
-    }, 70);
-  }
-  protected override render() {
-    return html`<tp-card style="max-inline-size:calc(var(--tp-spacing) * 240)">
-      <strong slot="header">Launch assistant</strong
-      ><span slot="description">Local demo · replies are scripted</span>
-      <tp-button
-        slot="header"
-        variant="ghost"
-        size="sm"
-        ?disabled=${this.loaded}
-        @click=${() => {
-        this.rows = [
-          { id: 'earlier-1', text: 'We are planning a small pilot release next week.', own: true },
-          {
-            id: 'earlier-2',
-            text: 'Let’s keep the first release focused on one successful journey.',
-            own: false,
-          },
-          ...this.rows,
-        ];
-        this.loaded = true;
-      }}
-        >${this.loaded ? 'Beginning of conversation' : 'Load earlier messages'}</tp-button
-      >
-      <tp-message-scroller
-        label="Launch assistant conversation"
-        .initialPosition=${this.initialPosition}
-        .follow=${this.follow}
-      >
-        ${repeat(
-          this.rows,
-          (row) => row.id,
-          (row) =>
-            html`<tp-message-scroller-item .messageId=${row.id} .scrollAnchor=${row.own}>
-              <tp-message
-                .align=${row.own ? 'end' : 'start'}
-                .author=${row.own ? 'You' : 'Launch assistant'}
-              >
-                <tp-bubble
-                  .align=${row.own ? 'end' : 'start'}
-                  .variant=${row.own ? 'secondary' : 'ghost'}
-                  >${row.text}</tp-bubble
-                >
-              </tp-message>
-            </tp-message-scroller-item>`,
-        )}
-      </tp-message-scroller>
-      <tp-form
-        slot="footer"
-        style="inline-size:100%"
-        .onFormSubmit=${(v: Record<string, unknown>, d: { form: HTMLFormElement }) => this.#send(v, d)}
-      >
-        <tp-field label="Message"
-          ><tp-text-area
-            name="message"
-            required
-            rows="2"
-            placeholder="Ask about the launch…"
-          ></tp-text-area
-        ></tp-field>
-        <div slot="actions">
-          <tp-button type="submit" ?disabled=${this.streaming}>Send</tp-button> ${
-          this.streaming
-            ? html`<tp-button
-                  variant="outline"
-                  @click=${() => {
-                    clearInterval(this.#timer);
-                    this.streaming = false;
-                  }}
-                  >Stop reply</tp-button
-                ><tp-spinner size="sm" label="Receiving reply"></tp-spinner>`
-            : ''
-        }
-        </div>
-      </tp-form>
-    </tp-card>`;
-  }
-}
-if (!customElements.get('message-scroller-demo'))
-  customElements.define('message-scroller-demo', MessageScrollerDemo);

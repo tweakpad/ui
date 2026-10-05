@@ -16,6 +16,7 @@ export default defineConfig({
       generateBundle() {
         for (const [source, fileName] of [
           ['src/foundation/carousel/LICENSE', 'LICENSE.swiper'],
+          ['src/components/message-scroller/LICENSE', 'LICENSE.message-scroller'],
           ['src/foundation/drag-drop/LICENSE.dnd-kit', 'LICENSE.dnd-kit'],
         ] as const) {
           this.emitFile({

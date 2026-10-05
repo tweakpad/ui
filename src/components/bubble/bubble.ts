@@ -121,7 +121,12 @@ export class TpBubble extends TpElement {
       reactions,
     });
     return this.renderPart('bubble-root', state, {
-      properties: { class: 'bubble', part: 'bubble-root', 'aria-label': this.label },
+      properties: {
+        class: 'bubble',
+        part: 'bubble-root',
+        role: this.label ? 'group' : null,
+        'aria-label': this.label || null,
+      },
       content: html`${this.renderPart('bubble-content', state, {
         tag: 'div',
         properties: { class: 'content', part: 'bubble-content' },

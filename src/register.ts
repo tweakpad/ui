@@ -63,6 +63,9 @@ import {
   TpDataVisualization,
   TpMessageScroller,
   TpMessageScrollerItem,
+  TpMessageScrollerViewport,
+  TpMessageScrollerContent,
+  TpMessageScrollerReturnControl,
   TpProgress,
   TpResizablePanelGroup,
   TpResizablePanel,
@@ -182,6 +185,9 @@ defineElement(TpCarousel.tagName, TpCarousel);
 defineElement(TpDataVisualization.tagName, TpDataVisualization);
 defineElement(TpMessageScroller.tagName, TpMessageScroller);
 defineElement(TpMessageScrollerItem.tagName, TpMessageScrollerItem);
+defineElement(TpMessageScrollerViewport.tagName, TpMessageScrollerViewport);
+defineElement(TpMessageScrollerContent.tagName, TpMessageScrollerContent);
+defineElement(TpMessageScrollerReturnControl.tagName, TpMessageScrollerReturnControl);
 defineElement(TpProgress.tagName, TpProgress);
 defineElement(TpResizablePanel.tagName, TpResizablePanel);
 defineElement(TpResizableHandle.tagName, TpResizableHandle);

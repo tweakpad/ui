@@ -4,34 +4,12 @@ import { TpElement } from '../../foundation/element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { resolvesReducedMotion } from '../../foundation/motion.js';
 import { MessageScrollerProvider, type ScrollOptions } from './provider.js';
-
-export class TpMessageScrollerItem extends TpElement {
-  static tagName = 'tp-message-scroller-item';
-  static presentationTagName = 'tp-message-scroller';
-  static override properties = {
-    ...TpElement.properties,
-    messageId: { type: String, attribute: 'message-id', reflect: true },
-    scrollAnchor: { type: Boolean, attribute: 'scroll-anchor', reflect: true },
-  };
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: block;
-        min-inline-size: 0;
-        flex: none;
-      }
-    `,
-  ];
-  messageId = '';
-  scrollAnchor = false;
-  protected override render() {
-    return this.renderPart('message-scroller-item', Object.freeze({}), {
-      properties: { part: 'message-scroller-item' },
-      content: html`<slot></slot>`,
-    });
-  }
-}
+import { messageScrollerContext, messageScrollerOwner } from './context.js';
+import type {
+  TpMessageScrollerItem,
+  TpMessageScrollerContent,
+  TpMessageScrollerViewport,
+} from './parts.js';
 
 export class TpMessageScroller extends TpElement {
   static tagName = 'tp-message-scroller';
@@ -64,45 +42,12 @@ export class TpMessageScroller extends TpElement {
         display: flex;
         flex-direction: column;
         min-block-size: 0;
-        block-size: 100%;
         overflow: hidden;
+        block-size: var(--tp-message-scroller-height, calc(var(--tp-spacing) * 120));
       }
 
-      .viewport {
-        overflow: auto;
-        overscroll-behavior: contain;
-        min-block-size: 0;
-        min-inline-size: 0;
-        flex: 1;
-        block-size: 100%;
-        max-block-size: var(--tp-message-scroller-height, calc(var(--tp-spacing) * 120));
-        overflow-anchor: none;
-      }
-
-      .content {
-        display: flex;
-        flex-direction: column;
-        min-block-size: 100%;
-      }
-
-      .spacer {
-        flex: none;
-        pointer-events: none;
-      }
-
-      .return {
-        position: absolute;
-        inset-block-end: var(--tp-space-3);
-        inset-inline-start: 50%;
-        translate: -50% 0;
-      }
-
-      :host(:dir(rtl)) .return {
-        translate: 50% 0;
-      }
-
-      .start {
-        inset-block: var(--tp-space-3) auto;
+      slot {
+        display: contents;
       }
 
       [hidden] {
@@ -110,6 +55,10 @@ export class TpMessageScroller extends TpElement {
       }
     `,
   ];
+  readonly [messageScrollerContext] = true as const;
+  #members = new Map<HTMLElement, { name: string; member: TpElement }>();
+  #explicit = false;
+  #membershipObserver: MutationObserver | undefined;
   #pinnedInput: boolean | undefined;
   defaultPinned = true;
   follow = true;
@@ -138,29 +87,41 @@ export class TpMessageScroller extends TpElement {
     this.requestUpdate('pinned', old);
   }
   #legacyIds = new WeakMap<HTMLElement, string>();
-  readonly provider = new MessageScrollerProvider({
+  readonly provider: MessageScrollerProvider = new MessageScrollerProvider({
     rows: () => {
       const items = [
         ...this.querySelectorAll<TpMessageScrollerItem>('tp-message-scroller-item'),
-      ].filter((row) => row.closest('tp-message-scroller') === this);
+      ].filter((row) => messageScrollerOwner(row) === this);
       if (items.length)
-        return items.map((row) => ({ id: row.messageId, anchor: row.scrollAnchor, element: row }));
+        return items.map((row) => ({
+          id: this.#rowId(row, row.messageId),
+          anchor: row.scrollAnchor,
+          element: row,
+          addressable: !!row.messageId,
+        }));
       // Preserve the original direct-message composition while new addressable rows use Item.
-      return [...this.children]
-        .filter((node): node is HTMLElement => node instanceof HTMLElement)
+      const content = this.#part('message-scroller-content')?.member;
+      return [...(this.#explicit && content ? content.children : this.children)]
+        .filter(
+          (node): node is HTMLElement =>
+            node instanceof HTMLElement && !node.localName.startsWith('tp-message-scroller-'),
+        )
         .map((element) => {
-          let id = element.id || this.#legacyIds.get(element);
-          if (!id) {
-            id = createId('message');
-            this.#legacyIds.set(element, id);
-          }
-          return { id, element, anchor: element.hasAttribute('scroll-anchor') };
+          return {
+            id: this.#rowId(element, element.id),
+            element,
+            anchor: element.hasAttribute('scroll-anchor'),
+          };
         });
     },
     knownIds: () => this.knownMessageIds,
     pinned: () => this.pinned,
     pin: (value, event) => {
-      this.#pin.set(value, event ? 'pointer' : 'programmatic', event);
+      this.#pin.set(
+        value,
+        event?.type === 'keydown' ? 'keyboard' : event ? 'pointer' : 'programmatic',
+        event,
+      );
       return this.pinned === value;
     },
     follow: () => this.follow,
@@ -169,46 +130,118 @@ export class TpMessageScroller extends TpElement {
     readingLine: () => Math.max(0, this.readingLine),
     previousItemPeek: () => Math.max(0, this.previousItemPeek),
     returnControlPeek: () => Math.max(0, this.returnControlPeek),
-    preserveOnPrepend: () => this.preserveOnPrepend,
+    preserveOnPrepend: () =>
+      (this.#part('message-scroller-viewport')?.member as TpMessageScrollerViewport | undefined)
+        ?.preserveOnPrepend ?? this.preserveOnPrepend,
     reducedMotion: () => resolvesReducedMotion(this),
-    changed: () => this.requestUpdate(),
+    changed: () => this.#publish(),
   });
+  #rowId(element: HTMLElement, supplied: string) {
+    if (supplied) return supplied;
+    let id = this.#legacyIds.get(element);
+    if (!id) {
+      id = createId('message');
+      this.#legacyIds.set(element, id);
+    }
+    return id;
+  }
+  #part(name: string) {
+    for (const [element, entry] of this.#members)
+      if (entry.name === name && element.isConnected) return { element, ...entry };
+  }
+  /** @internal Constituent registration; not a second state owner. */
+  registerScrollerPart(name: string, element: HTMLElement, member: TpElement): () => void {
+    this.#members.set(element, { name, member });
+    element.part.add(name);
+    const release = this.presentationController.registerPart(name, element);
+    queueMicrotask(() => {
+      if (this.isConnected) {
+        this.#connect();
+        this.provider.schedule();
+      }
+    });
+    return () => {
+      release();
+      this.#members.delete(element);
+      if (this.provider.viewport === element || name === 'message-scroller-content')
+        this.provider.disconnect();
+      this.provider.schedule();
+    };
+  }
+  #syncComposition = () => {
+    const explicit = [...this.querySelectorAll('tp-message-scroller-viewport')].some(
+      (node) => messageScrollerOwner(node as HTMLElement) === this,
+    );
+    if (explicit !== this.#explicit) {
+      this.#explicit = explicit;
+      this.requestUpdate();
+    }
+    this.provider.schedule();
+  };
   override connectedCallback(): void {
     super.connectedCallback();
+    this.#syncComposition();
+    this.#membershipObserver = new this.ownerDocument.defaultView!.MutationObserver(
+      this.#syncComposition,
+    );
+    this.#membershipObserver.observe(this, { childList: true, subtree: true });
     void this.updateComplete.then(() => {
       if (this.isConnected) this.#connect();
     });
   }
   override disconnectedCallback(): void {
+    this.#membershipObserver?.disconnect();
     this.provider.disconnect();
     super.disconnectedCallback();
   }
   #connect() {
-    const viewport = this.renderRoot.querySelector<HTMLElement>('.viewport');
-    if (!viewport || this.provider.viewport === viewport) return;
-    this.provider.connect(
-      viewport,
-      this.renderRoot.querySelector('.content')!,
-      this.renderRoot.querySelector('.spacer')!,
+    const viewport = this.#part('message-scroller-viewport')?.element;
+    const entry = this.#part('message-scroller-content');
+    const content = entry?.element;
+    const spacer = (entry?.member as TpMessageScrollerContent | undefined)?.spacerElement;
+    if (!viewport || !content || !spacer || this.provider.viewport === viewport) return;
+    this.provider.connect(viewport, content, spacer, this);
+    this.#publish();
+  }
+  #publish() {
+    const edges = this.provider.scrollable.value;
+    const tokens = [edges.start && 'start', edges.end && 'end'].filter(Boolean).join(' ');
+    for (const node of [
       this,
-    );
+      this.renderRoot?.querySelector('[part~="message-scroller"]'),
+      this.provider.viewport,
+    ]) {
+      node?.toggleAttribute(
+        'data-pending-scroll',
+        this.provider.pendingScroll && this.initialPosition !== 'start',
+      );
+      node?.toggleAttribute('data-scrollable-start', edges.start);
+      node?.toggleAttribute('data-scrollable-end', edges.end);
+      node?.toggleAttribute('data-autoscrolling', this.provider.autoscrolling);
+      node?.setAttribute('data-scroll-mode', this.provider.mode);
+      if (tokens) node?.setAttribute('data-scrollable', tokens);
+      else node?.removeAttribute('data-scrollable');
+    }
+    this.toggleAttribute('data-pinned', this.pinned);
+    this.#part('message-scroller-viewport')?.member.requestUpdate();
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     this.#connect();
     if (changed.has('pinned') && this.#pinnedInput !== undefined && !this.provider.pendingScroll) {
-      if (this.pinned) this.provider.scrollToEnd();
-      else this.provider.mode = 'free-scrolling';
+      if (
+        this.pinned &&
+        this.provider.mode !== 'following-bottom' &&
+        this.provider.mode !== 'settling-jump'
+      )
+        this.provider.scrollToEnd();
+      else if (!this.pinned && this.provider.mode === 'following-bottom')
+        this.provider.mode = 'free-scrolling';
     }
+    for (const { member } of this.#members.values())
+      if (changed.has('partContracts') || changed.has('label')) member.requestUpdate();
     if (changed.size) this.provider.schedule();
-    const edges = this.provider.scrollable.value;
-    for (const node of [this, this.provider.viewport]) {
-      node?.toggleAttribute('data-pending-scroll', this.provider.pendingScroll);
-      node?.toggleAttribute('data-scrollable-start', edges.start);
-      node?.toggleAttribute('data-scrollable-end', edges.end);
-      node?.setAttribute('data-scroll-mode', this.provider.mode);
-    }
-    this.toggleAttribute('data-pinned', this.pinned);
+    this.#publish();
   }
   scrollToStart(options?: ScrollOptions) {
     return this.provider.scrollToStart(options);
@@ -220,50 +253,19 @@ export class TpMessageScroller extends TpElement {
     return this.provider.scrollToMessage(id, options);
   }
   protected override render() {
-    const state = Object.freeze({});
-    const edges = this.provider.scrollable.value;
-    const go = (direction: 'start' | 'end', event: MouseEvent) => {
-      // Allow consumer click listeners to cancel before committing the command.
-      queueMicrotask(() => {
-        if (!event.defaultPrevented)
-          this[direction === 'start' ? 'scrollToStart' : 'scrollToEnd']({ behavior: 'smooth' });
-      });
-    };
-    return this.renderPart('message-scroller', state, {
+    return this.renderPart('message-scroller', Object.freeze({ pinned: this.pinned }), {
       properties: { class: 'root', part: 'message-scroller' },
-      content: html` ${this.renderPart('message-scroller-viewport', state, {
-          properties: {
-            class: 'viewport',
-            part: 'viewport message-scroller-viewport',
-            tabindex: '0',
-            role: 'region',
-            'aria-label': this.label,
-          },
-          content: this.renderPart('message-scroller-content', state, {
-            properties: {
-              class: 'content',
-              part: 'message-scroller-content',
-              role: 'log',
-              'aria-label': this.label,
-              'aria-live': 'polite',
-              'aria-relevant': 'additions',
-              'aria-atomic': 'false',
-            },
-            content: html`<slot @slotchange=${this.provider.schedule}></slot>
-              <div class="spacer" aria-hidden="true"></div>`,
-          }),
-        })}
-        <tp-button
-          class=${this.returnDirection === 'start' ? 'return start' : 'return'}
-          part="message-scroller-return-control"
-          variant="secondary"
-          size="sm"
-          ?hidden=${!edges[this.returnDirection]}
-          data-direction=${this.returnDirection}
-          data-active=${String(edges[this.returnDirection])}
-          @click=${(event: MouseEvent) => go(this.returnDirection, event)}
-          >${this.returnDirection === 'start' ? 'Jump to start' : 'Jump to latest'}</tp-button
-        >`,
+      content: this.#explicit
+        ? html`<slot></slot>`
+        : html` <tp-message-scroller-viewport exportparts="message-scroller-viewport, viewport">
+              <tp-message-scroller-content exportparts="message-scroller-content"
+                ><slot></slot
+              ></tp-message-scroller-content>
+            </tp-message-scroller-viewport>
+            <tp-message-scroller-return-control
+              exportparts="message-scroller-return-control"
+              .returnDirection=${this.returnDirection}
+            ></tp-message-scroller-return-control>`,
     });
   }
 }

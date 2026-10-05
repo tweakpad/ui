@@ -8,24 +8,28 @@ application owns message delivery, sender information and reaction counts.
   <tp-bubble>Can you send the updated design?</tp-bubble>
   <tp-bubble align="end" variant="tinted">
     The updated design is ready for review.
-    <tp-button slot="reactions" size="xs" aria-label="Like this message; 2 likes">Like · 2</tp-button>
+    <tp-button slot="reactions" size="xs" aria-label="Like this message; 2 likes"
+      >Like · 2</tp-button
+    >
   </tp-bubble>
 </tp-bubble-group>
 ```
 
 Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css` before rendering.
 
-| Property / attribute | Values | Default |
-| --- | --- | --- |
-| `variant` | default, secondary, subdued, tinted, outline, ghost, destructive | secondary |
-| `align` | start, end; logical sender alignment | start |
-| `reactionSide` / `reaction-side` | block-start, block-end | block-end |
-| `reactionsAlign` / `reactions-align` | start, end | end |
-| `label` | text describing the message container | Message |
+| Property / attribute                 | Values                                                           | Default   |
+| ------------------------------------ | ---------------------------------------------------------------- | --------- |
+| `variant`                            | default, secondary, subdued, tinted, outline, ghost, destructive | secondary |
+| `align`                              | start, end; logical sender alignment                             | start     |
+| `reactionSide` / `reaction-side`     | block-start, block-end                                           | block-end |
+| `reactionsAlign` / `reactions-align` | start, end                                                       | end       |
+| `label`                              | text describing the message container                            | Message   |
 
 The default slot accepts rich message content; `reactions` accepts named controls or
 plain counts. Empty reactions have no visible surface. Reaction side and alignment
 are independent. Grouping adds no conversation state or announcements.
+The named message container has `role="group"`; setting `label=""` removes both
+the name and role, leaving an ordinary noninteractive content container.
 
 Public presentation parts: `bubble` on the group; `bubble-root`, `bubble-content`
 and `bubble-reactions` on messages. Use the shared presentation dictionary or

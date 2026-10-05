@@ -50,6 +50,9 @@ import type {
   TpDataVisualization,
   TpMessageScroller,
   TpMessageScrollerItem,
+  TpMessageScrollerViewport,
+  TpMessageScrollerContent,
+  TpMessageScrollerReturnControl,
   TpProgress,
   TpResizablePanelGroup,
   TpResizablePanel,
@@ -186,6 +189,9 @@ declare global {
     'tp-message': TpMessage;
     'tp-message-scroller': TpMessageScroller;
     'tp-message-scroller-item': TpMessageScrollerItem;
+    'tp-message-scroller-viewport': TpMessageScrollerViewport;
+    'tp-message-scroller-content': TpMessageScrollerContent;
+    'tp-message-scroller-return-control': TpMessageScrollerReturnControl;
     'tp-native-select': TpNativeSelect;
     'tp-navigation-menu': TpNavigationMenu;
     'tp-navigation-panel': TpNavigationPanel;

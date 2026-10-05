@@ -1,5 +1,11 @@
-import { composedContains } from '../../foundation/focus.js';
 import { ObservableStore } from '../../foundation/store.js';
+import {
+  nonnegative,
+  scrollEdges,
+  scrollTarget,
+  readingVisibility,
+  type RowGeometry,
+} from './geometry.js';
 
 export type ScrollMode =
   'following-bottom' | 'free-scrolling' | 'anchored-to-message' | 'settling-jump';
@@ -16,6 +22,7 @@ export interface TranscriptRow {
   id: string;
   element: HTMLElement;
   anchor: boolean;
+  addressable?: boolean;
 }
 export interface ScrollVisibility {
   visibleMessageIds: readonly string[];
@@ -40,32 +47,47 @@ export interface MessageScrollerOptions {
   reducedMotion(): boolean;
   changed(): void;
 }
-/** Headless native-scroll owner shared by the root, rows and edge controls. Distances are CSS pixels. */
+interface PendingCommand {
+  kind: 'start' | 'end' | 'message';
+  id: string | undefined;
+  options: ScrollOptions;
+  resolve: (value: 'completed' | 'superseded') => void;
+}
+/** One headless owner for native scroll policy. Reconciliation is coalesced; rows never rerender on scroll. */
 export class MessageScrollerProvider {
   readonly scrollable = new ObservableStore({ start: false, end: false });
   mode: ScrollMode = 'free-scrolling';
   pendingScroll = true;
+  autoscrolling = false;
   #viewport: HTMLElement | undefined;
+  #content: HTMLElement | undefined;
   #spacer: HTMLElement | undefined;
   #resize: ResizeObserver | undefined;
   #mutation: MutationObserver | undefined;
+  #intersection: IntersectionObserver | undefined;
+  #intersectionMargin = '';
   #frame = 0;
+  #visibilityFrame = 0;
+  #autoTimer = 0;
   #opening = true;
-  #seen = new Set<string>();
   #rows: TranscriptRow[] = [];
+  #handledAnchors = new WeakSet<HTMLElement>();
   #saved: { id: string; offset: number } | undefined;
   #anchor: string | undefined;
-  #anchorMargin = 0;
+  #tailHeight = 0;
   #lastTop = 0;
   #waitToLeaveEnd = false;
+  #lastFollow = false;
+  #userMoved = false;
   #programTop: number | undefined;
+  #command: PendingCommand | undefined;
+  #settledFrames = 0;
+  #lastSnapshot = '';
+  #geometry = new Map<HTMLElement, RowGeometry>();
+  #diagnosed = new Set<string>();
   #listeners = new Set<(value: ScrollVisibility) => void>();
   #visibility: ScrollVisibility = emptyVisibility;
-  #diagnosed = new Set<string>();
-  #command:
-    | { id: string; options: ScrollOptions; resolve: (v: 'completed' | 'superseded') => void }
-    | undefined;
-  #settledFrames = 0;
+  #intersections = new Set<HTMLElement>();
   #cleanup: (() => void)[] = [];
   constructor(readonly options: MessageScrollerOptions) {}
   get viewport() {
@@ -76,10 +98,11 @@ export class MessageScrollerProvider {
   }
   subscribeVisibility(listener: (value: ScrollVisibility) => void): () => void {
     this.#listeners.add(listener);
+    this.#observeVisibility();
     this.schedule();
     return () => {
       this.#listeners.delete(listener);
-      if (!this.#listeners.size) this.#visibility = emptyVisibility;
+      if (!this.#listeners.size) this.#stopVisibility();
     };
   }
   connect(
@@ -88,43 +111,43 @@ export class MessageScrollerProvider {
     spacer: HTMLElement,
     source: HTMLElement,
   ): void {
+    // A known pre-mount target survives the first bind, but never an actual disconnect.
+    const pending = !this.#viewport ? this.#command : undefined;
+    if (pending) this.#command = undefined;
     this.disconnect();
+    this.#command = pending;
+    if (pending) this.#opening = false;
     this.#viewport = viewport;
+    this.#content = content;
     this.#spacer = spacer;
     const win = viewport.ownerDocument.defaultView!;
     const listen = (type: string, handler: EventListener, target: EventTarget = viewport) => {
       target.addEventListener(type, handler, { passive: true });
       this.#cleanup.push(() => target.removeEventListener(type, handler));
     };
-    listen('scroll', this.#scroll);
+    listen('scroll', () => {
+      this.#userMoved = true;
+      this.schedule();
+    });
     listen('wheel', this.#intent);
-    listen('touchstart', this.#intent);
-    listen('pointerdown', this.#intent);
+    listen('touchmove', this.#intent);
+    listen('pointerdown', (event) => {
+      if (event.composedPath()[0] === viewport) this.#intent(event);
+    });
     listen('keydown', (event) => {
       const e = event as KeyboardEvent;
       if (
-        ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key) &&
-        e.target === viewport
+        event.composedPath()[0] === viewport &&
+        ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)
       )
         this.#intent(e);
     });
-    listen('click', (event) => {
-      if (event.composedPath().some((node) => node instanceof Element && node.localName === 'a'))
-        this.#intent(event);
-    });
-    listen(
-      'selectionchange',
-      (event) => {
-        const selection = viewport.ownerDocument.getSelection();
-        if (selection && !selection.isCollapsed && composedContains(source, selection.anchorNode))
-          this.#intent(event);
-      },
-      viewport.ownerDocument,
-    );
-    this.#resize = new win.ResizeObserver(() => this.schedule());
-    this.#resize.observe(viewport);
-    this.#resize.observe(content);
-    this.#mutation = new win.MutationObserver(() => this.schedule());
+    if (win.ResizeObserver) {
+      this.#resize = new win.ResizeObserver(this.schedule);
+      this.#resize.observe(viewport);
+      this.#resize.observe(content);
+    }
+    this.#mutation = new win.MutationObserver(this.schedule);
     this.#mutation.observe(source, {
       childList: true,
       subtree: true,
@@ -132,117 +155,146 @@ export class MessageScrollerProvider {
       attributes: true,
       attributeFilter: ['message-id', 'scroll-anchor', 'hidden'],
     });
+    this.#observeVisibility();
     this.schedule();
   }
   disconnect(): void {
-    if (this.#frame) this.#viewport?.ownerDocument.defaultView?.cancelAnimationFrame(this.#frame);
-    this.#frame = 0;
+    const win = this.#viewport?.ownerDocument.defaultView;
+    if (this.#frame) win?.cancelAnimationFrame(this.#frame);
+    if (this.#autoTimer) win?.clearTimeout(this.#autoTimer);
+    this.#frame = this.#autoTimer = 0;
     this.#resize?.disconnect();
     this.#mutation?.disconnect();
-    for (const cleanup of this.#cleanup.splice(0)) cleanup();
+    this.#stopVisibility();
+    for (const release of this.#cleanup.splice(0)) release();
     this.#supersede();
-    this.#viewport = undefined;
-    this.#spacer = undefined;
-    this.#opening = true;
-    this.pendingScroll = true;
-    this.#seen.clear();
+    this.#viewport = this.#content = this.#spacer = undefined;
+    this.#opening = this.pendingScroll = true;
+    this.autoscrolling = false;
+    this.mode = 'free-scrolling';
     this.#rows = [];
-    this.#saved = undefined;
-    this.#anchor = undefined;
-    this.#programTop = undefined;
-    this.#visibility = emptyVisibility;
-    this.#settledFrames = 0;
+    this.#handledAnchors = new WeakSet();
+    this.#geometry.clear();
+    this.#saved = this.#anchor = this.#programTop = undefined;
+    this.#settledFrames = this.#tailHeight = this.#lastTop = 0;
+    this.#waitToLeaveEnd = this.#userMoved = false;
+    this.#lastFollow = this.options.follow();
+    this.#lastSnapshot = '';
+    this.#diagnosed.clear();
+    if (this.scrollable.value.start || this.scrollable.value.end)
+      this.scrollable.set({ start: false, end: false });
   }
   schedule = (): void => {
     if (this.#frame || !this.#viewport) return;
     this.#frame = this.#viewport.ownerDocument.defaultView!.requestAnimationFrame(() => {
       this.#frame = 0;
+      this.#geometry.clear();
       this.#reconcile();
+      this.#geometry.clear();
     });
   };
-  #top(row: TranscriptRow) {
-    const v = this.#viewport!;
-    return (
-      row.element.getBoundingClientRect().top -
-      v.getBoundingClientRect().top -
-      v.clientTop +
-      v.scrollTop
-    );
+  #measure(row: Pick<TranscriptRow, 'element'>): RowGeometry {
+    let geometry = this.#geometry.get(row.element);
+    if (!geometry) {
+      const v = this.#viewport!,
+        rect = row.element.getBoundingClientRect(),
+        viewportRect = v.getBoundingClientRect();
+      const scale = viewportRect.height / (v.offsetHeight || viewportRect.height) || 1;
+      geometry = {
+        top: (rect.top - viewportRect.top) / scale - v.clientTop + v.scrollTop,
+        height: rect.height / scale,
+      };
+      this.#geometry.set(row.element, geometry);
+    }
+    return geometry;
   }
-  #move(top: number, behavior: ScrollBehavior = 'instant') {
-    const v = this.#viewport!;
-    const bounded = Math.max(0, Math.min(top, v.scrollHeight - v.clientHeight));
-    this.#programTop = bounded;
-    if (Math.abs(v.scrollTop - bounded) > 0.5)
-      v.scrollTo({ top: bounded, behavior: this.options.reducedMotion() ? 'instant' : behavior });
+  #padding() {
+    const s = this.#content!.ownerDocument.defaultView!.getComputedStyle(this.#content!);
+    return {
+      start: parseFloat(s.paddingBlockStart) || 0,
+      end: parseFloat(s.paddingBlockEnd) || 0,
+      gap: parseFloat(s.rowGap) || 0,
+    };
+  }
+  #bottom() {
+    const padding = this.#padding();
+    // Match the source's content-child extent, not its addressable ID registry.
+    // Native prose, duplicate rows and an external virtualizer's spacers count;
+    // only our own following spacer is excluded. Flatten Lit's slot boundaries.
+    const children = [...this.#content!.children].flatMap((element) =>
+      element.localName === 'slot'
+        ? (element as HTMLSlotElement).assignedElements({ flatten: true })
+        : [element],
+    );
+    return children.reduce((bottom, element) => {
+      if (element === this.#spacer || !(element instanceof HTMLElement) || element.hidden)
+        return bottom;
+      const r = this.#measure({ element });
+      return Math.max(bottom, r.top + r.height + padding.end);
+    }, padding.start + padding.end);
   }
   #end() {
     return Math.max(0, this.#viewport!.scrollHeight - this.#viewport!.clientHeight);
   }
-  #clearSpacer() {
-    if (!this.#spacer) return;
-    const peek = Math.max(0, this.options.returnControlPeek());
-    this.#spacer.style.display = peek ? 'block' : 'none';
-    this.#spacer.style.blockSize = `${peek}px`;
+  #setSpacer(height: number) {
+    const spacer = this.#spacer!;
+    const next = Math.max(0, Math.ceil(height));
+    this.#tailHeight = next;
+    spacer.hidden = next === 0;
+    spacer.style.blockSize = `${next}px`;
+    spacer.style.marginBlockStart = next ? `${-this.#padding().gap}px` : '';
   }
-  #holdAnchor(row: TranscriptRow) {
-    const v = this.#viewport!,
-      spacer = this.#spacer!;
-    const top = Math.max(0, this.#top(row) - this.#anchorMargin);
-    spacer.style.display = 'block';
-    const existing = spacer.getBoundingClientRect().height;
-    const baseHeight = v.scrollHeight - existing;
-    spacer.style.blockSize = `${Math.max(0, top + v.clientHeight - baseHeight)}px`;
+  #clearSpacer() {
+    this.#setSpacer(nonnegative(this.options.returnControlPeek()));
+  }
+  #move(top: number, behavior: ScrollBehavior = 'instant') {
+    const v = this.#viewport!;
+    const target = Math.max(0, Math.min(top, this.#end()));
+    this.#programTop = target;
+    if (Math.abs(v.scrollTop - target) > 0.5)
+      v.scrollTo({ top: target, behavior: this.options.reducedMotion() ? 'instant' : behavior });
+  }
+  #hold(row: TranscriptRow) {
+    const top = Math.max(
+      0,
+      this.#measure(row).top -
+        this.#padding().start -
+        nonnegative(this.options.readingLine()) -
+        nonnegative(this.options.previousItemPeek()),
+    );
+    this.#setSpacer(top + this.#viewport!.clientHeight - this.#bottom());
     this.#move(top);
   }
   #intent = (event: Event): void => {
     if (!this.#viewport) return;
-    const before = this.#viewport.scrollTop;
     if (!this.options.pin(false, event)) {
       this.schedule();
       return;
     }
+    const top = this.#viewport.scrollTop;
     this.#supersede();
     this.mode = 'free-scrolling';
-    this.#waitToLeaveEnd = this.#end() - before <= this.options.threshold();
     this.#anchor = undefined;
-    this.#viewport.scrollTo({ top: before, behavior: 'instant' });
+    this.#waitToLeaveEnd = this.#end() - top <= nonnegative(this.options.threshold());
+    this.#viewport.scrollTo({ top, behavior: 'instant' });
     this.#programTop = undefined;
-    this.#capture();
-    this.schedule();
-  };
-  #scroll = (): void => {
-    const v = this.#viewport!;
-    if (this.mode === 'settling-jump') {
-      this.schedule();
-      return;
-    }
-    if (this.#programTop !== undefined && Math.abs(v.scrollTop - this.#programTop) < 1)
-      this.#programTop = undefined;
-    else if (this.mode === 'free-scrolling' && Math.abs(v.scrollTop - this.#lastTop) > 0.5) {
-      const atEnd = this.#end() - v.scrollTop <= Math.max(0, this.options.threshold());
-      if (!atEnd) this.#waitToLeaveEnd = false;
-      const pinned = atEnd && !this.#waitToLeaveEnd && this.options.follow();
-      if (this.options.pin(pinned)) this.mode = pinned ? 'following-bottom' : 'free-scrolling';
-      else if (this.options.pinned()) this.mode = 'following-bottom';
-      if (this.mode === 'free-scrolling') this.#anchor = undefined;
-    }
-    this.#capture();
+    this.#userMoved = true;
     this.schedule();
   };
   #capture() {
     const v = this.#viewport!;
     this.#lastTop = v.scrollTop;
-    const row = this.#rows.find(
-      (row) => this.#top(row) + row.element.getBoundingClientRect().height > v.scrollTop,
-    );
-    this.#saved = row ? { id: row.id, offset: this.#top(row) - v.scrollTop } : undefined;
+    const row = this.#rows.find((row) => {
+      const r = this.#measure(row);
+      return r.top + r.height > v.scrollTop && r.top < v.scrollTop + v.clientHeight;
+    });
+    this.#saved = row ? { id: row.id, offset: this.#measure(row).top - v.scrollTop } : undefined;
   }
   #reconcile() {
     const v = this.#viewport!;
     const seen = new Set<string>();
     const rows = this.options.rows().filter((row) => {
-      if (!row.id || !row.element.isConnected) return false;
+      if (!row.id || !row.element.isConnected || row.element.hidden) return false;
       if (seen.has(row.id)) {
         if (!this.#diagnosed.has(row.id)) {
           this.#diagnosed.add(row.id);
@@ -253,20 +305,54 @@ export class MessageScrollerProvider {
       seen.add(row.id);
       return true;
     });
-    for (const old of this.#rows)
-      if (!rows.some((r) => r.element === old.element)) this.#resize?.unobserve(old.element);
+    const oldRows = this.#rows,
+      oldElements = new Set(oldRows.map((row) => row.element)),
+      elements = new Set(rows.map((row) => row.element));
+    for (const row of oldRows)
+      if (!elements.has(row.element)) {
+        this.#resize?.unobserve(row.element);
+        this.#intersection?.unobserve(row.element);
+        this.#intersections.delete(row.element);
+      }
     for (const row of rows)
-      if (!this.#rows.some((r) => r.element === row.element)) this.#resize?.observe(row.element);
-    const oldLast = this.#rows.at(-1)?.id;
-    const oldLastIndex = rows.findIndex((r) => r.id === oldLast);
-    const appended = rows.filter(
-      (r, i) => !this.#seen.has(r.id) && (oldLastIndex < 0 || i > oldLastIndex),
-    );
+      if (!oldElements.has(row.element)) {
+        this.#resize?.observe(row.element);
+        this.#intersection?.observe(row.element);
+      }
     this.#rows = rows;
-    if (!v.clientHeight) return; // Hidden panels defer opening until ResizeObserver reports a viewport.
-    if (this.#command && this.mode !== 'settling-jump') {
-      if (rows.some((r) => r.id === this.#command!.id)) this.#execute();
-    } else if (this.mode === 'settling-jump') {
+    if (!v.clientHeight) return;
+    const threshold = nonnegative(this.options.threshold());
+    const follow = this.options.follow();
+    if (
+      follow &&
+      !this.#lastFollow &&
+      !this.#opening &&
+      this.mode === 'free-scrolling' &&
+      !this.#command &&
+      this.#bottom() - v.scrollTop - v.clientHeight <= threshold &&
+      this.options.pin(true)
+    )
+      this.mode = 'following-bottom';
+    this.#lastFollow = follow;
+    const userMoved = this.#userMoved;
+    this.#userMoved = false;
+    const expected = this.#programTop !== undefined && Math.abs(v.scrollTop - this.#programTop) < 1;
+    if (userMoved && !expected && this.mode !== 'settling-jump') {
+      const atEnd = this.#bottom() - v.scrollTop - v.clientHeight <= threshold;
+      if (!atEnd) this.#waitToLeaveEnd = false;
+      if (this.mode === 'following-bottom' && v.scrollTop < this.#lastTop - 0.5 && !atEnd) {
+        if (this.options.pin(false)) this.mode = 'free-scrolling';
+      } else if (
+        this.mode === 'free-scrolling' &&
+        atEnd &&
+        !this.#waitToLeaveEnd &&
+        this.options.follow() &&
+        this.options.pin(true)
+      )
+        this.mode = 'following-bottom';
+    }
+    if (this.#command && this.mode !== 'settling-jump') this.#execute();
+    else if (this.mode === 'settling-jump') {
       if (
         this.#programTop !== undefined &&
         Math.abs(v.scrollTop - Math.min(this.#programTop, this.#end())) < 1
@@ -277,30 +363,30 @@ export class MessageScrollerProvider {
         const command = this.#command;
         this.#command = undefined;
         this.mode =
-          this.#end() - v.scrollTop <= this.options.threshold() && this.options.follow()
+          command?.kind === 'end' && this.options.follow() && this.options.pinned()
             ? 'following-bottom'
             : 'free-scrolling';
-        this.options.pin(this.mode === 'following-bottom');
         command?.resolve('completed');
+        this.#programTop = undefined;
       } else this.schedule();
     } else if (this.#opening) {
       this.#clearSpacer();
       this.pendingScroll = false;
       if (rows.length) {
         this.#opening = false;
-        const initial = this.options.initialPosition();
-        const anchor = rows.filter((r) => r.anchor).at(-1);
+        const initial = this.options.initialPosition(),
+          anchor = rows.filter((row) => row.anchor).at(-1);
         if (
           (initial === 'last-anchor' || initial === 'preserve') &&
           anchor &&
-          v.scrollHeight - this.#top(anchor) > v.clientHeight
+          this.#bottom() - this.#measure(anchor).top > v.clientHeight
         ) {
           this.#anchor = anchor.id;
-          this.#anchorMargin = this.options.readingLine() + this.options.previousItemPeek();
           this.mode = 'anchored-to-message';
-          this.#holdAnchor(anchor);
-        } else if (initial !== 'start' && this.options.pinned()) {
-          this.mode = 'following-bottom';
+          this.#hold(anchor);
+        } else if (initial !== 'start') {
+          this.mode =
+            this.options.follow() && this.options.pinned() ? 'following-bottom' : 'free-scrolling';
           this.#move(this.#end());
         } else {
           this.mode = 'free-scrolling';
@@ -309,48 +395,127 @@ export class MessageScrollerProvider {
         }
       }
     } else {
-      const anchors = appended.filter((r) => r.anchor);
-      if (anchors.length === 1 && this.mode !== 'free-scrolling') {
-        this.#anchor = anchors[0]!.id;
-        this.#anchorMargin = this.options.readingLine() + this.options.previousItemPeek();
-        this.mode = 'anchored-to-message';
-      } else if (anchors.length > 1 && this.options.pinned()) {
-        this.#anchor = undefined;
-        this.mode = 'following-bottom';
+      const oldFirstIndex = rows.findIndex((row) => row.element === oldRows[0]?.element);
+      const prepended = oldFirstIndex > 0;
+      const newAnchors = rows.filter((row) => row.anchor && !this.#handledAnchors.has(row.element));
+      let freshAnchor = false;
+      if (!prepended && newAnchors.length) {
+        if (newAnchors.length > 1 && this.mode === 'following-bottom' && this.options.follow()) {
+          this.#anchor = undefined;
+        } else {
+          this.#anchor = newAnchors[0]!.id;
+          this.mode = 'anchored-to-message';
+          freshAnchor = true;
+        }
       }
-      const anchor = rows.find((r) => r.id === this.#anchor);
-      if (this.mode === 'anchored-to-message' && anchor) this.#holdAnchor(anchor);
-      else if (this.mode === 'following-bottom' && this.options.pinned() && this.options.follow()) {
+      const anchor = rows.find((row) => row.id === this.#anchor);
+      if (this.mode === 'anchored-to-message' && anchor) {
+        const previous = this.#tailHeight;
+        this.#hold(anchor);
+        if (
+          !freshAnchor &&
+          previous > 0 &&
+          this.#tailHeight === 0 &&
+          this.options.follow() &&
+          this.options.pin(true)
+        ) {
+          this.mode = 'following-bottom';
+          this.#anchor = undefined;
+          this.#clearSpacer();
+          this.#move(this.#end());
+        }
+      } else if (
+        this.mode === 'following-bottom' &&
+        this.options.pinned() &&
+        this.options.follow()
+      ) {
         this.#clearSpacer();
         this.#move(this.#end());
-      } else if (this.options.preserveOnPrepend() && this.#saved) {
-        const survivor = rows.find((r) => r.id === this.#saved!.id);
-        if (survivor) this.#move(this.#top(survivor) - this.#saved.offset);
+      } else {
+        if (this.mode === 'anchored-to-message') {
+          this.mode = 'free-scrolling';
+          this.#anchor = undefined;
+        }
+        if (!userMoved && this.options.preserveOnPrepend() && this.#saved) {
+          const row = rows.find((row) => row.id === this.#saved!.id);
+          if (row) this.#move(this.#measure(row).top - this.#saved.offset);
+        }
       }
     }
-    this.#seen = seen;
+    for (const row of rows) if (row.anchor) this.#handledAnchors.add(row.element);
     this.#capture();
-    const threshold = Math.max(0, this.options.threshold());
-    const next = { start: v.scrollTop > threshold, end: this.#end() - v.scrollTop > threshold };
+    const next = scrollEdges(
+      v.scrollTop,
+      this.#bottom(),
+      v.clientHeight,
+      threshold,
+      this.mode === 'following-bottom' && this.options.follow(),
+    );
     if (next.start !== this.scrollable.value.start || next.end !== this.scrollable.value.end)
       this.scrollable.set(next);
-    if (this.#listeners.size) {
-      const visible = rows
-        .filter(
-          (r) =>
-            this.#top(r) + r.element.getBoundingClientRect().height > v.scrollTop &&
-            this.#top(r) < v.scrollTop + v.clientHeight,
-        )
-        .map((r) => r.id);
-      const anchor =
-        rows
-          .filter(
-            (r) =>
-              r.anchor &&
-              this.#top(r) <=
-                v.scrollTop + this.options.readingLine() + this.options.previousItemPeek() + 0.5,
-          )
-          .at(-1)?.id ?? null;
+    this.#observeVisibility();
+    this.#scheduleVisibility();
+    this.#publish();
+  }
+  #publish() {
+    const key = `${this.mode}/${this.pendingScroll}/${this.autoscrolling}/${this.scrollable.value.start}/${this.scrollable.value.end}/${this.options.pinned()}`;
+    if (key !== this.#lastSnapshot) {
+      this.#lastSnapshot = key;
+      this.options.changed();
+    }
+  }
+  #observeVisibility() {
+    const v = this.#viewport;
+    if (!v || !this.#listeners.size) return;
+    const margin = `${-(nonnegative(this.options.readingLine()) + nonnegative(this.options.previousItemPeek()))}px 0px 0px 0px`;
+    if (this.#intersection && margin !== this.#intersectionMargin) {
+      this.#intersection.disconnect();
+      this.#intersection = undefined;
+      this.#intersections.clear();
+    }
+    const win = v.ownerDocument.defaultView!;
+    if (!this.#intersection && win.IntersectionObserver) {
+      this.#intersectionMargin = margin;
+      this.#intersection = new win.IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) this.#intersections.add(entry.target as HTMLElement);
+            else this.#intersections.delete(entry.target as HTMLElement);
+          }
+          this.#scheduleVisibility();
+        },
+        { root: v, rootMargin: margin, threshold: [0, 0.01, 0.5, 1] },
+      );
+      for (const row of this.#rows) this.#intersection.observe(row.element);
+    }
+  }
+  #stopVisibility() {
+    if (this.#visibilityFrame)
+      this.#viewport?.ownerDocument.defaultView?.cancelAnimationFrame(this.#visibilityFrame);
+    this.#visibilityFrame = 0;
+    this.#intersection?.disconnect();
+    this.#intersection = undefined;
+    this.#intersections.clear();
+    this.#visibility = emptyVisibility;
+  }
+  #scheduleVisibility() {
+    const v = this.#viewport;
+    if (!v || !this.#listeners.size || this.#visibilityFrame) return;
+    this.#visibilityFrame = v.ownerDocument.defaultView!.requestAnimationFrame(() => {
+      this.#visibilityFrame = 0;
+      if (!this.#listeners.size || !this.#viewport) return;
+      this.#geometry.clear();
+      const line =
+        v.scrollTop +
+        nonnegative(this.options.readingLine()) +
+        nonnegative(this.options.previousItemPeek());
+      const { visibleMessageIds: visible, currentAnchorId: anchor } = readingVisibility(
+        this.#rows,
+        (row) => this.#measure(row),
+        line,
+        v.scrollTop + v.clientHeight,
+        this.#intersection ? (row) => this.#intersections.has(row.element) : undefined,
+      );
       if (
         anchor !== this.#visibility.currentAnchorId ||
         visible.join('\0') !== this.#visibility.visibleMessageIds.join('\0')
@@ -361,69 +526,86 @@ export class MessageScrollerProvider {
         });
         for (const listener of this.#listeners) listener(this.#visibility);
       }
-    }
-    this.options.changed();
+      this.#geometry.clear();
+    });
   }
   #supersede() {
     this.#command?.resolve('superseded');
     this.#command = undefined;
   }
   scrollToStart(options: ScrollOptions = {}) {
-    return this.#request('@start', options);
+    return this.#request('start', undefined, options);
   }
   scrollToEnd(options: ScrollOptions = {}) {
-    return this.#request('@end', options);
+    return this.#request('end', undefined, options);
   }
   scrollToMessage(id: string, options: ScrollOptions = {}) {
-    return this.#request(id, options);
+    return this.#request('message', id, options);
   }
-  #request(id: string, options: ScrollOptions): ScrollCommand {
-    const row = this.options.rows().find((r) => r.id === id);
-    const mounted = !!row || id === '@start' || id === '@end';
-    if (!this.#viewport || (!mounted && !this.options.knownIds().includes(id)))
+  #request(
+    kind: PendingCommand['kind'],
+    id: string | undefined,
+    options: ScrollOptions,
+  ): ScrollCommand {
+    const row = kind === 'message' ? this.options.rows().find((row) => row.id === id) : undefined;
+    if (kind === 'message' && !row && !this.options.knownIds().includes(id!))
       return { status: 'rejected', finished: Promise.resolve('rejected') };
-    const desiredPin = id === '@end';
-    if (!this.options.pin(desiredPin))
+    if (!this.options.pin(kind === 'end'))
       return { status: 'rejected', finished: Promise.resolve('rejected') };
     this.#supersede();
     this.#opening = false;
-    this.pendingScroll = false;
-    let resolve!: (v: 'completed' | 'superseded') => void;
-    const finished = new Promise<'completed' | 'superseded'>((r) => {
-      resolve = r;
+    let resolve!: PendingCommand['resolve'];
+    const finished = new Promise<'completed' | 'superseded'>((done) => {
+      resolve = done;
     });
-    this.#command = { id, options, resolve };
+    this.#command = { kind, id, options, resolve };
     this.mode = 'free-scrolling';
-    if (mounted) this.#execute();
-    return { status: mounted ? 'accepted' : 'pending', finished };
+    const executed = this.#execute();
+    this.schedule();
+    this.#publish();
+    return { status: executed ? 'accepted' : 'pending', finished };
   }
-  #execute() {
-    const { id, options } = this.#command!,
-      v = this.#viewport!;
-    const row = this.options.rows().find((r) => r.id === id);
+  #execute(): boolean {
+    if (!this.#viewport?.clientHeight || !this.#command || !this.#content || !this.#spacer)
+      return false;
+    const { kind, id, options } = this.#command;
+    const row = kind === 'message' ? this.options.rows().find((row) => row.id === id) : undefined;
+    if (kind === 'message' && !row) return false;
+    this.#geometry.clear();
     this.#anchor = undefined;
     this.#clearSpacer();
-    let target = id === '@end' ? this.#end() : 0;
+    this.pendingScroll = false;
+    let target = kind === 'end' ? this.#end() : 0;
     if (row) {
-      const margin = Math.max(0, options.scrollMargin ?? this.options.readingLine());
-      const top = this.#top(row),
-        height = row.element.getBoundingClientRect().height;
-      target =
-        options.align === 'end'
-          ? top + height - v.clientHeight + margin
-          : options.align === 'center'
-            ? top - (v.clientHeight - height) / 2
-            : top - margin;
-      if (
-        options.align === 'nearest' &&
-        top >= v.scrollTop &&
-        top + height <= v.scrollTop + v.clientHeight
-      )
-        target = v.scrollTop;
+      const p = this.#padding();
+      target = Math.max(
+        0,
+        scrollTarget(
+          this.#measure(row),
+          this.#viewport.scrollTop,
+          this.#viewport.clientHeight,
+          p.start,
+          p.end,
+          options.align,
+          nonnegative(options.scrollMargin ?? this.options.readingLine()),
+        ),
+      );
+      this.#setSpacer(target + this.#viewport.clientHeight - this.#bottom());
     }
     this.mode = 'settling-jump';
     this.#settledFrames = 0;
+    if (kind === 'end' && options.behavior === 'smooth' && !this.options.reducedMotion()) {
+      const win = this.#viewport.ownerDocument.defaultView!;
+      this.autoscrolling = true;
+      if (this.#autoTimer) win.clearTimeout(this.#autoTimer);
+      this.#autoTimer = win.setTimeout(() => {
+        this.#autoTimer = 0;
+        this.autoscrolling = false;
+        this.#publish();
+      }, 180);
+    }
     this.#move(target, options.behavior ?? 'instant');
     this.schedule();
+    return true;
   }
 }
