@@ -57,9 +57,22 @@ export const inputGroupAppearance: PresentationDictionary = {
         'font-weight': 'var(--tp-font-medium)',
       },
     },
+    {
+      selector: '&[data-position="inline-start"]',
+      declarations: { 'padding-inline-end': '0' },
+    },
+    {
+      selector: '&[data-position="inline-end"]',
+      declarations: { 'padding-inline-start': '0' },
+    },
   ],
   'input-group-text': [
     { declarations: { color: 'var(--tp-muted-foreground)', 'font-size': 'var(--tp-text-sm)' } },
+    {
+      selector:
+        '&:is([slot="prefix"], [slot="suffix"], [slot="inline-start"], [slot="inline-end"])',
+      declarations: { 'min-inline-size': 'var(--tp-icon-size-md)' },
+    },
   ],
   'input-group-control': [
     {
@@ -78,6 +91,8 @@ export const inputGroupAppearance: PresentationDictionary = {
         outline: '0',
         'box-shadow': 'none',
         background: 'transparent',
+        'font-size': 'var(--tp-text-sm)',
+        'line-height': 'var(--tp-leading-normal)',
       },
     },
   ],

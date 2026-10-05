@@ -34,6 +34,7 @@ export class TpInputGroup extends TpElement {
         grid-row: 2;
         min-inline-size: 0;
         display: flex;
+        align-items: center;
       }
 
       .actions {
@@ -45,6 +46,16 @@ export class TpInputGroup extends TpElement {
         display: flex;
         align-items: center;
         min-inline-size: 0;
+      }
+
+      .addon[data-position^='inline-'] {
+        justify-content: center;
+      }
+
+      .addon[data-position^='inline-'] ::slotted(span) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
       }
 
       [data-position='inline-start'] {
