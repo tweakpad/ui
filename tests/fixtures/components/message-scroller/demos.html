@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Message Scroller use cases</title></head>
+<body>
+<main style="max-width:1200px;margin:auto;display:grid;gap:40px;grid-template-columns:repeat(auto-fit,minmax(min(100%,384px),1fr))"></main>
+<script type="module">
+import '/src/register.ts';
+import '/src/styles.css';
+import { messageScrollerUseCases } from '/src/stories/message-scroller-use-cases.ts';
+const main = document.querySelector('main');
+for (const example of messageScrollerUseCases) {
+  const demo = document.createElement('message-scroller-use-case');
+  demo.example = example.id;
+  demo.id = example.id;
+  main.append(demo);
+}
+const streaming = document.createElement('message-scroller-demo');
+streaming.variant = 'streaming';
+streaming.id = 'streaming';
+main.append(streaming);
+window.ready = Promise.all([...main.children].map(d => d.updateComplete));
+</script>
+</body>
+</html>

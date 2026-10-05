@@ -79,8 +79,8 @@ Keep provider as the only scroll owner; extract typed geometry/command helpers w
 | ID | Check | Status | Evidence / unresolved finding |
 | --- | --- | --- | --- |
 | I-01 | Actual shared ownership | passed | Root composes actual public Viewport/Content/Return control in shorthand; explicit tree verified with no implicit viewport; Return control extends TpButton; provider shared. |
-| I-02 | Sourced presentation | passed | Chrome page 67 screenshot: bounded transcript, native scrollbar, gap/padding recipe, actual Message/Bubble and centered circular Button. Reference base/Nova arrangement retained; library typography/tokens. |
-| I-03 | Independent options | passed | Explicit 220px viewport/Content mounts separately, start opening and start-directed control; shorthand still opens at end and shows end-directed control only after scrollToStart. |
+| I-02 | Sourced presentation | passed | Use-case correction: actual two-column Chrome fixture inspected; anchoring has role toggles and single-message Send, group chat has participant text and separator Marker with shared card frame. Remaining cases retain separately mapped source regions; no substitute controls. |
+| I-03 | Independent options | passed | Trusted User/Assistant toggle resets, two sends create opposite anchor flags; join action appends a separately anchored real Marker, with reply action remaining distinct. |
 
 ## Gate record
 
@@ -89,12 +89,12 @@ Keep provider as the only scroll owner; extract typed geometry/command helpers w
 | 0. Sources and scope | passed | Fresh live specs and complete local source chain above; URL docs also read |
 | 1. Capability mapping | passed | C-01–C-12 map all six parts and hooks; compatibility adaptations grounded in live spec |
 | 2. Architecture and composition reuse | passed | One provider, explicit/implicit same constituents, actual TpButton, shared presentation |
-| 3. Behavior | passed | V-02–V-08 |
-| 4. Presentation and customization | passed | V-01,V-09 |
-| 5. Accessibility | passed | V-07 |
-| 6. Visual and interaction inspection | passed | V-01,V-09 |
-| 7. Documentation and demo reuse | passed | V-10 |
-| 8. Regression and reconciliation | passed | V-10 |
+| 3. Behavior | pending | V-02–V-08 |
+| 4. Presentation and customization | pending | V-01,V-09 |
+| 5. Accessibility | pending | V-07 |
+| 6. Visual and interaction inspection | pending | V-01,V-09 |
+| 7. Documentation and demo reuse | pending | V-10 |
+| 8. Regression and reconciliation | pending | V-10 |
 
 ## Documentation synchronization
 
@@ -104,7 +104,7 @@ Keep provider as the only scroll owner; extract typed geometry/command helpers w
 
 ## Completion / handoff
 
-Implementation and the declared Chrome verification matrix are complete. Older workspace-conversation evidence was supplemented with current native input checks. This is not a cross-browser or screen-reader certification.
+The prior visual completion claim was invalidated by the user screenshot; the demo correction below reopens the affected gates. Earlier scroller behavior evidence remains valid. Older workspace-conversation evidence was supplemented with current native input checks. This is not a cross-browser or screen-reader certification.
 
 ### Dependency repair discovered during V-07
 
@@ -119,3 +119,52 @@ Axe found Bubble's existing default `aria-label="Message"` on a generic div, req
 - Repository-wide `npm run lint` is not green: it stops at unchanged `src/components/field/field.ts` formatting. Confirmed the HEAD version also fails Prettier with `--ignore-path /dev/null`; no Field change is included. This is an existing repository issue outside this component and does not represent a failed Message Scroller capability.
 - Chrome 154, real pointer and keyboard inputs; CSS-pixel geometry and native API fixtures. No claim of real touch-device, other-engine, OS reduced-motion preference, forced-colors or screen-reader testing. The component reduced-motion policy and shared motion resolver/unit coverage were exercised. No browser capabilities were mocked; no alternative browser driver used.
 - No runtime dependencies added; shadcn MIT notice emitted as `dist/LICENSE.message-scroller`. Existing registration/catalog identity remains compatible; three new public constituents exported/registered.
+
+## Reference demo correction (2026-10-05)
+
+The user screenshot disproves the earlier I-02 demo comparison: the wide Launch assistant form, visible Message label, resizable textarea, separate text Send, prefilled author rows and shaded footer do not reproduce the supplied reference. Gates 4-8 and I-02 are reopened.
+
+Fresh direct Foundation and Library reads at head 8440bff24a97dbbc5c762ebf4bd6baa958b305e1 confirm scroller anatomy and Card, Empty state, Input group, Tooltip contracts. Local UI revision unchanged. Chrome page 5 directly inspected: the actual demo uses **base/Rhea**, not the Nova scroller primitive alone. Source: apps/v4/examples/base/message-scroller-{demo,streaming}.tsx -> components/message-animated.tsx -> registry base Card/InputGroup/Button/Empty/Menu/Tooltip plus registry/styles/style-rhea.css.
+
+| Region | Source mapping | Local owner / decision | Verification |
+| --- | --- | --- | --- |
+| Chat shell | Card max-w-sm h-140, header border, unified surface, flush flexible content, footer without separator | Actual tp-card, action slot, section-colors=off; public parts for bounded 24rem x 35rem geometry | D-01 |
+| Empty and rows | Empty icon/title/description; MessageAnimated without authors, muted user and ghost assistant | Actual tp-empty-state, tp-message, tp-bubble, tp-icon; shared icon definitions; no demo substitutes | D-01,D-02 |
+| Composer | InputGroup with two-line queued prompt, block-end plus menu and arrow Send | Actual tp-input-group, read-only tp-text-area (required single Control per ucl17), tp-menu/items/separator, tp-button, tp-form. Compact no-resize two-line area adapts reference static div to required Control. | D-02,D-03 |
+| Header action | Reset icon inside Tooltip | Actual tp-tooltip and tp-button; reset scripted data, busy disabled; full timer cleanup | D-02 |
+| Palette/type | Rhea geometry with library theme | Keep semantic Tweakpad tokens and shared component recipes; public part overrides only for source-specific layout/shape | D-01,D-03 |
+
+Gates 0-2 pass for this mapped correction before editing. No core scroll semantics change.
+
+Planned D-01: compare full rendered base/streaming shells with page 5; inspect empty and populated states. D-02: trusted Send, busy state, Reset, plus-menu keyboard/Escape, native scroll-away/return; verify source copy. D-03: light/dark, 390px narrow RTL, overflow, accessible names and axe. D-04: targeted story/type/lint/build checks.
+
+The follow-up user correction rejects copying the reference conversation/branding. The demo retains original launch-planning content; the reference governs composition and behavior only. Base/Rhea visual comparison is explicitly about the 384x560 shell, empty-state arrangement, integrated bottom composer, right-aligned user bubble, unframed assistant response and icon actions. Library typography, spacing and theme colors remain intentional adaptations. Input group retains its required read-only native Control. No reference greeting or conversation text remains.
+
+### Demo correction results
+
+- D-01 passed: directly inspected live reference page 5 and source/Rhea styles, then Chrome page 67 default and streaming compositions. Card is 384x560 CSS pixels at desktop, with centered empty content, independent header Reset, unified surface and compact integrated composer. Original launch-planning messages and greeting replace all copied reference conversation/branding. Library theme colors/type/spacing and read-only Text area are intentional, documented adaptations; this is not a pixel-identical theme claim.
+- D-02 passed: trusted plus click, ArrowDown/Escape, Tab/Enter sends next prompt; 2 rows, streaming=true, Send/Reset disabled, log aria-busy=true. Second turn gives 4 rows. Trusted Home during streaming leaves top=0 across 900ms of growth, pinned=false and return active. Trusted Return click settles at 264.5 of 265px, pinned=true, return inactive. Reset clears 4 rows to 0 and restores first prompt/Empty state. Menu icons corrected to its actual default slot. Timer cleanup retained.
+- D-03 passed: light desktop empty/populated and dark 390px narrow inspected; RTL logical layout inspected in empty state. document clientWidth=scrollWidth=390. Axe found zero violations in the entire demo. One incomplete aria-valid-attr-value on Menu's cross-shadow trigger relation manually resolved: native button.ariaControlsElements points to the connected actual tp-menu (Chrome serializes the element relation with an empty aria-controls attribute). Real opening, menu tree, Escape and focus restoration also verified; no rules suppressed.
+- D-04 passed: 13 targeted story/geometry tests, full TypeScript noEmit, changed-file ESLint/Stylelint/Prettier, git diff --check, library build and final Storybook build. New shared chat icon entry emitted by the existing package icon pipeline. Existing global Field formatting issue remains outside this correction. Final Docs iframe renders both original-content demos; console contains only the normal Lit development warning.
+- Local evidence: tmp/component-verification/message-scroller/refactor/demo-docs-light.png, demo-dark-narrow.png, demo-build.log, demo-storybook.log. These are local ignored artifacts. Earlier behavioral fixture evidence remains unchanged; no scroller engine changes in this correction.
+
+## Use-case parity correction
+
+Prior D-01–D-04 only established the main/streaming chat shell. They did not establish demo parity. The user correctly rejected the remaining merged/static substitutes. Fresh direct live MessageScroller contracts and constituent Toggle group, Slider, Tabs, Select, Preview card and Marker contracts read at current head; local base/Rhea examples and base docs page inspected, including actual live page 5 controls.
+
+| Scenario | Reference example / exact interaction | Local mapping / reuse | Planned evidence |
+| --- | --- | --- | --- |
+| U-01 | anchoring: User/Assistant ToggleGroup resets and appends ONE message per Send | tp-toggle-group/tp-toggle, individual Item.scrollAnchor based on chosen role, actual Button | both roles; next anchored row coordinate |
+| U-02 | group-chat: participant join Marker anchors, then participant message does not | tp-marker separator inside stable Item, tp-message authors, subdued/ghost/tinted Bubble variants | initial -> join -> reply -> reset |
+| U-03 | previous-context: preloaded first exchange, adjustable 64–128px Slider beside composer; next anchored streamed turn | actual tp-slider, InputGroup/TextArea/Button composer; previousItemPeek + readingLine24 | change peek then send; previous context geometry |
+| U-04 | streaming: streamed reply follows end until native scroll-away | existing corrected shared chat demo | real scroll-away/return |
+| U-05 | opening-position: start/end/last-anchor Tabs for saved long transcript | actual tp-tabs with native tab constituents per its contract; keyed Root remount; no manual fake scrolling | distinct initial coordinates and pending paint |
+| U-06 | load-history: last five rows, load all earlier rows once, end Marker, reset | stable Items; actual Button/Marker; status feedback through native output | visible row same coordinate before/after prepend |
+| U-07 | animation: Select with Fade, Slide Up, Slide Side, Pop, Spring Bounce, Blur Fade, Scale Fade; sends streaming turn | actual tp-select, public Item motion via app-owned WAAPI, shared reduced-motion resolver, cancellation on reset/disconnect | presets animate newly appended user only; reduced policy; cleanup |
+| U-08 | commands: header Jump to menu chooses any user message in complete transcript | actual tp-menu/items/Button -> scrollToMessage outside viewport | each target receipt/coordinate |
+| U-09 | visibility: outside hover/focus outline with current-anchor indication and jump actions | actual tp-preview-card/Button; decorative outline marks native content; subscribeVisibility cleanup | current mark and aria-current track native scroll/jump |
+| U-10 | scrollable: footer reports top/middle/bottom/fit from independent edge flags | provider.scrollable subscription; plain status prose | all three long-transcript states, unsubscribe |
+
+Source authority and architecture gates 0-2 pass: each case separately mapped to docs and public owners; original launch copy remains. Shared shell/data/row helpers consumed by both base and use-case demos; no replacement scrolling or duplicated component behavior. SSR inline prepaint script is documented separately, not invented as a client demo. The old combined outline/history and static anchors are replaced, not counted as equivalent. All new example code must be copyable with public imports, and each matching use-case narrative lists the exact action and expected result.
+
+U-05 exposed an initial layout defect: hidden pending viewports caused content-visibility:auto Items to report 160px placeholders instead of actual Bubble heights. The shared Root will keep Item layout visible through an inherited private CSS variable while opening is pending, then restore auto optimization. This retains provider ownership and reference default-position semantics; no demo scroll workaround or public API addition. Reverify all opening positions, hidden initialization and existing engine fixture.

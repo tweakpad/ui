@@ -9,6 +9,7 @@ import type {
   SliderThumbAlignment,
 } from '../components/slider/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
+import { sliderExamples } from './slider.examples.js';
 import documentation from '../../docs/slider.md?raw';
 
 interface Args {
@@ -33,7 +34,11 @@ const meta: Meta<Args> = {
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
-    docs: { description: { component: documentation }, source: { code: source, language: 'html' } },
+    docs: {
+      examples: sliderExamples,
+      description: { component: documentation },
+      source: { code: source, language: 'html' },
+    },
   },
   args: {
     value: 40,

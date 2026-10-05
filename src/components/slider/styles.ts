@@ -17,6 +17,26 @@ export const sliderStyles = css`
     justify-content: space-between;
   }
 
+  /* Value-only controls form an inline readout; labels retain the stacked header. */
+  .root:not([data-orientation='vertical']):has(.header):not(:has([part~='slider-label'])) {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .root:not([data-orientation='vertical']):has(.header):not(:has([part~='slider-label'])) .control {
+    flex: 1;
+  }
+
+  .header {
+    min-inline-size: 0;
+    flex-wrap: wrap;
+  }
+
+  [part~='slider-output'] {
+    white-space: nowrap;
+    flex: none;
+  }
+
   .control {
     position: relative;
     display: flex;

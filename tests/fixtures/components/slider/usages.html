@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Slider usages</title></head><body><main></main><script type="module">
+import '/src/register.ts';
+import '/src/styles.css';
+import {render,html} from 'lit';
+import {sliderExamples} from '/src/stories/slider.examples.ts';
+const main=document.querySelector('main');
+main.style.cssText='max-width:700px;margin:auto;padding:24px;display:grid;gap:32px';
+render(html`${sliderExamples.map(e=>html`<section><h2>${e.title}</h2><p>${e.description}</p>${e.render()}</section>`)}`,main);
+window.examples=sliderExamples;
+</script></body></html>

@@ -166,7 +166,7 @@ export class TpMessageScrollerItem extends TpElement {
         display: block;
         min-inline-size: 0;
         flex: none;
-        content-visibility: auto;
+        content-visibility: var(--_tp-message-scroller-content-visibility, auto);
         contain-intrinsic-size: auto 10rem;
       }
     `,

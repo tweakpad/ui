@@ -3,7 +3,16 @@ import type { PresentationDictionary } from '../resolver.js';
 
 // shadcn Base slider.tsx → style-nova.css .cn-slider*; geometry belongs to the family.
 export const sliderAppearance: PresentationDictionary = {
-  slider: [{ declarations: { gap: 'var(--tp-space-2)' } }],
+  slider: [
+    { declarations: { gap: 'var(--tp-space-2)' } },
+    { selector: '& > .header', declarations: { gap: 'var(--tp-space-3)' } },
+    {
+      // Leave room for the centered endpoint thumb and its focus indication beside Output.
+      selector:
+        '&:not([data-orientation="vertical"]):has(.header):not(:has([part~="slider-label"]))',
+      declarations: { gap: 'var(--tp-space-4)' },
+    },
+  ],
   'slider-track': [
     {
       declarations: {

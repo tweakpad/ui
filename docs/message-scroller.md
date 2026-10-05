@@ -227,3 +227,22 @@ Each constituent exposes its native part through its own `::part(...)`; Root als
 Root and its native viewport expose presence markers `data-pending-scroll`, `data-scrollable-start`, `data-scrollable-end`, `data-autoscrolling`, a `data-scrollable` token list (`start end`) and `data-scroll-mode`. Root host also exposes `data-pinned`. Pending paint is hidden until opening placement completes; this is client-side placement, not a React SSR/hydration API.
 
 The default frame height is `120 × --tp-spacing`. Set `--tp-message-scroller-height: 24rem` for a different bound, or `100%` inside a height-constrained parent. Content padding/gaps, return-control appearance, colors and motion timings use shared tokens/dictionaries. The viewport recipe includes the reference’s native scroll-timeline bottom fade, which clears at the end; override `mask-image` through its presentation hook to remove it. RTL uses logical control placement. Keep motion policy inherited or set `motion-policy="reduce"` to make scroll commands immediate and remove decorative timed motion.
+
+## Reference chat demo
+
+The main demo follows the shadcn base/Rhea chat composition: a bounded Card with
+header Reset action, an Empty state, Message/Bubble rows, and an Input group
+composer with a plus Menu and icon-only Send button. Press Send to submit each
+queued prompt; replies stream locally. Reset clears the conversation. Menu choices
+are illustrative and do not upload files or invoke external services.
+
+The base demo sets `follow=false` and `previousItemPeek=64` to match the reference
+provider settings; the component defaults remain `true` and `0`. The Streaming
+messages example enables following. Story Controls apply when messages are mounted;
+changing opening controls remounts the demo.
+
+The reference uses static text for its read-only prompt. Tweakpad Input group
+requires one Control, so this composition uses an accessible read-only Text area
+with two visible lines and resizing disabled. Its accessible label is “Queued
+message”; no visible Field label or separate action row is added. All nested
+controls are public library components, and sizing uses their public parts.

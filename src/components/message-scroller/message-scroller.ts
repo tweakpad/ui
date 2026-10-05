@@ -204,6 +204,11 @@ export class TpMessageScroller extends TpElement {
     this.#publish();
   }
   #publish() {
+    // Pending viewports are hidden: measure real rows before enabling offscreen skipping.
+    this.style.setProperty(
+      '--_tp-message-scroller-content-visibility',
+      this.provider.pendingScroll ? 'visible' : 'auto',
+    );
     const edges = this.provider.scrollable.value;
     const tokens = [edges.start && 'start', edges.end && 'end'].filter(Boolean).join(' ');
     for (const node of [
