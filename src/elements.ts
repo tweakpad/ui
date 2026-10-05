@@ -116,6 +116,7 @@ import type {
   TpListItemSeparator,
   TpMarker,
   TpMessage,
+  TpMessageGroup,
   TpSkeleton,
   TpTable,
   TpTableHeader,
@@ -187,6 +188,7 @@ declare global {
     'tp-menu': TpMenu;
     'tp-menubar': TpMenubar;
     'tp-message': TpMessage;
+    'tp-message-group': TpMessageGroup;
     'tp-message-scroller': TpMessageScroller;
     'tp-message-scroller-item': TpMessageScrollerItem;
     'tp-message-scroller-viewport': TpMessageScrollerViewport;

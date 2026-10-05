@@ -552,9 +552,12 @@ export const componentAppearance: PresentationDictionary = {
     },
   ],
   ...listItemAppearance,
+  message: [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'message-root': [
-    { declarations: { gap: 'var(--tp-space-2)', 'font-size': 'var(--tp-text-sm)' } },
+    { declarations: { 'column-gap': 'var(--tp-space-2)', 'font-size': 'var(--tp-text-sm)' } },
   ],
+  'message-avatar': [{ declarations: { 'min-inline-size': 'var(--tp-control-height-lg)' } }],
+  'message-content': [{ declarations: { gap: 'calc(var(--tp-spacing) * 2.5)' } }],
   'message-header': [
     {
       declarations: {

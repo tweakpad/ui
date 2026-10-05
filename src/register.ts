@@ -94,6 +94,7 @@ import {
   TpListItemSeparator,
   TpMarker,
   TpMessage,
+  TpMessageGroup,
   TpSkeleton,
   TpTable,
   TpTableHeader,
@@ -214,6 +215,7 @@ defineElement(TpListItemGroup.tagName, TpListItemGroup);
 defineElement(TpListItemSeparator.tagName, TpListItemSeparator);
 defineElement(TpMarker.tagName, TpMarker);
 defineElement(TpMessage.tagName, TpMessage);
+defineElement(TpMessageGroup.tagName, TpMessageGroup);
 defineElement(TpSkeleton.tagName, TpSkeleton);
 defineElement(TpTable.tagName, TpTable);
 

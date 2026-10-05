@@ -281,7 +281,7 @@ export { TpListItem, TpListItemGroup, TpListItemSeparator } from './list-item/in
 
 export { TpMarker } from './marker/index.js';
 
-export { TpMessage } from './message/index.js';
+export { TpMessage, TpMessageGroup } from './message/index.js';
 
 export { TpSkeleton, primitiveMotionRoles } from './skeleton/index.js';
 

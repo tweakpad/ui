@@ -21,41 +21,91 @@ export class TpMessage extends TpElement {
       }
 
       .message {
-        display: flex;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
         inline-size: 100%;
         min-inline-size: 0;
       }
 
-      :host([align='end']) .message {
-        flex-direction: row-reverse;
+      .message[data-avatar] {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      :host([align='end']) .message[data-avatar] {
+        grid-template-columns: minmax(0, 1fr) auto;
       }
 
       .avatar {
         display: flex;
-        flex: none;
+        grid-column: 1;
+        grid-row: 2;
         align-self: flex-end;
       }
 
       .body {
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-        min-inline-size: 0;
+        display: contents;
+      }
+
+      .meta,
+      .content,
+      .footer {
+        grid-column: 1;
+      }
+
+      .message[data-avatar] :is(.meta, .content, .footer) {
+        grid-column: 2;
+      }
+
+      :host([align='end']) .message[data-avatar] :is(.meta, .content, .footer) {
+        grid-column: 1;
+      }
+
+      :host([align='end']) .avatar {
+        grid-column: 2;
       }
 
       .content {
+        display: flex;
+        flex-direction: column;
+        align-self: end;
+        grid-row: 2;
         min-inline-size: 0;
         overflow-wrap: anywhere;
+      }
+
+      .content > slot {
+        display: contents;
+      }
+
+      .content ::slotted(*) {
+        max-inline-size: 100%;
+      }
+
+      .content ::slotted(tp-attachment) {
+        align-self: flex-start;
+      }
+
+      :host([align='end']) .content ::slotted(tp-attachment) {
+        align-self: flex-end;
       }
 
       .meta,
       .footer {
         display: flex;
         flex-wrap: wrap;
-        align-items: baseline;
+        align-items: center;
+        min-inline-size: 0;
       }
 
-      :host([align='end']) :is(.meta, .footer) {
+      .meta {
+        grid-row: 1;
+      }
+
+      .footer {
+        grid-row: 3;
+      }
+
+      :host([align='end']) .footer {
         justify-content: flex-end;
       }
 
@@ -75,7 +125,13 @@ export class TpMessage extends TpElement {
     const changed = () => this.requestUpdate();
     return this.renderPart('message-root', state, {
       tag: 'article',
-      properties: { class: 'message', part: 'root message-root', 'data-align': this.align },
+      properties: {
+        class: 'message',
+        part: 'root message-root',
+        'data-align': this.align,
+        'data-avatar': has('avatar') ? '' : undefined,
+        'aria-label': this.getAttribute('aria-label') ?? undefined,
+      },
       content: html`${this.renderPart('message-avatar', state, {
           properties: { class: 'avatar', part: 'message-avatar', hidden: !has('avatar') },
           content: html`<slot name="avatar" @slotchange=${changed}></slot>`,

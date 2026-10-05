@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Message use cases</title>
+  </head>
+  <body>
+    <main
+      style="
+        max-width: 960px;
+        margin: auto;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 384px), 1fr));
+        gap: 48px;
+      "
+    ></main>
+    <script type="module">
+      import '/src/register.ts';
+      import '/src/styles.css';
+      import { render, html } from 'lit';
+      import { messageExamples } from '/src/stories/message.examples.ts';
+      import './fixture.ts';
+      render(
+        messageExamples.map(
+          (example) =>
+            html`<section>
+              <h2>${example.title}</h2>
+              ${example.render()}
+            </section>`,
+        ),
+        document.querySelector('main'),
+      );
+    </script>
+  </body>
+</html>
