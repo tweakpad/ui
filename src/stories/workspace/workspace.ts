@@ -26,13 +26,33 @@ import {
 import type { TpToast } from '../../components/toast/index.js';
 import type { TpNavigationPanel } from '../../components/navigation-panel/index.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
+import { formatTime, resolveTime } from '../../foundation/time/index.js';
 type WorkspaceOpenChange = CustomEvent<{ value: boolean }>;
 import './styles.css';
 
 const icon = (name: keyof typeof navigationIcons) =>
   html`<tp-icon .icon=${navigationIcons[name]}></tp-icon>`;
+const shortDate: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+/** Date-only value as an inline Time; the surrounding control owns any focus. */
 const date = (value: string) =>
-  new Date(`${value}T12:00:00`).toLocaleDateString('en', { month: 'short', day: 'numeric' });
+  html`<tp-time
+    datetime=${value}
+    mode="absolute"
+    .format=${shortDate}
+    .tooltip=${false}
+  ></tp-time>`;
+/** The same presentation for string-only properties. */
+const dateText = (value: string) =>
+  formatTime(resolveTime(value)!, Date.now(), { locale: 'en', mode: 'absolute', format: shortDate })
+    .text;
+/** Today, or a number of days earlier, at a local wall-clock time. */
+const at = (time: string, daysAgo = 0) => {
+  const [hours, minutes] = time.split(':').map(Number) as [number, number];
+  const value = new Date();
+  value.setDate(value.getDate() - daysAgo);
+  value.setHours(hours, minutes, 0, 0);
+  return value;
+};
 const statusVariant = (status: string) =>
   status === 'Blocked'
     ? 'destructive'
@@ -110,21 +130,21 @@ export class CatalogWorkspace extends LitElement {
     {
       id: 1,
       author: 'Sam Rivera',
-      time: '09:12',
+      time: at('09:12'),
       text: 'The mobile checkout is ready for a second look. I simplified the confirmation step.',
       own: false,
     },
     {
       id: 2,
       author: 'Alex Morgan',
-      time: '09:18',
+      time: at('09:18'),
       text: 'Great. Let’s check keyboard navigation before the review on Friday.',
       own: true,
     },
     {
       id: 3,
       author: 'Jamie Chen',
-      time: '09:24',
+      time: at('09:24'),
       text: 'I added the release checklist to Files. The launch announcement is next.',
       own: false,
     },
@@ -551,7 +571,7 @@ export class CatalogWorkspace extends LitElement {
             'Clear blockers before review',
             'Action needed',
           ],
-          ['Release date', date(this.deadline), 'Pilot team rollout', 'Milestone'],
+          ['Release date', dateText(this.deadline), 'Pilot team rollout', 'Milestone'],
         ].map(
           ([label, value, description, badge]) =>
             html`<tp-card
@@ -605,7 +625,7 @@ export class CatalogWorkspace extends LitElement {
                 >Upcoming</tp-badge
               ></tp-list-item
             >
-            <tp-list-item .description=${`${date(this.deadline)} · Everyone`}
+            <tp-list-item .description=${`${dateText(this.deadline)} · Everyone`}
               >Pilot launch<tp-badge slot="trailing">Milestone</tp-badge></tp-list-item
             >
           </div>
@@ -1099,21 +1119,21 @@ export class CatalogWorkspace extends LitElement {
                     {
                       id: -2,
                       author: 'Sam Rivera',
-                      time: 'Yesterday · 16:20',
+                      time: at('16:20', 1),
                       text: 'The pilot team can start on Friday. Are we ready to share the new onboarding flow?',
                       own: false,
                     },
                     {
                       id: -1,
                       author: 'Alex Morgan',
-                      time: 'Yesterday · 16:24',
+                      time: at('16:24', 1),
                       text: 'Yes. Let’s finish the accessibility review first and share the release brief with everyone.',
                       own: true,
                     },
                     {
                       id: 0,
                       author: 'Jamie Chen',
-                      time: 'Yesterday · 16:31',
+                      time: at('16:31', 1),
                       text: 'I’ll collect the final copy and the launch checklist in Files.',
                       own: false,
                     },
@@ -1161,7 +1181,7 @@ export class CatalogWorkspace extends LitElement {
               {
                 id: Date.now(),
                 author: 'Alex Morgan',
-                time: new Date().toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' }),
+                time: new Date(),
                 text,
                 own: true,
               },
@@ -1618,7 +1638,7 @@ export class CatalogWorkspace extends LitElement {
         @tp-open-change=${this.#open('updates')}
       >
         <div class="workspace-stack">
-          ${this.messages.map((message) => html`<tp-list-item .description=${message.text}><tp-avatar slot="leading" size="sm" .fallback=${initials(message.author)} .alt=${message.author}></tp-avatar>${message.author} · ${message.time}</tp-list-item>`)}
+          ${this.messages.map((message) => html`<tp-list-item .description=${message.text}><tp-avatar slot="leading" size="sm" .fallback=${initials(message.author)} .alt=${message.author}></tp-avatar>${message.author} · <tp-time .datetime=${message.time} mode="calendar"></tp-time></tp-list-item>`)}
         </div>
         <tp-button
           slot="footer"

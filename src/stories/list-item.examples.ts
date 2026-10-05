@@ -4,6 +4,7 @@ import setupSource from './list-item-example.js?raw';
 
 const layout =
   'display:grid;gap:var(--tp-space-4);max-inline-size:calc(var(--tp-spacing) * 150);min-inline-size:0';
+const ago = (milliseconds: number) => new Date(Date.now() - milliseconds).toISOString();
 const icon = '<tp-icon slot="media" data-icon="folder"></tp-icon>';
 const button = (label = 'Action', variant = 'outline', size = 'sm') =>
   `<tp-button slot="actions" variant="${variant}" size="${size}" data-feedback>${label}</tp-button>`;
@@ -84,8 +85,8 @@ export const listItemExamples = [
         (
           variant,
         ) => `<tp-list-item variant="${variant}" description="Supporting rows are independently optional."><strong slot="header">Project</strong>Header only</tp-list-item>
-<tp-list-item variant="${variant}" description="Metadata can follow the main content.">Footer only<span slot="footer">Updated two hours ago</span></tp-list-item>
-<tp-list-item variant="${variant}" description="A complete project summary."><strong slot="header">Team project</strong>Website redesign<span slot="footer">Updated five minutes ago</span></tp-list-item>`,
+<tp-list-item variant="${variant}" description="Metadata can follow the main content.">Footer only<span slot="footer">Updated <tp-time datetime="${ago(2 * 3_600_000)}"></tp-time></span></tp-list-item>
+<tp-list-item variant="${variant}" description="A complete project summary."><strong slot="header">Team project</strong>Website redesign<span slot="footer">Updated <tp-time datetime="${ago(5 * 60_000)}"></tp-time></span></tp-list-item>`,
       )
       .join('\n'),
   ),
@@ -113,7 +114,7 @@ export const listItemExamples = [
   example(
     'People and invitations',
     'list-item-people-example',
-    `<tp-list-item variant="outline" description="Last seen five months ago">${avatar('evilrabbit')}Evil Rabbit${invite('Evil Rabbit')}</tp-list-item>
+    `<tp-list-item variant="outline">${avatar('evilrabbit')}Evil Rabbit<span slot="description">Last seen <tp-time mode="relative" datetime="${ago(150 * 86_400_000)}"></tp-time></span>${invite('Evil Rabbit')}</tp-list-item>
 <tp-list-item variant="outline" description="Invite your team to collaborate on this project."><tp-avatar-group slot="media" size="sm">${people.map((person, n) => avatar(person, '', n < 2 ? 'data-secondary-avatar' : '')).join('')}</tp-avatar-group>Project team${button('Invite')}</tp-list-item>
 <tp-list-item-group aria-label="People">${people.map((person) => `<tp-list-item description="${person}@vercel.com">${avatar(person)}${person}${invite(person)}</tp-list-item>`).join('\n<tp-list-item-separator></tp-list-item-separator>\n')}</tp-list-item-group>`,
   ),

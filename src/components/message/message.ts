@@ -1,5 +1,6 @@
 import { css, html, nothing } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import type { TimeInput } from '../../foundation/time/parse.js';
 
 /** Sender-relative layout only. Transport and conversation state belong to the app. */
 export class TpMessage extends TpElement {
@@ -8,7 +9,7 @@ export class TpMessage extends TpElement {
     ...TpElement.properties,
     align: { type: String, reflect: true },
     author: { type: String },
-    timestamp: { type: String },
+    timestamp: {},
     pending: { type: Boolean, reflect: true },
     failed: { type: Boolean, reflect: true },
   };
@@ -116,9 +117,13 @@ export class TpMessage extends TpElement {
   ];
   align: 'start' | 'end' = 'start';
   author = '';
-  timestamp = '';
+  /** Time input presented through Time; unresolvable text is shown unchanged. */
+  timestamp: TimeInput = '';
   pending = false;
   failed = false;
+  get #hasTimestamp(): boolean {
+    return this.timestamp !== '' && this.timestamp !== null && this.timestamp !== undefined;
+  }
   protected override render() {
     const state = Object.freeze({ align: this.align });
     const has = (slot: string) => [...this.children].some((child) => child.slot === slot);
@@ -142,10 +147,10 @@ export class TpMessage extends TpElement {
             properties: {
               class: 'meta',
               part: 'meta message-header',
-              hidden: !this.author && !this.timestamp && !has('header'),
+              hidden: !this.author && !this.#hasTimestamp && !has('header'),
             },
             content: html`<slot name="header" @slotchange=${changed}
-              >${this.author ? html`<strong part="author">${this.author}</strong>` : nothing}${this.timestamp ? html`<time part="timestamp">${this.timestamp}</time>` : nothing}</slot
+              >${this.author ? html`<strong part="author">${this.author}</strong>` : nothing}${this.#hasTimestamp ? html`<tp-time part="timestamp" exportparts="time-value" .datetime=${this.timestamp}>${typeof this.timestamp === 'string' ? this.timestamp : nothing}</tp-time>` : nothing}</slot
             >`,
           })}
           ${this.renderPart('message-content', state, { properties: { class: 'content', part: 'content message-content' }, content: html`<slot></slot>` })}

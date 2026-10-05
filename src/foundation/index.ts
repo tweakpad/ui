@@ -20,6 +20,8 @@ export * from './number-field/index.js';
 export * from './positioning.js';
 export * from './presence.js';
 export * from './services.js';
+export * from './date-locale.js';
+export * from './time/index.js';
 export * from './slider.js';
 export * from './store.js';
 export * from './surface-handle.js';

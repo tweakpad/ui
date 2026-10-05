@@ -1,6 +1,13 @@
 import type { Direction } from './types.js';
 import { composedParent } from './focus.js';
 import { NumberLocale, numberFormatter } from './number-locale.js';
+import {
+  dateTimeFormatter,
+  durationFormatter,
+  relativeTimeFormatter,
+  type DurationRecord,
+  type DurationStyle,
+} from './date-locale.js';
 import type { NumericText } from './number-locale.js';
 
 export class CleanupScope {
@@ -168,7 +175,17 @@ export class LocaleService {
     return this.numberLocale(options).parse(text, committed);
   }
   date(value: Date | number, options?: Intl.DateTimeFormatOptions): string {
-    return new Intl.DateTimeFormat(this.locale, options).format(value);
+    return dateTimeFormatter(this.locale, options).format(value);
+  }
+  relativeTime(
+    value: number,
+    unit: Intl.RelativeTimeFormatUnit,
+    options?: Intl.RelativeTimeFormatOptions,
+  ): string {
+    return relativeTimeFormatter(this.locale, options).format(value, unit);
+  }
+  duration(value: DurationRecord, style?: DurationStyle): string {
+    return durationFormatter(this.locale, style).format(value);
   }
   compare(a: string, b: string, options?: Intl.CollatorOptions): number {
     return this.collator(options).compare(a, b);

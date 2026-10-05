@@ -2,6 +2,7 @@ import { bindPart } from '../../foundation/part.js';
 import { html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { createId } from '../../foundation/id.js';
+import { dateTimeFormatter } from '../../foundation/date-locale.js';
 import { TpElement, TpFormElement } from '../../foundation/element.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
 import {
@@ -385,7 +386,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
       const value = new Date(0);
       const p = this.calendarAdapter.parts(date);
       value.setUTCFullYear(p.year, p.month - 1, p.day);
-      return new Intl.DateTimeFormat(this.#locale(), {
+      return dateTimeFormatter(this.#locale(), {
         calendar: 'gregory',
         month: 'short',
         timeZone: 'UTC',

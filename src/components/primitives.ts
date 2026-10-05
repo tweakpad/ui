@@ -142,6 +142,8 @@ export { TpEmptyState } from './empty-state/index.js';
 
 export { TpKeyHint, TpKeyHintGroup } from './key-hint/index.js';
 
+export { TpTime } from './time/index.js';
+
 export class TpLabel extends TpElement {
   static tagName = 'tp-label';
   static override properties = {

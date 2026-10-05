@@ -98,6 +98,7 @@ import {
   TpMessageGroup,
   TpSkeleton,
   TpTable,
+  TpTime,
   TpTableHeader,
   TpTableBody,
   TpTableFooter,
@@ -220,6 +221,7 @@ defineElement(TpMessage.tagName, TpMessage);
 defineElement(TpMessageGroup.tagName, TpMessageGroup);
 defineElement(TpSkeleton.tagName, TpSkeleton);
 defineElement(TpTable.tagName, TpTable);
+defineElement(TpTime.tagName, TpTime);
 
 export * from './index.js';
 

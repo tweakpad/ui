@@ -1,3 +1,5 @@
+import { dateTimeFormatter } from './date-locale.js';
+
 export type CalendarSelectionMode = 'single' | 'multiple' | 'range';
 
 export interface CalendarRange {
@@ -102,7 +104,7 @@ export const gregorianCalendarAdapter: CalendarAdapter = {
         : style === 'month'
           ? { month: 'long', year: 'numeric', timeZone: 'UTC' }
           : { dateStyle: 'full', timeZone: 'UTC' };
-    return new Intl.DateTimeFormat(locale, { ...options, calendar: 'gregory' }).format(instant);
+    return dateTimeFormatter(locale, { ...options, calendar: 'gregory' }).format(instant);
   },
   weekNumber(date, weekStartsOn, minimalDays) {
     const year = this.parts(date).year;

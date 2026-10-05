@@ -53,6 +53,10 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
   'tp-key-hint-group': {
     kbd: 'key-hint-group',
   },
+  'tp-time': {
+    ':host': 'time',
+    time: 'time-value',
+  },
   'tp-label': {
     '.optional': 'label-optional-indicator',
   },

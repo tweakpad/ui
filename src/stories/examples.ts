@@ -204,7 +204,7 @@ const examples = {
     <tp-preview-card>
       <a slot="trigger" href="#preview">Preview project</a>
       <strong>Project Alpha</strong>
-      <p>Updated five minutes ago.</p>
+      <p>Updated <tp-time .datetime=${Date.now() - 5 * 60_000}></tp-time>.</p>
     </tp-preview-card>
   `,
   'tp-tooltip': () => html`
@@ -339,8 +339,9 @@ const examples = {
   `,
   'tp-marker': () => html`<tp-marker tone="success" label="Online"></tp-marker>`,
   'tp-message': () => html`
-    <tp-message author="Ada" timestamp="10:42">A complete message.</tp-message>
+    <tp-message author="Ada" .timestamp=${Date.now() - 2 * 60_000}>A complete message.</tp-message>
   `,
+  'tp-time': () => html`<tp-time .datetime=${Date.now() - 5 * 60_000}></tp-time>`,
   'tp-skeleton': skeletonProfile,
   'tp-table': () => html`
     <tp-table>

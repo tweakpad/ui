@@ -120,6 +120,7 @@ import type {
   TpMessageGroup,
   TpSkeleton,
   TpTable,
+  TpTime,
   TpTableHeader,
   TpTableBody,
   TpTableFooter,
@@ -190,6 +191,7 @@ declare global {
     'tp-menu': TpMenu;
     'tp-menubar': TpMenubar;
     'tp-message': TpMessage;
+    'tp-time': TpTime;
     'tp-message-group': TpMessageGroup;
     'tp-message-scroller': TpMessageScroller;
     'tp-message-scroller-item': TpMessageScrollerItem;

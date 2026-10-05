@@ -4,16 +4,16 @@ Message arranges sender identity, content, metadata and optional actions. It doe
 
 Use `align="start"` for other participants and `align="end"` for the current sender. Avatar and Footer follow the logical side, including RTL; Header stays start aligned. Set the nested Bubble's alignment to the same value. A team chat uses bubbles on both sides; an assistant transcript can use a `ghost` Bubble for full-width assistant content. An activity history may use start-aligned rows throughout. Choose the composition deliberately.
 
-| Property            | Default | Purpose                                                      |
-| ------------------- | ------- | ------------------------------------------------------------ |
-| `align`             | `start` | Logical sender side: `start` or `end`.                       |
-| `author`            | empty   | Sender name in the default header.                           |
-| `timestamp`         | empty   | Display timestamp in the default header.                     |
-| `pending`, `failed` | false   | Compatibility display flags; the application supplies state. |
+| Property            | Default | Purpose                                                                                                                           |
+| ------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `align`             | `start` | Logical sender side: `start` or `end`.                                                                                            |
+| `author`            | empty   | Sender name in the default header.                                                                                                |
+| `timestamp`         | empty   | Default-header time, rendered by [Time](./time.md). Accepts a `Date`, epoch number or text; unresolvable text is shown unchanged. |
+| `pending`, `failed` | false   | Compatibility display flags; the application supplies state.                                                                      |
 
 Slots: default (content), `avatar`, `header` (replaces default metadata), and `footer` (status, reactions or controls). A missing optional region has no layout footprint. Actions remain ordinary focusable controls.
 
-Presentation parts: `message-root`, `message-avatar`, `message-content`, `message-header`, `message-footer`; previous `root`, `body`, `meta`, `content`, `author`, `timestamp` hooks remain. Shared dictionary recipes own spacing and typography. Wrap chronological rows in `tp-message-scroller-item` when using Message Scroller.
+Presentation parts: `message-root`, `message-avatar`, `message-content`, `message-header`, `message-footer`; previous `root`, `body`, `meta`, `content`, `author`, `timestamp` hooks remain; `timestamp` is now the `tp-time` host and re-exports its `time-value` part. Shared dictionary recipes own spacing and typography. Wrap chronological rows in `tp-message-scroller-item` when using Message Scroller.
 
 ## Composition
 

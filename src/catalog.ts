@@ -69,6 +69,7 @@ export const catalog = [
   ['Message', 'tp-message', 'presentational-primitive'],
   ['Skeleton', 'tp-skeleton', 'thin-wrapper'],
   ['Table', 'tp-table', 'presentational-primitive'],
+  ['Time', 'tp-time', 'presentational-primitive'],
   ['Navigation panel', 'tp-navigation-panel', 'compound-reexport'],
 ] as const satisfies readonly (readonly [CatalogEntry['name'], string, CatalogEntry['kind']])[];
 

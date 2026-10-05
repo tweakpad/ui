@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import type { TpToast, ToastPosition, ToastSwipeDirection } from '../components/toast/index.js';
 import documentation from '../../docs/toast.md?raw';
+import { formatTime, resolveTime } from '../foundation/time/index.js';
 
 interface Args {
   timeout: number;
@@ -29,12 +30,16 @@ const meta: Meta<Args> = {
 <script type="module">
 import '@tweakpad/ui/register';
 import '@tweakpad/ui/styles.css';
+import { formatTime, resolveTime } from '@tweakpad/ui';
 
 const notifications = document.querySelector('tp-toast#notifications');
 document.querySelector('tp-button#show-notification').addEventListener('click', () => {
   notifications.add({
     title: 'Event created',
-    description: 'Sunday, December 3 at 9:00 AM',
+    description: formatTime(resolveTime('2023-12-03T09:00'), Date.now(), {
+      mode: 'absolute',
+      preset: 'full',
+    }).text,
     type: 'success',
   });
 });
@@ -100,7 +105,10 @@ document.querySelector('tp-button#show-notification').addEventListener('click', 
           )!;
           host.add({
             title: 'Event created',
-            description: 'Sunday, December 3 at 9:00 AM',
+            description: formatTime(resolveTime('2023-12-03T09:00')!, Date.now(), {
+              mode: 'absolute',
+              preset: 'full',
+            }).text,
             type: 'success',
             priority: args.priority === 'assertive' ? 'high' : 'low',
           });

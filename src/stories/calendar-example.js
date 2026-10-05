@@ -84,10 +84,15 @@ export function setupCalendarExample(root) {
     popover.initialFocus = calendar;
     listen(calendar, 'tp-value-change', (event) => {
       if (event.defaultPrevented) return;
-      label.textContent = new Intl.DateTimeFormat(undefined, {
-        dateStyle: 'medium',
-        timeZone: 'UTC',
-      }).format(new Date(`${event.detail.value}T00:00:00Z`));
+      // Time keeps the date-only value on its calendar day; the Button owns focus.
+      label.replaceChildren(
+        Object.assign(label.ownerDocument.createElement('tp-time'), {
+          datetime: event.detail.value,
+          mode: 'absolute',
+          preset: 'date-medium',
+          tooltip: false,
+        }),
+      );
       popover.close();
     });
   }

@@ -2,6 +2,10 @@ import { interactiveMarkupExample } from './documentation-examples.js';
 import { setupMessageExample } from './message-example.js';
 import setupSource from './message-example.js?raw';
 
+const yesterday = (() => {
+  const date = new Date(Date.now() - 86_400_000);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+})();
 const avatar = (name: string, initials: string) =>
   `<tp-avatar slot="avatar" fallback="${initials}" alt="${name}"></tp-avatar>`;
 const bubble = (text: string, align = 'start', extra = '') =>
@@ -106,7 +110,7 @@ ${row('Sam Rivera', bubble('The remaining review items are now assigned to the t
         bubble('Share them with the pilot team before the next session.', 'end'),
         'end',
         '',
-        '<span slot="footer">Read <time datetime="2026-10-04">yesterday</time></span>',
+        `<span slot="footer">Read <tp-time datetime="${yesterday}"></tp-time></span>`,
       ),
     ].join('\n'),
     'The optional Header names the sender. Footer metadata follows the message side; absent regions collapse.',
