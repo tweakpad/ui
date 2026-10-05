@@ -7,7 +7,7 @@ import type { DragDropManager } from './manager.js';
 import type { Draggable } from './entities.js';
 import type { DragEvent, DragOutcome } from './types.js';
 import { measureElement, cancelGeometryTransitions, parseTransform } from './dom-geometry.js';
-import { dragMotion } from './motion.js';
+import { dragMotion, dragMotionContext } from './motion.js';
 import type { MotionHandle } from '../motion.js';
 
 interface Member {
@@ -19,10 +19,15 @@ interface Member {
   next: Node | null;
 }
 type Membership = Map<Sortable['id'], Member>;
+interface IdleMember {
+  rect: ReturnType<typeof measureElement>;
+  index: number;
+  group: Sortable['group'];
+}
 export class OptimisticSorting {
   readonly #owners = new Set<(source: Draggable) => boolean>();
   readonly #motions = new Map<Element, MotionHandle>();
-  #idleRects = new Map<Sortable, ReturnType<typeof measureElement>>();
+  #idleRects = new Map<Sortable, IdleMember>();
   #idleRevision = 0;
   changed(): void {
     if (this.manager.dragOperation.status !== 'idle' || this.manager.destroyed) return;
@@ -35,15 +40,16 @@ export class OptimisticSorting {
           this.manager.dragOperation.status !== 'idle'
         )
           return;
-        const nextRects = new Map<Sortable, ReturnType<typeof measureElement>>();
+        const nextRects = new Map<Sortable, IdleMember>();
         for (const member of this.capture().values()) {
           const sortable = member.sortable,
             element = sortable.element;
           if (!element || [...this.#owners].some((owns) => owns(sortable.draggable))) continue;
           cancelGeometryTransitions(element);
           const next = measureElement(element),
-            old = this.#idleRects.get(sortable);
-          nextRects.set(sortable, next);
+            previous = this.#idleRects.get(sortable),
+            old = previous?.rect;
+          nextRects.set(sortable, { rect: next, index: sortable.index, group: sortable.group });
           const transition = sortable.transition;
           if (!next || !old || !transition?.idle) continue;
           const x = old.left - next.left,
@@ -63,7 +69,16 @@ export class OptimisticSorting {
               'sort-displacement',
               [{ translate: `${bx + x}px ${by + y}px` }, { translate: `${bx}px ${by}px` }],
               transition,
-              { itemId: sortable.id, x, y },
+              dragMotionContext(
+                sortable.id,
+                {
+                  sourceGroup: previous?.group,
+                  targetGroup: sortable.group,
+                  fromIndex: previous?.index,
+                  toIndex: sortable.index,
+                },
+                { x, y },
+              ),
             ),
           );
         }
@@ -205,7 +220,16 @@ export class OptimisticSorting {
               { translate: `${base.x}px ${base.y}px` },
             ],
             transition,
-            { itemId: sortable.id, x, y },
+            dragMotionContext(
+              sortable.id,
+              {
+                sourceGroup: members.get(sortable.id)?.group,
+                targetGroup: sortable.group,
+                fromIndex: members.get(sortable.id)?.index,
+                toIndex: sortable.index,
+              },
+              { x, y },
+            ),
           ),
         );
       }

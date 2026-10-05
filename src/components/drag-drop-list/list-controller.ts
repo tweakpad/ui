@@ -45,6 +45,20 @@ export function defaultItemLabel(item: unknown, id: UniqueIdentifier): string {
   return typeof label === 'string' && label.trim() ? label : String(id);
 }
 
+/** Independent drag/drop participation lanes for one list item. */
+export function itemParticipation(
+  option: boolean | { draggable?: boolean; droppable?: boolean } | undefined,
+  state: { disabled: boolean; readOnly: boolean; duplicate: boolean },
+): { dragDisabled: boolean; dropDisabled: boolean } {
+  const blocked = state.disabled || state.readOnly || state.duplicate;
+  const lanes =
+    typeof option === 'boolean' ? { draggable: option, droppable: option } : (option ?? {});
+  return {
+    dragDisabled: blocked || !!lanes.draggable,
+    dropDisabled: blocked || !!lanes.droppable,
+  };
+}
+
 const networks = new WeakMap<DragDropManager, ListNetwork>();
 type AnyList = ListController<any>;
 interface Session {

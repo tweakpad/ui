@@ -97,15 +97,15 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
       },
       {
         name: 'keyboard-feedback',
-        target: 'Overlay',
+        target: 'Overlay or source feedback',
         kind: 'state',
         phases: ['change'],
         completion: 'non-blocking',
-        context: ['itemId', 'x', 'y'],
+        context: ['itemId', 'sourceGroup', 'targetGroup', 'fromIndex', 'toIndex', 'x', 'y'],
       },
       {
         name: 'drop-settlement',
-        target: 'Overlay',
+        target: 'Overlay or source feedback',
         kind: 'state',
         phases: ['change'],
         completion: 'blocking',
@@ -709,11 +709,11 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
         cardinality: 'exactly one public owner host per control instance',
       },
       {
+        // No Foundation part: synthesized Navigation/Caption arrangement.
         name: 'calendar-header',
         publicName: 'Header',
         presentationKeys: ['calendar-header'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
+        cardinality: 'one per displayed Month, as a synthesized Navigation/Caption arrangement',
       },
       {
         name: 'calendar-previous',
@@ -730,13 +730,14 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'zero or one descendant of Root; cited behavior sets any required-presence condition',
       },
       {
+        // Compatibility public name for Foundation Calendar.Grid.
         name: 'calendar-month-grid',
         publicName: 'Month grid',
         presentationKeys: ['calendar-month-grid'],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
+        cardinality: 'one Grid per displayed Month',
       },
       {
+        // Compatibility public name for Foundation Calendar.DayButton.
         name: 'calendar-day',
         publicName: 'Day',
         presentationKeys: ['calendar-day'],
@@ -746,8 +747,7 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
         name: 'calendar-months',
         publicName: 'Months',
         presentationKeys: ['calendar-months'],
-        cardinality:
-          'zero or more descendants of Root as required by displayed months and configured options',
+        cardinality: 'exactly one descendant of Root',
       },
       {
         name: 'calendar-month',
@@ -2571,7 +2571,7 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'carousel-orientation-horizontal',
           'carousel-orientation-vertical',
         ],
-        cardinality: 'exactly one public owner host per control instance',
+        cardinality: 'One owner',
       },
       {
         name: 'carousel-viewport',
@@ -2581,8 +2581,7 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'carousel-viewport-orientation-horizontal',
           'carousel-viewport-orientation-vertical',
         ],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
+        cardinality: 'One in Root',
       },
       {
         name: 'carousel-track',
@@ -2592,8 +2591,7 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'carousel-track-orientation-horizontal',
           'carousel-track-orientation-vertical',
         ],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
+        cardinality: 'One in Viewport',
       },
       {
         name: 'carousel-item',
@@ -2603,7 +2601,7 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'carousel-item-orientation-horizontal',
           'carousel-item-orientation-vertical',
         ],
-        cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
+        cardinality: 'Zero or more in Track',
       },
       {
         name: 'carousel-previous',
@@ -2613,8 +2611,7 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'carousel-previous-orientation-horizontal',
           'carousel-previous-orientation-vertical',
         ],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
+        cardinality: 'Zero or one generated role',
       },
       {
         name: 'carousel-next',
@@ -2624,8 +2621,7 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'carousel-next-orientation-horizontal',
           'carousel-next-orientation-vertical',
         ],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
+        cardinality: 'Zero or one generated role',
       },
       {
         name: 'carousel-indicator',
@@ -2639,8 +2635,7 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'carousel-indicator-type-progress',
           'carousel-indicator-type-custom',
         ],
-        cardinality:
-          'zero or one descendant of Root; cited behavior sets any required-presence condition',
+        cardinality: 'Zero or one region with zero or more items',
       },
       {
         name: 'carousel-controls',
@@ -2651,13 +2646,13 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'carousel-controls-placement-inside',
           'carousel-controls-placement-outside',
         ],
-        cardinality: 'zero or one owned part',
+        cardinality: 'Zero or one group',
       },
       {
         name: 'carousel-status',
         publicName: 'Status',
         presentationKeys: ['carousel-status'],
-        cardinality: 'zero or one owned part',
+        cardinality: 'Zero or one position text',
       },
       {
         name: 'carousel-scrollbar',
@@ -2667,7 +2662,7 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'carousel-scrollbar-orientation-horizontal',
           'carousel-scrollbar-orientation-vertical',
         ],
-        cardinality: 'zero or one owned part',
+        cardinality: 'Zero or one active-axis region',
       },
       {
         name: 'carousel-thumb',
@@ -2677,19 +2672,19 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'carousel-thumb-orientation-horizontal',
           'carousel-thumb-orientation-vertical',
         ],
-        cardinality: 'zero or one owned part',
+        cardinality: 'One within scrollbar',
       },
       {
         name: 'carousel-autoplay-control',
         publicName: 'Autoplay control',
         presentationKeys: ['carousel-autoplay-control'],
-        cardinality: 'zero or one owned part',
+        cardinality: 'Zero or one action',
       },
       {
         name: 'carousel-announcements',
         publicName: 'Announcements',
         presentationKeys: ['carousel-announcements'],
-        cardinality: 'zero or one owned part',
+        cardinality: 'One owned region when initialized',
       },
     ],
   },

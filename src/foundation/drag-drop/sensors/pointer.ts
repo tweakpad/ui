@@ -109,15 +109,17 @@ export class PointerSensor implements Sensor {
     this.#disabled = value;
     if (value) this.#gesture?.cancel();
   }
-  bind(source: Draggable): () => void {
+  /** Per-binding options override this sensor's configured options for that source. */
+  bind(source: Draggable, options?: PointerSensorOptions): () => void {
     const scope = new CleanupScope();
     this.#scope.add(() => scope.dispose());
+    const effective = options ? { ...this.options, ...options } : this.options;
     const targets =
-      this.options.activatorElements === undefined
+      effective.activatorElements === undefined
         ? [source.handle ?? source.element]
-        : typeof this.options.activatorElements === 'function'
-          ? this.options.activatorElements(source)
-          : this.options.activatorElements;
+        : typeof effective.activatorElements === 'function'
+          ? effective.activatorElements(source)
+          : effective.activatorElements;
     const views = new Set<Window>();
     for (const target of new Set(targets)) {
       if (!target) continue;
@@ -126,14 +128,14 @@ export class PointerSensor implements Sensor {
         views.add(view);
         scope.add(touchLease(view));
       }
-      scope.listen(target, 'pointerdown', (event) => this.#down(event, source));
+      scope.listen(target, 'pointerdown', (event) => this.#down(event, source, effective));
     }
     return () => {
       scope.dispose();
       if (this.#gesture?.source === source && !this.#gesture.active) this.#gesture.cancel();
     };
   }
-  #down(event: PointerEvent, source: Draggable): void {
+  #down(event: PointerEvent, source: Draggable, options: PointerSensorOptions): void {
     if (
       this.disabled ||
       source.disabled ||
@@ -149,8 +151,8 @@ export class PointerSensor implements Sensor {
       return;
     let constraints: readonly ActivationConstraintInput[];
     try {
-      if ((this.options.preventActivation ?? interactive)(event, source)) return;
-      const input = this.options.activationConstraints;
+      if ((options.preventActivation ?? interactive)(event, source)) return;
+      const input = options.activationConstraints;
       constraints =
         input === undefined
           ? defaults(event, source)

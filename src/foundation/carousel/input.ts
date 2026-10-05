@@ -38,6 +38,24 @@ export function carouselInteractive(event: Event, root: HTMLElement): boolean {
   }
   return false;
 }
+const hideOnClickInteractive =
+  'summary,label,[role="button"],[role="link"],[role="checkbox"],[role="switch"],[role="radio"],[role="tab"],[role="menuitem"],[role="option"],[role="listbox"],[role="searchbox"]';
+/** Hide-on-click ignores descendant controls, interactive slide content and the
+ * indicator/scrollbar/autoplay regions supplied by the binding. */
+export function carouselHideOnClickIgnored(
+  event: Event,
+  root: HTMLElement,
+  regions: readonly (Element | null | undefined)[] = [],
+): boolean {
+  if (event.defaultPrevented || carouselInteractive(event, root)) return true;
+  for (const node of event.composedPath()) {
+    if (node === root) break;
+    if (regions.includes(node as Element)) return true;
+    if ((node as Node).nodeType === 1 && (node as Element).matches(hideOnClickInteractive))
+      return true;
+  }
+  return false;
+}
 export function carouselPathMatches(event: Event, selector: string, root: HTMLElement): boolean {
   for (const node of event.composedPath()) {
     if ((node as Node).nodeType === 1 && (node as Element).matches(selector)) return true;
@@ -508,14 +526,16 @@ class CarouselGestures {
       return;
     }
     if (!gesture.moved) {
-      gesture.moved = true;
-      owner.controller.autoplay.setReason('gesture', true);
-      owner.changed?.(true);
       try {
         gesture.capture.setPointerCapture(event.pointerId);
       } catch {
-        /* Document listeners preserve cleanup when capture is unavailable. */
+        // A capture exception cancels safely: discard the preview and release once.
+        this.cancel();
+        return;
       }
+      gesture.moved = true;
+      owner.controller.autoplay.setReason('gesture', true);
+      owner.changed?.(true);
     }
     if (interaction.resistance && owner.controller.snapshot.loopMode === 'finite') {
       if (position < first)

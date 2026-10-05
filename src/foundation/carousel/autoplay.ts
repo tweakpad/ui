@@ -51,7 +51,11 @@ export class CarouselAutoplay {
     this.setReason('explicit', true);
   }
   resume(): void {
-    this.#reasons.delete('unacknowledged');
+    // Clearing only the unacknowledged lease still changes the observable paused state.
+    if (this.#reasons.delete('unacknowledged') && !this.#reasons.has('explicit')) {
+      this.#generation++;
+      this.adapter.changed();
+    }
     this.setReason('explicit', false);
     this.refresh();
   }
@@ -100,4 +104,25 @@ export class CarouselAutoplay {
     this.#scheduler.dispose();
     this.#reasons.clear();
   }
+}
+
+/** The autoplay Button names the action it performs: Pause while the timer runs,
+ * Resume after a manual pause, an unacknowledged proposal or a timer stop. */
+export function carouselAutoplayAction(
+  autoplay: Pick<CarouselAutoplay, 'running' | 'reasons'>,
+): 'pause' | 'resume' {
+  return !autoplay.running ||
+    autoplay.reasons.includes('explicit') ||
+    autoplay.reasons.includes('unacknowledged')
+    ? 'resume'
+    : 'pause';
+}
+/** Performs the action named by {@link carouselAutoplayAction}; Resume restarts a stopped timer. */
+export function toggleCarouselAutoplay(autoplay: CarouselAutoplay): void {
+  if (carouselAutoplayAction(autoplay) === 'pause') {
+    autoplay.pause();
+    return;
+  }
+  autoplay.resume();
+  if (!autoplay.running) autoplay.start();
 }

@@ -100,6 +100,48 @@ const initial: CarouselSnapshot = Object.freeze({
 const validIndex = (index: unknown): index is number =>
   typeof index === 'number' && Number.isInteger(index) && Number.isFinite(index);
 
+/** Input category carried by Carousel value-change and value-commit metadata. */
+export type CarouselInputKind =
+  | 'mouse'
+  | 'touch'
+  | 'pen'
+  | 'pointer'
+  | 'keyboard'
+  | 'wheel'
+  | 'scroll'
+  | 'focus'
+  | 'timer'
+  | 'lifecycle'
+  | 'programmatic';
+/** Name of the synthetic originating event supplied for built-in timer proposals. */
+export const carouselTimerEventType = 'tp-carousel-autoplay-timer';
+/** Classifies the originating input from the real source event, then the registered reason. */
+export function carouselInputKind(reason: ChangeReason, sourceEvent?: Event): CarouselInputKind {
+  if (reason === 'automatic-advance' || sourceEvent?.type === carouselTimerEventType)
+    return 'timer';
+  if (sourceEvent) {
+    const pointerType = (sourceEvent as Partial<PointerEvent>).pointerType;
+    if (pointerType === 'mouse' || pointerType === 'touch' || pointerType === 'pen')
+      return pointerType;
+    const type = sourceEvent.type;
+    if (type.startsWith('key')) return 'keyboard';
+    if (type === 'wheel') return 'wheel';
+    if (type === 'scroll' || type === 'scrollend') return 'scroll';
+    if (type.startsWith('focus')) return 'focus';
+    // Keyboard activation of a native button produces a click with zero detail.
+    if (type === 'click') return (sourceEvent as MouseEvent).detail === 0 ? 'keyboard' : 'pointer';
+    if (type.startsWith('pointer') || type.startsWith('mouse') || type.startsWith('touch'))
+      return 'pointer';
+  }
+  if (reason === 'keyboard') return 'keyboard';
+  if (reason === 'wheel') return 'wheel';
+  // Native scroll transport settles a user scroll without a single originating DOM event.
+  if (reason === 'swipe') return 'scroll';
+  if (reason === 'missing' || reason === 'disabled' || reason === 'window-resize')
+    return 'lifecycle';
+  return 'programmatic';
+}
+
 /** Reusable renderer-adapted owner. Physical preview never publishes its own selection. */
 export class CarouselController {
   readonly #store = new ObservableStore<CarouselSnapshot>(initial);
@@ -173,6 +215,7 @@ export class CarouselController {
       hasDefaultValue: () => this.#input.defaultValue !== undefined,
       diagnostic: (message) => this.#diagnose(message),
       onCommit: (value, previous, reason) => {
+        const previousId = this.#acceptedId;
         const snap = carouselSnapForIndex(this.#layout, value);
         const item = this.#input.items.find(
           (item) => item.index === value && !item.disabled && !item.hidden,
@@ -182,7 +225,9 @@ export class CarouselController {
         if (snap !== null) this.#position = this.#layout.snaps[snap]!.position;
         this.#publish(reason);
         this.adapter.host.dispatchEvent(
-          new TpValueCommitEvent(value, previous, reason, this.#sourceEvent),
+          new TpValueCommitEvent(value, previous, reason, this.#sourceEvent, {
+            metadata: this.#metadata(previousId, value, snap, reason, this.#sourceEvent),
+          }),
         );
       },
     });
@@ -199,10 +244,14 @@ export class CarouselController {
         this.snapshot.snapCount > 1 &&
         !this.#input.disabled &&
         !this.#input.readOnly,
-      advance: () =>
-        this.#config.autoplayOptions.reverse
-          ? this.previous({ reason: 'automatic-advance' })
-          : this.next({ reason: 'automatic-advance' }),
+      advance: () => {
+        // Timer proposals carry a synthetic originating event, never the programmatic fallback.
+        const request = {
+          reason: 'automatic-advance' as const,
+          sourceEvent: new Event(carouselTimerEventType),
+        };
+        return this.#config.autoplayOptions.reverse ? this.previous(request) : this.next(request);
+      },
       changed: () => {
         if (this.#initialized) {
           this.#publish();
@@ -326,13 +375,20 @@ export class CarouselController {
         this.#resolveOwner();
         this.autoplay.setReason('unacknowledged', false);
       } else {
-        const retained = this.#input.items.find(
-          (item) => item.id === priorId && !item.hidden && !item.disabled,
-        );
+        const prior = this.#input.items.find((item) => item.id === priorId);
+        const retained = prior && !prior.hidden && !prior.disabled ? prior : undefined;
         const snap = carouselSnapForIndex(this.#layout, retained?.index ?? this.#state.value);
         const destination = snap === null ? null : this.#layout.snaps[snap]!.index;
         if (destination !== null && destination !== this.#state.value) {
-          this.#state.set(destination, retained ? 'window-resize' : 'missing');
+          // A still-present selection that became disabled reports the registered disabled reason.
+          const lifecycle = retained
+            ? 'window-resize'
+            : prior && !prior.hidden && prior.disabled
+              ? 'disabled'
+              : 'missing';
+          this.#state.set(destination, lifecycle, undefined, {
+            metadata: this.#metadata(priorId, destination, snap, lifecycle),
+          });
           this.#unresolved = this.#state.value !== destination;
           if (this.#unresolved) {
             this.#acceptedId = priorId;
@@ -575,6 +631,22 @@ export class CarouselController {
     if (this.#unresolved)
       this.#diagnose('Invalid controlled Carousel selection; navigation remains unavailable.');
   }
+  /** Shared proposal/commit metadata: identities, snap, input kind and operation generation. */
+  #metadata(
+    previousId: CarouselId | null,
+    value: number,
+    snap: number | null,
+    reason: ChangeReason,
+    sourceEvent?: Event,
+  ): Record<string, unknown> {
+    return {
+      previousId,
+      nextId: this.#input.items.find((item) => item.index === value)?.id ?? null,
+      snap,
+      generation: this.#generation,
+      inputKind: carouselInputKind(reason, sourceEvent),
+    };
+  }
   #selectedSnap(): number | null {
     return this.#unresolved || this.#acceptedId === null
       ? null
@@ -628,12 +700,13 @@ export class CarouselController {
       this.#sourceEvent = request.sourceEvent;
       if (destination !== previous) {
         const accepted = this.#state.set(destination, reason, request.sourceEvent, {
-          metadata: {
-            previousId: this.#acceptedId,
-            nextId: this.#input.items.find((item) => item.index === destination)?.id,
+          metadata: this.#metadata(
+            this.#acceptedId,
+            destination,
             snap,
-            generation,
-          },
+            reason,
+            request.sourceEvent,
+          ),
         });
         status =
           accepted && this.#state.value !== previous && !this.#unresolved ? 'accepted' : 'rejected';

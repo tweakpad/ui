@@ -1,4 +1,9 @@
-import { prepareMotion, resolvesReducedMotion, type MotionHandle } from '../motion.js';
+import {
+  prepareMotion,
+  resolvesReducedMotion,
+  type MotionHandle,
+  type MotionRequestOptions,
+} from '../motion.js';
 import { OwnedStyles } from '../owned-styles.js';
 import { CleanupScope, Scheduler } from '../services.js';
 import type { CarouselController } from './controller.js';
@@ -20,6 +25,23 @@ export const carouselMotionRoles = {
     completion: 'non-blocking',
   },
 } as const;
+
+/** auto-height parameters: previous/next height plus the accepted snap. */
+export function carouselAutoHeightMotion(
+  previous: number,
+  next: number,
+  snap: number | null,
+): MotionRequestOptions {
+  return { phase: 'change', fromState: previous, toState: next, context: { snap } };
+}
+/** scrollbar-visibility parameters: previous/next visibility plus orientation. */
+export function carouselScrollbarVisibilityMotion(
+  previous: boolean,
+  next: boolean,
+  orientation: 'horizontal' | 'vertical',
+): MotionRequestOptions {
+  return { phase: 'change', fromState: previous, toState: next, context: { orientation } };
+}
 
 export function carouselMotionTiming(
   owner: HTMLElement,
@@ -251,7 +273,7 @@ export class CarouselTransport {
       .settlePreview({ reason: 'swipe' })
       .finally(() => controller.autoplay.setReason('native-scroll', false));
   }
-  async autoHeight(height: number): Promise<void> {
+  async autoHeight(height: number, snap: number | null = null): Promise<void> {
     if (!Number.isFinite(height) || height <= 0) return;
     const previous = this.elements.viewport.getBoundingClientRect().height;
     this.#heightMotion?.cancel();
@@ -261,7 +283,7 @@ export class CarouselTransport {
       this.owner,
       this.elements.viewport,
       carouselMotionRoles.autoHeight,
-      { phase: 'change', fromState: previous, toState: height },
+      carouselAutoHeightMotion(previous, height, snap),
       {
         play: () => {
           const animation = this.elements.viewport.animate(

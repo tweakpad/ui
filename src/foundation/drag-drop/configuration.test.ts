@@ -11,6 +11,9 @@ describe('configuration boundaries', () => {
     { overlayDisabled: 'yes' },
     { rootElement: {} },
     { overlay: {} },
+    { overlay: { element: {} } },
+    { overlay: { element: { nodeType: 1 }, dropAnimation: 'ease' } },
+    { overlay: { element: { nodeType: 1 }, dropAnimation: { duration: -1 } } },
     { keyboardTransition: { duration: -1 } },
     { dropAnimation: { easing: 3 } },
     { autoScroll: { acceleration: Infinity } },
@@ -22,6 +25,17 @@ describe('configuration boundaries', () => {
     { announcements: { dragstart: 1 } },
   ])('rejects invalid options before acquisition: %j', (options) => {
     expect(() => validateConfiguration(options as unknown as ManagerOptions)).toThrow();
+  });
+  it('accepts an overlay element or an overlay input with its own drop animation', () => {
+    const element = { nodeType: 1 } as Element;
+    for (const overlay of [
+      element,
+      { element },
+      { element, dropAnimation: null },
+      { element, dropAnimation: { duration: 120 } },
+      { element, dropAnimation: () => undefined },
+    ])
+      expect(() => validateConfiguration({ overlay })).not.toThrow();
   });
   it('retains the last valid entity configuration on invalid updates', () => {
     const source = new Draggable({ id: 'a', feedback: 'none', keyboardTransition: null });

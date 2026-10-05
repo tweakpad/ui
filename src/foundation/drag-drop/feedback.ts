@@ -14,9 +14,15 @@ import {
 import { markFeedbackRoot } from './feedback-scope.js';
 import { Rectangle, type Coordinates } from './geometry.js';
 import type { DragDropManager } from './manager.js';
-import { dragMotion, validateTransition } from './motion.js';
+import {
+  dragMotion,
+  dragMotionContext,
+  resolveDropAnimation,
+  validateTransition,
+} from './motion.js';
+import { sortableMembership } from './sortable.js';
 import type { Draggable } from './entities.js';
-import type { FeedbackMode, FeedbackOptions } from './types.js';
+import type { DropAnimation, FeedbackMode, FeedbackOptions } from './types.js';
 
 export class DragFeedback {
   #scope: CleanupScope | undefined;
@@ -31,6 +37,7 @@ export class DragFeedback {
   #initialTranslate: Coordinates = { x: 0, y: 0 };
   #motion: MotionHandle | undefined;
   #origin: Rectangle | undefined;
+  #overlayDropAnimation: DropAnimation | undefined;
   mode: FeedbackMode = 'none';
   constructor(readonly manager: DragDropManager) {}
   /** List adapter supplies a real component composition for opaque shadow content. */
@@ -63,7 +70,13 @@ export class DragFeedback {
       typeof options.overlayDisabled === 'function'
         ? options.overlayDisabled(source)
         : options.overlayDisabled;
-    const overlay = overlayDisabled ? null : options.overlay;
+    const overlayInput = overlayDisabled ? null : options.overlay;
+    const overlay =
+      overlayInput && !('nodeType' in overlayInput) ? overlayInput.element : (overlayInput ?? null);
+    const overlayDropAnimation =
+      overlayInput && !('nodeType' in overlayInput) ? overlayInput.dropAnimation : undefined;
+    if (typeof overlayDropAnimation === 'object')
+      validateTransition(overlayDropAnimation, source.element);
     const original = source.element as HTMLElement,
       element = (overlay ?? original) as HTMLElement;
     if (!element.style)
@@ -87,6 +100,7 @@ export class DragFeedback {
     this.#original = original;
     this.#element = element;
     this.#origin = initial;
+    this.#overlayDropAnimation = overlayDropAnimation;
     const scope = (this.#scope = new CleanupScope((error) => this.manager.reportError(error)));
     const attributes = new OwnedAttributes(element),
       styles = (this.#styles = new OwnedStyles(element));
@@ -397,7 +411,7 @@ export class DragFeedback {
           { translate: `${translate.x}px ${translate.y}px` },
         ],
         this.#options.keyboardTransition ?? {},
-        { itemId: this.#source!.id, x: translate.x, y: translate.y },
+        dragMotionContext(this.#source!.id, sortableMembership(this.#source), translate),
       );
     }
   }
@@ -406,10 +420,12 @@ export class DragFeedback {
       source = this.#source,
       original = this.#original;
     if (!element || !source || !original) return;
-    const animation =
-      source.feedbackOptions.dropAnimation !== undefined
-        ? source.feedbackOptions.dropAnimation
-        : this.#options.dropAnimation;
+    const animation = resolveDropAnimation(
+      source.feedbackOptions.dropAnimation,
+      this.#overlayDropAnimation,
+      this.manager.options.dropAnimation,
+    );
+    const membership = sortableMembership(source);
     const motionOwner = this.#motionOwner ?? original;
     if (animation === null || !element.isConnected || resolvesReducedMotion(motionOwner)) return;
     this.#motion?.cancel();
@@ -423,7 +439,10 @@ export class DragFeedback {
         motionOwner,
         element,
         { name: 'drop-settlement', kind: 'state', phases: ['change'], completion: 'blocking' },
-        { phase: 'change', context: { itemId: source.id } },
+        {
+          phase: 'change',
+          context: dragMotionContext(source.id, membership, this.#translate),
+        },
         {
           play: () => ({
             finished: Promise.resolve(
@@ -474,7 +493,7 @@ export class DragFeedback {
         },
       ],
       animation ?? {},
-      { itemId: source.id, x: final.x, y: final.y },
+      dragMotionContext(source.id, membership, final),
     );
     await this.#motion.finished;
   }
@@ -490,6 +509,7 @@ export class DragFeedback {
     this.#source = undefined;
     this.#motionOwner = undefined;
     this.#origin = undefined;
+    this.#overlayDropAnimation = undefined;
     this.#translate = { x: 0, y: 0 };
   }
 }

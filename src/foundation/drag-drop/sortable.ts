@@ -1,4 +1,4 @@
-import { validateTransition } from './motion.js';
+import { validateTransition, type DragMotionMembership } from './motion.js';
 import { Draggable, Droppable } from './entities.js';
 import type { DragDropManager } from './manager.js';
 import { reportDragDropDiagnostic, type UniqueIdentifier } from './sorting.js';
@@ -34,6 +34,17 @@ export class SortableDroppable extends Droppable {
 }
 export function isSortable(entity: unknown): entity is SortableDraggable | SortableDroppable {
   return entity instanceof SortableDraggable || entity instanceof SortableDroppable;
+}
+/** Sortable source membership from drag start to its current projected position. */
+export function sortableMembership(entity: unknown): DragMotionMembership {
+  if (!isSortable(entity)) return {};
+  const sortable = entity.sortable;
+  return {
+    sourceGroup: sortable.initialGroup,
+    targetGroup: sortable.group,
+    fromIndex: sortable.initialIndex,
+    toIndex: sortable.index,
+  };
 }
 export function isSortableOperation<T extends { source: unknown; target: unknown }>(
   operation: T,

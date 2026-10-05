@@ -38,8 +38,18 @@ export function validateConfiguration(options: ManagerOptions, owner?: Element):
     options.rootElement?.nodeType !== 1
   )
     throw new TypeError('rootElement must be an element or resolver.');
-  if (options.overlay != null && options.overlay.nodeType !== 1)
-    throw new TypeError('overlay must be an element or null.');
+  const overlay = options.overlay;
+  if (overlay != null) {
+    const element = 'nodeType' in overlay ? overlay : (overlay as { element?: Element }).element;
+    if (element?.nodeType !== 1)
+      throw new TypeError('overlay must be an element, an overlay input or null.');
+    if (element !== overlay) {
+      const animation = (overlay as { dropAnimation?: unknown }).dropAnimation;
+      if (animation != null && typeof animation !== 'object' && typeof animation !== 'function')
+        throw new TypeError('Overlay drop animation must be an object, callback or null.');
+      if (animation && typeof animation === 'object') validateTransition(animation, owner);
+    }
+  }
   for (const value of [
     options.keyboardTransition,
     typeof options.dropAnimation === 'function' ? undefined : options.dropAnimation,

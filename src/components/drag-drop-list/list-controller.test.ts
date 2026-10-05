@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ControllableState, orderedValuesEqual } from '../../foundation/controllable-state.js';
 import { DragDropManager } from '../../foundation/drag-drop/manager.js';
 import { Draggable, Droppable } from '../../foundation/drag-drop/entities.js';
-import { ListController } from './list-controller.js';
+import { ListController, itemParticipation } from './list-controller.js';
 import type { TpDragDropList } from './drag-drop-list.js';
 
 function list(
@@ -171,5 +171,35 @@ describe('connected canonical list transactions', () => {
     expect(a.controller.moveItem('a', { index: 2 })).toBe('accepted');
     expect(a.host.value.map((x) => x.id)).toEqual(['c', 'b', 'a']);
     m.destroy();
+  });
+});
+
+describe('item participation lanes', () => {
+  const idle = { disabled: false, readOnly: false, duplicate: false };
+  it('splits draggable and droppable options for drag/drop-disabled markers', () => {
+    expect(itemParticipation(undefined, idle)).toEqual({
+      dragDisabled: false,
+      dropDisabled: false,
+    });
+    expect(itemParticipation(true, idle)).toEqual({ dragDisabled: true, dropDisabled: true });
+    expect(itemParticipation({ draggable: true }, idle)).toEqual({
+      dragDisabled: true,
+      dropDisabled: false,
+    });
+    expect(itemParticipation({ droppable: true }, idle)).toEqual({
+      dragDisabled: false,
+      dropDisabled: true,
+    });
+  });
+  it('disables both lanes for list disabled, read-only and duplicate identities', () => {
+    for (const state of [
+      { ...idle, disabled: true },
+      { ...idle, readOnly: true },
+      { ...idle, duplicate: true },
+    ])
+      expect(itemParticipation({ draggable: false, droppable: false }, state)).toEqual({
+        dragDisabled: true,
+        dropDisabled: true,
+      });
   });
 });

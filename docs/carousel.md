@@ -170,6 +170,15 @@ optional scoped targets replacing only their corresponding generated Button.
 One element cannot own both actions. Labels remain consumer-owned unless explicitly
 replaced through messages. Placements are `footer`, `inside`, and `outside`.
 
+`navigation.hideOnClick` and `indicators.hideOnClick` toggle their controls when
+noninteractive slide content is clicked. Clicks on descendant controls (the
+controls group, autoplay Button, scrollbar), interactive slide content (native
+form controls, links, labels, `tp-button` and other interactive library controls,
+or elements with interactive roles) and clicks already handled with
+`preventDefault()` never hide anything. Hidden controls are removed from the tab
+order and return when a mouse/pen pointer newly enters the Carousel or keyboard
+focus enters it from outside; touch users tap content again.
+
 `indicators` defaults to fraction and accepts false or:
 
 | Field                                  | Default / purpose                                                   |
@@ -182,18 +191,32 @@ replaced through messages. Placements are `footer`, `inside`, and `outside`.
 | `renderCustom`                         | Required for custom type; receives the coherent snapshot            |
 
 Clickable indicators are actual Buttons. Progress uses `tp-progress`. Nonclickable
-bullets are presentation, and fraction/status text describes committed snaps.
-Custom rendering must preserve accessible action/position meaning. Indicator count
-is snap count, which may differ from item count or mounted virtual count.
+bullets are non-focusable named images (`role="img"`, labelled with their position
+such as "3 of 8") inside the labelled indicator group, and fraction/status text
+describes committed snaps. Custom rendering must preserve accessible
+action/position meaning. Indicator count is snap count, which may differ from item
+count or mounted virtual count.
+
+If `renderCustom`, `renderIndicator`, `formatCurrent`, `formatTotal` or
+`messages.status` throws, that indicator render is cancelled: the previous coherent
+indicator content stays on screen (nothing before the first successful render)
+and a `tp-diagnostic` event reports the failure.
 
 `scrollbar` defaults false. Enabling it defaults to `enabled=true`,
 `draggable=false`, `thumbSize='auto'`, `visibility='always'`. A numeric thumb size
 must be positive and is constrained by track extent and the shared minimum.
 Visibility accepts `always`, `automatic`, `while-scrolling`, or `on-hover`.
 Optional `element` and `thumbElement` accept scoped targets. An interactive bar has
-scrollbar semantics, keyboard navigation and mandatory snap-on-release. Its common
-geometry/capture/rendering owner is also used by Scroll Area. Timed visibility
-waits 1000 ms, retains hover/focus/drag, and uses the scrollbar visibility motion role.
+scrollbar semantics (`aria-valuemin/max/now` plus human-readable `aria-valuetext`
+from `messages.position`, for example "3 of 8"), keyboard navigation and mandatory
+snap-on-release. Its common geometry/capture/rendering owner is also used by Scroll
+Area. With `visibility: 'while-scrolling'` any track movement reveals the bar:
+previous/next, indicators, swipe, wheel, keyboard, scrollbar input, autoplay and
+controller calls all report activity to the shared scrollbar owner. The bar hides
+after 1000 ms without movement with a 400 ms fade, stays visible while hovered,
+focused or dragged, and uses the `scrollbar-visibility` motion role (parameters:
+previous/next visibility and `context.orientation`). The `auto-height` role
+receives previous/next height and `context.snap`, the accepted snap index.
 
 ### Transport, looping, responsiveness and observation
 
@@ -238,7 +261,11 @@ render completion belongs to the host adapter; stale work cannot publish a newer
 `autoplayOptions` defaults to `{reverse:false, stopAfterInteraction:false}`.
 Per-item `autoplayDelay` or a slotted `data-tp-autoplay-delay` overrides a valid
 root interval. A Pause/Resume Button precedes moving content when autoplay is
-configured. Focus, hover, hidden documents, reduced motion, gestures, scrollbar
+configured. Its text and accessible name name the action for the actual timer
+state: Pause while the timer runs, Resume after a manual pause, an unacknowledged
+proposal, a finite-end stop or a `stopAfterInteraction` stop. Activating Resume
+clears the manual pause and restarts a stopped timer. Mandatory hover/focus pauses
+do not rename the Button. Focus, hover, hidden documents, reduced motion, gestures, scrollbar
 input, disabled/read-only state, unavailable geometry, unresolved ownership and
 active transitions independently pause the timer. All reasons must clear before a
 new full interval starts. Advances never overlap. Unacknowledged proposals stay
@@ -293,10 +320,17 @@ Virtual state contains `from`, `to`, `offset`, `visibleIds`, `mountedIds` and `p
 
 `tp-value-change` is the cancelable numeric proposal; `tp-value-commit` follows an
 accepted publication. Shared details include previous/current values, reason,
-source event, trigger, cancellation/propagation and proposal metadata identifying
-the IDs, snap and generation. Input reasons include `trigger-press`, `item-press`,
-`keyboard`, `swipe`, `wheel`, `drag`, `track-press`, `imperative-action`, and
-`automatic-advance`. Lifecycle/owner changes use their registered reasons.
+source event, trigger, cancellation/propagation and metadata
+`{previousId, nextId, snap, generation, inputKind}`; `tp-value-commit` carries the
+same metadata for the committed destination. `inputKind` is `mouse`, `touch`,
+`pen`, `pointer`, `keyboard`, `wheel`, `scroll`, `focus`, `timer`, `lifecycle` or
+`programmatic` (exported as the `CarouselInputKind` type). Input reasons include
+`trigger-press`, `item-press`, `keyboard`, `swipe`, `wheel`, `drag`, `track-press`,
+`imperative-action`, and `automatic-advance`. Timer proposals carry a synthetic
+`tp-carousel-autoplay-timer` source event rather than the generic programmatic
+origin. Lifecycle/owner changes use their registered reasons: `missing` when the
+selected item is removed or hidden, `disabled` when it becomes disabled, and
+`window-resize` for remeasurement or reorder corrections.
 
 Observation events bubble and compose: `tp-carousel-initialized`,
 `tp-carousel-reinitialized`, `tp-carousel-progress`, `tp-carousel-settled`,

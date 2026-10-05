@@ -1,6 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
-import { CarouselController, type CarouselInput } from './controller.js';
+import {
+  CarouselController,
+  carouselInputKind,
+  carouselTimerEventType,
+  type CarouselInput,
+} from './controller.js';
+import type { ValueChangeDetail } from '../types.js';
 import { carouselItems } from './model.js';
 
 class Host extends EventTarget implements ReactiveControllerHost {
@@ -371,5 +377,101 @@ describe('Carousel selection and lifecycle owner', () => {
     await nested;
     expect(first.status).toBe('cancelled');
     expect(f.controller.snapshot.selectedId).toBe('d');
+  });
+});
+
+describe('Carousel reasons, originating events and metadata', () => {
+  afterEach(() => vi.useRealTimers());
+  const details = (host: EventTarget, type: string) => {
+    const list: ValueChangeDetail<number>[] = [];
+    host.addEventListener(type, (event) =>
+      list.push((event as CustomEvent<ValueChangeDetail<number>>).detail),
+    );
+    return list;
+  };
+  it('gives automatic-advance a synthetic timer origin and timer metadata on change and commit', async () => {
+    vi.useFakeTimers();
+    const f = fixture();
+    f.write({ autoplay: 50 });
+    const changes = details(f.host, 'tp-value-change');
+    const commits = details(f.host, 'tp-value-commit');
+    await f.controller.initialize();
+    expect(f.controller.autoplay.running).toBe(true);
+    await vi.advanceTimersByTimeAsync(60);
+    expect(changes).toHaveLength(1);
+    const [change] = changes;
+    expect(change!.reason).toBe('automatic-advance');
+    expect(change!.sourceEvent.type).toBe(carouselTimerEventType);
+    expect(change!.sourceEvent.type).not.toBe('tp-programmatic-source');
+    expect(change!.metadata).toMatchObject({
+      previousId: 'a',
+      nextId: 'b',
+      snap: 1,
+      inputKind: 'timer',
+    });
+    expect(typeof change!.metadata?.generation).toBe('number');
+    expect(commits).toHaveLength(1);
+    expect(commits[0]!.reason).toBe('automatic-advance');
+    expect(commits[0]!.sourceEvent).toBe(change!.sourceEvent);
+    expect(commits[0]!.metadata).toEqual(change!.metadata);
+    f.controller.release();
+  });
+  it('records the input kind of a real source event in proposal and commit metadata', async () => {
+    const f = fixture();
+    await f.controller.initialize();
+    const changes = details(f.host, 'tp-value-change');
+    const commits = details(f.host, 'tp-value-commit');
+    const key = new Event('keydown');
+    await f.controller.next({ reason: 'keyboard', sourceEvent: key });
+    expect(changes[0]).toMatchObject({ reason: 'keyboard', sourceEvent: key });
+    expect(changes[0]!.metadata).toMatchObject({ inputKind: 'keyboard', nextId: 'b', snap: 1 });
+    expect(commits[0]!.metadata).toEqual(changes[0]!.metadata);
+    await f.controller.next();
+    expect(changes[1]!.metadata).toMatchObject({
+      previousId: 'b',
+      nextId: 'c',
+      inputKind: 'programmatic',
+    });
+  });
+  it('classifies pointer, touch, keyboard-activated clicks, wheel and lifecycle origins', () => {
+    const pointer = Object.assign(new Event('pointerup'), { pointerType: 'touch' });
+    const keyboardClick = Object.assign(new Event('click'), { pointerType: '', detail: 0 });
+    const mouseClick = Object.assign(new Event('click'), { pointerType: 'mouse', detail: 1 });
+    expect(carouselInputKind('swipe', pointer)).toBe('touch');
+    expect(carouselInputKind('trigger-press', keyboardClick)).toBe('keyboard');
+    expect(carouselInputKind('trigger-press', mouseClick)).toBe('mouse');
+    expect(carouselInputKind('wheel', new Event('wheel'))).toBe('wheel');
+    expect(carouselInputKind('swipe')).toBe('scroll');
+    expect(carouselInputKind('disabled')).toBe('lifecycle');
+    expect(carouselInputKind('automatic-advance', new Event('tp-programmatic-source'))).toBe(
+      'timer',
+    );
+    expect(carouselInputKind('imperative-action')).toBe('programmatic');
+  });
+  it('uses the registered disabled reason when the selected item becomes disabled', async () => {
+    const f = fixture();
+    await f.controller.initialize();
+    await f.controller.scrollToId('b');
+    const changes = details(f.host, 'tp-value-change');
+    f.write({
+      items: carouselItems(['a', 'b', 'c', 'd'], {
+        getItemOptions: (_value, index) => ({ disabled: index === 1 }),
+      }),
+    });
+    await f.controller.update();
+    expect(changes.map((change) => change.reason)).toEqual(['disabled']);
+    expect(changes[0]!.metadata).toMatchObject({ previousId: 'b', inputKind: 'lifecycle' });
+    expect(f.controller.snapshot.selectedId).not.toBe('b');
+    expect(f.controller.snapshot.selectedId).not.toBe(null);
+  });
+  it('keeps the missing reason when the selected item is removed', async () => {
+    const f = fixture();
+    await f.controller.initialize();
+    await f.controller.scrollToId('d');
+    const changes = details(f.host, 'tp-value-change');
+    f.write({ items: carouselItems(['a', 'b', 'c']) });
+    await f.controller.update();
+    expect(changes.map((change) => change.reason)).toEqual(['missing']);
+    expect(f.controller.snapshot.selectedId).toBe('c');
   });
 });

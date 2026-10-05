@@ -73,10 +73,16 @@ requirements. No live specification changes have been made yet.
 
 ## Amendment 2 (2026-10-05): user-facing message localization
 
-Status: approved by the user and implemented locally; NOT yet applied to the live
-specification because the Spec Blocks server (docs-mcp) was unreachable. Apply to
-Library `ucl17-calendar` (and reference from Foundation `sec-149-calendar-date-grid`
-validity text) once direct tools reconnect, then validate the project.
+Status: APPLIED to the live specification (Spec Blocks commit ac0db73d, project
+version 0.3.15); live `ucl17-calendar` at 0.3.16 carries the `messages` row
+(`CalendarMessages` partial dictionary, property only, default `{}`), confirmed by a
+direct-tool re-read on 2026-10-05. Originally approved by the user and implemented
+locally while the Spec Blocks server (docs-mcp) was unreachable.
+
+Historical note (superseded): not yet applied to the live specification because the
+Spec Blocks server was unreachable; to be applied to Library `ucl17-calendar` (and
+referenced from Foundation `sec-149-calendar-date-grid` validity text) once direct
+tools reconnected.
 
 Precedent: Carousel `messages` (`CarouselMessages`) — a partial dictionary of strings
 or functions with English fallbacks. Developer diagnostics remain unlocalized.

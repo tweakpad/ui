@@ -32,13 +32,25 @@ import {
   CarouselTransport,
   carouselMotionRoles,
   carouselMotionTiming,
+  carouselScrollbarVisibilityMotion,
 } from '../../foundation/carousel/transport.js';
+import {
+  CarouselRenderGuard,
+  carouselPositionText,
+  carouselScrollbarActivity,
+  carouselScrollbarValue,
+} from '../../foundation/carousel/status.js';
+import {
+  carouselAutoplayAction,
+  toggleCarouselAutoplay,
+} from '../../foundation/carousel/autoplay.js';
 import {
   bindCarouselGesture,
   bindCarouselKeyboard,
   bindCarouselWheel,
   carouselTarget,
   carouselInteractive,
+  carouselHideOnClickIgnored,
   type CarouselElements,
 } from '../../foundation/carousel/input.js';
 import { carouselLoopPermutation } from '../../foundation/carousel/loop.js';
@@ -142,6 +154,9 @@ export class TpCarousel<T = unknown> extends TpElement {
   #preloaded = new Set<string>();
   #dynamicBulletIndex = 0;
   #previousBullet: number | undefined;
+  readonly #indicatorGuard = new CarouselRenderGuard<unknown>();
+  /** The timer starts synchronously after initialization; before that the control names Pause. */
+  #autoplayReady = false;
   readonly #bar = new ScrollbarController({
     read: () => {
       const config = this.#config,
@@ -289,6 +304,8 @@ export class TpCarousel<T = unknown> extends TpElement {
   override disconnectedCallback(): void {
     this.#controller?.release();
     this.#controller = null;
+    this.#autoplayReady = false;
+    this.#indicatorGuard.reset();
     this.#transport?.dispose();
     this.#transport = null;
     this.#trackStyles?.dispose();
@@ -388,8 +405,18 @@ export class TpCarousel<T = unknown> extends TpElement {
     this.#trackStyles = new OwnedStyles(elements.track);
     this.#scope?.add(
       controller.subscribe((snapshot) => {
-        const released = this.#snapshot?.initialized && !snapshot.initialized;
+        const previous = this.#snapshot;
+        const released = previous?.initialized && !snapshot.initialized;
         this.#snapshot = snapshot;
+        // Every movement source publishes through the controller, so this one path
+        // reveals a while-scrolling bar for buttons, gestures, wheel, keys, timer and API.
+        const scrollbar = this.#config.scrollbar;
+        if (
+          scrollbar &&
+          scrollbar.visibility === 'while-scrolling' &&
+          carouselScrollbarActivity(previous, snapshot)
+        )
+          this.#bar.activity();
         if (released) this.#notify(null);
         this.requestUpdate('index', this.getAttribute('index'));
         for (const [marker, value] of Object.entries({
@@ -416,6 +443,11 @@ export class TpCarousel<T = unknown> extends TpElement {
       }),
     );
     this.#scope?.add(controller.on('reinitialized', () => this.#notify(this.controller)));
+    this.#scope?.add(
+      controller.on('initialized', () => {
+        this.#autoplayReady = true;
+      }),
+    );
     void controller.initialize().then(() => {
       if (this.#controller === controller && this.isConnected) this.#notify(this.controller);
     });
@@ -804,7 +836,8 @@ export class TpCarousel<T = unknown> extends TpElement {
             (item.element ?? this.#shells.get(item.id)?.element)?.getBoundingClientRect().height ??
             0,
         );
-      if (heights.length) void this.#transport?.autoHeight(Math.max(...heights));
+      if (heights.length)
+        void this.#transport?.autoHeight(Math.max(...heights), snapshot.snapIndex);
     }
     this.#bar.measure();
     this.#preload();
@@ -877,9 +910,33 @@ export class TpCarousel<T = unknown> extends TpElement {
           observer.observe(item.element, { childList: true, subtree: true, characterData: true });
       scope.add(() => observer.disconnect());
     }
-    scope.listen(elements.root, 'pointerenter', () => {
+    // Hide-on-click controls return on a new hover or keyboard focus entry. Touch
+    // contact and pointer-initiated focus precede the click itself, so they would
+    // immediately undo the click's own toggle; touch users toggle by tapping again.
+    let pointerFocus = false;
+    let releasePointerFocus: (() => void) | undefined;
+    scope.add(() => releasePointerFocus?.());
+    scope.listen(
+      elements.root,
+      'pointerdown',
+      () => {
+        pointerFocus = true;
+        releasePointerFocus?.();
+        releasePointerFocus = this.#scheduler?.timeout(() => {
+          pointerFocus = false;
+        }, 0);
+      },
+      { capture: true },
+    );
+    scope.listen(elements.root, 'pointerenter', (event) => {
       controller.autoplay.setReason('hover', true);
       this.#bar.hover(true);
+      if ((event as PointerEvent).pointerType !== 'touch') this.#reshowControls();
+    });
+    scope.listen(elements.root, 'focusin', (event) => {
+      const from = (event as FocusEvent).relatedTarget as Node | null;
+      if (!pointerFocus && (!from || !composedContains(elements.root, from)))
+        this.#reshowControls();
     });
     scope.listen(elements.root, 'pointerleave', () => {
       controller.autoplay.setReason('hover', false);
@@ -960,9 +1017,11 @@ export class TpCarousel<T = unknown> extends TpElement {
             attributes.set('aria-label', this.#config.messages.scrollbar);
             attributes.set('aria-orientation', snapshot.orientation);
             attributes.set('aria-controls', this.#viewportId);
-            attributes.set('aria-valuemin', '0');
-            attributes.set('aria-valuemax', String(Math.max(0, snapshot.snapCount - 1)));
-            attributes.set('aria-valuenow', String(snapshot.snapIndex ?? 0));
+            const value = carouselScrollbarValue(this.#config.messages.position, snapshot);
+            attributes.set('aria-valuemin', String(value.min));
+            attributes.set('aria-valuemax', String(value.max));
+            attributes.set('aria-valuenow', String(value.now));
+            attributes.set('aria-valuetext', interactive ? value.text : null);
           }),
         );
       }
@@ -1084,12 +1143,13 @@ export class TpCarousel<T = unknown> extends TpElement {
     });
   }
   #positionText(snapshot = this.#snapshot): string {
-    return this.#config.messages.position(
-      snapshot?.snapIndex === null || snapshot?.snapIndex === undefined
-        ? 0
-        : snapshot.snapIndex + 1,
-      snapshot?.snapCount ?? 0,
-    );
+    return carouselPositionText(this.#config.messages.position, snapshot);
+  }
+  #reshowControls(): void {
+    if (!this.#navigationHidden && !this.#indicatorsHidden) return;
+    this.#navigationHidden = false;
+    this.#indicatorsHidden = false;
+    this.requestUpdate();
   }
   #button(
     part: string,
@@ -1149,6 +1209,23 @@ export class TpCarousel<T = unknown> extends TpElement {
     );
   }
   #indicators(): unknown {
+    const dynamicIndex = this.#dynamicBulletIndex,
+      previousBullet = this.#previousBullet;
+    return this.#indicatorGuard.render(
+      () => this.#renderIndicators(),
+      nothing,
+      (error) => {
+        // Cancel the failed render, including its dynamic-window bookkeeping.
+        this.#dynamicBulletIndex = dynamicIndex;
+        this.#previousBullet = previousBullet;
+        this.#diagnose(
+          'Carousel indicator renderer or formatter failed; previous indicator content retained.',
+          error,
+        );
+      },
+    );
+  }
+  #renderIndicators(): unknown {
     const config = this.#config.indicators,
       snapshot = this.#snapshot;
     if (!config || !snapshot || this.#indicatorsHidden) return nothing;
@@ -1516,6 +1593,7 @@ export class TpCarousel<T = unknown> extends TpElement {
   #renderScrollbar(): unknown {
     const config = this.#config.scrollbar;
     if (!config || !config.enabled || config.element) return nothing;
+    const value = carouselScrollbarValue(this.#config.messages.position, this.#snapshot);
     return renderScrollbar(this, this.#bar, this.#state(), {
       trackPart: 'carousel-scrollbar',
       thumbPart: 'carousel-thumb',
@@ -1527,9 +1605,10 @@ export class TpCarousel<T = unknown> extends TpElement {
         'aria-label': this.#config.messages.scrollbar,
         'aria-controls': this.#viewportId,
         'aria-orientation': this.#config.orientation,
-        'aria-valuemin': 0,
-        'aria-valuemax': Math.max(0, (this.#snapshot?.snapCount ?? 1) - 1),
-        'aria-valuenow': this.#snapshot?.snapIndex ?? 0,
+        'aria-valuemin': value.min,
+        'aria-valuemax': value.max,
+        'aria-valuenow': value.now,
+        'aria-valuetext': config.draggable ? value.text : nothing,
         '@keydown': this.#scrollbarKey,
       },
     });
@@ -1546,7 +1625,7 @@ export class TpCarousel<T = unknown> extends TpElement {
       this,
       target,
       carouselMotionRoles.scrollbarVisibility,
-      { phase: 'change', fromState: previous, toState: visible },
+      carouselScrollbarVisibilityMotion(previous, visible, this.#config.orientation),
       {
         play: () => {
           const animation = target.animate(
@@ -1575,20 +1654,22 @@ export class TpCarousel<T = unknown> extends TpElement {
     const selected = mounted
       ? records.filter((item) => typeof item === 'symbol' || mounted.includes(item.id))
       : records;
-    const explicitlyPaused =
-      this.#controller?.autoplay.reasons.includes('explicit') ||
-      this.#controller?.autoplay.reasons.includes('unacknowledged');
+    // The label names the action for the actual timer state, including finite-end
+    // and stopAfterInteraction stops; Resume restarts a stopped timer.
+    const autoplayAction =
+      this.#controller && this.#autoplayReady
+        ? carouselAutoplayAction(this.#controller.autoplay)
+        : 'pause';
     const auto =
       this.autoplay > 0
         ? this.#button(
             'carousel-autoplay-control',
-            explicitlyPaused ? config.messages.resume : config.messages.pause,
+            config.messages[autoplayAction],
             this.disabled || this.readOnly,
             () => {
-              if (explicitlyPaused) this.#controller?.autoplay.resume();
-              else this.#controller?.autoplay.pause();
+              if (this.#controller) toggleCarouselAutoplay(this.#controller.autoplay);
             },
-            explicitlyPaused ? config.messages.resume : config.messages.pause,
+            config.messages[autoplayAction],
           )
         : nothing;
     const track = this.renderPart('carousel-track', state, {
@@ -1659,14 +1740,22 @@ export class TpCarousel<T = unknown> extends TpElement {
         'aria-roledescription': 'carousel',
         'aria-label': this.ariaLabel || this.label || nothing,
         '@click': (event: Event) => {
+          const navigation = config.navigation.hideOnClick,
+            indicators = !!config.indicators && config.indicators.hideOnClick;
+          const root = event.currentTarget as HTMLElement;
           if (
-            event.defaultPrevented ||
-            event.composedPath().some((node) => (node as Element).tagName === 'TP-BUTTON')
+            (!navigation && !indicators) ||
+            carouselHideOnClickIgnored(event, root, [
+              root.querySelector('.controls'),
+              root.querySelector('.scrollbar'),
+              config.scrollbar && config.scrollbar.element
+                ? carouselTarget(config.scrollbar.element, this)
+                : null,
+            ])
           )
             return;
-          if (config.navigation.hideOnClick) this.#navigationHidden = !this.#navigationHidden;
-          if (config.indicators && config.indicators.hideOnClick)
-            this.#indicatorsHidden = !this.#indicatorsHidden;
+          if (navigation) this.#navigationHidden = !this.#navigationHidden;
+          if (indicators) this.#indicatorsHidden = !this.#indicatorsHidden;
           this.requestUpdate();
         },
       },

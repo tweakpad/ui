@@ -24,6 +24,18 @@ const defaults: Announcements = {
       ? `Dragging ${label(event)} canceled.`
       : `Dropped ${label(event)}${event.operation.target ? ` over ${spokenLabel(event.operation.target)}` : ''}.`,
 };
+/** Attributes owned on a bound activator; a native handle button keeps native button semantics. */
+export function activatorAttributes(activator: {
+  localName: string;
+  matches(selector: string): boolean;
+  hasAttribute(name: string): boolean;
+}): Record<string, string> {
+  const owned: Record<string, string> = {};
+  if (!activator.matches('button,input,select,textarea,a[href],[tabindex]')) owned.tabindex = '0';
+  if (activator.localName !== 'button' && !activator.hasAttribute('aria-roledescription'))
+    owned['aria-roledescription'] = 'draggable';
+  return owned;
+}
 interface RootResources {
   description: HTMLElement;
   announcement: HTMLElement;
@@ -162,10 +174,8 @@ export class DragAccessibility {
         : 'Drag this item to move it.');
     this.#render(source, 'instructions', resources.description, description);
     const attributes = new OwnedAttributes(activator);
-    if (!activator.matches('button,input,select,textarea,a[href],[tabindex]'))
-      attributes.set('tabindex', '0');
-    if (!activator.hasAttribute('aria-roledescription'))
-      attributes.set('aria-roledescription', 'draggable');
+    for (const [name, value] of Object.entries(activatorAttributes(activator)))
+      attributes.set(name, value);
     const id = resources.description.id;
     // Description ownership is token-level; removing our token retains later consumer additions.
     activator.setAttribute(

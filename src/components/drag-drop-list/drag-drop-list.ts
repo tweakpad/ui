@@ -27,7 +27,7 @@ import {
   cancelGeometryTransitions,
   parseTransform,
 } from '../../foundation/drag-drop/dom-geometry.js';
-import { dragMotion } from '../../foundation/drag-drop/motion.js';
+import { dragMotion, dragMotionContext } from '../../foundation/drag-drop/motion.js';
 import type { Rectangle } from '../../foundation/drag-drop/geometry.js';
 import type { MotionHandle } from '../../foundation/motion.js';
 import type {
@@ -39,7 +39,7 @@ import type {
   SortTransition,
 } from '../../foundation/drag-drop/types.js';
 import { gripVerticalIcon } from '../../icons/grip-vertical.js';
-import { ListController, type ItemRecord } from './list-controller.js';
+import { ListController, itemParticipation, type ItemRecord } from './list-controller.js';
 import { dragDropListStyles } from './styles.js';
 import type {
   DragDropDestination,
@@ -171,7 +171,10 @@ export class TpDragDropList<T = unknown> extends TpElement {
   #list: HTMLElement | null = null;
   containerTarget: Droppable | undefined;
   #containerId = createId('drag-list-target');
-  #oldRects = new Map<UniqueIdentifier, Rectangle>();
+  #oldRects = new Map<
+    UniqueIdentifier,
+    { rect: Rectangle; index: number | undefined; group: UniqueIdentifier | undefined }
+  >();
   #motions = new Map<UniqueIdentifier, MotionHandle>();
   #overlay: HTMLElement | undefined;
   #overlayRelease: (() => void) | undefined;
@@ -294,8 +297,9 @@ export class TpDragDropList<T = unknown> extends TpElement {
       }
     }
     for (const [id, element] of this.#items) {
-      const rect = measureElement(element);
-      if (rect) this.#oldRects.set(id, rect);
+      const rect = measureElement(element),
+        sortable = this.#sortables.get(id);
+      if (rect) this.#oldRects.set(id, { rect, index: sortable?.index, group: sortable?.group });
     }
   }
   protected override updated(changed: PropertyValues<this>): void {
@@ -310,8 +314,16 @@ export class TpDragDropList<T = unknown> extends TpElement {
     if (this.disabled || this.readOnly) this.cancelDrag();
     this.#animateSort();
   }
+  #participation(record: ItemRecord<T>, options?: Partial<SortableInput>) {
+    return itemParticipation((options ?? this.#itemOptions.get(record.id))?.disabled, {
+      disabled: this.disabled,
+      readOnly: this.readOnly,
+      duplicate: record.duplicate,
+    });
+  }
   #context(record: ItemRecord<T>, preview = false): DragDropItemContext<T> {
     const entity = this.#sortables.get(record.id),
+      participation = this.#participation(record),
       committedIndex = this.value.findIndex(
         (item, index) =>
           (this.getItemId?.(item, index) ?? this.controller.resolve([item])[0]?.id) === record.id,
@@ -324,14 +336,9 @@ export class TpDragDropList<T = unknown> extends TpElement {
       dragging: entity?.isDragging ?? false,
       dropping: entity?.isDropping ?? false,
       dropTarget: entity?.isDropTarget ?? false,
-      disabled:
-        this.disabled ||
-        this.readOnly ||
-        record.duplicate ||
-        (typeof this.#itemOptions.get(record.id)?.disabled === 'boolean'
-          ? this.#itemOptions.get(record.id)!.disabled === true
-          : !!(this.#itemOptions.get(record.id)?.disabled as { draggable?: boolean } | undefined)
-              ?.draggable),
+      disabled: participation.dragDisabled,
+      dragDisabled: participation.dragDisabled,
+      dropDisabled: participation.dropDisabled,
       preview,
       list: this,
     };
@@ -458,10 +465,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
             ? oldData
             : nextData;
         this.#itemData.set(record.id, data);
-        const itemDisabled =
-          typeof options.disabled === 'boolean'
-            ? { draggable: options.disabled, droppable: options.disabled }
-            : (options.disabled ?? {});
+        const participation = this.#participation(record, options);
         const input: SortableInput = {
           ...options,
           id: record.id,
@@ -473,8 +477,8 @@ export class TpDragDropList<T = unknown> extends TpElement {
           accept: options.accept === undefined ? accept : options.accept,
           data,
           disabled: {
-            draggable: disabled || !!itemDisabled.draggable,
-            droppable: disabled || !!itemDisabled.droppable,
+            draggable: participation.dragDisabled,
+            droppable: participation.dropDisabled,
           },
         };
         let sortable = this.#sortables.get(record.id);
@@ -496,7 +500,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
             type: input.type,
             element,
             handle,
-            disabled: disabled || !!itemDisabled.draggable,
+            disabled: participation.dragDisabled,
           } as DraggableInput);
           sortable.droppable.update({
             ...options,
@@ -505,7 +509,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
             type: input.type,
             element,
             accept: input.accept,
-            disabled: disabled || !!itemDisabled.droppable,
+            disabled: participation.dropDisabled,
           } as DroppableInput);
           sortable.transition = options.transition;
         }
@@ -530,7 +534,8 @@ export class TpDragDropList<T = unknown> extends TpElement {
     for (const [id, element] of this.#items) {
       const sortable = this.#sortables.get(id),
         transition = sortable?.transition,
-        old = this.#oldRects.get(id);
+        previous = this.#oldRects.get(id),
+        old = previous?.rect;
       cancelGeometryTransitions(element);
       const next = measureElement(element);
       if (
@@ -558,7 +563,16 @@ export class TpDragDropList<T = unknown> extends TpElement {
           'sort-displacement',
           [{ translate: `${bx + x}px ${by + y}px` }, { translate: `${bx}px ${by}px` }],
           transition,
-          { itemId: id, x, y },
+          dragMotionContext(
+            id,
+            {
+              sourceGroup: previous?.group,
+              targetGroup: sortable?.group,
+              fromIndex: previous?.index,
+              toIndex: sortable?.index,
+            },
+            { x, y },
+          ),
         ),
       );
     }
@@ -602,9 +616,9 @@ export class TpDragDropList<T = unknown> extends TpElement {
         variant: 'ghost',
         size: 'icon-sm',
         '.ariaLabel': `Move ${record.label}`,
-        '.disabled': context.disabled || preview,
+        '.disabled': context.dragDisabled || preview,
         '.focusableWhenDisabled': true,
-        'data-drag-disabled': context.disabled,
+        'data-drag-disabled': context.dragDisabled,
         '.icon': gripVerticalIcon,
         '.partContracts': {
           button: {
@@ -641,7 +655,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
                 'data-dragging': context.dragging,
                 'data-dropping': context.dropping,
                 'data-drop-target': context.dropTarget,
-                'data-drop-disabled': context.disabled,
+                'data-drop-disabled': context.dropDisabled,
               },
               content: this.#row(record),
             });

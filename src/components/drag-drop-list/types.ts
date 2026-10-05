@@ -11,7 +11,12 @@ export interface DragDropItemContext<T> {
   dragging: boolean;
   dropping: boolean;
   dropTarget: boolean;
+  /** Drag participation is disabled; kept as the handle/drag lane alias of dragDisabled. */
   disabled: boolean;
+  /** List, read-only, duplicate or item draggable lane disables dragging this item. */
+  dragDisabled: boolean;
+  /** List, read-only, duplicate or item droppable lane disables dropping onto this item. */
+  dropDisabled: boolean;
   preview: boolean;
   list: TpDragDropList<T>;
 }

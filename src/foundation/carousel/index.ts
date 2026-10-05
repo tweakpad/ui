@@ -4,5 +4,6 @@ export type {
   CarouselInput,
   CarouselGeometry,
   CarouselProjection,
+  CarouselInputKind,
 } from './controller.js';
 export type * from './types.js';

@@ -56,19 +56,19 @@ calendar.addEventListener('tp-value-change', (event) => {
 | `defaultDisplayedMonth` / `default-displayed-month`                       | ISO date                                                 | empty      | Initial month. Otherwise the first selected date, then `today`.                                            |
 | `visibleMonths` / `visible-months`                                        | positive integer                                         | `1`        | Consecutive months shown side by side; they wrap when space is narrow.                                     |
 | `pagedNavigation` / `paged-navigation`                                    | boolean                                                  | `false`    | Previous/next move by `visibleMonths` instead of one month.                                                |
-| `navigationStart`, `navigationEnd` / `navigation-start`, `navigation-end` | ISO date                                                 | empty      | Navigation bounds, independent of selection bounds. They also bound caption dropdown choices.              |
+| `navigationStart`, `navigationEnd` / `navigation-start`, `navigation-end` | ISO date                                                 | empty      | Navigation bounds, independent of selection bounds. They also disable out-of-bounds caption choices.       |
 | `disabledNavigation` / `disabled-navigation`                              | `disable`, `hide`                                        | `disable`  | Unavailable previous/next controls are disabled or removed.                                                |
 | `captionLayout` / `caption-layout`                                        | `label`, `dropdown`, `dropdown-months`, `dropdown-years` | `label`    | Month and year text, or Native Select controls for both, the month only or the year only.                  |
 | `showOutsideDays`                                                         | boolean                                                  | `true`     | Show leading and trailing days of adjacent months. Set the property to `false` to leave their cells empty. |
 | `fixedWeeks` / `fixed-weeks`                                              | boolean                                                  | `false`    | Always render six weeks instead of the month's natural four to six.                                        |
-| `showWeekNumber` / `show-week-number`                                     | boolean                                                  | `false`    | Add a week-number column using the locale's week rules.                                                    |
+| `showWeekNumber` / `show-week-number`                                     | boolean                                                  | `false`    | Add a week-number column using the locale's week rules. Requires the adapter's `weekNumber`.               |
 | `buttonVariant` / `button-variant`                                        | Button variant                                           | `ghost`    | Variant of the previous and next Buttons.                                                                  |
 | `locale` / `locale`                                                       | BCP 47 tag                                               | empty      | Formatting locale. Empty uses the document language, then the browser language.                            |
 | `weekStartsOn` / `week-starts-on`                                         | `0`–`6`, or `-1`                                         | `-1`       | First weekday (0 is Sunday). `-1` uses the locale.                                                         |
 | `today` / `today`                                                         | ISO date                                                 | local date | The date marked as today.                                                                                  |
 | `label` / `label`                                                         | string                                                   | `Date`     | Accessible name of the calendar group.                                                                     |
 
-Without navigation bounds, the year dropdown offers the current year minus 100 through the current year. That list does not restrict selection.
+Without navigation bounds, the year dropdown offers the current year minus 100 through the current year. That list does not restrict selection. With navigation bounds, a month choice is disabled when that month cannot be displayed, and a year choice is disabled when none of its months can be; the displayed year always stays available. Choosing a year keeps the displayed month when it can be shown; if that month of the chosen year is outside the bounds, the change lands on the nearest month of that year that can be shown. Either way it is a normal `tp-displayed-month-change` proposal.
 
 `displayedMonthValue` returns the first displayed month. Navigation emits a cancelable `tp-displayed-month-change` with `{ value, previousValue, sourceEvent }`; a controlled owner assigns `displayedMonth` synchronously to accept it.
 
@@ -78,11 +78,15 @@ Without navigation bounds, the year dropdown offers the current year minus 100 t
 | ----------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `renderDay`       | `(day: CalendarDayState) => unknown`               | Lit content inside the day Button. Return `undefined` for the default number. The Button keeps its accessible date name, focus and activation.                      |
 | `formatters`      | `CalendarFormatters`                               | Optional `caption`, `monthDropdown`, `yearDropdown`, `weekday`, `day` and `weekNumber` display functions. They never change date identity.                          |
-| `dayModifiers`    | `Record<string, Set<string> \| (date) => boolean>` | Named date sets published as `data-<name>` day markers and `day.modifiers`. Names are lowercase; built-in state names are ignored.                                  |
+| `dayModifiers`    | `Record<string, Set<string> \| (date) => boolean>` | Named date sets published as `data-<name>` day markers and `day.modifiers`. Names are lowercase; built-in marker names are ignored.                                 |
 | `messages`        | `CalendarMessages`                                 | User-facing control names and validity messages. See [Localization](#localization).                                                                                 |
 | `calendarAdapter` | `CalendarAdapter`                                  | Date arithmetic and formatting. Defaults to `gregorianCalendarAdapter`. Supply an adapter for another calendar system; implement `weekNumber` to show week numbers. |
 
-`CalendarDayState` contains `date`, `month`, `label`, `selected`, `today`, `outside`, `disabled`, `unavailable`, `focused`, `rangeStart`, `rangeMiddle`, `rangeEnd` and `modifiers`. Day content must be passive: the day stays a single grid activation target, so do not place links or controls inside it.
+`CalendarDayState` contains `date`, `month`, `label`, `selected`, `today`, `outside`, `disabled`, `unavailable`, `focused`, `rangeStart`, `rangeMiddle`, `rangeEnd` and `modifiers`.
+
+Day content must be passive. The day Button is the only activation and focus target, so custom content cannot add interactive descendants: links, buttons, form controls, library controls, `tabindex` or editable elements, and interactive ARIA roles are unsupported. Such content produces a `calendar-interactive-day-content` diagnostic. Put extra accessible information in `messages.day` instead.
+
+Modifier names must be lowercase (`a-z`, `0-9`, `-`). They cannot reuse a built-in marker: `date`, `hidden`, `selected`, `today`, `outside`, `disabled`, `unavailable`, `focused`, `focus-visible`, `range-start`, `range-middle`, `range-end`, `roving` or `calendar-part`. Such names are ignored with a `calendar-ignored-day-modifier` diagnostic, so `data-date` and the built-in state markers are never replaced.
 
 ```ts
 const booked = new Set(['2026-01-12', '2026-01-13']);
@@ -148,11 +152,18 @@ calendar.messages = { day: (day) => (day.modifiers.booked ? `${day.label}, booke
 
 ## Events and methods
 
-| Event                       | Detail                                                          | Behavior                                                                                                  |
-| --------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `tp-value-change`           | `{ value, previousValue, reason, sourceEvent, cancelled }`      | Cancelable. `reason` is `selection` for day activation, `programmatic` for `setValue()` and `form-reset`. |
-| `tp-displayed-month-change` | `{ value, previousValue, sourceEvent }`                         | Cancelable. Emitted by previous/next, caption selectors and keyboard movement into another month.         |
-| `tp-diagnostic`             | `{ code: 'calendar-invalid-configuration', message, severity }` | Invalid bounds, limits, adapter capabilities or controlled/uncontrolled switches.                         |
+| Event                       | Detail                                                     | Behavior                                                                                                  |
+| --------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `tp-value-change`           | `{ value, previousValue, reason, sourceEvent, cancelled }` | Cancelable. `reason` is `selection` for day activation, `programmatic` for `setValue()` and `form-reset`. |
+| `tp-displayed-month-change` | `{ value, previousValue, sourceEvent }`                    | Cancelable. Emitted by previous/next, caption selectors and keyboard movement into another month.         |
+| `tp-diagnostic`             | `{ code, message, severity }`                              | Developer diagnostics. See below.                                                                         |
+
+Diagnostic codes:
+
+- `calendar-invalid-configuration` (`error`): invalid bounds or limits, rejected programmatic selections, and switches between controlled and uncontrolled. Invalid bounds or limits disable selection and report a custom validity error.
+- `calendar-week-number-unavailable` (`warning`): `showWeekNumber` is set, but the adapter has no `weekNumber(date, weekStartsOn, minimalDays)`. The week-number column is omitted. Selection, keyboard use and form validity are not affected.
+- `calendar-ignored-day-modifier` (`warning`): a `dayModifiers` name is invalid or reuses a built-in marker.
+- `calendar-interactive-day-content` (`warning`): `renderDay` content contains interactive or focusable descendants.
 
 `onValueChange` and `onDisplayedMonthChange` receive the same events before listeners. `setValue(value, sourceEvent?)` proposes a programmatic selection and returns whether it was committed. `selection` returns a copy of the committed selection.
 

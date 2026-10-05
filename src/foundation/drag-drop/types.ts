@@ -28,10 +28,15 @@ export interface DropAnimationContext {
 }
 export type DropAnimation =
   Transition | ((context: DropAnimationContext) => void | Promise<void>) | null;
+/** Overlay with its own drop configuration, between entity and manager precedence. */
+export interface DragOverlayInput {
+  element: Element;
+  dropAnimation?: DropAnimation;
+}
 export interface FeedbackOptions {
   feedback?: FeedbackMode | ((source: Draggable, manager: DragDropManager) => FeedbackMode);
   rootElement?: Element | ((source: Draggable) => Element);
-  overlay?: Element | null;
+  overlay?: Element | DragOverlayInput | null;
   overlayDisabled?: boolean | ((source: Draggable) => boolean);
   dropAnimation?: DropAnimation;
   keyboardTransition?: Transition | null;
@@ -44,7 +49,8 @@ export interface AccessibilityOptions {
 export type AutoScroll = boolean | { acceleration?: number; threshold?: number | Coordinates };
 export interface Sensor {
   disabled?: boolean;
-  bind(source: Draggable): () => void;
+  /** Options are sensor-specific per-binding overrides of the instance configuration. */
+  bind(source: Draggable, options?: object): () => void;
   destroy?(): void;
 }
 export type SensorFactory = (manager: DragDropManager) => Sensor;

@@ -1,5 +1,51 @@
 import { prepareMotion, type MotionHandle, type MotionValue } from '../motion.js';
-import type { Transition } from './types.js';
+import type { UniqueIdentifier } from './sorting.js';
+import type { DropAnimation, Transition } from './types.js';
+
+export type DragMotionRole = 'sort-displacement' | 'keyboard-feedback' | 'drop-settlement';
+/** Membership change described by a drag motion request; absent fields are omitted. */
+export interface DragMotionMembership {
+  sourceGroup?: UniqueIdentifier | undefined;
+  targetGroup?: UniqueIdentifier | undefined;
+  fromIndex?: number | undefined;
+  toIndex?: number | undefined;
+}
+/**
+ * Public role context shared by sort-displacement, keyboard-feedback and
+ * drop-settlement: itemId, sourceGroup, targetGroup, fromIndex, toIndex, x, y.
+ */
+export function dragMotionContext(
+  itemId: UniqueIdentifier,
+  membership: DragMotionMembership,
+  offset: { x: number; y: number },
+): Record<string, MotionValue> {
+  const context: Record<string, MotionValue> = { itemId };
+  for (const key of ['sourceGroup', 'targetGroup', 'fromIndex', 'toIndex'] as const) {
+    const value = membership[key];
+    if (value !== undefined) context[key] = value;
+  }
+  context.x = offset.x;
+  context.y = offset.y;
+  return context;
+}
+/** Drop configuration precedence: entity override, overlay override, then manager default. */
+export function resolveDropAnimation(
+  ...layers: readonly [
+    entity: DropAnimation | undefined,
+    overlay: DropAnimation | undefined,
+    manager: DropAnimation | undefined,
+  ]
+): DropAnimation | undefined {
+  let resolved: DropAnimation | undefined;
+  for (const layer of [...layers].reverse()) {
+    if (layer === undefined) continue;
+    resolved =
+      layer && typeof layer === 'object' && resolved && typeof resolved === 'object'
+        ? { ...resolved, ...layer }
+        : layer;
+  }
+  return resolved;
+}
 
 export function validateTransition(
   transition: Transition | null | undefined,
@@ -25,7 +71,7 @@ export function validateTransition(
 export function dragMotion(
   owner: HTMLElement,
   target: HTMLElement,
-  role: 'sort-displacement' | 'keyboard-feedback' | 'drop-settlement',
+  role: DragMotionRole,
   keyframes: Keyframe[],
   transition: Transition,
   context: Record<string, MotionValue>,

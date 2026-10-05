@@ -44,6 +44,23 @@ export function isKeyboardKey(
   return codes.some((key) => normalizeKey(key) === normalizeKey(event.key));
 }
 
+interface KeyboardBinding {
+  codes: KeyboardCodes;
+  offset: Coordinates;
+  preventActivation: KeyboardSensorOptions['preventActivation'];
+}
+function keyboardBinding(options: KeyboardSensorOptions): KeyboardBinding {
+  const codes = { ...defaultKeyboardCodes, ...options.keyboardCodes };
+  const value = options.offset ?? 10;
+  const offset = typeof value === 'number' ? { x: value, y: value } : { ...value };
+  if (!validCoordinates(offset) || offset.x < 0 || offset.y < 0)
+    throw new RangeError('Keyboard offset must be finite and nonnegative.');
+  for (const keys of Object.values(codes))
+    if (!Array.isArray(keys) || !keys.every((key) => typeof key === 'string'))
+      throw new TypeError('Keyboard codes must be arrays of key names.');
+  return { codes, offset, preventActivation: options.preventActivation };
+}
+
 export class KeyboardSensor implements Sensor {
   #disabled = false;
   #active: CleanupScope | undefined;
@@ -55,14 +72,9 @@ export class KeyboardSensor implements Sensor {
     readonly manager: DragDropManager,
     readonly options: KeyboardSensorOptions = {},
   ) {
-    this.codes = { ...defaultKeyboardCodes, ...options.keyboardCodes };
-    const offset = options.offset ?? 10;
-    this.offset = typeof offset === 'number' ? { x: offset, y: offset } : { ...offset };
-    if (!validCoordinates(this.offset) || this.offset.x < 0 || this.offset.y < 0)
-      throw new RangeError('Keyboard offset must be finite and nonnegative.');
-    for (const codes of Object.values(this.codes))
-      if (!Array.isArray(codes) || !codes.every((key) => typeof key === 'string'))
-        throw new TypeError('Keyboard codes must be arrays of key names.');
+    const binding = keyboardBinding(options);
+    this.codes = binding.codes;
+    this.offset = binding.offset;
   }
   static configure(options: KeyboardSensorOptions = {}): SensorFactory {
     return (manager) => new KeyboardSensor(manager, options);
@@ -78,7 +90,19 @@ export class KeyboardSensor implements Sensor {
       void this.manager.actions.stop({ canceled: true });
     }
   }
-  bind(source: Draggable): () => void {
+  /** Per-binding options override this sensor's configured options for that source. */
+  bind(source: Draggable, options?: KeyboardSensorOptions): () => void {
+    const binding = options
+      ? keyboardBinding({
+          ...this.options,
+          ...options,
+          keyboardCodes: { ...this.options.keyboardCodes, ...options.keyboardCodes },
+        })
+      : {
+          codes: this.codes,
+          offset: this.offset,
+          preventActivation: this.options.preventActivation,
+        };
     const scope = new CleanupScope();
     this.#scope.add(() => scope.dispose());
     const target = source.handle ?? source.element;
@@ -91,7 +115,7 @@ export class KeyboardSensor implements Sensor {
           source.disabled ||
           !source.registered ||
           this.manager.dragOperation.status !== 'idle' ||
-          !isKeyboardKey(event, this.codes.start)
+          !isKeyboardKey(event, binding.codes.start)
         )
           return;
         const effective = event.composedPath()[0];
@@ -103,7 +127,7 @@ export class KeyboardSensor implements Sensor {
             (effective as Element).matches('button'));
         if (!actualHandle) return;
         try {
-          if (this.options.preventActivation?.(event, source)) return;
+          if (binding.preventActivation?.(event, source)) return;
         } catch (error) {
           this.manager.reportError(error);
           return;
@@ -132,7 +156,7 @@ export class KeyboardSensor implements Sensor {
             },
             { once: true },
           );
-          active.listen(element.ownerDocument, 'keydown', (key) => this.#key(key), {
+          active.listen(element.ownerDocument, 'keydown', (key) => this.#key(key, binding), {
             capture: true,
           });
         } catch (error) {
@@ -141,9 +165,9 @@ export class KeyboardSensor implements Sensor {
       });
     return () => scope.dispose();
   }
-  #key(event: KeyboardEvent): void {
+  #key(event: KeyboardEvent, { codes, offset }: KeyboardBinding): void {
     if (event.defaultPrevented) return;
-    if (isKeyboardKey(event, [...this.codes.cancel, ...this.codes.end])) {
+    if (isKeyboardKey(event, [...codes.cancel, ...codes.end])) {
       const tab = normalizeKey(event.key) === 'tab';
       if (!tab) event.preventDefault();
       const id = this.manager.dragOperation.source?.id;
@@ -166,28 +190,18 @@ export class KeyboardSensor implements Sensor {
           })
           .catch((error) => this.manager.reportError(error));
       });
-      void this.manager.actions.stop({ event, canceled: isKeyboardKey(event, this.codes.cancel) });
+      void this.manager.actions.stop({ event, canceled: isKeyboardKey(event, codes.cancel) });
       return;
     }
     const direction = (['up', 'down', 'left', 'right'] as const).find((key) =>
-      isKeyboardKey(event, this.codes[key]),
+      isKeyboardKey(event, codes[key]),
     );
     if (!direction) return;
     event.preventDefault();
     const factor = event.shiftKey ? 5 : 1;
     const by = {
-      x:
-        direction === 'left'
-          ? -this.offset.x * factor
-          : direction === 'right'
-            ? this.offset.x * factor
-            : 0,
-      y:
-        direction === 'up'
-          ? -this.offset.y * factor
-          : direction === 'down'
-            ? this.offset.y * factor
-            : 0,
+      x: direction === 'left' ? -offset.x * factor : direction === 'right' ? offset.x * factor : 0,
+      y: direction === 'up' ? -offset.y * factor : direction === 'down' ? offset.y * factor : 0,
     };
     if (isSortable(this.manager.dragOperation.source)) void this.#sort(direction, by, event);
     else this.manager.actions.move({ by, event });

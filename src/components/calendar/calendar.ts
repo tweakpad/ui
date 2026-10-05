@@ -22,6 +22,15 @@ import type {
 import type { ChangeReason } from '../../foundation/types.js';
 
 import { calendarStyles } from './styles.js';
+import {
+  calendarBuiltInDayMarkers,
+  calendarCanDisplay,
+  calendarNearestYearMonth,
+  calendarYearMonths,
+  calendarYearNavigable,
+  containsInteractiveContent,
+  partitionCalendarModifiers,
+} from './policy.js';
 import type {
   CalendarDateMatcher,
   CalendarDayState,
@@ -182,6 +191,10 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
   #pendingFocusDate = '';
   #focusGeneration = 0;
   #lastDiagnostic = '';
+  /** Last emitted message per nonblocking diagnostic code; cleared when the condition ends. */
+  #warnings = new Map<string, string>();
+  #modifierNames: string[] = [];
+  #ignoredModifiers: string[] = [];
   readonly #calendarId = createId('tp-calendar');
 
   get selection(): CalendarValue {
@@ -214,6 +227,9 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
   }
 
   protected override render() {
+    const modifiers = partitionCalendarModifiers(Object.keys(this.dayModifiers ?? {}));
+    this.#modifierNames = modifiers.accepted;
+    this.#ignoredModifiers = modifiers.ignored;
     const months = this.#visibleMonthStarts();
     return this.#part('', {
       properties: {
@@ -301,7 +317,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
                         .partContracts=${{ 'native-select-control': this.partContracts['calendar-month-dropdown'] ?? {} }}
                         @tp-value-change=${(e: TpValueChangeEvent<string>) => this.#captionChange(e, monthIndex)}
                       >
-                        ${this.#yearMonths(month).map((date) => html`<option value=${date} ?disabled=${!this.#canDisplay(this.calendarAdapter.addMonths(date, -monthIndex))}>${monthLabel(date)}</option>`)}
+                        ${calendarYearMonths(this.calendarAdapter, month).map((date) => html`<option value=${date} ?disabled=${!this.#canDisplay(this.calendarAdapter.addMonths(date, -monthIndex))}>${monthLabel(date)}</option>`)}
                       </tp-native-select>`
                     : this.#part('caption-label', { content: monthLabel(month) })
                 }
@@ -318,7 +334,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
                         .partContracts=${{ 'native-select-control': this.partContracts['calendar-year-dropdown'] ?? {} }}
                         @tp-value-change=${(e: TpValueChangeEvent<string>) => this.#captionChange(e, monthIndex, month)}
                       >
-                        ${this.#yearOptions(month).map((date) => html`<option value=${String(this.calendarAdapter.parts(date).year)}>${yearLabel(date)}</option>`)}
+                        ${this.#yearOptions(month).map((date) => html`<option value=${String(this.calendarAdapter.parts(date).year)} ?disabled=${!this.#yearSelectable(date, month, monthIndex)}>${yearLabel(date)}</option>`)}
                       </tp-native-select>`
                     : this.#part('caption-label', { content: yearLabel(month) })
                 }
@@ -329,12 +345,18 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
 
   #captionChange(event: TpValueChangeEvent<string>, index: number, yearMonth?: string): void {
     event.stopPropagation();
-    const date = yearMonth
-      ? this.calendarAdapter.addYears(
-          yearMonth,
-          Number(event.detail.value) - this.calendarAdapter.parts(yearMonth).year,
-        )
-      : event.detail.value;
+    let date = event.detail.value;
+    if (yearMonth) {
+      const sameMonth = this.calendarAdapter.addYears(
+        yearMonth,
+        Number(event.detail.value) - this.calendarAdapter.parts(yearMonth).year,
+      );
+      // A year change lands on the nearest displayable month of that year.
+      date =
+        calendarNearestYearMonth(this.calendarAdapter, sameMonth, index, (start) =>
+          this.#canDisplay(start),
+        ) ?? sameMonth;
+    }
     this.#requestDisplayedMonth(
       this.calendarAdapter.addMonths(date, -index),
       event.detail.sourceEvent ?? event,
@@ -342,21 +364,18 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
     this.requestUpdate();
   }
 
-  #yearMonths(month: string): string[] {
-    const year = this.calendarAdapter.parts(month).year;
-    let first = month;
-    for (let i = 0; i < 24; i++) {
-      const previous = this.calendarAdapter.addMonths(first, -1);
-      if (this.calendarAdapter.parts(previous).year !== year) break;
-      first = previous;
-    }
-    const dates: string[] = [];
-    for (let i = 0; i < 24; i++) {
-      const date = this.calendarAdapter.addMonths(first, i);
-      if (this.calendarAdapter.parts(date).year !== year) break;
-      dates.push(date);
-    }
-    return dates;
+  /**
+   * A year choice is offered when at least one of its months can be displayed at
+   * this caption's position within the navigation bounds. The displayed year stays
+   * enabled so the current value remains representable.
+   */
+  #yearSelectable(date: string, displayed: string, monthIndex: number): boolean {
+    if (!this.navigationStart && !this.navigationEnd) return true;
+    if (this.calendarAdapter.parts(date).year === this.calendarAdapter.parts(displayed).year)
+      return true;
+    return calendarYearNavigable(this.calendarAdapter, date, monthIndex, (start) =>
+      this.#canDisplay(start),
+    );
   }
 
   #yearOptions(month: string): string[] {
@@ -478,27 +497,15 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
         this.calendarAdapter.compare(date, range.to) < 0
       ),
       modifiers: Object.fromEntries(
-        Object.entries(this.dayModifiers)
-          .filter(
-            ([key]) =>
-              /^[a-z][a-z0-9-]*$/.test(key) &&
-              ![
-                'selected',
-                'today',
-                'outside',
-                'disabled',
-                'unavailable',
-                'hidden',
-                'focused',
-                'range-start',
-                'range-middle',
-                'range-end',
-              ].includes(key),
-          )
-          .map(([key, matcher]) => [key, this.#matches(matcher, date)]),
+        this.#modifierNames.map((key) => [key, this.#matches(this.dayModifiers[key], date)]),
       ),
     };
+    // Custom markers first (names already exclude built-ins): built-in state and
+    // date identity always win.
     const markers: Record<string, unknown> = {
+      ...Object.fromEntries(
+        Object.entries(state.modifiers).map(([key, value]) => ['data-' + key, value]),
+      ),
       'data-date': date,
       'data-selected': state.selected,
       'data-today': state.today,
@@ -509,9 +516,6 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
       'data-range-start': state.rangeStart,
       'data-range-middle': state.rangeMiddle,
       'data-range-end': state.rangeEnd,
-      ...Object.fromEntries(
-        Object.entries(state.modifiers).map(([key, value]) => ['data-' + key, value]),
-      ),
     };
     return html`<span
       class="day-cell"
@@ -591,6 +595,18 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
     this.#syncFormState();
     const error = this.#configurationError();
     if (error) this.#diagnose(error);
+    this.#warn(
+      'calendar-week-number-unavailable',
+      this.showWeekNumber && !this.calendarAdapter.weekNumber
+        ? 'Calendar showWeekNumber needs an adapter weekNumber(date, weekStartsOn, minimalDays); the week-number column is omitted until calendarAdapter supplies it.'
+        : null,
+    );
+    this.#warn(
+      'calendar-ignored-day-modifier',
+      this.#ignoredModifiers.length
+        ? `Calendar dayModifiers ${this.#ignoredModifiers.map((name) => `"${name}"`).join(', ')} ignored: names must be lowercase (a-z, 0-9, -) and must not reuse built-in day markers (${calendarBuiltInDayMarkers.join(', ')}).`
+        : null,
+    );
     if (this.#pendingFocusDate) {
       const date = this.#pendingFocusDate;
       this.#pendingFocusDate = '';
@@ -843,17 +859,13 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
   }
 
   #canDisplay(start: string): boolean {
-    const normalized = this.calendarAdapter.startOfMonth(start);
-    const last = this.calendarAdapter.addMonths(normalized, this.visibleMonths - 1);
-    if (this.navigationStart) {
-      const lower = this.calendarAdapter.startOfMonth(this.navigationStart);
-      if (this.calendarAdapter.compare(normalized, lower) < 0) return false;
-    }
-    if (this.navigationEnd) {
-      const upper = this.calendarAdapter.startOfMonth(this.navigationEnd);
-      if (this.calendarAdapter.compare(last, upper) > 0) return false;
-    }
-    return true;
+    return calendarCanDisplay(
+      this.calendarAdapter,
+      start,
+      this.visibleMonths,
+      this.navigationStart,
+      this.navigationEnd,
+    );
   }
 
   #navigationStep(): number {
@@ -980,8 +992,6 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
   }
 
   #configurationError(): string | null {
-    if (this.showWeekNumber && !this.calendarAdapter.weekNumber)
-      return 'Calendar adapter must supply weekNumber to show week numbers.';
     if (!Number.isInteger(this.visibleMonths) || this.visibleMonths <= 0)
       return 'Calendar visibleMonths must be a positive integer.';
     if (
@@ -1076,8 +1086,25 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
     const members = [
       ...this.renderRoot.querySelectorAll<TpButton | TpNativeSelect>('[data-calendar-part]'),
     ];
-    await Promise.all(members.map((member) => member.updateComplete));
+    // Custom day content may contain library elements; wait for their shadow content.
+    const content = this.renderDay
+      ? members
+          .filter((member) => member.classList.contains('day'))
+          .flatMap((member) => [...member.children])
+      : [];
+    await Promise.all([
+      ...members.map((member) => member.updateComplete),
+      ...content
+        .flatMap((element) => [element, ...element.querySelectorAll('*')])
+        .map((element) => (element as Partial<TpElement>).updateComplete),
+    ]);
     if (!this.isConnected || generation !== this.#childGeneration) return;
+    this.#warn(
+      'calendar-interactive-day-content',
+      content.some((element) => element.isConnected && containsInteractiveContent(element))
+        ? 'Calendar renderDay content must not contain links, controls or focusable elements: the day Button is the only activation and focus target. Render passive content and use messages.day for extra accessible information.'
+        : null,
+    );
     const active = new Set<HTMLElement>();
     for (const member of members) {
       const target = member.shadowRoot?.querySelector<HTMLElement>('button,select');
@@ -1131,6 +1158,19 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
       ) ??
       this.#dayButtons().find((button) => button.dataset.date === date && !button.disabled) ??
       null
+    );
+  }
+
+  /** Nonblocking, actionable development diagnostic; emitted once per distinct condition. */
+  #warn(code: string, message: string | null): void {
+    if (message === null) {
+      this.#warnings.delete(code);
+      return;
+    }
+    if (this.#warnings.get(code) === message) return;
+    this.#warnings.set(code, message);
+    queueMicrotask(() =>
+      this.emit('tp-diagnostic', { code, message, severity: 'warning' as const }),
     );
   }
 

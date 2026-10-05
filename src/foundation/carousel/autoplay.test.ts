@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CarouselAutoplay } from './autoplay.js';
+import { CarouselAutoplay, carouselAutoplayAction, toggleCarouselAutoplay } from './autoplay.js';
 import type { CarouselNavigationResult } from './types.js';
 const accepted: CarouselNavigationResult = {
   status: 'accepted',
@@ -123,5 +123,71 @@ describe('Carousel autoplay pause leases', () => {
     await vi.advanceTimersByTimeAsync(100);
     expect(changed).toHaveBeenCalledTimes(notifications);
     expect(autoplay.reasons).toEqual([]);
+  });
+});
+
+describe('Carousel autoplay control state', () => {
+  afterEach(() => vi.useRealTimers());
+  it('names Resume after a finite-end stop and restarts the timer from the control', async () => {
+    vi.useFakeTimers();
+    let status: CarouselNavigationResult['status'] = 'unchanged';
+    const advance = vi.fn(async () => ({ ...accepted, status }));
+    const changed = vi.fn();
+    const autoplay = new CarouselAutoplay({
+      delay: () => 10,
+      available: () => true,
+      advance,
+      changed,
+    });
+    autoplay.start();
+    expect(carouselAutoplayAction(autoplay)).toBe('pause');
+    await vi.advanceTimersByTimeAsync(10);
+    expect(autoplay.running).toBe(false);
+    expect(carouselAutoplayAction(autoplay)).toBe('resume');
+    status = 'accepted';
+    toggleCarouselAutoplay(autoplay);
+    expect(autoplay.running).toBe(true);
+    expect(carouselAutoplayAction(autoplay)).toBe('pause');
+    await vi.advanceTimersByTimeAsync(10);
+    expect(advance).toHaveBeenCalledTimes(2);
+    autoplay.dispose();
+  });
+  it('names Resume after stopAfterInteraction-style stops and manual pauses', () => {
+    const autoplay = new CarouselAutoplay({
+      delay: () => 10,
+      available: () => true,
+      advance: async () => accepted,
+      changed() {},
+    });
+    autoplay.start();
+    autoplay.stop();
+    expect(carouselAutoplayAction(autoplay)).toBe('resume');
+    autoplay.start();
+    toggleCarouselAutoplay(autoplay);
+    expect(autoplay.reasons).toContain('explicit');
+    expect(carouselAutoplayAction(autoplay)).toBe('resume');
+    // Mandatory hover/focus pauses do not rename the manual control.
+    toggleCarouselAutoplay(autoplay);
+    autoplay.setReason('hover', true);
+    expect(carouselAutoplayAction(autoplay)).toBe('pause');
+    autoplay.dispose();
+  });
+  it('notifies when resume clears only an unacknowledged pause', async () => {
+    vi.useFakeTimers();
+    const changed = vi.fn();
+    const autoplay = new CarouselAutoplay({
+      delay: () => 10,
+      available: () => true,
+      advance: async () => ({ ...accepted, status: 'rejected' as const }),
+      changed,
+    });
+    autoplay.start();
+    await vi.advanceTimersByTimeAsync(10);
+    expect(carouselAutoplayAction(autoplay)).toBe('resume');
+    const notifications = changed.mock.calls.length;
+    autoplay.resume();
+    expect(changed.mock.calls.length).toBeGreaterThan(notifications);
+    expect(carouselAutoplayAction(autoplay)).toBe('pause');
+    autoplay.dispose();
   });
 });
