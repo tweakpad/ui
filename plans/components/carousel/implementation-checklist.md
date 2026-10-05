@@ -8,6 +8,130 @@ literal pipes inside table cells. A recorded defect does not clear a gate.
 For a read-only review, use these fields in the response or an authorized report;
 do not create a checklist file unless writing one is in scope.
 
+## Quick-release cancellation follow-up — 2026-10-05
+
+The previous completion claim did not resolve the user's jump. Reopened C-06 /
+V-40–V-51 for the actual browser event order. Read-only instrumentation of the
+user's main Storybook tab captured real quick gestures on the catalog Carousel:
+`lostpointercapture`, then a final `pointermove`, then `pointerup` about 2.5ms
+later. Five releases roll back before pointerup with no motion request (for
+example -1383.66px to -1520px). This differs from the automated drag ordering.
+
+Fresh Foundation/Component Library reads retain normal release versus explicit
+cancellation and final-sample requirements. Local Swiper `onTouchMove.ts` does
+not classify `buttons=0` as cancellation; `onTouchEnd.ts` owns normal release.
+Our extra guard does. Replaying the captured ordering with a zero-button move
+on actual Data content reproduces the defect: -356px immediately returns to
+-396px; no animation or value proposal occurs.
+
+Gates 0–2: remove that non-source cancellation guard; distinguish implicit mouse
+capture loss at release from genuine capture loss while pressed, using the
+composed event target across the component shadow root. Reuse the existing
+controller/transport/motion owners; no timing changes, new physics, new public
+API, or demo-only workaround. Required checks: quick ordering replay, held
+release, explicit capture loss, pointer cancellation and original jitter tests.
+The replay now retains the preview until pointerup and requests motion from
+-346px to -264px, selecting index 2 instead of cancelling at index 3. Six browser
+regressions pass: quick release, held release, explicit pressed capture loss,
+pointercancel and both final-jitter directions. These are explicitly synthetic
+replays, while the initial capture is actual user input. All 48 focused tests,
+typecheck and targeted lint/format pass. User retest is pending; broader historical
+gaps remain. Evidence: `tmp/component-verification/carousel/quick-release/`.
+No source timing defaults were changed.
+
+## Drag settlement repair — 2026-10-05
+
+Bounded follow-up: repair reported drag/release flicker using the adopted Swiper
+source, retaining the existing selection, gesture, transport and shared motion
+owners. Fresh direct reads of Foundation `sec-187-carousel` and Component Library
+`ucl21-carousel` confirm snap-on-release, current-position interruption, final
+sample flushing, controlled ownership, and motion cancellation contracts.
+
+- Gates 0–2 reviewed for C-01/C-06/C-09: local Swiper
+  `onTouchMove.ts` reads `getTranslate()` at first move and stops the old transition;
+  `onTouchEnd.ts` chooses the source snap; `slideTo.ts` transitions from current
+  translation even when resetting to the same selection. No new physics or
+  runtime dependency. Existing Card/Button presentation remains unchanged.
+- Chrome reproduction: normal uncontrolled release animates over intermediate
+  transforms. A value-change acknowledgement triggers Lit's full controller
+  update, replacing settlement with a speed-zero layout move: measured jump
+  from -399px to -556px in one frame, with no track animation.
+- Repair map: distinguish an already-consumed controlled acknowledgement from
+  genuine owner/layout changes; capture the visible transport position when
+  interrupting; flush pending preview before release; preserve shared motion
+  driver policy. Verify with controller regressions and focused Chrome drag
+  traces for both orientations, same-snap return, and controlled settlement.
+- Historical full-component gaps below remain separate; this repair does not
+  certify the entire original matrix. Focused integration checks pass: actual numbered Card/Button composition is
+  preserved; controller and transport continue to use ControllableState and
+  prepareMotion. Both axes, controlled acceptance/refusal, virtual release and
+  same-snap return have continuous intermediate track transforms. A paused
+  in-flight track at -159.856px moves to -280.856px after a real 121px drag.
+- Focused Chrome records: `tmp/component-verification/carousel/drag-settlement/chrome.json`.
+  MCP's single-displacement drag uses threshold=0 fixtures; this does not prove
+  a real multi-sample default-threshold gesture or touch input. Long-release
+  arithmetic is tested with longSwipeMs=0; source timing defaults are unchanged.
+- Three regressions added for controlled acknowledgement versus genuine owner
+  publication, interrupted settlement, and same-selection transition lifetime.
+  All 43 Carousel tests plus five shared motion tests pass; typecheck, targeted
+  ESLint/Prettier and diff hygiene pass. Adapter `readPosition()` is documented.
+- Full-record implement check passes. Its verify/complete boundaries retain the
+  older unrelated integration/matrix gaps; this bounded follow-up certifies only
+  the repaired paths above, not full Carousel acceptance.
+
+- User narrowed the report to **Data content**. Its release direction incorrectly
+  used the last movement delta, unlike Swiper's overall `swipeDirection`. A slight
+  reversal just before pointerup could therefore snap backwards. Direction now
+  derives from the drag origin, and the final pointerup sample is flushed.
+- Actual Data content in Chrome Docs: real drag, threshold=0 for the MCP tool,
+  settles continuously from -378px to -528px over 17 animated frames, with no
+  unexpected controller update. Durable multi-sample regression
+  `tests/fixtures/components/carousel/drag-release-checks.js` runs against that
+  actual example with default threshold=5: both forward/backward swipes tolerate
+  final reverse jitter, select source indices 2/1, and start motion at the exact
+  final preview (156.2/239.8 logical px in the 390px viewport). These latter
+  checks are synthetic browser events, separately identified from real input.
+- Production build passes. Full-record verify remains blocked by historical
+  I-02/I-03; full-component completion remains unclaimed. Local evidence is in
+  `tmp/component-verification/carousel/drag-settlement/data-content.json`.
+
+## Demo follow-up — 2026-10-05
+
+The user's follow-up requests explicit horizontal/vertical demos and simple solid
+numbered Cards matching the supplied shadcn page. This bounded documentation and
+composition change is implemented and verified; the older full-component matrix
+below is historical and is not certified by this follow-up. Chrome MCP is now
+responsive, so its earlier timeout is no longer a current connection blocker.
+
+- Fresh direct Foundation/Component Library reads: Carousel orientation, presentation,
+  public options and actual-component reuse remain authoritative; no contract changes.
+- Sources: ui.shadcn.com/docs/components/base/carousel; local
+  `apps/v4/examples/base/carousel-demo.tsx`, `carousel-orientation.tsx`, base Card
+  imports and `registry/styles/style-nova.css`. Reuse actual `tp-card` with
+  `section-colors="off"`; use native number content and public Card parts only for
+  sizing/alignment/type. Existing Carousel Button controls remain unchanged.
+- Horizontal Default story plus explicit Vertical story; five numbered Cards,
+  one square horizontal view, two vertical views, outside controls. Data, virtual
+  and controlled examples use the same Card treatment; copied source is synchronized.
+- Live Chrome: both orientations inspected in dark desktop and light 390x844
+  viewports; horizontal 320px desktop / 262px narrow square Cards; vertical two
+  visible Cards; no horizontal overflow. Actual Next input advances both axes;
+  actual ArrowDown on the vertical viewport advances selection. No slide actions.
+- Docs page contains both orientation stories; all five examples have zero slide
+  Buttons. Virtual example has 200 logical items and virtual state; controlled
+  example has its owner value. Console errors absent after fixing multiline inline
+  code spans. Example setup now resolves its actual data-example container.
+- Focused axe: no violations in either orientation. Named region, slide groups and
+  previous/next availability checked through Chrome's accessibility snapshots.
+- Typecheck, nine existing story tests, targeted ESLint/CSS lint, Prettier,
+  Storybook build and diff hygiene pass. No runtime component changes or new tests.
+- Evidence: live outputs/screenshots in this conversation; local Storybook build log
+  at `tmp/component-verification/carousel/demo-orientations/storybook.txt`.
+  MCP rejected direct evidence-file writes because its configured workspace roots
+  did not include this repo; inline screenshots and results were inspected instead.
+- Record boundary: implement checker passes; full verify/complete retain older
+  unresolved matrix rows. This follow-up does not claim full Carousel conformance.
+
 ## Delivery and source record
 
 - Component(s) / public identity: Carousel / TpCarousel / tp-carousel, reusable CarouselController.

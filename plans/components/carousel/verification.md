@@ -1,5 +1,17 @@
 # Carousel implementation and verification — 2026-10-05
 
+> Follow-up: the requested horizontal/vertical numbered-Card demos are now verified
+> through working Chrome DevTools MCP. See the implementation checklist's Demo
+> follow-up section. The initial timeout and broad conformance status below describe
+> the earlier implementation run, not a current browser connection failure.
+
+Demo scrollbar follow-up: the data, virtual and controlled setup explicitly enabled
+`scrollbar: { draggable: true }`; Chrome confirmed these were optional Carousel
+controls, with no native overflow containers. Changed those demo options to
+`scrollbar: false` and synchronized the description/copyable setup. Chrome confirmed
+all five Docs examples now have no rendered scrollbar. Targeted formatting, ESLint
+and diff checks pass; the public scrollbar capability is unchanged.
+
 The requested scope remains the complete `carousel.md` plan. Source implementation,
 documentation and local/package checks are present. **Carousel completion is blocked
 on Chrome DevTools MCP integration and acceptance checks.** No Carousel screenshot,
@@ -87,3 +99,62 @@ No specification commit, repository commit, dependency addition or upstream
 checkout update was made. Unrelated work and the two existing formatting failures
 were preserved. DragDrop's earlier evidence and tool-only gaps remain in its own
 component record.
+
+## Drag settlement follow-up (2026-10-05)
+
+Reference: clean local Swiper e043db5462adc8cae0751ec148f5cd5cfb92f098,
+`onTouchMove.ts`, `onTouchEnd.ts`, and `slideTo.ts`; fresh live Foundation and
+Component Library reads. Controlled acknowledgements must not become speed-zero
+layout updates. Interruption reads/fixes the current rendered translation, final
+preview is awaited before release, overall swipe direction drives the source
+release calculation, and unchanged selection can still have settling motion.
+
+Chrome MCP measured continuous monotonic post-release transforms (17 animated
+frames in each recorded case): controlled horizontal -120.996 to -278; vertical
+-198 to -288; same selection -399 to -278; controlled refusal -198 to 0; virtual
+-399 to -417. A paused real animation at -159.856 followed by a 121px real drag
+ends preview at -280.856, preserving the visible grab position. Fixture conditions
+and raw results: `tmp/component-verification/carousel/drag-settlement/chrome.json`.
+The MCP tool exposes only a single displacement: fixtures use threshold=0; no
+claim of default-threshold multi-sample or touch verification.
+
+48 focused tests pass (43 Carousel, five shared motion), including three new
+controller regressions. Typecheck, targeted ESLint/Prettier, and diff hygiene pass.
+These results do not resolve the older full-component acceptance matrix.
+
+The user identified Data content as the affected example. Its source mismatch is
+release direction derived from the last movement instead of overall displacement,
+so final reverse jitter could reverse the snap. Added durable Chrome-only
+`tests/fixtures/components/carousel/drag-release-checks.js`: synthetic multi-sample
+pointer sequences against the actual data example, default threshold=5, both
+directions and final pointerup movement. Both select the expected source snap
+and begin animation at the exact final preview. Actual real MCP drag on that
+example (threshold=0 for the tool's one displacement) settles -378 to -528 through
+17 intermediate frames, without controller reset. Raw evidence is in
+`tmp/component-verification/carousel/drag-settlement/data-content.json`.
+Production build and fixture ESLint pass.
+
+## Quick-release cancellation correction (2026-10-05)
+
+The prior drag repair did not fix the reported jump. The user's actual mouse
+trace exposed the missing sequence: capture loss, final move, then pointerup
+about 2.5ms later. Our zero-button mouse-move guard cancelled before pointerup
+and restored the accepted snap without motion. Swiper onTouchMove has no such
+guard. The captured catalog example jumped from -1383.66 to -1520px; an exact
+synthetic replay on Data content jumped from -356 to -396px with no motion.
+
+Removed the non-source guard and distinguished normal implicit mouse capture
+loss from pressed capture loss, inspecting composedPath across shadow roots.
+The same replay now preserves preview, consumes the final sample at -346px,
+and animates to -264px (index2). No timing or physics changes.
+
+Six focused Chrome regressions pass: quick-release ordering, held release,
+pressed capture loss, pointercancel, and both final-jitter directions. Explicit
+cancellation still restores selection and ignores the later pointerup. All 48
+focused unit tests, typecheck, targeted lint/format, production build and diff
+hygiene pass. Raw user trace and before/after replay are local artifacts under
+`tmp/component-verification/carousel/quick-release/`. Browser is Chrome154.
+The main Storybook preview was explicitly refreshed after the fix because
+custom-element registration is not replaced by module hot updates.
+
+Full historical component matrix remains separate and unresolved.

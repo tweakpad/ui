@@ -1,0 +1,46 @@
+.carousel-demo {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: 26rem;
+  margin-inline: auto;
+  padding: 3rem;
+}
+
+.carousel-demo--vertical {
+  block-size: 23rem;
+}
+
+.carousel-demo tp-carousel {
+  inline-size: 100%;
+}
+
+.carousel-demo-card {
+  display: block;
+  aspect-ratio: 1;
+}
+
+.carousel-demo-card::part(card) {
+  block-size: 100%;
+}
+
+.carousel-demo-card::part(card-content) {
+  place-items: center;
+  min-block-size: 0;
+  font-size: calc(var(--tp-text-2xl) * 1.8);
+  font-weight: var(--tp-font-semibold);
+}
+
+.carousel-demo--vertical .carousel-demo-card {
+  block-size: 100%;
+  aspect-ratio: auto;
+}
+
+.carousel-demo--vertical .carousel-demo-card::part(card-content) {
+  font-size: calc(var(--tp-text-2xl) * 1.5);
+}
+
+.carousel-data-demo {
+  inline-size: 100%;
+  max-inline-size: 32rem;
+  margin-inline: auto;
+}

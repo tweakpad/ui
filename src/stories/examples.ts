@@ -260,19 +260,11 @@ const examples = {
     html`<tp-pagination label="Results pages" page="4" pages="12"></tp-pagination>`,
   'tp-avatar': () => html`<tp-avatar fallback="IV" alt="Ivan V." size="default"></tp-avatar>`,
   'tp-carousel': () => html`
-    <tp-carousel label="Featured projects">
-      <tp-card
-        ><h3>Project one</h3>
-        <p>Research the opportunity.</p></tp-card
-      >
-      <tp-card
-        ><h3>Project two</h3>
-        <p>Develop the interaction.</p></tp-card
-      >
-      <tp-card
-        ><h3>Project three</h3>
-        <p>Review the experience.</p></tp-card
-      >
+    <tp-carousel label="Numbered slides">
+      ${Array.from(
+        { length: 5 },
+        (_, index) => html` <tp-card section-colors="off"><span>${index + 1}</span></tp-card> `,
+      )}
     </tp-carousel>
   `,
   'tp-data-visualization': () => dataVisualizationExample(),

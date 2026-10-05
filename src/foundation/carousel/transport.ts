@@ -287,7 +287,15 @@ export class CarouselTransport {
     this.#settleTimer?.();
     this.#settleTimer = undefined;
     this.controller()?.autoplay.setReason('native-scroll', false);
-    this.#motion?.cancel();
+    if (this.#motion) {
+      // Cancelling WAAPI otherwise exposes the inline destination for a frame.
+      // Preserve the current translate, as Swiper does before interrupting.
+      const transform = this.owner.ownerDocument.defaultView?.getComputedStyle(
+        this.elements.track,
+      ).transform;
+      if (transform) this.#track.set('transform', transform);
+      this.#motion.cancel();
+    }
     this.#motion = undefined;
     this.#nativeCancel?.();
     this.#heightMotion?.cancel();

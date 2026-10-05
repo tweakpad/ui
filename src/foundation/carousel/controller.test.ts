@@ -48,6 +48,104 @@ function fixture(controlled = false) {
 }
 
 describe('Carousel selection and lifecycle owner', () => {
+  function motionFixture() {
+    const host = new Host();
+    let value = 0;
+    let position = 0;
+    let finish = () => {};
+    let cancels = 0;
+    const moves: Array<{ position: number; speed?: number }> = [];
+    const items = carouselItems(['a', 'b', 'c']);
+    const controller = new CarouselController({
+      host,
+      read: () => ({ items, value }),
+      readPosition: () => position,
+      measure: () => ({
+        width: 100,
+        height: 100,
+        items: items.map((item) => ({ index: item.index, size: 100 })),
+      }),
+      render() {},
+      move: (next, request) => {
+        moves.push({
+          position: next,
+          ...(request.speed === undefined ? {} : { speed: request.speed }),
+        });
+        if (request.speed === 0) position = next;
+        else
+          return new Promise<void>((resolve) => {
+            finish = resolve;
+          });
+      },
+      cancel() {
+        cancels++;
+      },
+    });
+    host.addEventListener('tp-value-change', (event) => {
+      value = (event as CustomEvent<{ value: number }>).detail.value;
+    });
+    return {
+      controller,
+      moves,
+      finish: () => finish(),
+      cancels: () => cancels,
+      setPosition: (next: number) => {
+        position = next;
+      },
+      setValue: (next: number) => {
+        value = next;
+      },
+    };
+  }
+  it('keeps controlled acknowledgement updates inside the pending settlement', async () => {
+    const f = motionFixture();
+    await f.controller.initialize();
+    await f.controller.preview(40);
+    const navigation = f.controller.next({ reason: 'swipe' });
+    await Promise.resolve();
+    const cancels = f.cancels();
+    const moves = f.moves.length;
+    await f.controller.update(true);
+    expect(f.cancels()).toBe(cancels);
+    expect(f.moves).toHaveLength(moves);
+    expect(f.controller.snapshot.animating).toBe(true);
+    f.finish();
+    expect((await navigation).status).toBe('accepted');
+    f.setValue(2);
+    await f.controller.update(true);
+    expect(f.controller.index).toBe(2);
+    expect(f.moves.at(-1)).toEqual({ position: 200, speed: 0 });
+    f.controller.release();
+  });
+  it('interrupts at the rendered position and cancels the superseded settlement', async () => {
+    const f = motionFixture();
+    await f.controller.initialize();
+    const navigation = f.controller.next();
+    await Promise.resolve();
+    f.setPosition(35);
+    expect(f.controller.interruptPreview()).toBe(35);
+    expect(f.controller.projection.position).toBe(35);
+    expect(f.controller.snapshot.animating).toBe(false);
+    expect((await navigation).status).toBe('cancelled');
+    await f.controller.preview(45);
+    f.finish();
+    await Promise.resolve();
+    expect(f.controller.projection.position).toBe(45);
+    f.controller.release();
+  });
+  it('keeps same-selection snapback transitioning until physical settlement', async () => {
+    const f = motionFixture();
+    await f.controller.initialize();
+    await f.controller.preview(35);
+    const navigation = f.controller.scrollToIndex(0, { reason: 'swipe' });
+    await Promise.resolve();
+    expect(f.controller.snapshot.animating).toBe(true);
+    expect(f.moves.at(-1)).toEqual({ position: 0 });
+    f.finish();
+    expect((await navigation).status).toBe('unchanged');
+    expect(f.controller.snapshot.animating).toBe(false);
+    f.controller.release();
+  });
   it('restores the committed virtual projection and discards a late preview render', async () => {
     const items = carouselItems(['a', 'b', 'c']);
     const positions: number[] = [];

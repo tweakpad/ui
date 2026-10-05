@@ -66,6 +66,8 @@ export interface CarouselAdapter {
     generation: number,
   ): void | Promise<void>;
   cancel(): void;
+  /** Current rendered logical position, including an in-flight transition. */
+  readPosition?(): number;
   diagnose?(message: string, error?: unknown): void;
   validateOption?(group: string, value: unknown): boolean;
   bind?(controller: CarouselController): () => void;
@@ -253,6 +255,15 @@ export class CarouselController {
   }
   async update(ownerPublication = false): Promise<void> {
     if (this.#released || this.#destroyed) return;
+    // A synchronous controlled acknowledgement was already consumed by the
+    // selection transaction. Its later Lit update must not reset that motion.
+    if (
+      ownerPublication &&
+      this.#initialized &&
+      !this.#unresolved &&
+      Object.is(this.adapter.read().value, this.#ownerValue)
+    )
+      return;
     this.#cancel();
     this.#unbind?.();
     this.#unbind = undefined;
@@ -449,8 +460,18 @@ export class CarouselController {
       return this.#reject('transition-locked');
     return this.#navigate(snap, request);
   }
-  preview(position: number, reason: ChangeReason = 'swipe', write = true): void {
-    if (this.disposed || this.#unresolved || !Number.isFinite(position)) return;
+  /** Swiper's first-move getTranslate/setTransition(0) handoff. */
+  interruptPreview(): number {
+    const position = this.adapter.readPosition?.() ?? this.#position;
+    this.#cancel();
+    this.#generation++;
+    this.#position = position;
+    this.autoplay.setReason('transition', false);
+    this.#publish('swipe');
+    return position;
+  }
+  preview(position: number, reason: ChangeReason = 'swipe', write = true): Promise<void> {
+    if (this.disposed || this.#unresolved || !Number.isFinite(position)) return Promise.resolve();
     this.#position = position;
     this.#publish(reason);
     if (!this.#progressFrame) {
@@ -465,7 +486,7 @@ export class CarouselController {
     const previewGeneration = ++this.#previewGeneration;
     const generation = this.#generation;
     const project = this.#loop.mode === 'continuous' || !!this.#config.virtual;
-    void (async () => {
+    return (async () => {
       if (project) await this.adapter.render(this.snapshot, this.projection);
       if (
         previewGeneration !== this.#previewGeneration ||
@@ -590,6 +611,7 @@ export class CarouselController {
     const destination = this.#layout.snaps[snap]!.index;
     const previous = this.#state.value;
     const reason = request.reason ?? 'imperative-action';
+    const previousPosition = this.adapter.readPosition?.() ?? this.#position;
     this.#lastReason = reason;
     this.#cancel();
     const generation = ++this.#generation;
@@ -628,7 +650,7 @@ export class CarouselController {
     if (selected === null) status = 'rejected';
     const position = selected === null ? 0 : this.#layout.snaps[selected]!.position;
     this.#position = position;
-    this.#animating = status === 'accepted' && request.speed !== 0;
+    this.#animating = request.speed !== 0 && Math.abs(position - previousPosition) > 0.001;
     this.autoplay.setReason('transition', this.#animating);
     if (reason !== 'automatic-advance' && this.#config.autoplayOptions.stopAfterInteraction)
       this.autoplay.stop();

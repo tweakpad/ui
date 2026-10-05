@@ -1,9 +1,28 @@
 import { html } from 'lit';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import documentation from '../../docs/carousel.md?raw';
-import { carouselExamples } from './carousel.examples.js';
+import { carouselExamples, carouselDemoSource } from './carousel.examples.js';
+import './carousel.stories.css';
 
-const meta = {
+interface CarouselStoryArgs {
+  orientation: 'horizontal' | 'vertical';
+  loop: boolean;
+  itemsPerMovement: number;
+  autoplay: number;
+  disabled: boolean;
+  readOnly: boolean;
+  itemsPerView: number;
+  gap: number;
+  transport: 'transform' | 'scroll';
+  indicators: 'fraction' | 'bullets' | 'progress' | 'off';
+  navigation: boolean;
+  previous: boolean;
+  next: boolean;
+  placement: 'footer' | 'inside' | 'outside';
+  scrollbar: boolean;
+}
+
+const meta: Meta<CarouselStoryArgs> = {
   title: 'Components/Carousel',
   component: 'tp-carousel',
   tags: ['autodocs'],
@@ -12,13 +31,7 @@ const meta = {
     docs: {
       description: { component: documentation },
       examples: carouselExamples,
-      source: {
-        code: `<tp-carousel label="Project stages">
-  <tp-card><h3>Research</h3><p>Understand the problem.</p></tp-card>
-  <tp-card><h3>Design</h3><p>Explore the interaction.</p></tp-card>
-  <tp-card><h3>Review</h3><p>Test the complete experience.</p></tp-card>
-</tp-carousel>`,
-      },
+      source: { code: carouselDemoSource() },
     },
   },
   args: {
@@ -31,11 +44,11 @@ const meta = {
     itemsPerView: 1,
     gap: 16,
     transport: 'transform',
-    indicators: 'fraction',
+    indicators: 'off',
     navigation: true,
     previous: true,
     next: true,
-    placement: 'footer',
+    placement: 'outside',
     scrollbar: false,
   },
   argTypes: {
@@ -69,10 +82,10 @@ const meta = {
   },
   render: (args) =>
     html`<div
-      style=${args.orientation === 'vertical' ? 'height:360px;max-width:36rem' : 'max-width:48rem'}
+      class=${`carousel-demo${args.orientation === 'vertical' ? ' carousel-demo--vertical' : ''}`}
     >
       <tp-carousel
-        label="Project stages"
+        label="Numbered slides"
         .orientation=${args.orientation}
         .loop=${args.loop}
         .itemsPerMovement=${args.itemsPerMovement}
@@ -92,24 +105,27 @@ const meta = {
           scrollbar: args.scrollbar ? { draggable: true } : false,
         }}
       >
-        <tp-card
-          ><h3>Research</h3>
-          <p>Understand the people using the product.</p>
-          <tp-button type="button" variant="outline">Read research</tp-button></tp-card
-        >
-        <tp-card
-          ><h3>Design</h3>
-          <p>Explore and refine the interaction.</p>
-          <tp-button type="button" variant="outline">Open designs</tp-button></tp-card
-        >
-        <tp-card
-          ><h3>Review</h3>
-          <p>Test the complete experience.</p>
-          <tp-button type="button" variant="outline">Start review</tp-button></tp-card
-        >
+        ${Array.from(
+          { length: 5 },
+          (_, index) => html`
+            <tp-card class="carousel-demo-card" section-colors="off"
+              ><span>${index + 1}</span></tp-card
+            >
+          `,
+        )}
       </tp-carousel>
     </div>`,
-} satisfies Meta;
+};
 export default meta;
-type Story = StoryObj<typeof meta>;
-export const Default: Story = {};
+type Story = StoryObj<CarouselStoryArgs>;
+export const Default: Story = { name: 'Horizontal' };
+
+export const Vertical: Story = {
+  args: { orientation: 'vertical', itemsPerView: 2 },
+  parameters: {
+    docs: {
+      description: { story: 'Two numbered Cards at a time in a vertical track.' },
+      source: { code: carouselDemoSource(true) },
+    },
+  },
+};

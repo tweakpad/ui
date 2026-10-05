@@ -5,22 +5,24 @@ keyboard, swipe, optional wheel input, indicators and the scrollbar share one nu
 selection. Dragging and native scrolling expose provisional progress; they do not
 publish selection until the owner accepts a destination.
 
+The horizontal and vertical demos use five simple numbered Cards, following the
+[shadcn Carousel examples](https://ui.shadcn.com/docs/components/base/carousel).
+Cards retain the shared solid surface, border and radius; there are no slide actions.
+
 ```html
-<tp-carousel label="Project stages">
-  <tp-card
-    ><h3>Research</h3>
-    <p>Understand the problem.</p></tp-card
-  >
-  <tp-card
-    ><h3>Design</h3>
-    <p>Explore the interaction.</p></tp-card
-  >
-  <tp-card
-    ><h3>Review</h3>
-    <p>Test the complete experience.</p></tp-card
-  >
+<tp-carousel label="Numbered slides" style="max-width:20rem">
+  <tp-card section-colors="off">1</tp-card>
+  <tp-card section-colors="off">2</tp-card>
+  <tp-card section-colors="off">3</tp-card>
+  <tp-card section-colors="off">4</tp-card>
+  <tp-card section-colors="off">5</tp-card>
 </tp-carousel>
 ```
+
+For the vertical example, set `orientation="vertical"`, give the Carousel a fixed
+height, and set `options.layout.itemsPerView` to `2`. The Storybook Horizontal and
+Vertical examples include their complete layout CSS and outside-navigation setup
+in the copyable source.
 
 Give the Carousel a meaningful `label` or `aria-label`. A vertical Carousel needs
 a definite available height. Size the component through CSS; the measurement
@@ -161,8 +163,7 @@ performs native viewport scrolling.
 
 ### Navigation, indicators and scrollbar
 
-`navigation` defaults to `{enabled:true, previous:true, next:true, icons:true,
-placement:'footer', hideOnClick:false}`. `previousElement` and `nextElement` are
+`navigation` defaults to `{enabled:true, previous:true, next:true, icons:true, placement:'footer', hideOnClick:false}`. `previousElement` and `nextElement` are
 optional scoped targets replacing only their corresponding generated Button.
 One element cannot own both actions. Labels remain consumer-owned unless explicitly
 replaced through messages. Placements are `footer`, `inside`, and `outside`.
@@ -200,8 +201,7 @@ smooth-scroll timing belongs to the browser. Transform resistance and simulated
 mouse dragging are inactive in native mode.
 
 Root loop permits `loopMode='continuous'` (default) or `'rewind'`.
-`loopOptions` defaults to `{additionalItems:0, fillGroups:true,
-preventDuringTransition:true}`. Additional items is a nonnegative integer.
+`loopOptions` defaults to `{additionalItems:0, fillGroups:true, preventDuringTransition:true}`. Additional items is a nonnegative integer.
 Continuous mode permutes owned shells without cloning consumer controls or changing
 logical source order. Unmeasured content does not claim loop eligibility. All-fit
 content stays in source order; insufficient distinct content falls back to effective
@@ -217,8 +217,7 @@ loopMode, loopOptions, navigation, indicators, scrollbar, mousewheel, keyboard
 and interaction. Breakpoints cannot change selection ownership, content mode,
 renderers, transport, virtual enablement or callbacks.
 
-`observation` defaults to `{resizeObserver:true, windowResize:true,
-observeItemSubtree:false, observeParents:false}`. Membership and layout updates
+`observation` defaults to `{resizeObserver:true, windowResize:true, observeItemSubtree:false, observeParents:false}`. Membership and layout updates
 remain automatic; extra subtree/parent coverage is optional. Image load/error and
 font completion invalidate layout. `loading` defaults to `{preload:true, adjacent:0}`;
 adjacent is a nonnegative logical item count. Authored image-loading attributes
@@ -262,6 +261,9 @@ dependency on the catalog element. Construct `CarouselController` with a complet
 binding/focus/diagnostic hooks and owner window), then call `initialize()`.
 Render completion is awaited before geometry-dependent movement. Structurally
 invalid adapters throw before acquiring resources.
+An animated adapter supplies `readPosition()` in logical track coordinates and
+preserves that visible position in `cancel()`, so a new drag can interrupt motion
+without jumping to its previous destination.
 
 | Method                                        | Result                                                                        |
 | --------------------------------------------- | ----------------------------------------------------------------------------- |

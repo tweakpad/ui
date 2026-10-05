@@ -323,7 +323,6 @@ export class TpCarousel<T = unknown> extends TpElement {
     }
     if (
       [
-        'value',
         'defaultValue',
         'items',
         'getItemId',
@@ -341,8 +340,8 @@ export class TpCarousel<T = unknown> extends TpElement {
       ].some((key) => changed.has(key as keyof TpCarousel<T>))
     ) {
       this.#collect();
-      void this.#controller.update(changed.has('value'));
-    }
+      void this.#controller.update();
+    } else if (changed.has('value')) void this.#controller.update(true);
     if (changed.has('onControllerChange') && this.#lastCallback !== this.onControllerChange)
       this.#notify(this.controller);
     this.#bar.measure();
@@ -362,6 +361,7 @@ export class TpCarousel<T = unknown> extends TpElement {
       measure: (config) => this.#measure(config),
       render: (snapshot, projection) => this.#project(snapshot, projection),
       move: (position, request) => this.#transport?.move(position + this.#physicalOffset, request),
+      readPosition: () => (this.#transport?.position ?? 0) - this.#physicalOffset,
       cancel: () => {
         this.#transport?.cancel();
         this.#bar.end(true);

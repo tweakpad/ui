@@ -420,7 +420,11 @@ class CarouselGestures {
       }
     });
     scope.listen(this.document, 'lostpointercapture', (end) => {
-      if (end.target === this.gesture?.capture) this.end(end, true);
+      if (end.composedPath()[0] !== this.gesture?.capture) return;
+      // Chrome can release mouse capture before delivering the final move/up.
+      // With the button already up, pointerup still owns normal settlement.
+      if (end.pointerType === 'mouse' && end.buttons === 0) return;
+      this.end(end, true);
     });
     scope.listen(this.document.defaultView ?? this.document, 'blur', () => this.cancel());
     const interaction = owner.controller.configuration.interaction;
@@ -434,10 +438,8 @@ class CarouselGestures {
   move(event: PointerEvent): void {
     const gesture = this.gesture;
     if (!gesture || event.pointerId !== gesture.pointer) return;
-    if (event.pointerType === 'mouse' && event.buttons === 0 && event.type !== 'pointerup') {
-      this.end(event, true);
-      return;
-    }
+    // As in Swiper onTouchMove, keep the last sample even if buttons is already
+    // zero. Treating that pre-pointerup sample as cancellation snaps back.
     const dx = event.clientX - gesture.originX,
       dy = event.clientY - gesture.originY;
     let { owner } = gesture;
@@ -476,6 +478,7 @@ class CarouselGestures {
       gesture.originY = event.clientY;
       delta = 0;
     }
+    if (!gesture.moved) gesture.start = gesture.position = owner.controller.interruptPreview();
     const snaps = owner.controller.projection.layout.snaps;
     const first = snaps[0]?.position ?? 0,
       last = snaps.at(-1)?.position ?? first;
@@ -525,7 +528,8 @@ class CarouselGestures {
       (!interaction.allowPrevious && position < gesture.start)
     )
       position = gesture.start;
-    gesture.direction = Math.sign(position - gesture.position) || gesture.direction;
+    // Release uses overall swipe direction, not the most recent pointer jitter.
+    gesture.direction = Math.sign(position - gesture.start);
     gesture.position = position;
     event.preventDefault();
     if (interaction.stopMovePropagation) event.stopPropagation();
@@ -558,7 +562,11 @@ class CarouselGestures {
       this.suppressClick = false;
     }, 0);
     const finish = () => controller.autoplay.setReason('gesture', false);
-    if (cancelled || !gesture.moved) {
+    if (!gesture.moved) {
+      finish();
+      return;
+    }
+    if (cancelled) {
       void controller.restorePreview().finally(finish);
       return;
     }
@@ -576,11 +584,20 @@ class CarouselGestures {
       ),
     );
     const snap = controller.projection.layout.snaps[target];
-    if (snap)
-      void controller
-        .scrollToIndex(snap.index, { reason: 'swipe', sourceEvent: originalEvent(event) })
-        .finally(finish);
-    else finish();
+    if (snap) {
+      const generation = controller.projection.generation;
+      void (async () => {
+        // Flush the final sample, including an asynchronous virtual/loop render,
+        // before slideTo begins its transition from that exact translation.
+        if (controller.configuration.interaction.followPointer)
+          await controller.preview(gesture.position);
+        if (controller.disposed || controller.projection.generation !== generation) return;
+        await controller.scrollToIndex(snap.index, {
+          reason: 'swipe',
+          sourceEvent: originalEvent(event),
+        });
+      })().finally(finish);
+    } else finish();
   }
   cancel(): void {
     const gesture = this.gesture;
