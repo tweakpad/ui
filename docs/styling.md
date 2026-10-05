@@ -77,6 +77,8 @@ Dictionary replacement is document-scoped and does not remount controls or reset
 
 Compounds contribute through `setPartComposition` before consumer hooks. Native light-DOM parts can be registered with the presentation adapter, preserving their original elements and semantics. Hooks are keyed by stable part names, not generated variant keys.
 
+Primitive variant interaction rules use low specificity so a composed Menu or Navigation role owns its highlight. Popup triggers keep their active background while open; Menu, Menubar and Navigation Menu transfer that background without a trailing fade. Restored focus does not create a hover background on a closed navigation trigger. Keyboard focus keeps its separate visible outline, and popup/content transitions retain their motion policy.
+
 Migration is partial: consult [the repair ledger](./first-pass-conformance.md) before relying on dictionary-only customization for a control. In particular, the remaining component-local appearance and cross-shadow compound overrides have not yet been fully migrated.
 
 ## Constituent rendering contracts

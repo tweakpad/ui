@@ -6,6 +6,7 @@ import {
   commandLabelAppearance,
   commandSeparatorAppearance,
   commandShortcutAppearance,
+  popupTriggerAppearance,
 } from './command-surface.js';
 
 const menuSurface: readonly PresentationRule[] = [
@@ -50,7 +51,7 @@ const destructive: readonly PresentationRule[] = [
 ];
 const root = (prefix: 'menu'): Record<string, readonly PresentationRule[]> => ({
   [prefix]: [],
-  [`${prefix}-trigger`]: [],
+  [`${prefix}-trigger`]: popupTriggerAppearance,
   [`${prefix}-content`]: menuSurface,
   [`${prefix}-item`]: menuItem,
   [`${prefix}-item-variant-ghost`]: ghost,
@@ -86,6 +87,7 @@ export const menuFamilyAppearance: PresentationDictionary = {
   ],
   'menubar-menu': [],
   'menubar-trigger': [
+    ...popupTriggerAppearance,
     {
       declarations: {
         background: 'transparent',

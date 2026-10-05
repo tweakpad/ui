@@ -10,7 +10,10 @@ const rule = (
   selector?: string,
 ): PresentationRule => (selector ? { declarations, selector } : { declarations });
 
-const interactive = '&:not(:disabled, [aria-disabled="true"]):hover';
+// Primitive interaction paint must yield to a composed role's recipe. Otherwise
+// Button hover can briefly replace a Menu/Navigation highlight as focus moves.
+const interactive =
+  '&:where(:not(:disabled, [aria-disabled="true"]):is(:hover, [data-popup-open]))';
 
 /** Shared paint only. Geometry and interaction policy are not inferred from a variant. */
 export function variantPresentation(

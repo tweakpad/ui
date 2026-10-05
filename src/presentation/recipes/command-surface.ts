@@ -91,6 +91,11 @@ export const commandItemHighlightAppearance = {
   outline: 'none',
 };
 
+/** A trigger transfers active paint with its popup; it must not trail or replay it. */
+export const popupTriggerAppearance: readonly PresentationRule[] = [
+  { declarations: { transition: 'none' } },
+];
+
 export function commandItemRules(
   highlightSelector = '&:is(:focus, [data-highlighted]):not([data-disabled], [aria-disabled="true"])',
 ): readonly PresentationRule[] {

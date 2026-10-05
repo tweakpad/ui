@@ -1,5 +1,31 @@
 # Menu family browser handoff
 
+## Popup highlight regression
+
+Run on source and built fixtures through Chrome DevTools MCP. Sample computed
+backgrounds, `:hover`, `:focus`, `:focus-visible`, `data-popup-open` and
+`data-highlighted` with requestAnimationFrame while driving real input:
+
+- Hover Learn, Tools, then Documentation. Repeat after clicking Learn and after
+  ArrowDown moves focus into its panel. The old trigger clears when its open state
+  clears; focus restoration must not repaint it or start a background transition.
+  Hover and open use the same Navigation recipe color, without Button's variant
+  hover color replacing it. Keyboard focus keeps a visible outline.
+- Open Document actions, hover Share, Email, then Copy in the parent. The child
+  closes and only Copy is highlighted; Share's primitive Button hover must not
+  override the Menu recipe. Activate Copy; the trigger receives focus without a
+  hover background when the pointer remains away. Repeat with Escape.
+- Click File, hover Edit, then File. Open ownership and background transfer
+  together. Escape restores File focus; moving the pointer away clears its fill.
+- Focus Context target, use Shift+F10, hover Inspect, then Escape. The contextual
+  target receives focus without a new hover fill when the pointer is elsewhere.
+- Open Document settings, move to Done and activate it. The open trigger stays
+  highlighted during the popup interaction and returns to its resting background
+  after closing. Repeat in light/dark; inspect the existing scoped hook override.
+
+Also check Navigation Panel's Switch team and ordinary/disabled Button variants;
+compound precedence must not suppress standalone hover or enable disabled paint.
+
 Use registered Chrome DevTools MCP only, on a task-owned page. Source is
 `http://localhost:5173/tests/fixtures/components/menu/`; built adds `?package`.
 Root owns builds/server lifecycle. Do not run the exhaustive suite before the

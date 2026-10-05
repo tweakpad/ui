@@ -4,6 +4,7 @@ import {
   anchoredPresenceAppearance,
   popupSpacingAppearance,
   popupItemSpacingAppearance,
+  popupTriggerAppearance,
 } from './command-surface.js';
 
 const focus: readonly PresentationRule[] = [
@@ -70,14 +71,14 @@ export const navigationMenuAppearance: PresentationDictionary = {
         'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
-        transition: motionTransition(['background-color'], 'fast'),
       },
     },
     {
-      selector: '&:is([data-open],[data-popup-open])',
-      declarations: { background: 'color-mix(in oklab, var(--tp-muted) 50%, transparent)' },
+      selector:
+        '&:is(:hover,[data-open],[data-popup-open]):not([data-disabled],:disabled,[aria-disabled="true"])',
+      declarations: { background: 'var(--tp-muted)' },
     },
-    { selector: '&:is(:hover,:focus)', declarations: { background: 'var(--tp-muted)' } },
+    ...popupTriggerAppearance,
     ...focus,
   ],
   'navigation-menu-content': [
@@ -131,7 +132,7 @@ export const navigationMenuAppearance: PresentationDictionary = {
       selector: '&[aria-current="page"]',
       declarations: { background: 'color-mix(in oklab, var(--tp-muted) 50%, transparent)' },
     },
-    { selector: '&:is(:hover,:focus)', declarations: { background: 'var(--tp-muted)' } },
+    { selector: '&:is(:hover,:focus-visible)', declarations: { background: 'var(--tp-muted)' } },
     ...focus,
   ],
   'navigation-menu-indicator': [
