@@ -141,3 +141,9 @@ Menu, Menubar, Navigation Menu and selection lists share `--tp-space-2` popup pa
 Menu popups are at least as wide as their anchor, within the available viewport width. Longer content can widen the popup through the existing intrinsic layout.
 
 Pointer highlighting preserves the current scroll position. Keyboard navigation brings the active item into the nearest scroll container without scrolling outer documentation or application regions.
+
+## Active item and checked values
+
+An open Menu tree has one active highlight across all submenu levels. Pointer or keyboard navigation transfers it to the current item. Ancestors retain their navigation position without keeping an active background; returning from a submenu restores its trigger. Checked checkbox/radio values keep their indicators independently of the active highlight. `highlightedItem` is null for inactive menu levels.
+
+Moving to a different item in any parent menu closes that parent's open child branch, including deeper descendants. The parent and its ancestors stay open, and the new item keeps the highlight. This applies at every nesting depth and preserves cancelable open-change behavior.

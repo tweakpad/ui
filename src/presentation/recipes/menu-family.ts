@@ -2,8 +2,7 @@ import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import {
   commandSurfaceAppearance,
   popupSpacingAppearance,
-  commandItemAppearance,
-  commandItemHighlightAppearance,
+  commandItemRules,
   commandLabelAppearance,
   commandSeparatorAppearance,
   commandShortcutAppearance,
@@ -17,13 +16,12 @@ const menuSurface: readonly PresentationRule[] = [
     },
   },
 ];
+// Menu's tree owns active paint; focus, checked values and expanded paths are independent.
 const menuItem: readonly PresentationRule[] = [
-  ...commandItemAppearance,
-  {
-    selector:
-      '&:is([data-open], [aria-expanded="true"]):not([data-disabled], [aria-disabled="true"])',
-    declarations: commandItemHighlightAppearance,
-  },
+  ...commandItemRules('&[data-highlighted]:not([data-disabled], [aria-disabled="true"])'),
+  // Submenu triggers reuse Button, but active Menu rows must switch together.
+  // An inherited Button fade leaves the previous row painted after ownership moves.
+  { declarations: { transition: 'none' } },
 ];
 
 const subTrigger: readonly PresentationRule[] = [

@@ -128,3 +128,21 @@ Dialog/AlertDialog SurfaceState, plain/searchable Select positioning/portal/bran
 Button native and synthetic press, and Presence/foreign-document style ownership.
 Existing focused unit results do not replace these source and built browser
 regressions. Preserve the other agents' pages and the user-owned index state.
+
+## Single active highlight regression
+
+Run A28 (index 27) in source and package fixtures for focus, subtree removal and
+reconnection. In the Menu Storybook default, click Document actions, hover Share,
+Copy link, Invite people, Email invitation, then return to Copy link and Word wrap.
+Observe each animation frame, including the submenu close delay: exactly one row
+may carry active paint; expanded ancestors and checked values are independent.
+Submenu triggers must have zero transition duration, matching ordinary rows.
+Repeat with keyboard forward/backward/Escape and in both color schemes. Reload
+Storybook after presentation edits so retained HMR dictionaries cannot mask them.
+
+Parent dismissal: from Email invitation, hover Copy link; Invite people must close
+while Share stays open and Copy link stays active. Reopen Invite people, then
+hover Word wrap; Share and all descendants must close, leaving Word wrap active.
+Use forward/backward arrows then Up on the restored submenu trigger: Up navigates
+the parent list rather than reopening the child. Run A29 (index 28) in source and
+package fixtures for arbitrary-depth branch closure and consumer cancellation.

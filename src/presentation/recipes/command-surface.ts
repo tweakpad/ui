@@ -91,35 +91,44 @@ export const commandItemHighlightAppearance = {
   outline: 'none',
 };
 
-export const commandItemAppearance: readonly PresentationRule[] = [
-  {
-    declarations: {
-      color: 'var(--tp-popover-foreground)',
-      background: 'transparent',
-      border: '0',
-      'border-radius': 'var(--tp-radius-md)',
-      'font-size': 'var(--tp-text-sm)',
-      'font-family': 'inherit',
-      'line-height': 'inherit',
-      'text-decoration': 'none',
+export function commandItemRules(
+  highlightSelector = '&:is(:focus, [data-highlighted]):not([data-disabled], [aria-disabled="true"])',
+): readonly PresentationRule[] {
+  return [
+    {
+      declarations: {
+        color: 'var(--tp-popover-foreground)',
+        background: 'transparent',
+        border: '0',
+        'border-radius': 'var(--tp-radius-md)',
+        'font-size': 'var(--tp-text-sm)',
+        'font-family': 'inherit',
+        'line-height': 'inherit',
+        'text-decoration': 'none',
+      },
     },
-  },
-  ...popupItemSpacingAppearance,
-  {
-    selector: '&:is(:focus, [data-highlighted]):not([data-disabled], [aria-disabled="true"])',
-    declarations: commandItemHighlightAppearance,
-  },
-  // cn-menu-translucent explicitly overrides the destructive descendant text.
-  { selector: '&[variant="destructive"]', declarations: { color: 'var(--tp-accent-foreground)' } },
-  {
-    selector: '&[data-inset]',
-    declarations: { 'padding-inline-start': 'calc(var(--tp-spacing) * 7)' },
-  },
-  {
-    selector: '&:is([data-disabled], [aria-disabled="true"])',
-    declarations: { opacity: 'var(--tp-opacity-disabled)' },
-  },
-];
+    ...popupItemSpacingAppearance,
+    {
+      selector: highlightSelector,
+      declarations: commandItemHighlightAppearance,
+    },
+    // cn-menu-translucent explicitly overrides the destructive descendant text.
+    {
+      selector: '&[variant="destructive"]',
+      declarations: { color: 'var(--tp-accent-foreground)' },
+    },
+    {
+      selector: '&[data-inset]',
+      declarations: { 'padding-inline-start': 'calc(var(--tp-spacing) * 7)' },
+    },
+    {
+      selector: '&:is([data-disabled], [aria-disabled="true"])',
+      declarations: { opacity: 'var(--tp-opacity-disabled)' },
+    },
+  ];
+}
+
+export const commandItemAppearance = commandItemRules();
 
 export const commandLabelAppearance: readonly PresentationRule[] = [
   {

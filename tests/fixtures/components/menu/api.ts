@@ -1032,6 +1032,110 @@ export function installFamilyAPI(library: Library, built: boolean): void {
       }
     },
   });
+  cases.push({
+    id: 'A28-one-highlight-across-tree',
+    scenarios: 'menu-highlight/V-01,menu-highlight/V-02,menu-highlight/V-03',
+    async run() {
+      const parent = menu();
+      const child = menu('Child');
+      parent.root.append(child.root);
+      await mounted(parent.root, async () => {
+        await open(parent.root);
+        assert(
+          getComputedStyle(child.root.menuTrigger!).transitionDuration === '0s',
+          'Submenu trigger retained Button fade',
+        );
+        parent.first.controlElement!.focus();
+        assert(
+          parent.root.highlightedItem === parent.first.controlElement,
+          'Root focus not active',
+        );
+        await open(child.root);
+        child.first.controlElement!.focus();
+        await updated(parent.first, child.first);
+        assert(parent.root.highlightedItem === null, 'Ancestor retained active item');
+        assert(
+          !parent.first.controlElement!.hasAttribute('data-highlighted'),
+          'Ancestor marker retained',
+        );
+        assert(child.root.highlightedItem === child.first.controlElement, 'Child focus not active');
+        child.second.controlElement!.focus();
+        await updated(child.first, child.second);
+        assert(
+          !child.first.controlElement!.hasAttribute('data-highlighted'),
+          'Sibling marker retained',
+        );
+        child.root.close();
+        await until(() => !child.root.open, 'child close');
+        await updated(parent.root, child.root);
+        assert(child.root.highlightedItem === null, 'Closed child remained active');
+        assert(
+          parent.root.highlightedItem === child.root.menuTrigger,
+          'Parent trigger not restored',
+        );
+        await open(child.root);
+        child.first.controlElement!.focus();
+        child.root.remove();
+        await updated(parent.root);
+        assert(!child.root.highlightedItem, 'Detached child remained active');
+        parent.second.controlElement!.focus();
+        assert(
+          parent.root.highlightedItem === parent.second.controlElement,
+          'Removed owner blocked root',
+        );
+        parent.root.append(child.root);
+        await updated(parent.root, child.root);
+        if (!child.root.open) await open(child.root);
+        child.second.controlElement!.focus();
+        assert(
+          child.root.highlightedItem === child.second.controlElement,
+          'Reconnected child inactive',
+        );
+        assert(parent.root.highlightedItem === null, 'Reconnection retained ancestor highlight');
+      });
+    },
+  });
+  cases.push({
+    id: 'A29-parent-navigation-closes-child-branch',
+    scenarios: 'menu-highlight/V-04',
+    async run() {
+      const parent = menu();
+      const child = menu('Child');
+      const grandchild = menu('Grandchild');
+      parent.root.append(child.root);
+      child.root.append(grandchild.root);
+      await mounted(parent.root, async () => {
+        await open(parent.root);
+        await open(child.root);
+        await open(grandchild.root);
+        grandchild.first.controlElement!.focus();
+        child.first.controlElement!.focus();
+        await updated(child.root, grandchild.root);
+        assert(parent.root.open && child.root.open, 'Navigation closed an ancestor');
+        assert(!grandchild.root.open, 'Parent sibling left grandchild open');
+        assert(child.root.highlightedItem === child.first.controlElement, 'Close stole highlight');
+        await open(grandchild.root);
+        grandchild.first.controlElement!.focus();
+        parent.first.controlElement!.focus();
+        await updated(parent.root, child.root, grandchild.root);
+        assert(parent.root.open && !child.root.open && !grandchild.root.open, 'Branch not closed');
+        assert(
+          parent.root.highlightedItem === parent.first.controlElement,
+          'Root highlight stolen',
+        );
+        await open(child.root);
+        const veto = (event: Event) => event.preventDefault();
+        child.root.addEventListener('tp-open-change', veto);
+        parent.second.controlElement!.focus();
+        await updated(parent.root, child.root);
+        assert(child.root.open, 'Navigation bypassed close cancellation');
+        child.root.removeEventListener('tp-open-change', veto);
+        parent.first.controlElement!.focus();
+        await updated(parent.root, child.root);
+        assert(!child.root.open, 'Accepted navigation did not close child');
+      });
+    },
+  });
   Object.assign(window, {
     familyAPIManifest: cases.map(({ id, scenarios }) => ({ id, scenarios })),
     async runFamilyAPI(start = 0, count = 4) {

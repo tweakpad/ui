@@ -9,7 +9,7 @@ import {
   ChoiceCollectionController,
   type ChoiceRecord,
 } from '../../foundation/choice-collection.js';
-import { composedParent, deepActiveElement } from '../../foundation/focus.js';
+import { composedContains, composedParent, deepActiveElement } from '../../foundation/focus.js';
 import { logicalPortalOwner } from '../../foundation/owned-portal.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { setPartComposition } from '../../presentation/controller.js';
@@ -116,6 +116,9 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   #native = new Map<HTMLElement, Map<string, string | null>>();
   #nativeStates = new Map<HTMLElement, ControllableState<boolean | string>>();
   #scheduled = false;
+  // Stored only on rootMenu. Ancestor collections retain their return position,
+  // but only this menu may publish an active item across the visible tree.
+  #highlightOwner: TpMenu | null = null;
   readonly #collection = new ChoiceCollectionController<HTMLElement, CommandRecord>({
     locale: () => resolveLocale(this),
   });
@@ -160,8 +163,33 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     return () => {};
   }
   protected override focusOnClose(): void {
+    const owner = this.rootMenu.#highlightOwner;
+    const target = owner?.highlightedItem;
+    let parent = this.parentMenu;
+    let trigger = this.menuTrigger;
+    while (parent && parent !== owner) {
+      trigger = parent.menuTrigger;
+      parent = parent.parentMenu;
+    }
+    if (
+      owner &&
+      parent === owner &&
+      target &&
+      target !== trigger &&
+      this.popupElement &&
+      composedContains(this.popupElement, deepActiveElement(this.ownerDocument))
+    ) {
+      // Parent navigation has already chosen another item. Do not restore the
+      // abandoned trigger (including when this is a deeper portaled descendant).
+      (owner.#keyboard ? target : owner.popupElement)?.focus({ preventScroll: true });
+      return;
+    }
     if (this.invocation !== 'context' || this.#context.shouldRestoreFocus(this.popupElement))
       super.focusOnClose();
+    if (this.parentMenu && deepActiveElement(this.ownerDocument) === this.menuTrigger) {
+      const record = this.parentMenu.#items.find((item) => item.submenu === this);
+      if (record) this.parentMenu.#highlight(record, this.#keyboard);
+    }
   }
   protected override closed(): void {
     super.closed();
@@ -261,7 +289,9 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     return targets;
   }
   get highlightedItem(): HTMLElement | null {
-    return this.#collection.element(this.#collection.highlighted);
+    return this.open && this.rootMenu.#highlightOwner === this
+      ? this.#collection.element(this.#collection.highlighted)
+      : null;
   }
   itemChanged = (): void => {
     if (this.#scheduled) return;
@@ -486,7 +516,10 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   }
   #syncHighlight(): void {
     for (const record of this.#items) {
-      const highlighted = record === this.#collection.highlighted;
+      const highlighted =
+        this.open &&
+        this.rootMenu.#highlightOwner === this &&
+        record === this.#collection.highlighted;
       record.item?.setHighlight(highlighted, this.#keyboard);
       if (!record.item) {
         record.element.toggleAttribute('data-highlighted', highlighted);
@@ -494,10 +527,22 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
       }
     }
   }
-  #highlight(record: CommandRecord | undefined, keyboard: boolean): void {
+  #highlight(record: CommandRecord | undefined, keyboard: boolean, event?: Event): void {
+    const root = this.rootMenu;
+    const previousOwner = root.#highlightOwner;
+    if (record) root.#highlightOwner = this;
+    else if (previousOwner === this) root.#highlightOwner = null;
     this.#keyboard = keyboard;
     this.#collection.activeIndex = record ? this.#items.indexOf(record) : -1;
+    if (previousOwner && previousOwner !== this) previousOwner.#syncHighlight();
     this.#syncHighlight();
+    if (record) {
+      for (const item of this.#items) {
+        const child = item.submenu;
+        if (!child?.open || item === record) continue;
+        child.setOpen(false, 'list-navigation', event);
+      }
+    }
     if (keyboard) {
       record?.element.focus({ preventScroll: true });
       const scrollOptions = { block: 'nearest', inline: 'nearest', container: 'nearest' } as const;
@@ -586,6 +631,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   }
   #pointer = (event: PointerEvent): void => {
     if (
+      !this.#ownsMenuEvent(event) ||
       event.pointerType === 'touch' ||
       !this.highlightItemOnHover ||
       componentHandlingPrevented(event)
@@ -596,7 +642,18 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
         event.composedPath().includes(record.element) ||
         (record.item && event.composedPath().includes(record.item)),
     );
-    if (record && !record.disabled) this.#highlight(record, false);
+    if (record && !record.disabled) this.#highlight(record, false, event);
+  };
+  #ownsMenuEvent(event: Event): boolean {
+    return (
+      event.composedPath().find((node) => (node as Element).getAttribute?.('role') === 'menu') ===
+      this.popupElement
+    );
+  }
+  #itemFocus = (event: FocusEvent): void => {
+    if (!this.#ownsMenuEvent(event)) return;
+    const record = this.#items.find((item) => event.composedPath().includes(item.element));
+    if (record && !record.disabled) this.#highlight(record, this.#keyboard, event);
   };
   protected override popupProperties(): Record<string, unknown> {
     return {
@@ -604,6 +661,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
       'aria-orientation': this.orientation,
       '@click': this.#nativeClick,
       '@pointermove': this.#pointer,
+      '@focusin': this.#itemFocus,
     };
   }
   protected override surfaceKeydown = (event: KeyboardEvent): void => {
@@ -660,7 +718,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
       record = this.#collection.search(event.key);
     if (record) {
       event.preventDefault();
-      this.#highlight(record, true);
+      this.#highlight(record, true, event);
     }
   };
   protected override bindInteraction(
@@ -670,6 +728,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     const release = super.bindInteraction(element, options);
     const key = (event: KeyboardEvent): void => {
       if (
+        this.parentMenu ||
         event.defaultPrevented ||
         componentHandlingPrevented(event) ||
         this.triggerDisabled(element, options)
@@ -766,6 +825,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     this.rootMenu.#bar?.itemChanged();
   }
   override disconnectedCallback(): void {
+    if (this.rootMenu.#highlightOwner === this) this.rootMenu.#highlightOwner = null;
     this.#context.disconnect();
     for (const icon of this.#indicators.values()) icon.remove();
     this.#indicators.clear();
