@@ -137,6 +137,7 @@ export class TpField extends TpElement {
         grid-row: 1;
         display: flex;
         align-items: center;
+
         /* Reserve the binary control's expanded pointer target inside the row. */
         padding-inline: var(--tp-space-3);
       }

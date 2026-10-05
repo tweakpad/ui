@@ -149,9 +149,17 @@ export const drawerStyles = css`
   }
 
   .drawer-surface[data-swipe-axis='x'] > .swipe-handle {
+    /* Overlay the edge so section backgrounds span the entire surface. */
+    position: absolute;
+    top: 0;
+    z-index: 1;
     height: 100%;
     width: var(--tp-space-3);
     align-items: center;
+  }
+
+  .drawer-surface[data-swipe-direction='left'] > .swipe-handle {
+    right: 0;
   }
 
   .drawer-surface[data-swipe-direction='down'] > .swipe-handle {
@@ -159,6 +167,7 @@ export const drawerStyles = css`
   }
 
   .drawer-surface[data-swipe-direction='right'] > .swipe-handle {
+    left: 0;
     justify-content: end;
   }
 
