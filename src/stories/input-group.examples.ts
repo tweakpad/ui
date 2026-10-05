@@ -13,6 +13,8 @@ const area = (attributes = '') => `<tp-text-area ${attributes}></tp-text-area>`;
 const stack = (content: string) =>
   `<div style="display:grid;gap:var(--tp-space-5);max-inline-size:calc(var(--tp-spacing) * 120)">${content}</div>`;
 const hint = (keys: string, slot: string) => `<tp-key-hint slot="${slot}">${keys}</tp-key-hint>`;
+const shortcut = (slot: string) =>
+  `<tp-key-hint-group slot="${slot}" separator="none"><tp-key-hint key="mod"></tp-key-hint><tp-key-hint>K</tp-key-hint></tp-key-hint-group>`;
 const action = (text: string, attributes = '') => `<tp-button ${attributes}>${text}</tp-button>`;
 const menu = (
   label: string,
@@ -187,7 +189,7 @@ export const inputGroupExamples = [
     [
       field(
         'Quick search',
-        group(hint('⌘K', 'inline-start') + input('type="search" placeholder="Search"')),
+        group(shortcut('inline-start') + input('type="search" placeholder="Search"')),
       ),
       field(
         'Search applications',
@@ -202,8 +204,7 @@ export const inputGroupExamples = [
         group(
           icon('sparkle', 'inline-start') +
             input('placeholder="Type a command"') +
-            hint('Ctrl', 'inline-end') +
-            hint('K', 'inline-end'),
+            shortcut('inline-end'),
         ),
       ),
       field(

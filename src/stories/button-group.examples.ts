@@ -93,7 +93,7 @@ export const buttonGroupExamples = [
     group(
       'Document actions',
       button('Update', 'data-echo') +
-        `<tp-menu label="More document actions"><tp-button slot="trigger" variant="outline" size="icon" aria-label="More document actions">${icon('down')}</tp-button><tp-menu-item value="Share">${icon('share').replace('slot="icon-start"', '')}Share<tp-key-hint data-menu-shortcut>⌘S</tp-key-hint></tp-menu-item><tp-menu-item value="Archive">Archive</tp-menu-item><tp-separator></tp-separator><tp-menu-item value="Delete" variant="destructive">${icon('trash').replace('slot="icon-start"', '')}Delete</tp-menu-item></tp-menu>`,
+        `<tp-menu label="More document actions"><tp-button slot="trigger" variant="outline" size="icon" aria-label="More document actions">${icon('down')}</tp-button><tp-menu-item value="Share">${icon('share').replace('slot="icon-start"', '')}Share<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="S"></tp-key-hint></tp-key-hint-group></tp-menu-item><tp-menu-item value="Archive">Archive</tp-menu-item><tp-separator></tp-separator><tp-menu-item value="Delete" variant="destructive">${icon('trash').replace('slot="icon-start"', '')}Delete</tp-menu-item></tp-menu>`,
     ) +
       group(
         'Assistant actions',

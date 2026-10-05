@@ -7,6 +7,7 @@ describe('Storybook catalog entries', () => {
   const storyDirectory = new URL('./generated/', import.meta.url);
   const storyFiles = readdirSync(storyDirectory).filter((file) => file.endsWith('.stories.ts'));
   const newlyAuthoredStories = [
+    'key-hint',
     'badge',
     'carousel',
     'pagination',

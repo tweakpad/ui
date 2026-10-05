@@ -3709,13 +3709,15 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
         name: 'key-hint',
         publicName: 'Key',
         presentationKeys: ['key-hint'],
-        cardinality: 'exactly one public owner host per control instance',
+        cardinality:
+          'exactly one public owner host per Key instance; standalone or an ordered child of Group',
       },
       {
         name: 'key-hint-group',
         publicName: 'Group',
         presentationKeys: ['key-hint-group'],
-        cardinality: 'zero or more descendants of Key; cited behavior sets any stronger minimum',
+        cardinality:
+          'optional parent group host containing an ordered sequence of Key instances; groups may be nested to describe sequences',
       },
     ],
   },

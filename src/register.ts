@@ -88,6 +88,7 @@ import {
   TpCard,
   TpEmptyState,
   TpKeyHint,
+  TpKeyHintGroup,
   TpLabel,
   TpListItem,
   TpListItemGroup,
@@ -209,6 +210,7 @@ defineElement(TpButtonGroupText.tagName, TpButtonGroupText);
 defineElement(TpCard.tagName, TpCard);
 defineElement(TpEmptyState.tagName, TpEmptyState);
 defineElement(TpKeyHint.tagName, TpKeyHint);
+defineElement(TpKeyHintGroup.tagName, TpKeyHintGroup);
 defineElement(TpLabel.tagName, TpLabel);
 defineElement(TpListItem.tagName, TpListItem);
 defineElement(TpListItemGroup.tagName, TpListItemGroup);

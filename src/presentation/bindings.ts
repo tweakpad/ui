@@ -50,6 +50,9 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
   'tp-key-hint': {
     kbd: 'key-hint',
   },
+  'tp-key-hint-group': {
+    kbd: 'key-hint-group',
+  },
   'tp-label': {
     '.optional': 'label-optional-indicator',
   },

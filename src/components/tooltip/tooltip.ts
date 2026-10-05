@@ -37,8 +37,14 @@ export class TpTooltip extends TpHoverSurface {
     super.updated(changed);
     const hints = new Set(
       [
-        ...this.querySelectorAll<TpElement>('tp-key-hint'),
-        ...this.renderRoot.querySelectorAll<TpElement>('tp-key-hint'),
+        ...this.contentNodes.flatMap((node) =>
+          node instanceof Element
+            ? [
+                ...(node.matches('tp-key-hint') ? [node as TpElement] : []),
+                ...node.querySelectorAll<TpElement>('tp-key-hint'),
+              ]
+            : [],
+        ),
       ].filter((hint) => !hint.closest('[slot=trigger]')),
     );
     for (const hint of this.#hints) if (!hints.has(hint)) setPartComposition(hint, this);

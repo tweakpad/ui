@@ -1,4 +1,5 @@
 import { css, html, type TemplateResult, type PropertyValues } from 'lit';
+import { shortcutKeys } from '../key-hint/shortcut.js';
 import { TpDialog } from '../dialog/dialog.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
@@ -203,7 +204,7 @@ export class TpCommandPalette extends TpDialog {
           if (!(key in item)) delete (wrapper as unknown as Record<string, unknown>)[key];
         Object.assign(wrapper, item, {
           text: item.text ?? (typeof item.label === 'string' ? item.label : String(item.value)),
-          label: html`${item.icon ? html`<tp-icon .icon=${item.icon} size="var(--tp-icon-size-sm)" aria-hidden="true"></tp-icon>` : ''}<span>${item.label ?? String(item.value)}</span>${item.shortcut ? html`<tp-key-hint part="command-palette-shortcut-hint" aria-hidden="true">${item.shortcut}</tp-key-hint>` : ''}`,
+          label: html`${item.icon ? html`<tp-icon .icon=${item.icon} size="var(--tp-icon-size-sm)" aria-hidden="true"></tp-icon>` : ''}<span>${item.label ?? String(item.value)}</span>${item.shortcut ? html`<tp-key-hint-group separator="none" part="command-palette-shortcut-hint" aria-hidden="true">${shortcutKeys(item.shortcut).map((key) => html`<tp-key-hint>${key}</tp-key-hint>`)}</tp-key-hint-group>` : ''}`,
         });
         return wrapper;
       });

@@ -504,12 +504,12 @@ export class CatalogWorkspace extends LitElement {
               @click=${() => {
                 this.overlay = 'commands';
               }}
-              >Search workspace<tp-key-hint slot="icon-end"
-                >⌘K</tp-key-hint
-              ></tp-navigation-panel-action
-            ></tp-navigation-panel-item
-          ></tp-navigation-panel-menu
-        >
+              >Search workspace<tp-key-hint-group slot="icon-end" separator="none" platform="mac"
+                ><tp-key-hint key="command"></tp-key-hint
+                ><tp-key-hint
+                  key="K"
+                ></tp-key-hint></tp-key-hint-group></tp-navigation-panel-action></tp-navigation-panel-item
+        ></tp-navigation-panel-menu>
         <tp-navigation-panel-separator></tp-navigation-panel-separator>
         <tp-navigation-panel-menu
           ><tp-navigation-panel-item
@@ -1351,7 +1351,13 @@ export class CatalogWorkspace extends LitElement {
         ><tp-accordion-item value="shortcuts"
           ><span slot="label">Keyboard shortcuts</span>
           <div class="workspace-row">
-            <tp-key-hint>⌘K</tp-key-hint><span>or</span><tp-key-hint>Ctrl K</tp-key-hint
+            <tp-key-hint-group separator="none" platform="mac"
+              ><tp-key-hint key="command"></tp-key-hint
+              ><tp-key-hint key="K"></tp-key-hint></tp-key-hint-group
+            ><span>or</span
+            ><tp-key-hint-group separator="none" platform="windows"
+              ><tp-key-hint key="control"></tp-key-hint
+              ><tp-key-hint key="K"></tp-key-hint></tp-key-hint-group
             ><span>opens workspace commands.</span>
           </div></tp-accordion-item
         ></tp-accordion

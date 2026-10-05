@@ -110,6 +110,7 @@ import type {
   TpCard,
   TpEmptyState,
   TpKeyHint,
+  TpKeyHintGroup,
   TpLabel,
   TpListItem,
   TpListItemGroup,
@@ -180,6 +181,7 @@ declare global {
     'tp-input-group': TpInputGroup;
     'tp-icon': TpIcon;
     'tp-key-hint': TpKeyHint;
+    'tp-key-hint-group': TpKeyHintGroup;
     'tp-label': TpLabel;
     'tp-list-item': TpListItem;
     'tp-list-item-group': TpListItemGroup;

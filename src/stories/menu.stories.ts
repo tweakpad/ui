@@ -30,8 +30,8 @@ interface Args extends SurfaceArgs {
   closeDelay: number;
 }
 const menuContent = `
-  <tp-menu-item value="new"><tp-icon data-menu-icon="plus"></tp-icon>New document<tp-key-hint data-menu-shortcut>⌘N</tp-key-hint></tp-menu-item>
-  <tp-menu-item disabled value="paste"><tp-icon data-menu-icon="folder"></tp-icon>Paste<tp-key-hint data-menu-shortcut>⌘V</tp-key-hint></tp-menu-item>
+  <tp-menu-item value="new"><tp-icon data-menu-icon="plus"></tp-icon>New document<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="N"></tp-key-hint></tp-key-hint-group></tp-menu-item>
+  <tp-menu-item disabled value="paste"><tp-icon data-menu-icon="folder"></tp-icon>Paste<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="V"></tp-key-hint></tp-key-hint-group></tp-menu-item>
   <tp-separator></tp-separator>
   <tp-menu-checkbox-item default-checked>Word wrap</tp-menu-checkbox-item>
   <tp-menu-radio-group aria-label="Density" default-value="comfortable">
@@ -42,7 +42,7 @@ const menuContent = `
   <tp-separator></tp-separator>
   <tp-menu label="Share document">
     <tp-button slot="trigger" variant="ghost"><tp-icon slot="icon-start" data-menu-icon="share"></tp-icon>Share</tp-button>
-    <tp-menu-item value="link"><tp-icon data-menu-icon="share"></tp-icon>Copy link<tp-key-hint data-menu-shortcut>⇧⌘C</tp-key-hint></tp-menu-item>
+    <tp-menu-item value="link"><tp-icon data-menu-icon="share"></tp-icon>Copy link<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="shift"></tp-key-hint><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="C"></tp-key-hint></tp-key-hint-group></tp-menu-item>
     <tp-menu label="Invite people">
       <tp-button slot="trigger" variant="ghost"><tp-icon slot="icon-start" data-menu-icon="account"></tp-icon>Invite people</tp-button>
       <tp-menu-item value="email">Email invitation</tp-menu-item>
@@ -50,7 +50,7 @@ const menuContent = `
     </tp-menu>
   </tp-menu>
   <tp-separator></tp-separator>
-  <tp-menu-item value="delete" variant="destructive"><tp-icon data-menu-icon="trash"></tp-icon>Delete<tp-key-hint data-menu-shortcut>⌘⌫</tp-key-hint></tp-menu-item>`;
+  <tp-menu-item value="delete" variant="destructive"><tp-icon data-menu-icon="trash"></tp-icon>Delete<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="⌫"></tp-key-hint></tp-key-hint-group></tp-menu-item>`;
 const source = `${sourceImports}
 <tp-menu label="Document actions">
   <tp-button slot="trigger" variant="outline">Document actions</tp-button>${menuContent}

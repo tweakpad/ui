@@ -140,28 +140,7 @@ export class TpCard extends TpElement {
 
 export { TpEmptyState } from './empty-state/index.js';
 
-export class TpKeyHint extends TpElement {
-  static tagName = 'tp-key-hint';
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: inline-flex;
-      }
-
-      kbd {
-        display: inline-flex;
-        align-items: center;
-        min-width: var(--tp-icon-size-lg);
-        min-height: var(--tp-icon-size-lg);
-        justify-content: center;
-      }
-    `,
-  ];
-  protected override render() {
-    return html`<kbd part="root"><slot></slot></kbd>`;
-  }
-}
+export { TpKeyHint, TpKeyHintGroup } from './key-hint/index.js';
 
 export class TpLabel extends TpElement {
   static tagName = 'tp-label';

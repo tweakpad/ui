@@ -31,3 +31,5 @@ export * from './native-select/index.js';
 export * from './slider/index.js';
 
 export * from './questionnaire/index.js';
+
+export type { KeyHintPlatform, KeyHintSeparator, KeyHintLabels } from './key-hint/index.js';

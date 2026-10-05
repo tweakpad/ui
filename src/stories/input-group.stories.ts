@@ -16,7 +16,7 @@ const markup = `<tp-field label="Website">
   <tp-input-group>
     <span slot="prefix">https://</span>
     <tp-input name="website" placeholder="example.com"></tp-input>
-    <tp-key-hint slot="suffix">⌘K</tp-key-hint>
+    <tp-key-hint-group slot="suffix" separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="K"></tp-key-hint></tp-key-hint-group>
   </tp-input-group>
 </tp-field>`;
 const meta = {
@@ -53,9 +53,10 @@ const meta = {
         .invalid=${args.invalid}
         ><span slot="prefix">https://</span
         ><tp-input name="website" placeholder="example.com"></tp-input
-        ><tp-key-hint slot="suffix">⌘K</tp-key-hint></tp-input-group
-      ></tp-field
-    >`,
+        ><tp-key-hint-group slot="suffix" separator="none" platform="mac"
+          ><tp-key-hint key="command"></tp-key-hint
+          ><tp-key-hint key="K"></tp-key-hint></tp-key-hint-group></tp-input-group
+    ></tp-field>`,
 } satisfies Meta<Args>;
 export default meta;
 type Story = StoryObj<Args>;
