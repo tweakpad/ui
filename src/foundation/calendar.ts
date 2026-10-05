@@ -28,6 +28,7 @@ export interface CalendarAdapter {
   dayOfWeek(date: string): number;
   format(date: string, locale: string | undefined, style: 'day' | 'month' | 'accessible'): string;
   weekdayLabel(dayOfWeek: number, locale: string | undefined): string;
+  weekNumber?(date: string, weekStartsOn: number, minimalDays: number): number;
 }
 
 export interface CalendarSelectionRequest {
@@ -93,20 +94,56 @@ export const gregorianCalendarAdapter: CalendarAdapter = {
   },
   format(date, locale, style) {
     const parts = requireIsoDate(date);
-    const instant = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+    const instant = new Date(0);
+    instant.setUTCFullYear(parts.year, parts.month - 1, parts.day);
     const options: Intl.DateTimeFormatOptions =
       style === 'day'
         ? { day: 'numeric', timeZone: 'UTC' }
         : style === 'month'
           ? { month: 'long', year: 'numeric', timeZone: 'UTC' }
           : { dateStyle: 'full', timeZone: 'UTC' };
-    return new Intl.DateTimeFormat(locale, options).format(instant);
+    return new Intl.DateTimeFormat(locale, { ...options, calendar: 'gregory' }).format(instant);
+  },
+  weekNumber(date, weekStartsOn, minimalDays) {
+    const year = this.parts(date).year;
+    const firstWeek = (year: number) => {
+      const first = formatIsoDate(year, 1, minimalDays);
+      return this.addDays(first, -modulo(this.dayOfWeek(first) - weekStartsOn, 7));
+    };
+    let start = firstWeek(year);
+    if (this.compare(date, start) < 0) start = firstWeek(year - 1);
+    else if (this.compare(date, firstWeek(year + 1)) >= 0) start = firstWeek(year + 1);
+    return Math.floor(this.differenceInDays(date, start) / 7) + 1;
   },
   weekdayLabel(dayOfWeek, locale) {
-    const instant = new Date(Date.UTC(2021, 7, 1 + dayOfWeek));
-    return new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(instant);
+    return gregorianWeekdayLabels(locale)[modulo(dayOfWeek, 7)]!;
   },
 };
+
+const weekdayLabelCache = new Map<string, readonly string[]>();
+
+/**
+ * Short weekday labels, or the locale's narrow labels when any short label is longer
+ * than an abbreviation (for example Arabic, Hebrew and Thai full names), so a column
+ * header fits a day cell. One form is used for the whole week.
+ */
+function gregorianWeekdayLabels(locale: string | undefined): readonly string[] {
+  const key = locale ?? '';
+  const cached = weekdayLabelCache.get(key);
+  if (cached) return cached;
+  const format = (weekday: 'short' | 'narrow') => {
+    const formatter = new Intl.DateTimeFormat(locale, { weekday, timeZone: 'UTC' });
+    return Array.from({ length: 7 }, (_, day) =>
+      formatter.format(new Date(Date.UTC(2021, 7, 1 + day))),
+    );
+  };
+  const short = format('short');
+  const labels = short.some((label) => [...label.replace(/\.$/u, '')].length > 4)
+    ? format('narrow')
+    : short;
+  weekdayLabelCache.set(key, labels);
+  return labels;
+}
 
 export function normalizeCalendarValue(
   mode: CalendarSelectionMode,
@@ -200,11 +237,14 @@ export function calendarGridDates(
   month: string,
   weekStartsOn: number,
   adapter: CalendarAdapter,
+  fixedWeeks = true,
 ): string[] {
   const start = adapter.startOfMonth(month);
   const offset = modulo(adapter.dayOfWeek(start) - weekStartsOn, 7);
   const first = adapter.addDays(start, -offset);
-  return Array.from({ length: 42 }, (_, index) => adapter.addDays(first, index));
+  const days = adapter.differenceInDays(adapter.addMonths(start, 1), start);
+  const length = fixedWeeks ? 42 : Math.ceil((offset + days) / 7) * 7;
+  return Array.from({ length }, (_, index) => adapter.addDays(first, index));
 }
 
 export function calendarValueDates(

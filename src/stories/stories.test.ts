@@ -8,6 +8,7 @@ describe('Storybook catalog entries', () => {
   const storyFiles = readdirSync(storyDirectory).filter((file) => file.endsWith('.stories.ts'));
   const newlyAuthoredStories = [
     'key-hint',
+    'calendar',
     'badge',
     'carousel',
     'pagination',

@@ -742,6 +742,97 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
         presentationKeys: ['calendar-day'],
         cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
       },
+      {
+        name: 'calendar-months',
+        publicName: 'Months',
+        presentationKeys: ['calendar-months'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-month',
+        publicName: 'Month',
+        presentationKeys: ['calendar-month'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-caption',
+        publicName: 'Caption',
+        presentationKeys: ['calendar-caption'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-caption-label',
+        publicName: 'CaptionLabel',
+        presentationKeys: ['calendar-caption-label'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-dropdowns',
+        publicName: 'Dropdowns',
+        presentationKeys: ['calendar-dropdowns'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-month-dropdown',
+        publicName: 'MonthDropdown',
+        presentationKeys: ['calendar-month-dropdown'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-year-dropdown',
+        publicName: 'YearDropdown',
+        presentationKeys: ['calendar-year-dropdown'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-weekdays',
+        publicName: 'Weekdays',
+        presentationKeys: ['calendar-weekdays'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-weekday',
+        publicName: 'Weekday',
+        presentationKeys: ['calendar-weekday'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-weeks',
+        publicName: 'Weeks',
+        presentationKeys: ['calendar-weeks'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-week',
+        publicName: 'Week',
+        presentationKeys: ['calendar-week'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-week-number',
+        publicName: 'WeekNumber',
+        presentationKeys: ['calendar-week-number'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
+      {
+        name: 'calendar-footer',
+        publicName: 'Footer',
+        presentationKeys: ['calendar-footer'],
+        cardinality:
+          'zero or more descendants of Root as required by displayed months and configured options',
+      },
     ],
   },
   {

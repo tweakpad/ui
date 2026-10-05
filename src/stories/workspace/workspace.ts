@@ -1,6 +1,7 @@
 import { LitElement, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { keyed } from 'lit/directives/keyed.js';
+import { createRef, ref } from 'lit/directives/ref.js';
 import { navigationIcons } from '../../icons/navigation.js';
 import { refreshIcon } from '../../icons/refresh.js';
 import { downloadIcon } from '../../icons/download.js';
@@ -166,6 +167,7 @@ export class CatalogWorkspace extends LitElement {
     clearTimeout(this.#timer);
     super.disconnectedCallback();
   }
+  readonly #dueCalendar = createRef<HTMLElement>();
   #responsive = () => {
     this.mobile = this.#media?.matches ?? false;
   };
@@ -1472,9 +1474,13 @@ export class CatalogWorkspace extends LitElement {
               ></tp-field
             >
             <tp-field label="Due date"
-              ><tp-popover label="Choose a due date" placement="bottom start"
+              ><tp-popover
+                label="Choose a due date"
+                placement="bottom start"
+                .initialFocus=${() => this.#dueCalendar.value ?? null}
                 ><tp-button slot="trigger" variant="outline">${date(this.draftDue)}</tp-button
                 ><tp-calendar
+                  ${ref(this.#dueCalendar)}
                   label="Due date"
                   .value=${this.draftDue}
                   default-displayed-month="2026-10-01"

@@ -1,3 +1,4 @@
+import { calendarAppearance } from './recipes/calendar.js';
 import { motionTransition } from './motion.js';
 import { carouselAppearance } from './recipes/carousel.js';
 import { listItemAppearance } from './recipes/list-item.js';
@@ -661,77 +662,7 @@ export const componentAppearance: PresentationDictionary = {
       },
     },
   ],
-  calendar: [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-3)',
-      },
-    },
-    { selector: '& .month', declarations: { gap: 'var(--tp-space-2)' } },
-    { selector: '& :is(.navigation,.weekday)', declarations: { padding: 'var(--tp-space-1)' } },
-  ],
-  'calendar-header': [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-2)',
-      },
-    },
-  ],
-  'calendar-month-grid': [
-    {
-      selector: '&',
-      declarations: {
-        gap: 'var(--tp-space-4)',
-      },
-    },
-  ],
-  'calendar-day': [
-    {
-      selector: '&',
-      declarations: {
-        padding: 'var(--tp-space-1)',
-        border: '0',
-        'border-radius': 'var(--tp-radius-sm)',
-        color: 'inherit',
-        background: 'transparent',
-      },
-    },
-    {
-      selector: '&[data-outside]',
-      declarations: {
-        color: 'var(--tp-muted-foreground)',
-      },
-    },
-    {
-      selector: '&[data-range-middle]',
-      declarations: {
-        'border-radius': '0',
-        background: 'var(--tp-accent)',
-      },
-    },
-    {
-      selector: '&[data-selected]',
-      declarations: {
-        color: 'var(--tp-accent-foreground)',
-        background: 'var(--tp-accent)',
-      },
-    },
-    {
-      selector: '&[data-today]',
-      declarations: {
-        'box-shadow': 'inset 0 0 0 var(--tp-border-width) currentcolor',
-      },
-    },
-    {
-      selector: '&:focus-visible',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
-      },
-    },
-  ],
+  ...calendarAppearance,
   ...questionnaireAppearance,
   'toast-toast': [
     {

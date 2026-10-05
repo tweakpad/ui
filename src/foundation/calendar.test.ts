@@ -70,4 +70,33 @@ describe('calendar date and selection model', () => {
       value: { from: '2026-09-14' },
     });
   });
+
+  it('renders natural weeks unless fixed weeks are requested', () => {
+    // February 2026 starts on Sunday and has exactly four weeks.
+    expect(calendarGridDates('2026-02-01', 0, gregorianCalendarAdapter, false)).toHaveLength(28);
+    expect(calendarGridDates('2026-02-01', 0, gregorianCalendarAdapter, true)).toHaveLength(42);
+    // August 2026 starts on Saturday and spans six Sunday-first weeks.
+    expect(calendarGridDates('2026-08-01', 0, gregorianCalendarAdapter, false)).toHaveLength(42);
+    expect(calendarGridDates('2026-06-01', 1, gregorianCalendarAdapter, false)).toHaveLength(35);
+  });
+
+  it('numbers weeks with locale week-start and minimal-day rules', () => {
+    const iso = (date: string) => gregorianCalendarAdapter.weekNumber!(date, 1, 4);
+    expect(iso('2026-01-01')).toBe(1);
+    expect(iso('2021-01-03')).toBe(53);
+    expect(iso('2020-12-31')).toBe(53);
+    expect(iso('2024-12-30')).toBe(1);
+    const us = (date: string) => gregorianCalendarAdapter.weekNumber!(date, 0, 1);
+    expect(us('2026-01-11')).toBe(3);
+    expect(us('2025-12-28')).toBe(1);
+  });
+
+  it('uses narrow weekday labels when short labels do not abbreviate', () => {
+    expect(gregorianCalendarAdapter.weekdayLabel(0, 'en-US')).toBe('Sun');
+    expect(gregorianCalendarAdapter.weekdayLabel(1, 'fr')).toBe('lun.');
+    const arabic = Array.from({ length: 7 }, (_, day) =>
+      gregorianCalendarAdapter.weekdayLabel(day, 'ar-SA'),
+    );
+    expect(arabic.every((label) => [...label].length <= 2)).toBe(true);
+  });
 });
