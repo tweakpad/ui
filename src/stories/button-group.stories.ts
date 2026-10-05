@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import buttonGroupDocumentation from '../../docs/button-group.md?raw';
-import type { IconDefinition } from '../icons/types.js';
+import { navigationIcons } from '../icons/navigation.js';
 import { buttonGroupExamples } from './button-group.examples.js';
 
 interface ButtonGroupStoryArgs {
@@ -9,11 +9,6 @@ interface ButtonGroupStoryArgs {
   joined: boolean;
   label: string;
 }
-
-const moreIcon: IconDefinition = {
-  viewBox: '0 0 24 24',
-  paths: [{ d: 'M5 12h.01M12 12h.01M19 12h.01', strokeWidth: 3 }],
-};
 
 const meta: Meta<ButtonGroupStoryArgs> = {
   title: 'Components/Button group',
@@ -53,7 +48,12 @@ const meta: Meta<ButtonGroupStoryArgs> = {
     <tp-button-group orientation=${args.orientation} .joined=${args.joined} label=${args.label}>
       <tp-button variant="outline">Archive</tp-button>
       <tp-button variant="outline">Report</tp-button>
-      <tp-button variant="outline" .icon=${moreIcon} size="icon" aria-label="More actions">
+      <tp-button
+        variant="outline"
+        .icon=${navigationIcons.more}
+        size="icon"
+        aria-label="More actions"
+      >
       </tp-button>
     </tp-button-group>
   `,

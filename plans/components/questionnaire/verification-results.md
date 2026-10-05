@@ -14,7 +14,7 @@ Scope: all14 shadcn base Questionnaire use cases, constituent/public API review 
 
 Chrome MCP page102; existing localhost5173 Vite and6006 Storybook. Source fixture and `?package` use the respective source/built registrations. Screenshots/AX observations are inline in this session; logs and generated reference extraction are local only under `tmp/component-verification/questionnaire/2026-10-05/`.
 
-The fixture's22 assertions passed in source and built package: ordered progress, mixed Choices layout, empty submission error/focus, checkmark bounds, prior-answer plus repeated FormData serialization, keyed item versus stable action identity, answer-edit identity, independent action configuration/visibility, constituent state, disabled omission, empty collection, controlled reject/accept, atomic reset veto, last optional skip-and-submit, skip recovery, saved reset, prevented native reset, dynamic removal and reconnect.
+The fixture's24 assertions passed in source and built package: ordered progress, mixed Choices layout, empty submission error/focus, checkmark bounds, prior-answer plus repeated FormData serialization, keyed item versus stable action identity, answer-edit identity, independent action configuration/visibility, constituent state, disabled omission, empty collection, controlled reject/accept, atomic reset veto, last optional skip-and-submit, skip recovery, saved reset, prevented native reset, dynamic removal and reconnect.
 
 Trusted Chrome clicks/keys/fill additionally verified:
 
@@ -50,3 +50,7 @@ Storybook Docs inspection finds14 mounted Questionnaires, all13 additional title
 ## Unverified platform boundaries
 
 Registered Chrome MCP cannot drive real IME composition or OS forced-colors/reduced-motion. Explicit component reduce policy was exercised, not substituted for OS evidence. No Lit SSR/hydration harness is installed in the project; upstream SSR tests were read, but neither a source comparison nor client rendering is claimed as SSR execution. C-99/V-98/V-99 remain blocked, so this work does not certify complete platform conformance. These limitations do not remove any implemented use case or public capability from scope.
+
+## Alignment correction after user review
+
+Measured radio/checkbox16px indicators were top-aligned with21px label lines, yielding a2.5px center offset. Questionnaire structure now computes indicator margin from the current line-height and indicator extent, and centers actual KeyHint within one inherited line. Unsupported leading-snug token references were replaced with the existing leading-normal role. No demo offsets or generic Checkbox changes. Current radio, checkbox and shortcut center deltas are0px; wrapped63px labels with25px indicators retain first-line alignment. Two durable geometry assertions increase the fixture total to24, passing source and built. Light default and dark390px RTL Resume screenshots inspected, selected checkmarks stay contained. Settled Resume axe has0 violations and0 incomplete results.

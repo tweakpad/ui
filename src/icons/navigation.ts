@@ -16,7 +16,10 @@ export const navigationIcons = {
   frame: outline('M7 2v20M17 2v20M2 7h20M2 17h20'),
   chart: outline('M21 12a9 9 0 1 1-9-9v9z', 'M15 2v7h7a9 9 0 0 0-7-7'),
   map: outline('m3 5 6-3 6 3 6-3v17l-6 3-6-3-6 3z', 'M9 2v17m6-14v17'),
-  more: outline('M5 12h.01M12 12h.01M19 12h.01'),
+  more: {
+    viewBox: '0 0 24 24',
+    paths: [{ d: 'M5 12h.01M12 12h.01M19 12h.01', strokeWidth: 4 }],
+  },
   folder: outline('M3 6h6l2 2h10v12H3z'),
   share: outline('M4 18v-4a4 4 0 0 1 4-4h12', 'm16 6 4 4-4 4'),
   trash: outline('M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7'),
