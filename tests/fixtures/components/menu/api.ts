@@ -463,6 +463,10 @@ export function installFamilyAPI(library: Library, built: boolean): void {
           await updated(a, b, root);
           assert(a.setOpen(true), 'Bar initial Menu did not open');
           await updated(root, a, b);
+          assert(!b.inert && !b.menuTriggerHost?.inert, 'Modal bar disabled its sibling trigger');
+          assert(a.dismissController.contains(b.menuTrigger), 'Sibling is outside the bar branch');
+          assert(!b.setOpen(false, 'focus-outside'), 'Inactive sibling accepted dismissal');
+          assert(root.value === 'a' && a.open, 'Inactive sibling dismissed the active menu');
           const observations: boolean[][] = [];
           b.onOpenChange = () => {
             observations.push([a.open, b.open]);

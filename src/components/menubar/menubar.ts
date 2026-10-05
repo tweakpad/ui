@@ -50,6 +50,9 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
   onValueChange: ((event: TpValueChangeEvent<string>) => void) | undefined;
   loopFocus = true;
   modal = true;
+  get interactionElement(): HTMLElement {
+    return this;
+  }
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   #provided: string | undefined;
   #members: Member[] = [];
@@ -104,6 +107,9 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
   requestMenu(menu: TpMenu, open: boolean, reason: ChangeReason, event?: Event): boolean {
     const member = this.#members.find((member) => member.menu === menu);
     if (!member || this.disabled || menu.disabled) return false;
+    // A closed sibling may finish a queued blur/hover-leave after a transfer.
+    // Only the active member can dismiss the bar's scalar open state.
+    if (!open && member.identifier !== this.value) return false;
     const next = open ? member.identifier : '';
     if (next === this.value) return false;
     const previous = this.#members.find((member) => member.identifier === this.value);

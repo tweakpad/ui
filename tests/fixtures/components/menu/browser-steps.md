@@ -146,3 +146,10 @@ hover Word wrap; Share and all descendants must close, leaving Word wrap active.
 Use forward/backward arrows then Up on the restored submenu trigger: Up navigates
 the parent list rather than reopening the child. Run A29 (index 28) in source and
 package fixtures for arbitrary-depth branch closure and consumer cancellation.
+
+Menubar hover regression: hover Edit while closed (must stay closed), click File,
+then hover Edit, Help and File (exactly one popup, all sibling triggers reachable).
+Repeat with a nested Share submenu open. Click outside; all menus close and idle
+hover must no longer open them. Check a disabled sibling and canceled value-change
+keep the active menu. A12 asserts modal sibling reachability and rejects queued
+close requests from inactive members; run in source and package fixtures.

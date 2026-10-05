@@ -26,6 +26,7 @@ import type { TpElement } from '../../foundation/element.js';
 import { surfaceInteraction } from '../../foundation/surface-focus.js';
 
 export interface MenuBarOwner {
+  readonly interactionElement: HTMLElement;
   readonly disabled: boolean;
   readonly modal: boolean;
   handleMenuKey(menu: TpMenu, event: KeyboardEvent): boolean;
@@ -232,6 +233,10 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   }
   protected override get surfaceModal(): boolean {
     return !this.parentMenu && (this.#bar?.modal ?? super.surfaceModal);
+  }
+  protected override get surfaceBranchElements(): readonly Element[] {
+    const elements = super.surfaceBranchElements;
+    return this.#bar ? [...elements, this.#bar.interactionElement] : elements;
   }
   protected override get focusOpens(): boolean {
     return false;

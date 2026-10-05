@@ -373,12 +373,15 @@ export abstract class TpAnchoredSurface extends TpElement {
   readonly dismissController = new FloatingDismissController(this, {
     open: () => this.open,
     anchor: () => this.trigger,
-    insideElements: () => (this.positioner ? [this.positioner] : []),
+    insideElements: () => this.surfaceBranchElements,
     outside: () => this.dismissible,
     escape: () => true,
     topmostOnly: true,
     dismiss: (event) => this.dismissSurface(event),
   });
+  protected get surfaceBranchElements(): readonly Element[] {
+    return this.positioner ? [this.positioner] : [];
+  }
   get open(): boolean {
     return (this.openCoordinator?.open ?? this.state.open) && !this.surfaceDisabled;
   }
