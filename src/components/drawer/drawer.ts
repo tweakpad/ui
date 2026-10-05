@@ -49,6 +49,11 @@ export class TpDrawer extends TpDialog {
     snapToSequentialPoints: { type: Boolean, attribute: 'snap-to-sequential-points' },
     dismissible: { type: Boolean },
     showSwipeHandle: { type: Boolean, attribute: 'show-swipe-handle' },
+    swipeEnabled: {
+      attribute: 'swipe-enabled',
+      converter: { fromAttribute: (value: string | null) => value !== 'false' },
+    },
+    backdrop: { type: String },
   };
   static override styles = [TpDialog.styles, drawerStyles];
   edge: DrawerEdge = 'block-end';
@@ -57,11 +62,10 @@ export class TpDrawer extends TpDialog {
   snapToSequentialPoints = false;
   dismissible = true;
   showSwipeHandle = false;
-  override get modality(): 'modal' {
-    return 'modal';
-  }
-  override set modality(_value: 'modal' | 'non-modal' | 'trap-focus-only') {
-    /* Drawer is modal; Side Panel provides the other Dialog modalities. */
+  swipeEnabled = true;
+  backdrop: 'dark' | 'blur' = 'dark';
+  protected override get overlayProperties(): HostProperties {
+    return { 'data-backdrop': this.backdrop === 'blur' ? 'blur' : 'dark' };
   }
   onSnapPointChange: ((event: TpValueChangeEvent<DrawerSnapPoint | null>) => void) | undefined;
   #providedSnap: DrawerSnapPoint | null | undefined;
@@ -237,7 +241,10 @@ export class TpDrawer extends TpDialog {
   });
   readonly gesture = new DrawerGesture({
     enabled: () =>
-      this.isConnected && !this.disabled && (!this.open || this.dismissController.isTopmost),
+      this.isConnected &&
+      this.swipeEnabled &&
+      !this.disabled &&
+      (!this.open || this.dismissController.isTopmost),
     direction: () => this.swipeDirection,
     canExpand: () => this.#resolved.length > 0,
     surface: () => this.contentElement,
@@ -295,7 +302,7 @@ export class TpDrawer extends TpDialog {
   protected override renderSurfaceChildren(content: unknown): unknown {
     const points = [...this.#resolved].sort((a, b) => a.extent - b.extent);
     return html`${
-      this.showSwipeHandle
+      this.showSwipeHandle && this.swipeEnabled
         ? this.dialogPart('swipe-handle', {
             properties: {
               class: 'swipe-handle',
@@ -409,7 +416,12 @@ export class TpDrawer extends TpDialog {
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     this.#normalizeEdge();
-    if (changed.has('edge') || changed.has('disabled') || changed.has('snapPoints'))
+    if (
+      changed.has('edge') ||
+      changed.has('disabled') ||
+      changed.has('snapPoints') ||
+      changed.has('swipeEnabled')
+    )
       this.gesture.cancel();
     if (this.open) this.#swipeDismissed = false;
     if (!this.open) this.#openingRelease = false;

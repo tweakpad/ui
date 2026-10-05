@@ -36,7 +36,6 @@ describe('Storybook catalog entries', () => {
     'table',
     'scroll-area',
     'resizable-panel-group',
-    'side-panel',
     'drawer',
     'questionnaire',
     'data-visualization',

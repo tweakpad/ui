@@ -19,6 +19,16 @@ export const carouselAppearance: PresentationDictionary = {
   'carousel-controls-placement-footer': [
     { declarations: { 'margin-block-start': 'var(--tp-space-3)' } },
   ],
+  'carousel-controls-placement-outside': [
+    {
+      selector: '& > :is(.indicators, slot[name="indicators"])',
+      declarations: { 'margin-block-start': 'var(--tp-space-3)' },
+    },
+    {
+      selector: '&[data-orientation="vertical"] > :is(.indicators, slot[name="indicators"])',
+      declarations: { 'margin-block-start': '0', 'margin-inline-start': 'var(--tp-space-3)' },
+    },
+  ],
   'carousel-controls-placement-inside': [{ declarations: { padding: 'var(--tp-space-3)' } }],
   'carousel-status': [
     {

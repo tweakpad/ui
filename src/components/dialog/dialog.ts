@@ -252,6 +252,9 @@ export class TpDialog extends TpElement {
     this.#outsideDismissal = Boolean(value);
     this.requestUpdate('closeOnOutsideInteraction', previous);
   }
+  protected get overlayProperties(): HostProperties {
+    return {};
+  }
   protected get partPrefix(): string {
     return 'dialog';
   }
@@ -432,7 +435,7 @@ export class TpDialog extends TpElement {
       : nothing;
     return this.dialogPart('portal', {
       properties: { class: 'portal', 'data-state': state },
-      content: html` ${this.dialogPart('overlay', { properties: { class: 'overlay', popover: 'manual', 'aria-hidden': 'true', hidden: (Boolean(this.#parent) && !this.forceRender) || this.modality !== 'modal', '@pointerdown': this.#outside, ...markers } })}
+      content: html` ${this.dialogPart('overlay', { properties: { ...this.overlayProperties, class: 'overlay', popover: 'manual', 'aria-hidden': 'true', hidden: (Boolean(this.#parent) && !this.forceRender) || this.modality !== 'modal', '@pointerdown': this.#outside, ...markers } })}
       ${this.renderSurface(
         {
           class: 'content',

@@ -6,6 +6,9 @@ import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
 import documentation from '../../docs/drawer.md?raw';
 interface Args {
   open: boolean;
+  swipeEnabled: boolean;
+  backdrop: 'dark' | 'blur';
+  modality: 'modal' | 'non-modal' | 'trap-focus-only';
   edge: DrawerEdge;
   showHeader: boolean;
   showFooter: boolean;
@@ -30,6 +33,9 @@ const meta = {
   },
   args: {
     open: false,
+    swipeEnabled: true,
+    backdrop: 'dark',
+    modality: 'modal',
     edge: 'block-end',
     showHeader: true,
     showFooter: true,
@@ -41,6 +47,9 @@ const meta = {
   },
   argTypes: {
     open: { control: 'boolean' },
+    swipeEnabled: { control: 'boolean' },
+    backdrop: { control: 'select', options: ['dark', 'blur'] },
+    modality: { control: 'select', options: ['modal', 'non-modal', 'trap-focus-only'] },
     edge: {
       control: 'select',
       options: ['inline-start', 'inline-end', 'block-start', 'block-end'],
@@ -59,6 +68,9 @@ const meta = {
       label="Workspace settings"
       description="Update your profile and preferences."
       .open=${args.open}
+      .swipeEnabled=${args.swipeEnabled}
+      .backdrop=${args.backdrop}
+      .modality=${args.modality}
       .edge=${args.edge}
       .showHeader=${args.showHeader}
       .showFooter=${args.showFooter}
@@ -134,4 +146,34 @@ export const Nested: Story = {
         <tp-button slot="close" variant="outline">Close workspace</tp-button>
       </tp-drawer>
     </tp-drawer-provider>`,
+};
+
+const sideSource = `<tp-drawer edge="inline-end" swipe-enabled="false" backdrop="blur"
+  label="Workspace settings" description="Update your profile and preferences.">
+  <tp-button slot="trigger" variant="outline">Open side drawer</tp-button>
+  <tp-field label="Display name"><tp-input value="Alex Morgan"></tp-input></tp-field>
+  <tp-button slot="close" variant="outline">Done</tp-button>
+</tp-drawer>`;
+export const SideDrawer: Story = {
+  parameters: {
+    controls: { disable: true },
+    docs: {
+      source: { code: sideSource },
+      description: {
+        story: 'An edge-attached settings panel with gestures disabled and a blurred backdrop.',
+      },
+    },
+  },
+  render: () =>
+    html`<tp-drawer
+      edge="inline-end"
+      swipe-enabled="false"
+      backdrop="blur"
+      label="Workspace settings"
+      description="Update your profile and preferences."
+    >
+      <tp-button slot="trigger" variant="outline">Open side drawer</tp-button>
+      <tp-field label="Display name"><tp-input value="Alex Morgan"></tp-input></tp-field>
+      <tp-button slot="close" variant="outline">Done</tp-button>
+    </tp-drawer>`,
 };

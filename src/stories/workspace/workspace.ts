@@ -1385,7 +1385,9 @@ export class CatalogWorkspace extends LitElement {
           this.#command(e.detail.commandId);
         }}
       ></tp-command-palette>
-      <tp-side-panel
+      <tp-drawer
+        edge="inline-end"
+        swipe-enabled="false"
         label=${this.editing ? 'Task details' : 'Create a task'}
         description="Plan the next piece of the launch."
         .open=${this.overlay === 'task'}
@@ -1488,7 +1490,7 @@ export class CatalogWorkspace extends LitElement {
             </div>
           </tp-form>`,
         )}
-      </tp-side-panel>
+      </tp-drawer>
       <tp-dialog
         label="Invite a teammate"
         description="Give someone access to this project."
@@ -1595,7 +1597,9 @@ export class CatalogWorkspace extends LitElement {
         </p>
         <tp-button slot="close" variant="outline">Close</tp-button>
       </tp-drawer>
-      <tp-side-panel
+      <tp-drawer
+        edge="inline-end"
+        swipe-enabled="false"
         label="Recent activity"
         description="The latest updates across your project."
         .open=${this.overlay === 'updates'}
@@ -1612,7 +1616,7 @@ export class CatalogWorkspace extends LitElement {
           }}
           >Open conversation</tp-button
         >
-      </tp-side-panel>
+      </tp-drawer>
       <tp-alert-dialog
         label="Delete selected tasks?"
         .description=${`This removes ${this.selected.size} selected tasks from this preview. Export your work first if you need a copy.`}

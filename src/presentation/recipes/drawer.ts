@@ -51,6 +51,10 @@ export const drawerAppearance: PresentationDictionary = {
   ],
   'drawer-overlay': [
     {
+      selector: '&[data-backdrop="blur"]',
+      declarations: { 'backdrop-filter': 'blur(var(--tp-space-1))' },
+    },
+    {
       selector: '&[data-ending-style][data-swipe-dismiss]',
       declarations: {
         'transition-duration': motionDuration('normal', 'var(--drawer-swipe-strength, 1)'),

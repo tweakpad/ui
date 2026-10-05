@@ -18,7 +18,11 @@ export function nearestDrawerService<T extends HTMLElement>(
   const seen = new Set<Node>();
   for (let node = composedParent(element); node && !seen.has(node);) {
     seen.add(node);
-    if (node instanceof HTMLElement && node.localName === tag) return node as T;
+    if (
+      node instanceof HTMLElement &&
+      (node.localName === tag || (tag === 'tp-drawer' && node.localName === 'tp-side-panel'))
+    )
+      return node as T;
     const logical = logicalPortalOwner(node);
     node = logical && !seen.has(logical) ? logical : composedParent(node);
   }

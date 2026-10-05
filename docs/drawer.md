@@ -1,6 +1,6 @@
 # Drawer
 
-`tp-drawer` is a modal, edge-attached Dialog with optional swiping and snap points. It shares Dialog's state, sections, focus, dismissal, portal and theme recipes. Side Panel supplies an edge-attached workflow without gestures.
+`tp-drawer` is the shared edge-attached Dialog for swipeable drawers and side panels. It shares Dialog's state, sections, focus, dismissal, portal and theme recipes. Set `swipe-enabled="false"` for a panel without gestures.
 
 ```html
 <tp-drawer
@@ -33,7 +33,7 @@ Import `@tweakpad/ui/styles.css` and `@tweakpad/ui/register` once. Use real libr
 | `showFooter` / `show-footer`                           | boolean, true                                               | Show authored footer and close content.                                                                      |
 | `showCloseControl` / `show-close-control`              | boolean, true                                               | Corner Close; hiding requires another reachable close action.                                                |
 
-The [Dialog API](./dialog.md) is inherited, including controlled/default open state, triggers and handles, focus options, retention, portal targets, close policies, actions and lifecycle events. Drawer is always modal. A false Boolean value requires a property binding, not an attribute with the text "false".
+The [Dialog API](./dialog.md) is inherited, including controlled/default open state, triggers and handles, focus options, retention, portal targets, close policies, actions and lifecycle events. The `modality` property accepts `modal` (default), `non-modal`, and `trap-focus-only`. Non-modal and focus-trap-only modes hide the backdrop and preserve outside pointer interaction. Boolean properties use property bindings for false, except `swipe-enabled`, which explicitly accepts the attribute text "false".
 
 Numbers from zero through one are viewport fractions; larger numbers are pixel lengths. Strings accept CSS length units resolved in the owner environment, including px, em, rem, viewport, logical and font-relative units. Invalid points are omitted, resolved extents clamp to the smaller of surface and viewport, and points within one pixel retain the last authored representative. A controlled identifier outside the list uses the nearest visual point without rewriting owner state.
 
@@ -57,3 +57,31 @@ Open/closed, starting/ending, expanded, swiping, swipe-dismiss, swipe-direction,
 - `tp-drawer-virtual-keyboard-provider`: optional ancestor that observes the real visual viewport, coalesces keyboard geometry and reveals an editable control inside the active descendant Drawer's existing scroll region. It restores geometry after keyboard dismissal and disconnects its observers when removed. It does not own focus or create a second scroller.
 
 Provider and keyboard-provider render their children without layout boxes. Their composition APIs are services, not separate catalog controls. Native host attributes and styles customize these constituents; the Drawer dictionary owns generated Drawer parts.
+
+## Side panels and backdrops
+
+```html
+<tp-drawer
+  edge="inline-end"
+  swipe-enabled="false"
+  backdrop="blur"
+  label="Workspace settings"
+  description="Update your profile and preferences."
+>
+  <tp-button slot="trigger" variant="outline">Open settings</tp-button>
+  <tp-field label="Display name"><tp-input value="Alex Morgan"></tp-input></tp-field>
+  <tp-button slot="close" variant="outline">Done</tp-button>
+</tp-drawer>
+```
+
+| Property / attribute             | Type                                    | Default | Behavior                                                                                                                                                                                                                                             |
+| -------------------------------- | --------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `swipeEnabled` / `swipe-enabled` | Boolean; attribute `"false"` disables   | `true`  | Enables pointer and SwipeArea gestures. Disabling during a drag cancels capture and restores committed geometry. The swipe handle is hidden while disabled. Explicit actions and snap APIs remain available. Removing the attribute restores `true`. |
+| `backdrop`                       | `dark` or `blur`                        | `dark`  | Selects a dark fill or the same fill with background blur. Invalid values use dark. Affects appearance only; modality controls whether the backdrop is shown.                                                                                        |
+| `modality`                       | `modal`, `non-modal`, `trap-focus-only` | `modal` | Inherits Dialog's focus, outside-interaction and scroll policy.                                                                                                                                                                                      |
+
+Backdrop blur is provided by the `drawer-overlay` presentation recipe, using `--tp-space-1` for its radius. The fill uses `--tp-opacity-backdrop` and remains visible where backdrop filtering is unsupported. Override the `drawer-overlay` dictionary entry or `::part(drawer-overlay)` for a custom treatment. Header, body and footer spacing uses the same section recipe as Dialog; no demo padding is required. Existing portal customization rules apply.
+
+### Migrating Side Panel
+
+Drawer replaces Side Panel in the catalog. Change `<tp-side-panel>` to `<tp-drawer edge="inline-end" swipe-enabled="false">`. Keep existing Dialog properties and slots. `TpSidePanel`, `PanelEdge`, and `tp-side-panel` remain deprecated compatibility bindings with those defaults, delegating to Drawer. Use `DrawerEdge` and Drawer parts/recipes; the old `side-panel-content` surface maps to `drawer-surface`, and the other old `side-panel-*` parts map to `drawer-*`.

@@ -207,13 +207,6 @@ const examples = {
       <p>Updated five minutes ago.</p>
     </tp-preview-card>
   `,
-  'tp-side-panel': () => html`
-    <tp-side-panel label="Inspector">
-      <tp-button slot="trigger">Open inspector</tp-button>
-      <h2>Inspector</h2>
-      <p>Object properties</p>
-    </tp-side-panel>
-  `,
   'tp-tooltip': () => html`
     <tp-tooltip>
       <tp-button slot="trigger">Hover or focus me</tp-button>

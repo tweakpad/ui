@@ -163,6 +163,8 @@ performs native viewport scrolling.
 
 ### Navigation, indicators and scrollbar
 
+With `navigation.placement: "outside"`, arrows remain centered on the viewport edges and pagination occupies its own row below a horizontal viewport or a column beside a vertical viewport, with library-owned spacing. `inside` overlays the controls within the viewport; `footer` groups them below it.
+
 `navigation` defaults to `{enabled:true, previous:true, next:true, icons:true, placement:'footer', hideOnClick:false}`. `previousElement` and `nextElement` are
 optional scoped targets replacing only their corresponding generated Button.
 One element cannot own both actions. Labels remain consumer-owned unless explicitly

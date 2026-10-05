@@ -1256,6 +1256,7 @@ export class TpCarousel<T = unknown> extends TpElement {
               },
             )
           : html`<span
+              role="img"
               class=${bulletClass}
               data-current=${String(current === index)}
               aria-label=${label}

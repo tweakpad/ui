@@ -311,27 +311,30 @@ const sectionFooterAppearance = [
     'border-block-start': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
   }),
 ];
-for (const prefix of ['dialog', 'alert-dialog', 'drawer', 'side-panel']) {
+// One section rhythm for every Dialog-family surface, including Drawer's content wrapper.
+function dialogSectionAppearance(wrapper = '') {
+  const section = `& > ${wrapper}`;
+  return [
+    rule({ padding: 'var(--tp-space-5)' }, `${section}:is(.header,.body,.footer)`),
+    rule({ 'padding-block-start': '0' }, `${section}.body`),
+    rule({ 'padding-block-start': 'var(--tp-space-5)' }, `&[data-header-hidden] > ${wrapper}.body`),
+    rule(
+      { 'padding-block-start': 'calc(var(--tp-control-height-sm) + var(--tp-space-4))' },
+      `&[data-header-hidden]:has(.corner-close) > ${wrapper}.body`,
+    ),
+    rule({ gap: 'var(--tp-space-2)' }, `${section}:is(.header,.footer)`),
+    rule(
+      { 'padding-inline-end': 'calc(var(--tp-space-5) + var(--tp-space-8))' },
+      `${section}.header:has(~ .corner-close)`,
+    ),
+  ];
+}
+for (const prefix of ['dialog', 'alert-dialog', 'drawer']) {
   sharedPresentation[`${prefix}-${prefix === 'drawer' ? 'surface' : 'content'}`] = [
     ...surfaceAppearance,
     ...(['dialog', 'alert-dialog'].includes(prefix) ? surfaceFadeAppearance : []),
     rule({ padding: '0' }),
-    ...(['dialog', 'alert-dialog'].includes(prefix)
-      ? [
-          rule({ padding: 'var(--tp-space-5)' }, '& > :is(.header,.body,.footer)'),
-          rule({ 'padding-block-start': '0' }, '& > .body'),
-          rule({ 'padding-block-start': 'var(--tp-space-5)' }, '&[data-header-hidden] > .body'),
-          rule(
-            { 'padding-block-start': 'calc(var(--tp-control-height-sm) + var(--tp-space-4))' },
-            '&[data-header-hidden]:has(.corner-close) > .body',
-          ),
-          rule({ gap: 'var(--tp-space-2)' }, '& > :is(.header,.footer)'),
-          rule(
-            { 'padding-inline-end': 'calc(var(--tp-space-5) + var(--tp-space-8))' },
-            '& > .header:has(~ .corner-close)',
-          ),
-        ]
-      : []),
+    ...dialogSectionAppearance(prefix === 'drawer' ? '.drawer-content > ' : ''),
   ];
   sharedPresentation[`${prefix}-title`] = [
     rule({

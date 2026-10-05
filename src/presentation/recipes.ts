@@ -5,7 +5,6 @@ import { dragDropListAppearance } from './recipes/drag-drop-list.js';
 import { dataVisualizationAppearance } from './recipes/data-visualization.js';
 import { questionnaireAppearance } from './recipes/questionnaire.js';
 import { drawerAppearance } from './recipes/drawer.js';
-import { sidePanelAppearance } from './recipes/side-panel.js';
 import { resizablePanelGroupAppearance } from './recipes/resizable-panel-group.js';
 import { scrollAreaAppearance } from './recipes/scroll-area.js';
 import { tableAppearance } from './recipes/table.js';
@@ -1084,7 +1083,6 @@ export const componentAppearance: PresentationDictionary = {
   ...attachmentAppearance,
   ...tableAppearance,
   ...scrollAreaAppearance,
-  ...sidePanelAppearance,
   ...drawerAppearance,
   ...resizablePanelGroupAppearance,
   ...navigationPanelAppearance,

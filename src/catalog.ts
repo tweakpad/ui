@@ -36,7 +36,6 @@ export const catalog = [
   ['Drawer', 'tp-drawer', 'flattening-compound'],
   ['Popover', 'tp-popover', 'flattening-compound'],
   ['Preview card', 'tp-preview-card', 'flattening-compound'],
-  ['Side panel', 'tp-side-panel', 'flattening-compound'],
   ['Tooltip', 'tp-tooltip', 'flattening-compound'],
   ['Breadcrumb', 'tp-breadcrumb', 'flattening-compound'],
   ['Menu', 'tp-menu', 'flattening-compound'],

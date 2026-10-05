@@ -45,7 +45,6 @@ const authoredStories = new Set([
   'tp-table',
   'tp-scroll-area',
   'tp-resizable-panel-group',
-  'tp-side-panel',
   'tp-drawer',
   'tp-questionnaire',
   'tp-data-visualization',

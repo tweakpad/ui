@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Drawer merge verification</title>
+    <link rel="stylesheet" href="/dist/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: var(--tp-space-4);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Drawer merge verification</h1>
+      <p>Background content makes the dark and blurred backdrops distinguishable.</p>
+      <tp-button id="outside">Outside action</tp-button>
+      <tp-drawer
+        id="drawer"
+        label="Workspace settings"
+        description="Update your profile and preferences."
+        show-swipe-handle
+        ><tp-button slot="trigger" variant="outline">Open drawer</tp-button
+        ><tp-field label="Display name"><tp-input value="Alex Morgan"></tp-input></tp-field
+        ><tp-button slot="close" variant="outline">Done</tp-button></tp-drawer
+      >
+      <tp-side-panel id="legacy" label="Legacy panel"
+        ><tp-button slot="trigger">Open legacy alias</tp-button>
+        <p>Uses the Drawer implementation and spacing.</p>
+        <tp-button slot="close">Done</tp-button></tp-side-panel
+      >
+      <tp-dialog id="dialog" label="Dialog"
+        ><tp-button slot="trigger">Open dialog</tp-button>
+        <p>Shared section spacing.</p>
+        <tp-button slot="close">Done</tp-button></tp-dialog
+      >
+      <tp-alert-dialog id="alert" label="Confirm change"
+        ><tp-button slot="trigger">Open alert</tp-button>
+        <p>Shared section spacing.</p>
+        <tp-button slot="cancel">Cancel</tp-button
+        ><tp-button slot="confirm">Confirm</tp-button></tp-alert-dialog
+      >
+    </main>
+    <script type="module" src="/dist/register.js"></script>
+  </body>
+</html>

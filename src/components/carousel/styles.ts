@@ -124,8 +124,7 @@ export const carouselStyles = css`
     height: var(--tp-space-12);
   }
 
-  .controls[data-placement='inside'],
-  .controls[data-placement='outside'] {
+  .controls[data-placement='inside'] {
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -136,29 +135,94 @@ export const carouselStyles = css`
     pointer-events: auto;
   }
 
-  .controls[data-placement='inside'] .indicators,
-  .controls[data-placement='outside'] .indicators {
+  .controls[data-placement='inside'] .indicators {
     align-self: end;
   }
 
-  .controls[data-placement='outside'] .previous {
-    translate: -120% 0;
-  }
-
-  .controls[data-placement='outside'] .next {
-    translate: 120% 0;
-  }
-
-  .controls[data-orientation='vertical'][data-placement='inside'],
-  .controls[data-orientation='vertical'][data-placement='outside'] {
+  .controls[data-orientation='vertical'][data-placement='inside'] {
     flex-direction: column;
   }
 
-  .controls[data-orientation='vertical'][data-placement='outside'] .previous {
+  /* Share the viewport row with arrows; pagination owns a separate intrinsic row.
+     Subgrid keeps arrow alignment independent of pagination height and presence. */
+  .root:has(> .controls[data-placement='outside']) {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .root:has(> .controls[data-placement='outside']) > .viewport {
+    grid-area: 1 / 1;
+  }
+
+  .controls[data-placement='outside'] {
+    display: grid;
+    grid-area: 1 / 1 / 3 / 2;
+    grid-template-rows: subgrid;
+    grid-template-columns: 1fr auto 1fr;
+    row-gap: 0;
+    pointer-events: none;
+  }
+
+  .controls[data-placement='outside'] > :is(.previous, slot[name='previous']) {
+    grid-area: 1 / 1;
+    place-self: center start;
+    translate: -120% 0;
+  }
+
+  .controls[data-placement='outside'] > :is(.next, slot[name='next']) {
+    grid-area: 1 / 3;
+    place-self: center end;
+    translate: 120% 0;
+  }
+
+  .controls:dir(rtl)[data-orientation='horizontal'][data-placement='outside']
+    > :is(.previous, slot[name='previous']) {
+    translate: 120% 0;
+  }
+
+  .controls:dir(rtl)[data-orientation='horizontal'][data-placement='outside']
+    > :is(.next, slot[name='next']) {
+    translate: -120% 0;
+  }
+
+  .controls[data-placement='outside'] > :is(.indicators, slot[name='indicators']) {
+    grid-area: 2 / 1 / 3 / -1;
+    place-self: start stretch;
+  }
+
+  .controls[data-placement='outside'] > slot {
+    display: block;
+  }
+
+  :host([orientation='vertical']) .root:has(> .controls[data-placement='outside']) {
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .controls[data-orientation='vertical'][data-placement='outside'] {
+    grid-area: 1 / 1 / 2 / 3;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: subgrid;
+    column-gap: 0;
+  }
+
+  .controls[data-orientation='vertical'][data-placement='outside']
+    > :is(.indicators, slot[name='indicators']) {
+    grid-area: 1 / 2;
+    flex-direction: column;
+    align-self: center;
+  }
+
+  .controls[data-orientation='vertical'][data-placement='outside']
+    > :is(.previous, slot[name='previous']) {
+    grid-area: 1 / 1;
+    place-self: start center;
     translate: 0 -120%;
   }
 
-  .controls[data-orientation='vertical'][data-placement='outside'] .next {
+  .controls[data-orientation='vertical'][data-placement='outside'] > :is(.next, slot[name='next']) {
+    grid-area: 1 / 1;
+    place-self: end center;
     translate: 0 120%;
   }
 
