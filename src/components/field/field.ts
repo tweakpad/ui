@@ -118,6 +118,29 @@ export class TpField extends TpElement {
         flex: none;
       }
 
+      :host([orientation='horizontal']) .choice {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      :host([orientation='horizontal']) .choice .content {
+        display: contents;
+      }
+
+      :host([orientation='horizontal']) .choice .label,
+      :host([orientation='horizontal']) .choice .content > :not(.control) {
+        grid-column: 1;
+      }
+
+      :host([orientation='horizontal']) .choice .control {
+        grid-column: 2;
+        grid-row: 1;
+        display: flex;
+        align-items: center;
+        /* Reserve the binary control's expanded pointer target inside the row. */
+        padding-inline: var(--tp-space-3);
+      }
+
       @container (min-width:32rem) {
         :host([orientation='responsive']) .field {
           flex-direction: row;
@@ -126,6 +149,28 @@ export class TpField extends TpElement {
 
         :host([orientation='responsive']) .label {
           flex: none;
+        }
+
+        :host([orientation='responsive']) .choice {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        :host([orientation='responsive']) .choice .content {
+          display: contents;
+        }
+
+        :host([orientation='responsive']) .choice .label,
+        :host([orientation='responsive']) .choice .content > :not(.control) {
+          grid-column: 1;
+        }
+
+        :host([orientation='responsive']) .choice .control {
+          grid-column: 2;
+          grid-row: 1;
+          display: flex;
+          align-items: center;
+          padding-inline: var(--tp-space-3);
         }
       }
 
@@ -332,8 +377,13 @@ export class TpField extends TpElement {
       ${this.validityContent?.(state) ?? nothing}`;
     const field = html` ${this.#has('field-label', this.label, 'label') ? this.#part('field-label', 'tp-label', html`<slot name="label" @slotchange=${this.#queue}>${this.label}</slot>`, { class: 'label', '@click': this.#activate }) : nothing}
     ${this.#part('field-control-region', 'div', content, { class: 'content' })}`;
-    const group = html`<slot name="group"></slot
-      >${this.#part('field-field', 'div', field, { class: 'field' })}`;
+    const group = html`<slot name="group"></slot>${this.#part('field-field', 'div', field, {
+        class: this.#control?.matches(
+          'tp-switch,tp-checkbox,input[type="checkbox"],input[type="radio"],[role="switch"],[role="checkbox"],[role="radio"]',
+        )
+          ? 'field choice'
+          : 'field',
+      })}`;
     return this.#part(
       'field',
       'fieldset',
@@ -433,6 +483,8 @@ export class TpField extends TpElement {
         'match',
         'native-label',
         'required',
+        'type',
+        'role',
       ],
     });
   }
