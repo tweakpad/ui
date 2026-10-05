@@ -14,7 +14,7 @@
 
 | ID | Requirement / capability and defaults | Live authority | Local upstream path / symbol | Lit interface / implementation | Docs location | Scenario IDs | Status | Evidence / gap |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| C-01 | Larger three dots at unchanged icon/control extent; preserve names, events, theming | ucl22-icon, ucl16-button | base/table-actions.tsx MoreHorizontalIcon; existing ButtonGroup3-unit artwork | navigationIcons.more strokeWidth4, shared TpIcon renderer; ButtonGroup consumes offered definition | docs/icon.md existing supplied-path contract unchanged | V-01 V-02 | pending | Inspect rendered dots and menu action. |
+| C-01 | Larger three dots at unchanged icon/control extent; preserve names, events, theming | ucl22-icon, ucl16-button | base/table-actions.tsx MoreHorizontalIcon; existing ButtonGroup3-unit artwork | navigationIcons.more strokeWidth4, shared TpIcon renderer; ButtonGroup consumes offered definition | docs/icon.md existing supplied-path contract unchanged | V-01 V-02 | passed | Table light/dark screenshots; actual Menu click/Escape and geometry inspected. |
 
 ## Architecture and reuse
 
@@ -40,8 +40,8 @@
 
 | ID | Capability IDs / evidence category | Setup and input | Expected result | Actual result | Tool/command and evidence | Status | Justification / gap |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| V-01 | C-01 visual | Table actions light/dark, shared icon geometry | Bigger visible dots; same14px icon and button dimensions | pending | Chrome MCP102 | pending | Visual check |
-| V-02 | C-01 regression | Open actual Table Menu; ButtonGroup shared import; type/build/lint | Menu opens normally; shared definition adopted | pending | Chrome MCP and focused checks | pending | No API change |
+| V-01 | C-01 visual | Table actions light/dark, shared icon geometry | Bigger visible dots; same14px icon and button dimensions | 4-unit stroke:2.33px dots at14px icon extent, up from1.02px; Button remains32px; light/dark inspected | Chrome MCP102 inline screenshots and computed geometry | passed | No demo CSS change |
+| V-02 | C-01 regression | Open actual Table Menu; ButtonGroup shared import; type/build/lint | Menu opens normally; shared definition adopted | Named menu opens with View invoice/Download/Delete invoice; Escape closes and restores trigger focus; lint/type/build/diff checks pass | Chrome MCP102; npx eslint, npx tsc --noEmit, npm run build; /tmp/tweakpad-menu-dots-build.log | passed | No API change; build retains existing motion dynamic-import warning |
 
 ## Early integration checkpoint
 
@@ -58,13 +58,13 @@
 | 0. Sources and scope | passed | Bounded artwork request, current contracts and references read |
 | 1. Capability mapping | passed | One visual capability; existing APIs/semantics unchanged |
 | 2. Architecture and composition reuse | passed | Shared offered definition, no duplicate renderer or demo override |
-| 3. Behavior | pending | Real menu open |
-| 4. Presentation and customization | pending | Extent/color retained and dots bigger |
-| 5. Accessibility | pending | Trigger name and native semantics remain |
-| 6. Visual and interaction inspection | pending | Light/dark screenshot and actual menu |
-| 7. Documentation and demo reuse | pending | No public API changes; ButtonGroup imports shared artwork |
-| 8. Regression and reconciliation | pending | Focused lint/type/build/diff checks |
+| 3. Behavior | passed | Actual trigger click opens menu; Escape closes |
+| 4. Presentation and customization | passed | Dot diameter1.75 to4 units;14px icon/32px Button retained; inherited light/dark colors |
+| 5. Accessibility | passed | Named button/menu/items in accessibility tree; decorative icon hidden; Escape focus restored. No semantic changes; full Menu accessibility audit outside artwork scope |
+| 6. Visual and interaction inspection | passed | Inline Table light/dark screenshots inspected and actual click/Escape exercised |
+| 7. Documentation and demo reuse | passed | No public API changes; ButtonGroup imports shared artwork |
+| 8. Regression and reconciliation | passed | Focused ESLint, TypeScript, production build and diff check pass; no behavior tests added for artwork |
 
 ## Completion / handoff
 
-Pending implementation and visual verification. This bounded change does not certify Menu/Icon families.
+Completed shared dots artwork adjustment. Inline Chrome screenshots are session-local; build log is local at /tmp/tweakpad-menu-dots-build.log. This bounded change does not certify Menu/Icon families. Questionnaire evidence updates were preserved.
