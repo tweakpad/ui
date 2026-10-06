@@ -24,7 +24,7 @@ export function toggleGroupJoinedPresentation(
 ): PresentationDeclarations {
   return {
     ...joinedControlPresentation(index, count, orientation),
-    'padding-inline-start': `calc(var(--tp-spacing) * ${leadingIcon ? 1.5 : 2})`,
-    'padding-inline-end': `calc(var(--tp-spacing) * ${trailingIcon ? 1.5 : 2})`,
+    'padding-inline-start': leadingIcon ? 'var(--tp-space-1-5)' : 'var(--tp-space-2)',
+    'padding-inline-end': trailingIcon ? 'var(--tp-space-1-5)' : 'var(--tp-space-2)',
   };
 }

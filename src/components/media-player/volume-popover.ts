@@ -45,7 +45,7 @@ const volumePopupPresentation: PartPresentation = {
       'border-radius': 'var(--tp-radius-full)',
       padding: 'var(--tp-space-3) var(--tp-space-1)',
       'min-inline-size': '0',
-      '--_tp-slider-vertical-length': 'calc(var(--tp-spacing) * 22.5)',
+      '--_tp-slider-vertical-length': 'calc(var(--tp-space-10) * 2)',
     },
   },
 };

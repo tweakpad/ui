@@ -29,6 +29,7 @@ export const labelPresentation = definePresentation({
   definition,
   bindings: {
     'tp-label': {
+      ':host': 'label',
       '.optional': 'label-optional-indicator',
     },
   },

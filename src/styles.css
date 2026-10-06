@@ -33,10 +33,13 @@
   --tp-chart-5: #db2777;
 
   /* One spacing seed and its closed derived scale. */
-  --tp-spacing: 0.2rem;
+  --tp-spacing: 0.25rem;
   --tp-space-0: 0;
+  --tp-space-0-5: calc(var(--tp-spacing) * 0.5);
   --tp-space-1: calc(var(--tp-spacing) * 1);
+  --tp-space-1-5: calc(var(--tp-spacing) * 1.5);
   --tp-space-2: calc(var(--tp-spacing) * 2);
+  --tp-space-2-5: calc(var(--tp-spacing) * 2.5);
   --tp-space-3: calc(var(--tp-spacing) * 3);
   --tp-space-4: calc(var(--tp-spacing) * 4);
   --tp-space-5: calc(var(--tp-spacing) * 5);
@@ -52,10 +55,10 @@
   --tp-font-mono: ui-monospace, sfmono-regular, menlo, monaco, consolas, monospace;
   --tp-text-xs: 0.75rem;
   --tp-text-sm: 0.875rem;
-  --tp-text-base: 0.9375rem;
-  --tp-text-lg: 1rem;
-  --tp-text-xl: 1.125rem;
-  --tp-text-2xl: 1.25rem;
+  --tp-text-base: 1rem;
+  --tp-text-lg: 1.125rem;
+  --tp-text-xl: 1.25rem;
+  --tp-text-2xl: 1.5rem;
   --tp-font-normal: 400;
   --tp-font-medium: 500;
   --tp-font-semibold: 600;
@@ -68,12 +71,14 @@
   --tp-tracking-wide: 0.025em;
 
   /* Shared control and icon extents. */
-  --tp-control-height-sm: calc(var(--tp-spacing) * 10);
-  --tp-control-height-md: calc(var(--tp-spacing) * 11.25);
-  --tp-control-height-lg: calc(var(--tp-spacing) * 13.75);
-  --tp-icon-size-sm: calc(var(--tp-spacing) * 4.375);
-  --tp-icon-size-md: calc(var(--tp-spacing) * 5);
-  --tp-icon-size-lg: calc(var(--tp-spacing) * 6.25);
+  --tp-control-height-xs: calc(var(--tp-spacing) * 6);
+  --tp-control-height-sm: calc(var(--tp-spacing) * 7);
+  --tp-control-height-md: calc(var(--tp-spacing) * 8);
+  --tp-control-height-lg: calc(var(--tp-spacing) * 9);
+  --tp-icon-size-xs: calc(var(--tp-spacing) * 3);
+  --tp-icon-size-sm: calc(var(--tp-spacing) * 3.5);
+  --tp-icon-size-md: calc(var(--tp-spacing) * 4);
+  --tp-icon-size-lg: calc(var(--tp-spacing) * 5);
   --tp-target-size-min: 2.75rem;
 
   /* Lines, shape, elevation, and state opacity. */
@@ -83,13 +88,15 @@
   --tp-ring-width: 2px;
   --tp-ring-offset: calc(var(--tp-spacing) / 2);
   --tp-radius: 0.625rem;
-  --tp-radius-sm: max(0px, calc(var(--tp-radius) - var(--tp-space-1)));
-  --tp-radius-md: max(0px, calc(var(--tp-radius) - var(--tp-spacing) / 2));
+
+  /* Radii derive from radius alone (CL §5.3): sm 0.6, md 0.8, xl 1.4, 2xl 1.8, 3xl 2.2, 4xl 2.6. */
+  --tp-radius-sm: calc(var(--tp-radius) * 0.6);
+  --tp-radius-md: calc(var(--tp-radius) * 0.8);
   --tp-radius-lg: var(--tp-radius);
-  --tp-radius-xl: calc(var(--tp-radius) + var(--tp-spacing) / 2);
-  --tp-radius-2xl: calc(var(--tp-radius) + var(--tp-space-1));
-  --tp-radius-3xl: calc(var(--tp-radius) + var(--tp-space-2));
-  --tp-radius-4xl: calc(var(--tp-radius) + var(--tp-space-4));
+  --tp-radius-xl: calc(var(--tp-radius) * 1.4);
+  --tp-radius-2xl: calc(var(--tp-radius) * 1.8);
+  --tp-radius-3xl: calc(var(--tp-radius) * 2.2);
+  --tp-radius-4xl: calc(var(--tp-radius) * 2.6);
   --tp-radius-full: 9999px;
   --tp-shadow-none: none;
   --tp-shadow-sm: 0 calc(var(--tp-spacing) / 4) var(--tp-space-1) rgb(0 0 0 / 16%);

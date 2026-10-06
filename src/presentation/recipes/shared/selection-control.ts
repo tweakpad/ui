@@ -13,6 +13,8 @@ export const selectionControl: readonly PresentationRule[] = [
       font: 'inherit',
       'font-size': 'var(--tp-text-sm)',
       'text-align': 'start',
+      // A labelled row is the pointer target; keep it at the WCAG 2.2 minimum (24px).
+      'min-block-size': 'var(--tp-control-height-xs)',
     },
   },
   {
@@ -45,7 +47,10 @@ export const selectionControl: readonly PresentationRule[] = [
 
 export const checkboxRules: readonly PresentationRule[] = [
   ...selectionControl,
-  { selector: '& > .box', declarations: { 'border-radius': 'calc(var(--tp-radius-sm) * .75)' } },
+  {
+    selector: '& > .box',
+    declarations: { 'border-radius': 'min(var(--tp-radius-sm), var(--tp-space-1))' },
+  },
   {
     selector: '&[data-checked] > .box, &[data-indeterminate] > .box',
     declarations: {

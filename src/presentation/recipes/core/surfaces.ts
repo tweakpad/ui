@@ -1,12 +1,12 @@
 import type { PresentationDictionary } from '../../resolver.js';
-import { controlFieldAppearance, surfaceAppearance } from '../shared/surface.js';
+import { surfaceAppearance } from '../shared/surface.js';
 
-export const inputCoreAppearance: PresentationDictionary = { input: controlFieldAppearance };
-export const textAreaCoreAppearance: PresentationDictionary = {
-  'text-area': controlFieldAppearance,
-};
+// Input and Text area paint comes entirely from fieldBoundary (shared/text-control.ts).
+export const inputCoreAppearance: PresentationDictionary = { input: [] };
+export const textAreaCoreAppearance: PresentationDictionary = { 'text-area': [] };
 export const toastCoreAppearance: PresentationDictionary = {
-  'toast-close': controlFieldAppearance,
+  // The close control is an icon-sm ghost Button; its size step owns the extent.
+  'toast-close': [],
   'toast-toast': surfaceAppearance,
 };
 export const attachmentCoreAppearance: PresentationDictionary = {

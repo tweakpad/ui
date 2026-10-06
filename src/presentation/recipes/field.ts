@@ -6,7 +6,7 @@ export const fieldAppearance: PresentationDictionary = {
   'field-legend': [
     {
       declarations: {
-        'margin-block-end': 'calc(var(--tp-spacing) * 1.5)',
+        'margin-block-end': 'var(--tp-space-1-5)',
         'font-weight': 'var(--tp-font-medium)',
         'font-size': 'var(--tp-text-base)',
       },
@@ -21,7 +21,7 @@ export const fieldAppearance: PresentationDictionary = {
       declarations: {
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
-        'line-height': 'var(--tp-leading-snug)',
+        'line-height': 'var(--tp-leading-tight)',
         gap: 'var(--tp-space-2)',
       },
     },
@@ -31,7 +31,7 @@ export const fieldAppearance: PresentationDictionary = {
       declarations: {
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
-        'line-height': 'var(--tp-leading-snug)',
+        'line-height': 'var(--tp-leading-tight)',
       },
     },
   ],

@@ -9,7 +9,8 @@ export const bubbleAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        'border-radius': 'var(--tp-radius-lg)',
+        // Nova cn-bubble-content: rounded-xl px-3 py-2 text-sm leading-relaxed.
+        'border-radius': 'var(--tp-radius-xl)',
         padding: 'var(--tp-space-2) var(--tp-space-3)',
         border: 'var(--tp-border-width) var(--tp-border-style) transparent',
         'font-size': 'var(--tp-text-sm)',
@@ -40,7 +41,7 @@ export const bubbleAppearance: PresentationDictionary = {
       selector: '&',
       declarations: {
         gap: 'var(--tp-space-1)',
-        padding: 'calc(var(--tp-spacing) * 0.5) calc(var(--tp-spacing) * 1.5)',
+        padding: 'var(--tp-space-0-5) var(--tp-space-1-5)',
         'border-radius': 'var(--tp-radius-full)',
         background: 'var(--tp-muted)',
         'box-shadow': '0 0 0 var(--tp-border-width-strong) var(--tp-background)',

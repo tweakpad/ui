@@ -4,9 +4,12 @@ import { rule } from '../shared/variant.js';
 
 export const cardCoreAppearance: PresentationDictionary = {
   card: [
+    // Nova cn-card: text-sm, rounded-xl; one --card-spacing for every section (CL §13.3).
     rule({
+      '--_tp-card-spacing': 'var(--tp-space-4)',
+      'font-size': 'var(--tp-text-sm)',
       border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-      'border-radius': 'var(--tp-radius-lg)',
+      'border-radius': 'var(--tp-radius-xl)',
       color: 'var(--tp-card-foreground)',
       background: 'var(--tp-card)',
       'box-shadow': 'var(--tp-shadow-none)',
@@ -36,10 +39,11 @@ export const cardCoreAppearance: PresentationDictionary = {
   'card-title': [
     rule({
       margin: '0',
-      'font-size': 'var(--tp-text-lg)',
-      'font-weight': 'var(--tp-font-semibold)',
-      'line-height': 'var(--tp-leading-normal)',
+      'font-size': 'var(--tp-text-base)',
+      'font-weight': 'var(--tp-font-medium)',
+      'line-height': 'var(--tp-leading-tight)',
     }),
+    rule({ 'font-size': 'var(--tp-text-sm)' }, ':host([size="sm"]) &'),
   ],
   'card-description': [
     rule({
@@ -62,9 +66,11 @@ export const cardCoreAppearance: PresentationDictionary = {
     ].flatMap((part) =>
       ['sm', 'default'].map((size) => [
         `${part}-size-${size}`,
-        ['card-header', 'card-content', 'card-footer'].includes(part)
-          ? [rule({ padding: `var(--tp-space-${size === 'sm' ? 3 : 5})` })]
-          : [],
+        part === 'card'
+          ? [rule({ '--_tp-card-spacing': `var(--tp-space-${size === 'sm' ? 3 : 4})` })]
+          : ['card-header', 'card-content', 'card-footer'].includes(part)
+            ? [rule({ padding: 'var(--_tp-card-spacing)' })]
+            : [],
       ]),
     ),
   ),

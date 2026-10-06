@@ -64,7 +64,7 @@ export const sliderStyles = css`
     inline-size: var(--tp-control-height-md);
 
     /* Composing library controls (the media volume popup) may shorten the vertical extent. */
-    min-block-size: var(--_tp-slider-vertical-length, calc(var(--tp-spacing) * 40));
+    min-block-size: var(--_tp-slider-vertical-length, calc(var(--tp-space-10) * 4));
     flex: 1;
     block-size: auto;
   }
@@ -124,7 +124,7 @@ export const sliderThumbStyles = css`
   .thumb::after {
     content: '';
     position: absolute;
-    inset: min(calc(var(--tp-spacing) * -2), calc((100% - var(--tp-target-size-min)) / 2));
+    inset: min(calc(var(--tp-space-2) * -1), calc((100% - var(--tp-target-size-min)) / 2));
   }
 
   input {

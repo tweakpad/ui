@@ -24,7 +24,7 @@ export const messageScrollerAppearance: PresentationDictionary = {
         'mask-repeat': 'no-repeat',
         animation: 'tp-message-scroller-fade-end 1ms ease-in-out both',
         'animation-timeline': 'scroll(self y)',
-        'animation-range': 'calc(100% - var(--tp-spacing) * 24) 100%',
+        'animation-range': 'calc(100% - var(--tp-space-12) * 2) 100%',
       },
     },
   ],

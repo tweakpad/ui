@@ -5,19 +5,21 @@ import type { PresentationRule } from '../resolver.js';
 export const popupSpacingAppearance: readonly PresentationRule[] = [
   {
     declarations: {
-      '--_tp-popup-spacing': 'var(--tp-space-2)',
+      // Nova menu, select and combobox content: p-1.
+      '--_tp-popup-spacing': 'var(--tp-space-1)',
       padding: 'var(--_tp-popup-spacing)',
     },
   },
 ];
 
 /** Default row rhythm shared by command, navigation and selection popup items. */
-// Nova menu, select and combobox items: py-1 px-1.5 gap-1.5, in spacing units so density scales them.
+// Nova menu, select and combobox items: py-1 px-1.5 gap-1.5 at text-sm/20px, about 28px tall.
 export const popupItemSpacingAppearance: readonly PresentationRule[] = [
   {
     declarations: {
-      gap: 'calc(var(--tp-spacing) * 1.875)',
-      padding: 'calc(var(--tp-spacing) * 1.25) calc(var(--tp-spacing) * 1.875)',
+      gap: 'var(--tp-space-1-5)',
+      padding: 'var(--tp-space-1) var(--tp-space-1-5)',
+      'min-block-size': 'var(--tp-control-height-sm)',
     },
   },
 ];
@@ -73,7 +75,7 @@ export const commandSurfaceAppearance: readonly PresentationRule[] = [
     declarations: {
       color: 'var(--tp-popover-foreground)',
       background: 'color-mix(in oklab, var(--tp-popover) 70%, transparent)',
-      'backdrop-filter': 'blur(calc(var(--tp-spacing) * 10)) saturate(1.5)',
+      'backdrop-filter': 'blur(var(--tp-space-10)) saturate(1.5)',
       'border-radius': 'var(--tp-radius-lg)',
       border:
         'var(--tp-border-width) var(--tp-border-style) color-mix(in oklab, var(--tp-foreground) 10%, transparent)',
@@ -109,7 +111,7 @@ export function commandItemRules(
         'border-radius': 'var(--tp-radius-md)',
         'font-size': 'var(--tp-text-sm)',
         'font-family': 'inherit',
-        'line-height': 'inherit',
+        'line-height': 'var(--tp-leading-tight)',
         'text-decoration': 'none',
       },
     },
@@ -125,7 +127,10 @@ export function commandItemRules(
     },
     {
       selector: '&[data-inset]',
-      declarations: { 'padding-inline-start': 'calc(var(--tp-spacing) * 7)' },
+      declarations: {
+        'padding-inline-start':
+          'calc(var(--tp-space-1-5) + var(--tp-icon-size-md) + var(--tp-space-1-5))',
+      },
     },
     {
       selector: '&:is([data-disabled], [aria-disabled="true"])',
@@ -143,12 +148,15 @@ export const commandLabelAppearance: readonly PresentationRule[] = [
       'font-size': 'var(--tp-text-xs)',
       'font-weight': 'var(--tp-font-medium)',
       'padding-block': 'var(--tp-space-1)',
-      'padding-inline': 'var(--tp-space-2)',
+      'padding-inline': 'var(--tp-space-1-5)',
     },
   },
   {
     selector: '&[data-inset]',
-    declarations: { 'padding-inline-start': 'calc(var(--tp-spacing) * 7)' },
+    declarations: {
+      'padding-inline-start':
+        'calc(var(--tp-space-1-5) + var(--tp-icon-size-md) + var(--tp-space-1-5))',
+    },
   },
 ];
 export const commandSeparatorAppearance: readonly PresentationRule[] = [

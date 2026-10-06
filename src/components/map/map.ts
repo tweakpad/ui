@@ -165,7 +165,9 @@ export class TpMap extends TpElement implements MapApi {
         display: block;
         overflow: hidden;
         inline-size: 100%;
-        block-size: 24rem;
+
+        /* 384px at the default seed. */
+        block-size: calc(var(--tp-space-16) * 6);
         isolation: isolate;
       }
 

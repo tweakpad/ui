@@ -47,7 +47,7 @@ export const mapAppearance: PresentationDictionary = {
     },
     {
       selector: ':host([data-selected]) &',
-      declarations: { scale: '1.2', filter: 'drop-shadow(0 0 0.25rem var(--tp-ring))' },
+      declarations: { scale: '1.2', filter: 'drop-shadow(0 0 var(--tp-space-1) var(--tp-ring))' },
     },
     {
       selector: '&:focus-visible',

@@ -26,7 +26,9 @@ describe('cataloged component presentation', () => {
     expect(result.missingKeys).toEqual([]);
     expect(
       result.parts.button?.some(
-        (r) => r.declarations.padding === 'var(--tp-space-1) var(--tp-space-3)',
+        (r) =>
+          r.declarations['block-size'] === 'var(--tp-control-height-sm)' &&
+          r.declarations['padding-inline'] === 'var(--tp-space-2-5)',
       ),
     ).toBe(true);
     expect(JSON.stringify(definition)).toBe(before);

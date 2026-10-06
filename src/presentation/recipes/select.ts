@@ -6,6 +6,7 @@ import {
   commandSeparatorAppearance,
 } from './command-surface.js';
 import { inputRules } from './shared/text-control.js';
+import { controlStepDeclarations } from './shared/variant.js';
 
 /** shadcn bases/base Select, style-nova.css cn-select-*; shared field/surface base remains. */
 export const selectAppearance: PresentationDictionary = {
@@ -20,7 +21,7 @@ export const selectAppearance: PresentationDictionary = {
         background: 'transparent',
         border: '0',
         outline: '0',
-        padding: 'var(--tp-space-1) calc(var(--tp-spacing) * 2.5)',
+        padding: 'var(--tp-space-1) var(--tp-space-2-5)',
         'min-block-size': 'var(--tp-control-height-md)',
       },
     },
@@ -57,14 +58,10 @@ export const selectAppearance: PresentationDictionary = {
     ...inputRules,
     {
       declarations: {
-        'min-block-size': 'var(--tp-control-height-md)',
-        'block-size': 'var(--tp-control-height-md)',
-        'padding-block': 'var(--tp-space-2)',
-        'padding-inline-start': 'calc(var(--tp-spacing) * 2.5)',
+        // Nova cn-select-trigger: the md control step with pl-2.5 pr-2.
+        ...controlStepDeclarations('md'),
+        'padding-inline-start': 'var(--tp-space-2-5)',
         'padding-inline-end': 'var(--tp-space-2)',
-        gap: 'calc(var(--tp-spacing) * 1.5)',
-        'font-size': 'var(--tp-text-sm)',
-        'border-radius': 'var(--tp-radius-lg)',
         background:
           'light-dark(transparent, color-mix(in oklab, var(--tp-input) 30%, transparent))',
       },
@@ -98,7 +95,7 @@ export const selectAppearance: PresentationDictionary = {
     ...rule,
     selector: (rule.selector ?? '&').replaceAll('&', '&:not([data-searchable])'),
   })),
-  'select-value': [{ declarations: { gap: 'calc(var(--tp-spacing) * 1.5)' } }],
+  'select-value': [{ declarations: { gap: 'var(--tp-space-1-5)' } }],
   'select-content': [
     ...anchoredPresenceAppearance.map((rule) => ({
       ...rule,
@@ -120,13 +117,14 @@ export const selectAppearance: PresentationDictionary = {
         'box-shadow': 'var(--tp-shadow-md)',
         'border-color': 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)',
         'border-radius': 'var(--tp-radius-lg)',
-        'min-inline-size': 'max(var(--tp-anchor-width, 0px), calc(var(--tp-spacing) * 36))',
+        // Nova min-w-36: three space-12 steps.
+        'min-inline-size': 'max(var(--tp-anchor-width, 0px), calc(var(--tp-space-12) * 3))',
         opacity: '1',
         'transform-origin': 'var(--tp-transform-origin)',
       },
     },
     { selector: '&[data-tp-motion-driven]', declarations: { transition: 'none' } },
-    { selector: '& .select-item-text', declarations: { gap: 'calc(var(--tp-spacing) * 1.5)' } },
+    { selector: '& .select-item-text', declarations: { gap: 'var(--tp-space-1-5)' } },
     { selector: '& .select-arrow', declarations: { color: 'var(--tp-popover)' } },
   ],
   'select-list': popupSpacingAppearance,
@@ -136,7 +134,7 @@ export const selectAppearance: PresentationDictionary = {
       declarations: {
         color: 'var(--tp-muted-foreground)',
         'font-size': 'var(--tp-text-xs)',
-        padding: 'var(--tp-space-1) calc(var(--tp-spacing) * 1.5)',
+        padding: 'var(--tp-space-1) var(--tp-space-1-5)',
       },
     },
   ],
@@ -150,8 +148,8 @@ export const selectAppearance: PresentationDictionary = {
         'border-radius': 'var(--tp-radius-md)',
         'font-family': 'inherit',
         'font-size': 'var(--tp-text-sm)',
-        'line-height': 'var(--tp-leading-normal)',
-        'padding-inline-end': 'calc(var(--tp-spacing) * 8)',
+        'line-height': 'var(--tp-leading-tight)',
+        'padding-inline-end': 'var(--tp-space-8)',
         'text-align': 'start',
         outline: '0',
       },

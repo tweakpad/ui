@@ -72,7 +72,8 @@ export const tableAppearance: PresentationDictionary = {
     ...cells,
     {
       declarations: {
-        'block-size': 'calc(var(--tp-spacing) * 10)',
+        // Nova cn-table-head: h-10.
+        'block-size': 'var(--tp-space-10)',
         'font-weight': 'var(--tp-font-medium)',
       },
     },

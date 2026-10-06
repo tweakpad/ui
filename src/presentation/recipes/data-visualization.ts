@@ -12,15 +12,15 @@ export const dataVisualizationAppearance: PresentationDictionary = {
     {
       selector: '& .encoding',
       declarations: {
-        'inline-size': 'calc(var(--tp-spacing) * 2.5)',
-        'block-size': 'calc(var(--tp-spacing) * 2.5)',
+        'inline-size': 'var(--tp-space-2-5)',
+        'block-size': 'var(--tp-space-2-5)',
         background: 'var(--_tp-series-color)',
         'border-radius': 'var(--tp-radius-sm)',
       },
     },
     {
       selector: '& .encoding[data-indicator="line"]',
-      declarations: { 'inline-size': 'var(--tp-spacing)', 'block-size': 'auto' },
+      declarations: { 'inline-size': 'var(--tp-space-1)', 'block-size': 'auto' },
     },
     {
       selector: '& .encoding[data-indicator="dashed"]',
@@ -47,7 +47,7 @@ export const dataVisualizationAppearance: PresentationDictionary = {
         'border-radius': 'var(--tp-radius-lg)',
         'box-shadow': 'var(--tp-shadow-lg)',
         'font-size': 'var(--tp-text-xs)',
-        'min-inline-size': 'calc(var(--tp-spacing) * 30)',
+        'min-inline-size': 'calc(var(--tp-space-10) * 3)',
       },
     },
   ],

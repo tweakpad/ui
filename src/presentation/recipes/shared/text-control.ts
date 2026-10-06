@@ -4,7 +4,7 @@ import type { PresentationRule } from '../../resolver.js';
 // The library control-height token supplies the locally governed default extent.
 export const fieldBoundary = {
   'min-height': 'var(--tp-control-height-md)',
-  padding: 'var(--tp-space-1) calc(var(--tp-spacing) * 2.5)',
+  padding: 'var(--tp-space-1) var(--tp-space-2-5)',
   border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-input)',
   'border-radius': 'var(--tp-radius-lg)',
   color: 'var(--tp-foreground)',
@@ -55,5 +55,12 @@ export const inputRules: readonly PresentationRule[] = [
 
 export const textAreaRules: readonly PresentationRule[] = [
   ...control,
-  { declarations: { 'min-block-size': 'calc(var(--tp-control-height-md) * 2)' } },
+  // Nova cn-textarea: field-sizing-content min-h-16 py-2; the field grows with its text.
+  {
+    declarations: {
+      'field-sizing': 'content',
+      'min-block-size': 'var(--tp-space-16)',
+      'padding-block': 'var(--tp-space-2)',
+    },
+  },
 ];

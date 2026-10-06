@@ -25,9 +25,10 @@ export const navigationRow: readonly PresentationRule[] = [
       'font-size': 'var(--tp-text-sm)',
       'font-weight': 'var(--tp-font-normal)',
       'text-align': 'start',
-      // Nova h-8; replaces Button's size extent.
-      'block-size': packedExtent('var(--tp-control-height-sm)'),
-      'min-block-size': packedExtent('var(--tp-control-height-sm)'),
+      // Nova SidebarMenuButton h-8; replaces Button's size extent.
+      'block-size': packedExtent('var(--tp-control-height-md)'),
+      'min-block-size': packedExtent('var(--tp-control-height-md)'),
+      '--_tp-icon-extent': 'var(--tp-icon-size-md)',
     },
   },
   fillColor('var(--tp-accent)'),

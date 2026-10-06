@@ -86,7 +86,7 @@ export const toastAppearance: PresentationDictionary = {
       declarations: {
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
-        'line-height': 'var(--tp-leading-snug)',
+        'line-height': 'var(--tp-leading-tight)',
       },
     },
   ],

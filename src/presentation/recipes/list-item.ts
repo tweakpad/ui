@@ -4,7 +4,7 @@ export const listItemAppearance: PresentationDictionary = {
     { declarations: { gap: 'var(--tp-space-4)' } },
     {
       selector: ':host(:has(tp-list-item[size="sm"])) &',
-      declarations: { gap: 'calc(var(--tp-spacing) * 2.5)' },
+      declarations: { gap: 'var(--tp-space-2-5)' },
     },
     {
       selector: ':host(:has(tp-list-item[size="xs"])) &',
@@ -12,14 +12,11 @@ export const listItemAppearance: PresentationDictionary = {
     },
   ],
   'list-item-root': [
-    { selector: '.row:has(> &)', declarations: { 'column-gap': 'var(--tp-space-3)' } },
-    {
-      selector: ':host([size="sm"]) .row:has(> &)',
-      declarations: { 'column-gap': 'var(--tp-space-2)' },
-    },
+    // Nova cn-item sizes: default and sm gap-2.5, xs gap-2.
+    { selector: '.row:has(> &)', declarations: { 'column-gap': 'var(--tp-space-2-5)' } },
     {
       selector: ':host([size="xs"]) .row:has(> &)',
-      declarations: { 'column-gap': 'var(--tp-space-1)' },
+      declarations: { 'column-gap': 'var(--tp-space-2)' },
     },
     { selector: '&:is(a,button):hover', declarations: { background: 'var(--tp-muted)' } },
     {
@@ -43,21 +40,15 @@ export const listItemAppearance: PresentationDictionary = {
         color: 'var(--tp-foreground)',
         'text-align': 'start',
         'font-family': 'inherit',
-        padding: 'var(--tp-space-2) var(--tp-space-3)',
-        'border-radius': 'var(--tp-radius-sm)',
+        padding: 'var(--tp-space-2-5) var(--tp-space-3)',
+        'border-radius': 'var(--tp-radius-lg)',
         border: 'var(--tp-border-width) var(--tp-border-style) transparent',
       },
     },
     {
       selector: ":host([size='xs']) &",
       declarations: {
-        padding: 'var(--tp-space-1) var(--tp-space-2)',
-      },
-    },
-    {
-      selector: ":host([size='sm']) &",
-      declarations: {
-        padding: 'var(--tp-space-2)',
+        padding: 'var(--tp-space-2) var(--tp-space-2-5)',
       },
     },
   ],
@@ -69,8 +60,10 @@ export const listItemAppearance: PresentationDictionary = {
       },
     },
     {
-      selector: ':host(:is([size="sm"],[size="xs"])) &',
-      declarations: { 'padding-inline-end': 'calc(var(--tp-space-2) + var(--tp-border-width))' },
+      selector: ':host([size="xs"]) &',
+      declarations: {
+        'padding-inline-end': 'calc(var(--tp-space-2-5) + var(--tp-border-width))',
+      },
     },
   ],
   'list-item-description': [
@@ -104,8 +97,8 @@ export const listItemAppearance: PresentationDictionary = {
     {
       selector: '&[data-treatment="icon"]',
       declarations: {
-        'inline-size': 'var(--tp-icon-size-sm)',
-        'block-size': 'var(--tp-icon-size-sm)',
+        'inline-size': 'var(--tp-icon-size-md)',
+        'block-size': 'var(--tp-icon-size-md)',
       },
     },
     {

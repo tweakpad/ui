@@ -15,13 +15,18 @@ export function dialogFamilyAppearance(
     [`${prefix}-${prefix === 'drawer' ? 'surface' : 'content'}`]: [
       ...surfaceAppearance,
       ...(['dialog', 'alert-dialog'].includes(prefix) ? surfaceFadeAppearance : []),
-      rule({ padding: '0' }),
+      // Nova cn-dialog-content: text-sm, rounded-xl, gap-4 p-4.
+      rule({
+        padding: '0',
+        'font-size': 'var(--tp-text-sm)',
+        'border-radius': 'var(--tp-radius-xl)',
+      }),
       ...dialogSectionAppearance(prefix === 'drawer' ? '.drawer-content > ' : ''),
     ],
     [`${prefix}-title`]: [
       rule({
-        'font-size': 'var(--tp-text-lg)',
-        'font-weight': 'var(--tp-font-semibold)',
+        'font-size': 'var(--tp-text-base)',
+        'font-weight': 'var(--tp-font-medium)',
         'line-height': 'var(--tp-leading-tight)',
       }),
     ],

@@ -1,7 +1,15 @@
 import type { PresentationDictionary } from './resolver.js';
 import { presentationFamilies } from './families/index.js';
 
-export { controlSizePresentation, variantPresentation } from './recipes/shared/variant.js';
+export {
+  CONTROL_STEPS,
+  controlSizePresentation,
+  controlStepDeclarations,
+  controlStepOf,
+  variantPresentation,
+  type ControlStep,
+  type ControlStepMetrics,
+} from './recipes/shared/variant.js';
 
 /**
  * The default appearance of every family in one dictionary, for consumers that build a

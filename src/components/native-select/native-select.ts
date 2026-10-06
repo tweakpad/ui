@@ -78,7 +78,7 @@ export class TpNativeSelect extends TpFormElement<NativeSelectValue> {
 
       .indicator {
         position: absolute;
-        inset-inline-end: calc(var(--tp-spacing) * 2.5);
+        inset-inline-end: var(--tp-space-2-5);
         inset-block-start: 50%;
         translate: 0 -50%;
         pointer-events: none;

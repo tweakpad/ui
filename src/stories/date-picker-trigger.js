@@ -15,7 +15,7 @@ export function datePickerTriggerContracts(empty) {
       styleHook: {
         'justify-content': 'flex-start',
         'font-weight': 'var(--tp-font-normal)',
-        'padding-inline': 'calc(var(--tp-spacing) * 2.5)',
+        'padding-inline': 'var(--tp-space-2-5)',
         ...(empty ? { color: 'var(--tp-muted-foreground)' } : {}),
       },
     },

@@ -259,7 +259,7 @@ export class TpNavigationPanelItem extends NavigationPanelLayoutPart {
         --navigation-panel-trailing-space: var(--tp-space-2);
 
         grid-area: 1 / 3;
-        inline-size: var(--tp-target-size-min);
+        inline-size: max(var(--tp-control-height-sm), var(--_tp-coarse-target, 0px));
         margin-inline-end: var(--tp-space-2);
       }
 
@@ -275,7 +275,7 @@ export class TpNavigationPanelItem extends NavigationPanelLayoutPart {
       ::slotted(tp-menu) {
         grid-area: 1 / 3;
         display: block;
-        inline-size: var(--tp-target-size-min);
+        inline-size: max(var(--tp-control-height-sm), var(--_tp-coarse-target, 0px));
         margin-inline-end: var(--tp-space-2);
       }
 
@@ -331,7 +331,7 @@ export class TpNavigationPanelItem extends NavigationPanelLayoutPart {
       style: {
         '--navigation-panel-trailing-space':
           accessories && !collapsed
-            ? `calc(var(--tp-target-size-min) * ${accessories} + var(--tp-space-2))`
+            ? `calc(max(var(--tp-control-height-sm), var(--_tp-coarse-target, 0px)) * ${accessories} + var(--tp-space-2))`
             : 'var(--tp-space-2)',
       },
     };

@@ -26,14 +26,12 @@ export class TpElement extends LitElement {
   };
 
   static styles: CSSResultGroup = css`
+    /* Typography inherits: the theme establishes the default tuple (font-sans, text-base,
+       font-normal, leading-normal, tracking-normal) on :root, and a Nova text-sm root such as
+       Card, Dialog or Table passes its size to the components inside it. */
     :host {
       box-sizing: border-box;
       color: var(--tp-foreground);
-      font-family: var(--tp-font-sans);
-      font-size: var(--tp-text-base);
-      font-weight: var(--tp-font-normal);
-      line-height: var(--tp-leading-normal);
-      letter-spacing: var(--tp-tracking-normal);
     }
 
     :host([motion-policy='reduce']) {

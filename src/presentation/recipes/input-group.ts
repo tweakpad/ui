@@ -20,7 +20,8 @@ export const inputGroupAppearance: PresentationDictionary = {
   'input-group-addon': [
     {
       declarations: {
-        padding: 'calc(var(--tp-spacing) * 1.5) var(--tp-space-2)',
+        // Nova cn-input-group-addon: py-1.5 gap-2, pl-2 / pr-2 on inline addons.
+        padding: 'var(--tp-space-1-5) var(--tp-space-2)',
         gap: 'var(--tp-space-2)',
         color: 'var(--tp-muted-foreground)',
         'font-size': 'var(--tp-text-sm)',

@@ -18,7 +18,6 @@ export class TpLabel extends TpElement {
     css`
       :host {
         display: inline-flex;
-        font-weight: var(--tp-font-semibold);
       }
 
       .optional {

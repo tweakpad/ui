@@ -34,8 +34,11 @@ export const TOKEN_FAMILIES = {
   spacing: [
     'spacing',
     'space-0',
+    'space-0-5',
     'space-1',
+    'space-1-5',
     'space-2',
+    'space-2-5',
     'space-3',
     'space-4',
     'space-5',
@@ -51,9 +54,11 @@ export const TOKEN_FAMILIES = {
   lineHeight: ['leading-tight', 'leading-normal', 'leading-relaxed'],
   letterSpacing: ['tracking-tight', 'tracking-normal', 'tracking-wide'],
   size: [
+    'control-height-xs',
     'control-height-sm',
     'control-height-md',
     'control-height-lg',
+    'icon-size-xs',
     'icon-size-sm',
     'icon-size-md',
     'icon-size-lg',

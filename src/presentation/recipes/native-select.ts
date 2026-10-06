@@ -1,5 +1,6 @@
 import type { PresentationDictionary } from '../resolver.js';
 import { inputRules } from './shared/text-control.js';
+import { controlStepDeclarations } from './shared/variant.js';
 /** Nova native-select layers its native extents over the shared Input boundary. */
 export const nativeSelectAppearance: PresentationDictionary = {
   'native-select': [
@@ -11,9 +12,9 @@ export const nativeSelectAppearance: PresentationDictionary = {
     ...inputRules,
     {
       declarations: {
-        height: 'var(--tp-control-height-md)',
-        'min-height': 'var(--tp-control-height-md)',
-        'padding-inline-start': 'calc(var(--tp-spacing) * 2.5)',
+        // Nova cn-native-select: the md control step with py-1 pl-2.5 pr-8.
+        ...controlStepDeclarations('md'),
+        'padding-inline-start': 'var(--tp-space-2-5)',
         'padding-inline-end': 'var(--tp-space-8)',
         'padding-block': 'var(--tp-space-1)',
         // Native text alignment remains native while extent follows shared control sizes.
@@ -23,10 +24,11 @@ export const nativeSelectAppearance: PresentationDictionary = {
     {
       selector: '&[data-size="sm"]',
       declarations: {
-        height: 'var(--tp-control-height-sm)',
-        'min-height': 'var(--tp-control-height-sm)',
-        'padding-block': 'calc(var(--tp-spacing) * .5)',
-        'border-radius': 'min(var(--tp-radius-md), calc(var(--tp-spacing) * 2.5))',
+        // Nova data-[size=sm]: h-7 py-0.5 rounded-[min(var(--radius-md),10px)].
+        ...controlStepDeclarations('sm'),
+        'padding-inline-start': 'var(--tp-space-2-5)',
+        'padding-inline-end': 'var(--tp-space-8)',
+        'padding-block': 'var(--tp-space-0-5)',
       },
     },
     {
@@ -47,7 +49,11 @@ export const nativeSelectAppearance: PresentationDictionary = {
     },
     {
       selector: '&[multiple]',
-      declarations: { height: 'auto', 'padding-inline-end': 'calc(var(--tp-spacing) * 2.5)' },
+      declarations: {
+        height: 'auto',
+        'block-size': 'auto',
+        'padding-inline-end': 'var(--tp-space-2-5)',
+      },
     },
     {
       // Native HTML has no readonly select paint. The Foundation editing state
@@ -74,9 +80,8 @@ export const nativeSelectAppearance: PresentationDictionary = {
     {
       declarations: {
         color: 'var(--tp-muted-foreground)',
-        'font-size': 'var(--tp-text-base)',
-        'inline-size': 'var(--tp-space-4)',
-        'block-size': 'var(--tp-space-4)',
+        'inline-size': 'var(--tp-icon-size-md)',
+        'block-size': 'var(--tp-icon-size-md)',
       },
     },
   ],

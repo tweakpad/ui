@@ -66,7 +66,7 @@ export const mediaSurfaceVariables = css`
   :host([data-media-container]) {
     /* Darker than the upstream 10% white surface so text keeps contrast over bright footage. */
     --_tp-media-surface: color-mix(in oklab, var(--tp-background) 45%, transparent);
-    --_tp-media-surface-filter: blur(calc(var(--tp-spacing) * 5)) saturate(110%);
+    --_tp-media-surface-filter: blur(var(--tp-space-5)) saturate(110%);
     --_tp-media-surface-edge:
       0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-background) 15%, transparent),
       inset 0 var(--tp-border-width) 0 0 color-mix(in oklab, var(--tp-foreground) 10%, transparent);

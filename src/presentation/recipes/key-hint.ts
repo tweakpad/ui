@@ -4,8 +4,9 @@ export const keyHintAppearance: PresentationDictionary = {
   'key-hint': [
     {
       declarations: {
-        'block-size': 'calc(var(--tp-spacing) * 6.25)',
-        'min-inline-size': 'calc(var(--tp-spacing) * 6.25)',
+        // Nova cn-kbd: h-5 min-w-5 px-1 text-xs, icons size-3.
+        'block-size': 'var(--tp-space-5)',
+        'min-inline-size': 'var(--tp-space-5)',
         'padding-inline': 'var(--tp-space-1)',
         gap: 'var(--tp-space-1)',
         'border-radius': 'var(--tp-radius-sm)',
@@ -15,7 +16,7 @@ export const keyHintAppearance: PresentationDictionary = {
         'font-size': 'var(--tp-text-xs)',
         'font-weight': 'var(--tp-font-medium)',
         'line-height': '1',
-        '--tp-icon-size-md': 'calc(var(--tp-spacing) * 3.75)',
+        '--_tp-icon-extent': 'var(--tp-icon-size-xs)',
       },
     },
   ],

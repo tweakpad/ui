@@ -81,11 +81,11 @@ export const drawerAppearance: PresentationDictionary = {
     },
     {
       selector: '[data-swipe-axis="y"] > &::after',
-      declarations: { height: 'var(--tp-space-1)', width: 'calc(var(--tp-spacing) * 24)' },
+      declarations: { height: 'var(--tp-space-1)', width: 'calc(var(--tp-space-12) * 2)' },
     },
     {
       selector: '[data-swipe-axis="x"] > &::after',
-      declarations: { width: 'var(--tp-space-1)', height: 'calc(var(--tp-spacing) * 24)' },
+      declarations: { width: 'var(--tp-space-1)', height: 'calc(var(--tp-space-12) * 2)' },
     },
     {
       selector: '&:focus-visible',

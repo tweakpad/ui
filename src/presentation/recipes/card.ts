@@ -13,7 +13,7 @@ export const cardAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        gap: 'var(--tp-space-5)',
+        gap: 'var(--_tp-card-spacing)',
       },
     },
   ],

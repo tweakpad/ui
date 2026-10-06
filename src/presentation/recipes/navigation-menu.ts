@@ -67,11 +67,11 @@ export const navigationMenuAppearance: PresentationDictionary = {
         color: 'var(--tp-foreground)',
         border: '0',
         'border-radius': 'var(--tp-radius-lg)',
-        'padding-inline': 'calc(var(--tp-spacing) * 2.5)',
-        'padding-block': 'calc(var(--tp-spacing) * 1.5)',
-        // Nova sizes the trigger by its padding; a reused Button's size extent does not apply.
-        'block-size': 'auto',
-        'min-block-size': packedExtent('var(--tp-control-height-sm)'),
+        // Nova cn-navigation-menu-trigger: h-9 px-2.5 py-1.5; replaces the Button's size extent.
+        'padding-inline': 'var(--tp-space-2-5)',
+        'padding-block': 'var(--tp-space-1-5)',
+        'block-size': packedExtent('var(--tp-control-height-lg)'),
+        'min-block-size': packedExtent('var(--tp-control-height-lg)'),
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
       },
@@ -122,8 +122,8 @@ export const navigationMenuAppearance: PresentationDictionary = {
     {
       declarations: {
         // Nova cn-navigation-menu-link: p-2 gap-2.
-        gap: 'calc(var(--tp-spacing) * 2.5)',
-        padding: 'calc(var(--tp-spacing) * 2.5)',
+        gap: 'var(--tp-space-2)',
+        padding: 'var(--tp-space-2)',
         display: 'flex',
         'align-items': 'center',
         'border-radius': 'var(--tp-radius-md)',

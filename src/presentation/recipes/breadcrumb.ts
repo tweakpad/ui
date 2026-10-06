@@ -8,7 +8,7 @@ export const breadcrumbAppearance: PresentationDictionary = {
         margin: '0',
         padding: '0',
         'list-style': 'none',
-        gap: 'calc(var(--tp-spacing) * 1.5)',
+        gap: 'var(--tp-space-1-5)',
         color: 'var(--tp-muted-foreground)',
         'font-size': 'var(--tp-text-sm)',
       },

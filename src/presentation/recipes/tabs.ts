@@ -13,10 +13,15 @@ export const tabsAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        padding: 'var(--tp-space-1)',
+        // Nova cn-tabs-list: h-8 p-[3px]; the 3px inset is space-1 less the border.
+        padding: 'calc(var(--tp-space-1) - var(--tp-border-width))',
         'border-radius': 'var(--tp-radius-lg)',
         color: 'var(--tp-muted-foreground)',
       },
+    },
+    {
+      selector: ":host(:not([orientation='vertical'])) &",
+      declarations: { 'box-sizing': 'border-box', 'block-size': 'var(--tp-control-height-md)' },
     },
     { selector: ":host([variant='enclosed']) &", declarations: { background: 'var(--tp-muted)' } },
     {
@@ -34,10 +39,17 @@ export const tabsAppearance: PresentationDictionary = {
         font: 'inherit',
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
-        padding: 'var(--tp-space-1) var(--tp-space-2)',
-        gap: 'var(--tp-space-2)',
+        'line-height': 'var(--tp-leading-tight)',
+        // Nova cn-tabs-trigger: px-1.5 py-0.5 gap-1.5, h-[calc(100%-1px)].
+        padding: 'var(--tp-space-0-5) var(--tp-space-1-5)',
+        gap: 'var(--tp-space-1-5)',
         'border-radius': 'var(--tp-radius-md)',
+        '--_tp-icon-extent': 'var(--tp-icon-size-md)',
       },
+    },
+    {
+      selector: ":host(:not([orientation='vertical'])) &",
+      declarations: { 'block-size': 'calc(100% - var(--tp-border-width))' },
     },
     { selector: '&:hover:not([data-disabled])', declarations: { color: 'var(--tp-foreground)' } },
     {

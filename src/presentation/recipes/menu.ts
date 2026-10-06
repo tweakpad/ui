@@ -33,14 +33,14 @@ export const subTrigger: readonly PresentationRule[] = [
 ];
 const choiceItem: readonly PresentationRule[] = [
   ...menuItem,
-  { declarations: { 'padding-inline-end': 'calc(var(--tp-spacing) * 8)' } },
+  { declarations: { 'padding-inline-end': 'var(--tp-space-8)' } },
   {
     selector: '& .indicator',
     declarations: {
       position: 'absolute',
       'inset-inline-end': 'var(--tp-space-2)',
-      'inline-size': 'var(--tp-icon-size-sm)',
-      'block-size': 'var(--tp-icon-size-sm)',
+      'inline-size': 'var(--tp-icon-size-md)',
+      'block-size': 'var(--tp-icon-size-md)',
     },
   },
 ];

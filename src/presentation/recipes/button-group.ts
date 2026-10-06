@@ -13,7 +13,7 @@ export const buttonGroupAppearance: PresentationDictionary = {
     {
       declarations: {
         gap: 'var(--tp-space-2)',
-        padding: '0 calc(var(--tp-spacing) * 2.5)',
+        padding: '0 var(--tp-space-2-5)',
         background: 'var(--tp-muted)',
         color: 'var(--tp-foreground)',
         border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-input)',

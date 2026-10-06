@@ -6,7 +6,8 @@ export const alertAppearance: PresentationDictionary = {
       selector: '&',
       declarations: {
         'column-gap': 'var(--tp-space-2)',
-        padding: 'var(--tp-space-2) var(--tp-space-3)',
+        // Nova cn-alert: px-2.5 py-2 gap-y-0.5 gap-x-2.
+        padding: 'var(--tp-space-2) var(--tp-space-2-5)',
         border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
         'border-radius': 'var(--tp-radius-lg)',
         background: 'var(--tp-card)',
@@ -17,7 +18,7 @@ export const alertAppearance: PresentationDictionary = {
     },
     {
       selector: '& > .body',
-      declarations: { gap: 'calc(var(--tp-space-1) / 2)' },
+      declarations: { gap: 'var(--tp-space-0-5)' },
     },
     ...(['success', 'warning', 'danger'] as const).map((severity) => ({
       selector: `:host([severity='${severity}']) &`,
@@ -42,8 +43,6 @@ export const alertAppearance: PresentationDictionary = {
     },
     { selector: '& ::slotted(p)', declarations: { margin: '0' } },
   ],
-  'alert-mark': [
-    { selector: '&', declarations: { 'padding-block-start': 'calc(var(--tp-space-1) / 2)' } },
-  ],
+  'alert-mark': [{ selector: '&', declarations: { 'padding-block-start': 'var(--tp-space-0-5)' } }],
   'alert-action': [{ selector: '&', declarations: { gap: 'var(--tp-space-2)' } }],
 };

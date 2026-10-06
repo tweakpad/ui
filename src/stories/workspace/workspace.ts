@@ -376,7 +376,7 @@ export class CatalogWorkspace extends LitElement {
                 >${icon('bell')}</tp-button
               >Recent activity</tp-tooltip
             >
-            <tp-avatar fallback="AM" size="sm" alt="Alex Morgan"></tp-avatar>
+            <tp-avatar fallback="AM" alt="Alex Morgan"></tp-avatar>
           </div>
         </header>
         <tp-navigation-panel-inset>
@@ -393,7 +393,7 @@ export class CatalogWorkspace extends LitElement {
               </div>
               <div class="workspace-row">
                 <tp-avatar-group
-                  >${this.members.slice(0, 4).map((name) => html`<tp-avatar size="sm" .fallback=${initials(name)} .alt=${name}></tp-avatar>`)}</tp-avatar-group
+                  >${this.members.slice(0, 4).map((name) => html`<tp-avatar .fallback=${initials(name)} .alt=${name}></tp-avatar>`)}</tp-avatar-group
                 >
                 <tp-button variant="outline" size="sm" @click=${this.#invite}>Invite</tp-button>
                 <tp-button size="sm" @click=${this.#newTask}
@@ -449,7 +449,7 @@ export class CatalogWorkspace extends LitElement {
                 tooltip="Studio North workspace"
                 aria-label="Studio North workspace"
               >
-                <tp-avatar slot="icon-start" size="sm" fallback="N" alt="Studio North"></tp-avatar>
+                <tp-avatar slot="icon-start" fallback="N" alt="Studio North"></tp-avatar>
                 <span>Studio North</span><br /><small>Product studio</small
                 ><tp-icon slot="icon-end" .icon=${navigationIcons.selector}></tp-icon>
               </tp-navigation-panel-action>
@@ -538,8 +538,8 @@ export class CatalogWorkspace extends LitElement {
               size="lg"
               tooltip="Your settings"
               @click=${() => this.#go('settings')}
-              ><tp-avatar slot="icon-start" size="sm" fallback="AM" alt="Alex Morgan"></tp-avatar
-              >Alex Morgan<br /><small>Personal settings</small></tp-navigation-panel-action
+              ><tp-avatar slot="icon-start" fallback="AM" alt="Alex Morgan"></tp-avatar>Alex
+              Morgan<br /><small>Personal settings</small></tp-navigation-panel-action
             ></tp-navigation-panel-item
           ></tp-navigation-panel-menu
         >
@@ -686,7 +686,7 @@ export class CatalogWorkspace extends LitElement {
             .disabled=${this.refreshing}
             @click=${this.#refresh}
           ></tp-button>
-          ${this.refreshing ? html`<div class="workspace-stack" aria-label="Refreshing activity" aria-busy="true"><tp-skeleton class="workspace-skeleton-line" animated></tp-skeleton><tp-skeleton class="workspace-skeleton-line" animated></tp-skeleton><tp-skeleton class="workspace-skeleton-line" animated></tp-skeleton></div>` : html`<div class="workspace-stack">${this.messages.slice(-3).map((message) => html`<tp-list-item .description=${message.text}><tp-avatar slot="leading" size="sm" .fallback=${initials(message.author)} .alt=${message.author}></tp-avatar>${message.author}</tp-list-item>`)}</div>`}
+          ${this.refreshing ? html`<div class="workspace-stack" aria-label="Refreshing activity" aria-busy="true"><tp-skeleton class="workspace-skeleton-line" animated></tp-skeleton><tp-skeleton class="workspace-skeleton-line" animated></tp-skeleton><tp-skeleton class="workspace-skeleton-line" animated></tp-skeleton></div>` : html`<div class="workspace-stack">${this.messages.slice(-3).map((message) => html`<tp-list-item .description=${message.text}><tp-avatar slot="leading" .fallback=${initials(message.author)} .alt=${message.author}></tp-avatar>${message.author}</tp-list-item>`)}</div>`}
           <tp-button slot="footer" variant="link" @click=${() => this.#go('activity')}
             >Join the conversation</tp-button
           >
@@ -1651,7 +1651,7 @@ export class CatalogWorkspace extends LitElement {
         @tp-open-change=${this.#open('updates')}
       >
         <div class="workspace-stack">
-          ${this.messages.map((message) => html`<tp-list-item .description=${message.text}><tp-avatar slot="leading" size="sm" .fallback=${initials(message.author)} .alt=${message.author}></tp-avatar>${message.author} · <tp-time .datetime=${message.time} mode="calendar"></tp-time></tp-list-item>`)}
+          ${this.messages.map((message) => html`<tp-list-item .description=${message.text}><tp-avatar slot="leading" .fallback=${initials(message.author)} .alt=${message.author}></tp-avatar>${message.author} · <tp-time .datetime=${message.time} mode="calendar"></tp-time></tp-list-item>`)}
         </div>
         <tp-button
           slot="footer"

@@ -68,21 +68,21 @@ export class TpMapPin extends TpMapElement implements MapPinRecord {
       [part~='pin-visual'] {
         position: relative;
         display: block;
-        inline-size: 1.75rem;
-        block-size: 1.75rem;
+        inline-size: var(--tp-control-height-sm);
+        block-size: var(--tp-control-height-sm);
         border-radius: 50% 50% 50% 0;
         rotate: -45deg;
 
         /* The rotated tip extends 0.207 of the size below the box: keep it on the anchor. */
-        margin-block-end: calc(1.75rem * 0.207);
+        margin-block-end: calc(var(--tp-control-height-sm) * 0.207);
       }
 
       :host([anchor='center']) [part~='pin-visual'] {
         border-radius: 50%;
         rotate: none;
         margin: 0;
-        inline-size: 1.25rem;
-        block-size: 1.25rem;
+        inline-size: var(--tp-icon-size-lg);
+        block-size: var(--tp-icon-size-lg);
       }
 
       [part~='pin-visual']::after {

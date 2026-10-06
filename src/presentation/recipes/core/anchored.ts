@@ -10,9 +10,10 @@ export const previewCardCoreAppearance: PresentationDictionary = {
     ...anchoredPresenceAppearance,
     rule({ fill: 'var(--tp-popover)' }, '& > .arrow'),
     rule({
-      'inline-size': 'min(calc(var(--tp-spacing) * 64), var(--tp-available-width))',
-      padding: 'calc(var(--tp-spacing) * 2.5)',
-      gap: 'var(--tp-space-2)',
+      // Nova cn-hover-card-content: w-64 p-2.5 gap-2.5 (space-16 × 4 = 64 units).
+      'inline-size': 'min(calc(var(--tp-space-16) * 4), var(--tp-available-width))',
+      padding: 'var(--tp-space-2-5)',
+      gap: 'var(--tp-space-2-5)',
       'font-size': 'var(--tp-text-sm)',
     }),
   ],
@@ -24,8 +25,10 @@ export const tooltipCoreAppearance: PresentationDictionary = {
     ...surfaceAppearance,
     ...anchoredPresenceAppearance,
     rule({
-      'max-inline-size': 'min(calc(var(--tp-spacing) * 100), var(--tp-available-width))',
-      padding: 'calc(var(--tp-space-1) * 1.5) var(--tp-space-3)',
+      // Nova cn-tooltip-content: max-w-xs (20rem = space-16 × 5) px-3 py-1.5 gap-1.5 text-xs.
+      'max-inline-size': 'min(calc(var(--tp-space-16) * 5), var(--tp-available-width))',
+      padding: 'var(--tp-space-1-5) var(--tp-space-3)',
+      gap: 'var(--tp-space-1-5)',
       border: '0',
       'border-radius': 'var(--tp-radius-md)',
       background: 'var(--tp-foreground)',

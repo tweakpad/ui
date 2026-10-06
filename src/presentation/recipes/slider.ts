@@ -18,13 +18,13 @@ export const sliderAppearance: PresentationDictionary = {
       declarations: {
         'border-radius': 'var(--tp-radius-full)',
         background: 'var(--tp-muted)',
-        height: 'var(--tp-spacing)',
+        height: 'var(--tp-space-1)',
         width: '100%',
       },
     },
     {
       selector: '&[data-orientation="vertical"]',
-      declarations: { width: 'var(--tp-spacing)', height: '100%' },
+      declarations: { width: 'var(--tp-space-1)', height: '100%' },
     },
   ],
   'slider-range': [
@@ -33,8 +33,8 @@ export const sliderAppearance: PresentationDictionary = {
   'slider-thumb': [
     {
       declarations: {
-        width: 'calc(var(--tp-spacing) * 3)',
-        height: 'calc(var(--tp-spacing) * 3)',
+        width: 'var(--tp-space-3)',
+        height: 'var(--tp-space-3)',
         border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-ring)',
         'border-radius': 'var(--tp-radius-full)',
         background: 'var(--tp-background)',
@@ -46,7 +46,7 @@ export const sliderAppearance: PresentationDictionary = {
         '&:hover:not([data-disabled]), &:has(input:focus-visible), &[data-active]:not([data-disabled])',
       declarations: {
         'box-shadow':
-          '0 0 0 calc(var(--tp-spacing) * .75) color-mix(in oklab, var(--tp-ring) 50%, transparent)',
+          '0 0 0 calc(var(--tp-ring-width) * 1.5) color-mix(in oklab, var(--tp-ring) 50%, transparent)',
       },
     },
     {
@@ -62,13 +62,13 @@ export const sliderAppearance: PresentationDictionary = {
   'slider-variant-bar': [
     {
       declarations: {
-        '--_tp-slider-bar-size': 'calc(var(--tp-spacing) * 1.25)',
+        '--_tp-slider-bar-size': 'var(--tp-space-1)',
       },
     },
     {
       selector: '&:is(:hover, [data-pointing], [data-dragging], [data-focused])',
       declarations: {
-        '--_tp-slider-bar-size': 'calc(var(--tp-spacing) * 2.25)',
+        '--_tp-slider-bar-size': 'var(--tp-space-2)',
       },
     },
   ],
@@ -104,8 +104,8 @@ export const sliderAppearance: PresentationDictionary = {
   'slider-thumb-variant-bar': [
     {
       declarations: {
-        width: 'calc(var(--tp-spacing) * 2)',
-        height: 'calc(var(--tp-spacing) * 5)',
+        width: 'var(--tp-space-2)',
+        height: 'var(--tp-space-5)',
         border: '0',
         background: 'transparent',
       },
@@ -145,16 +145,14 @@ export const sliderAppearance: PresentationDictionary = {
     {
       selector: '&:not(:last-child)',
       declarations: {
-        'border-inline-end':
-          'calc(var(--tp-spacing) * .5) var(--tp-border-style) var(--tp-background)',
+        'border-inline-end': 'var(--tp-space-0-5) var(--tp-border-style) var(--tp-background)',
       },
     },
     {
       selector: '&[data-orientation="vertical"]:not(:last-child)',
       declarations: {
         'border-inline-end': '0',
-        'border-block-start':
-          'calc(var(--tp-spacing) * .5) var(--tp-border-style) var(--tp-background)',
+        'border-block-start': 'var(--tp-space-0-5) var(--tp-border-style) var(--tp-background)',
       },
     },
     {

@@ -58,11 +58,12 @@ export const navigationPanelAppearance: PresentationDictionary = {
     },
   ],
   'navigation-panel-variant-inset': [],
+  // Nova SidebarTrigger: Button icon-sm (size-7); coarse pointers raise it to the minimum target.
   'navigation-panel-trigger': [
     {
       declarations: {
-        'min-inline-size': 'var(--tp-target-size-min)',
-        'min-block-size': 'var(--tp-target-size-min)',
+        'min-inline-size': packedExtent('var(--tp-control-height-sm)'),
+        'min-block-size': packedExtent('var(--tp-control-height-sm)'),
       },
     },
   ],
@@ -107,7 +108,8 @@ export const navigationPanelAppearance: PresentationDictionary = {
   'navigation-panel-group-label': [
     {
       declarations: {
-        height: packedExtent('var(--tp-control-height-sm)'),
+        // Nova cn-sidebar-group-label: h-8 px-2 text-xs font-medium.
+        height: packedExtent('var(--tp-control-height-md)'),
         padding: '0 var(--tp-space-2)',
         'font-size': 'var(--tp-text-xs)',
         'font-weight': 'var(--tp-font-medium)',
@@ -122,8 +124,9 @@ export const navigationPanelAppearance: PresentationDictionary = {
   'navigation-panel-group-action': [
     {
       declarations: {
-        'min-inline-size': 'var(--tp-target-size-min)',
-        'min-block-size': 'var(--tp-target-size-min)',
+        // Nova cn-sidebar-group-action is w-5; the xs control extent keeps a 24px target.
+        'min-inline-size': packedExtent('var(--tp-control-height-xs)'),
+        'min-block-size': packedExtent('var(--tp-control-height-xs)'),
         background: 'transparent',
         color: 'var(--tp-foreground)',
       },
@@ -161,7 +164,12 @@ export const navigationPanelAppearance: PresentationDictionary = {
     },
     {
       selector: largeAction,
-      declarations: { 'block-size': 'auto', 'padding-block': 'var(--tp-space-3)' },
+      // Nova data-[size=lg]: a fixed h-12 p-2 row for two-line (title + detail) content.
+      declarations: {
+        'block-size': packedExtent('var(--tp-space-12)'),
+        'min-block-size': packedExtent('var(--tp-space-12)'),
+        'padding-block': 'var(--tp-space-2)',
+      },
     },
     {
       selector: largeAction + ' > [part~="button-label"]',
@@ -192,7 +200,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
       declarations: {
         gap: 'var(--tp-space-2)',
         padding: '0 var(--tp-space-2)',
-        height: 'calc(var(--tp-spacing) * 8)',
+        height: 'var(--tp-control-height-md)',
       },
     },
   ],
@@ -221,9 +229,13 @@ export const navigationPanelAppearance: PresentationDictionary = {
         color: 'var(--tp-foreground)',
         padding: '0 var(--tp-space-2)',
         'border-radius': 'var(--tp-radius-md)',
-        // Nova h-7.
-        'block-size': packedExtent('calc(var(--tp-spacing) * 8.75)'),
-        'min-block-size': packedExtent('calc(var(--tp-spacing) * 8.75)'),
+        // Nova cn-sidebar-menu-sub-button: h-7 gap-2 px-2, size md text-sm.
+        gap: 'var(--tp-space-2)',
+        'font-size': 'var(--tp-text-sm)',
+        'font-weight': 'var(--tp-font-normal)',
+        'block-size': packedExtent('var(--tp-control-height-sm)'),
+        'min-block-size': packedExtent('var(--tp-control-height-sm)'),
+        '--_tp-icon-extent': 'var(--tp-icon-size-md)',
       },
     },
     ...rowHighlight('&:hover:not([data-disabled]), &[data-active]'),
@@ -310,7 +322,6 @@ export const navigationPanelStructure: PresentationDictionary = {
   ],
   'navigation-panel-action': [
     { declarations: { 'inline-size': '100%', 'justify-content': 'start' } },
-    { selector: largeAction, declarations: { 'block-size': 'auto' } },
     {
       selector: iconAction,
       declarations: { 'justify-content': 'center' },

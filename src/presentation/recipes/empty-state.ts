@@ -7,7 +7,7 @@ export const emptyStateAppearance: PresentationDictionary = {
       declarations: {
         gap: 'var(--tp-space-4)',
         padding: 'var(--tp-space-6)',
-        'border-radius': 'var(--tp-radius-lg)',
+        'border-radius': 'var(--tp-radius-xl)',
       },
     },
   ],
@@ -21,7 +21,7 @@ export const emptyStateAppearance: PresentationDictionary = {
         color: 'var(--tp-foreground)',
         'inline-size': 'var(--tp-space-8)',
         'block-size': 'var(--tp-space-8)',
-        'border-radius': 'var(--tp-radius-md)',
+        'border-radius': 'var(--tp-radius-lg)',
       },
     },
   ],
@@ -48,6 +48,9 @@ export const emptyStateAppearance: PresentationDictionary = {
     },
   ],
   'empty-state-content': [
-    { selector: '&', declarations: { gap: 'var(--tp-space-2)', 'font-size': 'var(--tp-text-sm)' } },
+    {
+      selector: '&',
+      declarations: { gap: 'var(--tp-space-2-5)', 'font-size': 'var(--tp-text-sm)' },
+    },
   ],
 };

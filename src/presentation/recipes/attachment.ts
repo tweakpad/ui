@@ -16,7 +16,7 @@ export const attachmentAppearance: PresentationDictionary = {
     {
       declarations: {
         'padding-block': 'var(--tp-space-2)',
-        'padding-inline': 'calc(var(--tp-spacing) * 2.5)',
+        'padding-inline': 'var(--tp-space-2-5)',
         gap: 'var(--tp-space-2)',
         'border-radius': 'var(--tp-radius-lg)',
         border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
@@ -30,9 +30,9 @@ export const attachmentAppearance: PresentationDictionary = {
     {
       selector: ":host([size='sm']) &",
       declarations: {
-        'padding-block': 'calc(var(--tp-spacing) * 1.5)',
+        'padding-block': 'var(--tp-space-1-5)',
         'padding-inline': 'var(--tp-space-2)',
-        gap: 'calc(var(--tp-spacing) * 2.5)',
+        gap: 'var(--tp-space-2-5)',
         'font-size': 'var(--tp-text-xs)',
       },
     },
@@ -40,28 +40,28 @@ export const attachmentAppearance: PresentationDictionary = {
       selector: ":host([size='xs']) &",
       declarations: {
         'padding-block': 'var(--tp-space-1)',
-        'padding-inline': 'calc(var(--tp-spacing) * 1.5)',
+        'padding-inline': 'var(--tp-space-1-5)',
         'border-radius': 'var(--tp-radius-md)',
-        gap: 'calc(var(--tp-spacing) * 1.5)',
+        gap: 'var(--tp-space-1-5)',
         'font-size': 'var(--tp-text-xs)',
       },
     },
     {
       selector: ":host([orientation='vertical']) &",
-      declarations: { 'inline-size': 'calc(var(--tp-spacing) * 24)' },
+      declarations: { 'inline-size': 'calc(var(--tp-space-12) * 2)' },
     },
     {
       selector: ":host([orientation='vertical']) &[data-content]",
-      declarations: { 'inline-size': 'calc(var(--tp-spacing) * 30)' },
+      declarations: { 'inline-size': 'calc(var(--tp-space-10) * 3)' },
     },
     {
       selector: ":host(:not([orientation='vertical'])) &",
-      declarations: { 'min-inline-size': 'min(100%, calc(var(--tp-spacing) * 40))' },
+      declarations: { 'min-inline-size': 'min(100%, calc(var(--tp-space-10) * 4))' },
     },
     { selector: '&[data-media]', declarations: { padding: 'var(--tp-space-2)' } },
     {
       selector: ":host([size='sm']) &[data-media]",
-      declarations: { padding: 'calc(var(--tp-spacing) * 1.5)' },
+      declarations: { padding: 'var(--tp-space-1-5)' },
     },
     {
       selector: ":host([size='xs']) &[data-media]",
@@ -87,7 +87,7 @@ export const attachmentAppearance: PresentationDictionary = {
   'attachment-media': [
     {
       declarations: {
-        'inline-size': 'calc(var(--tp-spacing) * 10)',
+        'inline-size': 'var(--tp-space-10)',
         background: 'var(--tp-muted)',
         color: 'var(--tp-foreground)',
         'border-radius': 'var(--tp-radius-md)',
@@ -95,11 +95,11 @@ export const attachmentAppearance: PresentationDictionary = {
     },
     {
       selector: ":host([size='sm']) &",
-      declarations: { 'inline-size': 'calc(var(--tp-spacing) * 8)' },
+      declarations: { 'inline-size': 'var(--tp-space-8)' },
     },
     {
       selector: ":host([size='xs']) &",
-      declarations: { 'inline-size': 'calc(var(--tp-spacing) * 7)' },
+      declarations: { 'inline-size': 'calc(var(--tp-space-4) + var(--tp-space-3))' },
     },
     { selector: ":host([orientation='vertical']) &", declarations: { 'inline-size': '100%' } },
     {
@@ -138,7 +138,7 @@ export const attachmentAppearance: PresentationDictionary = {
       declarations: {
         color: 'var(--tp-muted-foreground)',
         'font-size': 'var(--tp-text-xs)',
-        'margin-block-start': 'calc(var(--tp-spacing) / 2)',
+        'margin-block-start': 'var(--tp-space-0-5)',
       },
     },
     { selector: ":host([status='error']) &", declarations: { color: 'var(--tp-destructive)' } },

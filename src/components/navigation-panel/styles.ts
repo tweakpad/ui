@@ -53,9 +53,13 @@ export const navigationPanelStyles = css`
   }
 
   .wide[data-collapsed][data-collapse-mode='compact'] {
+    /* Nova --sidebar-width-icon (3rem): one packed row plus the group inset. */
     inline-size: max(
-      calc(var(--tp-target-size-min) + var(--tp-space-2) * 2 + var(--tp-border-width) * 2),
-      calc(var(--tp-spacing) * 12)
+      calc(
+        max(var(--tp-control-height-md), var(--_tp-coarse-target, 0px)) + var(--tp-space-2) * 2 +
+          var(--tp-border-width) * 2
+      ),
+      var(--tp-space-12)
     );
   }
 
@@ -73,8 +77,9 @@ export const navigationPanelStyles = css`
     )[data-collapsed][data-collapse-mode='compact'] {
     inline-size: calc(
       max(
-          var(--tp-target-size-min) + var(--tp-space-2) * 2 + var(--tp-border-width) * 2,
-          var(--tp-spacing) * 12
+          max(var(--tp-control-height-md), var(--_tp-coarse-target, 0px)) + var(--tp-space-2) * 2 +
+            var(--tp-border-width) * 2,
+          var(--tp-space-12)
         ) +
         var(--tp-space-2) * 2
     );

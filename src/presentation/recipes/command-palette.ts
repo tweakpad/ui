@@ -21,8 +21,9 @@ export const commandPaletteAppearance: PresentationDictionary = {
     // Nova cn-command-item: py-1.5 px-2 gap-2.
     {
       declarations: {
-        gap: 'calc(var(--tp-spacing) * 2.5)',
-        padding: 'calc(var(--tp-spacing) * 1.875) calc(var(--tp-spacing) * 2.5)',
+        gap: 'var(--tp-space-2)',
+        padding: 'var(--tp-space-1-5) var(--tp-space-2)',
+        'min-block-size': 'var(--tp-control-height-md)',
       },
     },
   ],

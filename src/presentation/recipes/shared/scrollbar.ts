@@ -5,17 +5,18 @@ import type { PresentationRule } from '../../resolver.js';
 export const scrollbarRules: readonly PresentationRule[] = [
   {
     declarations: {
-      padding: 'calc(var(--tp-spacing) / 4)',
+      // Nova cn-scroll-area-scrollbar: a transparent 1px border insets the thumb.
+      padding: 'var(--tp-border-width)',
       transition: motionTransition(['opacity'], 'fast'),
     },
   },
   {
     selector: '&[data-orientation="vertical"]',
-    declarations: { width: 'calc(var(--tp-spacing) * 2.5)' },
+    declarations: { width: 'var(--tp-space-2-5)' },
   },
   {
     selector: '&[data-orientation="horizontal"]',
-    declarations: { height: 'calc(var(--tp-spacing) * 2.5)' },
+    declarations: { height: 'var(--tp-space-2-5)' },
   },
 ];
 

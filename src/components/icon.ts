@@ -61,7 +61,11 @@ export class TpIcon extends LitElement {
 
   protected override willUpdate(): void {
     // Direct width/height rules on the host can still override this default extent.
-    this.style.setProperty('--tp-icon-size', this.size || 'var(--tp-icon-size-md)');
+    // A control step publishes --_tp-icon-extent so slotted Icons follow its size.
+    this.style.setProperty(
+      '--tp-icon-size',
+      this.size || 'var(--_tp-icon-extent, var(--tp-icon-size-md))',
+    );
     this.toggleAttribute('data-empty', !this.icon);
     if (this.icon && this.label.trim()) {
       this.setAttribute('role', 'img');

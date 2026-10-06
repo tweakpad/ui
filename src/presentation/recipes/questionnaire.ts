@@ -39,8 +39,8 @@ export const questionnaireAppearance: PresentationDictionary = {
     ...nativeChoiceAppearance('checkbox'),
     {
       declarations: {
-        gap: 'calc(var(--tp-spacing) * 2.5)',
-        padding: 'calc(var(--tp-spacing) * 2.5) var(--tp-space-3)',
+        gap: 'var(--tp-space-2-5)',
+        padding: 'var(--tp-space-2-5) var(--tp-space-3)',
         border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-input)',
         'border-radius': 'var(--tp-radius-lg)',
         'font-size': 'var(--tp-text-sm)',
@@ -69,7 +69,7 @@ export const questionnaireAppearance: PresentationDictionary = {
     {
       selector: '& .choice-copy',
       declarations: {
-        gap: 'calc(var(--tp-spacing) * .5)',
+        gap: 'var(--tp-space-0-5)',
         'line-height': 'var(--tp-leading-normal)',
       },
     },

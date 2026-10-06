@@ -5,8 +5,10 @@ export const avatarAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        width: 'var(--tp-control-height-lg)',
-        height: 'var(--tp-control-height-lg)',
+        // Nova cn-avatar: size-8, sm size-6, lg size-10.
+        width: 'var(--tp-space-8)',
+        height: 'var(--tp-space-8)',
+        'font-size': 'var(--tp-text-sm)',
         'border-radius': 'var(--tp-radius-full)',
         background: 'transparent',
       },
@@ -25,15 +27,16 @@ export const avatarAppearance: PresentationDictionary = {
     {
       selector: "&[size='sm']",
       declarations: {
-        width: 'var(--tp-control-height-md)',
-        height: 'var(--tp-control-height-md)',
+        width: 'var(--tp-space-6)',
+        height: 'var(--tp-space-6)',
+        'font-size': 'var(--tp-text-xs)',
       },
     },
     {
       selector: "&[size='lg']",
       declarations: {
-        width: 'var(--tp-space-16)',
-        height: 'var(--tp-space-16)',
+        width: 'var(--tp-space-10)',
+        height: 'var(--tp-space-10)',
       },
     },
   ],
@@ -41,7 +44,7 @@ export const avatarAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        'font-weight': 'var(--tp-font-semibold)',
+        'font-weight': 'var(--tp-font-medium)',
       },
     },
   ],
@@ -49,7 +52,8 @@ export const avatarAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        'font-weight': 'var(--tp-font-semibold)',
+        'font-size': 'inherit',
+        'font-weight': 'var(--tp-font-medium)',
         background: 'var(--tp-muted)',
         color: 'var(--tp-muted-foreground)',
         'border-radius': 'inherit',
@@ -70,8 +74,9 @@ export const avatarAppearance: PresentationDictionary = {
   'avatar-badge': [
     {
       declarations: {
-        'inline-size': 'calc(var(--tp-spacing) * 2.5)',
-        'block-size': 'calc(var(--tp-spacing) * 2.5)',
+        // Nova avatar badge: size-2.5, sm size-2, lg size-3.
+        'inline-size': 'var(--tp-space-2-5)',
+        'block-size': 'var(--tp-space-2-5)',
         'border-radius': 'var(--tp-radius-full)',
         background: 'var(--tp-primary)',
         color: 'var(--tp-primary-foreground)',

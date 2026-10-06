@@ -237,15 +237,15 @@ export const mediaPlayerAppearance: PresentationDictionary = {
         padding: 'var(--tp-space-5)',
         'border-radius': 'var(--tp-radius-full)',
         background: 'color-mix(in oklab, var(--tp-background) 35%, transparent)',
-        'backdrop-filter': 'blur(calc(var(--tp-spacing) * 2.5))',
+        'backdrop-filter': 'blur(var(--tp-space-2-5))',
         transition: motionTransition(['opacity', 'scale']),
       },
     },
     {
       selector: ':host(tp-media-status-indicator) & [part~="icon"]',
       declarations: {
-        'inline-size': 'calc(var(--tp-spacing) * 8.5)',
-        'block-size': 'calc(var(--tp-spacing) * 8.5)',
+        'inline-size': 'calc(var(--tp-space-8) + var(--tp-space-0-5))',
+        'block-size': 'calc(var(--tp-space-8) + var(--tp-space-0-5))',
       },
     },
     {
@@ -254,14 +254,14 @@ export const mediaPlayerAppearance: PresentationDictionary = {
     },
     {
       selector: ':host(tp-media-volume-indicator) &',
-      declarations: { 'min-inline-size': 'calc(var(--tp-spacing) * 48)' },
+      declarations: { 'min-inline-size': 'calc(var(--tp-space-12) * 4)' },
     },
   ],
   'media-indicator-value': [{ declarations: { 'font-variant-numeric': 'tabular-nums' } }],
   'media-indicator-fill': [
     {
       declarations: {
-        'block-size': 'var(--tp-spacing)',
+        'block-size': 'var(--tp-space-1)',
         'border-radius': 'var(--tp-radius-full)',
         background: 'color-mix(in oklab, currentColor 20%, transparent)',
       },
@@ -297,8 +297,8 @@ export const mediaPlayerAppearance: PresentationDictionary = {
   'media-thumbnail': [
     {
       declarations: {
-        'max-inline-size': 'calc(var(--tp-spacing) * 40)',
-        'max-block-size': 'calc(var(--tp-spacing) * 40)',
+        'max-inline-size': 'calc(var(--tp-space-10) * 4)',
+        'max-block-size': 'calc(var(--tp-space-10) * 4)',
         'border-radius': 'var(--tp-radius-md)',
         background: 'color-mix(in oklab, var(--tp-background) 90%, transparent)',
         'box-shadow': 'var(--tp-shadow-md)',
@@ -312,7 +312,7 @@ export const mediaPlayerAppearance: PresentationDictionary = {
   'media-chapter-title': [
     {
       declarations: {
-        'max-inline-size': 'calc(var(--tp-spacing) * 40)',
+        'max-inline-size': 'calc(var(--tp-space-10) * 4)',
         'padding-inline': 'var(--tp-space-6)',
         'font-weight': 'var(--tp-font-medium)',
       },

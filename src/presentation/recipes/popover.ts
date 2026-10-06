@@ -12,9 +12,11 @@ export const popoverAppearance: PresentationDictionary = {
     ...popupSpacingAppearance,
     {
       declarations: {
+        // Nova cn-popover-content: gap-2.5 p-2.5 text-sm.
+        '--_tp-popup-spacing': 'var(--tp-space-2-5)',
         background: 'var(--tp-popover)',
         color: 'var(--tp-popover-foreground)',
-        gap: 'var(--tp-space-2)',
+        gap: 'var(--tp-space-2-5)',
         'border-radius': 'var(--tp-radius-lg)',
         border:
           'var(--tp-border-width) var(--tp-border-style) color-mix(in oklab, var(--tp-foreground) 10%, transparent)',
@@ -29,7 +31,7 @@ export const popoverAppearance: PresentationDictionary = {
       declarations: {
         display: 'flex',
         'flex-direction': 'column',
-        gap: 'calc(var(--tp-spacing) / 2)',
+        gap: 'var(--tp-space-0-5)',
         'font-size': 'var(--tp-text-sm)',
       },
     },

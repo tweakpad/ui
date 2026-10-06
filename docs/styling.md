@@ -17,15 +17,40 @@ Import `@tweakpad/ui/styles.css` once to install the default token set. Componen
 
 - Color pairs: `background`/`foreground`, `card`/`card-foreground`, `popover`/`popover-foreground`, `primary`/`primary-foreground`, `secondary`/`secondary-foreground`, `muted`/`muted-foreground`, `accent`/`accent-foreground`, `destructive`/`destructive-foreground`, `success`/`success-foreground`, and `warning`/`warning-foreground`.
 - Unpaired colors: `border`, `input`, `ring`, and `chart-1` through `chart-5`.
-- Spacing: `spacing` plus the derived `space-*` scale.
+- Spacing: `spacing` plus the derived `space-*` scale: `space-0`, `space-0-5`, `space-1`, `space-1-5`, `space-2`, `space-2-5`, `space-3`, `space-4`, `space-5`, `space-6`, `space-8`, `space-10`, `space-12` and `space-16`. Each equals `spacing` times its suffix; a trailing `-5` is the half step.
 - Typography: `font-*`, `text-*`, `leading-*`, and `tracking-*`.
-- Extents: `control-height-*`, `icon-size-*`, and `target-size-min`.
+- Extents: `control-height-xs|sm|md|lg`, `icon-size-xs|sm|md|lg`, and `target-size-min`.
 - Lines and shape: `border-width`, `border-width-strong`, `border-style`, `ring-width`, `ring-offset`, and `radius-*`.
 - Elevation and opacity: `shadow-*`, `opacity-disabled`, and `opacity-backdrop`.
 
 Every CSS custom property uses the `--tp-` prefix. For example, the `primary` role is exposed as `--tp-primary`.
 
-The default typography tuple is `font-sans`, `text-base`, `font-normal`, `leading-normal`, and `tracking-normal`. Text-bearing components inherit that tuple and change individual dimensions only through another role in the same family.
+The default typography tuple is `font-sans`, `text-base`, `font-normal`, `leading-normal`, and `tracking-normal`. Text-bearing components inherit that tuple and change individual dimensions only through another role in the same family. Like Nova, controls, cards, dialogs, popovers, menus and labels set `text-sm`; titles use `text-base`; badges, tooltips, keyboard hints and the xs control step use `text-xs`.
+
+### Default scale
+
+The default theme follows the shadcn Nova metrics on a 4px seed:
+
+| Role | Values |
+| --- | --- |
+| `spacing` | `0.25rem` (4px) |
+| `text-xs` … `text-2xl` | 12, 14, 16, 18, 20, 24px |
+| `control-height-xs` … `lg` | 24, 28, 32, 36px (`spacing` × 6, 7, 8, 9) |
+| `icon-size-xs` … `lg` | 12, 14, 16, 20px |
+| `radius-sm`, `md`, `lg`, `xl`, `2xl`, `3xl`, `4xl` | `radius` × 0.6, 0.8, 1, 1.4, 1.8, 2.2, 2.6 (6, 8, 10, 14, 18, 22, 26px) |
+
+### Control sizes
+
+Every single-line control resolves its size from one step table (`CONTROL_STEPS`, exported with `controlSizePresentation` from `@tweakpad/ui`): Button, Toggle, Toggle group, Select, Native select, Input, Input group, Tabs, Menubar, Pagination and navigation rows.
+
+| Step (public sizes) | Height | Padding (icon edge) | Gap | Type | Icon |
+| --- | --- | --- | --- | --- | --- |
+| xs (`xs`, `icon-xs`) | `control-height-xs` | `space-2` (`space-1-5`) | `space-1` | `text-xs` | `icon-size-xs` |
+| sm (`sm`, `icon-sm`) | `control-height-sm` | `space-2-5` (`space-1-5`) | `space-1` | `text-sm` | `icon-size-sm` |
+| md (`default`, `icon`) | `control-height-md` | `space-2-5` (`space-2`) | `space-1-5` | `text-sm` | `icon-size-md` |
+| lg (`lg`, `icon-lg`) | `control-height-lg` | `space-2-5` (`space-2`) | `space-1-5` | `text-sm` | `icon-size-md` |
+
+`icon-*` sizes are squares of the step height. A control publishes its icon extent to slotted Icons, so `<tp-icon>` inside a small Button or Toggle follows the step unless it sets `size`.
 
 ## Derived interaction colors
 
@@ -112,9 +137,9 @@ Put `bind` on the delegate's compatible semantic host to retain handlers, state,
 
 ## Default spacing
 
-Change `--tp-spacing` in the theme to scale library padding, gaps, control/icon extents and default anchored-surface geometry. Popup menus, navigation menus, selection lists and Popover use the same two-unit outer inset. Anchored surfaces use a three-unit default trigger separation and collision inset; explicit numeric positioning overrides remain available for deliberate geometry. Popover content uses real flex gaps, including the close action. Switch derives track and thumb extents from one size-dependent spacing value. Example stories leave positioning overrides unset so they use these defaults.
+Change `--tp-spacing` in the theme to scale library padding, gaps, control/icon extents and default anchored-surface geometry. Popup menus, navigation menus and selection lists use a one-unit outer inset (Nova `p-1`); Popover uses `space-2-5`. Anchored surfaces use a three-unit default trigger separation and collision inset; explicit numeric positioning overrides remain available for deliberate geometry. Popover content uses real flex gaps, including the close action. Switch derives track and thumb extents from one size-dependent spacing value. Example stories leave positioning overrides unset so they use these defaults.
 
-Menu, select and combobox items use the Nova item insets in spacing units, so they scale with `--tp-spacing`. Rows and triggers packed against their neighbours (navigation panel rows and group labels, navigation menu triggers and links) show their compact control extent on fine pointers. They cannot expand their pointer target without overlapping a neighbour, so on coarse pointers the default theme raises them to `--tp-target-size-min`.
+Menu, select and combobox items use the Nova item insets (`space-1` by `space-1-5`, at least `control-height-sm` tall), so they scale with `--tp-spacing`. Rows and triggers packed against their neighbours (navigation panel rows and group labels, navigation menu triggers and links) show their compact control extent on fine pointers. They cannot expand their pointer target without overlapping a neighbour, so on coarse pointers the default theme raises them to `--tp-target-size-min`.
 
 Typography, line widths, shape seeds, responsive query thresholds and minimum accessible targets retain their independent roles. Screen-reader-only clipping dimensions and runtime-measured pixel coordinates are geometry, not visible spacing. Scoped complete themes should provide their derived `space-*` roles consistently with their spacing seed.
 
