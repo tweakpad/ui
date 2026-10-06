@@ -1,6 +1,6 @@
 # Time — proposed spec amendment
 
-Status: **not applied**. Drafted 2026-10-05 against Spec Blocks project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`, HEAD `8440bff24a97dbbc5c762ebf4bd6baa958b305e1`. The write was withheld because the shared candidate was being edited concurrently (player spec and other pending entries). Apply through the Spec Blocks MCP (`spec_apply_document_operations`) once the candidate is quiet; node IDs below are the intended stable IDs and were verified unique at that HEAD.
+**Status: applied** 2026-10-06 as Spec Blocks commit `8d01eebc` (project 0.3.21, parent `cb2a512e`). The text below is the original draft; the committed version renumbers Time to §18.11 (`sec-1811-time`), and its locale requirement covers date-time and relative-time formatting only, because Media player's `mp-duration` already defines duration formatting.
 
 ## UI Foundation Specification (`doc_cd3c4721-9f9b-4531-abab-a8bfdbac75f1`)
 

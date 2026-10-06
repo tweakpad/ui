@@ -1,11 +1,6 @@
 # Carousel effects: proposed spec amendment
 
-**Status: not applied.** Drafted 2026-10-06 against Spec Blocks project
-`prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`. Apply it through the Spec Blocks MCP once the
-shared candidate is quiet: the player spec is in progress and other stalled entries are
-pending. It reverses the recorded exclusion of carousel "effects" and "parallax" and
-replaces it with a typed effect contract. Swiper `effect-*` modules remain excluded as
-ports; the new contract is a reimplementation.
+**Status: applied** 2026-10-06 as Spec Blocks commit `8d01eebc` (project 0.3.21, parent `cb2a512e`). The text below is the original draft; adaptation IDs became A-29 and A-30.
 
 ## UI Foundation Specification: Carousel (`sec-187-carousel`)
 

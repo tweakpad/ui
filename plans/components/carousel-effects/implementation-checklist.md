@@ -10,7 +10,7 @@
   - Pre-existing gap 1 (resolved 2026-10-06, S-02): the published `dist/` shared one large chunk and global presentation registries, so carousel-only consumers bundled unrelated components (see V-16).
   - Pre-existing gap 2: the DevTools drag tool cannot produce a multi-step swipe, and that affects the basic carousel too (see V-07).
 - Repository baseline / unrelated changes: `development`, clean at start. The media-player work belongs to another agent and is untouched.
-- Live project / document IDs and revisions: Spec Blocks project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`, HEAD `8440bff`. The carousel sections and exclusions were read on 2026-10-05/06. The amendment `spec-amendment.md` has not been applied (S-01).
+- Live project / document IDs and revisions: Spec Blocks project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`, HEAD `8440bff`. The carousel sections and exclusions were read on 2026-10-05/06. The amendment `spec-amendment.md` was applied on 2026-10-06 as spec commit `8d01eebc` (project 0.3.21).
 - Owning contracts / dependencies / vocabulary: `sec-187-carousel`, `ucl21-carousel`, motion roles and drivers (`sec-64-motion-requests-and-drivers`), environment services (`sec-123`), and the carousel exclusions (`carousel.md` §1.2, `docs/carousel.md`).
 - Local Base UI / Floating UI / shadcn evidence:
   - Swiper 14.3.0 in `library/external/swiper`: `shared/effect-init.ts`, `effect-virtual-transition-end.ts`, `core/update/updateSlidesProgress.ts`. Used as evidence only; no code was ported.
@@ -46,7 +46,7 @@
 
 | Issue | Concrete missing/conflicting contract | Affected dependencies | Proposed resolution | Authority / resolution evidence | Status |
 | ----- | ------------------------------------- | --------------------- | ------------------- | ------------------------------- | ------ |
-| S-01 | Live spec excludes carousel effects and parallax and has no effect contract | Carousel, motion roles, environment services | Apply `spec-amendment.md` | Write withheld: shared candidate busy (player spec in progress) | blocked |
+| S-01 | Live spec excludes carousel effects and parallax and has no effect contract | Carousel, motion roles, environment services | Apply `spec-amendment.md` | Applied as `8d01eebc`: Foundation `sec-f-carousel-effects`, graphics requirements in §12.3, evidence exclusion updated, adaptations A-29/A-30; Library `effect` property, `carousel-effect-surface` part, factory/shader/layer requirements, `transition` motion role | resolved |
 | S-02 | Presentation definitions, bindings, recipes and the default dictionary are global registries, so every component ships every component's presentation data | every component | Per-component presentation bundles that the controller resolves from a registry | Implemented library-wide. Each component imports its own `PresentationFamily` (`src/presentation/families/`), recipes are split per component and shared recipe modules, and the controller resolves families from the element class. `elementDependencies` with a recursive `defineElement` registers the rendered elements. Aggregates are opt-in. Guarded by `src/presentation/families.test.ts`. | resolved |
 
 ## Architecture and reuse
@@ -128,7 +128,7 @@
 
 | Gate | Status | Required exit evidence / remaining work |
 | ---- | ------ | --------------------------------------- |
-| 0. Sources and scope | blocked | Live spec read via MCP. It excludes effects, so the amendment is drafted but not applied (S-01). Implementation proceeded per the approved plan. |
+| 0. Sources and scope | passed | Effect contract adopted in the live spec at `8d01eebc` (S-01); the implementation matches the committed text. |
 | 1. Capability mapping | passed | C-01–C-18 map the plan, the draft amendment and the user requirements to code, docs and scenarios. |
 | 2. Architecture and composition reuse | passed | The family map shows extraction instead of duplication, and reuse of motion, scheduler, owned styles and virtual-shell paths. |
 | 3. Behavior | passed | V-01–V-07, V-10–V-12, V-14 and V-15 pass. Real-pointer drag is a tool limitation recorded in V-07. |
@@ -150,14 +150,14 @@
 ## Completion / handoff
 
 - Change summary: the presenter seam, the effect contract and presenter, five effects, internal WebGL infrastructure, docs and examples.
-- Actual delivery claim: complete against the plan, except spec adoption (S-01).
-- Record checker: blocked only by Gate 0 (spec adoption, S-01).
+- Actual delivery claim: complete against the plan and the live spec.
+- Record checker: passes `--stage complete`.
 - Non-browser checks: vitest 1032 pass; eslint/stylelint clean; `npm run build` ok.
 - Behavior: passed, with the real-pointer drag tool limitation noted.
 - Accessibility: tree and axe; no screen reader run.
 - Visual/customization/motion inspection: passed.
 - Documentation and demo composition reuse: passed.
 - Shared-consumer regressions / package boundaries: carousel unchanged; single-component bundles verified (V-16).
-- Required failures or blocked checks: S-01.
+- Required failures or blocked checks: none.
 - Older out-of-scope gaps: DevTools drag tool cannot express multi-step swipes.
 - Changed source revisions / reopened gates: none after the final runs.

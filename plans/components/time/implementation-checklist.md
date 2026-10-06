@@ -46,7 +46,7 @@
 
 | Issue | Concrete missing/conflicting contract | Affected dependencies | Proposed resolution | Authority / resolution evidence | Status |
 | ----- | ------------------------------------- | --------------------- | ------------------- | ------------------------------- | ------ |
-| S-01 | No Time contract in Foundation or Component Library; Message has no timestamp clause | Message, catalog coverage maps | Apply `plans/components/time/spec-amendment.md` | User chose option 2 (implement against draft); spec write withheld due to concurrent candidate edits | blocked |
+| S-01 | No Time contract in Foundation or Component Library; Message has no timestamp clause | Message, catalog coverage maps | Apply `plans/components/time/spec-amendment.md` | Applied 2026-10-06 as spec commit `8d01eebc` (project 0.3.21), reconciled to HEAD `cb2a512e`: section renumbered §18.11 (`sec-1811-time`) after Media player took §18.10; locale requirement limited to date-time and relative-time formatting because `mp-duration` already owns duration formatting | resolved |
 | S-02 | Draft does not yet state that the description is omitted when it equals the visible text, nor the `week` message | C-11, C-19 | Add both to `req-f-time-tooltip` / `ucl22-time-q2` when applying the amendment | Implementation choice to avoid redundant tab stops | pending |
 
 ## Architecture and reuse
@@ -120,7 +120,7 @@
 
 | Gate | Status | Required exit evidence / remaining work |
 | ---- | ------ | --------------------------------------- |
-| 0. Sources and scope | blocked | Live spec read through direct MCP (HEAD 8440bff); no Time contract exists. Amendment drafted in `spec-amendment.md` but not applied (S-01). User authorized implementing against the draft; adoption into the live spec remains required. |
+| 0. Sources and scope | passed | Time contract adopted in the live spec at `8d01eebc` (Foundation §18.11 `sec-1811-time`, Library `ucl22-time`, Message `timestamp`, both coverage maps); the implementation matches the committed text (S-01). |
 | 1. Capability mapping | passed | C-01–C-23 map every draft requirement, property, event, part and composition to implementation, docs and scenarios; S-02 records two draft refinements. |
 | 2. Architecture and composition reuse | passed | Family map names Tooltip, number-locale/LocaleService, Scheduler, resolveLocale and Message owners with consumers; presentation map traces shadcn timestamp spans and bubble tooltip to context recipes and the Tooltip recipe. |
 | 3. Behavior | passed | V-01–V-11, V-15 pass; reconnect defect found and fixed. |
@@ -142,14 +142,14 @@
 ## Completion / handoff
 
 - Change summary: Foundation time engine (parse, format, shared scheduler), cached locale formatters, `tp-time`, Message timestamp migration, demo migrations, docs and stories.
-- Actual delivery claim: implementation verified against the drafted amendment; not conformant to the live spec until S-01 is applied.
-- Record checker: `--stage implement` and `--stage verify` BLOCKED only by Gate 0 (S-01); not treated as cleared.
+- Actual delivery claim: implementation verified against the live spec contract committed at `8d01eebc`.
+- Record checker: Gate 0 cleared by the spec commit; see the latest checker run.
 - Non-browser checks: vitest 547/547; lint (pre-existing field.ts format warning); `npm run build` passes.
 - Behavior: V-01–V-11, V-15 passed.
 - Accessibility: tree + real keyboard + axe; no screen reader.
 - Visual/customization/motion inspection: passed (no motion of its own; Tooltip motion reused).
 - Documentation and demo composition reuse: passed.
 - Shared-consumer regressions / package boundaries: Calendar, Message, workspace, built exports passed.
-- Required failures or blocked checks: S-01 spec adoption
+- Required failures or blocked checks: none.
 - Older out-of-scope gaps: Calendar ignores ancestor `lang`; carousel keeps local visibility handling.
 - Changed source revisions / reopened gates: pending
