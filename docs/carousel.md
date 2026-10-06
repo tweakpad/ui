@@ -422,7 +422,7 @@ carousel.effect = null; // back to the moving track
 | --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `carouselShaderEffect()`    | stack  | WebGL2 transition over each item's `data-carousel-media`: a noise-edged `wipe`, a noise displacement-map `displace` or `chromatic`, a zooming `crosswarp`, or a refracting `glass`. |
 | `carouselCrossfadeEffect()` | stack  | Opacity transition; the outgoing item stays under the incoming one for `overlap`.                                                                                                   |
-| `carouselLayeredEffect()`   | stack  | Media turns away and in with perspective; `data-carousel-layer` elements rise in order.                                                                                             |
+| `carouselLayeredEffect()`   | stack  | Media turns away and in with perspective while the items dissolve; `data-carousel-layer` elements rise in order.                                                                    |
 | `carouselParallaxEffect()`  | track  | Media travels more slowly than its item (`depth`).                                                                                                                                  |
 | `carouselFocusEffect()`     | track  | Items dim and shrink with distance from alignment; layers reveal as an item arrives.                                                                                                |
 
@@ -431,7 +431,7 @@ does not set a speed, plus the options in the table below.
 
 - **Stack** effects keep every item at the viewport origin and force one item per view
   and per movement. Conflicting layout options are overridden with a `tp-diagnostic`.
-- **Track** effects keep the moving track, so any layout, loop or centering works.
+- **Track** effects keep the moving track, so any layout, loop or centering works. With several items in view, set `interaction.navigateOnItemClick` so a click on a partly visible item brings it into view.
 - Effects need the transform transport. With `transport: 'scroll'` the effect is
   ignored and a diagnostic reports it.
 

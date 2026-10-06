@@ -30,8 +30,9 @@ export interface CarouselLayeredOptions extends CarouselEffectTiming {
 }
 
 /**
- * Stacked 3D transition: the outgoing media turns away and recedes, the incoming media turns
- * in, then its `data-carousel-layer` elements reveal in order. Every value is a function of
+ * Stacked 3D transition: the outgoing media turns away and recedes while its item dissolves
+ * into the incoming one, whose media turns in beneath it; then its `data-carousel-layer`
+ * elements reveal in order. Every value is a function of
  * the frame, so drags scrub the whole choreography.
  */
 export function carouselLayeredEffect(options: CarouselLayeredOptions = {}): CarouselEffect {
@@ -76,30 +77,28 @@ export function carouselLayeredEffect(options: CarouselLayeredOptions = {}): Car
       return {
         frame(frame: CarouselEffectFrame) {
           const { current, next, amount } = frame;
-          for (const item of frame.items) {
-            if (item !== current && item !== next) continue;
-            styles.set(item.shell, 'z-index', item === next && amount > 0.5 ? '2' : '1');
-          }
+          // The outgoing item stays on top and the incoming one waits beneath it, so neither
+          // item's frame (background, border) can hide the other before its turn is visible.
+          if (current) styles.set(current.shell, 'z-index', '2');
+          if (next) styles.set(next.shell, 'z-index', '1');
           if (current) {
-            // Exit in the first part of the transition, accelerating away.
+            // Exit in the first part of the transition, accelerating away; the whole item then
+            // dissolves into the incoming one across the middle of the transition.
             const exit = clamp01(amount / 0.55) ** 2;
-            media(
-              current,
-              sign * exit * rotation,
-              1 - exit * (1 - depthScale),
-              1 - smoothstep(0.35, 0.6, amount),
-            );
+            media(current, sign * exit * rotation, 1 - exit * (1 - depthScale), 1);
+            styles.set(current.shell, 'opacity', String(1 - smoothstep(0.3, 0.7, amount)));
             layers(current, () => 1 - smoothstep(0, 0.3, amount));
           }
           if (next) {
             // Enter in the second part, decelerating into place.
-            const enter = easeOutCubic(clamp01((amount - 0.3) / 0.6));
+            const enter = easeOutCubic(clamp01((amount - 0.25) / 0.65));
             media(
               next,
               -sign * (1 - enter) * (rotation + 20),
               depthScale + enter * (1 - depthScale),
-              smoothstep(0.3, 0.5, amount),
+              smoothstep(0.2, 0.5, amount),
             );
+            styles.set(next.shell, 'opacity', '1');
             // Each window ends at arrival so layers are complete when the item settles.
             layers(next, (order) => {
               const start = Math.min(0.45 + order * stagger, 0.9);

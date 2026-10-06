@@ -116,16 +116,25 @@ export const carouselEffectExamples = [
     'Parallax',
     'carousel-effect-parallax',
     'parallax',
-    'The moving track keeps its layout; each item’s media travels more slowly inside its clipped item.',
-    { options: { layout: { itemsPerView: 1.25, gap: 16, centered: true } }, loop: true },
+    'The moving track keeps its layout; each item’s media travels more slowly inside its clipped item. Click a partly visible item to bring it into view.',
+    {
+      options: {
+        layout: { itemsPerView: 1.25, gap: 16, centered: true },
+        interaction: { navigateOnItemClick: true },
+      },
+      loop: true,
+    },
   ),
   example(
     'Focus',
     'carousel-effect-focus',
     'focus',
-    'Items dim and shrink with distance from alignment, and the aligned item’s layers reveal as it arrives.',
+    'Items dim and shrink with distance from alignment, and the aligned item’s layers reveal as it arrives. Click a partly visible item to bring it into view.',
     {
-      options: { layout: { itemsPerView: 2.4, gap: 16, centered: true } },
+      options: {
+        layout: { itemsPerView: 2.4, gap: 16, centered: true },
+        interaction: { navigateOnItemClick: true },
+      },
       cards: true,
       loop: true,
     },
