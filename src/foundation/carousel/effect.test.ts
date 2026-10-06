@@ -3,7 +3,9 @@ import { cubicBezier, parseEasing } from '../motion-easing.js';
 import {
   coverMap,
   focalPoint,
+  fragmentSource,
   revealDirection,
+  vertexSource,
 } from '../../components/carousel/effects/shader/shaders.js';
 import { resolveCarouselConfiguration } from './configuration.js';
 import {
@@ -83,6 +85,15 @@ describe('shader mapping', () => {
     expect(revealDirection('horizontal', 'ltr')).toEqual([-1, 0]);
     expect(revealDirection('horizontal', 'rtl')).toEqual([1, 0]);
     expect(revealDirection('vertical', 'ltr')).toEqual([0, -1]);
+    // Each stage keeps its own entry point.
+    expect(vertexSource).toContain('gl_Position');
+    expect(vertexSource).not.toContain('uDirection');
+    expect(fragmentSource).toContain('outColor =');
+    // Explicit travel overrides the axis, including corners.
+    expect(revealDirection('horizontal', 'rtl', 'down')).toEqual([0, 1]);
+    const [x, y] = revealDirection('horizontal', 'ltr', 'up-right');
+    expect(x).toBeCloseTo(Math.SQRT1_2);
+    expect(y).toBeCloseTo(-Math.SQRT1_2);
   });
 });
 

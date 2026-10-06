@@ -30,6 +30,7 @@ import {
   revealDirection,
   shaderVariants,
   vertexSource,
+  type CarouselShaderDirection,
   type CarouselShaderVariant,
 } from './shaders.js';
 
@@ -42,8 +43,11 @@ export interface CarouselShaderOptions extends CarouselEffectTiming {
   softness?: number;
   /** Noise frequency across the viewport. Default 3. */
   scale?: number;
-  /** Fixed reveal angle in degrees; by default the reveal follows the carousel axis. */
-  angle?: number;
+  /**
+   * Travel direction: an edge or a corner (diagonal). By default it follows the carousel axis,
+   * toward the inline start (block start when vertical).
+   */
+  direction?: CarouselShaderDirection;
   /** Distance `data-carousel-layer` elements rise while revealing, in pixels. Default 24. */
   rise?: number;
 }
@@ -90,6 +94,7 @@ class ShaderTransition implements CarouselEffectInstance {
   #onScreen = true;
   #idle: (() => void) | undefined;
   #focal = new WeakMap<Element, [number, number]>();
+  #clipping = new WeakMap<Element, { clips: boolean; radius: string }>();
   #positioned = new WeakMap<Element, boolean>();
   constructor(
     readonly context: CarouselEffectContext,
@@ -104,7 +109,7 @@ class ShaderTransition implements CarouselEffectInstance {
       pointerEvents: 'none',
     });
     context.surface.append(this.#canvas);
-    this.#direction = revealDirection(context.orientation, context.direction, options.angle);
+    this.#direction = revealDirection(context.orientation, context.direction, options.direction);
     const view = document.defaultView;
     if (view?.IntersectionObserver) {
       this.#observer = new view.IntersectionObserver((entries) => {
@@ -267,6 +272,67 @@ class ShaderTransition implements CarouselEffectInstance {
       });
   }
 
+  /** Layout changed: re-read focal points and clipping styles. */
+  update(): void {
+    this.#focal = new WeakMap();
+    this.#clipping = new WeakMap();
+  }
+
+  /**
+   * The media's visible area as a canvas `clip-path`: the nearest element between the media
+   * and its item content that clips (overflow) or rounds the media, inset relative to the
+   * media box and with that element's border radius.
+   */
+  #clip(media: HTMLElement, content: HTMLElement, mediaBox: DOMRect): string {
+    const view = this.context.owner.ownerDocument.defaultView;
+    const read = (element: Element) => {
+      let style = this.#clipping.get(element);
+      if (!style) {
+        const computed = view?.getComputedStyle(element);
+        // Each corner is "h" or "h v"; inset() takes horizontal radii, then vertical ones.
+        const corners = computed
+          ? [
+              computed.borderTopLeftRadius,
+              computed.borderTopRightRadius,
+              computed.borderBottomRightRadius,
+              computed.borderBottomLeftRadius,
+            ].map((corner) => corner.trim().split(/\s+/))
+          : [];
+        const rounded = corners.some((parts) => parts.some((part) => parseFloat(part) > 0));
+        style = {
+          clips:
+            !!computed && (computed.overflowX !== 'visible' || computed.overflowY !== 'visible'),
+          radius: rounded
+            ? `${corners.map((parts) => parts[0]).join(' ')} / ${corners
+                .map((parts) => parts[1] ?? parts[0])
+                .join(' ')}`
+            : '',
+        };
+        this.#clipping.set(element, style);
+      }
+      return style;
+    };
+    for (let element: Element | null = media; element;) {
+      const style = read(element);
+      // Replaced media always clip their own box; only their rounding matters.
+      if (element === media ? style.radius : style.clips) {
+        const box = element === media ? mediaBox : element.getBoundingClientRect();
+        const inset = [
+          box.top - mediaBox.top,
+          mediaBox.right - box.right,
+          mediaBox.bottom - box.bottom,
+          box.left - mediaBox.left,
+        ]
+          .map((value) => `${Math.max(0, value)}px`)
+          .join(' ');
+        return `inset(${inset}${style.radius ? ` round ${style.radius}` : ''})`;
+      }
+      if (element === content) break;
+      element = element.parentElement ?? (element.getRootNode() as ShadowRoot).host ?? null;
+    }
+    return 'none';
+  }
+
   #static(layer: HTMLElement): boolean {
     let value = this.#positioned.get(layer);
     if (value === undefined) {
@@ -357,6 +423,8 @@ class ShaderTransition implements CarouselEffectInstance {
       top: `${mediaBox.top - viewportBox.top}px`,
       width: `${width}px`,
       height: `${height}px`,
+      // The canvas sits outside the item, so repeat the media's own clip and rounding.
+      clipPath: this.#clip(toSource as HTMLElement, next.content, mediaBox),
     });
     // The canvas now shows both images; hide the DOM media beneath it.
     for (const source of [fromSource, toSource]) this.#styles.set(source, 'visibility', 'hidden');

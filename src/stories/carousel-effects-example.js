@@ -14,7 +14,7 @@ const factories = {
   shader: carouselShaderEffect,
 };
 
-/** Attach the effect named by data-effect; an optional variant group switches shader looks. */
+/** Attach the effect named by data-effect; optional option selects switch shader options. */
 export function setupCarouselEffectExample(root) {
   const carousels = [...root.querySelectorAll('tp-carousel[data-effect]')];
   const cleanups = [];
@@ -26,14 +26,20 @@ export function setupCarouselEffectExample(root) {
         ...options,
       });
     carousel.effect = create();
-    const variants = root.querySelector('tp-toggle-group[data-variants]');
-    if (variants && carousel.dataset.effect === 'shader') {
+    const controls = [...root.querySelectorAll('[data-option]')];
+    if (controls.length && carousel.dataset.effect === 'shader') {
+      // Option selects (variant, direction) rebuild the effect with every selected value.
+      const selected = {};
       const change = (event) => {
-        const [variant] = event.detail.value;
-        if (variant) carousel.effect = create({ variant });
+        const value = event.detail.value;
+        if (!value) return;
+        selected[event.currentTarget.dataset.option] = value;
+        carousel.effect = create(selected);
       };
-      variants.addEventListener('tp-value-change', change);
-      cleanups.push(() => variants.removeEventListener('tp-value-change', change));
+      for (const control of controls) {
+        control.addEventListener('tp-value-change', change);
+        cleanups.push(() => control.removeEventListener('tp-value-change', change));
+      }
     }
   }
   return () => {

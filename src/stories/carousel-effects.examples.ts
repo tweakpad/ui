@@ -12,6 +12,23 @@ const photos = [
   ['1469474968028-56623f02e42e', 'First light', 'Dolomites, Italy'],
 ] as const;
 
+const variants = [
+  ['wipe', 'Wipe'],
+  ['displace', 'Displace'],
+  ['chromatic', 'Chromatic'],
+] as const;
+
+const directions = [
+  ['left', 'Left'],
+  ['right', 'Right'],
+  ['up', 'Up'],
+  ['down', 'Down'],
+  ['up-left', 'Up left'],
+  ['up-right', 'Up right'],
+  ['down-left', 'Down left'],
+  ['down-right', 'Down right'],
+] as const;
+
 const slides = (layers: boolean) =>
   photos
     .map(
@@ -67,10 +84,17 @@ export const carouselEffectExamples = [
     'Shader transition',
     'carousel-effect-shader',
     'shader',
-    'A WebGL2 transition drawn over each item’s data-carousel-media. Drag to scrub it; captions marked data-carousel-layer stay live text above the canvas and reveal in order. Without WebGL2, ready media or motion it falls back to a crossfade.',
+    'A WebGL2 transition drawn over each item’s data-carousel-media. Wipe sweeps a noise-edged front across the frame; Displace and Chromatic use a flowing noise map that pushes the old image out and draws the new one in along the chosen direction, edge or corner. Drag to scrub it; captions marked data-carousel-layer stay live text above the canvas and reveal in order. Without WebGL2, ready media or motion it falls back to a crossfade.',
     {
-      extra:
-        '<tp-toggle-group data-variants label="Shader variant" variant="outline" size="sm" default-value=\'["wipe"]\'><tp-toggle value="wipe">Wipe</tp-toggle><tp-toggle value="displace">Displace</tp-toggle><tp-toggle value="chromatic">Chromatic</tp-toggle></tp-toggle-group>\n  ',
+      extra: `<div class="carousel-effect-options">
+    <tp-field label="Variant"><tp-select data-option="variant" default-value="wipe">${variants
+      .map(([value, label]) => `<option value="${value}">${label}</option>`)
+      .join('')}</tp-select></tp-field>
+    <tp-field label="Direction"><tp-select data-option="direction" default-value="left">${directions
+      .map(([value, label]) => `<option value="${value}">${label}</option>`)
+      .join('')}</tp-select></tp-field>
+  </div>
+  `,
       loop: true,
     },
   ),

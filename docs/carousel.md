@@ -454,15 +454,21 @@ fallback and announcements are unchanged.
 
 ### Effect options
 
-| Factory   | Options (defaults)                                                                                                     |
-| --------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Shader    | `variant` (`wipe`), `intensity` (0.35), `softness` (0.08), `scale` (3), `angle` (axis), `rise` (24), `duration` (1200) |
-| Crossfade | `overlap` (0.5), `duration` (600)                                                                                      |
-| Layered   | `perspective` (1200), `rotation` (70), `depthScale` (0.6), `rise` (32), `stagger` (0.12), `duration` (1000)            |
-| Parallax  | `depth` (0.3), `duration` (900)                                                                                        |
-| Focus     | `dim` (0.35), `scale` (0.9), `rise` (24), `duration` (800)                                                             |
+| Factory   | Options (defaults)                                                                                                         |
+| --------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Shader    | `variant` (`wipe`), `direction` (axis), `intensity` (0.35), `softness` (0.08), `scale` (3), `rise` (24), `duration` (1200) |
+| Crossfade | `overlap` (0.5), `duration` (600)                                                                                          |
+| Layered   | `perspective` (1200), `rotation` (70), `depthScale` (0.6), `rise` (32), `stagger` (0.12), `duration` (1000)                |
+| Parallax  | `depth` (0.3), `duration` (900)                                                                                            |
+| Focus     | `dim` (0.35), `scale` (0.9), `rise` (24), `duration` (800)                                                                 |
 
 ### Shader behavior
+
+- **Variants:**
+  - `wipe` sweeps a noise-edged front across the frame.
+  - `displace` and `chromatic` have no front. They use an fBm noise map as a displacement map that flows along the direction. The map pushes the outgoing image out and draws the incoming one in from behind, and it staggers when each pixel crosses over. `chromatic` displaces each color channel by a different amount.
+  - `intensity` sets the displacement strength, `softness` widens the crossover, and `scale` sets the noise frequency. Gesture speed strengthens the effect.
+- **Direction:** `direction` is the travel direction. It is one of the edges `left`, `right`, `up` and `down`, or one of the corners for a diagonal: `up-left`, `up-right`, `down-left` and `down-right`. By default it follows the carousel axis toward the inline start (block start when vertical), mirrored in RTL. Navigating backwards plays the transition in reverse.
 
 - **Shared context:** all shader carousels on a page share one WebGL2 context. Each
   carousel displays frames in its own canvas, so many carousels never exhaust the

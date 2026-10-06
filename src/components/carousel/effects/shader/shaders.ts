@@ -78,56 +78,65 @@ vec3 encodeSrgb(vec3 linear) {
 void main() {
   vec2 uv = vUv;
   vec2 dir = normalize(uDirection);
-  float span = abs(dir.x) + abs(dir.y);
-  // 0 where the reveal starts, 1 where it ends.
-  float along = dot(uv - 0.5, dir) / span + 0.5;
-  float grain = (fbm(uv * uScale + uSeed) - 0.5) * uIntensity;
-  float reach = uSoftness + abs(uIntensity) * 0.5;
-  float edge = mix(-reach, 1.0 + reach, uProgress);
-  float revealed = 1.0 - smoothstep(edge - uSoftness, edge + uSoftness, along + grain);
-  float band = 1.0 - abs(revealed * 2.0 - 1.0);
+  float progress = clamp(uProgress, 0.0, 1.0);
   float speed = clamp(uVelocity, 0.0, 1.0);
-
   // The outgoing image eases forward while the incoming one settles into place; both are
   // exact at their own end of the transition, so handing over to the DOM never jumps.
   // Sampling against the travel direction moves content with it.
-  vec2 fromUv = drift(uv, -dir, 0.08 * uProgress, 1.0);
-  vec2 toUv = drift(uv, dir, 0.08 * (1.0 - uProgress), 1.0);
-  // Velocity stretches both images along the travel direction inside the band.
-  vec2 smear = dir * band * speed * 0.08;
-  fromUv += smear;
-  toUv += smear;
-
-  // Variant looks peak mid-transition and vanish at both ends, so hand-off stays exact.
-  float peak = sin(3.14159265 * clamp(uProgress, 0.0, 1.0));
-  vec4 fromColor;
-  vec4 toColor;
-  if (uVariant == 1) {
-    // Liquid displacement across the whole frame: a noise field pushes the outgoing image
-    // ahead and pulls the incoming one in, strongest inside the band.
-    vec2 field = vec2(fbm(uv * uScale * 1.3 + uSeed), fbm(uv * uScale * 1.3 - uSeed)) - 0.5;
-    vec2 push = (dir * 0.6 + field) * (peak * 0.6 + band) * uIntensity * 0.3;
-    fromColor = sampleCover(uFrom, uFromMap, fromUv + push);
-    toColor = sampleCover(uTo, uToMap, toUv - push);
-  } else if (uVariant == 2) {
-    // RGB split along the travel direction over the whole frame, wider in the band and
-    // with gesture speed.
-    vec2 shift = dir * (peak * 0.012 + band * 0.015 + speed * 0.03) * (0.5 + uIntensity);
-    fromColor = vec4(
-      sampleCover(uFrom, uFromMap, fromUv + shift).r,
-      sampleCover(uFrom, uFromMap, fromUv + shift * 0.5).g,
-      sampleCover(uFrom, uFromMap, fromUv).b,
-      sampleCover(uFrom, uFromMap, fromUv).a);
-    toColor = vec4(
-      sampleCover(uTo, uToMap, toUv - shift).r,
-      sampleCover(uTo, uToMap, toUv - shift * 0.5).g,
-      sampleCover(uTo, uToMap, toUv).b,
-      sampleCover(uTo, uToMap, toUv).a);
+  vec2 fromUv = drift(uv, -dir, 0.08 * progress, 1.0);
+  vec2 toUv = drift(uv, dir, 0.08 * (1.0 - progress), 1.0);
+  vec4 color;
+  if (uVariant == 0) {
+    // Wipe: a noise-edged front travels across the frame.
+    float span = abs(dir.x) + abs(dir.y);
+    // 0 where the reveal starts, 1 where it ends.
+    float along = dot(uv - 0.5, dir) / span + 0.5;
+    float grain = (fbm(uv * uScale + uSeed) - 0.5) * uIntensity;
+    float reach = uSoftness + abs(uIntensity) * 0.5;
+    float edge = mix(-reach, 1.0 + reach, progress);
+    float revealed = 1.0 - smoothstep(edge - uSoftness, edge + uSoftness, along + grain);
+    float band = 1.0 - abs(revealed * 2.0 - 1.0);
+    // Velocity stretches both images along the travel direction inside the band.
+    vec2 smear = dir * band * speed * 0.08;
+    color = mix(
+      sampleCover(uFrom, uFromMap, fromUv + smear),
+      sampleCover(uTo, uToMap, toUv + smear),
+      revealed);
   } else {
-    fromColor = sampleCover(uFrom, uFromMap, fromUv);
-    toColor = sampleCover(uTo, uToMap, toUv);
+    // Displacement map: fBm noise that flows along the travel direction as the transition
+    // advances. Its value sets how far each pixel is pushed and when it crosses over, so the
+    // change sweeps through the noise instead of along a front.
+    float map = smoothstep(0.2, 0.8, fbm((uv - dir * progress * 0.25) * uScale * 1.5 + uSeed));
+    float spread = 0.35 + uSoftness;
+    float crossed = smoothstep(0.0, 1.0, progress * (1.0 + spread) - map * spread);
+    // The outgoing image is pushed along the direction and the incoming one arrives from
+    // behind; each displacement is zero at its own end of the transition.
+    vec2 push = dir * map * (0.2 + 0.8 * uIntensity) * (1.0 + speed);
+    vec2 away = push * progress;
+    vec2 behind = push * (1.0 - progress);
+    vec4 fromColor;
+    vec4 toColor;
+    if (uVariant == 1) {
+      fromColor = sampleCover(uFrom, uFromMap, fromUv - away);
+      toColor = sampleCover(uTo, uToMap, toUv + behind);
+    } else {
+      // Chromatic: a gentler displacement that each channel follows by a different amount,
+      // so colour fringes trail along the direction.
+      vec2 a = away * 0.5;
+      vec2 b = behind * 0.5;
+      fromColor = vec4(
+        sampleCover(uFrom, uFromMap, fromUv - a * 1.25).r,
+        sampleCover(uFrom, uFromMap, fromUv - a).g,
+        sampleCover(uFrom, uFromMap, fromUv - a * 0.75).b,
+        sampleCover(uFrom, uFromMap, fromUv - a).a);
+      toColor = vec4(
+        sampleCover(uTo, uToMap, toUv + b * 1.25).r,
+        sampleCover(uTo, uToMap, toUv + b).g,
+        sampleCover(uTo, uToMap, toUv + b * 0.75).b,
+        sampleCover(uTo, uToMap, toUv + b).a);
+    }
+    color = mix(fromColor, toColor, crossed);
   }
-  vec4 color = mix(fromColor, toColor, revealed);
   // Premultiplied output: encode color, keep coverage.
   vec3 straight = color.a > 0.0 ? color.rgb / color.a : vec3(0.0);
   outColor = vec4(encodeSrgb(straight) * color.a, color.a);
@@ -171,19 +180,34 @@ export function focalPoint(objectPosition: string): [number, number] {
   return [read(first), read(second)];
 }
 
+/** Travel direction of a shader transition: an edge, or a corner for a diagonal. */
+export type CarouselShaderDirection =
+  'left' | 'right' | 'up' | 'down' | 'up-left' | 'up-right' | 'down-left' | 'down-right';
+
+const diagonal = Math.SQRT1_2;
+/** Unit travel vectors in uv space, whose y axis points down like image rows. */
+export const shaderDirections: Record<CarouselShaderDirection, [number, number]> = {
+  left: [-1, 0],
+  right: [1, 0],
+  up: [0, -1],
+  down: [0, 1],
+  'up-left': [-diagonal, -diagonal],
+  'up-right': [diagonal, -diagonal],
+  'down-left': [-diagonal, diagonal],
+  'down-right': [diagonal, diagonal],
+};
+
 /**
- * Reveal direction in uv space. The upcoming item arrives from the inline end (or block end),
- * so the reveal travels toward the start; RTL mirrors it.
+ * Travel direction in uv space. By default the upcoming item arrives from the inline end
+ * (or block end), so the transition travels toward the start; RTL mirrors it.
  */
 export function revealDirection(
   orientation: 'horizontal' | 'vertical',
   direction: 'ltr' | 'rtl',
-  angle?: number,
+  travel?: CarouselShaderDirection,
 ): [number, number] {
-  if (angle !== undefined && Number.isFinite(angle)) {
-    const radians = (angle * Math.PI) / 180;
-    return [Math.cos(radians), Math.sin(radians)];
-  }
+  const preset = travel ? shaderDirections[travel] : undefined;
+  if (preset) return [...preset];
   if (orientation === 'vertical') return [0, -1];
   return direction === 'rtl' ? [1, 0] : [-1, 0];
 }

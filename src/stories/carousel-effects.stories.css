@@ -50,3 +50,9 @@
 .carousel-effect-caption span {
   font-size: var(--tp-text-sm);
 }
+
+.carousel-effect-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tp-space-4);
+}

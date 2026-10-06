@@ -43,6 +43,9 @@
 | C-16 | Rendering only while transitioning; no idle frames | draft shader requirement | — | presenter and effect scheduling | docs/carousel.md Shader behavior | V-15 | passed | 0 rAF calls in 2 s idle with 4 carousels |
 | C-17 | Tree-shakeable factories (no module side effects) | user requirement | — | explicit factory imports | docs/carousel.md Effects | V-16 | passed | Effect and WebGL code ship only to shader consumers; a `TpCarousel`-only bundle contains the carousel, button, icon, progress and spinner families only (V-16) |
 | C-18 | Public exports and custom-effect helpers | draft factories | — | `components/carousel/index.ts`, `foundation/carousel/index.ts` | docs/carousel.md Custom effects | V-17 | passed | `npm run build`; types exported |
+| C-19 | Shader `displace`/`chromatic` as noise displacement-map transitions without a wipe front; `wipe` keeps its front | `carousel-effect-factories` (variants named only) | gl-transitions/Codrops displacement technique (no code ported) | `effects/shader/shaders.ts` fragment main | docs/carousel.md Shader behavior | V-18 | passed | Screenshots displace-left-50.png, chromatic-downright-50.png |
+| C-20 | `direction` option with 4 edges and 4 corners (replaces the undocumented-in-spec `angle`); default follows axis/RTL | none (option level; record in the pending motion amendment) | — | `CarouselShaderDirection`, `shaderDirections`, `revealDirection` | docs/carousel.md Shader behavior, options table | V-18, V-19 | passed | Unit effect.test.ts; uniform (0.707,-0.707) for up-right via real Select |
+| C-21 | Canvas repeats the media's clip and border radius so rounded media stay rounded during transitions | `req-f-carousel-effect-a11y` (presentation unchanged) | — | `ShaderTransition.#clip`, `update()` cache reset | docs/carousel.md Authoring hooks | V-20 | passed | `inset(0px round 10px)`; corners-mid.png |
 
 | Issue | Concrete missing/conflicting contract | Affected dependencies | Proposed resolution | Authority / resolution evidence | Status |
 | ----- | ------------------------------------- | --------------------- | ------------------- | ------------------------------- | ------ |
@@ -84,13 +87,13 @@
 | -------------------- | ---------------------------- | ----------------------------------------- | ----------------------------------- | ------------------------------- | ------------ |
 | Viewport, track, items | library theme | carousel recipes (`presentation/recipes/carousel.ts`) | carousel recipes unchanged | Effects write only inline transform, opacity, visibility, translate and scale on the effect's own targets | V-09 |
 | Effect surface | — (Tweakpad original) | `components/carousel/styles.ts` `.effect-surface` | structural style | Structural positioning only; no appearance | V-08 |
-| Demo slides and captions | library theme | `src/stories/carousel-effects.stories.css` | Toggle Group for variant switching | Captions use theme spacing and type tokens | V-09 |
+| Demo slides and captions | library theme | `src/stories/carousel-effects.stories.css` | Field + Select for variant and direction | Captions use theme spacing and type tokens | V-09 |
 
 ### Implementation and composition reuse map
 
 | Demo / composition | Nested role | Existing component / public API | Registration and integration checks | Native exception / missing capability, if any |
 | ------------------ | ----------- | ------------------------------- | ----------------------------------- | --------------------------------------------- |
-| Shader example | variant switch | `tp-toggle-group` / `tp-toggle` | V-13 (real click on Displace) | none |
+| Shader example | variant and direction selection | `tp-field` / `tp-select` | V-13; 2026-10-06 real Select choices reach the shader (variant 1, direction up-right) | none |
 | All effect examples | carousel | `tp-carousel` with `effect` | V-09 | none |
 | Slides | media and captions | native `figure`/`img`/`figcaption` | V-13 | native content with `data-carousel-media`/`-layer` hooks |
 
@@ -115,6 +118,9 @@
 | V-15 | C-16; performance | 2 s idle with 4 shader carousels | no rAF | 0 calls | MCP evaluate | passed | Observed |
 | V-16 | C-17; package | vite bundle importing only `TpCarousel` from dist | no effect/WebGL code; no unrelated components | Effect and WebGL code ship only to shader consumers (20 KB). After the per-component family split (S-02), `defineElement(TpCarousel.tagName, TpCarousel)` from `dist/index.js` minifies to 203 KB excluding Lit. It contains the carousel, button, icon, progress and spinner families only, with no registry or aggregate modules. | `tmp/presentation-migration/measure.py`, `sizes-after-deps.txt`; Chrome standalone fixture | passed | — |
 | V-17 | C-18; build | lint, tests, build | clean | vitest 1032 pass; eslint/stylelint clean; build ok; pre-existing field.ts format warning | npm scripts | passed | Observed |
+| V-18 | C-19, C-20; visual | Real Select choices: Displace/Left, Chromatic/Down right, Wipe/Up; preview at 0.5 | Noise-driven displacement along the direction without a front; wipe front travels up | Inspected displace-left-50.png, chromatic-downright-50.png (channel split toned down once), wipe-up-50.png | MCP click + screenshots | passed | Dark theme, 1400 px |
+| V-19 | C-20; demo + a11y | Field/Select demo; open each listbox and choose | Labelled comboboxes "Variant"/"Direction"; options reach the shader | variant uniform 1, direction (0.707,-0.707); tree shows labelled comboboxes | MCP snapshot + click | passed | Real input |
+| V-20 | C-21; visual | Rounded slide (10px) mid-transition | Canvas corners rounded like the DOM media | `inset(0px round 10px)`; corners-mid.png inspected | MCP evaluate + screenshot | passed | Fixed defect: Chrome UA `overflow: clip` on img had stopped the clip walk |
 
 ## Early integration checkpoint
 
@@ -135,7 +141,7 @@
 | 4. Presentation and customization | passed | V-09: effects restore styles on detach. Item progress custom property and role attribute are exposed. |
 | 5. Accessibility | passed | V-08: tree and axe. Item semantics and announcements are unchanged. No screen reader run. |
 | 6. Visual and interaction inspection | passed | Screenshots inspected; edge-streak, caption and drift-sign defects found and fixed. |
-| 7. Documentation and demo reuse | passed | docs/carousel.md Effects, docs/motion.md, and five docs examples using Toggle Group and real carousels. |
+| 7. Documentation and demo reuse | passed | docs/carousel.md Effects, docs/motion.md, and five docs examples using Field/Select and real carousels. |
 | 8. Regression and reconciliation | passed | vitest 1032; eslint/stylelint clean; build ok; carousel regression V-01. Tree-shaking S-02 resolved; vitest 1039, lint and build re-run after the split. |
 
 ## Documentation synchronization
