@@ -42,3 +42,23 @@ export function nearestOwner(host: Node, predicate: (node: Node) => boolean): No
   }
   return null;
 }
+
+/**
+ * A compound owner for a constituent (for example a media player or map): with `ownerId`, the
+ * element with that id in the host's tree scope (then its document) when it satisfies
+ * `predicate`; otherwise the portal-aware `nearestOwner`. `null` when none is found.
+ */
+export function resolveOwner<T extends Node>(
+  host: Node,
+  predicate: (node: Node) => node is T,
+  ownerId?: string | null,
+): T | null {
+  if (ownerId) {
+    const root = host.getRootNode?.() as
+      (Node & { getElementById?(id: string): Element | null }) | undefined;
+    const element =
+      root?.getElementById?.(ownerId) ?? host.ownerDocument?.getElementById(ownerId) ?? null;
+    return element && predicate(element) ? element : null;
+  }
+  return nearestOwner(host, predicate);
+}

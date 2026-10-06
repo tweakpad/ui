@@ -175,6 +175,7 @@ import {
   TpMediaVideoLayout,
   TpMediaAudioLayout,
 } from './components/media-player/index.js';
+import { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/index.js';
 
 defineElement(TpAccordion.tagName, TpAccordion);
 defineElement(TpAccordionItem.tagName, TpAccordionItem);
@@ -311,6 +312,12 @@ defineElement(TpTableCell.tagName, TpTableCell);
 
 defineElement(TpTableCaption.tagName, TpTableCaption);
 defineElement(TpDragDropList.tagName, TpDragDropList);
+
+// The map root is defined first so pins and controls resolve it when they upgrade.
+defineElement(TpMap.tagName, TpMap);
+defineElement(TpMapOverlay.tagName, TpMapOverlay);
+defineElement(TpMapPin.tagName, TpMapPin);
+defineElement(TpMapControl.tagName, TpMapControl);
 
 // The media root is defined first so constituents resolve it when they upgrade.
 defineElement(TpMediaPlayer.tagName, TpMediaPlayer);

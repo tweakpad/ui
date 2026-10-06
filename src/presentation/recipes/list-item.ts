@@ -82,6 +82,8 @@ export const listItemAppearance: PresentationDictionary = {
       },
     },
     { selector: ':host([size="xs"]) &', declarations: { 'font-size': 'var(--tp-text-xs)' } },
+    // The selected row paints the accent fill; supporting text keeps contrast on it.
+    { selector: ':host([selected]) &', declarations: { color: 'var(--tp-accent-foreground)' } },
   ],
 
   'list-item-content': [

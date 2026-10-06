@@ -399,6 +399,12 @@ const examples = {
       <tp-media-video-layout></tp-media-video-layout>
     </tp-media-player>
   `,
+  // Without an engine the map shows its empty status; see the Map stories for engines.
+  'tp-map': () => html`
+    <tp-map label="Lisbon" default-center="38.7223,-9.1393" default-zoom="12">
+      <tp-map-pin value="lisbon" latitude="38.7223" longitude="-9.1393" label="Lisbon"></tp-map-pin>
+    </tp-map>
+  `,
 } satisfies Record<CatalogTag, () => TemplateResult>;
 
 export function renderComponentExample(tagName: CatalogTag): TemplateResult {

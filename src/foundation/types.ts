@@ -56,7 +56,9 @@ export type ChangeReason =
   /** Recognized tap-gesture proposal (Appendix B.8: pointer event). */
   | 'gesture'
   /** Activity-timeout change (Appendix B.8: synthetic timer event). */
-  | 'idle';
+  | 'idle'
+  /** Map camera change originated inside the map engine; never cancelable (Appendix B.8). */
+  | 'engine';
 
 export type PresenceState = 'absent' | 'starting' | 'open' | 'ending' | 'retained';
 

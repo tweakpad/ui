@@ -23,7 +23,7 @@ import type {
 } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import type { KeyShortcut } from '../../foundation/key-bindings.js';
-import { nearestOwner } from '../../foundation/portal-ownership.js';
+import { resolveOwner } from '../../foundation/portal-ownership.js';
 import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 import { shallowEqual, type StoreEquality } from '../../foundation/store.js';
 import type { ChangeReason } from '../../foundation/types.js';
@@ -135,14 +135,7 @@ const isPlayer = (node: Node): node is HTMLElement & MediaPlayerApi =>
  * no player is found (the caller diagnoses and renders disabled).
  */
 export function mediaPlayerOf(host: Node, playerId?: string | null): MediaPlayerApi | null {
-  if (playerId) {
-    const root = host.getRootNode?.() as
-      (Node & { getElementById?(id: string): Element | null }) | undefined;
-    const element =
-      root?.getElementById?.(playerId) ?? host.ownerDocument?.getElementById(playerId) ?? null;
-    return element && isPlayer(element) ? element : null;
-  }
-  return nearestOwner(host, isPlayer);
+  return resolveOwner(host, isPlayer, playerId);
 }
 
 /** A Lit host that may expose an already-resolved player (as `TpMediaElement` does). */

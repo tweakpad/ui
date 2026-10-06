@@ -74,6 +74,7 @@ import type {
   TpMediaVideoLayout,
   TpMediaAudioLayout,
 } from './components/media-player/index.js';
+import type { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/index.js';
 import type { TpAccordion } from './components/accordion.js';
 import type { TpAccordionItem } from './components/accordion-item.js';
 import type { TpButton } from './components/button.js';
@@ -261,6 +262,10 @@ declare global {
     'tp-navigation-panel-separator': TpNavigationPanelSeparator;
     'tp-navigation-panel-loading-placeholder': TpNavigationPanelLoadingPlaceholder;
     'tp-media-player': TpMediaPlayer;
+    'tp-map': TpMap;
+    'tp-map-pin': TpMapPin;
+    'tp-map-overlay': TpMapOverlay;
+    'tp-map-control': TpMapControl;
     'tp-media-container': TpMediaContainer;
     'tp-media-controls': TpMediaControls;
     'tp-media-controls-group': TpMediaControlsGroup;

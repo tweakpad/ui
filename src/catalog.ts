@@ -72,6 +72,7 @@ export const catalog = [
   ['Time', 'tp-time', 'presentational-primitive'],
   ['Navigation panel', 'tp-navigation-panel', 'compound-reexport'],
   ['Media player', 'tp-media-player', 'compound-reexport'],
+  ['Map', 'tp-map', 'compound-reexport'],
 ] as const satisfies readonly (readonly [CatalogEntry['name'], string, CatalogEntry['kind']])[];
 
 export const catalogEntries: readonly CatalogEntry[] = catalog.map(([name, tagName, kind]) => ({

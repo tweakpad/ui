@@ -45,6 +45,10 @@ export function groupMember(element: Element): GroupMember | undefined {
           ? element
           : (element.renderRoot?.querySelector<HTMLElement>(`[part~="${part}"]`) ?? null),
     };
+  // A composite that renders one boundary control (for example a map control's Button) names it.
+  const boundary = (element as TpElement & { readonly groupBoundary?: Element | null })
+    .groupBoundary;
+  if (boundary && boundary !== element) return groupMember(boundary);
   // Floating families expose their real trigger; popup content is never a member.
   const trigger = element.querySelector(':scope > [slot="trigger"]');
   return trigger ? groupMember(trigger) : undefined;

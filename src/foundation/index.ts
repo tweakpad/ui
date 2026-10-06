@@ -39,4 +39,5 @@ export type { ContentSecurityOptions, ContentSecurityScope } from './content-sec
 
 export * from './carousel/index.js';
 export * from './media/index.js';
+export * from './map/index.js';
 export * from './reason-leases.js';
