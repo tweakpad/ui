@@ -40,14 +40,16 @@ export const mediaPlayerAppearance: PresentationDictionary = {
       },
     },
   ],
-  // Native captions stay native (platform caption preferences apply) and lift above visible
-  // controls by the player's published offset (Video.js captions.css). Engines without this
+  // Native captions stay native (platform caption preferences apply), sit 10% of the video
+  // height above the bottom edge and lift above visible controls by the player's published
+  // offset (Video.js captions.css). Engines without this
   // pseudo-element keep native cue placement.
   'media-element': [
     {
       selector: '&::-webkit-media-text-track-container',
       declarations: {
-        translate: '0 calc(-1 * var(--tp-media-caption-offset, 0px))',
+        // At least 10% of the video height from the bottom edge, and above visible controls.
+        translate: '0 calc(-1 * max(10%, var(--tp-media-caption-offset, 0px)))',
         'font-family': 'var(--tp-font-sans)',
         transition: motionTransition(['translate']),
       },
