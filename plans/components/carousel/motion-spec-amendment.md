@@ -58,4 +58,6 @@ The phrase "exactly as before" is removed.
 
 ## UI Component Library Specification: Carousel (`ucl21-carousel`)
 
+In `carousel-effect-factories`, list the shader variants as `wipe`, `displace`, `chromatic` and `crosswarp`. Note that the shader accepts a travel `direction` (four edges and four corners).
+
 No change to properties, parts or events. The `track` and `transition` motion roles keep their rows. Drivers still claim each replacement request.

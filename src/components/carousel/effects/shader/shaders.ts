@@ -1,9 +1,10 @@
 /** GLSL ES 3.00 sources and CPU-side math for the carousel shader transition. */
-export type CarouselShaderVariant = 'wipe' | 'displace' | 'chromatic';
+export type CarouselShaderVariant = 'wipe' | 'displace' | 'chromatic' | 'crosswarp';
 export const shaderVariants: Record<CarouselShaderVariant, number> = {
   wipe: 0,
   displace: 1,
   chromatic: 2,
+  crosswarp: 3,
 };
 
 /** Full-screen triangle; vUv has its origin at the top-left like image rows. */
@@ -102,6 +103,27 @@ void main() {
       sampleCover(uFrom, uFromMap, fromUv + smear),
       sampleCover(uTo, uToMap, toUv + smear),
       revealed);
+  } else if (uVariant == 3) {
+    // Crosswarp: each pixel crosses over in travel order while the outgoing image zooms in and
+    // the incoming one zooms out to rest. Noise shapes the crossing so there is no straight
+    // seam, and a noise vector field morphs both images while they cross.
+    float span = abs(dir.x) + abs(dir.y);
+    float along = dot(uv - 0.5, dir) / span + 0.5;
+    float shape = (fbm(uv * uScale + uSeed) - 0.5) * uIntensity * 0.6;
+    // The expanded range keeps every pixel exactly old at 0 and new at 1 despite the noise.
+    float reach = abs(uIntensity) * 0.3;
+    float x = smoothstep(0.0, 1.0, progress * (2.0 + 2.0 * reach) - reach - along + shape);
+    float crossing = 4.0 * x * (1.0 - x);
+    vec2 field = vec2(
+      fbm(uv * uScale * 0.8 + uSeed + 3.1),
+      fbm(uv * uScale * 0.8 - uSeed - 1.7)) - 0.5;
+    vec2 morph = field * crossing * (0.08 + 0.3 * uIntensity) * (1.0 + speed);
+    vec2 fromWarp = (uv - 0.5) * (1.0 - 0.6 * x) + 0.5 - dir * x * 0.08 + morph;
+    vec2 toWarp = (uv - 0.5) * (0.4 + 0.6 * x) + 0.5 + dir * (1.0 - x) * 0.08 - morph;
+    color = mix(
+      sampleCover(uFrom, uFromMap, fromWarp),
+      sampleCover(uTo, uToMap, toWarp),
+      x);
   } else {
     // Displacement map: fBm noise that flows along the travel direction as the transition
     // advances. Its value sets how far each pixel is pushed and when it crosses over, so the

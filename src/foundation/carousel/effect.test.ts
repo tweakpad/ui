@@ -5,6 +5,7 @@ import {
   focalPoint,
   fragmentSource,
   revealDirection,
+  shaderVariants,
   vertexSource,
 } from '../../components/carousel/effects/shader/shaders.js';
 import { resolveCarouselConfiguration } from './configuration.js';
@@ -89,6 +90,9 @@ describe('shader mapping', () => {
     expect(vertexSource).toContain('gl_Position');
     expect(vertexSource).not.toContain('uDirection');
     expect(fragmentSource).toContain('outColor =');
+    // Displace (chromatic shares its branch) and crosswarp have explicit branches.
+    expect(fragmentSource).toContain(`uVariant == ${shaderVariants.displace}`);
+    expect(fragmentSource).toContain(`uVariant == ${shaderVariants.crosswarp}`);
     // Explicit travel overrides the axis, including corners.
     expect(revealDirection('horizontal', 'rtl', 'down')).toEqual([0, 1]);
     const [x, y] = revealDirection('horizontal', 'ltr', 'up-right');

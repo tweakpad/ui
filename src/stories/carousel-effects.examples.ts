@@ -16,6 +16,7 @@ const variants = [
   ['wipe', 'Wipe'],
   ['displace', 'Displace'],
   ['chromatic', 'Chromatic'],
+  ['crosswarp', 'Crosswarp'],
 ] as const;
 
 const directions = [
@@ -84,7 +85,7 @@ export const carouselEffectExamples = [
     'Shader transition',
     'carousel-effect-shader',
     'shader',
-    'A WebGL2 transition drawn over each item’s data-carousel-media. Wipe sweeps a noise-edged front across the frame; Displace and Chromatic use a flowing noise map that pushes the old image out and draws the new one in along the chosen direction, edge or corner. Drag to scrub it; captions marked data-carousel-layer stay live text above the canvas and reveal in order. Without WebGL2, ready media or motion it falls back to a crossfade.',
+    'A WebGL2 transition drawn over each item’s data-carousel-media. Wipe sweeps a noise-edged front across the frame; Displace and Chromatic use a flowing noise map that pushes the old image out and draws the new one in; Crosswarp zooms and morphs the two images across a noise-shaped crossing. Each follows the chosen direction, edge or corner. Drag to scrub it; captions marked data-carousel-layer stay live text above the canvas and reveal in order. Without WebGL2, ready media or motion it falls back to a crossfade.',
     {
       extra: `<div class="carousel-effect-options">
     <tp-field label="Variant"><tp-select data-option="variant" default-value="wipe">${variants
