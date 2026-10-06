@@ -93,6 +93,7 @@ describe('shader mapping', () => {
     // Displace (chromatic shares its branch) and crosswarp have explicit branches.
     expect(fragmentSource).toContain(`uVariant == ${shaderVariants.displace}`);
     expect(fragmentSource).toContain(`uVariant == ${shaderVariants.crosswarp}`);
+    expect(fragmentSource).toContain(`uVariant == ${shaderVariants.glass}`);
     // Explicit travel overrides the axis, including corners.
     expect(revealDirection('horizontal', 'rtl', 'down')).toEqual([0, 1]);
     const [x, y] = revealDirection('horizontal', 'ltr', 'up-right');

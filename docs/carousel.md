@@ -418,13 +418,13 @@ carousel.effect = carouselShaderEffect({ variant: 'displace' });
 carousel.effect = null; // back to the moving track
 ```
 
-| Factory                     | Layout | Look                                                                                                                                                          |
-| --------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `carouselShaderEffect()`    | stack  | WebGL2 transition over each item's `data-carousel-media`: a noise-edged `wipe`, a noise displacement-map `displace` or `chromatic`, or a zooming `crosswarp`. |
-| `carouselCrossfadeEffect()` | stack  | Opacity transition; the outgoing item stays under the incoming one for `overlap`.                                                                             |
-| `carouselLayeredEffect()`   | stack  | Media turns away and in with perspective; `data-carousel-layer` elements rise in order.                                                                       |
-| `carouselParallaxEffect()`  | track  | Media travels more slowly than its item (`depth`).                                                                                                            |
-| `carouselFocusEffect()`     | track  | Items dim and shrink with distance from alignment; layers reveal as an item arrives.                                                                          |
+| Factory                     | Layout | Look                                                                                                                                                                                |
+| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `carouselShaderEffect()`    | stack  | WebGL2 transition over each item's `data-carousel-media`: a noise-edged `wipe`, a noise displacement-map `displace` or `chromatic`, a zooming `crosswarp`, or a refracting `glass`. |
+| `carouselCrossfadeEffect()` | stack  | Opacity transition; the outgoing item stays under the incoming one for `overlap`.                                                                                                   |
+| `carouselLayeredEffect()`   | stack  | Media turns away and in with perspective; `data-carousel-layer` elements rise in order.                                                                                             |
+| `carouselParallaxEffect()`  | track  | Media travels more slowly than its item (`depth`).                                                                                                                                  |
+| `carouselFocusEffect()`     | track  | Items dim and shrink with distance from alignment; layers reveal as an item arrives.                                                                                                |
 
 Every factory accepts `duration` (ms) and `easing` (CSS easing), used when a navigation
 does not set a speed, plus the options in the table below.
@@ -468,6 +468,7 @@ fallback and announcements are unchanged.
   - `wipe` sweeps a noise-edged front across the frame.
   - `displace` and `chromatic` have no front. They use an fBm noise map as a displacement map that flows along the direction. The map pushes the outgoing image out and draws the incoming one in from behind, and it staggers when each pixel crosses over. `chromatic` displaces each color channel by a different amount.
   - `crosswarp` crosses each pixel over in travel order. The outgoing image zooms in while the incoming one zooms out to rest. Noise shapes the crossing so there is no straight seam, and a noise vector field morphs both images while they cross.
+  - `glass` sweeps a rippled glass ridge along the direction. Seen through it, the old and new images are refracted by its surface, each colour channel slightly differently (RGB aberration). A Fresnel rim and a soft highlight light its edges.
   - `intensity` sets the displacement strength, `softness` widens the crossover, and `scale` sets the noise frequency. Gesture speed strengthens the effect.
 - **Direction:** `direction` is the travel direction. It is one of the edges `left`, `right`, `up` and `down`, or one of the corners for a diagonal: `up-left`, `up-right`, `down-left` and `down-right`. By default it follows the carousel axis toward the inline start (block start when vertical), mirrored in RTL. Navigating backwards plays the transition in reverse.
 

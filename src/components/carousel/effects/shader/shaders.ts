@@ -1,10 +1,11 @@
 /** GLSL ES 3.00 sources and CPU-side math for the carousel shader transition. */
-export type CarouselShaderVariant = 'wipe' | 'displace' | 'chromatic' | 'crosswarp';
+export type CarouselShaderVariant = 'wipe' | 'displace' | 'chromatic' | 'crosswarp' | 'glass';
 export const shaderVariants: Record<CarouselShaderVariant, number> = {
   wipe: 0,
   displace: 1,
   chromatic: 2,
   crosswarp: 3,
+  glass: 4,
 };
 
 /** Full-screen triangle; vUv has its origin at the top-left like image rows. */
@@ -70,6 +71,18 @@ vec4 sampleCover(sampler2D image, vec4 map, vec2 uv) {
 vec2 drift(vec2 uv, vec2 dir, float zoom, float amount) {
   return 0.5 + (uv - 0.5) * (1.0 - zoom) + dir * amount * zoom * 0.5;
 }
+// Glass: a rounded ridge across the moving front, with noise ripples on its surface; 0 off
+// the ridge. The front runs from fully before the frame to fully past it.
+float glassHeight(vec2 p, vec2 dir, float span, float front, float width) {
+  // One smooth octave keeps the surface a clean lens; fBm detail would read as noise.
+  float ripple = noise(p * uScale * 0.6 + uSeed) - 0.5;
+  float along = dot(p - 0.5, dir) / span + 0.5 + ripple * uIntensity * 0.3;
+  float d = (along - front) / width;
+  float ridge = max(0.0, 1.0 - d * d);
+  // Cubed, the profile meets flat glass with zero slope and curvature, so the refraction
+  // fades in from nothing instead of starting at a visible edge.
+  return ridge * ridge * ridge * (1.0 + ripple * uIntensity * 0.5);
+}
 vec3 encodeSrgb(vec3 linear) {
   vec3 low = linear * 12.92;
   vec3 high = 1.055 * pow(linear, vec3(1.0 / 2.4)) - 0.055;
@@ -103,6 +116,49 @@ void main() {
       sampleCover(uFrom, uFromMap, fromUv + smear),
       sampleCover(uTo, uToMap, toUv + smear),
       revealed);
+  } else if (uVariant == 4) {
+    // Glass: a refracting ridge sweeps along the direction. The new image lies behind it and
+    // the old one ahead; through the glass both are refracted by its surface normal, each
+    // colour channel by a slightly different index (dispersion), with a Fresnel rim and a
+    // soft specular highlight. Off the ridge the height is 0, so both ends are exact.
+    float span = abs(dir.x) + abs(dir.y);
+    float width = 0.2 + uSoftness;
+    float reach = width + abs(uIntensity) * 0.15;
+    float front = mix(-reach, 1.0 + reach, progress);
+    float e = 0.002;
+    vec2 grad = vec2(
+      glassHeight(uv + vec2(e, 0.0), dir, span, front, width) -
+        glassHeight(uv - vec2(e, 0.0), dir, span, front, width),
+      glassHeight(uv + vec2(0.0, e), dir, span, front, width) -
+        glassHeight(uv - vec2(0.0, e), dir, span, front, width)) / (2.0 * e);
+    vec3 normal = normalize(vec3(-grad * 0.05 * (1.0 + speed), 1.0));
+    // The new image lies behind the ridge; the crossing follows the rippled front.
+    float along = dot(uv - 0.5, dir) / span + 0.5 +
+      (noise(uv * uScale * 0.6 + uSeed) - 0.5) * uIntensity * 0.3;
+    // The images fade across the whole ridge with a smootherstep, so there is no visible seam.
+    float t = clamp(0.5 - 0.5 * (along - front) / width, 0.0, 1.0);
+    float crossed = t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+    // The surface normal bends the view like a lens; flat glass (off the ridge) bends nothing.
+    vec2 bend = normal.xy * (0.05 + 0.12 * uIntensity) * (1.0 + speed);
+    float spread = 0.06 + 0.12 * uIntensity;
+    vec3 refracted;
+    for (int channel = 0; channel < 3; channel++) {
+      vec2 offset = bend * (1.0 + (float(channel) - 1.0) * spread);
+      vec4 a = sampleCover(uFrom, uFromMap, fromUv + offset);
+      vec4 b = sampleCover(uTo, uToMap, toUv + offset);
+      refracted[channel] = mix(a, b, crossed)[channel];
+    }
+    // Fresnel: reflectance grows as the surface turns away from the viewer, so the slopes catch
+    // the light while the flat crest and the edges stay clear.
+    float tilt = length(normal.xy);
+    float fresnel = pow(clamp(tilt * 1.6, 0.0, 1.0), 3.0);
+    vec3 light = normalize(vec3(-0.4, -0.6, 1.0));
+    vec3 halfway = normalize(light + vec3(0.0, 0.0, 1.0));
+    float specular = pow(max(dot(normal, halfway), 0.0), 60.0) * smoothstep(0.02, 0.2, tilt);
+    // Slopes facing away from the light are slightly darker, which gives the ridge depth.
+    float shade = 1.0 - 0.18 * clamp(-dot(normal.xy, light.xy) * 2.0, 0.0, 1.0);
+    vec3 shine = vec3(1.0) * (fresnel * 0.3 + specular * 0.6);
+    color = vec4(refracted * shade + shine, 1.0);
   } else if (uVariant == 3) {
     // Crosswarp: each pixel crosses over in travel order while the outgoing image zooms in and
     // the incoming one zooms out to rest. Noise shapes the crossing so there is no straight
