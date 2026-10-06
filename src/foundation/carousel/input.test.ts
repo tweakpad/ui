@@ -3,6 +3,7 @@ import {
   bindCarouselGesture,
   bindCarouselKeyboard,
   carouselHideOnClickIgnored,
+  carouselReleaseIntent,
   carouselReleaseSnap,
   normalizeCarouselWheel,
 } from './input.js';
@@ -38,6 +39,27 @@ describe('Carousel source input arithmetic', () => {
     expect(carouselReleaseSnap([0, 100, 200], 50, -1, 301, interaction, 1)).toBe(0);
     expect(carouselReleaseSnap([0, 100, 200], 1, 1, 300, interaction, 0)).toBe(1);
     expect(carouselReleaseSnap([0, 100, 200], 99, -1, 300, interaction, 1)).toBe(0);
+  });
+  it('decides release direction from a flick, not from jitter', () => {
+    const samples = (velocity: number) =>
+      [0, 16, 32, 48].map((time) => [1000 + time, 500 + time * velocity] as const);
+    // Dragged forward, then flicked back by more than the threshold.
+    expect(carouselReleaseIntent(samples(-1), 1048, 1, 48, 5)).toEqual({
+      velocity: -1,
+      direction: -1,
+      flick: true,
+    });
+    // A short reversal at release keeps the overall direction.
+    expect(carouselReleaseIntent(samples(-0.1), 1048, 1, 5, 5).direction).toBe(1);
+    expect(carouselReleaseIntent(samples(-1), 1048, 1, 6, 5).flick).toBe(false);
+    // A pointer that rested before release carries no velocity.
+    expect(carouselReleaseIntent(samples(1), 1120, 1, 0, 5)).toEqual({
+      velocity: 0,
+      direction: 1,
+      flick: false,
+    });
+    // A long drag that ends in a fast forward flick decides like a short swipe.
+    expect(carouselReleaseIntent(samples(0.5), 1048, 1, 0, 5).flick).toBe(true);
   });
   it('restores accepted selection when the relevant release category is disabled', () => {
     const interaction = resolveCarouselConfiguration({

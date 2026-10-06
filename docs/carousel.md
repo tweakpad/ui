@@ -153,6 +153,24 @@ accepted position and no swipe settles). Double tap/click is not intercepted: th
 Carousel exposes no tap/double-tap event and does not implement Zoom, so native
 `dblclick` reaches slide content unchanged.
 
+Transitions never block interaction by default. A drag can grab a moving carousel and
+continues from the presented position. Next/previous, keys and wheel impulses during a
+transition retarget it, and repeated requests accelerate. The new movement ends no
+later than the one it replaced, down to half the normal duration. A release keeps the
+drag's velocity and slows to rest on the chosen snap; it is never left unsnapped.
+Velocity is measured over the last 100 ms of the drag and is zero if the pointer rested
+for 60 ms before release. A flick of at least 0.3 px/ms decides the direction like a
+short swipe, however long the drag lasted. That includes a reversal of at least the
+threshold (minimum 10 px), so dragging forward and flicking back returns. Slower
+releases use the long-swipe ratio.
+
+While a gesture is pending or active, the Carousel prevents text selection and native
+image dragging inside it, with no consumer CSS. A descendant marked `draggable="true"`
+keeps its own native drag. Controls, indicators and the scrollbar are not
+text-selectable, so repeated clicks on Next do not select slide content.
+`preventInteractionOnTransition` and `loopOptions.preventDuringTransition` restore
+transition locking.
+
 `keyboard` is enabled by default, with `pageKeys=false` and `homeEnd=true`; false
 disables it. Arrow keys follow the active logical axis and RTL. Home/End select
 boundaries. Optional PageUp/PageDown use the same snap navigation. Modifiers, IME,
@@ -239,7 +257,7 @@ smooth-scroll timing belongs to the browser. Transform resistance and simulated
 mouse dragging are inactive in native mode.
 
 Root loop permits `loopMode='continuous'` (default) or `'rewind'`.
-`loopOptions` defaults to `{additionalItems:0, fillGroups:true, preventDuringTransition:true}`. Additional items is a nonnegative integer.
+`loopOptions` defaults to `{additionalItems:0, fillGroups:true, preventDuringTransition:false}`; `true` rejects navigation and drags while a continuous loop transitions. Additional items is a nonnegative integer.
 Continuous mode permutes owned shells without cloning consumer controls or changing
 logical source order. Unmeasured content does not claim loop eligibility. All-fit
 content stays in source order; insufficient distinct content falls back to effective
@@ -382,7 +400,10 @@ frames or timer advances.
 Motion roles are `track`, `transition` (effects only), `auto-height`, and
 `scrollbar-visibility`: state motions with phase `change` and non-blocking completion.
 Shared motion policy, consumer drivers, cancellation and bounded completion apply.
-Reduced motion and explicit zero-speed requests settle immediately.
+`track` and `transition` are sampled every animation frame. A navigation from rest uses
+the resolved duration and easing. One that starts while the carousel moves continues at
+the presented velocity, and each replacement publishes a new motion request. Reduced
+motion and explicit zero-speed requests settle immediately.
 
 ## Effects
 
@@ -397,13 +418,13 @@ carousel.effect = carouselShaderEffect({ variant: 'displace' });
 carousel.effect = null; // back to the moving track
 ```
 
-| Factory                     | Layout | Look                                                                                       |
-| --------------------------- | ------ | ------------------------------------------------------------------------------------------ |
-| `carouselShaderEffect()`    | stack  | WebGL2 transition over each item's `data-carousel-media`; `wipe`, `displace`, `chromatic`. |
-| `carouselCrossfadeEffect()` | stack  | Opacity transition; the outgoing item stays under the incoming one for `overlap`.          |
-| `carouselLayeredEffect()`   | stack  | Media turns away and in with perspective; `data-carousel-layer` elements rise in order.    |
-| `carouselParallaxEffect()`  | track  | Media travels more slowly than its item (`depth`).                                         |
-| `carouselFocusEffect()`     | track  | Items dim and shrink with distance from alignment; layers reveal as an item arrives.       |
+| Factory                     | Layout | Look                                                                                                                                         |
+| --------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `carouselShaderEffect()`    | stack  | WebGL2 transition over each item's `data-carousel-media`: a noise-edged `wipe`, a full-frame liquid `displace`, or an RGB-split `chromatic`. |
+| `carouselCrossfadeEffect()` | stack  | Opacity transition; the outgoing item stays under the incoming one for `overlap`.                                                            |
+| `carouselLayeredEffect()`   | stack  | Media turns away and in with perspective; `data-carousel-layer` elements rise in order.                                                      |
+| `carouselParallaxEffect()`  | track  | Media travels more slowly than its item (`depth`).                                                                                           |
+| `carouselFocusEffect()`     | track  | Items dim and shrink with distance from alignment; layers reveal as an item arrives.                                                         |
 
 Every factory accepts `duration` (ms) and `easing` (CSS easing), used when a navigation
 does not set a speed, plus the options in the table below.

@@ -263,6 +263,11 @@ interface Gesture {
   threshold: boolean;
   moved: boolean;
   direction: number;
+  /** Logical positions over time, for release velocity. */
+  samples: Array<readonly [number, number]>;
+  /** Extent reached on each side, for reversal distance. */
+  minimum: number;
+  maximum: number;
   scope: CleanupScope;
   capture: HTMLElement;
 }
@@ -411,6 +416,9 @@ class CarouselGestures {
       threshold: false,
       moved: false,
       direction: 0,
+      samples: [],
+      minimum: owner.controller.projection.position,
+      maximum: owner.controller.projection.position,
       scope,
       capture: owner.elements.track,
     };
@@ -459,6 +467,35 @@ class CarouselGestures {
       this.end(end, true);
     });
     scope.listen(this.document.defaultView ?? this.document, 'blur', () => this.cancel());
+    // Selection and native-drag lease for the owned gesture (`carousel-adopt-1060`).
+    const pointerType = event.pointerType;
+    scope.listen(
+      this.document,
+      'selectstart',
+      (select) => {
+        const gesture = this.gesture;
+        if (gesture && (pointerType === 'mouse' || gesture.moved)) select.preventDefault();
+      },
+      { capture: true },
+    );
+    scope.listen(
+      this.document,
+      'dragstart',
+      (drag) => {
+        if (!this.gesture) return;
+        // An explicitly draggable descendant owns its native drag and cancels activation.
+        const explicit = drag
+          .composedPath()
+          .some(
+            (node) =>
+              (node as Node).nodeType === 1 &&
+              (node as Element).getAttribute('draggable') === 'true',
+          );
+        if (explicit && !this.gesture.moved) this.cancel();
+        else drag.preventDefault();
+      },
+      { capture: true },
+    );
     const interaction = owner.controller.configuration.interaction;
     if (
       interaction.forcePreventStartDefault ||
@@ -510,7 +547,11 @@ class CarouselGestures {
       gesture.originY = event.clientY;
       delta = 0;
     }
-    if (!gesture.moved) gesture.start = gesture.position = owner.controller.interruptPreview();
+    if (!gesture.moved) {
+      gesture.start = gesture.position = owner.controller.interruptPreview();
+      gesture.minimum = gesture.maximum = gesture.start;
+      gesture.samples = [];
+    }
     const snaps = owner.controller.projection.layout.snaps;
     const first = snaps[0]?.position ?? 0,
       last = snaps.at(-1)?.position ?? first;
@@ -565,6 +606,11 @@ class CarouselGestures {
     // Release uses overall swipe direction, not the most recent pointer jitter.
     gesture.direction = Math.sign(position - gesture.start);
     gesture.position = position;
+    gesture.minimum = Math.min(gesture.minimum, position);
+    gesture.maximum = Math.max(gesture.maximum, position);
+    gesture.samples.push([event.timeStamp, position]);
+    while (gesture.samples.length > 2 && event.timeStamp - gesture.samples[0]![0] > 100)
+      gesture.samples.shift();
     event.preventDefault();
     if (interaction.stopMovePropagation) event.stopPropagation();
     this.frame?.();
@@ -604,11 +650,20 @@ class CarouselGestures {
       void controller.restorePreview().finally(finish);
       return;
     }
+    const overall = gesture.direction || Math.sign(gesture.position - gesture.start);
+    const intent = carouselReleaseIntent(
+      gesture.samples,
+      event.timeStamp,
+      overall,
+      overall > 0 ? gesture.maximum - gesture.position : gesture.position - gesture.minimum,
+      controller.configuration.interaction.threshold,
+    );
     const target = carouselReleaseSnap(
       controller.projection.layout.snaps.map((snap) => snap.position),
       gesture.position,
-      gesture.direction || Math.sign(gesture.position - gesture.start),
-      event.timeStamp - gesture.started,
+      intent.direction,
+      // A flick decides like a short swipe, however long the drag lasted.
+      intent.flick ? 0 : event.timeStamp - gesture.started,
       controller.configuration.interaction,
       controller.snapshot.snapIndex ?? 0,
       controller.snapshot.loopMode !== 'finite',
@@ -678,6 +733,35 @@ export function bindCarouselGesture(
       coordinators.delete(document);
     }
   });
+}
+
+/** A release at least this fast (px/ms) is a flick. */
+export const carouselFlickVelocity = 0.3;
+
+/**
+ * Release velocity and direction (`carousel-adopt-1034`, `-1049`). Velocity is measured over
+ * the last 100 ms of samples and is zero when the pointer rested 60 ms before release. A flick
+ * in the overall direction, or one that reversed by at least the threshold, decides the
+ * direction from its velocity; otherwise the overall swipe direction holds.
+ */
+export function carouselReleaseIntent(
+  samples: ReadonlyArray<readonly [number, number]>,
+  time: number,
+  overall: number,
+  reversal: number,
+  threshold: number,
+): { velocity: number; direction: number; flick: boolean } {
+  const recent = samples.filter(([sampled]) => time - sampled <= 100);
+  const first = recent[0],
+    last = recent.at(-1);
+  const elapsed = first && last ? last[0] - first[0] : 0;
+  const velocity =
+    first && last && elapsed >= 8 && time - last[0] < 60 ? (last[1] - first[1]) / elapsed : 0;
+  const sign = Math.sign(velocity);
+  const flick =
+    Math.abs(velocity) >= carouselFlickVelocity &&
+    (sign === overall || reversal >= Math.max(threshold, 10));
+  return { velocity, direction: flick ? sign : overall, flick };
 }
 
 export function carouselReleaseSnap(

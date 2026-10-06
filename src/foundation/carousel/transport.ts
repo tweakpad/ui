@@ -141,6 +141,12 @@ export class CarouselTransport {
     return position + (this.controller()?.projection.layout.snaps[0]?.position ?? 0);
   }
   async compensate(position: number): Promise<void> {
+    // Loop reordering moves to an equivalent position; an in-flight transition or the
+    // gesture's velocity continues from there instead of restarting.
+    if (this.controller()?.configuration.transport !== 'scroll' && this.#presenter.offset) {
+      this.#presenter.offset(position);
+      return;
+    }
     this.#compensating = true;
     try {
       await this.move(position, { speed: 0 });

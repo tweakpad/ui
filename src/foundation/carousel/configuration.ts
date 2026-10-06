@@ -116,7 +116,7 @@ const defaults: CarouselConfiguration = {
   keyboard: { enabled: true, pageKeys: false, homeEnd: true },
   virtual: false,
   autoplayOptions: { reverse: false, stopAfterInteraction: false },
-  loopOptions: { additionalItems: 0, fillGroups: true, preventDuringTransition: true },
+  loopOptions: { additionalItems: 0, fillGroups: true, preventDuringTransition: false },
   messages: {
     previous: 'Previous slide',
     next: 'Next slide',

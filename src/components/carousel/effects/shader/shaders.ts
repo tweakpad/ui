@@ -98,16 +98,21 @@ void main() {
   fromUv += smear;
   toUv += smear;
 
+  // Variant looks peak mid-transition and vanish at both ends, so hand-off stays exact.
+  float peak = sin(3.14159265 * clamp(uProgress, 0.0, 1.0));
   vec4 fromColor;
   vec4 toColor;
   if (uVariant == 1) {
-    vec2 normal = vec2(-dir.y, dir.x);
-    float wobble = fbm(uv * uScale * 1.7 - uSeed) - 0.5;
-    vec2 push = (dir + normal * wobble) * band * uIntensity * 0.35;
-    fromColor = sampleCover(uFrom, uFromMap, fromUv + push * revealed);
-    toColor = sampleCover(uTo, uToMap, toUv - push * (1.0 - revealed));
+    // Liquid displacement across the whole frame: a noise field pushes the outgoing image
+    // ahead and pulls the incoming one in, strongest inside the band.
+    vec2 field = vec2(fbm(uv * uScale * 1.3 + uSeed), fbm(uv * uScale * 1.3 - uSeed)) - 0.5;
+    vec2 push = (dir * 0.6 + field) * (peak * 0.6 + band) * uIntensity * 0.3;
+    fromColor = sampleCover(uFrom, uFromMap, fromUv + push);
+    toColor = sampleCover(uTo, uToMap, toUv - push);
   } else if (uVariant == 2) {
-    vec2 shift = dir * band * (0.006 + speed * 0.03) * (0.5 + uIntensity);
+    // RGB split along the travel direction over the whole frame, wider in the band and
+    // with gesture speed.
+    vec2 shift = dir * (peak * 0.012 + band * 0.015 + speed * 0.03) * (0.5 + uIntensity);
     fromColor = vec4(
       sampleCover(uFrom, uFromMap, fromUv + shift).r,
       sampleCover(uFrom, uFromMap, fromUv + shift * 0.5).g,

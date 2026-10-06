@@ -1,10 +1,13 @@
-import { prepareMotion, resolvesReducedMotion, type MotionHandle } from '../motion.js';
+import { resolvesReducedMotion } from '../motion.js';
 import { parseEasing } from '../motion-easing.js';
 import { OwnedStyles } from '../owned-styles.js';
-import { Scheduler } from '../services.js';
 import type { CarouselController, CarouselInput } from './controller.js';
 import type { CarouselLayout } from './layout.js';
-import { carouselTrackTransform, type CarouselPresenter } from './presenter.js';
+import {
+  CarouselFramePresenter,
+  carouselTrackTransform,
+  type CarouselFrameMotion,
+} from './presenter.js';
 import { carouselMotionRoles, carouselMotionTiming } from './timing.js';
 import type { CarouselId, CarouselNavigationRequest, CarouselOptions } from './types.js';
 
@@ -167,28 +170,21 @@ export function stackEffectConstraint(name: string) {
   };
 }
 
-const smoothing = 0.35;
-
 /** Frame-driven presenter: owns the logical position so effects can render any value. */
-export class EffectPresenter implements CarouselPresenter {
+export class EffectPresenter extends CarouselFramePresenter {
   readonly #track: OwnedStyles;
-  readonly #scheduler: Scheduler;
   readonly #instance: CarouselEffectInstance;
   readonly #shellStyles = new Map<HTMLElement, OwnedStyles>();
-  #position = 0;
-  #velocity = 0;
   #direction: 1 | -1 = 1;
-  #sampleTime = 0;
-  #motion: MotionHandle | undefined;
-  #stopFrames: (() => void) | undefined;
+  /** Last presented physical position, for the movement direction. */
+  #previous = 0;
   #pendingFrame: (() => void) | undefined;
-  #disposed = false;
   constructor(
     readonly effect: CarouselEffect,
     readonly host: CarouselEffectHost,
   ) {
+    super(host.owner);
     this.#track = new OwnedStyles(host.track);
-    this.#scheduler = new Scheduler(host.owner.ownerDocument.defaultView ?? undefined);
     const controller = host.controller();
     const horizontal = controller?.configuration.orientation !== 'vertical';
     this.#instance = effect.attach({
@@ -202,97 +198,52 @@ export class EffectPresenter implements CarouselPresenter {
       diagnose: (message, error) => host.diagnose(message, error),
     });
   }
-  get position(): number {
-    return this.#position;
+  protected override prepare(position: number): void {
+    if (this.effect.layout !== 'stack') return;
+    // Stacked loops present wrapped progress, so whole cycles are invisible: continue from the
+    // equivalent position nearest the destination to travel the short way across the seam.
+    const projection = this.host.controller()?.projection;
+    const layout = projection?.layout;
+    const cycle =
+      projection?.loop.mode === 'continuous' && layout
+        ? layout.sizes.reduce((sum, size) => sum + size + layout.gap, 0)
+        : 0;
+    if (cycle <= 0) return;
+    const start = this.kinetics.position;
+    const shift =
+      position + ((((start - position + cycle / 2) % cycle) + cycle) % cycle) - cycle / 2 - start;
+    this.kinetics.shift(shift);
+    this.#previous += shift;
   }
-  async move(position: number, request: CarouselNavigationRequest): Promise<void> {
-    if (this.#disposed) return;
-    this.#stop();
-    let start = this.#position;
-    if (this.effect.layout === 'stack') {
-      // Stacked loops present wrapped progress, so whole cycles are invisible: start from the
-      // equivalent position nearest the destination to travel the short way across the seam.
-      const projection = this.host.controller()?.projection;
-      const layout = projection?.layout;
-      const cycle =
-        projection?.loop.mode === 'continuous' && layout
-          ? layout.sizes.reduce((sum, size) => sum + size + layout.gap, 0)
-          : 0;
-      if (cycle > 0) {
-        start = position + ((((start - position + cycle / 2) % cycle) + cycle) % cycle) - cycle / 2;
-        this.#position = start;
-      }
-    }
-    if (
-      request.speed === 0 ||
-      Math.abs(start - position) < 0.001 ||
-      resolvesReducedMotion(this.host.owner)
-    ) {
-      this.#present(position, this.host.dragging() ? 'drag' : 'settle');
-      return;
-    }
-    const timing = carouselMotionTiming(this.host.owner, request.speed ?? this.effect.duration);
-    const easing = parseEasing(
-      request.speed === undefined && this.effect.easing ? this.effect.easing : timing.easing,
-    );
-    const motion = prepareMotion(
-      this.host.owner,
-      this.host.viewport,
-      carouselMotionRoles.transition,
-      {
+  protected motion(position: number, request: CarouselNavigationRequest): CarouselFrameMotion {
+    const timing = carouselMotionTiming(this.owner, request.speed ?? this.effect.duration);
+    return {
+      target: this.host.viewport,
+      role: carouselMotionRoles.transition,
+      request: {
         phase: 'change',
-        fromState: start,
+        fromState: this.position,
         toState: position,
         context: { effect: this.effect.name, duration: timing.duration },
       },
-      {
-        play: () => {
-          let begin: number | undefined;
-          let resolve!: () => void;
-          const finished = new Promise<void>((done) => (resolve = done));
-          const step = (time: number) => {
-            begin ??= time;
-            const progress = timing.duration > 0 ? (time - begin) / timing.duration : 1;
-            this.#present(start + (position - start) * easing(Math.min(1, progress)), 'animate');
-            if (progress >= 1) {
-              this.#stopFrames = undefined;
-              resolve();
-            } else this.#stopFrames = this.#scheduler.animationFrame(step);
-          };
-          this.#stopFrames = this.#scheduler.animationFrame(step);
-          return {
-            finished,
-            cancel: () => {
-              this.#stopFrames?.();
-              this.#stopFrames = undefined;
-              resolve();
-            },
-          };
-        },
+      timing: {
+        duration: timing.duration,
+        easing: parseEasing(
+          request.speed === undefined && this.effect.easing ? this.effect.easing : timing.easing,
+        ),
       },
-    );
-    this.#motion = motion;
-    motion.start();
-    await motion.finished;
-    if (this.#motion !== motion || this.#disposed) return;
-    this.#motion = undefined;
-    // A claimed external driver or reduced motion skips frames; settle on the destination.
-    this.#present(position, 'settle');
-  }
-  cancel(): void {
-    this.#stop();
+    };
   }
   /** Re-present the current position after layout or membership changes. */
   refresh(): void {
     this.#instance.update?.();
-    if (this.#motion) return;
-    this.#present(this.#position, this.host.dragging() ? 'drag' : 'settle');
+    if (this.animating) return;
+    this.present(this.position, this.host.dragging() ? 'drag' : 'settle');
   }
-  dispose(): void {
-    if (this.#disposed) return;
-    this.#stop();
+  override dispose(): void {
+    if (this.disposed) return;
     this.#pendingFrame?.();
-    this.#disposed = true;
+    super.dispose();
     try {
       this.#instance.detach();
     } catch (error) {
@@ -302,28 +253,19 @@ export class EffectPresenter implements CarouselPresenter {
     this.#shellStyles.clear();
     for (const item of this.host.items()) item.shell.removeAttribute('data-effect-role');
     this.#track.dispose();
-    this.#scheduler.dispose();
-  }
-  #stop(): void {
-    const motion = this.#motion;
-    this.#motion = undefined;
-    this.#stopFrames?.();
-    this.#stopFrames = undefined;
-    motion?.cancel();
   }
   #invalidate(): void {
-    if (this.#pendingFrame || this.#disposed) return;
-    this.#pendingFrame = this.#scheduler.animationFrame(() => {
+    if (this.#pendingFrame || this.disposed) return;
+    this.#pendingFrame = this.scheduler.animationFrame(() => {
       this.#pendingFrame = undefined;
-      if (!this.#motion) this.#present(this.#position, this.host.dragging() ? 'drag' : 'settle');
+      if (!this.animating) this.present(this.position, this.host.dragging() ? 'drag' : 'settle');
     });
   }
-  #present(physical: number, phase: CarouselEffectPhase): void {
-    if (this.#disposed) return;
+  protected present(physical: number, phase: CarouselEffectPhase): void {
+    if (this.disposed) return;
     const controller = this.host.controller();
-    const now = this.host.owner.ownerDocument.defaultView?.performance.now() ?? 0;
-    const previous = this.#position;
-    this.#position = physical;
+    const previous = this.#previous;
+    this.#previous = physical;
     const horizontal = controller?.configuration.orientation !== 'vertical';
     const rtl = horizontal && controller?.snapshot.direction === 'rtl';
     this.#track.set(
@@ -334,12 +276,10 @@ export class EffectPresenter implements CarouselPresenter {
     const layout = projection?.layout;
     if (!controller || !projection || !layout?.measured) return;
     const pitch = (layout.sizes[0] ?? 0) + layout.gap || 1;
-    const delta = (physical - previous) / pitch;
-    const elapsed = Math.max(1, now - this.#sampleTime) / 1000;
+    const delta = physical - previous;
     if (Math.abs(delta) > 1e-6) this.#direction = delta > 0 ? 1 : -1;
-    this.#velocity =
-      phase === 'settle' ? 0 : this.#velocity + (delta / elapsed - this.#velocity) * smoothing;
-    this.#sampleTime = now;
+    // Kinetic velocity is pixels per millisecond; effects receive pitches per second.
+    const velocity = phase === 'settle' ? 0 : (this.kinetics.velocity(this.now()) * 1000) / pitch;
     const logical = physical - this.host.logicalOffset();
     const loop = projection.loop.mode === 'continuous';
     const items = this.host.items().map((item) => {
@@ -375,7 +315,7 @@ export class EffectPresenter implements CarouselPresenter {
         Object.freeze({
           phase,
           position: logical,
-          velocity: this.#velocity,
+          velocity,
           direction: this.#direction,
           reducedMotion: resolvesReducedMotion(this.host.owner),
           items: Object.freeze(items),

@@ -105,6 +105,12 @@ export const carouselStyles = css`
     user-select: none;
   }
 
+  /* Repeated activation of controls must not select slide content or labels. */
+  .controls,
+  .scrollbar {
+    user-select: none;
+  }
+
   .controls {
     display: flex;
     align-items: center;

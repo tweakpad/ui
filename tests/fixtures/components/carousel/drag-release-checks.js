@@ -34,7 +34,7 @@ export async function checkCarouselRelease(carousel) {
       carousel.addEventListener('tp-motion-request', collect);
       const send = (type, x) => {
         const event = new view.PointerEvent(type, {
-          pointerId: 79,
+          pointerId: 1,
           pointerType: 'mouse',
           isPrimary: true,
           button: 0,
@@ -56,6 +56,9 @@ export async function checkCarouselRelease(carousel) {
         await frame();
         send('pointermove', preview + direction * 3);
         await frame();
+        const settled = new Promise((resolve) =>
+          carousel.addEventListener('tp-carousel-settled', resolve, { once: true }),
+        );
         send('pointerup', release);
         await frame();
         const expectedPosition = startPosition + direction * (distance - 5);
@@ -67,9 +70,9 @@ export async function checkCarouselRelease(carousel) {
           Math.abs(from - expectedPosition) < 0.01,
           `last sample lost: ${from} vs ${expectedPosition}`,
         );
-        const animation = track.getAnimations()[0];
-        assert(animation, 'release jumped without animation');
-        await animation.finished;
+        // Frame-driven settlement: the release keeps transitioning until it settles.
+        assert(carousel.hasAttribute('data-transitioning'), 'release jumped without animation');
+        await settled;
         results.push({ direction, index: carousel.index, from, expectedPosition, threshold: 5 });
       } finally {
         carousel.removeEventListener('tp-motion-request', collect);
@@ -113,7 +116,7 @@ export async function checkCarouselReleaseOrdering(carousel) {
         const target = ['pointerdown', 'lostpointercapture'].includes(type) ? track : document;
         target.dispatchEvent(
           new view.PointerEvent(type, {
-            pointerId: 87,
+            pointerId: 1,
             pointerType: 'mouse',
             isPrimary: true,
             button: 0,
@@ -160,14 +163,16 @@ export async function checkCarouselReleaseOrdering(carousel) {
           results.push({ mode, index: carousel.index, restored: position() });
           continue;
         }
+        const settled = new Promise((resolve) =>
+          carousel.addEventListener('tp-carousel-settled', resolve, { once: true }),
+        );
         send('pointerup', 160, 0);
         await frame();
         assert(motion, 'normal release skipped settling motion');
         const from = -new view.DOMMatrix(motion.fromState).m41;
         assert(Math.abs(from - (start - 50)) < 0.01, 'final release sample was lost');
-        const animation = track.getAnimations()[0];
-        assert(animation, 'release jumped instead of animating');
-        await animation.finished;
+        assert(carousel.hasAttribute('data-transitioning'), 'release jumped instead of animating');
+        await settled;
         assert(!carousel.hasAttribute('data-dragging'), 'release left gesture active');
         assert(carousel.index === (mode === 'quick-release' ? 2 : 3), 'wrong release destination');
         results.push({ mode, index: carousel.index, from, settled: position() });

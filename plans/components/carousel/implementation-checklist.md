@@ -201,6 +201,39 @@ responsive, so its earlier timeout is no longer a current connection blocker.
 - Record boundary: implement checker passes; full verify/complete retain older
   unresolved matrix rows. This follow-up does not claim full Carousel conformance.
 
+## Interruptible frame-sampled motion — 2026-10-06
+
+Bounded fix requested by the user: transitions must not block interaction, drags must respond to velocity with inertia, reversals before settling must work, and repeated next/previous must accelerate the in-flight transition. Motion is frame-based with easing kept. The component must prevent image dragging and selection itself, and the shader variants must be visibly distinct.
+
+**Sources.** Fresh direct Spec Blocks reads at HEAD `8d01eebc` (0.3.21). Four clauses conflict with the request:
+
+- `carousel-adopt-718`: the `loopOptions.preventDuringTransition=true` default.
+- `carousel-adopt-1034` and `-1049`: the release direction and timing rule.
+- `carousel-adopt-1083`: the wheel animation locks.
+
+The user chose the amendment drafted in `plans/components/carousel/motion-spec-amendment.md`, then instructed: implement the code first and write the spec after the component is finished. The amendment is **not yet applied**: the spec write was blocked by the permission system (S-01 below).
+
+**Diagnosis.**
+
+- Variant switching worked: the uVariant uniform changed. The looks were near-identical, though. Chromatic was about a 0.5% shift and displace was limited to the band.
+- The looping shader demo rejected every drag and click during transitions (`transition-locked`). A pointerdown during that lock skipped `preventDefault`, so native image drag and selection started.
+
+**Design (gates 0–2 reopened and re-passed for this boundary).**
+
+- `foundation/carousel/kinetics.ts` (new) is the single motion owner.
+  - A navigation from rest uses the resolved easing and duration.
+  - A navigation with momentum uses a Hermite segment that leaves at the presented velocity and arrives at rest. It is shortened toward the target, down to 35% of the duration.
+  - A retarget ends no later than its predecessor, down to 50% of the duration.
+  - It handles halt/retarget from the last presented frame, drag-sample velocity, and loop `shift`.
+- `presenter.ts` `CarouselFramePresenter` is shared by `TranslatePresenter` and `EffectPresenter`. Both are frame-sampled through the existing `track`/`transition` roles, with `prepareMotion` claim and cancel kept.
+- `transport.compensate` uses `presenter.offset` to keep motion across loop reorder.
+- `input.ts` adds `carouselReleaseIntent` (100 ms velocity window, 60 ms rest, 0.3 px/ms flick, reversal ≥ max(threshold, 10 px)) and a selection/native-drag lease for the gesture scope.
+- `styles.ts` makes controls and the scrollbar non-selectable.
+- Shader `displace`/`chromatic` became full-frame looks that peak mid-transition and vanish at both ends.
+- No new public API. The only default change is `loopOptions.preventDuringTransition=false`.
+
+**Evidence** is in `tmp/component-verification/carousel-effects/2026-10-06-motion/`. Details are in rows C-182–C-187 and V-127–V-136.
+
 ## Shared-owner adoption: pause leases and keyboard composites — 2026-10-06
 
 Bounded shared-owner adoption (R-11 plus Carousel keyboard nested-composite
@@ -455,12 +488,19 @@ the mapping must be complete even though implementation/test statuses are pendin
 | C-179 | snapshot.direction; default/policy inherited | sec-f-carousel-4; sec-187-carousel | source-traceability.md C-01 exact branch | src/foundation/carousel/controller.ts and Lit binding | docs/carousel.md | V-01, V-04, V-07, V-16, V-26, V-32, V-86 | pending | Implemented and documented; independent live option verification pending Chrome. |
 | C-180 | snapshot.loopMode; default/policy none | sec-f-carousel-4; sec-187-carousel | source-traceability.md C-01 exact branch | src/foundation/carousel/controller.ts and Lit binding | docs/carousel.md | V-01, V-04, V-07, V-16, V-26, V-32, V-86 | pending | Implemented and documented; independent live option verification pending Chrome. |
 | C-181 | snapshot.virtualRange; default/policy empty | sec-f-carousel-4; sec-187-carousel | source-traceability.md C-01 exact branch | src/foundation/carousel/controller.ts and Lit binding | docs/carousel.md | V-01, V-04, V-07, V-16, V-26, V-32, V-86 | pending | Implemented and documented; independent live option verification pending Chrome. |
+| C-182 | Frame-sampled presenter: track and effect motion sampled per frame from one kinetic owner; claimed drivers, reduced motion and `speed` honored | draft motion-spec-amendment.md (18.7.4.1); `carousel-adopt-976`; `req-f-carousel-presenter` | Swiper `setTranslate`/`slideTo` | `kinetics.ts` `CarouselKinetics`; `presenter.ts` `CarouselFramePresenter`, `TranslatePresenter`; `effect.ts` `EffectPresenter` | docs/carousel.md motion roles | V-127, V-131, V-135 | passed | Unit kinetics.test.ts; browser frames on the data fixture and the docs page |
+| C-183 | Interruptible navigation: next/previous/keys/wheel retarget an in-flight transition with continuous velocity; repeated requests accelerate | draft amendment (18.7.1.7, 18.7.7.2); `carousel-adopt-718` conflict S-01 | Swiper `loopPreventsSliding` (source behavior now opt-in) | `configuration.ts` default; `CarouselKinetics.plan`/`halt` | docs/carousel.md interaction | V-127, V-128 | passed | Double-click advances 2; three clicks reach index 3 in ~330 ms with continuous velocity |
+| C-184 | Drag during a transition continues from the presented position; superseded navigation resolves cancelled | `carousel-adopt-781`, `-840`; draft amendment | Swiper `onTouchStart` translate handoff | `interruptPreview`, kinetics halt | docs/carousel.md interaction | V-130 | passed | Mid-transition grab: `next()` resolved cancelled/superseded; drag continued from 1.10 |
+| C-185 | Velocity release: flick direction, inertia carried into the settle, snap-on-release kept | draft amendment (`carousel-adopt-1034`, `-1049`) | Swiper `onTouchEnd` short/long swipes | `carouselReleaseIntent`, `carouselReleaseSnap`, kinetic momentum | docs/carousel.md interaction | V-129, V-133 | passed | Unit input.test.ts; synthetic multi-sample browser drags |
+| C-186 | Selection and native-drag lease; controls not selectable; `draggable="true"` descendants keep native drag | draft amendment (`carousel-adopt-1060`) | Swiper `touchStartPreventDefault` | `input.ts` gesture scope listeners; `styles.ts` | docs/carousel.md interaction | V-132 | passed | dragstart/selectstart prevented during the gesture |
+| C-187 | Distinct shader variants: wipe, full-frame displace, RGB-split chromatic, exact at both ends | `carousel-effect-factories` | dm81 CodePen | `effects/shader/shaders.ts` | docs/carousel.md effects table | V-134 | passed | Screenshots displace-mid-after.png, chromatic-mid-after.png |
 
 Record spec/upstream conflicts here before dependent implementation:
 
 | Issue | Concrete missing/conflicting contract | Affected dependencies | Proposed resolution | Authority / resolution evidence | Status |
 | ----- | ------------------------------------- | --------------------- | ------------------- | ------------------------------- | ------ |
 | Contract adoption | Existing plugin wording and incomplete lane/options/anatomy | State/reasons/motion/Scroll Area | carousel.md section 17 exact adoption through direct MCP | Direct MCP candidate validated; all 47 reviews resolved | passed |
+| S-01 motion | `carousel-adopt-718` default `preventDuringTransition=true`, `-1034`/`-1049` release rule, `-1083` wheel animation locks, and `req-f-carousel-presenter-default` ("exactly as before") conflict with the requested interruptible, velocity-driven motion | Carousel input, loop, wheel and presenters | `plans/components/carousel/motion-spec-amendment.md` | User approved applying it, then instructed: code first, spec after the component is finished. The spec write was denied by the permission system, and the draft is not applied. | blocked |
 
 For catalog-wide work, also reconcile every upstream identity with a catalog,
 composition or Foundation exposure, evidence and any gap. Attach/reference that
@@ -654,6 +694,16 @@ source/capability evidence. Tool limitations are blocked, not passed or N/A.
 | V-124 | C-16 | Presentation definition metadata | Carousel part cardinalities match public-definition-detail wording | src/presentation tests pass after update. | npx vitest run src/presentation | passed | Metadata only; no rendered change. |
 | V-125 | C-12 | Autoplay with hover + focus + document hidden pauses overlapping, then clearing one at a time; manual pause/resume during a mandatory pause | Timer stays paused until the last reason clears, then restarts a full interval; Resume never overrides hover/focus/hidden; Button name unchanged by mandatory pauses | Unit: autoplay.test.ts (shared ReasonLeases delegation, reason isolation). Browser not run. | Chrome DevTools MCP real hover/Tab/visibility + snapshot | blocked | Chrome unavailable in the 2026-10-06 shared-owner task; no browser evidence. |
 | V-126 | C-07; accessibility | Slides containing tp-tabs/tablist, listbox, tp-menu, tp-radio-group, tp-slider and tp-input; focus each and press arrows/Home/End/PageDown; then focus plain slide content | Nested control handles its keys and the Carousel selection does not change; from plain content arrows/Home/End navigate; RTL/vertical axes respected | Unit: input.test.ts nested-composite and plain-content tests. Browser not run. | Chrome DevTools MCP real keyboard input + event log | blocked | Chrome unavailable in the 2026-10-06 shared-owner task; no browser evidence. |
+| V-127 | C-182, C-183; behavior | Shader story, real double-click on Next (MCP click dblClick) | Two accepted changes, one continuous movement | changes [1,2]; positions 0→1.994 in ~1.1 s, monotone | MCP click + frame log | passed | Real input |
+| V-128 | C-183; behavior | Data fixture, Next `click()` at 0, 120 and 180 ms | Index 3; velocity continuous at each handover; accelerated | 1349→1420→2163 px/s with no dip; settled in ~330 ms | MCP evaluate (control click, timed) | passed | Programmatic control clicks: MCP click latency (~1.4 s) cannot land mid-transition |
+| V-129 | C-185; behavior | Shader story: 6×40 px synthetic drag, then release | Advances 1; release velocity carried and decays to rest | ~2.9 pitch/s at release, decaying smoothly to 1.0 | `tests/fixtures/components/carousel/kinetic-checks.js` | passed | Synthetic multi-sample pointer events; the MCP drag tool produces no pointer gesture |
+| V-130 | C-184; behavior | Shader `next()`, then a backward synthetic drag at 350 ms | `next()` cancelled/superseded; drag continues from the presented 1.10; backward flick lands on the previous slide | cancelled/superseded; continuous from 1.053; index 0 | kinetic-checks.js | passed | Synthetic |
+| V-131 | C-182; regression | `drag-release-checks.js` on the data fixture (5173) | Last-sample release and quick/held/capture-loss/pointercancel ordering | All pass. Before the change all failed (stale synthetic pointerId 79/87 broke capture); fixture updated to pointer 1 and settled events | MCP evaluate | passed | The `slots` carousel has 3 items and does not match the fixture's assumptions |
+| V-132 | C-186; behavior | Synthetic dragstart/selectstart on slide media during the gesture; real double-click on Next | Both prevented; no selection | `{dragstart:true, selectstart:true}`; `getSelection().type` None | kinetic-checks.js; MCP dblclick | passed | Real dblclick plus synthetic native events |
+| V-133 | C-185; behavior | Forward drag 12×35 px, then reverse 4×30 px | Returns to the start slide with backward inertia | index 1 (start); −2.1 pitch/s carried | kinetic-checks.js | passed | Synthetic |
+| V-134 | C-187; visual | Real toggle clicks Displace/Chromatic, preview at half pitch | Visibly distinct full-frame looks | Inspected displace-mid-after.png (warped boat/ridge) and chromatic-mid-after.png (RGB split, toned down once) | MCP click + screenshots | passed | Visual inspection, dark theme, 1400 px |
+| V-135 | C-182; regression + reduced motion | Docs page: `next()` on all 10 carousels; `motionPolicy=reduce` on 4 | Animate and settle with no diagnostics; reduce settles in ~3 ms | all accepted and settled; reduce 3–4 ms | MCP evaluate | passed | API-driven |
+| V-136 | C-182–C-187; regression | `vitest run`, `npm run lint`, `npm run build` | Clean | 1052 tests pass; lint and build pass | npm scripts | passed | Local |
 
 Record viewport, theme, direction, motion conditions and relevant browser features
 for visual/interaction rows. Record what was visually inspected as well as the
@@ -717,6 +767,7 @@ at the work boundaries specified in SKILL.md.
 - Older out-of-scope gaps: Pre-existing formatting in src/components/field/field.ts and src/stories/message-scroller.examples.ts preserved. DragDrop tool-only capability gaps remain in its own record.
 - Spec 0.3.16 bounded fix (2026-10-05): eleven review items handled as recorded in "Spec 0.3.16 review fixes"; local tests/type/lint/format pass; V-113–V-123 pending Chrome DevTools MCP; double tap/click left unimplemented with recorded contract reason.
 - Shared-owner adoption (2026-10-06): CarouselAutoplay pause reasons delegate to shared ReasonLeases (R-11); Carousel keyboard enables the shared key-binding composite guard; unit/type/lint/format pass; V-125/V-126 pending Chrome DevTools MCP. No complete-component claim.
+- Interruptible motion (2026-10-06): C-182–C-187 and V-127–V-136 passed. S-01 motion spec amendment drafted and not applied (permission system); user ordered code first. No complete-component claim.
 - Changed source revisions / reopened gates: No upstream reference update or spec commit. Actual module names reconciled without changing family ownership; gates 0-2 retain their source/design evidence.
 
 A complete-component claim requires every applicable required gate to pass. A
