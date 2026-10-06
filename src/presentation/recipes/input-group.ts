@@ -28,6 +28,11 @@ export const inputGroupAppearance: PresentationDictionary = {
       },
     },
     {
+      // Inline addons sit inside the field height (Nova h-8 group); only block addons add rows.
+      selector: '&[data-position^="inline-"]',
+      declarations: { 'padding-block': '0' },
+    },
+    {
       selector: '&[data-position="inline-start"]',
       declarations: { 'padding-inline-end': '0' },
     },

@@ -46,6 +46,13 @@ const definition: ComponentDefinition = {
       cardinality: 'zero or more, inside Root or bound by map identifier',
     },
     {
+      name: 'map-control-group',
+      publicName: 'Control group',
+      presentationKeys: ['map-control-group'],
+      cardinality:
+        'zero or one descendant of Viewport, present when built-in controls are configured',
+    },
+    {
       name: 'map-status',
       publicName: 'Status',
       presentationKeys: ['map-status'],
@@ -70,6 +77,7 @@ export const mapPresentation = definePresentation({
       ':host': 'map',
       "[part~='viewport']": 'map-viewport',
       "[part~='status']": 'map-status',
+      "[part~='control-group']": 'map-control-group',
     },
     'tp-map-pin': {
       "[part~='pin']": 'map-pin',

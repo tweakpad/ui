@@ -7,7 +7,7 @@
 - Scope source: user request in this session plus the approved plan `/Users/vanrez/.claude/plans/lets-plan-to-create-cozy-star.md`; user authorized authoring the spec directly, injected adapters, and cloning references
 - In-scope changes and existing gaps: new map foundation/component/presentation/docs/stories/tests; shared repairs: `resolveOwner` (portal-ownership, media migrated), Button group `groupBoundary` member hook, List Item selected-description contrast; new `engine` ChangeReason; icons `map.ts`
 - Repository baseline / unrelated changes: branch `development` at `9b0f364`; slider/media-player working-tree edits present at session start were later committed or reverted by another actor and are untouched by this work
-- Live project / document IDs and revisions: project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`; Foundation `doc_cd3c4721-…`, Component Library `doc_8077bf7c-…`; authored at commit `77ef963` (v0.4.0) and amended at `ff35e54` (v0.4.1)
+- Live project / document IDs and revisions: project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`; Foundation `doc_cd3c4721-…`, Component Library `doc_8077bf7c-…`; authored at commit `77ef963` (v0.4.0), amended at `ff35e54` (v0.4.1) and `3db9e98` (v0.4.2, floating controls)
 - Owning contracts / dependencies / vocabulary: Foundation `sec-1812-map`, `map-reasons` (§5.3), B.8.3 row `map-b83-map`; Component Library `ucl21-map`, coverage row `audit-cov-map`; dependencies `ucl19-popover`, `ucl16-button`, `ucl22-icon`, `sec-102-anchorgeometry-and-virtualanchor`, `audit-sec-126-reduced-motion-policy`, `sec-54-store-and-subscription-behavior`
 - Local Base UI / Floating UI / shadcn evidence: no upstream map primitive (no hits in base-ui, floating-ui, ui registry); references cloned 2026-10-06 into `../specification/external/`: maplibre-gl-js `f67ac5e` (6.13.0), js-api-loader `220885a`, extended-component-library `7c8bc05`, openfreemap-styles `cf9e8e7`, mapcn `d160bd7`, google-map (Polymer) `65c597b`
 - Tool readiness: direct Spec Blocks MCP available; Chrome DevTools MCP available
@@ -40,7 +40,9 @@
 | C-18 | Events camera-change/commit/press/ready/error | map-f-events | Polymer events | `TpMap` emits | docs/map.md events | V-05, V-03 | passed | event log in Chrome; unit dedupe |
 | C-19 | Cooperative gestures / interactive=false | map-f-gestures | maplibre `cooperativeGestures` | adapter options | docs/map.md | V-17 | passed | adapters.test (keyboard handler disabled, option passed); not exercised with real wheel input |
 | C-20 | Presentation family/parts/recipe, pin motion role (transform only) | map-l-presentation, §6.1 | — | `families/map.ts`, `recipes/map.ts` | docs/map.md | V-01, V-12 | passed | families.test; Chrome visuals |
-| C-21 | Google engine parity (OverlayView pins, tween, scheme re-create with mapId) | map-l-engines | js-api-loader, extended-component-library | `adapters/google.ts` | docs/map.md Engines | V-14, V-18 | blocked | dev-mode (no key) verified placement/click/reveal; cloud mapId scheme re-create unverified without a key |
+| C-21 | Google engine parity (OverlayView pins, tween, scheme re-create with mapId) | map-l-engines | js-api-loader, extended-component-library | `adapters/google.ts` | docs/map.md Engines | V-14, V-18, V-22 | blocked | real key now verified (V-22); cloud map ID scheme re-create still unverified without a map ID |
+| C-22 | Floating controls: `controls` list, `controls-position` corner, `controls-orientation`, corner slots, Control group part | map-l-floating-controls (commit `3db9e98`) | mapcn MapControls position; Google control slots | `TpMap.#renderCorner`, `parseMapControls`, recipe `map-control-group` | docs/map.md Floating controls | V-21 | passed | Chrome: top-end vertical, bottom-start horizontal (light and dark), real click zoom +1; map.test |
+| C-23 | Google JSON style theme (user-supplied) through adapter `styles` | map-f-appearance | Google JSON styles | `createGoogleMapsEngine(…, { styles })`, `map-google-style.ts` | docs/map.md Engines | V-22 | passed | Chrome with real key: 13 style rules active |
 
 Record spec/upstream conflicts here before dependent implementation:
 
@@ -108,9 +110,11 @@ Record spec/upstream conflicts here before dependent implementation:
 | V-15 | C-03..C-09, C-13; unit | `npx vitest run src/foundation/map` | all pass | 38/38 (full suite 1102) | vitest | passed | observed via the listed tool; artifacts in tmp/component-verification/map/run-1/ |
 | V-16 | C-17; token theme | Token theme story (scoped dark) | roles resolved from tokens | background #18181b, water #27272a | MCP evaluate + screenshot 06 | passed | observed via the listed tool; artifacts in tmp/component-verification/map/run-1/ |
 | V-17 | C-19; gestures | cooperative gestures / interactive=false | option forwarded; handlers disabled | adapters.test | vitest | passed | real wheel/touch not exercised |
-| V-18 | C-21; Google mapId scheme switch | Google with mapId and key, toggle scheme | map re-created, camera kept | not run | needs API key and map ID | blocked | no key available |
+| V-18 | C-21; Google mapId scheme switch | Google with mapId and key, toggle scheme | map re-created, camera kept | not run | needs a cloud map ID | blocked | key available; no map ID configured |
 | V-19 | C-12; automated accessibility + regression | axe-core in page with overlay open; media owner regression | 0 violations | 0 violations after List Item contrast repair; media tests pass | MCP evaluate axe, vitest | passed | observed via the listed tool; artifacts in tmp/component-verification/map/run-1/ |
 | V-20 | C-20; responsive | 390×844 mobile touch | no horizontal scroll; usable | scrollWidth 390; overlay fits | screenshot 11 | passed | MapLibre compact attribution initially expanded over a pin |
+| V-21 | C-22; visual + real pointer | Default story with `controls`, positions top-end/bottom-start, vertical/horizontal, light/dark | group floats in the corner with a surface; bottom corners clear attribution; click acts | as expected; zoom 11.85 → 12.85 | MCP click + screenshots run-2/01, 03, 04 | passed | observed via the listed tool; artifacts in tmp/component-verification/map/run-2/ |
+| V-22 | C-23, C-21; Google with key | `.env` key, Google story | real Google basemap with the dark JSON style; pins and floating controls | ready, no errors, 13 style rules | MCP + screenshot run-2/02 | passed | observed via the listed tool; artifacts in tmp/component-verification/map/run-2/ |
 
 ## Early integration checkpoint
 

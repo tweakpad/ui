@@ -21,6 +21,8 @@ export function joinedControlPresentation(
     ...(first
       ? {}
       : { [vertical ? 'border-block-start-width' : 'border-inline-start-width']: '0' }),
-    ...(vertical ? { 'inline-size': '100%' } : {}),
+    // Vertical members stretch to the widest member without losing their own extent
+    // (a fixed `inline-size: 100%` collapses square icon controls in a fit-content group).
+    ...(vertical ? { 'min-inline-size': '100%' } : {}),
   };
 }

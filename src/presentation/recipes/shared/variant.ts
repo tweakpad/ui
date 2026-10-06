@@ -100,7 +100,9 @@ export function controlSizePresentation(size: string): readonly PresentationRule
             : step === 'lg'
               ? 'var(--tp-space-3) var(--tp-space-4)'
               : 'var(--tp-space-2) var(--tp-space-3)',
-      'font-size': `var(--tp-text-${step === 'default' ? 'base' : step})`,
+      // Nova control typography: every field-height control reads text-sm; the compact steps
+      // (Nova 0.75rem / 0.8rem) read text-xs. Heights, not type, carry the size steps.
+      'font-size': `var(--tp-text-${step === 'xs' || step === 'sm' ? 'xs' : 'sm'})`,
       ...(size.startsWith('icon')
         ? { 'inline-size': `var(--tp-control-height-${height})`, 'padding-inline': '0' }
         : {}),

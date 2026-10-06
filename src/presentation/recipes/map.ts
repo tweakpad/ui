@@ -73,6 +73,15 @@ export const mapAppearance: PresentationDictionary = {
     },
     { selector: '&::after', declarations: { background: 'var(--tp-primary-foreground)' } },
   ],
+  'map-control-group': [
+    {
+      declarations: {
+        background: 'var(--tp-background)',
+        'border-radius': 'var(--tp-radius-md)',
+        'box-shadow': 'var(--tp-shadow-md)',
+      },
+    },
+  ],
   'map-overlay': [],
   'map-control': [],
 };

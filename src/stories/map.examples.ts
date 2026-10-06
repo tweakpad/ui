@@ -3,6 +3,7 @@ import { ref } from 'lit/directives/ref.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import type { MapEngine } from '../foundation/map/engine.js';
 import { tokenMapTheme, type MapTheme } from '../foundation/map/theme.js';
+import { googleNightStyle } from './map-google-style.js';
 import {
   googleMapsEngine,
   lisbonBounds,
@@ -31,7 +32,15 @@ export interface MapMarkupOptions {
   readonly style?: string;
   /** Replaces the map's empty/loading/error status (`slot="status"`). */
   readonly status?: string;
+  /** Built-in floating controls (`controls`); defaults to all four actions. */
+  readonly controls?: string;
+  readonly controlsPosition?: string;
+  readonly controlsOrientation?: string;
+  /** Render the controls as a Button group outside the map (`map="id"`) instead of floating. */
+  readonly externalControls?: boolean;
 }
+
+const ALL_CONTROLS = 'zoom-in zoom-out reset fit-pins';
 
 const pinMarkup = () =>
   lisbonPlaces
@@ -88,18 +97,29 @@ export function mapMarkup(options: MapMarkupOptions): string {
     options.cooperativeGestures === false ? '' : 'cooperative-gestures',
     options.disabled ? 'disabled' : '',
     options.style ? `style="${options.style}"` : '',
+    options.externalControls ? '' : `controls="${options.controls ?? ALL_CONTROLS}"`,
+    options.externalControls || !options.controlsPosition
+      ? ''
+      : `controls-position="${options.controlsPosition}"`,
+    options.externalControls || !options.controlsOrientation
+      ? ''
+      : `controls-orientation="${options.controlsOrientation}"`,
   ]
     .filter(Boolean)
     .join(' ');
   return `<section aria-label="Lisbon sights explorer" data-example="map" style="display: grid; gap: var(--tp-space-4); grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); align-items: start; max-inline-size: 64rem">
   <div style="display: grid; gap: var(--tp-space-3); grid-column: span 2; min-inline-size: 0">
-    <tp-button-group label="Map view">
+    ${
+      options.externalControls
+        ? `<tp-button-group label="Map view">
       <tp-map-control map="${options.id}" action="zoom-in"></tp-map-control>
       <tp-map-control map="${options.id}" action="zoom-out"></tp-map-control>
       <tp-map-control map="${options.id}" action="reset"></tp-map-control>
       <tp-map-control map="${options.id}" action="fit-pins"></tp-map-control>
     </tp-button-group>
-    <tp-map ${attributes}>
+    `
+        : ''
+    }<tp-map ${attributes}>
     ${options.status ? `<p slot="status">${options.status}</p>\n    ` : ''}${pinMarkup()}
     </tp-map>
   </div>
@@ -163,6 +183,21 @@ export const mapDemoSource = () =>
     ),
   );
 
+/** Controls placed anywhere on the page and bound with `map="id"`. */
+export const externalControlsExample = (() => {
+  const markup = mapMarkup({ id: 'lisbon-external-map', externalControls: true });
+  return {
+    title: 'External controls',
+    description:
+      '`tp-map-control` elements outside the map bind to it with `map="id"`, here in a joined Button group above the map. They behave exactly like the built-in floating controls.',
+    code: copyable(
+      markup,
+      setupScript(`map.engine = createMapLibreEngine(maplibregl, { css: maplibreCss });`),
+    ),
+    render: () => renderMapExample(markup, () => openFreeMapEngine()),
+  };
+})();
+
 /** The same composition on Google Maps. */
 export function googleMapsExample(key: string | undefined) {
   const markup = mapMarkup({
@@ -173,14 +208,19 @@ export function googleMapsExample(key: string | undefined) {
   return {
     title: 'Google Maps engine',
     description:
-      'The identical composition on the Google Maps engine. Google renders Google basemaps only; OpenFreeMap vector tiles need the MapLibre engine. Set `STORYBOOK_GOOGLE_MAPS_API_KEY` to run it; without a key the map shows its empty status.',
+      'The identical composition on the Google Maps engine, themed with a dark Google JSON style through the adapter `styles` option. Google renders Google basemaps only; OpenFreeMap vector tiles need the MapLibre engine. Set `STORYBOOK_GOOGLE_MAPS_API_KEY` to run it; without a key the map shows its empty status.',
     code: copyable(
       markup,
       setupScript(
-        `import { setOptions, importLibrary } from '@googlemaps/js-api-loader';\nsetOptions({ key: 'YOUR_API_KEY' });\nmap.engine = createGoogleMapsEngine(importLibrary);`,
+        `import { setOptions, importLibrary } from '@googlemaps/js-api-loader';\nsetOptions({ key: 'YOUR_API_KEY' });\n// A JSON style themes Google basemaps (without a cloud map ID); one style for both schemes.\nconst nightStyle = ${JSON.stringify(googleNightStyle, null, 2)};\nmap.engine = createGoogleMapsEngine(importLibrary, { styles: { light: nightStyle, dark: nightStyle } });`,
       ),
     ),
-    render: () => renderMapExample(markup, () => (key ? googleMapsEngine(key) : null)),
+    render: () =>
+      renderMapExample(markup, () =>
+        key
+          ? googleMapsEngine(key, { styles: { light: googleNightStyle, dark: googleNightStyle } })
+          : null,
+      ),
   };
 }
 

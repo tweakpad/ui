@@ -16,8 +16,9 @@ export const oneTimeCodeAppearance: PresentationDictionary = {
         ...fieldBoundary,
         padding: '0',
         'min-height': '0',
-        'inline-size': 'var(--tp-target-size-min)',
-        'block-size': 'var(--tp-target-size-min)',
+        // Nova slots are field-height squares (size-8) with the shared field typography.
+        'inline-size': 'var(--tp-control-height-md)',
+        'block-size': 'var(--tp-control-height-md)',
         'border-inline-start-width': '0',
         'border-radius': '0',
       },

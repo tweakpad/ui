@@ -157,7 +157,7 @@ export class TpButtonGroup extends TpElement {
               styleHook: { 'flex-direction': 'column', 'align-items': 'stretch' },
             },
             'pagination-page-link': {
-              styleHook: this.orientation === 'vertical' ? { 'inline-size': '100%' } : {},
+              styleHook: this.orientation === 'vertical' ? { 'min-inline-size': '100%' } : {},
             },
           });
         }

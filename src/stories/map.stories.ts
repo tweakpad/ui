@@ -3,6 +3,7 @@ import { html } from 'lit';
 import documentation from '../../docs/map.md?raw';
 import { openFreeMapEngine } from './map-example.js';
 import {
+  externalControlsExample,
   googleMapsExample,
   mapDemoSource,
   mapMarkup,
@@ -11,6 +12,9 @@ import {
 } from './map.examples.js';
 
 interface Args {
+  controls: string;
+  controlsPosition: 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end';
+  controlsOrientation: 'vertical' | 'horizontal';
   reveal: 'none' | 'if-hidden' | 'always';
   revealZoom: number;
   fitPadding: number;
@@ -33,6 +37,9 @@ const meta = {
     },
   },
   args: {
+    controls: 'zoom-in zoom-out reset fit-pins',
+    controlsPosition: 'top-end',
+    controlsOrientation: 'vertical',
     reveal: 'always',
     revealZoom: 15,
     fitPadding: 48,
@@ -43,6 +50,25 @@ const meta = {
     disabled: false,
   },
   argTypes: {
+    controls: {
+      control: 'text',
+      description:
+        'Built-in floating controls, in order: any of `zoom-in`, `zoom-out`, `reset`, `fit-pins`. Empty renders none.',
+      table: { defaultValue: { summary: "''" } },
+    },
+    controlsPosition: {
+      control: 'select',
+      options: ['top-start', 'top-end', 'bottom-start', 'bottom-end'],
+      description:
+        '`controls-position`: corner for the built-in controls and default-slot content (logical, mirrors in RTL).',
+      table: { defaultValue: { summary: 'top-end' } },
+    },
+    controlsOrientation: {
+      control: 'inline-radio',
+      options: ['vertical', 'horizontal'],
+      description: '`controls-orientation`: stacking of the built-in controls.',
+      table: { defaultValue: { summary: 'vertical' } },
+    },
     reveal: {
       control: 'select',
       options: ['none', 'if-hidden', 'always'],
@@ -93,6 +119,9 @@ const meta = {
     renderMapExample(
       mapMarkup({
         id: 'lisbon-map',
+        controls: args.controls,
+        controlsPosition: args.controlsPosition,
+        controlsOrientation: args.controlsOrientation,
         reveal: args.reveal,
         revealZoom: args.revealZoom,
         fitPadding: args.fitPadding,
@@ -128,6 +157,11 @@ const exampleStory = (example: {
 
 const googleKey = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env
   ?.STORYBOOK_GOOGLE_MAPS_API_KEY;
+
+export const ExternalControls: Story = {
+  name: 'External controls',
+  ...exampleStory(externalControlsExample),
+};
 
 export const GoogleMaps: Story = {
   name: 'Google Maps engine',

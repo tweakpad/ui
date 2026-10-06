@@ -39,6 +39,8 @@ import {
 } from '../../foundation/map/theme.js';
 import { mapPresentation } from '../../presentation/families/map.js';
 import { TpSpinner } from '../spinner/spinner.js';
+import { TpButtonGroup } from '../button-group/button-group.js';
+import { TpMapControl, type MapControlAction } from './control.js';
 import {
   DEFAULT_MAP_MESSAGES,
   mapBrand,
@@ -48,6 +50,32 @@ import {
 } from './context.js';
 
 export type MapRevealPolicy = 'none' | 'if-hidden' | 'always';
+/** A viewport corner for floating content; logical, so it mirrors in right-to-left. */
+export type MapCorner = 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end';
+export type MapControlsOrientation = 'vertical' | 'horizontal';
+
+export const MAP_CORNERS: readonly MapCorner[] = [
+  'top-start',
+  'top-end',
+  'bottom-start',
+  'bottom-end',
+];
+const CONTROL_ACTIONS: readonly MapControlAction[] = ['zoom-in', 'zoom-out', 'reset', 'fit-pins'];
+
+/** Parses `controls` text (space- or comma-separated actions) in authored order, without repeats. */
+export function parseMapControls(
+  value: string | readonly string[] | null | undefined,
+): MapControlAction[] {
+  const tokens = typeof value === 'string' ? value.split(/[\s,]+/) : [...(value ?? [])];
+  const actions: MapControlAction[] = [];
+  for (const token of tokens)
+    if (
+      CONTROL_ACTIONS.includes(token as MapControlAction) &&
+      !actions.includes(token as MapControlAction)
+    )
+      actions.push(token as MapControlAction);
+  return actions;
+}
 
 const positionConverter = {
   fromAttribute: (value: string | null) => (value === null ? null : parsePosition(value)),
@@ -77,14 +105,20 @@ interface PinEntry {
  *
  * The basemap is rendered by a consumer-supplied engine (`engine`). Pins (`tp-map-pin`) are
  * light-DOM children projected to engine-placed anchors by manual slot assignment; their content
- * is never copied. The selected pin's `tp-map-overlay` opens anchored to it. Controls
- * (`tp-map-control`) may live inside the map or anywhere with `map="id"`.
+ * is never copied. The selected pin's `tp-map-overlay` opens anchored to it. `controls` renders
+ * floating action buttons in the `controls-position` corner; `tp-map-control` elements may also
+ * be authored inside the map (in a corner slot) or anywhere with `map="id"`.
  *
- * @slot - Controls and other content laid over the viewport's top inline-end corner.
+ * @slot - Floating content in the `controls-position` corner, after the built-in controls.
+ * @slot top-start - Floating content in the top inline-start corner.
+ * @slot top-end - Floating content in the top inline-end corner.
+ * @slot bottom-start - Floating content in the bottom inline-start corner.
+ * @slot bottom-end - Floating content in the bottom inline-end corner.
  * @slot status - Replaces the empty, loading and error message.
  * @csspart viewport - The labelled region that contains the engine surface and pins.
  * @csspart status - The empty, loading or error status.
- * @csspart controls - The container of default-slot content over the viewport.
+ * @csspart controls - Each floating corner container (also `controls-<corner>`).
+ * @csspart control-group - The Button group of built-in controls.
  * @fires tp-map-ready - The engine is ready; `detail.native` is the engine's map object.
  * @fires tp-map-error - The engine failed; `detail.error`.
  * @fires tp-map-request - Cancelable; every camera and selection request.
@@ -97,7 +131,7 @@ interface PinEntry {
 export class TpMap extends TpElement implements MapApi {
   static tagName = 'tp-map';
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
-    return [TpSpinner];
+    return [TpSpinner, TpButtonGroup, TpMapControl];
   }
   static override shadowRootOptions: ShadowRootInit = { mode: 'open', slotAssignment: 'manual' };
   static override presentation = mapPresentation;
@@ -119,6 +153,9 @@ export class TpMap extends TpElement implements MapApi {
     theme: { attribute: false },
     label: { type: String },
     messages: { attribute: false },
+    controls: {},
+    controlsPosition: { type: String, attribute: 'controls-position', reflect: true },
+    controlsOrientation: { type: String, attribute: 'controls-orientation', reflect: true },
   };
   static override styles = [
     TpElement.styles,
@@ -154,12 +191,36 @@ export class TpMap extends TpElement implements MapApi {
 
       [part~='controls'] {
         position: absolute;
-        inset-block-start: var(--tp-space-3);
-        inset-inline-end: var(--tp-space-3);
         z-index: 2;
         display: flex;
         flex-direction: column;
         gap: var(--tp-space-2);
+        max-inline-size: calc(100% - var(--tp-space-3) * 2);
+        pointer-events: none;
+      }
+
+      [part~='controls'] > * {
+        pointer-events: auto;
+      }
+
+      [data-corner^='top'] {
+        inset-block-start: var(--tp-space-3);
+      }
+
+      /* Engines draw attribution along the bottom edge; floating content stays clear of it. */
+      [data-corner^='bottom'] {
+        inset-block-end: calc(var(--tp-space-2) + var(--tp-control-height-sm));
+        flex-direction: column-reverse;
+      }
+
+      [data-corner$='-start'] {
+        inset-inline-start: var(--tp-space-3);
+        align-items: flex-start;
+      }
+
+      [data-corner$='-end'] {
+        inset-inline-end: var(--tp-space-3);
+        align-items: flex-end;
       }
 
       [part~='controls'][hidden] {
@@ -216,6 +277,12 @@ export class TpMap extends TpElement implements MapApi {
   label: string | null = null;
   /** Strings with English fallbacks, inherited by constituents. */
   messages: MapMessages = {};
+  /** Built-in floating controls, in order (`zoom-in zoom-out reset fit-pins`); empty renders none. */
+  controls: string | readonly MapControlAction[] = '';
+  /** The corner that holds the built-in controls and default-slot content. */
+  controlsPosition: MapCorner = 'top-end';
+  /** Stacking of the built-in controls. */
+  controlsOrientation: MapControlsOrientation = 'vertical';
   /** Observes selection proposals before dispatch. */
   onSelectedPinChange: ((event: TpValueChangeEvent<string | null>) => void) | undefined;
 
@@ -528,6 +595,7 @@ export class TpMap extends TpElement implements MapApi {
     this.dataset.scheme = state.scheme;
     this.toggleAttribute('data-moving', state.moving);
     this.toggleAttribute('data-selected', this.#effectiveSelection() !== null);
+    this.#assignSlots();
     if (!this.hasUpdated) return;
     if (changed.has('engine') && this.#connectedOnce) this.controller.setEngine(this.engine);
     const config = [
@@ -588,15 +656,39 @@ export class TpMap extends TpElement implements MapApi {
               <slot name="status"
                 >${
                   status === 'loading'
-                    ? html`<tp-spinner label=${messages.loading}></tp-spinner>`
+                    ? html`<tp-spinner aria-hidden="true"></tp-spinner>`
                     : nothing
                 }<span>${statusText}</span></slot
               >
             </div>`
           : nothing
       }
-      <div part="controls" hidden><slot class="controls-slot"></slot></div>
+      ${MAP_CORNERS.map((corner) => this.#renderCorner(corner))}
       <span class="probe" aria-hidden="true"></span>
+    </div>`;
+  }
+
+  /** The resolved corner for built-in controls and default-slot content. */
+  get resolvedControlsPosition(): MapCorner {
+    return MAP_CORNERS.includes(this.controlsPosition) ? this.controlsPosition : 'top-end';
+  }
+
+  #renderCorner(corner: MapCorner) {
+    const primary = corner === this.resolvedControlsPosition;
+    const actions = primary ? parseMapControls(this.controls) : [];
+    return html`<div part="controls controls-${corner}" data-corner=${corner} hidden>
+      ${
+        actions.length
+          ? html`<tp-button-group
+              part="control-group"
+              label=${this.mapMessages.controls}
+              orientation=${this.controlsOrientation === 'horizontal' ? 'horizontal' : 'vertical'}
+              >${actions.map(
+                (action) => html`<tp-map-control action=${action}></tp-map-control>`,
+              )}</tp-button-group
+            >`
+          : nothing
+      }<slot name=${corner}></slot>${primary ? html`<slot class="controls-slot"></slot>` : nothing}
     </div>`;
   }
 
@@ -727,17 +819,28 @@ export class TpMap extends TpElement implements MapApi {
     const status = root.querySelector<HTMLSlotElement>('slot[name="status"]');
     const rest: Node[] = [];
     const statusNodes: Element[] = [];
+    const cornerNodes = new Map<MapCorner, Element[]>(MAP_CORNERS.map((corner) => [corner, []]));
     for (const node of this.childNodes) {
       if (this.#entries.has(node as MapPinRecord)) continue;
       if (node.nodeType === 1 && (node as Element).localName === 'tp-map-pin') continue;
-      if (node.nodeType === 1 && (node as Element).getAttribute('slot') === 'status')
-        statusNodes.push(node as Element);
+      const slot = node.nodeType === 1 ? (node as Element).getAttribute('slot') : null;
+      if (slot === 'status') statusNodes.push(node as Element);
+      else if (slot && cornerNodes.has(slot as MapCorner))
+        cornerNodes.get(slot as MapCorner)!.push(node as Element);
       else if (node.nodeType === 1 || (node.nodeType === 3 && node.textContent?.trim()))
         rest.push(node);
     }
     controls?.assign(...(rest as Element[]));
-    const container = root.querySelector<HTMLElement>("[part~='controls']");
-    if (container) container.hidden = rest.length === 0;
+    for (const corner of MAP_CORNERS) {
+      const container = root.querySelector<HTMLElement>(`[data-corner='${corner}']`);
+      const named = cornerNodes.get(corner)!;
+      container?.querySelector<HTMLSlotElement>(`slot[name='${corner}']`)?.assign(...named);
+      if (!container) continue;
+      // A corner shows only when it has built-in controls or assigned content.
+      const builtIn = container.querySelector(':scope > tp-button-group') !== null;
+      const primary = corner === this.resolvedControlsPosition;
+      container.hidden = !builtIn && named.length === 0 && !(primary && rest.length > 0);
+    }
     status?.assign(...statusNodes);
     for (const [pin, entry] of this.#entries) entry.slot.assign(pin);
   }

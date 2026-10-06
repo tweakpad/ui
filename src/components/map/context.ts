@@ -39,6 +39,8 @@ export interface MapMessages {
   fitPins?: string;
   /** Fallback pin name. */
   pin?: string;
+  /** Name of the built-in control group. */
+  controls?: string;
 }
 
 export const DEFAULT_MAP_MESSAGES: Required<MapMessages> = Object.freeze({
@@ -51,6 +53,7 @@ export const DEFAULT_MAP_MESSAGES: Required<MapMessages> = Object.freeze({
   reset: 'Reset view',
   fitPins: 'Show all locations',
   pin: 'Location',
+  controls: 'Map controls',
 });
 
 /** A pin as the map sees it. */

@@ -4,21 +4,16 @@
 **map engine** that you supply; the map itself owns the camera, pins, selection,
 the selected pin's overlay, controls, events and theming, identically for every
 engine. Pins are declarative children whose visual is your own markup (for example
-an inline SVG); selecting a pin opens its `tp-map-overlay`, and `tp-map-control`
-buttons can live anywhere on the page.
+an inline SVG); selecting a pin opens its `tp-map-overlay`; zoom and reset controls float over the
+map (`controls`) or live anywhere on the page (`tp-map-control map="id"`).
 
 ```html
-<tp-button-group label="Map view">
-  <tp-map-control map="sights" action="zoom-in"></tp-map-control>
-  <tp-map-control map="sights" action="zoom-out"></tp-map-control>
-  <tp-map-control map="sights" action="reset"></tp-map-control>
-</tp-button-group>
-
 <tp-map
   id="sights"
   label="Lisbon sights"
   default-bounds="38.685,-9.235,38.77,-9.085"
   reveal="always"
+  controls="zoom-in zoom-out reset"
 >
   <tp-map-pin value="castle" latitude="38.7139" longitude="-9.1335" label="São Jorge Castle">
     <svg viewBox="0 0 32 40" width="32" height="40" aria-hidden="true">…</svg>
@@ -59,24 +54,27 @@ interaction, appearance and resize capabilities) to add another engine.
 
 ## Map properties
 
-| Property / attribute                           | Values                                            | Default                |
-| ---------------------------------------------- | ------------------------------------------------- | ---------------------- |
-| `engine`                                       | `MapEngine` or `null` (property only)             | `null`                 |
-| `defaultCenter` / `default-center`             | `latitude,longitude` or `{ latitude, longitude }` | `null`                 |
-| `defaultZoom` / `default-zoom`                 | zoom on the 256-pixel scale                       | `1`                    |
-| `defaultBounds` / `default-bounds`             | `south,west,north,east` or bounds                 | `null`                 |
-| `minZoom` / `min-zoom`, `maxZoom` / `max-zoom` | zoom range                                        | `0`, `20`              |
-| `fitPadding` / `fit-padding`                   | CSS pixels                                        | `48`                   |
-| `selectedPin` / `selected-pin`                 | pin value or `null` (controlled)                  | uncontrolled           |
-| `defaultSelectedPin` / `default-selected-pin`  | pin value or `null`                               | `null`                 |
-| `reveal`                                       | `none`, `if-hidden`, `always`                     | `if-hidden`            |
-| `revealZoom` / `reveal-zoom`                   | zoom or `null`                                    | `null`                 |
-| `interactive`                                  | boolean; `interactive="false"` turns gestures off | `true`                 |
-| `cooperativeGestures` / `cooperative-gestures` | boolean                                           | `false`                |
-| `theme`                                        | `MapTheme` (property only)                        | `null`                 |
-| `label`                                        | viewport accessible name                          | `null` (message `Map`) |
-| `messages`                                     | `MapMessages` (property only)                     | `{}`                   |
-| `disabled`                                     | boolean                                           | `false`                |
+| Property / attribute                           | Values                                                               | Default                |
+| ---------------------------------------------- | -------------------------------------------------------------------- | ---------------------- |
+| `engine`                                       | `MapEngine` or `null` (property only)                                | `null`                 |
+| `defaultCenter` / `default-center`             | `latitude,longitude` or `{ latitude, longitude }`                    | `null`                 |
+| `defaultZoom` / `default-zoom`                 | zoom on the 256-pixel scale                                          | `1`                    |
+| `defaultBounds` / `default-bounds`             | `south,west,north,east` or bounds                                    | `null`                 |
+| `minZoom` / `min-zoom`, `maxZoom` / `max-zoom` | zoom range                                                           | `0`, `20`              |
+| `fitPadding` / `fit-padding`                   | CSS pixels                                                           | `48`                   |
+| `selectedPin` / `selected-pin`                 | pin value or `null` (controlled)                                     | uncontrolled           |
+| `defaultSelectedPin` / `default-selected-pin`  | pin value or `null`                                                  | `null`                 |
+| `reveal`                                       | `none`, `if-hidden`, `always`                                        | `if-hidden`            |
+| `revealZoom` / `reveal-zoom`                   | zoom or `null`                                                       | `null`                 |
+| `interactive`                                  | boolean; `interactive="false"` turns gestures off                    | `true`                 |
+| `cooperativeGestures` / `cooperative-gestures` | boolean                                                              | `false`                |
+| `theme`                                        | `MapTheme` (property only)                                           | `null`                 |
+| `label`                                        | viewport accessible name                                             | `null` (message `Map`) |
+| `messages`                                     | `MapMessages` (property only)                                        | `{}`                   |
+| `controls`                                     | space- or comma-separated `zoom-in`, `zoom-out`, `reset`, `fit-pins` | `''` (none)            |
+| `controlsPosition` / `controls-position`       | `top-start`, `top-end`, `bottom-start`, `bottom-end`                 | `top-end`              |
+| `controlsOrientation` / `controls-orientation` | `vertical`, `horizontal`                                             | `vertical`             |
+| `disabled`                                     | boolean                                                              | `false`                |
 
 The **home view** is `default-bounds`, else `default-center` with `default-zoom`,
 else the fitted pins, else the whole world. The initial camera is the home view and
@@ -136,10 +134,32 @@ defaults to `block-start`, `side-offset` to 8). It follows the pin while the cam
 moves, publishes `data-anchor-hidden` when the pin leaves the viewport, and clears the
 selection on Escape or an outside press, returning focus to the pin.
 
-`tp-map-control` (`action="zoom-in | zoom-out | reset | fit-pins"`) composes Button
-and Icon (`variant` default `outline`, `size` default `icon`; default-slot content
-replaces the icon). Use `map="id"` outside the map. Controls stay focusable and
-become `aria-disabled` while the map is not ready or at a zoom limit. Controls join a
+### Floating controls
+
+`controls` renders action buttons floating over the map, in the order you list them,
+as a joined Button group (`control-group` part, named by the `controls` message):
+
+```html
+<tp-map
+  controls="zoom-in zoom-out reset"
+  controls-position="bottom-start"
+  controls-orientation="horizontal"
+  >…</tp-map
+>
+```
+
+`controls-position` picks a logical corner (`start`/`end` mirror in right-to-left);
+bottom corners sit above the engine attribution. Any other floating content goes in a
+corner slot — `slot="top-start"`, `top-end`, `bottom-start` or `bottom-end` — and
+unslotted children join the `controls-position` corner after the built-in buttons. Empty
+corners are not rendered. Each corner container exposes the parts `controls` and
+`controls-<corner>`.
+
+`tp-map-control` (`action="zoom-in | zoom-out | reset | fit-pins"`) is the button the
+built-in group uses; author it yourself for a custom arrangement, inside a corner slot or
+anywhere on the page with `map="id"`. It composes Button and Icon (`variant` default
+`outline`, `size` default `icon`; default-slot content replaces the icon), stays focusable
+and becomes `aria-disabled` while the map is not ready or at a zoom limit, and joins a
 Button group's seams.
 
 ## Theming
@@ -153,7 +173,7 @@ tokens (`map`, `map-viewport`, `map-pin`, `map-pin-visual`, `map-overlay`,
 them to the library tokens. Call `refreshAppearance()` after changing a scoped theme
 that the map cannot observe.
 
-Parts: `viewport`, `status`, `controls` on the map; `pin`, `pin-visual` on pins;
+Parts: `viewport`, `status`, `controls` (plus `controls-<corner>`), `control-group` on the map; `pin`, `pin-visual` on pins;
 `button`, `icon` on controls; Popover parts on overlays.
 
 ## Accessibility

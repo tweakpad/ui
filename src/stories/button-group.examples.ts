@@ -17,7 +17,7 @@ const options = (values: string[]) =>
   values.map((value) => `<option value="${value}">${value}</option>`).join('');
 function example(title: string, content: string, description?: string) {
   const id = 'button-group-' + title.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-');
-  const markup = `<div id="${id}" style="display:grid;gap:var(--tp-space-5);max-inline-size:calc(var(--tp-spacing) * 140)">${content}<output aria-live="polite"></output></div>`;
+  const markup = `<div id="${id}" style="display:grid;gap:var(--tp-space-5);max-inline-size:36rem">${content}<output aria-live="polite"></output></div>`;
   return interactiveMarkupExample(
     title,
     markup,
