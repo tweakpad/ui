@@ -82,8 +82,10 @@ export abstract class MediaSliderElement extends TpMediaElement {
         opacity: 1;
       }
 
+      /* A flex box, so the inline-level vertical Slider adds no baseline gap below itself. */
       :host([orientation='vertical']) {
-        display: inline-block;
+        display: inline-flex;
+        vertical-align: top;
         block-size: 100%;
       }
 

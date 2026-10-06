@@ -240,7 +240,7 @@ Static `slot="value"` content remains consumer-owned and is not automatically re
 
 `variant="bar"` paints a thumbless scrubbing track, as used by the media time and volume sliders:
 
-- The Track is a thin translucent foreground bar; buffer ranges are a grayed layer above it; the Range is a solid foreground fill ending in a rounded **end cap**.
-- While the slider is hovered, pointed, dragged or focused, the Track thickens and the end cap gets bolder.
-- Every Thumb stays in the DOM as the keyboard and accessibility input; it paints nothing except a focus ring around the end cap on keyboard focus. Pressing anywhere on the Track still moves the value (`track-press`).
+- The Track is a thin translucent foreground bar; buffer ranges are a grayed layer above it; the Range is a solid foreground fill.
+- While the slider is hovered, pointed, dragged or focused, the Track thickens.
+- Every Thumb stays in the DOM as the keyboard and accessibility input; it paints nothing; keyboard focus (`data-focus-visible` on the Root) rings the Track. Pressing anywhere on the Track still moves the value (`track-press`).
 - Presentation keys: `slider-variant-bar`, `slider-track-variant-bar`, `slider-buffer-variant-bar`, `slider-range-variant-bar`, `slider-thumb-variant-bar` (and their `-variant-default` counterparts, empty by default).

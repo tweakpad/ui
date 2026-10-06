@@ -338,6 +338,7 @@ export const mediaPlayerPresentation = definePresentation({
     },
     'tp-media-time': {
       ':host': 'media-time',
+      'tp-button': 'media-button-control',
       "[part~='time']": 'media-time-value',
       "[part~='sign']": 'media-time-sign',
     },

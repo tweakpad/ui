@@ -276,19 +276,31 @@ export class TpMediaSettingsMenu extends TpMediaElement {
     >`;
     switch (entry.group) {
       case 'quality':
-        return html`<tp-menu data-group="quality" .partPresentation=${settingsMenuPresentation}
+        return html`<tp-menu
+          data-group="quality"
+          .partPresentation=${settingsMenuPresentation}
+          .container=${this.player?.container ?? null}
           >${trigger}<tp-media-quality-radio-group></tp-media-quality-radio-group
         ></tp-menu>`;
       case 'audio':
-        return html`<tp-menu data-group="audio" .partPresentation=${settingsMenuPresentation}
+        return html`<tp-menu
+          data-group="audio"
+          .partPresentation=${settingsMenuPresentation}
+          .container=${this.player?.container ?? null}
           >${trigger}<tp-media-audio-track-radio-group></tp-media-audio-track-radio-group
         ></tp-menu>`;
       case 'speed':
-        return html`<tp-menu data-group="speed" .partPresentation=${settingsMenuPresentation}
+        return html`<tp-menu
+          data-group="speed"
+          .partPresentation=${settingsMenuPresentation}
+          .container=${this.player?.container ?? null}
           >${trigger}<tp-media-playback-rate-radio-group></tp-media-playback-rate-radio-group
         ></tp-menu>`;
       case 'captions':
-        return html`<tp-menu data-group="captions" .partPresentation=${settingsMenuPresentation}
+        return html`<tp-menu
+          data-group="captions"
+          .partPresentation=${settingsMenuPresentation}
+          .container=${this.player?.container ?? null}
           >${trigger}<tp-media-captions-radio-group></tp-media-captions-radio-group
         ></tp-menu>`;
     }

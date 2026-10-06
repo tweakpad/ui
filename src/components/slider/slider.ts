@@ -283,6 +283,14 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   get pointing(): boolean {
     return this.#pointerRatio !== null;
   }
+  /** Whether a thumb has keyboard-visible focus (`:focus-visible`), for track-level indication. */
+  #focusVisible = false;
+  #syncFocusVisible(element: HTMLElement): void {
+    const visible = !!(element as TpSliderThumb).inputElement?.matches(':focus-visible');
+    if (visible === this.#focusVisible) return;
+    this.#focusVisible = visible;
+    this.requestUpdate();
+  }
   get #focused(): boolean {
     return this.#thumbs.some((thumb) => thumb.inputElement?.matches(':focus'));
   }
@@ -563,6 +571,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     }
   }
   thumbFocus(element: HTMLElement, focused: boolean): void {
+    this.#syncFocusVisible(element);
     if (focused) {
       this.#activeIdentity = (element as TpSliderThumb).inputId;
       this.#lastUsedIdentity = this.#activeIdentity;
@@ -643,6 +652,8 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     this.#syncThumbs();
   }
   thumbKey(element: HTMLElement, event: KeyboardEvent): void {
+    // A mouse-focused thumb becomes keyboard-visible once keys are used.
+    this.#syncFocusVisible(element);
     if (componentHandlingPrevented(event)) return;
     const thumb = element as TpSliderThumb;
     const state = this.thumbState(thumb);
@@ -1214,6 +1225,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       'data-valid': !this.effectiveInvalid,
       'data-readonly': this.readOnly,
       'data-focused': state.focused,
+      'data-focus-visible': this.#focusVisible,
       'data-touched': state.touched,
       'data-dirty': state.dirty,
     };

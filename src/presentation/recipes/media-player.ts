@@ -169,7 +169,11 @@ export const mediaPlayerAppearance: PresentationDictionary = {
   ],
   'media-time-value': [
     {
+      // Every clock (plain or inside the toggle Button) shares one size and weight, so both
+      // sides of the timeline match in every density.
       declarations: {
+        'font-size': 'var(--tp-text-sm)',
+        'font-weight': 'var(--tp-font-normal)',
         'font-variant-numeric': 'tabular-nums',
         transition: motionTransition(['opacity']),
       },
