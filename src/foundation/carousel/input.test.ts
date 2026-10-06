@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   bindCarouselGesture,
+  bindCarouselKeyboard,
   carouselHideOnClickIgnored,
   carouselReleaseSnap,
   normalizeCarouselWheel,
@@ -197,5 +198,206 @@ describe('Carousel gesture pointer capture', () => {
       1,
       expect.objectContaining({ reason: 'swipe' }),
     );
+  });
+});
+
+describe('Carousel keyboard on the shared key-binding owner', () => {
+  type Node = EventTarget & Record<string, unknown>;
+  const node = (localName = 'div', attributes: Record<string, string> = {}): Node => {
+    const element = Object.assign(new EventTarget(), {
+      nodeType: 1,
+      localName,
+      isContentEditable: false,
+      ownerDocument: { defaultView: { navigator: { platform: 'Win32', userAgent: '' } } },
+      getAttribute: (name: string) => attributes[name] ?? null,
+      matches: (selector: string) =>
+        selector
+          .split(',')
+          .some(
+            (part) =>
+              part === localName ||
+              Object.entries(attributes).some(([name, value]) => part === `[${name}="${value}"]`),
+          ),
+    });
+    return element as unknown as Node;
+  };
+  function fixture(
+    keyboard: Record<string, unknown> | false = { enabled: true, pageKeys: false, homeEnd: true },
+    snapshot: Record<string, unknown> = {},
+  ) {
+    const root = node('section', { 'aria-roledescription': 'carousel' });
+    const controller = {
+      configuration: { keyboard },
+      snapshot: {
+        orientation: 'horizontal',
+        direction: 'ltr',
+        canScrollPrevious: true,
+        canScrollNext: true,
+        ...snapshot,
+      },
+      previous: vi.fn(),
+      next: vi.fn(),
+      scrollToIndex: vi.fn(),
+    };
+    const scope = new CleanupScope();
+    bindCarouselKeyboard(
+      controller as unknown as CarouselController,
+      { root, viewport: node(), track: node() } as never,
+      scope,
+    );
+    const press = (
+      key: string,
+      init: Record<string, unknown> = {},
+      path: EventTarget[] = [],
+      ancestors: EventTarget[] = [],
+    ) => {
+      const event = Object.assign(new Event('keydown', { cancelable: true }), {
+        key,
+        ctrlKey: false,
+        metaKey: false,
+        altKey: false,
+        shiftKey: false,
+        repeat: false,
+        isComposing: false,
+        ...init,
+      });
+      Object.defineProperty(event, 'composedPath', { value: () => [...path, root, ...ancestors] });
+      root.dispatchEvent(event);
+      return event;
+    };
+    return { root, controller, scope, press };
+  }
+
+  it('maps logical previous/next to direction and orientation and prevents only accepted keys', () => {
+    const ltr = fixture();
+    expect(ltr.press('ArrowRight').defaultPrevented).toBe(true);
+    expect(ltr.controller.next).toHaveBeenCalledWith({
+      reason: 'keyboard',
+      sourceEvent: expect.any(Event),
+    });
+    ltr.press('ArrowLeft');
+    expect(ltr.controller.previous).toHaveBeenCalledTimes(1);
+    expect(ltr.press('ArrowDown').defaultPrevented).toBe(false);
+    const rtl = fixture(undefined, { direction: 'rtl' });
+    rtl.press('ArrowLeft');
+    expect(rtl.controller.next).toHaveBeenCalledTimes(1);
+    const vertical = fixture(undefined, { orientation: 'vertical' });
+    expect(vertical.press('ArrowRight').defaultPrevented).toBe(false);
+    vertical.press('ArrowDown');
+    expect(vertical.controller.next).toHaveBeenCalledTimes(1);
+  });
+  it('honors boundaries, Home/End, page keys and disabled keyboard configuration', () => {
+    const edge = fixture(undefined, { canScrollNext: false });
+    expect(edge.press('ArrowRight').defaultPrevented).toBe(false);
+    expect(edge.press('End').defaultPrevented).toBe(false);
+    edge.press('Home');
+    expect(edge.controller.scrollToIndex).toHaveBeenCalledWith(0, expect.anything());
+    const pages = fixture({ enabled: true, pageKeys: true, homeEnd: false });
+    pages.press('PageDown');
+    expect(pages.controller.next).toHaveBeenCalledTimes(1);
+    expect(pages.press('Home').defaultPrevented).toBe(false);
+    const noPages = fixture();
+    expect(noPages.press('PageDown').defaultPrevented).toBe(false);
+    for (const keyboard of [false, { enabled: false, pageKeys: false, homeEnd: true }] as const) {
+      const off = fixture(keyboard);
+      expect(off.press('ArrowRight').defaultPrevented).toBe(false);
+      expect(off.controller.next).not.toHaveBeenCalled();
+    }
+  });
+  it('ignores modified, composing, consumed and nested-control keys but repeats when held', () => {
+    const f = fixture();
+    for (const init of [
+      { shiftKey: true },
+      { ctrlKey: true },
+      { altKey: true },
+      { metaKey: true },
+      { isComposing: true },
+    ])
+      expect(f.press('ArrowRight', init).defaultPrevented).toBe(false);
+    for (const control of [node('button'), node('input'), node('div', { role: 'slider' })])
+      expect(f.press('ArrowRight', {}, [control]).defaultPrevented).toBe(false);
+    expect(f.controller.next).not.toHaveBeenCalled();
+    expect(f.press('ArrowRight', { repeat: true }).defaultPrevented).toBe(true);
+    const nested = node('section', { 'aria-roledescription': 'carousel' });
+    expect(f.press('ArrowRight', {}, [node(), nested]).defaultPrevented).toBe(false);
+    expect(f.controller.next).toHaveBeenCalledTimes(1);
+  });
+  it('leaves keys owned by nested composites inside a slide with them (sec-187)', () => {
+    const f = fixture({ enabled: true, pageKeys: true, homeEnd: true });
+    const slide = () => [node('div', { role: 'group' }), node()];
+    const composites: [string, EventTarget[]][] = [
+      ['tab in tablist', [node('button', { role: 'tab' }), node('div', { role: 'tablist' })]],
+      ['option in listbox', [node('div', { role: 'option' }), node('div', { role: 'listbox' })]],
+      ['active-descendant listbox', [node('ul', { role: 'listbox' })]],
+      ['menu item', [node('div', { role: 'menuitem' }), node('div', { role: 'menu' })]],
+      ['menu component item', [node('tp-menu-item'), node('div', { role: 'menu' })]],
+      [
+        'radio in radiogroup',
+        [node('span', { role: 'radio' }), node('div', { role: 'radiogroup' })],
+      ],
+      ['radio group component item', [node('tp-radio-group-item'), node('div')]],
+      ['slider thumb', [node('tp-slider-thumb'), node('tp-slider')]],
+      ['toolbar', [node('span'), node('div', { role: 'toolbar' })]],
+      ['grid cell', [node('td', { role: 'gridcell' }), node('table', { role: 'grid' })]],
+      ['tree item', [node('li', { role: 'treeitem' }), node('ul', { role: 'tree' })]],
+      ['explicit owner', [node('div', { 'data-tp-owns-keys': '' })]],
+    ];
+    for (const [name, path] of composites)
+      for (const key of ['ArrowRight', 'ArrowLeft', 'Home', 'End', 'PageDown', 'PageUp'])
+        expect(f.press(key, {}, [...path, ...slide()]).defaultPrevented, `${key} in ${name}`).toBe(
+          false,
+        );
+    // Editable fields inside a slide own every key (sec-187: keys owned by nested editors).
+    for (const editor of [
+      node('input'),
+      node('textarea'),
+      node('div', { role: 'textbox' }),
+      node('div', { role: 'combobox' }),
+      node('div', { role: 'spinbutton' }),
+    ])
+      for (const key of ['ArrowRight', 'Home', 'End'])
+        expect(f.press(key, {}, [editor, ...slide()]).defaultPrevented).toBe(false);
+    expect(f.controller.next).not.toHaveBeenCalled();
+    expect(f.controller.previous).not.toHaveBeenCalled();
+    expect(f.controller.scrollToIndex).not.toHaveBeenCalled();
+    // An explicit owner claims only the keys it lists.
+    const arrows = node('div', { 'data-tp-owns-keys': 'ArrowLeft ArrowRight' });
+    expect(f.press('ArrowRight', {}, [arrows, ...slide()]).defaultPrevented).toBe(false);
+    expect(f.press('End', {}, [arrows, ...slide()]).defaultPrevented).toBe(true);
+    expect(f.controller.scrollToIndex).toHaveBeenCalledTimes(1);
+  });
+  it('still navigates from plain slide content and ignores composites outside the root', () => {
+    const f = fixture();
+    const slide = [node('p'), node('div', { role: 'group' }), node()];
+    expect(f.press('ArrowRight', {}, slide).defaultPrevented).toBe(true);
+    expect(f.press('ArrowLeft', {}, slide).defaultPrevented).toBe(true);
+    expect(f.press('End', {}, slide).defaultPrevented).toBe(true);
+    // Non-owning nested content (link-like spans, images, plain groups) is not a composite.
+    expect(
+      f.press('ArrowRight', {}, [node('img'), node('figure'), ...slide]).defaultPrevented,
+    ).toBe(true);
+    // A composite that contains the whole carousel does not claim keys inside it.
+    expect(
+      f.press('ArrowRight', {}, slide, [
+        node('div', { role: 'tabpanel' }),
+        node('div', { role: 'listbox' }),
+      ]).defaultPrevented,
+    ).toBe(true);
+    expect(f.controller.next).toHaveBeenCalledTimes(3);
+    expect(f.controller.previous).toHaveBeenCalledTimes(1);
+    expect(f.controller.scrollToIndex).toHaveBeenCalledTimes(1);
+  });
+  it('releases the owner with the binding scope and tolerates a rebind', () => {
+    const f = fixture();
+    f.scope.dispose();
+    expect(f.press('ArrowRight').defaultPrevented).toBe(false);
+    const g = fixture();
+    bindCarouselKeyboard(
+      g.controller as unknown as CarouselController,
+      { root: g.root, viewport: node(), track: node() } as never,
+      new CleanupScope(),
+    );
+    g.press('ArrowRight');
+    expect(g.controller.next).toHaveBeenCalledTimes(1);
   });
 });

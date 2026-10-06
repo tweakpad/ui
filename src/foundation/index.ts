@@ -21,6 +21,8 @@ export * from './positioning.js';
 export * from './presence.js';
 export * from './services.js';
 export * from './date-locale.js';
+export * from './duration-format.js';
+export * from './image-load.js';
 export * from './time/index.js';
 export * from './slider.js';
 export * from './store.js';
@@ -35,3 +37,5 @@ export { ContentSecurityService } from './content-security.js';
 export type { ContentSecurityOptions, ContentSecurityScope } from './content-security.js';
 
 export * from './carousel/index.js';
+export * from './media/index.js';
+export * from './reason-leases.js';

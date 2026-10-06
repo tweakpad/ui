@@ -44,6 +44,14 @@ export const sliderStyles = css`
     block-size: 100%;
   }
 
+  /* Non-semantic buffer ranges and chapter segments: domain-percentage geometry. */
+  .buffer,
+  .chapter {
+    position: absolute;
+    block-size: 100%;
+    pointer-events: none;
+  }
+
   :host([orientation='vertical']) {
     display: inline-flex;
     inline-size: fit-content;
@@ -71,7 +79,7 @@ export const sliderStyles = css`
     block-size: auto;
   }
 
-  :host([orientation='vertical']) .range {
+  :host([orientation='vertical']) :is(.range, .buffer, .chapter) {
     inline-size: 100%;
     block-size: auto;
   }

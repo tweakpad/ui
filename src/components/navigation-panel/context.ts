@@ -1,5 +1,5 @@
 import type { TpElement } from '../../foundation/element.js';
-import { composedParent } from '../../foundation/focus.js';
+import { nearestOwner } from '../../foundation/portal-ownership.js';
 import { mergePartProperties } from '../../foundation/part.js';
 import { attachPartReference, detachPartReference } from '../../foundation/part-reference.js';
 import type { ElementReference, ComponentPartContract, PartState } from '../../foundation/part.js';
@@ -10,11 +10,13 @@ export interface NavigationPanelOwner extends TpElement {
   readonly provider: NavigationPanelProvider;
   registerNavigationPart(name: string, element: HTMLElement, member?: TpElement): () => void;
 }
+/** Nearest Navigation Panel through the Foundation portal-aware owner walk. */
 export function navigationPanelOwner(element: HTMLElement): NavigationPanelOwner | undefined {
-  for (let node = composedParent(element); node; node = composedParent(node)) {
-    const owner = node as NavigationPanelOwner;
-    if (owner[navigationPanelContext]) return owner;
-  }
+  return (
+    nearestOwner(element, (node): node is NavigationPanelOwner =>
+      Boolean((node as Partial<NavigationPanelOwner>)[navigationPanelContext]),
+    ) ?? undefined
+  );
 }
 function resolvedClass(contract: ComponentPartContract | undefined, state: PartState): string {
   return (

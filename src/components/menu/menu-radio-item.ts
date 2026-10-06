@@ -1,6 +1,6 @@
 import { html, type PropertyValues } from 'lit';
 import { TpMenuItem } from './menu-item.js';
-import type { TpMenuRadioGroup } from './menu-radio-group.js';
+import { TpMenuRadioGroup } from './menu-radio-group.js';
 import { PresenceController } from '../../foundation/presence.js';
 import { composedParent } from '../../foundation/focus.js';
 import type { ChangeReason } from '../../foundation/types.js';
@@ -56,8 +56,9 @@ export class TpMenuRadioItem extends TpMenuItem {
   #syncGroup(): void {
     let group: TpMenuRadioGroup | null = null;
     for (let node = composedParent(this); node; node = composedParent(node)) {
-      if ((node as Element).localName === 'tp-menu-radio-group') {
-        group = node as TpMenuRadioGroup;
+      // Extensions of the Menu radio group (for example media track groups) are groups too.
+      if (node instanceof TpMenuRadioGroup) {
+        group = node;
         break;
       }
       if ((node as Element).localName === 'tp-menu') break;

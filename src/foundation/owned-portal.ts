@@ -19,6 +19,16 @@ export interface OwnedPortalOptions {
   /** Connected same-origin document targets; the default remains the owner document. */
   allowSameOriginDocument?: boolean;
 }
+/** The current destination named by a container value (element, shadow root, ref or resolver). */
+export function resolvePortalContainer(
+  container: OwnedPortalContainer,
+): HTMLElement | ShadowRoot | null {
+  return typeof container === 'function'
+    ? container()
+    : container && 'current' in container
+      ? container.current
+      : container;
+}
 const namedContainers = new WeakMap<HTMLElement, number>();
 /** An owned Lit root preserves actual part bindings when a consumer selects a portal. */
 export class OwnedPortal {
@@ -92,12 +102,7 @@ export class OwnedPortal {
     content: unknown,
     options: OwnedPortalOptions = {},
   ): boolean {
-    let target =
-      typeof container === 'function'
-        ? container()
-        : container && 'current' in container
-          ? container.current
-          : container;
+    let target = resolvePortalContainer(container);
     const parent = target;
     if (options.identifier && (!target || target.ownerDocument === this.owner.ownerDocument)) {
       const existing = this.owner.ownerDocument.getElementById(options.identifier);

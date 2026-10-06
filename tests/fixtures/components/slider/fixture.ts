@@ -1302,6 +1302,118 @@ async function assertInteractionProtocol() {
       'Synthetic PointerEvent/API protocol regression only; no real pointer/capture claim',
   };
 }
+/** mp-slider-media (R-01): API-level checks. Hover must still be exercised with real MCP input. */
+async function assertMediaExtensions() {
+  records.length = 0;
+  events.length = 0;
+  const diagnostics: unknown[] = [];
+  const pointerEvents: unknown[] = [];
+  const onDiagnostic = (event: Event) => diagnostics.push((event as CustomEvent).detail);
+  const onPointer = (event: Event) => pointerEvents.push((event as CustomEvent).detail);
+  document.addEventListener('tp-diagnostic', onDiagnostic);
+  document.addEventListener('tp-slider-pointer-change', onPointer);
+  const form = document.createElement('form');
+  dynamic.append(form);
+  const slider = await create({
+    defaultValue: 0,
+    minimum: 0,
+    maximum: Number.NaN,
+    name: 'time',
+    formOwner: form,
+    indeterminateText: 'Time unknown',
+  });
+  const root = slider.shadowRoot!.querySelector<HTMLElement>('[part~="slider"]')!;
+  const input = slider.inputElement as HTMLInputElement;
+  check(
+    'M01 non-finite range is indeterminate, disabled and described without a diagnostic',
+    slider.indeterminate &&
+      slider.hasAttribute('data-indeterminate') &&
+      slider.hasAttribute('data-disabled') &&
+      root.getAttribute('aria-disabled') === 'true' &&
+      input.disabled &&
+      input.getAttribute('aria-valuetext') === 'Time unknown' &&
+      !input.hasAttribute('aria-valuemax') &&
+      !diagnostics.some((detail) => (detail as { code?: string }).code === 'configuration'),
+    { diagnostics, valuetext: input.getAttribute('aria-valuetext') },
+  );
+  slider.maximum = 120;
+  slider.buffered = [
+    [0, 30],
+    [60, 90],
+  ];
+  slider.segments = [
+    { start: 0, end: 60, label: 'Intro' },
+    { start: 60, end: 120, label: 'Main' },
+  ];
+  await settle(slider);
+  check(
+    'M02 bounds/buffer/segment updates emit no value events',
+    events.length === 0 && !slider.indeterminate && !input.disabled,
+    events,
+  );
+  slider.setValue(70);
+  await settle(slider);
+  events.length = 0;
+  slider.maximum = 50;
+  await settle(slider);
+  check('M03 shrinking bounds clamps silently', slider.value === 50 && events.length === 0, {
+    value: slider.value,
+    events,
+  });
+  slider.maximum = 120;
+  await settle(slider);
+  const buffers = [...slider.shadowRoot!.querySelectorAll<HTMLElement>('[part~="slider-buffer"]')];
+  const chapters = [
+    ...slider.shadowRoot!.querySelectorAll<HTMLElement>('[part~="slider-chapter"]'),
+  ];
+  check(
+    'M04 buffer parts are non-semantic and publish --tp-slider-buffer',
+    buffers.length === 2 &&
+      buffers.every((node) => node.closest('[aria-hidden="true"]')) &&
+      root.style.getPropertyValue('--tp-slider-buffer') === '75%',
+    { count: buffers.length, buffer: root.style.getPropertyValue('--tp-slider-buffer') },
+  );
+  check(
+    'M05 chapter parts expose active state and segment variables',
+    chapters.length === 2 &&
+      chapters[0]!.hasAttribute('data-active') &&
+      !chapters[1]!.hasAttribute('data-active') &&
+      chapters[0]!.style.getPropertyValue('--tp-slider-segment-fill') === '83.3333%' &&
+      chapters[1]!.style.getPropertyValue('--tp-slider-segment-start') === '50%' &&
+      chapters[1]!.style.getPropertyValue('--tp-slider-segment-fill') !== '' &&
+      chapters[1]!.style.getPropertyValue('--tp-slider-segment-buffer') === '50%',
+    chapters.map((node) => node.getAttribute('style')),
+  );
+  check(
+    'M06 pointer is idle until real hover',
+    slider.pointerValue === null && !slider.hasAttribute('data-pointing'),
+    { pointerValue: slider.pointerValue, pointerEvents },
+  );
+  check(
+    'M07 form-associated slider submits its value',
+    JSON.stringify(new FormData(form).getAll('time')) === '["50"]',
+    new FormData(form).getAll('time'),
+  );
+  const fieldValues: unknown[] = [];
+  const onField = (event: Event) => fieldValues.push((event as CustomEvent).detail);
+  slider.addEventListener('tp-field-value', onField);
+  slider.formAssociatedValue = false;
+  await settle(slider);
+  slider.setValue(30);
+  await settle(slider);
+  check(
+    'M08 form opt-out submits nothing and emits no tp-field-value',
+    new FormData(form).getAll('time').length === 0 &&
+      fieldValues.length === 0 &&
+      slider.value === 30,
+    { form: new FormData(form).getAll('time'), fieldValues },
+  );
+  slider.removeEventListener('tp-field-value', onField);
+  document.removeEventListener('tp-diagnostic', onDiagnostic);
+  document.removeEventListener('tp-slider-pointer-change', onPointer);
+  form.remove();
+  return { checks: records.length, records: [...records], inputClaims: 'API calls only' };
+}
 Object.assign(window, {
   sliderAPI: {
     ...api,
@@ -1323,6 +1435,7 @@ Object.assign(window, {
     assertKeyboardDefaultProtocol,
     assertConstituents,
     assertInteractionProtocol,
+    assertMediaExtensions,
     html,
     snapshot(slider = scalar) {
       return {

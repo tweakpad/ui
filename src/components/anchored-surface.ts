@@ -36,7 +36,7 @@ import {
   geometryOffsets,
   type GeometryOffset,
   resolveSide,
-  rect,
+  cursorAxisRect,
   type Alignment,
   type LogicalSide,
   type Placement,
@@ -73,10 +73,30 @@ interface TriggerRecord {
   sync(): void;
   cleanup(): void;
 }
-function targetOf(element: HTMLElement): HTMLElement {
-  return (
-    element.shadowRoot?.querySelector<HTMLElement>('button,a[href],input,[tabindex]') ?? element
-  );
+const TRIGGER_CONTROL = 'button,a[href],input,[tabindex]';
+/**
+ * The semantic control of a trigger host: its own shadow control (first `button`, `a[href]`,
+ * `input` or `[tabindex]` in its shadow root), else the control of a library control composed in
+ * that shadow root (a wrapper such as a media button that renders a Button, up to three levels),
+ * else the host itself. Nested lookup ignores controls inside a top-layer surface (`[popover]`,
+ * for example an open Popover's popup), so a composed surface never becomes the trigger.
+ */
+export function targetOf(element: HTMLElement, depth = 0): HTMLElement {
+  const root = element.shadowRoot;
+  if (!root) return element;
+  const direct =
+    depth === 0
+      ? root.querySelector<HTMLElement>(TRIGGER_CONTROL)
+      : ([...root.querySelectorAll<HTMLElement>(TRIGGER_CONTROL)].find(
+          (candidate) => !candidate.closest('[popover]'),
+        ) ?? null);
+  if (direct || depth > 2) return direct ?? element;
+  for (const child of root.querySelectorAll<HTMLElement>('*')) {
+    if (!child.shadowRoot || child.closest('[popover]')) continue;
+    const nested = targetOf(child, depth + 1);
+    if (nested !== child) return nested;
+  }
+  return element;
 }
 
 /** Shared native anchored layer used by Popover, Preview Card and Tooltip. */
@@ -454,6 +474,13 @@ export abstract class TpAnchoredSurface extends TpElement {
   }
   protected get describesTrigger(): boolean {
     return this.isTooltip;
+  }
+  /**
+   * Whether a describing surface references its content as the active trigger's description
+   * (`aria-describedby`). Tooltip turns it off with `describes="none"` (visual-only tooltips).
+   */
+  protected get exposesTriggerDescription(): boolean {
+    return true;
   }
   protected get surfaceDisabled(): boolean {
     return this.disabled;
@@ -946,11 +973,19 @@ export abstract class TpAnchoredSurface extends TpElement {
     };
     const write = (name: string, value: string | null) => {
       if (!originals.has(name)) originals.set(name, target!.getAttribute(name));
+      const previous = applied.get(name);
       applied.set(name, value);
       if (target!.getAttribute(name) === value) return;
+      // One control can trigger several surfaces (a Tooltip on a Menu trigger). A surface that
+      // never set the shared open marker does not clear another surface's marker.
+      if (value === null && name === 'data-popup-open' && previous !== '') return;
       if (value === null) target!.removeAttribute(name);
       else target!.setAttribute(name, value);
     };
+    const observer = new this.ownerDocument.defaultView!.MutationObserver(() => {
+      sync();
+      if (this.triggerDisabled(element, options)) this.triggerBecameDisabled(element);
+    });
     const sync = () => {
       const next = targetOf(element);
       if (next !== target) {
@@ -959,6 +994,12 @@ export abstract class TpAnchoredSurface extends TpElement {
         controls = target.ariaControlsElements;
         controlsAttribute = target.getAttribute('aria-controls');
         unregister = this.presentationController.registerPart(part, target);
+        // A composed control's own disabled state also disables the trigger.
+        if (target !== element)
+          observer.observe(target, {
+            attributes: true,
+            attributeFilter: ['disabled', 'aria-disabled'],
+          });
       }
       const actualDescription = target.getAttribute('aria-describedby');
       if (
@@ -982,7 +1023,7 @@ export abstract class TpAnchoredSurface extends TpElement {
         write('aria-disabled', this.triggerDisabled(element, options) ? 'true' : null);
       }
       if (this.describesTrigger) {
-        if (active) {
+        if (active && this.exposesTriggerDescription) {
           if (!bridge) {
             bridge = this.ownerDocument.createElement('span');
             bridge.id = createId(`tp-${this.partPrefix}-description`);
@@ -1019,16 +1060,7 @@ export abstract class TpAnchoredSurface extends TpElement {
       }
     };
     const removeListeners = this.bindInteraction(element, options);
-    const observer = new this.ownerDocument.defaultView!.MutationObserver(() => {
-      sync();
-      if (this.triggerDisabled(element, options)) this.triggerBecameDisabled(element);
-    });
     observer.observe(element, { attributes: true, attributeFilter: ['disabled', 'aria-disabled'] });
-    if (target && target !== element)
-      observer.observe(target, {
-        attributes: true,
-        attributeFilter: ['disabled', 'aria-disabled'],
-      });
     const cleanup = () => {
       observer.disconnect();
       removeListeners();
@@ -1491,8 +1523,8 @@ export abstract class TpHoverSurface extends TpAnchoredSurface {
   protected override anchorGeometry(): AnchorGeometry | null {
     const anchor = super.anchorGeometry();
     const point = this.hover.point;
-    if (!anchor || this.trackCursorAxis === 'none' || this.hover.focusOpened || !point)
-      return anchor;
+    const axis = this.trackCursorAxis;
+    if (!anchor || axis === 'none' || this.hover.focusOpened || !point) return anchor;
     const context = 'getBoundingRectangle' in anchor ? (anchor.contextElement ?? this) : anchor;
     return {
       contextElement: context,
@@ -1501,14 +1533,7 @@ export abstract class TpHoverSurface extends TpAnchoredSurface {
           'getBoundingRectangle' in anchor
             ? anchor.getBoundingRectangle()
             : anchor.getBoundingClientRect();
-        const horizontal = this.trackCursorAxis === 'horizontal' || this.trackCursorAxis === 'both';
-        const vertical = this.trackCursorAxis === 'vertical' || this.trackCursorAxis === 'both';
-        return rect(
-          horizontal ? point.x : box.x,
-          vertical ? point.y : box.y,
-          horizontal ? 0 : box.width,
-          vertical ? 0 : box.height,
-        );
+        return cursorAxisRect(box, point, axis);
       },
     };
   }

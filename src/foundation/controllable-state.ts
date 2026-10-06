@@ -172,6 +172,21 @@ export class ControllableState<T> implements ReactiveController {
     return accepted;
   }
 
+  /**
+   * Owner-policy reconciliation of an uncontrolled value (for example clamping after
+   * a bounds change). Publishes through `onCommit` without a cancelable proposal or
+   * `tp-value-change`; controlled values remain owner-authoritative.
+   */
+  reconcile(value: T, reason: ChangeReason = 'programmatic'): void {
+    this.initialize();
+    if (this.#controlled) return;
+    if (this.#publishing) {
+      this.#queue.push(() => this.reconcile(value, reason));
+      return;
+    }
+    this.#publish(value, reason);
+  }
+
   /** A proposal keeps its value type without exposing a second state owner. */
   proposal(
     value: T,

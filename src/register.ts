@@ -137,6 +137,44 @@ import { TpToggle } from './components/toggle.js';
 import { TpToggleGroup } from './components/toggle-group.js';
 import { TpRadioGroupItem } from './components/radio-group/index.js';
 import { TpSliderThumb } from './components/slider/index.js';
+import {
+  TpMediaPlayer,
+  TpMediaContainer,
+  TpMediaControls,
+  TpMediaControlsGroup,
+  TpMediaPoster,
+  TpMediaTitle,
+  TpMediaHotkey,
+  TpMediaGesture,
+  TpMediaPlayButton,
+  TpMediaMuteButton,
+  TpMediaSeekButton,
+  TpMediaFullscreenButton,
+  TpMediaPipButton,
+  TpMediaCaptionsButton,
+  TpMediaPlaybackRateButton,
+  TpMediaLiveButton,
+  TpMediaRemotePlaybackButton,
+  TpMediaTime,
+  TpMediaBufferingIndicator,
+  TpMediaErrorDialog,
+  TpMediaStatusIndicator,
+  TpMediaSeekIndicator,
+  TpMediaVolumeIndicator,
+  TpMediaTimeSlider,
+  TpMediaTimeSliderPreview,
+  TpMediaThumbnail,
+  TpMediaChapterTitle,
+  TpMediaVolumeSlider,
+  TpMediaVolumePopover,
+  TpMediaPlaybackRateRadioGroup,
+  TpMediaCaptionsRadioGroup,
+  TpMediaAudioTrackRadioGroup,
+  TpMediaQualityRadioGroup,
+  TpMediaSettingsMenu,
+  TpMediaVideoLayout,
+  TpMediaAudioLayout,
+} from './components/media-player/index.js';
 
 defineElement(TpAccordion.tagName, TpAccordion);
 defineElement(TpAccordionItem.tagName, TpAccordionItem);
@@ -273,3 +311,41 @@ defineElement(TpTableCell.tagName, TpTableCell);
 
 defineElement(TpTableCaption.tagName, TpTableCaption);
 defineElement(TpDragDropList.tagName, TpDragDropList);
+
+// The media root is defined first so constituents resolve it when they upgrade.
+defineElement(TpMediaPlayer.tagName, TpMediaPlayer);
+defineElement(TpMediaContainer.tagName, TpMediaContainer);
+defineElement(TpMediaPoster.tagName, TpMediaPoster);
+defineElement(TpMediaTitle.tagName, TpMediaTitle);
+defineElement(TpMediaControls.tagName, TpMediaControls);
+defineElement(TpMediaControlsGroup.tagName, TpMediaControlsGroup);
+defineElement(TpMediaHotkey.tagName, TpMediaHotkey);
+defineElement(TpMediaGesture.tagName, TpMediaGesture);
+defineElement(TpMediaPlayButton.tagName, TpMediaPlayButton);
+defineElement(TpMediaMuteButton.tagName, TpMediaMuteButton);
+defineElement(TpMediaSeekButton.tagName, TpMediaSeekButton);
+defineElement(TpMediaFullscreenButton.tagName, TpMediaFullscreenButton);
+defineElement(TpMediaPipButton.tagName, TpMediaPipButton);
+defineElement(TpMediaCaptionsButton.tagName, TpMediaCaptionsButton);
+defineElement(TpMediaPlaybackRateButton.tagName, TpMediaPlaybackRateButton);
+defineElement(TpMediaLiveButton.tagName, TpMediaLiveButton);
+defineElement(TpMediaRemotePlaybackButton.tagName, TpMediaRemotePlaybackButton);
+defineElement(TpMediaTime.tagName, TpMediaTime);
+defineElement(TpMediaBufferingIndicator.tagName, TpMediaBufferingIndicator);
+defineElement(TpMediaErrorDialog.tagName, TpMediaErrorDialog);
+defineElement(TpMediaStatusIndicator.tagName, TpMediaStatusIndicator);
+defineElement(TpMediaSeekIndicator.tagName, TpMediaSeekIndicator);
+defineElement(TpMediaVolumeIndicator.tagName, TpMediaVolumeIndicator);
+defineElement(TpMediaTimeSlider.tagName, TpMediaTimeSlider);
+defineElement(TpMediaTimeSliderPreview.tagName, TpMediaTimeSliderPreview);
+defineElement(TpMediaThumbnail.tagName, TpMediaThumbnail);
+defineElement(TpMediaChapterTitle.tagName, TpMediaChapterTitle);
+defineElement(TpMediaVolumeSlider.tagName, TpMediaVolumeSlider);
+defineElement(TpMediaVolumePopover.tagName, TpMediaVolumePopover);
+defineElement(TpMediaPlaybackRateRadioGroup.tagName, TpMediaPlaybackRateRadioGroup);
+defineElement(TpMediaCaptionsRadioGroup.tagName, TpMediaCaptionsRadioGroup);
+defineElement(TpMediaAudioTrackRadioGroup.tagName, TpMediaAudioTrackRadioGroup);
+defineElement(TpMediaQualityRadioGroup.tagName, TpMediaQualityRadioGroup);
+defineElement(TpMediaSettingsMenu.tagName, TpMediaSettingsMenu);
+defineElement(TpMediaVideoLayout.tagName, TpMediaVideoLayout);
+defineElement(TpMediaAudioLayout.tagName, TpMediaAudioLayout);

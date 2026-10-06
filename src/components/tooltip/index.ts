@@ -1,4 +1,5 @@
 export { TpTooltip } from './tooltip.js';
+export type { TooltipDescribes } from './tooltip.js';
 import { SurfaceHandle } from '../../foundation/surface-handle.js';
 import type { AnchoredTriggerOptions } from '../anchored-surface.js';
 export class TooltipHandle extends SurfaceHandle<AnchoredTriggerOptions> {}

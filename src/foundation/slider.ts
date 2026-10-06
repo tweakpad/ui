@@ -21,6 +21,178 @@ export interface SliderMoveResult {
   activeIndex: number;
 }
 
+/** A non-semantic `[start, end]` range in slider value units, such as buffered media. */
+export type SliderBufferedRange = readonly [start: number, end: number];
+
+/** A non-semantic segment of the slider domain, such as a media chapter. */
+export interface SliderSegment {
+  readonly start: number;
+  readonly end: number;
+  readonly label?: string;
+}
+
+/** Normalized segment geometry and interaction state. Ratios are 0–1 of the slider domain. */
+export interface SliderSegmentState {
+  index: number;
+  start: number;
+  end: number;
+  label: string | undefined;
+  /** Segment start as a ratio of the slider domain. */
+  startRatio: number;
+  /** Segment size as a ratio of the slider domain. */
+  widthRatio: number;
+  /** Portion of this segment (0–1) below the current value. */
+  fillRatio: number;
+  /** Portion of this segment (0–1) below the buffer end. */
+  bufferRatio: number;
+  /** The current value lies inside this segment. */
+  active: boolean;
+  /** The hovered pointer value lies inside this segment. */
+  highlighted: boolean;
+}
+
+/**
+ * A non-finite or empty domain is a declared indeterminate state (for example media
+ * before metadata), not a configuration error.
+ */
+export function sliderRangeIndeterminate(minimum: number, maximum: number): boolean {
+  return !Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum >= maximum;
+}
+
+/** Clamped 0–1 position of a value in the domain; 0 for an indeterminate domain. */
+export function sliderRatio(value: number, minimum: number, maximum: number): number {
+  if (sliderRangeIndeterminate(minimum, maximum) || !Number.isFinite(value)) return 0;
+  return Math.min(1, Math.max(0, (value - minimum) / (maximum - minimum)));
+}
+
+/**
+ * Finite ranges clamped to the domain, ordered by start and merged where they
+ * overlap or touch. Empty and inverted ranges are dropped.
+ */
+export function normalizeSliderBufferedRanges(
+  ranges: readonly SliderBufferedRange[] | null | undefined,
+  minimum: number,
+  maximum: number,
+): Array<[number, number]> {
+  if (!ranges?.length || sliderRangeIndeterminate(minimum, maximum)) return [];
+  const clamped = ranges
+    .filter(
+      (range): range is SliderBufferedRange =>
+        Array.isArray(range) && Number.isFinite(range[0]) && Number.isFinite(range[1]),
+    )
+    .map(([start, end]): [number, number] => [
+      Math.min(maximum, Math.max(minimum, start)),
+      Math.min(maximum, Math.max(minimum, end)),
+    ])
+    .filter(([start, end]) => end > start)
+    .sort((left, right) => left[0] - right[0]);
+  const merged: Array<[number, number]> = [];
+  for (const range of clamped) {
+    const previous = merged.at(-1);
+    if (previous && range[0] <= previous[1]) previous[1] = Math.max(previous[1], range[1]);
+    else merged.push([...range]);
+  }
+  return merged;
+}
+
+/**
+ * The end of the normalized range containing `value`, else the end of the last
+ * range; `null` when nothing is buffered.
+ */
+export function sliderBufferEnd(
+  ranges: readonly SliderBufferedRange[],
+  value: number | undefined,
+): number | null {
+  if (!ranges.length) return null;
+  const containing =
+    value === undefined ? undefined : ranges.find(([start, end]) => value >= start && value <= end);
+  return (containing ?? ranges.at(-1)!)[1];
+}
+
+/** Finite segments clamped to the domain, ordered by start; empty segments are dropped. */
+export function normalizeSliderSegments(
+  segments: readonly SliderSegment[] | null | undefined,
+  minimum: number,
+  maximum: number,
+): SliderSegment[] {
+  if (!segments?.length || sliderRangeIndeterminate(minimum, maximum)) return [];
+  return segments
+    .filter(
+      (segment) => !!segment && Number.isFinite(segment.start) && Number.isFinite(segment.end),
+    )
+    .map((segment) => ({
+      ...segment,
+      start: Math.min(maximum, Math.max(minimum, segment.start)),
+      end: Math.min(maximum, Math.max(minimum, segment.end)),
+    }))
+    .filter((segment) => segment.end > segment.start)
+    .sort((left, right) => left.start - right.start);
+}
+
+/** Per-segment geometry, fill, buffer and containment for already-normalized segments. */
+export function sliderSegmentStates(
+  segments: readonly SliderSegment[],
+  options: {
+    minimum: number;
+    maximum: number;
+    value: number | undefined;
+    pointerValue: number | null;
+    bufferEnd: number | null;
+  },
+): SliderSegmentState[] {
+  const { minimum, maximum, value, pointerValue, bufferEnd } = options;
+  if (sliderRangeIndeterminate(minimum, maximum)) return [];
+  const domain = maximum - minimum;
+  const portion = (point: number | null | undefined, start: number, end: number): number =>
+    point === null || point === undefined || !Number.isFinite(point)
+      ? 0
+      : Math.min(1, Math.max(0, (point - start) / (end - start)));
+  return segments.map((segment, index) => {
+    const last = index === segments.length - 1;
+    const contains = (point: number | null | undefined): boolean =>
+      point !== null &&
+      point !== undefined &&
+      point >= segment.start &&
+      (point < segment.end || (last && point === segment.end));
+    return {
+      index,
+      start: segment.start,
+      end: segment.end,
+      label: segment.label,
+      startRatio: (segment.start - minimum) / domain,
+      widthRatio: (segment.end - segment.start) / domain,
+      fillRatio: portion(value, segment.start, segment.end),
+      bufferRatio: portion(bufferEnd, segment.start, segment.end),
+      active: contains(value),
+      highlighted: contains(pointerValue),
+    };
+  });
+}
+
+/**
+ * Map a pointer coordinate to a 0–1 domain ratio along the slider axis. Horizontal
+ * RTL mirrors the axis; vertical grows upward. `inset` is the CSS-pixel travel inset
+ * at each end (edge thumb alignment). Returns `null` for an unmeasurable axis.
+ */
+export function sliderPointerRatio(input: {
+  clientX: number;
+  clientY: number;
+  rect: { left: number; top: number; width: number; height: number };
+  orientation: 'horizontal' | 'vertical';
+  direction: 'ltr' | 'rtl';
+  inset?: number;
+}): number | null {
+  const { clientX, clientY, rect, orientation, direction, inset = 0 } = input;
+  const length = (orientation === 'horizontal' ? rect.width : rect.height) - inset * 2;
+  if (!(length > 0)) return null;
+  let ratio =
+    orientation === 'horizontal'
+      ? (clientX - rect.left - inset) / length
+      : 1 - (clientY - rect.top - inset) / length;
+  if (orientation === 'horizontal' && direction === 'rtl') ratio = 1 - ratio;
+  return Math.min(1, Math.max(0, ratio));
+}
+
 export function sliderConfigurationError(
   minimum: number,
   maximum: number,
@@ -29,15 +201,15 @@ export function sliderConfigurationError(
   minStepsBetweenValues: number,
   valueCount: number,
 ): string | null {
-  if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum >= maximum)
-    return 'Slider minimum must be finite and less than maximum.';
+  // An empty or non-finite domain is the declared indeterminate state, not an error.
+  const indeterminate = sliderRangeIndeterminate(minimum, maximum);
   if (!Number.isFinite(step) || step <= 0) return 'Slider step must be a positive finite number.';
   if (!Number.isFinite(largeStep) || largeStep <= 0)
     return 'Slider largeStep must be a positive finite number.';
   if (!Number.isInteger(minStepsBetweenValues) || minStepsBetweenValues < 0)
     return 'Slider minStepsBetweenValues must be a non-negative integer.';
   if (valueCount < 1) return 'Slider requires a value or defaultValue.';
-  if ((valueCount - 1) * minStepsBetweenValues * step > maximum - minimum)
+  if (!indeterminate && (valueCount - 1) * minStepsBetweenValues * step > maximum - minimum)
     return 'Slider bounds cannot contain the requested values and minimum separation.';
   return null;
 }
@@ -202,6 +374,12 @@ export function moveSliderThumb(request: SliderMoveRequest): SliderMoveResult {
     identities: items.map((item) => item.identity),
     activeIndex,
   };
+}
+
+/** Unsnapped domain value at a 0–1 ratio; used for hover pointer publication. */
+export function sliderRawValueFromRatio(ratio: number, minimum: number, maximum: number): number {
+  if (sliderRangeIndeterminate(minimum, maximum)) return Number.NaN;
+  return minimum + Math.min(1, Math.max(0, ratio)) * (maximum - minimum);
 }
 
 export function sliderValueFromRatio(

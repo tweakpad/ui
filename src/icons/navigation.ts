@@ -1,3 +1,4 @@
+import { settingsIcon } from './settings.js';
 import type { IconDefinition } from './types.js';
 
 const outline = (...paths: string[]): IconDefinition => ({
@@ -12,7 +13,7 @@ export const navigationIcons = {
   terminal: outline('M3 4h18v16H3z', 'm7 8 3 3-3 3', 'M13 14h4'),
   models: outline('M5 8h14v12H5z', 'M12 4v4', 'M2 12h3m14 0h3', 'M8 12h1m6 0h1', 'M8 16h8'),
   book: outline('M12 5v15', 'M12 5C8 2 4 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-2-1-6-2-10 1'),
-  settings: outline('M3 6h18M3 12h18M3 18h18', 'M7 3v6m10 0v6M9 15v6'),
+  settings: settingsIcon,
   frame: outline('M7 2v20M17 2v20M2 7h20M2 17h20'),
   chart: outline('M21 12a9 9 0 1 1-9-9v9z', 'M15 2v7h7a9 9 0 0 0-7-7'),
   map: outline('m3 5 6-3 6 3 6-3v17l-6 3-6-3-6 3z', 'M9 2v17m6-14v17'),

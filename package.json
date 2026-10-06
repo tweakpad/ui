@@ -25,6 +25,10 @@
       "types": "./dist/foundation/drag-drop/index.d.ts",
       "import": "./dist/drag-drop.js"
     },
+    "./media": {
+      "types": "./dist/foundation/media/index.d.ts",
+      "import": "./dist/media.js"
+    },
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"

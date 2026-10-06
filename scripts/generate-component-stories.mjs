@@ -73,6 +73,7 @@ const authoredStories = new Set([
   'tp-card',
   'tp-collapsible',
   'tp-icon',
+  'tp-media-player',
 ]);
 await rm(outputDirectory, { recursive: true, force: true });
 await mkdir(outputDirectory, { recursive: true });

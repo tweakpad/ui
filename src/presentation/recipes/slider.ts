@@ -67,4 +67,42 @@ export const sliderAppearance: PresentationDictionary = {
       },
     },
   ],
+  // Media buffer: a 35% muted-foreground layer over the muted Track, below the Range.
+  'slider-buffer': [
+    {
+      declarations: {
+        'border-radius': 'var(--tp-radius-full)',
+        background: 'color-mix(in oklab, var(--tp-muted-foreground) 35%, transparent)',
+      },
+    },
+  ],
+  'slider-buffer-orientation-horizontal': [],
+  'slider-buffer-orientation-vertical': [],
+  // Chapter segments separate with a background-colored gap; the pointed segment
+  // receives a 20% muted-foreground layer (docs/styling.md color-mix rule).
+  'slider-chapter': [
+    {
+      selector: '&:not(:last-child)',
+      declarations: {
+        'border-inline-end':
+          'calc(var(--tp-spacing) * .5) var(--tp-border-style) var(--tp-background)',
+      },
+    },
+    {
+      selector: '&[data-orientation="vertical"]:not(:last-child)',
+      declarations: {
+        'border-inline-end': '0',
+        'border-block-start':
+          'calc(var(--tp-spacing) * .5) var(--tp-border-style) var(--tp-background)',
+      },
+    },
+    {
+      selector: '&[data-highlighted]',
+      declarations: {
+        background: 'color-mix(in oklab, var(--tp-muted-foreground) 20%, transparent)',
+      },
+    },
+  ],
+  'slider-chapter-orientation-horizontal': [],
+  'slider-chapter-orientation-vertical': [],
 };

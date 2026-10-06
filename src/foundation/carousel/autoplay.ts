@@ -1,3 +1,4 @@
+import { ReasonLeases } from '../reason-leases.js';
 import { Scheduler } from '../services.js';
 import type { CarouselNavigationResult } from './types.js';
 
@@ -8,9 +9,13 @@ export interface CarouselAutoplayAdapter {
   changed(): void;
   owner?: Window;
 }
-/** Every pause reason owns its lease; one reason clearing cannot resume another's pause. */
+/**
+ * Every pause reason owns its lease on the shared {@link ReasonLeases} owner
+ * (`sec-187-carousel` autoplay, `sec-1922-activity-and-idle` leases): one reason clearing
+ * cannot resume another's pause, and the last lease clearing restarts a full interval.
+ */
 export class CarouselAutoplay {
-  readonly #reasons = new Set<string>();
+  readonly #reasons = new ReasonLeases<string>();
   #scheduler: Scheduler;
   #cancel: (() => void) | undefined;
   #running = false;
@@ -24,10 +29,11 @@ export class CarouselAutoplay {
     return this.#running;
   }
   get paused(): boolean {
-    return this.#reasons.size > 0;
+    return this.#reasons.active;
   }
+  /** Held pause reasons in first-acquired order. */
   get reasons(): readonly string[] {
-    return Object.freeze([...this.#reasons]);
+    return this.#reasons.reasons;
   }
   start(): void {
     if (!this.#running) {
@@ -52,7 +58,7 @@ export class CarouselAutoplay {
   }
   resume(): void {
     // Clearing only the unacknowledged lease still changes the observable paused state.
-    if (this.#reasons.delete('unacknowledged') && !this.#reasons.has('explicit')) {
+    if (this.#reasons.set('unacknowledged', false) && !this.#reasons.has('explicit')) {
       this.#generation++;
       this.adapter.changed();
     }
@@ -60,10 +66,8 @@ export class CarouselAutoplay {
     this.refresh();
   }
   setReason(reason: string, active: boolean): void {
-    const changed = active ? !this.#reasons.has(reason) : this.#reasons.has(reason);
-    if (!changed) return;
-    if (active) this.#reasons.add(reason);
-    else this.#reasons.delete(reason);
+    // Each reason is a single switch-style lease; an unchanged switch is not a change.
+    if (!this.#reasons.set(reason, active)) return;
     this.#generation++;
     this.#cancel?.();
     this.#cancel = undefined;

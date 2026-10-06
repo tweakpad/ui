@@ -13,6 +13,15 @@ import { plusIcon } from '../icons/plus.js';
 
 export type CatalogTag = (typeof catalog)[number][1];
 
+/** Repository-generated sample media (see `assets/media/README.md`). */
+export const sampleVideo = new URL('./assets/media/sample-video.mp4', import.meta.url).href;
+export const samplePoster = new URL('./assets/media/poster.jpg', import.meta.url).href;
+export const sampleAudio = new URL('./assets/media/sample-audio.m4a', import.meta.url).href;
+export const sampleCaptionsEn = new URL('./assets/media/captions-en.vtt', import.meta.url).href;
+export const sampleCaptionsEs = new URL('./assets/media/captions-es.vtt', import.meta.url).href;
+export const sampleChapters = new URL('./assets/media/chapters.vtt', import.meta.url).href;
+export const sampleThumbnails = new URL('./assets/media/thumbnails.vtt', import.meta.url).href;
+
 const questionnaireQuestions = [
   {
     name: 'role',
@@ -371,6 +380,24 @@ const examples = {
       <a href="#settings">Settings</a>
       <small slot="footer">Version 1</small>
     </tp-navigation-panel>
+  `,
+  'tp-media-player': () => html`
+    <tp-media-player content-title="Sample clip" poster=${samplePoster}>
+      <video
+        src=${sampleVideo}
+        width="1280"
+        height="720"
+        preload="metadata"
+        playsinline
+        crossorigin="anonymous"
+      >
+        <track kind="captions" srclang="en" label="English" src=${sampleCaptionsEn} />
+        <track kind="captions" srclang="es" label="Español" src=${sampleCaptionsEs} />
+        <track kind="chapters" srclang="en" src=${sampleChapters} />
+        <track kind="metadata" label="thumbnails" src=${sampleThumbnails} />
+      </video>
+      <tp-media-video-layout></tp-media-video-layout>
+    </tp-media-player>
   `,
 } satisfies Record<CatalogTag, () => TemplateResult>;
 

@@ -9,6 +9,12 @@ import {
   type DurationStyle,
 } from './date-locale.js';
 import type { NumericText } from './number-locale.js';
+import {
+  formatDuration,
+  formatDurationParts,
+  type DurationTextOptions,
+  type DurationTextParts,
+} from './duration-format.js';
 
 export class CleanupScope {
   readonly #cleanups = new Set<() => void>();
@@ -184,8 +190,23 @@ export class LocaleService {
   ): string {
     return relativeTimeFormatter(this.locale, options).format(value, unit);
   }
-  duration(value: DurationRecord, style?: DurationStyle): string {
-    return durationFormatter(this.locale, style).format(value);
+  /**
+   * Formats seconds as media clock text (`style: 'digital'`, the default, with optional `guide`)
+   * or as a spoken phrase (`style: 'long'`); see `formatDuration`. A duration record formats
+   * through `Intl.DurationFormat` or its unit-list fallback.
+   */
+  duration(seconds: number, options?: DurationTextOptions): string;
+  duration(value: DurationRecord, style?: DurationStyle): string;
+  duration(value: number | DurationRecord, options?: DurationTextOptions | DurationStyle): string {
+    if (typeof value === 'number')
+      return formatDuration(value, typeof options === 'object' ? options : {}, this.locale);
+    return durationFormatter(this.locale, typeof options === 'string' ? options : undefined).format(
+      value,
+    );
+  }
+  /** Digital or spoken duration text with its sign separated; see `formatDurationParts`. */
+  durationParts(seconds: number, options?: DurationTextOptions): DurationTextParts {
+    return formatDurationParts(seconds, options, this.locale);
   }
   compare(a: string, b: string, options?: Intl.CollatorOptions): number {
     return this.collator(options).compare(a, b);

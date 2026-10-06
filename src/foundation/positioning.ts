@@ -159,6 +159,29 @@ export function rect(x: number, y: number, width: number, height: number): Rect 
   return { x, y, width, height, top: y, right: x + width, bottom: y + height, left: x };
 }
 
+/** Axes along which a virtual anchor follows a point instead of its box. */
+export type CursorAxis = 'horizontal' | 'vertical' | 'both';
+
+/**
+ * A virtual-anchor rectangle that follows `point` along `axis` and keeps `box` on the other
+ * axis: a zero-width (or zero-height) slice of the box at the point. Shared by cursor-tracking
+ * hover surfaces and pointer-following previews such as the media time-slider preview.
+ */
+export function cursorAxisRect(
+  box: Pick<Rect, 'x' | 'y' | 'width' | 'height'>,
+  point: { readonly x: number; readonly y: number },
+  axis: CursorAxis,
+): Rect {
+  const horizontal = axis === 'horizontal' || axis === 'both';
+  const vertical = axis === 'vertical' || axis === 'both';
+  return rect(
+    horizontal ? point.x : box.x,
+    vertical ? point.y : box.y,
+    horizontal ? 0 : box.width,
+    vertical ? 0 : box.height,
+  );
+}
+
 function finiteRect(value: Rect): boolean {
   return (
     [

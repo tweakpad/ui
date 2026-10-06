@@ -200,6 +200,51 @@ describe('Navigation Panel provider coordination', () => {
     handler(stale);
     expect(stale.defaultPrevented).toBe(false);
   });
+  it('matches the shortcut key case-insensitively with exact modifiers and honors allowEditable', () => {
+    let handler!: (event: KeyboardEvent) => void;
+    const register = (_host: unknown, _binding: unknown, callback: typeof handler) => {
+      handler = callback;
+      return () => undefined;
+    };
+    const f = fixture({
+      shortcut: { key: '?', shiftKey: true, allowEditable: true },
+      shortcutAdapter: { register },
+    });
+    const press = (properties: Record<string, unknown>, path: EventTarget[] = []) => {
+      const event = key({ key: '?', ctrlKey: false, shiftKey: true, ...properties });
+      event.composedPath = () => path;
+      handler(event);
+      return event;
+    };
+    // Exact modifiers: no implied Shift and no extra Ctrl/Alt/Meta.
+    expect(press({ shiftKey: false }).defaultPrevented).toBe(false);
+    expect(press({ altKey: true }).defaultPrevented).toBe(false);
+    expect(press({ repeat: true }).defaultPrevented).toBe(false);
+    expect(f.provider.expanded).toBe(true);
+    // allowEditable lets the shortcut run from editors; composition is not filtered.
+    const editor = { nodeType: 1, localName: 'textarea' } as unknown as EventTarget;
+    expect(press({}, [editor]).defaultPrevented).toBe(true);
+    expect(f.provider.expanded).toBe(false);
+    expect(press({ isComposing: true }).defaultPrevented).toBe(true);
+    expect(f.provider.expanded).toBe(true);
+    // Activation targets and composites do not block the provider shortcut.
+    const button = {
+      nodeType: 1,
+      localName: 'button',
+      matches: () => true,
+    } as unknown as EventTarget;
+    expect(press({ key: 'Enter', shiftKey: false }, [button]).defaultPrevented).toBe(false);
+    f.update({ shortcut: { key: 'Enter' } });
+    expect(press({ key: 'ENTER', shiftKey: false }, [button]).defaultPrevented).toBe(true);
+    const contentEditable = {
+      nodeType: 1,
+      localName: 'div',
+      isContentEditable: true,
+    } as unknown as EventTarget;
+    expect(press({ key: 'Enter', shiftKey: false }, [contentEditable]).defaultPrevented).toBe(
+      false,
+    );
+  });
   it('none is inert only for wide toggle; compact remains modal-capable', () => {
     const f = fixture({ collapseMode: 'none' });
     expect(f.provider.toggle()).toBe(false);

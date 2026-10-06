@@ -7,6 +7,7 @@ class ElementStub {
   isConnected = true;
   children: ElementStub[] = [];
   parentNode: ElementStub | ShadowStub | null = null;
+  assignedSlot: ElementStub | null = null;
   shadowRoot: ShadowStub | null = null;
   #inert: string | null = null;
   inertWrites = 0;
@@ -188,5 +189,134 @@ describe('owner-document outside inert leases', () => {
     expect(b.other.inert).toBe(true);
     otherDocument();
     expect(b.other.inert).toBe(false);
+  });
+});
+
+function scopedFixture() {
+  const f = fixture();
+  // body > [outer, inner, other, authored, player > [video, layer, error], page]
+  // player shadow: [slot (assigns light children), chrome]
+  const player = new ElementStub(),
+    video = new ElementStub(),
+    layer = new ElementStub(),
+    error = new ElementStub(),
+    page = new ElementStub();
+  const shadow = new ShadowStub(player),
+    slot = new ElementStub(),
+    chrome = new ElementStub();
+  player.shadowRoot = shadow;
+  shadow.append(slot);
+  shadow.append(chrome);
+  player.append(video, layer, error);
+  for (const child of player.children) child.assignedSlot = slot;
+  f.document.body.append(player as unknown as HTMLElement);
+  (f.document.body as unknown as ElementStub).append(page);
+  const scope = player as unknown as HTMLElement;
+  return { ...f, player, video, layer, error, page, shadow, slot, chrome, scope };
+}
+describe('scoped outside inert leases', () => {
+  it('isolates only the scope and restores it on release', () => {
+    const f = scopedFixture();
+    const release = acquireOutsideInert(f.document, () => f.inside(f.layer), { scope: f.scope });
+    expect(f.video.inert).toBe(true);
+    expect(f.error.inert).toBe(true);
+    expect(f.chrome.inert).toBe(true);
+    expect(f.layer.inert).toBe(false);
+    expect(f.slot.inert).toBe(false);
+    expect(f.player.inert).toBe(false);
+    expect(f.page.inert).toBe(false);
+    expect(f.other.inert).toBe(false);
+    expect(ObserverStub.current!.roots.has(f.scope)).toBe(true);
+    expect(ObserverStub.current!.roots.has(f.shadow)).toBe(true);
+    release();
+    expect(f.video.inert).toBe(false);
+    expect(f.chrome.inert).toBe(false);
+    expect(f.authored.inert).toBe(true);
+  });
+  it('accepts a shadow-root scope', () => {
+    const f = scopedFixture();
+    const release = acquireOutsideInert(f.document, () => f.inside(f.slot), {
+      scope: f.shadow as unknown as ShadowRoot,
+    });
+    expect(f.chrome.inert).toBe(true);
+    expect(f.slot.inert).toBe(false);
+    expect(f.video.inert).toBe(false);
+    expect(f.other.inert).toBe(false);
+    release();
+    expect(f.chrome.inert).toBe(false);
+  });
+  it('keeps disjoint scoped leases effective together', () => {
+    const f = scopedFixture();
+    const second = new ElementStub(),
+      secondLayer = new ElementStub(),
+      secondVideo = new ElementStub();
+    second.append(secondVideo, secondLayer);
+    (f.document.body as unknown as ElementStub).append(second);
+    const a = acquireOutsideInert(f.document, () => f.inside(f.layer), { scope: f.scope });
+    const b = acquireOutsideInert(f.document, () => f.inside(secondLayer), {
+      scope: second as unknown as HTMLElement,
+    });
+    expect(f.video.inert).toBe(true);
+    expect(secondVideo.inert).toBe(true);
+    expect(f.layer.inert).toBe(false);
+    expect(secondLayer.inert).toBe(false);
+    a();
+    expect(f.video.inert).toBe(false);
+    expect(secondVideo.inert).toBe(true);
+    b();
+    expect(secondVideo.inert).toBe(false);
+  });
+  it('lets a newer document lease supersede a scoped lease, then restores it', () => {
+    const f = scopedFixture();
+    const scoped = acquireOutsideInert(f.document, () => f.inside(f.layer), { scope: f.scope });
+    const page = acquireOutsideInert(f.document, () => f.inside(f.outer));
+    expect(f.player.inert).toBe(true);
+    expect(f.other.inert).toBe(true);
+    page();
+    expect(f.player.inert).toBe(false);
+    expect(f.other.inert).toBe(false);
+    expect(f.video.inert).toBe(true);
+    expect(f.layer.inert).toBe(false);
+    scoped();
+    expect(f.video.inert).toBe(false);
+  });
+  it('exempts a newer scoped branch from an older enclosing document lease', () => {
+    const f = scopedFixture();
+    // The player sits inside the document modal branch (`outer`) in this case.
+    const outer = f.outer;
+    const body = f.document.body as unknown as ElementStub;
+    body.children.splice(body.children.indexOf(f.player), 1);
+    outer.append(f.player);
+    const page = acquireOutsideInert(f.document, () => f.inside(outer));
+    const scoped = acquireOutsideInert(f.document, () => f.inside(f.layer), { scope: f.scope });
+    expect(f.other.inert).toBe(true);
+    expect(outer.inert).toBe(false);
+    expect(f.layer.inert).toBe(false);
+    expect(f.video.inert).toBe(true);
+    scoped();
+    expect(f.video.inert).toBe(false);
+    expect(f.other.inert).toBe(true);
+    page();
+    expect(f.other.inert).toBe(false);
+  });
+  it('lets the newest lease of one scope define its branch', () => {
+    const f = scopedFixture();
+    const outer = acquireOutsideInert(f.document, () => f.inside(f.layer), { scope: f.scope });
+    const inner = acquireOutsideInert(f.document, () => f.inside(f.error), { scope: f.scope });
+    expect(f.layer.inert).toBe(true);
+    expect(f.error.inert).toBe(false);
+    inner();
+    expect(f.layer.inert).toBe(false);
+    expect(f.error.inert).toBe(true);
+    outer();
+    expect(f.error.inert).toBe(false);
+  });
+  it('ignores a disconnected scope', () => {
+    const f = scopedFixture();
+    f.player.isConnected = false;
+    const release = acquireOutsideInert(f.document, () => f.inside(f.layer), { scope: f.scope });
+    expect(f.video.inert).toBe(false);
+    expect(f.other.inert).toBe(false);
+    release();
   });
 });

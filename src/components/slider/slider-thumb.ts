@@ -102,23 +102,28 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
         nativeProperties[key] = value;
       else visualProperties[key] = value;
     }
+    // An indeterminate domain stays describable: finite native bounds, no NaN ARIA values.
+    const finite = (value: number): string | undefined =>
+      Number.isFinite(value) ? String(value) : undefined;
+    const nativeMinimum = finite(state.minimum) ?? finite(state.maximum) ?? '0';
     const inputProperties = mergePartProperties(
       {
         id: this.inputId,
         type: 'range',
         part: 'focusable',
-        '.min': String(state.minimum),
-        '.max': String(state.maximum),
+        '.min': nativeMinimum,
+        '.max': finite(state.maximum) ?? nativeMinimum,
         '.step': String(state.step),
-        '.value': String(state.value),
+        '.value': finite(state.value) ?? nativeMinimum,
         '.disabled': state.disabled,
         '.required': state.required,
         tabindex: state.disabled ? -1 : this.tabIndex,
         'aria-label': state.label || undefined,
         'aria-valuetext': state.valueText,
-        'aria-valuenow': String(state.value),
-        'aria-valuemin': String(state.minimum),
-        'aria-valuemax': String(state.maximum),
+        'aria-valuenow': finite(state.value),
+        'aria-valuemin': finite(state.minimum),
+        'aria-valuemax': finite(state.maximum),
+        'aria-disabled': state.indeterminate ? 'true' : undefined,
         'aria-orientation': state.orientation,
         'aria-readonly': state.readOnly ? 'true' : undefined,
         'aria-required': state.required ? 'true' : undefined,
@@ -181,6 +186,7 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
       'data-index': state.index,
       'data-orientation': state.orientation,
       'data-disabled': state.disabled,
+      'data-indeterminate': state.indeterminate,
       'data-dragging': state.dragging,
       'data-active': state.active,
       'data-invalid': state.invalid,

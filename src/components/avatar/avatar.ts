@@ -1,8 +1,9 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
 import { TpElement } from '../../foundation/element.js';
+import { ImageLoadController, type ImageLoadStatus } from '../../foundation/image-load.js';
 
-export type AvatarLoadingStatus = 'idle' | 'loading' | 'loaded' | 'error';
+export type AvatarLoadingStatus = ImageLoadStatus;
 
 export class TpAvatar extends TpElement {
   static tagName = 'tp-avatar';
@@ -81,15 +82,22 @@ export class TpAvatar extends TpElement {
   crossOrigin: '' | 'anonymous' | 'use-credentials' = '';
   referrerPolicy: ReferrerPolicy = '';
   onLoadingStatusChange: ((status: AvatarLoadingStatus) => void) | undefined;
-  #status: AvatarLoadingStatus = 'idle';
-  #generation = 0;
-  #preloader: HTMLImageElement | null = null;
+  readonly #image = new ImageLoadController(this, {
+    onStatusChange: (status) => {
+      if (status === 'loaded') {
+        this.#cancelDelay?.();
+        this.#cancelDelay = undefined;
+      }
+      this.onLoadingStatusChange?.(status);
+      this.emit('tp-loading-status-change', { status });
+    },
+  });
   #cancelDelay: (() => void) | undefined;
   #fallbackReady = false;
   #needsLoad = true;
   #contentObserver: MutationObserver | undefined;
   get imageLoadingStatus(): AvatarLoadingStatus {
-    return this.#status;
+    return this.#image.status;
   }
   override connectedCallback(): void {
     super.connectedCallback();
@@ -109,31 +117,14 @@ export class TpAvatar extends TpElement {
   override disconnectedCallback(): void {
     this.#contentObserver?.disconnect();
     this.#contentObserver = undefined;
-    ++this.#generation;
-    this.#clearLoad();
     this.#cancelDelay?.();
     this.#cancelDelay = undefined;
     super.disconnectedCallback();
   }
-  #clearLoad(): void {
-    if (this.#preloader) this.#preloader.onload = this.#preloader.onerror = null;
-    this.#preloader = null;
-  }
-  #setStatus(status: AvatarLoadingStatus, generation: number): void {
-    if (!this.isConnected || generation !== this.#generation || status === this.#status) return;
-    this.#status = status;
-    if (status === 'loaded') {
-      this.#cancelDelay?.();
-      this.#cancelDelay = undefined;
-    }
-    this.requestUpdate();
-    this.onLoadingStatusChange?.(status);
-    this.emit('tp-loading-status-change', { status });
-  }
   #scheduleFallback(): void {
     this.#cancelDelay?.();
     this.#cancelDelay = undefined;
-    if (this.#fallbackReady || this.#status === 'loaded') return;
+    if (this.#fallbackReady || this.#image.status === 'loaded') return;
     const delay = Number.isFinite(this.fallbackDelay) ? Math.max(0, this.fallbackDelay) : 0;
     if (!delay) {
       this.#fallbackReady = true;
@@ -141,10 +132,10 @@ export class TpAvatar extends TpElement {
     }
     const view = this.ownerDocument.defaultView;
     if (!view) return;
-    const generation = this.#generation;
+    const generation = this.#image.generation;
     const timer = view.setTimeout(() => {
       this.#cancelDelay = undefined;
-      if (!this.isConnected || generation !== this.#generation) return;
+      if (!this.isConnected || generation !== this.#image.generation) return;
       this.#fallbackReady = true;
       this.requestUpdate();
     }, delay);
@@ -152,24 +143,17 @@ export class TpAvatar extends TpElement {
   }
   #beginLoad(): void {
     this.#needsLoad = false;
-    this.#clearLoad();
-    const generation = ++this.#generation;
-    if (!this.src && !this.srcSet) {
-      this.#setStatus('idle', generation);
-      return;
-    }
-    this.#setStatus('loading', generation);
-    if (this.keepMounted) return;
-    const image = this.ownerDocument.createElement('img');
-    this.#preloader = image;
-    image.onload = () => this.#setStatus('loaded', generation);
-    image.onerror = () => this.#setStatus('error', generation);
-    if (this.referrerPolicy) image.referrerPolicy = this.referrerPolicy;
-    image.crossOrigin = this.crossOrigin || null;
-    if (this.sizes) image.sizes = this.sizes;
-    if (this.srcSet) image.srcset = this.srcSet;
-    if (this.src) image.src = this.src;
-    if (image.complete) this.#setStatus(image.naturalWidth > 0 ? 'loaded' : 'error', generation);
+    // Keep-mounted avatars request through the rendered image instead of a detached preloader.
+    this.#image.load(
+      {
+        src: this.src,
+        srcset: this.srcSet,
+        sizes: this.sizes,
+        crossOrigin: this.crossOrigin,
+        referrerPolicy: this.referrerPolicy,
+      },
+      { preload: !this.keepMounted },
+    );
   }
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
@@ -183,18 +167,16 @@ export class TpAvatar extends TpElement {
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    if (this.keepMounted && this.#status === 'loading') {
-      const image = this.shadowRoot?.querySelector('img');
-      if (image?.complete && (this.src || this.srcSet))
-        this.#setStatus(image.naturalWidth > 0 ? 'loaded' : 'error', this.#generation);
-    }
+    if (this.keepMounted && this.#image.status === 'loading')
+      this.#image.inspect(this.shadowRoot?.querySelector('img'));
   }
   readonly #slotsChanged = (): void => {
     this.requestUpdate();
   };
   protected override render() {
-    const generation = this.#generation;
-    const loaded = this.#status === 'loaded';
+    const generation = this.#image.generation;
+    const status = this.#image.status;
+    const loaded = status === 'loaded';
     const name = this.alt || this.fallback;
     const suppliedFallback = Array.from(this.childNodes).some((node) =>
       node.nodeType === Node.ELEMENT_NODE
@@ -207,34 +189,30 @@ export class TpAvatar extends TpElement {
         this.keepMounted || loaded
           ? keyed(
               generation,
-              this.renderPart(
-                'avatar-image',
-                Object.freeze({ loadingStatus: this.#status, loaded }),
-                {
-                  tag: 'img',
-                  properties: {
-                    part: 'image avatar-image',
-                    loading: this.loading,
-                    crossorigin: this.crossOrigin || undefined,
-                    referrerpolicy: this.referrerPolicy || undefined,
-                    sizes: this.sizes || undefined,
-                    srcset: this.srcSet || undefined,
-                    src: this.src || undefined,
-                    alt: this.alt,
-                    'aria-hidden': loaded ? undefined : 'true',
-                    'data-loading': this.#status === 'loading',
-                    'data-error': this.#status === 'error',
-                    '@load': () => this.#setStatus('loaded', generation),
-                    '@error': () => this.#setStatus('error', generation),
-                  },
+              this.renderPart('avatar-image', Object.freeze({ loadingStatus: status, loaded }), {
+                tag: 'img',
+                properties: {
+                  part: 'image avatar-image',
+                  loading: this.loading,
+                  crossorigin: this.crossOrigin || undefined,
+                  referrerpolicy: this.referrerPolicy || undefined,
+                  sizes: this.sizes || undefined,
+                  srcset: this.srcSet || undefined,
+                  src: this.src || undefined,
+                  alt: this.alt,
+                  'aria-hidden': loaded ? undefined : 'true',
+                  'data-loading': status === 'loading',
+                  'data-error': status === 'error',
+                  '@load': () => this.#image.settle('loaded', generation),
+                  '@error': () => this.#image.settle('error', generation),
                 },
-              ),
+              }),
             )
           : nothing
       }
       ${
         !loaded && this.#fallbackReady
-          ? this.renderPart('avatar-fallback', Object.freeze({ loadingStatus: this.#status }), {
+          ? this.renderPart('avatar-fallback', Object.freeze({ loadingStatus: status }), {
               tag: 'span',
               properties: {
                 class: 'fallback',

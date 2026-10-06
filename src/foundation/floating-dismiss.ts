@@ -8,7 +8,8 @@ interface DismissOptions {
   /** Owned content rendered outside the host, including explicit portal containers. */
   insideElements?: () => readonly Element[];
   outside: () => boolean;
-  escape: () => boolean;
+  /** Receives the Escape keydown so an owner can scope it (for example to a container). */
+  escape: (event?: KeyboardEvent) => boolean;
   topmostOnly?: boolean;
   dismiss: (event: Event) => void;
 }
@@ -100,7 +101,7 @@ export class FloatingDismissController implements ReactiveController {
       event.defaultPrevented ||
       event.key !== 'Escape' ||
       !this.options.open() ||
-      !this.options.escape()
+      !this.options.escape(event)
     )
       return;
     const eligible = (stacks.get(this.host.ownerDocument) ?? []).filter((item) =>

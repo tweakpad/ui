@@ -4,6 +4,8 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
 import type {
   TpSlider,
+  SliderBufferedRange,
+  SliderSegment,
   SliderValue,
   SliderThumbCollisionBehavior,
   SliderThumbAlignment,
@@ -26,6 +28,10 @@ interface Args {
   readOnly: boolean;
   label: string;
   locale: string;
+  buffered: SliderBufferedRange[];
+  segments: SliderSegment[];
+  indeterminateText: string;
+  formAssociatedValue: boolean;
 }
 const source = `<script type="module">\n  import '@tweakpad/ui/styles.css';\n  import '@tweakpad/ui/register';\n</script>\n<tp-slider label="Volume" name="volume" default-value="40"\n  minimum="0" maximum="100" step="1" thumb-alignment="edge">\n</tp-slider>`;
 const meta: Meta<Args> = {
@@ -54,6 +60,10 @@ const meta: Meta<Args> = {
     readOnly: false,
     label: 'Volume',
     locale: '',
+    buffered: [],
+    segments: [],
+    indeterminateText: '',
+    formAssociatedValue: true,
   },
   argTypes: {
     value: {
@@ -72,6 +82,20 @@ const meta: Meta<Args> = {
     readOnly: { control: 'boolean' },
     label: { control: 'text' },
     locale: { control: 'text' },
+    buffered: {
+      control: 'object',
+      description: 'Non-semantic [start, end] ranges in value units, e.g. [[0, 60]].',
+    },
+    segments: {
+      control: 'object',
+      description:
+        'Non-semantic chapter segments, e.g. [{"start": 0, "end": 50, "label": "Intro"}].',
+    },
+    indeterminateText: {
+      control: 'text',
+      description: 'aria-valuetext while minimum/maximum form an empty or non-finite domain.',
+    },
+    formAssociatedValue: { control: 'boolean' },
   },
   render: (args) => {
     const [, updateArgs] = useArgs<Args>();
@@ -91,6 +115,10 @@ const meta: Meta<Args> = {
       .readOnly=${args.readOnly}
       .label=${args.label}
       .locale=${args.locale}
+      .buffered=${args.buffered}
+      .segments=${args.segments}
+      .indeterminateText=${args.indeterminateText}
+      .formAssociatedValue=${args.formAssociatedValue}
       .onValueChange=${(event: TpValueChangeEvent<SliderValue | undefined>) => {
         if (event.defaultPrevented || event.detail.cancelled || event.detail.value === undefined)
           return;

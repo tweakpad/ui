@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Media player verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 960px;
+        display: grid;
+        gap: 40px;
+      }
+      section {
+        display: grid;
+        gap: 12px;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0;
+      }
+      h2 {
+        font-size: 18px;
+        margin: 0;
+      }
+      p {
+        margin: 0;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+      }
+      .narrow {
+        max-width: 420px;
+      }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Media player verification</h1>
+      <p>
+        Scenario anchors for Chrome DevTools MCP checks (contract IDs V-01…V-79 in
+        <code>plans/components/media-player/implementation-checklist.md</code>). Append
+        <code>?built</code> to load the built package instead of the sources.
+      </p>
+
+      <section id="default-section">
+        <h2>Video layout (default)</h2>
+        <tp-media-player id="video" content-title="Sample clip" poster="/src/stories/assets/media/poster.jpg">
+          <video
+            src="/src/stories/assets/media/sample-video.mp4"
+            width="1280"
+            height="720"
+            preload="metadata"
+            playsinline
+            crossorigin="anonymous"
+          >
+            <track kind="captions" srclang="en" label="English" src="/src/stories/assets/media/captions-en.vtt" />
+            <track kind="captions" srclang="es" label="Español" src="/src/stories/assets/media/captions-es.vtt" />
+            <track kind="chapters" srclang="en" src="/src/stories/assets/media/chapters.vtt" />
+            <track kind="metadata" label="thumbnails" src="/src/stories/assets/media/thumbnails.vtt" />
+          </video>
+          <tp-media-video-layout id="video-layout"></tp-media-video-layout>
+        </tp-media-player>
+        <div class="toolbar">
+          <tp-button id="hide-pip" variant="outline">hide="pip remote"</tp-button>
+          <tp-button id="seek-buttons" variant="outline">Toggle seek-buttons</tp-button>
+          <tp-button id="narrow" variant="outline">Toggle narrow width</tp-button>
+          <tp-button id="disable" variant="outline">Toggle player disabled</tp-button>
+        </div>
+      </section>
+
+      <section id="two-players">
+        <h2>Two players, document hotkeys</h2>
+        <p>
+          Both use <code>hotkey-scope="document"</code>: keys go to the most recently active player.
+        </p>
+        <div class="pair">
+          <tp-media-player id="first" content-title="First" hotkey-scope="document">
+            <video src="/src/stories/assets/media/sample-video.mp4" width="1280" height="720" preload="metadata" playsinline></video>
+            <tp-media-video-layout></tp-media-video-layout>
+          </tp-media-player>
+          <tp-media-player id="second" content-title="Second" hotkey-scope="document">
+            <video src="/src/stories/assets/media/sample-video.mp4" width="1280" height="720" preload="metadata" playsinline></video>
+            <tp-media-video-layout seek-buttons></tp-media-video-layout>
+          </tp-media-player>
+        </div>
+        <tp-input id="outside-input" label="Typing here must not trigger hotkeys" placeholder="Type k, f, m"></tp-input>
+      </section>
+
+      <section id="container-section">
+        <h2>Container variant</h2>
+        <p>Fullscreen, activity and gestures belong to <code>tp-media-container</code>; the note below stays outside fullscreen.</p>
+        <tp-media-player id="contained" content-title="Contained">
+          <tp-media-container id="container">
+            <video src="/src/stories/assets/media/sample-video.mp4" width="1280" height="720" preload="metadata" playsinline></video>
+            <tp-media-video-layout></tp-media-video-layout>
+          </tp-media-container>
+          <p id="outside-note">Outside the container but inside the player scope.</p>
+        </tp-media-player>
+      </section>
+
+      <section id="custom-section">
+        <h2>Custom media registration</h2>
+        <p><code>fixture-shadow-media</code> hosts its video in a shadow root and registers it.</p>
+        <tp-media-player id="custom" content-title="Custom media">
+          <fixture-shadow-media src="/src/stories/assets/media/sample-video.mp4"></fixture-shadow-media>
+          <tp-media-video-layout></tp-media-video-layout>
+        </tp-media-player>
+      </section>
+
+      <section id="rtl-section" dir="rtl" lang="ar">
+        <h2>RTL</h2>
+        <p>The bar follows the document direction; the timeline stays chronological left-to-right.</p>
+        <tp-media-player id="rtl" content-title="RTL">
+          <video src="/src/stories/assets/media/sample-video.mp4" width="1280" height="720" preload="metadata" playsinline></video>
+          <tp-media-video-layout></tp-media-video-layout>
+        </tp-media-player>
+      </section>
+
+      <section id="live-section" class="narrow">
+        <h2>Live with DVR (simulated)</h2>
+        <p>
+          <tp-badge variant="outline">Simulated</tp-badge> A looping clip reports a live stream with a
+          20-second window (<code>simulateLiveWindow</code>).
+        </p>
+        <tp-media-player id="live" content-title="Live sample">
+          <tp-media-video-layout></tp-media-video-layout>
+        </tp-media-player>
+        <div class="toolbar">
+          <tp-button id="live-no-dvr" variant="outline">Toggle DVR window</tp-button>
+        </div>
+      </section>
+
+      <section id="error-section">
+        <h2>Error</h2>
+        <tp-media-player id="error" content-title="Error sample">
+          <video id="error-video" src="/src/stories/assets/media/sample-video.mp4" width="1280" height="720" preload="metadata" playsinline></video>
+          <tp-media-video-layout></tp-media-video-layout>
+        </tp-media-player>
+        <div class="toolbar">
+          <tp-button id="trigger-error" variant="outline">Load a missing source</tp-button>
+          <tp-button id="restore-source" variant="outline">Restore the source</tp-button>
+        </div>
+      </section>
+
+      <section id="tracks-section">
+        <h2>Tracks adapter (mock)</h2>
+        <tp-media-player id="tracks" content-title="Adaptive sample">
+          <video src="/src/stories/assets/media/sample-video.mp4" width="1280" height="720" preload="metadata" playsinline crossorigin="anonymous">
+            <track kind="captions" srclang="en" label="English" src="/src/stories/assets/media/captions-en.vtt" />
+          </video>
+          <tp-media-video-layout></tp-media-video-layout>
+        </tp-media-player>
+      </section>
+
+      <section id="audio-section">
+        <h2>Audio layout</h2>
+        <tp-media-player id="audio" content-title="Sample sweep">
+          <audio src="/src/stories/assets/media/sample-audio.m4a" preload="metadata"></audio>
+          <tp-media-audio-layout></tp-media-audio-layout>
+        </tp-media-player>
+        <div class="narrow">
+          <tp-media-player id="audio-narrow" content-title="Narrow sweep">
+            <audio src="/src/stories/assets/media/sample-audio.m4a" preload="metadata"></audio>
+            <tp-media-audio-layout></tp-media-audio-layout>
+          </tp-media-player>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

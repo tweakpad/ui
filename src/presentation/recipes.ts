@@ -1,6 +1,7 @@
 import { calendarAppearance } from './recipes/calendar.js';
 import { motionTransition } from './motion.js';
 import { carouselAppearance } from './recipes/carousel.js';
+import { mediaPlayerAppearance } from './recipes/media-player.js';
 import { listItemAppearance } from './recipes/list-item.js';
 import { dragDropListAppearance } from './recipes/drag-drop-list.js';
 import { dataVisualizationAppearance } from './recipes/data-visualization.js';
@@ -33,6 +34,7 @@ import { selectionControlAppearance } from './recipes/selection-controls.js';
 // Existing appearance values moved without changing layout, behavior, or token choices.
 export const componentAppearance: PresentationDictionary = {
   ...carouselAppearance,
+  ...mediaPlayerAppearance,
   ...dragDropListAppearance,
   ...dataVisualizationAppearance,
   form: fieldAppearance['field-field-group']!,

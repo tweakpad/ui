@@ -287,4 +287,23 @@ describe('ControllableState', () => {
     expect(state.set(['other', 'has space'], 'trigger-press')).toBe(true);
     expect(input).toEqual(['has space', 'other']);
   });
+  it('reconciles an uncontrolled policy value without a proposal or value-change event', () => {
+    const lane = setup<number>(0, undefined, 150);
+    const changes = vi.fn();
+    lane.host.addEventListener('tp-value-change', changes);
+    lane.state.reconcile(100);
+    expect(lane.state.value).toBe(100);
+    expect(lane.onCommit).toHaveBeenCalledWith(100, 150, 'programmatic');
+    expect(lane.onChange).not.toHaveBeenCalled();
+    expect(changes).not.toHaveBeenCalled();
+    lane.state.reconcile(100);
+    expect(lane.onCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves a controlled value owner-authoritative during reconciliation', () => {
+    const lane = setup<number>(0, 40);
+    lane.state.reconcile(10);
+    expect(lane.state.value).toBe(40);
+    expect(lane.onCommit).not.toHaveBeenCalled();
+  });
 });

@@ -1,7 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { ObservableStore } from '../../foundation/store.js';
-import { composedParent } from '../../foundation/focus.js';
-import { logicalPortalOwner } from '../../foundation/owned-portal.js';
+import { nearestOwner } from '../../foundation/portal-ownership.js';
 import { clamp } from './geometry.js';
 import type { DrawerVisualState } from './types.js';
 export const inactiveDrawerState = (): DrawerVisualState => ({
@@ -11,22 +10,17 @@ export const inactiveDrawerState = (): DrawerVisualState => ({
   height: 0,
   swiping: false,
 });
+/** Nearest Drawer-family service element through the Foundation portal-aware owner walk. */
 export function nearestDrawerService<T extends HTMLElement>(
   element: HTMLElement,
   tag: string,
 ): T | null {
-  const seen = new Set<Node>();
-  for (let node = composedParent(element); node && !seen.has(node);) {
-    seen.add(node);
-    if (
+  return nearestOwner(
+    element,
+    (node): node is T =>
       node instanceof HTMLElement &&
-      (node.localName === tag || (tag === 'tp-drawer' && node.localName === 'tp-side-panel'))
-    )
-      return node as T;
-    const logical = logicalPortalOwner(node);
-    node = logical && !seen.has(logical) ? logical : composedParent(node);
-  }
-  return null;
+      (node.localName === tag || (tag === 'tp-drawer' && node.localName === 'tp-side-panel')),
+  );
 }
 /** Optional registry service. Modal ownership remains entirely with Dialog. */
 export class TpDrawerProvider extends LitElement {

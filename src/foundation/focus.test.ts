@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { composedContains, composedParent, focusableElements, isAvailable } from './focus.js';
+import {
+  composedContains,
+  composedParent,
+  composedScopeContains,
+  focusableElements,
+  isAvailable,
+} from './focus.js';
 
 describe('composed ancestry', () => {
   it('follows slotted foreign-realm elements without relying on ambient constructors', () => {
@@ -18,6 +24,21 @@ describe('composed ancestry', () => {
     const fragment = { nodeType: 11, parentNode: null } as unknown as DocumentFragment;
     expect(composedParent({ nodeType: 3, parentNode: fragment } as unknown as Text)).toBe(fragment);
     expect(composedParent(fragment)).toBeNull();
+  });
+  it('scopes containment to an element or a shadow root without containing its host', () => {
+    const host = { nodeType: 1, parentNode: null } as unknown as Element;
+    const shadow = { nodeType: 11, host, parentNode: null } as unknown as ShadowRoot;
+    const slot = { nodeType: 1, parentNode: shadow } as unknown as HTMLSlotElement;
+    const internal = { nodeType: 1, parentNode: shadow } as unknown as Element;
+    const slotted = { nodeType: 1, assignedSlot: slot, parentNode: host } as unknown as Element;
+    const outside = { nodeType: 1, parentNode: null } as unknown as Element;
+    expect(composedScopeContains(shadow, internal)).toBe(true);
+    expect(composedScopeContains(shadow, slotted)).toBe(true);
+    expect(composedScopeContains(shadow, shadow)).toBe(true);
+    expect(composedScopeContains(shadow, host)).toBe(false);
+    expect(composedScopeContains(shadow, outside)).toBe(false);
+    expect(composedScopeContains(host, slotted)).toBe(true);
+    expect(composedScopeContains(host, null)).toBe(false);
   });
 });
 

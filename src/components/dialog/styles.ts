@@ -37,6 +37,22 @@ export const dialogStyles = css`
     overscroll-behavior: contain;
   }
 
+  /*
+   * Container modality: the layer stays in the container's flat tree instead of the top layer.
+   * The container is the positioning context, so the backdrop covers only the container and
+   * the surface is centered and bounded within it. The layer is topmost in the container's
+   * stacking context; containers should establish one (isolation: isolate).
+   */
+  .contained .overlay,
+  .contained .content {
+    position: absolute;
+    z-index: 2147483647;
+  }
+
+  .contained .content {
+    max-block-size: calc(100% - var(--tp-space-8));
+  }
+
   .content:has(.header[hidden]):has(.body[hidden]):has(.footer[hidden]) {
     min-block-size: calc(var(--tp-control-height-sm) + var(--tp-space-4));
   }

@@ -3,7 +3,7 @@ import { ControllableState } from '../../foundation/controllable-state.js';
 import { SurfaceState } from '../../foundation/surface-state.js';
 import { CleanupScope } from '../../foundation/services.js';
 import { ObservableStore } from '../../foundation/store.js';
-import { componentHandlingPrevented } from '../../foundation/part.js';
+import { KeyBindingOwner } from '../../foundation/key-bindings.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
 import type {
@@ -220,25 +220,40 @@ export class NavigationPanelProvider implements ReactiveController {
       );
     }
     try {
-      if (shortcutAdapter && shortcut)
+      if (shortcutAdapter && shortcut) {
+        // The adapter owns listener placement; the shared owner owns matching and guards.
+        const owner = new KeyBindingOwner(this.host, {
+          listen: false,
+          dispatch: false,
+          scope: this.#scope,
+        });
+        owner.register({
+          // Object chords match key case-insensitively with exact modifiers.
+          keys: {
+            key: shortcut.key,
+            ctrlKey: shortcut.ctrlKey,
+            metaKey: shortcut.metaKey,
+            altKey: shortcut.altKey,
+            shiftKey: shortcut.shiftKey,
+          },
+          action: 'toggle-navigation-panel',
+          // Retained provider semantics: any editable control in the composed path
+          // blocks the shortcut unless allowEditable; no other target guards apply.
+          guards: {
+            editable: shortcut.allowEditable ? 'none' : 'all',
+            composition: false,
+            activation: false,
+            composites: false,
+            nestedOwners: false,
+          },
+          handler: (event) => current() && this.toggle('keyboard', event),
+        });
         this.#scope.add(
           shortcutAdapter.register(this.host, shortcut, (event) => {
-            if (
-              !current() ||
-              event.defaultPrevented ||
-              componentHandlingPrevented(event) ||
-              event.repeat ||
-              !this.#matchesShortcut(event, shortcut)
-            )
-              return;
-            if (
-              !shortcut.allowEditable &&
-              event.composedPath().some((node) => this.#editable(node))
-            )
-              return;
-            if (this.toggle('keyboard', event)) event.preventDefault();
+            owner.handleKeyDown(event);
           }),
         );
+      }
     } catch {
       this.host.reportProviderDiagnostic(
         'navigation-panel-shortcut-adapter',
@@ -306,21 +321,5 @@ export class NavigationPanelProvider implements ReactiveController {
         'Persistence save failed; the accepted preference remains available.',
       );
     }
-  }
-  #matchesShortcut(event: KeyboardEvent, binding: NavigationPanelShortcut): boolean {
-    return (
-      event.key.toLowerCase() === binding.key.toLowerCase() &&
-      event.ctrlKey === Boolean(binding.ctrlKey) &&
-      event.metaKey === Boolean(binding.metaKey) &&
-      event.altKey === Boolean(binding.altKey) &&
-      event.shiftKey === Boolean(binding.shiftKey)
-    );
-  }
-  #editable(node: EventTarget): boolean {
-    const element = node as HTMLElement;
-    return (
-      element?.nodeType === 1 &&
-      (['input', 'textarea', 'select'].includes(element.localName) || element.isContentEditable)
-    );
   }
 }

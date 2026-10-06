@@ -13,9 +13,17 @@ import {
 } from '../../foundation/part.js';
 import {
   moveSliderThumb,
+  normalizeSliderBufferedRanges,
+  normalizeSliderSegments,
   normalizeSliderValues,
   sameSliderValues,
+  sliderBufferEnd,
   sliderConfigurationError,
+  sliderPointerRatio,
+  sliderRangeIndeterminate,
+  sliderRatio,
+  sliderRawValueFromRatio,
+  sliderSegmentStates,
   sliderValueFromRatio,
 } from '../../foundation/slider.js';
 import { setPartComposition } from '../../presentation/controller.js';
@@ -27,6 +35,9 @@ import type { TpSliderThumb } from './slider-thumb.js';
 import { sliderStyles } from './styles.js';
 import { sliderValueConverter } from './types.js';
 import type {
+  SliderBufferedRange,
+  SliderPointerChangeDetail,
+  SliderSegment,
   SliderValue,
   SliderThumbAlignment,
   SliderThumbCollisionBehavior,
@@ -92,6 +103,14 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     onValueCommitted: { attribute: false },
     getAccessibleLabel: { attribute: false },
     getAccessibleValueText: { attribute: false },
+    buffered: { attribute: false },
+    segments: { attribute: false },
+    indeterminateText: { type: String, attribute: 'indeterminate-text' },
+    formAssociatedValue: {
+      type: Boolean,
+      attribute: 'form-associated-value',
+      converter: { fromAttribute: (value: string | null) => value !== 'false' },
+    },
   };
   static override styles = [TpElement.styles, sliderStyles];
   defaultValue: SliderValue | undefined;
@@ -133,6 +152,21 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   onValueCommitted: SliderValueCommitCallback | undefined;
   getAccessibleLabel: ((index: number) => string) | undefined;
   getAccessibleValueText: ((formatted: string, value: number, index: number) => string) | undefined;
+  /** Non-semantic `[start, end]` ranges in value units, such as buffered media. */
+  buffered: readonly SliderBufferedRange[] = [];
+  /** Non-semantic segments of the domain, such as media chapters. */
+  segments: readonly SliderSegment[] = [];
+  /** Accessible value text while the domain is indeterminate. */
+  indeterminateText = '';
+  /**
+   * `false` opts the Slider out of form participation: it submits and restores no
+   * value, reports no validity, ignores form reset and emits no `tp-field-value`.
+   */
+  formAssociatedValue = true;
+  #pointerRatio: number | null = null;
+  #lastPointerRatio = 0;
+  #pendingPointer: { ratio: number | null } | undefined;
+  #pointerFrame: { window: Window; id: number } | undefined;
   #provided: SliderValue | undefined;
   #collection = new CollectionRegistry();
   #collectionEntries = new Map<TpSliderThumb, () => void>();
@@ -217,6 +251,24 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   }
   get dragging(): boolean {
     return this.#dragging;
+  }
+  /** The domain is empty or non-finite: a declared, disabled, non-error state. */
+  get indeterminate(): boolean {
+    return sliderRangeIndeterminate(this.minimum, this.maximum);
+  }
+  /** Hovered 0–1 domain ratio while pointing over the track without dragging. */
+  get pointerRatio(): number | null {
+    return this.#pointerRatio;
+  }
+  /** Unsnapped hovered value while pointing over the track without dragging. */
+  get pointerValue(): number | null {
+    return this.#pointerRatio === null
+      ? null
+      : sliderRawValueFromRatio(this.#pointerRatio, this.minimum, this.maximum);
+  }
+  /** The pointer is over the track and no drag is in progress. */
+  get pointing(): boolean {
+    return this.#pointerRatio !== null;
   }
   get #focused(): boolean {
     return this.#thumbs.some((thumb) => thumb.inputElement?.matches(':focus'));
@@ -309,7 +361,8 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
           proposal.index,
         );
     } else this.#proposals = [];
-    this.emit('tp-field-value', { value, previousValue: previous, reason });
+    if (this.formAssociatedValue)
+      this.emit('tp-field-value', { value, previousValue: previous, reason });
     this.requestUpdate('value', previous);
     this.#syncThumbs();
     this.#syncForm();
@@ -382,6 +435,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     const formatted = this.#format(value);
     const labelResolver = thumb.getAccessibleLabel ?? this.getAccessibleLabel;
     const valueTextResolver = thumb.getAccessibleValueText ?? this.getAccessibleValueText;
+    const indeterminate = this.indeterminate;
     const label =
       labelResolver?.(index) ||
       this.#association.label ||
@@ -391,10 +445,11 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     return {
       index,
       value,
-      percentage: ((value - this.minimum) / (this.maximum - this.minimum)) * 100 || 0,
+      percentage: sliderRatio(value, this.minimum, this.maximum) * 100,
       disabled:
         this.effectiveDisabled ||
         thumb.effectiveDisabled ||
+        indeterminate ||
         !!this.#configurationError ||
         this.#membershipError ||
         index < 0 ||
@@ -410,11 +465,15 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       min: this.minimum,
       max: this.maximum,
       step: this.step,
+      indeterminate,
       focused: this.#focused,
       touched: this.#touched,
       dirty: !sameSliderValues(this.values, this.#initialValues ?? this.values),
       label: this.values.length > 1 && !labelResolver ? `${label || 'Value'} ${index + 1}` : label,
-      valueText: thumb.valueText ?? valueTextResolver?.(formatted, value, index) ?? formatted,
+      valueText:
+        indeterminate && this.indeterminateText
+          ? this.indeterminateText
+          : (thumb.valueText ?? valueTextResolver?.(formatted, value, index) ?? formatted),
     };
   }
   thumbContract(element: HTMLElement): ComponentPartContract {
@@ -617,14 +676,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     )
       return;
     const path = event.composedPath();
-    if (
-      !path.includes(this.#control) ||
-      path.find(
-        (node) =>
-          node instanceof this.ownerDocument.defaultView!.Element && node.localName === 'tp-slider',
-      ) !== this
-    )
-      return;
+    if (!this.#ownsControlPath(path)) return;
     const pressed = this.#thumbs.find(
       (thumb) =>
         path.includes(thumb) || (!!thumb.visualElement && path.includes(thumb.visualElement)),
@@ -667,6 +719,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
               undefined,
             );
     if (!thumb) return;
+    this.#setPointer(null, true);
     this.#activated = true;
     this.#activeIdentity = thumb.inputId;
     this.#lastUsedIdentity = thumb.inputId;
@@ -694,26 +747,99 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     this.#syncThumbs();
     this.requestUpdate();
   };
-  #pointerValue(event: PointerEvent, thumb: TpSliderThumb, offset: number): number {
-    const rect = this.#control?.getBoundingClientRect();
-    if (!rect) return this.thumbState(thumb).value;
-    const cssLength =
-      this.orientation === 'horizontal' ? this.#control!.clientWidth : this.#control!.clientHeight;
+  #ownsControlPath(path: readonly EventTarget[]): boolean {
+    return (
+      !!this.#control &&
+      path.includes(this.#control) &&
+      path.find(
+        (node) =>
+          node instanceof this.ownerDocument.defaultView!.Element && node.localName === 'tp-slider',
+      ) === this
+    );
+  }
+  /** Axis ratio under a pointer; `inset` follows the Thumb's measured edge alignment. */
+  #ratioAt(event: PointerEvent, thumb: TpSliderThumb | undefined, offset: number): number | null {
+    const control = this.#control;
+    const rect = control?.getBoundingClientRect();
+    if (!control || !rect) return null;
+    const horizontal = this.orientation === 'horizontal';
+    const cssLength = horizontal ? control.clientWidth : control.clientHeight;
     const inset =
-      this.#inset(thumb) *
-      (cssLength ? (this.orientation === 'horizontal' ? rect.width : rect.height) / cssLength : 1);
-    const length = (this.orientation === 'horizontal' ? rect.width : rect.height) - inset * 2;
-    if (length <= 0) return this.thumbState(thumb).value;
-    let ratio =
-      this.orientation === 'horizontal'
-        ? (event.clientX - offset - rect.left - inset) / length
-        : 1 - (event.clientY - offset - rect.top - inset) / length;
-    if (this.orientation === 'horizontal' && this.direction === 'rtl') ratio = 1 - ratio;
+      (thumb ? this.#inset(thumb) : 0) *
+      (cssLength ? (horizontal ? rect.width : rect.height) / cssLength : 1);
+    return sliderPointerRatio({
+      clientX: event.clientX - (horizontal ? offset : 0),
+      clientY: event.clientY - (horizontal ? 0 : offset),
+      rect,
+      orientation: this.orientation,
+      direction: this.direction === 'rtl' ? 'rtl' : 'ltr',
+      inset,
+    });
+  }
+  #pointerValue(event: PointerEvent, thumb: TpSliderThumb, offset: number): number {
+    const ratio = this.#ratioAt(event, thumb, offset);
+    if (ratio === null) return this.thumbState(thumb).value;
     return sliderValueFromRatio(ratio, this.minimum, this.maximum, this.step);
   }
+  /** Hover publication only; dragging, disabled and indeterminate sliders are not pointing. */
+  #hover(event: PointerEvent): void {
+    if (
+      this.#dragging ||
+      this.effectiveDisabled ||
+      this.indeterminate ||
+      !this.#ownsControlPath(event.composedPath())
+    ) {
+      this.#setPointer(null, true);
+      return;
+    }
+    const ratio = this.#ratioAt(event, this.#orderedThumbs()[0], 0);
+    this.#setPointer(ratio, ratio === null);
+  }
+  /** Pointer movement is coalesced to one publication per frame; clearing is immediate. */
+  #setPointer(ratio: number | null, immediate: boolean): void {
+    const window = this.ownerDocument.defaultView;
+    if (immediate || !window?.requestAnimationFrame) {
+      this.#cancelPointerFrame();
+      this.#applyPointer(ratio);
+      return;
+    }
+    this.#pendingPointer = { ratio };
+    if (this.#pointerFrame) return;
+    this.#pointerFrame = {
+      window,
+      id: window.requestAnimationFrame(() => {
+        this.#pointerFrame = undefined;
+        const pending = this.#pendingPointer;
+        this.#pendingPointer = undefined;
+        if (pending && this.isConnected) this.#applyPointer(pending.ratio);
+      }),
+    };
+  }
+  #cancelPointerFrame(): void {
+    if (this.#pointerFrame) this.#pointerFrame.window.cancelAnimationFrame(this.#pointerFrame.id);
+    this.#pointerFrame = undefined;
+    this.#pendingPointer = undefined;
+  }
+  #applyPointer(ratio: number | null): void {
+    if (Object.is(ratio, this.#pointerRatio)) return;
+    this.#pointerRatio = ratio;
+    if (ratio !== null) this.#lastPointerRatio = ratio;
+    this.requestUpdate();
+    this.emit<SliderPointerChangeDetail>('tp-slider-pointer-change', {
+      value: this.pointerValue,
+      ratio,
+    });
+  }
+  #pointerLeave = (): void => {
+    this.#setPointer(null, true);
+  };
   #pointerMove = (event: PointerEvent): void => {
     const drag = this.#drag;
-    if (!drag || drag.pointerId !== event.pointerId || componentHandlingPrevented(event)) return;
+    if (!drag) {
+      if (!componentHandlingPrevented(event)) this.#hover(event);
+      return;
+    }
+    if (drag.pointerId !== event.pointerId || componentHandlingPrevented(event)) return;
     const thumb = this.#thumbs.find((member) => member.inputId === drag.identity);
     if (!thumb || this.thumbState(thumb).disabled || this.thumbState(thumb).readOnly) {
       this.#cancelDrag();
@@ -932,6 +1058,11 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     }
   }
   #syncForm(): void {
+    if (!this.formAssociatedValue) {
+      this.setFormValue(null, null);
+      this.setValidity({}, '');
+      return;
+    }
     const data = new FormData();
     if (this.effectiveName && !this.#configurationError && !this.#membershipError)
       this.#orderedThumbs().forEach((thumb, index) => {
@@ -939,12 +1070,14 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
           data.append(this.effectiveName, String(this.values[index]));
       });
     this.setFormValue(this.effectiveDisabled ? null : data, JSON.stringify(this.value ?? null));
+    const missing = this.required && !this.values.length && !this.indeterminate;
     this.setValidity(
-      this.required && !this.values.length ? { valueMissing: true } : {},
-      this.required && !this.values.length ? 'Please select a value.' : '',
+      missing ? { valueMissing: true } : {},
+      missing ? 'Please select a value.' : '',
     );
   }
   protected resetFormValue(): void {
+    if (!this.formAssociatedValue) return;
     this.#cancelDrag();
     this.#proposals = [];
     this.#state.reset();
@@ -954,7 +1087,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     this.#syncForm();
   }
   override formStateRestoreCallback(state: string | File | FormData | null): void {
-    if (this.controlled || typeof state !== 'string') return;
+    if (this.controlled || !this.formAssociatedValue || typeof state !== 'string') return;
     try {
       const value: unknown = JSON.parse(state);
       if (
@@ -992,24 +1125,42 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     if (this.thumbCrossing !== undefined && !['prevent', 'swap'].includes(this.thumbCrossing))
       this.#configurationError = 'Slider thumbCrossing must be prevent or swap.';
     if (this.#configurationError) this.#diagnose('configuration', this.#configurationError);
-    if (this.#drag && (this.effectiveDisabled || this.readOnly || this.#configurationError))
+    const indeterminate = this.indeterminate;
+    if (
+      this.#drag &&
+      (this.effectiveDisabled || this.readOnly || indeterminate || this.#configurationError)
+    )
       this.#cancelDrag();
+    if (this.#pointerRatio !== null && (this.effectiveDisabled || indeterminate))
+      this.#setPointer(null, true);
+    // Bounds are configuration, not a value proposal: reconcile without value events.
     if (
       !this.controlled &&
       !this.#configurationError &&
+      !indeterminate &&
       ['minimum', 'maximum', 'step', 'minStepsBetweenValues'].some((key) =>
         changed.has(key as keyof TpSlider),
       )
     ) {
-      if (this.value !== undefined)
-        this.#state.set(this.#normalize(this.value), 'programmatic', undefined, {
-          cancelable: false,
-          metadata: { activeThumbIndex: -1 },
-        });
+      if (this.value !== undefined) this.#state.reconcile(this.#normalize(this.value));
     }
+    if (changed.has('formAssociatedValue' as keyof TpSlider)) this.#syncForm();
   }
   protected override render() {
     const values = this.values;
+    const indeterminate = this.indeterminate;
+    const buffered = normalizeSliderBufferedRanges(this.buffered, this.minimum, this.maximum);
+    const bufferEnd = sliderBufferEnd(buffered, values.at(-1));
+    const segments = sliderSegmentStates(
+      normalizeSliderSegments(this.segments, this.minimum, this.maximum),
+      {
+        minimum: this.minimum,
+        maximum: this.maximum,
+        value: values.at(-1),
+        pointerValue: this.pointerValue,
+        bufferEnd,
+      },
+    );
     while (this.#automaticIds.length < values.length)
       this.#automaticIds.push(createId('tp-slider-thumb'));
     this.#automaticIds.length = values.length;
@@ -1018,7 +1169,14 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       value: this.value,
       activeThumbIndex: this.activeThumbIndex,
       dragging: this.dragging,
-      disabled: this.effectiveDisabled,
+      disabled: this.effectiveDisabled || indeterminate,
+      indeterminate,
+      pointing: this.pointing,
+      pointerValue: this.pointerValue,
+      pointerRatio: this.pointerRatio,
+      buffered,
+      bufferEnd,
+      segments,
       readOnly: this.readOnly,
       invalid: this.effectiveInvalid,
       minimum: this.minimum,
@@ -1036,7 +1194,9 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     const markers = {
       'data-orientation': this.orientation,
       'data-dragging': this.dragging,
-      'data-disabled': this.effectiveDisabled,
+      'data-disabled': this.effectiveDisabled || indeterminate,
+      'data-indeterminate': indeterminate,
+      'data-pointing': this.pointing,
       'data-invalid': this.effectiveInvalid,
       'data-valid': !this.effectiveInvalid,
       'data-readonly': this.readOnly,
@@ -1049,8 +1209,12 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     const output = this.partContracts['slider-output'] || this.querySelector('[slot="value"]');
     const first = values.length > 1 ? values[0]! : this.minimum;
     const last = values.at(-1) ?? this.minimum;
-    const ratio = (value: number): number =>
-      Math.max(0, Math.min(1, (value - this.minimum) / (this.maximum - this.minimum))) * 100;
+    const ratio = (value: number): number => sliderRatio(value, this.minimum, this.maximum) * 100;
+    const percent = (fraction: number): string => `${Number((fraction * 100).toFixed(4))}%`;
+    const axis = (start: number, size: number): Record<string, string> =>
+      this.orientation === 'horizontal'
+        ? { 'inset-inline-start': percent(start), 'inline-size': percent(size) }
+        : { bottom: percent(start), height: percent(size) };
     const ordered = this.#orderedThumbs();
     const startInset =
       values.length > 1 && ordered[0]
@@ -1076,9 +1240,17 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
         role: 'group',
         'aria-label':
           this.#association.label || this.label || this.getAttribute('aria-label') || undefined,
+        'aria-disabled': indeterminate ? 'true' : undefined,
+        style: {
+          '--tp-slider-pointer': percent(this.#pointerRatio ?? this.#lastPointerRatio),
+          '--tp-slider-buffer': percent(
+            bufferEnd === null ? 0 : sliderRatio(bufferEnd, this.minimum, this.maximum),
+          ),
+        },
         ...markers,
         '@pointerdown': this.#pointerDown,
         '@pointermove': this.#pointerMove,
+        '@pointerleave': this.#pointerLeave,
         '@pointerup': this.#pointerUp,
         '@pointercancel': this.#pointerCancel,
         '@lostpointercapture': this.#pointerCancel,
@@ -1104,7 +1276,60 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
             : ''
         }
         <div class="control" ${this.#controlBinding()}>
-          ${this.renderPart('slider-track', state, { tag: 'div', properties: { part: `slider-track slider-track-orientation-${this.orientation}`, class: 'track', 'aria-hidden': 'true', ...markers }, content: this.renderPart('slider-range', state, { tag: 'span', properties: { part: `slider-range slider-range-orientation-${this.orientation}`, class: 'range', style: rangeStyle, ...markers } }) })}
+          ${this.renderPart('slider-track', state, {
+            tag: 'div',
+            properties: {
+              part: `slider-track slider-track-orientation-${this.orientation}`,
+              class: 'track',
+              'aria-hidden': 'true',
+              ...markers,
+            },
+            content: html`${repeat(
+              buffered,
+              ([start, end]) => `${start}:${end}`,
+              ([start, end], index) =>
+                this.renderPart(
+                  'slider-buffer',
+                  { ...state, index, start, end },
+                  {
+                    tag: 'span',
+                    properties: {
+                      part: `slider-buffer slider-buffer-orientation-${this.orientation}`,
+                      class: 'buffer',
+                      'data-orientation': this.orientation,
+                      'data-index': index,
+                      style: axis(ratio(start) / 100, (ratio(end) - ratio(start)) / 100),
+                    },
+                  },
+                ),
+            )}${this.renderPart('slider-range', state, { tag: 'span', properties: { part: `slider-range slider-range-orientation-${this.orientation}`, class: 'range', style: rangeStyle, ...markers } })}${repeat(
+              segments,
+              (segment) => `${segment.start}:${segment.end}`,
+              (segment) =>
+                this.renderPart(
+                  'slider-chapter',
+                  { ...state, ...segment },
+                  {
+                    tag: 'span',
+                    properties: {
+                      part: `slider-chapter slider-chapter-orientation-${this.orientation}`,
+                      class: 'chapter',
+                      'data-orientation': this.orientation,
+                      'data-index': segment.index,
+                      'data-active': segment.active,
+                      'data-highlighted': segment.highlighted,
+                      style: {
+                        ...axis(segment.startRatio, segment.widthRatio),
+                        '--tp-slider-segment-start': percent(segment.startRatio),
+                        '--tp-slider-segment-width': percent(segment.widthRatio),
+                        '--tp-slider-segment-fill': percent(segment.fillRatio),
+                        '--tp-slider-segment-buffer': percent(segment.bufferRatio),
+                      },
+                    },
+                  },
+                ),
+            )}`,
+          })}
           ${
             this.#explicit
               ? html`<slot @slotchange=${this.thumbChanged}></slot>`
@@ -1147,6 +1372,9 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     this.#refreshThumbs();
     super.updated(changed);
     this.toggleAttribute('data-dragging', this.dragging);
+    this.toggleAttribute('data-indeterminate', this.indeterminate);
+    this.toggleAttribute('data-pointing', this.pointing);
+    if (this.indeterminate) this.toggleAttribute('data-disabled', true);
     this.toggleAttribute('data-valid', !this.effectiveInvalid);
     this.toggleAttribute('data-focused', this.#focused);
     this.toggleAttribute('data-touched', this.#touched);
@@ -1160,6 +1388,8 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   }
   override disconnectedCallback(): void {
     this.#cancelDrag();
+    this.#cancelPointerFrame();
+    this.#pointerRatio = null;
     this.#proposals = [];
     this.#observer?.disconnect();
     this.#environmentScope?.dispose();

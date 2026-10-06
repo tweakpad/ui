@@ -35,6 +35,7 @@ export default defineConfig({
         index: resolve(import.meta.dirname, 'src/index.ts'),
         'drag-drop': resolve(import.meta.dirname, 'src/foundation/drag-drop/index.ts'),
         carousel: resolve(import.meta.dirname, 'src/foundation/carousel/index.ts'),
+        media: resolve(import.meta.dirname, 'src/foundation/media/index.ts'),
         register: resolve(import.meta.dirname, 'src/register.ts'),
         'register/icon': resolve(import.meta.dirname, 'src/register/icon.ts'),
         ...iconEntries,

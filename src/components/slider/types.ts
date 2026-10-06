@@ -1,10 +1,23 @@
 import type { ComponentPartContract, ElementReference } from '../../foundation/part.js';
-import type { SliderCollisionBehavior } from '../../foundation/slider.js';
+import type {
+  SliderBufferedRange,
+  SliderCollisionBehavior,
+  SliderSegment,
+  SliderSegmentState,
+} from '../../foundation/slider.js';
 import type { TpValueChangeEvent, TpValueCommitEvent } from '../../foundation/events.js';
 
 export type SliderValue = number | number[];
 export type SliderThumbAlignment = 'center' | 'edge' | 'delayed-edge';
 export type SliderThumbCollisionBehavior = SliderCollisionBehavior;
+export type { SliderBufferedRange, SliderSegment, SliderSegmentState };
+/** Detail of the non-cancelable `tp-slider-pointer-change` event. */
+export interface SliderPointerChangeDetail {
+  /** Unsnapped hovered value in the slider domain, or `null` when not pointing. */
+  value: number | null;
+  /** Hovered position as a 0–1 ratio of the domain, or `null` when not pointing. */
+  ratio: number | null;
+}
 export interface SliderThumbMetadata {
   index: number;
   inputId: string;
@@ -26,6 +39,8 @@ export interface SliderThumbState extends Record<string, unknown> {
   minimum: number;
   maximum: number;
   step: number;
+  /** The domain is empty or non-finite; the Thumb is disabled but still described. */
+  indeterminate: boolean;
   label: string;
   valueText: string;
 }

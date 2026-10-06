@@ -1,4 +1,6 @@
-import { TpDialog } from '../dialog/dialog.js';
+import { TpDialog, type DialogModality } from '../dialog/dialog.js';
+
+const alertDialogModalities: readonly DialogModality[] = ['modal', 'container'];
 export type {
   DialogInitialFocus as AlertDialogInitialFocus,
   DialogFinalFocus as AlertDialogFinalFocus,
@@ -15,11 +17,12 @@ export class TpAlertDialog extends TpDialog {
   protected override get isAlertDialog(): boolean {
     return true;
   }
-  override get modality(): 'modal' {
-    return 'modal';
-  }
-  override set modality(_value: 'modal' | 'non-modal' | 'trap-focus-only') {
-    /* Always modal. */
+  /**
+   * Always isolating: document `modal` (default) or `container` modality. Non-isolating values
+   * normalize to `modal`.
+   */
+  protected override get supportedModalities(): readonly DialogModality[] {
+    return alertDialogModalities;
   }
   override get closeOnOutsideInteraction(): boolean {
     return false;

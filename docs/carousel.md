@@ -146,12 +146,25 @@ Times/thresholds are nonnegative, angle is 0–90, ratio is positive, and swipe 
 resistance ratios are 0–1. Targets/handles accept an owner-scoped selector, element,
 or resolver; selectors do not search unrelated instances. Editable and independent
 interactive content retains its own actions. Nested Carousels coordinate through
-their composed event path; there is no public listener-order flag.
+their composed event path; there is no public listener-order flag. Pointer capture
+is acquired on the track only once a drag is claimed; if the browser refuses
+capture, the gesture is cancelled like `pointercancel` (the preview returns to the
+accepted position and no swipe settles). Double tap/click is not intercepted: the
+Carousel exposes no tap/double-tap event and does not implement Zoom, so native
+`dblclick` reaches slide content unchanged.
 
 `keyboard` is enabled by default, with `pageKeys=false` and `homeEnd=true`; false
 disables it. Arrow keys follow the active logical axis and RTL. Home/End select
 boundaries. Optional PageUp/PageDown use the same snap navigation. Modifiers, IME,
-cross-axis keys and descendant editing/control behavior remain native.
+cross-axis keys and descendant editing/control behavior remain native. Keys owned by
+a nested control inside a slide stay with it: editable fields (inputs, text areas,
+contenteditable, textbox/combobox/spinbutton) and controls own every key, and nested
+composites (tablist/tab, listbox/option, menu/menuitem, radiogroup/radio, slider,
+grid, toolbar, tree, native-controls media, Tweakpad menu/radio/select/slider items,
+or any element marked `data-tp-owns-keys`) keep their arrow, Home/End and Page keys,
+so those keys do not move the Carousel. Plain slide content (text, images, groups)
+still navigates, and a composite that contains the whole Carousel does not claim its
+keys. An inner Carousel owns its own navigation.
 
 `mousewheel` defaults false. Its enabled group defaults to `enabled=true`,
 `forceToAxis=false`, `releaseOnEdges=false`, `invert=false`, `sensitivity=1`,

@@ -36,6 +36,44 @@ import type {
   TpNavigationPanelSeparator,
   TpNavigationPanelLoadingPlaceholder,
 } from './components/navigation-panel/index.js';
+import type {
+  TpMediaPlayer,
+  TpMediaContainer,
+  TpMediaControls,
+  TpMediaControlsGroup,
+  TpMediaPoster,
+  TpMediaTitle,
+  TpMediaHotkey,
+  TpMediaGesture,
+  TpMediaPlayButton,
+  TpMediaMuteButton,
+  TpMediaSeekButton,
+  TpMediaFullscreenButton,
+  TpMediaPipButton,
+  TpMediaCaptionsButton,
+  TpMediaPlaybackRateButton,
+  TpMediaLiveButton,
+  TpMediaRemotePlaybackButton,
+  TpMediaTime,
+  TpMediaBufferingIndicator,
+  TpMediaErrorDialog,
+  TpMediaStatusIndicator,
+  TpMediaSeekIndicator,
+  TpMediaVolumeIndicator,
+  TpMediaTimeSlider,
+  TpMediaTimeSliderPreview,
+  TpMediaThumbnail,
+  TpMediaChapterTitle,
+  TpMediaVolumeSlider,
+  TpMediaVolumePopover,
+  TpMediaPlaybackRateRadioGroup,
+  TpMediaCaptionsRadioGroup,
+  TpMediaAudioTrackRadioGroup,
+  TpMediaQualityRadioGroup,
+  TpMediaSettingsMenu,
+  TpMediaVideoLayout,
+  TpMediaAudioLayout,
+} from './components/media-player/index.js';
 import type { TpAccordion } from './components/accordion.js';
 import type { TpAccordionItem } from './components/accordion-item.js';
 import type { TpButton } from './components/button.js';
@@ -222,6 +260,42 @@ declare global {
     'tp-navigation-panel-badge': TpNavigationPanelBadge;
     'tp-navigation-panel-separator': TpNavigationPanelSeparator;
     'tp-navigation-panel-loading-placeholder': TpNavigationPanelLoadingPlaceholder;
+    'tp-media-player': TpMediaPlayer;
+    'tp-media-container': TpMediaContainer;
+    'tp-media-controls': TpMediaControls;
+    'tp-media-controls-group': TpMediaControlsGroup;
+    'tp-media-poster': TpMediaPoster;
+    'tp-media-title': TpMediaTitle;
+    'tp-media-hotkey': TpMediaHotkey;
+    'tp-media-gesture': TpMediaGesture;
+    'tp-media-play-button': TpMediaPlayButton;
+    'tp-media-mute-button': TpMediaMuteButton;
+    'tp-media-seek-button': TpMediaSeekButton;
+    'tp-media-fullscreen-button': TpMediaFullscreenButton;
+    'tp-media-pip-button': TpMediaPipButton;
+    'tp-media-captions-button': TpMediaCaptionsButton;
+    'tp-media-playback-rate-button': TpMediaPlaybackRateButton;
+    'tp-media-live-button': TpMediaLiveButton;
+    'tp-media-remote-playback-button': TpMediaRemotePlaybackButton;
+    'tp-media-time': TpMediaTime;
+    'tp-media-buffering-indicator': TpMediaBufferingIndicator;
+    'tp-media-error-dialog': TpMediaErrorDialog;
+    'tp-media-status-indicator': TpMediaStatusIndicator;
+    'tp-media-seek-indicator': TpMediaSeekIndicator;
+    'tp-media-volume-indicator': TpMediaVolumeIndicator;
+    'tp-media-time-slider': TpMediaTimeSlider;
+    'tp-media-time-slider-preview': TpMediaTimeSliderPreview;
+    'tp-media-thumbnail': TpMediaThumbnail;
+    'tp-media-chapter-title': TpMediaChapterTitle;
+    'tp-media-volume-slider': TpMediaVolumeSlider;
+    'tp-media-volume-popover': TpMediaVolumePopover;
+    'tp-media-playback-rate-radio-group': TpMediaPlaybackRateRadioGroup;
+    'tp-media-captions-radio-group': TpMediaCaptionsRadioGroup;
+    'tp-media-audio-track-radio-group': TpMediaAudioTrackRadioGroup;
+    'tp-media-quality-radio-group': TpMediaQualityRadioGroup;
+    'tp-media-settings-menu': TpMediaSettingsMenu;
+    'tp-media-video-layout': TpMediaVideoLayout;
+    'tp-media-audio-layout': TpMediaAudioLayout;
 
     'tp-otp-field': TpOtpField;
     'tp-pagination': TpPagination;

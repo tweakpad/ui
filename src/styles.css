@@ -145,3 +145,23 @@ body {
   inherits: false;
   initial-value: 0%;
 }
+
+/* Media slider percentages published by tp-media-time-slider / tp-media-volume-slider
+   (Library mp-l-sliders); registered so presentation can animate them. */
+@property --tp-media-slider-fill {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
+
+@property --tp-media-slider-pointer {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
+
+@property --tp-media-slider-buffer {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}

@@ -363,8 +363,9 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
           });
       } else if (
         element.matches(
-          '[value]:not(tp-menu-radio-group),[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],a[href]',
+          '[value],[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],a[href]',
         ) &&
+        !(element instanceof TpMenuRadioGroup) &&
         !element.closest('tp-menu-item,tp-menu-checkbox-item,tp-menu-radio-item')
       ) {
         records.push({
@@ -435,7 +436,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
         setPartComposition(element, this, this.partPresentation);
       }
       const suffix =
-        element.localName === 'tp-menu-radio-group'
+        element instanceof TpMenuRadioGroup
           ? 'radio-group'
           : element.matches('[role="group"]')
             ? 'group'
@@ -446,7 +447,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
                 : element.hasAttribute('data-menu-shortcut')
                   ? 'shortcut'
                   : undefined;
-      if (suffix && element.localName !== 'tp-menu-radio-group')
+      if (suffix && !(element instanceof TpMenuRadioGroup))
         this.#parts.push(this.presentationController.registerPart(this.partName(suffix), element));
     }
     for (const group of this.#groups)
@@ -793,7 +794,10 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
         !this.#parent ||
         !this.records.has(target) ||
         [...target.children].some(
-          (child) => child !== icon && child.getAttribute('slot') === 'icon-end',
+          (child) =>
+            child !== icon &&
+            child.getAttribute('slot') === 'icon-end' &&
+            !child.hasAttribute('data-menu-hint'),
         )
       ) {
         icon.remove();
@@ -802,7 +806,11 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     }
     if (!this.#parent) return;
     for (const target of this.records.keys()) {
-      if (!this.#indicators.has(target) && !target.querySelector('[slot="icon-end"]')) {
+      // A trailing `data-menu-hint` (for example the selected value) keeps the chevron after it.
+      if (
+        !this.#indicators.has(target) &&
+        !target.querySelector('[slot="icon-end"]:not([data-menu-hint])')
+      ) {
         const icon = this.ownerDocument.createElement('tp-icon') as TpIcon;
         icon.icon = chevronRightIcon;
         icon.size = 'var(--tp-icon-size-sm)';

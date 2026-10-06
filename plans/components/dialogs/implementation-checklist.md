@@ -31,6 +31,10 @@
 | C-10 | Accessible names, descriptions, real controls and focus relations | Foundation §7; both catalog contracts | DialogTitle / Description / Close | visible Title; description slots; Button native actions; labelled corner icon | docs/dialog.md | V-10 | passed | Chrome AX roles/names/descriptions; real Tab/ShiftTab/Escape and named corner Button; local axe WCAG2A/AA and 2.1AA has zero violations for both open surfaces. |
 | C-11 | Token/dictionary/part overrides; light/dark, RTL, narrow and long content | library presentation contracts | selected base/Nova regions adapted to existing Tweakpad tokens | common structure and shared presentation; registered native controls; no private consumer selectors | docs/dialog.md; docs/alert-dialog.md | V-11 | passed | Inspected dark desktop and light narrow/RTL screenshots: full-width footer, wrapped title/description, no horizontal overflow. Part hooks, tokens, alternate dictionary paint and geometry apply while preserving node identity, open state and focus. |
 | C-12 | Docs, Controls, supported exports and affected-consumer regression | skill gates 7–8 | existing catalog and generator; Drawer source | authored Dialog/Alert base examples, same public tags, shared Drawer/SidePanel paths | docs/dialog.md; stories | V-12 | passed | Authored Dialog/Alert Docs, real text and showCloseControl Controls update component; built exports share classes/handles; package close and mode regressions pass. Tests64, lint, build and Storybook build pass. |
+| C-13 | Container modality in the shared owner: `modality="container"` uses `container` as boundary; renders in place (no top layer); container siblings inert; focus trapped; no scroll lock; container-sized backdrop; Escape/close watcher scoped to the container; initial/final focus; fullscreen container | user decision 2026-10-06; Library ucl21 mp-l-feedback "modal within the container"; Foundation §16.2/§16.3/§11.3 need amendment (proposed text in handoff) | videojs-v10 core/src/dom/ui/dialog.ts `setInteractionRoot`/`documentModal`; html/src/ui/error-dialog; Base UI has no equivalent | `src/components/dialog/modality.ts` (normalize/resolve), `TpDialog` (#resolved, #applyModality, #withinScope, #overlayHidden, final focus), `styles.ts` `.contained`; Alert via `supportedModalities` ['modal','container']; Drawer/SidePanel exclude it | docs/dialog.md Container modality; docs/alert-dialog.md; docs/drawer.md | V-13 V-14 V-15 V-17 | pending | Implemented; unit resolution tests pass; browser verification blocked (Chrome DevTools MCP being reconfigured). Divergence: upstream videojs does not trap Tab in scoped mode; Tweakpad traps Tab per user decision and releases focus moved outside the container. |
+| C-14 | Scoped outside inertness in the shared lease owner (repair, not copy) | Foundation §11.3 leases by owner environment | videojs `isolateBackground` walk to interaction root | `src/foundation/outside-inert.ts` `acquireOutsideInert(document, inside, { scope })`; newest lease supersedes contained scopes; newer branches exempt from older enclosing leases; live regions preserved; `composedScopeContains` in focus.ts | docs/dialog.md | V-16 | passed | 7 new unit tests (scope element/shadow root, disjoint players, document supersedes and restores, enclosing document lease exempts newer scoped branch, same-scope nesting, disconnected scope) plus all 8 existing document-lease tests pass. |
+| C-15 | Media error dialog adopts container modality; keeps `lockInteractions()` | Library ucl21 mp-l-feedback; Foundation §18.10 mp-f-edges-r10 | videojs html/src/ui/error-dialog element.ts | `src/components/media-player/feedback.ts` `modality="container"` + `.container=player.container` | docs/media-player.md | V-17 | pending | Implemented; browser verification in and out of fullscreen blocked. |
+| C-16 | Escape scoping hook on shared dismiss controller | Foundation §16.3 Escape closes topmost | — | `FloatingDismissController` passes the keydown to `escape(event)` | — | V-15 | pending | Type-checked; browser blocked. |
 
 ## Architecture and reuse
 
@@ -42,6 +46,7 @@
 | Action controls | DialogContent/Close render Button; AlertDialogCancel renders Button | components/button.ts, icon.ts and icons/types.ts | Use tp-button for synthesized corner Close, an X artwork definition through existing icon pipeline; authored controls retain handlers | V-02 V-03 V-10 |
 | Dismissal/focus/scroll | DialogInteractions and FloatingFocusManager | foundation/focus.ts, floating-dismiss.ts, scroll-lock.ts | Retain shared helpers; add topmost/public containment hooks where needed; mode policy stays on shared owner | dialog family; Popover regression V-06 V-07 V-09 |
 | Handle | Alert handle and Dialog handle share root store profile | alert-dialog/handle.ts | Move common handle to dialog/handle.ts, preserve Alert type/factory aliases | V-08 |
+| Container modality boundary | videojs core/src/dom/ui/dialog.ts setInteractionRoot + lockInteractions | foundation/outside-inert.ts (document-only stack); owned-portal.ts container resolution; floating-dismiss.ts Escape | Repair outside-inert with a scope option instead of copying a walker; export `resolvePortalContainer` from owned-portal and reuse it; one `modality` axis on TpDialog inherited by Alert; Drawer/SidePanel opt out via `supportedModalities` because their geometry is viewport-relative | Dialog, Alert, media error dialog; Drawer/SidePanel/Command Palette regression; V-13..V-18 |
 
 ### Presentation source map
 
@@ -76,13 +81,19 @@
 | V-10 | C-10; accessibility | Named open dialogs, real keyboard, axe local | Correct role/name/action relationships, trap/return, no component violations | Chrome AX roles/names/descriptions; real Tab/ShiftTab/Escape and named corner Button; local axe WCAG2A/AA and 2.1AA has zero violations for both open surfaces. | Chrome DevTools MCP; browser-results.json, verification.md and screenshot artifacts; relevant unit/build commands | passed | Evidence scope and tool limits below |
 | V-11 | C-11; visual/customization | Dark/light, narrow/desktop, RTL/long text, token/part/dictionary changes | Source-mapped regions, no clipping, stable focus and identity | Inspected dark desktop and light narrow/RTL screenshots: full-width footer, wrapped title/description, no horizontal overflow. Part hooks, tokens, alternate dictionary paint and geometry apply while preserving node identity, open state and focus. | Chrome DevTools MCP; browser-results.json, verification.md and screenshot artifacts; relevant unit/build commands | passed | Evidence scope and tool limits below |
 | V-12 | C-12; docs/regression/build | Authored Docs/Controls, built exports; affected consumers | Complete current API docs, shared registration, targeted regressions and checks clean | Authored Dialog/Alert Docs, real text and showCloseControl Controls update component; built exports share classes/handles; package close and mode regressions pass. Tests64, lint, build and Storybook build pass. | Chrome DevTools MCP; browser-results.json, verification.md and screenshot artifacts; relevant unit/build commands | passed | Evidence scope and tool limits below |
+| V-13 | C-13; behavior | Dialog `modality="container"` with a positioned, isolated container; open via trigger; Tab/Shift+Tab; click outside container; Escape with focus inside vs outside container; close | Content and backdrop inside the container only; siblings inert; page outside interactive and not scroll-locked; Tab cycles inside dialog; outside-container focus not pulled back; Escape only when focus is in the container; final focus restored unless focus left the container | not run | Chrome DevTools MCP | blocked | Chrome DevTools MCP unavailable (being reconfigured) |
+| V-14 | C-13; fallback | `modality="container"` with no container, a null ref, and a foreign-document container | Document modal behavior and one `dialog-modality-container` diagnostic while open | resolution unit-tested | vitest modality.test.ts; MCP pending | blocked | Browser part blocked |
+| V-15 | C-13 C-16; accessibility | AX tree for container-modal Dialog and Alert | role dialog/alertdialog, name, description, `aria-modal=false`, inert siblings excluded | not run | Chrome DevTools MCP | blocked | Browser blocked; spec amendment pending for Alert "modal semantics" |
+| V-16 | C-14; unit | scoped inert lease cases | see C-14 | 15/15 outside-inert tests pass | `npx vitest run src/foundation/outside-inert.test.ts` | passed | Stub DOM; browser corroboration under V-13/V-17 |
+| V-17 | C-13 C-15; media | Media player error (e.g. invalid source) windowed and with container fullscreen, also entering fullscreen while the dialog is open; Dismiss, Escape, Retry; hotkeys/gestures locked | Dialog visible within the player in both modes, controls inert, page outside interactive, focus trapped and returned | not run | Chrome DevTools MCP | blocked | Browser blocked |
+| V-18 | C-13; regression | Document modal, trap-focus-only, non-modal Dialog; Alert; nested dialogs; Drawer/SidePanel; Command Palette; `modality="container"` on Drawer normalizes to modal with diagnostic | Unchanged prior behavior (V-05..V-09) | not run | Chrome DevTools MCP | blocked | Browser blocked; full unit suite passes |
 
 ## Early integration checkpoint
 
 | ID | Check | Status | Evidence / unresolved finding |
 | --- | --- | --- | --- |
-| I-01 | Actual family ownership and duplicate removal | passed | TpAlertDialog and TpDrawer extend TpDialog; SidePanel extends Drawer; TpDialogBase removed; both handles alias DialogHandle |
-| I-02 | First default composition matches sourced footer and corner treatment | passed | Chrome page44: full-width footer and corner X inspected at 1440x1000 dark; Card/Dialog both background rgb(39,39,42), top border 1px rgb(63,63,70), padding16px. Matches Nova section anatomy via existing tokens. |
+| I-01 | Actual family ownership and duplicate removal | passed | TpAlertDialog and TpDrawer extend TpDialog; SidePanel extends Drawer; TpDialogBase removed; both handles alias DialogHandle. Container modality follow-up: lives in TpDialog; Alert/Drawer only override `supportedModalities`; scoped inertness repairs the shared outside-inert lease (no new walker, no Alert-only lifecycle) |
+| I-02 | First default composition matches sourced footer and corner treatment | blocked | Reopened for container modality: the first rendered container-modal composition (media error dialog, windowed and fullscreen) is not inspected; Chrome DevTools MCP unavailable this session. Earlier Dialog/Card footer evidence (Chrome page44) stands for document modality. |
 | I-03 | Corner visibility and footer action independence | passed | Chrome: showCloseControl=false hides corner with enabled Close editor; disabling it restores corner. Real corner click closes with close-action. Footer Save and Close remain independent. |
 
 ## Gate record
@@ -92,12 +103,12 @@
 | 0. Sources and scope | passed | Fresh direct project/doc/term reads and clean local source revisions above; concrete user correction preserved |
 | 1. Capability mapping | passed | C-01 through C-12 map correction and regressions to source, API and V-IDs; older conformance gaps retained separately |
 | 2. Architecture and composition reuse | passed | Repair design replaces parallel owners with TpDialog and shared footer recipe; actual adoption remains I-01, not assumed |
-| 3. Behavior | passed | V-02, V-03, V-05 through V-09 |
+| 3. Behavior | blocked | Reopened for container modality (C-13..C-16): V-13, V-15, V-17, V-18 need Chrome DevTools MCP |
 | 4. Presentation and customization | passed | V-04 and V-11 |
-| 5. Accessibility | passed | V-10 |
-| 6. Visual and interaction inspection | passed | V-02 through V-07 and V-11 |
-| 7. Documentation and demo reuse | passed | V-12 |
-| 8. Regression and reconciliation | passed | V-01, V-09, V-12 and completion checker |
+| 5. Accessibility | blocked | Reopened: V-15 |
+| 6. Visual and interaction inspection | blocked | Reopened: V-13, V-17 (container sizing, stacking, fullscreen) |
+| 7. Documentation and demo reuse | blocked | Docs updated for container modality; Dialog story control not added (no container fixture in the existing controls); rendered media composition unverified |
+| 8. Regression and reconciliation | blocked | Unit suite, tsc, eslint, prettier, stylelint pass; browser regressions V-18 blocked; spec amendment pending |
 
 ## Completion / handoff
 
@@ -138,3 +149,17 @@ are hidden on the next frame, emitting one completion. Opening retains a running
 position in grid, flex and block fixtures. keepMounted, opening interruption and
 explicit custom exit completion pass. Tests64, lint, package build and Storybook
 build pass after these changes. Production typecheck is included in the build.
+
+## Follow-up: container modality (2026-10-06)
+
+User decision: add a container modality mode to the shared Dialog family and use it
+for the media error dialog. Implemented as a fourth `modality` value, `container`,
+whose boundary is the existing `container` property (no new property). Alert Dialog
+supports `modal` and `container`; Drawer/Side Panel normalize `container` to `modal`
+with a diagnostic. Scoped inertness is a repair of `foundation/outside-inert.ts`.
+Spec Blocks was read through direct MCP tools (UI Foundation and Library documents,
+read-only; another agent is editing the spec, so the amendment is proposed in the
+handoff rather than applied). Browser verification is blocked in this session
+(Chrome being reconfigured); no Playwright or build was run, per instruction.
+Gates 3 and 5 to 8 are reopened for this follow-up.
+

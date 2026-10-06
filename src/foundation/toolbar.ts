@@ -2,7 +2,7 @@ import { OwnedAttributes as Attributes } from './owned-attributes.js';
 import { CollectionRegistry } from './collection.js';
 import { compositeControl } from './composite-control.js';
 import { composedContains, composedElements, deepActiveElement, isAvailable } from './focus.js';
-import { componentHandlingPrevented } from './part.js';
+import { editableOwnsNavigationKey, keyEventPreempted } from './key-bindings.js';
 import { CleanupScope } from './services.js';
 import type { Orientation } from './types.js';
 
@@ -30,30 +30,11 @@ type Group = { element: HTMLElement; disabled?: boolean; attributes: Attributes 
 const roots = new WeakMap<HTMLElement, ToolbarController>();
 const itemOwners = new WeakMap<HTMLElement, ToolbarController>();
 
-/** Whether the native editor still owns this arrow/Home/End operation. */
-export function toolbarInputOwnsKey(event: KeyboardEvent, element: HTMLElement): boolean {
-  if (event.isComposing || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey)
-    return true;
-  if (!['input', 'textarea'].includes(element.localName)) return false;
-  const input = element as HTMLInputElement | HTMLTextAreaElement;
-  if (input.readOnly || input.disabled) return false;
-  const start = input.selectionStart;
-  const end = input.selectionEnd;
-  if (start === null || end === null) {
-    // Numeric/date/range editors own their native increment/decrement arrows.
-    return event.key.startsWith('Arrow');
-  }
-  if (event.key === 'Home' || event.key === 'End') return true;
-  if (start !== end) return event.key.startsWith('Arrow');
-  const rtl = element.ownerDocument.defaultView?.getComputedStyle(element).direction === 'rtl';
-  if (event.key === 'ArrowLeft') return rtl ? end < input.value.length : start > 0;
-  if (event.key === 'ArrowRight') return rtl ? start > 0 : end < input.value.length;
-  if (element.localName === 'textarea') {
-    if (event.key === 'ArrowUp') return start > 0;
-    if (event.key === 'ArrowDown') return end < input.value.length;
-  }
-  return false;
-}
+/**
+ * Whether the native editor still owns this arrow/Home/End operation. The caret-edge
+ * rule is owned by the shared key-binding module (`sec-1920-key-bindings`).
+ */
+export const toolbarInputOwnsKey = editableOwnsNavigationKey;
 
 /** Opt-in Foundation focus composition. Child controls retain value/action/form ownership. */
 export class ToolbarController {
@@ -372,7 +353,7 @@ export class ToolbarController {
     event.stopImmediatePropagation();
   };
   #keyDown = (event: KeyboardEvent): void => {
-    if (event.defaultPrevented || componentHandlingPrevented(event) || event.isComposing) return;
+    if (keyEventPreempted(event)) return;
     const item = this.#eventItem(event);
     if (!item) return;
     const disabled = this.#disabled(item);

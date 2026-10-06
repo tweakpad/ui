@@ -8,6 +8,47 @@ export interface StoreChange<T> {
 
 export type StoreSubscriber<T> = (change: StoreChange<T>) => void;
 
+/** Equality used by selected subscriptions to decide whether the selected value changed. */
+export type StoreEquality<S> = (previous: S, next: S) => boolean;
+
+/** Receives the selected value, plus the selected change and its reason. */
+export type SelectedStoreSubscriber<S> = (selected: S, change: StoreChange<S>) => void;
+
+export interface StoreSubscribeOptions {
+  /** Immediately deliver the current value with the `programmatic` reason. */
+  emitCurrent?: boolean;
+}
+
+export interface SelectedStoreSubscribeOptions<T, S> extends StoreSubscribeOptions {
+  /** Derives the slice this subscriber depends on from each published value. */
+  selector: (value: T) => S;
+  /** Reports whether two selected values are equal; defaults to `Object.is`. */
+  equality?: StoreEquality<S>;
+}
+
+const hasOwn = Object.prototype.hasOwnProperty;
+
+/**
+ * Shallowly compares two values: identical values, or plain objects/arrays whose own string and
+ * symbol keys hold `Object.is`-equal values. Suitable as a selected-subscription equality.
+ */
+export function shallowEqual<T>(a: T, b: T): boolean {
+  if (Object.is(a, b)) return true;
+  if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  const keysA = Reflect.ownKeys(a);
+  const keysB = Reflect.ownKeys(b);
+  if (keysA.length !== keysB.length) return false;
+  for (const key of keysA) {
+    if (
+      !hasOwn.call(b, key) ||
+      !Object.is((a as Record<PropertyKey, unknown>)[key], (b as Record<PropertyKey, unknown>)[key])
+    )
+      return false;
+  }
+  return true;
+}
+
 export class ObservableStore<T> {
   #value: T;
   readonly #subscribers = new Set<StoreSubscriber<T>>();
@@ -80,11 +121,51 @@ export class ObservableStore<T> {
     }
   }
 
-  subscribe(subscriber: StoreSubscriber<T>, emitCurrent = false): () => void {
-    this.#subscribers.add(subscriber);
-    if (emitCurrent)
-      subscriber({ value: this.#value, previousValue: this.#value, reason: 'programmatic' });
-    return () => this.#subscribers.delete(subscriber);
+  /**
+   * Observes published values and returns an unsubscribe operation. The second argument is either
+   * the legacy `emitCurrent` flag or an options record. With a `selector`, the listener receives the
+   * selected value and runs only when `equality` (default `Object.is`) reports that it changed.
+   * The selected type is inferred from the selector's return type, so give an inline selector a
+   * typed parameter (or pass the type argument) when the listener needs the selected type.
+   */
+  subscribe(subscriber: StoreSubscriber<T>, options?: boolean | StoreSubscribeOptions): () => void;
+  subscribe<S>(
+    subscriber: SelectedStoreSubscriber<NoInfer<S>>,
+    options: SelectedStoreSubscribeOptions<T, S>,
+  ): () => void;
+  subscribe<S>(
+    subscriber: StoreSubscriber<T> | SelectedStoreSubscriber<S>,
+    options: boolean | StoreSubscribeOptions | SelectedStoreSubscribeOptions<T, S> = false,
+  ): () => void {
+    const emitCurrent = typeof options === 'boolean' ? options : Boolean(options.emitCurrent);
+    const selection =
+      typeof options === 'object' &&
+      typeof (options as Partial<SelectedStoreSubscribeOptions<T, S>>).selector === 'function'
+        ? (options as SelectedStoreSubscribeOptions<T, S>)
+        : undefined;
+    let entry: StoreSubscriber<T>;
+    if (selection) {
+      const { selector } = selection;
+      const equality = selection.equality ?? Object.is;
+      const listener = subscriber as SelectedStoreSubscriber<S>;
+      let selected = selector(this.#value);
+      entry = ({ value, reason }) => {
+        const next = selector(value);
+        if (equality(selected, next)) return;
+        const previousValue = selected;
+        selected = next;
+        listener(next, { value: next, previousValue, reason });
+      };
+      this.#subscribers.add(entry);
+      if (emitCurrent)
+        listener(selected, { value: selected, previousValue: selected, reason: 'programmatic' });
+    } else {
+      entry = subscriber as StoreSubscriber<T>;
+      this.#subscribers.add(entry);
+      if (emitCurrent)
+        entry({ value: this.#value, previousValue: this.#value, reason: 'programmatic' });
+    }
+    return () => this.#subscribers.delete(entry);
   }
 
   #notify(change: StoreChange<T>): void {

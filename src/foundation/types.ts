@@ -48,7 +48,15 @@ export type ChangeReason =
   | 'submit'
   | 'anchor-removed'
   | 'selection'
-  | 'dismiss';
+  | 'dismiss'
+  /** Media-element-originated state change; never cancelable (Appendix B.8: media element event). */
+  | 'media'
+  /** Key-binding proposal (Appendix B.8: keyboard event). */
+  | 'hotkey'
+  /** Recognized tap-gesture proposal (Appendix B.8: pointer event). */
+  | 'gesture'
+  /** Activity-timeout change (Appendix B.8: synthetic timer event). */
+  | 'idle';
 
 export type PresenceState = 'absent' | 'starting' | 'open' | 'ending' | 'retained';
 

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { navigationPartContract, type NavigationPanelOwner } from './context.js';
+import {
+  navigationPanelContext,
+  navigationPanelOwner,
+  navigationPartContract,
+  type NavigationPanelOwner,
+} from './context.js';
+import { setLogicalPortalOwner } from '../../foundation/portal-ownership.js';
 import type { PartRenderContext, PartState } from '../../foundation/part.js';
 const nativeState = Object.freeze({ variant: 'outline', disabled: true, value: 'planning' });
 function fixture() {
@@ -67,5 +73,50 @@ describe('Navigation Panel native owner context layering', () => {
     });
     expect(local.renderDelegate).toBe(delegate);
     expect(local.renderDelegate?.(context)).toBe(nativeState);
+  });
+});
+
+describe('Navigation Panel owner lookup (media player R-06 regression V-76)', () => {
+  interface FakeNode {
+    nodeType: number;
+    parentNode: FakeNode | null;
+    assignedSlot?: FakeNode | null;
+    host?: FakeNode;
+    [navigationPanelContext]?: true;
+  }
+  const element = (parentNode: FakeNode | null = null, owner = false): FakeNode => ({
+    nodeType: 1,
+    parentNode,
+    assignedSlot: null,
+    ...(owner ? { [navigationPanelContext]: true as const } : {}),
+  });
+  const as = <T>(node: FakeNode) => node as unknown as T;
+
+  it('resolves the nearest panel through slots and shadow hosts', () => {
+    const outer = element(null, true);
+    const panel = element(outer, true);
+    const shadow: FakeNode = { nodeType: 11, parentNode: null, host: panel };
+    const slot = element(shadow);
+    const link = element(panel);
+    link.assignedSlot = slot;
+    const nested = element(link);
+    expect(navigationPanelOwner(as(nested))).toBe(panel);
+    expect(navigationPanelOwner(as(link))).toBe(panel);
+    expect(navigationPanelOwner(as(panel))).toBe(outer);
+    expect(navigationPanelOwner(as(outer))).toBeUndefined();
+  });
+
+  it('resolves a part rendered in a portal through its logical owner', () => {
+    const panel = element(null, true);
+    const trigger = element(panel);
+    const portalHost = element(element());
+    const part = element(element(portalHost));
+    expect(navigationPanelOwner(as(part))).toBeUndefined();
+    setLogicalPortalOwner(as(portalHost), as(trigger));
+    try {
+      expect(navigationPanelOwner(as(part))).toBe(panel);
+    } finally {
+      setLogicalPortalOwner(as(portalHost), null);
+    }
   });
 });

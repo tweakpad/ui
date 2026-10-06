@@ -1,3 +1,27 @@
+/** Media constituents share these keys (Library mp-l-presentation). */
+const mediaButtonBindings: Readonly<Record<string, string>> = {
+  ':host': 'media-button',
+  "[part~='mark']": 'media-button-mark',
+  "[part~='text']": 'media-button-text',
+  'tp-button[data-media-text]': 'media-button-text-control',
+};
+const mediaLayoutBindings: Readonly<Record<string, string>> = {
+  ':host': 'media-layout',
+  "[part~='top']": 'media-layout-region',
+  "[part~='center']": 'media-layout-region',
+  "[part~='bottom-start']": 'media-layout-region',
+  "[part~='bottom-end']": 'media-layout-region',
+  "[part~='bar']": 'media-layout-region',
+  "[part~='time']": 'media-layout-region',
+  "[part~='secondary']": 'media-layout-region',
+};
+const mediaIndicatorBindings: Readonly<Record<string, string>> = {
+  ':host': 'media-indicator',
+  "[part~='content']": 'media-indicator-content',
+  "[part~='value']": 'media-indicator-value',
+  "[part~='fill']": 'media-indicator-fill',
+};
+
 /** Component-owned associations between existing hosts and their published part slots. */
 export const partBindings: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   'tp-drag-drop-list': {
@@ -99,6 +123,8 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
     '[part~="slider-thumb"]': 'slider-thumb',
     '[part~="slider-label"]': 'slider-label',
     '[part~="slider-output"]': 'slider-output',
+    '[part~="slider-buffer"]': 'slider-buffer',
+    '[part~="slider-chapter"]': 'slider-chapter',
   },
   'tp-slider-thumb': {
     '[part~="slider-thumb"]': 'slider-thumb',
@@ -209,6 +235,88 @@ export const partBindings: Readonly<Record<string, Readonly<Record<string, strin
     '[part~="carousel-autoplay-control"]': 'carousel-autoplay-control',
     '[part~="carousel-announcements"]': 'carousel-announcements',
   },
+  'tp-media-player': {
+    ':host': 'media-player',
+  },
+  'tp-media-container': {
+    ':host': 'media-container',
+  },
+  'tp-media-poster': {
+    ':host': 'media-poster',
+    "[part~='image']": 'media-poster-image',
+  },
+  'tp-media-title': {
+    ':host': 'media-title',
+  },
+  'tp-media-controls': {
+    ':host': 'media-controls',
+    "[part~='backdrop']": 'media-controls-backdrop',
+  },
+  'tp-media-controls-group': {
+    ':host': 'media-controls-group',
+  },
+  // Non-visual bindings: no parts (and no fallback to the root's bindings).
+  'tp-media-hotkey': {},
+  'tp-media-gesture': {},
+  // Media buttons: the composed Button keeps its own recipe; these keys adapt the media layer.
+  'tp-media-play-button': mediaButtonBindings,
+  'tp-media-mute-button': mediaButtonBindings,
+  'tp-media-seek-button': mediaButtonBindings,
+  'tp-media-fullscreen-button': mediaButtonBindings,
+  'tp-media-pip-button': mediaButtonBindings,
+  'tp-media-captions-button': mediaButtonBindings,
+  'tp-media-playback-rate-button': mediaButtonBindings,
+  'tp-media-remote-playback-button': mediaButtonBindings,
+  'tp-media-live-button': {
+    ...mediaButtonBindings,
+    "[part~='icon']": 'media-button-live-dot',
+  },
+  'tp-media-time': {
+    ':host': 'media-time',
+    "[part~='time']": 'media-time-value',
+    "[part~='sign']": 'media-time-sign',
+  },
+  'tp-media-buffering-indicator': {
+    ':host': 'media-buffering-indicator',
+  },
+  'tp-media-error-dialog': {
+    ':host': 'media-error-dialog',
+  },
+  'tp-media-status-indicator': mediaIndicatorBindings,
+  'tp-media-seek-indicator': mediaIndicatorBindings,
+  'tp-media-volume-indicator': mediaIndicatorBindings,
+  // Sliders compose `tp-slider` (its recipe paints track, range, buffer, chapters and thumb).
+  'tp-media-time-slider': {
+    ':host': 'media-time-slider',
+  },
+  'tp-media-volume-slider': {
+    ':host': 'media-volume-slider',
+  },
+  'tp-media-time-slider-preview': {
+    ':host': 'media-time-slider-preview',
+  },
+  'tp-media-thumbnail': {
+    ':host': 'media-thumbnail',
+    "[part~='image']": 'media-thumbnail-image',
+  },
+  'tp-media-chapter-title': {
+    ':host': 'media-chapter-title',
+  },
+  // Radio groups extend the Menu radio group (Menu presentation) and add the media part.
+  'tp-media-playback-rate-radio-group': { ':host': 'media-radio-group' },
+  'tp-media-captions-radio-group': { ':host': 'media-radio-group' },
+  'tp-media-audio-track-radio-group': { ':host': 'media-radio-group' },
+  'tp-media-quality-radio-group': { ':host': 'media-radio-group' },
+  // Presets compose Popover/Menu, which keep their own recipes.
+  'tp-media-volume-popover': {
+    ':host': 'media-volume-popover',
+  },
+  'tp-media-settings-menu': {
+    ':host': 'media-settings-menu',
+  },
+  // Layouts compose the constituents above; their regions are structural.
+  'tp-media-video-layout': mediaLayoutBindings,
+  'tp-media-audio-layout': mediaLayoutBindings,
   'tp-avatar': {
     ':host': 'avatar',
     img: 'avatar-image',

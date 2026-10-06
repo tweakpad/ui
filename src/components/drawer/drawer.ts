@@ -1,6 +1,6 @@
 import { ObservableStore } from '../../foundation/store.js';
 import { html, nothing, type PropertyValues } from 'lit';
-import { TpDialog, dialogMotionRoles } from '../dialog/dialog.js';
+import { TpDialog, dialogMotionRoles, type DialogModality } from '../dialog/dialog.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
 import { resolveSide } from '../../foundation/positioning.js';
@@ -27,6 +27,8 @@ import type {
   TpDrawerVirtualKeyboardProvider,
 } from './virtual-keyboard.js';
 import { drawerStyles } from './styles.js';
+
+const drawerModalities: readonly DialogModality[] = ['modal', 'non-modal', 'trap-focus-only'];
 const edges: readonly DrawerEdge[] = ['block-start', 'block-end', 'inline-start', 'inline-end'];
 const directions: Record<string, DrawerDirection> = {
   top: 'up',
@@ -152,6 +154,10 @@ export class TpDrawer extends TpDialog {
   }
   protected override get partPrefix(): string {
     return 'drawer';
+  }
+  /** Drawer geometry is viewport-relative; container modality is not supported (uses modal). */
+  protected override get supportedModalities(): readonly DialogModality[] {
+    return drawerModalities;
   }
   protected override get surfacePartName(): string {
     return 'surface';

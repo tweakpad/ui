@@ -13,6 +13,17 @@ export function composedContains(root: Node, node: Node | null): boolean {
   return false;
 }
 
+/**
+ * Flat-tree containment for a scope that may be an element or a shadow root. A shadow root
+ * contains its own tree and nodes slotted through it; it does not contain its host.
+ */
+export function composedScopeContains(scope: Node, node: Node | null): boolean {
+  if (scope.nodeType !== 11) return composedContains(scope, node);
+  for (let current = node; current; current = composedParent(current))
+    if (current === scope || current.parentNode === scope) return true;
+  return false;
+}
+
 export function deepActiveElement(document: Document): Element | null {
   let active = document.activeElement;
   while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;

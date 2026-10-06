@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CarouselAutoplay, carouselAutoplayAction, toggleCarouselAutoplay } from './autoplay.js';
+import { ReasonLeases } from '../reason-leases.js';
 import type { CarouselNavigationResult } from './types.js';
 const accepted: CarouselNavigationResult = {
   status: 'accepted',
@@ -189,5 +190,50 @@ describe('Carousel autoplay control state', () => {
     expect(changed.mock.calls.length).toBeGreaterThan(notifications);
     expect(carouselAutoplayAction(autoplay)).toBe('pause');
     autoplay.dispose();
+  });
+});
+
+describe('Carousel autoplay on the shared reason-lease owner', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+  it('delegates pause reasons to ReasonLeases switch leases and clears them on dispose', () => {
+    const set = vi.spyOn(ReasonLeases.prototype, 'set');
+    const clear = vi.spyOn(ReasonLeases.prototype, 'clear');
+    const changed = vi.fn();
+    const autoplay = new CarouselAutoplay({
+      delay: () => 10,
+      available: () => true,
+      advance: async () => accepted,
+      changed,
+    });
+    autoplay.start();
+    const notifications = changed.mock.calls.length;
+    autoplay.setReason('focus', true);
+    autoplay.setReason('hover', true);
+    // A repeated switch is not a second lease and does not notify.
+    autoplay.setReason('focus', true);
+    expect(set.mock.calls).toEqual([
+      ['focus', true],
+      ['hover', true],
+      ['focus', true],
+    ]);
+    expect(changed).toHaveBeenCalledTimes(notifications + 2);
+    expect(autoplay.reasons).toEqual(['focus', 'hover']);
+    expect(Object.isFrozen(autoplay.reasons)).toBe(true);
+    // Releasing one reason never clears another.
+    autoplay.setReason('focus', false);
+    expect(autoplay.paused).toBe(true);
+    expect(autoplay.reasons).toEqual(['hover']);
+    autoplay.pause();
+    expect(set).toHaveBeenLastCalledWith('explicit', true);
+    autoplay.resume();
+    expect(set).toHaveBeenCalledWith('unacknowledged', false);
+    expect(set).toHaveBeenLastCalledWith('explicit', false);
+    expect(autoplay.reasons).toEqual(['hover']);
+    autoplay.dispose();
+    expect(clear).toHaveBeenCalledTimes(1);
+    expect(autoplay.paused).toBe(false);
   });
 });

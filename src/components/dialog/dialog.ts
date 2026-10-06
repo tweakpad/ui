@@ -5,6 +5,7 @@ import { TpElement } from '../../foundation/element.js';
 import {
   composedContains,
   composedParent,
+  composedScopeContains,
   deepActiveElement,
   focusableElements,
   isAvailable,
@@ -32,12 +33,27 @@ import {
   type OwnedPortalContainer,
 } from '../../foundation/owned-portal.js';
 import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
+import {
+  dialogModalities,
+  isolatingModality,
+  normalizeDialogModality,
+  resolveDialogModality,
+  type DialogModality,
+  type ResolvedDialogModality,
+} from './modality.js';
+import type { OutsideInertScope } from '../../foundation/outside-inert.js';
+
+export type { DialogModality } from './modality.js';
 
 export type DialogInitialFocus =
   'first' | 'cancel' | 'confirm' | 'popup' | string | HTMLElement | (() => HTMLElement | null);
 export type DialogFinalFocus =
   HTMLElement | (() => HTMLElement | null) | 'trigger' | 'previous' | false;
 const triggerIdentifiers = new WeakMap<HTMLElement, string>();
+/** Hide a native popover only when it is showing; container-modal layers have no popover. */
+function hidePopover(element: HTMLElement | null | undefined): void {
+  if (element?.matches(':popover-open')) element.hidePopover();
+}
 
 export const dialogMotionRoles = {
   backdrop: {
@@ -103,7 +119,8 @@ export class TpDialog extends TpElement {
   portalIdentifier: string | undefined;
   showHeader = true;
   showFooter = true;
-  #modality: 'modal' | 'non-modal' | 'trap-focus-only' = 'modal';
+  #modality: DialogModality = 'modal';
+  #resolved: ResolvedDialogModality = { modality: 'modal', scope: null };
   #outsideDismissal = true;
   onOpenChange: ((event: TpSurfaceOpenChangeEvent) => void) | undefined;
   onOpenChangeComplete: ((open: boolean) => void) | undefined;
@@ -137,7 +154,8 @@ export class TpDialog extends TpElement {
   #forceUnmount = false;
   #phase: PresenceState = 'absent';
   #motion: MotionHandle[] = [];
-  #activeModality: string | undefined;
+  #activeModality: DialogModality | undefined;
+  #activeScope: OutsideInertScope | null = null;
   #restoreOnClose = true;
   #diagnosed = new Set<string>();
   #observer: MutationObserver | undefined;
@@ -198,8 +216,8 @@ export class TpDialog extends TpElement {
     onComplete: (open) => {
       if (!this.isConnected) return;
       if (!open) {
-        this.surfaceRoot.querySelector<HTMLElement>('.overlay')?.hidePopover();
-        if (this.#layer?.matches(':popover-open')) this.#layer.hidePopover();
+        hidePopover(this.surfaceRoot.querySelector<HTMLElement>('.overlay'));
+        hidePopover(this.#layer);
         this.#layer?.removeAttribute('open');
         this.#activeTrigger = null;
         this.#payload = undefined;
@@ -212,15 +230,15 @@ export class TpDialog extends TpElement {
     open: () => this.open,
     anchor: () => this.#activeTrigger,
     insideElements: () => (this.#content ? [this.#content] : []),
-    outside: () => this.modality !== 'modal' && this.closeOnOutsideInteraction,
-    escape: () => this.closeOnEscape,
+    outside: () => !isolatingModality(this.#resolved.modality) && this.closeOnOutsideInteraction,
+    escape: (event) => this.closeOnEscape && this.#withinScope(event),
     topmostOnly: true,
     dismiss: (event) =>
       this.setOpen(false, event.type === 'keydown' ? 'escape-key' : 'outside-press', event),
   });
   readonly #closeWatcher = new CloseWatcherController(this, {
     enabled: () => this.open && this.dismissController.isTopmost,
-    allowed: () => this.allowSystemDismissal,
+    allowed: () => this.allowSystemDismissal && this.#withinScope(),
     close: (event) => this.setOpen(false, 'close-watcher', event),
   });
   protected get allowSystemDismissal(): boolean {
@@ -236,13 +254,51 @@ export class TpDialog extends TpElement {
     this.requestUpdate();
     if (this.hasUpdated) this.#state.sync(true);
   }
-  get modality(): 'modal' | 'non-modal' | 'trap-focus-only' {
+  /**
+   * Requested modality. `container` scopes modality to `container`; when that cannot apply, the
+   * document modality is used with a diagnostic. Values a family member does not support
+   * normalize to `modal`.
+   */
+  get modality(): DialogModality {
     return this.#modality;
   }
-  set modality(value: 'modal' | 'non-modal' | 'trap-focus-only') {
+  set modality(value: DialogModality) {
     const previous = this.#modality;
-    this.#modality = ['modal', 'non-modal', 'trap-focus-only'].includes(value) ? value : 'modal';
+    const { modality, unsupported } = normalizeDialogModality(value, this.supportedModalities);
+    this.#modality = modality;
+    if (unsupported)
+      this.#diagnostic(
+        'modality-unsupported',
+        `${this.localName} does not support modality ${String(value)}; using modal.`,
+      );
     this.requestUpdate('modality', previous);
+  }
+  /** Modality values this family member supports. */
+  protected get supportedModalities(): readonly DialogModality[] {
+    return dialogModalities;
+  }
+  /** The modality currently applied after resolving `container` (see `modality`). */
+  get effectiveModality(): DialogModality {
+    return this.#resolved.modality;
+  }
+  get #contained(): boolean {
+    return this.#resolved.modality === 'container';
+  }
+  /** Container modality ignores system dismissal and Escape from outside its container. */
+  #withinScope(event?: Event): boolean {
+    const scope = this.#activeScope;
+    if (!this.#contained || !scope) return true;
+    const target = (event?.composedPath()[0] as Node | undefined) ?? null;
+    const active = deepActiveElement(this.ownerDocument);
+    return composedScopeContains(scope, target ?? active);
+  }
+  get #overlayHidden(): boolean {
+    return (
+      (Boolean(this.#parent) && !this.forceRender) ||
+      !isolatingModality(this.#resolved.modality) ||
+      // An in-place overlay has no popover state; hide it once the exit completes.
+      (this.#contained && !this.open && this.#presence.state !== 'ending')
+    );
   }
   get closeOnOutsideInteraction(): boolean {
     return this.#outsideDismissal;
@@ -340,7 +396,7 @@ export class TpDialog extends TpElement {
     this.#closeWatcher.hostDisconnected();
     this.#environment.disconnect();
     this.#deactivate(false);
-    this.surfaceRoot.querySelector<HTMLElement>('.overlay')?.hidePopover();
+    hidePopover(this.surfaceRoot.querySelector<HTMLElement>('.overlay'));
     this.#slotTriggerCleanup?.();
     this.#slotTriggerCleanup = undefined;
     this.#slotTrigger = null;
@@ -363,6 +419,14 @@ export class TpDialog extends TpElement {
     super.willUpdate(changed);
     if (changed.has('portal') || changed.has('container') || changed.has('portalIdentifier'))
       this.#portalFallback = false;
+    this.#resolved = resolveDialogModality({
+      requested: this.modality,
+      container: this.container,
+      ownerDocument: this.ownerDocument,
+      portalFallback: this.#portalFallback,
+    });
+    if (this.#resolved.diagnostic && this.open)
+      this.#diagnostic('modality-container', this.#resolved.diagnostic);
     this.#state.sync();
     this.#presence.setPresent(this.isConnected && this.open);
   }
@@ -383,7 +447,11 @@ export class TpDialog extends TpElement {
     return this.dialogPart(this.surfacePartName, {
       tag: 'dialog',
       protectedProperties: ['id', 'data-dialog-layer'],
-      properties: { ...properties, 'data-dialog-layer': '', popover: 'manual' },
+      properties: {
+        ...properties,
+        'data-dialog-layer': '',
+        popover: this.#contained ? undefined : 'manual',
+      },
       content,
     });
   }
@@ -434,13 +502,15 @@ export class TpDialog extends TpElement {
         })
       : nothing;
     return this.dialogPart('portal', {
-      properties: { class: 'portal', 'data-state': state },
-      content: html` ${this.dialogPart('overlay', { properties: { ...this.overlayProperties, class: 'overlay', popover: 'manual', 'aria-hidden': 'true', hidden: (Boolean(this.#parent) && !this.forceRender) || this.modality !== 'modal', '@pointerdown': this.#outside, ...markers } })}
+      properties: { class: this.#contained ? 'portal contained' : 'portal', 'data-state': state },
+      content: html` ${this.dialogPart('overlay', { properties: { ...this.overlayProperties, class: 'overlay', popover: this.#contained ? undefined : 'manual', 'aria-hidden': 'true', hidden: this.#overlayHidden, '@pointerdown': this.#outside, ...markers } })}
       ${this.renderSurface(
         {
           class: 'content',
           role: this.isAlertDialog ? 'alertdialog' : 'dialog',
-          'aria-modal': String(this.modality === 'modal'),
+          // Container modality leaves the rest of the document available, so it is not
+          // announced as document-modal; its container siblings are inert instead.
+          'aria-modal': String(this.#resolved.modality === 'modal'),
           'aria-labelledby': this.#titleId,
           'aria-describedby': described ? this.#descriptionId : undefined,
           'aria-hidden': open ? undefined : 'true',
@@ -516,16 +586,23 @@ export class TpDialog extends TpElement {
     this.#syncParts();
     if (this.open && !this.#active) this.#activate();
     else if (!this.open && this.#active) this.#deactivate(this.#restoreOnClose);
-    else if (this.open && this.#activeModality !== this.modality) this.#applyModality();
+    else if (
+      this.open &&
+      (this.#activeModality !== this.#resolved.modality ||
+        this.#activeScope !== this.#resolved.scope)
+    )
+      this.#applyModality();
     if (!this.open && this.previewPresent && this.#layer) {
       const overlay = this.surfaceRoot.querySelector<HTMLElement>('.overlay');
-      if (this.modality === 'modal' && overlay && !overlay.matches(':popover-open'))
-        overlay.showPopover();
       this.#layer.setAttribute('open', '');
-      if (!this.#layer.matches(':popover-open')) this.#layer.showPopover();
+      if (!this.#contained) {
+        if (this.#resolved.modality === 'modal' && overlay && !overlay.matches(':popover-open'))
+          overlay.showPopover();
+        if (!this.#layer.matches(':popover-open')) this.#layer.showPopover();
+      }
     } else if (!this.open && this.#presence.state !== 'ending') {
-      this.surfaceRoot.querySelector<HTMLElement>('.overlay')?.hidePopover();
-      if (this.#layer?.matches(':popover-open')) this.#layer.hidePopover();
+      hidePopover(this.surfaceRoot.querySelector<HTMLElement>('.overlay'));
+      hidePopover(this.#layer);
       this.#layer?.removeAttribute('open');
     }
     this.#syncMotion();
@@ -559,7 +636,7 @@ export class TpDialog extends TpElement {
         });
       }
     }
-    if (this.open && this.modality !== 'non-modal' && this.#content) {
+    if (this.open && this.#resolved.modality !== 'non-modal' && this.#content) {
       const active = deepActiveElement(this.ownerDocument);
       if (
         active &&
@@ -859,7 +936,7 @@ export class TpDialog extends TpElement {
         : () => {
             this.#restoreOnClose =
               reason !== 'focus-outside' &&
-              (reason !== 'outside-press' || this.modality === 'modal');
+              (reason !== 'outside-press' || isolatingModality(this.#resolved.modality));
           },
     );
   }
@@ -905,25 +982,35 @@ export class TpDialog extends TpElement {
     this.#inertCleanup?.();
     this.#inertCleanup = undefined;
     const overlay = this.surfaceRoot.querySelector<HTMLElement>('.overlay');
-    if (layer.matches(':popover-open')) layer.hidePopover();
-    overlay?.hidePopover();
-    this.#activeModality = this.modality;
-    if (this.modality === 'modal') {
+    hidePopover(layer);
+    hidePopover(overlay);
+    const { modality, scope } = this.#resolved;
+    this.#activeModality = modality;
+    this.#activeScope = scope;
+    if (modality === 'modal') {
       if ((!this.#parent || this.forceRender) && overlay) overlay.showPopover();
       this.#scrollCleanup = acquireScrollLock(this.ownerDocument);
     }
-    layer.setAttribute('popover', 'manual');
     layer.setAttribute('open', '');
-    layer.showPopover();
-    if (this.modality === 'modal')
-      this.#inertCleanup = acquireOutsideInert(this.ownerDocument, () => [
-        layer,
-        ...(overlay ? [overlay] : []),
-        ...this.dismissController.branchElements.filter(
-          (element): element is HTMLElement =>
-            element instanceof HTMLElement && element !== this && element !== this.#activeTrigger,
-        ),
-      ]);
+    // Container modality keeps the layer in the container's flat tree: it stays clipped to and
+    // visible within the container, including while the container is fullscreen.
+    if (modality !== 'container') {
+      layer.setAttribute('popover', 'manual');
+      layer.showPopover();
+    }
+    if (isolatingModality(modality))
+      this.#inertCleanup = acquireOutsideInert(
+        this.ownerDocument,
+        () => [
+          layer,
+          ...(overlay ? [overlay] : []),
+          ...this.dismissController.branchElements.filter(
+            (element): element is HTMLElement =>
+              element instanceof HTMLElement && element !== this && element !== this.#activeTrigger,
+          ),
+        ],
+        { scope },
+      );
     if (active && this.#content && composedContains(this.#content, active)) restoreFocus(active);
   }
   #deactivate(restore: boolean, closeChildren = true): void {
@@ -944,8 +1031,20 @@ export class TpDialog extends TpElement {
     // Keep the common top layer alive only for an actual exit animation.
     if (this.#layer?.matches(':popover-open') && this.#presence.state !== 'ending')
       this.#layer.hidePopover();
+    // Container modality: focus the user already moved outside the container stays there.
+    // Focus that fell back to the body (removed content) is still restored.
+    const scope = this.#activeModality === 'container' ? this.#activeScope : null;
+    const current = deepActiveElement(this.ownerDocument);
+    const focusLeftScope = Boolean(
+      scope &&
+      current &&
+      current !== this.ownerDocument.body &&
+      !composedScopeContains(scope, current),
+    );
     this.#activeModality = undefined;
-    if (restore && this.finalFocus === false) {
+    this.#activeScope = null;
+    const restoring = restore && !focusLeftScope;
+    if (restoring && this.finalFocus === false) {
       const body = this.ownerDocument.body;
       const tabIndex = body.getAttribute('tabindex');
       body.tabIndex = -1;
@@ -953,7 +1052,7 @@ export class TpDialog extends TpElement {
       if (tabIndex === null) body.removeAttribute('tabindex');
       else body.setAttribute('tabindex', tabIndex);
     }
-    if (restore && this.finalFocus !== false) {
+    if (restoring && this.finalFocus !== false) {
       const chosen = typeof this.finalFocus === 'function' ? this.finalFocus() : this.finalFocus;
       const target =
         chosen instanceof HTMLElement
@@ -1004,7 +1103,7 @@ export class TpDialog extends TpElement {
     if (
       !this.open ||
       !this.dismissController.isTopmost ||
-      this.modality === 'non-modal' ||
+      this.#resolved.modality === 'non-modal' ||
       event.defaultPrevented
     )
       return;
@@ -1015,15 +1114,21 @@ export class TpDialog extends TpElement {
       !this.open ||
       !this.dismissController.isTopmost ||
       !this.#content ||
-      this.#activeModality !== this.modality
+      this.#activeModality !== this.#resolved.modality
     )
       return;
     const active = deepActiveElement(this.ownerDocument);
     if (composedContains(this.#content, active)) return;
-    if (this.modality === 'non-modal') {
+    if (this.#activeModality === 'non-modal') {
       if (!composedContains(this.#activeTrigger ?? this, active) && this.closeOnOutsideInteraction)
         this.setOpen(false, 'focus-outside', event);
-    } else this.#initialFocus();
+    } else if (
+      this.#activeModality === 'container' &&
+      this.#activeScope &&
+      !composedScopeContains(this.#activeScope, active)
+    )
+      return; // Content outside the container remains interactive.
+    else this.#initialFocus();
   };
   #cornerClose = (event: MouseEvent): void => {
     queueMicrotask(() => {
@@ -1112,8 +1217,7 @@ export class TpDialog extends TpElement {
     this.#content?.toggleAttribute('data-nested', Boolean(this.#parent));
     this.#content?.toggleAttribute('data-nested-dialog-open', this.#children.size > 0);
     const overlay = this.surfaceRoot.querySelector<HTMLElement>('.overlay');
-    if (overlay)
-      overlay.hidden = this.modality !== 'modal' || (Boolean(this.#parent) && !this.forceRender);
+    if (overlay) overlay.hidden = this.#overlayHidden;
     this.#content?.style.setProperty('--nested-dialogs', String(this.#children.size));
     this.toggleAttribute('data-open', this.open);
     this.toggleAttribute('data-closed', !this.open);

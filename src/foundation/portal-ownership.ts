@@ -20,3 +20,25 @@ export function logicalPortalOwner(node: Node | null): HTMLElement | null {
   }
   return null;
 }
+
+/**
+ * The nearest strict ancestor that satisfies `predicate`, walking composed parents (assigned slots
+ * and shadow hosts) and continuing from a registered portal host to its logical owner. Every node
+ * inside a relocated subtree is considered before the walk leaves it, so an owner placed inside a
+ * portal still wins over one outside it. Cycles in logical ownership terminate the walk.
+ */
+export function nearestOwner<T extends Node>(
+  host: Node,
+  predicate: (node: Node) => node is T,
+): T | null;
+export function nearestOwner(host: Node, predicate: (node: Node) => boolean): Node | null;
+export function nearestOwner(host: Node, predicate: (node: Node) => boolean): Node | null {
+  const seen = new Set<Node>([host]);
+  for (let node = composedParent(host); node && !seen.has(node);) {
+    seen.add(node);
+    if (predicate(node)) return node;
+    const logical = owners.get(node);
+    node = logical && !seen.has(logical) ? logical : composedParent(node);
+  }
+  return null;
+}

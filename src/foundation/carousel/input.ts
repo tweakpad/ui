@@ -1,5 +1,6 @@
 import { CleanupScope, Scheduler } from '../services.js';
 import { componentHandlingPrevented } from '../part.js';
+import { KeyBindingOwner } from '../key-bindings.js';
 import type { CarouselController } from './controller.js';
 import type { CarouselTarget } from './types.js';
 
@@ -64,64 +65,77 @@ export function carouselPathMatches(event: Event, selector: string, root: HTMLEl
   return false;
 }
 
+/** Carousel key semantics bound through the shared key-binding owner (`sec-1920`). */
 export function bindCarouselKeyboard(
   controller: CarouselController,
   elements: CarouselElements,
   scope: CleanupScope,
 ): void {
-  scope.listen(elements.root, 'keydown', (event) => {
-    const keyboard = controller.configuration.keyboard;
-    if (
-      !keyboard ||
-      !keyboard.enabled ||
-      event.defaultPrevented ||
-      componentHandlingPrevented(event) ||
-      event.isComposing ||
-      event.altKey ||
-      event.ctrlKey ||
-      event.metaKey ||
-      event.shiftKey ||
-      carouselInteractive(event, elements.root)
-    )
-      return;
-    // The nearest Carousel in the composed path owns local navigation.
-    const nearest = event
-      .composedPath()
-      .find((node) => (node as Element).getAttribute?.('aria-roledescription') === 'carousel');
-    if (nearest && nearest !== elements.root) return;
-    const state = controller.snapshot;
-    const previous =
-      state.orientation === 'vertical'
-        ? 'ArrowUp'
-        : state.direction === 'rtl'
-          ? 'ArrowRight'
-          : 'ArrowLeft';
-    const next =
-      state.orientation === 'vertical'
-        ? 'ArrowDown'
-        : state.direction === 'rtl'
-          ? 'ArrowLeft'
-          : 'ArrowRight';
-    const request = { reason: 'keyboard' as const, sourceEvent: event };
-    if (
-      (event.key === previous || (keyboard.pageKeys && event.key === 'PageUp')) &&
-      state.canScrollPrevious
-    ) {
-      event.preventDefault();
-      void controller.previous(request);
-    } else if (
-      (event.key === next || (keyboard.pageKeys && event.key === 'PageDown')) &&
-      state.canScrollNext
-    ) {
-      event.preventDefault();
-      void controller.next(request);
-    } else if (keyboard.homeEnd && event.key === 'Home' && state.canScrollPrevious) {
-      event.preventDefault();
-      void controller.scrollToIndex(0, request);
-    } else if (keyboard.homeEnd && event.key === 'End' && state.canScrollNext) {
-      event.preventDefault();
-      void controller.scrollToIndex(Number.MAX_SAFE_INTEGER, request);
-    }
+  const root = elements.root;
+  // A failed update can rebind without unbinding; one owner per root.
+  KeyBindingOwner.for(root)?.dispose();
+  const owner = new KeyBindingOwner(root, {
+    dispatch: false,
+    scope,
+    // Carousel ownership: descendant controls/editors own every key, and the nearest
+    // carousel region (including a non-Tweakpad one) owns local navigation.
+    ownsKey: (event) => {
+      if (carouselInteractive(event, root)) return true;
+      const nearest = event
+        .composedPath()
+        .find((node) => (node as Element).getAttribute?.('aria-roledescription') === 'carousel');
+      return !!nearest && nearest !== root;
+    },
+  });
+  owner.register({
+    keys: 'ArrowLeft, ArrowRight, ArrowUp, ArrowDown, PageUp, PageDown, Home, End',
+    // Held arrows keep navigating. Keys owned by a nested composite inside a slide
+    // (tablist, listbox, menu, radiogroup, grid, toolbar, tree, slider, native-controls
+    // media or `data-tp-owns-keys`) stay with it through the shared composite guard,
+    // bounded at the carousel root (`sec-187` keyboard). Editors already own every key
+    // through carouselInteractive above (root-bounded, unlike the unbounded shared
+    // editable guard), so the editable guard is not needed here.
+    repeat: true,
+    guards: { editable: 'none', composites: true },
+    handler: (event) => {
+      const keyboard = controller.configuration.keyboard;
+      if (!keyboard || !keyboard.enabled) return false;
+      const state = controller.snapshot;
+      const previous =
+        state.orientation === 'vertical'
+          ? 'ArrowUp'
+          : state.direction === 'rtl'
+            ? 'ArrowRight'
+            : 'ArrowLeft';
+      const next =
+        state.orientation === 'vertical'
+          ? 'ArrowDown'
+          : state.direction === 'rtl'
+            ? 'ArrowLeft'
+            : 'ArrowRight';
+      const request = { reason: 'keyboard' as const, sourceEvent: event };
+      // Prevent before requesting so listeners observe the same ordering as before.
+      if (
+        (event.key === previous || (keyboard.pageKeys && event.key === 'PageUp')) &&
+        state.canScrollPrevious
+      ) {
+        event.preventDefault();
+        void controller.previous(request);
+      } else if (
+        (event.key === next || (keyboard.pageKeys && event.key === 'PageDown')) &&
+        state.canScrollNext
+      ) {
+        event.preventDefault();
+        void controller.next(request);
+      } else if (keyboard.homeEnd && event.key === 'Home' && state.canScrollPrevious) {
+        event.preventDefault();
+        void controller.scrollToIndex(0, request);
+      } else if (keyboard.homeEnd && event.key === 'End' && state.canScrollNext) {
+        event.preventDefault();
+        void controller.scrollToIndex(Number.MAX_SAFE_INTEGER, request);
+      } else return false;
+      return true;
+    },
   });
 }
 

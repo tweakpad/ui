@@ -8,6 +8,75 @@ literal pipes inside table cells. A recorded defect does not clear a gate.
 For a read-only review, use these fields in the response or an authorized report;
 do not create a checklist file unless writing one is in scope.
 
+## Spec 0.3.16 review fixes — 2026-10-05
+
+Bounded fix task from the spec-vs-code review of the committed Spec Blocks
+project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483` version 0.3.16 (read through
+direct `spec_get_document` only; spec not modified). Live authority read:
+carousel-adopt-548, -599, -805, -843, -1054/-1058/-1060, -1091/-1097, -1100,
+-1111/-1119, -1134, -2123/-2131, -2138, -2152, -2175, -2194 and the
+public-definition-detail part rows -1447…-1613. No upstream reference update.
+Gates 0–2 retain their design evidence: every fix reuses the existing owners
+(ControllableState/TpValueCommitEvent, CarouselAutoplay, shared
+ScrollbarController activity path, shared motion `prepareMotion`, CarouselGestures
+coordinator). One new Carousel-local Foundation module, `status.ts`, holds pure
+position text / scrollbar value / activity / renderer-guard logic consumed by the
+Lit binding; Scroll Area behavior and `src/foundation/scrollbar.ts` are unchanged.
+
+Fixes:
+
+1. Interactive scrollbar `aria-valuetext` from `messages.position` (English
+   default "3 of 8", localizable) on the generated and external scrollbar
+   (`carousel.ts` `#renderScrollbar`, `#bind`; `status.ts` `carouselScrollbarValue`).
+   No new message key: carousel-adopt-697 closes the message set.
+2. `while-scrolling`: the controller snapshot subscriber calls the shared
+   `ScrollbarController.activity()` whenever preview progress or the
+   transition flag changes (buttons, indicators, swipe, wheel, keyboard,
+   scrollbar, autoplay, API); 1000 ms delay and 400 ms fade unchanged; first
+   initialized publication and relayout without movement are not activity.
+3. Indicator renderer/formatter exceptions (`renderCustom`, `renderIndicator`,
+   `formatCurrent`, `formatTotal`, `messages.status`) cancel that render, roll
+   back dynamic-bullet bookkeeping, keep the previous coherent content and emit
+   one `tp-diagnostic` (`CarouselRenderGuard`).
+4. Lifecycle reason `disabled` when the selected item is still present but
+   disabled; `missing` for removal/hiding; `window-resize` unchanged.
+5. `automatic-advance` proposals carry a synthetic `tp-carousel-autoplay-timer`
+   source event; change and commit metadata are `{previousId, nextId, snap,
+   generation, inputKind}` (`carouselInputKind`, exported `CarouselInputKind`
+   type); lifecycle corrections carry the same metadata.
+6. Pointer-capture exception on the claimed gesture cancels it like
+   `pointercancel` (preview restored once, no drag marker, no settlement).
+7. Hide-on-click ignores descendant controls, interactive slide content
+   (`carouselInteractive` plus interactive roles/labels), the controls group,
+   scrollbar and handled clicks; controls re-show on a new mouse/pen hover or
+   keyboard focus entry from outside, touch users tap again.
+8. Autoplay Button text/name follow the real timer state (`carouselAutoplayAction`):
+   Resume after manual pause, unacknowledged proposal, finite-end or
+   stopAfterInteraction stop; Resume restarts a stopped timer; `resume()` now
+   notifies when it clears only the unacknowledged lease.
+9. Motion parameters: `auto-height` context `{snap}` (accepted snap index),
+   `scrollbar-visibility` context `{orientation}`.
+10. Double tap/click (carousel-adopt-1058): not implemented. The live contract
+    registers no tap/double-tap event, callback or Zoom behavior (event list in
+    carousel-adopt-843 is closed), so the 300 ms source timing has no observable
+    Tweakpad consumer. Native `dblclick` is never suppressed by the coordinator.
+    Recorded as a spec clarification candidate, not a silent pass.
+11. `src/presentation/components.ts` Carousel part cardinalities now use the
+    public-definition-detail wording (One owner … One owned region when initialized).
+
+Not changed per task: the `focus` reason (carousel.ts `#bindFocus`) pending spec
+registration; adapter naming and "0 of 0" wording are spec-side.
+
+Local evidence (no browser run in this task):
+`npx vitest run src/foundation/carousel src/components/carousel src/foundation/scrollbar.test.ts`
+— 8 files / 66 tests pass (new: status.test.ts 4, controller 5, autoplay 3,
+input 5, scrollbar 2); the capture-failure test fails against the previous
+input.ts and passes after the fix. `npx vitest run src/presentation
+src/components/scroll-area src/stories` pass. `npx tsc --noEmit -p
+tsconfig.json`, ESLint and Prettier on touched files pass. Browser scenarios
+V-113–V-124 below are pending Chrome DevTools MCP verification; no visual,
+accessibility-tree or real-input claim is made.
+
 ## Quick-release cancellation follow-up — 2026-10-05
 
 The previous completion claim did not resolve the user's jump. Reopened C-06 /
@@ -131,6 +200,51 @@ responsive, so its earlier timeout is no longer a current connection blocker.
   did not include this repo; inline screenshots and results were inspected instead.
 - Record boundary: implement checker passes; full verify/complete retain older
   unresolved matrix rows. This follow-up does not claim full Carousel conformance.
+
+## Shared-owner adoption: pause leases and keyboard composites — 2026-10-06
+
+Bounded shared-owner adoption (R-11 plus Carousel keyboard nested-composite
+ownership). Fresh direct `spec_get_document` read of the Foundation document in
+project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483` (headOid `bf2e8b3c…`):
+`sec-187-carousel` Autoplay contract ("Pause reasons are a set … Clearing one does
+not clear the others. Start/resume cannot override a mandatory reason"; "A rejected
+timer proposal pauses with a rejection reason until explicit resume") and Keyboard
+("Ignore consumer-prevented events, modified shortcuts, IME composition and keys
+owned by nested actions/editors/composites"); `sec-1920-key-bindings` (the owner
+ignores "a target whose nested owner (slider, menu, list) owns the key");
+`sec-1922-activity-and-idle` (reason leases release idempotently and releasing one
+reason must not clear another). Spec not modified. No upstream reference update.
+Gates 0–2 keep their design evidence: both changes delegate existing Carousel
+behavior to existing shared Foundation owners; no new module or parallel owner.
+
+1. R-11 pause leases: `CarouselAutoplay` (`src/foundation/carousel/autoplay.ts`)
+   now holds its pause reasons in the shared `ReasonLeases`
+   (`src/foundation/reason-leases.ts`, also consumed by the media activity owner)
+   via switch-style `set(reason, active)` leases. `paused`/`reasons` read the lease
+   owner (first-acquired order, frozen); the explicit/unacknowledged resume
+   special case and the notify/generation/full-interval refresh are unchanged;
+   `dispose()` clears every lease. Every existing `setReason` consumer
+   (controller, transport, input, Lit binding) is unchanged.
+2. Keyboard composites: `bindCarouselKeyboard` (`src/foundation/carousel/input.ts`)
+   enables the shared `KeyBindingOwner` composite guard (`composites: true`,
+   bounded at the Carousel root). Arrow/Home/End/Page keys inside nested
+   tablist/tab, listbox/option, menu/menuitem, radiogroup/radio, grid, toolbar,
+   tree, slider, native-controls media, Tweakpad menu/radio/select/slider items and
+   `data-tp-owns-keys` owners no longer move the Carousel. Editors keep every key
+   through the existing root-bounded `carouselInteractive` ownership (spec: keys
+   owned by nested editors), so the shared editable guard stays `none` (it walks
+   the whole path and would wrongly disable a Carousel placed inside an editable
+   host). Carousel-owned regions are unaffected: slides/indicators are role group,
+   the scrollbar was already owned. Docs keyboard paragraph updated.
+
+Local evidence (no browser run; Chrome unavailable in this task):
+`npx vitest run src/foundation/carousel src/components/carousel src/foundation`
+— 69 files / 730 tests pass, including the new autoplay delegation test
+(`ReasonLeases.prototype.set/clear` spies) and two keyboard tests (nested
+composites/editors inside a slide; plain content and outer composites). The
+nested-composite test fails with `composites: false` and passes with the change.
+`npx tsc --noEmit -p tsconfig.json`, ESLint and Prettier on touched files pass.
+V-125/V-126 below remain blocked on Chrome DevTools MCP.
 
 ## Delivery and source record
 
@@ -373,6 +487,8 @@ sources and concrete reason instead of omitting this map.
 | Lifetime/owned writes | core/core.ts init/destroy; modules/resize; a11y destroy | services.ts; owned-attributes.ts; owned-styles.ts; motion.ts | Reuse owner environment, CleanupScope, Scheduler, leases and request generations; no new general scheduler/motion owner | Carousel, Scroll Area, DragDrop; V-97, V-102, V-103, V-104, V-105, V-106 |
 | Logical/mounted collection | virtual update/renderExternal; element slotted slides | collection.ts; choice-model.ts | Carousel logical source records preserve typed IDs and unmounted entries; mounted registry reused for order/eligibility, no Select semantics | Carousel slotted/data/virtual; V-09, V-10, V-13, V-86, V-90 |
 | Navigation/indicators | shadcn carousel.tsx -> Button; pagination type/progress | components/button; components/progress; icons | Real Button actions and real Progress; indicators are actions, Pagination links are unsuitable | Carousel controls/docs/fixtures; V-67, V-68, V-69, V-70, V-71, V-72 |
+| Pause reason leases | Swiper autoplay pause/resume flags; Tweakpad `sec-187` reason set | foundation/carousel/autoplay.ts private Set; foundation/reason-leases.ts | Delegated to shared ReasonLeases switch leases (R-11); Carousel keeps explicit/unacknowledged resume and full-interval refresh | CarouselAutoplay consumers (controller, transport, input, Lit binding); media activity owner / V-125 |
+| Keyboard nested ownership | Swiper keyboard module; Tweakpad `sec-187` keyboard, `sec-1920` key bindings | foundation/key-bindings.ts composite guard; foundation/interactive-target.ts selectors | Carousel binding enables shared composite guard bounded at root; carouselInteractive keeps editors/controls and nested Carousel ownership | Carousel keyboard / V-126 |
 
 ### Presentation source map
 
@@ -524,6 +640,20 @@ source/capability evidence. Tool limitations are blocked, not passed or N/A.
 | V-110 | C-16; presentation | Canonical/slotted/data/controlled docs and copyable examples | Full API/defaults agree, real components and sufficient imports | Full scenario not run; partial local evidence, where applicable, is in verification.md. | Vitest where pure; Chrome DevTools MCP for DOM/input; tmp/component-verification/carousel/2026-10-05/ | blocked | Chrome MCP timeout blocks the required integration checkpoint and full browser acceptance matrix; no inferred pass. |
 | V-111 | C-16; presentation | Built exports, types, register and legacy display imports | Existing public identity retained; controller/types usable outside Storybook | Full scenario not run; partial local evidence, where applicable, is in verification.md. | Vitest where pure; Chrome DevTools MCP for DOM/input; tmp/component-verification/carousel/2026-10-05/ | blocked | Chrome MCP timeout blocks the required integration checkpoint and full browser acceptance matrix; no inferred pass. |
 | V-112 | C-16; presentation | Source/dist dependency audit, generators and full reconciliation | No new runtime deps/plugin exports; no deleted authored docs or unmapped source branch | Full scenario not run; partial local evidence, where applicable, is in verification.md. | Vitest where pure; Chrome DevTools MCP for DOM/input; tmp/component-verification/carousel/2026-10-05/ | blocked | Chrome MCP timeout blocks the required integration checkpoint and full browser acceptance matrix; no inferred pass. |
+| V-113 | C-11; C-14; accessibility | Draggable generated scrollbar and external `scrollbar.element`; navigate; localized `messages.position` | Accessibility tree shows scrollbar with valuemin/max/now and valuetext "N of M" (localized) tracking the committed snap; non-draggable bar has no valuetext/role | Unit: carouselScrollbarValue (status.test.ts). Browser not run. | Chrome DevTools MCP take_snapshot / evaluate_script | blocked | Requires Chrome DevTools MCP. 2026-10-05 verification run: Chrome DevTools MCP could not launch (profile chrome-devtools-mcp/chrome-profile locked by another Claude Code session's browser, pid 74256); no browser evidence; see tmp/component-verification/carousel/2026-10-05-spec-fixes/browser-blocked.log. |
+| V-114 | C-11; C-09; motion | `scrollbar.visibility='while-scrolling'`; previous/next, indicator click, swipe, wheel, arrow keys, autoplay, controller.scrollToIndex | Bar fades in on each movement, stays during motion, hides 1000 ms after the last movement with a 400 ms fade; hover/focus/drag keep it; reduced motion removes fade only; Scroll Area timing unchanged | Unit: ScrollbarController activity (scrollbar.test.ts), carouselScrollbarActivity (status.test.ts). Browser not run. | Chrome DevTools MCP real input, screenshots and timing | blocked | Requires Chrome DevTools MCP. 2026-10-05 verification run: Chrome DevTools MCP could not launch (profile chrome-devtools-mcp/chrome-profile locked by another Claude Code session's browser, pid 74256); no browser evidence; see tmp/component-verification/carousel/2026-10-05-spec-fixes/browser-blocked.log. |
+| V-115 | C-10; C-15 | `renderCustom`, `renderIndicator`, `formatCurrent`/`formatTotal`, `messages.status` that throw after a successful render | Previous indicator content stays rendered and coherent; one tp-diagnostic; carousel stays usable | Unit: CarouselRenderGuard (status.test.ts). Browser not run. | Chrome DevTools MCP evaluate_script + screenshot | blocked | Requires Chrome DevTools MCP. 2026-10-05 verification run: Chrome DevTools MCP could not launch (profile chrome-devtools-mcp/chrome-profile locked by another Claude Code session's browser, pid 74256); no browser evidence; see tmp/component-verification/carousel/2026-10-05-spec-fixes/browser-blocked.log. |
+| V-116 | C-02; C-01 | Select item b, then set it disabled (slot `disabled` attribute and data getItemOptions) | tp-value-change/commit reason `disabled`, metadata inputKind `lifecycle`; selection moves to nearest enabled snap | Unit: controller.test.ts disabled/missing reasons. Browser not run. | Chrome DevTools MCP evaluate_script event log | blocked | Requires Chrome DevTools MCP. 2026-10-05 verification run: Chrome DevTools MCP could not launch (profile chrome-devtools-mcp/chrome-profile locked by another Claude Code session's browser, pid 74256); no browser evidence; see tmp/component-verification/carousel/2026-10-05-spec-fixes/browser-blocked.log. |
+| V-117 | C-12; C-01 | Autoplay advance with event listeners | Change and commit reason `automatic-advance`, sourceEvent type `tp-carousel-autoplay-timer`, identical metadata with inputKind `timer` | Unit: controller.test.ts. Browser not run. | Chrome DevTools MCP evaluate_script event log | blocked | Requires Chrome DevTools MCP. 2026-10-05 verification run: Chrome DevTools MCP could not launch (profile chrome-devtools-mcp/chrome-profile locked by another Claude Code session's browser, pid 74256); no browser evidence; see tmp/component-verification/carousel/2026-10-05-spec-fixes/browser-blocked.log. |
+| V-118 | C-06; C-07; C-08; C-01 | Real mouse/touch swipe, keyboard arrows, keyboard-activated and mouse-clicked previous/next, wheel | metadata.inputKind is mouse/touch, keyboard, keyboard/mouse, wheel respectively, on change and commit | Unit: carouselInputKind classification. Browser not run. | Chrome DevTools MCP real input + event log | blocked | Requires Chrome DevTools MCP. 2026-10-05 verification run: Chrome DevTools MCP could not launch (profile chrome-devtools-mcp/chrome-profile locked by another Claude Code session's browser, pid 74256); no browser evidence; see tmp/component-verification/carousel/2026-10-05-spec-fixes/browser-blocked.log. |
+| V-119 | C-06; C-15 | Force `setPointerCapture` to throw on the track, then drag | Gesture cancels: preview returns to the accepted slide, no data-dragging, no settlement, no stuck autoplay gesture pause | Unit: input.test.ts capture failure. Browser not run. | Chrome DevTools MCP evaluate_script setup + real pointer drag | blocked | Requires Chrome DevTools MCP. 2026-10-05 verification run: Chrome DevTools MCP could not launch (profile chrome-devtools-mcp/chrome-profile locked by another Claude Code session's browser, pid 74256); no browser evidence; see tmp/component-verification/carousel/2026-10-05-spec-fixes/browser-blocked.log. |
+| V-120 | C-10; C-06 | `navigation.hideOnClick` and `indicators.hideOnClick`; click image content, slide button/link/input, controls, indicators, scrollbar, autoplay Button | Only noninteractive content toggles; controls hidden are out of tab order; mouse re-entry and keyboard Tab entry re-show; touch tap toggles; focused control never hidden by its own activation | Unit: carouselHideOnClickIgnored. Browser not run. | Chrome DevTools MCP real click/hover/Tab, snapshot | blocked | Requires Chrome DevTools MCP. 2026-10-05 verification run: Chrome DevTools MCP could not launch (profile chrome-devtools-mcp/chrome-profile locked by another Claude Code session's browser, pid 74256); no browser evidence; see tmp/component-verification/carousel/2026-10-05-spec-fixes/browser-blocked.log. |
+| V-121 | C-12; C-14 | `autoplay` with finite end, `stopAfterInteraction`, manual pause, hover/focus pause | Button text and accessible name say Pause only while the timer runs; Resume after stop/manual pause; Resume restarts the timer; hover/focus do not rename it | Unit: carouselAutoplayAction/toggleCarouselAutoplay. Browser not run. | Chrome DevTools MCP snapshot + real clicks | blocked | Requires Chrome DevTools MCP. 2026-10-05 verification run: Chrome DevTools MCP could not launch (profile chrome-devtools-mcp/chrome-profile locked by another Claude Code session's browser, pid 74256); no browser evidence; see tmp/component-verification/carousel/2026-10-05-spec-fixes/browser-blocked.log. |
+| V-122 | C-09; motion | `layout.autoHeight`; `scrollbar.visibility='while-scrolling'` with a `tp-motion-request` listener, both orientations | auto-height request context.snap equals accepted snap; scrollbar-visibility request context.orientation equals the Carousel orientation | Unit: motion option builders (status.test.ts). Browser not run. | Chrome DevTools MCP evaluate_script motion-request log | blocked | Requires Chrome DevTools MCP. 2026-10-05 verification run: Chrome DevTools MCP could not launch (profile chrome-devtools-mcp/chrome-profile locked by another Claude Code session's browser, pid 74256); no browser evidence; see tmp/component-verification/carousel/2026-10-05-spec-fixes/browser-blocked.log. |
+| V-123 | C-06 | Double click / double tap on slide content | Native dblclick reaches content; no synthetic click or Zoom behavior | Not implemented by design (no registered event); browser not run. | Chrome DevTools MCP real double click | blocked | Disposition recorded in Spec 0.3.16 review fixes section. 2026-10-05 verification run: Chrome DevTools MCP could not launch (profile chrome-devtools-mcp/chrome-profile locked by another Claude Code session's browser, pid 74256); no browser evidence; see tmp/component-verification/carousel/2026-10-05-spec-fixes/browser-blocked.log. |
+| V-124 | C-16 | Presentation definition metadata | Carousel part cardinalities match public-definition-detail wording | src/presentation tests pass after update. | npx vitest run src/presentation | passed | Metadata only; no rendered change. |
+| V-125 | C-12 | Autoplay with hover + focus + document hidden pauses overlapping, then clearing one at a time; manual pause/resume during a mandatory pause | Timer stays paused until the last reason clears, then restarts a full interval; Resume never overrides hover/focus/hidden; Button name unchanged by mandatory pauses | Unit: autoplay.test.ts (shared ReasonLeases delegation, reason isolation). Browser not run. | Chrome DevTools MCP real hover/Tab/visibility + snapshot | blocked | Chrome unavailable in the 2026-10-06 shared-owner task; no browser evidence. |
+| V-126 | C-07; accessibility | Slides containing tp-tabs/tablist, listbox, tp-menu, tp-radio-group, tp-slider and tp-input; focus each and press arrows/Home/End/PageDown; then focus plain slide content | Nested control handles its keys and the Carousel selection does not change; from plain content arrows/Home/End navigate; RTL/vertical axes respected | Unit: input.test.ts nested-composite and plain-content tests. Browser not run. | Chrome DevTools MCP real keyboard input + event log | blocked | Chrome unavailable in the 2026-10-06 shared-owner task; no browser evidence. |
 
 Record viewport, theme, direction, motion conditions and relevant browser features
 for visual/interaction rows. Record what was visually inspected as well as the
@@ -585,6 +715,8 @@ at the work boundaries specified in SKILL.md.
 - Shared-consumer regressions / package boundaries: Entire unit suite passes; ScrollArea/Carousel share actual scrollbar owner/render helper. Built ESM/declarations/license and Lit-only runtime audit pass; final live regressions blocked.
 - Required failures or blocked checks: I-02/I-03; gates 3-8; full browser matrix including source/dist, themes, accessibility, pointer/wheel/keyboard, native scrolling, loops, virtual focus and cleanup. Reconnect Chrome MCP before resuming.
 - Older out-of-scope gaps: Pre-existing formatting in src/components/field/field.ts and src/stories/message-scroller.examples.ts preserved. DragDrop tool-only capability gaps remain in its own record.
+- Spec 0.3.16 bounded fix (2026-10-05): eleven review items handled as recorded in "Spec 0.3.16 review fixes"; local tests/type/lint/format pass; V-113–V-123 pending Chrome DevTools MCP; double tap/click left unimplemented with recorded contract reason.
+- Shared-owner adoption (2026-10-06): CarouselAutoplay pause reasons delegate to shared ReasonLeases (R-11); Carousel keyboard enables the shared key-binding composite guard; unit/type/lint/format pass; V-125/V-126 pending Chrome DevTools MCP. No complete-component claim.
 - Changed source revisions / reopened gates: No upstream reference update or spec commit. Actual module names reconciled without changing family ownership; gates 0-2 retain their source/design evidence.
 
 A complete-component claim requires every applicable required gate to pass. A

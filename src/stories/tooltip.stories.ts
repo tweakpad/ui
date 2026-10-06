@@ -3,7 +3,7 @@ import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
 import documentation from '../../docs/tooltip.md?raw';
 import { plusIcon } from '../icons/plus.js';
-import type { TooltipSide, TooltipAlign } from '../components/tooltip/index.js';
+import type { TooltipSide, TooltipAlign, TooltipDescribes } from '../components/tooltip/index.js';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
 interface Args {
   open: boolean;
@@ -19,6 +19,7 @@ interface Args {
   disableHoverablePopup: boolean;
   closeOnClick: boolean;
   trackCursorAxis: 'none' | 'horizontal' | 'vertical' | 'both';
+  describes: TooltipDescribes;
   keepMounted: boolean;
 }
 const meta: Meta<Args> = {
@@ -40,6 +41,7 @@ const meta: Meta<Args> = {
     disableHoverablePopup: false,
     closeOnClick: true,
     trackCursorAxis: 'none',
+    describes: 'trigger',
     keepMounted: false,
   },
   argTypes: {
@@ -68,6 +70,11 @@ const meta: Meta<Args> = {
     disableHoverablePopup: { control: 'boolean' },
     closeOnClick: { control: 'boolean' },
     trackCursorAxis: { control: 'select', options: ['none', 'horizontal', 'vertical', 'both'] },
+    describes: {
+      control: 'select',
+      options: ['trigger', 'none'],
+      description: 'none keeps the tooltip visual only (no accessible description).',
+    },
     keepMounted: { control: 'boolean' },
   },
   render: (args) => {
@@ -86,6 +93,7 @@ const meta: Meta<Args> = {
       .disableHoverablePopup=${args.disableHoverablePopup}
       .closeOnClick=${args.closeOnClick}
       .trackCursorAxis=${args.trackCursorAxis}
+      .describes=${args.describes}
       .keepMounted=${args.keepMounted}
       @tp-open-change=${(event: TpSurfaceOpenChangeEvent) => updateArgs({ open: event.detail.value })}
       ><tp-button slot="trigger" variant="outline">Save</tp-button></tp-tooltip
