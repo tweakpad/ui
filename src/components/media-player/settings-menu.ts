@@ -21,6 +21,8 @@ import {
 } from './radio-groups.js';
 import { selectedOptionLabel } from './radio-options.js';
 import { TpMenu } from '../menu/menu.js';
+import type { PartPresentation } from '../../presentation/resolver.js';
+import { mediaPopupSurface } from './styles.js';
 import { TpButton } from '../button.js';
 import { TpMediaQualityRadioGroup } from './radio-groups.js';
 import { TpMediaAudioTrackRadioGroup } from './radio-groups.js';
@@ -119,6 +121,13 @@ export function mediaSettingsEntries(
  * @csspart trigger - The composed settings Button.
  * @csspart menu - The composed Menu.
  */
+/** Settings popups share the media overlay surface (Video.js default skin menu popup). */
+const settingsMenuPresentation: PartPresentation = {
+  'menu-content': {
+    styleHook: { ...mediaPopupSurface, 'border-radius': 'var(--tp-radius-xl)' },
+  },
+};
+
 export class TpMediaSettingsMenu extends TpMediaElement {
   static tagName = 'tp-media-settings-menu';
   /** Library elements this element renders; defining it defines them too. */
@@ -226,6 +235,7 @@ export class TpMediaSettingsMenu extends TpMediaElement {
     const availability: MediaControlAvailability | undefined = this.availability;
     const label = this.message('settings');
     return html`<tp-menu
+      .partPresentation=${settingsMenuPresentation}
       part="menu"
       .container=${this.player?.container ?? null}
       .side=${this.side}
@@ -266,19 +276,19 @@ export class TpMediaSettingsMenu extends TpMediaElement {
     >`;
     switch (entry.group) {
       case 'quality':
-        return html`<tp-menu data-group="quality"
+        return html`<tp-menu data-group="quality" .partPresentation=${settingsMenuPresentation}
           >${trigger}<tp-media-quality-radio-group></tp-media-quality-radio-group
         ></tp-menu>`;
       case 'audio':
-        return html`<tp-menu data-group="audio"
+        return html`<tp-menu data-group="audio" .partPresentation=${settingsMenuPresentation}
           >${trigger}<tp-media-audio-track-radio-group></tp-media-audio-track-radio-group
         ></tp-menu>`;
       case 'speed':
-        return html`<tp-menu data-group="speed"
+        return html`<tp-menu data-group="speed" .partPresentation=${settingsMenuPresentation}
           >${trigger}<tp-media-playback-rate-radio-group></tp-media-playback-rate-radio-group
         ></tp-menu>`;
       case 'captions':
-        return html`<tp-menu data-group="captions"
+        return html`<tp-menu data-group="captions" .partPresentation=${settingsMenuPresentation}
           >${trigger}<tp-media-captions-radio-group></tp-media-captions-radio-group
         ></tp-menu>`;
     }

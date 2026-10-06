@@ -78,8 +78,8 @@ const layoutStyles = css`
   tp-media-controls-group.time {
     flex: 1 1 auto;
     min-inline-size: 0;
-    gap: var(--tp-space-2);
-    padding-inline: var(--tp-space-2);
+    gap: var(--tp-space-3);
+    padding-inline: var(--tp-space-1);
     container: tp-media-time / inline-size;
   }
 

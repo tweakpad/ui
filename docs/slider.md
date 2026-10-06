@@ -42,6 +42,7 @@ The default composition generates one Thumb per value. Author `tp-slider-thumb` 
 | `thumbCollisionBehavior`           | `push`                        | `push`, `swap` or `none`                                    |
 | `thumbAlignment`                   | `center`                      | `center`, `edge` or `delayed-edge`                          |
 | `orientation`                      | `horizontal`                  | `horizontal` or `vertical`                                  |
+| `variant`                          | `default`                     | `default` or `bar` (reflected; see Bar variant below)       |
 | `disabled`, `readOnly`, `required` | false                         | Shared form-control states                                  |
 | `label`                            | empty                         | Optional visible label and accessible name                  |
 | `locale`, `format`                 | owner locale / default format | Locale and `Intl.NumberFormatOptions` for value output/text |
@@ -234,3 +235,12 @@ Static `slot="value"` content remains consumer-owned and is not automatically re
 | `partContracts`, `partPresentation`, motion policy | Inherited customization; see [Styling](./styling.md) and [Motion](./motion.md) |
 
 `minimum`, `maximum`, `min`, `max`, `step`, `orientation`, `disabled`, `required`, `label`, `name` and `locale` use their same-spelled attributes. Root `inputElement` exposes the first Thumb input; `thumbMetadata` and each Thumb's `inputElement` expose all inputs. Do not assign independent values to Thumbs.
+
+## Bar variant
+
+`variant="bar"` paints a thumbless scrubbing track, as used by the media time and volume sliders:
+
+- The Track is a thin translucent foreground bar; buffer ranges are a grayed layer above it; the Range is a solid foreground fill ending in a rounded **end cap**.
+- While the slider is hovered, pointed, dragged or focused, the Track thickens and the end cap gets bolder.
+- Every Thumb stays in the DOM as the keyboard and accessibility input; it paints nothing except a focus ring around the end cap on keyboard focus. Pressing anywhere on the Track still moves the value (`track-press`).
+- Presentation keys: `slider-variant-bar`, `slider-track-variant-bar`, `slider-buffer-variant-bar`, `slider-range-variant-bar`, `slider-thumb-variant-bar` (and their `-variant-default` counterparts, empty by default).

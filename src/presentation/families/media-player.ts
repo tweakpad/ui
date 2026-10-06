@@ -99,6 +99,11 @@ const definition: ComponentDefinition = {
       publicName: 'Container',
       cardinality: 'zero or one; the root takes the container role when absent',
     },
+    {
+      name: 'media-element',
+      publicName: 'Media',
+      cardinality: 'the attached native video or audio element (registered, not rendered)',
+    },
     { name: 'media-poster', publicName: 'Poster', cardinality: 'zero or one per container' },
     {
       name: 'media-poster-image',
@@ -128,6 +133,11 @@ const definition: ComponentDefinition = {
     },
     { name: 'media-controls-group', publicName: 'Controls group', cardinality: 'zero or more' },
     { name: 'media-button', publicName: 'Buttons', cardinality: 'zero or more action buttons' },
+    {
+      name: 'media-button-control',
+      publicName: 'Button control',
+      cardinality: 'the composed Button of each media button and media menu trigger',
+    },
     {
       name: 'media-button-mark',
       publicName: 'Button content',
@@ -264,54 +274,63 @@ export const mediaPlayerPresentation = definePresentation({
     'tp-media-gesture': {},
     'tp-media-play-button': {
       ':host': 'media-button',
+      'tp-button': 'media-button-control',
       "[part~='mark']": 'media-button-mark',
       "[part~='text']": 'media-button-text',
       'tp-button[data-media-text]': 'media-button-text-control',
     },
     'tp-media-mute-button': {
       ':host': 'media-button',
+      'tp-button': 'media-button-control',
       "[part~='mark']": 'media-button-mark',
       "[part~='text']": 'media-button-text',
       'tp-button[data-media-text]': 'media-button-text-control',
     },
     'tp-media-seek-button': {
       ':host': 'media-button',
+      'tp-button': 'media-button-control',
       "[part~='mark']": 'media-button-mark',
       "[part~='text']": 'media-button-text',
       'tp-button[data-media-text]': 'media-button-text-control',
     },
     'tp-media-fullscreen-button': {
       ':host': 'media-button',
+      'tp-button': 'media-button-control',
       "[part~='mark']": 'media-button-mark',
       "[part~='text']": 'media-button-text',
       'tp-button[data-media-text]': 'media-button-text-control',
     },
     'tp-media-pip-button': {
       ':host': 'media-button',
+      'tp-button': 'media-button-control',
       "[part~='mark']": 'media-button-mark',
       "[part~='text']": 'media-button-text',
       'tp-button[data-media-text]': 'media-button-text-control',
     },
     'tp-media-captions-button': {
       ':host': 'media-button',
+      'tp-button': 'media-button-control',
       "[part~='mark']": 'media-button-mark',
       "[part~='text']": 'media-button-text',
       'tp-button[data-media-text]': 'media-button-text-control',
     },
     'tp-media-playback-rate-button': {
       ':host': 'media-button',
+      'tp-button': 'media-button-control',
       "[part~='mark']": 'media-button-mark',
       "[part~='text']": 'media-button-text',
       'tp-button[data-media-text]': 'media-button-text-control',
     },
     'tp-media-remote-playback-button': {
       ':host': 'media-button',
+      'tp-button': 'media-button-control',
       "[part~='mark']": 'media-button-mark',
       "[part~='text']": 'media-button-text',
       'tp-button[data-media-text]': 'media-button-text-control',
     },
     'tp-media-live-button': {
       ':host': 'media-button',
+      'tp-button': 'media-button-control',
       "[part~='mark']": 'media-button-mark',
       "[part~='text']": 'media-button-text',
       'tp-button[data-media-text]': 'media-button-text-control',
@@ -379,6 +398,7 @@ export const mediaPlayerPresentation = definePresentation({
     },
     'tp-media-settings-menu': {
       ':host': 'media-settings-menu',
+      "tp-button[part~='trigger']": 'media-button-control',
     },
     'tp-media-video-layout': {
       ':host': 'media-layout',

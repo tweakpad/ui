@@ -47,6 +47,7 @@ import type {
   SliderThumbOwner,
   SliderValueChangeCallback,
   SliderValueCommitCallback,
+  SliderVariant,
 } from './types.js';
 import { sliderPresentation } from '../../presentation/families/slider.js';
 import { TpSliderThumb } from './slider-thumb.js';
@@ -98,6 +99,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     step: { type: Number },
     largeStep: { type: Number, attribute: 'large-step' },
     minStepsBetweenValues: { type: Number, attribute: 'min-steps-between-values' },
+    variant: { type: String, reflect: true },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
     thumbCollisionBehavior: {
       type: String,
@@ -141,6 +143,8 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   step = 1;
   largeStep = 10;
   minStepsBetweenValues = 0;
+  /** `bar` paints a thumbless track; the Thumb stays as the keyboard and accessibility input. */
+  variant: SliderVariant = 'default';
   thumbAlignment: SliderThumbAlignment = 'center';
   #collisionBehavior: SliderThumbCollisionBehavior = 'push';
   #canonicalCollisionAuthored = false;

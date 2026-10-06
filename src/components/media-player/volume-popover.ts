@@ -5,7 +5,9 @@ import type { MediaAvailability } from '../../foundation/media/availability.js';
 import type { ChangeReason } from '../../foundation/types.js';
 
 import { TpMediaElement, type MediaPlayerApi } from './context.js';
+import { mediaPopupSurface } from './styles.js';
 import { TpMediaMuteButton } from './buttons.js';
+import type { PartPresentation } from '../../presentation/resolver.js';
 import { TpPopover } from '../popover/popover.js';
 import { TpMediaVolumeSlider } from './volume-slider.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
@@ -31,6 +33,23 @@ export function volumePopupUsable(attached: boolean, availability: MediaAvailabi
  * @csspart mute-button - The composed mute button.
  * @csspart volume-slider - The composed volume slider.
  */
+/**
+ * The volume popup is the media overlay surface (Video.js default skin volume popover): a
+ * frosted pill around a short vertical bar slider. The surface variables come from the player
+ * container (`mediaSurfaceVariables`), which also makes them opaque under user preferences.
+ */
+const volumePopupPresentation: PartPresentation = {
+  'popover-content': {
+    styleHook: {
+      ...mediaPopupSurface,
+      'border-radius': 'var(--tp-radius-full)',
+      padding: 'var(--tp-space-3) var(--tp-space-1)',
+      'min-inline-size': '0',
+      '--_tp-slider-vertical-length': 'calc(var(--tp-spacing) * 22.5)',
+    },
+  },
+};
+
 export class TpMediaVolumePopover extends TpMediaElement {
   static tagName = 'tp-media-volume-popover';
   /** Library elements this element renders; defining it defines them too. */
@@ -108,6 +127,7 @@ export class TpMediaVolumePopover extends TpMediaElement {
     if (!this.usable) return mute(undefined);
     return html`<tp-popover
       part="popover"
+      .partPresentation=${volumePopupPresentation}
       .container=${this.player?.container ?? null}
       .openOnHover=${true}
       .openDelay=${this.openDelay}

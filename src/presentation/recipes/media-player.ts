@@ -40,6 +40,19 @@ export const mediaPlayerAppearance: PresentationDictionary = {
       },
     },
   ],
+  // Native captions stay native (platform caption preferences apply) and lift above visible
+  // controls by the player's published offset (Video.js captions.css). Engines without this
+  // pseudo-element keep native cue placement.
+  'media-element': [
+    {
+      selector: '&::-webkit-media-text-track-container',
+      declarations: {
+        translate: '0 calc(-1 * var(--tp-media-caption-offset, 0px))',
+        'font-family': 'var(--tp-font-sans)',
+        transition: motionTransition(['translate']),
+      },
+    },
+  ],
   'media-poster': [{ declarations: { transition: motionTransition(['opacity', 'visibility']) } }],
   'media-title': [
     {
@@ -69,11 +82,38 @@ export const mediaPlayerAppearance: PresentationDictionary = {
       declarations: {
         'inset-block-start': 'calc(-1 * var(--tp-space-16))',
         background:
-          'linear-gradient(to top, color-mix(in oklab, var(--tp-background) 70%, transparent), transparent)',
+          'linear-gradient(to top in oklab, color-mix(in oklab, var(--tp-background) 45%, transparent), transparent)',
       },
     },
   ],
-  'media-controls-group': [{ declarations: { gap: 'var(--tp-space-1)' } }],
+  // Groups placed directly in Controls over video are frosted, translucent pills (Video.js default
+  // skin surface): a 10% foreground surface with backdrop blur, a hairline and an inner highlight.
+  // Contrast and transparency preferences make them opaque (mediaSurfacePreferenceStyles).
+  'media-controls-group': [
+    { declarations: { gap: 'var(--tp-space-1)' } },
+    {
+      selector: 'tp-media-controls:not([visibility="always"]) > &',
+      declarations: {
+        padding: 'var(--tp-space-1)',
+        'border-radius': 'var(--tp-radius-full)',
+        background: 'var(--_tp-media-surface)',
+        'backdrop-filter': 'var(--_tp-media-surface-filter)',
+        'box-shadow': 'var(--_tp-media-surface-edge)',
+      },
+    },
+  ],
+  // The composed Button inside each media button: a round control with a light highlight over
+  // video instead of the page's ghost fill.
+  'media-button-control': [
+    { selector: '&::part(button)', declarations: { 'border-radius': 'var(--tp-radius-full)' } },
+    {
+      selector: '&::part(button)::before',
+      declarations: {
+        'border-radius': 'inherit',
+        'background-color': 'color-mix(in oklab, var(--tp-foreground) 12%, transparent)',
+      },
+    },
+  ],
   // Buttons: the composed `tp-button` (ghost, icon) keeps its recipe; these keys adapt the
   // icon/text region and widen text-bearing buttons (rate, live) beyond the square icon size.
   'media-button-mark': [{ declarations: { gap: 'var(--tp-space-1)' } }],
@@ -119,6 +159,12 @@ export const mediaPlayerAppearance: PresentationDictionary = {
         'font-size': 'var(--tp-text-sm)',
         'font-variant-numeric': 'tabular-nums',
       },
+    },
+    {
+      // A plain clock matches the toggle button's inline padding so both sides of the
+      // timeline keep the same spacing.
+      selector: '&:not([toggle]):not([type="pointer"])',
+      declarations: { 'padding-inline': 'var(--tp-space-2)' },
     },
   ],
   'media-time-value': [
@@ -177,6 +223,28 @@ export const mediaPlayerAppearance: PresentationDictionary = {
     {
       selector: ':host(tp-media-seek-indicator) &',
       declarations: { background: 'transparent', 'font-size': 'var(--tp-text-base)' },
+    },
+    {
+      // Status (Video.js playback status indicator): a round, blurred mark that grows in.
+      selector: ':host(tp-media-status-indicator) &',
+      declarations: {
+        padding: 'var(--tp-space-5)',
+        'border-radius': 'var(--tp-radius-full)',
+        background: 'color-mix(in oklab, var(--tp-background) 35%, transparent)',
+        'backdrop-filter': 'blur(calc(var(--tp-spacing) * 2.5))',
+        transition: motionTransition(['opacity', 'scale']),
+      },
+    },
+    {
+      selector: ':host(tp-media-status-indicator) & [part~="icon"]',
+      declarations: {
+        'inline-size': 'calc(var(--tp-spacing) * 8.5)',
+        'block-size': 'calc(var(--tp-spacing) * 8.5)',
+      },
+    },
+    {
+      selector: ':host(tp-media-status-indicator:is([data-starting-style], [data-ending-style])) &',
+      declarations: { opacity: '0', scale: '0.85' },
     },
     {
       selector: ':host(tp-media-volume-indicator) &',

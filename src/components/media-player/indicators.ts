@@ -284,15 +284,26 @@ const STATUS_ICONS: Readonly<Record<MediaIndicatorStatus, MediaIconName>> = {
 export class TpMediaStatusIndicator extends TpMediaIndicatorElement<MediaStatusDetails> {
   static tagName = 'tp-media-status-indicator';
 
+  // A centered mark, not a frame-filling panel (Video.js PlaybackStatusIndicator).
+  static override styles = [
+    TpMediaIndicatorElement.styles,
+    css`
+      :host {
+        place-items: center;
+      }
+    `,
+  ];
+
   protected process(input: MediaInputAction, snapshot: MediaState): MediaStatusDetails | null {
     return statusIndicatorDetails(input, snapshot, this.mediaMessages, this.mediaLocale);
   }
 
   protected renderPayload(payload: MediaStatusDetails): unknown {
-    return html`${iconTemplate({ slot: payload.status, name: STATUS_ICONS[payload.status] })}<span
-        part="value"
-        >${payload.value ?? payload.label}</span
-      >`;
+    // The icon is the feedback; text appears only for a value (volume percent). The label stays
+    // in the player's announcer, as the indicator is decorative.
+    return html`${iconTemplate({ slot: payload.status, name: STATUS_ICONS[payload.status] })}${
+      payload.value === null ? nothing : html`<span part="value">${payload.value}</span>`
+    }`;
   }
 
   protected payloadMarkers(payload: MediaStatusDetails | null): MediaMarkers {

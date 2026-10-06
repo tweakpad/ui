@@ -44,8 +44,12 @@ export interface SliderThumbState extends Record<string, unknown> {
   label: string;
   valueText: string;
 }
+/** `bar`: a thumbless track for scrubbing (media timelines); the Thumb keeps its input. */
+export type SliderVariant = 'default' | 'bar';
+
 export interface SliderThumbOwner {
   readonly orientation: 'horizontal' | 'vertical';
+  readonly variant: SliderVariant;
   thumbState(thumb: HTMLElement): SliderThumbState;
   thumbContract(thumb: HTMLElement): ComponentPartContract;
   thumbPosition(thumb: HTMLElement): Record<string, string>;

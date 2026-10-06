@@ -57,6 +57,45 @@ export const mediaOverlayStyles = css`
  */
 const HIGH_CONTRAST = '(prefers-reduced-transparency: reduce), (prefers-contrast: more)';
 
+/**
+ * The frosted overlay surface (Video.js default skin: a translucent surface with backdrop
+ * blur) as private variables on the media container, so control groups and portaled popups
+ * (volume, menus) inherit one surface. Preferences make it opaque without blur.
+ */
+export const mediaSurfaceVariables = css`
+  :host([data-media-container]) {
+    /* Darker than the upstream 10% white surface so text keeps contrast over bright footage. */
+    --_tp-media-surface: color-mix(in oklab, var(--tp-background) 45%, transparent);
+    --_tp-media-surface-filter: blur(calc(var(--tp-spacing) * 5)) saturate(110%);
+    --_tp-media-surface-edge:
+      0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-background) 15%, transparent),
+      inset 0 var(--tp-border-width) 0 0 color-mix(in oklab, var(--tp-foreground) 10%, transparent);
+  }
+
+  @media ${unsafeCSS(HIGH_CONTRAST)} {
+    :host([data-media-container]) {
+      --_tp-media-surface: var(--tp-background);
+      --_tp-media-surface-filter: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    :host([data-media-container]) {
+      --_tp-media-surface: Canvas;
+      --_tp-media-surface-filter: none;
+      --_tp-media-surface-edge: 0 0 0 1px CanvasText;
+    }
+  }
+`;
+
+/** Inline paint for portaled media popups (volume, settings), reading the container surface. */
+export const mediaPopupSurface = {
+  background: 'var(--_tp-media-surface)',
+  'backdrop-filter': 'var(--_tp-media-surface-filter)',
+  'box-shadow': 'var(--_tp-media-surface-edge)',
+  'border-color': 'transparent',
+} as const;
+
 /** Opaque surface under high contrast; system colors under forced colors. */
 export function mediaSurfacePreferenceStyles(selector: string): CSSResult {
   const target = unsafeCSS(selector);

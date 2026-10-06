@@ -1,7 +1,7 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { TpMediaElement } from './context.js';
-import { mediaContainerStyles } from './styles.js';
+import { mediaContainerStyles, mediaSurfaceVariables } from './styles.js';
 
 /**
  * `tp-media-container`: optional container part (`mp-f-container`). When present inside a
@@ -20,6 +20,7 @@ export class TpMediaContainer extends TpMediaElement {
   static override styles = [
     TpElement.styles,
     mediaContainerStyles,
+    mediaSurfaceVariables,
     css`
       :host {
         display: block;

@@ -62,7 +62,7 @@ import {
   mediaTypeOf,
   type MediaType,
 } from './markers.js';
-import { mediaContainerStyles } from './styles.js';
+import { mediaContainerStyles, mediaSurfaceVariables } from './styles.js';
 import { mediaPlayerPresentation } from '../../presentation/families/media-player.js';
 
 export type MediaHotkeysMode = 'default' | 'none';
@@ -171,6 +171,7 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
   static override styles = [
     TpElement.styles,
     mediaContainerStyles,
+    mediaSurfaceVariables,
     css`
       :host {
         display: contents;
@@ -538,6 +539,7 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
     this.#connection = undefined;
     this.#scheduler = undefined;
     this.#unbindContainer();
+    this.#registerMediaPart(null);
     // Detach synchronously; destroy two frames later unless the root reconnects (a DOM move).
     this.#store.detach();
     const store = this.#store;
@@ -689,6 +691,7 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
     );
     const media = discoverMedia(this.#registrations, candidates);
     this.#mediaType = mediaTypeOf(media);
+    this.#registerMediaPart(media);
     if (media) this.#store.attach({ media, container, adapter: this.mediaAdapter });
     else {
       if (this.#store.attached) this.#store.detach();
@@ -696,6 +699,21 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
     }
     this.#observeControls();
     this.#applyMarkers();
+  }
+
+  #mediaPart: { element: HTMLElement; release: () => void } | undefined;
+
+  /** The attached media is a presentation part, so recipes can lift its native captions. */
+  #registerMediaPart(media: unknown): void {
+    if (media === this.#mediaPart?.element) return;
+    this.#mediaPart?.release();
+    this.#mediaPart =
+      media instanceof HTMLElement
+        ? {
+            element: media,
+            release: this.presentationController.registerPart('media-element', media),
+          }
+        : undefined;
   }
 
   #scheduleNoMediaDiagnostic(): void {

@@ -62,7 +62,9 @@ export const sliderStyles = css`
     flex-direction: column;
     justify-content: center;
     inline-size: var(--tp-control-height-md);
-    min-block-size: calc(var(--tp-spacing) * 40);
+
+    /* Composing library controls (the media volume popup) may shorten the vertical extent. */
+    min-block-size: var(--_tp-slider-vertical-length, calc(var(--tp-spacing) * 40));
     flex: 1;
     block-size: auto;
   }

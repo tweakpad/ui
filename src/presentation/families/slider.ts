@@ -13,12 +13,24 @@ const definition: ComponentDefinition = {
       values: ['horizontal', 'vertical'],
       default: 'horizontal',
     },
+    {
+      // Thumbless scrubbing track (media timelines); the Thumb keeps its native input.
+      name: 'variant',
+      values: ['default', 'bar'],
+      default: 'default',
+    },
   ],
   parts: [
     {
       name: 'slider',
       publicName: 'Root',
-      presentationKeys: ['slider', 'slider-orientation-horizontal', 'slider-orientation-vertical'],
+      presentationKeys: [
+        'slider',
+        'slider-orientation-horizontal',
+        'slider-orientation-vertical',
+        'slider-variant-default',
+        'slider-variant-bar',
+      ],
       cardinality: 'exactly one public owner host per control instance',
     },
     {
@@ -28,6 +40,8 @@ const definition: ComponentDefinition = {
         'slider-track',
         'slider-track-orientation-horizontal',
         'slider-track-orientation-vertical',
+        'slider-track-variant-default',
+        'slider-track-variant-bar',
       ],
       cardinality:
         'zero or one descendant of Root; cited behavior sets any required-presence condition',
@@ -39,6 +53,8 @@ const definition: ComponentDefinition = {
         'slider-range',
         'slider-range-orientation-horizontal',
         'slider-range-orientation-vertical',
+        'slider-range-variant-default',
+        'slider-range-variant-bar',
       ],
       cardinality:
         'zero or one descendant of Root; cited behavior sets any required-presence condition',
@@ -50,6 +66,8 @@ const definition: ComponentDefinition = {
         'slider-thumb',
         'slider-thumb-orientation-horizontal',
         'slider-thumb-orientation-vertical',
+        'slider-thumb-variant-default',
+        'slider-thumb-variant-bar',
       ],
       cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
     },
@@ -83,6 +101,8 @@ const definition: ComponentDefinition = {
         'slider-buffer',
         'slider-buffer-orientation-horizontal',
         'slider-buffer-orientation-vertical',
+        'slider-buffer-variant-default',
+        'slider-buffer-variant-bar',
       ],
       cardinality: 'zero or more descendants of Track; one per normalized buffered range',
     },

@@ -5,7 +5,7 @@ import { TpFormElement } from '../../foundation/form-element.js';
 import { bindPart, mergePartProperties, renderPart } from '../../foundation/part.js';
 import { createId } from '../../foundation/id.js';
 import { sliderThumbStyles } from './styles.js';
-import type { SliderThumbOwner, SliderThumbState } from './types.js';
+import type { SliderThumbOwner, SliderThumbState, SliderVariant } from './types.js';
 import { sliderPresentation } from '../../presentation/families/slider.js';
 
 /** Native input/Field binding only. The containing Slider owns all value/form transactions. */
@@ -67,6 +67,10 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
   };
   get slider(): SliderThumbOwner | null {
     return this.#owner;
+  }
+  /** The owning Slider's variant, so the Thumb resolves the same presentation axis. */
+  get variant(): SliderVariant {
+    return this.#owner?.variant ?? 'default';
   }
   set slider(owner: SliderThumbOwner | null) {
     if (owner === this.#owner) return;

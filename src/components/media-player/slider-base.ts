@@ -178,6 +178,7 @@ export abstract class MediaSliderElement extends TpMediaElement {
         exportparts=${MEDIA_SLIDER_EXPORTPARTS}
         dir=${config.direction ?? nothing}
         orientation=${config.orientation}
+        variant="bar"
         aria-label=${config.label}
         .formAssociatedValue=${false}
         .minimum=${config.minimum}
@@ -305,15 +306,18 @@ export abstract class MediaSliderElement extends TpMediaElement {
     if (!player || !slider || this.#press || this.#config?.disabled || slider.indeterminate) return;
     const window = this.ownerDocument.defaultView;
     if (!window) return;
+    // Bubble-phase listeners run after the Slider's own release on its root, so its commit (the
+    // seek) is proposed before the press ends and the displayed value returns to the playhead.
+    // A capture listener plus microtask ran before that release under real input, and the commit
+    // then saw no change and seeking never happened.
     const end = (pointerEvent: Event) => {
       if ((pointerEvent as PointerEvent).pointerId !== event.pointerId) return;
-      // Let the Slider finish its own release (commit) before the lock and drag state end.
-      queueMicrotask(() => this.#endPress());
+      this.#endPress();
     };
     const types = ['pointerup', 'pointercancel', 'lostpointercapture'] as const;
     for (const type of types) {
       this.addEventListener(type, end);
-      window.addEventListener(type, end, true);
+      window.addEventListener(type, end);
     }
     this.#press = {
       player,
@@ -322,7 +326,7 @@ export abstract class MediaSliderElement extends TpMediaElement {
       cleanup: () => {
         for (const type of types) {
           this.removeEventListener(type, end);
-          window.removeEventListener(type, end, true);
+          window.removeEventListener(type, end);
         }
       },
     };
