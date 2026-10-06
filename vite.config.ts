@@ -44,7 +44,14 @@ export default defineConfig({
       cssFileName: 'styles',
     },
     rollupOptions: {
-      external: ['lit', /^lit\//],
+      external: ['lit', /^lit\//, /^@lit\//],
+      output: {
+        // One output module per source module: with package `sideEffects`, consumer bundlers
+        // drop every module a page does not import, so one component ships only its own graph.
+        preserveModules: true,
+        preserveModulesRoot: 'src',
+        entryFileNames: '[name].js',
+      },
     },
     sourcemap: true,
   },

@@ -134,7 +134,7 @@ class ShaderTransition implements CarouselEffectInstance {
     this.#canvas.style.display = 'none';
     for (const item of [current, next]) {
       const media = carouselItemMedia(item);
-      if (media) this.#styles.set(media, 'visibility', 'visible');
+      if (media) this.#styles.set(media, 'visibility', 'inherit');
     }
     renderCrossfade(this.#styles, frame);
   }
@@ -223,7 +223,7 @@ class ShaderTransition implements CarouselEffectInstance {
     this.#canvas.style.display = 'none';
     for (const item of frame.items) {
       const media = carouselItemMedia(item);
-      if (media) this.#styles.set(media, 'visibility', 'visible');
+      if (media) this.#styles.set(media, 'visibility', 'inherit');
       // Shells must not form stacking contexts, so layers can rise above the canvas.
       this.#styles.set(item.shell, 'opacity', '1');
       this.#styles.set(item.shell, 'z-index', 'auto');

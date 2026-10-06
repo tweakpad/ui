@@ -31,7 +31,7 @@ const meta: Meta<CarouselStoryArgs> = {
     layout: 'padded',
     docs: {
       description: { component: documentation },
-      examples: [...carouselExamples, ...carouselEffectExamples],
+      examples: carouselExamples,
       source: { code: carouselDemoSource() },
     },
   },
@@ -130,3 +130,24 @@ export const Vertical: Story = {
     },
   },
 };
+
+/** Effect demos are stories so each gets the canvas toolbar and an isolated view. */
+const effectStory = (index: number): Story => {
+  const example = carouselEffectExamples[index]!;
+  return {
+    name: example.title,
+    render: example.render,
+    parameters: {
+      controls: { disable: true },
+      docs: {
+        description: { story: example.description },
+        source: { code: example.code, language: 'html' },
+      },
+    },
+  };
+};
+export const ShaderTransition = effectStory(0);
+export const Crossfade = effectStory(1);
+export const Layered = effectStory(2);
+export const Parallax = effectStory(3);
+export const Focus = effectStory(4);

@@ -1,6 +1,5 @@
-import { render, nothing } from 'lit';
+import { getCompatibleStyle, nothing, render } from 'lit';
 import type { CSSResultGroup } from 'lit';
-import { getCompatibleStyle } from '@lit/reactive-element/css-tag.js';
 import { setLogicalPortalOwner } from './portal-ownership.js';
 import { GeneratedStyleResource } from './generated-style.js';
 export { logicalPortalOwner } from './portal-ownership.js';

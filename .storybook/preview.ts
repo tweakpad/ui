@@ -10,7 +10,12 @@ const preview = definePreview({
   parameters: {
     a11y: { test: 'error' },
     controls: { expanded: true },
-    docs: { page: DocumentationPage, source: { format: false } },
+    docs: {
+      page: DocumentationPage,
+      source: { format: false },
+      // Every story on a docs page keeps the canvas toolbar (reload, zoom, open isolated).
+      canvas: { withToolbar: true },
+    },
     layout: 'centered',
   },
 });

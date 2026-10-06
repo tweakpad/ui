@@ -748,7 +748,9 @@ export class TpCarousel<T = unknown> extends TpElement {
     this.#projection = projection;
     while (this.#fillers.length < projection.loop.fillers)
       this.#fillers.push(Symbol('carousel-filler'));
-    this.#fillers.length = projection.loop.mode === 'continuous' ? projection.loop.fillers : 0;
+    // Stacked effects present loops through wrapped item progress; DOM order never changes.
+    const reorder = projection.loop.mode === 'continuous' && !this.#stacked;
+    this.#fillers.length = reorder ? projection.loop.fillers : 0;
     const ids: Array<CarouselId | symbol> = [
       ...projection.items.filter((item) => !item.hidden).map((item) => item.id),
       ...this.#fillers,
@@ -771,7 +773,7 @@ export class TpCarousel<T = unknown> extends TpElement {
         : snapshot.selectedId;
     this.#order = this.#order.filter((id) => ids.includes(id));
     for (const id of ids) if (!this.#order.includes(id)) this.#order.push(id);
-    if (projection.loop.mode === 'continuous' && placementId !== null) {
+    if (reorder && placementId !== null) {
       const active = this.#order.indexOf(placementId);
       this.#order = [
         ...carouselLoopPermutation(
@@ -879,9 +881,9 @@ export class TpCarousel<T = unknown> extends TpElement {
       }
       physical += size + projection.layout.gap;
     }
-    if (projection.loop.mode !== 'continuous') this.#physicalOffset = 0;
+    if (!reorder) this.#physicalOffset = 0;
     if (
-      projection.loop.mode === 'continuous' &&
+      reorder &&
       before &&
       anchor?.isConnected &&
       oldOrder.some((id, index) => this.#order[index] !== id)

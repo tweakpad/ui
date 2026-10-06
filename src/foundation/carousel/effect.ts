@@ -208,7 +208,21 @@ export class EffectPresenter implements CarouselPresenter {
   async move(position: number, request: CarouselNavigationRequest): Promise<void> {
     if (this.#disposed) return;
     this.#stop();
-    const start = this.#position;
+    let start = this.#position;
+    if (this.effect.layout === 'stack') {
+      // Stacked loops present wrapped progress, so whole cycles are invisible: start from the
+      // equivalent position nearest the destination to travel the short way across the seam.
+      const projection = this.host.controller()?.projection;
+      const layout = projection?.layout;
+      const cycle =
+        projection?.loop.mode === 'continuous' && layout
+          ? layout.sizes.reduce((sum, size) => sum + size + layout.gap, 0)
+          : 0;
+      if (cycle > 0) {
+        start = position + ((((start - position + cycle / 2) % cycle) + cycle) % cycle) - cycle / 2;
+        this.#position = start;
+      }
+    }
     if (
       request.speed === 0 ||
       Math.abs(start - position) < 0.001 ||
