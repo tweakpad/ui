@@ -2570,6 +2570,13 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
         completion: 'non-blocking',
       },
       {
+        name: 'transition',
+        target: 'carousel-viewport',
+        kind: 'state',
+        phases: ['change'],
+        completion: 'non-blocking',
+      },
+      {
         name: 'auto-height',
         target: 'carousel-viewport',
         kind: 'state',
@@ -2614,6 +2621,12 @@ export const componentDefinitions: readonly ComponentDefinition[] = [
           'carousel-track-orientation-vertical',
         ],
         cardinality: 'One in Viewport',
+      },
+      {
+        name: 'carousel-effect-surface',
+        publicName: 'Effect surface',
+        presentationKeys: ['carousel-effect-surface'],
+        cardinality: 'Zero or one in Viewport; present while an effect is active',
       },
       {
         name: 'carousel-item',

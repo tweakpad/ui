@@ -1,0 +1,52 @@
+.carousel-effect-demo {
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--tp-space-4);
+  inline-size: 100%;
+  max-inline-size: 52rem;
+  margin-inline: auto;
+}
+
+.carousel-effect-demo tp-carousel {
+  inline-size: 100%;
+}
+
+.carousel-effect-slide {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--tp-radius-lg);
+  background: var(--tp-muted);
+}
+
+.carousel-effect-demo--cards .carousel-effect-slide {
+  aspect-ratio: 4 / 5;
+}
+
+.carousel-effect-slide img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.carousel-effect-caption {
+  position: absolute;
+  inset-inline-start: var(--tp-space-6);
+  inset-block-end: var(--tp-space-6);
+  display: grid;
+  gap: var(--tp-space-1);
+  margin: 0;
+  color: oklch(100% 0 0deg);
+  text-shadow: 0 1px 12px oklch(0% 0 0deg / 55%);
+}
+
+.carousel-effect-caption strong {
+  font-size: var(--tp-text-2xl);
+  font-weight: var(--tp-font-semibold);
+}
+
+.carousel-effect-caption span {
+  font-size: var(--tp-text-sm);
+}

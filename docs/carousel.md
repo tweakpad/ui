@@ -360,7 +360,8 @@ release pending work; passive observation cannot undo an already committed value
 Public parts are `carousel`, `carousel-viewport`, `carousel-track`, `carousel-item`,
 `carousel-previous`, `carousel-next`, `carousel-indicator`, `carousel-controls`,
 `carousel-status`, `carousel-scrollbar`, `carousel-thumb`,
-`carousel-autoplay-control`, and `carousel-announcements`. Legacy `root`, `viewport`,
+`carousel-autoplay-control`, `carousel-announcements`, and, while an effect is active,
+`carousel-effect-surface`. Legacy `root`, `viewport`,
 `track`, `previous`, `next`, `controls`, and `status` aliases remain available.
 Action parts reach the actual Button through supported part registration/export.
 
@@ -378,11 +379,101 @@ content operable; offscreen shells are inert. Focus has a fallback before a shel
 becomes inert. One polite region announces accepted manual settlement, not progress
 frames or timer advances.
 
-Motion roles are `track`, `auto-height`, and `scrollbar-visibility`: state motions
-with phase `change` and non-blocking completion. Shared motion policy, consumer
-drivers, cancellation and bounded completion apply. Reduced motion and explicit
-zero-speed requests settle immediately.
+Motion roles are `track`, `transition` (effects only), `auto-height`, and
+`scrollbar-visibility`: state motions with phase `change` and non-blocking completion.
+Shared motion policy, consumer drivers, cancellation and bounded completion apply.
+Reduced motion and explicit zero-speed requests settle immediately.
 
-Grid/multirow layout, unsnapped free momentum, zoom, effects, parallax, linked
-controllers, thumbnail controllers, URL routing, raw HTML renderers and a public
-plugin/module injection system are outside this Carousel contract.
+## Effects
+
+Basic usage needs no effect: the track translates between items. Assign an effect object
+to `effect` (property only) for an advanced presentation. Effects are created by
+factories you import, so a page that uses none bundles none.
+
+```js
+import { carouselShaderEffect } from '@tweakpad/ui';
+
+carousel.effect = carouselShaderEffect({ variant: 'displace' });
+carousel.effect = null; // back to the moving track
+```
+
+| Factory                     | Layout | Look                                                                                       |
+| --------------------------- | ------ | ------------------------------------------------------------------------------------------ |
+| `carouselShaderEffect()`    | stack  | WebGL2 transition over each item's `data-carousel-media`; `wipe`, `displace`, `chromatic`. |
+| `carouselCrossfadeEffect()` | stack  | Opacity transition; the outgoing item stays under the incoming one for `overlap`.          |
+| `carouselLayeredEffect()`   | stack  | Media turns away and in with perspective; `data-carousel-layer` elements rise in order.    |
+| `carouselParallaxEffect()`  | track  | Media travels more slowly than its item (`depth`).                                         |
+| `carouselFocusEffect()`     | track  | Items dim and shrink with distance from alignment; layers reveal as an item arrives.       |
+
+Every factory accepts `duration` (ms) and `easing` (CSS easing), used when a navigation
+does not set a speed, plus the options in the table below.
+
+- **Stack** effects keep every item at the viewport origin and force one item per view
+  and per movement. Conflicting layout options are overridden with a `tp-diagnostic`.
+- **Track** effects keep the moving track, so any layout, loop or centering works.
+- Effects need the transform transport. With `transport: 'scroll'` the effect is
+  ignored and a diagnostic reports it.
+
+Effects are pure functions of the carousel position. Dragging scrubs them, interrupting
+a transition freezes them where they are, and reversing plays them backwards. Under
+reduced motion they settle instantly. Item semantics, labels, inert handling, focus
+fallback and announcements are unchanged.
+
+### Authoring hooks
+
+- `data-carousel-media` marks the one media element per item that effects transform.
+  The shader requires an `img`, `video` or `canvas`; cross-origin media needs
+  `crossorigin="anonymous"` and a CORS-enabled server.
+- `data-carousel-layer="n"` marks text or decoration that reveals in order `n`. With
+  the shader, layers stay live DOM above the canvas. Statically positioned layers are
+  made relative so they can rise above it.
+- While an effect is active each item shell exposes `--tp-carousel-item-progress`
+  (0 aligned, positive upcoming, negative passed, loop-wrapped) and
+  `data-effect-role` (`current`, `outgoing` or `incoming`) for your own CSS.
+
+### Effect options
+
+| Factory   | Options (defaults)                                                                                                     |
+| --------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Shader    | `variant` (`wipe`), `intensity` (0.35), `softness` (0.08), `scale` (3), `angle` (axis), `rise` (24), `duration` (1200) |
+| Crossfade | `overlap` (0.5), `duration` (600)                                                                                      |
+| Layered   | `perspective` (1200), `rotation` (70), `depthScale` (0.6), `rise` (32), `stagger` (0.12), `duration` (1000)            |
+| Parallax  | `depth` (0.3), `duration` (900)                                                                                        |
+| Focus     | `dim` (0.35), `scale` (0.9), `rise` (24), `duration` (800)                                                             |
+
+### Shader behavior
+
+- **Shared context:** all shader carousels on a page share one WebGL2 context. Each
+  carousel displays frames in its own canvas, so many carousels never exhaust the
+  browser's context limit.
+- **Rendering:** the shader compiles during idle time and renders only while
+  transitioning. Neighbouring media is uploaded ahead of time as sRGB textures with
+  mipmaps, and blended in linear light with cover-fit and `object-position`.
+- **Crossfade fallback**, with one diagnostic per reason, when:
+  - WebGL2 is unavailable or the context is lost (it resumes after restoration);
+  - the media is not ready or is cross-origin without CORS;
+  - an item has no usable `data-carousel-media`;
+  - the carousel is off-screen.
+
+### Custom effects
+
+`CarouselEffect` objects have:
+
+- `name` and `layout` (`track` or `stack`);
+- optional `duration`, `easing` and `constrain(input, diagnose)`;
+- `attach(context)`, which returns `{ frame(frame), update?(), detach() }`.
+
+Each frame provides:
+
+- `phase` (`drag`, `animate`, `settle`), `position`, `velocity` (items per second), `direction`;
+- `items`, each with `progress`, `shell` and `content`;
+- `current`, `next` and `amount`, the pair being transitioned and how far.
+
+The context provides the viewport, track, effect surface, orientation, direction,
+`invalidate()` and `diagnose()`. Restore everything you change in `detach()`. Helpers
+`stackEffectConstraint`, `carouselItemProgress` and `mergeCarouselOptions` are exported.
+
+Grid/multirow layout, unsnapped free momentum, zoom, linked controllers, thumbnail
+controllers, URL routing, raw HTML renderers and a public plugin/module injection
+system are outside this Carousel contract. Effects are typed presentation objects,
+not installable modules.

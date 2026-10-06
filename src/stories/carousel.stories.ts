@@ -2,6 +2,7 @@ import { html } from 'lit';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import documentation from '../../docs/carousel.md?raw';
 import { carouselExamples, carouselDemoSource } from './carousel.examples.js';
+import { carouselEffectExamples } from './carousel-effects.examples.js';
 import './carousel.stories.css';
 
 interface CarouselStoryArgs {
@@ -30,7 +31,7 @@ const meta: Meta<CarouselStoryArgs> = {
     layout: 'padded',
     docs: {
       description: { component: documentation },
-      examples: carouselExamples,
+      examples: [...carouselExamples, ...carouselEffectExamples],
       source: { code: carouselDemoSource() },
     },
   },

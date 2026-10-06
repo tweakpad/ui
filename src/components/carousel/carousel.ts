@@ -1,3 +1,4 @@
+import { EffectPresenter, type CarouselEffect } from '../../foundation/carousel/effect.js';
 import { html, nothing, type PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { cache } from 'lit/directives/cache.js';
@@ -96,6 +97,7 @@ export class TpCarousel<T = unknown> extends TpElement {
     options: { attribute: false },
     onControllerChange: { attribute: false },
     label: { type: String },
+    effect: { attribute: false },
   };
   static override styles = [TpElement.styles, scrollbarStyles, carouselStyles];
   value: number | undefined;
@@ -112,6 +114,10 @@ export class TpCarousel<T = unknown> extends TpElement {
   options: CarouselOptions = {};
   onControllerChange: ((controller: CarouselController | null) => void) | undefined;
   label = '';
+  /** Presentation extension created by an effect factory; null keeps the moving track. */
+  effect: CarouselEffect | null = null;
+  #effectPresenter: EffectPresenter | null = null;
+  #appliedEffect: CarouselEffect | null = null;
   #initialIndex = 0;
   #initialIndexExplicit = false;
   #controller: CarouselController | null = null;
@@ -308,6 +314,8 @@ export class TpCarousel<T = unknown> extends TpElement {
     this.#indicatorGuard.reset();
     this.#transport?.dispose();
     this.#transport = null;
+    this.#effectPresenter = null;
+    this.#appliedEffect = null;
     this.#trackStyles?.dispose();
     this.#trackStyles = undefined;
     this.#scope?.dispose();
@@ -336,7 +344,12 @@ export class TpCarousel<T = unknown> extends TpElement {
     super.updated(changed);
     if (!this.#controller) {
       this.#initialize();
+      this.#applyEffect();
       return;
+    }
+    if (changed.has('effect') || changed.has('options')) {
+      this.#applyEffect();
+      if (changed.has('effect')) void this.#controller.update();
     }
     if (
       [
@@ -365,6 +378,63 @@ export class TpCarousel<T = unknown> extends TpElement {
     this.#syncVisibility();
   }
   readonly #tabInert = new Set<CarouselId>();
+  readonly #effectDiagnostics = new Set<string>();
+  /** The effect in force; the native scroll transport cannot host effects. */
+  get #activeEffect(): CarouselEffect | null {
+    return this.effect && this.options.transport !== 'scroll' ? this.effect : null;
+  }
+  get #stacked(): boolean {
+    return this.#activeEffect?.layout === 'stack';
+  }
+  #effectDiagnose(message: string): void {
+    if (this.#effectDiagnostics.has(message)) return;
+    this.#effectDiagnostics.add(message);
+    this.#diagnose(message);
+  }
+  #applyEffect(): void {
+    if (this.effect && this.options.transport === 'scroll')
+      this.#effectDiagnose(
+        'Carousel effects require the transform transport; the effect is ignored.',
+      );
+    const effect = this.#activeEffect,
+      transport = this.#transport,
+      elements = this.#elements;
+    if (!transport || !elements || effect === this.#appliedEffect) return;
+    this.#appliedEffect = effect;
+    this.#effectPresenter = null;
+    if (!effect) {
+      transport.presenter = null;
+      this.requestUpdate();
+      return;
+    }
+    try {
+      const presenter = new EffectPresenter(effect, {
+        owner: this,
+        viewport: elements.viewport,
+        track: elements.track,
+        controller: () => this.#controller,
+        surface: () =>
+          this.renderRoot.querySelector<HTMLElement>('[part~="carousel-effect-surface"]') ??
+          elements.viewport,
+        logicalOffset: () => this.#physicalOffset,
+        items: () =>
+          (this.#projection?.items ?? []).flatMap((item) => {
+            const shell = this.#shells.get(item.id)?.element;
+            return shell && !item.hidden
+              ? [{ id: item.id, index: item.index, shell, content: item.element ?? shell }]
+              : [];
+          }),
+        dragging: () => this.#dragging,
+        diagnose: (message, error) => this.#diagnose(message, error),
+      });
+      this.#effectPresenter = presenter;
+      transport.presenter = presenter;
+    } catch (error) {
+      this.#diagnose(`Carousel ${effect.name} effect failed to attach.`, error);
+      transport.presenter = null;
+    }
+    this.requestUpdate();
+  }
   #initialize(): void {
     const elements = this.#elements;
     if (!this.isConnected || this.#controller || !elements) return;
@@ -453,6 +523,17 @@ export class TpCarousel<T = unknown> extends TpElement {
     });
   }
   #read(): CarouselInput {
+    const input = this.#readInput();
+    const effect = this.#activeEffect;
+    if (!effect?.constrain) return input;
+    try {
+      return effect.constrain(input, (message) => this.#effectDiagnose(message));
+    } catch (error) {
+      this.#diagnose(`Carousel ${effect.name} effect constraint failed.`, error);
+      return input;
+    }
+  }
+  #readInput(): CarouselInput {
     return {
       items: this.#records,
       options: this.options,
@@ -758,14 +839,23 @@ export class TpCarousel<T = unknown> extends TpElement {
       if (shell) {
         shell.styles.set('width', horizontal ? `${size}px` : '100%');
         shell.styles.set('height', horizontal ? 'auto' : `${size}px`);
-        shell.styles.set('position', snapshot.virtual ? 'absolute' : 'relative');
+        const stacked = this.#stacked;
+        shell.styles.set('position', snapshot.virtual || stacked ? 'absolute' : 'relative');
         shell.styles.set(
           'inset-inline-start',
-          snapshot.virtual && horizontal ? `${physical + nativeBefore}px` : 'auto',
+          stacked && horizontal
+            ? '0px'
+            : snapshot.virtual && horizontal
+              ? `${physical + nativeBefore}px`
+              : 'auto',
         );
         shell.styles.set(
           'top',
-          snapshot.virtual && !horizontal ? `${physical + nativeBefore}px` : 'auto',
+          stacked && !horizontal
+            ? '0px'
+            : snapshot.virtual && !horizontal
+              ? `${physical + nativeBefore}px`
+              : 'auto',
         );
         const visible = snapshot.visibleIds.includes(id);
         const pinnedFocus =
@@ -804,7 +894,18 @@ export class TpCarousel<T = unknown> extends TpElement {
       if (this.#projection !== projection) return;
     }
     this.#projectedId = placementId;
-    if (snapshot.virtual) {
+    if (this.#stacked) {
+      // Stacked effects keep every item at the viewport origin.
+      const tallest = Math.max(
+        0,
+        ...[...this.#shells.values()].map((shell) => shell.element.offsetHeight),
+      );
+      this.#trackStyles?.set('width', '100%');
+      this.#trackStyles?.set(
+        'height',
+        horizontal ? `${tallest}px` : `${projection.layout.sizes[0] ?? 0}px`,
+      );
+    } else if (snapshot.virtual) {
       this.#trackStyles?.set(
         'width',
         horizontal
@@ -839,6 +940,7 @@ export class TpCarousel<T = unknown> extends TpElement {
       if (heights.length)
         void this.#transport?.autoHeight(Math.max(...heights), snapshot.snapIndex);
     }
+    this.#effectPresenter?.refresh();
     this.#bar.measure();
     this.#preload();
   }
@@ -1532,14 +1634,21 @@ export class TpCarousel<T = unknown> extends TpElement {
                   ...(this.#config.orientation === 'horizontal'
                     ? { width: `${size}px` }
                     : { height: `${size}px` }),
-                  ...(snapshot?.virtual
+                  ...(this.#stacked
                     ? {
                         position: 'absolute',
                         ...(this.#config.orientation === 'horizontal'
-                          ? { insetInlineStart: `${this.#entryPosition(item.id)}px` }
-                          : { top: `${this.#entryPosition(item.id)}px` }),
+                          ? { insetInlineStart: '0px' }
+                          : { top: '0px' }),
                       }
-                    : {}),
+                    : snapshot?.virtual
+                      ? {
+                          position: 'absolute',
+                          ...(this.#config.orientation === 'horizontal'
+                            ? { insetInlineStart: `${this.#entryPosition(item.id)}px` }
+                            : { top: `${this.#entryPosition(item.id)}px` }),
+                        }
+                      : {}),
                 },
         },
         reference: this.#shellReference(item.id),
@@ -1716,8 +1825,19 @@ export class TpCarousel<T = unknown> extends TpElement {
         tabindex: 0,
         'data-orientation': config.orientation,
         'data-transport': config.transport,
+        'data-effect': this.#activeEffect?.name ?? nothing,
       },
-      content: track,
+      content: html`${track}${
+        this.#activeEffect
+          ? this.renderPart('carousel-effect-surface', state, {
+              properties: {
+                class: 'effect-surface',
+                part: 'carousel-effect-surface',
+                'aria-hidden': 'true',
+              },
+            })
+          : nothing
+      }`,
     });
     const controls =
       config.navigation.enabled || config.indicators

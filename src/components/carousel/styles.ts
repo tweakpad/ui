@@ -15,6 +15,21 @@ export const carouselStyles = css`
     min-inline-size: 0;
   }
 
+  /* Effect layers (surface, raised item layers) stack only within the viewport. */
+  .viewport[data-effect] {
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* Effect layer: above item media, below layers that effects raise; never hit-tested. */
+  .effect-surface {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
   .track {
     display: flex;
     position: relative;

@@ -1,68 +1,25 @@
-import {
-  prepareMotion,
-  resolvesReducedMotion,
-  type MotionHandle,
-  type MotionRequestOptions,
-} from '../motion.js';
+import { prepareMotion, resolvesReducedMotion, type MotionHandle } from '../motion.js';
+import { TranslatePresenter, type CarouselPresenter } from './presenter.js';
+import { carouselAutoHeightMotion, carouselMotionRoles, carouselMotionTiming } from './timing.js';
 import { OwnedStyles } from '../owned-styles.js';
 import { CleanupScope, Scheduler } from '../services.js';
 import type { CarouselController } from './controller.js';
 import type { CarouselElements } from './input.js';
 import type { CarouselNavigationRequest } from './types.js';
 
-export const carouselMotionRoles = {
-  track: { name: 'track', kind: 'state', phases: ['change'], completion: 'non-blocking' },
-  autoHeight: {
-    name: 'auto-height',
-    kind: 'state',
-    phases: ['change'],
-    completion: 'non-blocking',
-  },
-  scrollbarVisibility: {
-    name: 'scrollbar-visibility',
-    kind: 'state',
-    phases: ['change'],
-    completion: 'non-blocking',
-  },
-} as const;
-
-/** auto-height parameters: previous/next height plus the accepted snap. */
-export function carouselAutoHeightMotion(
-  previous: number,
-  next: number,
-  snap: number | null,
-): MotionRequestOptions {
-  return { phase: 'change', fromState: previous, toState: next, context: { snap } };
-}
-/** scrollbar-visibility parameters: previous/next visibility plus orientation. */
-export function carouselScrollbarVisibilityMotion(
-  previous: boolean,
-  next: boolean,
-  orientation: 'horizontal' | 'vertical',
-): MotionRequestOptions {
-  return { phase: 'change', fromState: previous, toState: next, context: { orientation } };
-}
-
-export function carouselMotionTiming(
-  owner: HTMLElement,
-  explicit?: number,
-): { duration: number; easing: string } {
-  const style = owner.ownerDocument.defaultView?.getComputedStyle(owner);
-  const token = style?.getPropertyValue('--tp-duration-normal').trim() ?? '';
-  const match = /^(\d+(?:\.\d+)?)(ms|s)$/.exec(token);
-  const duration = explicit ?? (match ? Number(match[1]) * (match[2] === 's' ? 1000 : 1) : 300);
-  const scale = Number(style?.getPropertyValue('--tp-motion-scale').trim() || 1);
-  return {
-    duration: Math.max(0, duration * (Number.isFinite(scale) ? scale : 1)),
-    easing: style?.getPropertyValue('--tp-easing-standard').trim() || 'ease',
-  };
-}
+export {
+  carouselAutoHeightMotion,
+  carouselMotionRoles,
+  carouselMotionTiming,
+  carouselScrollbarVisibilityMotion,
+} from './timing.js';
 
 export class CarouselTransport {
   readonly #track: OwnedStyles;
   readonly #viewport: OwnedStyles;
   readonly #scheduler: Scheduler;
-  #motion: MotionHandle | undefined;
+  readonly #translate: TranslatePresenter;
+  #presenter: CarouselPresenter;
   #heightMotion: MotionHandle | undefined;
   #nativeCancel: (() => void) | undefined;
   #echo = 0;
@@ -80,22 +37,26 @@ export class CarouselTransport {
     this.#track = new OwnedStyles(elements.track);
     this.#viewport = new OwnedStyles(elements.viewport);
     this.#scheduler = new Scheduler(owner.ownerDocument.defaultView ?? undefined);
+    this.#translate = new TranslatePresenter(owner, elements, controller);
+    this.#presenter = this.#translate;
+  }
+  /** The transform-model presenter; null restores the default track translation. */
+  get presenter(): CarouselPresenter {
+    return this.#presenter;
+  }
+  set presenter(presenter: CarouselPresenter | null) {
+    const next = presenter ?? this.#translate;
+    if (next === this.#presenter) return;
+    const position = this.#presenter.position;
+    this.#presenter.cancel();
+    if (this.#presenter !== this.#translate) this.#presenter.dispose();
+    this.#presenter = next;
+    if (this.controller()?.configuration.transport !== 'scroll')
+      void next.move(position, { speed: 0 });
   }
   get position(): number {
-    const controller = this.controller();
-    if (controller?.configuration.transport === 'scroll') return this.read();
-    const view = this.owner.ownerDocument.defaultView;
-    if (!view) return 0;
-    const transform = view.getComputedStyle(this.elements.track).transform;
-    if (transform === 'none') return 0;
-    const values = transform
-      .slice(transform.indexOf('(') + 1, -1)
-      .split(',')
-      .map(Number);
-    const horizontal = controller?.snapshot.orientation !== 'vertical';
-    const coordinate =
-      values.length === 16 ? values[horizontal ? 12 : 13] : values[horizontal ? 4 : 5];
-    return (coordinate ?? 0) * (horizontal && controller?.snapshot.direction === 'rtl' ? 1 : -1);
+    if (this.controller()?.configuration.transport === 'scroll') return this.read();
+    return this.#presenter.position;
   }
   async move(position: number, request: CarouselNavigationRequest): Promise<void> {
     const controller = this.controller();
@@ -169,43 +130,7 @@ export class CarouselTransport {
       });
       return;
     }
-    const previousPosition = this.position;
-    const before =
-      this.owner.ownerDocument.defaultView?.getComputedStyle(this.elements.track).transform ??
-      'none';
-    const transform = horizontal
-      ? `translate3d(${rtl ? position : -position}px,0,0)`
-      : `translate3d(0,${-position}px,0)`;
-    this.#motion?.cancel();
-    this.#track.set('transform', transform);
-    if (
-      request.speed === 0 ||
-      Math.abs(previousPosition - position) < 0.001 ||
-      before === transform ||
-      resolvesReducedMotion(this.owner)
-    )
-      return;
-    const motion = prepareMotion(
-      this.owner,
-      this.elements.track,
-      carouselMotionRoles.track,
-      { phase: 'change', fromState: before, toState: transform },
-      {
-        play: () => {
-          const animation = this.elements.track.animate([{ transform: before }, { transform }], {
-            ...carouselMotionTiming(this.owner, request.speed),
-          });
-          return {
-            finished: animation.finished.then(() => undefined),
-            cancel: () => animation.cancel(),
-          };
-        },
-      },
-    );
-    this.#motion = motion;
-    motion.start();
-    await motion.finished;
-    if (this.#motion === motion) this.#motion = undefined;
+    await this.#presenter.move(position, request);
   }
   read(): number {
     const state = this.controller()?.snapshot;
@@ -309,22 +234,15 @@ export class CarouselTransport {
     this.#settleTimer?.();
     this.#settleTimer = undefined;
     this.controller()?.autoplay.setReason('native-scroll', false);
-    if (this.#motion) {
-      // Cancelling WAAPI otherwise exposes the inline destination for a frame.
-      // Preserve the current translate, as Swiper does before interrupting.
-      const transform = this.owner.ownerDocument.defaultView?.getComputedStyle(
-        this.elements.track,
-      ).transform;
-      if (transform) this.#track.set('transform', transform);
-      this.#motion.cancel();
-    }
-    this.#motion = undefined;
+    this.#presenter.cancel();
     this.#nativeCancel?.();
     this.#heightMotion?.cancel();
     this.#heightMotion = undefined;
   }
   dispose(): void {
     this.cancel();
+    if (this.#presenter !== this.#translate) this.#presenter.dispose();
+    this.#translate.dispose();
     this.#scheduler.dispose();
     this.#track.dispose();
     this.#viewport.dispose();
