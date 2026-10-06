@@ -1,4 +1,3 @@
-import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { ValidationRun } from '../../foundation/validation.js';
 import type { TpField } from '../field/index.js';
@@ -21,6 +20,7 @@ const nativeAttributes = [
   'aria-describedby',
 ] as const;
 const configurationAttributes = [
+  'no-autofill',
   'validation-mode',
   'validation-timing',
   'native-validation',
@@ -36,7 +36,6 @@ export class TpForm extends TpElement {
     ...TpElement.properties,
     onFormSubmit: { attribute: false },
     errors: { attribute: false, noAccessor: true },
-    noAutofill: { type: Boolean, attribute: 'no-autofill', reflect: true },
   };
   static override get observedAttributes(): string[] {
     return [...new Set([...super.observedAttributes, ...configurationAttributes])];
@@ -48,9 +47,13 @@ export class TpForm extends TpElement {
   ): void {
     super.attributeChangedCallback(name, previous, value);
     if (previous !== value && configurationAttributes.includes(name)) this.#syncConfiguration();
+    // Contained text-entry controls read this attribute; repaint them when it changes.
+    if (name === 'no-autofill' && (previous === null) !== (value === null))
+      for (const element of this.querySelectorAll<HTMLElement & { requestUpdate?: () => void }>(
+        '*',
+      ))
+        element.requestUpdate?.();
   }
-  /** Opts every contained text-entry control out of host and extension autofill. */
-  noAutofill = false;
   #errors: Record<string, string | readonly string[]> = {};
   get errors(): Record<string, string | readonly string[]> {
     return this.#errors;
@@ -128,6 +131,13 @@ export class TpForm extends TpElement {
     this.setAttribute('submission-policy', value);
     this.#updateActions();
   }
+  /** Opts every contained text-entry control out of host and extension autofill. */
+  get noAutofill(): boolean {
+    return this.hasAttribute('no-autofill');
+  }
+  set noAutofill(value: boolean) {
+    this.toggleAttribute('no-autofill', value);
+  }
   get novalidate(): boolean {
     return this.hasAttribute('novalidate');
   }
@@ -159,16 +169,6 @@ export class TpForm extends TpElement {
   protected override shouldUpdate(): boolean {
     return false;
   }
-  protected override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
-    // Contained controls read the reflected attribute; repaint them when it changes.
-    if (changed.has('noAutofill') && (this.noAutofill || changed.get('noAutofill')))
-      for (const element of this.querySelectorAll<HTMLElement & { requestUpdate?: () => void }>(
-        '*',
-      ))
-        element.requestUpdate?.();
-  }
-
   override connectedCallback(): void {
     const existing = [...this.childNodes];
     super.connectedCallback();

@@ -324,7 +324,14 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     next.className = 'visually-hidden';
     next.hidden = false;
     next.textContent = text;
-    if (!next.isConnected) this.renderRoot.append(next);
+    // IDREFs resolve within one tree: keep the node beside the association target. A light-DOM
+    // native editor gets a light-DOM node, hidden inline since shadow styles do not reach it.
+    const target = this.#associationTarget;
+    const container = target && target.getRootNode() !== this.renderRoot ? this : this.renderRoot;
+    if (container === this)
+      next.style.cssText =
+        'position:absolute;inline-size:1px;block-size:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0';
+    if (next.parentNode !== container) container.append(next);
     return next;
   }
 

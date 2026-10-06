@@ -24,6 +24,7 @@ import {
   type Task,
 } from './data.js';
 import type { TpToast } from '../../components/toast/index.js';
+import type { TpDialog } from '../../components/dialog/index.js';
 import type { TpNavigationPanel } from '../../components/navigation-panel/index.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import { formatTime, resolveTime } from '../../foundation/time/index.js';
@@ -188,6 +189,9 @@ export class CatalogWorkspace extends LitElement {
     super.disconnectedCallback();
   }
   readonly #dueCalendar = createRef<HTMLElement>();
+  readonly #inviteDialog = createRef<TpDialog>();
+  // Passing the press keeps its interaction type for the Dialog's initial focus policy.
+  #invite = (event: Event) => this.#inviteDialog.value?.setOpen(true, 'trigger-press', event);
   #responsive = () => {
     this.mobile = this.#media?.matches ?? false;
   };
@@ -389,14 +393,7 @@ export class CatalogWorkspace extends LitElement {
                 <tp-avatar-group
                   >${this.members.slice(0, 4).map((name) => html`<tp-avatar size="sm" .fallback=${initials(name)} .alt=${name}></tp-avatar>`)}</tp-avatar-group
                 >
-                <tp-button
-                  variant="outline"
-                  size="sm"
-                  @click=${() => {
-                    this.overlay = 'invite';
-                  }}
-                  >Invite</tp-button
-                >
+                <tp-button variant="outline" size="sm" @click=${this.#invite}>Invite</tp-button>
                 <tp-button size="sm" @click=${this.#newTask}
                   ><tp-icon slot="icon-start" .icon=${plusIcon}></tp-icon>New task</tp-button
                 >
@@ -1239,12 +1236,7 @@ export class CatalogWorkspace extends LitElement {
               ></tp-preview-card>`,
           )}
         </div>
-        <tp-button
-          slot="footer"
-          variant="outline"
-          @click=${() => {
-            this.overlay = 'invite';
-          }}
+        <tp-button slot="footer" variant="outline" @click=${this.#invite}
           >Invite a teammate</tp-button
         ></tp-card
       >
@@ -1272,7 +1264,7 @@ export class CatalogWorkspace extends LitElement {
           }}
         >
           <tp-field label="Project name" description="Visible to everyone in the workspace."
-            ><tp-input name="name" .defaultValue=${this.projectName} required></tp-input
+            ><tp-input name="name" no-autofill .defaultValue=${this.projectName} required></tp-input
           ></tp-field>
           <div class="workspace-grid">
             <tp-field label="Timezone"
@@ -1528,6 +1520,7 @@ export class CatalogWorkspace extends LitElement {
         description="Give someone access to this project."
         .open=${this.overlay === 'invite'}
         @tp-open-change=${this.#open('invite')}
+        ${ref(this.#inviteDialog)}
       >
         <tp-form
           .onFormSubmit=${(values: Record<string, unknown>, details: { form: HTMLFormElement }) => {
@@ -1540,11 +1533,17 @@ export class CatalogWorkspace extends LitElement {
           }}
         >
           <tp-field label="Name"
-            ><tp-input name="name" placeholder="Jamie Chen" required></tp-input></tp-field
+            ><tp-input
+              name="name"
+              autocomplete="name"
+              placeholder="Jamie Chen"
+              required
+            ></tp-input></tp-field
           ><tp-field label="Email"
             ><tp-input
               name="email"
               type="email"
+              autocomplete="email"
               placeholder="jamie@studio.example"
               required
             ></tp-input></tp-field

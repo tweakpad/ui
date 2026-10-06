@@ -1,3 +1,8 @@
+import {
+  restoreLostFocus,
+  surfaceInteraction,
+  type SurfaceInteraction,
+} from '../../foundation/surface-focus.js';
 import { CloseWatcherController } from '../../foundation/close-watcher.js';
 import { html, nothing } from 'lit';
 import type { CSSResultGroup, PropertyValues } from 'lit';
@@ -48,8 +53,14 @@ import type { CustomElementConstructorWithTag } from '../../foundation/define.js
 
 export type { DialogModality } from './modality.js';
 
+type DialogFocusTarget = 'first' | 'cancel' | 'confirm' | 'popup' | string | HTMLElement;
+
+/**
+ * A resolver receives how the Dialog was opened, as the shared surface focus targets do, and
+ * returns any other target; `null` uses the first available control.
+ */
 export type DialogInitialFocus =
-  'first' | 'cancel' | 'confirm' | 'popup' | string | HTMLElement | (() => HTMLElement | null);
+  DialogFocusTarget | ((interaction: SurfaceInteraction) => DialogFocusTarget | null);
 export type DialogFinalFocus =
   HTMLElement | (() => HTMLElement | null) | 'trigger' | 'previous' | false;
 const triggerIdentifiers = new WeakMap<HTMLElement, string>();
@@ -143,6 +154,8 @@ export class TpDialog extends TpElement {
   #previousFocus: Element | null = null;
   #activeTrigger: HTMLElement | null = null;
   #payload: unknown;
+  /** The event that opened the Dialog; its interaction type selects initial focus. */
+  #openingEvent: Event | undefined;
   #triggers = new Map<HTMLElement, TriggerRecord>();
   #slotTrigger: HTMLElement | null = null;
   #slotTriggerCleanup: (() => void) | undefined;
@@ -228,6 +241,7 @@ export class TpDialog extends TpElement {
         this.#layer?.removeAttribute('open');
         this.#activeTrigger = null;
         this.#payload = undefined;
+        this.#openingEvent = undefined;
       }
       this.emit('tp-open-change-complete', { open });
       this.onOpenChangeComplete?.(open);
@@ -937,6 +951,7 @@ export class TpDialog extends TpElement {
               return;
             this.#activeTrigger = trigger ?? null;
             this.#payload = payload;
+            this.#openingEvent = event;
             if (!this.#active) this.#previousFocus = previous;
             this.requestUpdate();
           }
@@ -978,6 +993,7 @@ export class TpDialog extends TpElement {
     this.#applyModality();
     this.#focusPending = true;
     this.ownerDocument.addEventListener('focusin', this.#focusIn);
+    this.ownerDocument.addEventListener('focusout', this.#focusOut);
     this.addEventListener('click', this.#cancelAction);
   }
   #applyModality(): void {
@@ -1024,6 +1040,7 @@ export class TpDialog extends TpElement {
     if (!this.#active) return;
     this.#active = false;
     this.ownerDocument.removeEventListener('focusin', this.#focusIn);
+    this.ownerDocument.removeEventListener('focusout', this.#focusOut);
     this.removeEventListener('click', this.#cancelAction);
     if (closeChildren) {
       for (const child of this.#children) child.close();
@@ -1088,8 +1105,15 @@ export class TpDialog extends TpElement {
   #initialFocus(): void {
     const content = this.#content;
     if (!content) return;
+    const interaction = surfaceInteraction(this.#openingEvent);
+    const resolved =
+      typeof this.initialFocus === 'function' ? this.initialFocus(interaction) : this.initialFocus;
+    // Touch opening focuses the Popup rather than its first control, so the on-screen
+    // keyboard and autofill suggestions do not open unasked (Foundation Dialog default).
     const policy =
-      typeof this.initialFocus === 'function' ? this.initialFocus() : this.initialFocus;
+      resolved === 'first' && typeof this.initialFocus !== 'function' && interaction === 'touch'
+        ? 'popup'
+        : resolved;
     const named =
       policy instanceof HTMLElement
         ? policy
@@ -1116,26 +1140,28 @@ export class TpDialog extends TpElement {
       return;
     if (event.key === 'Tab' && this.#content) trapTabKey(event, this.#content);
   };
+  // Modal and container modes never pull focus back from an outside element (Base UI parity):
+  // Tab trapping and outside inertness contain focus, so an overlay another owner adds, such as
+  // an autofill menu, stays usable. Only non-modal mode reacts, by closing.
   #focusIn = (event: FocusEvent): void => {
     if (
       !this.open ||
       !this.dismissController.isTopmost ||
       !this.#content ||
+      this.#activeModality !== 'non-modal' ||
       this.#activeModality !== this.#resolved.modality
     )
       return;
     const active = deepActiveElement(this.ownerDocument);
     if (composedContains(this.#content, active)) return;
-    if (this.#activeModality === 'non-modal') {
-      if (!composedContains(this.#activeTrigger ?? this, active) && this.closeOnOutsideInteraction)
-        this.setOpen(false, 'focus-outside', event);
-    } else if (
-      this.#activeModality === 'container' &&
-      this.#activeScope &&
-      !composedScopeContains(this.#activeScope, active)
-    )
-      return; // Content outside the container remains interactive.
-    else this.#initialFocus();
+    if (!composedContains(this.#activeTrigger ?? this, active) && this.closeOnOutsideInteraction)
+      this.setOpen(false, 'focus-outside', event);
+  };
+  #focusOut = (event: FocusEvent): void => {
+    const content = this.#content;
+    if (!this.open || !content || this.#activeModality === 'non-modal') return;
+    if (!composedContains(content, event.composedPath()[0] as Node)) return;
+    restoreLostFocus(event, content, 'popup');
   };
   #cornerClose = (event: MouseEvent): void => {
     queueMicrotask(() => {

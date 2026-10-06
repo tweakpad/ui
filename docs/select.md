@@ -97,7 +97,10 @@ the form's serialized values are separate concerns. Form serialization uses
 
 `disabled`, `readOnly` (`readonly`), `required`, `invalid`, `name`, `formOwner`
 (`form`), and `inputElementReference` use the shared FormControl binding.
-`autoComplete` (`autocomplete`) defaults to the empty string. `inputElement`
+`autoComplete` (`autocomplete`) defaults to the empty string. `noAutofill`
+(`no-autofill`, default `false`, also inherited from an enclosing Field or Form)
+opts both the autofill channel and the searchable query out of browser and
+password-manager autofill. `inputElement`
 exposes the visually hidden native autofill channel; `triggerElement` is the
 visible focus/label target. `form`, `labels`, `validity`, `validationMessage`,
 `checkValidity()`, `reportValidity()`, `focus()` and `blur()` retain their shared
@@ -225,7 +228,6 @@ Use actual `tp-field` for labels/descriptions/errors, `tp-icon` for rich choice
 artwork, `tp-button` for adjacent actions and `tp-dialog` for modal composition.
 Root/part API changes do not require reproducing any of these components locally.
 
-
 ## Searchable selection
 
 Searchable Select combines an editable query with a single selected value or an ordered set of values. The query, selection and open state are independent. Its editor uses Input Group; Trigger, Clear and Chip Remove use the library Button owner.
@@ -248,32 +250,32 @@ document.body.append(field);
 
 Set a controlled property before connection to select that lane's controlled mode. The owner accepts a proposal synchronously by updating the corresponding property in its callback. Leaving the proposal unaccepted or cancelling it restores that lane. Use `defaultValue`, `defaultInputValue` and `defaultOpen` for uncontrolled defaults; these are sampled initially and restored on form reset. `multiple` determines the selection shape: `null` or one value, versus an ordered unique array.
 
-| Property                                     | Type / default                                                                   | Attribute                                                                      |
-| -------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `value`, `defaultValue`                      | unknown; uncontrolled empty                                                      | `value`, `default-value` accept scalar text; use properties for records/arrays |
-| `inputValue`, `defaultInputValue`            | string; uncontrolled `''`                                                        | `input-value`, `default-input-value`                                           |
-| `open`, `defaultOpen`                        | boolean; uncontrolled `false`                                                    | `open`, `default-open`                                                         |
-| `multiple`                                   | boolean; `false`                                                                 | `multiple`                                                                     |
-| `items`                                      | flat/grouped records or `SelectItemCollection`; registered options when absent | property only                                                                  |
-| `filteredItems`                              | authoritative ordered results; absent                                            | property only                                                                  |
-| `filter`                                     | `(item, query, text) => boolean`; built-in collation filter; `null` disables it  | property only                                                                  |
-| `limit`, `locale`                            | integer `-1` means unlimited; inherited locale                                   | `limit`, `locale`                                                              |
-| `itemToText`, `itemToLabel`                  | text/form serializer and rich render resolver; scalar conversion                 | property only                                                                  |
-| `isItemEqual`                                | equality callback; `Object.is`                                                   | property only                                                                  |
-| `placeholder`, `label`                       | `''`, `'Options'`; Field supplies its own accessible label                       | same names                                                                     |
-| `identifier`, `autoComplete`                 | generated editor/list ID prefix; optional autofill hint                          | `identifier`, `autocomplete`                                                   |
-| `autoHighlight`                              | `false`, `true` after typing, or `'always'`; `false`                             | property only                                                                  |
-| `keepHighlight`, `highlightItemOnHover`      | `false`, `true`                                                                  | `keep-highlight`, `highlight-item-on-hover`                                    |
-| `loopFocus`, `grid`                          | `true`, `false`                                                                  | `loop-focus`, `grid`                                                           |
-| `completionMode`                             | `'list'`, `'both'`, `'inline'`, `'none'`; `'list'`                               | `completion-mode`                                                              |
-| `openOnInputClick`, `searchable`             | `true`, `false`                                                                  | `open-on-input-click`, `searchable`                                            |
-| `closeOnSelect`                              | single closes; multiple remains open unless explicitly configured                | `close-on-select`                                                              |
-| `clearBehavior`                              | `'query'`, `'selection'`, `'both'`, `'contextual'`; contextual                   | `clear-behavior`                                                               |
-| `showTrigger`, `showClear`, `showChipRemove` | `true`, `false`, `true`; independent constituent visibility                      | `show-trigger`, `show-clear`, `show-chip-remove`                               |
-| `nativeAction`, `clearKeepMounted`           | Trigger native action `true`; retained Clear `false`                             | `native-action`, `clear-keep-mounted`                                          |
-| `virtualized`, `mountedItems`                | `false`; optional explicit mounted window within complete `items`                | `virtualized`; window property only                                            |
-| `inline`, `loading`, `modal`                 | all `false`                                                                      | same names                                                                     |
-| `keepMounted`                                | `false`; retain a closed inert surface                                           | `keep-mounted`                                                                 |
+| Property                                     | Type / default                                                                  | Attribute                                                                      |
+| -------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `value`, `defaultValue`                      | unknown; uncontrolled empty                                                     | `value`, `default-value` accept scalar text; use properties for records/arrays |
+| `inputValue`, `defaultInputValue`            | string; uncontrolled `''`                                                       | `input-value`, `default-input-value`                                           |
+| `open`, `defaultOpen`                        | boolean; uncontrolled `false`                                                   | `open`, `default-open`                                                         |
+| `multiple`                                   | boolean; `false`                                                                | `multiple`                                                                     |
+| `items`                                      | flat/grouped records or `SelectItemCollection`; registered options when absent  | property only                                                                  |
+| `filteredItems`                              | authoritative ordered results; absent                                           | property only                                                                  |
+| `filter`                                     | `(item, query, text) => boolean`; built-in collation filter; `null` disables it | property only                                                                  |
+| `limit`, `locale`                            | integer `-1` means unlimited; inherited locale                                  | `limit`, `locale`                                                              |
+| `itemToText`, `itemToLabel`                  | text/form serializer and rich render resolver; scalar conversion                | property only                                                                  |
+| `isItemEqual`                                | equality callback; `Object.is`                                                  | property only                                                                  |
+| `placeholder`, `label`                       | `''`, `'Options'`; Field supplies its own accessible label                      | same names                                                                     |
+| `identifier`, `autoComplete`                 | generated editor/list ID prefix; optional autofill hint                         | `identifier`, `autocomplete`                                                   |
+| `autoHighlight`                              | `false`, `true` after typing, or `'always'`; `false`                            | property only                                                                  |
+| `keepHighlight`, `highlightItemOnHover`      | `false`, `true`                                                                 | `keep-highlight`, `highlight-item-on-hover`                                    |
+| `loopFocus`, `grid`                          | `true`, `false`                                                                 | `loop-focus`, `grid`                                                           |
+| `completionMode`                             | `'list'`, `'both'`, `'inline'`, `'none'`; `'list'`                              | `completion-mode`                                                              |
+| `openOnInputClick`, `searchable`             | `true`, `false`                                                                 | `open-on-input-click`, `searchable`                                            |
+| `closeOnSelect`                              | single closes; multiple remains open unless explicitly configured               | `close-on-select`                                                              |
+| `clearBehavior`                              | `'query'`, `'selection'`, `'both'`, `'contextual'`; contextual                  | `clear-behavior`                                                               |
+| `showTrigger`, `showClear`, `showChipRemove` | `true`, `false`, `true`; independent constituent visibility                     | `show-trigger`, `show-clear`, `show-chip-remove`                               |
+| `nativeAction`, `clearKeepMounted`           | Trigger native action `true`; retained Clear `false`                            | `native-action`, `clear-keep-mounted`                                          |
+| `virtualized`, `mountedItems`                | `false`; optional explicit mounted window within complete `items`               | `virtualized`; window property only                                            |
+| `inline`, `loading`, `modal`                 | all `false`                                                                     | same names                                                                     |
+| `keepMounted`                                | `false`; retain a closed inert surface                                          | `keep-mounted`                                                                 |
 
 Filtering retains selected values even when their options are not visible. Both Select modes preserve the existing `SelectEntry` shape: `{value, label?, text?, disabled?, index?, row?}` and groups `{type:'group', label?, items}`. Object-valued choices use `{value: record, label: 'Display text'}`; use the factory for arbitrary application records with primitive IDs. `filteredItems` and `mountedItems` contain chosen values or factory-owned records. This avoids interpreting the same object differently between searchable and plain modes.
 
@@ -283,17 +285,17 @@ In list mode, highlighting does not change text. Both mode filters and shows a t
 
 Single selection fills text unless that lane rejects it. Multiple selection clears the query with `input-clear` and metadata `itemPress: true`; automatic cleanup omits that flag. Contextual Clear clears a nonempty query, otherwise selection. Both Clear proposes both lanes atomically: cancelling either proposal leaves both committed values unchanged. Chip Remove has an accessible value-specific name; directional keys move between chips, and Backspace/Delete remove through the same selection owner.
 
-| Floating property                           | Type / default                                                                                                                                        |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `container`                                 | element, shadow root, ref or resolver; `null` keeps the surface local                                                                                 |
-| `placement`, `side`, `align`                | `'block-end start'`; explicit logical side/alignment override placement                                                                                 |
-| `sideOffset`, `alignOffset`                 | three theme spacing units for sideOffset; `0` for alignOffset; number or geometry resolver                                                            |
-| `anchor`                                    | element/virtual geometry, ref or resolver; editor group                                                                                               |
-| `positionMethod`                            | `'absolute'` or `'fixed'`; absolute                                                                                                                   |
-| `collisionAvoidance`                        | `{side:'flip', align:'flip', fallbackAxisSide:'none'}`                                                                                                |
-| `collisionBoundary`, `collisionPadding`     | clipping ancestors; three theme spacing units or physical-side padding record                                                                         |
-| `sticky`, `disableAnchorTracking`           | `false`, `false`                                                                                                                                      |
-| `showArrow`, `arrowPadding`, `showBackdrop` | `false`, two theme spacing units, `false`                                                                                                             |
+| Floating property                           | Type / default                                                                                                                                             |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `container`                                 | element, shadow root, ref or resolver; `null` keeps the surface local                                                                                      |
+| `placement`, `side`, `align`                | `'block-end start'`; explicit logical side/alignment override placement                                                                                    |
+| `sideOffset`, `alignOffset`                 | three theme spacing units for sideOffset; `0` for alignOffset; number or geometry resolver                                                                 |
+| `anchor`                                    | element/virtual geometry, ref or resolver; editor group                                                                                                    |
+| `positionMethod`                            | `'absolute'` or `'fixed'`; absolute                                                                                                                        |
+| `collisionAvoidance`                        | `{side:'flip', align:'flip', fallbackAxisSide:'none'}`                                                                                                     |
+| `collisionBoundary`, `collisionPadding`     | clipping ancestors; three theme spacing units or physical-side padding record                                                                              |
+| `sticky`, `disableAnchorTracking`           | `false`, `false`                                                                                                                                           |
+| `showArrow`, `arrowPadding`, `showBackdrop` | `false`, two theme spacing units, `false`                                                                                                                  |
 | `initialFocus`, `finalFocus`                | `'trigger'`: editor default; element, ref, interaction resolver, boolean, numeric popup index or `'trigger'`, `'first'`, `'popup'`, `'previous'`, `'none'` |
 
 Floating attributes use kebab case; element, record and resolver bindings use properties. Offset resolvers receive `{side, align, anchor:{width,height}, positioner:{width,height}}` during positioning. Modal mode preserves the editable control, contains Tab focus and leases outside inertness/scroll locking. Arrow and Backdrop visibility do not enable modality. Inline mode renders an in-flow list without its own portal, positioner or popup; accepted closing of its surrounding Dialog, Alert Dialog, Drawer or Popover resets transient query/highlight.
@@ -322,6 +324,5 @@ The generated `tp-select-trigger`, `tp-select-clear` and `tp-select-chip-remove`
 Parts: `select`, `select-anchor`, `select-input`, `select-trigger`, `select-clear`, `select-content`, `select-list`, `select-collection`, `select-option`, `select-group`, `select-label`, `select-separator`, `select-empty-state`, `select-chip-list`, `select-chip`, `select-chip-remove`; optional structural `select-row`, `select-list-container`, `item-text`, `indicator`, `arrow`, `backdrop`. Slots: `label` and `empty`; unnamed content supplies registered options.
 
 Each part contract supports render delegates with the protected behavior bundle, host properties, state-dependent class/style/content hooks and an actual semantic element reference. Option/Group configuration can provide individual contracts; references release on removal. `partPresentation` and the shared presentation dictionary customize appearance without replacing state/focus/form owners. Part snapshots expose committed open/value/inputValue/multiple/disabled/readOnly/required/invalid/loading/empty/presence; Options add selected/highlighted/index/value. Open/closed, selected/highlighted/disabled and presence markers follow that snapshot. Retained content is hidden and inert. Motion, positioning, portal inheritance and observers use the owning document/window and clean up on disconnection.
-
 
 Migration: the separate Combobox tag, class and catalog entry are removed. Use `TpSelect` with `searchable = true`, `createSelectItems`, `createSelectFilter`, and `select-*` parts. Plain Select defaults remain unchanged. Native Select remains a native selection control.

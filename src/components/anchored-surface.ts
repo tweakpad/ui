@@ -21,7 +21,11 @@ import { OwnedPortal, type OwnedPortalContainer } from '../foundation/owned-port
 import { ComposedEnvironmentObserver } from '../foundation/composed-environment.js';
 import { acquireOutsideInert, refreshOutsideInert } from '../foundation/outside-inert.js';
 import { acquireScrollLock } from '../foundation/scroll-lock.js';
-import { resolveSurfaceFocus, type SurfaceFocusTarget } from '../foundation/surface-focus.js';
+import {
+  resolveSurfaceFocus,
+  restoreLostFocus,
+  type SurfaceFocusTarget,
+} from '../foundation/surface-focus.js';
 import {
   componentHandlingPrevented,
   type PartRenderOptions,
@@ -782,8 +786,17 @@ export abstract class TpAnchoredSurface extends TpElement {
     if (this.surfaceModal && this.dismissController.isTopmost && this.popup)
       trapTabKey(event, this.popup);
   };
+  /**
+   * How a modal surface restores focus lost to the body when its focused element disappears
+   * (Base UI `restoreFocus`): the Popup, or the last item for item surfaces such as Menu.
+   */
+  protected get surfaceRestoreFocus(): 'popup' | 'previous' {
+    return 'popup';
+  }
   protected surfaceFocusout = (event: FocusEvent): void => {
     this.popupBlur(event);
+    if (this.surfaceModal && this.popup && this.dismissController.isTopmost)
+      restoreLostFocus(event, this.popup, this.surfaceRestoreFocus);
     if (this.isTooltip || this.surfaceModal) return;
     queueMicrotask(() => {
       if (this.open && !this.dismissController.contains(deepActiveElement(this.ownerDocument)))
@@ -831,23 +844,11 @@ export abstract class TpAnchoredSurface extends TpElement {
       }),
     );
   }
-  #focusIn = (): void => {
-    if (
-      this.open &&
-      this.surfaceModal &&
-      this.dismissController.isTopmost &&
-      !this.dismissController.contains(deepActiveElement(this.ownerDocument))
-    )
-      (this.popup ? (focusableElements(this.popup)[0] ?? this.popup) : null)?.focus({
-        preventScroll: true,
-      });
-  };
   #releaseLayers(): void {
     this.#releaseModal?.();
     this.#releaseModal = undefined;
     this.#releaseScroll?.();
     this.#releaseScroll = undefined;
-    this.#focusDocument?.removeEventListener('focusin', this.#focusIn, true);
     this.#focusDocument = undefined;
   }
   #syncLayers(): void {
@@ -863,10 +864,7 @@ export abstract class TpAnchoredSurface extends TpElement {
       ),
     );
     this.#releaseScroll ??= acquireScrollLock(this.ownerDocument);
-    if (!this.#focusDocument) {
-      this.#focusDocument = this.ownerDocument;
-      this.#focusDocument.addEventListener('focusin', this.#focusIn, true);
-    }
+    this.#focusDocument = this.ownerDocument;
   }
   protected popupEnter = (_event: PointerEvent): void => {
     void _event;

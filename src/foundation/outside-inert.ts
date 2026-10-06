@@ -16,14 +16,16 @@ interface InertLease {
 interface InertState {
   leases: InertLease[];
   applied: Map<HTMLElement, string | null>;
+  /** Nodes inserted since the last lease acquisition or refresh; they and their subtrees stay out. */
+  late: WeakSet<Node>;
   observer: MutationObserver;
-  update: () => void;
+  update: (snapshot?: boolean) => void;
 }
 const documents = new WeakMap<Document, InertState>();
 
 /** Refresh newly mounted branch portals before synchronous focus placement. */
 export function refreshOutsideInert(document: Document): void {
-  documents.get(document)?.update();
+  documents.get(document)?.update(true);
 }
 
 function scopeConnected(scope: OutsideInertScope): boolean {
@@ -39,6 +41,11 @@ function scopeConnected(scope: OutsideInertScope): boolean {
  * Older leases with a disjoint or enclosing scope stay effective, and the branches of every
  * newer lease are exempt from them, so a later modal is never made inert by an earlier one.
  * Live regions anywhere in the document remain available.
+ *
+ * As with Base UI `markOthers`, only outside elements present when a lease is acquired or
+ * refreshed become inert. Elements inserted later by another owner stay interactive, so a
+ * password manager or extension overlay appended to the body while a modal is open remains
+ * usable; the observer still keeps branches, live regions and restoration current.
  */
 export function acquireOutsideInert(
   document: Document,
@@ -49,12 +56,23 @@ export function acquireOutsideInert(
   if (!view || !document.body) return () => {};
   let state = documents.get(document);
   if (!state) {
+    const markLate = (records: readonly MutationRecord[]): void => {
+      for (const record of records)
+        if (record.type === 'childList')
+          for (const node of record.addedNodes) created.late.add(node);
+    };
     const created: InertState = {
       leases: [],
       applied: new Map(),
-      observer: new view.MutationObserver(() => created.update()),
-      update: () => {
+      late: new WeakSet(),
+      observer: new view.MutationObserver((records) => {
+        markLate(records);
+        created.update();
+      }),
+      update: (snapshot = false) => {
+        markLate(created.observer.takeRecords());
         created.observer.disconnect();
+        if (snapshot) created.late = new WeakSet();
         const desired = new Set<HTMLElement>();
         const observedRoots = new Set<ParentNode>([document.body]);
         const live: HTMLElement[] = [];
@@ -78,19 +96,25 @@ export function acquireOutsideInert(
           }
         };
         if (created.leases.length) collectLive(document.body);
-        const visit = (parent: ParentNode, allowed: readonly HTMLElement[]): void => {
+        const visit = (
+          parent: ParentNode,
+          allowed: readonly HTMLElement[],
+          lateParent = false,
+        ): void => {
           for (const child of parent.children) {
             if (child.namespaceURI !== 'http://www.w3.org/1999/xhtml') continue;
             const element = child as HTMLElement;
             if (allowed.some((root) => root === element || composedContains(root, element)))
               continue;
+            const late = lateParent || created.late.has(element);
             if (allowed.some((root) => composedContains(element, root))) {
-              visit(element, allowed);
+              visit(element, allowed, late);
               if (element.shadowRoot) {
                 observedRoots.add(element.shadowRoot);
-                visit(element.shadowRoot, allowed);
+                visit(element.shadowRoot, allowed, late);
               }
-            } else if (!element.inert || created.applied.has(element)) desired.add(element);
+            } else if (created.applied.has(element) || (!element.inert && !late))
+              desired.add(element);
           }
         };
         // Newest first: decide which leases remain effective and what each must exempt.
@@ -148,7 +172,7 @@ export function acquireOutsideInert(
   }
   const lease: InertLease = { inside, scope: options.scope ?? null };
   state.leases.push(lease);
-  state.update();
+  state.update(true);
   let released = false;
   return () => {
     if (released) return;

@@ -14,19 +14,19 @@ export class TpTextArea extends TpTextControl {
   static override styles = [
     TpTextControl.styles,
     css`
-      textarea {
+      ::slotted(textarea) {
         resize: block;
       }
 
-      :host([resize='none']) textarea {
+      :host([resize='none']) ::slotted(textarea) {
         resize: none;
       }
 
-      :host([resize='inline']) textarea {
+      :host([resize='inline']) ::slotted(textarea) {
         resize: inline;
       }
 
-      :host([resize='both']) textarea {
+      :host([resize='both']) ::slotted(textarea) {
         resize: both;
       }
     `,

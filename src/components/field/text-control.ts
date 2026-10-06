@@ -1,4 +1,4 @@
-import { css } from 'lit';
+import { css, html, render } from 'lit';
 import type { PropertyValues } from 'lit';
 import { CompositeControlController } from '../../foundation/composite-control.js';
 import { TpFormElement } from '../../foundation/form-element.js';
@@ -8,6 +8,7 @@ import { ControllableState } from '../../foundation/controllable-state.js';
 import { renderPart } from '../../foundation/part.js';
 import type { ComponentPartContract, HostProperties } from '../../foundation/part.js';
 import { textEditingModel } from '../../foundation/text-editing.js';
+import { createId } from '../../foundation/id.js';
 const textValue = (value: unknown): string =>
   value == null ? '' : Array.isArray(value) ? value.join(',') : String(value);
 interface TextState {
@@ -22,7 +23,16 @@ function state(host: TpTextControl): TextState {
   return value;
 }
 
-/** One native editing, value, form and Field integration owner for both text controls. */
+/**
+ * One native editing, value, form and Field integration owner for both text controls.
+ *
+ * As in Base UI, the native editor is a real element in the consumer's tree: it renders into the
+ * host's light DOM (slotted into the shadow root) so it has the same form owner as the host.
+ * Browsers and password managers classify, group and fill it like any native field, and it
+ * submits natively. A semantic editing model (Number Field) keeps the native editor unnamed and
+ * submits its raw value through the host instead, as Base UI pairs a visible input with a hidden
+ * named one.
+ */
 export abstract class TpTextControl extends TpFormElement {
   static override properties = {
     ...TpFormElement.properties,
@@ -46,9 +56,26 @@ export abstract class TpTextControl extends TpFormElement {
         min-inline-size: 0;
       }
 
-      .control {
+      /* The light-DOM editor receives the base shadow rules it no longer inherits. */
+      ::slotted([data-tp-editor]) {
+        box-sizing: inherit;
         inline-size: 100%;
         min-inline-size: 0;
+      }
+
+      ::slotted([data-tp-editor]:focus-visible) {
+        outline: var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);
+        outline-offset: var(--tp-ring-offset);
+      }
+
+      :host([invalid]) ::slotted([data-tp-editor]),
+      :host([data-invalid]) ::slotted([data-tp-editor]) {
+        border-color: var(--tp-destructive);
+      }
+
+      :host([invalid]) ::slotted([data-tp-editor]:focus-visible),
+      :host([data-invalid]) ::slotted([data-tp-editor]:focus-visible) {
+        outline-color: var(--tp-destructive);
       }
     `,
   ];
@@ -89,6 +116,8 @@ export abstract class TpTextControl extends TpFormElement {
     return model ? model.fieldValue : this.value;
   }
   #composing = false;
+  #editor: unknown;
+  #editorPart: { element: HTMLElement; release: () => void } | undefined;
   #paste: ClipboardEvent | undefined;
   #customValidity = '';
   #files: FileList | null = null;
@@ -120,8 +149,9 @@ export abstract class TpTextControl extends TpFormElement {
   }
   override get inputElement(): HTMLInputElement | HTMLTextAreaElement | null {
     return (
-      this.renderRoot?.querySelector<HTMLInputElement | HTMLTextAreaElement>('input,textarea') ??
-      null
+      this.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+        ':scope > input[data-tp-editor], :scope > textarea[data-tp-editor]',
+      ) ?? null
     );
   }
   get selectionStart(): number | null {
@@ -191,6 +221,30 @@ export abstract class TpTextControl extends TpFormElement {
     }
   }
 
+  protected override update(changed: PropertyValues<this>): void {
+    super.update(changed);
+    render(this.#editor, this, { host: this });
+    const editor = this.inputElement;
+    if (editor !== this.#editorPart?.element) {
+      this.#editorPart?.release();
+      this.#editorPart = editor
+        ? { element: editor, release: this.#registerEditor(editor) }
+        : undefined;
+    }
+    // The native editor shares the host's form owner, including a form reached by `form` id.
+    const form = this.form;
+    if (editor && editor.form !== form) {
+      if (form) {
+        if (!form.id) form.id = createId('tp-form-owner');
+        editor.setAttribute('form', form.id);
+      } else editor.removeAttribute('form');
+    }
+  }
+  #registerEditor(editor: HTMLElement): () => void {
+    const parts = (editor.getAttribute('part') ?? '').split(/\s+/).filter(Boolean);
+    const releases = parts.map((name) => this.presentationController.registerPart(name, editor));
+    return () => releases.forEach((release) => release());
+  }
   protected override updated(changed: PropertyValues<this>): void {
     const input = this.inputElement;
     if (input) {
@@ -201,8 +255,14 @@ export abstract class TpTextControl extends TpFormElement {
     this.toggleAttribute('data-readonly', this.effectiveReadOnly);
     textEditingModel(this)?.updated?.();
   }
+  override connectedCallback(): void {
+    super.connectedCallback();
+    if (this.#editorPart && !this.#editorPart.element.isConnected) this.#editorPart = undefined;
+  }
   override disconnectedCallback(): void {
     textEditingModel(this)?.disconnected?.();
+    this.#editorPart?.release();
+    this.#editorPart = undefined;
     super.disconnectedCallback();
   }
   protected syncForm(): void {
@@ -216,15 +276,8 @@ export abstract class TpTextControl extends TpFormElement {
       this.setValidity(flags, this.#customValidity || model.validationMessage, input);
       return;
     }
-    if (input.localName === 'input' && (input as HTMLInputElement).type === 'file') {
-      const data = new FormData();
-      if (this.effectiveName) {
-        const files = [...((input as HTMLInputElement).files ?? [])];
-        if (!files.length) files.push(new File([], '', { type: 'application/octet-stream' }));
-        for (const file of files) data.append(this.effectiveName, file);
-      }
-      this.setFormValue(this.effectiveDisabled ? null : data);
-    } else this.setFormValue(this.effectiveDisabled ? null : input.value, this.value);
+    // The named native editor submits itself; the host keeps only restorable state.
+    this.setFormValue(null, this.value);
     this.setValidity(
       input.validity.valid ? {} : nativeValidityFlags(input.validity),
       input.validationMessage,
@@ -242,6 +295,8 @@ export abstract class TpTextControl extends TpFormElement {
       properties = {
         ...properties,
         ...model.properties,
+        // The model submits its raw value through the host; the visible editor stays unnamed.
+        '.name': '',
         '.value': this.editingValue,
         '.disabled': this.effectiveDisabled,
         '.readOnly': this.effectiveReadOnly,
@@ -257,7 +312,7 @@ export abstract class TpTextControl extends TpFormElement {
         'data-disabled': this.effectiveDisabled,
         tabindex: composite.tabIndex,
       };
-    return renderPart(
+    this.#editor = renderPart(
       part,
       {
         value: this.value,
@@ -270,13 +325,14 @@ export abstract class TpTextControl extends TpFormElement {
       this.controlPartContract(part),
       {
         tag,
-        properties,
+        properties: { ...properties, 'data-tp-editor': '', '@keypress': this.#keyPress },
         onHandlerPrevented: {
           '@input': this.rollbackInput,
           '@compositionend': this.cancelComposition,
         },
       },
     );
+    return html`<slot></slot>`;
   }
   #request(value: string, reason: ChangeReason, sourceEvent?: Event): boolean {
     const model = textEditingModel(this);
@@ -390,6 +446,30 @@ export abstract class TpTextControl extends TpFormElement {
       this.rollbackInput();
     }
   };
+  /**
+   * Implicit submission at the native moment (Enter keypress, focus still on the editor), extended
+   * to Tweakpad submit buttons the browser does not treat as default buttons. A keydown that a
+   * Consumer cancels suppresses the keypress, and with it submission. Submitting here rather than
+   * after keydown keeps a closing surface's focus restoration from receiving this keystroke.
+   */
+  #keyPress = (event: KeyboardEvent): void => {
+    const input = event.currentTarget as HTMLElement;
+    if (event.key !== 'Enter' || input.localName !== 'input') return;
+    event.preventDefault();
+    const form = this.form;
+    if (!form || this.#composing || event.isComposing || this.effectiveDisabled) return;
+    const submitter = [
+      ...form.querySelectorAll<HTMLElement>(
+        'button,input[type="submit"],input[type="image"],tp-button[type="submit"]',
+      ),
+    ].find(
+      (el) =>
+        !el.matches(':disabled,[disabled]') &&
+        (el instanceof HTMLButtonElement ? el.type === 'submit' : true),
+    );
+    if (submitter) submitter.click();
+    else form.requestSubmit();
+  };
   protected inputKeyDown = (event: KeyboardEvent): void => {
     if (
       !this.#composing &&
@@ -398,33 +478,10 @@ export abstract class TpTextControl extends TpFormElement {
       !this.effectiveDisabled
     )
       textEditingModel(this)?.keyDown(event);
-    if (
-      event.key !== 'Enter' ||
-      this.#composing ||
-      event.isComposing ||
-      event.defaultPrevented ||
-      this.effectiveDisabled ||
-      (event.currentTarget as HTMLElement)?.localName !== 'input'
-    )
-      return;
-    const form = this.form;
-    if (!form) return;
-    queueMicrotask(() => {
-      if (event.defaultPrevented || !this.isConnected) return;
-      const submitter = [
-        ...form.querySelectorAll<HTMLElement>(
-          'button,input[type="submit"],input[type="image"],tp-button[type="submit"]',
-        ),
-      ].find(
-        (el) =>
-          !el.matches(':disabled,[disabled]') &&
-          (el instanceof HTMLButtonElement ? el.type === 'submit' : true),
-      );
-      if (submitter) submitter.click();
-      else form.requestSubmit();
-    });
   };
   protected override resetFormValue(): void {
+    // The native editor resets after its host in tree order; restore the owned value afterwards.
+    queueMicrotask(() => this.rollbackInput());
     const model = textEditingModel(this);
     if (model) {
       model.reset();

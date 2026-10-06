@@ -63,6 +63,10 @@ function semanticTarget(element: HTMLElement): HTMLElement {
 
 /** Actual command-menu owner, with trigger/context invocation, nested Menu and Menubar. */
 export class TpMenu extends TpHoverSurface implements MenuItemOwner {
+  /** Menu restores lost focus to its last item, as Base UI Menu passes `restoreFocus`. */
+  protected override get surfaceRestoreFocus(): 'popup' | 'previous' {
+    return 'previous';
+  }
   static tagName = 'tp-menu';
   static override presentation = menuPresentation;
   static override properties = {

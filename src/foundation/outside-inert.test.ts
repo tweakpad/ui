@@ -51,8 +51,15 @@ class ShadowStub {
 class ObserverStub {
   static current: ObserverStub | undefined;
   roots = new Set<object>();
-  constructor(readonly notify: () => void) {
+  constructor(readonly callback: (records: object[]) => void) {
     ObserverStub.current = this;
+  }
+  /** Deliver mutation records; `inserted` reports nodes added since the last delivery. */
+  notify(...inserted: ElementStub[]): void {
+    this.callback(inserted.length ? [{ type: 'childList', addedNodes: inserted }] : []);
+  }
+  takeRecords(): object[] {
+    return [];
   }
   observe(root: object): void {
     this.roots.add(root);
@@ -117,7 +124,7 @@ describe('owner-document outside inert leases', () => {
     expect(unrelated.inert).toBe(false);
     expect(f.authored.inert).toBe(true);
   });
-  it('observes traversed shadow boundaries and inerts newly inserted outside siblings', () => {
+  it('observes traversed shadow boundaries and leaves later outside siblings interactive', () => {
     const f = fixture();
     const shadow = new ShadowStub(f.outer),
       active = new ElementStub();
@@ -127,11 +134,36 @@ describe('owner-document outside inert leases', () => {
     expect(ObserverStub.current!.roots.has(shadow)).toBe(true);
     const inserted = new ElementStub();
     shadow.append(inserted);
-    ObserverStub.current!.notify();
+    ObserverStub.current!.notify(inserted);
     expect(active.inert).toBe(false);
+    expect(inserted.inert).toBe(false);
+    refreshOutsideInert(f.document);
     expect(inserted.inert).toBe(true);
     release();
     expect(inserted.inert).toBe(false);
+  });
+  it('leaves an overlay appended to the body after opening interactive', () => {
+    const f = fixture();
+    const release = acquireOutsideInert(f.document, () => f.inside(f.outer));
+    const overlay = new ElementStub();
+    (f.document.body as unknown as ElementStub).append(overlay);
+    ObserverStub.current!.notify(overlay);
+    expect(overlay.inert).toBe(false);
+    expect(f.other.inert).toBe(true);
+    const item = new ElementStub(),
+      status = new ElementStub();
+    status.setAttribute('role', 'status');
+    overlay.append(item, status);
+    ObserverStub.current!.notify();
+    expect(overlay.inert).toBe(false);
+    expect(item.inert).toBe(false);
+    // A newer lease marks what exists when it opens, as Base UI markOthers does per popup.
+    const releaseNested = acquireOutsideInert(f.document, () => f.inside(f.inner));
+    expect(overlay.inert).toBe(false);
+    expect(item.inert).toBe(true);
+    releaseNested();
+    release();
+    expect(item.inert).toBe(false);
   });
   it('releases a newly admitted portal synchronously before focus', () => {
     const f = fixture();
