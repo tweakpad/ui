@@ -16,7 +16,16 @@ export const commandPaletteAppearance: PresentationDictionary = {
   'command-palette-input': selectAppearance['select-input']!,
   'command-palette-list': selectAppearance['select-list']!,
   'command-palette-group': selectAppearance['select-group']!,
-  'command-palette-item': commandItemAppearance,
+  'command-palette-item': [
+    ...commandItemAppearance,
+    // Nova cn-command-item: py-1.5 px-2 gap-2.
+    {
+      declarations: {
+        gap: 'calc(var(--tp-spacing) * 2.5)',
+        padding: 'calc(var(--tp-spacing) * 1.875) calc(var(--tp-spacing) * 2.5)',
+      },
+    },
+  ],
   'command-palette-shortcut-hint': [
     { declarations: { 'margin-inline-start': 'auto', color: 'var(--tp-muted-foreground)' } },
   ],

@@ -1,5 +1,6 @@
 import type { PresentationRule } from '../../resolver.js';
 import { fillColor, fillShown } from './fill.js';
+import { packedExtent } from './target.js';
 
 /** Accent row highlight: content color plus the accent fill layer, which fades. */
 export function rowHighlight(selector: string): PresentationRule[] {
@@ -24,7 +25,9 @@ export const navigationRow: readonly PresentationRule[] = [
       'font-size': 'var(--tp-text-sm)',
       'font-weight': 'var(--tp-font-normal)',
       'text-align': 'start',
-      'min-block-size': 'var(--tp-target-size-min)',
+      // Nova h-8; replaces Button's size extent.
+      'block-size': packedExtent('var(--tp-control-height-sm)'),
+      'min-block-size': packedExtent('var(--tp-control-height-sm)'),
     },
   },
   fillColor('var(--tp-accent)'),

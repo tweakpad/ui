@@ -8,6 +8,7 @@ import {
   rowHighlight,
 } from './shared/navigation-row.js';
 import { fillColor } from './shared/fill.js';
+import { packedExtent } from './shared/target.js';
 
 const parts = [
   'navigation-panel',
@@ -106,7 +107,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
   'navigation-panel-group-label': [
     {
       declarations: {
-        height: 'max(calc(var(--tp-spacing) * 8), var(--tp-target-size-min))',
+        height: packedExtent('var(--tp-control-height-sm)'),
         padding: '0 var(--tp-space-2)',
         'font-size': 'var(--tp-text-xs)',
         'font-weight': 'var(--tp-font-medium)',
@@ -158,7 +159,10 @@ export const navigationPanelAppearance: PresentationDictionary = {
       selector: iconAction,
       declarations: { padding: '0' },
     },
-    { selector: largeAction, declarations: { 'padding-block': 'var(--tp-space-3)' } },
+    {
+      selector: largeAction,
+      declarations: { 'block-size': 'auto', 'padding-block': 'var(--tp-space-3)' },
+    },
     {
       selector: largeAction + ' > [part~="button-label"]',
       declarations: { 'line-height': 'var(--tp-leading-tight)' },
@@ -217,7 +221,9 @@ export const navigationPanelAppearance: PresentationDictionary = {
         color: 'var(--tp-foreground)',
         padding: '0 var(--tp-space-2)',
         'border-radius': 'var(--tp-radius-md)',
-        'min-block-size': 'var(--tp-target-size-min)',
+        // Nova h-7.
+        'block-size': packedExtent('calc(var(--tp-spacing) * 8.75)'),
+        'min-block-size': packedExtent('calc(var(--tp-spacing) * 8.75)'),
       },
     },
     ...rowHighlight('&:hover:not([data-disabled]), &[data-active]'),

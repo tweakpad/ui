@@ -205,7 +205,9 @@ export class TpNavigationPanelGroupLabel extends NavigationPanelLayoutPart {
     NavigationPanelLayoutPart.styles,
     css`
       :host([data-collapsed]:not([data-compact])[data-collapse-mode='compact']) {
-        margin-block-start: calc(-1 * max(var(--tp-spacing) * 8, var(--tp-target-size-min)));
+        margin-block-start: calc(
+          -1 * max(var(--tp-control-height-sm), var(--_tp-coarse-target, 0px))
+        );
         pointer-events: none;
       }
     `,

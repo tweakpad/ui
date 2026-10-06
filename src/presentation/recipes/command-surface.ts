@@ -12,11 +12,12 @@ export const popupSpacingAppearance: readonly PresentationRule[] = [
 ];
 
 /** Default row rhythm shared by command, navigation and selection popup items. */
+// Nova menu, select and combobox items: py-1 px-1.5 gap-1.5, in spacing units so density scales them.
 export const popupItemSpacingAppearance: readonly PresentationRule[] = [
   {
     declarations: {
-      gap: 'var(--tp-space-3)',
-      padding: 'var(--tp-space-2)',
+      gap: 'calc(var(--tp-spacing) * 1.875)',
+      padding: 'calc(var(--tp-spacing) * 1.25) calc(var(--tp-spacing) * 1.875)',
     },
   },
 ];

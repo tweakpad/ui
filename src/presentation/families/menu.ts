@@ -1,5 +1,6 @@
 import type { ComponentDefinition } from '../definition.js';
 import { definePresentation } from '../family.js';
+import { coarseTarget } from '../recipes/shared/target.js';
 import { menuAppearance } from '../recipes/menu.js';
 
 const definition: ComponentDefinition = {
@@ -134,7 +135,10 @@ export const menuPresentation = definePresentation({
           display: 'flex',
           'align-items': 'center',
           'inline-size': '100%',
-          'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
+          // Nova items have no fixed or minimum extent (a reused Button sub-trigger
+          // included); touch keeps the accessible target.
+          'block-size': 'auto',
+          'min-block-size': coarseTarget,
           'text-align': 'start',
           'justify-content': 'start',
           cursor: 'pointer',
@@ -154,7 +158,10 @@ export const menuPresentation = definePresentation({
           display: 'flex',
           'align-items': 'center',
           'inline-size': '100%',
-          'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
+          // Nova items have no fixed or minimum extent (a reused Button sub-trigger
+          // included); touch keeps the accessible target.
+          'block-size': 'auto',
+          'min-block-size': coarseTarget,
           'text-align': 'start',
           'justify-content': 'start',
           cursor: 'pointer',
@@ -174,7 +181,10 @@ export const menuPresentation = definePresentation({
           display: 'flex',
           'align-items': 'center',
           'inline-size': '100%',
-          'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
+          // Nova items have no fixed or minimum extent (a reused Button sub-trigger
+          // included); touch keeps the accessible target.
+          'block-size': 'auto',
+          'min-block-size': coarseTarget,
           'text-align': 'start',
           'justify-content': 'start',
           cursor: 'pointer',
@@ -194,7 +204,10 @@ export const menuPresentation = definePresentation({
           display: 'flex',
           'align-items': 'center',
           'inline-size': '100%',
-          'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
+          // Nova items have no fixed or minimum extent (a reused Button sub-trigger
+          // included); touch keeps the accessible target.
+          'block-size': 'auto',
+          'min-block-size': coarseTarget,
           'text-align': 'start',
           'justify-content': 'start',
           cursor: 'pointer',

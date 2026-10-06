@@ -1,4 +1,5 @@
 import { motionTransition } from '../motion.js';
+import { packedExtent } from './shared/target.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import {
   anchoredPresenceAppearance,
@@ -68,7 +69,9 @@ export const navigationMenuAppearance: PresentationDictionary = {
         'border-radius': 'var(--tp-radius-lg)',
         'padding-inline': 'calc(var(--tp-spacing) * 2.5)',
         'padding-block': 'calc(var(--tp-spacing) * 1.5)',
-        'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
+        // Nova sizes the trigger by its padding; a reused Button's size extent does not apply.
+        'block-size': 'auto',
+        'min-block-size': packedExtent('var(--tp-control-height-sm)'),
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
       },
@@ -118,10 +121,13 @@ export const navigationMenuAppearance: PresentationDictionary = {
     ...popupItemSpacingAppearance,
     {
       declarations: {
+        // Nova cn-navigation-menu-link: p-2 gap-2.
+        gap: 'calc(var(--tp-spacing) * 2.5)',
+        padding: 'calc(var(--tp-spacing) * 2.5)',
         display: 'flex',
         'align-items': 'center',
         'border-radius': 'var(--tp-radius-md)',
-        'min-block-size': 'max(var(--tp-control-height-md), var(--tp-target-size-min))',
+        'min-block-size': packedExtent('var(--tp-control-height-md)'),
         'font-size': 'var(--tp-text-sm)',
         'text-decoration': 'none',
         color: 'var(--tp-foreground)',

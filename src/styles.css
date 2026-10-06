@@ -121,6 +121,14 @@ body {
   font-size: var(--tp-text-base);
 }
 
+/* Packed rows and triggers show a compact extent; touch pointers raise them to the
+   minimum accessible target (see packedExtent in presentation recipes). */
+@media (pointer: coarse) {
+  :root {
+    --_tp-coarse-target: var(--tp-target-size-min);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --tp-motion-scale: 0;
