@@ -1,4 +1,4 @@
-import { css, html, nothing } from 'lit';
+import { css, html, nothing, unsafeCSS } from 'lit';
 import type { PropertyValues } from 'lit';
 import { CollectionRegistry } from '../../foundation/collection.js';
 import { TpElement } from '../../foundation/element.js';
@@ -12,6 +12,13 @@ import { OwnedAttributes } from './owned-attributes.js';
 import { TabsPanel } from './panel.js';
 import { tabGeometry } from './indicator.js';
 import { tabsPresentation } from '../../presentation/families/tabs.js';
+import { motionDuration } from '../../presentation/motion.js';
+import {
+  prepareMotion,
+  type MotionHandle,
+  type MotionRoleDefinition,
+  type MotionValue,
+} from '../../foundation/motion.js';
 
 export type TabsActivationDirection = 'left' | 'right' | 'up' | 'down' | 'none';
 export type TabsMember = HTMLElement & {
@@ -20,6 +27,28 @@ export type TabsMember = HTMLElement & {
   nativeAction?: boolean;
   disabled?: boolean;
 };
+export const tabsMotionRoles = {
+  indicator: { name: 'indicator', kind: 'state', phases: ['change'], completion: 'non-blocking' },
+} as const satisfies Record<string, MotionRoleDefinition>;
+
+const edges = ['left', 'right', 'top', 'bottom'] as const;
+/** Indicator edges glide together; an underline's leading edge outruns the trailing one. */
+function indicatorMotion(leading?: (typeof edges)[number]) {
+  return unsafeCSS(
+    edges
+      .map(
+        (edge) =>
+          `${edge} ${motionDuration(edge === leading ? 'fast' : 'normal')} var(--tp-easing-standard)`,
+      )
+      .join(', '),
+  );
+}
+
+const motionState = (value: unknown): MotionValue =>
+  typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+    ? value
+    : null;
+
 const memberValue = (element: TabsMember): unknown =>
   element.value ?? element.getAttribute('value');
 
@@ -77,35 +106,73 @@ export class TpTabs extends TpElement {
         max-inline-size: 50%;
       }
 
-      ::slotted([slot='indicator']) {
+      /* Inset edges, so each side of the indicator can move on its own. */
+      ::slotted([slot='indicator']),
+      .indicator {
         position: absolute;
         pointer-events: none;
-        left: var(--tp-active-tab-left, 0);
-        top: var(--tp-active-tab-top, 0);
-        width: var(--tp-active-tab-width, 0);
-        height: var(--tp-active-tab-height, 0);
+        inset: var(--tp-active-tab-top, 0)
+          calc(100% - var(--tp-active-tab-left, 0px) - var(--tp-active-tab-width, 0px))
+          calc(100% - var(--tp-active-tab-top, 0px) - var(--tp-active-tab-height, 0px))
+          var(--tp-active-tab-left, 0);
       }
 
-      :host([variant='underline'][orientation='horizontal']) ::slotted([slot='indicator']) {
+      :host([variant='underline'][orientation='horizontal']) ::slotted([slot='indicator']),
+      :host([variant='underline'][orientation='horizontal']) .indicator {
         top: calc(
           var(--tp-active-tab-top, 0px) +
             var(--tp-active-tab-height, 0px) - var(--tp-border-width-strong)
         );
-        height: var(--tp-border-width-strong);
       }
 
-      :host([variant='underline'][orientation='vertical']) ::slotted([slot='indicator']) {
+      :host([variant='underline'][orientation='vertical']) ::slotted([slot='indicator']),
+      :host([variant='underline'][orientation='vertical']) .indicator {
         left: calc(
           var(--tp-active-tab-left, 0px) +
             var(--tp-active-tab-width, 0px) - var(--tp-border-width-strong)
         );
-        width: var(--tp-border-width-strong);
       }
 
-      :host([variant='underline'][orientation='vertical']:dir(rtl)) ::slotted([slot='indicator']) {
+      :host([variant='underline'][orientation='vertical']:dir(rtl)) ::slotted([slot='indicator']),
+      :host([variant='underline'][orientation='vertical']:dir(rtl)) .indicator {
         left: var(--tp-active-tab-left, 0);
+        right: calc(100% - var(--tp-active-tab-left, 0px) - var(--tp-border-width-strong));
       }
 
+      /* Selection changes move the indicator; first placement and layout changes do not. */
+      ::slotted(
+        [slot='indicator'][data-activation-direction]:not([data-activation-direction='none'])
+      ),
+      .indicator[data-activation-direction]:not([data-activation-direction='none']) {
+        transition: ${indicatorMotion()};
+      }
+
+      :host([variant='underline']) ::slotted([slot='indicator'][data-activation-direction='left']),
+      :host([variant='underline']) .indicator[data-activation-direction='left'] {
+        transition: ${indicatorMotion('left')};
+      }
+
+      :host([variant='underline']) ::slotted([slot='indicator'][data-activation-direction='right']),
+      :host([variant='underline']) .indicator[data-activation-direction='right'] {
+        transition: ${indicatorMotion('right')};
+      }
+
+      :host([variant='underline']) ::slotted([slot='indicator'][data-activation-direction='up']),
+      :host([variant='underline']) .indicator[data-activation-direction='up'] {
+        transition: ${indicatorMotion('top')};
+      }
+
+      :host([variant='underline']) ::slotted([slot='indicator'][data-activation-direction='down']),
+      :host([variant='underline']) .indicator[data-activation-direction='down'] {
+        transition: ${indicatorMotion('bottom')};
+      }
+
+      ::slotted([slot='indicator'][data-tp-motion-driven]),
+      .indicator[data-tp-motion-driven] {
+        transition: none !important;
+      }
+
+      .indicator[hidden],
       ::slotted([hidden]) {
         display: none !important;
       }
@@ -136,8 +203,10 @@ export class TpTabs extends TpElement {
         );
       else {
         this.#selection.external(value);
-        if (!Object.is(previous, this.value))
+        if (!Object.is(previous, this.value)) {
           this.activationDirection = this.#direction(previous, this.value);
+          this.#prepareIndicatorMotion(previous);
+        }
       }
     }
     this.requestUpdate('value', previous);
@@ -159,6 +228,7 @@ export class TpTabs extends TpElement {
   #environmentObserver: MutationObserver | undefined;
   #resize: ResizeObserver | undefined;
   #frame = 0;
+  #indicatorMotion: MotionHandle | null = null;
   #syncing = false;
   #focused: HTMLElement | null = null;
   #pointerButton: number | null = null;
@@ -227,6 +297,8 @@ export class TpTabs extends TpElement {
     this.ownerDocument.defaultView!.removeEventListener('resize', this.#scheduleGeometry);
     this.ownerDocument.defaultView!.cancelAnimationFrame(this.#frame);
     this.#frame = 0;
+    this.#indicatorMotion?.cancel();
+    this.#indicatorMotion = null;
     this.ownerDocument.removeEventListener('pointerup', this.#pointerEnd);
     this.ownerDocument.removeEventListener('pointercancel', this.#pointerEnd);
     for (const release of this.#parts.values()) release();
@@ -240,6 +312,13 @@ export class TpTabs extends TpElement {
     this.#pointerButton = null;
     this.removeAttribute('data-has-indicator');
     super.disconnectedCallback();
+  }
+  /** The consumer's indicator, or the default one rendered when none is slotted. */
+  #indicator(): HTMLElement | null {
+    return (
+      this.querySelector<HTMLElement>(':scope > [slot="indicator"]') ??
+      this.renderRoot.querySelector<HTMLElement>('.indicator')
+    );
   }
   #observe(): void {
     this.#observer?.observe(this, {
@@ -399,11 +478,13 @@ export class TpTabs extends TpElement {
       }
       this.#markers(list);
       this.#markers(this.renderRoot.querySelector<HTMLElement>('.root')!);
-      const indicator = this.querySelector<HTMLElement>(':scope > [slot="indicator"]');
+      const indicator = this.#indicator();
       this.toggleAttribute('data-has-indicator', Boolean(indicator));
       if (indicator) {
-        this.#register(indicator, 'tabs-indicator', currentParts);
-        this.#own(indicator).set('role', 'presentation');
+        if (indicator.slot === 'indicator') {
+          this.#register(indicator, 'tabs-indicator', currentParts);
+          this.#own(indicator).set('role', 'presentation');
+        }
         this.#markers(indicator);
       }
       for (const [element, release] of this.#parts)
@@ -445,7 +526,7 @@ export class TpTabs extends TpElement {
       this.#frame = 0;
       const list = this.renderRoot.querySelector<HTMLElement>('.list');
       if (!list) return;
-      const indicator = this.querySelector<HTMLElement>(':scope > [slot="indicator"]');
+      const indicator = this.#indicator();
       if (!indicator) return;
       const selected = this.#tabs.find((tab) => Object.is(memberValue(tab), this.value));
       const geometry = selected
@@ -463,6 +544,8 @@ export class TpTabs extends TpElement {
       );
       this.#own(indicator).set('hidden', active || this.renderBeforeActivation ? null : '');
       this.#own(indicator).set('data-active', active ? '' : null);
+      this.#indicatorMotion?.start();
+      this.#indicatorMotion = null;
       this.#observe();
     });
   };
@@ -501,11 +584,26 @@ export class TpTabs extends TpElement {
       );
       return accepted;
     });
-    if (!Object.is(previous, this.value))
+    if (!Object.is(previous, this.value)) {
       this.activationDirection = this.#direction(previous, this.value);
+      this.#prepareIndicatorMotion(previous);
+    }
     this.#sync();
     this.requestUpdate();
     return accepted;
+  }
+  /** Publishes the indicator role; its default motion starts with the next geometry write. */
+  #prepareIndicatorMotion(previous: unknown): void {
+    this.#indicatorMotion?.cancel();
+    const indicator = this.#indicator();
+    this.#indicatorMotion = indicator
+      ? prepareMotion(this, indicator, tabsMotionRoles.indicator, {
+          phase: 'change',
+          fromState: motionState(previous),
+          toState: motionState(this.value),
+          context: { activationDirection: this.activationDirection },
+        })
+      : null;
   }
   #eventTab(event: Event): TabsMember | undefined {
     return event
@@ -618,7 +716,9 @@ export class TpTabs extends TpElement {
         @scroll=${this.#scheduleGeometry}
       >
         <slot name="tab" @slotchange=${this.#sync}></slot>
-        <slot name="indicator" @slotchange=${this.#sync}></slot>
+        <slot name="indicator" @slotchange=${this.#sync}
+          ><span class="indicator" part="tabs-indicator" aria-hidden="true"></span
+        ></slot>
       </div>
       <div class="panels"><slot name="panel" @slotchange=${this.#sync}></slot></div>
     </div>`;

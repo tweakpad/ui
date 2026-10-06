@@ -56,7 +56,7 @@ emit a diagnostic.
 | ------------------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `tab`              | required `value`; `disabled` or `aria-disabled="true"`; `nativeAction` property / `native-action="false"` | One or more direct children with unique non-null values. Prefer native `<button>`; Tabs supplies `type="button"`, role, roving tabindex and selection relationships. `nativeAction` defaults to `true`; set it to `false` for non-native hosts needing Enter/Space activation. |
 | `panel`            | required `value`; `keepMounted` property / `keep-mounted`                                                 | Every panel matches exactly one tab; a tab may have no panel. `keepMounted` defaults to `false`.                                                                                                                                                                               |
-| `indicator`        | optional decorative element                                                                               | One measured selection indicator. Omit it to use each tab's selected recipe instead.                                                                                                                                                                                           |
+| `indicator`        | optional decorative element                                                                               | One measured selection indicator replacing the default one. Without it, Tabs renders its own `tabs-indicator`.                                                                                                                                                                 |
 
 Tab labels may include `tp-icon`, `tp-badge`, or other noninteractive content.
 Do not nest interactive controls inside a tab. Use `tp-button`, `tp-input`,
@@ -148,9 +148,18 @@ Root/list/constituents expose `data-orientation` and
 `data-disabled`; panels expose `data-index`, `data-selected`, `data-hidden`,
 `data-starting-style` and `data-ending-style`. Indicator `data-active` means a
 measurable selection exists. The root's `data-has-indicator` prevents a second
-selected background or underline.
+selected background or underline; it is set whenever the default or a slotted
+indicator is present.
 
 The list and indicator receive `--tp-active-tab-left`, `--tp-active-tab-right`,
 `--tp-active-tab-top`, `--tp-active-tab-bottom`, `--tp-active-tab-width` and
 `--tp-active-tab-height` in pixels. They are measured layout outputs for custom
 indicator styling, refreshed for selection, member resize and list scrolling.
+
+A selection change moves the indicator; its first placement and layout changes do
+not. The enclosed indicator glides to the selected tab. The underline's leading
+edge, in the activation direction, moves faster than its trailing edge, so the
+line stretches briefly while it travels. Before moving, Tabs dispatches a
+`tp-motion-request` for the `indicator` role with `activationDirection` context;
+a claiming driver replaces the default transition. Reduced motion makes the move
+instant.
