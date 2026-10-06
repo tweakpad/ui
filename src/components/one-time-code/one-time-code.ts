@@ -1,4 +1,5 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
+import { autofillHint } from '../../foundation/autofill.js';
 import { live } from 'lit/directives/live.js';
 import { TpElement } from '../../foundation/element.js';
 import { TpFormElement } from '../../foundation/form-element.js';
@@ -40,6 +41,7 @@ export class TpOtpField extends TpFormElement {
     groupLengths: { type: Array, attribute: 'group-lengths' },
     mask: { type: Boolean, reflect: true },
     autoComplete: { type: String, attribute: 'autocomplete' },
+    noAutofill: { type: Boolean, attribute: 'no-autofill', reflect: true },
     autoSubmit: { type: Boolean, attribute: 'auto-submit' },
     label: { type: String },
     placeholder: { type: String },
@@ -108,6 +110,11 @@ export class TpOtpField extends TpFormElement {
   groupLengths: readonly number[] = [];
   mask = false;
   autoComplete = 'one-time-code';
+  /** Opts the code editor out of host and extension autofill. */
+  noAutofill = false;
+  get effectiveNoAutofill(): boolean {
+    return this.noAutofill || this.inheritedNoAutofill;
+  }
   autoSubmit = false;
   label = 'One-time code';
   placeholder = '';
@@ -246,7 +253,11 @@ export class TpOtpField extends TpFormElement {
             .value=${live(this.value)}
             aria-label=${this.label || nothing}
             inputmode=${this.inputMode}
-            autocomplete=${this.autoComplete}
+            autocomplete=${this.effectiveNoAutofill ? 'off' : this.autoComplete}
+            data-bwignore=${autofillHint(this.effectiveNoAutofill, 'data-bwignore')}
+            data-1p-ignore=${autofillHint(this.effectiveNoAutofill, 'data-1p-ignore')}
+            data-lpignore=${autofillHint(this.effectiveNoAutofill, 'data-lpignore')}
+            data-form-type=${autofillHint(this.effectiveNoAutofill, 'data-form-type')}
             spellcheck="false"
             autocapitalize="off"
             ?disabled=${this.effectiveDisabled || !this.#capacity}

@@ -1,3 +1,4 @@
+import { formOptsOutOfAutofill } from './autofill.js';
 import type { PropertyDeclarations, PropertyValues } from 'lit';
 import { createId } from './id.js';
 import type { ElementReference } from './part.js';
@@ -53,6 +54,7 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     name?: string;
     invalid?: boolean;
     markers?: Record<string, boolean>;
+    noAutofill?: boolean;
   } = {};
   #fieldMarkers = new Set<string>();
   #inputReference: ElementReference | undefined;
@@ -102,11 +104,16 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
   get inputElement(): HTMLElement | null {
     return this.renderRoot?.querySelector<HTMLElement>('input,textarea,select') ?? null;
   }
+  /** No autofill inherited from the owning Field or an enclosing Form. */
+  protected get inheritedNoAutofill(): boolean {
+    return !!this.#fieldContext.noAutofill || formOptsOutOfAutofill(this);
+  }
   setFieldContext(context: {
     disabled?: boolean;
     name?: string;
     invalid?: boolean;
     markers?: Record<string, boolean>;
+    noAutofill?: boolean;
   }): void {
     if (JSON.stringify(this.#fieldContext) === JSON.stringify(context)) return;
     this.#fieldContext = { ...context };

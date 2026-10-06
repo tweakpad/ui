@@ -54,6 +54,7 @@ export class TpField extends TpElement {
     legend: { type: String },
     legendScale: { type: String, attribute: 'legend-scale', reflect: true },
     nativeLabel: { type: Boolean, attribute: 'native-label' },
+    noAutofill: { type: Boolean, attribute: 'no-autofill', reflect: true },
     errorMatch: { attribute: false },
     validator: { attribute: false },
     validationMode: { type: String, attribute: 'validation-mode' },
@@ -201,6 +202,8 @@ export class TpField extends TpElement {
   legendScale: 'section' | 'field' = 'section';
   override orientation: 'horizontal' | 'vertical' | 'responsive' = 'vertical';
   nativeLabel = true;
+  /** Opts the Field's text-entry control out of host and extension autofill. */
+  noAutofill = false;
   errorMatch: boolean | keyof ValidityState | undefined;
   validator: FieldValidator | undefined;
   validationMode: FieldValidationMode | undefined;
@@ -535,6 +538,7 @@ export class TpField extends TpElement {
         disabled: this.effectiveDisabled || this.#itemDisabled(control),
         ...(this.name ? { name: this.name } : {}),
         invalid: state.validity.valid === false,
+        noAutofill: this.noAutofill,
         markers: Object.fromEntries(
           markers
             .filter((marker) => marker !== 'disabled' && marker !== 'invalid')

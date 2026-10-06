@@ -1,4 +1,5 @@
 import { SelectQueryController } from './query.js';
+import { autofillHint } from '../../foundation/autofill.js';
 import { renderQuery } from './query-view.js';
 import { SelectSource } from './source.js';
 import { isSelectItemCollection, type SelectItemCollection } from './items.js';
@@ -119,6 +120,7 @@ export class TpSelect extends TpFormElement<unknown> {
     label: { type: String },
     identifier: { type: String },
     autoComplete: { type: String, attribute: 'autocomplete' },
+    noAutofill: { type: Boolean, attribute: 'no-autofill', reflect: true },
     nativeAction: { type: Boolean, attribute: 'native-action' },
     modal: { type: Boolean, noAccessor: true },
     highlightItemOnHover: { type: Boolean, attribute: 'highlight-item-on-hover' },
@@ -216,6 +218,11 @@ export class TpSelect extends TpFormElement<unknown> {
   label = 'Options';
   identifier = createId('tp-select');
   autoComplete = '';
+  /** Opts the autofill receiver and the query editor out of host and extension autofill. */
+  noAutofill = false;
+  get effectiveNoAutofill(): boolean {
+    return this.noAutofill || this.inheritedNoAutofill;
+  }
   nativeAction = true;
   #providedModal: boolean | undefined;
   get modal(): boolean {
@@ -725,7 +732,11 @@ export class TpSelect extends TpFormElement<unknown> {
         tabindex="-1"
         aria-hidden="true"
         .value=${this.#values(this.value).map(String).join(',')}
-        autocomplete=${this.autoComplete || nothing}
+        autocomplete=${this.effectiveNoAutofill ? 'off' : this.autoComplete || nothing}
+        data-bwignore=${autofillHint(this.effectiveNoAutofill, 'data-bwignore')}
+        data-1p-ignore=${autofillHint(this.effectiveNoAutofill, 'data-1p-ignore')}
+        data-lpignore=${autofillHint(this.effectiveNoAutofill, 'data-lpignore')}
+        data-form-type=${autofillHint(this.effectiveNoAutofill, 'data-form-type')}
         ?disabled=${this.effectiveDisabled}
         @change=${this.#autofill}
       />

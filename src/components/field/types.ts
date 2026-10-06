@@ -41,6 +41,7 @@ export type FieldControl = HTMLElement & {
     name?: string;
     invalid?: boolean;
     markers?: Record<string, boolean>;
+    noAutofill?: boolean;
   }) => void;
   checkValidity?: () => boolean;
   setCustomValidity?: (message: string) => void;

@@ -1,4 +1,5 @@
 import { html, nothing } from 'lit';
+import { autofillProperties } from '../../foundation/autofill.js';
 import { repeat } from 'lit/directives/repeat.js';
 import type { ComponentPartContract, PartRenderOptions, PartState } from '../../foundation/part.js';
 import { chevronDownIcon } from '../../icons/chevron-down.js';
@@ -45,7 +46,7 @@ export function renderQuery(h: TpSelect, q: SelectQueryController, v: QueryView)
       'aria-expanded': String(h.open),
       'aria-controls': h.open ? `${h.identifier}-list` : undefined,
       'aria-autocomplete': h.completionMode,
-      autocomplete: h.autoComplete || 'off',
+      ...autofillProperties(h.effectiveNoAutofill, h.autoComplete || 'off'),
       'aria-required': String(h.required),
       'aria-invalid': String(h.effectiveInvalid),
       '@input': (event: Event) => q.input(event),

@@ -1,4 +1,5 @@
 import { css, nothing } from 'lit';
+import { autofillProperties } from '../../foundation/autofill.js';
 import { TpTextControl } from '../field/text-control.js';
 import { textAreaPresentation } from '../../presentation/families/text-area.js';
 
@@ -39,7 +40,7 @@ export class TpTextArea extends TpTextControl {
       '.name': this.effectiveName,
       '.value': this.editingValue,
       '.placeholder': this.placeholder,
-      '.autocomplete': this.autocomplete,
+      ...autofillProperties(this.effectiveNoAutofill, this.autocomplete, '.autocomplete'),
       '.rows': Math.max(1, Math.trunc(this.rows) || 2),
       minlength: this.minLength >= 0 ? this.minLength : nothing,
       maxlength: this.maxLength >= 0 ? this.maxLength : nothing,

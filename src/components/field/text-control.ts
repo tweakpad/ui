@@ -32,6 +32,7 @@ export abstract class TpTextControl extends TpFormElement {
     hostProperties: { attribute: false },
     placeholder: { type: String },
     autocomplete: { type: String },
+    noAutofill: { type: Boolean, attribute: 'no-autofill', reflect: true },
     minLength: { type: Number, attribute: 'minlength' },
     maxLength: { type: Number, attribute: 'maxlength' },
     label: { type: String },
@@ -57,6 +58,8 @@ export abstract class TpTextControl extends TpFormElement {
   hostProperties: Record<string, unknown> = {};
   placeholder = '';
   autocomplete = '';
+  /** Opts the native editor out of host and extension autofill. */
+  noAutofill = false;
   minLength = -1;
   maxLength = -1;
   label = '';
@@ -71,6 +74,9 @@ export abstract class TpTextControl extends TpFormElement {
   /** Disabled context before an optional semantic editing model contributes its policy. */
   get inheritedDisabled(): boolean {
     return super.effectiveDisabled || !!this.#composite.state?.disabled;
+  }
+  get effectiveNoAutofill(): boolean {
+    return this.noAutofill || this.inheritedNoAutofill;
   }
   get effectiveReadOnly(): boolean {
     return this.readOnly || !!textEditingModel(this)?.readOnly;

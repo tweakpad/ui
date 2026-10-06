@@ -1,4 +1,5 @@
 import { nothing } from 'lit';
+import { autofillProperties } from '../../foundation/autofill.js';
 import { TpTextControl } from '../field/text-control.js';
 import { inputPresentation } from '../../presentation/families/input.js';
 
@@ -26,7 +27,7 @@ export class TpInput extends TpTextControl {
       '.name': this.effectiveName,
       ...(this.type === 'file' ? {} : { '.value': this.editingValue }),
       '.placeholder': this.placeholder,
-      '.autocomplete': this.autocomplete,
+      ...autofillProperties(this.effectiveNoAutofill, this.autocomplete, '.autocomplete'),
       '.min': this.min,
       '.max': this.max,
       '.step': this.step,
