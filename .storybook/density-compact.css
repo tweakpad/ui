@@ -1,0 +1,14 @@
+/*
+ * Prototype compact density: overrides only the spacing and type seeds. Derived roles
+ * (space-*, control heights, icon extents, radii) are declared on :root and recompute
+ * from the seed on the same element. Minimum accessible targets stay unchanged.
+ */
+:root[data-tp-density='compact'] {
+  --tp-spacing: 0.175rem;
+  --tp-text-xs: 0.6875rem;
+  --tp-text-sm: 0.8125rem;
+  --tp-text-base: 0.875rem;
+  --tp-text-lg: 0.9375rem;
+  --tp-text-xl: 1.0625rem;
+  --tp-text-2xl: 1.125rem;
+}
