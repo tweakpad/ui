@@ -12,7 +12,7 @@ import { TpCalendar } from '@tweakpad/ui';
 <tp-calendar label="Date" name="date" default-value="2026-06-12"></tp-calendar>
 ```
 
-Build a date picker by putting a Calendar in a Popover with a Button trigger. Close the Popover after accepting `tp-value-change`. Combine a date with a time in application code, using Field-labelled time Inputs.
+Build a date picker by putting a Calendar in a Popover with a Button trigger. Close the Popover after accepting `tp-value-change`. Label the trigger with a Time (`mode="absolute" preset="date-long" tooltip="false"`) and set its `datetime` to the selected value: Time's `preset`, `pattern`, `format`, `locale` and `time-zone` configure the date text, and its content is the placeholder until a date is chosen. Combine a date with a time in application code, using Field-labelled time Inputs.
 
 ## Selection
 

@@ -1,5 +1,6 @@
 import { html } from 'lit';
 import { clockIcon } from '../icons/clock.js';
+import { applyDatePickerTrigger } from './date-picker-trigger.js';
 
 const isoDate = (date) =>
   `${String(date.getFullYear()).padStart(4, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -79,20 +80,16 @@ export function setupCalendarExample(root) {
 
   for (const popover of root.querySelectorAll('tp-popover[data-date-picker]')) {
     const calendar = popover.querySelector('tp-calendar');
-    const label = popover.querySelector('[data-date-label]');
+    const label = popover.querySelector('tp-time');
+    const trigger = popover.querySelector('tp-button[slot="trigger"]');
+    applyDatePickerTrigger(trigger, true);
     // Opening moves focus to the calendar's current day (Calendar focus delegates to it).
     popover.initialFocus = calendar;
     listen(calendar, 'tp-value-change', (event) => {
       if (event.defaultPrevented) return;
-      // Time keeps the date-only value on its calendar day; the Button owns focus.
-      label.replaceChildren(
-        Object.assign(label.ownerDocument.createElement('tp-time'), {
-          datetime: event.detail.value,
-          mode: 'absolute',
-          preset: 'date-medium',
-          tooltip: false,
-        }),
-      );
+      applyDatePickerTrigger(trigger, !event.detail.value);
+      // Time keeps the date-only value on its calendar day and shows its content while empty.
+      label.datetime = event.detail.value ?? undefined;
       popover.close();
     });
   }

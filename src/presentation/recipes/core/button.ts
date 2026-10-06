@@ -20,6 +20,17 @@ for (const part of Object.keys(button)) {
   for (const variant of ['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'])
     button[`${part}-variant-${variant}`] =
       part === 'button' ? variantPresentation(variant, true) : [];
+  // Nova cn-button-variant-outline: dark:bg-input/30 dark:border-input, the field fill, so an
+  // outline Button sits with Input, Select and date-picker triggers instead of the page color.
+  if (part === 'button')
+    button['button-variant-outline'] = [
+      ...button['button-variant-outline']!,
+      rule({
+        background:
+          'light-dark(var(--tp-background), color-mix(in oklab, var(--tp-input) 30%, transparent))',
+        'border-color': 'light-dark(var(--tp-border), var(--tp-input))',
+      }),
+    ];
   for (const size of ['xs', 'sm', 'default', 'lg', 'icon-xs', 'icon-sm', 'icon', 'icon-lg'])
     button[`${part}-size-${size}`] = part === 'button' ? controlSizePresentation(size) : [];
 }

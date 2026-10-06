@@ -139,12 +139,12 @@ export const calendarExamples = [
   interactive(
     'Date picker',
     'calendar-date-picker',
-    `<tp-field label="Due date">
+    `<tp-field label="Due date" style="max-inline-size: 18rem">
   <tp-popover label="Choose a due date" placement="bottom start" data-date-picker>
-    <tp-button slot="trigger" variant="outline"><span data-date-label>Pick a date</span></tp-button>
+    <tp-button slot="trigger" variant="outline"><tp-time mode="absolute" preset="date-long" tooltip="false">Pick a date</tp-time></tp-button>
     <tp-calendar label="Due date"></tp-calendar>
   </tp-popover>
 </tp-field>`,
-    'Popover owns the floating surface and focus return; Calendar supplies the selection and the application closes the Popover after accepting it.',
+    'Popover owns the floating surface and focus return; Calendar supplies the selection and the application closes the Popover after accepting it. The trigger is an outline Button that fills the Field, leads with a calendar icon and mutes its placeholder, set through its icon property and button part contract. Its label is a Time: preset, pattern, format, locale and time-zone configure the date text exactly as on any Time, and the Time content is the placeholder shown until a date is chosen.',
   ),
 ];

@@ -131,6 +131,12 @@ export interface MapLibreEngineOptions {
   readonly css?: string;
   /** Apply the map's theme roles to matching style layers (default `true`). */
   readonly applyTheme?: boolean;
+  /**
+   * Attribution presentation: `collapsed` (default) shows only the info button until opened;
+   * `expanded` keeps the full text; `auto` keeps MapLibre's behavior (expanded until the first
+   * drag on compact maps).
+   */
+  readonly attribution?: 'collapsed' | 'expanded' | 'auto';
   /** Extra MapLibre `Map` options; the map's camera, zoom range and interaction take precedence. */
   readonly mapOptions?: Record<string, unknown>;
 }
@@ -263,8 +269,9 @@ export function createMapLibreEngine(
       let scheme = context.scheme;
       let theme = context.theme;
       const camera = context.initialCamera;
+      const attribution = options.attribution ?? 'collapsed';
       const map = new maplibregl.Map({
-        attributionControl: { compact: true },
+        attributionControl: attribution === 'expanded' ? { compact: false } : { compact: true },
         ...options.mapOptions,
         container,
         style: styleFor(scheme),
@@ -279,6 +286,22 @@ export function createMapLibreEngine(
       });
       const overlays = new Set<HTMLElement>();
       let loaded = false;
+      // Start the compact attribution closed (the info button stays visible and reachable).
+      // Runs once, when the attribution has content; later toggles belong to the user.
+      let attributionCollapsed = attribution !== 'collapsed';
+      const collapseAttribution = () => {
+        if (attributionCollapsed) return;
+        const control = container.querySelector<HTMLElement>('.maplibregl-ctrl-attrib');
+        const inner = control?.querySelector('.maplibregl-ctrl-attrib-inner');
+        if (!control || !inner?.textContent?.trim()) return;
+        control.classList.add('maplibregl-compact');
+        control.classList.remove('maplibregl-compact-show');
+        // A closed <details> reports collapsed; MapLibre's toggle runs before the native one.
+        control.removeAttribute('open');
+        attributionCollapsed = true;
+      };
+      map.on('styledata', collapseAttribution);
+      map.on('sourcedata', collapseAttribution);
       let animationId = 0;
 
       const setInteractive = (enabled: boolean) => {
@@ -296,6 +319,7 @@ export function createMapLibreEngine(
 
       map.on('load', () => {
         loaded = true;
+        collapseAttribution();
         if (applyTheme) applyMapLibreTheme(map, theme);
         context.ready();
       });

@@ -189,7 +189,7 @@ export const externalControlsExample = (() => {
   return {
     title: 'External controls',
     description:
-      '`tp-map-control` elements outside the map bind to it with `map="id"`, here in a joined Button group above the map. They behave exactly like the built-in floating controls.',
+      'tp-map-control elements outside the map bind to it with map="id", here in a joined Button group above the map. They behave exactly like the built-in floating controls.',
     code: copyable(
       markup,
       setupScript(`map.engine = createMapLibreEngine(maplibregl, { css: maplibreCss });`),
@@ -208,7 +208,7 @@ export function googleMapsExample(key: string | undefined) {
   return {
     title: 'Google Maps engine',
     description:
-      'The identical composition on the Google Maps engine, themed with a dark Google JSON style through the adapter `styles` option. Google renders Google basemaps only; OpenFreeMap vector tiles need the MapLibre engine. Set `STORYBOOK_GOOGLE_MAPS_API_KEY` to run it; without a key the map shows its empty status.',
+      'The identical composition on the Google Maps engine, themed with a dark Google JSON style through the adapter styles option. Google renders Google basemaps only; OpenFreeMap vector tiles need the MapLibre engine. Set STORYBOOK_GOOGLE_MAPS_API_KEY to run it; without a key the map shows its empty status.',
     code: copyable(
       markup,
       setupScript(

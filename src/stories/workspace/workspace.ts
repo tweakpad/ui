@@ -7,6 +7,8 @@ import { refreshIcon } from '../../icons/refresh.js';
 import { downloadIcon } from '../../icons/download.js';
 import { fileTextIcon } from '../../icons/file-text.js';
 import { plusIcon } from '../../icons/plus.js';
+import { calendarIcon } from '../../icons/calendar.js';
+import { datePickerTriggerContracts } from '../date-picker-trigger.js';
 import {
   quarterlyRenderer,
   quarterlyData,
@@ -1490,7 +1492,19 @@ export class CatalogWorkspace extends LitElement {
                 label="Choose a due date"
                 placement="bottom start"
                 .initialFocus=${() => this.#dueCalendar.value ?? null}
-                ><tp-button slot="trigger" variant="outline">${date(this.draftDue)}</tp-button
+                ><tp-button
+                  slot="trigger"
+                  variant="outline"
+                  style="display: block"
+                  .icon=${calendarIcon}
+                  .partContracts=${datePickerTriggerContracts(!this.draftDue)}
+                  ><tp-time
+                    .datetime=${this.draftDue || undefined}
+                    mode="absolute"
+                    preset="date-long"
+                    .tooltip=${false}
+                    >Pick a date</tp-time
+                  ></tp-button
                 ><tp-calendar
                   ${ref(this.#dueCalendar)}
                   label="Due date"

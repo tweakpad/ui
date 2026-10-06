@@ -21,6 +21,9 @@ class FakeElement {
   remove() {
     this.removed = true;
   }
+  querySelector() {
+    return null;
+  }
 }
 
 function stubMapLibre() {
