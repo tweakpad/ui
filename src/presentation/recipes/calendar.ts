@@ -99,6 +99,9 @@ export const calendarAppearance: PresentationDictionary = {
         'font-weight': 'var(--tp-font-normal)',
         'border-radius': 'var(--tp-radius-md)',
         border: '0',
+        // Selection moves between days at once. An inherited Button fade crosses the
+        // fill and text colors, so the deselected digit blinks out mid-transition.
+        transition: 'none',
       },
     },
     { selector: '&[data-outside]', declarations: { color: 'var(--tp-muted-foreground)' } },
