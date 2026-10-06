@@ -5,11 +5,15 @@ import { TpButton } from '../button.js';
 import type { PropertyValues } from 'lit';
 import type { ComponentPartContract, ElementReference, PartState } from '../../foundation/part.js';
 import { attachPartReference, detachPartReference } from '../../foundation/part-reference.js';
+import { buttonPresentation } from '../../presentation/families/button.js';
+import { selectPresentation } from '../../presentation/families/select.js';
 
 /** Companion actions retain Button's press, native/delegated anatomy and mark owners. */
 class SelectAction extends TpButton {
   static presentationTagName = 'tp-button';
+  static override presentation = buttonPresentation;
   static presentationFamilyTagNames = ['tp-select'];
+  static override presentationFamilies = [selectPresentation];
   static override properties = {
     ...TpButton.properties,
     selectState: { attribute: false },

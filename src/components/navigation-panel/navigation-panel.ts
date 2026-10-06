@@ -27,6 +27,7 @@ import type {
   NavigationPanelSide,
   NavigationPanelVariant,
 } from './types.js';
+import { navigationPanelPresentation } from '../../presentation/families/navigation-panel.js';
 interface ControlRecord {
   part: string;
   element: HTMLElement;
@@ -45,6 +46,7 @@ const optionalBoolean = {
 /** Responsive navigation composition. Modal/focus/dismissal ownership belongs to the actual Drawer. */
 export class TpNavigationPanel extends TpElement {
   static tagName = 'tp-navigation-panel';
+  static override presentation = navigationPanelPresentation;
   static override properties = {
     ...TpElement.properties,
     expanded: { type: Boolean, noAccessor: true },

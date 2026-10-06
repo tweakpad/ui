@@ -27,6 +27,7 @@ import type {
   TpDrawerVirtualKeyboardProvider,
 } from './virtual-keyboard.js';
 import { drawerStyles } from './styles.js';
+import { drawerPresentation } from '../../presentation/families/drawer.js';
 
 const drawerModalities: readonly DialogModality[] = ['modal', 'non-modal', 'trap-focus-only'];
 const edges: readonly DrawerEdge[] = ['block-start', 'block-end', 'inline-start', 'inline-end'];
@@ -38,6 +39,7 @@ const directions: Record<string, DrawerDirection> = {
 };
 export class TpDrawer extends TpDialog {
   static override tagName = 'tp-drawer';
+  static override presentation = drawerPresentation;
   static override properties = {
     ...TpDialog.properties,
     edge: { type: String, reflect: true },

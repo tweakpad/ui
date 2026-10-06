@@ -9,6 +9,7 @@ import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { TpMenu, MenuBarOwner } from '../menu/menu.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import type { PartPresentation } from '../../presentation/resolver.js';
+import { menubarPresentation } from '../../presentation/families/menubar.js';
 
 interface Member {
   menu: TpMenu;
@@ -20,6 +21,7 @@ interface Member {
 /** One scalar value commits the entire bar; child surfaces are passive derived views. */
 export class TpMenubar extends TpElement implements MenuBarOwner {
   static tagName = 'tp-menubar';
+  static override presentation = menubarPresentation;
   static override properties = {
     ...TpElement.properties,
     value: { type: String, noAccessor: true },

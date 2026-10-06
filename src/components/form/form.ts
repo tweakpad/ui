@@ -4,6 +4,7 @@ import type { TpField } from '../field/index.js';
 import { fieldSubmission } from '../field/field.js';
 import { fieldValues } from '../field/field-state.js';
 import { isAvailable } from '../../foundation/focus.js';
+import { formPresentation } from '../../presentation/families/form.js';
 
 const nativeAttributes = [
   'action',
@@ -29,6 +30,7 @@ const configurationAttributes = [
 
 export class TpForm extends TpElement {
   static tagName = 'tp-form';
+  static override presentation = formPresentation;
   static override properties = {
     ...TpElement.properties,
     onFormSubmit: { attribute: false },

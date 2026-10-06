@@ -8,13 +8,26 @@ import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { SelectRecord } from '../select/model.js';
 import type { SelectEntry } from '../select/types.js';
-import type { TpCommandList } from './list.js';
+
 import { commandRank, type CommandEntry, type CommandItem, type CommandFilter } from './model.js';
+import { commandPalettePresentation } from '../../presentation/families/command-palette.js';
+import { dialogPresentation } from '../../presentation/families/dialog.js';
+import { TpCommandList } from './list.js';
+import { TpIcon } from '../icon.js';
+import { TpKeyHintGroup } from '../key-hint/key-hint-group.js';
+import { TpKeyHint } from '../key-hint/key-hint.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /** Command query/highlight policy with Dialog as the only optional modal owner. */
 export class TpCommandPalette extends TpDialog {
   static override tagName = 'tp-command-palette';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpCommandList, TpIcon, TpKeyHintGroup, TpKeyHint];
+  }
+  static override presentation = commandPalettePresentation;
   static presentationFamilyTagNames = ['tp-dialog'];
+  static override presentationFamilies = [dialogPresentation];
   static override properties = {
     ...TpDialog.properties,
     inline: { type: Boolean, reflect: true },

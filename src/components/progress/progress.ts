@@ -9,6 +9,7 @@ import type { MotionHandle } from '../../foundation/motion.js';
 import { progressMotionRoles } from './motion.js';
 import { progressState } from './state.js';
 import type { AccessibleProgressText, ProgressState } from './state.js';
+import { progressPresentation } from '../../presentation/families/progress.js';
 
 const progressValueConverter = {
   fromAttribute: (value: string | null): number | null =>
@@ -24,6 +25,7 @@ const maximumConverter = {
 /** Noninteractive task progress; every part observes one semantic and formatting snapshot. */
 export class TpProgress extends TpElement {
   static tagName = 'tp-progress';
+  static override presentation = progressPresentation;
   static override properties = {
     ...TpElement.properties,
     value: { converter: progressValueConverter },

@@ -11,6 +11,7 @@ import type { ChangeReason } from '../../foundation/types.js';
 import { OwnedAttributes } from './owned-attributes.js';
 import { TabsPanel } from './panel.js';
 import { tabGeometry } from './indicator.js';
+import { tabsPresentation } from '../../presentation/families/tabs.js';
 
 export type TabsActivationDirection = 'left' | 'right' | 'up' | 'down' | 'none';
 export type TabsMember = HTMLElement & {
@@ -24,6 +25,7 @@ const memberValue = (element: TabsMember): unknown =>
 
 export class TpTabs extends TpElement {
   static tagName = 'tp-tabs';
+  static override presentation = tabsPresentation;
   static override properties = {
     ...TpElement.properties,
     value: { noAccessor: true },

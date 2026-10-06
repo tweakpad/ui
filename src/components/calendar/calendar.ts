@@ -3,7 +3,8 @@ import { html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { createId } from '../../foundation/id.js';
 import { dateTimeFormatter } from '../../foundation/date-locale.js';
-import { TpElement, TpFormElement } from '../../foundation/element.js';
+import { TpElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
 import {
   calendarGridDates,
@@ -39,11 +40,14 @@ import type {
   CalendarMessages,
   CalendarValidityCode,
 } from './types.js';
-import type { TpButton } from '../button.js';
-import type { TpNativeSelect } from '../native-select/index.js';
+
 import { compositeControl } from '../../foundation/composite-control.js';
 import { chevronRightIcon } from '../../icons/chevron-right.js';
 import type { PartRenderOptions, PartState } from '../../foundation/part.js';
+import { calendarPresentation } from '../../presentation/families/calendar.js';
+import { TpButton } from '../button.js';
+import { TpNativeSelect } from '../native-select/native-select.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 const calendarValueConverter = {
   fromAttribute(value: string | null): CalendarValue {
     if (value === null || !value.trim()) return undefined;
@@ -93,6 +97,11 @@ const defaultValidityMessages: Record<CalendarValidityCode, string> = {
 
 export class TpCalendar extends TpFormElement<CalendarValue> {
   static tagName = 'tp-calendar';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpButton, TpNativeSelect];
+  }
+  static override presentation = calendarPresentation;
   static override properties = {
     ...TpFormElement.properties,
     value: { converter: calendarValueConverter },

@@ -1,11 +1,15 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
 import { live } from 'lit/directives/live.js';
-import { TpElement, TpFormElement } from '../../foundation/element.js';
+import { TpElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { minusIcon } from '../../icons/minus.js';
 import { normalizeCode, codeOffset, type CodeValidation } from './normalize.js';
+import { otpFieldPresentation } from '../../presentation/families/otp-field.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export interface CodeCompleteDetail {
   value: string;
@@ -20,6 +24,11 @@ export interface CodeInvalidDetail {
 /** One native editor, one common value owner; visible positions never own editing state. */
 export class TpOtpField extends TpFormElement {
   static tagName = 'tp-otp-field';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon];
+  }
+  static override presentation = otpFieldPresentation;
   static override properties = {
     ...TpFormElement.properties,
     length: { type: Number },

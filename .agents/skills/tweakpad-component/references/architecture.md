@@ -195,6 +195,34 @@ into a replaceable theme. Reuse color pairs, typography, spacing and motion role
 avoid ad hoc colors, dimensions or animation values for which a role already
 exists. A justified extension requires contract/naming review and documentation.
 
+### Tree-shakeable ownership
+
+Using one component must bundle only that component, the components it renders and
+the shared code they reach. `src/presentation/families.test.ts` enforces these rules:
+
+- **Presentation family.** Each component owns `src/presentation/families/<name>.ts`.
+  It holds `definePresentation({ definition, bindings, structure, sources })`. The element
+  class sets `static presentation` to that family, and `static presentationFamilies` to
+  any member families it presents. Families import only recipe modules,
+  `../family.js` and `../definition.js`.
+- **Recipes.** Component appearance goes in `recipes/<name>.ts`. Appearance shared by
+  several families goes in `recipes/shared/` or `recipes/core/`. Recipes never import
+  `componentDefinitions`, `defaultPresentationDictionary`, `families/index.ts` or another
+  component's family. Use `complete: true` instead of reading the catalog.
+- **Aggregates.** Components and Foundation never import the aggregates
+  (`presentation/components.ts`, `default.ts`, `families/index.ts`). They exist only for
+  tooling and full-library themes.
+- **Rendered elements.** Every library element a class renders, through a `<tp-*>`
+  template, `renderPart({ tag })` or `createElement`, is listed in
+  `static get elementDependencies()`. `defineElement` defines them recursively.
+- **Imports.** Import component classes from their own modules, never through the
+  `primitives.ts`, `display.ts` or `shared.ts` compatibility barrels. Import
+  framework-free helpers from `src/foundation/`, not from another component's folder.
+
+Verify with a standalone fixture that calls `defineElement` for the one component
+only, without `register`. Measure a single-component bundle built from `dist/index.js`
+when shared code changes.
+
 ## Implementation and composition reuse
 
 This applies to component internals, stories, Docs, example renderers, copyable

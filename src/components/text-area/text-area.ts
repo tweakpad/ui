@@ -1,8 +1,10 @@
 import { css, nothing } from 'lit';
 import { TpTextControl } from '../field/text-control.js';
+import { textAreaPresentation } from '../../presentation/families/text-area.js';
 
 export class TpTextArea extends TpTextControl {
   static tagName = 'tp-text-area';
+  static override presentation = textAreaPresentation;
   static override properties = {
     ...TpTextControl.properties,
     rows: { type: Number },

@@ -15,6 +15,8 @@ import {
   type MediaTimeType,
   type MediaTimeView,
 } from './time-state.js';
+import { TpButton } from '../button.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /**
  * The time a `type="pointer"` display shows: its own `value`, else the preview source's pointer
@@ -65,6 +67,10 @@ const numberOrNull = {
  */
 export class TpMediaTime extends TpMediaElement {
   static tagName = 'tp-media-time';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpButton];
+  }
 
   static override properties: PropertyDeclarations = {
     ...TpMediaElement.properties,

@@ -5,14 +5,20 @@ import { ControllableState } from '../../foundation/controllable-state.js';
 import { resolvesReducedMotion } from '../../foundation/motion.js';
 import { MessageScrollerProvider, type ScrollOptions } from './provider.js';
 import { messageScrollerContext, messageScrollerOwner } from './context.js';
-import type {
-  TpMessageScrollerItem,
-  TpMessageScrollerContent,
-  TpMessageScrollerViewport,
-} from './parts.js';
+import type { TpMessageScrollerItem } from './parts.js';
+import { messageScrollerPresentation } from '../../presentation/families/message-scroller.js';
+import { TpMessageScrollerViewport } from './parts.js';
+import { TpMessageScrollerContent } from './parts.js';
+import { TpMessageScrollerReturnControl } from './parts.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export class TpMessageScroller extends TpElement {
   static tagName = 'tp-message-scroller';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpMessageScrollerViewport, TpMessageScrollerContent, TpMessageScrollerReturnControl];
+  }
+  static override presentation = messageScrollerPresentation;
   static override properties = {
     ...TpElement.properties,
     pinned: { type: Boolean, noAccessor: true },

@@ -2,11 +2,9 @@ import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import type { TpOpenChangeEvent } from '../foundation/events.js';
-import type {
-  CollapsibleContentAlignment,
-  CollapsibleIndicatorPosition,
-  TpCollapsible,
-} from './collapsible.js';
+import type { CollapsibleContentAlignment, CollapsibleIndicatorPosition } from './collapsible.js';
+import { TpCollapsible } from './collapsible.js';
+import type { CustomElementConstructorWithTag } from '../foundation/define.js';
 
 export type AccordionIndicatorPosition = CollapsibleIndicatorPosition;
 export type AccordionContentAlignment = CollapsibleContentAlignment;
@@ -23,6 +21,10 @@ const optionalContentAlignmentConverter = {
 /** A public Accordion Item host. Its Root owns selection; Collapsible owns disclosure behavior. */
 export class TpAccordionItem extends TpElement {
   static tagName = 'tp-accordion-item';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpCollapsible];
+  }
   static override properties = {
     ...TpElement.properties,
     value: { type: String, reflect: true },

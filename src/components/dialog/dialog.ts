@@ -42,6 +42,9 @@ import {
   type ResolvedDialogModality,
 } from './modality.js';
 import type { OutsideInertScope } from '../../foundation/outside-inert.js';
+import { dialogPresentation } from '../../presentation/families/dialog.js';
+import { TpButton } from '../button.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type { DialogModality } from './modality.js';
 
@@ -75,6 +78,10 @@ interface TriggerRecord {
 /** Shared Dialog-family owner. Subclasses supply policy and public part names. */
 export class TpDialog extends TpElement {
   static tagName = 'tp-dialog';
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpButton];
+  }
+  static override presentation = dialogPresentation;
   static override properties = {
     ...TpElement.properties,
     open: { type: Boolean, noAccessor: true },

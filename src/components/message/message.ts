@@ -1,10 +1,18 @@
 import { css, html, nothing } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import type { TimeInput } from '../../foundation/time/parse.js';
+import { messagePresentation } from '../../presentation/families/message.js';
+import { TpTime } from '../time/time.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /** Sender-relative layout only. Transport and conversation state belong to the app. */
 export class TpMessage extends TpElement {
   static tagName = 'tp-message';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpTime];
+  }
+  static override presentation = messagePresentation;
   static override properties = {
     ...TpElement.properties,
     align: { type: String, reflect: true },

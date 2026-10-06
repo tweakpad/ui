@@ -12,6 +12,10 @@ import {
   mediaStalled,
 } from './feedback-state.js';
 import { mediaOverlayStyles, mediaScrimPreferenceStyles } from './styles.js';
+import { TpSpinner } from '../spinner/spinner.js';
+import { TpAlertDialog } from '../alert-dialog/alert-dialog.js';
+import { TpButton } from '../button.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 type LooseRequest = (
   action: MediaRequestAction,
@@ -28,6 +32,10 @@ type LooseRequest = (
  */
 export class TpMediaBufferingIndicator extends TpMediaElement {
   static tagName = 'tp-media-buffering-indicator';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpSpinner];
+  }
 
   static override properties: PropertyDeclarations = {
     ...TpMediaElement.properties,
@@ -135,6 +143,10 @@ export class TpMediaBufferingIndicator extends TpMediaElement {
  */
 export class TpMediaErrorDialog extends TpMediaElement {
   static tagName = 'tp-media-error-dialog';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpAlertDialog, TpButton];
+  }
 
   static override properties: PropertyDeclarations = {
     ...TpMediaElement.properties,

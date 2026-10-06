@@ -1,10 +1,12 @@
 import { css, html, nothing } from 'lit';
 import { KeyHintElement } from './base.js';
 import { keyHintNotation } from './notation.js';
+import { keyHintPresentation } from '../../presentation/families/key-hint.js';
 
 /** One informative key; authored content can replace the generated notation. */
 export class TpKeyHint extends KeyHintElement {
   static tagName = 'tp-key-hint';
+  static override presentation = keyHintPresentation;
   static override properties = { ...KeyHintElement.properties, key: { type: String } };
   static override styles = [
     KeyHintElement.styles,

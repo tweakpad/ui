@@ -1,11 +1,13 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
-import { TpElement, TpFormElement } from '../foundation/element.js';
+import { TpElement } from '../foundation/element.js';
+import { TpFormElement } from '../foundation/form-element.js';
 import { ControllableState } from '../foundation/controllable-state.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import { SyntheticPress } from '../foundation/synthetic-press.js';
 import { componentHandlingPrevented } from '../foundation/part.js';
 import type { ChangeReason } from '../foundation/types.js';
+import { togglePresentation } from '../presentation/families/toggle.js';
 
 export interface ToggleSelectionOwner {
   readonly variant: 'ghost' | 'outline';
@@ -20,6 +22,7 @@ export interface ToggleSelectionOwner {
 /** Shared action owner for standalone Toggle and ToggleGroup items. */
 export class TpToggle extends TpFormElement {
   static tagName = 'tp-toggle';
+  static override presentation = togglePresentation;
   static override properties = {
     ...TpFormElement.properties,
     pressed: { type: Boolean, noAccessor: true },

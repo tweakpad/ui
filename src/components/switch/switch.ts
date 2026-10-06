@@ -8,6 +8,9 @@ import {
 } from '../../foundation/motion.js';
 import { TpCheckbox } from '../checkbox/index.js';
 import type { SwitchState } from './types.js';
+import { switchPresentation } from '../../presentation/families/switch.js';
+import { TpLabel } from '../label/label.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export const switchMotionRoles = {
   track: { name: 'track', kind: 'state', phases: ['change'], completion: 'non-blocking' },
@@ -17,6 +20,11 @@ export const switchMotionRoles = {
 /** Binary setting policy bound to the existing Checkbox Boolean/action/form owner. */
 export class TpSwitch extends TpCheckbox {
   static tagName = 'tp-switch';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpLabel];
+  }
+  static override presentation = switchPresentation;
   static override properties = {
     ...TpCheckbox.properties,
     size: { type: String, reflect: true },

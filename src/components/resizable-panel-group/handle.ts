@@ -2,6 +2,7 @@ import { css, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import type { TpResizablePanelGroup } from './group.js';
+import { resizablePanelGroupPresentation } from '../../presentation/families/resizable-panel-group.js';
 export interface ResizeHandleState {
   orientation: 'horizontal' | 'vertical';
   min: number;
@@ -14,6 +15,7 @@ export interface ResizeHandleState {
 export class TpResizableHandle extends TpElement {
   static tagName = 'tp-resizable-handle';
   static presentationTagName = 'tp-resizable-panel-group';
+  static override presentation = resizablePanelGroupPresentation;
   static override properties = {
     ...TpElement.properties,
     withHandle: { type: Boolean, attribute: 'with-handle' },

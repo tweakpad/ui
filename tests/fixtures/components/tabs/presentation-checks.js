@@ -1,4 +1,3 @@
-/* global document, requestAnimationFrame, getComputedStyle */
 // Public API and geometry assertions executed through Chrome DevTools MCP.
 export async function run(api) {
   const results = [];

@@ -1,11 +1,13 @@
 import { html, type PropertyValues } from 'lit';
 import { KeyHintElement } from './base.js';
 import type { KeyHintSeparator } from './notation.js';
+import { keyHintPresentation } from '../../presentation/families/key-hint.js';
 
 /** Parent sequence layout; each slotted Key remains its own real component. */
 export class TpKeyHintGroup extends KeyHintElement {
   static tagName = 'tp-key-hint-group';
   static presentationTagName = 'tp-key-hint';
+  static override presentation = keyHintPresentation;
   static override properties = { ...KeyHintElement.properties, separator: { type: String } };
   separator: KeyHintSeparator = 'plus';
   #members = new Set<KeyHintElement>();

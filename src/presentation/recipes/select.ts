@@ -5,7 +5,7 @@ import {
   popupItemSpacingAppearance,
   commandSeparatorAppearance,
 } from './command-surface.js';
-import { textControlAppearance } from './text-controls.js';
+import { inputRules } from './shared/text-control.js';
 
 /** shadcn bases/base Select, style-nova.css cn-select-*; shared field/surface base remains. */
 export const selectAppearance: PresentationDictionary = {
@@ -54,7 +54,7 @@ export const selectAppearance: PresentationDictionary = {
   'select-collection': [],
   'select-row': [],
   'select-trigger': [
-    ...textControlAppearance.input!,
+    ...inputRules,
     {
       declarations: {
         'min-block-size': 'var(--tp-control-height-md)',

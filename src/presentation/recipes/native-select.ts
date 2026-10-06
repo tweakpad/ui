@@ -1,5 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
-import { textControlAppearance } from './text-controls.js';
+import { inputRules } from './shared/text-control.js';
 /** Nova native-select layers its native extents over the shared Input boundary. */
 export const nativeSelectAppearance: PresentationDictionary = {
   'native-select': [
@@ -8,7 +8,7 @@ export const nativeSelectAppearance: PresentationDictionary = {
   'native-select-size-default': [],
   'native-select-size-sm': [],
   'native-select-control': [
-    ...textControlAppearance.input!,
+    ...inputRules,
     {
       declarations: {
         height: 'var(--tp-control-height-md)',

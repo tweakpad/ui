@@ -34,10 +34,20 @@ import type {
   ToastPosition,
   ToastSwipeDirection,
 } from './types.js';
+import { toastPresentation } from '../../presentation/families/toast.js';
+import { TpSpinner } from '../spinner/spinner.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+import { TpButton } from '../button.js';
 
 /** Portal/viewport binding to the single logical Provider and notification manager. */
 export class TpToast extends TpElement {
   static tagName = 'tp-toast';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpSpinner, TpIcon, TpButton];
+  }
+  static override presentation = toastPresentation;
   static override properties = {
     ...TpElement.properties,
     toastManager: { attribute: false },

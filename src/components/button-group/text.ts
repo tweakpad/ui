@@ -1,10 +1,12 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { buttonGroupPresentation } from '../../presentation/families/button-group.js';
 
 /** Noninteractive content; Label and Icon remain their existing public controls. */
 export class TpButtonGroupText extends TpElement {
   static tagName = 'tp-button-group-text';
   static presentationTagName = 'tp-button-group';
+  static override presentation = buttonGroupPresentation;
   static override styles = [
     TpElement.styles,
     css`

@@ -1,4 +1,4 @@
-/* global URLSearchParams, location, document, window, requestAnimationFrame, setTimeout, getComputedStyle, library, performance */
+/* global library */
 const built = new URLSearchParams(location.search).has('built');
 await import(built ? '/dist/register.js' : '/src/register.ts');
 const css = document.createElement('link');

@@ -5,13 +5,22 @@ import { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ComponentPartContract } from '../../foundation/part.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { resolveLocale } from '../../foundation/services.js';
-import { eventReason } from '../shared.js';
+import { eventReason } from '../shared/events.js';
 import { chevronRightIcon } from '../../icons/chevron-right.js';
 import { navigationIcons } from '../../icons/navigation.js';
+import { paginationPresentation } from '../../presentation/families/pagination.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+import { TpButton } from '../button.js';
 
 /** Destination navigation composed from the library's actual link Button. */
 export class TpPagination extends TpElement {
   static tagName = 'tp-pagination';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon, TpButton];
+  }
+  static override presentation = paginationPresentation;
   static override properties = {
     ...TpElement.properties,
     page: { type: Number },

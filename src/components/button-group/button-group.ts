@@ -3,11 +3,13 @@ import { TpElement } from '../../foundation/element.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import { joinedControlPresentation } from '../../presentation/composition.js';
 import { groupMember, paginationMembers, type GroupMember } from './members.js';
+import { buttonGroupPresentation } from '../../presentation/families/button-group.js';
 
 type Binding = GroupMember & { key: string; release: () => void };
 /** Layout and part composition only: members retain all interaction and value ownership. */
 export class TpButtonGroup extends TpElement {
   static tagName = 'tp-button-group';
+  static override presentation = buttonGroupPresentation;
   static override properties = {
     ...TpElement.properties,
     joined: { type: Boolean, reflect: true },

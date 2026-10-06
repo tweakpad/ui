@@ -1,4 +1,4 @@
-import { anchoredArrowStyles } from './shared.js';
+import { anchoredArrowStyles } from './shared/anchored-arrow.js';
 import { css, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { PopupViewportController } from '../foundation/popup-viewport.js';
@@ -27,7 +27,7 @@ import {
   type PartRenderOptions,
   type PartState,
 } from '../foundation/part.js';
-import { componentDefinitions } from '../presentation/components.js';
+import { presentationFamilyFor } from '../presentation/family.js';
 import { createId } from '../foundation/id.js';
 import { prepareMotion, type MotionHandle } from '../foundation/motion.js';
 import {
@@ -628,9 +628,9 @@ export abstract class TpAnchoredSurface extends TpElement {
   }
   protected surfacePart(suffix: string, options: PartRenderOptions = {}): unknown {
     const name = this.partName(suffix);
-    const publicPart = componentDefinitions
-      .find((definition) => definition.tagName === this.presentationTagName)
-      ?.parts.some((part) => part.name === name);
+    const publicPart = presentationFamilyFor(this, this.presentationTagName)?.definition.parts.some(
+      (part) => part.name === name,
+    );
     const key = publicPart ? name : suffix;
     let ref = this.#partRefs.get(suffix);
     if (!ref) {

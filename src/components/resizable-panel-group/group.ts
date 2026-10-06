@@ -23,10 +23,17 @@ import type {
   PanelPersistenceAdapter,
   PanelSize,
 } from './types.js';
+import { resizablePanelGroupPresentation } from '../../presentation/families/resizable-panel-group.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /** One layout/proposal/input owner for authored constituents and legacy native panels. */
 export class TpResizablePanelGroup extends TpElement {
   static tagName = 'tp-resizable-panel-group';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpResizableHandle];
+  }
+  static override presentation = resizablePanelGroupPresentation;
   static override properties = {
     ...TpElement.properties,
     sizes: { attribute: false, noAccessor: true },

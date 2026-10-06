@@ -1,5 +1,5 @@
-import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
+import { scrollbarRules, scrollbarThumbRules } from './shared/scrollbar.js';
 /** Base/Nova scroll anatomy; thickness, padding, radius and motion share theme roles. */
 export const scrollAreaAppearance: PresentationDictionary = {
   'scroll-area': [],
@@ -13,31 +13,6 @@ export const scrollAreaAppearance: PresentationDictionary = {
       },
     },
   ],
-  'scroll-area-scrollbar': [
-    {
-      declarations: {
-        padding: 'calc(var(--tp-spacing) / 4)',
-        transition: motionTransition(['opacity'], 'fast'),
-      },
-    },
-    {
-      selector: '&[data-orientation="vertical"]',
-      declarations: { width: 'calc(var(--tp-spacing) * 2.5)' },
-    },
-    {
-      selector: '&[data-orientation="horizontal"]',
-      declarations: { height: 'calc(var(--tp-spacing) * 2.5)' },
-    },
-  ],
-  'scroll-area-thumb': [
-    { declarations: { background: 'var(--tp-border)', 'border-radius': 'var(--tp-radius-full)' } },
-    {
-      selector: '&[data-orientation="vertical"]',
-      declarations: { 'min-height': 'min(var(--tp-space-4), 100%)' },
-    },
-    {
-      selector: '&[data-orientation="horizontal"]',
-      declarations: { 'min-width': 'min(var(--tp-space-4), 100%)' },
-    },
-  ],
+  'scroll-area-scrollbar': scrollbarRules,
+  'scroll-area-thumb': scrollbarThumbRules,
 };

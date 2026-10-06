@@ -1,6 +1,7 @@
 import { css, html } from 'lit';
 import type { PropertyValues, PropertyDeclarations } from 'lit';
-import { TpElement, TpFormElement } from '../../foundation/element.js';
+import { TpElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { CheckboxGroupController } from '../../foundation/checkbox-group.js';
@@ -12,6 +13,9 @@ import { createId } from '../../foundation/id.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { checkIcon } from '../../icons/check.js';
 import { minusIcon } from '../../icons/minus.js';
+import { checkboxPresentation } from '../../presentation/families/checkbox.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /** One committed Boolean snapshot shared by Checkbox and Switch render bindings. */
 export interface BooleanControlState extends Readonly<Record<string, unknown>> {
@@ -32,6 +36,11 @@ export interface BooleanControlState extends Readonly<Record<string, unknown>> {
 /** Checkbox state/form owner, also consumed by the Switch family. */
 export class TpCheckbox extends TpFormElement {
   static tagName = 'tp-checkbox';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon];
+  }
+  static override presentation = checkboxPresentation;
   static override properties: PropertyDeclarations = {
     ...TpFormElement.properties,
     checked: { type: Boolean, noAccessor: true },

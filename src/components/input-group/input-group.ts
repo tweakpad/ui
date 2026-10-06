@@ -1,12 +1,14 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
-import { assignedElements } from '../shared.js';
+import { assignedElements } from '../shared/events.js';
+import { inputGroupPresentation } from '../../presentation/families/input-group.js';
 
 type Edge = 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
 /** Presentation composition only; the editor and actions retain their own behavior. */
 export class TpInputGroup extends TpElement {
   static tagName = 'tp-input-group';
+  static override presentation = inputGroupPresentation;
   static override properties = {
     ...TpElement.properties,
     addonPosition: { type: String, attribute: 'addon-position', reflect: true },

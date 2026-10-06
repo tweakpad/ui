@@ -3,6 +3,9 @@ import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import { chevronRightIcon } from '../../icons/chevron-right.js';
+import { breadcrumbPresentation } from '../../presentation/families/breadcrumb.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 interface Item {
   element: HTMLElement;
@@ -13,6 +16,11 @@ interface Item {
 /** Native ordered-list wrappers project original caller nodes without changing link roles. */
 export class TpBreadcrumb extends TpElement {
   static tagName = 'tp-breadcrumb';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon];
+  }
+  static override presentation = breadcrumbPresentation;
   static override properties = {
     ...TpElement.properties,
     label: { type: String },

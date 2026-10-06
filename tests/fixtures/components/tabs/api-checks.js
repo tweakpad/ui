@@ -1,5 +1,4 @@
 // Loaded only by a Chrome DevTools MCP evaluation; no browser driver or simulated input.
-/* global document, requestAnimationFrame, setTimeout, performance */
 export async function run() {
   const results = [];
   const frame = () => new Promise(requestAnimationFrame);

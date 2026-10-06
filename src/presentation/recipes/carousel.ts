@@ -1,14 +1,8 @@
 import type { PresentationDictionary } from '../resolver.js';
-import { scrollAreaAppearance } from './scroll-area.js';
-import { componentDefinitions } from '../components.js';
+import { scrollbarRules, scrollbarThumbRules } from './shared/scrollbar.js';
 
 /** shadcn Base/Vega anatomy with actual Button/Progress and one configured structural gap. */
 export const carouselAppearance: PresentationDictionary = {
-  ...Object.fromEntries(
-    componentDefinitions
-      .find((definition) => definition.tagName === 'tp-carousel')!
-      .parts.flatMap((part) => (part.presentationKeys ?? [part.name]).map((key) => [key, []])),
-  ),
   carousel: [],
   'carousel-viewport': [],
   'carousel-track': [],
@@ -58,8 +52,8 @@ export const carouselAppearance: PresentationDictionary = {
       declarations: { opacity: '1', background: 'var(--tp-primary)' },
     },
   ],
-  'carousel-scrollbar': scrollAreaAppearance['scroll-area-scrollbar']!,
-  'carousel-thumb': scrollAreaAppearance['scroll-area-thumb']!,
+  'carousel-scrollbar': scrollbarRules,
+  'carousel-thumb': scrollbarThumbRules,
   'carousel-autoplay-control': [{ declarations: { 'margin-block-end': 'var(--tp-space-2)' } }],
   'carousel-announcements': [],
 };

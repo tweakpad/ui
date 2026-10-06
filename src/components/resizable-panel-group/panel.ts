@@ -3,9 +3,11 @@ import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import type { TpResizablePanelGroup } from './group.js';
 import type { PanelExtent, PanelSize } from './types.js';
+import { resizablePanelGroupPresentation } from '../../presentation/families/resizable-panel-group.js';
 export class TpResizablePanel extends TpElement {
   static tagName = 'tp-resizable-panel';
   static presentationTagName = 'tp-resizable-panel-group';
+  static override presentation = resizablePanelGroupPresentation;
   static override properties = {
     ...TpElement.properties,
     defaultSize: { attribute: 'default-size' },

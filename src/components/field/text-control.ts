@@ -1,7 +1,7 @@
 import { css } from 'lit';
 import type { PropertyValues } from 'lit';
 import { CompositeControlController } from '../../foundation/composite-control.js';
-import { TpFormElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { ControllableState } from '../../foundation/controllable-state.js';

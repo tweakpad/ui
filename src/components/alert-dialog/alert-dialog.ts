@@ -1,4 +1,5 @@
 import { TpDialog, type DialogModality } from '../dialog/dialog.js';
+import { alertDialogPresentation } from '../../presentation/families/alert-dialog.js';
 
 const alertDialogModalities: readonly DialogModality[] = ['modal', 'container'];
 export type {
@@ -9,6 +10,7 @@ export type {
 /** Alert Dialog shares Dialog anatomy/lifecycle, with mandatory decision policy. */
 export class TpAlertDialog extends TpDialog {
   static override tagName = 'tp-alert-dialog';
+  static override presentation = alertDialogPresentation;
   override initialFocus = 'cancel';
   override showCloseControl = false;
   protected override get partPrefix(): string {

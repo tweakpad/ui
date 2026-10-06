@@ -9,7 +9,7 @@ import type { MediaMessageKey } from '../../foundation/media/messages.js';
 import type { MediaState } from '../../foundation/media/state.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { settingsIcon } from '../../icons/settings.js';
-import type { TpMenu } from '../menu/menu.js';
+
 import { TpMediaElement, type MediaPlayerApi } from './context.js';
 import {
   audioTrackModel,
@@ -20,6 +20,13 @@ import {
   type MediaRadioModelContext,
 } from './radio-groups.js';
 import { selectedOptionLabel } from './radio-options.js';
+import { TpMenu } from '../menu/menu.js';
+import { TpButton } from '../button.js';
+import { TpMediaQualityRadioGroup } from './radio-groups.js';
+import { TpMediaAudioTrackRadioGroup } from './radio-groups.js';
+import { TpMediaPlaybackRateRadioGroup } from './radio-groups.js';
+import { TpMediaCaptionsRadioGroup } from './radio-groups.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /** Settings groups, in the default (Video.js settings menu) order. */
 export type MediaSettingsGroup = 'quality' | 'audio' | 'speed' | 'captions';
@@ -114,6 +121,17 @@ export function mediaSettingsEntries(
  */
 export class TpMediaSettingsMenu extends TpMediaElement {
   static tagName = 'tp-media-settings-menu';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [
+      TpMenu,
+      TpButton,
+      TpMediaQualityRadioGroup,
+      TpMediaAudioTrackRadioGroup,
+      TpMediaPlaybackRateRadioGroup,
+      TpMediaCaptionsRadioGroup,
+    ];
+  }
 
   static override properties: PropertyDeclarations = {
     ...TpMediaElement.properties,

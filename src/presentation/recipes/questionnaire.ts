@@ -1,7 +1,7 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
-import { nativeChoiceAppearance } from './selection-controls.js';
-import { textControlAppearance } from './text-controls.js';
+import { nativeChoiceAppearance } from './shared/selection-control.js';
+import { inputRules } from './shared/text-control.js';
 /** base registry Questionnaire + Nova; native constituents share existing recipes. */
 export const questionnaireAppearance: PresentationDictionary = {
   questionnaire: [{ declarations: { gap: 'var(--tp-space-4)' } }],
@@ -77,7 +77,7 @@ export const questionnaireAppearance: PresentationDictionary = {
     },
     { selector: '& .choice-description', declarations: { color: 'var(--tp-muted-foreground)' } },
   ],
-  'questionnaire-input-region': (textControlAppearance.input ?? [])
+  'questionnaire-input-region': inputRules
     .filter((rule) => !rule.selector?.includes('file-selector'))
     .map((rule) => ({ ...rule, selector: (rule.selector ?? '&').replaceAll('&', '& > input') })),
   'questionnaire-error': [

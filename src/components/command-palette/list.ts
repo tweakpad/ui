@@ -4,6 +4,10 @@ import type { SelectRecord } from '../select/model.js';
 import type { PartState } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { navigationIcons } from '../../icons/navigation.js';
+import { commandPalettePresentation } from '../../presentation/families/command-palette.js';
+import { selectPresentation } from '../../presentation/families/select.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 const parts: Record<string, string> = {
   'select-anchor': 'command-palette-input-wrapper',
   'select-input': 'command-palette-input',
@@ -16,8 +20,14 @@ const parts: Record<string, string> = {
 /** Execution policy on the actual Select collection; no alternative option renderer or popup. */
 export class TpCommandList extends TpSelect {
   static override tagName = 'tp-command-list';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon];
+  }
   static presentationTagName = 'tp-command-palette';
+  static override presentation = commandPalettePresentation;
   static presentationFamilyTagNames = ['tp-select'];
+  static override presentationFamilies = [selectPresentation];
   static override properties = {
     ...TpSelect.properties,
     activeValue: { attribute: false },

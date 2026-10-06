@@ -9,6 +9,7 @@ export * from './controllable-state.js';
 export * from './checkbox-group.js';
 export * from './define.js';
 export * from './element.js';
+export * from './form-element.js';
 export * from './part.js';
 export * from './events.js';
 export * from './focus.js';

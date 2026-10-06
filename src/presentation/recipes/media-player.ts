@@ -1,4 +1,3 @@
-import { componentDefinitions } from '../components.js';
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 
@@ -17,11 +16,6 @@ import type { PresentationDictionary } from '../resolver.js';
  * adaptation is required.
  */
 export const mediaPlayerAppearance: PresentationDictionary = {
-  ...Object.fromEntries(
-    componentDefinitions
-      .find((definition) => definition.tagName === 'tp-media-player')!
-      .parts.flatMap((part) => (part.presentationKeys ?? [part.name]).map((key) => [key, []])),
-  ),
   'media-container': [
     {
       declarations: {

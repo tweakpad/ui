@@ -43,6 +43,9 @@ import {
   selectedQuality,
   type MediaRadioOption,
 } from './radio-options.js';
+import { TpMenuRadioItem } from '../menu/menu-radio-item.js';
+import { TpBadge } from '../badge/index.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /** A custom item renderer; it must render a `tp-menu-radio-item` whose `value` is the option's. */
 export type MediaRadioItemRenderer = (
@@ -150,6 +153,10 @@ export function qualityModel(state: MediaState, context: MediaRadioModelContext)
  *   it is accepted).
  */
 export abstract class TpMediaRadioGroupElement extends TpMenuRadioGroup {
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpMenuRadioItem, TpBadge];
+  }
   static override properties = {
     ...TpMenuRadioGroup.properties,
     playerId: { type: String, attribute: 'player' },

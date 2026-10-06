@@ -4,7 +4,8 @@ import { TpValueChangeEvent, TpValueCommitEvent } from '../../foundation/events.
 import type { Orientation, ChangeReason } from '../../foundation/types.js';
 import { sliderRatio } from '../../foundation/slider.js';
 import { setPartComposition } from '../../presentation/controller.js';
-import type { TpSlider } from '../slider/slider.js';
+import { TpSlider } from '../slider/slider.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import type {
   SliderBufferedRange,
   SliderPointerChangeDetail,
@@ -62,6 +63,10 @@ const percent = (fraction: number): string =>
  * Subclasses supply `sliderConfig()` and react to accepted changes and commits.
  */
 export abstract class MediaSliderElement extends TpMediaElement {
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpSlider];
+  }
   static override styles = [
     TpElement.styles,
     css`

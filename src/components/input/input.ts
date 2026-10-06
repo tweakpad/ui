@@ -1,8 +1,10 @@
 import { nothing } from 'lit';
 import { TpTextControl } from '../field/text-control.js';
+import { inputPresentation } from '../../presentation/families/input.js';
 
 export class TpInput extends TpTextControl {
   static tagName = 'tp-input';
+  static override presentation = inputPresentation;
   static override properties = {
     ...TpTextControl.properties,
     type: { type: String },

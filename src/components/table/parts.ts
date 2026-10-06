@@ -1,9 +1,11 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { tablePresentation } from '../../presentation/families/table.js';
 
 /** Public composition units keep native elements in the flattened table tree. */
 abstract class TablePart extends TpElement {
   static presentationTagName = 'tp-table';
+  static override presentation = tablePresentation;
   static nativeTag = '';
   static partName = '';
   static nativeRole = '';

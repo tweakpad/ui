@@ -2,11 +2,13 @@ import { css, html, nothing, type PropertyValues } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
 import { TpElement } from '../../foundation/element.js';
 import { ImageLoadController, type ImageLoadStatus } from '../../foundation/image-load.js';
+import { avatarPresentation } from '../../presentation/families/avatar.js';
 
 export type AvatarLoadingStatus = ImageLoadStatus;
 
 export class TpAvatar extends TpElement {
   static tagName = 'tp-avatar';
+  static override presentation = avatarPresentation;
   static override properties = {
     ...TpElement.properties,
     src: { type: String },
@@ -241,6 +243,7 @@ export class TpAvatar extends TpElement {
 export class TpAvatarGroup extends TpElement {
   static tagName = 'tp-avatar-group';
   static presentationTagName = 'tp-avatar';
+  static override presentation = avatarPresentation;
   static override properties = {
     ...TpElement.properties,
     size: { type: String, reflect: true },

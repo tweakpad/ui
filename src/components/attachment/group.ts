@@ -1,8 +1,10 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { attachmentPresentation } from '../../presentation/families/attachment.js';
 export class TpAttachmentGroup extends TpElement {
   static tagName = 'tp-attachment-group';
   static presentationTagName = 'tp-attachment';
+  static override presentation = attachmentPresentation;
   static override styles = [
     TpElement.styles,
     css`

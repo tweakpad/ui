@@ -1,8 +1,10 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { markerPresentation } from '../../presentation/families/marker.js';
 
 export class TpMarker extends TpElement {
   static tagName = 'tp-marker';
+  static override presentation = markerPresentation;
   static override properties = {
     ...TpElement.properties,
     variant: { type: String, reflect: true },

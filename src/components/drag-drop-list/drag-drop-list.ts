@@ -47,6 +47,11 @@ import type {
   DragDropItemOptions,
   MoveItemOutcome,
 } from './types.js';
+import { dragDropListPresentation } from '../../presentation/families/drag-drop-list.js';
+import { TpListItem } from '../list-item/list-item.js';
+import { TpEmptyState } from '../empty-state/empty-state.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+import { TpButton } from '../button.js';
 
 const eventNames: Record<DragEventName, string> = {
   beforedragstart: 'tp-before-drag-start',
@@ -90,6 +95,11 @@ const complexProperties = Object.fromEntries(
 /** Immutable collection binding; entities and services belong to Foundation. */
 export class TpDragDropList<T = unknown> extends TpElement {
   static tagName = 'tp-drag-drop-list';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpListItem, TpEmptyState, TpButton];
+  }
+  static override presentation = dragDropListPresentation;
   static override properties = {
     ...TpElement.properties,
     ...complexProperties,

@@ -1,8 +1,10 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { emptyStatePresentation } from '../../presentation/families/empty-state.js';
 
 export class TpEmptyState extends TpElement {
   static tagName = 'tp-empty-state';
+  static override presentation = emptyStatePresentation;
   static override properties = {
     ...TpElement.properties,
     title: { type: String },

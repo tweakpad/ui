@@ -14,6 +14,9 @@ import {
 } from '../foundation/motion.js';
 import type { LogicalPosition, PresenceState } from '../foundation/types.js';
 import { chevronRightIcon } from '../icons/chevron-right.js';
+import { collapsiblePresentation } from '../presentation/families/collapsible.js';
+import { TpIcon } from './icon.js';
+import type { CustomElementConstructorWithTag } from '../foundation/define.js';
 
 export type CollapsibleIndicatorPosition = LogicalPosition;
 export type CollapsibleContentAlignment = 'edge' | 'label';
@@ -41,6 +44,11 @@ export const collapsibleMotionRoles = {
 
 export class TpCollapsible extends TpElement {
   static tagName = 'tp-collapsible';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon];
+  }
+  static override presentation = collapsiblePresentation;
   static override properties = {
     ...TpElement.properties,
     open: { type: Boolean, reflect: true },

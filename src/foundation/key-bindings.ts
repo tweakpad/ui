@@ -8,13 +8,13 @@ import {
 } from './interactive-target.js';
 import { componentHandlingPrevented } from './part.js';
 import { CleanupScope } from './services.js';
-// Shortcut display is the Key Hint control's responsibility; reuse its notation.
+// Shortcut notation is shared with the Key Hint control's display.
 import {
   keyHintNotation,
   keyHintPlatform,
   type KeyHintPlatform,
   type ResolvedKeyHintPlatform,
-} from '../components/key-hint/notation.js';
+} from './key-notation.js';
 
 /**
  * Foundation `sec-1920-key-bindings`: one shared owner registers scoped shortcuts,

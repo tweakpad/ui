@@ -3,9 +3,10 @@ import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
 import { TpOpenChangeEvent, TpValueChangeEvent } from '../foundation/events.js';
 import { createId } from '../foundation/id.js';
-import { assignedElements } from './shared.js';
+import { assignedElements } from './shared/events.js';
 import { TpAccordionItem, type AccordionContentAlignment } from './accordion-item.js';
 import type { TpCollapsible } from './collapsible.js';
+import { accordionPresentation } from '../presentation/families/accordion.js';
 
 export type AccordionValue = string[];
 export type AccordionVariant = 'plain' | 'line' | 'outline' | 'separated';
@@ -35,6 +36,7 @@ function sameAccordionValue(a: readonly string[], b: readonly string[]): boolean
 
 export class TpAccordion extends TpElement {
   static tagName = 'tp-accordion';
+  static override presentation = accordionPresentation;
   static override properties = {
     ...TpElement.properties,
     selectionMode: { type: String, attribute: 'selection-mode', reflect: true },

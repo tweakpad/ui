@@ -10,9 +10,11 @@ import {
   type ScrollbarOptions,
   type ScrollbarVisibility,
 } from './types.js';
+import { scrollAreaPresentation } from '../../presentation/families/scroll-area.js';
 
 export class TpScrollArea extends TpElement {
   static tagName = 'tp-scroll-area';
+  static override presentation = scrollAreaPresentation;
   static override properties = {
     ...TpElement.properties,
     axis: { type: String, reflect: true },

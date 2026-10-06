@@ -5,9 +5,15 @@ import { PresenceController } from '../../foundation/presence.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { checkIcon } from '../../icons/check.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export class TpMenuCheckboxItem extends TpMenuItem {
   static override tagName = 'tp-menu-checkbox-item';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon];
+  }
   static override properties = {
     ...TpMenuItem.properties,
     checked: { type: Boolean, noAccessor: true },

@@ -4,7 +4,7 @@ import { TpElement } from '../../foundation/element.js';
 import { ValidationController, ValidationRun } from '../../foundation/validation.js';
 import { PresenceController } from '../../foundation/presence.js';
 import { renderPart } from '../../foundation/part.js';
-import { activateLabeledControl } from '../shared.js';
+import { activateLabeledControl } from '../shared/events.js';
 import { nativeValidityFlags } from './text-control.js';
 import {
   fieldErrors as deduplicate,
@@ -19,6 +19,9 @@ import type {
   FieldValidator,
   FieldValidity,
 } from './types.js';
+import { fieldPresentation } from '../../presentation/families/field.js';
+import { TpSeparator } from '../separator/separator.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 const markers = [
   'disabled',
@@ -36,6 +39,11 @@ const controls =
 export const fieldSubmission = Symbol('Field submission');
 export class TpField extends TpElement {
   static tagName = 'tp-field';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpSeparator];
+  }
+  static override presentation = fieldPresentation;
   static override properties = {
     ...TpElement.properties,
     name: { type: String },
@@ -884,9 +892,7 @@ export class TpField extends TpElement {
     const native = validityOwner?.validity;
     this.#nativeFlags = native ? nativeValidityFlags(native) : {};
     const nativeError =
-      native?.valid === false
-        ? validityOwner?.validationMessage || 'Invalid value.'
-        : '';
+      native?.valid === false ? validityOwner?.validationMessage || 'Invalid value.' : '';
     this.#computedErrors = nativeError ? [nativeError] : [];
     this.#customErrors = [];
     let result: ReturnType<FieldValidator>;

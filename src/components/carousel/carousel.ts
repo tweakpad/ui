@@ -67,6 +67,11 @@ import type {
 import { chevronRightIcon } from '../../icons/chevron-right.js';
 import { renderScrollbar, scrollbarStyles } from '../shared-scrollbar.js';
 import { carouselStyles } from './styles.js';
+import { carouselPresentation } from '../../presentation/families/carousel.js';
+import { TpIcon } from '../icon.js';
+import { TpProgress } from '../progress/progress.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+import { TpButton } from '../button.js';
 
 interface SlotRecord {
   id: string;
@@ -81,6 +86,11 @@ interface Shell {
 }
 export class TpCarousel<T = unknown> extends TpElement {
   static tagName = 'tp-carousel';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon, TpProgress, TpButton];
+  }
+  static override presentation = carouselPresentation;
   static override properties = {
     ...TpElement.properties,
     value: { attribute: false },

@@ -2,11 +2,20 @@ import { css, html, nothing, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { xIcon } from '../../icons/x.js';
+import { attachmentPresentation } from '../../presentation/families/attachment.js';
+import { TpSpinner } from '../spinner/spinner.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+import { TpButton } from '../button.js';
 
 export type AttachmentStatus = 'idle' | 'uploading' | 'processing' | 'error' | 'complete';
 /** File presentation only. Application code owns upload, retry, removal and navigation. */
 export class TpAttachment extends TpElement {
   static tagName = 'tp-attachment';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpSpinner, TpButton];
+  }
+  static override presentation = attachmentPresentation;
   static override properties = {
     ...TpElement.properties,
     filename: { type: String },

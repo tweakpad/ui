@@ -1,9 +1,11 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { bubblePresentation } from '../../presentation/families/bubble.js';
 
 export class TpBubbleGroup extends TpElement {
   static tagName = 'tp-bubble-group';
   static presentationTagName = 'tp-bubble';
+  static override presentation = bubblePresentation;
   static override styles = [
     TpElement.styles,
     css`
@@ -29,6 +31,7 @@ export class TpBubbleGroup extends TpElement {
 
 export class TpBubble extends TpElement {
   static tagName = 'tp-bubble';
+  static override presentation = bubblePresentation;
   static override properties = {
     ...TpElement.properties,
     align: { type: String, reflect: true },

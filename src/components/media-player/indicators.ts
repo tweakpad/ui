@@ -28,6 +28,8 @@ import {
 } from './indicator-state.js';
 import { applyMediaMarkers } from './media-button.js';
 import { mediaOverlayStyles, mediaSurfacePreferenceStyles } from './styles.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 const REQUEST_EVENT = 'tp-media-request';
 
@@ -57,6 +59,10 @@ function iconTemplate(icon: MediaButtonIcon): unknown {
  * @csspart value - The value or label text.
  */
 export abstract class TpMediaIndicatorElement<P> extends TpMediaElement {
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon];
+  }
   static override properties: PropertyDeclarations = {
     ...TpMediaElement.properties,
     closeDelay: { type: Number, attribute: 'close-delay' },

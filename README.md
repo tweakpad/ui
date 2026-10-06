@@ -17,13 +17,32 @@ import '@tweakpad/ui/register';
 <tp-button type="submit">Continue</tp-button>
 ```
 
-Import named classes and Foundation utilities from `@tweakpad/ui` when registration is managed by the host:
+`@tweakpad/ui/register` defines every component. To ship only what you use, import named classes from `@tweakpad/ui` and define them yourself:
 
 ```ts
-import { TpButton, defineElement } from '@tweakpad/ui';
+import { TpCarousel, defineElement } from '@tweakpad/ui';
 
-defineElement(TpButton.tagName, TpButton);
+// Also defines tp-button, tp-icon, tp-progress and tp-spinner, which the carousel renders.
+defineElement(TpCarousel.tagName, TpCarousel);
 ```
+
+## Tree-shaking
+
+The package is published as one module per source file and only the `register` entries and
+stylesheets have side effects, so a bundler keeps just the modules a consumer reaches.
+
+- Each component imports its own presentation family (`src/presentation/families/<name>.ts`):
+  its definition, part bindings, structure and default appearance, built from the recipe
+  modules it uses. No component reads a library-wide registry.
+- A class's `elementDependencies` lists the library elements its templates render.
+  `defineElement` defines those recursively, so one call registers exactly what a component
+  needs.
+- `componentDefinitions` and `defaultPresentationDictionary` aggregate every family. They
+  are opt-in exports for tooling and full-library themes; importing them pulls in every
+  component's presentation.
+
+`src/presentation/families.test.ts` guards these rules: families import only recipes,
+components never import the aggregates, and every rendered `tp-*` element is declared.
 
 ## Public conventions
 

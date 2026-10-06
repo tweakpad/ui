@@ -1,8 +1,10 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
-import { TpElement, TpFormElement } from '../../foundation/element.js';
+import { TpElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
 import { PresenceController } from '../../foundation/presence.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
+import { radioGroupPresentation } from '../../presentation/families/radio-group.js';
 
 export interface RadioSelectionOwner {
   isChecked(member: HTMLElement): boolean;
@@ -17,6 +19,8 @@ export interface RadioSelectionOwner {
 
 export class TpRadioGroupItem extends TpFormElement<unknown> {
   static tagName = 'tp-radio-group-item';
+  // Constituent of its group's family; presented with the group's definition.
+  static override presentation = radioGroupPresentation;
   static override properties = {
     ...TpFormElement.properties,
     value: { type: String, noAccessor: true },

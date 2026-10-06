@@ -1,7 +1,7 @@
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-import { TpFormElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
@@ -17,6 +17,9 @@ import {
 } from './options.js';
 import type { NativeItem, NativeOption } from './options.js';
 import type { NativeSelectValue, NativeSelectState, NativeSelectOptionState } from './types.js';
+import { nativeSelectPresentation } from '../../presentation/families/native-select.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 interface ValueOwner {
   supplied: NativeSelectValue | undefined;
@@ -32,6 +35,11 @@ function owner(host: TpNativeSelect): ValueOwner {
 /** Native picker policy on the shared form, value-transaction and part owners. */
 export class TpNativeSelect extends TpFormElement<NativeSelectValue> {
   static tagName = 'tp-native-select';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon];
+  }
+  static override presentation = nativeSelectPresentation;
   static override properties = {
     ...TpFormElement.properties,
     value: { noAccessor: true },

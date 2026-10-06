@@ -21,6 +21,7 @@ import type {
   PositioningStrategy,
 } from '../../foundation/positioning.js';
 import type { ChangeReason } from '../../foundation/types.js';
+import { navigationMenuPresentation } from '../../presentation/families/navigation-menu.js';
 
 interface NavigationMember {
   host: HTMLElement;
@@ -37,6 +38,7 @@ interface NavigationMember {
 /** Native navigation policy; its scalar value is the only state proposal owner. */
 export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOwner {
   static tagName = 'tp-navigation-menu';
+  static override presentation = navigationMenuPresentation;
   static override properties = {
     ...TpHoverSurface.properties,
     value: { type: String, noAccessor: true },

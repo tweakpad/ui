@@ -4,11 +4,11 @@ import { TpElement } from '../../foundation/element.js';
 import { renderPart } from '../../foundation/part.js';
 import { ref } from 'lit/directives/ref.js';
 import type { PropertyValues } from 'lit';
-import type { TpTooltip } from '../tooltip/tooltip.js';
+
 import { TpButton } from '../button.js';
 import { TpInput } from '../input/input.js';
-import { TpBadge } from '../primitives.js';
-import { TpSeparator } from '../display.js';
+import { TpBadge } from '../badge/index.js';
+import { TpSeparator } from '../separator/index.js';
 import { NavigationPanelMember } from './member.js';
 import type { ComponentPartContract, PartRenderOptions, PartState } from '../../foundation/part.js';
 import {
@@ -16,6 +16,13 @@ import {
   navigationPartContract,
   type NavigationPanelOwner,
 } from './context.js';
+import { buttonPresentation } from '../../presentation/families/button.js';
+import { inputPresentation } from '../../presentation/families/input.js';
+import { badgePresentation } from '../../presentation/families/badge.js';
+import { separatorPresentation } from '../../presentation/families/separator.js';
+import { TpTooltip } from '../tooltip/tooltip.js';
+import { TpSkeleton } from '../skeleton/skeleton.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 const contextStyles = css`
   :host {
     display: block;
@@ -335,12 +342,17 @@ export class TpNavigationPanelSubmenu extends NavigationPanelLayoutPart {
 }
 export class TpNavigationPanelSubitem extends NavigationPanelLayoutPart {
   static override tagName = 'tp-navigation-panel-subitem';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpTooltip];
+  }
   static override partName = 'navigation-panel-subitem';
   static override nativeTag = 'li';
 }
 /** Inherited Button owns all action/link/press/form behavior; navigation contributes context and presentation. */
 export class NavigationPanelButtonPart extends TpButton {
   static presentationTagName = 'tp-button';
+  static override presentation = buttonPresentation;
   static partName = '';
   static override styles = [
     TpButton.styles,
@@ -514,6 +526,7 @@ export class TpNavigationPanelSublink extends TpNavigationPanelLink {
 // Reusable visual/field constituents retain their actual family implementation.
 export class TpNavigationPanelInput extends TpInput {
   static presentationTagName = 'tp-input';
+  static override presentation = inputPresentation;
   static override tagName = 'tp-navigation-panel-input';
   readonly #member = new NavigationPanelMember(this, 'navigation-panel-input', 'input');
   protected override controlPartContract(part: string): ComponentPartContract {
@@ -532,6 +545,7 @@ export class TpNavigationPanelBadge extends TpBadge {
     `,
   ];
   static presentationTagName = 'tp-badge';
+  static override presentation = badgePresentation;
   static override tagName = 'tp-navigation-panel-badge';
   readonly #member = new NavigationPanelMember(this, 'navigation-panel-badge', 'badge');
   constructor() {
@@ -547,6 +561,7 @@ export class TpNavigationPanelBadge extends TpBadge {
 export class TpNavigationPanelSeparator extends TpSeparator {
   // The panel projects its recipe onto Separator's root, not a second host rule.
   static presentationTagName = 'tp-separator';
+  static override presentation = separatorPresentation;
   static override styles = [
     TpSeparator.styles,
     css`
@@ -566,6 +581,10 @@ export class TpNavigationPanelSeparator extends TpSeparator {
 }
 export class TpNavigationPanelLoadingPlaceholder extends NavigationPanelLayoutPart {
   static override tagName = 'tp-navigation-panel-loading-placeholder';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpSkeleton];
+  }
   static override partName = 'navigation-panel-loading-placeholder';
   static override properties = {
     ...NavigationPanelLayoutPart.properties,

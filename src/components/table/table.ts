@@ -2,6 +2,7 @@ import { css, html, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { tableSections } from './parts.js';
 import { tableColumns, TableGeometry } from './sticky.js';
+import { tablePresentation } from '../../presentation/families/table.js';
 const parts: Record<string, string> = {
   table: 'table-table',
   caption: 'table-caption',
@@ -15,6 +16,7 @@ const parts: Record<string, string> = {
 /** Native tabular semantics and overflow, without interactive-grid state. */
 export class TpTable extends TpElement {
   static tagName = 'tp-table';
+  static override presentation = tablePresentation;
   static override properties = {
     ...TpElement.properties,
     label: { type: String },

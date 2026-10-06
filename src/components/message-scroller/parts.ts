@@ -5,10 +5,13 @@ import { chevronDownIcon } from '../../icons/chevron-down.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { MessageScrollerMember } from './context.js';
 import { messageScrollerFadeKeyframes } from '../../presentation/recipes/message-scroller.js';
+import { messageScrollerPresentation } from '../../presentation/families/message-scroller.js';
+import { buttonPresentation } from '../../presentation/families/button.js';
 
 export class TpMessageScrollerViewport extends TpElement {
   static tagName = 'tp-message-scroller-viewport';
   static presentationTagName = 'tp-message-scroller';
+  static override presentation = messageScrollerPresentation;
   static override properties = {
     ...TpElement.properties,
     label: { type: String },
@@ -86,6 +89,7 @@ export class TpMessageScrollerViewport extends TpElement {
 export class TpMessageScrollerContent extends TpElement {
   static tagName = 'tp-message-scroller-content';
   static presentationTagName = 'tp-message-scroller';
+  static override presentation = messageScrollerPresentation;
   static override properties = { ...TpElement.properties, label: { type: String } };
   static override styles = [
     TpElement.styles,
@@ -154,6 +158,7 @@ export class TpMessageScrollerContent extends TpElement {
 export class TpMessageScrollerItem extends TpElement {
   static tagName = 'tp-message-scroller-item';
   static presentationTagName = 'tp-message-scroller';
+  static override presentation = messageScrollerPresentation;
   static override properties = {
     ...TpElement.properties,
     messageId: { type: String, attribute: 'message-id', reflect: true },
@@ -196,6 +201,7 @@ export class TpMessageScrollerItem extends TpElement {
 export class TpMessageScrollerReturnControl extends TpButton {
   static override tagName = 'tp-message-scroller-return-control';
   static presentationTagName = 'tp-button';
+  static override presentation = buttonPresentation;
   static override properties = {
     ...TpButton.properties,
     returnDirection: { type: String, attribute: 'return-direction', reflect: true },

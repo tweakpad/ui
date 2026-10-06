@@ -5,6 +5,8 @@ import { PresenceController } from '../../foundation/presence.js';
 import { composedParent } from '../../foundation/focus.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { IconDefinition } from '../../icons/types.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 // The source RadioItemIndicator circle is artwork passed through the shared Icon owner.
 const radioMark: IconDefinition = {
@@ -14,6 +16,10 @@ const radioMark: IconDefinition = {
 
 export class TpMenuRadioItem extends TpMenuItem {
   static override tagName = 'tp-menu-radio-item';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon];
+  }
   static override properties = {
     ...TpMenuItem.properties,
     keepMounted: { type: Boolean, attribute: 'keep-mounted' },

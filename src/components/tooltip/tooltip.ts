@@ -2,6 +2,7 @@ import type { PropertyDeclarations, PropertyValues } from 'lit';
 import { TpHoverSurface } from '../anchored-surface.js';
 import type { TpElement } from '../../foundation/element.js';
 import { setPartComposition } from '../../presentation/controller.js';
+import { tooltipPresentation } from '../../presentation/families/tooltip.js';
 
 /** What the tooltip content means to assistive technology. */
 export type TooltipDescribes = 'trigger' | 'none';
@@ -18,6 +19,7 @@ export type TooltipDescribes = 'trigger' | 'none';
  */
 export class TpTooltip extends TpHoverSurface {
   static tagName = 'tp-tooltip';
+  static override presentation = tooltipPresentation;
   static override properties = {
     ...TpHoverSurface.properties,
     describes: { type: String, reflect: true },

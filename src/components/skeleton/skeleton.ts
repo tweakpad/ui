@@ -6,6 +6,7 @@ import {
   type MotionHandle,
   type MotionRoleDefinition,
 } from '../../foundation/motion.js';
+import { skeletonPresentation } from '../../presentation/families/skeleton.js';
 
 export const primitiveMotionRoles = {
   skeletonLoading: {
@@ -18,6 +19,7 @@ export const primitiveMotionRoles = {
 
 export class TpSkeleton extends TpElement {
   static tagName = 'tp-skeleton';
+  static override presentation = skeletonPresentation;
   static override properties = {
     ...TpElement.properties,
     label: { type: String },

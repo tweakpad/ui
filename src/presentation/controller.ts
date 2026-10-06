@@ -1,11 +1,8 @@
 import { GeneratedStyleResource } from '../foundation/generated-style.js';
 import type { ReactiveController, ReactiveControllerHost, RenderOptions } from 'lit';
-import { componentDefinitions } from './components.js';
-import { partBindings } from './bindings.js';
-import { registeredPartStructure } from './structure.js';
-import { defaultPresentationDictionary } from './default.js';
+import { presentationFamilyFor } from './family.js';
 import { resolveComponentPresentation, serializeDeclarations } from './resolver.js';
-import type { PartPresentation, PresentationDictionary } from './resolver.js';
+import type { PartPresentation, PresentationDictionary, PresentationRule } from './resolver.js';
 
 type Host = HTMLElement &
   ReactiveControllerHost & {
@@ -157,11 +154,15 @@ export class PresentationController implements ReactiveController {
         : this.host.localName === 'tp-slider-thumb'
           ? 'tp-slider'
           : this.host.localName);
-    const definition = componentDefinitions.find((item) => item.tagName === definitionTag);
-    if (!definition || !this.host.renderRoot) return;
+    // Each element carries its own family; no catalog-wide registry is consulted.
+    const family = presentationFamilyFor(this.host, definitionTag);
+    if (!family || !this.host.renderRoot) return;
+    const definition = family.definition;
     const lightParts = new Map<HTMLElement, Map<string, boolean>>();
     for (const [selector, part] of Object.entries(
-      partBindings[this.host.localName] ?? partBindings[inheritedTag ?? this.host.localName] ?? {},
+      family.bindings[this.host.localName] ??
+        family.bindings[inheritedTag ?? this.host.localName] ??
+        {},
     )) {
       if (selector === ':host') {
         this.host.part.add(part);
@@ -200,7 +201,8 @@ export class PresentationController implements ReactiveController {
         }
       this.#lightParts.set(element, parts);
     }
-    const dictionary = dictionaries.get(this.host.ownerDocument) ?? defaultPresentationDictionary;
+    const custom = dictionaries.get(this.host.ownerDocument);
+    const dictionary = custom ?? family.appearance;
     const axes = Object.fromEntries(
       (definition.axes ?? []).map((axis) => [
         axis.name,
@@ -220,10 +222,16 @@ export class PresentationController implements ReactiveController {
       (this.host.constructor as { presentationFamilyTagNames?: readonly string[] })
         .presentationFamilyTagNames ??
       [];
+    const structures: PresentationDictionary[] = [family.structure];
     for (const tagName of familyTags) {
-      const family = componentDefinitions.find((item) => item.tagName === tagName);
-      if (!family) continue;
-      const contribution = resolveComponentPresentation(family, axes, dictionary);
+      const member = presentationFamilyFor(this.host, tagName);
+      if (!member) continue;
+      structures.push(member.structure);
+      const contribution = resolveComponentPresentation(
+        member.definition,
+        axes,
+        custom ?? member.appearance,
+      );
       resolved = {
         parts: { ...resolved.parts, ...contribution.parts },
         missingKeys: [...new Set([...resolved.missingKeys, ...contribution.missingKeys])],
@@ -232,7 +240,10 @@ export class PresentationController implements ReactiveController {
     const mergedParts = Object.fromEntries(
       Object.entries(resolved.parts).map(([part, rules]) => [
         part,
-        [...rules, ...(registeredPartStructure[part] ?? [])],
+        [
+          ...rules,
+          ...structures.flatMap((structure): readonly PresentationRule[] => structure[part] ?? []),
+        ],
       ]),
     );
     const css = Object.entries(mergedParts)

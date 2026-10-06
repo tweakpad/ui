@@ -1,14 +1,18 @@
 import { html } from 'lit';
 import type { PropertyValues } from 'lit';
-import { TpElement, TpFormElement } from '../../foundation/element.js';
+import { TpElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
 import { bindPart, mergePartProperties, renderPart } from '../../foundation/part.js';
 import { createId } from '../../foundation/id.js';
 import { sliderThumbStyles } from './styles.js';
 import type { SliderThumbOwner, SliderThumbState } from './types.js';
+import { sliderPresentation } from '../../presentation/families/slider.js';
 
 /** Native input/Field binding only. The containing Slider owns all value/form transactions. */
 export class TpSliderThumb extends TpFormElement<number | undefined> {
   static tagName = 'tp-slider-thumb';
+  // Constituent of its group's family; presented with the group's definition.
+  static override presentation = sliderPresentation;
   static override properties = {
     ...TpFormElement.properties,
     index: { type: Number },

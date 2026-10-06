@@ -1,5 +1,5 @@
 import { parseKeyPattern, type KeyChord } from '../../foundation/key-bindings.js';
-import type { ResolvedKeyHintPlatform } from '../key-hint/notation.js';
+import type { ResolvedKeyHintPlatform } from '../../foundation/key-notation.js';
 import { MEDIA_REQUEST_ACTIONS, type MediaRequestAction } from '../../foundation/media/requests.js';
 import type { MediaState } from '../../foundation/media/state.js';
 

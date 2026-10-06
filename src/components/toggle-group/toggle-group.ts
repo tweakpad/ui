@@ -1,15 +1,17 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
-import { TpElement, TpFormElement } from '../../foundation/element.js';
+import { TpElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState, orderedValuesEqual } from '../../foundation/controllable-state.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { CollectionRegistry } from '../../foundation/collection.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { setPartComposition } from '../../presentation/controller.js';
-import { toggleGroupJoinedPresentation } from '../../presentation/recipes/selection-controls.js';
+import { toggleGroupJoinedPresentation } from '../../presentation/recipes/toggle-group.js';
 import { TpToggle, type ToggleSelectionOwner } from '../toggle.js';
 import { normalizeToggleValues, toggleSelection } from './selection.js';
+import { toggleGroupPresentation } from '../../presentation/families/toggle-group.js';
 
 const listConverter = {
   fromAttribute: (value: string | null) =>
@@ -23,6 +25,7 @@ export class TpToggleGroup
   implements ToggleSelectionOwner
 {
   static tagName = 'tp-toggle-group';
+  static override presentation = toggleGroupPresentation;
   static override properties = {
     ...TpFormElement.properties,
     value: { noAccessor: true, converter: listConverter },

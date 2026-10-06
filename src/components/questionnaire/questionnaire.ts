@@ -1,6 +1,6 @@
 import { html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
-import type { TpButton } from '../button.js';
+
 import { createId } from '../../foundation/id.js';
 import { TpElement } from '../../foundation/element.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
@@ -22,11 +22,16 @@ import type {
   QuestionnaireStatus,
 } from '../../foundation/questionnaire.js';
 import type { ChangeReason } from '../../foundation/types.js';
-import { eventReason } from '../shared.js';
+import { eventReason } from '../shared/events.js';
 import { QuestionnaireState, cloneAnswers } from './state.js';
 import { type PartRenderOptions } from '../../foundation/part.js';
 import { checkIcon } from '../../icons/check.js';
 import { questionnaireStyles } from './styles.js';
+import { questionnairePresentation } from '../../presentation/families/questionnaire.js';
+import { TpIcon } from '../icon.js';
+import { TpKeyHint } from '../key-hint/key-hint.js';
+import { TpButton } from '../button.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type QuestionnaireAction = 'previous' | 'skip' | 'next' | 'submit';
 export interface QuestionnaireActionOptions {
@@ -60,6 +65,11 @@ function questionnaireInteractionReason(event: Event): ChangeReason {
 
 export class TpQuestionnaire extends TpElement {
   static tagName = 'tp-questionnaire';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon, TpKeyHint, TpButton];
+  }
+  static override presentation = questionnairePresentation;
   static override properties = {
     ...TpElement.properties,
     questions: { attribute: false },

@@ -1,0 +1,406 @@
+import type { ComponentDefinition } from '../definition.js';
+import { definePresentation } from '../family.js';
+import { mediaPlayerAppearance } from '../recipes/media-player.js';
+
+const definition: ComponentDefinition = {
+  name: 'Media player',
+  tagName: 'tp-media-player',
+  kind: 'compound-reexport',
+  sourceNode: 'ucl21-media-player',
+  // tp-media-controls `visibility`: `auto` overlays the media, `always` stays in flow (audio).
+  axes: [{ name: 'visibility', values: ['auto', 'always'], default: 'auto' }],
+  nonVisualParts: ['Hotkey', 'Gesture'],
+  states: [
+    'paused',
+    'ended',
+    'started',
+    'waiting',
+    'seeking',
+    'muted',
+    'fullscreen',
+    'pip',
+    'captions-showing',
+    'controls-visible',
+    'user-active',
+    'live-edge',
+    'error',
+    'visible',
+    'loading',
+    'loaded',
+    'disabled',
+    'hidden',
+    // Buttons, time and feedback constituents.
+    'availability',
+    'active',
+    'direction',
+    'rate',
+    'volume-level',
+    'live',
+    'remote-state',
+    'type',
+    'negative',
+    'unavailable',
+    'toggle',
+    'open',
+    'status',
+    'level',
+    'min',
+    'max',
+    'starting-style',
+    'ending-style',
+    // Sliders, preview, thumbnail and menus.
+    'dragging',
+    'pointing',
+    'interactive',
+    'orientation',
+    'indeterminate',
+    'track',
+    'rendition',
+    'group',
+  ],
+  motionRoles: [
+    {
+      name: 'controls-visibility',
+      target: 'media-controls',
+      kind: 'state',
+      phases: ['change'],
+      completion: 'non-blocking',
+    },
+    {
+      name: 'title-visibility',
+      target: 'media-title',
+      kind: 'state',
+      phases: ['change'],
+      completion: 'non-blocking',
+    },
+    {
+      name: 'poster',
+      target: 'media-poster',
+      kind: 'presence',
+      phases: ['exit', 'enter'],
+      completion: 'non-blocking',
+    },
+    {
+      name: 'indicator',
+      target: 'media-indicator-content',
+      kind: 'presence',
+      phases: ['enter', 'exit'],
+      completion: 'non-blocking',
+    },
+  ],
+  parts: [
+    {
+      name: 'media-player',
+      publicName: 'Root',
+      cardinality: 'exactly one provider per player; display: contents unless it is the container',
+    },
+    {
+      name: 'media-container',
+      publicName: 'Container',
+      cardinality: 'zero or one; the root takes the container role when absent',
+    },
+    { name: 'media-poster', publicName: 'Poster', cardinality: 'zero or one per container' },
+    {
+      name: 'media-poster-image',
+      publicName: 'Poster image',
+      cardinality: 'the fallback image of Poster (public part `image`)',
+    },
+    { name: 'media-title', publicName: 'Title', cardinality: 'zero or more' },
+    {
+      name: 'media-controls',
+      publicName: 'Controls',
+      presentationKeys: [
+        'media-controls',
+        'media-controls-visibility-auto',
+        'media-controls-visibility-always',
+      ],
+      cardinality: 'zero or more visibility regions',
+    },
+    {
+      name: 'media-controls-backdrop',
+      publicName: 'Controls backdrop',
+      presentationKeys: [
+        'media-controls-backdrop',
+        'media-controls-backdrop-visibility-auto',
+        'media-controls-backdrop-visibility-always',
+      ],
+      cardinality: 'one decorative scrim per Controls (public part `backdrop`)',
+    },
+    { name: 'media-controls-group', publicName: 'Controls group', cardinality: 'zero or more' },
+    { name: 'media-button', publicName: 'Buttons', cardinality: 'zero or more action buttons' },
+    {
+      name: 'media-button-mark',
+      publicName: 'Button content',
+      cardinality: 'icon and visible text region of each media button (public part `mark`)',
+    },
+    {
+      name: 'media-button-text',
+      publicName: 'Button text',
+      cardinality: 'visible rate or live text (public part `text`)',
+    },
+    {
+      name: 'media-button-text-control',
+      publicName: 'Text button control',
+      cardinality: 'the composed Button of a text-bearing media button (rate, live)',
+    },
+    {
+      name: 'media-button-live-dot',
+      publicName: 'Live dot',
+      cardinality: 'decorative dot of the live button (public part `icon`)',
+    },
+    { name: 'media-time-slider', publicName: 'Time slider', cardinality: 'zero or more' },
+    {
+      name: 'media-time-slider-preview',
+      publicName: 'Time slider preview',
+      cardinality: 'zero or one per Time slider',
+    },
+    { name: 'media-thumbnail', publicName: 'Thumbnail', cardinality: 'zero or more' },
+    {
+      name: 'media-thumbnail-image',
+      publicName: 'Thumbnail image',
+      cardinality: 'the sprite or thumbnail image of Thumbnail (public part `image`)',
+    },
+    {
+      name: 'media-chapter-title',
+      publicName: 'Chapter title',
+      cardinality: 'zero or more; usually one per Time slider preview',
+    },
+    { name: 'media-volume-slider', publicName: 'Volume slider', cardinality: 'zero or more' },
+    {
+      name: 'media-volume-popover',
+      publicName: 'Volume popover',
+      cardinality: 'preset composition of Popover, mute button and volume slider',
+    },
+    {
+      name: 'media-settings-menu',
+      publicName: 'Settings menu',
+      cardinality: 'preset composition of Menu and the media radio groups',
+    },
+    {
+      name: 'media-settings-hint',
+      publicName: 'Settings value hint',
+      cardinality: 'selected-value hint of each settings submenu trigger',
+    },
+    { name: 'media-time', publicName: 'Time', cardinality: 'zero or more' },
+    {
+      name: 'media-time-value',
+      publicName: 'Time value',
+      cardinality: 'the native time element of Time (public part `time`)',
+    },
+    {
+      name: 'media-time-sign',
+      publicName: 'Remaining sign',
+      cardinality: 'aria-hidden sign of remaining time (public part `sign`)',
+    },
+    {
+      name: 'media-radio-group',
+      publicName: 'Radio groups',
+      cardinality: 'zero or more track and rate groups',
+    },
+    {
+      name: 'media-buffering-indicator',
+      publicName: 'Buffering indicator',
+      cardinality: 'zero or one',
+    },
+    { name: 'media-error-dialog', publicName: 'Error dialog', cardinality: 'zero or one' },
+    {
+      name: 'media-indicator',
+      publicName: 'Feedback indicators',
+      cardinality: 'zero or more decorative indicators',
+    },
+    {
+      name: 'media-indicator-content',
+      publicName: 'Indicator surface',
+      cardinality: 'one per open indicator (public part `content`)',
+    },
+    {
+      name: 'media-indicator-value',
+      publicName: 'Indicator value',
+      cardinality: 'value or label text of an indicator (public part `value`)',
+    },
+    {
+      name: 'media-indicator-fill',
+      publicName: 'Volume indicator fill',
+      cardinality: 'level bar of the volume indicator (public part `fill`)',
+    },
+    {
+      name: 'media-layout',
+      publicName: 'Video layout, Audio layout',
+      cardinality: 'zero or one preset composition per container',
+    },
+    {
+      name: 'media-layout-region',
+      publicName: 'Layout regions',
+      cardinality:
+        'regions and groups of a layout (public parts `top`, `center`, `bottom-start`, `bottom-end`, `bar`, `time`, `secondary`)',
+    },
+  ],
+};
+
+export const mediaPlayerPresentation = definePresentation({
+  definition,
+  bindings: {
+    'tp-media-player': {
+      ':host': 'media-player',
+    },
+    'tp-media-container': {
+      ':host': 'media-container',
+    },
+    'tp-media-poster': {
+      ':host': 'media-poster',
+      "[part~='image']": 'media-poster-image',
+    },
+    'tp-media-title': {
+      ':host': 'media-title',
+    },
+    'tp-media-controls': {
+      ':host': 'media-controls',
+      "[part~='backdrop']": 'media-controls-backdrop',
+    },
+    'tp-media-controls-group': {
+      ':host': 'media-controls-group',
+    },
+    'tp-media-hotkey': {},
+    'tp-media-gesture': {},
+    'tp-media-play-button': {
+      ':host': 'media-button',
+      "[part~='mark']": 'media-button-mark',
+      "[part~='text']": 'media-button-text',
+      'tp-button[data-media-text]': 'media-button-text-control',
+    },
+    'tp-media-mute-button': {
+      ':host': 'media-button',
+      "[part~='mark']": 'media-button-mark',
+      "[part~='text']": 'media-button-text',
+      'tp-button[data-media-text]': 'media-button-text-control',
+    },
+    'tp-media-seek-button': {
+      ':host': 'media-button',
+      "[part~='mark']": 'media-button-mark',
+      "[part~='text']": 'media-button-text',
+      'tp-button[data-media-text]': 'media-button-text-control',
+    },
+    'tp-media-fullscreen-button': {
+      ':host': 'media-button',
+      "[part~='mark']": 'media-button-mark',
+      "[part~='text']": 'media-button-text',
+      'tp-button[data-media-text]': 'media-button-text-control',
+    },
+    'tp-media-pip-button': {
+      ':host': 'media-button',
+      "[part~='mark']": 'media-button-mark',
+      "[part~='text']": 'media-button-text',
+      'tp-button[data-media-text]': 'media-button-text-control',
+    },
+    'tp-media-captions-button': {
+      ':host': 'media-button',
+      "[part~='mark']": 'media-button-mark',
+      "[part~='text']": 'media-button-text',
+      'tp-button[data-media-text]': 'media-button-text-control',
+    },
+    'tp-media-playback-rate-button': {
+      ':host': 'media-button',
+      "[part~='mark']": 'media-button-mark',
+      "[part~='text']": 'media-button-text',
+      'tp-button[data-media-text]': 'media-button-text-control',
+    },
+    'tp-media-remote-playback-button': {
+      ':host': 'media-button',
+      "[part~='mark']": 'media-button-mark',
+      "[part~='text']": 'media-button-text',
+      'tp-button[data-media-text]': 'media-button-text-control',
+    },
+    'tp-media-live-button': {
+      ':host': 'media-button',
+      "[part~='mark']": 'media-button-mark',
+      "[part~='text']": 'media-button-text',
+      'tp-button[data-media-text]': 'media-button-text-control',
+      "[part~='icon']": 'media-button-live-dot',
+    },
+    'tp-media-time': {
+      ':host': 'media-time',
+      "[part~='time']": 'media-time-value',
+      "[part~='sign']": 'media-time-sign',
+    },
+    'tp-media-buffering-indicator': {
+      ':host': 'media-buffering-indicator',
+    },
+    'tp-media-error-dialog': {
+      ':host': 'media-error-dialog',
+    },
+    'tp-media-status-indicator': {
+      ':host': 'media-indicator',
+      "[part~='content']": 'media-indicator-content',
+      "[part~='value']": 'media-indicator-value',
+      "[part~='fill']": 'media-indicator-fill',
+    },
+    'tp-media-seek-indicator': {
+      ':host': 'media-indicator',
+      "[part~='content']": 'media-indicator-content',
+      "[part~='value']": 'media-indicator-value',
+      "[part~='fill']": 'media-indicator-fill',
+    },
+    'tp-media-volume-indicator': {
+      ':host': 'media-indicator',
+      "[part~='content']": 'media-indicator-content',
+      "[part~='value']": 'media-indicator-value',
+      "[part~='fill']": 'media-indicator-fill',
+    },
+    'tp-media-time-slider': {
+      ':host': 'media-time-slider',
+    },
+    'tp-media-volume-slider': {
+      ':host': 'media-volume-slider',
+    },
+    'tp-media-time-slider-preview': {
+      ':host': 'media-time-slider-preview',
+    },
+    'tp-media-thumbnail': {
+      ':host': 'media-thumbnail',
+      "[part~='image']": 'media-thumbnail-image',
+    },
+    'tp-media-chapter-title': {
+      ':host': 'media-chapter-title',
+    },
+    'tp-media-playback-rate-radio-group': {
+      ':host': 'media-radio-group',
+    },
+    'tp-media-captions-radio-group': {
+      ':host': 'media-radio-group',
+    },
+    'tp-media-audio-track-radio-group': {
+      ':host': 'media-radio-group',
+    },
+    'tp-media-quality-radio-group': {
+      ':host': 'media-radio-group',
+    },
+    'tp-media-volume-popover': {
+      ':host': 'media-volume-popover',
+    },
+    'tp-media-settings-menu': {
+      ':host': 'media-settings-menu',
+    },
+    'tp-media-video-layout': {
+      ':host': 'media-layout',
+      "[part~='top']": 'media-layout-region',
+      "[part~='center']": 'media-layout-region',
+      "[part~='bottom-start']": 'media-layout-region',
+      "[part~='bottom-end']": 'media-layout-region',
+      "[part~='bar']": 'media-layout-region',
+      "[part~='time']": 'media-layout-region',
+      "[part~='secondary']": 'media-layout-region',
+    },
+    'tp-media-audio-layout': {
+      ':host': 'media-layout',
+      "[part~='top']": 'media-layout-region',
+      "[part~='center']": 'media-layout-region',
+      "[part~='bottom-start']": 'media-layout-region',
+      "[part~='bottom-end']": 'media-layout-region',
+      "[part~='bar']": 'media-layout-region',
+      "[part~='time']": 'media-layout-region',
+      "[part~='secondary']": 'media-layout-region',
+    },
+  },
+  sources: [mediaPlayerAppearance],
+  complete: true,
+});

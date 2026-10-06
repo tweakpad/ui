@@ -1,6 +1,7 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
-import { TpElement, TpFormElement } from '../../foundation/element.js';
+import { TpElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import { CollectionRegistry } from '../../foundation/collection.js';
@@ -8,11 +9,13 @@ import type { TpValueChangeEvent } from '../../foundation/events.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { TpRadioGroupItem, type RadioSelectionOwner } from './radio-group-item.js';
+import { radioGroupPresentation } from '../../presentation/families/radio-group.js';
 
 type Member = TpRadioGroupItem | HTMLButtonElement | HTMLInputElement;
 const valueOf = (member: Member): unknown => member.value;
 export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelectionOwner {
   static tagName = 'tp-radio-group';
+  static override presentation = radioGroupPresentation;
   static override properties = {
     ...TpFormElement.properties,
     value: { type: String, noAccessor: true },

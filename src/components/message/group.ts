@@ -1,10 +1,12 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { messagePresentation } from '../../presentation/families/message.js';
 
 /** Consecutive messages share a density owner without introducing conversation state. */
 export class TpMessageGroup extends TpElement {
   static tagName = 'tp-message-group';
   static presentationTagName = 'tp-message';
+  static override presentation = messagePresentation;
   static override styles = [
     TpElement.styles,
     css`

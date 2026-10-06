@@ -9,15 +9,14 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: [
-      'tests/fixtures/components/progress/copied-example.js',
-      'tests/fixtures/components/navigation-menu-geometry/fixture.js',
-      'tests/fixtures/components/popover-placement/fixture.js',
-      'src/stories/navigation-panel-example.js',
-      'src/stories/drag-drop-list-example.js',
-      'tests/fixtures/components/drag-drop-list/*.js',
-    ],
+    files: ['src/stories/navigation-panel-example.js', 'src/stories/drag-drop-list-example.js'],
     languageOptions: { globals: globals.browser },
+  },
+  {
+    // Browser verification fixtures run as page modules; they follow the src typing policy.
+    files: ['tests/fixtures/**/*.{js,ts}'],
+    languageOptions: { globals: globals.browser },
+    rules: { '@typescript-eslint/no-explicit-any': 'off' },
   },
   {
     files: ['scripts/**/*.mjs'],

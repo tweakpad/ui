@@ -4,7 +4,7 @@ import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { MediaRequestAction, MediaRequestOptions } from '../../foundation/media/requests.js';
 import type { MediaState } from '../../foundation/media/state.js';
 import { mediaIcons } from '../../icons/media.js';
-import type { TpButton } from '../button.js';
+
 import type {
   MediaButtonContext,
   MediaButtonIcon,
@@ -12,6 +12,9 @@ import type {
   MediaMarkers,
 } from './button-state.js';
 import { TpMediaElement, type MediaPlayerApi } from './context.js';
+import { TpButton } from '../button.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type MediaButtonVariant = TpButton['variant'];
 export type MediaButtonSize = TpButton['size'];
@@ -61,6 +64,10 @@ const ATTACH_EVENTS = ['tp-media-attach', 'tp-media-detach'] as const;
  * @csspart text - Visible text of text-bearing buttons (playback rate, live).
  */
 export abstract class TpMediaButtonElement extends TpMediaElement {
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpButton, TpIcon];
+  }
   static override properties: PropertyDeclarations = {
     ...TpMediaElement.properties,
     label: { type: String },

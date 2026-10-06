@@ -1,10 +1,12 @@
 import { css } from 'lit';
 import { TpHoverSurface } from '../anchored-surface.js';
 import { deepActiveElement } from '../../foundation/focus.js';
+import { previewCardPresentation } from '../../presentation/families/preview-card.js';
 
 /** Supplementary preview policy on the shared anchored/hover implementation. */
 export class TpPreviewCard extends TpHoverSurface {
   static tagName = 'tp-preview-card';
+  static override presentation = previewCardPresentation;
   static override styles = [
     TpHoverSurface.styles,
     css`

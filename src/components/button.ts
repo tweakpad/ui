@@ -8,11 +8,20 @@ import { componentHandlingPrevented, renderPart } from '../foundation/part.js';
 import type { ComponentPartContract } from '../foundation/part.js';
 import type { LogicalPosition } from '../foundation/types.js';
 import type { IconDefinition } from '../icons/types.js';
+import { buttonPresentation } from '../presentation/families/button.js';
+import { TpSpinner } from './spinner/spinner.js';
+import { TpIcon } from './icon.js';
+import type { CustomElementConstructorWithTag } from '../foundation/define.js';
 
 type ButtonType = 'button' | 'submit' | 'reset';
 
 export class TpButton extends TpElement {
   static tagName = 'tp-button';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpSpinner, TpIcon];
+  }
+  static override presentation = buttonPresentation;
   static override properties = {
     ...TpElement.properties,
     type: { type: String, reflect: true },

@@ -1,9 +1,11 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { aspectRatioPresentation } from '../../presentation/families/aspect-ratio.js';
 
 /** A ratio owns its geometry; intrinsic child dimensions cannot enlarge it. */
 export class TpAspectRatio extends TpElement {
   static tagName = 'tp-aspect-ratio';
+  static override presentation = aspectRatioPresentation;
   static override properties = {
     ...TpElement.properties,
     ratio: { type: Number, noAccessor: true },

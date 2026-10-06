@@ -1,9 +1,11 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { listItemPresentation } from '../../presentation/families/list-item.js';
 
 /** Presentational row. Native actions are supplied through the public part contract. */
 export class TpListItem extends TpElement {
   static tagName = 'tp-list-item';
+  static override presentation = listItemPresentation;
   static override properties = {
     ...TpElement.properties,
     selected: { type: Boolean, reflect: true },

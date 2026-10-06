@@ -24,6 +24,7 @@ import type {
 import type { ChangeReason } from '../../foundation/types.js';
 import type { TpElement } from '../../foundation/element.js';
 import { surfaceInteraction } from '../../foundation/surface-focus.js';
+import { menuPresentation } from '../../presentation/families/menu.js';
 
 export interface MenuBarOwner {
   readonly interactionElement: HTMLElement;
@@ -63,6 +64,7 @@ function semanticTarget(element: HTMLElement): HTMLElement {
 /** Actual command-menu owner, with trigger/context invocation, nested Menu and Menubar. */
 export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   static tagName = 'tp-menu';
+  static override presentation = menuPresentation;
   static override properties = {
     ...TpHoverSurface.properties,
     value: { type: String },

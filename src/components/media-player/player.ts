@@ -63,6 +63,7 @@ import {
   type MediaType,
 } from './markers.js';
 import { mediaContainerStyles } from './styles.js';
+import { mediaPlayerPresentation } from '../../presentation/families/media-player.js';
 
 export type MediaHotkeysMode = 'default' | 'none';
 export type MediaHotkeyScope = 'player' | 'document';
@@ -145,6 +146,7 @@ const CONSTITUENT_PROPERTIES = [
  */
 export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
   static tagName = 'tp-media-player';
+  static override presentation = mediaPlayerPresentation;
 
   static override properties: PropertyDeclarations = {
     ...TpElement.properties,

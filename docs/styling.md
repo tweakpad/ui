@@ -47,13 +47,22 @@ Component-specific styling belongs in a documented presentation dictionary, publ
 
 ## Presentation resolution and overrides
 
-`componentDefinitions` contains the cataloged ordered axes/defaults and canonical public part keys. `resolveComponentPresentation(definition, axes, dictionary)` resolves base keys followed by axes in declaration order. Its `missingKeys` diagnostic means no appearance was supplied for that contribution; it never silently reads another dictionary.
+Each component has a presentation family, exported as `<name>Presentation` (for example `buttonPresentation`). A family carries the component's definition (ordered axes, defaults and canonical public part keys), part bindings, structure and default `appearance` dictionary. `resolveComponentPresentation(definition, axes, dictionary)` resolves base keys followed by axes in declaration order. Its `missingKeys` diagnostic means no appearance was supplied for that contribution; it never silently reads another dictionary.
+
+A document dictionary set with `setPresentationDictionary` replaces the default appearance of every component in that document. Build it from the families of the components you use, so the override stays as lean as the components themselves:
 
 ```js
-import { defaultPresentationDictionary, setPresentationDictionary } from '@tweakpad/ui';
+import {
+  buttonPresentation,
+  iconPresentation,
+  spinnerPresentation,
+  setPresentationDictionary,
+} from '@tweakpad/ui';
 
 setPresentationDictionary({
-  ...defaultPresentationDictionary,
+  ...buttonPresentation.appearance,
+  ...iconPresentation.appearance,
+  ...spinnerPresentation.appearance,
   'button-variant-default': [
     {
       declarations: {
@@ -72,6 +81,8 @@ card.partPresentation = {
   },
 };
 ```
+
+An application that registers the whole library can spread `defaultPresentationDictionary` instead; it aggregates every family, so it also bundles every component's presentation.
 
 Dictionary replacement is document-scoped and does not remount controls or reset state. Token variables remain inherited and separate from dictionary definitions. A class hook adds a class at the real part; it does not let document styles cross a shadow boundary. Use style hooks, public `::part`, or dictionary rules for that boundary.
 

@@ -3,8 +3,12 @@ import { TpElement } from '../../foundation/element.js';
 import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 import type { MediaAvailability } from '../../foundation/media/availability.js';
 import type { ChangeReason } from '../../foundation/types.js';
-import type { TpPopover } from '../popover/popover.js';
+
 import { TpMediaElement, type MediaPlayerApi } from './context.js';
+import { TpMediaMuteButton } from './buttons.js';
+import { TpPopover } from '../popover/popover.js';
+import { TpMediaVolumeSlider } from './volume-slider.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /** Whether the volume popup can open: only while volume can be set (Video.js parity). */
 export function volumePopupUsable(attached: boolean, availability: MediaAvailability): boolean {
@@ -29,6 +33,10 @@ export function volumePopupUsable(attached: boolean, availability: MediaAvailabi
  */
 export class TpMediaVolumePopover extends TpMediaElement {
   static tagName = 'tp-media-volume-popover';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpMediaMuteButton, TpPopover, TpMediaVolumeSlider];
+  }
 
   static override properties: PropertyDeclarations = {
     ...TpMediaElement.properties,

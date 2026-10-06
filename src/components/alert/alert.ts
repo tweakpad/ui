@@ -1,6 +1,7 @@
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { alertPresentation } from '../../presentation/families/alert.js';
 
 export type AlertSeverity = 'informational' | 'success' | 'warning' | 'danger';
 export type AlertAnnouncement = 'off' | 'polite' | 'assertive';
@@ -8,6 +9,7 @@ export type AlertAnnouncement = 'off' | 'polite' | 'assertive';
 /** Persistent in-flow message. Authored text must communicate the condition without color. */
 export class TpAlert extends TpElement {
   static tagName = 'tp-alert';
+  static override presentation = alertPresentation;
   static override properties = {
     ...TpElement.properties,
     severity: { type: String, reflect: true },

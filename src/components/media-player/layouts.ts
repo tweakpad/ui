@@ -3,8 +3,7 @@ import { ref } from 'lit/directives/ref.js';
 import { DelayGroup } from '../../foundation/delay-group.js';
 import { TpElement } from '../../foundation/element.js';
 import type { KeyShortcut } from '../../foundation/key-bindings.js';
-import type { TpMenu } from '../menu/menu.js';
-import type { TpTooltip } from '../tooltip/tooltip.js';
+
 import { TpMediaElement, mediaPopupScopeBrand, type MediaPlayerApi } from './context.js';
 import {
   mediaLayoutSlice,
@@ -16,7 +15,38 @@ import {
   type MediaVideoLayoutVariant,
 } from './layout-state.js';
 import { DEFAULT_SEEK_STEP } from './player.js';
-import type { TpMediaSettingsMenu } from './settings-menu.js';
+
+import { TpKeyHint } from '../key-hint/key-hint.js';
+import { TpKeyHintGroup } from '../key-hint/key-hint-group.js';
+import { TpMediaPoster } from './poster.js';
+import { TpMediaTitle } from './title.js';
+import { TpMediaBufferingIndicator } from './feedback.js';
+import { TpMediaStatusIndicator } from './indicators.js';
+import { TpMediaSeekIndicator } from './indicators.js';
+import { TpMediaVolumeIndicator } from './indicators.js';
+import { TpMediaControls } from './controls.js';
+import { TpMediaControlsGroup } from './controls.js';
+import { TpMediaErrorDialog } from './feedback.js';
+import { TpTooltip } from '../tooltip/tooltip.js';
+import { TpMediaPlayButton } from './buttons.js';
+import { TpMediaSeekButton } from './buttons.js';
+import { TpMediaVolumePopover } from './volume-popover.js';
+import { TpMediaLiveButton } from './buttons.js';
+import { TpMediaTime } from './time.js';
+import { TpMediaTimeSlider } from './time-slider.js';
+import { TpMediaTimeSliderPreview } from './preview.js';
+import { TpMediaThumbnail } from './thumbnail.js';
+import { TpMediaChapterTitle } from './chapter-title.js';
+import { TpMediaCaptionsButton } from './buttons.js';
+import { TpMenu } from '../menu/menu.js';
+import { TpMediaCaptionsRadioGroup } from './radio-groups.js';
+import { TpMediaSettingsMenu } from './settings-menu.js';
+import { TpMediaRemotePlaybackButton } from './buttons.js';
+import { TpMediaPipButton } from './buttons.js';
+import { TpMediaFullscreenButton } from './buttons.js';
+import { TpMediaPlaybackRateButton } from './buttons.js';
+import { TpMediaPlaybackRateRadioGroup } from './radio-groups.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /** Tooltip delay group of a layout (Video.js `Tooltip.Provider`: 600 ms, 400 ms group rest). */
 export const MEDIA_LAYOUT_TOOLTIP_DELAY = 600;
@@ -87,6 +117,10 @@ const layoutStyles = css`
  * tooltips of a layout share one `TooltipProvider` (600 ms delay, 400 ms group rest).
  */
 export abstract class TpMediaLayoutElement extends TpMediaElement {
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpKeyHint, TpKeyHintGroup];
+  }
   static override properties: PropertyDeclarations = {
     ...TpMediaElement.properties,
     hide: { type: String },
@@ -303,6 +337,37 @@ function keyHint(shortcut: KeyShortcut | undefined): unknown {
  */
 export class TpMediaVideoLayout extends TpMediaLayoutElement {
   static tagName = 'tp-media-video-layout';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [
+      TpMediaPoster,
+      TpMediaTitle,
+      TpMediaBufferingIndicator,
+      TpMediaStatusIndicator,
+      TpMediaSeekIndicator,
+      TpMediaVolumeIndicator,
+      TpMediaControls,
+      TpMediaControlsGroup,
+      TpMediaErrorDialog,
+      TpTooltip,
+      TpMediaPlayButton,
+      TpMediaSeekButton,
+      TpMediaVolumePopover,
+      TpMediaLiveButton,
+      TpMediaTime,
+      TpMediaTimeSlider,
+      TpMediaTimeSliderPreview,
+      TpMediaThumbnail,
+      TpMediaChapterTitle,
+      TpMediaCaptionsButton,
+      TpMenu,
+      TpMediaCaptionsRadioGroup,
+      TpMediaSettingsMenu,
+      TpMediaRemotePlaybackButton,
+      TpMediaPipButton,
+      TpMediaFullscreenButton,
+    ];
+  }
 
   static override styles = [
     TpElement.styles,
@@ -357,7 +422,7 @@ export class TpMediaVideoLayout extends TpMediaLayoutElement {
       }
 
       /* Below lg the secondary group floats in the top corner of the container: its bottom edge
-         sits one spacing step below the container top, then it moves down by its own height. */
+     sits one spacing step below the container top, then it moves down by its own height. */
       .secondary {
         position: absolute;
         inset-inline-end: var(--tp-space-2);
@@ -684,6 +749,26 @@ export class TpMediaVideoLayout extends TpMediaLayoutElement {
  */
 export class TpMediaAudioLayout extends TpMediaLayoutElement {
   static tagName = 'tp-media-audio-layout';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [
+      TpMediaControls,
+      TpMediaControlsGroup,
+      TpMediaErrorDialog,
+      TpMediaBufferingIndicator,
+      TpTooltip,
+      TpMediaPlayButton,
+      TpMediaSeekButton,
+      TpMediaTime,
+      TpMediaTimeSlider,
+      TpMediaTimeSliderPreview,
+      TpMediaLiveButton,
+      TpMenu,
+      TpMediaPlaybackRateButton,
+      TpMediaPlaybackRateRadioGroup,
+      TpMediaVolumePopover,
+    ];
+  }
 
   static override styles = [
     TpElement.styles,

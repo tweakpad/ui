@@ -2,7 +2,7 @@ import { html, nothing, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
-import type { TpTooltip } from '../tooltip/tooltip.js';
+
 import { VisualizationResponsiveViewport } from './viewport.js';
 import { visualizationIdentifier } from './payload.js';
 import {
@@ -22,9 +22,18 @@ import type {
   VisualizationSnapshot,
   VisualizationTooltipOptions,
 } from './types.js';
+import { dataVisualizationPresentation } from '../../presentation/families/data-visualization.js';
+import { TpTooltip } from '../tooltip/tooltip.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+import { TpIcon } from '../icon.js';
 
 export class TpDataVisualization extends TpElement {
   static tagName = 'tp-data-visualization';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpTooltip, TpIcon];
+  }
+  static override presentation = dataVisualizationPresentation;
   static override properties = {
     ...TpElement.properties,
     label: { type: String },

@@ -9,10 +9,12 @@ import type {
   LogicalSide,
   PositioningStrategy,
 } from '../../foundation/positioning.js';
+import { popoverPresentation } from '../../presentation/families/popover.js';
 
 /** Interactive Popover policy on the same surface/hover owners as Tooltip and Menu. */
 export class TpPopover extends TpHoverSurface {
   static tagName = 'tp-popover';
+  static override presentation = popoverPresentation;
   static override styles = [
     TpHoverSurface.styles,
     css`

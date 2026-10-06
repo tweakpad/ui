@@ -5,11 +5,12 @@ import { isSelectItemCollection, type SelectItemCollection } from './items.js';
 import type { SelectClearBehavior, SelectCompletionMode } from './query-types.js';
 import { selectStateMarkers } from './state.js';
 import { composedParent } from '../../foundation/focus.js';
-import { anchoredArrowStyles } from '../shared.js';
+import { anchoredArrowStyles } from '../shared/anchored-arrow.js';
 import { html, nothing } from 'lit';
 import type { CSSResultGroup, PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-import { TpElement, TpFormElement } from '../../foundation/element.js';
+import { TpElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { ChoiceCollectionController } from '../../foundation/choice-collection.js';
 import { SurfaceState, type TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
@@ -65,9 +66,20 @@ import type {
   SelectEntry,
   SelectFocusTarget,
 } from './types.js';
+import { selectPresentation } from '../../presentation/families/select.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+import { TpButton } from '../button.js';
+import { TpBadge } from '../badge/index.js';
+import { TpInputGroup } from '../input-group/input-group.js';
 
 export class TpSelect extends TpFormElement<unknown> {
   static tagName = 'tp-select';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon, TpButton, TpBadge, TpInputGroup];
+  }
+  static override presentation = selectPresentation;
   static override properties = {
     ...TpFormElement.properties,
     searchable: { type: Boolean, reflect: true },

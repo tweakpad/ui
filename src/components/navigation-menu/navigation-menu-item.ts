@@ -6,6 +6,8 @@ import { createId } from '../../foundation/id.js';
 import { chevronDownIcon } from '../../icons/chevron-down.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { shadowReferenceTarget } from '../../foundation/focus.js';
+import { TpIcon } from '../icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export interface NavigationMenuOwner extends HTMLElement {
   readonly value: string;
@@ -20,6 +22,10 @@ export interface NavigationMenuOwner extends HTMLElement {
 /** Native navigation content stays attached to its original constituent and is never cloned. */
 export class TpNavigationMenuItem extends TpElement {
   static tagName = 'tp-navigation-menu-item';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon];
+  }
   static override properties = {
     ...TpElement.properties,
     value: { type: String },

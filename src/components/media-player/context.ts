@@ -54,6 +54,7 @@ import {
   type MediaState,
 } from '../../foundation/media/state.js';
 import type { MediaTarget } from '../../foundation/media/target.js';
+import { mediaPlayerPresentation } from '../../presentation/families/media-player.js';
 
 /** Brand carried by `tp-media-player`; the owner lookup tests it instead of `instanceof`. */
 export const mediaPlayerBrand: unique symbol = Symbol.for('tweakpad.media-player');
@@ -451,6 +452,7 @@ export abstract class TpMediaElement extends TpElement {
 
   /** Constituents share the Media player definition, parts and recipes. */
   static presentationTagName = 'tp-media-player';
+  static override presentation = mediaPlayerPresentation;
 
   /** Id of a `tp-media-player` to bind to from outside its subtree (`player` attribute). */
   playerId: string | null = null;

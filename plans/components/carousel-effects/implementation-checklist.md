@@ -7,7 +7,7 @@
 - Scope source: user, 2026-10-06. Effects are fully supported and public, live next to the carousel, and must be tree-shakeable. The shader uses a full-frame stacked layout over slide media only. Phase 1 covers the seam, the shader and all CSS variants. The user's instruction was "implement it".
 - In-scope changes and existing gaps:
   - In scope: the presenter refactor, effects, docs and stories.
-  - Pre-existing gap 1: the published `dist/` shares one large chunk, so carousel-only consumers still bundle unrelated components. This is not caused by effects (see V-16).
+  - Pre-existing gap 1 (resolved 2026-10-06, S-02): the published `dist/` shared one large chunk and global presentation registries, so carousel-only consumers bundled unrelated components (see V-16).
   - Pre-existing gap 2: the DevTools drag tool cannot produce a multi-step swipe, and that affects the basic carousel too (see V-07).
 - Repository baseline / unrelated changes: `development`, clean at start. The media-player work belongs to another agent and is untouched.
 - Live project / document IDs and revisions: Spec Blocks project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`, HEAD `8440bff`. The carousel sections and exclusions were read on 2026-10-05/06. The amendment `spec-amendment.md` has not been applied (S-01).
@@ -41,13 +41,13 @@
 | C-14 | Shader fallbacks: no WebGL2, context loss/restore, CORS, missing media, off-screen, reduced motion | draft fallback requirement | — | `#ensure`, `#draw`, texture failures | docs/carousel.md Shader behavior | V-05, V-14 | passed | loss gives crossfade frames, restore resumes GL; CORS diagnostic |
 | C-15 | Layers above the canvas without breaking author positioning | draft layer requirement | — | `#layers`, `#static` | docs/carousel.md Authoring hooks | V-13 | passed | caption stays absolutely positioned (fixed defect) |
 | C-16 | Rendering only while transitioning; no idle frames | draft shader requirement | — | presenter and effect scheduling | docs/carousel.md Shader behavior | V-15 | passed | 0 rAF calls in 2 s idle with 4 carousels |
-| C-17 | Tree-shakeable factories (no module side effects) | user requirement | — | explicit factory imports | docs/carousel.md Effects | V-16 | blocked | effect modules have no side effects, but the existing `dist/` single chunk prevents any tree-shaking |
+| C-17 | Tree-shakeable factories (no module side effects) | user requirement | — | explicit factory imports | docs/carousel.md Effects | V-16 | passed | Effect and WebGL code ship only to shader consumers; a `TpCarousel`-only bundle contains the carousel, button, icon, progress and spinner families only (V-16) |
 | C-18 | Public exports and custom-effect helpers | draft factories | — | `components/carousel/index.ts`, `foundation/carousel/index.ts` | docs/carousel.md Custom effects | V-17 | passed | `npm run build`; types exported |
 
 | Issue | Concrete missing/conflicting contract | Affected dependencies | Proposed resolution | Authority / resolution evidence | Status |
 | ----- | ------------------------------------- | --------------------- | ------------------- | ------------------------------- | ------ |
 | S-01 | Live spec excludes carousel effects and parallax and has no effect contract | Carousel, motion roles, environment services | Apply `spec-amendment.md` | Write withheld: shared candidate busy (player spec in progress) | blocked |
-| S-02 | `dist/` is not tree-shakeable (one shared chunk) | every component | Separate build task: preserve modules or split per entry | Observed in V-16; outside this task | pending |
+| S-02 | Presentation definitions, bindings, recipes and the default dictionary are global registries, so every component ships every component's presentation data | every component | Per-component presentation bundles that the controller resolves from a registry | Implemented library-wide. Each component imports its own `PresentationFamily` (`src/presentation/families/`), recipes are split per component and shared recipe modules, and the controller resolves families from the element class. `elementDependencies` with a recursive `defineElement` registers the rendered elements. Aggregates are opt-in. Guarded by `src/presentation/families.test.ts`. | resolved |
 
 ## Architecture and reuse
 
@@ -113,7 +113,7 @@
 | V-13 | C-13, C-15; visual + real input | real clicks on Displace and Next | displacement band, no edge streaks, caption above | 71 GL frames on click; screenshots inspected | MCP click; `shader-displace-mid.png` | passed | Observed visually and by frame log |
 | V-14 | C-14; fallback | context lose/restore; CORS-less image | crossfade while lost, GL after restore; CORS diagnostic | none → block; diagnostic emitted | MCP evaluate | passed | Observed |
 | V-15 | C-16; performance | 2 s idle with 4 shader carousels | no rAF | 0 calls | MCP evaluate | passed | Observed |
-| V-16 | C-17; package | vite bundle importing only `TpCarousel` from dist | no effect/WebGL code | shared 1.7 MB chunk includes WebGL and unrelated components | scratch vite build | blocked | Pre-existing dist chunking (S-02) |
+| V-16 | C-17; package | vite bundle importing only `TpCarousel` from dist | no effect/WebGL code; no unrelated components | Effect and WebGL code ship only to shader consumers (20 KB). After the per-component family split (S-02), `defineElement(TpCarousel.tagName, TpCarousel)` from `dist/index.js` minifies to 203 KB excluding Lit. It contains the carousel, button, icon, progress and spinner families only, with no registry or aggregate modules. | `tmp/presentation-migration/measure.py`, `sizes-after-deps.txt`; Chrome standalone fixture | passed | — |
 | V-17 | C-18; build | lint, tests, build | clean | vitest 1032 pass; eslint/stylelint clean; build ok; pre-existing field.ts format warning | npm scripts | passed | Observed |
 
 ## Early integration checkpoint
@@ -136,7 +136,7 @@
 | 5. Accessibility | passed | V-08: tree and axe. Item semantics and announcements are unchanged. No screen reader run. |
 | 6. Visual and interaction inspection | passed | Screenshots inspected; edge-streak, caption and drift-sign defects found and fixed. |
 | 7. Documentation and demo reuse | passed | docs/carousel.md Effects, docs/motion.md, and five docs examples using Toggle Group and real carousels. |
-| 8. Regression and reconciliation | passed | vitest 1032; eslint/stylelint clean; build ok; carousel regression V-01. Tree-shaking gap S-02 is recorded as pre-existing. |
+| 8. Regression and reconciliation | passed | vitest 1032; eslint/stylelint clean; build ok; carousel regression V-01. Tree-shaking S-02 resolved; vitest 1039, lint and build re-run after the split. |
 
 ## Documentation synchronization
 
@@ -150,14 +150,14 @@
 ## Completion / handoff
 
 - Change summary: the presenter seam, the effect contract and presenter, five effects, internal WebGL infrastructure, docs and examples.
-- Actual delivery claim: complete against the plan, except spec adoption (S-01) and package tree-shaking (S-02, pre-existing).
-- Record checker: blocked only by Gate 0 and V-16 / C-17, which are recorded honestly.
+- Actual delivery claim: complete against the plan, except spec adoption (S-01).
+- Record checker: blocked only by Gate 0 (spec adoption, S-01).
 - Non-browser checks: vitest 1032 pass; eslint/stylelint clean; `npm run build` ok.
 - Behavior: passed, with the real-pointer drag tool limitation noted.
 - Accessibility: tree and axe; no screen reader run.
 - Visual/customization/motion inspection: passed.
 - Documentation and demo composition reuse: passed.
-- Shared-consumer regressions / package boundaries: carousel unchanged; dist tree-shaking pre-existing gap.
-- Required failures or blocked checks: S-01, S-02/V-16.
+- Shared-consumer regressions / package boundaries: carousel unchanged; single-component bundles verified (V-16).
+- Required failures or blocked checks: S-01.
 - Older out-of-scope gaps: DevTools drag tool cannot express multi-step swipes.
 - Changed source revisions / reopened gates: none after the final runs.

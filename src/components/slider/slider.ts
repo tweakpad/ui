@@ -1,7 +1,8 @@
 import { html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-import { TpElement, TpFormElement } from '../../foundation/element.js';
+import { TpElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { TpValueCommitEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
@@ -31,7 +32,7 @@ import { createId } from '../../foundation/id.js';
 import { CleanupScope, LocaleService, resolveLocale } from '../../foundation/services.js';
 import { composedParent } from '../../foundation/focus.js';
 import { CollectionRegistry } from '../../foundation/collection.js';
-import type { TpSliderThumb } from './slider-thumb.js';
+
 import { sliderStyles } from './styles.js';
 import { sliderValueConverter } from './types.js';
 import type {
@@ -47,6 +48,9 @@ import type {
   SliderValueChangeCallback,
   SliderValueCommitCallback,
 } from './types.js';
+import { sliderPresentation } from '../../presentation/families/slider.js';
+import { TpSliderThumb } from './slider-thumb.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 const valuesOf = (value: SliderValue | undefined): number[] =>
   value === undefined ? [] : Array.isArray(value) ? [...value] : [value];
@@ -78,6 +82,11 @@ interface Drag {
 /** A single commit/form owner shared by generated and explicitly authored Thumbs. */
 export class TpSlider extends TpFormElement<SliderValue | undefined> implements SliderThumbOwner {
   static tagName = 'tp-slider';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpSliderThumb];
+  }
+  static override presentation = sliderPresentation;
   static override properties = {
     ...TpFormElement.properties,
     value: { converter: sliderValueConverter, noAccessor: true },

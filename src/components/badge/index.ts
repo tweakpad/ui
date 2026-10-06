@@ -1,8 +1,10 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { badgePresentation } from '../../presentation/families/badge.js';
 
 export class TpBadge extends TpElement {
   static tagName = 'tp-badge';
+  static override presentation = badgePresentation;
   static override properties = {
     ...TpElement.properties,
     variant: { type: String, reflect: true },

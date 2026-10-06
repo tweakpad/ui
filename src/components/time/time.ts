@@ -28,7 +28,10 @@ import {
   type TimeInput,
 } from '../../foundation/time/parse.js';
 import { TimeRefreshScheduler, type TimeRefreshTarget } from '../../foundation/time/scheduler.js';
-import type { TpTooltip } from '../tooltip/tooltip.js';
+
+import { timePresentation } from '../../presentation/families/time.js';
+import { TpTooltip } from '../tooltip/tooltip.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type TimeUpdateInterval = 'auto' | 'none' | number;
 export interface TimeUpdateDetail {
@@ -58,6 +61,11 @@ function durationOption(text: string, fallback: number): number {
 /** A native time element presenting one date, time, or duration with optional full description. */
 export class TpTime extends TpElement implements TimeRefreshTarget {
   static tagName = 'tp-time';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpTooltip];
+  }
+  static override presentation = timePresentation;
   static override properties = {
     ...TpElement.properties,
     datetime: {},
