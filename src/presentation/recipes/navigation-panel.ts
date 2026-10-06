@@ -1,6 +1,13 @@
 import { edgeSurfaceAppearance } from './edge-surface.js';
 import type { PresentationDictionary } from '../resolver.js';
-import { navigationRow, iconAction, collapsedRow, largeAction } from './shared/navigation-row.js';
+import {
+  navigationRow,
+  iconAction,
+  collapsedRow,
+  largeAction,
+  rowHighlight,
+} from './shared/navigation-row.js';
+import { fillColor } from './shared/fill.js';
 
 const parts = [
   'navigation-panel',
@@ -135,10 +142,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
         'padding-inline-end': 'var(--navigation-panel-trailing-space, var(--tp-space-2))',
       },
     },
-    {
-      selector: '&:hover:not([data-disabled]), &:active:not([data-disabled]), &[data-active]',
-      declarations: { background: 'var(--tp-accent)', color: 'var(--tp-accent-foreground)' },
-    },
+    ...rowHighlight('&:hover:not([data-disabled]), &:active:not([data-disabled]), &[data-active]'),
     { selector: '&[data-active]', declarations: { 'font-weight': 'var(--tp-font-medium)' } },
     { selector: collapsedRow, declarations: { padding: '0' } },
   ],
@@ -149,10 +153,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
         'padding-inline-end': 'var(--navigation-panel-trailing-space, var(--tp-space-2))',
       },
     },
-    {
-      selector: '&:hover:not([data-disabled]), &[data-active]',
-      declarations: { background: 'var(--tp-accent)', color: 'var(--tp-accent-foreground)' },
-    },
+    ...rowHighlight('&:hover:not([data-disabled]), &[data-active]'),
     {
       selector: iconAction,
       declarations: { padding: '0' },
@@ -209,6 +210,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
   ],
   'navigation-panel-subitem': [],
   'navigation-panel-sublink': [
+    fillColor('var(--tp-accent)'),
     {
       declarations: {
         background: 'transparent',
@@ -218,10 +220,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
         'min-block-size': 'var(--tp-target-size-min)',
       },
     },
-    {
-      selector: '&:hover:not([data-disabled]), &[data-active]',
-      declarations: { background: 'var(--tp-accent)', color: 'var(--tp-accent-foreground)' },
-    },
+    ...rowHighlight('&:hover:not([data-disabled]), &[data-active]'),
   ],
   'navigation-panel-input': [{ declarations: { background: 'var(--tp-background)' } }],
   'navigation-panel-separator': [

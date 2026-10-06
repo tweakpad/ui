@@ -1,5 +1,6 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
+import { fillColor, fillShown } from './shared/fill.js';
 const invalidPaint = {
   'border-color':
     'light-dark(var(--tp-destructive), color-mix(in oklab, var(--tp-destructive) 50%, transparent))',
@@ -19,10 +20,10 @@ export const switchAppearance: PresentationDictionary = {
           'light-dark(var(--tp-input), color-mix(in oklab, var(--tp-input) 80%, transparent))',
         border: 'var(--tp-border-width) var(--tp-border-style) transparent',
         'border-radius': 'var(--tp-radius-full)',
-        transition: motionTransition(['background-color'], 'fast'),
       },
     },
-    { selector: '&[data-checked]', declarations: { background: 'var(--tp-primary)' } },
+    fillColor('var(--tp-primary)'),
+    fillShown('&[data-checked]'),
     {
       selector: '&[data-disabled]',
       declarations: { cursor: 'not-allowed', opacity: 'var(--tp-opacity-disabled)' },

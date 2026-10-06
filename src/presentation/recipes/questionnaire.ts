@@ -1,7 +1,7 @@
-import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 import { nativeChoiceAppearance } from './shared/selection-control.js';
 import { inputRules } from './shared/text-control.js';
+import { fillColor, fillShown } from './shared/fill.js';
 /** base registry Questionnaire + Nova; native constituents share existing recipes. */
 export const questionnaireAppearance: PresentationDictionary = {
   questionnaire: [{ declarations: { gap: 'var(--tp-space-4)' } }],
@@ -45,13 +45,11 @@ export const questionnaireAppearance: PresentationDictionary = {
         'border-radius': 'var(--tp-radius-lg)',
         'font-size': 'var(--tp-text-sm)',
         background: 'light-dark(transparent,color-mix(in oklab,var(--tp-input) 20%,transparent))',
-        transition: motionTransition(['background-color'], 'fast'),
       },
     },
-    {
-      selector: '&:not([data-disabled]):hover',
-      declarations: { background: 'color-mix(in oklab,var(--tp-muted) 50%,transparent)' },
-    },
+    fillColor('color-mix(in oklab,var(--tp-muted) 50%,transparent)'),
+    // A checked choice keeps its own fill; hover does not cover it.
+    fillShown('&:not([data-disabled], [data-checked]):hover'),
     {
       selector: '&[data-checked]',
       declarations: {

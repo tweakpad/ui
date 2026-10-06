@@ -1,4 +1,5 @@
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
+import { fillHidden } from './shared/fill.js';
 
 const toggleIconEdges = (units: number): PresentationRule[] => [
   {
@@ -10,21 +11,19 @@ const toggleIconEdges = (units: number): PresentationRule[] => [
     declarations: { 'padding-inline-end': `calc(var(--tp-spacing) * ${units})` },
   },
 ];
+const pressedInteraction =
+  '&[aria-pressed="true"]:not(:disabled, [aria-disabled="true"]):is(:hover, :focus-visible)';
+
 export const toggleAppearance: PresentationDictionary = {
   toggle: [
     { declarations: { 'min-inline-size': 'var(--tp-control-height-md)' } },
     ...toggleIconEdges(2),
     // Keep pressed paint distinct when a consumer moves the pointer onto it.
     {
-      selector:
-        '&[aria-pressed="true"]:not(:disabled, [aria-disabled="true"]):is(:hover, :focus-visible)',
+      selector: pressedInteraction,
       declarations: { background: 'var(--tp-muted)', color: 'var(--tp-foreground)' },
     },
-    {
-      selector:
-        '&[aria-pressed="true"]:not(:disabled, [aria-disabled="true"]):is(:hover, :focus-visible)::before',
-      declarations: { opacity: '0' },
-    },
+    fillHidden(pressedInteraction),
   ],
   'toggle-content': [
     { declarations: { gap: 'var(--tp-space-1)', '--tp-icon-size-md': 'var(--tp-icon-size-sm)' } },

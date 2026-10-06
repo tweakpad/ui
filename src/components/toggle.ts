@@ -8,6 +8,7 @@ import { SyntheticPress } from '../foundation/synthetic-press.js';
 import { componentHandlingPrevented } from '../foundation/part.js';
 import type { ChangeReason } from '../foundation/types.js';
 import { togglePresentation } from '../presentation/families/toggle.js';
+import { fillLayerStyles } from '../presentation/motion.js';
 
 export interface ToggleSelectionOwner {
   readonly variant: 'ghost' | 'outline';
@@ -52,6 +53,8 @@ export class TpToggle extends TpFormElement {
         position: relative;
         z-index: 1;
       }
+
+      ${fillLayerStyles('.control')}
 
       .content {
         display: inline-flex;

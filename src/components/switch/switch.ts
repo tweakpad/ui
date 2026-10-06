@@ -9,8 +9,12 @@ import {
 import { TpCheckbox } from '../checkbox/index.js';
 import type { SwitchState } from './types.js';
 import { switchPresentation } from '../../presentation/families/switch.js';
+import { fillLayerStyles } from '../../presentation/motion.js';
 import { TpLabel } from '../label/label.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+
+/** The track border is transparent, so its checked fill covers the border box. */
+const trackFill = fillLayerStyles('.root', 'calc(-1 * var(--tp-border-width))');
 
 export const switchMotionRoles = {
   track: { name: 'track', kind: 'state', phases: ['change'], completion: 'non-blocking' },
@@ -64,6 +68,8 @@ export class TpSwitch extends TpCheckbox {
         outline: none;
       }
 
+      ${trackFill}
+
       .root::after {
         content: '';
         position: absolute;
@@ -94,7 +100,8 @@ export class TpSwitch extends TpCheckbox {
         display: none;
       }
 
-      [data-tp-motion-driven] {
+      [data-tp-motion-driven],
+      [data-tp-motion-driven]::before {
         transition: none !important;
       }
     `,

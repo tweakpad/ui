@@ -1,4 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { fillHidden } from './shared/fill.js';
 
 const rangeBacking = {
   content: "''",
@@ -104,6 +105,9 @@ export const calendarAppearance: PresentationDictionary = {
         transition: 'none',
       },
     },
+    { selector: '&::before', declarations: { transition: 'none' } },
+    // Hover never covers a day's own selected, today or range fill.
+    fillHidden('&:is([data-today], [data-selected], [data-range-middle])'),
     { selector: '&[data-outside]', declarations: { color: 'var(--tp-muted-foreground)' } },
     {
       selector: '&[data-today]:not([data-selected])',

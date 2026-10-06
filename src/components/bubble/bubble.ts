@@ -1,6 +1,7 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { bubblePresentation } from '../../presentation/families/bubble.js';
+import { fillLayerStyles } from '../../presentation/motion.js';
 
 export class TpBubbleGroup extends TpElement {
   static tagName = 'tp-bubble-group';
@@ -75,6 +76,8 @@ export class TpBubble extends TpElement {
         overflow: hidden;
         overflow-wrap: anywhere;
       }
+
+      ${fillLayerStyles('.content:is(button, a)')}
 
       slot {
         display: contents;

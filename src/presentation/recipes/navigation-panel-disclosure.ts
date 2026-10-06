@@ -1,10 +1,14 @@
 import type { PresentationDictionary } from '../resolver.js';
-import { navigationRow, disclosureContext, collapsedContext } from './shared/navigation-row.js';
+import {
+  solidNavigationRow,
+  disclosureContext,
+  collapsedContext,
+} from './shared/navigation-row.js';
 
 /** Composes the real Collapsible with SidebarMenuButton paint; no second disclosure owner. */
 export const navigationPanelDisclosureAppearance: PresentationDictionary = {
   'collapsible-trigger': [
-    ...navigationRow.map((rule) => ({
+    ...solidNavigationRow.map((rule) => ({
       ...rule,
       selector: disclosureContext + (rule.selector ?? '&'),
     })),

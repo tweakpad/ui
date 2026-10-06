@@ -1,4 +1,6 @@
 import { unsafeCSS } from 'lit';
+import { serializeDeclarations } from './resolver.js';
+import type { PresentationDeclarations } from './resolver.js';
 
 export function motionDuration(timing: 'fast' | 'normal' = 'normal', factor = '1') {
   return `calc(var(--tp-duration-${timing}) * var(--tp-motion-scale) * ${factor})`;
@@ -16,6 +18,37 @@ export function motionTransition(
 
 export function transitionCss(properties: readonly string[], timing: 'fast' | 'normal' = 'normal') {
   return unsafeCSS(motionTransition(properties, timing));
+}
+
+/**
+ * Structure for state fills: a layer between a control's own fill and its content whose
+ * opacity fades. Presentation supplies the layer color and when it shows. Background-color
+ * itself is never transitioned: Chrome runs that on the compositor and can repaint the
+ * start color for one frame when the transition ends (CompositeBGColorAnimation).
+ */
+export const fillLayerHost: PresentationDeclarations = {
+  position: 'relative',
+  isolation: 'isolate',
+};
+
+export function fillLayer(inset = '0'): PresentationDeclarations {
+  return {
+    content: "''",
+    position: 'absolute',
+    inset,
+    'z-index': '-1',
+    'border-radius': 'inherit',
+    'pointer-events': 'none',
+    opacity: '0',
+    transition: motionTransition(['opacity'], 'fast'),
+  };
+}
+
+export function fillLayerStyles(control: string, inset = '0') {
+  return unsafeCSS(
+    `${control}{${serializeDeclarations(fillLayerHost)}}` +
+      `${control}::before{${serializeDeclarations(fillLayer(inset))}}`,
+  );
 }
 
 /** Shared activity cadence: continuous indicators and slower loading placeholders. */

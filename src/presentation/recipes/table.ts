@@ -1,5 +1,11 @@
-import { motionTransition } from '../motion.js';
+import { fillLayer, fillLayerHost } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
+import { fillColor } from './shared/fill.js';
+
+/** Whether a row's cells show their fill layer; each row resets it for nested tables. */
+const rowFill = '--_tp-table-row-fill';
+// Row hover reaches every cell, including sticky cells that paint the row's fill themselves.
+const rowHover = 'color-mix(in oklab, var(--tp-muted) 50%, var(--tp-background))';
 const cells = [
   {
     declarations: {
@@ -12,6 +18,7 @@ const cells = [
     },
   },
   { selector: '&[data-sticky-column]', declarations: { background: 'inherit' } },
+  fillColor(rowHover),
 ];
 /** Native Table regions from base/Nova; all insets and type use the common theme. */
 export const tableAppearance: PresentationDictionary = {
@@ -53,22 +60,12 @@ export const tableAppearance: PresentationDictionary = {
     },
   ],
   'table-row': [
-    {
-      declarations: {
-        background: 'inherit',
-        transition: motionTransition(['background-color'], 'fast'),
-      },
-    },
-    {
-      selector: '&:hover',
-      declarations: {
-        background: 'color-mix(in oklab, var(--tp-muted) 50%, var(--tp-background))',
-      },
-    },
+    { declarations: { background: 'inherit', [rowFill]: '0' } },
+    { selector: '&:hover', declarations: { [rowFill]: '1' } },
     {
       selector:
         ':host([selection-presentation="row"]) &:is([data-selected]:not([data-selected="false"]),[data-state="selected"]), &[data-selection-presentation="row"][data-selected]',
-      declarations: { background: 'var(--tp-muted)' },
+      declarations: { background: 'var(--tp-muted)', [rowFill]: '0' },
     },
   ],
   'table-column-header': [
@@ -81,4 +78,14 @@ export const tableAppearance: PresentationDictionary = {
     },
   ],
   'table-cell': cells,
+};
+
+/** Every cell carries the fill layer; its row decides when it shows. */
+const cellLayer = [
+  { declarations: fillLayerHost },
+  { selector: '&::before', declarations: { ...fillLayer(), opacity: `var(${rowFill}, 0)` } },
+];
+export const tableStructure: PresentationDictionary = {
+  'table-column-header': cellLayer,
+  'table-cell': cellLayer,
 };

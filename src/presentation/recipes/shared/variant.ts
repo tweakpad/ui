@@ -1,5 +1,6 @@
 import { motionTransition } from '../../motion.js';
 import type { PresentationRule } from '../../resolver.js';
+import { fillColor, fillShown } from './fill.js';
 
 export const rule = (
   declarations: PresentationRule['declarations'],
@@ -10,6 +11,8 @@ export const rule = (
 // Button hover can briefly replace a Menu/Navigation highlight as focus moves.
 export const interactive =
   '&:where(:not(:disabled, [aria-disabled="true"]):is(:hover, [data-popup-open]))';
+// The variant's fill layer color yields the same way to a composed role's layer color.
+const primitive = ':where(&)';
 
 /** Shared paint only. Geometry and interaction policy are not inferred from a variant. */
 export function variantPresentation(
@@ -45,12 +48,11 @@ export function variantPresentation(
     ];
     if (isInteractive)
       rules.push(
-        rule(
-          {
-            'background-color': `color-mix(in oklab, var(--tp-${role}) ${variant === 'destructive' ? 85 : 80}%, light-dark(var(--tp-foreground), var(--tp-background)))`,
-          },
-          interactive,
+        fillColor(
+          `color-mix(in oklab, var(--tp-${role}) ${variant === 'destructive' ? 85 : 80}%, light-dark(var(--tp-foreground), var(--tp-background)))`,
+          primitive,
         ),
+        fillShown(interactive),
       );
     return rules;
   }
@@ -61,7 +63,7 @@ export function variantPresentation(
         background: variant === 'outline' ? 'var(--tp-background)' : 'transparent',
         'border-color': variant === 'outline' ? 'var(--tp-border)' : 'transparent',
         ...(isInteractive && variant !== 'link'
-          ? { transition: motionTransition(['color', 'background-color', 'border-color'], 'fast') }
+          ? { transition: motionTransition(['color', 'border-color'], 'fast') }
           : {}),
       }),
     ];
@@ -74,12 +76,8 @@ export function variantPresentation(
       );
     else if (isInteractive)
       rules.push(
-        rule(
-          {
-            'background-color': 'color-mix(in oklab, var(--tp-input) 50%, var(--tp-background))',
-          },
-          interactive,
-        ),
+        fillColor('color-mix(in oklab, var(--tp-input) 50%, transparent)', primitive),
+        fillShown(interactive),
       );
     return rules;
   }

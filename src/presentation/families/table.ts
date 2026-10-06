@@ -1,6 +1,6 @@
 import type { ComponentDefinition } from '../definition.js';
 import { definePresentation } from '../family.js';
-import { tableAppearance } from '../recipes/table.js';
+import { tableAppearance, tableStructure } from '../recipes/table.js';
 
 const definition: ComponentDefinition = {
   name: 'Table',
@@ -76,5 +76,6 @@ const definition: ComponentDefinition = {
 
 export const tablePresentation = definePresentation({
   definition,
+  structure: tableStructure,
   sources: [tableAppearance],
 });

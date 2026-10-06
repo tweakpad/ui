@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { fillLayerStyles } from '../../presentation/motion.js';
 export const questionnaireStyles = css`
   :host {
     display: block;
@@ -15,6 +16,8 @@ export const questionnaireStyles = css`
   fieldset {
     margin: 0;
   }
+
+  ${fillLayerStyles("[part~='questionnaire-choice']")}
 
   [part~='questionnaire-choice'] {
     display: grid;

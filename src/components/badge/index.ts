@@ -1,6 +1,7 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { badgePresentation } from '../../presentation/families/badge.js';
+import { fillLayerStyles } from '../../presentation/motion.js';
 
 export class TpBadge extends TpElement {
   static tagName = 'tp-badge';
@@ -33,7 +34,9 @@ export class TpBadge extends TpElement {
         display: contents;
       }
 
-      :host([interactive]) .badge:is(button, a)::before {
+      ${fillLayerStyles(':host([interactive]) .badge:is(button, a)')}
+
+      :host([interactive]) .badge:is(button, a)::after {
         content: '';
         position: absolute;
         inset-block: min(0px, calc((100% - var(--tp-target-size-min)) / 2));

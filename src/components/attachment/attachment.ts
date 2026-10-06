@@ -3,6 +3,7 @@ import { TpElement } from '../../foundation/element.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { xIcon } from '../../icons/x.js';
 import { attachmentPresentation } from '../../presentation/families/attachment.js';
+import { fillLayerStyles } from '../../presentation/motion.js';
 import { TpSpinner } from '../spinner/spinner.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpButton } from '../button.js';
@@ -37,6 +38,8 @@ export class TpAttachment extends TpElement {
         min-inline-size: 0;
         max-inline-size: 100%;
       }
+
+      ${fillLayerStyles('.attachment')}
 
       .attachment {
         position: relative;

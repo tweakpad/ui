@@ -1,4 +1,4 @@
-import { transitionCss } from '../presentation/motion.js';
+import { fillLayerStyles, transitionCss } from '../presentation/motion.js';
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../foundation/element.js';
@@ -59,7 +59,13 @@ export class TpButton extends TpElement {
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: ${transitionCss(['color', 'background-color', 'border-color'], 'fast')};
+        transition: ${transitionCss(['color', 'border-color'], 'fast')};
+      }
+
+      ${fillLayerStyles('.control')}
+
+      :host([variant='link']) .control::before {
+        content: none;
       }
 
       .control[aria-disabled='true'] {

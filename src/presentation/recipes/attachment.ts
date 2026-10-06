@@ -1,5 +1,6 @@
 import type { PresentationDictionary } from '../resolver.js';
 import { motionTransition } from '../motion.js';
+import { fillColor, fillShown } from './shared/fill.js';
 /** Base Attachment + Nova cn-attachment-* mapped to shared theme roles. */
 export const attachmentAppearance: PresentationDictionary = {
   attachment: [
@@ -23,7 +24,7 @@ export const attachmentAppearance: PresentationDictionary = {
         color: 'var(--tp-card-foreground)',
         'box-shadow': 'none',
         'font-size': 'var(--tp-text-sm)',
-        transition: motionTransition(['background-color', 'border-color'], 'fast'),
+        transition: motionTransition(['border-color'], 'fast'),
       },
     },
     {
@@ -73,10 +74,8 @@ export const attachmentAppearance: PresentationDictionary = {
         'border-color': 'color-mix(in oklab, var(--tp-destructive) 30%, transparent)',
       },
     },
-    {
-      selector: '&[data-trigger]:hover',
-      declarations: { background: 'color-mix(in oklab, var(--tp-muted) 50%, var(--tp-card))' },
-    },
+    fillColor('color-mix(in oklab, var(--tp-muted) 50%, var(--tp-card))'),
+    fillShown('&[data-trigger]:hover'),
     {
       selector: '&:focus-within',
       declarations: {
@@ -160,5 +159,7 @@ export const attachmentAppearance: PresentationDictionary = {
         'border-radius': 'inherit',
       },
     },
+    // The stretched trigger is unpainted: the root's fill layer shows its hover.
+    { selector: '&::part(button)::before', declarations: { content: 'none' } },
   ],
 };

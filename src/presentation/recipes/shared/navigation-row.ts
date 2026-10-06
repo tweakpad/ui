@@ -1,4 +1,16 @@
 import type { PresentationRule } from '../../resolver.js';
+import { fillColor, fillShown } from './fill.js';
+
+/** Accent row highlight: content color plus the accent fill layer, which fades. */
+export function rowHighlight(selector: string): PresentationRule[] {
+  return [
+    { selector, declarations: { color: 'var(--tp-accent-foreground)' } },
+    fillShown(selector),
+  ];
+}
+
+const rowStates =
+  '&:is(:hover, [data-popup-open]):not([data-disabled], :disabled, [aria-disabled="true"]), &[data-active]';
 
 /** SidebarMenuButton paint shared by actions, destinations and composed disclosures. */
 export const navigationRow: readonly PresentationRule[] = [
@@ -15,13 +27,15 @@ export const navigationRow: readonly PresentationRule[] = [
       'min-block-size': 'var(--tp-target-size-min)',
     },
   },
+  fillColor('var(--tp-accent)'),
+  ...rowHighlight(rowStates),
+];
+/** The same row paint for a control without a fill layer (a composed Collapsible trigger). */
+export const solidNavigationRow: readonly PresentationRule[] = [
+  navigationRow[0]!,
   {
-    selector:
-      '&:is(:hover, [data-popup-open]):not([data-disabled], :disabled, [aria-disabled="true"]), &[data-active]',
-    declarations: {
-      background: 'var(--tp-accent)',
-      color: 'var(--tp-accent-foreground)',
-    },
+    selector: rowStates,
+    declarations: { background: 'var(--tp-accent)', color: 'var(--tp-accent-foreground)' },
   },
 ];
 // Root-projected rules target the native Button, rather than the Panel host.
