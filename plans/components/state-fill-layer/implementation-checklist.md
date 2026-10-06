@@ -41,6 +41,7 @@
 | --- | --- | --- | --- | --- | --- |
 | G-01 | Layer visibility uses opacity 0/1; contract forbids opacity as a color-role substitute and literal state opacity values | all fill consumers | opacity is used only as a binary fade mechanism; layer color always comes from a role or oklab mix | tbl-cl-styling-surface-coverage-r8; req-cl-55-component | pending |
 | G-02 | Switch track Motion role driver replacement: default fill now on a pseudo-element of the target | Switch | suppress layer transition under data-tp-motion-driven; record that a driver animating background is covered | tbl-cl-158-r10 | pending |
+| G-03 | Switch checked layer covers the track border box (transparent border filled as upstream), so the 1px focus/invalid border color is under the fill when checked; the outer ring box-shadow remains | Switch | accepted trade-off vs a grey ring from a padding-box layer; verify in V-10 | ucl16-switch-q3; req-cl-156-focus | pending |
 
 ## Architecture and reuse
 
@@ -87,13 +88,13 @@
 | V-11 | C-12; table | hover rows incl. sticky columns; selected rows; native registered table | all cells fade; selected muted | not run | Chrome MCP | pending | |
 | V-12 | C-01 C-13 C-14; attachment/questionnaire | hover trigger attachment; hover/check choice | layer fade; checked distinct | not run | Chrome MCP | pending | |
 | V-13 | C-15; customization | consumer ::part(button)::before override; dictionary override | override applies | not run | Chrome MCP | pending | |
-| V-14 | C-01; regression | vitest, tsc, eslint, stylelint, prettier, build, build-storybook | pass | not run | local commands | pending | |
+| V-14 | C-01; regression | vitest, tsc, eslint, stylelint, prettier, build, build-storybook | pass | vitest 1056/1056 (4 new in src/presentation/fill-layer.test.ts); tsc clean; eslint, stylelint, prettier clean on touched files; npm run build and storybook build succeed | local commands 2026-10-06 | passed | non-browser only; browser rows remain pending |
 
 ## Early integration checkpoint
 
 | ID | Check | Status | Evidence / unresolved finding |
 | --- | --- | --- | --- |
-| I-01 | Shared owners are actually used by related consumers; old duplicate behavior is removed/delegated | pending | |
+| I-01 | Shared owners are actually used by related consumers; old duplicate behavior is removed/delegated | passed | fillLayerStyles used by button.ts, toggle.ts, badge, bubble, switch, attachment, questionnaire styles; fillLayer/fillLayerHost in table structure; fill.ts helpers used by variant, toggle, navigation-row, navigation-panel, calendar, switch, table, attachment, questionnaire recipes; no background transition remains (fill-layer.test.ts source scan) |
 | I-02 | Default visual regions match traced source and shared library recipes | pending | |
 | I-03 | Independent constituent options work, including placement separately from action behavior | pending | |
 
@@ -122,7 +123,7 @@
 
 ## Completion / handoff
 
-- Change summary: pending
+- Change summary: shared fill layer replaces every background transition (6 sources, all consumers); skill references updated (architecture State fill motion, verification flicker diagnosis, regression case). Browser verification pending: Chrome DevTools MCP disconnected.
 - Actual delivery claim: pending
 - Record checker: pending
 - Non-browser checks: pending

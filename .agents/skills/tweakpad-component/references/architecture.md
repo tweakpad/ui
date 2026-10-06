@@ -195,6 +195,30 @@ into a replaceable theme. Reuse color pairs, typography, spacing and motion role
 avoid ad hoc colors, dimensions or animation values for which a role already
 exists. A justified extension requires contract/naming review and documentation.
 
+### State fill motion
+
+Never transition `background`, `background-color` or `all`. Chrome runs
+background-color transitions on the compositor and can repaint the start color for
+one frame when one ends (Chrome 154, `CompositeBGColorAnimation`; see
+qtoggle/qui PR #52). The flash is intermittent and invisible to computed styles.
+Fade a state fill through the shared fill layer instead:
+
+- Structure: `fillLayerStyles(selector)` (or `fillLayerHost` / `fillLayer()` in a
+  family `structure` dictionary for registered native parts) from
+  `src/presentation/motion.ts` adds an isolated `::before` layer under the content
+  that fades by opacity.
+- Presentation: `fillColor`, `fillShown` and `fillHidden` from
+  `src/presentation/recipes/shared/fill.ts`. Give the layer one color per element so
+  it can fade out after its state ends; states only show or hide it. A state with a
+  different color is the part's own fill and changes instantly. Primitive layer
+  colors use `:where(&)` so a composed role's layer color wins.
+- `::before` is reserved for the fill layer on controls; put hit-target extensions on
+  `::after`. A composition that unpaints a reused Button from outside must also
+  remove its layer (`::part(button)::before { content: none }`).
+
+`src/presentation/fill-layer.test.ts` fails on any background transition in
+component or presentation source.
+
 ### Tree-shakeable ownership
 
 Using one component must bundle only that component, the components it renders and

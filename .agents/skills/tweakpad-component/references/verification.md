@@ -148,6 +148,12 @@ built graph statically and exercise a served built-package fixture through MCP.
 5. Verify motion at normal speed, rapid reversals/interruption, cleanup and
    reduced-motion boundaries. Check hidden/inert/presence state throughout, not
    just opacity. Inspect external motion hooks if the contract includes them.
+   For a reported flicker or flash, reproduce it before diagnosing it. Computed
+   styles, per-frame `getComputedStyle` logs and transition events show what the
+   page requested, not what the compositor painted. Get the user's recording or
+   capture painted frames (DevTools trace screenshots), reduce the defect to a plain
+   HTML page, and search for known browser defects with that signature before
+   theorizing. Do not propose fixes for mechanisms that were merely measured.
 6. Exercise inherited root and scoped token overrides, all supported theme modes,
    dictionary replacement, public parts and per-instance hooks. Verify actual
    public part names and compound/native registered parts across shadow roots.
