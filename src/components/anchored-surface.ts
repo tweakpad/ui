@@ -12,6 +12,7 @@ import {
   composedContains,
   composedParent,
   deepActiveElement,
+  focusManaged,
   focusableElements,
   restoreFocus,
   shadowReferenceTarget,
@@ -829,7 +830,7 @@ export abstract class TpAnchoredSurface extends TpElement {
       popup: this.popup,
       previous: this.#previousFocus,
     });
-    target?.focus({ preventScroll: true });
+    if (target) focusManaged(target);
   }
   protected focusOnClose(): void {
     if (!this.popup || !composedContains(this.popup, deepActiveElement(this.ownerDocument))) return;

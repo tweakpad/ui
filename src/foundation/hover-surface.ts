@@ -1,5 +1,5 @@
 import { componentHandlingPrevented } from './part.js';
-import { deepActiveElement } from './focus.js';
+import { deepActiveElement, isManagedFocus } from './focus.js';
 import type { DelayGroup } from './delay-group.js';
 import { safeCorridor } from './safe-corridor.js';
 import type { ChangeReason } from './types.js';
@@ -140,8 +140,11 @@ export class HoverSurfaceController {
     };
     const focus = (event: FocusEvent) => {
       if (touch || !this.options.focusOpens() || this.options.disabled(element, config)) return;
+      // Base UI useFocus: only visible (keyboard) focus opens, and focus a surface moved on its
+      // own behalf (initial focus, focus returned on close) is not the user arriving here.
+      if (isManagedFocus(element.ownerDocument)) return;
+      if (!(event.composedPath()[0] as Element | undefined)?.matches?.(':focus-visible')) return;
       const delayed = this.options.delayedKeyboardFocus?.() ?? false;
-      if (delayed && !(event.composedPath()[0] as Element)?.matches(':focus-visible')) return;
       this.cancel();
       this.#focusOpened = true;
       this.instant = delayed ? undefined : 'focus';

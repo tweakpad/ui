@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { focusManaged } from './focus.js';
 import { HoverSurfaceController } from './hover-surface.js';
 import { DelayGroup } from './delay-group.js';
 import { preventComponentHandling } from './part.js';
@@ -117,17 +118,38 @@ describe('shared hover surface policy', () => {
       expect(f.requests).toEqual([[true, 'trigger-press']]);
     },
   );
+  const visible = (focusVisible = true) => ({
+    composedPath: () => [
+      { matches: (selector: string) => selector === ':focus-visible' && focusVisible },
+    ],
+  });
   it('keeps Tooltip focus opening while press-only Popover does not open on focus', () => {
     const tooltip = fixture();
     tooltip.bind();
-    tooltip.event('focusin');
+    tooltip.event('focusin', visible());
     expect(tooltip.requests).toEqual([[true, 'trigger-focus']]);
     const popover = fixture({ focus: false, press: true, hover: false });
     popover.bind();
-    popover.event('focusin');
+    popover.event('focusin', visible());
     popover.event('pointerenter', { pointerType: 'mouse' });
     vi.advanceTimersByTime(500);
     expect(popover.requests).toEqual([]);
+  });
+  it('opens on visible focus only, and not for focus a surface moves on its own behalf', () => {
+    const f = fixture();
+    f.bind();
+    f.event('focusin', visible(false));
+    expect(f.requests).toEqual([]);
+    const document = {} as Document;
+    Object.defineProperty(f.element, 'ownerDocument', { value: document });
+    const target = {
+      ownerDocument: document,
+      focus: () => f.event('focusin', visible()),
+    } as unknown as HTMLElement;
+    focusManaged(target);
+    expect(f.requests).toEqual([]);
+    f.event('focusin', visible());
+    expect(f.requests).toEqual([[true, 'trigger-focus']]);
   });
   it('cancels delayed opening on exit or disconnect and excludes touch', () => {
     const f = fixture();

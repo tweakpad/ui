@@ -5,7 +5,7 @@ import { SelectSource } from './source.js';
 import { isSelectItemCollection, type SelectItemCollection } from './items.js';
 import type { SelectClearBehavior, SelectCompletionMode } from './query-types.js';
 import { selectStateMarkers } from './state.js';
-import { composedParent } from '../../foundation/focus.js';
+import { composedParent, focusManaged } from '../../foundation/focus.js';
 import { anchoredArrowStyles } from '../shared/anchored-arrow.js';
 import { html, nothing } from 'lit';
 import type { CSSResultGroup, PropertyValues } from 'lit';
@@ -1419,7 +1419,7 @@ export class TpSelect extends TpFormElement<unknown> {
   #initialFocus(): void {
     if (!this.open) return;
     const element = this.#focusTarget(this.initialFocus, true);
-    if (element && isAvailable(element)) element.focus({ preventScroll: true });
+    if (element && isAvailable(element)) focusManaged(element);
   }
   #openCommitted(open: boolean): void {
     this.#query.completion = '';

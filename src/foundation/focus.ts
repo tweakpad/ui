@@ -120,9 +120,35 @@ export function trapTabKey(event: KeyboardEvent, root: ParentNode): void {
   }
 }
 
+const managing = new WeakSet<Document>();
+
+/**
+ * Moves focus on a surface's behalf: a popup's initial focus, or focus returned to its trigger.
+ * The user did not navigate to the target, so focus-opened descriptions (Tooltip, Preview card)
+ * ignore it; later keyboard navigation to the same element opens them as usual.
+ */
+export function focusManaged(
+  target: HTMLElement,
+  options: FocusOptions = { preventScroll: true },
+): void {
+  const document = target.ownerDocument;
+  const nested = managing.has(document);
+  managing.add(document);
+  try {
+    target.focus(options);
+  } finally {
+    if (!nested) managing.delete(document);
+  }
+}
+
+/** Whether the focus change being dispatched was made through `focusManaged`. */
+export function isManagedFocus(document: Document): boolean {
+  return managing.has(document);
+}
+
 export function restoreFocus(target: Element | null): boolean {
   if (!target || !isAvailable(target)) return false;
-  target.focus({ preventScroll: true });
+  focusManaged(target);
   return composedContains(target, deepActiveElement(target.ownerDocument));
 }
 

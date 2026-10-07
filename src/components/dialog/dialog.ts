@@ -12,6 +12,7 @@ import {
   composedParent,
   composedScopeContains,
   deepActiveElement,
+  focusManaged,
   focusableElements,
   isAvailable,
   restoreFocus,
@@ -1103,7 +1104,7 @@ export class TpDialog extends TpElement {
             : this.#activeTrigger;
       if (!restoreFocus(target) && !restoreFocus(this.#previousFocus)) {
         const fallback = this.#parent ? this.#parent.#content : null;
-        if (fallback) fallback.focus({ preventScroll: true });
+        if (fallback) focusManaged(fallback);
         else {
           const body = this.ownerDocument.body;
           const previous = body.getAttribute('tabindex');
@@ -1143,9 +1144,8 @@ export class TpDialog extends TpElement {
                 ...(this.#portal.host?.querySelectorAll<HTMLElement>('[id]') ?? []),
               ].find((element) => element.id === policy);
     const target = named ? this.#actionTarget(named) : null;
-    if (target && composedContains(content, target) && isAvailable(target))
-      target.focus({ preventScroll: true });
-    else (focusableElements(content)[0] ?? content).focus({ preventScroll: true });
+    if (target && composedContains(content, target) && isAvailable(target)) focusManaged(target);
+    else focusManaged(focusableElements(content)[0] ?? content);
   }
   #key = (event: KeyboardEvent): void => {
     if (

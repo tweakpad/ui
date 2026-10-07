@@ -1,4 +1,4 @@
-import { deepActiveElement, focusableElements } from './focus.js';
+import { deepActiveElement, focusManaged, focusableElements } from './focus.js';
 
 /** How a surface was opened; empty when no initiating event is known. */
 export type SurfaceInteraction = 'mouse' | 'touch' | 'pen' | 'keyboard' | '';
@@ -79,6 +79,6 @@ export function restoreLostFocus(
     if (!popup.isConnected || (active && active !== document.body)) return;
     if (target?.isConnected && target.getClientRects().length) return;
     const fallback = mode === 'previous' ? focusableElements(popup).at(-1) : undefined;
-    (fallback ?? popup).focus({ preventScroll: true });
+    focusManaged(fallback ?? popup);
   });
 }
