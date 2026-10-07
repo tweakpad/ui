@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tree view standalone</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <tp-tree-view label="Standalone" default-expanded='["a"]'>
+      <tp-tree-item value="a">Alpha<tp-tree-item value="a1">Alpha one</tp-tree-item></tp-tree-item>
+    </tp-tree-view>
+    <script type="module">
+      const built = new URL(location.href).searchParams.has('package');
+      const { defineElement } = await import(
+        /* @vite-ignore */ built ? '/dist/foundation/define.js' : '/src/foundation/define.ts'
+      );
+      const { TpTreeView } = await import(
+        /* @vite-ignore */ built
+          ? '/dist/components/tree-view/tree-view.js'
+          : '/src/components/tree-view/tree-view.ts'
+      );
+      defineElement(TpTreeView.tagName, TpTreeView);
+      window.standalone = [
+        'tp-tree-view',
+        'tp-tree-item',
+        'tp-icon',
+        'tp-button',
+        'tp-spinner',
+        'tp-checkbox',
+      ].map((tag) => `${tag}:${Boolean(customElements.get(tag))}`);
+    </script>
+  </body>
+</html>

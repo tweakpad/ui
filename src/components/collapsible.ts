@@ -1,18 +1,18 @@
-import { transitionCss } from '../presentation/motion.js';
+import { disclosureIndicatorStyles, disclosurePanelStyles } from '../presentation/motion.js';
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { compositeControl } from '../foundation/composite-control.js';
 import type { PartRenderOptions, PartState } from '../foundation/part.js';
 import { CollapsibleController } from '../foundation/collapsible.js';
+import {
+  DisclosureIndicator,
+  DisclosurePanelController,
+  disclosureMotionRoles,
+} from '../foundation/disclosure-panel.js';
 import { TpElement } from '../foundation/element.js';
 import { TpOpenChangeEvent } from '../foundation/events.js';
-import {
-  prepareMotion,
-  type MotionHandle,
-  type MotionRoleDefinition,
-  type MotionValue,
-} from '../foundation/motion.js';
-import type { LogicalPosition, PresenceState } from '../foundation/types.js';
+import type { MotionValue } from '../foundation/motion.js';
+import type { LogicalPosition } from '../foundation/types.js';
 import { chevronRightIcon } from '../icons/chevron-right.js';
 import { collapsiblePresentation } from '../presentation/families/collapsible.js';
 import { TpIcon } from './icon.js';
@@ -21,26 +21,8 @@ import type { CustomElementConstructorWithTag } from '../foundation/define.js';
 export type CollapsibleIndicatorPosition = LogicalPosition;
 export type CollapsibleContentAlignment = 'edge' | 'label';
 
-export const collapsibleMotionRoles = {
-  disclosure: {
-    name: 'disclosure',
-    kind: 'presence',
-    phases: ['enter', 'exit'],
-    completion: 'blocking',
-  },
-  content: {
-    name: 'content',
-    kind: 'presence',
-    phases: ['enter', 'exit'],
-    completion: 'blocking',
-  },
-  indicator: {
-    name: 'indicator',
-    kind: 'state',
-    phases: ['change'],
-    completion: 'non-blocking',
-  },
-} as const satisfies Record<string, MotionRoleDefinition>;
+/** Collapsible owns the shared disclosure roles; compositions delegate to them. */
+export const collapsibleMotionRoles = disclosureMotionRoles;
 
 export class TpCollapsible extends TpElement {
   static tagName = 'tp-collapsible';
@@ -128,9 +110,9 @@ export class TpCollapsible extends TpElement {
         flex: none;
         line-height: 1;
         pointer-events: none;
-        rotate: 0deg;
-        transition: ${transitionCss(['rotate'])};
       }
+
+      ${disclosureIndicatorStyles('[data-default-indicator]')}
 
       [data-default-indicator][hidden] {
         display: none;
@@ -140,14 +122,9 @@ export class TpCollapsible extends TpElement {
         display: grid;
         grid-column: 1 / -1;
         grid-template-columns: subgrid;
-        overflow: clip;
-        block-size: 0;
-        transition: ${transitionCss(['block-size'])};
       }
 
-      [part~='collapsible-content'][data-state='open'] {
-        block-size: var(--collapsible-panel-height);
-      }
+      ${disclosurePanelStyles("[part~='collapsible-content']")}
 
       [part~='collapsible-content-body'] {
         display: flow-root;
@@ -157,15 +134,6 @@ export class TpCollapsible extends TpElement {
 
       :host([data-content-alignment='label']) [part~='collapsible-content-body'] {
         grid-column-start: 2;
-      }
-
-      [part~='collapsible-content'][data-tp-motion-driven~='disclosure'],
-      [data-default-indicator][data-tp-motion-driven~='indicator'] {
-        transition: none !important;
-      }
-
-      [part~='collapsible-content'][hidden]:not([hidden='until-found']) {
-        display: none !important;
       }
     `,
   ];
@@ -179,8 +147,6 @@ export class TpCollapsible extends TpElement {
   onOpenChange: ((event: TpOpenChangeEvent) => void) | undefined;
   #motionOwner: HTMLElement = this;
   #motionContext: Readonly<Record<string, MotionValue>> = Object.freeze({});
-  #resizeObserver: ResizeObserver | null = null;
-  #observedBody: HTMLElement | null = null;
   #parts = new Map<string, HTMLElement>();
   #references = new Map<string, (element: HTMLElement | null) => void>();
   #composedTrigger: ReturnType<typeof compositeControl>;
@@ -207,9 +173,14 @@ export class TpCollapsible extends TpElement {
       },
     });
   }
-  #pendingEnter: MotionHandle[] = [];
-  #pendingExit: MotionHandle[] = [];
-  #indicatorMotion: MotionHandle | null = null;
+  readonly #indicator = new DisclosureIndicator();
+  readonly #panel = new DisclosurePanelController(this, {
+    owner: () => this.#motionOwner,
+    panel: () => this.panelElement,
+    body: () => this.bodyElement,
+    context: () => this.#motionContext,
+    trackCompletion: (completion) => this.#collapsible.trackCompletion(completion),
+  });
   #defaultInitialized = false;
   readonly #collapsible = new CollapsibleController(this, {
     owner: this,
@@ -227,7 +198,7 @@ export class TpCollapsible extends TpElement {
     keepMounted: () => this.keepMounted,
     hiddenUntilFound: () => this.hiddenUntilFound,
     onOpenRequest: (open, reason, sourceEvent) => this.#requestOpen(open, reason, sourceEvent),
-    onStateChange: (state) => this.#syncPresence(state),
+    onStateChange: (state) => this.#panel.sync(state),
     onComplete: (open) => {
       this.dispatchEvent(
         new CustomEvent('tp-open-change-complete', {
@@ -302,11 +273,10 @@ export class TpCollapsible extends TpElement {
     }
     const indicator = this.#defaultIndicatorElement;
     if (!indicator) {
-      this.#indicatorMotion?.cancel();
-      this.#indicatorMotion = null;
+      this.#indicator.cancel();
       return;
     }
-    indicator.style.rotate = this.open ? '90deg' : '0deg';
+    this.#indicator.apply(indicator, DisclosureIndicator.rotation(this.open));
   }
 
   override connectedCallback(): void {
@@ -316,7 +286,7 @@ export class TpCollapsible extends TpElement {
       if (!this.hasAttribute('open') && this.defaultOpen) this.open = true;
     }
     if (this.hasUpdated) {
-      this.#observeBody();
+      this.#panel.observe();
       this.requestUpdate();
       queueMicrotask(() => {
         if (this.isConnected) this.#collapsible.update(this.open, this.disabled);
@@ -325,23 +295,20 @@ export class TpCollapsible extends TpElement {
   }
 
   override disconnectedCallback(): void {
-    this.#resizeObserver?.disconnect();
-    this.#resizeObserver = null;
-    this.#observedBody = null;
     this.#composedTrigger?.release(this);
     this.#composedTrigger = undefined;
-    this.#cancelPendingMotion();
+    this.#panel.disconnect();
+    this.#indicator.cancel();
     super.disconnectedCallback();
   }
 
   protected override firstUpdated(): void {
     this.refreshPositions();
-    this.#observeBody();
+    this.#panel.observe();
     queueMicrotask(() => {
       if (!this.isConnected) return;
       this.#collapsible.update(this.open, this.disabled);
-      const indicator = this.#defaultIndicatorElement;
-      if (indicator) indicator.style.rotate = this.open ? '90deg' : '0deg';
+      this.#indicator.apply(this.#defaultIndicatorElement, DisclosureIndicator.rotation(this.open));
     });
   }
 
@@ -395,81 +362,15 @@ export class TpCollapsible extends TpElement {
     this.open = open;
   }
 
-  #syncPresence(state: PresenceState): void {
-    const panel = this.panelElement;
-    const body = this.bodyElement;
-    if (!panel || !body) return;
-    const phase = state === 'starting' ? 'enter' : state === 'ending' ? 'exit' : null;
-    if (phase) {
-      const handles = [
-        prepareMotion(this.#motionOwner, panel, collapsibleMotionRoles.disclosure, {
-          phase,
-          fromState: phase === 'enter' ? 'closed' : 'open',
-          toState: phase === 'enter' ? 'open' : 'closed',
-          context: this.#motionContext,
-        }),
-        prepareMotion(this.#motionOwner, body, collapsibleMotionRoles.content, {
-          phase,
-          fromState: phase === 'enter' ? 'closed' : 'open',
-          toState: phase === 'enter' ? 'open' : 'closed',
-          context: this.#motionContext,
-        }),
-      ];
-      if (phase === 'enter') this.#pendingEnter = handles;
-      else this.#pendingExit = handles;
-    }
-    if (state === 'starting' || state === 'open' || state === 'ending') this.#measure();
-    const handles =
-      state === 'open' ? this.#pendingEnter : state === 'ending' ? this.#pendingExit : [];
-    for (const handle of handles) {
-      handle.start();
-      this.#collapsible.trackCompletion(handle.finished);
-    }
-    if (state === 'open') this.#pendingEnter = [];
-    if (state === 'ending') this.#pendingExit = [];
-  }
-
-  #observeBody(): void {
-    const body = this.bodyElement;
-    if (body === this.#observedBody) return;
-    this.#resizeObserver?.disconnect();
-    this.#resizeObserver = null;
-    this.#observedBody = body;
-    if (!body || typeof ResizeObserver === 'undefined') return;
-    this.#resizeObserver = new ResizeObserver(() => this.#measure());
-    this.#resizeObserver.observe(body);
-    this.#measure();
-  }
-
-  #measure(): void {
-    const panel = this.panelElement;
-    const body = this.bodyElement;
-    if (!panel || !body) return;
-    panel.style.setProperty('--collapsible-panel-height', `${Math.max(0, body.scrollHeight)}px`);
-    panel.style.setProperty('--collapsible-panel-width', `${Math.max(0, body.scrollWidth)}px`);
-  }
-
-  #cancelPendingMotion(): void {
-    for (const handle of [...this.#pendingEnter, ...this.#pendingExit]) handle.cancel();
-    this.#pendingEnter = [];
-    this.#pendingExit = [];
-    this.#indicatorMotion?.cancel();
-    this.#indicatorMotion = null;
-  }
-
   protected override willUpdate(changed: PropertyValues<this>): void {
     if (!this.hasUpdated) return;
     if (changed.has('open') && this.#collapsible.initialized) {
-      this.#indicatorMotion = prepareMotion(
+      this.#indicator.prepare(
         this.#motionOwner,
         this.#defaultIndicatorElement,
-        collapsibleMotionRoles.indicator,
-        {
-          phase: 'change',
-          fromState: this.#collapsible.open,
-          toState: this.open,
-          context: this.#motionContext,
-        },
+        this.#collapsible.open,
+        this.open,
+        this.#motionContext,
       );
     }
     if (
@@ -481,9 +382,8 @@ export class TpCollapsible extends TpElement {
       this.#collapsible.update(this.open, this.disabled);
     }
     if (changed.has('open')) {
-      const indicator = this.#defaultIndicatorElement;
-      if (indicator) indicator.style.rotate = this.open ? '90deg' : '0deg';
-      this.#indicatorMotion?.start();
+      this.#indicator.apply(this.#defaultIndicatorElement, DisclosureIndicator.rotation(this.open));
+      this.#indicator.start();
     }
   }
 
@@ -507,8 +407,8 @@ export class TpCollapsible extends TpElement {
     // The first update defers this to firstUpdated's microtask: presence changes made here would
     // need another render inside this one.
     if (this.#collapsible.initialized) this.#refreshController();
-    this.#observeBody();
-    this.#measure();
+    this.#panel.observe();
+    this.#panel.measure();
   }
 
   #renderPosition(

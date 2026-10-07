@@ -67,3 +67,24 @@ export function ambientCss(
 ) {
   return unsafeCSS(ambientAnimation(name, kind, easing));
 }
+
+/**
+ * Structure of a measured disclosure region (Collapsible content, Tree view groups): the
+ * block size follows the measured extent while open and collapses to zero otherwise.
+ */
+export function disclosurePanelStyles(panel: string, blockExtent = '--collapsible-panel-height') {
+  return unsafeCSS(
+    `${panel}{overflow:clip;block-size:0;transition:${motionTransition(['block-size'])}}` +
+      `${panel}[data-state='open']{block-size:var(${blockExtent})}` +
+      `${panel}[data-tp-motion-driven~='disclosure']{transition:none !important}` +
+      `${panel}[hidden]:not([hidden='until-found']){display:none !important}`,
+  );
+}
+
+/** Structure of the default disclosure indicator; its rotation is set by Foundation. */
+export function disclosureIndicatorStyles(indicator: string) {
+  return unsafeCSS(
+    `${indicator}{rotate:0deg;transition:${motionTransition(['rotate'])}}` +
+      `${indicator}[data-tp-motion-driven~='indicator']{transition:none !important}`,
+  );
+}

@@ -80,6 +80,7 @@ import type {
   TpTableOfContents,
   TpTableOfContentsItem,
 } from './components/table-of-contents/index.js';
+import type { TpTreeItem, TpTreeView } from './components/tree-view/index.js';
 import type { TpAccordion } from './components/accordion.js';
 import type { TpAccordionItem } from './components/accordion-item.js';
 import type { TpButton } from './components/button.js';
@@ -211,6 +212,8 @@ declare global {
     'tp-code-block': TpCodeBlock;
     'tp-table-of-contents': TpTableOfContents;
     'tp-table-of-contents-item': TpTableOfContentsItem;
+    'tp-tree-view': TpTreeView;
+    'tp-tree-item': TpTreeItem;
     'tp-carousel': TpCarousel;
     'tp-checkbox': TpCheckbox;
     'tp-collapsible': TpCollapsible;

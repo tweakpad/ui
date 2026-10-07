@@ -48,6 +48,21 @@ function setup() {
   };
 }
 describe('presence lifecycle', () => {
+  it('settles without a transition and still animates later changes', async () => {
+    const f = setup();
+    f.controller.settle(true);
+    expect(f.controller.state).toBe('open');
+    await f.settle();
+    expect(f.complete).not.toHaveBeenCalled();
+    f.controller.setPresent(false);
+    expect(f.controller.state).toBe('ending');
+    await f.settle();
+    expect(f.controller.state).toBe('absent');
+    expect(f.complete.mock.calls).toEqual([[false]]);
+    f.controller.settle(true);
+    f.controller.settle(false);
+    expect(f.controller.state).toBe('absent');
+  });
   it('schedules and cancels with the allocating owner window across adoption', async () => {
     const makeWindow = () => {
       let id = 0;

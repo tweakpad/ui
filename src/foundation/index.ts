@@ -47,3 +47,7 @@ export * from './scroll-spy.js';
 export * from './indicator-geometry.js';
 export * from './collect-targets.js';
 export * from './observation.js';
+export * from './disclosure-panel.js';
+export * from './virtual-range.js';
+export * from './virtual-list.js';
+export * from './tree/index.js';

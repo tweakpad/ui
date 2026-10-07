@@ -179,6 +179,7 @@ import {
 import { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/index.js';
 import { TpCodeBlock } from './components/code-block/index.js';
 import { TpTableOfContents, TpTableOfContentsItem } from './components/table-of-contents/index.js';
+import { TpTreeItem, TpTreeView } from './components/tree-view/index.js';
 
 defineElement(TpAccordion.tagName, TpAccordion);
 defineElement(TpAccordionItem.tagName, TpAccordionItem);
@@ -255,6 +256,8 @@ defineElement(TpCard.tagName, TpCard);
 defineElement(TpCodeBlock.tagName, TpCodeBlock);
 defineElement(TpTableOfContents.tagName, TpTableOfContents);
 defineElement(TpTableOfContentsItem.tagName, TpTableOfContentsItem);
+defineElement(TpTreeView.tagName, TpTreeView);
+defineElement(TpTreeItem.tagName, TpTreeItem);
 defineElement(TpEmptyState.tagName, TpEmptyState);
 defineElement(TpKeyHint.tagName, TpKeyHint);
 defineElement(TpKeyHintGroup.tagName, TpKeyHintGroup);

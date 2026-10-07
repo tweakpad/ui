@@ -63,6 +63,17 @@ export class PresenceController implements ReactiveController {
     this.#setState('ending');
   }
 
+  /** Commits presence without a transition, for a first render or a bulk change. */
+  settle(present: boolean): void {
+    if (this.#destroyed) return;
+    this.#requested = present;
+    this.#fallbackDuration = 0;
+    this.#generation += 1;
+    this.#cancelWait();
+    this.#trackedCompletions.clear();
+    this.#setState(present ? 'open' : this.#options.keepMounted?.() ? 'retained' : 'absent');
+  }
+
   completeExit(): void {
     if (this.#requested) return;
     this.#generation += 1;

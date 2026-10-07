@@ -10,6 +10,8 @@ import { html } from 'lit';
 import type { TemplateResult } from 'lit';
 import type { catalog } from '../catalog.js';
 import { plusIcon } from '../icons/plus.js';
+import { folderIcon } from '../icons/folder.js';
+import { fileTextIcon } from '../icons/file-text.js';
 
 export type CatalogTag = (typeof catalog)[number][1];
 
@@ -415,6 +417,32 @@ const examples = {
     </tp-table-of-contents>
     <section id="catalog-toc-intro"><p>Introduction</p></section>
     <section id="catalog-toc-usage"><p>Usage</p></section>
+  `,
+  'tp-tree-view': () => html`
+    <tp-tree-view
+      label="Files"
+      default-expanded='["src", "components"]'
+      default-value='["button.ts"]'
+    >
+      <tp-tree-item value="src">
+        <tp-icon slot="leading" .icon=${folderIcon}></tp-icon>src
+        <tp-tree-item value="components">
+          <tp-icon slot="leading" .icon=${folderIcon}></tp-icon>components
+          <tp-tree-item value="button.ts"
+            ><tp-icon slot="leading" .icon=${fileTextIcon}></tp-icon>button.ts</tp-tree-item
+          >
+          <tp-tree-item value="card.ts"
+            ><tp-icon slot="leading" .icon=${fileTextIcon}></tp-icon>card.ts</tp-tree-item
+          >
+        </tp-tree-item>
+        <tp-tree-item value="index.ts"
+          ><tp-icon slot="leading" .icon=${fileTextIcon}></tp-icon>index.ts</tp-tree-item
+        >
+      </tp-tree-item>
+      <tp-tree-item value="package.json"
+        ><tp-icon slot="leading" .icon=${fileTextIcon}></tp-icon>package.json</tp-tree-item
+      >
+    </tp-tree-view>
   `,
   // Without an engine the map shows its empty status; see the Map stories for engines.
   'tp-map': () => html`

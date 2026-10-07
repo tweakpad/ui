@@ -15,6 +15,7 @@ import { checkIcon } from '../../icons/check.js';
 import { minusIcon } from '../../icons/minus.js';
 import { checkboxPresentation } from '../../presentation/families/checkbox.js';
 import { TpIcon } from '../icon.js';
+import { selectionBoxStyles } from '../shared/control-styles.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /** One committed Boolean snapshot shared by Checkbox and Switch render bindings. */
@@ -55,6 +56,7 @@ export class TpCheckbox extends TpFormElement {
   };
   static override styles = [
     TpElement.styles,
+    selectionBoxStyles,
     css`
       :host {
         display: inline-flex;
@@ -65,14 +67,6 @@ export class TpCheckbox extends TpFormElement {
         align-items: center;
         position: relative;
         cursor: pointer;
-      }
-
-      .box {
-        display: inline-grid;
-        flex: none;
-        place-items: center;
-        inline-size: var(--tp-icon-size-md);
-        block-size: var(--tp-icon-size-md);
       }
 
       .indicator {

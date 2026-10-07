@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tree view verification</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        font-family: system-ui;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+      }
+      main {
+        max-width: 1100px;
+        margin: auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+        gap: 24px;
+      }
+      section {
+        min-inline-size: 0;
+      }
+      h1 {
+        font-size: 24px;
+        grid-column: 1/-1;
+      }
+      h2 {
+        font-size: 16px;
+      }
+      pre {
+        font-size: 12px;
+        white-space: pre-wrap;
+        max-block-size: 12rem;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Tree view</h1>
+      <section>
+        <h2>Markup, multiple, checkboxes</h2>
+        <tp-tree-view
+          id="markup"
+          label="Markup"
+          selection-mode="multiple"
+          checkbox-selection
+          selection-propagation
+          default-expanded='["a"]'
+        >
+          <tp-tree-item value="a"
+            >Alpha<tp-tree-item value="a1">Alpha one</tp-tree-item
+            ><tp-tree-item value="a2">Alpha two</tp-tree-item
+            ><tp-tree-item value="a3" disabled>Alpha three</tp-tree-item></tp-tree-item
+          >
+          <tp-tree-item value="b"
+            >Beta<tp-tree-item value="b1">Beta one</tp-tree-item></tp-tree-item
+          >
+          <tp-tree-item value="c">Gamma</tp-tree-item>
+        </tp-tree-view>
+      </section>
+      <section dir="rtl">
+        <h2>RTL</h2>
+        <tp-tree-view
+          id="rtl"
+          label="Right to left"
+          default-expanded='["r"]'
+          default-value='["r2"]'
+        >
+          <tp-tree-item value="r"
+            >مجلد<tp-tree-item value="r1">ملف أول</tp-tree-item
+            ><tp-tree-item value="r2"
+              >ملف ثانٍ<tp-tree-item value="r21">عنصر</tp-tree-item></tp-tree-item
+            ></tp-tree-item
+          >
+          <tp-tree-item value="s">آخر</tp-tree-item>
+        </tp-tree-view>
+      </section>
+      <section>
+        <h2>Form</h2>
+        <form id="form">
+          <tp-tree-view
+            id="form-tree"
+            name="files"
+            required
+            label="Form"
+            selection-mode="multiple"
+            default-value='["f2"]'
+          >
+            <tp-tree-item value="f1">First</tp-tree-item
+            ><tp-tree-item value="f2">Second</tp-tree-item
+            ><tp-tree-item value="f3">Third</tp-tree-item> </tp-tree-view
+          ><tp-button type="reset" variant="outline" size="sm">Reset</tp-button>
+        </form>
+      </section>
+      <section>
+        <h2>Records, virtualized (100k)</h2>
+        <tp-tree-view id="big" label="Big" virtualized style="block-size: 20rem"></tp-tree-view>
+      </section>
+      <section>
+        <h2>Disabled / read-only</h2>
+        <tp-tree-view id="disabled" label="Disabled" disabled default-expanded='["d"]'
+          ><tp-tree-item value="d"
+            >Disabled<tp-tree-item value="d1">Child</tp-tree-item></tp-tree-item
+          ></tp-tree-view
+        >
+        <tp-tree-view id="readonly" label="Read only" readonly default-value='["o1"]'
+          ><tp-tree-item value="o"
+            >Read only<tp-tree-item value="o1">Child</tp-tree-item></tp-tree-item
+          ></tp-tree-view
+        >
+      </section>
+      <section>
+        <h2>Empty</h2>
+        <tp-tree-view id="empty" label="Empty"><p slot="empty">Nothing here yet.</p></tp-tree-view>
+      </section>
+      <section style="grid-column: 1/-1">
+        <h2>Events</h2>
+        <pre id="log"></pre>
+      </section>
+    </main>
+    <script type="module">
+      const built = new URL(location.href).searchParams.has('package');
+      const styles = document.createElement('link');
+      styles.rel = 'stylesheet';
+      styles.href = built ? '/dist/styles.css' : '/src/styles.css';
+      document.head.append(styles);
+      const big = document.querySelector('#big');
+      const items = Array.from({ length: 100 }, (_, a) => ({
+        id: `${a}`,
+        label: `Folder ${a}`,
+        children: Array.from({ length: 1000 }, (_, b) => ({
+          id: `${a}.${b}`,
+          label: `Item ${a}.${b}`,
+        })),
+      }));
+      big.defaultItems = items;
+      big.defaultExpanded = items.map((item) => item.id);
+      big.defaultValue = ['50.500'];
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      const events = [];
+      const log = document.querySelector('#log');
+      for (const type of [
+        'tp-value-change',
+        'tp-expanded-change',
+        'tp-items-change',
+        'tp-action',
+        'tp-loading-status-change',
+        'tp-diagnostic',
+      ])
+        document.addEventListener(type, (event) => {
+          events.push({
+            type,
+            tree: event.target.id,
+            reason: event.detail?.reason,
+            value: event.detail?.value,
+          });
+          log.textContent = events
+            .slice(-12)
+            .map((entry) => JSON.stringify(entry))
+            .join('\n');
+        });
+      window.treeFixture = { events, big, form: document.querySelector('#form') };
+    </script>
+  </body>
+</html>

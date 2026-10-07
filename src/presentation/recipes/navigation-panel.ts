@@ -6,6 +6,9 @@ import {
   collapsedRow,
   largeAction,
   rowHighlight,
+  subLevelGap,
+  subLevelGuideLine,
+  subLevelGuideOffset,
 } from './shared/navigation-row.js';
 import { fillColor } from './shared/fill.js';
 import { packedExtent } from './shared/target.js';
@@ -208,11 +211,11 @@ export const navigationPanelAppearance: PresentationDictionary = {
     {
       declarations: {
         'margin-block': '0',
-        'margin-inline-start':
-          'calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - var(--tp-border-width) / 2)',
+        'margin-inline-start': subLevelGuideOffset,
         'margin-inline-end': 'var(--tp-space-3)',
         padding: 'var(--tp-space-1) var(--tp-space-2)',
-        'border-inline-start': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
+        gap: subLevelGap,
+        'border-inline-start': subLevelGuideLine,
       },
     },
     {

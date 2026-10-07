@@ -51,3 +51,12 @@ export const largeAction =
 export const disclosureContext = ':host-context(tp-navigation-panel-item) ';
 export const collapsedContext =
   ':host-context(tp-navigation-panel-item[data-collapsed]:not([data-compact])[data-collapse-mode="compact"]) ';
+
+/** SidebarMenuSub guide (nova `border-l`): the border role and width of a sub-level line. */
+export const subLevelGuideColor = 'var(--tp-border)';
+export const subLevelGuideWidth = 'var(--tp-border-width)';
+export const subLevelGuideLine = `${subLevelGuideWidth} var(--tp-border-style) ${subLevelGuideColor}`;
+/** SidebarMenuSub `gap-1`: the separation between sub-level rows. */
+export const subLevelGap = 'var(--tp-space-1)';
+/** The line runs under the centre of the parent row's leading icon. */
+export const subLevelGuideOffset = `calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - ${subLevelGuideWidth} / 2)`;

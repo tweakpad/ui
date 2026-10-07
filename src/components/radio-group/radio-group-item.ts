@@ -5,6 +5,7 @@ import { TpFormElement } from '../../foundation/form-element.js';
 import { PresenceController } from '../../foundation/presence.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { radioGroupPresentation } from '../../presentation/families/radio-group.js';
+import { selectionBoxStyles } from '../shared/control-styles.js';
 
 export interface RadioSelectionOwner {
   isChecked(member: HTMLElement): boolean;
@@ -29,6 +30,7 @@ export class TpRadioGroupItem extends TpFormElement<unknown> {
   };
   static override styles = [
     TpElement.styles,
+    selectionBoxStyles,
     css`
       :host {
         display: inline-flex;
@@ -41,14 +43,6 @@ export class TpRadioGroupItem extends TpFormElement<unknown> {
         position: relative;
         cursor: pointer;
         min-inline-size: 0;
-      }
-
-      .box {
-        display: inline-grid;
-        flex: none;
-        place-items: center;
-        inline-size: var(--tp-icon-size-md);
-        block-size: var(--tp-icon-size-md);
       }
 
       .indicator {
