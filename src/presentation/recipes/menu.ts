@@ -24,8 +24,28 @@ export const menuItem: readonly PresentationRule[] = [
   { declarations: { transition: 'none' } },
 ];
 
+// Nova cn-*-sub-trigger is an ordinary command row (gap-1.5 px-1.5 py-1) whose icon and text
+// are direct children. The reused Button wraps its default slot in a label and tightens edges
+// that show a mark, so the row restores both: label content shares the row gap, as in a Menu
+// item, and either mark keeps the item's inline padding so icons align across rows.
 export const subTrigger: readonly PresentationRule[] = [
   ...menuItem,
+  {
+    selector: '& > [part~="button-label"]',
+    declarations: {
+      display: 'inline-flex',
+      'align-items': 'center',
+      gap: 'inherit',
+    },
+  },
+  {
+    selector: "&:has(> [part~='button-leading-mark']:not([hidden]))",
+    declarations: { 'padding-inline-start': 'var(--tp-space-1-5)' },
+  },
+  {
+    selector: "&:has(> [part~='button-trailing-mark']:not([hidden]))",
+    declarations: { 'padding-inline-end': 'var(--tp-space-1-5)' },
+  },
   {
     selector: '& > [part~="button-trailing-mark"]',
     declarations: { 'margin-inline-start': 'auto' },
