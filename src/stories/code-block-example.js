@@ -10,7 +10,10 @@ async function loadShiki() {
     ]);
     const highlighter = await createHighlighterCore({
       engine: createJavaScriptRegexEngine(),
-      themes: [import('@shikijs/themes/github-light'), import('@shikijs/themes/github-dark')],
+      themes: [
+        import('@shikijs/themes/github-light-default'),
+        import('@shikijs/themes/github-dark-default'),
+      ],
       langs: [
         import('@shikijs/langs/typescript'),
         import('@shikijs/langs/html'),
@@ -20,7 +23,7 @@ async function loadShiki() {
       ],
     });
     return createShikiHighlighter(highlighter, {
-      themes: { light: 'github-light', dark: 'github-dark' },
+      themes: { light: 'github-light-default', dark: 'github-dark-default' },
     });
   })();
   return shiki;

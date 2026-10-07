@@ -76,11 +76,14 @@ import { createShikiHighlighter } from '@tweakpad/ui/code';
 
 const shiki = await createHighlighterCore({
   engine: createJavaScriptRegexEngine(),
-  themes: [import('@shikijs/themes/github-light'), import('@shikijs/themes/github-dark')],
+  themes: [
+    import('@shikijs/themes/github-light-default'),
+    import('@shikijs/themes/github-dark-default'),
+  ],
   langs: [import('@shikijs/langs/typescript'), import('@shikijs/langs/html')],
 });
 document.querySelector('tp-code-block').highlighter = createShikiHighlighter(shiki, {
-  themes: { light: 'github-light', dark: 'github-dark' },
+  themes: { light: 'github-light-default', dark: 'github-dark-default' },
 });
 ```
 
@@ -92,7 +95,7 @@ Scoped tokens use the `--tp-syntax-*` roles: `comment`, `keyword`, `string`, `nu
 `function`, `type`, `constant`, `variable`, `property`, `tag`, `attribute`, `operator`,
 `inserted` and `deleted`. Each default is a `light-dark()` pair, so the palette follows the
 color scheme; set any role on an ancestor to restyle the built-in highlighter. Tokens
-with explicit colors (Shiki themes) use their light or dark color for the current scheme.
+with explicit colors (Shiki themes) use their light or dark color for the current scheme. Theme colors are the theme's own: check their contrast on the code surface (for example, `github-light-default` comments measure about 4.3:1 on the default surface). The built-in `--tp-syntax-*` defaults keep every role at 4.5:1 or more on the surface and on highlighted and diff lines in both schemes.
 
 Parts: `code-block`, `header`, `title`, `language`, `viewport`, `line`, `line-number`,
 `line-marker`, `token` and `expand`; the presentation keys are prefixed `code-block-`.

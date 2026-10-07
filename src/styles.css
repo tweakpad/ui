@@ -36,7 +36,7 @@
      the built-in tokenizer. GitHub light/dark hues, adjusted to keep at least 4.5:1 on the code
      surface and on highlighted or diff lines in both schemes. */
   --tp-syntax-comment: light-dark(#59636e, #a0a8b1);
-  --tp-syntax-keyword: light-dark(#cf222e, #ff7b72);
+  --tp-syntax-keyword: light-dark(#b42318, #ff9a92);
   --tp-syntax-string: light-dark(#0a3069, #a5d6ff);
   --tp-syntax-number: light-dark(#0550ae, #79c0ff);
   --tp-syntax-function: light-dark(#6639ba, #d2a8ff);
@@ -46,7 +46,7 @@
   --tp-syntax-property: light-dark(#0550ae, #79c0ff);
   --tp-syntax-tag: light-dark(#116329, #7ee787);
   --tp-syntax-attribute: light-dark(#0550ae, #79c0ff);
-  --tp-syntax-operator: light-dark(#cf222e, #ff7b72);
+  --tp-syntax-operator: light-dark(#b42318, #ff9a92);
   --tp-syntax-inserted: light-dark(#116329, #aff5b4);
   --tp-syntax-deleted: light-dark(#82071e, #ffdcd7);
 

@@ -6,7 +6,7 @@ const definition: ComponentDefinition = {
   name: 'Code block',
   tagName: 'tp-code-block',
   kind: 'presentational-primitive',
-  sourceNode: 'ucl22-code-block',
+  sourceNode: 'ucl21-code-block',
   states: ['collapsed', 'expanded', 'wrap', 'line-numbers', 'highlighted', 'inserted', 'deleted'],
   parts: [
     {

@@ -59,7 +59,7 @@ const COPIED_DURATION = 2000;
 let sequence = 0;
 
 /**
- * Highlighted source code (`ucl22-code-block`, behavior Foundation §18.13 Code highlighting).
+ * Highlighted source code (`ucl21-code-block`, behavior Foundation §18.13 Code highlighting).
  *
  * The source comes from `code` or, when unset, the element's text content (dedented). Tokens come
  * from `highlighter` (the built-in tokenizer by default, or an adapter such as
@@ -133,9 +133,12 @@ export class TpCodeBlock extends TpElement {
         white-space: nowrap;
       }
 
+      /* Without a header the copy action floats over the code (shadcn: absolute top right). */
       .floating {
         position: absolute;
         z-index: 1;
+        inset-block-start: var(--tp-space-2);
+        inset-inline-end: var(--tp-space-2);
       }
 
       pre {
@@ -424,7 +427,7 @@ export class TpCodeBlock extends TpElement {
     const languageName = this.language && this.language !== 'plaintext' ? this.language : '';
     const collapsed = this.collapsible && !this.expanded;
     const copy = this.copyable
-      ? html`<tp-tooltip class=${titled ? 'copy' : 'copy floating'}
+      ? html`<tp-tooltip class="copy"
           ><tp-button
             slot="trigger"
             part="copy"
@@ -455,7 +458,7 @@ export class TpCodeBlock extends TpElement {
         }
         ${titled ? copy : nothing}
       </div>
-      ${titled ? nothing : copy}
+      ${titled || !copy ? nothing : html`<span class="floating">${copy}</span>`}
       <pre
         part="viewport"
         class="viewport"

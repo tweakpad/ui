@@ -100,6 +100,14 @@ function simulateUploads(host: WorkspaceHost) {
   });
 }
 
+const embedSnippet = `<tp-media-player content-title="Atlas launch teaser">
+  <video src="https://cdn.studio.example/atlas/teaser.mp4" playsinline preload="metadata">
+    <track kind="captions" srclang="en" label="English" src="teaser.en.vtt" default>
+  </video>
+  <tp-media-video-layout></tp-media-video-layout>
+</tp-media-player>
+<script type="module" src="https://cdn.studio.example/atlas/player.js"></script>`;
+
 export function renderFiles(host: WorkspaceHost): TemplateResult {
   simulateUploads(host);
   const uploads = host.view<readonly Upload[]>('files.uploads', initialUploads);
@@ -279,6 +287,18 @@ export function renderFiles(host: WorkspaceHost): TemplateResult {
                 </tp-attachment>`,
             )}
           </tp-attachment-group>
+        </tp-card>
+
+        <tp-card>
+          <h2 slot="header">Embed the teaser</h2>
+          <p slot="description">Paste into a pilot partner's page.</p>
+          <tp-code-block
+            language="html"
+            label="embed.html"
+            line-numbers
+            highlight-lines="3-4"
+            .code=${embedSnippet}
+          ></tp-code-block>
         </tp-card>
       </div>
     </div>

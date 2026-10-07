@@ -105,7 +105,7 @@ export const codeBlockExamples = [
   ),
   markupExample(
     'Token theme',
-    `<div style="--tp-syntax-keyword: var(--tp-primary); --tp-syntax-string: var(--tp-chart-3); --tp-syntax-function: var(--tp-chart-2); --tp-syntax-comment: var(--tp-muted-foreground)">\n${block(
+    `<div style="--tp-syntax-keyword: light-dark(#6d28d9, #c4b5fd); --tp-syntax-string: light-dark(#047857, #6ee7b7); --tp-syntax-function: light-dark(#1d4ed8, #93c5fd); --tp-syntax-comment: var(--tp-muted-foreground)">\n${block(
       'language="typescript" label="themed.ts"',
       typescriptSample,
     )}\n</div>`,

@@ -23,7 +23,7 @@ const tokenColors: PresentationRule[] = [
   },
 ];
 
-/** Default Code block appearance (`ucl22-code-block`): existing roles plus the syntax extension. */
+/** Default Code block appearance (`ucl21-code-block`): existing roles plus the syntax extension. */
 export const codeBlockAppearance: PresentationDictionary = {
   'code-block': [
     {
@@ -71,15 +71,7 @@ export const codeBlockAppearance: PresentationDictionary = {
       },
     },
   ],
-  'code-block-copy': [
-    {
-      selector: '&.floating',
-      declarations: {
-        'inset-block-start': 'var(--tp-space-2)',
-        'inset-inline-end': 'var(--tp-space-2)',
-      },
-    },
-  ],
+  'code-block-copy': [],
   'code-block-viewport': [
     {
       declarations: {
@@ -129,13 +121,13 @@ export const codeBlockAppearance: PresentationDictionary = {
     {
       selector: '&[data-inserted]',
       declarations: {
-        background: 'color-mix(in oklab, var(--tp-syntax-inserted) 14%, transparent)',
+        background: 'color-mix(in oklab, var(--tp-syntax-inserted) 10%, transparent)',
       },
     },
     {
       selector: '&[data-deleted]',
       declarations: {
-        background: 'color-mix(in oklab, var(--tp-syntax-deleted) 14%, transparent)',
+        background: 'color-mix(in oklab, var(--tp-syntax-deleted) 10%, transparent)',
       },
     },
   ],
