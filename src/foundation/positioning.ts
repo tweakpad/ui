@@ -1,4 +1,5 @@
 import { composedParent } from './focus.js';
+import { observeScroll } from './observation.js';
 export type Side = 'top' | 'right' | 'bottom' | 'left';
 export type LogicalSide = Side | 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
 export type Alignment = 'start' | 'center' | 'end';
@@ -833,7 +834,8 @@ export function positionSurface(
   const cleanups: Array<() => void> = [];
   if (policy) {
     if (policy.ancestorScroll ?? true) {
-      let targets = new Set<EventTarget>();
+      // Shared scroll sources: one native listener per ancestor, however many surfaces track it.
+      const targets = new Map<EventTarget, () => void>();
       const bind = () => {
         const next = new Set<EventTarget>([
           ...overflowAncestors(context),
@@ -841,11 +843,17 @@ export function positionSurface(
           ownerWindow,
           ...(ownerWindow.visualViewport ? [ownerWindow.visualViewport] : []),
         ]);
-        for (const target of targets)
-          if (!next.has(target)) target.removeEventListener('scroll', schedule);
+        for (const [target, release] of targets)
+          if (!next.has(target)) {
+            release();
+            targets.delete(target);
+          }
         for (const target of next)
-          if (!targets.has(target)) target.addEventListener('scroll', schedule, { passive: true });
-        targets = next;
+          if (!targets.has(target))
+            targets.set(
+              target,
+              observeScroll(target, { scroll: schedule, timing: { immediate: true } }, ownerWindow),
+            );
       };
       bind();
       const observer = new ownerWindow.MutationObserver(() => {
@@ -855,7 +863,7 @@ export function positionSurface(
       observer.observe(context.ownerDocument, { childList: true, subtree: true });
       cleanups.push(() => {
         observer.disconnect();
-        for (const target of targets) target.removeEventListener('scroll', schedule);
+        for (const release of targets.values()) release();
         targets.clear();
       });
     }

@@ -1,4 +1,5 @@
-import { composedParent } from '../../foundation/focus.js';
+/** Indicator placement relative to a container, shared by Tabs and Table of contents. */
+import { composedParent } from './focus.js';
 
 function offset(element: HTMLElement): { left: number; top: number } {
   let left = 0,
@@ -18,7 +19,7 @@ function offset(element: HTMLElement): { left: number; top: number } {
 }
 
 /** Layout offsets survive rotation/skew; agreeing rect offsets preserve subpixel/scaled placement. */
-export function tabGeometry(tab: HTMLElement, list: HTMLElement): Record<string, number> {
+export function elementGeometry(tab: HTMLElement, list: HTMLElement): Record<string, number> {
   const t = offset(tab),
     l = offset(list);
   let left = t.left - l.left - list.clientLeft,
@@ -61,4 +62,19 @@ export function tabGeometry(tab: HTMLElement, list: HTMLElement): Record<string,
     width,
     height,
   };
+}
+
+/**
+ * The block span from the start of `first` to the end of `last` inside `container`, in the
+ * container's scrolled coordinate space.
+ */
+export function blockSpanGeometry(
+  first: HTMLElement,
+  last: HTMLElement,
+  container: HTMLElement,
+): { top: number; height: number } {
+  const start = elementGeometry(first, container),
+    end = first === last ? start : elementGeometry(last, container);
+  const top = Math.min(start.top!, end.top!);
+  return { top, height: Math.max(start.top! + start.height!, end.top! + end.height!) - top };
 }

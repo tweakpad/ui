@@ -23,11 +23,30 @@
   min-block-size: 0;
 }
 
+.brief-preview-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--tp-space-4);
+}
+
+/* The table of contents lives inside the preview it tracks, sticky at the top. */
+.brief-toc {
+  position: sticky;
+  inset-block-start: 0;
+  inline-size: calc(var(--tp-space-16) * 2.5);
+}
+
 .brief-preview {
+  display: grid;
+  gap: var(--tp-space-4);
   margin: 0;
-  white-space: pre-wrap;
   font-family: var(--tp-font-sans);
   line-height: var(--tp-leading-relaxed);
+}
+
+.brief-section > p {
+  margin: 0;
 }
 
 .brief-preview[data-font='mono'] {

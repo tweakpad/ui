@@ -1,5 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { ObservableStore } from '../../foundation/store.js';
+import { observeScroll } from '../../foundation/observation.js';
 import { composedParent, deepActiveElement } from '../../foundation/focus.js';
 import { nearestDrawerService } from './provider.js';
 import type { TpDrawer } from './drawer.js';
@@ -19,11 +20,19 @@ export class TpDrawerVirtualKeyboardProvider extends LitElement {
   readonly geometry = new ObservableStore<DrawerKeyboardGeometry>({ inset: 0, height: 0, top: 0 });
   #frame = 0;
   #viewport: VisualViewport | null = null;
+  #releaseScroll: (() => void) | null = null;
   override connectedCallback(): void {
     super.connectedCallback();
     this.#viewport = this.ownerDocument.defaultView?.visualViewport ?? null;
     this.#viewport?.addEventListener('resize', this.#schedule);
-    this.#viewport?.addEventListener('scroll', this.#schedule);
+    // Shared scroll source: one listener on the visual viewport for every subscriber.
+    this.#releaseScroll = this.#viewport
+      ? observeScroll(
+          this.#viewport,
+          { scroll: this.#schedule, timing: { immediate: true } },
+          this.ownerDocument.defaultView,
+        )
+      : null;
     this.ownerDocument.defaultView?.addEventListener('resize', this.#schedule);
     this.ownerDocument.addEventListener('focusin', this.#schedule);
     this.ownerDocument.addEventListener('focusout', this.#schedule);
@@ -82,7 +91,8 @@ export class TpDrawerVirtualKeyboardProvider extends LitElement {
   override disconnectedCallback(): void {
     this.#cancelFrame();
     this.#viewport?.removeEventListener('resize', this.#schedule);
-    this.#viewport?.removeEventListener('scroll', this.#schedule);
+    this.#releaseScroll?.();
+    this.#releaseScroll = null;
     this.ownerDocument.defaultView?.removeEventListener('resize', this.#schedule);
     this.ownerDocument.removeEventListener('focusin', this.#schedule);
     this.ownerDocument.removeEventListener('focusout', this.#schedule);

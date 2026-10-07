@@ -76,6 +76,10 @@ import type {
 } from './components/media-player/index.js';
 import type { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/index.js';
 import type { TpCodeBlock } from './components/code-block/index.js';
+import type {
+  TpTableOfContents,
+  TpTableOfContentsItem,
+} from './components/table-of-contents/index.js';
 import type { TpAccordion } from './components/accordion.js';
 import type { TpAccordionItem } from './components/accordion-item.js';
 import type { TpButton } from './components/button.js';
@@ -205,6 +209,8 @@ declare global {
     'tp-calendar': TpCalendar;
     'tp-card': TpCard;
     'tp-code-block': TpCodeBlock;
+    'tp-table-of-contents': TpTableOfContents;
+    'tp-table-of-contents-item': TpTableOfContentsItem;
     'tp-carousel': TpCarousel;
     'tp-checkbox': TpCheckbox;
     'tp-collapsible': TpCollapsible;

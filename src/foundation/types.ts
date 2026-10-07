@@ -58,7 +58,9 @@ export type ChangeReason =
   /** Activity-timeout change (Appendix B.8: synthetic timer event). */
   | 'idle'
   /** Map camera change originated inside the map engine; never cancelable (Appendix B.8). */
-  | 'engine';
+  | 'engine'
+  /** Scroll-spy change derived from scroll position or layout; never cancelable (Foundation §18.15). */
+  | 'scroll';
 
 export type PresenceState = 'absent' | 'starting' | 'open' | 'ending' | 'retained';
 

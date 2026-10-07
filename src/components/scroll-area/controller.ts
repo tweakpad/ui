@@ -1,4 +1,5 @@
 import { ScrollbarController } from '../../foundation/scrollbar.js';
+import { observeScroll } from '../../foundation/observation.js';
 import type { TpScrollArea } from './scroll-area.js';
 import { initialScrollAreaState, type OverflowEdge, type ScrollAreaState } from './types.js';
 
@@ -106,9 +107,11 @@ export class ScrollAreaController {
     const viewport = this.host.viewportElement;
     if (this.#viewport !== viewport) {
       this.end();
-      this.#viewport?.removeEventListener('scroll', this.#scroll);
+      this.#releaseScroll?.();
       this.#viewport = viewport;
-      viewport?.addEventListener('scroll', this.#scroll, { passive: true });
+      this.#releaseScroll = viewport
+        ? observeScroll(viewport, { scroll: this.#scroll, timing: { immediate: true } })
+        : null;
       this.#offsets = { x: viewport?.scrollLeft ?? 0, y: viewport?.scrollTop ?? 0 };
     }
     const nodes = new Set<Element>([
@@ -127,6 +130,7 @@ export class ScrollAreaController {
       this.measure();
     });
   };
+  #releaseScroll: (() => void) | null = null;
   #scroll = (): void => {
     const viewport = this.#viewport;
     if (!viewport) return;
@@ -221,7 +225,8 @@ export class ScrollAreaController {
     this.#resize?.disconnect();
     this.#mutations?.disconnect();
     this.#observed.clear();
-    this.#viewport?.removeEventListener('scroll', this.#scroll);
+    this.#releaseScroll?.();
+    this.#releaseScroll = null;
     this.#viewport = null;
     this.host.removeEventListener('load', this.schedule, true);
     this.host.removeEventListener('transitionend', this.schedule, true);

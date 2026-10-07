@@ -35,6 +35,7 @@ export * from './questionnaire/index.js';
 export * from './media-player/index.js';
 export * from './map/index.js';
 export * from './code-block/index.js';
+export * from './table-of-contents/index.js';
 
 export type { KeyHintPlatform, KeyHintSeparator, KeyHintLabels } from './key-hint/index.js';
 export type * from './time/index.js';

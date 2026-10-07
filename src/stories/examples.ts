@@ -407,6 +407,15 @@ const examples = {
       .code=${"export const greeting = 'Hello';"}
     ></tp-code-block>
   `,
+  // Targets live on the page around the example; the spy follows the page scroll.
+  'tp-table-of-contents': () => html`
+    <tp-table-of-contents>
+      <tp-table-of-contents-item href="#catalog-toc-intro">Introduction</tp-table-of-contents-item>
+      <tp-table-of-contents-item href="#catalog-toc-usage">Usage</tp-table-of-contents-item>
+    </tp-table-of-contents>
+    <section id="catalog-toc-intro"><p>Introduction</p></section>
+    <section id="catalog-toc-usage"><p>Usage</p></section>
+  `,
   // Without an engine the map shows its empty status; see the Map stories for engines.
   'tp-map': () => html`
     <tp-map label="Lisbon" default-center="38.7223,-9.1393" default-zoom="12">

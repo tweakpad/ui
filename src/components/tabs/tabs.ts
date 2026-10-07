@@ -10,7 +10,7 @@ import { SyntheticPress } from '../../foundation/synthetic-press.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { OwnedAttributes } from './owned-attributes.js';
 import { TabsPanel } from './panel.js';
-import { tabGeometry } from './indicator.js';
+import { elementGeometry } from '../../foundation/indicator-geometry.js';
 import { tabsPresentation } from '../../presentation/families/tabs.js';
 import { motionDuration } from '../../presentation/motion.js';
 import {
@@ -530,7 +530,7 @@ export class TpTabs extends TpElement {
       if (!indicator) return;
       const selected = this.#tabs.find((tab) => Object.is(memberValue(tab), this.value));
       const geometry = selected
-        ? tabGeometry(selected, list)
+        ? elementGeometry(selected, list)
         : { left: 0, right: 0, top: 0, bottom: 0, width: 0, height: 0 };
       this.#observer?.disconnect();
       for (const target of [list, indicator])

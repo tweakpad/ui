@@ -37,6 +37,21 @@ export function renderBrief(host: WorkspaceHost): TemplateResult {
   const counting = host.view('brief.wordCount', true);
   const font = host.view<Font>('brief.font', 'sans');
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  // The page decides what a section is: a block whose short first line is followed by more lines
+  // is a titled section; the opening block is the overview. Other blocks belong to the section
+  // before them. The table of contents only follows the targets it is given.
+  const blocks = text
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((body, index) => {
+      const [first = '', ...rest] = body.split('\n');
+      const title = index === 0 ? 'Overview' : rest.length && first.length <= 48 ? first : null;
+      return { id: `workspace-brief-section-${index + 1}`, title, body };
+    });
+  const sections = blocks.filter(
+    (block): block is typeof block & { title: string } => block.title !== null,
+  );
   const command = (event: MenuAction) => {
     const value = event.detail.value;
     if (value === 'download') download(host, text);
@@ -162,16 +177,39 @@ export function renderBrief(host: WorkspaceHost): TemplateResult {
                     <strong>Preview</strong><tp-badge variant="outline">Live</tp-badge>
                   </div>
                   <tp-scroll-area class="brief-scroll" aria-label="Brief preview"
-                    ><article
-                      class="brief-preview"
-                      ?data-bold=${bold}
-                      ?data-italic=${italic}
-                      data-align=${alignment}
-                      data-font=${font}
-                      .textContent=${text}
-                    ></article
-                  ></tp-scroll-area></div
-              ></tp-resizable-panel>`
+                    ><div class="brief-preview-layout">
+                      <article
+                        class="brief-preview"
+                        ?data-bold=${bold}
+                        ?data-italic=${italic}
+                        data-align=${alignment}
+                        data-font=${font}
+                      >
+                        ${blocks.map(
+                          (section) =>
+                            html`<section id=${section.id} class="brief-section">
+                              ${section.body.split('\n').map((line) => html`<p>${line}</p>`)}
+                            </section>`,
+                        )}
+                      </article>
+                      ${
+                        host.mobile || sections.length < 2
+                          ? nothing
+                          : html`<aside class="brief-toc">
+                              <tp-table-of-contents label="Sections" navigation="scroll">
+                                ${sections.map(
+                                  (section) =>
+                                    html`<tp-table-of-contents-item href=${`#${section.id}`}
+                                      >${section.title}</tp-table-of-contents-item
+                                    >`,
+                                )}
+                              </tp-table-of-contents>
+                            </aside>`
+                      }
+                    </div></tp-scroll-area
+                  >
+                </div></tp-resizable-panel
+              >`
           : nothing
       }
     </tp-resizable-panel-group>

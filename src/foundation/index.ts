@@ -42,3 +42,8 @@ export * from './carousel/index.js';
 export * from './media/index.js';
 export * from './map/index.js';
 export * from './reason-leases.js';
+export * from './scroll.js';
+export * from './scroll-spy.js';
+export * from './indicator-geometry.js';
+export * from './collect-targets.js';
+export * from './observation.js';

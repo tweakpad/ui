@@ -178,6 +178,7 @@ import {
 } from './components/media-player/index.js';
 import { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/index.js';
 import { TpCodeBlock } from './components/code-block/index.js';
+import { TpTableOfContents, TpTableOfContentsItem } from './components/table-of-contents/index.js';
 
 defineElement(TpAccordion.tagName, TpAccordion);
 defineElement(TpAccordionItem.tagName, TpAccordionItem);
@@ -252,6 +253,8 @@ defineElement(TpButtonGroup.tagName, TpButtonGroup);
 defineElement(TpButtonGroupText.tagName, TpButtonGroupText);
 defineElement(TpCard.tagName, TpCard);
 defineElement(TpCodeBlock.tagName, TpCodeBlock);
+defineElement(TpTableOfContents.tagName, TpTableOfContents);
+defineElement(TpTableOfContentsItem.tagName, TpTableOfContentsItem);
 defineElement(TpEmptyState.tagName, TpEmptyState);
 defineElement(TpKeyHint.tagName, TpKeyHint);
 defineElement(TpKeyHintGroup.tagName, TpKeyHintGroup);

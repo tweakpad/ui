@@ -1,4 +1,5 @@
 import { ObservableStore } from '../../foundation/store.js';
+import { observeScroll } from '../../foundation/observation.js';
 import {
   nonnegative,
   scrollEdges,
@@ -125,12 +126,16 @@ export class MessageScrollerProvider {
       target.addEventListener(type, handler, { passive: true });
       this.#cleanup.push(() => target.removeEventListener(type, handler));
     };
-    listen('scroll', () => {
-      this.#userMoved = true;
-      this.schedule();
-    });
-    listen('wheel', this.#intent);
-    listen('touchmove', this.#intent);
+    this.#cleanup.push(
+      observeScroll(viewport, {
+        scroll: () => {
+          this.#userMoved = true;
+          this.schedule();
+        },
+        userScroll: this.#intent,
+        timing: { immediate: true },
+      }),
+    );
     listen('pointerdown', (event) => {
       if (event.composedPath()[0] === viewport) this.#intent(event);
     });

@@ -1,5 +1,6 @@
 /** Source-derived nested reveal and clipping; dnd-kit utilities/scroll (MIT). */
 import { composedParent } from '../focus.js';
+import { scrollableAncestors } from '../scroll.js';
 import { Rectangle } from './geometry.js';
 import { measureElement, viewportRectangle } from './dom-geometry.js';
 import { getFrameTransform, parseTransform } from './dom-geometry.js';
@@ -8,36 +9,6 @@ import type { DragDropManager } from './manager.js';
 import type { AutoScroll } from './types.js';
 import type { Coordinates } from './geometry.js';
 
-export function scrollableAncestors(element: Element, includeSelf = false): HTMLElement[] {
-  const result: HTMLElement[] = [];
-  for (
-    let node: Node | null = includeSelf ? element : composedParent(element);
-    node;
-    node = composedParent(node)
-  ) {
-    if (node.nodeType !== 1) continue;
-    const ancestor = node as HTMLElement,
-      view = ancestor.ownerDocument.defaultView;
-    const styles = view?.getComputedStyle(ancestor);
-    if (
-      styles &&
-      /(auto|scroll|overlay)/.test(`${styles.overflowX} ${styles.overflowY}`) &&
-      (ancestor.scrollWidth > ancestor.clientWidth || ancestor.scrollHeight > ancestor.clientHeight)
-    )
-      result.push(ancestor);
-  }
-  const root = element.ownerDocument.scrollingElement as HTMLElement | null;
-  if (root && !result.includes(root)) result.push(root);
-  try {
-    const frame = element.ownerDocument.defaultView?.frameElement;
-    if (frame)
-      for (const ancestor of scrollableAncestors(frame))
-        if (!result.includes(ancestor)) result.push(ancestor);
-  } catch {
-    /* Protected frame boundary. */
-  }
-  return result;
-}
 export function visibleRectangle(element: Element, margin = 0): Rectangle | undefined {
   const measured = measureElement(element);
   if (!measured) return;
