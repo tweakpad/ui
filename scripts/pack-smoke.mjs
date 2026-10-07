@@ -34,6 +34,19 @@ for (const [subpath, target] of Object.entries(manifest.exports)) {
 }
 for (const required of ['LICENSE', 'README.md', 'dist/custom-elements.json'])
   if (!files.has(required)) fail(`${required} is not packed`);
+const elementsManifest = JSON.parse(readFileSync(join(root, 'dist/custom-elements.json'), 'utf8'));
+const elements = new Map(
+  elementsManifest.modules
+    .flatMap((module) => module.declarations ?? [])
+    .filter((declaration) => declaration.tagName)
+    .map((declaration) => [declaration.tagName, declaration]),
+);
+if (
+  [...elements.values()].some((element) => element.events?.some((event) => event.name === 'type'))
+)
+  fail('custom-elements.json lists the bogus `type` event');
+if (!elements.get('tp-input')?.events?.some((event) => event.name === 'tp-value-change'))
+  fail('custom-elements.json misses tp-input tp-value-change');
 const megabytes = (bytes) => bytes / 1024 / 1024;
 if (megabytes(pack.size) > 8)
   fail(`tarball is ${megabytes(pack.size).toFixed(1)} MB (budget 8 MB)`);
