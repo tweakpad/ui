@@ -321,12 +321,17 @@ export class MessageScrollerUseCase extends MessageScrollerDemo {
             this.currentAnchor = value.currentAnchorId;
           }),
         );
-      if (root && this.example === 'scrollable')
+      if (root && this.example === 'scrollable') {
         this.#unsubscribers.push(
           root.provider.scrollable.subscribe(({ value }) => {
             this.edges = value;
-          }, true),
+          }),
         );
+        // The first edges come from the scroller's committed layout; read them after this update.
+        queueMicrotask(() => {
+          if (this.#subscribedRoot === root) this.edges = root.provider.scrollable.value;
+        });
+      }
     }
     if (this.example === 'animation')
       for (const item of this.renderRoot.querySelectorAll<HTMLElement>(

@@ -105,8 +105,9 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
     this.#retained.clear();
     super.disconnectedCallback();
   }
-  protected override updated(changed: PropertyValues<this>) {
-    super.updated(changed);
+  protected override willUpdate(changed: PropertyValues<this>) {
+    super.willUpdate(changed);
+    // Opening Activity reads the notifications, within the same render.
     if (changed.has('section') && this.section === 'activity') this.unread = 0;
   }
 
