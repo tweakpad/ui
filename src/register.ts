@@ -178,6 +178,7 @@ import {
 } from './components/media-player/index.js';
 import { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/index.js';
 import { TpCodeBlock } from './components/code-block/index.js';
+import { TpMarkdown } from './components/markdown/index.js';
 import { TpTableOfContents, TpTableOfContentsItem } from './components/table-of-contents/index.js';
 import { TpTreeItem, TpTreeView } from './components/tree-view/index.js';
 
@@ -254,6 +255,7 @@ defineElement(TpButtonGroup.tagName, TpButtonGroup);
 defineElement(TpButtonGroupText.tagName, TpButtonGroupText);
 defineElement(TpCard.tagName, TpCard);
 defineElement(TpCodeBlock.tagName, TpCodeBlock);
+defineElement(TpMarkdown.tagName, TpMarkdown);
 defineElement(TpTableOfContents.tagName, TpTableOfContents);
 defineElement(TpTableOfContentsItem.tagName, TpTableOfContentsItem);
 defineElement(TpTreeView.tagName, TpTreeView);

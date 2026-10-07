@@ -4,4 +4,4 @@ export {
   type CodeBlockMessages,
   type CodeCopyDetail,
 } from './code-block.js';
-export { dedentCode } from './dedent.js';
+export { dedentCode } from '../../foundation/dedent.js';

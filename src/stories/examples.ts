@@ -409,6 +409,11 @@ const examples = {
       .code=${"export const greeting = 'Hello';"}
     ></tp-code-block>
   `,
+  'tp-markdown': () => html`
+    <tp-markdown
+      .source=${'### Release notes\n\nMarkdown renders **formatted** text, `inline code` and [links](#).\n\n- Native lists\n- [x] Task items'}
+    ></tp-markdown>
+  `,
   // Targets live on the page around the example; the spy follows the page scroll.
   'tp-table-of-contents': () => html`
     <tp-table-of-contents>

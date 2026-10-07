@@ -74,8 +74,9 @@ and `table-table`. Authored native-table descendants keep their existing root-le
 part registration for compatibility.
 
 The library theme controls type, spacing, borders, row emphasis and sticky
-backgrounds. Geometry markers are `data-sticky` on pinned header/footer and
-`data-sticky-column` on pinned cells. Table exposes no component-specific state
+backgrounds. Geometry markers are `data-sticky` on pinned header/footer,
+`data-sticky-column` on pinned cells and `data-last-row` on cells that reach the end of
+a body or footer, which drop their bottom border. Table exposes no component-specific state
 change events or imperative methods.
 
 The examples cover every reference use case: basic table, totals footer, simple

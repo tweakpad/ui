@@ -120,6 +120,16 @@ export class TpTable extends TpElement {
     );
     this.#geometry.style(table, 'table-layout', this.layout === 'fixed' ? 'fixed' : 'auto');
     const sections = tableSections(table, this);
+    // Nova body and footer: the last row has no bottom border (`[&_tr:last-child]:border-0`).
+    // Cells live in nested shadow roots in the composed tree, so the row position is a marker.
+    for (const section of sections) {
+      if (section.element.localName === 'thead') continue;
+      section.rows.forEach((row, index) => {
+        for (const cell of row)
+          if (cell.rowSpan === 0 || index + Math.max(1, cell.rowSpan) >= section.rows.length)
+            this.#geometry.marker(cell, 'data-last-row', '');
+      });
+    }
     const { cells, count } = tableColumns(sections);
     const number = (value: number) =>
       Number.isFinite(value) ? Math.max(0, Math.min(count, Math.floor(value))) : 0;

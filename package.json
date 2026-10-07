@@ -61,6 +61,11 @@
       "import": "./dist/code.js",
       "default": "./dist/code.js"
     },
+    "./markdown": {
+      "types": "./dist/foundation/markdown/index.d.ts",
+      "import": "./dist/markdown.js",
+      "default": "./dist/markdown.js"
+    },
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",

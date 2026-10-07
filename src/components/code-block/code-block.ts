@@ -20,7 +20,7 @@ import { copyIcon } from '../../icons/copy.js';
 import { checkIcon } from '../../icons/check.js';
 import { chevronDownIcon } from '../../icons/chevron-down.js';
 import { codeBlockPresentation } from '../../presentation/families/code-block.js';
-import { dedentCode } from './dedent.js';
+import { dedentCode } from '../../foundation/dedent.js';
 import { TpButton } from '../button.js';
 import { TpTooltip } from '../tooltip/tooltip.js';
 

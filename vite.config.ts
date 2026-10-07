@@ -40,6 +40,7 @@ export default defineConfig({
         media: resolve(import.meta.dirname, 'src/foundation/media/index.ts'),
         map: resolve(import.meta.dirname, 'src/foundation/map/index.ts'),
         code: resolve(import.meta.dirname, 'src/foundation/code/index.ts'),
+        markdown: resolve(import.meta.dirname, 'src/foundation/markdown/index.ts'),
         register: resolve(import.meta.dirname, 'src/register.ts'),
         'register/icon': resolve(import.meta.dirname, 'src/register/icon.ts'),
         ...iconEntries,

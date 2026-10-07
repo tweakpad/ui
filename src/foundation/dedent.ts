@@ -1,4 +1,4 @@
-/** Removes a leading and trailing blank line and the indentation every line shares. */
+/** Light-DOM source text (Code block, Markdown): removes a leading and trailing blank line and the indentation every line shares. */
 export function dedentCode(text: string): string {
   const lines = text.replace(/\r\n?/g, '\n').split('\n');
   while (lines.length && !lines[0]!.trim()) lines.shift();

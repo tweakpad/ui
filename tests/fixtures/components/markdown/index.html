@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Markdown verification</title>
+    <link rel="stylesheet" href="/src/styles.css">
+    <style>
+      body { margin: 0; background: var(--tp-background); color: var(--tp-foreground); font-family: var(--tp-font-sans); }
+      main { max-width: 760px; margin: 24px auto; padding: 16px; display: grid; gap: 32px; }
+      h1.fixture { font-size: 1.25rem; margin: 0; }
+      section.case { display: grid; gap: 12px; }
+      section.case > h2 { font-size: 0.875rem; margin: 0; color: var(--tp-muted-foreground); font-weight: 500; }
+      .narrow { inline-size: 300px; max-inline-size: 100%; }
+      .docs { display: grid; grid-template-columns: 1fr 200px; gap: 24px; align-items: start; }
+      .docs tp-table-of-contents { position: sticky; top: 16px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 class="fixture">Markdown verification</h1>
+      <section class="case" id="case-base"><h2>Base document</h2><tp-markdown id="base" id-prefix="base-"></tp-markdown></section>
+      <section class="case" id="case-light"><h2>Light-DOM source</h2>
+        <tp-markdown id="light">
+          ## Light DOM
+
+          Read from *text content*, dedented.
+        </tp-markdown>
+        <tp-markdown id="script"><script type="text/markdown">Script <b>child</b> with `<raw>` text.</script></tp-markdown>
+      </section>
+      <section class="case" id="case-bubble"><h2>Streaming in a bubble (size sm)</h2>
+        <tp-bubble variant="ghost"><tp-markdown id="stream" size="sm" streaming></tp-markdown></tp-bubble>
+      </section>
+      <section class="case" id="case-extension"><h2>Renderers and elements</h2><tp-markdown id="extension"></tp-markdown></section>
+      <section class="case" id="case-security"><h2>Security</h2><tp-markdown id="security"></tp-markdown></section>
+      <section class="case narrow" id="case-narrow" dir="rtl"><h2>Narrow, RTL</h2><tp-markdown id="rtl" heading-offset="2"></tp-markdown></section>
+      <section class="case" id="case-docs"><h2>Docs page with table of contents</h2>
+        <div class="docs"><tp-markdown id="docs" id-prefix="docs-"></tp-markdown><tp-table-of-contents id="toc" label="On this page"></tp-table-of-contents></div>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

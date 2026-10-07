@@ -76,6 +76,7 @@ import type {
 } from './components/media-player/index.js';
 import type { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/index.js';
 import type { TpCodeBlock } from './components/code-block/index.js';
+import type { TpMarkdown } from './components/markdown/index.js';
 import type {
   TpTableOfContents,
   TpTableOfContentsItem,
@@ -210,6 +211,7 @@ declare global {
     'tp-calendar': TpCalendar;
     'tp-card': TpCard;
     'tp-code-block': TpCodeBlock;
+    'tp-markdown': TpMarkdown;
     'tp-table-of-contents': TpTableOfContents;
     'tp-table-of-contents-item': TpTableOfContentsItem;
     'tp-tree-view': TpTreeView;

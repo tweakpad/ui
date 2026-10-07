@@ -64,6 +64,7 @@ import { navigationPanelPresentation } from './navigation-panel.js';
 import { mediaPlayerPresentation } from './media-player.js';
 import { mapPresentation } from './map.js';
 import { codeBlockPresentation } from './code-block.js';
+import { markdownPresentation } from './markdown.js';
 import { tableOfContentsPresentation } from './table-of-contents.js';
 import { treeViewPresentation } from './tree-view.js';
 
@@ -132,6 +133,7 @@ export { navigationPanelPresentation } from './navigation-panel.js';
 export { mediaPlayerPresentation } from './media-player.js';
 export { mapPresentation } from './map.js';
 export { codeBlockPresentation } from './code-block.js';
+export { markdownPresentation } from './markdown.js';
 export { tableOfContentsPresentation } from './table-of-contents.js';
 export { treeViewPresentation } from './tree-view.js';
 
@@ -202,6 +204,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   mediaPlayerPresentation,
   mapPresentation,
   codeBlockPresentation,
+  markdownPresentation,
   tableOfContentsPresentation,
   treeViewPresentation,
 ];

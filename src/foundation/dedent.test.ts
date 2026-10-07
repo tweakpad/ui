@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { dedentCode } from './dedent.js';
 
-describe('code block source text', () => {
+describe('light-DOM source text', () => {
   it('drops surrounding blank lines and the indentation every line shares', () => {
     expect(dedentCode('\n    const a = 1;\n      if (a) {}\n    \n')).toBe(
       'const a = 1;\n  if (a) {}',

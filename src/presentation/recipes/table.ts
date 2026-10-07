@@ -18,6 +18,8 @@ const cells = [
     },
   },
   { selector: '&[data-sticky-column]', declarations: { background: 'inherit' } },
+  // Nova cn-table-body/cn-table-footer: the last row of a section has no bottom border.
+  { selector: '&[data-last-row]', declarations: { 'border-block-end-width': '0' } },
   fillColor(rowHover),
 ];
 /** Native Table regions from base/Nova; all insets and type use the common theme. */
