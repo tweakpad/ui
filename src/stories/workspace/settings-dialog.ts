@@ -21,8 +21,8 @@ export interface SettingsHost extends WorkspaceHost {
   projectName: string;
   projectSettings: { timezone: string; cadence: string; visibility: string; capacity: number };
   memberAccess: Record<string, string>;
-  theme: string;
-  setTheme(value: string): void;
+  /** The subtree the Appearance theme applies to. */
+  readonly themeTarget: HTMLElement;
 }
 type OpenChange = CustomEvent<{ value: boolean }>;
 
@@ -238,17 +238,12 @@ function members(host: SettingsHost) {
 function appearance(host: SettingsHost) {
   return html`<div class="workspace-stack-lg">
     <tp-field label="Theme" description="System follows your device setting.">
-      <tp-toggle-group
-        variant="outline"
+      <tp-theme-switcher
+        variant="group"
         label="Theme"
-        .value=${[host.theme]}
-        @tp-value-change=${(e: TpValueChangeEvent<string[]>) => {
-          if (e.target === e.currentTarget)
-            host.accept(e, (value) => host.setTheme(value[0] ?? 'system'));
-        }}
-        ><tp-toggle value="system">System</tp-toggle><tp-toggle value="light">Light</tp-toggle
-        ><tp-toggle value="dark">Dark</tp-toggle></tp-toggle-group
-      >
+        storage-key="tp-workspace-theme"
+        .target=${host.themeTarget}
+      ></tp-theme-switcher>
     </tp-field>
     <tp-field label="Density"
       ><tp-radio-group label="Density" default-value="comfortable"

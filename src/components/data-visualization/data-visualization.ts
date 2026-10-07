@@ -1,4 +1,5 @@
 import { html, nothing, type PropertyValues } from 'lit';
+import { resolveColorScheme } from '../../foundation/color-scheme.js';
 import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
@@ -255,9 +256,10 @@ export class TpDataVisualization extends TpElement {
     if (!this.isConnected) return;
     const styles = this.ownerDocument.defaultView!.getComputedStyle(this);
     const dark =
-      styles.colorScheme.split(' ').includes('dark') &&
-      (!styles.colorScheme.includes('light') ||
-        this.ownerDocument.defaultView!.matchMedia('(prefers-color-scheme: dark)').matches);
+      resolveColorScheme(
+        styles.colorScheme,
+        this.ownerDocument.defaultView!.matchMedia('(prefers-color-scheme: dark)').matches,
+      ) === 'dark';
     this.#colors = Object.fromEntries(
       Object.entries(this.series).map(([key, series], index) => {
         const value =

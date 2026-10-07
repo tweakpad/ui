@@ -5,6 +5,7 @@
  * color, including library token references (`var(--tp-…)`); the map resolves them against its
  * root before they reach the engine, so a scoped token theme recolors the basemap.
  */
+import { resolveColorScheme } from '../color-scheme.js';
 import type { MapScheme } from './engine.js';
 
 export const MAP_THEME_ROLES = [
@@ -54,11 +55,8 @@ export const tokenMapTheme: MapTheme = Object.freeze({
 });
 
 /** The scheme for a computed `color-scheme` value (dark only when dark wins). */
-export function resolveScheme(colorScheme: string, prefersDark: boolean): MapScheme {
-  const values = colorScheme.split(/\s+/);
-  if (!values.includes('dark')) return 'light';
-  return !values.includes('light') || prefersDark ? 'dark' : 'light';
-}
+export const resolveScheme: (colorScheme: string, prefersDark: boolean) => MapScheme =
+  resolveColorScheme;
 
 /**
  * Resolves each role with `resolveColor`, which turns any CSS color (including token references

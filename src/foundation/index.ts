@@ -4,6 +4,7 @@ export type { Alignment as DragAlignment } from './drag-drop/geometry.js';
 export type { Alignment } from './positioning.js';
 export * from './calendar.js';
 export * from './collapsible.js';
+export * from './color-scheme.js';
 export * from './questionnaire.js';
 export * from './controllable-state.js';
 export * from './checkbox-group.js';

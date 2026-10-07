@@ -59,7 +59,13 @@ Switch has no indeterminate or CheckboxGroup aggregate state. Assigning a truthy
 | Part           | Default host / content                                                                                       |
 | -------------- | ------------------------------------------------------------------------------------------------------------ |
 | `switch`       | Semantic span or native button; role switch, checked state, action/focus/form binding and Thumb composition. |
-| `switch-thumb` | Presentational span; always mounted through on/off changes, no input or focus.                               |
+| `switch-thumb` | Presentational span; always mounted through on/off changes, no input or focus. Holds the `thumb` slot.       |
+
+Authored Thumb content goes in the `thumb` slot (Base UI `Switch.Thumb` children), for example an icon that moves with the Thumb. It is decorative: it inherits the Thumb's hidden accessibility state and never changes the Control's name, role, state or geometry. Theme switcher uses it for its sun and moon icons.
+
+```html
+<tp-switch aria-label="Dark mode"><tp-icon slot="thumb" data-icon="moon"></tp-icon></tp-switch>
+```
 
 Both parts accept `renderDelegate({state, properties, content, bind})`, `hostProperties`, `classHook` string/resolver, `styleHook` record/resolver, `elementReference` callback/object and static/resolver `content`. Put `${bind}` on the correct semantic host. Root delegation retains switch role, focus, native-action semantics and required initiating handlers; Thumb delegation must remain presentational. State is an immutable committed snapshot including checked, disabled, readOnly, required, invalid, focusVisible, Field touched/dirty/filled/focused, size and direction. Thumb markers match Control markers. References clear on removal and reconnect/adopt with the involved owner document.
 

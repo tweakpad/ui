@@ -135,6 +135,7 @@ import { TpSwitch } from './components/switch.js';
 import { TpTabs } from './components/tabs.js';
 import { TpToggle } from './components/toggle.js';
 import { TpToggleGroup } from './components/toggle-group.js';
+import { TpThemeSwitcher } from './components/theme-switcher.js';
 import { TpRadioGroupItem } from './components/radio-group/index.js';
 import { TpSliderThumb } from './components/slider/index.js';
 import {
@@ -191,6 +192,7 @@ defineElement(TpSwitch.tagName, TpSwitch);
 defineElement(TpTabs.tagName, TpTabs);
 defineElement(TpToggle.tagName, TpToggle);
 defineElement(TpToggleGroup.tagName, TpToggleGroup);
+defineElement(TpThemeSwitcher.tagName, TpThemeSwitcher);
 defineElement(TpCalendar.tagName, TpCalendar);
 defineElement(TpField.tagName, TpField);
 defineElement(TpForm.tagName, TpForm);

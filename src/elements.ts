@@ -170,6 +170,7 @@ import type {
   TpTableCaption,
 } from './components/primitives.js';
 import type { TpSwitch } from './components/switch.js';
+import type { TpThemeSwitcher } from './components/theme-switcher.js';
 import type { TpTabs } from './components/tabs.js';
 import type { TpToggle } from './components/toggle.js';
 import type { TpToggleGroup } from './components/toggle-group.js';
@@ -329,6 +330,7 @@ declare global {
     'tp-slider-thumb': TpSliderThumb;
     'tp-spinner': TpSpinner;
     'tp-switch': TpSwitch;
+    'tp-theme-switcher': TpThemeSwitcher;
     'tp-table-header': TpTableHeader;
     'tp-table-body': TpTableBody;
     'tp-table-footer': TpTableFooter;

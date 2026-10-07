@@ -46,6 +46,7 @@ describe('Storybook catalog entries', () => {
     'toggle',
     'toast',
     'toggle-group',
+    'theme-switcher',
     'text-area',
     'radio-group',
     'input',

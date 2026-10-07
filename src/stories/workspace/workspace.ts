@@ -1,6 +1,7 @@
 import { LitElement, html, nothing, type PropertyValues } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
 import { createRef, ref } from 'lit/directives/ref.js';
+import { applyColorSchemePreference } from '../../foundation/color-scheme.js';
 import { navigationIcons } from '../../icons/navigation.js';
 import { plusIcon } from '../../icons/plus.js';
 import { calendarIcon } from '../../icons/calendar.js';
@@ -60,7 +61,6 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
     deadline: { state: true },
     draftDue: { state: true },
     goal: { state: true },
-    theme: { state: true },
     mobile: { state: true },
     unread: { state: true },
     pendingDelete: { state: true },
@@ -77,7 +77,6 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
   deadline = '2026-10-16';
   draftDue = '2026-10-16';
   goal = '';
-  theme = 'system';
   mobile = false;
   unread = 3;
   pendingDelete: readonly number[] = [];
@@ -93,6 +92,8 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
   }
   override connectedCallback() {
     super.connectedCallback();
+    // Apply the saved Appearance theme now, not when Settings first renders its switcher.
+    applyColorSchemePreference({ target: this, storageKey: 'tp-workspace-theme' });
     this.ownerDocument.addEventListener('keydown', this.#shortcut);
     this.#media = this.ownerDocument.defaultView?.matchMedia('(max-width: 40rem)');
     this.#responsive();
@@ -154,12 +155,9 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
   retain(key: string, setup: () => () => void) {
     if (!this.#retained.has(key)) this.#retained.set(key, setup());
   }
-  /** Applies the Appearance choice to this workspace subtree. */
-  setTheme(value: string) {
-    this.theme = value;
-    if (value === 'system') this.removeAttribute('data-theme');
-    else this.setAttribute('data-theme', value);
-    this.style.colorScheme = value === 'system' ? 'light dark' : value;
+  /** The Appearance theme applies to this workspace subtree. */
+  get themeTarget(): HTMLElement {
+    return this;
   }
 
   // Passing the press keeps its interaction type for the Dialog's initial focus policy.

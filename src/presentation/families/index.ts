@@ -9,6 +9,7 @@ import { switchPresentation } from './switch.js';
 import { tabsPresentation } from './tabs.js';
 import { togglePresentation } from './toggle.js';
 import { toggleGroupPresentation } from './toggle-group.js';
+import { themeSwitcherPresentation } from './theme-switcher.js';
 import { calendarPresentation } from './calendar.js';
 import { fieldPresentation } from './field.js';
 import { formPresentation } from './form.js';
@@ -74,6 +75,7 @@ export { switchPresentation } from './switch.js';
 export { tabsPresentation } from './tabs.js';
 export { togglePresentation } from './toggle.js';
 export { toggleGroupPresentation } from './toggle-group.js';
+export { themeSwitcherPresentation } from './theme-switcher.js';
 export { calendarPresentation } from './calendar.js';
 export { fieldPresentation } from './field.js';
 export { formPresentation } from './form.js';
@@ -141,6 +143,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   tabsPresentation,
   togglePresentation,
   toggleGroupPresentation,
+  themeSwitcherPresentation,
   calendarPresentation,
   fieldPresentation,
   formPresentation,

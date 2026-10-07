@@ -92,6 +92,7 @@ const examples = {
     </tp-radio-group>
   `,
   'tp-switch': () => html`<tp-switch default-checked>Notifications</tp-switch>`,
+  'tp-theme-switcher': () => html`<tp-theme-switcher></tp-theme-switcher>`,
   'tp-tabs': () => html`
     <tp-tabs default-value="overview">
       <button slot="tab" value="overview">Overview</button>

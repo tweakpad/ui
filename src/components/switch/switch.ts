@@ -124,8 +124,11 @@ export class TpSwitch extends TpCheckbox {
   }
 
   #syncLabel = (): void => {
+    // Text and unslotted elements only; template comment markers are not label text.
     const text = [...this.childNodes]
-      .filter((node) => node.nodeType !== 1 || !(node as Element).hasAttribute('slot'))
+      .filter((node) =>
+        node.nodeType === 1 ? !(node as Element).hasAttribute('slot') : node.nodeType === 3,
+      )
       .map((node) => node.textContent ?? '')
       .join(' ')
       .trim();
@@ -190,6 +193,8 @@ export class TpSwitch extends TpCheckbox {
         'data-filled': state.filled,
         'data-size': state.size,
       },
+      // Base UI Switch.Thumb accepts children; authored thumb content is decorative.
+      content: html`<slot name="thumb"></slot>`,
     });
     return html`${this.renderBooleanControl(state, thumb, 'switch', 'switch', {
         'data-size': state.size,

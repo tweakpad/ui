@@ -19,6 +19,7 @@ export const catalog = [
   ['Tabs', 'tp-tabs', 'compound-reexport'],
   ['Toggle', 'tp-toggle', 'compound-reexport'],
   ['Toggle group', 'tp-toggle-group', 'compound-reexport'],
+  ['Theme switcher', 'tp-theme-switcher', 'preset-composition'],
   ['Calendar', 'tp-calendar', 'compound-reexport'],
   ['Field', 'tp-field', 'compound-reexport'],
   ['Form', 'tp-form', 'compound-reexport'],

@@ -12,6 +12,7 @@ export * from './navigation.js';
 export * from './overlays.js';
 export * from './primitives.js';
 export * from './switch.js';
+export * from './theme-switcher.js';
 export * from './tabs.js';
 export * from './toggle.js';
 export * from './toggle-group.js';

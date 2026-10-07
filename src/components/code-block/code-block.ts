@@ -321,8 +321,11 @@ export class TpCodeBlock extends TpElement {
   }
 
   #readLightCode(): void {
+    // Comments (including template child markers) are not code.
     const text = [...this.childNodes]
-      .filter((node) => !(node instanceof Element && node.getAttribute('slot') === 'title'))
+      .filter((node) =>
+        node instanceof Element ? node.getAttribute('slot') !== 'title' : node.nodeType === 3,
+      )
       .map((node) => node.textContent ?? '')
       .join('');
     this._lightCode = dedentCode(text);
