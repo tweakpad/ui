@@ -350,11 +350,21 @@ export class TpCarousel<T = unknown> extends TpElement {
     this.#notify(null);
     super.disconnectedCallback();
   }
+  #initializeQueued = false;
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     if (!this.#controller) {
-      this.#initialize();
-      this.#applyEffect();
+      // Initialization measures the committed render and publishes a snapshot that renders
+      // again, so it runs once this update has finished.
+      if (!this.#initializeQueued) {
+        this.#initializeQueued = true;
+        queueMicrotask(() => {
+          this.#initializeQueued = false;
+          if (this.#controller || !this.isConnected) return;
+          this.#initialize();
+          this.#applyEffect();
+        });
+      }
       return;
     }
     if (changed.has('effect') || changed.has('options')) {

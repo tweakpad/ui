@@ -107,11 +107,31 @@ export class TpDataVisualization extends TpElement {
   setInspection(state: VisualizationInspection): void {
     if (state.active && this.interaction !== 'both' && this.interaction !== state.source) return;
     this.#inspection = state;
-    this.requestUpdate();
+    this.#repaint();
   }
   setLegend(payload: readonly VisualizationPayload[]): void {
+    const current = this.#legend;
+    // Renderers republish their legend on every update; only a different one repaints.
+    if (
+      payload.length === current.length &&
+      payload.every((item, index) => {
+        const previous = current[index]!;
+        const keys = Object.keys(item);
+        return (
+          keys.length === Object.keys(previous).length &&
+          keys.every((key) => Object.is(item[key], previous[key]))
+        );
+      })
+    )
+      return;
     this.#legend = payload;
-    this.requestUpdate();
+    this.#repaint();
+  }
+  #engineUpdating = false;
+  /** A renderer driven from updated() publishes after this render committed. */
+  #repaint(): void {
+    if (this.#engineUpdating) this.requestCommittedUpdate();
+    else this.requestUpdate();
   }
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
@@ -167,6 +187,26 @@ export class TpDataVisualization extends TpElement {
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     if (!this.isConnected) return;
+    this.#engineUpdating = true;
+    try {
+      this.#syncEngine(changed);
+    } finally {
+      this.#engineUpdating = false;
+    }
+    const tooltip = this.renderRoot.querySelector<TpTooltip>('tp-tooltip');
+    void tooltip?.updateComplete.then(() => {
+      if (!this.isConnected || !tooltip.popupElement || this.#popup === tooltip.popupElement)
+        return;
+      this.#releasePopup?.();
+      this.#popup = tooltip.popupElement;
+      this.#releasePopup = this.presentationController.registerPart(
+        'data-visualization-inspection-surface',
+        this.#popup,
+      );
+    });
+    this.#checkDescription();
+  }
+  #syncEngine(changed: PropertyValues<this>): void {
     const plot = this.renderRoot.querySelector<HTMLElement>(
       '[part~="data-visualization-plot-region"]',
     );
@@ -194,18 +234,6 @@ export class TpDataVisualization extends TpElement {
       }
     } else if (changed.has('data') || changed.has('series') || changed.has('interaction'))
       this.#updateEngine();
-    const tooltip = this.renderRoot.querySelector<TpTooltip>('tp-tooltip');
-    void tooltip?.updateComplete.then(() => {
-      if (!this.isConnected || !tooltip.popupElement || this.#popup === tooltip.popupElement)
-        return;
-      this.#releasePopup?.();
-      this.#popup = tooltip.popupElement;
-      this.#releasePopup = this.presentationController.registerPart(
-        'data-visualization-inspection-surface',
-        this.#popup,
-      );
-    });
-    this.#checkDescription();
   }
   #tooltipChange = (event: CustomEvent<{ value: boolean }>): void => {
     if (!event.detail.value) {

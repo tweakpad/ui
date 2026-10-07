@@ -554,8 +554,8 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
         node,
         cleanup: this.presentationController.registerPart('slider-thumb', node),
       });
+      // Registration happens while the thumb renders; the observer's first callback measures it.
       this.#resize?.observe(node);
-      this.#measureThumb(thumb, node);
     } else this.#measurements.delete(thumb.inputId);
   }
   #measureThumb(thumb: TpSliderThumb, node: HTMLElement): void {

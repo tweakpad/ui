@@ -16,6 +16,7 @@ type Host = HTMLElement &
 const dictionaries = new WeakMap<Document, PresentationDictionary>();
 const subscribers = new WeakMap<Document, Set<PresentationController>>();
 const compositions = new WeakMap<HTMLElement, Map<object, PartPresentation>>();
+const controllers = new WeakMap<HTMLElement, PresentationController>();
 let registrationId = 0;
 const isDocument = (node: Node): node is Document => node.nodeType === 9;
 const isShadowRoot = (node: Node): node is ShadowRoot => node.nodeType === 11 && 'host' in node;
@@ -30,7 +31,10 @@ export function setPartComposition(
   if (!owners) compositions.set(host, (owners = new Map()));
   if (presentation) owners.set(owner, presentation);
   else owners.delete(owner);
-  host.requestUpdate();
+  // Compositions only feed the hook pass, so the host repaints its hooks without re-rendering.
+  const controller = controllers.get(host);
+  if (controller) controller.requestRefresh();
+  else host.requestUpdate();
 }
 
 /** Repaints connected instances in place; no state, focus, or form ownership changes. */
@@ -67,6 +71,11 @@ export class PresentationController implements ReactiveController {
   >();
   constructor(private host: Host) {
     host.addController(this);
+    controllers.set(host, this);
+  }
+  /** Re-applies recipes and hooks after this update, without requesting a host render. */
+  requestRefresh(): void {
+    this.#scheduleRefresh();
   }
   /** Lit's structural styles must belong to the document of first connection too. */
   createRenderRoot(): ShadowRoot {

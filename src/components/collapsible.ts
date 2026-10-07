@@ -504,7 +504,9 @@ export class TpCollapsible extends TpElement {
       { disabled: this.disabled, focusableWhenDisabled: false, tabIndex: this.disabled ? -1 : 0 },
       this.#refreshController,
     );
-    this.#refreshController();
+    // The first update defers this to firstUpdated's microtask: presence changes made here would
+    // need another render inside this one.
+    if (this.#collapsible.initialized) this.#refreshController();
     this.#observeBody();
     this.#measure();
   }

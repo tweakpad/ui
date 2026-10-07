@@ -209,8 +209,12 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     const invalid = Object.values(flags).some(Boolean);
     if (this.#nativeInvalid !== invalid) {
       this.#nativeInvalid = invalid;
-      this.requestUpdate();
+      this.validityChanged();
     }
+  }
+  /** Native validity flipped; controls that read it while rendering can repaint in place. */
+  protected validityChanged(): void {
+    this.requestUpdate();
   }
 
   protected override updated(changed: PropertyValues<this>): void {

@@ -1107,7 +1107,8 @@ export class TpSelect extends TpFormElement<unknown> {
         this.#focusPending = false;
         void this.updatePosition().then(() => this.#initialFocus());
       }
-      this.#scrollState();
+      // Scroll arrows follow the committed list's layout; their presence renders after this update.
+      queueMicrotask(() => this.#scrollState());
     } else {
       this.#releaseModality();
       this.#stopScroll();

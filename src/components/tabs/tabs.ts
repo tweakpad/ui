@@ -256,6 +256,7 @@ export class TpTabs extends TpElement {
       this.#input,
       this.defaultValue,
       (value, previous, reason) => {
+        // Reconciliation runs inside #sync, which applies the fallback selection itself.
         this.activationDirection = 'none';
         this.#notify(
           new TpValueChangeEvent(value, previous, reason, undefined, {
@@ -263,7 +264,6 @@ export class TpTabs extends TpElement {
             metadata: { activationDirection: 'none' },
           }),
         );
-        this.requestUpdate();
       },
     );
   }
@@ -693,10 +693,20 @@ export class TpTabs extends TpElement {
     this.#diagnostics.add(code);
     this.emit('tp-diagnostic', { code: 'tabs-' + code, message, severity: 'warning' });
   }
+  #firstSync = false;
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     this.#initialize();
-    this.#sync();
+    if (this.#firstSync) {
+      this.#sync();
+      return;
+    }
+    // Members are adopted once the first render committed: mounting the selected panel starts
+    // its presence, which renders again.
+    queueMicrotask(() => {
+      this.#firstSync = true;
+      this.#sync();
+    });
   }
   protected override render() {
     return html`<div class="root" part="tabs">

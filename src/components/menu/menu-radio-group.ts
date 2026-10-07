@@ -91,6 +91,7 @@ export class TpMenuRadioGroup extends TpElement {
     return this.#members.has(member) && !this.#excluded.has(member);
   }
   memberChanged(): void {
+    const excluded = new Set(this.#excluded);
     this.#excluded.clear();
     const values: unknown[] = [];
     for (const member of [...this.#members].sort((a, b) =>
@@ -107,7 +108,8 @@ export class TpMenuRadioGroup extends TpElement {
           });
         }
       } else values.push(member.value);
-      member.requestUpdate();
+      // Only a member whose selectability flipped renders differently.
+      if (excluded.has(member) !== this.#excluded.has(member)) member.requestUpdate();
     }
   }
   select(member: MenuRadioMember, event: Event, reason: ChangeReason): boolean {

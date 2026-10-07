@@ -6,7 +6,7 @@ import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { createId } from '../../foundation/id.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
-import type { TpMenu, MenuBarOwner } from '../menu/menu.js';
+import type { TpMenu, MenuBarOwner, MenuPartTarget } from '../menu/menu.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import type { PartPresentation } from '../../presentation/resolver.js';
 import { menubarPresentation } from '../../presentation/families/menubar.js';
@@ -17,7 +17,20 @@ interface Member {
   target: HTMLElement | null;
   original: Map<string, string | null>;
   parts: Array<() => void>;
+  partTargets: readonly MenuPartTarget[];
 }
+/** Same-value writes still notify observers, and the menu observes its own subtree. */
+function setAttribute(element: HTMLElement, name: string, value: string): void {
+  if (element.getAttribute(name) !== value) element.setAttribute(name, value);
+}
+const samePartTargets = (a: readonly MenuPartTarget[], b: readonly MenuPartTarget[]): boolean =>
+  a.length === b.length &&
+  a.every(
+    (target, index) =>
+      target.name === b[index]!.name &&
+      target.element === b[index]!.element &&
+      target.owner === b[index]!.owner,
+  );
 /** One scalar value commits the entire bar; child surfaces are passive derived views. */
 export class TpMenubar extends TpElement implements MenuBarOwner {
   static tagName = 'tp-menubar';
@@ -152,6 +165,7 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
   }
   #restore(member: Member): void {
     member.parts.splice(0).forEach((release) => release());
+    member.partTargets = [];
     if (member.target)
       for (const [name, value] of member.original) {
         if (value === null) member.target.removeAttribute(name);
@@ -199,7 +213,14 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
           request: (open, reason, event) => this.requestMenu(menu, open, reason, event),
         });
         if (!accepted) continue;
-        member = { menu, identifier, target: null, original: new Map(), parts: [] };
+        member = {
+          menu,
+          identifier,
+          target: null,
+          original: new Map(),
+          parts: [],
+          partTargets: [],
+        };
         menu.setMenuBar(this);
       }
       member.identifier = identifier;
@@ -245,18 +266,30 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
           );
       }
       if (target) {
-        target.setAttribute('role', 'menuitem');
-        target.tabIndex = !this.disabled && !member.menu.disabled && member.menu === focus ? 0 : -1;
-        target.setAttribute('aria-disabled', String(this.disabled || member.menu.disabled));
+        setAttribute(target, 'role', 'menuitem');
+        setAttribute(
+          target,
+          'tabindex',
+          !this.disabled && !member.menu.disabled && member.menu === focus ? '0' : '-1',
+        );
+        setAttribute(target, 'aria-disabled', String(this.disabled || member.menu.disabled));
       }
-      member.parts.splice(0).forEach((release) => release());
-      for (const part of member.menu.menubarPartTargets) {
+      const partTargets = member.menu.menubarPartTargets;
+      for (const part of partTargets) {
         owners.add(part.owner);
         if (this.#compositions.get(part.owner) !== this.partPresentation) {
           setPartComposition(part.owner, this, this.partPresentation);
           this.#compositions.set(part.owner, this.partPresentation);
         }
-        member.parts.push(part.owner.presentationController.registerPart(part.name, part.element));
+      }
+      // Re-registering unchanged parts would refresh every owner on each item change.
+      if (!samePartTargets(partTargets, member.partTargets)) {
+        member.parts.splice(0).forEach((release) => release());
+        member.partTargets = partTargets;
+        for (const part of partTargets)
+          member.parts.push(
+            part.owner.presentationController.registerPart(part.name, part.element),
+          );
       }
     }
     for (const owner of this.#compositions.keys())

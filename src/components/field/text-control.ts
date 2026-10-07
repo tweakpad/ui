@@ -239,6 +239,25 @@ export abstract class TpTextControl extends TpFormElement {
         editor.setAttribute('form', form.id);
       } else editor.removeAttribute('form');
     }
+    if (!editor) return;
+    // Native validity reflects the editor just rendered; repaint it now instead of in another cycle.
+    this.#validating = true;
+    try {
+      this.syncForm();
+    } finally {
+      this.#validating = false;
+    }
+    if (this.#validityStale) {
+      this.#validityStale = false;
+      this.render();
+      render(this.#editor, this, { host: this });
+    }
+  }
+  #validating = false;
+  #validityStale = false;
+  protected override validityChanged(): void {
+    if (this.#validating) this.#validityStale = true;
+    else super.validityChanged();
   }
   #registerEditor(editor: HTMLElement): () => void {
     const parts = (editor.getAttribute('part') ?? '').split(/\s+/).filter(Boolean);
@@ -246,11 +265,7 @@ export abstract class TpTextControl extends TpFormElement {
     return () => releases.forEach((release) => release());
   }
   protected override updated(changed: PropertyValues<this>): void {
-    const input = this.inputElement;
-    if (input) {
-      this.syncForm();
-      this.toggleAttribute('data-filled', this.value !== '');
-    }
+    if (this.inputElement) this.toggleAttribute('data-filled', this.value !== '');
     super.updated(changed);
     this.toggleAttribute('data-readonly', this.effectiveReadOnly);
     textEditingModel(this)?.updated?.();
@@ -258,6 +273,9 @@ export abstract class TpTextControl extends TpFormElement {
   override connectedCallback(): void {
     super.connectedCallback();
     if (this.#editorPart && !this.#editorPart.element.isConnected) this.#editorPart = undefined;
+    // Disconnection released the editor's parts; a moved control re-registers its rendered editor.
+    const editor = this.hasUpdated && !this.#editorPart ? this.inputElement : null;
+    if (editor) this.#editorPart = { element: editor, release: this.#registerEditor(editor) };
   }
   override disconnectedCallback(): void {
     textEditingModel(this)?.disconnected?.();

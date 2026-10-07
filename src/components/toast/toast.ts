@@ -889,7 +889,10 @@ export class TpToast extends TpElement {
           view.observer.observe(content);
         }
       }
-      if (content) this.manager.measure(toast.identifier, content.offsetHeight, element);
+      // The observer's first callback measures after layout; measuring here would publish
+      // a height that repaints within this update.
+      if (content && !view.observer)
+        this.manager.measure(toast.identifier, content.offsetHeight, element);
       if (toast.positionerProperties?.anchor) this.#position(view, element);
       else if (view.positioner) {
         view.positioner.destroy();

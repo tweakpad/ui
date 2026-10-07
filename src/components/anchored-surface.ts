@@ -1068,12 +1068,13 @@ export abstract class TpAnchoredSurface extends TpElement {
     };
     this.records.set(element, { identifier, options, sync, cleanup });
     sync();
-    this.requestUpdate();
+    // Trigger records only select the active trigger and payload of an open surface.
+    if (this.open) this.requestUpdate();
     return () => {
       cleanup();
       this.records.delete(element);
       if (this.trigger === element && this.open) this.setOpen(false, 'anchor-removed');
-      this.requestUpdate();
+      if (this.open) this.requestUpdate();
     };
   }
   protected triggerBecameDisabled(element: HTMLElement): void {

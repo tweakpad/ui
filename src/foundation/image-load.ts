@@ -29,6 +29,11 @@ export interface ImageLoadControllerOptions {
    * pixels. A rejected decode still reports `loaded` when the image has intrinsic size.
    */
   decode?: boolean;
+  /**
+   * Defaults to `true`: request a host update on each status change. Pass `false` when the host
+   * only reflects the status imperatively from `onStatusChange`.
+   */
+  requestUpdate?: boolean;
 }
 
 /** A Lit host; elements also supply their owner document and connection state. */
@@ -167,7 +172,7 @@ export class ImageLoadController implements ReactiveController {
     if (!connected || generation !== this.#generation || status === this.#status) return;
     const previous = this.#status;
     this.#status = status;
-    this.host.requestUpdate();
+    if (this.options.requestUpdate !== false) this.host.requestUpdate();
     this.options.onStatusChange?.(status, previous);
   }
 

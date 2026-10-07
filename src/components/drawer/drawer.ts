@@ -481,7 +481,8 @@ export class TpDrawer extends TpDialog {
     const previous = this.#currentExtent;
     this.#currentExtent = active?.extent ?? this.#dimensions.extent;
     this.#paint();
-    if (changed || previous !== this.#currentExtent) this.requestUpdate();
+    // Snap geometry comes from layout, so it renders after the committed update that produced it.
+    if (changed || previous !== this.#currentExtent) this.requestCommittedUpdate();
   };
   #resolveLength = (value: string): number | undefined => {
     // Let the owning CSS environment resolve font/logical/container units and

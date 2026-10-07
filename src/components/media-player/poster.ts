@@ -78,7 +78,11 @@ export class TpMediaPoster extends TpMediaElement {
     ended: state.ended,
     poster: state.poster,
   }));
-  readonly #load = new ImageLoadController(this);
+  // Status only drives markers, which are reflected here rather than by another render.
+  readonly #load = new ImageLoadController(this, {
+    requestUpdate: false,
+    onStatusChange: () => this.#reflectStatus(),
+  });
   #image: HTMLImageElement | null = null;
   /** The adopted image had no source of its own, so this element writes its `src`. */
   #owned = false;
@@ -118,6 +122,10 @@ export class TpMediaPoster extends TpMediaElement {
     const image = this.#authoredImage() ?? this.renderRoot.querySelector('img');
     this.#adopt(image);
     this.#applySource(this.#playback.value.poster);
+    this.#reflectStatus();
+  }
+
+  #reflectStatus(): void {
     const status = this.#load.status;
     this.toggleAttribute('data-visible', this.visible);
     this.toggleAttribute('data-loading', status === 'loading');

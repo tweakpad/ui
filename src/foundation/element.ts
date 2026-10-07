@@ -135,6 +135,20 @@ export class TpElement extends LitElement {
     );
   }
 
+  #committedUpdateQueued = false;
+  /**
+   * Requests a render for state that only exists once a render committed (layout measurement,
+   * mounted renderers). It runs after the current update cycle instead of inside it.
+   */
+  protected requestCommittedUpdate(): void {
+    if (this.#committedUpdateQueued) return;
+    this.#committedUpdateQueued = true;
+    queueMicrotask(() => {
+      this.#committedUpdateQueued = false;
+      if (this.isConnected) this.requestUpdate();
+    });
+  }
+
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     this.toggleAttribute('data-disabled', this.disabled);

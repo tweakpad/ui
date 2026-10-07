@@ -1207,12 +1207,22 @@ export class TpDialog extends TpElement {
     };
     this.#closeActions.set(element, record);
     if (this.isConnected) record.attach();
-    this.requestUpdate();
+    this.#closeActionsChanged();
     return () => {
       record.detach();
       this.#closeActions.delete(element);
-      this.requestUpdate();
+      this.#closeActionsChanged();
     };
+  }
+  /** Close actions only decide the corner control of an open surface; repaint when it flips. */
+  #closeActionsChanged(): void {
+    if (
+      this.open &&
+      !this.isAlertDialog &&
+      !this.showCloseControl &&
+      this.#cornerDecision === this.#hasCloseAlternative()
+    )
+      this.requestUpdate();
   }
   #cancelAction = (event: MouseEvent): void => {
     const cancel = this.isAlertDialog ? this.#assigned('cancel') : null;
