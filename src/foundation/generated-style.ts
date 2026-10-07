@@ -1,5 +1,32 @@
 import { contentSecurityPolicy, subscribeContentSecurity } from './content-security.js';
 
+/**
+ * Constructed sheets shared by identical CSS text within one document. Every instance of a
+ * component generates the same structure and recipe CSS for the same presentation state, so one
+ * immutable sheet serves all of them: the browser parses and indexes it once instead of once per
+ * element (hundreds of instances otherwise hold hundreds of identical rule sets). Sheets are
+ * reference counted and dropped when no root adopts them.
+ */
+const sharedSheets = new WeakMap<Document, Map<string, { sheet: CSSStyleSheet; users: number }>>();
+function acquireSheet(document: Document, Sheet: typeof CSSStyleSheet, css: string): CSSStyleSheet {
+  let sheets = sharedSheets.get(document);
+  if (!sheets) sharedSheets.set(document, (sheets = new Map()));
+  let entry = sheets.get(css);
+  if (!entry) {
+    const sheet = new Sheet();
+    sheet.replaceSync(css);
+    sheets.set(css, (entry = { sheet, users: 0 }));
+  }
+  entry.users++;
+  return entry.sheet;
+}
+function releaseSheet(document: Document, css: string): void {
+  const sheets = sharedSheets.get(document);
+  const entry = sheets?.get(css);
+  if (!entry || --entry.users > 0) return;
+  sheets!.delete(css);
+}
+
 /** Owns only generated CSS transport. Consumer resources and component state are untouched. */
 export class GeneratedStyleResource {
   readonly boundary: Comment;
@@ -7,6 +34,8 @@ export class GeneratedStyleResource {
   #applied = '';
   #style: HTMLStyleElement | undefined;
   #sheet: CSSStyleSheet | undefined;
+  /** The shared-sheet key (CSS text) and document this resource holds a reference for. */
+  #sheetKey: { document: Document; css: string } | undefined;
   #document?: Document;
   #nonce: string | undefined;
   #unsubscribe: (() => void) | undefined;
@@ -61,10 +90,22 @@ export class GeneratedStyleResource {
       'adoptedStyleSheets' in root &&
       Sheet
     ) {
-      this.#sheet ??= new Sheet();
-      if (this.#applied !== this.#css) this.#sheet.replaceSync(this.#css);
-      if (!root.adoptedStyleSheets.includes(this.#sheet))
-        root.adoptedStyleSheets = [...root.adoptedStyleSheets, this.#sheet];
+      if (this.#sheetKey?.css !== this.#css || this.#sheetKey.document !== document) {
+        // Swap to the shared sheet for the new text in place; shared sheets are never mutated.
+        const previous = this.#sheet;
+        const previousKey = this.#sheetKey;
+        const next = acquireSheet(document, Sheet, this.#css);
+        this.#sheet = next;
+        this.#sheetKey = { document, css: this.#css };
+        const adopted = root.adoptedStyleSheets;
+        const index = previous ? adopted.indexOf(previous) : -1;
+        root.adoptedStyleSheets =
+          index >= 0
+            ? [...adopted.slice(0, index), next, ...adopted.slice(index + 1)]
+            : [...adopted, next];
+        if (previousKey) releaseSheet(previousKey.document, previousKey.css);
+      } else if (!root.adoptedStyleSheets.includes(this.#sheet!))
+        root.adoptedStyleSheets = [...root.adoptedStyleSheets, this.#sheet!];
     } else {
       if (!this.#style) {
         this.#style = document.createElement('style');
@@ -81,8 +122,16 @@ export class GeneratedStyleResource {
     this.#style = undefined;
     if (this.#sheet) {
       const root = this.target as ShadowRoot;
-      root.adoptedStyleSheets = root.adoptedStyleSheets.filter((sheet) => sheet !== this.#sheet);
+      // Remove one occurrence: another resource of this root may share the same sheet.
+      const adopted = root.adoptedStyleSheets;
+      const index = adopted.indexOf(this.#sheet);
+      if (index >= 0)
+        root.adoptedStyleSheets = [...adopted.slice(0, index), ...adopted.slice(index + 1)];
       this.#sheet = undefined;
+    }
+    if (this.#sheetKey) {
+      releaseSheet(this.#sheetKey.document, this.#sheetKey.css);
+      this.#sheetKey = undefined;
     }
     this.#applied = '';
   }

@@ -166,8 +166,8 @@ const examples = {
   `,
   'tp-select': () => html`
     <tp-select label="Size" placeholder="Choose a size">
-      <span value="small">Small</span>
-      <span value="large">Large</span>
+      <option value="small">Small</option>
+      <option value="large">Large</option>
     </tp-select>
   `,
   'tp-alert-dialog': () => html`
