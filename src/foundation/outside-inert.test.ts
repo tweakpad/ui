@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { acquireOutsideInert, refreshOutsideInert } from './outside-inert.js';
+import { acquireOutsideInert, isLeaseInert, refreshOutsideInert } from './outside-inert.js';
 
 class ElementStub {
   nodeType = 1;
@@ -185,6 +185,19 @@ describe('owner-document outside inert leases', () => {
     release();
     expect(f.other.inert).toBe(false);
     expect(f.authored.inert).toBe(true);
+  });
+  it('reports lease inertness apart from authored inertness', () => {
+    const f = fixture();
+    for (const element of [f.outer, f.other, f.authored])
+      Object.assign(element, { ownerDocument: f.document });
+    const lease = (element: ElementStub) => isLeaseInert(element as unknown as HTMLElement);
+    expect(lease(f.other)).toBe(false);
+    const release = acquireOutsideInert(f.document, () => f.inside(f.outer));
+    expect(lease(f.other)).toBe(true);
+    expect(lease(f.outer)).toBe(false);
+    expect(lease(f.authored)).toBe(false);
+    release();
+    expect(lease(f.other)).toBe(false);
   });
   it('switches to a nested modal branch then restores the outer lease', () => {
     const f = fixture();

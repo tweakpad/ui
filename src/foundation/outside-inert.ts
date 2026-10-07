@@ -23,6 +23,15 @@ interface InertState {
 }
 const documents = new WeakMap<Document, InertState>();
 
+/**
+ * Whether an element is inert only because a modal lease isolated it: a layer above it holds
+ * interaction for now. Inertness the author set before the lease is not lease inertness.
+ */
+export function isLeaseInert(element: HTMLElement): boolean {
+  const applied = documents.get(element.ownerDocument)?.applied;
+  return !!applied?.has(element) && applied.get(element) === null;
+}
+
 /** Refresh newly mounted branch portals before synchronous focus placement. */
 export function refreshOutsideInert(document: Document): void {
   documents.get(document)?.update(true);

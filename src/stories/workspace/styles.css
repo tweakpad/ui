@@ -266,10 +266,11 @@ catalog-workspace {
 }
 
 /* Settings dialog (shadcn base blocks sidebar-13): navigation beside a scrolling pane. */
+
+/* sidebar-13: a flush, full-height navigation beside an inset main column (DialogContent p-0). */
 .workspace-settings-layout {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--tp-space-4);
   block-size: min(calc(var(--tp-space-16) * 7.5), calc(100dvh - var(--tp-space-16)));
   overflow: hidden;
 }
@@ -277,20 +278,19 @@ catalog-workspace {
 .workspace-settings-nav {
   block-size: 100%;
   overflow: hidden;
-  border-radius: var(--tp-radius-lg);
 }
 
 .workspace-settings-main {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--tp-space-2);
+  padding-inline: var(--tp-space-4);
   min-inline-size: 0;
   min-block-size: 0;
 }
 
 .workspace-settings-header {
   flex-wrap: nowrap;
-  min-block-size: var(--tp-control-height-md);
+  min-block-size: var(--tp-space-16);
 }
 
 .workspace-settings-scroll {

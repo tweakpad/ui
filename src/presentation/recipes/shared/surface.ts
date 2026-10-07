@@ -29,20 +29,27 @@ export const sectionFooterAppearance: readonly PresentationRule[] = [
   }),
 ];
 // One section rhythm for every Dialog-family surface, including Drawer's content wrapper.
+// CL §13: one root-scoped spacing variable, initialized from a space role, read by every section.
+// Consumers set the documented `--tp-dialog-spacing` (Nova `DialogContent className="p-0"` is 0).
 export function dialogSectionAppearance(wrapper = '') {
   const section = `& > ${wrapper}`;
+  const spacing = 'var(--_tp-dialog-spacing)';
   return [
     // Nova cn-dialog-content gap-4 p-4.
-    rule({ padding: 'var(--tp-space-4)' }, `${section}:is(.header,.body,.footer)`),
+    rule({ '--_tp-dialog-spacing': 'var(--tp-dialog-spacing, var(--tp-space-4))' }),
+    rule({ padding: spacing }, `${section}:is(.header,.body,.footer)`),
     rule({ 'padding-block-start': '0' }, `${section}.body`),
-    rule({ 'padding-block-start': 'var(--tp-space-4)' }, `&[data-header-hidden] > ${wrapper}.body`),
+    rule({ 'padding-block-start': spacing }, `&[data-header-hidden] > ${wrapper}.body`),
+    // A visible corner Close without a header keeps its own row: its inset, extent and inset.
     rule(
-      { 'padding-block-start': 'calc(var(--tp-control-height-sm) + var(--tp-space-4))' },
+      {
+        'padding-block-start': `max(${spacing}, calc(var(--tp-control-height-sm) + var(--tp-space-4)))`,
+      },
       `&[data-header-hidden]:has(.corner-close) > ${wrapper}.body`,
     ),
     rule({ gap: 'var(--tp-space-2)' }, `${section}:is(.header,.footer)`),
     rule(
-      { 'padding-inline-end': 'calc(var(--tp-space-4) + var(--tp-space-8))' },
+      { 'padding-inline-end': `calc(${spacing} + var(--tp-space-8))` },
       `${section}.header:has(~ .corner-close)`,
     ),
   ];

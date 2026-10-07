@@ -15,7 +15,7 @@ import '@tweakpad/ui/register';
 </tp-dialog>
 ```
 
-The corner Close is a library Button with an accessible name. It is independent of the footer. `showCloseControl = false` hides it only while another named, enabled, visible close action is reachable inside this dialog. The `close` slot binds a footer action automatically. For other placement, call `dialog.registerCloseAction(button)` and retain the returned cleanup function. Ordinary `footer` content has no implicit close behavior. Empty footers are hidden. Footer paint and spacing follow Card's section treatment.
+The corner Close is a library Button with an accessible name. It is independent of the footer. `showCloseControl = false` hides it only while another named, enabled, visible close action is reachable inside this dialog. Isolation by a layer above the dialog (an open Select, Menu, Popover or nested Dialog) does not make the alternative unreachable: that layer owns interaction and dismisses first. A hidden, disabled or author-inert alternative does, and restores the corner Close. The decision holds through the closing transition. The `close` slot binds a footer action automatically. For other placement, call `dialog.registerCloseAction(button)` and retain the returned cleanup function. Ordinary `footer` content has no implicit close behavior. Empty footers are hidden. Footer paint and spacing follow Card's section treatment.
 
 ## Properties
 
@@ -88,6 +88,8 @@ The Storybook controls do not offer `container`, because the story has no contai
 ## Anatomy and presentation
 
 Slots: trigger, title, description, default body, footer and close. The shared renderer accepts legacy actions/cancel/confirm footer content, but only Alert Dialog gives Cancel its decision behavior. Prefer `close` for a Dialog dismissal action.
+
+Section spacing comes from one variable. Set `--tp-dialog-spacing` (a length, normally a `--tp-space-*` role; default `--tp-space-4`) on the Dialog, or on Content through its part hook, to change the header, body and footer inset together. `--tp-dialog-spacing: 0` gives an edge-to-edge body for compositions that bring their own layout, such as a settings dialog with a navigation panel. A visible corner Close without a header still keeps its own row. Drawer and Alert Dialog read the same variable.
 
 Public parts and dictionary keys: dialog, dialog-trigger, dialog-portal, dialog-overlay, dialog-content, dialog-header, dialog-title, dialog-description, dialog-footer and dialog-close. Slotted trigger and synthesized Close register their actual native Button host for `partPresentation`. Consumer actions keep their own Button customization. No size or variant axis is added.
 

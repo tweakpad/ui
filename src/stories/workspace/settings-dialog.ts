@@ -481,7 +481,8 @@ export function renderSettingsDialog(host: SettingsHost) {
     .partPresentation=${{
       'dialog-content': {
         styleHook: {
-          // sidebar-13: max-w-[800px] max-h-[500px], clipped edges.
+          // sidebar-13: DialogContent p-0 max-w-[800px] max-h-[500px], clipped edges.
+          '--tp-dialog-spacing': '0',
           'inline-size': 'min(calc(var(--tp-space-16) * 12.5), calc(100% - var(--tp-space-8)))',
           overflow: 'hidden',
         },

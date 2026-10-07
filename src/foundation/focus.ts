@@ -30,20 +30,34 @@ export function deepActiveElement(document: Document): Element | null {
   return active;
 }
 
-export function isAvailable(element: Element, includeDisabled = false): element is HTMLElement {
+export interface AvailabilityOptions {
+  /** Inertness this predicate accepts, such as isolation applied by a modal layer above. */
+  ignoreInert?: (element: HTMLElement) => boolean;
+  /** False judges attributes only, for content whose layout does not exist yet. Default true. */
+  layout?: boolean;
+}
+
+export function isAvailable(
+  element: Element,
+  includeDisabled = false,
+  options: AvailabilityOptions = {},
+): element is HTMLElement {
   const view = element.ownerDocument.defaultView;
   if (!view || element.namespaceURI !== 'http://www.w3.org/1999/xhtml' || !element.isConnected)
     return false;
+  const layout = options.layout ?? true;
   for (let node: Node | null = element; node; node = composedParent(node)) {
     if (node.nodeType !== 1) continue;
     const current = node as HTMLElement;
     // Native form named properties can shadow .hidden/.inert with a control.
     // These platform booleans reflect attributes; inspect that source directly.
     if (
-      current.matches('[hidden], [inert]') ||
+      current.matches('[hidden]') ||
+      (current.matches('[inert]') && !options.ignoreInert?.(current)) ||
       (!includeDisabled && current.matches('[disabled], [aria-disabled="true"]'))
     )
       return false;
+    if (!layout) continue;
     const style = current.ownerDocument.defaultView?.getComputedStyle(current);
     if (!style) return false;
     if (
@@ -53,7 +67,7 @@ export function isAvailable(element: Element, includeDisabled = false): element 
     )
       return false;
   }
-  return element.getClientRects().length > 0;
+  return !layout || element.getClientRects().length > 0;
 }
 
 export function isFocusable(element: Element): element is HTMLElement {

@@ -23,7 +23,7 @@ import { prepareMotion, type MotionHandle } from '../../foundation/motion.js';
 import type { MotionRoleDefinition } from '../../foundation/motion.js';
 import { xIcon } from '../../icons/x.js';
 import { SurfaceState, type TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
-import { acquireOutsideInert } from '../../foundation/outside-inert.js';
+import { acquireOutsideInert, isLeaseInert } from '../../foundation/outside-inert.js';
 import type { HostProperties } from '../../foundation/part.js';
 import { acquireScrollLock } from '../../foundation/scroll-lock.js';
 import { FloatingDismissController } from '../../foundation/floating-dismiss.js';
@@ -350,8 +350,15 @@ export class TpDialog extends TpElement {
     ];
   }
   #hasCloseAlternative(): boolean {
+    // Before the first open render mounts Content, a registered action belongs to this Dialog's
+    // own subtree and is judged by its attributes; afterwards it must sit inside Content.
+    const content = this.#content;
     return [...this.#closeActions.keys(), this.#assigned('close')].some((element) => {
-      if (!element || !this.#content || !composedContains(this.#content, element)) return false;
+      if (
+        !element ||
+        !(content ? composedContains(content, element) : composedContains(this, element))
+      )
+        return false;
       for (let node = composedParent(element); node && node !== this; node = composedParent(node))
         if (node instanceof TpDialog) return false;
       if (
@@ -366,12 +373,22 @@ export class TpDialog extends TpElement {
       return (
         target.tabIndex >= 0 &&
         Boolean(target.getAttribute('aria-label') || element.textContent?.trim()) &&
-        isAvailable(target)
+        // A layer above this Dialog (Select, Menu, nested Dialog) isolates the alternative
+        // without removing it, and content not yet shown has no layout to judge.
+        isAvailable(target, false, {
+          ignoreInert: isLeaseInert,
+          layout: !!content?.getClientRects().length,
+        })
       );
     });
   }
+  /** The decision the open surface was shown with; an exiting surface keeps it. */
+  #cornerDecision = false;
   get #showCornerClose(): boolean {
-    return !this.isAlertDialog && (this.showCloseControl || !this.#hasCloseAlternative());
+    if (this.isAlertDialog) return false;
+    if (this.showCloseControl) return true;
+    if (!this.open) return this.#cornerDecision;
+    return (this.#cornerDecision = !this.#hasCloseAlternative());
   }
   get payload(): unknown {
     return this.#payload;

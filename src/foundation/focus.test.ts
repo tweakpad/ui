@@ -75,6 +75,19 @@ describe('focus across owner realms', () => {
     expect(isAvailable(child)).toBe(false);
   });
 
+  it('accepts inertness a caller attributes to a layer above, and judges attributes only without layout', () => {
+    const host = element();
+    const child = element();
+    Object.assign(host, { matches: (selector: string) => selector === '[inert]' });
+    Object.assign(child, { parentNode: { nodeType: 11, host } });
+    expect(isAvailable(child)).toBe(false);
+    expect(isAvailable(child, false, { ignoreInert: (node) => node === host })).toBe(true);
+    Object.assign(host, { matches: () => false });
+    Object.assign(child, { getClientRects: () => [] });
+    expect(isAvailable(child)).toBe(false);
+    expect(isAvailable(child, false, { layout: false })).toBe(true);
+  });
+
   it('does not interpret native form named controls as hidden or inert state', () => {
     const form = element();
     const input = element();
