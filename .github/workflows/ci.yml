@@ -23,3 +23,5 @@ jobs:
       - run: npm test
       # Builds, packs and installs the tarball into a consumer project (types, exports, tree-shaking).
       - run: npm run test:package
+      # Per-component bundle sizes; fails if the package entry ships modules a component does not use.
+      - run: node scripts/size-report.mjs

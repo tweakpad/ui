@@ -101,7 +101,8 @@
     "cem": "cem analyze",
     "test:package:browser": "npm run build && node scripts/package-smoke.mjs",
     "changeset": "changeset",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "size:report": "npm run build && node scripts/size-report.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
