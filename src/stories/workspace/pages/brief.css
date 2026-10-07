@@ -1,0 +1,64 @@
+/* Brief editor: a resizable editor/preview pair that fills a fixed working height. */
+.brief-editor {
+  block-size: calc(var(--tp-space-16) * 7);
+}
+
+.brief-pane {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--tp-space-4);
+  block-size: 100%;
+  box-sizing: border-box;
+  padding: var(--tp-space-4);
+}
+
+.brief-pane-heading {
+  min-block-size: var(--tp-control-height-md);
+}
+
+.brief-pane tp-text-area,
+.brief-pane tp-text-area::part(text-area),
+.brief-scroll {
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+.brief-preview {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: var(--tp-font-sans);
+  line-height: var(--tp-leading-relaxed);
+}
+
+.brief-preview[data-font='mono'] {
+  font-family: var(--tp-font-mono);
+}
+
+.brief-preview[data-bold] {
+  font-weight: var(--tp-font-semibold);
+}
+
+.brief-preview[data-italic] {
+  font-style: italic;
+}
+
+.brief-preview[data-align='center'] {
+  text-align: center;
+}
+
+.brief-preview[data-align='end'] {
+  text-align: end;
+}
+
+.brief-criteria {
+  display: grid;
+  gap: var(--tp-space-2);
+  margin: 0;
+  padding-inline-start: var(--tp-space-5);
+}
+
+@media (width <= 40rem) {
+  .brief-editor {
+    block-size: calc(var(--tp-space-16) * 12);
+  }
+}

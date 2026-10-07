@@ -1,0 +1,81 @@
+.work-panel {
+  padding-block-start: var(--tp-space-4);
+}
+
+.work-search {
+  inline-size: min(100%, calc(var(--tp-space-16) * 4.5));
+}
+
+.work-filter {
+  inline-size: calc(var(--tp-space-10) * 4);
+}
+
+.work-selection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tp-space-2);
+  padding: var(--tp-space-2) var(--tp-space-3);
+  border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+  border-radius: var(--tp-radius-lg);
+  background: color-mix(in oklab, var(--tp-muted) 60%, transparent);
+}
+
+.work-table {
+  display: block;
+  max-block-size: calc(var(--tp-space-16) * 7);
+}
+
+.work-check {
+  inline-size: var(--tp-space-10);
+}
+
+.work-number {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.work-actions {
+  inline-size: var(--tp-space-10);
+  text-align: end;
+}
+
+.work-owner {
+  flex-wrap: nowrap;
+  gap: var(--tp-space-2);
+}
+
+.work-sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.work-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(calc(var(--tp-space-16) * 4), 1fr));
+  gap: var(--tp-space-4);
+  overflow-x: auto;
+  padding-block-end: var(--tp-space-2);
+}
+
+.work-lane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tp-space-3);
+  min-inline-size: 0;
+  padding: var(--tp-space-3);
+  border-radius: var(--tp-radius-xl);
+  background: color-mix(in oklab, var(--tp-muted) 50%, transparent);
+}
+
+.work-lane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tp-space-2);
+  padding-inline: var(--tp-space-1);
+}

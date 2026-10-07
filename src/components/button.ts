@@ -48,8 +48,10 @@ export class TpButton extends TpElement {
   static override styles = [
     TpElement.styles,
     css`
+      /* Nova cn-button: shrink-0 whitespace-nowrap; a label never wraps out of the step height. */
       :host {
         display: inline-block;
+        flex-shrink: 0;
       }
 
       .control {
@@ -58,6 +60,7 @@ export class TpButton extends TpElement {
         display: flex;
         align-items: center;
         justify-content: center;
+        white-space: nowrap;
         cursor: pointer;
         transition: ${transitionCss(['color', 'border-color'], 'fast')};
       }

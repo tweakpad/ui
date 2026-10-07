@@ -58,11 +58,11 @@ export class TpCard extends TpElement {
         display: grid;
       }
 
+      /* Nova cn-card-footer: flex items-center, content from the logical start. */
       .card > footer {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        justify-content: flex-end;
       }
 
       .card > [hidden] {
@@ -88,7 +88,9 @@ export class TpCard extends TpElement {
     const wrapper = slot.parentElement;
     if (
       wrapper &&
-      wrapper.matches('[part="card-title"], [part="card-description"], [part="card-action"]')
+      wrapper.matches(
+        '[part="card-title"], [part="card-description"], [part="card-action"], [part="card-content"]',
+      )
     )
       wrapper.hidden = !slot
         .assignedNodes({ flatten: true })
@@ -116,7 +118,9 @@ export class TpCard extends TpElement {
           <slot name="action" @slotchange=${this.#syncSection}></slot>
         </div>
       </header>
-      <div class="content" part="card-content"><slot></slot></div>
+      <div class="content" part="card-content" hidden>
+        <slot @slotchange=${this.#syncSection}></slot>
+      </div>
       <footer part="card-footer" hidden>
         <slot name="footer" @slotchange=${this.#syncSection}></slot>
       </footer>

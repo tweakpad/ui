@@ -41,11 +41,13 @@ export class TpToggle extends TpFormElement {
         display: inline-block;
       }
 
+      /* Nova cn-toggle: whitespace-nowrap. */
       .control {
         position: relative;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        white-space: nowrap;
         cursor: pointer;
       }
 

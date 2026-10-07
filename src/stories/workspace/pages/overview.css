@@ -1,0 +1,57 @@
+.overview-metric-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tp-space-1);
+  align-items: flex-start;
+}
+
+.overview-metric-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tp-space-1-5);
+  font-weight: var(--tp-font-medium);
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--tp-space-6);
+  align-items: start;
+}
+
+.overview-calendar {
+  display: block;
+  inline-size: fit-content;
+  margin-inline: auto;
+}
+
+.overview-skeleton-row {
+  display: flex;
+  gap: var(--tp-space-3);
+  align-items: center;
+}
+
+.overview-skeleton-avatar {
+  inline-size: var(--tp-space-6);
+  block-size: var(--tp-space-6);
+  border-radius: var(--tp-radius-full);
+  flex: none;
+}
+
+.overview-skeleton-line {
+  inline-size: calc(var(--tp-space-16) * 3);
+  max-inline-size: 100%;
+  block-size: var(--tp-space-3);
+}
+
+.overview-skeleton-short {
+  inline-size: calc(var(--tp-space-16) * 2);
+  max-inline-size: 100%;
+  block-size: var(--tp-space-3);
+}
+
+@media (width <= 64rem) {
+  .overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

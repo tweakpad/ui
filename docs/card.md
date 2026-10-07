@@ -4,11 +4,11 @@
 
 ## Properties
 
-| Property        | Attribute        | Values      | Default |
-| --------------- | ---------------- | ----------- | ------- |
-| `elevated`      | `elevated`       | Boolean     | `false` |
-| `borders`       | `borders`        | `on`, `off` | `on`    |
-| `sectionColors` | `section-colors` | `on`, `off` | `on`    |
+| Property        | Attribute        | Values          | Default   |
+| --------------- | ---------------- | --------------- | --------- |
+| `elevated`      | `elevated`       | Boolean         | `false`   |
+| `borders`       | `borders`        | `on`, `off`     | `on`      |
+| `sectionColors` | `section-colors` | `on`, `off`     | `on`      |
 | `size`          | `size`           | `sm`, `default` | `default` |
 
 `elevated` changes only the shadow: medium when true, none when false. Borders, colors, spacing, dimensions, and semantics do not change. Card is the only control exposing this property in this pass.
@@ -26,15 +26,15 @@ The three section fills derive from the shared card and muted color roles. There
 
 ## Slots and parts
 
-| Slot          | Purpose                                              | Shadow part |
-| ------------- | ---------------------------------------------------- | ----------- |
-| `header`      | Heading content, ideally a heading element           | `card-title` |
-| `description` | Muted supporting text in the header                  | `card-description` |
-| `action`      | Consumer-owned header action                        | `card-action` |
-| default       | Main content                                         | `card-content` |
-| `footer`      | Actions in reading order, aligned to the logical end | `card-footer` |
+| Slot          | Purpose                                                                | Shadow part        |
+| ------------- | ---------------------------------------------------------------------- | ------------------ |
+| `header`      | Heading content, ideally a heading element                             | `card-title`       |
+| `description` | Muted supporting text in the header                                    | `card-description` |
+| `action`      | Consumer-owned header action                                           | `card-action`      |
+| default       | Main content                                                           | `card-content`     |
+| `footer`      | Secondary metadata or actions in reading order, from the logical start | `card-footer`      |
 
-The surface exposes `card`; the header exposes `card-header`. Empty header and footer sections are omitted from layout. Card does not create actions or alter Button variants; use `<tp-button>` in the footer when actions are needed.
+The surface exposes `card`; the header exposes `card-header`. Empty header, content and footer sections are omitted from layout. Card does not create actions or alter Button variants; use `<tp-button>` in the footer when actions are needed.
 
 ```html
 <tp-card>

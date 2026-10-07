@@ -1,0 +1,41 @@
+.sites-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--tp-space-16) * 3), 1fr));
+  gap: var(--tp-space-4);
+}
+
+.sites-metric {
+  font-size: var(--tp-text-2xl);
+  font-weight: var(--tp-font-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.sites-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: var(--tp-space-4);
+  align-items: start;
+}
+
+.sites-map {
+  block-size: calc(var(--tp-space-16) * 7);
+}
+
+.sites-overlay-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tp-space-3);
+}
+
+@media (width <= 64rem) {
+  .sites-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (width <= 40rem) {
+  .sites-map {
+    block-size: calc(var(--tp-space-16) * 5);
+  }
+}

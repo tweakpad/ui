@@ -1,0 +1,48 @@
+/* The transcript keeps a working height; the composer stays in the Card footer. */
+.activity-scroller {
+  --tp-message-scroller-height: calc(var(--tp-space-16) * 6);
+}
+
+.activity-history {
+  display: flex;
+  justify-content: center;
+}
+
+.activity-team {
+  display: grid;
+  gap: var(--tp-space-1);
+}
+
+.activity-member::part(button) {
+  inline-size: 100%;
+  justify-content: flex-start;
+}
+
+.activity-profile {
+  display: grid;
+  gap: var(--tp-space-3);
+}
+
+.activity-profile p {
+  margin: 0;
+}
+
+.activity-profile-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--tp-space-3);
+}
+
+.activity-profile-heading > div {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.activity-reacted {
+  padding-block-end: var(--tp-space-4);
+}
+
+/* Nova InputGroupButton ml-auto: the send action ends the composer's action row. */
+.activity-send {
+  margin-inline-start: auto;
+}

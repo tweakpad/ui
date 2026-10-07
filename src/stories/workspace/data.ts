@@ -1,16 +1,33 @@
 import { navigationIcons } from '../../icons/navigation.js';
+import { shieldAlertIcon } from '../../icons/shield-alert.js';
 import type { CommandEntry } from '../../components/command-palette/index.js';
 import type { QuestionnaireQuestion } from '../../foundation/questionnaire.js';
+import type { Section, SettingsSection } from './host.js';
 
-export type Section = 'overview' | 'work' | 'files' | 'brief' | 'activity' | 'settings';
-export const destinations = [
+export type { Section, SettingsSection } from './host.js';
+export const destinations: readonly (readonly [Section, string, keyof typeof navigationIcons])[] = [
   ['overview', 'Overview', 'chart'],
   ['work', 'Work', 'frame'],
   ['files', 'Files', 'folder'],
   ['brief', 'Brief', 'book'],
   ['activity', 'Activity', 'bell'],
-  ['settings', 'Settings', 'settings'],
-] as const;
+  ['sites', 'Pilot sites', 'map'],
+];
+/** Settings dialog sections: id, label, icon and the one-line purpose shown under the title. */
+export const settingsSections = [
+  [
+    'general',
+    'General',
+    navigationIcons.settings,
+    'Name, schedule and visibility of this project.',
+  ],
+  ['notifications', 'Notifications', navigationIcons.bell, 'Choose what reaches you, and where.'],
+  ['members', 'Members', navigationIcons.account, 'People with access and their roles.'],
+  ['appearance', 'Appearance', navigationIcons.sparkle, 'Theme and density for this device.'],
+  ['security', 'Security', shieldAlertIcon, 'Two-step verification and active sessions.'],
+  ['shortcuts', 'Shortcuts', navigationIcons.terminal, 'Keyboard shortcuts across the workspace.'],
+  ['danger', 'Danger zone', navigationIcons.trash, 'Archive or delete this project.'],
+] as const satisfies readonly (readonly [SettingsSection, string, unknown, string])[];
 export interface Task {
   id: number;
   title: string;
@@ -147,6 +164,16 @@ export const commands: readonly CommandEntry[] = [
       icon: navigationIcons[icon],
     })),
   },
+  {
+    type: 'group',
+    label: 'Settings',
+    items: settingsSections.map(([value, label, icon]) => ({
+      value: `settings:${value}`,
+      label: `${label} settings`,
+      icon,
+      keywords: ['preferences', 'settings'],
+    })),
+  },
   { type: 'separator' },
   {
     value: 'new-task',
@@ -155,7 +182,60 @@ export const commands: readonly CommandEntry[] = [
     keywords: ['add', 'work'],
   },
   { value: 'invite', label: 'Invite a teammate', icon: navigationIcons.account },
-  { value: 'export', label: 'Export work as CSV', icon: navigationIcons.share },
+  { value: 'discovery', label: 'Define release goals', icon: navigationIcons.sparkle },
+];
+/** Notification channels in Settings › Notifications. */
+export const notificationChannels = [
+  [
+    'mentions',
+    'Mentions and replies',
+    'When someone mentions you or replies to your thread.',
+    true,
+  ],
+  [
+    'assignments',
+    'Task assignments',
+    'When a task is assigned to you or its due date changes.',
+    true,
+  ],
+  ['reviews', 'Review requests', 'When a teammate asks for your review.', true],
+  ['digest', 'Weekly digest', 'A Monday summary of progress, blockers and upcoming dates.', false],
+] as const;
+/** Signed-in sessions in Settings › Security; `minutes` is how long ago each was active. */
+export const sessions = [
+  {
+    id: 'mac',
+    device: 'MacBook Pro · Chrome',
+    place: 'Lisbon, Portugal',
+    minutes: 0,
+    current: true,
+  },
+  {
+    id: 'iphone',
+    device: 'iPhone 16 · Safari',
+    place: 'Lisbon, Portugal',
+    minutes: 95,
+    current: false,
+  },
+  {
+    id: 'pc',
+    device: 'Windows 11 · Edge',
+    place: 'Madrid, Spain',
+    minutes: 60 * 26,
+    current: false,
+  },
+];
+export const pendingInvites = [
+  { email: 'riley@studio.example', role: 'Can view', days: 2 },
+  { email: 'morgan.lee@pilot.example', role: 'Can edit', days: 5 },
+];
+export const memberRoles = ['Owner', 'Can edit', 'Can view'];
+/** Header notifications in the Recent activity drawer; `minutes` is how long ago. */
+export const updates = [
+  { author: 'Sam Rivera', text: 'Moved “Review the mobile checkout” to In review.', minutes: 12 },
+  { author: 'Jamie Chen', text: 'Uploaded “Launch teaser v3.mp4” to Files.', minutes: 48 },
+  { author: 'Taylor Kim', text: 'Marked Lisbon pilot site as ready for rollout.', minutes: 130 },
+  { author: 'Alex Morgan', text: 'Updated the release brief success measures.', minutes: 60 * 20 },
 ];
 export const questions: readonly QuestionnaireQuestion[] = [
   {
