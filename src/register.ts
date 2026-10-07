@@ -176,6 +176,7 @@ import {
   TpMediaAudioLayout,
 } from './components/media-player/index.js';
 import { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/index.js';
+import { TpCodeBlock } from './components/code-block/index.js';
 
 defineElement(TpAccordion.tagName, TpAccordion);
 defineElement(TpAccordionItem.tagName, TpAccordionItem);
@@ -248,6 +249,7 @@ defineElement(TpBubbleGroup.tagName, TpBubbleGroup);
 defineElement(TpButtonGroup.tagName, TpButtonGroup);
 defineElement(TpButtonGroupText.tagName, TpButtonGroupText);
 defineElement(TpCard.tagName, TpCard);
+defineElement(TpCodeBlock.tagName, TpCodeBlock);
 defineElement(TpEmptyState.tagName, TpEmptyState);
 defineElement(TpKeyHint.tagName, TpKeyHint);
 defineElement(TpKeyHintGroup.tagName, TpKeyHintGroup);

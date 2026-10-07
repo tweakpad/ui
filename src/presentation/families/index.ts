@@ -62,6 +62,7 @@ import { tablePresentation } from './table.js';
 import { navigationPanelPresentation } from './navigation-panel.js';
 import { mediaPlayerPresentation } from './media-player.js';
 import { mapPresentation } from './map.js';
+import { codeBlockPresentation } from './code-block.js';
 
 export { dragDropListPresentation } from './drag-drop-list.js';
 export { accordionPresentation } from './accordion.js';
@@ -126,6 +127,7 @@ export { tablePresentation } from './table.js';
 export { navigationPanelPresentation } from './navigation-panel.js';
 export { mediaPlayerPresentation } from './media-player.js';
 export { mapPresentation } from './map.js';
+export { codeBlockPresentation } from './code-block.js';
 
 /** Every family in catalog order. Importing this pulls in the whole library's presentation. */
 export const presentationFamilies: readonly PresentationFamily[] = [
@@ -192,4 +194,5 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   navigationPanelPresentation,
   mediaPlayerPresentation,
   mapPresentation,
+  codeBlockPresentation,
 ];

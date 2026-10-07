@@ -39,6 +39,7 @@ export default defineConfig({
         carousel: resolve(import.meta.dirname, 'src/foundation/carousel/index.ts'),
         media: resolve(import.meta.dirname, 'src/foundation/media/index.ts'),
         map: resolve(import.meta.dirname, 'src/foundation/map/index.ts'),
+        code: resolve(import.meta.dirname, 'src/foundation/code/index.ts'),
         register: resolve(import.meta.dirname, 'src/register.ts'),
         'register/icon': resolve(import.meta.dirname, 'src/register/icon.ts'),
         ...iconEntries,

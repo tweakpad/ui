@@ -32,6 +32,24 @@
   --tp-chart-4: #d97706;
   --tp-chart-5: #db2777;
 
+  /* Token extension, CL §5 Syntax colors: one role per code scope (Foundation §18.13), used by
+     the built-in tokenizer. GitHub light/dark hues, adjusted to keep at least 4.5:1 on the code
+     surface and on highlighted or diff lines in both schemes. */
+  --tp-syntax-comment: light-dark(#59636e, #a0a8b1);
+  --tp-syntax-keyword: light-dark(#cf222e, #ff7b72);
+  --tp-syntax-string: light-dark(#0a3069, #a5d6ff);
+  --tp-syntax-number: light-dark(#0550ae, #79c0ff);
+  --tp-syntax-function: light-dark(#6639ba, #d2a8ff);
+  --tp-syntax-type: light-dark(#953800, #ffa657);
+  --tp-syntax-constant: light-dark(#0550ae, #79c0ff);
+  --tp-syntax-variable: light-dark(#953800, #ffa657);
+  --tp-syntax-property: light-dark(#0550ae, #79c0ff);
+  --tp-syntax-tag: light-dark(#116329, #7ee787);
+  --tp-syntax-attribute: light-dark(#0550ae, #79c0ff);
+  --tp-syntax-operator: light-dark(#cf222e, #ff7b72);
+  --tp-syntax-inserted: light-dark(#116329, #aff5b4);
+  --tp-syntax-deleted: light-dark(#82071e, #ffdcd7);
+
   /* One spacing seed and its closed derived scale. */
   --tp-spacing: 0.25rem;
   --tp-space-0: 0;

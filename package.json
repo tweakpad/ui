@@ -56,6 +56,11 @@
       "import": "./dist/map.js",
       "default": "./dist/map.js"
     },
+    "./code": {
+      "types": "./dist/foundation/code/index.d.ts",
+      "import": "./dist/code.js",
+      "default": "./dist/code.js"
+    },
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
@@ -123,6 +128,7 @@
     "playwright": "^1.63.0",
     "postcss-lit": "^1.4.1",
     "prettier": "^3.9.6",
+    "shiki": "^4.5.0",
     "storybook": "^10.6.0",
     "stylelint": "^17.15.0",
     "stylelint-config-standard": "^40.0.0",

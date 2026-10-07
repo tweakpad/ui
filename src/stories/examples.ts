@@ -399,6 +399,13 @@ const examples = {
       <tp-media-video-layout></tp-media-video-layout>
     </tp-media-player>
   `,
+  'tp-code-block': () => html`
+    <tp-code-block
+      language="typescript"
+      label="hello.ts"
+      .code=${"export const greeting = 'Hello';"}
+    ></tp-code-block>
+  `,
   // Without an engine the map shows its empty status; see the Map stories for engines.
   'tp-map': () => html`
     <tp-map label="Lisbon" default-center="38.7223,-9.1393" default-zoom="12">

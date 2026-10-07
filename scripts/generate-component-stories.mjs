@@ -75,6 +75,7 @@ const authoredStories = new Set([
   'tp-icon',
   'tp-media-player',
   'tp-map',
+  'tp-code-block',
 ]);
 await rm(outputDirectory, { recursive: true, force: true });
 await mkdir(outputDirectory, { recursive: true });

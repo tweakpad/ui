@@ -31,6 +31,23 @@ export const TOKEN_FAMILIES = {
     'chart-4',
     'chart-5',
   ],
+  /** Token extension (CL §5 Syntax colors): one color per code scope. */
+  syntax: [
+    'syntax-comment',
+    'syntax-keyword',
+    'syntax-string',
+    'syntax-number',
+    'syntax-function',
+    'syntax-type',
+    'syntax-constant',
+    'syntax-variable',
+    'syntax-property',
+    'syntax-tag',
+    'syntax-attribute',
+    'syntax-operator',
+    'syntax-inserted',
+    'syntax-deleted',
+  ],
   spacing: [
     'spacing',
     'space-0',
