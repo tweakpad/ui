@@ -14,7 +14,7 @@ export * from './part.js';
 export * from './events.js';
 export * from './focus.js';
 export * from './floating-tree.js';
-export * from './id.js';
+export { createId } from './id.js';
 export * from './motion.js';
 export * from './meter.js';
 export * from './number-field/index.js';

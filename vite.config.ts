@@ -33,6 +33,8 @@ export default defineConfig({
     lib: {
       entry: {
         index: resolve(import.meta.dirname, 'src/index.ts'),
+        // The stylesheet has its own entry (emitted as `styles.css`), so no typed module imports CSS.
+        stylesheet: resolve(import.meta.dirname, 'src/stylesheet.ts'),
         'drag-drop': resolve(import.meta.dirname, 'src/foundation/drag-drop/index.ts'),
         carousel: resolve(import.meta.dirname, 'src/foundation/carousel/index.ts'),
         media: resolve(import.meta.dirname, 'src/foundation/media/index.ts'),

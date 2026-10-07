@@ -2,16 +2,35 @@
   "name": "@tweakpad/ui",
   "version": "0.1.0",
   "description": "LitElement implementation of the Tweakpad UI Foundation and Component Library specifications.",
+  "license": "MIT",
+  "author": "Tweakpad",
+  "homepage": "https://github.com/tweakpad/ui#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tweakpad/ui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tweakpad/ui/issues"
+  },
+  "keywords": [
+    "web-components",
+    "custom-elements",
+    "lit",
+    "ui",
+    "design-system",
+    "components",
+    "accessibility"
+  ],
   "type": "module",
   "sideEffects": [
     "**/*.css",
-    "./src/register.ts",
-    "./src/register/icon.ts",
     "./dist/register.js",
     "./dist/register/icon.js"
   ],
   "files": [
-    "dist"
+    "dist",
+    "!dist/stylesheet.js",
+    "!dist/stylesheet.js.map"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -19,41 +38,50 @@
   "exports": {
     "./carousel": {
       "types": "./dist/foundation/carousel/index.d.ts",
-      "import": "./dist/carousel.js"
+      "import": "./dist/carousel.js",
+      "default": "./dist/carousel.js"
     },
     "./drag-drop": {
       "types": "./dist/foundation/drag-drop/index.d.ts",
-      "import": "./dist/drag-drop.js"
+      "import": "./dist/drag-drop.js",
+      "default": "./dist/drag-drop.js"
     },
     "./media": {
       "types": "./dist/foundation/media/index.d.ts",
-      "import": "./dist/media.js"
+      "import": "./dist/media.js",
+      "default": "./dist/media.js"
     },
     "./map": {
       "types": "./dist/foundation/map/index.d.ts",
-      "import": "./dist/map.js"
+      "import": "./dist/map.js",
+      "default": "./dist/map.js"
     },
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./register": {
       "types": "./dist/register.d.ts",
-      "import": "./dist/register.js"
+      "import": "./dist/register.js",
+      "default": "./dist/register.js"
     },
     "./register/icon": {
       "types": "./dist/register/icon.d.ts",
-      "import": "./dist/register/icon.js"
+      "import": "./dist/register/icon.js",
+      "default": "./dist/register/icon.js"
     },
     "./icons/*": {
       "types": "./dist/icons/*.d.ts",
-      "import": "./dist/icons/*.js"
+      "import": "./dist/icons/*.js",
+      "default": "./dist/icons/*.js"
     },
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run clean && tsc -p tsconfig.build.json && vite build",
+    "build": "npm run clean && tsc -p tsconfig.build.json && vite build && npm run cem",
     "clean": "node scripts/clean.mjs",
     "format": "prettier --write \"src/**/*.{ts,css}\" \".storybook/**/*.{ts,css,mdx}\" \"scripts/**/*.mjs\" \"*.{js,ts,json,css,html,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,css}\" \".storybook/**/*.{ts,css,mdx}\" \"scripts/**/*.mjs\" \"*.{js,ts,json,css,html,md}\"",
@@ -66,16 +94,19 @@
     "test:browser": "BROWSER=chromium node scripts/browser-smoke.mjs && BROWSER=firefox node scripts/browser-smoke.mjs && BROWSER=webkit node scripts/browser-smoke.mjs",
     "test:button:browser": "node scripts/button-browser-smoke.mjs",
     "test:stories": "node scripts/storybook-entries-smoke.mjs",
-    "test:package": "npm run build && node scripts/package-smoke.mjs",
+    "test:package": "npm run build && node scripts/pack-smoke.mjs",
     "verify:phase-1": "node scripts/verify-phase-1.mjs",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
-  },
-  "dependencies": {
-    "lit": "^3.3.3"
+    "build-storybook": "storybook build",
+    "cem": "cem analyze",
+    "test:package:browser": "npm run build && node scripts/package-smoke.mjs",
+    "changeset": "changeset",
+    "release": "changeset publish"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@changesets/cli": "^2.31.1",
+    "@custom-elements-manifest/analyzer": "^0.11.0",
     "@eslint/js": "^10.0.1",
     "@googlemaps/js-api-loader": "^2.1.3",
     "@storybook/addon-a11y": "^10.6.0",
@@ -86,6 +117,7 @@
     "eslint-plugin-lit": "^2.3.1",
     "eslint-plugin-lit-a11y": "^5.1.1",
     "globals": "^16.4.0",
+    "lit": "^3.3.3",
     "maplibre-gl": "^6.13.0",
     "playwright": "^1.63.0",
     "postcss-lit": "^1.4.1",
@@ -98,7 +130,19 @@
     "vite": "^8.3.0",
     "vitest": "^4.1.11"
   },
-  "engines": {
-    "node": ">=24"
+  "customElements": "dist/custom-elements.json",
+  "peerDependencies": {
+    "lit": "^3.3.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=24",
+      "onFail": "warn"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

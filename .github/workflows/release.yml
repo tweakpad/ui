@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    branches: [development]
+
+concurrency: release-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  # npm Trusted Publishing (OIDC): no npm token is stored; provenance is attached automatically.
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run build
+      # Opens a "Version Packages" pull request while changesets are pending; once that pull
+      # request is merged, publishes the new version to npm.
+      - uses: changesets/action@v1
+        with:
+          publish: npm run release
+          title: Version Packages
+          commit: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

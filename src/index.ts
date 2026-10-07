@@ -1,4 +1,3 @@
-import './styles.css';
 import './elements.js';
 
 export * from './catalog.js';
