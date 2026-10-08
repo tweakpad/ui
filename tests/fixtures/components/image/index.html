@@ -72,10 +72,27 @@
       <section class="case" id="case-nested"><h2>Parallax and reveal in a nested scroller</h2>
         <div class="scroller" id="scroller"></div>
       </section>
+      <section class="case" id="case-smoothing"><h2>Parallax smoothing 0 and 0.85 (up zoom-in)</h2>
+        <div class="grid" id="smoothing"></div>
+      </section>
       <div class="spacer">scroll</div>
       <section class="case" id="case-reveal"><h2>Reveal (runs once)</h2>
         <div class="grid" id="reveals"></div>
       </section>
+      <div class="spacer">scroll</div>
+      <section class="case" id="case-repeat"><h2>Reveal repeat and custom timing (900ms, cubic-bezier(0.16, 1, 0.3, 1) set on the container)</h2>
+        <div class="grid" id="repeats" style="--tp-image-reveal-duration: 900ms; --tp-image-reveal-easing: cubic-bezier(0.16, 1, 0.3, 1)"></div>
+      </section>
+      <div class="spacer">scroll</div>
+      <section class="case" id="case-groups"><h2>Groups: stagger 120ms (one failing member), held, repeat, nested</h2>
+        <tp-image-group id="group-stagger" class="grid" stagger="120" reveal="fade up"></tp-image-group>
+        <tp-image-group id="group-held" class="grid" stagger="80" reveal="fade zoom-in" reveal-hold></tp-image-group>
+        <tp-image-group id="group-repeat" class="grid" stagger="60" reveal="fade up" reveal-repeat></tp-image-group>
+        <tp-image-group id="group-outer" class="grid" reveal="fade">
+          <tp-image-group id="group-inner" class="grid" stagger="100" reveal="fade left"></tp-image-group>
+        </tp-image-group>
+      </section>
+      <div class="spacer">scroll</div>
       <div class="spacer">scroll</div>
       <section class="case" id="case-stress" hidden><h2>Stress: 500 images</h2>
         <div class="stress" id="stress"></div>

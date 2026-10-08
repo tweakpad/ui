@@ -179,7 +179,7 @@ import {
 import { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/index.js';
 import { TpCodeBlock } from './components/code-block/index.js';
 import { TpMarkdown } from './components/markdown/index.js';
-import { TpImage } from './components/image/index.js';
+import { TpImage, TpImageGroup } from './components/image/index.js';
 import { TpTableOfContents, TpTableOfContentsItem } from './components/table-of-contents/index.js';
 import { TpTreeItem, TpTreeView } from './components/tree-view/index.js';
 
@@ -258,6 +258,7 @@ defineElement(TpCard.tagName, TpCard);
 defineElement(TpCodeBlock.tagName, TpCodeBlock);
 defineElement(TpMarkdown.tagName, TpMarkdown);
 defineElement(TpImage.tagName, TpImage);
+defineElement(TpImageGroup.tagName, TpImageGroup);
 defineElement(TpTableOfContents.tagName, TpTableOfContents);
 defineElement(TpTableOfContentsItem.tagName, TpTableOfContentsItem);
 defineElement(TpTreeView.tagName, TpTreeView);

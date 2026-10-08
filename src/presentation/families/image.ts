@@ -40,6 +40,12 @@ const definition: ComponentDefinition = {
       cardinality: 'zero or one descendant of Frame, present while loading',
     },
     {
+      name: 'image-group',
+      publicName: 'Group',
+      presentationKeys: ['image-group'],
+      cardinality: "zero or one ancestor of Root (tp-image-group); owns its members' reveal timing",
+    },
+    {
       name: 'image-fallback',
       publicName: 'Fallback',
       presentationKeys: ['image-fallback'],
@@ -51,6 +57,9 @@ const definition: ComponentDefinition = {
 export const imagePresentation = definePresentation({
   definition,
   bindings: {
+    'tp-image-group': {
+      ':host': 'image-group',
+    },
     'tp-image': {
       ':host': 'image',
       "[part~='frame']": 'image-frame',

@@ -217,6 +217,8 @@ export interface IntersectionOptions {
   /** Default: the top-level viewport. */
   readonly root?: Element | Document | null;
   readonly rootMargin?: string;
+  /** Extends the clip of scroll containers between the element and the root, like rootMargin. */
+  readonly scrollMargin?: string;
   readonly threshold?: number | readonly number[];
 }
 
@@ -248,8 +250,9 @@ export function observeIntersection(
   if (!view?.IntersectionObserver) return () => {};
   const root = options.root ?? null;
   const rootMargin = options.rootMargin ?? '0px';
+  const scrollMargin = options.scrollMargin ?? '0px';
   const threshold = [options.threshold ?? 0].flat().sort((a, b) => a - b);
-  const key = `${rootMargin}|${threshold.join(',')}`;
+  const key = `${rootMargin}|${scrollMargin}|${threshold.join(',')}`;
   let byOptions = intersectionRegistries.get(root ?? view);
   if (!byOptions) intersectionRegistries.set(root ?? view, (byOptions = new Map()));
   let registry = byOptions.get(key);
@@ -264,7 +267,8 @@ export function observeIntersection(
           for (const notify of [...(callbacks.get(entry.target) ?? [])]) notify(entry);
         }
       },
-      { root, rootMargin, threshold },
+      // scrollMargin is ignored where unsupported; members then join at the visible edge.
+      { root, rootMargin, scrollMargin, threshold } as IntersectionObserverInit,
     );
     byOptions.set(key, (registry = { observer, callbacks, entries }));
   }

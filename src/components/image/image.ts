@@ -1,4 +1,4 @@
-import { css, html, nothing, unsafeCSS, type PropertyValues } from 'lit';
+import { css, html, nothing, type PropertyValues } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
@@ -12,6 +12,7 @@ import {
 import { canObserveIntersection, observeIntersection } from '../../foundation/observation.js';
 import {
   clampParallaxDepth,
+  clampParallaxSmoothing,
   observeParallax,
   parallaxAxis,
   parallaxDriver,
@@ -20,14 +21,21 @@ import {
 } from '../../foundation/parallax.js';
 import { imageOffIcon } from '../../icons/image.js';
 import { imagePresentation } from '../../presentation/families/image.js';
-import { motionDuration, transitionCss } from '../../presentation/motion.js';
+import { transitionCss } from '../../presentation/motion.js';
 import { TpAspectRatio } from '../aspect-ratio/aspect-ratio.js';
 import { TpIcon } from '../icon.js';
 import { TpSkeleton } from '../skeleton/skeleton.js';
 import { TpSpinner } from '../spinner/spinner.js';
 import {
+  imageGroupHost,
+  nearestImageGroup,
+  transitionSpan,
+  type ImageGroupHost,
+  type ImageGroupMember,
+} from './group-protocol.js';
+import {
+  hasWidthDescriptors,
   readSources,
-  resolveImageSizes,
   SOURCE_ATTRIBUTES,
   type ImageSourceRecord,
 } from './sources.js';
@@ -52,6 +60,9 @@ const REVEAL_EFFECTS: readonly ImageRevealEffect[] = [
   'zoom-out',
 ];
 
+/** Where a repeating reveal starts: 10% inside the viewport's block edges. */
+const REVEAL_ENTRY_INSET = '-10% 0px -10% 0px';
+
 export const imageMotionRoles = {
   reveal: {
     name: 'reveal',
@@ -60,9 +71,6 @@ export const imageMotionRoles = {
     completion: 'non-blocking',
   },
 } as const satisfies Record<string, MotionRoleDefinition>;
-
-/** Reveal timing: twice the normal duration, scaled by the shared motion policy. */
-const revealDuration = unsafeCSS(motionDuration('normal', '2'));
 
 /**
  * `tp-image`: a responsive image in an optional fixed-ratio frame, with a placeholder while it
@@ -117,7 +125,10 @@ export class TpImage extends TpElement {
     zoomed: { type: Boolean, reflect: true },
     parallax: { type: String, reflect: true },
     parallaxDepth: { type: Number, attribute: 'parallax-depth' },
+    parallaxSmoothing: { type: Number, attribute: 'parallax-smoothing' },
     reveal: { type: String, reflect: true },
+    revealRepeat: { type: Boolean, attribute: 'reveal-repeat', reflect: true },
+    revealHold: { type: Boolean, attribute: 'reveal-hold', reflect: true },
   };
   static override styles = [
     TpElement.styles,
@@ -127,10 +138,22 @@ export class TpImage extends TpElement {
         position: relative;
         min-inline-size: 0;
         transition:
-          opacity ${revealDuration} var(--tp-easing-standard),
-          translate ${revealDuration} var(--tp-easing-standard),
-          scale ${revealDuration} var(--tp-easing-standard);
-        transition-delay: var(--tp-image-reveal-delay, 0s);
+          opacity var(--_reveal-duration) var(--_reveal-easing),
+          translate var(--_reveal-duration) var(--_reveal-easing),
+          scale var(--_reveal-duration) var(--_reveal-easing);
+
+        /* The group adds its stagger offset; reduced motion removes waiting along with motion. */
+        transition-delay: calc(
+          (var(--tp-image-reveal-delay, 0s) + var(--_tp-image-group-delay, 0ms)) *
+            var(--tp-motion-scale, 1)
+        );
+
+        /* Reveal timing is consumer-tunable; the shared motion scale still applies. */
+        --_reveal-duration: calc(
+          var(--tp-image-reveal-duration, calc(var(--tp-duration-normal) * 2)) *
+            var(--tp-motion-scale, 1)
+        );
+        --_reveal-easing: var(--tp-image-reveal-easing, var(--tp-easing-standard));
       }
 
       :host([hidden]) {
@@ -138,37 +161,42 @@ export class TpImage extends TpElement {
       }
 
       /* Reveal start state (Foundation §18.17 img-reveal); data-revealed returns to rest. */
-      :host([reveal]:not([reveal=''], [data-revealed])) {
+      :host([data-reveal]:not([data-revealed])) {
         translate: var(--_reveal-x, 0%) var(--_reveal-y, 0%);
         scale: var(--_reveal-scale, 1);
       }
 
-      :host([reveal~='fade']:not([data-revealed])) {
+      :host([data-reveal~='fade']:not([data-revealed])) {
         opacity: 0;
       }
 
-      :host([reveal~='up']:not([data-revealed])) {
+      :host([data-reveal~='up']:not([data-revealed])) {
         --_reveal-y: var(--tp-image-reveal-distance, var(--tp-space-6));
       }
 
-      :host([reveal~='down']:not([data-revealed])) {
+      :host([data-reveal~='down']:not([data-revealed])) {
         --_reveal-y: calc(-1 * var(--tp-image-reveal-distance, var(--tp-space-6)));
       }
 
-      :host([reveal~='left']:not([data-revealed])) {
+      :host([data-reveal~='left']:not([data-revealed])) {
         --_reveal-x: var(--tp-image-reveal-distance, var(--tp-space-6));
       }
 
-      :host([reveal~='right']:not([data-revealed])) {
+      :host([data-reveal~='right']:not([data-revealed])) {
         --_reveal-x: calc(-1 * var(--tp-image-reveal-distance, var(--tp-space-6)));
       }
 
-      :host([reveal~='zoom-in']:not([data-revealed])) {
+      :host([data-reveal~='zoom-in']:not([data-revealed])) {
         --_reveal-scale: calc(1 - var(--tp-image-reveal-scale, 0.08));
       }
 
-      :host([reveal~='zoom-out']:not([data-revealed])) {
+      :host([data-reveal~='zoom-out']:not([data-revealed])) {
         --_reveal-scale: calc(1 + var(--tp-image-reveal-scale, 0.08));
+      }
+
+      /* Returning to the start state (repeat, off screen) is instant; only revealing animates. */
+      :host(:not([data-revealed])) {
+        transition-duration: 0s;
       }
 
       :host([data-tp-motion-driven~='reveal']) {
@@ -220,7 +248,14 @@ export class TpImage extends TpElement {
         block-size: 100%;
         border-radius: inherit;
         scale: calc((1 + var(--_overscan, 0) * var(--_motion)) * var(--_zoom));
-        transition: ${transitionCss(['scale'])};
+
+        /* Hover zoom: slower than control feedback, settling with an ease-out by default. */
+        transition: scale
+          calc(
+            var(--tp-image-zoom-duration, calc(var(--tp-duration-normal) * 2)) *
+              var(--tp-motion-scale, 1)
+          )
+          var(--tp-image-zoom-easing, ease-out);
       }
 
       /* With a ratio, Aspect-ratio box fits its slotted Media; the picture inherits that fit. */
@@ -396,7 +431,13 @@ export class TpImage extends TpElement {
   zoomed = false;
   parallax: ImageParallax = 'none';
   parallaxDepth = 0.3;
+  /** Share of the remaining scroll-linked motion left after a 60 Hz frame; 0 is locked to scroll. */
+  parallaxSmoothing = 0;
   reveal = '';
+  /** Reveal again on every viewport entry instead of only the first. */
+  revealRepeat = false;
+  /** While set, a ready reveal waits in its start state; clearing it plays the reveal. */
+  revealHold = false;
 
   #ratio: number | undefined;
   /** Width divided by height; unset uses the image's intrinsic geometry. */
@@ -416,14 +457,28 @@ export class TpImage extends TpElement {
     onStatusChange: (status) => {
       this.setAttribute('data-status', status);
       this.emit('tp-loading-status-change', { status });
+      if (status === 'loaded') this.#decode();
+      this.#settledChanged();
     },
   });
+  /** The load generation whose image has been decoded, so a reveal's first frame has pixels. */
+  #decodedGeneration = -1;
+  #group: ImageGroupHost | undefined;
+  #leaveGroup: (() => void) | undefined;
+  /** A concrete `sizes` replacing `auto` once a group asks a lazy image to load now. */
+  #eagerSizes: string | undefined;
+  #eager = false;
+  #revealSerial = 0;
+  /** In view (inside the entry inset for a repeating reveal) while waiting for the image. */
+  #revealWaiting = false;
   #requestKey: string | undefined;
   #sources: ImageSourceRecord[] = [];
   #sourceObserver: MutationObserver | undefined;
   #revealed = false;
   #releaseVisibility: (() => void) | undefined;
   #releaseParallax: (() => void) | undefined;
+  #parallaxSmoothingApplied = 0;
+  #releaseRevealEntry: (() => void) | undefined;
   #parallaxMedia: HTMLElement | null = null;
   #driver: 'timeline' | 'script' = 'script';
 
@@ -435,6 +490,11 @@ export class TpImage extends TpElement {
   /** The candidate the browser selected for the current source. */
   get currentSrc(): string {
     return this.#img?.currentSrc ?? '';
+  }
+
+  /** Whether the reveal has played (false again after a repeat reset). */
+  get revealed(): boolean {
+    return this.#revealed;
   }
 
   get #img(): HTMLImageElement | null {
@@ -460,9 +520,18 @@ export class TpImage extends TpElement {
     return this.#parallaxDirection !== undefined || this.#parallaxZoom;
   }
 
+  /** The image's own reveal effect, or its group's default. */
   get #revealEffects(): ImageRevealEffect[] {
-    const tokens = this.reveal.split(/\s+/);
+    const tokens = (this.reveal || this.#group?.reveal || '').split(/\s+/);
     return REVEAL_EFFECTS.filter((effect) => tokens.includes(effect));
+  }
+
+  /** `sizes` for a request: supplied, `auto` for lazy width sets, or the size measured on eager. */
+  #sizesFor(sizes: string | null | undefined, srcset: string | null | undefined) {
+    if (sizes) return sizes;
+    if (!hasWidthDescriptors(srcset)) return undefined;
+    if (this.#eagerSizes) return this.#eagerSizes;
+    return this.loading === 'lazy' ? 'auto, 100vw' : undefined;
   }
 
   override connectedCallback(): void {
@@ -470,29 +539,36 @@ export class TpImage extends TpElement {
     // The load controller abandons its generation on disconnection; request again.
     this.#requestKey = undefined;
     this.#syncSourceObserver();
+    this.#joinGroup();
     this.requestUpdate();
   }
 
   override disconnectedCallback(): void {
     this.#releaseVisibility?.();
     this.#releaseVisibility = undefined;
+    this.#releaseRevealEntry?.();
+    this.#releaseRevealEntry = undefined;
+    this.#revealWaiting = false;
     this.removeAttribute('data-in-view');
     this.#releaseParallax?.();
     this.#releaseParallax = undefined;
     this.#parallaxMedia = null;
     this.#sourceObserver?.disconnect();
     this.#sourceObserver = undefined;
+    this.#leaveGroup?.();
+    this.#leaveGroup = undefined;
+    this.#group = undefined;
     super.disconnectedCallback();
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
     this.#sources = readSources(this);
-    const sizes = resolveImageSizes(this.sizes, this.srcSet, this.loading);
+    const sizes = this.#sizesFor(this.sizes, this.srcSet);
     const key = JSON.stringify([
       this.src,
       this.srcSet,
-      sizes,
+      this.sizes,
       this.crossOrigin,
       this.referrerPolicy,
       this.#sources,
@@ -512,8 +588,14 @@ export class TpImage extends TpElement {
       );
       this.setAttribute('data-status', this.#image.status);
     }
-    if (!this.#revealed && this.#revealEffects.length && this.#revealsImmediately())
-      this.#markRevealed();
+    const effects = this.#revealEffects.join(' ');
+    if (effects) this.setAttribute('data-reveal', effects);
+    else this.removeAttribute('data-reveal');
+    // No intersection support or reduced motion: reveal as soon as the image settles.
+    if (!this.#group && !this.#revealed && effects && this.#revealsImmediately()) {
+      this.#revealWaiting = true;
+      this.#revealIfWaiting();
+    }
   }
 
   protected override updated(changed: PropertyValues<this>): void {
@@ -521,6 +603,7 @@ export class TpImage extends TpElement {
     this.#image.observe(this.#img);
     this.#syncVisibility();
     this.#syncParallax();
+    if (changed.has('revealHold') || changed.has('reveal')) this.#settledChanged();
   }
 
   /** Reduced motion or no intersection support: present the revealed state from the start. */
@@ -528,18 +611,123 @@ export class TpImage extends TpElement {
     return !canObserveIntersection(this) || resolvesReducedMotion(this);
   }
 
-  #markRevealed(): void {
+  /** Settled: loaded and decoded, failed, or without a source. */
+  #settled(): boolean {
+    const status = this.#image.status;
+    if (status === 'loading') return false;
+    return status !== 'loaded' || this.#decodedGeneration === this.#image.generation;
+  }
+
+  /** Decodes once per loaded source before a reveal may use it. */
+  #decode(): void {
+    const generation = this.#image.generation;
+    const img = this.#img;
+    const done = () => {
+      if (generation !== this.#image.generation) return;
+      this.#decodedGeneration = generation;
+      this.#settledChanged();
+    };
+    if (typeof img?.decode === 'function') void img.decode().then(done, done);
+    else done();
+  }
+
+  #settledChanged(): void {
+    if (this.#group) this.#group.update();
+    else this.#revealIfWaiting();
+  }
+
+  /**
+   * Plays the reveal after `delay` ms (a group's stagger offset), announces it, and resolves once
+   * its motion has settled: the driver's playback when claimed, or the CSS transition otherwise.
+   */
+  #reveal(delay = 0): Promise<void> {
+    const serial = ++this.#revealSerial;
+    if (delay > 0) this.style.setProperty('--_tp-image-group-delay', `${delay}ms`);
+    else this.style.removeProperty('--_tp-image-group-delay');
     this.#revealed = true;
     this.toggleAttribute('data-revealed', true);
+    const effect = this.#revealEffects.join(' ');
+    const motion = prepareMotion(this, this, imageMotionRoles.reveal, {
+      phase: 'change',
+      fromState: 'pending',
+      toState: 'revealed',
+      context: { effect },
+    });
+    motion.start();
+    this.emit('tp-reveal-change', { revealed: true, effect });
+    const view = this.ownerDocument.defaultView;
+    const settledMotion: Promise<void> = motion.claimed
+      ? motion.finished
+      : new Promise((resolve) =>
+          view ? view.setTimeout(resolve, transitionSpan(view.getComputedStyle(this))) : resolve(),
+        );
+    return settledMotion.then(() => {
+      if (serial !== this.#revealSerial || !this.#revealed) return;
+      this.emit('tp-reveal-change-complete', { revealed: true });
+    });
   }
+
+  /** Returns instantly to the start state (a repeating reveal that left the view). */
+  #unreveal(): void {
+    if (!this.#revealed) return;
+    const serial = ++this.#revealSerial;
+    this.#revealed = false;
+    this.removeAttribute('data-revealed');
+    this.style.removeProperty('--_tp-image-group-delay');
+    const effect = this.#revealEffects.join(' ');
+    this.emit('tp-reveal-change', { revealed: false, effect });
+    queueMicrotask(() => {
+      if (serial === this.#revealSerial)
+        this.emit('tp-reveal-change-complete', { revealed: false });
+    });
+  }
+
+  /** Registers with the nearest `tp-image-group`, once that element is defined. */
+  #joinGroup(): void {
+    const element = nearestImageGroup(this);
+    if (!element) return;
+    const host = element[imageGroupHost];
+    if (!host) {
+      void this.ownerDocument.defaultView?.customElements.whenDefined('tp-image-group').then(() => {
+        if (this.isConnected && !this.#group && nearestImageGroup(this) === element)
+          this.#joinGroup();
+      });
+      return;
+    }
+    this.#group = host;
+    this.#revealWaiting = false;
+    this.#leaveGroup = host.register(this.#member);
+    this.requestUpdate();
+  }
+
+  readonly #member: ImageGroupMember = {
+    element: this,
+    status: () => this.#image.status,
+    settled: () => this.#settled(),
+    revealing: () => this.#revealEffects.length > 0,
+    revealed: () => this.#revealed,
+    held: () => this.revealHold,
+    ensureLoading: () => {
+      if (this.#eager || this.loading === 'eager' || this.#image.status !== 'loading') return;
+      // Native `sizes=auto` needs lazy loading; keep the laid-out width it would have used.
+      const width = this.#img?.getBoundingClientRect().width ?? 0;
+      if (width > 0) this.#eagerSizes = `${Math.ceil(width)}px`;
+      this.#eager = true;
+      this.requestUpdate();
+    },
+    reveal: (delay) => this.#reveal(delay),
+    reset: () => this.#unreveal(),
+    revealsImmediately: () => this.#revealsImmediately(),
+  };
 
   #syncVisibility(): void {
     const loadingMotion =
       this.#image.status === 'loading' &&
       (this.placeholder !== 'none' || this.querySelector(':scope > [slot="placeholder"]'));
+    const repeats = this.#repeatsReveal;
     const needed =
       this.isConnected &&
-      ((!this.#revealed && this.#revealEffects.length > 0) ||
+      ((!this.#group && this.#revealEffects.length > 0 && (!this.#revealed || repeats)) ||
         Boolean(loadingMotion) ||
         this.#parallaxActive);
     if (needed && !this.#releaseVisibility) {
@@ -549,6 +737,45 @@ export class TpImage extends TpElement {
       this.#releaseVisibility = undefined;
       this.removeAttribute('data-in-view');
     }
+    // A repeating reveal enters on a viewport inset and resets only once fully out, so the start
+    // state's offset cannot pull a just-hidden image back in and loop.
+    const entryNeeded = this.isConnected && repeats;
+    if (entryNeeded && !this.#releaseRevealEntry)
+      this.#releaseRevealEntry = observeIntersection(this, this.#entered, {
+        rootMargin: REVEAL_ENTRY_INSET,
+      });
+    else if (!entryNeeded && this.#releaseRevealEntry) {
+      this.#releaseRevealEntry();
+      this.#releaseRevealEntry = undefined;
+    }
+  }
+
+  get #repeatsReveal(): boolean {
+    return (
+      !this.#group &&
+      this.revealRepeat &&
+      this.#revealEffects.length > 0 &&
+      !this.#revealsImmediately()
+    );
+  }
+
+  readonly #entered = (entry: IntersectionObserverEntry): void => {
+    if (!this.#releaseRevealEntry) return;
+    this.#revealWaiting = entry.isIntersecting && !this.#revealed;
+    this.#revealIfWaiting();
+  };
+
+  /**
+   * A reveal plays only once the image has settled: loaded and decoded (so its first animated
+   * frame has pixels), failed, or unsourced. Decoding is awaited only here, so a cached image
+   * still settles without a loading phase.
+   */
+  #revealIfWaiting(): void {
+    if (this.#group || !this.#revealWaiting || this.#revealed) return;
+    if (this.revealHold || !this.#settled() || !this.isConnected) return;
+    this.#revealWaiting = false;
+    void this.#reveal();
+    this.#syncVisibility();
   }
 
   readonly #intersected = (entry: IntersectionObserverEntry): void => {
@@ -556,14 +783,15 @@ export class TpImage extends TpElement {
     this.setAttribute('data-in-view', String(entry.isIntersecting));
     // Layout around the image may have changed since the driver was chosen.
     if (entry.isIntersecting && this.#parallaxActive) this.#chooseDriver();
-    if (entry.isIntersecting && !this.#revealed && this.#revealEffects.length) {
-      this.#markRevealed();
-      prepareMotion(this, this, imageMotionRoles.reveal, {
-        phase: 'change',
-        fromState: 'pending',
-        toState: 'revealed',
-        context: { effect: this.#revealEffects.join(' ') },
-      }).start();
+    if (this.#repeatsReveal) {
+      // Fully out of view: back to the start state, instantly, ready to reveal on re-entry.
+      if (!entry.isIntersecting) {
+        this.#revealWaiting = false;
+        this.#unreveal();
+      }
+    } else if (!this.#group && !this.#revealed && this.#revealEffects.length) {
+      this.#revealWaiting = entry.isIntersecting;
+      this.#revealIfWaiting();
     }
     this.#syncVisibility();
   };
@@ -576,7 +804,7 @@ export class TpImage extends TpElement {
     const axis = parallaxAxis(this);
     if (axis === 'inline') this.setAttribute('data-parallax-axis', axis);
     else this.removeAttribute('data-parallax-axis');
-    const driver = parallaxDriver(this);
+    const driver = parallaxDriver(this, { smoothing: this.parallaxSmoothing });
     if (driver === this.#driver) return;
     this.#driver = driver;
     this.requestUpdate();
@@ -592,14 +820,19 @@ export class TpImage extends TpElement {
       this.#parallaxActive &&
       this.#driver === 'script' &&
       !resolvesReducedMotion(this);
-    if (wanted && media === this.#parallaxMedia) return;
+    const smoothing = clampParallaxSmoothing(this.parallaxSmoothing);
+    if (wanted && media === this.#parallaxMedia && smoothing === this.#parallaxSmoothingApplied)
+      return;
     this.#releaseParallax?.();
     this.#releaseParallax = undefined;
     this.#parallaxMedia = null;
     if (!wanted) return;
     this.#parallaxMedia = media;
-    this.#releaseParallax = observeParallax(this, (progress) =>
-      media.style.setProperty('--_progress', progress.toFixed(4)),
+    this.#parallaxSmoothingApplied = smoothing;
+    this.#releaseParallax = observeParallax(
+      this,
+      (progress) => media.style.setProperty('--_progress', progress.toFixed(4)),
+      { smoothing },
     );
   }
 
@@ -634,7 +867,7 @@ export class TpImage extends TpElement {
           type=${ifDefined(source.type)}
           width=${ifDefined(source.width)}
           height=${ifDefined(source.height)}
-          sizes=${ifDefined(resolveImageSizes(source.sizes, source.srcset, this.loading))}
+          sizes=${ifDefined(this.#sizesFor(source.sizes, source.srcset))}
           srcset=${ifDefined(source.srcset)}
         />`,
     );
@@ -691,7 +924,7 @@ export class TpImage extends TpElement {
       <picture
         >${this.#renderSources()}<img
           part="picture image-picture"
-          loading=${this.loading}
+          loading=${this.#eager ? 'eager' : this.loading}
           decoding="async"
           fetchpriority=${this.fetchPriority || nothing}
           crossorigin=${this.crossOrigin || nothing}
@@ -699,7 +932,7 @@ export class TpImage extends TpElement {
           width=${ifDefined(this.width)}
           height=${ifDefined(this.height)}
           alt=${this.alt}
-          sizes=${ifDefined(resolveImageSizes(this.sizes, this.srcSet, this.loading))}
+          sizes=${ifDefined(this.#sizesFor(this.sizes, this.srcSet))}
           srcset=${this.srcSet || nothing}
           src=${this.src || nothing}
       /></picture>

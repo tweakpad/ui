@@ -5,6 +5,7 @@ import {
   parallaxDriver,
   parallaxProgress,
   scrollAxis,
+  smoothProgress,
   supportsViewTimeline,
   timelineScrollContainer,
 } from './parallax.js';
@@ -122,5 +123,36 @@ describe('scroll axis', () => {
     expect(scrollAxis(box(300, 1200))).toBe('block');
     expect(scrollAxis(box(1200, 1200))).toBe('block');
     expect(scrollAxis(box(300, 300))).toBe('block');
+  });
+});
+
+describe('parallax smoothing', () => {
+  it('snaps to the target without smoothing', () => {
+    expect(smoothProgress(-1, 1, 0, 16)).toBe(1);
+  });
+
+  it('leaves the smoothing share of the distance after one 60 Hz frame', () => {
+    expect(smoothProgress(0, 1, 0.5, 1000 / 60)).toBeCloseTo(0.5);
+    expect(smoothProgress(0, 1, 0.9, 1000 / 60)).toBeCloseTo(0.1);
+  });
+
+  it('does not depend on the frame rate', () => {
+    const once = smoothProgress(0, 1, 0.8, 2000 / 60);
+    const twice = smoothProgress(smoothProgress(0, 1, 0.8, 1000 / 60), 1, 0.8, 1000 / 60);
+    expect(once).toBeCloseTo(twice);
+  });
+
+  it('converges and clamps the factor so motion never freezes', () => {
+    let current = -1;
+    for (let frame = 0; frame < 600; frame++) current = smoothProgress(current, 1, 1, 1000 / 60);
+    expect(current).toBeCloseTo(1, 3);
+    expect(smoothProgress(0, 1, 0.5, 0)).toBe(0);
+  });
+
+  it('drives smoothed parallax from scroll observation', () => {
+    const { body, node } = layout();
+    const image = node(body);
+    expect(parallaxDriver(image)).toBe('timeline');
+    expect(parallaxDriver(image, { smoothing: 0.5 })).toBe('script');
   });
 });

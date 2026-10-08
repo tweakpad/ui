@@ -15,7 +15,10 @@ interface Args {
   zoomed: boolean;
   parallax: string;
   parallaxDepth: number;
+  parallaxSmoothing: number;
   reveal: string;
+  revealRepeat: boolean;
+  revealHold: boolean;
   alt: string;
 }
 
@@ -42,7 +45,10 @@ const meta = {
     zoomed: false,
     parallax: 'none',
     parallaxDepth: 0.3,
+    parallaxSmoothing: 0,
     reveal: '',
+    revealRepeat: false,
+    revealHold: false,
     alt: imageDefaults.alt,
   },
   argTypes: {
@@ -114,11 +120,28 @@ const meta = {
       description: '`parallax-depth`: enlargement and travel of the parallax image.',
       table: { defaultValue: { summary: '0.3' } },
     },
+    parallaxSmoothing: {
+      control: { type: 'range', min: 0, max: 0.95, step: 0.05 },
+      description:
+        '`parallax-smoothing`: how far parallax and scroll zoom trail the scroll; 0 is locked to it.',
+      table: { defaultValue: { summary: '0' } },
+    },
     reveal: {
       control: 'text',
       description:
         'Viewport-entry effect, run once: any of `fade up down left right zoom-in zoom-out`.',
       table: { defaultValue: { summary: "''" } },
+    },
+    revealRepeat: {
+      control: 'boolean',
+      description:
+        '`reveal-repeat`: reveal again on every viewport entry instead of only the first.',
+      table: { defaultValue: { summary: 'false' } },
+    },
+    revealHold: {
+      control: 'boolean',
+      description: '`reveal-hold`: a ready reveal waits in its start state until this is cleared.',
+      table: { defaultValue: { summary: 'false' } },
     },
     alt: {
       control: 'text',
@@ -139,7 +162,10 @@ const meta = {
       .zoomed=${args.zoomed}
       .parallax=${args.parallax}
       .parallaxDepth=${args.parallaxDepth}
+      .parallaxSmoothing=${args.parallaxSmoothing}
       .reveal=${args.reveal}
+      .revealRepeat=${args.revealRepeat}
+      .revealHold=${args.revealHold}
       src=${imageDefaults.src}
       srcset=${imageDefaults.srcset}
       alt=${args.alt}

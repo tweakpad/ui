@@ -3,7 +3,6 @@
  * fallback used where the host has no scroll-driven timelines (Foundation §18.17).
  */
 import {
-  canObserveIntersection,
   observeIntersection,
   observeResize,
   observeScroll,
@@ -77,7 +76,12 @@ export function timelineScrollContainer(element: Element): Element | null {
  * would follow the container that actually scrolls; otherwise from shared scroll observation,
  * which skips clipping ancestors that cannot scroll.
  */
-export function parallaxDriver(element: Element): 'timeline' | 'script' {
+export function parallaxDriver(
+  element: Element,
+  options: { readonly smoothing?: number } = {},
+): 'timeline' | 'script' {
+  // A view timeline is locked to the scroll; trailing motion needs frame-driven progress.
+  if (clampParallaxSmoothing(options.smoothing ?? 0) > 0) return 'script';
   if (!supportsViewTimeline(element.ownerDocument.defaultView)) return 'script';
   return timelineScrollContainer(element) === commonScrollContainer([element])
     ? 'timeline'
@@ -97,15 +101,63 @@ export function parallaxAxis(element: Element): ParallaxAxis {
   return container ? scrollAxis(container) : 'block';
 }
 
+/** Smoothing: finite values clamped to 0 through 0.98 (1 would never move). */
+export function clampParallaxSmoothing(smoothing: number): number {
+  return Number.isFinite(smoothing) ? Math.min(0.98, Math.max(0, smoothing)) : 0;
+}
+
+/** One 60 Hz frame; smoothing is the share of the remaining distance left after it. */
+const FRAME = 1000 / 60;
+
+/**
+ * Moves `current` toward `target` for `elapsed` milliseconds of trailing motion: `smoothing` is the
+ * share of the remaining distance still left after one 60 Hz frame, so 0 snaps to the target and
+ * the result does not depend on the frame rate.
+ */
+export function smoothProgress(
+  current: number,
+  target: number,
+  smoothing: number,
+  elapsed: number,
+): number {
+  const factor = clampParallaxSmoothing(smoothing);
+  if (factor === 0 || elapsed <= 0) return factor === 0 ? target : current;
+  return target - (target - current) * factor ** (elapsed / FRAME);
+}
+
 type ProgressWriter = (progress: number) => void;
 
-/** The visible members of one scroll container, measured together once per frame. */
+interface ParallaxMember {
+  readonly write: ProgressWriter;
+  readonly smoothing: number;
+  /** Undefined until measured: an unmeasured member is never written. */
+  target: number | undefined;
+  /** Undefined until first written, so a joining member starts at rest on its target. */
+  current: number | undefined;
+}
+
+/** Distance below which trailing motion has settled. */
+const SETTLED = 0.0005;
+
+/**
+ * How far beyond the visible area a member joins and leaves its field, so it is measured and
+ * placed before it shows and keeps moving until it is gone.
+ */
+const PARALLAX_MARGIN = '25%';
+
+/**
+ * The members of one scroll container. One animation frame at a time measures every member (when
+ * scrolling or layout changed), then writes every member's progress; frames that only finish
+ * trailing motion read no layout, and the loop stops once everything settles.
+ */
 class ParallaxField {
-  readonly members = new Map<Element, ProgressWriter>();
+  readonly members = new Map<Element, ParallaxMember>();
   readonly #view: Window;
   readonly #root: boolean;
   readonly #release: (() => void)[];
   #frame = 0;
+  #measure = false;
+  #lastFrame = 0;
   #axis: ParallaxAxis = 'block';
   #rtl = false;
 
@@ -114,7 +166,11 @@ class ParallaxField {
     this.#root = container === container.ownerDocument.scrollingElement;
     this.#measureContainer();
     this.#release = [
-      observeScroll(scrollEventTarget(container), { scroll: () => this.flush() }),
+      // The field owns its frame; the shared source only reports that scrolling happened.
+      observeScroll(scrollEventTarget(container), {
+        scroll: () => this.schedule(),
+        timing: { immediate: true },
+      }),
       observeResize(this.#root ? container.ownerDocument.documentElement : container, () => {
         this.#measureContainer();
         this.schedule();
@@ -127,16 +183,20 @@ class ParallaxField {
     this.#rtl = this.#view.getComputedStyle(this.container).direction === 'rtl';
   }
 
-  schedule(): void {
+  /** Requests a frame; `measure` (the default) re-reads geometry in it. */
+  schedule(measure = true): void {
+    this.#measure ||= measure;
     if (this.#frame) return;
-    this.#frame = this.#view.requestAnimationFrame(() => {
+    this.#frame = this.#view.requestAnimationFrame((time) => {
       this.#frame = 0;
-      this.flush();
+      if (this.#measure) this.#read();
+      this.#write(time);
     });
   }
 
-  /** Reads every member's geometry before writing any progress, so a frame lays out once. */
-  flush(): void {
+  /** Reads every member's geometry before any progress is written, so a frame lays out once. */
+  #read(): void {
+    this.#measure = false;
     const inline = this.#axis === 'inline';
     let visibleStart = 0,
       visibleEnd = inline ? this.#view.innerWidth : this.#view.innerHeight;
@@ -149,17 +209,35 @@ class ParallaxField {
         visibleStart + (inline ? this.container.clientWidth : this.container.clientHeight);
     }
     const measured = [...this.members].map(
-      ([element, write]) => [write, element.getBoundingClientRect()] as const,
+      ([element, member]) => [member, element.getBoundingClientRect()] as const,
     );
     // Right-to-left strips scroll toward the left, so their content enters from that side.
     const sign = inline && this.#rtl ? -1 : 1;
-    for (const [write, rect] of measured)
-      write(
+    for (const [member, rect] of measured)
+      member.target =
         sign *
-          (inline
-            ? parallaxProgress(rect.left, rect.width, visibleStart, visibleEnd)
-            : parallaxProgress(rect.top, rect.height, visibleStart, visibleEnd)),
-      );
+        (inline
+          ? parallaxProgress(rect.left, rect.width, visibleStart, visibleEnd)
+          : parallaxProgress(rect.top, rect.height, visibleStart, visibleEnd));
+  }
+
+  /** Writes every measured member, trailing members moving toward their target. */
+  #write(now: number): void {
+    const elapsed = this.#lastFrame ? Math.min(now - this.#lastFrame, 100) : FRAME;
+    let moving = false;
+    for (const member of this.members.values()) {
+      if (member.target === undefined) continue;
+      const current =
+        member.current === undefined
+          ? member.target
+          : smoothProgress(member.current, member.target, member.smoothing, elapsed);
+      const settled = Math.abs(member.target - current) < SETTLED;
+      member.current = settled ? member.target : current;
+      member.write(member.current);
+      moving ||= !settled;
+    }
+    this.#lastFrame = moving ? now : 0;
+    if (moving) this.schedule(false);
   }
 
   dispose(): void {
@@ -171,11 +249,19 @@ class ParallaxField {
 const fields = new WeakMap<HTMLElement, ParallaxField>();
 
 /**
- * Reports `element`'s scroll progress (see `parallaxProgress`) to `write` while it is visible,
- * through one shared field per scroll container: one scroll subscription and one measurement pass
- * per frame for all visible members, and nothing at all for elements off screen.
+ * Reports `element`'s scroll progress (see `parallaxProgress`) to `write` while it is near the
+ * visible area of its scroller, through one shared field per scroll container: one measurement
+ * pass and one write pass per frame for all its members, and nothing for elements far off screen.
+ * A member is placed before it shows (it joins at subscription and within a margin of the visible
+ * area), and leaving snaps it to the edge it left by, which is where it reappears.
  */
-export function observeParallax(element: Element, write: ProgressWriter): () => void {
+export function observeParallax(
+  element: Element,
+  write: ProgressWriter,
+  /** `smoothing` makes progress trail the scroll (see `smoothProgress`); default 0. */
+  options: { readonly smoothing?: number } = {},
+): () => void {
+  const smoothing = clampParallaxSmoothing(options.smoothing ?? 0);
   let field: ParallaxField | undefined;
   let releaseSize: (() => void) | undefined;
   const join = () => {
@@ -184,13 +270,16 @@ export function observeParallax(element: Element, write: ProgressWriter): () => 
     if (!container) return;
     field = fields.get(container);
     if (!field) fields.set(container, (field = new ParallaxField(container)));
-    field.members.set(element, write);
+    field.members.set(element, { write, smoothing, target: undefined, current: undefined });
     const current = field;
     releaseSize = observeResize(element, () => current.schedule());
     field.schedule();
   };
   const leave = () => {
     if (!field) return;
+    const member = field.members.get(element);
+    // Off screen by the margin, so the snap is invisible; the image returns through that edge.
+    if (member?.target !== undefined) write(member.target < 0 ? -1 : 1);
     releaseSize?.();
     releaseSize = undefined;
     field.members.delete(element);
@@ -200,10 +289,13 @@ export function observeParallax(element: Element, write: ProgressWriter): () => 
     }
     field = undefined;
   };
-  const releaseVisibility = observeIntersection(element, (entry) =>
-    entry.isIntersecting ? join() : leave(),
+  const releaseVisibility = observeIntersection(
+    element,
+    (entry) => (entry.isIntersecting ? join() : leave()),
+    { rootMargin: PARALLAX_MARGIN, scrollMargin: PARALLAX_MARGIN },
   );
-  if (!canObserveIntersection(element)) join();
+  // Measured in the next frame, before the element first paints; visibility then takes over.
+  join();
   return () => {
     releaseVisibility();
     leave();

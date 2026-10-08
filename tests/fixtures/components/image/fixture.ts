@@ -13,6 +13,7 @@ if (built) document.querySelector<HTMLLinkElement>('link[rel=stylesheet]')!.href
 const api = await import(/* @vite-ignore */ built ? '/dist/index.js' : '/src/index.ts');
 // Only Image: it must define the controls it composes itself.
 api.defineElement(api.TpImage.tagName, api.TpImage);
+api.defineElement(api.TpImageGroup.tagName, api.TpImageGroup);
 
 const photo = (id: string, width: number, format = '') =>
   `https://images.unsplash.com/${id}?w=${width}&q=70&auto=format&fit=crop${format ? `&fm=${format}` : ''}`;
@@ -161,6 +162,36 @@ for (const [index, reveal] of ['fade', 'up', 'down', 'left', 'right', 'zoom-in',
       reveal,
     ),
   );
+
+const smoothing = document.querySelector('#smoothing')!;
+for (const value of ['0', '0.85'])
+  smoothing.append(
+    make(
+      { id: `smoothing-${value}`, ratio: '1', parallax: 'up zoom-in', 'parallax-smoothing': value, src: photo(alley, 640), alt: '' },
+      `smoothing ${value}`,
+    ),
+  );
+
+const repeats = document.querySelector('#repeats')!;
+repeats.append(
+  make({ id: 'repeat-on', ratio: '1.5', reveal: 'fade up', 'reveal-repeat': '', src: photo(desks, 480), alt: '' }, 'reveal-repeat'),
+  make({ id: 'repeat-off', ratio: '1.5', reveal: 'fade up', src: photo(office, 480), alt: '' }, 'once (default)'),
+);
+
+// Groups: unique widths keep each member a separate request.
+const groupImage = (id: string, index: number, extra: Record<string, string> = {}) =>
+  make({ id, ratio: '1.5', src: photo(photos[index % photos.length]!, 500 + index), alt: '', ...extra });
+const stagger = document.querySelector('#group-stagger')!;
+for (let index = 0; index < 5; index++) stagger.append(groupImage(`group-stagger-${index}`, index));
+stagger.append(groupImage('group-stagger-failing', 5, { src: '/missing-member.jpg' }));
+const held = document.querySelector('#group-held')!;
+for (let index = 0; index < 4; index++) held.append(groupImage(`group-held-${index}`, index + 10));
+const repeat = document.querySelector('#group-repeat')!;
+for (let index = 0; index < 4; index++) repeat.append(groupImage(`group-repeat-${index}`, index + 20));
+const outer = document.querySelector('#group-outer')!;
+outer.prepend(groupImage('group-outer-0', 30));
+const inner = document.querySelector('#group-inner')!;
+for (let index = 0; index < 3; index++) inner.append(groupImage(`group-inner-${index}`, index + 40));
 
 if (params.has('stress')) {
   const section = document.querySelector<HTMLElement>('#case-stress')!;
