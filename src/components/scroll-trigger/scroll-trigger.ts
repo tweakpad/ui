@@ -24,7 +24,7 @@ export type ScrollTriggerStatus = 'idle' | 'loading' | 'ready';
  * that never changes its own box, so binding it never moves the content around it.
  *
  * With `scrub`, the scroll position drives the same choreography instead of time: progress over
- * `scrub-range` moves forward only, or both ways with `reveal-repeat`. With `pin`, the trigger
+ * `scrub-range` follows the scroll both ways, or only forward with `scrub-once`. With `pin`, the trigger
  * becomes a track one viewport plus `--tp-scroll-trigger-pin-length` tall whose content sticks in
  * the `stage` part, so a pinned section can reveal as the scroll advances.
  *
@@ -55,6 +55,7 @@ export class TpScrollTrigger extends TpElement {
     scrub: { type: Boolean, reflect: true },
     scrubRange: { type: String, attribute: 'scrub-range', reflect: true },
     scrubSmoothing: { type: Number, attribute: 'scrub-smoothing' },
+    scrubOnce: { type: Boolean, attribute: 'scrub-once', reflect: true },
     pin: { type: Boolean, reflect: true },
   };
   static override styles = [
@@ -108,6 +109,8 @@ export class TpScrollTrigger extends TpElement {
   scrubRange: ScrollRange = 'contain';
   /** How far scrubbed progress trails the scroll, 0 through 0.98; 0 is locked to it. */
   scrubSmoothing = 0;
+  /** Scrubbed progress only moves forward, leaving revealed members at rest on scroll back. */
+  scrubOnce = false;
   /** Pin the content in a sticky stage for an extra scroll length. */
   pin = false;
 
@@ -122,6 +125,7 @@ export class TpScrollTrigger extends TpElement {
     scrub: () => this.scrub,
     range: () => parseScrollRange(this.scrubRange),
     smoothing: () => this.scrubSmoothing,
+    scrubOnce: () => this.scrubOnce,
     marker: true,
     emit: (type, detail) => this.emit(type, detail),
     status: ({ status, ready, failed, total }) => {

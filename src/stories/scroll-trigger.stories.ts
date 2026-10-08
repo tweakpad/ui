@@ -12,6 +12,7 @@ interface Args {
   scrub: boolean;
   scrubRange: 'contain' | 'cover' | 'entry' | 'exit';
   scrubSmoothing: number;
+  scrubOnce: boolean;
   pin: boolean;
 }
 
@@ -35,6 +36,7 @@ const meta = {
     scrub: false,
     scrubRange: 'contain',
     scrubSmoothing: 0,
+    scrubOnce: false,
     pin: false,
   },
   argTypes: {
@@ -61,8 +63,7 @@ const meta = {
     },
     scrub: {
       control: 'boolean',
-      description:
-        'Follow the scroll position instead of time (forward only unless `reveal-repeat`).',
+      description: 'Follow the scroll position instead of time, in both directions.',
       table: { defaultValue: { summary: 'false' } },
     },
     scrubRange: {
@@ -75,6 +76,12 @@ const meta = {
       control: { type: 'range', min: 0, max: 0.95, step: 0.05 },
       description: '`scrub-smoothing`: how far progress trails the scroll; 0 is locked to it.',
       table: { defaultValue: { summary: '0' } },
+    },
+    scrubOnce: {
+      control: 'boolean',
+      description:
+        '`scrub-once`: scrubbed progress only moves forward; scrolling back leaves members at rest.',
+      table: { defaultValue: { summary: 'false' } },
     },
     pin: {
       control: 'boolean',
@@ -89,7 +96,7 @@ const meta = {
       .replace('stagger="200"', `stagger="${args.stagger}" stagger-from="${args.staggerFrom}"`)
       .replace(
         '<tp-scroll-trigger',
-        `<tp-scroll-trigger${args.revealRepeat ? ' reveal-repeat' : ''}${args.revealHold ? ' reveal-hold' : ''}${args.scrub ? ` scrub scrub-range="${args.scrubRange}" scrub-smoothing="${args.scrubSmoothing}"` : ''}${args.pin ? ' pin' : ''}`,
+        `<tp-scroll-trigger${args.revealRepeat ? ' reveal-repeat' : ''}${args.revealHold ? ' reveal-hold' : ''}${args.scrub ? ` scrub scrub-range="${args.scrubRange}" scrub-smoothing="${args.scrubSmoothing}"${args.scrubOnce ? ' scrub-once' : ''}` : ''}${args.pin ? ' pin' : ''}`,
       );
     return html`<div style="max-inline-size: 48rem">${unsafeHTML(markup)}</div>`;
   },

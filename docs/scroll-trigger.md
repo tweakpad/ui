@@ -48,6 +48,7 @@ too, so binding it never moves the content around it. Lay out its content as you
 | `scrub` | follow the scroll position instead of time | `false` |
 | `scrubRange` / `scrub-range` | `contain`, `cover`, `entry`, `exit` | `contain` |
 | `scrubSmoothing` / `scrub-smoothing` | 0 to 0.98; how far progress trails the scroll | `0` |
+| `scrubOnce` / `scrub-once` | scrubbed progress only moves forward | `false` |
 | `pin` | pin the content in a sticky stage for an extra scroll length | `false` |
 
 Read-only: `status` (`idle`, `loading`, `ready`), `members` (the member elements in order),
@@ -69,9 +70,10 @@ would play: members start `stagger` milliseconds apart along a timeline that end
 member's own reveal (its duration, stagger and easing) ends, and progress 0 to 1 moves through
 that timeline. A section therefore looks the same scrubbed as played.
 
-By default progress only moves forward: once something is revealed, scrolling back up leaves it at
-rest. With `reveal-repeat` the reveal follows the scroll both ways. `scrub-smoothing` (0 to 0.98)
-makes it trail the scroll a little, like `parallax-smoothing` on Image.
+Progress follows the scroll both ways, so scrolling back plays the reveal in reverse. With
+`scrub-once` it only moves forward: once something is revealed, scrolling back leaves it at rest.
+`reveal-repeat` has no effect while scrubbing. `scrub-smoothing` (0 to 0.98) makes progress trail
+the scroll a little, like `parallax-smoothing` on Image.
 
 | Range (`scrub-range`) | Progress runs |
 | --- | --- |
@@ -120,7 +122,7 @@ any sticky element, there must be no clipping ancestor between the trigger and i
 | Event | Detail | When |
 | --- | --- | --- |
 | `tp-loading-status-change` | `{ status, ready, failed, total }` | the members' aggregate readiness changes |
-| `tp-reveal-change` | `{ revealed }` | the sequence starts, or a repeat resets it |
+| `tp-reveal-change` | `{ revealed }` | the sequence starts, or a repeat resets it (scrubbed: progress leaves 0, or returns to 0) |
 | `tp-reveal-change-complete` | `{ revealed }` | the last member's reveal has settled (scrubbed: progress reached 1) |
 | `tp-scroll-progress` | `{ progress }` | each frame scrubbed progress changes |
 

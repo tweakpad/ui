@@ -206,6 +206,8 @@ export interface RevealCoordinatorConfig {
   range?(): ScrollRange;
   /** How far scrubbed progress trails the scroll. */
   smoothing?(): number;
+  /** Scrubbed progress only moves forward (by default it follows the scroll both ways). */
+  scrubOnce?(): boolean;
 }
 
 /**
@@ -397,9 +399,9 @@ export class RevealCoordinator {
     this.schedule();
   }
 
-  /** New measured progress: forward only unless repeating, then events and presentation. */
+  /** New measured progress: both ways unless scrubbing once, then events and presentation. */
   #scrolled(measured: number): void {
-    const repeat = this.#config.repeat();
+    const repeat = !this.#config.scrubOnce?.();
     this.#highest = repeat ? measured : Math.max(this.#highest, measured);
     const progress = this.#highest;
     if (progress === this.#progress && this.#revealed === progress > 0) return;

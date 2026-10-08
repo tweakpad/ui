@@ -23,9 +23,9 @@
     <main>
       <h1 class="fixture">Scroll trigger verification</h1>
       <p class="flow" id="above">Flow content above the pinned section.</p>
-      <div class="spacer">Scroll: a pinned section reveals as the scroll advances (forward only)</div>
+      <div class="spacer">Scroll: a pinned section reveals as the scroll advances (forward only, scrub-once)</div>
 
-      <tp-scroll-trigger id="pinned" scrub pin stagger="250" style="--tp-scroll-trigger-pin-length: 200vh">
+      <tp-scroll-trigger id="pinned" scrub scrub-once pin stagger="250" style="--tp-scroll-trigger-pin-length: 200vh">
         <div class="scene">
           <h2><tp-text-motion id="pinned-heading" split="words" mask="words" reveal="up" stagger="80">Quiet spaces reveal as you scroll</tp-text-motion></h2>
           <tp-image-group id="pinned-group" reveal="fade up" stagger="120"><div class="row" id="pinned-images"></div></tp-image-group>
@@ -34,8 +34,8 @@
       </tp-scroll-trigger>
       <p class="flow" id="after-pinned">Flow content after the pinned section.</p>
 
-      <div class="spacer">Scroll: this pinned section reverses on scroll up (reveal-repeat)</div>
-      <tp-scroll-trigger id="reversing" scrub pin reveal-repeat stagger="200" scrub-smoothing="0.8" style="--tp-scroll-trigger-pin-length: 150vh">
+      <div class="spacer">Scroll: this pinned section reverses on scroll up (the default)</div>
+      <tp-scroll-trigger id="reversing" scrub pin stagger="200" scrub-smoothing="0.8" style="--tp-scroll-trigger-pin-length: 150vh">
         <div class="scene">
           <h2><tp-text-motion id="reversing-heading" split="chars" reveal="fade blur" stagger="30" stagger-from="center">Back and forth</tp-text-motion></h2>
           <p><tp-text-motion id="reversing-caption" split="words lines" mask="lines" reveal="up">Each line follows the scroll in both directions, trailing it slightly.</tp-text-motion></p>

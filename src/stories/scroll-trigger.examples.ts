@@ -10,6 +10,21 @@ const rooms = [
   'photo-1548516173-3cabfa4607e9',
 ];
 
+/**
+ * Static Skeleton bars that stand in for surrounding page content, so the demo shows only the
+ * subject: `sizes` are inline sizes; `block` adds a taller block such as an image.
+ */
+const placeholder = (sizes: readonly string[], style = '') =>
+  `<div style="display: grid; gap: var(--tp-space-3); padding-block: var(--tp-space-6);${style}">
+${sizes
+  .map((size) =>
+    size === 'block'
+      ? '  <tp-skeleton motion="none" style="block-size: 6rem"></tp-skeleton>'
+      : `  <tp-skeleton motion="none" style="block-size: 0.75rem; inline-size: ${size}"></tp-skeleton>`,
+  )
+  .join('\n')}
+</div>`;
+
 export const scrollTriggerDefaultSource = `<tp-scroll-trigger stagger="200">
   <h3 style="margin: 0 0 var(--tp-space-3); font-size: 2rem; line-height: 1.1">
     <tp-text-motion split="words lines" mask="lines" reveal="up">Quiet spaces, open light</tp-text-motion>
@@ -32,7 +47,7 @@ ${rooms
 export const scrollTriggerExamples = [
   markupExample(
     'Pinned scene revealed by the scroll',
-    `<p style="margin: 0; padding-block: var(--tp-space-6); color: var(--tp-muted-foreground)">Scroll this example. The next section pins while the scroll plays its reveal.</p>
+    `${placeholder(['40%', '90%', '75%', 'block', '85%', '60%'], ' min-block-size: 100cqb; align-content: start; box-sizing: border-box')}
 <tp-scroll-trigger scrub pin stagger="250" style="--tp-scroll-trigger-pin-length: 150cqb">
   <div style="block-size: 100%; display: grid; align-content: center; gap: var(--tp-space-4)">
     <h3 style="margin: 0; font-size: 1.75rem; line-height: 1.15">
@@ -49,36 +64,24 @@ ${rooms
       </div>
     </tp-image-group>
     <p style="margin: 0; color: var(--tp-muted-foreground)">
-      <tp-text-motion split="words" reveal="fade" stagger="40">Scrolling back up leaves everything at rest.</tp-text-motion>
+      <tp-text-motion split="words" reveal="fade" stagger="40">Three rooms designed for focused work.</tp-text-motion>
     </p>
   </div>
 </tp-scroll-trigger>
-<p style="margin: 0; padding-block: var(--tp-space-6); color: var(--tp-muted-foreground)">The section unpins and the content continues.</p>`,
-    'The example scrolls inside its own frame, which is a size container (`container-type: size`): the pinned stage fills it while the scroll advances through 150% of its height, and the scroll position plays the same choreography a timed reveal would. The words rise behind their masks, then the images, then the caption. Progress only moves forward, so scrolling back leaves the scene revealed; add `reveal-repeat` to make it follow the scroll both ways.',
+${placeholder(['85%', '60%', 'block', '90%', '70%'], ' min-block-size: 100cqb; align-content: start; box-sizing: border-box')}`,
+    'The example scrolls inside its own frame, a size container (`container-type: size`): the pinned stage fills it while the scroll advances through 150% of its height, and the scroll position plays the same choreography a timed reveal would. The words rise behind their masks, then the images, then the caption, and scrolling back plays it in reverse. Skeleton bars stand in for the surrounding content.',
     { viewport: '26rem' },
   ),
   markupExample(
-    'Scrubbed in both directions',
-    `<div style="min-block-size: 100cqb; display: grid; align-content: end; gap: var(--tp-space-3); padding-block: var(--tp-space-6); color: var(--tp-muted-foreground)">
-  <p style="margin: 0">Scroll this example. The band below enters from the bottom edge and leaves at the top; its lines follow the scroll both ways.</p>
-  <p style="margin: 0">Each room is planned around daylight first: deep windows on the long side, pale floors that carry the light inward, and storage kept low so nothing blocks the view.</p>
-  <p style="margin: 0">Quiet zones sit at the far end of every floor, away from the stairs and the kitchen, so focused work never shares a wall with a meeting.</p>
-  <p style="margin: 0">Acoustic panels line the ceilings of the open areas, and every desk is within a few steps of a window, a plant and a place to make a call.</p>
-  <p style="margin: 0">Materials stay honest and few: oak, linen, lime plaster and steel, chosen to age well and to keep the rooms calm through the day.</p>
-</div>
-<tp-scroll-trigger scrub scrub-range="cover" reveal-repeat scrub-smoothing="0.8" stagger="150" reveal="fade left">
+    'Unpinned band scrubbed through its pass',
+    `${placeholder(['45%', '90%', '80%', 'block', '70%', '85%'], ' min-block-size: 100cqb; align-content: end; box-sizing: border-box')}
+<tp-scroll-trigger scrub scrub-range="cover" scrub-smoothing="0.8" stagger="150" reveal="fade left">
   <p style="margin: 0; font-size: 1.5rem"><tp-text-motion>The first line slides in with the scroll,</tp-text-motion></p>
   <p style="margin: 0; font-size: 1.5rem"><tp-text-motion>then the second,</tp-text-motion></p>
   <p style="margin: 0; font-size: 1.5rem"><tp-text-motion>and back out as you scroll up.</tp-text-motion></p>
 </tp-scroll-trigger>
-<div style="min-block-size: 100cqb; display: grid; align-content: start; gap: var(--tp-space-3); padding-block: var(--tp-space-6); color: var(--tp-muted-foreground)">
-  <p style="margin: 0">Shared tables fill the middle of the plan, close enough to the windows for daylight and far enough from the quiet zones to keep conversations easy.</p>
-  <p style="margin: 0">Meeting rooms are glazed on one side only, so they borrow light from the floor without putting their occupants on display.</p>
-  <p style="margin: 0">Kitchens open onto terraces where the building steps back, giving every floor somewhere to step outside between tasks.</p>
-  <p style="margin: 0">Wayfinding stays quiet too: a single accent colour per floor, repeated on doors and signs, instead of arrows on every wall.</p>
-  <p style="margin: 0">The band has left the top edge by now. Scroll back up to watch the lines reverse.</p>
-</div>`,
-    'An unpinned band scrubbed across its whole pass through the example’s scroll (`scrub-range="cover"`). With `reveal-repeat` the lines follow the scroll both ways, and `scrub-smoothing` makes them trail it slightly.',
+${placeholder(['80%', '60%', 'block', '90%', '50%'], ' min-block-size: 100cqb; align-content: start; box-sizing: border-box')}`,
+    'An unpinned band scrubbed across its whole pass through the example’s scroll (`scrub-range="cover"`): the lines follow the scroll both ways, and `scrub-smoothing` makes them trail it slightly. Add `scrub-once` to keep revealed lines at rest when scrolling back.',
     { viewport: '20rem' },
   ),
   markupExample(
