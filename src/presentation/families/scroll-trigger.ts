@@ -14,6 +14,12 @@ const definition: ComponentDefinition = {
       presentationKeys: ['scroll-trigger'],
       cardinality: 'exactly one public owner host per control instance',
     },
+    {
+      name: 'scroll-trigger-stage',
+      publicName: 'Stage',
+      presentationKeys: ['scroll-trigger-stage'],
+      cardinality: 'exactly one, in Root, around its content; sticky while pinned',
+    },
   ],
 };
 
@@ -23,6 +29,7 @@ export const scrollTriggerPresentation = definePresentation({
   bindings: {
     'tp-scroll-trigger': {
       ':host': 'scroll-trigger',
+      "[part~='stage']": 'scroll-trigger-stage',
     },
   },
 });

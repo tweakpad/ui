@@ -46,6 +46,14 @@ export type ImageParallaxEffect = ParallaxDirection | 'zoom-in' | 'zoom-out';
 export type ImageParallax = 'none' | ImageParallaxEffect | (string & {});
 export type ImageRevealEffect = 'fade' | 'up' | 'down' | 'left' | 'right' | 'zoom-in' | 'zoom-out';
 
+/** Milliseconds of the first time in a computed time list (`0.56s`, `560ms`). */
+function milliseconds(value: string): number {
+  const text = value.split(',')[0]!.trim();
+  const number = Number.parseFloat(text);
+  if (!Number.isFinite(number)) return 0;
+  return text.endsWith('ms') ? number : number * 1000;
+}
+
 const REVEAL_EFFECTS: readonly ImageRevealEffect[] = [
   'fade',
   'up',
@@ -153,38 +161,56 @@ export class TpImage extends TpElement {
         display: none;
       }
 
-      /* Reveal start state (Foundation §18.17 img-reveal); data-revealed returns to rest. */
-      :host([data-reveal]:not([data-revealed])) {
+      /* Reveal start values (Foundation §18.17 img-reveal), shared by the timed start state and
+         the scrubbed keyframe; data-revealed returns to rest. */
+      :host([data-reveal~='fade']) {
+        --_reveal-opacity: 0;
+      }
+
+      :host([data-reveal~='up']) {
+        --_reveal-y: var(--tp-image-reveal-distance, var(--tp-space-6));
+      }
+
+      :host([data-reveal~='down']) {
+        --_reveal-y: calc(-1 * var(--tp-image-reveal-distance, var(--tp-space-6)));
+      }
+
+      :host([data-reveal~='left']) {
+        --_reveal-x: var(--tp-image-reveal-distance, var(--tp-space-6));
+      }
+
+      :host([data-reveal~='right']) {
+        --_reveal-x: calc(-1 * var(--tp-image-reveal-distance, var(--tp-space-6)));
+      }
+
+      :host([data-reveal~='zoom-in']) {
+        --_reveal-scale: calc(1 - var(--tp-image-reveal-scale, 0.08));
+      }
+
+      :host([data-reveal~='zoom-out']) {
+        --_reveal-scale: calc(1 + var(--tp-image-reveal-scale, 0.08));
+      }
+
+      :host([data-reveal]:not([data-revealed], [data-tp-scrub])) {
+        opacity: var(--_reveal-opacity, 1);
         translate: var(--_reveal-x, 0%) var(--_reveal-y, 0%);
         scale: var(--_reveal-scale, 1);
       }
 
-      :host([data-reveal~='fade']:not([data-revealed])) {
-        opacity: 0;
+      /* Scrubbed (Foundation §18.17 img-scrub): the scroll sets the time; the image shows its
+         eased reveal at that time, its reveal delay included. */
+      @keyframes tp-image-reveal {
+        from {
+          opacity: var(--_reveal-opacity, 1);
+          translate: var(--_reveal-x, 0%) var(--_reveal-y, 0%);
+          scale: var(--_reveal-scale, 1);
+        }
       }
 
-      :host([data-reveal~='up']:not([data-revealed])) {
-        --_reveal-y: var(--tp-image-reveal-distance, var(--tp-space-6));
-      }
-
-      :host([data-reveal~='down']:not([data-revealed])) {
-        --_reveal-y: calc(-1 * var(--tp-image-reveal-distance, var(--tp-space-6)));
-      }
-
-      :host([data-reveal~='left']:not([data-revealed])) {
-        --_reveal-x: var(--tp-image-reveal-distance, var(--tp-space-6));
-      }
-
-      :host([data-reveal~='right']:not([data-revealed])) {
-        --_reveal-x: calc(-1 * var(--tp-image-reveal-distance, var(--tp-space-6)));
-      }
-
-      :host([data-reveal~='zoom-in']:not([data-revealed])) {
-        --_reveal-scale: calc(1 - var(--tp-image-reveal-scale, 0.08));
-      }
-
-      :host([data-reveal~='zoom-out']:not([data-revealed])) {
-        --_reveal-scale: calc(1 + var(--tp-image-reveal-scale, 0.08));
+      :host([data-reveal][data-tp-scrub]) {
+        transition: none;
+        animation: tp-image-reveal var(--_reveal-duration) var(--_reveal-easing) both paused;
+        animation-delay: calc(var(--tp-image-reveal-delay, 0s) - var(--_tp-image-time, 0ms));
       }
 
       /* Returning to the start state (repeat, off screen) is instant; only revealing animates. */
@@ -662,6 +688,26 @@ export class TpImage extends TpElement {
     reveal: (delay) => this.#playback.play(delay),
     reset: () => this.#playback.reset(),
     refresh: () => this.requestUpdate(),
+    duration: () => {
+      const view = this.ownerDocument.defaultView;
+      if (!view || !this.#revealEffects.length) return 0;
+      // The scrubbed keyframe resolves the duration; its delay at time 0 is the reveal delay.
+      this.toggleAttribute('data-tp-scrub', true);
+      this.style.setProperty('--_tp-image-time', '0ms');
+      const style = view.getComputedStyle(this);
+      return (
+        Math.max(0, milliseconds(style.animationDelay)) + milliseconds(style.animationDuration)
+      );
+    },
+    scrub: (time) => {
+      if (time === null) {
+        this.removeAttribute('data-tp-scrub');
+        this.style.removeProperty('--_tp-image-time');
+        return;
+      }
+      this.toggleAttribute('data-tp-scrub', true);
+      this.style.setProperty('--_tp-image-time', `${Math.max(0, time)}ms`);
+    },
   };
 
   readonly #membership = new RevealMembership(this, this.#member, () => this.requestUpdate());

@@ -9,6 +9,10 @@ interface Args {
   staggerFrom: 'first' | 'last' | 'center';
   revealRepeat: boolean;
   revealHold: boolean;
+  scrub: boolean;
+  scrubRange: 'contain' | 'cover' | 'entry' | 'exit';
+  scrubSmoothing: number;
+  pin: boolean;
 }
 
 const meta = {
@@ -23,7 +27,16 @@ const meta = {
       source: { code: scrollTriggerDefaultSource },
     },
   },
-  args: { stagger: 200, staggerFrom: 'first', revealRepeat: false, revealHold: false },
+  args: {
+    stagger: 200,
+    staggerFrom: 'first',
+    revealRepeat: false,
+    revealHold: false,
+    scrub: false,
+    scrubRange: 'contain',
+    scrubSmoothing: 0,
+    pin: false,
+  },
   argTypes: {
     stagger: {
       control: { type: 'range', min: 0, max: 600, step: 20 },
@@ -46,6 +59,29 @@ const meta = {
       description: '`reveal-hold`: hold every member in its start state until cleared.',
       table: { defaultValue: { summary: 'false' } },
     },
+    scrub: {
+      control: 'boolean',
+      description:
+        'Follow the scroll position instead of time (forward only unless `reveal-repeat`).',
+      table: { defaultValue: { summary: 'false' } },
+    },
+    scrubRange: {
+      control: 'inline-radio',
+      options: ['contain', 'cover', 'entry', 'exit'],
+      description: '`scrub-range`: the scroll range mapped to progress.',
+      table: { defaultValue: { summary: 'contain' } },
+    },
+    scrubSmoothing: {
+      control: { type: 'range', min: 0, max: 0.95, step: 0.05 },
+      description: '`scrub-smoothing`: how far progress trails the scroll; 0 is locked to it.',
+      table: { defaultValue: { summary: '0' } },
+    },
+    pin: {
+      control: 'boolean',
+      description:
+        'Pin the content in a sticky stage for `--tp-scroll-trigger-pin-length` (twice the visible extent).',
+      table: { defaultValue: { summary: 'false' } },
+    },
   },
   render: (args) => {
     // The default source is the composition; story controls set the trigger's own properties.
@@ -53,7 +89,7 @@ const meta = {
       .replace('stagger="200"', `stagger="${args.stagger}" stagger-from="${args.staggerFrom}"`)
       .replace(
         '<tp-scroll-trigger',
-        `<tp-scroll-trigger${args.revealRepeat ? ' reveal-repeat' : ''}${args.revealHold ? ' reveal-hold' : ''}`,
+        `<tp-scroll-trigger${args.revealRepeat ? ' reveal-repeat' : ''}${args.revealHold ? ' reveal-hold' : ''}${args.scrub ? ` scrub scrub-range="${args.scrubRange}" scrub-smoothing="${args.scrubSmoothing}"` : ''}${args.pin ? ' pin' : ''}`,
       );
     return html`<div style="max-inline-size: 48rem">${unsafeHTML(markup)}</div>`;
   },

@@ -210,6 +210,11 @@ tp-text-motion:not(:defined) {
   display: block;
 }
 
+/* A pinned trigger is its full track before definition too (Foundation §18.18 vr-pin). */
+tp-scroll-trigger[pin] {
+  block-size: calc(100cqb + var(--tp-scroll-trigger-pin-length, 200cqb));
+}
+
 /* An image reserves its frame before definition where typed attributes are supported. */
 @supports (aspect-ratio: attr(ratio type(<number>))) {
   tp-image:not(:defined)[width][height] {

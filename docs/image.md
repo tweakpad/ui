@@ -189,7 +189,8 @@ the trigger waits for every member (the group waits for its images) and reveals 
 An image belongs to its nearest group or trigger, and a group inside a trigger or another group
 is one member of it, playing its own stagger after the delay it receives. Images added later
 join the set and reveal as soon as they settle. For other motion, hold the group, wait for what
-you need, then clear `reveal-hold`.
+you need, then clear `reveal-hold`. Inside a scrubbing trigger the scroll position drives the
+image's reveal (delay, duration and easing included) instead of time.
 
 ## Performance
 

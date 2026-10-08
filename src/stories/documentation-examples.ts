@@ -2,9 +2,17 @@ import { html } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 
-/** Authored, trusted HTML is both the rendered composition and its copyable source. */
-export function markupExample(title: string, code: string, description?: string) {
-  return { title, code, description, render: () => html`${unsafeHTML(code)}` };
+/**
+ * Authored, trusted HTML is both the rendered composition and its copyable source. `viewport` makes
+ * the example's own preview a scroll container of that height (a scrolling use case).
+ */
+export function markupExample(
+  title: string,
+  code: string,
+  description?: string,
+  options: { readonly viewport?: string } = {},
+) {
+  return { title, code, description, ...options, render: () => html`${unsafeHTML(code)}` };
 }
 
 /** One mount/cleanup path for live application examples and their copyable source. */

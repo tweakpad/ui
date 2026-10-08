@@ -46,6 +46,14 @@ const EFFECTS: readonly TextMotionEffect[] = [
 ];
 const DEFAULT_REVEAL = 'fade up';
 
+/** Milliseconds of the first time in a computed time list (`0.56s`, `560ms`). */
+function seconds(value: string): number {
+  const text = value.split(',')[0]!.trim();
+  const number = Number.parseFloat(text);
+  if (!Number.isFinite(number)) return 0;
+  return text.endsWith('ms') ? number : number * 1000;
+}
+
 export const textMotionRoles = {
   reveal: {
     name: 'reveal',
@@ -243,6 +251,29 @@ export class TpTextMotion extends TpElement {
     reveal: (delay) => this.#playback.play(delay),
     reset: () => this.#playback.reset(),
     refresh: () => this.requestUpdate(),
+    duration: () => {
+      // The scrubbed keyframe resolves the piece duration; the last stagger offset adds to it.
+      const animated = this.#splitter.pieces.animated;
+      const view = this.ownerDocument.defaultView;
+      if (!animated.length || !view) return 0;
+      this.toggleAttribute('data-tp-scrub', true);
+      const last = Math.max(
+        ...animated.map((piece) => Number(piece.style.getPropertyValue('--tp-text-order')) || 0),
+      );
+      return (
+        last * Math.max(0, Number(this.stagger) || 0) +
+        seconds(view.getComputedStyle(animated[0]!).animationDuration)
+      );
+    },
+    scrub: (time) => {
+      if (time === null) {
+        this.removeAttribute('data-tp-scrub');
+        this.style.removeProperty('--_tp-tm-time');
+        return;
+      }
+      this.toggleAttribute('data-tp-scrub', true);
+      this.style.setProperty('--_tp-tm-time', `${Math.max(0, time)}ms`);
+    },
   };
 
   readonly #membership = new RevealMembership(this, this.#member, () => {

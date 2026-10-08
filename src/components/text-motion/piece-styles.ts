@@ -91,44 +91,66 @@ tp-text-motion [data-tp-animate] {
   );
 }
 
-tp-text-motion[data-reveal]:not([data-revealed]) [data-tp-animate] {
+/* Effect start values, shared by the timed start state and the scrubbed keyframe. */
+tp-text-motion[data-reveal~='fade'] [data-tp-animate] {
+  --_tp-tm-opacity: 0;
+}
+
+tp-text-motion[data-reveal~='up'] [data-tp-animate] {
+  --_tp-tm-y: var(--_tp-tm-distance);
+}
+
+tp-text-motion[data-reveal~='down'] [data-tp-animate] {
+  --_tp-tm-y: calc(-1 * var(--_tp-tm-distance));
+}
+
+tp-text-motion[data-reveal~='left'] [data-tp-animate] {
+  --_tp-tm-x: var(--_tp-tm-distance);
+}
+
+tp-text-motion[data-reveal~='right'] [data-tp-animate] {
+  --_tp-tm-x: calc(-1 * var(--_tp-tm-distance));
+}
+
+tp-text-motion[data-reveal~='zoom-in'] [data-tp-animate] {
+  --_tp-tm-scale: calc(1 - var(--tp-text-motion-scale, 0.2));
+}
+
+tp-text-motion[data-reveal~='zoom-out'] [data-tp-animate] {
+  --_tp-tm-scale: calc(1 + var(--tp-text-motion-scale, 0.2));
+}
+
+tp-text-motion[data-reveal~='blur'] [data-tp-animate] {
+  --_tp-tm-filter: blur(var(--tp-text-motion-blur, 0.15em));
+}
+
+tp-text-motion[data-reveal]:not([data-revealed], [data-tp-scrub]) [data-tp-animate] {
+  opacity: var(--_tp-tm-opacity, 1);
   translate: var(--_tp-tm-x, 0) var(--_tp-tm-y, 0);
   scale: var(--_tp-tm-scale, 1);
+  filter: var(--_tp-tm-filter, none);
   /* Returning to the start state is instant; only revealing animates. */
   transition-duration: 0s;
   transition-delay: 0s;
 }
 
-tp-text-motion[data-reveal~='fade']:not([data-revealed]) [data-tp-animate] {
-  opacity: 0;
+/* Scrubbed (Foundation §18.19 tm-scrub): the scroll sets the time; each piece shows its eased
+   state at that time of the timed reveal, its stagger offset included. */
+@keyframes tp-text-motion-reveal {
+  from {
+    opacity: var(--_tp-tm-opacity, 1);
+    translate: var(--_tp-tm-x, 0) var(--_tp-tm-y, 0);
+    scale: var(--_tp-tm-scale, 1);
+    filter: var(--_tp-tm-filter, none);
+  }
 }
 
-tp-text-motion[data-reveal~='up']:not([data-revealed]) [data-tp-animate] {
-  --_tp-tm-y: var(--_tp-tm-distance);
-}
-
-tp-text-motion[data-reveal~='down']:not([data-revealed]) [data-tp-animate] {
-  --_tp-tm-y: calc(-1 * var(--_tp-tm-distance));
-}
-
-tp-text-motion[data-reveal~='left']:not([data-revealed]) [data-tp-animate] {
-  --_tp-tm-x: var(--_tp-tm-distance);
-}
-
-tp-text-motion[data-reveal~='right']:not([data-revealed]) [data-tp-animate] {
-  --_tp-tm-x: calc(-1 * var(--_tp-tm-distance));
-}
-
-tp-text-motion[data-reveal~='zoom-in']:not([data-revealed]) [data-tp-animate] {
-  --_tp-tm-scale: calc(1 - var(--tp-text-motion-scale, 0.2));
-}
-
-tp-text-motion[data-reveal~='zoom-out']:not([data-revealed]) [data-tp-animate] {
-  --_tp-tm-scale: calc(1 + var(--tp-text-motion-scale, 0.2));
-}
-
-tp-text-motion[data-reveal~='blur']:not([data-revealed]) [data-tp-animate] {
-  filter: blur(var(--tp-text-motion-blur, 0.15em));
+tp-text-motion[data-reveal][data-tp-scrub] [data-tp-animate] {
+  transition: none;
+  animation: tp-text-motion-reveal var(--_tp-tm-duration) var(--_tp-tm-easing) both paused;
+  animation-delay: calc(
+    var(--tp-text-order, 0) * var(--_tp-tm-stagger, 30ms) - var(--_tp-tm-time, 0ms)
+  );
 }
 
 tp-text-motion[data-tp-motion-driven~='reveal'] [data-tp-animate] {

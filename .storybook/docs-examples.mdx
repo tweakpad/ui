@@ -10,7 +10,17 @@ export function ExampleContent({ example }) {
     const node = host.current;
     return () => render(nothing, node);
   }, [example]);
-  return <div className="tp-docs-example-preview" ref={host} />;
+  // A scrolling use case: the preview itself is the scroll container (and the size container that
+  // pinned sections fill), at the height the example asks for.
+  const viewport = example.viewport
+    ? {
+        blockSize: example.viewport,
+        overflow: 'auto',
+        containerType: 'size',
+        paddingInline: 'var(--tp-space-6)',
+      }
+    : undefined;
+  return <div className="tp-docs-example-preview" ref={host} style={viewport} />;
 }
 
 export function Example({ example }) {
@@ -24,7 +34,7 @@ export function Example({ example }) {
       {example.description && <p>{example.description}</p>}
       <MDXProvider components={components}>
         <Canvas
-          layout="padded"
+          layout={example.viewport ? 'fullscreen' : 'padded'}
           withToolbar={false}
           source={{ code: example.code, language: example.language || 'html', format: false }}
         />

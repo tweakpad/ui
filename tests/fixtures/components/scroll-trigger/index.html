@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Scroll trigger verification</title>
+    <link rel="stylesheet" href="/src/styles.css">
+    <style>
+      body { margin: 0; background: var(--tp-background); color: var(--tp-foreground); font-family: var(--tp-font-sans); }
+      main { max-width: 960px; margin: 0 auto; padding: 16px; }
+      h1.fixture { font-size: 1.25rem; margin: 24px 0; }
+      .flow { margin: 24px 0; padding: 12px; border: 1px dashed var(--tp-border); border-radius: var(--tp-radius-md); font-size: 0.875rem; color: var(--tp-muted-foreground); }
+      .spacer { block-size: 70vh; display: grid; place-items: center; color: var(--tp-muted-foreground); font-size: 0.75rem; border: 1px dashed var(--tp-border); border-radius: var(--tp-radius-lg); }
+      .scene { block-size: 100%; display: grid; align-content: center; gap: var(--tp-space-4); }
+      .scene h2 { margin: 0; font-size: 2.5rem; line-height: 1.1; }
+      .scene p { margin: 0; font-size: 1.125rem; color: var(--tp-muted-foreground); }
+      .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--tp-space-3); }
+      tp-image { border-radius: var(--tp-radius-lg); }
+      .band { display: grid; gap: var(--tp-space-3); padding: var(--tp-space-6) 0; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 class="fixture">Scroll trigger verification</h1>
+      <p class="flow" id="above">Flow content above the pinned section.</p>
+      <div class="spacer">Scroll: a pinned section reveals as the scroll advances (forward only)</div>
+
+      <tp-scroll-trigger id="pinned" scrub pin stagger="250" style="--tp-scroll-trigger-pin-length: 200vh">
+        <div class="scene">
+          <h2><tp-text-motion id="pinned-heading" split="words" mask="words" reveal="up" stagger="80">Quiet spaces reveal as you scroll</tp-text-motion></h2>
+          <tp-image-group id="pinned-group" reveal="fade up" stagger="120"><div class="row" id="pinned-images"></div></tp-image-group>
+          <p><tp-text-motion id="pinned-caption" split="words" reveal="fade" stagger="40">Scrolling back up leaves everything at rest.</tp-text-motion></p>
+        </div>
+      </tp-scroll-trigger>
+      <p class="flow" id="after-pinned">Flow content after the pinned section.</p>
+
+      <div class="spacer">Scroll: this pinned section reverses on scroll up (reveal-repeat)</div>
+      <tp-scroll-trigger id="reversing" scrub pin reveal-repeat stagger="200" scrub-smoothing="0.8" style="--tp-scroll-trigger-pin-length: 150vh">
+        <div class="scene">
+          <h2><tp-text-motion id="reversing-heading" split="chars" reveal="fade blur" stagger="30" stagger-from="center">Back and forth</tp-text-motion></h2>
+          <p><tp-text-motion id="reversing-caption" split="words lines" mask="lines" reveal="up">Each line follows the scroll in both directions, trailing it slightly.</tp-text-motion></p>
+        </div>
+      </tp-scroll-trigger>
+      <p class="flow" id="after-reversing">Flow content after the reversing section.</p>
+
+      <div class="spacer">Scroll: an unpinned band scrubbed across its cover range</div>
+      <tp-scroll-trigger id="band" scrub scrub-range="cover" stagger="150" reveal="fade left">
+        <div class="band">
+          <p><tp-text-motion id="band-1">First line slides in with the scroll</tp-text-motion></p>
+          <p><tp-text-motion id="band-2">then the second</tp-text-motion></p>
+          <p><tp-text-motion id="band-3">and the third.</tp-text-motion></p>
+        </div>
+      </tp-scroll-trigger>
+      <p class="flow" id="after-band">Flow content after the band.</p>
+      <div class="spacer">End</div>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

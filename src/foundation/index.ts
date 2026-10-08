@@ -48,6 +48,7 @@ export * from './indicator-geometry.js';
 export * from './collect-targets.js';
 export * from './observation.js';
 export * from './parallax.js';
+export * from './scroll-progress.js';
 export * from './reveal-coordination.js';
 export * from './reveal-playback.js';
 export * from './viewport-trigger.js';

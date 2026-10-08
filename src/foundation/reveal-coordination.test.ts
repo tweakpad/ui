@@ -231,6 +231,65 @@ describe('reveal coordinator', () => {
   });
 });
 
+describe('scrubbed choreography', () => {
+  beforeEach(() => {
+    FakeIntersectionObserver.instances = [];
+    view = newView();
+  });
+
+  /** A nested coordinator's member, captured from a fake outer coordinator. */
+  function nestedMember(stagger: number) {
+    const registered: RevealMember[] = [];
+    const outer = fakeElement(0);
+    outer[revealCoordinatorHost] = {
+      register: (member) => {
+        registered.push(member);
+        return () => {};
+      },
+      update: () => {},
+      reveal: '',
+    };
+    const inner = fakeElement(1, outer);
+    const { hold } = coordinate(inner, { stagger });
+    return { inner, hold, member: () => registered[0]! };
+  }
+
+  function scrubbed(element: HTMLElement, duration: number) {
+    const times: (number | null)[] = [];
+    return {
+      ...fakeMember(element),
+      times,
+      duration: () => duration,
+      scrub: (time: number | null) => times.push(time),
+    };
+  }
+
+  it('lays the timed choreography out as a timeline and presents each member its own time', async () => {
+    const { inner, member } = nestedMember(100);
+    const members = [scrubbed(fakeElement(2), 500), scrubbed(fakeElement(3), 300)];
+    for (const item of members) inner[revealCoordinatorHost]!.register(item);
+    await flush();
+    // Offsets 0 and 100: the second ends at 400, the first at 500.
+    expect(member().duration!()).toBe(500);
+    member().scrub!(250);
+    expect(members[0]!.times.at(-1)).toBe(250);
+    expect(members[1]!.times.at(-1)).toBe(150);
+  });
+
+  it('keeps every member at the start state while held, and returns them to timed reveals', async () => {
+    const { inner, hold, member } = nestedMember(100);
+    const leaf = scrubbed(fakeElement(2), 500);
+    inner[revealCoordinatorHost]!.register(leaf);
+    await flush();
+    member().duration!();
+    hold.value = true;
+    member().scrub!(400);
+    expect(leaf.times.at(-1)).toBe(0);
+    member().scrub!(null);
+    expect(leaf.times.at(-1)).toBeNull();
+  });
+});
+
 describe('transition span', () => {
   it('measures the longest transition including its delay', () => {
     const style = (transitionDuration: string, transitionDelay: string) =>

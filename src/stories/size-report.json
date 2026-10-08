@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T12:06:24.557Z",
+  "generatedAt": "2026-10-08T17:40:26.395Z",
   "version": "0.1.0",
   "method": "Each catalog component as documented (the root plus the parts its canonical example composes) imported from @tweakpad/ui and defined, bundled with Rolldown (minified, lit external), gzip level 9.",
   "lit": {
@@ -12,8 +12,8 @@
     "chunks": 1
   },
   "full": {
-    "gzip": 464690,
-    "minified": 1735367
+    "gzip": 466683,
+    "minified": 1742235
   },
   "components": [
     {
@@ -622,22 +622,52 @@
       ]
     },
     {
+      "name": "Scroll trigger",
+      "tagName": "tp-scroll-trigger",
+      "className": "TpScrollTrigger",
+      "kind": "thin-wrapper",
+      "uses": [
+        "tp-text-motion"
+      ],
+      "gzip": 23920,
+      "minified": 73402,
+      "ownGzip": 19982,
+      "modules": 30,
+      "rootGzip": 14291,
+      "includes": [
+        "tp-text-motion"
+      ]
+    },
+    {
       "name": "Image",
       "tagName": "tp-image",
       "className": "TpImage",
       "kind": "preset-composition",
       "uses": [],
-      "gzip": 22594,
-      "minified": 74041,
-      "ownGzip": 18546,
-      "modules": 38,
-      "rootGzip": 22594,
+      "gzip": 23621,
+      "minified": 77504,
+      "ownGzip": 19562,
+      "modules": 39,
+      "rootGzip": 23621,
       "includes": [
         "tp-aspect-ratio",
         "tp-icon",
         "tp-skeleton",
         "tp-spinner"
       ]
+    },
+    {
+      "name": "Text motion",
+      "tagName": "tp-text-motion",
+      "className": "TpTextMotion",
+      "kind": "compound-reexport",
+      "uses": [],
+      "gzip": 22995,
+      "minified": 70018,
+      "ownGzip": 19036,
+      "modules": 28,
+      "rootGzip": 22995,
+      "includes": []
     },
     {
       "name": "Accordion",
@@ -656,23 +686,6 @@
         "tp-accordion-item",
         "tp-collapsible",
         "tp-icon"
-      ]
-    },
-    {
-      "name": "Scroll trigger",
-      "tagName": "tp-scroll-trigger",
-      "className": "TpScrollTrigger",
-      "kind": "thin-wrapper",
-      "uses": [
-        "tp-text-motion"
-      ],
-      "gzip": 21246,
-      "minified": 64861,
-      "ownGzip": 17307,
-      "modules": 28,
-      "rootGzip": 12232,
-      "includes": [
-        "tp-text-motion"
       ]
     },
     {
@@ -706,19 +719,6 @@
         "tp-icon",
         "tp-spinner"
       ]
-    },
-    {
-      "name": "Text motion",
-      "tagName": "tp-text-motion",
-      "className": "TpTextMotion",
-      "kind": "compound-reexport",
-      "uses": [],
-      "gzip": 20732,
-      "minified": 62826,
-      "ownGzip": 16789,
-      "modules": 26,
-      "rootGzip": 20732,
-      "includes": []
     },
     {
       "name": "Input group",

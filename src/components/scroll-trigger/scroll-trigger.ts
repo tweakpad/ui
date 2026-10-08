@@ -7,6 +7,7 @@ import {
   type RevealCoordinatorHost,
   type StaggerFrom,
 } from '../../foundation/reveal-coordination.js';
+import { parseScrollRange, type ScrollRange } from '../../foundation/scroll-progress.js';
 import { scrollTriggerPresentation } from '../../presentation/families/scroll-trigger.js';
 
 export type ScrollTriggerStatus = 'idle' | 'loading' | 'ready';
@@ -22,10 +23,20 @@ export type ScrollTriggerStatus = 'idle' | 'loading' | 'ready';
  * own effect (or takes `reveal` as a default) and motion role. The trigger is an ordinary block
  * that never changes its own box, so binding it never moves the content around it.
  *
+ * With `scrub`, the scroll position drives the same choreography instead of time: progress over
+ * `scrub-range` moves forward only, or both ways with `reveal-repeat`. With `pin`, the trigger
+ * becomes a track one viewport plus `--tp-scroll-trigger-pin-length` tall whose content sticks in
+ * the `stage` part, so a pinned section can reveal as the scroll advances.
+ *
  * Markers: `data-status`, `data-in-view` (while observed), `data-revealed`.
  *
  * @slot - Content, including the members at any depth.
  * @csspart scroll-trigger - The host.
+ * @csspart stage - Wraps the content; sticky while pinned.
+ * @fires tp-scroll-progress - `{ progress }` in each frame scrubbed progress changes.
+ * @cssprop --tp-scroll-trigger-pin-length - Extra scroll length while pinned. Default `200cqb`
+ * (twice the visible extent: the nearest size container, otherwise the viewport).
+ * @cssprop --tp-scroll-trigger-pin-top - Pinned offset from the viewport start. Default `0`.
  * @fires tp-loading-status-change - `{ status, ready, failed, total }` when the aggregate
  * readiness changes.
  * @fires tp-reveal-change - `{ revealed }` when the sequence starts or a repeat resets it.
@@ -41,6 +52,10 @@ export class TpScrollTrigger extends TpElement {
     reveal: { type: String, reflect: true },
     revealRepeat: { type: Boolean, attribute: 'reveal-repeat', reflect: true },
     revealHold: { type: Boolean, attribute: 'reveal-hold', reflect: true },
+    scrub: { type: Boolean, reflect: true },
+    scrubRange: { type: String, attribute: 'scrub-range', reflect: true },
+    scrubSmoothing: { type: Number, attribute: 'scrub-smoothing' },
+    pin: { type: Boolean, reflect: true },
   };
   static override styles = [
     TpElement.styles,
@@ -51,6 +66,28 @@ export class TpScrollTrigger extends TpElement {
 
       :host([hidden]) {
         display: none;
+      }
+
+      /* The stage only boxes the content while pinned, so an unpinned trigger lays out its
+         content directly. */
+      .stage {
+        display: contents;
+      }
+
+      /* Pinned (Foundation §18.18 vr-pin): a track one visible extent plus the pin length tall,
+         the content sticking to its start. The visible extent is the nearest size container (a
+         scroll container with container-type: size), otherwise the viewport: cqb falls back to
+         the small viewport. The same height is set before definition. */
+      :host([pin]) {
+        block-size: calc(100cqb + var(--tp-scroll-trigger-pin-length, 200cqb));
+      }
+
+      :host([pin]) .stage {
+        display: block;
+        position: sticky;
+        inset-block-start: var(--tp-scroll-trigger-pin-top, 0%);
+        block-size: calc(100cqb - var(--tp-scroll-trigger-pin-top, 0%));
+        overflow: clip;
       }
     `,
   ];
@@ -65,6 +102,14 @@ export class TpScrollTrigger extends TpElement {
   revealRepeat = false;
   /** While set (or while any member holds), every member waits in its start state. */
   revealHold = false;
+  /** Reveal with the scroll position instead of over time. */
+  scrub = false;
+  /** The scroll range mapped to progress while scrubbing. */
+  scrubRange: ScrollRange = 'contain';
+  /** How far scrubbed progress trails the scroll, 0 through 0.98; 0 is locked to it. */
+  scrubSmoothing = 0;
+  /** Pin the content in a sticky stage for an extra scroll length. */
+  pin = false;
 
   #status: ScrollTriggerStatus = 'idle';
 
@@ -74,6 +119,9 @@ export class TpScrollTrigger extends TpElement {
     repeat: () => this.revealRepeat,
     hold: () => this.revealHold,
     reveal: () => this.reveal,
+    scrub: () => this.scrub,
+    range: () => parseScrollRange(this.scrubRange),
+    smoothing: () => this.scrubSmoothing,
     marker: true,
     emit: (type, detail) => this.emit(type, detail),
     status: ({ status, ready, failed, total }) => {
@@ -101,6 +149,11 @@ export class TpScrollTrigger extends TpElement {
     return this.#coordinator.revealed;
   }
 
+  /** Scrubbed progress, 0 through 1 (0 when not scrubbing). */
+  get progress(): number {
+    return this.#coordinator.progress;
+  }
+
   override connectedCallback(): void {
     super.connectedCallback();
     this.#coordinator.connect();
@@ -117,6 +170,6 @@ export class TpScrollTrigger extends TpElement {
   }
 
   protected override render() {
-    return html`<slot></slot>`;
+    return html`<div part="stage" class="stage"><slot></slot></div>`;
   }
 }

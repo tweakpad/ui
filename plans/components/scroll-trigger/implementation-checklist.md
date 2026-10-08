@@ -14,7 +14,7 @@
   - The image refactor (see the image record).
   - Gaps are listed under Completion.
 - Repository baseline / unrelated changes: `9e16b4a` (development), clean at start
-- Live project / document IDs and revisions: Spec Blocks `prj_c5a403a0-…`; commits `dc3ac91` (v0.9.0) and `e3c96ec` (v0.9.1)
+- Live project / document IDs and revisions: Spec Blocks `prj_c5a403a0-…`; commits `dc3ac91` (v0.9.0), `e3c96ec` (v0.9.1) and `b74e9d5` (v0.10.0: `vr-scrub`, `vr-pin`, `tm-scrub`, `img-scrub`, the Stage part and the scrub/pin properties) and `a3e2ef1` (v0.10.1: pinning sized from the visible extent)
 - Owning contracts / dependencies / vocabulary: Foundation §18.18 `vr-*`; CL `ucl21-scroll-trigger`, `audit-cov-scroll-trigger`; managed term Scroll trigger (new), Trigger (amended to distinguish it)
 - Local Base UI / Floating UI / shadcn evidence:
   - No upstream equivalent in `../specification/external/` (clean checkouts).
@@ -37,6 +37,10 @@
 | C-06 | Layout stability: block before and after definition; no box changes | `vr-layout` | n/a | `:host { display: block }`, `styles.css` pre-definition rule | Members | V-06 | passed | 0 diffs on late definition |
 | C-07 | Reduced motion and no observer: immediate once ready, no stagger | `vr-motion-policy` | n/a | `revealsImmediately` | Entry | V-07 | passed | motion-policy reduce verified on a member |
 | C-08 | Public API: status, members, revealed; data-status, data-in-view, data-revealed | `stl-api` | n/a | getters; `marker: true` | Properties, Events | V-01 | passed | getters and markers read in the fixture |
+| C-09 | Scroll-linked progress over contain/cover/entry/exit through the shared scroll field; smoothing | `vr-scrub` | scroll-driven view-timeline ranges | `scroll-progress.ts` `observeScrollProgress`, `rangeProgress`; `scrub`, `scrub-range`, `scrub-smoothing` | Scroll-linked reveals | V-09, V-10 | passed | progress follows the scroll linearly; smoothing trails then settles |
+| C-10 | Forward-only by default; `reveal-repeat` reverses | `vr-scrub` | n/a (user decision) | `#scrolled` highest-progress rule | Scroll-linked reveals | V-09, V-10 | passed | stays at 1 when scrolling back; reverses with repeat |
+| C-11 | Timed choreography mapped onto scroll; hold; reduced motion; events, including `tp-scroll-progress` | `vr-scrub` | n/a | `#measureTimeline`, `#presentTime`; member `duration`/`scrub` | Scroll-linked reveals, Events | V-09, V-11 | passed | unit tests plus fixture choreography |
+| C-12 | Pin: track of 100svh + pin length, sticky Stage, identical before definition | `vr-pin` | n/a | `pin`, `stage` part, `styles.css` | Pinning | V-12, V-13 | passed | stage sticks; 0 shifts on late definition |
 
 ### Gaps and conflicts
 
@@ -80,6 +84,12 @@
 | V-06 | C-06; layout stability | `?defer=1500` | No movement | all diffs 0, 0 shifts | MCP evaluate | passed | Observed in Chrome DevTools MCP on 2026-10-08 against `tests/fixtures/components/text-motion/index.html` |
 | V-07 | C-07; reduced motion | `motion-policy="reduce"` member | Immediate | text motion at rest immediately | MCP evaluate | passed | Observed in Chrome DevTools MCP on 2026-10-08 (shared reveal playback); OS toggle not emulated |
 | V-08 | C-08; docs | Storybook Docs default and examples | Composition reveals; second trigger waits off screen | first revealed; second pending | MCP evaluate and screenshot | passed | Observed in Chrome DevTools MCP on 2026-10-08 in Storybook `components-scroll-trigger--docs` |
+| V-09 | C-09 to C-11; scrub | Pinned forward-only section at 0, 0.15, 0.35, 0.6, 1, then back to 0.5 and 0 | Progress linear; words, images and caption in choreography order; stays revealed going back | progress 0→1; word 0 then word 3; image then caption; stayed at 1 | MCP evaluate | passed | Observed in Chrome DevTools MCP on 2026-10-08 against `tests/fixtures/components/scroll-trigger/index.html` |
+| V-10 | C-09, C-10; reversing | `reveal-repeat` with `scrub-smoothing="0.8"`, center stagger | Trails then settles; follows the scroll back to 0; un-reveal event | 0.486 after 30ms, then 1; back to 0; `reveal-change:false` fired | MCP evaluate | passed | Observed in Chrome DevTools MCP on 2026-10-08 against `tests/fixtures/components/scroll-trigger/index.html` |
+| V-11 | C-11; unit | Nested coordinator timeline, hold, return to timed | Member times = time − offset; hold → 0; null → timed | 10 coordination tests pass | vitest `reveal-coordination.test.ts`, `scroll-progress.test.ts` | passed | vitest run 2026-10-08 |
+| V-12 | C-12; pinning | Late definition `?defer=1500` | Same page height and positions; 0 shifts | height 8184 = 8184; all diffs 0; 0 shifts | MCP evaluate | passed | Observed in Chrome DevTools MCP on 2026-10-08 against `tests/fixtures/components/scroll-trigger/index.html` |
+| V-13 | C-12; Storybook | Pinned scene and reversing band demos, each in its own scroll container (`container-type: size`) with intro and outro content | Stage fills the container and sticks; progress 0→1 within the container; no blank areas | scroller 416px, track 1040px (416 + 150cqb), stage 416px stuck throughout; band 0→1 and back; screenshots show no gaps | MCP evaluate and screenshots | passed | Observed in Chrome DevTools MCP on 2026-10-08 in Storybook `components-scroll-trigger--docs`; page-level pinning falls back to the viewport (fixture: stage 900px, track 2700px) |
+| V-14 | C-09; performance | 808-character split text scrubbed with a pin | No layout per frame | trace: 16 style recalculations totalling 8ms, a few ms of script, no Layout from the scrub; Lighthouse a11y 90 only from contrast flagged on pieces mid-reveal (transient, aria-hidden) | MCP trace `tmp/component-verification/scroll-trigger/scrub-trace.json` | passed | Observed in Chrome DevTools MCP on 2026-10-08 against `tests/fixtures/components/scroll-trigger/index.html` |
 
 ## Early integration checkpoint
 
@@ -110,6 +120,8 @@
 
 ## Completion / handoff
 
-- Delivered and verified as recorded. Evidence is local.
+- Delivered and verified as recorded, including the scroll-linked reveals and pinning (v0.10.0). Evidence is local.
 - Behaviour change: nested Image groups are now members of the outer coordinator, not independent (G-02).
 - The OS-level reduced-motion toggle was not emulated.
+
+- A pinned trigger needs no clipping ancestor between it and its scroller, as for any sticky element. Inside a scroll container, give the container `container-type: size` so the stage fills it.

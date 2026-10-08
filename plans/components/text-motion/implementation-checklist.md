@@ -59,6 +59,7 @@
 | C-20 | Performance: shared observers, one batched layout | `tm-edges`, `env-shared-observation` | n/a | shared RO and fonts, scheduler, keep range | Responsive | V-19 | passed | 200 instances; 2 long frames only on grid column changes |
 | C-21 | Styling surface: data-tp-piece, index/order vars, custom properties, markers | `tml-api`, `tml-presentation` | n/a | piece CSS, `#finish` | Styling | V-13 | passed | data-tp-piece, --tp-text-index/--tp-text-order and markers inspected in the fixture (MCP) |
 | C-22 | Coordinated membership (scroll trigger / image group) | `vr-membership` | n/a | `RevealMembership` | Reveal | V-14 | passed | trigger heading/caption |
+| C-23 | Scrubbed presentation: pieces at the scrubbed time with stagger and easing; duration reported | `tm-scrub` | n/a | piece CSS keyframe `tp-text-motion-reveal`, member `duration`/`scrub` | Reveal | V-20 | passed | words scrub in order behind their masks |
 
 ### Gaps and conflicts
 
@@ -118,6 +119,7 @@
 | V-17 | C-18; Storybook | Change the `split` control | Re-split of Lit-rendered text | 41 chars | MCP fill | passed | Observed in Chrome DevTools MCP on 2026-10-08 in Storybook Docs `components-text-motion--docs` |
 | V-18 | C-19; reduced motion | `motion-policy="reduce"` | Rest immediately | opacity 1, 0s, complete in 13ms | MCP evaluate | passed | OS-level toggle not emulated |
 | V-19 | C-20; performance | `?stress=200` resize sweep | No layout thrash; bounded frames | average 36ms per two frames; 2 long frames on column changes | MCP trace `tmp/component-verification/text-motion/resize-trace-2.json` | passed | Observed in Chrome DevTools MCP on 2026-10-08 against `tests/fixtures/components/text-motion/index.html` |
+| V-20 | C-23; scrub | Words, chars and lines inside scrubbed triggers | Eased state per piece at the scrubbed time; re-split keeps it | e.g. word 0 at 49% of its travel at progress 0.15 while word 3 waits; centre characters first | MCP evaluate | passed | Observed in Chrome DevTools MCP on 2026-10-08 against `tests/fixtures/components/scroll-trigger/index.html` |
 
 ## Early integration checkpoint
 

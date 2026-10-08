@@ -80,6 +80,9 @@ Standalone, a text reveals the first time it enters the viewport, once its fonts
 it comes back 10% into view. Inside a [Scroll trigger](scroll-trigger.md) (or an Image group),
 that coordinator owns the timing.
 
+Inside a scrubbing [Scroll trigger](scroll-trigger.md) the scroll position drives the same
+reveal: every piece shows its eased state at the scrubbed time, in stagger order.
+
 ### Responsive behaviour
 
 Lines are recalculated in the same frame as the width change, before paint, and only when the

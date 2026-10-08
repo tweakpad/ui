@@ -7,6 +7,7 @@
 import { composedParent } from './focus.js';
 import { resolvesReducedMotion } from './motion.js';
 import { canObserveIntersection } from './observation.js';
+import { observeScrollProgress, type ScrollRange } from './scroll-progress.js';
 import { ViewportTrigger } from './viewport-trigger.js';
 
 export type StaggerFrom = 'first' | 'last' | 'center';
@@ -30,7 +31,17 @@ export interface RevealMember {
   reset(): void;
   /** The coordinator default effect changed; re-render the start state. */
   refresh?(): void;
+  /** The member's own full reveal in milliseconds, its internal stagger included. */
+  duration?(): number;
+  /**
+   * Presents the reveal `time` milliseconds into it, following the scroll (0 is the start state,
+   * the duration or more is rest); `null` returns to timed reveals.
+   */
+  scrub?(time: number | null): void;
 }
+
+/** A scrubbed time far enough past any reveal to present rest (reduced motion). */
+const REST_TIME = 1e9;
 
 /** What a coordinator offers the members inside it. */
 export interface RevealCoordinatorHost {
@@ -189,6 +200,12 @@ export interface RevealCoordinatorConfig {
   emit(type: string, detail: unknown): void;
   /** Called after each evaluation with the aggregate status, to report it. */
   status(status: CoordinatorStatus, members: readonly RevealMember[]): void;
+  /** Follow the scroll position instead of playing over time (Foundation §18.18 `vr-scrub`). */
+  scrub?(): boolean;
+  /** The scroll range mapped to progress while scrubbing. */
+  range?(): ScrollRange;
+  /** How far scrubbed progress trails the scroll. */
+  smoothing?(): number;
 }
 
 /**
@@ -208,6 +225,17 @@ export class RevealCoordinator {
   #scheduled = false;
   #prepared = false;
   #connected = false;
+  /** Scrubbing: the subscription, its settings, the presented progress and the timeline. */
+  #releaseScrub: (() => void) | undefined;
+  #scrubKey: string | undefined;
+  #progress = 0;
+  #highest = 0;
+  #complete = false;
+  #timeline: { members: RevealMember[]; offsets: number[]; total: number } = {
+    members: [],
+    offsets: [],
+    total: 0,
+  };
 
   /** Offered to descendants through `[revealCoordinatorHost]`. */
   readonly host: RevealCoordinatorHost;
@@ -238,7 +266,7 @@ export class RevealCoordinator {
       marker: config.marker ?? false,
       changed: () => this.schedule(),
       left: () => {
-        if (config.repeat()) this.#reset();
+        if (config.repeat() && !this.#scrubbing()) this.#reset();
       },
     });
     // This coordinator as a member of an outer one.
@@ -254,6 +282,11 @@ export class RevealCoordinator {
       refresh: () => {
         for (const member of this.#members) member.refresh?.();
       },
+      duration: () => this.#measureTimeline(this.members).total,
+      scrub: (time) => {
+        if (time === null) this.#endScrub();
+        else this.#presentTime(time);
+      },
     };
     this.#membership = new RevealMembership(element, this.#member, () => {
       this.#syncTrigger();
@@ -268,6 +301,11 @@ export class RevealCoordinator {
 
   get revealed(): boolean {
     return this.#revealed;
+  }
+
+  /** Scrubbed progress, 0 through 1 (0 when not scrubbing). */
+  get progress(): number {
+    return this.#progress;
   }
 
   /** Whether this coordinator is a member of an outer one (or waiting to become one). */
@@ -286,6 +324,9 @@ export class RevealCoordinator {
     this.#connected = false;
     this.#membership.disconnect();
     this.#trigger.release();
+    this.#releaseScrub?.();
+    this.#releaseScrub = undefined;
+    this.#scrubKey = undefined;
     this.#prepared = false;
   }
 
@@ -309,6 +350,106 @@ export class RevealCoordinator {
   #syncTrigger(): void {
     // A nested coordinator follows its outer coordinator, never its own visibility.
     this.#trigger.sync(this.#connected && !this.#membership.coordinated);
+    this.#syncScrub();
+  }
+
+  /** Scrubbing applies to an outermost coordinator only; a nested one follows its outer one. */
+  #scrubbing(): boolean {
+    return Boolean(this.#config.scrub?.()) && this.#connected && !this.#membership.coordinated;
+  }
+
+  /** Follows the scroll while scrubbing; leaving scrub mode returns members to timed reveals. */
+  #syncScrub(): void {
+    if (!this.#scrubbing()) {
+      if (this.#releaseScrub) {
+        this.#releaseScrub();
+        this.#releaseScrub = undefined;
+        this.#scrubKey = undefined;
+        this.#endScrub();
+      }
+      return;
+    }
+    const range = this.#config.range?.() ?? 'contain';
+    const smoothing = this.#config.smoothing?.() ?? 0;
+    const key = `${range}|${smoothing}`;
+    if (key === this.#scrubKey) return;
+    this.#releaseScrub?.();
+    this.#scrubKey = key;
+    this.#releaseScrub = observeScrollProgress(
+      this.#element,
+      (progress) => this.#scrolled(progress),
+      {
+        range,
+        smoothing,
+      },
+    );
+  }
+
+  /** Every member back to timed reveals, from the start state. */
+  #endScrub(): void {
+    for (const member of this.#members) member.scrub?.(null);
+    this.#progress = this.#highest = 0;
+    this.#complete = false;
+    if (this.#revealed) {
+      this.#revealed = false;
+      this.#element.removeAttribute('data-revealed');
+    }
+    this.schedule();
+  }
+
+  /** New measured progress: forward only unless repeating, then events and presentation. */
+  #scrolled(measured: number): void {
+    const repeat = this.#config.repeat();
+    this.#highest = repeat ? measured : Math.max(this.#highest, measured);
+    const progress = this.#highest;
+    if (progress === this.#progress && this.#revealed === progress > 0) return;
+    this.#progress = progress;
+    this.#config.emit('tp-scroll-progress', { progress });
+    if (progress > 0 && !this.#revealed) {
+      this.#revealed = true;
+      this.#element.toggleAttribute('data-revealed', true);
+      this.#config.emit('tp-reveal-change', { revealed: true });
+    } else if (progress === 0 && this.#revealed && repeat) {
+      this.#revealed = false;
+      this.#element.removeAttribute('data-revealed');
+      this.#config.emit('tp-reveal-change', { revealed: false });
+    }
+    if (progress >= 1 && !this.#complete) {
+      this.#complete = true;
+      this.#config.emit('tp-reveal-change-complete', { revealed: true });
+    } else if (progress < 1 && this.#complete && repeat) this.#complete = false;
+    this.#presentTime(progress * this.#timeline.total);
+  }
+
+  /**
+   * The timed choreography laid out for scrubbing: each revealing member starts at its stagger
+   * offset and lasts its own duration; the total is the latest end.
+   */
+  #measureTimeline(members: readonly RevealMember[]) {
+    const revealing = members.filter((member) => member.revealing());
+    const offsets = staggerDelays(
+      revealing.length,
+      this.#config.stagger(),
+      this.#config.staggerFrom(),
+    );
+    const total = Math.max(
+      0,
+      ...revealing.map((member, index) => offsets[index]! + (member.duration?.() ?? 0)),
+    );
+    this.#timeline = { members: revealing, offsets, total };
+    return this.#timeline;
+  }
+
+  /** Presents `time` of the choreography on every member (held: the start state). */
+  #presentTime(time: number): void {
+    const { members, offsets } = this.#timeline;
+    const held = this.#held(this.members);
+    const reduced = resolvesReducedMotion(this.#element);
+    members.forEach((member, index) => {
+      const local = held ? 0 : reduced ? REST_TIME : time - offsets[index]!;
+      if (member.scrub) member.scrub(local);
+      else if (local > 0 && !member.revealed() && member.ready()) void member.reveal(0);
+    });
   }
 
   #immediate(): boolean {
@@ -326,6 +467,12 @@ export class RevealCoordinator {
     const nested = this.#membership.coordinated;
     if (nested) this.#membership.update();
     else if (this.#trigger.near || this.#immediate()) this.#prepare();
+    if (this.#scrubbing()) {
+      // The scroll is authoritative: lay out the choreography and present the current progress.
+      this.#measureTimeline(members);
+      this.#presentTime(this.#progress * this.#timeline.total);
+      return;
+    }
     if (this.#held(members)) return;
     if (!this.#revealed) {
       if (nested) return;
