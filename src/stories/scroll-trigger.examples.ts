@@ -85,6 +85,28 @@ ${placeholder(['80%', '60%', 'block', '90%', '50%'], ' min-block-size: 100cqb; a
     { viewport: '20rem' },
   ),
   markupExample(
+    'Custom scroll offsets',
+    `${placeholder(['45%', '90%', '80%', 'block', '70%', '85%'], ' min-block-size: 100cqb; align-content: end; box-sizing: border-box')}
+<tp-scroll-trigger scrub scrub-range="entry 25% contain 40%" stagger="200">
+  <h3 style="margin: 0 0 var(--tp-space-3); font-size: 1.5rem; line-height: 1.15">
+    <tp-text-motion split="words" mask="words" reveal="up" stagger="60">Settled before the middle</tp-text-motion>
+  </h3>
+  <tp-image-group reveal="fade up" stagger="120">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--tp-space-3)">
+${rooms
+  .map(
+    (id) =>
+      `      <tp-image ratio="1.5" style="border-radius: var(--tp-radius-md)" src="${photo(id, 480)}" srcset="${widths(id)}" sizes="10rem" alt=""></tp-image>`,
+  )
+  .join('\n')}
+    </div>
+  </tp-image-group>
+</tp-scroll-trigger>
+${placeholder(['80%', '60%', 'block', '90%', '50%'], ' min-block-size: 100cqb; align-content: start; box-sizing: border-box')}`,
+    'An advanced range with offsets, as in CSS `animation-range`: `scrub-range="entry 25% contain 40%"` starts once a quarter of the section has entered and finishes 40% of the way through `contain`, so the reveal is complete before the section reaches the middle of the frame and stays at rest while it is read.',
+    { viewport: '22rem' },
+  ),
+  markupExample(
     'Features from the center',
     `<tp-scroll-trigger stagger="120" stagger-from="center" reveal="fade up" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: var(--tp-space-4)">
 ${['Calm', 'Light', 'Focus', 'Space', 'Rest']

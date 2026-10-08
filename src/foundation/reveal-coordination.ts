@@ -7,7 +7,11 @@
 import { composedParent } from './focus.js';
 import { resolvesReducedMotion } from './motion.js';
 import { canObserveIntersection } from './observation.js';
-import { observeScrollProgress, type ScrollRange } from './scroll-progress.js';
+import {
+  observeScrollProgress,
+  type ScrollRange,
+  type ScrollRangeSpan,
+} from './scroll-progress.js';
 import { ViewportTrigger } from './viewport-trigger.js';
 
 export type StaggerFrom = 'first' | 'last' | 'center';
@@ -202,8 +206,8 @@ export interface RevealCoordinatorConfig {
   status(status: CoordinatorStatus, members: readonly RevealMember[]): void;
   /** Follow the scroll position instead of playing over time (Foundation §18.18 `vr-scrub`). */
   scrub?(): boolean;
-  /** The scroll range mapped to progress while scrubbing. */
-  range?(): ScrollRange;
+  /** The scroll range mapped to progress while scrubbing (a name, or a start and an end point). */
+  range?(): ScrollRange | ScrollRangeSpan;
   /** How far scrubbed progress trails the scroll. */
   smoothing?(): number;
   /** Scrubbed progress only moves forward (by default it follows the scroll both ways). */
@@ -373,7 +377,7 @@ export class RevealCoordinator {
     }
     const range = this.#config.range?.() ?? 'contain';
     const smoothing = this.#config.smoothing?.() ?? 0;
-    const key = `${range}|${smoothing}`;
+    const key = `${JSON.stringify(range)}|${smoothing}`;
     if (key === this.#scrubKey) return;
     this.#releaseScrub?.();
     this.#scrubKey = key;

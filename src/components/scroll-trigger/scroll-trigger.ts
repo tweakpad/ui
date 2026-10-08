@@ -7,7 +7,7 @@ import {
   type RevealCoordinatorHost,
   type StaggerFrom,
 } from '../../foundation/reveal-coordination.js';
-import { parseScrollRange, type ScrollRange } from '../../foundation/scroll-progress.js';
+import { parseScrollRangeSpan } from '../../foundation/scroll-progress.js';
 import { scrollTriggerPresentation } from '../../presentation/families/scroll-trigger.js';
 
 export type ScrollTriggerStatus = 'idle' | 'loading' | 'ready';
@@ -105,8 +105,11 @@ export class TpScrollTrigger extends TpElement {
   revealHold = false;
   /** Reveal with the scroll position instead of over time. */
   scrub = false;
-  /** The scroll range mapped to progress while scrubbing. */
-  scrubRange: ScrollRange = 'contain';
+  /**
+   * The scroll range mapped to progress while scrubbing: `contain`, `cover`, `entry` or `exit`,
+   * or, as in CSS `animation-range`, a start and an end point such as `entry 20% contain 50%`.
+   */
+  scrubRange = 'contain';
   /** How far scrubbed progress trails the scroll, 0 through 0.98; 0 is locked to it. */
   scrubSmoothing = 0;
   /** Scrubbed progress only moves forward, leaving revealed members at rest on scroll back. */
@@ -123,7 +126,7 @@ export class TpScrollTrigger extends TpElement {
     hold: () => this.revealHold,
     reveal: () => this.reveal,
     scrub: () => this.scrub,
-    range: () => parseScrollRange(this.scrubRange),
+    range: () => parseScrollRangeSpan(this.scrubRange),
     smoothing: () => this.scrubSmoothing,
     scrubOnce: () => this.scrubOnce,
     marker: true,

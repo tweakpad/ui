@@ -6,8 +6,16 @@ nothing holds it, it reveals them in document order, `stagger` milliseconds apar
 
 ```html
 <tp-scroll-trigger stagger="200">
-  <h2><tp-text-motion split="words lines" mask="lines" reveal="up">A coordinated entrance</tp-text-motion></h2>
-  <tp-image-group reveal="fade up" stagger="120" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px">
+  <h2>
+    <tp-text-motion split="words lines" mask="lines" reveal="up"
+      >A coordinated entrance</tp-text-motion
+    >
+  </h2>
+  <tp-image-group
+    reveal="fade up"
+    stagger="120"
+    style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px"
+  >
     <tp-image ratio="1" src="/a.jpg" alt=""></tp-image>
     <tp-image ratio="1" src="/b.jpg" alt=""></tp-image>
     <tp-image ratio="1" src="/c.jpg" alt=""></tp-image>
@@ -38,18 +46,18 @@ too, so binding it never moves the content around it. Lay out its content as you
 
 ## Properties
 
-| Property / attribute | Values | Default |
-| --- | --- | --- |
-| `stagger` | milliseconds between consecutive members | `0` |
-| `staggerFrom` / `stagger-from` | `first`, `last`, `center` | `first` |
-| `reveal` | default effect tokens for members without their own | `''` |
-| `revealRepeat` / `reveal-repeat` | reset every member once fully out of view and replay on entry | `false` |
-| `revealHold` / `reveal-hold` | hold every member in its start state until cleared | `false` |
-| `scrub` | follow the scroll position instead of time | `false` |
-| `scrubRange` / `scrub-range` | `contain`, `cover`, `entry`, `exit` | `contain` |
-| `scrubSmoothing` / `scrub-smoothing` | 0 to 0.98; how far progress trails the scroll | `0` |
-| `scrubOnce` / `scrub-once` | scrubbed progress only moves forward | `false` |
-| `pin` | pin the content in a sticky stage for an extra scroll length | `false` |
+| Property / attribute                 | Values                                                                                        | Default   |
+| ------------------------------------ | --------------------------------------------------------------------------------------------- | --------- |
+| `stagger`                            | milliseconds between consecutive members                                                      | `0`       |
+| `staggerFrom` / `stagger-from`       | `first`, `last`, `center`                                                                     | `first`   |
+| `reveal`                             | default effect tokens for members without their own                                           | `''`      |
+| `revealRepeat` / `reveal-repeat`     | reset every member once fully out of view and replay on entry                                 | `false`   |
+| `revealHold` / `reveal-hold`         | hold every member in its start state until cleared                                            | `false`   |
+| `scrub`                              | follow the scroll position instead of time                                                    | `false`   |
+| `scrubRange` / `scrub-range`         | `contain`, `cover`, `entry`, `exit`, or start and end offsets such as `entry 25% contain 40%` | `contain` |
+| `scrubSmoothing` / `scrub-smoothing` | 0 to 0.98; how far progress trails the scroll                                                 | `0`       |
+| `scrubOnce` / `scrub-once`           | scrubbed progress only moves forward                                                          | `false`   |
+| `pin`                                | pin the content in a sticky stage for an extra scroll length                                  | `false`   |
 
 Read-only: `status` (`idle`, `loading`, `ready`), `members` (the member elements in order),
 `revealed` and `progress` (0 to 1 while scrubbing).
@@ -75,12 +83,28 @@ Progress follows the scroll both ways, so scrolling back plays the reveal in rev
 `reveal-repeat` has no effect while scrubbing. `scrub-smoothing` (0 to 0.98) makes progress trail
 the scroll a little, like `parallax-smoothing` on Image.
 
-| Range (`scrub-range`) | Progress runs |
-| --- | --- |
-| `contain` (default) | while the trigger fills its place in the viewport; for a trigger taller than the viewport (a pinned track), from its top at the viewport top to its bottom at the viewport bottom |
-| `cover` | from entering at the bottom to leaving at the top |
-| `entry` | while entering |
-| `exit` | while leaving |
+| Range (`scrub-range`) | Progress runs                                                                                                                                                                     |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `contain` (default)   | while the trigger fills its place in the viewport; for a trigger taller than the viewport (a pinned track), from its top at the viewport top to its bottom at the viewport bottom |
+| `cover`               | from entering at the bottom to leaving at the top                                                                                                                                 |
+| `entry`               | while entering                                                                                                                                                                    |
+| `exit`                | while leaving                                                                                                                                                                     |
+
+### Custom offsets
+
+For finer control, `scrub-range` takes a start and an end point in the grammar of CSS
+`animation-range`: each point is a range name with a percentage of that range, and progress runs
+linearly between the two scroll positions.
+
+```html
+<tp-scroll-trigger scrub scrub-range="entry 25% contain 40%">…</tp-scroll-trigger>
+```
+
+This starts once a quarter of the trigger has entered and finishes 40% of the way through
+`contain`, so the reveal is complete before the trigger reaches the middle. A start without a
+percentage means 0% of its range and an end without one 100% (`entry exit` runs from starting to
+enter to finishing leaving); a single point such as `cover 50%` runs from there to the end of its
+range. A value that cannot be parsed falls back to `contain`.
 
 `reveal-hold` keeps every member at its start state. Members are still asked to prepare when the
 trigger nears the viewport, but scrubbing does not wait for them: an image that is still loading
@@ -103,7 +127,11 @@ section pinned to the page scroll.
   <p>Intro content…</p>
   <tp-scroll-trigger scrub pin stagger="250" style="--tp-scroll-trigger-pin-length: 150cqb">
     <div style="block-size: 100%; display: grid; align-content: center; gap: 16px">
-      <h2><tp-text-motion split="words" mask="words" reveal="up">Quiet spaces reveal as you scroll</tp-text-motion></h2>
+      <h2>
+        <tp-text-motion split="words" mask="words" reveal="up"
+          >Quiet spaces reveal as you scroll</tp-text-motion
+        >
+      </h2>
       <tp-image-group reveal="fade up" stagger="120">…</tp-image-group>
     </div>
   </tp-scroll-trigger>
@@ -119,12 +147,12 @@ any sticky element, there must be no clipping ancestor between the trigger and i
 
 ## Events
 
-| Event | Detail | When |
-| --- | --- | --- |
-| `tp-loading-status-change` | `{ status, ready, failed, total }` | the members' aggregate readiness changes |
-| `tp-reveal-change` | `{ revealed }` | the sequence starts, or a repeat resets it (scrubbed: progress leaves 0, or returns to 0) |
-| `tp-reveal-change-complete` | `{ revealed }` | the last member's reveal has settled (scrubbed: progress reached 1) |
-| `tp-scroll-progress` | `{ progress }` | each frame scrubbed progress changes |
+| Event                       | Detail                             | When                                                                                      |
+| --------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| `tp-loading-status-change`  | `{ status, ready, failed, total }` | the members' aggregate readiness changes                                                  |
+| `tp-reveal-change`          | `{ revealed }`                     | the sequence starts, or a repeat resets it (scrubbed: progress leaves 0, or returns to 0) |
+| `tp-reveal-change-complete` | `{ revealed }`                     | the last member's reveal has settled (scrubbed: progress reached 1)                       |
+| `tp-scroll-progress`        | `{ progress }`                     | each frame scrubbed progress changes                                                      |
 
 Scrubbed reveals request no motion role. To drive an external animation library from the scroll,
 listen to `tp-scroll-progress` and seek your own timeline.

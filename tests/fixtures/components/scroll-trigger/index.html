@@ -52,6 +52,14 @@
         </div>
       </tp-scroll-trigger>
       <p class="flow" id="after-band">Flow content after the band.</p>
+
+      <div class="spacer">Scroll: custom offsets, revealed between 25% entered and 40% through contain</div>
+      <tp-scroll-trigger id="offsets" scrub scrub-range="entry 25% contain 40%" stagger="150" reveal="fade up">
+        <div class="band">
+          <p><tp-text-motion id="offsets-1">Settled before the middle</tp-text-motion></p>
+          <p><tp-text-motion id="offsets-2">and at rest while read.</tp-text-motion></p>
+        </div>
+      </tp-scroll-trigger>
       <div class="spacer">End</div>
     </main>
     <script type="module" src="./fixture.ts"></script>

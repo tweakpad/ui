@@ -10,7 +10,7 @@ interface Args {
   revealRepeat: boolean;
   revealHold: boolean;
   scrub: boolean;
-  scrubRange: 'contain' | 'cover' | 'entry' | 'exit';
+  scrubRange: string;
   scrubSmoothing: number;
   scrubOnce: boolean;
   pin: boolean;
@@ -67,9 +67,9 @@ const meta = {
       table: { defaultValue: { summary: 'false' } },
     },
     scrubRange: {
-      control: 'inline-radio',
-      options: ['contain', 'cover', 'entry', 'exit'],
-      description: '`scrub-range`: the scroll range mapped to progress.',
+      control: 'text',
+      description:
+        '`scrub-range`: the scroll range mapped to progress: `contain`, `cover`, `entry`, `exit`, or start and end offsets such as `entry 25% contain 40%`.',
       table: { defaultValue: { summary: 'contain' } },
     },
     scrubSmoothing: {

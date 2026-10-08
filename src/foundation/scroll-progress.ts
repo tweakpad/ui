@@ -57,6 +57,92 @@ export function rangeProgress(
   return clamp((visibleStart - start) / (size - visible));
 }
 
+/** A point of a named range: `fraction` 0 is its start, 1 its end (`entry 20%` is 0.2). */
+export interface ScrollRangePoint {
+  readonly name: ScrollRange;
+  readonly fraction: number;
+}
+
+/** Progress runs from `start` to `end`, each a point of a named range (`entry 20% contain 50%`). */
+export interface ScrollRangeSpan {
+  readonly start: ScrollRangePoint;
+  readonly end: ScrollRangePoint;
+}
+
+const RANGE_NAMES = new Set<ScrollRange>(['cover', 'contain', 'entry', 'exit']);
+
+/**
+ * Parses a scroll range in the grammar of CSS `animation-range`: a range name alone spans that
+ * range (`entry`); a name with a percentage is a start point that ends at 100% of that range
+ * (`entry 20%`); two points give the start and the end (`entry 20% contain 50%`), a start without
+ * a percentage meaning 0% and an end without one 100%. Anything unparsable is `contain`.
+ */
+export function parseScrollRangeSpan(value: string | null | undefined): ScrollRangeSpan {
+  const tokens = (value ?? '').trim().split(/\s+/).filter(Boolean);
+  const points: { name: ScrollRange; fraction?: number }[] = [];
+  for (const token of tokens) {
+    if (RANGE_NAMES.has(token as ScrollRange)) points.push({ name: token as ScrollRange });
+    else if (
+      /^-?\d+(\.\d+)?%$/.test(token) &&
+      points.length &&
+      points.at(-1)!.fraction === undefined
+    )
+      points.at(-1)!.fraction = Number.parseFloat(token) / 100;
+    else return whole('contain');
+  }
+  const [start, end] = points;
+  if (!start || points.length > 2) return whole('contain');
+  if (!end)
+    return start.fraction === undefined
+      ? whole(start.name)
+      : {
+          start: { name: start.name, fraction: start.fraction },
+          end: { name: start.name, fraction: 1 },
+        };
+  return {
+    start: { name: start.name, fraction: start.fraction ?? 0 },
+    end: { name: end.name, fraction: end.fraction ?? 1 },
+  };
+}
+
+function whole(name: ScrollRange): ScrollRangeSpan {
+  return { start: { name, fraction: 0 }, end: { name, fraction: 1 } };
+}
+
+/** The position of the box's start edge at which `point` of its range is reached. */
+function pointPosition(
+  point: ScrollRangePoint,
+  size: number,
+  visibleStart: number,
+  visibleEnd: number,
+): number {
+  const visible = visibleEnd - visibleStart;
+  const shorter = Math.min(size, visible);
+  const { name, fraction } = point;
+  if (name === 'cover') return visibleEnd - fraction * (visible + size);
+  if (name === 'entry') return visibleEnd - fraction * shorter;
+  if (name === 'exit') return visibleStart + shorter - size - fraction * shorter;
+  return size <= visible
+    ? visibleEnd - size - fraction * (visible - size)
+    : visibleStart - fraction * (size - visible);
+}
+
+/** Progress 0 through 1 of a box at `start` of `size` between the two points of `span`. */
+export function spanProgress(
+  span: ScrollRangeSpan,
+  start: number,
+  size: number,
+  visibleStart: number,
+  visibleEnd: number,
+): number {
+  if (span.start.name === span.end.name && span.start.fraction === 0 && span.end.fraction === 1)
+    return rangeProgress(span.start.name, start, size, visibleStart, visibleEnd);
+  const from = pointPosition(span.start, size, visibleStart, visibleEnd);
+  const to = pointPosition(span.end, size, visibleStart, visibleEnd);
+  if (from === to) return start <= from ? 1 : 0;
+  return clamp((from - start) / (from - to));
+}
+
 /** Inline when `container` overflows only horizontally (a sideways strip), otherwise block. */
 export function scrollAxis(container: Element): ScrollAxis {
   const sideways = container.scrollWidth > container.clientWidth;
@@ -92,7 +178,7 @@ type ProgressWriter = (progress: number) => void;
 
 interface FieldMember {
   readonly write: ProgressWriter;
-  readonly range: ScrollRange;
+  readonly range: ScrollRangeSpan;
   readonly smoothing: number;
   /** Undefined until measured: an unmeasured member is never written. */
   target: number | undefined;
@@ -179,8 +265,8 @@ class ScrollField {
     const mirrored = inline && this.#rtl;
     for (const [member, rect] of measured) {
       const progress = inline
-        ? rangeProgress(member.range, rect.left, rect.width, visibleStart, visibleEnd)
-        : rangeProgress(member.range, rect.top, rect.height, visibleStart, visibleEnd);
+        ? spanProgress(member.range, rect.left, rect.width, visibleStart, visibleEnd)
+        : spanProgress(member.range, rect.top, rect.height, visibleStart, visibleEnd);
       member.target = mirrored ? 1 - progress : progress;
     }
   }
@@ -224,10 +310,10 @@ export function observeScrollProgress(
   element: Element,
   write: ProgressWriter,
   /** `smoothing` makes progress trail the scroll (see `smoothProgress`); default 0. */
-  options: { readonly range?: ScrollRange; readonly smoothing?: number } = {},
+  options: { readonly range?: ScrollRange | ScrollRangeSpan; readonly smoothing?: number } = {},
 ): () => void {
   const smoothing = clampScrollSmoothing(options.smoothing ?? 0);
-  const range = options.range ?? 'cover';
+  const range = typeof options.range === 'object' ? options.range : whole(options.range ?? 'cover');
   let field: ScrollField | undefined;
   let releaseSize: (() => void) | undefined;
   const join = () => {
