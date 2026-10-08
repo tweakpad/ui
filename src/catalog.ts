@@ -64,6 +64,7 @@ export const catalog = [
   ['Markdown', 'tp-markdown', 'preset-composition'],
   ['Image', 'tp-image', 'preset-composition'],
   ['Scroll trigger', 'tp-scroll-trigger', 'thin-wrapper'],
+  ['Timeline', 'tp-timeline', 'compound-reexport'],
   ['Autocomplete', 'tp-autocomplete', 'flattening-compound'],
   ['Text motion', 'tp-text-motion', 'compound-reexport'],
   ['Table of contents', 'tp-table-of-contents', 'compound-reexport'],

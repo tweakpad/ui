@@ -478,6 +478,26 @@ const examples = {
       >
     </tp-tree-view>
   `,
+  'tp-timeline': () => html`
+    <tp-timeline value="shipped" aria-label="Order status">
+      <tp-timeline-item value="placed">
+        <strong>Placed</strong>
+        <div><tp-time datetime="2026-03-18" mode="absolute" pattern="MMM d"></tp-time></div>
+      </tp-timeline-item>
+      <tp-timeline-item value="confirmed">
+        <strong>Confirmed</strong>
+        <div><tp-time datetime="2026-03-18" mode="absolute" pattern="MMM d"></tp-time></div>
+      </tp-timeline-item>
+      <tp-timeline-item value="shipped">
+        <strong>Shipped</strong>
+        <div><tp-time datetime="2026-03-19" mode="absolute" pattern="MMM d"></tp-time></div>
+      </tp-timeline-item>
+      <tp-timeline-item value="delivered">
+        <strong>Delivered</strong>
+        <div><tp-time datetime="2026-03-21" mode="absolute" pattern="MMM d"></tp-time></div>
+      </tp-timeline-item>
+    </tp-timeline>
+  `,
   // Without an engine the map shows its empty status; see the Map stories for engines.
   'tp-map': () => html`
     <tp-map label="Lisbon" default-center="38.7223,-9.1393" default-zoom="12">

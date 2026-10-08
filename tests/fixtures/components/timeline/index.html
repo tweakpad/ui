@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Timeline verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+        font-size: var(--tp-text-sm);
+      }
+      main {
+        max-width: 960px;
+        margin: 24px auto;
+        padding: 16px;
+        display: grid;
+        gap: 40px;
+      }
+      h1.fixture {
+        font-size: 1.25rem;
+        margin: 0;
+      }
+      section.case {
+        display: grid;
+        gap: 12px;
+      }
+      section.case > h2.label {
+        font-size: 0.875rem;
+        margin: 0;
+        color: var(--tp-muted-foreground);
+        font-weight: 500;
+      }
+      .title {
+        display: block;
+        font-weight: 500;
+      }
+      .meta {
+        color: var(--tp-muted-foreground);
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .resizable {
+        resize: horizontal;
+        overflow: hidden;
+        inline-size: 720px;
+        min-inline-size: 200px;
+        max-inline-size: 100%;
+        border: 1px dashed var(--tp-border);
+        padding: 12px;
+      }
+      .flow {
+        margin: 0;
+        padding: 8px;
+        border: 1px dashed var(--tp-border);
+        color: var(--tp-muted-foreground);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 class="fixture">Timeline verification</h1>
+
+      <section class="case" id="case-base">
+        <h2 class="label">Vertical, value-driven (end side)</h2>
+        <div class="controls">
+          <tp-button id="prev" variant="outline" size="sm">Previous</tp-button>
+          <tp-button id="next" variant="outline" size="sm">Next</tp-button>
+          <tp-button id="clear" variant="outline" size="sm">Clear value</tp-button>
+          <tp-button id="add" variant="outline" size="sm">Add item</tp-button>
+          <tp-button id="remove" variant="outline" size="sm">Remove first</tp-button>
+          <tp-button id="reverse" variant="outline" size="sm">Reverse order</tp-button>
+        </div>
+        <tp-timeline id="base" value="shipped" aria-label="Order status">
+          <tp-timeline-item value="placed"
+            ><span class="title">Placed</span><span class="meta">Mar 18</span></tp-timeline-item
+          >
+          <tp-timeline-item value="confirmed"
+            ><span class="title">Confirmed</span><span class="meta">Mar 18</span></tp-timeline-item
+          >
+          <tp-timeline-item value="shipped"
+            ><span class="title">Shipped</span><span class="meta">Mar 19</span></tp-timeline-item
+          >
+          <tp-timeline-item value="transit"
+            ><span class="title">In transit</span><span class="meta">Mar 20</span></tp-timeline-item
+          >
+          <tp-timeline-item value="delivered"
+            ><span class="title">Delivered</span><span class="meta">Mar 21</span></tp-timeline-item
+          >
+        </tp-timeline>
+        <p class="flow" id="base-below">Flow content below the timeline.</p>
+      </section>
+
+      <section class="case" id="case-log">
+        <h2 class="label">No value (log), opposite slot with times, links in content</h2>
+        <tp-timeline id="log" aria-labelledby="log-heading">
+          <tp-timeline-item
+            ><span slot="opposite">09:12</span
+            ><span class="title" id="log-heading">Deploy started</span
+            ><a href="#case-log">View run</a></tp-timeline-item
+          >
+          <tp-timeline-item
+            ><span slot="opposite">09:14</span><span class="title">Tests passed</span>All 412 tests
+            passed in 47 seconds, including the long-running integration suite that exercises the
+            payment flows.</tp-timeline-item
+          >
+          <tp-timeline-item
+            ><span slot="opposite">09:20</span><span class="title">Released</span
+            ><a href="#case-log">Release notes</a></tp-timeline-item
+          >
+        </tp-timeline>
+      </section>
+
+      <section class="case" id="case-start">
+        <h2 class="label">align=start</h2>
+        <tp-timeline id="start" align="start" value="b">
+          <tp-timeline-item value="a"
+            ><span class="title">Research</span><span class="meta">4 weeks</span></tp-timeline-item
+          >
+          <tp-timeline-item value="b"
+            ><span class="title">Design</span><span class="meta">3 weeks</span></tp-timeline-item
+          >
+          <tp-timeline-item value="c"
+            ><span class="title">Build</span><span class="meta">8 weeks</span></tp-timeline-item
+          >
+        </tp-timeline>
+      </section>
+
+      <section class="case" id="case-alternate">
+        <h2 class="label">
+          align=alternate with opposite and long content (resizable: collapses below 40rem)
+        </h2>
+        <div class="resizable">
+          <tp-timeline id="alternate" align="alternate" value="beta">
+            <tp-timeline-item value="kickoff"
+              ><span slot="opposite">Jan 2025</span
+              ><span class="title">Project kickoff</span>Initial planning, team assembly, and
+              architecture design for the new platform.</tp-timeline-item
+            >
+            <tp-timeline-item value="alpha"
+              ><span slot="opposite">Mar 2025</span><span class="title">Alpha release</span>Core
+              features shipped to internal testers.</tp-timeline-item
+            >
+            <tp-timeline-item value="beta"
+              ><span slot="opposite">Jun 2025</span><span class="title">Beta launch</span>Public
+              beta with 500 early adopters. Feedback collection and iteration cycle begins, with
+              weekly releases and a public roadmap.</tp-timeline-item
+            >
+            <tp-timeline-item value="ga"
+              ><span slot="opposite">Sep 2025</span
+              ><span class="title">General availability</span>Production release.</tp-timeline-item
+            >
+          </tp-timeline>
+        </div>
+      </section>
+
+      <section class="case" id="case-horizontal">
+        <h2 class="label">Horizontal, value-driven</h2>
+        <tp-timeline id="horizontal" orientation="horizontal" value="test" aria-label="CI pipeline">
+          <tp-timeline-item value="install"
+            ><span class="title">Install</span><span class="meta">12s</span></tp-timeline-item
+          >
+          <tp-timeline-item value="lint"
+            ><span class="title">Lint</span><span class="meta">8s</span></tp-timeline-item
+          >
+          <tp-timeline-item value="test"
+            ><span class="title">Test</span><span class="meta">Running</span></tp-timeline-item
+          >
+          <tp-timeline-item value="build"
+            ><span class="title">Build</span><span class="meta">Queued</span></tp-timeline-item
+          >
+          <tp-timeline-item value="deploy"
+            ><span class="title">Deploy</span><span class="meta">Queued</span></tp-timeline-item
+          >
+        </tp-timeline>
+      </section>
+
+      <section class="case" id="case-horizontal-alternate">
+        <h2 class="label">Horizontal alternate with uneven content</h2>
+        <tp-timeline id="horizontal-alternate" orientation="horizontal" align="alternate">
+          <tp-timeline-item
+            ><span class="title">Kickoff</span
+            ><span class="meta"
+              >Initial planning, team assembly and architecture design.</span
+            ></tp-timeline-item
+          >
+          <tp-timeline-item
+            ><span class="title">Alpha</span
+            ><span class="meta">Core features.</span></tp-timeline-item
+          >
+          <tp-timeline-item
+            ><span class="title">Beta</span
+            ><span class="meta"
+              >Public beta with 500 early adopters and a feedback cycle.</span
+            ></tp-timeline-item
+          >
+          <tp-timeline-item
+            ><span class="title">GA</span><span class="meta">Production.</span></tp-timeline-item
+          >
+        </tp-timeline>
+      </section>
+
+      <section class="case" id="case-responsive">
+        <h2 class="label">orientation=responsive (resize the box across 40rem)</h2>
+        <div class="resizable">
+          <tp-timeline id="responsive" orientation="responsive" value="two">
+            <tp-timeline-item value="one"><span class="title">Cart</span></tp-timeline-item>
+            <tp-timeline-item value="two"><span class="title">Shipping</span></tp-timeline-item>
+            <tp-timeline-item value="three"><span class="title">Payment</span></tp-timeline-item>
+            <tp-timeline-item value="four"><span class="title">Review</span></tp-timeline-item>
+          </tp-timeline>
+        </div>
+      </section>
+
+      <section class="case" id="case-rtl" dir="rtl">
+        <h2 class="label">Right to left</h2>
+        <tp-timeline id="rtl-horizontal" orientation="horizontal" value="b">
+          <tp-timeline-item value="a"><span class="title">One</span></tp-timeline-item>
+          <tp-timeline-item value="b"><span class="title">Two</span></tp-timeline-item>
+          <tp-timeline-item value="c"><span class="title">Three</span></tp-timeline-item>
+        </tp-timeline>
+        <tp-timeline id="rtl-vertical" value="b">
+          <tp-timeline-item value="a"
+            ><span slot="opposite">Mon</span><span class="title">One</span></tp-timeline-item
+          >
+          <tp-timeline-item value="b"
+            ><span slot="opposite">Tue</span><span class="title">Two</span></tp-timeline-item
+          >
+          <tp-timeline-item value="c"
+            ><span slot="opposite">Wed</span><span class="title">Three</span></tp-timeline-item
+          >
+        </tp-timeline>
+      </section>
+
+      <section class="case" id="case-markers">
+        <h2 class="label">Custom markers and status overrides (no root value)</h2>
+        <tp-timeline id="markers">
+          <tp-timeline-item status="complete"
+            ><tp-icon slot="marker" class="check"></tp-icon
+            ><span class="title">Architectural design</span
+            ><span class="meta">Sep — Nov 2025</span></tp-timeline-item
+          >
+          <tp-timeline-item status="current"
+            ><tp-avatar slot="marker" size="sm" fallback="AB"></tp-avatar
+            ><span class="title">Permits</span><span class="meta">Dec 2025</span></tp-timeline-item
+          >
+          <tp-timeline-item status="upcoming"
+            ><span slot="marker">3</span><span class="title">Site preparation</span
+            ><span class="meta">Feb 2026</span></tp-timeline-item
+          >
+        </tp-timeline>
+      </section>
+
+      <section class="case" id="case-collapsible">
+        <h2 class="label">Collapsible composition</h2>
+        <tp-timeline
+          id="collapsible"
+          value="foundation"
+          style="--tp-timeline-marker-offset: var(--tp-space-2-5)"
+        >
+          <tp-timeline-item value="design"
+            ><tp-collapsible
+              ><span slot="label">Architectural design</span>Plans approved.</tp-collapsible
+            ></tp-timeline-item
+          >
+          <tp-timeline-item value="foundation"
+            ><tp-collapsible id="open-me"
+              ><span slot="label">Foundation and concrete</span>Footings poured and cured.
+              Foundation walls 80% complete. Waterproofing membrane applied to completed
+              sections.</tp-collapsible
+            ></tp-timeline-item
+          >
+          <tp-timeline-item value="framing"
+            ><tp-collapsible
+              ><span slot="label">Structural framing</span>Not started.</tp-collapsible
+            ></tp-timeline-item
+          >
+        </tp-timeline>
+        <p class="flow">Flow content below the collapsible timeline.</p>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

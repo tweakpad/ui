@@ -18,6 +18,7 @@ const authoredStories = new Set([
   'tp-image',
   'tp-text-motion',
   'tp-scroll-trigger',
+  'tp-timeline',
   'tp-autocomplete',
   'tp-table-of-contents',
   'tp-tree-view',
