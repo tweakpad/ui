@@ -180,6 +180,8 @@ import { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/in
 import { TpCodeBlock } from './components/code-block/index.js';
 import { TpMarkdown } from './components/markdown/index.js';
 import { TpImage, TpImageGroup } from './components/image/index.js';
+import { TpScrollTrigger } from './components/scroll-trigger/index.js';
+import { TpTextMotion } from './components/text-motion/index.js';
 import { TpTableOfContents, TpTableOfContentsItem } from './components/table-of-contents/index.js';
 import { TpTreeItem, TpTreeView } from './components/tree-view/index.js';
 
@@ -259,6 +261,8 @@ defineElement(TpCodeBlock.tagName, TpCodeBlock);
 defineElement(TpMarkdown.tagName, TpMarkdown);
 defineElement(TpImage.tagName, TpImage);
 defineElement(TpImageGroup.tagName, TpImageGroup);
+defineElement(TpScrollTrigger.tagName, TpScrollTrigger);
+defineElement(TpTextMotion.tagName, TpTextMotion);
 defineElement(TpTableOfContents.tagName, TpTableOfContents);
 defineElement(TpTableOfContentsItem.tagName, TpTableOfContentsItem);
 defineElement(TpTreeView.tagName, TpTreeView);

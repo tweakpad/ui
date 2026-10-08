@@ -304,28 +304,56 @@ interface SubtreeRegistry {
   readonly observer: MutationObserver;
   readonly callbacks: Set<() => void>;
 }
-const subtreeRegistries = new WeakMap<Node, SubtreeRegistry>();
+const subtreeRegistries = new WeakMap<Node, Map<string, SubtreeRegistry>>();
+
+export interface SubtreeOptions {
+  /** Observe text edits and every attribute, not only structure (content observation). */
+  readonly content?: boolean;
+  /** Observe the whole subtree (default) or only the root's children. */
+  readonly subtree?: boolean;
+}
+
+const subtreeKey = (options: SubtreeOptions) =>
+  `${options.content ? 'content' : 'structure'}|${options.subtree === false ? 'children' : 'subtree'}`;
 
 /**
- * Observes structural changes under `root` (children, `id`, `hidden`, `open`) through one shared
- * MutationObserver per root.
+ * Observes changes under `root` through one shared MutationObserver per root and option set:
+ * structure (children, `id`, `hidden`, `open`) by default, or content (structure, text and every
+ * attribute) when `content` is set.
  */
-export function observeSubtree(root: Node, callback: () => void): () => void {
+export function observeSubtree(
+  root: Node,
+  callback: () => void,
+  options: SubtreeOptions = {},
+): () => void {
   const view = (root.ownerDocument ?? (root as Document)).defaultView;
   if (!view?.MutationObserver) return () => {};
-  let registry = subtreeRegistries.get(root);
+  let byOptions = subtreeRegistries.get(root);
+  if (!byOptions) subtreeRegistries.set(root, (byOptions = new Map()));
+  const key = subtreeKey(options);
+  let registry = byOptions.get(key);
   if (!registry) {
     const callbacks = new Set<() => void>();
     const observer = new view.MutationObserver(() => {
       for (const notify of [...callbacks]) notify();
     });
-    observer.observe(root, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: ['id', 'hidden', 'open'],
-    });
-    subtreeRegistries.set(root, (registry = { observer, callbacks }));
+    observer.observe(
+      root,
+      options.content
+        ? {
+            subtree: options.subtree !== false,
+            childList: true,
+            characterData: true,
+            attributes: true,
+          }
+        : {
+            subtree: options.subtree !== false,
+            childList: true,
+            attributes: true,
+            attributeFilter: ['id', 'hidden', 'open'],
+          },
+    );
+    byOptions.set(key, (registry = { observer, callbacks }));
   }
   const { observer, callbacks } = registry;
   callbacks.add(callback);
@@ -336,6 +364,67 @@ export function observeSubtree(root: Node, callback: () => void): () => void {
     callbacks.delete(callback);
     if (callbacks.size) return;
     observer.disconnect();
-    subtreeRegistries.delete(root);
+    byOptions.delete(key);
+  };
+}
+
+/**
+ * Drops the records pending for `root` and `options`, so an owner's own synchronous writes are
+ * not reported back to it as outside changes.
+ */
+export function discardSubtreeRecords(root: Node, options: SubtreeOptions = {}): void {
+  subtreeRegistries.get(root)?.get(subtreeKey(options))?.observer.takeRecords();
+}
+
+type FontsCallback = () => void;
+interface FontRegistry {
+  readonly callbacks: Set<FontsCallback>;
+  readonly release: () => void;
+}
+const fontRegistries = new WeakMap<Document, FontRegistry>();
+
+/** Whether every font the document has requested so far has finished loading. */
+export function fontsLoaded(document: Document): boolean {
+  return (document as Document & { fonts?: FontFaceSet }).fonts?.status !== 'loading';
+}
+
+/** Resolves once the fonts the document has requested so far have loaded. */
+export function whenFontsReady(document: Document): Promise<void> {
+  const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
+  return fonts && fonts.status === 'loading'
+    ? fonts.ready.then(
+        () => undefined,
+        () => undefined,
+      )
+    : Promise.resolve();
+}
+
+/**
+ * Calls `callback` whenever fonts finish loading in `document`, through one shared listener per
+ * document, released when its last subscriber leaves.
+ */
+export function observeFonts(document: Document, callback: FontsCallback): () => void {
+  const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
+  if (!fonts || typeof fonts.addEventListener !== 'function') return () => {};
+  let registry = fontRegistries.get(document);
+  if (!registry) {
+    const callbacks = new Set<FontsCallback>();
+    const notify = () => {
+      for (const subscriber of [...callbacks]) subscriber();
+    };
+    fonts.addEventListener('loadingdone', notify);
+    registry = { callbacks, release: () => fonts.removeEventListener('loadingdone', notify) };
+    fontRegistries.set(document, registry);
+  }
+  const { callbacks } = registry;
+  callbacks.add(callback);
+  let active = true;
+  return () => {
+    if (!active) return;
+    active = false;
+    callbacks.delete(callback);
+    if (callbacks.size) return;
+    registry.release();
+    fontRegistries.delete(document);
   };
 }

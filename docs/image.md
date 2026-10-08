@@ -172,6 +172,7 @@ example as a grid.
 | Group property / attribute | Values | Default |
 | --- | --- | --- |
 | `stagger` | milliseconds between consecutive member reveals | `0` (in sync) |
+| `staggerFrom` / `stagger-from` | `first`, `last`, `center` | `first` |
 | `reveal` | default effect tokens for members without their own | `''` |
 | `revealRepeat` / `reveal-repeat` | replay the group reveal on every entry | `false` |
 | `revealHold` / `reveal-hold` | hold the whole group; a member's own hold also holds it | `false` |
@@ -183,11 +184,12 @@ The group's read-only properties are `loadingStatus` (`idle`, `loading`, `loaded
 member's reveal has settled. Members' events bubble through the group with the same names, so
 check `event.target === group` to handle only the group's.
 
-To sync other motion, hold the group, wait for what you need, then release it. For example, keep
-`reveal-hold` set until the group reports `loaded` and a headline has finished animating, then
-clear it, and start a caption when the group's `tp-reveal-change-complete` arrives. Nested
-groups are independent, and an image belongs to its nearest group. Images added later join the
-set and reveal as soon as they settle.
+To sequence a group with text or other images, put them in a [Scroll trigger](scroll-trigger.md):
+the trigger waits for every member (the group waits for its images) and reveals them in order.
+An image belongs to its nearest group or trigger, and a group inside a trigger or another group
+is one member of it, playing its own stagger after the delay it receives. Images added later
+join the set and reveal as soon as they settle. For other motion, hold the group, wait for what
+you need, then clear `reveal-hold`.
 
 ## Performance
 

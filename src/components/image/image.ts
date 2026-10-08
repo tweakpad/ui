@@ -4,12 +4,8 @@ import { styleMap } from 'lit/directives/style-map.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpElement } from '../../foundation/element.js';
 import { ImageLoadController, type ImageLoadStatus } from '../../foundation/image-load.js';
-import {
-  prepareMotion,
-  resolvesReducedMotion,
-  type MotionRoleDefinition,
-} from '../../foundation/motion.js';
-import { canObserveIntersection, observeIntersection } from '../../foundation/observation.js';
+import { resolvesReducedMotion, type MotionRoleDefinition } from '../../foundation/motion.js';
+import { observeIntersection } from '../../foundation/observation.js';
 import {
   clampParallaxDepth,
   clampParallaxSmoothing,
@@ -19,6 +15,13 @@ import {
   parallaxGeometry,
   type ParallaxDirection,
 } from '../../foundation/parallax.js';
+import { RevealMembership, type RevealMember } from '../../foundation/reveal-coordination.js';
+import {
+  revealsImmediately,
+  RevealPlayback,
+  StandaloneReveal,
+  transitionSpan,
+} from '../../foundation/reveal-playback.js';
 import { imageOffIcon } from '../../icons/image.js';
 import { imagePresentation } from '../../presentation/families/image.js';
 import { transitionCss } from '../../presentation/motion.js';
@@ -26,13 +29,6 @@ import { TpAspectRatio } from '../aspect-ratio/aspect-ratio.js';
 import { TpIcon } from '../icon.js';
 import { TpSkeleton } from '../skeleton/skeleton.js';
 import { TpSpinner } from '../spinner/spinner.js';
-import {
-  imageGroupHost,
-  nearestImageGroup,
-  transitionSpan,
-  type ImageGroupHost,
-  type ImageGroupMember,
-} from './group-protocol.js';
 import {
   hasWidthDescriptors,
   readSources,
@@ -59,9 +55,6 @@ const REVEAL_EFFECTS: readonly ImageRevealEffect[] = [
   'zoom-in',
   'zoom-out',
 ];
-
-/** Where a repeating reveal starts: 10% inside the viewport's block edges. */
-const REVEAL_ENTRY_INSET = '-10% 0px -10% 0px';
 
 export const imageMotionRoles = {
   reveal: {
@@ -463,22 +456,15 @@ export class TpImage extends TpElement {
   });
   /** The load generation whose image has been decoded, so a reveal's first frame has pixels. */
   #decodedGeneration = -1;
-  #group: ImageGroupHost | undefined;
-  #leaveGroup: (() => void) | undefined;
   /** A concrete `sizes` replacing `auto` once a group asks a lazy image to load now. */
   #eagerSizes: string | undefined;
   #eager = false;
-  #revealSerial = 0;
-  /** In view (inside the entry inset for a repeating reveal) while waiting for the image. */
-  #revealWaiting = false;
   #requestKey: string | undefined;
   #sources: ImageSourceRecord[] = [];
   #sourceObserver: MutationObserver | undefined;
-  #revealed = false;
   #releaseVisibility: (() => void) | undefined;
   #releaseParallax: (() => void) | undefined;
   #parallaxSmoothingApplied = 0;
-  #releaseRevealEntry: (() => void) | undefined;
   #parallaxMedia: HTMLElement | null = null;
   #driver: 'timeline' | 'script' = 'script';
 
@@ -494,7 +480,7 @@ export class TpImage extends TpElement {
 
   /** Whether the reveal has played (false again after a repeat reset). */
   get revealed(): boolean {
-    return this.#revealed;
+    return this.#playback.revealed;
   }
 
   get #img(): HTMLImageElement | null {
@@ -522,7 +508,7 @@ export class TpImage extends TpElement {
 
   /** The image's own reveal effect, or its group's default. */
   get #revealEffects(): ImageRevealEffect[] {
-    const tokens = (this.reveal || this.#group?.reveal || '').split(/\s+/);
+    const tokens = (this.reveal || this.#membership.host?.reveal || '').split(/\s+/);
     return REVEAL_EFFECTS.filter((effect) => tokens.includes(effect));
   }
 
@@ -539,25 +525,21 @@ export class TpImage extends TpElement {
     // The load controller abandons its generation on disconnection; request again.
     this.#requestKey = undefined;
     this.#syncSourceObserver();
-    this.#joinGroup();
+    this.#membership.connect();
     this.requestUpdate();
   }
 
   override disconnectedCallback(): void {
     this.#releaseVisibility?.();
     this.#releaseVisibility = undefined;
-    this.#releaseRevealEntry?.();
-    this.#releaseRevealEntry = undefined;
-    this.#revealWaiting = false;
+    this.#standalone.release();
     this.removeAttribute('data-in-view');
     this.#releaseParallax?.();
     this.#releaseParallax = undefined;
     this.#parallaxMedia = null;
     this.#sourceObserver?.disconnect();
     this.#sourceObserver = undefined;
-    this.#leaveGroup?.();
-    this.#leaveGroup = undefined;
-    this.#group = undefined;
+    this.#membership.disconnect();
     super.disconnectedCallback();
   }
 
@@ -591,11 +573,8 @@ export class TpImage extends TpElement {
     const effects = this.#revealEffects.join(' ');
     if (effects) this.setAttribute('data-reveal', effects);
     else this.removeAttribute('data-reveal');
-    // No intersection support or reduced motion: reveal as soon as the image settles.
-    if (!this.#group && !this.#revealed && effects && this.#revealsImmediately()) {
-      this.#revealWaiting = true;
-      this.#revealIfWaiting();
-    }
+    // No intersection support or reduced motion: reveal before the first paint once settled.
+    if (revealsImmediately(this)) this.#standalone.update();
   }
 
   protected override updated(changed: PropertyValues<this>): void {
@@ -603,16 +582,13 @@ export class TpImage extends TpElement {
     this.#image.observe(this.#img);
     this.#syncVisibility();
     this.#syncParallax();
-    if (changed.has('revealHold') || changed.has('reveal')) this.#settledChanged();
+    if (changed.has('revealHold') || changed.has('reveal') || changed.has('revealRepeat'))
+      this.#settledChanged();
   }
 
-  /** Reduced motion or no intersection support: present the revealed state from the start. */
-  #revealsImmediately(): boolean {
-    return !canObserveIntersection(this) || resolvesReducedMotion(this);
-  }
-
-  /** Settled: loaded and decoded, failed, or without a source. */
+  /** Settled: loaded and decoded, failed, or without a source (after the request is issued). */
   #settled(): boolean {
+    if (this.#requestKey === undefined) return false;
     const status = this.#image.status;
     if (status === 'loading') return false;
     return status !== 'loaded' || this.#decodedGeneration === this.#image.generation;
@@ -632,82 +608,50 @@ export class TpImage extends TpElement {
   }
 
   #settledChanged(): void {
-    if (this.#group) this.#group.update();
-    else this.#revealIfWaiting();
+    if (this.#membership.coordinated) this.#membership.update();
+    else this.#standalone.update();
   }
 
   /**
-   * Plays the reveal after `delay` ms (a group's stagger offset), announces it, and resolves once
-   * its motion has settled: the driver's playback when claimed, or the CSS transition otherwise.
+   * The reveal (Foundation §18.18): played after a coordinator's stagger offset, announced, and
+   * settled from the claimed driver's playback or the CSS transition.
    */
-  #reveal(delay = 0): Promise<void> {
-    const serial = ++this.#revealSerial;
-    if (delay > 0) this.style.setProperty('--_tp-image-group-delay', `${delay}ms`);
-    else this.style.removeProperty('--_tp-image-group-delay');
-    this.#revealed = true;
-    this.toggleAttribute('data-revealed', true);
-    const effect = this.#revealEffects.join(' ');
-    const motion = prepareMotion(this, this, imageMotionRoles.reveal, {
-      phase: 'change',
-      fromState: 'pending',
-      toState: 'revealed',
-      context: { effect },
-    });
-    motion.start();
-    this.emit('tp-reveal-change', { revealed: true, effect });
-    const view = this.ownerDocument.defaultView;
-    const settledMotion: Promise<void> = motion.claimed
-      ? motion.finished
-      : new Promise((resolve) =>
-          view ? view.setTimeout(resolve, transitionSpan(view.getComputedStyle(this))) : resolve(),
-        );
-    return settledMotion.then(() => {
-      if (serial !== this.#revealSerial || !this.#revealed) return;
-      this.emit('tp-reveal-change-complete', { revealed: true });
-    });
-  }
+  readonly #playback = new RevealPlayback({
+    owner: this,
+    role: imageMotionRoles.reveal,
+    emit: (type, detail) => this.emit(type, detail),
+    effect: () => this.#revealEffects.join(' '),
+    apply: (revealed, delay) => {
+      if (revealed && delay > 0) this.style.setProperty('--_tp-image-group-delay', `${delay}ms`);
+      else this.style.removeProperty('--_tp-image-group-delay');
+      this.toggleAttribute('data-revealed', revealed);
+      // A revealed image that does not repeat no longer needs reveal visibility.
+      if (this.isConnected) this.#syncVisibility();
+    },
+    span: () => {
+      const view = this.ownerDocument.defaultView;
+      return view ? transitionSpan(view.getComputedStyle(this)) : 0;
+    },
+  });
 
-  /** Returns instantly to the start state (a repeating reveal that left the view). */
-  #unreveal(): void {
-    if (!this.#revealed) return;
-    const serial = ++this.#revealSerial;
-    this.#revealed = false;
-    this.removeAttribute('data-revealed');
-    this.style.removeProperty('--_tp-image-group-delay');
-    const effect = this.#revealEffects.join(' ');
-    this.emit('tp-reveal-change', { revealed: false, effect });
-    queueMicrotask(() => {
-      if (serial === this.#revealSerial)
-        this.emit('tp-reveal-change-complete', { revealed: false });
-    });
-  }
-
-  /** Registers with the nearest `tp-image-group`, once that element is defined. */
-  #joinGroup(): void {
-    const element = nearestImageGroup(this);
-    if (!element) return;
-    const host = element[imageGroupHost];
-    if (!host) {
-      void this.ownerDocument.defaultView?.customElements.whenDefined('tp-image-group').then(() => {
-        if (this.isConnected && !this.#group && nearestImageGroup(this) === element)
-          this.#joinGroup();
-      });
-      return;
-    }
-    this.#group = host;
-    this.#revealWaiting = false;
-    this.#leaveGroup = host.register(this.#member);
-    this.requestUpdate();
-  }
-
-  readonly #member: ImageGroupMember = {
+  /** What this image offers its coordinator (an Image group or a Scroll trigger). */
+  readonly #member: RevealMember = {
     element: this,
-    status: () => this.#image.status,
-    settled: () => this.#settled(),
+    ready: () => this.#settled(),
+    outcome: () => {
+      const status = this.#image.status;
+      return status === 'loaded'
+        ? 'loaded'
+        : status === 'error'
+          ? 'failed'
+          : status === 'loading'
+            ? 'pending'
+            : 'none';
+    },
     revealing: () => this.#revealEffects.length > 0,
-    revealed: () => this.#revealed,
+    revealed: () => this.#playback.revealed,
     held: () => this.revealHold,
-    ensureLoading: () => {
+    prepare: () => {
       if (this.#eager || this.loading === 'eager' || this.#image.status !== 'loading') return;
       // Native `sizes=auto` needs lazy loading; keep the laid-out width it would have used.
       const width = this.#img?.getBoundingClientRect().width ?? 0;
@@ -715,19 +659,36 @@ export class TpImage extends TpElement {
       this.#eager = true;
       this.requestUpdate();
     },
-    reveal: (delay) => this.#reveal(delay),
-    reset: () => this.#unreveal(),
-    revealsImmediately: () => this.#revealsImmediately(),
+    reveal: (delay) => this.#playback.play(delay),
+    reset: () => this.#playback.reset(),
+    refresh: () => this.requestUpdate(),
   };
+
+  readonly #membership = new RevealMembership(this, this.#member, () => this.requestUpdate());
+
+  /**
+   * Without a coordinator the image reveals itself once in view and settled: loaded and decoded
+   * (so its first animated frame has pixels), failed, or unsourced.
+   */
+  readonly #standalone = new StandaloneReveal(this, {
+    playback: this.#playback,
+    repeat: () => this.revealRepeat,
+    revealing: () => this.#revealEffects.length > 0,
+    ready: () => this.#settled(),
+    held: () => this.revealHold,
+    coordinated: () => this.#membership.coordinated,
+  });
 
   #syncVisibility(): void {
     const loadingMotion =
       this.#image.status === 'loading' &&
       (this.placeholder !== 'none' || this.querySelector(':scope > [slot="placeholder"]'));
-    const repeats = this.#repeatsReveal;
+    const repeats = this.revealRepeat && !revealsImmediately(this);
     const needed =
       this.isConnected &&
-      ((!this.#group && this.#revealEffects.length > 0 && (!this.#revealed || repeats)) ||
+      ((!this.#membership.coordinated &&
+        this.#revealEffects.length > 0 &&
+        (!this.#playback.revealed || repeats)) ||
         Boolean(loadingMotion) ||
         this.#parallaxActive);
     if (needed && !this.#releaseVisibility) {
@@ -737,45 +698,6 @@ export class TpImage extends TpElement {
       this.#releaseVisibility = undefined;
       this.removeAttribute('data-in-view');
     }
-    // A repeating reveal enters on a viewport inset and resets only once fully out, so the start
-    // state's offset cannot pull a just-hidden image back in and loop.
-    const entryNeeded = this.isConnected && repeats;
-    if (entryNeeded && !this.#releaseRevealEntry)
-      this.#releaseRevealEntry = observeIntersection(this, this.#entered, {
-        rootMargin: REVEAL_ENTRY_INSET,
-      });
-    else if (!entryNeeded && this.#releaseRevealEntry) {
-      this.#releaseRevealEntry();
-      this.#releaseRevealEntry = undefined;
-    }
-  }
-
-  get #repeatsReveal(): boolean {
-    return (
-      !this.#group &&
-      this.revealRepeat &&
-      this.#revealEffects.length > 0 &&
-      !this.#revealsImmediately()
-    );
-  }
-
-  readonly #entered = (entry: IntersectionObserverEntry): void => {
-    if (!this.#releaseRevealEntry) return;
-    this.#revealWaiting = entry.isIntersecting && !this.#revealed;
-    this.#revealIfWaiting();
-  };
-
-  /**
-   * A reveal plays only once the image has settled: loaded and decoded (so its first animated
-   * frame has pixels), failed, or unsourced. Decoding is awaited only here, so a cached image
-   * still settles without a loading phase.
-   */
-  #revealIfWaiting(): void {
-    if (this.#group || !this.#revealWaiting || this.#revealed) return;
-    if (this.revealHold || !this.#settled() || !this.isConnected) return;
-    this.#revealWaiting = false;
-    void this.#reveal();
-    this.#syncVisibility();
   }
 
   readonly #intersected = (entry: IntersectionObserverEntry): void => {
@@ -783,16 +705,6 @@ export class TpImage extends TpElement {
     this.setAttribute('data-in-view', String(entry.isIntersecting));
     // Layout around the image may have changed since the driver was chosen.
     if (entry.isIntersecting && this.#parallaxActive) this.#chooseDriver();
-    if (this.#repeatsReveal) {
-      // Fully out of view: back to the start state, instantly, ready to reveal on re-entry.
-      if (!entry.isIntersecting) {
-        this.#revealWaiting = false;
-        this.#unreveal();
-      }
-    } else if (!this.#group && !this.#revealed && this.#revealEffects.length) {
-      this.#revealWaiting = entry.isIntersecting;
-      this.#revealIfWaiting();
-    }
     this.#syncVisibility();
   };
 

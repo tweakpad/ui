@@ -63,6 +63,8 @@ describe('Storybook catalog entries', () => {
     'code-block',
     'markdown',
     'image',
+    'text-motion',
+    'scroll-trigger',
   ].map((name) => readFileSync(new URL(`./${name}.stories.ts`, import.meta.url), 'utf8'));
   const accordionStory = readFileSync(new URL('./accordion.stories.ts', import.meta.url), 'utf8');
   const alertDialogStory = readFileSync(

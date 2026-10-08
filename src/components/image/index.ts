@@ -10,5 +10,6 @@ export {
   type ImageZoom,
 } from './image.js';
 export { hasWidthDescriptors, resolveImageSizes } from './sources.js';
-export { TpImageGroup, type ImageGroupLoadingStatus } from './image-group.js';
-export { staggerDelays, groupLoadingStatus } from './group-protocol.js';
+export { TpImageGroup } from './image-group.js';
+export { groupLoadingStatus, type ImageGroupLoadingStatus } from './group-status.js';
+export { staggerDelays } from '../../foundation/reveal-coordination.js';

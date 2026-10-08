@@ -198,3 +198,42 @@ body {
   inherits: true;
   initial-value: 0%;
 }
+
+/* Layout stability before definition (Foundation §18.18 vr-layout, §18.19 tm-layout): the
+   coordinators are blocks before and after they are defined, and Text motion occupies its final
+   space with its text hidden, so splitting never shows a flash of unsplit text. If the
+   definition never loads, the text appears after three seconds. */
+tp-scroll-trigger:not(:defined),
+tp-image-group:not(:defined),
+tp-image:not(:defined),
+tp-text-motion:not(:defined) {
+  display: block;
+}
+
+/* An image reserves its frame before definition where typed attributes are supported. */
+@supports (aspect-ratio: attr(ratio type(<number>))) {
+  tp-image:not(:defined)[width][height] {
+    aspect-ratio: attr(width type(<number>)) / attr(height type(<number>));
+  }
+
+  tp-image:not(:defined)[ratio] {
+    aspect-ratio: attr(ratio type(<number>));
+  }
+}
+
+tp-text-motion:not(:defined) {
+  visibility: hidden;
+  animation: tp-text-motion-undefined 0s 3s forwards;
+}
+
+/* Character pieces cannot kern or form ligatures; switch both off before splitting. */
+tp-text-motion[split~='chars'] {
+  font-kerning: none;
+  font-variant-ligatures: none;
+}
+
+@keyframes tp-text-motion-undefined {
+  to {
+    visibility: visible;
+  }
+}

@@ -422,6 +422,19 @@ const examples = {
       zoom="in"
     ></tp-image>
   `,
+  'tp-text-motion': () => html`
+    <h3>
+      <tp-text-motion split="words lines" mask="lines" reveal="up"
+        >Quiet spaces, open light</tp-text-motion
+      >
+    </h3>
+  `,
+  'tp-scroll-trigger': () => html`
+    <tp-scroll-trigger stagger="150" reveal="fade up">
+      <p><tp-text-motion>Revealed together, in order</tp-text-motion></p>
+      <p><tp-text-motion>once the trigger enters view.</tp-text-motion></p>
+    </tp-scroll-trigger>
+  `,
   // Targets live on the page around the example; the spy follows the page scroll.
   'tp-table-of-contents': () => html`
     <tp-table-of-contents>

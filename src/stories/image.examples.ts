@@ -1,6 +1,4 @@
-import { interactiveMarkupExample, markupExample } from './documentation-examples.js';
-import { setupCoordinatedReveal } from './image-example.js';
-import setupSource from './image-example.js?raw';
+import { markupExample } from './documentation-examples.js';
 
 const photo = (id: string, width: number) =>
   `https://images.unsplash.com/${id}?w=${width}&q=75&auto=format&fit=crop`;
@@ -69,23 +67,21 @@ ${Object.values(imageSource)
 </tp-image-group>`,
     "A group fetches all of its images as it nears the viewport and reveals none until every one has loaded. Then it reveals them in order, 120ms apart, using the group's default effect.",
   ),
-  interactiveMarkupExample(
+  markupExample(
     'Coordinated headline and images',
-    `<div id="image-coordinated" style="display: grid; gap: var(--tp-space-4)">
-  <h3 style="margin: 0; opacity: 0">Quiet spaces, open light</h3>
-  <tp-image-group reveal="fade up" stagger="120" reveal-hold style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--tp-space-3)">
+    `<tp-scroll-trigger stagger="200" style="display: grid; gap: var(--tp-space-4)">
+  <h3 style="margin: 0"><tp-text-motion split="words lines" mask="lines" reveal="up">Quiet spaces, open light</tp-text-motion></h3>
+  <tp-image-group reveal="fade up" stagger="120" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--tp-space-3)">
 ${[imageSource.office, imageSource.desks, imageSource.terrace]
   .map(
     (id) =>
-      `    <tp-image loading="eager" ratio="1" style="border-radius: var(--tp-radius-lg)" src="${photo(id, 800)}" srcset="${widths(id)}" alt=""></tp-image>`,
+      `    <tp-image ratio="1" style="border-radius: var(--tp-radius-lg)" src="${photo(id, 800)}" srcset="${widths(id)}" alt=""></tp-image>`,
   )
   .join('\n')}
   </tp-image-group>
-  <p style="margin: 0; opacity: 0; color: var(--tp-muted-foreground)">Three rooms designed for focused work.</p>
-</div>`,
-    setupCoordinatedReveal,
-    `${setupSource}\nsetupCoordinatedReveal(document.getElementById('image-coordinated'));`,
-    'The heading animates in while the images load. The group holds its reveal (`reveal-hold`) until both its `tp-loading-status-change` reports `loaded` and the heading has finished, then reveals the images staggered. Its `tp-reveal-change-complete` brings in the caption.',
+  <p style="margin: 0; color: var(--tp-muted-foreground)"><tp-text-motion reveal="fade">Three rooms designed for focused work.</tp-text-motion></p>
+</tp-scroll-trigger>`,
+    'A [Scroll trigger](?path=/docs/components-scroll-trigger--docs) sequences the heading, the group and the caption. It waits until all three images have loaded, then reveals the heading, the images (120ms apart) and the caption in order, 200ms apart.',
   ),
   markupExample(
     'Parallax hero with art direction',

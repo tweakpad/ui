@@ -66,6 +66,8 @@ import { mapPresentation } from './map.js';
 import { codeBlockPresentation } from './code-block.js';
 import { markdownPresentation } from './markdown.js';
 import { imagePresentation } from './image.js';
+import { scrollTriggerPresentation } from './scroll-trigger.js';
+import { textMotionPresentation } from './text-motion.js';
 import { tableOfContentsPresentation } from './table-of-contents.js';
 import { treeViewPresentation } from './tree-view.js';
 
@@ -136,6 +138,8 @@ export { mapPresentation } from './map.js';
 export { codeBlockPresentation } from './code-block.js';
 export { markdownPresentation } from './markdown.js';
 export { imagePresentation } from './image.js';
+export { scrollTriggerPresentation } from './scroll-trigger.js';
+export { textMotionPresentation } from './text-motion.js';
 export { tableOfContentsPresentation } from './table-of-contents.js';
 export { treeViewPresentation } from './tree-view.js';
 
@@ -208,6 +212,8 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   codeBlockPresentation,
   markdownPresentation,
   imagePresentation,
+  scrollTriggerPresentation,
+  textMotionPresentation,
   tableOfContentsPresentation,
   treeViewPresentation,
 ];

@@ -63,6 +63,8 @@ export const catalog = [
   ['Code block', 'tp-code-block', 'presentational-primitive'],
   ['Markdown', 'tp-markdown', 'preset-composition'],
   ['Image', 'tp-image', 'preset-composition'],
+  ['Scroll trigger', 'tp-scroll-trigger', 'thin-wrapper'],
+  ['Text motion', 'tp-text-motion', 'compound-reexport'],
   ['Table of contents', 'tp-table-of-contents', 'compound-reexport'],
   ['Tree view', 'tp-tree-view', 'compound-reexport'],
   ['Empty state', 'tp-empty-state', 'presentational-primitive'],

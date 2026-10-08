@@ -110,7 +110,7 @@ const gsapDriver = {
 
 Web Animations and third-party tween libraries do not inherit a component's CSS transition declaration. Resolve a shared custom-property value as shown when the driver should follow the Tweakpad motion theme. Application-specific drivers may instead use an easing from their own centralized motion system.
 
-The library does not split text, construct timelines, or define choreography between arbitrary descendants. A consumer may do that inside `play()` using its own light-DOM content. The Collapsible and Accordion **External line-by-line motion** stories demonstrate this boundary by claiming only the `content` role and staggering their paragraphs; panel measurement and presence remain owned by Collapsible.
+The library splits text only through [Text motion](text-motion.md), whose `reveal` role hands a claimed driver the split pieces, and sequences reveals only through [Scroll trigger](scroll-trigger.md) and Image groups. It does not construct timelines or define choreography between arbitrary descendants. A consumer may do that inside `play()` using its own light-DOM content. The Collapsible and Accordion **External line-by-line motion** stories demonstrate this boundary by claiming only the `content` role and staggering their paragraphs; panel measurement and presence remain owned by Collapsible.
 
 ## Current role inventory
 
@@ -143,5 +143,6 @@ Public context lists only stable values supplied by the component in addition to
 | Card                           | `interaction`       | Root                                        | state: `change`                                     | `input`                                              | non-blocking |
 | Skeleton                       | `loading`           | Placeholder                                 | ambient: `start`, `stop`                            | —                                                    | non-blocking |
 | Image                          | `reveal`            | Root                                        | state: `change`                                     | `effect`                                             | non-blocking |
+| Text motion                    | `reveal`            | Root                                        | state: `change`                                     | `effect`, `unit`, `count`                            | non-blocking |
 
 State and ambient roles are non-blocking. Presence roles above are blocking, so their actual playback completion controls the stable open/closed completion notification. Driver errors, rejected finite playback, missing targets, duplicate claims, and bounded-completion failures emit `tp-diagnostic` and cannot leave lifecycle completion pending forever.

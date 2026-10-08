@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Text motion verification</title>
+    <link rel="stylesheet" href="/src/styles.css">
+    <style>
+      body { margin: 0; background: var(--tp-background); color: var(--tp-foreground); font-family: var(--tp-font-sans); }
+      main { max-width: 960px; margin: 24px auto; padding: 16px; display: grid; gap: 40px; }
+      h1.fixture { font-size: 1.25rem; margin: 0; }
+      section.case { display: grid; gap: 12px; }
+      section.case > h2.label { font-size: 0.875rem; margin: 0; color: var(--tp-muted-foreground); font-weight: 500; }
+      .display { font-size: 2.5rem; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+      .lead { font-size: 1.125rem; line-height: 1.6; margin: 0; max-inline-size: 60ch; }
+      .flow { margin: 0; padding: 8px 12px; border: 1px dashed var(--tp-border); border-radius: var(--tp-radius-md); font-size: 0.875rem; color: var(--tp-muted-foreground); }
+      .resizable { resize: horizontal; overflow: hidden; inline-size: 520px; min-inline-size: 160px; max-inline-size: 100%; border: 1px solid var(--tp-border); border-radius: var(--tp-radius-lg); padding: 12px; }
+      .spacer { block-size: 80vh; display: grid; place-items: center; color: var(--tp-muted-foreground); font-size: 0.75rem; border: 1px dashed var(--tp-border); border-radius: var(--tp-radius-lg); }
+      .row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+      .stress { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+      tp-image { border-radius: var(--tp-radius-lg); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 class="fixture">Text motion verification</h1>
+
+      <section class="case" id="case-base"><h2 class="label">Base: words and lines, line mask, up</h2>
+        <h2 class="display"><tp-text-motion id="base" split="words lines" mask="lines" reveal="up">Quiet spaces, open light, and rooms that breathe</tp-text-motion></h2>
+        <p class="flow" id="base-below">Flow content directly below the heading.</p>
+      </section>
+
+      <section class="case" id="case-chars"><h2 class="label">Characters from the center, fade and blur; kerning-heavy text</h2>
+        <p class="display"><tp-text-motion id="chars" split="chars" reveal="fade blur" stagger="25" stagger-from="center">AVATAR Wave Toy</tp-text-motion></p>
+        <p class="flow">Below the characters.</p>
+      </section>
+
+      <section class="case" id="case-nested"><h2 class="label">Nested formatting and a link across lines (resize the box)</h2>
+        <div class="resizable" id="resizable">
+          <p class="lead"><tp-text-motion id="nested" split="words lines" reveal="fade up" stagger="20">Read the <a href="#case-nested" id="nested-link">documentation for <strong>every component</strong></a> and <em class="note">its many configurable options</em> before you ship, <code>tp-text-motion</code> included.</tp-text-motion></p>
+          <p class="flow">Below the resizable paragraph.</p>
+        </div>
+      </section>
+
+      <section class="case" id="case-scripts"><h2 class="label">Scripts: emoji, CJK, Arabic (falls back to words), Hebrew with English</h2>
+        <p class="lead"><tp-text-motion id="emoji" split="chars" reveal="fade up">Family 👩‍👩‍👧 and flags 🇯🇵🇫🇷 café</tp-text-motion></p>
+        <p class="lead" lang="ja"><tp-text-motion id="cjk" split="words lines" reveal="fade up">静かな空間と、開かれた光。呼吸する部屋。</tp-text-motion></p>
+        <p class="lead" dir="rtl" lang="ar"><tp-text-motion id="arabic" split="chars" reveal="fade">مساحات هادئة وضوء مفتوح</tp-text-motion></p>
+        <p class="lead" dir="rtl" lang="he"><tp-text-motion id="hebrew" split="words lines" mask="lines" reveal="up">מרחבים שקטים עם Hello World ואור פתוח בכל חדר בבית</tp-text-motion></p>
+      </section>
+
+      <section class="case" id="case-breaks"><h2 class="label">Line breaks and preserved whitespace</h2>
+        <p class="lead"><tp-text-motion id="breaks" split="words lines" reveal="fade">First line<br>second line<br><br>after an empty line</tp-text-motion></p>
+        <p class="lead" style="white-space: pre-wrap"><tp-text-motion id="pre" split="words" reveal="fade">Spaced    out	tabbed</tp-text-motion></p>
+      </section>
+
+      <section class="case" id="case-masks"><h2 class="label">Word mask from below; character mask from the left; descenders (gjpqy)</h2>
+        <p class="display" style="line-height: 1"><tp-text-motion id="word-mask" split="words" mask="words" reveal="up" stagger="60">Gently jumping quaintly by</tp-text-motion></p>
+        <p class="display"><tp-text-motion id="char-mask" split="chars" mask="chars" reveal="right" stagger="20">Sliding glyphs</tp-text-motion></p>
+      </section>
+
+      <div class="spacer">Scroll: the next cases reveal on entry</div>
+
+      <section class="case" id="case-trigger"><h2 class="label">Scroll trigger: heading, image group and caption in order</h2>
+        <tp-scroll-trigger id="trigger" stagger="200">
+          <h3 class="display"><tp-text-motion id="trigger-heading" split="words lines" mask="lines" reveal="up">A coordinated entrance</tp-text-motion></h3>
+          <tp-image-group id="trigger-group" stagger="120" reveal="fade up">
+            <div class="row" id="trigger-images"></div>
+          </tp-image-group>
+          <p class="lead"><tp-text-motion id="trigger-caption" reveal="fade">The caption follows once the images have revealed.</tp-text-motion></p>
+        </tp-scroll-trigger>
+        <p class="flow">Below the trigger.</p>
+      </section>
+
+      <div class="spacer">Scroll</div>
+
+      <section class="case" id="case-repeat"><h2 class="label">Repeat on every entry; held until released</h2>
+        <p class="display"><tp-text-motion id="repeat" split="words" reveal="fade up" reveal-repeat>Every time it enters</tp-text-motion></p>
+        <p class="display"><tp-text-motion id="hold" split="words" reveal="fade up" reveal-hold>Held until released</tp-text-motion></p>
+      </section>
+
+      <section class="case" id="case-stress" hidden><h2 class="label">Stress</h2>
+        <div class="stress" id="stress"></div>
+      </section>
+      <div class="spacer">End</div>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

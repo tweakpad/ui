@@ -78,6 +78,8 @@ import type { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/m
 import type { TpCodeBlock } from './components/code-block/index.js';
 import type { TpMarkdown } from './components/markdown/index.js';
 import type { TpImage, TpImageGroup } from './components/image/index.js';
+import type { TpScrollTrigger } from './components/scroll-trigger/index.js';
+import type { TpTextMotion } from './components/text-motion/index.js';
 import type {
   TpTableOfContents,
   TpTableOfContentsItem,
@@ -215,6 +217,8 @@ declare global {
     'tp-markdown': TpMarkdown;
     'tp-image': TpImage;
     'tp-image-group': TpImageGroup;
+    'tp-scroll-trigger': TpScrollTrigger;
+    'tp-text-motion': TpTextMotion;
     'tp-table-of-contents': TpTableOfContents;
     'tp-table-of-contents-item': TpTableOfContentsItem;
     'tp-tree-view': TpTreeView;

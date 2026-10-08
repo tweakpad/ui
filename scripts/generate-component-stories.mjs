@@ -16,6 +16,8 @@ const outputDirectory = join(root, 'src/stories/generated');
 const authoredStories = new Set([
   'tp-markdown',
   'tp-image',
+  'tp-text-motion',
+  'tp-scroll-trigger',
   'tp-table-of-contents',
   'tp-tree-view',
   'tp-key-hint',
