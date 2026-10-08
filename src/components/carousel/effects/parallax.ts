@@ -3,6 +3,7 @@ import type {
   CarouselEffectContext,
   CarouselEffectFrame,
 } from '../../../foundation/carousel/effect.js';
+import { parallaxGeometry } from '../../../foundation/parallax.js';
 import { EffectStyles, carouselItemMedia, easings, type CarouselEffectTiming } from './shared.js';
 
 export interface CarouselParallaxOptions extends CarouselEffectTiming {
@@ -29,8 +30,9 @@ export function carouselParallaxEffect(options: CarouselParallaxOptions = {}): C
       const styles = new EffectStyles();
       const horizontal = context.orientation === 'horizontal';
       const sign = horizontal && context.direction === 'rtl' ? -1 : 1;
-      const scale = 1 + depth;
-      const travel = (depth / 2) * 100;
+      const geometry = parallaxGeometry(depth);
+      const scale = geometry.scale;
+      const travel = geometry.travel * 100;
       return {
         frame(frame: CarouselEffectFrame) {
           for (const item of frame.items) {

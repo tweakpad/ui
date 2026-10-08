@@ -36,6 +36,7 @@ export * from './media-player/index.js';
 export * from './map/index.js';
 export * from './code-block/index.js';
 export * from './markdown/index.js';
+export * from './image/index.js';
 export * from './table-of-contents/index.js';
 export * from './tree-view/index.js';
 

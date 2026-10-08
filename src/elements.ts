@@ -77,6 +77,7 @@ import type {
 import type { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/index.js';
 import type { TpCodeBlock } from './components/code-block/index.js';
 import type { TpMarkdown } from './components/markdown/index.js';
+import type { TpImage } from './components/image/index.js';
 import type {
   TpTableOfContents,
   TpTableOfContentsItem,
@@ -212,6 +213,7 @@ declare global {
     'tp-card': TpCard;
     'tp-code-block': TpCodeBlock;
     'tp-markdown': TpMarkdown;
+    'tp-image': TpImage;
     'tp-table-of-contents': TpTableOfContents;
     'tp-table-of-contents-item': TpTableOfContentsItem;
     'tp-tree-view': TpTreeView;

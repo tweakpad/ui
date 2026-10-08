@@ -52,7 +52,7 @@ export function renderEmptyStateExample(args: EmptyStateArgs = emptyStateDefault
 }
 export interface AspectRatioArgs {
   ratio: number;
-  fit: 'fill' | 'contain' | 'cover' | 'none';
+  fit: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down';
 }
 export const aspectRatioDefaults: AspectRatioArgs = { ratio: 16 / 9, fit: 'fill' };
 export function renderAspectRatioExample(args: AspectRatioArgs = aspectRatioDefaults) {

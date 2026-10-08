@@ -1,7 +1,8 @@
 /**
  * Shared observation services (Foundation §12.3): one native scroll listener per event type on
- * each scroll target, one ResizeObserver per window and one subtree MutationObserver per root,
- * however many components subscribe. Each is released when its last subscriber leaves.
+ * each scroll target, one ResizeObserver per window, one subtree MutationObserver per root and one
+ * IntersectionObserver per root and option set, however many components subscribe. Each is
+ * released when its last subscriber leaves.
  */
 
 /**
@@ -209,6 +210,89 @@ export function observeResize(element: Element, callback: ResizeCallback): () =>
     if (set.size) return;
     callbacks.delete(element);
     observer.unobserve(element);
+  };
+}
+
+export interface IntersectionOptions {
+  /** Default: the top-level viewport. */
+  readonly root?: Element | Document | null;
+  readonly rootMargin?: string;
+  readonly threshold?: number | readonly number[];
+}
+
+type IntersectionCallback = (entry: IntersectionObserverEntry) => void;
+interface IntersectionRegistry {
+  readonly observer: IntersectionObserver;
+  readonly callbacks: Map<Element, Set<IntersectionCallback>>;
+  readonly entries: Map<Element, IntersectionObserverEntry>;
+}
+/** Keyed by root (or window for the viewport), then by margin and thresholds. */
+const intersectionRegistries = new WeakMap<object, Map<string, IntersectionRegistry>>();
+
+/** Whether `node`'s window can observe intersections; without it, treat targets as visible. */
+export function canObserveIntersection(node: Node): boolean {
+  return Boolean((node.ownerDocument ?? (node as Document)).defaultView?.IntersectionObserver);
+}
+
+/**
+ * Observes `element`'s intersection through the observer shared by every subscriber with the same
+ * root, root margin and thresholds. A subscriber joining an element that is already observed
+ * receives its latest entry. Does nothing where intersection observation is unavailable.
+ */
+export function observeIntersection(
+  element: Element,
+  callback: IntersectionCallback,
+  options: IntersectionOptions = {},
+): () => void {
+  const view = element.ownerDocument.defaultView;
+  if (!view?.IntersectionObserver) return () => {};
+  const root = options.root ?? null;
+  const rootMargin = options.rootMargin ?? '0px';
+  const threshold = [options.threshold ?? 0].flat().sort((a, b) => a - b);
+  const key = `${rootMargin}|${threshold.join(',')}`;
+  let byOptions = intersectionRegistries.get(root ?? view);
+  if (!byOptions) intersectionRegistries.set(root ?? view, (byOptions = new Map()));
+  let registry = byOptions.get(key);
+  if (!registry) {
+    const callbacks = new Map<Element, Set<IntersectionCallback>>();
+    const entries = new Map<Element, IntersectionObserverEntry>();
+    const observer = new view.IntersectionObserver(
+      (records) => {
+        for (const entry of records) {
+          if (!callbacks.has(entry.target)) continue;
+          entries.set(entry.target, entry);
+          for (const notify of [...(callbacks.get(entry.target) ?? [])]) notify(entry);
+        }
+      },
+      { root, rootMargin, threshold },
+    );
+    byOptions.set(key, (registry = { observer, callbacks, entries }));
+  }
+  const { observer, callbacks, entries } = registry;
+  let set = callbacks.get(element);
+  if (!set) {
+    callbacks.set(element, (set = new Set()));
+    observer.observe(element);
+  } else if (entries.has(element)) {
+    // The observer reports an element once on observe; replay it for a later subscriber.
+    queueMicrotask(() => {
+      const entry = entries.get(element);
+      if (entry && set!.has(callback)) callback(entry);
+    });
+  }
+  set.add(callback);
+  let active = true;
+  return () => {
+    if (!active) return;
+    active = false;
+    set.delete(callback);
+    if (set.size) return;
+    callbacks.delete(element);
+    entries.delete(element);
+    observer.unobserve(element);
+    if (callbacks.size) return;
+    observer.disconnect();
+    byOptions.delete(key);
   };
 }
 

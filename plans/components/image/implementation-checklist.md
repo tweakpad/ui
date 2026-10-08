@@ -1,0 +1,234 @@
+# Component implementation and evidence record
+
+## Delivery and source record
+
+- Component(s) / public identity: Image, `tp-image` (catalog kind `preset-composition`).
+- Requested work / claim: a complete new component covering:
+  - aspect ratio (reusing the existing Aspect-ratio box)
+  - lazy loading with a configurable pulse-skeleton or spinner placeholder
+  - object-fit modes
+  - hover zoom in and zoom out
+  - scroll parallax up, down, left or right
+  - viewport-entry transitions (translate, zoom, opacity)
+  - standard responsive images: `srcset`/`sizes`/`<picture>` sources, with all their rules
+  - performance with hundreds of images
+- Scope source: two user messages on 2026-10-08:
+  - the original image component request
+  - the follow-up: "this component should support standard srcsets for optimized resources on mobile and all its rules"
+  - Approved plan: `~/.claude/plans/create-a-new-image-breezy-curry.md`.
+  - User decisions: author a spec amendment first; reveal runs once ("Always once").
+- In-scope changes and existing gaps:
+  - New `src/components/image/`.
+  - Shared Foundation `observeIntersection` in `src/foundation/observation.ts`.
+  - New `src/foundation/parallax.ts`, holding the parallax geometry and the frame-batched scroll fallback.
+  - `src/foundation/image-load.ts`: picture-source awareness, and `authoredImageHasSource` moved there from the media poster.
+  - Aspect-ratio box gains `scale-down`.
+  - Migrations to the shared intersection service: carousel shader effect, message-scroller provider.
+  - Carousel parallax effect moves onto the shared parallax geometry.
+  - Icon `imageOffIcon`, presentation family and recipe, registration, docs, stories and fixture.
+  - Markdown keeps native `<img>` (`mdl-a11y` requires native image semantics); see G-02.
+- Repository baseline / unrelated changes: `4e3ac6f655348e8ec2fb01f62b7730f9ba8098ff` (development). The working tree was clean at the start, apart from this plan folder.
+- Live project / document IDs and revisions:
+  - Project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`, head `01a0d1bce7c87667df4c7555922d78257fc0edfa` (v0.8.4). I authored it in this task; see `plans/components/image/spec-record.md`.
+  - Foundation `doc_cd3c4721-9f9b-4531-abab-a8bfdbac75f1`.
+  - Component Library `doc_8077bf7c-0361-48f3-ac87-53b983bd89b3`.
+- Owning contracts / dependencies / vocabulary:
+  - Foundation `sec-1817-image`, `env-shared-intersection`, `env-shared-observation`, `sec-181-avatar`, `audit-sec-126-reduced-motion-policy`, `sec-64-motion-requests-and-drivers`.
+  - CL `ucl21-image`, `ucl22-aspect-ratio`, `ucl22-skeleton`, `ucl21-spinner`, `ucl22-icon`, `sec-cl-158-motion-roles` (`tbl-cl-158-image-reveal`), `audit-cov-image`.
+  - Managed vocabulary: Root, Part, Motion role, Motion request and Presentational primitive. No new terms.
+- Local Base UI / Floating UI / shadcn evidence:
+  - Base UI `../specification/external/base-ui` at `5b495488d182c81a8a14a440d7a376517118f8ec`:
+    - `packages/react/src/avatar/image/useImageLoadingStatus.ts`
+    - `AvatarImage.tsx`: `keepMounted`, attribute order `sizes`, `srcSet`, `src` last
+    - `AvatarImage.test.tsx`
+  - shadcn `../specification/external/ui` at `63c1308d112b6b1205d86244a156cca1abef5087`:
+    - `apps/v4/registry/bases/base/ui/aspect-ratio.tsx`
+    - `bases/base/ui/skeleton.tsx` with `styles/style-nova.css` `.cn-skeleton` (line 1223)
+    - `bases/base/ui/spinner.tsx`
+    - `new-york-v4/examples/item-image.tsx`
+    - `bases/*/blocks/preview-02/cards/album-card.tsx` (`object-cover`)
+    - There is no image, hover-zoom, parallax or reveal item.
+  - Floating UI `../specification/external/floating-ui` at `27629b74ba36ab8ceb2a968051927b9b69511a3b`: `packages/dom/src/autoUpdate.ts` `observeMove` (a per-element IntersectionObserver).
+  - All reference checkouts are clean (read-only).
+- Tool readiness:
+  - Direct Spec Blocks MCP was unavailable (HTTP 502) during planning. It was available for the amendment, and I used it.
+  - Chrome DevTools MCP is registered (deferred tools).
+- Browser / server / build under test: the Vite dev server (`npm run dev`) with source imports; Storybook for docs.
+- Evidence directory: `tmp/component-verification/image/<run>/`
+- Durable verification fixtures / served URLs: `tests/fixtures/components/image/index.html`, plus a 500-image stress section, served by the Vite project server.
+- Evidence availability to the next agent: local only.
+
+## Capability and interface mapping
+
+| ID   | Requirement / capability and defaults | Live authority | Local upstream path / symbol | Lit interface / implementation | Docs location | Scenario IDs | Status  | Evidence / gap   |
+| ---- | ------------------------------------- | -------------- | ---------------------------- | ------------------------------ | ------------- | ------------ | ------- | ---------------- |
+| C-01 | Request attributes `src`, `srcset`, `sizes`, `crossorigin`, `referrerpolicy`, `fetchpriority`, `width`, `height` pass through to the native image; `decoding="async"`; attribute order: loading/decoding/priority/policies/dimensions/sizes, then srcset, then src | `img-request-order`, `imgl-props` | Base UI `AvatarImage.tsx` (sizes/srcSet/src applied last) | `TpImage` properties; template attribute order in `image.ts` | `docs/image.md` Responsive images | V-01 | passed | V-01: the shadow img attribute order is `part decoding loading alt sizes srcset src` (static `part`/`decoding` first; then loading, sizes, srcset, src); `decoding="async"` |
+| C-02 | `sizes` defaults to `auto, 100vw` for lazy images with a `w`-descriptor srcset and no sizes; otherwise pass-through or host default | `img-sizes` | HTML `sizes=auto` (no upstream equivalent) | `resolveImageSizes()` in `image.ts` | `docs/image.md` Responsive images | V-02 | passed | V-02: `sizes="auto, 100vw"` only on the lazy w-set; at DPR 2 in a 182px slot, auto picked 640w (100vw would pick 1280w); explicit sizes picked 640w; eager picked 1280w |
+| C-03 | `<source>` children (media, type, srcset, sizes, width, height) mirrored in order into a shadow `<picture>`; authored sources inert; any change starts a new generation; selected source dimensions govern geometry without ratio | `img-sources`, `imgl-api` | media poster adopts authored `<picture>` (`media-player/poster.ts`) | hidden default slot `slotchange` plus a MutationObserver created only while sources exist | `docs/image.md` Art direction | V-03 | passed | V-03: 3 sources mirrored in order; a media edit gave loading→loaded; adding a webp source mirrored it first; removal back to 3; desktop picked avif 400w, mobile (390@3x) picked the art-directed avif 800w |
+| C-04 | `currentSrc` read-only; a host candidate switch after load keeps `loaded` | `img-sources`, `img-loading` | `HTMLImageElement.currentSrc` | `TpImage.currentSrc` getter | `docs/image.md` API | V-03 | passed | V-03: `currentSrc` reports the chosen candidate (e.g. `fm=avif`); status stayed loaded |
+| C-05 | `loading` lazy (default) or eager, using the native strategy | `imgl-props` | Avatar `loading` (`avatar.ts`) | `TpImage.loading` | `docs/image.md` API | V-04 | passed | V-04: with lazy loading, 14 image requests for 539 images; 0 of 500 stress images loaded below the fold |
+| C-06 | Status idle/loading/loaded/error derived from the rendered image (no detached preload); generations; already-complete settles without a loading phase; `tp-loading-status-change {status}` once per change; `imageLoadingStatus` getter; `data-status` marker | `img-loading`, `imgl-api` | Base UI `useImageLoadingStatus`, `AvatarImage keepMounted` | `ImageLoadController` with `preload:false` and `observe(img)` | `docs/image.md` Loading | V-05 | passed | V-05: vitest picture/sources cases pass; in the browser, one loading/loaded pair per source; a mid-load swap gave one pair ending on the final w=1998; no duplicate requests (network list) |
+| C-07 | Placeholder `skeleton` (default; pulsing Skeleton), `spinner` (static Skeleton surface plus decorative Spinner), `none`; `placeholder` slot replaces it; Fallback on error/idle is a static Skeleton plus `imageOffIcon`; `fallback` slot replaces it; never visible together with a settled image | `img-placeholder`, `imgl-composition`, `imgl-definition-summary` | shadcn `skeleton.tsx`, `spinner.tsx`; Base UI `AvatarFallback` | `tp-skeleton`, `tp-spinner`, `tp-icon` in the template; named slots | `docs/image.md` Placeholder and fallback | V-06 | passed | V-06: `placeholders-loading.png` shows the skeleton pulse, skeleton plus spinner, none, and the slotted blur; the error and idle default fallbacks show skeleton plus icon; the slotted fallback is visible |
+| C-08 | `ratio` (optional) composes `tp-aspect-ratio`; invalid ratio fails deterministically; without a ratio, intrinsic geometry from width/height or the selected source | `imgl-composition`, `ucl22-aspect-ratio-q1`, `img-edges` | shadcn `bases/base/ui/aspect-ratio.tsx` | `<tp-aspect-ratio .ratio>` frame, or a native frame div | `docs/image.md` Ratio | V-07 | passed | V-07: `ratio=0` and NaN throw RangeError and keep the previous value; unsetting renders a div frame; resetting renders tp-aspect-ratio; intrinsic 900×600 reserves space |
+| C-09 | `fit` cover (default), contain, fill, none, scale-down; `--tp-image-position` maps to object-position | `imgl-props`, `imgl-presentation` | shadcn `object-cover` usages | ratio mode: Aspect-ratio box `fit` flows through `object-fit: inherit`; intrinsic mode: host `[fit]` rule | `docs/image.md` Fit | V-08 | passed | V-08: all five fit values plus `--tp-image-position` inspected in dark and light themes |
+| C-10 | Aspect-ratio box `fit` accepts `scale-down` | `ucl22-aspect-ratio-props-r1` | n/a | `aspect-ratio.ts` type and `::slotted` rule | `docs/aspect-ratio.md` | V-08 | passed | V-08: fit `scale-down` renders through Aspect-ratio box `::slotted` and `object-fit: inherit` |
+| C-11 | `zoom` none/in/out on hover (hover-capable pointers), `zoomed` forces the state, `--tp-image-zoom-scale` (default 1.1); no layout, hit-area or clipping change; composes with the parallax overscan | `img-zoom`, `imgl-presentation` | none upstream | Media `scale` transition through `motionTransition(['scale'])` | `docs/image.md` Zoom | V-09 | passed | V-09: real hover: zoom-in 1→1.1, zoom-out 1.1→1, zoomed holds 1.1; host width unchanged at 150px; screenshot `zoom-hover-out.png` |
+| C-12 | `parallax` token list: one direction (up/down/left/right, physical) and/or scroll zoom (zoom-in/zoom-out: picture scale 1↔1+depth across progress, composes with displacement and hover zoom); progress on the scrolling ancestor's axis (inline for sideways scrollers, RTL-mirrored); `parallax-depth` 0.3 clamped to [0,1]; overscan 1+depth, travel ±depth/2; CSS scroll-driven timeline (`view()`) when supported | `img-parallax` | carousel `carouselParallaxEffect` (scale 1+depth, travel depth/2·100%) | Media `translate` animation with `animation-timeline: view()`; shared `parallaxTravel()` from `foundation/parallax.ts` | `docs/image.md` Parallax | V-10 | passed | V-10: timeline driver: up +14.94%→0→−14.94%, down/left/right symmetric, depth 2 clamps to scale 2 with ±49.8%; a fix moved the view timeline to the host (the overflow frame is a scroll container) |
+| C-13 | Parallax fallback (no view timelines, or a clipping ancestor that cannot scroll sits between image and scroller): shared scroll observation once per frame, visible images only, read all geometry then write; driver re-chosen on each viewport entry | `img-parallax`, `env-shared-observation` | n/a | `observeParallax()` in `foundation/parallax.ts` (uses `observeIntersection`, `observeScroll`, `observeResize`) | `docs/image.md` Performance | V-11 | passed | V-11: `?script-parallax` gives progress −0.996/0/0.996 with the same translations; scroll listeners only on document and the scroller; 1 ResizeObserver |
+| C-14 | `reveal` token list fade/up/down/left/right/zoom-in/zoom-out; start state while pending; runs once on first entry through motion role `reveal` (state: change, context `effect`, non-blocking); `data-revealed`; `--tp-image-reveal-distance/-scale/-delay` | `img-reveal`, `tbl-cl-158-image-reveal`, `imgl-presentation` | none upstream; motion roles `src/foundation/motion.ts` | `prepareMotion(this, this, imageMotionRoles.reveal, …)`; host transition | `docs/image.md` Reveal; `docs/motion.md` | V-12 | passed | V-12: start states (opacity 0, +24px, 0.92) animate to rest on entry; one `reveal` motion request per image (state/change, pending→revealed, effect); stays revealed on re-entry |
+| C-15 | Visibility observed through the shared intersection service only while a reveal is pending or the animated placeholder is loading; released after reveal; `data-in-view` (`true`/`false`) while observed; off-screen loading placeholders pause; stops on disconnect, resumes on reconnect | `img-visibility`, `env-shared-intersection` | n/a | `observeIntersection()`; `--tp-motion-play-state: paused` rule | `docs/image.md` Performance | V-13 | passed | V-13: placeholders running in view and paused off screen (`data-in-view=false`); observation and `data-in-view` released after load and after reveal; reconnect resumes |
+| C-16 | Reduced motion: reveal immediate, parallax at rest, zoom instant, no ambient placeholder motion | `img-motion-policy`, `audit-sec-126-reduced-motion-policy` | `resolvesReducedMotion` (`foundation/motion.ts`) | reveal is decided at connect; `--tp-motion-scale` clamps parallax travel; skeleton/spinner follow the inherited play state | `docs/image.md` Motion | V-14 | passed | V-14: `motion-policy="reduce"`: revealed off screen without observation, 0s transitions, parallax scale 1 and translate 0. The system-preference toggle is blocked (V-25) |
+| C-17 | Accessibility: alt names the image, empty alt is decorative; placeholder and default fallback aria-hidden with no live regions; frame `aria-busy` while loading; consumer fallback may carry the name | `img-a11y` | Base UI Avatar accessibility-hidden while loading | template ARIA | `docs/image.md` Accessibility | V-15 | passed | V-15: snapshot shows named images by alt, `alt=""` absent, frames `busy` while loading, no live regions; Lighthouse accessibility 100 |
+| C-18 | Presentation: Image paints no surface; parts `image`, `image-frame`, `image-media`, `image-picture`, `image-placeholder`, `image-fallback` reachable via `::part`; only opacity/scale/translate transition; no blanket `will-change` | `imgl-presentation`, `imgl-public-definition`, `imgl-presentation-keys` | n/a | `presentation/families/image.ts`, `recipes/image.ts` | `docs/image.md` Styling | V-16 | passed | V-16: `::part(fallback)` color and `::part(picture)` filter applied; host radius inherited; a `--tp-muted` override reached the skeleton; light theme screenshot `light-custom.png` |
+| C-19 | Shared intersection service: one observer per root, margin and threshold list; per-element delivery; release on last unsubscribe; late subscribers get the last entry; consumers migrated | `env-shared-intersection` | Floating UI `observeMove` (per-element; stays local) | `observeIntersection()`; carousel shader and message scroller migrated | `docs/image.md` Performance | V-17, V-20, V-21 | passed | V-17: vitest (5 cases) pass; browser: 1 IntersectionObserver for 539 images; shader and message-scroller migrated (V-20, V-21) |
+| C-20 | Hundreds of images: one intersection observer, at most one scroll listener per scroller, lazy fetching only near the viewport, no long tasks while scrolling | `img-edges` (many images) | n/a | design above | `docs/image.md` Performance | V-18 | passed | V-18: 240 scroll frames over 539 images, timeline driver: p50 16.7ms, p95 26.5ms, 0 long animation frames; script driver: 1 LoAF (64ms forced layout in the read pass after image loads) |
+| C-21 | Load fade-in: Picture fades in on load with the shared duration; cached images do not animate | `imgl-presentation`, `img-loading` | Base UI `data-starting-style` | Picture opacity transition | `docs/image.md` Loading | V-19 | passed | V-19: `img` opacity 0 until `data-status=loaded` with the shared transition; a cached image settles without a loading phase (V-05) |
+| C-22 | Picture-aware source detection shared by the image-load owner (`authoredImageHasSource`), used by the media poster and Image | `img-sources`, `img-loading` | `media-player/poster.ts` `authoredImageHasSource` | moved to `foundation/image-load.ts`; `ImageLoadSource.sources` | n/a (internal) | V-05, V-22 | passed | V-05, V-22: vitest `authoredImageHasSource`/picture cases pass; poster tests pass |
+
+Record spec/upstream conflicts here before dependent implementation:
+
+| Issue | Concrete missing/conflicting contract | Affected dependencies | Proposed resolution | Authority / resolution evidence | Status |
+| ----- | ------------------------------------- | --------------------- | ------------------- | ------------------------------- | ------ |
+| G-01 | No Image contract, no shared intersection rule and no `scale-down` fit existed in the live spec | whole component; Aspect-ratio box; carousel and message scroller | Author Foundation §18.17 and `env-shared-intersection`, CL Image, the motion role row, the coverage row and the Fit amendment (user-authorized) | Spec commit `dd439b4a` (v0.8.2) | passed |
+| G-02 | Markdown renders images natively; `mdl-a11y` requires native image semantics | Markdown | Leave Markdown on native `<img>`; Image is not a required composition there | `mdl-a11y` | passed |
+
+## Architecture and reuse
+
+- Component folder and responsibility boundaries:
+  - `src/components/image/image.ts`: the element, its template and its structural CSS.
+  - `src/components/image/sources.ts`: the source-children mirror.
+  - `src/components/image/index.ts`.
+  - Geometry and scroll-fallback scheduling live in `src/foundation/parallax.ts`.
+  - Intersection observation lives in `src/foundation/observation.ts`.
+  - Load status lives in `src/foundation/image-load.ts`.
+- Supported exports / registration / constituent API impact:
+  - New exports `TpImage`, `imageMotionRoles`, the image types, `observeIntersection`, `parallaxTravel` and `observeParallax`.
+  - `authoredImageHasSource` moves to Foundation. The poster re-exports it, so the existing import path keeps working.
+  - New icon module `@tweakpad/ui/icons/image`.
+  - `tp-image` is registered in `register.ts` and typed in `elements.ts`.
+- Public vocabulary / tokens / parts / presentation review:
+  - Property names follow the HTML image attributes and Avatar (`srcset`, `crossorigin`, `referrerpolicy`, `loading`).
+  - `fit` follows Aspect-ratio box. `parallax-depth` follows the carousel parallax `depth`.
+  - The `tp-loading-status-change` event and `imageLoadingStatus` getter follow Avatar.
+  - Motion uses `--tp-duration-*`, `--tp-easing-standard`, `--tp-motion-scale` and `--tp-motion-play-state`. Spacing uses `--tp-space-*`.
+
+### Family dependency map
+
+| Responsibility | Upstream dependency path / symbol          | Existing local owner investigated | Reuse / repair and component-specific differences | Actual consumers / regression scenario IDs |
+| -------------- | ------------------------------------------ | --------------------------------- | ------------------------------------------------- | ------------------------------------------ |
+| Image loading status | Base UI `avatar/image/useImageLoadingStatus.ts`, `AvatarImage.tsx` keepMounted path | `src/foundation/image-load.ts` `ImageLoadController` (Avatar, media poster/thumbnail, tree model) | Reuse with `preload:false` and `observe`. **Repair**: picture-aware `inspect` and loadable `sources`, so a `<picture>` with only source srcsets counts as loadable | Avatar, media poster, Image / V-05, V-22 |
+| Picture source detection | n/a | `media-player/poster.ts` `authoredImageHasSource` | **Move** to `foundation/image-load.ts`; the poster imports it and re-exports it for compatibility | media poster, Image / V-22 |
+| Ratio frame and fit | shadcn `aspect-ratio.tsx` | `src/components/aspect-ratio/aspect-ratio.ts` `TpAspectRatio` | Compose it. **Repair**: add `scale-down`. Fit reaches Picture through `object-fit: inherit` from the slotted Media | Image, Aspect-ratio stories / V-07, V-08 |
+| Loading placeholder | shadcn `skeleton.tsx`, `spinner.tsx` | `TpSkeleton`, `TpSpinner` | Compose with `motion="pulse"`, or `motion="none"` plus `tp-spinner label=""` | Image / V-06 |
+| Failure fallback mark | n/a | `TpIcon` with `src/icons/*` definitions | New `imageOffIcon` definition (data only) rendered through `tp-icon` | Image / V-06 |
+| Intersection observation | Floating UI `autoUpdate.ts` `observeMove` | ad-hoc observers in `components/carousel/effects/shader/effect.ts:115`, `components/message-scroller/provider.ts:484`, `foundation/positioning.ts:889` | **New shared owner** `observeIntersection` next to `observeResize`. **Migrate** the carousel shader and the message scroller. Positioning keeps its observer, as the spec allows: its options are derived per element from the anchor geometry | Image, carousel shader, message scroller / V-17, V-20, V-21 |
+| Parallax geometry | n/a | `components/carousel/effects/parallax.ts` `carouselParallaxEffect` (scale 1+depth, travel depth/2·100%) | **Extract** `parallaxTravel(depth)` into `foundation/parallax.ts`; the carousel effect and Image both use it | carousel parallax effect, Image / V-10, V-20 |
+| Scroll fallback scheduling | n/a | `foundation/observation.ts` `observeScroll`, `observeResize`; `foundation/scroll.ts` `scrollableAncestors` | Reuse. The new `observeParallax` keeps one field per scroll container with a read-then-write flush | Image / V-11 |
+| Motion roles and reduced motion | n/a | `foundation/motion.ts` `prepareMotion`, `resolvesReducedMotion`; `presentation/motion.ts` `motionTransition`, `motionDuration` | Reuse: new role `reveal` (state, change, non-blocking) | Image / V-12, V-14 |
+
+### Presentation source map
+
+| Region / public part | Registry base / style preset | Source component + stylesheet / selectors | Existing library component / recipe | Decision / contract adaptations        | Scenario IDs |
+| -------------------- | ---------------------------- | ----------------------------------------- | ----------------------------------- | -------------------------------------- | ------------ |
+| Root `image` | base / Nova (library theme) | no shadcn image; examples use `object-cover` with consumer rounding (`rounded-lg`) | none: Image paints no surface | Geometry only; the consumer sets the radius on the host, which the frame inherits | V-16 |
+| Frame `image-frame` | base / Nova | `bases/base/ui/aspect-ratio.tsx` (`relative aspect-(--ratio)`) | `tp-aspect-ratio` | Composed when `ratio` is set; otherwise a native clipping div | V-07 |
+| Media `image-media` | n/a | none upstream | structure only | Carries the zoom and parallax transforms | V-09, V-10 |
+| Picture `image-picture` | base / Nova | `object-cover` (`item-image.tsx`, `album-card.tsx`) | structure only | Native picture/img; fit and position as above | V-08 |
+| Placeholder `image-placeholder` | base / Nova | `bases/base/ui/skeleton.tsx`, `.cn-skeleton` (`style-nova.css:1223`: `bg-muted rounded-md`); `spinner.tsx` | `tp-skeleton` (recipe `recipes/skeleton.ts` `--tp-muted`), `tp-spinner` | Skeleton radius inherits the frame's | V-06 |
+| Fallback `image-fallback` | base / Nova | none upstream for images; Avatar fallback uses a muted surface | `tp-skeleton motion="none"` plus `tp-icon` (muted foreground) | Icon color is `--tp-muted-foreground` and size is `--tp-icon-size-lg`, through the recipe | V-06 |
+
+### Implementation and composition reuse map
+
+| Demo / composition | Nested role | Existing component / public API | Registration and integration checks | Native exception / missing capability, if any |
+| ------------------ | ----------- | ------------------------------- | ----------------------------------- | --------------------------------------------- |
+| `tp-image` internals | ratio frame | `tp-aspect-ratio` | `elementDependencies`; V-07 | none |
+| `tp-image` internals | loading surface | `tp-skeleton` | `elementDependencies`; V-06 | none |
+| `tp-image` internals | activity mark | `tp-spinner` (decorative, empty label) | `elementDependencies`; V-06 | none |
+| `tp-image` internals | failure mark | `tp-icon` with `imageOffIcon` | `elementDependencies`; V-06 | none |
+| `tp-image` internals | picture | native `<picture>`, `<source>`, `<img>` | V-01, V-03 | Required native anatomy (`img-anatomy`) |
+| Stories / docs: card composition | card and caption | `tp-card` with header and title | V-23 | none |
+| Stories / docs: gallery grid | layout | native CSS grid | V-23 | Ordinary layout |
+| Fixture | stress grid, nested scroller | native layout containers | V-18 | Verification layout only |
+
+## Verification scenarios
+
+| ID   | Capability IDs / evidence category | Setup and input     | Expected result     | Actual result | Tool/command and evidence  | Status  | Justification / gap |
+| ---- | ---------------------------------- | ------------------- | ------------------- | ------------- | -------------------------- | ------- | ------------------- |
+| V-01 | C-01; behavior | Fixture image with every request attribute; inspect the shadow `img` attributes and order | Attributes present in contract order; `decoding="async"` | attribute order as recorded in C-01 | Chrome DevTools MCP `evaluate_script` | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-02 | C-02; behavior and network | Lazy `w`-srcset without sizes; with explicit sizes; eager without sizes; viewports 390 and 1280 at DPR 1/2/3 | `sizes="auto, 100vw"` only in the first case; network fetches the expected candidate | candidates as recorded in C-02 at 1440@2x and 390@3x (auto→1280, sizes→1280, eager→1280, x→900) | MCP `emulate`/`resize_page`, `list_network_requests` | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-03 | C-03, C-04; behavior and network | `<source media>` art direction plus `type` AVIF/WebP fallback; resize across the breakpoint; add/remove/edit a source | Mirrored in order; `currentSrc` follows; status stays `loaded` on switch; edits start a new generation; no MutationObserver without sources | as recorded in C-03/C-04; MutationObserver created only for the image with sources | MCP `evaluate_script`, `list_network_requests`, screenshots | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-04 | C-05; network | 500-image grid, lazy and eager | Lazy fetches only near the viewport; eager fetches all | 14 requests for 539 images before scrolling; stress images unrequested until near | MCP `list_network_requests` | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-05 | C-06, C-22; behavior and unit | Load success, 404 error, cached, `src` change mid-load, no source | Status transitions and events once each; stale ignored; idle without a source | status events once per change; stale ignored; idle without a source; vitest image-load 30+ cases pass | vitest `image-load.test.ts`; MCP event log | passed | vitest `src/foundation/image-load.test.ts` plus MCP event log (`window.imageLog`) |
+| V-06 | C-07; visual and behavior | `placeholder` skeleton/spinner/none, slotted placeholder, error default fallback and slotted fallback; throttled network | Correct region shown only in its state; never overlapping a settled image | placeholder modes, slots and fallback inspected under Slow 3G | MCP screenshots with network throttling | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-07 | C-08; behavior and visual | `ratio` 16/9, 1, invalid (0, NaN); no ratio with width/height | Frame geometry correct; invalid throws `RangeError`; intrinsic reserves space before load | RangeError; ratio and intrinsic geometry correct | MCP screenshots, `evaluate_script` | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-08 | C-09, C-10; visual | Every `fit` value in ratio and intrinsic mode; `--tp-image-position`; Aspect-ratio `fit="scale-down"` | Correct object-fit and position | fit modes and position correct | MCP screenshots | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-09 | C-11, C-21; interaction and visual | Real hover with zoom in/out; `zoomed`; zoom with parallax | Scale transitions without layout shift; overscan composes | real hover results as recorded in C-11 | MCP `hover`, screenshots | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-10 | C-12; interaction and visual | Each parallax direction in the window and in a nested scroller; depth 0, 0.3, 1, 2 (clamped) | Media translates in that direction, edges never exposed | window and nested scroller (+13.5%→−8.9%→−15%) both follow their scroller | MCP scroll plus screenshots, computed `translate` | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-11 | C-13; behavior | Fixture forcing the script driver (scroll-timeline support detection disabled in the fixture only) | One scroll subscription per scroller; only visible images written; reads before writes | script driver matches the timeline; one subscription per scroller | MCP `evaluate_script` instrumentation, performance trace | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-12 | C-14; interaction and visual | Reveal token combinations; scroll in, out and back; motion driver claim | Animates once; stays revealed on re-entry; driver claim suppresses the CSS transition | reveal once; motion request contract verified (driver claim path uses the shared prepareMotion owner) | MCP scroll plus screenshots, event log | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-13 | C-15; behavior | Count observed targets; reveal completes; status settles; disconnect/reconnect | Observation released when not needed; `data-in-view` only while observed; off-screen placeholder paused | observation released and paused as expected | MCP `evaluate_script` | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-14 | C-16; motion | `emulate` reduced motion; `motion-policy="reduce"` ancestor | Reveal immediate; parallax at rest; zoom instant; placeholder paused | `motion-policy` reduce path verified | MCP `emulate`, screenshots | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-25 | C-16; motion | System `prefers-reduced-motion` toggle | Same results as V-14 | not run | Chrome DevTools MCP `emulate` has no reduced-motion option | blocked | Tool limitation; the path shares `--tp-motion-scale` (styles.css media rule) and `resolvesReducedMotion` matchMedia with V-14. Verify by enabling macOS Reduce Motion and reloading the fixture. |
+| V-15 | C-17; accessibility | Named image, `alt=""`, loading, error | Tree shows image name or no node; no status regions; `aria-busy`; Lighthouse accessibility | a11y tree, Lighthouse 100; no keyboard path (Image has no interactive role) | MCP `take_snapshot`, `lighthouse_audit` | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-16 | C-18; customization | `::part(image-frame)`, radius on host, token overrides, dark theme | Overrides apply; no Image-owned paint | overrides apply; no Image-owned paint | MCP screenshots | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-17 | C-19; unit | `observeIntersection` sharing and keying, delivery isolation, late subscriber, release | Unit tests pass | `observation.test.ts` 11 tests pass | vitest `observation.test.ts` | passed | vitest `src/foundation/observation.test.ts` |
+| V-18 | C-20; performance | 500-image grid with reveal, zoom and parallax; scroll trace | One intersection observer; no long tasks or forced reflows from Image | frame and LoAF numbers recorded in C-20 | MCP `performance_start_trace`/`stop`, instrumentation | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-19 | C-21; visual | Throttled load, then a cached reload | Fade on a network load; no fade when cached | fade on network load, none on settle-from-cache | MCP screenshots | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-20 | C-12, C-19; regression | Carousel parallax and shader effect stories | Unchanged behavior; shader pauses off screen | carousel parallax scale 1.3 / travel 15% unchanged; shader draws on a real click transition (canvas block→none), its viewport observed via the shared service; carousel vitest pass | vitest carousel tests; MCP Storybook | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-21 | C-19; regression | Message scroller visibility (unread markers, visible rows) | Unchanged behavior | a built scroller reports visible m0–m3 → m5–m8 while scrolling, through the shared observer; vitest pass | vitest; MCP Storybook | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-22 | C-22; regression | Media poster with an authored `<picture>`; Avatar stories | Unchanged | `markers.test.ts` passes; poster re-exports `authoredImageHasSource` | vitest `markers.test.ts`; MCP Storybook | passed | vitest `src/components/media-player/markers.test.ts` |
+| V-23 | C-07, C-11, C-12, C-14, C-18; docs | Storybook Image docs page, base example and API tables | Renders; Controls are real APIs; examples use library components | Docs page renders Default, API, 4 examples (gallery, hero, card with `tp-card`, placeholder/fallback); only the intentional 404 | MCP Storybook | passed | Observed in Chrome DevTools MCP on 2026-10-08 against the Vite fixture `tests/fixtures/components/image/index.html`; artifacts in `tmp/component-verification/image/run-1/` |
+| V-24 | C-10, C-19, C-22; regression | `npm run lint`, `typecheck`, `test`, `build`, Storybook build, single-component bundle | All pass | lint, typecheck, 1298 tests, `npm run build`, Storybook build (tmp/storybook-static), size report (tp-image 18.1 kB gzip), built-package fixture defines only Image plus its 4 dependencies | shell | passed | shell: lint, tsc, `npm test`, `npm run build`, `storybook build --output-dir tmp/storybook-static`, `node scripts/size-report.mjs`; MCP `?built` fixture |
+
+## Early integration checkpoint
+
+| ID   | Check                                                                                             | Status  | Evidence / unresolved finding                               |
+| ---- | ------------------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------- |
+| I-01 | Shared owners are actually used by related consumers; old duplicate behavior is removed/delegated | passed | The diff confirms each shared owner is in use. `observeIntersection` is used by `components/image/image.ts`, `foundation/parallax.ts`, `carousel/effects/shader/effect.ts` (its ad-hoc observer was removed) and `message-scroller/provider.ts` (its ad-hoc observer was removed). `parallaxGeometry` is used by `carousel/effects/parallax.ts` and Image `#parallaxStyle`; Image's CSS duplicate of the formula was removed. `authoredImageHasSource` moved to `foundation/image-load.ts`, which the poster imports. Image uses `ImageLoadController` (preload:false). In the browser, 539 images used 1 IntersectionObserver and 1 ResizeObserver; scroll listeners were only on document and the nested scroller. |
+| I-02 | Default visual regions match traced source and shared library recipes                             | passed | `tmp/component-verification/image/run-1/placeholders-loading.png`: the skeleton placeholder is the `tp-skeleton` muted surface (Nova `.cn-skeleton bg-muted`) with an inherited radius; the spinner variant is a static skeleton with a centered `tp-spinner`; the fallback is a static skeleton with a muted `tp-icon`. Image paints no surface of its own. |
+| I-03 | Independent constituent options work, including placement separately from action behavior         | passed | Each option was exercised on its own: placeholder modes, fit modes, zoom in/out/zoomed (real hover), parallax in 4 directions plus depth clamp, reveal tokens, and ratio versus intrinsic. Zoom with parallax composes (scale 1.3 at rest, translate animated independently). Reveal acts on the host, separately from Media transforms. |
+
+## Gate record
+
+| Gate                                  | Status  | Required exit evidence / remaining work                                               |
+| ------------------------------------- | ------- | ------------------------------------------------------------------------------------- |
+| 0. Sources and scope                  | passed  | Spec v0.8.2 `dd439b4a` read and authored through direct MCP; upstream revisions recorded above; scope from the user's two messages plus their spec and reveal decisions. |
+| 1. Capability mapping                 | passed  | C-01 to C-22 map every `sec-1817-image` and `ucl21-image` requirement to an interface and scenarios; G-01 resolved by the amendment; G-02 recorded. |
+| 2. Architecture and composition reuse | passed  | The family map names the existing owners and the repairs (image-load, Aspect-ratio box), the new shared owners with migrated consumers (intersection: carousel shader, message scroller), the extracted parallax geometry (carousel effect), and the presentation and composition reuse. |
+| 3. Behavior | passed | V-01–V-13, V-17–V-19 passed; behavior verified in Chrome DevTools MCP and vitest. |
+| 4. Presentation and customization | passed | V-16: parts, tokens and host radius; no Image-owned paint; recipes from Skeleton, Spinner and Icon. |
+| 5. Accessibility | passed | V-15: accessibility tree snapshot, Lighthouse accessibility 100; Image has no focusable or keyboard role; no screen-reader testing claimed. |
+| 6. Visual and interaction inspection | blocked | Dark and light themes, mobile 390@3x, hover, parallax, reveal and placeholders inspected (screenshots in tmp/component-verification/image/run-1). V-25 (system reduced-motion preference) is blocked by the MCP tool. |
+| 7. Documentation and demo reuse | passed | V-23: `docs/image.md`, Storybook Default plus API, 4 examples composing library components (tp-card); `docs/motion.md` role row; Aspect-ratio docs updated. |
+| 8. Regression and reconciliation | passed | V-20–V-22, V-24: consumers (carousel parallax and shader, message scroller, poster, Aspect-ratio) and build/package boundaries verified. |
+
+## Documentation synchronization
+
+- [x] Base example, actual Controls, constituent APIs and reference agree with code.
+- [x] Added/removed/changed properties, events, methods, slots and hooks are updated.
+- [x] Verification fixtures are separate from curated public examples.
+- [x] Rendered and copyable compositions reuse existing components.
+- [x] Imports and registration work outside Storybook's global setup.
+- [x] Generator handling and changed tests preserve the intended documentation.
+
+## Completion / handoff
+
+- Change summary:
+  - New `tp-image`: responsive picture, loading placeholder and fallback, fit, hover zoom, parallax, one-shot reveal.
+  - New shared `observeIntersection` service (carousel shader and message scroller migrated).
+  - New `foundation/parallax.ts` (geometry shared with the carousel parallax effect, plus the frame-batched scroll fallback).
+  - `image-load` made picture-aware (`authoredImageHasSource` moved there from the poster).
+  - Aspect-ratio `scale-down`.
+  - Icon `imageOffIcon`.
+  - Spec v0.8.2.
+- Actual delivery claim: the complete component, with one blocked verification: V-25, the system reduced-motion preference toggle, which Chrome DevTools MCP cannot emulate.
+- Record checker: `implement` and `verify` passed; `complete` is blocked by V-25 and Gate 6 (recorded as blocked).
+- Non-browser checks: `npm run lint` clean, `tsc --noEmit` clean, `npm test` 1298 passed, `npm run build` passed, Storybook build passed (output in `tmp/storybook-static`), size report regenerated.
+- Behavior: V-01 to V-13 and V-17 to V-19 passed (see the table).
+- Accessibility: tree snapshot plus Lighthouse 100. No screen-reader evidence.
+- Visual/customization/motion inspection: screenshots under `tmp/component-verification/image/run-1/`.
+- Documentation and demo composition reuse: Storybook Docs inspected; the examples compose `tp-card`.
+- Shared-consumer regressions / package boundaries: V-20 to V-22 and V-24 passed.
+- Required failures or blocked checks: V-25 blocked (tool limitation).
+- Older out-of-scope gaps: Aspect-ratio box's internal `.box` still uses `overflow: hidden`. Image works around this with a host-named view timeline, so it was not changed.
+- Changed source revisions / reopened gates: **User requests 2026-10-08: (1) docs blocks with ~5 images in a vertical and a horizontal scroller; (2) scroll zoom as a parallax effect, combinable with displacement; (3) parallax demos load eagerly.** Horizontal scrollers exposed that progress was block-axis only, so inline-axis support was added (`scrollAxis`/`parallaxAxis`, ParallaxField axis/RTL, `data-parallax-axis`, `view-timeline-axis: inline`). Scroll zoom scales the `img` inside Media (timeline keyframes `tp-image-parallax-zoom`, or the script `--_progress` formula). Spec v0.8.4. Verified: fixture strips LTR/RTL on both drivers (±2.7%, identical); scroll zoom on both drivers (zoom-in 1→1.3, zoom-out 1.3→1, `up zoom-in` combined with ±15% translate); reduced-motion rest (scale 1, translate 0); Storybook Docs: 3 scroller blocks plus hero, 16 parallax images all `loading=eager` and loaded, vertical ±20%, horizontal −9.8% at 520px of 1240px, zoom block progress 0→1 per image. Screenshots in `tmp/component-verification/image/run-3/`. Unit tests: `scrollAxis`, driver selection. **Earlier, user report 2026-10-08, "I don't see the parallax at all"**. In the Storybook Docs, the example sits inside `div.docs-story` (overflow auto) and `div.sbdocs-preview` (overflow hidden). Neither scrolls, but both are CSS scroll containers, so the view timeline froze at progress 0.5. Fix: `parallaxDriver()`/`timelineScrollContainer()` in `foundation/parallax.ts` choose the timeline only when it follows the real scroller; otherwise the script driver runs. Spec amended to v0.8.3. V-10/V-11 rerun: Storybook Docs hero (script driver) ±12.1%, screenshots `tmp/component-verification/image/run-2/docs-hero-{bottom,top}.png`; new fixture case `#clipped` uses the script driver (±14.5%); the plain page and the nested scroller still use the timeline. Unit tests in `parallax.test.ts` (driver selection). Earlier: the parallax driver was fixed after first observation (host view timeline) and the geometry was routed through `parallaxGeometry`. V-10 and V-11 were rerun after both changes.

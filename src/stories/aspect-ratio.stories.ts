@@ -23,7 +23,7 @@ const meta = {
   args: aspectRatioDefaults,
   argTypes: {
     ratio: { control: { type: 'number', min: 0.1, step: 0.1 } },
-    fit: { control: 'select', options: ['fill', 'contain', 'cover', 'none'] },
+    fit: { control: 'select', options: ['fill', 'contain', 'cover', 'none', 'scale-down'] },
   },
   render: renderAspectRatioExample,
 } satisfies Meta<AspectRatioArgs>;

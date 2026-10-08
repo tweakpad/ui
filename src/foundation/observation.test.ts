@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { observeScroll } from './observation.js';
+import { canObserveIntersection, observeIntersection, observeScroll } from './observation.js';
 
 class CountingTarget extends EventTarget {
   added = 0;
@@ -113,5 +113,100 @@ describe('shared scroll source', () => {
     release();
     vi.advanceTimersByTime(50);
     expect(calls).not.toHaveBeenCalled();
+  });
+});
+
+class FakeIntersectionObserver {
+  static instances: FakeIntersectionObserver[] = [];
+  readonly targets = new Set<object>();
+  disconnected = false;
+  constructor(
+    readonly callback: (entries: { target: object; isIntersecting: boolean }[]) => void,
+    readonly options: { root: unknown; rootMargin: string; threshold: number[] },
+  ) {
+    FakeIntersectionObserver.instances.push(this);
+  }
+  observe(target: object) {
+    this.targets.add(target);
+  }
+  unobserve(target: object) {
+    this.targets.delete(target);
+  }
+  disconnect() {
+    this.disconnected = true;
+    this.targets.clear();
+  }
+  report(target: object, isIntersecting: boolean) {
+    this.callback([{ target, isIntersecting }]);
+  }
+}
+
+function intersectionWindow() {
+  const view = { IntersectionObserver: FakeIntersectionObserver };
+  const element = () => ({ ownerDocument: { defaultView: view } }) as unknown as Element;
+  return { view, element };
+}
+
+describe('shared intersection observer', () => {
+  beforeEach(() => {
+    FakeIntersectionObserver.instances = [];
+  });
+
+  it('shares one observer per root and option set', () => {
+    const { element } = intersectionWindow();
+    const releases = Array.from({ length: 100 }, () => observeIntersection(element(), () => {}));
+    expect(FakeIntersectionObserver.instances).toHaveLength(1);
+    expect(FakeIntersectionObserver.instances[0]!.targets.size).toBe(100);
+    observeIntersection(element(), () => {}, { rootMargin: '10px', threshold: [0.5, 0] });
+    expect(FakeIntersectionObserver.instances).toHaveLength(2);
+    expect(FakeIntersectionObserver.instances[1]!.options.threshold).toEqual([0, 0.5]);
+    for (const release of releases) release();
+    expect(FakeIntersectionObserver.instances[0]!.disconnected).toBe(true);
+  });
+
+  it('delivers entries only to the subscribers of their element', () => {
+    const { element } = intersectionWindow();
+    const a = element(),
+      b = element();
+    const seenA = vi.fn(),
+      seenB = vi.fn();
+    observeIntersection(a, seenA);
+    observeIntersection(b, seenB);
+    FakeIntersectionObserver.instances[0]!.report(a, true);
+    expect(seenA).toHaveBeenCalledTimes(1);
+    expect(seenB).not.toHaveBeenCalled();
+  });
+
+  it('replays the latest entry to a later subscriber of the same element', async () => {
+    const { element } = intersectionWindow();
+    const target = element();
+    observeIntersection(target, () => {});
+    FakeIntersectionObserver.instances[0]!.report(target, true);
+    const late = vi.fn();
+    observeIntersection(target, late);
+    await Promise.resolve();
+    expect(late).toHaveBeenCalledWith(expect.objectContaining({ isIntersecting: true }));
+  });
+
+  it('unobserves an element when its last subscriber leaves', () => {
+    const { element } = intersectionWindow();
+    const target = element(),
+      other = element();
+    const first = observeIntersection(target, () => {});
+    const second = observeIntersection(target, () => {});
+    observeIntersection(other, () => {});
+    const observer = FakeIntersectionObserver.instances[0]!;
+    first();
+    expect(observer.targets.has(target)).toBe(true);
+    second();
+    second();
+    expect(observer.targets.has(target)).toBe(false);
+    expect(observer.disconnected).toBe(false);
+  });
+
+  it('reports unsupported windows and observes nothing there', () => {
+    const element = { ownerDocument: { defaultView: {} } } as unknown as Element;
+    expect(canObserveIntersection(element)).toBe(false);
+    expect(() => observeIntersection(element, () => {})()).not.toThrow();
   });
 });

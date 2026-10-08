@@ -142,5 +142,6 @@ Public context lists only stable values supplied by the component in addition to
 | Spinner                        | `rotation`          | Indicator or Root                           | ambient: `start`, `stop`                            | —                                                    | non-blocking |
 | Card                           | `interaction`       | Root                                        | state: `change`                                     | `input`                                              | non-blocking |
 | Skeleton                       | `loading`           | Placeholder                                 | ambient: `start`, `stop`                            | —                                                    | non-blocking |
+| Image                          | `reveal`            | Root                                        | state: `change`                                     | `effect`                                             | non-blocking |
 
 State and ambient roles are non-blocking. Presence roles above are blocking, so their actual playback completion controls the stable open/closed completion notification. Driver errors, rejected finite playback, missing targets, duplicate claims, and bounded-completion failures emit `tp-diagnostic` and cannot leave lifecycle completion pending forever.

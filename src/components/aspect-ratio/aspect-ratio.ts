@@ -50,10 +50,14 @@ export class TpAspectRatio extends TpElement {
       :host([fit='none']) ::slotted(*) {
         object-fit: none;
       }
+
+      :host([fit='scale-down']) ::slotted(*) {
+        object-fit: scale-down;
+      }
     `,
   ];
   #ratio = 16 / 9;
-  fit: 'fill' | 'contain' | 'cover' | 'none' = 'fill';
+  fit: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down' = 'fill';
   get ratio(): number {
     return this.#ratio;
   }

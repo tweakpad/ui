@@ -1,5 +1,9 @@
 import { ObservableStore } from '../../foundation/store.js';
-import { observeScroll } from '../../foundation/observation.js';
+import {
+  canObserveIntersection,
+  observeIntersection,
+  observeScroll,
+} from '../../foundation/observation.js';
 import {
   nonnegative,
   scrollEdges,
@@ -65,7 +69,8 @@ export class MessageScrollerProvider {
   #spacer: HTMLElement | undefined;
   #resize: ResizeObserver | undefined;
   #mutation: MutationObserver | undefined;
-  #intersection: IntersectionObserver | undefined;
+  /** Row subscriptions to the shared intersection service, while visibility is observed. */
+  #intersection: Map<HTMLElement, () => void> | undefined;
   #intersectionMargin = '';
   #frame = 0;
   #visibilityFrame = 0;
@@ -316,13 +321,12 @@ export class MessageScrollerProvider {
     for (const row of oldRows)
       if (!elements.has(row.element)) {
         this.#resize?.unobserve(row.element);
-        this.#intersection?.unobserve(row.element);
-        this.#intersections.delete(row.element);
+        this.#unwatchRow(row.element);
       }
     for (const row of rows)
       if (!oldElements.has(row.element)) {
         this.#resize?.observe(row.element);
-        this.#intersection?.observe(row.element);
+        this.#watchRow(row.element);
       }
     this.#rows = rows;
     if (!v.clientHeight) return;
@@ -473,34 +477,44 @@ export class MessageScrollerProvider {
     const v = this.#viewport;
     if (!v || !this.#listeners.size) return;
     const margin = `${-(nonnegative(this.options.readingLine()) + nonnegative(this.options.previousItemPeek()))}px 0px 0px 0px`;
-    if (this.#intersection && margin !== this.#intersectionMargin) {
-      this.#intersection.disconnect();
-      this.#intersection = undefined;
-      this.#intersections.clear();
-    }
-    const win = v.ownerDocument.defaultView!;
-    if (!this.#intersection && win.IntersectionObserver) {
+    if (this.#intersection && margin !== this.#intersectionMargin) this.#releaseRows();
+    if (!this.#intersection && canObserveIntersection(v)) {
       this.#intersectionMargin = margin;
-      this.#intersection = new win.IntersectionObserver(
-        (entries) => {
-          for (const entry of entries) {
-            if (entry.isIntersecting) this.#intersections.add(entry.target as HTMLElement);
-            else this.#intersections.delete(entry.target as HTMLElement);
-          }
+      this.#intersection = new Map();
+      for (const row of this.#rows) this.#watchRow(row.element);
+    }
+  }
+  #watchRow(element: HTMLElement) {
+    const v = this.#viewport;
+    if (!v || !this.#intersection || this.#intersection.has(element)) return;
+    this.#intersection.set(
+      element,
+      observeIntersection(
+        element,
+        (entry) => {
+          if (entry.isIntersecting) this.#intersections.add(element);
+          else this.#intersections.delete(element);
           this.#scheduleVisibility();
         },
-        { root: v, rootMargin: margin, threshold: [0, 0.01, 0.5, 1] },
-      );
-      for (const row of this.#rows) this.#intersection.observe(row.element);
-    }
+        { root: v, rootMargin: this.#intersectionMargin, threshold: [0, 0.01, 0.5, 1] },
+      ),
+    );
+  }
+  #unwatchRow(element: HTMLElement) {
+    this.#intersection?.get(element)?.();
+    this.#intersection?.delete(element);
+    this.#intersections.delete(element);
+  }
+  #releaseRows() {
+    for (const release of this.#intersection?.values() ?? []) release();
+    this.#intersection = undefined;
+    this.#intersections.clear();
   }
   #stopVisibility() {
     if (this.#visibilityFrame)
       this.#viewport?.ownerDocument.defaultView?.cancelAnimationFrame(this.#visibilityFrame);
     this.#visibilityFrame = 0;
-    this.#intersection?.disconnect();
-    this.#intersection = undefined;
-    this.#intersections.clear();
+    this.#releaseRows();
     this.#visibility = emptyVisibility;
   }
   #scheduleVisibility() {

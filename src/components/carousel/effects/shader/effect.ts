@@ -6,6 +6,7 @@ import {
   type CarouselEffectInstance,
   type CarouselEffectItem,
 } from '../../../../foundation/carousel/effect.js';
+import { observeIntersection } from '../../../../foundation/observation.js';
 import { WebGLHost } from '../../../../foundation/webgl/host.js';
 import { createProgram, type WebGLProgramHandle } from '../../../../foundation/webgl/program.js';
 import {
@@ -90,7 +91,7 @@ class ShaderTransition implements CarouselEffectInstance {
   #display: ImageBitmapRenderingContext | CanvasRenderingContext2D | null = null;
   #releaseHost: (() => void) | undefined;
   #releaseTextures: (() => void) | undefined;
-  #observer: IntersectionObserver | undefined;
+  #releaseVisibility: () => void;
   #onScreen = true;
   #idle: (() => void) | undefined;
   #focal = new WeakMap<Element, [number, number]>();
@@ -111,12 +112,9 @@ class ShaderTransition implements CarouselEffectInstance {
     context.surface.append(this.#canvas);
     this.#direction = revealDirection(context.orientation, context.direction, options.direction);
     const view = document.defaultView;
-    if (view?.IntersectionObserver) {
-      this.#observer = new view.IntersectionObserver((entries) => {
-        this.#onScreen = entries.some((entry) => entry.isIntersecting);
-      });
-      this.#observer.observe(context.viewport);
-    }
+    this.#releaseVisibility = observeIntersection(context.viewport, (entry) => {
+      this.#onScreen = entry.isIntersecting;
+    });
     // Compile ahead of the first transition so it does not stall.
     if (view?.requestIdleCallback) {
       const id = view.requestIdleCallback(() => this.#ensure(), { timeout: 1500 });
@@ -146,7 +144,7 @@ class ShaderTransition implements CarouselEffectInstance {
 
   detach(): void {
     this.#idle?.();
-    this.#observer?.disconnect();
+    this.#releaseVisibility();
     this.#styles.dispose();
     this.#canvas.remove();
     this.#disposeResources();

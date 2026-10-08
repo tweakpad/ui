@@ -1,15 +1,10 @@
 import { css, html, nothing, type PropertyDeclarations, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
-import { ImageLoadController } from '../../foundation/image-load.js';
+import { authoredImageHasSource, ImageLoadController } from '../../foundation/image-load.js';
 import { TpMediaElement } from './context.js';
 import { mediaOverlayStyles } from './styles.js';
 
-/** Whether an authored image already has a source (its own attributes, or `<picture>` sources). */
-export function authoredImageHasSource(image: HTMLImageElement): boolean {
-  if (image.hasAttribute('src') || image.hasAttribute('srcset')) return true;
-  const parent = image.parentElement;
-  return parent?.localName === 'picture' && parent.querySelector('source') !== null;
-}
+export { authoredImageHasSource };
 
 /** Poster visibility (Library mp-l-poster-title): until playback starts, optionally after end. */
 export function posterVisible(

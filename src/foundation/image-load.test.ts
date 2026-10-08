@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ReactiveController } from 'lit';
 import {
   ImageLoadController,
+  authoredImageHasSource,
   hasOwnImageSource,
   type ImageLoadControllerOptions,
   type ImageLoadStatus,
@@ -18,6 +19,8 @@ class FakeImage {
   srcset = '';
   #src = '';
   readonly attributes = new Map<string, string>();
+  parentElement: { localName: string; querySelector(selector: string): object | null } | null =
+    null;
   readonly listeners = new Map<string, Set<() => void>>();
   decode?: () => Promise<void>;
   /** Simulates a cache hit: assigning `src` completes the request synchronously. */
@@ -304,5 +307,39 @@ describe('ImageLoadController (media player R-10, Avatar regression V-78)', () =
     value.attributes.delete('srcset');
     value.attributes.set('src', 'a.png');
     expect(hasOwnImageSource(image(value))).toBe(true);
+  });
+  it('treats picture source srcsets as a loadable source that only a rendered image loads', () => {
+    const { controller, created } = fixture();
+    controller.load({ sources: [{ srcset: 'a.avif 1x' }] }, { preload: false });
+    expect(controller.status).toBe('loading');
+    controller.load({ sources: [{ srcset: 'a.avif 1x' }] });
+    expect(created).toHaveLength(0);
+    expect(controller.status).toBe('loading');
+    controller.load({ sources: [{ srcset: '' }] });
+    expect(controller.status).toBe('idle');
+  });
+
+  it('settles a complete image sourced by its picture', () => {
+    const { controller } = fixture();
+    controller.load({ sources: [{ srcset: 'a.avif' }] }, { preload: false });
+    const rendered = new FakeImage();
+    rendered.complete = true;
+    rendered.naturalWidth = 20;
+    rendered.parentElement = { localName: 'picture', querySelector: () => null };
+    controller.inspect(image(rendered));
+    expect(controller.status).toBe('loading');
+    rendered.parentElement = { localName: 'picture', querySelector: () => ({}) };
+    controller.inspect(image(rendered));
+    expect(controller.status).toBe('loaded');
+  });
+
+  it('identifies authored images sourced by attributes or picture sources', () => {
+    const value = new FakeImage();
+    expect(authoredImageHasSource(image(value))).toBe(false);
+    value.parentElement = { localName: 'picture', querySelector: () => ({}) };
+    expect(authoredImageHasSource(image(value))).toBe(true);
+    value.parentElement = null;
+    value.attributes.set('src', 'a.png');
+    expect(authoredImageHasSource(image(value))).toBe(true);
   });
 });

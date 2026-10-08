@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Image verification</title>
+    <link rel="stylesheet" href="/src/styles.css">
+    <style>
+      body { margin: 0; background: var(--tp-background); color: var(--tp-foreground); font-family: var(--tp-font-sans); }
+      main { max-width: 960px; margin: 24px auto; padding: 16px; display: grid; gap: 40px; }
+      h1.fixture { font-size: 1.25rem; margin: 0; }
+      section.case { display: grid; gap: 12px; }
+      section.case[hidden] { display: none; }
+      section.case > h2 { font-size: 0.875rem; margin: 0; color: var(--tp-muted-foreground); font-weight: 500; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+      .grid figure { margin: 0; display: grid; gap: 4px; font-size: 0.75rem; color: var(--tp-muted-foreground); }
+      tp-image { border-radius: var(--tp-radius-lg); }
+      .wide { max-inline-size: 640px; }
+      .spacer { block-size: 60vh; display: grid; place-items: center; color: var(--tp-muted-foreground); font-size: 0.75rem; border: 1px dashed var(--tp-border); border-radius: var(--tp-radius-lg); }
+      .scroller { block-size: 320px; overflow: auto; border: 1px solid var(--tp-border); border-radius: var(--tp-radius-lg); padding: 12px; display: grid; gap: 12px; }
+      .scroller .pad { block-size: 280px; }
+      .strip { display: flex; gap: 12px; overflow-x: auto; padding: 12px; border: 1px solid var(--tp-border); border-radius: var(--tp-radius-lg); }
+      .strip tp-image { flex: 0 0 220px; }
+      .stress { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 class="fixture">Image verification</h1>
+      <section class="case" id="case-base"><h2>Base: ratio 16/9, skeleton, zoom in, reveal fade up</h2>
+        <tp-image id="base" class="wide" ratio="1.7777777778" zoom="in" reveal="fade up" alt="A bright open-plan office"></tp-image>
+      </section>
+      <section class="case" id="case-placeholders"><h2>Placeholders (throttle the network to hold the loading state)</h2>
+        <div class="grid" id="placeholders"></div>
+      </section>
+      <section class="case" id="case-states"><h2>Error, no source, slotted fallback and placeholder</h2>
+        <div class="grid">
+          <figure><tp-image id="error" ratio="1.5" src="/does-not-exist.jpg" alt="Missing photo"></tp-image>error, default fallback</figure>
+          <figure><tp-image id="idle" ratio="1.5" alt="No source"></tp-image>no source</figure>
+          <figure><tp-image id="custom-fallback" ratio="1.5" src="/does-not-exist.jpg" alt="Missing photo"><span slot="fallback" style="font-size:0.875rem">Photo unavailable</span></tp-image>slotted fallback</figure>
+        </div>
+      </section>
+      <section class="case" id="case-fit"><h2>Fit (ratio 1, wide image) and position</h2>
+        <div class="grid" id="fits"></div>
+      </section>
+      <section class="case" id="case-intrinsic"><h2>Intrinsic geometry (no ratio, width/height)</h2>
+        <tp-image id="intrinsic" class="wide" width="900" height="600" alt="Office desks"></tp-image>
+      </section>
+      <section class="case" id="case-responsive"><h2>Responsive: w-descriptors without sizes, with sizes, x-descriptors, picture sources</h2>
+        <div class="grid">
+          <figure><tp-image id="srcset-auto" ratio="1.5" alt="Auto sizes"></tp-image>w, lazy, no sizes</figure>
+          <figure><tp-image id="srcset-sizes" ratio="1.5" sizes="(max-width: 600px) 100vw, 200px" alt="Explicit sizes"></tp-image>w, sizes</figure>
+          <figure><tp-image id="srcset-eager" ratio="1.5" loading="eager" alt="Eager"></tp-image>w, eager, no sizes</figure>
+          <figure><tp-image id="srcset-x" ratio="1.5" alt="Density"></tp-image>x descriptors</figure>
+          <figure><tp-image id="art" ratio="1.5" alt="Art direction"></tp-image>picture: media + type</figure>
+        </div>
+      </section>
+      <section class="case" id="case-zoom"><h2>Zoom</h2>
+        <div class="grid" id="zooms"></div>
+      </section>
+      <div class="spacer">scroll</div>
+      <section class="case" id="case-parallax"><h2>Parallax (window)</h2>
+        <div class="grid" id="parallax"></div>
+      </section>
+      <section class="case" id="case-clipped"><h2>Parallax inside clipping ancestors that do not scroll (overflow hidden and auto)</h2>
+        <div style="overflow: hidden; border-radius: var(--tp-radius-xl)"><div style="overflow: auto"><tp-image id="clipped" ratio="2.4" parallax="up" alt=""></tp-image></div></div>
+      </section>
+      <section class="case" id="case-strip"><h2>Parallax in a horizontal strip (inline axis), LTR and RTL</h2>
+        <div class="strip" id="strip"></div>
+        <div class="strip" id="strip-rtl" dir="rtl"></div>
+      </section>
+      <section class="case" id="case-nested"><h2>Parallax and reveal in a nested scroller</h2>
+        <div class="scroller" id="scroller"></div>
+      </section>
+      <div class="spacer">scroll</div>
+      <section class="case" id="case-reveal"><h2>Reveal (runs once)</h2>
+        <div class="grid" id="reveals"></div>
+      </section>
+      <div class="spacer">scroll</div>
+      <section class="case" id="case-stress" hidden><h2>Stress: 500 images</h2>
+        <div class="stress" id="stress"></div>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

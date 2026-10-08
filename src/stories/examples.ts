@@ -414,6 +414,14 @@ const examples = {
       .source=${'### Release notes\n\nMarkdown renders **formatted** text, `inline code` and [links](#).\n\n- Native lists\n- [x] Task items'}
     ></tp-markdown>
   `,
+  'tp-image': () => html`
+    <tp-image
+      .ratio=${16 / 9}
+      src=${'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&auto=format&fit=crop&q=80'}
+      alt="A bright open-plan office"
+      zoom="in"
+    ></tp-image>
+  `,
   // Targets live on the page around the example; the spy follows the page scroll.
   'tp-table-of-contents': () => html`
     <tp-table-of-contents>

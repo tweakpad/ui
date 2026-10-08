@@ -62,6 +62,7 @@ export const catalog = [
   ['Card', 'tp-card', 'presentational-primitive'],
   ['Code block', 'tp-code-block', 'presentational-primitive'],
   ['Markdown', 'tp-markdown', 'preset-composition'],
+  ['Image', 'tp-image', 'preset-composition'],
   ['Table of contents', 'tp-table-of-contents', 'compound-reexport'],
   ['Tree view', 'tp-tree-view', 'compound-reexport'],
   ['Empty state', 'tp-empty-state', 'presentational-primitive'],

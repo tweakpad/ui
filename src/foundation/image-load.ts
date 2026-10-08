@@ -3,10 +3,15 @@ import type { ReactiveController, ReactiveControllerHost } from 'lit';
 /** `idle`: no source; `loading`: a source is pending; `loaded`/`error`: the current source settled. */
 export type ImageLoadStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
-/** Image request attributes; only `src` or `srcset` makes a source loadable. */
+/**
+ * Image request attributes; `src`, `srcset` or a `<picture>` source `srcset` makes a source
+ * loadable. Picture sources are selected by the host, so they load only through a rendered image
+ * (`preload: false`).
+ */
 export interface ImageLoadSource {
   src?: string | null | undefined;
   srcset?: string | null | undefined;
+  sources?: readonly { readonly srcset?: string | null | undefined }[] | undefined;
   sizes?: string | null | undefined;
   crossOrigin?: '' | 'anonymous' | 'use-credentials' | null | undefined;
   referrerPolicy?: ReferrerPolicy | null | undefined;
@@ -45,6 +50,24 @@ export type ImageLoadHost = ReactiveControllerHost & {
 /** Whether an image's own attributes request a source (a `complete` state is then meaningful). */
 export function hasOwnImageSource(image: HTMLImageElement): boolean {
   return Boolean(image.getAttribute('src')) || image.hasAttribute('srcset');
+}
+
+/** Whether an image has a source of its own or through the `<source>` children of its `<picture>`. */
+export function authoredImageHasSource(image: HTMLImageElement): boolean {
+  if (image.hasAttribute('src') || image.hasAttribute('srcset')) return true;
+  const parent = image.parentElement;
+  return parent?.localName === 'picture' && parent.querySelector('source') !== null;
+}
+
+/** `hasOwnImageSource`, or a `<picture>` parent offering a source `srcset`. */
+function requestsSource(image: HTMLImageElement): boolean {
+  if (hasOwnImageSource(image)) return true;
+  const parent = image.parentElement;
+  return parent?.localName === 'picture' && parent.querySelector('source[srcset]') !== null;
+}
+
+function loadable(source: ImageLoadSource | null | undefined): boolean {
+  return Boolean(source?.src || source?.srcset || source?.sources?.some((entry) => entry.srcset));
 }
 
 /**
@@ -97,12 +120,12 @@ export class ImageLoadController implements ReactiveController {
   load(source: ImageLoadSource | null | undefined, options: ImageLoadRequestOptions = {}): number {
     this.#release();
     const generation = ++this.#generation;
-    if (!source?.src && !source?.srcset) {
+    if (!source || !loadable(source)) {
       this.#set('idle', generation);
       return generation;
     }
     this.#set('loading', generation);
-    if (options.preload === false) return generation;
+    if (options.preload === false || (!source.src && !source.srcset)) return generation;
     const document = this.host.ownerDocument ?? globalThis.document;
     const image = document.createElement('img');
     this.#preloader = image;
@@ -137,7 +160,7 @@ export class ImageLoadController implements ReactiveController {
 
   /** Settles from an image whose request already completed; incomplete or unsourced images wait. */
   inspect(image: HTMLImageElement | null | undefined, generation = this.#generation): void {
-    if (image?.complete && hasOwnImageSource(image)) this.#complete(image, generation);
+    if (image?.complete && requestsSource(image)) this.#complete(image, generation);
   }
 
   /** Reports a result observed by the caller, e.g. a rendered image's `load`/`error` listener. */
