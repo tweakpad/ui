@@ -3,7 +3,17 @@ import { autofillHint } from '../../foundation/autofill.js';
 import { renderQuery } from './query-view.js';
 import { SelectSource } from './source.js';
 import { isSelectItemCollection, type SelectItemCollection } from './items.js';
-import type { SelectClearBehavior, SelectCompletionMode } from './query-types.js';
+import {
+  DEFAULT_SELECT_MESSAGES,
+  type SelectClearBehavior,
+  type SelectCompletionMode,
+  type SelectMatchFields,
+  type SelectMessages,
+} from './query-types.js';
+import type { SearchSource } from '../../foundation/search/source.js';
+import type { SearchMatching, SearchStatus } from '../../foundation/search/types.js';
+import { renderHighlighted } from '../../foundation/search/highlight.js';
+import { TpValueChangeEvent as ValueChangeEvent } from '../../foundation/events.js';
 import { selectStateMarkers } from './state.js';
 import { composedParent, focusManaged } from '../../foundation/focus.js';
 import { anchoredArrowStyles } from '../shared/anchored-arrow.js';
@@ -73,12 +83,13 @@ import type { CustomElementConstructorWithTag } from '../../foundation/define.js
 import { TpButton } from '../button.js';
 import { TpBadge } from '../badge/index.js';
 import { TpInputGroup } from '../input-group/input-group.js';
+import { TpSpinner } from '../spinner/spinner.js';
 
 export class TpSelect extends TpFormElement<unknown> {
   static tagName = 'tp-select';
   /** Library elements this element renders; defining it defines them too. */
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
-    return [TpIcon, TpButton, TpBadge, TpInputGroup];
+    return [TpIcon, TpButton, TpBadge, TpInputGroup, TpSpinner];
   }
   static override presentation = selectPresentation;
   static override properties = {
@@ -89,11 +100,27 @@ export class TpSelect extends TpFormElement<unknown> {
     query: { type: String, noAccessor: true },
     filteredItems: { attribute: false },
     filter: { attribute: false },
+    matching: { type: String },
+    source: { attribute: false },
+    searchDelay: { type: Number, attribute: 'search-delay' },
+    highlightMatches: {
+      attribute: 'highlight-matches',
+      converter: { fromAttribute: (value: string | null) => value !== null && value !== 'false' },
+    },
+    matchFields: { attribute: false },
+    messages: { attribute: false },
+    submitOnItemClick: { type: Boolean, attribute: 'submit-on-item-click' },
     limit: { type: Number },
     locale: { type: String },
     completionMode: { type: String, attribute: 'completion-mode' },
     clearBehavior: { type: String, attribute: 'clear-behavior' },
-    autoHighlight: { attribute: false },
+    autoHighlight: {
+      attribute: 'auto-highlight',
+      converter: {
+        fromAttribute: (value: string | null) =>
+          value === null || value === 'false' ? false : value === 'always' ? 'always' : true,
+      },
+    },
     keepHighlight: { type: Boolean, attribute: 'keep-highlight' },
     loopFocus: { type: Boolean, attribute: 'loop-focus' },
     grid: { type: Boolean },
@@ -111,7 +138,7 @@ export class TpSelect extends TpFormElement<unknown> {
     onItemHighlighted: { attribute: false },
 
     value: { type: String, noAccessor: true },
-    defaultValue: { type: String, attribute: 'default-value' },
+    defaultValue: { type: String, attribute: 'default-value', noAccessor: true },
     open: { type: Boolean, noAccessor: true },
     defaultOpen: { type: Boolean, attribute: 'default-open' },
     multiple: { type: Boolean, reflect: true },
@@ -160,7 +187,15 @@ export class TpSelect extends TpFormElement<unknown> {
     onOpenChangeComplete: { attribute: false },
   };
   static override styles: CSSResultGroup = [TpElement.styles, anchoredArrowStyles, selectStyles];
-  defaultValue: unknown = undefined;
+  #defaultValue: unknown = undefined;
+  get defaultValue(): unknown {
+    return this.#defaultValue;
+  }
+  set defaultValue(value: unknown) {
+    const previous = this.#defaultValue;
+    this.#defaultValue = value;
+    this.requestUpdate('defaultValue', previous);
+  }
   defaultOpen = false;
   multiple = false;
   items: readonly SelectEntry[] | SelectItemCollection<unknown> | undefined;
@@ -169,6 +204,20 @@ export class TpSelect extends TpFormElement<unknown> {
   filteredItems: readonly unknown[] | undefined;
   filter:
     ((item: unknown, query: string, text: (item: unknown) => string) => boolean) | null | undefined;
+  /** How the query matches items: `contains` (default), `prefix`, `exact` or ranked `fuzzy`. */
+  matching: SearchMatching = 'contains';
+  /** Supplies results instead of matching items: a server endpoint or another search engine. */
+  source: SearchSource | undefined;
+  /** Milliseconds without typing before a source is queried. */
+  searchDelay = 0;
+  /** Marks matched ranges in option text. */
+  highlightMatches = false;
+  /** Extra searchable text of an item, such as keywords. */
+  matchFields: SelectMatchFields | undefined;
+  /** Replaceable status and empty-state texts. */
+  messages: SelectMessages = {};
+  /** Submits the owning form after an item is accepted (selection-free mode). */
+  submitOnItemClick = false;
   limit = -1;
   locale: string | undefined;
   completionMode: SelectCompletionMode = 'list';
@@ -201,6 +250,25 @@ export class TpSelect extends TpFormElement<unknown> {
   }
   get query(): string {
     return this.inputValue;
+  }
+  /** Status of the search source behind the list; idle when matching locally. */
+  get searchStatus(): SearchStatus {
+    return this.#query.searchStatus;
+  }
+  /** `messages` merged over the defaults. */
+  get resolvedMessages(): Required<SelectMessages> {
+    return { ...DEFAULT_SELECT_MESSAGES, ...this.messages };
+  }
+  /** Selection-free owners (Autocomplete) have no selection lane: their value is the text. */
+  protected get selectionFree(): boolean {
+    return false;
+  }
+  /** Event name of text-lane proposals. */
+  protected get inputValueEventName(): string {
+    return 'tp-input-value-change';
+  }
+  protected inputValueChanged(event: ValueChangeEvent<string>): void {
+    this.onInputValueChange?.(event);
   }
   set query(value: string | undefined) {
     this.inputValue = value;
@@ -359,10 +427,15 @@ export class TpSelect extends TpFormElement<unknown> {
   readonly #selection = new ControllableState<unknown>({
     host: this,
     initialValue: null,
-    readControlledValue: () => this.#providedValue,
+    // Selection-free owners keep this lane empty: their value is the text.
+    readControlledValue: () => (this.selectionFree ? undefined : this.#providedValue),
     readDefaultValue: () =>
-      this.multiple ? this.#values(this.defaultValue) : (this.defaultValue ?? null),
-    hasDefaultValue: () => this.defaultValue !== undefined,
+      this.selectionFree
+        ? null
+        : this.multiple
+          ? this.#values(this.defaultValue)
+          : (this.defaultValue ?? null),
+    hasDefaultValue: () => !this.selectionFree && this.defaultValue !== undefined,
     onChange: (event) => this.onValueChange?.(event),
     equals: (a, b) =>
       this.multiple
@@ -384,6 +457,34 @@ export class TpSelect extends TpFormElement<unknown> {
     values: (value) => this.#values(value),
     text: (value) => this.#text(value),
     select: (record, event) => this.selectOption(record, event),
+    selectionFree: () => this.selectionFree,
+    eventName: () => this.inputValueEventName,
+    changed: (event) => this.inputValueChanged(event),
+    committed: () => {
+      if (!this.selectionFree) return;
+      this.#syncForm();
+      this.dispatchEvent(new Event('tp-field-value', { bubbles: true, composed: true }));
+    },
+    messages: () => this.resolvedMessages,
+    searchStatus: (status, query, total, error) => {
+      this.dispatchEvent(
+        new CustomEvent('tp-search-status', {
+          detail: { status, query, total },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      if (status === 'error')
+        this.dispatchEvent(
+          new CustomEvent('tp-search-error', {
+            detail: { error, query },
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      this.requestUpdate();
+    },
+    submit: () => this.#submitForm(),
     metadata: (record) => ({
       source: this.#source.sources.get(record.option) ?? record.value,
       logicalIndex: record.option.index ?? this.#collection.source.indexOf(record),
@@ -586,6 +687,8 @@ export class TpSelect extends TpFormElement<unknown> {
       (record) => this.#collection.element(record) === active,
     );
     const previousHighlight = this.#collection.highlighted;
+    this.#query.prepare();
+    const resultItems = this.searchable ? this.#query.resultItems : undefined;
     this.#model.update(
       isSelectItemCollection(this.items)
         ? this.#source.normalize(this.items, [])
@@ -597,8 +700,8 @@ export class TpSelect extends TpFormElement<unknown> {
                     node.matches('option,optgroup,hr,tp-select-option'),
                   ),
                 )
-              : this.searchable && this.filteredItems !== undefined
-                ? this.#source.normalize(this.filteredItems, [])
+              : resultItems !== undefined
+                ? this.#source.normalize(resultItems, [])
                 : this.#nativeEntries)),
       (value) => this.#text(value),
       (value) => this.itemToLabel?.(value) ?? this.#text(value),
@@ -608,14 +711,16 @@ export class TpSelect extends TpFormElement<unknown> {
     if (this.searchable && this.virtualized && !this.items)
       this.#diagnose('virtualized requires the complete ordered source items.');
     this.#clearPresence.setPresent(
-      this.searchable && this.showClear && (!!this.inputValue || !!this.#values(this.value).length),
+      this.searchable &&
+        this.showClear &&
+        (!!this.inputValue || !!this.#values(this.#selection.value).length),
     );
     this.#repairFocus =
       !!focusedOption &&
       (!this.#collection.source.includes(focusedOption) || !!focusedOption.disabled);
     if (this.open && !this.#wasOpen) {
       this.#pointer.opened();
-      if (!this.searchable) this.#collection.openAt(this.#values(this.value));
+      if (!this.searchable) this.#collection.openAt(this.#values(this.#selection.value));
       this.#focusPending = !this.inline;
     }
     this.#wasOpen = this.open;
@@ -634,7 +739,7 @@ export class TpSelect extends TpFormElement<unknown> {
           content: renderQuery(this, this.#query, {
             part: (name, state, options, contract) => this.#part(name, state, options, contract),
             ref: (key, part, commit) => this.#ref(key, part, commit),
-            values: () => this.#values(this.value),
+            values: () => this.#values(this.#selection.value),
             text: (value) => this.#text(value),
             state,
             prefix: this.renderQueryPrefix(),
@@ -654,7 +759,7 @@ export class TpSelect extends TpFormElement<unknown> {
           ${this.open ? this.#query.status : ''}
         </div>
         <slot hidden></slot>`;
-    const selected = this.#values(this.value).map(
+    const selected = this.#values(this.#selection.value).map(
       (value) =>
         this.#collection.selected(value)?.label ?? this.itemToLabel?.(value) ?? this.#text(value),
     );
@@ -731,7 +836,7 @@ export class TpSelect extends TpFormElement<unknown> {
         class="visually-hidden"
         tabindex="-1"
         aria-hidden="true"
-        .value=${this.#values(this.value).map(String).join(',')}
+        .value=${this.#values(this.#selection.value).map(String).join(',')}
         autocomplete=${this.effectiveNoAutofill ? 'off' : this.autoComplete || nothing}
         data-bwignore=${autofillHint(this.effectiveNoAutofill, 'data-bwignore')}
         data-1p-ignore=${autofillHint(this.effectiveNoAutofill, 'data-1p-ignore')}
@@ -754,7 +859,7 @@ export class TpSelect extends TpFormElement<unknown> {
         tabindex: -1,
         'aria-label': this.label || this.placeholder || 'Options',
         'aria-multiselectable': this.multiple ? 'true' : undefined,
-        'aria-busy': this.loading ? 'true' : undefined,
+        'aria-busy': this.#query.busy ? 'true' : undefined,
         '@keydown': (event: KeyboardEvent) => {
           if (event.target === event.currentTarget) this.#keyDown(event, false);
         },
@@ -766,7 +871,7 @@ export class TpSelect extends TpFormElement<unknown> {
       reference: this.#ref('list', 'select-list', (element) => {
         this.#list = element;
       }),
-      content: html`${this.searchable ? this.#part('select-collection', state, { content: this.#nodes(this.#model.nodes) }) : this.#nodes(this.#model.nodes)}${this.searchable && !this.#collection.visible.length && !this.loading ? this.#part('select-empty-state', state, { properties: { role: 'presentation' }, content: html`<slot name="empty">No results found.</slot>` }) : nothing}`,
+      content: html`${this.searchable ? this.#part('select-collection', state, { content: this.#nodes(this.#model.nodes) }) : this.#nodes(this.#model.nodes)}${this.#emptyContent(state)}`,
     });
     const content = this.#part('select-content', state, {
       properties: {
@@ -795,7 +900,7 @@ export class TpSelect extends TpFormElement<unknown> {
     return html`${this.showBackdrop && !this.inline ? this.#part('backdrop', state, { properties: { class: 'select-backdrop', 'aria-hidden': 'true', 'data-open': this.open, 'data-closed': !this.open, '@pointerdown': (event: Event) => this.setOpen(false, 'outside-press', event) } }) : nothing}${content}`;
   }
   #nodes(nodes: readonly SelectNode[]): unknown {
-    if (this.searchable && this.filteredItems) {
+    if (this.searchable && this.#query.ranked) {
       const positions = (node: SelectNode): number[] =>
         'children' in node
           ? node.children.flatMap(positions)
@@ -918,7 +1023,11 @@ export class TpSelect extends TpFormElement<unknown> {
     const text = this.#part(
       'item-text',
       state,
-      { tag: 'span', properties: { class: 'select-item-text' }, content: record.label },
+      {
+        tag: 'span',
+        properties: { class: 'select-item-text' },
+        content: this.#optionText(record),
+      },
       record.option.textContract,
     );
     return this.#part(
@@ -1374,6 +1483,37 @@ export class TpSelect extends TpFormElement<unknown> {
       if (record) this.selectOption(record, event);
     }
   }
+  /**
+   * With nothing to show: a loading status (spinner and text) while a source is pending, the
+   * error text after it fails, otherwise the empty state.
+   */
+  #emptyContent(state: PartState): unknown {
+    if (!this.searchable || this.#collection.visible.length) return nothing;
+    const messages = this.resolvedMessages;
+    if (this.#query.busy || (this.source && this.searchStatus === 'error'))
+      return this.#part('select-status', state, {
+        properties: { class: 'select-status', role: 'presentation' },
+        content: this.#query.busy
+          ? html`<tp-spinner size="sm" aria-hidden="true"></tp-spinner>${messages.loading}`
+          : messages.error,
+      });
+    return this.#part('select-empty-state', state, {
+      properties: { role: 'presentation' },
+      content: html`<slot name="empty">${messages.empty}</slot>`,
+    });
+  }
+  /** Option text, with matched ranges marked when highlighting. */
+  #optionText(record: SelectRecord): unknown {
+    const ranges = this.highlightMatches ? this.#query.rangesOf(record) : undefined;
+    return ranges?.length && record.label === record.text
+      ? renderHighlighted(record.text, ranges, this.choicePart('select-match'))
+      : record.label;
+  }
+  /** Submits the owning form, as Enter in a text input would. */
+  #submitForm(): void {
+    const form = this.form as (HTMLFormElement & { requestSubmit?: () => void }) | null;
+    form?.requestSubmit?.();
+  }
   protected selectOption(record: SelectRecord, event: Event): void {
     if (
       !this.open ||
@@ -1383,17 +1523,24 @@ export class TpSelect extends TpFormElement<unknown> {
       !this.#collection.source.includes(record)
     )
       return;
+    if (this.selectionFree) {
+      this.#query.selected(record, event);
+      this.setOpen(false, 'item-press', event);
+      if (this.submitOnItemClick && this.inputValue === record.text) this.#submitForm();
+      this.requestUpdate();
+      return;
+    }
     const next = this.multiple
-      ? this.#collection.toggle(this.#values(this.value), record.value)
+      ? this.#collection.toggle(this.#values(this.#selection.value), record.value)
       : record.value;
-    const unchanged = !this.multiple && this.#collection.equal(next, this.value);
+    const unchanged = !this.multiple && this.#collection.equal(next, this.#selection.value);
     const accepted = unchanged || this.#selection.set(next, 'item-press', event);
     const committed = this.multiple
-      ? this.#values(next).length === this.#values(this.value).length &&
+      ? this.#values(next).length === this.#values(this.#selection.value).length &&
         this.#values(next).every((value, index) =>
-          this.#collection.equal(value, this.#values(this.value)[index]),
+          this.#collection.equal(value, this.#values(this.#selection.value)[index]),
         )
-      : this.#collection.equal(this.value, next);
+      : this.#collection.equal(this.#selection.value, next);
     if (accepted && committed) {
       if (this.searchable) this.#query.selected(record, event);
       if (this.searchable ? (this.closeOnSelect ?? !this.multiple) : !this.multiple)
@@ -1431,7 +1578,7 @@ export class TpSelect extends TpFormElement<unknown> {
       this.#forceUnmount = false;
       this.#pointer.opened();
       this.#previousFocus = deepActiveElement(this.ownerDocument);
-      if (!this.searchable) this.#collection.openAt(this.#values(this.value));
+      if (!this.searchable) this.#collection.openAt(this.#values(this.#selection.value));
       this.#focusPending = !this.inline;
     } else {
       this.#pointer.reset();
@@ -1548,7 +1695,18 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#collection.typeahead.reset();
   }
   #syncForm(): void {
-    const values = this.#values(this.value),
+    if (this.selectionFree) {
+      const text = this.inputValue;
+      this.setFormValue(this.effectiveDisabled ? null : text, text);
+      const missing = this.required && !text;
+      this.setValidity(
+        missing ? { valueMissing: true } : {},
+        missing ? 'Please fill out this field.' : '',
+        this.#trigger ?? undefined,
+      );
+      return;
+    }
+    const values = this.#values(this.#selection.value),
       form = new FormData();
     for (const value of values) form.append(this.effectiveName, String(value));
     this.setFormValue(
@@ -1580,6 +1738,11 @@ export class TpSelect extends TpFormElement<unknown> {
     mode: 'restore' | 'autocomplete',
   ): void {
     if (typeof state !== 'string') return;
+    if (this.selectionFree) {
+      if (mode === 'autocomplete') this.#query.state.set(state, 'input');
+      else if (!this.#query.state.controlled) this.#query.state.set(state, 'programmatic');
+      return;
+    }
     let values: unknown[];
     try {
       values = JSON.parse(state) as unknown[];
@@ -1606,7 +1769,9 @@ export class TpSelect extends TpFormElement<unknown> {
         : [value];
   }
   #selected(value: unknown): boolean {
-    return this.#values(this.value).some((selected) => this.#collection.equal(selected, value));
+    return this.#values(this.#selection.value).some((selected) =>
+      this.#collection.equal(selected, value),
+    );
   }
   #text(value: unknown): string {
     return this.itemToText?.(value) ?? (value == null ? '' : String(value));
@@ -1617,7 +1782,7 @@ export class TpSelect extends TpFormElement<unknown> {
       searchable: this.searchable,
       inputValue: this.inputValue,
       loading: this.loading,
-      value: this.value,
+      value: this.selectionFree ? this.inputValue : this.#selection.value,
       multiple: this.multiple,
       disabled: this.effectiveDisabled,
       readOnly: this.readOnly,

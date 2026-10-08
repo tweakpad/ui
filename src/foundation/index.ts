@@ -56,3 +56,4 @@ export * from './disclosure-panel.js';
 export * from './virtual-range.js';
 export * from './virtual-list.js';
 export * from './tree/index.js';
+export * from './search/index.js';

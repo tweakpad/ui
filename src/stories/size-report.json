@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T17:40:26.395Z",
+  "generatedAt": "2026-10-08T21:28:46.563Z",
   "version": "0.1.0",
   "method": "Each catalog component as documented (the root plus the parts its canonical example composes) imported from @tweakpad/ui and defined, bundled with Rolldown (minified, lit external), gzip level 9.",
   "lit": {
@@ -12,8 +12,8 @@
     "chunks": 1
   },
   "full": {
-    "gzip": 466683,
-    "minified": 1742235
+    "gzip": 474346,
+    "minified": 1764446
   },
   "components": [
     {
@@ -24,11 +24,11 @@
       "uses": [
         "tp-media-video-layout"
       ],
-      "gzip": 133705,
-      "minified": 482502,
-      "ownGzip": 129469,
+      "gzip": 133710,
+      "minified": 482538,
+      "ownGzip": 129477,
       "modules": 170,
-      "rootGzip": 43362,
+      "rootGzip": 43369,
       "includes": [
         "tp-alert-dialog",
         "tp-badge",
@@ -90,37 +90,16 @@
       ]
     },
     {
-      "name": "Tree view",
-      "tagName": "tp-tree-view",
-      "className": "TpTreeView",
-      "kind": "compound-reexport",
-      "uses": [
-        "tp-tree-item",
-        "tp-icon"
-      ],
-      "gzip": 71298,
-      "minified": 235514,
-      "ownGzip": 67183,
-      "modules": 97,
-      "rootGzip": 71330,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-spinner",
-        "tp-tree-item"
-      ]
-    },
-    {
       "name": "Command palette",
       "tagName": "tp-command-palette",
       "className": "TpCommandPalette",
       "kind": "preset-composition",
       "uses": [],
-      "gzip": 70674,
-      "minified": 244363,
-      "ownGzip": 66718,
-      "modules": 101,
-      "rootGzip": 70674,
+      "gzip": 77019,
+      "minified": 263126,
+      "ownGzip": 73058,
+      "modules": 109,
+      "rootGzip": 77019,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -135,6 +114,66 @@
       ]
     },
     {
+      "name": "Tree view",
+      "tagName": "tp-tree-view",
+      "className": "TpTreeView",
+      "kind": "compound-reexport",
+      "uses": [
+        "tp-tree-item",
+        "tp-icon"
+      ],
+      "gzip": 71303,
+      "minified": 235550,
+      "ownGzip": 67188,
+      "modules": 97,
+      "rootGzip": 71335,
+      "includes": [
+        "tp-button",
+        "tp-icon",
+        "tp-spinner",
+        "tp-tree-item"
+      ]
+    },
+    {
+      "name": "Autocomplete",
+      "tagName": "tp-autocomplete",
+      "className": "TpAutocomplete",
+      "kind": "flattening-compound",
+      "uses": [],
+      "gzip": 63494,
+      "minified": 214135,
+      "ownGzip": 59336,
+      "modules": 92,
+      "rootGzip": 63494,
+      "includes": [
+        "tp-badge",
+        "tp-button",
+        "tp-icon",
+        "tp-input-group",
+        "tp-select",
+        "tp-spinner"
+      ]
+    },
+    {
+      "name": "Select",
+      "tagName": "tp-select",
+      "className": "TpSelect",
+      "kind": "flattening-compound",
+      "uses": [],
+      "gzip": 62756,
+      "minified": 211093,
+      "ownGzip": 58585,
+      "modules": 89,
+      "rootGzip": 62756,
+      "includes": [
+        "tp-badge",
+        "tp-button",
+        "tp-icon",
+        "tp-input-group",
+        "tp-spinner"
+      ]
+    },
+    {
       "name": "Carousel",
       "tagName": "tp-carousel",
       "className": "TpCarousel",
@@ -142,11 +181,11 @@
       "uses": [
         "tp-card"
       ],
-      "gzip": 62647,
-      "minified": 209965,
-      "ownGzip": 58483,
+      "gzip": 62656,
+      "minified": 210001,
+      "ownGzip": 58492,
       "modules": 78,
-      "rootGzip": 60898,
+      "rootGzip": 60905,
       "includes": [
         "tp-button",
         "tp-card",
@@ -202,25 +241,6 @@
         "tp-map-overlay",
         "tp-map-pin",
         "tp-popover",
-        "tp-spinner"
-      ]
-    },
-    {
-      "name": "Select",
-      "tagName": "tp-select",
-      "className": "TpSelect",
-      "kind": "flattening-compound",
-      "uses": [],
-      "gzip": 56662,
-      "minified": 193262,
-      "ownGzip": 52513,
-      "modules": 80,
-      "rootGzip": 56662,
-      "includes": [
-        "tp-badge",
-        "tp-button",
-        "tp-icon",
-        "tp-input-group",
         "tp-spinner"
       ]
     },
@@ -482,11 +502,11 @@
       "className": "TpNavigationPanel",
       "kind": "compound-reexport",
       "uses": [],
-      "gzip": 34653,
-      "minified": 119786,
-      "ownGzip": 30435,
+      "gzip": 34662,
+      "minified": 119822,
+      "ownGzip": 30441,
       "modules": 51,
-      "rootGzip": 34653,
+      "rootGzip": 34662,
       "includes": [
         "tp-button",
         "tp-icon",
@@ -595,11 +615,11 @@
       "uses": [
         "tp-input"
       ],
-      "gzip": 25622,
-      "minified": 88561,
-      "ownGzip": 21641,
+      "gzip": 25625,
+      "minified": 88577,
+      "ownGzip": 21644,
       "modules": 40,
-      "rootGzip": 22941,
+      "rootGzip": 22945,
       "includes": [
         "tp-input",
         "tp-separator"
@@ -611,11 +631,11 @@
       "className": "TpForm",
       "kind": "compound-reexport",
       "uses": [],
-      "gzip": 24858,
-      "minified": 87412,
-      "ownGzip": 20931,
+      "gzip": 24859,
+      "minified": 87428,
+      "ownGzip": 20933,
       "modules": 34,
-      "rootGzip": 24858,
+      "rootGzip": 24859,
       "includes": [
         "tp-field",
         "tp-separator"
@@ -629,11 +649,11 @@
       "uses": [
         "tp-text-motion"
       ],
-      "gzip": 23920,
-      "minified": 73402,
-      "ownGzip": 19982,
+      "gzip": 24404,
+      "minified": 74737,
+      "ownGzip": 20465,
       "modules": 30,
-      "rootGzip": 14291,
+      "rootGzip": 14748,
       "includes": [
         "tp-text-motion"
       ]
@@ -644,11 +664,11 @@
       "className": "TpImage",
       "kind": "preset-composition",
       "uses": [],
-      "gzip": 23621,
-      "minified": 77504,
-      "ownGzip": 19562,
+      "gzip": 23986,
+      "minified": 78465,
+      "ownGzip": 19928,
       "modules": 39,
-      "rootGzip": 23621,
+      "rootGzip": 23986,
       "includes": [
         "tp-aspect-ratio",
         "tp-icon",
@@ -662,11 +682,11 @@
       "className": "TpTextMotion",
       "kind": "compound-reexport",
       "uses": [],
-      "gzip": 22995,
-      "minified": 70018,
-      "ownGzip": 19036,
+      "gzip": 23371,
+      "minified": 71071,
+      "ownGzip": 19392,
       "modules": 28,
-      "rootGzip": 22995,
+      "rootGzip": 23371,
       "includes": []
     },
     {

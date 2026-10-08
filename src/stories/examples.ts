@@ -173,6 +173,14 @@ const examples = {
       <option value="large">Large</option>
     </tp-select>
   `,
+  'tp-autocomplete': () => html`
+    <tp-autocomplete label="Fruit" placeholder="Search fruit">
+      <option>Apple</option>
+      <option>Banana</option>
+      <option>Raspberry</option>
+      <option>Strawberry</option>
+    </tp-autocomplete>
+  `,
   'tp-alert-dialog': () => html`
     <tp-alert-dialog
       label="Delete project?"

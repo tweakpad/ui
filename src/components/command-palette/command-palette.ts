@@ -9,7 +9,11 @@ import type { ChangeReason } from '../../foundation/types.js';
 import type { SelectRecord } from '../select/model.js';
 import type { SelectEntry } from '../select/types.js';
 
-import { commandRank, type CommandEntry, type CommandItem, type CommandFilter } from './model.js';
+import type { CommandEntry, CommandItem, CommandFilter } from './model.js';
+import { TextIndex } from '../../foundation/search/text-index.js';
+import { renderHighlighted } from '../../foundation/search/highlight.js';
+import type { SearchRange } from '../../foundation/search/types.js';
+import { resolveLocale } from '../../foundation/services.js';
 import { commandPalettePresentation } from '../../presentation/families/command-palette.js';
 import { dialogPresentation } from '../../presentation/families/dialog.js';
 import { TpCommandList } from './list.js';
@@ -126,6 +130,10 @@ export class TpCommandPalette extends TpDialog {
   #projected: readonly SelectEntry[] = [];
   #visible: unknown[] = [];
   #records = new Map<unknown, CommandItem>();
+  #ranges = new Map<unknown, readonly SearchRange[]>();
+  #index:
+    | { items: readonly CommandItem[]; locale: string | undefined; index: TextIndex<CommandItem> }
+    | undefined;
   #wrappers = new Map<unknown, SelectEntry>();
   #observer: MutationObserver | undefined;
   #noExecutableMatch = false;
@@ -200,6 +208,29 @@ export class TpCommandPalette extends TpDialog {
     this.#query.initialize();
     this.#value.initialize();
     this.#records.clear();
+    const source =
+      this.items ??
+      [...this.querySelectorAll<HTMLOptionElement>('option')].map((option) => ({
+        value: option.value,
+        label: option.label,
+        disabled: option.disabled,
+      }));
+    const collect = (entries: readonly CommandEntry[]): void => {
+      for (const entry of entries) {
+        if (entry && typeof entry === 'object' && 'type' in entry && entry.type === 'group')
+          collect(entry.items);
+        else if (!(entry && typeof entry === 'object' && 'type' in entry)) {
+          const item: CommandItem =
+            entry && typeof entry === 'object' ? (entry as CommandItem) : { value: entry };
+          if (!this.#records.has(item.value)) this.#records.set(item.value, item);
+        }
+      }
+    };
+    collect(source);
+    const ranked = this.#rank();
+    this.#visible = ranked.map((item) => item.value);
+    this.#noExecutableMatch =
+      !!ranked.length && ranked.every((item) => this.#records.get(item.value)?.disabled);
     const retained = new Set<unknown>();
     const project = (entries: readonly CommandEntry[]): SelectEntry[] =>
       entries.map((entry) => {
@@ -209,7 +240,6 @@ export class TpCommandPalette extends TpDialog {
           return entry;
         const item: CommandItem =
           entry && typeof entry === 'object' ? (entry as CommandItem) : { value: entry };
-        if (!this.#records.has(item.value)) this.#records.set(item.value, item);
         retained.add(entry);
         let wrapper = this.#wrappers.get(entry) as CommandItem | undefined;
         if (!wrapper) this.#wrappers.set(entry, (wrapper = { value: item.value }));
@@ -217,34 +247,72 @@ export class TpCommandPalette extends TpDialog {
           if (!(key in item)) delete (wrapper as unknown as Record<string, unknown>)[key];
         Object.assign(wrapper, item, {
           text: item.text ?? (typeof item.label === 'string' ? item.label : String(item.value)),
-          label: html`${item.icon ? html`<tp-icon .icon=${item.icon} size="var(--tp-icon-size-sm)" aria-hidden="true"></tp-icon>` : ''}<span>${item.label ?? String(item.value)}</span>${item.shortcut ? html`<tp-key-hint-group separator="none" part="command-palette-shortcut-hint" aria-hidden="true">${shortcutKeys(item.shortcut).map((key) => html`<tp-key-hint>${key}</tp-key-hint>`)}</tp-key-hint-group>` : ''}`,
+          label: html`${item.icon ? html`<tp-icon .icon=${item.icon} size="var(--tp-icon-size-sm)" aria-hidden="true"></tp-icon>` : ''}<span>${this.#itemLabel(item)}</span>${item.shortcut ? html`<tp-key-hint-group separator="none" part="command-palette-shortcut-hint" aria-hidden="true">${shortcutKeys(item.shortcut).map((key) => html`<tp-key-hint>${key}</tp-key-hint>`)}</tp-key-hint-group>` : ''}`,
         });
         return wrapper;
       });
-    const source =
-      this.items ??
-      [...this.querySelectorAll<HTMLOptionElement>('option')].map((option) => ({
-        value: option.value,
-        label: option.label,
-        disabled: option.disabled,
-      }));
     this.#projected = project(source);
     for (const key of this.#wrappers.keys()) if (!retained.has(key)) this.#wrappers.delete(key);
-    const ranked = [...this.#records.values()]
-      .flatMap((item, index) => {
-        const rank =
-          !this.shouldFilter || this.filter === null
-            ? 0
-            : (this.filter ?? commandRank)(item, this.query);
-        return rank === false || !Number.isFinite(rank) ? [] : [{ value: item.value, rank, index }];
-      })
-      .sort((a, b) => a.rank - b.rank || a.index - b.index);
-    this.#visible = ranked.map((item) => item.value);
-    this.#noExecutableMatch =
-      !!ranked.length && ranked.every((item) => this.#records.get(item.value)?.disabled);
     const visibleEnabled = ranked.filter((item) => !this.#records.get(item.value)?.disabled);
     if (!visibleEnabled.some((item) => Object.is(item.value, this.value)))
       this.#value.set(visibleEnabled[0]?.value ?? null, 'programmatic');
+  }
+  /**
+   * Commands in display order: all of them without filtering, ordered by a supplied filter's
+   * rank, or ranked by Text search over each command's text, value and keywords.
+   */
+  #rank(): Array<{ value: unknown }> {
+    const items = [...this.#records.values()];
+    this.#ranges.clear();
+    if (!this.shouldFilter || this.filter === null) return items;
+    if (this.filter)
+      return items
+        .flatMap((item, index) => {
+          const rank = this.filter!(item, this.query);
+          return rank === false || !Number.isFinite(rank)
+            ? []
+            : [{ value: item.value, rank, index }];
+        })
+        .sort((a, b) => a.rank - b.rank || a.index - b.index);
+    const hits = this.#search(items).search(this.query);
+    for (const hit of hits) {
+      const ranges = hit.matches?.find((match) => match.field === 'text')?.ranges;
+      if (ranges) this.#ranges.set(hit.item.value, ranges);
+    }
+    return hits.map((hit) => hit.item);
+  }
+  #search(items: readonly CommandItem[]): TextIndex<CommandItem> {
+    const locale = resolveLocale(this);
+    const cached = this.#index;
+    if (
+      cached &&
+      cached.locale === locale &&
+      cached.items.length === items.length &&
+      items.every((item, index) => item === cached.items[index])
+    )
+      return cached.index;
+    const index = new TextIndex<CommandItem>({
+      fields: ['text', 'value', 'keywords'],
+      boost: { text: 2 },
+      locale,
+      extract: (item, field) =>
+        field === 'text'
+          ? (item.text ?? (typeof item.label === 'string' ? item.label : String(item.value)))
+          : field === 'value'
+            ? String(item.value)
+            : item.keywords,
+    });
+    index.addAll(items);
+    this.#index = { items, locale, index };
+    return index;
+  }
+  /** The command's label, with matched ranges marked when it is plain text. */
+  #itemLabel(item: CommandItem): unknown {
+    const label = item.label ?? String(item.value);
+    const ranges = this.#ranges.get(item.value);
+    return typeof label === 'string' && ranges?.length && (item.text ?? label) === label
+      ? renderHighlighted(label, ranges, 'command-palette-match')
+      : label;
   }
   #execute(record: SelectRecord, sourceEvent: Event): void {
     const item = this.#records.get(record.value);

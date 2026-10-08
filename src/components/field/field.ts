@@ -34,7 +34,7 @@ const markers = [
   'pending',
 ] as const;
 const controls =
-  'tp-input,tp-text-area,tp-native-select,tp-number-field,tp-otp-field,tp-slider,tp-checkbox,tp-radio-group,tp-switch,tp-select,tp-toggle-group,tp-calendar,input,textarea,select,[data-field-control]';
+  'tp-input,tp-text-area,tp-native-select,tp-number-field,tp-otp-field,tp-slider,tp-checkbox,tp-radio-group,tp-switch,tp-select,tp-autocomplete,tp-toggle-group,tp-calendar,input,textarea,select,[data-field-control]';
 
 export const fieldSubmission = Symbol('Field submission');
 export class TpField extends TpElement {

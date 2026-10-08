@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Autocomplete verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 16px;
+        display: grid;
+        gap: 24px;
+      }
+      h1 {
+        font-size: 1.25rem;
+        margin: 24px 0 0;
+      }
+      section {
+        display: grid;
+        gap: 8px;
+      }
+      h2 {
+        font-size: 0.875rem;
+        margin: 0;
+        color: var(--tp-muted-foreground);
+        font-weight: 500;
+      }
+      tp-autocomplete,
+      tp-select {
+        inline-size: 20rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Autocomplete verification</h1>
+      <section>
+        <h2>Fuzzy (default), light-DOM options</h2>
+        <tp-autocomplete id="fuzzy" label="Fruit" placeholder="Search fruit">
+          <option>Apple</option>
+          <option>Apricot</option>
+          <option>Banana</option>
+          <option>Blackberry</option>
+          <option>Blueberry</option>
+          <option>Cherry</option>
+          <option>Raspberry</option>
+          <option>Strawberry</option>
+          <option>Pineapple</option>
+          <option>Passion fruit</option>
+        </tp-autocomplete>
+      </section>
+      <section>
+        <h2>Exact matching (contains)</h2>
+        <tp-autocomplete id="exact" matching="contains" label="Fruit" placeholder="Search fruit">
+          <option>Apple</option>
+          <option>Raspberry</option>
+          <option>Strawberry</option>
+        </tp-autocomplete>
+      </section>
+      <section>
+        <h2>Server source (simulated, 300ms search delay)</h2>
+        <tp-autocomplete
+          id="server"
+          search-delay="300"
+          label="City"
+          placeholder="Search cities"
+          show-clear
+        ></tp-autocomplete>
+      </section>
+      <section>
+        <h2>Inline completion (both) in a form</h2>
+        <form id="form">
+          <tp-autocomplete
+            id="form-field"
+            name="fruit"
+            completion-mode="both"
+            auto-highlight
+            label="Fruit"
+            placeholder="Search fruit"
+          >
+            <option>Apple</option>
+            <option>Apricot</option>
+            <option>Banana</option>
+          </tp-autocomplete>
+        </form>
+      </section>
+      <section>
+        <h2>Searchable Select with fuzzy matching (regression)</h2>
+        <tp-select
+          id="select"
+          searchable
+          matching="fuzzy"
+          highlight-matches
+          label="Fruit"
+          placeholder="Choose fruit"
+        >
+          <option value="apple">Apple</option>
+          <option value="raspberry">Raspberry</option>
+          <option value="strawberry">Strawberry</option>
+        </tp-select>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

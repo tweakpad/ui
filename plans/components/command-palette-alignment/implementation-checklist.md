@@ -74,3 +74,7 @@ Bounded fix requested by the screenshot: align the existing query InputGroup and
 Avatar investigation: fresh ucl21-avatar from current Library AST; base/ui/avatar.tsx and Nova74-94. Root border overlay follows upstream after:border-border; blend mode intentionally omitted to retain theme border color requested by user.
 
 Verification scope: these two presentation fixes only. Broader previously recorded Command Palette platform gaps remain in library-completion/command-palette/implementation-checklist.md; no full conformance claim. Chrome MCP page90 screenshots inspected inline; no screenshot export claimed. No broad browser suite or repeat build needed for these CSS-only changes.
+
+## Shared change 2026-10-08: Text search
+
+The shared Text search engine (`src/foundation/search`, spec v0.11.0 `5cbe3bb8`, v0.11.1 `a3bad05b`) now serves this owner: Select gains `matching` (default `contains`, unchanged results), `source`, `searchDelay`, `highlightMatches`, `matchFields`, `messages`, `searchStatus`, the `select-status` and `select-match` parts and a selection-free mode used by `tp-autocomplete`; Command palette ranks through `TextIndex` (fuzzy over text, value and keywords) instead of `commandRank`. Regression evidence: select-query fixture 73/73 assertions passed in Chrome DevTools MCP; command palette story ("opne" finds Open document) inspected; 1,360 unit tests pass. Details: `plans/components/autocomplete/implementation-checklist.md`.

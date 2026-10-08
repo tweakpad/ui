@@ -1,5 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
-import { selectAppearance } from './select.js';
+import { searchMatchRules, selectAppearance } from './select.js';
 import { commandItemAppearance } from './command-surface.js';
 export const commandPaletteAppearance: PresentationDictionary = {
   'command-palette': [
@@ -16,6 +16,7 @@ export const commandPaletteAppearance: PresentationDictionary = {
   'command-palette-input': selectAppearance['select-input']!,
   'command-palette-list': selectAppearance['select-list']!,
   'command-palette-group': selectAppearance['select-group']!,
+  'command-palette-match': searchMatchRules,
   'command-palette-item': [
     ...commandItemAppearance,
     // Nova cn-command-item: py-1.5 px-2 gap-2.

@@ -64,6 +64,18 @@ const definition: ComponentDefinition = {
       cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
     },
     {
+      name: 'select-status',
+      publicName: 'Status',
+      presentationKeys: ['select-status'],
+      cardinality: 'zero or one in List; present while a source loads or after it fails',
+    },
+    {
+      name: 'select-match',
+      publicName: 'Match',
+      presentationKeys: ['select-match'],
+      cardinality: 'zero or more descendants of Option; present while matches are highlighted',
+    },
+    {
       name: 'select-separator',
       publicName: 'Separator',
       presentationKeys: ['select-separator'],
@@ -163,6 +175,8 @@ export const selectPresentation = definePresentation({
       '[part~="select-group"]': 'select-group',
       '[part~="select-label"]': 'select-label',
       '[part~="select-option"]': 'select-option',
+      '[part~="select-match"]': 'select-match',
+      '[part~="select-status"]': 'select-status',
       '[part~="select-separator"]': 'select-separator',
       '[part~="select-scroll-up-button"]': 'select-scroll-up-button',
       '[part~="select-scroll-down-button"]': 'select-scroll-down-button',

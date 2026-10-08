@@ -31,10 +31,14 @@ export function hasUnspacedScript(text: string): boolean {
 /** Characters after which a line may break inside a word (hyphens and dashes). */
 const BREAK_AFTER = /[-‐‒–—―­/]/u;
 
-type Segmenter = { segment(text: string): Iterable<{ segment: string; isWordLike?: boolean }> };
+export type Segmenter = { segment(text: string): Iterable<{ segment: string; isWordLike?: boolean }> };
 const segmenters = new Map<string, Segmenter | null>();
 
-function segmenter(granularity: 'word' | 'grapheme', locale: string | undefined): Segmenter | null {
+/** The host's cached segmenter for `granularity` and `locale`, or null where Intl.Segmenter is missing. */
+export function segmenter(
+  granularity: 'word' | 'grapheme',
+  locale: string | undefined,
+): Segmenter | null {
   const key = `${granularity}|${locale ?? ''}`;
   if (segmenters.has(key)) return segmenters.get(key)!;
   const Constructor = (Intl as unknown as { Segmenter?: new (...args: unknown[]) => Segmenter })

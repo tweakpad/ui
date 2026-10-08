@@ -79,6 +79,7 @@ import type { TpCodeBlock } from './components/code-block/index.js';
 import type { TpMarkdown } from './components/markdown/index.js';
 import type { TpImage, TpImageGroup } from './components/image/index.js';
 import type { TpScrollTrigger } from './components/scroll-trigger/index.js';
+import type { TpAutocomplete } from './components/autocomplete/index.js';
 import type { TpTextMotion } from './components/text-motion/index.js';
 import type {
   TpTableOfContents,
@@ -218,6 +219,7 @@ declare global {
     'tp-image': TpImage;
     'tp-image-group': TpImageGroup;
     'tp-scroll-trigger': TpScrollTrigger;
+    'tp-autocomplete': TpAutocomplete;
     'tp-text-motion': TpTextMotion;
     'tp-table-of-contents': TpTableOfContents;
     'tp-table-of-contents-item': TpTableOfContentsItem;

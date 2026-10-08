@@ -8,6 +8,32 @@ import {
 import { inputRules } from './shared/text-control.js';
 import { controlStepDeclarations } from './shared/variant.js';
 
+/**
+ * A matched range of option text (Text search highlighting). shadcn has no counterpart; matched
+ * text keeps the option's color and gains weight, with the native mark background removed.
+ */
+export const searchMatchRules: PresentationDictionary[string] = [
+  {
+    declarations: {
+      background: 'transparent',
+      color: 'inherit',
+      'font-weight': 'var(--tp-font-semibold)',
+    },
+  },
+];
+
+/** cn-combobox-empty: muted, small, centered; also the loading and error status row. */
+const emptyStateRules: PresentationDictionary[string] = [
+  {
+    declarations: {
+      padding: 'var(--tp-space-2)',
+      color: 'var(--tp-muted-foreground)',
+      'font-size': 'var(--tp-text-sm)',
+      'text-align': 'center',
+    },
+  },
+];
+
 /** shadcn bases/base Select, style-nova.css cn-select-*; shared field/surface base remains. */
 export const selectAppearance: PresentationDictionary = {
   select: [],
@@ -42,17 +68,10 @@ export const selectAppearance: PresentationDictionary = {
       },
     },
   ],
-  'select-empty-state': [
-    {
-      declarations: {
-        padding: 'var(--tp-space-2)',
-        color: 'var(--tp-muted-foreground)',
-        'font-size': 'var(--tp-text-sm)',
-        'text-align': 'center',
-      },
-    },
-  ],
+  'select-empty-state': emptyStateRules,
+  'select-status': emptyStateRules,
   'select-collection': [],
+  'select-match': searchMatchRules,
   'select-row': [],
   'select-trigger': [
     ...inputRules,
