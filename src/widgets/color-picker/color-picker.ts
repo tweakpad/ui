@@ -968,6 +968,10 @@ export class TpColorPicker extends TpFormElement<string> {
 
   // ---- fields --------------------------------------------------------------------------------
 
+  /**
+   * The composed Selects are controlled; an accepted pick is written back synchronously
+   * (inside the Select's own proposal) so the Select commits and closes its listbox at once.
+   */
   #formatSelectChange = (event: TpValueChangeEvent<unknown>): void => {
     if (event.target !== event.currentTarget) return;
     event.stopPropagation();
@@ -975,6 +979,7 @@ export class TpColorPicker extends TpFormElement<string> {
     if (!isColorFormat(next)) return;
     const accepted = this.#formatState.set(next, 'item-press', event.detail.sourceEvent);
     if (!accepted && this.format !== next) event.preventDefault();
+    else (event.currentTarget as TpSelect).value = this.format;
   };
 
   #hexInput = (event: TpValueChangeEvent<string>): void => {
@@ -1158,6 +1163,7 @@ export class TpColorPicker extends TpFormElement<string> {
     if (!isHarmony(next)) return;
     const accepted = this.#harmonyState.set(next, 'item-press', event.detail.sourceEvent);
     if (!accepted && this.harmony !== next) event.preventDefault();
+    else (event.currentTarget as TpSelect).value = this.harmony;
   };
 
   #templateChange = (event: TpValueChangeEvent<unknown>): void => {
@@ -1166,6 +1172,7 @@ export class TpColorPicker extends TpFormElement<string> {
     const index = Number(event.detail.value);
     if (!Number.isInteger(index) || index < 0 || index >= this.schemes.length) return;
     this.#templateIndex = index;
+    (event.currentTarget as TpSelect).value = String(index);
     this.requestUpdate();
   };
 

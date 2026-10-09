@@ -91,7 +91,9 @@ saturation pair, seeded from the previous rule so the layout does not jump. The 
 the handles in wheel order. `harmony` / `defaultHarmony` form a lane with `tp-harmony-change`
 (`item-press` from the Harmony Select, `programmatic` otherwise), and the read-only
 `harmonyColors` lists the base color first, then the derived colors, serialized in the active
-format.
+format. In markup use `default-harmony="triad"` (as with `default-format` and `default-view`): a
+`harmony` attribute or property makes the lane controlled, so the Harmony Select only proposes
+and the rule changes once the owner writes the proposal back.
 
 The schemes view shows strips of related colors. Without consumer data the widget generates
 tints, shades, tones, analogous, complementary, triad and tetrad rows in OKLab/OKLCH from the

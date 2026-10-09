@@ -88,7 +88,7 @@ export const colorPickerStyles = css`
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    row-gap: var(--tp-space-2);
+    gap: var(--tp-space-2);
     min-inline-size: 0;
   }
 
