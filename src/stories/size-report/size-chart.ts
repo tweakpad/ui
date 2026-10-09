@@ -15,7 +15,8 @@ export const sizeChartSeries = {
   component: { label: 'Component', color: 'var(--tp-chart-1)', appearance: { striped: false } },
 };
 
-const kb = (bytes: number) => `${(bytes / 1024).toFixed(1)} kB`;
+/** The build log's format: kB of 1000 bytes, truncated to two decimals. */
+export const kb = (bytes: number) => `${(Math.floor(bytes / 10) / 100).toFixed(2)} kB`;
 
 /**
  * Horizontal stacked bars (story-owned SVG adapter; geometry stays outside the library control).

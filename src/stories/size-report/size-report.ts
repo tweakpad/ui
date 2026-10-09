@@ -1,13 +1,12 @@
 import { LitElement, html, nothing } from 'lit';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import report from '../size-report.json';
-import { sizeChartRenderer, sizeChartSeries, type SizeChartRow } from './size-chart.js';
+import { kb, sizeChartRenderer, sizeChartSeries, type SizeChartRow } from './size-chart.js';
 import './size-report.css';
 
 type Component = (typeof report.components)[number];
 type SortKey = 'documented' | 'root' | 'own' | 'name';
 
-const kb = (bytes: number) => `${(bytes / 1024).toFixed(1)} kB`;
 const share = (bytes: number) => `${((bytes / report.full.gzip) * 100).toFixed(1)}%`;
 const sorters: Record<SortKey, (a: Component, b: Component) => number> = {
   documented: (a, b) => b.gzip - a.gzip,
@@ -63,7 +62,8 @@ export class SizeReportView extends LitElement {
           <h1>Bundle size</h1>
           <p>
             What an application ships for each component of <code>@tweakpad/ui</code>
-            ${report.version}, minified and gzipped.
+            ${report.version}: the published files it imports, sized as the build log lists them,
+            and gzipped.
           </p>
         </div>
         <div class="size-report-status">
@@ -174,6 +174,7 @@ export class SizeReportView extends LitElement {
             <tr>
               <th scope="col">Component</th>
               <th scope="col">As documented</th>
+              <th scope="col">Shipped</th>
               <th scope="col">Root only</th>
               <th scope="col">Beyond shared</th>
               <th scope="col">Of library</th>
@@ -200,6 +201,7 @@ export class SizeReportView extends LitElement {
         }
       </th>
       <td class="size-report-number"><strong>${kb(component.gzip)}</strong></td>
+      <td class="size-report-number">${kb(component.bytes)}</td>
       <td class="size-report-number">${kb(component.rootGzip)}</td>
       <td class="size-report-number">${kb(component.ownGzip)}</td>
       <td class="size-report-number">${share(component.gzip)}</td>
@@ -223,8 +225,13 @@ export class SizeReportView extends LitElement {
       <p>${report.method}</p>
       <ul>
         <li>
-          <strong>As documented</strong>: the component with the parts its canonical example
-          composes, for example the media player with its video layout.
+          <strong>As documented</strong>: the gzip size of the component with the parts its
+          canonical example composes, for example the media player with its video layout.
+        </li>
+        <li>
+          <strong>Shipped</strong>: the same files before compression, as <code>npm run build</code>
+          lists them (kB of 1000 bytes). The build log's gzip column uses a different compressor and
+          lands within about one percent of the figures here.
         </li>
         <li><strong>Root only</strong>: the element alone, without authored parts.</li>
         <li>
