@@ -783,6 +783,11 @@ export abstract class TpAnchoredSurface extends TpElement {
     if (this.surfaceModal && this.popup && this.dismissController.isTopmost)
       restoreLostFocus(event, this.popup, this.surfaceRestoreFocus);
     if (this.isTooltip || this.surfaceModal) return;
+    // Focus moving to a known target inside the branch never dismisses. Between focusout and
+    // focusin the document's active element is transiently the body, so the deferred check
+    // alone closed the surface on every pointer move between two fields inside the popup.
+    const next = event.relatedTarget as Node | null;
+    if (next && this.dismissController.contains(next)) return;
     queueMicrotask(() => {
       if (this.open && !this.dismissController.contains(deepActiveElement(this.ownerDocument)))
         this.setOpen(false, 'focus-outside', event);

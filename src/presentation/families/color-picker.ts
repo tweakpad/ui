@@ -48,6 +48,7 @@ const definition: ComponentDefinition = {
     shaped('color-picker-swatch'),
     sized('color-picker-schemes'),
     sized('color-picker-scheme'),
+    sized('color-picker-scheme-item'),
     sized('color-picker-wheel'),
     sized('color-picker-wheel-handle'),
     sized('color-picker-wheel-line'),

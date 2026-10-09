@@ -864,6 +864,12 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       return;
     }
     if (drag.pointerId !== event.pointerId || componentHandlingPrevented(event)) return;
+    if (event.buttons === 0) {
+      // Base UI SliderControl: a move without a pressed button means another handler
+      // consumed the release, so the drag settles instead of running on.
+      this.#pointerUp(event);
+      return;
+    }
     const thumb = this.#thumbs.find((member) => member.inputId === drag.identity);
     if (!thumb || this.thumbState(thumb).disabled || this.thumbState(thumb).readOnly) {
       this.#cancelDrag();
@@ -900,6 +906,10 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   };
   #pointerCancel = (event: PointerEvent): void => {
     if (event.pointerId === this.#drag?.pointerId) this.#cancelDrag();
+  };
+  /** Capture lost before the release (the browser or another handler took the pointer): settle like a release. */
+  #lostCapture = (event: PointerEvent): void => {
+    if (event.pointerId === this.#drag?.pointerId) this.#pointerUp(event);
   };
   #cancelDrag(cancelPending = true): void {
     const drag = this.#drag;
@@ -1273,7 +1283,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
         '@pointerleave': this.#pointerLeave,
         '@pointerup': this.#pointerUp,
         '@pointercancel': this.#pointerCancel,
-        '@lostpointercapture': this.#pointerCancel,
+        '@lostpointercapture': this.#lostCapture,
       },
       content: html`${
           label || output

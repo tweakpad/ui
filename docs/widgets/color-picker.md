@@ -78,7 +78,8 @@ the preview. Author `slot="trigger"` content to replace the default trigger. `op
 state owner; its `tp-open-change` and `tp-open-change-complete` events are re-dispatched from
 the widget with the Popover's reasons. Opening moves focus to the first dimension of the active
 view and closing returns it to the trigger. The popup renders in place through the native top
-layer so it keeps the widget's structure and presentation.
+layer so it keeps the widget's structure and presentation, and the plane gives way to the
+Popover's available height so the panel never scrolls.
 
 The `footer` slot renders below the panel (for example an action row), hidden while empty.
 
@@ -129,8 +130,9 @@ Selects, Tabs, Toggle Groups and Popover inside never leak their lane events.
 
 Commit policy: surface and Slider drags publish `track-press` on press and `drag` proposals while
 moving, then commit once on release. Escape during a drag restores the pre-press value
-(`escape-key`); pointer cancellation and lost capture restore it as well (`pointer`); neither
-commits. Keyboard steps, wheel scrubbing (opt-in through `allowWheelScrub`), swatches, the
+(`escape-key`) and pointer cancellation restores it as well (`pointer`); neither commits. A capture
+lost before the release, or a move that reports no pressed button, ends the drag where the pointer
+last was and commits it (`drag`), so the last release always settles. Keyboard steps, wheel scrubbing (opt-in through `allowWheelScrub`), swatches, the
 eyedropper, hex Enter and blur, and `setValue()` commit immediately (a paste the Input reports
 as `input-paste` commits at once; the current Input reports it as typing, so it commits on Enter
 or blur). Numeric fields commit when the Number field commits (Enter or blur).
@@ -205,12 +207,12 @@ Public parts: `color-picker`, `color-picker-label`, `color-picker-tabs`, `color-
 `color-picker-channel`, `color-picker-preview`, `color-picker-fields`, `color-picker-field`,
 `color-picker-format`, `color-picker-swatches`, `color-picker-swatch-grid`,
 `color-picker-swatch-item`, `color-picker-swatch`, `color-picker-schemes`,
-`color-picker-scheme`, `color-picker-wheel`, `color-picker-wheel-handle`,
+`color-picker-scheme`, `color-picker-scheme-item`, `color-picker-wheel`, `color-picker-wheel-handle`,
 `color-picker-wheel-line`, `color-picker-ring`, `color-picker-ring-thumb`,
 `color-picker-triangle`, `color-picker-triangle-thumb`, `color-picker-trigger`,
 `color-picker-popup` and `color-picker-footer`. Parts that live inside a nested component
 (`-slider-track`, `-alpha-track`, `-slider-range`, `-slider-thumb`, `-swatch-grid`,
-`-swatch-item`, `-scheme`) are registered on that component's elements, so dictionary keys reach
+`-swatch-item`, `-scheme`, `-scheme-item`) are registered on that component's elements, so dictionary keys reach
 them; the surfaces forward their parts through `exportparts`.
 
 | Marker / variable                                              | Element                    | Meaning                                                     |

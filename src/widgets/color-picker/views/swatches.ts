@@ -55,7 +55,7 @@ export function renderSwatchRow(row: SwatchRow, options: SwatchRowOptions) {
   });
   return html`<tp-toggle-group
     class=${options.kind}
-    variant="outline"
+    variant=${options.kind === 'scheme' ? 'ghost' : 'outline'}
     .spacing=${options.kind === 'scheme' ? 0 : 1}
     label=${row.label}
     .value=${options.selected ? [options.selected] : []}

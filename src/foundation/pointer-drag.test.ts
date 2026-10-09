@@ -136,7 +136,7 @@ describe('PointerDrag', () => {
     expect(calls).toEqual(['begin', 'end:press']);
   });
 
-  it('cancels on Escape, pointercancel, lost capture and disposal', () => {
+  it('cancels on Escape, pointercancel and disposal', () => {
     const { owner, element, drag, calls } = setup();
     element.dispatchEvent(pointer('pointerdown'));
     const escape = new Event('keydown', { cancelable: true });
@@ -152,14 +152,36 @@ describe('PointerDrag', () => {
     expect(calls.at(-1)).toBe('cancel:pointer');
 
     element.dispatchEvent(pointer('pointerdown'));
-    element.dispatchEvent(pointer('lostpointercapture'));
-    expect(calls.at(-1)).toBe('cancel:pointer');
-
-    element.dispatchEvent(pointer('pointerdown'));
     drag.disconnect();
     expect(calls.at(-1)).toBe('cancel:disposed');
     element.dispatchEvent(pointer('pointerdown'));
-    expect(calls.filter((call) => call === 'begin')).toHaveLength(4);
+    expect(calls.filter((call) => call === 'begin')).toHaveLength(3);
+  });
+
+  it('settles at the last known position when capture is lost before the release', () => {
+    const { owner, element, drag, calls, points } = setup();
+    element.dispatchEvent(pointer('pointerdown'));
+    element.dispatchEvent(pointer('pointermove', { clientX: 90, clientY: 60 }));
+    expect(owner.frames).toHaveLength(1);
+    element.dispatchEvent(pointer('lostpointercapture', { clientX: 0, clientY: 0 }));
+    expect(calls).toEqual(['begin', 'end:drag']);
+    expect(points.at(-1)).toMatchObject({ x: 80, y: 40 });
+    expect(drag.active).toBe(false);
+    expect(element.released).toEqual([1]);
+    expect(owner.frames).toHaveLength(0);
+    element.dispatchEvent(pointer('pointerup'));
+    expect(calls).toHaveLength(2);
+  });
+
+  it('settles where a buttonless move reports a release consumed elsewhere', () => {
+    const { element, drag, calls, points } = setup();
+    element.dispatchEvent(pointer('pointerdown'));
+    element.dispatchEvent(pointer('pointermove', { clientX: 50, clientY: 20, buttons: 0 }));
+    expect(calls).toEqual(['begin', 'end:drag']);
+    expect(points.at(-1)).toMatchObject({ x: 40, y: 0 });
+    expect(drag.active).toBe(false);
+    element.dispatchEvent(pointer('pointerup'));
+    expect(calls).toHaveLength(2);
   });
 
   it('drops a pending frame when the gesture ends or is cancelled', () => {

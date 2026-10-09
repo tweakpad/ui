@@ -289,6 +289,8 @@ export class TpColorPicker extends TpFormElement<string> {
   #dragSnapshot: DragSnapshot | undefined;
   #dragging = false;
   #suppressedSlider: TpSlider | null = null;
+  /** Reason of the composed Slider's latest drag proposal, for a release the Slider did not commit. */
+  #sliderReason: 'track-press' | 'drag' | undefined;
   #hexText = '';
   #recent: readonly string[] = [];
   #customHandles: readonly Hsv[] = [];
@@ -725,6 +727,7 @@ export class TpColorPicker extends TpFormElement<string> {
     const snapshot = this.#dragSnapshot;
     this.#dragSnapshot = undefined;
     this.#dragging = false;
+    this.#sliderReason = undefined;
     if (snapshot)
       this.#emitCommit(this.value, snapshot.value, reason, sourceEvent, this.#metadata(metadata));
     this.requestUpdate();
@@ -734,6 +737,7 @@ export class TpColorPicker extends TpFormElement<string> {
     const snapshot = this.#dragSnapshot;
     this.#dragSnapshot = undefined;
     this.#dragging = false;
+    this.#sliderReason = undefined;
     if (!snapshot) return;
     this.#pending = null;
     this.#immediate = undefined;
@@ -850,7 +854,10 @@ export class TpColorPicker extends TpFormElement<string> {
       event.preventDefault();
       return;
     }
-    if (reason === 'track-press' || reason === 'drag') this.#beginDrag();
+    if (reason === 'track-press' || reason === 'drag') {
+      this.#beginDrag();
+      this.#sliderReason = reason;
+    }
     const immediate = reason !== 'track-press' && reason !== 'drag';
     const accepted = this.#proposeColor(
       this.#withSliderValue(definition, value, hsvKey),
@@ -910,19 +917,28 @@ export class TpColorPicker extends TpFormElement<string> {
       slider.addEventListener(type, release);
   };
 
+  /**
+   * Pointer cancellation restores the pre-drag value (Widgets 6.1 Keyboard and pointer). The
+   * Slider's own listener runs first and has already dropped its drag, so the widget's snapshot,
+   * not `slider.dragging`, tells whether a gesture was in progress.
+   */
   #sliderPointerCancel = (event: PointerEvent): void => {
     const slider = event.currentTarget as TpSlider;
-    if (slider.dragging && this.#dragSnapshot) this.#restoreDrag('pointer', event);
+    if (this.#dragSnapshot && this.#suppressedSlider !== slider)
+      this.#restoreDrag('pointer', event);
   };
 
   /**
-   * A release the Slider did not commit (every proposal of the gesture was rejected) still ends
-   * the widget's drag; `#endDrag` emits nothing when the value never changed.
+   * A release the Slider did not commit (every proposal of the gesture was rejected, or the
+   * owner's write-back is still pending) still ends the widget's drag with the gesture's own
+   * reason; `#endDrag` emits nothing when the value never changed.
    */
   #sliderRelease = (event: PointerEvent): void => {
     const slider = event.currentTarget as TpSlider;
     if (!this.#dragSnapshot || this.#suppressedSlider === slider) return;
-    this.#endDrag(slider.dragging ? 'drag' : 'track-press', event, { surface: 'slider' });
+    this.#endDrag(this.#sliderReason ?? (slider.dragging ? 'drag' : 'track-press'), event, {
+      surface: 'slider',
+    });
   };
 
   #sliderWheel(definition: ChannelDefinition, hsvKey: HsvKey | undefined, event: WheelEvent): void {
@@ -1298,11 +1314,14 @@ export class TpColorPicker extends TpFormElement<string> {
         group.shadowRoot?.querySelector<HTMLElement>('[part~="toggle-group"]') ?? null,
         group.classList.contains('scheme') ? 'color-picker-scheme' : 'color-picker-swatch-grid',
       );
+      const itemName = group.classList.contains('scheme')
+        ? 'color-picker-scheme-item'
+        : 'color-picker-swatch-item';
       for (const toggle of group.querySelectorAll<TpToggle>('tp-toggle')) {
         await toggle.updateComplete;
         this.#registerOnce(
           toggle.shadowRoot?.querySelector<HTMLElement>('[part~="toggle"]') ?? null,
-          'color-picker-swatch-item',
+          itemName,
         );
       }
     }

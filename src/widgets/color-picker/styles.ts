@@ -102,6 +102,12 @@ export const colorPickerStyles = css`
     min-inline-size: calc(var(--tp-spacing) * 14);
   }
 
+  /* Six hex digits plus the prefix never truncate; the alpha field wraps first. */
+  .field[data-field='hex'] {
+    flex-basis: calc(var(--tp-spacing) * 24);
+    min-inline-size: calc(var(--tp-spacing) * 22);
+  }
+
   .field tp-input-group,
   .field tp-input {
     inline-size: 100%;
@@ -159,12 +165,10 @@ export const colorPickerStyles = css`
     inline-size: 100%;
   }
 
-  /* Strip members share the row; the registered item rule reads the inline-size override. */
+  /* Strip members share the row. */
   tp-toggle-group.scheme tp-toggle {
     flex: 1 1 0;
     min-inline-size: 0;
-
-    --_tp-color-picker-swatch-inline: 100%;
   }
 
   /* The fill is slotted into the Toggle; it covers the Toggle's own box (flat-tree containing block). */

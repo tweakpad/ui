@@ -60,13 +60,14 @@ export const colorPickerAppearance: PresentationDictionary = {
     {
       declarations: {
         '--_tp-color-picker-space': 'var(--tp-space-3)',
-        '--_tp-color-picker-area': 'calc(var(--tp-spacing) * 40)',
+        '--_tp-color-picker-area-base': 'calc(var(--tp-spacing) * 40)',
+        '--_tp-color-picker-area': 'var(--_tp-color-picker-area-base)',
         '--_tp-color-picker-track': 'var(--tp-space-3)',
         '--_tp-color-picker-thumb': 'var(--tp-space-4)',
         '--_tp-color-picker-swatch': 'var(--tp-control-height-sm)',
         '--_tp-color-picker-checker': 'var(--tp-space-2)',
         '--_tp-color-picker-ring': 'var(--tp-space-5)',
-        '--_tp-color-picker-popup': 'calc(var(--tp-spacing) * 70)',
+        '--_tp-color-picker-popup': 'calc(var(--tp-spacing) * 88)',
         color: 'var(--tp-foreground)',
         'font-size': 'var(--tp-text-sm)',
       },
@@ -77,12 +78,12 @@ export const colorPickerAppearance: PresentationDictionary = {
     {
       declarations: {
         '--_tp-color-picker-space': 'var(--tp-space-2)',
-        '--_tp-color-picker-area': 'calc(var(--tp-spacing) * 32)',
+        '--_tp-color-picker-area-base': 'calc(var(--tp-spacing) * 32)',
         '--_tp-color-picker-track': 'var(--tp-space-2-5)',
         '--_tp-color-picker-thumb': 'var(--tp-space-3)',
         '--_tp-color-picker-swatch': 'var(--tp-control-height-xs)',
         '--_tp-color-picker-ring': 'var(--tp-space-4)',
-        '--_tp-color-picker-popup': 'calc(var(--tp-spacing) * 60)',
+        '--_tp-color-picker-popup': 'calc(var(--tp-spacing) * 78)',
       },
     },
   ],
@@ -90,12 +91,12 @@ export const colorPickerAppearance: PresentationDictionary = {
     {
       declarations: {
         '--_tp-color-picker-space': 'var(--tp-space-4)',
-        '--_tp-color-picker-area': 'calc(var(--tp-spacing) * 50)',
+        '--_tp-color-picker-area-base': 'calc(var(--tp-spacing) * 50)',
         '--_tp-color-picker-track': 'var(--tp-space-4)',
         '--_tp-color-picker-thumb': 'var(--tp-space-5)',
         '--_tp-color-picker-swatch': 'var(--tp-control-height-md)',
         '--_tp-color-picker-ring': 'var(--tp-space-6)',
-        '--_tp-color-picker-popup': 'calc(var(--tp-spacing) * 80)',
+        '--_tp-color-picker-popup': 'calc(var(--tp-spacing) * 98)',
       },
     },
   ],
@@ -164,13 +165,11 @@ export const colorPickerAppearance: PresentationDictionary = {
   'color-picker-preview-shape-round': [
     { declarations: { 'border-radius': 'var(--tp-radius-full)' } },
   ],
-  'color-picker-swatch': [{ declarations: { ...checker, 'border-radius': 'inherit' } }],
-  'color-picker-swatch-shape-round': [
-    { declarations: { 'border-radius': 'var(--tp-radius-full)' } },
-  ],
-  'color-picker-swatch-shape-square': [
-    { declarations: { 'border-radius': 'var(--tp-radius-md)' } },
-  ],
+  // The fill covers the Toggle, which clips it to its own radius (rounded square, round, or
+  // the joined strip geometry); the fill itself stays square.
+  'color-picker-swatch': [{ declarations: { ...checker } }],
+  'color-picker-swatch-shape-round': [],
+  'color-picker-swatch-shape-square': [],
   'color-picker-swatch-item': [
     {
       selector: '&[part~="toggle"]',
@@ -178,9 +177,10 @@ export const colorPickerAppearance: PresentationDictionary = {
         position: 'relative',
         overflow: 'hidden',
         padding: '0',
-        'inline-size': 'var(--_tp-color-picker-swatch-inline, var(--_tp-color-picker-swatch))',
+        'inline-size': 'var(--_tp-color-picker-swatch)',
         'block-size': 'var(--_tp-color-picker-swatch)',
         'min-inline-size': '0',
+        'min-block-size': '0',
         'border-radius': 'var(--tp-radius-md)',
       },
     },
@@ -191,10 +191,39 @@ export const colorPickerAppearance: PresentationDictionary = {
       declarations: { position: 'static' },
     },
     {
-      selector: '&[part~="toggle"][data-pressed]',
+      // The pressed ring sits on the fill (the Toggle's own box is covered by it).
+      selector: '&[part~="toggle"][data-pressed] slot::slotted(.swatch)',
       declarations: {
         'box-shadow':
-          '0 0 0 var(--tp-ring-width) var(--tp-background), 0 0 0 calc(var(--tp-ring-width) * 2) var(--tp-ring)',
+          'inset 0 0 0 var(--tp-border-width-strong) var(--tp-background), inset 0 0 0 calc(var(--tp-border-width-strong) * 2) var(--tp-ring)',
+      },
+    },
+  ],
+  // Strip members: borderless, joined through the Toggle Group seam geometry, equal widths.
+  'color-picker-scheme-item': [
+    {
+      selector: '&[part~="toggle"]',
+      declarations: {
+        position: 'relative',
+        overflow: 'hidden',
+        padding: '0',
+        border: '0',
+        'inline-size': '100%',
+        'block-size': 'var(--_tp-color-picker-swatch)',
+        'min-inline-size': '0',
+        'min-block-size': '0',
+      },
+    },
+    {
+      selector: '&[part~="toggle"] > [part~="toggle-content"]',
+      declarations: { position: 'static' },
+    },
+    {
+      // The pressed ring sits on the fill (the Toggle's own box is covered by it).
+      selector: '&[part~="toggle"][data-pressed] slot::slotted(.swatch)',
+      declarations: {
+        'box-shadow':
+          'inset 0 0 0 var(--tp-border-width-strong) var(--tp-background), inset 0 0 0 calc(var(--tp-border-width-strong) * 2) var(--tp-ring)',
       },
     },
   ],
@@ -274,6 +303,14 @@ export const colorPickerStructure: PresentationDictionary = {
         gap: 'var(--_tp-color-picker-space)',
         'inline-size': 'var(--_tp-color-picker-popup)',
         'max-inline-size': '100%',
+        // Thumbs sit centered on the plane edges and carry a hit-target halo; the inset keeps
+        // that overhang inside the Popover's scroll container.
+        padding: 'calc(var(--_tp-color-picker-thumb) / 2 + var(--tp-space-2))',
+        // The plane gives way before the Popover has to scroll: it shrinks with the available
+        // height (controls, a wrapped fields row, gaps and paddings take up to 58 spacing units)
+        // down to 20 units.
+        '--_tp-color-picker-area':
+          'max(calc(var(--tp-spacing) * 20), min(var(--_tp-color-picker-area-base), calc(var(--tp-available-height, 100dvh) - calc(var(--tp-spacing) * 58))))',
       },
     },
   ],
