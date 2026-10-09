@@ -17,16 +17,18 @@ export const navigationPanelDisclosureAppearance: PresentationDictionary = {
   'collapsible-label': [
     { selector: disclosureContext + '&', declarations: { 'font-weight': 'inherit' } },
   ],
+  // SidebarMenuButton spaces icon, label and chevron with `gap-2` alone: the row gap above
+  // replaces the Collapsible's own region margins, so the label lines up with sub-level rows.
   'collapsible-leading': [
     {
       selector: disclosureContext + '&',
-      declarations: { color: 'inherit', 'margin-inline-end': 'var(--tp-space-2)' },
+      declarations: { color: 'inherit', 'margin-inline-end': '0' },
     },
   ],
   'collapsible-trailing': [
     {
       selector: disclosureContext + '&',
-      declarations: { color: 'inherit', 'margin-inline-start': 'var(--tp-space-2)' },
+      declarations: { color: 'inherit', 'margin-inline-start': '0' },
     },
   ],
   'collapsible-content-body': [
