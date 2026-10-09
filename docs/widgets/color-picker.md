@@ -69,6 +69,9 @@ or pick another format.
 `tp-tabs` strip above the panel and `view` / `defaultView` select the active tab. The fields row
 (`fields`), format Select (`formatSelect`), preview swatch (`preview`) and eyedropper
 (`eyedropper`, rendered only where the platform `EyeDropper` API exists) are independent toggles.
+In the fields row the channel editors of the format (or the single hex editor) are the members of a
+[Field group](../field-group.md), so they read as one joined tuple, while the alpha editor stays
+apart with the row gap.
 `size` (`sm`, `default`, `lg`) scales the area, tracks, thumbs and swatches; `shape` (`square`,
 `round`) shapes the preview and swatches.
 
@@ -204,7 +207,8 @@ Public parts: `color-picker`, `color-picker-label`, `color-picker-tabs`, `color-
 `color-picker-eyedropper`, `color-picker-generate`, `color-picker-template`,
 `color-picker-harmony`, `color-picker-slider`, `color-picker-slider-track`,
 `color-picker-alpha-track`, `color-picker-slider-range`, `color-picker-slider-thumb`,
-`color-picker-channel`, `color-picker-preview`, `color-picker-fields`, `color-picker-field`,
+`color-picker-channel`, `color-picker-preview`, `color-picker-fields`, `color-picker-field-group`,
+`color-picker-field`,
 `color-picker-format`, `color-picker-swatches`, `color-picker-swatch-grid`,
 `color-picker-swatch-item`, `color-picker-swatch`, `color-picker-schemes`,
 `color-picker-scheme`, `color-picker-scheme-item`, `color-picker-wheel`, `color-picker-wheel-handle`,

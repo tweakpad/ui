@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Field group verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        font-family: var(--tp-font-sans);
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        margin: var(--tp-space-8);
+      }
+      main {
+        display: grid;
+        gap: var(--tp-space-6);
+        max-inline-size: calc(var(--tp-spacing) * 140);
+      }
+      section {
+        display: grid;
+        gap: var(--tp-space-3);
+      }
+      h1,
+      h2 {
+        font-size: var(--tp-text-lg);
+        margin: 0;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: var(--tp-space-2);
+      }
+      .narrow {
+        inline-size: calc(var(--tp-spacing) * 60);
+        padding: var(--tp-space-2);
+        outline: var(--tp-border-width) dashed var(--tp-border);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Field group verification</h1>
+      <section>
+        <h2>Size pair</h2>
+        <tp-field-group id="size" label="Size"
+          ><tp-input-group
+            ><span slot="prefix">W</span
+            ><tp-input
+              label="Width"
+              name="width"
+              default-value="1280"
+              inputmode="numeric"
+            ></tp-input
+            ><span slot="suffix">px</span></tp-input-group
+          ><tp-input-group
+            ><span slot="prefix">H</span
+            ><tp-input
+              label="Height"
+              name="height"
+              default-value="720"
+              inputmode="numeric"
+            ></tp-input
+            ><span slot="suffix">px</span></tp-input-group
+          ></tp-field-group
+        >
+      </section>
+      <section>
+        <h2>Coordinates</h2>
+        <tp-field-group id="coords" label="Position"
+          ><tp-input-group
+            ><span slot="prefix">X</span
+            ><tp-input label="X" default-value="24"></tp-input></tp-input-group
+          ><tp-input-group
+            ><span slot="prefix">Y</span
+            ><tp-input label="Y" default-value="48"></tp-input></tp-input-group
+          ><tp-input-group
+            ><span slot="prefix">Z</span
+            ><tp-input label="Z" default-value="0"></tp-input></tp-input-group
+        ></tp-field-group>
+      </section>
+      <section>
+        <h2>Channels with alpha apart</h2>
+        <div class="row">
+          <tp-field-group id="rgb" label="RGB" style="flex: 1 1 0; min-inline-size: 0"
+            ><tp-input-group
+              ><span slot="prefix">R</span
+              ><tp-input label="Red" default-value="109"></tp-input></tp-input-group
+            ><tp-input-group
+              ><span slot="prefix">G</span
+              ><tp-input label="Green" default-value="93"></tp-input></tp-input-group
+            ><tp-input-group
+              ><span slot="prefix">B</span
+              ><tp-input label="Blue" default-value="252"></tp-input></tp-input-group
+          ></tp-field-group>
+          <tp-input-group id="alpha" style="flex: 0 1 calc(var(--tp-spacing) * 24)"
+            ><tp-input label="Alpha" default-value="100"></tp-input
+            ><span slot="suffix">%</span></tp-input-group
+          >
+        </div>
+      </section>
+      <section>
+        <h2>Vertical</h2>
+        <tp-field-group
+          id="vertical"
+          label="Margins"
+          orientation="vertical"
+          style="max-inline-size: calc(var(--tp-spacing) * 40)"
+          ><tp-input-group
+            ><span slot="prefix">T</span
+            ><tp-input label="Top" default-value="8"></tp-input></tp-input-group
+          ><tp-input-group
+            ><span slot="prefix">B</span
+            ><tp-input label="Bottom" default-value="8"></tp-input></tp-input-group
+        ></tp-field-group>
+      </section>
+      <section>
+        <h2>Separator</h2>
+        <tp-field-group id="separated" label="Range"
+          ><tp-input-group
+            ><span slot="prefix">Min</span
+            ><tp-input label="Minimum" default-value="0"></tp-input></tp-input-group
+          ><tp-separator></tp-separator
+          ><tp-input-group
+            ><span slot="prefix">Max</span
+            ><tp-input label="Maximum" default-value="100"></tp-input></tp-input-group
+        ></tp-field-group>
+      </section>
+      <section>
+        <h2>Mixed members</h2>
+        <tp-field-group id="mixed" label="Duration"
+          ><tp-input label="Amount" default-value="30"></tp-input
+          ><tp-select label="Unit" default-value="s"></tp-select
+          ><tp-native-select label="Scope"
+            ><option value="all">All</option>
+            <option value="active">Active</option></tp-native-select
+          ><tp-toggle aria-label="Lock" variant="outline">Lock</tp-toggle
+          ><tp-menu label="More"
+            ><tp-button slot="trigger" variant="outline">More</tp-button
+            ><tp-menu-item value="reset">Reset</tp-menu-item></tp-menu
+          ></tp-field-group
+        >
+      </section>
+      <section>
+        <h2>States</h2>
+        <tp-field-group id="states" label="Timeout"
+          ><tp-input-group
+            ><tp-input label="Seconds" default-value="30" readonly></tp-input
+            ><span slot="suffix">s</span></tp-input-group
+          ><tp-input-group
+            ><tp-input label="Retries" default-value="3" disabled></tp-input></tp-input-group
+        ></tp-field-group>
+      </section>
+      <section>
+        <h2>Form</h2>
+        <form id="form">
+          <tp-field-group label="Offset"
+            ><tp-input-group
+              ><span slot="prefix">X</span
+              ><tp-input label="Offset X" name="x" default-value="4"></tp-input></tp-input-group
+            ><tp-input-group
+              ><span slot="prefix">Y</span
+              ><tp-input label="Offset Y" name="y" default-value="-2"></tp-input></tp-input-group
+          ></tp-field-group>
+          <tp-button type="submit" variant="outline" style="margin-block-start: var(--tp-space-2)"
+            >Submit</tp-button
+          >
+        </form>
+        <output id="form-output" aria-live="polite"></output>
+      </section>
+      <section>
+        <h2>Narrow and RTL</h2>
+        <div class="narrow">
+          <tp-field-group id="narrow" label="Narrow"
+            ><tp-input-group
+              ><span slot="prefix">X</span
+              ><tp-input label="X" default-value="1200"></tp-input></tp-input-group
+            ><tp-input-group
+              ><span slot="prefix">Y</span
+              ><tp-input label="Y" default-value="3400"></tp-input></tp-input-group
+            ><tp-input-group
+              ><span slot="prefix">Z</span
+              ><tp-input label="Z" default-value="5600"></tp-input></tp-input-group
+          ></tp-field-group>
+        </div>
+        <div dir="rtl">
+          <tp-field-group id="rtl" label="الحجم"
+            ><tp-input-group
+              ><span slot="prefix">W</span
+              ><tp-input label="Width" default-value="1280"></tp-input></tp-input-group
+            ><tp-input-group
+              ><span slot="prefix">H</span
+              ><tp-input label="Height" default-value="720"></tp-input></tp-input-group
+          ></tp-field-group>
+        </div>
+      </section>
+      <section>
+        <h2>Contract host</h2>
+        <div id="host"></div>
+      </section>
+    </main>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      await customElements.whenDefined('tp-field-group');
+      await customElements.whenDefined('tp-select');
+      document.querySelector('#mixed tp-select').items = [
+        { value: 's', label: 'Seconds' },
+        { value: 'm', label: 'Minutes' },
+      ];
+      document.querySelector('#form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        document.querySelector('#form-output').textContent = [...data.entries()]
+          .map(([key, value]) => `${key}=${value}`)
+          .join(' ');
+      });
+      window.fieldGroupContract = await import('./contract-checks.js');
+      document.documentElement.toggleAttribute('data-ready', true);
+    </script>
+  </body>
+</html>

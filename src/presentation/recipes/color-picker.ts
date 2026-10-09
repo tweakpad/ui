@@ -321,6 +321,8 @@ export const colorPickerStructure: PresentationDictionary = {
   'color-picker-toolbar': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'color-picker-channel': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'color-picker-fields': [{ declarations: { gap: 'var(--tp-space-2)' } }],
+  // The channel editors are a Field group; its members keep the Input group recipe.
+  'color-picker-field-group': [],
   'color-picker-field': [{ declarations: { 'min-inline-size': 'calc(var(--tp-spacing) * 14)' } }],
   'color-picker-swatch-grid': [
     {

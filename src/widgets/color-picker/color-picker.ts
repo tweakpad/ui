@@ -22,6 +22,7 @@ import { TpSlider } from '../../components/slider/slider.js';
 import type { SliderValue } from '../../components/slider/types.js';
 import { TpInput } from '../../components/input/input.js';
 import { TpInputGroup } from '../../components/input-group/input-group.js';
+import { TpFieldGroup } from '../../components/field-group/field-group.js';
 import { TpSelect } from '../../components/select/select.js';
 import { TpButton } from '../../components/button/button.js';
 import { TpIcon } from '../../components/icon/icon.js';
@@ -181,7 +182,7 @@ const NESTED_EVENT_TYPES = [
   'tp-presence-complete',
 ] as const;
 const NESTED_HOSTS =
-  'tp-slider, tp-select, tp-input, tp-input-group, tp-button, tp-label, tp-tabs, tp-toggle-group, tp-toggle, tp-popover';
+  'tp-slider, tp-select, tp-input, tp-input-group, tp-field-group, tp-button, tp-label, tp-tabs, tp-toggle-group, tp-toggle, tp-popover';
 const SURFACES = 'tp-color-picker-area, tp-color-picker-wheel, tp-color-picker-triangle';
 const isView = (value: unknown): value is ColorPickerView =>
   typeof value === 'string' && (COLOR_PICKER_VIEWS as readonly string[]).includes(value);
@@ -206,6 +207,7 @@ export class TpColorPicker extends TpFormElement<string> {
       TpSlider,
       TpInput,
       TpInputGroup,
+      TpFieldGroup,
       TpSelect,
       TpButton,
       TpIcon,
@@ -1134,7 +1136,10 @@ export class TpColorPicker extends TpFormElement<string> {
         definition,
         previous: null,
       };
-      const group = root.querySelector<HTMLElement>('tp-input-group');
+      const group =
+        root.localName === 'tp-input-group'
+          ? root
+          : root.querySelector<HTMLElement>('tp-input-group');
       if (group) scope.add(controller.registerGroup(group).dispose);
       scope.listen(input, 'tp-value-change' as keyof GlobalEventHandlersEventMap, (event) =>
         this.#fieldChange(created, event as unknown as TpValueChangeEvent<number | null>),
@@ -1882,28 +1887,35 @@ export class TpColorPicker extends TpFormElement<string> {
           @tp-field-value=${stop}
         ></tp-select>`
       : nothing;
-    const channels =
+    // The format's editors are one Field group (a joined tuple); alpha stays apart.
+    const members =
       this.format === 'hex'
-        ? html`<div class="field" part="color-picker-field" data-field="hex">
-            <tp-input-group
-              ><span slot="prefix">#</span
-              ><tp-input
-                class="hex"
-                label=${dimensionLabel(this.label, strings.hex)}
-                .value=${this.#hexText}
-                .hostProperties=${{ inputmode: 'text', spellcheck: 'false', autocapitalize: 'off', maxlength: 8 }}
-                ?disabled=${this.effectiveDisabled}
-                ?readonly=${this.readOnly}
-                @tp-value-change=${this.#hexInput}
-                @tp-field-value=${stop}
-                @keydown=${this.#hexKeyDown}
-                @focusout=${this.#hexBlur}
-              ></tp-input
-            ></tp-input-group>
-          </div>`
+        ? html`<tp-input-group class="field" part="color-picker-field" data-field="hex"
+            ><span slot="prefix">#</span
+            ><tp-input
+              class="hex"
+              label=${dimensionLabel(this.label, strings.hex)}
+              .value=${this.#hexText}
+              .hostProperties=${{ inputmode: 'text', spellcheck: 'false', autocapitalize: 'off', maxlength: 8 }}
+              ?disabled=${this.effectiveDisabled}
+              ?readonly=${this.readOnly}
+              @tp-value-change=${this.#hexInput}
+              @tp-field-value=${stop}
+              @keydown=${this.#hexKeyDown}
+              @focusout=${this.#hexBlur}
+            ></tp-input
+          ></tp-input-group>`
         : channelDefinitions(this.format, false).map((definition) =>
             this.#renderField(definition, 'fields'),
           );
+    const memberCount = this.format === 'hex' ? 1 : channelDefinitions(this.format, false).length;
+    const channels = html`<tp-field-group
+      class="channels"
+      data-format=${this.format}
+      style=${`--_tp-color-picker-members: ${memberCount}`}
+      label=${dimensionLabel(this.label, strings[FORMAT_STRING_KEYS[this.format]])}
+      >${members}</tp-field-group
+    >`;
     const alphaField = this.alpha ? this.#renderField(ALPHA_CHANNEL, 'fields') : nothing;
     return this.renderPart(
       'color-picker-fields',
@@ -1921,24 +1933,22 @@ export class TpColorPicker extends TpFormElement<string> {
     );
   }
 
+  /** One editor: the Input group host is the field part and the NumberField root. */
   #renderField(definition: ChannelDefinition, scope: 'fields' | 'channel') {
     const name = channelName(this.#strings, definition);
     const suffix = definition.unit ? html`<span slot="suffix">${definition.unit}</span>` : nothing;
-    return html`<div
+    return html`<tp-input-group
       class="field"
       part="color-picker-field"
       data-field=${definition.key}
       data-number-field=${`${scope}:${definition.key}`}
-    >
-      <tp-input-group
-        ><tp-input
-          label=${dimensionLabel(this.label, name)}
-          ?disabled=${this.effectiveDisabled}
-          ?readonly=${this.readOnly}
-        ></tp-input
-        >${suffix}</tp-input-group
-      >
-    </div>`;
+      ><tp-input
+        label=${dimensionLabel(this.label, name)}
+        ?disabled=${this.effectiveDisabled}
+        ?readonly=${this.readOnly}
+      ></tp-input
+      >${suffix}</tp-input-group
+    >`;
   }
 }
 

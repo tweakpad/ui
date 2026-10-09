@@ -24,6 +24,7 @@ export * from './drag-drop-list/index.js';
 export * from './drawer/index.js';
 export * from './empty-state/index.js';
 export * from './field/index.js';
+export * from './field-group/index.js';
 export * from './form/index.js';
 export * from './icon/index.js';
 export * from './image/index.js';

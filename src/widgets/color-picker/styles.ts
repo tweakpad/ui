@@ -96,19 +96,31 @@ export const colorPickerStyles = css`
     flex: none;
   }
 
-  /* Fields share the row and wrap below their basis instead of truncating their text. */
-  .field {
-    flex: 1 1 calc(var(--tp-spacing) * 20);
-    min-inline-size: calc(var(--tp-spacing) * 14);
+  /*
+   * The channel editors are one Field group that grows with its member count; the alpha
+   * editor keeps one editor's share. Both wrap below their basis instead of truncating text.
+   */
+  .fields-row > .channels {
+    flex: var(--_tp-color-picker-members, 3) 1
+      calc(var(--tp-spacing) * 20 * var(--_tp-color-picker-members, 3));
+    min-inline-size: calc(var(--tp-spacing) * 14 * var(--_tp-color-picker-members, 3));
   }
 
   /* Six hex digits plus the prefix never truncate; the alpha field wraps first. */
-  .field[data-field='hex'] {
+  .fields-row > .channels[data-format='hex'] {
     flex-basis: calc(var(--tp-spacing) * 24);
     min-inline-size: calc(var(--tp-spacing) * 22);
   }
 
-  .field tp-input-group,
+  .fields-row > .field {
+    flex: 1 1 calc(var(--tp-spacing) * 20);
+    min-inline-size: calc(var(--tp-spacing) * 14);
+  }
+
+  .channels > .field {
+    min-inline-size: 0;
+  }
+
   .field tp-input {
     inline-size: 100%;
   }

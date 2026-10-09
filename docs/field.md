@@ -41,7 +41,7 @@ The default/control slot contains the registered control, including through a na
 | Slot                | Published part           | Constituent options                                                                                                                                      |
 | ------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `legend`            | `field-legend`           | Optional group caption; legendScale chooses section/field presentation.                                                                                  |
-| `group`             | `field-field-group`      | Peer Field layout.                                                                                                                                       |
+| `group`             | `field-field-group`      | Peer Field layout. To join the editors of one value as a tuple use [Field group](field-group.md) instead.                                                |
 | `label`             | `field-label`            | Rich name content; native-label=false suppresses forwarding.                                                                                             |
 | `title`             | `field-title`            | Grouped choice name.                                                                                                                                     |
 | default / `control` | `field-control-region`   | Compatible value participant; retain its own public API.                                                                                                 |

@@ -1,14 +1,8 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { joinedGroupGap, joinedGroupSeparator } from './shared/joined-group.js';
 
 export const buttonGroupAppearance: PresentationDictionary = {
-  'button-group': [
-    {
-      selector: ':host(:not([joined])) &, &[data-nested]',
-      declarations: {
-        gap: 'var(--tp-space-2)',
-      },
-    },
-  ],
+  'button-group': [joinedGroupGap],
   'button-group-text-segment': [
     {
       declarations: {
@@ -23,5 +17,5 @@ export const buttonGroupAppearance: PresentationDictionary = {
       },
     },
   ],
-  'button-group-separator': [{ declarations: { background: 'var(--tp-input)' } }],
+  'button-group-separator': [joinedGroupSeparator],
 };

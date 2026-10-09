@@ -334,6 +334,18 @@ const examples = {
       <tp-button variant="outline">Next</tp-button>
     </tp-button-group>
   `,
+  'tp-field-group': () => html`
+    <tp-field-group label="Size">
+      <tp-input-group>
+        <span slot="prefix">W</span>
+        <tp-input label="Width" default-value="1280" inputmode="numeric"></tp-input>
+      </tp-input-group>
+      <tp-input-group>
+        <span slot="prefix">H</span>
+        <tp-input label="Height" default-value="720" inputmode="numeric"></tp-input>
+      </tp-input-group>
+    </tp-field-group>
+  `,
   'tp-card': () => html`
     <tp-card>
       <h3 slot="header">Project access</h3>

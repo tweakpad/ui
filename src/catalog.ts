@@ -59,6 +59,7 @@ export const catalog = [
   ['Badge', 'tp-badge', 'thin-wrapper'],
   ['Bubble', 'tp-bubble', 'presentational-primitive'],
   ['Button group', 'tp-button-group', 'preset-composition'],
+  ['Field group', 'tp-field-group', 'preset-composition'],
   ['Card', 'tp-card', 'presentational-primitive'],
   ['Code block', 'tp-code-block', 'presentational-primitive'],
   ['Markdown', 'tp-markdown', 'preset-composition'],
