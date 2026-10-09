@@ -172,3 +172,9 @@ export class TpMediaPoster extends TpMediaElement {
     this.#load.observe(image);
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-poster': TpMediaPoster;
+  }
+}

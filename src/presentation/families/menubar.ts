@@ -7,74 +7,37 @@ const definition: ComponentDefinition = {
   name: 'Menubar',
   tagName: 'tp-menubar',
   kind: 'flattening-compound',
-  sourceNode: 'ucl20-menubar',
   axes: [],
   parts: [
     {
       name: 'menubar',
-      publicName: 'Root',
-      presentationKeys: ['menubar'],
-      cardinality: 'exactly one public owner host per control instance',
     },
     {
       name: 'menubar-menu',
-      publicName: 'Menu',
-      presentationKeys: ['menubar-menu'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'menubar-trigger',
-      publicName: 'Trigger',
-      presentationKeys: ['menubar-trigger'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'menubar-content',
-      publicName: 'Content',
-      presentationKeys: ['menubar-content'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'menubar-item',
-      publicName: 'Item',
-      presentationKeys: ['menubar-item'],
-      cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
     },
     {
       name: 'menubar-group',
-      publicName: 'Group',
-      presentationKeys: ['menubar-group'],
-      cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
     },
     {
       name: 'menubar-sub-trigger',
-      publicName: 'SubTrigger',
-      presentationKeys: ['menubar-sub-trigger'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'menubar-sub-content',
-      publicName: 'SubContent',
-      presentationKeys: ['menubar-sub-content'],
-      cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
     },
     {
       name: 'menubar-separator',
-      publicName: 'Separator',
-      presentationKeys: ['menubar-separator'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'menubar-shortcut',
-      publicName: 'Shortcut',
-      presentationKeys: ['menubar-shortcut'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
   ],
 };
@@ -138,5 +101,4 @@ export const menubarPresentation = definePresentation({
     ],
   },
   sources: [menubarAppearance],
-  complete: true,
 });

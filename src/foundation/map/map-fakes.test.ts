@@ -1,7 +1,7 @@
+import { ManualFrames } from '../fakes.test.js';
 import { describe, expect, it } from 'vitest';
 /** Fakes for map tests: a manual frame source, a recording engine and a controller host. */
 import type { ChangeReason } from '../types.js';
-import type { TweenFrameSource } from './camera.js';
 import type {
   MapAnimationOptions,
   MapEngine,
@@ -25,36 +25,6 @@ import {
   type MapRequestDetail,
 } from './controller.js';
 import type { ResolvedMapTheme } from './theme.js';
-
-export class ManualFrames implements TweenFrameSource {
-  time = 0;
-  #next = 1;
-  readonly #callbacks = new Map<number, (time: number) => void>();
-  requestAnimationFrame(callback: (time: number) => void): number {
-    const handle = this.#next++;
-    this.#callbacks.set(handle, callback);
-    return handle;
-  }
-  cancelAnimationFrame(handle: number): void {
-    this.#callbacks.delete(handle);
-  }
-  now(): number {
-    return this.time;
-  }
-  get pending(): number {
-    return this.#callbacks.size;
-  }
-  /** Runs one frame `ms` later. */
-  tick(ms = 16): void {
-    this.time += ms;
-    const callbacks = [...this.#callbacks.values()];
-    this.#callbacks.clear();
-    for (const callback of callbacks) callback(this.time);
-  }
-  run(frames: number, ms = 16): void {
-    for (let index = 0; index < frames; index++) this.tick(ms);
-  }
-}
 
 export const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 

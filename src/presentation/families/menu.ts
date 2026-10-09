@@ -7,7 +7,6 @@ const definition: ComponentDefinition = {
   name: 'Menu',
   tagName: 'tp-menu',
   kind: 'flattening-compound',
-  sourceNode: 'ucl20-menu',
   axes: [
     {
       name: 'itemVariant',
@@ -18,94 +17,46 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'menu',
-      publicName: 'Root',
-      presentationKeys: ['menu'],
-      cardinality: 'exactly one public owner host per control instance',
     },
     {
       name: 'menu-trigger',
-      publicName: 'Trigger',
-      presentationKeys: ['menu-trigger'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'menu-target',
-      publicName: 'Context target',
-      presentationKeys: ['menu-target'],
-      cardinality: 'one invoking region in context invocation mode',
     },
     {
       name: 'menu-content',
-      publicName: 'Content',
-      presentationKeys: ['menu-content'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'menu-item',
-      publicName: 'Item',
-      presentationKeys: ['menu-item', 'menu-item-variant-ghost', 'menu-item-variant-destructive'],
-      cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
+      axes: ['itemVariant'],
     },
     {
       name: 'menu-checkbox-item',
-      publicName: 'Checkbox item',
-      presentationKeys: ['menu-checkbox-item'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'menu-radio-group',
-      publicName: 'RadioGroup',
-      presentationKeys: ['menu-radio-group'],
-      cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
     },
     {
       name: 'menu-radio-item',
-      publicName: 'RadioItem',
-      presentationKeys: ['menu-radio-item'],
-      cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
     },
     {
       name: 'menu-group',
-      publicName: 'Group',
-      presentationKeys: ['menu-group'],
-      cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
     },
     {
       name: 'menu-label',
-      publicName: 'Label',
-      presentationKeys: ['menu-label'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'menu-sub-trigger',
-      publicName: 'SubTrigger',
-      presentationKeys: ['menu-sub-trigger'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'menu-sub-content',
-      publicName: 'SubContent',
-      presentationKeys: ['menu-sub-content'],
-      cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
     },
     {
       name: 'menu-separator',
-      publicName: 'Separator',
-      presentationKeys: ['menu-separator'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'menu-shortcut',
-      publicName: 'Shortcut',
-      presentationKeys: ['menu-shortcut'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
   ],
 };
@@ -222,5 +173,4 @@ export const menuPresentation = definePresentation({
     ],
   },
   sources: [menuAppearance],
-  complete: true,
 });

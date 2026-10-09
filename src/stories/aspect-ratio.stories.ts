@@ -9,9 +9,7 @@ import {
 const meta = {
   title: 'Components/Aspect-ratio box',
   component: 'tp-aspect-ratio',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: aspectRatioExamples,

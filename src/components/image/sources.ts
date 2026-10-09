@@ -22,16 +22,3 @@ export function readSources(host: Element): ImageSourceRecord[] {
 export function hasWidthDescriptors(srcset: string | null | undefined): boolean {
   return Boolean(srcset?.split(',').some((candidate) => /\s\d+w$/.test(candidate.trim())));
 }
-
-/**
- * `sizes` for a request: a supplied value passes through; a lazy width-descriptor set without one
- * uses the laid-out width (`auto`), falling back to the viewport width where `auto` is unknown.
- */
-export function resolveImageSizes(
-  sizes: string | null | undefined,
-  srcset: string | null | undefined,
-  loading: 'lazy' | 'eager',
-): string | undefined {
-  if (sizes) return sizes;
-  return loading === 'lazy' && hasWidthDescriptors(srcset) ? 'auto, 100vw' : undefined;
-}

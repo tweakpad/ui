@@ -14,9 +14,7 @@ interface Args {
 const meta = {
   title: 'Components/Time',
   component: 'tp-time',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: timeExamples,

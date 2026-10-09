@@ -45,7 +45,7 @@ import { compositeControl } from '../../foundation/composite-control.js';
 import { chevronRightIcon } from '../../icons/chevron-right.js';
 import type { PartRenderOptions, PartState } from '../../foundation/part.js';
 import { calendarPresentation } from '../../presentation/families/calendar.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 import { TpNativeSelect } from '../native-select/native-select.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 const calendarValueConverter = {
@@ -1178,20 +1178,20 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
     }
     if (this.#warnings.get(code) === message) return;
     this.#warnings.set(code, message);
-    queueMicrotask(() =>
-      this.emit('tp-diagnostic', { code, message, severity: 'warning' as const }),
-    );
+    queueMicrotask(() => this.diagnose(code, message));
   }
 
   #diagnose(message: string): void {
     if (!message || message === this.#lastDiagnostic) return;
     this.#lastDiagnostic = message;
     queueMicrotask(() =>
-      this.emit('tp-diagnostic', {
-        code: 'calendar-invalid-configuration',
-        message,
-        severity: 'error' as const,
-      }),
+      this.diagnose('calendar-invalid-configuration', message, { severity: 'error' }),
     );
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-calendar': TpCalendar;
   }
 }

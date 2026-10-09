@@ -75,7 +75,7 @@ export function ambientCss(
 export function disclosurePanelStyles(panel: string, blockExtent = '--collapsible-panel-height') {
   return unsafeCSS(
     `${panel}{overflow:clip;block-size:0;transition:${motionTransition(['block-size'])}}` +
-      `${panel}[data-state='open']{block-size:var(${blockExtent})}` +
+      `${panel}[data-open]:not([data-starting-style]){block-size:var(${blockExtent})}` +
       `${panel}[data-tp-motion-driven~='disclosure']{transition:none !important}` +
       `${panel}[hidden]:not([hidden='until-found']){display:none !important}`,
   );

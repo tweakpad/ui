@@ -1,4 +1,5 @@
 import { css, html, nothing, type PropertyDeclarations, type PropertyValues } from 'lit';
+import { numberOrNull } from '../../foundation/converters.js';
 import { TpElement } from '../../foundation/element.js';
 import { TpMediaElement } from './context.js';
 import { applyMediaMarkers } from './media-button.js';
@@ -15,7 +16,7 @@ import {
   type MediaTimeType,
   type MediaTimeView,
 } from './time-state.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /**
@@ -29,17 +30,6 @@ export function mediaPointerTime(
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   return typeof previewTime === 'number' && Number.isFinite(previewTime) ? previewTime : null;
 }
-
-const numberOrNull = {
-  fromAttribute(value: string | null): number | null {
-    if (value === null || value.trim() === '') return null;
-    const number = Number(value);
-    return Number.isFinite(number) ? number : null;
-  },
-  toAttribute(value: number | null): string | null {
-    return value === null ? null : String(value);
-  },
-};
 
 /**
  * `tp-media-time`: current, duration, remaining or pointer time (Library mp-l-time).
@@ -244,4 +234,10 @@ export class TpMediaTime extends TpMediaElement {
     if (event.defaultPrevented || this.mediaDisabled) return;
     this.toggleShown();
   };
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-time': TpMediaTime;
+  }
 }

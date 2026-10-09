@@ -81,7 +81,3 @@ Provider and keyboard-provider render their children without layout boxes. Their
 | `modality`                       | `modal`, `non-modal`, `trap-focus-only` | `modal` | Inherits Dialog's focus, outside-interaction and scroll policy.                                                                                                                                                                                      |
 
 Backdrop blur is provided by the `drawer-overlay` presentation recipe, using `--tp-space-1` for its radius. The fill uses `--tp-opacity-backdrop` and remains visible where backdrop filtering is unsupported. Override the `drawer-overlay` dictionary entry or `::part(drawer-overlay)` for a custom treatment. Header, body and footer spacing uses the same section recipe as Dialog; no demo padding is required. Existing portal customization rules apply.
-
-### Migrating Side Panel
-
-Drawer replaces Side Panel in the catalog. Change `<tp-side-panel>` to `<tp-drawer edge="inline-end" swipe-enabled="false">`. Keep existing Dialog properties and slots. `TpSidePanel`, `PanelEdge`, and `tp-side-panel` remain deprecated compatibility bindings with those defaults, delegating to Drawer. Use `DrawerEdge` and Drawer parts/recipes; the old `side-panel-content` surface maps to `drawer-surface`, and the other old `side-panel-*` parts map to `drawer-*`.

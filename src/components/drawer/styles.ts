@@ -20,7 +20,7 @@ export const drawerStyles = css`
     background: transparent;
   }
 
-  .drawer-viewport[data-modal='true'] {
+  .drawer-viewport[data-modal] {
     pointer-events: auto;
   }
 

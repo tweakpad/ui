@@ -1,8 +1,13 @@
+import { arrowKeys } from '../../foundation/collection.js';
 import { css, type PropertyValues } from 'lit';
-import { TpHoverSurface, type AnchoredTriggerOptions } from '../anchored-surface.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+import {
+  TpHoverSurface,
+  type AnchoredTriggerOptions,
+} from '../anchored-surface/anchored-surface.js';
 import { TpMenuItem, type MenuItemOwner } from './menu-item.js';
 import { chevronRightIcon } from '../../icons/chevron-right.js';
-import type { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import { ContextInvocation } from './context-invocation.js';
 import { TpMenuRadioGroup } from './menu-radio-group.js';
 import {
@@ -68,6 +73,10 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     return 'previous';
   }
   static tagName = 'tp-menu';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpIcon];
+  }
   static override presentation = menuPresentation;
   static override properties = {
     ...TpHoverSurface.properties,
@@ -78,7 +87,6 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     loopFocus: { type: Boolean, attribute: 'loop-focus' },
     highlightItemOnHover: { type: Boolean, attribute: 'highlight-item-on-hover' },
     closeParentOnEscape: { type: Boolean, attribute: 'close-parent-on-escape' },
-    closeParentOnEsc: { type: Boolean, attribute: 'close-parent-on-esc', noAccessor: true },
   };
   static override styles = [
     TpHoverSurface.styles,
@@ -255,12 +263,6 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   }
   protected override get defaultCloseDelay(): number {
     return 0;
-  }
-  get closeParentOnEsc(): boolean {
-    return this.closeParentOnEscape;
-  }
-  set closeParentOnEsc(value: boolean) {
-    this.closeParentOnEscape = value;
   }
   get rootMenu(): TpMenu {
     return this.parentMenu?.rootMenu ?? this;
@@ -692,8 +694,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
       );
     if (root !== this.popupElement) return;
     const highlighted = this.#collection.highlighted;
-    const forward = this.direction === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
-    const backward = this.direction === 'rtl' ? 'ArrowRight' : 'ArrowLeft';
+    const { next: forward, previous: backward } = arrowKeys('horizontal', this.direction);
     if (event.key === forward && highlighted?.submenu) {
       event.preventDefault();
       highlighted.submenu.setOpen(true, 'list-navigation', event);
@@ -865,5 +866,11 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     this.#parent?.itemChanged();
     this.#parent = null;
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-menu': TpMenu;
   }
 }

@@ -22,9 +22,7 @@ const markup = `<tp-field label="Website">
 const meta = {
   title: 'Components/Input group',
   component: 'tp-input-group',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       source: { code: `${imports}\n${markup}` },

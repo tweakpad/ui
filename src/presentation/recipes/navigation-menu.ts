@@ -1,4 +1,5 @@
 import { motionTransition } from '../motion.js';
+import { popupBorder } from './shared/surface.js';
 import { packedExtent } from './shared/target.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import {
@@ -24,8 +25,7 @@ const popup: readonly PresentationRule[] = [
       background: 'var(--tp-popover)',
       color: 'var(--tp-popover-foreground)',
       'border-radius': 'var(--tp-radius-lg)',
-      border:
-        'var(--tp-border-width) var(--tp-border-style) color-mix(in oklab, var(--tp-foreground) 10%, transparent)',
+      border: popupBorder,
       'box-shadow': 'var(--tp-shadow-sm)',
     },
   },
@@ -57,9 +57,7 @@ export const navigationMenuStructure: PresentationDictionary = {
 /** Base navigation composition plus its optional new-york viewport; native link roles are retained. */
 export const navigationMenuAppearance: PresentationDictionary = {
   ...axes,
-  'navigation-menu': [],
   'navigation-menu-list': [{ declarations: { gap: '0' } }],
-  'navigation-menu-item': [],
   'navigation-menu-trigger': [
     {
       declarations: {
@@ -114,7 +112,7 @@ export const navigationMenuAppearance: PresentationDictionary = {
     },
     ...popup.map((rule) => ({
       ...rule,
-      selector: `&[data-viewport="false"]${rule.selector?.replace('&', '') ?? ''}`,
+      selector: `&:not([data-viewport])${rule.selector?.replace('&', '') ?? ''}`,
     })),
   ],
   'navigation-menu-link': [

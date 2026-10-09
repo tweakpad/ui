@@ -1,7 +1,7 @@
 import type { ReactiveControllerHost } from 'lit';
 import { ControllableState } from '../controllable-state.js';
 import { TpValueCommitEvent } from '../events.js';
-import { ObservableStore } from '../store.js';
+import { Emitter, ObservableStore } from '../store.js';
 import { Scheduler } from '../services.js';
 import type { ChangeReason, Direction } from '../types.js';
 import { CarouselAutoplay } from './autoplay.js';
@@ -146,7 +146,7 @@ export function carouselInputKind(reason: ChangeReason, sourceEvent?: Event): Ca
 export class CarouselController {
   readonly #store = new ObservableStore<CarouselSnapshot>(initial);
   readonly #state: ControllableState<number>;
-  readonly #listeners = new Map<CarouselEventName, Set<(snapshot: CarouselSnapshot) => void>>();
+  readonly #events = new Emitter<Record<CarouselEventName, [CarouselSnapshot]>>();
   #config = resolveCarouselConfiguration();
   #input: CarouselInput;
   #layout = carouselLayout([], 0, this.#config);
@@ -288,13 +288,10 @@ export class CarouselController {
     return this.#store.subscribe((change) => listener(change.value), true);
   }
   on(event: CarouselEventName, listener: (snapshot: CarouselSnapshot) => void): () => void {
-    let listeners = this.#listeners.get(event);
-    if (!listeners) this.#listeners.set(event, (listeners = new Set()));
-    listeners.add(listener);
-    return () => this.off(event, listener);
+    return this.#events.on(event, listener);
   }
   off(event: CarouselEventName, listener: (snapshot: CarouselSnapshot) => void): void {
-    this.#listeners.get(event)?.delete(listener);
+    this.#events.off(event, listener);
   }
 
   async initialize(): Promise<void> {
@@ -596,7 +593,7 @@ export class CarouselController {
     this.#released = true;
     this.autoplay.dispose();
     this.#scheduler.dispose();
-    this.#listeners.clear();
+    this.#events.clear();
   }
 
   #initialIndex(): number {
@@ -842,7 +839,7 @@ export class CarouselController {
     this.adapter.host.requestUpdate();
   }
   #emit(event: CarouselEventName): void {
-    for (const listener of [...(this.#listeners.get(event) ?? [])]) {
+    for (const listener of this.#events.listeners(event)) {
       try {
         listener(this.snapshot);
       } catch (error) {

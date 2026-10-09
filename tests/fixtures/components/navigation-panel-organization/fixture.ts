@@ -3,7 +3,7 @@ import {
   setupNavigationPanelExample,
 } from '../../../../src/stories/navigation-panel-example.js';
 import type { TpNavigationPanel } from '../../../../src/components/navigation-panel/index.js';
-import type { TpCollapsible } from '../../../../src/components/collapsible.js';
+import type { TpCollapsible } from '../../../../src/components/collapsible/collapsible.js';
 import type { TpMenu } from '../../../../src/components/menu/menu.js';
 import { visualGeometry } from './visual.js';
 import { alignmentGeometry } from './alignment.js';

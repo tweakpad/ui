@@ -1,21 +1,8 @@
 /** Locale numeric primitives shared by formatting services and editable numeric controls. */
+import { numberFormatter } from './intl.js';
+
 export type NumericText =
   { kind: 'number'; value: number } | { kind: 'empty' | 'incomplete' | 'invalid'; value: null };
-
-const formatters = new Map<string, Intl.NumberFormat>();
-export function numberFormatter(
-  locale?: string | string[],
-  options?: Intl.NumberFormatOptions,
-): Intl.NumberFormat {
-  const key = JSON.stringify([locale, options]);
-  let formatter = formatters.get(key);
-  if (!formatter) {
-    formatter = new Intl.NumberFormat(locale, options);
-    if (formatters.size >= 64) formatters.delete(formatters.keys().next().value!);
-    formatters.set(key, formatter);
-  }
-  return formatter;
-}
 
 const minus = /[-−－‒–—﹣]/gu;
 const plus = /[+＋﹢]/gu;

@@ -53,10 +53,6 @@ export const calendarAppearance: PresentationDictionary = {
   ],
   'calendar-months': [{ declarations: { gap: 'var(--tp-space-4)' } }],
   'calendar-month': [{ declarations: { gap: 'var(--tp-space-3)' } }],
-  'calendar-header': [],
-  'calendar-previous': [],
-  'calendar-next': [],
-  'calendar-caption': [],
   'calendar-caption-label': [{ declarations: { 'font-weight': 'var(--tp-font-medium)' } }],
   'calendar-dropdowns': [{ declarations: { gap: 'var(--tp-space-1)' } }],
   'calendar-month-dropdown': [
@@ -78,7 +74,6 @@ export const calendarAppearance: PresentationDictionary = {
     },
   ],
   'calendar-month-grid': [{ declarations: { gap: 'var(--tp-space-2)' } }],
-  'calendar-weekdays': [],
   'calendar-weekday': [
     {
       declarations: {
@@ -89,7 +84,6 @@ export const calendarAppearance: PresentationDictionary = {
     },
   ],
   'calendar-weeks': [{ declarations: { gap: 'var(--tp-space-2)' } }],
-  'calendar-week': [],
   'calendar-week-number': [
     { declarations: { color: 'var(--tp-muted-foreground)', 'font-size': 'var(--tp-text-xs)' } },
   ],

@@ -1,15 +1,17 @@
-import { interactiveMarkupExample, markupExample } from './documentation-examples.js';
+import { markupExample, moduleExample } from './documentation-examples.js';
 import { setupTimelineExample } from './timeline-example.js';
 import setupSource from './timeline-example.js?raw';
 
 function interactive(title: string, id: string, markup: string, description: string) {
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    `<div id="${id}">${markup}</div>`,
-    setupTimelineExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nsetupTimelineExample(document.getElementById('${id}'));`,
+    id,
+    markup,
     description,
-  );
+    setup: setupTimelineExample,
+    source: setupSource,
+    call: `setupTimelineExample(document.getElementById('${id}'));`,
+  });
 }
 
 const date = (value: string) =>

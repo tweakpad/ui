@@ -1,7 +1,7 @@
 export type TpInput = import('../../../../src/components/input/index.js').TpInput;
 export type TpTextArea = import('../../../../src/components/text-area/index.js').TpTextArea;
 export type TpField = import('../../../../src/components/field/index.js').TpField;
-export type TpIcon = import('../../../../src/components/icon.js').TpIcon;
+export type TpIcon = import('../../../../src/components/icon/icon.js').TpIcon;
 
 const built = location.pathname.endsWith('/package.html');
 const libraryPath = built ? '/dist/index.js' : '/src/index.ts';

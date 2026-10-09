@@ -6,8 +6,8 @@ import { homeIcon, scanIcon } from '../../icons/map.js';
 import { minusIcon } from '../../icons/minus.js';
 import { plusIcon } from '../../icons/plus.js';
 import type { IconDefinition } from '../../icons/types.js';
-import { TpButton } from '../button.js';
-import { TpIcon } from '../icon.js';
+import { TpButton } from '../button/button.js';
+import { TpIcon } from '../icon/icon.js';
 import { TpMapElement, type MapMessages } from './context.js';
 
 export type MapControlAction = 'zoom-in' | 'zoom-out' | 'reset' | 'fit-pins';
@@ -145,4 +145,10 @@ export class TpMapControl extends TpMapElement {
             : map.request('fit-pins', undefined, options);
     void request.catch(() => undefined);
   };
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-map-control': TpMapControl;
+  }
 }

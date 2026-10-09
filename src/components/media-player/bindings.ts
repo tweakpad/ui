@@ -1,4 +1,5 @@
 import { css, type PropertyDeclarations, type PropertyValues } from 'lit';
+import { numberOrNull } from '../../foundation/converters.js';
 import { TpElement } from '../../foundation/element.js';
 import type {
   TapGesturePointer,
@@ -22,17 +23,6 @@ const nonVisual = css`
     display: none !important;
   }
 `;
-
-const numberOrNull = {
-  fromAttribute(value: string | null): number | null {
-    if (value === null || value.trim() === '') return null;
-    const number = Number(value);
-    return Number.isFinite(number) ? number : null;
-  },
-  toAttribute(value: number | null): string | null {
-    return value === null ? null : String(value);
-  },
-};
 
 /** Shared registration lifecycle: register with the player while connected, refresh on change. */
 abstract class MediaBindingElement extends TpMediaElement {
@@ -115,5 +105,12 @@ export class TpMediaGesture extends MediaBindingElement implements MediaGestureI
 
   protected registerWith(registry: BindingRegistry): (() => void) | undefined {
     return registry.registerGesture?.(this);
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-hotkey': TpMediaHotkey;
+    'tp-media-gesture': TpMediaGesture;
   }
 }

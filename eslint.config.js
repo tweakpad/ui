@@ -9,10 +9,6 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['src/stories/navigation-panel-example.js', 'src/stories/drag-drop-list-example.js'],
-    languageOptions: { globals: globals.browser },
-  },
-  {
     // Browser verification fixtures run as page modules; they follow the src typing policy.
     files: ['tests/fixtures/**/*.{js,ts}'],
     languageOptions: { globals: globals.browser },

@@ -16,7 +16,6 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Radio group',
   component: 'tp-radio-group',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: {

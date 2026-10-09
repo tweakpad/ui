@@ -6,7 +6,6 @@ export const inputCoreAppearance: PresentationDictionary = { input: [] };
 export const textAreaCoreAppearance: PresentationDictionary = { 'text-area': [] };
 export const toastCoreAppearance: PresentationDictionary = {
   // The close control is an icon-sm ghost Button; its size step owns the extent.
-  'toast-close': [],
   'toast-toast': surfaceAppearance,
 };
 export const attachmentCoreAppearance: PresentationDictionary = {

@@ -58,10 +58,8 @@ export const mapAppearance: PresentationDictionary = {
           '0 0 0 calc(var(--tp-ring-width) + var(--tp-ring-offset)) var(--tp-background)',
       },
     },
-    {
-      selector: ':host([data-disabled]) &',
-      declarations: { cursor: 'not-allowed', opacity: 'var(--tp-opacity-disabled)' },
-    },
+    // The pin host already applies the disabled opacity; the base rule's pointer cursor still needs overriding.
+    { selector: ':host([data-disabled]) &', declarations: { cursor: 'not-allowed' } },
   ],
   'map-pin-visual': [
     {
@@ -82,6 +80,4 @@ export const mapAppearance: PresentationDictionary = {
       },
     },
   ],
-  'map-overlay': [],
-  'map-control': [],
 };

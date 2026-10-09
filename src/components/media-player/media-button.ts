@@ -12,8 +12,8 @@ import type {
   MediaMarkers,
 } from './button-state.js';
 import { TpMediaElement, type MediaPlayerApi } from './context.js';
-import { TpButton } from '../button.js';
-import { TpIcon } from '../icon.js';
+import { TpButton } from '../button/button.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type MediaButtonVariant = TpButton['variant'];

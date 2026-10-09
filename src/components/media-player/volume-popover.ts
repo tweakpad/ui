@@ -59,7 +59,7 @@ export class TpMediaVolumePopover extends TpMediaElement {
 
   static override properties: PropertyDeclarations = {
     ...TpMediaElement.properties,
-    side: { type: String },
+    side: { type: String, reflect: true },
     openDelay: { type: Number, attribute: 'open-delay' },
     closeDelay: { type: Number, attribute: 'close-delay' },
   };
@@ -170,5 +170,11 @@ export class TpMediaVolumePopover extends TpMediaElement {
   #releaseLock(): void {
     this.#lock?.release();
     this.#lock = undefined;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-volume-popover': TpMediaVolumePopover;
   }
 }

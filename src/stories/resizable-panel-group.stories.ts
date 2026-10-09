@@ -21,9 +21,7 @@ const source = `<tp-resizable-panel-group style="height:18rem">
 const meta = {
   title: 'Components/Resizable panel group',
   component: 'tp-resizable-panel-group',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: { description: { component: documentation }, source: { code: source, language: 'html' } },
   },
   args: {

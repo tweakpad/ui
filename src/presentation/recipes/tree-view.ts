@@ -30,8 +30,6 @@ const halfGap = `calc(${subLevelGap} / 2)`;
 
 export const treeViewAppearance: PresentationDictionary = {
   'tree-view': [{ declarations: { 'font-size': 'var(--tp-text-sm)' } }],
-  'tree-view-viewport': [],
-  'tree-view-item': [],
   'tree-view-row': [
     ...navigationRow,
     {
@@ -61,7 +59,6 @@ export const treeViewAppearance: PresentationDictionary = {
       },
     },
   ],
-  'tree-view-row-size-default': [],
   'tree-view-indent': [
     {
       declarations: {
@@ -75,10 +72,8 @@ export const treeViewAppearance: PresentationDictionary = {
     { selector: ':host(:dir(rtl)) &', declarations: { 'background-image': guides('left') } },
     { selector: ':host([data-guides="none"]) &', declarations: { 'background-image': 'none' } },
   ],
-  'tree-view-indicator': [],
   'tree-view-checkbox': [...checkboxRules],
   'tree-view-leading': [{ declarations: { gap: 'var(--tp-space-2)' } }],
-  'tree-view-label': [],
   'tree-view-trailing': [
     { declarations: { gap: 'var(--tp-space-2)', color: 'var(--tp-muted-foreground)' } },
   ],
@@ -95,7 +90,6 @@ export const treeViewAppearance: PresentationDictionary = {
       },
     },
   ],
-  'tree-view-group': [],
   'tree-view-empty': [
     { declarations: { padding: 'var(--tp-space-2)', color: 'var(--tp-muted-foreground)' } },
   ],

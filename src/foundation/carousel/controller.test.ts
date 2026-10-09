@@ -1,5 +1,5 @@
+import { fakeHost } from '../fakes.test.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import {
   CarouselController,
   carouselInputKind,
@@ -9,18 +9,8 @@ import {
 import type { ValueChangeDetail } from '../types.js';
 import { carouselItems } from './model.js';
 
-class Host extends EventTarget implements ReactiveControllerHost {
-  updateComplete = Promise.resolve(true);
-  addController(_controller: ReactiveController): void {
-    void _controller;
-  }
-  removeController(_controller: ReactiveController): void {
-    void _controller;
-  }
-  requestUpdate(): void {}
-}
 function fixture(controlled = false) {
-  const host = new Host();
+  const host = fakeHost();
   let input: CarouselInput = {
     items: carouselItems(['a', 'b', 'c', 'd']),
     ...(controlled ? { value: 0 } : {}),
@@ -55,7 +45,7 @@ function fixture(controlled = false) {
 
 describe('Carousel selection and lifecycle owner', () => {
   function motionFixture() {
-    const host = new Host();
+    const host = fakeHost();
     let value = 0;
     let position = 0;
     let finish = () => {};
@@ -158,7 +148,7 @@ describe('Carousel selection and lifecycle owner', () => {
     const finish: Array<() => void> = [];
     let delay = false;
     const controller = new CarouselController({
-      host: new Host(),
+      host: fakeHost(),
       read: () => ({ items, options: { virtual: {} } }),
       measure: () => ({
         width: 100,
@@ -211,7 +201,7 @@ describe('Carousel selection and lifecycle owner', () => {
     f.controller.release();
   });
   it('retains logical initial selection while hidden, then measures without a fake commit', async () => {
-    const host = new Host();
+    const host = fakeHost();
     let width = 0;
     const events: string[] = [];
     const items = carouselItems(['a', 'b', 'c']);
@@ -260,7 +250,7 @@ describe('Carousel selection and lifecycle owner', () => {
     f.controller.release();
   });
   it('invalidates pending renderer work before releasing a host lifetime', async () => {
-    const host = new Host();
+    const host = fakeHost();
     const items = carouselItems(['a', 'b']);
     const moves: number[] = [];
     let finish: (() => void) | undefined;

@@ -8,7 +8,7 @@ import {
   samplePoster,
   sampleThumbnails,
   sampleVideo,
-} from './examples.js';
+} from './media.js';
 import {
   audioLayoutExample,
   headlessExample,
@@ -39,9 +39,7 @@ interface Args {
 const meta = {
   title: 'Components/Media player',
   component: 'tp-media-player',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       source: { code: mediaPlayerDemoSource() },

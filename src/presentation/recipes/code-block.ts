@@ -71,7 +71,6 @@ export const codeBlockAppearance: PresentationDictionary = {
       },
     },
   ],
-  'code-block-copy': [],
   'code-block-viewport': [
     {
       declarations: {

@@ -1,4 +1,5 @@
 import { css, html } from 'lit';
+import { observeSlots, slotOccupied } from '../shared/slots.js';
 import { TpElement } from '../../foundation/element.js';
 import { listItemPresentation } from '../../presentation/families/list-item.js';
 
@@ -125,36 +126,18 @@ export class TpListItem extends TpElement {
   variant: 'ghost' | 'outline' | 'subdued' = 'ghost';
   size: 'xs' | 'sm' | 'default' = 'default';
   mediaTreatment: 'plain' | 'icon' | 'image' = 'plain';
-  #observer: MutationObserver | undefined;
+  #releaseSlots: (() => void) | undefined;
   #sync = (): void => {
     this.requestUpdate();
   };
-  #has(names: string[]): boolean {
-    return [...this.childNodes].some((node) => {
-      const slot =
-        node.nodeType === Node.ELEMENT_NODE ? ((node as Element).getAttribute('slot') ?? '') : '';
-      return (
-        names.includes(slot) &&
-        (node.nodeType === Node.ELEMENT_NODE ||
-          (node.nodeType === Node.TEXT_NODE && !!node.textContent?.trim()))
-      );
-    });
-  }
   override connectedCallback(): void {
     super.connectedCallback();
-    this.#observer = new this.ownerDocument.defaultView!.MutationObserver(this.#sync);
-    this.#observer.observe(this, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ['slot'],
-    });
+    this.#releaseSlots = observeSlots(this, this.#sync, { characterData: true });
     this.requestUpdate();
   }
   override disconnectedCallback(): void {
-    this.#observer?.disconnect();
-    this.#observer = undefined;
+    this.#releaseSlots?.();
+    this.#releaseSlots = undefined;
     super.disconnectedCallback();
   }
   protected override render() {
@@ -168,8 +151,11 @@ export class TpListItem extends TpElement {
     });
     const supplied = (part: string) => this.partContracts[part]?.content !== undefined;
     const description =
-      !!this.description || this.#has(['description']) || supplied('list-item-description');
-    const actions = this.#has(['actions', 'trailing']) || supplied('list-item-actions');
+      !!this.description ||
+      slotOccupied(this, ['description'], { text: true }) ||
+      supplied('list-item-description');
+    const actions =
+      slotOccupied(this, ['actions', 'trailing'], { text: true }) || supplied('list-item-actions');
     const part = (name: string, options: Parameters<TpElement['renderPart']>[2]) =>
       this.renderPart(name, state, options);
     const region = (
@@ -199,9 +185,9 @@ export class TpListItem extends TpElement {
           'aria-current': this.selected ? 'true' : undefined,
         },
         content: html`
-          ${region('header', html`<slot name="header" @slotchange=${this.#sync}></slot>`, this.#has(['header']))}
+          ${region('header', html`<slot name="header" @slotchange=${this.#sync}></slot>`, slotOccupied(this, ['header'], { text: true }))}
           <span class="body">
-            ${region('media', html`<slot name="media" @slotchange=${this.#sync}><slot name="leading" @slotchange=${this.#sync}></slot></slot>`, this.#has(['media', 'leading']), { 'data-treatment': this.mediaTreatment })}
+            ${region('media', html`<slot name="media" @slotchange=${this.#sync}><slot name="leading" @slotchange=${this.#sync}></slot></slot>`, slotOccupied(this, ['media', 'leading'], { text: true }), { 'data-treatment': this.mediaTreatment })}
             ${part('list-item-content', {
               tag: 'span',
               properties: { class: 'content' },
@@ -211,9 +197,15 @@ export class TpListItem extends TpElement {
               `,
             })}
           </span>
-          ${region('footer', html`<slot name="footer" @slotchange=${this.#sync}></slot>`, this.#has(['footer']))}
+          ${region('footer', html`<slot name="footer" @slotchange=${this.#sync}></slot>`, slotOccupied(this, ['footer'], { text: true }))}
         `,
       })}${region('actions', html`<slot name="actions" @slotchange=${this.#sync}><slot name="trailing" @slotchange=${this.#sync}></slot></slot>`, actions)}
     </div>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-list-item': TpListItem;
   }
 }

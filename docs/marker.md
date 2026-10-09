@@ -10,11 +10,11 @@ for a label above a rule. The default treatment has no boundary.
 
 Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css` once.
 
-| Property / attribute | Values | Default |
-| --- | --- | --- |
-| `variant` | default, separator, border | default |
-| `label` | Text fallback when the default slot is empty | empty |
-| `tone` | neutral, accent, danger, success; compatibility color mapping | neutral |
+| Property / attribute | Values                                                        | Default |
+| -------------------- | ------------------------------------------------------------- | ------- |
+| `variant`            | default, separator, border                                    | default |
+| `label`              | Text fallback when the default slot is empty                  | empty   |
+| `tone`               | neutral, accent, danger, success; compatibility color mapping | neutral |
 
 The default slot supplies content; the optional `icon` slot accepts an existing
 Icon or decorative Spinner. The icon region is hidden from accessibility, so its

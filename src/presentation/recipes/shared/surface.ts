@@ -54,3 +54,7 @@ export function dialogSectionAppearance(wrapper = '') {
     ),
   ];
 }
+
+/** The hairline of floating popups: a 10% foreground mix (shadcn popover, menu and command surfaces). */
+export const popupBorderColor = 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)';
+export const popupBorder = `var(--tp-border-width) var(--tp-border-style) ${popupBorderColor}`;

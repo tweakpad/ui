@@ -21,8 +21,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Dialog',
   component: 'tp-dialog',
-  tags: ['autodocs'],
-  parameters: { layout: 'padded', docs: { description: { component: documentation } } },
+  parameters: { docs: { description: { component: documentation } } },
   args: {
     open: false,
     label: 'Edit profile',

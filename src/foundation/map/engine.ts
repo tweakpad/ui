@@ -104,37 +104,4 @@ export interface MapEngine {
   ): MapEngineInstance | Promise<MapEngineInstance>;
 }
 
-export type MapCapability =
-  | 'animation'
-  | 'fit'
-  | 'zoom-range'
-  | 'interaction'
-  | 'cooperative-gestures'
-  | 'appearance'
-  | 'resize';
-
-/** Whether an instance implements an optional capability. */
-export function engineSupports(
-  instance: MapEngineInstance | null,
-  capability: MapCapability,
-): boolean {
-  if (!instance) return false;
-  switch (capability) {
-    case 'animation':
-      return typeof instance.easeTo === 'function';
-    case 'fit':
-      return typeof instance.cameraForBounds === 'function';
-    case 'zoom-range':
-      return typeof instance.setZoomRange === 'function';
-    case 'interaction':
-      return typeof instance.setInteractive === 'function';
-    case 'cooperative-gestures':
-      return typeof instance.setCooperativeGestures === 'function';
-    case 'appearance':
-      return typeof instance.setAppearance === 'function';
-    case 'resize':
-      return typeof instance.resize === 'function';
-  }
-}
-
 export type { MapCameraTarget };

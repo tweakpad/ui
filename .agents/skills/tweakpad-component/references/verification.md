@@ -64,12 +64,12 @@ with a concrete scope/dependency reason; this cannot excuse missing implementati
    not turn viewport emulation into a claim of actual touch interaction or Chrome
    results into a cross-browser claim.
 
-Inspect commands before running them. At skill creation, the following commands
-or scripts launch Playwright and must not be used for this pipeline's browser
-verification: `test:browser`, `test:button:browser`, `test:stories`, `test:package`,
-and `scripts/repair-browser-smoke.mjs`. Read their assertions as regression leads
-and perform applicable checks through Chrome DevTools MCP. Do not delete useful
-coverage because its old driver is prohibited.
+The repository has no browser driver: the former Playwright smoke scripts were
+re-homed as fixtures under `tests/fixtures/components/<component>/`, and each
+folder's `README.md` lists the Chrome DevTools MCP steps and the assertion
+modules to evaluate. Repository scripts (`build`, `test:package`, `size:report`)
+are Node-only. Do not add a browser driver, and do not delete useful fixture
+coverage because its original driver was removed.
 
 Non-browser verification remains useful: `npm test`, `npm run lint`,
 `npx tsc -p tsconfig.build.json --noEmit`, `npm run build`, `npm run build-storybook`,
@@ -117,8 +117,8 @@ built graph statically and exercise a served built-package fixture through MCP.
   the component. Inspect high-contrast/forced-colors and zoom requirements where
   applicable and tooling supports them; blocked is different from not applicable.
 - Run automated accessibility analysis through the MCP-controlled page using the
-  local Storybook a11y facilities or locally available axe core. Do not instantiate
-  `@axe-core/playwright` as a driver or fetch a remote replacement. Record the
+  local Storybook a11y facilities or locally available axe core. Do not add a
+  browser-driver axe integration or fetch a remote replacement. Record the
   rules, scope, findings and resolution. If the analyzer cannot run, leave that
   check blocked; an accessibility-tree snapshot is a different check.
 - Separate genuine component violations from isolated-fixture page landmarks.

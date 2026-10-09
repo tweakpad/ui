@@ -4,7 +4,6 @@ import { tablePresentation } from '../../presentation/families/table.js';
 
 /** Public composition units keep native elements in the flattened table tree. */
 abstract class TablePart extends TpElement {
-  static presentationTagName = 'tp-table';
   static override presentation = tablePresentation;
   static nativeTag = '';
   static partName = '';
@@ -145,4 +144,16 @@ export function tableSections(table: HTMLTableElement, owner: HTMLElement): Tabl
       },
     ];
   });
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-table-header': TpTableHeader;
+    'tp-table-body': TpTableBody;
+    'tp-table-footer': TpTableFooter;
+    'tp-table-row': TpTableRow;
+    'tp-table-head': TpTableHead;
+    'tp-table-cell': TpTableCell;
+    'tp-table-caption': TpTableCaption;
+  }
 }

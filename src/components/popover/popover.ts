@@ -1,5 +1,5 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
-import { TpHoverSurface } from '../anchored-surface.js';
+import { TpHoverSurface } from '../anchored-surface/anchored-surface.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { createId } from '../../foundation/id.js';
 import { composedContains, deepActiveElement } from '../../foundation/focus.js';
@@ -118,5 +118,11 @@ export class TpPopover extends TpHoverSurface {
     this.#anchorRelease = undefined;
     this.#registeredAnchor = undefined;
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-popover': TpPopover;
   }
 }

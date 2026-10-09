@@ -8,7 +8,7 @@ import { composedParent } from '../../foundation/focus.js';
 import { TabsSelection } from '../../foundation/tabs-selection.js';
 import { SyntheticPress } from '../../foundation/synthetic-press.js';
 import type { ChangeReason } from '../../foundation/types.js';
-import { OwnedAttributes } from './owned-attributes.js';
+import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 import { TabsPanel } from './panel.js';
 import { elementGeometry } from '../../foundation/indicator-geometry.js';
 import { tabsPresentation } from '../../presentation/families/tabs.js';
@@ -18,6 +18,7 @@ import {
   type MotionHandle,
   type MotionRoleDefinition,
   type MotionValue,
+  stateRole,
 } from '../../foundation/motion.js';
 
 export type TabsActivationDirection = 'left' | 'right' | 'up' | 'down' | 'none';
@@ -28,7 +29,7 @@ export type TabsMember = HTMLElement & {
   disabled?: boolean;
 };
 export const tabsMotionRoles = {
-  indicator: { name: 'indicator', kind: 'state', phases: ['change'], completion: 'non-blocking' },
+  indicator: stateRole('indicator'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
 const edges = ['left', 'right', 'top', 'bottom'] as const;
@@ -232,7 +233,6 @@ export class TpTabs extends TpElement {
   #syncing = false;
   #focused: HTMLElement | null = null;
   #pointerButton: number | null = null;
-  #diagnostics = new Set<string>();
   #duplicates = new Set<HTMLElement>();
   #ids = new WeakMap<HTMLElement, string>();
 
@@ -305,7 +305,7 @@ export class TpTabs extends TpElement {
     this.#parts.clear();
     for (const panel of this.#panels.values()) panel.destroy();
     this.#panels.clear();
-    for (const attributes of this.#attributes.values()) attributes.restore();
+    for (const attributes of this.#attributes.values()) attributes.dispose();
     this.#attributes.clear();
     this.#tabs = [];
     this.#focused = null;
@@ -359,7 +359,7 @@ export class TpTabs extends TpElement {
   #isDisabled = (element: HTMLElement): boolean =>
     (element as TabsMember).disabled === true ||
     element.hasAttribute('disabled') ||
-    this.#own(element).authored('aria-disabled') === 'true';
+    this.#own(element).original('aria-disabled') === 'true';
   #register(element: HTMLElement, part: string, current: Set<HTMLElement>): void {
     current.add(element);
     if (!this.#parts.has(element))
@@ -402,7 +402,7 @@ export class TpTabs extends TpElement {
           );
           continue;
         }
-        if (this.#duplicates.delete(tab)) a.restore();
+        if (this.#duplicates.delete(tab)) a.dispose();
         seen.add(value);
         tabs.push(tab);
         this.#register(tab, 'tabs-trigger', currentParts);
@@ -468,7 +468,7 @@ export class TpTabs extends TpElement {
         const a = this.#own(tab),
           panel = panelByValue.get(memberValue(tab));
         a.set('aria-selected', String(active));
-        a.set('aria-disabled', disabled ? 'true' : a.authored('aria-disabled'));
+        a.set('aria-disabled', disabled ? 'true' : a.original('aria-disabled'));
         a.set('data-disabled', disabled ? '' : null);
         a.set('data-selected', active ? '' : null);
         a.set('data-active', active ? '' : null);
@@ -498,7 +498,7 @@ export class TpTabs extends TpElement {
           !this.#panels.has(element) &&
           !this.renderRoot.contains(element)
         ) {
-          owner.restore();
+          owner.dispose();
           this.#attributes.delete(element);
         }
       }
@@ -689,9 +689,7 @@ export class TpTabs extends TpElement {
     if (tab) this.#presses.get(tab)?.reset();
   };
   #diagnose(code: string, message: string): void {
-    if (this.#diagnostics.has(code)) return;
-    this.#diagnostics.add(code);
-    this.emit('tp-diagnostic', { code: 'tabs-' + code, message, severity: 'warning' });
+    this.diagnose('tabs-' + code, message, { once: true });
   }
   #firstSync = false;
   protected override updated(changed: PropertyValues<this>): void {
@@ -732,5 +730,11 @@ export class TpTabs extends TpElement {
       </div>
       <div class="panels"><slot name="panel" @slotchange=${this.#sync}></slot></div>
     </div>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-tabs': TpTabs;
   }
 }

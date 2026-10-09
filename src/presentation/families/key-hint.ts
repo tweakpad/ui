@@ -6,22 +6,13 @@ const definition: ComponentDefinition = {
   name: 'Key hint',
   tagName: 'tp-key-hint',
   kind: 'presentational-primitive',
-  sourceNode: 'ucl22-key-hint',
   axes: [],
   parts: [
     {
       name: 'key-hint',
-      publicName: 'Key',
-      presentationKeys: ['key-hint'],
-      cardinality:
-        'exactly one public owner host per Key instance; standalone or an ordered child of Group',
     },
     {
       name: 'key-hint-group',
-      publicName: 'Group',
-      presentationKeys: ['key-hint-group'],
-      cardinality:
-        'optional parent group host containing an ordered sequence of Key instances; groups may be nested to describe sequences',
     },
   ],
 };

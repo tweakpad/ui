@@ -72,3 +72,18 @@ describe('shared typeahead locale and lifecycle', () => {
     expect(owner.search(items, 'J')).toBe(-1);
   });
 });
+
+describe('TypeaheadController', () => {
+  it('wraps through enabled matching items', () => {
+    const controller = new TypeaheadController();
+    const items = [
+      { value: 'a', label: 'Alpha' },
+      { value: 'b', label: 'Beta', disabled: true },
+      { value: 'c', label: 'Charlie' },
+    ];
+    expect(controller.search(items, 'c', 0)).toBe(2);
+    controller.reset();
+    expect(controller.search(items, 'a', 2)).toBe(0);
+    controller.reset();
+  });
+});

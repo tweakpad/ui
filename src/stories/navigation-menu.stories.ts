@@ -31,7 +31,6 @@ const source = `${sourceImports}
 const meta: Meta<Args> = {
   title: 'Components/Navigation menu',
   component: 'tp-navigation-menu',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: {

@@ -4,7 +4,6 @@ import { drawerPresentation } from '../../presentation/families/drawer.js';
 /** Private composition: the existing Drawer owns every modal and presence behavior. */
 export class NavigationPanelDrawer extends TpDrawer {
   static override tagName = 'tp-navigation-panel-drawer';
-  static presentationTagName = 'tp-drawer';
   static override presentation = drawerPresentation;
   controlsTarget: HTMLElement | undefined;
   protected override triggerControlsTarget(): HTMLElement {
@@ -36,4 +35,10 @@ export class NavigationPanelDrawer extends TpDrawer {
       }
     `,
   ];
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-navigation-panel-drawer': NavigationPanelDrawer;
+  }
 }

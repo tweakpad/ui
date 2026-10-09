@@ -1,8 +1,9 @@
 import { html, nothing } from 'lit';
+import { slotOccupied } from '../shared/slots.js';
 import type { PropertyValues } from 'lit';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpElement } from '../../foundation/element.js';
-import { prepareMotion, resolvesReducedMotion } from '../../foundation/motion.js';
+import { prepareMotion, resolvesReducedMotion, stateRole } from '../../foundation/motion.js';
 import type { MotionRoleDefinition } from '../../foundation/motion.js';
 import type { Orientation } from '../../foundation/types.js';
 import { timelinePresentation } from '../../presentation/families/timeline.js';
@@ -11,7 +12,7 @@ import { timelineItemStyles } from './layout.js';
 import type { TimelineItemState, TimelineSide, TimelineStatus } from './state.js';
 
 export const timelineMotionRoles = {
-  connector: { name: 'connector', kind: 'state', phases: ['change'], completion: 'non-blocking' },
+  connector: stateRole('connector'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
 /** What the owning Timeline resolves for one of its Items. */
@@ -32,7 +33,6 @@ type Connector = 'before' | 'after';
 /** One entry on the timeline axis: marker, connectors, content and opposite content. */
 export class TpTimelineItem extends TpElement {
   static tagName = 'tp-timeline-item';
-  static presentationTagName = 'tp-timeline';
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
     return [TpSeparator];
   }
@@ -41,7 +41,7 @@ export class TpTimelineItem extends TpElement {
     ...TpElement.properties,
     value: { type: String },
     status: { type: String },
-    align: { type: String },
+    align: { type: String, reflect: true },
     _record: { state: true },
     _customMarker: { state: true },
     _opposite: { state: true },
@@ -89,15 +89,9 @@ export class TpTimelineItem extends TpElement {
     this.orientation = record?.orientation ?? 'vertical';
   }
 
-  #slotted(name: string): boolean {
-    return [...this.childNodes].some((node) =>
-      node.nodeType === Node.ELEMENT_NODE ? (node as Element).getAttribute('slot') === name : false,
-    );
-  }
-
   #slotChange = (): void => {
-    this._customMarker = this.#slotted('marker');
-    this._opposite = this.#slotted('opposite');
+    this._customMarker = slotOccupied(this, 'marker');
+    this._opposite = slotOccupied(this, 'opposite');
   };
 
   override connectedCallback(): void {
@@ -227,5 +221,11 @@ export class TpTimelineItem extends TpElement {
           content: html`<slot @slotchange=${this.#slotChange}></slot>`,
         })}`,
     });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-timeline-item': TpTimelineItem;
   }
 }

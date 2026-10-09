@@ -14,7 +14,6 @@ export interface ResizeHandleState {
 }
 export class TpResizableHandle extends TpElement {
   static tagName = 'tp-resizable-handle';
-  static presentationTagName = 'tp-resizable-panel-group';
   static override presentation = resizablePanelGroupPresentation;
   static override properties = {
     ...TpElement.properties,
@@ -183,5 +182,11 @@ export class TpResizableHandle extends TpElement {
           })
         : undefined,
     });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-resizable-handle': TpResizableHandle;
   }
 }

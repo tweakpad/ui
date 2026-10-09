@@ -42,3 +42,9 @@ export class TpSelectOption extends TpElement {
     this.dispatchEvent(new Event('tp-select-source-change', { bubbles: true, composed: true }));
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-select-option': TpSelectOption;
+  }
+}

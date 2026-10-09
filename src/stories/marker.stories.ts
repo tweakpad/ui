@@ -6,9 +6,7 @@ import { markerExamples } from './marker.examples.js';
 const meta = {
   title: 'Components/Marker',
   component: 'tp-marker',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: { description: { component: documentation }, examples: markerExamples },
   },
   args: { variant: 'default', label: 'Conversation compacted', tone: 'neutral' },

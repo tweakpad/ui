@@ -8,6 +8,7 @@ import {
   setupNavigationPanelExample,
 } from './navigation-panel-example.js';
 import exampleSource from './navigation-panel-example.js?raw';
+import { publishedSource } from './documentation-examples.js';
 import documentation from '../../docs/navigation-panel.md?raw';
 import type { TpNavigationPanel } from '../components/navigation-panel/index.js';
 interface Args {
@@ -20,10 +21,7 @@ interface Args {
   motionPolicy: 'inherit' | 'normal' | 'reduce';
 }
 function source(args: Args): string {
-  const module = exampleSource
-    .replaceAll("'../icons/navigation.js'", "'@tweakpad/ui/icons/navigation'")
-    .replaceAll("'../icons/plus.js'", "'@tweakpad/ui/icons/plus'")
-    .replaceAll('export ', '');
+  const module = publishedSource(exampleSource).replaceAll('export ', '');
   return `import '@tweakpad/ui/register';
 import '@tweakpad/ui/styles.css';
 ${module}
@@ -42,7 +40,6 @@ panel.addEventListener('tp-value-change', event => {
 const meta: Meta<Args> = {
   title: 'Components/Navigation panel',
   component: 'tp-navigation-panel',
-  tags: ['autodocs'],
   parameters: {
     layout: 'fullscreen',
     docs: {

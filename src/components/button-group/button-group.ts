@@ -268,3 +268,9 @@ export class TpButtonGroup extends TpElement {
     );
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-button-group': TpButtonGroup;
+  }
+}

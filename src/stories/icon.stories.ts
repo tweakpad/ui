@@ -14,9 +14,7 @@ interface IconStoryArgs {
 const meta: Meta<IconStoryArgs> = {
   title: 'Components/Icon',
   component: 'tp-icon',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: { description: { component: iconDocumentation.replace(/^# Icon\n/u, '') } },
   },
   args: { icon: plusIcon, label: 'Add', size: '' },

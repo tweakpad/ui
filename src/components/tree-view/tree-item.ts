@@ -1,4 +1,5 @@
 import { css, html, nothing } from 'lit';
+import { observeSlots } from '../shared/slots.js';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { interactiveTargetInPath } from '../../foundation/interactive-target.js';
@@ -18,9 +19,9 @@ import {
   disclosurePanelStyles,
   fillLayerStyles,
 } from '../../presentation/motion.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import { TpSpinner } from '../spinner/spinner.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 import { selectionBoxStyles } from '../shared/control-styles.js';
 import { GROUP_EXTENT } from './segments.js';
 import type { TreeItemOwner, TreeItemState } from './types.js';
@@ -201,7 +202,7 @@ export class TpTreeItem extends TpElement {
     trackCompletion: (completion) => this.#presence.trackCompletion(completion),
     extent: GROUP_EXTENT,
   });
-  #observer: MutationObserver | null = null;
+  #releaseSlots: (() => void) | null = null;
   #settled = false;
 
   constructor() {
@@ -247,22 +248,16 @@ export class TpTreeItem extends TpElement {
   override connectedCallback(): void {
     super.connectedCallback();
     // Reassign when direct children or their slot names change; the tree observes structure.
-    this.#observer = new (this.ownerDocument.defaultView ?? window).MutationObserver((records) => {
+    this.#releaseSlots = observeSlots(this, (records) => {
       if (records.some((record) => record.target === this || record.target.parentNode === this))
         this.#assign();
-    });
-    this.#observer.observe(this, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['slot'],
     });
     this.#findOwner();
   }
 
   override disconnectedCallback(): void {
-    this.#observer?.disconnect();
-    this.#observer = null;
+    this.#releaseSlots?.();
+    this.#releaseSlots = null;
     this.#indicator.cancel();
     this.#panel.cancel();
     super.disconnectedCallback();
@@ -473,7 +468,8 @@ export class TpTreeItem extends TpElement {
         ? html`<div
             part="group"
             role="group"
-            data-state=${presence}
+            ?data-open=${presence === 'starting' || presence === 'open'}
+            ?data-closed=${presence !== 'starting' && presence !== 'open'}
             ?data-starting-style=${presence === 'starting'}
             ?data-ending-style=${presence === 'ending'}
             ?hidden=${presence === 'absent' || presence === 'retained'}
@@ -482,5 +478,11 @@ export class TpTreeItem extends TpElement {
           </div>`
         : html`<slot name="group" hidden></slot>`;
     return html`${row}${statusLine}${group}`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-tree-item': TpTreeItem;
   }
 }

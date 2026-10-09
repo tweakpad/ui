@@ -1,6 +1,6 @@
-import type { Direction } from './types.js';
 import { composedParent } from './focus.js';
-import { NumberLocale, numberFormatter } from './number-locale.js';
+import { collator as intlCollator, numberFormatter } from './intl.js';
+import { NumberLocale } from './number-locale.js';
 import {
   dateTimeFormatter,
   durationFormatter,
@@ -146,30 +146,40 @@ export class DiagnosticChannel extends EventTarget {
   }
 }
 
-export class EnvironmentService {
-  constructor(readonly document: Document = globalThis.document) {}
+/** The detail of a `tp-diagnostic` event: exactly a code, a message and a severity. */
+export interface DiagnosticDetail {
+  code: string;
+  message: string;
+  severity: DiagnosticSeverity;
+}
 
-  direction(element?: Element | null): Direction {
-    const explicit = element?.closest('[dir]')?.getAttribute('dir');
-    if (explicit === 'rtl' || explicit === 'ltr') return explicit;
-    return this.document.documentElement.dir === 'rtl' ? 'rtl' : 'ltr';
+/**
+ * Dispatches a bubbling, composed `tp-diagnostic` event from `host` (Foundation diagnostics
+ * channel). With `once`, a code already in the set is not reported again; the set records it.
+ * Returns whether the event was dispatched.
+ */
+export function reportDiagnostic(
+  host: EventTarget,
+  detail: DiagnosticDetail,
+  options: { once?: Set<string> } = {},
+): boolean {
+  if (options.once) {
+    if (options.once.has(detail.code)) return false;
+    options.once.add(detail.code);
   }
-
-  get reducedMotion(): boolean {
-    return (
-      this.document.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches ?? false
-    );
-  }
-
-  activeElement(root: Document | ShadowRoot = this.document): Element | null {
-    let active: Element | null = root.activeElement;
-    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
-    return active;
-  }
+  const { code, message, severity } = detail;
+  const Event = (host as Partial<Node>).ownerDocument?.defaultView?.CustomEvent ?? CustomEvent;
+  host.dispatchEvent(
+    new Event<DiagnosticDetail>('tp-diagnostic', {
+      bubbles: true,
+      composed: true,
+      detail: { code, message, severity },
+    }),
+  );
+  return true;
 }
 
 export class LocaleService {
-  readonly #collators = new Map<string, Intl.Collator>();
   constructor(readonly locale: string | string[] | undefined = undefined) {}
   number(value: number, options?: Intl.NumberFormatOptions): string {
     return numberFormatter(this.locale, options).format(value);
@@ -212,13 +222,7 @@ export class LocaleService {
     return this.collator(options).compare(a, b);
   }
   collator(options?: Intl.CollatorOptions): Intl.Collator {
-    const key = JSON.stringify(options ?? {});
-    let collator = this.#collators.get(key);
-    if (!collator) {
-      collator = new Intl.Collator(this.locale, options);
-      this.#collators.set(key, collator);
-    }
-    return collator;
+    return intlCollator(this.locale, options);
   }
 }
 

@@ -1,3 +1,120 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tooltip verification</title><link rel="stylesheet" href="/src/styles.css"><style>
-body{margin:0;background:var(--tp-background);color:var(--tp-foreground);font-family:var(--tp-font-sans)}main{padding:100px 40px;display:grid;justify-items:center;gap:40px} .row{display:flex;gap:24px;align-items:center}.rich{display:inline-flex;align-items:center;gap:6px}#clip{width:210px;height:65px;overflow:hidden;transform:translateZ(0);display:grid;place-items:center}#edge>tp-button{position:fixed;top:2px;left:2px}#scroller{height:70px;overflow:auto;width:220px}#scroll-space{padding:20px 10px 220px}#layout{display:grid;gap:20px;justify-items:center}
-</style></head><body><main><h1>Tooltip verification</h1><tp-button id="outside" variant="outline">Outside</tp-button><div class="row" id="layout"><tp-tooltip id="basic"><tp-button slot="trigger" variant="outline">Save changes</tp-button><span class="rich"><tp-icon id="tip-icon"></tp-icon>Save changes <tp-key-hint>⌘ S</tp-key-hint></span></tp-tooltip></div><div class="row"><tp-tooltip id="second"><tp-button slot="trigger" variant="outline">Second action</tp-button>Another useful description</tp-tooltip><tp-tooltip id="cursor" track-cursor-axis="both" open-delay="0"><tp-button slot="trigger" variant="outline">Follow pointer</tp-button>Pointer tracking</tp-tooltip></div><div id="clip"><tp-tooltip id="clipped" open-delay="0" side="right"><tp-button slot="trigger" variant="outline">Clipped ancestor</tp-button>Visible outside the clipped ancestor</tp-tooltip></div><div id="scroller"><div id="scroll-space"><tp-tooltip id="scroll" open-delay="0"><tp-button slot="trigger" variant="outline">Scrollable anchor</tp-button>Scrolling geometry</tp-tooltip></div></div><div class="row"><tp-popover id="popover" label="Popover regression"><tp-button slot="trigger" variant="outline">Popover</tp-button><tp-button variant="outline">Popover action</tp-button></tp-popover><tp-preview-card id="preview" open-delay="0"><tp-button slot="trigger" variant="outline">Preview Card</tp-button><p>Preview content</p><tp-button variant="outline">Preview action</tp-button></tp-preview-card><tp-dialog id="dialog" label="Modal regression"><tp-button slot="trigger" variant="outline">Dialog</tp-button><tp-tooltip id="nested" open-delay="0"><tp-button slot="trigger" variant="outline">Nested tooltip</tp-button>Above the modal</tp-tooltip></tp-dialog></div><tp-button id="detached-a" variant="outline">Detached A</tp-button><tp-button id="detached-b" variant="outline">Detached B</tp-button><tp-tooltip id="detached"></tp-tooltip><tp-tooltip id="edge" side="top" open-delay="0"><tp-button slot="trigger" variant="outline">Edge</tp-button>A description that stays on screen</tp-tooltip></main><script type="module" src="./fixture.ts"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tooltip verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        padding: 100px 40px;
+        display: grid;
+        justify-items: center;
+        gap: 40px;
+      }
+      .row {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+      }
+      .rich {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      #clip {
+        width: 210px;
+        height: 65px;
+        overflow: hidden;
+        transform: translateZ(0);
+        display: grid;
+        place-items: center;
+      }
+      #edge > tp-button {
+        position: fixed;
+        top: 2px;
+        left: 2px;
+      }
+      #scroller {
+        height: 70px;
+        overflow: auto;
+        width: 220px;
+      }
+      #scroll-space {
+        padding: 20px 10px 220px;
+      }
+      #layout {
+        display: grid;
+        gap: 20px;
+        justify-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Tooltip verification</h1>
+      <tp-button id="outside" variant="outline">Outside</tp-button>
+      <div class="row" id="layout">
+        <tp-tooltip id="basic"
+          ><tp-button slot="trigger" variant="outline">Save changes</tp-button
+          ><span class="rich"
+            ><tp-icon id="tip-icon"></tp-icon>Save changes <tp-key-hint>⌘ S</tp-key-hint></span
+          ></tp-tooltip
+        >
+      </div>
+      <div class="row">
+        <tp-tooltip id="second"
+          ><tp-button slot="trigger" variant="outline">Second action</tp-button>Another useful
+          description</tp-tooltip
+        ><tp-tooltip id="cursor" track-cursor-axis="both" open-delay="0"
+          ><tp-button slot="trigger" variant="outline">Follow pointer</tp-button>Pointer
+          tracking</tp-tooltip
+        >
+      </div>
+      <div id="clip">
+        <tp-tooltip id="clipped" open-delay="0" side="right"
+          ><tp-button slot="trigger" variant="outline">Clipped ancestor</tp-button>Visible outside
+          the clipped ancestor</tp-tooltip
+        >
+      </div>
+      <div id="scroller">
+        <div id="scroll-space">
+          <tp-tooltip id="scroll" open-delay="0"
+            ><tp-button slot="trigger" variant="outline">Scrollable anchor</tp-button>Scrolling
+            geometry</tp-tooltip
+          >
+        </div>
+      </div>
+      <div class="row">
+        <tp-popover id="popover" label="Popover regression"
+          ><tp-button slot="trigger" variant="outline">Popover</tp-button
+          ><tp-button variant="outline">Popover action</tp-button></tp-popover
+        ><tp-preview-card id="preview" open-delay="0"
+          ><tp-button slot="trigger" variant="outline">Preview Card</tp-button>
+          <p>Preview content</p>
+          <tp-button variant="outline">Preview action</tp-button></tp-preview-card
+        ><tp-dialog id="dialog" label="Modal regression"
+          ><tp-button slot="trigger" variant="outline">Dialog</tp-button
+          ><tp-tooltip id="nested" open-delay="0"
+            ><tp-button slot="trigger" variant="outline">Nested tooltip</tp-button>Above the
+            modal</tp-tooltip
+          ></tp-dialog
+        >
+      </div>
+      <tp-button id="detached-a" variant="outline">Detached A</tp-button
+      ><tp-button id="detached-b" variant="outline">Detached B</tp-button
+      ><tp-tooltip id="detached"></tp-tooltip
+      ><tp-tooltip id="edge" side="top" open-delay="0"
+        ><tp-button slot="trigger" variant="outline">Edge</tp-button>A description that stays on
+        screen</tp-tooltip
+      >
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

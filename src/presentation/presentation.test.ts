@@ -1,7 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { DefinitionRegistry } from './definition.js';
-import { mergePresentation, presentationStyle } from './dictionary.js';
 import {
   assertCompatibleTokenModes,
   assertCompleteStylingCoverage,
@@ -10,85 +8,6 @@ import {
   STYLING_CATEGORIES,
   TOKEN_FAMILIES,
 } from './tokens.js';
-
-describe('presentation dictionary', () => {
-  it('applies layers in order and replaces conflict groups atomically', () => {
-    const result = mergePresentation([
-      {
-        tokens: { background: 'var(--tp-background)' },
-        parts: { root: { padding: 'var(--tp-space-1)', compact: true } },
-      },
-      {
-        tokens: { background: 'var(--tp-card)' },
-        parts: { root: { spacious: true } },
-        conflicts: { density: ['compact', 'spacious'] },
-      },
-    ]);
-    expect(result).toEqual({
-      tokens: { background: 'var(--tp-card)' },
-      parts: { root: { padding: 'var(--tp-space-1)', spacious: true } },
-    });
-    expect(presentationStyle(result.tokens)).toBe('--tp-background:var(--tp-card)');
-  });
-});
-
-describe('definition registry', () => {
-  it('rejects duplicate identities and preserves immutable definitions', () => {
-    const registry = new DefinitionRegistry();
-    registry.register({
-      name: 'Button',
-      tagName: 'tp-button',
-      kind: 'compound-reexport',
-      parts: [{ name: 'control' }],
-    });
-    expect(() =>
-      registry.register({
-        name: 'Button',
-        tagName: 'tp-other-button',
-        kind: 'thin-wrapper',
-        parts: [],
-      }),
-    ).toThrow(/Duplicate/);
-    expect(Object.isFrozen(registry.get('Button'))).toBe(true);
-  });
-
-  it('validates closed motion-role inventories against public parts', () => {
-    const registry = new DefinitionRegistry();
-    registry.register({
-      name: 'Panel',
-      tagName: 'tp-panel',
-      kind: 'compound-reexport',
-      parts: [{ name: 'content' }],
-      motionRoles: [
-        {
-          name: 'surface',
-          target: 'content',
-          kind: 'presence',
-          phases: ['enter', 'exit'],
-          completion: 'blocking',
-        },
-      ],
-    });
-    expect(registry.get('Panel')?.motionRoles?.[0]?.name).toBe('surface');
-    expect(() =>
-      registry.register({
-        name: 'Broken panel',
-        tagName: 'tp-broken-panel',
-        kind: 'compound-reexport',
-        parts: [{ name: 'content' }],
-        motionRoles: [
-          {
-            name: 'surface',
-            target: 'private-node',
-            kind: 'presence',
-            phases: ['enter'],
-            completion: 'blocking',
-          },
-        ],
-      }),
-    ).toThrow(/Unknown motion target/);
-  });
-});
 
 describe('foundational styling tokens', () => {
   const styles = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');

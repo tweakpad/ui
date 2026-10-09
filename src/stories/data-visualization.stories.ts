@@ -14,9 +14,7 @@ interface Args {
 const meta = {
   title: 'Components/Data visualization',
   component: 'tp-data-visualization',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: { description: { component: documentation }, source: { code: source } },
   },
   args: {

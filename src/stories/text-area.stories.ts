@@ -18,8 +18,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Text area',
   component: 'tp-text-area',
-  tags: ['autodocs'],
-  parameters: { layout: 'padded', docs: { description: { component: documentation } } },
+  parameters: { docs: { description: { component: documentation } } },
   args: {
     value: '',
     label: 'Message',

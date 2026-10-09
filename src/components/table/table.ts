@@ -228,3 +228,9 @@ export class TpTable extends TpElement {
     );
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-table': TpTable;
+  }
+}

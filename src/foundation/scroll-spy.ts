@@ -11,7 +11,12 @@ import {
   scrollEventTarget,
   type ScrollTiming,
 } from './observation.js';
-import { commonScrollContainer } from './scroll.js';
+import {
+  SCROLL_SETTLE_MS,
+  commonScrollContainer,
+  isDocumentScroller,
+  scrollport,
+} from './scroll.js';
 
 /** A target's box along the block axis, relative to the scroll root's visible start edge. */
 export interface SpyBox {
@@ -145,7 +150,6 @@ interface MeasuredEntry<K> {
   readonly element: Element;
 }
 
-const NAVIGATION_SETTLE = 150;
 const px = (value: string) => parseFloat(value) || 0;
 
 /**
@@ -240,7 +244,7 @@ export class ScrollSpyController<K> {
       const resolved: ScrollBehavior = resolvesReducedMotion(this.#options.host)
         ? 'instant'
         : behavior;
-      if (root === root.ownerDocument.scrollingElement)
+      if (isDocumentScroller(root))
         root.ownerDocument.defaultView?.scrollTo({ top, behavior: resolved });
       else root.scrollTo({ top, behavior: resolved });
     }
@@ -270,7 +274,7 @@ export class ScrollSpyController<K> {
     clearTimeout(hold.timer);
     hold.timer = setTimeout(() => {
       if (this.#hold === hold) hold.settled = true;
-    }, NAVIGATION_SETTLE);
+    }, SCROLL_SETTLE_MS);
   }
 
   #release(): void {
@@ -373,9 +377,7 @@ export class ScrollSpyController<K> {
       return;
     }
     const view = root.ownerDocument.defaultView!;
-    const isDocument = root === root.ownerDocument.scrollingElement;
-    const visibleStart = isDocument ? 0 : root.getBoundingClientRect().top + root.clientTop;
-    const scrollTop = isDocument ? view.scrollY : root.scrollTop;
+    const { top: visibleStart, scrollTop } = scrollport(root);
     this.#scrollSize = root.scrollHeight;
     this.#padding = px(view.getComputedStyle(root).scrollPaddingBlockStart);
     const boxes = entries.map(({ element }) => {
@@ -420,11 +422,7 @@ export class ScrollSpyController<K> {
       this.#publish({ active: [], current: null }, event);
       return;
     }
-    const current = this.#root;
-    const view = current.ownerDocument.defaultView!;
-    const isDocument = current === current.ownerDocument.scrollingElement;
-    const clientSize = isDocument ? view.innerHeight : current.clientHeight;
-    const scrollTop = isDocument ? view.scrollY : current.scrollTop;
+    const { height: clientSize, scrollTop } = scrollport(this.#root);
     const offset =
       parseActivationOffset(this.#options.offset?.() ?? null, clientSize) ?? this.#padding + 1;
     // Overscroll past either end keeps the line inside the content, so both edges stay current.

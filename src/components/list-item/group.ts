@@ -1,29 +1,15 @@
-import { css, html, type PropertyValues } from 'lit';
+import { html, type PropertyValues } from 'lit';
+import { stackGroupStyles } from '../shared/stack-group.js';
 import { TpElement } from '../../foundation/element.js';
 import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 import { listItemPresentation } from '../../presentation/families/list-item.js';
 
 export class TpListItemGroup extends TpElement {
   static tagName = 'tp-list-item-group';
-  static presentationTagName = 'tp-list-item';
   static override presentation = listItemPresentation;
   static override properties = { ...TpElement.properties, ariaLabel: { attribute: 'aria-label' } };
   override ariaLabel: string | null = null;
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: block;
-        min-inline-size: 0;
-      }
-
-      .group {
-        display: flex;
-        flex-direction: column;
-        min-inline-size: 0;
-      }
-    `,
-  ];
+  static override styles = [TpElement.styles, stackGroupStyles];
   #members = new Map<HTMLElement, { attributes: OwnedAttributes; release?: () => void }>();
   #sync = (): void => {
     const children = new Set(
@@ -78,5 +64,11 @@ export class TpListItemGroup extends TpElement {
         content: html`<slot @slotchange=${this.#sync}></slot>`,
       },
     );
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-list-item-group': TpListItemGroup;
   }
 }

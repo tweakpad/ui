@@ -10,9 +10,7 @@ interface Args {
 const meta = {
   title: 'Components/Spinner',
   component: 'tp-spinner',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: spinnerExamples,

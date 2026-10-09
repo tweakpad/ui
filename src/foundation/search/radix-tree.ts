@@ -45,7 +45,6 @@ export class SearchableMap<V> {
         const leaf = new RadixNode<V>();
         node.edges.set(key[index]!, { label: key.slice(index), node: leaf });
         node = leaf;
-        index = key.length;
         break;
       }
       const shared = commonPrefixLength(edge.label, key, index);
@@ -118,7 +117,6 @@ export class SearchableMap<V> {
         if (!edge.label.startsWith(prefix.slice(index))) return;
         base += edge.label;
         node = edge.node;
-        index = prefix.length;
         break;
       }
       if (!prefix.startsWith(edge.label, index)) return;

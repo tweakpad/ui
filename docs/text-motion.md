@@ -24,15 +24,15 @@ typography on that element: the pieces inherit it.
 
 ## Properties
 
-| Property / attribute | Values | Default |
-| --- | --- | --- |
-| `split` | tokens of `chars`, `words`, `lines`; the finest animates | `words` |
-| `mask` | `none`, `lines`, `words`, `chars` (must be a split unit) | `none` |
-| `reveal` | tokens of `fade`, `up`, `down`, `left`, `right`, `zoom-in`, `zoom-out`, `blur`; empty disables | unset: the coordinator's `reveal`, or `fade up` |
-| `stagger` | milliseconds between consecutive pieces | `30` |
-| `staggerFrom` / `stagger-from` | `first`, `last`, `center` | `first` |
-| `revealRepeat` / `reveal-repeat` | reveal again on every viewport entry | `false` |
-| `revealHold` / `reveal-hold` | a ready reveal waits until cleared | `false` |
+| Property / attribute             | Values                                                                                         | Default                                         |
+| -------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `split`                          | tokens of `chars`, `words`, `lines`; the finest animates                                       | `words`                                         |
+| `mask`                           | `none`, `lines`, `words`, `chars` (must be a split unit)                                       | `none`                                          |
+| `reveal`                         | tokens of `fade`, `up`, `down`, `left`, `right`, `zoom-in`, `zoom-out`, `blur`; empty disables | unset: the coordinator's `reveal`, or `fade up` |
+| `stagger`                        | milliseconds between consecutive pieces                                                        | `30`                                            |
+| `staggerFrom` / `stagger-from`   | `first`, `last`, `center`                                                                      | `first`                                         |
+| `revealRepeat` / `reveal-repeat` | reveal again on every viewport entry                                                           | `false`                                         |
+| `revealHold` / `reveal-hold`     | a ready reveal waits until cleared                                                             | `false`                                         |
 
 Read-only: `lines`, `words`, `chars`, `masks` (arrays of the current pieces, in order) and
 `revealed`. Methods: `splitText()` splits again from the original content (also after
@@ -98,12 +98,12 @@ the height, such as letter spacing or weight, call `splitText()`.
 
 ## Events
 
-| Event | Detail | When |
-| --- | --- | --- |
-| `tp-text-split` | `{ lines, words, chars, masks }` | after every split or line change |
-| `tp-reveal-change` | `{ revealed, effect }` | the reveal starts, or a repeat resets it |
-| `tp-reveal-change-complete` | `{ revealed }` | the last piece has settled (or right after a reset) |
-| `tp-diagnostic` | `{ code, message, severity }` | a joined script was kept in words |
+| Event                       | Detail                           | When                                                |
+| --------------------------- | -------------------------------- | --------------------------------------------------- |
+| `tp-text-split`             | `{ lines, words, chars, masks }` | after every split or line change                    |
+| `tp-reveal-change`          | `{ revealed, effect }`           | the reveal starts, or a repeat resets it            |
+| `tp-reveal-change-complete` | `{ revealed }`                   | the last piece has settled (or right after a reset) |
+| `tp-diagnostic`             | `{ code, message, severity }`    | a joined script was kept in words                   |
 
 ### External animation libraries
 
@@ -120,12 +120,18 @@ document.addEventListener('tp-motion-request', (event) => {
   event.respondWith({
     play: () => {
       const animations = owner.words.map((word, index) =>
-        word.animate([{ opacity: 0, translate: '0 0.5em' }, { opacity: 1, translate: '0 0' }], {
-          duration: 500,
-          delay: index * 40,
-          easing: 'ease-out',
-          fill: 'backwards',
-        }),
+        word.animate(
+          [
+            { opacity: 0, translate: '0 0.5em' },
+            { opacity: 1, translate: '0 0' },
+          ],
+          {
+            duration: 500,
+            delay: index * 40,
+            easing: 'ease-out',
+            fill: 'backwards',
+          },
+        ),
       );
       return {
         finished: Promise.all(animations.map((animation) => animation.finished)),
@@ -152,14 +158,14 @@ style them from your page, for example `tp-text-motion [data-tp-piece='char'] { 
 Each piece carries `--tp-text-index` (its index within its unit) and the animating pieces carry
 `--tp-text-order` (its stagger position).
 
-| Custom property | Default | Purpose |
-| --- | --- | --- |
-| `--tp-text-motion-duration` | twice `--tp-duration-normal` | per-piece duration |
-| `--tp-text-motion-easing` | `ease-out` | easing |
-| `--tp-text-motion-distance` | `0.4em` | travel without a mask |
-| `--tp-text-motion-scale` | `0.2` | scale offset for `zoom-in` and `zoom-out` |
-| `--tp-text-motion-blur` | `0.15em` | start blur for `blur` |
-| `--tp-text-motion-mask-bleed` | `0.1em` | how far masks extend over ascenders and descenders |
+| Custom property               | Default                      | Purpose                                            |
+| ----------------------------- | ---------------------------- | -------------------------------------------------- |
+| `--tp-text-motion-duration`   | twice `--tp-duration-normal` | per-piece duration                                 |
+| `--tp-text-motion-easing`     | `ease-out`                   | easing                                             |
+| `--tp-text-motion-distance`   | `0.4em`                      | travel without a mask                              |
+| `--tp-text-motion-scale`      | `0.2`                        | scale offset for `zoom-in` and `zoom-out`          |
+| `--tp-text-motion-blur`       | `0.15em`                     | start blur for `blur`                              |
+| `--tp-text-motion-mask-bleed` | `0.1em`                      | how far masks extend over ascenders and descenders |
 
 All durations and delays are scaled by `--tp-motion-scale`. Markers on the host:
 `data-split-ready`, `data-in-view` (while observed) and `data-revealed`.

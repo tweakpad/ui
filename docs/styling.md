@@ -31,24 +31,24 @@ The default typography tuple is `font-sans`, `text-base`, `font-normal`, `leadin
 
 The default theme follows the shadcn Nova metrics on a 4px seed:
 
-| Role | Values |
-| --- | --- |
-| `spacing` | `0.25rem` (4px) |
-| `text-xs` … `text-2xl` | 12, 14, 16, 18, 20, 24px |
-| `control-height-xs` … `lg` | 24, 28, 32, 36px (`spacing` × 6, 7, 8, 9) |
-| `icon-size-xs` … `lg` | 12, 14, 16, 20px |
+| Role                                               | Values                                                                  |
+| -------------------------------------------------- | ----------------------------------------------------------------------- |
+| `spacing`                                          | `0.25rem` (4px)                                                         |
+| `text-xs` … `text-2xl`                             | 12, 14, 16, 18, 20, 24px                                                |
+| `control-height-xs` … `lg`                         | 24, 28, 32, 36px (`spacing` × 6, 7, 8, 9)                               |
+| `icon-size-xs` … `lg`                              | 12, 14, 16, 20px                                                        |
 | `radius-sm`, `md`, `lg`, `xl`, `2xl`, `3xl`, `4xl` | `radius` × 0.6, 0.8, 1, 1.4, 1.8, 2.2, 2.6 (6, 8, 10, 14, 18, 22, 26px) |
 
 ### Control sizes
 
 Every single-line control resolves its size from one step table (`CONTROL_STEPS`, exported with `controlSizePresentation` from `@tweakpad/ui`): Button, Toggle, Toggle group, Select, Native select, Input, Input group, Tabs, Menubar, Pagination and navigation rows.
 
-| Step (public sizes) | Height | Padding (icon edge) | Gap | Type | Icon |
-| --- | --- | --- | --- | --- | --- |
-| xs (`xs`, `icon-xs`) | `control-height-xs` | `space-2` (`space-1-5`) | `space-1` | `text-xs` | `icon-size-xs` |
-| sm (`sm`, `icon-sm`) | `control-height-sm` | `space-2-5` (`space-1-5`) | `space-1` | `text-sm` | `icon-size-sm` |
-| md (`default`, `icon`) | `control-height-md` | `space-2-5` (`space-2`) | `space-1-5` | `text-sm` | `icon-size-md` |
-| lg (`lg`, `icon-lg`) | `control-height-lg` | `space-2-5` (`space-2`) | `space-1-5` | `text-sm` | `icon-size-md` |
+| Step (public sizes)    | Height              | Padding (icon edge)       | Gap         | Type      | Icon           |
+| ---------------------- | ------------------- | ------------------------- | ----------- | --------- | -------------- |
+| xs (`xs`, `icon-xs`)   | `control-height-xs` | `space-2` (`space-1-5`)   | `space-1`   | `text-xs` | `icon-size-xs` |
+| sm (`sm`, `icon-sm`)   | `control-height-sm` | `space-2-5` (`space-1-5`) | `space-1`   | `text-sm` | `icon-size-sm` |
+| md (`default`, `icon`) | `control-height-md` | `space-2-5` (`space-2`)   | `space-1-5` | `text-sm` | `icon-size-md` |
+| lg (`lg`, `icon-lg`)   | `control-height-lg` | `space-2-5` (`space-2`)   | `space-1-5` | `text-sm` | `icon-size-md` |
 
 `icon-*` sizes are squares of the step height. A control publishes its icon extent to slotted Icons, so `<tp-icon>` inside a small Button or Toggle follows the step unless it sets `size`.
 
@@ -115,7 +115,7 @@ Compounds contribute through `setPartComposition` before consumer hooks. Native 
 
 Primitive variant interaction rules use low specificity so a composed Menu or Navigation role owns its highlight. Popup triggers keep their active background while open; Menu, Menubar and Navigation Menu transfer that background without a trailing fade. Restored focus does not create a hover background on a closed navigation trigger. Keyboard focus keeps its separate visible outline, and popup/content transitions retain their motion policy.
 
-Migration is partial: consult [the repair ledger](./first-pass-conformance.md) before relying on dictionary-only customization for a control. In particular, the remaining component-local appearance and cross-shadow compound overrides have not yet been fully migrated.
+Migration is partial: consult [the repair ledger](../plans/phase-1/first-pass-conformance.md) before relying on dictionary-only customization for a control. In particular, the remaining component-local appearance and cross-shadow compound overrides have not yet been fully migrated.
 
 ## Constituent rendering contracts
 

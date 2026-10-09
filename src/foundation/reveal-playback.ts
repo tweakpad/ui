@@ -12,15 +12,17 @@ import {
 import { canObserveIntersection } from './observation.js';
 import { ViewportTrigger } from './viewport-trigger.js';
 
+/** Milliseconds of one CSS `<time>` value (`0.56s`, `560ms`); 0 when it does not parse. */
+export function cssTimeMs(text: string): number {
+  const value = text.trim();
+  const number = Number.parseFloat(value);
+  if (!Number.isFinite(number)) return 0;
+  return value.endsWith('ms') ? number : number * 1000;
+}
+
 /** The longest `duration + delay` among an element's transitions, in milliseconds. */
 export function transitionSpan(style: CSSStyleDeclaration): number {
-  const times = (value: string) =>
-    value.split(',').map((part) => {
-      const text = part.trim();
-      const number = Number.parseFloat(text);
-      if (!Number.isFinite(number)) return 0;
-      return text.endsWith('ms') ? number : number * 1000;
-    });
+  const times = (value: string) => value.split(',').map(cssTimeMs);
   const durations = times(style.transitionDuration);
   const delays = times(style.transitionDelay);
   return Math.max(

@@ -1,4 +1,5 @@
 import { css, html, type PropertyValues } from 'lit';
+import { isDrawerHost } from '../../foundation/surface-brand.js';
 import { TpElement } from '../../foundation/element.js';
 import { nearestDrawerService } from './provider.js';
 import { oppositeDirection, type DrawerDirection } from './types.js';
@@ -49,7 +50,7 @@ export class TpDrawerSwipeArea extends TpElement {
   #start = (event: Event): void => {
     this.#bindOwner();
     const drawer = this.drawer;
-    if (!drawer || drawer.localName !== 'tp-drawer' || drawer.open || this.disabled) return;
+    if (!drawer || !isDrawerHost(drawer) || drawer.open || this.disabled) return;
     drawer.startSwipe(
       event as PointerEvent | TouchEvent,
       this,
@@ -88,5 +89,11 @@ export class TpDrawerSwipeArea extends TpElement {
   }
   protected override render() {
     return html`<slot></slot>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-drawer-swipe-area': TpDrawerSwipeArea;
   }
 }

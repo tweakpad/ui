@@ -288,8 +288,8 @@ Use registered **Google Chrome DevTools MCP** tools for all browser navigation,
 interaction, page evaluation, screenshots, and accessibility inspection. Do not
 use agent-browser, computer-use/GUI automation, standalone Playwright/Puppeteer,
 raw CDP, custom browser bridges, or a different browser automation integration.
-Inspect repository scripts before running them: several current smoke/package
-commands launch Playwright. Do their browser checks through MCP instead.
+Browser regression checks live in `tests/fixtures/components/<component>/` with
+README steps; run them through MCP. Repository scripts are Node-only.
 
 MCP evaluation may set up a fixture, exercise public property/method APIs, collect
 events, and inspect results. It must not simulate user input and present that as

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Card verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+      }
+      h2 {
+        font-size: var(--tp-text-base);
+        margin: 0 0 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Card verification</h1>
+    <p>Presentation configurations and the shared-surface contract; see <code>README.md</code>.</p>
+    <main>
+      <section>
+        <h2>Default</h2>
+        <tp-card id="default">
+          <h3 slot="header">Project access</h3>
+          <p slot="description">Review how your team will use this workspace.</p>
+          <p>Invited teammates can view shared plans, project files, and recent activity.</p>
+          <tp-button slot="footer" variant="outline" size="sm">Not now</tp-button>
+          <tp-button slot="footer" size="sm">Continue</tp-button>
+        </tp-card>
+      </section>
+      <section>
+        <h2>Elevated</h2>
+        <tp-card id="elevated" elevated>
+          <h3 slot="header">Project access</h3>
+          <p>Invited teammates can view shared plans.</p>
+          <tp-button slot="footer" size="sm">Continue</tp-button>
+        </tp-card>
+      </section>
+      <section>
+        <h2>Borders off</h2>
+        <tp-card id="borders-off" borders="off">
+          <h3 slot="header">Project access</h3>
+          <p>Invited teammates can view shared plans.</p>
+          <tp-button slot="footer" size="sm">Continue</tp-button>
+        </tp-card>
+      </section>
+      <section>
+        <h2>Section colors off</h2>
+        <tp-card id="section-colors-off" section-colors="off">
+          <h3 slot="header">Project access</h3>
+          <p>Invited teammates can view shared plans.</p>
+          <tp-button slot="footer" size="sm">Continue</tp-button>
+        </tp-card>
+      </section>
+      <section>
+        <h2>Borders and section colors off</h2>
+        <tp-card id="both-off" borders="off" section-colors="off">
+          <h3 slot="header">Project access</h3>
+          <p>Invited teammates can view shared plans.</p>
+          <tp-button slot="footer" size="sm">Continue</tp-button>
+        </tp-card>
+      </section>
+      <section>
+        <h2>Small</h2>
+        <tp-card id="small" size="sm">
+          <h3 slot="header">Project access</h3>
+          <p>Invited teammates can view shared plans.</p>
+          <tp-button slot="footer" size="sm">Continue</tp-button>
+        </tp-card>
+      </section>
+    </main>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      window.cardContract = await import('./contract-checks.js');
+      await customElements.whenDefined('tp-card');
+      document.documentElement.dataset.ready = '';
+    </script>
+  </body>
+</html>

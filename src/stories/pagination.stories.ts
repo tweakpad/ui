@@ -55,9 +55,7 @@ function control(args: Args, updateArgs: (args: Partial<Args>) => void) {
 const meta = {
   title: 'Components/Pagination',
   component: 'tp-pagination',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       source: { code: source },

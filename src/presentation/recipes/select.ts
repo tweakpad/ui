@@ -1,4 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { popupBorderColor } from './shared/surface.js';
 import {
   anchoredPresenceAppearance,
   popupSpacingAppearance,
@@ -37,7 +38,6 @@ const emptyStateRules: PresentationDictionary[string] = [
 /** shadcn bases/base Select, style-nova.css cn-select-*; shared field/surface base remains. */
 export const selectAppearance: PresentationDictionary = {
   select: [],
-  'select-anchor': [],
   'select-input': [
     {
       declarations: {
@@ -52,8 +52,6 @@ export const selectAppearance: PresentationDictionary = {
       },
     },
   ],
-  'select-clear': [],
-  'select-chip-remove': [],
   'select-chip-list': [
     { declarations: { gap: 'var(--tp-space-1)', padding: 'var(--tp-space-1)' } },
   ],
@@ -70,9 +68,7 @@ export const selectAppearance: PresentationDictionary = {
   ],
   'select-empty-state': emptyStateRules,
   'select-status': emptyStateRules,
-  'select-collection': [],
   'select-match': searchMatchRules,
-  'select-row': [],
   'select-trigger': [
     ...inputRules,
     {
@@ -81,8 +77,6 @@ export const selectAppearance: PresentationDictionary = {
         ...controlStepDeclarations('md'),
         'padding-inline-start': 'var(--tp-space-2-5)',
         'padding-inline-end': 'var(--tp-space-2)',
-        background:
-          'light-dark(transparent, color-mix(in oklab, var(--tp-input) 30%, transparent))',
       },
     },
     {
@@ -93,15 +87,6 @@ export const selectAppearance: PresentationDictionary = {
       },
     },
     { selector: '&[data-placeholder]', declarations: { color: 'var(--tp-muted-foreground)' } },
-    {
-      selector: '&:focus-visible',
-      declarations: {
-        outline:
-          'var(--tp-ring-width) var(--tp-border-style) color-mix(in oklab, var(--tp-ring) 50%, transparent)',
-        'outline-offset': '0',
-        'border-color': 'var(--tp-ring)',
-      },
-    },
     { selector: '&[data-invalid]', declarations: { 'border-color': 'var(--tp-destructive)' } },
     {
       selector: '&[data-invalid]:focus-visible',
@@ -134,7 +119,7 @@ export const selectAppearance: PresentationDictionary = {
       declarations: {
         padding: '0',
         'box-shadow': 'var(--tp-shadow-md)',
-        'border-color': 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)',
+        'border-color': popupBorderColor,
         'border-radius': 'var(--tp-radius-lg)',
         // Nova min-w-36: three space-12 steps.
         'min-inline-size': 'max(var(--tp-anchor-width, 0px), calc(var(--tp-space-12) * 3))',

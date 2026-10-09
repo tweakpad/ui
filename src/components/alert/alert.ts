@@ -106,3 +106,9 @@ export class TpAlert extends TpElement {
     </div>`;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-alert': TpAlert;
+  }
+}

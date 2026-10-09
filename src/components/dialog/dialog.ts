@@ -1,3 +1,4 @@
+import { SURFACE_HOST } from '../../foundation/surface-brand.js';
 import {
   restoreLostFocus,
   surfaceInteraction,
@@ -20,7 +21,7 @@ import {
 } from '../../foundation/focus.js';
 import { createId } from '../../foundation/id.js';
 import { PresenceController } from '../../foundation/presence.js';
-import { prepareMotion, type MotionHandle } from '../../foundation/motion.js';
+import { prepareMotion, type MotionHandle, presenceRole } from '../../foundation/motion.js';
 import type { MotionRoleDefinition } from '../../foundation/motion.js';
 import { xIcon } from '../../icons/x.js';
 import { SurfaceState, type TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
@@ -28,7 +29,6 @@ import { acquireOutsideInert, isLeaseInert } from '../../foundation/outside-iner
 import type { HostProperties } from '../../foundation/part.js';
 import { acquireScrollLock } from '../../foundation/scroll-lock.js';
 import { FloatingDismissController } from '../../foundation/floating-dismiss.js';
-import { globalFloatingTree } from '../../foundation/floating-tree.js';
 import type { ChangeReason, PresenceState } from '../../foundation/types.js';
 import type { DialogHandle, DialogTriggerOptions } from './handle.js';
 import { dialogStyles } from './styles.js';
@@ -49,7 +49,7 @@ import {
 } from './modality.js';
 import type { OutsideInertScope } from '../../foundation/outside-inert.js';
 import { dialogPresentation } from '../../presentation/families/dialog.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type { DialogModality } from './modality.js';
@@ -71,13 +71,8 @@ function hidePopover(element: HTMLElement | null | undefined): void {
 }
 
 export const dialogMotionRoles = {
-  backdrop: {
-    name: 'backdrop',
-    kind: 'presence',
-    phases: ['enter', 'exit'],
-    completion: 'blocking',
-  },
-  surface: { name: 'surface', kind: 'presence', phases: ['enter', 'exit'], completion: 'blocking' },
+  backdrop: presenceRole('backdrop'),
+  surface: presenceRole('surface'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
 interface TriggerRecord {
@@ -90,6 +85,7 @@ interface TriggerRecord {
 /** Shared Dialog-family owner. Subclasses supply policy and public part names. */
 export class TpDialog extends TpElement {
   static tagName = 'tp-dialog';
+  readonly [SURFACE_HOST] = true as const;
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
     return [TpButton];
   }
@@ -165,7 +161,6 @@ export class TpDialog extends TpElement {
   #slotCloseCleanup: (() => void) | undefined;
   #slotClose: HTMLElement | null = null;
   #handleCleanup: (() => void) | undefined;
-  #treeCleanup: (() => void) | undefined;
   #scrollCleanup: (() => void) | undefined;
   #inertCleanup: (() => void) | undefined;
   #parent: TpDialog | null = null;
@@ -192,28 +187,12 @@ export class TpDialog extends TpElement {
   get #usesPortal(): boolean {
     return !this.#portalFallback && Boolean(this.portal || this.container || this.portalIdentifier);
   }
-  #partRefs = new Map<string, (element: HTMLElement | null) => void>();
-  #partElements = new Map<string, HTMLElement>();
-  #partReleases = new Map<string, () => void>();
   protected dialogPart(suffix: string, options: PartRenderOptions = {}): unknown {
     const name = this.partName(suffix);
-    let reference = this.#partRefs.get(suffix);
-    if (!reference) {
-      reference = (element) => {
-        if (element === this.#partElements.get(suffix)) return;
-        this.#partReleases.get(suffix)?.();
-        this.#partReleases.delete(suffix);
-        if (element) {
-          this.#partElements.set(suffix, element);
-          this.#partReleases.set(suffix, this.presentationController.registerPart(name, element));
-        } else this.#partElements.delete(suffix);
-      };
-      this.#partRefs.set(suffix, reference);
-    }
     return this.renderPart(
       name,
       { open: this.open, presence: this.presenceState, payload: this.payload },
-      { ...options, reference },
+      { ...options, reference: this.presentationController.partReference(suffix, name) },
     );
   }
   protected get surfaceState(): SurfaceState {
@@ -223,8 +202,8 @@ export class TpDialog extends TpElement {
     read: () => this.#providedOpen,
     defaultOpen: () => this.defaultOpen,
     dispatch: (event) => {
-      this.dispatchEvent(event);
       this.onOpenChange?.(event);
+      this.dispatchEvent(event);
     },
     commit: () => this.requestUpdate(),
     diagnostic: (message) => this.#diagnostic('state-mode', message),
@@ -415,7 +394,7 @@ export class TpDialog extends TpElement {
     if (this.shadowRoot && 'referenceTarget' in this.shadowRoot)
       (this.shadowRoot as ShadowRoot & { referenceTarget: string }).referenceTarget =
         this.#contentId;
-    this.#observer = new MutationObserver(() => {
+    this.#observer = new (this.ownerDocument.defaultView ?? window).MutationObserver(() => {
       this.#syncParts();
       this.requestUpdate();
     });
@@ -502,7 +481,6 @@ export class TpDialog extends TpElement {
       this.description || this.#assigned('description')?.textContent?.trim(),
     );
     const markers = {
-      'data-state': state,
       'data-open': open,
       'data-closed': !open,
       'data-starting-style': state === 'starting',
@@ -541,7 +519,7 @@ export class TpDialog extends TpElement {
         })
       : nothing;
     return this.dialogPart('portal', {
-      properties: { class: this.#contained ? 'portal contained' : 'portal', 'data-state': state },
+      properties: { class: this.#contained ? 'portal contained' : 'portal' },
       content: html` ${this.dialogPart('overlay', { properties: { ...this.overlayProperties, class: 'overlay', popover: this.#contained ? undefined : 'manual', 'aria-hidden': 'true', hidden: this.#overlayHidden, '@pointerdown': this.#outside, ...markers } })}
       ${this.renderSurface(
         {
@@ -1002,12 +980,6 @@ export class TpDialog extends TpElement {
       this.#parent.#children.add(this);
       this.#parent.requestUpdate();
     }
-    this.#treeCleanup = globalFloatingTree.register({
-      id: this.#nodeId,
-      ...(this.#parent ? { parentId: this.#parent.#nodeId } : {}),
-      element: layer,
-      dismiss: () => this.close(),
-    });
     this.#applyModality();
     this.#focusPending = true;
     this.ownerDocument.addEventListener('focusin', this.#focusIn);
@@ -1064,8 +1036,6 @@ export class TpDialog extends TpElement {
       for (const child of this.#children) child.close();
       this.#children.clear();
     }
-    this.#treeCleanup?.();
-    this.#treeCleanup = undefined;
     this.#scrollCleanup?.();
     this.#scrollCleanup = undefined;
     this.#inertCleanup?.();
@@ -1287,10 +1257,12 @@ export class TpDialog extends TpElement {
   #diagnostic(code: string, message: string): void {
     if (this.#diagnosed.has(code)) return;
     this.#diagnosed.add(code);
-    this.emit('tp-diagnostic', {
-      code: `${this.partPrefix}-${code}`,
-      severity: 'warning',
-      message,
-    });
+    this.diagnose(`${this.partPrefix}-${code}`, message);
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-dialog': TpDialog;
   }
 }

@@ -1,11 +1,7 @@
 import type { MotionRoleDefinition } from '../../foundation/motion.js';
+import { ambientRole, stateRole } from '../../foundation/motion.js';
 
 export const progressMotionRoles = {
-  value: { name: 'value', kind: 'state', phases: ['change'], completion: 'non-blocking' },
-  indeterminate: {
-    name: 'indeterminate',
-    kind: 'ambient',
-    phases: ['start', 'stop'],
-    completion: 'non-blocking',
-  },
+  value: stateRole('value'),
+  indeterminate: ambientRole('indeterminate'),
 } as const satisfies Record<string, MotionRoleDefinition>;

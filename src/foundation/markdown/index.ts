@@ -1,5 +1,5 @@
 export * from './types.js';
-export { parseMarkdown, builtinMarkdownParser } from './block.js';
+export { parseMarkdown } from './block.js';
 export { inlineText, normalizeLabel } from './inline.js';
 export { decodeEntities } from './entities.js';
 export {

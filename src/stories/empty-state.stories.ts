@@ -9,9 +9,7 @@ import {
 const meta = {
   title: 'Components/Empty state',
   component: 'tp-empty-state',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: emptyStateExamples,

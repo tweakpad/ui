@@ -317,7 +317,7 @@ export async function runSelectQueryAssertions({ create, settle, api }: API) {
         options(host).length === 0 &&
           !!host.popupElement!.querySelector('[part~=select-empty-state]'),
       );
-      host.loading = true;
+      host.busy = true;
       await settle(host);
       check(
         'V11-loading-not-empty',

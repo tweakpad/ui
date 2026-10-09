@@ -134,7 +134,7 @@ function gregorianWeekdayLabels(locale: string | undefined): readonly string[] {
   const cached = weekdayLabelCache.get(key);
   if (cached) return cached;
   const format = (weekday: 'short' | 'narrow') => {
-    const formatter = new Intl.DateTimeFormat(locale, { weekday, timeZone: 'UTC' });
+    const formatter = dateTimeFormatter(locale, { weekday, timeZone: 'UTC' });
     return Array.from({ length: 7 }, (_, day) =>
       formatter.format(new Date(Date.UTC(2021, 7, 1 + day))),
     );

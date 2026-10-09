@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Button Group browser contract</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Button Group browser contract</h1>
+    <p>Joined geometry, member semantics and orientation; see <code>README.md</code>.</p>
+    <div id="host"></div>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      window.buttonGroupContract = await import('./contract-checks.js');
+      await customElements.whenDefined('tp-button-group');
+      document.documentElement.dataset.ready = '';
+    </script>
+  </body>
+</html>

@@ -6,5 +6,4 @@ export * from './families/index.js';
 export * from './default.js';
 export * from './controller.js';
 export * from './composition.js';
-export * from './dictionary.js';
 export * from './tokens.js';

@@ -1,5 +1,5 @@
 import type { PropertyDeclarations, PropertyValues } from 'lit';
-import { TpHoverSurface } from '../anchored-surface.js';
+import { TpHoverSurface } from '../anchored-surface/anchored-surface.js';
 import type { TpElement } from '../../foundation/element.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import { tooltipPresentation } from '../../presentation/families/tooltip.js';
@@ -106,5 +106,11 @@ export class TpTooltip extends TpHoverSurface {
     for (const hint of this.#hints) setPartComposition(hint, this);
     this.#hints.clear();
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-tooltip': TpTooltip;
   }
 }

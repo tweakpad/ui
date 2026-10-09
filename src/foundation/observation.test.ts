@@ -1,3 +1,4 @@
+import { FakeIntersectionObserver } from './fakes.test.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { canObserveIntersection, observeIntersection, observeScroll } from './observation.js';
 
@@ -115,31 +116,6 @@ describe('shared scroll source', () => {
     expect(calls).not.toHaveBeenCalled();
   });
 });
-
-class FakeIntersectionObserver {
-  static instances: FakeIntersectionObserver[] = [];
-  readonly targets = new Set<object>();
-  disconnected = false;
-  constructor(
-    readonly callback: (entries: { target: object; isIntersecting: boolean }[]) => void,
-    readonly options: { root: unknown; rootMargin: string; threshold: number[] },
-  ) {
-    FakeIntersectionObserver.instances.push(this);
-  }
-  observe(target: object) {
-    this.targets.add(target);
-  }
-  unobserve(target: object) {
-    this.targets.delete(target);
-  }
-  disconnect() {
-    this.disconnected = true;
-    this.targets.clear();
-  }
-  report(target: object, isIntersecting: boolean) {
-    this.callback([{ target, isIntersecting }]);
-  }
-}
 
 function intersectionWindow() {
   const view = { IntersectionObserver: FakeIntersectionObserver };

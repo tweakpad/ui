@@ -3,7 +3,7 @@ import { ref } from 'lit/directives/ref.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import type { TpForm } from '../components/form/index.js';
 import type { TpField } from '../components/field/index.js';
-import type { TpButton } from '../components/button.js';
+import type { TpButton } from '../components/button/button.js';
 
 const actions = `<div slot="actions"><tp-button type="reset" variant="outline">Reset</tp-button><tp-button type="submit">Save</tp-button></div><output aria-live="polite"></output>`;
 function example(title: string, markup: string, setup?: (form: TpForm) => void, script = '') {

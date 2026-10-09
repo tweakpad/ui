@@ -1,7 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
 export const resizablePanelGroupAppearance: PresentationDictionary = {
-  'resizable-panel-group': [],
-  'resizable-panel-group-panel': [],
   'resizable-panel-group-separator': [
     { declarations: { background: 'var(--tp-border)' } },
     {

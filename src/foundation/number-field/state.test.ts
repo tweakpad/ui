@@ -1,4 +1,4 @@
-import type { ReactiveController, ReactiveControllerHost } from 'lit';
+import { fakeHost } from '../fakes.test.js';
 import { describe, expect, it } from 'vitest';
 import { LocaleService } from '../services.js';
 import { NumberFieldState, type NumberFieldStateOptions } from './state.js';
@@ -8,19 +8,8 @@ import {
   roundNumberFieldValue,
 } from './numeric.js';
 
-class Host extends EventTarget implements ReactiveControllerHost {
-  controllers = new Set<ReactiveController>();
-  addController(c: ReactiveController) {
-    this.controllers.add(c);
-  }
-  removeController(c: ReactiveController) {
-    this.controllers.delete(c);
-  }
-  requestUpdate() {}
-  updateComplete = Promise.resolve(true);
-}
 const model = (options: NumberFieldStateOptions = {}) => {
-  const host = new Host();
+  const host = fakeHost();
   const changes: Array<{ value: number | null; reason: string }> = [];
   const commits: Array<{ value: number | null; reason: string }> = [];
   const state = new NumberFieldState(
@@ -197,7 +186,7 @@ describe('NumberField numeric/editor ownership', () => {
     expect(state.touched).toBe(false);
     expect(state.dirty).toBe(false);
     state.dispose();
-    expect(host.controllers.size).toBe(0);
+    expect(host.controllers.length).toBe(0);
   });
   it('seeds an empty bounded field at zero clamped to its nearest bound, without an extra step', () => {
     const { state } = model({ minimum: 5, maximum: 10, step: 2, snapOnStep: true });

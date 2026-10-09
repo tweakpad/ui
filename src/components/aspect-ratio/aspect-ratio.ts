@@ -83,3 +83,9 @@ export class TpAspectRatio extends TpElement {
     });
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-aspect-ratio': TpAspectRatio;
+  }
+}

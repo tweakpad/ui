@@ -1,15 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
-import type { ReactiveControllerHost } from 'lit';
-import { SelectModel } from './model.js';
-const host = (): ReactiveControllerHost => ({
-  addController: vi.fn(),
-  removeController: vi.fn(),
-  requestUpdate: vi.fn(),
-  updateComplete: Promise.resolve(true),
-});
+import { fakeHost } from './fakes.test.js';
+import { describe, expect, it } from 'vitest';
+import { ChoiceModel } from './choice-model.js';
 describe('Select source record lifecycle', () => {
   it('retains duplicate records for diagnostics while rendering repeated identities once', () => {
-    const model = new SelectModel(host());
+    const model = new ChoiceModel(fakeHost());
     const option = { value: 'b', label: 'Beta' };
     model.update(['a', 'a', option, option], String, String);
     expect(model.records).toHaveLength(4);
@@ -19,7 +13,7 @@ describe('Select source record lifecycle', () => {
     expect(model.nodes.map((node) => node.id)).toEqual([ids[1], ids[0]]);
   });
   it('deduplicates nested repeated groups without discarding distinct declarations', () => {
-    const model = new SelectModel(host());
+    const model = new ChoiceModel(fakeHost());
     const group = { type: 'group' as const, label: 'Group', items: ['a', 'a'] };
     model.update([group, group, { value: 'a', label: 'Another declaration' }], String, String);
     expect(model.nodes).toHaveLength(2);
@@ -27,7 +21,7 @@ describe('Select source record lifecycle', () => {
     expect(model.records).toHaveLength(5);
   });
   it('keeps distinct signed-zero scalar identities required by Object.is equality', () => {
-    const model = new SelectModel(host());
+    const model = new ChoiceModel(fakeHost());
     model.update([-0, 0], String, String);
     expect(model.nodes).toHaveLength(2);
     expect(Object.is(model.records[0]!.value, -0)).toBe(true);
@@ -37,8 +31,8 @@ describe('Select source record lifecycle', () => {
     expect(model.nodes.map((node) => node.id)).toEqual([ids[1], ids[0]]);
   });
   it('removes the Presence owner for source records that disappear', () => {
-    const controllerHost = host();
-    const model = new SelectModel(controllerHost);
+    const controllerHost = fakeHost();
+    const model = new ChoiceModel(controllerHost);
     model.update(['a', 'b'], String, String);
     const first = model.records[0]!.presence;
     model.update(['b'], String, String);

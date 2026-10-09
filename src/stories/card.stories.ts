@@ -13,7 +13,6 @@ interface CardStoryArgs {
 const meta: Meta<CardStoryArgs> = {
   title: 'Components/Card',
   component: 'tp-card',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: { description: { component: cardDocumentation.replace(/^# Card\n/u, '') } },
@@ -78,14 +77,6 @@ export default meta;
 type Story = StoryObj<CardStoryArgs>;
 
 export const Default: Story = {};
-
-export const Elevated: Story = { args: { elevated: true } };
-
-export const BordersOff: Story = { args: { borders: 'off' } };
-
-export const SectionColorsOff: Story = { args: { sectionColors: 'off' } };
-
-export const BothOff: Story = { args: { borders: 'off', sectionColors: 'off' } };
 
 export const ContentOnly: Story = {
   render: () => html`

@@ -10,7 +10,6 @@ export const toggleCoreAppearance: PresentationDictionary = {
       '&[aria-pressed="true"]',
     ),
   ],
-  'toggle-content': [],
   ...Object.fromEntries(
     ['toggle', 'toggle-content'].flatMap((part) => [
       ...['ghost', 'outline'].map((variant) => [

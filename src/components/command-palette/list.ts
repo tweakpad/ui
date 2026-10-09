@@ -1,12 +1,12 @@
 import { html, type PropertyValues } from 'lit';
 import { TpSelect } from '../select/select.js';
-import type { SelectRecord } from '../select/model.js';
+import type { ChoiceModelRecord } from '../../foundation/choice-model.js';
 import type { PartState } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { navigationIcons } from '../../icons/navigation.js';
 import { commandPalettePresentation } from '../../presentation/families/command-palette.js';
 import { selectPresentation } from '../../presentation/families/select.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 const parts: Record<string, string> = {
   'select-anchor': 'command-palette-input-wrapper',
@@ -24,9 +24,7 @@ export class TpCommandList extends TpSelect {
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
     return [TpIcon];
   }
-  static presentationTagName = 'tp-command-palette';
   static override presentation = commandPalettePresentation;
-  static presentationFamilyTagNames = ['tp-select'];
   static override presentationFamilies = [selectPresentation];
   static override properties = {
     ...TpSelect.properties,
@@ -43,7 +41,7 @@ export class TpCommandList extends TpSelect {
   activeValue: unknown;
   onActiveChange:
     ((value: unknown, details: { index: number; reason: ChangeReason }) => unknown) | undefined;
-  onExecute: ((record: SelectRecord, event: Event) => void) | undefined;
+  onExecute: ((record: ChoiceModelRecord, event: Event) => void) | undefined;
   constructor() {
     super();
     this.onItemHighlighted = (value, details) => {
@@ -77,13 +75,13 @@ export class TpCommandList extends TpSelect {
   protected override choiceState(state: PartState): PartState {
     return { ...state, selected: !!state.highlighted };
   }
-  protected override optionAccessibleName(record: SelectRecord): string {
+  protected override optionAccessibleName(record: ChoiceModelRecord): string {
     return record.text;
   }
-  protected override optionAriaSelected(record: SelectRecord): boolean {
+  protected override optionAriaSelected(record: ChoiceModelRecord): boolean {
     return this.choiceCollection.highlighted === record;
   }
-  protected override selectOption(record: SelectRecord, event: Event): void {
+  protected override selectOption(record: ChoiceModelRecord, event: Event): void {
     if (
       this.effectiveDisabled ||
       record.disabled ||
@@ -91,5 +89,11 @@ export class TpCommandList extends TpSelect {
     )
       return;
     this.onExecute?.(record, event);
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-command-list': TpCommandList;
   }
 }

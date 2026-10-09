@@ -4,12 +4,12 @@
 space it reserves; changing motion never changes that geometry. Import
 `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`.
 
-| Property / attribute | Values | Default |
-| --- | --- | --- |
-| `motion` | pulse, sweep, none | pulse |
-| `animated` | boolean; false suppresses either animation | true |
-| `motionPolicy` / `motion-policy` | inherit, normal, reduce | inherit |
-| `label` | legacy string; deliberately not announced | Loading |
+| Property / attribute             | Values                                     | Default |
+| -------------------------------- | ------------------------------------------ | ------- |
+| `motion`                         | pulse, sweep, none                         | pulse   |
+| `animated`                       | boolean; false suppresses either animation | true    |
+| `motionPolicy` / `motion-policy` | inherit, normal, reduce                    | inherit |
+| `label`                          | legacy string; deliberately not announced  | Loading |
 
 The shared reduced-motion policy and `tp-motion-request` loading role apply to both
 motion treatments. Shared duration tokens govern timing. The `skeleton` part is
@@ -28,7 +28,7 @@ For example, `border-radius:var(--tp-radius-full)` inherits into the placeholder
 Alternatively use `partPresentation.skeleton.styleHook` with shared radius tokens. The
 `skeleton` part also supports the existing part contract/delegate API. No local
 spacing attributes, interaction events, form value or focus behavior are added.
-Export: `TpSkeleton`. `primitiveMotionRoles.skeletonLoading` remains exported.
+Export: `TpSkeleton` and `skeletonMotionRoles`.
 
 Docs include the reference avatar, media preview, card, text, form and table loading layouts.
 All use the same Skeleton primitive with ordinary theme-relative layout; no new

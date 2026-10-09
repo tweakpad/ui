@@ -1,7 +1,7 @@
 import { css } from 'lit';
-import type { TpElement } from '../foundation/element.js';
-import type { ScrollbarController } from '../foundation/scrollbar.js';
-import type { PartState } from '../foundation/part.js';
+import type { TpElement } from '../../foundation/element.js';
+import type { ScrollbarController } from '../../foundation/scrollbar.js';
+import type { PartState } from '../../foundation/part.js';
 
 /** Shared native scrollbar anatomy; policy and public part names come from its owner. */
 export function renderScrollbar(
@@ -20,7 +20,7 @@ export function renderScrollbar(
       class: 'track tp-scrollbar',
       'data-orientation': state.orientation,
       'data-scrolling': controller.scrolling,
-      'data-visible': String(controller.visible),
+      'data-visible': controller.visible,
       'data-disabled': state.disabled,
       'aria-hidden': 'true',
       '@pointerdown': controller.pointerDown,
@@ -60,7 +60,7 @@ export const scrollbarStyles = css`
     block-size: 100%;
   }
 
-  .tp-scrollbar[data-visible='false'] {
+  .tp-scrollbar:not([data-visible]) {
     opacity: 0;
     pointer-events: none;
   }

@@ -1,4 +1,4 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { moduleExample } from './documentation-examples.js';
 import { setupBreadcrumbExample } from './breadcrumb-example.js';
 import setupSource from './breadcrumb-example.js?raw';
 
@@ -8,13 +8,16 @@ const trigger =
   '<tp-button slot="trigger" variant="ghost" size="icon-sm" aria-label="Show omitted ancestors" data-ancestor-trigger></tp-button>';
 const menu = `<tp-menu label="Ancestor pages" placement="block-end start">${trigger}${ancestors}</tp-menu>`;
 function example(title: string, id: string, content: string, description?: string) {
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    `<div id="${id}" style="display:grid;gap:var(--tp-space-4)">${content}<output aria-live="polite"></output></div>`,
-    setupBreadcrumbExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nsetupBreadcrumbExample(document.getElementById('${id}'));`,
+    id,
+    markup: `${content}<output aria-live="polite"></output>`,
     description,
-  );
+    wrapperStyle: 'display:grid;gap:var(--tp-space-4)',
+    setup: setupBreadcrumbExample,
+    source: setupSource,
+    call: `setupBreadcrumbExample(document.getElementById('${id}'));`,
+  });
 }
 export const breadcrumbExamples = [
   example(

@@ -1,4 +1,4 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { moduleExample } from './documentation-examples.js';
 import { setupListItemExample } from './list-item-example.js';
 import setupSource from './list-item-example.js?raw';
 
@@ -9,12 +9,15 @@ const icon = '<tp-icon slot="media" data-icon="folder"></tp-icon>';
 const button = (label = 'Action', variant = 'outline', size = 'sm') =>
   `<tp-button slot="actions" variant="${variant}" size="${size}" data-feedback>${label}</tp-button>`;
 function example(title: string, id: string, markup: string) {
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    `<div id="${id}" style="${layout}">${markup}<tp-toast></tp-toast></div>`,
-    setupListItemExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nsetupListItemExample(document.getElementById('${id}'));`,
-  );
+    id,
+    markup: `${markup}<tp-toast></tp-toast>`,
+    wrapperStyle: layout,
+    setup: setupListItemExample,
+    source: setupSource,
+    call: `setupListItemExample(document.getElementById('${id}'));`,
+  });
 }
 const variants = ['ghost', 'outline', 'subdued'];
 const people = ['shadcn', 'maxleiter', 'evilrabbit'];

@@ -1,7 +1,7 @@
 import { refreshIcon } from '../icons/refresh.js';
 
 export function setupOneTimeCodeExample(root) {
-  const code = root.querySelector('tp-otp-field');
+  const code = root.querySelector('tp-one-time-code-field');
   const output = root.querySelector('output');
   const form = root.querySelector('tp-form');
   const resend = root.querySelector('[data-resend]');

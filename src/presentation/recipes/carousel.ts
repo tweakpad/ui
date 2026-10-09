@@ -4,9 +4,6 @@ import { scrollbarRules, scrollbarThumbRules } from './shared/scrollbar.js';
 /** shadcn Base/Vega anatomy with actual Button/Progress and one configured structural gap. */
 export const carouselAppearance: PresentationDictionary = {
   carousel: [],
-  'carousel-viewport': [],
-  'carousel-track': [],
-  'carousel-item': [],
   'carousel-previous': [{ declarations: { 'border-radius': 'var(--tp-radius-full)' } }],
   'carousel-next': [{ declarations: { 'border-radius': 'var(--tp-radius-full)' } }],
   'carousel-controls': [{ declarations: { gap: 'var(--tp-space-3)' } }],
@@ -47,13 +44,11 @@ export const carouselAppearance: PresentationDictionary = {
       },
     },
     {
-      selector:
-        '& .bullet[data-current="true"], & [data-current="true"] .bullet, &[data-current="true"] .bullet',
+      selector: '& .bullet[data-current], & [data-current] .bullet, &[data-current] .bullet',
       declarations: { opacity: '1', background: 'var(--tp-primary)' },
     },
   ],
   'carousel-scrollbar': scrollbarRules,
   'carousel-thumb': scrollbarThumbRules,
   'carousel-autoplay-control': [{ declarations: { 'margin-block-end': 'var(--tp-space-2)' } }],
-  'carousel-announcements': [],
 };

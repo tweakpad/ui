@@ -282,12 +282,12 @@ function security(host: SettingsHost) {
           : html`<tp-field
                 label="Authenticator code"
                 description="Enter the six digits from your authenticator app. Try 246810."
-                ><tp-otp-field
+                ><tp-one-time-code-field
                   length="6"
                   .value=${code}
                   @tp-value-change=${(e: TpValueChangeEvent<string>) =>
                     host.accept(e, (value) => host.setView('settings:code', value))}
-                ></tp-otp-field
+                ></tp-one-time-code-field
               ></tp-field>
               <div class="workspace-row">
                 <tp-button

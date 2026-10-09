@@ -26,7 +26,7 @@ import type {
 import { dataVisualizationPresentation } from '../../presentation/families/data-visualization.js';
 import { TpTooltip } from '../tooltip/tooltip.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 
 export class TpDataVisualization extends TpElement {
   static tagName = 'tp-data-visualization';
@@ -245,11 +245,10 @@ export class TpDataVisualization extends TpElement {
   #checkDescription = (): void => {
     const missing = !this.description.trim() && !this.querySelector('[slot="table"]');
     if (missing && !this.#missingDescription)
-      this.emit('tp-diagnostic', {
-        code: 'missing-description',
-        message:
-          'Data Visualization requires a meaningful description or an equivalent data table in slot="table".',
-      });
+      this.diagnose(
+        'missing-description',
+        'Data Visualization requires a meaningful description or an equivalent data table in slot="table".',
+      );
     this.#missingDescription = missing;
   };
   #appearance(): void {
@@ -298,5 +297,11 @@ export class TpDataVisualization extends TpElement {
     this.#engine = undefined;
     this.#mountedRenderer = undefined;
     this.#plot = undefined;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-data-visualization': TpDataVisualization;
   }
 }

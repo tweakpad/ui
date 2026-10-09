@@ -1,10 +1,11 @@
+import { stepIndex } from '../../foundation/collection.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { ChoiceCollectionController } from '../../foundation/choice-collection.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
 import { resolveLocale } from '../../foundation/services.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
-import type { SelectRecord } from './model.js';
+import type { ChoiceModelRecord } from '../../foundation/choice-model.js';
 import type { TpSelect } from './select.js';
 import { createSelectFilter, type SelectFilter } from './filter.js';
 import type { SelectMessages, SelectQueryRecordMetadata } from './query-types.js';
@@ -16,12 +17,12 @@ import type { SearchSource } from '../../foundation/search/source.js';
 import type { SearchHit, SearchRange, SearchStatus } from '../../foundation/search/types.js';
 
 interface QueryOwner {
-  collection: ChoiceCollectionController<unknown, SelectRecord>;
+  collection: ChoiceCollectionController<unknown, ChoiceModelRecord>;
   selection: ControllableState<unknown>;
   values(value: unknown): unknown[];
   text(value: unknown): string;
-  select(record: SelectRecord, event: Event): void;
-  metadata(record: SelectRecord): SelectQueryRecordMetadata;
+  select(record: ChoiceModelRecord, event: Event): void;
+  metadata(record: ChoiceModelRecord): SelectQueryRecordMetadata;
   /** Autocomplete: no selection lane; the text is the value. */
   selectionFree(): boolean;
   /** Event name of text-lane proposals. */
@@ -34,11 +35,11 @@ interface QueryOwner {
 }
 
 interface CachedIndex {
-  readonly records: readonly SelectRecord[];
+  readonly records: readonly ChoiceModelRecord[];
   readonly texts: readonly string[];
   readonly fields: unknown;
   readonly locale: string | undefined;
-  readonly index: TextIndex<SelectRecord>;
+  readonly index: TextIndex<ChoiceModelRecord>;
 }
 /** Editable policy only. Select retains the sole selection, collection and surface lifecycle. */
 export class SelectQueryController {
@@ -53,7 +54,7 @@ export class SelectQueryController {
   #notified: { value: unknown; index: number } | undefined;
   /** Matched ranges of each visible record's text, computed when first rendered. */
   readonly #ranges = new Map<
-    SelectRecord,
+    ChoiceModelRecord,
     readonly SearchRange[] | (() => readonly SearchRange[])
   >();
   /** Whether the visible order is a ranking rather than source order. */
@@ -103,9 +104,9 @@ export class SelectQueryController {
   get searchStatus(): SearchStatus {
     return this.run.status;
   }
-  /** Loading, from the loading property or a pending source query. */
+  /** Loading, from the host's busy property or a pending source query. */
   get busy(): boolean {
-    return this.host.loading || (!!this.host.source && this.run.status === 'loading');
+    return this.host.busy || (!!this.host.source && this.run.status === 'loading');
   }
   #locale(): string | undefined {
     return this.host.locale ?? resolveLocale(this.host);
@@ -155,7 +156,7 @@ export class SelectQueryController {
     this.#matcher = createSelectFilter(locale ? { locale } : {});
     const selection = this.owner.selection.value;
     const results = this.resultItems;
-    let candidates: SelectRecord[];
+    let candidates: ChoiceModelRecord[];
     if (results !== undefined) {
       candidates = [
         ...new Set(
@@ -219,7 +220,7 @@ export class SelectQueryController {
         : messages.results(c.visible.length);
   }
   /** The ranked index over the current records, rebuilt only when their texts change. */
-  #search(locale: string | undefined): TextIndex<SelectRecord> {
+  #search(locale: string | undefined): TextIndex<ChoiceModelRecord> {
     const records = this.owner.collection.source,
       fields = this.host.matchFields,
       cached = this.#index;
@@ -233,7 +234,7 @@ export class SelectQueryController {
       )
     )
       return cached.index;
-    const index = new TextIndex<SelectRecord>({
+    const index = new TextIndex<ChoiceModelRecord>({
       fields: ['text', 'extra'],
       boost: { text: 2 },
       locale,
@@ -249,12 +250,16 @@ export class SelectQueryController {
     };
     return index;
   }
-  #extraTexts(record: SelectRecord): string[] {
+  #extraTexts(record: ChoiceModelRecord): string[] {
     const value = this.host.matchFields?.(this.owner.metadata(record).source);
     return value == null ? [] : typeof value === 'string' ? [value] : [...value];
   }
   /** Ranges of source results or authoritative items: from the hits, else the query's words. */
-  #resultRanges(records: readonly SelectRecord[], query: string, locale: string | undefined): void {
+  #resultRanges(
+    records: readonly ChoiceModelRecord[],
+    query: string,
+    locale: string | undefined,
+  ): void {
     const terms = tokenize(query, locale).map((token) => token.term);
     const hits = new Map<unknown, SearchHit>();
     if (this.host.filteredItems === undefined)
@@ -270,18 +275,18 @@ export class SelectQueryController {
     }
   }
   /** The matched ranges of `record`'s text, for highlighting. */
-  rangesOf(record: SelectRecord): readonly SearchRange[] {
+  rangesOf(record: ChoiceModelRecord): readonly SearchRange[] {
     let ranges = this.#ranges.get(record);
     if (typeof ranges === 'function') this.#ranges.set(record, (ranges = ranges()));
     return ranges ?? [];
   }
-  matches(record: SelectRecord, item: unknown): boolean {
+  matches(record: ChoiceModelRecord, item: unknown): boolean {
     return (
       Object.is(this.owner.metadata(record).source, item) ||
       this.owner.collection.equal(record.value, item)
     );
   }
-  mounted(record: SelectRecord): boolean {
+  mounted(record: ChoiceModelRecord): boolean {
     return (
       !this.host.virtualized ||
       !this.host.mountedItems ||
@@ -308,7 +313,7 @@ export class SelectQueryController {
     else this.host.setOpen(true, 'input', event);
     this.host.requestUpdate();
   }
-  selected(record: SelectRecord, event: Event): void {
+  selected(record: ChoiceModelRecord, event: Event): void {
     this.state.set(
       this.host.multiple ? '' : record.text,
       this.host.multiple ? 'input-clear' : 'item-press',
@@ -450,14 +455,13 @@ export class SelectQueryController {
         (record) =>
           !record.disabled && this.owner.metadata(record).row === this.owner.metadata(current).row,
       );
-      const index = row.indexOf(current) + ((event.key === 'ArrowRight') !== rtl ? 1 : -1);
-      c.activeIndex = c.visible.indexOf(
-        row[
-          h.loopFocus
-            ? (index + row.length) % row.length
-            : Math.max(0, Math.min(row.length - 1, index))
-        ]!,
+      const index = stepIndex(
+        row.indexOf(current),
+        (event.key === 'ArrowRight') !== rtl ? 1 : -1,
+        row.length,
+        h.loopFocus,
       );
+      c.activeIndex = c.visible.indexOf(row[index]!);
       this.highlight('list-navigation');
     }
   }
@@ -469,13 +473,10 @@ export class SelectQueryController {
       c.boundary(delta < 0);
       return;
     }
-    const row = (record: SelectRecord) => this.owner.metadata(record).row;
+    const row = (record: ChoiceModelRecord) => this.owner.metadata(record).row;
     const rows = [...new Set(enabled.map(row))],
       column = enabled.filter((record) => row(record) === row(current)).indexOf(current);
-    let next = rows.indexOf(row(current)) + delta;
-    next = this.host.loopFocus
-      ? (next + rows.length) % rows.length
-      : Math.max(0, Math.min(rows.length - 1, next));
+    const next = stepIndex(rows.indexOf(row(current)), delta, rows.length, this.host.loopFocus);
     const candidates = enabled.filter((record) => row(record) === rows[next]);
     const target = candidates[Math.min(column, candidates.length - 1)];
     if (target) c.activeIndex = c.visible.indexOf(target);

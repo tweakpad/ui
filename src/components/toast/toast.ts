@@ -1,4 +1,5 @@
 import { GeneratedStyleResource } from '../../foundation/generated-style.js';
+import { isSurfaceHost } from '../../foundation/surface-brand.js';
 import { setLogicalPortalOwner } from '../../foundation/portal-ownership.js';
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
@@ -36,9 +37,9 @@ import type {
 } from './types.js';
 import { toastPresentation } from '../../presentation/families/toast.js';
 import { TpSpinner } from '../spinner/spinner.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 
 /** Portal/viewport binding to the single logical Provider and notification manager. */
 export class TpToast extends TpElement {
@@ -315,7 +316,7 @@ export class TpToast extends TpElement {
         this.#inheritPortalTheme();
         this.requestUpdate();
       });
-    this.#observer = new MutationObserver(() => {
+    this.#observer = new (this.ownerDocument.defaultView ?? window).MutationObserver(() => {
       for (const [identifier, view] of this.#views) {
         if (
           view.element &&
@@ -325,12 +326,14 @@ export class TpToast extends TpElement {
           this.manager.remove(identifier, view.toast.lifecycleKey);
       }
     });
-    this.#themeObserver = new MutationObserver((records) => {
-      if (
-        records.some((record) => record.target instanceof Element && record.target.contains(this))
-      )
-        this.#inheritPortalTheme();
-    });
+    this.#themeObserver = new (this.ownerDocument.defaultView ?? window).MutationObserver(
+      (records) => {
+        if (
+          records.some((record) => record.target instanceof Element && record.target.contains(this))
+        )
+          this.#inheritPortalTheme();
+      },
+    );
     this.#themeObserver.observe(this.ownerDocument.documentElement, {
       subtree: true,
       attributes: true,
@@ -513,9 +516,7 @@ export class TpToast extends TpElement {
           (node) =>
             node instanceof Element &&
             node !== this &&
-            ((node.matches('tp-dialog,tp-alert-dialog,tp-popover,tp-menu,tp-select') &&
-              Boolean((node as HTMLElement & { open?: boolean }).open)) ||
-              node.matches(':popover-open')) &&
+            ((isSurfaceHost(node) && node.open) || node.matches(':popover-open')) &&
             node !== this.#viewport,
         )
       )
@@ -937,14 +938,7 @@ export class TpToast extends TpElement {
       arrow: element.querySelector('.arrow'),
       arrowPadding: properties.arrowPadding ?? themeSpacing(this, 2),
       sticky: properties.sticky ?? false,
-      tracking: properties.disableAnchorTracking
-        ? false
-        : {
-            ancestorScroll: true,
-            ancestorResize: true,
-            elementResize: true,
-            anchorLayoutShift: true,
-          },
+      tracking: properties.disableAnchorTracking ? false : {},
       constrainSize: true,
       onInvalid: () => this.manager.close(view.toast.identifier, 'anchor-removed'),
       onPosition: (result: PositioningResult) => {
@@ -1037,6 +1031,12 @@ export class TpToast extends TpElement {
   #diagnostic = (code: string, message: string): void => {
     if (this.#warnings.has(code)) return;
     this.#warnings.add(code);
-    this.emit('tp-diagnostic', { code: `toast-${code}`, message, severity: 'warning' });
+    this.diagnose(`toast-${code}`, message);
   };
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-toast': TpToast;
+  }
 }

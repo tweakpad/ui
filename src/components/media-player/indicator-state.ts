@@ -4,6 +4,7 @@
  * snapshot taken *before* the key-binding or gesture request executes and predicts its outcome.
  */
 import { captionsAvailability } from '../../foundation/media/availability.js';
+import { clamp01 } from '../../foundation/converters.js';
 import { formatDuration } from '../../foundation/duration-format.js';
 import { formatMediaPercent, type MediaMessagesResolver } from '../../foundation/media/messages.js';
 import { UNMUTE_VOLUME, type MediaRequestAction } from '../../foundation/media/requests.js';
@@ -63,10 +64,6 @@ export interface MediaVolumePrediction {
   readonly previousVolume: number;
   readonly volume: number;
   readonly muted: boolean;
-}
-
-function clamp01(value: number): number {
-  return Math.min(1, Math.max(0, value));
 }
 
 function finiteNumber(value: unknown): number | null {

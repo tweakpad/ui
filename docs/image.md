@@ -21,28 +21,28 @@ Spinner and Icon elements it renders.
 
 ## Properties
 
-| Property / attribute | Values | Default |
-| --- | --- | --- |
-| `src` | URL | `''` |
-| `srcSet` / `srcset` | srcset candidate list (`w` or `x` descriptors) | `''` |
-| `sizes` | sizes list | derived (see [Responsive images](#responsive-images)) |
-| `alt` | text; empty marks the image decorative | `''` |
-| `loading` | `lazy`, `eager` | `lazy` |
-| `fetchPriority` / `fetchpriority` | `high`, `low`, `auto` | host default |
-| `crossOrigin` / `crossorigin` | `anonymous`, `use-credentials` | none |
-| `referrerPolicy` / `referrerpolicy` | referrer policy | host default |
-| `width`, `height` | intrinsic pixel dimensions | none |
-| `ratio` | finite number greater than zero (width ÷ height) | none: intrinsic geometry |
-| `fit` | `cover`, `contain`, `fill`, `none`, `scale-down` | `cover` |
-| `placeholder` | `skeleton`, `spinner`, `none` | `skeleton` |
-| `zoom` | `none`, `in`, `out` | `none` |
-| `zoomed` | boolean | `false` |
-| `parallax` | `none`, or space-separated: one of `up`, `down`, `left`, `right` and/or one of `zoom-in`, `zoom-out` | `none` |
-| `parallaxDepth` / `parallax-depth` | number from 0 to 1 | `0.3` |
-| `parallaxSmoothing` / `parallax-smoothing` | number from 0 to 1 (clamped to 0.98) | `0` (locked to the scroll) |
-| `reveal` | space-separated `fade`, `up`, `down`, `left`, `right`, `zoom-in`, `zoom-out` | `''` |
-| `revealRepeat` / `reveal-repeat` | boolean: reveal on every entry instead of only the first | `false` |
-| `revealHold` / `reveal-hold` | boolean: a ready reveal waits in its start state until cleared | `false` |
+| Property / attribute                       | Values                                                                                               | Default                                               |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `src`                                      | URL                                                                                                  | `''`                                                  |
+| `srcSet` / `srcset`                        | srcset candidate list (`w` or `x` descriptors)                                                       | `''`                                                  |
+| `sizes`                                    | sizes list                                                                                           | derived (see [Responsive images](#responsive-images)) |
+| `alt`                                      | text; empty marks the image decorative                                                               | `''`                                                  |
+| `loading`                                  | `lazy`, `eager`                                                                                      | `lazy`                                                |
+| `fetchPriority` / `fetchpriority`          | `high`, `low`, `auto`                                                                                | host default                                          |
+| `crossOrigin` / `crossorigin`              | `anonymous`, `use-credentials`                                                                       | none                                                  |
+| `referrerPolicy` / `referrerpolicy`        | referrer policy                                                                                      | host default                                          |
+| `width`, `height`                          | intrinsic pixel dimensions                                                                           | none                                                  |
+| `ratio`                                    | finite number greater than zero (width ÷ height)                                                     | none: intrinsic geometry                              |
+| `fit`                                      | `cover`, `contain`, `fill`, `none`, `scale-down`                                                     | `cover`                                               |
+| `placeholder`                              | `skeleton`, `spinner`, `none`                                                                        | `skeleton`                                            |
+| `zoom`                                     | `none`, `in`, `out`                                                                                  | `none`                                                |
+| `zoomed`                                   | boolean                                                                                              | `false`                                               |
+| `parallax`                                 | `none`, or space-separated: one of `up`, `down`, `left`, `right` and/or one of `zoom-in`, `zoom-out` | `none`                                                |
+| `parallaxDepth` / `parallax-depth`         | number from 0 to 1                                                                                   | `0.3`                                                 |
+| `parallaxSmoothing` / `parallax-smoothing` | number from 0 to 1 (clamped to 0.98)                                                                 | `0` (locked to the scroll)                            |
+| `reveal`                                   | space-separated `fade`, `up`, `down`, `left`, `right`, `zoom-in`, `zoom-out`                         | `''`                                                  |
+| `revealRepeat` / `reveal-repeat`           | boolean: reveal on every entry instead of only the first                                             | `false`                                               |
+| `revealHold` / `reveal-hold`               | boolean: a ready reveal waits in its start state until cleared                                       | `false`                                               |
 
 Read-only: `imageLoadingStatus` (`idle`, `loading`, `loaded`, `error`), `currentSrc` (the
 candidate the browser chose) and `revealed`. Exports: `TpImage`, `TpImageGroup`,
@@ -50,11 +50,11 @@ candidate the browser chose) and `revealed`. Exports: `TpImage`, `TpImageGroup`,
 
 All events bubble and are composed:
 
-| Event | Detail | When |
-| --- | --- | --- |
-| `tp-loading-status-change` | `{ status }` | After every loading status change. |
-| `tp-reveal-change` | `{ revealed, effect }` | When a reveal starts (`true`) or a repeating reveal resets (`false`). |
-| `tp-reveal-change-complete` | `{ revealed }` | When that motion has settled, including any delay. Under reduced motion it fires at once. |
+| Event                       | Detail                 | When                                                                                      |
+| --------------------------- | ---------------------- | ----------------------------------------------------------------------------------------- |
+| `tp-loading-status-change`  | `{ status }`           | After every loading status change.                                                        |
+| `tp-reveal-change`          | `{ revealed, effect }` | When a reveal starts (`true`) or a repeating reveal resets (`false`).                     |
+| `tp-reveal-change-complete` | `{ revealed }`         | When that motion has settled, including any delay. Under reduced motion it fires at once. |
 
 Setting an invalid `ratio` throws `RangeError` and keeps the previous value. Without `ratio`,
 the image keeps its own proportions. Give `width` and `height` (or set them on the selected
@@ -82,7 +82,11 @@ candidate.
 
 ```html
 <tp-image ratio="1.5" src="/hero-1280.jpg" alt="Mountain ridge at dawn">
-  <source media="(max-width: 600px)" type="image/avif" srcset="/hero-tall-400.avif 400w, /hero-tall-800.avif 800w" />
+  <source
+    media="(max-width: 600px)"
+    type="image/avif"
+    srcset="/hero-tall-400.avif 400w, /hero-tall-800.avif 800w"
+  />
   <source media="(max-width: 600px)" srcset="/hero-tall-400.jpg 400w, /hero-tall-800.jpg 800w" />
   <source type="image/avif" srcset="/hero-640.avif 640w, /hero-1280.avif 1280w" />
 </tp-image>
@@ -162,20 +166,24 @@ trigger their own reveal; the group owns their timing. Lay the group out like an
 example as a grid.
 
 ```html
-<tp-image-group reveal="fade up" stagger="120" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px">
+<tp-image-group
+  reveal="fade up"
+  stagger="120"
+  style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px"
+>
   <tp-image ratio="1" src="/a.jpg" alt=""></tp-image>
   <tp-image ratio="1" src="/b.jpg" alt=""></tp-image>
   <tp-image ratio="1" src="/c.jpg" alt=""></tp-image>
 </tp-image-group>
 ```
 
-| Group property / attribute | Values | Default |
-| --- | --- | --- |
-| `stagger` | milliseconds between consecutive member reveals | `0` (in sync) |
-| `staggerFrom` / `stagger-from` | `first`, `last`, `center` | `first` |
-| `reveal` | default effect tokens for members without their own | `''` |
-| `revealRepeat` / `reveal-repeat` | replay the group reveal on every entry | `false` |
-| `revealHold` / `reveal-hold` | hold the whole group; a member's own hold also holds it | `false` |
+| Group property / attribute       | Values                                                  | Default       |
+| -------------------------------- | ------------------------------------------------------- | ------------- |
+| `stagger`                        | milliseconds between consecutive member reveals         | `0` (in sync) |
+| `staggerFrom` / `stagger-from`   | `first`, `last`, `center`                               | `first`       |
+| `reveal`                         | default effect tokens for members without their own     | `''`          |
+| `revealRepeat` / `reveal-repeat` | replay the group reveal on every entry                  | `false`       |
+| `revealHold` / `reveal-hold`     | hold the whole group; a member's own hold also holds it | `false`       |
 
 The group's read-only properties are `loadingStatus` (`idle`, `loading`, `loaded`), `images`
 (the members in order) and `revealed`. It dispatches `tp-loading-status-change` with
@@ -218,26 +226,26 @@ Image paints no surface of its own. The placeholder and fallback surfaces are th
 Skeleton, so theme tokens such as `--tp-muted` apply. Set `border-radius` on the host to round
 the frame.
 
-| Part | Element |
-| --- | --- |
-| `frame` (`image-frame`) | the clipping frame (an Aspect Ratio box when `ratio` is set) |
-| `media` (`image-media`) | the layer that zoom and parallax move |
-| `picture` (`image-picture`) | the native image |
-| `placeholder` (`image-placeholder`) | the loading surface |
-| `fallback` (`image-fallback`) | the failure surface |
-| `image-group` | the `tp-image-group` host |
+| Part                                | Element                                                      |
+| ----------------------------------- | ------------------------------------------------------------ |
+| `frame` (`image-frame`)             | the clipping frame (an Aspect Ratio box when `ratio` is set) |
+| `media` (`image-media`)             | the layer that zoom and parallax move                        |
+| `picture` (`image-picture`)         | the native image                                             |
+| `placeholder` (`image-placeholder`) | the loading surface                                          |
+| `fallback` (`image-fallback`)       | the failure surface                                          |
+| `image-group`                       | the `tp-image-group` host                                    |
 
-| Custom property | Default |
-| --- | --- |
-| `--tp-image-position` | `50% 50%` (object position) |
-| `--tp-image-zoom-scale` | `1.1` |
-| `--tp-image-zoom-duration` | `calc(var(--tp-duration-normal) * 2)`; always scaled by the motion policy |
-| `--tp-image-zoom-easing` | `ease-out` |
-| `--tp-image-reveal-distance` | `var(--tp-space-6)` |
-| `--tp-image-reveal-scale` | `0.08` (scale offset for `zoom-in`/`zoom-out`) |
-| `--tp-image-reveal-delay` | `0s` |
+| Custom property              | Default                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| `--tp-image-position`        | `50% 50%` (object position)                                               |
+| `--tp-image-zoom-scale`      | `1.1`                                                                     |
+| `--tp-image-zoom-duration`   | `calc(var(--tp-duration-normal) * 2)`; always scaled by the motion policy |
+| `--tp-image-zoom-easing`     | `ease-out`                                                                |
+| `--tp-image-reveal-distance` | `var(--tp-space-6)`                                                       |
+| `--tp-image-reveal-scale`    | `0.08` (scale offset for `zoom-in`/`zoom-out`)                            |
+| `--tp-image-reveal-delay`    | `0s`                                                                      |
 | `--tp-image-reveal-duration` | `calc(var(--tp-duration-normal) * 2)`; always scaled by the motion policy |
-| `--tp-image-reveal-easing` | `var(--tp-easing-standard)`; any CSS easing |
+| `--tp-image-reveal-easing`   | `var(--tp-easing-standard)`; any CSS easing                               |
 
-Markers on the host: `data-status`; `data-in-view` (`true`/`false`, only while visibility is
-observed); `data-revealed`.
+Markers on the host: `data-status`; `data-in-view` (present while visibility is observed and
+the image intersects the viewport); `data-revealed`.

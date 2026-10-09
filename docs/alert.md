@@ -16,12 +16,12 @@ html`<tp-alert severity="success" announcement="polite">
 
 ### Properties and attributes
 
-| Property / attribute | Type; default | Behavior |
-| --- | --- | --- |
-| `severity` | informational, success, warning, danger; informational | Reflected. Selects visual emphasis using semantic theme colors. It does not select the announcement policy. |
-| `announcement` | off, polite, assertive; off | Reflected. Off has no live role; polite uses `status`; assertive uses `alert`. All modes set the corresponding `aria-live` value. |
-| `title` | string; empty | Optional text fallback for the title slot. Attribute input is supported; property updates do not reflect. The story supplies “Update available”; the component default is empty. |
-| `partPresentation` | object; `{}` | Inherited per-instance public part hooks. Property only. |
+| Property / attribute | Type; default                                          | Behavior                                                                                                                                                                         |
+| -------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `severity`           | informational, success, warning, danger; informational | Reflected. Selects visual emphasis using semantic theme colors. It does not select the announcement policy.                                                                      |
+| `announcement`       | off, polite, assertive; off                            | Reflected. Off has no live role; polite uses `status`; assertive uses `alert`. All modes set the corresponding `aria-live` value.                                                |
+| `title`              | string; empty                                          | Optional text fallback for the title slot. Attribute input is supported; property updates do not reflect. The story supplies “Update available”; the component default is empty. |
+| `partPresentation`   | object; `{}`                                           | Inherited per-instance public part hooks. Property only.                                                                                                                         |
 
 **Communicate severity in the words, not only the color or icon.** For example, use “Changes saved”, “Warning: storage almost full”, or “Could not save your changes”. Alert does not insert an English severity prefix into authored content. Supply the appropriate message in the application's language.
 
@@ -29,12 +29,12 @@ Keep announcement off for static page content. Use polite for routine updates to
 
 ### Slots and composition
 
-| Slot | Content |
-| --- | --- |
-| Default | Optional description; text, paragraphs, lists, links and library components are supported. |
-| `title` | Optional rich title, including emphasis, links or Badge. Assigned content replaces the `title` text fallback. Removing it restores the fallback. |
-| `icon` | Optional mark, normally a decorative Icon. Do not rely on it alone to explain severity. |
-| `actions` | Optional action controls. Use Button with a label describing the result; the application owns their behavior. |
+| Slot      | Content                                                                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Default   | Optional description; text, paragraphs, lists, links and library components are supported.                                                       |
+| `title`   | Optional rich title, including emphasis, links or Badge. Assigned content replaces the `title` text fallback. Removing it restores the fallback. |
+| `icon`    | Optional mark, normally a decorative Icon. Do not rely on it alone to explain severity.                                                          |
+| `actions` | Optional action controls. Use Button with a label describing the result; the application owns their behavior.                                    |
 
 Empty regions consume no spacing. Content wraps inside constrained containers; icon and actions occupy their intrinsic inline tracks. Native block content retains its own authored structure; direct description paragraphs have their outer margin reset. Apply typography to nested authored content as needed.
 
@@ -50,7 +50,7 @@ Use existing tokens such as `--tp-card`, `--tp-card-foreground`, `--tp-muted-for
 
 ```ts
 alert.partPresentation = {
-  'alert': { styleHook: { 'border-radius': 'var(--tp-radius-sm)' } },
+  alert: { styleHook: { 'border-radius': 'var(--tp-radius-sm)' } },
   'alert-title': { styleHook: { 'font-weight': 'var(--tp-font-semibold)' } },
 };
 ```

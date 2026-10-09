@@ -37,9 +37,7 @@ const source = `<script type="module">\n  import '@tweakpad/ui/styles.css';\n  i
 const meta: Meta<Args> = {
   title: 'Components/Slider',
   component: 'tp-slider',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       examples: sliderExamples,
       description: { component: documentation },

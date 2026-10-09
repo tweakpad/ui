@@ -66,7 +66,7 @@ export class TpMenuRadioGroup extends TpElement {
     hasDefaultValue: () => this.defaultValue !== undefined,
     onChange: (event) => this.onValueChange?.(event),
     onCommit: () => this.#members.forEach((member) => member.requestUpdate()),
-    diagnostic: (message) => this.emit('tp-diagnostic', { code: 'menu-radio-state', message }),
+    diagnostic: (message) => this.diagnose('menu-radio-state', message),
   });
   get value(): unknown {
     return this.#state.value;
@@ -101,11 +101,10 @@ export class TpMenuRadioGroup extends TpElement {
         this.#excluded.add(member);
         if (!this.#reported.has(member)) {
           this.#reported.add(member);
-          this.emit('tp-diagnostic', {
-            code: 'menu-radio-value',
-            message:
-              'Radio items require a value unique within their nearest RadioGroup; missing and later duplicate values are excluded.',
-          });
+          this.diagnose(
+            'menu-radio-value',
+            'Radio items require a value unique within their nearest RadioGroup; missing and later duplicate values are excluded.',
+          );
         }
       } else values.push(member.value);
       // Only a member whose selectability flipped renders differently.
@@ -135,5 +134,11 @@ export class TpMenuRadioGroup extends TpElement {
         content: html`<slot></slot>`,
       },
     );
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-menu-radio-group': TpMenuRadioGroup;
   }
 }

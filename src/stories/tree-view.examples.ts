@@ -1,10 +1,8 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { interactiveMarkupExample, publishedSource } from './documentation-examples.js';
 import { setupTreeViewExample } from './tree-view-example.js';
 import setupSource from './tree-view-example.js?raw';
 
-const script = setupSource
-  .replaceAll("'../icons/", "'@tweakpad/ui/icons/")
-  .replaceAll(".js';", "';");
+const script = publishedSource(setupSource);
 
 function example(title: string, mode: string, content: string, description: string) {
   const id = `tree-view-${mode}-example`;

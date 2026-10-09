@@ -34,15 +34,15 @@ Viewport, methods and customization. Menu's defaults and additional properties a
 
 | Property / attribute                                 | Type                  | Default            | Meaning                                                                                    |
 | ---------------------------------------------------- | --------------------- | ------------------ | ------------------------------------------------------------------------------------------ |
-| `invocation` | trigger / context | trigger | Choose ordinary trigger activation or context invocation. |
-| `for` | string | empty | Context target ID; otherwise the trigger slot, then parent region. |
+| `invocation`                                         | trigger / context     | trigger            | Choose ordinary trigger activation or context invocation.                                  |
+| `for`                                                | string                | empty              | Context target ID; otherwise the trigger slot, then parent region.                         |
 | `value`                                              | string                | empty              | Standalone legacy last-command value; inside Menubar this is the Menu's stable identifier. |
 | `itemVariant / item-variant`                         | ghost / destructive   | ghost              | Default visual treatment for Items without their own variant.                              |
 | `orientation`                                        | horizontal / vertical | vertical           | Direction of list navigation.                                                              |
 | `loopFocus / loop-focus`                             | boolean               | true               | Wrap enabled command navigation.                                                           |
 | `highlightItemOnHover / highlight-item-on-hover`     | boolean               | true               | Highlight enabled commands on pointer movement.                                            |
 | `modal`                                              | boolean               | true               | Root owns outside inertness and scroll lock; nested menus participate in its branch.       |
-| `closeParentOnEscape / close-parent-on-escape`       | boolean               | false              | Also close parent on Escape; closeParentOnEsc is the legacy property alias.                |
+| `closeParentOnEscape / close-parent-on-escape`       | boolean               | false              | Also close parent on Escape.                                                               |
 | `openOnHover / open-on-hover`                        | boolean               | false; nested true | Enable hover opening.                                                                      |
 | `openDelay / open-delay`, `closeDelay / close-delay` | number                | 100, 0             | Hover timing.                                                                              |
 
@@ -82,30 +82,30 @@ Each nested Menu retains its own ordinary submenu trigger and chevron.
 
 ## Command constituents
 
-| Element / property                     | Type                            | Default / behavior                                                                                 |
-| -------------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `tp-menu-item`                         | command                         | Generic Item.                                                                                      |
-| `value`                                | unknown; string attribute       | undefined; command payload, not selection state.                                                   |
-| `label`                                | string                          | empty; accessible/typeahead override for rich content.                                             |
-| `disabled`                             | boolean                         | false; also respects nearest Menu disabled state.                                                  |
-| `variant`                              | ghost / destructive / undefined | inherit Root itemVariant.                                                                          |
-| `nativeAction / native-action`         | boolean                         | false; default semantic div uses the shared synthetic press owner. True uses a native button.      |
-| `closeOnClick / close-on-click`        | boolean                         | true for Item; false for checks/radios and native links.                                           |
-| `onClick`                              | `(event: Event) => void`        | Consumer activation hook before component handling.                                                |
-| `activate(event)`                      | method                          | Propose activation through the owning Menu; no effect when unregistered/disabled/closed.           |
-| `focus(options?)`, `click()`           | methods                         | Forward to the current actual semantic host.                                                       |
-| `controlElement`                       | HTMLElement or null             | Current semantic Item host.                                                                        |
-| `highlighted`                          | read-only boolean               | Committed collection highlight.                                                                    |
-| `tp-menu-checkbox-item.checked`        | optional boolean                | Controlled checked state.                                                                          |
-| `defaultChecked / default-checked`     | boolean                         | false for uncontrolled initialization.                                                             |
-| `onCheckedChange`                      | Boolean value event callback    | Same cancelable proposal as tp-value-change.                                                       |
-| Checkbox `keepMounted / keep-mounted`  | boolean                         | false; retain the inactive Indicator only.                                                         |
-| `tp-menu-radio-group.value`            | unknown                         | Optional controlled selection; values use Object.is identity.                                      |
-| RadioGroup `defaultValue / default-value`              | unknown property; string attribute | undefined; uncontrolled initial selection.                                                         |
-| RadioGroup `disabled`, `onValueChange` | boolean, value event callback   | false; group proposal callback.                                                                    |
-| `tp-menu-radio-item.value`             | unknown; string attribute       | Required, unique in nearest RadioGroup. Missing/later duplicate values are diagnosed and excluded. |
-| RadioItem `checked`                    | read-only boolean               | Derived from RadioGroup; activating the selected choice does not clear it.                         |
-| RadioItem `keepMounted / keep-mounted` | boolean                         | false; retain its inactive Indicator.                                                              |
+| Element / property                        | Type                               | Default / behavior                                                                                 |
+| ----------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `tp-menu-item`                            | command                            | Generic Item.                                                                                      |
+| `value`                                   | unknown; string attribute          | undefined; command payload, not selection state.                                                   |
+| `label`                                   | string                             | empty; accessible/typeahead override for rich content.                                             |
+| `disabled`                                | boolean                            | false; also respects nearest Menu disabled state.                                                  |
+| `variant`                                 | ghost / destructive / undefined    | inherit Root itemVariant.                                                                          |
+| `nativeAction / native-action`            | boolean                            | false; default semantic div uses the shared synthetic press owner. True uses a native button.      |
+| `closeOnClick / close-on-click`           | boolean                            | true for Item; false for checks/radios and native links.                                           |
+| `onClick`                                 | `(event: Event) => void`           | Consumer activation hook before component handling.                                                |
+| `activate(event)`                         | method                             | Propose activation through the owning Menu; no effect when unregistered/disabled/closed.           |
+| `focus(options?)`, `click()`              | methods                            | Forward to the current actual semantic host.                                                       |
+| `controlElement`                          | HTMLElement or null                | Current semantic Item host.                                                                        |
+| `highlighted`                             | read-only boolean                  | Committed collection highlight.                                                                    |
+| `tp-menu-checkbox-item.checked`           | optional boolean                   | Controlled checked state.                                                                          |
+| `defaultChecked / default-checked`        | boolean                            | false for uncontrolled initialization.                                                             |
+| `onCheckedChange`                         | Boolean value event callback       | Same cancelable proposal as tp-value-change.                                                       |
+| Checkbox `keepMounted / keep-mounted`     | boolean                            | false; retain the inactive Indicator only.                                                         |
+| `tp-menu-radio-group.value`               | unknown                            | Optional controlled selection; values use Object.is identity.                                      |
+| RadioGroup `defaultValue / default-value` | unknown property; string attribute | undefined; uncontrolled initial selection.                                                         |
+| RadioGroup `disabled`, `onValueChange`    | boolean, value event callback      | false; group proposal callback.                                                                    |
+| `tp-menu-radio-item.value`                | unknown; string attribute          | Required, unique in nearest RadioGroup. Missing/later duplicate values are diagnosed and excluded. |
+| RadioItem `checked`                       | read-only boolean                  | Derived from RadioGroup; activating the selected choice does not clear it.                         |
+| RadioItem `keepMounted / keep-mounted`    | boolean                            | false; retain its inactive Indicator.                                                              |
 
 Checkbox and RadioGroup controlled owners accept `event.detail.value`
 synchronously. Details include previousValue/reason/sourceEvent/cancelled;

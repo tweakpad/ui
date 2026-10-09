@@ -60,18 +60,3 @@ export function carouselItems<T>(
   });
   return Object.freeze(records);
 }
-
-export function nearestCarouselItem(
-  items: readonly CarouselItem[],
-  index: number,
-): CarouselItem | null {
-  let nearest: CarouselItem | null = null;
-  for (const item of items)
-    if (
-      !item.disabled &&
-      !item.hidden &&
-      (!nearest || Math.abs(item.index - index) < Math.abs(nearest.index - index))
-    )
-      nearest = item;
-  return nearest;
-}

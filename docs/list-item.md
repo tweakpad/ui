@@ -16,14 +16,14 @@ the existing decorative Separator.
 
 Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css` once.
 
-| Property / attribute | Values | Default |
-| --- | --- | --- |
-| `variant` | ghost, outline, subdued | ghost |
-| `size` | xs, sm, default | default |
-| `mediaTreatment` / `media-treatment` | plain, icon, image | plain |
-| `description` | Supporting text fallback | empty |
-| `selected` | Compatibility current-item metadata, reflected as `aria-current` | false |
-| `value` | Application-owned identity; no selection behavior | empty |
+| Property / attribute                 | Values                                                           | Default |
+| ------------------------------------ | ---------------------------------------------------------------- | ------- |
+| `variant`                            | ghost, outline, subdued                                          | ghost   |
+| `size`                               | xs, sm, default                                                  | default |
+| `mediaTreatment` / `media-treatment` | plain, icon, image                                               | plain   |
+| `description`                        | Supporting text fallback                                         | empty   |
+| `selected`                           | Compatibility current-item metadata, reflected as `aria-current` | false   |
+| `value`                              | Application-owned identity; no selection behavior                | empty   |
 
 Slots: default supplies the title; `title` replaces that fallback. `description`
 replaces the text property. `media` accepts Icon, Avatar or image content (`leading`

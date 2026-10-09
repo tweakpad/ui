@@ -25,7 +25,6 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Tooltip',
   component: 'tp-tooltip',
-  tags: ['autodocs'],
   parameters: { layout: 'centered', docs: { description: { component: documentation } } },
   args: {
     open: false,

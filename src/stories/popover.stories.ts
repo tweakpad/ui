@@ -30,7 +30,6 @@ const source = `${sourceImports}
 const meta: Meta<Args> = {
   title: 'Components/Popover',
   component: 'tp-popover',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: {

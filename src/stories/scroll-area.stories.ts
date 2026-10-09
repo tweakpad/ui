@@ -23,9 +23,7 @@ const defaults: Args = {
 const meta = {
   title: 'Components/Scroll area',
   component: 'tp-scroll-area',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: scrollAreaExamples,

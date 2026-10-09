@@ -19,9 +19,7 @@ interface Args {
 const meta = {
   title: 'Components/Scroll trigger',
   component: 'tp-scroll-trigger',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: scrollTriggerExamples,

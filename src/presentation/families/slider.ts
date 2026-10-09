@@ -6,7 +6,6 @@ const definition: ComponentDefinition = {
   name: 'Slider',
   tagName: 'tp-slider',
   kind: 'compound-reexport',
-  sourceNode: 'ucl17-slider',
   axes: [
     {
       name: 'orientation',
@@ -23,99 +22,37 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'slider',
-      publicName: 'Root',
-      presentationKeys: [
-        'slider',
-        'slider-orientation-horizontal',
-        'slider-orientation-vertical',
-        'slider-variant-default',
-        'slider-variant-bar',
-      ],
-      cardinality: 'exactly one public owner host per control instance',
+      axes: ['orientation', 'variant'],
     },
     {
       name: 'slider-track',
-      publicName: 'Track',
-      presentationKeys: [
-        'slider-track',
-        'slider-track-orientation-horizontal',
-        'slider-track-orientation-vertical',
-        'slider-track-variant-default',
-        'slider-track-variant-bar',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['orientation', 'variant'],
     },
     {
       name: 'slider-range',
-      publicName: 'Range',
-      presentationKeys: [
-        'slider-range',
-        'slider-range-orientation-horizontal',
-        'slider-range-orientation-vertical',
-        'slider-range-variant-default',
-        'slider-range-variant-bar',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['orientation', 'variant'],
     },
     {
       name: 'slider-thumb',
-      publicName: 'Thumb',
-      presentationKeys: [
-        'slider-thumb',
-        'slider-thumb-orientation-horizontal',
-        'slider-thumb-orientation-vertical',
-        'slider-thumb-variant-default',
-        'slider-thumb-variant-bar',
-      ],
-      cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
+      axes: ['orientation', 'variant'],
     },
     {
       name: 'slider-label',
-      publicName: 'Label',
-      presentationKeys: [
-        'slider-label',
-        'slider-label-orientation-horizontal',
-        'slider-label-orientation-vertical',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'slider-output',
-      publicName: 'Output',
-      presentationKeys: [
-        'slider-output',
-        'slider-output-orientation-horizontal',
-        'slider-output-orientation-vertical',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       // sec-148-slider mp-slider-media: optional non-semantic buffer ranges.
       name: 'slider-buffer',
-      publicName: 'Buffer',
-      presentationKeys: [
-        'slider-buffer',
-        'slider-buffer-orientation-horizontal',
-        'slider-buffer-orientation-vertical',
-        'slider-buffer-variant-default',
-        'slider-buffer-variant-bar',
-      ],
-      cardinality: 'zero or more descendants of Track; one per normalized buffered range',
+      axes: ['orientation', 'variant'],
     },
     {
       // sec-148-slider mp-slider-media: optional non-semantic chapter segments.
       name: 'slider-chapter',
-      publicName: 'Chapter',
-      presentationKeys: [
-        'slider-chapter',
-        'slider-chapter-orientation-horizontal',
-        'slider-chapter-orientation-vertical',
-      ],
-      cardinality: 'zero or more descendants of Track; one per normalized segment',
+      axes: ['orientation'],
     },
   ],
 };

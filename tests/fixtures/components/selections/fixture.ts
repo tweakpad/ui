@@ -22,18 +22,18 @@ const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) 
 render(
   html`
     ${(['sm', 'default', 'lg'] as const).map(
-    (size) =>
-      html`<p>
-        <tp-toggle id=${`icon-only-${size}`} .size=${size} aria-label=${`Bold ${size}`}
-          ><tp-icon .icon=${boldIcon}></tp-icon
-        ></tp-toggle>
-        <tp-toggle id=${`icon-label-${size}`} .size=${size} variant="outline"
-          ><tp-icon .icon=${italicIcon} data-icon="inline-start"></tp-icon> Italic
-          ${size}</tp-toggle
-        >
-        <tp-button .size=${size} variant="outline" .icon=${boldIcon}>Apply ${size}</tp-button>
-      </p>`,
-  )}
+      (size) =>
+        html`<p>
+          <tp-toggle id=${`icon-only-${size}`} .size=${size} aria-label=${`Bold ${size}`}
+            ><tp-icon .icon=${boldIcon}></tp-icon
+          ></tp-toggle>
+          <tp-toggle id=${`icon-label-${size}`} .size=${size} variant="outline"
+            ><tp-icon .icon=${italicIcon} data-icon="inline-start"></tp-icon> Italic
+            ${size}</tp-toggle
+          >
+          <tp-button .size=${size} variant="outline" .icon=${boldIcon}>Apply ${size}</tp-button>
+        </p>`,
+    )}
     <tp-toggle id="icon-pressed" default-pressed aria-label="Bold selected"
       ><tp-icon .icon=${boldIcon}></tp-icon
     ></tp-toggle>

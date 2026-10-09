@@ -1,3 +1,4 @@
+import { arrowKeys } from '../../foundation/collection.js';
 import { css, html, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
@@ -170,10 +171,7 @@ export class TpMapPin extends TpMapElement implements MapPinRecord {
     // Pins are projected by their map, so only a direct child can register.
     const map = owner && this.parentElement === owner ? owner : null;
     if (owner && !map)
-      this.emit('tp-diagnostic', {
-        code: 'map-pin-parent',
-        message: 'tp-map-pin must be a direct child of its tp-map.',
-      });
+      this.diagnose('map-pin-parent', 'tp-map-pin must be a direct child of its tp-map.');
     if (map !== this.#registered) {
       this.#release?.();
       this.#release = undefined;
@@ -198,10 +196,10 @@ export class TpMapPin extends TpMapElement implements MapPinRecord {
     this.#settled = true;
     if (!this.label.trim() && !this.#labelDiagnosed) {
       this.#labelDiagnosed = true;
-      this.emit('tp-diagnostic', {
-        code: 'map-pin-label',
-        message: `Map pin "${this.value}" has no label; its accessible name falls back to "${this.accessibleLabel}".`,
-      });
+      this.diagnose(
+        'map-pin-label',
+        `Map pin "${this.value}" has no label; its accessible name falls back to "${this.accessibleLabel}".`,
+      );
     }
     const selected = this.selected;
     this.toggleAttribute('data-selected', selected);
@@ -271,9 +269,7 @@ export class TpMapPin extends TpMapElement implements MapPinRecord {
   #keydown = (event: KeyboardEvent): void => {
     const map = this.#registered;
     if (!map || event.altKey || event.ctrlKey || event.metaKey) return;
-    const rtl = this.direction === 'rtl';
-    const previous = rtl ? 'ArrowRight' : 'ArrowLeft';
-    const next = rtl ? 'ArrowLeft' : 'ArrowRight';
+    const { previous, next } = arrowKeys('horizontal', this.direction);
     let handled = true;
     switch (event.key) {
       case 'ArrowUp':
@@ -313,4 +309,10 @@ export class TpMapPin extends TpMapElement implements MapPinRecord {
     event.preventDefault();
     event.stopPropagation();
   };
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-map-pin': TpMapPin;
+  }
 }

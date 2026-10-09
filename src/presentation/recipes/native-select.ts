@@ -3,11 +3,8 @@ import { inputRules } from './shared/text-control.js';
 import { controlStepDeclarations } from './shared/variant.js';
 /** Nova native-select layers its native extents over the shared Input boundary. */
 export const nativeSelectAppearance: PresentationDictionary = {
-  'native-select': [
-    { selector: '&[data-disabled]', declarations: { opacity: 'var(--tp-opacity-disabled)' } },
-  ],
-  'native-select-size-default': [],
-  'native-select-size-sm': [],
+  // The host already applies the disabled opacity and cursor.
+  'native-select': [],
   'native-select-control': [
     ...inputRules,
     {
@@ -66,16 +63,8 @@ export const nativeSelectAppearance: PresentationDictionary = {
       },
     },
   ],
-  'native-select-control-size-default': [],
-  'native-select-control-size-sm': [],
   'native-select-option': [{ declarations: { background: 'Canvas', color: 'CanvasText' } }],
-  'native-select-option-size-default': [],
-  'native-select-option-size-sm': [],
   'native-select-option-group': [{ declarations: { background: 'Canvas', color: 'CanvasText' } }],
-  'native-select-option-group-size-default': [],
-  'native-select-option-group-size-sm': [],
-  'native-select-indicator-size-default': [],
-  'native-select-indicator-size-sm': [],
   'native-select-indicator': [
     {
       declarations: {

@@ -75,7 +75,6 @@ const iconGroupSource = (labels: boolean) =>
 const meta: Meta<Args> = {
   title: 'Components/Toggle group',
   component: 'tp-toggle-group',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: {

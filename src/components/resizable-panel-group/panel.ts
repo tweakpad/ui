@@ -6,7 +6,6 @@ import type { PanelExtent, PanelSize } from './types.js';
 import { resizablePanelGroupPresentation } from '../../presentation/families/resizable-panel-group.js';
 export class TpResizablePanel extends TpElement {
   static tagName = 'tp-resizable-panel';
-  static presentationTagName = 'tp-resizable-panel-group';
   static override presentation = resizablePanelGroupPresentation;
   static override properties = {
     ...TpElement.properties,
@@ -77,5 +76,11 @@ export class TpResizablePanel extends TpElement {
       { collapsed: this.isCollapsed(), disabled: this.disabled },
       { properties: { class: 'panel' }, content: html`<slot></slot>` },
     );
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-resizable-panel': TpResizablePanel;
   }
 }

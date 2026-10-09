@@ -15,9 +15,7 @@ const values = ['', 'placed', 'confirmed', 'shipped', 'transit', 'delivered'];
 const meta = {
   title: 'Components/Timeline',
   component: 'tp-timeline',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: timelineExamples,

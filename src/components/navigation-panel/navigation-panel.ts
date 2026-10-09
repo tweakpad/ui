@@ -1,11 +1,13 @@
 import { bindPart } from '../../foundation/part.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+import { optionalBoolean } from '../../foundation/converters.js';
 import { GeneratedStyleResource } from '../../foundation/generated-style.js';
 import { html, nothing, render } from 'lit';
 import type { PropertyValues, RootPart } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import { TpElement } from '../../foundation/element.js';
-import { TpButton } from '../button.js';
-import type { NavigationPanelDrawer } from './drawer.js';
+import { TpButton } from '../button/button.js';
+import { NavigationPanelDrawer } from './drawer.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
 import { composedContains, deepActiveElement, restoreFocus } from '../../foundation/focus.js';
@@ -37,15 +39,13 @@ interface ControlRecord {
   compact: boolean | undefined;
   relationshipSync: (() => void) | undefined;
 }
-const optionalBoolean = {
-  fromAttribute: (value: string | null): boolean | undefined =>
-    value === null ? undefined : value !== 'false',
-  toAttribute: (value: boolean | undefined): string | null =>
-    value === undefined ? null : String(value),
-};
 /** Responsive navigation composition. Modal/focus/dismissal ownership belongs to the actual Drawer. */
 export class TpNavigationPanel extends TpElement {
   static tagName = 'tp-navigation-panel';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [NavigationPanelDrawer];
+  }
   static override presentation = navigationPanelPresentation;
   static override properties = {
     ...TpElement.properties,
@@ -102,8 +102,6 @@ export class TpNavigationPanel extends TpElement {
   #headerResize: ResizeObserver | undefined;
   #toolbarHeader: HTMLElement | null = null;
   #controls = new Map<HTMLElement, ControlRecord>();
-  #partReferences = new Map<string, (element: HTMLElement | null) => void>();
-  #partRegistrations = new Map<string, () => void>();
   #slotRegistrations = new Map<HTMLElement, () => void>();
   #slotTargets = new Map<HTMLElement, HTMLElement>();
   #slotObservers = new Map<HTMLElement, MutationObserver>();
@@ -167,9 +165,7 @@ export class TpNavigationPanel extends TpElement {
   reportProviderDiagnostic(code: string, message: string): void {
     if (this.#diagnosed.has(code)) return;
     this.#diagnosed.add(code);
-    queueMicrotask(() =>
-      this.emit('tp-diagnostic', { code, message, severity: 'warning' as const }),
-    );
+    queueMicrotask(() => this.diagnose(code, message));
   }
   override connectedCallback(): void {
     super.connectedCallback();
@@ -201,8 +197,6 @@ export class TpNavigationPanel extends TpElement {
     this.#toolbarHeader = null;
     this.#environment.disconnect();
     for (const record of this.#controls.values()) record.activationCleanup?.();
-    for (const unregister of this.#partRegistrations.values()) unregister();
-    this.#partRegistrations.clear();
     for (const unregister of this.#slotRegistrations.values()) unregister();
     this.#slotRegistrations.clear();
     for (const observer of this.#slotObservers.values()) observer.disconnect();
@@ -458,20 +452,7 @@ export class TpNavigationPanel extends TpElement {
     };
   }
   #partReference(part: string): (element: HTMLElement | null) => void {
-    let reference = this.#partReferences.get(part);
-    if (!reference) {
-      reference = (element) => {
-        this.#partRegistrations.get(part)?.();
-        this.#partRegistrations.delete(part);
-        if (element)
-          this.#partRegistrations.set(
-            part,
-            this.presentationController.registerPart(part, element),
-          );
-      };
-      this.#partReferences.set(part, reference);
-    }
-    return reference;
+    return this.presentationController.partReference(part, part);
   }
   #syncMode(): void {
     if (!this.#projection || !this.#drawer || !this.#wideMount) return;
@@ -710,5 +691,11 @@ export class TpNavigationPanel extends TpElement {
       'Panel widths must be positive CSS extents; using the token-derived default.',
     );
     return `calc(var(--tp-spacing) * ${multiplier})`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-navigation-panel': TpNavigationPanel;
   }
 }

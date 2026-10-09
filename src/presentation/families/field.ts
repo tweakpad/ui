@@ -6,7 +6,6 @@ const definition: ComponentDefinition = {
   name: 'Field',
   tagName: 'tp-field',
   kind: 'compound-reexport',
-  sourceNode: 'ucl17-field',
   axes: [
     {
       name: 'orientation',
@@ -17,122 +16,43 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'field',
-      publicName: 'Field set',
-      presentationKeys: [
-        'field',
-        'field-orientation-vertical',
-        'field-orientation-horizontal',
-        'field-orientation-responsive',
-      ],
-      cardinality: 'exactly one public owner host per control instance',
+      axes: ['orientation'],
     },
     {
       name: 'field-legend',
-      publicName: 'Legend',
-      presentationKeys: [
-        'field-legend',
-        'field-legend-orientation-vertical',
-        'field-legend-orientation-horizontal',
-        'field-legend-orientation-responsive',
-      ],
-      cardinality:
-        'zero or one descendant of Field set; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'field-field-group',
-      publicName: 'Field group',
-      presentationKeys: [
-        'field-field-group',
-        'field-field-group-orientation-vertical',
-        'field-field-group-orientation-horizontal',
-        'field-field-group-orientation-responsive',
-      ],
-      cardinality:
-        'zero or one descendant of Field set; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'field-field',
-      publicName: 'Field',
-      presentationKeys: [
-        'field-field',
-        'field-field-orientation-vertical',
-        'field-field-orientation-horizontal',
-        'field-field-orientation-responsive',
-      ],
-      cardinality:
-        'zero or one descendant of Field set; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'field-label',
-      publicName: 'Label',
-      presentationKeys: [
-        'field-label',
-        'field-label-orientation-vertical',
-        'field-label-orientation-horizontal',
-        'field-label-orientation-responsive',
-      ],
-      cardinality:
-        'zero or one descendant of Field set; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'field-title',
-      publicName: 'Title',
-      presentationKeys: [
-        'field-title',
-        'field-title-orientation-vertical',
-        'field-title-orientation-horizontal',
-        'field-title-orientation-responsive',
-      ],
-      cardinality:
-        'zero or one descendant of Field set; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'field-control-region',
-      publicName: 'Control region',
-      presentationKeys: [
-        'field-control-region',
-        'field-control-region-orientation-vertical',
-        'field-control-region-orientation-horizontal',
-        'field-control-region-orientation-responsive',
-      ],
-      cardinality:
-        'zero or one descendant of Field set; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'field-description',
-      publicName: 'Description',
-      presentationKeys: [
-        'field-description',
-        'field-description-orientation-vertical',
-        'field-description-orientation-horizontal',
-        'field-description-orientation-responsive',
-      ],
-      cardinality:
-        'zero or one descendant of Field set; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'field-error',
-      publicName: 'Error',
-      presentationKeys: [
-        'field-error',
-        'field-error-orientation-vertical',
-        'field-error-orientation-horizontal',
-        'field-error-orientation-responsive',
-      ],
-      cardinality:
-        'zero or one descendant of Field set; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'field-separator',
-      publicName: 'Separator',
-      presentationKeys: [
-        'field-separator',
-        'field-separator-orientation-vertical',
-        'field-separator-orientation-horizontal',
-        'field-separator-orientation-responsive',
-      ],
-      cardinality:
-        'zero or one descendant of Field set; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
   ],
 };

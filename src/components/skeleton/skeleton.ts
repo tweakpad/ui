@@ -5,16 +5,12 @@ import {
   prepareMotion,
   type MotionHandle,
   type MotionRoleDefinition,
+  ambientRole,
 } from '../../foundation/motion.js';
 import { skeletonPresentation } from '../../presentation/families/skeleton.js';
 
-export const primitiveMotionRoles = {
-  skeletonLoading: {
-    name: 'loading',
-    kind: 'ambient',
-    phases: ['start', 'stop'],
-    completion: 'non-blocking',
-  },
+export const skeletonMotionRoles = {
+  loading: ambientRole('loading'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
 export class TpSkeleton extends TpElement {
@@ -131,7 +127,7 @@ export class TpSkeleton extends TpElement {
     toState: 'loading' | 'idle',
   ): void {
     this.#loadingMotion?.cancel();
-    this.#loadingMotion = prepareMotion(this, this.#surface, primitiveMotionRoles.skeletonLoading, {
+    this.#loadingMotion = prepareMotion(this, this.#surface, skeletonMotionRoles.loading, {
       phase,
       fromState,
       toState,
@@ -158,5 +154,11 @@ export class TpSkeleton extends TpElement {
         protectedProperties: ['animated'],
       },
     );
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-skeleton': TpSkeleton;
   }
 }

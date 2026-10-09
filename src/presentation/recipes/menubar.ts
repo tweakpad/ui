@@ -21,7 +21,6 @@ export const menubarAppearance: PresentationDictionary = {
       },
     },
   ],
-  'menubar-menu': [],
   'menubar-trigger': [
     ...popupTriggerAppearance,
     {
@@ -71,7 +70,6 @@ export const menubarAppearance: PresentationDictionary = {
       },
     },
   ],
-  'menubar-group': [],
   'menubar-sub-trigger': subTrigger,
   'menubar-sub-content': [
     ...menuSurface,

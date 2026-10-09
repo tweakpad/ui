@@ -12,9 +12,6 @@ const button: Record<string, readonly PresentationRule[]> = {
       'text-decoration': 'none',
     }),
   ],
-  'button-label': [],
-  'button-leading-mark': [],
-  'button-trailing-mark': [],
 };
 for (const part of Object.keys(button)) {
   for (const variant of ['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'])

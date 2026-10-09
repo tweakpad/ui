@@ -14,21 +14,21 @@ starts a new loading generation; stale load completions cannot replace it.
 
 Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css` before rendering.
 
-| Property / attribute | Type / values | Default |
-| --- | --- | --- |
-| `src` | image URL | empty |
-| `alt` | accessible entity name; empty for decorative images | empty |
-| `fallback` | fallback text; default slot overrides content | empty |
-| `size` | sm, default, lg | default |
-| `fallbackDelay` / `fallback-delay` | milliseconds before first fallback | 0 |
-| `keepMounted` / `keep-mounted` | mount image before success | false |
-| `loading` | eager, lazy; native image loading with keep-mounted | eager |
-| `srcSet` / `srcset` | native responsive image candidates | empty |
-| `sizes` | native responsive image sizes | empty |
-| `crossOrigin` / `crossorigin` | empty, anonymous, use-credentials | empty |
-| `referrerPolicy` / `referrerpolicy` | native image referrer policy | empty |
-| `imageLoadingStatus` | read-only idle, loading, loaded, error | idle |
-| `onLoadingStatusChange` | optional callback receiving the status | undefined |
+| Property / attribute                | Type / values                                       | Default   |
+| ----------------------------------- | --------------------------------------------------- | --------- |
+| `src`                               | image URL                                           | empty     |
+| `alt`                               | accessible entity name; empty for decorative images | empty     |
+| `fallback`                          | fallback text; default slot overrides content       | empty     |
+| `size`                              | sm, default, lg                                     | default   |
+| `fallbackDelay` / `fallback-delay`  | milliseconds before first fallback                  | 0         |
+| `keepMounted` / `keep-mounted`      | mount image before success                          | false     |
+| `loading`                           | eager, lazy; native image loading with keep-mounted | eager     |
+| `srcSet` / `srcset`                 | native responsive image candidates                  | empty     |
+| `sizes`                             | native responsive image sizes                       | empty     |
+| `crossOrigin` / `crossorigin`       | empty, anonymous, use-credentials                   | empty     |
+| `referrerPolicy` / `referrerpolicy` | native image referrer policy                        | empty     |
+| `imageLoadingStatus`                | read-only idle, loading, loaded, error              | idle      |
+| `onLoadingStatusChange`             | optional callback receiving the status              | undefined |
 
 `tp-loading-status-change` bubbles across shadow boundaries with `{ status }`.
 It reports an observed status change and is not cancelable. Changing the image

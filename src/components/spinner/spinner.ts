@@ -1,17 +1,12 @@
 import { ambientCss } from '../../presentation/motion.js';
 import { css, html, nothing } from 'lit';
 import { TpElement } from '../../foundation/element.js';
-import { prepareMotion, type MotionHandle } from '../../foundation/motion.js';
+import { prepareMotion, type MotionHandle, ambientRole } from '../../foundation/motion.js';
 import type { MotionRoleDefinition } from '../../foundation/motion.js';
 import { spinnerPresentation } from '../../presentation/families/spinner.js';
 
 export const spinnerMotionRoles = {
-  rotation: {
-    name: 'rotation',
-    kind: 'ambient',
-    phases: ['start', 'stop'],
-    completion: 'non-blocking',
-  },
+  rotation: ambientRole('rotation'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
 export class TpSpinner extends TpElement {
@@ -65,5 +60,11 @@ export class TpSpinner extends TpElement {
     return this.label
       ? html`<span class="visually-hidden" role="status">${this.label}</span>`
       : nothing;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-spinner': TpSpinner;
   }
 }

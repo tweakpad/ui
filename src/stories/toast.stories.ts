@@ -17,9 +17,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Toast',
   component: 'tp-toast',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       source: {

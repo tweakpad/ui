@@ -1,32 +1,15 @@
 import { css, html } from 'lit';
+import { renderStackGroup, stackGroupStyles } from '../shared/stack-group.js';
 import { TpElement } from '../../foundation/element.js';
 import { bubblePresentation } from '../../presentation/families/bubble.js';
 import { fillLayerStyles } from '../../presentation/motion.js';
 
 export class TpBubbleGroup extends TpElement {
   static tagName = 'tp-bubble-group';
-  static presentationTagName = 'tp-bubble';
   static override presentation = bubblePresentation;
-  static override styles = [
-    TpElement.styles,
-    css`
-      :host {
-        display: block;
-        min-inline-size: 0;
-      }
-
-      .group {
-        display: flex;
-        flex-direction: column;
-        min-inline-size: 0;
-      }
-    `,
-  ];
+  static override styles = [TpElement.styles, stackGroupStyles];
   protected override render() {
-    return this.renderPart('bubble', Object.freeze({}), {
-      properties: { class: 'group', part: 'bubble' },
-      content: html`<slot></slot>`,
-    });
+    return renderStackGroup(this, 'bubble');
   }
 }
 
@@ -154,5 +137,12 @@ export class TpBubble extends TpElement {
         content: html`<slot name="reactions" @slotchange=${this.#slotsChanged}></slot>`,
       })}`,
     });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-bubble': TpBubble;
+    'tp-bubble-group': TpBubbleGroup;
   }
 }

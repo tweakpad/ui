@@ -17,9 +17,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Native select',
   component: 'tp-native-select',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       source: {

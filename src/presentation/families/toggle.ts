@@ -7,7 +7,6 @@ const definition: ComponentDefinition = {
   name: 'Toggle',
   tagName: 'tp-toggle',
   kind: 'compound-reexport',
-  sourceNode: 'ucl16-toggle',
   axes: [
     {
       name: 'variant',
@@ -23,30 +22,11 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'toggle',
-      publicName: 'Control',
-      presentationKeys: [
-        'toggle',
-        'toggle-variant-ghost',
-        'toggle-variant-outline',
-        'toggle-size-sm',
-        'toggle-size-default',
-        'toggle-size-lg',
-      ],
-      cardinality: 'exactly one public owner host per control instance',
+      axes: ['variant', 'size'],
     },
     {
       name: 'toggle-content',
-      publicName: 'Content',
-      presentationKeys: [
-        'toggle-content',
-        'toggle-content-variant-ghost',
-        'toggle-content-variant-outline',
-        'toggle-content-size-sm',
-        'toggle-content-size-default',
-        'toggle-content-size-lg',
-      ],
-      cardinality:
-        'zero or one descendant of Control; cited behavior sets any required-presence condition',
+      axes: ['variant', 'size'],
     },
   ],
 };

@@ -3,11 +3,11 @@
 `tp-spinner` shows indeterminate activity. Its existing size variants use shared
 icon-size theme roles and scale with base spacing.
 
-| Property / attribute | Values | Default |
-| --- | --- | --- |
-| `size` | sm, default, lg | default |
-| `label` | status text; empty for decorative usage | Loading |
-| `motionPolicy` / `motion-policy` | inherit, normal, reduce | inherit |
+| Property / attribute             | Values                                  | Default |
+| -------------------------------- | --------------------------------------- | ------- |
+| `size`                           | sm, default, lg                         | default |
+| `label`                          | status text; empty for decorative usage | Loading |
+| `motionPolicy` / `motion-policy` | inherit, normal, reduce                 | inherit |
 
 ```html
 <tp-spinner size="sm" label="Loading projects"></tp-spinner>

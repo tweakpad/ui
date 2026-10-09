@@ -15,7 +15,7 @@ import { fieldPresentation } from './field.js';
 import { formPresentation } from './form.js';
 import { inputPresentation } from './input.js';
 import { inputGroupPresentation } from './input-group.js';
-import { otpFieldPresentation } from './otp-field.js';
+import { oneTimeCodeFieldPresentation } from './one-time-code-field.js';
 import { nativeSelectPresentation } from './native-select.js';
 import { questionnairePresentation } from './questionnaire.js';
 import { sliderPresentation } from './slider.js';
@@ -89,7 +89,7 @@ export { fieldPresentation } from './field.js';
 export { formPresentation } from './form.js';
 export { inputPresentation } from './input.js';
 export { inputGroupPresentation } from './input-group.js';
-export { otpFieldPresentation } from './otp-field.js';
+export { oneTimeCodeFieldPresentation } from './one-time-code-field.js';
 export { nativeSelectPresentation } from './native-select.js';
 export { questionnairePresentation } from './questionnaire.js';
 export { sliderPresentation } from './slider.js';
@@ -147,7 +147,7 @@ export { textMotionPresentation } from './text-motion.js';
 export { tableOfContentsPresentation } from './table-of-contents.js';
 export { treeViewPresentation } from './tree-view.js';
 
-/** Every family in catalog order. Importing this pulls in the whole library's presentation. */
+/** Every family. Importing this pulls in the whole library's presentation. */
 export const presentationFamilies: readonly PresentationFamily[] = [
   dragDropListPresentation,
   accordionPresentation,
@@ -165,7 +165,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   formPresentation,
   inputPresentation,
   inputGroupPresentation,
-  otpFieldPresentation,
+  oneTimeCodeFieldPresentation,
   nativeSelectPresentation,
   questionnairePresentation,
   sliderPresentation,

@@ -1,1 +1,1 @@
-export { TpSkeleton, primitiveMotionRoles } from './skeleton.js';
+export { TpSkeleton, skeletonMotionRoles } from './skeleton.js';

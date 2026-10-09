@@ -27,7 +27,6 @@ const source = `${sourceImports}
 const meta = {
   title: 'Components/Preview card',
   component: 'tp-preview-card',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: {

@@ -6,9 +6,7 @@
  * selects translated phrases such as "remaining".
  */
 import { durationFormatter, type DurationRecord, type DurationStyle } from './date-locale.js';
-import { numberFormatter } from './number-locale.js';
-
-type LocaleInput = string | string[] | undefined;
+import { numberFormatter, type LocaleInput } from './intl.js';
 
 /** `digital` renders clock text such as `1:05:30`; the unit styles render spoken phrases. */
 export type DurationTextStyle = 'digital' | DurationStyle;

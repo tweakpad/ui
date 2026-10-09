@@ -1,3 +1,4 @@
+import { keyEvent } from './fakes.test.js';
 import { describe, expect, it } from 'vitest';
 import { toolbarInputOwnsKey } from './toolbar.js';
 import { CollectionRegistry } from './collection.js';
@@ -12,15 +13,14 @@ const editor = (start: number | null, end = start, direction = 'ltr', type = 'in
     disabled: false,
     ownerDocument: { defaultView: { getComputedStyle: () => ({ direction }) } },
   }) as unknown as HTMLElement;
-const key = (key: string, flags = {}) => ({ key, ...flags }) as KeyboardEvent;
 
 describe('Toolbar native editing boundary', () => {
   it('keeps horizontal arrows in the editor until a collapsed caret reaches the matching edge', () => {
-    expect(toolbarInputOwnsKey(key('ArrowLeft'), editor(2))).toBe(true);
-    expect(toolbarInputOwnsKey(key('ArrowRight'), editor(2))).toBe(true);
-    expect(toolbarInputOwnsKey(key('ArrowLeft'), editor(0))).toBe(false);
-    expect(toolbarInputOwnsKey(key('ArrowRight'), editor(5))).toBe(false);
-    expect(toolbarInputOwnsKey(key('ArrowRight'), editor(0, 5))).toBe(true);
+    expect(toolbarInputOwnsKey(keyEvent('ArrowLeft'), editor(2))).toBe(true);
+    expect(toolbarInputOwnsKey(keyEvent('ArrowRight'), editor(2))).toBe(true);
+    expect(toolbarInputOwnsKey(keyEvent('ArrowLeft'), editor(0))).toBe(false);
+    expect(toolbarInputOwnsKey(keyEvent('ArrowRight'), editor(5))).toBe(false);
+    expect(toolbarInputOwnsKey(keyEvent('ArrowRight'), editor(0, 5))).toBe(true);
   });
   it('preserves selection, editing commands, composition and native numeric arrows', () => {
     for (const flags of [
@@ -30,17 +30,17 @@ describe('Toolbar native editing boundary', () => {
       { metaKey: true },
       { isComposing: true },
     ])
-      expect(toolbarInputOwnsKey(key('ArrowRight', flags), editor(5))).toBe(true);
+      expect(toolbarInputOwnsKey(keyEvent('ArrowRight', flags), editor(5))).toBe(true);
     for (const name of ['Home', 'End'])
-      expect(toolbarInputOwnsKey(key(name), editor(2))).toBe(true);
-    expect(toolbarInputOwnsKey(key('ArrowUp'), editor(null))).toBe(true);
-    expect(toolbarInputOwnsKey(key('ArrowDown'), editor(2))).toBe(false);
+      expect(toolbarInputOwnsKey(keyEvent(name), editor(2))).toBe(true);
+    expect(toolbarInputOwnsKey(keyEvent('ArrowUp'), editor(null))).toBe(true);
+    expect(toolbarInputOwnsKey(keyEvent('ArrowDown'), editor(2))).toBe(false);
   });
   it('respects RTL and textarea vertical boundaries', () => {
-    expect(toolbarInputOwnsKey(key('ArrowLeft'), editor(0, 0, 'rtl'))).toBe(true);
-    expect(toolbarInputOwnsKey(key('ArrowRight'), editor(0, 0, 'rtl'))).toBe(false);
-    expect(toolbarInputOwnsKey(key('ArrowUp'), editor(2, 2, 'ltr', 'textarea'))).toBe(true);
-    expect(toolbarInputOwnsKey(key('ArrowUp'), editor(0, 0, 'ltr', 'textarea'))).toBe(false);
+    expect(toolbarInputOwnsKey(keyEvent('ArrowLeft'), editor(0, 0, 'rtl'))).toBe(true);
+    expect(toolbarInputOwnsKey(keyEvent('ArrowRight'), editor(0, 0, 'rtl'))).toBe(false);
+    expect(toolbarInputOwnsKey(keyEvent('ArrowUp'), editor(2, 2, 'ltr', 'textarea'))).toBe(true);
+    expect(toolbarInputOwnsKey(keyEvent('ArrowUp'), editor(0, 0, 'ltr', 'textarea'))).toBe(false);
   });
 });
 

@@ -1,146 +1,47 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { catalogEntries } from '../catalog.js';
-import { componentStoryTags } from './examples.js';
+
+const directory = new URL('./', import.meta.url);
+const read = (file: string) => readFileSync(new URL(file, directory), 'utf8');
+const storyFiles = readdirSync(directory)
+  .filter((file) => file.endsWith('.stories.ts'))
+  .sort();
+const stories = new Map(storyFiles.map((file) => [file, read(file)]));
+const story = (name: string) => stories.get(`${name}.stories.ts`)!;
+/** The meta object of a story file: everything before its stories. */
+const meta = (source: string) => source.split('export default meta')[0]!;
+const componentStories = [...stories.values()].filter((source) =>
+  source.includes("title: 'Components/"),
+);
 
 describe('Storybook catalog entries', () => {
-  const storyDirectory = new URL('./generated/', import.meta.url);
-  const storyFiles = readdirSync(storyDirectory).filter((file) => file.endsWith('.stories.ts'));
-  const newlyAuthoredStories = [
-    'table-of-contents',
-    'tree-view',
-    'key-hint',
-    'calendar',
-    'badge',
-    'carousel',
-    'pagination',
-    'otp-field',
-    'preview-card',
-    'input-group',
-    'breadcrumb',
-    'spinner',
-    'skeleton',
-    'form',
-    'avatar',
-    'bubble',
-    'marker',
-    'list-item',
-    'empty-state',
-    'aspect-ratio',
-    'menu',
-    'menubar',
-    'navigation-menu',
-    'popover',
-    'navigation-panel',
-    'switch',
-    'slider',
-    'select',
-    'command-palette',
-    'attachment',
-    'table',
-    'scroll-area',
-    'resizable-panel-group',
-    'drawer',
-    'questionnaire',
-    'data-visualization',
-    'native-select',
-    'progress',
-    'toggle',
-    'toast',
-    'toggle-group',
-    'theme-switcher',
-    'text-area',
-    'radio-group',
-    'input',
-    'field',
-    'checkbox',
-    'drag-drop-list',
-    'message',
-    'message-scroller',
-    'time',
-    'media-player',
-    'map',
-    'code-block',
-    'markdown',
-    'image',
-    'text-motion',
-    'scroll-trigger',
-    'timeline',
-    'autocomplete',
-  ].map((name) => readFileSync(new URL(`./${name}.stories.ts`, import.meta.url), 'utf8'));
-  const accordionStory = readFileSync(new URL('./accordion.stories.ts', import.meta.url), 'utf8');
-  const alertDialogStory = readFileSync(
-    new URL('./alert-dialog.stories.ts', import.meta.url),
-    'utf8',
-  );
-  const tabsStory = readFileSync(new URL('./tabs.stories.ts', import.meta.url), 'utf8');
-  const alertStory = readFileSync(new URL('./alert.stories.ts', import.meta.url), 'utf8');
-  const tooltipStory = readFileSync(new URL('./tooltip.stories.ts', import.meta.url), 'utf8');
-  const dialogStory = readFileSync(new URL('./dialog.stories.ts', import.meta.url), 'utf8');
-  const buttonStory = readFileSync(new URL('./button.stories.ts', import.meta.url), 'utf8');
-  const buttonGroupStory = readFileSync(
-    new URL('./button-group.stories.ts', import.meta.url),
-    'utf8',
-  );
-  const cardStory = readFileSync(new URL('./card.stories.ts', import.meta.url), 'utf8');
-  const collapsibleStory = readFileSync(
-    new URL('./collapsible.stories.ts', import.meta.url),
-    'utf8',
-  );
-  const iconStory = readFileSync(new URL('./icon.stories.ts', import.meta.url), 'utf8');
-  const examplesSource = readFileSync(new URL('./examples.ts', import.meta.url), 'utf8');
-  const docsPage = readFileSync(new URL('../../.storybook/docs-page.mdx', import.meta.url), 'utf8');
-
-  it('has one type-checked fixture for every public control', () => {
-    expect([...componentStoryTags].sort()).toEqual(
-      catalogEntries.map((entry) => entry.tagName).sort(),
-    );
-  });
+  const docsPage = read('../../.storybook/docs-page.mdx');
+  const preview = read('../../.storybook/preview.ts');
 
   it('has one statically indexed Default story for every public control', () => {
-    const sources = [
-      ...newlyAuthoredStories,
-      ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
-      accordionStory,
-      alertDialogStory,
-      alertStory,
-      tabsStory,
-      dialogStory,
-      tooltipStory,
-      buttonStory,
-      buttonGroupStory,
-      cardStory,
-      collapsibleStory,
-      iconStory,
-    ];
-    expect(sources).toHaveLength(catalogEntries.length);
+    expect(componentStories).toHaveLength(catalogEntries.length);
     for (const entry of catalogEntries) {
       expect(
-        sources.filter((source) => source.includes(`component: '${entry.tagName}'`)),
+        componentStories.filter((source) => source.includes(`component: '${entry.tagName}'`)),
       ).toHaveLength(1);
       expect(
-        sources.filter((source) => source.includes(`title: 'Components/${entry.name}'`)),
+        componentStories.filter((source) => source.includes(`title: 'Components/${entry.name}'`)),
       ).toHaveLength(1);
     }
   });
 
-  it('puts an unstyled Default example before public-API configurations', () => {
-    const sources = [
-      ...newlyAuthoredStories,
-      ...storyFiles.map((file) => readFileSync(new URL(file, storyDirectory), 'utf8')),
-      accordionStory,
-      alertDialogStory,
-      alertStory,
-      tabsStory,
-      dialogStory,
-      tooltipStory,
-      buttonStory,
-      buttonGroupStory,
-      cardStory,
-      collapsibleStory,
-      iconStory,
-    ];
+  it('declares Docs and layout once in the preview, not per story file', () => {
+    expect(preview).toContain("tags: ['autodocs']");
+    expect(preview).toContain("layout: 'padded'");
+    expect(story('size-report')).toContain("tags: ['!autodocs']");
+    for (const [file, source] of stories) {
+      if (file !== 'size-report.stories.ts') expect(source).not.toContain("tags: ['autodocs']");
+      expect(meta(source)).not.toContain("layout: 'padded'");
+    }
+  });
 
+  it('puts an unstyled Default example before public-API configurations', () => {
     expect(docsPage.indexOf('## Default')).toBeLessThan(docsPage.indexOf('<Primary />'));
     expect(docsPage.indexOf('<Primary />')).toBeLessThan(docsPage.indexOf('<Controls />'));
     expect(docsPage).toContain('## Public properties');
@@ -152,12 +53,11 @@ describe('Storybook catalog entries', () => {
       docsPage.indexOf('<Description />'),
     );
 
-    for (const source of sources) {
+    for (const source of componentStories) {
       expect(source.match(/export const \w+: Story/u)?.[0]).toBe('export const Default: Story');
-      expect(source).toContain("tags: ['autodocs']");
       // A viewport/plot/resizer needs an external size. Allow ordinary layout,
       // while still rejecting component paint overrides in the base example.
-      const base = source.split('export const Default: Story')[0]!;
+      const base = meta(source);
       expect(base).not.toMatch(/<style(?:\s|>)/u);
       for (const [, inlineStyle] of base.matchAll(/<tp-[\w-]+\b[^>]*?\sstyle="([^"]*)"/gu)) {
         for (const declaration of inlineStyle!.split(';').filter(Boolean)) {
@@ -169,23 +69,24 @@ describe('Storybook catalog entries', () => {
       }
       expect(source).not.toContain('::part(');
     }
+    const examplesSource = read('examples.ts');
     expect(examplesSource).not.toMatch(/<style(?:\s|>)/u);
     expect(examplesSource).not.toMatch(/\sstyle=/u);
     expect(examplesSource).not.toContain('::part(');
   });
 
   it('keeps Collapsible controls limited to its public properties', () => {
-    expect(collapsibleStory).toContain("tags: ['autodocs']");
-    expect(collapsibleStory).toContain('export const Open: Story');
-    expect(collapsibleStory).toContain('export const Retained: Story');
-    expect(collapsibleStory).toContain('export const FindInPage: Story');
-    expect(collapsibleStory).toContain('export const LeadingIndicator: Story');
+    const collapsibleStory = story('collapsible');
     expect(collapsibleStory).toContain('export const LeadingContent: Story');
     expect(collapsibleStory).toContain('<tp-badge slot="leading" variant="accent">New</tp-badge>');
     expect(collapsibleStory).not.toContain('<span slot="leading">New</span>');
-    expect(collapsibleStory).toContain('export const LabelAlignedContent: Story');
     expect(collapsibleStory).toContain('export const TrailingContent: Story');
     expect(collapsibleStory).toContain('export const ExternalLineByLineMotion: Story');
+    expect(collapsibleStory).toContain("from './line-by-line-motion.js'");
+    // Attribute values are Controls, not stories.
+    expect(collapsibleStory).not.toMatch(
+      /export const (?:Open|Disabled|Retained|FindInPage|LeadingIndicator|LabelAlignedContent): Story/u,
+    );
     for (const property of [
       'open',
       'defaultOpen',
@@ -206,15 +107,13 @@ describe('Storybook catalog entries', () => {
   });
 
   it('keeps Accordion controls limited to its public Root properties', () => {
-    expect(accordionStory).toContain("tags: ['autodocs']");
-    expect(accordionStory).toContain('export const DisabledItem: Story');
-    expect(accordionStory).toContain('renderAccordion(args, { itemDisabled: true })');
-    expect(accordionStory).toContain('export const ExternalLineByLineMotion: Story');
-    expect(accordionStory).toContain('export const Line: Story');
-    expect(accordionStory).toContain('export const Outline: Story');
-    expect(accordionStory).toContain('export const Separated: Story');
+    const accordionStory = story('accordion');
     expect(accordionStory).toContain('export const PositionalContent: Story');
-    expect(accordionStory).toContain('export const LabelAlignedContent: Story');
+    expect(accordionStory).toContain('export const ExternalLineByLineMotion: Story');
+    expect(accordionStory).toContain("from './line-by-line-motion.js'");
+    expect(accordionStory).not.toMatch(
+      /export const (?:Line|Outline|Separated|LabelAlignedContent|ReducedMotion|Multiple|Collapsible|Disabled|DisabledItem|Retained|FindInPage|MixedIndicatorPositions): Story/u,
+    );
     for (const property of [
       'variant',
       'selectionMode',
@@ -230,28 +129,20 @@ describe('Storybook catalog entries', () => {
     ]) {
       expect(accordionStory).toContain(`    ${property}: {`);
     }
-    for (const fixtureProperty of [
-      'accountContentAlignment',
-      'indicatorPosition',
-      'securityIndicatorPosition',
-      'billingIndicatorPosition',
-      'itemDisabled',
-      'headingLevel',
-      'showLeadingContent',
-      'contentMotion',
-    ]) {
+    for (const fixtureProperty of ['showLeadingContent', 'contentMotion']) {
       expect(accordionStory).not.toContain(`    ${fixtureProperty}: {`);
     }
   });
 
   it('documents Icon artwork, accessibility, and size in a maintained controls story', () => {
-    expect(iconStory).toContain("tags: ['autodocs']");
+    const iconStory = story('icon');
     for (const property of ['icon', 'label', 'size']) {
       expect(iconStory).toContain(`    ${property}: {`);
     }
   });
 
   it('exposes the Button contract in a maintained controls story', () => {
+    const buttonStory = story('button');
     for (const property of [
       'variant',
       'size',
@@ -272,23 +163,17 @@ describe('Storybook catalog entries', () => {
     ]) {
       expect(buttonStory).toContain(`    ${property}: {`);
     }
-    for (const configuration of [
-      'IconOnly',
-      'IconLeading',
-      'IconTrailing',
-      'LoadingLeading',
-      'LoadingTrailing',
-      'AsLink',
-      'WithMarks',
-      'FocusableDisabled',
-      'SyntheticAction',
-      'FormActions',
-    ]) {
+    // Distinct use cases stay; variant, size and state values are Controls.
+    for (const configuration of ['IconOnly', 'AsLink', 'WithMarks', 'FormActions']) {
       expect(buttonStory).toContain(`export const ${configuration}: Story`);
     }
+    expect(buttonStory).not.toMatch(
+      /export const (?:Secondary|Destructive|Outline|Ghost|LinkAppearance|ExtraSmall|Small|Large|IconExtraSmall|IconSmall|IconLarge|IconLeading|IconTrailing|LoadingLeading|LoadingTrailing|Disabled|FocusableDisabled|SyntheticAction): Story/u,
+    );
   });
 
   it('documents Button group layout while reusing Button members', () => {
+    const buttonGroupStory = story('button-group');
     for (const property of ['orientation', 'joined', 'label']) {
       expect(buttonGroupStory).toContain(`    ${property}: {`);
     }
@@ -301,20 +186,16 @@ describe('Storybook catalog entries', () => {
   });
 
   it('shows Card sections and independent presentation properties', () => {
+    const cardStory = story('card');
     expect(cardStory).toContain("component: 'tp-card'");
     expect(cardStory).not.toContain("options: ['default', 'elevated']");
     for (const property of ['elevated', 'borders', 'sectionColors', 'size']) {
       expect(cardStory).toContain(`    ${property}: {`);
     }
-    for (const configuration of [
-      'Elevated',
-      'BordersOff',
-      'SectionColorsOff',
-      'BothOff',
-      'ContentOnly',
-    ]) {
-      expect(cardStory).toContain(`export const ${configuration}: Story`);
-    }
+    expect(cardStory).toContain('export const ContentOnly: Story');
+    expect(cardStory).not.toMatch(
+      /export const (?:Elevated|BordersOff|SectionColorsOff|BothOff): Story/u,
+    );
     for (const slot of ['header', 'description', 'footer']) {
       expect(cardStory).toContain(`slot="${slot}"`);
     }

@@ -88,10 +88,9 @@ describe('nearestDrawerService (media player R-06 regression V-76)', () => {
     expect(nearestDrawerService(as(inner), 'tp-drawer')).toBe(outer);
     expect(nearestDrawerService(as(swipe), 'tp-drawer-provider')).toBe(provider);
     expect(nearestDrawerService(as(provider), 'tp-drawer-provider')).toBeNull();
-    const panel = new FakeElement('tp-side-panel');
+    const panel = new FakeElement('tp-drawer');
     const nested = new FakeElement('tp-drawer-indent', panel);
     expect(nearestDrawerService(as(nested), 'tp-drawer')).toBe(panel);
-    expect(nearestDrawerService(as(nested), 'tp-side-panel')).toBe(panel);
     expect(nearestDrawerService(as(nested), 'tp-drawer-provider')).toBeNull();
   });
 

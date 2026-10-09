@@ -1,7 +1,7 @@
 import { selectStateMarkers } from './state.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import type { PartPresentation } from '../../presentation/resolver.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 import type { PropertyValues } from 'lit';
 import type { ComponentPartContract, ElementReference, PartState } from '../../foundation/part.js';
 import { attachPartReference, detachPartReference } from '../../foundation/part-reference.js';
@@ -10,9 +10,7 @@ import { selectPresentation } from '../../presentation/families/select.js';
 
 /** Companion actions retain Button's press, native/delegated anatomy and mark owners. */
 class SelectAction extends TpButton {
-  static presentationTagName = 'tp-button';
   static override presentation = buttonPresentation;
-  static presentationFamilyTagNames = ['tp-select'];
   static override presentationFamilies = [selectPresentation];
   static override properties = {
     ...TpButton.properties,
@@ -121,5 +119,13 @@ export class TpSelectChipRemove extends SelectAction {
   protected override selectPart = 'select-chip-remove';
   protected override buttonTabIndex(): string | null {
     return this.disabled ? '-1' : this.nativeAction ? null : '0';
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-select-trigger': TpSelectTrigger;
+    'tp-select-clear': TpSelectClear;
+    'tp-select-chip-remove': TpSelectChipRemove;
   }
 }

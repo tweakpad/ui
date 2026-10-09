@@ -1,4 +1,5 @@
 import { css, html } from 'lit';
+import { slotOccupied } from '../shared/slots.js';
 import { TpElement } from '../../foundation/element.js';
 import { emptyStatePresentation } from '../../presentation/families/empty-state.js';
 
@@ -55,21 +56,19 @@ export class TpEmptyState extends TpElement {
   title = 'Nothing here';
   description = '';
   mediaTreatment: 'plain' | 'icon' = 'plain';
-  #hasSlot(name: string): boolean {
-    return Array.from(this.childNodes).some((node) =>
-      node instanceof Element
-        ? (node.getAttribute('slot') ?? '') === name
-        : !name && Boolean(node.textContent?.trim()),
-    );
-  }
   readonly #slotsChanged = (): void => {
     this.requestUpdate();
   };
   protected override render() {
-    const media = this.#hasSlot('media') || this.#hasSlot('icon');
-    const title = Boolean(this.title) || this.#hasSlot('title');
-    const description = Boolean(this.description) || this.#hasSlot('description');
-    const content = this.#hasSlot('') || this.#hasSlot('content') || this.#hasSlot('actions');
+    const media =
+      slotOccupied(this, 'media', { text: true }) || slotOccupied(this, 'icon', { text: true });
+    const title = Boolean(this.title) || slotOccupied(this, 'title', { text: true });
+    const description =
+      Boolean(this.description) || slotOccupied(this, 'description', { text: true });
+    const content =
+      slotOccupied(this, '', { text: true }) ||
+      slotOccupied(this, 'content', { text: true }) ||
+      slotOccupied(this, 'actions', { text: true });
     const state = Object.freeze({
       media,
       title,
@@ -115,5 +114,11 @@ export class TpEmptyState extends TpElement {
           ><slot name="actions" @slotchange=${this.#slotsChanged}></slot>`,
       })}`,
     });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-empty-state': TpEmptyState;
   }
 }

@@ -6,20 +6,20 @@ using them. This document does not duplicate normative component contracts.
 
 ## Source map
 
-| Concern             | Start here                                                                                                        | What to establish                                                                                                                                                     |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live authority      | Direct Spec Blocks MCP; project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`                                        | Confirm project identity, current revisions, documents, and managed vocabulary.                                                                                       |
-| Foundation          | Document `doc_cd3c4721-9f9b-4531-abab-a8bfdbac75f1`                                                               | Owning behavior plus state, lifecycle, accessibility, forms, motion, positioning and coverage dependencies.                                                           |
-| Component Library   | Document `doc_8077bf7c-0361-48f3-ac87-53b983bd89b3`                                                               | Definition, anatomy, properties, shared terminology, presentation, composition and coverage dependencies.                                                             |
-| Spec access policy  | `../specification/AGENTS.md`                                                                                      | Registered direct tools only; no shell, JSON-RPC, curl or bridge substitutes for server calls. Reading local upstream reference files is separate from server access. |
-| Base UI             | `../specification/external/base-ui/packages/react/src/` and `packages/utils/src/`                                 | Public exports, constituent units, internal/shared owners, data attributes, source types, adjacent tests, docs and demos.                                             |
-| Floating UI         | `../specification/external/floating-ui/packages/{core,dom,utils}/src/`                                            | Positioning stages, overflow/measurement, clipping, owner realms, auto-update and cleanup. Follow relevant interaction references too.                                |
-| shadcn              | `../specification/external/ui/apps/v4/registry/`                                                                  | Components, compositions and presentation across applicable registry bases; `ui` is the local shadcn checkout.                                                        |
-| Public inventory    | `src/catalog.ts`, `src/components/index.ts`, `src/index.ts`, `src/register.ts`, `src/elements.ts`, `package.json` | Catalog identities, class exports, custom-element types/registration and package entrypoints.                                                                         |
-| Shared behavior     | `src/foundation/`, `src/components/shared.ts`                                                                     | Existing abstractions and consumers, including limitations that require shared repair.                                                                                |
-| Shared presentation | `src/presentation/`, `src/styles.css`, `docs/styling.md`, `docs/motion.md`                                        | Definition/part registration, resolution, tokens, recipes, structure, composition, public overrides and motion boundaries.                                            |
-| Docs and fixtures   | `src/stories/`, `src/stories/examples.ts`, `.storybook/`, `docs/`                                                 | Authored/generated stories, base examples, actual API tables, nested-component usage and published example code.                                                      |
-| Prior coverage      | `plans/phase-1/outputs/`, `docs/first-pass-conformance.md`                                                        | Leads and previous gaps only; source versions and dispositions may be stale.                                                                                          |
+| Concern             | Start here                                                                                      | What to establish                                                                                                                                                                                                                                                                                                                              |
+| ------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live authority      | Direct Spec Blocks MCP; project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`                      | Confirm project identity, current revisions, documents, and managed vocabulary.                                                                                                                                                                                                                                                                |
+| Foundation          | Document `doc_cd3c4721-9f9b-4531-abab-a8bfdbac75f1`                                             | Owning behavior plus state, lifecycle, accessibility, forms, motion, positioning and coverage dependencies.                                                                                                                                                                                                                                    |
+| Component Library   | Document `doc_8077bf7c-0361-48f3-ac87-53b983bd89b3`                                             | Definition, anatomy, properties, shared terminology, presentation, composition and coverage dependencies.                                                                                                                                                                                                                                      |
+| Spec access policy  | `../specification/AGENTS.md`                                                                    | Registered direct tools only; no shell, JSON-RPC, curl or bridge substitutes for server calls. Reading local upstream reference files is separate from server access.                                                                                                                                                                          |
+| Base UI             | `../specification/external/base-ui/packages/react/src/` and `packages/utils/src/`               | Public exports, constituent units, internal/shared owners, data attributes, source types, adjacent tests, docs and demos.                                                                                                                                                                                                                      |
+| Floating UI         | `../specification/external/floating-ui/packages/{core,dom,utils}/src/`                          | Positioning stages, overflow/measurement, clipping, owner realms, auto-update and cleanup. Follow relevant interaction references too.                                                                                                                                                                                                         |
+| shadcn              | `../specification/external/ui/apps/v4/registry/`                                                | Components, compositions and presentation across applicable registry bases; `ui` is the local shadcn checkout.                                                                                                                                                                                                                                 |
+| Public inventory    | `src/catalog.ts`, `src/components/index.ts`, `src/index.ts`, `src/register.ts`, `package.json`  | Catalog identities, class exports, registration and package entrypoints; each component module declares its own `HTMLElementTagNameMap` entry.                                                                                                                                                                                                 |
+| Shared behavior     | `src/foundation/`, `src/components/shared/`                                                     | Existing abstractions and consumers, including limitations that require shared repair.                                                                                                                                                                                                                                                         |
+| Shared presentation | `src/presentation/`, `src/styles.css`, `docs/styling.md`, `docs/motion.md`                      | Definition/part registration, resolution, tokens, recipes, structure, composition, public overrides and motion boundaries.                                                                                                                                                                                                                     |
+| Docs and fixtures   | `src/stories/`, `src/stories/examples.ts`, `.storybook/`, `docs/`, `tests/fixtures/components/` | Authored stories, base examples, actual API tables, nested-component usage and published example code. `src/stories/*-example.js` (+ `.d.ts` stubs, `allowJs` is off) are authored sources that `*.examples.ts` import both as modules and as `?raw` published code; they are not build output. Browser fixtures with per-folder README steps. |
+| Prior coverage      | `plans/phase-1/outputs/`, `plans/phase-1/first-pass-conformance.md`                             | Leads and previous gaps only; source versions and dispositions may be stale.                                                                                                                                                                                                                                                                   |
 
 Use source IDs as locators, not frozen contracts. Read related owning nodes and
 dependencies, not just search-result excerpts. Do not copy old section numbers,
@@ -118,17 +118,17 @@ capability rather than React syntax.
 
 ## Reuse investigation
 
-| Responsibility            | Existing places to inspect                                                                                |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Lit lifecycle and forms   | `foundation/element.ts`: `TpElement`, `TpFormElement`; check inherited API exposure as well as behavior.  |
-| State and notifications   | `foundation/controllable-state.ts`, `store.ts`, `events.ts`, `types.ts`.                                  |
-| Collections and focus     | `foundation/collection.ts`, `focus.ts`, `typeahead.ts`, `id.ts`.                                          |
-| Environment and cleanup   | `foundation/services.ts`: `EnvironmentService`, `Scheduler`, `CleanupScope`.                              |
-| Positioning and dismissal | `foundation/positioning.ts`, `floating-dismiss.ts`, `floating-tree.ts`, `safe-corridor.ts`.               |
-| Presence and motion       | `foundation/presence.ts`, `motion.ts`, `collapsible.ts`.                                                  |
-| Domain behavior           | `foundation/validation.ts`, `calendar.ts`, `slider.ts`, `questionnaire.ts`.                               |
-| Component helpers         | `components/shared.ts`: assignment, label activation, event reasons and shared styles.                    |
-| Related components        | The actual local components corresponding to upstream imported/reexported owners; follow their consumers. |
+| Responsibility            | Existing places to inspect                                                                                                                                 |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lit lifecycle and forms   | `foundation/element.ts`: `TpElement`, `TpFormElement`; check inherited API exposure as well as behavior.                                                   |
+| State and notifications   | `foundation/controllable-state.ts`, `store.ts`, `events.ts`, `types.ts`.                                                                                   |
+| Collections and focus     | `foundation/collection.ts`, `focus.ts`, `typeahead.ts`, `id.ts`.                                                                                           |
+| Environment and cleanup   | `foundation/services.ts`: `EnvironmentService`, `Scheduler`, `CleanupScope`.                                                                               |
+| Positioning and dismissal | `foundation/positioning.ts`, `floating-dismiss.ts`, `floating-tree.ts`, `safe-corridor.ts`.                                                                |
+| Presence and motion       | `foundation/presence.ts`, `motion.ts`, `collapsible.ts`.                                                                                                   |
+| Domain behavior           | `foundation/validation.ts`, `calendar.ts`, `slider.ts`, `questionnaire.ts`.                                                                                |
+| Component helpers         | `components/shared/`: `events.ts` (assignment, label activation, event reasons), `elevation.ts`, `control-styles.ts`, `anchored-arrow.ts`, `scrollbar.ts`. |
+| Related components        | The actual local components corresponding to upstream imported/reexported owners; follow their consumers.                                                  |
 
 Paths in this table are under `src/`. Search consumers before changing a shared
 module. Existing helpers must still meet the current contract: reuse does not
@@ -301,11 +301,12 @@ URL and setup in the checklist; snapshots/logs still belong under `tmp/`. Use
 source imports for development checks and built-package imports for package
 checks. This location does not authorize adding a second browser driver.
 
-Inspect `scripts/generate-component-stories.mjs` before changing generated stories:
-it currently rebuilds the generated directory and tracks authored exceptions.
-Preserve new authored docs through the generator's current mechanism. Inspect
-`src/stories/stories.test.ts` and `.storybook/docs-page.mdx`: existing expectations
-may require obsolete configuration stories or include every story in Docs. Update
-the affected expectations to verify API/documentation behavior, rather than
-preserving an unwanted gallery to satisfy a string assertion. Avoid running the
-whole generator or formatter just to modify one component.
+Every component story file is authored in `src/stories/<name>.stories.ts`;
+`.storybook/preview.ts` supplies the `autodocs` tag and padded layout once, so a
+story file declares only what differs. Inspect `src/stories/stories.test.ts` and
+`.storybook/docs-page.mdx`: expectations verify one Default story, Controls and
+documented examples per catalog entry and reject attribute-enumeration galleries
+(additional stories demonstrate distinct compositions or use cases). Update the
+affected expectations to verify API/documentation behavior rather than preserving
+an unwanted gallery to satisfy a string assertion. Avoid running the whole
+formatter just to modify one component.

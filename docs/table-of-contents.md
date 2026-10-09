@@ -21,8 +21,17 @@ reached. An indicator on the inline-start rail spans the active items. Contract:
 ```
 
 ```css
-.page { display: grid; grid-template-columns: minmax(0, 1fr) 14rem; align-items: start; }
-.page-toc { position: sticky; top: 1.5rem; max-block-size: calc(100vh - 3rem); overflow: auto; }
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 14rem;
+  align-items: start;
+}
+.page-toc {
+  position: sticky;
+  top: 1.5rem;
+  max-block-size: calc(100vh - 3rem);
+  overflow: auto;
+}
 ```
 
 The usual place is a sticky column on either side of the page, inside the same scroll container
@@ -53,10 +62,13 @@ tag names, heading levels, nesting or document order. Everything else comes from
   so a jump always makes its target current. Set the CSS you already use for anchor offsets:
 
   ```css
-  html { scroll-padding-block-start: 4rem; } /* a sticky header */
+  html {
+    scroll-padding-block-start: 4rem;
+  } /* a sticky header */
   ```
 
   `activation-offset` replaces it with pixels or a percentage of the scroll root.
+
 - **Both edges.** There is always a current item. At the top, and whenever the reading line is
   still above the first target (an introduction, padding, or overscroll), the first target is
   current. Over the last screen of scrolling the reading line moves down to the end edge, so short
@@ -118,21 +130,21 @@ The heading selector and depth rule are the page's choice here, not the library'
 
 ### `tp-table-of-contents`
 
-| Property | Attribute | Type | Default | Description |
-| --- | --- | --- | --- | --- |
-| `value` | — | `string \| null` | — | Controlled current target identifier. Setting it, even to `null`, controls the component. |
-| `defaultValue` | `default-value` | `string \| null` | `null` | Initial current target before the first measurement. |
-| `scrollRoot` | — | `Element \| null` | `null` | Explicit scroll root. |
-| `scrollRootId` | `scroll-root` | `string \| null` | `null` | Id of the scroll root, resolved in this tree scope, then the document. |
-| `activationOffset` | `activation-offset` | `string \| number \| null` | `null` | Reading line: pixels, or a percentage such as `25%`. |
-| `navigation` | `navigation` | `'fragment' \| 'scroll'` | `'fragment'` | `fragment` records the target in the URL; `scroll` leaves the URL untouched, for applications that route on the fragment. |
-| `scrollBehavior` | `scroll-behavior` | `'smooth' \| 'instant' \| 'auto'` | `'smooth'` | How the content scrolls when navigating; `auto` follows the container's CSS. Reduced motion is always instant. |
-| `scrollThrottle` | `scroll-throttle` | `number` | `0` | Milliseconds between updates while scrolling; `0` updates once per frame. |
-| `scrollDebounce` | `scroll-debounce` | `number` | `0` | Update only after scrolling pauses this many milliseconds; wins over `scrollThrottle`. |
-| `label` | `label` | `string` | `''` | Title text when no `title` slot is authored. |
-| `messages` | — | `TableOfContentsMessages` | `{}` | `{ title }`, default "On this page". |
-| `activeValues` | — | `readonly string[]` | — | Read-only: active target identifiers, by position. |
-| `resolvedScrollRoot` | — | `HTMLElement \| null` | — | Read-only: the scroll container being observed. |
+| Property             | Attribute           | Type                              | Default      | Description                                                                                                               |
+| -------------------- | ------------------- | --------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `value`              | —                   | `string \| null`                  | —            | Controlled current target identifier. Setting it, even to `null`, controls the component.                                 |
+| `defaultValue`       | `default-value`     | `string \| null`                  | `null`       | Initial current target before the first measurement.                                                                      |
+| `scrollRoot`         | —                   | `Element \| null`                 | `null`       | Explicit scroll root.                                                                                                     |
+| `scrollRootId`       | `scroll-root`       | `string \| null`                  | `null`       | Id of the scroll root, resolved in this tree scope, then the document.                                                    |
+| `activationOffset`   | `activation-offset` | `string \| number \| null`        | `null`       | Reading line: pixels, or a percentage such as `25%`.                                                                      |
+| `navigation`         | `navigation`        | `'fragment' \| 'scroll'`          | `'fragment'` | `fragment` records the target in the URL; `scroll` leaves the URL untouched, for applications that route on the fragment. |
+| `scrollBehavior`     | `scroll-behavior`   | `'smooth' \| 'instant' \| 'auto'` | `'smooth'`   | How the content scrolls when navigating; `auto` follows the container's CSS. Reduced motion is always instant.            |
+| `scrollThrottle`     | `scroll-throttle`   | `number`                          | `0`          | Milliseconds between updates while scrolling; `0` updates once per frame.                                                 |
+| `scrollDebounce`     | `scroll-debounce`   | `number`                          | `0`          | Update only after scrolling pauses this many milliseconds; wins over `scrollThrottle`.                                    |
+| `label`              | `label`             | `string`                          | `''`         | Title text when no `title` slot is authored.                                                                              |
+| `messages`           | —                   | `TableOfContentsMessages`         | `{}`         | `{ title }`, default "On this page".                                                                                      |
+| `activeValues`       | —                   | `readonly string[]`               | —            | Read-only: active target identifiers, by position.                                                                        |
+| `resolvedScrollRoot` | —                   | `HTMLElement \| null`             | —            | Read-only: the scroll container being observed.                                                                           |
 
 Methods: `navigate(value)` scrolls to an item's target and makes it current (reason
 `programmatic`); `refresh()` recalculates after changes the component cannot observe, such as
@@ -150,12 +162,12 @@ Slots: default (items) and `title`. Parts: `table-of-contents` (the `nav`), `tit
 
 ### `tp-table-of-contents-item`
 
-| Property | Attribute | Type | Default | Description |
-| --- | --- | --- | --- | --- |
-| `href` | `href` | `string \| null` | `null` | Fragment URL naming the target. |
-| `target` | — | `Element \| null` | `null` | Target element reference; wins over `href`. |
-| `depth` | `depth` | `number` | `1` | Indentation level. Presentation only; never used for tracking. |
-| `active` / `current` | — | `boolean` | `false` | Set by the table of contents. |
+| Property             | Attribute | Type              | Default | Description                                                    |
+| -------------------- | --------- | ----------------- | ------- | -------------------------------------------------------------- |
+| `href`               | `href`    | `string \| null`  | `null`  | Fragment URL naming the target.                                |
+| `target`             | —         | `Element \| null` | `null`  | Target element reference; wins over `href`.                    |
+| `depth`              | `depth`   | `number`          | `1`     | Indentation level. Presentation only; never used for tracking. |
+| `active` / `current` | —         | `boolean`         | `false` | Set by the table of contents.                                  |
 
 The item publishes the target's id as its value, or a generated stable identifier for a
 reference without an id. Part: `link` (with `data-active`, `data-current`). The host carries

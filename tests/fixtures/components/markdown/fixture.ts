@@ -1,9 +1,17 @@
 import type { TpMarkdown, MarkdownHeadingTarget } from '../../../../src/index.js';
 
 const built = new URLSearchParams(location.search).has('built');
-if (built) document.querySelector<HTMLLinkElement>('link[rel=stylesheet]')!.href = '/dist/styles.css';
+if (built)
+  document.querySelector<HTMLLinkElement>('link[rel=stylesheet]')!.href = '/dist/styles.css';
 const api = await import(/* @vite-ignore */ built ? '/dist/index.js' : '/src/index.ts');
-const { defineElement, TpMarkdown: Markdown, TpBubble, TpBadge, TpTableOfContents, TpTableOfContentsItem } = api;
+const {
+  defineElement,
+  TpMarkdown: Markdown,
+  TpBubble,
+  TpBadge,
+  TpTableOfContents,
+  TpTableOfContentsItem,
+} = api;
 // Only these definitions: Markdown must define the controls it composes itself.
 for (const element of [Markdown, TpBubble, TpBadge, TpTableOfContents, TpTableOfContentsItem])
   defineElement(element.tagName, element);
@@ -80,17 +88,23 @@ Content with *markdown*.
 [^1]: The footnote text, with a [link](https://example.com).
 `;
 
-const element = <T extends HTMLElement = TpMarkdown>(id: string) => document.getElementById(id) as T;
+const element = <T extends HTMLElement = TpMarkdown>(id: string) =>
+  document.getElementById(id) as T;
 const diagnostics: { id: string; code: string; message: string }[] = [];
 const renders: { id: string; headings: string[] }[] = [];
 for (const markdown of document.querySelectorAll('tp-markdown')) {
   markdown.addEventListener('tp-diagnostic', (event) =>
-    diagnostics.push({ id: markdown.id, ...(event as CustomEvent<{ code: string; message: string }>).detail }),
+    diagnostics.push({
+      id: markdown.id,
+      ...(event as CustomEvent<{ code: string; message: string }>).detail,
+    }),
   );
   markdown.addEventListener('tp-markdown-render', (event) =>
     renders.push({
       id: markdown.id,
-      headings: (event as CustomEvent<{ headings: MarkdownHeadingTarget[] }>).detail.headings.map((h) => h.id ?? ''),
+      headings: (event as CustomEvent<{ headings: MarkdownHeadingTarget[] }>).detail.headings.map(
+        (h) => h.id ?? '',
+      ),
     }),
   );
 }
@@ -102,11 +116,17 @@ extension.elements = { 'tp-badge': ['variant'] };
 extension.renderers = {
   code: (node) =>
     node.lang === 'diagram'
-      ? Object.assign(document.createElement('pre'), { className: 'diagram', textContent: `diagram: ${node.value}` })
+      ? Object.assign(document.createElement('pre'), {
+          className: 'diagram',
+          textContent: `diagram: ${node.value}`,
+        })
       : undefined,
   link: (node, context) =>
     node.url.startsWith('/docs')
-      ? Object.assign(document.createElement('a'), { href: `#routed${node.url}`, textContent: `→ ${node.url}` })
+      ? Object.assign(document.createElement('a'), {
+          href: `#routed${node.url}`,
+          textContent: `→ ${node.url}`,
+        })
       : context.fallback(),
   emphasis: () => {
     throw new Error('renderer failure');
@@ -124,7 +144,8 @@ const fallback = true;
 
 A [routed](/docs/start) link, a [normal](https://example.com) link, and *emphasis that throws*.`;
 
-element('security').source = `[script link](javascript:alert(1)) ![data image](data:image/png;base64,AAAA) <span onclick="x">span</span> <img src=x onerror=alert(1)> <script>alert(1)</script>`;
+element('security').source =
+  `[script link](javascript:alert(1)) ![data image](data:image/png;base64,AAAA) <span onclick="x">span</span> <img src=x onerror=alert(1)> <script>alert(1)</script>`;
 
 element('rtl').source = `# Heading at level 3
 
@@ -141,14 +162,17 @@ const longLine = "a long line of code that must scroll horizontally rather than 
 const docs = element('docs');
 docs.source = Array.from(
   { length: 4 },
-  (_, index) => `## Section ${index + 1}\n\n${'Paragraph text that makes the section tall enough to scroll. '.repeat(12)}`,
+  (_, index) =>
+    `## Section ${index + 1}\n\n${'Paragraph text that makes the section tall enough to scroll. '.repeat(12)}`,
 ).join('\n\n');
 const toc = element('toc');
 docs.addEventListener('tp-markdown-render', (event) => {
   const { headings } = (event as CustomEvent<{ headings: MarkdownHeadingTarget[] }>).detail;
   toc.replaceChildren(
     ...headings.map((heading) => {
-      const item = document.createElement('tp-table-of-contents-item') as HTMLElement & { target: Element };
+      const item = document.createElement('tp-table-of-contents-item') as HTMLElement & {
+        target: Element;
+      };
       item.target = heading.element;
       item.textContent = heading.label;
       return item;
@@ -168,6 +192,16 @@ async function stream(text: string, size = 4, delay = 16): Promise<void> {
   markdown.streaming = false;
 }
 
-Object.assign(window, { markdownAPI: api, markdownDiagnostics: diagnostics, markdownRenders: renders, stream, element });
-await Promise.all([...document.querySelectorAll('tp-markdown')].map((markdown) => (markdown as TpMarkdown).updateComplete));
+Object.assign(window, {
+  markdownAPI: api,
+  markdownDiagnostics: diagnostics,
+  markdownRenders: renders,
+  stream,
+  element,
+});
+await Promise.all(
+  [...document.querySelectorAll('tp-markdown')].map(
+    (markdown) => (markdown as TpMarkdown).updateComplete,
+  ),
+);
 document.documentElement.dataset.ready = '';

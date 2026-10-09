@@ -1,12 +1,12 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
-import { TpElement } from '../foundation/element.js';
-import { TpOpenChangeEvent, TpValueChangeEvent } from '../foundation/events.js';
-import { createId } from '../foundation/id.js';
-import { assignedElements } from './shared/events.js';
+import { TpElement } from '../../foundation/element.js';
+import { TpOpenChangeEvent, TpValueChangeEvent } from '../../foundation/events.js';
+import { createId } from '../../foundation/id.js';
+import { assignedElements } from '../shared/events.js';
 import { TpAccordionItem, type AccordionContentAlignment } from './accordion-item.js';
-import type { TpCollapsible } from './collapsible.js';
-import { accordionPresentation } from '../presentation/families/accordion.js';
+import type { TpCollapsible } from '../collapsible/collapsible.js';
+import { accordionPresentation } from '../../presentation/families/accordion.js';
 
 export type AccordionValue = string[];
 export type AccordionVariant = 'plain' | 'line' | 'outline' | 'separated';
@@ -80,7 +80,6 @@ export class TpAccordion extends TpElement {
   #observer: MutationObserver | null = null;
   #rebuildScheduled = false;
   #initialized = false;
-  #diagnostics = new Set<string>();
 
   protected override render() {
     return html`<div part="accordion" data-orientation="vertical" ?data-disabled=${this.disabled}>
@@ -90,17 +89,19 @@ export class TpAccordion extends TpElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
-    this.#observer = new MutationObserver((mutations) => {
-      if (
-        mutations.some((mutation) =>
-          mutation.type === 'attributes'
-            ? mutation.target instanceof TpAccordionItem
-            : mutation.target === this || mutation.target instanceof TpAccordionItem,
-        )
-      ) {
-        this.#scheduleRebuild();
-      }
-    });
+    this.#observer = new (this.ownerDocument.defaultView ?? window).MutationObserver(
+      (mutations) => {
+        if (
+          mutations.some((mutation) =>
+            mutation.type === 'attributes'
+              ? mutation.target instanceof TpAccordionItem
+              : mutation.target === this || mutation.target instanceof TpAccordionItem,
+          )
+        ) {
+          this.#scheduleRebuild();
+        }
+      },
+    );
     this.#observer.observe(this, {
       subtree: true,
       childList: true,
@@ -349,10 +350,7 @@ export class TpAccordion extends TpElement {
   }
 
   #diagnose(code: string, message: string): void {
-    const key = `${code}:${message}`;
-    if (this.#diagnostics.has(key)) return;
-    this.#diagnostics.add(key);
-    queueMicrotask(() => this.emit('tp-diagnostic', { code, message, severity: 'error' as const }));
+    this.diagnose(code, message, { severity: 'error', once: true, defer: true });
   }
 
   protected override updated(changed: PropertyValues<this>): void {
@@ -368,5 +366,11 @@ export class TpAccordion extends TpElement {
     ) {
       this.#applyValue();
     }
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-accordion': TpAccordion;
   }
 }

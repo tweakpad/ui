@@ -74,7 +74,9 @@ export class TpLabel extends TpElement {
       }
       this.#controlObserver?.disconnect();
       this.#control = control;
-      this.#controlObserver = new MutationObserver(this.#syncRequired);
+      this.#controlObserver = new (this.ownerDocument.defaultView ?? window).MutationObserver(
+        this.#syncRequired,
+      );
       this.#controlObserver.observe(control, { attributes: true, attributeFilter: ['required'] });
     }
     this.#syncRequired();
@@ -116,5 +118,11 @@ export class TpLabel extends TpElement {
           : nothing
       }
     </label>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-label': TpLabel;
   }
 }

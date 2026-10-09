@@ -1,10 +1,13 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
-import { TpElement } from '../foundation/element.js';
-import type { TpOpenChangeEvent } from '../foundation/events.js';
-import type { CollapsibleContentAlignment, CollapsibleIndicatorPosition } from './collapsible.js';
-import { TpCollapsible } from './collapsible.js';
-import type { CustomElementConstructorWithTag } from '../foundation/define.js';
+import { TpElement } from '../../foundation/element.js';
+import type { TpOpenChangeEvent } from '../../foundation/events.js';
+import type {
+  CollapsibleContentAlignment,
+  CollapsibleIndicatorPosition,
+} from '../collapsible/collapsible.js';
+import { TpCollapsible } from '../collapsible/collapsible.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type AccordionIndicatorPosition = CollapsibleIndicatorPosition;
 export type AccordionContentAlignment = CollapsibleContentAlignment;
@@ -127,5 +130,11 @@ export class TpAccordionItem extends TpElement {
     this.dataset.contentAlignment = alignment;
     const collapsible = this.collapsibleElement;
     if (collapsible) collapsible.contentAlignment = alignment;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-accordion-item': TpAccordionItem;
   }
 }

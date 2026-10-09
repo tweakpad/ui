@@ -10,11 +10,18 @@ import { componentHandlingPrevented } from './part.js';
 import { CleanupScope } from './services.js';
 // Shortcut notation is shared with the Key Hint control's display.
 import {
+  canonicalKeyName,
   keyHintNotation,
   keyHintPlatform,
   type KeyHintPlatform,
   type ResolvedKeyHintPlatform,
 } from './key-notation.js';
+
+/** The lowercased `KeyboardEvent.key` an authored key matches: aliases resolved, `Space` a space. */
+function eventKeyName(key: string): string {
+  const name = canonicalKeyName(key);
+  return name === 'space' ? ' ' : name;
+}
 
 /**
  * Foundation `sec-1920-key-bindings`: one shared owner registers scoped shortcuts,
@@ -195,14 +202,11 @@ export function parseKeyPattern(input: string, platform: ResolvedKeyHintPlatform
       modifiers[modifier === 'mod' ? (platform === 'mac' ? 'metaKey' : 'ctrlKey') : modifier] =
         true;
     }
-    const keys =
-      key === '0-9'
-        ? Array.from({ length: 10 }, (_, digit) => String(digit))
-        : [key.toLowerCase() === 'space' ? ' ' : key];
+    const keys = key === '0-9' ? Array.from({ length: 10 }, (_, digit) => String(digit)) : [key];
     for (const match of keys)
       chords.push({
-        key: match.toLowerCase(),
-        label: match === ' ' ? 'Space' : match,
+        key: eventKeyName(match),
+        label: eventKeyName(match) === ' ' ? 'Space' : match,
         ...modifiers,
         implicit: true,
         pattern,
@@ -219,7 +223,7 @@ function chordsFor(keys: KeyBindingKeys, platform: ResolvedKeyHintPlatform): Key
     if (typeof entry?.key !== 'string') throw new Error('Invalid key chord: missing key.');
     return [
       {
-        key: entry.key.toLowerCase(),
+        key: eventKeyName(entry.key),
         label: entry.key === ' ' ? 'Space' : entry.key,
         ctrlKey: Boolean(entry.ctrlKey),
         metaKey: Boolean(entry.metaKey),

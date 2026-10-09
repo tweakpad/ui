@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { ObservableStore, shallowEqual } from './store.js';
+import { describe, expect, it, vi } from 'vitest';
+import { Emitter, ObservableStore, shallowEqual } from './store.js';
 
 describe('coherent operation publication (drag-drop V-70)', () => {
   it('publishes batches whose old value is undefined exactly once', () => {
@@ -184,5 +184,50 @@ describe('selected subscriptions (media player C-09, V-11, V-74)', () => {
     expect(shallowEqual([], {})).toBe(false);
     expect(shallowEqual(null, {})).toBe(false);
     expect(shallowEqual<unknown>('a', { 0: 'a' })).toBe(false);
+  });
+});
+
+describe('ObservableStore', () => {
+  it('publishes one atomic change for a batch', () => {
+    const store = new ObservableStore(0);
+    const subscriber = vi.fn();
+    store.subscribe(subscriber);
+    store.batch(() => {
+      store.set(1, 'input');
+      store.set(2, 'selection');
+    });
+    expect(subscriber).toHaveBeenCalledOnce();
+    expect(subscriber).toHaveBeenCalledWith({ value: 2, previousValue: 0, reason: 'selection' });
+  });
+});
+
+describe('Emitter', () => {
+  it('delivers each event to its own listeners with the event arguments', () => {
+    const emitter = new Emitter<{ moved: [number, string]; settled: [] }>();
+    const moved = vi.fn();
+    const settled = vi.fn();
+    const off = emitter.on('moved', moved);
+    emitter.on('settled', settled);
+    emitter.emit('moved', 1, 'drag');
+    emitter.emit('settled');
+    expect(moved).toHaveBeenCalledWith(1, 'drag');
+    expect(settled).toHaveBeenCalledOnce();
+    off();
+    emitter.emit('moved', 2, 'drag');
+    expect(moved).toHaveBeenCalledTimes(1);
+  });
+
+  it('snapshots listeners so one may unsubscribe its sibling mid-dispatch, and clears', () => {
+    const emitter = new Emitter<{ change: [number] }>();
+    const second = vi.fn();
+    emitter.on('change', () => emitter.off('change', second));
+    emitter.on('change', second);
+    expect(emitter.listeners('change')).toHaveLength(2);
+    emitter.emit('change', 1);
+    expect(second).toHaveBeenCalledWith(1);
+    emitter.emit('change', 2);
+    expect(second).toHaveBeenCalledTimes(1);
+    emitter.clear();
+    expect(emitter.listeners('change')).toEqual([]);
   });
 });

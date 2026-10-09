@@ -127,3 +127,9 @@ export class TpCard extends TpElement {
     </article>`;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-card': TpCard;
+  }
+}

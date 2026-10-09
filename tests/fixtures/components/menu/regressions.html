@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Menu regressions</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 32px;
+      }
+      h2 {
+        font-size: var(--tp-text-base);
+        margin: 0 0 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Menu regressions</h1>
+    <p>Checks ported from the former repair smoke script; see <code>README.md</code>.</p>
+    <main>
+      <section>
+        <h2>Commands, checkbox policy and cancellation</h2>
+        <tp-menu id="actions" label="Actions">
+          <tp-button slot="trigger" variant="outline">Actions</tp-button>
+          <tp-menu-item value="go">Go</tp-menu-item>
+          <tp-menu-checkbox-item value="check">Check</tp-menu-checkbox-item>
+          <a href="#local" value="link">Link</a>
+        </tp-menu>
+      </section>
+      <section>
+        <h2>Submenu</h2>
+        <tp-menu id="parent" label="Parent">
+          <tp-button slot="trigger" variant="outline">Parent</tp-button>
+          <tp-menu-item value="first">First</tp-menu-item>
+          <tp-menu id="child" label="Child">
+            <tp-menu-item slot="trigger" value="child-trigger">Child</tp-menu-item>
+            <tp-menu-item value="child-command">Command</tp-menu-item>
+          </tp-menu>
+        </tp-menu>
+      </section>
+      <section>
+        <h2>Menubar atomic cancellation</h2>
+        <tp-menubar id="bar">
+          <tp-menu value="a" label="A">
+            <tp-button slot="trigger" variant="ghost">A</tp-button>
+            <tp-menu-item value="one">One</tp-menu-item>
+          </tp-menu>
+          <tp-menu value="b" label="B">
+            <tp-button slot="trigger" variant="ghost">B</tp-button>
+            <tp-menu-item value="two">Two</tp-menu-item>
+          </tp-menu>
+        </tp-menubar>
+      </section>
+    </main>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      window.menuRegressions = await import('./regression-checks.js');
+      await customElements.whenDefined('tp-menubar');
+      document.documentElement.dataset.ready = '';
+    </script>
+  </body>
+</html>

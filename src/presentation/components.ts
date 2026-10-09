@@ -2,7 +2,7 @@ import type { ComponentDefinition } from './definition.js';
 import { presentationFamilies } from './families/index.js';
 
 /**
- * Every component definition, in catalog order. Components never import this aggregate;
+ * Every component definition. Components never import this aggregate;
  * each element carries its own family, so only an explicit import of this list (catalogs,
  * documentation, audits) bundles the whole library's definitions.
  */

@@ -10,10 +10,8 @@ describe('cataloged component presentation', () => {
     expect(new Set(componentDefinitions.map((d) => d.tagName))).toEqual(
       new Set(catalogEntries.map((d) => d.tagName)),
     );
-    for (const definition of componentDefinitions) {
-      expect(definition.sourceNode).toBeTruthy();
+    for (const definition of componentDefinitions)
       expect(new Set(definition.parts.map((p) => p.name)).size).toBe(definition.parts.length);
-    }
   });
   it('resolves Button base, variant, then size without mutating definitions', () => {
     const definition = componentDefinitions.find((d) => d.name === 'Button')!;

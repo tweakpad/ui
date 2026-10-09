@@ -1,5 +1,5 @@
+import { fakeHost } from './fakes.test.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import { PopupViewportController } from './popup-viewport.js';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -7,7 +7,6 @@ afterEach(() => vi.unstubAllGlobals());
 function fixture() {
   let id = 0;
   const frames = new Map<number, FrameRequestCallback>();
-  const controllers: ReactiveController[] = [];
   vi.stubGlobal('window', {
     requestAnimationFrame(callback: FrameRequestCallback) {
       frames.set(++id, callback);
@@ -17,16 +16,10 @@ function fixture() {
       frames.delete(key);
     },
   });
-  const host = {
-    addController(controller: ReactiveController) {
-      controllers.push(controller);
-    },
-    removeController: vi.fn(),
-    requestUpdate: vi.fn(),
-  } as unknown as ReactiveControllerHost;
+  const host = fakeHost();
   const viewport = new PopupViewportController(host, () => null);
   const frame = async () => {
-    controllers.forEach((controller) => controller.hostUpdated?.());
+    host.controllers.forEach((controller) => controller.hostUpdated?.());
     const pending = [...frames.values()];
     frames.clear();
     pending.forEach((callback) => callback(0));

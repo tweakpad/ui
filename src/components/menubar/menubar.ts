@@ -1,3 +1,4 @@
+import { stepIndex } from '../../foundation/collection.js';
 import { css, html, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
@@ -74,7 +75,6 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
   #focusMember: TpMenu | null = null;
   #observer: MutationObserver | undefined;
   #pending = new Map<TpMenu, TpSurfaceOpenChangeEvent>();
-  #diagnostics = new Set<string>();
   #compositions = new Map<TpElement, PartPresentation>();
   #partsQueued = false;
   itemChanged = (): void => {
@@ -105,9 +105,7 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
     if (this.hasUpdated) this.#state.sync();
   }
   #diagnose(code: string, message: string): void {
-    if (this.#diagnostics.has(code)) return;
-    this.#diagnostics.add(code);
-    this.emit('tp-diagnostic', { code: `menubar-${code}`, message });
+    this.diagnose(`menubar-${code}`, message, { once: true });
   }
   override connectedCallback(): void {
     super.connectedCallback();
@@ -328,9 +326,7 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
     if (next < 0 && event.key !== backward) return false;
     if (![forward, backward, 'Home', 'End'].includes(event.key)) return false;
     event.preventDefault();
-    next = this.loopFocus
-      ? (next + enabled.length) % enabled.length
-      : Math.min(enabled.length - 1, Math.max(0, next));
+    next = stepIndex(next, 0, enabled.length, this.loopFocus);
     const target = enabled[next];
     if (!target) return true;
     if (
@@ -392,5 +388,11 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
     for (const owner of this.#compositions.keys()) setPartComposition(owner, this);
     this.#compositions.clear();
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-menubar': TpMenubar;
   }
 }

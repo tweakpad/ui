@@ -1,3 +1,4 @@
+import { FakeIntersectionObserver } from './fakes.test.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   coordinatorStatus,
@@ -9,33 +10,6 @@ import {
   type RevealMember,
 } from './reveal-coordination.js';
 import { transitionSpan } from './reveal-playback.js';
-
-class FakeIntersectionObserver {
-  static instances: FakeIntersectionObserver[] = [];
-  readonly targets = new Set<object>();
-  constructor(
-    readonly callback: (entries: { target: object; isIntersecting: boolean }[]) => void,
-    readonly options: { rootMargin: string },
-  ) {
-    FakeIntersectionObserver.instances.push(this);
-  }
-  observe(target: object) {
-    this.targets.add(target);
-  }
-  unobserve(target: object) {
-    this.targets.delete(target);
-  }
-  disconnect() {
-    this.targets.clear();
-  }
-}
-
-/** Reports `isIntersecting` for `target` from every observer watching it with `rootMargin`. */
-function report(target: object, isIntersecting: boolean, rootMargin = '0px') {
-  for (const observer of FakeIntersectionObserver.instances)
-    if (observer.options.rootMargin === rootMargin && observer.targets.has(target))
-      observer.callback([{ target, isIntersecting }]);
-}
 
 /** A fresh window per test, so the shared observer registry starts empty. */
 const newView = () => ({
@@ -159,8 +133,8 @@ describe('reveal coordinator', () => {
     const first = fakeMember(fakeElement(1), false);
     const second = fakeMember(fakeElement(2));
     for (const member of [third, first, second]) root[revealCoordinatorHost]!.register(member);
-    report(root, true, '25%');
-    report(root, true);
+    FakeIntersectionObserver.report(root, true, '25%');
+    FakeIntersectionObserver.report(root, true);
     await flush();
     expect(first.prepare).toHaveBeenCalled();
     expect(second.reveal).not.toHaveBeenCalled();
@@ -184,7 +158,7 @@ describe('reveal coordinator', () => {
     const root = fakeElement(0);
     coordinate(root);
     root[revealCoordinatorHost]!.register(fakeMember(fakeElement(1)));
-    report(root, true);
+    FakeIntersectionObserver.report(root, true);
     await flush();
     const late = fakeMember(fakeElement(2));
     root[revealCoordinatorHost]!.register(late);
@@ -197,13 +171,13 @@ describe('reveal coordinator', () => {
     coordinate(root, { repeat: true });
     const member = fakeMember(fakeElement(1));
     root[revealCoordinatorHost]!.register(member);
-    report(root, true);
+    FakeIntersectionObserver.report(root, true);
     await flush();
     expect(member.reveal).not.toHaveBeenCalled(); // entry waits for the 10% inset
-    report(root, true, '-10% 0px -10% 0px');
+    FakeIntersectionObserver.report(root, true, '-10% 0px -10% 0px');
     await flush();
     expect(member.reveal).toHaveBeenCalledTimes(1);
-    report(root, false);
+    FakeIntersectionObserver.report(root, false);
     await flush();
     expect(member.reset).toHaveBeenCalled();
     expect(root.events).toContainEqual(['tp-reveal-change', { revealed: false }]);
@@ -218,7 +192,7 @@ describe('reveal coordinator', () => {
     const nested = [fakeMember(fakeElement(3), false), fakeMember(fakeElement(4))];
     outer[revealCoordinatorHost]!.register(before);
     for (const member of nested) inner[revealCoordinatorHost]!.register(member);
-    report(outer, true);
+    FakeIntersectionObserver.report(outer, true);
     await flush();
     // The inner coordinator is not ready until all of its members are.
     expect(before.reveal).not.toHaveBeenCalled();

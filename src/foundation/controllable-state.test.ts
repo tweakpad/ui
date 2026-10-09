@@ -1,3 +1,4 @@
+import { fakeHost } from './fakes.test.js';
 import { describe, expect, it, vi } from 'vitest';
 import { ControllableState, orderedValuesEqual } from './controllable-state.js';
 import { TpValueChangeEvent } from './events.js';
@@ -5,12 +6,7 @@ import { TpValueChangeEvent } from './events.js';
 function setup<T>(initialValue: T, controlled?: T, defaultValue?: T) {
   let input = controlled;
   let initial = defaultValue;
-  const host = Object.assign(new EventTarget(), {
-    addController: vi.fn(),
-    removeController: vi.fn(),
-    requestUpdate: vi.fn(),
-    updateComplete: Promise.resolve(true),
-  });
+  const host = fakeHost();
   const onCommit = vi.fn(),
     diagnostic = vi.fn(),
     onChange = vi.fn();

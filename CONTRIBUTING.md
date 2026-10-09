@@ -9,18 +9,20 @@ npm run dev
 npm run storybook
 npm run format
 npm test
-npm run test:browser
-npm run test:stories
 npm run test:package
-npm run verify:phase-1
+npm run size:report
 npm run lint
 npm run build
 npm run build-storybook
 ```
 
-`npm run lint` checks Prettier formatting, TypeScript and Lit templates, Lit accessibility, standalone CSS, and CSS embedded in Lit `css` templates. `npm run test:package` packs the library and checks the tarball as a consumer would install it.
+`npm run lint` checks Prettier formatting, TypeScript and Lit templates, Lit accessibility, standalone CSS, and CSS embedded in Lit `css` templates. `npm run test:package` packs the library and checks the tarball as a consumer would install it. `npm run size:report` measures each catalog component's gzipped bundle and guards tree-shaking.
 
-The Storybook overview renders every public catalog identity. The browser smoke suite checks registration, interaction, native form behavior, keyboard navigation, console errors, and Axe accessibility results.
+Browser verification runs through Google Chrome DevTools MCP against the fixtures in `tests/fixtures/components/<component>/` (served by `npm run dev`; append `?built` or `?package` where a fixture documents it to load the built package). Each fixture folder's `README.md` lists its checks. Storybook's accessibility addon reports Axe results per story.
+
+## Stories
+
+Every component has one `src/stories/<name>.stories.ts` with a `Default` story and `Controls`; `.storybook/preview.ts` tags every story file for Docs (`autodocs`) and sets the padded layout, so story files only declare what differs. Additional stories demonstrate distinct compositions or use cases, not attribute values. Copyable documentation examples live in `src/stories/<name>.examples.ts`; their authored `*-example.js` modules (with `.d.ts` stubs) are imported both as modules and as `?raw` source.
 
 ## Tree-shaking rules
 

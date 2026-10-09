@@ -49,16 +49,13 @@ export const sliderAppearance: PresentationDictionary = {
           '0 0 0 calc(var(--tp-ring-width) * 1.5) color-mix(in oklab, var(--tp-ring) 50%, transparent)',
       },
     },
-    {
-      selector: '&[data-disabled]',
-      declarations: { opacity: 'var(--tp-opacity-disabled)', cursor: 'not-allowed' },
-    },
+    // The host already applies the disabled opacity; dimming the thumb too would double it.
+    { selector: '&[data-disabled]', declarations: { cursor: 'not-allowed' } },
     { selector: '&[data-invalid]', declarations: { 'border-color': 'var(--tp-destructive)' } },
   ],
   // Bar variant: a thumbless scrubbing track (Video.js v10 default skin geometry). The Track
   // thickens while the slider is hovered, pointed, dragged or focused. The Thumb keeps its
   // native input but paints nothing; keyboard focus rings the Track.
-  'slider-variant-default': [],
   'slider-variant-bar': [
     {
       declarations: {
@@ -72,7 +69,6 @@ export const sliderAppearance: PresentationDictionary = {
       },
     },
   ],
-  'slider-track-variant-default': [],
   'slider-track-variant-bar': [
     {
       declarations: {
@@ -94,13 +90,10 @@ export const sliderAppearance: PresentationDictionary = {
       },
     },
   ],
-  'slider-buffer-variant-default': [],
   'slider-buffer-variant-bar': [
     { declarations: { background: 'color-mix(in oklab, var(--tp-foreground) 20%, transparent)' } },
   ],
-  'slider-range-variant-default': [],
   'slider-range-variant-bar': [{ declarations: { background: 'var(--tp-foreground)' } }],
-  'slider-thumb-variant-default': [],
   'slider-thumb-variant-bar': [
     {
       declarations: {
@@ -137,8 +130,6 @@ export const sliderAppearance: PresentationDictionary = {
       },
     },
   ],
-  'slider-buffer-orientation-horizontal': [],
-  'slider-buffer-orientation-vertical': [],
   // Chapter segments separate with a background-colored gap; the pointed segment
   // receives a 20% muted-foreground layer (docs/styling.md color-mix rule).
   'slider-chapter': [
@@ -162,6 +153,4 @@ export const sliderAppearance: PresentationDictionary = {
       },
     },
   ],
-  'slider-chapter-orientation-horizontal': [],
-  'slider-chapter-orientation-vertical': [],
 };

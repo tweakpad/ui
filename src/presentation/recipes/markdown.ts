@@ -39,7 +39,6 @@ export const markdownAppearance: PresentationDictionary = {
       declarations: { 'margin-block-start': '0' },
     },
   ],
-  'markdown-size-default': [],
   'markdown-size-sm': [
     {
       declarations: {
@@ -89,7 +88,6 @@ export const markdownAppearance: PresentationDictionary = {
     { selector: `${sm}[data-level="3"]`, declarations: { 'font-size': 'var(--tp-text-base)' } },
     { selector: `${sm}[data-level="4"]`, declarations: { 'font-size': 'var(--tp-text-sm)' } },
   ],
-  'markdown-paragraph': [],
   'markdown-list': [
     { declarations: { 'padding-inline-start': 'var(--tp-space-6)' } },
     {
@@ -174,9 +172,7 @@ export const markdownAppearance: PresentationDictionary = {
       },
     },
   ],
-  'markdown-emphasis': [],
   'markdown-strong': [{ declarations: { 'font-weight': 'var(--tp-font-semibold)' } }],
-  'markdown-delete': [],
   'markdown-footnotes': [
     {
       declarations: {

@@ -6,7 +6,6 @@ const definition: ComponentDefinition = {
   name: 'Spinner',
   tagName: 'tp-spinner',
   kind: 'presentational-primitive',
-  sourceNode: 'ucl21-spinner',
   axes: [
     {
       name: 'size',
@@ -17,21 +16,11 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'spinner',
-      publicName: 'Indicator',
-      presentationKeys: ['spinner', 'spinner-size-default', 'spinner-size-sm', 'spinner-size-lg'],
-      cardinality: 'exactly one public owner host per control instance',
+      axes: ['size'],
     },
     {
       name: 'spinner-accessible-label',
-      publicName: 'Accessible label',
-      presentationKeys: [
-        'spinner-accessible-label',
-        'spinner-accessible-label-size-default',
-        'spinner-accessible-label-size-sm',
-        'spinner-accessible-label-size-lg',
-      ],
-      cardinality:
-        'zero or one descendant of Indicator; cited behavior sets any required-presence condition',
+      axes: ['size'],
     },
   ],
 };

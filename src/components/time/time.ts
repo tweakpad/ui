@@ -1,4 +1,5 @@
 import { css, html, nothing } from 'lit';
+import { defaultTrue } from '../../foundation/converters.js';
 import type { PropertyValues } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import { TpElement } from '../../foundation/element.js';
@@ -88,7 +89,7 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
     updateInterval: { attribute: 'update-interval', converter: updateIntervalConverter },
     now: { attribute: false },
     messages: { attribute: false },
-    tooltip: { converter: { fromAttribute: (value: string | null) => value !== 'false' } },
+    tooltip: { converter: defaultTrue },
     tooltipPattern: { type: String, attribute: 'tooltip-pattern' },
     tooltipFormatter: { attribute: false },
   };
@@ -152,7 +153,6 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
   #releaseTrigger: (() => void) | undefined;
   #releaseDescriptionPart: (() => void) | undefined;
   #descriptionPopup: HTMLElement | undefined;
-  #reported = new Set<string>();
   #value: ResolvedTime | null = null;
   #text = '';
   #accessibleText = '';
@@ -240,10 +240,7 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
   }
 
   #diagnose(code: string, message: string): void {
-    const key = `${code}:${message}`;
-    if (this.#reported.has(key)) return;
-    this.#reported.add(key);
-    queueMicrotask(() => this.emit('tp-diagnostic', { code, message }));
+    this.diagnose(code, message, { once: true, defer: true });
   }
 
   #present(): void {
@@ -411,5 +408,11 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
         popup,
       );
     });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-time': TpTime;
   }
 }

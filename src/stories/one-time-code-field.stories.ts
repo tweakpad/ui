@@ -1,10 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
-import { codeExamples } from './one-time-code.examples.js';
+import { codeExamples } from './one-time-code-field.examples.js';
 import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
-import type { TpOtpField, CodeValidation } from '../components/one-time-code/index.js';
+import type {
+  TpOneTimeCodeField,
+  CodeValidation,
+} from '../components/one-time-code-field/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import documentation from '../../docs/one-time-code.md?raw';
+import documentation from '../../docs/one-time-code-field.md?raw';
 interface Args {
   length: number;
   value: string;
@@ -16,7 +19,7 @@ interface Args {
   required: boolean;
   invalid: boolean;
   placeholder: string;
-  autoComplete: string;
+  autocomplete: string;
   autoSubmit: boolean;
 }
 const source = `<script type="module">
@@ -24,14 +27,12 @@ const source = `<script type="module">
   import '@tweakpad/ui/styles.css';
 </script>
 <tp-field label="Verification code" description="Enter the six-character code.">
-  <tp-otp-field length="6" name="code" group-lengths="[3,3]"></tp-otp-field>
+  <tp-one-time-code-field length="6" name="code" group-lengths="[3,3]"></tp-one-time-code-field>
 </tp-field>`;
 const meta = {
   title: 'Components/One-time code field',
-  component: 'tp-otp-field',
-  tags: ['autodocs'],
+  component: 'tp-one-time-code-field',
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       source: { code: source },
@@ -49,7 +50,7 @@ const meta = {
     required: false,
     invalid: false,
     placeholder: '',
-    autoComplete: 'one-time-code',
+    autocomplete: 'one-time-code',
     autoSubmit: false,
   },
   argTypes: {
@@ -63,13 +64,13 @@ const meta = {
     required: { control: 'boolean' },
     invalid: { control: 'boolean' },
     placeholder: { control: 'text' },
-    autoComplete: { control: 'text' },
+    autocomplete: { control: 'text' },
     autoSubmit: { control: 'boolean' },
   },
   render: (args) => {
     const [, updateArgs] = useArgs<Args>();
     return html`<tp-field label="Verification code" description="Enter the six-character code."
-      ><tp-otp-field
+      ><tp-one-time-code-field
         .length=${args.length}
         .value=${args.value}
         .validationType=${args.validationType}
@@ -80,16 +81,16 @@ const meta = {
         .required=${args.required}
         .invalid=${args.invalid}
         .placeholder=${args.placeholder}
-        .autoComplete=${args.autoComplete}
+        .autocomplete=${args.autocomplete}
         .autoSubmit=${args.autoSubmit}
         name="code"
         @tp-value-change=${(event: TpValueChangeEvent<string>) => {
           if (!event.defaultPrevented && !event.detail.cancelled) {
-            (event.currentTarget as TpOtpField).value = event.detail.value;
+            (event.currentTarget as TpOneTimeCodeField).value = event.detail.value;
             updateArgs({ value: event.detail.value });
           }
         }}
-      ></tp-otp-field
+      ></tp-one-time-code-field
     ></tp-field>`;
   },
 } satisfies Meta<Args>;

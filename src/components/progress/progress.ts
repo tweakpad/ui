@@ -288,7 +288,7 @@ export class TpProgress extends TpElement {
   readonly #diagnose = (code: string, message: string): void => {
     if (this.#diagnostics.has(code)) return;
     this.#diagnostics.add(code);
-    this.emit('tp-diagnostic', { code: 'progress-' + code, message, severity: 'warning' });
+    this.diagnose('progress-' + code, message);
   };
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
@@ -410,5 +410,11 @@ export class TpProgress extends TpElement {
       },
       content: html`${label}${value}${track}`,
     });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-progress': TpProgress;
   }
 }

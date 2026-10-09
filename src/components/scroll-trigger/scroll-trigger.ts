@@ -65,10 +65,6 @@ export class TpScrollTrigger extends TpElement {
         display: block;
       }
 
-      :host([hidden]) {
-        display: none;
-      }
-
       /* The stage only boxes the content while pinned, so an unpinned trigger lays out its
          content directly. */
       .stage {
@@ -178,5 +174,11 @@ export class TpScrollTrigger extends TpElement {
 
   protected override render() {
     return html`<div part="stage" class="stage"><slot></slot></div>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-scroll-trigger': TpScrollTrigger;
   }
 }

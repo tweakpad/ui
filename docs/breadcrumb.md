@@ -16,10 +16,10 @@ current page; it is not turned into a disabled link.
 </tp-breadcrumb>
 ```
 
-| Property / attribute | Type | Default | Purpose |
-| --- | --- | --- | --- |
-| `label` | string | Breadcrumb | Navigation landmark name. |
-| `separator` | string | empty | Decorative separator text; empty uses the shared logical chevron Icon. |
+| Property / attribute | Type   | Default    | Purpose                                                                |
+| -------------------- | ------ | ---------- | ---------------------------------------------------------------------- |
+| `label`              | string | Breadcrumb | Navigation landmark name.                                              |
+| `separator`          | string | empty      | Decorative separator text; empty uses the shared logical chevron Icon. |
 
 The default slot accepts links, plain current-page content and compositions such
 as Menu. Original nodes, destinations, listeners and authored roles are preserved.

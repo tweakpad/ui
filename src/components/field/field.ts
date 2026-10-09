@@ -34,7 +34,7 @@ const markers = [
   'pending',
 ] as const;
 const controls =
-  'tp-input,tp-text-area,tp-native-select,tp-number-field,tp-otp-field,tp-slider,tp-checkbox,tp-radio-group,tp-switch,tp-select,tp-autocomplete,tp-toggle-group,tp-calendar,input,textarea,select,[data-field-control]';
+  'tp-input,tp-text-area,tp-native-select,tp-number-field,tp-one-time-code-field,tp-slider,tp-checkbox,tp-radio-group,tp-switch,tp-select,tp-autocomplete,tp-toggle-group,tp-calendar,input,textarea,select,[data-field-control]';
 
 export const fieldSubmission = Symbol('Field submission');
 export class TpField extends TpElement {
@@ -325,7 +325,7 @@ export class TpField extends TpElement {
     this.addEventListener('tp-field-value', this.#changed);
     this.addEventListener('tp-value-change', this.#proposal);
     this.addEventListener('keydown', this.#keyDown);
-    this.#observer = new MutationObserver(this.#queue);
+    this.#observer = new (this.ownerDocument.defaultView ?? window).MutationObserver(this.#queue);
     this.#observe();
     this.#queue();
     this.ownerDocument.addEventListener('reset', this.#reset, true);
@@ -982,5 +982,11 @@ export class TpField extends TpElement {
     ]);
     this.requestUpdate();
     this.emit('tp-validation', { run, state: this.validityState });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-field': TpField;
   }
 }

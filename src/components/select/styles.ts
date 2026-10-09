@@ -198,6 +198,7 @@ export const selectStyles = css`
     justify-content: center;
     gap: var(--tp-space-2);
   }
+
   .select-separator {
     block-size: var(--tp-border-width);
     flex: none;

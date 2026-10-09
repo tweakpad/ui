@@ -1,13 +1,14 @@
-import { anchoredArrowStyles } from './shared/anchored-arrow.js';
+import { anchoredArrowStyles } from '../shared/anchored-arrow.js';
+import { SURFACE_HOST } from '../../foundation/surface-brand.js';
 import { css, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-import { PopupViewportController } from '../foundation/popup-viewport.js';
+import { PopupViewportController } from '../../foundation/popup-viewport.js';
 import type { CSSResultGroup, PropertyValues } from 'lit';
-import { TpElement } from '../foundation/element.js';
-import { SurfaceState, TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
-import type { SurfaceHandle, SurfaceTriggerOptions } from '../foundation/surface-handle.js';
-import { PresenceController } from '../foundation/presence.js';
-import { FloatingDismissController } from '../foundation/floating-dismiss.js';
+import { TpElement } from '../../foundation/element.js';
+import { SurfaceState, TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
+import type { SurfaceHandle, SurfaceTriggerOptions } from '../../foundation/surface-handle.js';
+import { PresenceController } from '../../foundation/presence.js';
+import { FloatingDismissController } from '../../foundation/floating-dismiss.js';
 import {
   composedContains,
   composedParent,
@@ -17,24 +18,24 @@ import {
   restoreFocus,
   shadowReferenceTarget,
   trapTabKey,
-} from '../foundation/focus.js';
-import { OwnedPortal, type OwnedPortalContainer } from '../foundation/owned-portal.js';
-import { ComposedEnvironmentObserver } from '../foundation/composed-environment.js';
-import { acquireOutsideInert, refreshOutsideInert } from '../foundation/outside-inert.js';
-import { acquireScrollLock } from '../foundation/scroll-lock.js';
+} from '../../foundation/focus.js';
+import { OwnedPortal, type OwnedPortalContainer } from '../../foundation/owned-portal.js';
+import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
+import { acquireOutsideInert, refreshOutsideInert } from '../../foundation/outside-inert.js';
+import { acquireScrollLock } from '../../foundation/scroll-lock.js';
 import {
   resolveSurfaceFocus,
   restoreLostFocus,
   type SurfaceFocusTarget,
-} from '../foundation/surface-focus.js';
+} from '../../foundation/surface-focus.js';
 import {
   componentHandlingPrevented,
   type PartRenderOptions,
   type PartState,
-} from '../foundation/part.js';
-import { presentationFamilyFor } from '../presentation/family.js';
-import { createId } from '../foundation/id.js';
-import { prepareMotion, type MotionHandle } from '../foundation/motion.js';
+} from '../../foundation/part.js';
+import { presentationFamilyFor } from '../../presentation/family.js';
+import { createId } from '../../foundation/id.js';
+import { prepareMotion, type MotionHandle, presenceRole } from '../../foundation/motion.js';
 import {
   positionSurface,
   themeSpacing,
@@ -51,10 +52,10 @@ import {
   type CollisionBoundary,
   type AnchorGeometry,
   type PositioningStrategy,
-} from '../foundation/positioning.js';
-import type { ChangeReason, PresenceState } from '../foundation/types.js';
-import { HoverSurfaceController } from '../foundation/hover-surface.js';
-import { DelayGroup } from '../foundation/delay-group.js';
+} from '../../foundation/positioning.js';
+import type { ChangeReason, PresenceState } from '../../foundation/types.js';
+import { HoverSurfaceController } from '../../foundation/hover-surface.js';
+import { DelayGroup } from '../../foundation/delay-group.js';
 
 export interface AnchoredTriggerOptions extends SurfaceTriggerOptions {
   openOnHover?: boolean;
@@ -106,13 +107,14 @@ export function targetOf(element: HTMLElement, depth = 0): HTMLElement {
 
 /** Shared native anchored layer used by Popover, Preview Card and Tooltip. */
 export abstract class TpAnchoredSurface extends TpElement {
+  readonly [SURFACE_HOST] = true as const;
   static override properties = {
     ...TpElement.properties,
     open: { type: Boolean, noAccessor: true },
     defaultOpen: { type: Boolean, attribute: 'default-open', noAccessor: true },
     placement: { type: String, noAccessor: true },
-    side: { type: String },
-    align: { type: String },
+    side: { type: String, reflect: true },
+    align: { type: String, reflect: true },
     offset: { type: Number, noAccessor: true },
     sideOffset: { type: Number, attribute: 'side-offset', noAccessor: true },
     alignOffset: { type: Number, attribute: 'align-offset' },
@@ -345,9 +347,6 @@ export abstract class TpAnchoredSurface extends TpElement {
     this.requestUpdate();
     void this.updatePosition();
   });
-  #partElements = new Map<string, HTMLElement>();
-  #partRefs = new Map<string, (element: HTMLElement | null) => void>();
-  #partReleases = new Map<string, () => void>();
   #openingEvent: Event | undefined;
   #closingEvent: Event | undefined;
   #previousFocus: Element | null = null;
@@ -355,7 +354,10 @@ export abstract class TpAnchoredSurface extends TpElement {
   #releaseScroll: (() => void) | undefined;
   #focusDocument: Document | undefined;
   #focusPending = false;
-  #viewport = new PopupViewportController(this, () => this.#partElements.get('viewport') ?? null);
+  #viewport = new PopupViewportController(
+    this,
+    () => this.presentationController.partElement('viewport') ?? null,
+  );
   protected readonly state = new SurfaceState({
     read: () => this.#providedOpen,
     defaultOpen: () => this.defaultOpen,
@@ -525,10 +527,10 @@ export abstract class TpAnchoredSurface extends TpElement {
     return this.#portal.host;
   }
   protected get positioner(): HTMLElement | null {
-    return this.#partElements.get('positioner') ?? null;
+    return this.presentationController.partElement('positioner') ?? null;
   }
   protected get popup(): HTMLElement | null {
-    return this.#partElements.get('content') ?? null;
+    return this.presentationController.partElement('content') ?? null;
   }
   protected get instant(): string | undefined {
     return undefined;
@@ -539,11 +541,7 @@ export abstract class TpAnchoredSurface extends TpElement {
   protected diagnostic(code: string, message: string): void {
     if (!this.#diagnosed.has(code)) {
       this.#diagnosed.add(code);
-      this.emit('tp-diagnostic', {
-        code: `${this.partPrefix}-${code}`,
-        severity: 'warning',
-        message,
-      });
+      this.diagnose(`${this.partPrefix}-${code}`, message);
     }
   }
   override connectedCallback(): void {
@@ -578,8 +576,6 @@ export abstract class TpAnchoredSurface extends TpElement {
     this.#portal.clear();
     this.#viewport.reset();
     this.#releaseLayers();
-    for (const release of this.#partReleases.values()) release();
-    this.#partReleases.clear();
     this.#handleCleanup?.();
     this.#handleCleanup = undefined;
     for (const record of this.records.values()) record.cleanup();
@@ -637,21 +633,11 @@ export abstract class TpAnchoredSurface extends TpElement {
       (part) => part.name === name,
     );
     const key = publicPart ? name : suffix;
-    let ref = this.#partRefs.get(suffix);
-    if (!ref) {
-      ref = (element) => {
-        if (element === this.#partElements.get(suffix)) return;
-        this.#partReleases.get(suffix)?.();
-        this.#partReleases.delete(suffix);
-        if (element) {
-          this.#partElements.set(suffix, element);
-          if (publicPart)
-            this.#partReleases.set(suffix, this.presentationController.registerPart(name, element));
-        } else this.#partElements.delete(suffix);
-      };
-      this.#partRefs.set(suffix, ref);
-    }
-    return this.renderPart(key, this.partState(), { ...options, reference: ref });
+    const reference = this.presentationController.partReference(
+      suffix,
+      publicPart ? name : undefined,
+    );
+    return this.renderPart(key, this.partState(), { ...options, reference });
   }
   protected popupProperties(): Record<string, unknown> {
     const state = this.presence.state;
@@ -661,7 +647,6 @@ export abstract class TpAnchoredSurface extends TpElement {
       role: this.overlayRole,
       tabindex: -1,
       'aria-label': this.isTooltip ? undefined : this.label || undefined,
-      'data-state': state,
       'data-open': this.open,
       'data-closed': !this.open,
       'data-starting-style': state === 'starting',
@@ -770,7 +755,6 @@ export abstract class TpAnchoredSurface extends TpElement {
                 hidden: state === 'retained',
                 '.inert': !this.open,
                 'aria-hidden': this.open ? undefined : 'true',
-                'data-state': state,
               },
               content: html`${guards ? html`<span class="visually-hidden" tabindex="0" data-focus-guard @focus=${() => this.triggerElement?.focus()}></span>` : nothing}${content}${guards ? html`<span class="visually-hidden" tabindex="0" data-focus-guard @focus=${() => this.focusOutside(1)}></span>` : nothing}`,
             }),
@@ -1269,7 +1253,7 @@ export abstract class TpAnchoredSurface extends TpElement {
       collision: this.collisionAvoidance,
       sticky: this.sticky,
       constrainSize: true,
-      arrow: this.showArrow ? (this.#partElements.get('arrow') ?? null) : null,
+      arrow: this.showArrow ? (this.presentationController.partElement('arrow') ?? null) : null,
       get arrowPadding() {
         return arrowPadding();
       },
@@ -1324,7 +1308,7 @@ export abstract class TpAnchoredSurface extends TpElement {
           attributeFilter: ['slot', 'disabled', 'aria-disabled'],
         });
     } else this.#portal.clear();
-    const viewport = this.#partElements.get('viewport');
+    const viewport = this.presentationController.partElement('viewport');
     this.#viewport.setElements(
       viewport?.querySelector('[data-viewport-current]') ?? null,
       viewport?.querySelector('[data-viewport-previous]') ?? null,
@@ -1378,22 +1362,12 @@ export abstract class TpAnchoredSurface extends TpElement {
       if (state === 'starting' || state === 'ending') {
         this.#motion?.cancel();
         this.#motion = this.surfaceMotionRole
-          ? prepareMotion(
-              this,
-              this.popup,
-              {
-                name: 'surface',
-                kind: 'presence',
-                phases: ['enter', 'exit'],
-                completion: 'blocking',
-              },
-              {
-                phase: state === 'starting' ? 'enter' : 'exit',
-                fromState: state === 'starting' ? 'closed' : 'open',
-                toState: this.open ? 'open' : 'closed',
-                context: { placement: this.positioningResult?.placement ?? this.placement },
-              },
-            )
+          ? prepareMotion(this, this.popup, presenceRole('surface'), {
+              phase: state === 'starting' ? 'enter' : 'exit',
+              fromState: state === 'starting' ? 'closed' : 'open',
+              toState: this.open ? 'open' : 'closed',
+              context: { placement: this.positioningResult?.placement ?? this.placement },
+            })
           : null;
       }
       if (state === 'open' || state === 'ending') {

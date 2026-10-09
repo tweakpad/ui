@@ -1,5 +1,5 @@
 import { dateTimeFormatter, durationFormatter, relativeTimeFormatter } from '../date-locale.js';
-import { numberFormatter } from '../number-locale.js';
+import { numberFormatter } from '../intl.js';
 import { civilEpoch, type ResolvedTime, type TimeDuration } from './parse.js';
 
 export type TimeMode = 'auto' | 'relative' | 'calendar' | 'absolute' | 'duration';

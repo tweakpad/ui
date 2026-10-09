@@ -28,7 +28,7 @@ import {
 } from './indicator-state.js';
 import { applyMediaMarkers } from './media-button.js';
 import { mediaOverlayStyles, mediaSurfacePreferenceStyles } from './styles.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 const REQUEST_EVENT = 'tp-media-request';
@@ -485,5 +485,13 @@ export class TpMediaVolumeIndicator extends TpMediaIndicatorElement<MediaVolumeI
   #clearBoundary(): void {
     this.#cancelBoundary?.();
     this.#cancelBoundary = undefined;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-status-indicator': TpMediaStatusIndicator;
+    'tp-media-seek-indicator': TpMediaSeekIndicator;
+    'tp-media-volume-indicator': TpMediaVolumeIndicator;
   }
 }

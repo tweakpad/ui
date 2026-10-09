@@ -31,15 +31,15 @@ paint or spacing. An authored noninteractive HTML root may be used instead; it
 receives `role="meter"`. Registered constituents can live across open shadow
 boundaries; the label relationship uses an element reference.
 
-| Constructor option / update option | Default / meaning |
-| --- | --- |
-| `value` | Required number; no default. NaN uses minimum, negative/positive infinity use the respective bound. |
-| `minimum`, `maximum` | 0, 100. Must be finite and strictly ordered with finite extent. |
-| `locale` | Nearest rendered `lang` owner; string or locale list can override it. |
-| `format` | Without an explicit format, display localized percentage of range. With a format, format the clamped scalar. |
-| `valueText` | Explicit accessible text, otherwise resolver or formatted value. |
-| `getAccessibleValueText(formattedValue, rawValue)` | Optional accessible-text resolver; receives the original value even when clamped. |
-| `diagnostic(code, message)` | Optional callback for invalid range/format; root also emits a bubbling/composed `tp-diagnostic`, once per code. |
+| Constructor option / update option                 | Default / meaning                                                                                               |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `value`                                            | Required number; no default. NaN uses minimum, negative/positive infinity use the respective bound.             |
+| `minimum`, `maximum`                               | 0, 100. Must be finite and strictly ordered with finite extent.                                                 |
+| `locale`                                           | Nearest rendered `lang` owner; string or locale list can override it.                                           |
+| `format`                                           | Without an explicit format, display localized percentage of range. With a format, format the clamped scalar.    |
+| `valueText`                                        | Explicit accessible text, otherwise resolver or formatted value.                                                |
+| `getAccessibleValueText(formattedValue, rawValue)` | Optional accessible-text resolver; receives the original value even when clamped.                               |
+| `diagnostic(code, message)`                        | Optional callback for invalid range/format; root also emits a bubbling/composed `tp-diagnostic`, once per code. |
 
 `meterState(options)` returns an immutable snapshot without binding DOM. The
 controller's read-only `state` is that same snapshot for every registered part:

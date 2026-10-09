@@ -44,7 +44,7 @@ import {
   type MediaRadioOption,
 } from './radio-options.js';
 import { TpMenuRadioItem } from '../menu/menu-radio-item.js';
-import { TpBadge } from '../badge/index.js';
+import { TpBadge } from '../badge/badge.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /** A custom item renderer; it must render a `tp-menu-radio-item` whose `value` is the option's. */
@@ -381,5 +381,14 @@ export class TpMediaQualityRadioGroup extends TpMediaRadioGroupElement {
   }
   protected requestSelection(value: unknown, reason: ChangeReason, event: Event): Promise<unknown> {
     return this.request('select-video-rendition', String(value), { reason, sourceEvent: event });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-playback-rate-radio-group': TpMediaPlaybackRateRadioGroup;
+    'tp-media-captions-radio-group': TpMediaCaptionsRadioGroup;
+    'tp-media-audio-track-radio-group': TpMediaAudioTrackRadioGroup;
+    'tp-media-quality-radio-group': TpMediaQualityRadioGroup;
   }
 }

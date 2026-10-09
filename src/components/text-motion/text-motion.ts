@@ -1,4 +1,5 @@
 import { css, html, type PropertyValues } from 'lit';
+import { stateRole } from '../../foundation/motion.js';
 import { TpElement } from '../../foundation/element.js';
 import type { MotionRoleDefinition } from '../../foundation/motion.js';
 import {
@@ -19,6 +20,7 @@ import {
   RevealPlayback,
   StandaloneReveal,
   transitionSpan,
+  cssTimeMs,
 } from '../../foundation/reveal-playback.js';
 import { scheduleLinePass, type LinePass } from '../../foundation/text-split/scheduler.js';
 import {
@@ -47,20 +49,8 @@ const EFFECTS: readonly TextMotionEffect[] = [
 const DEFAULT_REVEAL = 'fade up';
 
 /** Milliseconds of the first time in a computed time list (`0.56s`, `560ms`). */
-function seconds(value: string): number {
-  const text = value.split(',')[0]!.trim();
-  const number = Number.parseFloat(text);
-  if (!Number.isFinite(number)) return 0;
-  return text.endsWith('ms') ? number : number * 1000;
-}
-
 export const textMotionRoles = {
-  reveal: {
-    name: 'reveal',
-    kind: 'state',
-    phases: ['change'],
-    completion: 'non-blocking',
-  },
+  reveal: stateRole('reveal'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
 /** The units named by a `split` value; `chars` without `words` still keeps words whole. */
@@ -118,10 +108,6 @@ export class TpTextMotion extends TpElement {
         display: block;
       }
 
-      :host([hidden]) {
-        display: none;
-      }
-
       /* Characters are positioned individually, so kerning and ligatures cannot apply; they are
          off from the first frame so splitting never re-wraps the text. */
       :host([split~='chars']) {
@@ -150,8 +136,7 @@ export class TpTextMotion extends TpElement {
   revealHold = false;
 
   readonly #splitter = new TextSplitter(this, {
-    diagnose: (code, message) =>
-      queueMicrotask(() => this.emit('tp-diagnostic', { code, message, severity: 'warning' })),
+    diagnose: (code, message) => queueMicrotask(() => this.diagnose(code, message)),
   });
   #splitKey: string | undefined;
   #reverted = false;
@@ -262,7 +247,7 @@ export class TpTextMotion extends TpElement {
       );
       return (
         last * Math.max(0, Number(this.stagger) || 0) +
-        seconds(view.getComputedStyle(animated[0]!).animationDuration)
+        cssTimeMs(view.getComputedStyle(animated[0]!).animationDuration.split(',')[0]!)
       );
     },
     scrub: (time) => {
@@ -483,5 +468,11 @@ export class TpTextMotion extends TpElement {
   #contentChanged(): void {
     if (this.#reverted || !this.isConnected) return;
     this.#split();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-text-motion': TpTextMotion;
   }
 }

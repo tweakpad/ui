@@ -1,16 +1,19 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { moduleExample } from './documentation-examples.js';
 import { setupMarkerExample } from './marker-example.js';
 import setupSource from './marker-example.js?raw';
 
 const layout =
   'display:grid;gap:var(--tp-space-8);max-inline-size:calc(var(--tp-spacing) * 140);min-inline-size:0';
 function interactive(title: string, id: string, markup: string, exampleLayout = layout) {
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    `<div id="${id}" style="${exampleLayout}">${markup}</div>`,
-    setupMarkerExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nsetupMarkerExample(document.getElementById('${id}'));`,
-  );
+    id,
+    markup,
+    wrapperStyle: exampleLayout,
+    setup: setupMarkerExample,
+    source: setupSource,
+    call: `setupMarkerExample(document.getElementById('${id}'));`,
+  });
 }
 export const markerExamples = [
   interactive(

@@ -21,7 +21,7 @@ export class TpMenuItem extends TpElement {
   static override properties = {
     ...TpElement.properties,
     label: { type: String },
-    variant: { type: String },
+    variant: { type: String, reflect: true },
     value: { type: String },
     nativeAction: { type: Boolean, attribute: 'native-action' },
     closeOnClick: { type: Boolean, attribute: 'close-on-click' },
@@ -240,5 +240,11 @@ export class TpMenuItem extends TpElement {
     this.#press.reset();
     owner?.itemChanged();
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-menu-item': TpMenuItem;
   }
 }

@@ -4,7 +4,7 @@
 import { defineElement } from '../../../../src/foundation/define.js';
 
 const modules: Record<string, () => Promise<Record<string, unknown>>> = {
-  TpButton: () => import('../../../../src/components/button.js'),
+  TpButton: () => import('../../../../src/components/button/button.js'),
   TpCarousel: () => import('../../../../src/components/carousel/index.js'),
   TpTime: () => import('../../../../src/components/time/index.js'),
   TpMessage: () => import('../../../../src/components/message/index.js'),

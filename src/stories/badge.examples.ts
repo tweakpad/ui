@@ -1,17 +1,19 @@
-import { interactiveMarkupExample, markupExample } from './documentation-examples.js';
+import { markupExample, moduleExample } from './documentation-examples.js';
 import { setupBadgeExample } from './badge-example.js';
 import setupSource from './badge-example.js?raw';
 
 const row = (content: string) =>
   `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-4)">${content}</div>`;
 const interactive = (title: string, id: string, markup: string, description: string) =>
-  interactiveMarkupExample(
+  moduleExample({
     title,
-    `<div id="${id}">${markup}</div>`,
-    setupBadgeExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nsetupBadgeExample(document.getElementById('${id}'));`,
+    id,
+    markup,
     description,
-  );
+    setup: setupBadgeExample,
+    source: setupSource,
+    call: `setupBadgeExample(document.getElementById('${id}'));`,
+  });
 
 export const badgeExamples = [
   markupExample(

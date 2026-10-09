@@ -52,7 +52,6 @@ document.body.append(palette);`;
 const meta: Meta<Args> = {
   title: 'Components/Command palette',
   component: 'tp-command-palette',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: { description: { component: documentation }, source: { code: source } },

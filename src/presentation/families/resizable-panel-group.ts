@@ -6,7 +6,6 @@ const definition: ComponentDefinition = {
   name: 'Resizable panel group',
   tagName: 'tp-resizable-panel-group',
   kind: 'compound-reexport',
-  sourceNode: 'ucl21-resizable-panels',
   axes: [
     {
       name: 'orientation',
@@ -17,45 +16,19 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'resizable-panel-group',
-      publicName: 'Group',
-      presentationKeys: [
-        'resizable-panel-group',
-        'resizable-panel-group-orientation-horizontal',
-        'resizable-panel-group-orientation-vertical',
-      ],
-      cardinality: 'exactly one public owner host per control instance',
+      axes: ['orientation'],
     },
     {
       name: 'resizable-panel-group-panel',
-      publicName: 'Panel',
-      presentationKeys: [
-        'resizable-panel-group-panel',
-        'resizable-panel-group-panel-orientation-horizontal',
-        'resizable-panel-group-panel-orientation-vertical',
-      ],
-      cardinality: 'zero or more descendants of Group; cited behavior sets any stronger minimum',
+      axes: ['orientation'],
     },
     {
       name: 'resizable-panel-group-separator',
-      publicName: 'Separator',
-      presentationKeys: [
-        'resizable-panel-group-separator',
-        'resizable-panel-group-separator-orientation-horizontal',
-        'resizable-panel-group-separator-orientation-vertical',
-      ],
-      cardinality:
-        'zero or one descendant of Group; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'resizable-panel-group-handle-decoration',
-      publicName: 'Handle decoration',
-      presentationKeys: [
-        'resizable-panel-group-handle-decoration',
-        'resizable-panel-group-handle-decoration-orientation-horizontal',
-        'resizable-panel-group-handle-decoration-orientation-vertical',
-      ],
-      cardinality:
-        'zero or one descendant of Group; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
   ],
 };

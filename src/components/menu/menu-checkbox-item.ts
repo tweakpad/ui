@@ -5,7 +5,7 @@ import { PresenceController } from '../../foundation/presence.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { checkIcon } from '../../icons/check.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export class TpMenuCheckboxItem extends TpMenuItem {
@@ -38,7 +38,7 @@ export class TpMenuCheckboxItem extends TpMenuItem {
     hasDefaultValue: () => this.defaultChecked !== undefined,
     onChange: (event) => this.onCheckedChange?.(event),
     onCommit: () => this.requestUpdate(),
-    diagnostic: (message) => this.emit('tp-diagnostic', { code: 'menu-checked-state', message }),
+    diagnostic: (message) => this.diagnose('menu-checked-state', message),
   });
   #presence = new PresenceController(this, {
     surface: () => this.#indicator,
@@ -89,5 +89,11 @@ export class TpMenuCheckboxItem extends TpMenuItem {
         content: html`<tp-icon .icon=${checkIcon} size="var(--tp-icon-size-sm)"></tp-icon>`,
       },
     )}`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-menu-checkbox-item': TpMenuCheckboxItem;
   }
 }

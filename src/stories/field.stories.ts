@@ -14,8 +14,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Field',
   component: 'tp-field',
-  tags: ['autodocs'],
-  parameters: { layout: 'padded', docs: { description: { component: documentation } } },
+  parameters: { docs: { description: { component: documentation } } },
   args: {
     label: 'Email',
     description: 'Used for receipts and project updates.',

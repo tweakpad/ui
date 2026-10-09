@@ -37,7 +37,6 @@ export class TpTimeline extends TpElement {
 
   #items: TpTimelineItem[] = [];
   #owned = new Map<TpTimelineItem, OwnedAttributes>();
-  #diagnostics = new Set<string>();
 
   // The host is the list, so aria-label and aria-labelledby name it directly. An attribute,
   // not ElementInternals, so that every accessibility tool sees the list.
@@ -122,15 +121,7 @@ export class TpTimeline extends TpElement {
 
   #diagnose(value: string): void {
     const message = `Timeline item value "${value}" is duplicated; the first matching item is current.`;
-    if (this.#diagnostics.has(message)) return;
-    this.#diagnostics.add(message);
-    queueMicrotask(() =>
-      this.emit('tp-diagnostic', {
-        code: 'timeline-duplicate-value',
-        message,
-        severity: 'warning' as const,
-      }),
-    );
+    this.diagnose('timeline-duplicate-value', message, { once: true, defer: true });
   }
 
   protected override render() {
@@ -143,5 +134,11 @@ export class TpTimeline extends TpElement {
       },
       content: html`<slot @slotchange=${this.#sync}></slot>`,
     });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-timeline': TpTimeline;
   }
 }

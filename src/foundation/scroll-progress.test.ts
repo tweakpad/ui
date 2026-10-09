@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  parseScrollRange,
-  parseScrollRangeSpan,
-  rangeProgress,
-  spanProgress,
-} from './scroll-progress.js';
+import { parseScrollRangeSpan, rangeProgress, spanProgress } from './scroll-progress.js';
 
 // A 1000px visible extent from 0 to 1000.
 const at = (range: Parameters<typeof rangeProgress>[0], start: number, size: number) =>
@@ -45,9 +40,13 @@ describe('scroll ranges', () => {
   });
 
   it('parses ranges with contain as the default', () => {
-    expect(parseScrollRange('cover')).toBe('cover');
-    expect(parseScrollRange('bogus')).toBe('contain');
-    expect(parseScrollRange(null)).toBe('contain');
+    expect(parseScrollRangeSpan('cover').start.name).toBe('cover');
+    expect(parseScrollRangeSpan('bogus').start.name).toBe('contain');
+    expect(parseScrollRangeSpan(null).start.name).toBe('contain');
+  });
+
+  it('reports rest for an empty extent', () => {
+    expect(rangeProgress('cover', 0, 0, 0, 0)).toBe(0);
   });
 });
 

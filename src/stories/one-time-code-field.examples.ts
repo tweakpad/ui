@@ -1,55 +1,58 @@
-import { interactiveMarkupExample, markupExample } from './documentation-examples.js';
-import { setupOneTimeCodeExample } from './one-time-code-example.js';
-import setupSource from './one-time-code-example.js?raw';
+import { markupExample, moduleExample } from './documentation-examples.js';
+import { setupOneTimeCodeExample } from './one-time-code-field-example.js';
+import setupSource from './one-time-code-field-example.js?raw';
 
 function interactiveExample(title: string, id: string, markup: string, description?: string) {
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    `<div id="${id}" style="display:grid;gap:var(--tp-space-4)">${markup}<output aria-live="polite"></output></div>`,
-    setupOneTimeCodeExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nsetupOneTimeCodeExample(document.getElementById('${id}'));`,
+    id,
+    markup: `${markup}<output aria-live="polite"></output>`,
     description,
-  );
+    wrapperStyle: 'display:grid;gap:var(--tp-space-4)',
+    setup: setupOneTimeCodeExample,
+    source: setupSource,
+    call: `setupOneTimeCodeExample(document.getElementById('${id}'));`,
+  });
 }
 export const codeExamples = [
   markupExample(
     'Simple',
-    `<tp-field label="Verification code"><tp-otp-field length="6" name="code"></tp-otp-field></tp-field>`,
+    `<tp-field label="Verification code"><tp-one-time-code-field length="6" name="code"></tp-one-time-code-field></tp-field>`,
   ),
   markupExample(
     'Digits only',
-    `<tp-field label="SMS code" description="Enter the six digits from the text message."><tp-otp-field length="6" name="sms-code" validation-type="numeric"></tp-otp-field></tp-field>`,
+    `<tp-field label="SMS code" description="Enter the six digits from the text message."><tp-one-time-code-field length="6" name="sms-code" validation-type="numeric"></tp-one-time-code-field></tp-field>`,
   ),
   interactiveExample(
     'Grouped code',
     'code-grouped',
-    `<tp-field label="Grouped verification code"><tp-otp-field length="6" name="grouped-code" group-lengths="[2,2,2]" data-controlled="123456"></tp-otp-field></tp-field>`,
+    `<tp-field label="Grouped verification code"><tp-one-time-code-field length="6" name="grouped-code" group-lengths="[2,2,2]" data-controlled="123456"></tp-one-time-code-field></tp-field>`,
   ),
   markupExample(
     'Alphanumeric',
-    `<tp-field label="Recovery code" description="Letters and numbers are accepted."><tp-otp-field length="6" name="recovery-code" validation-type="alphanumeric" group-lengths="[3,3]"></tp-otp-field></tp-field>`,
+    `<tp-field label="Recovery code" description="Letters and numbers are accepted."><tp-one-time-code-field length="6" name="recovery-code" validation-type="alphanumeric" group-lengths="[3,3]"></tp-one-time-code-field></tp-field>`,
   ),
   markupExample(
     'Disabled',
-    `<tp-field label="Verification unavailable"><tp-otp-field length="6" disabled default-value="123456" group-lengths="[3,3]"></tp-otp-field></tp-field>`,
+    `<tp-field label="Verification unavailable"><tp-one-time-code-field length="6" disabled default-value="123456" group-lengths="[3,3]"></tp-one-time-code-field></tp-field>`,
   ),
   markupExample(
     'Four digits',
-    `<tp-field label="PIN"><tp-otp-field length="4" name="pin" validation-type="numeric"></tp-otp-field></tp-field>`,
+    `<tp-field label="PIN"><tp-one-time-code-field length="4" name="pin" validation-type="numeric"></tp-one-time-code-field></tp-field>`,
   ),
   markupExample(
     'Invalid code',
-    `<tp-field label="Expired verification code" error="Invalid code. Please try again." invalid><tp-otp-field length="6" default-value="000000" group-lengths="[2,2,2]" validation-type="numeric" invalid></tp-otp-field></tp-field>`,
+    `<tp-field label="Expired verification code" error="Invalid code. Please try again." invalid><tp-one-time-code-field length="6" default-value="000000" group-lengths="[2,2,2]" validation-type="numeric" invalid></tp-one-time-code-field></tp-field>`,
   ),
   markupExample(
     'Masked code',
-    `<tp-field label="Private verification code"><tp-otp-field length="6" validation-type="numeric" mask></tp-otp-field></tp-field>`,
+    `<tp-field label="Private verification code"><tp-one-time-code-field length="6" validation-type="numeric" mask></tp-one-time-code-field></tp-field>`,
     'Masking changes presentation only. The value remains one normalized string.',
   ),
   interactiveExample(
     'Controlled code',
     'code-controlled',
-    `<tp-field label="Application-owned verification code"><tp-otp-field length="6" data-controlled=""></tp-otp-field></tp-field>`,
+    `<tp-field label="Application-owned verification code"><tp-one-time-code-field length="6" data-controlled=""></tp-one-time-code-field></tp-field>`,
     'The application publishes accepted values synchronously and reports the committed code.',
   ),
   interactiveExample(
@@ -61,7 +64,7 @@ export const codeExamples = [
     <p slot="description">Enter the verification code sent to m@example.com.</p>
     <tp-button slot="action" variant="outline" size="sm" data-resend>Resend code</tp-button>
     <tp-field label="Login verification code">
-      <tp-otp-field length="6" name="code" group-lengths="[3,3]" required></tp-otp-field>
+      <tp-one-time-code-field length="6" name="code" group-lengths="[3,3]" required></tp-one-time-code-field>
       <a slot="description" href="#recover-account">I no longer have access to this email address.</a>
     </tp-field>
     <div slot="footer" style="display:grid;gap:var(--tp-space-2);inline-size:100%">
@@ -77,7 +80,7 @@ export const codeExamples = [
     'code-auto-submit',
     `<tp-form>
   <tp-field label="Email verification code" description="Use the code from your email.">
-    <tp-otp-field length="6" name="code" group-lengths="[3,3]" required auto-submit></tp-otp-field>
+    <tp-one-time-code-field length="6" name="code" group-lengths="[3,3]" required auto-submit></tp-one-time-code-field>
   </tp-field>
   <div slot="actions">
     <tp-button type="reset" variant="outline">Reset</tp-button>

@@ -1,3 +1,4 @@
+import { arrowKeys } from '../../foundation/collection.js';
 import { bindPart } from '../../foundation/part.js';
 import { GeneratedStyleResource } from '../../foundation/generated-style.js';
 import { css, html, type PropertyValues } from 'lit';
@@ -140,7 +141,6 @@ export class TpResizablePanelGroup extends TpElement {
   #restored: PanelLayout | undefined;
   #initialized = false;
   #settled: readonly number[] = [];
-  #diagnostics = new Set<string>();
   #drag:
     | {
         id: number;
@@ -238,9 +238,7 @@ export class TpResizablePanelGroup extends TpElement {
     ).sizes;
   }
   #diagnose(code: string, message: string): void {
-    if (this.#diagnostics.has(code)) return;
-    this.#diagnostics.add(code);
-    this.emit('tp-diagnostic', { code, message });
+    this.diagnose(code, message, { once: true });
   }
   #sync = (): void => {
     if (this.#drag?.handle.disabled) this.#stop();
@@ -446,7 +444,7 @@ export class TpResizablePanelGroup extends TpElement {
     this.#settled = [...this.#state.value];
     const layout = this.getLayout();
     this.onLayoutChanged?.(layout);
-    this.emit('tp-layout-changed', { layout, sizes: [...this.#settled] });
+    this.emit('tp-layout-change-complete', { layout, sizes: [...this.#settled] });
     if (this.#inputSizes === undefined && this.persistenceAdapter && this.persistenceKey) {
       try {
         void Promise.resolve(this.persistenceAdapter.save(this.persistenceKey, layout)).catch(() =>
@@ -572,9 +570,7 @@ export class TpResizablePanelGroup extends TpElement {
     const i = this.#target(handle),
       bound = this.#bounds[i];
     if (!bound) return;
-    const horizontal = this.orientation === 'horizontal',
-      increase = horizontal ? (this.direction === 'rtl' ? 'ArrowLeft' : 'ArrowRight') : 'ArrowDown',
-      decrease = horizontal ? (this.direction === 'rtl' ? 'ArrowRight' : 'ArrowLeft') : 'ArrowUp';
+    const { next: increase, previous: decrease } = arrowKeys(this.orientation, this.direction);
     let value: number | undefined;
     const current = this.#state.value[i] ?? 0,
       step = Number.isFinite(this.keyboardStep) && this.keyboardStep > 0 ? this.keyboardStep : 1;
@@ -740,5 +736,11 @@ export class TpResizablePanelGroup extends TpElement {
           )}`,
       },
     );
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-resizable-panel-group': TpResizablePanelGroup;
   }
 }

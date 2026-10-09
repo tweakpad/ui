@@ -6,29 +6,16 @@ const definition: ComponentDefinition = {
   name: 'Form',
   tagName: 'tp-form',
   kind: 'compound-reexport',
-  sourceNode: 'ucl17-form',
-  nonVisualParts: ['Field registry'],
   axes: [],
   parts: [
     {
       name: 'form',
-      publicName: 'Root',
-      presentationKeys: ['form'],
-      cardinality: 'exactly one public owner host per control instance',
     },
     {
       name: 'form-error-summary',
-      publicName: 'Error summary',
-      presentationKeys: ['form-error-summary'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'form-actions',
-      publicName: 'Actions',
-      presentationKeys: ['form-actions'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
   ],
 };

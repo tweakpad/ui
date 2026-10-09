@@ -1,4 +1,5 @@
 import { type PropertyDeclarations, type PropertyValues } from 'lit';
+import { defaultTrue } from '../../foundation/converters.js';
 import { formatDuration } from '../../foundation/duration-format.js';
 import {
   timeRangeAvailability,
@@ -212,7 +213,7 @@ export class TpMediaTimeSlider extends MediaSliderElement implements MediaPrevie
     showChapters: {
       type: Boolean,
       attribute: 'show-chapters',
-      converter: { fromAttribute: (value: string | null) => value !== 'false' },
+      converter: defaultTrue,
     },
   };
 
@@ -425,5 +426,11 @@ export class TpMediaTimeSlider extends MediaSliderElement implements MediaPrevie
         detail: { time: next.time, previewing: next.previewing },
       }),
     );
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-time-slider': TpMediaTimeSlider;
   }
 }

@@ -62,3 +62,9 @@ export class TpBadge extends TpElement {
     );
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-badge': TpBadge;
+  }
+}

@@ -40,3 +40,9 @@ export class TpSeparator extends TpElement {
     );
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-separator': TpSeparator;
+  }
+}

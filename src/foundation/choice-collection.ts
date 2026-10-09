@@ -1,4 +1,4 @@
-import { CollectionRegistry } from './collection.js';
+import { CollectionRegistry, stepIndex } from './collection.js';
 import { TypeaheadController } from './typeahead.js';
 
 export interface ChoiceRecord<T = unknown> {
@@ -97,10 +97,12 @@ export class ChoiceCollectionController<T, R extends ChoiceRecord<T> = ChoiceRec
     } else {
       // Source records may exist before their option hosts are mounted.
       const current = this.#highlight ? enabled.indexOf(this.#highlight) : -1;
-      let index = current < 0 ? (delta < 0 ? enabled.length - 1 : 0) : current + delta;
-      index = loop
-        ? (index + enabled.length) % enabled.length
-        : Math.max(0, Math.min(enabled.length - 1, index));
+      const index =
+        current < 0
+          ? delta < 0
+            ? enabled.length - 1
+            : 0
+          : stepIndex(current, delta, enabled.length, loop);
       this.#highlight = enabled[index];
     }
     return this.#highlight;

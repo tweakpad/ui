@@ -7,9 +7,9 @@ import { TpElement } from '../../foundation/element.js';
 import { bindPart, type PartState } from '../../foundation/part.js';
 import { createId } from '../../foundation/id.js';
 import { OwnedAttributes } from '../../foundation/owned-attributes.js';
-import { composedContains } from '../../foundation/focus.js';
+import { composedContains, deepActiveElement } from '../../foundation/focus.js';
 import { OwnedStyles } from '../../foundation/owned-styles.js';
-import { CleanupScope, Scheduler, EnvironmentService } from '../../foundation/services.js';
+import { CleanupScope, Scheduler } from '../../foundation/services.js';
 import { CollectionRegistry } from '../../foundation/collection.js';
 import {
   resolvesReducedMotion,
@@ -65,13 +65,13 @@ import type {
   CarouselItemOptions,
 } from '../../foundation/carousel/types.js';
 import { chevronRightIcon } from '../../icons/chevron-right.js';
-import { renderScrollbar, scrollbarStyles } from '../shared-scrollbar.js';
+import { renderScrollbar, scrollbarStyles } from '../shared/scrollbar.js';
 import { carouselStyles } from './styles.js';
 import { carouselPresentation } from '../../presentation/families/carousel.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import { TpProgress } from '../progress/progress.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 
 interface SlotRecord {
   id: string;
@@ -147,7 +147,6 @@ export class TpCarousel<T = unknown> extends TpElement {
   #resizeSizes = new WeakMap<Element, string>();
   #partReleases = new Map<string, () => void>();
   #actionRefs = new Map<string, (element: HTMLElement | null) => void>();
-  #diagnostics = new Set<string>();
   #viewportId = createId('tp-carousel-viewport');
   #announcement = '';
   #dragging = false;
@@ -475,7 +474,7 @@ export class TpCarousel<T = unknown> extends TpElement {
       },
       bind: (owner) => this.#bind(owner),
       focusedId: () => {
-        const active = new EnvironmentService(this.ownerDocument).activeElement();
+        const active = deepActiveElement(this.ownerDocument);
         return (
           this.#records.find((item) => item.element && composedContains(item.element, active))
             ?.id ??
@@ -750,7 +749,7 @@ export class TpCarousel<T = unknown> extends TpElement {
     };
   }
   async #project(snapshot: CarouselSnapshot, projection: CarouselProjection): Promise<void> {
-    const focused = new EnvironmentService(this.ownerDocument).activeElement();
+    const focused = deepActiveElement(this.ownerDocument);
     if (
       [...this.#shells].some(
         ([id, shell]) =>
@@ -842,7 +841,7 @@ export class TpCarousel<T = unknown> extends TpElement {
       horizontal ? this.#measure(this.#config).width : this.#measure(this.#config).height,
       true,
     );
-    const active = new EnvironmentService(this.ownerDocument).activeElement();
+    const active = deepActiveElement(this.ownerDocument);
     for (const id of this.#order) {
       if (typeof id === 'symbol') {
         physical += (projection.layout.sizes.at(-1) ?? 0) + projection.layout.gap;
@@ -1205,15 +1204,7 @@ export class TpCarousel<T = unknown> extends TpElement {
     }
   }
   #diagnose(message: string, error?: unknown): void {
-    if (this.#diagnostics.has(message)) return;
-    this.#diagnostics.add(message);
-    this.dispatchEvent(
-      new CustomEvent('tp-diagnostic', {
-        detail: { code: 'carousel', message, error },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this.diagnose('carousel', message, { severity: 'error', once: true, context: error });
   }
   #shellReference(id: CarouselId): (element: HTMLElement | null) => void {
     let reference = this.#references.get(id);
@@ -1435,7 +1426,7 @@ export class TpCarousel<T = unknown> extends TpElement {
                     button: {
                       hostProperties: {
                         'aria-current': current === index ? 'true' : undefined,
-                        'data-current': String(current === index),
+                        'data-current': current === index,
                       },
                       elementReference: this.#actionReference(
                         'carousel-indicator',
@@ -1459,7 +1450,7 @@ export class TpCarousel<T = unknown> extends TpElement {
           : html`<span
               role="img"
               class=${bulletClass}
-              data-current=${String(current === index)}
+              ?data-current=${current === index}
               aria-label=${label}
               >${config.renderIndicator?.(context) ?? nothing}</span
             >`;
@@ -1477,7 +1468,7 @@ export class TpCarousel<T = unknown> extends TpElement {
   #syncVisibility(): void {
     const snapshot = this.#snapshot;
     if (!snapshot) return;
-    const active = new EnvironmentService(this.ownerDocument).activeElement();
+    const active = deepActiveElement(this.ownerDocument);
     for (const [id, shell] of this.#shells) {
       const visible = snapshot.visibleIds.includes(id);
       const item = this.#records.find((item) => item.id === id);
@@ -1554,7 +1545,7 @@ export class TpCarousel<T = unknown> extends TpElement {
         .scrollToId(item.id, { reason: 'focus', speed: 0, sourceEvent: event })
         .then((result) => {
           if (!active || this.#controller !== controller || result.status !== 'rejected') return;
-          const focused = new EnvironmentService(this.ownerDocument).activeElement();
+          const focused = deepActiveElement(this.ownerDocument);
           const shell = this.#shells.get(item.id)?.element;
           if (shell && composedContains(shell, focused))
             elements.viewport.focus({ preventScroll: true });
@@ -1906,5 +1897,11 @@ export class TpCarousel<T = unknown> extends TpElement {
           @slotchange=${() => this.#schedule()}
         ></slot>`,
     });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-carousel': TpCarousel;
   }
 }

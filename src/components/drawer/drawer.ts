@@ -1,4 +1,6 @@
 import { ObservableStore } from '../../foundation/store.js';
+import { DRAWER_HOST } from '../../foundation/surface-brand.js';
+import { defaultTrue, clamp } from '../../foundation/converters.js';
 import { html, nothing, type PropertyValues } from 'lit';
 import { TpDialog, dialogMotionRoles, type DialogModality } from '../dialog/dialog.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
@@ -8,7 +10,7 @@ import { ComposedEnvironmentObserver } from '../../foundation/composed-environme
 import type { HostProperties } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { DrawerGesture } from './gesture.js';
-import { clamp, nearestPoint, resolveSnapPoints, settleSnap, snapExtent } from './geometry.js';
+import { nearestPoint, resolveSnapPoints, settleSnap, snapExtent } from './geometry.js';
 import {
   directionSign,
   horizontalDirection,
@@ -39,6 +41,7 @@ const directions: Record<string, DrawerDirection> = {
 };
 export class TpDrawer extends TpDialog {
   static override tagName = 'tp-drawer';
+  readonly [DRAWER_HOST] = true as const;
   static override presentation = drawerPresentation;
   static override properties = {
     ...TpDialog.properties,
@@ -55,7 +58,7 @@ export class TpDrawer extends TpDialog {
     showSwipeHandle: { type: Boolean, attribute: 'show-swipe-handle' },
     swipeEnabled: {
       attribute: 'swipe-enabled',
-      converter: { fromAttribute: (value: string | null) => value !== 'false' },
+      converter: defaultTrue,
     },
     backdrop: { type: String },
   };
@@ -84,8 +87,7 @@ export class TpDrawer extends TpDialog {
       new TpValueChangeEvent(value, previous, reason, source, options, 'tp-snap-point-change'),
     onChange: (event) => this.onSnapPointChange?.(event),
     onCommit: () => this.#measure(),
-    diagnostic: (message) =>
-      this.emit('tp-diagnostic', { code: 'drawer-snap-mode', severity: 'warning', message }),
+    diagnostic: (message) => this.diagnose('drawer-snap-mode', message),
   });
   get snapPoint(): DrawerSnapPoint | null {
     return this.#snap.value;
@@ -212,11 +214,10 @@ export class TpDrawer extends TpDialog {
       this.snapPoints.filter((point) => Object.is(point, value)).length !== 1 ||
       snapExtent(value, this.#dimensions) === undefined
     ) {
-      this.emit('tp-diagnostic', {
-        code: 'drawer-snap-identifier',
-        severity: 'warning',
-        message: 'A snap proposal must identify exactly one snapPoints member.',
-      });
+      this.diagnose(
+        'drawer-snap-identifier',
+        'A snap proposal must identify exactly one snapPoints member.',
+      );
       return false;
     }
     return this.#snap.set(value, reason, sourceEvent);
@@ -339,7 +340,7 @@ export class TpDrawer extends TpDialog {
         class: 'drawer-viewport',
         'data-dialog-layer': '',
         popover: 'manual',
-        'data-modal': String(this.modality === 'modal'),
+        'data-modal': this.modality === 'modal',
         '@pointerdown': properties['@pointerdown'],
       },
       content: this.dialogPart('surface', {
@@ -400,7 +401,9 @@ export class TpDrawer extends TpDialog {
       this.#keyboard = value;
       this.#measure();
     }, true);
-    this.#resize = new ResizeObserver(() => this.#measure());
+    this.#resize = new (this.ownerDocument.defaultView ?? window).ResizeObserver(() =>
+      this.#measure(),
+    );
     this.ownerDocument.defaultView?.addEventListener('resize', this.#measure);
   }
   override disconnectedCallback(): void {
@@ -582,5 +585,11 @@ export class TpDrawer extends TpDialog {
       else this.#parentDrawer.#nested.delete(this);
       this.#parentDrawer.#paint();
     }
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-drawer': TpDrawer;
   }
 }

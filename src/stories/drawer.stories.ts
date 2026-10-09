@@ -26,7 +26,6 @@ const source = `<tp-drawer label="Workspace settings" description="Update your p
 const meta = {
   title: 'Components/Drawer',
   component: 'tp-drawer',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: { description: { component: documentation }, source: { code: source } },
@@ -146,34 +145,4 @@ export const Nested: Story = {
         <tp-button slot="close" variant="outline">Close workspace</tp-button>
       </tp-drawer>
     </tp-drawer-provider>`,
-};
-
-const sideSource = `<tp-drawer edge="inline-end" swipe-enabled="false" backdrop="blur"
-  label="Workspace settings" description="Update your profile and preferences.">
-  <tp-button slot="trigger" variant="outline">Open side drawer</tp-button>
-  <tp-field label="Display name"><tp-input value="Alex Morgan"></tp-input></tp-field>
-  <tp-button slot="close" variant="outline">Done</tp-button>
-</tp-drawer>`;
-export const SideDrawer: Story = {
-  parameters: {
-    controls: { disable: true },
-    docs: {
-      source: { code: sideSource },
-      description: {
-        story: 'An edge-attached settings panel with gestures disabled and a blurred backdrop.',
-      },
-    },
-  },
-  render: () =>
-    html`<tp-drawer
-      edge="inline-end"
-      swipe-enabled="false"
-      backdrop="blur"
-      label="Workspace settings"
-      description="Update your profile and preferences."
-    >
-      <tp-button slot="trigger" variant="outline">Open side drawer</tp-button>
-      <tp-field label="Display name"><tp-input value="Alex Morgan"></tp-input></tp-field>
-      <tp-button slot="close" variant="outline">Done</tp-button>
-    </tp-drawer>`,
 };

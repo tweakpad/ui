@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Navigation Menu verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      .links {
+        display: grid;
+        gap: 8px;
+        padding: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Navigation Menu verification</h1>
+    <p>Disclosure, native links and Escape restoration; see <code>README.md</code>.</p>
+    <tp-button id="outside" variant="outline">Outside</tp-button>
+    <tp-navigation-menu id="navigation" aria-label="Products">
+      <tp-navigation-menu-item value="products">
+        <tp-button slot="trigger" variant="ghost" id="products-trigger">Products</tp-button>
+        <div slot="content" class="links" id="products-content">
+          <a href="#product">Product</a><a href="#pricing">Pricing</a>
+        </div>
+      </tp-navigation-menu-item>
+      <tp-navigation-menu-item><a href="#about" id="about">About</a></tp-navigation-menu-item>
+    </tp-navigation-menu>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      window.navigationMenuContract = await import('./contract-checks.js');
+      await customElements.whenDefined('tp-navigation-menu');
+      document.documentElement.dataset.ready = '';
+    </script>
+  </body>
+</html>

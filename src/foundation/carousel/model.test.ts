@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { carouselItems, nearestCarouselItem } from './model.js';
+import { carouselItems } from './model.js';
 import { carouselVirtualRange, CarouselVirtualCache, carouselModulo } from './virtual.js';
 import { carouselLoopPlan, carouselLoopPermutation } from './loop.js';
 import { carouselLayout } from './layout.js';
@@ -11,7 +11,6 @@ describe('Carousel logical membership and projection', () => {
     expect(records.map((item) => item.id)).toEqual([0, '', 1, '1', 'object']);
     expect(records.at(-1)?.index).toBe(5);
     expect(records.at(-1)?.label).toBe('');
-    expect(nearestCarouselItem(records, 4)?.index).toBe(3);
   });
   it('retains an empty initial virtual range, then includes zero and fractional views', () => {
     const config = resolveCarouselConfiguration({ virtual: {}, layout: { itemsPerView: 2.5 } });

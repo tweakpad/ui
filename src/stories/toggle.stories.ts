@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
-import type { TpToggle } from '../components/toggle.js';
+import type { TpToggle } from '../components/toggle/toggle.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import {
@@ -54,7 +54,6 @@ function iconSource(iconName: string, icon: unknown, text: string, label = '') {
 const meta: Meta<Args> = {
   title: 'Components/Toggle',
   component: 'tp-toggle',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: {
@@ -96,16 +95,6 @@ const meta: Meta<Args> = {
 export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
-export const SyntheticAction: Story = {
-  args: { nativeAction: false },
-  parameters: {
-    docs: {
-      source: {
-        code: "import { html, render } from 'lit';\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\nrender(html`<tp-toggle .nativeAction=${false}>Bold</tp-toggle>`, document.querySelector('#app'));",
-      },
-    },
-  },
-};
 export const IconOnly: Story = {
   args: { ariaLabel: 'Bold' },
   render: (args) => renderToggle(args, html`<tp-icon .icon=${boldIcon}></tp-icon>`),

@@ -1,4 +1,5 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
+import { observeSlots, slotOccupied } from '../shared/slots.js';
 import { TpElement } from '../../foundation/element.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { xIcon } from '../../icons/x.js';
@@ -6,7 +7,7 @@ import { attachmentPresentation } from '../../presentation/families/attachment.j
 import { fillLayerStyles } from '../../presentation/motion.js';
 import { TpSpinner } from '../spinner/spinner.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 
 export type AttachmentStatus = 'idle' | 'uploading' | 'processing' | 'error' | 'complete';
 /** File presentation only. Application code owns upload, retry, removal and navigation. */
@@ -130,32 +131,29 @@ export class TpAttachment extends TpElement {
   status: AttachmentStatus = 'idle';
   mediaTreatment: 'mark' | 'image' = 'mark';
   removable = false;
-  #observer: MutationObserver | undefined;
+  #releaseSlots: (() => void) | undefined;
   #delegates = new Map<Element, { part: string; release: () => void }>();
-  #hasSlot(name: string): boolean {
-    return [...this.children].some((child) => child.slot === name);
-  }
   #sync = (): void => {
     this.requestUpdate();
   };
   protected override render() {
     const busy = this.status === 'uploading' || this.status === 'processing';
-    const hasMedia = this.#hasSlot('media') || this.#hasSlot('preview');
-    const hasActions = this.removable || this.#hasSlot('actions');
+    const hasMedia = slotOccupied(this, 'media') || slotOccupied(this, 'preview');
+    const hasActions = this.removable || slotOccupied(this, 'actions');
     const hasContent =
       !!this.filename ||
       !!this.description ||
       !!this.errorMessage ||
       this.fileSize > 0 ||
       busy ||
-      this.#hasSlot('title') ||
-      this.#hasSlot('description') ||
+      slotOccupied(this, 'title') ||
+      slotOccupied(this, 'description') ||
       [...this.childNodes].some((node) =>
         node.nodeType === Node.TEXT_NODE
           ? !!node.textContent?.trim()
           : node instanceof Element && !node.getAttribute('slot'),
       );
-    const hasTrigger = !!this.href || this.#hasSlot('trigger');
+    const hasTrigger = !!this.href || slotOccupied(this, 'trigger');
     const state = {
       status: this.status,
       size: this.size,
@@ -188,7 +186,7 @@ export class TpAttachment extends TpElement {
         ${part('attachment-content', {
           properties: { class: 'content', hidden: !hasContent },
           content: html` ${part('attachment-title', { tag: 'span', properties: { class: 'title' }, content: html`<slot name="title" @slotchange=${this.#sync}>${this.filename}</slot>` })}
-            ${part('attachment-description', { tag: 'span', properties: { class: 'description', hidden: !description && !this.#hasSlot('description'), role: 'status', 'aria-live': 'polite' }, content: html`<slot name="description" @slotchange=${this.#sync}>${description}</slot>` })}
+            ${part('attachment-description', { tag: 'span', properties: { class: 'description', hidden: !description && !slotOccupied(this, 'description'), role: 'status', 'aria-live': 'polite' }, content: html`<slot name="description" @slotchange=${this.#sync}>${description}</slot>` })}
             <slot></slot>`,
         })}
         ${part('attachment-actions', {
@@ -246,18 +244,11 @@ export class TpAttachment extends TpElement {
   }
   override connectedCallback(): void {
     super.connectedCallback();
-    this.#observer = new this.ownerDocument.defaultView!.MutationObserver(this.#sync);
-    this.#observer.observe(this, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ['slot'],
-    });
+    this.#releaseSlots = observeSlots(this, this.#sync, { characterData: true });
     this.requestUpdate();
   }
   override disconnectedCallback(): void {
-    this.#observer?.disconnect();
+    this.#releaseSlots?.();
     for (const { release } of this.#delegates.values()) release();
     this.#delegates.clear();
     super.disconnectedCallback();
@@ -271,4 +262,10 @@ function formatBytes(value: number): string {
     Math.floor(Math.log(Math.max(value, 1)) / Math.log(1024)),
   );
   return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: index ? 1 : 0 }).format(value / 1024 ** index)} ${units[index]}`;
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-attachment': TpAttachment;
+  }
 }

@@ -17,7 +17,6 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Checkbox',
   component: 'tp-checkbox',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: {

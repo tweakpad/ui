@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Input Group verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 24px;
+        max-inline-size: 36rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Input Group verification</h1>
+    <p>Inherited action defaults and the single field boundary; see <code>README.md</code>.</p>
+    <main>
+      <tp-input-group id="group">
+        <span slot="prefix">URL</span>
+        <tp-input aria-label="Site address"></tp-input>
+        <tp-button slot="action" id="inherited">Go</tp-button>
+        <tp-button slot="action" id="explicit" variant="outline" size="sm">Explicit</tp-button>
+      </tp-input-group>
+    </main>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      window.inputGroupContract = await import('./contract-checks.js');
+      await customElements.whenDefined('tp-input-group');
+      document.documentElement.dataset.ready = '';
+    </script>
+  </body>
+</html>

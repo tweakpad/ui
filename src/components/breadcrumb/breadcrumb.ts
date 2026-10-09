@@ -4,7 +4,7 @@ import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import { chevronRightIcon } from '../../icons/chevron-right.js';
 import { breadcrumbPresentation } from '../../presentation/families/breadcrumb.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 interface Item {
@@ -175,5 +175,11 @@ export class TpBreadcrumb extends TpElement {
     this.#items.forEach((item) => this.#release(item));
     this.#items = [];
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-breadcrumb': TpBreadcrumb;
   }
 }

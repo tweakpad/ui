@@ -19,9 +19,7 @@ interface Args {
 const meta = {
   title: 'Components/Autocomplete',
   component: 'tp-autocomplete',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: autocompleteExamples,

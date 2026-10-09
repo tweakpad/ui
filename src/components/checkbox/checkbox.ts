@@ -14,7 +14,7 @@ import type { ChangeReason } from '../../foundation/types.js';
 import { checkIcon } from '../../icons/check.js';
 import { minusIcon } from '../../icons/minus.js';
 import { checkboxPresentation } from '../../presentation/families/checkbox.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import { selectionBoxStyles } from '../shared/control-styles.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
@@ -147,7 +147,7 @@ export class TpCheckbox extends TpFormElement {
       this.requestUpdate('checked', previous);
       this.syncCheckboxForm();
     },
-    diagnostic: (message) => this.emit('tp-diagnostic', { code: 'checkbox-state', message }),
+    diagnostic: (message) => this.diagnose('checkbox-state', message),
   });
   get checked(): boolean {
     return this.#group?.isChecked(this) ?? this.#state.value;
@@ -167,10 +167,10 @@ export class TpCheckbox extends TpFormElement {
   set indeterminate(value: boolean) {
     const previous = this.indeterminate;
     if (!this.supportsIndeterminate && value) {
-      this.emit('tp-diagnostic', {
-        code: 'switch-indeterminate',
-        message: 'Switch has binary checked state and does not support indeterminate.',
-      });
+      this.diagnose(
+        'switch-indeterminate',
+        'Switch has binary checked state and does not support indeterminate.',
+      );
     }
     this.#indeterminate = this.supportsIndeterminate && Boolean(value);
     this.requestUpdate('indeterminate', previous);
@@ -428,9 +428,9 @@ export class TpCheckbox extends TpFormElement {
     );
     const missing =
       !this.checkboxDisabled && !this.checkboxParent && this.required && !this.checked;
-    this.setValidity(
-      missing ? { valueMissing: true } : {},
-      missing ? 'Please select this option.' : '',
+    this.setRequiredValidity(
+      missing,
+      'Please select this option.',
       this.controlElement ?? undefined,
     );
   }
@@ -503,5 +503,11 @@ export class TpCheckbox extends TpFormElement {
     this.#space = false;
     owner?.refresh();
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-checkbox': TpCheckbox;
   }
 }

@@ -1,4 +1,4 @@
-import { interactiveMarkupExample, markupExample } from './documentation-examples.js';
+import { markupExample, moduleExample } from './documentation-examples.js';
 import { setupBubbleExample } from './bubble-example.js';
 import setupSource from './bubble-example.js?raw';
 
@@ -6,13 +6,16 @@ const groupStyle =
   'display:grid;gap:var(--tp-space-8);max-inline-size:calc(var(--tp-spacing) * 140);min-inline-size:0';
 const wrap = (markup: string) => `<div style="${groupStyle}">${markup}</div>`;
 function interactive(title: string, id: string, markup: string, description: string) {
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    `<div id="${id}" style="${groupStyle};padding-block-end:var(--tp-space-6)">${markup}<tp-toast></tp-toast></div>`,
-    setupBubbleExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nsetupBubbleExample(document.getElementById('${id}'));`,
+    id,
+    markup: `${markup}<tp-toast></tp-toast>`,
     description,
-  );
+    wrapperStyle: `${groupStyle};padding-block-end:var(--tp-space-6)`,
+    setup: setupBubbleExample,
+    source: setupSource,
+    call: `setupBubbleExample(document.getElementById('${id}'));`,
+  });
 }
 const longMessage =
   'A longer message wraps across lines so the logical alignment and reaction offset are easier to inspect.';

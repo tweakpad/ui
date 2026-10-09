@@ -1,6 +1,7 @@
+import { arrowKeys } from '../../foundation/collection.js';
 import { css, html, nothing, type PropertyValues } from 'lit';
 import { ref } from 'lit/directives/ref.js';
-import { TpHoverSurface } from '../anchored-surface.js';
+import { TpHoverSurface } from '../anchored-surface/anchored-surface.js';
 import { TpNavigationMenuItem, type NavigationMenuOwner } from './navigation-menu-item.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
@@ -400,7 +401,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
             'aria-hidden': open ? undefined : 'true',
             'data-open': open,
             'data-closed': !open,
-            'data-viewport': String(this.showViewport),
+            'data-viewport': this.showViewport,
             '@click': this.#linkClick,
           },
           content: html`<slot name="content"></slot>`,
@@ -461,18 +462,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
       );
     const index = controls.findIndex((element) => event.composedPath().includes(element));
     if (index < 0) return;
-    const forward =
-      this.orientation === 'vertical'
-        ? 'ArrowDown'
-        : this.direction === 'rtl'
-          ? 'ArrowLeft'
-          : 'ArrowRight';
-    const backward =
-      this.orientation === 'vertical'
-        ? 'ArrowUp'
-        : this.direction === 'rtl'
-          ? 'ArrowRight'
-          : 'ArrowLeft';
+    const { next: forward, previous: backward } = arrowKeys(this.orientation, this.direction);
     const next =
       event.key === forward
         ? index + 1
@@ -587,5 +577,11 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
     for (const member of this.#members) this.#release(member);
     this.#members = [];
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-navigation-menu': TpNavigationMenu;
   }
 }

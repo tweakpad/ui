@@ -1,4 +1,4 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { moduleExample } from './documentation-examples.js';
 import { setupInputGroupExample } from './input-group-example.js';
 import setupSource from './input-group-example.js?raw';
 
@@ -27,15 +27,15 @@ const menu = (
 
 function example(title: string, content: string, description?: string) {
   const id = 'input-group-' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const markup = `<div id="${id}">${stack(content)}<output aria-live="polite"></output></div>`;
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    markup,
-    setupInputGroupExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}
-setupInputGroupExample(document.getElementById('${id}'));`,
+    id,
+    markup: `${stack(content)}<output aria-live="polite"></output>`,
     description,
-  );
+    setup: setupInputGroupExample,
+    source: setupSource,
+    call: `setupInputGroupExample(document.getElementById('${id}'));`,
+  });
 }
 
 export const inputGroupExamples = [

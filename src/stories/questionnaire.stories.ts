@@ -28,9 +28,7 @@ const source = `<tp-questionnaire label="Project questionnaire" shortcut-mode="l
 const meta = {
   title: 'Components/Questionnaire',
   component: 'tp-questionnaire',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       examples: questionnaireExamples,
       description: { component: documentation },

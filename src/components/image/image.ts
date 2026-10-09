@@ -1,14 +1,18 @@
+import { clampScrollSmoothing } from '../../foundation/scroll-progress.js';
 import { css, html, nothing, type PropertyValues } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpElement } from '../../foundation/element.js';
 import { ImageLoadController, type ImageLoadStatus } from '../../foundation/image-load.js';
-import { resolvesReducedMotion, type MotionRoleDefinition } from '../../foundation/motion.js';
+import {
+  resolvesReducedMotion,
+  type MotionRoleDefinition,
+  stateRole,
+} from '../../foundation/motion.js';
 import { observeIntersection } from '../../foundation/observation.js';
 import {
   clampParallaxDepth,
-  clampParallaxSmoothing,
   observeParallax,
   parallaxAxis,
   parallaxDriver,
@@ -21,12 +25,13 @@ import {
   RevealPlayback,
   StandaloneReveal,
   transitionSpan,
+  cssTimeMs,
 } from '../../foundation/reveal-playback.js';
 import { imageOffIcon } from '../../icons/image.js';
 import { imagePresentation } from '../../presentation/families/image.js';
 import { transitionCss } from '../../presentation/motion.js';
 import { TpAspectRatio } from '../aspect-ratio/aspect-ratio.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import { TpSkeleton } from '../skeleton/skeleton.js';
 import { TpSpinner } from '../spinner/spinner.js';
 import {
@@ -47,13 +52,6 @@ export type ImageParallax = 'none' | ImageParallaxEffect | (string & {});
 export type ImageRevealEffect = 'fade' | 'up' | 'down' | 'left' | 'right' | 'zoom-in' | 'zoom-out';
 
 /** Milliseconds of the first time in a computed time list (`0.56s`, `560ms`). */
-function milliseconds(value: string): number {
-  const text = value.split(',')[0]!.trim();
-  const number = Number.parseFloat(text);
-  if (!Number.isFinite(number)) return 0;
-  return text.endsWith('ms') ? number : number * 1000;
-}
-
 const REVEAL_EFFECTS: readonly ImageRevealEffect[] = [
   'fade',
   'up',
@@ -65,12 +63,7 @@ const REVEAL_EFFECTS: readonly ImageRevealEffect[] = [
 ];
 
 export const imageMotionRoles = {
-  reveal: {
-    name: 'reveal',
-    kind: 'state',
-    phases: ['change'],
-    completion: 'non-blocking',
-  },
+  reveal: stateRole('reveal'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
 /**
@@ -83,7 +76,7 @@ export const imageMotionRoles = {
  * loading is never defeated by a preload. Visibility and parallax subscribe to shared observers
  * only while they are needed, so a page can hold hundreds of images.
  *
- * Markers: `data-status`, `data-in-view` (`true`/`false`, while observed), `data-revealed`.
+ * Markers: `data-status`, `data-in-view` (present while observed and intersecting), `data-revealed`.
  *
  * @slot - `<source>` children (media, type, srcset, sizes, width, height), in priority order.
  * @slot placeholder - Replaces the default loading placeholder.
@@ -157,10 +150,6 @@ export class TpImage extends TpElement {
         --_reveal-easing: var(--tp-image-reveal-easing, var(--tp-easing-standard));
       }
 
-      :host([hidden]) {
-        display: none;
-      }
-
       /* Reveal start values (Foundation §18.17 img-reveal), shared by the timed start state and
          the scrubbed keyframe; data-revealed returns to rest. */
       :host([data-reveal~='fade']) {
@@ -223,7 +212,7 @@ export class TpImage extends TpElement {
       }
 
       /* Off-screen loading placeholders stop their ambient motion. */
-      :host([data-status='loading'][data-in-view='false']) {
+      :host([data-status='loading']:not([data-in-view])) {
         --tp-motion-play-state: paused;
       }
 
@@ -696,7 +685,8 @@ export class TpImage extends TpElement {
       this.style.setProperty('--_tp-image-time', '0ms');
       const style = view.getComputedStyle(this);
       return (
-        Math.max(0, milliseconds(style.animationDelay)) + milliseconds(style.animationDuration)
+        Math.max(0, cssTimeMs(style.animationDelay.split(',')[0]!)) +
+        cssTimeMs(style.animationDuration.split(',')[0]!)
       );
     },
     scrub: (time) => {
@@ -748,7 +738,7 @@ export class TpImage extends TpElement {
 
   readonly #intersected = (entry: IntersectionObserverEntry): void => {
     if (!this.#releaseVisibility) return;
-    this.setAttribute('data-in-view', String(entry.isIntersecting));
+    this.toggleAttribute('data-in-view', entry.isIntersecting);
     // Layout around the image may have changed since the driver was chosen.
     if (entry.isIntersecting && this.#parallaxActive) this.#chooseDriver();
     this.#syncVisibility();
@@ -778,7 +768,7 @@ export class TpImage extends TpElement {
       this.#parallaxActive &&
       this.#driver === 'script' &&
       !resolvesReducedMotion(this);
-    const smoothing = clampParallaxSmoothing(this.parallaxSmoothing);
+    const smoothing = clampScrollSmoothing(this.parallaxSmoothing);
     if (wanted && media === this.#parallaxMedia && smoothing === this.#parallaxSmoothingApplied)
       return;
     this.#releaseParallax?.();
@@ -909,5 +899,11 @@ export class TpImage extends TpElement {
             >${content}</tp-aspect-ratio
           >`;
     return html`${frame}<slot hidden @slotchange=${this.#sourcesChanged}></slot>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-image': TpImage;
   }
 }

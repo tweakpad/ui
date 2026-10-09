@@ -6,7 +6,6 @@ const definition: ComponentDefinition = {
   name: 'Tabs',
   tagName: 'tp-tabs',
   kind: 'compound-reexport',
-  sourceNode: 'ucl16-tabs',
   axes: [
     {
       name: 'orientation',
@@ -22,67 +21,23 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'tabs',
-      publicName: 'Root',
-      presentationKeys: [
-        'tabs',
-        'tabs-orientation-horizontal',
-        'tabs-orientation-vertical',
-        'tabs-variant-enclosed',
-        'tabs-variant-underline',
-      ],
-      cardinality: 'exactly one public owner host per control instance',
+      axes: ['orientation', 'variant'],
     },
     {
       name: 'tabs-list',
-      publicName: 'List',
-      presentationKeys: [
-        'tabs-list',
-        'tabs-list-orientation-horizontal',
-        'tabs-list-orientation-vertical',
-        'tabs-list-variant-enclosed',
-        'tabs-list-variant-underline',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['orientation', 'variant'],
     },
     {
       name: 'tabs-trigger',
-      publicName: 'Trigger',
-      presentationKeys: [
-        'tabs-trigger',
-        'tabs-trigger-orientation-horizontal',
-        'tabs-trigger-orientation-vertical',
-        'tabs-trigger-variant-enclosed',
-        'tabs-trigger-variant-underline',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['orientation', 'variant'],
     },
     {
       name: 'tabs-indicator',
-      publicName: 'Indicator',
-      presentationKeys: [
-        'tabs-indicator',
-        'tabs-indicator-orientation-horizontal',
-        'tabs-indicator-orientation-vertical',
-        'tabs-indicator-variant-enclosed',
-        'tabs-indicator-variant-underline',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['orientation', 'variant'],
     },
     {
       name: 'tabs-content',
-      publicName: 'Content',
-      presentationKeys: [
-        'tabs-content',
-        'tabs-content-orientation-horizontal',
-        'tabs-content-orientation-vertical',
-        'tabs-content-variant-enclosed',
-        'tabs-content-variant-underline',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['orientation', 'variant'],
     },
   ],
 };

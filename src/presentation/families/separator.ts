@@ -6,7 +6,6 @@ const definition: ComponentDefinition = {
   name: 'Separator',
   tagName: 'tp-separator',
   kind: 'thin-wrapper',
-  sourceNode: 'ucl21-separator',
   axes: [
     {
       name: 'orientation',
@@ -17,13 +16,7 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'separator',
-      publicName: 'Rule',
-      presentationKeys: [
-        'separator',
-        'separator-orientation-horizontal',
-        'separator-orientation-vertical',
-      ],
-      cardinality: 'exactly one public owner host per control instance',
+      axes: ['orientation'],
     },
   ],
 };

@@ -1,4 +1,4 @@
-import type { TpAvatar } from '../../../../src/components/display.js';
+import type { TpAvatar } from '../../../../src/components/avatar/avatar.js';
 import type { TpNavigationPanel } from '../../../../src/components/navigation-panel/index.js';
 import type { TpMenu } from '../../../../src/components/menu/menu.js';
 

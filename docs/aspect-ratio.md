@@ -11,10 +11,10 @@ the resulting rectangle and cannot enlarge it with intrinsic dimensions.
 
 Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`.
 
-| Property / attribute | Values | Default |
-| --- | --- | --- |
-| `ratio` | finite number greater than zero; width divided by height | 16 / 9 for compatibility |
-| `fit` | fill, contain, cover, none, scale-down | fill |
+| Property / attribute | Values                                                   | Default                  |
+| -------------------- | -------------------------------------------------------- | ------------------------ |
+| `ratio`              | finite number greater than zero; width divided by height | 16 / 9 for compatibility |
+| `fit`                | fill, contain, cover, none, scale-down                   | fill                     |
 
 Supply a ratio explicitly for new usages. Invalid property assignments throw
 `RangeError` and preserve the previous valid ratio. Invalid attribute values also

@@ -1,7 +1,7 @@
 import type { ReactiveControllerHost } from 'lit';
 import { PresenceController } from '../../foundation/presence.js';
 import { createId } from '../../foundation/id.js';
-import { prepareMotion, type MotionHandle } from '../../foundation/motion.js';
+import { prepareMotion, type MotionHandle, presenceRole } from '../../foundation/motion.js';
 import type { ToastObject } from './types.js';
 import type { ToastManager } from './manager.js';
 import type { PositioningHandle } from '../../foundation/positioning.js';
@@ -61,26 +61,16 @@ export class ToastView {
     const present = this.#present ?? true;
     if (this.#motionPhase === present) return;
     this.#motionPhase = present;
-    this.motion = prepareMotion(
-      element,
-      element,
-      {
-        name: 'toast.presence',
-        kind: 'presence',
-        phases: ['enter', 'exit'],
-        completion: 'blocking',
+    this.motion = prepareMotion(element, element, presenceRole('toast.presence'), {
+      phase: present ? 'enter' : 'exit',
+      fromState: !present,
+      toState: present,
+      context: {
+        identifier: this.toast.identifier,
+        type: this.toast.type ?? '',
+        cause: this.toast.cause ?? '',
       },
-      {
-        phase: present ? 'enter' : 'exit',
-        fromState: !present,
-        toState: present,
-        context: {
-          identifier: this.toast.identifier,
-          type: this.toast.type ?? '',
-          cause: this.toast.cause ?? '',
-        },
-      },
-    );
+    });
     if (this.motion.claimed) {
       element.setAttribute('data-tp-motion-driven', '');
       this.presence.trackCompletion(this.motion.finished);

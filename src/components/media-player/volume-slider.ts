@@ -162,3 +162,9 @@ export class TpMediaVolumeSlider extends MediaSliderElement {
     slider.setValue(next, 'wheel', event);
   };
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-volume-slider': TpMediaVolumeSlider;
+  }
+}

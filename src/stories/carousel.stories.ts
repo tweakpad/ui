@@ -26,9 +26,7 @@ interface CarouselStoryArgs {
 const meta: Meta<CarouselStoryArgs> = {
   title: 'Components/Carousel',
   component: 'tp-carousel',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: carouselExamples,

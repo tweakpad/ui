@@ -11,7 +11,7 @@ import {
   samplePoster,
   sampleThumbnails,
   sampleVideo,
-} from '../../examples.js';
+} from '../../media.js';
 import type { WorkspaceHost } from '../host.js';
 import './files.css';
 

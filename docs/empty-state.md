@@ -10,11 +10,11 @@ and recovery controls. Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.c
 </tp-empty-state>
 ```
 
-| Property / attribute | Values | Default |
-| --- | --- | --- |
-| `title` | fallback title text | Nothing here |
-| `description` | fallback description text | empty |
-| `mediaTreatment` / `media-treatment` | plain, icon | plain |
+| Property / attribute                 | Values                    | Default      |
+| ------------------------------------ | ------------------------- | ------------ |
+| `title`                              | fallback title text       | Nothing here |
+| `description`                        | fallback description text | empty        |
+| `mediaTreatment` / `media-treatment` | plain, icon               | plain        |
 
 Slots: `media` (with `icon` retained as a compatible fallback), `title`,
 `description`, default content, `content` and `actions`. A slotted description works

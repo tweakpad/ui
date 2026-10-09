@@ -6,7 +6,6 @@ const definition: ComponentDefinition = {
   name: 'Avatar',
   tagName: 'tp-avatar',
   kind: 'compound-reexport',
-  sourceNode: 'ucl21-avatar',
   axes: [
     {
       name: 'size',
@@ -17,68 +16,27 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'avatar',
-      publicName: 'Root',
-      presentationKeys: ['avatar', 'avatar-size-sm', 'avatar-size-default', 'avatar-size-lg'],
-      cardinality: 'exactly one public owner host per control instance',
+      axes: ['size'],
     },
     {
       name: 'avatar-image',
-      publicName: 'Image',
-      presentationKeys: [
-        'avatar-image',
-        'avatar-image-size-sm',
-        'avatar-image-size-default',
-        'avatar-image-size-lg',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['size'],
     },
     {
       name: 'avatar-fallback',
-      publicName: 'Fallback',
-      presentationKeys: [
-        'avatar-fallback',
-        'avatar-fallback-size-sm',
-        'avatar-fallback-size-default',
-        'avatar-fallback-size-lg',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['size'],
     },
     {
       name: 'avatar-badge',
-      publicName: 'Badge',
-      presentationKeys: [
-        'avatar-badge',
-        'avatar-badge-size-sm',
-        'avatar-badge-size-default',
-        'avatar-badge-size-lg',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['size'],
     },
     {
       name: 'avatar-group',
-      publicName: 'Group',
-      presentationKeys: [
-        'avatar-group',
-        'avatar-group-size-sm',
-        'avatar-group-size-default',
-        'avatar-group-size-lg',
-      ],
-      cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
+      axes: ['size'],
     },
     {
       name: 'avatar-overflow-count',
-      publicName: 'Overflow count',
-      presentationKeys: [
-        'avatar-overflow-count',
-        'avatar-overflow-count-size-sm',
-        'avatar-overflow-count-size-default',
-        'avatar-overflow-count-size-lg',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['size'],
     },
   ],
 };

@@ -1,4 +1,24 @@
+import { getCompatibleStyle, type CSSResultGroup } from 'lit';
 import { contentSecurityPolicy, subscribeContentSecurity } from './content-security.js';
+
+/** The CSS text of a Lit style result or nested group, in declaration order. */
+export function styleText(result: CSSResultGroup): string {
+  if (Array.isArray(result)) return result.map(styleText).join('\n');
+  const compatible = getCompatibleStyle(result);
+  return 'cssText' in compatible
+    ? compatible.cssText
+    : [...compatible.cssRules].map((rule) => rule.cssText).join('\n');
+}
+
+/** The `--tp-*` design tokens of a computed style, by name. */
+export function themeTokens(style: CSSStyleDeclaration): Map<string, string> {
+  const tokens = new Map<string, string>();
+  for (let index = 0; index < style.length; index++) {
+    const name = style[index]!;
+    if (name.startsWith('--tp-')) tokens.set(name, style.getPropertyValue(name));
+  }
+  return tokens;
+}
 
 /**
  * Constructed sheets shared by identical CSS text within one document. Every instance of a

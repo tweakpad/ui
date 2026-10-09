@@ -34,8 +34,6 @@ export const dataVisualizationAppearance: PresentationDictionary = {
     },
   ],
   'data-visualization-plot-region': [{ declarations: { color: 'var(--tp-muted-foreground)' } }],
-  'data-visualization-style-scope': [],
-  'data-visualization-series': [],
   'data-visualization-legend': [{ declarations: { gap: 'var(--tp-space-4)' } }],
   'data-visualization-inspection-surface': [
     ...popupSpacingAppearance,

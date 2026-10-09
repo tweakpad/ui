@@ -26,9 +26,7 @@ const attribute = (name: string, value: string | number, fallback: string | numb
 const meta = {
   title: 'Components/Table of contents',
   component: 'tp-table-of-contents',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: tableOfContentsExamples,

@@ -135,7 +135,7 @@ tp-accordion-item::part(accordion-content-body) {
 }
 ```
 
-The measured content panel publishes `--collapsible-panel-height` and `--collapsible-panel-width`, and its presence state is available through `data-state`, `data-starting-style`, and `data-ending-style`. The ContentBody separates content padding from the animated panel extent.
+The measured content panel publishes `--collapsible-panel-height` and `--collapsible-panel-width`, and its presence state is available through `data-open`, `data-closed`, `data-starting-style`, and `data-ending-style`. The ContentBody separates content padding from the animated panel extent.
 
 The internal Collapsible publishes the standard `disclosure`, `content`, and `indicator` roles. The default `disclosure` role animates the outer Content panel's measured height. The `indicator` role targets only the built-in disclosure indicator while that fallback is rendered; positional consumer content never inherits it. The `content` role targets ContentBody but deliberately has no default visual motion: a fade is one possible presentation, not part of disclosure behavior.
 

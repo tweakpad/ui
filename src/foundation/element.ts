@@ -2,6 +2,7 @@ import { LitElement, css } from 'lit';
 import type { CSSResultGroup, PropertyDeclarations, PropertyValues } from 'lit';
 import type { Direction, Orientation } from './types.js';
 import { cancelMotions, type MotionPolicy } from './motion.js';
+import type { Diagnostic, DiagnosticSeverity } from './services.js';
 
 import { PresentationController } from '../presentation/controller.js';
 import type { PresentationFamily } from '../presentation/family.js';
@@ -133,6 +134,34 @@ export class TpElement extends LitElement {
         detail,
       }),
     );
+  }
+
+  #diagnostics: Set<string> | undefined;
+  /**
+   * Reports a development diagnostic as a bubbling `tp-diagnostic` event with
+   * `{ code, message, severity }`. `once` reports a code a single time per instance; `defer`
+   * dispatches after the current task so a render that discovered the problem completes first.
+   */
+  protected diagnose(
+    code: string,
+    message: string,
+    options: {
+      severity?: DiagnosticSeverity;
+      once?: boolean;
+      defer?: boolean;
+      context?: unknown;
+    } = {},
+  ): void {
+    if (options.once) {
+      this.#diagnostics ??= new Set();
+      const key = `${code}\n${message}`;
+      if (this.#diagnostics.has(key)) return;
+      this.#diagnostics.add(key);
+    }
+    const detail: Diagnostic = { code, message, severity: options.severity ?? 'warning' };
+    if (options.context !== undefined) detail.context = options.context;
+    if (options.defer) queueMicrotask(() => this.emit('tp-diagnostic', detail));
+    else this.emit('tp-diagnostic', detail);
   }
 
   #committedUpdateQueued = false;

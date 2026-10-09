@@ -21,9 +21,7 @@ interface Args {
 const meta = {
   title: 'Components/Code block',
   component: 'tp-code-block',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: codeBlockExamples,

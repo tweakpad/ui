@@ -15,6 +15,7 @@
  * Constituents never write to the media element; every change is a `request()` through the
  * player's single pipeline (cancelable `tp-media-request`, gating, `tp-media-request-failed`).
  */
+import { reportDiagnostic } from '../../foundation/services.js';
 import type {
   PropertyDeclarations,
   PropertyValues,
@@ -373,17 +374,11 @@ export class MediaOwnerController implements ReactiveController {
     if (this.#diagnosed) return;
     this.#diagnosed = true;
     const host = this.#host;
-    host.dispatchEvent(
-      new CustomEvent('tp-diagnostic', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          code: 'media-player-missing',
-          message: `<${host.localName}> has no tp-media-player owner; it renders disabled.`,
-          severity: 'warning',
-        },
-      }),
-    );
+    reportDiagnostic(host, {
+      code: 'media-player-missing',
+      message: `<${host.localName}> has no tp-media-player owner; it renders disabled.`,
+      severity: 'warning',
+    });
     host.requestUpdate();
   }
 
@@ -444,7 +439,6 @@ export abstract class TpMediaElement extends TpElement {
   };
 
   /** Constituents share the Media player definition, parts and recipes. */
-  static presentationTagName = 'tp-media-player';
   static override presentation = mediaPlayerPresentation;
 
   /** Id of a `tp-media-player` to bind to from outside its subtree (`player` attribute). */

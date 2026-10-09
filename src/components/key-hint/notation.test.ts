@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { keyHintNotation, keyHintPlatform } from './notation.js';
+import { keyHintNotation, keyHintPlatform } from '../../foundation/key-notation.js';
 import { shortcutKeys } from './shortcut.js';
 describe('Key Hint notation', () => {
   it('resolves automatic platform and preserves explicit overrides', () => {

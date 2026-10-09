@@ -1,4 +1,5 @@
 import { SelectQueryController } from './query.js';
+import { SURFACE_HOST, isSurfaceHost } from '../../foundation/surface-brand.js';
 import { autofillHint } from '../../foundation/autofill.js';
 import { renderQuery } from './query-view.js';
 import { SelectSource } from './source.js';
@@ -13,7 +14,7 @@ import {
 import type { SearchSource } from '../../foundation/search/source.js';
 import type { SearchMatching, SearchStatus } from '../../foundation/search/types.js';
 import { renderHighlighted } from '../../foundation/search/highlight.js';
-import { TpValueChangeEvent as ValueChangeEvent } from '../../foundation/events.js';
+import type { TpValueChangeEvent as ValueChangeEvent } from '../../foundation/events.js';
 import { selectStateMarkers } from './state.js';
 import { composedParent, focusManaged } from '../../foundation/focus.js';
 import { anchoredArrowStyles } from '../shared/anchored-arrow.js';
@@ -57,7 +58,7 @@ import type {
   PositioningHandle,
   PositioningStrategy,
 } from '../../foundation/positioning.js';
-import { prepareMotion, type MotionHandle } from '../../foundation/motion.js';
+import { prepareMotion, type MotionHandle, presenceRole } from '../../foundation/motion.js';
 import { createId } from '../../foundation/id.js';
 import { resolveSurfaceFocus } from '../../foundation/surface-focus.js';
 import { resolveLocale } from '../../foundation/services.js';
@@ -65,9 +66,14 @@ import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { chevronRightIcon } from '../../icons/chevron-right.js';
 import { checkIcon } from '../../icons/check.js';
-import { SelectModel, nativeSelectEntries, type SelectNode, type SelectRecord } from './model.js';
-import { SelectPortal } from './portal.js';
-import { SelectEnvironment } from './environment.js';
+import {
+  ChoiceModel,
+  nativeChoiceEntries,
+  type ChoiceModelNode,
+  type ChoiceModelRecord,
+} from '../../foundation/choice-model.js';
+import { OwnedPortal } from '../../foundation/owned-portal.js';
+import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
 import { SelectPointer } from './pointer.js';
 import { selectStyles } from './styles.js';
 import type {
@@ -78,15 +84,16 @@ import type {
   SelectFocusTarget,
 } from './types.js';
 import { selectPresentation } from '../../presentation/families/select.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
-import { TpButton } from '../button.js';
-import { TpBadge } from '../badge/index.js';
+import { TpButton } from '../button/button.js';
+import { TpBadge } from '../badge/badge.js';
 import { TpInputGroup } from '../input-group/input-group.js';
 import { TpSpinner } from '../spinner/spinner.js';
 
 export class TpSelect extends TpFormElement<unknown> {
   static tagName = 'tp-select';
+  readonly [SURFACE_HOST] = true as const;
   /** Library elements this element renders; defining it defines them too. */
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
     return [TpIcon, TpButton, TpBadge, TpInputGroup, TpSpinner];
@@ -127,7 +134,7 @@ export class TpSelect extends TpFormElement<unknown> {
     inline: { type: Boolean },
     virtualized: { type: Boolean },
     mountedItems: { attribute: false },
-    loading: { type: Boolean },
+    busy: { type: Boolean, reflect: true },
     openOnInputClick: { type: Boolean, attribute: 'open-on-input-click' },
     closeOnSelect: { type: Boolean, attribute: 'close-on-select' },
     showTrigger: { type: Boolean, attribute: 'show-trigger' },
@@ -146,7 +153,7 @@ export class TpSelect extends TpFormElement<unknown> {
     placeholder: { type: String },
     label: { type: String },
     identifier: { type: String },
-    autoComplete: { type: String, attribute: 'autocomplete' },
+    autocomplete: { type: String },
     noAutofill: { type: Boolean, attribute: 'no-autofill', reflect: true },
     nativeAction: { type: Boolean, attribute: 'native-action' },
     modal: { type: Boolean, noAccessor: true },
@@ -155,8 +162,8 @@ export class TpSelect extends TpFormElement<unknown> {
     container: { attribute: false },
     alignItemWithTrigger: { type: Boolean, attribute: 'align-item-with-trigger', noAccessor: true },
     placement: { type: String },
-    side: { type: String },
-    align: { type: String },
+    side: { type: String, reflect: true },
+    align: { type: String, reflect: true },
     sideOffset: { type: Number, attribute: 'side-offset', noAccessor: true },
     alignOffset: { type: Number, attribute: 'align-offset' },
     anchor: { attribute: false },
@@ -229,7 +236,8 @@ export class TpSelect extends TpFormElement<unknown> {
   inline = false;
   virtualized = false;
   mountedItems: readonly unknown[] | undefined;
-  loading = false;
+  /** Consumer-declared busy state (for example while options load); shows the loading status row. */
+  busy = false;
   openOnInputClick = true;
   closeOnSelect: boolean | undefined;
   showTrigger = true;
@@ -285,7 +293,7 @@ export class TpSelect extends TpFormElement<unknown> {
   placeholder = '';
   label = 'Options';
   identifier = createId('tp-select');
-  autoComplete = '';
+  autocomplete = '';
   /** Opts the autofill receiver and the query editor out of host and extension autofill. */
   noAutofill = false;
   get effectiveNoAutofill(): boolean {
@@ -418,12 +426,12 @@ export class TpSelect extends TpFormElement<unknown> {
     close: () => this.setOpen(false),
     unmount: () => this.unmount(),
   };
-  readonly #collection = new ChoiceCollectionController<unknown, SelectRecord>({
+  readonly #collection = new ChoiceCollectionController<unknown, ChoiceModelRecord>({
     locale: () => this.locale ?? resolveLocale(this),
     equals: (a, b) => this.isItemEqual?.(a, b) ?? Object.is(a, b),
     diagnostic: (message) => this.#diagnose(message),
   });
-  readonly #model = new SelectModel(this);
+  readonly #model = new ChoiceModel(this);
   readonly #selection = new ControllableState<unknown>({
     host: this,
     initialValue: null,
@@ -444,9 +452,9 @@ export class TpSelect extends TpFormElement<unknown> {
             this.#collection.equal(value, this.#values(b)[index]),
           )
         : this.#collection.equal(a, b),
-    onCommit: () => {
+    onCommit: (value, previousValue, reason) => {
       this.#syncForm();
-      this.dispatchEvent(new Event('tp-field-value', { bubbles: true, composed: true }));
+      this.emit('tp-field-value', { value, previousValue, reason });
     },
     diagnostic: (message) => this.#diagnose(message),
   });
@@ -463,7 +471,7 @@ export class TpSelect extends TpFormElement<unknown> {
     committed: () => {
       if (!this.selectionFree) return;
       this.#syncForm();
-      this.dispatchEvent(new Event('tp-field-value', { bubbles: true, composed: true }));
+      this.emit('tp-field-value', { value: this.value, previousValue: undefined, reason: 'input' });
     },
     messages: () => this.resolvedMessages,
     searchStatus: (status, query, total, error) => {
@@ -505,8 +513,8 @@ export class TpSelect extends TpFormElement<unknown> {
     read: () => this.#providedOpen,
     defaultOpen: () => this.defaultOpen,
     dispatch: (event) => {
-      this.dispatchEvent(event);
       this.onOpenChange?.(event);
+      this.dispatchEvent(event);
     },
     commit: (open) => this.#openCommitted(open),
     diagnostic: (message) => this.#diagnose(message),
@@ -516,6 +524,7 @@ export class TpSelect extends TpFormElement<unknown> {
     keepMounted: () => !this.#forceUnmount && (this.keepMounted || this.#surface.retained),
     onStateChange: () => this.requestUpdate(),
     onComplete: (open) => {
+      this.emit('tp-open-change-complete', { open });
       this.onOpenChangeComplete?.(open);
       if (!open) {
         if (!this.inline) this.#content?.hidePopover();
@@ -546,9 +555,8 @@ export class TpSelect extends TpFormElement<unknown> {
   #up: HTMLElement | null = null;
   #down: HTMLElement | null = null;
   #arrow: HTMLElement | null = null;
-  #refs = new Map<string, (element: HTMLElement | null) => void>();
-  #releases = new Map<string, () => void>();
-  #portal = new SelectPortal(this, TpSelect.styles);
+  #refKeys = new Set<string>();
+  #portal = new OwnedPortal(this, TpSelect.styles);
   #position: PositioningHandle | null = null;
   #positionKey = '';
   #positionAnchor: unknown;
@@ -557,7 +565,7 @@ export class TpSelect extends TpFormElement<unknown> {
   #positionTarget: HTMLElement | null = null;
   #observer: MutationObserver | null = null;
   #nativeEntries: SelectEntry[] = [];
-  readonly #environment = new SelectEnvironment(this, () => {
+  readonly #environment = new ComposedEnvironmentObserver(this, () => {
     this.requestUpdate();
     void this.#position?.update();
   });
@@ -569,7 +577,7 @@ export class TpSelect extends TpFormElement<unknown> {
   #focusPending = false;
   #wasOpen = false;
   #space = false;
-  readonly #pointer = new SelectPointer<SelectRecord>(() =>
+  readonly #pointer = new SelectPointer<ChoiceModelRecord>(() =>
     this.ownerDocument.defaultView!.performance.now(),
   );
   #triggerPressed = false;
@@ -581,7 +589,6 @@ export class TpSelect extends TpFormElement<unknown> {
   #motionPhase = '';
   #openingEvent: Event | undefined;
   #closingEvent: Event | undefined;
-  #diagnostics = new Set<string>();
 
   get triggerElement(): HTMLElement | null {
     return this.#trigger;
@@ -646,9 +653,9 @@ export class TpSelect extends TpFormElement<unknown> {
     super.connectedCallback();
     this.#environment.connect();
     this.addEventListener('tp-select-source-change', this.#sourceChanged);
-    this.#nativeEntries = nativeSelectEntries(this);
+    this.#nativeEntries = nativeChoiceEntries(this);
     this.#observer = new this.ownerDocument.defaultView!.MutationObserver(() => {
-      this.#nativeEntries = nativeSelectEntries(this);
+      this.#nativeEntries = nativeChoiceEntries(this);
       this.requestUpdate();
     });
     this.#observer.observe(this, {
@@ -673,8 +680,6 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#space = false;
     this.#motion?.cancel();
     this.#motion = null;
-    for (const release of this.#releases.values()) release();
-    this.#releases.clear();
     super.disconnectedCallback();
   }
   readonly #sourceChanged = (): void => this.requestUpdate();
@@ -709,7 +714,10 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#collection.setSource(this.#model.records);
     this.#query.sync(previousHighlight);
     if (this.searchable && this.virtualized && !this.items)
-      this.#diagnose('virtualized requires the complete ordered source items.');
+      this.#diagnose(
+        'virtualized requires the complete ordered source items.',
+        'select-virtualized',
+      );
     this.#clearPresence.setPresent(
       this.searchable &&
         this.showClear &&
@@ -837,7 +845,7 @@ export class TpSelect extends TpFormElement<unknown> {
         tabindex="-1"
         aria-hidden="true"
         .value=${this.#values(this.#selection.value).map(String).join(',')}
-        autocomplete=${this.effectiveNoAutofill ? 'off' : this.autoComplete || nothing}
+        autocomplete=${this.effectiveNoAutofill ? 'off' : this.autocomplete || nothing}
         data-bwignore=${autofillHint(this.effectiveNoAutofill, 'data-bwignore')}
         data-1p-ignore=${autofillHint(this.effectiveNoAutofill, 'data-1p-ignore')}
         data-lpignore=${autofillHint(this.effectiveNoAutofill, 'data-lpignore')}
@@ -899,25 +907,27 @@ export class TpSelect extends TpFormElement<unknown> {
     });
     return html`${this.showBackdrop && !this.inline ? this.#part('backdrop', state, { properties: { class: 'select-backdrop', 'aria-hidden': 'true', 'data-open': this.open, 'data-closed': !this.open, '@pointerdown': (event: Event) => this.setOpen(false, 'outside-press', event) } }) : nothing}${content}`;
   }
-  #nodes(nodes: readonly SelectNode[]): unknown {
+  #nodes(nodes: readonly ChoiceModelNode[]): unknown {
     if (this.searchable && this.#query.ranked) {
-      const positions = (node: SelectNode): number[] =>
+      const positions = (node: ChoiceModelNode): number[] =>
         'children' in node
           ? node.children.flatMap(positions)
           : 'value' in node && this.#collection.visible.includes(node)
             ? [this.#collection.visible.indexOf(node)]
             : [];
-      const ranked = nodes.flatMap((node, index): Array<{ node: SelectNode; rank: number }> => {
-        if ('type' in node && node.type === 'separator') {
-          const before = nodes.slice(0, index).flatMap(positions),
-            after = nodes.slice(index + 1).flatMap(positions);
-          return before.length && after.length
-            ? [{ node, rank: (Math.max(...before) + Math.min(...after)) / 2 }]
-            : [];
-        }
-        const rank = positions(node);
-        return [{ node, rank: rank.length ? Math.min(...rank) : Infinity }];
-      });
+      const ranked = nodes.flatMap(
+        (node, index): Array<{ node: ChoiceModelNode; rank: number }> => {
+          if ('type' in node && node.type === 'separator') {
+            const before = nodes.slice(0, index).flatMap(positions),
+              after = nodes.slice(index + 1).flatMap(positions);
+            return before.length && after.length
+              ? [{ node, rank: (Math.max(...before) + Math.min(...after)) / 2 }]
+              : [];
+          }
+          const rank = positions(node);
+          return [{ node, rank: rank.length ? Math.min(...rank) : Infinity }];
+        },
+      );
       nodes = ranked.sort((a, b) => a.rank - b.rank).map((entry) => entry.node);
     }
     if (!this.searchable || !this.grid)
@@ -926,7 +936,7 @@ export class TpSelect extends TpFormElement<unknown> {
         (node) => node.id,
         (node) => this.#node(node),
       );
-    const rows: Array<{ id: string; row?: number | undefined; nodes: SelectNode[] }> = [];
+    const rows: Array<{ id: string; row?: number | undefined; nodes: ChoiceModelNode[] }> = [];
     for (const node of nodes) {
       const row = 'value' in node ? this.#query.owner.metadata(node).row : undefined;
       const previous = rows.at(-1);
@@ -945,12 +955,12 @@ export class TpSelect extends TpFormElement<unknown> {
             }),
     );
   }
-  #visibleNode(node: SelectNode): boolean {
+  #visibleNode(node: ChoiceModelNode): boolean {
     return 'children' in node
       ? node.children.some((child) => this.#visibleNode(child))
       : 'value' in node && this.#collection.visible.includes(node);
   }
-  #node(node: SelectNode): unknown {
+  #node(node: ChoiceModelNode): unknown {
     if (
       this.searchable &&
       'children' in node &&
@@ -988,7 +998,7 @@ export class TpSelect extends TpFormElement<unknown> {
         },
         node.partContract,
       );
-    const record = node as SelectRecord;
+    const record = node as ChoiceModelRecord;
     if (
       (!this.#collection.visible.includes(record) &&
         !(record.option as { forceMount?: boolean }).forceMount) ||
@@ -1230,17 +1240,10 @@ export class TpSelect extends TpFormElement<unknown> {
       this.#motionPhase !== phase
     ) {
       this.#motionPhase = phase;
-      this.#motion = prepareMotion(
-        this,
-        this.#content,
-        {
-          name: 'select.presence',
-          kind: 'presence',
-          phases: ['enter', 'exit'],
-          completion: 'blocking',
-        },
-        { phase: phase === 'starting' ? 'enter' : 'exit', toState: this.open },
-      );
+      this.#motion = prepareMotion(this, this.#content, presenceRole('select.presence'), {
+        phase: phase === 'starting' ? 'enter' : 'exit',
+        toState: this.open,
+      });
       this.#presence.trackCompletion(this.#motion.finished);
       this.#motion.start();
     } else if (phase !== 'starting' && phase !== 'ending') this.#motionPhase = '';
@@ -1256,7 +1259,7 @@ export class TpSelect extends TpFormElement<unknown> {
       'select-scroll-up-button',
       'select-scroll-down-button',
     ]);
-    const visit = (nodes: readonly SelectNode[]): void => {
+    const visit = (nodes: readonly ChoiceModelNode[]): void => {
       for (const node of nodes) {
         live.add(node.id);
         if ('children' in node) {
@@ -1267,8 +1270,9 @@ export class TpSelect extends TpFormElement<unknown> {
     };
     visit(this.#model.nodes);
     // Preserve refs while any ending/retained constituent still owns its target.
-    for (const key of this.#refs.keys())
-      if (!live.has(key) && !this.#releases.has(key)) this.#refs.delete(key);
+    for (const key of this.#refKeys)
+      if (!live.has(key) && this.presentationController.dropReference(key))
+        this.#refKeys.delete(key);
   }
   #setupPosition(): void {
     const configured =
@@ -1503,7 +1507,7 @@ export class TpSelect extends TpFormElement<unknown> {
     });
   }
   /** Option text, with matched ranges marked when highlighting. */
-  #optionText(record: SelectRecord): unknown {
+  #optionText(record: ChoiceModelRecord): unknown {
     const ranges = this.highlightMatches ? this.#query.rangesOf(record) : undefined;
     return ranges?.length && record.label === record.text
       ? renderHighlighted(record.text, ranges, this.choicePart('select-match'))
@@ -1514,7 +1518,7 @@ export class TpSelect extends TpFormElement<unknown> {
     const form = this.form as (HTMLFormElement & { requestSubmit?: () => void }) | null;
     form?.requestSubmit?.();
   }
-  protected selectOption(record: SelectRecord, event: Event): void {
+  protected selectOption(record: ChoiceModelRecord, event: Event): void {
     if (
       !this.open ||
       record.disabled ||
@@ -1548,7 +1552,7 @@ export class TpSelect extends TpFormElement<unknown> {
     }
     this.requestUpdate();
   }
-  #highlight(record: SelectRecord, focus: boolean): void {
+  #highlight(record: ChoiceModelRecord, focus: boolean): void {
     if (record.disabled) return;
     this.#collection.activeIndex = this.#collection.visible.indexOf(record);
     this.requestUpdate();
@@ -1699,11 +1703,7 @@ export class TpSelect extends TpFormElement<unknown> {
       const text = this.inputValue;
       this.setFormValue(this.effectiveDisabled ? null : text, text);
       const missing = this.required && !text;
-      this.setValidity(
-        missing ? { valueMissing: true } : {},
-        missing ? 'Please fill out this field.' : '',
-        this.#trigger ?? undefined,
-      );
+      this.setRequiredValidity(missing, 'Please fill out this field.', this.#trigger ?? undefined);
       return;
     }
     const values = this.#values(this.#selection.value),
@@ -1720,11 +1720,7 @@ export class TpSelect extends TpFormElement<unknown> {
       JSON.stringify(values),
     );
     const missing = this.required && !values.length;
-    this.setValidity(
-      missing ? { valueMissing: true } : {},
-      missing ? 'Please select an option.' : '',
-      this.#trigger ?? undefined,
-    );
+    this.setRequiredValidity(missing, 'Please select an option.', this.#trigger ?? undefined);
   }
   protected override resetFormValue(): void {
     this.#selection.reset();
@@ -1781,7 +1777,7 @@ export class TpSelect extends TpFormElement<unknown> {
       open: this.open,
       searchable: this.searchable,
       inputValue: this.inputValue,
-      loading: this.loading,
+      loading: this.busy,
       value: this.selectionFree ? this.inputValue : this.#selection.value,
       multiple: this.multiple,
       disabled: this.effectiveDisabled,
@@ -1800,11 +1796,11 @@ export class TpSelect extends TpFormElement<unknown> {
   protected choiceState(state: PartState): PartState {
     return state;
   }
-  protected optionAccessibleName(record: SelectRecord): string | undefined {
+  protected optionAccessibleName(record: ChoiceModelRecord): string | undefined {
     void record;
     return undefined;
   }
-  protected optionAriaSelected(record: SelectRecord): boolean {
+  protected optionAriaSelected(record: ChoiceModelRecord): boolean {
     return this.#selected(record.value);
   }
   #part(
@@ -1849,38 +1845,23 @@ export class TpSelect extends TpFormElement<unknown> {
     part: string,
     commit?: (element: HTMLElement | null) => void,
   ): (element: HTMLElement | null) => void {
-    let reference = this.#refs.get(key);
-    if (!reference) {
-      reference = (element) => {
-        this.#releases.get(key)?.();
-        this.#releases.delete(key);
-        if (
-          element &&
-          part &&
-          !(
-            this.searchable &&
-            ['select-trigger', 'select-clear', 'select-chip-remove'].includes(part)
-          )
+    this.#refKeys.add(key);
+    return this.presentationController.partReference(
+      key,
+      () =>
+        part &&
+        !(
+          this.searchable && ['select-trigger', 'select-clear', 'select-chip-remove'].includes(part)
         )
-          this.#releases.set(
-            key,
-            this.presentationController.registerPart(this.choicePart(part), element),
-          );
-        commit?.(element);
-      };
-      this.#refs.set(key, reference);
-    }
-    return reference;
+          ? this.choicePart(part)
+          : undefined,
+      commit,
+    );
   }
   #syncOuter(): void {
     let outer: HTMLElement | null = null;
     for (let node = composedParent(this); node; node = composedParent(node))
-      if (
-        node.nodeType === 1 &&
-        (node as Element).matches(
-          'tp-dialog,tp-alert-dialog,tp-popover,tp-drawer,tp-command-palette',
-        )
-      ) {
+      if (node.nodeType === 1 && isSurfaceHost(node)) {
         outer = node as HTMLElement;
         break;
       }
@@ -1899,15 +1880,13 @@ export class TpSelect extends TpFormElement<unknown> {
         this.#query.resetTransient(event);
     });
   };
-  #diagnose(message: string): void {
-    if (this.#diagnostics.has(message)) return;
-    this.#diagnostics.add(message);
-    this.dispatchEvent(
-      new CustomEvent('tp-diagnostic', {
-        detail: { component: 'select', message },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+  #diagnose(message: string, code = 'select-state'): void {
+    this.diagnose(code, message, { once: true });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-select': TpSelect;
   }
 }

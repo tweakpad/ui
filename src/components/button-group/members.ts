@@ -1,4 +1,5 @@
 import { TpElement } from '../../foundation/element.js';
+import { inheritedRootTag } from '../../presentation/family.js';
 
 // These are the existing public boundary parts, not replacement controls.
 const boundaryParts: Readonly<Record<string, string>> = {
@@ -31,9 +32,7 @@ export function paginationMembers(element: TpElement): (GroupMember | undefined)
 }
 export function groupMember(element: Element): GroupMember | undefined {
   if (!(element instanceof TpElement)) return;
-  const tag =
-    (element.constructor as typeof TpElement & { presentationTagName?: string })
-      .presentationTagName ?? element.localName;
+  const tag = inheritedRootTag(element.constructor as typeof TpElement) ?? element.localName;
   // Text consumes the family dictionary but has its own governed part.
   const part = boundaryParts[element.localName] ?? boundaryParts[tag];
   if (part)

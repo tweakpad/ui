@@ -7,7 +7,6 @@ const definition: ComponentDefinition = {
   name: 'Badge',
   tagName: 'tp-badge',
   kind: 'thin-wrapper',
-  sourceNode: 'ucl22-badge',
   axes: [
     {
       name: 'variant',
@@ -18,17 +17,7 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'badge',
-      publicName: 'Root',
-      presentationKeys: [
-        'badge',
-        'badge-variant-default',
-        'badge-variant-secondary',
-        'badge-variant-destructive',
-        'badge-variant-outline',
-        'badge-variant-ghost',
-        'badge-variant-link',
-      ],
-      cardinality: 'exactly one public owner host per control instance',
+      axes: ['variant'],
     },
   ],
 };
@@ -41,5 +30,4 @@ export const badgePresentation = definePresentation({
     },
   },
   sources: [badgeAppearance, passiveVariantAppearance(definition, 'badge')],
-  complete: true,
 });

@@ -1,5 +1,5 @@
 import { html } from 'lit';
-import type { TpButton } from '../../../../src/components/button.js';
+import type { TpButton } from '../../../../src/components/button/button.js';
 import type { ComponentInitiatingEvent } from '../../../../src/foundation/part.js';
 import type { ComponentPartContract } from '../../../../src/foundation/part.js';
 import type { TpElement } from '../../../../src/foundation/element.js';

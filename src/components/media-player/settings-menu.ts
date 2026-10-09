@@ -23,7 +23,7 @@ import { selectedOptionLabel } from './radio-options.js';
 import { TpMenu } from '../menu/menu.js';
 import type { PartPresentation } from '../../presentation/resolver.js';
 import { mediaPopupSurface } from './styles.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 import { TpMediaQualityRadioGroup } from './radio-groups.js';
 import { TpMediaAudioTrackRadioGroup } from './radio-groups.js';
 import { TpMediaPlaybackRateRadioGroup } from './radio-groups.js';
@@ -145,8 +145,8 @@ export class TpMediaSettingsMenu extends TpMediaElement {
   static override properties: PropertyDeclarations = {
     ...TpMediaElement.properties,
     groups: { attribute: 'groups', converter: groupsConverter },
-    side: { type: String },
-    align: { type: String },
+    side: { type: String, reflect: true },
+    align: { type: String, reflect: true },
   };
 
   static override styles = [
@@ -345,5 +345,11 @@ export class TpMediaSettingsMenu extends TpMediaElement {
   #releaseLock(): void {
     this.#lock?.release();
     this.#lock = undefined;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-settings-menu': TpMediaSettingsMenu;
   }
 }

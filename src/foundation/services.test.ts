@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CleanupScope, Scheduler } from './services.js';
+import { CleanupScope, Scheduler, reportDiagnostic } from './services.js';
 
 describe('cleanup ownership (drag-drop V-17/A11)', () => {
   it('releases every resource once in reverse order despite disposer and reporter failures', () => {
@@ -78,5 +78,49 @@ describe('owner scheduling (drag-drop V-12/V-41/V-65)', () => {
     scheduler.microtask(callback);
     await Promise.resolve();
     expect(callback).not.toHaveBeenCalled();
+  });
+});
+
+describe('reportDiagnostic', () => {
+  it('dispatches a bubbling, composed tp-diagnostic carrying exactly code, message and severity', () => {
+    const host = new EventTarget();
+    const seen: unknown[] = [];
+    host.addEventListener('tp-diagnostic', (event) =>
+      seen.push([(event as CustomEvent).detail, event.bubbles, event.composed]),
+    );
+    expect(
+      reportDiagnostic(host, {
+        code: 'tabs-missing-panel',
+        message: 'No panel.',
+        severity: 'warning',
+      }),
+    ).toBe(true);
+    expect(seen).toEqual([
+      [{ code: 'tabs-missing-panel', message: 'No panel.', severity: 'warning' }, true, true],
+    ]);
+  });
+
+  it('reports a code once per dedupe set', () => {
+    const host = new EventTarget();
+    const listener = vi.fn();
+    host.addEventListener('tp-diagnostic', listener);
+    const once = new Set<string>();
+    const detail = { code: 'x-dup', message: 'Duplicate.', severity: 'error' as const };
+    expect(reportDiagnostic(host, detail, { once })).toBe(true);
+    expect(reportDiagnostic(host, detail, { once })).toBe(false);
+    expect(reportDiagnostic(host, { ...detail, code: 'x-other' }, { once })).toBe(true);
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect([...once]).toEqual(['x-dup', 'x-other']);
+  });
+
+  it('creates the event in the host window realm', () => {
+    class RealmEvent<T> extends CustomEvent<T> {}
+    const host = Object.assign(new EventTarget(), {
+      ownerDocument: { defaultView: { CustomEvent: RealmEvent } },
+    });
+    const seen: Event[] = [];
+    host.addEventListener('tp-diagnostic', (event) => seen.push(event));
+    reportDiagnostic(host, { code: 'a', message: 'b', severity: 'info' });
+    expect(seen[0]).toBeInstanceOf(RealmEvent);
   });
 });

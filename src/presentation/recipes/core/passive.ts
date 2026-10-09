@@ -1,4 +1,5 @@
 import type { ComponentDefinition } from '../../definition.js';
+import { partKeys } from '../../family.js';
 import type { PresentationDictionary, PresentationRule } from '../../resolver.js';
 import { variantPresentation } from '../shared/variant.js';
 
@@ -10,7 +11,7 @@ export function passiveVariantAppearance(
   const name = definition.name;
   const passive: Record<string, readonly PresentationRule[]> = {};
   for (const part of definition.parts)
-    for (const key of part.presentationKeys ?? []) {
+    for (const key of partKeys(part, definition)) {
       if (name === 'Badge' && /-variant-(subdued|tinted)$/.test(key)) continue;
       const variant = key.split('-variant-')[1];
       passive[key] =

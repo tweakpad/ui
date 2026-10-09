@@ -1,4 +1,5 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
+import { observeSlots } from '../shared/slots.js';
 import { TpElement } from '../../foundation/element.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { assignedElements } from '../shared/events.js';
@@ -100,7 +101,7 @@ export class TpInputGroup extends TpElement {
   #control: HTMLElement | null = null;
   #native: HTMLElement | null = null;
   #controlCleanup: (() => void) | undefined;
-  #observer: MutationObserver | undefined;
+  #releaseSlots: (() => void) | undefined;
   #editorObserver: MutationObserver | undefined;
   #inherited = new Map<HTMLElement, Map<string, { original: string | null; applied: string }>>();
   #actionParts = new Map<HTMLElement, { target: HTMLElement; release: () => void }>();
@@ -184,11 +185,10 @@ export class TpInputGroup extends TpElement {
     const control = candidates.length === 1 ? candidates[0]! : null;
     this.toggleAttribute('data-invalid-composition', candidates.length !== 1);
     if (candidates.length !== 1 && this.#candidateCount !== candidates.length)
-      this.emit('tp-composition-diagnostic', {
-        component: 'Input group',
-        expected: 'exactly one editor',
-        actual: candidates.length,
-      });
+      this.diagnose(
+        'input-group-composition',
+        `Input group expects exactly one editor; found ${candidates.length}.`,
+      );
     this.#candidateCount = candidates.length;
     if (this.#control !== control) {
       this.#editorObserver?.disconnect();
@@ -246,8 +246,8 @@ export class TpInputGroup extends TpElement {
         const property = (action as unknown as Record<string, unknown>)[key!];
         const nonDefaultProperty =
           (action.localName === 'tp-button' ||
-            (action.constructor as { presentationTagName?: string }).presentationTagName ===
-              'tp-button') &&
+            (action.constructor as { presentation?: { definition: { tagName: string } } })
+              .presentation?.definition.tagName === 'tp-button') &&
           typeof property === 'string' &&
           property !== 'default';
         if (!previous && (authored || nonDefaultProperty)) continue;
@@ -349,7 +349,7 @@ export class TpInputGroup extends TpElement {
     if (changed.has('actionSize') || changed.has('actionVariant')) this.#syncActions();
   }
   override disconnectedCallback(): void {
-    this.#observer?.disconnect();
+    this.#releaseSlots?.();
     this.#editorObserver?.disconnect();
     this.#controlCleanup?.();
     this.#controlCleanup = undefined;
@@ -373,21 +373,21 @@ export class TpInputGroup extends TpElement {
   }
   override connectedCallback(): void {
     super.connectedCallback();
-    this.#observer = new this.ownerDocument.defaultView!.MutationObserver(() => {
+    this.#releaseSlots = observeSlots(this, () => {
       this.#readControl();
       this.#syncActions();
       this.#syncText();
-    });
-    this.#observer.observe(this, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['slot'],
     });
     this.requestUpdate();
     if (this.hasUpdated) {
       this.#readControl();
       this.#syncActions();
     }
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-input-group': TpInputGroup;
   }
 }

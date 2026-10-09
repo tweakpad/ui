@@ -26,7 +26,7 @@ export const catalog = [
   ['Input', 'tp-input', 'compound-reexport'],
   ['Input group', 'tp-input-group', 'preset-composition'],
   ['Native select', 'tp-native-select', 'compound-reexport'],
-  ['One-time code field', 'tp-otp-field', 'compound-reexport'],
+  ['One-time code field', 'tp-one-time-code-field', 'compound-reexport'],
   ['Questionnaire', 'tp-questionnaire', 'compound-reexport'],
   ['Slider', 'tp-slider', 'compound-reexport'],
   ['Text area', 'tp-text-area', 'compound-reexport'],

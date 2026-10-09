@@ -1,7 +1,7 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
-import { renderScrollbar, scrollbarStyles } from '../shared-scrollbar.js';
+import { renderScrollbar, scrollbarStyles } from '../shared/scrollbar.js';
 import { ScrollAreaController } from './controller.js';
 import {
   initialScrollAreaState,
@@ -249,5 +249,11 @@ export class TpScrollArea extends TpElement {
         (bar) => this.#renderBar(bar),
       )}${this.showCorner ? this.renderPart('scroll-area-corner', {}, { properties: { class: 'corner', 'aria-hidden': 'true' } }) : nothing}`,
     });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-scroll-area': TpScrollArea;
   }
 }

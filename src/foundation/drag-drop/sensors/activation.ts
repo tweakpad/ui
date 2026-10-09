@@ -173,7 +173,3 @@ export class DelayConstraint extends PointerConstraint<{ value: number; toleranc
     };
   }
 }
-export const PointerActivationConstraints = {
-  Delay: DelayConstraint,
-  Distance: DistanceConstraint,
-};

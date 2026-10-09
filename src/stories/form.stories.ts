@@ -5,9 +5,7 @@ import { renderFormExample, formDefaults, type FormArgs } from './form.examples.
 const meta = {
   title: 'Components/Form',
   component: 'tp-form',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: { description: { component: documentation }, examples: formExamples },
   },
   args: formDefaults,

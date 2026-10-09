@@ -49,3 +49,9 @@ export class TpInput extends TpTextControl {
     });
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-input': TpInput;
+  }
+}

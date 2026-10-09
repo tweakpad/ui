@@ -1,6 +1,6 @@
 /** Source-derived nested reveal and clipping; dnd-kit utilities/scroll (MIT). */
 import { composedParent } from '../focus.js';
-import { scrollableAncestors } from '../scroll.js';
+import { isDocumentScroller, scrollableAncestors } from '../scroll.js';
 import { Rectangle } from './geometry.js';
 import { measureElement, viewportRectangle } from './dom-geometry.js';
 import { getFrameTransform, parseTransform } from './dom-geometry.js';
@@ -42,10 +42,7 @@ export function revealElement(
 ): void {
   for (const ancestor of scrollableAncestors(element)) {
     const rect = measureElement(element),
-      bounds =
-        ancestor === element.ownerDocument.scrollingElement
-          ? viewportRectangle(element)
-          : measureElement(ancestor);
+      bounds = isDocumentScroller(ancestor) ? viewportRectangle(element) : measureElement(ancestor);
     if (!rect || !bounds) continue;
     const x =
       options.inline === 'none'
@@ -173,10 +170,9 @@ export class DragScrolling {
     this.#scrolling = false;
     for (const element of this.#ancestors) {
       if (!element.isConnected) continue;
-      const rect =
-        element === element.ownerDocument.scrollingElement
-          ? viewportRectangle(element)
-          : measureElement(element);
+      const rect = isDocumentScroller(element)
+        ? viewportRectangle(element)
+        : measureElement(element);
       const view = element.ownerDocument.defaultView;
       if (!rect || !view) continue;
       const transform = parseTransform(view.getComputedStyle(element)),

@@ -1,10 +1,10 @@
 import { ScrollbarController } from '../../foundation/scrollbar.js';
+import { clamp } from '../../foundation/converters.js';
 import { observeScroll } from '../../foundation/observation.js';
 import type { TpScrollArea } from './scroll-area.js';
 import { initialScrollAreaState, type OverflowEdge, type ScrollAreaState } from './types.js';
 
 type Axis = 'x' | 'y';
-const clamp = (value: number, max: number) => Math.max(0, Math.min(max, value));
 const numeric = (value: string) => Number.parseFloat(value) || 0;
 /** Mirrors a native viewport. Both axes share observation, capture and cleanup. */
 export class ScrollAreaController {
@@ -50,7 +50,7 @@ export class ScrollAreaController {
             rtl,
             viewportExtent: nativeExtent,
             contentExtent: total,
-            progress: range ? clamp(offset, range) / range : 0,
+            progress: range ? clamp(offset, 0, range) / range : 0,
             disabled: this.host.disabled,
             draggable: true,
             snapElement: viewport,
@@ -152,8 +152,8 @@ export class ScrollAreaController {
       y: Math.max(0, viewport.scrollHeight - viewport.clientHeight),
     };
     const offsets = {
-      x: clamp(rtl ? -viewport.scrollLeft : viewport.scrollLeft, ranges.x),
-      y: clamp(viewport.scrollTop, ranges.y),
+      x: clamp(rtl ? -viewport.scrollLeft : viewport.scrollLeft, 0, ranges.x),
+      y: clamp(viewport.scrollTop, 0, ranges.y),
     };
     const state: ScrollAreaState = {
       ...this.#state,
@@ -178,7 +178,7 @@ export class ScrollAreaController {
     const horizontal = tracks.find((track) => track.dataset.orientation === 'horizontal');
     const vertical = tracks.find((track) => track.dataset.orientation === 'vertical');
     const visible = (track?: HTMLElement) =>
-      !!track && !track.hidden && track.dataset.visible === 'true';
+      !!track && !track.hidden && track.hasAttribute('data-visible');
     const cornerWidth = visible(vertical) && visible(horizontal) ? vertical!.offsetWidth : 0;
     const cornerHeight = visible(vertical) && visible(horizontal) ? horizontal!.offsetHeight : 0;
     for (const [name, value] of [
@@ -214,7 +214,7 @@ export class ScrollAreaController {
       : viewport.scrollHeight - viewport.clientHeight;
     const current = horizontal ? viewport.scrollLeft : viewport.scrollTop;
     const rtl = horizontal && this.host.direction === 'rtl';
-    const next = rtl ? -clamp(-current - delta, max) : clamp(current + delta, max);
+    const next = rtl ? -clamp(-current - delta, 0, max) : clamp(current + delta, 0, max);
     if (next === current) return;
     event.preventDefault();
     if (horizontal) viewport.scrollLeft = next;

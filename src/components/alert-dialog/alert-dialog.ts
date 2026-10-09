@@ -33,3 +33,9 @@ export class TpAlertDialog extends TpDialog {
     /* Decision surfaces never dismiss outside. */
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-alert-dialog': TpAlertDialog;
+  }
+}

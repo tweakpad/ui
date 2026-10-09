@@ -18,7 +18,7 @@ import {
 import type { NativeItem, NativeOption } from './options.js';
 import type { NativeSelectValue, NativeSelectState, NativeSelectOptionState } from './types.js';
 import { nativeSelectPresentation } from '../../presentation/families/native-select.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 interface ValueOwner {
@@ -102,7 +102,7 @@ export class TpNativeSelect extends TpFormElement<NativeSelectValue> {
   multiple = false;
   placeholder = '';
   label = 'Options';
-  size = 'default';
+  size: 'sm' | 'default' = 'default';
   #items: NativeItem[] = [];
   #observer: MutationObserver | null = null;
   #control: HTMLSelectElement | null = null;
@@ -277,12 +277,7 @@ export class TpNativeSelect extends TpFormElement<NativeSelectValue> {
           this.#syncForm();
           this.emit('tp-field-value', { value, previousValue, reason });
         },
-        diagnostic: (message) =>
-          this.emit('tp-diagnostic', {
-            code: 'native-select-value-mode',
-            message,
-            severity: 'warning',
-          }),
+        diagnostic: (message) => this.diagnose('native-select-value-mode', message),
       });
     }
     const controller = state.controller;
@@ -592,5 +587,11 @@ export class TpNativeSelect extends TpFormElement<NativeSelectValue> {
         class="source"
         @slotchange=${this.#readOptions}
       ></slot>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-native-select': TpNativeSelect;
   }
 }

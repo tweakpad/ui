@@ -1,7 +1,8 @@
 import { LitElement, css, html } from 'lit';
+import { isDrawerHost } from '../../foundation/surface-brand.js';
+import { clamp } from '../../foundation/converters.js';
 import { ObservableStore } from '../../foundation/store.js';
 import { nearestOwner } from '../../foundation/portal-ownership.js';
-import { clamp } from './geometry.js';
 import type { DrawerVisualState } from './types.js';
 export const inactiveDrawerState = (): DrawerVisualState => ({
   active: false,
@@ -19,7 +20,7 @@ export function nearestDrawerService<T extends HTMLElement>(
     element,
     (node): node is T =>
       node instanceof HTMLElement &&
-      (node.localName === tag || (tag === 'tp-drawer' && node.localName === 'tp-side-panel')),
+      (node.localName === tag || (tag === 'tp-drawer' && isDrawerHost(node))),
   );
 }
 /** Optional registry service. Modal ownership remains entirely with Dialog. */
@@ -106,4 +107,12 @@ export class TpDrawerIndent extends LitElement {
 /** Same provider subscription, presentation-only background region. */
 export class TpDrawerIndentBackground extends TpDrawerIndent {
   static override tagName = 'tp-drawer-indent-background';
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-drawer-provider': TpDrawerProvider;
+    'tp-drawer-indent': TpDrawerIndent;
+    'tp-drawer-indent-background': TpDrawerIndentBackground;
+  }
 }

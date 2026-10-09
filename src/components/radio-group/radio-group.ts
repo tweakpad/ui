@@ -52,7 +52,6 @@ export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelecti
   #registry = new CollectionRegistry();
   #observer: MutationObserver | undefined;
   #scheduled = false;
-  #diagnostics = new Set<string>();
   #registered = new Map<Member, Array<() => void>>();
   #nativeState = new Map<Member, Map<string, string | null>>();
   #state = new ControllableState<unknown>({
@@ -296,9 +295,9 @@ export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelecti
           : String(value);
     this.setFormValue(this.effectiveDisabled ? null : serialized);
     const missing = !this.effectiveDisabled && this.required && !selected;
-    this.setValidity(
-      missing ? { valueMissing: true } : {},
-      missing ? 'Please select an option.' : '',
+    this.setRequiredValidity(
+      missing,
+      'Please select an option.',
       this.renderRoot.querySelector<HTMLElement>('.group') ?? undefined,
     );
   }
@@ -325,9 +324,12 @@ export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelecti
     super.disconnectedCallback();
   }
   #diagnose(code: string, message: string): void {
-    if (!this.#diagnostics.has(code)) {
-      this.#diagnostics.add(code);
-      this.emit('tp-diagnostic', { code: 'radio-group-' + code, message });
-    }
+    this.diagnose('radio-group-' + code, message, { once: true });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-radio-group': TpRadioGroup;
   }
 }

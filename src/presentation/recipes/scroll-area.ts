@@ -2,7 +2,6 @@ import type { PresentationDictionary } from '../resolver.js';
 import { scrollbarRules, scrollbarThumbRules } from './shared/scrollbar.js';
 /** Base/Nova scroll anatomy; thickness, padding, radius and motion share theme roles. */
 export const scrollAreaAppearance: PresentationDictionary = {
-  'scroll-area': [],
   'scroll-area-viewport': [
     { declarations: { outline: 'none' } },
     {

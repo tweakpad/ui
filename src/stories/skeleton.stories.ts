@@ -9,9 +9,7 @@ interface Args {
 const meta = {
   title: 'Components/Skeleton',
   component: 'tp-skeleton',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       source: { code: skeletonSource },

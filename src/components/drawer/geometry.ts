@@ -1,6 +1,5 @@
 import type { DrawerDimensions, DrawerSnapPoint, ResolvedSnapPoint } from './types.js';
-export const clamp = (value: number, min: number, max: number) =>
-  Math.max(min, Math.min(max, value));
+import { clamp } from '../../foundation/converters.js';
 /** Fractions are Drawer-specific; these are measured lengths, never presentation spacing. */
 export function snapExtent(value: DrawerSnapPoint | null, d: DrawerDimensions): number | undefined {
   if (typeof value === 'number')

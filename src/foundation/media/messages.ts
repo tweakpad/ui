@@ -1,3 +1,4 @@
+import { numberFormatter } from '../intl.js';
 /**
  * Media player messages dictionary (`mp-f-locale`; contract proposal §3.13).
  *
@@ -267,14 +268,12 @@ export function mediaErrorMessageKey(code: number | null | undefined): MediaMess
 
 /** Rate label `${rate}×` (U+00D7), with digits from the locale. */
 export function formatPlaybackRate(rate: number, locale?: string | string[]): string {
-  const digits = new Intl.NumberFormat(locale, { maximumFractionDigits: 2, useGrouping: false });
+  const digits = numberFormatter(locale, { maximumFractionDigits: 2, useGrouping: false });
   return `${digits.format(rate)}×`;
 }
 
 /** Percentage text for a 0–1 value, formatted by the locale. */
 export function formatMediaPercent(value: number, locale?: string | string[]): string {
   const ratio = Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
-  return new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(
-    ratio,
-  );
+  return numberFormatter(locale, { style: 'percent', maximumFractionDigits: 0 }).format(ratio);
 }

@@ -41,10 +41,8 @@ export const oneTimeCodeAppearance: PresentationDictionary = {
     { selector: '&[data-active]', declarations: fieldFocus },
     { selector: '&[data-selected]', declarations: { background: 'var(--tp-muted)' } },
     { selector: '&[data-invalid]', declarations: fieldInvalid },
-    {
-      selector: '&[data-disabled]',
-      declarations: { background: disabledBackground, opacity: 'var(--tp-opacity-disabled)' },
-    },
+    // The host already applies the disabled opacity; only the surface changes here.
+    { selector: '&[data-disabled]', declarations: { background: disabledBackground } },
     {
       selector: '&[data-caret]::after',
       declarations: {

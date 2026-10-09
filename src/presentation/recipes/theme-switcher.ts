@@ -7,12 +7,6 @@ import type { PresentationDictionary } from '../resolver.js';
  * it reads as the current mode; icons swap with shadcn's rotate-and-scale crossfade.
  */
 export const themeSwitcherAppearance: PresentationDictionary = {
-  'theme-switcher': [],
-  'theme-switcher-variant-switch': [],
-  'theme-switcher-variant-button': [],
-  'theme-switcher-variant-group': [],
-  'theme-switcher-size-default': [],
-  'theme-switcher-size-sm': [],
   'theme-switcher-switch': [
     // The thumb is the control height less the track inset; the icon sits inside it.
     { declarations: { '--_tp-switch-spacing': 'var(--tp-control-height-sm)' } },
@@ -30,19 +24,9 @@ export const themeSwitcherAppearance: PresentationDictionary = {
       },
     },
   ],
-  'theme-switcher-switch-size-default': [],
   'theme-switcher-switch-size-sm': [
     { declarations: { '--_tp-switch-spacing': 'var(--tp-space-5)' } },
   ],
-  'theme-switcher-button': [],
-  'theme-switcher-button-size-default': [],
-  'theme-switcher-button-size-sm': [],
-  'theme-switcher-group': [],
-  'theme-switcher-group-size-default': [],
-  'theme-switcher-group-size-sm': [],
-  'theme-switcher-option': [],
-  'theme-switcher-option-size-default': [],
-  'theme-switcher-option-size-sm': [],
   'theme-switcher-icon': [
     {
       declarations: {
@@ -61,7 +45,6 @@ export const themeSwitcherAppearance: PresentationDictionary = {
       declarations: { transform: 'rotate(-90deg) scale(0)' },
     },
   ],
-  'theme-switcher-icon-size-default': [],
   'theme-switcher-icon-size-sm': [
     {
       declarations: {

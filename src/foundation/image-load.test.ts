@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import type { ReactiveController } from 'lit';
+import { describe, expect, it } from 'vitest';
+import { fakeHost } from './fakes.test.js';
 import {
   ImageLoadController,
   authoredImageHasSource,
@@ -60,13 +60,8 @@ class FakeImage {
 function fixture(options: Omit<ImageLoadControllerOptions, 'onStatusChange'> = {}) {
   const created: FakeImage[] = [];
   let nextCached: 'loaded' | 'error' | undefined;
-  const controllers: ReactiveController[] = [];
-  const host = {
+  const host = fakeHost({
     isConnected: true,
-    requestUpdate: vi.fn(),
-    addController: (controller: ReactiveController) => controllers.push(controller),
-    removeController: () => undefined,
-    updateComplete: Promise.resolve(true),
     ownerDocument: {
       createElement: () => {
         const image = new FakeImage();
@@ -75,7 +70,8 @@ function fixture(options: Omit<ImageLoadControllerOptions, 'onStatusChange'> = {
         return image;
       },
     } as unknown as Document,
-  };
+  });
+  const { controllers } = host;
   const changes: [ImageLoadStatus, ImageLoadStatus][] = [];
   const controller = new ImageLoadController(host, {
     ...options,

@@ -1,22 +1,20 @@
+import { Emitter } from '../store.js';
 import type { DragDropManager } from './manager.js';
 import type { DragEvent, DragEventName, DragListener } from './types.js';
 
 export class DragDropMonitor {
-  readonly #listeners = new Map<DragEventName, Set<DragListener>>();
+  readonly #events = new Emitter<Record<DragEventName, [DragEvent, DragDropManager]>>();
   constructor(readonly manager: DragDropManager) {}
   addEventListener(name: DragEventName, handler: DragListener): () => void {
-    let listeners = this.#listeners.get(name);
-    if (!listeners) this.#listeners.set(name, (listeners = new Set()));
-    listeners.add(handler);
-    return () => this.removeEventListener(name, handler);
+    return this.#events.on(name, handler);
   }
   removeEventListener(name: DragEventName, handler: DragListener): void {
-    this.#listeners.get(name)?.delete(handler);
+    this.#events.off(name, handler);
   }
   dispatch(name: DragEventName, event: DragEvent): void {
-    for (const listener of [...(this.#listeners.get(name) ?? [])]) listener(event, this.manager);
+    this.#events.emit(name, event, this.manager);
   }
   clear(): void {
-    this.#listeners.clear();
+    this.#events.clear();
   }
 }

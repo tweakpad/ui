@@ -6,7 +6,6 @@ const definition: ComponentDefinition = {
   name: 'Switch',
   tagName: 'tp-switch',
   kind: 'compound-reexport',
-  sourceNode: 'ucl16-switch',
   axes: [
     {
       name: 'size',
@@ -17,15 +16,11 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'switch',
-      publicName: 'Control',
-      presentationKeys: ['switch', 'switch-size-sm', 'switch-size-default'],
-      cardinality: 'exactly one public owner host per control instance',
+      axes: ['size'],
     },
     {
       name: 'switch-thumb',
-      publicName: 'Thumb',
-      presentationKeys: ['switch-thumb', 'switch-thumb-size-sm', 'switch-thumb-size-default'],
-      cardinality: 'zero or more descendants of Control; cited behavior sets any stronger minimum',
+      axes: ['size'],
     },
   ],
 };

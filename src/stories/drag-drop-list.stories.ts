@@ -10,8 +10,8 @@ const items = Object.freeze([
 const meta = {
   title: 'Components/Drag Drop List',
   component: 'tp-drag-drop-list',
-  tags: ['autodocs'],
   parameters: {
+    layout: 'centered',
     docs: {
       description: { component: documentation },
       examples: dragDropListExamples,

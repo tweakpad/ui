@@ -7,7 +7,7 @@ import type {
   TpNavigationPanelLoadingPlaceholder,
 } from '../../../../src/components/navigation-panel/index.js';
 import type { TpElement } from '../../../../src/foundation/element.js';
-import type { TpButton } from '../../../../src/components/button.js';
+import type { TpButton } from '../../../../src/components/button/button.js';
 import type { NavigationPanelDrawer } from '../../../../src/components/navigation-panel/drawer.js';
 const built = new URLSearchParams(location.search).has('built');
 if (built)

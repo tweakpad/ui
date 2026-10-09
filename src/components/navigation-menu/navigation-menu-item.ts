@@ -6,7 +6,7 @@ import { createId } from '../../foundation/id.js';
 import { chevronDownIcon } from '../../icons/chevron-down.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { shadowReferenceTarget } from '../../foundation/focus.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export interface NavigationMenuOwner extends HTMLElement {
@@ -78,10 +78,7 @@ export class TpNavigationMenuItem extends TpElement {
   #indicatorPortal = new OwnedPortal(this, TpNavigationMenuItem.styles);
   #container: HTMLElement | null = null;
   #content: HTMLElement | null = null;
-  #parts = new Map<string, () => void>();
-  #elements = new Map<string, HTMLElement>();
   #links = new Map<HTMLElement, { release: () => void; current: string | null }>();
-  #refs = new Map<string, (element: HTMLElement | null) => void>();
   #observer: MutationObserver | undefined;
   #presence = new PresenceController(this, {
     surface: () => this.#content,
@@ -129,19 +126,9 @@ export class TpNavigationMenuItem extends TpElement {
     this.requestUpdate();
   }
   #reference(name: string): (element: HTMLElement | null) => void {
-    let ref = this.#refs.get(name);
-    if (!ref) {
-      ref = (element) => {
-        this.#parts.get(name)?.();
-        this.#parts.delete(name);
-        if (name === 'navigation-menu-content') this.#content = element;
-        if (element) this.#elements.set(name, element);
-        else this.#elements.delete(name);
-        if (element) this.#parts.set(name, this.presentationController.registerPart(name, element));
-      };
-      this.#refs.set(name, ref);
-    }
-    return ref;
+    return this.presentationController.partReference(name, name, (element) => {
+      if (name === 'navigation-menu-content') this.#content = element;
+    });
   }
   #changed = (): void => {
     this.#owner?.itemChanged();
@@ -204,7 +191,7 @@ export class TpNavigationMenuItem extends TpElement {
           'aria-hidden': this.active ? undefined : 'true',
           'data-open': this.active,
           'data-closed': !this.active,
-          'data-viewport': String(this.#owner?.showViewport ?? true),
+          'data-viewport': this.#owner?.showViewport ?? true,
           'data-activation-direction': activationDirection,
           'data-starting-style': this.#presence.state === 'starting',
           'data-ending-style': this.#presence.state === 'ending',
@@ -334,9 +321,6 @@ export class TpNavigationMenuItem extends TpElement {
     this.#portal.clear();
     this.#indicatorPortal.clear();
     this.#container = null;
-    this.#parts.forEach((release) => release());
-    this.#parts.clear();
-    this.#elements.clear();
     this.#links.forEach(({ release, current }, link) => {
       release();
       if (link.getAttribute('aria-current') === 'page' && current !== 'page') {
@@ -348,5 +332,11 @@ export class TpNavigationMenuItem extends TpElement {
     this.#owner?.itemChanged();
     this.#owner = null;
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-navigation-menu-item': TpNavigationMenuItem;
   }
 }

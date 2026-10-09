@@ -36,11 +36,11 @@ buttons, anchors and editable controls may also be registered for interoperabili
 A custom action control uses its own native/non-native action policy; Toolbar never
 replaces it or introduces another activation event.
 
-| Root option | Default | Behavior |
-| --- | --- | --- |
-| `orientation` | `horizontal` | `horizontal` or `vertical`; controls arrows and exposed orientation |
-| `loopFocus` | `true` | Whether navigation wraps at boundaries |
-| `disabled` | `false` | Disables actions and editing while preserving focusable stops; links remain independent |
+| Root option   | Default      | Behavior                                                                                |
+| ------------- | ------------ | --------------------------------------------------------------------------------------- |
+| `orientation` | `horizontal` | `horizontal` or `vertical`; controls arrows and exposed orientation                     |
+| `loopFocus`   | `true`       | Whether navigation wraps at boundaries                                                  |
+| `disabled`    | `false`      | Disables actions and editing while preserving focusable stops; links remain independent |
 
 `new ToolbarController(root, options?)` binds one native semantic root. Its
 read-only `host`, `orientation`, `loopFocus` and `disabled` accessors expose current
@@ -49,11 +49,11 @@ membership/visibility synchronization. `dispose()` removes listeners, observer,
 registrations and owned semantics. It preserves later authored changes. A disposed
 controller cannot be reused; create a fresh controller when reconnecting its owner.
 
-| Registration | Options and defaults | Semantics |
-| --- | --- | --- |
-| `registerItem(element, options)` | Required `kind`: `button`, `link`, or `input`; `disabled=false`; `focusableWhenDisabled=true` | Registers an actual library control host or native interactive element. Own disabled state remains authoritative. Links do not inherit Toolbar/Group disabled state. |
-| `registerGroup(element, options?)` | `disabled=false` | Binds an authored native semantic group containing registered controls. Groups share the root's navigation sequence. For ButtonGroup, register its existing public `button-group` semantic part, without adding another role around it. |
-| `registerSeparator(element, options?)` | Optional `orientation`, otherwise perpendicular to Root | Uses actual Separator's orientation/decorative properties, or a native separator's role/ARIA. Explicit orientation stays independent of Root. |
+| Registration                           | Options and defaults                                                                          | Semantics                                                                                                                                                                                                                               |
+| -------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `registerItem(element, options)`       | Required `kind`: `button`, `link`, or `input`; `disabled=false`; `focusableWhenDisabled=true` | Registers an actual library control host or native interactive element. Own disabled state remains authoritative. Links do not inherit Toolbar/Group disabled state.                                                                    |
+| `registerGroup(element, options?)`     | `disabled=false`                                                                              | Binds an authored native semantic group containing registered controls. Groups share the root's navigation sequence. For ButtonGroup, register its existing public `button-group` semantic part, without adding another role around it. |
+| `registerSeparator(element, options?)` | Optional `orientation`, otherwise perpendicular to Root                                       | Uses actual Separator's orientation/decorative properties, or a native separator's role/ARIA. Explicit orientation stays independent of Root.                                                                                           |
 
 Each registration returns `{ update(partialOptions), dispose() }`. Dispose it when
 its constituent is permanently removed. Temporary removal excludes an item from

@@ -66,3 +66,9 @@ export class TpMarker extends TpElement {
     });
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-marker': TpMarker;
+  }
+}

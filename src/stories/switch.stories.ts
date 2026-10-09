@@ -18,9 +18,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Switch',
   component: 'tp-switch',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       source: {

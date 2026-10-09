@@ -234,7 +234,6 @@ export class CollapsibleController implements ReactiveController {
   #applyPresenceState(state: PresenceState): void {
     const content = this.#content;
     if (!content) return;
-    content.dataset.state = state;
     content.toggleAttribute('data-starting-style', state === 'starting');
     content.toggleAttribute('data-ending-style', state === 'ending');
     if (state === 'starting' || state === 'open' || state === 'ending') {

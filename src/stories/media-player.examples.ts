@@ -7,7 +7,7 @@ import {
   samplePoster,
   sampleThumbnails,
   sampleVideo,
-} from './examples.js';
+} from './media.js';
 import { setupMediaPlayerExample } from './media-player-example.js';
 import setupSource from './media-player-example.js?raw';
 

@@ -14,7 +14,7 @@ import {
 import { mediaOverlayStyles, mediaScrimPreferenceStyles } from './styles.js';
 import { TpSpinner } from '../spinner/spinner.js';
 import { TpAlertDialog } from '../alert-dialog/alert-dialog.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 type LooseRequest = (
@@ -251,5 +251,12 @@ export class TpMediaErrorDialog extends TpMediaElement {
   #releaseLock(): void {
     this.#lock?.release();
     this.#lock = undefined;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-buffering-indicator': TpMediaBufferingIndicator;
+    'tp-media-error-dialog': TpMediaErrorDialog;
   }
 }

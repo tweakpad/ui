@@ -16,14 +16,15 @@ import {
   prepareMotion,
   type MotionHandle,
   type MotionRoleDefinition,
+  stateRole,
 } from '../../foundation/motion.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { themeSwitcherPresentation } from '../../presentation/families/theme-switcher.js';
 import { TpSwitch } from '../switch/index.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 import { TpToggleGroup } from '../toggle-group/index.js';
-import { TpToggle } from '../toggle.js';
-import { TpIcon } from '../icon.js';
+import { TpToggle } from '../toggle/toggle.js';
+import { TpIcon } from '../icon/icon.js';
 import { sunIcon } from '../../icons/sun.js';
 import { moonIcon } from '../../icons/moon.js';
 import { monitorIcon } from '../../icons/monitor.js';
@@ -37,7 +38,7 @@ import {
 } from './preferences.js';
 
 export const themeSwitcherMotionRoles = {
-  icon: { name: 'icon', kind: 'state', phases: ['change'], completion: 'non-blocking' },
+  icon: stateRole('icon'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
 const icons: Record<ColorSchemePreference, IconDefinition> = {
@@ -322,5 +323,11 @@ export class TpThemeSwitcher extends TpElement {
       @tp-value-change=${this.#switchChange}
       >${this.#icons(['light', 'dark'], state.resolved)}</tp-switch
     >`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-theme-switcher': TpThemeSwitcher;
   }
 }

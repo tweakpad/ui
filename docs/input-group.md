@@ -2,7 +2,7 @@
 
 Input Group joins one Input or Textarea with text, icons, shortcuts and independent actions. It owns the outside border and focus/invalid indication. The editor retains its native editing, validation, form and selection behavior; actions remain real Buttons.
 
-Use Field for the editor's label, description and error. A group label does not replace an editor label. Supply exactly one editor in the default slot; multiple or absent editors emit `tp-composition-diagnostic` with `{ component, expected, actual }` and set `data-invalid-composition`.
+Use Field for the editor's label, description and error. A group label does not replace an editor label. Supply exactly one editor in the default slot; multiple or absent editors emit `tp-diagnostic` (`input-group-composition`) and set `data-invalid-composition`.
 
 | Property / attribute               | Type                                                              | Default        | Meaning                                                                |
 | ---------------------------------- | ----------------------------------------------------------------- | -------------- | ---------------------------------------------------------------------- |

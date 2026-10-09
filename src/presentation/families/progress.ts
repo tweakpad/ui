@@ -6,42 +6,22 @@ const definition: ComponentDefinition = {
   name: 'Progress',
   tagName: 'tp-progress',
   kind: 'compound-reexport',
-  sourceNode: 'ucl21-progress',
   axes: [],
   parts: [
     {
       name: 'progress',
-      publicName: 'Root',
-      presentationKeys: ['progress'],
-      cardinality: 'exactly one public owner host per control instance',
     },
     {
       name: 'progress-label',
-      publicName: 'Label',
-      presentationKeys: ['progress-label'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'progress-value-output',
-      publicName: 'Value output',
-      presentationKeys: ['progress-value-output'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'progress-track',
-      publicName: 'Track',
-      presentationKeys: ['progress-track'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'progress-indicator',
-      publicName: 'Indicator',
-      presentationKeys: ['progress-indicator'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
   ],
 };

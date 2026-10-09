@@ -24,10 +24,8 @@ export const switchAppearance: PresentationDictionary = {
     },
     fillColor('var(--tp-primary)'),
     fillShown('&[data-checked]'),
-    {
-      selector: '&[data-disabled]',
-      declarations: { cursor: 'not-allowed', opacity: 'var(--tp-opacity-disabled)' },
-    },
+    // The host already applies the disabled opacity; dimming the root too would double it.
+    { selector: '&[data-disabled]', declarations: { cursor: 'not-allowed' } },
     { selector: '&[data-readonly]:not([data-disabled])', declarations: { cursor: 'default' } },
     {
       selector: '&[data-focus-visible]:focus-visible',
@@ -47,8 +45,6 @@ export const switchAppearance: PresentationDictionary = {
       declarations: invalidPaint,
     },
   ],
-  'switch-size-default': [],
-  'switch-size-sm': [],
   'switch-thumb': [
     {
       declarations: {
@@ -64,6 +60,4 @@ export const switchAppearance: PresentationDictionary = {
       },
     },
   ],
-  'switch-thumb-size-default': [],
-  'switch-thumb-size-sm': [],
 };

@@ -1,3 +1,4 @@
+import { displayNames } from '../intl.js';
 import { isCaptionTrackKind } from './availability.js';
 import type { MediaMessagesResolver } from './messages.js';
 
@@ -54,7 +55,7 @@ export function findLocaleTrack<T extends { readonly language: string }>(
 export function languageName(language: string, locale?: string | string[]): string {
   if (!language) return '';
   try {
-    return new Intl.DisplayNames(locale, { type: 'language' }).of(language) ?? '';
+    return displayNames(locale, { type: 'language' }).of(language) ?? '';
   } catch {
     return '';
   }

@@ -144,7 +144,6 @@ export const attachmentAppearance: PresentationDictionary = {
     { selector: ":host([status='error']) &", declarations: { color: 'var(--tp-destructive)' } },
   ],
   'attachment-actions': [{ declarations: { gap: 'var(--tp-space-1)' } }],
-  'attachment-action': [],
   'attachment-trigger': [
     { declarations: { 'border-radius': 'inherit' } },
     {

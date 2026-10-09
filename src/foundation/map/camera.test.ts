@@ -8,7 +8,7 @@ import {
   tweenCamera,
 } from './camera.js';
 import { DEFAULT_CAMERA, mergeCamera, type MapCamera } from './geo.js';
-import { ManualFrames } from './map-fakes.test.js';
+import { ManualFrames } from '../fakes.test.js';
 
 const lisbon = mergeCamera(DEFAULT_CAMERA, {
   center: { latitude: 38.7, longitude: -9.1 },

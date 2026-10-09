@@ -5,9 +5,7 @@ import { listItemExamples } from './list-item.examples.js';
 const meta = {
   title: 'Components/List item',
   component: 'tp-list-item',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: { description: { component: documentation }, examples: listItemExamples },
   },
   args: {

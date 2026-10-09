@@ -1,4 +1,4 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { moduleExample } from './documentation-examples.js';
 import { setupMessageExample } from './message-example.js';
 import setupSource from './message-example.js?raw';
 
@@ -17,13 +17,16 @@ const icon = (name: string) => `<tp-icon data-icon="${name}"></tp-icon>`;
 const layout =
   'display:flex;flex-direction:column;gap:var(--tp-space-6);inline-size:100%;max-inline-size:24rem;margin-inline:auto';
 function example(title: string, id: string, content: string, description: string) {
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    `<div id="${id}" style="${layout}">${content}</div>`,
-    setupMessageExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nsetupMessageExample(document.getElementById('${id}'));`,
+    id,
+    markup: content,
     description,
-  );
+    wrapperStyle: layout,
+    setup: setupMessageExample,
+    source: setupSource,
+    call: `setupMessageExample(document.getElementById('${id}'));`,
+  });
 }
 
 export const messageExamples = [

@@ -20,8 +20,11 @@ export interface RadioSelectionOwner {
 
 export class TpRadioGroupItem extends TpFormElement<unknown> {
   static tagName = 'tp-radio-group-item';
-  // Constituent of its group's family; presented with the group's definition.
+  // Constituent of its group's family; presented with the group's definition and axes.
   static override presentation = radioGroupPresentation;
+  get presentationOwner(): HTMLElement | null {
+    return this.closest('tp-radio-group');
+  }
   static override properties = {
     ...TpFormElement.properties,
     value: { type: String, noAccessor: true },
@@ -240,10 +243,10 @@ export class TpRadioGroupItem extends TpFormElement<unknown> {
     super.connectedCallback();
     queueMicrotask(() => {
       if (this.isConnected && !this.closest('tp-radio-group'))
-        this.emit('tp-diagnostic', {
-          code: 'radio-group-required',
-          message: 'A Radio Group Item requires a nearest Radio Group owner.',
-        });
+        this.diagnose(
+          'radio-group-required',
+          'A Radio Group Item requires a nearest Radio Group owner.',
+        );
     });
   }
   override disconnectedCallback(): void {
@@ -252,5 +255,11 @@ export class TpRadioGroupItem extends TpFormElement<unknown> {
     this.#space = false;
     group?.memberChanged();
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-radio-group-item': TpRadioGroupItem;
   }
 }

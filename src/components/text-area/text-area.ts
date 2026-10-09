@@ -59,3 +59,9 @@ export class TpTextArea extends TpTextControl {
     });
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-text-area': TpTextArea;
+  }
+}

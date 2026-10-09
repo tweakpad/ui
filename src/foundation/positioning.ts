@@ -1,5 +1,6 @@
 import { composedParent } from './focus.js';
-import { observeScroll } from './observation.js';
+import { observeResize, observeScroll } from './observation.js';
+import { visualViewportBox } from './scroll.js';
 export type Side = 'top' | 'right' | 'bottom' | 'left';
 export type LogicalSide = Side | 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
 export type Alignment = 'start' | 'center' | 'end';
@@ -64,7 +65,12 @@ export interface AutoUpdatePolicy {
   ancestorScroll?: boolean;
   ancestorResize?: boolean;
   elementResize?: boolean;
-  anchorLayoutShift?: boolean;
+  /**
+   * Follow the anchor when layout shifts move it: through an IntersectionObserver fitted to its
+   * box (the default), by sampling its box every frame (`'poll'`), or not at all (`false`).
+   */
+  anchorLayoutShift?: boolean | 'poll';
+  /** Reposition on every animation frame (anchors animated through transforms). */
   frameSynchronized?: boolean;
 }
 
@@ -540,13 +546,8 @@ export function computeSurfacePosition(
 }
 
 function viewportRect(ownerWindow: Window): Rect {
-  const visual = ownerWindow.visualViewport;
-  return rect(
-    visual?.offsetLeft ?? 0,
-    visual?.offsetTop ?? 0,
-    visual?.width ?? ownerWindow.innerWidth,
-    visual?.height ?? ownerWindow.innerHeight,
-  );
+  const { x, y, width, height } = visualViewportBox(ownerWindow);
+  return rect(x, y, width, height);
 }
 
 export function resolveSide(side: LogicalSide, element: Element): Side {
@@ -631,6 +632,78 @@ function roundToDevicePixel(value: number, ownerWindow: Window): number {
   return Math.round(value * ratio) / ratio;
 }
 
+/**
+ * Reports when `element` moves or resizes on screen without a scroll or resize event: an
+ * IntersectionObserver whose root margin fits the element's box exactly fires as soon as the box
+ * no longer fills it, and is fitted again to the new box (Floating UI `autoUpdate` layout shift).
+ */
+function observeMove(
+  element: Element,
+  onMove: () => void,
+  ownerWindow: Window & typeof globalThis,
+): () => void {
+  const root = element.ownerDocument.documentElement;
+  let observer: IntersectionObserver | null = null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const cleanup = (): void => {
+    clearTimeout(timer);
+    observer?.disconnect();
+    observer = null;
+  };
+  const refresh = (skip = false, threshold = 1): void => {
+    cleanup();
+    const box = element.getBoundingClientRect();
+    if (!skip) onMove();
+    if (!box.width || !box.height) return;
+    const inset = (value: number) => `${-Math.floor(value)}px`;
+    const rootMargin = [
+      inset(box.top),
+      inset(root.clientWidth - (box.left + box.width)),
+      inset(root.clientHeight - (box.top + box.height)),
+      inset(box.left),
+    ].join(' ');
+    const options = { rootMargin, threshold: Math.max(0, Math.min(1, threshold)) || 1 };
+    let first = true;
+    const observed = (entries: IntersectionObserverEntry[]): void => {
+      const ratio = entries[0]?.intersectionRatio ?? 0;
+      const current = element.getBoundingClientRect();
+      // The entry is a snapshot: a box that moved since it was computed is observed again.
+      if (
+        current.x !== box.x ||
+        current.y !== box.y ||
+        current.width !== box.width ||
+        current.height !== box.height
+      ) {
+        refresh();
+        return;
+      }
+      if (ratio !== threshold) {
+        if (!first) {
+          refresh();
+          return;
+        }
+        // Clipped in place: the ratio is 0, so refreshing at once would loop; wait a second.
+        if (!ratio) timer = setTimeout(() => refresh(false, 1e-7), 1000);
+        else refresh(false, ratio);
+      }
+      first = false;
+    };
+    const create = (init: IntersectionObserverInit) =>
+      new ownerWindow.IntersectionObserver(observed, init);
+    let created: IntersectionObserver;
+    try {
+      // The document as root follows the anchor inside frames; older browsers reject it.
+      created = create({ ...options, root: root.ownerDocument });
+    } catch {
+      created = create(options);
+    }
+    observer = created;
+    created.observe(element);
+  };
+  refresh(true);
+  return cleanup;
+}
+
 function clearPosition(surface: HTMLElement): void {
   surface.removeAttribute('data-positioned');
   surface.removeAttribute('data-placement');
@@ -639,6 +712,7 @@ function clearPosition(surface: HTMLElement): void {
   surface.removeAttribute('data-anchor-hidden');
   surface.removeAttribute('data-reference-hidden');
   surface.removeAttribute('data-escaped');
+  surface.style.removeProperty('position');
   surface.style.removeProperty('translate');
   surface.style.removeProperty('left');
   surface.style.removeProperty('top');
@@ -873,24 +947,12 @@ export function positionSurface(
       cleanups.push(() => ownerWindow.removeEventListener('resize', schedule));
       cleanups.push(() => ownerWindow.visualViewport?.removeEventListener('resize', schedule));
     }
-    if (
-      (policy.elementResize ?? 'ResizeObserver' in ownerWindow) &&
-      'ResizeObserver' in ownerWindow
-    ) {
-      const observer = new ownerWindow.ResizeObserver(schedule);
-      observer.observe(context);
-      observer.observe(surface);
-      cleanups.push(() => observer.disconnect());
-    }
-    if (
-      (policy.anchorLayoutShift ?? 'IntersectionObserver' in ownerWindow) &&
-      'IntersectionObserver' in ownerWindow
-    ) {
-      const observer = new ownerWindow.IntersectionObserver(schedule);
-      observer.observe(context);
-      cleanups.push(() => observer.disconnect());
-    }
-    if (policy.frameSynchronized || (policy.anchorLayoutShift ?? true)) {
+    if (policy.elementResize ?? true)
+      cleanups.push(observeResize(context, schedule), observeResize(surface, schedule));
+    const layoutShift = policy.anchorLayoutShift ?? true;
+    if (layoutShift === true && !policy.frameSynchronized && 'IntersectionObserver' in ownerWindow)
+      cleanups.push(observeMove(context, schedule, ownerWindow));
+    if (policy.frameSynchronized || layoutShift === 'poll') {
       let frame = 0;
       let previous = '';
       const tick = (): void => {

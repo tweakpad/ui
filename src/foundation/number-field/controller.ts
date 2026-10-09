@@ -1,5 +1,5 @@
 import type { TpInput } from '../../components/input/input.js';
-import type { TpButton } from '../../components/button.js';
+import type { TpButton } from '../../components/button/button.js';
 import { bindTextEditingModel, type TextEditingModel } from '../text-editing.js';
 import { NumberFieldState, type NumberFieldStateOptions } from './state.js';
 import { OwnedAttributes } from '../owned-attributes.js';

@@ -5,7 +5,8 @@ import CatalogDocs from '../.storybook/catalog-docs.mdx';
 import rendererSource from './stories/data-visualization.examples.ts?raw';
 import datePickerSource from './stories/date-picker-trigger.js?raw';
 import mapSource from './stories/map-example.js?raw';
-import examplesSource from './stories/examples.ts?raw';
+import mediaSource from './stories/media.ts?raw';
+import { publishedIconImports } from './stories/documentation-examples.js';
 
 const workspaceSources = import.meta.glob<string>('./stories/workspace/**/*.{ts,css}', {
   query: '?raw',
@@ -15,8 +16,7 @@ const workspaceSources = import.meta.glob<string>('./stories/workspace/**/*.{ts,
 
 /** Rewrites repository-relative imports to the published package and the files listed below. */
 const published = (source: string) =>
-  source
-    .replace(/'(?:\.\.\/)+icons\/([^']+)\.js'/g, "'@tweakpad/ui/icons/$1'")
+  publishedIconImports(source)
     .replace(/'(?:\.\.\/)+components\/[^']+'/g, "'@tweakpad/ui'")
     .replace(/'(?:\.\.\/)+foundation\/drag-drop\/index\.js'/g, "'@tweakpad/ui/drag-drop'")
     .replace(/'(?:\.\.\/)+foundation\/map\/index\.js'/g, "'@tweakpad/ui/map'")
@@ -25,20 +25,16 @@ const published = (source: string) =>
     .replaceAll("'../../data-visualization.examples.js'", "'../chart.js'")
     .replaceAll("'../date-picker-trigger.js'", "'./date-picker-trigger.js'")
     .replaceAll("'../../map-example.js'", "'../map-example.js'")
-    .replaceAll("'../../examples.js'", "'../media.js'");
+    .replaceAll("'../../media.js'", "'../media.js'");
 
 const order = (path: string) =>
   path.endsWith('/workspace.ts') ? 0 : path.includes('/pages/') ? 2 : path.endsWith('.css') ? 3 : 1;
 const files = Object.entries(workspaceSources)
   .map(([path, source]) => [path.replace('./stories/workspace/', ''), source] as const)
   .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b));
-const sampleMedia = examplesSource.match(
-  /\/\*\* Repository-generated sample media[\s\S]*?export const sampleThumbnails[^\n]*\n/,
-)?.[0];
 
 const meta = {
   title: 'Tweakpad UI/Complete catalog',
-  tags: ['autodocs'],
   parameters: {
     layout: 'fullscreen',
     docs: {
@@ -57,7 +53,7 @@ const meta = {
           '// chart.ts\n' + published(rendererSource),
           '// date-picker-trigger.js\n' + published(datePickerSource),
           '// map-example.js\n' + published(mapSource),
-          ...(sampleMedia ? ['// media.ts\n' + sampleMedia] : []),
+          '// media.ts\n' + mediaSource,
         ].join('\n\n'),
       },
     },

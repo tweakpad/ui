@@ -20,7 +20,7 @@ import { join } from 'node:path';
  * - `controllers`: exported non-event class → events its module fires, so a component that
  *   constructs a shared controller (`new ControllableState(…)`) lists the events it dispatches.
  */
-function scanEventSources(directory) {
+function scanEventSources(...directories) {
   const sources = [];
   const walk = (folder) => {
     for (const entry of readdirSync(folder, { withFileTypes: true })) {
@@ -30,7 +30,7 @@ function scanEventSources(directory) {
         sources.push(readFileSync(path, 'utf8'));
     }
   };
-  walk(directory);
+  for (const directory of directories) walk(directory);
   const eventClasses = new Map();
   const parents = new Map();
   for (const source of sources) {
@@ -151,11 +151,36 @@ const tweakpadEvents = ({ eventClasses, controllers }) => ({
   },
 });
 
+/**
+ * Consumers' tooling only needs the public surface: private/protected members (and `#private`
+ * ones, which the analyzer reports with `privacy: 'private'`) are dropped from every declaration.
+ * The analyzer always pretty-prints; `scripts/minify-manifest.mjs` rewrites the file compact.
+ */
+const tweakpadPublicMembers = () => ({
+  name: 'tweakpad-public-members',
+  packageLinkPhase({ customElementsManifest }) {
+    const isPublic = (member) =>
+      member.privacy !== 'private' &&
+      member.privacy !== 'protected' &&
+      !String(member.name ?? '').startsWith('#');
+    for (const module of customElementsManifest.modules)
+      for (const declaration of module.declarations ?? []) {
+        if (declaration.members) declaration.members = declaration.members.filter(isPublic);
+        if (declaration.attributes)
+          declaration.attributes = declaration.attributes.filter(isPublic);
+      }
+  },
+});
+
 export default {
   // Components plus the element bases they inherit attributes and members from.
   globs: ['src/components/**/*.ts', 'src/foundation/element.ts', 'src/foundation/form-element.ts'],
-  exclude: ['src/**/*.test.ts', 'src/**/*.stories.ts', 'src/stories/**', 'src/stylesheet.ts'],
+  exclude: ['src/**/*.test.ts'],
   outdir: 'dist',
   litelement: true,
-  plugins: [tweakpadTagNames(), tweakpadEvents(scanEventSources('src'))],
+  plugins: [
+    tweakpadTagNames(),
+    tweakpadEvents(scanEventSources('src/components', 'src/foundation')),
+    tweakpadPublicMembers(),
+  ],
 };

@@ -20,9 +20,7 @@ interface Args {
 const meta = {
   title: 'Components/Tree view',
   component: 'tp-tree-view',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: treeViewExamples,

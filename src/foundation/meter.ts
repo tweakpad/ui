@@ -1,6 +1,7 @@
 import { nothing, render } from 'lit';
 import { createId } from './id.js';
-import { resolveLocale } from './services.js';
+import { OwnedAttributes } from './owned-attributes.js';
+import { reportDiagnostic, resolveLocale } from './services.js';
 import { numericRange, formatNumericRange, type NumericRangeOptions } from './numeric-range.js';
 
 export interface MeterOptions extends Partial<NumericRangeOptions> {
@@ -40,7 +41,7 @@ export interface MeterPartOptions {
 interface Registration {
   element: HTMLElement;
   options: MeterPartOptions;
-  attributes: Map<string, { original: string | null; applied: string | null }>;
+  attributes: OwnedAttributes;
   originalNodes?: Node[];
   renderBefore?: Comment;
   originalSize?: { value: string; priority: string };
@@ -51,23 +52,8 @@ const owners = new WeakMap<Element, MeterController>();
 export function getMeterState(element: Element): MeterState | undefined {
   return owners.get(element)?.state;
 }
-function attribute(record: Registration, name: string, value: string | null): void {
-  let owned = record.attributes.get(name);
-  if (!owned) {
-    owned = { original: record.element.getAttribute(name), applied: value };
-    record.attributes.set(name, owned);
-  }
-  owned.applied = value;
-  if (record.element.getAttribute(name) === value) return;
-  if (value === null) record.element.removeAttribute(name);
-  else record.element.setAttribute(name, value);
-}
 function release(record: Registration): void {
-  for (const [name, owned] of record.attributes) {
-    if (record.element.getAttribute(name) !== owned.applied) continue;
-    if (owned.original === null) record.element.removeAttribute(name);
-    else record.element.setAttribute(name, owned.original);
-  }
+  record.attributes.dispose();
   if (record.originalNodes) {
     render(nothing, record.element, { renderBefore: record.renderBefore ?? null });
     record.element.replaceChildren(...record.originalNodes);
@@ -104,7 +90,7 @@ export class MeterController {
     if (owners.has(host)) throw new Error('This element already belongs to a MeterController.');
     if (typeof options.value !== 'number') throw new TypeError('Meter requires a numeric value.');
     this.#options = { ...options };
-    this.#root = { element: host, options: {}, attributes: new Map() };
+    this.#root = { element: host, options: {}, attributes: new OwnedAttributes(host) };
     this.#originalLabels = host.ariaLabelledByElements;
     owners.set(host, this);
     const Observer = host.ownerDocument.defaultView?.MutationObserver;
@@ -147,15 +133,10 @@ export class MeterController {
       locale: this.#options.locale ?? this.#locale,
       diagnostic: (code, message) => {
         this.#options.diagnostic?.(code, message);
-        if (this.#diagnostics.has(code)) return;
-        this.#diagnostics.add(code);
-        const Event = this.host.ownerDocument.defaultView!.CustomEvent;
-        this.host.dispatchEvent(
-          new Event('tp-diagnostic', {
-            bubbles: true,
-            composed: true,
-            detail: { code: `meter-${code}`, message, severity: 'warning' },
-          }),
+        reportDiagnostic(
+          this.host,
+          { code: `meter-${code}`, message, severity: 'warning' },
+          { once: this.#diagnostics },
         );
       },
     };
@@ -166,7 +147,7 @@ export class MeterController {
     if (owners.has(element)) throw new Error('This element already belongs to a MeterController.');
     const old = this.#parts.get(part);
     if (old) release(old);
-    const record: Registration = { element, options, attributes: new Map() };
+    const record: Registration = { element, options, attributes: new OwnedAttributes(element) };
     if (part === 'value') {
       record.originalNodes = [...element.childNodes];
       record.renderBefore = element.ownerDocument.createComment('meter-value');
@@ -191,39 +172,40 @@ export class MeterController {
     if (this.#disposed) return;
     this.#state = meterState(this.#configuration());
     const s = this.#state;
-    attribute(this.#root, 'role', 'meter');
+    this.#root.attributes.set('role', 'meter');
     for (const [name, value] of Object.entries({
       'aria-valuemin': s.minimum,
       'aria-valuemax': s.maximum,
       'aria-valuenow': s.clampedValue,
       'aria-valuetext': s.accessibleValueText,
     }))
-      attribute(this.#root, name, String(value));
+      this.#root.attributes.set(name, String(value));
     if (this.host.localName === 'meter') {
-      attribute(this.#root, 'min', String(s.minimum));
-      attribute(this.#root, 'max', String(s.maximum));
-      attribute(this.#root, 'value', String(s.clampedValue));
+      this.#root.attributes.set('min', String(s.minimum));
+      this.#root.attributes.set('max', String(s.maximum));
+      this.#root.attributes.set('value', String(s.clampedValue));
     }
     const label = this.#parts.get('label');
     if (label) {
-      if (!label.element.id) attribute(label, 'id', createId('tp-meter-label'));
+      if (!label.element.id) label.attributes.set('id', createId('tp-meter-label'));
       this.#labelIdentifier = label.element.id;
-      attribute(label, 'role', 'presentation');
-      attribute(this.#root, 'aria-labelledby', label.element.id);
+      label.attributes.set('role', 'presentation');
+      // Element-reference reflection clears the string association attribute: own that cleared
+      // state, and spell the identifier out only where references are not reflected.
+      const view = this.host.ownerDocument.defaultView;
+      const reflectsElements = !!view && 'ariaLabelledByElements' in view.Element.prototype;
+      this.#root.attributes.set('aria-labelledby', reflectsElements ? null : label.element.id);
       this.#appliedLabels = [label.element];
       this.host.ariaLabelledByElements = this.#appliedLabels;
-      // Element-reference reflection clears the string association attribute.
-      this.#root.attributes.get('aria-labelledby')!.applied =
-        this.host.getAttribute('aria-labelledby');
     } else if (this.#appliedLabels !== undefined) {
       this.host.ariaLabelledByElements = this.#originalLabels;
       this.#appliedLabels = undefined;
-      const owned = this.#root.attributes.get('aria-labelledby');
-      if (owned) attribute(this.#root, 'aria-labelledby', owned.original);
+      const attributes = this.#root.attributes;
+      attributes.set('aria-labelledby', attributes.original('aria-labelledby'));
     }
     const value = this.#parts.get('value');
     if (value) {
-      attribute(value, 'aria-hidden', 'true');
+      value.attributes.set('aria-hidden', 'true');
       render(
         value.options.content ? value.options.content(s.formattedValue, s.value) : s.formattedValue,
         value.element,

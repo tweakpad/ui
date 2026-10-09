@@ -25,9 +25,7 @@ interface Args {
 const meta = {
   title: 'Components/Image',
   component: 'tp-image',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: imageExamples,

@@ -13,8 +13,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Alert',
   component: 'tp-alert',
-  tags: ['autodocs'],
-  parameters: { layout: 'padded', docs: { description: { component: documentation } } },
+  parameters: { docs: { description: { component: documentation } } },
   args: { severity: 'informational', announcement: 'off', title: 'Update available' },
   argTypes: {
     severity: {

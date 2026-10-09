@@ -1,5 +1,5 @@
 import { css } from 'lit';
-import { TpHoverSurface } from '../anchored-surface.js';
+import { TpHoverSurface } from '../anchored-surface/anchored-surface.js';
 import { deepActiveElement } from '../../foundation/focus.js';
 import { previewCardPresentation } from '../../presentation/families/preview-card.js';
 
@@ -45,5 +45,11 @@ export class TpPreviewCard extends TpHoverSurface {
   protected override focusOnClose(): void {
     if (this.#movedFocus) super.focusOnClose();
     this.#movedFocus = false;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-preview-card': TpPreviewCard;
   }
 }

@@ -1,4 +1,5 @@
 import { motionTransition } from '../motion.js';
+import { popupBorder, popupBorderColor } from './shared/surface.js';
 import type { PresentationRule } from '../resolver.js';
 
 /** One default inset for command, navigation and selection popup surfaces. */
@@ -77,8 +78,7 @@ export const commandSurfaceAppearance: readonly PresentationRule[] = [
       background: 'color-mix(in oklab, var(--tp-popover) 70%, transparent)',
       'backdrop-filter': 'blur(var(--tp-space-10)) saturate(1.5)',
       'border-radius': 'var(--tp-radius-lg)',
-      border:
-        'var(--tp-border-width) var(--tp-border-style) color-mix(in oklab, var(--tp-foreground) 10%, transparent)',
+      border: popupBorder,
       'box-shadow': 'var(--tp-shadow-md)',
       'font-size': 'var(--tp-text-sm)',
     },
@@ -89,7 +89,7 @@ export const commandSurfaceAppearance: readonly PresentationRule[] = [
 ];
 
 export const commandItemHighlightAppearance = {
-  background: 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)',
+  background: popupBorderColor,
   color: 'var(--tp-accent-foreground)',
   outline: 'none',
 };

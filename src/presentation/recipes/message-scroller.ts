@@ -41,7 +41,7 @@ export const messageScrollerAppearance: PresentationDictionary = {
       },
     },
     {
-      selector: '&[data-active="false"]',
+      selector: '&:not([data-active])',
       declarations: { opacity: '0', translate: '0 var(--tp-space-1)' },
     },
   ],

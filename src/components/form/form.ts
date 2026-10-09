@@ -189,7 +189,7 @@ export class TpForm extends TpElement {
     const form = this.#form;
     for (const node of [...this.childNodes])
       if (node !== form && !(node instanceof HTMLStyleElement)) form.append(node);
-    this.#observer = new MutationObserver((records) => {
+    this.#observer = new (this.ownerDocument.defaultView ?? window).MutationObserver((records) => {
       for (const record of records)
         for (const node of record.addedNodes)
           if (node !== form && node.parentNode === this && !(node instanceof HTMLStyleElement))
@@ -423,5 +423,11 @@ export class TpForm extends TpElement {
       action.removeAttribute('disabled');
       delete action.dataset.tpFormPolicyDisabled;
     }
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-form': TpForm;
   }
 }

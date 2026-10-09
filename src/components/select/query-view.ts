@@ -46,7 +46,7 @@ export function renderQuery(h: TpSelect, q: SelectQueryController, v: QueryView)
       'aria-expanded': String(h.open),
       'aria-controls': h.open ? `${h.identifier}-list` : undefined,
       'aria-autocomplete': h.completionMode,
-      ...autofillProperties(h.effectiveNoAutofill, h.autoComplete || 'off'),
+      ...autofillProperties(h.effectiveNoAutofill, h.autocomplete || 'off'),
       'aria-required': String(h.required),
       'aria-invalid': String(h.effectiveInvalid),
       '@input': (event: Event) => q.input(event),

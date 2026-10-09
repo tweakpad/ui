@@ -40,14 +40,14 @@ Icons are separate modules: import only the definitions you use from `@tweakpad/
 
 ## Entry points
 
-| Import                                                  | Contents                                                                     |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `@tweakpad/ui`                                          | Component classes, foundation utilities, presentation APIs (no side effects) |
-| `@tweakpad/ui/register`                                 | Defines every component                                                      |
-| `@tweakpad/ui/register/icon`                            | Defines `tp-icon` only                                                       |
-| `@tweakpad/ui/icons/<name>`                             | Individual icon definitions                                                  |
-| `@tweakpad/ui/styles.css`                               | Design tokens and page defaults                                              |
-| `@tweakpad/ui/carousel`, `/drag-drop`, `/media`, `/map` | Foundation modules for those feature areas                                   |
+| Import                                                                        | Contents                                                                     |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `@tweakpad/ui`                                                                | Component classes, foundation utilities, presentation APIs (no side effects) |
+| `@tweakpad/ui/register`                                                       | Defines every component                                                      |
+| `@tweakpad/ui/register/icon`                                                  | Defines `tp-icon` only                                                       |
+| `@tweakpad/ui/icons/<name>`                                                   | Individual icon definitions                                                  |
+| `@tweakpad/ui/styles.css`                                                     | Design tokens and page defaults                                              |
+| `@tweakpad/ui/carousel`, `/drag-drop`, `/media`, `/map`, `/code`, `/markdown` | Foundation modules for those feature areas                                   |
 
 The package is ESM, one module per source file, with side effects limited to the `register` entries and the stylesheet, so bundlers keep only what you reach. A [custom elements manifest](https://github.com/webcomponents/custom-elements-manifest) ships as `custom-elements.json` (package `customElements` field) for editor tooling.
 
@@ -59,7 +59,7 @@ The package is ESM, one module per source file, with side effects limited to the
 
 ## Conventions
 
-- All custom elements use the `tp-` prefix.
+- All custom elements use the `tp-` prefix. Property, attribute, state-marker and event naming rules are in the [conventions guide](https://github.com/tweakpad/ui/blob/development/docs/conventions.md).
 - Interactive value changes dispatch cancelable `tp-value-change` events with `value`, `previousValue`, `reason` and the source event; open-state controls dispatch cancelable `tp-open-change`.
 - Form controls take part in native forms. Text controls render their native editor in your document so browser autofill and password managers work as with any form field.
 - Direction follows the nearest `dir` boundary; keyboard navigation accounts for RTL.

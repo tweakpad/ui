@@ -1,4 +1,4 @@
-import { interactiveMarkupExample, markupExample } from './documentation-examples.js';
+import { markupExample, moduleExample } from './documentation-examples.js';
 import { setupCalendarExample } from './calendar-example.js';
 import setupSource from './calendar-example.js?raw';
 
@@ -9,15 +9,15 @@ const inCard = (calendar: string) =>
 </tp-card>`;
 
 const interactive = (title: string, id: string, markup: string, description: string) =>
-  interactiveMarkupExample(
+  moduleExample({
     title,
-    `<div id="${id}">${markup}</div>`,
-    setupCalendarExample,
-    `${setupSource
-      .replaceAll("'../icons/", "'@tweakpad/ui/icons/")
-      .replaceAll(".js';", "';")}\nsetupCalendarExample(document.getElementById('${id}'));`,
+    id,
+    markup,
     description,
-  );
+    setup: setupCalendarExample,
+    source: setupSource,
+    call: `setupCalendarExample(document.getElementById('${id}'));`,
+  });
 
 export const calendarExamples = [
   markupExample(

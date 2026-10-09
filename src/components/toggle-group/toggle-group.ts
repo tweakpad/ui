@@ -9,7 +9,7 @@ import { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import { toggleGroupJoinedPresentation } from '../../presentation/recipes/toggle-group.js';
-import { TpToggle, type ToggleSelectionOwner } from '../toggle.js';
+import { TpToggle, type ToggleSelectionOwner } from '../toggle/toggle.js';
 import { normalizeToggleValues, toggleSelection } from './selection.js';
 import { toggleGroupPresentation } from '../../presentation/families/toggle-group.js';
 
@@ -82,7 +82,6 @@ export class TpToggleGroup
   #observer: MutationObserver | undefined;
   #scheduled = false;
   #registered = new Map<TpToggle, { target: HTMLElement; cleanup: () => void }>();
-  #diagnostics = new Set<string>();
   #state = new ControllableState<readonly string[]>({
     host: this,
     initialValue: [],
@@ -345,8 +344,12 @@ export class TpToggleGroup
     super.disconnectedCallback();
   }
   #diagnose(code: string, message: string): void {
-    if (this.#diagnostics.has(code)) return;
-    this.#diagnostics.add(code);
-    this.emit('tp-diagnostic', { code: 'toggle-group-' + code, message });
+    this.diagnose('toggle-group-' + code, message, { once: true });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-toggle-group': TpToggleGroup;
   }
 }

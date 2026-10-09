@@ -5,7 +5,7 @@ import { PresenceController } from '../../foundation/presence.js';
 import { composedParent } from '../../foundation/focus.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { IconDefinition } from '../../icons/types.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 // The source RadioItemIndicator circle is artwork passed through the shared Icon owner.
@@ -117,5 +117,11 @@ export class TpMenuRadioItem extends TpMenuItem {
         ></tp-icon>`,
       },
     )}`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-menu-radio-item': TpMenuRadioItem;
   }
 }

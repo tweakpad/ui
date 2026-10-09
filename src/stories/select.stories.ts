@@ -92,7 +92,6 @@ function control(args: Args, items: readonly SelectEntry[] = fruits) {
 const meta: Meta<Args> = {
   title: 'Components/Select',
   component: 'tp-select',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: { description: { component: documentation }, source: { code: basicSource } },
@@ -208,22 +207,6 @@ export const RichGroups: Story = {
     },
   },
 };
-export const Multiple: Story = {
-  args: { multiple: true, value: [], label: 'Formatting', placeholder: 'Choose formatting' },
-  render: (args) =>
-    html`<div>
-      <tp-field label="Formatting" description="Choose more than one style"
-        >${control(args, richItems)}</tp-field
-      >
-    </div>`,
-  parameters: {
-    docs: {
-      source: {
-        code: `<script type="module">\n  ${sourceImports.replaceAll('\n', '\n  ')}\n</script>\n<tp-field label="Formatting" description="Choose more than one style">\n  <tp-select name="format" multiple placeholder="Choose formatting">\n    <option value="bold">Bold</option>\n    <option value="italic">Italic</option>\n    <option value="underline">Underline</option>\n  </tp-select>\n</tp-field>`,
-      },
-    },
-  },
-};
 export const LargeList: Story = {
   args: { label: 'Country', placeholder: 'Choose a country' },
   render: (args) =>
@@ -254,43 +237,6 @@ export const InDialog: Story = {
     docs: {
       source: {
         code: `<script type="module">\n  ${sourceImports.replaceAll('\n', '\n  ')}\n</script>\n<tp-dialog label="Choose delivery fruit">\n  <tp-button slot="trigger" variant="outline">Choose fruit</tp-button>\n  <tp-field label="Fruit" description="The Select popup belongs to this dialog">\n    <tp-select placeholder="Choose a fruit">\n      <option value="apple">Apple</option>\n      <option value="banana">Banana</option>\n      <option value="cherry">Cherry</option>\n    </tp-select>\n  </tp-field>\n  <tp-button data-dialog-close variant="outline">Done</tp-button>\n</tp-dialog>`,
-      },
-    },
-  },
-};
-
-export const Searchable: Story = {
-  args: { searchable: true, modal: false, alignItemWithTrigger: false, showClear: true },
-  parameters: {
-    docs: {
-      source: { code: basicSource.replace('<tp-select ', '<tp-select searchable show-clear ') },
-    },
-  },
-};
-export const SearchableMultiple: Story = {
-  args: {
-    searchable: true,
-    modal: false,
-    alignItemWithTrigger: false,
-    showClear: true,
-    multiple: true,
-    value: [],
-    label: 'Team members',
-    placeholder: 'Find members',
-  },
-  render: (args) => control(args, ['Alex Morgan', 'Jordan Doe', 'Sam Rivera', 'Taylor Kim']),
-  parameters: {
-    docs: {
-      source: {
-        code: `${sourceImports}
-const members = document.createElement('tp-select');
-members.searchable = true;
-members.multiple = true;
-members.showClear = true;
-members.label = 'Team members';
-members.placeholder = 'Find members';
-members.items = ['Alex Morgan', 'Jordan Doe', 'Sam Rivera', 'Taylor Kim'];
-document.body.append(members);`,
       },
     },
   },

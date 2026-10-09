@@ -5,7 +5,6 @@ import { buttonGroupPresentation } from '../../presentation/families/button-grou
 /** Noninteractive content; Label and Icon remain their existing public controls. */
 export class TpButtonGroupText extends TpElement {
   static tagName = 'tp-button-group-text';
-  static presentationTagName = 'tp-button-group';
   static override presentation = buttonGroupPresentation;
   static override styles = [
     TpElement.styles,
@@ -31,5 +30,11 @@ export class TpButtonGroupText extends TpElement {
         content: html`<slot></slot>`,
       },
     );
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-button-group-text': TpButtonGroupText;
   }
 }

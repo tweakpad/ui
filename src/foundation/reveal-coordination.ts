@@ -6,7 +6,7 @@
  */
 import { composedParent } from './focus.js';
 import { resolvesReducedMotion } from './motion.js';
-import { canObserveIntersection } from './observation.js';
+import { revealsImmediately } from './reveal-playback.js';
 import {
   observeScrollProgress,
   type ScrollRange,
@@ -459,7 +459,7 @@ export class RevealCoordinator {
   }
 
   #immediate(): boolean {
-    return !canObserveIntersection(this.#element) || resolvesReducedMotion(this.#element);
+    return revealsImmediately(this.#element);
   }
 
   #held(members: readonly RevealMember[]): boolean {

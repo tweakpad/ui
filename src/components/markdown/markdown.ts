@@ -154,7 +154,9 @@ export class TpMarkdown extends TpElement {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#readLightSource();
-    this.#mutations = new MutationObserver(() => this.#readLightSource());
+    this.#mutations = new (this.ownerDocument.defaultView ?? window).MutationObserver(() =>
+      this.#readLightSource(),
+    );
     this.#mutations.observe(this, { childList: true, characterData: true, subtree: true });
     this.renderRoot.addEventListener('click', this.#click as EventListener);
     this.ownerDocument.defaultView?.addEventListener('hashchange', this.#hashChange);
@@ -215,7 +217,7 @@ export class TpMarkdown extends TpElement {
   }
 
   #diagnostic(code: string, message: string): void {
-    this.emit('tp-diagnostic', { code, message });
+    this.diagnose(code, message);
   }
 
   #parse(): void {
@@ -346,4 +348,10 @@ export class TpMarkdown extends TpElement {
 
 function blockKey(block: MarkdownBlock, index: number): string {
   return block.position ? `${block.position.start.offset}:${block.type}` : `${index}:${block.type}`;
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-markdown': TpMarkdown;
+  }
 }

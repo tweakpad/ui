@@ -72,22 +72,14 @@ describe('per-component presentation ownership', () => {
         );
   });
 
-  it('imports component code from owning modules, not compatibility barrels', () => {
-    const barrels = new Set([
-      'components/primitives.ts',
-      'components/display.ts',
-      'components/shared.ts',
-    ]);
-    const offenders: string[] = [];
-    for (const file of [...sources('components'), ...sources('foundation')]) {
-      if (barrels.has(file) || file === 'components/index.ts') continue;
-      for (const specifier of imports(file)) {
-        if (!specifier.startsWith('.')) continue;
-        const target = join(file, '..', specifier).replace(/\.js$/, '.ts');
-        if (barrels.has(target)) offenders.push(`${file} -> ${specifier}`);
-      }
-    }
-    expect(offenders).toEqual([]);
+  it('keeps every component in its own folder with an entrypoint', () => {
+    const top = readdirSync(join(root, 'components'), { withFileTypes: true });
+    expect(
+      top.filter((entry) => entry.isFile() && entry.name.endsWith('.ts')).map((e) => e.name),
+    ).toEqual(['index.ts']);
+    for (const entry of top)
+      if (entry.isDirectory() && entry.name !== 'shared')
+        expect(readdirSync(join(root, 'components', entry.name)), entry.name).toContain('index.ts');
   });
 
   it('declares every library element a component renders, so defining it defines them', () => {
@@ -100,27 +92,46 @@ describe('per-component presentation ownership', () => {
       ))
         tagClass.set(match[2]!, match[1]!);
     }
-    // A component folder owns its templates, including helper modules without a class.
-    const folders = new Map<string, string[]>();
-    for (const file of files) {
-      const folder = file.split('/').length > 2 ? file.split('/').slice(0, 2).join('/') : file;
-      folders.set(folder, [...(folders.get(folder) ?? []), file]);
-    }
+    // Each class declares what its own templates render; helper modules without a class belong
+    // to the classes of their folder, so they are checked against the folder's declarations.
     const missing = new Set<string>();
-    for (const [folder, members] of folders) {
-      const text = members.map((file) => readFileSync(join(root, file), 'utf8')).join('\n');
-      const own = new Set(
-        [...text.matchAll(/static (?:override )?tagName = '(tp-[a-z0-9-]+)'/g)].map((m) => m[1]),
-      );
-      const declared = [
-        ...text.matchAll(/static get elementDependencies\(\)[^{]*\{\s*return \[([^\]]*)\]/g),
+    const renders = (text: string) =>
+      [...text.matchAll(/(?:<|\btag: ?'|createElement\(')(tp-[a-z0-9-]+)/g)].map((m) => m[1]!);
+    const declares = (text: string) =>
+      [
+        ...text.matchAll(
+          /static (?:override )?get elementDependencies\(\)[^{]*\{\s*return \[([^\]]*)\]/g,
+        ),
       ]
         .flatMap((m) => m[1]!.split(','))
         .map((name) => name.trim());
-      for (const [, tag] of text.matchAll(/(?:<|\btag: ?'|createElement\(')(tp-[a-z0-9-]+)/g)) {
-        if (own.has(tag) || !tagClass.has(tag!)) continue;
-        if (!declared.includes(tagClass.get(tag!)!)) missing.add(`${folder} renders <${tag}>`);
+    const folderOf = (file: string) =>
+      file.split('/').length > 2 ? file.split('/').slice(0, 2).join('/') : file;
+    const folderText = new Map<string, string>();
+    for (const file of files)
+      folderText.set(
+        folderOf(file),
+        (folderText.get(folderOf(file)) ?? '') + readFileSync(join(root, file), 'utf8'),
+      );
+    for (const file of files) {
+      const text = readFileSync(join(root, file), 'utf8');
+      const classes = [...text.matchAll(/^export (?:abstract )?class (Tp\w+|\w+Part)\b/gm)];
+      if (!classes.length) {
+        // A helper module: its templates must be declared somewhere in the folder.
+        const declared = declares(folderText.get(folderOf(file))!);
+        for (const tag of renders(text))
+          if (tagClass.has(tag) && !declared.includes(tagClass.get(tag)!))
+            missing.add(`${file} renders <${tag}>`);
+        continue;
       }
+      classes.forEach((match, index) => {
+        const body = text.slice(match.index, classes[index + 1]?.index ?? text.length);
+        const own = body.match(/static (?:override )?tagName = '(tp-[a-z0-9-]+)'/)?.[1];
+        const declared = declares(body);
+        for (const tag of renders(body))
+          if (tag !== own && tagClass.has(tag) && !declared.includes(tagClass.get(tag)!))
+            missing.add(`${match[1]} (${file}) renders <${tag}>`);
+      });
     }
     expect([...missing]).toEqual([]);
   });

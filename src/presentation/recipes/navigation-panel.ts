@@ -60,7 +60,6 @@ export const navigationPanelAppearance: PresentationDictionary = {
       },
     },
   ],
-  'navigation-panel-variant-inset': [],
   // Nova SidebarTrigger: Button icon-sm (size-7); coarse pointers raise it to the minimum target.
   'navigation-panel-trigger': [
     {
@@ -141,7 +140,6 @@ export const navigationPanelAppearance: PresentationDictionary = {
   ],
   'navigation-panel-group-content': [{ declarations: { 'font-size': 'var(--tp-text-sm)' } }],
   'navigation-panel-menu': [{ declarations: { gap: '0' } }],
-  'navigation-panel-item': [],
   'navigation-panel-link': [
     ...navigationRow,
     {
@@ -223,7 +221,6 @@ export const navigationPanelAppearance: PresentationDictionary = {
       declarations: { display: 'none' },
     },
   ],
-  'navigation-panel-subitem': [],
   'navigation-panel-sublink': [
     fillColor('var(--tp-accent)'),
     {

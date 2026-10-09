@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Collapsible verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 24px;
+        max-inline-size: 40rem;
+      }
+      h2 {
+        font-size: var(--tp-text-base);
+        margin: 0 0 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Collapsible verification</h1>
+    <p>
+      State configurations that were previously Storybook stories, with the ported browser checks;
+      see <code>README.md</code>.
+    </p>
+    <template id="content">
+      <span slot="label">Project details</span>
+      <p>Created today and shared with three collaborators.</p>
+      <p>
+        Review ownership, access rules, and the longer description associated with this project
+        without navigating away from the current view.
+      </p>
+    </template>
+    <main>
+      <section>
+        <h2>Default (closed)</h2>
+        <tp-collapsible id="default"></tp-collapsible>
+      </section>
+      <section>
+        <h2>Open</h2>
+        <tp-collapsible id="open" open></tp-collapsible>
+      </section>
+      <section>
+        <h2>Disabled</h2>
+        <tp-collapsible id="disabled" disabled></tp-collapsible>
+      </section>
+      <section>
+        <h2>Retained</h2>
+        <tp-collapsible id="retained" keep-mounted></tp-collapsible>
+      </section>
+      <section>
+        <h2>Find in page</h2>
+        <tp-collapsible id="find-in-page" hidden-until-found></tp-collapsible>
+      </section>
+      <section>
+        <h2>Leading indicator</h2>
+        <tp-collapsible id="leading-indicator" indicator-position="leading"></tp-collapsible>
+      </section>
+      <section>
+        <h2>Label-aligned content with leading content</h2>
+        <tp-collapsible id="label-aligned" open content-alignment="label">
+          <tp-badge slot="leading" variant="accent">New</tp-badge>
+        </tp-collapsible>
+      </section>
+      <section>
+        <h2>External line-by-line motion</h2>
+        <tp-collapsible id="line-by-line" open></tp-collapsible>
+      </section>
+    </main>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      const content = document.querySelector('#content').content;
+      for (const collapsible of document.querySelectorAll('tp-collapsible'))
+        collapsible.append(content.cloneNode(true));
+      const { playLineByLine } = await import('/src/stories/line-by-line-motion.ts');
+      document.querySelector('#line-by-line').addEventListener('tp-motion-request', (event) => {
+        if (event.request.role === 'content') event.respondWith({ play: playLineByLine });
+      });
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      window.collapsibleContract = await import('./contract-checks.js');
+      await customElements.whenDefined('tp-collapsible');
+      document.documentElement.dataset.ready = '';
+    </script>
+  </body>
+</html>

@@ -176,12 +176,13 @@ Read-only: `searchStatus`, `inputElement`, `highlightedValue`. Methods: `clear()
 
 ## Events
 
-| Event              | Detail                             | When                                                                        |
-| ------------------ | ---------------------------------- | --------------------------------------------------------------------------- |
-| `tp-value-change`  | `{ value, previousValue, reason }` | the text changes: `input`, `item-press`, `clear`, `escape-key` (cancelable) |
-| `tp-open-change`   | `{ open, reason }`                 | the suggestions open or close (cancelable)                                  |
-| `tp-search-status` | `{ status, query, total }`         | a search source's status changes                                            |
-| `tp-search-error`  | `{ error, query }`                 | a search source fails                                                       |
+| Event                     | Detail                             | When                                                                        |
+| ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
+| `tp-value-change`         | `{ value, previousValue, reason }` | the text changes: `input`, `item-press`, `clear`, `escape-key` (cancelable) |
+| `tp-open-change`          | `{ open, reason }`                 | the suggestions open or close (cancelable)                                  |
+| `tp-open-change-complete` | `{ open }`                         | the suggestions finished opening or closing, after motion                   |
+| `tp-search-status`        | `{ status, query, total }`         | a search source's status changes                                            |
+| `tp-search-error`         | `{ error, query }`                 | a search source fails                                                       |
 
 `onValueChange`, `onOpenChange` and `onItemHighlighted(value, { index, reason })` are the callback
 forms.

@@ -1,5 +1,26 @@
 import type { Direction, Orientation } from './types.js';
 
+/**
+ * The index `delta` steps from `index` among `length` items: wrapping past either end when `loop`,
+ * held at the ends otherwise; -1 for an empty list.
+ */
+export function stepIndex(index: number, delta: number, length: number, loop: boolean): number {
+  if (length <= 0) return -1;
+  const next = index + delta;
+  return loop ? ((next % length) + length) % length : Math.max(0, Math.min(length - 1, next));
+}
+
+/** The arrow keys that move to the previous and next item along `orientation` in `direction`. */
+export function arrowKeys(
+  orientation: Orientation,
+  direction: Direction,
+): { readonly previous: string; readonly next: string } {
+  if (orientation === 'vertical') return { previous: 'ArrowUp', next: 'ArrowDown' };
+  return direction === 'rtl'
+    ? { previous: 'ArrowRight', next: 'ArrowLeft' }
+    : { previous: 'ArrowLeft', next: 'ArrowRight' };
+}
+
 export interface CollectionItem {
   element: HTMLElement;
   disabled?: boolean;
@@ -42,9 +63,7 @@ export class CollectionRegistry {
     const enabled = this.navigable(includeDisabled);
     if (enabled.length === 0) return null;
     const index = enabled.findIndex((item) => item.element === current);
-    let next = index < 0 ? 0 : index + delta;
-    if (loop) next = (next + enabled.length) % enabled.length;
-    else next = Math.max(0, Math.min(enabled.length - 1, next));
+    const next = index < 0 ? 0 : stepIndex(index, delta, enabled.length, loop);
     return enabled[next]?.element ?? null;
   }
 
@@ -55,10 +74,7 @@ export class CollectionRegistry {
     direction: Direction,
     options: { loop?: boolean; includeDisabled?: boolean } = {},
   ): HTMLElement | null {
-    const previous =
-      orientation === 'vertical' ? 'ArrowUp' : direction === 'rtl' ? 'ArrowRight' : 'ArrowLeft';
-    const next =
-      orientation === 'vertical' ? 'ArrowDown' : direction === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
+    const { previous, next } = arrowKeys(orientation, direction);
     let target: HTMLElement | null = null;
     if (event.key === previous)
       target = this.move(current, -1, options.loop ?? true, options.includeDisabled);

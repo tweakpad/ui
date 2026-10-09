@@ -10,9 +10,7 @@ const conversation = messageExamples[0]!;
 const meta = {
   title: 'Components/Message',
   component: 'tp-message',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       examples: messageExamples.slice(1),
       description: { component: documentation },

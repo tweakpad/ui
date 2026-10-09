@@ -92,5 +92,4 @@ const root = (prefix: 'menu'): Record<string, readonly PresentationRule[]> => ({
 /** Base Menu/Context reexports and the shared Nova translucent command surface. */
 export const menuAppearance: PresentationDictionary = {
   ...root('menu'),
-  'menu-target': [],
 };

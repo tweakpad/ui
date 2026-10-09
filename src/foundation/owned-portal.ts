@@ -1,7 +1,7 @@
-import { getCompatibleStyle, nothing, render } from 'lit';
+import { nothing, render } from 'lit';
 import type { CSSResultGroup } from 'lit';
 import { setLogicalPortalOwner } from './portal-ownership.js';
-import { GeneratedStyleResource } from './generated-style.js';
+import { GeneratedStyleResource, styleText, themeTokens } from './generated-style.js';
 export { logicalPortalOwner } from './portal-ownership.js';
 
 export type OwnedPortalContainer =
@@ -164,29 +164,15 @@ export class OwnedPortal {
           : this.owner;
       setLogicalPortalOwner(this.#host, logicalOwner);
       const root = this.#host.attachShadow({ mode: 'open' });
-      const cssText = (result: CSSResultGroup): string => {
-        if (Array.isArray(result)) return result.map(cssText).join('\n');
-        const compatible = getCompatibleStyle(result);
-        return 'cssText' in compatible
-          ? compatible.cssText
-          : [...compatible.cssRules].map((rule) => rule.cssText).join('\n');
-      };
       this.#styleResource = new GeneratedStyleResource(this.owner, root);
-      this.#styleResource.setText(cssText(this.styles));
+      this.#styleResource.setText(styleText(this.styles));
       target.append(this.#host);
     }
     const computed = this.owner.ownerDocument.defaultView!.getComputedStyle(this.owner);
-    const nextTokens = new Set<string>();
-    for (let index = 0; index < computed.length; index++) {
-      const name = computed[index]!;
-      if (name.startsWith('--tp-')) {
-        nextTokens.add(name);
-        this.#host!.style.setProperty(name, computed.getPropertyValue(name));
-      }
-    }
-    for (const name of this.#tokens)
-      if (!nextTokens.has(name)) this.#host!.style.removeProperty(name);
-    this.#tokens = nextTokens;
+    const tokens = themeTokens(computed);
+    for (const [name, value] of tokens) this.#host!.style.setProperty(name, value);
+    for (const name of this.#tokens) if (!tokens.has(name)) this.#host!.style.removeProperty(name);
+    this.#tokens = new Set(tokens.keys());
     this.#host!.style.colorScheme = computed.colorScheme;
     this.#host!.dir = computed.direction;
     // External projection can move the owner itself out of its styled shadow

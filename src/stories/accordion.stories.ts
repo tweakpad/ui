@@ -2,18 +2,11 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { useArgs } from 'storybook/preview-api';
 import { html } from 'lit';
 import accordionDocumentation from '../../docs/accordion.md?raw';
-import type { AccordionValue, AccordionVariant } from '../components/accordion.js';
-import type {
-  AccordionContentAlignment,
-  AccordionIndicatorPosition,
-} from '../components/accordion-item.js';
+import type { AccordionValue, AccordionVariant } from '../components/accordion/accordion.js';
+import type { AccordionContentAlignment } from '../components/accordion/accordion-item.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import type {
-  MotionPlayback,
-  MotionPolicy,
-  MotionRequest,
-  TpMotionRequestEvent,
-} from '../foundation/motion.js';
+import type { MotionPolicy, TpMotionRequestEvent } from '../foundation/motion.js';
+import { playLineByLine } from './line-by-line-motion.js';
 
 interface AccordionStoryArgs {
   selectionMode: 'single' | 'multiple';
@@ -29,24 +22,13 @@ interface AccordionStoryArgs {
   onValueChange?: (event: TpValueChangeEvent<AccordionValue>) => void;
 }
 
+/** Composition choices that are not Root properties: positional content and an external driver. */
 interface AccordionFixtureOptions {
-  accountContentAlignment: AccordionContentAlignment | 'inherit';
-  accountIndicatorPosition: AccordionIndicatorPosition;
-  securityIndicatorPosition: AccordionIndicatorPosition;
-  billingIndicatorPosition: AccordionIndicatorPosition;
-  itemDisabled: boolean;
-  headingLevel: number;
   showLeadingContent: boolean;
   contentMotion: 'none' | 'line-by-line';
 }
 
 const defaultAccordionFixture: AccordionFixtureOptions = {
-  accountContentAlignment: 'inherit',
-  accountIndicatorPosition: 'trailing',
-  securityIndicatorPosition: 'trailing',
-  billingIndicatorPosition: 'trailing',
-  itemDisabled: false,
-  headingLevel: 2,
   showLeadingContent: false,
   contentMotion: 'none',
 };
@@ -54,9 +36,7 @@ const defaultAccordionFixture: AccordionFixtureOptions = {
 const meta: Meta<AccordionStoryArgs> = {
   title: 'Components/Accordion',
   component: 'tp-accordion',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: {
         component: accordionDocumentation.replace(/^# Accordion\n/u, ''),
@@ -190,24 +170,8 @@ function renderAccordion(args: AccordionStoryArgs, options: Partial<AccordionFix
       @tp-value-change=${handleValueChange}
       @tp-motion-request=${handleMotionRequest}
     >
-      <tp-accordion-item
-        value="account"
-        indicator-position=${fixture.accountIndicatorPosition}
-        .contentAlignment=${
-          fixture.accountContentAlignment === 'inherit'
-            ? undefined
-            : fixture.accountContentAlignment
-        }
-        heading-level=${fixture.headingLevel}
-      >
-        ${
-          fixture.showLeadingContent
-            ? html`<span
-                slot=${fixture.accountIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
-                >01</span
-              >`
-            : null
-        }
+      <tp-accordion-item value="account" heading-level="2">
+        ${fixture.showLeadingContent ? html`<span slot="leading">01</span>` : null}
         <span slot="label">Account settings</span>
         <p>Your public profile starts here.</p>
         <p>
@@ -215,37 +179,14 @@ function renderAccordion(args: AccordionStoryArgs, options: Partial<AccordionFix
           review the recovery options you would need if you lost access to your usual device.
         </p>
       </tp-accordion-item>
-      <tp-accordion-item
-        value="security"
-        indicator-position=${fixture.securityIndicatorPosition}
-        heading-level=${fixture.headingLevel}
-        ?disabled=${fixture.itemDisabled}
-      >
-        ${
-          fixture.showLeadingContent
-            ? html`<span
-                slot=${fixture.securityIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
-                >02</span
-              >`
-            : null
-        }
+      <tp-accordion-item value="security" heading-level="2">
+        ${fixture.showLeadingContent ? html`<span slot="leading">02</span>` : null}
         <span slot="label">Security</span>
         <p>Require a second step when signing in from a new device or location.</p>
         <p>Save your backup codes offline.</p>
       </tp-accordion-item>
-      <tp-accordion-item
-        value="billing"
-        indicator-position=${fixture.billingIndicatorPosition}
-        heading-level=${fixture.headingLevel}
-      >
-        ${
-          fixture.showLeadingContent
-            ? html`<span
-                slot=${fixture.billingIndicatorPosition === 'leading' ? 'trailing' : 'leading'}
-                >03</span
-              >`
-            : null
-        }
+      <tp-accordion-item value="billing" heading-level="2">
+        ${fixture.showLeadingContent ? html`<span slot="leading">03</span>` : null}
         <span slot="label">Billing</span>
         <p>
           Review every invoice from the current subscription, download receipts for your records,
@@ -263,39 +204,6 @@ type Story = StoryObj<AccordionStoryArgs>;
 
 export const Default: Story = {};
 
-export const Line: Story = {
-  args: { variant: 'line' },
-  parameters: {
-    docs: {
-      description: {
-        story: 'Horizontal separators divide adjacent Items without adding outer container chrome.',
-      },
-    },
-  },
-};
-
-export const Outline: Story = {
-  args: { variant: 'outline' },
-  parameters: {
-    docs: {
-      description: {
-        story: 'One rounded outer border with token-governed separators between Items.',
-      },
-    },
-  },
-};
-
-export const Separated: Story = {
-  args: { variant: 'separated' },
-  parameters: {
-    docs: {
-      description: {
-        story: 'Independent bordered Item surfaces separated by the shared spacing scale.',
-      },
-    },
-  },
-};
-
 export const PositionalContent: Story = {
   args: { variant: 'separated', contentAlignment: 'label' },
   render: (args) => renderAccordion(args, { showLeadingContent: true }),
@@ -309,19 +217,6 @@ export const PositionalContent: Story = {
   },
 };
 
-export const LabelAlignedContent: Story = {
-  args: { contentAlignment: 'label' },
-  render: (args) => renderAccordion(args, { showLeadingContent: true }),
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Aligns each ContentBody to its Label’s logical inline start without assuming what occupies Leading.',
-      },
-    },
-  },
-};
-
 export const ExternalLineByLineMotion: Story = {
   render: (args) => renderAccordion(args, { contentMotion: 'line-by-line' }),
   parameters: {
@@ -329,130 +224,6 @@ export const ExternalLineByLineMotion: Story = {
       description: {
         story:
           'Claims only the per-Item content role and staggers the Item paragraphs. Accordion still owns disclosure measurement, presence, and selection.',
-      },
-    },
-  },
-};
-
-export const ReducedMotion: Story = {
-  args: { motionPolicy: 'reduce', collapsible: true },
-  render: (args) => renderAccordion(args, { contentMotion: 'line-by-line' }),
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Keeps the same semantic and presence lifecycle while completing finite motion at the next checkpoint and skipping the external line-by-line driver.',
-      },
-    },
-  },
-};
-
-function playLineByLine(request: MotionRequest): MotionPlayback {
-  const lines = [...request.owner.querySelectorAll<HTMLElement>('p')];
-  const exiting = request.phase === 'exit';
-  const ordered = exiting ? [...lines].reverse() : lines;
-  const easing = getComputedStyle(request.owner).getPropertyValue('--tp-easing-standard').trim();
-  const animations = ordered.map((line, index) =>
-    line.animate(
-      exiting
-        ? [
-            { opacity: 1, transform: 'translateY(0)' },
-            { opacity: 0, transform: 'translateY(calc(var(--tp-space-2) * -1))' },
-          ]
-        : [
-            { opacity: 0, transform: 'translateY(var(--tp-space-3))' },
-            { opacity: 1, transform: 'translateY(0)' },
-          ],
-      {
-        duration: 380,
-        delay: index * 100,
-        easing,
-        fill: 'both',
-      },
-    ),
-  );
-  const finished = Promise.all(animations.map((animation) => animation.finished)).then(() => {
-    animations.forEach((animation) => animation.cancel());
-  });
-  return {
-    finished,
-    cancel: () => animations.forEach((animation) => animation.cancel()),
-  };
-}
-
-export const Multiple: Story = {
-  args: { selectionMode: 'multiple', value: ['account', 'security'] },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Multiple mode permits independent open items and keeps value in registration order.',
-      },
-    },
-  },
-};
-
-export const Collapsible: Story = {
-  args: { collapsible: true },
-  parameters: {
-    docs: {
-      description: { story: 'Single mode can allow all items to close when collapsible is true.' },
-    },
-  },
-};
-
-export const Disabled: Story = {
-  args: { disabled: true },
-  parameters: {
-    docs: {
-      description: {
-        story: 'A disabled root prevents activation without changing the current open item.',
-      },
-    },
-  },
-};
-
-export const DisabledItem: Story = {
-  render: (args) => renderAccordion(args, { itemDisabled: true }),
-  parameters: {
-    docs: {
-      description: {
-        story: 'Only the Security item is disabled. Account settings and Billing remain available.',
-      },
-    },
-  },
-};
-
-export const Retained: Story = {
-  args: { collapsible: true, keepMounted: true },
-  parameters: {
-    docs: {
-      description: {
-        story: 'Closed content reaches the retained presence state after its exit transition.',
-      },
-    },
-  },
-};
-
-export const FindInPage: Story = {
-  args: { collapsible: true, hiddenUntilFound: true },
-  parameters: {
-    docs: {
-      description: { story: 'Closed content remains discoverable through browser find-in-page.' },
-    },
-  },
-};
-
-export const MixedIndicatorPositions: Story = {
-  render: (args) =>
-    renderAccordion(args, {
-      accountIndicatorPosition: 'leading',
-      billingIndicatorPosition: 'leading',
-    }),
-  parameters: {
-    docs: {
-      description: {
-        story: 'Each Item configures which logical position receives its built-in indicator.',
       },
     },
   },

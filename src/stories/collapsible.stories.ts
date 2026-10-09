@@ -5,15 +5,11 @@ import collapsibleDocumentation from '../../docs/collapsible.md?raw';
 import type {
   CollapsibleContentAlignment,
   CollapsibleIndicatorPosition,
-} from '../components/collapsible.js';
+} from '../components/collapsible/collapsible.js';
 import type { TpOpenChangeEvent } from '../foundation/events.js';
-import type {
-  MotionPlayback,
-  MotionPolicy,
-  MotionRequest,
-  TpMotionRequestEvent,
-} from '../foundation/motion.js';
+import type { MotionPolicy, TpMotionRequestEvent } from '../foundation/motion.js';
 import { plusIcon } from '../icons/plus.js';
+import { playLineByLine } from './line-by-line-motion.js';
 
 interface CollapsibleStoryArgs {
   open: boolean;
@@ -43,9 +39,7 @@ const defaultCollapsibleFixture: CollapsibleFixtureOptions = {
 const meta: Meta<CollapsibleStoryArgs> = {
   title: 'Components/Collapsible',
   component: 'tp-collapsible',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: {
         component: collapsibleDocumentation.replace(/^# Collapsible\n/u, ''),
@@ -196,32 +190,7 @@ type Story = StoryObj<CollapsibleStoryArgs>;
 
 export const Default: Story = {};
 
-export const Open: Story = {
-  args: { open: true },
-};
-
-export const Disabled: Story = {
-  args: { disabled: true },
-};
-
-export const Retained: Story = {
-  args: { open: false, keepMounted: true },
-};
-
-export const FindInPage: Story = {
-  args: { open: false, hiddenUntilFound: true },
-};
-
-export const LeadingIndicator: Story = {
-  args: { indicatorPosition: 'leading' },
-};
-
 export const LeadingContent: Story = {
-  render: (args) => renderCollapsible(args, { showLeadingContent: true }),
-};
-
-export const LabelAlignedContent: Story = {
-  args: { open: true, contentAlignment: 'label' },
   render: (args) => renderCollapsible(args, { showLeadingContent: true }),
 };
 
@@ -233,30 +202,3 @@ export const ExternalLineByLineMotion: Story = {
   args: { open: true },
   render: (args) => renderCollapsible(args, { contentMotion: 'line-by-line' }),
 };
-
-function playLineByLine(request: MotionRequest): MotionPlayback {
-  const lines = [...request.owner.querySelectorAll<HTMLElement>('p')];
-  const ordered = request.phase === 'exit' ? [...lines].reverse() : lines;
-  const easing = getComputedStyle(request.owner).getPropertyValue('--tp-easing-standard').trim();
-  const animations = ordered.map((line, index) =>
-    line.animate(
-      request.phase === 'exit'
-        ? [
-            { opacity: 1, transform: 'translateY(0)' },
-            { opacity: 0, transform: 'translateY(calc(var(--tp-space-2) * -1))' },
-          ]
-        : [
-            { opacity: 0, transform: 'translateY(var(--tp-space-3))' },
-            { opacity: 1, transform: 'translateY(0)' },
-          ],
-      { duration: 380, delay: index * 100, easing, fill: 'both' },
-    ),
-  );
-  const finished = Promise.all(animations.map((animation) => animation.finished)).then(() => {
-    animations.forEach((animation) => animation.cancel());
-  });
-  return {
-    finished,
-    cancel: () => animations.forEach((animation) => animation.cancel()),
-  };
-}

@@ -13,9 +13,7 @@ interface Args {
 const meta = {
   title: 'Components/Markdown',
   component: 'tp-markdown',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: markdownExamples,

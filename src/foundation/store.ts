@@ -49,6 +49,38 @@ export function shallowEqual<T>(a: T, b: T): boolean {
   return true;
 }
 
+/**
+ * Listeners keyed by event name, each name carrying its own argument list. Dispatch walks a
+ * snapshot, so a listener may subscribe or unsubscribe while running; `on` returns its `off`.
+ */
+export class Emitter<Events extends Record<string, readonly unknown[]>> {
+  readonly #listeners = new Map<keyof Events, Set<(...args: never) => void>>();
+
+  on<K extends keyof Events>(name: K, listener: (...args: Events[K]) => void): () => void {
+    let listeners = this.#listeners.get(name);
+    if (!listeners) this.#listeners.set(name, (listeners = new Set()));
+    listeners.add(listener);
+    return () => this.off(name, listener);
+  }
+
+  off<K extends keyof Events>(name: K, listener: (...args: Events[K]) => void): void {
+    this.#listeners.get(name)?.delete(listener);
+  }
+
+  /** The listeners of `name` at this moment, for a dispatcher that isolates each one's errors. */
+  listeners<K extends keyof Events>(name: K): ReadonlyArray<(...args: Events[K]) => void> {
+    return [...(this.#listeners.get(name) ?? [])] as Array<(...args: Events[K]) => void>;
+  }
+
+  emit<K extends keyof Events>(name: K, ...args: Events[K]): void {
+    for (const listener of this.listeners(name)) listener(...args);
+  }
+
+  clear(): void {
+    this.#listeners.clear();
+  }
+}
+
 export class ObservableStore<T> {
   #value: T;
   readonly #subscribers = new Set<StoreSubscriber<T>>();

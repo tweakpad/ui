@@ -1,6 +1,6 @@
 import { css, html, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 import { chevronDownIcon } from '../../icons/chevron-down.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { MessageScrollerMember } from './context.js';
@@ -10,7 +10,6 @@ import { buttonPresentation } from '../../presentation/families/button.js';
 
 export class TpMessageScrollerViewport extends TpElement {
   static tagName = 'tp-message-scroller-viewport';
-  static presentationTagName = 'tp-message-scroller';
   static override presentation = messageScrollerPresentation;
   static override properties = {
     ...TpElement.properties,
@@ -88,7 +87,6 @@ export class TpMessageScrollerViewport extends TpElement {
 
 export class TpMessageScrollerContent extends TpElement {
   static tagName = 'tp-message-scroller-content';
-  static presentationTagName = 'tp-message-scroller';
   static override presentation = messageScrollerPresentation;
   static override properties = { ...TpElement.properties, label: { type: String } };
   static override styles = [
@@ -157,7 +155,6 @@ export class TpMessageScrollerContent extends TpElement {
 
 export class TpMessageScrollerItem extends TpElement {
   static tagName = 'tp-message-scroller-item';
-  static presentationTagName = 'tp-message-scroller';
   static override presentation = messageScrollerPresentation;
   static override properties = {
     ...TpElement.properties,
@@ -200,7 +197,6 @@ export class TpMessageScrollerItem extends TpElement {
 /** The live Return control is a Button constituent, not a second action implementation. */
 export class TpMessageScrollerReturnControl extends TpButton {
   static override tagName = 'tp-message-scroller-return-control';
-  static presentationTagName = 'tp-button';
   static override presentation = buttonPresentation;
   static override properties = {
     ...TpButton.properties,
@@ -226,7 +222,7 @@ export class TpMessageScrollerReturnControl extends TpButton {
         inset-block: var(--tp-space-4) auto;
       }
 
-      :host([data-active='false']) {
+      :host(:not([data-active])) {
         pointer-events: none;
       }
 
@@ -296,13 +292,22 @@ export class TpMessageScrollerReturnControl extends TpButton {
     )
       this.ariaLabel = `Scroll to ${this.returnDirection}`;
     this.inert = !this.active;
-    this.setAttribute('data-active', String(this.active));
+    this.toggleAttribute('data-active', this.active);
     this.setAttribute('data-direction', this.returnDirection);
   }
   protected override updated(changed: PropertyValues<this>) {
     super.updated(changed);
     const button = this.renderRoot.querySelector('[part~="button"]');
-    button?.setAttribute('data-active', String(this.active));
+    button?.toggleAttribute('data-active', this.active);
     button?.setAttribute('data-direction', this.returnDirection);
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-message-scroller-item': TpMessageScrollerItem;
+    'tp-message-scroller-viewport': TpMessageScrollerViewport;
+    'tp-message-scroller-content': TpMessageScrollerContent;
+    'tp-message-scroller-return-control': TpMessageScrollerReturnControl;
   }
 }

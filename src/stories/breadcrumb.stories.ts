@@ -19,9 +19,7 @@ const source = `${imports}
 const meta = {
   title: 'Components/Breadcrumb',
   component: 'tp-breadcrumb',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       source: { code: source },

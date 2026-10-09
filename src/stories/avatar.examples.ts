@@ -1,4 +1,4 @@
-import { interactiveMarkupExample, markupExample } from './documentation-examples.js';
+import { markupExample, moduleExample } from './documentation-examples.js';
 import { setupAvatarExample } from './avatar-example.js';
 import setupSource from './avatar-example.js?raw';
 
@@ -27,13 +27,16 @@ const groups = (omitted: number, icon = false) =>
       .join('\n'),
   );
 function example(title: string, id: string, markup: string, description?: string) {
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    `<div id="${id}" style="display:grid;gap:var(--tp-space-4)">${markup}</div>`,
-    setupAvatarExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nsetupAvatarExample(document.getElementById('${id}'));`,
+    id,
+    markup,
     description,
-  );
+    wrapperStyle: 'display:grid;gap:var(--tp-space-4)',
+    setup: setupAvatarExample,
+    source: setupSource,
+    call: `setupAvatarExample(document.getElementById('${id}'));`,
+  });
 }
 function statuses(images: boolean, icon = false) {
   return row(

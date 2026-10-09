@@ -86,12 +86,14 @@ import * as carousel from '@tweakpad/ui/carousel';
 import * as dragDrop from '@tweakpad/ui/drag-drop';
 import * as media from '@tweakpad/ui/media';
 import * as map from '@tweakpad/ui/map';
+import * as code from '@tweakpad/ui/code';
+import * as markdown from '@tweakpad/ui/markdown';
 import packageJson from '@tweakpad/ui/package.json' with { type: 'json' };
 
 defineElement(TpButton.tagName, TpButton);
 const button: HTMLElementTagNameMap['tp-button'] = document.createElement('tp-button');
 button.variant = 'outline';
-export const used = [TpIcon, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, packageJson.version];
+export const used = [TpIcon, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, packageJson.version];
 `,
 );
 writeFileSync(join(consumer, 'css.d.ts'), "declare module '*.css';\n");

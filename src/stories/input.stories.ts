@@ -18,8 +18,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Input',
   component: 'tp-input',
-  tags: ['autodocs'],
-  parameters: { layout: 'padded', docs: { description: { component: documentation } } },
+  parameters: { docs: { description: { component: documentation } } },
   args: {
     value: '',
     type: 'text',

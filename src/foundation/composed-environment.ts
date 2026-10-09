@@ -1,4 +1,5 @@
 import { composedParent } from './focus.js';
+import { themeTokens } from './generated-style.js';
 import { resolveLocale } from './services.js';
 
 /** Observe a component's composed inheritance chain, not unrelated page mutations. */
@@ -37,16 +38,13 @@ export class ComposedEnvironmentObserver {
   }
   #read(): string {
     const style = this.owner.ownerDocument.defaultView!.getComputedStyle(this.owner);
-    const tokens = Array.from(style)
-      .filter((key) => key.startsWith('--tp-'))
-      .sort()
-      .map((key) => `${key}:${style.getPropertyValue(key)}`);
+    const tokens = themeTokens(style);
     return JSON.stringify([
       style.direction,
       style.writingMode,
       style.colorScheme,
       resolveLocale(this.owner),
-      ...tokens,
+      ...[...tokens.keys()].sort().map((key) => `${key}:${tokens.get(key)}`),
     ]);
   }
   #check = (): void => {

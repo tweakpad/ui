@@ -22,7 +22,6 @@ const parts: Record<string, string> = Object.fromEntries(
 export class TpAutocomplete extends TpSelect {
   static override tagName = 'tp-autocomplete';
   static override presentation = autocompletePresentation;
-  static presentationFamilyTagNames = ['tp-select'];
   static override presentationFamilies = [selectPresentation];
   override searchable = true;
   override openOnInputClick = false;
@@ -64,5 +63,11 @@ export class TpAutocomplete extends TpSelect {
   }
   protected override choiceState(state: PartState): PartState {
     return { ...state, selected: false };
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-autocomplete': TpAutocomplete;
   }
 }

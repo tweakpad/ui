@@ -280,3 +280,9 @@ export class TpMessageScroller extends TpElement {
     });
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-message-scroller': TpMessageScroller;
+  }
+}

@@ -1,4 +1,5 @@
 import { html } from 'lit';
+import { defaultTrue } from '../../foundation/converters.js';
 import type { PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
@@ -120,7 +121,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     formAssociatedValue: {
       type: Boolean,
       attribute: 'form-associated-value',
-      converter: { fromAttribute: (value: string | null) => value !== 'false' },
+      converter: defaultTrue,
     },
   };
   static override styles = [TpElement.styles, sliderStyles];
@@ -191,7 +192,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   #explicit = false;
   #configurationError: string | null = null;
   #membershipError = false;
-  #diagnostics = new Set<string>();
   #proposals: Proposal[] = [];
   #activeProposal: Proposal | undefined;
   #drag: Drag | null = null;
@@ -1095,10 +1095,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       });
     this.setFormValue(this.effectiveDisabled ? null : data, JSON.stringify(this.value ?? null));
     const missing = this.required && !this.values.length && !this.indeterminate;
-    this.setValidity(
-      missing ? { valueMissing: true } : {},
-      missing ? 'Please select a value.' : '',
-    );
+    this.setRequiredValidity(missing, 'Please select a value.');
   }
   protected resetFormValue(): void {
     if (!this.formAssociatedValue) return;
@@ -1127,9 +1124,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     }
   }
   #diagnose(code: string, message: string): void {
-    if (this.#diagnostics.has(`${code}:${message}`)) return;
-    this.#diagnostics.add(`${code}:${message}`);
-    this.emit('tp-diagnostic', { component: 'Slider', code, message });
+    this.diagnose('slider-' + code, message, { once: true });
   }
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
@@ -1433,5 +1428,11 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     this.#memberComposition = new WeakMap();
     this.#measurements.clear();
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-slider': TpSlider;
   }
 }

@@ -51,7 +51,7 @@ import { dragDropListPresentation } from '../../presentation/families/drag-drop-
 import { TpListItem } from '../list-item/list-item.js';
 import { TpEmptyState } from '../empty-state/empty-state.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 
 const eventNames: Record<DragEventName, string> = {
   beforedragstart: 'tp-before-drag-start',
@@ -800,5 +800,11 @@ export class TpDragDropList<T = unknown> extends TpElement {
     this.#overlay = undefined;
     this.#overlayRelease?.();
     this.#overlayRelease = undefined;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-drag-drop-list': TpDragDropList;
   }
 }

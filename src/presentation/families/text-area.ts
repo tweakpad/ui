@@ -7,21 +7,13 @@ const definition: ComponentDefinition = {
   name: 'Text area',
   tagName: 'tp-text-area',
   kind: 'compound-reexport',
-  sourceNode: 'ucl17-textarea',
   axes: [],
   parts: [
     {
       name: 'text-area',
-      publicName: 'Control',
-      presentationKeys: ['text-area'],
-      cardinality: 'exactly one public owner host per control instance',
     },
     {
       name: 'text-area-resize-affordance',
-      publicName: 'Resize affordance',
-      presentationKeys: ['text-area-resize-affordance'],
-      cardinality:
-        'zero or one descendant of Control; cited behavior sets any required-presence condition',
     },
   ],
 };

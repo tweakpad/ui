@@ -983,6 +983,15 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
   }
 
   #diagnostic(diagnostic: Diagnostic): void {
-    this.emit('tp-diagnostic', diagnostic);
+    this.diagnose(diagnostic.code, diagnostic.message, {
+      severity: diagnostic.severity,
+      context: diagnostic.context,
+    });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-player': TpMediaPlayer;
   }
 }

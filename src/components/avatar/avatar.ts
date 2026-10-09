@@ -1,8 +1,10 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
+import { observeSlots, slotOccupied } from '../shared/slots.js';
 import { keyed } from 'lit/directives/keyed.js';
 import { TpElement } from '../../foundation/element.js';
 import { ImageLoadController, type ImageLoadStatus } from '../../foundation/image-load.js';
 import { avatarPresentation } from '../../presentation/families/avatar.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type AvatarLoadingStatus = ImageLoadStatus;
 
@@ -97,28 +99,19 @@ export class TpAvatar extends TpElement {
   #cancelDelay: (() => void) | undefined;
   #fallbackReady = false;
   #needsLoad = true;
-  #contentObserver: MutationObserver | undefined;
+  #releaseSlots: (() => void) | undefined;
   get imageLoadingStatus(): AvatarLoadingStatus {
     return this.#image.status;
   }
   override connectedCallback(): void {
     super.connectedCallback();
-    this.#contentObserver = new this.ownerDocument.defaultView!.MutationObserver(
-      this.#slotsChanged,
-    );
-    this.#contentObserver.observe(this, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ['slot'],
-    });
+    this.#releaseSlots = observeSlots(this, this.#slotsChanged, { characterData: true });
     this.#needsLoad = true;
     this.requestUpdate();
   }
   override disconnectedCallback(): void {
-    this.#contentObserver?.disconnect();
-    this.#contentObserver = undefined;
+    this.#releaseSlots?.();
+    this.#releaseSlots = undefined;
     this.#cancelDelay?.();
     this.#cancelDelay = undefined;
     super.disconnectedCallback();
@@ -180,12 +173,8 @@ export class TpAvatar extends TpElement {
     const status = this.#image.status;
     const loaded = status === 'loaded';
     const name = this.alt || this.fallback;
-    const suppliedFallback = Array.from(this.childNodes).some((node) =>
-      node.nodeType === Node.ELEMENT_NODE
-        ? !(node as Element).getAttribute('slot')
-        : node.nodeType === Node.TEXT_NODE && Boolean(node.textContent?.trim()),
-    );
-    const badge = Array.from(this.children).some((child) => child.slot === 'badge');
+    const suppliedFallback = slotOccupied(this, '', { text: true });
+    const badge = slotOccupied(this, 'badge');
     return html`
       ${
         this.keepMounted || loaded
@@ -242,7 +231,10 @@ export class TpAvatar extends TpElement {
 /** Composition uses the same Avatar for omitted-member presentation. */
 export class TpAvatarGroup extends TpElement {
   static tagName = 'tp-avatar-group';
-  static presentationTagName = 'tp-avatar';
+  /** Library elements this element renders; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpAvatar];
+  }
   static override presentation = avatarPresentation;
   static override properties = {
     ...TpElement.properties,
@@ -299,5 +291,12 @@ export class TpAvatarGroup extends TpElement {
             : nothing
         }`,
     });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-avatar': TpAvatar;
+    'tp-avatar-group': TpAvatarGroup;
   }
 }

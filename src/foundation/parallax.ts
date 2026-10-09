@@ -8,17 +8,11 @@ import { commonScrollContainer } from './scroll.js';
 import {
   clampScrollSmoothing,
   observeScrollProgress,
-  rangeProgress,
   scrollAxis,
   type ScrollAxis,
 } from './scroll-progress.js';
 
-export { scrollAxis, smoothProgress } from './scroll-progress.js';
-
 export type ParallaxDirection = 'up' | 'down' | 'left' | 'right';
-
-/** The axis scroll progress is measured along: inline for a scroller that only scrolls sideways. */
-export type ParallaxAxis = ScrollAxis;
 
 /**
  * Media enlarged by `scale` inside a clipped frame can travel `travel` (a fraction of its own
@@ -32,20 +26,6 @@ export function parallaxGeometry(depth: number): { scale: number; travel: number
 /** Image depth: finite values clamped to 0 through 1. */
 export function clampParallaxDepth(depth: number): number {
   return Number.isFinite(depth) ? Math.min(1, Math.max(0, depth)) : 0;
-}
-
-/**
- * Progress of a box through a visible extent, from -1 as its start edge enters at the extent's end
- * to 1 as its end edge leaves at the extent's start (the `cover` range of a view timeline).
- */
-export function parallaxProgress(
-  start: number,
-  size: number,
-  visibleStart: number,
-  visibleEnd: number,
-): number {
-  if (visibleEnd - visibleStart + size <= 0) return 0;
-  return rangeProgress('cover', start, size, visibleStart, visibleEnd) * 2 - 1;
 }
 
 /** Whether the host can drive parallax from a scroll-driven view timeline. */
@@ -83,7 +63,7 @@ export function parallaxDriver(
   options: { readonly smoothing?: number } = {},
 ): 'timeline' | 'script' {
   // A view timeline is locked to the scroll; trailing motion needs frame-driven progress.
-  if (clampParallaxSmoothing(options.smoothing ?? 0) > 0) return 'script';
+  if (clampScrollSmoothing(options.smoothing ?? 0) > 0) return 'script';
   if (!supportsViewTimeline(element.ownerDocument.defaultView)) return 'script';
   return timelineScrollContainer(element) === commonScrollContainer([element])
     ? 'timeline'
@@ -91,19 +71,15 @@ export function parallaxDriver(
 }
 
 /** The axis of the container that actually scrolls `element` (see `scrollAxis`). */
-export function parallaxAxis(element: Element): ParallaxAxis {
+export function parallaxAxis(element: Element): ScrollAxis {
   const container = commonScrollContainer([element]);
   return container ? scrollAxis(container) : 'block';
 }
 
-/** Smoothing: finite values clamped to 0 through 0.98 (1 would never move). */
-export function clampParallaxSmoothing(smoothing: number): number {
-  return clampScrollSmoothing(smoothing);
-}
-
 /**
- * Reports `element`'s parallax progress (see `parallaxProgress`, -1 through 1) to `write` through
- * the shared scroll field of its scroller (see `observeScrollProgress`).
+ * Reports `element`'s parallax progress to `write` through the shared scroll field of its
+ * scroller (see `observeScrollProgress`): -1 as its start edge enters at the visible end, 1 as
+ * its end edge leaves at the visible start (the `cover` range of a view timeline).
  */
 export function observeParallax(
   element: Element,

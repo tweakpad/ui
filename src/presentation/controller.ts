@@ -1,6 +1,11 @@
-import { GeneratedStyleResource } from '../foundation/generated-style.js';
-import type { ReactiveController, ReactiveControllerHost, RenderOptions } from 'lit';
-import { presentationFamilyFor } from './family.js';
+import { GeneratedStyleResource, styleText } from '../foundation/generated-style.js';
+import type {
+  CSSResultGroup,
+  ReactiveController,
+  ReactiveControllerHost,
+  RenderOptions,
+} from 'lit';
+import { inheritedRootTag, presentationFamilyFor, type PresentationFamily } from './family.js';
 import { resolveComponentPresentation, serializeDeclarations } from './resolver.js';
 import type { PartPresentation, PresentationDictionary, PresentationRule } from './resolver.js';
 
@@ -19,6 +24,13 @@ const compositions = new WeakMap<HTMLElement, Map<object, PartPresentation>>();
 const controllers = new WeakMap<HTMLElement, PresentationController>();
 let registrationId = 0;
 const isDocument = (node: Node): node is Document => node.nodeType === 9;
+/** A rule's selector bound to its part target; an ampersand in the rule stands for the target. */
+const selectorFor = (rule: PresentationRule, target: string): string =>
+  rule.selector?.includes('&')
+    ? rule.selector.replaceAll('&', target)
+    : target + (rule.selector ?? '');
+const ruleCss = (rule: PresentationRule, selector: string): string =>
+  `${selector}{${serializeDeclarations(rule.declarations)}}`;
 const isShadowRoot = (node: Node): node is ShadowRoot => node.nodeType === 11 && 'host' in node;
 
 /** A compound's contribution precedes the member's terminal consumer overrides. */
@@ -85,25 +97,60 @@ export class PresentationController implements ReactiveController {
     if (!this.#structuralResource) {
       this.#structuralResource = new GeneratedStyleResource(this.host, root);
       const styles =
-        (
-          this.host.constructor as {
-            elementStyles?: ReadonlyArray<{ cssText?: string; cssRules?: CSSRuleList }>;
-          }
-        ).elementStyles ?? [];
-      this.#structuralResource.setText(
-        styles
-          .map(
-            (result) =>
-              result.cssText ?? [...(result.cssRules ?? [])].map((rule) => rule.cssText).join('\n'),
-          )
-          .join('\n'),
-      );
+        (this.host.constructor as { elementStyles?: CSSResultGroup }).elementStyles ?? [];
+      this.#structuralResource.setText(styleText(styles));
     }
     // This boundary survives nonce changes, suppression, and document adoption.
     this.host.renderOptions.renderBefore ??= this.#structuralResource.boundary;
     return root;
   }
   /** Register consumer-owned native parts without wrapping or replacing them. */
+  #references = new Map<
+    string,
+    { ref: (element: HTMLElement | null) => void; element: HTMLElement | null }
+  >();
+  /**
+   * A stable ref callback for a rendered part: it tracks the element under `key`, registers it
+   * as the presentation part `part` (resolved per call when a function) while it is mounted, and
+   * reports replacements to `commit`. Identity is stable per key, so templates stay cacheable.
+   */
+  partReference(
+    key: string,
+    part?: string | (() => string | undefined),
+    commit?: (element: HTMLElement | null) => void,
+  ): (element: HTMLElement | null) => void {
+    let entry = this.#references.get(key);
+    if (!entry) {
+      let release: (() => void) | undefined;
+      const record: { element: HTMLElement | null; ref: (element: HTMLElement | null) => void } = {
+        element: null,
+        ref: () => {},
+      };
+      record.ref = (element) => {
+        if (element === record.element) return;
+        release?.();
+        release = undefined;
+        record.element = element;
+        const name = typeof part === 'function' ? part() : part;
+        if (element && name) release = this.registerPart(name, element);
+        commit?.(element);
+      };
+      entry = record;
+      this.#references.set(key, entry);
+    }
+    return entry.ref;
+  }
+  /** The element currently mounted for a `partReference` key. */
+  partElement(key: string): HTMLElement | null {
+    return this.#references.get(key)?.element ?? null;
+  }
+  /** Forgets an unmounted reference (a removed collection item); `false` while still mounted. */
+  dropReference(key: string): boolean {
+    const entry = this.#references.get(key);
+    if (!entry || entry.element) return !entry;
+    this.#references.delete(key);
+    return true;
+  }
   registerPart(name: string, element: HTMLElement): () => void {
     if (!/^[a-z][a-z0-9-]*$/.test(name)) throw new Error('Invalid presentation part name');
     const members = this.#registered.get(name) ?? new Set<HTMLElement>();
@@ -152,27 +199,39 @@ export class PresentationController implements ReactiveController {
   }
   refresh(): void {
     // A public constituent consumes its family's definition and dictionary, not
-    // a second visual catalog identity.
-    const inheritedTag =
-      this.host.presentationTagName ??
-      (this.host.constructor as { presentationTagName?: string }).presentationTagName;
-    const definitionTag =
-      inheritedTag ??
-      (this.host.localName === 'tp-radio-group-item'
-        ? 'tp-radio-group'
-        : this.host.localName === 'tp-slider-thumb'
-          ? 'tp-slider'
-          : this.host.localName);
+    // a second visual catalog identity. A class that extends a family's root element under
+    // another tag (a Navigation panel button, a Select action) also inherits the root's
+    // bindings; a constituent (a radio item, a map pin) binds only its own tag.
+    const constructor = this.host.constructor as {
+      presentation?: PresentationFamily;
+      presentationFamilies?: readonly PresentationFamily[];
+    };
+    const familyTag = constructor.presentation?.definition.tagName;
+    const inheritedTag = this.host.presentationTagName ?? inheritedRootTag(constructor, familyTag);
+    const definitionTag = inheritedTag ?? familyTag ?? this.host.localName;
     // Each element carries its own family; no catalog-wide registry is consulted.
     const family = presentationFamilyFor(this.host, definitionTag);
     if (!family || !this.host.renderRoot) return;
     const definition = family.definition;
-    const lightParts = new Map<HTMLElement, Map<string, boolean>>();
-    for (const [selector, part] of Object.entries(
+    // A reused control can expose its compound's canonical parts through this same
+    // controller, keeping recipe and terminal hook ownership together: member families
+    // bind this element's own tag and contribute their structure and appearance.
+    const familyTags =
+      this.host.presentationFamilyTagNames ??
+      constructor.presentationFamilies?.map((member) => member.definition.tagName) ??
+      [];
+    const members = familyTags.flatMap((tagName) => {
+      const member = presentationFamilyFor(this.host, tagName);
+      return member ? [member] : [];
+    });
+    const bindings = [
       family.bindings[this.host.localName] ??
-        family.bindings[inheritedTag ?? this.host.localName] ??
+        (inheritedTag ? family.bindings[inheritedTag] : undefined) ??
         {},
-    )) {
+      ...members.map((member) => member.bindings[this.host.localName] ?? {}),
+    ];
+    const lightParts = new Map<HTMLElement, Map<string, boolean>>();
+    for (const [selector, part] of bindings.flatMap((set) => Object.entries(set))) {
       if (selector === ':host') {
         this.host.part.add(part);
         if (!this.#hostParts.has(part))
@@ -215,26 +274,14 @@ export class PresentationController implements ReactiveController {
     const axes = Object.fromEntries(
       (definition.axes ?? []).map((axis) => [
         axis.name,
-        (
-          (this.host.presentationOwner ??
-            (this.host.localName === 'tp-radio-group-item'
-              ? this.host.closest('tp-radio-group')
-              : null)) as unknown as Record<string, unknown> | null
-        )?.[axis.name] ?? (this.host as unknown as Record<string, unknown>)[axis.name],
+        (this.host.presentationOwner as unknown as Record<string, unknown> | null | undefined)?.[
+          axis.name
+        ] ?? (this.host as unknown as Record<string, unknown>)[axis.name],
       ]),
     );
     let resolved = resolveComponentPresentation(definition, axes, dictionary);
-    // A reused control can expose its compound's canonical parts through this
-    // same controller, keeping recipe and terminal hook ownership together.
-    const familyTags =
-      this.host.presentationFamilyTagNames ??
-      (this.host.constructor as { presentationFamilyTagNames?: readonly string[] })
-        .presentationFamilyTagNames ??
-      [];
     const structures: PresentationDictionary[] = [family.structure];
-    for (const tagName of familyTags) {
-      const member = presentationFamilyFor(this.host, tagName);
-      if (!member) continue;
+    for (const member of members) {
       structures.push(member.structure);
       const contribution = resolveComponentPresentation(
         member.definition,
@@ -257,13 +304,7 @@ export class PresentationController implements ReactiveController {
     );
     const css = Object.entries(mergedParts)
       .flatMap(([part, rules]) =>
-        rules.map((rule) => {
-          const target = `[part~="${part}"]`;
-          const selector = rule.selector?.includes('&')
-            ? rule.selector.replaceAll('&', target)
-            : target + (rule.selector ?? '');
-          return `${selector}{${serializeDeclarations(rule.declarations)}}`;
-        }),
+        rules.map((rule) => ruleCss(rule, selectorFor(rule, `[part~="${part}"]`))),
       )
       .join('\n');
     if (isShadowRoot(this.host.renderRoot)) {
@@ -281,21 +322,16 @@ export class PresentationController implements ReactiveController {
           const rules = roots.get(root) ?? [];
           roots.set(root, rules);
           for (const rule of mergedParts[part] ?? []) {
-            const target = `[data-tp-presentation-part~="${this.#id}-${part}"]`;
-            let selector = rule.selector?.includes('&')
-              ? rule.selector.replaceAll('&', target)
-              : target + (rule.selector ?? '');
             // The owning component may be outside this shadow tree. Evaluate owner
             // conditions here; do not accidentally bind :host to the member's host.
             let applies = true;
-            selector = selector
+            const selector = selectorFor(rule, `[data-tp-presentation-part~="${this.#id}-${part}"]`)
               .replace(/:host\(([^)]+)\)/g, (_match, condition: string) => {
                 applies &&= this.host.matches(condition);
                 return '';
               })
               .replace(/:host\b/g, '');
-            if (applies)
-              rules.push(`${selector.trim()}{${serializeDeclarations(rule.declarations)}}`);
+            if (applies) rules.push(ruleCss(rule, selector.trim()));
           }
         }
       }

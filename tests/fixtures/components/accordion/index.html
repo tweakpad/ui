@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Accordion verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 32px;
+        max-inline-size: 48rem;
+      }
+      h2 {
+        font-size: var(--tp-text-base);
+        margin: 0 0 8px;
+      }
+      template + * {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Accordion verification</h1>
+    <p>
+      Variants, per-item configuration and motion scenarios that were previously Storybook
+      configuration stories, with the ported browser checks; see <code>README.md</code>.
+    </p>
+    <template id="items">
+      <tp-accordion-item value="account" heading-level="2">
+        <span slot="label">Account settings</span>
+        <p>Your public profile starts here.</p>
+        <p>
+          Choose how your name appears to your team, update the email used for account notices, and
+          review the recovery options you would need if you lost access to your usual device.
+        </p>
+      </tp-accordion-item>
+      <tp-accordion-item value="security" heading-level="2">
+        <span slot="label">Security</span>
+        <p>Require a second step when signing in from a new device or location.</p>
+        <p>Save your backup codes offline.</p>
+      </tp-accordion-item>
+      <tp-accordion-item value="billing" heading-level="2">
+        <span slot="label">Billing</span>
+        <p>
+          Review every invoice from the current subscription, download receipts for your records,
+          and compare charges across billing periods before making a change.
+        </p>
+        <p>Update the payment method used for future charges.</p>
+        <p>Changes apply to your next invoice.</p>
+      </tp-accordion-item>
+    </template>
+    <main>
+      <section>
+        <h2>Variants</h2>
+        <div style="display: grid; gap: 24px">
+          <tp-accordion id="plain" variant="plain" value="account"></tp-accordion>
+          <tp-accordion id="line" variant="line" value="account"></tp-accordion>
+          <tp-accordion id="outline" variant="outline" value="account"></tp-accordion>
+          <tp-accordion id="separated" variant="separated" value="account"></tp-accordion>
+        </div>
+      </section>
+      <section>
+        <h2>Disabled item (Security)</h2>
+        <tp-accordion id="disabled-item" value="account" data-disable="security"></tp-accordion>
+      </section>
+      <section>
+        <h2>Disabled root</h2>
+        <tp-accordion id="disabled-root" disabled value="account"></tp-accordion>
+      </section>
+      <section>
+        <h2>Mixed indicator positions (Account and Billing leading)</h2>
+        <tp-accordion
+          id="mixed-indicators"
+          value="account"
+          data-leading="account billing"
+        ></tp-accordion>
+      </section>
+      <section>
+        <h2>Multiple, retained, find-in-page</h2>
+        <div style="display: grid; gap: 24px">
+          <tp-accordion
+            id="multiple"
+            selection-mode="multiple"
+            value="account security"
+          ></tp-accordion>
+          <tp-accordion id="retained" collapsible keep-mounted value="account"></tp-accordion>
+          <tp-accordion
+            id="find-in-page"
+            collapsible
+            hidden-until-found
+            value="account"
+          ></tp-accordion>
+        </div>
+      </section>
+      <section>
+        <h2>External line-by-line motion and reduced motion</h2>
+        <div style="display: grid; gap: 24px">
+          <tp-accordion id="line-by-line" value="account" data-line-by-line></tp-accordion>
+          <tp-accordion
+            id="reduced-motion"
+            motion-policy="reduce"
+            collapsible
+            value="account"
+            data-line-by-line
+          ></tp-accordion>
+        </div>
+      </section>
+    </main>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      const items = document.querySelector('#items').content;
+      for (const accordion of document.querySelectorAll('tp-accordion')) {
+        accordion.append(items.cloneNode(true));
+        for (const value of accordion.dataset.disable?.split(' ') ?? [])
+          accordion
+            .querySelector(`tp-accordion-item[value="${value}"]`)
+            .setAttribute('disabled', '');
+        for (const value of accordion.dataset.leading?.split(' ') ?? [])
+          accordion
+            .querySelector(`tp-accordion-item[value="${value}"]`)
+            .setAttribute('indicator-position', 'leading');
+      }
+      const { playLineByLine } = await import('/src/stories/line-by-line-motion.ts');
+      for (const accordion of document.querySelectorAll('tp-accordion[data-line-by-line]'))
+        accordion.addEventListener('tp-motion-request', (event) => {
+          if (event.request.role === 'content') event.respondWith({ play: playLineByLine });
+        });
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      window.accordionContract = await import('./contract-checks.js');
+      await customElements.whenDefined('tp-accordion-item');
+      document.documentElement.dataset.ready = '';
+    </script>
+  </body>
+</html>

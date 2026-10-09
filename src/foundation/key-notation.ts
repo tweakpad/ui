@@ -63,13 +63,18 @@ const symbols: Record<string, string> = {
   arrowleft: '←',
   arrowright: '→',
 };
+/** The canonical lowercase name of an authored key: `Esc`, `Return`, `⌘` and friends resolved. */
+export function canonicalKeyName(key: string): string {
+  const normalized = key.toLowerCase();
+  return Object.hasOwn(aliases, normalized) ? aliases[normalized]! : normalized;
+}
+
 export function keyHintNotation(
   key: string,
   platform: ResolvedKeyHintPlatform,
   labels: KeyHintLabels = {},
 ): { text: string; label: string } {
-  const normalized = key.toLowerCase();
-  let name = Object.hasOwn(aliases, normalized) ? aliases[normalized]! : normalized;
+  let name = canonicalKeyName(key);
   if (name === 'mod') name = platform === 'mac' ? 'command' : 'control';
   const override = Object.hasOwn(labels, key)
     ? labels[key]

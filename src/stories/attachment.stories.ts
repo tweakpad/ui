@@ -30,9 +30,7 @@ document.body.append(attachment);`;
 const meta = {
   title: 'Components/Attachment',
   component: 'tp-attachment',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       source: { code: source, language: 'javascript' },

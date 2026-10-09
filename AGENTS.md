@@ -11,8 +11,8 @@ Apply it to every existing and future component; examples do not restrict scope.
 - Investigate the supplied local references in `../specification/external/`.
   Implement with LitElement and shared internal infrastructure, without React or
   upstream runtime dependencies.
-- Use Google Chrome DevTools MCP exclusively for browser verification. Existing
-  Playwright smoke scripts do not override this requirement.
+- Use Google Chrome DevTools MCP exclusively for browser verification; the fixtures
+  under `tests/fixtures/components/` are driven through it, never through another driver.
 - Reuse existing component-family behavior, components and presentation recipes
   in implementations, demos, stories, documentation examples and fixtures. Trace
   upstream imports/reexports and external styles before choosing local owners.

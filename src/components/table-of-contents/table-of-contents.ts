@@ -10,6 +10,7 @@ import {
   prepareMotion,
   type MotionHandle,
   type MotionRoleDefinition,
+  stateRole,
 } from '../../foundation/motion.js';
 import { observeResize } from '../../foundation/observation.js';
 import { scrollableAncestors } from '../../foundation/scroll.js';
@@ -26,7 +27,7 @@ export const DEFAULT_TABLE_OF_CONTENTS_MESSAGES: Required<TableOfContentsMessage
 };
 
 export const tableOfContentsMotionRoles = {
-  indicator: { name: 'indicator', kind: 'state', phases: ['change'], completion: 'non-blocking' },
+  indicator: stateRole('indicator'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
 /** The decoded identifier a URL fragment names, or null. */
@@ -307,7 +308,7 @@ export class TpTableOfContents extends TpElement {
   }
 
   #diagnostic(code: string, message: string): void {
-    this.emit('tp-diagnostic', { code, message });
+    this.diagnose(code, message);
   }
 
   #spied(result: ScrollSpyResult<string>): void {
@@ -501,5 +502,11 @@ export class TpTableOfContents extends TpElement {
         <slot @slotchange=${this.#slotChange}></slot>
       </div>
     </nav>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-table-of-contents': TpTableOfContents;
   }
 }

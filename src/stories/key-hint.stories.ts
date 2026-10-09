@@ -11,9 +11,7 @@ interface Args {
 const meta = {
   title: 'Components/Key hint',
   component: 'tp-key-hint',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: keyHintExamples,

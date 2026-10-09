@@ -1,3 +1,4 @@
+import { arrowKeys } from '../collection.js';
 import type { Direction } from '../types.js';
 import type { TreeModel, VisibleRows } from './model.js';
 
@@ -42,8 +43,7 @@ export function treeKeyAction(input: TreeKeyInput, context: TreeKeyContext): Tre
   if (!node) return null;
   const command = input.ctrlKey || input.metaKey;
   if (input.altKey) return null;
-  const forward = context.direction === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
-  const backward = context.direction === 'rtl' ? 'ArrowRight' : 'ArrowLeft';
+  const { next: forward, previous: backward } = arrowKeys('horizontal', context.direction);
   switch (input.key) {
     case 'ArrowDown':
     case 'ArrowUp': {

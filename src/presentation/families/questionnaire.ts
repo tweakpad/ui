@@ -6,76 +6,37 @@ const definition: ComponentDefinition = {
   name: 'Questionnaire',
   tagName: 'tp-questionnaire',
   kind: 'compound-reexport',
-  sourceNode: 'ucl17-questionnaire',
   axes: [],
   parts: [
     {
       name: 'questionnaire',
-      publicName: 'Root',
-      presentationKeys: ['questionnaire'],
-      cardinality: 'exactly one public owner host per control instance',
     },
     {
       name: 'questionnaire-progress',
-      publicName: 'Progress',
-      presentationKeys: ['questionnaire-progress'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'questionnaire-question',
-      publicName: 'Question',
-      presentationKeys: ['questionnaire-question'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'questionnaire-title',
-      publicName: 'Title',
-      presentationKeys: ['questionnaire-title'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'questionnaire-description',
-      publicName: 'Description',
-      presentationKeys: ['questionnaire-description'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'questionnaire-choices',
-      publicName: 'Choices',
-      presentationKeys: ['questionnaire-choices'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'questionnaire-choice',
-      publicName: 'Choice',
-      presentationKeys: ['questionnaire-choice'],
-      cardinality: 'zero or more descendants of Root; cited behavior sets any stronger minimum',
     },
     {
       name: 'questionnaire-input-region',
-      publicName: 'Input region',
-      presentationKeys: ['questionnaire-input-region'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'questionnaire-error',
-      publicName: 'Error',
-      presentationKeys: ['questionnaire-error'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
     {
       name: 'questionnaire-actions',
-      publicName: 'Actions',
-      presentationKeys: ['questionnaire-actions'],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
     },
   ],
 };

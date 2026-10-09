@@ -72,8 +72,7 @@ export class ViewportTrigger {
       );
     this.#releases.push(
       observeIntersection(this.element, (entry) => {
-        if (this.options.marker)
-          this.element.setAttribute('data-in-view', String(entry.isIntersecting));
+        if (this.options.marker) this.element.toggleAttribute('data-in-view', entry.isIntersecting);
         // Fully out of view: a repeating reveal returns to its start state.
         if (!repeat) this.#inView = entry.isIntersecting;
         else if (!entry.isIntersecting) {

@@ -3,9 +3,7 @@ import type { TpDialog } from '../../../../src/components/dialog/index.js';
 const controlled = document.querySelector<TpDialog>('#controlled')!;
 controlled.open = false;
 const events: unknown[] = [];
-for (const dialog of document.querySelectorAll<TpDialog>(
-  'tp-alert-dialog, tp-dialog, tp-drawer, tp-side-panel',
-)) {
+for (const dialog of document.querySelectorAll<TpDialog>('tp-alert-dialog, tp-dialog, tp-drawer')) {
   dialog.addEventListener('tp-open-change', (event: Event) => {
     if (event.target !== dialog) return;
     const detail = (event as CustomEvent).detail;

@@ -1,6 +1,8 @@
 import type { ReactiveControllerHost } from 'lit';
 import { ControllableState, orderedValuesEqual } from './controllable-state.js';
 import { TpValueChangeEvent } from './events.js';
+import { OwnedAttributes } from './owned-attributes.js';
+import { reportDiagnostic } from './services.js';
 import type { ChangeReason } from './types.js';
 
 export interface CheckboxGroupMember extends HTMLElement {
@@ -61,14 +63,12 @@ export class CheckboxGroupController {
   #observer: MutationObserver;
   #scheduled = false;
   #disposed = false;
-  #originalRole: string | null;
-  #originalDisabled: string | null;
+  readonly #attributes: OwnedAttributes;
   #diagnostics = new Set<string>();
   constructor(host: HTMLElement, options: CheckboxGroupOptions = {}) {
     if (owners.has(host)) throw new Error('This host already has a CheckboxGroupController.');
     this.host = host;
-    this.#originalRole = host.getAttribute('role');
-    this.#originalDisabled = host.getAttribute('aria-disabled');
+    this.#attributes = new OwnedAttributes(host);
     this.#options = { ...options };
     const adapter = {
       addController: () => {},
@@ -91,7 +91,7 @@ export class CheckboxGroupController {
     });
     owners.set(host, this);
     if (!host.hasAttribute('role') && host.localName !== 'fieldset')
-      host.setAttribute('role', 'group');
+      this.#attributes.set('role', 'group');
     this.#observer = new host.ownerDocument.defaultView!.MutationObserver(() => this.refresh());
     this.#observer.observe(host, {
       childList: true,
@@ -235,7 +235,7 @@ export class CheckboxGroupController {
       );
       for (const member of this.#members)
         if (!members.includes(member) && member.checkboxGroup === this) member.checkboxGroup = null;
-      this.host.setAttribute('aria-disabled', String(this.disabled));
+      this.#attributes.set('aria-disabled', String(this.disabled));
       this.#members = members;
       this.#excluded.clear();
       const values = new Set<string>();
@@ -261,20 +261,13 @@ export class CheckboxGroupController {
     for (const member of this.#members)
       if (member.checkboxGroup === this) member.checkboxGroup = null;
     this.#members = [];
-    if (this.#originalRole === null) this.host.removeAttribute('role');
-    else this.host.setAttribute('role', this.#originalRole);
-    if (this.#originalDisabled === null) this.host.removeAttribute('aria-disabled');
-    else this.host.setAttribute('aria-disabled', this.#originalDisabled);
+    this.#attributes.dispose();
   }
   #diagnose(code: string, message: string): void {
-    if (this.#diagnostics.has(code)) return;
-    this.#diagnostics.add(code);
-    this.host.dispatchEvent(
-      new CustomEvent('tp-diagnostic', {
-        bubbles: true,
-        composed: true,
-        detail: { code: 'checkbox-group-' + code, message },
-      }),
+    reportDiagnostic(
+      this.host,
+      { code: 'checkbox-group-' + code, message, severity: 'warning' },
+      { once: this.#diagnostics },
     );
   }
 }

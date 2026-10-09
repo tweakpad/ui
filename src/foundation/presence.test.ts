@@ -1,3 +1,4 @@
+import { fakeHost } from './fakes.test.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReactiveControllerHost } from 'lit';
 import { PresenceController } from './presence.js';
@@ -14,11 +15,7 @@ function setup() {
   });
   vi.stubGlobal('cancelAnimationFrame', (key: number) => frames.delete(key));
   vi.stubGlobal('window', globalThis);
-  const host = {
-    addController: vi.fn(),
-    removeController: vi.fn(),
-    requestUpdate: vi.fn(),
-  } as unknown as ReactiveControllerHost;
+  const host = fakeHost();
   const complete = vi.fn();
   let retained = false;
   const controller = new PresenceController(host, {
@@ -93,12 +90,7 @@ describe('presence lifecycle', () => {
     };
     const first = makeWindow();
     const second = makeWindow();
-    const host = {
-      addController: vi.fn(),
-      removeController: vi.fn(),
-      requestUpdate: vi.fn(),
-      ownerDocument: { defaultView: first.view },
-    };
+    const host = fakeHost({ ownerDocument: { defaultView: first.view } });
     const completed = vi.fn();
     const controller = new PresenceController(host as unknown as ReactiveControllerHost, {
       onComplete: completed,

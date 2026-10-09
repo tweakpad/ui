@@ -1,52 +1,18 @@
-/** Cached locale date, relative-time and duration formatting shared by locale services. */
-type LocaleInput = string | readonly string[] | undefined;
+/** Cached locale date, relative-time, list and duration formatting shared by locale services. */
+import { cachedIntl, numberFormatter, type LocaleInput } from './intl.js';
 
-const limit = 64;
-function cached<T>(cache: Map<string, T>, key: string, create: () => T): T {
-  let value = cache.get(key);
-  if (!value) {
-    value = create();
-    if (cache.size >= limit) cache.delete(cache.keys().next().value!);
-    cache.set(key, value);
-  }
-  return value;
-}
+export const dateTimeFormatter = cachedIntl(
+  (locale, options?: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, options),
+);
 
-const dateTimeFormatters = new Map<string, Intl.DateTimeFormat>();
-export function dateTimeFormatter(
-  locale?: LocaleInput,
-  options?: Intl.DateTimeFormatOptions,
-): Intl.DateTimeFormat {
-  return cached(
-    dateTimeFormatters,
-    JSON.stringify([locale, options]),
-    () => new Intl.DateTimeFormat(locale as string | string[] | undefined, options),
-  );
-}
+export const relativeTimeFormatter = cachedIntl(
+  (locale, options?: Intl.RelativeTimeFormatOptions) =>
+    new Intl.RelativeTimeFormat(locale, options),
+);
 
-const relativeTimeFormatters = new Map<string, Intl.RelativeTimeFormat>();
-export function relativeTimeFormatter(
-  locale?: LocaleInput,
-  options?: Intl.RelativeTimeFormatOptions,
-): Intl.RelativeTimeFormat {
-  return cached(
-    relativeTimeFormatters,
-    JSON.stringify([locale, options]),
-    () => new Intl.RelativeTimeFormat(locale as string | string[] | undefined, options),
-  );
-}
-
-const listFormatters = new Map<string, Intl.ListFormat>();
-export function listFormatter(
-  locale?: LocaleInput,
-  options?: Intl.ListFormatOptions,
-): Intl.ListFormat {
-  return cached(
-    listFormatters,
-    JSON.stringify([locale, options]),
-    () => new Intl.ListFormat(locale as string | string[] | undefined, options),
-  );
-}
+export const listFormatter = cachedIntl(
+  (locale, options?: Intl.ListFormatOptions) => new Intl.ListFormat(locale, options),
+);
 
 export type DurationStyle = 'long' | 'short' | 'narrow';
 export interface DurationRecord {
@@ -76,16 +42,12 @@ const durationUnits = [
   ['minutes', 'minute'],
   ['seconds', 'second'],
 ] as const;
-const durationFormatters = new Map<string, DurationFormatter>();
-/** Locale duration text; falls back to localized unit lists when Intl.DurationFormat is absent. */
-export function durationFormatter(
-  locale?: LocaleInput,
-  style: DurationStyle = 'long',
-): DurationFormatter {
-  return cached(durationFormatters, JSON.stringify([locale, style]), () => {
+const durationFormatters = cachedIntl(
+  (locale, style: DurationStyle | undefined): DurationFormatter => {
+    const unitDisplay = style ?? 'long';
     const native = (Intl as unknown as { DurationFormat?: DurationFormatConstructor })
       .DurationFormat;
-    if (native) return new native(locale as string | string[] | undefined, { style });
+    if (native) return new native(locale, { style: unitDisplay });
     return {
       format(duration: DurationRecord): string {
         const seconds = (duration.seconds ?? 0) + (duration.milliseconds ?? 0) / 1000;
@@ -96,21 +58,24 @@ export function durationFormatter(
           )
           .filter(([value]) => value !== 0)
           .map(([value, unit]) =>
-            new Intl.NumberFormat(locale as string | string[] | undefined, {
+            numberFormatter(locale, {
               style: 'unit',
               unit,
-              unitDisplay: style,
+              unitDisplay,
               maximumFractionDigits: 3,
             }).format(value),
           );
         if (!parts.length)
-          return new Intl.NumberFormat(locale as string | string[] | undefined, {
-            style: 'unit',
-            unit: 'second',
-            unitDisplay: style,
-          }).format(0);
-        return listFormatter(locale, { type: 'unit', style }).format(parts);
+          return numberFormatter(locale, { style: 'unit', unit: 'second', unitDisplay }).format(0);
+        return listFormatter(locale, { type: 'unit', style: unitDisplay }).format(parts);
       },
     };
-  });
+  },
+);
+/** Locale duration text; falls back to localized unit lists when Intl.DurationFormat is absent. */
+export function durationFormatter(
+  locale?: LocaleInput,
+  style: DurationStyle = 'long',
+): DurationFormatter {
+  return durationFormatters(locale, style);
 }

@@ -9,9 +9,9 @@ import { eventReason } from '../shared/events.js';
 import { chevronRightIcon } from '../../icons/chevron-right.js';
 import { navigationIcons } from '../../icons/navigation.js';
 import { paginationPresentation } from '../../presentation/families/pagination.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 
 /** Destination navigation composed from the library's actual link Button. */
 export class TpPagination extends TpElement {
@@ -279,4 +279,10 @@ export function pageWindow(current: number, total: number): (number | null)[] {
   if (end < total - 1) result.push(null);
   result.push(total);
   return result;
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-pagination': TpPagination;
+  }
 }

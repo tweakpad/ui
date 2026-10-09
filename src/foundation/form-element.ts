@@ -204,6 +204,10 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     } else this.internals?.setFormValue(this.effectiveDisabled ? null : value, state);
   }
 
+  /** The shared `required` outcome: `valueMissing` while required and empty, clear otherwise. */
+  protected setRequiredValidity(missing: boolean, message: string, anchor?: HTMLElement): void {
+    this.setValidity(missing ? { valueMissing: true } : {}, missing ? message : '', anchor);
+  }
   protected setValidity(flags: ValidityStateFlags = {}, message = '', anchor?: HTMLElement): void {
     this.internals?.setValidity(flags, message, anchor);
     const invalid = Object.values(flags).some(Boolean);

@@ -1,4 +1,5 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
+import { defaultTrue } from '../../foundation/converters.js';
 import { TpElement } from '../../foundation/element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
@@ -83,11 +84,6 @@ const positionConverter = {
 const boundsConverter = {
   fromAttribute: (value: string | null) => (value === null ? null : parseBounds(value)),
 };
-/** `interactive` defaults to true; only the text `false` turns it off. */
-const defaultTrueConverter = {
-  fromAttribute: (value: string | null) => value !== 'false',
-  toAttribute: (value: boolean) => (value ? null : 'false'),
-};
 const finiteOr = (value: unknown, fallback: number) =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 
@@ -148,7 +144,7 @@ export class TpMap extends TpElement implements MapApi {
     defaultSelectedPin: { attribute: 'default-selected-pin' },
     reveal: { type: String },
     revealZoom: { type: Number, attribute: 'reveal-zoom' },
-    interactive: { converter: defaultTrueConverter },
+    interactive: { converter: defaultTrue },
     cooperativeGestures: { type: Boolean, attribute: 'cooperative-gestures' },
     theme: { attribute: false },
     label: { type: String },
@@ -779,7 +775,7 @@ export class TpMap extends TpElement implements MapApi {
   }
 
   #diagnostic(code: string, message: string): void {
-    this.emit('tp-diagnostic', { code, message });
+    this.diagnose(code, message);
   }
 
   #observeSize(): void {
@@ -1030,5 +1026,11 @@ export class TpMap extends TpElement implements MapApi {
     }
     this.#colorCache.set(value, result);
     return result;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-map': TpMap;
   }
 }

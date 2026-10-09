@@ -1,4 +1,5 @@
-import type { PresentationRecord } from './dictionary.js';
+/** A token set: role names to CSS values. */
+export type PresentationRecord = Readonly<Record<string, string | number | boolean | null>>;
 
 export const TOKEN_FAMILIES = {
   color: [

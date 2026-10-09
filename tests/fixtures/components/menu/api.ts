@@ -601,7 +601,7 @@ export function installFamilyAPI(library: Library, built: boolean): void {
             'Independent viewport removal lost content/state',
           );
           assert(
-            items[1]!.item.contentElement?.getAttribute('data-viewport') === 'false',
+            items[1]!.item.contentElement?.hasAttribute('data-viewport') === false,
             'Direct content presentation marker stale',
           );
         });

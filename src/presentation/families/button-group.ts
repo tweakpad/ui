@@ -6,7 +6,6 @@ const definition: ComponentDefinition = {
   name: 'Button group',
   tagName: 'tp-button-group',
   kind: 'preset-composition',
-  sourceNode: 'ucl22-button-group',
   axes: [
     {
       name: 'orientation',
@@ -17,46 +16,19 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'button-group',
-      publicName: 'Root',
-      presentationKeys: [
-        'button-group',
-        'button-group-orientation-horizontal',
-        'button-group-orientation-vertical',
-      ],
-      cardinality: 'exactly one public owner host per control instance',
+      axes: ['orientation'],
     },
     {
       name: 'button-group-control',
-      publicName: 'Control',
-      presentationKeys: [
-        'button-group-control',
-        'button-group-control-orientation-horizontal',
-        'button-group-control-orientation-vertical',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'button-group-text-segment',
-      publicName: 'Text segment',
-      presentationKeys: [
-        'button-group-text-segment',
-        'button-group-text-segment-orientation-horizontal',
-        'button-group-text-segment-orientation-vertical',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
     {
       name: 'button-group-separator',
-      publicName: 'Separator',
-      presentationKeys: [
-        'button-group-separator',
-        'button-group-separator-orientation-horizontal',
-        'button-group-separator-orientation-vertical',
-      ],
-      cardinality:
-        'zero or one descendant of Root; cited behavior sets any required-presence condition',
+      axes: ['orientation'],
     },
   ],
 };

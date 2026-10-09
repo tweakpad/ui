@@ -177,3 +177,9 @@ export class TpMessage extends TpElement {
     });
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-message': TpMessage;
+  }
+}

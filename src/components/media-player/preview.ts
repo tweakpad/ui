@@ -318,3 +318,9 @@ export class TpMediaTimeSliderPreview extends TpMediaElement implements MediaPre
     void this.#handle.update();
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-time-slider-preview': TpMediaTimeSliderPreview;
+  }
+}

@@ -1,3 +1,4 @@
+import { keyEvent } from '../fakes.test.js';
 import { describe, expect, it, vi } from 'vitest';
 import { TreeModel, VisibleRows, type TreeAccessors } from './model.js';
 import {
@@ -49,15 +50,6 @@ const items: Item[] = [
 
 const build = (list: Item[] = items, loaded?: Map<string, Item[]>) =>
   new TreeModel({ items: list, accessors, ...(loaded ? { loaded } : {}) });
-
-const key = (k: string, modifiers: Partial<TreeKeyInput> = {}): TreeKeyInput => ({
-  key: k,
-  shiftKey: false,
-  ctrlKey: false,
-  metaKey: false,
-  altKey: false,
-  ...modifiers,
-});
 
 describe('tree model', () => {
   it('records parents, depths, sibling positions and expandability', () => {
@@ -234,54 +226,61 @@ describe('keyboard', () => {
     });
 
   it('follows the APG tree map', () => {
-    expect(action(key('ArrowDown'), 'src')).toEqual({ type: 'focus', id: 'app', extend: false });
-    expect(action(key('ArrowUp'), 'src')).toBeNull();
-    expect(action(key('ArrowRight'), 'docs')).toEqual({ type: 'expand', id: 'docs' });
-    expect(action(key('ArrowRight'), 'app')).toEqual({ type: 'focus', id: 'main.ts' });
-    expect(action(key('ArrowRight'), 'main.ts')).toBeNull();
-    expect(action(key('ArrowLeft'), 'app')).toEqual({ type: 'collapse', id: 'app' });
-    expect(action(key('ArrowLeft'), 'main.ts')).toEqual({ type: 'focus', id: 'app' });
-    expect(action(key('ArrowLeft'), 'docs')).toBeNull();
-    expect(action(key('Home'), 'docs')).toEqual({ type: 'focus', id: 'src' });
-    expect(action(key('End'), 'src')).toEqual({ type: 'focus', id: 'package.json' });
-    expect(action(key('*', { shiftKey: true }), 'app')).toEqual({
+    expect(action(keyEvent('ArrowDown'), 'src')).toEqual({
+      type: 'focus',
+      id: 'app',
+      extend: false,
+    });
+    expect(action(keyEvent('ArrowUp'), 'src')).toBeNull();
+    expect(action(keyEvent('ArrowRight'), 'docs')).toEqual({ type: 'expand', id: 'docs' });
+    expect(action(keyEvent('ArrowRight'), 'app')).toEqual({ type: 'focus', id: 'main.ts' });
+    expect(action(keyEvent('ArrowRight'), 'main.ts')).toBeNull();
+    expect(action(keyEvent('ArrowLeft'), 'app')).toEqual({ type: 'collapse', id: 'app' });
+    expect(action(keyEvent('ArrowLeft'), 'main.ts')).toEqual({ type: 'focus', id: 'app' });
+    expect(action(keyEvent('ArrowLeft'), 'docs')).toBeNull();
+    expect(action(keyEvent('Home'), 'docs')).toEqual({ type: 'focus', id: 'src' });
+    expect(action(keyEvent('End'), 'src')).toEqual({ type: 'focus', id: 'package.json' });
+    expect(action(keyEvent('*', { shiftKey: true }), 'app')).toEqual({
       type: 'expand-siblings',
       id: 'app',
     });
-    expect(action(key('Enter'), 'app')).toEqual({ type: 'activate', id: 'app' });
-    expect(action(key(' '), 'app')).toEqual({ type: 'toggle', id: 'app' });
+    expect(action(keyEvent('Enter'), 'app')).toEqual({ type: 'activate', id: 'app' });
+    expect(action(keyEvent(' '), 'app')).toEqual({ type: 'toggle', id: 'app' });
   });
 
   it('mirrors horizontal keys in right-to-left direction', () => {
-    expect(action(key('ArrowLeft'), 'docs', { rtl: true })).toEqual({ type: 'expand', id: 'docs' });
-    expect(action(key('ArrowRight'), 'main.ts', { rtl: true })).toEqual({
+    expect(action(keyEvent('ArrowLeft'), 'docs', { rtl: true })).toEqual({
+      type: 'expand',
+      id: 'docs',
+    });
+    expect(action(keyEvent('ArrowRight'), 'main.ts', { rtl: true })).toEqual({
       type: 'focus',
       id: 'app',
     });
   });
 
   it('offers range keys only in multiple mode', () => {
-    expect(action(key('ArrowDown', { shiftKey: true }), 'src', { multiple: true })).toEqual({
+    expect(action(keyEvent('ArrowDown', { shiftKey: true }), 'src', { multiple: true })).toEqual({
       type: 'focus',
       id: 'app',
       extend: true,
     });
-    expect(action(key(' ', { shiftKey: true }), 'src')).toBeNull();
-    expect(action(key(' ', { shiftKey: true }), 'src', { multiple: true })).toEqual({
+    expect(action(keyEvent(' ', { shiftKey: true }), 'src')).toBeNull();
+    expect(action(keyEvent(' ', { shiftKey: true }), 'src', { multiple: true })).toEqual({
       type: 'select-range',
       id: 'src',
     });
     expect(
-      action(key('End', { shiftKey: true, ctrlKey: true }), 'src', { multiple: true }),
+      action(keyEvent('End', { shiftKey: true, ctrlKey: true }), 'src', { multiple: true }),
     ).toEqual({
       type: 'select-to-edge',
       id: 'package.json',
       edge: 'end',
     });
-    expect(action(key('a', { metaKey: true }), 'src', { multiple: true })).toEqual({
+    expect(action(keyEvent('a', { metaKey: true }), 'src', { multiple: true })).toEqual({
       type: 'select-all',
     });
-    expect(action(key('a', { metaKey: true }), 'src')).toBeNull();
+    expect(action(keyEvent('a', { metaKey: true }), 'src')).toBeNull();
   });
 });
 

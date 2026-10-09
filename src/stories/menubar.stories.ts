@@ -3,7 +3,7 @@ import { html } from 'lit';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { navigationIcons } from '../icons/navigation.js';
 import { plusIcon } from '../icons/plus.js';
-import type { TpIcon } from '../components/icon.js';
+import type { TpIcon } from '../components/icon/icon.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpMenubar } from '../components/menubar/index.js';
@@ -74,7 +74,6 @@ const setupIcons = (element: Element | undefined): void => {
 const meta: Meta<Args> = {
   title: 'Components/Menubar',
   component: 'tp-menubar',
-  tags: ['autodocs'],
   parameters: {
     layout: 'centered',
     docs: {

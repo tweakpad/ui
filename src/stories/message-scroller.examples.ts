@@ -1,14 +1,14 @@
 import { html } from 'lit';
 import './message-scroller-streaming.js';
+import { publishedIconImports } from './documentation-examples.js';
 import { messageScrollerUseCases } from './message-scroller-use-cases.js';
 import streamingSource from './message-scroller-streaming.ts?raw';
 import casesSource from './message-scroller-use-cases.ts?raw';
 
 const packageImports = (source: string) =>
-  source
+  publishedIconImports(source)
     .replaceAll('../components/message-scroller/index.js', '@tweakpad/ui')
-    .replaceAll('../foundation/motion.js', '@tweakpad/ui')
-    .replaceAll(/'\.\.\/icons\/([^']+)\.js'/g, "'@tweakpad/ui/icons/$1'");
+    .replaceAll('../foundation/motion.js', '@tweakpad/ui');
 const sharedCode = `import '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\n${packageImports(streamingSource)}`;
 // A single copyable module, with the shared demo owner defined before its subclass.
 const standaloneCases = casesSource

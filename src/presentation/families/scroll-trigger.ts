@@ -5,20 +5,13 @@ const definition: ComponentDefinition = {
   name: 'Scroll trigger',
   tagName: 'tp-scroll-trigger',
   kind: 'thin-wrapper',
-  sourceNode: 'ucl21-scroll-trigger',
   axes: [],
   parts: [
     {
       name: 'scroll-trigger',
-      publicName: 'Root',
-      presentationKeys: ['scroll-trigger'],
-      cardinality: 'exactly one public owner host per control instance',
     },
     {
       name: 'scroll-trigger-stage',
-      publicName: 'Stage',
-      presentationKeys: ['scroll-trigger-stage'],
-      cardinality: 'exactly one, in Root, around its content; sticky while pinned',
     },
   ],
 };

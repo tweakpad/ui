@@ -38,3 +38,9 @@ export class TpMediaContainer extends TpMediaElement {
     return html`<slot></slot>`;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-container': TpMediaContainer;
+  }
+}

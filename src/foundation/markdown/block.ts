@@ -10,7 +10,6 @@ import type {
   MarkdownAlign,
   MarkdownBlock,
   MarkdownListItem,
-  MarkdownParser,
   MarkdownRoot,
   MarkdownTableRow,
 } from './types.js';
@@ -736,6 +735,3 @@ function listsMatch(list: ListData, item: ListData): boolean {
 export function parseMarkdown(source: string): MarkdownRoot {
   return new BlockParser().parse(source.replace(/\r\n?/g, '\n'));
 }
-
-/** The built-in parser as a `MarkdownParser`. */
-export const builtinMarkdownParser: MarkdownParser = { name: 'builtin', parse: parseMarkdown };

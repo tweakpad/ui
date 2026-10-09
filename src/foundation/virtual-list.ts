@@ -1,6 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import { observeResize, observeScroll, scrollEventTarget } from './observation.js';
-import { scrollableAncestors } from './scroll.js';
+import { SCROLL_SETTLE_MS, scrollableAncestors, scrollport } from './scroll.js';
 import { ExtentIndex, virtualRange, type VirtualRange } from './virtual-range.js';
 
 export interface VirtualListOptions {
@@ -239,7 +239,7 @@ export class VirtualList implements ReactiveController {
         this.#target = null;
         this.#userScrolling = true;
         clearTimeout(this.#scrollIdle);
-        this.#scrollIdle = setTimeout(() => (this.#userScrolling = false), 150);
+        this.#scrollIdle = setTimeout(() => (this.#userScrolling = false), SCROLL_SETTLE_MS);
       },
     });
     const list = this.#options.list();
@@ -278,19 +278,12 @@ export class VirtualList implements ReactiveController {
   }
 
   #listStart(viewport: HTMLElement, list: HTMLElement): number {
-    const document = viewport.ownerDocument;
-    const listTop = list.getBoundingClientRect().top;
-    const viewportTop =
-      viewport === document.scrollingElement ? 0 : viewport.getBoundingClientRect().top;
-    const border = viewport === document.scrollingElement ? 0 : viewport.clientTop;
-    return listTop - viewportTop - border + viewport.scrollTop;
+    const port = scrollport(viewport);
+    return list.getBoundingClientRect().top - port.top + port.scrollTop;
   }
 
   #clientHeight(viewport: HTMLElement): number {
-    const document = viewport.ownerDocument;
-    return viewport === document.scrollingElement
-      ? (document.defaultView?.innerHeight ?? viewport.clientHeight)
-      : viewport.clientHeight;
+    return scrollport(viewport).height;
   }
 
   #compute(): void {

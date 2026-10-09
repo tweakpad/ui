@@ -3,12 +3,10 @@ import {
   clampParallaxDepth,
   parallaxGeometry,
   parallaxDriver,
-  parallaxProgress,
-  scrollAxis,
-  smoothProgress,
   supportsViewTimeline,
   timelineScrollContainer,
 } from './parallax.js';
+import { scrollAxis, smoothProgress } from './scroll-progress.js';
 
 describe('parallax geometry', () => {
   it('enlarges by the depth and travels half of it to either side', () => {
@@ -23,25 +21,6 @@ describe('parallax geometry', () => {
     expect(clampParallaxDepth(-1)).toBe(0);
     expect(clampParallaxDepth(0.4)).toBe(0.4);
     expect(clampParallaxDepth(Number.POSITIVE_INFINITY)).toBe(0);
-  });
-});
-
-describe('parallax progress', () => {
-  // A 100px box in an 800px viewport.
-  it('runs from -1 entering at the end to 1 leaving at the start', () => {
-    expect(parallaxProgress(800, 100, 0, 800)).toBe(-1);
-    expect(parallaxProgress(-100, 100, 0, 800)).toBe(1);
-    expect(parallaxProgress(350, 100, 0, 800)).toBeCloseTo(0);
-  });
-
-  it('clamps outside the visible extent and measures nested extents', () => {
-    expect(parallaxProgress(2000, 100, 0, 800)).toBe(-1);
-    expect(parallaxProgress(-900, 100, 0, 800)).toBe(1);
-    expect(parallaxProgress(250, 100, 200, 400)).toBeCloseTo(0);
-  });
-
-  it('reports rest for an empty extent', () => {
-    expect(parallaxProgress(0, 0, 0, 0)).toBe(0);
   });
 });
 

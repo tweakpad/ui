@@ -20,9 +20,7 @@ const scopeTo = (surface: Element | undefined) => {
 const meta: Meta<Args> = {
   title: 'Components/Theme switcher',
   component: 'tp-theme-switcher',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       source: {

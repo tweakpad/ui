@@ -1,5 +1,5 @@
 import type { PropertyValues } from 'lit';
-import type { Alignment, LogicalSide } from '../../foundation/positioning.js';
+import { themeSpacing, type Alignment, type LogicalSide } from '../../foundation/positioning.js';
 import type { TpOpenChangeEvent } from '../../foundation/events.js';
 import { mapPresentation } from '../../presentation/families/map.js';
 import { TpPopover } from '../popover/popover.js';
@@ -36,7 +36,7 @@ export class TpMapOverlay extends TpPopover {
     // Selection owns the open lane from the start (a surface keeps its initial control mode).
     this.open = false;
     this.initialFocus = 'none';
-    this.sideOffset = 8;
+    this.sideOffset = themeSpacing(this, 2);
     this.addEventListener('tp-open-change', this.#openChange as EventListener);
   }
 
@@ -104,4 +104,10 @@ export class TpMapOverlay extends TpPopover {
       .request('select-pin', null, { reason, sourceEvent: source, trigger: pin })
       .catch(() => undefined);
   };
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-map-overlay': TpMapOverlay;
+  }
 }

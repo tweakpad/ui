@@ -8,8 +8,8 @@ import type { TpValueChangeEvent } from '../../foundation/events.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { minusIcon } from '../../icons/minus.js';
 import { normalizeCode, codeOffset, type CodeValidation } from './normalize.js';
-import { otpFieldPresentation } from '../../presentation/families/otp-field.js';
-import { TpIcon } from '../icon.js';
+import { oneTimeCodeFieldPresentation } from '../../presentation/families/one-time-code-field.js';
+import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export interface CodeCompleteDetail {
@@ -23,13 +23,13 @@ export interface CodeInvalidDetail {
 }
 
 /** One native editor, one common value owner; visible positions never own editing state. */
-export class TpOtpField extends TpFormElement {
-  static tagName = 'tp-otp-field';
+export class TpOneTimeCodeField extends TpFormElement {
+  static tagName = 'tp-one-time-code-field';
   /** Library elements this element renders; defining it defines them too. */
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
     return [TpIcon];
   }
-  static override presentation = otpFieldPresentation;
+  static override presentation = oneTimeCodeFieldPresentation;
   static override properties = {
     ...TpFormElement.properties,
     length: { type: Number },
@@ -40,7 +40,7 @@ export class TpOtpField extends TpFormElement {
     normalizeValue: { attribute: false },
     groupLengths: { type: Array, attribute: 'group-lengths' },
     mask: { type: Boolean, reflect: true },
-    autoComplete: { type: String, attribute: 'autocomplete' },
+    autocomplete: { type: String },
     noAutofill: { type: Boolean, attribute: 'no-autofill', reflect: true },
     autoSubmit: { type: Boolean, attribute: 'auto-submit' },
     label: { type: String },
@@ -109,7 +109,7 @@ export class TpOtpField extends TpFormElement {
   normalizeValue: ((value: string) => string) | undefined;
   groupLengths: readonly number[] = [];
   mask = false;
-  autoComplete = 'one-time-code';
+  autocomplete = 'one-time-code';
   /** Opts the code editor out of host and extension autofill. */
   noAutofill = false;
   get effectiveNoAutofill(): boolean {
@@ -138,12 +138,11 @@ export class TpOtpField extends TpFormElement {
     readDefaultValue: () => this.#normalize(this.defaultValue ?? ''),
     hasDefaultValue: () => this.defaultValue !== undefined,
     onChange: (event) => this.onValueChange?.(event),
-    onCommit: () => {
+    onCommit: (value, previousValue, reason) => {
       this.#syncForm();
-      this.dispatchEvent(new Event('tp-field-value', { bubbles: true, composed: true }));
+      this.emit('tp-field-value', { value, previousValue, reason });
     },
-    diagnostic: (message) =>
-      this.emit('tp-diagnostic', { component: 'One-time code field', message }),
+    diagnostic: (message) => this.diagnose('one-time-code-field-state', message),
   });
   override get value(): string {
     return this.#normalize(this.#state.value);
@@ -253,7 +252,7 @@ export class TpOtpField extends TpFormElement {
             .value=${live(this.value)}
             aria-label=${this.label || nothing}
             inputmode=${this.inputMode}
-            autocomplete=${this.effectiveNoAutofill ? 'off' : this.autoComplete}
+            autocomplete=${this.effectiveNoAutofill ? 'off' : this.autocomplete}
             data-bwignore=${autofillHint(this.effectiveNoAutofill, 'data-bwignore')}
             data-1p-ignore=${autofillHint(this.effectiveNoAutofill, 'data-1p-ignore')}
             data-lpignore=${autofillHint(this.effectiveNoAutofill, 'data-lpignore')}
@@ -420,10 +419,7 @@ export class TpOtpField extends TpFormElement {
   #syncForm(): void {
     const value = this.value;
     this.setFormValue(this.effectiveDisabled ? null : value || null);
-    this.setValidity(
-      this.required && !this.complete ? { valueMissing: true } : {},
-      this.required && !this.complete ? 'Complete the code.' : '',
-    );
+    this.setRequiredValidity(this.required && !this.complete, 'Complete the code.');
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
@@ -432,8 +428,7 @@ export class TpOtpField extends TpFormElement {
       ? 'Supply a positive integer length, matching positive group lengths, and a characterPredicate for predicate validation.'
       : '';
     this.toggleAttribute('data-invalid-composition', !!issue);
-    if (issue && issue !== this.#diagnosed)
-      this.emit('tp-composition-diagnostic', { component: 'One-time code field', message: issue });
+    if (issue && issue !== this.#diagnosed) this.diagnose('one-time-code-field-composition', issue);
     this.#diagnosed = issue;
   }
   protected resetFormValue(): void {
@@ -453,5 +448,11 @@ export class TpOtpField extends TpFormElement {
     this.#compositionInput = undefined;
     this.#focused = false;
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-one-time-code-field': TpOneTimeCodeField;
   }
 }

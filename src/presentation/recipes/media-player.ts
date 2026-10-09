@@ -278,7 +278,6 @@ export const mediaPlayerAppearance: PresentationDictionary = {
   // Sliders compose `tp-slider`, whose recipe paints the track, range, buffer, chapters and
   // thumb; the media hosts only size the control (Video.js default skin slider widths).
   'media-time-slider': [{ declarations: { 'flex-grow': '1', 'min-inline-size': '0' } }],
-  'media-volume-slider': [],
   // Preview (Video.js default skin): the thumbnail sits on a translucent backdrop surface above
   // tabular text; the chapter title truncates to the preview width.
   'media-time-slider-preview': [
@@ -318,8 +317,6 @@ export const mediaPlayerAppearance: PresentationDictionary = {
       },
     },
   ],
-  'media-volume-popover': [],
-  'media-settings-menu': [],
   // Selected-value hint of a settings submenu trigger, before the Menu's chevron.
   'media-settings-hint': [
     {

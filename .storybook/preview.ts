@@ -8,6 +8,8 @@ import '../src/register.js';
 
 const preview = definePreview({
   addons: [addonDocs()],
+  // Every story file gets a Docs page; opt out per file with `tags: ['!autodocs']`.
+  tags: ['autodocs'],
   globalTypes: {
     density: {
       description: 'Token density preset (prototype)',
@@ -37,10 +39,11 @@ const preview = definePreview({
     docs: {
       page: DocumentationPage,
       source: { format: false },
-      // Every story on a docs page keeps the canvas toolbar (reload, zoom, open isolated).
-      canvas: { withToolbar: true },
+      // Every story on a docs page keeps the canvas toolbar (reload, zoom, open isolated). The
+      // Canvas block reads this parameter as a boolean; its declared type mirrors `withSource`.
+      canvas: { withToolbar: true as unknown as 'open' },
     },
-    layout: 'centered',
+    layout: 'padded',
   },
 });
 

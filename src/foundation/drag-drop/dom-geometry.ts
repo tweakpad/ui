@@ -4,6 +4,7 @@
  */
 import { Rectangle, validRectangle, type BoundingRectangle, type Coordinates } from './geometry.js';
 import { composedParent } from '../focus.js';
+import { visualViewportBox } from '../scroll.js';
 
 export interface Transform extends Coordinates {
   scaleX: number;
@@ -259,16 +260,8 @@ export function measureElement(
 export function viewportRectangle(element: Element): Rectangle | undefined {
   const view = element.ownerDocument.defaultView;
   if (!view) return;
-  const visual = view.visualViewport;
-  return applyTransform(
-    new Rectangle(
-      visual?.offsetLeft ?? 0,
-      visual?.offsetTop ?? 0,
-      visual?.width ?? view.innerWidth,
-      visual?.height ?? view.innerHeight,
-    ),
-    getFrameTransform(element),
-  );
+  const { x, y, width, height } = visualViewportBox(view);
+  return applyTransform(new Rectangle(x, y, width, height), getFrameTransform(element));
 }
 
 /** Only browser CSS transitions conflicting with final geometry are canceled. */

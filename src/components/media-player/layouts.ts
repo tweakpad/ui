@@ -52,11 +52,6 @@ import type { CustomElementConstructorWithTag } from '../../foundation/define.js
 export const MEDIA_LAYOUT_TOOLTIP_DELAY = 600;
 export const MEDIA_LAYOUT_TOOLTIP_REST = 400;
 
-/** Library breakpoints of the layouts (container widths; Video.js `media-lg`, `media-2xl`). */
-export const MEDIA_LAYOUT_BREAKPOINTS = Object.freeze({ lg: '32rem', '2xl': '42rem' });
-/** Width of the time group below which its time displays hide (Video.js `16rem`). */
-export const MEDIA_LAYOUT_TIME_COMPACT = '16rem';
-
 interface TooltipRegistration {
   element: HTMLElement;
   release: () => void;
@@ -64,10 +59,6 @@ interface TooltipRegistration {
 
 /** Structure shared by both layouts: regions, control groups and tooltip labels. */
 const layoutStyles = css`
-  :host([hidden]) {
-    display: none;
-  }
-
   .region {
     display: flex;
     align-items: center;
@@ -170,11 +161,10 @@ export abstract class TpMediaLayoutElement extends TpMediaElement {
       for (const token of unknown) {
         if (this.#diagnosed.has(token)) continue;
         this.#diagnosed.add(token);
-        this.emit('tp-diagnostic', {
-          code: 'media-layout-hide-token',
-          message: `<${this.localName}> hide="${token}" names no built-in control.`,
-          severity: 'warning',
-        });
+        this.diagnose(
+          'media-layout-hide-token',
+          `<${this.localName}> hide="${token}" names no built-in control.`,
+        );
       }
     }
   }
@@ -942,5 +932,12 @@ export class TpMediaAudioLayout extends TpMediaLayoutElement {
     return this.shows('volume')
       ? html`<tp-media-volume-popover></tp-media-volume-popover>`
       : nothing;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-video-layout': TpMediaVideoLayout;
+    'tp-media-audio-layout': TpMediaAudioLayout;
   }
 }

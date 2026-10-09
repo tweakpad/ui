@@ -10,7 +10,7 @@ import {
   observeScroll,
   scrollEventTarget,
 } from './observation.js';
-import { commonScrollContainer } from './scroll.js';
+import { commonScrollContainer, isDocumentScroller, scrollport } from './scroll.js';
 
 /** The axis progress is measured along: inline for a scroller that only scrolls sideways. */
 export type ScrollAxis = 'block' | 'inline';
@@ -22,10 +22,6 @@ export type ScrollAxis = 'block' | 'inline';
  * `entry` while entering and `exit` while leaving.
  */
 export type ScrollRange = 'cover' | 'contain' | 'entry' | 'exit';
-
-export function parseScrollRange(value: string | null | undefined): ScrollRange {
-  return value === 'cover' || value === 'entry' || value === 'exit' ? value : 'contain';
-}
 
 const clamp = (value: number) => Math.min(1, Math.max(0, value));
 
@@ -213,7 +209,7 @@ class ScrollField {
 
   constructor(readonly container: HTMLElement) {
     this.#view = container.ownerDocument.defaultView!;
-    this.#root = container === container.ownerDocument.scrollingElement;
+    this.#root = isDocumentScroller(container);
     this.#measureContainer();
     this.#release = [
       // The field owns its frame; the shared source only reports that scrolling happened.
@@ -248,16 +244,9 @@ class ScrollField {
   #read(): void {
     this.#measure = false;
     const inline = this.#axis === 'inline';
-    let visibleStart = 0,
-      visibleEnd = inline ? this.#view.innerWidth : this.#view.innerHeight;
-    if (!this.#root) {
-      const box = this.container.getBoundingClientRect();
-      visibleStart = inline
-        ? box.left + this.container.clientLeft
-        : box.top + this.container.clientTop;
-      visibleEnd =
-        visibleStart + (inline ? this.container.clientWidth : this.container.clientHeight);
-    }
+    const port = scrollport(this.container);
+    const visibleStart = inline ? port.left : port.top;
+    const visibleEnd = visibleStart + (inline ? port.width : port.height);
     const measured = [...this.members].map(
       ([element, member]) => [member, element.getBoundingClientRect()] as const,
     );

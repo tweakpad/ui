@@ -1,4 +1,4 @@
-import { LocaleService } from '../services.js';
+import { collator } from '../intl.js';
 import { foldedPrefixEnd, tokenize } from './normalize.js';
 import type { SearchRange } from './types.js';
 
@@ -9,21 +9,15 @@ export interface CollationOptions extends Intl.CollatorOptions {
 /** Where a query must match: anywhere, at the start, or at the end of the text. */
 export type CollationMatch = 'contains' | 'startsWith' | 'endsWith';
 
-const collators = new Map<string, Intl.Collator>();
-
 /** The shared search collator: base sensitivity, punctuation ignored, cached per option set. */
 export function searchCollator(options: CollationOptions = {}): Intl.Collator {
   const { locale, ...supplied } = options;
-  const comparison: Intl.CollatorOptions = {
+  return collator(locale, {
     usage: 'search',
     sensitivity: 'base',
     ignorePunctuation: true,
     ...supplied,
-  };
-  const key = JSON.stringify([locale, comparison]);
-  let collator = collators.get(key);
-  if (!collator) collators.set(key, (collator = new LocaleService(locale).collator(comparison)));
-  return collator;
+  });
 }
 
 /**

@@ -105,3 +105,9 @@ export class TpDrawerVirtualKeyboardProvider extends LitElement {
     return html`<slot></slot>`;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-drawer-virtual-keyboard-provider': TpDrawerVirtualKeyboardProvider;
+  }
+}

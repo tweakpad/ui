@@ -1,4 +1,4 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { moduleExample } from './documentation-examples.js';
 import { setupEmptyStateExample } from './empty-state-example.js';
 import setupSource from './empty-state-example.js?raw';
 
@@ -26,13 +26,16 @@ const search = `<tp-input-group style="inline-size:100%;max-inline-size:calc(var
 <span style="color:var(--tp-muted-foreground)">Need help? <a href="#support" style="color:inherit;text-underline-offset:var(--tp-space-1)">Contact support</a></span>`;
 const border = 'border:var(--tp-border-width) var(--tp-border-style) var(--tp-border)';
 function example(title: string, id: string, markup: string, description?: string) {
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    `<div id="${id}" style="inline-size:100%;min-inline-size:0">${markup}<tp-toast></tp-toast></div>`,
-    setupEmptyStateExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nconst cleanup = setupEmptyStateExample(document.getElementById('${id}'));\n// Call cleanup() when removing this example.`,
+    id,
+    markup: `${markup}<tp-toast></tp-toast>`,
     description,
-  );
+    wrapperStyle: 'inline-size:100%;min-inline-size:0',
+    setup: setupEmptyStateExample,
+    source: setupSource,
+    call: `const cleanup = setupEmptyStateExample(document.getElementById('${id}'));\n// Call cleanup() when removing this example.`,
+  });
 }
 export const emptyStateExamples = [
   example(

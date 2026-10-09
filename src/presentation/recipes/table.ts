@@ -66,7 +66,7 @@ export const tableAppearance: PresentationDictionary = {
     { selector: '&:hover', declarations: { [rowFill]: '1' } },
     {
       selector:
-        ':host([selection-presentation="row"]) &:is([data-selected]:not([data-selected="false"]),[data-state="selected"]), &[data-selection-presentation="row"][data-selected]',
+        ':host([selection-presentation="row"]) &[data-selected], &[data-selection-presentation="row"][data-selected]',
       declarations: { background: 'var(--tp-muted)', [rowFill]: '0' },
     },
   ],

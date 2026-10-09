@@ -1,6 +1,7 @@
 const params = new URLSearchParams(location.search);
 const built = params.has('built');
-if (built) document.querySelector<HTMLLinkElement>('link[rel=stylesheet]')!.href = '/dist/styles.css';
+if (built)
+  document.querySelector<HTMLLinkElement>('link[rel=stylesheet]')!.href = '/dist/styles.css';
 
 // Layout shifts are recorded from the start, before any element is defined.
 const shifts: { value: number; sources: string[] }[] = [];
@@ -41,7 +42,9 @@ for (const type of [
       type,
       detail:
         type === 'tp-text-split'
-          ? Object.fromEntries(Object.entries(detail).map(([key, list]) => [key, (list as unknown[]).length]))
+          ? Object.fromEntries(
+              Object.entries(detail).map(([key, list]) => [key, (list as unknown[]).length]),
+            )
           : detail,
       time: Math.round(performance.now()),
     });

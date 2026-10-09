@@ -5,7 +5,7 @@ import {
   type KeyHintLabels,
   type KeyHintPlatform,
   type ResolvedKeyHintPlatform,
-} from './notation.js';
+} from '../../foundation/key-notation.js';
 
 interface GroupContext {
   platform: ResolvedKeyHintPlatform;

@@ -81,3 +81,9 @@ export class TpMediaChapterTitle extends TpMediaElement {
     owned.set('hidden', this.text ? owned.original('hidden') : '');
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-chapter-title': TpMediaChapterTitle;
+  }
+}

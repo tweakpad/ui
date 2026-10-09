@@ -8,9 +8,8 @@ import {
   type StaggerFrom,
 } from '../../foundation/reveal-coordination.js';
 import { imagePresentation } from '../../presentation/families/image.js';
-import type { ImageGroupLoadingStatus } from './group-status.js';
 
-export type { ImageGroupLoadingStatus } from './group-status.js';
+export type ImageGroupLoadingStatus = 'idle' | 'loading' | 'loaded';
 
 /**
  * `tp-image-group`: coordinates the `tp-image` elements inside it (Foundation §18.17 `img-group`,
@@ -32,7 +31,6 @@ export type { ImageGroupLoadingStatus } from './group-status.js';
  */
 export class TpImageGroup extends TpElement {
   static tagName = 'tp-image-group';
-  static presentationTagName = 'tp-image';
   static override presentation = imagePresentation;
   static override properties = {
     ...TpElement.properties,
@@ -47,10 +45,6 @@ export class TpImageGroup extends TpElement {
     css`
       :host {
         display: block;
-      }
-
-      :host([hidden]) {
-        display: none;
       }
     `,
   ];
@@ -122,5 +116,11 @@ export class TpImageGroup extends TpElement {
 
   protected override render() {
     return html`<slot></slot>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-image-group': TpImageGroup;
   }
 }

@@ -1,14 +1,14 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
-import { TpElement } from '../foundation/element.js';
-import { TpFormElement } from '../foundation/form-element.js';
-import { ControllableState } from '../foundation/controllable-state.js';
-import type { TpValueChangeEvent } from '../foundation/events.js';
-import { SyntheticPress } from '../foundation/synthetic-press.js';
-import { componentHandlingPrevented } from '../foundation/part.js';
-import type { ChangeReason } from '../foundation/types.js';
-import { togglePresentation } from '../presentation/families/toggle.js';
-import { fillLayerStyles } from '../presentation/motion.js';
+import { TpElement } from '../../foundation/element.js';
+import { TpFormElement } from '../../foundation/form-element.js';
+import { ControllableState } from '../../foundation/controllable-state.js';
+import type { TpValueChangeEvent } from '../../foundation/events.js';
+import { SyntheticPress } from '../../foundation/synthetic-press.js';
+import { componentHandlingPrevented } from '../../foundation/part.js';
+import type { ChangeReason } from '../../foundation/types.js';
+import { togglePresentation } from '../../presentation/families/toggle.js';
+import { fillLayerStyles } from '../../presentation/motion.js';
 
 export interface ToggleSelectionOwner {
   readonly variant: 'ghost' | 'outline';
@@ -89,7 +89,7 @@ export class TpToggle extends TpFormElement {
     hasDefaultValue: () => this.defaultPressed !== undefined,
     onChange: (event) => this.onPressedChange?.(event),
     onCommit: (_value, previous) => this.requestUpdate('pressed', previous),
-    diagnostic: (message) => this.emit('tp-diagnostic', { code: 'toggle-state', message }),
+    diagnostic: (message) => this.diagnose('toggle-state', message),
   });
   #press = new SyntheticPress((event) => this.#request(event), false);
   get pressed(): boolean {
@@ -268,10 +268,10 @@ export class TpToggle extends TpFormElement {
   }
   setPressed(pressed: boolean, reason: ChangeReason = 'programmatic', event?: Event): void {
     if (this.#owner) {
-      this.emit('tp-diagnostic', {
-        code: 'toggle-group-owner',
-        message: 'Set the owning Toggle Group value; grouped Toggles do not own pressed state.',
-      });
+      this.diagnose(
+        'toggle-group-owner',
+        'Set the owning Toggle Group value; grouped Toggles do not own pressed state.',
+      );
       return;
     }
     this.#state.set(pressed, reason, event);
@@ -306,5 +306,11 @@ export class TpToggle extends TpFormElement {
     this.removeAttribute('data-focus-visible');
     this.requestUpdate();
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-toggle': TpToggle;
   }
 }

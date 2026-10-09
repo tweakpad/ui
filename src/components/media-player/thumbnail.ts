@@ -322,3 +322,9 @@ export class TpMediaThumbnail extends TpMediaElement {
     this.requestUpdate();
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-thumbnail': TpMediaThumbnail;
+  }
+}

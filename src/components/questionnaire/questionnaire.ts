@@ -28,9 +28,9 @@ import { type PartRenderOptions } from '../../foundation/part.js';
 import { checkIcon } from '../../icons/check.js';
 import { questionnaireStyles } from './styles.js';
 import { questionnairePresentation } from '../../presentation/families/questionnaire.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import { TpKeyHint } from '../key-hint/key-hint.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type QuestionnaireAction = 'previous' | 'skip' | 'next' | 'submit';
@@ -1007,11 +1007,13 @@ export class TpQuestionnaire extends TpElement {
     if (!message || message === this.#lastDiagnostic) return;
     this.#lastDiagnostic = message;
     queueMicrotask(() =>
-      this.emit('tp-diagnostic', {
-        code: 'questionnaire-invalid-configuration',
-        message,
-        severity: 'error' as const,
-      }),
+      this.diagnose('questionnaire-invalid-configuration', message, { severity: 'error' }),
     );
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-questionnaire': TpQuestionnaire;
   }
 }

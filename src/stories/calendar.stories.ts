@@ -29,9 +29,7 @@ interface Args {
 const meta = {
   title: 'Components/Calendar',
   component: 'tp-calendar',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: calendarExamples,

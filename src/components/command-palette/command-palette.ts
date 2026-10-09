@@ -6,7 +6,7 @@ import { TpValueChangeEvent } from '../../foundation/events.js';
 import { composedContains, deepActiveElement } from '../../foundation/focus.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
-import type { SelectRecord } from '../select/model.js';
+import type { ChoiceModelRecord } from '../../foundation/choice-model.js';
 import type { SelectEntry } from '../select/types.js';
 
 import type { CommandEntry, CommandItem, CommandFilter } from './model.js';
@@ -17,7 +17,7 @@ import { resolveLocale } from '../../foundation/services.js';
 import { commandPalettePresentation } from '../../presentation/families/command-palette.js';
 import { dialogPresentation } from '../../presentation/families/dialog.js';
 import { TpCommandList } from './list.js';
-import { TpIcon } from '../icon.js';
+import { TpIcon } from '../icon/icon.js';
 import { TpKeyHintGroup } from '../key-hint/key-hint-group.js';
 import { TpKeyHint } from '../key-hint/key-hint.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
@@ -30,7 +30,6 @@ export class TpCommandPalette extends TpDialog {
     return [TpCommandList, TpIcon, TpKeyHintGroup, TpKeyHint];
   }
   static override presentation = commandPalettePresentation;
-  static presentationFamilyTagNames = ['tp-dialog'];
   static override presentationFamilies = [dialogPresentation];
   static override properties = {
     ...TpDialog.properties,
@@ -196,7 +195,7 @@ export class TpCommandPalette extends TpDialog {
         this.#value.set(value, details.reason);
         return this.value;
       }}
-      .onExecute=${(record: SelectRecord, event: Event) => this.#execute(record, event)}
+      .onExecute=${(record: ChoiceModelRecord, event: Event) => this.#execute(record, event)}
       @tp-input-value-change=${(event: Event) => event.stopPropagation()}
       @tp-field-value=${(event: Event) => event.stopPropagation()}
     >
@@ -314,7 +313,7 @@ export class TpCommandPalette extends TpDialog {
       ? renderHighlighted(label, ranges, 'command-palette-match')
       : label;
   }
-  #execute(record: SelectRecord, sourceEvent: Event): void {
+  #execute(record: ChoiceModelRecord, sourceEvent: Event): void {
     const item = this.#records.get(record.value);
     if (!item || item.disabled || this.disabled || !this.#visible.includes(record.value)) return;
     if (componentHandlingPrevented(sourceEvent)) return;
@@ -388,5 +387,11 @@ export class TpCommandPalette extends TpDialog {
   override disconnectedCallback(): void {
     this.#observer?.disconnect();
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-command-palette': TpCommandPalette;
   }
 }

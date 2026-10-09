@@ -46,8 +46,8 @@ import {
 import { disclosurePanelStyles } from '../../presentation/motion.js';
 import { treeViewPresentation } from '../../presentation/families/tree-view.js';
 import { gripVerticalIcon } from '../../icons/grip-vertical.js';
-import { TpButton } from '../button.js';
-import { TpIcon } from '../icon.js';
+import { TpButton } from '../button/button.js';
+import { TpIcon } from '../icon/icon.js';
 import { TpTreeItem } from './tree-item.js';
 import { GROUP_EXTENT, TreeSegment } from './segments.js';
 import { DEFAULT_TREE_VIEW_MESSAGES } from './messages.js';
@@ -306,7 +306,6 @@ export class TpTreeView<T = TreeViewItem>
   #measuredRow = 0;
   #observer: MutationObserver | null = null;
   #rebuildQueued = false;
-  #diagnostics = new Set<string>();
   #announcer: LiveAnnouncer | undefined;
   readonly #typeahead = new TypeaheadController(
     750,
@@ -798,7 +797,8 @@ export class TpTreeView<T = TreeViewItem>
           part="segment"
           role="none"
           data-segment=${block.segment.parentId}
-          data-state=${presence}
+          ?data-open=${presence === 'starting' || presence === 'open'}
+          ?data-closed=${presence !== 'starting' && presence !== 'open'}
           ?data-exit=${exit}
           ?inert=${exit}
           ?data-starting-style=${presence === 'starting'}
@@ -1410,9 +1410,7 @@ export class TpTreeView<T = TreeViewItem>
       this.setFormValue(data);
     } else this.setFormValue(null);
     const tree = this.associationTarget() ?? undefined;
-    if (this.required && !this.value.length)
-      this.setValidity({ valueMissing: true }, 'Select an item.', tree);
-    else this.setValidity({});
+    this.setRequiredValidity(this.required && !this.value.length, 'Select an item.', tree);
   }
 
   /** Selected identifiers in logical (depth-first) order; unknown ones last. */
@@ -1431,8 +1429,12 @@ export class TpTreeView<T = TreeViewItem>
   }
 
   #diagnose(code: string, message: string): void {
-    if (this.#diagnostics.has(code)) return;
-    this.#diagnostics.add(code);
-    this.emit('tp-diagnostic', { code: `tree-view-${code}`, message });
+    this.diagnose(`tree-view-${code}`, message, { once: true });
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-tree-view': TpTreeView;
   }
 }

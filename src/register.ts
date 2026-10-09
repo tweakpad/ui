@@ -1,112 +1,118 @@
-import { TpCommandList } from './components/command-palette/index.js';
-import { TpDragDropList } from './components/drag-drop-list/index.js';
+import { TpAccordionItem } from './components/accordion/accordion-item.js';
+import { TpAccordion } from './components/accordion/accordion.js';
+import { TpAlertDialog } from './components/alert-dialog/alert-dialog.js';
+import { TpAlert } from './components/alert/alert.js';
+import { TpAspectRatio } from './components/aspect-ratio/aspect-ratio.js';
+import { TpAttachment } from './components/attachment/attachment.js';
+import { TpAttachmentGroup } from './components/attachment/group.js';
+import { TpAutocomplete } from './components/autocomplete/autocomplete.js';
+import { TpAvatar, TpAvatarGroup } from './components/avatar/avatar.js';
+import { TpBadge } from './components/badge/badge.js';
+import { TpBreadcrumb } from './components/breadcrumb/breadcrumb.js';
+import { TpBubble, TpBubbleGroup } from './components/bubble/bubble.js';
+import { TpButtonGroup } from './components/button-group/button-group.js';
+import { TpButtonGroupText } from './components/button-group/text.js';
+import { TpButton } from './components/button/button.js';
+import { TpCalendar } from './components/calendar/calendar.js';
+import { TpCard } from './components/card/card.js';
+import { TpCarousel } from './components/carousel/carousel.js';
+import { TpCheckbox } from './components/checkbox/checkbox.js';
+import { TpCodeBlock } from './components/code-block/code-block.js';
+import { TpCollapsible } from './components/collapsible/collapsible.js';
+import { TpCommandPalette } from './components/command-palette/command-palette.js';
+import { TpCommandList } from './components/command-palette/list.js';
+import { TpDataVisualization } from './components/data-visualization/data-visualization.js';
+import { TpDialog } from './components/dialog/dialog.js';
+import { TpDragDropList } from './components/drag-drop-list/drag-drop-list.js';
+import { TpDrawer } from './components/drawer/drawer.js';
 import {
-  TpSelectTrigger,
-  TpSelectClear,
-  TpSelectChipRemove,
-  TpSelectOption,
-} from './components/select/index.js';
-import {
-  TpMenuItem,
-  TpMenuCheckboxItem,
-  TpMenuRadioGroup,
-  TpMenuRadioItem,
-} from './components/menu/index.js';
-import { TpNavigationMenuItem } from './components/navigation-menu/index.js';
-import { defineElement } from './foundation/define.js';
-import { TpAccordion } from './components/accordion.js';
-import { TpAccordionItem } from './components/accordion-item.js';
-import { TpButton } from './components/button.js';
-import { TpCheckbox } from './components/checkbox.js';
-import { TpIcon } from './components/icon.js';
-import { TpCommandPalette, TpSelect } from './components/choices.js';
-import { TpCollapsible } from './components/collapsible.js';
-import {
-  TpCalendar,
-  TpField,
-  TpForm,
-  TpInput,
-  TpInputGroup,
-  TpNativeSelect,
-  TpOtpField,
-  TpQuestionnaire,
-  TpRadioGroup,
-  TpSlider,
-  TpTextArea,
-} from './components/forms.js';
-import {
-  TpAlertDialog,
-  TpDialog,
-  TpDrawer,
   TpDrawerProvider,
   TpDrawerIndent,
   TpDrawerIndentBackground,
-  TpDrawerVirtualKeyboardProvider,
-  TpDrawerSwipeArea,
-  TpPopover,
-  TpPreviewCard,
-  TpSidePanel,
-  TpTooltip,
-} from './components/overlays.js';
+} from './components/drawer/provider.js';
+import { TpDrawerSwipeArea } from './components/drawer/swipe-area.js';
+import { TpDrawerVirtualKeyboardProvider } from './components/drawer/virtual-keyboard.js';
+import { TpEmptyState } from './components/empty-state/empty-state.js';
+import { TpField } from './components/field/field.js';
+import { TpForm } from './components/form/form.js';
+import { TpIcon } from './components/icon/icon.js';
+import { TpImageGroup } from './components/image/image-group.js';
+import { TpImage } from './components/image/image.js';
+import { TpInputGroup } from './components/input-group/input-group.js';
+import { TpInput } from './components/input/input.js';
+import { TpKeyHintGroup } from './components/key-hint/key-hint-group.js';
+import { TpKeyHint } from './components/key-hint/key-hint.js';
+import { TpLabel } from './components/label/label.js';
+import { TpListItemGroup } from './components/list-item/group.js';
+import { TpListItem } from './components/list-item/list-item.js';
+import { TpListItemSeparator } from './components/list-item/separator.js';
+import { TpMapControl } from './components/map/control.js';
+import { TpMap } from './components/map/map.js';
+import { TpMapOverlay } from './components/map/overlay.js';
+import { TpMapPin } from './components/map/pin.js';
+import { TpMarkdown } from './components/markdown/markdown.js';
+import { TpMarker } from './components/marker/marker.js';
+import { TpMediaHotkey, TpMediaGesture } from './components/media-player/bindings.js';
 import {
-  TpBreadcrumb,
-  TpMenu,
-  TpMenubar,
-  TpNavigationMenu,
-  TpNavigationPanel,
-  TpPagination,
-} from './components/navigation.js';
+  TpMediaPlayButton,
+  TpMediaMuteButton,
+  TpMediaSeekButton,
+  TpMediaFullscreenButton,
+  TpMediaPipButton,
+  TpMediaCaptionsButton,
+  TpMediaPlaybackRateButton,
+  TpMediaLiveButton,
+  TpMediaRemotePlaybackButton,
+} from './components/media-player/buttons.js';
+import { TpMediaChapterTitle } from './components/media-player/chapter-title.js';
+import { TpMediaContainer } from './components/media-player/container.js';
+import { TpMediaControls, TpMediaControlsGroup } from './components/media-player/controls.js';
 import {
-  TpAvatar,
-  TpAvatarGroup,
-  TpCarousel,
-  TpDataVisualization,
-  TpMessageScroller,
+  TpMediaBufferingIndicator,
+  TpMediaErrorDialog,
+} from './components/media-player/feedback.js';
+import {
+  TpMediaStatusIndicator,
+  TpMediaSeekIndicator,
+  TpMediaVolumeIndicator,
+} from './components/media-player/indicators.js';
+import { TpMediaVideoLayout, TpMediaAudioLayout } from './components/media-player/layouts.js';
+import { TpMediaPlayer } from './components/media-player/player.js';
+import { TpMediaPoster } from './components/media-player/poster.js';
+import { TpMediaTimeSliderPreview } from './components/media-player/preview.js';
+import {
+  TpMediaPlaybackRateRadioGroup,
+  TpMediaCaptionsRadioGroup,
+  TpMediaAudioTrackRadioGroup,
+  TpMediaQualityRadioGroup,
+} from './components/media-player/radio-groups.js';
+import { TpMediaSettingsMenu } from './components/media-player/settings-menu.js';
+import { TpMediaThumbnail } from './components/media-player/thumbnail.js';
+import { TpMediaTimeSlider } from './components/media-player/time-slider.js';
+import { TpMediaTime } from './components/media-player/time.js';
+import { TpMediaTitle } from './components/media-player/title.js';
+import { TpMediaVolumePopover } from './components/media-player/volume-popover.js';
+import { TpMediaVolumeSlider } from './components/media-player/volume-slider.js';
+import { TpMenuCheckboxItem } from './components/menu/menu-checkbox-item.js';
+import { TpMenuItem } from './components/menu/menu-item.js';
+import { TpMenuRadioGroup } from './components/menu/menu-radio-group.js';
+import { TpMenuRadioItem } from './components/menu/menu-radio-item.js';
+import { TpMenu } from './components/menu/menu.js';
+import { TpMenubar } from './components/menubar/menubar.js';
+import { TpMessageScroller } from './components/message-scroller/message-scroller.js';
+import {
   TpMessageScrollerItem,
   TpMessageScrollerViewport,
   TpMessageScrollerContent,
   TpMessageScrollerReturnControl,
-  TpProgress,
-  TpResizablePanelGroup,
-  TpResizablePanel,
-  TpResizableHandle,
-  TpScrollArea,
-  TpSeparator,
-  TpSpinner,
-  TpToast,
-} from './components/display.js';
-import {
-  TpAlert,
-  TpAspectRatio,
-  TpAttachment,
-  TpAttachmentGroup,
-  TpBadge,
-  TpBubble,
-  TpBubbleGroup,
-  TpButtonGroup,
-  TpButtonGroupText,
-  TpCard,
-  TpEmptyState,
-  TpKeyHint,
-  TpKeyHintGroup,
-  TpLabel,
-  TpListItem,
-  TpListItemGroup,
-  TpListItemSeparator,
-  TpMarker,
-  TpMessage,
-  TpMessageGroup,
-  TpSkeleton,
-  TpTable,
-  TpTime,
-  TpTableHeader,
-  TpTableBody,
-  TpTableFooter,
-  TpTableRow,
-  TpTableHead,
-  TpTableCell,
-  TpTableCaption,
-} from './components/primitives.js';
+} from './components/message-scroller/parts.js';
+import { TpMessageGroup } from './components/message/group.js';
+import { TpMessage } from './components/message/message.js';
+import { TpNativeSelect } from './components/native-select/native-select.js';
+import { TpNavigationMenuItem } from './components/navigation-menu/navigation-menu-item.js';
+import { TpNavigationMenu } from './components/navigation-menu/navigation-menu.js';
+import { NavigationPanelDrawer } from './components/navigation-panel/drawer.js';
+import { TpNavigationPanel } from './components/navigation-panel/navigation-panel.js';
 import {
   TpNavigationPanelInset,
   TpNavigationPanelHeader,
@@ -129,63 +135,55 @@ import {
   TpNavigationPanelBadge,
   TpNavigationPanelSeparator,
   TpNavigationPanelLoadingPlaceholder,
-} from './components/navigation-panel/index.js';
-import { NavigationPanelDrawer } from './components/navigation-panel/drawer.js';
-import { TpSwitch } from './components/switch.js';
-import { TpTabs } from './components/tabs.js';
-import { TpToggle } from './components/toggle.js';
-import { TpToggleGroup } from './components/toggle-group.js';
-import { TpThemeSwitcher } from './components/theme-switcher.js';
-import { TpRadioGroupItem } from './components/radio-group/index.js';
-import { TpSliderThumb } from './components/slider/index.js';
+} from './components/navigation-panel/parts.js';
+import { TpOneTimeCodeField } from './components/one-time-code-field/one-time-code-field.js';
+import { TpPagination } from './components/pagination/pagination.js';
+import { TpPopover } from './components/popover/popover.js';
+import { TpPreviewCard } from './components/preview-card/preview-card.js';
+import { TpProgress } from './components/progress/progress.js';
+import { TpQuestionnaire } from './components/questionnaire/questionnaire.js';
+import { TpRadioGroupItem } from './components/radio-group/radio-group-item.js';
+import { TpRadioGroup } from './components/radio-group/radio-group.js';
+import { TpResizablePanelGroup } from './components/resizable-panel-group/group.js';
+import { TpResizableHandle } from './components/resizable-panel-group/handle.js';
+import { TpResizablePanel } from './components/resizable-panel-group/panel.js';
+import { TpScrollArea } from './components/scroll-area/scroll-area.js';
+import { TpScrollTrigger } from './components/scroll-trigger/scroll-trigger.js';
+import { TpSelectTrigger, TpSelectClear, TpSelectChipRemove } from './components/select/actions.js';
+import { TpSelectOption } from './components/select/option.js';
+import { TpSelect } from './components/select/select.js';
+import { TpSeparator } from './components/separator/separator.js';
+import { TpSkeleton } from './components/skeleton/skeleton.js';
+import { TpSliderThumb } from './components/slider/slider-thumb.js';
+import { TpSlider } from './components/slider/slider.js';
+import { TpSpinner } from './components/spinner/spinner.js';
+import { TpSwitch } from './components/switch/switch.js';
+import { TpTableOfContentsItem } from './components/table-of-contents/table-of-contents-item.js';
+import { TpTableOfContents } from './components/table-of-contents/table-of-contents.js';
 import {
-  TpMediaPlayer,
-  TpMediaContainer,
-  TpMediaControls,
-  TpMediaControlsGroup,
-  TpMediaPoster,
-  TpMediaTitle,
-  TpMediaHotkey,
-  TpMediaGesture,
-  TpMediaPlayButton,
-  TpMediaMuteButton,
-  TpMediaSeekButton,
-  TpMediaFullscreenButton,
-  TpMediaPipButton,
-  TpMediaCaptionsButton,
-  TpMediaPlaybackRateButton,
-  TpMediaLiveButton,
-  TpMediaRemotePlaybackButton,
-  TpMediaTime,
-  TpMediaBufferingIndicator,
-  TpMediaErrorDialog,
-  TpMediaStatusIndicator,
-  TpMediaSeekIndicator,
-  TpMediaVolumeIndicator,
-  TpMediaTimeSlider,
-  TpMediaTimeSliderPreview,
-  TpMediaThumbnail,
-  TpMediaChapterTitle,
-  TpMediaVolumeSlider,
-  TpMediaVolumePopover,
-  TpMediaPlaybackRateRadioGroup,
-  TpMediaCaptionsRadioGroup,
-  TpMediaAudioTrackRadioGroup,
-  TpMediaQualityRadioGroup,
-  TpMediaSettingsMenu,
-  TpMediaVideoLayout,
-  TpMediaAudioLayout,
-} from './components/media-player/index.js';
-import { TpMap, TpMapPin, TpMapOverlay, TpMapControl } from './components/map/index.js';
-import { TpCodeBlock } from './components/code-block/index.js';
-import { TpMarkdown } from './components/markdown/index.js';
-import { TpImage, TpImageGroup } from './components/image/index.js';
-import { TpScrollTrigger } from './components/scroll-trigger/index.js';
-import { TpTimeline, TpTimelineItem } from './components/timeline/index.js';
-import { TpAutocomplete } from './components/autocomplete/index.js';
-import { TpTextMotion } from './components/text-motion/index.js';
-import { TpTableOfContents, TpTableOfContentsItem } from './components/table-of-contents/index.js';
-import { TpTreeItem, TpTreeView } from './components/tree-view/index.js';
+  TpTableHeader,
+  TpTableBody,
+  TpTableFooter,
+  TpTableRow,
+  TpTableHead,
+  TpTableCell,
+  TpTableCaption,
+} from './components/table/parts.js';
+import { TpTable } from './components/table/table.js';
+import { TpTabs } from './components/tabs/tabs.js';
+import { TpTextArea } from './components/text-area/text-area.js';
+import { TpTextMotion } from './components/text-motion/text-motion.js';
+import { TpThemeSwitcher } from './components/theme-switcher/theme-switcher.js';
+import { TpTime } from './components/time/time.js';
+import { TpTimelineItem } from './components/timeline/timeline-item.js';
+import { TpTimeline } from './components/timeline/timeline.js';
+import { TpToast } from './components/toast/toast.js';
+import { TpToggleGroup } from './components/toggle-group/toggle-group.js';
+import { TpToggle } from './components/toggle/toggle.js';
+import { TpTooltip } from './components/tooltip/tooltip.js';
+import { TpTreeItem } from './components/tree-view/tree-item.js';
+import { TpTreeView } from './components/tree-view/tree-view.js';
+import { defineElement } from './foundation/define.js';
 
 defineElement(TpAccordion.tagName, TpAccordion);
 defineElement(TpAccordionItem.tagName, TpAccordionItem);
@@ -207,7 +205,7 @@ defineElement(TpForm.tagName, TpForm);
 defineElement(TpInput.tagName, TpInput);
 defineElement(TpInputGroup.tagName, TpInputGroup);
 defineElement(TpNativeSelect.tagName, TpNativeSelect);
-defineElement(TpOtpField.tagName, TpOtpField);
+defineElement(TpOneTimeCodeField.tagName, TpOneTimeCodeField);
 defineElement(TpQuestionnaire.tagName, TpQuestionnaire);
 defineElement(TpRadioGroup.tagName, TpRadioGroup);
 defineElement(TpRadioGroupItem.tagName, TpRadioGroupItem);
@@ -224,7 +222,6 @@ defineElement(TpDrawerVirtualKeyboardProvider.tagName, TpDrawerVirtualKeyboardPr
 defineElement(TpDrawerSwipeArea.tagName, TpDrawerSwipeArea);
 defineElement(TpPopover.tagName, TpPopover);
 defineElement(TpPreviewCard.tagName, TpPreviewCard);
-defineElement(TpSidePanel.tagName, TpSidePanel);
 defineElement(TpTooltip.tagName, TpTooltip);
 defineElement(TpBreadcrumb.tagName, TpBreadcrumb);
 defineElement(TpMenu.tagName, TpMenu);

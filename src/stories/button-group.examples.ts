@@ -1,4 +1,4 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { moduleExample } from './documentation-examples.js';
 import { setupButtonGroupExample } from './button-group-example.js';
 import setupSource from './button-group-example.js?raw';
 
@@ -17,14 +17,16 @@ const options = (values: string[]) =>
   values.map((value) => `<option value="${value}">${value}</option>`).join('');
 function example(title: string, content: string, description?: string) {
   const id = 'button-group-' + title.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-');
-  const markup = `<div id="${id}" style="display:grid;gap:var(--tp-space-5);max-inline-size:36rem">${content}<output aria-live="polite"></output></div>`;
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    markup,
-    setupButtonGroupExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nsetupButtonGroupExample(document.getElementById('${id}'));`,
+    id,
+    markup: `${content}<output aria-live="polite"></output>`,
     description,
-  );
+    wrapperStyle: 'display:grid;gap:var(--tp-space-5);max-inline-size:36rem',
+    setup: setupButtonGroupExample,
+    source: setupSource,
+    call: `setupButtonGroupExample(document.getElementById('${id}'));`,
+  });
 }
 export const buttonGroupExamples = [
   example(

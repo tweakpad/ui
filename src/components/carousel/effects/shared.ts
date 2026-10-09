@@ -30,7 +30,8 @@ export class EffectStyles {
   }
 }
 
-export const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
+import { clamp01 } from '../../../foundation/converters.js';
+export { clamp01 };
 export const smoothstep = (edge0: number, edge1: number, value: number): number => {
   const t = clamp01((value - edge0) / (edge1 - edge0 || 1));
   return t * t * (3 - 2 * t);

@@ -1,15 +1,11 @@
+import { fakeHost } from './fakes.test.js';
 import { describe, it, expect, vi } from 'vitest';
 import { ControllableState } from './controllable-state.js';
 import { SurfaceState } from './surface-state.js';
 function setup(controlled = false) {
   let inputOpen: boolean | undefined = controlled ? true : undefined;
   let inputSnap: number | undefined = controlled ? 2 : undefined;
-  const host = Object.assign(new EventTarget(), {
-    addController: vi.fn(),
-    removeController: vi.fn(),
-    requestUpdate: vi.fn(),
-    updateComplete: Promise.resolve(true),
-  });
+  const host = fakeHost();
   const observations: unknown[] = [];
   let veto = false,
     acknowledge = true;

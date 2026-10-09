@@ -1,17 +1,17 @@
-import { fillLayerStyles, transitionCss } from '../presentation/motion.js';
+import { fillLayerStyles, transitionCss } from '../../presentation/motion.js';
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
-import { TpElement } from '../foundation/element.js';
-import { CompositeControlController } from '../foundation/composite-control.js';
-import { SyntheticPress } from '../foundation/synthetic-press.js';
-import { componentHandlingPrevented, renderPart } from '../foundation/part.js';
-import type { ComponentPartContract } from '../foundation/part.js';
-import type { LogicalPosition } from '../foundation/types.js';
-import type { IconDefinition } from '../icons/types.js';
-import { buttonPresentation } from '../presentation/families/button.js';
-import { TpSpinner } from './spinner/spinner.js';
-import { TpIcon } from './icon.js';
-import type { CustomElementConstructorWithTag } from '../foundation/define.js';
+import { TpElement } from '../../foundation/element.js';
+import { CompositeControlController } from '../../foundation/composite-control.js';
+import { SyntheticPress } from '../../foundation/synthetic-press.js';
+import { componentHandlingPrevented, renderPart } from '../../foundation/part.js';
+import type { ComponentPartContract } from '../../foundation/part.js';
+import type { LogicalPosition } from '../../foundation/types.js';
+import type { IconDefinition } from '../../icons/types.js';
+import { buttonPresentation } from '../../presentation/families/button.js';
+import { TpSpinner } from '../spinner/spinner.js';
+import { TpIcon } from '../icon/icon.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 type ButtonType = 'button' | 'submit' | 'reset';
 
@@ -144,12 +144,10 @@ export class TpButton extends TpElement {
         this.#invalidLinkDelegate = delegate;
         queueMicrotask(() => {
           if (!this.isConnected || this.buttonPartContract()?.renderDelegate !== delegate) return;
-          this.emit('tp-diagnostic', {
-            code: 'button-native-link-required',
-            message:
-              'A Button with href requires a native anchor delegate; using the native anchor.',
-            severity: 'warning' as const,
-          });
+          this.diagnose(
+            'button-native-link-required',
+            'A Button with href requires a native anchor delegate; using the native anchor.',
+          );
           this.requestUpdate();
         });
       }
@@ -376,11 +374,10 @@ export class TpButton extends TpElement {
     } else if (!this.#unnamedReported) {
       this.#unnamedReported = true;
       queueMicrotask(() =>
-        this.emit('tp-diagnostic', {
-          code: 'button-accessible-name-missing',
-          message: 'Button requires an accessible name; icon-only buttons need aria-label.',
-          severity: 'warning' as const,
-        }),
+        this.diagnose(
+          'button-accessible-name-missing',
+          'Button requires an accessible name; icon-only buttons need aria-label.',
+        ),
       );
     }
   };
@@ -445,5 +442,11 @@ export class TpButton extends TpElement {
     } finally {
       proxy.remove();
     }
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-button': TpButton;
   }
 }

@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import buttonDocumentation from '../../docs/button.md?raw';
-import { chevronRightIcon } from '../icons/chevron-right.js';
 import { plusIcon } from '../icons/plus.js';
 import type { IconDefinition } from '../icons/types.js';
 
@@ -27,9 +26,7 @@ interface ButtonStoryArgs {
 const meta: Meta<ButtonStoryArgs> = {
   title: 'Components/Button',
   component: 'tp-button',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: { description: { component: buttonDocumentation.replace(/^# Button\n/u, '') } },
   },
   args: {
@@ -164,38 +161,8 @@ export default meta;
 type Story = StoryObj<ButtonStoryArgs>;
 
 export const Default: Story = {};
-export const Secondary: Story = { args: { variant: 'secondary' } };
-export const Destructive: Story = { args: { variant: 'destructive' } };
-export const Outline: Story = { args: { variant: 'outline' } };
-export const Ghost: Story = { args: { variant: 'ghost' } };
-export const LinkAppearance: Story = { args: { variant: 'link' } };
-export const ExtraSmall: Story = { args: { size: 'xs' } };
-export const Small: Story = { args: { size: 'sm' } };
-export const Large: Story = { args: { size: 'lg' } };
 export const IconOnly: Story = {
   args: { size: 'icon', ariaLabel: 'Add', icon: plusIcon },
-};
-export const IconExtraSmall: Story = {
-  ...IconOnly,
-  args: { size: 'icon-xs', ariaLabel: 'Add', icon: plusIcon },
-};
-export const IconSmall: Story = {
-  ...IconOnly,
-  args: { size: 'icon-sm', ariaLabel: 'Add', icon: plusIcon },
-};
-export const IconLarge: Story = {
-  ...IconOnly,
-  args: { size: 'icon-lg', ariaLabel: 'Add', icon: plusIcon },
-};
-export const IconLeading: Story = { args: { icon: plusIcon, iconPosition: 'leading' } };
-export const IconTrailing: Story = {
-  args: { icon: chevronRightIcon, iconPosition: 'trailing' },
-};
-export const LoadingLeading: Story = {
-  args: { loadingPosition: 'leading', disabled: true, focusableWhenDisabled: true },
-};
-export const LoadingTrailing: Story = {
-  args: { loadingPosition: 'trailing', disabled: true, focusableWhenDisabled: true },
 };
 export const AsLink: Story = { args: { variant: 'link', href: '#button-link-target' } };
 export const WithMarks: Story = {
@@ -207,11 +174,6 @@ export const WithMarks: Story = {
     </tp-button>
   `,
 };
-export const Disabled: Story = { args: { disabled: true } };
-export const FocusableDisabled: Story = {
-  args: { disabled: true, focusableWhenDisabled: true },
-};
-export const SyntheticAction: Story = { args: { nativeAction: false } };
 export const FormActions: Story = {
   render: () => html`
     <form

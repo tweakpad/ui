@@ -189,10 +189,10 @@ export class TpMapElement extends TpElement {
       if (owner) this.bindOwner(owner);
       else if (!this.#diagnosed) {
         this.#diagnosed = true;
-        this.emit('tp-diagnostic', {
-          code: 'map-owner',
-          message: `${this.localName} has no map; place it inside tp-map or set map="id".`,
-        });
+        this.diagnose(
+          'map-owner',
+          `${this.localName} has no map; place it inside tp-map or set map="id".`,
+        );
       }
     });
   }

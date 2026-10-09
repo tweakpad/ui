@@ -5,6 +5,7 @@ import {
   prepareMotion,
   type MotionHandle,
   type MotionRoleDefinition,
+  stateRole,
 } from '../../foundation/motion.js';
 import { TpCheckbox } from '../checkbox/index.js';
 import type { SwitchState } from './types.js';
@@ -17,8 +18,8 @@ import type { CustomElementConstructorWithTag } from '../../foundation/define.js
 const trackFill = fillLayerStyles('.root', 'calc(-1 * var(--tp-border-width))');
 
 export const switchMotionRoles = {
-  track: { name: 'track', kind: 'state', phases: ['change'], completion: 'non-blocking' },
-  thumb: { name: 'thumb', kind: 'state', phases: ['change'], completion: 'non-blocking' },
+  track: stateRole('track'),
+  thumb: stateRole('thumb'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
 /** Binary setting policy bound to the existing Checkbox Boolean/action/form owner. */
@@ -220,5 +221,11 @@ export class TpSwitch extends TpCheckbox {
     for (const handle of this.#motion) handle.cancel();
     this.#motion = [];
     super.disconnectedCallback();
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-switch': TpSwitch;
   }
 }

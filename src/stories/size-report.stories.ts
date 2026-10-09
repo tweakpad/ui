@@ -9,7 +9,8 @@ import './size-report/size-report.js';
  */
 const meta = {
   title: 'Tweakpad UI/Bundle size',
-  parameters: { layout: 'padded', controls: { disable: true } },
+  tags: ['!autodocs'],
+  parameters: { controls: { disable: true } },
 } satisfies Meta;
 
 export default meta;

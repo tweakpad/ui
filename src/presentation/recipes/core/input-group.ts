@@ -2,10 +2,6 @@ import type { PresentationDictionary } from '../../resolver.js';
 import { rule } from '../shared/variant.js';
 
 export const inputGroupCoreAppearance: PresentationDictionary = {
-  'input-group': [],
-  'input-group-addon': [],
-  'input-group-text': [],
-  'input-group-action': [],
   'input-group-control': [
     rule({
       border: '0',

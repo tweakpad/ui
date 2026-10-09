@@ -1,6 +1,6 @@
 import type { ReactiveControllerHost } from 'lit';
 import { PresenceController } from '../../foundation/presence.js';
-import { OwnedAttributes } from './owned-attributes.js';
+import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 
 /** Owns a panel's mount location while retaining the exact consumer-authored node. */
 export class TabsPanel {
@@ -73,6 +73,6 @@ export class TabsPanel {
     if (restore && this.anchor.parentNode && this.element.parentNode === this.storage)
       this.anchor.after(this.element);
     this.anchor.remove();
-    this.attributes.restore();
+    this.attributes.dispose();
   }
 }

@@ -1,21 +1,16 @@
+import { keyEvent } from './fakes.test.js';
 import { describe, expect, it, vi } from 'vitest';
 import { SyntheticPress } from './synthetic-press.js';
-
-const key = (value: string) =>
-  Object.assign(new Event('keydown', { cancelable: true }), {
-    key: value,
-    repeat: false,
-  }) as KeyboardEvent;
 
 describe('component-managed synthetic activation', () => {
   it('keeps native default prevention separate from the managed Enter and Space action', () => {
     const activate = vi.fn();
     const press = new SyntheticPress(activate, false);
-    const enter = key('Enter');
+    const enter = keyEvent('Enter');
     enter.preventDefault();
     press.keyDown(enter);
-    const down = key(' '),
-      up = key(' ');
+    const down = keyEvent(' '),
+      up = keyEvent(' ');
     down.preventDefault();
     up.preventDefault();
     press.keyDown(down);
@@ -26,9 +21,9 @@ describe('component-managed synthetic activation', () => {
   it('lets an explicitly suppressed initiating handler discard an armed gesture', () => {
     const activate = vi.fn();
     const press = new SyntheticPress(activate, false);
-    press.keyDown(key(' '));
+    press.keyDown(keyEvent(' '));
     press.reset();
-    press.keyUp(key(' '));
+    press.keyUp(keyEvent(' '));
     expect(activate).not.toHaveBeenCalled();
   });
 });

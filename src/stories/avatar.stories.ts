@@ -14,9 +14,7 @@ interface Args {
 const meta = {
   title: 'Components/Avatar',
   component: 'tp-avatar',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: avatarExamples,

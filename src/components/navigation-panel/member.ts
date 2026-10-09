@@ -1,3 +1,4 @@
+import { reportDiagnostic } from '../../foundation/services.js';
 import type { ReactiveController } from 'lit';
 import type { TpElement } from '../../foundation/element.js';
 import type { ComponentPartContract } from '../../foundation/part.js';
@@ -22,17 +23,11 @@ export class NavigationPanelMember implements ReactiveController {
   hostConnected(): void {
     this.owner = navigationPanelOwner(this.host);
     if (!this.owner) {
-      this.host.dispatchEvent(
-        new CustomEvent('tp-diagnostic', {
-          bubbles: true,
-          composed: true,
-          detail: {
-            code: 'navigation-panel-provider-missing',
-            message: `Place ${this.host.localName} under tp-navigation-panel to supply its Provider.`,
-            severity: 'error' as const,
-          },
-        }),
-      );
+      reportDiagnostic(this.host, {
+        code: 'navigation-panel-provider-missing',
+        message: `Place ${this.host.localName} under tp-navigation-panel to supply its Provider.`,
+        severity: 'error',
+      });
       return;
     }
     this.#unsubscribe = this.owner.provider.subscribe(() => this.host.requestUpdate());

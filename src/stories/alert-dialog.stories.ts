@@ -16,8 +16,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Alert dialog',
   component: 'tp-alert-dialog',
-  tags: ['autodocs'],
-  parameters: { layout: 'padded', docs: { description: { component: documentation } } },
+  parameters: { docs: { description: { component: documentation } } },
   args: {
     open: false,
     label: 'Delete project?',

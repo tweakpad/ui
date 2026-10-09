@@ -270,3 +270,9 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
     super.disconnectedCallback();
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-slider-thumb': TpSliderThumb;
+  }
+}

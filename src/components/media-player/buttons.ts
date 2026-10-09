@@ -1,4 +1,5 @@
 import type { PropertyDeclarations, PropertyValues } from 'lit';
+import { numberOrNull } from '../../foundation/converters.js';
 import { PressAndHold } from '../../foundation/press-and-hold.js';
 import type { MediaState } from '../../foundation/media/state.js';
 import {
@@ -17,17 +18,6 @@ import {
 } from './button-state.js';
 import { TpMediaButtonElement } from './media-button.js';
 import { DEFAULT_SEEK_STEP } from './player.js';
-
-const numberOrNull = {
-  fromAttribute(value: string | null): number | null {
-    if (value === null || value.trim() === '') return null;
-    const number = Number(value);
-    return Number.isFinite(number) ? number : null;
-  },
-  toAttribute(value: number | null): string | null {
-    return value === null ? null : String(value);
-  },
-};
 
 /**
  * `tp-media-play-button`: `toggle-paused`. Label `replay` when ended, `play` when paused,
@@ -281,5 +271,19 @@ export class TpMediaRemotePlaybackButton extends TpMediaButtonElement {
   protected computeView(state: MediaState, context: MediaButtonContext): MediaButtonView {
     void this.#state.value;
     return remotePlaybackButtonView(state, context);
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-play-button': TpMediaPlayButton;
+    'tp-media-mute-button': TpMediaMuteButton;
+    'tp-media-seek-button': TpMediaSeekButton;
+    'tp-media-fullscreen-button': TpMediaFullscreenButton;
+    'tp-media-pip-button': TpMediaPipButton;
+    'tp-media-captions-button': TpMediaCaptionsButton;
+    'tp-media-playback-rate-button': TpMediaPlaybackRateButton;
+    'tp-media-live-button': TpMediaLiveButton;
+    'tp-media-remote-playback-button': TpMediaRemotePlaybackButton;
   }
 }

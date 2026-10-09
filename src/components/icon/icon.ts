@@ -1,9 +1,9 @@
 import { LitElement, css, html, nothing, svg } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import type { IconDefinition } from '../icons/types.js';
-import { PresentationController } from '../presentation/controller.js';
-import type { PartPresentation } from '../presentation/resolver.js';
-import { iconPresentation } from '../presentation/families/icon.js';
+import type { IconDefinition } from '../../icons/types.js';
+import { PresentationController } from '../../presentation/controller.js';
+import type { PartPresentation } from '../../presentation/resolver.js';
+import { iconPresentation } from '../../presentation/families/icon.js';
 
 /** Non-interactive SVG presentation for a consumer-supplied icon definition. */
 export class TpIcon extends LitElement {
@@ -102,5 +102,11 @@ export class TpIcon extends LitElement {
           ></path>`,
       )}
     </svg>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-icon': TpIcon;
   }
 }

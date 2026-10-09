@@ -9,9 +9,7 @@ import {
 const meta = {
   title: 'Components/Bubble',
   component: 'tp-bubble',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: { description: { component: documentation }, examples: bubbleExamples },
   },
   args: bubbleDefaults,

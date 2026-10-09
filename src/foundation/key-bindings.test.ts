@@ -1,3 +1,4 @@
+import { keyEvent } from './fakes.test.js';
 import { describe, expect, it, vi } from 'vitest';
 import {
   KeyBindingOwner,
@@ -64,30 +65,6 @@ function element(
   return node;
 }
 
-interface KeyInit {
-  key: string;
-  ctrlKey?: boolean;
-  metaKey?: boolean;
-  altKey?: boolean;
-  shiftKey?: boolean;
-  repeat?: boolean;
-  isComposing?: boolean;
-}
-function key(init: KeyInit | string, path: EventTarget[] = []): KeyboardEvent {
-  const properties = typeof init === 'string' ? { key: init } : init;
-  const event = Object.assign(new Event('keydown', { cancelable: true }), {
-    ctrlKey: false,
-    metaKey: false,
-    altKey: false,
-    shiftKey: false,
-    repeat: false,
-    isComposing: false,
-    ...properties,
-  });
-  Object.defineProperty(event, 'composedPath', { value: () => path });
-  return event as unknown as KeyboardEvent;
-}
-
 function owner(host = element(), options: ConstructorParameters<typeof KeyBindingOwner>[1] = {}) {
   return new KeyBindingOwner(host, { platform: 'windows', ...options });
 }
@@ -145,35 +122,41 @@ describe('Key pattern parsing', () => {
 describe('Key chord matching', () => {
   const [ctrlF] = parseKeyPattern('Ctrl+f', 'linux');
   it('compares keys case-insensitively and modifiers exactly', () => {
-    expect(matchesKeyChord(ctrlF!, key({ key: 'F', ctrlKey: true }))).toBe(true);
-    expect(matchesKeyChord(ctrlF!, key({ key: 'f' }))).toBe(false);
-    expect(matchesKeyChord(ctrlF!, key({ key: 'f', ctrlKey: true, shiftKey: true }))).toBe(false);
-    expect(matchesKeyChord(ctrlF!, key({ key: 'f', ctrlKey: true, metaKey: true }))).toBe(false);
+    expect(matchesKeyChord(ctrlF!, keyEvent({ key: 'F', ctrlKey: true }))).toBe(true);
+    expect(matchesKeyChord(ctrlF!, keyEvent({ key: 'f' }))).toBe(false);
+    expect(matchesKeyChord(ctrlF!, keyEvent({ key: 'f', ctrlKey: true, shiftKey: true }))).toBe(
+      false,
+    );
+    expect(matchesKeyChord(ctrlF!, keyEvent({ key: 'f', ctrlKey: true, metaKey: true }))).toBe(
+      false,
+    );
   });
   it('implies Shift and Alt for caseless symbols but not for letters', () => {
     const [greater] = parseKeyPattern('>', 'linux');
-    expect(matchesKeyChord(greater!, key({ key: '>', shiftKey: true }))).toBe(true);
-    expect(matchesKeyChord(greater!, key({ key: '>', shiftKey: true, altKey: true }))).toBe(true);
-    expect(matchesKeyChord(greater!, key({ key: '>', ctrlKey: true }))).toBe(false);
+    expect(matchesKeyChord(greater!, keyEvent({ key: '>', shiftKey: true }))).toBe(true);
+    expect(matchesKeyChord(greater!, keyEvent({ key: '>', shiftKey: true, altKey: true }))).toBe(
+      true,
+    );
+    expect(matchesKeyChord(greater!, keyEvent({ key: '>', ctrlKey: true }))).toBe(false);
     const [question] = parseKeyPattern('Shift+?', 'linux');
-    expect(matchesKeyChord(question!, key({ key: '?' }))).toBe(false);
-    expect(matchesKeyChord(question!, key({ key: '?', shiftKey: true }))).toBe(true);
+    expect(matchesKeyChord(question!, keyEvent({ key: '?' }))).toBe(false);
+    expect(matchesKeyChord(question!, keyEvent({ key: '?', shiftKey: true }))).toBe(true);
     const [k] = parseKeyPattern('k', 'linux');
-    expect(matchesKeyChord(k!, key({ key: 'K', shiftKey: true }))).toBe(false);
+    expect(matchesKeyChord(k!, keyEvent({ key: 'K', shiftKey: true }))).toBe(false);
     const [space] = parseKeyPattern('Space', 'linux');
-    expect(matchesKeyChord(space!, key({ key: ' ', shiftKey: true }))).toBe(false);
+    expect(matchesKeyChord(space!, keyEvent({ key: ' ', shiftKey: true }))).toBe(false);
   });
   it('never matches Unidentified (IME) keys', () => {
     const [unidentified] = parseKeyPattern('Unidentified', 'linux');
-    expect(matchesKeyChord(unidentified!, key('Unidentified'))).toBe(false);
+    expect(matchesKeyChord(unidentified!, keyEvent('Unidentified'))).toBe(false);
   });
   it('treats explicit chord objects as exact, without implied modifiers', () => {
     const target = owner();
     const handler = vi.fn();
     target.register({ keys: { key: '?' }, handler });
-    target.handleKeyDown(key({ key: '?', shiftKey: true }));
+    target.handleKeyDown(keyEvent({ key: '?', shiftKey: true }));
     expect(handler).not.toHaveBeenCalled();
-    target.handleKeyDown(key('?'));
+    target.handleKeyDown(keyEvent('?'));
     expect(handler).toHaveBeenCalledTimes(1);
     expect(() => target.register({ keys: {} as never, handler })).toThrow(/missing key/);
     target.register({ keys: { key: '' }, handler: () => true });
@@ -185,7 +168,7 @@ describe('Key binding owner dispatch', () => {
     const host = element();
     const target = owner(host);
     const { handler } = bind(target, { keys: 'k', action: 'toggle-paused', value: 1 });
-    const event = key('k', [host]);
+    const event = keyEvent('k', { path: [host] });
     host.dispatchEvent(event);
     expect(handler).toHaveBeenCalledWith(event, {
       chord: expect.objectContaining({ key: 'k' }),
@@ -194,7 +177,7 @@ describe('Key binding owner dispatch', () => {
       scope: 'owner',
     });
     expect(event.defaultPrevented).toBe(true);
-    const other = key('j', [host]);
+    const other = keyEvent('j', { path: [host] });
     host.dispatchEvent(other);
     expect(other.defaultPrevented).toBe(false);
   });
@@ -204,7 +187,7 @@ describe('Key binding owner dispatch', () => {
     const second = vi.fn(() => false as const);
     target.register({ keys: 'k', handler: first });
     target.register({ keys: 'k', handler: second });
-    const event = key('k');
+    const event = keyEvent('k');
     expect(target.handleKeyDown(event)).toBe(false);
     expect(first).toHaveBeenCalled();
     expect(second).toHaveBeenCalled();
@@ -215,22 +198,22 @@ describe('Key binding owner dispatch', () => {
     const calls: string[] = [];
     target.register({ keys: '>', handler: () => void calls.push('implicit') });
     target.register({ keys: 'Shift+>', handler: () => void calls.push('explicit') });
-    target.handleKeyDown(key({ key: '>', shiftKey: true }));
+    target.handleKeyDown(keyEvent({ key: '>', shiftKey: true }));
     expect(calls).toEqual(['explicit']);
     target.register({ keys: 'm', handler: () => void calls.push('first') });
     target.register({ keys: 'm', handler: () => void calls.push('second') });
-    target.handleKeyDown(key('m'));
+    target.handleKeyDown(keyEvent('m'));
     expect(calls).toEqual(['explicit', 'first']);
   });
   it('does not repeat while held unless the binding opts in', () => {
     const target = owner();
     const { handler: toggle } = bind(target, { keys: 'f' });
     const { handler: step } = bind(target, { keys: 'ArrowRight', repeat: true });
-    const held = key({ key: 'f', repeat: true });
+    const held = keyEvent({ key: 'f', repeat: true });
     target.handleKeyDown(held);
     expect(toggle).not.toHaveBeenCalled();
     expect(held.defaultPrevented).toBe(false);
-    target.handleKeyDown(key({ key: 'ArrowRight', repeat: true }));
+    target.handleKeyDown(keyEvent({ key: 'ArrowRight', repeat: true }));
     expect(step).toHaveBeenCalledTimes(1);
   });
   it('honors static and dynamic binding disablement', () => {
@@ -238,10 +221,10 @@ describe('Key binding owner dispatch', () => {
     let disabled = true;
     const { handler } = bind(target, { keys: 'c', disabled: () => disabled });
     const { handler: never } = bind(target, { keys: 'x', disabled: true });
-    target.handleKeyDown(key('c'));
-    target.handleKeyDown(key('x'));
+    target.handleKeyDown(keyEvent('c'));
+    target.handleKeyDown(keyEvent('x'));
     disabled = false;
-    target.handleKeyDown(key('c'));
+    target.handleKeyDown(keyEvent('c'));
     expect(handler).toHaveBeenCalledTimes(1);
     expect(never).not.toHaveBeenCalled();
   });
@@ -250,7 +233,7 @@ describe('Key binding owner dispatch', () => {
     const { handler, release } = bind(target, { keys: 'k' });
     release();
     release();
-    target.handleKeyDown(key('k'));
+    target.handleKeyDown(keyEvent('k'));
     expect(handler).not.toHaveBeenCalled();
     expect(target.list()).toEqual([]);
   });
@@ -260,19 +243,19 @@ describe('Key binding guards', () => {
   it('ignores consumed and composing events', () => {
     const target = owner();
     const { handler } = bind(target, { keys: 'k' });
-    const prevented = key('k');
+    const prevented = keyEvent('k');
     prevented.preventDefault();
     target.handleKeyDown(prevented);
-    const component = key('k');
+    const component = keyEvent('k');
     preventComponentHandling(component);
     target.handleKeyDown(component);
-    target.handleKeyDown(key({ key: 'k', isComposing: true }));
+    target.handleKeyDown(keyEvent({ key: 'k', isComposing: true }));
     expect(handler).not.toHaveBeenCalled();
     expect(keyEventPreempted(component)).toBe(true);
-    expect(keyEventPreempted(key('Unidentified'))).toBe(true);
-    expect(keyEventPreempted(key('k'))).toBe(false);
+    expect(keyEventPreempted(keyEvent('Unidentified'))).toBe(true);
+    expect(keyEventPreempted(keyEvent('k'))).toBe(false);
     const { handler: legacy } = bind(target, { keys: 'j', guards: { composition: false } });
-    target.handleKeyDown(key({ key: 'j', isComposing: true }));
+    target.handleKeyDown(keyEvent({ key: 'j', isComposing: true }));
     expect(legacy).toHaveBeenCalledTimes(1);
   });
   it('leaves Space and Enter to activatable targets inside the owner', () => {
@@ -280,16 +263,16 @@ describe('Key binding guards', () => {
     const target = owner(host);
     const { handler } = bind(target, { keys: 'Space, Enter' });
     const button = element('button');
-    target.handleKeyDown(key(' ', [button, host]));
-    target.handleKeyDown(key('Enter', [element('div', { role: 'slider' }), host]));
-    target.handleKeyDown(key(' ', [element('tp-menu-item'), host]));
+    target.handleKeyDown(keyEvent(' ', { path: [button, host] }));
+    target.handleKeyDown(keyEvent('Enter', { path: [element('div', { role: 'slider' }), host] }));
+    target.handleKeyDown(keyEvent(' ', { path: [element('tp-menu-item'), host] }));
     expect(handler).not.toHaveBeenCalled();
-    target.handleKeyDown(key(' ', [element('div'), host]));
+    target.handleKeyDown(keyEvent(' ', { path: [element('div'), host] }));
     // Interactive elements outside the owner boundary do not count.
-    target.handleKeyDown(key(' ', [host, element('button')]));
+    target.handleKeyDown(keyEvent(' ', { path: [host, element('button')] }));
     expect(handler).toHaveBeenCalledTimes(2);
     const { handler: other } = bind(target, { keys: 'k' });
-    target.handleKeyDown(key('k', [button, host]));
+    target.handleKeyDown(keyEvent('k', { path: [button, host] }));
     expect(other).toHaveBeenCalledTimes(1);
   });
   it('ignores unmodified single keys in editable targets but allows modified shortcuts', () => {
@@ -304,14 +287,16 @@ describe('Key binding guards', () => {
       element('select'),
       element('div', { contenteditable: '' }),
     ]) {
-      target.handleKeyDown(key('k', [editor, host]));
-      target.handleKeyDown(key({ key: '?', shiftKey: true }, [editor, host]));
+      target.handleKeyDown(keyEvent('k', { path: [editor, host] }));
+      target.handleKeyDown(keyEvent({ key: '?', shiftKey: true }, { path: [editor, host] }));
     }
     expect(single).not.toHaveBeenCalled();
     expect(symbol).not.toHaveBeenCalled();
-    target.handleKeyDown(key({ key: 'k', ctrlKey: true }, [element('input'), host]));
+    target.handleKeyDown(keyEvent({ key: 'k', ctrlKey: true }, { path: [element('input'), host] }));
     expect(modified).toHaveBeenCalledTimes(1);
-    target.handleKeyDown(key('k', [element('div', { contenteditable: 'false' }), host]));
+    target.handleKeyDown(
+      keyEvent('k', { path: [element('div', { contenteditable: 'false' }), host] }),
+    );
     expect(single).toHaveBeenCalledTimes(1);
   });
   it('supports the all/none editable policies', () => {
@@ -319,9 +304,9 @@ describe('Key binding guards', () => {
     const { handler: blocked } = bind(target, { keys: 'Ctrl+b', guards: { editable: 'all' } });
     const { handler: allowed } = bind(target, { keys: 'b', guards: { editable: 'none' } });
     const input = element('input');
-    target.handleKeyDown(key({ key: 'b', ctrlKey: true }, [input]));
+    target.handleKeyDown(keyEvent({ key: 'b', ctrlKey: true }, { path: [input] }));
     expect(blocked).not.toHaveBeenCalled();
-    target.handleKeyDown(key('b', [input]));
+    target.handleKeyDown(keyEvent('b', { path: [input] }));
     expect(allowed).toHaveBeenCalledTimes(1);
   });
   it('leaves navigation and typeahead keys to nested composite owners', () => {
@@ -331,38 +316,49 @@ describe('Key binding guards', () => {
     const { handler: letter } = bind(target, { keys: 'k' });
     const { handler: modified } = bind(target, { keys: 'Ctrl+ArrowRight' });
     const slider = element('div', { role: 'slider' });
-    target.handleKeyDown(key('ArrowRight', [slider, host]));
-    target.handleKeyDown(key('ArrowRight', [element('tp-slider-thumb'), host]));
+    target.handleKeyDown(keyEvent('ArrowRight', { path: [slider, host] }));
+    target.handleKeyDown(keyEvent('ArrowRight', { path: [element('tp-slider-thumb'), host] }));
     target.handleKeyDown(
-      key('ArrowRight', [element('button'), element('div', { role: 'toolbar' }), host]),
+      keyEvent('ArrowRight', {
+        path: [element('button'), element('div', { role: 'toolbar' }), host],
+      }),
     );
     expect(seek).not.toHaveBeenCalled();
-    target.handleKeyDown(key('k', [slider, host]));
+    target.handleKeyDown(keyEvent('k', { path: [slider, host] }));
     expect(letter).toHaveBeenCalledTimes(1);
-    target.handleKeyDown(key('k', [element('div', { role: 'menuitem' }), host]));
+    target.handleKeyDown(keyEvent('k', { path: [element('div', { role: 'menuitem' }), host] }));
     expect(letter).toHaveBeenCalledTimes(1);
-    target.handleKeyDown(key({ key: 'ArrowRight', ctrlKey: true }, [slider, host]));
+    target.handleKeyDown(keyEvent({ key: 'ArrowRight', ctrlKey: true }, { path: [slider, host] }));
     expect(modified).toHaveBeenCalledTimes(1);
-    target.handleKeyDown(key('ArrowRight', [element('button'), host]));
+    target.handleKeyDown(keyEvent('ArrowRight', { path: [element('button'), host] }));
     expect(seek).toHaveBeenCalledTimes(1);
     const { handler: opted } = bind(target, {
       keys: 'ArrowLeft',
       guards: { composites: false },
     });
-    target.handleKeyDown(key('ArrowLeft', [slider, host]));
+    target.handleKeyDown(keyEvent('ArrowLeft', { path: [slider, host] }));
     expect(opted).toHaveBeenCalledTimes(1);
   });
   it('honors explicit data-tp-owns-keys markers', () => {
     const host = element();
     const target = owner(host);
     const { handler } = bind(target, { keys: 'k, Space, Ctrl+j' });
-    target.handleKeyDown(key('k', [element('div', { 'data-tp-owns-keys': 'k Space' }), host]));
-    target.handleKeyDown(key(' ', [element('div', { 'data-tp-owns-keys': 'k Space' }), host]));
     target.handleKeyDown(
-      key({ key: 'j', ctrlKey: true }, [element('div', { 'data-tp-owns-keys': '' }), host]),
+      keyEvent('k', { path: [element('div', { 'data-tp-owns-keys': 'k Space' }), host] }),
+    );
+    target.handleKeyDown(
+      keyEvent(' ', { path: [element('div', { 'data-tp-owns-keys': 'k Space' }), host] }),
+    );
+    target.handleKeyDown(
+      keyEvent(
+        { key: 'j', ctrlKey: true },
+        { path: [element('div', { 'data-tp-owns-keys': '' }), host] },
+      ),
     );
     expect(handler).not.toHaveBeenCalled();
-    target.handleKeyDown(key('k', [element('div', { 'data-tp-owns-keys': 'j' }), host]));
+    target.handleKeyDown(
+      keyEvent('k', { path: [element('div', { 'data-tp-owns-keys': 'j' }), host] }),
+    );
     expect(handler).toHaveBeenCalledTimes(1);
   });
   it('applies the consumer ownership hook, disabled predicate and interaction locks', () => {
@@ -370,18 +366,18 @@ describe('Key binding guards', () => {
     let disabled = false;
     const target = owner(element(), { ownsKey: () => owns, disabled: () => disabled });
     const { handler } = bind(target, { keys: 'k' });
-    target.handleKeyDown(key('k'));
+    target.handleKeyDown(keyEvent('k'));
     owns = false;
     disabled = true;
-    target.handleKeyDown(key('k'));
+    target.handleKeyDown(keyEvent('k'));
     disabled = false;
     const release = target.lock();
-    target.handleKeyDown(key('k'));
+    target.handleKeyDown(keyEvent('k'));
     expect(target.inert).toBe(true);
     release();
     release();
     expect(target.inert).toBe(false);
-    target.handleKeyDown(key('k'));
+    target.handleKeyDown(keyEvent('k'));
     expect(handler).toHaveBeenCalledTimes(1);
   });
   it('lets a nested owner with a matching binding claim the key', () => {
@@ -394,18 +390,18 @@ describe('Key binding guards', () => {
     inner.register({ keys: 'ArrowRight', handler: innerArrow });
     const path = [element('span'), innerHost, outerHost];
     // The inner owner declined (e.g. at a boundary) but still owns the key.
-    innerHost.dispatchEvent(key('ArrowRight', path));
-    outer.handleKeyDown(key('ArrowRight', path));
+    innerHost.dispatchEvent(keyEvent('ArrowRight', { path }));
+    outer.handleKeyDown(keyEvent('ArrowRight', { path }));
     expect(innerArrow).toHaveBeenCalledTimes(1);
     expect(outerArrow).not.toHaveBeenCalled();
-    outer.handleKeyDown(key('k', path));
+    outer.handleKeyDown(keyEvent('k', { path }));
     expect(outerArrow).toHaveBeenCalledTimes(1);
     const release = inner.lock();
-    outer.handleKeyDown(key('ArrowRight', path));
+    outer.handleKeyDown(keyEvent('ArrowRight', { path }));
     expect(outerArrow).toHaveBeenCalledTimes(2);
     release();
     inner.dispose();
-    outer.handleKeyDown(key('ArrowRight', path));
+    outer.handleKeyDown(keyEvent('ArrowRight', { path }));
     expect(outerArrow).toHaveBeenCalledTimes(3);
   });
 });
@@ -423,15 +419,15 @@ describe('Document-scope routing', () => {
     const { handler: a } = bind(first, { keys: 'k', scope: 'document' });
     const { handler: b } = bind(second, { keys: 'k', scope: 'document' });
     // Before any activity the first registered owner handles.
-    doc.dispatchEvent(key('k', [doc]));
+    doc.dispatchEvent(keyEvent('k', { path: [doc] }));
     expect([a.mock.calls.length, b.mock.calls.length]).toEqual([1, 0]);
     activate(secondHost, 'focusin');
-    const event = key('k', [doc]);
+    const event = keyEvent('k', { path: [doc] });
     doc.dispatchEvent(event);
     expect([a.mock.calls.length, b.mock.calls.length]).toEqual([1, 1]);
     expect(event.defaultPrevented).toBe(true);
     activate(firstHost, 'keydown');
-    doc.dispatchEvent(key('k', [doc]));
+    doc.dispatchEvent(keyEvent('k', { path: [doc] }));
     expect([a.mock.calls.length, b.mock.calls.length]).toEqual([2, 1]);
     expect(b.mock.calls[0]![1].scope).toBe('document');
   });
@@ -445,7 +441,7 @@ describe('Document-scope routing', () => {
     bind(second, { keys: 'j', scope: 'document' });
     const { handler: local } = bind(second, { keys: 'k' });
     activate(secondHost);
-    doc.dispatchEvent(key('k', [doc]));
+    doc.dispatchEvent(keyEvent('k', { path: [doc] }));
     expect(a).toHaveBeenCalledTimes(1);
     expect(local).not.toHaveBeenCalled();
   });
@@ -459,7 +455,7 @@ describe('Document-scope routing', () => {
     const { handler: b } = bind(second, { keys: 'k', scope: 'document' });
     activate(secondHost);
     const release = second.lock();
-    doc.dispatchEvent(key('k', [doc]));
+    doc.dispatchEvent(keyEvent('k', { path: [doc] }));
     expect([a.mock.calls.length, b.mock.calls.length]).toEqual([0, 0]);
     release();
   });
@@ -471,7 +467,7 @@ describe('Document-scope routing', () => {
     const first = bind(target, { keys: 'k', scope: 'document' });
     const second = bind(target, { keys: 'j', scope: 'document' });
     expect(add).toHaveBeenCalledTimes(1);
-    const prevented = key('k', [doc]);
+    const prevented = keyEvent('k', { path: [doc] });
     prevented.preventDefault();
     doc.dispatchEvent(prevented);
     expect(first.handler).not.toHaveBeenCalled();
@@ -479,14 +475,14 @@ describe('Document-scope routing', () => {
     expect(remove).not.toHaveBeenCalled();
     second.release();
     expect(remove).toHaveBeenCalledTimes(1);
-    doc.dispatchEvent(key('j', [doc]));
+    doc.dispatchEvent(keyEvent('j', { path: [doc] }));
     expect(second.handler).not.toHaveBeenCalled();
   });
   it('does not deliver owner-scope events to document bindings', () => {
     const host = element();
     const target = owner(host);
     const { handler } = bind(target, { keys: 'k', scope: 'document' });
-    host.dispatchEvent(key('k', [host]));
+    host.dispatchEvent(keyEvent('k', { path: [host] }));
     expect(handler).not.toHaveBeenCalled();
   });
 });
@@ -603,9 +599,9 @@ describe('Key binding owner lifecycle', () => {
     await flush();
     expect(listener).not.toHaveBeenCalled();
     expect(remove).toHaveBeenCalledTimes(4);
-    host.dispatchEvent(key('k', [host]));
+    host.dispatchEvent(keyEvent('k', { path: [host] }));
     expect(handler).not.toHaveBeenCalled();
-    expect(target.handleKeyDown(key('k'))).toBe(false);
+    expect(target.handleKeyDown(keyEvent('k'))).toBe(false);
     expect(target.register({ keys: 'k', handler })()).toBeUndefined();
     expect(KeyBindingOwner.for(host)).toBeUndefined();
     expect(owner(host)).toBeInstanceOf(KeyBindingOwner);
@@ -625,9 +621,9 @@ describe('Key binding owner lifecycle', () => {
     expect(add.mock.calls.filter(([type, , options]) => type === 'keydown' && !options)).toEqual(
       [],
     );
-    host.dispatchEvent(key('k', [host]));
+    host.dispatchEvent(keyEvent('k', { path: [host] }));
     expect(handler).not.toHaveBeenCalled();
-    expect(target.handleKeyDown(key('k'))).toBe(true);
+    expect(target.handleKeyDown(keyEvent('k'))).toBe(true);
   });
 });
 
@@ -642,8 +638,34 @@ describe('Editable navigation ownership', () => {
       disabled: false,
       ownerDocument: { defaultView: { getComputedStyle: () => ({ direction: 'ltr' }) } },
     } as unknown as HTMLElement;
-    expect(editableOwnsNavigationKey(key('ArrowRight'), input)).toBe(false);
-    expect(editableOwnsNavigationKey(key('ArrowLeft'), input)).toBe(true);
-    expect(editableOwnsNavigationKey(key('ArrowLeft'), element('button') as never)).toBe(false);
+    expect(editableOwnsNavigationKey(keyEvent('ArrowRight'), input)).toBe(false);
+    expect(editableOwnsNavigationKey(keyEvent('ArrowLeft'), input)).toBe(true);
+    expect(editableOwnsNavigationKey(keyEvent('ArrowLeft'), element('button') as never)).toBe(
+      false,
+    );
+  });
+});
+
+describe('Key name aliases', () => {
+  it('matches Esc, Return and symbol patterns against the canonical event keys', () => {
+    const [esc] = parseKeyPattern('Esc', 'linux');
+    expect(esc).toMatchObject({ key: 'escape', label: 'Esc' });
+    expect(matchesKeyChord(esc!, keyEvent('Escape'))).toBe(true);
+    expect(matchesKeyChord(parseKeyPattern('Return', 'linux')[0]!, keyEvent('Enter'))).toBe(true);
+    expect(
+      matchesKeyChord(
+        parseKeyPattern('Mod+⌫', 'windows')[0]!,
+        keyEvent({ key: 'Backspace', ctrlKey: true }),
+      ),
+    ).toBe(true);
+    expect(parseKeyPattern('space', 'linux')[0]).toMatchObject({ key: ' ', label: 'Space' });
+  });
+
+  it('fires an owner binding written with an alias', () => {
+    const host = element();
+    const target = owner(host);
+    const { handler } = bind(target, { keys: 'Esc' });
+    host.dispatchEvent(keyEvent('Escape', { path: [host] }));
+    expect(handler).toHaveBeenCalledOnce();
   });
 });

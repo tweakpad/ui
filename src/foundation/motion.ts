@@ -1,3 +1,4 @@
+import { reportDiagnostic } from './services.js';
 import { composedParent } from './focus.js';
 
 export type MotionKind = 'presence' | 'state' | 'ambient';
@@ -16,6 +17,24 @@ export interface MotionRoleDefinition {
   phases: readonly MotionPhase[];
   completion: MotionCompletion;
 }
+
+/** A state role: a transition between two committed states, non-blocking by default. */
+export const stateRole = (
+  name: string,
+  completion: MotionCompletion = 'non-blocking',
+): MotionRoleDefinition => ({ name, kind: 'state', phases: ['change'], completion });
+/** An ambient role: a continuous animation that starts and stops with a condition. */
+export const ambientRole = (name: string): MotionRoleDefinition => ({
+  name,
+  kind: 'ambient',
+  phases: ['start', 'stop'],
+  completion: 'non-blocking',
+});
+/** A presence role: enter and exit of a mounted region, blocking by default. */
+export const presenceRole = (
+  name: string,
+  completion: MotionCompletion = 'blocking',
+): MotionRoleDefinition => ({ name, kind: 'presence', phases: ['enter', 'exit'], completion });
 
 export interface MotionRequest {
   role: string;
@@ -313,15 +332,7 @@ export function resolvesReducedMotion(element: Element): boolean {
 }
 
 export function reportMotionDiagnostic(owner: HTMLElement, code: string, message: string): void {
-  queueMicrotask(() =>
-    owner.dispatchEvent(
-      new CustomEvent('tp-diagnostic', {
-        bubbles: true,
-        composed: true,
-        detail: { code, message, severity: 'error' as const },
-      }),
-    ),
-  );
+  queueMicrotask(() => reportDiagnostic(owner, { code, message, severity: 'error' }));
 }
 
 function settledHandle(): MotionHandle {

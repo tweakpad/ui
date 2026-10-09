@@ -1,4 +1,4 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { moduleExample } from './documentation-examples.js';
 import { setupAttachmentExample } from './attachment-example.js';
 import setupSource from './attachment-example.js?raw';
 
@@ -71,13 +71,16 @@ const group = (label: string, content: string) =>
 const section = (label: string, content: string) =>
   `<section style="${stack}"><h4 style="margin:0">${label}</h4>${content}</section>`;
 function example(title: string, id: string, markup: string, description?: string) {
-  return interactiveMarkupExample(
+  return moduleExample({
     title,
-    `<div id="${id}" style="display:grid;gap:var(--tp-space-6);min-inline-size:0">${markup}</div>`,
-    setupAttachmentExample,
-    `${setupSource.replaceAll("'../icons/", "'@tweakpad/ui/icons/").replaceAll(".js';", "';")}\nconst cleanup = setupAttachmentExample(document.getElementById('${id}'));\n// Call cleanup() when removing this composition.`,
+    id,
+    markup,
     description,
-  );
+    wrapperStyle: 'display:grid;gap:var(--tp-space-6);min-inline-size:0',
+    setup: setupAttachmentExample,
+    source: setupSource,
+    call: `const cleanup = setupAttachmentExample(document.getElementById('${id}'));\n// Call cleanup() when removing this composition.`,
+  });
 }
 function stateExamples(image: boolean) {
   const items = (orientation: string) =>

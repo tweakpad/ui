@@ -13,9 +13,7 @@ interface ButtonGroupStoryArgs {
 const meta: Meta<ButtonGroupStoryArgs> = {
   title: 'Components/Button group',
   component: 'tp-button-group',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       examples: buttonGroupExamples,
       description: { component: buttonGroupDocumentation.replace(/^# Button group\n/u, '') },

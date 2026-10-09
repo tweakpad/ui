@@ -1,6 +1,6 @@
 import { css, html, nothing } from 'lit';
 import { KeyHintElement } from './base.js';
-import { keyHintNotation } from './notation.js';
+import { keyHintNotation } from '../../foundation/key-notation.js';
 import { keyHintPresentation } from '../../presentation/families/key-hint.js';
 
 /** One informative key; authored content can replace the generated notation. */
@@ -37,5 +37,11 @@ export class TpKeyHint extends KeyHintElement {
           >${label ? html`<span class="visually-hidden">${label}</span>` : nothing}`,
       },
     )}`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-key-hint': TpKeyHint;
   }
 }

@@ -15,6 +15,46 @@ export function markupExample(
   return { title, code, description, ...options, render: () => html`${unsafeHTML(code)}` };
 }
 
+/** Rewrites repository-relative icon imports (any depth) to the published `@tweakpad/ui/icons/*`. */
+export const publishedIconImports = (raw: string) =>
+  raw.replace(/'(?:\.\.\/)+icons\/([^']+)\.js'/g, "'@tweakpad/ui/icons/$1'");
+
+/** The published form of an authored example module: package icons, extensionless specifiers. */
+export const publishedSource = (raw: string) => publishedIconImports(raw).replaceAll(".js';", "';");
+
+/**
+ * A live example whose behavior is an authored module (`setup` with its `?raw` `source`): the
+ * markup is wrapped in a container the module mounts by `id`, and the copyable code is the
+ * module's published source followed by `call`.
+ */
+export function moduleExample({
+  title,
+  id,
+  markup,
+  setup,
+  source,
+  call,
+  wrapperStyle,
+  description,
+}: {
+  readonly title: string;
+  readonly id: string;
+  readonly markup: string;
+  readonly setup: (root: HTMLElement) => () => void;
+  readonly source: string;
+  readonly call: string;
+  readonly wrapperStyle?: string | undefined;
+  readonly description?: string | undefined;
+}) {
+  return interactiveMarkupExample(
+    title,
+    `<div id="${id}"${wrapperStyle ? ` style="${wrapperStyle}"` : ''}>${markup}</div>`,
+    setup,
+    `${publishedSource(source)}\n${call}`,
+    description,
+  );
+}
+
 /** One mount/cleanup path for live application examples and their copyable source. */
 export function interactiveMarkupExample(
   title: string,

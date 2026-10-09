@@ -1,4 +1,6 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
+import { createId } from '../../foundation/id.js';
+import { defaultTrue } from '../../foundation/converters.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { TpElement } from '../../foundation/element.js';
@@ -21,7 +23,7 @@ import { checkIcon } from '../../icons/check.js';
 import { chevronDownIcon } from '../../icons/chevron-down.js';
 import { codeBlockPresentation } from '../../presentation/families/code-block.js';
 import { dedentCode } from '../../foundation/dedent.js';
-import { TpButton } from '../button.js';
+import { TpButton } from '../button/button.js';
 import { TpTooltip } from '../tooltip/tooltip.js';
 
 export interface CodeBlockMessages {
@@ -49,14 +51,7 @@ export interface CodeCopyDetail {
   readonly text: string;
 }
 
-/** `copyable` defaults to true; only the text `false` turns it off. */
-const defaultTrueConverter = {
-  fromAttribute: (value: string | null) => value !== 'false',
-  toAttribute: (value: boolean) => (value ? null : 'false'),
-};
 const COPIED_DURATION = 2000;
-
-let sequence = 0;
 
 /**
  * Highlighted source code (`ucl21-code-block`, behavior Foundation §18.13 Code highlighting).
@@ -95,7 +90,7 @@ export class TpCodeBlock extends TpElement {
     collapsible: { type: Boolean, reflect: true },
     defaultExpanded: { type: Boolean, attribute: 'default-expanded' },
     collapsedLines: { type: Number, attribute: 'collapsed-lines' },
-    copyable: { converter: defaultTrueConverter, reflect: true },
+    copyable: { converter: defaultTrue, reflect: true },
     wrap: { type: Boolean, reflect: true },
     messages: { attribute: false },
     _tokens: { state: true },
@@ -201,7 +196,7 @@ export class TpCodeBlock extends TpElement {
   declare _hasTitle: boolean;
   declare _lightCode: string;
 
-  readonly #id = `tp-code-block-${++sequence}`;
+  readonly #id = createId('tp-code-block');
   readonly #expanded: ControllableState<boolean>;
   #provided: boolean | undefined;
   #request: AbortController | undefined;
@@ -273,7 +268,9 @@ export class TpCodeBlock extends TpElement {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#readLightCode();
-    this.#mutations = new MutationObserver(() => this.#readLightCode());
+    this.#mutations = new (this.ownerDocument.defaultView ?? window).MutationObserver(() =>
+      this.#readLightCode(),
+    );
     this.#mutations.observe(this, { childList: true, characterData: true, subtree: true });
   }
 
@@ -388,7 +385,7 @@ export class TpCodeBlock extends TpElement {
   }
 
   #diagnostic(code: string, message: string): void {
-    this.emit('tp-diagnostic', { code, message });
+    this.diagnose(code, message);
   }
 
   #toggle = (event: Event): void => {
@@ -521,5 +518,11 @@ export class TpCodeBlock extends TpElement {
           : nothing
       }
     </figure>`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-code-block': TpCodeBlock;
   }
 }

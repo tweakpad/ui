@@ -1,3 +1,4 @@
+import { keyEvent } from './fakes.test.js';
 import { describe, expect, it, vi } from 'vitest';
 import { TabsSelection } from './tabs-selection.js';
 import { TpValueChangeEvent } from './events.js';
@@ -109,27 +110,25 @@ describe('Tabs selection ownership', () => {
 });
 
 describe('shared synthetic press', () => {
-  const key = (key: string, repeat = false) =>
-    Object.assign(new Event('keydown', { cancelable: true }), { key, repeat }) as KeyboardEvent;
   it('activates Enter once, Space on release and cancels a pending Space on blur', () => {
     const activate = vi.fn(),
       press = new SyntheticPress(activate);
-    press.keyDown(key('Enter'));
-    press.keyDown(key('Enter', true));
+    press.keyDown(keyEvent('Enter'));
+    press.keyDown(keyEvent('Enter', { repeat: true }));
     expect(activate).toHaveBeenCalledTimes(1);
-    press.keyDown(key(' '));
+    press.keyDown(keyEvent(' '));
     expect(activate).toHaveBeenCalledTimes(1);
-    press.keyUp(key(' '));
+    press.keyUp(keyEvent(' '));
     expect(activate).toHaveBeenCalledTimes(2);
-    press.keyDown(key(' '));
+    press.keyDown(keyEvent(' '));
     press.reset();
-    press.keyUp(key(' '));
+    press.keyUp(keyEvent(' '));
     expect(activate).toHaveBeenCalledTimes(2);
   });
   it('respects canceled initiating input', () => {
     const activate = vi.fn(),
       press = new SyntheticPress(activate),
-      event = key('Enter');
+      event = keyEvent('Enter');
     event.preventDefault();
     press.keyDown(event);
     expect(activate).not.toHaveBeenCalled();

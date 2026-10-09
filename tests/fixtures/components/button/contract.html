@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Button browser contract</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 24px;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Button browser contract</h1>
+      <p>
+        Assertions ported from the former Playwright button smoke; see <code>README.md</code>.
+        Append <code>?built</code> to load the built package.
+      </p>
+      <section class="row" id="activation">
+        <tp-button id="default">Continue</tp-button>
+      </section>
+      <section class="row" id="states">
+        <tp-button loading-position="leading" disabled focusable-when-disabled>Saving</tp-button>
+        <tp-button loading-position="trailing" disabled focusable-when-disabled>Saving</tp-button>
+        <tp-button disabled>Disabled</tp-button>
+        <tp-button disabled focusable-when-disabled>Focusable disabled</tp-button>
+        <tp-button native-action="false">Synthetic action</tp-button>
+      </section>
+      <div id="host"></div>
+    </main>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      const contract = await import('./contract-checks.js');
+      window.buttonContract = contract;
+      await customElements.whenDefined('tp-button');
+      document.documentElement.dataset.ready = '';
+    </script>
+  </body>
+</html>

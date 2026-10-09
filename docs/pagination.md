@@ -20,22 +20,22 @@ Canceling the proposal prevents navigation. Ctrl/Meta/Shift/Alt clicks retain
 native link behavior without changing the current page. Activating the current
 page does not reload the same destination.
 
-| Property / attribute | Type | Default | Purpose |
-| --- | --- | --- | --- |
-| `page` | positive integer | 1 | Application-owned current page; supply a page within the result set. |
-| `pages` | positive integer | 1 | Total page count. |
-| `label` | string | Pagination | Navigation landmark name. |
-| `hrefForPage` | `(page: number) => string` | current URL with page query | Real destination for every link. |
-| `pageLabel` | `(page: number) => string` | Page plus locale-formatted number | Accessible page-link name. |
-| `previousLabel / previous-label` | string | Previous | Localized visible and accessible previous name. |
-| `nextLabel / next-label` | string | Next | Localized visible and accessible next name. |
-| `pageLinkVariant / page-link-variant` | icon / text | icon | Square or content-width numbered links. |
-| `showPrevious / show-previous` | boolean | true | Render the previous link. |
-| `showNext / show-next` | boolean | true | Render the next link. |
-| `showPageLinks / show-page-links` | boolean | true | Render numeric links and omitted ranges. |
-| `showLabels / show-labels` | boolean | true | Include direction text, compacted below 40rem; false retains named icon links at every width. |
-| `disabled` | boolean | false | Disable all links through Button's shared native-link policy. |
-| `onPageChange` | value-change callback | undefined | Same cancelable navigation intent as `tp-value-change`. |
+| Property / attribute                  | Type                       | Default                           | Purpose                                                                                       |
+| ------------------------------------- | -------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `page`                                | positive integer           | 1                                 | Application-owned current page; supply a page within the result set.                          |
+| `pages`                               | positive integer           | 1                                 | Total page count.                                                                             |
+| `label`                               | string                     | Pagination                        | Navigation landmark name.                                                                     |
+| `hrefForPage`                         | `(page: number) => string` | current URL with page query       | Real destination for every link.                                                              |
+| `pageLabel`                           | `(page: number) => string` | Page plus locale-formatted number | Accessible page-link name.                                                                    |
+| `previousLabel / previous-label`      | string                     | Previous                          | Localized visible and accessible previous name.                                               |
+| `nextLabel / next-label`              | string                     | Next                              | Localized visible and accessible next name.                                                   |
+| `pageLinkVariant / page-link-variant` | icon / text                | icon                              | Square or content-width numbered links.                                                       |
+| `showPrevious / show-previous`        | boolean                    | true                              | Render the previous link.                                                                     |
+| `showNext / show-next`                | boolean                    | true                              | Render the next link.                                                                         |
+| `showPageLinks / show-page-links`     | boolean                    | true                              | Render numeric links and omitted ranges.                                                      |
+| `showLabels / show-labels`            | boolean                    | true                              | Include direction text, compacted below 40rem; false retains named icon links at every width. |
+| `disabled`                            | boolean                    | false                             | Disable all links through Button's shared native-link policy.                                 |
+| `onPageChange`                        | value-change callback      | undefined                         | Same cancelable navigation intent as `tp-value-change`.                                       |
 
 Set true-default boolean properties to `false` in JavaScript/Lit; an HTML attribute
 with the string `false` is still present and therefore true. Direction and locale

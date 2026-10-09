@@ -1,4 +1,4 @@
-import type { ComponentDefinition } from './definition.js';
+import type { ComponentDefinition, PartDefinition } from './definition.js';
 import type { PresentationDictionary, PresentationRule } from './resolver.js';
 
 /**
@@ -13,7 +13,7 @@ export interface PresentationFamily {
   readonly bindings: Readonly<Record<string, Readonly<Record<string, string>>>>;
   /** Arrangement of registered parts; not replaceable dictionary appearance. */
   readonly structure: PresentationDictionary;
-  /** Default appearance for this family's presentation keys. */
+  /** Default appearance for every presentation key of the family. */
   readonly appearance: PresentationDictionary;
 }
 
@@ -23,34 +23,71 @@ export interface PresentationFamilyInput {
   readonly structure?: PresentationDictionary;
   /** Appearance sources merged per key in order. */
   readonly sources?: readonly PresentationDictionary[];
-  /** Give every presentation key an entry, even when no source styles it. */
-  readonly complete?: boolean;
+}
+
+/** The key segment of an axis: a part-scoped axis name (`itemVariant`) drops its prefix. */
+export function axisSuffix(name: string): string {
+  const suffix = name.replace(
+    /^(?:item|action|pageLink|reactions|indicator|controls)(?=[A-Z])/,
+    '',
+  );
+  return `${suffix[0]?.toLowerCase() ?? ''}${suffix.slice(1)}`;
+}
+
+/** The axes a part participates in, in definition order. */
+export function partAxes(
+  part: PartDefinition,
+  definition: ComponentDefinition,
+): NonNullable<ComponentDefinition['axes']> {
+  return (definition.axes ?? []).filter((axis) => part.axes?.includes(axis.name));
+}
+
+/** The presentation keys of one part: its name, then `<part>-<axis>-<value>` per participating axis value. */
+export function partKeys(part: PartDefinition, definition: ComponentDefinition): string[] {
+  return [
+    part.name,
+    ...partAxes(part, definition).flatMap((axis) =>
+      axis.values.map((value) => `${part.name}-${axisSuffix(axis.name)}-${value}`),
+    ),
+  ];
 }
 
 /** All presentation keys a definition declares, in part order. */
 export function presentationKeys(definition: ComponentDefinition): string[] {
-  return definition.parts.flatMap((part) => part.presentationKeys ?? [part.name]);
+  return definition.parts.flatMap((part) => partKeys(part, definition));
 }
 
-/** Every key of a definition with no rules, for families that style keys individually. */
-export function emptyAppearance(definition: ComponentDefinition): PresentationDictionary {
-  return Object.fromEntries(presentationKeys(definition).map((key) => [key, []]));
-}
-
+/** A family is complete: every key has an entry, empty when no source styles it. */
 export function definePresentation(input: PresentationFamilyInput): PresentationFamily {
   const sources = input.sources ?? [];
   const appearance: Record<string, readonly PresentationRule[]> = {};
-  for (const key of presentationKeys(input.definition)) {
-    const present = sources.filter((source) => key in source);
-    if (!present.length && !input.complete) continue;
-    appearance[key] = present.flatMap((source) => source[key] ?? []);
-  }
+  for (const key of presentationKeys(input.definition))
+    appearance[key] = sources.flatMap((source) => source[key] ?? []);
   return Object.freeze({
     definition: input.definition,
     bindings: input.bindings ?? {},
     structure: input.structure ?? {},
     appearance,
   });
+}
+
+/**
+ * The root tag whose bindings a class inherits: set when the class extends that family's root
+ * element under another tag (a Navigation panel button extends Button). A constituent that only
+ * belongs to the family (a radio item, a map pin) inherits nothing and binds its own tag.
+ */
+export function inheritedRootTag(
+  constructor: { presentation?: PresentationFamily | undefined },
+  familyTag: string | undefined = constructor.presentation?.definition.tagName,
+): string | undefined {
+  if (!familyTag) return undefined;
+  for (
+    let ancestor = Object.getPrototypeOf(constructor) as { tagName?: string } | null;
+    ancestor;
+    ancestor = Object.getPrototypeOf(ancestor) as { tagName?: string } | null
+  )
+    if (ancestor.tagName === familyTag) return familyTag;
+  return undefined;
 }
 
 /** The family for a tag: the element's own, one it declares, or a defined element's family. */

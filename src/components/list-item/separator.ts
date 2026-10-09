@@ -7,7 +7,6 @@ import type { CustomElementConstructorWithTag } from '../../foundation/define.js
 /** List Item presentation binding around the shared decorative Separator. */
 export class TpListItemSeparator extends TpElement {
   static tagName = 'tp-list-item-separator';
-  static presentationTagName = 'tp-list-item';
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
     return [TpSeparator];
   }
@@ -30,5 +29,11 @@ export class TpListItemSeparator extends TpElement {
         properties: { class: 'separator', '.decorative': true, '.orientation': 'horizontal' },
       },
     );
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-list-item-separator': TpListItemSeparator;
   }
 }

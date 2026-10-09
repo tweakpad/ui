@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { targetOf } from '../anchored-surface.js';
+import { targetOf } from '../anchored-surface/anchored-surface.js';
 import { TpTooltip } from './tooltip.js';
 
 /** Minimal element stand-in: a tag, an optional shadow tree and a `[popover]` ancestor flag. */

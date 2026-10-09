@@ -58,3 +58,9 @@ export class TpMediaTitle extends TpMediaElement {
     return html`<span part="text">${this.#title.value}</span>`;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-title': TpMediaTitle;
+  }
+}

@@ -1,5 +1,5 @@
 import type { TpNavigationPanel } from '../../../../src/components/navigation-panel/index.js';
-import type { TpCollapsible } from '../../../../src/components/collapsible.js';
+import type { TpCollapsible } from '../../../../src/components/collapsible/collapsible.js';
 import type { TpNavigationPanelHeader } from '../../../../src/components/navigation-panel/parts.js';
 
 /** Actual composed geometry; run through Chrome DevTools MCP. */

@@ -124,7 +124,7 @@ For entrance animation, animate a message’s inner presentation with opacity/tr
 
 All other Button properties, slots, part contracts, loading, disabled/focusable-disabled, render delegates and native action behavior remain inherited; see Button’s complete API. Keep `type="button"` (default) for transcript commands. A navigation `href` retains Button link semantics and should only be supplied when navigation is intended too. A text label can use `size="sm"`; set `icon = null` if no arrow is wanted.
 
-An inactive control is inert, unavailable to pointer/keyboard input and visually hidden. An active control can independently be disabled. `data-active="true|false"` and `data-direction="start|end"` appear on host and button. Cancel its bubbling `click` with `event.preventDefault()` or the shared `preventComponentHandling()` mechanism before the queued scroll command runs. Omitting the constituent in explicit composition removes it entirely.
+An inactive control is inert, unavailable to pointer/keyboard input and visually hidden. An active control can independently be disabled. `data-active` (present while active) and `data-direction="start|end"` appear on host and button. Cancel its bubbling `click` with `event.preventDefault()` or the shared `preventComponentHandling()` mechanism before the queued scroll command runs. Omitting the constituent in explicit composition removes it entirely.
 
 ## Commands and controlled pinning
 

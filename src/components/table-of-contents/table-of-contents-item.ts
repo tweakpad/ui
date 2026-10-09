@@ -123,3 +123,9 @@ export class TpTableOfContentsItem extends TpElement {
     ></a>`;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-table-of-contents-item': TpTableOfContentsItem;
+  }
+}

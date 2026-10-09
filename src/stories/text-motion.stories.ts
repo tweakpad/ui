@@ -21,9 +21,7 @@ interface Args {
 const meta = {
   title: 'Components/Text motion',
   component: 'tp-text-motion',
-  tags: ['autodocs'],
   parameters: {
-    layout: 'padded',
     docs: {
       description: { component: documentation },
       examples: textMotionExamples,

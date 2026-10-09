@@ -79,7 +79,7 @@ collapsible.addEventListener('tp-open-change', (event) => {
 
 ## Styling
 
-The public parts are `collapsible`, `collapsible-heading`, `collapsible-trigger`, `collapsible-leading`, `collapsible-label`, `collapsible-trailing`, `collapsible-content`, and `collapsible-content-body`. Root, Trigger, Leading, Label, Trailing, and Content publish the applicable `data-open`, `data-closed`, and `data-disabled` markers. The host publishes `data-indicator-position` and `data-content-alignment`; each positional part publishes its fixed `data-position`. Content also publishes `data-state`, `data-starting-style`, and `data-ending-style` from the shared presence lifecycle.
+The public parts are `collapsible`, `collapsible-heading`, `collapsible-trigger`, `collapsible-leading`, `collapsible-label`, `collapsible-trailing`, `collapsible-content`, and `collapsible-content-body`. Root, Trigger, Leading, Label, Trailing, and Content publish the applicable `data-open`, `data-closed`, and `data-disabled` markers. The host publishes `data-indicator-position` and `data-content-alignment`; each positional part publishes its fixed `data-position`. Content also publishes `data-starting-style` and `data-ending-style` from the shared presence lifecycle.
 
 The measured panel exposes `--collapsible-panel-height` and `--collapsible-panel-width`. Its default Trigger, Label, positional content, focus ring, and ContentBody inset are token-based baseline presentation shared by standalone Collapsible and Accordion Item. Override those public parts when a product needs a different treatment. Put content padding on ContentBody, not Content, so padding is included in the measured animated extent.
 

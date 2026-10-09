@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Table native markup verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Table native markup verification</h1>
+    <p>An authored native table keeps its structure and receives the shared cell recipe.</p>
+    <tp-table id="native" label="Native table">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Invoice</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>INV001</td>
+            <td>Paid</td>
+          </tr>
+          <tr>
+            <td>INV002</td>
+            <td>Pending</td>
+          </tr>
+        </tbody>
+      </table>
+    </tp-table>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      window.tableContract = await import('./contract-checks.js');
+      await customElements.whenDefined('tp-table');
+      document.documentElement.dataset.ready = '';
+    </script>
+  </body>
+</html>

@@ -200,3 +200,10 @@ export class TpMediaControlsGroup extends TpMediaElement {
     return html`<slot></slot>`;
   }
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'tp-media-controls': TpMediaControls;
+    'tp-media-controls-group': TpMediaControlsGroup;
+  }
+}
