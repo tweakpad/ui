@@ -26,7 +26,9 @@ describe('per-component presentation ownership', () => {
   });
 
   it('keeps families independent: no family imports another family or an aggregate', () => {
-    for (const file of sources('presentation/families').filter((f) => !f.endsWith('index.ts')))
+    for (const file of sources('presentation/families').filter(
+      (f) => !/\/(?:index|widgets)\.ts$/.test(f),
+    ))
       for (const specifier of imports(file))
         expect(specifier, file).toMatch(
           /^(\.\.\/recipes\/|\.\.\/family\.js$|\.\.\/definition\.js$)/,
@@ -51,8 +53,16 @@ describe('per-component presentation ownership', () => {
       'components/index.ts',
       'index.ts',
       'catalog.ts',
+      'presentation/widgets.ts',
+      'presentation/families/widgets.ts',
+      'widgets/index.ts',
+      'widgets/catalog.ts',
     ];
-    for (const file of [...sources('components'), ...sources('foundation')]) {
+    for (const file of [
+      ...sources('components'),
+      ...sources('foundation'),
+      ...sources('widgets'),
+    ]) {
       if (aggregates.includes(file)) continue;
       for (const specifier of imports(file)) {
         if (!specifier.startsWith('.')) continue;
@@ -83,7 +93,7 @@ describe('per-component presentation ownership', () => {
   });
 
   it('declares every library element a component renders, so defining it defines them', () => {
-    const files = sources('components');
+    const files = [...sources('components'), ...sources('widgets')];
     const tagClass = new Map<string, string>();
     for (const file of files) {
       const text = readFileSync(join(root, file), 'utf8');

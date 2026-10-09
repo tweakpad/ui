@@ -1,7 +1,8 @@
 import type { StorybookConfig } from '@storybook/web-components-vite';
 
 const config: StorybookConfig = {
-  stories: ['../src/**/*.stories.ts'],
+  // Stories anywhere under src; the Widgets section also has an MDX overview page.
+  stories: ['../src/**/*.stories.ts', '../src/stories/widgets/*.mdx'],
   addons: ['@storybook/addon-a11y', '@storybook/addon-docs'],
   framework: {
     name: '@storybook/web-components-vite',

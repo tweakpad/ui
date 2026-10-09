@@ -19,20 +19,25 @@ describe('foundational styling tokens', () => {
     }
   });
 
+  const elementDirectories = ['../components/', '../widgets/'].map(
+    (directory) => new URL(directory, import.meta.url),
+  );
+
   it('keeps bezier definitions out of component transition declarations', () => {
-    const componentDirectory = new URL('../components/', import.meta.url);
-    for (const file of readdirSync(componentDirectory).filter((name) => name.endsWith('.ts'))) {
-      const source = readFileSync(new URL(file, componentDirectory), 'utf8');
-      expect(source, file).not.toContain('cubic-bezier(');
-    }
+    for (const directory of elementDirectories)
+      for (const file of readdirSync(directory).filter((name) => name.endsWith('.ts'))) {
+        const source = readFileSync(new URL(file, directory), 'utf8');
+        expect(source, file).not.toContain('cubic-bezier(');
+      }
     expect(styles).toMatch(/--tp-easing-standard:\s*cubic-bezier\(/u);
   });
 
   it('uses semantic roles and OKLab for every percentage-derived color', () => {
-    const componentDirectory = new URL('../components/', import.meta.url);
-    const componentStyles = readdirSync(componentDirectory)
-      .filter((name) => name.endsWith('.ts'))
-      .map((name) => readFileSync(new URL(name, componentDirectory), 'utf8'));
+    const componentStyles = elementDirectories.flatMap((directory) =>
+      readdirSync(directory)
+        .filter((name) => name.endsWith('.ts'))
+        .map((name) => readFileSync(new URL(name, directory), 'utf8')),
+    );
     const sources = [styles, ...componentStyles];
     const validMix =
       /color-mix\(\s*in\s+oklab\s*,\s*var\(--tp-[a-z0-9-]+\)\s+\d+(?:\.\d+)?%\s*,\s*(?:transparent|var\(--tp-[a-z0-9-]+\)(?:\s+\d+(?:\.\d+)?%)?|light-dark\(\s*var\(--tp-[a-z0-9-]+\)\s*,\s*var\(--tp-[a-z0-9-]+\)\s*\))\s*\)/gu;

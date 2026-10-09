@@ -1,6 +1,7 @@
 # Component implementation and evidence record
 
-Copy to `plans/components/<component>/implementation-checklist.md`. Replace
+Copy to `plans/components/<component>/implementation-checklist.md` (widgets:
+`plans/widgets/<widget>/implementation-checklist.md`). Replace
 bracketed fields and expand the tables for the actual task. Keep this file updated
 through the gates; do not check boxes merely because code was written.
 Keep the named sections, table columns and IDs below: the skill's record checker
@@ -23,7 +24,7 @@ do not create a checklist file unless writing one is in scope.
 - Tool readiness: [direct Spec Blocks and Chrome DevTools MCP availability]
 - Browser / server / build under test: [version, URL, source or built package]
 - Evidence directory: `tmp/component-verification/[component]/[run]/`
-- Durable verification fixtures / served URLs: [existing fixture or `tests/fixtures/components/<component>/index.html`]
+- Durable verification fixtures / served URLs: [existing fixture or `tests/fixtures/components/<component>/index.html`; widgets: `tests/fixtures/widgets/<widget>/index.html`]
 - Evidence availability to the next agent: [local only or actual shared location]
 
 ## Capability and interface mapping

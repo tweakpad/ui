@@ -3,7 +3,9 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { defaultPresentationDictionary } from './default.js';
 import { presentationFamilies } from './families/index.js';
+import { widgetPresentationFamilies } from './families/widgets.js';
 import { fillLayer } from './motion.js';
+import { defaultWidgetPresentationDictionary } from './widgets.js';
 import { fillColor, fillHidden, fillShown } from './recipes/shared/fill.js';
 
 const backgroundTransition = /\b(background(-color)?|all)\b/;
@@ -18,7 +20,7 @@ function sources(directory: string): string[] {
 
 describe('state fill layer', () => {
   it('never transitions a background in library source', () => {
-    const offenders = ['src/components', 'src/presentation'].flatMap((root) =>
+    const offenders = ['src/components', 'src/widgets', 'src/presentation'].flatMap((root) =>
       sources(root).flatMap((path) =>
         [
           ...readFileSync(path, 'utf8').matchAll(
@@ -35,7 +37,9 @@ describe('state fill layer', () => {
   it('keeps every resolved appearance and structure rule off background transitions', () => {
     const dictionaries = [
       defaultPresentationDictionary,
+      defaultWidgetPresentationDictionary,
       ...presentationFamilies.map((family) => family.structure),
+      ...widgetPresentationFamilies.map((family) => family.structure),
     ];
     for (const dictionary of dictionaries)
       for (const rules of Object.values(dictionary))

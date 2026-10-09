@@ -25,7 +25,11 @@
   "sideEffects": [
     "**/*.css",
     "./dist/register.js",
-    "./dist/register/icon.js"
+    "./dist/register/icon.js",
+    "./dist/register/widgets.js",
+    "./src/register.ts",
+    "./src/register/icon.ts",
+    "./src/register/widgets.ts"
   ],
   "files": [
     "dist",
@@ -80,6 +84,16 @@
       "types": "./dist/register/icon.d.ts",
       "import": "./dist/register/icon.js",
       "default": "./dist/register/icon.js"
+    },
+    "./widgets": {
+      "types": "./dist/widgets/index.d.ts",
+      "import": "./dist/widgets.js",
+      "default": "./dist/widgets.js"
+    },
+    "./register/widgets": {
+      "types": "./dist/register/widgets.d.ts",
+      "import": "./dist/register/widgets.js",
+      "default": "./dist/register/widgets.js"
     },
     "./icons/*": {
       "types": "./dist/icons/*.d.ts",

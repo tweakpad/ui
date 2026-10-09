@@ -1,6 +1,6 @@
 ---
 name: tweakpad-component
-description: 'Implement, refactor, fix, or review Tweakpad LitElement components and their Storybook documentation/compositions against the live specification and local Base UI, Floating UI, and shadcn references. Enforce shared architecture, component reuse, API coverage, theming, accessibility, and Chrome DevTools MCP verification. Applies to this library, not generic frontend work.'
+description: 'Implement, refactor, fix, or review Tweakpad LitElement components and widgets and their Storybook documentation/compositions against the live specification and local Base UI, Floating UI, shadcn and tweakpane references. Enforce shared architecture, component reuse, API coverage, theming, accessibility, and Chrome DevTools MCP verification. Applies to this library, not generic frontend work.'
 ---
 
 # Tweakpad component implementation
@@ -17,7 +17,15 @@ Badge are examples, never limits on coverage. A library component must work with
 the rest of the library, share its language and infrastructure, support public
 customization, and have complete documentation.
 
-- Read the live Foundation and Component Library specifications, managed
+Widgets, the specialized controls under `src/widgets/<widget>/` (color pickers,
+curve editors, audio graphs), follow the same pipeline with their own paths: the
+UI Widgets Specification as the owning document, tweakpane as an additional
+upstream reference, `docs/widgets/`, `src/stories/widgets/`,
+`tests/fixtures/widgets/` and `plans/widgets/<widget>/`. They ship only through
+`@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`; `docs/widgets/README.md`
+lists every file a widget adds.
+
+- Read the live Foundation, Component Library and Widgets specifications, managed
   vocabulary, owning contracts, and dependencies through **direct Spec Blocks MCP
   tools**. Those sources govern public behavior, anatomy, naming, and presentation
   boundaries. Local implementation, historical plans, and snapshots are not
@@ -84,7 +92,8 @@ stories and examples.
    spending time on the exhaustive browser matrix.
 
 For implementation work, copy [component-checklist.md](assets/component-checklist.md) to
-`plans/components/<component>/implementation-checklist.md`, or update the existing
+`plans/components/<component>/implementation-checklist.md` (widgets:
+`plans/widgets/<widget>/implementation-checklist.md`), or update the existing
 record. Use a stable component slug. Record source revisions, contract references,
 capabilities, shared ownership, demo composition reuse, verification scenarios,
 actual results, and remaining gaps. Store detailed logs and screenshots under
@@ -107,6 +116,8 @@ node .agents/skills/tweakpad-component/scripts/check-gates.mjs plans/components/
 node .agents/skills/tweakpad-component/scripts/check-gates.mjs plans/components/<component>/implementation-checklist.md --stage verify
 node .agents/skills/tweakpad-component/scripts/check-gates.mjs plans/components/<component>/implementation-checklist.md --stage complete
 ```
+
+For a widget, pass `plans/widgets/<widget>/implementation-checklist.md` instead.
 
 `implement` requires gates 0–2; `verify` additionally requires the early integration
 checkpoint before exhaustive browser verification; `complete` requires all gates,
@@ -288,8 +299,9 @@ Use registered **Google Chrome DevTools MCP** tools for all browser navigation,
 interaction, page evaluation, screenshots, and accessibility inspection. Do not
 use agent-browser, computer-use/GUI automation, standalone Playwright/Puppeteer,
 raw CDP, custom browser bridges, or a different browser automation integration.
-Browser regression checks live in `tests/fixtures/components/<component>/` with
-README steps; run them through MCP. Repository scripts are Node-only.
+Browser regression checks live in `tests/fixtures/components/<component>/` and
+`tests/fixtures/widgets/<widget>/` with README steps; run them through MCP.
+Repository scripts are Node-only.
 
 MCP evaluation may set up a fixture, exercise public property/method APIs, collect
 events, and inspect results. It must not simulate user input and present that as

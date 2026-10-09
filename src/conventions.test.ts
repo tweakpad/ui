@@ -14,7 +14,12 @@ const sources = (dir: string): string[] =>
         ? [join(dir, entry.name)]
         : [],
   );
-const files = [...sources('components'), ...sources('foundation'), ...sources('presentation')];
+const files = [
+  ...sources('components'),
+  ...sources('widgets'),
+  ...sources('foundation'),
+  ...sources('presentation'),
+];
 const read = (file: string) => readFileSync(join(root, file), 'utf8');
 
 interface Declaration {

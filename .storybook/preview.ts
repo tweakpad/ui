@@ -5,6 +5,7 @@ import '../src/styles.css';
 import './docs.css';
 import './density-compact.css';
 import '../src/register.js';
+import '../src/register/widgets.js';
 
 const preview = definePreview({
   addons: [addonDocs()],
@@ -36,6 +37,8 @@ const preview = definePreview({
   parameters: {
     a11y: { test: 'error' },
     controls: { expanded: true },
+    // Sidebar sections: the library pages first, then foundational components, then widgets.
+    options: { storySort: { order: ['Tweakpad UI', 'Components', 'Widgets'] } },
     docs: {
       page: DocumentationPage,
       source: { format: false },

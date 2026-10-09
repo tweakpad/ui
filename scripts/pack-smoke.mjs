@@ -34,6 +34,10 @@ for (const [subpath, target] of Object.entries(manifest.exports)) {
 }
 for (const required of ['LICENSE', 'README.md', 'dist/custom-elements.json'])
   if (!files.has(required)) fail(`${required} is not packed`);
+// The widgets section is opt-in: the main index and register never import a widget module.
+for (const entry of ['dist/index.js', 'dist/register.js'])
+  if (/from\s*["'][^"']*widgets/u.test(readFileSync(join(root, entry), 'utf8')))
+    fail(`${entry} imports the widgets section`);
 const elementsManifest = JSON.parse(readFileSync(join(root, 'dist/custom-elements.json'), 'utf8'));
 const elements = new Map(
   elementsManifest.modules
@@ -81,6 +85,8 @@ writeFileSync(
 import '@tweakpad/ui/register';
 import { TpButton, defineElement, createId } from '@tweakpad/ui';
 import { TpIcon } from '@tweakpad/ui/register/icon';
+import '@tweakpad/ui/register/widgets';
+import { widgetEntries } from '@tweakpad/ui/widgets';
 import { plusIcon } from '@tweakpad/ui/icons/plus';
 import * as carousel from '@tweakpad/ui/carousel';
 import * as dragDrop from '@tweakpad/ui/drag-drop';
@@ -93,7 +99,7 @@ import packageJson from '@tweakpad/ui/package.json' with { type: 'json' };
 defineElement(TpButton.tagName, TpButton);
 const button: HTMLElementTagNameMap['tp-button'] = document.createElement('tp-button');
 button.variant = 'outline';
-export const used = [TpIcon, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, packageJson.version];
+export const used = [TpIcon, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, widgetEntries.length, packageJson.version];
 `,
 );
 writeFileSync(join(consumer, 'css.d.ts'), "declare module '*.css';\n");

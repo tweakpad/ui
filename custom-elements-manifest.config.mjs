@@ -174,13 +174,18 @@ const tweakpadPublicMembers = () => ({
 
 export default {
   // Components plus the element bases they inherit attributes and members from.
-  globs: ['src/components/**/*.ts', 'src/foundation/element.ts', 'src/foundation/form-element.ts'],
+  globs: [
+    'src/components/**/*.ts',
+    'src/widgets/**/*.ts',
+    'src/foundation/element.ts',
+    'src/foundation/form-element.ts',
+  ],
   exclude: ['src/**/*.test.ts'],
   outdir: 'dist',
   litelement: true,
   plugins: [
     tweakpadTagNames(),
-    tweakpadEvents(scanEventSources('src/components', 'src/foundation')),
+    tweakpadEvents(scanEventSources('src/components', 'src/widgets', 'src/foundation')),
     tweakpadPublicMembers(),
   ],
 };

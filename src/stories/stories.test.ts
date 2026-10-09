@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { catalogEntries } from '../catalog.js';
+import { widgetEntries } from '../widgets/catalog.js';
 
 const directory = new URL('./', import.meta.url);
 const read = (file: string) => readFileSync(new URL(file, directory), 'utf8');
@@ -9,11 +10,19 @@ const storyFiles = readdirSync(directory)
   .sort();
 const stories = new Map(storyFiles.map((file) => [file, read(file)]));
 const story = (name: string) => stories.get(`${name}.stories.ts`)!;
+// Widget stories live in `widgets/` beside the section overview (an MDX page, not a story file).
+const widgetStories = new Map(
+  readdirSync(new URL('./widgets/', import.meta.url))
+    .filter((file) => file.endsWith('.stories.ts'))
+    .sort()
+    .map((file) => [`widgets/${file}`, read(`widgets/${file}`)]),
+);
 /** The meta object of a story file: everything before its stories. */
 const meta = (source: string) => source.split('export default meta')[0]!;
 const componentStories = [...stories.values()].filter((source) =>
   source.includes("title: 'Components/"),
 );
+const elementStories = [...componentStories, ...widgetStories.values()];
 
 describe('Storybook catalog entries', () => {
   const docsPage = read('../../.storybook/docs-page.mdx');
@@ -31,11 +40,34 @@ describe('Storybook catalog entries', () => {
     }
   });
 
+  it('has one Widgets story per published widget, and none elsewhere', () => {
+    const titled = [...widgetStories.values()].filter((source) =>
+      source.includes("title: 'Widgets/"),
+    );
+    expect(titled).toHaveLength(widgetEntries.length);
+    expect(widgetStories.size).toBe(widgetEntries.length);
+    for (const entry of widgetEntries) {
+      expect(
+        titled.filter((source) => source.includes(`component: '${entry.tagName}'`)),
+      ).toHaveLength(1);
+      expect(
+        titled.filter((source) => source.includes(`title: 'Widgets/${entry.name}'`)),
+      ).toHaveLength(1);
+    }
+    for (const source of stories.values()) expect(source).not.toContain("title: 'Widgets/");
+    for (const source of widgetStories.values())
+      expect(source).not.toContain("title: 'Components/");
+    // The section exists before its first widget: an overview page, registration and ordering.
+    expect(read('widgets/overview.mdx')).toContain('<Meta title="Widgets/Overview" />');
+    expect(preview).toContain("import '../src/register/widgets.js';");
+    expect(preview).toContain("order: ['Tweakpad UI', 'Components', 'Widgets']");
+  });
+
   it('declares Docs and layout once in the preview, not per story file', () => {
     expect(preview).toContain("tags: ['autodocs']");
     expect(preview).toContain("layout: 'padded'");
     expect(story('size-report')).toContain("tags: ['!autodocs']");
-    for (const [file, source] of stories) {
+    for (const [file, source] of [...stories, ...widgetStories]) {
       if (file !== 'size-report.stories.ts') expect(source).not.toContain("tags: ['autodocs']");
       expect(meta(source)).not.toContain("layout: 'padded'");
     }
@@ -53,7 +85,7 @@ describe('Storybook catalog entries', () => {
       docsPage.indexOf('<Description />'),
     );
 
-    for (const source of componentStories) {
+    for (const source of elementStories) {
       expect(source.match(/export const \w+: Story/u)?.[0]).toBe('export const Default: Story');
       // A viewport/plot/resizer needs an external size. Allow ordinary layout,
       // while still rejecting component paint overrides in the base example.
@@ -69,10 +101,11 @@ describe('Storybook catalog entries', () => {
       }
       expect(source).not.toContain('::part(');
     }
-    const examplesSource = read('examples.ts');
-    expect(examplesSource).not.toMatch(/<style(?:\s|>)/u);
-    expect(examplesSource).not.toMatch(/\sstyle=/u);
-    expect(examplesSource).not.toContain('::part(');
+    for (const examplesSource of [read('examples.ts'), read('widgets/examples.ts')]) {
+      expect(examplesSource).not.toMatch(/<style(?:\s|>)/u);
+      expect(examplesSource).not.toMatch(/\sstyle=/u);
+      expect(examplesSource).not.toContain('::part(');
+    }
   });
 
   it('keeps Collapsible controls limited to its public properties', () => {

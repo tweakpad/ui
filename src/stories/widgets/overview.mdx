@@ -1,0 +1,22 @@
+import { Markdown, Meta } from '@storybook/addon-docs/blocks';
+import overview from '../../../docs/widgets/README.md?raw';
+import { widgetEntries } from '../../widgets/catalog.js';
+
+<Meta title="Widgets/Overview" />
+
+<Markdown>{overview}</Markdown>
+
+## Status
+
+{widgetEntries.length ? (
+
+  <ul>
+    {widgetEntries.map((entry) => (
+      <li key={entry.tagName}>
+        <code>{entry.tagName}</code>: {entry.name} ({entry.kind})
+      </li>
+    ))}
+  </ul>
+) : (
+  <p>No widgets are published yet. The first widget planned is the color picker.</p>
+)}

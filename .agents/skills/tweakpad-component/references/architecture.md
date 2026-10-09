@@ -11,14 +11,17 @@ using them. This document does not duplicate normative component contracts.
 | Live authority      | Direct Spec Blocks MCP; project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`                      | Confirm project identity, current revisions, documents, and managed vocabulary.                                                                                                                                                                                                                                                                |
 | Foundation          | Document `doc_cd3c4721-9f9b-4531-abab-a8bfdbac75f1`                                             | Owning behavior plus state, lifecycle, accessibility, forms, motion, positioning and coverage dependencies.                                                                                                                                                                                                                                    |
 | Component Library   | Document `doc_8077bf7c-0361-48f3-ac87-53b983bd89b3`                                             | Definition, anatomy, properties, shared terminology, presentation, composition and coverage dependencies.                                                                                                                                                                                                                                      |
+| Widgets             | Document `doc_0d98facc-5a5d-4de2-bccb-7317abea0b9f`                                             | Scope, packaging, shared widget contracts (value model, input, rendering, accessibility, theming, performance) and each widget's definition; widgets only.                                                                                                                                                                                   |
 | Spec access policy  | `../specification/AGENTS.md`                                                                    | Registered direct tools only; no shell, JSON-RPC, curl or bridge substitutes for server calls. Reading local upstream reference files is separate from server access.                                                                                                                                                                          |
 | Base UI             | `../specification/external/base-ui/packages/react/src/` and `packages/utils/src/`               | Public exports, constituent units, internal/shared owners, data attributes, source types, adjacent tests, docs and demos.                                                                                                                                                                                                                      |
 | Floating UI         | `../specification/external/floating-ui/packages/{core,dom,utils}/src/`                          | Positioning stages, overflow/measurement, clipping, owner realms, auto-update and cleanup. Follow relevant interaction references too.                                                                                                                                                                                                         |
 | shadcn              | `../specification/external/ui/apps/v4/registry/`                                                | Components, compositions and presentation across applicable registry bases; `ui` is the local shadcn checkout.                                                                                                                                                                                                                                 |
+| tweakpane (widgets) | `../specification/external/tweakpane/packages/core/src/`, `../specification/research/tweakpane/` | Widget parity evidence: `input-binding/color/view/` (color picker), `input-binding/point-2d/` (2D picker), `monitor-binding/number/view/graph-log.ts` (graph). Its `tp-` CSS prefix is a naming coincidence only.                                                                                                                         |
 | Public inventory    | `src/catalog.ts`, `src/components/index.ts`, `src/index.ts`, `src/register.ts`, `package.json`  | Catalog identities, class exports, registration and package entrypoints; each component module declares its own `HTMLElementTagNameMap` entry.                                                                                                                                                                                                 |
+| Widget inventory    | `src/widgets/catalog.ts`, `src/widgets/index.ts`, `src/register/widgets.ts`                     | The widgets section: catalog, class exports and registration for `@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`; never reached from `src/index.ts` or `src/register.ts` (`src/widgets/catalog.test.ts`).                                                                                                                        |
 | Shared behavior     | `src/foundation/`, `src/components/shared/`                                                     | Existing abstractions and consumers, including limitations that require shared repair.                                                                                                                                                                                                                                                         |
 | Shared presentation | `src/presentation/`, `src/styles.css`, `docs/styling.md`, `docs/motion.md`                      | Definition/part registration, resolution, tokens, recipes, structure, composition, public overrides and motion boundaries.                                                                                                                                                                                                                     |
-| Docs and fixtures   | `src/stories/`, `src/stories/examples.ts`, `.storybook/`, `docs/`, `tests/fixtures/components/` | Authored stories, base examples, actual API tables, nested-component usage and published example code. `src/stories/*-example.js` (+ `.d.ts` stubs, `allowJs` is off) are authored sources that `*.examples.ts` import both as modules and as `?raw` published code; they are not build output. Browser fixtures with per-folder README steps. |
+| Docs and fixtures   | `src/stories/`, `src/stories/examples.ts`, `.storybook/`, `docs/`, `tests/fixtures/components/` | Authored stories, base examples, actual API tables, nested-component usage and published example code. `src/stories/*-example.js` (+ `.d.ts` stubs, `allowJs` is off) are authored sources that `*.examples.ts` import both as modules and as `?raw` published code; they are not build output. Browser fixtures with per-folder README steps. Widgets use `src/stories/widgets/` (stories, `examples.ts`, `overview.mdx`), `docs/widgets/` and `tests/fixtures/widgets/`. |
 | Prior coverage      | `plans/phase-1/outputs/`, `plans/phase-1/first-pass-conformance.md`                             | Leads and previous gaps only; source versions and dispositions may be stale.                                                                                                                                                                                                                                                                   |
 
 Use source IDs as locators, not frozen contracts. Read related owning nodes and
@@ -91,9 +94,13 @@ Do not interpret reuse as merely importing a Button or a focus utility. Apply th
 dependency-tracing procedure to every component family, not just Dialog.
 
 New and substantially implemented components belong in
-`src/components/<component>/`. Migrate the assigned implementation out of grouped
-files when implementing it; preserve unrelated implementations and supported
-exports. Update importers, registration, types, stories and tests together.
+`src/components/<component>/`; widgets belong in `src/widgets/<widget>/` under the
+same folder rules, with their catalog tuple, `src/widgets/index.ts` export,
+`src/register/widgets.ts` definition and `src/presentation/families/widgets.ts`
+entry (the checklist in `docs/widgets/README.md`). Migrate the assigned
+implementation out of grouped files when implementing it; preserve unrelated
+implementations and supported exports. Update importers, registration, types,
+stories and tests together.
 This is a file-organization rule, not permission to sever the family ownership
 established above. A component folder can contain a thin policy binding to a shared
 owner; the shared owner need not be copied into each component folder.
@@ -233,9 +240,12 @@ the shared code they reach. `src/presentation/families.test.ts` enforces these r
   several families goes in `recipes/shared/` or `recipes/core/`. Recipes never import
   `componentDefinitions`, `defaultPresentationDictionary`, `families/index.ts` or another
   component's family. Use `complete: true` instead of reading the catalog.
-- **Aggregates.** Components and Foundation never import the aggregates
-  (`presentation/components.ts`, `default.ts`, `families/index.ts`). They exist only for
-  tooling and full-library themes.
+- **Aggregates.** Components, widgets and Foundation never import the aggregates
+  (`presentation/components.ts`, `default.ts`, `families/index.ts`, and the widget
+  counterparts `presentation/widgets.ts`, `families/widgets.ts`). They exist only for
+  tooling and full-library themes. Widget families are listed in `families/widgets.ts`,
+  never in `families/index.ts`, so `@tweakpad/ui` and `/register` never reach a widget
+  (`src/widgets/catalog.test.ts`).
 - **Rendered elements.** Every library element a class renders, through a `<tp-*>`
   template, `renderPart({ tag })` or `createElement`, is listed in
   `static get elementDependencies()`. `defineElement` defines them recursively.

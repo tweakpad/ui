@@ -43,6 +43,9 @@ export default defineConfig({
         markdown: resolve(import.meta.dirname, 'src/foundation/markdown/index.ts'),
         register: resolve(import.meta.dirname, 'src/register.ts'),
         'register/icon': resolve(import.meta.dirname, 'src/register/icon.ts'),
+        // The widgets section ships through its own entries; `index` and `register` never reach it.
+        widgets: resolve(import.meta.dirname, 'src/widgets/index.ts'),
+        'register/widgets': resolve(import.meta.dirname, 'src/register/widgets.ts'),
         ...iconEntries,
       },
       formats: ['es'],

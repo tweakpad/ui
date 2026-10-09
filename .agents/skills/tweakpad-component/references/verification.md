@@ -65,9 +65,9 @@ with a concrete scope/dependency reason; this cannot excuse missing implementati
    results into a cross-browser claim.
 
 The repository has no browser driver: the former Playwright smoke scripts were
-re-homed as fixtures under `tests/fixtures/components/<component>/`, and each
-folder's `README.md` lists the Chrome DevTools MCP steps and the assertion
-modules to evaluate. Repository scripts (`build`, `test:package`, `size:report`)
+re-homed as fixtures under `tests/fixtures/components/<component>/` (widgets:
+`tests/fixtures/widgets/<widget>/`), and each folder's `README.md` lists the
+Chrome DevTools MCP steps and the assertion modules to evaluate. Repository scripts (`build`, `test:package`, `size:report`)
 are Node-only. Do not add a browser driver, and do not delete useful fixture
 coverage because its original driver was removed.
 
@@ -183,6 +183,7 @@ matrix. Cite live requirements before treating a feature as supported or omitted
 | Continuous/date controls               | Boundaries, step/rounding, locale/direction, pointer capture/drag cancellation, multiple-thumb/range relationships, keyboard equivalents, disabled dates/values, validation and native form output.                                  |
 | Presentational/composed controls       | Public anatomy, optional/empty regions, native semantics, content sizing, responsive layout, theming and real nested component reuse.                                                                                                |
 | Notifications and asynchronous content | Announcement policy, queues/lifetimes, dismissal, pause/resume where supported, focus, concurrent updates, timers, cleanup and reconnect behavior.                                                                                   |
+| Canvas, graph, color and audio widgets | Device-pixel-ratio and resize re-render, theme change repaint, context loss, pointer capture and drag cancellation, wheel/keyboard equivalents with fine and coarse modifiers, value-model boundaries and canonical serialization, registered change reasons, accessible name/value per dimension, reduced motion, token/part theming, frame budget under continuous input and resource release on disconnect. |
 
 ## Documentation and demo reuse acceptance
 

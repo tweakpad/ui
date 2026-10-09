@@ -1,8 +1,9 @@
 # Attribute, marker and event conventions
 
-These rules apply to every component. `src/conventions.test.ts` checks the ones that can be
-read from the source; the rest are reviewed against the live specification (Component
-Library §10 Variant system, §11 State presentation; Foundation §5.3 ChangeEvent, Appendix B).
+These rules apply to every component and widget (`src/components/`, `src/widgets/`).
+`src/conventions.test.ts` checks the ones that can be read from the source; the rest are
+reviewed against the live specification (Component Library §10 Variant system, §11 State
+presentation; Foundation §5.3 ChangeEvent, Appendix B; the UI Widgets Specification for widgets).
 
 ## Properties and attributes
 

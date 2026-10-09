@@ -38,6 +38,8 @@ defineElement(TpCarousel.tagName, TpCarousel);
 
 Icons are separate modules: import only the definitions you use from `@tweakpad/ui/icons/<name>`, and `@tweakpad/ui/register/icon` registers `tp-icon` alone.
 
+Widgets, the specialized controls (color pickers, curve editors, audio graphs), are a separate section: `@tweakpad/ui/widgets` exports their classes and `@tweakpad/ui/register/widgets` defines them. Neither the main index nor `/register` includes a widget, so the core stays small unless you opt in. See the [widgets guide](https://github.com/tweakpad/ui/blob/development/docs/widgets/README.md).
+
 ## Entry points
 
 | Import                                                                        | Contents                                                                     |
@@ -45,6 +47,8 @@ Icons are separate modules: import only the definitions you use from `@tweakpad/
 | `@tweakpad/ui`                                                                | Component classes, foundation utilities, presentation APIs (no side effects) |
 | `@tweakpad/ui/register`                                                       | Defines every component                                                      |
 | `@tweakpad/ui/register/icon`                                                  | Defines `tp-icon` only                                                       |
+| `@tweakpad/ui/widgets`                                                        | Widget classes, types, the widget catalog and widget presentation aggregates |
+| `@tweakpad/ui/register/widgets`                                               | Defines every widget; not included in `/register`                            |
 | `@tweakpad/ui/icons/<name>`                                                   | Individual icon definitions                                                  |
 | `@tweakpad/ui/styles.css`                                                     | Design tokens and page defaults                                              |
 | `@tweakpad/ui/carousel`, `/drag-drop`, `/media`, `/map`, `/code`, `/markdown` | Foundation modules for those feature areas                                   |
@@ -71,7 +75,7 @@ Current versions of Chrome, Edge, Firefox and Safari (custom elements, shadow DO
 
 ## Documentation
 
-Component guides live in [`docs/`](https://github.com/tweakpad/ui/tree/development/docs), for example [Accordion](https://github.com/tweakpad/ui/blob/development/docs/accordion.md), [Icon](https://github.com/tweakpad/ui/blob/development/docs/icon.md) and [Motion](https://github.com/tweakpad/ui/blob/development/docs/motion.md).
+Component guides live in [`docs/`](https://github.com/tweakpad/ui/tree/development/docs), for example [Accordion](https://github.com/tweakpad/ui/blob/development/docs/accordion.md), [Icon](https://github.com/tweakpad/ui/blob/development/docs/icon.md) and [Motion](https://github.com/tweakpad/ui/blob/development/docs/motion.md). Widget guides live in [`docs/widgets/`](https://github.com/tweakpad/ui/tree/development/docs/widgets).
 
 ## License
 

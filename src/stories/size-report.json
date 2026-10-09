@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-09T09:23:08.604Z",
+  "generatedAt": "2026-10-09T13:40:09.789Z",
   "version": "0.1.0",
-  "method": "Each catalog component as documented (the root plus the parts its canonical example composes) imported from @tweakpad/ui and defined; Rolldown resolves the modules that ships (lit external, tree-shaken) and each module is measured as published in dist, bytes on disk and gzip per file, the way the build log lists it.",
+  "method": "Each catalog component (from @tweakpad/ui) and widget (from @tweakpad/ui/widgets) as documented (the root plus the parts its canonical example composes), imported and defined; Rolldown resolves the modules that ships (lit external, tree-shaken) and each module is measured as published in dist, bytes on disk and gzip per file, the way the build log lists it.",
   "lit": {
     "bytes": 16643,
     "gzip": 7357,
@@ -17,12 +17,18 @@
     "gzip": 779674,
     "modules": 587
   },
+  "fullWidgets": {
+    "bytes": 428,
+    "gzip": 193,
+    "modules": 1
+  },
   "components": [
     {
       "name": "Media player",
       "tagName": "tp-media-player",
       "className": "TpMediaPlayer",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [
         "tp-media-video-layout"
       ],
@@ -72,6 +78,7 @@
       "tagName": "tp-markdown",
       "className": "TpMarkdown",
       "kind": "preset-composition",
+      "section": "components",
       "uses": [],
       "bytes": 351411,
       "gzip": 129857,
@@ -98,6 +105,7 @@
       "tagName": "tp-command-palette",
       "className": "TpCommandPalette",
       "kind": "preset-composition",
+      "section": "components",
       "uses": [],
       "bytes": 339847,
       "gzip": 122371,
@@ -123,6 +131,7 @@
       "tagName": "tp-tree-view",
       "className": "TpTreeView",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [
         "tp-tree-item",
         "tp-icon"
@@ -145,6 +154,7 @@
       "tagName": "tp-autocomplete",
       "className": "TpAutocomplete",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [],
       "bytes": 281279,
       "gzip": 102264,
@@ -166,6 +176,7 @@
       "tagName": "tp-select",
       "className": "TpSelect",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [],
       "bytes": 278093,
       "gzip": 100878,
@@ -186,6 +197,7 @@
       "tagName": "tp-map",
       "className": "TpMap",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [
         "tp-map-pin"
       ],
@@ -211,6 +223,7 @@
       "tagName": "tp-message-scroller",
       "className": "TpMessageScroller",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [
         "tp-message-scroller-item",
         "tp-message",
@@ -238,6 +251,7 @@
       "tagName": "tp-carousel",
       "className": "TpCarousel",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [
         "tp-card"
       ],
@@ -260,6 +274,7 @@
       "tagName": "tp-drag-drop-list",
       "className": "TpDragDropList",
       "kind": "preset-composition",
+      "section": "components",
       "uses": [],
       "bytes": 260286,
       "gzip": 95346,
@@ -280,6 +295,7 @@
       "tagName": "tp-navigation-panel",
       "className": "TpNavigationPanel",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 266420,
       "gzip": 94859,
@@ -302,6 +318,7 @@
       "tagName": "tp-code-block",
       "className": "TpCodeBlock",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 226905,
       "gzip": 84726,
@@ -321,6 +338,7 @@
       "tagName": "tp-menu",
       "className": "TpMenu",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [
         "tp-button"
       ],
@@ -343,6 +361,7 @@
       "tagName": "tp-timeline",
       "className": "TpTimeline",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [
         "tp-timeline-item",
         "tp-time"
@@ -365,6 +384,7 @@
       "tagName": "tp-menubar",
       "className": "TpMenubar",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [
         "tp-menu"
       ],
@@ -386,6 +406,7 @@
       "tagName": "tp-drawer",
       "className": "TpDrawer",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [
         "tp-button"
       ],
@@ -408,6 +429,7 @@
       "tagName": "tp-message",
       "className": "TpMessage",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 205002,
       "gzip": 73880,
@@ -425,6 +447,7 @@
       "tagName": "tp-preview-card",
       "className": "TpPreviewCard",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [
         "tp-time"
       ],
@@ -444,6 +467,7 @@
       "tagName": "tp-time",
       "className": "TpTime",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 198214,
       "gzip": 71704,
@@ -460,6 +484,7 @@
       "tagName": "tp-data-visualization",
       "className": "TpDataVisualization",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 194049,
       "gzip": 71037,
@@ -477,6 +502,7 @@
       "tagName": "tp-navigation-menu",
       "className": "TpNavigationMenu",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [],
       "bytes": 195471,
       "gzip": 70172,
@@ -494,6 +520,7 @@
       "tagName": "tp-popover",
       "className": "TpPopover",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [
         "tp-button"
       ],
@@ -514,6 +541,7 @@
       "tagName": "tp-tooltip",
       "className": "TpTooltip",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [
         "tp-button"
       ],
@@ -534,6 +562,7 @@
       "tagName": "tp-theme-switcher",
       "className": "TpThemeSwitcher",
       "kind": "preset-composition",
+      "section": "components",
       "uses": [],
       "bytes": 168542,
       "gzip": 65403,
@@ -557,6 +586,7 @@
       "tagName": "tp-calendar",
       "className": "TpCalendar",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 169003,
       "gzip": 59905,
@@ -576,6 +606,7 @@
       "tagName": "tp-toast",
       "className": "TpToast",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 153903,
       "gzip": 56875,
@@ -594,6 +625,7 @@
       "tagName": "tp-alert-dialog",
       "className": "TpAlertDialog",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [
         "tp-button"
       ],
@@ -615,6 +647,7 @@
       "tagName": "tp-dialog",
       "className": "TpDialog",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [
         "tp-button"
       ],
@@ -635,6 +668,7 @@
       "tagName": "tp-questionnaire",
       "className": "TpQuestionnaire",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 132560,
       "gzip": 50071,
@@ -654,6 +688,7 @@
       "tagName": "tp-field",
       "className": "TpField",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [
         "tp-input"
       ],
@@ -673,6 +708,7 @@
       "tagName": "tp-form",
       "className": "TpForm",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 123294,
       "gzip": 44709,
@@ -690,6 +726,7 @@
       "tagName": "tp-image",
       "className": "TpImage",
       "kind": "preset-composition",
+      "section": "components",
       "uses": [],
       "bytes": 114796,
       "gzip": 44427,
@@ -709,6 +746,7 @@
       "tagName": "tp-scroll-trigger",
       "className": "TpScrollTrigger",
       "kind": "thin-wrapper",
+      "section": "components",
       "uses": [
         "tp-text-motion"
       ],
@@ -727,6 +765,7 @@
       "tagName": "tp-slider",
       "className": "TpSlider",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 118920,
       "gzip": 42555,
@@ -743,6 +782,7 @@
       "tagName": "tp-accordion",
       "className": "TpAccordion",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [
         "tp-accordion-item"
       ],
@@ -763,6 +803,7 @@
       "tagName": "tp-text-motion",
       "className": "TpTextMotion",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 108486,
       "gzip": 41442,
@@ -777,6 +818,7 @@
       "tagName": "tp-switch",
       "className": "TpSwitch",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 104564,
       "gzip": 41127,
@@ -795,6 +837,7 @@
       "tagName": "tp-native-select",
       "className": "TpNativeSelect",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 103965,
       "gzip": 39627,
@@ -811,6 +854,7 @@
       "tagName": "tp-input-group",
       "className": "TpInputGroup",
       "kind": "preset-composition",
+      "section": "components",
       "uses": [
         "tp-input"
       ],
@@ -829,6 +873,7 @@
       "tagName": "tp-collapsible",
       "className": "TpCollapsible",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 94524,
       "gzip": 37001,
@@ -845,6 +890,7 @@
       "tagName": "tp-toggle-group",
       "className": "TpToggleGroup",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [
         "tp-toggle"
       ],
@@ -863,6 +909,7 @@
       "tagName": "tp-label",
       "className": "TpLabel",
       "kind": "preset-composition",
+      "section": "components",
       "uses": [
         "tp-input"
       ],
@@ -881,6 +928,7 @@
       "tagName": "tp-attachment",
       "className": "TpAttachment",
       "kind": "preset-composition",
+      "section": "components",
       "uses": [],
       "bytes": 91123,
       "gzip": 35961,
@@ -899,6 +947,7 @@
       "tagName": "tp-pagination",
       "className": "TpPagination",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [],
       "bytes": 86365,
       "gzip": 35436,
@@ -917,6 +966,7 @@
       "tagName": "tp-checkbox",
       "className": "TpCheckbox",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 89711,
       "gzip": 34809,
@@ -933,6 +983,7 @@
       "tagName": "tp-text-area",
       "className": "TpTextArea",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 87843,
       "gzip": 34400,
@@ -947,6 +998,7 @@
       "tagName": "tp-table-of-contents",
       "className": "TpTableOfContents",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [
         "tp-table-of-contents-item"
       ],
@@ -965,6 +1017,7 @@
       "tagName": "tp-button-group",
       "className": "TpButtonGroup",
       "kind": "preset-composition",
+      "section": "components",
       "uses": [
         "tp-button"
       ],
@@ -985,6 +1038,7 @@
       "tagName": "tp-input",
       "className": "TpInput",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 87576,
       "gzip": 34278,
@@ -999,6 +1053,7 @@
       "tagName": "tp-card",
       "className": "TpCard",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [
         "tp-button"
       ],
@@ -1019,6 +1074,7 @@
       "tagName": "tp-radio-group",
       "className": "TpRadioGroup",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [
         "tp-radio-group-item"
       ],
@@ -1037,6 +1093,7 @@
       "tagName": "tp-tabs",
       "className": "TpTabs",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 85702,
       "gzip": 32746,
@@ -1051,6 +1108,7 @@
       "tagName": "tp-resizable-panel-group",
       "className": "TpResizablePanelGroup",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 83691,
       "gzip": 32406,
@@ -1068,6 +1126,7 @@
       "tagName": "tp-one-time-code-field",
       "className": "TpOneTimeCodeField",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 81366,
       "gzip": 31814,
@@ -1084,6 +1143,7 @@
       "tagName": "tp-toggle",
       "className": "TpToggle",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 78873,
       "gzip": 31369,
@@ -1098,6 +1158,7 @@
       "tagName": "tp-scroll-area",
       "className": "TpScrollArea",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 78263,
       "gzip": 31225,
@@ -1112,6 +1173,7 @@
       "tagName": "tp-button",
       "className": "TpButton",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 73889,
       "gzip": 30189,
@@ -1129,6 +1191,7 @@
       "tagName": "tp-list-item",
       "className": "TpListItem",
       "kind": "preset-composition",
+      "section": "components",
       "uses": [],
       "bytes": 65621,
       "gzip": 25778,
@@ -1143,6 +1206,7 @@
       "tagName": "tp-table",
       "className": "TpTable",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 63060,
       "gzip": 25574,
@@ -1159,6 +1223,7 @@
       "tagName": "tp-progress",
       "className": "TpProgress",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 61997,
       "gzip": 25068,
@@ -1173,6 +1238,7 @@
       "tagName": "tp-bubble",
       "className": "TpBubble",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 60318,
       "gzip": 24832,
@@ -1187,6 +1253,7 @@
       "tagName": "tp-breadcrumb",
       "className": "TpBreadcrumb",
       "kind": "flattening-compound",
+      "section": "components",
       "uses": [],
       "bytes": 57553,
       "gzip": 24235,
@@ -1203,6 +1270,7 @@
       "tagName": "tp-avatar",
       "className": "TpAvatar",
       "kind": "compound-reexport",
+      "section": "components",
       "uses": [],
       "bytes": 60174,
       "gzip": 24120,
@@ -1219,6 +1287,7 @@
       "tagName": "tp-badge",
       "className": "TpBadge",
       "kind": "thin-wrapper",
+      "section": "components",
       "uses": [],
       "bytes": 56847,
       "gzip": 23759,
@@ -1233,6 +1302,7 @@
       "tagName": "tp-key-hint",
       "className": "TpKeyHint",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [
         "tp-key-hint-group"
       ],
@@ -1251,6 +1321,7 @@
       "tagName": "tp-skeleton",
       "className": "TpSkeleton",
       "kind": "thin-wrapper",
+      "section": "components",
       "uses": [],
       "bytes": 52129,
       "gzip": 21785,
@@ -1265,6 +1336,7 @@
       "tagName": "tp-empty-state",
       "className": "TpEmptyState",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 52173,
       "gzip": 21486,
@@ -1279,6 +1351,7 @@
       "tagName": "tp-spinner",
       "className": "TpSpinner",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 50731,
       "gzip": 21400,
@@ -1293,6 +1366,7 @@
       "tagName": "tp-marker",
       "className": "TpMarker",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 51371,
       "gzip": 21048,
@@ -1307,6 +1381,7 @@
       "tagName": "tp-alert",
       "className": "TpAlert",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 50675,
       "gzip": 21045,
@@ -1321,6 +1396,7 @@
       "tagName": "tp-aspect-ratio",
       "className": "TpAspectRatio",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 48478,
       "gzip": 20248,
@@ -1335,6 +1411,7 @@
       "tagName": "tp-separator",
       "className": "TpSeparator",
       "kind": "thin-wrapper",
+      "section": "components",
       "uses": [],
       "bytes": 47949,
       "gzip": 20222,
@@ -1349,6 +1426,7 @@
       "tagName": "tp-icon",
       "className": "TpIcon",
       "kind": "presentational-primitive",
+      "section": "components",
       "uses": [],
       "bytes": 23188,
       "gzip": 9965,
