@@ -1,4 +1,4 @@
-import type { TemplateResult } from 'lit';
+import { html, type TemplateResult } from 'lit';
 import type { widgetCatalog } from '../../widgets/catalog.js';
 
 export type WidgetTag = (typeof widgetCatalog)[number][1];
@@ -8,7 +8,10 @@ export type WidgetTag = (typeof widgetCatalog)[number][1];
  * file to learn which parts each widget's documented example composes, so keep the
  * `  'tp-<name>': () =>` layout of `src/stories/examples.ts`.
  */
-const examples = {} satisfies Record<WidgetTag, () => TemplateResult>;
+const examples = {
+  'tp-color-picker': () =>
+    html`<tp-color-picker label="Accent" name="accent" default-value="#6d5dfc"></tp-color-picker>`,
+} satisfies Record<WidgetTag, () => TemplateResult>;
 
 export function renderWidgetExample(tagName: WidgetTag): TemplateResult {
   const example: () => TemplateResult = examples[tagName];

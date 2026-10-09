@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T13:40:09.789Z",
+  "generatedAt": "2026-10-09T19:19:10.161Z",
   "version": "0.1.0",
   "method": "Each catalog component (from @tweakpad/ui) and widget (from @tweakpad/ui/widgets) as documented (the root plus the parts its canonical example composes), imported and defined; Rolldown resolves the modules that ships (lit external, tree-shaken) and each module is measured as published in dist, bytes on disk and gzip per file, the way the build log lists it.",
   "lit": {
@@ -18,9 +18,9 @@
     "modules": 587
   },
   "fullWidgets": {
-    "bytes": 428,
-    "gzip": 193,
-    "modules": 1
+    "bytes": 613871,
+    "gzip": 210703,
+    "modules": 171
   },
   "components": [
     {
@@ -71,6 +71,39 @@
         "tp-slider-thumb",
         "tp-spinner",
         "tp-tooltip"
+      ]
+    },
+    {
+      "name": "Color picker",
+      "tagName": "tp-color-picker",
+      "className": "TpColorPicker",
+      "kind": "flattening-compound",
+      "section": "widgets",
+      "uses": [],
+      "bytes": 610801,
+      "gzip": 209678,
+      "ownGzip": 201360,
+      "modules": 170,
+      "rootBytes": 610801,
+      "rootGzip": 209678,
+      "includes": [
+        "tp-badge",
+        "tp-button",
+        "tp-color-picker-area",
+        "tp-color-picker-triangle",
+        "tp-color-picker-wheel",
+        "tp-icon",
+        "tp-input",
+        "tp-input-group",
+        "tp-label",
+        "tp-popover",
+        "tp-select",
+        "tp-slider",
+        "tp-slider-thumb",
+        "tp-spinner",
+        "tp-tabs",
+        "tp-toggle",
+        "tp-toggle-group"
       ]
     },
     {

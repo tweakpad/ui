@@ -40,9 +40,13 @@ pixel-ratio and theme changes; a role, accessible name and textual value per edi
 appearance from the widget's presentation family through semantic tokens; and input coalesced to
 one render per frame with every resource released on disconnect.
 
+## Published widgets
+
+- [Color picker](./color-picker.md): `tp-color-picker` (tweakpane reference:
+  `packages/core/src/input-binding/color/`).
+
 ## Planned widgets
 
-- Color picker (tweakpane reference: `packages/core/src/input-binding/color/view/`).
 - Curve editor.
 - Audio graph.
 

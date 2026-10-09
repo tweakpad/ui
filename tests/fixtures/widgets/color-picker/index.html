@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Color picker verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 720px;
+        display: grid;
+        gap: 32px;
+      }
+      section {
+        display: grid;
+        gap: 12px;
+      }
+      #narrow {
+        inline-size: 240px;
+      }
+      #dynamic {
+        display: grid;
+        gap: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Color picker verification</h1>
+      <tp-button id="before" variant="outline">Before picker</tp-button>
+      <form id="form">
+        <section>
+          <tp-color-picker
+            id="inline"
+            label="Accent"
+            name="accent"
+            default-value="#6d5dfc"
+          ></tp-color-picker>
+        </section>
+        <section>
+          <tp-color-picker
+            id="popup"
+            label="Popup"
+            name="popup"
+            picker="popup"
+            default-value="#2622a5"
+          ></tp-color-picker>
+        </section>
+        <section>
+          <tp-color-picker
+            id="sliders"
+            label="Sliders"
+            name="sliders"
+            views="sliders"
+            default-format="hsl"
+            default-value="hsl(242 66% 39%)"
+          ></tp-color-picker>
+        </section>
+        <section>
+          <tp-color-picker
+            id="wheel"
+            label="Wheel"
+            name="wheel"
+            views="wheel"
+            harmony="triad"
+            default-value="#e53935"
+          ></tp-color-picker>
+        </section>
+        <section>
+          <tp-color-picker
+            id="triangle"
+            label="Triangle"
+            name="triangle"
+            views="triangle"
+            default-value="#43a047"
+          ></tp-color-picker>
+        </section>
+        <section>
+          <tp-color-picker
+            id="schemes"
+            label="Schemes"
+            name="schemes"
+            views="area swatches schemes"
+            default-value="#fb8c00"
+          ></tp-color-picker>
+        </section>
+        <section>
+          <tp-field label="Field accent" id="field-wrapper">
+            <tp-color-picker id="field" default-value="#0288d1"></tp-color-picker>
+          </tp-field>
+        </section>
+        <section id="narrow">
+          <tp-color-picker id="narrow-picker" label="Narrow" default-value="#8e24aa"></tp-color-picker>
+        </section>
+        <section dir="rtl">
+          <tp-color-picker id="rtl" label="RTL" default-value="#00897b"></tp-color-picker>
+        </section>
+        <tp-button id="reset" type="reset" variant="outline">Reset form</tp-button>
+      </form>
+      <tp-button id="after" variant="outline">After picker</tp-button>
+      <div id="dynamic"></div>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

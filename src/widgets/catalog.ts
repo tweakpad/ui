@@ -10,7 +10,9 @@ export type WidgetEntry = CatalogEntry;
 type WidgetTuple = readonly [WidgetEntry['name'], `tp-${string}`, WidgetEntry['kind']];
 
 /** Public widgets in sidebar order: `[name, tag, kind]`. */
-export const widgetCatalog = [] as const satisfies readonly WidgetTuple[];
+export const widgetCatalog = [
+  ['Color picker', 'tp-color-picker', 'flattening-compound'],
+] as const satisfies readonly WidgetTuple[];
 
 export const widgetEntries: readonly WidgetEntry[] = widgetCatalog.map((entry: WidgetTuple) => ({
   name: entry[0],

@@ -1,0 +1,109 @@
+import type { ComponentDefinition } from '../definition.js';
+import { definePresentation } from '../family.js';
+import { colorPickerAppearance, colorPickerStructure } from '../recipes/color-picker.js';
+
+const sized = (name: string, slot?: string) => ({
+  name,
+  axes: ['size'],
+  ...(slot ? { slot } : {}),
+});
+const shaped = (name: string) => ({ name, axes: ['size', 'shape'] });
+
+/** UI Widgets Specification 6.1 Color picker: one family, axes size, picker and shape. */
+const definition: ComponentDefinition = {
+  name: 'Color picker',
+  tagName: 'tp-color-picker',
+  kind: 'flattening-compound',
+  axes: [
+    { name: 'size', values: ['sm', 'default', 'lg'], default: 'default' },
+    { name: 'picker', values: ['inline', 'popup'], default: 'inline' },
+    { name: 'shape', values: ['square', 'round'], default: 'square' },
+  ],
+  parts: [
+    { name: 'color-picker', axes: ['size', 'picker'] },
+    sized('color-picker-label'),
+    sized('color-picker-tabs'),
+    sized('color-picker-tab'),
+    sized('color-picker-area'),
+    sized('color-picker-area-thumb'),
+    sized('color-picker-controls'),
+    sized('color-picker-toolbar'),
+    sized('color-picker-eyedropper'),
+    sized('color-picker-generate'),
+    sized('color-picker-template'),
+    sized('color-picker-harmony'),
+    sized('color-picker-slider'),
+    sized('color-picker-slider-track'),
+    sized('color-picker-alpha-track'),
+    sized('color-picker-slider-range'),
+    sized('color-picker-slider-thumb'),
+    sized('color-picker-channel'),
+    shaped('color-picker-preview'),
+    sized('color-picker-fields'),
+    sized('color-picker-field'),
+    sized('color-picker-format'),
+    sized('color-picker-swatches'),
+    sized('color-picker-swatch-grid'),
+    shaped('color-picker-swatch-item'),
+    shaped('color-picker-swatch'),
+    sized('color-picker-schemes'),
+    sized('color-picker-scheme'),
+    sized('color-picker-wheel'),
+    sized('color-picker-wheel-handle'),
+    sized('color-picker-wheel-line'),
+    sized('color-picker-ring'),
+    sized('color-picker-ring-thumb'),
+    sized('color-picker-triangle'),
+    sized('color-picker-triangle-thumb'),
+    sized('color-picker-trigger', 'trigger'),
+    sized('color-picker-popup'),
+    sized('color-picker-footer', 'footer'),
+  ],
+};
+
+export const colorPickerPresentation = definePresentation({
+  definition,
+  bindings: {
+    'tp-color-picker': {
+      '[part~="color-picker"]': 'color-picker',
+      '[part~="color-picker-label"]': 'color-picker-label',
+      'tp-tabs.views': 'color-picker-tabs',
+      'button[slot="tab"]': 'color-picker-tab',
+      '[part~="color-picker-controls"]': 'color-picker-controls',
+      '[part~="color-picker-toolbar"]': 'color-picker-toolbar',
+      'tp-button.eyedropper': 'color-picker-eyedropper',
+      'tp-button.generate': 'color-picker-generate',
+      'tp-select.template': 'color-picker-template',
+      'tp-select.harmony': 'color-picker-harmony',
+      'tp-slider.channel': 'color-picker-slider',
+      '[part~="color-picker-channel"]': 'color-picker-channel',
+      '[part~="color-picker-preview"]': 'color-picker-preview',
+      '[part~="color-picker-fields"]': 'color-picker-fields',
+      '[part~="color-picker-field"]': 'color-picker-field',
+      'tp-select.format': 'color-picker-format',
+      'tp-toggle-group.swatches': 'color-picker-swatches',
+      '.swatch': 'color-picker-swatch',
+      '[part~="color-picker-schemes"]': 'color-picker-schemes',
+      '[part~="color-picker-trigger"]': 'color-picker-trigger',
+      '[part~="color-picker-popup"]': 'color-picker-popup',
+      '[part~="color-picker-footer"]': 'color-picker-footer',
+    },
+    'tp-color-picker-area': {
+      '[part~="color-picker-area"]': 'color-picker-area',
+      '[part~="color-picker-area-thumb"]': 'color-picker-area-thumb',
+    },
+    'tp-color-picker-wheel': {
+      '[part~="color-picker-wheel"]': 'color-picker-wheel',
+      '[part~="color-picker-wheel-handle"]': 'color-picker-wheel-handle',
+      '[part~="color-picker-wheel-line"]': 'color-picker-wheel-line',
+    },
+    'tp-color-picker-triangle': {
+      '[part~="color-picker-ring"]': 'color-picker-ring',
+      '[part~="color-picker-ring-thumb"]': 'color-picker-ring-thumb',
+      '[part~="color-picker-triangle"]': 'color-picker-triangle',
+      '[part~="color-picker-triangle-thumb"]': 'color-picker-triangle-thumb',
+    },
+  },
+  structure: colorPickerStructure,
+  sources: [colorPickerAppearance],
+});
