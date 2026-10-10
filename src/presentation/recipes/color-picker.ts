@@ -335,7 +335,9 @@ export const colorPickerStructure: PresentationDictionary = {
     {
       declarations: {
         gap: 'var(--_tp-color-picker-space)',
-        'inline-size': 'var(--_tp-color-picker-popup)',
+        // The size's width, or the width the editors row needs to stay on one line.
+        'inline-size':
+          'max(var(--_tp-color-picker-popup), calc(var(--tp-spacing) * var(--_tp-color-picker-popup-min, 0)))',
         'max-inline-size': '100%',
         // Thumbs sit centered on the plane edges and carry a hit-target halo; the inset keeps
         // that overhang inside the Popover's scroll container.

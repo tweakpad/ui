@@ -137,6 +137,23 @@ export const colorPickerStyles = css`
     inline-size: calc(var(--tp-spacing) * 20);
   }
 
+  /*
+   * The popup's editors share one line: they shrink down to the width that still shows their
+   * digits (the widget sets --_tp-color-picker-group-min from the format's editors), and the
+   * popup widens for formats that need more (--_tp-color-picker-popup-min on the panel).
+   */
+  .popup-panel .fields-row {
+    flex-wrap: nowrap;
+  }
+
+  .popup-panel .fields-row > .channels {
+    min-inline-size: calc(var(--tp-spacing) * var(--_tp-color-picker-group-min, 48));
+  }
+
+  .popup-panel .fields-row > .field {
+    min-inline-size: calc(var(--tp-spacing) * 18);
+  }
+
   tp-slider {
     inline-size: 100%;
     min-inline-size: 0;

@@ -482,6 +482,19 @@ export async function assertPopupHeader(): Promise<Report> {
   );
   const copy = root.querySelector<HTMLElement & { value: string }>('tp-copy-button.copy')!;
   checks.push(check('Copy button carries the serialized value', copy.value === start, copy.value));
+  const tooltips = [...root.querySelectorAll('tp-button-group.compare tp-tooltip')].map((tip) =>
+    [...tip.childNodes]
+      .filter((node) => node.nodeType === Node.TEXT_NODE)
+      .map((node) => node.textContent!.trim())
+      .join(''),
+  );
+  checks.push(
+    check(
+      'comparison halves carry tooltips with their values in the active format',
+      tooltips.length === 2 && tooltips[0] === start && tooltips[1] === target.value,
+      tooltips,
+    ),
+  );
   target.close();
   await settle(target);
   await wait(60);

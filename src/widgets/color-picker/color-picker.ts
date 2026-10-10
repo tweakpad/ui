@@ -34,6 +34,7 @@ import { TpTabs } from '../../components/tabs/tabs.js';
 import { TpToggleGroup } from '../../components/toggle-group/toggle-group.js';
 import { TpToggle } from '../../components/toggle/toggle.js';
 import { TpPopover } from '../../components/popover/popover.js';
+import { TpTooltip } from '../../components/tooltip/tooltip.js';
 import { pipetteIcon } from '../../icons/pipette.js';
 import { wandSparklesIcon } from '../../icons/wand-sparkles.js';
 import {
@@ -184,7 +185,7 @@ const NESTED_EVENT_TYPES = [
   'tp-presence-complete',
 ] as const;
 const NESTED_HOSTS =
-  'tp-slider, tp-select, tp-input, tp-input-group, tp-field-group, tp-button, tp-button-group, tp-button-group-text, tp-copy-button, tp-label, tp-tabs, tp-toggle-group, tp-toggle, tp-popover';
+  'tp-slider, tp-select, tp-input, tp-input-group, tp-field-group, tp-button, tp-button-group, tp-button-group-text, tp-copy-button, tp-tooltip, tp-label, tp-tabs, tp-toggle-group, tp-toggle, tp-popover';
 const SURFACES = 'tp-color-picker-area, tp-color-picker-wheel, tp-color-picker-triangle';
 const isView = (value: unknown): value is ColorPickerView =>
   typeof value === 'string' && (COLOR_PICKER_VIEWS as readonly string[]).includes(value);
@@ -221,6 +222,7 @@ export class TpColorPicker extends TpFormElement<string> {
       TpToggleGroup,
       TpToggle,
       TpPopover,
+      TpTooltip,
     ];
   }
   static override presentation = colorPickerPresentation;
@@ -1072,12 +1074,18 @@ export class TpColorPicker extends TpFormElement<string> {
   #fieldOptions(definition: ChannelDefinition) {
     const model = this.#model ?? toWorkingSpace(BLACK, this.format);
     const current = channelDisplayValue(model, definition);
+    // The Number field's `step` is both its arrow increment and its validity grid (Foundation
+    // 14.6, as the native input): the field shows the channel at `precision` digits, so its
+    // step is that last digit (0.001 for the OK channels, 0.1 for Lab), never coarser than the
+    // display, or every rounded reading would report a step mismatch. The Sliders keep the
+    // channel step.
+    const step = Math.min(definition.step, 10 ** -definition.precision);
     return {
       value: Number(formatChannelValue(definition, current)),
       minimum: definition.min,
       maximum: definition.max,
-      step: definition.step,
-      smallStep: definition.smallStep,
+      step,
+      smallStep: Math.min(definition.smallStep, step),
       largeStep: definition.largeStep,
       format: { maximumFractionDigits: definition.precision, useGrouping: false },
       ...(this.locale ? { locale: this.locale } : {}),
@@ -1494,9 +1502,14 @@ export class TpColorPicker extends TpFormElement<string> {
         properties: {
           part: 'color-picker-popup',
           class: 'panel popup-panel',
-          // Rows besides the plane (header, controls, fields, recent strip, gaps, paddings and
-          // the Popover chrome) that the plane height cap reserves, in spacing units.
-          style: { '--_tp-color-picker-reserve': String(this.recent.length ? 66 : 56) },
+          style: {
+            // Rows besides the plane (header, controls, fields, recent strip, gaps, paddings
+            // and the Popover chrome) that the plane height cap reserves, in spacing units.
+            '--_tp-color-picker-reserve': String(this.recent.length ? 66 : 56),
+            // Width the editors row needs on one line (the editors' minimums, the row gap and
+            // the panel padding), in spacing units.
+            '--_tp-color-picker-popup-min': String(this.#editorsRowUnits()),
+          },
           ...this.#panelListeners(),
         },
         content: html`${this.#renderHeader()}${this.#renderViews()}${this.#renderFields()}${this.#renderRecent()}`,
@@ -1531,13 +1544,18 @@ export class TpColorPicker extends TpFormElement<string> {
 
   /**
    * Original|current comparison: a Button group of the original color (a Button that restores
-   * it) and the current color (a text segment); both fills are value-domain paint.
+   * it) and the current color (a text segment); both fills are value-domain paint, and each
+   * half carries a Tooltip with its value serialized in the active format.
    */
   #renderCompare() {
     if (!this.preview) return nothing;
     const strings = this.#strings;
     const original = this.#original ?? '';
     const originalColor = original ? parseColor(original) : null;
+    // The snapshot keeps the format it was taken in; the Button reads in the active one.
+    const originalText = originalColor
+      ? this.#serialize(this.#adoptAlpha(toWorkingSpace(originalColor, this.format)))
+      : '';
     const fill = (color: ColorValue | null, slot?: string) =>
       html`<span
         class="swatch"
@@ -1545,20 +1563,26 @@ export class TpColorPicker extends TpFormElement<string> {
         slot=${slot ?? nothing}
         style=${`--_tp-color-picker-paint: ${color ? flatGradient(color) : 'none'}`}
       ></span>`;
+    // The Tooltips repeat what the Button's name and the fields already say: visual only.
     return html`<tp-button-group
       class="compare"
       part="color-picker-compare"
       label=${dimensionLabel(this.label, strings.compare)}
-      ><tp-button
-        class="original"
-        variant="outline"
-        size="icon"
-        aria-label=${`${strings.original} ${original || strings.empty}`}
-        ?disabled=${this.effectiveDisabled || this.readOnly}
-        @click=${this.#restoreOriginal}
-        >${fill(originalColor, 'icon-start')}</tp-button
-      ><tp-button-group-text class="current" aria-hidden="true"
-        >${fill(this.#model)}</tp-button-group-text
+      ><tp-tooltip class="compare-tooltip" describes="none"
+        ><tp-button
+          slot="trigger"
+          class="original"
+          variant="outline"
+          size="icon"
+          aria-label=${`${strings.original} ${originalText || strings.empty}`}
+          ?disabled=${this.effectiveDisabled || this.readOnly}
+          @click=${this.#restoreOriginal}
+          >${fill(originalColor, 'icon-start')}</tp-button
+        >${originalText || strings.empty}</tp-tooltip
+      ><tp-tooltip class="compare-tooltip" describes="none"
+        ><tp-button-group-text slot="trigger" class="current" aria-hidden="true"
+          >${fill(this.#model)}</tp-button-group-text
+        >${this.value || strings.empty}</tp-tooltip
       ></tp-button-group
     >`;
   }
@@ -2028,11 +2052,11 @@ export class TpColorPicker extends TpFormElement<string> {
         : channelDefinitions(this.format, false).map((definition) =>
             this.#renderField(definition, 'fields'),
           );
-    const memberCount = this.format === 'hex' ? 1 : channelDefinitions(this.format, false).length;
+    const memberCount = this.#memberCount();
     const channels = html`<tp-field-group
       class="channels"
       data-format=${this.format}
-      style=${`--_tp-color-picker-members: ${memberCount}`}
+      style=${`--_tp-color-picker-members: ${memberCount}; --_tp-color-picker-group-min: ${this.#groupUnits()}`}
       label=${dimensionLabel(this.label, strings[FORMAT_STRING_KEYS[this.format]])}
       >${members}</tp-field-group
     >`;
@@ -2051,6 +2075,30 @@ export class TpColorPicker extends TpFormElement<string> {
           <div class="fields-row">${formatSelect}${channels}${alphaField}</div>`,
       },
     );
+  }
+
+  /** Editors in the Field group: the hex editor alone, or one per channel of the format. */
+  #memberCount(): number {
+    return this.format === 'hex' ? 1 : channelDefinitions(this.format, false).length;
+  }
+
+  /**
+   * Narrowest Field group that still shows every member's digits, in spacing units: 16 per
+   * channel editor, 18 with a unit suffix (`100%`, `360°`), 22 for the prefixed hex editor.
+   */
+  #groupUnits(): number {
+    if (this.format === 'hex') return 22;
+    return channelDefinitions(this.format, false).reduce(
+      (units, definition) => units + (definition.unit ? 18 : 16),
+      0,
+    );
+  }
+
+  /** Width the popup's editors row needs on one line, in spacing units; 0 without fields. */
+  #editorsRowUnits(): number {
+    if (!this.fields) return 0;
+    const panelPadding = 8;
+    return this.#groupUnits() + (this.alpha ? 18 + 2 : 0) + panelPadding;
   }
 
   /** One editor: the Input group host is the field part and the NumberField root. */

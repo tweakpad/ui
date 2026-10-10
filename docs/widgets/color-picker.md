@@ -79,9 +79,13 @@ apart with the row gap.
 the preview. The popup opens with a header row: the format Select, the original|current
 comparison (a [Button group](../button-group.md) whose Button is filled with the value the popup
 opened with and whose text segment shows the current color; pressing the original restores it
-with reason `item-press` on the `compare` surface), the [Copy button](../copy-button.md) for the
+with reason `item-press` on the `compare` surface, and hovering or focusing either half shows a
+[Tooltip](../tooltip.md) with that color serialized in the active format), the
+[Copy button](../copy-button.md) for the
 serialized value and the eyedropper. Below the surface the fields row keeps only the editors on
-one line, and the `recent` colors, when supplied, render as one swatch strip at the bottom.
+one line (they shrink rather than wrap, and the popup widens past its size's width for formats
+whose editors need more room, such as CMYK), and the `recent` colors, when supplied, render as
+one swatch strip at the bottom.
 `formatSelect`, `preview` and `eyedropper` hide their header items as they hide the inline ones.
 Author `slot="trigger"` content to replace the default trigger. `open` /
 `defaultOpen`, `setOpen(open, reason?)` and `close()` forward to the Popover, which remains the
@@ -187,8 +191,11 @@ Every editable dimension is a hidden native range input inside its thumb or hand
 | Swatches, schemes        | Toggle Group roving focus; Space/Enter select                                                                                                                               |
 | Popup                    | Enter/Space on the trigger opens; Escape closes and returns focus; the header's Select, original swatch, Copy button and eyedropper are ordinary stops ahead of the surface |
 
-Arrow steps use the channel step; Shift, Control or Command and the Page keys use the large step,
-Alt the small step. Horizontal arrows follow the writing direction on the area and Sliders;
+On the surfaces and Sliders arrow steps use the channel step; Shift, Control or Command and the
+Page keys use the large step, Alt the small step. The numeric fields follow the Number field
+model with their last displayed digit as the step (0.001 for the OK channels, 0.1 for Lab and
+the OKLCH hue, 1 elsewhere), so every value the fields show is valid; Shift still uses the
+channel's large step. Horizontal arrows follow the writing direction on the area and Sliders;
 angular axes (wheel, ring) do not flip. Pointer presses capture the pointer, coalesce movement to
 one proposal per frame and release once; Shift snaps coarsely and Alt moves finely on Sliders.
 
