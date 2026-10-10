@@ -52,6 +52,8 @@ export class TpColorPickerTriangle extends ColorSurfaceElement {
       element: node,
       owner: this.ownerDocument.defaultView,
       disabled: () => !this.editable,
+      // A press inside the ring or triangle thumb drags it from where it was pressed.
+      grip: (event) => (event.target as Element | null)?.closest?.('.thumb'),
       focusTarget: () =>
         this.renderRoot.querySelector<HTMLElement>(
           this.#pressed?.mode === 'hue'

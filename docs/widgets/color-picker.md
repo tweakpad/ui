@@ -197,7 +197,10 @@ model with their last displayed digit as the step (0.001 for the OK channels, 0.
 the OKLCH hue, 1 elsewhere), so every value the fields show is valid; Shift still uses the
 channel's large step. Horizontal arrows follow the writing direction on the area and Sliders;
 angular axes (wheel, ring) do not flip. Pointer presses capture the pointer, coalesce movement to
-one proposal per frame and release once; Shift snaps coarsely and Alt moves finely on Sliders.
+one proposal per frame and release once. A press inside a handle (the area thumb, a wheel
+handle, the ring or triangle thumb, a Slider thumb) keeps the pointer's offset from the handle's
+center, so the handle moves with the pointer instead of jumping under it; a press elsewhere
+moves the handle to the press point. Shift snaps coarsely and Alt moves finely on Sliders.
 
 ## Constituents and accessibility
 

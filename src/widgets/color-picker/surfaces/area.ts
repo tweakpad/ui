@@ -26,6 +26,8 @@ export class TpColorPickerArea extends ColorSurfaceElement {
       element: node,
       owner: this.ownerDocument.defaultView,
       disabled: () => !this.editable,
+      // A press inside the thumb drags it from where it was pressed.
+      grip: (event) => (event.target as Element | null)?.closest?.('.thumb'),
       focusTarget: () =>
         this.renderRoot.querySelector<HTMLElement>('input[data-dimension="saturation"]'),
       handlers: {

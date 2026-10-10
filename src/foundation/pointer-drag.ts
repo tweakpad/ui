@@ -9,8 +9,11 @@ import { CleanupScope, Scheduler } from './services.js';
  * capture lost before the release (the browser or another handler took the pointer)
  * and a move that reports no pressed button (the release was consumed elsewhere, Base
  * UI SliderControl parity) end the gesture at the last known position: the user's last
- * movement settles instead of being discarded. One-dimensional Slider thumbs keep their
- * own drag because thumb selection and collision belong to the Slider contract.
+ * movement settles instead of being discarded. A press inside a handle (`grip`) keeps the
+ * pointer's offset from that handle's center for the whole gesture, so the handle moves with
+ * the pointer instead of jumping under it (Base UI SliderControl's pressed-thumb offset); a
+ * press elsewhere positions at the pointer. One-dimensional Slider thumbs keep their own drag
+ * because thumb selection and collision belong to the Slider contract.
  */
 export interface PointerDragModifiers {
   readonly shift: boolean;
@@ -55,12 +58,24 @@ export interface PointerDragOptions {
   readonly threshold?: number;
   /** Element to focus on press, so keyboard editing continues from the pointer gesture. */
   readonly focusTarget?: () => HTMLElement | null | undefined;
+  /**
+   * The handle under a press, if any; every point of that gesture is then shifted by the
+   * pointer's offset from the handle's center, so a press inside a handle does not move it.
+   */
+  readonly grip?: (event: PointerEvent) => Element | null | undefined;
+}
+
+interface DragOffset {
+  readonly x: number;
+  readonly y: number;
 }
 
 interface DragSession {
   readonly pointerId: number;
   readonly startX: number;
   readonly startY: number;
+  /** Pointer offset from the pressed handle's center; zero for a press on the surface. */
+  readonly offset: DragOffset;
   readonly scope: CleanupScope;
   dragging: boolean;
   latest: PointerEvent;
@@ -68,6 +83,17 @@ interface DragSession {
 }
 
 const DEFAULT_THRESHOLD = 2;
+const NO_OFFSET: DragOffset = { x: 0, y: 0 };
+
+/** The pointer's offset from the center of the pressed handle. */
+function gripOffset(grip: Element, event: PointerEvent): DragOffset {
+  const rect = grip.getBoundingClientRect();
+  if (!rect.width && !rect.height) return NO_OFFSET;
+  return {
+    x: event.clientX - (rect.left + rect.width / 2),
+    y: event.clientY - (rect.top + rect.height / 2),
+  };
+}
 
 export class PointerDrag {
   readonly #options: PointerDragOptions;
@@ -118,11 +144,11 @@ export class PointerDrag {
     this.#options.handlers.cancel(reason, event);
   }
 
-  #point(event: PointerEvent): PointerDragPoint {
+  #point(event: PointerEvent, offset: DragOffset = NO_OFFSET): PointerDragPoint {
     const rect = this.#options.element.getBoundingClientRect();
     return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+      x: event.clientX - offset.x - rect.left,
+      y: event.clientY - offset.y - rect.top,
       width: rect.width,
       height: rect.height,
       modifiers: {
@@ -151,7 +177,9 @@ export class PointerDrag {
       componentHandlingPrevented(event)
     )
       return;
-    const point = this.#point(event);
+    const grip = this.#options.grip?.(event);
+    const offset = grip ? gripOffset(grip, event) : NO_OFFSET;
+    const point = this.#point(event, offset);
     if (this.#options.handlers.begin?.(point, event) === false) return;
     event.preventDefault();
     const element = this.#options.element;
@@ -166,6 +194,7 @@ export class PointerDrag {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
+      offset,
       scope,
       dragging: false,
       latest: event,
@@ -205,28 +234,28 @@ export class PointerDrag {
     this.#track(session, event);
     if (event.buttons === 0) {
       // No button is pressed any more: another handler consumed the release.
-      this.#finish(session, event, this.#point(event));
+      this.#finish(session, event, this.#point(event, session.offset));
       return;
     }
     if (session.frame || !this.#scheduler) return;
     session.frame = this.#scheduler.animationFrame(() => {
       session.frame = undefined;
       if (this.#session !== session) return;
-      this.#options.handlers.move(this.#point(session.latest), session.latest);
+      this.#options.handlers.move(this.#point(session.latest, session.offset), session.latest);
     });
   };
 
   #pointerUp = (event: PointerEvent): void => {
     const session = this.#session;
     if (!session || event.pointerId !== session.pointerId) return;
-    this.#finish(session, event, this.#point(event));
+    this.#finish(session, event, this.#point(event, session.offset));
   };
 
   /** Capture lost before the release: settle where the pointer last was. */
   #lostCapture = (event: PointerEvent): void => {
     const session = this.#session;
     if (!session || event.pointerId !== session.pointerId) return;
-    this.#finish(session, event, this.#point(session.latest));
+    this.#finish(session, event, this.#point(session.latest, session.offset));
   };
 
   #pointerCancel = (event: PointerEvent): void => {

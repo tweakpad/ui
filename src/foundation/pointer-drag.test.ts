@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PointerDrag, type PointerDragHandlers, type PointerDragPoint } from './pointer-drag.js';
+import {
+  PointerDrag,
+  type PointerDragHandlers,
+  type PointerDragOptions,
+  type PointerDragPoint,
+} from './pointer-drag.js';
 
 class FakeWindow extends EventTarget {
   readonly #frames = new Map<number, FrameRequestCallback>();
@@ -62,7 +67,7 @@ function pointer(type: string, init: Record<string, unknown> = {}): PointerEvent
 
 function setup(
   overrides: Partial<PointerDragHandlers> = {},
-  options: { disabled?: () => boolean } = {},
+  options: Partial<Pick<PointerDragOptions, 'disabled' | 'grip'>> = {},
 ) {
   const owner = new FakeWindow();
   const element = new FakeElement();
@@ -127,6 +132,28 @@ describe('PointerDrag', () => {
     // A late lost-capture notification after the release is not a cancellation.
     element.dispatchEvent(pointer('lostpointercapture'));
     expect(calls).toEqual(['begin', 'move', 'end:drag']);
+  });
+
+  it('keeps the pointer offset from a pressed handle instead of centering on the pointer', () => {
+    const grip = { getBoundingClientRect: () => ({ left: 100, top: 60, width: 16, height: 16 }) };
+    const { element, owner, points, handlers } = setup(
+      {},
+      { grip: () => grip as unknown as Element },
+    );
+    // Pressed 5 px right of and 3 px below the handle's center (108, 68): the surface box starts
+    // at (10, 20), so the gesture reads the handle center, (98, 48), not the pointer.
+    element.dispatchEvent(pointer('pointerdown', { clientX: 113, clientY: 71 }));
+    expect([points[0]!.x, points[0]!.y]).toEqual([98, 48]);
+    element.dispatchEvent(pointer('pointermove', { clientX: 133, clientY: 81, buttons: 1 }));
+    owner.flush();
+    expect([points[1]!.x, points[1]!.y]).toEqual([118, 58]);
+    element.dispatchEvent(pointer('pointerup', { clientX: 133, clientY: 81 }));
+    expect([points[2]!.x, points[2]!.y]).toEqual([118, 58]);
+    expect(handlers.end).toHaveBeenCalledTimes(1);
+    // A press outside any handle positions at the pointer.
+    const plain = setup({}, { grip: () => null });
+    plain.element.dispatchEvent(pointer('pointerdown', { clientX: 113, clientY: 71 }));
+    expect([plain.points[0]!.x, plain.points[0]!.y]).toEqual([103, 51]);
   });
 
   it('reports a press without movement as a non-drag end', () => {

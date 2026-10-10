@@ -73,6 +73,8 @@ export class TpColorPickerWheel extends ColorSurfaceElement {
       element: node,
       owner: this.ownerDocument.defaultView,
       disabled: () => !this.editable,
+      // A press inside an editable handle drags it from where it was pressed.
+      grip: (event) => (event.target as Element | null)?.closest?.('.handle[data-editable]'),
       focusTarget: () =>
         this.renderRoot.querySelector<HTMLElement>(
           `input[data-handle="${this.#active < 0 ? this.baseIndex : this.#active}"][data-dimension="hue"]`,
