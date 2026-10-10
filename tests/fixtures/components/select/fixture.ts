@@ -197,6 +197,25 @@ async function apiChecks() {
     assertion(host.value === 'cherry' && !host.open, 'accepted owner value');
     host.remove();
   });
+  await test('Controlled owner publishing later still closes on the item press', async () => {
+    const host = await make({ value: 'apple' });
+    host.onValueChange = (event) => {
+      queueMicrotask(() => {
+        host.value = event.detail.value;
+      });
+    };
+    await choose(host, 'Banana');
+    assertion(!host.open, 'late owner publication kept the popup open');
+    assertion(host.value === 'banana', 'late owner publication lost');
+    host.remove();
+  });
+  await test('Controlled owner ignoring the proposal closes and keeps its value', async () => {
+    const host = await make({ value: 'apple' });
+    await choose(host, 'Cherry');
+    assertion(!host.open, 'ignored proposal kept the popup open');
+    assertion(host.value === 'apple', 'ignored proposal changed the value');
+    host.remove();
+  });
   await test('ReadOnly opens but rejects value change', async () => {
     const host = await make({ readOnly: true });
     await choose(host, 'Banana');

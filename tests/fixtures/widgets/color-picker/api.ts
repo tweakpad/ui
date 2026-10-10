@@ -758,6 +758,110 @@ export async function assertHarmony(): Promise<Report> {
   return report(checks);
 }
 
+/**
+ * V-103: the composed Selects close on the item press under controlled picker lanes, whether
+ * the owner publishes later or never (Base UI commitSelection parity through tp-select).
+ */
+export async function assertComposedSelects(): Promise<Report> {
+  const checks: Check[] = [];
+  const target = document.createElement('tp-color-picker') as unknown as TpColorPicker;
+  target.setAttribute('views', 'wheel');
+  target.setAttribute('harmony', 'triad');
+  target.setAttribute('format', 'hex');
+  target.setAttribute('default-value', '#e53935');
+  document.getElementById('dynamic')!.append(target);
+  await settle(target);
+  const select = (name: string) =>
+    target.shadowRoot!.querySelector(`tp-select.${name}`) as HTMLElement & {
+      open: boolean;
+      value: unknown;
+      listElement: HTMLElement | null;
+      setOpen(open: boolean): void;
+      updateComplete: Promise<unknown>;
+    };
+  const pick = async (name: string, text: string): Promise<void> => {
+    const host = select(name);
+    host.setOpen(true);
+    await host.updateComplete;
+    await settle(target);
+    const option = [...host.listElement!.querySelectorAll<HTMLElement>('[role=option]')].find(
+      (element) => element.textContent!.trim().startsWith(text),
+    );
+    option!.focus();
+    await host.updateComplete;
+    option!.click();
+    await host.updateComplete;
+    await settle(target);
+  };
+  // No owner write: the proposal is ignored, the list still closes and the value holds.
+  await pick('harmony', 'Complementary');
+  checks.push(
+    check('ignored harmony proposal closes the Select', !select('harmony').open, {
+      open: select('harmony').open,
+    }),
+  );
+  checks.push(
+    check('ignored harmony proposal keeps the rule', target.harmony === 'triad', target.harmony),
+  );
+  checks.push(
+    check(
+      'ignored harmony proposal keeps the Select value',
+      select('harmony').value === 'triad',
+      select('harmony').value,
+    ),
+  );
+  // Owner publishing on a microtask (Storybook args, framework state): the list closes on the
+  // press and the Select follows the owner's write.
+  const later = (event: Event) => {
+    const detail = (event as CustomEvent<{ value: string }>).detail;
+    queueMicrotask(() => {
+      target.harmony = detail.value as TpColorPicker['harmony'];
+    });
+  };
+  target.addEventListener('tp-harmony-change', later);
+  await pick('harmony', 'Analogous');
+  checks.push(
+    check('late harmony owner: Select closed', !select('harmony').open, select('harmony').open),
+  );
+  checks.push(
+    check('late harmony owner: rule follows', target.harmony === 'analogous', target.harmony),
+  );
+  checks.push(
+    check(
+      'late harmony owner: Select value follows',
+      select('harmony').value === 'analogous',
+      select('harmony').value,
+    ),
+  );
+  target.removeEventListener('tp-harmony-change', later);
+  const laterFormat = (event: Event) => {
+    const detail = (event as CustomEvent<{ value: string }>).detail;
+    queueMicrotask(() => {
+      target.format = detail.value as TpColorPicker['format'];
+    });
+  };
+  target.addEventListener('tp-format-change', laterFormat);
+  await pick('format', 'RGB');
+  checks.push(
+    check('late format owner: Select closed', !select('format').open, select('format').open),
+  );
+  checks.push(check('late format owner: format follows', target.format === 'rgb', target.format));
+  target.removeEventListener('tp-format-change', laterFormat);
+  await pick('format', 'HSL');
+  checks.push(
+    check(
+      'ignored format proposal closes the Select',
+      !select('format').open,
+      select('format').open,
+    ),
+  );
+  checks.push(
+    check('ignored format proposal keeps the format', target.format === 'rgb', target.format),
+  );
+  target.remove();
+  return report(checks);
+}
+
 /** V-22: triangle geometry round trip at the vertices and the centroid. */
 export async function assertTriangleMapping(): Promise<Report> {
   const geometry = await import('../../../../src/widgets/color-picker/surfaces/geometry.js');

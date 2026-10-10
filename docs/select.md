@@ -164,8 +164,10 @@ and highlighted/selected state remain distinct.
 `tp-value-change` carries `value`, `previousValue`, `reason`, `sourceEvent`,
 `cancelled`, `allowPropagation`, and optional metadata. Item activation uses
 `item-press`. Cancel with `event.preventDefault()` or `event.detail.cancelled`.
-A single selection closes only after the selection commits; multiple selection
-stays open. A controlled rejection keeps the committed markers and form value.
+An accepted single selection closes on the item press, even when a controlled
+owner publishes the value later; multiple selection stays open. A canceled
+proposal keeps the popup open, and a controlled rejection keeps the committed
+markers and form value.
 
 `tp-open-change` uses the same value detail shape and adds `trigger` and
 `detail.preventUnmountOnClose()`. The latter retains an accepted closed popup
