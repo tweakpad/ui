@@ -8,7 +8,6 @@ import { ControllableState } from '../../foundation/controllable-state.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
-import { LiveAnnouncer } from '../../foundation/announcer.js';
 import {
   builtinHighlighter,
   copyText,
@@ -18,12 +17,11 @@ import {
   type CodeToken,
   type CodeTokens,
 } from '../../foundation/code/index.js';
-import { copyIcon } from '../../icons/copy.js';
-import { checkIcon } from '../../icons/check.js';
 import { chevronDownIcon } from '../../icons/chevron-down.js';
 import { codeBlockPresentation } from '../../presentation/families/code-block.js';
 import { dedentCode } from '../../foundation/dedent.js';
 import { TpButton } from '../button/button.js';
+import { TpCopyButton, type CopyDetail } from '../copy-button/copy-button.js';
 import { TpTooltip } from '../tooltip/tooltip.js';
 
 export interface CodeBlockMessages {
@@ -74,7 +72,7 @@ const COPIED_DURATION = 2000;
 export class TpCodeBlock extends TpElement {
   static tagName = 'tp-code-block';
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
-    return [TpButton, TpTooltip];
+    return [TpButton, TpCopyButton, TpTooltip];
   }
   static override presentation = codeBlockPresentation;
   static override properties = {
@@ -201,7 +199,6 @@ export class TpCodeBlock extends TpElement {
   #provided: boolean | undefined;
   #request: AbortController | undefined;
   #copiedTimer: ReturnType<typeof setTimeout> | undefined;
-  #announcer: LiveAnnouncer | undefined;
   #resize: ResizeObserver | undefined;
   #mutations: MutationObserver | undefined;
 
@@ -248,21 +245,16 @@ export class TpCodeBlock extends TpElement {
     return this.#expanded.set(value, reason, event);
   }
 
-  /** Copies the source text, as the copy action does. */
+  /**
+   * Copies the source text through the composed Copy button (which announces and confirms);
+   * without a copy action it writes the clipboard directly.
+   */
   async copy(sourceEvent?: Event): Promise<boolean> {
+    const button = this.renderRoot?.querySelector<TpCopyButton>('tp-copy-button');
+    if (button) return button.copy(sourceEvent);
     const text = this.source;
     if (!this.emit<CodeCopyDetail>('tp-code-copy', { text }, { cancelable: true })) return false;
-    void sourceEvent;
-    const copied = await copyText(this.ownerDocument, text);
-    const messages = this.codeMessages;
-    this.#announcer ??= new LiveAnnouncer({ document: () => this.ownerDocument });
-    this.#announcer.announce(copied ? messages.copied : messages.copyFailed);
-    if (copied) {
-      this._copied = true;
-      clearTimeout(this.#copiedTimer);
-      this.#copiedTimer = setTimeout(() => (this._copied = false), COPIED_DURATION);
-    }
-    return copied;
+    return copyText(this.ownerDocument, text);
   }
 
   override connectedCallback(): void {
@@ -281,8 +273,6 @@ export class TpCodeBlock extends TpElement {
     this.#request?.abort();
     this.#request = undefined;
     clearTimeout(this.#copiedTimer);
-    this.#announcer?.dispose();
-    this.#announcer = undefined;
     super.disconnectedCallback();
   }
 
@@ -392,8 +382,18 @@ export class TpCodeBlock extends TpElement {
     this.#expanded.set(!this.expanded, 'trigger-press', event);
   };
 
-  #copy = (event: Event): void => {
-    void this.copy(event);
+  /** The Copy button proposes before writing; the block re-proposes it as `tp-code-copy`. */
+  #copyProposal = (event: CustomEvent<CopyDetail>): void => {
+    if (
+      !this.emit<CodeCopyDetail>('tp-code-copy', { text: event.detail.value }, { cancelable: true })
+    )
+      event.preventDefault();
+  };
+  /** The tooltip echoes the Copy button's copied state for the same duration. */
+  #copied = (): void => {
+    this._copied = true;
+    clearTimeout(this.#copiedTimer);
+    this.#copiedTimer = setTimeout(() => (this._copied = false), COPIED_DURATION);
   };
 
   #renderToken(token: CodeToken) {
@@ -428,15 +428,17 @@ export class TpCodeBlock extends TpElement {
     const collapsed = this.collapsible && !this.expanded;
     const copy = this.copyable
       ? html`<tp-tooltip class="copy"
-          ><tp-button
+          ><tp-copy-button
             slot="trigger"
             part="copy"
-            variant="ghost"
-            size="icon-sm"
-            .icon=${this._copied ? checkIcon : copyIcon}
-            aria-label=${this._copied ? messages.copied : messages.copy}
-            @click=${this.#copy}
-          ></tp-button
+            class="copy-button"
+            .value=${this.source}
+            label=${messages.copy}
+            copied-label=${messages.copied}
+            failed-label=${messages.copyFailed}
+            @tp-copy=${this.#copyProposal}
+            @tp-copied=${this.#copied}
+          ></tp-copy-button
           >${this._copied ? messages.copied : messages.copy}</tp-tooltip
         >`
       : nothing;

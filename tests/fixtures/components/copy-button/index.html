@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Copy button verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        font-family: var(--tp-font-sans);
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        margin: var(--tp-space-8);
+      }
+      main {
+        display: grid;
+        gap: var(--tp-space-6);
+        max-inline-size: calc(var(--tp-spacing) * 140);
+      }
+      section {
+        display: grid;
+        gap: var(--tp-space-3);
+      }
+      h1,
+      h2 {
+        font-size: var(--tp-text-lg);
+        margin: 0;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--tp-space-3);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Copy button verification</h1>
+      <section>
+        <h2>Icon-only and labelled</h2>
+        <div class="row">
+          <tp-copy-button id="plain" value="plain value" label="Copy plain value"></tp-copy-button>
+          <tp-copy-button
+            id="labelled"
+            show-label
+            value="labelled value"
+            label="Copy link"
+            copied-label="Link copied"
+          ></tp-copy-button>
+          <tp-copy-button
+            id="outline"
+            variant="outline"
+            show-label
+            value="outline value"
+          ></tp-copy-button>
+          <tp-copy-button
+            id="disabled"
+            disabled
+            value="never"
+            label="Copy (disabled)"
+          ></tp-copy-button>
+        </div>
+      </section>
+      <section>
+        <h2>Sizes</h2>
+        <div class="row">
+          <tp-copy-button size="xs" value="xs" label="Copy xs"></tp-copy-button>
+          <tp-copy-button size="sm" value="sm" label="Copy sm"></tp-copy-button>
+          <tp-copy-button size="default" value="default" label="Copy default"></tp-copy-button>
+          <tp-copy-button size="lg" value="lg" label="Copy lg"></tp-copy-button>
+          <tp-copy-button size="lg" show-label value="lg" label="Copy lg"></tp-copy-button>
+        </div>
+      </section>
+      <section>
+        <h2>Beside a value</h2>
+        <tp-input-group id="key-group"
+          ><tp-input label="API key" readonly default-value="sk_live_4f2c9e1b7a"></tp-input
+          ><tp-copy-button
+            slot="action"
+            id="key"
+            value="sk_live_4f2c9e1b7a"
+            label="Copy API key"
+          ></tp-copy-button
+        ></tp-input-group>
+        <tp-field-group id="position" label="Position"
+          ><tp-input-group
+            ><span slot="prefix">X</span
+            ><tp-input label="X" default-value="24"></tp-input></tp-input-group
+          ><tp-input-group
+            ><span slot="prefix">Y</span
+            ><tp-input label="Y" default-value="48"></tp-input></tp-input-group
+          ><tp-copy-button id="position-copy" value="24, 48" label="Copy position"></tp-copy-button
+        ></tp-field-group>
+      </section>
+      <section>
+        <h2>Code block</h2>
+        <tp-code-block id="code" language="ts" label="install.ts"
+          >import { TpCopyButton } from '@tweakpad/ui';</tp-code-block
+        >
+      </section>
+      <section>
+        <h2>Cancelled proposal</h2>
+        <tp-copy-button
+          id="cancelled"
+          value="not copied"
+          label="Copy (cancelled by the page)"
+        ></tp-copy-button>
+        <output id="log" aria-live="off"></output>
+      </section>
+      <section>
+        <h2>Contract host</h2>
+        <div id="host"></div>
+      </section>
+    </main>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      await customElements.whenDefined('tp-copy-button');
+      const log = document.querySelector('#log');
+      document.querySelector('#cancelled').addEventListener('tp-copy', (event) => {
+        event.preventDefault();
+        log.textContent = `cancelled ${event.detail.value}`;
+      });
+      for (const type of ['tp-copy', 'tp-copied', 'tp-copy-error'])
+        document.addEventListener(type, (event) => {
+          if (event.target.id === 'cancelled') return;
+          log.textContent = `${type} ${event.detail.value}`;
+        });
+      window.copyButtonContract = await import('./contract-checks.js');
+      document.documentElement.toggleAttribute('data-ready', true);
+    </script>
+  </body>
+</html>

@@ -137,13 +137,6 @@ export async function assertValueLanes(): Promise<Report> {
       [dynamic.value, dynamic.color],
     ),
   );
-  checks.push(
-    check(
-      'format change leaves recent colors alone',
-      dynamic.recentColors.length === 0,
-      dynamic.recentColors,
-    ),
-  );
   dynamic.remove();
   // Uncontrolled: the published value follows the format.
   const free = document.createElement('tp-color-picker') as unknown as TpColorPicker;
@@ -296,7 +289,7 @@ const settle = async (target: TpColorPicker) => {
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 };
 
-/** V-18, V-19: swatch selection, re-press and recents on the schemes instance. */
+/** V-18: swatch selection and re-press on the schemes instance. */
 export async function assertSwatches(): Promise<Report> {
   const checks: Check[] = [];
   const target = picker('schemes');
@@ -337,14 +330,181 @@ export async function assertSwatches(): Promise<Report> {
     ),
   );
   checks.push(check('still pressed after the re-press', second.pressed, second.pressed));
+  return report(checks, { expected });
+}
+
+/** V-19: application-supplied recent colors on the popup strip and in the swatches view. */
+export async function assertRecent(): Promise<Report> {
+  const checks: Check[] = [];
+  const target = picker('popup');
+  const colors = ['#e53935', '#fb8c00', '#43a047'];
+  target.recent = colors;
+  target.setOpen(true, 'programmatic');
+  await settle(target);
+  await wait(60);
+  const strip = target.shadowRoot!.querySelector('[part~="color-picker-recent"] tp-toggle-group');
+  const toggles = strip ? [...strip.querySelectorAll('tp-toggle')] : [];
+  checks.push(check('popup strip shows the supplied colors', toggles.length === 3, toggles.length));
   checks.push(
     check(
-      'recent colors lead with the pressed swatch',
-      target.recentColors[0] === expected,
-      target.recentColors,
+      'strip swatches are named by the supplied strings',
+      toggles.map((t) => t.getAttribute('aria-label')).join() === colors.join(),
+      toggles.map((t) => t.getAttribute('aria-label')),
     ),
   );
-  return report(checks, { expected, recents: target.recentColors });
+  const captured = capture(target, ['tp-value-change', 'tp-value-commit']);
+  (toggles[1] as HTMLElement).shadowRoot!.querySelector('button')!.click();
+  await wait(40);
+  await settle(target);
+  captured.stop();
+  checks.push(
+    check('pressing a recent swatch publishes it', target.value === '#fb8c00', target.value),
+  );
+  checks.push(
+    check(
+      'the press commits once with the swatch surface',
+      captured.events.filter(
+        (e) =>
+          e.type === 'tp-value-commit' &&
+          (e.metadata as { surface?: string })?.surface === 'swatch',
+      ).length === 1,
+      captured.events,
+    ),
+  );
+  checks.push(
+    check(
+      'the widget keeps no history: recent stays the supplied list',
+      target.recent === colors,
+      target.recent,
+    ),
+  );
+  target.recent = [];
+  await settle(target);
+  checks.push(
+    check(
+      'an empty list removes the strip',
+      !target.shadowRoot!.querySelector('[part~="color-picker-recent"]'),
+      null,
+    ),
+  );
+  target.close();
+  await settle(target);
+  await wait(60);
+  // The swatches view lists the same colors.
+  const schemes = picker('schemes');
+  schemes.recent = colors;
+  schemes.view = 'swatches';
+  await settle(schemes);
+  const groups = [...schemes.shadowRoot!.querySelectorAll('tp-toggle-group.swatches')];
+  const recentGroup = groups.find((g) => g.getAttribute('label') === 'Recent colors');
+  checks.push(
+    check(
+      'swatches view lists a Recent colors group with the supplied colors',
+      recentGroup?.querySelectorAll('tp-toggle').length === 3,
+      recentGroup?.querySelectorAll('tp-toggle').length,
+    ),
+  );
+  schemes.recent = [];
+  await settle(schemes);
+  return report(checks, { events: captured.events });
+}
+
+/** V-96: popup header, original|current comparison restore and the Copy button. */
+export async function assertPopupHeader(): Promise<Report> {
+  const checks: Check[] = [];
+  const target = picker('popup');
+  const start = target.value;
+  target.setOpen(true, 'programmatic');
+  await settle(target);
+  await wait(60);
+  const root = target.shadowRoot!;
+  const header = root.querySelector('[part~="color-picker-header"]');
+  const order = header
+    ? [...header.children].map((child) => `${child.localName}.${child.className}`)
+    : [];
+  checks.push(
+    check(
+      'header holds the Select, the comparison, the Copy button and the eyedropper in order',
+      order.join() ===
+        'tp-select.format,tp-button-group.compare,tp-copy-button.copy,tp-button.eyedropper' ||
+        order.join() === 'tp-select.format,tp-button-group.compare,tp-copy-button.copy',
+      order,
+    ),
+  );
+  checks.push(
+    check(
+      'fields row keeps only the editors',
+      !root.querySelector('[part~="color-picker-fields"] tp-select') &&
+        !root.querySelector('[part~="color-picker-fields"] [part~="color-picker-preview"]'),
+      null,
+    ),
+  );
+  const original = root.querySelector<HTMLElement>('tp-button.original')!;
+  checks.push(
+    check(
+      'original Button is named by the original serialization',
+      original.getAttribute('aria-label') === `Restore the original color ${start}`,
+      original.getAttribute('aria-label'),
+    ),
+  );
+  const swatchPaint = (host: Element | null) =>
+    host
+      ?.querySelector<HTMLElement>('.swatch')
+      ?.style.getPropertyValue('--_tp-color-picker-paint') ?? '';
+  target.setValue('#ff0000', 'keyboard');
+  await settle(target);
+  checks.push(check('edit changes the value', target.value === '#ff0000', target.value));
+  checks.push(
+    check(
+      'current fill follows the value while the original fill keeps the opening color',
+      swatchPaint(root.querySelector('tp-button-group-text.current')).includes('rgb(255 0 0)') &&
+        !swatchPaint(original).includes('rgb(255 0 0)'),
+      [swatchPaint(original), swatchPaint(root.querySelector('tp-button-group-text.current'))],
+    ),
+  );
+  const captured = capture(target, ['tp-value-change', 'tp-value-commit']);
+  original.shadowRoot!.querySelector('button')!.click();
+  await wait(40);
+  await settle(target);
+  captured.stop();
+  checks.push(check('pressing the original restores it', target.value === start, target.value));
+  checks.push(
+    check(
+      'restore commits once as item-press on the compare surface',
+      captured.events.filter(
+        (e) =>
+          e.type === 'tp-value-commit' &&
+          e.reason === 'item-press' &&
+          (e.metadata as { surface?: string })?.surface === 'compare',
+      ).length === 1,
+      captured.events,
+    ),
+  );
+  const copy = root.querySelector<HTMLElement & { value: string }>('tp-copy-button.copy')!;
+  checks.push(check('Copy button carries the serialized value', copy.value === start, copy.value));
+  target.close();
+  await settle(target);
+  await wait(60);
+  // Reopening snapshots the current value as the new original.
+  target.setValue('#00ff00', 'keyboard');
+  await settle(target);
+  target.setOpen(true, 'programmatic');
+  await settle(target);
+  await wait(60);
+  const reopened = root.querySelector<HTMLElement>('tp-button.original')!;
+  checks.push(
+    check(
+      'reopening takes the current value as the original',
+      reopened.getAttribute('aria-label') === 'Restore the original color #00ff00',
+      reopened.getAttribute('aria-label'),
+    ),
+  );
+  target.close();
+  await settle(target);
+  await wait(60);
+  target.setValue(start, 'programmatic');
+  await settle(target);
+  return report(checks, { events: captured.events, order });
 }
 
 /** V-20, V-21: harmony derivation and custom handles on the wheel instance. */

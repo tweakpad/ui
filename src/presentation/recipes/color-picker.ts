@@ -227,6 +227,40 @@ export const colorPickerAppearance: PresentationDictionary = {
       },
     },
   ],
+  // The comparison swatch: the original Button and the current text segment are square
+  // control-height boxes whose slotted fills cover them (same scheme as the swatch items).
+  'color-picker-compare-original': [
+    {
+      selector: '&[part~="button"]',
+      declarations: {
+        position: 'relative',
+        overflow: 'hidden',
+        padding: '0',
+        'inline-size': 'var(--tp-control-height-md)',
+        'block-size': 'var(--tp-control-height-md)',
+        'min-inline-size': '0',
+      },
+    },
+    {
+      // The fill is slotted into the leading mark; that mark steps aside so the fill
+      // positions against the Button root.
+      selector: '&[part~="button"] > [part~="button-leading-mark"]',
+      declarations: { position: 'static' },
+    },
+  ],
+  'color-picker-compare-current': [
+    {
+      selector: '&[part~="button-group-text-segment"]',
+      declarations: {
+        position: 'relative',
+        overflow: 'hidden',
+        padding: '0',
+        'inline-size': 'var(--tp-control-height-md)',
+        'block-size': 'var(--tp-control-height-md)',
+        'min-inline-size': '0',
+      },
+    },
+  ],
   'color-picker-swatch-item-shape-round': [
     { selector: '&[part~="toggle"]', declarations: { 'border-radius': 'var(--tp-radius-full)' } },
   ],
@@ -307,10 +341,11 @@ export const colorPickerStructure: PresentationDictionary = {
         // that overhang inside the Popover's scroll container.
         padding: 'calc(var(--_tp-color-picker-thumb) / 2 + var(--tp-space-2))',
         // The plane gives way before the Popover has to scroll: it shrinks with the available
-        // height (controls, a wrapped fields row, gaps and paddings take up to 58 spacing units)
-        // down to 20 units.
+        // height minus the rows around it (header, controls, fields, recent strip, gaps and
+        // paddings: the widget sets `--_tp-color-picker-reserve` in spacing units) down to
+        // 20 units.
         '--_tp-color-picker-area':
-          'max(calc(var(--tp-spacing) * 20), min(var(--_tp-color-picker-area-base), calc(var(--tp-available-height, 100dvh) - calc(var(--tp-spacing) * 58))))',
+          'max(calc(var(--tp-spacing) * 20), min(var(--_tp-color-picker-area-base), calc(var(--tp-available-height, 100dvh) - calc(var(--tp-spacing) * var(--_tp-color-picker-reserve, 70)))))',
       },
     },
   ],
@@ -359,4 +394,8 @@ export const colorPickerStructure: PresentationDictionary = {
   'color-picker-footer': [
     { declarations: { display: 'flex', 'justify-content': 'flex-end', gap: 'var(--tp-space-2)' } },
   ],
+  'color-picker-header': [{ declarations: { gap: 'var(--tp-space-2)' } }],
+  'color-picker-compare': [],
+  'color-picker-copy': [],
+  'color-picker-recent': [],
 };

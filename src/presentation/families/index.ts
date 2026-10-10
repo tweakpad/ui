@@ -4,6 +4,7 @@ import { accordionPresentation } from './accordion.js';
 import { buttonPresentation } from './button.js';
 import { checkboxPresentation } from './checkbox.js';
 import { collapsiblePresentation } from './collapsible.js';
+import { copyButtonPresentation } from './copy-button.js';
 import { radioGroupPresentation } from './radio-group.js';
 import { switchPresentation } from './switch.js';
 import { tabsPresentation } from './tabs.js';
@@ -79,6 +80,7 @@ export { accordionPresentation } from './accordion.js';
 export { buttonPresentation } from './button.js';
 export { checkboxPresentation } from './checkbox.js';
 export { collapsiblePresentation } from './collapsible.js';
+export { copyButtonPresentation } from './copy-button.js';
 export { radioGroupPresentation } from './radio-group.js';
 export { switchPresentation } from './switch.js';
 export { tabsPresentation } from './tabs.js';
@@ -156,6 +158,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   buttonPresentation,
   checkboxPresentation,
   collapsiblePresentation,
+  copyButtonPresentation,
   radioGroupPresentation,
   switchPresentation,
   tabsPresentation,

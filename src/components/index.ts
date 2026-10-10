@@ -17,6 +17,7 @@ export * from './carousel/index.js';
 export * from './checkbox/index.js';
 export * from './code-block/index.js';
 export * from './collapsible/index.js';
+export * from './copy-button/index.js';
 export * from './command-palette/index.js';
 export * from './data-visualization/index.js';
 export * from './dialog/index.js';

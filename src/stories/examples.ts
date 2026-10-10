@@ -334,6 +334,9 @@ const examples = {
       <tp-button variant="outline">Next</tp-button>
     </tp-button-group>
   `,
+  'tp-copy-button': () => html`
+    <tp-copy-button value="npm install @tweakpad/ui" label="Copy install command"></tp-copy-button>
+  `,
   'tp-field-group': () => html`
     <tp-field-group label="Size">
       <tp-input-group>

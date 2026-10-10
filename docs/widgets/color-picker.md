@@ -56,14 +56,14 @@ or pick another format.
 
 ## Views and layout
 
-| View       | Surface and controls                                                                   |
-| ---------- | -------------------------------------------------------------------------------------- |
-| `area`     | Saturation/brightness plane, eyedropper, hue and alpha Sliders                         |
-| `sliders`  | One labeled Slider with a numeric value box per channel of the format, plus alpha      |
-| `wheel`    | Hue/saturation disc with harmony handles, Harmony Select, brightness and alpha Sliders |
-| `triangle` | Hue ring around an HSV triangle (canvas), alpha Slider                                 |
-| `swatches` | Saved colors (flat list or labeled groups) and recent colors as Toggle Group grids     |
-| `schemes`  | Generated scheme strips (tints, shades, tones, analogous, …) or consumer templates     |
+| View       | Surface and controls                                                                     |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| `area`     | Saturation/brightness plane, eyedropper, hue and alpha Sliders                           |
+| `sliders`  | One labeled Slider with a numeric value box per channel of the format, plus alpha        |
+| `wheel`    | Hue/saturation disc with harmony handles, Harmony Select, brightness and alpha Sliders   |
+| `triangle` | Hue ring around an HSV triangle (canvas), alpha Slider                                   |
+| `swatches` | Saved colors (flat list or labeled groups) and the `recent` colors as Toggle Group grids |
+| `schemes`  | Generated scheme strips (tints, shades, tones, analogous, …) or consumer templates       |
 
 `views` (space-separated) lists the available views in order; more than one view renders a
 `tp-tabs` strip above the panel and `view` / `defaultView` select the active tab. The fields row
@@ -76,13 +76,21 @@ apart with the row gap.
 `round`) shapes the preview and swatches.
 
 `picker="popup"` renders the panel inside a `tp-popover` opened from an icon Button that shows
-the preview. Author `slot="trigger"` content to replace the default trigger. `open` /
+the preview. The popup opens with a header row: the format Select, the original|current
+comparison (a [Button group](../button-group.md) whose Button is filled with the value the popup
+opened with and whose text segment shows the current color; pressing the original restores it
+with reason `item-press` on the `compare` surface), the [Copy button](../copy-button.md) for the
+serialized value and the eyedropper. Below the surface the fields row keeps only the editors on
+one line, and the `recent` colors, when supplied, render as one swatch strip at the bottom.
+`formatSelect`, `preview` and `eyedropper` hide their header items as they hide the inline ones.
+Author `slot="trigger"` content to replace the default trigger. `open` /
 `defaultOpen`, `setOpen(open, reason?)` and `close()` forward to the Popover, which remains the
 state owner; its `tp-open-change` and `tp-open-change-complete` events are re-dispatched from
 the widget with the Popover's reasons. Opening moves focus to the first dimension of the active
 view and closing returns it to the trigger. The popup renders in place through the native top
 layer so it keeps the widget's structure and presentation, and the plane gives way to the
-Popover's available height so the panel never scrolls.
+Popover's available height, down to a 20-unit floor, so the panel only scrolls where even that
+floor does not fit (viewports under about 470 px with the recent strip).
 
 The `footer` slot renders below the panel (for example an action row), hidden while empty.
 
@@ -108,25 +116,37 @@ templates chosen through the Template Select. Pressing a scheme or saved swatch 
 color (`item-press`, or `keyboard` when selected from the keyboard); pressing the selected swatch
 again proposes nothing.
 
-`swatches` accepts strings or `{ label, colors }` groups. Every interactive commit pushes the
-color (hex identity) to the front of `recentColors`, de-duplicated and capped at `recentLimit`
-(default 8; 0 disables); `clearRecentColors()` empties the list.
+`swatches` accepts strings or `{ label, colors }` groups. `recent` (a property, not an
+attribute) lists recent colors supplied by the application, which owns that logic: the last
+commits of a session, the most used colors, or whatever the product defines. The widget keeps no
+history of its own; the list renders as the popup strip and as a "Recent colors" group in the
+swatches view, and pressing an entry proposes it like any saved swatch.
+
+```js
+let recent = [];
+picker.addEventListener('tp-value-commit', (event) => {
+  if (event.detail.metadata?.formatChange) return;
+  recent = [event.detail.value, ...recent.filter((entry) => entry !== event.detail.value)];
+  picker.recent = recent.slice(0, 5);
+});
+```
 
 ## Interaction and events
 
-| Event                     | Detail                                                        | Reasons                                                                                                                                                                                                   |
-| ------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tp-value-change`         | `value`, `previousValue`, `reason`, `sourceEvent`, `metadata` | `track-press`, `drag`, `keyboard`, `wheel`, `item-press`, `trigger-press`, `input`, `input-blur`, `input-paste`, `increment`, `decrement`, `scrub`, `escape-key`, `pointer`, `form-reset`, `programmatic` |
-| `tp-value-commit`         | same                                                          | the settling reason                                                                                                                                                                                       |
-| `tp-format-change`        | `TpValueChangeEvent<ColorFormat>`                             | `item-press`, `programmatic`                                                                                                                                                                              |
-| `tp-view-change`          | `TpValueChangeEvent<ColorPickerView>`                         | `pointer`, `keyboard`, `programmatic`                                                                                                                                                                     |
-| `tp-harmony-change`       | `TpValueChangeEvent<HarmonyRule>`                             | `item-press`, `programmatic`                                                                                                                                                                              |
-| `tp-open-change`          | `TpOpenChangeEvent` (popup)                                   | the Popover's reasons (`trigger-press`, `escape-key`, `outside-press`, …)                                                                                                                                 |
-| `tp-open-change-complete` | `{ open }`                                                    | —                                                                                                                                                                                                         |
+| Event                                   | Detail                                                                    | Reasons                                                                                                                                                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tp-value-change`                       | `value`, `previousValue`, `reason`, `sourceEvent`, `metadata`             | `track-press`, `drag`, `keyboard`, `wheel`, `item-press`, `trigger-press`, `input`, `input-blur`, `input-paste`, `increment`, `decrement`, `scrub`, `escape-key`, `pointer`, `form-reset`, `programmatic` |
+| `tp-value-commit`                       | same                                                                      | the settling reason                                                                                                                                                                                       |
+| `tp-format-change`                      | `TpValueChangeEvent<ColorFormat>`                                         | `item-press`, `programmatic`                                                                                                                                                                              |
+| `tp-view-change`                        | `TpValueChangeEvent<ColorPickerView>`                                     | `pointer`, `keyboard`, `programmatic`                                                                                                                                                                     |
+| `tp-harmony-change`                     | `TpValueChangeEvent<HarmonyRule>`                                         | `item-press`, `programmatic`                                                                                                                                                                              |
+| `tp-open-change`                        | `TpOpenChangeEvent` (popup)                                               | the Popover's reasons (`trigger-press`, `escape-key`, `outside-press`, …)                                                                                                                                 |
+| `tp-open-change-complete`               | `{ open }`                                                                | —                                                                                                                                                                                                         |
+| `tp-copy`, `tp-copied`, `tp-copy-error` | the Copy button's events (`detail.value`), bubbling from the popup header | —                                                                                                                                                                                                         |
 
 `metadata` carries the floating-point `color` of the proposal and, when known, the edited
 `channel`, the `surface` (`area`, `wheel`, `triangle`, `slider`, `field`, `swatch`, `scheme`,
-`eyedropper`) and `formatChange`. `tp-value-change` is cancelable: a cancelled proposal leaves the
+`eyedropper`, `compare`) and `formatChange`. `tp-value-change` is cancelable: a cancelled proposal leaves the
 value, every surface, the fields and the form state unchanged, and the nested control that
 proposed it reverts. Only the widget's own events cross its boundary; the Sliders, Inputs,
 Selects, Tabs, Toggle Groups and Popover inside never leak their lane events.
@@ -157,15 +177,15 @@ observations.
 
 Every editable dimension is a hidden native range input inside its thumb or handle.
 
-| Surface / control        | Keys                                                                                                                       |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| Area, triangle           | Left/Right saturation, Up/Down brightness on either input; Page Up/Down, Home, End act on the focused dimension            |
-| Hue ring, wheel hue      | Left/Right/Up/Down step the hue; it wraps past 0 and 360                                                                   |
-| Wheel saturation         | arrows step saturation; Home/End reach the bounds                                                                          |
-| Hue and alpha Sliders    | the Slider keyboard model; the hue Slider wraps past 0 and 360 instead of clamping                                         |
-| Channel Sliders / fields | Slider and Number field models (arrows, Page keys, Home/End, Shift/Control/Meta for the large step, Alt for the small one) |
-| Swatches, schemes        | Toggle Group roving focus; Space/Enter select                                                                              |
-| Popup                    | Enter/Space on the trigger opens; Escape closes and returns focus                                                          |
+| Surface / control        | Keys                                                                                                                                                                        |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Area, triangle           | Left/Right saturation, Up/Down brightness on either input; Page Up/Down, Home, End act on the focused dimension                                                             |
+| Hue ring, wheel hue      | Left/Right/Up/Down step the hue; it wraps past 0 and 360                                                                                                                    |
+| Wheel saturation         | arrows step saturation; Home/End reach the bounds                                                                                                                           |
+| Hue and alpha Sliders    | the Slider keyboard model; the hue Slider wraps past 0 and 360 instead of clamping                                                                                          |
+| Channel Sliders / fields | Slider and Number field models (arrows, Page keys, Home/End, Shift/Control/Meta for the large step, Alt for the small one)                                                  |
+| Swatches, schemes        | Toggle Group roving focus; Space/Enter select                                                                                                                               |
+| Popup                    | Enter/Space on the trigger opens; Escape closes and returns focus; the header's Select, original swatch, Copy button and eyedropper are ordinary stops ahead of the surface |
 
 Arrow steps use the channel step; Shift, Control or Command and the Page keys use the large step,
 Alt the small step. Horizontal arrows follow the writing direction on the area and Sliders;
@@ -180,13 +200,17 @@ its unit (`242°`, `66%`, `0.628`). The area and triangle inputs sit in a group 
 "Saturation and brightness", the wheel in "Hue and saturation"; custom harmony handles expose
 "Harmony color N: Hue/Saturation". The root is a group named by `label` (or `aria-label`).
 Tab order per view: tabs, surface inputs, eyedropper, hue, alpha, format Select, fields, alpha
-field, then one roving stop per swatch group. `strings` overrides every name (`hue`, `alpha`,
-`eyedropper`, `savedColors`, `viewWheel`, `formatOklch`, `harmonyTriad`, `schemeTints`, …) for
-localization; `locale` formats the numeric fields.
+field, then one roving stop per swatch group; in the popup the header (format Select, original
+swatch, Copy button, eyedropper) precedes the surface. The original swatch is a Button named
+"Restore the original color" plus the original serialization; the current swatch is decorative;
+the Copy button announces its result. `strings` overrides every name (`hue`, `alpha`,
+`eyedropper`, `compare`, `original`, `copy`, `savedColors`, `viewWheel`, `formatOklch`,
+`harmonyTriad`, `schemeTints`, …) for localization; `locale` formats the numeric fields.
 
-Nested controls are the library's `tp-slider`, `tp-input` in `tp-input-group` with the Number
-field controller, `tp-select`, `tp-button` with `tp-icon`, `tp-tabs`, `tp-toggle-group` with
-`tp-toggle`, `tp-label` and `tp-popover`. The three render surfaces (`tp-color-picker-area`,
+Nested controls are the library's `tp-slider`, `tp-input` in `tp-input-group` inside a
+`tp-field-group` with the Number field controller, `tp-select`, `tp-button` with `tp-icon`,
+`tp-button-group` with `tp-button-group-text`, `tp-copy-button`, `tp-tabs`, `tp-toggle-group`
+with `tp-toggle`, `tp-label` and `tp-popover`. The three render surfaces (`tp-color-picker-area`,
 `tp-color-picker-wheel`, `tp-color-picker-triangle`) are widget constituents; the triangle
 rasterizes through the shared canvas surface owner at the device pixel ratio and repaints only on
 hue, size, pixel-ratio and theme changes, recovering from context loss.
@@ -214,10 +238,13 @@ Public parts: `color-picker`, `color-picker-label`, `color-picker-tabs`, `color-
 `color-picker-scheme`, `color-picker-scheme-item`, `color-picker-wheel`, `color-picker-wheel-handle`,
 `color-picker-wheel-line`, `color-picker-ring`, `color-picker-ring-thumb`,
 `color-picker-triangle`, `color-picker-triangle-thumb`, `color-picker-trigger`,
-`color-picker-popup` and `color-picker-footer`. Parts that live inside a nested component
+`color-picker-popup`, `color-picker-header`, `color-picker-compare`,
+`color-picker-compare-original`, `color-picker-compare-current`, `color-picker-copy`,
+`color-picker-recent` and `color-picker-footer`. Parts that live inside a nested component
 (`-slider-track`, `-alpha-track`, `-slider-range`, `-slider-thumb`, `-swatch-grid`,
-`-swatch-item`, `-scheme`, `-scheme-item`) are registered on that component's elements, so dictionary keys reach
-them; the surfaces forward their parts through `exportparts`.
+`-swatch-item`, `-scheme`, `-scheme-item`, `-compare-original`, `-compare-current`) are
+registered on that component's elements, so dictionary keys reach them; the surfaces forward
+their parts through `exportparts`.
 
 | Marker / variable                                              | Element                    | Meaning                                                     |
 | -------------------------------------------------------------- | -------------------------- | ----------------------------------------------------------- |
@@ -255,17 +282,17 @@ keeping the last chromatic hue and saturation when a drag passes through black, 
 
 ## Usage guide
 
-| Use case                    | Composition / API                                                           |
-| --------------------------- | --------------------------------------------------------------------------- |
-| Compact inline picker       | `default-value`; defaults to the area view with fields                      |
-| Popup in a form             | `picker="popup"` inside `tp-field` and `tp-form`; `name` submits the string |
-| Channel editing             | `views="sliders"` with `default-format="oklch"` or any format               |
-| Color harmonies             | `views="wheel" default-harmony="triad"`; read `harmonyColors`               |
-| HSV triangle                | `views="triangle"`                                                          |
-| Saved and recent colors     | `views="area swatches"`, `swatches`, `recent-limit`                         |
-| Palette templates           | `views="area schemes"`, generated rows or `schemes`                         |
-| Controlled owner            | `value`, synchronous `onValueChange` acceptance                             |
-| Rejecting proposals         | cancel `tp-value-change`; observe `tp-value-commit`                         |
-| Alpha off / limited formats | `alpha="false"`, `formats="hex rgb oklch"`                                  |
-| Localization                | `strings`, `locale`                                                         |
-| RTL                         | `dir="rtl"`; the area and Sliders mirror, angular surfaces stay unchanged   |
+| Use case                    | Composition / API                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Compact inline picker       | `default-value`; defaults to the area view with fields                                                              |
+| Popup in a form             | `picker="popup"` inside `tp-field` and `tp-form`; `name` submits the string; header with comparison and Copy button |
+| Channel editing             | `views="sliders"` with `default-format="oklch"` or any format                                                       |
+| Color harmonies             | `views="wheel" default-harmony="triad"`; read `harmonyColors`                                                       |
+| HSV triangle                | `views="triangle"`                                                                                                  |
+| Saved and recent colors     | `views="area swatches"`, `swatches`, application-owned `recent`                                                     |
+| Palette templates           | `views="area schemes"`, generated rows or `schemes`                                                                 |
+| Controlled owner            | `value`, synchronous `onValueChange` acceptance                                                                     |
+| Rejecting proposals         | cancel `tp-value-change`; observe `tp-value-commit`                                                                 |
+| Alpha off / limited formats | `alpha="false"`, `formats="hex rgb oklch"`                                                                          |
+| Localization                | `strings`, `locale`                                                                                                 |
+| RTL                         | `dir="rtl"`; the area and Sliders mirror, angular surfaces stay unchanged                                           |

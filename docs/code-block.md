@@ -41,8 +41,8 @@ Messages: `code` (the figure name without a title, after the language), `copy`, 
 
 ## Methods and events
 
-- `copy()` copies the source text and resolves to whether it succeeded. The copy action
-  calls it.
+- `copy()` copies the source text and resolves to whether it succeeded; it runs through the
+  composed [Copy button](copy-button.md) when the copy action is shown.
 - `setExpanded(value, reason?)` proposes expansion and returns whether it was accepted.
 - `source` is the text the block shows and copies.
 
@@ -52,8 +52,11 @@ Messages: `code` (the figure name without a title, after the language), `copy`, 
 | `tp-value-change` | yes        | `expanded` proposal (`trigger-press` or `imperative-action`)                                 |
 | `tp-diagnostic`   | no         | `code-block-language` for unknown languages, `code-block-highlight` for highlighter failures |
 
-Copying uses the Clipboard API with a fallback for documents where it is unavailable,
-shows a check for two seconds and announces "Copied" (or "Copy failed") politely.
+The copy action is a [Copy button](copy-button.md): it uses the Clipboard API with a fallback
+for documents where it is unavailable, shows a check for two seconds, takes the copied message
+as its name and announces "Copied" (or "Copy failed") politely. The block's `copy`, `copied` and
+`copyFailed` messages become the button's labels; `tp-code-copy` still fires before the write
+and preventing it skips the copy.
 
 ## Highlighters
 

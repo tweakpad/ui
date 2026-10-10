@@ -94,6 +94,14 @@ schemesInstance.swatches = [
   '#fdd835',
   { label: 'Brand', colors: ['#6d5dfc', '#2622a5', 'rgb(255 255 255 / 0.5)'] },
 ];
+// Recent colors are application state: the popup instance receives five.
+(document.getElementById('popup') as HTMLElement & { recent: readonly string[] }).recent = [
+  '#e53935',
+  '#fb8c00',
+  '#43a047',
+  '#039be5',
+  '#8e24aa',
+];
 await customElements.whenDefined('tp-color-picker');
 await settle();
 document.documentElement.dataset.fixtureReady = '';

@@ -16,12 +16,13 @@ Browser verification of `tp-color-picker`, driven only through the Chrome DevToo
    `leaked` (constituent events that reached the document), `clear()`, `settle()`,
    `create(attributes)` (a dynamic instance under `#dynamic`), `snapshotState(id)` and the
    assertion helpers of `api.ts` (`assertValueLanes`, `assertNestedEventBoundary`,
-   `assertForms`, `assertField`, `assertSwatches`, `assertHarmony`, `assertTriangleMapping`,
-   `assertPopup`, `assertCleanup`). Each helper returns `{ checks, records, passed }`.
+   `assertForms`, `assertField`, `assertSwatches`, `assertRecent`, `assertHarmony`,
+   `assertTriangleMapping`, `assertPopup`, `assertPopupHeader`, `assertCleanup`). Each helper
+   returns `{ checks, records, passed }`.
 5. `take_screenshot` for visual evidence under `tmp/component-verification/color-picker/<run>/`;
    `emulate` for color scheme, viewport and device pixel ratio.
 
-Instances: `#inline` (area), `#popup`, `#sliders` (HSL), `#wheel` (triad), `#triangle`,
+Instances: `#inline` (area), `#popup` (five application-supplied `recent` colors), `#sliders` (HSL), `#wheel` (triad), `#triangle`,
 `#schemes` (area, swatches, schemes with saved swatches), `#field` inside `tp-field`,
 `#narrow-picker` (240px), `#rtl`, plus `#before` / `#after` focus stops and the `#reset` button
 of the surrounding form.

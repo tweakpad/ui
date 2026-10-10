@@ -25,6 +25,9 @@ import { TpInputGroup } from '../../components/input-group/input-group.js';
 import { TpFieldGroup } from '../../components/field-group/field-group.js';
 import { TpSelect } from '../../components/select/select.js';
 import { TpButton } from '../../components/button/button.js';
+import { TpButtonGroup } from '../../components/button-group/button-group.js';
+import { TpButtonGroupText } from '../../components/button-group/text.js';
+import { TpCopyButton } from '../../components/copy-button/copy-button.js';
 import { TpIcon } from '../../components/icon/icon.js';
 import { TpLabel } from '../../components/label/label.js';
 import { TpTabs } from '../../components/tabs/tabs.js';
@@ -78,7 +81,6 @@ import {
   withAlpha,
   withChannel,
 } from './model.js';
-import { pushRecent } from './recent.js';
 import { resolveStrings } from './strings.js';
 import { colorPickerStyles } from './styles.js';
 import {
@@ -182,7 +184,7 @@ const NESTED_EVENT_TYPES = [
   'tp-presence-complete',
 ] as const;
 const NESTED_HOSTS =
-  'tp-slider, tp-select, tp-input, tp-input-group, tp-field-group, tp-button, tp-label, tp-tabs, tp-toggle-group, tp-toggle, tp-popover';
+  'tp-slider, tp-select, tp-input, tp-input-group, tp-field-group, tp-button, tp-button-group, tp-button-group-text, tp-copy-button, tp-label, tp-tabs, tp-toggle-group, tp-toggle, tp-popover';
 const SURFACES = 'tp-color-picker-area, tp-color-picker-wheel, tp-color-picker-triangle';
 const isView = (value: unknown): value is ColorPickerView =>
   typeof value === 'string' && (COLOR_PICKER_VIEWS as readonly string[]).includes(value);
@@ -210,6 +212,9 @@ export class TpColorPicker extends TpFormElement<string> {
       TpFieldGroup,
       TpSelect,
       TpButton,
+      TpButtonGroup,
+      TpButtonGroupText,
+      TpCopyButton,
       TpIcon,
       TpLabel,
       TpTabs,
@@ -240,7 +245,7 @@ export class TpColorPicker extends TpFormElement<string> {
     harmony: { type: String, noAccessor: true },
     defaultHarmony: { type: String, attribute: 'default-harmony' },
     swatches: { attribute: false },
-    recentLimit: { type: Number, attribute: 'recent-limit' },
+    recent: { attribute: false },
     schemes: { attribute: false },
     allowWheelScrub: { type: Boolean, attribute: 'allow-wheel-scrub' },
     label: { type: String },
@@ -268,7 +273,8 @@ export class TpColorPicker extends TpFormElement<string> {
   shape: ColorPickerShape = 'square';
   defaultHarmony: HarmonyRule | undefined;
   swatches: readonly ColorSwatchInput[] = [];
-  recentLimit = 8;
+  /** Recent colors supplied by the application; the widget keeps no history of its own. */
+  recent: readonly string[] = [];
   schemes: readonly ColorScheme[] = [];
   allowWheelScrub = false;
   label = '';
@@ -294,7 +300,8 @@ export class TpColorPicker extends TpFormElement<string> {
   /** Reason of the composed Slider's latest drag proposal, for a release the Slider did not commit. */
   #sliderReason: 'track-press' | 'drag' | undefined;
   #hexText = '';
-  #recent: readonly string[] = [];
+  /** The value when the popup opened; the comparison swatch restores it. */
+  #original: string | undefined;
   #customHandles: readonly Hsv[] = [];
   #templateIndex = 0;
   #generatedBase: ColorValue | null = null;
@@ -426,9 +433,6 @@ export class TpColorPicker extends TpFormElement<string> {
   get dragging(): boolean {
     return this.#dragging;
   }
-  get recentColors(): readonly string[] {
-    return this.#recent;
-  }
   get supportsEyeDropper(): boolean {
     return this.#eyedropperSupported;
   }
@@ -458,11 +462,6 @@ export class TpColorPicker extends TpFormElement<string> {
       sourceEvent,
       { immediate: true },
     );
-  }
-
-  clearRecentColors(): void {
-    this.#recent = [];
-    this.requestUpdate();
   }
 
   /** Opens the platform eyedropper; resolves true when a color was picked and accepted. */
@@ -540,6 +539,9 @@ export class TpColorPicker extends TpFormElement<string> {
       this.#state.reconcile(this.#serialize(withAlpha(this.#model, 1)));
     if (this.#modelText !== this.value) this.#adoptText(this.value);
     this.#authoredTrigger = this.querySelector(':scope > [slot="trigger"]') !== null;
+    // A popup that opens without a proposal (initially open) still snapshots the original.
+    if (this.picker === 'popup' && this.open && this.#original === undefined)
+      this.#original = this.value;
   }
 
   protected override updated(changed: PropertyValues<this>): void {
@@ -702,16 +704,6 @@ export class TpColorPicker extends TpFormElement<string> {
     const event = new TpValueCommitEvent<string>(value, previous, reason, source, { metadata });
     this.onValueCommitted?.(event);
     this.dispatchEvent(event);
-    if (
-      reason !== 'programmatic' &&
-      reason !== 'form-reset' &&
-      !metadata.formatChange &&
-      this.#model &&
-      this.recentLimit > 0
-    ) {
-      this.#recent = pushRecent(this.#recent, serializeColor(this.#model, 'hex'), this.recentLimit);
-      this.requestUpdate();
-    }
   }
 
   #beginDrag(): void {
@@ -1248,14 +1240,32 @@ export class TpColorPicker extends TpFormElement<string> {
     const proposal = new TpOpenChangeEvent(value, previousValue, reason, sourceEvent);
     this.dispatchEvent(proposal);
     if (proposal.defaultPrevented || proposal.detail.cancelled) event.preventDefault();
+    // The original color is the value at the moment the popup opens.
+    else if (value) this.#original = this.value;
     this.requestUpdate();
   };
 
   #openComplete = (event: CustomEvent<{ open: boolean }>): void => {
     if (event.target !== event.currentTarget) return;
     event.stopPropagation();
+    if (!event.detail.open) this.#original = undefined;
     this.emit('tp-open-change-complete', { open: event.detail.open });
     this.requestUpdate();
+  };
+
+  /** Pressing the original swatch proposes the value the popup opened with. */
+  #restoreOriginal = (event: Event): void => {
+    const original = this.#original;
+    if (original === undefined || this.readOnly || this.effectiveDisabled) return;
+    const parsed = original ? parseColor(original) : null;
+    if (!parsed) {
+      this.#proposeText('', 'item-press', event, { surface: 'compare' });
+      return;
+    }
+    this.#proposeColor(this.#adoptAlpha(toWorkingSpace(parsed, this.format)), 'item-press', event, {
+      immediate: true,
+      surface: 'compare',
+    });
   };
 
   #initialFocus = (): HTMLElement | null => this.#dimensionInput() ?? this.#firstControl();
@@ -1329,6 +1339,24 @@ export class TpColorPicker extends TpFormElement<string> {
           itemName,
         );
       }
+    }
+    // The comparison swatch: the original Button and the current text segment carry the fills.
+    for (const original of this.#queryAll<TpButton>('tp-button.original')) {
+      await original.updateComplete;
+      if (!original.isConnected) continue;
+      this.#registerOnce(
+        original.shadowRoot?.querySelector<HTMLElement>('[part~="button"]') ?? null,
+        'color-picker-compare-original',
+      );
+    }
+    for (const current of this.#queryAll<TpButtonGroupText>('tp-button-group-text.current')) {
+      await current.updateComplete;
+      if (!current.isConnected) continue;
+      this.#registerOnce(
+        current.shadowRoot?.querySelector<HTMLElement>('[part~="button-group-text-segment"]') ??
+          null,
+        'color-picker-compare-current',
+      );
     }
     for (const [element, release] of this.#registeredParts)
       if (!element.isConnected) {
@@ -1466,11 +1494,131 @@ export class TpColorPicker extends TpFormElement<string> {
         properties: {
           part: 'color-picker-popup',
           class: 'panel popup-panel',
+          // Rows besides the plane (header, controls, fields, recent strip, gaps, paddings and
+          // the Popover chrome) that the plane height cap reserves, in spacing units.
+          style: { '--_tp-color-picker-reserve': String(this.recent.length ? 66 : 56) },
           ...this.#panelListeners(),
         },
-        content: html`${this.#renderViews()}${this.#renderFields()}`,
+        content: html`${this.#renderHeader()}${this.#renderViews()}${this.#renderFields()}${this.#renderRecent()}`,
       })}</tp-popover
     >`;
+  }
+
+  /**
+   * Popup header (Widgets 6.1 Anatomy): the format Select, the original|current comparison,
+   * the Copy button and the eyedropper, in that keyboard order, ahead of the surface.
+   */
+  #renderHeader() {
+    const strings = this.#strings;
+    return this.renderPart(
+      'color-picker-header',
+      { format: this.format, value: this.value },
+      {
+        tag: 'div',
+        properties: { part: 'color-picker-header', class: 'header' },
+        content: html`${this.#renderFormatSelect()}${this.#renderCompare()}<tp-copy-button
+            class="copy"
+            part="color-picker-copy"
+            size="default"
+            .value=${this.value}
+            label=${dimensionLabel(this.label, strings.copy)}
+            ?disabled=${this.effectiveDisabled || !this.value}
+          ></tp-copy-button
+          >${this.#renderEyedropper('icon')}`,
+      },
+    );
+  }
+
+  /**
+   * Original|current comparison: a Button group of the original color (a Button that restores
+   * it) and the current color (a text segment); both fills are value-domain paint.
+   */
+  #renderCompare() {
+    if (!this.preview) return nothing;
+    const strings = this.#strings;
+    const original = this.#original ?? '';
+    const originalColor = original ? parseColor(original) : null;
+    const fill = (color: ColorValue | null, slot?: string) =>
+      html`<span
+        class="swatch"
+        part="color-picker-swatch"
+        slot=${slot ?? nothing}
+        style=${`--_tp-color-picker-paint: ${color ? flatGradient(color) : 'none'}`}
+      ></span>`;
+    return html`<tp-button-group
+      class="compare"
+      part="color-picker-compare"
+      label=${dimensionLabel(this.label, strings.compare)}
+      ><tp-button
+        class="original"
+        variant="outline"
+        size="icon"
+        aria-label=${`${strings.original} ${original || strings.empty}`}
+        ?disabled=${this.effectiveDisabled || this.readOnly}
+        @click=${this.#restoreOriginal}
+        >${fill(originalColor, 'icon-start')}</tp-button
+      ><tp-button-group-text class="current" aria-hidden="true"
+        >${fill(this.#model)}</tp-button-group-text
+      ></tp-button-group
+    >`;
+  }
+
+  /** Recent colors supplied by the application, as one swatch strip under the popup fields. */
+  #renderRecent() {
+    if (!this.recent.length) return nothing;
+    const strings = this.#strings;
+    return this.renderPart(
+      'color-picker-recent',
+      { count: this.recent.length },
+      {
+        tag: 'div',
+        properties: { part: 'color-picker-recent', class: 'recent' },
+        content: renderSwatchRow(
+          { label: strings.recentColors, colors: this.recent },
+          this.#swatchRowOptions(),
+        ),
+      },
+    );
+  }
+
+  #swatchRowOptions() {
+    return {
+      kind: 'swatches' as const,
+      selected: this.#identity(),
+      disabled: this.effectiveDisabled,
+      readOnly: this.readOnly,
+      onChange: (event: TpValueChangeEvent<readonly string[]>) =>
+        this.#swatchChange(event, 'swatch'),
+    };
+  }
+
+  #renderEyedropper(size: 'icon' | 'icon-sm') {
+    if (!this.eyedropper || !this.#eyedropperSupported) return nothing;
+    return html`<tp-button
+      class="eyedropper"
+      variant="ghost"
+      size=${size}
+      .icon=${pipetteIcon}
+      aria-label=${dimensionLabel(this.label, this.#strings.eyedropper)}
+      ?disabled=${this.effectiveDisabled || this.readOnly}
+      @click=${() => void this.pickFromScreen()}
+    ></tp-button>`;
+  }
+
+  #renderFormatSelect() {
+    if (!this.formatSelect) return nothing;
+    const strings = this.#strings;
+    return html`<tp-select
+      class="format"
+      label=${strings.format}
+      .items=${this.formats
+        .filter(isColorFormat)
+        .map((format) => ({ value: format, label: strings[FORMAT_STRING_KEYS[format]] }))}
+      .value=${this.format}
+      ?disabled=${this.effectiveDisabled}
+      @tp-value-change=${this.#formatSelectChange}
+      @tp-field-value=${stop}
+    ></tp-select>`;
   }
 
   #renderViews() {
@@ -1519,19 +1667,8 @@ export class TpColorPicker extends TpFormElement<string> {
   }
 
   #renderControls(sliders: unknown[]) {
-    const strings = this.#strings;
-    const eyedropper =
-      this.eyedropper && this.#eyedropperSupported
-        ? html`<tp-button
-            class="eyedropper"
-            variant="ghost"
-            size="icon-sm"
-            .icon=${pipetteIcon}
-            aria-label=${dimensionLabel(this.label, strings.eyedropper)}
-            ?disabled=${this.effectiveDisabled || this.readOnly}
-            @click=${() => void this.pickFromScreen()}
-          ></tp-button>`
-        : nothing;
+    // In the popup the eyedropper sits in the header.
+    const eyedropper = this.picker === 'popup' ? nothing : this.#renderEyedropper('icon-sm');
     return this.renderPart(
       'color-picker-controls',
       { eyedropper: eyedropper !== nothing },
@@ -1722,15 +1859,8 @@ export class TpColorPicker extends TpFormElement<string> {
     const loose = this.swatches.filter((entry): entry is string => typeof entry === 'string');
     if (loose.length) rows.push({ label: strings.savedColors, colors: loose });
     for (const entry of this.swatches) if (typeof entry !== 'string') rows.push(entry);
-    if (this.#recent.length) rows.push({ label: strings.recentColors, colors: this.#recent });
-    const options = {
-      kind: 'swatches' as const,
-      selected: this.#identity(),
-      disabled: this.effectiveDisabled,
-      readOnly: this.readOnly,
-      onChange: (event: TpValueChangeEvent<readonly string[]>) =>
-        this.#swatchChange(event, 'swatch'),
-    };
+    if (this.recent.length) rows.push({ label: strings.recentColors, colors: this.recent });
+    const options = this.#swatchRowOptions();
     return this.renderPart(
       'color-picker-swatches',
       { rows: rows.length },
@@ -1873,20 +2003,10 @@ export class TpColorPicker extends TpFormElement<string> {
   #renderFields() {
     if (!this.fields) return nothing;
     const strings = this.#strings;
-    const preview = this.#renderPreview();
-    const formatSelect = this.formatSelect
-      ? html`<tp-select
-          class="format"
-          label=${strings.format}
-          .items=${this.formats
-            .filter(isColorFormat)
-            .map((format) => ({ value: format, label: strings[FORMAT_STRING_KEYS[format]] }))}
-          .value=${this.format}
-          ?disabled=${this.effectiveDisabled}
-          @tp-value-change=${this.#formatSelectChange}
-          @tp-field-value=${stop}
-        ></tp-select>`
-      : nothing;
+    // In the popup the preview and the Select belong to the header; the row keeps the editors.
+    const popup = this.picker === 'popup';
+    const preview = popup ? nothing : this.#renderPreview();
+    const formatSelect = popup ? nothing : this.#renderFormatSelect();
     // The format's editors are one Field group (a joined tuple); alpha stays apart.
     const members =
       this.format === 'hex'
@@ -1925,7 +2045,7 @@ export class TpColorPicker extends TpFormElement<string> {
         properties: {
           part: 'color-picker-fields',
           class: 'fields',
-          'data-preview': this.preview,
+          'data-preview': this.preview && !popup,
         },
         content: html`${preview}
           <div class="fields-row">${formatSelect}${channels}${alphaField}</div>`,

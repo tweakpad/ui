@@ -59,6 +59,12 @@ const definition: ComponentDefinition = {
     sized('color-picker-triangle-thumb'),
     sized('color-picker-trigger', 'trigger'),
     sized('color-picker-popup'),
+    sized('color-picker-header'),
+    sized('color-picker-compare'),
+    sized('color-picker-compare-original'),
+    sized('color-picker-compare-current'),
+    sized('color-picker-copy'),
+    sized('color-picker-recent'),
     sized('color-picker-footer', 'footer'),
   ],
 };
@@ -89,6 +95,10 @@ export const colorPickerPresentation = definePresentation({
       '[part~="color-picker-schemes"]': 'color-picker-schemes',
       '[part~="color-picker-trigger"]': 'color-picker-trigger',
       '[part~="color-picker-popup"]': 'color-picker-popup',
+      '[part~="color-picker-header"]': 'color-picker-header',
+      'tp-button-group.compare': 'color-picker-compare',
+      'tp-copy-button.copy': 'color-picker-copy',
+      '[part~="color-picker-recent"]': 'color-picker-recent',
       '[part~="color-picker-footer"]': 'color-picker-footer',
     },
     'tp-color-picker-area': {

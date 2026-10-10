@@ -30,6 +30,17 @@ export function setupColorPickerExample(root) {
         picker.swatches = [];
       }
     }
+    // Recent colors are application state: keep the last five committed colors, newest
+    // first, and supply them through `recent` (the widget keeps no history of its own).
+    if (picker.hasAttribute('data-recent')) {
+      let recent = [];
+      listen(picker, 'tp-value-commit', (event) => {
+        if (!event.detail.value || (event.detail.metadata && event.detail.metadata.formatChange))
+          return;
+        recent = [event.detail.value, ...recent.filter((entry) => entry !== event.detail.value)];
+        picker.recent = recent.slice(0, 5);
+      });
+    }
     // Live readout: the committed and proposed values of the picker.
     if (picker.hasAttribute('data-output')) {
       const output = readout(picker);

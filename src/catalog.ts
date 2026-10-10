@@ -14,6 +14,7 @@ export const catalog = [
   ['Button', 'tp-button', 'compound-reexport'],
   ['Checkbox', 'tp-checkbox', 'compound-reexport'],
   ['Collapsible', 'tp-collapsible', 'compound-reexport'],
+  ['Copy button', 'tp-copy-button', 'preset-composition'],
   ['Radio group', 'tp-radio-group', 'compound-reexport'],
   ['Switch', 'tp-switch', 'compound-reexport'],
   ['Tabs', 'tp-tabs', 'compound-reexport'],

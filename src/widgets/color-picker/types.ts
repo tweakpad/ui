@@ -15,7 +15,15 @@ export type ColorPickerPicker = 'inline' | 'popup';
 export type ColorPickerSize = 'sm' | 'default' | 'lg';
 export type ColorPickerShape = 'square' | 'round';
 export type ColorPickerSurface =
-  'area' | 'wheel' | 'triangle' | 'slider' | 'field' | 'swatch' | 'scheme' | 'eyedropper';
+  | 'area'
+  | 'wheel'
+  | 'triangle'
+  | 'slider'
+  | 'field'
+  | 'swatch'
+  | 'scheme'
+  | 'eyedropper'
+  | 'compare';
 
 /** Saved swatches: a flat list of colors or labeled groups. */
 export interface ColorSwatchGroup {
@@ -69,6 +77,10 @@ export interface ColorPickerStrings {
   readonly harmony: string;
   readonly harmonyHandle: string;
   readonly eyedropper: string;
+  readonly compare: string;
+  readonly original: string;
+  readonly copy: string;
+  readonly empty: string;
   readonly generate: string;
   readonly template: string;
   readonly savedColors: string;

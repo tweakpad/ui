@@ -46,14 +46,14 @@ export const colorPickerExamples = [
     'Popup in a form',
     `<tp-form data-form-output>
   <tp-field label="Accent" description="Opens the picker in a popup; the string submits under its name.">
-    <tp-color-picker name="accent" picker="popup" default-value="#6d5dfc"></tp-color-picker>
+    <tp-color-picker name="accent" picker="popup" default-value="#6d5dfc" data-recent></tp-color-picker>
   </tp-field>
   <div slot="actions">
     <tp-button type="submit">Save</tp-button>
     <tp-button type="reset" variant="outline">Reset</tp-button>
   </div>
 </tp-form>`,
-    'The popup trigger shows the preview; opening focuses the first dimension and Escape returns focus. Reset restores the default through `form-reset`.',
+    'The popup header holds the format Select, the original|current comparison (press the original to restore it), the Copy button and the eyedropper; the fields stay on one row. The example keeps the last five commits in its own state and supplies them through `recent`. Reset restores the default through `form-reset`.',
   ),
   example(
     'Channel sliders',
@@ -72,8 +72,8 @@ export const colorPickerExamples = [
   ),
   example(
     'Saved and recent colors',
-    `<tp-color-picker label="Theme" views="area swatches" default-view="swatches" default-value="#fb8c00" data-swatches='${SWATCHES}' data-output></tp-color-picker>`,
-    'Saved colors come from `swatches` (strings or labeled groups); every interactive commit joins the recent colors, capped at `recent-limit`.',
+    `<tp-color-picker label="Theme" views="area swatches" default-view="swatches" default-value="#fb8c00" data-swatches='${SWATCHES}' data-recent data-output></tp-color-picker>`,
+    'Saved colors come from `swatches` (strings or labeled groups). Recent colors are application state: the example records each commit and supplies the last five through `recent`.',
   ),
   example(
     'Schemes',

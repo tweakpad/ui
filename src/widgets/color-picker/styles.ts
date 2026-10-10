@@ -201,6 +201,31 @@ export const colorPickerStyles = css`
     min-inline-size: 0;
   }
 
+  /* Popup header: the Select takes the remaining width; the actions keep their size. */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: var(--tp-space-2);
+    min-inline-size: 0;
+  }
+
+  .header > tp-select {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+
+  .header > tp-button-group,
+  .header > tp-copy-button,
+  .header > tp-button {
+    flex: none;
+  }
+
+  .recent {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-inline-size: 0;
+  }
+
   .preview {
     display: block;
     flex: none;

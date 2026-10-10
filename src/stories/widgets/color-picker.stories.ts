@@ -30,7 +30,7 @@ interface Args {
   shape: ColorPickerShape;
   harmony: HarmonyRule;
   swatches: string[];
-  recentLimit: number;
+  recent: string[];
   allowWheelScrub: boolean;
   label: string;
   locale: string;
@@ -67,7 +67,7 @@ const meta: Meta<Args> = {
     shape: 'square',
     harmony: 'none',
     swatches: [],
-    recentLimit: 8,
+    recent: [],
     allowWheelScrub: false,
     label: 'Accent',
     locale: '',
@@ -101,7 +101,10 @@ const meta: Meta<Args> = {
       options: ['none', 'complementary', 'analogous', 'triad', 'compound', 'custom'],
     },
     swatches: { control: 'object', description: 'Saved colors or labeled groups.' },
-    recentLimit: { control: 'number' },
+    recent: {
+      control: 'object',
+      description: 'Recent colors supplied by the application (popup strip and swatches view).',
+    },
     allowWheelScrub: { control: 'boolean' },
     label: { control: 'text' },
     locale: { control: 'text' },
@@ -127,7 +130,7 @@ const meta: Meta<Args> = {
       .shape=${args.shape}
       .harmony=${args.harmony}
       .swatches=${args.swatches}
-      .recentLimit=${args.recentLimit}
+      .recent=${args.recent}
       .allowWheelScrub=${args.allowWheelScrub}
       .label=${args.label}
       .locale=${args.locale}
@@ -156,7 +159,7 @@ export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
 export const Popup: Story = {
-  args: { picker: 'popup' },
+  args: { picker: 'popup', recent: ['#e53935', '#fb8c00', '#43a047', '#039be5', '#8e24aa'] },
   parameters: {
     docs: {
       source: {

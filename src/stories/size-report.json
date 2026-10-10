@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T21:52:33.514Z",
+  "generatedAt": "2026-10-10T00:14:31.740Z",
   "version": "0.1.0",
   "method": "Each catalog component (from @tweakpad/ui) and widget (from @tweakpad/ui/widgets) as documented (the root plus the parts its canonical example composes), imported and defined; Rolldown resolves the modules that ships (lit external, tree-shaken) and each module is measured as published in dist, bytes on disk and gzip per file, the way the build log lists it.",
   "lit": {
@@ -13,14 +13,14 @@
     "modules": 9
   },
   "full": {
-    "bytes": 2293163,
-    "gzip": 781655,
-    "modules": 592
+    "bytes": 2298420,
+    "gzip": 783683,
+    "modules": 595
   },
   "fullWidgets": {
-    "bytes": 625841,
-    "gzip": 215256,
-    "modules": 177
+    "bytes": 645019,
+    "gzip": 222305,
+    "modules": 186
   },
   "components": [
     {
@@ -80,18 +80,21 @@
       "kind": "flattening-compound",
       "section": "widgets",
       "uses": [],
-      "bytes": 622771,
-      "gzip": 214231,
-      "ownGzip": 205913,
-      "modules": 176,
-      "rootBytes": 622771,
-      "rootGzip": 214231,
+      "bytes": 641949,
+      "gzip": 221280,
+      "ownGzip": 212962,
+      "modules": 185,
+      "rootBytes": 641949,
+      "rootGzip": 221280,
       "includes": [
         "tp-badge",
         "tp-button",
+        "tp-button-group",
+        "tp-button-group-text",
         "tp-color-picker-area",
         "tp-color-picker-triangle",
         "tp-color-picker-wheel",
+        "tp-copy-button",
         "tp-field-group",
         "tp-icon",
         "tp-input",
@@ -114,17 +117,18 @@
       "kind": "preset-composition",
       "section": "components",
       "uses": [],
-      "bytes": 351492,
-      "gzip": 129878,
-      "ownGzip": 121560,
-      "modules": 121,
-      "rootBytes": 351492,
-      "rootGzip": 129878,
+      "bytes": 356515,
+      "gzip": 131872,
+      "ownGzip": 123554,
+      "modules": 124,
+      "rootBytes": 356515,
+      "rootGzip": 131872,
       "includes": [
         "tp-alert",
         "tp-button",
         "tp-checkbox",
         "tp-code-block",
+        "tp-copy-button",
         "tp-icon",
         "tp-key-hint",
         "tp-separator",
@@ -354,14 +358,15 @@
       "kind": "presentational-primitive",
       "section": "components",
       "uses": [],
-      "bytes": 226986,
-      "gzip": 84747,
-      "ownGzip": 76429,
-      "modules": 81,
-      "rootBytes": 226986,
-      "rootGzip": 84747,
+      "bytes": 232009,
+      "gzip": 86741,
+      "ownGzip": 78423,
+      "modules": 84,
+      "rootBytes": 232009,
+      "rootGzip": 86741,
       "includes": [
         "tp-button",
+        "tp-copy-button",
         "tp-icon",
         "tp-spinner",
         "tp-tooltip"
@@ -1052,6 +1057,25 @@
       "rootGzip": 34809,
       "includes": [
         "tp-icon"
+      ]
+    },
+    {
+      "name": "Copy button",
+      "tagName": "tp-copy-button",
+      "className": "TpCopyButton",
+      "kind": "preset-composition",
+      "section": "components",
+      "uses": [],
+      "bytes": 84386,
+      "gzip": 34714,
+      "ownGzip": 26396,
+      "modules": 41,
+      "rootBytes": 84386,
+      "rootGzip": 34714,
+      "includes": [
+        "tp-button",
+        "tp-icon",
+        "tp-spinner"
       ]
     },
     {
