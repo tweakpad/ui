@@ -17,7 +17,7 @@ Browser verification of `tp-color-picker`, driven only through the Chrome DevToo
    `create(attributes)` (a dynamic instance under `#dynamic`), `snapshotState(id)` and the
    assertion helpers of `api.ts` (`assertValueLanes`, `assertNestedEventBoundary`,
    `assertForms`, `assertField`, `assertSwatches`, `assertRecent`, `assertHarmony`,
-   `assertTriangleMapping`, `assertPopup`, `assertPopupHeader`, `assertCleanup`). Each helper
+   `assertPalette`, `assertHandlePress`, `assertTriangleMapping`, `assertPopup`, `assertPopupHeader`, `assertCleanup`). Each helper
    returns `{ checks, records, passed }`.
 5. `take_screenshot` for visual evidence under `tmp/component-verification/color-picker/<run>/`;
    `emulate` for color scheme, viewport and device pixel ratio.

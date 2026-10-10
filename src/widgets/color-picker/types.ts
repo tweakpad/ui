@@ -78,6 +78,7 @@ export interface ColorPickerStrings {
   readonly harmonyHandle: string;
   readonly eyedropper: string;
   readonly compare: string;
+  readonly palette: string;
   readonly original: string;
   readonly copy: string;
   readonly empty: string;

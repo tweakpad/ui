@@ -165,6 +165,29 @@ export const colorPickerStyles = css`
     min-inline-size: 0;
   }
 
+  /*
+   * Harmony palette ring: the wheel sits in the middle 72 % of a square box and the segments
+   * (Copy buttons clipped to arcs) cover the box; only the arcs take pointer input.
+   */
+  .ring-box {
+    position: relative;
+    inline-size: min(100%, calc(var(--_tp-color-picker-area) / 0.72));
+    aspect-ratio: 1;
+    margin-inline: auto;
+    min-inline-size: 0;
+  }
+
+  .ring-box > tp-color-picker-wheel {
+    position: absolute;
+    inset: 14%;
+  }
+
+  .palette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
   .toolbar tp-select {
     flex: 1 1 auto;
     min-inline-size: 0;
@@ -243,6 +266,19 @@ export const colorPickerStyles = css`
     min-inline-size: 0;
   }
 
+  /* Each segment covers the ring box; its copy mark shows while hovered, focused or copied. */
+  .palette tp-copy-button {
+    --_tp-color-picker-mark: 0;
+
+    position: absolute;
+    inset: 0;
+    display: block;
+  }
+
+  .palette tp-copy-button:is(:hover, :focus-within, [data-copied]) {
+    --_tp-color-picker-mark: 1;
+  }
+
   .preview {
     display: block;
     flex: none;
@@ -296,6 +332,11 @@ export const colorSurfaceStyles = css`
     left: 0;
     translate: -50% -50%;
     touch-action: none;
+  }
+
+  /* Editable handles paint above the derived ones that may share or overlap their position. */
+  .handle[data-editable] {
+    z-index: 1;
   }
 
   .thumb::after,

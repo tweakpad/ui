@@ -27,6 +27,7 @@ export const DEFAULT_STRINGS: ColorPickerStrings = {
   harmonyHandle: 'Harmony color',
   eyedropper: 'Pick a color from the screen',
   compare: 'Original and current color',
+  palette: 'Harmony palette',
   original: 'Restore the original color',
   copy: 'Copy color',
   empty: 'none',

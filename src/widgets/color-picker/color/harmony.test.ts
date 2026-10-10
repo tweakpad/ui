@@ -6,6 +6,7 @@ import {
   harmonyBaseIndex,
   harmonyColors,
   harmonyHandles,
+  harmonyPrincipals,
   seedCustomHandles,
 } from './harmony.js';
 import { generateSchemeRows } from './scheme.js';
@@ -83,5 +84,19 @@ describe('generateSchemeRows', () => {
     expect(increasing([...lightness(rows[1]!)].reverse())).toBe(true);
     const chroma = rows[2]!.colors.map((entry) => convertColor(entry, 'oklch').coords[1]);
     expect(increasing([...chroma].reverse())).toBe(true);
+  });
+  it('marks the principal hues of each scheme and keeps the base among them', () => {
+    const count = (rule: Parameters<typeof harmonyPrincipals>[0]) =>
+      harmonyPrincipals(rule).filter(Boolean).length;
+    expect(count('complementary')).toBe(2);
+    expect(count('analogous')).toBe(3);
+    expect(count('triad')).toBe(3);
+    expect(count('compound')).toBe(3);
+    expect(count('custom')).toBe(5);
+    expect(harmonyPrincipals('none')).toEqual([]);
+    for (const rule of ['complementary', 'analogous', 'triad', 'compound'] as const)
+      expect(harmonyPrincipals(rule)[harmonyBaseIndex(rule)]).toBe(true);
+    // Custom handle lists of any length are all principals.
+    expect(harmonyPrincipals('custom', 3)).toEqual([true, true, true]);
   });
 });

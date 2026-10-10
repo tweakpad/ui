@@ -56,14 +56,14 @@ or pick another format.
 
 ## Views and layout
 
-| View       | Surface and controls                                                                     |
-| ---------- | ---------------------------------------------------------------------------------------- |
-| `area`     | Saturation/brightness plane, eyedropper, hue and alpha Sliders                           |
-| `sliders`  | One labeled Slider with a numeric value box per channel of the format, plus alpha        |
-| `wheel`    | Hue/saturation disc with harmony handles, Harmony Select, brightness and alpha Sliders   |
-| `triangle` | Hue ring around an HSV triangle (canvas), alpha Slider                                   |
-| `swatches` | Saved colors (flat list or labeled groups) and the `recent` colors as Toggle Group grids |
-| `schemes`  | Generated scheme strips (tints, shades, tones, analogous, …) or consumer templates       |
+| View       | Surface and controls                                                                                                   |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `area`     | Saturation/brightness plane, eyedropper, hue and alpha Sliders                                                         |
+| `sliders`  | One labeled Slider with a numeric value box per channel of the format, plus alpha                                      |
+| `wheel`    | Hue/saturation disc with harmony handles inside the harmony palette ring, Harmony Select, brightness and alpha Sliders |
+| `triangle` | Hue ring around an HSV triangle (canvas), alpha Slider                                                                 |
+| `swatches` | Saved colors (flat list or labeled groups) and the `recent` colors as Toggle Group grids                               |
+| `schemes`  | Generated scheme strips (tints, shades, tones, analogous, …) or consumer templates                                     |
 
 `views` (space-separated) lists the available views in order; more than one view renders a
 `tp-tabs` strip above the panel and `view` / `defaultView` select the active tab. The fields row
@@ -107,7 +107,16 @@ saturation pair, seeded from the previous rule so the layout does not jump. The 
 the handles in wheel order. `harmony` / `defaultHarmony` form a lane with `tp-harmony-change`
 (`item-press` from the Harmony Select, `programmatic` otherwise), and the read-only
 `harmonyColors` lists the base color first, then the derived colors, serialized in the active
-format. In markup use `default-harmony="triad"` (as with `default-format` and `default-view`): a
+format. Around the disc the harmony palette ring shows those colors as one segment per handle
+in wheel order, each a [Copy button](../copy-button.md) clipped to its arc. Every segment has
+the same thickness; the scheme's principal hues (the base, centered at the top, with the
+complement, the triad hues, the split complements or the analogous ±30°) cover twice the arc of
+the calculated variants that the Adobe-like tables add beside each principal. Under `custom`
+every handle is a principal. Pressing a segment copies that color in the active format;
+the copy mark sits at the arc's centroid and appears on hover, keyboard focus (ringed as the
+focus indicator) and while copied, in a color that reads on the fill. The fill is the value
+itself, so neither hover nor focus tints it. The ring box keeps its size under every rule, so
+switching to `none` only empties it. In markup use `default-harmony="triad"` (as with `default-format` and `default-view`): a
 `harmony` attribute or property makes the lane controlled, so the Harmony Select only proposes
 and the rule changes once the owner writes the proposal back.
 
@@ -200,7 +209,10 @@ angular axes (wheel, ring) do not flip. Pointer presses capture the pointer, coa
 one proposal per frame and release once. A press inside a handle (the area thumb, a wheel
 handle, the ring or triangle thumb, a Slider thumb) keeps the pointer's offset from the handle's
 center, so the handle moves with the pointer instead of jumping under it; a press elsewhere
-moves the handle to the press point. Shift snaps coarsely and Alt moves finely on Sliders.
+moves the handle to the press point. Under a harmony rule the derived wheel handles follow the
+base, so a press on one of them moves nothing, and where a derived handle shares or overlaps the
+base's position the base still takes the press. Shift snaps coarsely and Alt moves finely on
+Sliders.
 
 ## Constituents and accessibility
 
@@ -213,8 +225,9 @@ Tab order per view: tabs, surface inputs, eyedropper, hue, alpha, format Select,
 field, then one roving stop per swatch group; in the popup the header (format Select, original
 swatch, Copy button, eyedropper) precedes the surface. The original swatch is a Button named
 "Restore the original color" plus the original serialization; the current swatch is decorative;
-the Copy button announces its result. `strings` overrides every name (`hue`, `alpha`,
-`eyedropper`, `compare`, `original`, `copy`, `savedColors`, `viewWheel`, `formatOklch`,
+the Copy button announces its result. Harmony palette segments are Copy buttons named "Copy color"
+plus their serialization, grouped as "Harmony palette", in the tab order right after the wheel. `strings` overrides every name (`hue`,
+`alpha`, `eyedropper`, `compare`, `original`, `copy`, `palette`, `savedColors`, `viewWheel`, `formatOklch`,
 `harmonyTriad`, `schemeTints`, …) for localization; `locale` formats the numeric fields.
 
 Nested controls are the library's `tp-slider`, `tp-input` in `tp-input-group` inside a
@@ -239,7 +252,8 @@ dimension.
 Public parts: `color-picker`, `color-picker-label`, `color-picker-tabs`, `color-picker-tab`,
 `color-picker-area`, `color-picker-area-thumb`, `color-picker-controls`, `color-picker-toolbar`,
 `color-picker-eyedropper`, `color-picker-generate`, `color-picker-template`,
-`color-picker-harmony`, `color-picker-slider`, `color-picker-slider-track`,
+`color-picker-harmony`, `color-picker-palette`, `color-picker-palette-swatch`,
+`color-picker-palette-item`, `color-picker-slider`, `color-picker-slider-track`,
 `color-picker-alpha-track`, `color-picker-slider-range`, `color-picker-slider-thumb`,
 `color-picker-channel`, `color-picker-preview`, `color-picker-fields`, `color-picker-field-group`,
 `color-picker-field`,
@@ -252,7 +266,8 @@ Public parts: `color-picker`, `color-picker-label`, `color-picker-tabs`, `color-
 `color-picker-compare-original`, `color-picker-compare-current`, `color-picker-copy`,
 `color-picker-recent` and `color-picker-footer`. Parts that live inside a nested component
 (`-slider-track`, `-alpha-track`, `-slider-range`, `-slider-thumb`, `-swatch-grid`,
-`-swatch-item`, `-scheme`, `-scheme-item`, `-compare-original`, `-compare-current`) are
+`-swatch-item`, `-scheme`, `-scheme-item`, `-compare-original`, `-compare-current`,
+`-palette-swatch`, `-palette-item`) are
 registered on that component's elements, so dictionary keys reach them; the surfaces forward
 their parts through `exportparts`.
 

@@ -520,6 +520,211 @@ export async function assertPopupHeader(): Promise<Report> {
   return report(checks, { events: captured.events, order });
 }
 
+/** V-101: pressing a handle, at its edge or on a derived handle, moves nothing. */
+export async function assertHandlePress(): Promise<Report> {
+  const checks: Check[] = [];
+  const target = picker('wheel');
+  target.harmony = 'triad';
+  target.setValue('#e53935', 'programmatic');
+  await settle(target);
+  target.scrollIntoView({ block: 'center' });
+  await wait(60);
+  const wheel = target.shadowRoot!.querySelector('tp-color-picker-wheel')!;
+  const root = wheel.shadowRoot!;
+  const handles = [...root.querySelectorAll<HTMLElement>('[part~="color-picker-wheel-handle"]')];
+  const press = async (element: HTMLElement, dx: number, id: number): Promise<string> => {
+    const rect = element.getBoundingClientRect();
+    const x = rect.left + rect.width / 2 + dx;
+    const y = rect.top + rect.height / 2;
+    const hit = root.elementFromPoint(x, y) ?? element;
+    const init = (type: string, extra: PointerEventInit = {}) =>
+      new PointerEvent(type, {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        pointerId: id,
+        pointerType: 'mouse',
+        isPrimary: true,
+        clientX: x,
+        clientY: y,
+        buttons: 1,
+        button: type === 'pointerdown' ? 0 : -1,
+        ...extra,
+      });
+    hit.dispatchEvent(init('pointerdown'));
+    await wait(30);
+    hit.dispatchEvent(init('pointerup', { buttons: 0 }));
+    await settle(target);
+    return `${hit.localName}.${hit.className}`;
+  };
+  const primary = handles.find((h) => h.hasAttribute('data-primary'))!;
+  const derived = handles.find((h) => !h.hasAttribute('data-primary'))!;
+  const edgeTarget = await press(primary, primary.getBoundingClientRect().width / 2 - 1, 961);
+  checks.push(
+    check('a press at the base handle edge leaves the value', target.value === '#e53935', [
+      edgeTarget,
+      target.value,
+    ]),
+  );
+  const haloTarget = await press(primary, primary.getBoundingClientRect().width / 2 + 4, 962);
+  checks.push(
+    check('a press on the base handle halo leaves the value', target.value === '#e53935', [
+      haloTarget,
+      target.value,
+    ]),
+  );
+  const derivedTarget = await press(derived, 2, 963);
+  checks.push(
+    check('a press on a derived handle moves nothing', target.value === '#e53935', [
+      derivedTarget,
+      target.value,
+    ]),
+  );
+  // Complementary and analogous variants share or overlap the base's position: a drag that
+  // starts there still moves the base.
+  const dragOverlap = async (rule: 'complementary' | 'analogous', id: number) => {
+    target.harmony = rule;
+    target.setValue('#e53935', 'programmatic');
+    await settle(target);
+    const base = root.querySelector<HTMLElement>(
+      '[part~="color-picker-wheel-handle"][data-primary]',
+    )!;
+    const rect = base.getBoundingClientRect();
+    const x = rect.left + rect.width / 2 + 3;
+    const y = rect.top + rect.height / 2;
+    const hit = root.elementFromPoint(x, y) ?? base;
+    const init = (type: string, cx: number, cy: number, extra: PointerEventInit = {}) =>
+      new PointerEvent(type, {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        pointerId: id,
+        pointerType: 'mouse',
+        isPrimary: true,
+        clientX: cx,
+        clientY: cy,
+        buttons: 1,
+        button: type === 'pointerdown' ? 0 : -1,
+        ...extra,
+      });
+    hit.dispatchEvent(init('pointerdown', x, y));
+    await wait(30);
+    hit.dispatchEvent(init('pointermove', x + 24, y + 8));
+    await wait(30);
+    hit.dispatchEvent(init('pointerup', x + 24, y + 8, { buttons: 0 }));
+    await settle(target);
+    return {
+      hit: `${hit.localName}${hit.hasAttribute('data-editable') ? '[editable]' : '[derived]'}`,
+      value: target.value,
+    };
+  };
+  for (const rule of ['complementary', 'analogous'] as const) {
+    const result = await dragOverlap(rule, rule === 'complementary' ? 964 : 965);
+    checks.push(
+      check(
+        `a drag starting over the base under ${rule} moves the base`,
+        result.value !== '#e53935',
+        result,
+      ),
+    );
+  }
+  target.harmony = 'triad';
+  target.setValue('#e53935', 'programmatic');
+  await settle(target);
+  return report(checks, {});
+}
+
+/** V-102: the harmony palette copies each handle's color in the active format. */
+export async function assertPalette(): Promise<Report> {
+  const checks: Check[] = [];
+  const target = picker('wheel');
+  target.harmony = 'triad';
+  await settle(target);
+  const root = target.shadowRoot!;
+  const items = [
+    ...root.querySelectorAll<HTMLElement & { value: string; copied: boolean }>(
+      '[part~="color-picker-palette"] tp-copy-button',
+    ),
+  ];
+  checks.push(
+    check(
+      'one palette item per harmony handle',
+      items.length > 1 && items.length === target.harmonyColors.length,
+      [items.length, target.harmonyColors.length],
+    ),
+  );
+  const values = items.map((item) => item.value);
+  checks.push(
+    check(
+      'items carry the harmony colors in the active format',
+      [...values].sort().join() === [...target.harmonyColors].sort().join(),
+      [values, target.harmonyColors],
+    ),
+  );
+  const principal = items.filter((item) => item.hasAttribute('data-principal'));
+  checks.push(
+    check(
+      'the triad has three principal segments, the base among them',
+      principal.length === 3 && principal.some((item) => item.hasAttribute('data-base')),
+      principal.map((item) => item.value),
+    ),
+  );
+  target.harmony = 'complementary';
+  await settle(target);
+  const complementary = [...root.querySelectorAll('[part~="color-picker-palette"] tp-copy-button')];
+  checks.push(
+    check(
+      'the complementary scheme has two principal segments among its five handles',
+      complementary.length === 5 &&
+        complementary.filter((item) => item.hasAttribute('data-principal')).length === 2,
+      complementary.map((item) => item.hasAttribute('data-principal')),
+    ),
+  );
+  target.harmony = 'triad';
+  await settle(target);
+  checks.push(
+    check(
+      'items are named by the copy action and their value',
+      items.every((item) => item.getAttribute('label') === `Copy color ${item.value}`),
+      items.map((item) => item.getAttribute('label')),
+    ),
+  );
+  const roots = items.map((item) =>
+    item.shadowRoot!.querySelector('tp-button')!.shadowRoot!.querySelector('[part~="button"]')!,
+  );
+  checks.push(
+    check(
+      'no hover layer tints a segment',
+      roots.every((root) => getComputedStyle(root, '::before').content === 'none'),
+      roots.map((root) => getComputedStyle(root, '::before').content),
+    ),
+  );
+  const secondary = items.find((item) => !item.hasAttribute('data-principal'))!;
+  const captured = capture(target, ['tp-copy', 'tp-copied', 'tp-copy-error']);
+  secondary.shadowRoot!.querySelector('tp-button')!.shadowRoot!.querySelector('button')!.click();
+  await wait(120);
+  captured.stop();
+  checks.push(
+    check(
+      'pressing an item copies its value and confirms',
+      captured.events.some((e) => e.type === 'tp-copied') && secondary.copied,
+      [captured.events, secondary.copied],
+    ),
+  );
+  target.harmony = 'none';
+  await settle(target);
+  checks.push(
+    check(
+      'no palette without a harmony rule',
+      !root.querySelector('[part~="color-picker-palette"]'),
+      null,
+    ),
+  );
+  target.harmony = 'triad';
+  await settle(target);
+  return report(checks, { values, events: captured.events });
+}
+
 /** V-20, V-21: harmony derivation and custom handles on the wheel instance. */
 export async function assertHarmony(): Promise<Report> {
   const checks: Check[] = [];

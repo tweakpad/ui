@@ -227,6 +227,55 @@ export const colorPickerAppearance: PresentationDictionary = {
       },
     },
   ],
+  // Harmony palette segments: each Copy button's Button root fills the ring box and is clipped
+  // to its arc (`--_tp-color-picker-segment`, set inline by the widget) over the checkerboard
+  // and the handle's paint. The fill is the value itself, so no state tints it: the Button's
+  // hover layer is removed and keyboard focus rings the copy mark instead of the arc. The mark
+  // sits at the arc's centroid and appears on hover, keyboard focus and while copied, in a
+  // color that reads on the fill.
+  'color-picker-palette-item': [
+    {
+      selector: '&[part~="button"]',
+      declarations: {
+        position: 'relative',
+        'inline-size': '100%',
+        'block-size': '100%',
+        'min-inline-size': '0',
+        'min-block-size': '0',
+        padding: '0',
+        border: '0',
+        'border-radius': '0',
+        'clip-path': 'polygon(var(--_tp-color-picker-segment))',
+        'pointer-events': 'auto',
+        color: 'var(--_tp-color-picker-contrast, var(--tp-foreground))',
+        ...checker,
+      },
+    },
+    {
+      selector: '&[part~="button"] > [part~="button-leading-mark"]',
+      declarations: {
+        position: 'absolute',
+        left: 'var(--_tp-color-picker-mark-x, 50%)',
+        top: 'var(--_tp-color-picker-mark-y, 50%)',
+        translate: '-50% -50%',
+        opacity: 'var(--_tp-color-picker-mark, 0)',
+        transition: motionTransition(['opacity'], 'fast'),
+      },
+    },
+    { selector: '&[part~="button"]::before', declarations: { content: 'none' } },
+    {
+      selector: '&[part~="button"]:focus-visible',
+      declarations: { outline: 'none', 'box-shadow': 'none' },
+    },
+    {
+      selector: '&[part~="button"]:focus-visible > [part~="button-leading-mark"]',
+      declarations: {
+        'border-radius': 'var(--tp-radius-full)',
+        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
+        'outline-offset': 'var(--tp-border-width)',
+      },
+    },
+  ],
   // The comparison swatch: the original Button and the current text segment are square
   // control-height boxes whose slotted fills cover them (same scheme as the swatch items).
   'color-picker-compare-original': [
@@ -356,6 +405,11 @@ export const colorPickerStructure: PresentationDictionary = {
   ],
   'color-picker-controls': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'color-picker-toolbar': [{ declarations: { gap: 'var(--tp-space-2)' } }],
+  'color-picker-palette': [],
+  // The segment's Button fills its Copy button; only the clipped root takes pointer input.
+  'color-picker-palette-swatch': [
+    { declarations: { display: 'block', 'block-size': '100%', 'pointer-events': 'none' } },
+  ],
   'color-picker-channel': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'color-picker-fields': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   // The channel editors are a Field group; its members keep the Input group recipe.

@@ -48,10 +48,13 @@ import {
   HARMONY_RULES,
   harmonyBaseIndex,
   harmonyColors,
+  harmonyPrincipals,
   seedCustomHandles,
   type HarmonyRule,
   type Hsv,
 } from './color/harmony.js';
+import { contrastColor } from './color/contrast.js';
+import { ringSegments } from './palette-ring.js';
 import { parseColor } from './color/parse.js';
 import { generateSchemeRows, type SchemeRowId } from './color/scheme.js';
 import { displayColor, serializeColor } from './color/serialize.js';
@@ -1348,6 +1351,20 @@ export class TpColorPicker extends TpFormElement<string> {
         );
       }
     }
+    // The harmony palette: each segment's Button fills its Copy button, and its Button root
+    // carries the arc clip, the fill and the mark.
+    for (const copy of this.#queryAll<TpCopyButton>('tp-copy-button.palette-item')) {
+      await copy.updateComplete;
+      if (!copy.isConnected) continue;
+      const button = copy.shadowRoot?.querySelector<TpButton>('tp-button');
+      if (!button) continue;
+      this.#registerOnce(button, 'color-picker-palette-swatch');
+      await button.updateComplete;
+      this.#registerOnce(
+        button.shadowRoot?.querySelector<HTMLElement>('[part~="button"]') ?? null,
+        'color-picker-palette-item',
+      );
+    }
     // The comparison swatch: the original Button and the current text segment carry the fills.
     for (const original of this.#queryAll<TpButton>('tp-button.original')) {
       await original.updateComplete;
@@ -1818,21 +1835,25 @@ export class TpColorPicker extends TpFormElement<string> {
       @tp-value-change=${this.#harmonySelectChange}
       @tp-field-value=${stop}
     ></tp-select>`;
-    return html`<tp-color-picker-wheel
-        exportparts="color-picker-wheel, color-picker-wheel-handle, color-picker-wheel-line"
-        .hue=${hsv.h}
-        .saturation=${hsv.s}
-        .brightness=${hsv.v}
-        .harmony=${this.harmony}
-        .handles=${this.#customHandles}
-        .label=${this.label}
-        .strings=${this.#strings}
-        .allowWheelScrub=${this.allowWheelScrub}
-        ?disabled=${this.effectiveDisabled}
-        ?readonly=${this.readOnly}
-        style=${styleMap(paint)}
-        @color-surface-change=${this.#surfaceChange}
-      ></tp-color-picker-wheel>
+    // The ring box keeps its size under every rule, so toggling the harmony never reflows.
+    return html`<div class="ring-box">
+        <tp-color-picker-wheel
+          exportparts="color-picker-wheel, color-picker-wheel-handle, color-picker-wheel-line"
+          .hue=${hsv.h}
+          .saturation=${hsv.s}
+          .brightness=${hsv.v}
+          .harmony=${this.harmony}
+          .handles=${this.#customHandles}
+          .label=${this.label}
+          .strings=${this.#strings}
+          .allowWheelScrub=${this.allowWheelScrub}
+          ?disabled=${this.effectiveDisabled}
+          ?readonly=${this.readOnly}
+          style=${styleMap(paint)}
+          @color-surface-change=${this.#surfaceChange}
+        ></tp-color-picker-wheel>
+        ${this.#renderPalette()}
+      </div>
       ${this.renderPart(
         'color-picker-toolbar',
         { view: 'wheel' },
@@ -1855,6 +1876,58 @@ export class TpColorPicker extends TpFormElement<string> {
         ),
         this.#alphaSlider(model),
       ])}`;
+  }
+
+  /**
+   * Harmony palette ring (wheel view): one Copy button per handle, clipped to an arc segment
+   * of the ring around the disc, in wheel order with the base centered at the top; the
+   * scheme's principal hues take the larger radius, the calculated variants are thinner.
+   * Pressing a segment copies that color serialized in the active format.
+   */
+  #renderPalette() {
+    const model = this.#model;
+    if (this.harmony === 'none' || !model) return nothing;
+    const strings = this.#strings;
+    const baseIndex = harmonyBaseIndex(this.harmony);
+    const colors = this.#wheelColors();
+    const principals = harmonyPrincipals(this.harmony, colors.length);
+    const segments = ringSegments(colors.length, baseIndex, principals);
+    const items = colors.map((hsv, index) => {
+      const color = fromHsv(hsv, model.alpha, this.format);
+      const text = this.#serialize(color);
+      const segment = segments[index]!;
+      return html`<tp-copy-button
+        class="palette-item"
+        size="sm"
+        .value=${text}
+        label=${`${strings.copy} ${text}`}
+        data-principal=${index === baseIndex || principals[index] ? '' : nothing}
+        data-base=${index === baseIndex ? '' : nothing}
+        ?disabled=${this.effectiveDisabled}
+        style=${styleMap({
+          '--_tp-color-picker-paint': flatGradient(color),
+          '--_tp-color-picker-contrast': contrastColor(fromHsv(hsv, 1, 'rgb')),
+          '--_tp-color-picker-segment': segment.polygon,
+          '--_tp-color-picker-mark-x': `${segment.markX}%`,
+          '--_tp-color-picker-mark-y': `${segment.markY}%`,
+        })}
+      ></tp-copy-button>`;
+    });
+    return this.renderPart(
+      'color-picker-palette',
+      { harmony: this.harmony, count: items.length },
+      {
+        tag: 'div',
+        properties: {
+          part: 'color-picker-palette',
+          class: 'palette',
+          role: 'group',
+          'aria-label': dimensionLabel(this.label, strings.palette),
+          'data-harmony': this.harmony,
+        },
+        content: items,
+      },
+    );
   }
 
   #renderTriangleView() {

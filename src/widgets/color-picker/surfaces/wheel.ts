@@ -73,14 +73,25 @@ export class TpColorPickerWheel extends ColorSurfaceElement {
       element: node,
       owner: this.ownerDocument.defaultView,
       disabled: () => !this.editable,
-      // A press inside an editable handle drags it from where it was pressed.
-      grip: (event) => (event.target as Element | null)?.closest?.('.handle[data-editable]'),
+      // A press within reach of an editable handle drags it from where it was pressed, even
+      // where a derived handle paints over it (complementary and analogous variants share the
+      // base's position or overlap it).
+      grip: (event) => this.#editableHandleUnder(event.clientX, event.clientY),
       focusTarget: () =>
         this.renderRoot.querySelector<HTMLElement>(
           `input[data-handle="${this.#active < 0 ? this.baseIndex : this.#active}"][data-dimension="hue"]`,
         ),
       handlers: {
         begin: (point, event) => {
+          // A derived handle follows the base: pressing it edits nothing and moves nothing,
+          // unless an editable handle is within reach of the press (overlapping handles).
+          const pressed = (event.target as Element | null)?.closest?.('.handle');
+          if (
+            pressed &&
+            !pressed.hasAttribute('data-editable') &&
+            !this.#editableHandleUnder(event.clientX, event.clientY)
+          )
+            return false;
           const handle = this.#handleAt(point);
           this.#active = handle;
           const current = this.colors[handle] ?? this.#base;
@@ -136,26 +147,31 @@ export class TpColorPickerWheel extends ColorSurfaceElement {
     return discToHs(point, Math.min(point.width, point.height));
   }
 
+  /** The editable handle whose reach (its box plus a 4 px margin) holds a viewport point. */
+  #editableHandleUnder(x: number, y: number): HTMLElement | null {
+    const surface = this.#surface;
+    if (!surface) return null;
+    let best: HTMLElement | null = null;
+    let bestDistance = Infinity;
+    for (const handle of surface.querySelectorAll<HTMLElement>('.handle[data-editable]')) {
+      const rect = handle.getBoundingClientRect();
+      const distance = Math.hypot(rect.left + rect.width / 2 - x, rect.top + rect.height / 2 - y);
+      const radius = Math.max(rect.width / 2 + 4, 12);
+      if (distance <= radius && distance < bestDistance) {
+        best = handle;
+        bestDistance = distance;
+      }
+    }
+    return best;
+  }
+
   /** The editable handle under the pointer, or the base handle (which jumps to the point). */
   #handleAt(point: PointerDragPoint): number {
     const surface = this.#surface;
     if (!surface) return this.baseIndex;
     const box = surface.getBoundingClientRect();
-    const x = box.left + point.x;
-    const y = box.top + point.y;
-    let best = this.baseIndex;
-    let bestDistance = Infinity;
-    for (const handle of surface.querySelectorAll<HTMLElement>('.handle[data-editable]')) {
-      const index = Number(handle.dataset.index);
-      const rect = handle.getBoundingClientRect();
-      const distance = Math.hypot(rect.left + rect.width / 2 - x, rect.top + rect.height / 2 - y);
-      const radius = Math.max(rect.width / 2 + 4, 12);
-      if (distance <= radius && distance < bestDistance) {
-        best = index;
-        bestDistance = distance;
-      }
-    }
-    return best;
+    const handle = this.#editableHandleUnder(box.left + point.x, box.top + point.y);
+    return handle ? Number(handle.dataset.index) : this.baseIndex;
   }
 
   #propose(
