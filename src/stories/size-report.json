@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T13:03:17.815Z",
+  "generatedAt": "2026-10-11T14:28:35.121Z",
   "version": "0.1.0",
   "method": "Each catalog component (from @tweakpad/ui) and widget (from @tweakpad/ui/widgets) as documented (the root plus the parts its canonical example composes), imported and defined; Rolldown resolves the modules that ships (lit external, tree-shaken) and each module is measured as published in dist, bytes on disk and gzip per file, the way the build log lists it.",
   "lit": {
@@ -18,9 +18,9 @@
     "modules": 595
   },
   "fullWidgets": {
-    "bytes": 657352,
-    "gzip": 226843,
-    "modules": 191
+    "bytes": 802347,
+    "gzip": 274969,
+    "modules": 231
   },
   "components": [
     {
@@ -30,12 +30,12 @@
       "kind": "flattening-compound",
       "section": "widgets",
       "uses": [],
-      "bytes": 654282,
-      "gzip": 225818,
-      "ownGzip": 217500,
-      "modules": 190,
-      "rootBytes": 654282,
-      "rootGzip": 225818,
+      "bytes": 654983,
+      "gzip": 226455,
+      "ownGzip": 218137,
+      "modules": 192,
+      "rootBytes": 654983,
+      "rootGzip": 226455,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -109,6 +109,40 @@
         "tp-slider-thumb",
         "tp-spinner",
         "tp-tooltip"
+      ]
+    },
+    {
+      "name": "Easing editor",
+      "tagName": "tp-easing-editor",
+      "className": "TpEasingEditor",
+      "kind": "flattening-compound",
+      "section": "widgets",
+      "uses": [],
+      "bytes": 587179,
+      "gzip": 204903,
+      "ownGzip": 196585,
+      "modules": 178,
+      "rootBytes": 587179,
+      "rootGzip": 204903,
+      "includes": [
+        "tp-badge",
+        "tp-button",
+        "tp-copy-button",
+        "tp-easing-editor-expression",
+        "tp-easing-editor-frames",
+        "tp-easing-editor-graph",
+        "tp-icon",
+        "tp-input",
+        "tp-input-group",
+        "tp-label",
+        "tp-scroll-area",
+        "tp-select",
+        "tp-slider",
+        "tp-slider-thumb",
+        "tp-spinner",
+        "tp-tabs",
+        "tp-toggle",
+        "tp-toggle-group"
       ]
     },
     {

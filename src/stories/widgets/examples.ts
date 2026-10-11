@@ -11,6 +11,12 @@ export type WidgetTag = (typeof widgetCatalog)[number][1];
 const examples = {
   'tp-color-picker': () =>
     html`<tp-color-picker label="Accent" name="accent" default-value="#6d5dfc"></tp-color-picker>`,
+  'tp-easing-editor': () =>
+    html`<tp-easing-editor
+      label="Motion"
+      name="easing"
+      default-value="ease-out"
+    ></tp-easing-editor>`,
 } satisfies Record<WidgetTag, () => TemplateResult>;
 
 export function renderWidgetExample(tagName: WidgetTag): TemplateResult {

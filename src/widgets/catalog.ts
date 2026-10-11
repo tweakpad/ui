@@ -12,6 +12,7 @@ type WidgetTuple = readonly [WidgetEntry['name'], `tp-${string}`, WidgetEntry['k
 /** Public widgets in sidebar order: `[name, tag, kind]`. */
 export const widgetCatalog = [
   ['Color picker', 'tp-color-picker', 'flattening-compound'],
+  ['Easing editor', 'tp-easing-editor', 'flattening-compound'],
 ] as const satisfies readonly WidgetTuple[];
 
 export const widgetEntries: readonly WidgetEntry[] = widgetCatalog.map((entry: WidgetTuple) => ({

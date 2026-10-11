@@ -44,10 +44,11 @@ one render per frame with every resource released on disconnect.
 
 - [Color picker](./color-picker.md): `tp-color-picker` (tweakpane reference:
   `packages/core/src/input-binding/color/`).
+- [Easing editor](./easing-editor.md): `tp-easing-editor` (tweakpane reference:
+  `packages/core/src/input-binding/point-2d/` and `monitor-binding/number/view/graph-log.ts`).
 
 ## Planned widgets
 
-- Curve editor.
 - Audio graph.
 
 ## Adding a widget

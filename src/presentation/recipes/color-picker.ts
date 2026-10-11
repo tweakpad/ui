@@ -1,9 +1,6 @@
 import { motionTransition } from '../motion.js';
-import type {
-  PresentationDeclarations,
-  PresentationDictionary,
-  PresentationRule,
-} from '../resolver.js';
+import type { PresentationDeclarations, PresentationDictionary } from '../resolver.js';
+import { activeRing, focusRing, ringMix, thumb, thumbRing } from './shared/handle.js';
 import { popupBorder } from './shared/surface.js';
 
 // Widgets Specification 6.1 Presentation: value-domain paint arrives from the widget as the
@@ -13,7 +10,6 @@ import { popupBorder } from './shared/surface.js';
 // checkerboard mixin) adapted to the library tokens and the Slider thumb recipe.
 
 const hairline = 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)';
-const ringMix = 'color-mix(in oklab, var(--tp-foreground) 30%, transparent)';
 
 /** Checkerboard from the background and muted roles under the widget's paint layer. */
 const checker: PresentationDeclarations = {
@@ -27,27 +23,6 @@ const checker: PresentationDeclarations = {
   'background-position':
     '0 0, 0 0, calc(var(--_tp-color-picker-checker) / 2) calc(var(--_tp-color-picker-checker) / 2)',
 };
-
-const thumbRing: PresentationDeclarations = {
-  'border-radius': 'var(--tp-radius-full)',
-  border: 'var(--tp-border-width-strong) var(--tp-border-style) var(--tp-background)',
-  'box-shadow': `0 0 0 var(--tp-border-width) ${ringMix}, var(--tp-shadow-sm)`,
-  background: 'var(--_tp-color-picker-thumb-paint, var(--tp-background))',
-  transition: motionTransition(['box-shadow', 'outline-color'], 'fast'),
-};
-const focusRing: PresentationDeclarations = {
-  outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-  'outline-offset': 'var(--tp-ring-offset)',
-};
-const activeRing: PresentationDeclarations = {
-  'box-shadow': `0 0 0 var(--tp-border-width) ${ringMix}, 0 0 0 calc(var(--tp-ring-width) * 1.5) color-mix(in oklab, var(--tp-ring) 50%, transparent)`,
-};
-
-const thumb = (size: string): readonly PresentationRule[] => [
-  { declarations: { 'inline-size': size, 'block-size': size, ...thumbRing } },
-  { selector: '&:has(input:focus-visible)', declarations: focusRing },
-  { selector: '&[data-dragging]', declarations: activeRing },
-];
 
 const surfaceFrame: PresentationDeclarations = {
   'border-radius': 'var(--tp-radius-lg)',

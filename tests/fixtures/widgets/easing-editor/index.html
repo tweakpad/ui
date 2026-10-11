@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Easing editor verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 860px;
+        display: grid;
+        gap: 32px;
+      }
+      section {
+        display: grid;
+        gap: 12px;
+      }
+      #narrow {
+        inline-size: 300px;
+      }
+      #dynamic {
+        display: grid;
+        gap: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Easing editor verification</h1>
+      <tp-button id="before" variant="outline">Before editor</tp-button>
+      <form id="form">
+        <section>
+          <tp-easing-editor
+            id="extended"
+            label="Motion"
+            name="easing"
+            default-value="ease-out"
+          ></tp-easing-editor>
+        </section>
+        <section>
+          <tp-easing-editor
+            id="compact"
+            label="Compact"
+            name="compact"
+            layout="compact"
+            default-value="cubic-bezier(0.34, 1.56, 0.64, 1)"
+          ></tp-easing-editor>
+        </section>
+        <section>
+          <tp-easing-editor
+            id="spring"
+            label="Spring"
+            name="spring"
+            default-value="spring(1 200 8)"
+            default-duration="0.6"
+          ></tp-easing-editor>
+        </section>
+        <section>
+          <tp-easing-editor
+            id="parametric"
+            label="Parametric"
+            name="parametric"
+            default-value="back(in-out)"
+            preset-picker="false"
+          ></tp-easing-editor>
+        </section>
+        <section>
+          <tp-easing-editor
+            id="custom"
+            label="Custom"
+            name="custom"
+            default-value="linear(0, 0.25 25%, 1.1 60%, 1)"
+            timing="false"
+            preview="rotation"
+          ></tp-easing-editor>
+        </section>
+        <section>
+          <tp-field label="Field easing" description="Inside a Field">
+            <tp-easing-editor id="field" name="field" default-value="ease-in-out" required></tp-easing-editor>
+          </tp-field>
+        </section>
+        <section id="narrow">
+          <tp-easing-editor id="narrow-editor" label="Narrow" size="sm" default-value="ease"></tp-easing-editor>
+        </section>
+        <section>
+          <tp-easing-editor id="disabled" label="Disabled" default-value="ease" disabled></tp-easing-editor>
+        </section>
+        <section>
+          <tp-easing-editor id="readonly" label="Read only" default-value="ease" readonly></tp-easing-editor>
+        </section>
+        <section dir="rtl">
+          <tp-easing-editor id="rtl" label="يسار" default-value="ease-in"></tp-easing-editor>
+        </section>
+        <tp-button id="reset" type="reset" variant="outline">Reset form</tp-button>
+      </form>
+      <div id="dynamic"></div>
+      <tp-button id="after" variant="outline">After editor</tp-button>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>
