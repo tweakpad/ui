@@ -11,19 +11,20 @@ independent actions; activating Remove or Download cannot bubble into the trigge
 
 ## Properties
 
-| Property / attribute                 | Type                                                   | Default      | Meaning                                                                                                                              |
-| ------------------------------------ | ------------------------------------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `filename`                           | string                                                 | `''`         | Resource title and generated action names. Supply a meaningful name.                                                                 |
-| `description`                        | string                                                 | `''`         | Type, size, status or other detail.                                                                                                  |
-| `fileSize` / `file-size`             | number                                                 | `0`          | Optional byte count; formatted when no description is supplied.                                                                      |
-| `status`                             | `idle`, `uploading`, `processing`, `error`, `complete` | `idle`       | Application-owned status. Idle has a dashed border; busy states without authored media show Spinner; error exposes explanatory text. |
-| `errorMessage` / `error-message`     | string                                                 | `''`         | Error/recovery explanation. Falls back to description, then “This attachment could not be processed.”                                |
-| `size`                               | `xs`, `sm`, `default`                                  | `default`    | Theme-proportional density.                                                                                                          |
-| `orientation`                        | `horizontal`, `vertical`                               | `horizontal` | File row or image card arrangement.                                                                                                  |
-| `mediaTreatment` / `media-treatment` | `mark`, `image`                                        | `mark`       | File mark or image presentation. Media remains optional.                                                                             |
-| `href`, `target`                     | string                                                 | `''`         | Optional generated native link through Button. An authored trigger takes precedence.                                                 |
-| `removable`                          | boolean                                                | `false`      | Adds the standard Remove Button.                                                                                                     |
-| `disabled`                           | boolean                                                | `false`      | Disables generated link/remove controls. Author-supplied controls retain their own disabled policy.                                  |
+| Property / attribute                 | Type                                                   | Default      | Meaning                                                                                                                                                                                          |
+| ------------------------------------ | ------------------------------------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `filename`                           | string                                                 | `''`         | Resource title and generated action names. Supply a meaningful name.                                                                                                                             |
+| `description`                        | string                                                 | `''`         | Type, size, status or other detail.                                                                                                                                                              |
+| `fileSize` / `file-size`             | number                                                 | `0`          | Optional byte count; formatted in binary units for the nearest `lang` when no description is supplied.                                                                                           |
+| `status`                             | `idle`, `uploading`, `processing`, `error`, `complete` | `idle`       | Application-owned status. Idle has a dashed border; busy states without authored media show Spinner; error exposes explanatory text.                                                             |
+| `errorMessage` / `error-message`     | string                                                 | `''`         | Error/recovery explanation. Falls back to description, then “This attachment could not be processed.”                                                                                            |
+| `size`                               | `xs`, `sm`, `default`                                  | `default`    | Theme-proportional density.                                                                                                                                                                      |
+| `orientation`                        | `horizontal`, `vertical`                               | `horizontal` | File row or image card arrangement.                                                                                                                                                              |
+| `mediaTreatment` / `media-treatment` | `mark`, `image`                                        | `mark`       | File mark or image presentation. Media remains optional.                                                                                                                                         |
+| `href`, `target`                     | string                                                 | `''`         | Optional generated native link through Button. An authored trigger takes precedence.                                                                                                             |
+| `removable`                          | boolean                                                | `false`      | Adds the standard Remove Button.                                                                                                                                                                 |
+| `disabled`                           | boolean                                                | `false`      | Disables generated link/remove controls. Author-supplied controls retain their own disabled policy.                                                                                              |
+| `messages`                           | partial `AttachmentMessages`, property only            | `{}`         | Overrides generated text: `remove`, `open` (with `{name}`), `fallbackName`, `uploading`, `processing`, `uploadingLabel`, `processingLabel`, `error`. Defaults are `DEFAULT_ATTACHMENT_MESSAGES`. |
 
 ## Composition
 
@@ -44,7 +45,8 @@ actions retain ordinary Tab order. It does not own selection or upload state.
 ## Events and customization
 
 The generated Remove Button emits cancelable, bubbling, composed `tp-remove` with
-`{ filename, sourceEvent }`. No attachment is removed automatically. Handle the
+`{ filename, sourceEvent }`; `preventDefault()` marks the removal refused for later listeners. No
+attachment is removed automatically. Handle the
 event in application code after respecting cancellation. Authored actions retain
 Button events and native link behavior. No additional imperative methods exist.
 

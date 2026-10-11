@@ -8,8 +8,37 @@ import { fillLayerStyles } from '../../presentation/motion.js';
 import { TpSpinner } from '../spinner/spinner.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpButton } from '../button/button.js';
+import { formatBytes } from '../../foundation/format-bytes.js';
+import { resolveLocale } from '../../foundation/services.js';
 
 export type AttachmentStatus = 'idle' | 'uploading' | 'processing' | 'error' | 'complete';
+/** Visible and accessible Attachment text. `{name}` is replaced with the filename. */
+export interface AttachmentMessages {
+  /** Generated Remove action name. */
+  remove: string;
+  /** Generated link trigger name. */
+  open: string;
+  /** Name used in action names when no filename is supplied. */
+  fallbackName: string;
+  /** Description status text while uploading or processing. */
+  uploading: string;
+  processing: string;
+  /** Spinner status labels while uploading or processing without authored media. */
+  uploadingLabel: string;
+  processingLabel: string;
+  /** Error description when neither an error message nor a description is supplied. */
+  error: string;
+}
+export const DEFAULT_ATTACHMENT_MESSAGES: AttachmentMessages = Object.freeze({
+  remove: 'Remove {name}',
+  open: 'Open {name}',
+  fallbackName: 'attachment',
+  uploading: 'Uploading…',
+  processing: 'Processing…',
+  uploadingLabel: 'Uploading attachment',
+  processingLabel: 'Processing attachment',
+  error: 'This attachment could not be processed.',
+});
 /** File presentation only. Application code owns upload, retry, removal and navigation. */
 export class TpAttachment extends TpElement {
   static tagName = 'tp-attachment';
@@ -30,6 +59,7 @@ export class TpAttachment extends TpElement {
     status: { type: String, reflect: true },
     mediaTreatment: { type: String, attribute: 'media-treatment', reflect: true },
     removable: { type: Boolean },
+    messages: { attribute: false },
   };
   static override styles = [
     TpElement.styles,
@@ -131,11 +161,20 @@ export class TpAttachment extends TpElement {
   status: AttachmentStatus = 'idle';
   mediaTreatment: 'mark' | 'image' = 'mark';
   removable = false;
+  /** Partial text overrides; missing entries use `DEFAULT_ATTACHMENT_MESSAGES`. */
+  messages: Partial<AttachmentMessages> = {};
   #releaseSlots: (() => void) | undefined;
   #delegates = new Map<Element, { part: string; release: () => void }>();
   #sync = (): void => {
     this.requestUpdate();
   };
+  #text(key: keyof AttachmentMessages): string {
+    const text = this.messages[key] ?? DEFAULT_ATTACHMENT_MESSAGES[key];
+    return text.replaceAll(
+      '{name}',
+      this.filename || (this.messages.fallbackName ?? DEFAULT_ATTACHMENT_MESSAGES.fallbackName),
+    );
+  }
   protected override render() {
     const busy = this.status === 'uploading' || this.status === 'processing';
     const hasMedia = slotOccupied(this, 'media') || slotOccupied(this, 'preview');
@@ -162,11 +201,11 @@ export class TpAttachment extends TpElement {
     };
     const description =
       this.status === 'error'
-        ? this.errorMessage || this.description || 'This attachment could not be processed.'
+        ? this.errorMessage || this.description || this.#text('error')
         : this.description ||
           [
-            this.fileSize > 0 ? formatBytes(this.fileSize) : '',
-            busy ? (this.status === 'uploading' ? 'Uploading…' : 'Processing…') : '',
+            this.fileSize > 0 ? formatBytes(this.fileSize, resolveLocale(this)) : '',
+            busy ? this.#text(this.status === 'uploading' ? 'uploading' : 'processing') : '',
           ]
             .filter(Boolean)
             .join(' · ');
@@ -182,7 +221,7 @@ export class TpAttachment extends TpElement {
         'aria-busy': busy ? 'true' : undefined,
       },
       content: html`
-        ${part('attachment-media', { properties: { class: 'media', hidden: !hasMedia && !busy, 'data-treatment': this.mediaTreatment }, content: html`${busy && !hasMedia ? html`<tp-spinner size="sm" .label=${this.status === 'uploading' ? 'Uploading attachment' : 'Processing attachment'}></tp-spinner>` : html`<slot name="media" @slotchange=${this.#sync}><slot name="preview" @slotchange=${this.#sync}></slot></slot>`}` })}
+        ${part('attachment-media', { properties: { class: 'media', hidden: !hasMedia && !busy, 'data-treatment': this.mediaTreatment }, content: html`${busy && !hasMedia ? html`<tp-spinner size="sm" .label=${this.#text(this.status === 'uploading' ? 'uploadingLabel' : 'processingLabel')}></tp-spinner>` : html`<slot name="media" @slotchange=${this.#sync}><slot name="preview" @slotchange=${this.#sync}></slot></slot>`}` })}
         ${part('attachment-content', {
           properties: { class: 'content', hidden: !hasContent },
           content: html` ${part('attachment-title', { tag: 'span', properties: { class: 'title' }, content: html`<slot name="title" @slotchange=${this.#sync}>${this.filename}</slot>` })}
@@ -200,14 +239,18 @@ export class TpAttachment extends TpElement {
                       '.size': 'icon-xs',
                       '.icon': xIcon,
                       '.disabled': this.disabled,
-                      '.ariaLabel': `Remove ${this.filename || 'attachment'}`,
+                      '.ariaLabel': this.#text('remove'),
                       '@click': (event: Event) => {
                         if (
                           !event.defaultPrevented &&
                           !componentHandlingPrevented(event) &&
                           !this.disabled
                         )
-                          this.emit('tp-remove', { filename: this.filename, sourceEvent: event });
+                          this.emit(
+                            'tp-remove',
+                            { filename: this.filename, sourceEvent: event },
+                            { cancelable: true },
+                          );
                       },
                     },
                   })
@@ -216,7 +259,7 @@ export class TpAttachment extends TpElement {
             <slot name="actions" @slotchange=${this.#sync}></slot>`,
         })}
         <slot name="trigger" @slotchange=${this.#sync}
-          >${this.href ? part('attachment-trigger', { tag: 'tp-button', properties: { class: 'trigger', '.href': this.href, '.target': this.target, '.variant': 'ghost', '.disabled': this.disabled, '.ariaLabel': `Open ${this.filename || 'attachment'}` } }) : nothing}</slot
+          >${this.href ? part('attachment-trigger', { tag: 'tp-button', properties: { class: 'trigger', '.href': this.href, '.target': this.target, '.variant': 'ghost', '.disabled': this.disabled, '.ariaLabel': this.#text('open') } }) : nothing}</slot
         >
       `,
     });
@@ -253,15 +296,6 @@ export class TpAttachment extends TpElement {
     this.#delegates.clear();
     super.disconnectedCallback();
   }
-}
-function formatBytes(value: number): string {
-  if (!Number.isFinite(value) || value < 0) return '';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const index = Math.min(
-    units.length - 1,
-    Math.floor(Math.log(Math.max(value, 1)) / Math.log(1024)),
-  );
-  return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: index ? 1 : 0 }).format(value / 1024 ** index)} ${units[index]}`;
 }
 
 declare global {

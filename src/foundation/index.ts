@@ -22,6 +22,7 @@ export * from './positioning.js';
 export * from './presence.js';
 export * from './services.js';
 export * from './intl.js';
+export * from './format-bytes.js';
 export * from './date-locale.js';
 export * from './duration-format.js';
 export * from './image-load.js';

@@ -57,3 +57,6 @@ presentation; Foundation §5.3 ChangeEvent, Appendix B; the UI Widgets Specifica
   component name (`tabs-missing-panel`).
 - `tp-field-value` is the internal coordination event between a form control and its Field;
   it always carries the same detail as `tp-value-change`.
+- `tp-field-validity` (empty detail) tells the enclosing Field that a control's validity
+  changed without a value change, such as a rejected File upload item; the Field revalidates
+  under its timing policy.

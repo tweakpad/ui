@@ -11,3 +11,16 @@ export const imageOffIcon: IconDefinition = {
     { d: 'M3 3l18 18', strokeWidth: 2 },
   ],
 };
+
+/** A picture frame with a sun and a hill: an image file (24×24 outline, 2-unit stroke). */
+export const imageIcon: IconDefinition = {
+  viewBox: '0 0 24 24',
+  paths: [
+    {
+      d: 'M5.5 4h13A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-13A1.5 1.5 0 0 1 5.5 4z',
+      strokeWidth: 2,
+    },
+    { d: 'M4 16l4.5-4.5L18 20', strokeWidth: 2 },
+    { d: 'M14.5 9.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0', strokeWidth: 2 },
+  ],
+};

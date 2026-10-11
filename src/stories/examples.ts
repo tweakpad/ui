@@ -161,6 +161,14 @@ const examples = {
   'tp-text-area': () => html`
     <tp-text-area label="Message" placeholder="Write a message"></tp-text-area>
   `,
+  'tp-file-upload': () => html`
+    <tp-file-upload
+      name="files"
+      multiple
+      accept=".pdf,image/png,image/jpeg"
+      max-file-size="10MB"
+    ></tp-file-upload>
+  `,
   'tp-command-palette': () => html`
     <tp-command-palette label="Commands" inline>
       <option value="new">New document</option>

@@ -1,4 +1,5 @@
 import type { IconDefinition } from './types.js';
+import { uploadCloudIcon } from './upload-cloud.js';
 const outline = (...paths: string[]): IconDefinition => ({
   viewBox: '0 0 24 24',
   paths: paths.map((d) => ({ d, strokeWidth: 2 })),
@@ -12,5 +13,5 @@ export const emptyStateIcons = {
     'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z',
   ),
   bookmark: outline('M6 3h12v18l-6-4-6 4z'),
-  cloud: outline('M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 3 16.25', 'M8 16l4-4 4 4', 'M12 12v9'),
+  cloud: uploadCloudIcon,
 };

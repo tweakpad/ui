@@ -65,6 +65,7 @@ export * from './table/index.js';
 export * from './table-of-contents/index.js';
 export * from './tabs/index.js';
 export * from './text-area/index.js';
+export * from './file-upload/index.js';
 export * from './text-motion/index.js';
 export * from './theme-switcher/index.js';
 export * from './time/index.js';

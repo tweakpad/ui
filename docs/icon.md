@@ -57,6 +57,10 @@ The grouped `mediaIcons` object (keys below) is for layouts that use the whole s
 
 Accordion uses `chevronRightIcon` for its default disclosure indicator. `indicator-position="leading"` or `"trailing"` selects the positional slot whose fallback renders that icon. Assigning any consumer content to the selected `leading` or `trailing` slot suppresses the fallback; the assigned content keeps its own semantics and does not automatically receive indicator motion.
 
+## File icons
+
+`@tweakpad/ui/icons/upload-cloud` exports `uploadCloudIcon`, the upload mark of File upload and the `cloud` entry of `@tweakpad/ui/icons/empty-state`. `@tweakpad/ui/icons/image` exports `imageIcon` (an image file) beside `imageOffIcon` (an image that could not load); `@tweakpad/ui/icons/file-text` exports `fileTextIcon` for other files.
+
 ## Properties
 
 | Property | Attribute | Type                          | Default     | Behavior                                                                                                               |

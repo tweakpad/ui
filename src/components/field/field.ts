@@ -34,7 +34,7 @@ const markers = [
   'pending',
 ] as const;
 const controls =
-  'tp-input,tp-text-area,tp-native-select,tp-number-field,tp-one-time-code-field,tp-slider,tp-checkbox,tp-radio-group,tp-switch,tp-select,tp-autocomplete,tp-toggle-group,tp-calendar,input,textarea,select,[data-field-control]';
+  'tp-input,tp-text-area,tp-native-select,tp-number-field,tp-one-time-code-field,tp-slider,tp-checkbox,tp-radio-group,tp-switch,tp-select,tp-autocomplete,tp-toggle-group,tp-calendar,tp-file-upload,input,textarea,select,[data-field-control]';
 
 export const fieldSubmission = Symbol('Field submission');
 export class TpField extends TpElement {
@@ -323,6 +323,7 @@ export class TpField extends TpElement {
     this.addEventListener('input', this.#changed);
     this.addEventListener('change', this.#changed);
     this.addEventListener('tp-field-value', this.#changed);
+    this.addEventListener('tp-field-validity', this.#changed);
     this.addEventListener('tp-value-change', this.#proposal);
     this.addEventListener('keydown', this.#keyDown);
     this.#observer = new (this.ownerDocument.defaultView ?? window).MutationObserver(this.#queue);
@@ -340,6 +341,7 @@ export class TpField extends TpElement {
     this.removeEventListener('input', this.#changed);
     this.removeEventListener('change', this.#changed);
     this.removeEventListener('tp-field-value', this.#changed);
+    this.removeEventListener('tp-field-validity', this.#changed);
     this.removeEventListener('tp-value-change', this.#proposal);
     this.removeEventListener('keydown', this.#keyDown);
     this.ownerDocument.removeEventListener('reset', this.#reset, true);
@@ -791,7 +793,9 @@ export class TpField extends TpElement {
       this.requestUpdate();
       return;
     }
-    if (equivalent(this.value, this.#lastValue)) return;
+    // A control whose validity changed without a value change (a File upload rejection)
+    // revalidates under the same timing policy as an edit.
+    if (event?.type !== 'tp-field-validity' && equivalent(this.value, this.#lastValue)) return;
     this.#lastValue = this.value;
     this.#dirty = !equivalent(this.value, this.#initial);
     this.#cancel();

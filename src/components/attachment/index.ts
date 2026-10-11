@@ -1,3 +1,3 @@
-export { TpAttachment } from './attachment.js';
-export type { AttachmentStatus } from './attachment.js';
+export { TpAttachment, DEFAULT_ATTACHMENT_MESSAGES } from './attachment.js';
+export type { AttachmentStatus, AttachmentMessages } from './attachment.js';
 export { TpAttachmentGroup } from './group.js';

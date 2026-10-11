@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>File upload verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+        font-size: var(--tp-text-sm);
+      }
+      main {
+        max-width: 960px;
+        margin: 24px auto;
+        padding: 16px;
+        display: grid;
+        gap: 40px;
+      }
+      section.case {
+        display: grid;
+        gap: 12px;
+      }
+      section.case > h2.label {
+        font-size: 0.875rem;
+        margin: 0;
+        color: var(--tp-muted-foreground);
+        font-weight: 500;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      #log {
+        margin: 0;
+        padding: 8px;
+        max-block-size: 200px;
+        overflow: auto;
+        border: 1px dashed var(--tp-border);
+        font-family: var(--tp-font-mono);
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="case">
+        <h2 class="label">Single backup file (reference 1)</h2>
+        <tp-file-upload
+          id="backup"
+          name="backup"
+          accept=".sql,.sql.gz,.dump,.bak"
+          max-file-size="10GB"
+        >
+          <span slot="title">Upload backup file</span>
+        </tp-file-upload>
+      </section>
+
+      <section class="case">
+        <h2 class="label">Chips with clear (reference 2)</h2>
+        <tp-file-upload
+          id="chips"
+          name="attachments"
+          multiple
+          item-size="xs"
+          clearable
+          size="sm"
+          show-trigger
+          paste="document"
+        ></tp-file-upload>
+        <p class="label">Paste files anywhere on the page outside text fields.</p>
+      </section>
+
+      <section class="case">
+        <h2 class="label">Documents with badges and metadata (reference 3)</h2>
+        <tp-file-upload
+          id="documents"
+          name="documents"
+          multiple
+          hint-treatment="badges"
+          accept=".pdf,.doc,.docx,.xls,.xlsx"
+          max-file-size="25MB"
+        ></tp-file-upload>
+      </section>
+
+      <section class="case">
+        <h2 class="label">Image grid with eight slots (reference 4)</h2>
+        <tp-file-upload
+          id="grid"
+          name="images"
+          multiple
+          layout="grid"
+          max-files="8"
+          accept="image/jpeg,image/png,image/webp"
+          clearable
+          paste="control"
+        ></tp-file-upload>
+        <p class="label">Paste images while the grid has focus or the pointer is over it.</p>
+        <textarea id="notes" rows="2" aria-label="Notes">Pasting here stays text.</textarea>
+      </section>
+
+      <section class="case">
+        <h2 class="label">Upload adapter (progress, failure, retry)</h2>
+        <tp-file-upload
+          id="uploads"
+          name="uploads"
+          multiple
+          upload-concurrency="2"
+        ></tp-file-upload>
+        <div class="row">
+          <tp-button id="add-uploads" variant="outline" size="sm">Add three files</tp-button>
+          <tp-button id="cancel-uploads" variant="ghost" size="sm">Cancel uploads</tp-button>
+        </div>
+      </section>
+
+      <section class="case">
+        <h2 class="label">CSV validator</h2>
+        <tp-file-upload id="csv" name="csv" multiple accept=".csv,text/csv">
+          <span slot="title">Import contacts</span>
+          <span slot="description">CSV with name, email and phone columns</span>
+        </tp-file-upload>
+      </section>
+
+      <section class="case">
+        <h2 class="label">Field and Form</h2>
+        <tp-form id="form">
+          <tp-field label="Contract" description="Signed PDF, up to 5 MB" id="field">
+            <tp-file-upload
+              id="contract"
+              name="contract"
+              required
+              accept="application/pdf"
+              max-file-size="5MB"
+              show-trigger
+            ></tp-file-upload>
+          </tp-field>
+          <div class="row" slot="actions">
+            <tp-button type="submit" id="submit">Submit</tp-button>
+            <tp-button type="reset" variant="outline" id="reset">Reset</tp-button>
+          </div>
+        </tp-form>
+      </section>
+
+      <section class="case">
+        <h2 class="label">Disabled and read-only</h2>
+        <tp-file-upload id="disabled" disabled multiple></tp-file-upload>
+        <tp-file-upload id="readonly" readonly multiple></tp-file-upload>
+      </section>
+
+      <section class="case">
+        <h2 class="label">Contract host</h2>
+        <div id="host"></div>
+      </section>
+
+      <pre id="log"></pre>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+    <script type="module" src="./contract-checks.js"></script>
+  </body>
+</html>

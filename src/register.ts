@@ -174,6 +174,7 @@ import {
 import { TpTable } from './components/table/table.js';
 import { TpTabs } from './components/tabs/tabs.js';
 import { TpTextArea } from './components/text-area/text-area.js';
+import { TpFileUpload } from './components/file-upload/file-upload.js';
 import { TpTextMotion } from './components/text-motion/text-motion.js';
 import { TpThemeSwitcher } from './components/theme-switcher/theme-switcher.js';
 import { TpTime } from './components/time/time.js';
@@ -215,6 +216,7 @@ defineElement(TpRadioGroupItem.tagName, TpRadioGroupItem);
 defineElement(TpSlider.tagName, TpSlider);
 defineElement(TpSliderThumb.tagName, TpSliderThumb);
 defineElement(TpTextArea.tagName, TpTextArea);
+defineElement(TpFileUpload.tagName, TpFileUpload);
 defineElement(TpAlertDialog.tagName, TpAlertDialog);
 defineElement(TpDialog.tagName, TpDialog);
 defineElement(TpDrawer.tagName, TpDrawer);

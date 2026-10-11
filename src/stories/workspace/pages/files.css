@@ -29,14 +29,3 @@
 .files-footer {
   inline-size: 100%;
 }
-
-.files-dropzone::part(empty-state) {
-  border: var(--tp-border-width) dashed var(--tp-border);
-}
-
-.files-progress {
-  display: flex;
-  flex-direction: column;
-  gap: var(--tp-space-1);
-  min-inline-size: calc(var(--tp-space-16) * 3);
-}
