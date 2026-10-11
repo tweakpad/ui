@@ -64,6 +64,17 @@ export const easingEditorAppearance: PresentationDictionary = {
   ],
   // The badge is a Badge (tp-badge) host floating over the graph and keeps the Badge's recipe.
   'easing-editor-badge': [],
+  // Registered on the presets Toggle's control: icon-only, square like the play Button.
+  'easing-editor-presets-toggle': [
+    {
+      selector: '&[part~="toggle"]',
+      declarations: {
+        'padding-inline': '0',
+        'inline-size': 'var(--tp-control-height-sm)',
+        'min-inline-size': 'var(--tp-control-height-sm)',
+      },
+    },
+  ],
   // The mode Button is a Button host in the header and keeps the Button's recipe.
   'easing-editor-preview-mode': [],
   // The presets overlay floats over the graph on a translucent surface.
@@ -132,7 +143,9 @@ export const easingEditorAppearance: PresentationDictionary = {
     {
       declarations: {
         'border-radius': 'var(--tp-radius-lg)',
-        'background-color': 'var(--tp-card, var(--tp-background))',
+        // A muted tint so the graph box reads on white light surfaces, without a frame through the dots.
+        'background-color':
+          'color-mix(in oklab, var(--tp-muted) 60%, var(--tp-card, var(--tp-background)))',
         overflow: 'visible',
       },
     },
@@ -249,6 +262,9 @@ export const easingEditorStructure: PresentationDictionary = {
         'inline-size': '100%',
         'grid-template-columns':
           'repeat(auto-fill, minmax(calc(var(--_tp-easing-editor-thumb) + var(--tp-spacing) * 10), 1fr))',
+        // Every tile of a group takes the height of its tallest (two-line) name.
+        'grid-auto-rows': '1fr',
+        'align-items': 'stretch',
         gap: 'var(--tp-space-1)',
       },
     },

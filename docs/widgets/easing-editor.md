@@ -61,7 +61,10 @@ nearest point.
 ## Graph and overshoot
 
 The graph is a square SVG plot with a dotted grid marking the unit box (a dot at every tenth,
-no outline; outside it the graph keeps its background and paints no dots); a Badge in its
+no outline, clipped to the graph box and its rounded corners; outside the unit box the graph keeps
+its background and paints no dots). The plot sits inset by the editor's spacing step inside the box, so
+the curve's ends and the corner handles clear its rounded corners; the curve clips to the box
+too, and only the Bézier handles, their lines and the custom points may reach past it; a Badge in its
 bottom-right corner names the matching preset or reads Custom. Bézier curves show two handles
 with their lines; custom curves show one point per entry. While a handle, point or Slider is
 dragged the progression range holds still; when the drag settles (or the value changes otherwise)
@@ -100,14 +103,20 @@ the preview from the start, also when the tile is already the current one.
 
 ## Layouts
 
-`layout="extended"` (default) places the presets in a column beside the graph. `layout="compact"`
-hides them behind a Presets Toggle in the header: they overlay the graph on a translucent surface
+The header holds the category Tabs at the inline start and, together at the inline end, the outlined
+play Button, the preview mode Button and (compact layout) the presets Toggle.
+
+`layout="extended"` (default) places the presets in a column beside the graph, scrolling vertically
+inside it with a scrollbar that shows while hovering or scrolling; long preset names wrap between
+words and every tile of a group shares one height. `layout="compact"`
+hides them behind an icon-only presets Toggle (named "Show presets") in the header: they overlay the graph on a translucent surface
 and scroll inside it, a pick closes them, Escape closes them and returns focus to the Toggle, and
 `presetsOpen` / `defaultPresetsOpen` form a lane with `tp-open-change`. The compact layout suits a
 Dialog. `size` (`sm`, `default`, `lg`) changes the root spacing variable and the derived graph
-side (288, 384 and 480 px), handle, thumbnail and presets extents. The graph is square and fills
-the available width up to its side, and the editor is no wider than the graph plus, in the
-extended layout, the presets column: it never stretches across a wide host.
+side (288, 384 and 480 px), handle, thumbnail and presets extents. The graph is square. In the extended layout the editor is no wider than the graph side plus the
+presets column, so it never stretches across a wide host; the compact layout fills its container
+(a Dialog, a Popover) up to 32rem and the graph follows its width. The graph box carries a muted
+tint so its limits read on white surfaces.
 
 ## Duration
 

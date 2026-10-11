@@ -475,6 +475,46 @@ export async function assertPresets(): Promise<Report> {
   const groups = root.querySelectorAll('tp-toggle-group.presets');
   const toggles = root.querySelectorAll('tp-toggle.preset');
   checks.push(check('nine preset groups', groups.length === 9, groups.length));
+  const scrollArea = root.querySelector('.presets-panel tp-scroll-area');
+  checks.push(
+    check(
+      'the presets scroll vertically only and every name fits its tile',
+      scrollArea?.getAttribute('axis') === 'y' &&
+        (() => {
+          const viewport = scrollArea.shadowRoot?.querySelector<HTMLElement>('.viewport');
+          return !!viewport && viewport.scrollWidth <= viewport.clientWidth;
+        })() &&
+        [...root.querySelectorAll<HTMLElement>('tp-toggle.preset')].every((tile) => {
+          const control = tile.shadowRoot?.querySelector<HTMLElement>('[part~="toggle"]');
+          return !!control && control.scrollWidth <= control.clientWidth + 1;
+        }),
+      scrollArea?.getAttribute('axis'),
+    ),
+  );
+  checks.push(
+    check(
+      'tiles of a group share one height',
+      [...root.querySelectorAll('tp-toggle-group.presets')].every(
+        (group) =>
+          new Set(
+            [...group.querySelectorAll('tp-toggle.preset')].map((tile) =>
+              Math.round(
+                tile.shadowRoot!.querySelector('[part~="toggle"]')!.getBoundingClientRect().height,
+              ),
+            ),
+          ).size === 1,
+      ),
+      true,
+    ),
+  );
+  checks.push(
+    check(
+      'the presets scrollbar shows on hover only',
+      scrollArea?.getAttribute('scrollbar-visibility') === 'on-hover' &&
+        !scrollArea.shadowRoot?.querySelector('[data-orientation="vertical"][data-visible]'),
+      scrollArea?.getAttribute('scrollbar-visibility'),
+    ),
+  );
   checks.push(
     check(
       '38 preset tiles (6 basic, 4 springs, 7 families × 4)',
@@ -526,6 +566,26 @@ export async function assertPresets(): Promise<Report> {
   );
   const newTitle = root.querySelector('tp-badge.badge')!.textContent?.trim();
   checks.push(check('badge follows the preset', newTitle === 'Bounce out', newTitle));
+  // The replay after a pick runs the picked easing, not the previous one.
+  {
+    const shape = graphOf(target).shadowRoot.querySelector<HTMLElement>('.shape')!;
+    target.setValue('ease-out');
+    await settle(target);
+    for (const animation of shape.getAnimations()) animation.cancel();
+    pressToggle(root.querySelector('tp-toggle.preset[value="ease-in"]')!);
+    await settle(target);
+    await tick();
+    const easing = shape.getAnimations()[0]?.effect?.getTiming().easing;
+    checks.push(
+      check(
+        'a preset pick replays the picked easing',
+        target.value === 'cubic-bezier(0.42, 0, 1, 1)' && easing === 'cubic-bezier(0.42, 0, 1, 1)',
+        { value: target.value, easing },
+      ),
+    );
+    pressToggle(root.querySelector('tp-toggle.preset[value="bounce-out"]')!);
+    await settle(target);
+  }
   // Pressing the current tile again changes nothing but restarts the preview from the start.
   const shape = graphOf(target).shadowRoot.querySelector<HTMLElement>('.shape')!;
   await new Promise((resolve) => setTimeout(resolve, 150));
@@ -582,6 +642,21 @@ export async function assertCompact(): Promise<Report> {
   const toggle = root.querySelector('tp-toggle.presets-toggle') as HTMLElement & {
     pressed: boolean;
   };
+  checks.push(
+    check(
+      'the presets Toggle is icon-only, square and named',
+      !!toggle.querySelector('tp-icon') &&
+        !toggle.textContent?.trim() &&
+        Math.abs(toggle.getBoundingClientRect().width - toggle.getBoundingClientRect().height) <
+          1 &&
+        (toggle.getAttribute('aria-label') ?? '').endsWith('Show presets'),
+      {
+        text: toggle.textContent?.trim(),
+        size: [toggle.getBoundingClientRect().width, toggle.getBoundingClientRect().height],
+        label: toggle.getAttribute('aria-label'),
+      },
+    ),
+  );
   checks.push(check('presets toggle present in compact', !!toggle, !!toggle));
   checks.push(
     check(
@@ -846,6 +921,58 @@ export async function assertGraph(): Promise<Report> {
   );
   const dotCount = graph.shadowRoot.querySelectorAll('.grid-dot').length;
   checks.push(check('grid is 11 by 11 dots', dotCount === 121, dotCount));
+  {
+    const layer = graph.shadowRoot.querySelector<HTMLElement>('.grid-layer');
+    const surfaceStyle = getComputedStyle(surface);
+    const layerStyle = layer ? getComputedStyle(layer) : null;
+    const layerBox = layer?.getBoundingClientRect();
+    const curveLayer = graph.shadowRoot.querySelector<HTMLElement>('.curve-layer');
+    const curveLayerStyle = curveLayer ? getComputedStyle(curveLayer) : null;
+    const frameBox = graph.shadowRoot.querySelector('.frame')!.getBoundingClientRect();
+    const curveBox = graph.shadowRoot
+      .querySelector('.curve-layer svg.plot')!
+      .getBoundingClientRect();
+    const inset = frameBox.left - graphBox.left;
+    checks.push(
+      check(
+        'the plot frame is inset inside the graph box so the curve ends clear the corners',
+        inset >= 8 &&
+          Math.abs(frameBox.top - graphBox.top - inset) < 1 &&
+          Math.abs(graphBox.right - frameBox.right - inset) < 1 &&
+          Math.abs(curveBox.left - frameBox.left) < 1 &&
+          Math.abs(curveBox.width - frameBox.width) < 1,
+        { inset, frame: frameBox.width, curve: curveBox.width },
+      ),
+    );
+    checks.push(
+      check(
+        'the curve clips to the graph box; only the handles and their lines may leave it',
+        !!curveLayer?.querySelector('polyline.curve') &&
+          curveLayerStyle?.overflow === 'hidden' &&
+          curveLayerStyle.borderTopLeftRadius === surfaceStyle.borderTopLeftRadius &&
+          !!graph.shadowRoot.querySelector('svg.plot .handle-line') &&
+          !graph.shadowRoot.querySelector('.grid-layer .handle-line, .curve-layer .handle-line') &&
+          !graph.shadowRoot.querySelector('.grid-layer .handle, .curve-layer .handle'),
+        { overflow: curveLayerStyle?.overflow, radius: curveLayerStyle?.borderTopLeftRadius },
+      ),
+    );
+    checks.push(
+      check(
+        'the dots clip to the graph box and its rounded corners',
+        !!layer &&
+          !!layer.querySelector('.grid-dot') &&
+          layerStyle?.overflow === 'hidden' &&
+          layerStyle.borderTopLeftRadius === surfaceStyle.borderTopLeftRadius &&
+          surfaceStyle.borderTopLeftRadius !== '0px' &&
+          Math.abs((layerBox?.width ?? 0) - graphBox.width) < 1 &&
+          !graph.shadowRoot.querySelector('svg.plot:not(.grid-layer svg) .grid-dot'),
+        {
+          overflow: layerStyle?.overflow,
+          radius: [layerStyle?.borderTopLeftRadius, surfaceStyle.borderTopLeftRadius],
+        },
+      ),
+    );
+  }
   checks.push(
     check(
       'no overshoot band and no unit outline are painted',
@@ -1098,7 +1225,8 @@ export async function assertPoints(): Promise<Report> {
       graph.shadowRoot.querySelectorAll('.point').length,
     ),
   );
-  const box = surface.getBoundingClientRect();
+  // Positions map into the inset plot frame, not the whole graph box.
+  const box = graph.shadowRoot.querySelector('.frame')!.getBoundingClientRect();
   const captured = capture(target, LANES);
   // Press the empty graph at 25 % time, 25 % progression: a new point there.
   pointer(surface, 'pointerdown', box.left + box.width * 0.25, box.top + box.height * 0.75);
@@ -1224,6 +1352,15 @@ export async function assertFrames(): Promise<Report> {
   checks.push(check('40 ticks whatever the duration (0.6 s)', bar.count === 40, bar.count));
   const ticks = bar.shadowRoot.querySelectorAll('line.tick');
   checks.push(check('40 ticks rendered', ticks.length === 40, ticks.length));
+  const tickBox = ticks[0]!.getBoundingClientRect();
+  const barBox = bar.getBoundingClientRect();
+  checks.push(
+    check(
+      'ticks span the bar height',
+      tickBox.height > 0 && Math.abs(tickBox.height - barBox.height) < 1,
+      { tick: tickBox.height, bar: barBox.height },
+    ),
+  );
   const img = bar.shadowRoot.querySelector('[role="img"]');
   checks.push(
     check(
@@ -1526,6 +1663,95 @@ export async function assertExpression(): Promise<Report> {
   );
   captured.stop();
   target.remove();
+  return report(checks);
+}
+
+/** V-17, V-50: header layout — Tabs at the start, the outlined Buttons together at the end. */
+export async function assertHeader(): Promise<Report> {
+  const checks: Check[] = [];
+  for (const id of ['extended', 'compact', 'rtl']) {
+    const target = editor(id);
+    const header = target.shadowRoot!.querySelector<HTMLElement>('[part~="easing-editor-header"]')!;
+    const buttons = [...header.children].filter((child) =>
+      child.matches('tp-button, tp-toggle'),
+    ) as HTMLElement[];
+    const play = header.querySelector('tp-button.play');
+    const box = header.getBoundingClientRect();
+    const rtl = getComputedStyle(header).direction === 'rtl';
+    const rects = buttons.map((button) => button.getBoundingClientRect());
+    const edge = rtl
+      ? Math.min(...rects.map((r) => r.left))
+      : Math.max(...rects.map((r) => r.right));
+    const gaps = rects
+      .slice(1)
+      .map((rect, index) =>
+        rtl ? rects[index]!.left - rect.right : rect.left - rects[index]!.right,
+      );
+    const tabs = header.querySelector('tp-tabs')!.getBoundingClientRect();
+    checks.push(
+      check(
+        `${id}: play is an outlined icon Button like the mode Button`,
+        play?.getAttribute('variant') === 'outline' &&
+          play.getAttribute('size') === 'icon-sm' &&
+          header.querySelector('tp-button.preview-mode')?.getAttribute('variant') === 'outline',
+        play?.getAttribute('variant'),
+      ),
+    );
+    checks.push(
+      check(
+        `${id}: the Buttons sit together at the inline end, the Tabs at the start`,
+        buttons.length === (id === 'compact' ? 3 : 2) &&
+          Math.abs(edge - (rtl ? box.left : box.right)) < 1 &&
+          gaps.every((gap) => gap > 0 && gap < 12) &&
+          Math.abs((rtl ? tabs.right : tabs.left) - (rtl ? box.right : box.left)) < 1,
+        { count: buttons.length, edge: Math.round(edge - (rtl ? box.left : box.right)), gaps },
+      ),
+    );
+  }
+  return report(checks);
+}
+
+/** V-50, V-52: the graph box is tinted apart from its surface; compact fills its container. */
+export async function assertSurfaces(): Promise<Report> {
+  const checks: Check[] = [];
+  const extended = editor('extended');
+  const graphRoot = graphOf(extended).shadowRoot.querySelector<HTMLElement>(
+    '[part~="easing-editor-graph"]',
+  )!;
+  const surfaceColor = getComputedStyle(graphRoot).backgroundColor;
+  const pageColor = getComputedStyle(document.body).backgroundColor;
+  checks.push(
+    check(
+      'the graph box is tinted apart from the page',
+      surfaceColor !== pageColor && surfaceColor !== 'rgba(0, 0, 0, 0)',
+      { surfaceColor, pageColor },
+    ),
+  );
+  const host = document.createElement('div');
+  host.style.inlineSize = '478px';
+  const compact = document.createElement('tp-easing-editor') as unknown as TpEasingEditor;
+  compact.setAttribute('layout', 'compact');
+  compact.setAttribute('label', 'Dialog width');
+  host.append(compact as unknown as Node);
+  document.body.append(host);
+  await settle(compact);
+  const root = compact.shadowRoot!.querySelector('.root')!.getBoundingClientRect();
+  const graph = graphOf(compact).getBoundingClientRect();
+  checks.push(
+    check(
+      'compact fills a 478 px container with a square graph',
+      Math.abs(root.width - 478) < 1 &&
+        Math.abs(graph.width - 478) < 1 &&
+        Math.abs(graph.height - 478) < 1,
+      { root: root.width, graph: [graph.width, graph.height] },
+    ),
+  );
+  host.style.inlineSize = '900px';
+  await settle(compact);
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const capped = compact.shadowRoot!.querySelector('.root')!.getBoundingClientRect().width;
+  checks.push(check('compact caps at 32rem on wide hosts', Math.abs(capped - 512) < 1, capped));
+  host.remove();
   return report(checks);
 }
 

@@ -25,6 +25,7 @@ import { TpTabs } from '../../components/tabs/tabs.js';
 import { TpToggleGroup } from '../../components/toggle-group/toggle-group.js';
 import { TpToggle } from '../../components/toggle/toggle.js';
 import { TpScrollArea } from '../../components/scroll-area/scroll-area.js';
+import { easeInOutControlPointsIcon } from '../../icons/ease-in-out-control-points.js';
 import { replayIcon } from '../../icons/media.js';
 import { plusIcon } from '../../icons/plus.js';
 import { minusIcon } from '../../icons/minus.js';
@@ -617,7 +618,10 @@ export class TpEasingEditor extends TpFormElement<string> {
     const event = new TpValueCommitEvent<string>(value, previous, reason, source, { metadata });
     this.onValueCommitted?.(event);
     this.dispatchEvent(event);
-    // Every settled adjustment replays the preview (Widgets 6.2 Anatomy, preview layer).
+    // Every settled adjustment replays the preview (Widgets 6.2 Anatomy, preview layer). The
+    // commit can arrive before the value lane requests its render, so request it here: the
+    // replay must follow the render that hands the committed curve to the graph.
+    this.requestUpdate();
     void this.updateComplete.then(() => this.#graph?.play());
   }
 
@@ -1272,6 +1276,14 @@ export class TpEasingEditor extends TpFormElement<string> {
         );
       }
     }
+    const presetsToggle = this.renderRoot.querySelector<TpToggle>('tp-toggle.presets-toggle');
+    if (presetsToggle) {
+      await presetsToggle.updateComplete;
+      this.#registerOnce(
+        presetsToggle.shadowRoot?.querySelector<HTMLElement>('[part~="toggle"]') ?? null,
+        'easing-editor-presets-toggle',
+      );
+    }
     for (const [element, release] of this.#registeredParts)
       if (!element.isConnected) {
         release();
@@ -1426,7 +1438,7 @@ export class TpEasingEditor extends TpFormElement<string> {
         : html`<tp-button
             class="play"
             part="easing-editor-play"
-            variant="ghost"
+            variant="outline"
             size="icon-sm"
             .icon=${replayIcon}
             aria-label=${this.#dimensionLabel(strings.play)}
@@ -1459,8 +1471,8 @@ export class TpEasingEditor extends TpFormElement<string> {
             ?disabled=${this.effectiveDisabled}
             @tp-value-change=${this.#presetsToggleChange}
             @tp-field-value=${stop}
-            >${strings.presets}</tp-toggle
-          >`
+            ><tp-icon .icon=${easeInOutControlPointsIcon} aria-hidden="true"></tp-icon
+          ></tp-toggle>`
         : nothing;
     return this.renderPart(
       'easing-editor-header',
@@ -1494,7 +1506,10 @@ export class TpEasingEditor extends TpFormElement<string> {
           'data-overlay': overlay,
           '@keydown': this.#presetsKeyDown,
         },
-        content: html`<tp-scroll-area axis="vertical" label=${this.#dimensionLabel(strings.presets)}
+        content: html`<tp-scroll-area
+          axis="y"
+          scrollbar-visibility="on-hover"
+          label=${this.#dimensionLabel(strings.presets)}
           ><div class="presets-list">${groups}</div></tp-scroll-area
         >`,
       },

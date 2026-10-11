@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-11T14:28:35.121Z",
+  "generatedAt": "2026-10-11T15:26:44.772Z",
   "version": "0.1.0",
   "method": "Each catalog component (from @tweakpad/ui) and widget (from @tweakpad/ui/widgets) as documented (the root plus the parts its canonical example composes), imported and defined; Rolldown resolves the modules that ships (lit external, tree-shaken) and each module is measured as published in dist, bytes on disk and gzip per file, the way the build log lists it.",
   "lit": {
@@ -18,9 +18,9 @@
     "modules": 595
   },
   "fullWidgets": {
-    "bytes": 802347,
-    "gzip": 274969,
-    "modules": 231
+    "bytes": 805259,
+    "gzip": 275884,
+    "modules": 232
   },
   "components": [
     {
@@ -118,12 +118,12 @@
       "kind": "flattening-compound",
       "section": "widgets",
       "uses": [],
-      "bytes": 587179,
-      "gzip": 204903,
-      "ownGzip": 196585,
-      "modules": 178,
-      "rootBytes": 587179,
-      "rootGzip": 204903,
+      "bytes": 590091,
+      "gzip": 205818,
+      "ownGzip": 197500,
+      "modules": 179,
+      "rootBytes": 590091,
+      "rootGzip": 205818,
       "includes": [
         "tp-badge",
         "tp-button",

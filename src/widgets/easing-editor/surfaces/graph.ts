@@ -93,6 +93,7 @@ export class TpEasingEditorGraph extends TpElement {
   readonly #groupId = createId('tp-easing-graph');
   #surface: HTMLElement | null = null;
   #shape: HTMLElement | null = null;
+  #frame: HTMLElement | null = null;
   #drag: PointerDrag | undefined;
   #pressed: EasingCurve | undefined;
   #active: Active | undefined;
@@ -254,6 +255,10 @@ export class TpEasingEditorGraph extends TpElement {
     this.#shape = node;
   };
 
+  #frameReference = (node: HTMLElement | null): void => {
+    this.#frame = node;
+  };
+
   /** Resolves the press: a handle or point to drag, a new custom point, or a declined press. */
   #begin(point: PointerDragPoint, event: PointerEvent): boolean | undefined {
     const curve = this.curve;
@@ -297,14 +302,18 @@ export class TpEasingEditorGraph extends TpElement {
     return undefined;
   }
 
+  /** Maps a pointer position on the surface into the inset plot frame. */
   #coordinates(point: PointerDragPoint): EasingPoint {
-    const width = point.width || 1;
-    const height = point.height || 1;
+    const frame = this.#frame;
+    const left = frame?.offsetLeft ?? 0;
+    const top = frame?.offsetTop ?? 0;
+    const width = frame?.offsetWidth || point.width || 1;
+    const height = frame?.offsetHeight || point.height || 1;
     return {
-      input: Math.min(1, Math.max(0, point.x / width)),
+      input: Math.min(1, Math.max(0, (point.x - left) / width)),
       output: clampParameter(
         PROGRESSION_DIMENSION,
-        progressionAt(1 - point.y / height, this.#range),
+        progressionAt(1 - (point.y - top) / height, this.#range),
       ),
     };
   }
@@ -632,7 +641,21 @@ export class TpEasingEditorGraph extends TpElement {
     const path = curve
       ? svg`<polyline part="easing-editor-graph-curve" class="curve" points=${curvePolyline(easingFunction(curve), range, 100, 100, SAMPLES)} vector-effect="non-scaling-stroke"></polyline>`
       : nothing;
-    return svg`<svg class="plot" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><g part="easing-editor-graph-grid" class="grid">${dots}</g>${handleLines}${path}</svg>`;
+    // The dots and the curve clip to the graph box and its corners; only the handles and their
+    // lines may leave it. The curve keeps painting above the handle lines.
+    return html`<div class="grid-layer">
+        <svg class="plot" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <g part="easing-editor-graph-grid" class="grid">${dots}</g>
+        </svg>
+      </div>
+      <svg class="plot" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        ${handleLines}
+      </svg>
+      <div class="curve-layer">
+        <svg class="plot" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          ${path}
+        </svg>
+      </div>`;
   }
 
   protected override render() {
@@ -685,7 +708,8 @@ export class TpEasingEditorGraph extends TpElement {
         'data-playing': this.#playing,
         'data-editable': curve?.kind === 'bezier' || curve?.kind === 'custom',
       },
-      content: html`${previewLayer}${this.#renderPlot()}${handles}`,
+      content: html`${previewLayer}${this.#renderPlot()}
+        <div ${bindPart({ class: 'frame' }, [this.#frameReference])}>${handles}</div>`,
     });
   }
 }

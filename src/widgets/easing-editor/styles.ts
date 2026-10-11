@@ -13,7 +13,7 @@ export const easingEditorStyles = css`
     opacity: 1;
   }
 
-  /* The graph side bounds the editor: alone in the compact layout, with the presets column beside. */
+  /* The graph side bounds the editor, with the presets column beside it when it is shown there. */
   .root {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -29,6 +29,11 @@ export const easingEditorStyles = css`
     );
   }
 
+  /* Compact (a dialog, a popover): fill the container up to a dialog's width; the graph follows. */
+  .root[data-layout='compact'] {
+    max-inline-size: calc(var(--tp-spacing) * 128);
+  }
+
   .label {
     display: block;
   }
@@ -40,17 +45,11 @@ export const easingEditorStyles = css`
     min-inline-size: 0;
   }
 
+  /* The Tabs hold the inline start; play, preview mode and presets sit together at the end. */
   .header > tp-tabs {
     flex: none;
     min-inline-size: 0;
-  }
-
-  .header > .title {
-    flex: 1 1 auto;
-    min-inline-size: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    margin-inline-end: auto;
   }
 
   .header > tp-button,
@@ -164,10 +163,13 @@ export const easingEditorStyles = css`
     pointer-events: none;
   }
 
+  /* Toggles keep their labels on one line; preset names wrap between words inside the tile. */
   .preset-name {
     display: block;
     max-inline-size: 100%;
     text-align: center;
+    white-space: normal;
+    text-wrap: balance;
     overflow-wrap: anywhere;
     pointer-events: none;
   }
@@ -296,13 +298,38 @@ export const easingSurfaceStyles = css`
     cursor: not-allowed;
   }
 
-  .plot {
+  /*
+   * The graph's plot frame sits inset by the editor's spacing step inside the graph box, so the
+   * curve's ends and the corner handles clear the rounded clip; the frame and the plots share it.
+   * The frames bar has no inset. An SVG does not stretch between opposite insets, so the plots
+   * take explicit sizes.
+   */
+  .graph {
+    --_tp-easing-editor-plot-inset: var(--_tp-easing-editor-space, var(--tp-space-3));
+  }
+
+  .plot,
+  .frame {
     display: block;
     position: absolute;
-    inset: 0;
-    inline-size: 100%;
-    block-size: 100%;
+    inset: var(--_tp-easing-editor-plot-inset, 0);
+    inline-size: calc(100% - 2 * var(--_tp-easing-editor-plot-inset, 0px));
+    block-size: calc(100% - 2 * var(--_tp-easing-editor-plot-inset, 0px));
     overflow: visible;
+  }
+
+  .frame {
+    pointer-events: none;
+  }
+
+  /* The grid dots and the curve clip to the graph box and its rounded corners; handles do not. */
+  .grid-layer,
+  .curve-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
   }
 
   /* The preview square is centered and sized to the graph area; rotation fits it when turned. */
@@ -314,6 +341,7 @@ export const easingSurfaceStyles = css`
     justify-content: center;
     pointer-events: none;
     overflow: hidden;
+    border-radius: inherit;
   }
 
   .shape {
@@ -336,6 +364,7 @@ export const easingSurfaceStyles = css`
     left: 0;
     translate: -50% -50%;
     touch-action: none;
+    pointer-events: auto;
   }
 
   .handle::after,
