@@ -62,10 +62,12 @@ nearest point.
 
 The graph is a square SVG plot with a dotted grid marking the unit box (a dot at every tenth,
 no outline, clipped to the graph box and its rounded corners; outside the unit box the graph keeps
-its background and paints no dots). The plot sits inset by the editor's spacing step inside the box, so
-the curve's ends and the corner handles clear its rounded corners; the curve clips to the box
-too, and only the Bézier handles, their lines and the custom points may reach past it; a Badge in its
-bottom-right corner names the matching preset or reads Custom. Bézier curves show two handles
+its background and paints no dots). The plot sits inset inside the box by the editor's spacing
+step (8 px at the `sm` size and in the compact layout, 12 px by default, 16 px at `lg`), so the
+curve's ends and the corner handles clear its rounded corners. The curve clips to the box edges,
+not to the inset, so an overshoot into the inset stays visible; only the Bézier handles, their
+lines and the custom points may reach past the box. A Badge in its bottom-right corner names the
+matching preset or reads Custom. Bézier curves show two handles
 with their lines; custom curves show one point per entry. While a handle, point or Slider is
 dragged the progression range holds still; when the drag settles (or the value changes otherwise)
 the plot and the frames bar ease to the re-quantized range through the Foundation motion role
