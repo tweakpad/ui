@@ -10,7 +10,6 @@ import type { ChangeReason } from '../../foundation/types.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import {
   builtinHighlighter,
-  copyText,
   parseLineRanges,
   plainTokens,
   type CodeHighlighter,
@@ -20,6 +19,7 @@ import {
 import { chevronDownIcon } from '../../icons/chevron-down.js';
 import { codeBlockPresentation } from '../../presentation/families/code-block.js';
 import { dedentCode } from '../../foundation/dedent.js';
+import { copyText } from '../../foundation/clipboard.js';
 import { TpButton } from '../button/button.js';
 import { TpCopyButton, type CopyDetail } from '../copy-button/copy-button.js';
 import { TpTooltip } from '../tooltip/tooltip.js';

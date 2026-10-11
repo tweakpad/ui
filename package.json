@@ -70,6 +70,11 @@
       "import": "./dist/markdown.js",
       "default": "./dist/markdown.js"
     },
+    "./qr": {
+      "types": "./dist/foundation/qr/index.d.ts",
+      "import": "./dist/qr.js",
+      "default": "./dist/qr.js"
+    },
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",

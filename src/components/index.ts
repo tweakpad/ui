@@ -50,6 +50,7 @@ export * from './pagination/index.js';
 export * from './popover/index.js';
 export * from './preview-card/index.js';
 export * from './progress/index.js';
+export * from './qr-code/index.js';
 export * from './questionnaire/index.js';
 export * from './radio-group/index.js';
 export * from './resizable-panel-group/index.js';

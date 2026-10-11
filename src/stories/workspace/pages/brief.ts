@@ -1,5 +1,6 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
+import { downloadBlob } from '../../../foundation/download.js';
 import { boldIcon, italicIcon } from '../../../icons/text-formatting.js';
 import { downloadIcon } from '../../../icons/download.js';
 import { icon, type WorkspaceHost } from '../host.js';
@@ -19,12 +20,7 @@ const shortcut = (...keys: string[]) =>
   >`;
 
 function download(host: WorkspaceHost, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown' }));
-  const anchor = host.ownerDocument.createElement('a');
-  anchor.href = url;
-  anchor.download = 'Launch brief.md';
-  anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  downloadBlob(host.ownerDocument, new Blob([text], { type: 'text/markdown' }), 'Launch brief.md');
 }
 
 /** Release brief editor: Menubar commands, formatting Toggles and a resizable live preview. */

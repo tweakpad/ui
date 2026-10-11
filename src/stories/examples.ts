@@ -453,6 +453,12 @@ const examples = {
       zoom="in"
     ></tp-image>
   `,
+  'tp-qr-code': () => html`
+    <tp-qr-code
+      value="https://ledger.app/connect/jd-4829"
+      label="Scan to connect your mobile device"
+    ></tp-qr-code>
+  `,
   'tp-text-motion': () => html`
     <h3>
       <tp-text-motion split="words lines" mask="lines" reveal="up"

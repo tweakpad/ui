@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>QR code verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 860px;
+        display: grid;
+        gap: 28px;
+      }
+      section {
+        display: grid;
+        gap: 12px;
+        justify-items: start;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 20px;
+      }
+      #narrow {
+        inline-size: 100px;
+      }
+      #ancestor-size {
+        --tp-qr-code-size: 200px;
+      }
+      #parts::part(modules) {
+        fill: rgb(200, 0, 0);
+      }
+      #paste {
+        inline-size: 320px;
+        min-block-size: 48px;
+        border: 1px dashed var(--tp-border);
+        padding: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>QR code verification</h1>
+      <section>
+        <h2>Basic</h2>
+        <tp-qr-code id="basic" value="https://tweakpad.github.io" label="Tweakpad UI"></tp-qr-code>
+      </section>
+      <section>
+        <h2>Actions</h2>
+        <tp-button id="before" variant="outline">Before</tp-button>
+        <tp-qr-code
+          id="actions"
+          value="https://tweakpad.github.io/invite/42"
+          label="Invite link"
+          copyable
+          downloadable
+          filename="invite"
+        ></tp-qr-code>
+        <div class="row">
+          <tp-qr-code
+            id="copy-only"
+            value="copy only"
+            label="Copy only"
+            size="sm"
+            copyable
+          ></tp-qr-code>
+          <tp-qr-code
+            id="download-only"
+            value="download only"
+            label="Download only"
+            size="sm"
+            downloadable
+          ></tp-qr-code>
+          <tp-qr-code id="empty" label="Empty" size="sm" copyable downloadable></tp-qr-code>
+          <tp-qr-code id="overflow" label="Too long" size="sm" copyable downloadable></tp-qr-code>
+        </div>
+        <div id="paste" contenteditable="true" role="textbox" aria-label="Paste target"></div>
+      </section>
+      <section>
+        <h2>Sizes and colors</h2>
+        <div class="row">
+          <tp-qr-code
+            id="sm"
+            size="sm"
+            value="https://tweakpad.github.io"
+            label="Small"
+          ></tp-qr-code>
+          <tp-qr-code id="default" value="https://tweakpad.github.io" label="Default"></tp-qr-code>
+          <tp-qr-code
+            id="lg"
+            size="lg"
+            value="https://tweakpad.github.io"
+            label="Large"
+          ></tp-qr-code>
+          <div id="ancestor-size">
+            <tp-qr-code
+              id="variable"
+              value="https://tweakpad.github.io"
+              label="Variable"
+            ></tp-qr-code>
+          </div>
+        </div>
+        <div class="row">
+          <div id="narrow">
+            <tp-qr-code
+              id="narrowed"
+              value="https://tweakpad.github.io"
+              label="Narrow"
+            ></tp-qr-code>
+          </div>
+          <tp-qr-code
+            id="colors"
+            value="https://tweakpad.github.io"
+            label="Colors"
+            style="--tp-qr-code-foreground: #3b2fc9; --tp-qr-code-background: #f4f2ff"
+          ></tp-qr-code>
+          <tp-qr-code id="parts" value="https://tweakpad.github.io" label="Parts"></tp-qr-code>
+          <tp-qr-code
+            id="low-contrast"
+            value="low contrast"
+            label="Low contrast"
+            style="--tp-qr-code-foreground: #cccccc"
+          ></tp-qr-code>
+        </div>
+      </section>
+      <section dir="rtl">
+        <h2>Right to left</h2>
+        <tp-qr-code
+          id="rtl"
+          value="https://tweakpad.github.io"
+          label="Right to left"
+          copyable
+          downloadable
+        ></tp-qr-code>
+      </section>
+      <section>
+        <h2>Dynamic</h2>
+        <div id="dynamic"></div>
+      </section>
+      <pre id="log"></pre>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

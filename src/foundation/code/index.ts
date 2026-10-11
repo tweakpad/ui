@@ -4,4 +4,3 @@ export { lex, toLines, type Grammar, type LexRule, type RawToken } from './lexer
 export * from './tokenizer.js';
 export * from './builtin.js';
 export * from './adapters/shiki.js';
-export * from './clipboard.js';

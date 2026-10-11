@@ -2,7 +2,12 @@ import { css, html, nothing, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { LiveAnnouncer } from '../../foundation/announcer.js';
-import { copyText } from '../../foundation/code/clipboard.js';
+import {
+  copyData,
+  copyText,
+  type ClipboardRepresentations,
+  type ClipboardWriteResult,
+} from '../../foundation/clipboard.js';
 import { copyIcon } from '../../icons/copy.js';
 import { checkIcon } from '../../icons/check.js';
 import { copyButtonPresentation } from '../../presentation/families/copy-button.js';
@@ -15,6 +20,16 @@ export type CopyButtonSize = 'xs' | 'sm' | 'default' | 'lg';
 export interface CopyDetail {
   readonly value: string;
 }
+/** Detail of `tp-copied` and `tp-copy-error`: the value and the media types actually written. */
+export interface CopyResultDetail extends CopyDetail {
+  readonly types: readonly string[];
+}
+/**
+ * Supplies further clipboard representations for `value`, keyed by media type (for example
+ * `image/png`), written together with `value` as `text/plain` in one clipboard item. Called
+ * synchronously during the activation; pending representations are returned as promises.
+ */
+export type CopyDataProvider = (value: string) => ClipboardRepresentations;
 
 const ICON_SIZES: Record<CopyButtonSize, 'icon-xs' | 'icon-sm' | 'icon' | 'icon-lg'> = {
   xs: 'icon-xs',
@@ -25,13 +40,14 @@ const ICON_SIZES: Record<CopyButtonSize, 'icon-xs' | 'icon-sm' | 'icon' | 'icon-
 
 /**
  * Writes `value` to the clipboard and confirms in place (Component Library §16 Copy button,
- * clipboard semantics of Foundation §18.13): the composed Button swaps its copy Icon for a
- * check and takes the copied message as its name for `duration`, every result is announced
- * politely, and `tp-copy` (cancelable) / `tp-copied` / `tp-copy-error` report the sequence.
+ * Foundation §19.25 Clipboard write): the composed Button swaps its copy Icon for a check and
+ * takes the copied message as its name for `duration`, every result is announced politely, and
+ * `tp-copy` (cancelable) / `tp-copied` / `tp-copy-error` report the sequence. With `data` set,
+ * one clipboard item carries its representations together with `value` as `text/plain`.
  *
  * @fires tp-copy - Cancelable, before writing; `detail.value`.
- * @fires tp-copied - After a successful write; `detail.value`.
- * @fires tp-copy-error - After a failed write; `detail.value`.
+ * @fires tp-copied - After a successful write; `detail.value` and the written `detail.types`.
+ * @fires tp-copy-error - After a failed write; `detail.value` and empty `detail.types`.
  */
 export class TpCopyButton extends TpElement {
   static tagName = 'tp-copy-button';
@@ -42,6 +58,7 @@ export class TpCopyButton extends TpElement {
   static override properties = {
     ...TpElement.properties,
     value: { type: String },
+    data: { attribute: false },
     label: { type: String },
     copiedLabel: { type: String, attribute: 'copied-label' },
     failedLabel: { type: String, attribute: 'failed-label' },
@@ -64,12 +81,20 @@ export class TpCopyButton extends TpElement {
         display: none;
       }
 
+      /* The composed Button paints the unavailable state; the host is not dimmed twice. */
+      :host([disabled]) {
+        cursor: auto;
+        opacity: 1;
+      }
+
       .label {
         white-space: nowrap;
       }
     `,
   ];
   value = '';
+  /** Further representations written with `value` in one clipboard item; null copies text. */
+  data: CopyDataProvider | null = null;
   label = 'Copy';
   copiedLabel = 'Copied';
   failedLabel = 'Copy failed';
@@ -97,24 +122,44 @@ export class TpCopyButton extends TpElement {
     return this.renderRoot?.querySelector('tp-button') ?? null;
   }
 
-  /** Writes `value` and resolves to whether the clipboard accepted it. */
+  /** Writes `value` (and `data`) and resolves to whether the clipboard accepted it. */
   async copy(sourceEvent?: Event): Promise<boolean> {
     void sourceEvent;
     if (this.disabled) return false;
     const value = this.value;
     if (!this.emit<CopyDetail>('tp-copy', { value }, { cancelable: true })) return false;
-    const copied = await copyText(this.ownerDocument, value);
+    const result = await this.#write(value);
     this.#announcer ??= new LiveAnnouncer({ document: () => this.ownerDocument });
-    this.#announcer.announce(copied ? this.copiedLabel : this.failedLabel);
-    if (copied) {
+    this.#announcer.announce(result.copied ? this.copiedLabel : this.failedLabel);
+    if (result.copied) {
       this._copied = true;
       clearTimeout(this.#timer);
       this.#timer = setTimeout(() => {
         this._copied = false;
       }, this.duration);
-      this.emit<CopyDetail>('tp-copied', { value });
-    } else this.emit<CopyDetail>('tp-copy-error', { value });
-    return copied;
+      this.emit<CopyResultDetail>('tp-copied', { value, types: result.types });
+    } else this.emit<CopyResultDetail>('tp-copy-error', { value, types: [] });
+    return result.copied;
+  }
+
+  /** The text write, or one data write when `data` supplies further representations. */
+  #write(value: string): Promise<ClipboardWriteResult> {
+    const document = this.ownerDocument;
+    if (!this.data) {
+      return copyText(document, value).then((copied) => ({
+        copied,
+        types: copied ? ['text/plain'] : [],
+      }));
+    }
+    let representations: ClipboardRepresentations = {};
+    try {
+      representations = this.data(value);
+    } catch (error) {
+      this.diagnose('copy-button-data', `The data provider threw: ${String(error)}`);
+    }
+    const record: Record<string, ClipboardRepresentations[string]> = { ...representations };
+    if (!('text/plain' in record) && value !== '') record['text/plain'] = value;
+    return copyData(document, record);
   }
 
   override focus(options?: FocusOptions): void {

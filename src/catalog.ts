@@ -66,6 +66,7 @@ export const catalog = [
   ['Code block', 'tp-code-block', 'presentational-primitive'],
   ['Markdown', 'tp-markdown', 'preset-composition'],
   ['Image', 'tp-image', 'preset-composition'],
+  ['QR code', 'tp-qr-code', 'preset-composition'],
   ['Scroll trigger', 'tp-scroll-trigger', 'thin-wrapper'],
   ['Timeline', 'tp-timeline', 'compound-reexport'],
   ['Autocomplete', 'tp-autocomplete', 'flattening-compound'],

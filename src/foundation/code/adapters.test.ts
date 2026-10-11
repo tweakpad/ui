@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createShikiHighlighter, type ShikiHighlighterLike } from './adapters/shiki.js';
-import { copyText } from './clipboard.js';
 import { parseLineRanges } from './ranges.js';
 import { tokenize } from './tokenizer.js';
 import type { CodeHighlighter } from './types.js';
@@ -93,58 +92,5 @@ describe('Shiki adapter', () => {
     });
     const defaulted = createShikiHighlighter({ codeToTokens: () => ({ tokens: [] }) }, { themes });
     expect(defaulted.languages).toBeUndefined();
-  });
-});
-
-describe('copyText', () => {
-  function documentStub(clipboard?: { writeText: (text: string) => Promise<void> }) {
-    const appended: unknown[] = [];
-    const area = {
-      value: '',
-      style: {} as Record<string, string>,
-      setAttribute: vi.fn(),
-      focus: vi.fn(),
-      select: vi.fn(),
-      remove: vi.fn(),
-    };
-    const document = {
-      defaultView: { navigator: { clipboard } },
-      activeElement: null,
-      body: { append: (node: unknown) => appended.push(node) },
-      createElement: vi.fn(() => area),
-      execCommand: vi.fn(() => true),
-    };
-    return { document: document as unknown as Document, area, appended };
-  }
-
-  it('uses the Clipboard API when it is available', async () => {
-    const writeText = vi.fn(async () => {});
-    const { document } = documentStub({ writeText });
-    await expect(copyText(document, 'npm i')).resolves.toBe(true);
-    expect(writeText).toHaveBeenCalledWith('npm i');
-    expect(document.createElement).not.toHaveBeenCalled();
-  });
-
-  it('falls back to a hidden text area when the Clipboard API rejects or is missing', async () => {
-    const rejected = documentStub({
-      writeText: vi.fn(async () => Promise.reject(new Error('denied'))),
-    });
-    await expect(copyText(rejected.document, 'x')).resolves.toBe(true);
-    expect(rejected.area.value).toBe('x');
-    expect(rejected.area.select).toHaveBeenCalled();
-    expect(rejected.area.remove).toHaveBeenCalled();
-    const missing = documentStub();
-    (missing.document.execCommand as ReturnType<typeof vi.fn>).mockReturnValue(false);
-    await expect(copyText(missing.document, 'y')).resolves.toBe(false);
-  });
-
-  it('never throws', async () => {
-    const broken = {
-      defaultView: null,
-      createElement: () => {
-        throw new Error('no dom');
-      },
-    };
-    await expect(copyText(broken as unknown as Document, 'z')).resolves.toBe(false);
   });
 });

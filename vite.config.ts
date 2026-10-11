@@ -30,6 +30,10 @@ export default defineConfig({
   ],
   build: {
     emptyOutDir: false,
+    // Current Chrome, Edge, Firefox and Safari (README "Browser support") all support
+    // light-dark(); lowering it to root-switched variables would stop a scoped color-scheme
+    // (a light QR code tile, dark video controls) from resolving the theme roles beneath it.
+    cssTarget: ['chrome123', 'edge123', 'firefox120', 'safari17.5'],
     lib: {
       entry: {
         index: resolve(import.meta.dirname, 'src/index.ts'),
@@ -41,6 +45,7 @@ export default defineConfig({
         map: resolve(import.meta.dirname, 'src/foundation/map/index.ts'),
         code: resolve(import.meta.dirname, 'src/foundation/code/index.ts'),
         markdown: resolve(import.meta.dirname, 'src/foundation/markdown/index.ts'),
+        qr: resolve(import.meta.dirname, 'src/foundation/qr/index.ts'),
         register: resolve(import.meta.dirname, 'src/register.ts'),
         'register/icon': resolve(import.meta.dirname, 'src/register/icon.ts'),
         // The widgets section ships through its own entries; `index` and `register` never reach it.

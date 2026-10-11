@@ -1057,6 +1057,16 @@ export abstract class TpAnchoredSurface extends TpElement {
     };
     this.records.set(element, { identifier, options, sync, cleanup });
     sync();
+    // A composed control (a Button) can be upgraded or render its native control after
+    // registration; the trigger attributes then move from the host to that control.
+    const registry = this.ownerDocument.defaultView?.customElements;
+    if (target === element && registry && element.localName.includes('-'))
+      void registry
+        .whenDefined(element.localName)
+        .then(() => (element as HTMLElement & { updateComplete?: Promise<unknown> }).updateComplete)
+        .then(() => {
+          if (this.records.get(element)?.sync === sync) sync();
+        });
     // Trigger records only select the active trigger and payload of an open surface.
     if (this.open) this.requestUpdate();
     return () => {

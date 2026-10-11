@@ -4,14 +4,15 @@
 turns into a check, its accessible name becomes the copied message for a short time, and the
 result is announced politely. It composes one [Button](button.md) with an [Icon](icon.md), so
 variants, sizes, focus and disabled treatment are the Button's. It is the library's one copy
-control; [Code block](code-block.md) and the color picker compose it instead of owning clipboard
-logic.
+control; [Code block](code-block.md), [QR code](qr-code.md) and the color picker compose it
+instead of owning clipboard logic.
 
 ## Properties
 
 | Property      | Attribute      | Values                                                            | Default       |
 | ------------- | -------------- | ----------------------------------------------------------------- | ------------- |
 | `value`       | `value`        | Text written to the clipboard                                     | `""`          |
+| `data`        | (property)     | Provider of further representations, see below                    | `null`        |
 | `label`       | `label`        | Accessible name at rest; visible text when `showLabel` is true    | `Copy`        |
 | `copiedLabel` | `copied-label` | Name, visible text and announcement after a successful copy       | `Copied`      |
 | `failedLabel` | `failed-label` | Announcement after a failed copy                                  | `Copy failed` |
@@ -48,14 +49,33 @@ button in an Input group action:
 - `copied` is true while the check icon and the copied message are shown.
 - `focus()` moves focus to the composed Button.
 
-| Event           | Cancelable | Detail                                         |
-| --------------- | ---------- | ---------------------------------------------- |
-| `tp-copy`       | yes        | `value`; preventing it skips the write         |
-| `tp-copied`     | no         | `value`, after a successful write              |
-| `tp-copy-error` | no         | `value`, after a failed write (also announced) |
+| Event           | Cancelable | Detail                                                           |
+| --------------- | ---------- | ---------------------------------------------------------------- |
+| `tp-copy`       | yes        | `value`; preventing it skips the write                           |
+| `tp-copied`     | no         | `value` and `types`, the media types written                     |
+| `tp-copy-error` | no         | `value` and empty `types`, after a failed write (also announced) |
 
 Copying uses the Clipboard API and falls back to a selection-based copy where it is unavailable
 or denied; success is reported only after the write succeeded.
+
+## Copying more than text
+
+`data` is a function that receives `value` and returns further representations keyed by media
+type, each a string, a `Blob` or a promise of either. They are written with `value` as
+`text/plain` in one clipboard item, so a paste target picks the type it understands: an image
+editor takes the picture and a text field takes the text. The function runs during the click,
+so return pending work as promises instead of awaiting it; browsers that tie clipboard access to
+the click (Safari) reject a write that starts later.
+
+```js
+const button = document.querySelector('tp-copy-button');
+button.value = 'https://example.com/invite/42';
+button.data = () => ({ 'image/png': renderInviteCard() }); // renderInviteCard(): Promise<Blob>
+```
+
+Types the browser cannot write are left out. When the browser refuses the item, the text alone is
+copied and `tp-copied` reports `types: ['text/plain']`. [QR code](qr-code.md) uses this to copy its
+image together with its value.
 
 ## Semantics and styling
 

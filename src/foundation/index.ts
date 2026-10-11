@@ -8,6 +8,7 @@ export * from './color-scheme.js';
 export * from './questionnaire.js';
 export * from './controllable-state.js';
 export * from './checkbox-group.js';
+export * from './clipboard.js';
 export * from './define.js';
 export * from './element.js';
 export * from './form-element.js';

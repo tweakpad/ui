@@ -94,12 +94,13 @@ import * as media from '@tweakpad/ui/media';
 import * as map from '@tweakpad/ui/map';
 import * as code from '@tweakpad/ui/code';
 import * as markdown from '@tweakpad/ui/markdown';
+import * as qr from '@tweakpad/ui/qr';
 import packageJson from '@tweakpad/ui/package.json' with { type: 'json' };
 
 defineElement(TpButton.tagName, TpButton);
 const button: HTMLElementTagNameMap['tp-button'] = document.createElement('tp-button');
 button.variant = 'outline';
-export const used = [TpIcon, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, widgetEntries.length, packageJson.version];
+export const used = [TpIcon, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, qr.encodeQr('x').size, widgetEntries.length, packageJson.version];
 `,
 );
 writeFileSync(join(consumer, 'css.d.ts'), "declare module '*.css';\n");
@@ -123,6 +124,18 @@ writeFileSync(
     2,
   ),
 );
+
+// The QR encoder is DOM-free: it must run in Node without a document or Lit.
+run(
+  process.execPath,
+  [
+    '--input-type=module',
+    '-e',
+    "const { encodeQr } = await import('@tweakpad/ui/qr'); if (encodeQr('HELLO WORLD').version !== 1) process.exit(1);",
+  ],
+  consumer,
+);
+console.log('pack-smoke: @tweakpad/ui/qr runs in Node');
 
 // 4. Type-check against the published declarations, including the library's own.
 run(join(root, 'node_modules/.bin/tsc'), ['-p', consumer]);

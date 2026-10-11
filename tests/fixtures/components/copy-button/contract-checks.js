@@ -57,8 +57,34 @@ export async function run({ readClipboard = false } = {}) {
 
   copy.disabled = true;
   await settle(copy);
-  const disabled = (await copy.copy()) === false && button(copy).disabled === true;
+  // The composed Button paints the unavailable state; the host is not dimmed a second time.
+  const disabled =
+    (await copy.copy()) === false &&
+    button(copy).disabled === true &&
+    getComputedStyle(copy).opacity === '1';
   copy.disabled = false;
+
+  // Data: the provider's representations and the value as text/plain in one clipboard item.
+  const results = [];
+  const record = (event) => results.push({ type: event.type, types: event.detail.types });
+  copy.addEventListener('tp-copied', record);
+  copy.addEventListener('tp-copy-error', record);
+  let provided = null;
+  copy.data = (value) => {
+    provided = value;
+    return { 'text/html': `<b>${value}</b>` };
+  };
+  const dataResult = await copy.copy();
+  copy.data = null;
+  copy.removeEventListener('tp-copied', record);
+  copy.removeEventListener('tp-copy-error', record);
+  const data =
+    provided === 'contract value' &&
+    dataResult === true &&
+    results[0]?.type === 'tp-copied' &&
+    results[0].types.join() === 'text/html,text/plain';
+  await wait(450);
+  await settle(copy);
 
   copy.showLabel = true;
   copy.copiedLabel = 'Done';
@@ -87,6 +113,7 @@ export async function run({ readClipboard = false } = {}) {
     reset,
     cancelled,
     disabled,
+    data,
     labelled,
     labelledCopied,
     clipboard: clipboard === 'matches' || clipboard === 'unavailable',

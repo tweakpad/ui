@@ -69,6 +69,7 @@ import { mapPresentation } from './map.js';
 import { codeBlockPresentation } from './code-block.js';
 import { markdownPresentation } from './markdown.js';
 import { imagePresentation } from './image.js';
+import { qrCodePresentation } from './qr-code.js';
 import { scrollTriggerPresentation } from './scroll-trigger.js';
 import { timelinePresentation } from './timeline.js';
 import { autocompletePresentation } from './autocomplete.js';
@@ -146,6 +147,7 @@ export { mapPresentation } from './map.js';
 export { codeBlockPresentation } from './code-block.js';
 export { markdownPresentation } from './markdown.js';
 export { imagePresentation } from './image.js';
+export { qrCodePresentation } from './qr-code.js';
 export { scrollTriggerPresentation } from './scroll-trigger.js';
 export { timelinePresentation } from './timeline.js';
 export { autocompletePresentation } from './autocomplete.js';
@@ -225,6 +227,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   codeBlockPresentation,
   markdownPresentation,
   imagePresentation,
+  qrCodePresentation,
   scrollTriggerPresentation,
   timelinePresentation,
   autocompletePresentation,

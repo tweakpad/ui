@@ -10,6 +10,7 @@ const modules: Record<string, () => Promise<Record<string, unknown>>> = {
   TpMessage: () => import('../../../../src/components/message/index.js'),
   TpSwitch: () => import('../../../../src/components/switch/index.js'),
   TpFileUpload: () => import('../../../../src/components/file-upload/index.js'),
+  TpQrCode: () => import('../../../../src/components/qr-code/index.js'),
 };
 const markup: Record<string, string> = {
   TpButton: '<tp-button loading>Save</tp-button>',
@@ -18,7 +19,9 @@ const markup: Record<string, string> = {
   TpTime: '<tp-time datetime="2026-10-05T14:30:00Z"></tp-time>',
   TpMessage: '<tp-message author="Ada" timestamp="2026-10-05T14:30:00Z">Hello</tp-message>',
   TpSwitch: '<tp-switch>Notifications</tp-switch>',
-  TpFileUpload: '<tp-file-upload multiple accept=".pdf" max-file-size="5MB" show-trigger hint-treatment="badges"></tp-file-upload>',
+  TpFileUpload:
+    '<tp-file-upload multiple accept=".pdf" max-file-size="5MB" show-trigger hint-treatment="badges"></tp-file-upload>',
+  TpQrCode: '<tp-qr-code value="https://tweakpad.github.io" copyable downloadable></tp-qr-code>',
 };
 const name = new URLSearchParams(location.search).get('component') ?? 'TpButton';
 const module = await modules[name]!();
