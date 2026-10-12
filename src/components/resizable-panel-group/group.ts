@@ -64,6 +64,9 @@ export class TpResizablePanelGroup extends TpElement {
         min-block-size: 0;
       }
 
+      /* Feasible panels fill the group exactly: it clips (react-resizable-panels: overflow
+         hidden), so a handle's hit target at an edge never becomes scrollable overflow. Only
+         infeasible bounds expose their overflow. */
       .group {
         position: relative;
         display: flex;
@@ -72,6 +75,10 @@ export class TpResizablePanelGroup extends TpElement {
         block-size: 100%;
         min-inline-size: 0;
         min-block-size: 0;
+        overflow: clip;
+      }
+
+      :host([data-infeasible]) .group {
         overflow: auto;
       }
 

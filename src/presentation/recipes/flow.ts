@@ -492,17 +492,9 @@ export const flowAppearance: PresentationDictionary = {
   // `-viewport` from its part and the tone tokens; the two names stay reserved for the renderer.
   'flow-minimap-node': [],
   'flow-minimap-viewport': [],
-  'flow-controls': [
-    {
-      declarations: {
-        'background-color': 'var(--tp-card)',
-        border: popupBorder,
-        'border-radius': 'var(--tp-radius-md)',
-        'box-shadow': 'var(--tp-shadow-sm)',
-        padding: 'var(--tp-space-1)',
-      },
-    },
-  ],
+  // A toolbar of sets, as Toolbar and nested Button groups compose them: the outline members carry
+  // their own surface, so the bar adds none.
+  'flow-controls': [],
   'flow-control': [],
   // The root writes `--tp-available-height` on the palette host (55 % of the pane, less a
   // controls stack sharing its inline side); the host caps and scrolls, the part only paints.
@@ -556,7 +548,8 @@ export const flowStructure: PresentationDictionary = {
   'flow-node-row': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-node-footer': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-node-toolbar': [{ declarations: { gap: 'var(--tp-space-1)' } }],
-  'flow-controls': [{ declarations: { gap: 'var(--tp-space-1)' } }],
+  // The theme gap between sets (Nova button-group gap-2), as nested Button groups and toolbars use.
+  'flow-controls': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-inspector-header': [
     { declarations: { gap: 'var(--tp-space-2)', padding: 'var(--_tp-flow-space)' } },
   ],
