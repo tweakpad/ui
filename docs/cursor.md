@@ -52,8 +52,10 @@ While the pointer is inside the innermost zone that addresses a cursor, that zon
   document, so a dot and a lagging ring can share zones or have their own.
 
 Nested zones work; the innermost wins. Zones inside shadow roots work because zones register with
-the document, not through DOM ancestry. After scrolling with a still pointer, or on `refresh()`,
-the zones under the pointer are resolved again.
+the document, not through DOM ancestry. While the page or any scroll container scrolls under a still pointer, including one inside a
+shadow root such as Scroll area, the zones under the pointer are resolved again in every frame, so
+the state never waits for the browser's own hover update at the end of the scroll; `refresh()` does
+the same on demand.
 
 ## Sticking
 

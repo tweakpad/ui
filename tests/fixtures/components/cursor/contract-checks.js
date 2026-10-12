@@ -406,6 +406,54 @@ const checks = {
     $('#scratch').innerHTML = '';
     return inert && reported;
   },
+  async scrollUnderStillPointer() {
+    const { element } = await mount();
+    const scratch = $('#scratch');
+    const tall = 'display:block;block-size:120px';
+    scratch.innerHTML = `<div id="scroller" style="block-size:120px;overflow:auto;inline-size:240px">
+      <tp-cursor-zone id="first" state="first"><span style="${tall}">First</span></tp-cursor-zone>
+      <tp-cursor-zone id="second" state="second"><span style="${tall}">Second</span></tp-cursor-zone>
+      <tp-cursor-zone id="third" state="third" stick="bounds"><span style="${tall}">Third</span></tp-cursor-zone>
+    </div>
+    <tp-scroll-area id="area" style="block-size:120px;inline-size:240px">
+      <tp-cursor-zone id="shadow-first" state="shadow-first"><span style="${tall}">One</span></tp-cursor-zone>
+      <tp-cursor-zone id="shadow-second" state="shadow-second"><span style="${tall}">Two</span></tp-cursor-zone>
+    </tp-scroll-area>`;
+    const scroller = $('#scroller');
+    scroller.scrollIntoView({ block: 'center' });
+    await frames(3);
+    const point = centerOf(scroller);
+    await engage(element, point.x, point.y);
+    fx().enterZone($('#first'));
+    await frame();
+    const first = element.state === 'first';
+    // Light-DOM scroll container: scroll events reach the capture listener every frame.
+    scroller.scrollTop = 120;
+    await frames(3);
+    const second = element.state === 'second' && $('#second').hasAttribute('data-hovered') && !$('#first').hasAttribute('data-hovered');
+    // A stuck cursor follows its zone while it scrolls away.
+    scroller.scrollTop = 200;
+    await frames(3);
+    const stuck = element.state === 'third' && element.stuck;
+    const before = parseFloat(element.style.getPropertyValue('--tp-cursor-stuck-height'));
+    const top = $('#third').firstElementChild.getBoundingClientRect().top;
+    scroller.scrollTop = 220;
+    await frames(4);
+    const followed = $('#third').firstElementChild.getBoundingClientRect().top < top && before > 0;
+    // Scroll area viewport inside a shadow root: the composed wheel starts the watch.
+    const area = $('#area');
+    await area.updateComplete;
+    const areaPoint = centerOf(area);
+    fx().movePointer(areaPoint.x, areaPoint.y, 'mouse');
+    await frames(2);
+    const shadowFirst = element.state === 'shadow-first';
+    area.dispatchEvent(new WheelEvent('wheel', { bubbles: true, composed: true, deltaY: 120 }));
+    area.viewportElement.scrollTop = 120;
+    await frames(3);
+    const shadowSecond = element.state === 'shadow-second';
+    scratch.innerHTML = '';
+    return first && second && stuck && followed && shadowFirst && shadowSecond;
+  },
   async layoutStability() {
     const scratch = $('#scratch');
     scratch.innerHTML = '<p>before</p><tp-button id="wrap-me">Wrap me</tp-button><p id="after">after</p>';

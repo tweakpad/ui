@@ -14,7 +14,7 @@ import {
   type MotionHandle,
   type MotionRoleDefinition,
 } from '../../foundation/motion.js';
-import { observeResize, observeScroll } from '../../foundation/observation.js';
+import { observeResize } from '../../foundation/observation.js';
 import { CleanupScope } from '../../foundation/services.js';
 import {
   clampSpring,
@@ -291,6 +291,11 @@ export class TpCursor extends TpElement implements CursorParticipant {
     )
       this.#override = null;
     this.#resolveState('hover', event);
+  }
+
+  /** Content scrolled under the pointer; a stuck cursor follows its zone. */
+  scrolled(): void {
+    this.#remeasure();
   }
 
   /** Re-enters the top layer above surfaces opened later (Foundation `cc-layer`). */
@@ -647,12 +652,6 @@ export class TpCursor extends TpElement implements CursorParticipant {
         ? [zone]
         : Array.from(zone.children).filter((child) => child.localName !== 'template');
     for (const target of targets) scope.add(observeResize(target, () => this.#remeasure()));
-    scope.add(
-      observeScroll(this.ownerDocument, {
-        scroll: () => this.#remeasure(),
-        timing: { immediate: true },
-      }),
-    );
     this.#publishStuck();
     this.#subscription?.wake();
   }

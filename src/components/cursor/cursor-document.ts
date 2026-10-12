@@ -1,5 +1,4 @@
 import { composedParent } from '../../foundation/focus.js';
-import { observeScroll } from '../../foundation/observation.js';
 import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 import { CleanupScope } from '../../foundation/services.js';
 import {
@@ -30,6 +29,8 @@ export interface CursorParticipant {
   gateChanged(event: Event | null): void;
   pressedChanged(pressed: boolean, event: PointerEvent): void;
   zonesChanged(event: Event | null, updated: CursorZoneLike | null): void;
+  /** Content moved under a still pointer this frame (scrolling); re-measure attraction. */
+  scrolled(): void;
   raise(): void;
 }
 
@@ -46,6 +47,8 @@ export const NATIVE_HIDE_ATTRIBUTE = 'data-tp-cursor-hidden';
 /** Marks a cursor surface so its own top-layer toggles never trigger a re-raise. */
 export const SURFACE_ATTRIBUTE = 'data-tp-cursor-surface';
 export const CAPABLE_QUERY = '(hover: hover) and (pointer: fine)';
+/** Milliseconds the scroll watch keeps running after the last scroll signal. */
+const SCROLL_WATCH = 200;
 
 interface Lease {
   count: number;
@@ -73,6 +76,9 @@ export class CursorDocument {
   #pointer: CursorPoint | null = null;
   #pressed = false;
   #raising = false;
+  #watchFrame: number | undefined;
+  #watchUntil = 0;
+  #watchEvent: Event | null = null;
 
   private constructor(document: Document) {
     this.#document = document;
@@ -274,7 +280,19 @@ export class CursorDocument {
       this.#capable = media.matches;
       listen(media, 'change', this.#capability);
     }
-    scope.add(observeScroll(document, { scrollEnd: (event) => this.rehit(event) }));
+    // Scrolling under a still pointer (Foundation cc-innermost): boundary events only arrive
+    // once the scroll ends, so every scroll signal starts a per-frame watch that re-resolves the
+    // zones under the pointer. Element scroll events do not bubble but reach a capture listener;
+    // scroll containers inside shadow roots never reach the document, so the composed input
+    // that scrolls them (wheel, keys, a pressed pointer on a scrollbar) starts the watch too.
+    listen(document, 'scroll', this.#scrollSignal, capture);
+    listen(document, 'scrollend', this.#scrollSignal, capture);
+    listen(document, 'wheel', this.#scrollSignal, capture);
+    listen(document, 'keydown', this.#scrollSignal, capture);
+    scope.add(() => {
+      if (this.#watchFrame !== undefined) view?.cancelAnimationFrame(this.#watchFrame);
+      this.#watchFrame = undefined;
+    });
   }
 
   #uninstall(): void {
@@ -297,6 +315,26 @@ export class CursorDocument {
     this.#pointer = { x: event.clientX, y: event.clientY };
     if (changed) this.#notifyGate(event);
     for (const root of this.#roots) root.pointerMoved(this.#pointer, event);
+    // A pressed pointer may be dragging a scrollbar, which suppresses boundary events.
+    if (this.#pressed) this.#scrollSignal(event);
+  };
+
+  /** Keeps re-resolving zones every frame until scrolling has been quiet for a while. */
+  readonly #scrollSignal = (event: Event): void => {
+    const view = this.#document.defaultView;
+    if (!view || !this.#roots.length) return;
+    this.#watchEvent = event;
+    this.#watchUntil = view.performance.now() + SCROLL_WATCH;
+    if (this.#watchFrame === undefined) this.#watchFrame = view.requestAnimationFrame(this.#watch);
+  };
+
+  readonly #watch = (time: number): void => {
+    this.#watchFrame = undefined;
+    this.rehit(this.#watchEvent);
+    for (const root of this.#roots) root.scrolled();
+    const view = this.#document.defaultView;
+    if (view && time < this.#watchUntil) this.#watchFrame = view.requestAnimationFrame(this.#watch);
+    else this.#watchEvent = null;
   };
 
   readonly #down = (event: PointerEvent): void => {
