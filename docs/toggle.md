@@ -53,6 +53,8 @@ Use a real `tp-button` for an adjacent one-time action. The With Button example 
 
 ## Parts and customization
 
+The host sizes to its content. A host given an inline size, or stretched by a column or grid container, draws a Control of the same width, as Button does.
+
 `toggle` is the Control part and `toggle-content` its optional Content. Each supports `renderDelegate({state, properties, content, bind})`, `hostProperties`, `classHook`, `styleHook`, `elementReference` and `content`. Place `bind` on a delegate's semantic host. Required role, pressed state, native flags and references remain owned by Toggle. Class/style/content resolvers receive the same committed state, including `pressed`, `disabled`, `readOnly` and `focusVisible`. References clear on replacement/disconnect.
 
 `partContracts['toggle-content'].content` can render a filled bookmark Icon only while `state.pressed`, without a second pressed-state owner. The Stateful Icon story includes a complete copyable example. Consumer handlers run first: `preventComponentHandling(event)` suppresses component activation separately from native `event.preventDefault()`. Explicitly canceled Space gestures do not leave an armed release.

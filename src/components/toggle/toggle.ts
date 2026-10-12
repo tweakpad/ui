@@ -41,9 +41,11 @@ export class TpToggle extends TpFormElement {
         display: inline-block;
       }
 
-      /* Nova cn-toggle: whitespace-nowrap. */
+      /* Nova cn-toggle: whitespace-nowrap. The visible toggle is the host's box, as Button's is
+         (Nova renders one element), so a stretched or sized host draws a matching toggle. */
       .control {
         position: relative;
+        inline-size: 100%;
         display: inline-flex;
         align-items: center;
         justify-content: center;

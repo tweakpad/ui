@@ -92,10 +92,19 @@ const controlsStyles = css`
     align-items: center;
   }
 
+  /* A vertical toolbar is one column: every set spans it, so square icon Buttons and the wider
+     Nova Toggles line up instead of each group keeping its own fit-content width. */
+  .controls[data-orientation='vertical'] > :is(tp-button-group, tp-toggle-group, tp-toggle),
+  .controls[data-orientation='vertical'] .transport > tp-button-group {
+    inline-size: 100%;
+  }
+
+  /* The transport is one set laid out like the panel: its parts keep the panel's set gap. */
   .transport {
     display: inline-flex;
     flex-direction: column;
     align-items: stretch;
+    gap: inherit;
   }
 
   .controls[data-orientation='horizontal'] .transport {

@@ -258,8 +258,6 @@ export const easingEditorStructure: PresentationDictionary = {
       selector: '&[part~="toggle-group"]',
       declarations: {
         display: 'grid',
-        // The Toggle group root is a flex item of its host: span the host, not the min-content.
-        'inline-size': '100%',
         'grid-template-columns':
           'repeat(auto-fill, minmax(calc(var(--_tp-easing-editor-thumb) + var(--tp-spacing) * 10), 1fr))',
         // Every tile of a group takes the height of its tallest (two-line) name.

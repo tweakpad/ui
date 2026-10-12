@@ -404,10 +404,7 @@ export const colorPickerStructure: PresentationDictionary = {
   'color-picker-swatch': [{ declarations: { display: 'block' } }],
   'color-picker-swatches': [{ declarations: { gap: 'var(--tp-space-3)' } }],
   'color-picker-schemes': [{ declarations: { gap: 'var(--tp-space-2)' } }],
-  // Registered inside each strip Toggle Group: the strip spans the row.
-  'color-picker-scheme': [
-    { selector: '&[part~="toggle-group"]', declarations: { 'inline-size': '100%' } },
-  ],
+  'color-picker-scheme': [],
   'color-picker-wheel': [
     {
       declarations: {

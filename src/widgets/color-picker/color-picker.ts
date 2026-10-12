@@ -1963,7 +1963,7 @@ export class TpColorPicker extends TpFormElement<string> {
       { rows: rows.length },
       {
         tag: 'div',
-        properties: { part: 'color-picker-swatches', class: 'swatches' },
+        properties: { part: 'color-picker-swatches', class: 'swatches-view' },
         content: rows.map(
           (row) =>
             html`<div class="swatch-group">
@@ -2014,7 +2014,7 @@ export class TpColorPicker extends TpFormElement<string> {
       { rows: rows.length, consumer },
       {
         tag: 'div',
-        properties: { part: 'color-picker-schemes', class: 'schemes' },
+        properties: { part: 'color-picker-schemes', class: 'schemes-view' },
         content: html`${this.renderPart(
           'color-picker-toolbar',
           { view: 'schemes' },

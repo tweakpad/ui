@@ -193,8 +193,8 @@ export const colorPickerStyles = css`
     min-inline-size: 0;
   }
 
-  .swatches,
-  .schemes {
+  .swatches-view,
+  .schemes-view {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     min-inline-size: 0;
@@ -213,6 +213,8 @@ export const colorPickerStyles = css`
     color: var(--tp-muted-foreground);
   }
 
+  /* Each row's Toggle group spans its row: a wrapping swatch grid or a joined strip. */
+  tp-toggle-group.swatches,
   tp-toggle-group.scheme {
     inline-size: 100%;
   }

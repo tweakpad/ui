@@ -50,6 +50,8 @@ Public methods include `setValue`, `focus(options?)`, `blur()` and shared Field 
 
 Pressed/unpressed and disabled markers follow committed state. Group exposes orientation and multiple state. Default and outline paint, sizes, focus rings and icons reuse the Toggle and shared presentation recipes; no parallel item implementation is created.
 
+Like Nova's `w-fit` group, the host sizes to its members. An inline size set on the host (for example `inline-size: 100%` to span a column or a grid cell) is the group's own size: the `toggle-group` part fills the host, vertical members stretch across it, and a grid set on the part through `partPresentation` lays its tiles out over the full width.
+
 ## Ownership and notifications
 
 The first update fixes controlled versus uncontrolled ownership. Supply either the controlled property or its default. A controlled callback accepts or rewrites a proposal by assigning the controlled property; without an owner return, committed state remains unchanged. Cancel with `event.preventDefault()` or `event.detail.cancelled = true`. Callbacks run before the composed, bubbling `tp-value-change` notification. Reentrant requests are queued after the current transaction.

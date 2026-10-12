@@ -42,14 +42,18 @@ export class TpToggleGroup
   static override styles = [
     TpElement.styles,
     css`
+      /* Nova w-fit: the group sizes to its members, and an inline size authored on the host is
+         the group's own size (the visible group fills the host; vertical members stretch). */
       :host {
         display: inline-flex;
+        inline-size: fit-content;
         min-inline-size: 0;
         max-inline-size: 100%;
       }
 
       .group {
         display: flex;
+        flex: 1;
         align-items: center;
         flex-wrap: wrap;
         min-inline-size: 0;
