@@ -24,7 +24,16 @@ const meta = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'],
+      options: [
+        'default',
+        'secondary',
+        'destructive',
+        'success',
+        'warning',
+        'outline',
+        'ghost',
+        'link',
+      ],
       table: { defaultValue: { summary: 'default' } },
     },
     interactive: {

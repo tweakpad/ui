@@ -17,6 +17,13 @@ const examples = {
       name="easing"
       default-value="ease-out"
     ></tp-easing-editor>`,
+  'tp-flow': () =>
+    html`<tp-flow
+      label="Pipeline"
+      name="flow"
+      fit-view
+      default-value='{"version":1,"nodes":[{"id":"start","type":"step","position":{"x":0,"y":0},"data":{},"label":"Start"},{"id":"finish","type":"step","position":{"x":320,"y":0},"data":{},"label":"Finish"}],"edges":[{"id":"start-finish","source":"start","target":"finish","label":"then"}]}'
+    ></tp-flow>`,
 } satisfies Record<WidgetTag, () => TemplateResult>;
 
 export function renderWidgetExample(tagName: WidgetTag): TemplateResult {

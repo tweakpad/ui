@@ -13,6 +13,8 @@ import '@tweakpad/ui/styles.css';
 <tp-badge>New</tp-badge>
 <tp-badge variant="secondary">12 unread</tp-badge>
 <tp-badge variant="destructive">Failed</tp-badge>
+<tp-badge variant="success">Passed</tp-badge>
+<tp-badge variant="warning">Degraded</tp-badge>
 <tp-badge variant="outline">Draft</tp-badge>
 <tp-badge variant="ghost">Optional</tp-badge>
 <tp-badge variant="link">Reference</tp-badge>
@@ -23,12 +25,12 @@ separate side-effect import as shown above.
 
 ## Properties and attributes
 
-| Property / attribute | Type / values                                                     | Default   | Behavior                                                                                                                                                           |
-| -------------------- | ----------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `variant`            | `default`, `secondary`, `destructive`, `outline`, `ghost`, `link` | `default` | Reflected string; visual treatment only. Use a supported value.                                                                                                    |
-| `interactive`        | boolean                                                           | `false`   | Reflected Boolean attribute. Declares an action or link supplied through `partContracts.badge`; does not create an action, link, click handler or tab stop itself. |
-| `partContracts`      | `Record<string, ComponentPartContract>`                           | `{}`      | Property only; rendering, content, neutral properties, class/style hooks and references for `badge`.                                                               |
-| `partPresentation`   | `PartPresentation`                                                | `{}`      | Property only; terminal instance presentation for `badge`.                                                                                                         |
+| Property / attribute | Type / values                                                                           | Default   | Behavior                                                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `variant`            | `default`, `secondary`, `destructive`, `success`, `warning`, `outline`, `ghost`, `link` | `default` | Reflected string; visual treatment only. `success` and `warning` are solid status pills on the shared status roles. Use a supported value.                         |
+| `interactive`        | boolean                                                                                 | `false`   | Reflected Boolean attribute. Declares an action or link supplied through `partContracts.badge`; does not create an action, link, click handler or tab stop itself. |
+| `partContracts`      | `Record<string, ComponentPartContract>`                                                 | `{}`      | Property only; rendering, content, neutral properties, class/style hooks and references for `badge`.                                                               |
+| `partPresentation`   | `PartPresentation`                                                                      | `{}`      | Property only; terminal instance presentation for `badge`.                                                                                                         |
 
 Boolean attributes use presence: `interactive="false"` is still true. Remove the
 attribute or assign `.interactive = false` in JavaScript/Lit. Property and attribute
@@ -141,8 +143,9 @@ Use Button for full action, form, disabled-link or loading-action behavior.
 `badge` is the single public Root part: `tp-badge::part(badge)`. It is also the key
 for `partContracts` and `partPresentation`. Presentation dictionary keys are
 `badge`, `badge-variant-default`, `badge-variant-secondary`,
-`badge-variant-destructive`, `badge-variant-outline`, `badge-variant-ghost` and
-`badge-variant-link`. No additional Badge constituents require registration.
+`badge-variant-destructive`, `badge-variant-success`, `badge-variant-warning`,
+`badge-variant-outline`, `badge-variant-ghost` and `badge-variant-link`. No
+additional Badge constituents require registration.
 
 The `partContracts.badge` hooks are `renderDelegate`, `hostProperties`, `classHook`,
 `styleHook`, `content` and `elementReference`. State supplied to hooks is the
@@ -172,9 +175,10 @@ badge.partContracts = {
 
 Shared color, radius, typography, spacing and ring tokens follow root or scoped
 themes; per-instance presentation is terminal. See [Styling](./styling.md) for
-scoped theme tokens, dictionary replacement and the shared hook types. The six
+scoped theme tokens, dictionary replacement and the shared hook types. The eight
 variants use the library's shared semantic palette, including its solid
-destructive treatment. Badge-specific paint is not embedded in demo CSS.
+destructive, success and warning treatments (`--tp-success`, `--tp-warning` and
+their foreground pairs). Badge-specific paint is not embedded in demo CSS.
 
 Reflected host attributes include `variant` and `interactive`; shared host markers
 include `data-disabled`, `data-readonly`, `data-invalid` and `data-orientation`.

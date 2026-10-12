@@ -18,6 +18,7 @@ export default defineConfig({
           ['src/foundation/carousel/LICENSE', 'LICENSE.swiper'],
           ['src/components/message-scroller/LICENSE', 'LICENSE.message-scroller'],
           ['src/foundation/drag-drop/LICENSE.dnd-kit', 'LICENSE.dnd-kit'],
+          ['src/foundation/flow/LICENSE.xyflow', 'LICENSE.xyflow'],
         ] as const) {
           this.emitFile({
             type: 'asset',
@@ -46,6 +47,7 @@ export default defineConfig({
         code: resolve(import.meta.dirname, 'src/foundation/code/index.ts'),
         markdown: resolve(import.meta.dirname, 'src/foundation/markdown/index.ts'),
         qr: resolve(import.meta.dirname, 'src/foundation/qr/index.ts'),
+        flow: resolve(import.meta.dirname, 'src/foundation/flow/index.ts'),
         register: resolve(import.meta.dirname, 'src/register.ts'),
         'register/icon': resolve(import.meta.dirname, 'src/register/icon.ts'),
         // The widgets section ships through its own entries; `index` and `register` never reach it.

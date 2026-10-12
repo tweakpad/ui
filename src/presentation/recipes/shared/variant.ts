@@ -37,7 +37,8 @@ export function variantPresentation(
     ];
   if (variant === 'plain')
     return [rule({ background: 'transparent', 'border-color': 'transparent', color: 'inherit' })];
-  if (['default', 'secondary', 'destructive'].includes(variant)) {
+  // Solid role fills: primary, secondary and the status roles with a foreground pair.
+  if (['default', 'secondary', 'destructive', 'success', 'warning'].includes(variant)) {
     const role = variant === 'default' ? 'primary' : variant;
     const rules = [
       rule({
@@ -49,7 +50,7 @@ export function variantPresentation(
     if (isInteractive)
       rules.push(
         fillColor(
-          `color-mix(in oklab, var(--tp-${role}) ${variant === 'destructive' ? 85 : 80}%, light-dark(var(--tp-foreground), var(--tp-background)))`,
+          `color-mix(in oklab, var(--tp-${role}) ${['destructive', 'success', 'warning'].includes(variant) ? 85 : 80}%, light-dark(var(--tp-foreground), var(--tp-background)))`,
           primitive,
         ),
         fillShown(interactive),

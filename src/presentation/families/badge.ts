@@ -10,7 +10,16 @@ const definition: ComponentDefinition = {
   axes: [
     {
       name: 'variant',
-      values: ['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'],
+      values: [
+        'default',
+        'secondary',
+        'destructive',
+        'success',
+        'warning',
+        'outline',
+        'ghost',
+        'link',
+      ],
       default: 'default',
     },
   ],

@@ -75,6 +75,11 @@
       "import": "./dist/qr.js",
       "default": "./dist/qr.js"
     },
+    "./flow": {
+      "types": "./dist/foundation/flow/index.d.ts",
+      "import": "./dist/flow.js",
+      "default": "./dist/flow.js"
+    },
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",

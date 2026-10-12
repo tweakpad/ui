@@ -60,7 +60,11 @@ export type ChangeReason =
   /** Map camera change originated inside the map engine; never cancelable (Appendix B.8). */
   | 'engine'
   /** Scroll-spy change derived from scroll position or layout; never cancelable (Foundation §18.15). */
-  | 'scroll';
+  | 'scroll'
+  /** Flow connection completed by pointer, click or keyboard (Appendix B.8: pointer or keyboard event). */
+  | 'connect'
+  /** Flow layout engine output applied as one transaction (Appendix B.8: synthetic engine event). */
+  | 'layout';
 
 export type PresenceState = 'absent' | 'starting' | 'open' | 'ending' | 'retained';
 

@@ -32,10 +32,11 @@ export const badgeAppearance: PresentationDictionary = {
         'outline-offset': 'var(--tp-ring-offset)',
       },
     },
-    {
-      selector: ':host([interactive][variant="destructive"]) &:is(button,a):focus-visible',
-      declarations: { 'border-color': 'var(--tp-destructive)' },
-    },
+    // Solid status pills keep their own fill color as the focused border.
+    ...(['destructive', 'success', 'warning'] as const).map((variant) => ({
+      selector: `:host([interactive][variant="${variant}"]) &:is(button,a):focus-visible`,
+      declarations: { 'border-color': `var(--tp-${variant})` },
+    })),
     {
       selector: ':host([disabled]) &:is(button,a)',
       declarations: { cursor: 'not-allowed' },

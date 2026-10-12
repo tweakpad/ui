@@ -1,0 +1,575 @@
+import { ambientAnimation, motionTransition } from '../motion.js';
+import type { PresentationDictionary } from '../resolver.js';
+import { activeRing, focusRing, thumb } from './shared/handle.js';
+import { popupBorder, sectionFooterAppearance } from './shared/surface.js';
+
+// Widgets Specification 6.3 Presentation: path geometry, label anchors and port positions are
+// content supplied by the engine; every color below resolves through tokens. References:
+// xyflow packages/system/src/styles/init.css (edge stroke #b1b1b7 width 1, selected #555,
+// `.animated` dash 5 / dashdraw, handle 6 px, selection rgba(0,89,220,.08), pattern dots
+// #91919a) and style.css, Workflow Builder packages/ui edge styles (width 2 / selected 3) and
+// handle.module.css (port grows on hover, 50 px hit circle), the library Card, List item,
+// Badge, Marker, Button group and handle recipes for the composed regions.
+
+const hairline = 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)';
+const dots = 'color-mix(in oklab, var(--tp-foreground) 18%, transparent)';
+const edgeStroke = 'color-mix(in oklab, var(--tp-foreground) 35%, transparent)';
+const edgeHover = 'color-mix(in oklab, var(--tp-foreground) 55%, transparent)';
+const haloStroke = 'color-mix(in oklab, var(--tp-ring) 35%, transparent)';
+const selectionFill = 'color-mix(in oklab, var(--tp-primary) 8%, transparent)';
+const selectionLine = 'color-mix(in oklab, var(--tp-primary) 80%, transparent)';
+const minimapNode = 'color-mix(in oklab, var(--tp-foreground) 15%, transparent)';
+const minimapMask = 'color-mix(in oklab, var(--tp-muted) 60%, transparent)';
+const statusRing =
+  'color-mix(in oklab, var(--_tp-flow-status, var(--tp-primary)) 60%, transparent)';
+
+const statusTones: readonly [status: string, tone: string][] = [
+  ['pending', 'var(--tp-warning)'],
+  ['waiting', 'var(--tp-warning)'],
+  ['running', 'var(--tp-primary)'],
+  ['active', 'var(--tp-primary)'],
+  ['success', 'var(--tp-success)'],
+  ['taken', 'var(--tp-success)'],
+  ['failed', 'var(--tp-destructive)'],
+  ['skipped', 'var(--tp-muted-foreground)'],
+  ['cancelled', 'var(--tp-muted-foreground)'],
+  ['not-taken', 'var(--tp-muted-foreground)'],
+  ['disabled', 'var(--tp-muted-foreground)'],
+];
+
+const tones: readonly [tone: string, value: string][] = [
+  ['chart-1', 'var(--tp-chart-1)'],
+  ['chart-2', 'var(--tp-chart-2)'],
+  ['chart-3', 'var(--tp-chart-3)'],
+  ['chart-4', 'var(--tp-chart-4)'],
+  ['chart-5', 'var(--tp-chart-5)'],
+  ['primary', 'var(--tp-primary)'],
+  ['success', 'var(--tp-success)'],
+  ['warning', 'var(--tp-warning)'],
+  ['destructive', 'var(--tp-destructive)'],
+];
+
+export const flowAppearance: PresentationDictionary = {
+  flow: [
+    {
+      declarations: {
+        '--_tp-flow-space': 'var(--tp-space-3)',
+        '--_tp-flow-node-width': 'calc(var(--tp-spacing) * 60)',
+        '--_tp-flow-port-size': 'var(--tp-space-2-5)',
+        '--_tp-flow-handle': 'var(--tp-space-3)',
+        '--_tp-flow-edge-width': '1.5px',
+        '--_tp-flow-marker': 'var(--tp-space-3)',
+        '--_tp-flow-grid': '16px',
+        '--_tp-flow-dash': '6 4',
+        '--_tp-flow-minimap': 'calc(var(--tp-spacing) * 50)',
+        '--_tp-flow-inspector': 'calc(var(--tp-spacing) * 88)',
+        '--_tp-flow-block-size': 'calc(var(--tp-spacing) * 120)',
+        background: 'var(--tp-background)',
+        color: 'var(--tp-foreground)',
+        'font-size': 'var(--tp-text-sm)',
+        border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
+        'border-radius': 'var(--tp-radius-lg)',
+      },
+    },
+    { selector: '&[data-disabled]', declarations: { opacity: 'var(--tp-opacity-disabled)' } },
+  ],
+  'flow-size-sm': [
+    {
+      declarations: {
+        '--_tp-flow-space': 'var(--tp-space-2)',
+        '--_tp-flow-node-width': 'calc(var(--tp-spacing) * 52)',
+        '--_tp-flow-port-size': 'var(--tp-space-2)',
+        '--_tp-flow-handle': 'var(--tp-space-2-5)',
+        '--_tp-flow-edge-width': '1px',
+        '--_tp-flow-marker': 'var(--tp-space-2-5)',
+        '--_tp-flow-minimap': 'calc(var(--tp-spacing) * 40)',
+        '--_tp-flow-inspector': 'calc(var(--tp-spacing) * 72)',
+        '--_tp-flow-block-size': 'calc(var(--tp-spacing) * 90)',
+      },
+    },
+  ],
+  'flow-size-lg': [
+    {
+      declarations: {
+        '--_tp-flow-space': 'var(--tp-space-4)',
+        '--_tp-flow-node-width': 'calc(var(--tp-spacing) * 68)',
+        '--_tp-flow-port-size': 'var(--tp-space-3)',
+        '--_tp-flow-handle': 'var(--tp-space-4)',
+        '--_tp-flow-edge-width': '2px',
+        '--_tp-flow-marker': 'var(--tp-space-4)',
+        '--_tp-flow-minimap': 'calc(var(--tp-spacing) * 60)',
+        '--_tp-flow-inspector': 'calc(var(--tp-spacing) * 96)',
+        '--_tp-flow-block-size': 'calc(var(--tp-spacing) * 150)',
+      },
+    },
+  ],
+  'flow-pane': [
+    { declarations: { cursor: 'default' } },
+    { selector: '&[data-tool="pan"], &[data-pan-active]', declarations: { cursor: 'grab' } },
+    { selector: '&[data-panning]', declarations: { cursor: 'grabbing' } },
+    { selector: '&[data-selecting]', declarations: { cursor: 'crosshair' } },
+  ],
+  'flow-viewport': [],
+  'flow-background': [],
+  'flow-background-pattern': [
+    { declarations: { fill: dots, stroke: hairline } },
+    { selector: '&[data-pattern="dots"]', declarations: { stroke: 'none' } },
+    {
+      selector: '&[data-pattern="lines"], &[data-pattern="cross"]',
+      declarations: { fill: 'none' },
+    },
+  ],
+  // Node host: the card shape composes Card (its own recipe); the host adds width, rings and cursors.
+  'flow-node': [
+    {
+      declarations: {
+        'inline-size': 'var(--_tp-flow-node-width)',
+        'border-radius': 'var(--tp-radius-xl)',
+        cursor: 'grab',
+        transition: motionTransition(['box-shadow', 'outline-color'], 'fast'),
+      },
+    },
+    { selector: '&[data-shape="compact"]', declarations: { 'inline-size': 'auto' } },
+    {
+      selector: '&[data-shape="panel"]',
+      declarations: { 'inline-size': 'calc(var(--_tp-flow-node-width) * 1.2)' },
+    },
+    {
+      selector: '&[data-shape="group"]',
+      declarations: { 'inline-size': 'auto', cursor: 'default' },
+    },
+    { selector: '&:hover', declarations: { 'box-shadow': 'var(--tp-shadow-sm)' } },
+    {
+      selector: '&[data-dragging]',
+      declarations: { cursor: 'grabbing', 'box-shadow': 'var(--tp-shadow-md)' },
+    },
+    {
+      selector: '&[data-selected]',
+      declarations: { 'box-shadow': '0 0 0 var(--tp-ring-width) var(--tp-ring)' },
+    },
+    { selector: '&[data-focus-visible]', declarations: focusRing },
+    {
+      selector: '&[data-status="running"], &[data-status="waiting"]',
+      declarations: { 'box-shadow': `0 0 0 var(--tp-ring-width) ${statusRing}` },
+    },
+    {
+      selector: '&[data-status="skipped"], &[data-status="cancelled"]',
+      declarations: { opacity: 'var(--tp-opacity-disabled)' },
+    },
+    {
+      selector: '&[data-connecting]',
+      declarations: { 'box-shadow': `0 0 0 var(--tp-ring-width) ${haloStroke}` },
+    },
+    ...statusTones.map(([status, tone]) => ({
+      selector: `&[data-status="${status}"]`,
+      declarations: { '--_tp-flow-status': tone },
+    })),
+    ...tones.map(([tone, value]) => ({
+      selector: `&[data-tone="${tone}"]`,
+      declarations: { '--_tp-flow-tone': value },
+    })),
+  ],
+  // Composed Card registered as the node card; kept on the Card recipe, tinted by tone for panels.
+  'flow-node-card': [
+    {
+      selector: '&[data-shape="panel"]',
+      declarations: {
+        '--_tp-flow-node-header-fill':
+          'color-mix(in oklab, var(--_tp-flow-tone, var(--tp-muted)) 25%, var(--tp-card))',
+      },
+    },
+  ],
+  'flow-node-shell': [
+    {
+      declarations: {
+        'background-color': 'var(--tp-card)',
+        color: 'var(--tp-card-foreground)',
+        border: `var(--tp-border-width) var(--tp-border-style) ${hairline}`,
+        'border-radius': 'var(--tp-radius-lg)',
+        'box-shadow': 'var(--tp-shadow-sm)',
+        'font-size': 'var(--tp-text-sm)',
+      },
+    },
+    {
+      selector: '&[data-shape="panel"]',
+      declarations: {
+        'background-color':
+          'color-mix(in oklab, var(--_tp-flow-tone, var(--tp-muted)) 25%, var(--tp-card))',
+      },
+    },
+    {
+      selector: '&[data-shape="compact"]',
+      declarations: { 'border-radius': 'var(--tp-radius-md)' },
+    },
+  ],
+  'flow-node-header': [{ declarations: { gap: 'var(--tp-space-2)' } }],
+  'flow-node-icon': [
+    {
+      declarations: {
+        'inline-size': 'var(--tp-icon-size-lg)',
+        'block-size': 'var(--tp-icon-size-lg)',
+        'border-radius': 'var(--tp-radius-md)',
+        'background-color':
+          'color-mix(in oklab, var(--_tp-flow-tone, var(--tp-muted-foreground)) 15%, var(--tp-background))',
+        color: 'var(--_tp-flow-tone, var(--tp-foreground))',
+        border: `var(--tp-border-width) var(--tp-border-style) ${hairline}`,
+      },
+    },
+  ],
+  'flow-node-title': [
+    {
+      declarations: { 'font-weight': 'var(--tp-font-medium)', color: 'var(--tp-card-foreground)' },
+    },
+  ],
+  'flow-node-description': [
+    { declarations: { 'font-size': 'var(--tp-text-xs)', color: 'var(--tp-muted-foreground)' } },
+  ],
+  'flow-node-body': [],
+  'flow-node-row': [{ declarations: { 'font-size': 'var(--tp-text-xs)' } }],
+  'flow-node-row-label': [{ declarations: { color: 'var(--tp-muted-foreground)' } }],
+  'flow-node-row-control': [],
+  'flow-node-footer': [
+    { declarations: { 'font-size': 'var(--tp-text-xs)', color: 'var(--tp-muted-foreground)' } },
+  ],
+  'flow-node-status': [
+    { declarations: { color: 'var(--_tp-flow-status, var(--tp-muted-foreground))' } },
+  ],
+  // Group container: a dashed, tinted frame holding its children.
+  'flow-node-group': [
+    {
+      declarations: {
+        border:
+          'var(--tp-border-width) dashed color-mix(in oklab, var(--_tp-flow-tone, var(--tp-foreground)) 40%, transparent)',
+        'border-radius': 'var(--tp-radius-xl)',
+        'background-color':
+          'color-mix(in oklab, var(--_tp-flow-tone, var(--tp-muted)) 8%, transparent)',
+      },
+    },
+  ],
+  'flow-node-toolbar': [
+    {
+      declarations: {
+        'background-color': 'var(--tp-card)',
+        border: popupBorder,
+        'border-radius': 'var(--tp-radius-md)',
+        'box-shadow': 'var(--tp-shadow-sm)',
+        padding: 'var(--tp-space-1)',
+      },
+    },
+  ],
+  'flow-node-resizer': [],
+  // Four zero-extent lines: each paints the dashed border of its own edge only.
+  'flow-node-resizer-line': [
+    {
+      declarations: {
+        border: 'var(--tp-border-width) dashed var(--tp-primary)',
+        'pointer-events': 'none',
+      },
+    },
+    {
+      selector: '&[data-edge="top"]',
+      declarations: { 'border-width': 'var(--tp-border-width) 0 0 0' },
+    },
+    {
+      selector: '&[data-edge="bottom"]',
+      declarations: { 'border-width': '0 0 var(--tp-border-width) 0' },
+    },
+    {
+      selector: '&[data-edge="left"]',
+      declarations: { 'border-width': '0 0 0 var(--tp-border-width)' },
+    },
+    {
+      selector: '&[data-edge="right"]',
+      declarations: { 'border-width': '0 var(--tp-border-width) 0 0' },
+    },
+  ],
+  'flow-node-resizer-handle': [
+    ...thumb('var(--_tp-flow-handle)'),
+    { declarations: { '--_tp-handle-paint': 'var(--tp-primary)' } },
+    { selector: '&:focus-visible', declarations: focusRing },
+    {
+      selector: '&[data-corner="top-left"], &[data-corner="bottom-right"]',
+      declarations: { cursor: 'nwse-resize' },
+    },
+    {
+      selector: '&[data-corner="top-right"], &[data-corner="bottom-left"]',
+      declarations: { cursor: 'nesw-resize' },
+    },
+    { selector: '&:disabled', declarations: { cursor: 'default' } },
+  ],
+  // Ports: the shared widget handle ring; candidates grow and ring, validity recolors.
+  'flow-port': [
+    ...thumb('var(--_tp-flow-port-size)'),
+    {
+      declarations: {
+        '--_tp-handle-paint': 'var(--_tp-flow-port-tone, var(--tp-muted-foreground))',
+        cursor: 'crosshair',
+        transition: motionTransition(
+          ['box-shadow', 'outline-color', 'inline-size', 'block-size'],
+          'fast',
+        ),
+      },
+    },
+    { selector: '&:focus-visible', declarations: focusRing },
+    {
+      selector: '&[data-candidate]',
+      declarations: {
+        'inline-size': 'calc(var(--_tp-flow-port-size) * 1.5)',
+        'block-size': 'calc(var(--_tp-flow-port-size) * 1.5)',
+        ...activeRing,
+      },
+    },
+    { selector: '&[data-valid]', declarations: { '--_tp-handle-paint': 'var(--tp-success)' } },
+    {
+      selector: '&[data-invalid]',
+      declarations: { '--_tp-handle-paint': 'var(--tp-destructive)' },
+    },
+    { selector: '&[data-click-connecting]', declarations: activeRing },
+    {
+      selector: '&[aria-disabled="true"]',
+      declarations: { cursor: 'default', opacity: 'var(--tp-opacity-disabled)' },
+    },
+    ...tones.map(([tone, value]) => ({
+      selector: `&[data-tone="${tone}"]`,
+      declarations: { '--_tp-flow-port-tone': value },
+    })),
+  ],
+  'flow-port-dot': [],
+  'flow-port-label': [
+    { declarations: { 'font-size': 'var(--tp-text-xs)', color: 'var(--tp-muted-foreground)' } },
+  ],
+  // Edges: one SVG group per visible edge painted by the renderer.
+  'flow-edge': [
+    ...statusTones.map(([status, tone]) => ({
+      selector: `&[data-status="${status}"]`,
+      declarations: { '--_tp-flow-status': tone },
+    })),
+    {
+      selector: '&[data-status="not-taken"], &[data-status="disabled"]',
+      declarations: { opacity: 'var(--tp-opacity-disabled)' },
+    },
+  ],
+  'flow-edge-path': [
+    {
+      declarations: {
+        fill: 'none',
+        stroke: 'var(--_tp-flow-edge-stroke, var(--_tp-flow-status, ' + edgeStroke + '))',
+        'stroke-width': 'var(--_tp-flow-edge-width)',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+        'vector-effect': 'non-scaling-stroke',
+        transition: motionTransition(['stroke', 'stroke-width'], 'fast'),
+      },
+    },
+    { selector: '[part~="flow-edge"][data-hover] > &', declarations: { stroke: edgeHover } },
+    {
+      selector:
+        '[part~="flow-edge"][data-selected] > &, [part~="flow-edge"][data-focus-visible] > &',
+      declarations: {
+        stroke: 'var(--tp-primary)',
+        'stroke-width': 'calc(var(--_tp-flow-edge-width) * 1.5)',
+      },
+    },
+    {
+      selector:
+        '[part~="flow-edge"][data-animated] > &, [part~="flow-edge"][data-status="active"] > &',
+      declarations: {
+        'stroke-dasharray': 'var(--_tp-flow-dash)',
+        animation: ambientAnimation('tp-flow-dash'),
+        'animation-play-state': 'var(--tp-motion-play-state, running)',
+      },
+    },
+    {
+      selector: '[part~="flow-edge"][data-direction="backward"] > &',
+      declarations: { 'animation-direction': 'reverse' },
+    },
+  ],
+  'flow-edge-halo': [
+    {
+      declarations: {
+        fill: 'none',
+        stroke: haloStroke,
+        'stroke-width': 'calc(var(--_tp-flow-edge-width) + var(--tp-ring-width) * 2)',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+        'vector-effect': 'non-scaling-stroke',
+        opacity: '0',
+        'pointer-events': 'none',
+        transition: motionTransition(['opacity'], 'fast'),
+      },
+    },
+    { selector: '[part~="flow-edge"][data-focus-visible] > &', declarations: { opacity: '1' } },
+  ],
+  'flow-edge-hit': [
+    {
+      declarations: {
+        fill: 'none',
+        stroke: 'transparent',
+        'stroke-width': '20px',
+        'vector-effect': 'non-scaling-stroke',
+        'pointer-events': 'stroke',
+        cursor: 'pointer',
+      },
+    },
+  ],
+  'flow-edge-marker': [{ declarations: { fill: 'context-stroke', stroke: 'none' } }],
+  // Labels are Badges (outline) in a positioned host; the host only places them.
+  'flow-edge-label': [
+    { declarations: { 'pointer-events': 'auto' } },
+    {
+      selector: '&[data-selected] [part~="badge"]',
+      declarations: { 'border-color': 'var(--tp-primary)' },
+    },
+  ],
+  'flow-edge-focus': [],
+  'flow-edge-waypoint': [
+    ...thumb('var(--_tp-flow-handle)'),
+    { declarations: { '--_tp-handle-paint': 'var(--tp-primary)', cursor: 'move' } },
+  ],
+  'flow-edge-segment-handle': [
+    ...thumb('var(--_tp-flow-handle)'),
+    { declarations: { '--_tp-handle-paint': 'var(--tp-primary)' } },
+    { selector: '&:focus-visible', declarations: focusRing },
+    { selector: '&[data-axis="x"]', declarations: { cursor: 'ew-resize' } },
+    { selector: '&[data-axis="y"]', declarations: { cursor: 'ns-resize' } },
+  ],
+  'flow-edge-reconnect': [
+    ...thumb('var(--_tp-flow-handle)'),
+    { declarations: { '--_tp-handle-paint': 'var(--tp-primary)', cursor: 'crosshair' } },
+    { selector: '&:focus-visible', declarations: focusRing },
+  ],
+  'flow-connection-line': [
+    {
+      declarations: {
+        fill: 'none',
+        stroke: 'var(--tp-primary)',
+        'stroke-width': 'var(--_tp-flow-edge-width)',
+        'stroke-dasharray': 'var(--_tp-flow-dash)',
+        'vector-effect': 'non-scaling-stroke',
+        'pointer-events': 'none',
+      },
+    },
+    { selector: '&[data-valid]', declarations: { stroke: 'var(--tp-success)' } },
+    { selector: '&[data-invalid]', declarations: { stroke: 'var(--tp-destructive)' } },
+  ],
+  'flow-selection': [
+    {
+      declarations: {
+        'background-color': selectionFill,
+        border: `var(--tp-border-width) dotted ${selectionLine}`,
+        'pointer-events': 'none',
+      },
+    },
+  ],
+  'flow-selection-bounds': [
+    {
+      declarations: {
+        border: `var(--tp-border-width) dotted ${selectionLine}`,
+        'border-radius': 'var(--tp-radius-sm)',
+        cursor: 'grab',
+      },
+    },
+  ],
+  'flow-minimap': [
+    {
+      declarations: {
+        '--_tp-flow-minimap-node': minimapNode,
+        '--_tp-flow-minimap-mask': minimapMask,
+        '--_tp-flow-minimap-viewport': 'var(--tp-primary)',
+        'inline-size': 'var(--_tp-flow-minimap)',
+        'block-size': 'calc(var(--_tp-flow-minimap) * 0.75)',
+        'background-color': 'var(--tp-card)',
+        border: popupBorder,
+        'border-radius': 'var(--tp-radius-md)',
+        'box-shadow': 'var(--tp-shadow-sm)',
+        overflow: 'clip',
+      },
+    },
+    { selector: '&[data-pannable]', declarations: { cursor: 'grab' } },
+    { selector: '&[data-panning]', declarations: { cursor: 'grabbing' } },
+  ],
+  // Canvas paint, not elements: the minimap reads `--_tp-flow-minimap-node`, `-mask` and
+  // `-viewport` from its part and the tone tokens; the two names stay reserved for the renderer.
+  'flow-minimap-node': [],
+  'flow-minimap-viewport': [],
+  'flow-controls': [
+    {
+      declarations: {
+        'background-color': 'var(--tp-card)',
+        border: popupBorder,
+        'border-radius': 'var(--tp-radius-md)',
+        'box-shadow': 'var(--tp-shadow-sm)',
+        padding: 'var(--tp-space-1)',
+      },
+    },
+  ],
+  'flow-control': [],
+  // The root writes `--tp-available-height` on the palette host (55 % of the pane, less a
+  // controls stack sharing its inline side); the host caps and scrolls, the part only paints.
+  'flow-palette': [
+    {
+      declarations: {
+        'inline-size': 'calc(var(--tp-spacing) * 64)',
+        'background-color': 'var(--tp-card)',
+        border: popupBorder,
+        'border-radius': 'var(--tp-radius-md)',
+        'box-shadow': 'var(--tp-shadow-sm)',
+      },
+    },
+  ],
+  // Command items are native drag sources for the canvas; the Command palette paints the row.
+  'flow-palette-item': [{ declarations: { cursor: 'grab' } }],
+  'flow-inspector': [
+    {
+      declarations: {
+        'background-color': 'var(--tp-card)',
+        color: 'var(--tp-card-foreground)',
+        'border-inline-start': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
+      },
+    },
+  ],
+  'flow-inspector-header': [
+    {
+      declarations: {
+        'border-block-end': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
+      },
+    },
+    { selector: '& .title', declarations: { 'font-weight': 'var(--tp-font-medium)' } },
+    {
+      selector: '& .subtitle',
+      declarations: { 'font-size': 'var(--tp-text-xs)', color: 'var(--tp-muted-foreground)' },
+    },
+  ],
+  'flow-inspector-body': [],
+  'flow-inspector-footer': sectionFooterAppearance,
+  'flow-panel-top-start': [],
+  'flow-panel-top-end': [],
+  'flow-panel-bottom-start': [],
+  'flow-panel-bottom-end': [],
+  'flow-instructions': [],
+};
+
+/** Layout the dictionary cannot replace: spacing roles and the pattern geometry hooks. */
+export const flowStructure: PresentationDictionary = {
+  flow: [{ declarations: { 'min-block-size': 'var(--_tp-flow-block-size)' } }],
+  'flow-node-header': [{ declarations: { gap: 'var(--tp-space-2)' } }],
+  'flow-node-row': [{ declarations: { gap: 'var(--tp-space-2)' } }],
+  'flow-node-footer': [{ declarations: { gap: 'var(--tp-space-2)' } }],
+  'flow-node-toolbar': [{ declarations: { gap: 'var(--tp-space-1)' } }],
+  'flow-controls': [{ declarations: { gap: 'var(--tp-space-1)' } }],
+  'flow-inspector-header': [
+    { declarations: { gap: 'var(--tp-space-2)', padding: 'var(--_tp-flow-space)' } },
+  ],
+  'flow-inspector-body': [
+    { declarations: { padding: 'var(--_tp-flow-space)', gap: 'var(--tp-space-3)' } },
+  ],
+  'flow-inspector-footer': [
+    { declarations: { gap: 'var(--tp-space-2)', padding: 'var(--_tp-flow-space)' } },
+  ],
+  'flow-panel-top-start': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
+  'flow-panel-top-end': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
+  'flow-panel-bottom-start': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
+  'flow-panel-bottom-end': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
+};
+
+export { motionTransition };

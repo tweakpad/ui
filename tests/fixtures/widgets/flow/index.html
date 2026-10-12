@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Flow verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 1100px;
+        display: grid;
+        gap: 32px;
+      }
+      section {
+        display: grid;
+        gap: 12px;
+      }
+      tp-flow {
+        block-size: 520px;
+      }
+      #narrow {
+        inline-size: min(320px, 100%);
+        block-size: 360px;
+      }
+      #dynamic {
+        display: grid;
+        gap: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Flow verification</h1>
+      <button id="before" type="button">Before flow</button>
+
+      <section>
+        <h2>Monitor (card nodes, run state)</h2>
+        <tp-flow id="monitor" label="Lead pipeline" name="monitor" fit-view></tp-flow>
+      </section>
+
+      <section>
+        <h2>Material (panel nodes with controls)</h2>
+        <tp-flow id="material" label="Material" fit-view show-port-labels palette></tp-flow>
+      </section>
+
+      <section>
+        <h2>Declarative (authored light-DOM nodes and edges)</h2>
+        <tp-flow id="declarative" label="Declarative" fit-view>
+          <tp-flow-node id="a" type="trigger" x="40" y="80" label="Webhook"></tp-flow-node>
+          <tp-flow-node id="b" type="action" x="360" y="80" label="Send email">
+            <p>Authored content</p>
+          </tp-flow-node>
+          <tp-flow-edge id="ab" source="a" target="b" label="then"></tp-flow-edge>
+          <tp-button slot="top-end" variant="outline" size="sm">Publish</tp-button>
+        </tp-flow>
+      </section>
+
+      <section>
+        <h2>Pipeline (vertical, compact nodes, orthogonal edges, palette)</h2>
+        <tp-flow
+          id="pipeline"
+          label="Release pipeline"
+          fit-view
+          palette
+          inspector-commit="explicit"
+        ></tp-flow>
+      </section>
+
+      <section dir="rtl">
+        <h2>RTL</h2>
+        <tp-flow id="rtl" label="RTL pipeline" fit-view></tp-flow>
+      </section>
+
+      <section>
+        <h2>Large (generated)</h2>
+        <tp-flow id="large" label="Large graph" minimap></tp-flow>
+      </section>
+
+      <section>
+        <h2>Controlled, read-only, view, disabled, narrow</h2>
+        <tp-flow
+          id="controlled"
+          label="Controlled"
+          fit-view
+          value='{"version":1,"nodes":[],"edges":[]}'
+        ></tp-flow>
+        <tp-flow
+          id="late-owner"
+          label="Late owner"
+          fit-view
+          value='{"version":1,"nodes":[],"edges":[]}'
+        ></tp-flow>
+        <tp-flow
+          id="never-owner"
+          label="Never owner"
+          fit-view
+          value='{"version":1,"nodes":[],"edges":[]}'
+        ></tp-flow>
+        <tp-flow id="readonly" label="Read only" readonly fit-view></tp-flow>
+        <tp-flow id="view" label="View" mode="view" fit-view></tp-flow>
+        <tp-flow id="disabled" label="Disabled" disabled fit-view></tp-flow>
+        <tp-flow id="narrow" label="Narrow" size="sm" fit-view></tp-flow>
+      </section>
+
+      <section>
+        <h2>Form</h2>
+        <form id="form">
+          <tp-field label="Pipeline" description="Submitted as JSON">
+            <tp-flow id="field" name="pipeline" required fit-view></tp-flow>
+          </tp-field>
+          <tp-button type="submit">Submit</tp-button>
+          <tp-button id="reset" type="reset" variant="outline">Reset</tp-button>
+          <output id="submitted"></output>
+        </form>
+      </section>
+
+      <section id="dynamic"></section>
+      <button id="after" type="button">After flow</button>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

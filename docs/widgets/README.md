@@ -46,6 +46,10 @@ one render per frame with every resource released on disconnect.
   `packages/core/src/input-binding/color/`).
 - [Easing editor](./easing-editor.md): `tp-easing-editor` (tweakpane reference:
   `packages/core/src/input-binding/point-2d/` and `monitor-binding/number/view/graph-log.ts`).
+- [Flow](./flow.md): `tp-flow` with the public constituents `tp-flow-node`, `tp-flow-edge` and
+  `tp-flow-port`, and the DOM-free engine `@tweakpad/ui/flow` (`src/foundation/flow/`). Upstream
+  references: xyflow (`library/external/xyflow`) and Workflow Builder
+  (`library/external/workflowbuilder`); tweakpane has no graph editor.
 
 ## Planned widgets
 

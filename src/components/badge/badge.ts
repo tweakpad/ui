@@ -44,7 +44,9 @@ export class TpBadge extends TpElement {
       }
     `,
   ];
-  variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link' = 'default';
+  variant:
+    'default' | 'secondary' | 'destructive' | 'success' | 'warning' | 'outline' | 'ghost' | 'link' =
+    'default';
   interactive = false;
   protected override render() {
     return this.renderPart(

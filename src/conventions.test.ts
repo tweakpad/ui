@@ -141,6 +141,8 @@ const registeredReasons = new Set([
   'idle',
   'engine',
   'scroll',
+  'connect',
+  'layout',
 ]);
 
 describe('attribute conventions', () => {
