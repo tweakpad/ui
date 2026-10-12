@@ -161,6 +161,10 @@ const examples = {
   'tp-text-area': () => html`
     <tp-text-area label="Message" placeholder="Write a message"></tp-text-area>
   `,
+  'tp-cursor': () => html`
+    <tp-cursor></tp-cursor>
+    <tp-cursor-zone state="view"><tp-button>Hover me</tp-button></tp-cursor-zone>
+  `,
   'tp-file-upload': () => html`
     <tp-file-upload
       name="files"

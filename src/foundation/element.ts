@@ -55,6 +55,15 @@ export class TpElement extends LitElement {
       opacity: var(--tp-opacity-disabled);
     }
 
+    /* Custom cursor (Foundation cc-native-lease): while a cursor hides the host pointer, every
+       library part yields its own pointer to it; a native zone resets the switch for its subtree.
+       Hosts are light-DOM elements and take the cursor's document rule instead. */
+    @container style(--tp-cursor-hidden: 1) {
+      * {
+        cursor: none !important;
+      }
+    }
+
     *,
     *::before,
     *::after {

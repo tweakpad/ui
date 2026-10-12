@@ -210,6 +210,16 @@ tp-text-motion:not(:defined) {
   display: block;
 }
 
+/* A cursor paints only in the top layer, so its resting content must not render in flow before
+   definition, and a zone never boxes its content (Foundation §18.22 cc-anatomy). */
+tp-cursor:not(:defined) {
+  display: none;
+}
+
+tp-cursor-zone:not(:defined) {
+  display: contents;
+}
+
 /* A pinned trigger is its full track before definition too (Foundation §18.18 vr-pin). */
 tp-scroll-trigger[pin] {
   block-size: calc(100cqb + var(--tp-scroll-trigger-pin-length, 200cqb));

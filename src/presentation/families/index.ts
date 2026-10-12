@@ -54,6 +54,7 @@ import { fieldGroupPresentation } from './field-group.js';
 import { cardPresentation } from './card.js';
 import { emptyStatePresentation } from './empty-state.js';
 import { fileUploadPresentation } from './file-upload.js';
+import { cursorPresentation } from './cursor.js';
 import { iconPresentation } from './icon.js';
 import { listItemPresentation } from './list-item.js';
 import { keyHintPresentation } from './key-hint.js';
@@ -132,6 +133,7 @@ export { fieldGroupPresentation } from './field-group.js';
 export { cardPresentation } from './card.js';
 export { emptyStatePresentation } from './empty-state.js';
 export { fileUploadPresentation } from './file-upload.js';
+export { cursorPresentation } from './cursor.js';
 export { iconPresentation } from './icon.js';
 export { listItemPresentation } from './list-item.js';
 export { keyHintPresentation } from './key-hint.js';
@@ -212,6 +214,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   cardPresentation,
   emptyStatePresentation,
   fileUploadPresentation,
+  cursorPresentation,
   iconPresentation,
   listItemPresentation,
   keyHintPresentation,

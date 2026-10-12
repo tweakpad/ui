@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Cursor verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+        font-size: var(--tp-text-sm);
+      }
+      main {
+        max-width: 960px;
+        margin: 24px auto;
+        padding: 16px;
+        display: grid;
+        gap: 40px;
+      }
+      section.case {
+        display: grid;
+        gap: 12px;
+        justify-items: start;
+      }
+      section.case > h2.label {
+        font-size: 0.875rem;
+        margin: 0;
+        color: var(--tp-muted-foreground);
+        font-weight: 500;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+      }
+      .nested {
+        padding: 24px;
+        border: 1px dashed var(--tp-border);
+        border-radius: var(--tp-radius-lg);
+      }
+      #log {
+        margin: 0;
+        padding: 8px;
+        max-block-size: 200px;
+        overflow: auto;
+        border: 1px dashed var(--tp-border);
+        font-family: var(--tp-font-mono);
+        font-size: 12px;
+        white-space: pre-wrap;
+        justify-self: stretch;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="case" id="base-case">
+        <h2 class="label">Document cursor</h2>
+        <tp-cursor id="base"></tp-cursor>
+        <p>Move the pointer anywhere: the ring follows and the native pointer hides.</p>
+      </section>
+
+      <section class="case" id="zones">
+        <h2 class="label">Zones</h2>
+        <div class="row">
+          <tp-cursor-zone
+            id="view-zone"
+            state="view"
+            style="
+              --tp-cursor-size: 4rem;
+              --tp-cursor-color: rgb(220 38 38);
+              --tp-cursor-opacity: 0.9;
+            "
+          >
+            <template><tp-badge>View</tp-badge></template>
+            <tp-button id="view-button" variant="outline">View zone</tp-button>
+          </tp-cursor-zone>
+          <tp-cursor-zone id="drag-zone" state="drag" style="--tp-cursor-blend: difference">
+            <tp-button id="drag-button" variant="outline">Drag zone</tp-button>
+          </tp-cursor-zone>
+          <tp-cursor-zone id="stick-center" stick="center">
+            <tp-button id="center-button" variant="outline">Stick center</tp-button>
+          </tp-cursor-zone>
+          <tp-cursor-zone id="stick-bounds" stick="bounds">
+            <tp-button id="bounds-button" variant="outline">Stick bounds</tp-button>
+          </tp-cursor-zone>
+          <tp-cursor-zone id="heavy-zone" state="heavy" stiffness="900" damping="60">
+            <tp-button id="heavy-button" variant="outline">Heavy physics</tp-button>
+          </tp-cursor-zone>
+        </div>
+        <tp-cursor-zone id="outer-zone" state="outer">
+          <div class="nested" id="outer-box">
+            <span>Outer zone</span>
+            <tp-cursor-zone id="inner-zone" state="inner">
+              <tp-button id="inner-button" variant="outline">Inner zone</tp-button>
+            </tp-cursor-zone>
+          </div>
+        </tp-cursor-zone>
+        <tp-cursor-zone id="native-zone" native>
+          <tp-field label="Notes" description="The native pointer returns here.">
+            <tp-text-area id="native-area" rows="2"></tp-text-area>
+          </tp-field>
+        </tp-cursor-zone>
+      </section>
+
+      <section class="case" id="region-case">
+        <h2 class="label">Region scope</h2>
+        <tp-card id="region-card">
+          <h3 slot="header">Region card</h3>
+          <tp-cursor id="region" scope="region"></tp-cursor>
+          <tp-cursor-zone for="region" state="card">
+            <tp-button id="region-button" variant="outline">Region button</tp-button>
+          </tp-cursor-zone>
+        </tp-card>
+      </section>
+
+      <section class="case" id="pair">
+        <h2 class="label">Dot and lagging ring</h2>
+        <div class="row" id="pair-region">
+          <tp-cursor id="dot" scope="region" stiffness="900" damping="50">
+            <span
+              style="
+                display: block;
+                inline-size: 8px;
+                block-size: 8px;
+                border-radius: 50%;
+                background: currentcolor;
+              "
+            ></span>
+          </tp-cursor>
+          <tp-cursor
+            id="ring"
+            scope="region"
+            stiffness="120"
+            damping="16"
+            style="--tp-cursor-size: 40px"
+          ></tp-cursor>
+          <tp-cursor-zone id="ring-zone" for="ring" state="press" style="--tp-cursor-size: 64px">
+            <tp-button id="ring-button">Only the ring reacts</tp-button>
+          </tp-cursor-zone>
+        </div>
+      </section>
+
+      <section class="case" id="dialog-case">
+        <h2 class="label">Top layer</h2>
+        <tp-dialog
+          id="dialog"
+          label="A modal dialog"
+          description="The cursor must paint above this dialog and its backdrop."
+        >
+          <tp-button id="open-dialog" slot="trigger" variant="outline">Open dialog</tp-button>
+          <tp-cursor-zone state="dialog" style="--tp-cursor-size: 56px"
+            ><tp-button variant="outline">Inside the dialog</tp-button></tp-cursor-zone
+          >
+          <tp-button id="close-dialog" slot="close" variant="outline">Close</tp-button>
+        </tp-dialog>
+      </section>
+
+      <section class="case" id="reduced-case">
+        <h2 class="label">Reduced motion</h2>
+        <div class="row" id="reduced-region">
+          <tp-cursor id="reduced" scope="region" motion-policy="reduce"></tp-cursor>
+          <tp-cursor-zone for="reduced" state="view" style="--tp-cursor-size: 48px">
+            <tp-button id="reduced-button" variant="outline">No lag</tp-button>
+          </tp-cursor-zone>
+        </div>
+      </section>
+
+      <section class="case">
+        <h2 class="label">Contract host</h2>
+        <div id="host"></div>
+        <div id="scratch"></div>
+      </section>
+
+      <pre id="log"></pre>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+    <script type="module" src="./contract-checks.js"></script>
+  </body>
+</html>

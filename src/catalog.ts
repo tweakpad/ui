@@ -71,6 +71,7 @@ export const catalog = [
   ['Timeline', 'tp-timeline', 'compound-reexport'],
   ['Autocomplete', 'tp-autocomplete', 'flattening-compound'],
   ['Text motion', 'tp-text-motion', 'compound-reexport'],
+  ['Cursor', 'tp-cursor', 'compound-reexport'],
   ['Table of contents', 'tp-table-of-contents', 'compound-reexport'],
   ['Tree view', 'tp-tree-view', 'compound-reexport'],
   ['Empty state', 'tp-empty-state', 'presentational-primitive'],

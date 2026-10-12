@@ -40,6 +40,9 @@ presentation; Foundation §5.3 ChangeEvent, Appendix B; the UI Widgets Specifica
 - Enumeration markers carry exactly one declared value (`data-side="top"`,
   `data-orientation="vertical"`).
 - Library-internal markers that are not part of a public contract use the `data-tp-` prefix.
+- Published geometry outputs are read-only custom properties on the host, named
+  `--tp-<component>-<measure>` (`--tp-cursor-x`, `--tp-cursor-stuck-width`); they are never part
+  of the token set and never inputs.
 - A disabled host is dimmed once, by the shared `:host([disabled])`/`:host([data-disabled])`
   rule in `TpElement`. Part recipes selected by the host's disabled state change cursor,
   background or color only; they never apply `--tp-opacity-disabled` again. Item-level
@@ -60,3 +63,7 @@ presentation; Foundation §5.3 ChangeEvent, Appendix B; the UI Widgets Specifica
 - `tp-field-validity` (empty detail) tells the enclosing Field that a control's validity
   changed without a value change, such as a rejected File upload item; the Field revalidates
   under its timing policy.
+- A non-value lane is `tp-<noun>-<lane>-change` with the same detail shape
+  (`tp-cursor-state-change` carries `{ value, previousValue, zone, reason, sourceEvent }`;
+  `tp-cursor-follow-change` carries `{ value, previousValue, reason, sourceEvent }`). `hover` is
+  the reason for pointer entry into and exit from a declared region.
