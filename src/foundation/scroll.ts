@@ -119,3 +119,55 @@ export function commonScrollContainer(elements: readonly Element[]): HTMLElement
   }
   return document.scrollingElement as HTMLElement | null;
 }
+
+/**
+ * The scroll container on a wheel's path, between its target and `boundary` (exclusive), that
+ * the browser would scroll for it: the nearest overflowing container that can still move in
+ * the wheel's direction on either axis, or whose `overscroll-behavior` keeps every wheel. Null
+ * when nothing there scrolls, so a surface that pans on wheels can take it (Flow nodes).
+ */
+export function wheelScrollContainer(event: WheelEvent, boundary: Element): Element | null {
+  let deltaX = event.deltaX;
+  let deltaY = event.deltaY;
+  // Shift scrolls sideways; macOS already swaps the axes, other platforms report deltaY.
+  if (event.shiftKey && deltaX === 0) {
+    deltaX = deltaY;
+    deltaY = 0;
+  }
+  for (const target of event.composedPath()) {
+    if (target === boundary) break;
+    if ((target as Node).nodeType !== 1) continue;
+    const element = target as Element;
+    const styles = element.ownerDocument.defaultView?.getComputedStyle(element);
+    if (!styles) continue;
+    const rtl = styles.direction === 'rtl';
+    if (
+      wheelMoves(element, 'x', deltaX, styles.overflowX, styles.overscrollBehaviorX, rtl) ||
+      wheelMoves(element, 'y', deltaY, styles.overflowY, styles.overscrollBehaviorY, false)
+    )
+      return element;
+  }
+  return null;
+}
+
+function wheelMoves(
+  element: Element,
+  axis: 'x' | 'y',
+  delta: number,
+  overflow: string,
+  overscroll: string,
+  rtl: boolean,
+): boolean {
+  if (delta === 0 || !/(auto|scroll|overlay)/.test(overflow)) return false;
+  const range =
+    axis === 'x'
+      ? element.scrollWidth - element.clientWidth
+      : element.scrollHeight - element.clientHeight;
+  if (range < 1) return false;
+  // `contain` and `none` keep the gesture in the container even at its end.
+  if (overscroll && overscroll !== 'auto') return true;
+  const position = axis === 'x' ? element.scrollLeft : element.scrollTop;
+  // Right-to-left inline scrolling runs from 0 (start) to -range.
+  const start = rtl ? -range : 0;
+  return delta > 0 ? position < start + range - 1 : position > start + 1;
+}

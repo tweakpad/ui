@@ -4,6 +4,8 @@ import { FrameLoop } from './frame-loop.js';
 import {
   AUTO_PAN_SPEED,
   PanZoomController,
+  WHEEL_LATCH_SLOP,
+  WHEEL_LATCH_TIMEOUT,
   WHEEL_SETTLE_DELAY,
   clampViewport,
   wheelZoomFactor,
@@ -134,11 +136,14 @@ interface SetupOptions {
   viewport?: PanZoomViewport;
   filter?: PanZoomOptions['filter'];
   frameLoop?: PanZoomOptions['frameLoop'];
+  /** Reads wheels on a separate container element. */
+  wheelElement?: boolean;
 }
 
 function setup(options: SetupOptions = {}) {
   const owner = new FakeWindow();
   const element = new FakeElement();
+  const wheelElement = options.wheelElement ? new FakeElement() : element;
   const model = { viewport: options.viewport ?? { x: 0, y: 0, zoom: 1 } };
   const policy: PanZoomPolicy = { ...DEFAULT_POLICY, ...options.policy };
   const limits: PanZoomLimits = { minZoom: 0.25, maxZoom: 4, ...options.limits };
@@ -169,9 +174,21 @@ function setup(options: SetupOptions = {}) {
     handlers,
     ...(options.filter ? { filter: options.filter } : {}),
     ...(options.frameLoop ? { frameLoop: options.frameLoop } : {}),
+    ...(options.wheelElement ? { wheelElement: wheelElement as unknown as HTMLElement } : {}),
   });
   controller.connect();
-  return { owner, element, model, policy, limits, controller, calls, viewports, handlers };
+  return {
+    owner,
+    element,
+    wheelElement,
+    model,
+    policy,
+    limits,
+    controller,
+    calls,
+    viewports,
+    handlers,
+  };
 }
 
 const nearPoint = (point: PanZoomPoint, expected: PanZoomPoint) => {
@@ -460,6 +477,9 @@ describe('PanZoomController', () => {
     owner.advance(1);
     expect(calls).toEqual(['start:wheel', 'move:wheel', 'move:wheel', 'end:wheel']);
     expect(controller.active).toBe(false);
+    // The stream's latch outlives the gesture.
+    expect(owner.timers).toBe(1);
+    owner.advance(WHEEL_LATCH_TIMEOUT);
     expect(owner.timers).toBe(0);
   });
 
@@ -511,6 +531,105 @@ describe('PanZoomController', () => {
     const filtered = setup({ filter: (event) => event.type !== 'wheel' });
     filtered.element.dispatchEvent(wheel({ deltaY: -100 }));
     expect(filtered.calls).toEqual([]);
+  });
+
+  it('latches a surface-owned wheel stream: content sliding under the pointer cannot take it', () => {
+    let refuse = false;
+    const { owner, element, calls, viewports } = setup({
+      policy: { wheel: 'pan' },
+      filter: (event) => !(refuse && event.type === 'wheel'),
+    });
+    element.dispatchEvent(wheel({ deltaY: 10 }));
+    expect(viewports).toEqual([{ x: 0, y: -10, zoom: 1 }]);
+    // A node now sits under the stationary pointer: the stream stays the surface's, taken in the
+    // capture phase so the node never sees it.
+    refuse = true;
+    const latched = wheel({ deltaY: 10, clientX: 110 + WHEEL_LATCH_SLOP - 1 });
+    const stop = vi.spyOn(latched, 'stopPropagation');
+    element.dispatchEvent(latched);
+    expect(latched.defaultPrevented).toBe(true);
+    expect(stop).toHaveBeenCalled();
+    expect(viewports[1]).toEqual({ x: 0, y: -20, zoom: 1 });
+    // Wheels within the timeout extend the latch, past the gesture's own settle.
+    owner.advance(WHEEL_LATCH_TIMEOUT - 1);
+    element.dispatchEvent(wheel({ deltaY: 10 }));
+    owner.advance(WHEEL_LATCH_TIMEOUT - 1);
+    element.dispatchEvent(wheel({ deltaY: 10 }));
+    expect(viewports).toHaveLength(4);
+    expect(calls.filter((call) => call === 'start:wheel')).toHaveLength(3);
+    // A pause ends the stream: the next wheel asks the filter again.
+    owner.advance(WHEEL_LATCH_TIMEOUT);
+    const next = wheel({ deltaY: 10 });
+    element.dispatchEvent(next);
+    expect(next.defaultPrevented).toBe(false);
+    expect(viewports).toHaveLength(4);
+  });
+
+  it('keeps a content-owned stream with the content until it pauses', () => {
+    let refuse = true;
+    const { owner, element, viewports } = setup({
+      policy: { wheel: 'pan' },
+      filter: () => !refuse,
+    });
+    const first = wheel({ deltaY: 10 });
+    element.dispatchEvent(first);
+    expect(first.defaultPrevented).toBe(false);
+    // The scrolled content moved away from the pointer; the stream still belongs to it.
+    refuse = false;
+    const second = wheel({ deltaY: 10 });
+    const stop = vi.spyOn(second, 'stopPropagation');
+    element.dispatchEvent(second);
+    expect(second.defaultPrevented).toBe(false);
+    expect(stop).not.toHaveBeenCalled();
+    expect(viewports).toEqual([]);
+    owner.advance(WHEEL_LATCH_TIMEOUT);
+    element.dispatchEvent(wheel({ deltaY: 10 }));
+    expect(viewports).toEqual([{ x: 0, y: -10, zoom: 1 }]);
+
+    // Content that handled the first wheel itself owns the stream too.
+    const handled = setup({ policy: { wheel: 'pan' } });
+    const claimed = wheel({ deltaY: 10 });
+    claimed.preventDefault();
+    handled.element.dispatchEvent(claimed);
+    handled.element.dispatchEvent(wheel({ deltaY: 10 }));
+    expect(handled.viewports).toEqual([]);
+  });
+
+  it('ends the latch when the pointer leaves the slop region or the zoom modifier changes', () => {
+    let refuse = false;
+    const { element, viewports } = setup({
+      policy: { wheel: 'pan' },
+      filter: (event) => !(refuse && event.type === 'wheel'),
+    });
+    element.dispatchEvent(wheel({ deltaY: 10 }));
+    refuse = true;
+    element.dispatchEvent(wheel({ deltaY: 10, clientX: 110 + WHEEL_LATCH_SLOP + 1 }));
+    expect(viewports).toHaveLength(1);
+
+    refuse = false;
+    const pinch = setup({
+      policy: { wheel: 'pan' },
+      filter: (event) => !(refuse && !(event as WheelEvent).ctrlKey),
+    });
+    refuse = true;
+    // A page-owned scroll stream does not swallow the pinch that follows it.
+    pinch.element.dispatchEvent(wheel({ deltaY: 10 }));
+    pinch.element.dispatchEvent(wheel({ deltaY: -100, ctrlKey: true }));
+    expect(pinch.viewports).toHaveLength(1);
+    expect(pinch.viewports[0]!.zoom).toBeCloseTo(2 ** 0.2);
+  });
+
+  it('reads wheels on the wheel element and pointer gestures on the element only', () => {
+    const { element, wheelElement, calls } = setup({
+      policy: { wheel: 'pan' },
+      wheelElement: true,
+    });
+    element.dispatchEvent(wheel({ deltaY: 10 }));
+    expect(calls).toEqual([]);
+    wheelElement.dispatchEvent(wheel({ deltaY: 10 }));
+    expect(calls).toEqual(['start:wheel', 'move:wheel']);
+    wheelElement.dispatchEvent(pointer('pointerdown'));
+    expect(calls).toEqual(['start:wheel', 'move:wheel']);
   });
 
   it('ignores wheels while a pointer gesture is in progress', () => {
@@ -658,7 +777,8 @@ describe('PanZoomController', () => {
     const { owner, element, controller, calls } = setup({ frameLoop: new FrameLoop(frames) });
     element.dispatchEvent(wheel({ deltaY: -100 }));
     controller.autoPan({ x: 0, y: 0 });
-    expect(owner.timers).toBe(1);
+    // The wheel gesture's settle and the stream's latch.
+    expect(owner.timers).toBe(2);
     expect(frames.pending).toBe(1);
     controller.disconnect();
     expect(calls).toEqual(['start:wheel', 'move:wheel', 'end:wheel']);

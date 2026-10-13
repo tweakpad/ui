@@ -337,7 +337,12 @@ convert client coordinates, `canvasSize` is the pane's size and `getNodesBounds(
 A left drag pans in the pan tool, while Space is held or with the middle button. `wheel` sets what
 a plain wheel does: `pan` (default), `zoom` toward the pointer, or `none` to leave the page's
 scrolling alone; Control or Command with the wheel (a trackpad pinch) always zooms toward the
-pointer and Shift swaps the axes. On touch, one finger on the empty pane pans in either tool and
+pointer and Shift swaps the axes. The wheel works anywhere over the canvas, nodes and panels
+included: a wheel over a node or panel goes to its content only when something there can scroll
+in that direction (a long list, a textarea), and otherwise moves the canvas. A wheel stream keeps
+the owner its first wheel chose, the way the browser latches native scrolling, so nodes that pan
+under a stationary pointer never stop it; the stream ends after a 500 ms pause, when the pointer
+moves more than 10 px, or when Control or Command changes. On touch, one finger on the empty pane pans in either tool and
 a second finger pinches around the midpoint (a touch press never starts a marquee); a double press
 on the empty pane zooms in by 1.2, and `cooperativeGestures` hands plain wheel and one-finger pane
 gestures to the page. Node, connection, marquee and resize drags auto-pan near the pane edges.

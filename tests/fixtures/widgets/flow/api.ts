@@ -406,6 +406,164 @@ export async function assertViewport(id = 'monitor'): Promise<Report> {
   );
 }
 
+/**
+ * Wheel streams latch like native scrolling (synthetic wheels dispatched at the hit-tested
+ * element; the MCP has no wheel input, and synthetic wheels never scroll natively, so the
+ * content's scroll position is set where the browser would have moved it). A stream that
+ * starts on the pane keeps panning while a node and its scrollable content slide under the
+ * stationary pointer; a stream that starts over a node pans unless the content under the
+ * pointer can scroll that way; ctrl wheels zoom everywhere; leaving the slop region or pausing
+ * starts a new stream.
+ */
+export async function assertWheelLatching(id = 'declarative', nodeId = 'b'): Promise<Report> {
+  const STREAM_PAUSE = 600; // past WHEEL_LATCH_TIMEOUT (500 ms)
+  const target = flow(id);
+  target.scrollIntoView({ block: 'center' });
+  await target.fitViewTo({ duration: 0 });
+  const start = target.viewport;
+  const node = target.querySelector<HTMLElement>(`tp-flow-node#${nodeId}`)!;
+  const list = document.createElement('div');
+  list.dataset.wheelProbe = '';
+  list.style.cssText = 'max-block-size: 48px; overflow: auto';
+  list.innerHTML = Array.from({ length: 10 }, (_, index) => `<div>Row ${index + 1}</div>`).join('');
+  node.append(list);
+  await wait(200);
+  await settle(target);
+  let listWheels = 0;
+  list.addEventListener('wheel', () => (listWheels += 1));
+  const insideList = (element: Element | null) => element !== null && list.contains(element);
+  const insideNode = (element: Element | null) => {
+    for (let item: Node | null = element; item; item = item.parentNode ?? (item as ShadowRoot).host)
+      if (item === node) return true;
+    return false;
+  };
+  const send = (point: FlowPoint, init: WheelEventInit) => {
+    const element = topAt(point)!;
+    const event = new WheelEvent('wheel', {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      clientX: point.x,
+      clientY: point.y,
+      ...init,
+    });
+    const seen = listWheels;
+    element.dispatchEvent(event);
+    return {
+      element,
+      prevented: event.defaultPrevented,
+      listSaw: listWheels > seen,
+      y: target.viewport.y,
+      zoom: target.viewport.zoom,
+    };
+  };
+  const reset = async () => {
+    await wait(STREAM_PAUSE);
+    list.scrollTop = 0;
+    await target.setViewport(start, { duration: 0 });
+    await settle(target);
+  };
+
+  // A stream started on the pane just above the node.
+  const listBox = () => list.getBoundingClientRect();
+  const above = { x: listBox().x + 20, y: node.getBoundingClientRect().y - 20 };
+  const stream: ReturnType<typeof send>[] = [];
+  for (let index = 0; index < 40; index += 1) {
+    stream.push(send(above, { deltaY: 10 }));
+    if (stream.filter((entry) => insideList(entry.element)).length >= 3) break;
+    await frame();
+  }
+  await reset();
+
+  // A stream started over scrollable content belongs to it, even once it reaches its end.
+  let inList = { x: listBox().x + 20, y: listBox().y + 20 };
+  const content = [send(inList, { deltaY: 10 }), send(inList, { deltaY: 10 })];
+  list.scrollTop = list.scrollHeight;
+  content.push(send(inList, { deltaY: 10 }));
+  await wait(STREAM_PAUSE);
+
+  // At its end, a new downward stream finds nothing to scroll: the canvas takes it.
+  const atEnd = [send(inList, { deltaY: 10 }), send(inList, { deltaY: 10 })];
+  await reset();
+
+  // Over node content that cannot scroll at all.
+  const header = { x: listBox().x + 20, y: node.getBoundingClientRect().y + 12 };
+  const plain = [send(header, { deltaY: 10 })];
+  await reset();
+
+  // Ctrl wheels zoom over scrollable content.
+  inList = { x: listBox().x + 20, y: listBox().y + 20 };
+  const pinch = send(inList, { deltaY: -20, ctrlKey: true });
+  await reset();
+
+  // Leaving the slop region starts a new stream: the content takes it.
+  inList = { x: listBox().x + 20, y: listBox().y + 20 };
+  const pane = send({ x: inList.x, y: node.getBoundingClientRect().y - 20 }, { deltaY: 10 });
+  const moved = send(inList, { deltaY: 10 });
+
+  list.remove();
+  await reset();
+  const monotonic = stream.every((entry, index) => index === 0 || entry.y < stream[index - 1]!.y);
+  const summary = (entries: ReturnType<typeof send>[]) =>
+    entries.map((entry) => ({
+      element: entry.element.localName,
+      inList: insideList(entry.element),
+      prevented: entry.prevented,
+      listSaw: entry.listSaw,
+      y: entry.y,
+    }));
+  return report(
+    [
+      check(
+        'pane stream keeps panning over the node',
+        stream[0]!.element.matches('.pane, tp-flow-background') &&
+          stream.some((entry) => insideNode(entry.element) && !insideList(entry.element)) &&
+          stream.some((entry) => insideList(entry.element)) &&
+          stream.every((entry) => entry.prevented) &&
+          monotonic,
+        summary(stream),
+      ),
+      check(
+        'latched wheels never reach the content',
+        stream.every((entry) => !entry.listSaw),
+        stream.map((entry) => entry.listSaw),
+      ),
+      check(
+        'stream over scrollable content left to it',
+        content.every((entry) => !entry.prevented && entry.listSaw && entry.y === start.y),
+        summary(content),
+      ),
+      check(
+        'nothing to scroll that way pans; the rest of the stream is captured',
+        atEnd.every((entry) => entry.prevented) &&
+          atEnd[1]!.y < atEnd[0]!.y &&
+          atEnd[0]!.y < start.y &&
+          !atEnd[1]!.listSaw,
+        summary(atEnd),
+      ),
+      check(
+        'unscrollable node content pans',
+        insideNode(plain[0]!.element) &&
+          !insideList(plain[0]!.element) &&
+          plain[0]!.prevented &&
+          plain[0]!.y < start.y,
+        summary(plain),
+      ),
+      check(
+        'ctrl wheel zooms over scrollable content',
+        insideList(pinch.element) && pinch.prevented && pinch.zoom > start.zoom,
+        { prevented: pinch.prevented, zoom: pinch.zoom, from: start.zoom },
+      ),
+      check(
+        'leaving the slop region starts a new stream',
+        pane.prevented && insideList(moved.element) && !moved.prevented && moved.listSaw,
+        summary([pane, moved]),
+      ),
+    ],
+    { start },
+  );
+}
+
 // ---- gestures (synthetic sequences; real ones through the MCP drag tool) --------------------
 
 /**

@@ -17,6 +17,14 @@ import { CleanupScope, Scheduler } from './services.js';
  * synthesized start and a 150 ms debounced end (xyflow `panScrollTimeout`). Programmatic steps
  * (`panBy`, `zoomAround`, `animateTo`, `autoPan`) go through the same clamp and handler.
  *
+ * Wheels latch like the browser's own wheel scrolling: the first wheel of a stream decides
+ * whether the surface or the content under the pointer owns it (the filter, a content handler
+ * that prevented the default, the policy), and every later wheel of the stream goes to the same
+ * owner. A surface-owned stream is taken in the capture phase, so content that the pan slides
+ * under a stationary pointer never interrupts it. A stream ends when wheels pause for
+ * `WHEEL_LATCH_TIMEOUT`, the pointer leaves the first wheel's slop region, or the zoom modifier
+ * changes (a pinch after a scroll is a new gesture).
+ *
  * Surfaces that pan on touch need `touch-action: none`; a handled press prevents the default
  * action (text selection, compatibility mouse events) so focus belongs to `handlers.start`.
  * Keyboard panning is not handled here.
@@ -86,6 +94,12 @@ export interface PanZoomFrameLoop {
 
 export interface PanZoomOptions {
   readonly element: HTMLElement;
+  /**
+   * The element whose wheels the owner reads, defaulting to `element`. A surface whose content
+   * is a sibling of the pane (a transformed node layer) passes their common container, so wheels
+   * over the content reach the latch; pointer gestures still start on `element` only.
+   */
+  readonly wheelElement?: HTMLElement;
   /** Owner window for timers and frames; defaults to the element's view. */
   readonly owner?: Window | null;
   /** The current viewport (read model). */
@@ -112,6 +126,13 @@ export interface PanZoomAnimationOptions {
 
 /** Debounce after the last wheel event before the wheel gesture ends (xyflow parity). */
 export const WHEEL_SETTLE_DELAY = 150;
+/**
+ * Pause after which the next wheel starts a new stream with a new owner (Chrome's mouse-wheel
+ * latching transaction).
+ */
+export const WHEEL_LATCH_TIMEOUT = 500;
+/** Pointer travel from the stream's first wheel, in CSS pixels, that ends the latch (Chrome). */
+export const WHEEL_LATCH_SLOP = 10;
 /** Distance from the element edge, in CSS pixels, within which `autoPan` moves. */
 export const AUTO_PAN_EDGE = 40;
 /** Auto-pan speed at the edge, in CSS pixels per frame. */
@@ -207,6 +228,15 @@ interface WheelGesture {
   settle: () => void;
 }
 
+/** The owner of the current wheel stream. */
+interface WheelLatch {
+  readonly owner: 'surface' | 'content';
+  readonly x: number;
+  readonly y: number;
+  readonly zoom: boolean;
+  release: () => void;
+}
+
 interface Animation {
   readonly from: PanZoomViewport;
   readonly to: PanZoomViewport;
@@ -222,6 +252,7 @@ export class PanZoomController {
   #scheduler: Scheduler | undefined;
   #gesture: PointerGesture | null = null;
   #wheel: WheelGesture | null = null;
+  #latch: WheelLatch | null = null;
   #animation: Animation | null = null;
   #animationFrames: PanZoomFrameSubscription | undefined;
   #autoPanPoint: PanZoomPoint | null = null;
@@ -254,13 +285,16 @@ export class PanZoomController {
     scope.add(() => this.#scheduler?.dispose());
     const element = this.#options.element;
     scope.listen(element, 'pointerdown', this.#pointerDown);
-    scope.listen(element, 'wheel', this.#wheelEvent, { passive: false });
+    const wheelElement = this.#options.wheelElement ?? element;
+    scope.listen(wheelElement, 'wheel', this.#latchedWheel, { passive: false, capture: true });
+    scope.listen(wheelElement, 'wheel', this.#wheelEvent, { passive: false });
     scope.listen(element, 'dblclick', this.#doubleClick);
   }
 
   disconnect(): void {
     this.#cancelGesture();
     this.#settleWheel(null);
+    this.#releaseLatch();
     this.cancelAnimation();
     this.stopAutoPan();
     this.#animationFrames?.release();
@@ -625,8 +659,54 @@ export class PanZoomController {
 
   // Wheel
 
+  /** Capture phase: a latched stream keeps its owner whatever is now under the pointer. */
+  readonly #latchedWheel = (event: WheelEvent): void => {
+    const latch = this.#latch;
+    if (!latch) return;
+    if (
+      Math.hypot(event.clientX - latch.x, event.clientY - latch.y) > WHEEL_LATCH_SLOP ||
+      (event.ctrlKey || event.metaKey) !== latch.zoom
+    ) {
+      this.#releaseLatch();
+      return;
+    }
+    this.#renewLatch(latch);
+    if (latch.owner === 'content' || this.#gesture) return;
+    // The content under the pointer never sees a surface-owned wheel.
+    if (this.#applyWheel(event)) event.stopPropagation();
+    else this.#releaseLatch();
+  };
+
+  /** Bubble phase: the first wheel of a stream, after the content had its say, picks the owner. */
   readonly #wheelEvent = (event: WheelEvent): void => {
-    if (this.#gesture || !this.#allowed(event)) return;
+    if (this.#latch || this.#gesture) return;
+    const surface = !event.defaultPrevented && this.#allowed(event) && this.#applyWheel(event);
+    const latch: WheelLatch = {
+      owner: surface ? 'surface' : 'content',
+      x: event.clientX,
+      y: event.clientY,
+      zoom: event.ctrlKey || event.metaKey,
+      release: () => undefined,
+    };
+    this.#latch = latch;
+    this.#renewLatch(latch);
+  };
+
+  #renewLatch(latch: WheelLatch): void {
+    latch.release();
+    latch.release =
+      this.#scheduler?.timeout(() => {
+        if (this.#latch === latch) this.#latch = null;
+      }, WHEEL_LATCH_TIMEOUT) ?? (() => undefined);
+  }
+
+  #releaseLatch(): void {
+    this.#latch?.release();
+    this.#latch = null;
+  }
+
+  /** Pans or zooms for one wheel under the policy; false leaves the wheel to the page. */
+  #applyWheel(event: WheelEvent): boolean {
     const policy = this.#options.policy();
     const point = this.#relative(event);
     const limits = this.#options.limits();
@@ -634,14 +714,14 @@ export class PanZoomController {
     let next: PanZoomViewport;
     if (event.ctrlKey || event.metaKey) {
       // macOS reports a trackpad pinch as a ctrl wheel; a modified wheel is the cooperative zoom.
-      if (!policy.pinch) return;
+      if (!policy.pinch) return false;
       const factor = wheelZoomFactor(event.deltaY, event.deltaMode, {
         pinch: true,
         mac: this.#mac,
       });
       next = zoomToPoint(viewport, viewport.zoom * factor, point, limits);
     } else if (policy.wheel === 'none' || policy.cooperative) {
-      return;
+      return false;
     } else if (policy.wheel === 'zoom') {
       const factor = wheelZoomFactor(event.deltaY, event.deltaMode);
       next = zoomToPoint(viewport, viewport.zoom * factor, point, limits);
@@ -667,7 +747,8 @@ export class PanZoomController {
     this.#wheel.settle =
       this.#scheduler?.timeout(() => this.#settleWheel(event), WHEEL_SETTLE_DELAY) ??
       (() => undefined);
-  };
+    return true;
+  }
 
   #settleWheel(event: Event | null): void {
     const wheel = this.#wheel;

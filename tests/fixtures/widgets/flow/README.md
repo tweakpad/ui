@@ -26,7 +26,8 @@ another driver). The record lives in `plans/widgets/flow/implementation-checklis
    dynamic instance under `#dynamic`) and the assertion helpers of `api.ts`: `assertValueLane`,
    `assertControlledOwners`, `assertLateAndNeverOwners`, `assertNestedEventBoundary`,
    `assertDeclarativeAdoption`,
-   `assertViewport`, `assertNodeDrag`, `assertConnection`, `assertEdgeHandles` (hit-tested
+   `assertViewport`, `assertWheelLatching` (dispatched wheel streams over the pane, a node and
+   scrollable node content; the MCP has no wheel input), `assertNodeDrag`, `assertConnection`, `assertEdgeHandles` (hit-tested
    presses on a selected edge's handles), `assertMarquee`,
    `assertSelectionAndDelete`, `assertClipboard`, `assertUndoRedo`, `assertRouting`,
    `assertLayout`, `assertVirtualization`, `assertRunState`, `assertModes`, `assertForms`,

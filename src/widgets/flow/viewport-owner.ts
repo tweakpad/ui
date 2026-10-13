@@ -10,6 +10,8 @@ import type { ChangeReason } from '../../foundation/types.js';
 
 export interface ViewportOwnerOptions {
   pane: () => HTMLElement | null;
+  /** The pane's container with the node layer and panels: wheels over them reach the latch. */
+  wheelTarget: () => HTMLElement | null;
   transformTarget: () => HTMLElement | null;
   viewport: () => FlowViewport;
   size: () => FlowSize;
@@ -65,8 +67,10 @@ export class ViewportOwner {
     const pane = this.#options.pane();
     if (!pane || this.#controller) return;
     const view = pane.ownerDocument.defaultView;
+    const wheelTarget = this.#options.wheelTarget();
     this.#controller = new PanZoomController({
       element: pane,
+      ...(wheelTarget ? { wheelElement: wheelTarget } : {}),
       owner: view,
       viewport: () => this.#options.viewport(),
       limits: () => ({ ...this.#options.limits(), translateExtent: undefined }) as never,

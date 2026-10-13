@@ -19,6 +19,7 @@ import {
 } from '../../foundation/motion.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { PanZoomPolicy } from '../../foundation/pan-zoom.js';
+import { wheelScrollContainer } from '../../foundation/scroll.js';
 import {
   createRoutingPlanner,
   type FlowRoutingPlannerOptions,
@@ -683,6 +684,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     });
     this.#viewportOwner = new ViewportOwner({
       pane: () => this.#pane,
+      wheelTarget: () => this.#canvas,
       transformTarget: () => this.#viewportElement,
       viewport: () => this.#viewportState.value,
       size: () => this.#size,
@@ -4017,14 +4019,21 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     for (const target of path) {
       if (target === canvas) break;
       if (!(target instanceof Element)) continue;
+      if (target.hasAttribute('data-no-pan') || target.localName === 'tp-menu') return false;
+      // Wheels over nodes and panels pan the canvas unless their content can scroll that way;
+      // the pan/zoom owner keeps a stream that started elsewhere whatever slides under it.
       if (
         target.localName === 'tp-flow-node' ||
         target.localName === 'tp-flow-port' ||
-        target.localName === 'tp-flow-edge-label'
+        target.localName === 'tp-flow-edge-label' ||
+        target.classList.contains('panel')
       )
-        return event.type === 'wheel';
-      if (target.hasAttribute('data-no-pan')) return false;
-      if (target.classList.contains('panel')) return false;
+        return (
+          event.type === 'wheel' &&
+          (event.ctrlKey ||
+            event.metaKey ||
+            wheelScrollContainer(event as WheelEvent, target) === null)
+        );
       if (target.getAttribute('part')?.includes('flow-edge-hit')) return event.type === 'wheel';
     }
     if (event.type === 'pointerdown' && interactiveTargetInPath(event, canvas ?? this))
