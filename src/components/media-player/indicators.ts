@@ -41,7 +41,7 @@ function iconTemplate(icon: MediaButtonIcon): unknown {
 }
 
 /**
- * Shared feedback indicator (Library mp-l-feedback; Video.js `InputIndicatorElement`):
+ * Shared feedback indicator (Library mp-l-feedback):
  *
  * - Decorative: the host is always `aria-hidden`; announcements belong to the player's status
  *   region.
@@ -284,7 +284,7 @@ const STATUS_ICONS: Readonly<Record<MediaIndicatorStatus, MediaIconName>> = {
 export class TpMediaStatusIndicator extends TpMediaIndicatorElement<MediaStatusDetails> {
   static tagName = 'tp-media-status-indicator';
 
-  // A centered mark, not a frame-filling panel (Video.js PlaybackStatusIndicator).
+  // A centered mark, not a frame-filling panel.
   static override styles = [
     TpMediaIndicatorElement.styles,
     css`

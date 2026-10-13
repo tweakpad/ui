@@ -13,7 +13,7 @@ export const menuSurface: readonly PresentationRule[] = [
   {
     declarations: {
       'min-inline-size': 'min(var(--tp-anchor-width, 0px), var(--tp-available-width, 100vw))',
-      // Nova menu content outline-none: a pointer-opened menu focuses its content, and the
+      // Menu content draws no outline: a pointer-opened menu focuses its content, and the
       // highlighted item, not a ring around the surface, shows where the keyboard is.
       outline: 'none',
     },
@@ -27,7 +27,7 @@ export const menuItem: readonly PresentationRule[] = [
   { declarations: { transition: 'none' } },
 ];
 
-// Nova cn-*-sub-trigger is an ordinary command row (gap-1.5 px-1.5 py-1) whose icon and text
+// A sub-trigger is an ordinary command row whose icon and text
 // are direct children. The reused Button wraps its default slot in a label and tightens edges
 // that show a mark, so the row restores both: label content shares the row gap, as in a Menu
 // item, and either mark keeps the item's inline padding so icons align across rows.
@@ -92,7 +92,7 @@ const root = (prefix: 'menu'): Record<string, readonly PresentationRule[]> => ({
   [`${prefix}-shortcut`]: commandShortcutAppearance,
 });
 
-/** Base Menu/Context reexports and the shared Nova translucent command surface. */
+/** Menu and Context menu share the translucent command surface. */
 export const menuAppearance: PresentationDictionary = {
   ...root('menu'),
 };

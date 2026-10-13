@@ -10,7 +10,7 @@ export const previewCardCoreAppearance: PresentationDictionary = {
     ...anchoredPresenceAppearance,
     rule({ fill: 'var(--tp-popover)' }, '& > .arrow'),
     rule({
-      // Nova cn-hover-card-content: w-64 p-2.5 gap-2.5 (space-16 × 4 = 64 units).
+      // 64 spacing units wide (space-16 × 4), capped by the available width.
       'inline-size': 'min(calc(var(--tp-space-16) * 4), var(--tp-available-width))',
       padding: 'var(--tp-space-2-5)',
       gap: 'var(--tp-space-2-5)',
@@ -25,7 +25,7 @@ export const tooltipCoreAppearance: PresentationDictionary = {
     ...surfaceAppearance,
     ...anchoredPresenceAppearance,
     rule({
-      // Nova cn-tooltip-content: max-w-xs (20rem = space-16 × 5) px-3 py-1.5 gap-1.5 text-xs.
+      // At most 20rem wide (space-16 × 5), capped by the available width.
       'max-inline-size': 'min(calc(var(--tp-space-16) * 5), var(--tp-available-width))',
       padding: 'var(--tp-space-1-5) var(--tp-space-3)',
       gap: 'var(--tp-space-1-5)',

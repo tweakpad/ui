@@ -58,7 +58,7 @@ export class TpCard extends TpElement {
         display: grid;
       }
 
-      /* Nova cn-card-footer: flex items-center, content from the logical start. */
+      /* Footer: a centered flex row, content from the logical start. */
       .card > footer {
         display: flex;
         flex-wrap: wrap;

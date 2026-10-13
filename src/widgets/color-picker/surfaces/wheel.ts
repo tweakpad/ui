@@ -15,7 +15,7 @@ interface Pressed {
 }
 
 /**
- * The hue/saturation disc with harmony handles (reference image 6). The base handle edits the
+ * The hue/saturation disc with harmony handles. The base handle edits the
  * color; derived handles follow the rule; under `custom` every handle is its own dimension pair.
  * Brightness is not edited here: the widget dims the disc through `--_tp-color-picker-dim`.
  */

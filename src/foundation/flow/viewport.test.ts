@@ -108,7 +108,7 @@ describe('flow viewport', () => {
     expect(screenToFlow({ x: 400, y: 300 }, centered)).toEqual({ x: 100, y: 100 });
   });
 
-  it('constrains the translation like d3-zoom', () => {
+  it('constrains the translation to the extent', () => {
     const free = clampViewport({ x: -5000, y: 12, zoom: 9 }, { ...limits, size });
     expect(free).toEqual({ x: -5000, y: 12, zoom: 4 });
 

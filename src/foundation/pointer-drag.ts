@@ -7,11 +7,10 @@ import { CleanupScope, Scheduler } from './services.js';
  * callback per animation frame, release ends the gesture once, and Escape, pointer
  * cancellation or disposal abandon it so the owner restores its pre-press value. A
  * capture lost before the release (the browser or another handler took the pointer)
- * and a move that reports no pressed button (the release was consumed elsewhere, Base
- * UI SliderControl parity) end the gesture at the last known position: the user's last
+ * and a move that reports no pressed button (the release was consumed elsewhere) end the gesture at the last known position: the user's last
  * movement settles instead of being discarded. A press inside a handle (`grip`) keeps the
  * pointer's offset from that handle's center for the whole gesture, so the handle moves with
- * the pointer instead of jumping under it (Base UI SliderControl's pressed-thumb offset); a
+ * the pointer instead of jumping under it; a
  * press elsewhere positions at the pointer. One-dimensional Slider thumbs keep their own drag
  * because thumb selection and collision belong to the Slider contract.
  */

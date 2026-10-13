@@ -2,8 +2,7 @@ import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 
 /**
- * Media player appearance (Library mp-l-presentation; Video.js default video skin traced in the
- * implementation checklist). Only existing token roles are used:
+ * Media player appearance (Library mp-l-presentation). Only existing token roles are used:
  *
  * - Regions over video use a scoped `color-scheme: dark`, so every `light-dark()` role resolves to
  *   its dark value without new color tokens; audio (`visibility="always"`) follows the page scheme.
@@ -42,7 +41,7 @@ export const mediaPlayerAppearance: PresentationDictionary = {
   ],
   // Native captions stay native (platform caption preferences apply), sit 10% of the video
   // height above the bottom edge and lift above visible controls by the player's published
-  // offset (Video.js captions.css). Engines without this
+  // offset. Engines without this
   // pseudo-element keep native cue placement.
   'media-element': [
     {
@@ -88,8 +87,8 @@ export const mediaPlayerAppearance: PresentationDictionary = {
       },
     },
   ],
-  // Groups placed directly in Controls over video are frosted, translucent pills (Video.js default
-  // skin surface): a 10% foreground surface with backdrop blur, a hairline and an inner highlight.
+  // Groups placed directly in Controls over video are frosted, translucent pills:
+  // a 10% foreground surface with backdrop blur, a hairline and an inner highlight.
   // Contrast and transparency preferences make them opaque (mediaSurfacePreferenceStyles).
   'media-controls-group': [
     { declarations: { gap: 'var(--tp-space-1)' } },
@@ -231,7 +230,7 @@ export const mediaPlayerAppearance: PresentationDictionary = {
       declarations: { background: 'transparent', 'font-size': 'var(--tp-text-base)' },
     },
     {
-      // Status (Video.js playback status indicator): a round, blurred mark that grows in.
+      // Status: a round, blurred mark that grows in.
       selector: ':host(tp-media-status-indicator) &',
       declarations: {
         padding: 'var(--tp-space-5)',
@@ -276,9 +275,9 @@ export const mediaPlayerAppearance: PresentationDictionary = {
     },
   ],
   // Sliders compose `tp-slider`, whose recipe paints the track, range, buffer, chapters and
-  // thumb; the media hosts only size the control (Video.js default skin slider widths).
+  // thumb; the media hosts only size the control.
   'media-time-slider': [{ declarations: { 'flex-grow': '1', 'min-inline-size': '0' } }],
-  // Preview (Video.js default skin): the thumbnail sits on a translucent backdrop surface above
+  // Preview: the thumbnail sits on a translucent backdrop surface above
   // tabular text; the chapter title truncates to the preview width.
   'media-time-slider-preview': [
     {

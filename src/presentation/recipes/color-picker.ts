@@ -6,8 +6,8 @@ import { popupBorder } from './shared/surface.js';
 // Widgets Specification 6.1 Presentation: value-domain paint arrives from the widget as the
 // inline custom properties `--_tp-color-picker-paint` (an <image> list) and
 // `--_tp-color-picker-thumb-paint` (a <color>); every rule below resolves through tokens.
-// Reference: tweakpane lib/sass/view/_color-picker.scss (12px ring markers, 4px tracks,
-// checkerboard mixin) adapted to the library tokens and the Slider thumb recipe.
+// Markers are 12px rings and tracks are 4px over a checkerboard, built from the library tokens
+// and the Slider thumb recipe.
 
 const hairline = 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)';
 

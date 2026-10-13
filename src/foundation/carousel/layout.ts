@@ -1,4 +1,4 @@
-// Geometry adapted from Swiper updateSlides / updateSlidesProgress (MIT; see LICENSE).
+// Slide geometry: sizes, snaps and progress.
 import type { CarouselConfiguration } from './configuration.js';
 import type { CarouselMeasurement } from './types.js';
 
@@ -136,7 +136,7 @@ export function carouselLayout(
       }
       lastOrdinal = Math.max(items.length - count, 0);
     }
-    // Unlike upstream's snap-array index, ordinal remains correct with grouped slides.
+    // The ordinal, not the snap-array index, stays correct with grouped slides.
     snaps = raw.filter((snap) =>
       edge ? snap.ordinal <= lastOrdinal : snap.position <= extent - usable,
     );

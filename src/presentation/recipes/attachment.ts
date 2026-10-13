@@ -1,7 +1,7 @@
 import type { PresentationDictionary } from '../resolver.js';
 import { motionTransition } from '../motion.js';
 import { fillColor, fillShown } from './shared/fill.js';
-/** Base Attachment + Nova cn-attachment-* mapped to shared theme roles. */
+/** Attachment appearance mapped to shared theme roles. */
 export const attachmentAppearance: PresentationDictionary = {
   attachment: [
     {

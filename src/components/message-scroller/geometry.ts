@@ -1,4 +1,4 @@
-/** Native CSS-pixel geometry adapted from the local @shadcn/react MessageScroller source. */
+/** Native CSS-pixel row geometry. */
 export interface RowGeometry {
   top: number;
   height: number;

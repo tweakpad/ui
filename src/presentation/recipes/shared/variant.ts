@@ -92,7 +92,7 @@ export type ControlStep = 'xs' | 'sm' | 'md' | 'lg';
 export interface ControlStepMetrics {
   readonly height: string;
   readonly paddingInline: string;
-  /** Inline padding on an edge that holds an icon or mark (Nova `has-data-[icon=…]`). */
+  /** Inline padding on an edge that holds an icon or mark. */
   readonly iconEdge: string;
   readonly gap: string;
   readonly fontSize: string;
@@ -102,9 +102,8 @@ export interface ControlStepMetrics {
 
 /**
  * One size table for every single-line control (Button, Toggle, Select, Native select, field
- * controls, Tabs, Menubar, navigation rows). Values follow Nova (`cn-button-size-*`): heights
- * 24/28/32/36 at the 4px seed, text-xs at xs and text-sm otherwise, and the step's icon extent.
- * Nova's sm `text-[0.8rem]` is a non-token literal; text-sm keeps one control font per step.
+ * controls, Tabs, Menubar, navigation rows): heights 24/28/32/36 at the 4px seed, text-xs at xs
+ * and text-sm otherwise, and the step's icon extent; one control font per step.
  */
 export const CONTROL_STEPS: Readonly<Record<ControlStep, ControlStepMetrics>> = {
   xs: {

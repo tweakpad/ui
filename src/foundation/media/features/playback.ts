@@ -11,7 +11,7 @@ import type { MediaFeature } from './context.js';
  *
  * `waiting` is starvation (`readyState` below future data while playing) that has not been
  * disproved by an advancing `currentTime`: Safari reports `HAVE_CURRENT_DATA` for the whole of
- * some MSE streams while presenting normally (Video.js `playbackFeature`).
+ * some MSE streams while presenting normally.
  */
 export const playbackFeature: MediaFeature = {
   name: 'playback',

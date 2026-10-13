@@ -772,8 +772,8 @@ export abstract class TpAnchoredSurface extends TpElement {
       trapTabKey(event, this.popup);
   };
   /**
-   * How a modal surface restores focus lost to the body when its focused element disappears
-   * (Base UI `restoreFocus`): the Popup, or the last item for item surfaces such as Menu.
+   * How a modal surface restores focus lost to the body when its focused element disappears:
+   * the Popup, or the last item for item surfaces such as Menu.
    */
   protected get surfaceRestoreFocus(): 'popup' | 'previous' {
     return 'popup';

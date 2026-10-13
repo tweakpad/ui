@@ -189,7 +189,7 @@ const controlsStyles = css`
   }
 
   /* A vertical toolbar is one column: every set spans it, so square icon Buttons and the wider
-     Nova Toggles line up instead of each group keeping its own fit-content width. */
+     Toggles line up instead of each group keeping its own fit-content width. */
   .controls[data-orientation='vertical'] > :is(tp-button-group, tp-toggle-group, tp-toggle),
   .controls[data-orientation='vertical'] .transport > tp-button-group {
     inline-size: 100%;

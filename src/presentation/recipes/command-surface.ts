@@ -6,7 +6,6 @@ import type { PresentationRule } from '../resolver.js';
 export const popupSpacingAppearance: readonly PresentationRule[] = [
   {
     declarations: {
-      // Nova menu, select and combobox content: p-1.
       '--_tp-popup-spacing': 'var(--tp-space-1)',
       padding: 'var(--_tp-popup-spacing)',
     },
@@ -14,7 +13,7 @@ export const popupSpacingAppearance: readonly PresentationRule[] = [
 ];
 
 /** Default row rhythm shared by command, navigation and selection popup items. */
-// Nova menu, select and combobox items: py-1 px-1.5 gap-1.5 at text-sm/20px, about 28px tall.
+// Menu, select and combobox items: small text on a 20px line, about 28px tall at the 4px seed.
 export const popupItemSpacingAppearance: readonly PresentationRule[] = [
   {
     declarations: {
@@ -70,7 +69,7 @@ export const anchoredPresenceAppearance: readonly PresentationRule[] = [
   },
 ];
 
-/** Nova cn-menu-target + cn-menu-translucent, shared by Menu family and Select. */
+/** The translucent command surface shared by the Menu family and Select. */
 export const commandSurfaceAppearance: readonly PresentationRule[] = [
   {
     declarations: {
@@ -81,13 +80,13 @@ export const commandSurfaceAppearance: readonly PresentationRule[] = [
       border: popupBorder,
       'box-shadow': 'var(--tp-shadow-md)',
       'font-size': 'var(--tp-text-sm)',
-      // Nova portals this surface to the body; one kept in a shadow root (portal off) must not
-      // inherit its trigger's typography, such as an Input group addon's medium weight.
+      // A surface kept in a shadow root (portal off) must not inherit its trigger's
+      // typography, such as an Input group addon's medium weight.
       'font-weight': 'var(--tp-font-normal)',
     },
   },
   ...popupSpacingAppearance,
-  // The Library anchored-motion contract governs over Nova's animate-none override.
+  // Presence motion comes from the library's anchored-motion roles.
   ...anchoredPresenceAppearance,
 ];
 
@@ -123,7 +122,7 @@ export function commandItemRules(
       selector: highlightSelector,
       declarations: commandItemHighlightAppearance,
     },
-    // cn-menu-translucent explicitly overrides the destructive descendant text.
+    // The translucent surface explicitly overrides the destructive descendant text.
     {
       selector: '&[variant="destructive"]',
       declarations: { color: 'var(--tp-accent-foreground)' },

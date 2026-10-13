@@ -21,11 +21,7 @@ export const autocompleteParts = {
   'autocomplete-status': 'select-status',
 } as const;
 
-/**
- * shadcn has no Autocomplete; it styles the Base UI Combobox Autocomplete is built on
- * (bases/base/ui/combobox.tsx, cn-combobox-*), which the searchable Select recipe already follows.
- * Each Autocomplete part reuses that recipe, without the item indicator.
- */
+/** Each Autocomplete part reuses the searchable Select recipe, without the item indicator. */
 export const autocompleteAppearance: PresentationDictionary = Object.fromEntries(
   Object.entries(autocompleteParts).map(([part, select]) => [
     part,

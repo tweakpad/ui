@@ -14,7 +14,7 @@ export const toggleGroupAppearance: PresentationDictionary = {
   ),
 };
 
-/** Nova adds Toggle-only joined padding over the common ButtonGroup seam geometry. */
+/** Toggle-only joined padding over the common ButtonGroup seam geometry. */
 export function toggleGroupJoinedPresentation(
   index: number,
   count: number,

@@ -20,7 +20,7 @@ do not create a checklist file unless writing one is in scope.
 - Repository baseline / unrelated changes: [revision and changes to preserve]
 - Live project / document IDs and revisions: [fresh direct MCP reads]
 - Owning contracts / dependencies / vocabulary: [stable source references]
-- Local Base UI / Floating UI / shadcn evidence: [paths, revisions, dirty status]
+- Local reference evidence: [paths, revisions, dirty status]
 - Tool readiness: [direct Spec Blocks and Chrome DevTools MCP availability]
 - Browser / server / build under test: [version, URL, source or built package]
 - Evidence directory: `tmp/component-verification/[component]/[run]/`
@@ -37,16 +37,16 @@ configurable options. Do not merge placement, visibility and action semantics in
 one "actions" row. Every C-ID must link to existing V-IDs. Before implementation,
 the mapping must be complete even though implementation/test statuses are pending.
 
-| ID   | Requirement / capability and defaults | Live authority | Local upstream path / symbol | Lit interface / implementation | Docs location | Scenario IDs | Status  | Evidence / gap   |
-| ---- | ------------------------------------- | -------------- | ---------------------------- | ------------------------------ | ------------- | ------------ | ------- | ---------------- |
-| C-01 | [constituent capability and defaults] | [source]       | [source/test symbol]         | [mapping]                      | [reference]   | V-01         | pending | [remaining work] |
+| ID   | Requirement / capability and defaults | Live authority | Local reference path / symbol | Lit interface / implementation | Docs location | Scenario IDs | Status  | Evidence / gap   |
+| ---- | ------------------------------------- | -------------- | ----------------------------- | ------------------------------ | ------------- | ------------ | ------- | ---------------- |
+| C-01 | [constituent capability and defaults] | [source]       | [source/test symbol]          | [mapping]                      | [reference]   | V-01         | pending | [remaining work] |
 
-Record spec/upstream conflicts here before dependent implementation:
+Record spec/reference conflicts here before dependent implementation:
 
 | Issue | Concrete missing/conflicting contract | Affected dependencies | Proposed resolution | Authority / resolution evidence | Status |
 | ----- | ------------------------------------- | --------------------- | ------------------- | ------------------------------- | ------ |
 
-For catalog-wide work, also reconcile every upstream identity with a catalog,
+For catalog-wide work, also reconcile every reference identity with a catalog,
 composition or Foundation exposure, evidence and any gap. Attach/reference that
 inventory; matching names or catalog totals do not prove coverage.
 
@@ -58,13 +58,13 @@ inventory; matching names or catalog totals do not prove coverage.
 
 ### Family dependency map
 
-Trace upstream reexports/imports to implementation owners and inspect corresponding
+Trace reference reexports/imports to implementation owners and inspect corresponding
 local components. Name both the old owner and the planned shared owner if extracting
 one; list the actual consumers that will use it. Low-level utility reuse alone is
 insufficient. For a primitive without family dependencies, record the inspected
 sources and concrete reason instead of omitting this map.
 
-| Responsibility | Upstream dependency path / symbol          | Existing local owner investigated | Reuse / repair and component-specific differences | Actual consumers / regression scenario IDs |
+| Responsibility | Reference dependency path / symbol         | Existing local owner investigated | Reuse / repair and component-specific differences | Actual consumers / regression scenario IDs |
 | -------------- | ------------------------------------------ | --------------------------------- | ------------------------------------------------- | ------------------------------------------ |
 | [behavior]     | [dependency edge, not only component name] | [path and symbol]                 | [shared owner and policy differences]             | [consumer paths / V-IDs]                   |
 

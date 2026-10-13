@@ -15,7 +15,7 @@ export function hsvOf(value: ColorValue): Hsv {
 
 /**
  * Keeps the last chromatic hue (and saturation at zero brightness) so dragging through
- * black, white or gray and back does not lose the surface position (tweakpane loses it).
+ * black, white or gray and back does not lose the surface position.
  */
 export function stickyHsv(previous: Hsv, next: ColorValue): Hsv {
   const current = hsvOf(next);

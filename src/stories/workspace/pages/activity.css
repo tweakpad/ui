@@ -42,7 +42,7 @@
   padding-block-end: var(--tp-space-4);
 }
 
-/* Nova InputGroupButton ml-auto: the send action ends the composer's action row. */
+/* The send action ends the composer's action row. */
 .activity-send {
   margin-inline-start: auto;
 }

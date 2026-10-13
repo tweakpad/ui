@@ -24,7 +24,7 @@ export const markerExamples = [
 <tp-marker role="status"><tp-spinner slot="icon" size="sm"></tp-spinner>Reading files</tp-marker>
 <tp-marker data-body="link"><tp-icon slot="icon" data-icon="branch"></tp-icon>Open activity details</tp-marker>
 <tp-marker data-body="button" data-feedback><tp-icon slot="icon" data-icon="clock"></tp-icon>Review activity<tp-icon data-icon="chevron" aria-hidden="true" style="flex:none;inline-size:var(--tp-icon-size-sm);block-size:var(--tp-icon-size-sm)"></tp-icon></tp-marker>
-<tp-marker><tp-icon slot="icon" data-icon="account"></tp-icon>Rhea joined the chat</tp-marker>
+<tp-marker><tp-icon slot="icon" data-icon="account"></tp-icon>Mateo joined the chat</tp-marker>
 <tp-marker data-layout="center"><strong>Olivia Rose</strong> left the chat</tp-marker>
 <tp-marker data-layout="vertical"><tp-icon slot="icon" data-icon="file"></tp-icon>Icon above the content</tp-marker>
 <p id="marker-details" style="margin:0">Activity details</p><tp-toast></tp-toast>`,

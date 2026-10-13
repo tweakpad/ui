@@ -507,7 +507,7 @@ class CarouselGestures {
   move(event: PointerEvent): void {
     const gesture = this.gesture;
     if (!gesture || event.pointerId !== gesture.pointer) return;
-    // As in Swiper onTouchMove, keep the last sample even if buttons is already
+    // Keep the last sample even if buttons is already
     // zero. Treating that pre-pointerup sample as cancellation snaps back.
     const dx = event.clientX - gesture.originX,
       dy = event.clientY - gesture.originY;

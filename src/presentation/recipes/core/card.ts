@@ -4,7 +4,7 @@ import { rule } from '../shared/variant.js';
 
 export const cardCoreAppearance: PresentationDictionary = {
   card: [
-    // Nova cn-card: text-sm, rounded-xl; one --card-spacing for every section (CL §13.3).
+    // One --card-spacing for every section (CL §13.3).
     rule({
       '--_tp-card-spacing': 'var(--tp-space-4)',
       'font-size': 'var(--tp-text-sm)',

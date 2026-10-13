@@ -18,11 +18,11 @@ const cells = [
     },
   },
   { selector: '&[data-sticky-column]', declarations: { background: 'inherit' } },
-  // Nova cn-table-body/cn-table-footer: the last row of a section has no bottom border.
+  // The last row of a body or footer section has no bottom border.
   { selector: '&[data-last-row]', declarations: { 'border-block-end-width': '0' } },
   fillColor(rowHover),
 ];
-/** Native Table regions from base/Nova; all insets and type use the common theme. */
+/** Native Table regions; all insets and type use the common theme. */
 export const tableAppearance: PresentationDictionary = {
   table: [],
   'table-table': [
@@ -74,7 +74,6 @@ export const tableAppearance: PresentationDictionary = {
     ...cells,
     {
       declarations: {
-        // Nova cn-table-head: h-10.
         'block-size': 'var(--tp-space-10)',
         'font-weight': 'var(--tp-font-medium)',
       },

@@ -14,7 +14,7 @@ const parts: Record<string, string> = Object.fromEntries(
 
 /**
  * Free text with suggestions. Autocomplete is the shared editable choice owner (the searchable
- * Select, as upstream builds Autocomplete on Combobox) in selection-free mode: its value is the
+ * Select) in selection-free mode: its value is the
  * text, accepting a suggestion replaces the text, and the form receives the text. Suggestions
  * come from its items through ranked, typo-tolerant search by default, from the exact matching
  * modes, or from a search source such as a server endpoint or another search engine.

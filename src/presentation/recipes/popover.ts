@@ -2,14 +2,13 @@ import type { PresentationDictionary } from '../resolver.js';
 import { popupBorder } from './shared/surface.js';
 import { anchoredPresenceAppearance, popupSpacingAppearance } from './command-surface.js';
 
-/** Base Popover, Nova cn-popover-*; placement/presence comes from the shared owner. */
+/** Popover surface; placement and presence come from the shared owner. */
 export const popoverAppearance: PresentationDictionary = {
   popover: [],
   'popover-content': [
     ...popupSpacingAppearance,
     {
       declarations: {
-        // Nova cn-popover-content: gap-2.5 p-2.5 text-sm.
         '--_tp-popup-spacing': 'var(--tp-space-2-5)',
         background: 'var(--tp-popover)',
         color: 'var(--tp-popover-foreground)',

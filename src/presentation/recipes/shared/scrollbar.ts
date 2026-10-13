@@ -5,7 +5,7 @@ import type { PresentationRule } from '../../resolver.js';
 export const scrollbarRules: readonly PresentationRule[] = [
   {
     declarations: {
-      // Nova cn-scroll-area-scrollbar: a transparent 1px border insets the thumb.
+      // A transparent 1px border insets the thumb.
       padding: 'var(--tp-border-width)',
       transition: motionTransition(['opacity'], 'fast'),
     },

@@ -2,7 +2,7 @@ import type { PresentationDictionary } from '../resolver.js';
 import { motionTransition } from '../motion.js';
 import { css } from 'lit';
 
-/** Shadow-scoped keyframe for the shared viewport recipe, adapted from scroll-fade-b. */
+/** Shadow-scoped keyframe for the shared viewport recipe. */
 export const messageScrollerFadeKeyframes = css`
   @keyframes tp-message-scroller-fade-end {
     from {

@@ -2,7 +2,7 @@ import type { PresentationDictionary } from '../resolver.js';
 import { nativeChoiceAppearance } from './shared/selection-control.js';
 import { inputRules } from './shared/text-control.js';
 import { fillColor, fillShown } from './shared/fill.js';
-/** base registry Questionnaire + Nova; native constituents share existing recipes. */
+/** Questionnaire appearance; native constituents share existing recipes. */
 export const questionnaireAppearance: PresentationDictionary = {
   questionnaire: [{ declarations: { gap: 'var(--tp-space-4)' } }],
   'questionnaire-progress': [

@@ -13,7 +13,7 @@ export function rowHighlight(selector: string): PresentationRule[] {
 const rowStates =
   '&:is(:hover, [data-popup-open]):not([data-disabled], :disabled, [aria-disabled="true"]), &[data-active]';
 
-/** SidebarMenuButton paint shared by actions, destinations and composed disclosures. */
+/** Navigation-row paint shared by actions, destinations and composed disclosures. */
 export const navigationRow: readonly PresentationRule[] = [
   {
     declarations: {
@@ -25,7 +25,7 @@ export const navigationRow: readonly PresentationRule[] = [
       'font-size': 'var(--tp-text-sm)',
       'font-weight': 'var(--tp-font-normal)',
       'text-align': 'start',
-      // Nova SidebarMenuButton h-8; replaces Button's size extent.
+      // Replaces Button's size extent.
       'block-size': packedExtent('var(--tp-control-height-md)'),
       'min-block-size': packedExtent('var(--tp-control-height-md)'),
       '--_tp-icon-extent': 'var(--tp-icon-size-md)',
@@ -52,11 +52,11 @@ export const disclosureContext = ':host-context(tp-navigation-panel-item) ';
 export const collapsedContext =
   ':host-context(tp-navigation-panel-item[data-collapsed]:not([data-compact])[data-collapse-mode="compact"]) ';
 
-/** SidebarMenuSub guide (nova `border-l`): the border role and width of a sub-level line. */
+/** Sub-level guide: the border role and width of a sub-level line. */
 export const subLevelGuideColor = 'var(--tp-border)';
 export const subLevelGuideWidth = 'var(--tp-border-width)';
 export const subLevelGuideLine = `${subLevelGuideWidth} var(--tp-border-style) ${subLevelGuideColor}`;
-/** SidebarMenuSub `gap-1`: the separation between sub-level rows. */
+/** The separation between sub-level rows. */
 export const subLevelGap = 'var(--tp-space-1)';
 /** The line runs under the centre of the parent row's leading icon. */
 export const subLevelGuideOffset = `calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - ${subLevelGuideWidth} / 2)`;

@@ -12,7 +12,7 @@ import { TpPopover } from '../popover/popover.js';
 import { TpMediaVolumeSlider } from './volume-slider.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
-/** Whether the volume popup can open: only while volume can be set (Video.js parity). */
+/** Whether the volume popup can open: only while volume can be set. */
 export function volumePopupUsable(attached: boolean, availability: MediaAvailability): boolean {
   return attached && availability === 'available';
 }
@@ -34,8 +34,7 @@ export function volumePopupUsable(attached: boolean, availability: MediaAvailabi
  * @csspart volume-slider - The composed volume slider.
  */
 /**
- * The volume popup is the media overlay surface (Video.js default skin volume popover): a
- * frosted pill around a short vertical bar slider. The surface variables come from the player
+ * The volume popup is the media overlay surface: a frosted pill around a short vertical bar slider. The surface variables come from the player
  * container (`mediaSurfaceVariables`), which also makes them opaque under user preferences.
  */
 const volumePopupPresentation: PartPresentation = {

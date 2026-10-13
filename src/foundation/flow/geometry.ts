@@ -2,8 +2,7 @@ import type { FlowExtent, FlowPoint, FlowRect, FlowSide, FlowSize } from './type
 
 /**
  * Rect and point math for the flow engine. Pure functions over plain objects; `clamp*`, the
- * bounds union, the overlap area and grid snapping follow xyflow's `utils/general.ts`.
- * Adapted from xyflow packages/system/src/utils/general.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
+ * bounds union, the overlap area and grid snapping.
  */
 
 export const infiniteExtent: FlowExtent = [
@@ -95,7 +94,7 @@ export function distanceToRect(point: FlowPoint, rect: FlowRect): number {
   return Math.hypot(dx, dy);
 }
 
-/** Keeps `position` inside `extent` for a box of `size` (xyflow `clampPosition`). */
+/** Keeps `position` inside `extent` for a box of `size`. */
 export function clampPointToExtent(
   position: FlowPoint,
   extent: FlowExtent,

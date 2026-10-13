@@ -5,9 +5,8 @@ import { fillColor, fillShown } from './shared/fill.js';
 import { fieldFocus, fieldInvalid } from './shared/text-control.js';
 
 /**
- * File upload appearance (CL `fupl-q2`): the Dropzone is shadcn `.cn-empty` with a dashed border
- * (`border-dashed p-12 gap-4 rounded-lg`); its media, title and description reuse the Empty state
- * recipe. Drop-target fill fades through the shared fill layer; rejection is the part's own fill.
+ * File upload appearance (CL `fupl-q2`): the Dropzone is an Empty state surface with a dashed
+ * border; its media, title and description reuse the Empty state recipe. Drop-target fill fades through the shared fill layer; rejection is the part's own fill.
  */
 const shared = (key: string): readonly PresentationRule[] => emptyStateAppearance[key] ?? [];
 

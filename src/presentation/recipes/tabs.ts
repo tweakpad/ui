@@ -13,7 +13,7 @@ export const tabsAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        // Nova cn-tabs-list: h-8 p-[3px]; the 3px inset is space-1 less the border.
+        // The 3px inset is space-1 less the border.
         padding: 'calc(var(--tp-space-1) - var(--tp-border-width))',
         'border-radius': 'var(--tp-radius-lg)',
         color: 'var(--tp-muted-foreground)',
@@ -40,7 +40,6 @@ export const tabsAppearance: PresentationDictionary = {
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
         'line-height': 'var(--tp-leading-tight)',
-        // Nova cn-tabs-trigger: px-1.5 py-0.5 gap-1.5, h-[calc(100%-1px)].
         padding: 'var(--tp-space-0-5) var(--tp-space-1-5)',
         gap: 'var(--tp-space-1-5)',
         'border-radius': 'var(--tp-radius-md)',

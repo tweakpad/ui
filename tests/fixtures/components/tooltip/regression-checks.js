@@ -1,5 +1,4 @@
 // Tooltip regression checks, executed through Chrome DevTools MCP `evaluate_script`.
-// Ported from the former Playwright repair smoke script.
 const settle = async (...elements) => {
   for (let i = 0; i < 3; i++) {
     await Promise.all(elements.map((element) => element.updateComplete));

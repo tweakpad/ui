@@ -7,6 +7,6 @@ Served by the Vite dev server (`npm run dev`), driven only through Chrome DevToo
    `html[data-ready]`.
 2. `await inputGroupContract.actionInheritance()`: setting `actionVariant`/`actionSize` on the
    group updates the action without authored values and leaves the explicit `outline`/`sm`
-   action untouched (ported from the former repair smoke).
+   action untouched.
 3. `await inputGroupContract.singleBoundary()`: the grouped `tp-input`'s native input has a
    `0px` border, so the group paints one field boundary.

@@ -5,7 +5,7 @@ export function joinedControlPresentation(
   index: number,
   count: number,
   orientation: 'horizontal' | 'vertical',
-  // Nova restores the members' own outer shape (rounded-lg) at the group ends.
+  // The group ends restore the members' own outer shape (their large radius).
   radius: string | null = 'var(--tp-radius-lg)',
 ): PresentationDeclarations {
   const first = index === 0;

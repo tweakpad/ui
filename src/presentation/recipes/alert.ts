@@ -6,7 +6,6 @@ export const alertAppearance: PresentationDictionary = {
       selector: '&',
       declarations: {
         'column-gap': 'var(--tp-space-2)',
-        // Nova cn-alert: px-2.5 py-2 gap-y-0.5 gap-x-2.
         padding: 'var(--tp-space-2) var(--tp-space-2-5)',
         border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
         'border-radius': 'var(--tp-radius-lg)',

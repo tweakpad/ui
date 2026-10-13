@@ -1,6 +1,5 @@
 /**
- * Pure time-display logic (Library mp-l-time, Foundation mp-f-locale; Video.js
- * `core/ui/time/core.ts`). Clock text is digital with the duration as the layout guide; spoken text
+ * Pure time-display logic (Library mp-l-time, Foundation mp-f-locale). Clock text is digital with the duration as the layout guide; spoken text
  * uses long unit phrases; `datetime` is an ISO 8601 duration of the absolute value.
  */
 import { formatDuration, secondsToIsoDuration } from '../../foundation/duration-format.js';
@@ -92,7 +91,7 @@ export function mediaTimeView(input: MediaTimeInput): MediaTimeView {
 }
 
 /**
- * The type a toggle shows next (Video.js `TimeCore#getToggleType`): current ↔ remaining for
+ * The type a toggle shows next: current ↔ remaining for
  * `type="current"`; duration ↔ remaining for `type="duration"` and `type="remaining"` (which
  * starts on remaining).
  */
@@ -130,8 +129,7 @@ export interface MediaTimeToggleText {
 }
 
 /**
- * Name and description of the toggle button (Video.js `TimeCore#getLabel`/`getDescription`). The
- * name says what activation shows and describes the value shown now with a suffix:
+ * Name and description of the toggle button. The name says what activation shows and describes the value shown now with a suffix:
  * current → "Show remaining time, 1 minute elapsed."; remaining (type `current`) → "Show elapsed
  * time, 4 minutes remaining."; remaining (type `duration`/`remaining`) → "Show duration,
  * 4 minutes remaining."; duration → "Show remaining time, 5 minutes duration.". The description

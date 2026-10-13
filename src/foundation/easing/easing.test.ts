@@ -85,7 +85,7 @@ describe('easing evaluation', () => {
     expect(fn(1)).toBe(1);
   });
 
-  it('evaluates the Penner families and their directions', () => {
+  it('evaluates the parametric families and their directions', () => {
     const bounceOut = parametricFunction({
       kind: 'parametric',
       family: 'bounce',

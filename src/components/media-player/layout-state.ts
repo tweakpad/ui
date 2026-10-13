@@ -1,6 +1,5 @@
 /**
- * Pure policy of the preset layouts (Library mp-l-layouts; Video.js default video and audio
- * skins): the `hide` token vocabulary, the automatic live variant, and the tooltip text of each
+ * Pure policy of the preset video and audio layouts (Library mp-l-layouts): the `hide` token vocabulary, the automatic live variant, and the tooltip text of each
  * built-in button, which reuses the buttons' own state → view mapping so a tooltip always shows
  * the same state-dependent label the button carries as its accessible name.
  */

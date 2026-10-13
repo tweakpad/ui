@@ -2,7 +2,7 @@ import { motionTransition } from '../motion.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import { CODE_SCOPES } from '../../foundation/code/types.js';
 
-/** The code surface: the card fill mixed halfway toward muted (shadcn `--code`). */
+/** The code surface: the card fill mixed halfway toward muted. */
 const surface = 'color-mix(in oklab, var(--tp-card) 50%, var(--tp-muted))';
 
 /** Scoped tokens read their `--tp-syntax-*` role; adapter colors win through `light-dark()`. */
@@ -28,7 +28,7 @@ export const codeBlockAppearance: PresentationDictionary = {
   'code-block': [
     {
       declarations: {
-        // shadcn code figure: bg-code, rounded-xl, text-sm, mono, ligatures off.
+        // Code figure: the code surface, extra-large radius, small mono text, ligatures off.
         border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
         'border-radius': 'var(--tp-radius-xl)',
         background: surface,

@@ -635,7 +635,7 @@ function roundToDevicePixel(value: number, ownerWindow: Window): number {
 /**
  * Reports when `element` moves or resizes on screen without a scroll or resize event: an
  * IntersectionObserver whose root margin fits the element's box exactly fires as soon as the box
- * no longer fills it, and is fitted again to the new box (Floating UI `autoUpdate` layout shift).
+ * no longer fills it, and is fitted again to the new box.
  */
 function observeMove(
   element: Element,

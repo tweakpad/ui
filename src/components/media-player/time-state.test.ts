@@ -83,7 +83,7 @@ describe('media time names', () => {
     );
   });
 
-  it('toggles current ↔ remaining, and duration ↔ remaining for duration and remaining (Video.js)', () => {
+  it('toggles current ↔ remaining, and duration ↔ remaining for duration and remaining', () => {
     expect(initialMediaTimeShown('current')).toBe('current');
     expect(initialMediaTimeShown('remaining')).toBe('remaining');
     expect(initialMediaTimeShown('duration')).toBe('duration');

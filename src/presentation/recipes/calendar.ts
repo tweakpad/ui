@@ -16,8 +16,8 @@ export const calendarAppearance: PresentationDictionary = {
     {
       declarations: {
         padding: 'var(--tp-space-2)',
-        // The containing surface (page, Card, Popover) owns the fill, as shadcn's
-        // bg-transparent inside card/popover content; the calendar part can still set one.
+        // The containing surface (page, Card, Popover) owns the fill, so the calendar stays
+        // transparent inside card and popover content; the calendar part can still set one.
         color: 'var(--tp-foreground)',
         'font-size': 'var(--tp-text-sm)',
         gap: 'var(--tp-space-3)',

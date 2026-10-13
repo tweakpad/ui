@@ -1,7 +1,7 @@
 import { motionDuration, motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 
-/** Shadcn base Toast and Nova paint; shared surface contribution supplies popover colors. */
+/** Toast paint; the shared surface contribution supplies popover colors. */
 export const toastAppearance: PresentationDictionary = {
   'toast-toast': [
     {

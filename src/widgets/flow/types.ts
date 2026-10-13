@@ -33,7 +33,7 @@ export const FLOW_BACKGROUNDS = ['dots', 'lines', 'cross', 'none'] as const;
 export type FlowBackground = (typeof FLOW_BACKGROUNDS)[number];
 /**
  * Where a floating panel anchors: the four corners and the middle of the four edges, as
- * `block-inline` pairs (xyflow Panel positions in logical directions).
+ * `block-inline` pairs in logical directions.
  */
 export const FLOW_PANEL_POSITIONS = [
   'top-start',

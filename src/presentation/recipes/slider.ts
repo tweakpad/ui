@@ -1,7 +1,7 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 
-// shadcn Base slider.tsx → style-nova.css .cn-slider*; geometry belongs to the family.
+// Slider paint; geometry belongs to the family.
 export const sliderAppearance: PresentationDictionary = {
   slider: [
     { declarations: { gap: 'var(--tp-space-2)' } },
@@ -53,7 +53,7 @@ export const sliderAppearance: PresentationDictionary = {
     { selector: '&[data-disabled]', declarations: { cursor: 'not-allowed' } },
     { selector: '&[data-invalid]', declarations: { 'border-color': 'var(--tp-destructive)' } },
   ],
-  // Bar variant: a thumbless scrubbing track (Video.js v10 default skin geometry). The Track
+  // Bar variant: a thumbless scrubbing track. The Track
   // thickens while the slider is hovered, pointed, dragged or focused. The Thumb keeps its
   // native input but paints nothing; keyboard focus rings the Track.
   'slider-variant-bar': [

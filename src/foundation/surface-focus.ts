@@ -60,7 +60,7 @@ export function resolveSurfaceFocus(
 }
 
 /**
- * Base UI `restoreFocus` for a modal surface, called from a focusout inside its Popup. Focus that
+ * Focus restoration for a modal surface, called from a focusout inside its Popup. Focus that
  * moves to another element (including third-party overlays such as autofill menus) is never
  * pulled back; containment comes from Tab trapping and outside inertness. Only when the focused
  * inside element was removed or hidden and focus fell to the body is it restored: to the Popup

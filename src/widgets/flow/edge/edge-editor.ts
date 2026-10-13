@@ -124,7 +124,7 @@ const editorStyles = css`
     pointer-events: none;
   }
 
-  /* xyflow EdgeAnchor: an invisible circle shifted outward by its radius, so it covers the edge
+  /* Reconnect anchor: an invisible circle shifted outward by its radius, so it covers the edge
      where it leaves the socket and never the socket itself (which keeps starting new
      connections). Coarse pointers raise it to the minimum target. */
   .reconnect {

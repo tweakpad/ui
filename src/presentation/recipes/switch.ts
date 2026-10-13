@@ -7,7 +7,7 @@ const invalidPaint = {
   'box-shadow':
     '0 0 0 var(--tp-ring-width) light-dark(color-mix(in oklab, var(--tp-destructive) 20%, transparent), color-mix(in oklab, var(--tp-destructive) 40%, transparent))',
 };
-/** shadcn registry Base/Nova Switch paint; translated geometry remains structural. */
+/** Switch paint; translated geometry remains structural. */
 export const switchAppearance: PresentationDictionary = {
   switch: [
     {

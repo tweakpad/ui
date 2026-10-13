@@ -10,7 +10,7 @@ const hex = (input: string): string | null => {
 };
 
 describe('parseColor', () => {
-  it('parses hex notations including tweakpane prefixes', () => {
+  it('parses hex notations including the 0x prefix', () => {
     expect(hex('#123')).toBe('#112233');
     expect(hex('#1234')).toBe('#11223344');
     expect(hex('#12345678')).toBe('#12345678');

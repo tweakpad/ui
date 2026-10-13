@@ -40,8 +40,8 @@ export function mediaPointerTime(
  * - The accessible name is the `currentTime`, `duration` or `remainingTime` message, or
  *   `timeUnknown` before a time range exists.
  * - `toggle` composes a ghost `tp-button` that switches current ↔ remaining (`type="current"`) or
- *   duration ↔ remaining (`type="duration"`, or `type="remaining"`, which starts on remaining),
- *   as Video.js does. Its name is `showRemaining`/`showElapsed`/`showDuration` with the spoken
+ *   duration ↔ remaining (`type="duration"`, or `type="remaining"`, which starts on remaining).
+ *   Its name is `showRemaining`/`showElapsed`/`showDuration` with the spoken
  *   value and its suffix (`elapsedSuffix`, `remainingSuffix`, `durationSuffix`); its
  *   `aria-description` is `toggleTimeDescription` (current) or `toggleDurationDescription`.
  * - `value` (seconds, property or attribute) replaces the media position for `current` and

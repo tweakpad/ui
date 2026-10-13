@@ -157,7 +157,7 @@ describe('owner-document outside inert leases', () => {
     ObserverStub.current!.notify();
     expect(overlay.inert).toBe(false);
     expect(item.inert).toBe(false);
-    // A newer lease marks what exists when it opens, as Base UI markOthers does per popup.
+    // A newer lease marks what exists when it opens, per popup.
     const releaseNested = acquireOutsideInert(f.document, () => f.inside(f.inner));
     expect(overlay.inert).toBe(false);
     expect(item.inert).toBe(true);

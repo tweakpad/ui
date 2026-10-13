@@ -37,7 +37,7 @@ const parts = [
   'navigation-panel-input',
   'navigation-panel-separator',
 ];
-/** shadcn Base sidebar.tsx → style-nova.css1110–1221; existing semantic role adaptations. */
+/** Navigation panel appearance from the semantic theme roles. */
 export const navigationPanelAppearance: PresentationDictionary = {
   ...Object.fromEntries(
     parts.flatMap((part) =>
@@ -60,7 +60,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
       },
     },
   ],
-  // Nova SidebarTrigger: Button icon-sm (size-7); coarse pointers raise it to the minimum target.
+  // The trigger is an icon-sm Button; coarse pointers raise it to the minimum target.
   'navigation-panel-trigger': [
     {
       declarations: {
@@ -110,7 +110,6 @@ export const navigationPanelAppearance: PresentationDictionary = {
   'navigation-panel-group-label': [
     {
       declarations: {
-        // Nova cn-sidebar-group-label: h-8 px-2 text-xs font-medium.
         height: packedExtent('var(--tp-control-height-md)'),
         padding: '0 var(--tp-space-2)',
         'font-size': 'var(--tp-text-xs)',
@@ -126,7 +125,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
   'navigation-panel-group-action': [
     {
       declarations: {
-        // Nova cn-sidebar-group-action is w-5; the xs control extent keeps a 24px target.
+        // The xs control extent keeps a 24px target.
         'min-inline-size': packedExtent('var(--tp-control-height-xs)'),
         'min-block-size': packedExtent('var(--tp-control-height-xs)'),
         background: 'transparent',
@@ -165,7 +164,7 @@ export const navigationPanelAppearance: PresentationDictionary = {
     },
     {
       selector: largeAction,
-      // Nova data-[size=lg]: a fixed h-12 p-2 row for two-line (title + detail) content.
+      // Size lg: a fixed 48px row for two-line (title + detail) content.
       declarations: {
         'block-size': packedExtent('var(--tp-space-12)'),
         'min-block-size': packedExtent('var(--tp-space-12)'),
@@ -229,7 +228,6 @@ export const navigationPanelAppearance: PresentationDictionary = {
         color: 'var(--tp-foreground)',
         padding: '0 var(--tp-space-2)',
         'border-radius': 'var(--tp-radius-md)',
-        // Nova cn-sidebar-menu-sub-button: h-7 gap-2 px-2, size md text-sm.
         gap: 'var(--tp-space-2)',
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-normal)',

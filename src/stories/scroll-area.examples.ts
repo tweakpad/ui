@@ -27,7 +27,7 @@ export const scrollAreaExamples = [
       .join('\n    ')}
   </div>
 </tp-scroll-area>`,
-    'A native horizontal viewport with portrait artwork and captions. Photographs match the reference gallery.',
+    'A native horizontal viewport with portrait artwork and captions.',
   ),
   markupExample(
     'Both axes',

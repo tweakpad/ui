@@ -1,5 +1,3 @@
-// Adapted from dnd-kit packages/helpers/tests/move.test.ts at
-// e522d9c6a3cbe39e6e980ee3b6fd7a78f238ab94. MIT; see LICENSE.dnd-kit.
 import { describe, expect, it } from 'vitest';
 import { arrayMove, arraySwap, move, swap } from './sorting.js';
 

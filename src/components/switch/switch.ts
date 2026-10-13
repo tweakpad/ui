@@ -194,7 +194,7 @@ export class TpSwitch extends TpCheckbox {
         'data-filled': state.filled,
         'data-size': state.size,
       },
-      // Base UI Switch.Thumb accepts children; authored thumb content is decorative.
+      // The Thumb accepts authored content; it is decorative.
       content: html`<slot name="thumb"></slot>`,
     });
     return html`${this.renderBooleanControl(state, thumb, 'switch', 'switch', {

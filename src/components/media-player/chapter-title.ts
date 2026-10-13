@@ -20,7 +20,7 @@ export function chapterTitleAt(
 
 /**
  * `tp-media-chapter-title`: the title of the chapter at the preview position (Library
- * mp-l-preview; Video.js `TimeSliderChapterTitle`). It follows the pointer or drag time of the
+ * mp-l-preview). It follows the pointer or drag time of the
  * nearest preview or time slider, and the slider value during keyboard interaction.
  *
  * It is `aria-hidden` except during keyboard interaction with the slider, when it is a polite

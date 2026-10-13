@@ -140,7 +140,7 @@ export class HoverSurfaceController {
     };
     const focus = (event: FocusEvent) => {
       if (touch || !this.options.focusOpens() || this.options.disabled(element, config)) return;
-      // Base UI useFocus: only visible (keyboard) focus opens, and focus a surface moved on its
+      // Only visible (keyboard) focus opens, and focus a surface moved on its
       // own behalf (initial focus, focus returned on close) is not the user arriving here.
       if (isManagedFocus(element.ownerDocument)) return;
       if (!(event.composedPath()[0] as Element | undefined)?.matches?.(':focus-visible')) return;

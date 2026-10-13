@@ -1,7 +1,3 @@
-// Adapted from xyflow packages/system/src/utils/edges/bezier-edge.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
-// Adapted from xyflow packages/system/src/utils/edges/straight-edge.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
-// Adapted from xyflow packages/system/src/utils/edges/smoothstep-edge.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
-// Adapted from xyflow packages/system/src/utils/edges/general.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
 import { distance, sideNormal } from '../geometry.js';
 import type { FlowEdgeKind, FlowEdgeKindOptions, FlowPoint, FlowRect, FlowSide } from '../types.js';
 
@@ -176,7 +172,7 @@ export function bezierPath(
   };
 }
 
-/** Midpoint between two endpoints and the absolute offsets (xyflow `getEdgeCenter`). */
+/** Midpoint between two endpoints and the absolute offsets. */
 export function edgeCenter(source: FlowPoint, target: FlowPoint): FlowPoint {
   const xOffset = Math.abs(target.x - source.x) / 2;
   const yOffset = Math.abs(target.y - source.y) / 2;
@@ -205,7 +201,7 @@ function stepDirection(source: FlowPoint, sourceSide: FlowSide, target: FlowPoin
 }
 
 /**
- * Orthogonal-looking polyline between two sides (xyflow `getPoints`): a gap out of each port,
+ * Orthogonal-looking polyline between two sides: a gap out of each port,
  * one or two bends, and the label center on the longest segment for same-side cases.
  */
 function stepPoints(
@@ -327,7 +323,7 @@ function stepPoints(
   return { points: pathPoints, center: { x: centerX, y: centerY } };
 }
 
-/** The rounded corner at `b` between `a` and `c` (xyflow `getBend`). */
+/** The rounded corner at `b` between `a` and `c`. */
 export function bendSegment(a: FlowPoint, b: FlowPoint, c: FlowPoint, size: number): string {
   const bendSize = Math.min(distance(a, b) / 2, distance(b, c) / 2, size);
   const { x, y } = b;

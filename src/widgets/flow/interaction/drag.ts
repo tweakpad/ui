@@ -21,7 +21,7 @@ interface DragEntry {
  * the last accepted position.
  */
 /**
- * Press selection (xyflow `handleNodeClick`): a press on an unselected node makes it the
+ * Press selection: a press on an unselected node makes it the
  * selection, Shift, Command or Control adding it; a selected node keeps the selection as is.
  * Presses on a node's own controls select it too: they keep the press, the node takes the
  * selection.

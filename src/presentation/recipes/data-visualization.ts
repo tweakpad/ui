@@ -1,6 +1,6 @@
 import type { PresentationDictionary } from '../resolver.js';
 import { popupSpacingAppearance } from './command-surface.js';
-/** Base chart anatomy, Nova tooltip treatment, common popup inset and theme palette. */
+/** Chart anatomy, tooltip treatment, common popup inset and theme palette. */
 export const dataVisualizationAppearance: PresentationDictionary = {
   'data-visualization': [
     { declarations: { gap: 'var(--tp-space-4)', 'font-size': 'var(--tp-text-sm)' } },

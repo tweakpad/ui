@@ -4,12 +4,8 @@ import { activeRing, focusRing, thumb } from './shared/handle.js';
 import { popupBorder, sectionFooterAppearance, surfaceAppearance } from './shared/surface.js';
 
 // Widgets Specification 6.3 Presentation: path geometry, label anchors and port positions are
-// content supplied by the engine; every color below resolves through tokens. References:
-// xyflow packages/system/src/styles/init.css (edge stroke #b1b1b7 width 1, selected #555,
-// `.animated` dash 5 / dashdraw, handle 6 px, selection rgba(0,89,220,.08), pattern dots
-// #91919a) and style.css, Workflow Builder packages/ui edge styles (width 2 / selected 3) and
-// handle.module.css (port grows on hover, 50 px hit circle), the library Card, List item,
-// Badge, Marker, Button group and handle recipes for the composed regions.
+// content supplied by the engine; every color below resolves through tokens. The composed
+// regions use the library Card, List item, Badge, Marker, Button group and handle recipes.
 
 const hairline = 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)';
 const dots = 'color-mix(in oklab, var(--tp-foreground) 18%, transparent)';
@@ -514,7 +510,7 @@ export const flowAppearance: PresentationDictionary = {
     { selector: '&[data-axis="x"]', declarations: { cursor: 'ew-resize' } },
     { selector: '&[data-axis="y"]', declarations: { cursor: 'ns-resize' } },
   ],
-  // xyflow edge updater: an invisible grab area on the edge beside the socket (`cursor: move`);
+  // Edge updater: an invisible grab area on the edge beside the socket (`cursor: move`);
   // keyboard focus still shows the ring.
   'flow-edge-reconnect': [
     { declarations: { background: 'transparent', border: '0', cursor: 'move' } },
@@ -645,7 +641,7 @@ export const flowAppearance: PresentationDictionary = {
     { declarations: { cursor: 'grab' } },
     { selector: '&:active', declarations: { cursor: 'grabbing' } },
   ],
-  // A Sheet floating over the canvas (shadcn base Sheet): the shared floating surface, sections
+  // A panel floating over the canvas: the shared floating surface, sections
   // padded by the inspector, entering and leaving 2.5rem from the inline end with a fade.
   'flow-inspector': [
     ...surfaceAppearance,
@@ -702,7 +698,7 @@ export const flowStructure: PresentationDictionary = {
   'flow-node-row': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-node-footer': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-node-toolbar': [{ declarations: { gap: 'var(--tp-space-1)' } }],
-  // The theme gap between sets (Nova button-group gap-2), as nested Button groups and toolbars use.
+  // The theme gap between sets, as nested Button groups and toolbars use.
   'flow-controls': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-inspector-header': [
     { declarations: { gap: 'var(--tp-space-2)', padding: 'var(--_tp-flow-space)' } },

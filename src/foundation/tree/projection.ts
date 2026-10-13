@@ -1,7 +1,6 @@
 /*
- * Tree reorder projection, ported from the dnd-kit sortable tree example
- * (apps/stories/stories/react/Sortable/Tree/utilities.ts, MIT, pinned e522d9c6):
- * `getProjection`, `getMaxDepth`, `getMinDepth` and `getDragDepth`, generalized to item ids.
+ * Tree reorder projection: the projected depth and parent of a dragged row, and its depth
+ * limits, over item ids.
  */
 import type { TreeModel } from './model.js';
 

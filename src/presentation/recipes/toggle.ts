@@ -6,7 +6,7 @@ const pressedInteraction =
 
 export const toggleAppearance: PresentationDictionary = {
   toggle: [
-    // Nova `min-w-8 / min-w-7 / min-w-9`: a Toggle is never narrower than its height.
+    // A Toggle is never narrower than its height.
     { declarations: { 'min-inline-size': 'var(--tp-control-height-md)' } },
     // Keep pressed paint distinct when a consumer moves the pointer onto it.
     {

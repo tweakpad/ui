@@ -1646,7 +1646,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     );
   }
 
-  /** Client (viewport) coordinates → flow coordinates, like xyflow's `screenToFlowPosition`. */
+  /** Client (viewport) coordinates → flow coordinates. */
   screenToFlow(point: FlowPoint): FlowPoint {
     return this.#viewportOwner.screenToFlow(
       this.#viewportOwner.paneOffset({ clientX: point.x, clientY: point.y }),
@@ -4799,7 +4799,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       cooperative: this.cooperativeGestures,
       activationHeld: this.#spaceHeld,
       // One finger on the empty pane pans in either tool (a second finger pinches); a touch
-      // marquee is not offered, as in xyflow without selection-on-drag.
+      // marquee is not offered.
       panOnTouch: true,
     };
   }

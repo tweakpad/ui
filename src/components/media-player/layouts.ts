@@ -48,7 +48,7 @@ import { TpMediaPlaybackRateButton } from './buttons.js';
 import { TpMediaPlaybackRateRadioGroup } from './radio-groups.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
-/** Tooltip delay group of a layout (Video.js `Tooltip.Provider`: 600 ms, 400 ms group rest). */
+/** Tooltip delay group of a layout: 600 ms, 400 ms group rest. */
 export const MEDIA_LAYOUT_TOOLTIP_DELAY = 600;
 export const MEDIA_LAYOUT_TOOLTIP_REST = 400;
 
@@ -291,8 +291,8 @@ function keyHint(shortcut: KeyShortcut | undefined): unknown {
 }
 
 /**
- * `tp-media-video-layout`: the standard video player (Library mp-l-layouts; Video.js default video
- * and live video skins), composed only of media constituents and library components.
+ * `tp-media-video-layout`: the standard video and live video player (Library mp-l-layouts),
+ * composed only of media constituents and library components.
  *
  * - Overlays: poster; title (`top` region); buffering indicator (`center` region); status, seek
  *   and volume indicators; error dialog.
@@ -715,8 +715,7 @@ export class TpMediaVideoLayout extends TpMediaLayoutElement {
 }
 
 /**
- * `tp-media-audio-layout`: the standard audio player (Library mp-l-layouts; Video.js default audio
- * skin). Controls are always visible (`visibility="always"`) and follow the page color scheme;
+ * `tp-media-audio-layout`: the standard audio player (Library mp-l-layouts). Controls are always visible (`visibility="always"`) and follow the page color scheme;
  * there is no poster, title, gestures or visual indicator.
  *
  * - `bottom-start` region: play (with the buffering indicator over it) and the seek −/+ buttons,

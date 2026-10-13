@@ -1,8 +1,8 @@
 import type { PresentationDictionary } from '../resolver.js';
 
-// The tile follows the shadcn QR card (`rounded-xl border bg-white p-4` around a 160 px code, about
-// 194 px): bordered, rounded and light in every scheme, 192 px by default with the quiet zone inside. A scoped light color scheme resolves every light-dark() role inside it to its
-// light value, as Media player scopes dark. The composed Copy button, Button, Menu and Button
+// The tile is bordered, rounded and light in every scheme, 192 px by default with the quiet zone
+// inside. A scoped light color scheme resolves every light-dark() role inside it to its light
+// value, as Media player scopes dark. The composed Copy button, Button, Menu and Button
 // group recipes own the actions' paint.
 export const qrCodeAppearance: PresentationDictionary = {
   'qr-code': [{ declarations: { gap: 'var(--tp-space-3)' } }],

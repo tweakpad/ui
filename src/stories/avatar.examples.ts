@@ -1,20 +1,17 @@
 import { markupExample, moduleExample } from './documentation-examples.js';
 import { setupAvatarExample } from './avatar-example.js';
 import setupSource from './avatar-example.js?raw';
+import { ines, mara, ravi, samplePeople } from './avatars.js';
 
 const sizes = ['sm', 'default', 'lg'] as const;
 const row = (content: string) =>
   `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-2)">${content}</div>`;
-const people = [
-  ['shadcn', 'CN'],
-  ['maxleiter', 'LR'],
-  ['evilrabbit', 'ER'],
-] as const;
+const people = samplePeople.slice(0, 3);
 const members = (size: string, grayscale = false) =>
   people
     .map(
-      ([name, fallback]) =>
-        `<tp-avatar size="${size}" src="https://github.com/${name}.png" fallback="${fallback}" alt="@${name}"${grayscale ? ' data-grayscale' : ''}></tp-avatar>`,
+      (person) =>
+        `<tp-avatar size="${size}" src="${person.src}" fallback="${person.initials}" alt="${person.name}"${grayscale ? ' data-grayscale' : ''}></tp-avatar>`,
     )
     .join('\n');
 const groups = (omitted: number, icon = false) =>
@@ -44,7 +41,7 @@ function statuses(images: boolean, icon = false) {
       .map(
         (
           size,
-        ) => `<tp-avatar size="${size}" fallback="JZ" alt="@jorgezreik" data-status="Available"${images ? ' src="https://github.com/jorgezreik.png"' : ''}>
+        ) => `<tp-avatar size="${size}" fallback="${ravi.initials}" alt="${ravi.name}" data-status="Available"${images ? ` src="${ravi.src}"` : ''}>
   ${icon ? `<tp-icon slot="badge" data-icon="${images ? 'plus' : 'check'}"></tp-icon>` : '<span slot="badge"></span>'}
 </tp-avatar>`,
       )
@@ -67,7 +64,7 @@ export const avatarExamples = [
       sizes
         .map(
           (size) =>
-            `<tp-avatar size="${size}" src="https://github.com/shadcn.png" fallback="CN" alt="@shadcn"></tp-avatar>`,
+            `<tp-avatar size="${size}" src="${mara.src}" fallback="${mara.initials}" alt="${mara.name}"></tp-avatar>`,
         )
         .join('\n'),
     ),
@@ -97,8 +94,8 @@ export const avatarExamples = [
   example(
     'Custom shape and grayscale images',
     'avatar-custom-shape',
-    row(`<tp-avatar src="https://github.com/shadcn.png" fallback="CN" alt="@shadcn"></tp-avatar>
-<tp-avatar src="https://github.com/evilrabbit.png" fallback="ER" alt="@evilrabbit" style="border-radius:var(--tp-radius-lg)"></tp-avatar>
+    row(`<tp-avatar src="${mara.src}" fallback="${mara.initials}" alt="${mara.name}"></tp-avatar>
+<tp-avatar src="${ines.src}" fallback="${ines.initials}" alt="${ines.name}" style="border-radius:var(--tp-radius-lg)"></tp-avatar>
 <tp-avatar-group>${members('default', true)}</tp-avatar-group>`),
     'A shared radius token customizes the viewport; the public image part applies grayscale without affecting status or fallback colors.',
   ),

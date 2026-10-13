@@ -40,7 +40,7 @@ export function composedDepth(node: Node): number {
   return depth;
 }
 
-/** Pointer types that drive a custom cursor (Base UI `isMouseLikePointerType`). */
+/** Pointer types that drive a custom cursor: mouse-like pointers. */
 export function mouseLikePointer(pointerType: string | undefined): boolean {
   return pointerType === 'mouse' || pointerType === 'pen' || pointerType === '' || !pointerType;
 }

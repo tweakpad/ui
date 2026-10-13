@@ -81,7 +81,7 @@ function metric(
   </tp-card>`;
 }
 
-/** Nova chart-area-interactive: a fixed 250px plot (aspect-auto h-[250px]) instead of the default ratio. */
+/** A fixed 250px plot instead of the default ratio. */
 const plotHeight = {
   'data-visualization-plot-region': {
     styleHook: { 'aspect-ratio': 'auto', 'block-size': 'calc(var(--tp-space-16) * 4)' },

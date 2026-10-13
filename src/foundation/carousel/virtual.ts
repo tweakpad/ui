@@ -1,4 +1,4 @@
-// Range arithmetic adapted from Swiper Virtual (MIT; see LICENSE).
+// Virtual range arithmetic.
 import type { CarouselConfiguration } from './configuration.js';
 import type { CarouselId, CarouselItem, CarouselVirtualRange } from './types.js';
 import type { CarouselLayout } from './layout.js';

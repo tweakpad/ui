@@ -1,16 +1,17 @@
 ---
 name: tweakpad-component
-description: 'Implement, refactor, fix, or review Tweakpad LitElement components and widgets and their Storybook documentation/compositions against the live specification and local Base UI, Floating UI, shadcn and tweakpane references. Enforce shared architecture, component reuse, API coverage, theming, accessibility, and Chrome DevTools MCP verification. Applies to this library, not generic frontend work.'
+description: 'Implement, refactor, fix, or review Tweakpad LitElement components and widgets and their Storybook documentation/compositions against the live specification and the local reference implementations. Enforce shared architecture, component reuse, API coverage, theming, accessibility, and Chrome DevTools MCP verification. Applies to this library, not generic frontend work.'
 ---
 
 # Tweakpad component implementation
 
 ## Objective and authority
 
-Build the complete Base UI + shadcn component and capability surface as cohesive
-LitElement web components, including the applicable Floating UI behavior. Lit is
-the runtime dependency; do not add React, upstream component packages, positioning
-packages, or another runtime dependency to fill implementation gaps.
+Build the complete component and capability surface of the live specification as
+cohesive LitElement web components, including the applicable positioning behavior.
+Lit is the runtime dependency; do not add a UI framework, external component
+packages, positioning packages, or another runtime dependency to fill
+implementation gaps.
 
 Every existing and future component follows this pipeline. Accordion, Field, and
 Badge are examples, never limits on coverage. A library component must work with
@@ -19,8 +20,8 @@ customization, and have complete documentation.
 
 Widgets, the specialized controls under `src/widgets/<widget>/` (color pickers,
 curve editors, audio graphs), follow the same pipeline with their own paths: the
-UI Widgets Specification as the owning document, tweakpane as an additional
-upstream reference, `docs/widgets/`, `src/stories/widgets/`,
+UI Widgets Specification as the owning document, the widget reference
+implementation as additional evidence, `docs/widgets/`, `src/stories/widgets/`,
 `tests/fixtures/widgets/` and `plans/widgets/<widget>/`. They ship only through
 `@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`; `CONTRIBUTING.md`
 (Adding a widget) lists every file a widget adds.
@@ -30,8 +31,8 @@ upstream reference, `docs/widgets/`, `src/stories/widgets/`,
   tools**. Those sources govern public behavior, anatomy, naming, and presentation
   boundaries. Local implementation, historical plans, and snapshots are not
   normative substitutes.
-- Investigate local upstream code, tests, types, examples, and reusable patterns
-  under the sibling `specification/external/` directory. These are implementation
+- Investigate the local reference code, tests, types, examples, and reusable
+  patterns under the sibling `specification/external/` directory. These are implementation
   and parity evidence, not authority to contradict the spec. Do not fetch GitHub
   replacements or update the reference checkouts as part of component work.
 - If parity requires a missing or conflicting contract, record the precise gap
@@ -62,9 +63,9 @@ stories and examples.
    bounded delivery must come from the user's request, not from implementation
    difficulty, elapsed time, or a list of acknowledged gaps. Recording a failure
    does not clear it or authorize stopping work that can still be completed.
-2. **Reuse the component family, not just utilities.** Trace upstream imports,
+2. **Reuse the component family, not just utilities.** Trace reference imports,
    reexports and shared owners to the corresponding local components. When two
-   components share a behavioral implementation upstream, preserve that ownership
+   components share a behavioral implementation in the reference, preserve that ownership
    in the Lit binding: reuse/repair the existing component or an actual common
    owner consumed by both. Sharing focus or event helpers while duplicating the
    surrounding state, lifecycle, rendering and coordination is not sufficient.
@@ -141,7 +142,7 @@ unavailable, browser gates remain blocked; never substitute another browser tool
 ### 0. Establish current sources and scope
 
 Read instructions, working-tree changes, live contracts and dependencies, local
-upstream references, and relevant shared consumers. Record revision identifiers
+reference implementations, and relevant shared consumers. Record revision identifiers
 and dirty-reference status. Use the source locators in the architecture reference
 without treating recorded versions or catalog counts as current authority.
 
@@ -153,17 +154,17 @@ unresolved semantics cannot silently enter implementation.
 Inventory all properties/attributes, types/defaults, methods, events and
 cancellation, slots/parts, states/markers, composition, lifecycle, forms,
 accessibility, interaction, motion, and presentation/customization requirements.
-Read upstream tests and constituent units, not just the showcase component.
+Read reference tests and constituent units, not just the showcase component.
 Include related components and independently configured regions. Record exact
-upstream paths/symbols and defaults; a whole-family prose row cannot replace
+reference paths/symbols and defaults; a whole-family prose row cannot replace
 individual capabilities. Follow the presentation source chain defined in the
 architecture reference before choosing the visual baseline.
 
 Map each capability to its live authority, local reference evidence, Lit/public
-interface, implementation, documentation, and test scenario. Translate React
-mechanisms into equivalent web-platform capabilities; do not reproduce React
-APIs mechanically or silently discard them. For catalog-wide work or a complete
-library claim, reconcile the upstream union with Tweakpad identities and
+interface, implementation, documentation, and test scenario. Translate
+framework mechanisms into equivalent web-platform capabilities; do not reproduce
+framework APIs mechanically or silently discard them. For catalog-wide work or a
+complete library claim, reconcile the reference union with Tweakpad identities and
 composition/Foundation exposure as described in the architecture reference.
 
 **Exit:** all applicable requirements have a disposition and verification plan;
@@ -184,7 +185,7 @@ not force unrelated folder migration; record existing structural gaps and the
 limited delivery claim.
 
 Complete the family dependency and presentation source maps before editing. Name
-the upstream relationship, existing local owner, reuse/repair decision, component-
+the reference relationship, existing local owner, reuse/repair decision, component-
 specific differences and actual consumers. A new "shared" module used only by the
 new component does not prove reuse when an existing sibling retains the duplicate
 implementation. Composition, inheritance and controllers are possible mechanisms;
@@ -265,7 +266,10 @@ including constituent APIs where public. Controls expose real APIs, with fixture
 setup kept separate. Document properties/attributes, types/defaults, methods,
 events/details, slots/parts, state hooks, customization, and usage constraints.
 Docs read as standalone consumer documentation: state behavior directly, without
-upstream library names, specification citations, internal records or design rationale.
+third-party library names, specification citations, internal records or design rationale.
+Code, comments, tests, samples and docs never name third-party libraries the
+implementation draws on; the only exception is the license notice files that ship
+with the package.
 
 Do not create documentation stories merely to enumerate attribute combinations.
 Keep exhaustive verification fixtures outside curated Docs. Add further published

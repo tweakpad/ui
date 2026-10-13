@@ -126,7 +126,7 @@ export class TpCodeBlock extends TpElement {
         white-space: nowrap;
       }
 
-      /* Without a header the copy action floats over the code (shadcn: absolute top right). */
+      /* Without a header the copy action floats over the code, at the top right. */
       .floating {
         position: absolute;
         z-index: 1;

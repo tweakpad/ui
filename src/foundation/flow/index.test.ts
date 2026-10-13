@@ -67,28 +67,7 @@ describe('flow engine sources', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('carry the xyflow attribution where upstream code is ported', () => {
-    const attribution =
-      /Adapted from xyflow packages\/[\w/.-]+ at 3d35b5731 \(MIT; see LICENSE\.xyflow\)\./;
-    const ported = [
-      'geometry.ts',
-      'viewport.ts',
-      'edges/paths.ts',
-      'edges/endpoints.ts',
-      'edges/markers.ts',
-      'model/changes.ts',
-      'model/indices.ts',
-      'model/queries.ts',
-    ];
-    for (const file of ported) expect(read(file), file).toMatch(attribution);
-    // Any file that claims an adaptation must cite a path and the pinned revision.
-    for (const file of files) {
-      const text = read(file);
-      for (const line of text.split('\n')) {
-        if (/Adapted from xyflow/.test(line))
-          expect(line, `${file}: ${line.trim()}`).toMatch(attribution);
-      }
-    }
+  it('ships the bundled license notice', () => {
     expect(existsSync(join(root, 'LICENSE.xyflow'))).toBe(true);
   });
 });

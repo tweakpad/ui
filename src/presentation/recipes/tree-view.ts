@@ -11,8 +11,8 @@ import { checkboxRules } from './shared/selection-control.js';
 import { packedExtent } from './shared/target.js';
 
 /**
- * shadcn sidebar file tree (base + nova): rows are SidebarMenuButton rows; nested levels are
- * marked by the SidebarMenuSub `border-l` guide, drawn here once per ancestor level.
+ * Rows are navigation rows; nested levels are marked by an inline-start guide line, drawn once
+ * per ancestor level.
  */
 // The indent covers the levels before the row, so each guide sits under its ancestor's indicator.
 const guideOffset = subLevelGuideOffset;
@@ -23,7 +23,7 @@ const guides = (direction: 'right' | 'left') =>
 const indentation = 'calc(var(--_tp-tree-depth, 0) * var(--tp-tree-view-indent))';
 const indented = (padding: string) => `calc(${padding} + ${indentation})`;
 /**
- * SidebarMenuSub row separation, split above and below every row so it is part of each item's
+ * Sub-level row separation, split above and below every row so it is part of each item's
  * measured extent (virtual windows) and equal between rows of any depth in both content modes.
  */
 const halfGap = `calc(${subLevelGap} / 2)`;
@@ -33,13 +33,13 @@ export const treeViewAppearance: PresentationDictionary = {
   'tree-view-row': [
     ...navigationRow,
     {
-      // SidebarMenuSub: a nested row (and its highlight) starts at its indentation.
+      // A nested row (and its highlight) starts at its indentation.
       declarations: { 'margin-block': halfGap, 'margin-inline-start': indentation },
     },
     ...rowHighlight('&[data-selected]'),
     { selector: '&[data-selected]', declarations: { 'font-weight': 'var(--tp-font-medium)' } },
     {
-      // Nova cn-sidebar-menu-button focus-visible ring, drawn inside the row.
+      // The focus-visible ring is drawn inside the row.
       selector: ':host(:focus-visible) &',
       declarations: {
         outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
@@ -49,7 +49,6 @@ export const treeViewAppearance: PresentationDictionary = {
     { selector: '&[data-disabled]', declarations: { opacity: '0.5', cursor: 'not-allowed' } },
     { selector: '&[data-dragging]', declarations: { opacity: '0.4' } },
   ],
-  // Nova sidebar size sm: h-7.
   'tree-view-row-size-sm': [
     {
       declarations: {

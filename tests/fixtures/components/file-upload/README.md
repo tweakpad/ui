@@ -4,7 +4,7 @@ Served by the Vite dev server (`npm run dev`), driven only through Chrome DevToo
 `?built` to load the built package. The library dev server may listen only on the IPv6
 loopback; use `http://[::1]:5173/` when `localhost` resolves to another server.
 
-- `index.html`: one instance per reference layout (single backup file, chips with Clear, the
+- `index.html`: one instance per layout (single backup file, chips with Clear, the
   Trigger and `paste="document"`, documents with badges and a metadata validator, an eight-slot image grid with `paste="control"` and a
   textarea that keeps its own pastes), an upload
   adapter case, a CSV validator, a Field + Form case, disabled and read-only instances, an empty

@@ -15,7 +15,6 @@ export function dialogFamilyAppearance(
     [`${prefix}-${prefix === 'drawer' ? 'surface' : 'content'}`]: [
       ...surfaceAppearance,
       ...(['dialog', 'alert-dialog'].includes(prefix) ? surfaceFadeAppearance : []),
-      // Nova cn-dialog-content: text-sm, rounded-xl, gap-4 p-4.
       rule({
         padding: '0',
         'font-size': 'var(--tp-text-sm)',
@@ -42,7 +41,7 @@ export function dialogFamilyAppearance(
         background:
           'color-mix(in srgb, light-dark(var(--tp-foreground), var(--tp-background)) calc(var(--tp-opacity-backdrop) * 100%), transparent)',
       }),
-      // Nova supports-backdrop-filter:backdrop-blur-xs, opted into with `backdrop="blur"`.
+      // An extra-small backdrop blur where backdrop-filter is supported, opted into with `backdrop="blur"`.
       rule({ 'backdrop-filter': 'blur(var(--tp-space-1))' }, '&[data-backdrop="blur"]'),
       ...surfaceFadeAppearance,
     ],

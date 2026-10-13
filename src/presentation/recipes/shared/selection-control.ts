@@ -1,6 +1,6 @@
 import type { PresentationRule } from '../../resolver.js';
 
-// shadcn base + style-nova: .cn-checkbox, .cn-radio-group-item and their indicators.
+// Checkbox and Radio controls and their indicators.
 // The label is consumer content; only the control box receives selection paint.
 export const selectionControl: readonly PresentationRule[] = [
   {

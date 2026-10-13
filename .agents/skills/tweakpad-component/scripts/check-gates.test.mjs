@@ -25,7 +25,7 @@ function record({
     ) +
     table(
       'Family dependency map',
-      ['Responsibility', 'Upstream', 'Local', 'Decision', 'Consumers'],
+      ['Responsibility', 'Reference', 'Local', 'Decision', 'Consumers'],
       [
         [
           'open state',
@@ -42,8 +42,8 @@ function record({
       [
         [
           'footer',
-          'base/nova',
-          'dialog.tsx + nova.css .footer',
+          'base/default',
+          'dialog source + preset .footer',
           'card footer recipe',
           'share recipe',
           'V-01',

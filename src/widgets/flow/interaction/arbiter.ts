@@ -142,8 +142,8 @@ export class FlowPointerArbiter {
     if (node) {
       if (host.tool === 'pan' || !node.nodeId) return false;
       if (host.interactiveInPath(event, node) || noDragInPath(event, node)) {
-        // The control keeps the press; the node takes the selection (xyflow selects on a click
-        // anywhere inside a node), so an edge selected before is let go.
+        // The control keeps the press; the node takes the selection (a click anywhere inside a
+        // node selects it), so an edge selected before is let go.
         selectNodeOnPress(host, node.nodeId, event);
         return false;
       }

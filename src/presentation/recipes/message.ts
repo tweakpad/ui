@@ -5,7 +5,6 @@ export const messageAppearance: PresentationDictionary = {
   'message-root': [
     { declarations: { 'column-gap': 'var(--tp-space-2)', 'font-size': 'var(--tp-text-sm)' } },
   ],
-  // Nova cn-message-avatar min-w-8 (the default Avatar), cn-message-content gap-2.5.
   'message-avatar': [{ declarations: { 'min-inline-size': 'var(--tp-space-8)' } }],
   'message-content': [{ declarations: { gap: 'var(--tp-space-2-5)' } }],
   'message-header': [

@@ -54,7 +54,7 @@ export function parseThumbnailConstraints(raw: {
 }
 
 /**
- * Sprite-cell layout (Video.js `ThumbnailCore.resize`): one uniform scale fills the max
+ * Sprite-cell layout: one uniform scale fills the max
  * constraints, raised to meet the min constraints (min wins, as in CSS), `1` when
  * unconstrained. The container clips the sprite sheet; the image is translated to the cell.
  * Scaled cells are inset by 1 px to hide the interpolation fringe of neighbouring cells.

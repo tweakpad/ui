@@ -22,12 +22,12 @@ describe('serializeColor', () => {
     expect(serializeColor(red, 'oklch')).toBe('oklch(0.628 0.258 29.2)');
   });
 
-  it('matches the tweakpane parity cases with modern syntax', () => {
+  it('serializes legacy input with modern syntax', () => {
     expect(serializeColor(parse('rgb(0,128,255)'), 'rgb')).toBe('rgb(0 128 255)');
     expect(serializeColor(parse('rgba(12,34,56,0.7)'), 'rgb')).toBe('rgb(12 34 56 / 0.7)');
     expect(serializeColor(color('srgb', [0, 0, 0], 0.4), 'hex')).toBe('#00000066');
     expect(serializeColor(color('srgb', [0, 0, 0], 0.4), 'rgb')).toBe('rgb(0 0 0 / 0.4)');
-    // hex rounds (deviation from tweakpane's floor)
+    // hex rounds rather than floors
     expect(serializeColor(color('srgb', [3.14 / 255, 0, 0]), 'hex')).toBe('#030000');
     expect(serializeColor(color('srgb', [400 / 255, 200 / 255, 0]), 'hex')).toBe('#ffc800');
     expect(serializeColor(color('srgb', [0.5, 0.5, 0.5], 0.5), 'hex')).toBe('#80808080');
@@ -81,7 +81,7 @@ describe('channels', () => {
     expect(channelDefinitions('oklch', false)[2]).toMatchObject({ key: 'hue', precision: 1 });
   });
 
-  it('wraps hue like tweakpane and clamps everything else', () => {
+  it('wraps hue and clamps everything else', () => {
     const [hue, saturation] = channelDefinitions('hsv', false);
     expect(wrapHue(360)).toBe(360);
     expect(wrapHue(361)).toBe(1);

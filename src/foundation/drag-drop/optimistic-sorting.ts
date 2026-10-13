@@ -1,4 +1,4 @@
-/** OptimisticSortingPlugin behavior, adapted from dnd-kit (MIT).
+/** Optimistic sorting behavior.
  * Foundation owns plain DOM ordering. Renderer adapters claim their own keyed
  * collections and use the same manager barriers without mutating managed DOM.
  */

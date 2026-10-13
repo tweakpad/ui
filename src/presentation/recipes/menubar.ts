@@ -11,7 +11,7 @@ export const menubarAppearance: PresentationDictionary = {
   menubar: [
     {
       declarations: {
-        // Nova cn-menubar: h-8 gap-0.5 p-[3px]; the 3px inset is space-1 less the border.
+        // The 3px inset is space-1 less the border.
         'box-sizing': 'border-box',
         'block-size': 'var(--tp-control-height-md)',
         padding: 'calc(var(--tp-space-1) - var(--tp-border-width))',
@@ -28,7 +28,7 @@ export const menubarAppearance: PresentationDictionary = {
         background: 'transparent',
         color: 'var(--tp-foreground)',
         border: '0',
-        // Nova cn-menubar-trigger: rounded-sm px-1.5 py-[2px], filling the bar's content box
+        // Triggers fill the bar's content box
         // (its height less the 3px inset and border on each side), so a 24px target.
         'block-size': 'calc(var(--tp-control-height-md) - var(--tp-space-2))',
         'min-block-size': '0',
@@ -46,7 +46,7 @@ export const menubarAppearance: PresentationDictionary = {
   ],
   'menubar-content': [
     ...menuSurface,
-    // Nova min-w-36: three space-12 steps.
+    // At least three space-12 steps wide.
     { declarations: { 'min-inline-size': 'calc(var(--tp-space-12) * 3)' } },
   ],
   'menubar-item': [

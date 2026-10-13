@@ -1,6 +1,5 @@
 /**
- * Pure buffering and error-dialog policy (Library mp-l-feedback; Video.js
- * `core/ui/buffering-indicator`, `core/ui/error-dialog`).
+ * Pure buffering and error-dialog policy (Library mp-l-feedback).
  */
 import {
   mediaErrorMessageKey,

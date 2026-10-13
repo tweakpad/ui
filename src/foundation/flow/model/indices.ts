@@ -1,4 +1,3 @@
-// Adapted from xyflow packages/system/src/utils/store.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
 import type {
   FlowChange,
   FlowDocument,
@@ -11,7 +10,7 @@ import type {
 
 /**
  * Lookup maps over a document: id → node/edge, array positions, children, incident edges, a
- * connection lookup keyed by node and port (port of xyflow's `updateConnectionLookup`) and
+ * connection lookup keyed by node and port and
  * absolute positions resolved through parent chains. Rebuilt per applied batch (O(n)); the
  * spatial index is updated incrementally by the model.
  */

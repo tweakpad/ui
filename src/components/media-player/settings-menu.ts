@@ -30,7 +30,7 @@ import { TpMediaPlaybackRateRadioGroup } from './radio-groups.js';
 import { TpMediaCaptionsRadioGroup } from './radio-groups.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
-/** Settings groups, in the default (Video.js settings menu) order. */
+/** Settings groups, in the default order. */
 export type MediaSettingsGroup = 'quality' | 'audio' | 'speed' | 'captions';
 
 export const DEFAULT_MEDIA_SETTINGS_GROUPS: readonly MediaSettingsGroup[] = Object.freeze([
@@ -121,7 +121,7 @@ export function mediaSettingsEntries(
  * @csspart trigger - The composed settings Button.
  * @csspart menu - The composed Menu.
  */
-/** Settings popups share the media overlay surface (Video.js default skin menu popup). */
+/** Settings popups share the media overlay surface. */
 const settingsMenuPresentation: PartPresentation = {
   'menu-content': {
     styleHook: { ...mediaPopupSurface, 'border-radius': 'var(--tp-radius-xl)' },

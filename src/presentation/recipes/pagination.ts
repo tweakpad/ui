@@ -14,7 +14,7 @@ export const paginationAppearance: PresentationDictionary = {
   'pagination-page-link-variant-icon': [
     {
       declarations: {
-        // Nova PaginationLink: Button size icon (size-8).
+        // Links use the Button icon size.
         'inline-size': 'var(--tp-control-height-md)',
         'min-inline-size': 'var(--tp-control-height-md)',
         'padding-inline': '0',
@@ -25,7 +25,6 @@ export const paginationAppearance: PresentationDictionary = {
   'pagination-ellipsis': [
     {
       declarations: {
-        // Nova cn-pagination-ellipsis: size-8.
         'inline-size': 'var(--tp-control-height-md)',
         'block-size': 'var(--tp-control-height-md)',
       },

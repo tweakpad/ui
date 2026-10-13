@@ -5,7 +5,6 @@ export const badgeAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        // Nova cn-badge: h-5 gap-1 px-2 py-0.5 text-xs font-medium, icons size-3.
         'block-size': 'var(--tp-space-5)',
         gap: 'var(--tp-space-1)',
         padding: '0 var(--tp-space-2)',

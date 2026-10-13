@@ -1,7 +1,6 @@
 /**
  * Inline structure (CommonMark §6) with the GitHub Flavored Markdown strikethrough, footnote
- * reference and extended autolink extensions. Follows the reference implementation's delimiter
- * and bracket stacks; nodes live in doubly linked lists until they are materialized as mdast.
+ * reference and extended autolink extensions. Uses delimiter and bracket stacks; nodes live in doubly linked lists until they are materialized as mdast.
  */
 import { decodeEntity, ENTITY } from './entities.js';
 import { HTML_TAG } from './html.js';

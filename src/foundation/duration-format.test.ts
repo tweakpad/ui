@@ -8,7 +8,7 @@ const digits = (locale: string, value: number, pad = false) =>
     ...(pad ? { minimumIntegerDigits: 2 } : {}),
   }).format(value);
 
-describe('digital duration text (media player C-37, V-41; Video.js formatTime parity)', () => {
+describe('digital duration text (media player C-37, V-41)', () => {
   it.each([
     [0, undefined, '0:00'],
     [5, undefined, '0:05'],
@@ -63,7 +63,7 @@ describe('digital duration text (media player C-37, V-41; Video.js formatTime pa
   });
 });
 
-describe('spoken duration text (Video.js formatTimeAsPhrase parity)', () => {
+describe('spoken duration text', () => {
   it('formats long English phrases from hour, minute and second units', () => {
     expect(formatDuration(65, { style: 'long', locale: 'en' })).toBe('1 minute, 5 seconds');
     expect(formatDuration(3661, { style: 'long', locale: 'en' })).toBe(

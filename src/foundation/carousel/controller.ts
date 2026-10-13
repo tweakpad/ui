@@ -513,7 +513,7 @@ export class CarouselController {
       return this.#reject('transition-locked');
     return this.#navigate(snap, request);
   }
-  /** Swiper's first-move getTranslate/setTransition(0) handoff. */
+  /** First-move handoff: reads the current translate and drops the transition. */
   interruptPreview(): number {
     const position = this.adapter.readPosition?.() ?? this.#position;
     this.#cancel();

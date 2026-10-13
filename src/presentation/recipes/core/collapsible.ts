@@ -4,7 +4,6 @@ import { rule } from '../shared/variant.js';
 export const collapsibleCoreAppearance: PresentationDictionary = {
   collapsible: [],
   'collapsible-trigger': [
-    // Nova cn-accordion-trigger: text-sm font-medium (py-2.5 in its own rows).
     rule({
       padding: 'var(--tp-space-2-5) var(--tp-space-4)',
       border: '0',

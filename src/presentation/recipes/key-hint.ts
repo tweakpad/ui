@@ -4,7 +4,6 @@ export const keyHintAppearance: PresentationDictionary = {
   'key-hint': [
     {
       declarations: {
-        // Nova cn-kbd: h-5 min-w-5 px-1 text-xs, icons size-3.
         'block-size': 'var(--tp-space-5)',
         'min-inline-size': 'var(--tp-space-5)',
         'padding-inline': 'var(--tp-space-1)',

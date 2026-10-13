@@ -104,7 +104,7 @@ function turns(messages: readonly Message[]) {
 
 function bubble(message: Message, own: boolean) {
   // Reactions overhang the bubble edge, and scroller items paint-contain their content
-  // (content-visibility: auto, as upstream); a reacted bubble reserves that overhang.
+  // (content-visibility: auto); a reacted bubble reserves that overhang.
   return html`<tp-bubble
     class=${message.reaction ? 'activity-reacted' : ''}
     .align=${own ? 'end' : 'start'}

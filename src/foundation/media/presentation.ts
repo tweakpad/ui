@@ -10,7 +10,7 @@ import {
 /**
  * Presentation services (`mp-f-presentation`): fullscreen, picture-in-picture, remote playback
  * prompt and orientation lock. Everything resolves the owner document of the container/media
- * rather than the global document. Follows Video.js `core/src/dom/presentation/*`.
+ * rather than the global document.
  */
 export interface MediaPresentationTarget {
   readonly media: MediaTarget;

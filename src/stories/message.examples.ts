@@ -61,7 +61,7 @@ export const messageExamples = [
       ),
       '<tp-marker role="status">Sam is typing…</tp-marker>',
     ].join('\n'),
-    'Alternating senders, grouped bubbles, delivery metadata, a reaction summary and a typing Marker match the reference conversation composition.',
+    'Alternating senders, grouped bubbles, delivery metadata, a reaction summary and a typing Marker in one conversation.',
   ),
   example(
     'Avatar',

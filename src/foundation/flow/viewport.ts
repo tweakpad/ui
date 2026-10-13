@@ -1,11 +1,9 @@
-// Adapted from xyflow packages/system/src/utils/general.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
-// Adapted from xyflow packages/system/src/xypanzoom/utils.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
 import { clamp, infiniteExtent } from './geometry.js';
 import type { FlowExtent, FlowPoint, FlowRect, FlowSize, FlowViewport } from './types.js';
 
 /**
- * Viewport math: screen ↔ flow conversion, fit-to-bounds with xyflow padding forms, zoom around
- * a screen point, d3-zoom-like translate constraints, wheel and auto-pan factors and log-linear
+ * Viewport math: screen ↔ flow conversion, fit-to-bounds with padding forms, zoom around
+ * a screen point, translate constraints, wheel and auto-pan factors and log-linear
  * interpolation. Pure functions; the widget's pan/zoom owner drives them from pointer events.
  */
 
@@ -96,7 +94,7 @@ export interface FlowResolvedPadding {
   y: number;
 }
 
-/** Resolves a padding form to pixels for a pane of `size` (xyflow `parsePaddings`). */
+/** Resolves a padding form to pixels for a pane of `size`. */
 export function resolveFitPadding(padding: FlowFitPadding, size: FlowSize): FlowResolvedPadding {
   if (typeof padding === 'string' || typeof padding === 'number') {
     const paddingY = parsePadding(padding, size.height);
@@ -117,7 +115,7 @@ export function resolveFitPadding(padding: FlowFitPadding, size: FlowSize): Flow
   return { top, right, bottom, left, x: left + right, y: top + bottom };
 }
 
-/** The viewport that shows `bounds` centered inside `size` with `padding` (xyflow `getViewportForBounds`). */
+/** The viewport that shows `bounds` centered inside `size` with `padding`. */
 export function viewportForBounds(
   bounds: FlowRect,
   size: FlowSize,
@@ -185,8 +183,7 @@ export function centerOn(point: FlowPoint, size: FlowSize, zoom: number): FlowVi
 }
 
 /**
- * Clamps the zoom to its limits and the translation to `translateExtent` with d3-zoom's
- * `constrain` semantics: an extent smaller than the pane is centered, a larger one may not
+ * Clamps the zoom to its limits and the translation to `translateExtent`: an extent smaller than the pane is centered, a larger one may not
  * leave empty space at a pane edge.
  */
 export function clampViewport(viewport: FlowViewport, options: FlowClampOptions): FlowViewport {
@@ -224,7 +221,7 @@ function autoPanAxis(value: number, min: number, max: number): number {
   return 0;
 }
 
-/** Pan velocity (screen px per tick) while `point` is near the edges of a pane of `size` (xyflow `calcAutoPan`). */
+/** Pan velocity (screen px per tick) while `point` is near the edges of a pane of `size`. */
 export function autoPanVelocity(
   point: FlowPoint,
   size: FlowSize,

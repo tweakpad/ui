@@ -1540,7 +1540,7 @@ export class TpSelect extends TpFormElement<unknown> {
     const unchanged = !this.multiple && this.#collection.equal(next, this.#selection.value);
     const accepted = unchanged || this.#selection.set(next, 'item-press', event);
     // An accepted press closes even when a controlled owner publishes the value later
-    // (Base UI commitSelection): only a canceled proposal keeps the popup open.
+    // only a canceled proposal keeps the popup open.
     if (accepted) {
       if (this.searchable) this.#query.selected(record, event);
       if (this.searchable ? (this.closeOnSelect ?? !this.multiple) : !this.multiple)

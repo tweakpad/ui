@@ -865,7 +865,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     }
     if (drag.pointerId !== event.pointerId || componentHandlingPrevented(event)) return;
     if (event.buttons === 0) {
-      // Base UI SliderControl: a move without a pressed button means another handler
+      // A move without a pressed button means another handler
       // consumed the release, so the drag settles instead of running on.
       this.#pointerUp(event);
       return;

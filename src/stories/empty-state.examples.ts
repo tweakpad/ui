@@ -1,6 +1,7 @@
 import { moduleExample } from './documentation-examples.js';
 import { setupEmptyStateExample } from './empty-state-example.js';
 import setupSource from './empty-state-example.js?raw';
+import { ines, mara, samplePeople } from './avatars.js';
 
 const icon = (name: string, slot = '') =>
   `<tp-icon data-icon="${name}"${slot ? ` slot="${slot}"` : ''}></tp-icon>`;
@@ -83,7 +84,7 @@ export const emptyStateExamples = [
     'Offline user',
     'empty-avatar',
     `<tp-empty-state title="User offline" description="This user is currently offline. You can leave a message to notify them or try again later.">
-  <tp-avatar slot="media" size="lg" src="https://github.com/shadcn.png" fallback="LR" alt="User profile" style="filter:grayscale(1)"></tp-avatar>
+  <tp-avatar slot="media" size="lg" src="${ines.src}" fallback="${ines.initials}" alt="${ines.name}" style="filter:grayscale(1)"></tp-avatar>
   ${feedback('Leave message', '', 'default')}
 </tp-empty-state>`,
   ),
@@ -92,9 +93,13 @@ export const emptyStateExamples = [
     'empty-team',
     `<tp-empty-state title="No team members" description="Invite your team to collaborate on this project.">
   <tp-avatar-group slot="media" size="lg" style="filter:grayscale(1)">
-    <tp-avatar src="https://github.com/shadcn.png" fallback="CN" alt="@shadcn"></tp-avatar>
-    <tp-avatar src="https://github.com/maxleiter.png" fallback="LR" alt="@maxleiter"></tp-avatar>
-    <tp-avatar src="https://github.com/evilrabbit.png" fallback="ER" alt="@evilrabbit"></tp-avatar>
+    ${samplePeople
+      .slice(0, 3)
+      .map(
+        (person) =>
+          `<tp-avatar src="${person.src}" fallback="${person.initials}" alt="${person.name}"></tp-avatar>`,
+      )
+      .join('\n    ')}
   </tp-avatar-group>
   ${feedback('Invite members', 'plus', 'default')}
 </tp-empty-state>`,

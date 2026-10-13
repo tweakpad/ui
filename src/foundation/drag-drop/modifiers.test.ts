@@ -16,7 +16,7 @@ const operation = (x: number, y: number): ModifierOperation => ({
   shape: null,
   source: null,
 });
-describe('source-derived modifiers', () => {
+describe('modifiers', () => {
   it('uses ordered intermediate transforms, fixed axes and explicit disabled pass-through', () => {
     const axis = new AxisModifier({ axis: 'x', value: 7 });
     expect(applyModifiers(operation(5, -21), [axis, new SnapModifier()])).toEqual({

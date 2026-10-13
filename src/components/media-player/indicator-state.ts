@@ -1,6 +1,6 @@
 /**
- * Pure feedback-indicator logic (Library mp-l-feedback; Video.js `core/ui/indicator`,
- * `status-indicator`, `seek-indicator`, `volume-indicator`). Every function reads the media state
+ * Pure feedback-indicator logic (Library mp-l-feedback: the status, seek and volume
+ * indicators). Every function reads the media state
  * snapshot taken *before* the key-binding or gesture request executes and predicts its outcome.
  */
 import { captionsAvailability } from '../../foundation/media/availability.js';

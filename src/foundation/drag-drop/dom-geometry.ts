@@ -1,5 +1,4 @@
-/** DOM geometry port from dnd-kit utilities/shapes, transform and frame (MIT).
- * See LICENSE.dnd-kit. Owner realms, normalized negative scales and finite
+/** DOM geometry: shapes, transforms and frames. Owner realms, normalized negative scales and finite
  * measurements implement the adopted A12/A13/A22 corrections.
  */
 import { Rectangle, validRectangle, type BoundingRectangle, type Coordinates } from './geometry.js';

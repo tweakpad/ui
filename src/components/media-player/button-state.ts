@@ -1,6 +1,6 @@
 /**
- * Pure state → view mapping for the media buttons (Library mp-l-buttons, mp-f-disabled-hidden;
- * Video.js `core/ui/*-button/core.ts`). Each view names the state-dependent accessible label, the
+ * Pure state → view mapping for the media buttons (Library mp-l-buttons, mp-f-disabled-hidden).
+ * Each view names the state-dependent accessible label, the
  * per-state icon slot and its fallback artwork, visible text (rate and live buttons), the host
  * markers, the feature availability with its hide policy, and the request the button issues.
  * The Lit elements in `buttons.ts` only bind these views to `tp-button`.
@@ -75,7 +75,7 @@ function gated(capability: MediaAvailability, feature: MediaAvailability): Media
 
 export type MediaPlayButtonState = 'play' | 'pause' | 'replay';
 
-/** `replay` when ended, `play` when paused, otherwise `pause` (Video.js PlayButtonCore). */
+/** `replay` when ended, `play` when paused, otherwise `pause`. */
 export function playButtonState(state: Pick<MediaState, 'paused' | 'ended'>): MediaPlayButtonState {
   if (state.ended) return 'replay';
   return state.paused ? 'play' : 'pause';
@@ -115,7 +115,7 @@ export function volumeIconSlot(level: MediaVolumeLevel): MediaButtonIcon {
   }
 }
 
-/** `unmute` when muted or at zero volume (Video.js MuteButtonCore), otherwise `mute`. */
+/** `unmute` when muted or at zero volume, otherwise `mute`. */
 export function muteButtonLabelKey(state: Pick<MediaState, 'muted' | 'volume'>): 'mute' | 'unmute' {
   return state.muted || state.volume <= 0 ? 'unmute' : 'mute';
 }

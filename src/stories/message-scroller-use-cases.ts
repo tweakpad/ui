@@ -115,8 +115,8 @@ const animationPresets = [
 ] as const;
 type AnimationPreset = (typeof animationPresets)[number][0];
 
-// Application-owned Item entrances. Spring samples preserve the reference's
-// stiffness/damping/mass values without adding a motion runtime to the library.
+// Application-owned Item entrances. Spring samples use stiffness/damping/mass values
+// without adding a motion runtime to the library.
 function entranceFrames(
   preset: AnimationPreset,
   rtl: boolean,

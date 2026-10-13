@@ -12,7 +12,6 @@ export const listItemAppearance: PresentationDictionary = {
     },
   ],
   'list-item-root': [
-    // Nova cn-item sizes: default and sm gap-2.5, xs gap-2.
     { selector: '.row:has(> &)', declarations: { 'column-gap': 'var(--tp-space-2-5)' } },
     {
       selector: ':host([size="xs"]) .row:has(> &)',

@@ -74,7 +74,7 @@ export class TpMenuItem extends TpElement {
   ];
   label = '';
   variant: 'ghost' | 'destructive' | undefined;
-  /** Indents the label to the text of items with a leading icon (Nova `inset`). */
+  /** Indents the label to the text of items with a leading icon. */
   inset = false;
   get itemVariant(): 'ghost' | 'destructive' {
     return this.variant ?? this.#owner?.itemVariant ?? 'ghost';

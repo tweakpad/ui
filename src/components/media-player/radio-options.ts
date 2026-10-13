@@ -1,6 +1,5 @@
 /**
- * Option generation for the media radio groups (Library mp-l-menus; Video.js
- * `*-radio-group/core.ts`). Pure functions of store state, messages and locale.
+ * Option generation for the media radio groups (Library mp-l-menus). Pure functions of store state, messages and locale.
  */
 import { captionTracks, languageName, textTrackLabel } from '../../foundation/media/captions.js';
 import { formatPlaybackRate, type MediaMessagesResolver } from '../../foundation/media/messages.js';

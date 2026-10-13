@@ -30,8 +30,7 @@ const step =
     sign * config[key];
 
 /**
- * Default map (`hotkeys="default"`; Video.js `skins/shared/behaviors/playback-hotkeys.tsx`). One
- * entry per pattern, so an authored binding can suppress a single key of a shared action.
+ * Default map (`hotkeys="default"`). One entry per pattern, so an authored binding can suppress a single key of a shared action.
  */
 export const DEFAULT_MEDIA_HOTKEYS: readonly MediaHotkeyDefinition[] = Object.freeze([
   { keys: 'Space', action: 'toggle-paused' },

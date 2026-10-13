@@ -73,7 +73,7 @@ function semanticTarget(element: HTMLElement): HTMLElement {
 
 /** Actual command-menu owner, with trigger/context invocation, nested Menu and Menubar. */
 export class TpMenu extends TpHoverSurface implements MenuItemOwner {
-  /** Menu restores lost focus to its last item, as Base UI Menu passes `restoreFocus`. */
+  /** Menu restores lost focus to its last item. */
   protected override get surfaceRestoreFocus(): 'popup' | 'previous' {
     return 'previous';
   }

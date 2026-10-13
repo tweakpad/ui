@@ -1021,7 +1021,7 @@ export class TpColorPicker extends TpFormElement<string> {
     const digits = text.trim().replace(/^#/, '');
     const parsed = /^[0-9a-f]{3,8}$/i.test(digits) ? parseColor(`#${digits}`) : null;
     if (!parsed) {
-      // Invalid text reverts to the current color (tweakpane parity).
+      // Invalid text reverts to the current color.
       this.#hexText = this.#model ? serializeColor(this.#model, 'hex').slice(1) : '';
       this.requestUpdate();
       return;

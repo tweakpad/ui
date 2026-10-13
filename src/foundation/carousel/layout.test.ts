@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { carouselLayout, closestCarouselSnap, carouselVisible } from './layout.js';
 import { resolveCarouselConfiguration } from './configuration.js';
 
-describe('Carousel source-derived layout', () => {
+describe('Carousel layout', () => {
   const items = (count: number) =>
     Array.from({ length: count }, (_, index) => ({ index, size: 100 }));
   it('keeps a zero-size mount unmeasured without NaN or invented snaps', () => {

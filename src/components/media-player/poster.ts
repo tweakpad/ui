@@ -132,7 +132,7 @@ export class TpMediaPoster extends TpMediaElement {
     return this.querySelector('img');
   }
 
-  /** Ownership is settled when an image becomes active (Video.js poster adoption). */
+  /** Ownership is settled when an image becomes active. */
   #adopt(next: HTMLImageElement | null): void {
     if (next === this.#image) return;
     // An authored image that steps aside keeps nothing this element pointed it at.

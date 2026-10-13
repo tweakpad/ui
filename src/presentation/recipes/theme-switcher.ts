@@ -4,7 +4,7 @@ import type { PresentationDictionary } from '../resolver.js';
 /**
  * Theme switcher paint over the composed Switch, Button and Toggle group. The switch keeps a
  * neutral track in both states (no primary checked fill) and a thumb in the page background, so
- * it reads as the current mode; icons swap with shadcn's rotate-and-scale crossfade.
+ * it reads as the current mode; icons swap with a rotate-and-scale crossfade.
  */
 export const themeSwitcherAppearance: PresentationDictionary = {
   'theme-switcher-switch': [

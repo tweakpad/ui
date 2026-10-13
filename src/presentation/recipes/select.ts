@@ -10,8 +10,7 @@ import { inputRules } from './shared/text-control.js';
 import { controlStepDeclarations } from './shared/variant.js';
 
 /**
- * A matched range of option text (Text search highlighting). shadcn has no counterpart; matched
- * text keeps the option's color and gains weight, with the native mark background removed.
+ * A matched range of option text (Text search highlighting). Matched text keeps the option's color and gains weight, with the native mark background removed.
  */
 export const searchMatchRules: PresentationDictionary[string] = [
   {
@@ -23,7 +22,7 @@ export const searchMatchRules: PresentationDictionary[string] = [
   },
 ];
 
-/** cn-combobox-empty: muted, small, centered; also the loading and error status row. */
+/** The empty row: muted, small, centered; also the loading and error status row. */
 const emptyStateRules: PresentationDictionary[string] = [
   {
     declarations: {
@@ -35,7 +34,7 @@ const emptyStateRules: PresentationDictionary[string] = [
   },
 ];
 
-/** shadcn bases/base Select, style-nova.css cn-select-*; shared field/surface base remains. */
+/** Select appearance over the shared field and surface base. */
 export const selectAppearance: PresentationDictionary = {
   select: [],
   'select-input': [
@@ -73,7 +72,6 @@ export const selectAppearance: PresentationDictionary = {
     ...inputRules,
     {
       declarations: {
-        // Nova cn-select-trigger: the md control step with pl-2.5 pr-2.
         ...controlStepDeclarations('md'),
         'padding-inline-start': 'var(--tp-space-2-5)',
         'padding-inline-end': 'var(--tp-space-2)',
@@ -121,7 +119,7 @@ export const selectAppearance: PresentationDictionary = {
         'box-shadow': 'var(--tp-shadow-md)',
         'border-color': popupBorderColor,
         'border-radius': 'var(--tp-radius-lg)',
-        // Nova min-w-36: three space-12 steps.
+        // At least three space-12 steps wide.
         'min-inline-size': 'max(var(--tp-anchor-width, 0px), calc(var(--tp-space-12) * 3))',
         opacity: '1',
         'transform-origin': 'var(--tp-transform-origin)',

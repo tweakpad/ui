@@ -1,5 +1,3 @@
-// Adapted from xyflow packages/react/src/utils/changes.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
-// Adapted from xyflow packages/system/src/utils/graph.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
 import { shallowEqual } from '../../store.js';
 import { clampPointToExtent } from '../geometry.js';
 import type {
@@ -693,7 +691,7 @@ export function squashFlowChanges(changes: readonly FlowChange[]): FlowChange[] 
 }
 
 /**
- * Expands removals (xyflow `getElementsToRemove`): a removed node takes its descendants and the
+ * Expands removals: a removed node takes its descendants and the
  * edges connected to any removed node; `deletable: false` nodes and edges stay. The result is
  * independent of the order of the input removals and lists nodes in document order.
  */

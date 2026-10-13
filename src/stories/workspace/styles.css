@@ -265,9 +265,7 @@ catalog-workspace {
   gap: var(--tp-space-4);
 }
 
-/* Settings dialog (shadcn base blocks sidebar-13): navigation beside a scrolling pane. */
-
-/* sidebar-13: a flush, full-height navigation beside an inset main column (DialogContent p-0). */
+/* Settings dialog: a flush, full-height navigation beside an inset, scrolling main column. */
 .workspace-settings-layout {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);

@@ -41,7 +41,7 @@ export class ToastGesture {
             node instanceof Element &&
             node !== element &&
             node.matches(
-              'button,a,input,textarea,select,tp-button,tp-input,tp-text-area,[role="button"],[contenteditable],[data-swipe-ignore],[data-base-ui-swipe-ignore]',
+              'button,a,input,textarea,select,tp-button,tp-input,tp-text-area,[role="button"],[contenteditable],[data-swipe-ignore]',
             ),
         )
     )

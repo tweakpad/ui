@@ -1,7 +1,7 @@
 import { ambientAnimation, motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 
-/** shadcn base registry + Nova selectors947–965; invariant containment lives in TpProgress. */
+/** Progress appearance; invariant containment lives in TpProgress. */
 export const progressAppearance: PresentationDictionary = {
   progress: [{ declarations: { gap: 'var(--tp-space-3)' } }],
   'progress-label': [

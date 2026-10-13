@@ -1,4 +1,4 @@
-// Buffer/permutation arithmetic adapted from Swiper loopFix (MIT; see LICENSE).
+// Loop buffer and permutation arithmetic.
 import type { CarouselConfiguration } from './configuration.js';
 import type { CarouselLayout } from './layout.js';
 import { carouselModulo } from './virtual.js';

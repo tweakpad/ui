@@ -5,9 +5,8 @@ import { popupBorder } from './shared/surface.js';
 
 // Widgets Specification 6.2 Presentation: the curve geometry, the thumbnails and the tick
 // positions are content supplied by the widget as SVG; every color below resolves through
-// tokens. Reference: tweakpane lib/sass/view/_point-2d-picker.scss (axes at 0.1 opacity,
-// 4px marker filled on focus) and _graph-log.scss (polyline stroke) adapted to the library
-// tokens; the handle rings are the shared widget handle recipe.
+// tokens: axes at 0.1 opacity, a 4px marker filled on focus and a polyline stroke; the handle
+// rings are the shared widget handle recipe.
 
 const hairline = 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)';
 const dots = 'color-mix(in oklab, var(--tp-foreground) 18%, transparent)';

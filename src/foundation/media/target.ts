@@ -4,7 +4,7 @@
  * The store accepts any object that implements the HTMLMediaElement-compatible subset below.
  * Native `<video>` and `<audio>` qualify; a custom media element qualifies by implementing the
  * subset. Every capability is optional: a feature whose capability is missing keeps its defaults
- * and reports `unsupported`. Shapes follow Video.js `packages/media/src/core/types.ts`.
+ * and reports `unsupported`.
  */
 
 /** `HTMLMediaElement.readyState` values. */

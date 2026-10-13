@@ -12,7 +12,7 @@ import type {
 
 /**
  * Document serialization: `toJSON` strips `selected` and never writes runtime fields;
- * parsing migrates older shapes (0 → 1 maps xyflow documents) and validates structure, strict
+ * parsing migrates older shapes (0 → 1 maps unversioned documents) and validates structure, strict
  * (throws) or lenient (drops invalid items with issues); nodes are normalized parents first.
  */
 export interface FlowMigration {
@@ -138,7 +138,7 @@ export function serializeFlowDocument<N extends FlowNode, E extends FlowEdge>(
   return result;
 }
 
-const XYFLOW_EDGE_KINDS: Record<string, FlowEdgeKind> = {
+const UNVERSIONED_EDGE_KINDS: Record<string, FlowEdgeKind> = {
   default: 'bezier',
   bezier: 'bezier',
   simplebezier: 'bezier',
@@ -237,7 +237,7 @@ function migrateEdgeV0(input: Rec): Rec {
   if (edge.targetPort === undefined && typeof targetHandle === 'string')
     edge.targetPort = targetHandle;
   if (edge.kind === undefined && typeof type === 'string') {
-    const kind = XYFLOW_EDGE_KINDS[type];
+    const kind = UNVERSIONED_EDGE_KINDS[type];
     if (kind) edge.kind = kind;
   }
   if (typeof label === 'string') edge.label = label;
@@ -249,8 +249,8 @@ function migrateEdgeV0(input: Rec): Rec {
   return edge;
 }
 
-/** Built-in 0 → 1: xyflow-shaped documents (`sourceHandle`, `type`, `parentNode`, `width`/`height`/`measured`). */
-export const XYFLOW_MIGRATION: FlowMigration = {
+/** Built-in 0 → 1: unversioned documents (`sourceHandle`, `type`, `parentNode`, `width`/`height`/`measured`). */
+export const UNVERSIONED_MIGRATION: FlowMigration = {
   from: 0,
   to: 1,
   migrate(input) {
@@ -261,7 +261,7 @@ export const XYFLOW_MIGRATION: FlowMigration = {
   },
 };
 
-export const BUILT_IN_MIGRATIONS: readonly FlowMigration[] = [XYFLOW_MIGRATION];
+export const BUILT_IN_MIGRATIONS: readonly FlowMigration[] = [UNVERSIONED_MIGRATION];
 
 function versionOf(input: Rec): number {
   return typeof input.version === 'number' && Number.isFinite(input.version) ? input.version : 0;

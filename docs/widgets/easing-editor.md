@@ -38,7 +38,7 @@ decimals, `, ` between CSS arguments and single spaces inside the non-CSS functi
 unparsable string empties the editor (`data-empty`) and reports a `tp-diagnostic`. The read-only
 `curve` holds the record, `kind` its kind and `easingFunction` its progression function.
 
-Springs and the Penner families (`sine`, `power`, `expo`, `circ`, `back`, `elastic`, `bounce`)
+Springs and the classic easing families (`sine`, `power`, `expo`, `circ`, `back`, `elastic`, `bounce`)
 have no CSS notation of their own; the CSS adapter samples them into `linear()`. A spring's
 progression is normalized to its own settle time (shown under its controls, capped at 10 s); the
 exported and previewed time is the `duration` lane.
@@ -96,7 +96,7 @@ Slider drag restores the pre-drag value, as the graph does.
 
 ## Presets
 
-The preset picker lists the built-in table (Basic, Spring, and one group per Penner family with
+The preset picker lists the built-in table (Basic, Spring, and one group per easing family with
 its four directions) or the groups supplied through `presets`. Each tile is a Toggle with a
 thumbnail of the curve and its name; the tile whose canonical value equals the current value is
 pressed, `presetId` names it and the graph's badge shows its label. Pressing a tile proposes and commits

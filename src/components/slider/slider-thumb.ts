@@ -167,7 +167,7 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
         '@blur': () => this.#clearCanceledAdjustment(),
       },
     );
-    // tabIndex is an authored host property in the upstream Thumb contract.
+    // tabIndex is an authored host property of the Thumb.
     const authoredTabIndex =
       nativeProperties.tabindex ?? nativeProperties.tabIndex ?? nativeProperties['.tabIndex'];
     if (!state.disabled && authoredTabIndex !== undefined)

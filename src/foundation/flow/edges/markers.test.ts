@@ -20,7 +20,7 @@ describe('edge markers', () => {
     );
   });
 
-  it('normalizes definitions with xyflow defaults', () => {
+  it('normalizes definitions with defaults', () => {
     expect(normalizeMarker('circle')).toEqual({
       type: 'circle',
       width: 12.5,

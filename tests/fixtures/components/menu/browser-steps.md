@@ -35,10 +35,10 @@ the child agent merely because it is listed here.
 ## Early integration
 
 1. Wait for `window.familyReady === true` with a bounded evaluation. Call
-   `familyEarly.open('commands')`; inspect actual screenshot and AX tree. Compare
+   `familyEarly.open('commands')`; inspect actual screenshot and AX tree. Check
    the translucent command surface, small typography, padding, independent check/
-   radio artwork, groups/separator/shortcut, disabled and destructive treatments
-   to the exact Base/Nova source map in `plans/components/menu/family-design.md`.
+   radio artwork, groups/separator/shortcut, and the disabled and destructive
+   treatments.
    Open the actual Share submenu with real pointer/keys and inspect its shape,
    placement, name, sibling isolation and focus.
 2. Call `familyEarly.closeAll()` and `familyEarly.options()`. Inspect Popover

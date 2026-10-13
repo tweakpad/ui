@@ -26,12 +26,12 @@ function state(host: TpTextControl): TextState {
 /**
  * One native editing, value, form and Field integration owner for both text controls.
  *
- * As in Base UI, the native editor is a real element in the consumer's tree: it renders into the
+ * The native editor is a real element in the consumer's tree: it renders into the
  * host's light DOM (slotted into the shadow root) so it has the same form owner as the host.
  * Browsers and password managers classify, group and fill it like any native field, and it
  * submits natively. A semantic editing model (Number Field) keeps the native editor unnamed and
- * submits its raw value through the host instead, as Base UI pairs a visible input with a hidden
- * named one.
+ * submits its raw value through the host instead, pairing a visible input with a hidden named
+ * one.
  */
 export abstract class TpTextControl extends TpFormElement {
   static override properties = {

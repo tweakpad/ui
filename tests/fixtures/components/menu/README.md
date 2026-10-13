@@ -4,8 +4,7 @@ Served by the Vite dev server (`npm run dev`), driven only through Chrome DevToo
 
 - `index.html` + `fixture.ts` + `api.ts`: the Menu family API fixture; `browser-steps.md`
   lists its pointer/keyboard handoff.
-- `regressions.html` + `regression-checks.js`: checks ported from the former Playwright repair
-  smoke script. Append `?built` to load the built package.
+- `regressions.html` + `regression-checks.js`: regression checks. Append `?built` to load the built package.
 
 ## regressions.html through Chrome DevTools MCP
 

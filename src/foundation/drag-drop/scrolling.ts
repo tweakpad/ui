@@ -1,4 +1,4 @@
-/** Source-derived nested reveal and clipping; dnd-kit utilities/scroll (MIT). */
+/** Nested reveal and clipping. */
 import { composedParent } from '../focus.js';
 import { isDocumentScroller, scrollableAncestors } from '../scroll.js';
 import { Rectangle } from './geometry.js';

@@ -6,23 +6,23 @@ using them. This document does not duplicate normative component contracts.
 
 ## Source map
 
-| Concern             | Start here                                                                                      | What to establish                                                                                                                                                                                                                                                                                                                              |
-| ------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live authority      | Direct Spec Blocks MCP; project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`                      | Confirm project identity, current revisions, documents, and managed vocabulary.                                                                                                                                                                                                                                                                |
-| Foundation          | Document `doc_cd3c4721-9f9b-4531-abab-a8bfdbac75f1`                                             | Owning behavior plus state, lifecycle, accessibility, forms, motion, positioning and coverage dependencies.                                                                                                                                                                                                                                    |
-| Component Library   | Document `doc_8077bf7c-0361-48f3-ac87-53b983bd89b3`                                             | Definition, anatomy, properties, shared terminology, presentation, composition and coverage dependencies.                                                                                                                                                                                                                                      |
-| Widgets             | Document `doc_0d98facc-5a5d-4de2-bccb-7317abea0b9f`                                             | Scope, packaging, shared widget contracts (value model, input, rendering, accessibility, theming, performance) and each widget's definition; widgets only.                                                                                                                                                                                   |
-| Spec access policy  | `../specification/AGENTS.md`                                                                    | Registered direct tools only; no shell, JSON-RPC, curl or bridge substitutes for server calls. Reading local upstream reference files is separate from server access.                                                                                                                                                                          |
-| Base UI             | `../specification/external/base-ui/packages/react/src/` and `packages/utils/src/`               | Public exports, constituent units, internal/shared owners, data attributes, source types, adjacent tests, docs and demos.                                                                                                                                                                                                                      |
-| Floating UI         | `../specification/external/floating-ui/packages/{core,dom,utils}/src/`                          | Positioning stages, overflow/measurement, clipping, owner realms, auto-update and cleanup. Follow relevant interaction references too.                                                                                                                                                                                                         |
-| shadcn              | `../specification/external/ui/apps/v4/registry/`                                                | Components, compositions and presentation across applicable registry bases; `ui` is the local shadcn checkout.                                                                                                                                                                                                                                 |
-| tweakpane (widgets) | `../specification/external/tweakpane/packages/core/src/`, `../specification/research/tweakpane/` | Widget parity evidence: `input-binding/color/view/` (color picker), `input-binding/point-2d/` (2D picker), `monitor-binding/number/view/graph-log.ts` (graph). Its `tp-` CSS prefix is a naming coincidence only.                                                                                                                         |
-| Public inventory    | `src/catalog.ts`, `src/components/index.ts`, `src/index.ts`, `src/register.ts`, `package.json`  | Catalog identities, class exports, registration and package entrypoints; each component module declares its own `HTMLElementTagNameMap` entry.                                                                                                                                                                                                 |
-| Widget inventory    | `src/widgets/catalog.ts`, `src/widgets/index.ts`, `src/register/widgets.ts`                     | The widgets section: catalog, class exports and registration for `@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`; never reached from `src/index.ts` or `src/register.ts` (`src/widgets/catalog.test.ts`).                                                                                                                        |
-| Shared behavior     | `src/foundation/`, `src/components/shared/`                                                     | Existing abstractions and consumers, including limitations that require shared repair.                                                                                                                                                                                                                                                         |
-| Shared presentation | `src/presentation/`, `src/styles.css`, `docs/styling.md`, `docs/motion.md`                      | Definition/part registration, resolution, tokens, recipes, structure, composition, public overrides and motion boundaries.                                                                                                                                                                                                                     |
-| Docs and fixtures   | `src/stories/`, `src/stories/examples.ts`, `.storybook/`, `docs/`, `tests/fixtures/components/` | Authored stories, base examples, actual API tables, nested-component usage and published example code. `src/stories/*-example.js` (+ `.d.ts` stubs, `allowJs` is off) are authored sources that `*.examples.ts` import both as modules and as `?raw` published code; they are not build output. Browser fixtures with per-folder README steps. Widgets use `src/stories/widgets/` (stories, `examples.ts`, `overview.mdx`), `docs/widgets/` and `tests/fixtures/widgets/`. |
-| Prior coverage      | `plans/phase-1/outputs/`, `plans/phase-1/first-pass-conformance.md`                             | Leads and previous gaps only; source versions and dispositions may be stale.                                                                                                                                                                                                                                                                   |
+| Concern                | Start here                                                                                        | What to establish                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live authority         | Direct Spec Blocks MCP; project `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`                        | Confirm project identity, current revisions, documents, and managed vocabulary.                                                                                                                                                                                                                                                                                                                                                                                            |
+| Foundation             | Document `doc_cd3c4721-9f9b-4531-abab-a8bfdbac75f1`                                               | Owning behavior plus state, lifecycle, accessibility, forms, motion, positioning and coverage dependencies.                                                                                                                                                                                                                                                                                                                                                                |
+| Component Library      | Document `doc_8077bf7c-0361-48f3-ac87-53b983bd89b3`                                               | Definition, anatomy, properties, shared terminology, presentation, composition and coverage dependencies.                                                                                                                                                                                                                                                                                                                                                                  |
+| Widgets                | Document `doc_0d98facc-5a5d-4de2-bccb-7317abea0b9f`                                               | Scope, packaging, shared widget contracts (value model, input, rendering, accessibility, theming, performance) and each widget's definition; widgets only.                                                                                                                                                                                                                                                                                                                 |
+| Spec access policy     | `../specification/AGENTS.md`                                                                      | Registered direct tools only; no shell, JSON-RPC, curl or bridge substitutes for server calls. Reading local reference files is separate from server access.                                                                                                                                                                                                                                                                                                               |
+| Behavior reference     | `../specification/external/` (headless component library checkout)                                | Public exports, constituent units, internal/shared owners, data attributes, source types, adjacent tests, docs and demos.                                                                                                                                                                                                                                                                                                                                                  |
+| Positioning reference  | `../specification/external/` (positioning library checkout)                                       | Positioning stages, overflow/measurement, clipping, owner realms, auto-update and cleanup. Follow relevant interaction references too.                                                                                                                                                                                                                                                                                                                                     |
+| Presentation reference | `../specification/external/` (component registry checkout)                                        | Components, compositions and presentation across applicable registry bases.                                                                                                                                                                                                                                                                                                                                                                                                |
+| Widget reference       | `../specification/external/` and `../specification/research/` (widget library checkout and notes) | Widget parity evidence: the color input binding view (color picker), the 2D point input binding (2D picker) and the number graph monitor view (graph).                                                                                                                                                                                                                                                                                                                     |
+| Public inventory       | `src/catalog.ts`, `src/components/index.ts`, `src/index.ts`, `src/register.ts`, `package.json`    | Catalog identities, class exports, registration and package entrypoints; each component module declares its own `HTMLElementTagNameMap` entry.                                                                                                                                                                                                                                                                                                                             |
+| Widget inventory       | `src/widgets/catalog.ts`, `src/widgets/index.ts`, `src/register/widgets.ts`                       | The widgets section: catalog, class exports and registration for `@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`; never reached from `src/index.ts` or `src/register.ts` (`src/widgets/catalog.test.ts`).                                                                                                                                                                                                                                                       |
+| Shared behavior        | `src/foundation/`, `src/components/shared/`                                                       | Existing abstractions and consumers, including limitations that require shared repair.                                                                                                                                                                                                                                                                                                                                                                                     |
+| Shared presentation    | `src/presentation/`, `src/styles.css`, `docs/styling.md`, `docs/motion.md`                        | Definition/part registration, resolution, tokens, recipes, structure, composition, public overrides and motion boundaries.                                                                                                                                                                                                                                                                                                                                                 |
+| Docs and fixtures      | `src/stories/`, `src/stories/examples.ts`, `.storybook/`, `docs/`, `tests/fixtures/components/`   | Authored stories, base examples, actual API tables, nested-component usage and published example code. `src/stories/*-example.js` (+ `.d.ts` stubs, `allowJs` is off) are authored sources that `*.examples.ts` import both as modules and as `?raw` published code; they are not build output. Browser fixtures with per-folder README steps. Widgets use `src/stories/widgets/` (stories, `examples.ts`, `overview.mdx`), `docs/widgets/` and `tests/fixtures/widgets/`. |
+| Prior coverage         | `plans/phase-1/outputs/`, `plans/phase-1/first-pass-conformance.md`                               | Leads and previous gaps only; source versions and dispositions may be stale.                                                                                                                                                                                                                                                                                                                                                                                               |
 
 Use source IDs as locators, not frozen contracts. Read related owning nodes and
 dependencies, not just search-result excerpts. Do not copy old section numbers,
@@ -34,14 +34,14 @@ current concurrency fields, small edits, project validation, and dependency revi
 
 For a whole-library review or completeness claim:
 
-1. Enumerate Base UI's public component exports from its source index. Classify
+1. Enumerate the behavior reference's public component exports from its source index. Classify
    providers, helpers and constituent units separately; do not count every module
    as a standalone visual component.
-2. Enumerate shadcn component entries across the applicable local registry bases.
-   Start with `bases/base/ui` and `new-york-v4/ui`, and inspect the registry indexes
-   and other bases for unique capabilities. Dedupe repeated identities without
+2. Enumerate the presentation reference's component entries across the applicable
+   local registry bases, and inspect the registry indexes and other bases for unique
+   capabilities. Dedupe repeated identities without
    losing distinct functionality or composition.
-3. Map each upstream identity/capability to a Tweakpad catalog control,
+3. Map each reference identity/capability to a Tweakpad catalog control,
    constituent/composition, or Foundation capability. Every mapping needs
    behavior/anatomy evidence and a current spec reference. Similar names or similar
    screenshots do not establish equivalence.
@@ -63,7 +63,7 @@ from representative trials.
 
 ### Establish family ownership before choosing files
 
-Start at upstream public exports and follow reexports, imports, root hooks,
+Start at the reference's public exports and follow reexports, imports, root hooks,
 controllers and constituent implementations until the shared owners are explicit.
 Then inspect the related local component implementations, not only `foundation/`.
 Populate the checklist's family dependency map with source path/symbol, existing
@@ -85,9 +85,9 @@ prerequisites within the task; do not expand into every unrelated Foundation or
 catalog gap. A cross-cutting dependency is a design item to resolve, not permission
 to omit the capability or silently turn the task into a whole-library rewrite.
 
-For Dialog-family work, inspect Base UI `alert-dialog/index.parts.ts`,
-`alert-dialog/root/AlertDialogRoot.tsx`, `dialog/root/useRenderDialogRoot.tsx`, and
-the corresponding local Dialog implementation. These are locators, not frozen
+For Dialog-family work, inspect the behavior reference's alert-dialog parts index,
+its alert-dialog root, the dialog root renderer it delegates to, and the
+corresponding local Dialog implementation. These are locators, not frozen
 contracts. Alert Dialog's family behavior must use the same owner as Dialog;
 required modal policy, safe decision focus and action semantics remain distinct.
 Do not interpret reuse as merely importing a Button or a focus utility. Apply this
@@ -108,7 +108,7 @@ owner; the shared owner need not be copied into each component folder.
 Organize by real ownership: an entrypoint, host/root coordination, constituent
 units, state/controllers, structural styles, local types and tests as needed.
 Simple primitives need fewer files. Do not split every method into a file or add
-empty layers to imitate upstream directory counts.
+empty layers to imitate reference directory counts.
 
 The behavioral layer owns reusable semantics and interaction. Lit elements bind
 that behavior to web-component lifecycle and native DOM. The presentation layer
@@ -116,12 +116,12 @@ supplies appearance through the established definitions/dictionary system. Share
 controllers may be Lit-aware; there is no requirement to add a second framework
 or parallel unstyled package.
 
-Base UI Field's `root`, `control`, `label`, `description`, `error`, `validity` and
-`item` units illustrate responsibility boundaries. Follow the selected component's
+The reference Field's `root`, `control`, `label`, `description`, `error`, `validity`
+and `item` units illustrate responsibility boundaries. Follow the selected component's
 actual source dependencies instead of applying that tree to every control.
-React context/hooks/render props map to appropriate controllers, registration,
+Framework context/hooks/render props map to appropriate controllers, registration,
 slots, properties, events or methods under the live contract. Preserve the
-capability rather than React syntax.
+capability rather than framework syntax.
 
 ## Reuse investigation
 
@@ -135,7 +135,7 @@ capability rather than React syntax.
 | Presence and motion       | `foundation/presence.ts`, `motion.ts`, `collapsible.ts`.                                                                                                   |
 | Domain behavior           | `foundation/validation.ts`, `calendar.ts`, `slider.ts`, `questionnaire.ts`.                                                                                |
 | Component helpers         | `components/shared/`: `events.ts` (assignment, label activation, event reasons), `elevation.ts`, `control-styles.ts`, `anchored-arrow.ts`, `scrollbar.ts`. |
-| Related components        | The actual local components corresponding to upstream imported/reexported owners; follow their consumers.                                                  |
+| Related components        | The actual local components corresponding to reference imported/reexported owners; follow their consumers.                                                 |
 
 Paths in this table are under `src/`. Search consumers before changing a shared
 module. Existing helpers must still meet the current contract: reuse does not
@@ -152,15 +152,15 @@ circular component imports, and shared mutable state leaking between instances.
 
 ### Trace the complete presentation source
 
-1. Record the applicable shadcn registry base(s) and style preset(s). Start with
+1. Record the applicable presentation registry base(s) and style preset(s). Start with
    the current library theme and live presentation contract. When variants differ,
    record which behavior and appearance are adopted and why; do not silently choose
    whichever source is easiest to copy. Ask only if the remaining choice materially
    changes an unspecified product requirement.
-2. Read the component and composition source. Follow classes such as `cn-*` into
-   `../specification/external/ui/apps/v4/registry/styles/`, then inspect the relevant
-   tokens, selectors, variants and responsive rules. JSX class names and inline
-   layout utilities alone are not the complete visual source.
+2. Read the component and composition source. Follow its style classes into the
+   registry stylesheets, then inspect the relevant tokens, selectors, variants and
+   responsive rules. Markup class names and inline layout utilities alone are not
+   the complete visual source.
 3. For each meaningful region (surface, header, body, footer/actions, media and
    controls), map source selectors/declarations to the existing library component
    or dictionary recipe. Record intentional contract/theme adaptations. Reuse or
@@ -173,13 +173,13 @@ circular component imports, and shared mutable state leaking between instances.
    every panel in Card simply because it has a similar footer.
 
 The following is an investigation example, not a mandated preset or an instruction
-to add Dialog-only APIs to Alert Dialog. Shadcn's base Dialog Content has an independent
-`showCloseButton` option; its Footer has another optional close button. Inspect
-both defaults and the styles that position the corner control. In the local Nova
-preset, `.cn-dialog-footer`, `.cn-alert-dialog-footer` and `.cn-card-footer` share
-muted, bordered footer presentation. Trace and reconcile that relationship with
-Tweakpad's Card recipe. This does not prescribe Nova for every component or imply
-that shadcn imports Card into Dialog. It does prohibit omitting the stylesheet or
+to add Dialog-only APIs to Alert Dialog. The presentation reference's Dialog Content has
+an independent `showCloseButton` option; its Footer has another optional close button.
+Inspect both defaults and the styles that position the corner control. In the reference
+style preset, the dialog, alert-dialog and card footer classes share muted, bordered
+footer presentation. Trace and reconcile that relationship with Tweakpad's Card recipe.
+This does not prescribe that preset for every component or imply that the reference
+imports Card into Dialog. It does prohibit omitting the stylesheet or
 conflating Cancel semantics with footer-only placement.
 
 Resolve public language from live shared vocabulary and owning contracts, then

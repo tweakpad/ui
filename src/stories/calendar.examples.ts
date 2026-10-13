@@ -2,7 +2,7 @@ import { markupExample, moduleExample } from './documentation-examples.js';
 import { setupCalendarExample } from './calendar-example.js';
 import setupSource from './calendar-example.js?raw';
 
-/** Reference examples place Calendar in a Card; the Card owns the surface and outline. */
+/** Examples place Calendar in a Card; the Card owns the surface and outline. */
 const inCard = (calendar: string) =>
   `<tp-card section-colors="off" style="inline-size:fit-content">
   ${calendar}

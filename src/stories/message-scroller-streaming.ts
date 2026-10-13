@@ -5,7 +5,7 @@ import { plusIcon } from '../icons/plus.js';
 import { refreshIcon } from '../icons/refresh.js';
 import { chatIcons } from '../icons/chat.js';
 
-// Application-owned transport, matching the reference's read-only queued chat.
+// Application-owned transport for a read-only queued chat.
 export const conversation = [
   [
     'Could you help me prepare the pilot launch?',

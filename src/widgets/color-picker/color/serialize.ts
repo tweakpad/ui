@@ -8,7 +8,7 @@ const SRGB_SPACES = new Set<ColorSpace>(['srgb', 'srgb-linear', 'hsl', 'hsv', 'h
 
 /**
  * Brings a color into the sRGB gamut for an sRGB-based format: out-of-range sRGB-based
- * coordinates clip (tweakpane parity for over-driven channels), wide-gamut colors are
+ * coordinates clip (over-driven channels), wide-gamut colors are
  * gamut-mapped (CSS Color 4).
  */
 function fitToSrgb(value: ColorValue): ColorValue {

@@ -53,7 +53,7 @@ export const navigationPanelStyles = css`
   }
 
   .wide[data-collapsed][data-collapse-mode='compact'] {
-    /* Nova --sidebar-width-icon (3rem): one packed row plus the group inset. */
+    /* 3rem at the default seed: one packed row plus the group inset. */
     inline-size: max(
       calc(
         max(var(--tp-control-height-md), var(--_tp-coarse-target, 0px)) + var(--tp-space-2) * 2 +

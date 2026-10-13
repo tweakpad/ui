@@ -20,7 +20,6 @@ export const inputGroupAppearance: PresentationDictionary = {
   'input-group-addon': [
     {
       declarations: {
-        // Nova cn-input-group-addon: py-1.5 gap-2, pl-2 / pr-2 on inline addons.
         padding: 'var(--tp-space-1-5) var(--tp-space-2)',
         gap: 'var(--tp-space-2)',
         color: 'var(--tp-muted-foreground)',
@@ -29,7 +28,7 @@ export const inputGroupAppearance: PresentationDictionary = {
       },
     },
     {
-      // Inline addons sit inside the field height (Nova h-8 group); only block addons add rows.
+      // Inline addons sit inside the field height; only block addons add rows.
       selector: '&[data-position^="inline-"]',
       declarations: { 'padding-block': '0' },
     },

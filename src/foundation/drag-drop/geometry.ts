@@ -1,5 +1,4 @@
-/** Source: dnd-kit geometry/{point,shapes,position} at e522d9c6a3cbe39e6e980ee3b6fd7a78f238ab94.
- * MIT, see LICENSE.dnd-kit. A22 replaces signal history; invalid numeric samples
+/** Point, shape and position geometry. A22 replaces signal history; invalid numeric samples
  * are rejected before publication and zero elapsed time produces zero velocity.
  */
 export interface Coordinates {

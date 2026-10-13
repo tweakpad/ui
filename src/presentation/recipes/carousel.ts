@@ -1,7 +1,7 @@
 import type { PresentationDictionary } from '../resolver.js';
 import { scrollbarRules, scrollbarThumbRules } from './shared/scrollbar.js';
 
-/** shadcn Base/Vega anatomy with actual Button/Progress and one configured structural gap. */
+/** Carousel anatomy with Button and Progress controls and one configured structural gap. */
 export const carouselAppearance: PresentationDictionary = {
   carousel: [],
   'carousel-previous': [{ declarations: { 'border-radius': 'var(--tp-radius-full)' } }],

@@ -760,7 +760,7 @@ export async function assertHarmony(): Promise<Report> {
 
 /**
  * V-103: the composed Selects close on the item press under controlled picker lanes, whether
- * the owner publishes later or never (Base UI commitSelection parity through tp-select).
+ * the owner publishes later or never (tp-select commits the selection itself).
  */
 export async function assertComposedSelects(): Promise<Report> {
   const checks: Check[] = [];

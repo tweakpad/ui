@@ -1,6 +1,4 @@
-/** Source-derived collision formulas: dnd-kit packages/collision/src/algorithms,
- * e522d9c6a3cbe39e6e980ee3b6fd7a78f238ab94. MIT; see LICENSE.dnd-kit.
- */
+/** Collision detection formulas. */
 import { Point, Rectangle } from './geometry.js';
 import type { Coordinates, Position } from './geometry.js';
 import type { UniqueIdentifier } from './sorting.js';
@@ -32,8 +30,6 @@ export interface CollisionInput {
   droppable: { id: UniqueIdentifier; shape: Rectangle | undefined };
 }
 export type CollisionDetector = (input: CollisionInput) => Collision | null;
-
-// Upstream: pointerIntersection.ts
 
 /**
  * A high precision collision detection algorithm that detects
@@ -76,8 +72,6 @@ export const pointerIntersection: CollisionDetector = ({ dragOperation, droppabl
   return null;
 };
 
-// Upstream: shapeIntersection.ts
-
 /**
  * Returns the droppable with the greatest intersection area with
  * the collision shape.
@@ -116,8 +110,6 @@ export const shapeIntersection: CollisionDetector = ({ dragOperation, droppable 
   return null;
 };
 
-// Upstream: default.ts
-
 /**
  * Returns the droppable that has the greatest intersection area with the
  * pointer coordinates. If there are no pointer coordinates, or the pointer
@@ -127,8 +119,6 @@ export const shapeIntersection: CollisionDetector = ({ dragOperation, droppable 
 export const defaultCollisionDetection: CollisionDetector = (args) => {
   return pointerIntersection(args) ?? shapeIntersection(args);
 };
-
-// Upstream: closestCenter.ts
 
 /**
  * Returns the distance between the droppable shape and the drag operation shape.
@@ -162,8 +152,6 @@ export const closestCenter: CollisionDetector = (input) => {
   };
 };
 
-// Upstream: closestCorners.ts
-
 /**
  * Returns the distance between the corners of the droppable shape and the drag operation shape.
  */
@@ -191,8 +179,6 @@ export const closestCorners: CollisionDetector = (input) => {
   };
 };
 
-// Upstream: pointerDistance.ts
-
 /**
  * Returns the distance between the droppable shape and the drag operation coordinates.
  */
@@ -214,8 +200,6 @@ export const pointerDistance: CollisionDetector = (input) => {
     priority: CollisionPriority.Normal,
   };
 };
-
-// Upstream: directionBiased.ts
 
 export const directionBiased: CollisionDetector = ({ dragOperation, droppable }) => {
   if (!droppable.shape) {

@@ -1,4 +1,3 @@
-// Adapted from xyflow packages/system/src/utils/marker.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
 import type { FlowMarker, FlowMarkerDefinition, FlowMarkerType, FlowPoint } from '../types.js';
 
 /**

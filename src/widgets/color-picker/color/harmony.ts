@@ -40,7 +40,7 @@ const handle = (
 const principal = (hueOffset: number, saturationScale = 1, valueScale = 1): HarmonyHandle =>
   handle(hueOffset, saturationScale, valueScale, false, true);
 
-/** Five handles per rule in wheel (polyline) order, Adobe-like. */
+/** Five handles per rule in wheel (polyline) order. */
 export const HARMONY_HANDLES: Readonly<
   Record<Exclude<HarmonyRule, 'none' | 'custom'>, readonly HarmonyHandle[]>
 > = {

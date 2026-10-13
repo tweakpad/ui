@@ -1,6 +1,6 @@
 /**
  * Block structure (CommonMark §4–5) with GitHub Flavored Markdown tables, task list items and
- * footnote definitions. Follows the reference implementation's two phases: lines build a tree of
+ * footnote definitions. Parsing has two phases: lines build a tree of
  * open blocks, then paragraphs, headings and table cells are parsed for inline content.
  */
 import { HTML_BLOCK_CLOSE, HTML_BLOCK_OPEN } from './html.js';

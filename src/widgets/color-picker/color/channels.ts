@@ -158,7 +158,7 @@ export function channelDefinitions(
   return alpha ? [...channels, ALPHA_CHANNEL] : channels;
 }
 
-/** tweakpane's `loopHueRange`: hue wraps, except that exactly 360 is kept. */
+/** Hue wraps, except that exactly 360 is kept. */
 export function wrapHue(value: number): number {
   if (value === 360) return 360;
   const wrapped = value % 360;

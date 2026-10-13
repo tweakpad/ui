@@ -4,7 +4,7 @@ import type { PresentationDeclarations, PresentationRule } from '../../resolver.
 // Widget handle rings (the color picker's area thumb, wheel handles, ring and triangle thumbs;
 // the easing editor's control handles and points): a round marker ringed in the background
 // color over a foreground mix, with the Slider thumb's focus and active rings.
-// Reference: tweakpane lib/sass/view/_color-picker.scss (12px ring markers) adapted to tokens.
+// The markers are 12px rings built from tokens.
 
 export const ringMix = 'color-mix(in oklab, var(--tp-foreground) 30%, transparent)';
 

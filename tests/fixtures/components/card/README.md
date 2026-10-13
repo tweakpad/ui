@@ -10,7 +10,7 @@ Served by the Vite dev server (`npm run dev`), driven only through Chrome DevToo
 1. Navigate to `http://localhost:5173/tests/fixtures/components/card/` and wait for
    `html[data-ready]`.
 2. `await cardContract.shadowOnly()`: toggling `elevated` on `#default` adds a box shadow and
-   leaves border, fill and width unchanged (ported from the former repair smoke).
+   leaves border, fill and width unchanged.
 3. `await cardContract.partialPaddingOverride()`: a `partPresentation` style hook on
    `card-content` changes only `padding-inline-start`.
 4. `cardContract.configurations()` returns each card's border width, shadow, header/content

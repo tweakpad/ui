@@ -48,7 +48,7 @@ export class TpButton extends TpElement {
   static override styles = [
     TpElement.styles,
     css`
-      /* Nova cn-button: shrink-0 whitespace-nowrap; a label never wraps out of the step height. */
+      /* No shrinking and no wrapping: a label never wraps out of the step height. */
       :host {
         display: inline-block;
         flex-shrink: 0;

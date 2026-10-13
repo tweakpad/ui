@@ -5,7 +5,6 @@ export const avatarAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        // Nova cn-avatar: size-8, sm size-6, lg size-10.
         width: 'var(--tp-space-8)',
         height: 'var(--tp-space-8)',
         'font-size': 'var(--tp-text-sm)',
@@ -74,7 +73,6 @@ export const avatarAppearance: PresentationDictionary = {
   'avatar-badge': [
     {
       declarations: {
-        // Nova avatar badge: size-2.5, sm size-2, lg size-3.
         'inline-size': 'var(--tp-space-2-5)',
         'block-size': 'var(--tp-space-2-5)',
         'border-radius': 'var(--tp-radius-full)',

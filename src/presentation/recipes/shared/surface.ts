@@ -30,12 +30,11 @@ export const sectionFooterAppearance: readonly PresentationRule[] = [
 ];
 // One section rhythm for every Dialog-family surface, including Drawer's content wrapper.
 // CL §13: one root-scoped spacing variable, initialized from a space role, read by every section.
-// Consumers set the documented `--tp-dialog-spacing` (Nova `DialogContent className="p-0"` is 0).
+// Consumers set the documented `--tp-dialog-spacing`; 0 removes the section padding.
 export function dialogSectionAppearance(wrapper = '') {
   const section = `& > ${wrapper}`;
   const spacing = 'var(--_tp-dialog-spacing)';
   return [
-    // Nova cn-dialog-content gap-4 p-4.
     rule({ '--_tp-dialog-spacing': 'var(--tp-dialog-spacing, var(--tp-space-4))' }),
     rule({ padding: spacing }, `${section}:is(.header,.body,.footer)`),
     rule({ 'padding-block-start': '0' }, `${section}.body`),
@@ -55,6 +54,6 @@ export function dialogSectionAppearance(wrapper = '') {
   ];
 }
 
-/** The hairline of floating popups: a 10% foreground mix (shadcn popover, menu and command surfaces). */
+/** The hairline of floating popups: a 10% foreground mix (popover, menu and command surfaces). */
 export const popupBorderColor = 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)';
 export const popupBorder = `var(--tp-border-width) var(--tp-border-style) ${popupBorderColor}`;

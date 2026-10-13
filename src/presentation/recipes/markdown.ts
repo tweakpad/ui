@@ -2,8 +2,8 @@ import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 
 /**
- * Default Markdown appearance (`ucl21-markdown`), traced from shadcn Typeset (`typeset.css`) and
- * expressed in typography, spacing and color roles. Block spacing flows from the block-start edge
+ * Default Markdown appearance (`ucl21-markdown`), expressed in typography, spacing and color
+ * roles. Block spacing flows from the block-start edge
  * only (`--_tp-markdown-flow`), so appended streaming content never restyles settled blocks.
  */
 const sm = ':host([size="sm"]) &';
@@ -29,7 +29,7 @@ export const markdownAppearance: PresentationDictionary = {
       declarations: { 'margin-block-start': 'var(--tp-space-2)' },
     },
     // A thematic break separates sections, so it takes section spacing on both sides
-    // (Typeset: flow × 2.4); the following block carries the trailing space.
+    // (flow × 2.4); the following block carries the trailing space.
     {
       selector: '& > tp-separator, & [data-flow] > tp-separator, & tp-separator + *',
       declarations: { 'margin-block-start': 'var(--_tp-markdown-heading-flow)' },

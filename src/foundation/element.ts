@@ -28,7 +28,7 @@ export class TpElement extends LitElement {
 
   static styles: CSSResultGroup = css`
     /* Typography inherits: the theme establishes the default tuple (font-sans, text-base,
-       font-normal, leading-normal, tracking-normal) on :root, and a Nova text-sm root such as
+       font-normal, leading-normal, tracking-normal) on :root, and a text-sm root such as
        Card, Dialog or Table passes its size to the components inside it. */
     :host {
       box-sizing: border-box;

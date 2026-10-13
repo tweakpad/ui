@@ -120,7 +120,7 @@ export class TpTable extends TpElement {
     );
     this.#geometry.style(table, 'table-layout', this.layout === 'fixed' ? 'fixed' : 'auto');
     const sections = tableSections(table, this);
-    // Nova body and footer: the last row has no bottom border (`[&_tr:last-child]:border-0`).
+    // Body and footer: the last row has no bottom border.
     // Cells live in nested shadow roots in the composed tree, so the row position is a marker.
     for (const section of sections) {
       if (section.element.localName === 'thead') continue;

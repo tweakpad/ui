@@ -5,7 +5,7 @@ import {
   collapsedContext,
 } from './shared/navigation-row.js';
 
-/** Composes the real Collapsible with SidebarMenuButton paint; no second disclosure owner. */
+/** Composes the real Collapsible with navigation-row paint; no second disclosure owner. */
 export const navigationPanelDisclosureAppearance: PresentationDictionary = {
   'collapsible-trigger': [
     ...solidNavigationRow.map((rule) => ({
@@ -17,7 +17,7 @@ export const navigationPanelDisclosureAppearance: PresentationDictionary = {
   'collapsible-label': [
     { selector: disclosureContext + '&', declarations: { 'font-weight': 'inherit' } },
   ],
-  // SidebarMenuButton spaces icon, label and chevron with `gap-2` alone: the row gap above
+  // A navigation row spaces icon, label and chevron with its gap alone: the row gap above
   // replaces the Collapsible's own region margins, so the label lines up with sub-level rows.
   'collapsible-leading': [
     {

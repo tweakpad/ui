@@ -10,8 +10,7 @@ Default, PositionalContent and ExternalLineByLineMotion compositions.
 
 1. Navigate to `http://localhost:5173/tests/fixtures/components/accordion/` and wait for
    `html[data-ready]`.
-2. `await accordionContract.runAll()` runs the evaluate-only checks ported from the former
-   Playwright scripts: variant chrome expectations, disabled-item isolation, the external
+2. `await accordionContract.runAll()` runs the evaluate-only checks: variant chrome expectations, disabled-item isolation, the external
    line-by-line driver (claimed content requests, staggered paragraph animations,
    `data-tp-motion-driven`), reduced-motion skipping the driver, a root `partPresentation`
    override reaching the cross-shadow trigger part, reconnection keeping the open item, and

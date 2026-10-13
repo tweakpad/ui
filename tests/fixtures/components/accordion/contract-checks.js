@@ -1,5 +1,4 @@
 // Accordion contract checks, executed through Chrome DevTools MCP `evaluate_script`.
-// Ported from the former Playwright Storybook-entries and repair smoke scripts.
 const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 const settle = async (...elements) => {
   for (let i = 0; i < 3; i++) {

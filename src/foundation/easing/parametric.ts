@@ -119,7 +119,7 @@ const bounceOut = (t: number): number => {
   return n1 * (t -= 2.625 / d1) * t + 0.984375;
 };
 
-/** The "in" form of a family (Penner easing formulas). */
+/** The "in" form of a family. */
 function easeIn(
   family: ParametricFamily,
   parameters: Readonly<Record<string, number>>,

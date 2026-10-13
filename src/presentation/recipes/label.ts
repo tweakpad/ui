@@ -1,7 +1,6 @@
 import type { PresentationDictionary } from '../resolver.js';
 
 export const labelAppearance: PresentationDictionary = {
-  // Nova cn-label: gap-2 text-sm leading-none font-medium.
   label: [
     {
       declarations: {

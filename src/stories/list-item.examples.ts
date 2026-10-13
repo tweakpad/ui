@@ -1,6 +1,7 @@
 import { moduleExample } from './documentation-examples.js';
 import { setupListItemExample } from './list-item-example.js';
 import setupSource from './list-item-example.js?raw';
+import { type SamplePerson, ravi, samplePeople } from './avatars.js';
 
 const layout =
   'display:grid;gap:var(--tp-space-4);max-inline-size:calc(var(--tp-spacing) * 150);min-inline-size:0';
@@ -20,11 +21,11 @@ function example(title: string, id: string, markup: string) {
   });
 }
 const variants = ['ghost', 'outline', 'subdued'];
-const people = ['shadcn', 'maxleiter', 'evilrabbit'];
-const avatar = (person: string, slot = 'media', extra = '') =>
-  `<tp-avatar slot="${slot}" size="sm" src="https://github.com/${person}.png" fallback="${person.slice(0, 2).toUpperCase()}" alt="${person}" ${extra}></tp-avatar>`;
-const invite = (person: string) =>
-  `<tp-button slot="actions" variant="outline" size="icon-sm" aria-label="Invite ${person}" data-round data-feedback><tp-icon slot="icon-start" data-icon="plus"></tp-icon></tp-button>`;
+const people = samplePeople.slice(0, 3);
+const avatar = (person: SamplePerson, slot = 'media', extra = '') =>
+  `<tp-avatar slot="${slot}" size="sm" src="${person.src}" fallback="${person.initials}" alt="${person.name}" ${extra}></tp-avatar>`;
+const invite = (name: string) =>
+  `<tp-button slot="actions" variant="outline" size="icon-sm" aria-label="Invite ${name}" data-round data-feedback><tp-icon slot="icon-start" data-icon="plus"></tp-icon></tp-button>`;
 export const listItemExamples = [
   example(
     'Content and actions',
@@ -117,16 +118,16 @@ export const listItemExamples = [
   example(
     'People and invitations',
     'list-item-people-example',
-    `<tp-list-item variant="outline">${avatar('evilrabbit')}Evil Rabbit<span slot="description">Last seen <tp-time mode="relative" datetime="${ago(150 * 86_400_000)}"></tp-time></span>${invite('Evil Rabbit')}</tp-list-item>
+    `<tp-list-item variant="outline">${avatar(ravi)}${ravi.name}<span slot="description">Last seen <tp-time mode="relative" datetime="${ago(150 * 86_400_000)}"></tp-time></span>${invite(ravi.name)}</tp-list-item>
 <tp-list-item variant="outline" description="Invite your team to collaborate on this project."><tp-avatar-group slot="media" size="sm">${people.map((person, n) => avatar(person, '', n < 2 ? 'data-secondary-avatar' : '')).join('')}</tp-avatar-group>Project team${button('Invite')}</tp-list-item>
-<tp-list-item-group aria-label="People">${people.map((person) => `<tp-list-item description="${person}@example.com">${avatar(person)}${person}${invite(person)}</tp-list-item>`).join('\n<tp-list-item-separator></tp-list-item-separator>\n')}</tp-list-item-group>`,
+<tp-list-item-group aria-label="People">${people.map((person) => `<tp-list-item description="${person.handle}@example.com">${avatar(person)}${person.name}${invite(person.name)}</tp-list-item>`).join('\n<tp-list-item-separator></tp-list-item-separator>\n')}</tp-list-item-group>`,
   ),
   example(
     'People menu',
     'list-item-menu-example',
     `<tp-menu label="People" placement="block-end start" data-people>
   <tp-button slot="trigger" variant="outline" size="sm" style="justify-self:start">Select person<tp-icon slot="icon-end" data-icon="chevronDown"></tp-icon></tp-button>
-  ${people.map((person) => `<tp-menu-item value="${person}" label="${person}"><tp-list-item size="xs" description="${person}@example.com">${avatar(person)}${person}</tp-list-item></tp-menu-item>`).join('\n  ')}
+  ${people.map((person) => `<tp-menu-item value="${person.handle}" label="${person.name}"><tp-list-item size="xs" description="${person.handle}@example.com">${avatar(person)}${person.name}</tp-list-item></tp-menu-item>`).join('\n  ')}
 </tp-menu>`,
   ),
   example(

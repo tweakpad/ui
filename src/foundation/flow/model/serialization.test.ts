@@ -6,7 +6,7 @@ import {
   normalizeNodeOrder,
   parseFlowDocument,
   serializeFlowDocument,
-  XYFLOW_MIGRATION,
+  UNVERSIONED_MIGRATION,
 } from './serialization.js';
 
 function node(id: string, extra: Partial<FlowNode> = {}): FlowNode {
@@ -99,8 +99,8 @@ describe('serializeFlowDocument', () => {
 });
 
 describe('migrateFlowDocument', () => {
-  it('migrates xyflow-shaped documents to version 1', () => {
-    const xyflow = {
+  it('migrates unversioned documents to version 1', () => {
+    const unversioned = {
       nodes: [
         {
           id: '1',
@@ -136,7 +136,7 @@ describe('migrateFlowDocument', () => {
       ],
       viewport: { x: 1, y: 2, zoom: 0.5 },
     };
-    const migrated = migrateFlowDocument(xyflow) as Record<string, unknown>;
+    const migrated = migrateFlowDocument(unversioned) as Record<string, unknown>;
     expect(migrated.version).toBe(1);
     const nodes = migrated.nodes as Array<Record<string, unknown>>;
     expect(nodes[0]).toEqual({
@@ -175,7 +175,7 @@ describe('migrateFlowDocument', () => {
       label: '3',
     });
     expect(migrated.viewport).toEqual({ x: 1, y: 2, zoom: 0.5 });
-    expect(XYFLOW_MIGRATION.to).toBe(1);
+    expect(UNVERSIONED_MIGRATION.to).toBe(1);
   });
 
   it('chains custom migrations and leaves current documents alone', () => {
@@ -262,7 +262,7 @@ describe('parseFlowDocument', () => {
     );
   });
 
-  it('migrates xyflow input while parsing', () => {
+  it('migrates unversioned input while parsing', () => {
     const { document, issues } = parseFlowDocument({
       nodes: [{ id: '1', position: { x: 0, y: 0 }, data: {} }],
       edges: [{ id: 'e', source: '1', target: '1', sourceHandle: 'h' }],

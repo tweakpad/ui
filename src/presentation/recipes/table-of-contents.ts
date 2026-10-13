@@ -1,7 +1,7 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 
-/** Default Table of contents appearance (`ucl20-table-of-contents`), Nova text and spacing. */
+/** Default Table of contents appearance (`ucl20-table-of-contents`): text and spacing. */
 export const tableOfContentsAppearance: PresentationDictionary = {
   'table-of-contents': [
     {

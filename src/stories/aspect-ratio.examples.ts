@@ -1,6 +1,6 @@
 import { markupExample } from './documentation-examples.js';
 
-/** Base registry aspect-ratio-example.tsx: preserve all four reference use cases. */
+/** The four documented ratios. */
 const ratios = [
   { title: '16:9', ratio: 16 / 9 },
   { title: '21:9', ratio: 21 / 9 },

@@ -60,7 +60,7 @@ export const menubarPresentation = definePresentation({
           display: 'flex',
           'align-items': 'center',
           'inline-size': '100%',
-          // Nova items have no fixed or minimum extent (a reused Button sub-trigger
+          // Items have no fixed or minimum extent (a reused Button sub-trigger
           // included); touch keeps the accessible target.
           'block-size': 'auto',
           'min-block-size': coarseTarget,
@@ -83,7 +83,7 @@ export const menubarPresentation = definePresentation({
           display: 'flex',
           'align-items': 'center',
           'inline-size': '100%',
-          // Nova items have no fixed or minimum extent (a reused Button sub-trigger
+          // Items have no fixed or minimum extent (a reused Button sub-trigger
           // included); touch keeps the accessible target.
           'block-size': 'auto',
           'min-block-size': coarseTarget,

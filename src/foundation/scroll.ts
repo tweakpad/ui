@@ -72,7 +72,6 @@ export function visualViewportBox(view: Window): {
 /**
  * Overflowing scroll containers around `element`, nearest first, across shadow boundaries; the
  * document scrolling element always closes the list, followed by those of parent frames.
- * Source-derived from dnd-kit utilities/scroll (MIT).
  */
 export function scrollableAncestors(element: Element, includeSelf = false): HTMLElement[] {
   const result: HTMLElement[] = [];

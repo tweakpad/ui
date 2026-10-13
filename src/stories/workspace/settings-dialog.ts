@@ -27,7 +27,7 @@ export interface SettingsHost extends WorkspaceHost {
 type OpenChange = CustomEvent<{ value: boolean }>;
 
 const closeRegistrations = new WeakMap<Element, () => void>();
-/** The header close button is the Dialog's registered close action (sidebar-13 has no footer). */
+/** The header close button is the Dialog's registered close action (the dialog has no footer). */
 const closeAction = ref((element) => {
   if (!element || closeRegistrations.has(element)) return;
   const dialog = element.closest<TpDialog>('tp-dialog');
@@ -460,7 +460,7 @@ const sectionContent: Record<SettingsSection, (host: SettingsHost) => unknown> =
   danger,
 };
 
-/** Settings in a Dialog with its own navigation, after shadcn base blocks sidebar-13. */
+/** Settings in a Dialog with its own navigation. */
 export function renderSettingsDialog(host: SettingsHost) {
   const current = settingsSections.find(([id]) => id === host.settingsSection)!;
   const select = (section: SettingsSection) => (event: Event) => {
@@ -476,7 +476,7 @@ export function renderSettingsDialog(host: SettingsHost) {
     .partPresentation=${{
       'dialog-content': {
         styleHook: {
-          // sidebar-13: DialogContent p-0 max-w-[800px] max-h-[500px], clipped edges.
+          // Flush content at most 800px wide and 500px tall, with clipped edges.
           '--tp-dialog-spacing': '0',
           'inline-size': 'min(calc(var(--tp-space-16) * 12.5), calc(100% - var(--tp-space-8)))',
           overflow: 'hidden',

@@ -1,7 +1,7 @@
 import type { PresentationDictionary } from '../resolver.js';
 import { inputRules } from './shared/text-control.js';
 import { controlStepDeclarations } from './shared/variant.js';
-/** Nova native-select layers its native extents over the shared Input boundary. */
+/** Native select layers its native extents over the shared Input boundary. */
 export const nativeSelectAppearance: PresentationDictionary = {
   // The host already applies the disabled opacity and cursor.
   'native-select': [],
@@ -9,7 +9,6 @@ export const nativeSelectAppearance: PresentationDictionary = {
     ...inputRules,
     {
       declarations: {
-        // Nova cn-native-select: the md control step with py-1 pl-2.5 pr-8.
         ...controlStepDeclarations('md'),
         'padding-inline-start': 'var(--tp-space-2-5)',
         'padding-inline-end': 'var(--tp-space-8)',
@@ -21,7 +20,6 @@ export const nativeSelectAppearance: PresentationDictionary = {
     {
       selector: '&[data-size="sm"]',
       declarations: {
-        // Nova data-[size=sm]: h-7 py-0.5 rounded-[min(var(--radius-md),10px)].
         ...controlStepDeclarations('sm'),
         'padding-inline-start': 'var(--tp-space-2-5)',
         'padding-inline-end': 'var(--tp-space-8)',

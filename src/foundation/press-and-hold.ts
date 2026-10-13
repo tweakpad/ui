@@ -9,7 +9,7 @@ export interface PressAndHoldOptions {
   focus?(): void;
 }
 
-/** Shared native-button hold policy. Timing/gesture thresholds follow Base UI usePressAndHold. */
+/** Shared native-button hold policy: hold timing and gesture thresholds. */
 export class PressAndHold {
   readonly #scope = new CleanupScope();
   #gesture: CleanupScope | undefined;

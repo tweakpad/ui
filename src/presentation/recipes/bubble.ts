@@ -9,7 +9,6 @@ export const bubbleAppearance: PresentationDictionary = {
     {
       selector: '&',
       declarations: {
-        // Nova cn-bubble-content: rounded-xl px-3 py-2 text-sm leading-relaxed.
         'border-radius': 'var(--tp-radius-xl)',
         padding: 'var(--tp-space-2) var(--tp-space-3)',
         border: 'var(--tp-border-width) var(--tp-border-style) transparent',

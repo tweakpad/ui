@@ -361,7 +361,7 @@ function renderTable(host: WorkspaceHost): TemplateResult {
   </div>`;
 }
 
-/** Nova data-table: the task title is a link Button with `px-0`, flush with its metadata line. */
+/** The task title is a link Button without inline padding, flush with its metadata line. */
 const linkTitle = { button: { styleHook: { 'padding-inline': '0' } } };
 
 /** Work: one task set shown as a filterable table or a drag-and-drop status board. */

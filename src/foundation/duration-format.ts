@@ -1,8 +1,7 @@
 /**
  * Media clock and spoken duration text (Foundation `mp-duration`).
  *
- * Mirrors Video.js `formatTime`, `formatTimeAsPhrase` and `secondsToIsoDuration`
- * (`packages/utils/src/time/format.ts`): locale only formats digits and unit names; it never
+ * Digital, spoken and ISO duration text: locale only formats digits and unit names; it never
  * selects translated phrases such as "remaining".
  */
 import { durationFormatter, type DurationRecord, type DurationStyle } from './date-locale.js';
@@ -96,7 +95,7 @@ export function formatDurationParts(
 }
 
 /**
- * Digital text includes a leading `-` for negative input (Video.js `formatTime`). Spoken styles
+ * Digital text includes a leading `-` for negative input. Spoken styles
  * return the absolute phrase: wrap it with a messages-dictionary entry such as
  * "{duration} remaining" rather than relying on locale selection.
  */

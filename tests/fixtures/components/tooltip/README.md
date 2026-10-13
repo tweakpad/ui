@@ -4,8 +4,7 @@ Served by the Vite dev server (`npm run dev`), driven only through Chrome DevToo
 
 - `index.html` + `fixture.ts`: provider delays, detached handles, clipping, scrolling and
   layered-surface regressions (`window.tooltipAPI`, `tooltipProvider`, `tooltipHandle`).
-- `regressions.html` + `regression-checks.js`: ported from the former Playwright repair smoke
-  script. Append `?built` to load the built package.
+- `regressions.html` + `regression-checks.js`: regression checks. Append `?built` to load the built package.
 
 ## regressions.html through Chrome DevTools MCP
 

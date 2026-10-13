@@ -21,7 +21,7 @@ function* declarations(): Generator<[string, string]> {
 }
 
 describe('size and spacing normalization (CL §5.3)', () => {
-  // Popup and media widths (Nova w-64, max-w-xs, min-w-36) are layout extents, not spacing.
+  // Popup and media widths are layout extents, not spacing.
   const spacingProperty = /\s(padding|margin|gap|row-gap|column-gap|inset)[\w-]*$/;
 
   it('derives spacing from the named space-* roles, never from the raw seed', () => {

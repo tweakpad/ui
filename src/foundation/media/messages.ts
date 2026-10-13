@@ -116,7 +116,7 @@ export type MediaPlayerMessages = {
   [K in MediaMessageKey]?: MediaMessageEntry<K> | undefined;
 };
 
-/** English defaults (Video.js `core/i18n/locales/en.ts`; error strings match `MediaError`). */
+/** English defaults (error strings match `MediaError`). */
 export const DEFAULT_MEDIA_MESSAGES: Readonly<MediaPlayerMessageDictionary> = Object.freeze({
   player: 'Media player',
   play: 'Play',

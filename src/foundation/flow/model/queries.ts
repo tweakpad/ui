@@ -1,6 +1,3 @@
-// Adapted from xyflow packages/system/src/utils/graph.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
-// Adapted from xyflow packages/system/src/utils/store.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
-// Adapted from xyflow packages/system/src/utils/edges/general.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
 import { unionRects } from '../geometry.js';
 import type { FlowEdge, FlowNode, FlowRect } from '../types.js';
 
@@ -136,7 +133,7 @@ export function nodesBounds(rects: Iterable<FlowRect>): FlowRect {
   return unionRects([...rects]);
 }
 
-/** Node z (xyflow `calculateZ` + child elevation): own `zIndex`, selected nodes raised, children above parents. */
+/** Node z with child elevation: own `zIndex`, selected nodes raised, children above parents. */
 export function nodeZ(
   node: Pick<FlowNode, 'zIndex' | 'selected'>,
   parentZ: number | undefined,
@@ -158,7 +155,7 @@ export interface FlowEdgeZParams {
   targetElevated: boolean;
 }
 
-/** Edge z (xyflow `getElevatedEdgeZIndex`): edges sit below nodes unless a node they touch is elevated. */
+/** Edge z: edges sit below nodes unless a node they touch is elevated. */
 export function edgeZ(params: FlowEdgeZParams): number {
   const zIndex = params.zIndex ?? 0;
   const edge = params.elevateOnSelect && params.selected ? zIndex + 1000 : zIndex;

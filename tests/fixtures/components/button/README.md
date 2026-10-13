@@ -3,8 +3,7 @@
 Served by the Vite dev server (`npm run dev`), driven only through Chrome DevTools MCP.
 
 - `index.html` + `fixture.ts`: part-contract verification (`window` records).
-- `contract.html` + `contract-checks.js`: the browser contract ported from the former Playwright
-  smoke script. Append `?built` to load the built package (`npm run build` first).
+- `contract.html` + `contract-checks.js`: the browser contract. Append `?built` to load the built package (`npm run build` first).
 
 ## contract.html through Chrome DevTools MCP
 

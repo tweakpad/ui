@@ -1,7 +1,5 @@
 /**
- * Adapted from dnd-kit packages/helpers/src/move.ts at
- * e522d9c6a3cbe39e6e980ee3b6fd7a78f238ab94 (MIT; LICENSE.dnd-kit).
- * Branch ordering and optimistic reconciliation are preserved. A06 adds finite
+ * Array move helpers with optimistic reconciliation. A06 adds finite
  * integer/range validation before every indexing branch; A20 retains vertical
  * midpoint semantics here. Horizontal insertion belongs to the list adapter.
  */

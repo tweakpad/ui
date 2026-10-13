@@ -12,9 +12,9 @@ import { CleanupScope, Scheduler } from './services.js';
  *
  * The owner keeps no viewport of its own: it reads the model through `viewport()` and reports
  * every computed viewport through `handlers.move`, clamped to the zoom range and the translate
- * extent (d3-zoom `constrain`). Pointer movement is coalesced to one `move` per animation
+ * extent. Pointer movement is coalesced to one `move` per animation
  * frame; wheel movement applies per event (the browser already paces wheels per frame) with a
- * synthesized start and a 150 ms debounced end (xyflow `panScrollTimeout`). Programmatic steps
+ * synthesized start and a 150 ms debounced end. Programmatic steps
  * (`panBy`, `zoomAround`, `animateTo`, `autoPan`) go through the same clamp and handler.
  *
  * Wheels latch like the browser's own wheel scrolling: the first wheel of a stream decides
@@ -124,7 +124,7 @@ export interface PanZoomAnimationOptions {
   readonly easing?: (t: number) => number;
 }
 
-/** Debounce after the last wheel event before the wheel gesture ends (xyflow parity). */
+/** Debounce after the last wheel event before the wheel gesture ends. */
 export const WHEEL_SETTLE_DELAY = 150;
 /**
  * Pause after which the next wheel starts a new stream with a new owner (Chrome's mouse-wheel
@@ -139,10 +139,10 @@ export const AUTO_PAN_EDGE = 40;
 export const AUTO_PAN_SPEED = 15;
 /** Zoom factor of a double click. */
 export const DOUBLE_CLICK_ZOOM_FACTOR = 1.2;
-/** Default `animateTo` duration (d3-zoom transition parity). */
+/** Default `animateTo` duration. */
 export const DEFAULT_ANIMATION_DURATION = 250;
 
-/** d3-ease `cubicInOut`, the d3-zoom transition default. */
+/** Cubic in-out easing, the default `animateTo` curve. */
 export function cubicInOut(t: number): number {
   return ((t *= 2) <= 1 ? t * t * t : (t -= 2) * t * t + 2) / 2;
 }
@@ -150,7 +150,7 @@ export function cubicInOut(t: number): number {
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /**
- * The zoom multiplier of a wheel event (xyflow `wheelDelta`): line and page deltas count more
+ * The zoom multiplier of a wheel event: line and page deltas count more
  * than pixel deltas, and a macOS trackpad pinch (a `ctrl` wheel) counts ten times more.
  */
 export function wheelZoomFactor(
@@ -164,7 +164,7 @@ export function wheelZoomFactor(
 
 /**
  * Clamps the zoom to the limits and shifts the translation so the visible area, `size` at the
- * element origin, stays inside the translate extent (d3-zoom `constrain`): an extent smaller
+ * element origin, stays inside the translate extent: an extent smaller
  * than the view is centered, otherwise the view is pushed back inside.
  */
 export function clampViewport(
@@ -199,7 +199,7 @@ export function zoomToPoint(
   return { x: screenPoint.x - flowX * next, y: screenPoint.y - flowY * next, zoom: next };
 }
 
-/** Auto-pan velocity along one axis (xyflow `calcAutoPanVelocity`): ramps from 1/40 to full speed. */
+/** Auto-pan velocity along one axis: ramps from 1/40 to full speed. */
 function autoPanVelocity(value: number, size: number): number {
   const min = AUTO_PAN_EDGE;
   const max = size - AUTO_PAN_EDGE;
@@ -485,7 +485,7 @@ export class PanZoomController {
   #allowsPress(event: PointerEvent, policy: PanZoomPolicy): boolean {
     if (policy.activationHeld) return true;
     if (event.pointerType === 'touch') return policy.panOnTouch;
-    // d3-zoom leaves Ctrl-modified mouse presses alone (macOS context menu, Ctrl+wheel pinch).
+    // Ctrl-modified mouse presses are left alone (macOS context menu, Ctrl+wheel pinch).
     if (event.pointerType === 'mouse' && event.ctrlKey) return false;
     return policy.panButtons.includes(event.button);
   }
@@ -765,7 +765,7 @@ export class PanZoomController {
     event.preventDefault();
     this.cancelAnimation();
     const viewport = this.#options.viewport();
-    // Shift zooms out (d3-zoom dblclick parity).
+    // Shift zooms out.
     const factor = event.shiftKey ? 1 / DOUBLE_CLICK_ZOOM_FACTOR : DOUBLE_CLICK_ZOOM_FACTOR;
     const next = zoomToPoint(
       viewport,

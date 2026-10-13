@@ -46,4 +46,4 @@ Current versions of Chrome, Edge, Firefox and Safari.
 
 ## License
 
-MIT. Ported portions of Swiper, shadcn/ui, dnd-kit and xyflow keep their MIT notices in the package's `LICENSE.*` files.
+MIT. Third-party portions keep their MIT notices in the package's `LICENSE.*` files.

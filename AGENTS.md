@@ -11,18 +11,19 @@ Apply it to every existing and future component; examples do not restrict scope.
   substituting shell, JSON-RPC, curl, scripts or bridges.
 - Widgets (specialized controls such as color pickers, curve editors and audio
   graphs) follow the same skill under `src/widgets/<widget>/`, ship only through
-  `@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`, use tweakpane under
-  `../specification/external/tweakpane/` as parity evidence, and keep their records
+  `@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`, use the widget reference
+  implementation under `../specification/external/` as parity evidence, and keep their records
   under `plans/widgets/<widget>/`. Never add a widget to the main index or `/register`.
 - Investigate the supplied local references in `../specification/external/`.
-  Implement with LitElement and shared internal infrastructure, without React or
-  upstream runtime dependencies.
+  Implement with LitElement and shared internal infrastructure, without a UI framework
+  or external runtime dependencies. Code, comments, tests, samples and docs never name
+  the third-party libraries these references come from (license notice files excepted).
 - Use Google Chrome DevTools MCP exclusively for browser verification; the fixtures
   under `tests/fixtures/components/` and `tests/fixtures/widgets/` are driven through
   it, never through another driver.
 - Reuse existing component-family behavior, components and presentation recipes
   in implementations, demos, stories, documentation examples and fixtures. Trace
-  upstream imports/reexports and external styles before choosing local owners.
+  reference imports/reexports and external styles before choosing local owners.
   Do not create parallel implementations or local visual substitutes.
 - Pass the skill's source, capability and reuse gates before implementation, then
   its early integration checkpoint before exhaustive verification. Preserve the

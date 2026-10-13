@@ -51,7 +51,7 @@ function scopeConnected(scope: OutsideInertScope): boolean {
  * newer lease are exempt from them, so a later modal is never made inert by an earlier one.
  * Live regions anywhere in the document remain available.
  *
- * As with Base UI `markOthers`, only outside elements present when a lease is acquired or
+ * Only outside elements present when a lease is acquired or
  * refreshed become inert. Elements inserted later by another owner stay interactive, so a
  * password manager or extension overlay appended to the body while a modal is open remains
  * usable; the observer still keeps branches, live regions and restoration current.

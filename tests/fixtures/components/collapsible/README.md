@@ -10,8 +10,7 @@ Default, LeadingContent, TrailingContent and ExternalLineByLineMotion compositio
 
 1. Navigate to `http://localhost:5173/tests/fixtures/components/collapsible/` and wait for
    `html[data-ready]`.
-2. `await collapsibleContract.runAll()` runs the evaluate-only checks ported from the former
-   Playwright script: the closed contract (`aria-expanded`, `aria-controls`/`aria-labelledby`
+2. `await collapsibleContract.runAll()` runs the evaluate-only checks: the closed contract (`aria-expanded`, `aria-controls`/`aria-labelledby`
    association, hidden content), label alignment in LTR and RTL with Leading content, retained
    and `hidden="until-found"` content, the disabled trigger, and the external line-by-line
    driver on exit and enter.

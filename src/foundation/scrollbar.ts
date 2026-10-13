@@ -2,8 +2,7 @@ import { CleanupScope, Scheduler } from './services.js';
 import { OwnedStyles, leaseStyle } from './owned-styles.js';
 import type { Orientation } from './types.js';
 
-/** Shared Scroll Area geometry; Carousel compression adapted from Swiper 14.3.0
- * scrollbar.ts (e043db5462adc8cae0751ec148f5cd5cfb92f098), MIT. */
+/** Shared Scroll Area geometry, including the Carousel's compressed scrollbar. */
 export function scrollbarMetrics(
   extent: number,
   viewport: number,

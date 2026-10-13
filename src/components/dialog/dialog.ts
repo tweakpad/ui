@@ -129,7 +129,7 @@ export class TpDialog extends TpElement {
   label = '';
   description = '';
   forceRender = false;
-  /** Overlay treatment: a dark fill, or the same fill blurring what it covers (Nova backdrop-blur-xs). */
+  /** Overlay treatment: a dark fill, or the same fill blurring what it covers. */
   backdrop: 'dark' | 'blur' = 'dark';
   showCloseControl = true;
   portal = false;
@@ -1135,7 +1135,7 @@ export class TpDialog extends TpElement {
       return;
     if (event.key === 'Tab' && this.#content) trapTabKey(event, this.#content);
   };
-  // Modal and container modes never pull focus back from an outside element (Base UI parity):
+  // Modal and container modes never pull focus back from an outside element:
   // Tab trapping and outside inertness contain focus, so an overlay another owner adds, such as
   // an autofill menu, stays usable. Only non-modal mode reacts, by closing.
   #focusIn = (event: FocusEvent): void => {

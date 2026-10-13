@@ -1,4 +1,4 @@
-/** Source-derived dnd-kit abstract/modifiers and dom/modifiers; MIT, see LICENSE.dnd-kit. */
+/** Abstract and DOM modifiers. */
 import { CleanupScope, Scheduler } from '../services.js';
 import {
   Rectangle,

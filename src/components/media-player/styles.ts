@@ -43,8 +43,8 @@ export const mediaOverlayStyles = css`
 `;
 
 /**
- * User preferences for translucent overlay surfaces (Library mp-l-presentation; Video.js
- * `media-high-contrast` and `forced-colors` skin variants). Dictionary recipes cannot hold
+ * User preferences for translucent overlay surfaces (Library mp-l-presentation: high-contrast
+ * and forced-colors variants). Dictionary recipes cannot hold
  * `@media`, so the structure owns these overrides; `!important` lets the preference win over
  * recipe and per-instance paint, as an accessibility setting should.
  *
@@ -58,13 +58,12 @@ export const mediaOverlayStyles = css`
 const HIGH_CONTRAST = '(prefers-reduced-transparency: reduce), (prefers-contrast: more)';
 
 /**
- * The frosted overlay surface (Video.js default skin: a translucent surface with backdrop
- * blur) as private variables on the media container, so control groups and portaled popups
+ * The frosted overlay surface (a translucent surface with backdrop blur) as private variables on the media container, so control groups and portaled popups
  * (volume, menus) inherit one surface. Preferences make it opaque without blur.
  */
 export const mediaSurfaceVariables = css`
   :host([data-media-container]) {
-    /* Darker than the upstream 10% white surface so text keeps contrast over bright footage. */
+    /* Dark enough that text keeps contrast over bright footage. */
     --_tp-media-surface: color-mix(in oklab, var(--tp-background) 45%, transparent);
     --_tp-media-surface-filter: blur(var(--tp-space-5)) saturate(110%);
     --_tp-media-surface-edge:

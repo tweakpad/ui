@@ -1304,7 +1304,7 @@ export class FlowModel<
     return ids.sort((a, b) => (order.get(a) ?? 0) - (order.get(b) ?? 0));
   }
 
-  /** Node z values with selection and child elevation (xyflow semantics). */
+  /** Node z values with selection and child elevation. */
   nodeZ(id: string): number {
     if (this.#zCache?.doc !== this.#doc) this.#zCache = { doc: this.#doc, z: new Map() };
     const cache = this.#zCache.z;

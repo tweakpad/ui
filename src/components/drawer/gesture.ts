@@ -20,7 +20,7 @@ interface GestureOptions {
   release(output: DrawerGestureOutput): void;
 }
 const interactive =
-  'button,a[href],input,textarea,select,[contenteditable]:not([contenteditable=false]),[role=button],[role=slider],[data-swipe-ignore],[data-base-ui-swipe-ignore]';
+  'button,a[href],input,textarea,select,[contenteditable]:not([contenteditable=false]),[role=button],[role=slider],[data-swipe-ignore]';
 /** Drawer axis arbitration; content keeps native scrolling until the dismiss edge is reached. */
 export class DrawerGesture {
   #element: HTMLElement | null = null;
@@ -70,9 +70,7 @@ export class DrawerGesture {
       targets.some(
         (node) =>
           node.matches(
-            touch
-              ? 'input[type=range],[role=slider],[data-swipe-ignore],[data-base-ui-swipe-ignore]'
-              : interactive,
+            touch ? 'input[type=range],[role=slider],[data-swipe-ignore]' : interactive,
           ) && !node.hasAttribute('data-drawer-swipe-handle'),
       )
     )

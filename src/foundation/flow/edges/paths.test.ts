@@ -18,7 +18,7 @@ const source = { point: { x: 0, y: 20 }, side: 'right' as const };
 const target = { point: { x: 150, y: 100 }, side: 'left' as const };
 
 describe('edge paths', () => {
-  it('builds the xyflow bezier path and center', () => {
+  it('builds the bezier path and center', () => {
     const path = bezierPath(source, target, DEFAULT_EDGE_KIND_OPTIONS.bezier);
     expect(path.kind).toBe('bezier');
     expect(path.d).toBe('M0,20 C75,20 75,100 150,100');
@@ -52,7 +52,7 @@ describe('edge paths', () => {
     expect(path.bbox).toEqual({ x: 0, y: 20, width: 150, height: 80 });
   });
 
-  it('builds the xyflow smoothstep polyline with rounded bends', () => {
+  it('builds the smoothstep polyline with rounded bends', () => {
     const path = smoothStepPath(source, target, DEFAULT_EDGE_KIND_OPTIONS.smoothstep);
     expect(path.points).toEqual([
       { x: 0, y: 20 },

@@ -209,7 +209,7 @@ function once(target: EventTarget, type: string, signal: AbortSignal): Promise<b
 
 /**
  * The next rate in `rates` above (`direction > 0`) or below the current rate, clamped at the
- * ends of the list (`step-playback-rate`; Video.js wraps, Tweakpad clamps).
+ * ends of the list (`step-playback-rate`).
  */
 export function steppedPlaybackRate(
   rates: readonly number[],

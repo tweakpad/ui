@@ -1,6 +1,6 @@
 import type { PresentationRule } from '../../resolver.js';
 
-// shadcn base/style-nova cn-input and cn-textarea share their boundary paint.
+// Input and Text area share their boundary paint.
 // The library control-height token supplies the locally governed default extent.
 export const fieldBoundary = {
   'min-height': 'var(--tp-control-height-md)',
@@ -55,7 +55,7 @@ export const inputRules: readonly PresentationRule[] = [
 
 export const textAreaRules: readonly PresentationRule[] = [
   ...control,
-  // Nova cn-textarea: field-sizing-content min-h-16 py-2; the field grows with its text.
+  // The field grows with its text (`field-sizing: content`).
   {
     declarations: {
       'field-sizing': 'content',

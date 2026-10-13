@@ -20,7 +20,7 @@ const FAMILIES: ReadonlyArray<readonly [string, keyof EasingEditorStrings]> = [
 
 /**
  * The built-in preset table (Widgets 6.2 Properties): basic CSS easings, four springs and one
- * group per Penner family with the four directions. Labels come from the strings so a locale
+ * group per classic easing family with the four directions. Labels come from the strings so a locale
  * can rename them; ids are stable.
  */
 export function builtinPresetGroups(strings: EasingEditorStrings): readonly EasingPresetGroup[] {

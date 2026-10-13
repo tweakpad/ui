@@ -17,8 +17,8 @@ for (const part of Object.keys(button)) {
   for (const variant of ['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'])
     button[`${part}-variant-${variant}`] =
       part === 'button' ? variantPresentation(variant, true) : [];
-  // Nova cn-button-variant-outline: dark:bg-input/30 dark:border-input, the field fill, so an
-  // outline Button sits with Input, Select and date-picker triggers instead of the page color.
+  // In dark schemes the outline variant takes the field fill and border, so an outline Button sits
+  // with Input, Select and date-picker triggers instead of the page color.
   if (part === 'button')
     button['button-variant-outline'] = [
       ...button['button-variant-outline']!,

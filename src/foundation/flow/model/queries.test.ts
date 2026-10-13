@@ -73,7 +73,7 @@ describe('flow graph queries', () => {
     ).toEqual({ x: 0, y: -5, width: 10, height: 15 });
   });
 
-  it('computes node and edge z like xyflow', () => {
+  it('computes node and edge z with selection and child elevation', () => {
     expect(nodeZ({}, undefined)).toBe(0);
     expect(nodeZ({ zIndex: 3, selected: true }, undefined)).toBe(1003);
     expect(nodeZ({ zIndex: 2 }, 5)).toBe(6);

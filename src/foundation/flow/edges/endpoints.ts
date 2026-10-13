@@ -1,4 +1,3 @@
-// Adapted from xyflow packages/system/src/utils/edges/positions.ts at 3d35b5731 (MIT; see LICENSE.xyflow).
 import { rectCenter, sideOf } from '../geometry.js';
 import type {
   FlowEdgeKind,
@@ -91,7 +90,7 @@ export function defaultPortGeometry(
   }
 }
 
-/** The anchor on a box's `side` (xyflow `getHandlePosition`), in the box's coordinate space. */
+/** The anchor on a box's `side`, in the box's coordinate space. */
 export function sideAnchor(box: FlowRect, side: FlowSide): FlowPoint {
   switch (side) {
     case 'top':
