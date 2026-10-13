@@ -1,4 +1,4 @@
-import { FlowRunState, type FlowRunStateOptions } from './state.js';
+import { FlowRunState, reconcileRun, type FlowRunStateOptions } from './state.js';
 import type { FlowRun, FlowRunEvent, FlowRunGraph, FlowTicker, FlowTrace } from './types.js';
 
 export interface FlowRunPlayerOptions extends FlowRunStateOptions {
@@ -183,6 +183,16 @@ export class FlowRunPlayer {
     this.#state.reset();
     this.#index = 0;
     this.#snapshots = [{ index: 0, run: this.#state.snapshot() }];
+    this.#notify();
+  }
+
+  /** Follows an edited document; the position and the snapshots stay, matched to the graph. */
+  setGraph(graph: FlowRunGraph): void {
+    this.#state.setGraph(graph);
+    this.#snapshots = this.#snapshots.map((snapshot) => ({
+      index: snapshot.index,
+      run: reconcileRun(snapshot.run, graph),
+    }));
     this.#notify();
   }
 

@@ -16,19 +16,33 @@ function example(title: string, content: string, description: string) {
 
 export const flowExamples = [
   example(
-    'Material graph',
-    '<tp-flow label="Material" palette="menu" show-port-labels fit-view data-schema="material" data-document="material" data-output></tp-flow>',
-    'Panel nodes from the schema: a toned header, rows of label + Select, Slider, Color picker, Checkbox or NumberField control, labelled typed ports and Bézier edges (`rules.defaultEdgeKind`). A control inside a node proposes a `node-data` change on the document lane with `metadata.nodeId` and `property`; the Material node is resizable. `palette="menu"` puts the node library in a Dialog over the widget, opened by the floating "+": the schema\'s `categories` become columns, and a node is dragged onto the canvas (or clicked, then placed with a click on the canvas).',
+    'Stage lighting',
+    '<tp-flow label="Stage lighting" palette="menu" show-port-labels fit-view data-schema="lighting" data-document="lighting" data-output></tp-flow>',
+    'Panel nodes from the schema: a toned header, rows of label + Select, Slider, Color picker, Checkbox or NumberField control, labelled typed ports and Bézier edges (`rules.defaultEdgeKind`). A control inside a node proposes a `node-data` change on the document lane with `metadata.nodeId` and `property`; the Fixture group node is resizable. `palette="menu"` puts the node library in a Dialog over the widget, opened by the floating "+": the schema\'s `categories` become columns, and a node is dragged onto the canvas (or clicked, then placed with a click on the canvas).',
   ),
   example(
     'Vertical pipeline',
-    '<tp-flow label="Release pipeline" palette fit-view data-schema="pipeline" data-document="pipeline" data-output></tp-flow>',
+    '<tp-flow label="Order fulfillment" palette fit-view data-schema="pipeline" data-document="pipeline" data-output></tp-flow>',
     'Compact icon nodes with ports on their top and bottom sides, orthogonal edges routed around the nodes, arrow markers and branch labels as Badge pills. The build path is `animated`: its dashed stroke marches from source to target (a closed arrow keeps the direction when reduced motion pauses it). `palette` puts the node library in a sidebar at the inline start, opened by the floating "+", with a section per category of the schema; drag a chip onto the canvas, or click it and then the canvas. Every label carries a "+" Button that opens the library for an insertion on that edge, and releasing a connection on the empty pane does the same at the drop point.',
   ),
   example(
     'Pipeline with inspector',
-    `<tp-flow label="Release pipeline" inspector="auto" inspector-commit="explicit" default-inspector-open default-selection='{"nodes":["p3"],"edges":[]}' fit-view data-schema="pipeline" data-document="pipeline" data-output></tp-flow>`,
+    `<tp-flow label="Order fulfillment" inspector="auto" inspector-commit="explicit" default-inspector-open default-selection='{"nodes":["p3"],"edges":[]}' fit-view data-schema="pipeline" data-document="pipeline" data-output></tp-flow>`,
     'The inspector holds the settings the schema keeps off the node: compact nodes have no body rows, so their properties default to `placement: "inspector"`. Double press a step or the approval (or use Settings in the node toolbar or the context menu) to open it; it floats over the canvas at the inline end and slides in like a Sheet, follows a single selected node with settings and closes when the selection leaves them. Settings edits those properties through the library control each one names, Wiring lists the connections, Run shows the status. `inspector-commit="explicit"` keeps edits local until Save (one proposal per edited key) and Cancel reverts them.',
+  ),
+  example(
+    'Execution and debugging',
+    `<tp-flow label="Product photo import" runnable validate palette palette-trigger="none" fit-view data-schema="photo" data-document="photo" data-execute>
+  <tp-breadcrumb slot="header-start" label="Location"><a href="#">Workflows</a><span>Product photo import</span></tp-breadcrumb>
+  <tp-flow-controls slot="header-center" actions="run-summary" orientation="horizontal"></tp-flow-controls>
+  <tp-tooltip slot="header-end" side="bottom">
+    <tp-button slot="trigger" variant="ghost" size="icon" aria-label="Help"><tp-icon slot="icon-start" data-flow-icon="circle-help"></tp-icon></tp-button>
+    Run the whole graph with Run, or select a node and run it, everything from it or everything up to it from its toolbar, its context menu or the Run menu.
+  </tp-tooltip>
+  <tp-button slot="header-end" variant="outline" data-flow-palette><tp-icon slot="icon-start" data-flow-icon="plus"></tp-icon>Add step</tp-button>
+  <tp-flow-controls slot="header-end" actions="execute" orientation="horizontal"></tp-flow-controls>
+</tp-flow>`,
+    'Everything here is opt-in. `runnable` turns on run requests: Run in the `execute` control (Stop while a run is going, and a menu of scopes), Run node in the node toolbar, Run node, Run from here and Run up to here in the context menu, and Mod+Enter. The widget never executes anything: it dispatches `tp-run-request` with the action, the scope and the node ids in execution order, and the backend answers with run events through `pushRunEvent()`. This example\'s mock backend streams them with short delays: a node waits for an approval and reports a warning, another fails. Nodes show their progress, waiting reason, warnings and errors; `run-summary` counts the nodes per status. `validate` shows design problems before any run: "Purge CDN cache" has an unconnected required input. The header slots (`header-start`, `header-center`, `header-end`) hold the breadcrumb, the summary and the actions, and the header only appears when one of them has content.',
   ),
   example(
     'Animated edges',
@@ -37,7 +51,7 @@ export const flowExamples = [
   ),
   example(
     'Toolbars and panels',
-    `<tp-flow label="Lead pipeline" fit-view controls="zoom-out zoom zoom-in fit" controls-position="bottom-center" controls-orientation="horizontal" data-schema="workflow" data-document="workflow" data-history-readout>
+    `<tp-flow label="Support triage" fit-view controls="zoom-out zoom zoom-in fit" controls-position="bottom-center" controls-orientation="horizontal" data-schema="workflow" data-document="workflow" data-history-readout>
   <tp-flow-controls slot="top-end" actions="undo redo" orientation="horizontal">
     <tp-button variant="outline" size="sm">Publish</tp-button>
   </tp-flow-controls>
@@ -56,8 +70,8 @@ export const flowExamples = [
   <tp-toggle value="vertical">Vertical</tp-toggle>
   <tp-toggle value="smart">Smart</tp-toggle>
 </tp-toggle-group>
-<tp-flow id="flow-auto-layout" label="Lead pipeline" auto-layout="horizontal" controls="zoom-in zoom-out fit tool lock layout undo redo" fit-view data-schema="workflow" data-document="workflow" data-pin="notify" data-layout-readout></tp-flow>`,
-    'In an automatic layout mode a dropped node is pinned and the rest of the graph flows around it as one `layout` transaction, animated under the layout motion role (one step under reduced motion). "Notify sales" starts pinned. The Toggle group sets `autoLayout` and calls `layout()`; the layout control and Undo/Redo are opted in through `controls`; `tp-layout-complete` reports the direction and the statistics.',
+<tp-flow id="flow-auto-layout" label="Support triage" auto-layout="horizontal" controls="zoom-in zoom-out fit tool lock layout undo redo" fit-view data-schema="workflow" data-document="workflow" data-pin="reply" data-layout-readout></tp-flow>`,
+    'In an automatic layout mode a dropped node is pinned and the rest of the graph flows around it as one `layout` transaction, animated under the layout motion role (one step under reduced motion). "Send auto-reply" starts pinned. The Toggle group sets `autoLayout` and calls `layout()`; the layout control and Undo/Redo are opted in through `controls`; `tp-layout-complete` reports the direction and the statistics.',
   ),
   example(
     'Read-only dependency viewer',
@@ -66,20 +80,20 @@ export const flowExamples = [
   ),
   example(
     'Controlled owner',
-    '<tp-flow label="Lead pipeline" fit-view confirm-delete data-schema="workflow" data-document="workflow" data-controlled data-validate data-output></tp-flow>',
-    'A controlled owner holds the document and writes every accepted proposal back to `value`; the widget keeps the proposed geometry while the owner is late and drops it when the owner refuses. `isValidConnection` refuses a connection into "Notify sales" from anything but the condition. `confirm-delete` asks before nodes are deleted from the keyboard, the node toolbar or the context menu: an Alert dialog over the blurred widget names the node (or the count), and Delete removes the nodes with their edges in one change.',
+    '<tp-flow label="Support triage" fit-view confirm-delete data-schema="workflow" data-document="workflow" data-controlled data-validate data-output></tp-flow>',
+    'A controlled owner holds the document and writes every accepted proposal back to `value`; the widget keeps the proposed geometry while the owner is late and drops it when the owner refuses. `isValidConnection` refuses a connection into "Send auto-reply" from anything but the condition. `confirm-delete` asks before nodes are deleted from the keyboard, the node toolbar or the context menu: an Alert dialog over the blurred widget names the node (or the count), and Delete removes the nodes with their edges in one change.',
   ),
   example(
     'Declarative nodes',
-    `<tp-flow label="Notifications" fit-view data-schema="workflow" data-output>
-  <tp-flow-node id="hook" type="trigger" x="40" y="80" label="Webhook"></tp-flow-node>
-  <tp-flow-node id="send" type="action" x="400" y="80" label="Send email">
-    <tp-field orientation="horizontal" label="Urgent">
-      <tp-switch data-flow-property="urgent"></tp-switch>
+    `<tp-flow label="Front door" fit-view data-schema="workflow" data-output>
+  <tp-flow-node id="bell" type="trigger" x="40" y="80" label="Doorbell pressed"></tp-flow-node>
+  <tp-flow-node id="light" type="action" x="400" y="80" label="Turn on porch light">
+    <tp-field orientation="horizontal" label="Only after dark">
+      <tp-switch data-flow-property="afterDark"></tp-switch>
     </tp-field>
   </tp-flow-node>
-  <tp-flow-edge id="hook-send" source="hook" source-port="out" target="send" target-port="in" label="then" marker-end="arrowclosed"></tp-flow-edge>
-  <tp-button slot="top-end" variant="outline" size="sm">Publish</tp-button>
+  <tp-flow-edge id="bell-light" source="bell" source-port="out" target="light" target-port="in" label="then" marker-end="arrowclosed"></tp-flow-edge>
+  <tp-button slot="top-end" variant="outline" size="sm">Save</tp-button>
 </tp-flow>`,
     'Light-DOM `tp-flow-node` and `tp-flow-edge` children are adopted into the document by id and the authored node elements stay the rendered hosts. Authored content renders inside the card; a library control marked `data-flow-property` edits that key of the node data through the document lane. Dragging writes back only the owned `x`, `y`, `width` and `height` attributes. Panel slots (the four corners and the four edge middles) hold consumer panels.',
   ),

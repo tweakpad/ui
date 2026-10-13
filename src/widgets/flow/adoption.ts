@@ -9,7 +9,7 @@ import type {
 } from '../../foundation/flow/types.js';
 import type { TpFlowNode } from './node/node.js';
 import type { TpFlowEdge } from './edge/flow-edge.js';
-import { FLOW_PANEL_POSITIONS, type FlowPanelPosition } from './types.js';
+import { FLOW_SLOT_REGIONS, type FlowSlotRegion } from './types.js';
 
 /** A shallow copy without the given keys (the record patch of an adopted element). */
 function omit<T extends object, K extends keyof T>(value: T, keys: readonly K[]): Omit<T, K> {
@@ -68,7 +68,7 @@ export class LightDomAdoption {
   readonly #options: AdoptionOptions;
   readonly #nodes = new Map<string, TpFlowNode>();
   readonly #edges = new Map<string, TpFlowEdge>();
-  readonly #panels = new Map<FlowPanelPosition, Element[]>();
+  readonly #panels = new Map<FlowSlotRegion, Element[]>();
   #observer: MutationObserver | undefined;
   #writing = false;
   #anonymous = 0;
@@ -85,9 +85,9 @@ export class LightDomAdoption {
     return this.#edges;
   }
 
-  /** Light-DOM children slotted into the panel at `position`, in document order. */
-  panel(position: FlowPanelPosition): readonly Element[] {
-    return this.#panels.get(position) ?? [];
+  /** Light-DOM children slotted into a panel or the header, in document order. */
+  panel(region: FlowSlotRegion): readonly Element[] {
+    return this.#panels.get(region) ?? [];
   }
 
   connect(): void {
@@ -151,7 +151,7 @@ export class LightDomAdoption {
     const model = this.#options.model();
     const nodes = new Map<string, TpFlowNode>();
     const edges = new Map<string, TpFlowEdge>();
-    const panels = new Map<FlowPanelPosition, Element[]>();
+    const panels = new Map<FlowSlotRegion, Element[]>();
     const changes: FlowChange[] = [];
     for (const child of host.children) {
       if (child.localName === 'tp-flow-node') {
@@ -179,8 +179,8 @@ export class LightDomAdoption {
         if (!model.getEdge(element.id))
           changes.push({ type: 'edge-add', edge: this.#readEdge(element) });
       } else {
-        const slot = child.getAttribute('slot') as FlowPanelPosition | null;
-        if (slot && (FLOW_PANEL_POSITIONS as readonly string[]).includes(slot)) {
+        const slot = child.getAttribute('slot') as FlowSlotRegion | null;
+        if (slot && (FLOW_SLOT_REGIONS as readonly string[]).includes(slot)) {
           const list = panels.get(slot) ?? [];
           list.push(child);
           panels.set(slot, list);

@@ -1,3 +1,4 @@
+import { adjacencyOrder, reachable, type FlowAdjacency } from '../model/queries.js';
 import type { FlowDocument, FlowModelLike } from '../types.js';
 import type {
   FlowEdgeRunState,
@@ -7,6 +8,8 @@ import type {
   FlowRunEvent,
   FlowRunGraph,
   FlowRunGraphEdge,
+  FlowRunScope,
+  FlowRunSummary,
 } from './types.js';
 
 /** Builds the run graph (node ids plus edges and adjacency) from a document or a model. */
@@ -31,6 +34,62 @@ export function flowRunGraph(source: FlowDocument | FlowModelLike): FlowRunGraph
     incoming.get(edge.target)?.push(edge.id);
   }
   return { nodes, edges, outgoing, incoming };
+}
+
+/** Node-to-node adjacency of a run graph, in its node order. */
+function runAdjacency(graph: FlowRunGraph): FlowAdjacency {
+  const outgoing = new Map<string, string[]>();
+  const incoming = new Map<string, string[]>();
+  for (const id of graph.nodes) {
+    outgoing.set(id, []);
+    incoming.set(id, []);
+  }
+  for (const edge of graph.edges) {
+    const out = outgoing.get(edge.source);
+    const inc = incoming.get(edge.target);
+    if (!out || !inc) continue;
+    out.push(edge.target);
+    inc.push(edge.source);
+  }
+  return { order: graph.nodes, outgoing, incoming };
+}
+
+/**
+ * The nodes a run request covers, in execution (topological) order: every node (`graph`), the node
+ * alone (`node`), the node and everything downstream of it (`from`), or everything upstream of it
+ * and the node (`to`). Nodes on cycles follow in graph order; an unknown node yields nothing.
+ */
+export function flowRunScope(graph: FlowRunGraph, scope: FlowRunScope, nodeId?: string): string[] {
+  const adjacency = runAdjacency(graph);
+  const order = adjacencyOrder(adjacency);
+  if (scope === 'graph') return order;
+  if (nodeId === undefined || !adjacency.outgoing.has(nodeId)) return [];
+  if (scope === 'node') return [nodeId];
+  const covered = reachable(adjacency, nodeId, scope === 'from' ? 'downstream' : 'upstream');
+  covered.add(nodeId);
+  return order.filter((id) => covered.has(id));
+}
+
+/** Node counts per status, plus the nodes carrying warnings, for a summary of a run. */
+export function flowRunSummary(run: FlowRun | null | undefined): FlowRunSummary {
+  const summary: FlowRunSummary = {
+    idle: 0,
+    pending: 0,
+    running: 0,
+    waiting: 0,
+    success: 0,
+    failed: 0,
+    skipped: 0,
+    cancelled: 0,
+    warnings: 0,
+    total: 0,
+  };
+  for (const node of run?.nodes.values() ?? []) {
+    summary[node.status] += 1;
+    summary.total += 1;
+    if (node.warnings?.length) summary.warnings += 1;
+  }
+  return summary;
 }
 
 const FINISHED = new Set(['success', 'failed']);
@@ -79,7 +138,7 @@ const inactiveEdge = (): FlowEdgeRunState => ({ status: 'inactive', explicit: fa
  * Snapshots are deep copies the player restores from.
  */
 export class FlowRunState {
-  readonly #graph: FlowRunGraph;
+  #graph: FlowRunGraph;
   readonly #strict: boolean;
   readonly #unreached: 'skipped' | 'idle';
   readonly #initialRunId: string;
@@ -113,6 +172,16 @@ export class FlowRunState {
     this.#run = this.#fresh(this.#initialRunId);
     this.#pending = [];
     this.#seen.clear();
+  }
+
+  /**
+   * Follows an edited document: added nodes and edges join idle, removed ones leave the record,
+   * and every edge status is derived again.
+   */
+  setGraph(graph: FlowRunGraph): void {
+    this.#graph = graph;
+    this.#run = reconcileRun(this.#run, graph);
+    this.#refreshEdges(graph.edges.map((edge) => edge.id));
   }
 
   /** Applies one event; returns whether the state changed now (duplicates/buffered: false). */
@@ -202,6 +271,19 @@ export class FlowRunState {
         this.#run.applied = run.applied;
         this.#run.status = 'running';
         this.#run.startedAt = event.at;
+        if (event.scope) {
+          // A partial run: nodes outside the scope keep their earlier results.
+          const scope = new Set(event.scope);
+          this.#run.scope = [...event.scope];
+          for (const [nodeId, state] of run.nodes)
+            if (!scope.has(nodeId) && this.#run.nodes.has(nodeId))
+              this.#run.nodes.set(nodeId, state);
+          for (const edge of this.#graph.edges) {
+            const kept = run.edges.get(edge.id);
+            if (kept && !scope.has(edge.source) && !scope.has(edge.target))
+              this.#run.edges.set(edge.id, kept);
+          }
+        }
         all = true;
         break;
       }
@@ -215,6 +297,7 @@ export class FlowRunState {
         node.progress = undefined;
         node.message = undefined;
         node.error = undefined;
+        node.warnings = undefined;
         node.ports = undefined;
         node.waiting = undefined;
         if (run.status === 'idle') run.status = 'running';
@@ -225,6 +308,12 @@ export class FlowRunState {
         const node = this.#node(event.nodeId);
         node.status = 'waiting';
         node.waiting = { reason: event.reason, options: event.options };
+        touched.add(event.nodeId);
+        break;
+      }
+      case 'node_warning': {
+        const node = this.#node(event.nodeId);
+        node.warnings = [...(node.warnings ?? []), event.message];
         touched.add(event.nodeId);
         break;
       }
@@ -250,11 +339,14 @@ export class FlowRunState {
           if (!node.ports.includes(event.port)) node.ports.push(event.port);
         }
         touched.add(event.nodeId);
+        // Targets reached through the finished ports wait their turn, within a scoped run's scope.
+        const scope = this.#run.scope;
         for (const edgeId of this.#graph.outgoing.get(event.nodeId) ?? []) {
           const edge = this.#edgeOf(edgeId);
           if (!edge || !finishedThrough(edge, node)) continue;
           const target = this.#node(edge.target);
-          if (target.status === 'idle') target.status = 'pending';
+          if (target.status === 'idle' && (!scope || scope.includes(edge.target)))
+            target.status = 'pending';
           touched.add(edge.target);
         }
         break;
@@ -291,7 +383,7 @@ export class FlowRunState {
       case 'run_completed':
         run.status = 'completed';
         run.endedAt = event.at;
-        for (const node of run.nodes.values())
+        for (const node of this.#scoped())
           if (node.status === 'idle' || node.status === 'pending') node.status = this.#unreached;
         all = true;
         break;
@@ -299,7 +391,8 @@ export class FlowRunState {
       case 'run_cancelled':
         run.status = event.type === 'run_failed' ? 'failed' : 'cancelled';
         run.endedAt = event.at;
-        for (const node of run.nodes.values())
+        if (event.type === 'run_failed') run.error = event.error;
+        for (const node of this.#scoped())
           if (BUSY.has(node.status) || node.status === 'pending') node.status = 'cancelled';
         all = true;
         break;
@@ -314,6 +407,16 @@ export class FlowRunState {
       }
       this.#refreshEdges([...ids]);
     }
+  }
+
+  /** The node records the run covers: its scope, or every node of a whole-graph run. */
+  #scoped(): FlowNodeRunState[] {
+    const { nodes, scope } = this.#run;
+    if (!scope) return [...nodes.values()];
+    return scope.flatMap((id) => {
+      const node = nodes.get(id);
+      return node ? [node] : [];
+    });
   }
 
   #edgeOf(id: string): FlowRunGraphEdge | undefined {
@@ -342,9 +445,19 @@ export function cloneRun(run: FlowRun): FlowRun {
     nodes.set(id, {
       ...node,
       ports: node.ports ? [...node.ports] : undefined,
+      warnings: node.warnings ? [...node.warnings] : undefined,
       waiting: node.waiting ? { ...node.waiting } : undefined,
     });
   const edges = new Map<string, FlowEdgeRunState>();
   for (const [id, edge] of run.edges) edges.set(id, { ...edge });
+  return { ...run, ...(run.scope ? { scope: [...run.scope] } : {}), nodes, edges };
+}
+
+/** A run record matched to a graph: new nodes and edges idle, removed ones dropped. */
+export function reconcileRun(run: FlowRun, graph: FlowRunGraph): FlowRun {
+  const nodes = new Map<string, FlowNodeRunState>();
+  for (const id of graph.nodes) nodes.set(id, run.nodes.get(id) ?? idleNode());
+  const edges = new Map<string, FlowEdgeRunState>();
+  for (const edge of graph.edges) edges.set(edge.id, run.edges.get(edge.id) ?? inactiveEdge());
   return { ...run, nodes, edges };
 }

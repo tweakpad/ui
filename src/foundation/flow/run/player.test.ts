@@ -250,4 +250,27 @@ describe('FlowRunPlayer', () => {
     player.pause();
     player.dispose();
   });
+
+  it('follows an edited graph and keeps its position and snapshots', () => {
+    const player = new FlowRunPlayer(graph, { trace: trace(), snapshotInterval: 2 });
+    player.seek(6);
+    const edited = flowRunGraph({
+      ...document,
+      nodes: [...document.nodes, { id: 'n6', type: 't', position: { x: 0, y: 0 }, data: {} }],
+      edges: [...document.edges, { id: 'e5', source: 'n5', target: 'n6' }],
+    });
+    let notified = 0;
+    player.subscribe(() => (notified += 1));
+    player.setGraph(edited);
+    expect(notified).toBe(1);
+    expect(player.index).toBe(6);
+    expect(player.state.nodes.get('n6')!.status).toBe('idle');
+    expect(player.state.nodes.get('n1')!.status).toBe('success');
+    expect(player.state.nodes.get('n2')!.status).toBe('running');
+    // A seek back restores a snapshot matched to the new graph.
+    player.seek(1);
+    expect(player.state.nodes.get('n6')!.status).toBe('idle');
+    player.toEnd();
+    expect(player.state.nodes.get('n6')!.status).toBe('skipped');
+  });
 });

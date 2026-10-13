@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { FlowDocument } from '../types.js';
-import { FlowRunState, deriveEdgeStatus, flowRunGraph } from './state.js';
+import {
+  FlowRunState,
+  deriveEdgeStatus,
+  flowRunGraph,
+  flowRunScope,
+  flowRunSummary,
+} from './state.js';
 import type { FlowRunEvent, FlowRunGraph } from './types.js';
 
 const document: FlowDocument = {
@@ -245,5 +251,129 @@ describe('FlowRunState', () => {
     expect(state.run.nodes.get('ghost')!.status).toBe('running');
     expect(state.apply(at('edge_taken', { edgeId: 'ghost-edge' }, 2))).toBe(true);
     expect(state.run.edges.get('ghost-edge')!.status).toBe('taken');
+  });
+});
+
+describe('warnings, scoped runs and the run error', () => {
+  it('accumulates warnings until the node starts again', () => {
+    const state = new FlowRunState(graph());
+    state.apply(at('run_started'));
+    state.apply(at('node_started', { nodeId: 'start' }, 1));
+    state.apply(at('node_warning', { nodeId: 'start', message: 'Slow response' }, 2));
+    state.apply(at('node_warning', { nodeId: 'start', message: 'Retried once' }, 3));
+    state.apply(at('node_completed', { nodeId: 'start' }, 4));
+    expect(state.run.nodes.get('start')!.warnings).toEqual(['Slow response', 'Retried once']);
+    expect(state.run.nodes.get('start')!.status).toBe('success');
+    state.apply(at('node_started', { nodeId: 'start' }, 5));
+    expect(state.run.nodes.get('start')!.warnings).toBeUndefined();
+  });
+
+  it('keeps results outside a scoped run and applies the end rules inside it only', () => {
+    const state = new FlowRunState(graph());
+    state.apply(at('run_started'));
+    state.apply(at('node_started', { nodeId: 'start' }, 1));
+    state.apply(at('node_completed', { nodeId: 'start' }, 2));
+    state.apply(at('node_started', { nodeId: 'check' }, 3));
+    state.apply(at('node_failed', { nodeId: 'check', error: 'Bad input' }, 4));
+    state.apply(at('run_failed', { error: 'Bad input' }, 5));
+    expect(state.run.error).toBe('Bad input');
+    // Run the failed node again on its own.
+    state.apply(at('run_started', { scope: ['check'] }, 10));
+    expect(state.run.scope).toEqual(['check']);
+    expect(state.run.error).toBeUndefined();
+    expect(state.run.nodes.get('start')!.status).toBe('success');
+    expect(state.run.nodes.get('check')!.status).toBe('idle');
+    expect(state.run.edges.get('s-c')!.status).toBe('taken');
+    state.apply(at('node_started', { nodeId: 'check' }, 11));
+    state.apply(at('node_completed', { nodeId: 'check', port: 'yes' }, 12));
+    state.apply(at('run_completed', {}, 13));
+    // Nodes outside the scope stay as they were (idle): never pending, never skipped.
+    expect(state.run.nodes.get('yes')!.status).toBe('idle');
+    expect(state.run.edges.get('c-yes')!.status).toBe('taken');
+    expect(state.run.nodes.get('no')!.status).toBe('idle');
+    expect(state.run.nodes.get('end')!.status).toBe('idle');
+    expect(state.run.nodes.get('check')!.status).toBe('success');
+  });
+
+  it('cancels only busy nodes inside the scope', () => {
+    const state = new FlowRunState(graph());
+    state.apply(at('run_started'));
+    state.apply(at('node_started', { nodeId: 'end' }, 1));
+    state.apply(at('run_started', { scope: ['start', 'check'] }, 2));
+    state.apply(at('node_started', { nodeId: 'start' }, 3));
+    state.apply(at('run_cancelled', {}, 4));
+    expect(state.run.nodes.get('start')!.status).toBe('cancelled');
+    expect(state.run.nodes.get('end')!.status).toBe('running');
+  });
+
+  it('follows an edited graph: new nodes join idle, removed ones leave', () => {
+    const state = new FlowRunState(graph());
+    state.apply(at('run_started'));
+    state.apply(at('node_started', { nodeId: 'start' }, 1));
+    state.apply(at('node_completed', { nodeId: 'start' }, 2));
+    const edited = flowRunGraph({
+      ...document,
+      nodes: [
+        ...document.nodes.filter((node) => node.id !== 'no'),
+        { id: 'extra', type: 't', position: { x: 0, y: 0 }, data: {} },
+      ],
+      edges: [
+        ...document.edges.filter((edge) => edge.source !== 'no' && edge.target !== 'no'),
+        { id: 'start-extra', source: 'start', target: 'extra' },
+      ],
+    });
+    state.setGraph(edited);
+    expect(state.run.nodes.has('no')).toBe(false);
+    expect(state.run.nodes.get('extra')!.status).toBe('idle');
+    expect(state.run.nodes.get('start')!.status).toBe('success');
+    expect(state.run.edges.get('start-extra')!.status).toBe('taken');
+    expect(state.run.edges.has('c-no')).toBe(false);
+  });
+});
+
+describe('flowRunSummary', () => {
+  it('counts nodes per status and the nodes with warnings', () => {
+    const state = new FlowRunState(graph());
+    state.apply(at('run_started'));
+    state.apply(at('node_started', { nodeId: 'start' }, 1));
+    state.apply(at('node_warning', { nodeId: 'start', message: 'Slow' }, 2));
+    state.apply(at('node_completed', { nodeId: 'start' }, 3));
+    state.apply(at('node_started', { nodeId: 'check' }, 4));
+    state.apply(at('node_failed', { nodeId: 'check', error: 'Boom' }, 5));
+    const summary = flowRunSummary(state.run);
+    expect(summary).toMatchObject({ total: 5, success: 1, failed: 1, idle: 3, warnings: 1 });
+    expect(flowRunSummary(null).total).toBe(0);
+  });
+});
+
+describe('flowRunScope', () => {
+  it('orders every scope topologically', () => {
+    const run = graph();
+    expect(flowRunScope(run, 'graph')).toEqual(['start', 'check', 'yes', 'no', 'end']);
+    expect(flowRunScope(run, 'node', 'yes')).toEqual(['yes']);
+    expect(flowRunScope(run, 'from', 'check')).toEqual(['check', 'yes', 'no', 'end']);
+    expect(flowRunScope(run, 'to', 'yes')).toEqual(['start', 'check', 'yes']);
+    expect(flowRunScope(run, 'from', 'missing')).toEqual([]);
+    expect(flowRunScope(run, 'node')).toEqual([]);
+  });
+
+  it('keeps disconnected nodes out of node scopes and appends cycles in graph order', () => {
+    const cyclic = flowRunGraph({
+      version: 1,
+      nodes: ['a', 'b', 'c', 'lone'].map((id) => ({
+        id,
+        type: 't',
+        position: { x: 0, y: 0 },
+        data: {},
+      })),
+      edges: [
+        { id: 'a-b', source: 'a', target: 'b' },
+        { id: 'b-c', source: 'b', target: 'c' },
+        { id: 'c-b', source: 'c', target: 'b' },
+      ],
+    });
+    expect(flowRunScope(cyclic, 'graph')).toEqual(['a', 'lone', 'b', 'c']);
+    expect(flowRunScope(cyclic, 'from', 'b')).toEqual(['b', 'c']);
+    expect(flowRunScope(cyclic, 'to', 'c')).toEqual(['a', 'b', 'c']);
   });
 });

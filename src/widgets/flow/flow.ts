@@ -102,6 +102,7 @@ import {
 } from '../../icons/align.js';
 import { scanIcon } from '../../icons/map.js';
 import { workflowIcon } from '../../icons/workflow.js';
+import { playIcon } from '../../icons/media.js';
 import {
   COPY_KEYS,
   CUT_KEYS,
@@ -109,6 +110,7 @@ import {
   DUPLICATE_KEYS,
   PASTE_KEYS,
   renderShortcut,
+  RUN_KEYS,
   SELECT_ALL_KEYS,
   ZOOM_FIT_KEYS,
   ZOOM_IN_KEYS,
@@ -118,12 +120,14 @@ import {
 import {
   TpFlowControls,
   CONTROL_ACTION,
+  EXECUTE_REQUEST,
   TOOL_REQUEST,
   RUN_ACTION,
   ZOOM_REQUEST,
   DEFAULT_ZOOM_PRESETS,
   controlActionsConverter,
   type FlowControlActionDetail,
+  type FlowExecuteRequestDetail,
   type FlowToolRequestDetail,
   type FlowRunActionDetail,
   type FlowZoomRequestDetail,
@@ -194,6 +198,7 @@ import type {
   FlowConnection,
   FlowDocument,
   FlowEdge,
+  FlowIssue,
   FlowNode,
   FlowPoint,
   FlowPortGeometry,
@@ -206,11 +211,15 @@ import type {
 import type {
   FlowEdgeRunState,
   FlowNodeRunState,
+  FlowNodeRunStatus,
   FlowRun,
+  FlowRunEvent,
+  FlowRunScope,
+  FlowRunSummary,
   FlowTrace,
 } from '../../foundation/flow/run/types.js';
 import { FlowRunPlayer } from '../../foundation/flow/run/player.js';
-import { flowRunGraph } from '../../foundation/flow/run/state.js';
+import { flowRunGraph, flowRunScope, flowRunSummary } from '../../foundation/flow/run/state.js';
 import type { IconDefinition } from '../../icons/types.js';
 import { flowPresentation } from '../../presentation/families/flow.js';
 import { setPartComposition } from '../../presentation/controller.js';
@@ -235,7 +244,9 @@ import { defaultPropertyControls } from './node/property-controls.js';
 import { flowStyles } from './styles.js';
 import { DEFAULT_STRINGS, format, resolveStrings } from './strings.js';
 import {
+  FLOW_HEADER_SLOTS,
   FLOW_PANEL_POSITIONS,
+  FLOW_SLOT_REGIONS,
   type FlowControlAction,
   type FlowAutoLayout,
   type FlowBackground,
@@ -243,8 +254,11 @@ import {
   type FlowContextMenuTemplate,
   type FlowContextSubject,
   type FlowPanelPosition,
+  type FlowRunControlState,
+  type FlowRunRequestDetail,
   type FlowRunTransportState,
   type FlowEdgeTemplate,
+  type FlowIssuesChangeDetail,
   type FlowInspectorPolicy,
   type FlowPaletteLayout,
   type FlowLod,
@@ -259,6 +273,28 @@ import {
 } from './types.js';
 
 const EMPTY_DOCUMENT: FlowDocument = { version: 1, nodes: [], edges: [] };
+const NO_ISSUES: readonly FlowIssue[] = [];
+/** Changes that add or remove nodes and edges, or move an edge's endpoints. */
+const STRUCTURAL_CHANGES: ReadonlySet<string> = new Set([
+  'node-add',
+  'node-remove',
+  'node-replace',
+  'edge-add',
+  'edge-remove',
+  'edge-replace',
+  'edge-update',
+]);
+/** Changes that cannot change a validation result. */
+const GEOMETRY_CHANGES: ReadonlySet<string> = new Set([
+  'node-position',
+  'node-size',
+  'node-select',
+  'node-measure',
+  'edge-select',
+  'edge-waypoints',
+  'viewport',
+  'layout-settings',
+]);
 const EMPTY_SELECTION: FlowSelection = { nodes: [], edges: [] };
 const IDENTITY: FlowViewport = { x: 0, y: 0, zoom: 1 };
 const MATERIALIZE_PER_FRAME = 12;
@@ -500,6 +536,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     defaultPaletteOpen: { type: Boolean, attribute: 'default-palette-open' },
     paletteTrigger: { type: String, attribute: 'palette-trigger' },
     confirmDelete: { type: Boolean, attribute: 'confirm-delete' },
+    runnable: { type: Boolean },
+    validate: { type: Boolean },
+    issues: { attribute: false },
     locked: { type: Boolean, reflect: true },
     onValueChange: { attribute: false },
     onValueCommitted: { attribute: false },
@@ -585,6 +624,15 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   paletteTrigger: FlowPanelPosition | 'none' = 'top-start';
   /** User deletions that remove nodes ask first, in a dialog over the blurred widget. */
   confirmDelete = false;
+  /**
+   * Run requests (opt-in): the node toolbar's Run, the context menu's run items, Mod+Enter and
+   * the `execute` control dispatch `tp-run-request`. The widget never executes anything.
+   */
+  runnable = false;
+  /** Shows the document's validation issues (opt-in): it validates after load and each change. */
+  validate = false;
+  /** Further problems to show (a backend's lint), merged with the validation issues. */
+  issues: readonly FlowIssue[] = [];
   /** The lock control: editing refused while locked (pan, zoom and selection stay). */
   locked = false;
   onValueChange: ((event: TpValueChangeEvent<FlowDocument>) => void) | undefined;
@@ -671,6 +719,15 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #player: FlowRunPlayer | undefined;
   #unsubscribePlayer: (() => void) | undefined;
   #runState: FlowRun | undefined;
+  /** Node statuses already announced: each change is announced once, a new run silently. */
+  readonly #announced = new Map<string, FlowNodeRunStatus>();
+  #runControl: { key: string; state: FlowRunControlState } | undefined;
+  #problems: readonly FlowIssue[] = [];
+  #problemsKey = '[]';
+  readonly #nodeIssues = new Map<string, FlowIssue[]>();
+  readonly #edgeIssues = new Map<string, FlowIssue['severity']>();
+  #validationQueued = false;
+  #headerShown = false;
   #pendingInsert: { at: FlowPoint; source?: ConnectionStartInfo } | undefined;
   #resize:
     | {
@@ -837,6 +894,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       hovered: () => this.#hoveredEdge,
       focused: () => this.#focusVisibleEdge,
       runEdge: (id) => this.#runEdge(id),
+      issueEdge: (id) => this.#edgeIssues.get(id),
       interactive: () => !this.effectiveDisabled,
       addable: () => this.palette !== 'none' && this.editable,
       nodeLabel: (id) => this.#nodeLabel(id),
@@ -858,6 +916,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         this.assignPanels();
         // Authored control bars take the current state as soon as they are slotted.
         this.#syncAuthoredControlBars();
+        // The header shows only while one of its slots has content.
+        if (this.#hasHeader() !== this.#headerShown) this.requestUpdate();
         this.#schedule();
       },
     });
@@ -879,6 +939,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     target.addEventListener(CONTROL_ACTION, this.#controlAction as EventListener);
     target.addEventListener(TOOL_REQUEST, this.#toolRequest as EventListener);
     target.addEventListener(RUN_ACTION, this.#runAction as EventListener);
+    target.addEventListener(EXECUTE_REQUEST, this.#executeRequest as EventListener);
     target.addEventListener(ZOOM_REQUEST, this.#zoomRequest as EventListener);
     target.addEventListener(MINIMAP_STEP, this.#minimapStep as EventListener);
     target.addEventListener(MINIMAP_PAN, this.#minimapPan as EventListener);
@@ -1727,6 +1788,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (changed.has('renderer')) this.#syncRenderer();
     if (changed.has('router')) this.#syncRouter();
     if (changed.has('run')) this.#syncRun();
+    if (changed.has('validate') || changed.has('issues') || changed.has('schema'))
+      this.#queueValidation();
     if (changed.has('locked')) {
       this.#nodeLayer.rebind();
       this.#schedule();
@@ -1885,6 +1948,11 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       }
       if (event.changes.some((change) => change.type === 'layout-settings'))
         this.#remeasureVisiblePorts();
+      // A live run follows the edited graph; problems follow every change but geometry.
+      if (this.#player && event.changes.some((change) => STRUCTURAL_CHANGES.has(change.type)))
+        this.#player.setGraph(flowRunGraph(this.#model));
+      if (this.validate && event.changes.some((change) => !GEOMETRY_CHANGES.has(change.type)))
+        this.#queueValidation();
     }
     this.#schedule();
   }
@@ -2673,6 +2741,11 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       handler: (event) => this.duplicate('hotkey', event).length > 0,
     });
     keys.register({
+      keys: RUN_KEYS,
+      action: 'run',
+      handler: (event) => this.#requestRun('run', 'graph', undefined, 'hotkey', event),
+    });
+    keys.register({
       keys: SELECT_ALL_KEYS,
       action: 'select-all',
       handler: (event) => this.selectAll('hotkey', event),
@@ -2877,8 +2950,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const bars: TpFlowControls[] = [];
     const builtIn = this.renderRoot?.querySelector<TpFlowControls>('tp-flow-controls.controls');
     if (builtIn) bars.push(builtIn);
-    for (const position of FLOW_PANEL_POSITIONS)
-      for (const element of this.#adoption.panel(position))
+    for (const region of FLOW_SLOT_REGIONS)
+      for (const element of this.#adoption.panel(region))
         if (element.localName === 'tp-flow-controls') bars.push(element as TpFlowControls);
     return bars;
   }
@@ -2898,6 +2971,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       bar.zoom = this.viewport.zoom;
       bar.zoomPresets = this.zoomPresets;
       bar.runState = this.#runTransportState();
+      bar.runControl = this.#runControlState();
     }
   }
 
@@ -2931,6 +3005,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
             .zoom=${this.viewport.zoom}
             .zoomPresets=${this.zoomPresets}
             .runState=${this.#runTransportState()}
+            .runControl=${this.#runControlState()}
           ></tp-flow-controls>`
         : nothing;
     const minimap =
@@ -2963,6 +3038,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return html`<tp-dialog
       class="palette-menu"
       modality="container"
+      backdrop="blur"
       label=${strings.addNode}
       .open=${this.paletteOpen}
       .finalFocus=${this.#paletteFinalFocus}
@@ -3028,7 +3104,19 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (this.nodeToolbar)
       return this.nodeToolbar({ node, definition: this.#model.definitionOf(node) });
     const strings = this.#resolvedStrings;
+    // Run requests reach monitors too: without editing the toolbar holds Run alone.
+    const run = this.#runRequests
+      ? html`<tp-button
+          variant="ghost"
+          size="icon-xs"
+          .icon=${playIcon}
+          .ariaLabel=${strings.runNode}
+          @click=${this.#toolbarRun}
+        ></tp-button>`
+      : nothing;
+    if (!this.editable) return run;
     return html`
+      ${run}
       ${
         this.#inspectable(node)
           ? html`<tp-button
@@ -3068,6 +3156,16 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       ></tp-button>
     `;
   }
+
+  /** Run requests are on: `runnable` and not disabled. */
+  get #runRequests(): boolean {
+    return this.runnable && !this.effectiveDisabled;
+  }
+
+  #toolbarRun = (event: Event): void => {
+    const node = this.#singleSelectedNode();
+    if (node) this.#requestRun('run', 'node', node.id, 'trigger-press', event);
+  };
 
   #toolbarDuplicate = (event: Event): void => {
     this.duplicate('trigger-press', event);
@@ -3267,7 +3365,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (toolbar) {
       const node = this.#singleSelectedNode();
       const rect =
-        node && this.editable && this.nodeToolbar !== false ? model.nodeRect(node.id) : undefined;
+        node && (this.editable || this.#runRequests) && this.nodeToolbar !== false
+          ? model.nodeRect(node.id)
+          : undefined;
       if (rect) {
         const origin = this.flowToScreen({ x: rect.x, y: rect.y });
         toolbar.setAnchor({
@@ -4257,6 +4357,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     host.ports = this.mode === 'view' && !this.showPorts ? [] : this.#model.ports(node.id);
     host.portStates = this.#portStatesOf(node.id);
     host.status = this.#runNode(node.id);
+    host.issues = this.#nodeIssues.get(node.id) ?? NO_ISSUES;
     host.accessibleName = this.#nodeAriaLabel(node, definition);
     host.selected = this.selection.nodes.includes(node.id);
     host.focused = this.#focusedNode === node.id;
@@ -4322,6 +4423,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     for (const port of this.#model.ports(nodeId)) {
       const connected = this.#model.portConnections(nodeId, port.direction, port.id).length > 0;
       const state: FlowPortState = { ...(transient[port.id] ?? {}), connected };
+      const issue = this.#portIssue(nodeId, port.id);
+      if (issue) state.issue = issue;
       states[port.id] = state;
       key += `${port.id}:${JSON.stringify(state)};`;
     }
@@ -4329,6 +4432,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (cached && cached.key === key) return cached.states;
     this.#portStatesCache.set(nodeId, { key, states });
     return states;
+  }
+
+  /** The worst problem a node's issues report for one of its ports. */
+  #portIssue(nodeId: string, portId: string): FlowIssue['severity'] | undefined {
+    let severity: FlowIssue['severity'] | undefined;
+    for (const issue of this.#nodeIssues.get(nodeId) ?? [])
+      if (issue.portId === portId && severity !== 'error') severity = issue.severity;
+    return severity;
   }
 
   /** Sets transient port states (candidates, validity) and re-binds the affected host. */
@@ -4406,28 +4517,127 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     }
   }
 
+  /** Node counts per status (and the nodes with warnings) of the visualized run. */
+  get runSummary(): FlowRunSummary {
+    return flowRunSummary(this.#runState);
+  }
+
+  /**
+   * Feeds a live run, one backend event at a time: the first event starts a live player on the
+   * current graph, later ones append to it. `clearRun()` (or `run = null`) ends it.
+   */
+  pushRunEvent(event: FlowRunEvent): void {
+    if (!this.#player) this.#adoptPlayer(new FlowRunPlayer(flowRunGraph(this.#model)));
+    this.#player!.push(event);
+  }
+
+  /** Clears the visualized run: a snapshot, a trace or a live run. */
+  clearRun(): void {
+    if (this.run !== null) this.run = null;
+    else this.#syncRun();
+  }
+
+  /**
+   * Asks the backend to run (`tp-run-request`, `runnable` only): the whole graph, one node, a
+   * node and its downstream (`from`) or its upstream and it (`to`). Returns whether it asked.
+   */
+  requestRun(
+    scope: FlowRunScope = 'graph',
+    nodeId?: string,
+    sourceEvent?: Event,
+    reason: ChangeReason = 'imperative-action',
+  ): boolean {
+    return this.#requestRun('run', scope, nodeId, reason, sourceEvent);
+  }
+
+  /** Asks the backend to stop the current run (`tp-run-request` with `stop`). */
+  requestStop(sourceEvent?: Event, reason: ChangeReason = 'imperative-action'): boolean {
+    return this.#requestRun('stop', undefined, undefined, reason, sourceEvent);
+  }
+
+  #requestRun(
+    action: FlowRunRequestDetail['action'],
+    scope: FlowRunScope | undefined,
+    nodeId: string | undefined,
+    reason: ChangeReason,
+    sourceEvent: Event | undefined,
+  ): boolean {
+    if (!this.runnable || this.effectiveDisabled) return false;
+    const detail: FlowRunRequestDetail = { action, nodeIds: [], reason };
+    if (action === 'run') {
+      const covered = scope ?? 'graph';
+      if (covered !== 'graph' && (!nodeId || !this.#model.getNode(nodeId))) return false;
+      detail.scope = covered;
+      if (covered !== 'graph') detail.nodeId = nodeId!;
+      detail.nodeIds = flowRunScope(flowRunGraph(this.#model), covered, nodeId);
+      if (!detail.nodeIds.length) return false;
+    }
+    if (sourceEvent) detail.sourceEvent = sourceEvent;
+    this.dispatchEvent(
+      new CustomEvent<FlowRunRequestDetail>('tp-run-request', {
+        bubbles: true,
+        composed: true,
+        detail,
+      }),
+    );
+    return true;
+  }
+
+  /** What the `execute` and `run-summary` controls show; stable while nothing changes. */
+  #runControlState(): FlowRunControlState {
+    const run = this.#runState;
+    const state: FlowRunControlState = {
+      runnable: this.runnable && !this.effectiveDisabled,
+      running: run?.status === 'running' || run?.status === 'paused',
+      hasRun: Boolean(run),
+      selectedNode: this.#singleSelectedNode()?.id,
+      summary: flowRunSummary(run),
+    };
+    const key = JSON.stringify(state);
+    if (this.#runControl?.key !== key) this.#runControl = { key, state };
+    return this.#runControl.state;
+  }
+
+  /** The `execute` control: Run or Stop, and the scopes of its menu. */
+  #executeRequest = (event: CustomEvent<FlowExecuteRequestDetail>): void => {
+    event.stopPropagation();
+    const { action, scope, sourceEvent } = event.detail;
+    const reason: ChangeReason = event.detail.menu ? 'item-press' : 'trigger-press';
+    const nodeId = scope && scope !== 'graph' ? this.#singleSelectedNode()?.id : undefined;
+    this.#requestRun(action, scope, nodeId, reason, sourceEvent);
+  };
+
   #syncRun(): void {
+    this.#releasePlayer();
+    const run = this.run;
+    if (Array.isArray(run)) {
+      const player = new FlowRunPlayer(flowRunGraph(this.#model), { trace: run as FlowTrace });
+      player.toEnd();
+      this.#adoptPlayer(player);
+      return;
+    }
+    this.#runState = (run as FlowRun | null) ?? undefined;
+    this.#runChanged();
+  }
+
+  #releasePlayer(): void {
     this.#unsubscribePlayer?.();
     this.#unsubscribePlayer = undefined;
     this.#player?.dispose();
     this.#player = undefined;
-    const run = this.run;
-    const trace = Array.isArray(run) ? (run as FlowTrace) : undefined;
-    if (trace) {
-      const player = new FlowRunPlayer(flowRunGraph(this.#model), { trace });
-      this.#player = player;
-      player.toEnd();
-      this.#runState = player.state;
-      this.#unsubscribePlayer = player.subscribe(() => {
-        const previous = this.#runState;
-        this.#runState = player.state;
-        this.#runChanged(previous);
-      });
-    } else this.#runState = (run as FlowRun | null) ?? undefined;
-    this.#runChanged(undefined);
   }
 
-  #runChanged(previous: FlowRun | undefined): void {
+  #adoptPlayer(player: FlowRunPlayer): void {
+    this.#player = player;
+    this.#runState = player.state;
+    this.#unsubscribePlayer = player.subscribe(() => {
+      this.#runState = player.state;
+      this.#runChanged();
+    });
+    this.#runChanged();
+  }
+
+  #runChanged(): void {
     const run = this.#runState;
     this.#root?.toggleAttribute('data-running', Boolean(run && run.status !== 'idle'));
     this.#nodeLayer.rebind();
@@ -4435,16 +4645,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#schedule();
     // The controls' transport (index, length, playing) renders from the root template.
     this.requestUpdate();
-    if (previous && run)
-      for (const [id, state] of run.nodes)
-        if (previous.nodes.get(id)?.status !== state.status)
-          this.#announcer.announce(
-            format(this.#resolvedStrings.announceStatus, {
-              label: this.#nodeLabel(id),
-              status: this.#statusLabel(state.status),
-            }),
-            { key: `status:${id}` },
-          );
+    this.#announceStatuses(run);
     const player = this.#player;
     this.dispatchEvent(
       new CustomEvent('tp-run-change', {
@@ -4452,6 +4653,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         composed: true,
         detail: {
           run,
+          summary: flowRunSummary(run),
           ...(player
             ? {
                 index: player.index,
@@ -4461,6 +4663,86 @@ export class TpFlow extends TpFormElement<FlowDocument> {
               }
             : {}),
         },
+      }),
+    );
+  }
+
+  /**
+   * Announces each node whose status changed since the last announced state. The record of a
+   * live run is updated in place, so the comparison keeps its own copy of the statuses.
+   */
+  #announceStatuses(run: FlowRun | undefined): void {
+    const announced = this.#announced;
+    if (!run) {
+      announced.clear();
+      return;
+    }
+    const first = announced.size === 0;
+    for (const [id, state] of run.nodes) {
+      const previous = announced.get(id);
+      announced.set(id, state.status);
+      if (first || previous === state.status) continue;
+      this.#announcer.announce(
+        format(this.#resolvedStrings.announceStatus, {
+          label: this.#nodeLabel(id),
+          status: this.#statusLabel(state.status),
+        }),
+        { key: `status:${id}` },
+      );
+    }
+  }
+
+  // ---- problems -------------------------------------------------------------------------------
+
+  /** Problems shown on nodes, ports and edges: validation issues (`validate`) and `issues`. */
+  get problems(): readonly FlowIssue[] {
+    return this.#problems;
+  }
+
+  #queueValidation(): void {
+    if (this.#validationQueued) return;
+    this.#validationQueued = true;
+    queueMicrotask(() => {
+      this.#validationQueued = false;
+      this.#refreshProblems();
+    });
+  }
+
+  #refreshProblems(): void {
+    const problems = [...(this.validate ? this.#model.validate() : []), ...this.issues];
+    const key = JSON.stringify(
+      problems.map((issue) => [
+        issue.severity,
+        issue.code,
+        issue.message,
+        issue.nodeId ?? '',
+        issue.edgeId ?? '',
+        issue.portId ?? '',
+      ]),
+    );
+    if (key === this.#problemsKey) return;
+    this.#problemsKey = key;
+    this.#problems = problems;
+    this.#nodeIssues.clear();
+    this.#edgeIssues.clear();
+    for (const issue of problems) {
+      if (issue.nodeId) {
+        const list = this.#nodeIssues.get(issue.nodeId) ?? [];
+        list.push(issue);
+        this.#nodeIssues.set(issue.nodeId, list);
+      }
+      if (issue.edgeId && this.#edgeIssues.get(issue.edgeId) !== 'error')
+        this.#edgeIssues.set(issue.edgeId, issue.severity);
+    }
+    this.#portStatesCache.clear();
+    this.#nodeLayer.rebind();
+    this.#edgeLayer.invalidate();
+    this.#schedule();
+    this.dispatchEvent(
+      new CustomEvent<FlowIssuesChangeDetail>('tp-issues-change', {
+        bubbles: true,
+        composed: true,
+        detail: { issues: problems },
       }),
     );
   }
@@ -4489,10 +4771,20 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #nodeAriaLabel(node: FlowNode, definition: ReturnType<FlowModel['definitionOf']>): string {
     const status = this.#runNode(node.id);
     if (this.getNodeAriaLabel) return this.getNodeAriaLabel(node, definition, status);
+    const strings = this.#resolvedStrings;
     const parts = [this.#nodeLabel(node.id)];
     if (definition && definition.label !== parts[0]) parts.push(definition.label);
-    if (status) parts.push(status.status);
-    if (this.selection.nodes.includes(node.id)) parts.push(this.#resolvedStrings.selected);
+    if (status) {
+      parts.push(this.#statusLabel(status.status));
+      if (status.status === 'failed' && status.error)
+        parts.push(format(strings.ariaError, { message: status.error }));
+      if (status.warnings?.length)
+        parts.push(format(strings.ariaWarnings, { count: status.warnings.length }));
+    }
+    const issues = this.#nodeIssues.get(node.id);
+    if (issues?.length)
+      parts.push(`${strings.problems}: ${issues.map((issue) => issue.message).join('; ')}`);
+    if (this.selection.nodes.includes(node.id)) parts.push(strings.selected);
     return parts.join(', ');
   }
 
@@ -4850,6 +5142,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           options.keys ? renderShortcut(options.keys) : nothing
         }</tp-menu-item
       >`;
+    const runs = this.#runRequests;
     const remove = item('delete', trashIcon, strings.delete, {
       disabled: !editable,
       keys: DELETE_KEYS[0],
@@ -4886,8 +5179,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         count < 2 && this.#inspectable(node)
           ? html`${item('settings', settingsIcon, strings.settings)}<tp-separator></tp-separator>`
           : nothing;
+      const run = runs
+        ? html`${item('run-node', playIcon, strings.runNode)}
+            <tp-menu-item inset value="run-from">${strings.runFrom}</tp-menu-item>
+            <tp-menu-item inset value="run-to">${strings.runTo}</tp-menu-item>
+            <tp-separator></tp-separator>`
+        : nothing;
       return html`
-        ${settings}${arrange}
+        ${run}${settings}${arrange}
         ${item('duplicate', copyPlusIcon, strings.duplicate, {
           disabled: !editable,
           keys: DUPLICATE_KEYS,
@@ -4912,6 +5211,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         ${remove}
       `;
     return html`
+      ${
+        runs
+          ? html`${item('run-graph', playIcon, strings.runGraph, { keys: RUN_KEYS })}
+              <tp-separator></tp-separator>`
+          : nothing
+      }
       ${item('paste', clipboardPasteIcon, strings.paste, {
         disabled: !editable || !clipboardFallback,
         keys: PASTE_KEYS,
@@ -4932,6 +5237,25 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     switch (event.detail.value) {
       case 'settings':
         if (subject?.kind === 'node') this.#openSettings('item-press', source);
+        break;
+      case 'run-node':
+      case 'run-from':
+      case 'run-to':
+        if (subject?.kind === 'node')
+          this.#requestRun(
+            'run',
+            event.detail.value === 'run-node'
+              ? 'node'
+              : event.detail.value === 'run-from'
+                ? 'from'
+                : 'to',
+            subject.nodeId,
+            'item-press',
+            source,
+          );
+        break;
+      case 'run-graph':
+        this.#requestRun('run', 'graph', undefined, 'item-press', source);
         break;
       case 'duplicate':
         this.duplicate('item-press', source);
@@ -5238,13 +5562,39 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           'data-lod': this.lod,
         },
         content: html`
-          ${this.#renderPalette()} ${this.#renderCanvas()}
+          ${this.#renderHeader()} ${this.#renderPalette()} ${this.#renderCanvas()}
           ${this.inspector === 'none' ? nothing : this.#renderInspector()}
           ${this.#renderDeleteConfirmation()}
           <p id=${instructionsId} class="visually-hidden" part="flow-instructions">
             ${strings.instructions}
           </p>
         `,
+      },
+    ) as TemplateResult;
+  }
+
+  #hasHeader(): boolean {
+    return FLOW_HEADER_SLOTS.some((slot) => this.#adoption.panel(slot).length > 0);
+  }
+
+  /**
+   * The opt-in header above the canvas: its start, center and end slots. It renders hidden until
+   * one of them has content, so graphs without a breadcrumb, statuses or run buttons skip it.
+   */
+  #renderHeader(): TemplateResult {
+    this.#headerShown = this.#hasHeader();
+    return this.renderPart(
+      'flow-header',
+      {},
+      {
+        tag: 'div',
+        properties: { part: 'flow-header', class: 'header', hidden: !this.#headerShown },
+        content: html`${FLOW_HEADER_SLOTS.map(
+          (slot) =>
+            html`<div class="header-region" data-region=${slot.slice(7)}>
+              <slot name=${slot}></slot>
+            </div>`,
+        )}`,
       },
     ) as TemplateResult;
   }
@@ -5334,9 +5684,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   /** Assigns authored panel children to their slots (manual slot assignment). */
   assignPanels(): void {
-    for (const position of FLOW_PANEL_POSITIONS) {
-      const slot = this.renderRoot.querySelector<HTMLSlotElement>(`slot[name="${position}"]`);
-      const elements = this.#adoption.panel(position);
+    for (const region of FLOW_SLOT_REGIONS) {
+      const slot = this.renderRoot.querySelector<HTMLSlotElement>(`slot[name="${region}"]`);
+      const elements = this.#adoption.panel(region);
       if (slot) slot.assign(...elements);
     }
   }

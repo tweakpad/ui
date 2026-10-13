@@ -12,6 +12,7 @@ const definition: ComponentDefinition = {
   axes: [{ name: 'size', values: ['sm', 'default', 'lg'], default: 'default' }],
   parts: [
     { name: 'flow', axes: ['size'] },
+    part('flow-header'),
     part('flow-pane'),
     part('flow-viewport'),
     part('flow-background'),
@@ -29,6 +30,7 @@ const definition: ComponentDefinition = {
     part('flow-node-row-control'),
     part('flow-node-footer'),
     part('flow-node-status'),
+    part('flow-node-problem'),
     part('flow-node-group'),
     part('flow-node-toolbar'),
     part('flow-node-resizer'),
@@ -55,6 +57,7 @@ const definition: ComponentDefinition = {
     part('flow-minimap-viewport'),
     part('flow-controls'),
     part('flow-control'),
+    part('flow-run-summary'),
     part('flow-palette'),
     part('flow-palette-header'),
     part('flow-palette-body'),
@@ -86,6 +89,7 @@ export const flowPresentation = definePresentation({
   bindings: {
     'tp-flow': {
       '[part~="flow"]': 'flow',
+      '[part~="flow-header"]': 'flow-header',
       '[part~="flow-pane"]': 'flow-pane',
       '[part~="flow-viewport"]': 'flow-viewport',
       '[part~="flow-edge"]': 'flow-edge',
@@ -121,6 +125,7 @@ export const flowPresentation = definePresentation({
       '[part~="flow-node-row-control"]': 'flow-node-row-control',
       '[part~="flow-node-footer"]': 'flow-node-footer',
       '[part~="flow-node-status"]': 'flow-node-status',
+      'tp-button.problem': 'flow-node-problem',
       '[part~="flow-node-group"]': 'flow-node-group',
     },
     'tp-flow-port': {
@@ -157,6 +162,7 @@ export const flowPresentation = definePresentation({
     'tp-flow-controls': {
       '[part~="flow-controls"]': 'flow-controls',
       'tp-button.control, tp-toggle.control': 'flow-control',
+      '[part~="flow-run-summary"]': 'flow-run-summary',
     },
     'tp-flow-palette': {
       '[part~="flow-palette"]': 'flow-palette',

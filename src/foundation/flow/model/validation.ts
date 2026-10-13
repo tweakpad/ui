@@ -386,7 +386,8 @@ export function validateDocument(
             issue(
               'required-port',
               'warning',
-              `Port "${port.id}" of "${node.id}" requires a connection.`,
+              // Named as people see it: the port and node labels, the ids as fallbacks.
+              `"${port.label ?? port.id}" of "${node.label ?? model.definitionOf(node)?.label ?? node.id}" requires a connection.`,
               { nodeId: node.id, portId: port.id },
             ),
           );

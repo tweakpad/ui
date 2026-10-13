@@ -8,6 +8,7 @@ import {
 import type { TpValueChangeEvent, TpValueCommitEvent } from '../../../foundation/events.js';
 import type { ChangeReason } from '../../../foundation/types.js';
 import type {
+  FlowIssue,
   FlowLayoutDirection,
   FlowNode,
   FlowNodeDefinition,
@@ -26,6 +27,9 @@ import { TpListItem } from '../../../components/list-item/list-item.js';
 import { TpBadge } from '../../../components/badge/badge.js';
 import { TpMarker } from '../../../components/marker/marker.js';
 import { TpSpinner } from '../../../components/spinner/spinner.js';
+import { TpProgress } from '../../../components/progress/progress.js';
+import { TpTooltip } from '../../../components/tooltip/tooltip.js';
+import { TpButton } from '../../../components/button/button.js';
 import { TpIcon } from '../../../components/icon/icon.js';
 import { TpInput } from '../../../components/input/input.js';
 import { TpInputGroup } from '../../../components/input-group/input-group.js';
@@ -49,6 +53,7 @@ import type {
 } from '../types.js';
 import { controlEventValue, defaultPropertyControls } from './property-controls.js';
 import {
+  problemSeverity,
   renderCardShape,
   renderCompactShape,
   renderGroupShape,
@@ -74,6 +79,8 @@ export interface FlowPortState {
   candidateFocused?: boolean;
   valid?: boolean | null;
   clickConnecting?: boolean;
+  /** The worst problem the widget's issues report for the port. */
+  issue?: 'error' | 'warning';
   connected?: boolean;
 }
 
@@ -141,6 +148,9 @@ export class TpFlowNode extends TpElement {
       TpBadge,
       TpMarker,
       TpSpinner,
+      TpProgress,
+      TpTooltip,
+      TpButton,
       TpIcon,
       TpInput,
       TpInputGroup,
@@ -165,6 +175,7 @@ export class TpFlowNode extends TpElement {
     ports: { attribute: false },
     portStates: { attribute: false },
     status: { attribute: false },
+    issues: { attribute: false },
     accessibleName: { type: String, attribute: 'accessible-name' },
     selected: { type: Boolean },
     focused: { type: Boolean },
@@ -190,6 +201,8 @@ export class TpFlowNode extends TpElement {
   ports: readonly FlowResolvedPort[] = [];
   portStates: Readonly<Record<string, FlowPortState>> = {};
   status: FlowNodeRunState | undefined;
+  /** Problems the widget shows on this node (validation issues and supplied ones). */
+  issues: readonly FlowIssue[] = [];
   accessibleName = '';
   selected = false;
   focused = false;
@@ -287,6 +300,9 @@ export class TpFlowNode extends TpElement {
     this.dataset['shape'] = this.shape;
     if (this.status) this.dataset['status'] = this.status.status;
     else delete this.dataset['status'];
+    const problem = problemSeverity(this.issues, this.status);
+    if (problem) this.dataset['problem'] = problem;
+    else delete this.dataset['problem'];
     this.#syncNumberFields();
     this.#syncComposition();
     this.#positionRowPorts();
@@ -574,6 +590,7 @@ export class TpFlowNode extends TpElement {
       ?candidate-focused=${Boolean(state.candidateFocused)}
       .valid=${state.valid ?? null}
       ?click-connecting=${Boolean(state.clickConnecting)}
+      issue=${state.issue ?? ''}
       ?disabled=${this.disabled}
     ></tp-flow-port>`;
   };
@@ -639,6 +656,7 @@ export class TpFlowNode extends TpElement {
       tone: node?.type && definition?.tone ? definition.tone : undefined,
       lod: this.lod,
       status: this.status,
+      issues: this.issues,
       strings: this.strings,
       ports: this.ports,
       properties,
@@ -686,6 +704,8 @@ export class TpFlowNode extends TpElement {
           'data-dragging': this.dragging,
           'data-connecting': this.connecting,
           'data-status': this.status?.status,
+          'data-problem': problemSeverity(this.issues, this.status),
+          'data-warnings': Boolean(this.status?.warnings?.length),
           'data-lod': this.lod,
           'data-pinned': Boolean(node?.pinned),
           'data-parent': Boolean(node?.parentId),

@@ -208,7 +208,7 @@ export async function assertControlledOwners(): Promise<Report> {
  * the late owner's write is adopted with one commit; the never owner's proposals are rolled
  * back after the settle grace, without a commit or a history entry.
  */
-export async function assertLateAndNeverOwners(nodeId = 'notify'): Promise<Report> {
+export async function assertLateAndNeverOwners(nodeId = 'reply'): Promise<Report> {
   const api = window as unknown as { flowAPI: { lateWrites: unknown[] } };
   const results: Record<string, unknown> = {};
   for (const id of ['late-owner', 'never-owner']) {
@@ -280,7 +280,7 @@ export async function assertLateAndNeverOwners(nodeId = 'notify'): Promise<Repor
   );
 }
 
-export async function assertNestedEventBoundary(id = 'material'): Promise<Report> {
+export async function assertNestedEventBoundary(id = 'lighting'): Promise<Report> {
   const target = flow(id);
   const leaked = (window as unknown as { flowAPI: { leaked: unknown[]; clear: () => void } })
     .flowAPI;
@@ -571,7 +571,7 @@ export async function assertWheelLatching(id = 'declarative', nodeId = 'b'): Pro
  * Drags the left-most node: a node near the inline end would put the pointer in the auto-pan
  * zone and under the panels that float there.
  */
-export async function assertNodeDrag(id = 'monitor', nodeId = 'form'): Promise<Report> {
+export async function assertNodeDrag(id = 'monitor', nodeId = 'ticket'): Promise<Report> {
   const target = flow(id);
   const captured = capture(target, ['tp-value-change', 'tp-value-commit']);
   const node = host(target, nodeId)!;
@@ -631,20 +631,20 @@ export async function assertConnection(id = 'monitor'): Promise<Report> {
   const removed = target.deleteElements({ edges: ['e4'] }, 'imperative-action');
   await settle(target);
   const captured = capture(target, ['tp-connect', 'tp-value-change', 'tp-value-commit']);
-  const from = port(target, 'enrich', 'out')!.button!;
-  const to = port(target, 'deal', 'in')!.button!;
+  const from = port(target, 'lookup', 'out')!.button!;
+  const to = port(target, 'assign', 'in')!.button!;
   await syntheticDrag(from, center(from), center(to));
-  const edges = target.edges.filter((edge) => edge.source === 'enrich' && edge.target === 'deal');
+  const edges = target.edges.filter((edge) => edge.source === 'lookup' && edge.target === 'assign');
   const connect = captured.events.find((event) => event.type === 'tp-connect');
   const commit = captured.events.find((event) => event.type === 'tp-value-commit');
   // invalid: occupied input
   const line = target.shadowRoot!.querySelector('[part~="flow-connection-line"]');
-  const invalidFrom = port(target, 'form', 'out')!.button!;
-  const invalidTo = port(target, 'enrich', 'in')!.button!;
+  const invalidFrom = port(target, 'ticket', 'out')!.button!;
+  const invalidTo = port(target, 'lookup', 'in')!.button!;
   pointer('pointerdown', invalidFrom, center(invalidFrom));
   pointer('pointermove', invalidFrom, center(invalidTo));
   await frame();
-  const candidate = port(target, 'enrich', 'in')!;
+  const candidate = port(target, 'lookup', 'in')!;
   const invalidState = {
     candidate: candidate.candidate,
     valid: candidate.valid,
@@ -714,8 +714,8 @@ export async function assertEdgeHandles(): Promise<Report> {
   const monitor = flow('monitor');
   const monitorOriginal = monitor.value;
   monitor.scrollIntoView({ block: 'center' });
-  const plan = monitor.model.getNode('plan')!;
-  monitor.updateNode('plan', { position: { x: plan.position.x + 40, y: plan.position.y - 150 } });
+  const plan = monitor.model.getNode('urgent')!;
+  monitor.updateNode('urgent', { position: { x: plan.position.x + 40, y: plan.position.y - 150 } });
   monitor.addNodes([{ id: 'handles-x1', type: 'action', position: { x: 380, y: 420 }, data: {} }]);
   await settle(monitor);
   monitor.select({ nodes: [], edges: ['e1'] });
@@ -729,7 +729,7 @@ export async function assertEdgeHandles(): Promise<Report> {
   const overlap = (a: DOMRect, b: DOMRect) =>
     Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
     Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
-  const sockets = [port(monitor, 'form', 'out')!, port(monitor, 'plan', 'in')!];
+  const sockets = [port(monitor, 'ticket', 'out')!, port(monitor, 'urgent', 'in')!];
   const anchors = editorHandles(monitor).filter(
     (handle) => handle.dataset['handle'] === 'reconnect',
   );
@@ -805,7 +805,7 @@ export async function assertEdgeHandles(): Promise<Report> {
       .map((handle) => Number(handle.dataset['index'])),
   };
   // A press on a control inside a node selects that node (the control keeps the press).
-  const field = host(monitor, 'notify')?.shadowRoot?.querySelector<HTMLElement>(
+  const field = host(monitor, 'reply')?.shadowRoot?.querySelector<HTMLElement>(
     'tp-input, input, tp-number-field',
   );
   let nodeControlSelection: unknown = null;
@@ -902,7 +902,7 @@ export async function assertEdgeHandles(): Promise<Report> {
       ),
       check(
         'a press on a node control selects that node',
-        JSON.stringify(nodeControlSelection) === JSON.stringify({ nodes: ['notify'], edges: [] }),
+        JSON.stringify(nodeControlSelection) === JSON.stringify({ nodes: ['reply'], edges: [] }),
         nodeControlSelection,
       ),
       check(
@@ -925,7 +925,7 @@ export async function assertMarquee(id = 'monitor'): Promise<Report> {
   const captured = capture(target, ['tp-selection-change']);
   const pane = target.shadowRoot!.querySelector('[part~="flow-pane"]')!;
   const rect = pane.getBoundingClientRect();
-  const planHost = host(target, 'plan')!;
+  const planHost = host(target, 'urgent')!;
   const planRect = planHost.getBoundingClientRect();
   const from = { x: rect.left + 8, y: rect.top + 8 };
   const to = { x: planRect.left + 20, y: planRect.top + 20 };
@@ -942,8 +942,8 @@ export async function assertMarquee(id = 'monitor'): Promise<Report> {
   const marquee = target.shadowRoot!.querySelector<HTMLElement>('.marquee');
   return report(
     [
-      check('partial mode selects intersecting nodes', partial.includes('plan'), partial),
-      check('full mode needs containment', !full.includes('plan'), full),
+      check('partial mode selects intersecting nodes', partial.includes('urgent'), partial),
+      check('full mode needs containment', !full.includes('urgent'), full),
       check(
         'selection reason',
         captured.events.some((event) => event.reason === 'selection'),
@@ -965,13 +965,13 @@ export async function assertSelectionAndDelete(id = 'monitor'): Promise<Report> 
     'tp-selection-change',
   ]);
   const before = { nodes: target.nodes.length, edges: target.edges.length };
-  target.select({ nodes: ['form'], edges: [] });
+  target.select({ nodes: ['ticket'], edges: [] });
   const deleted = target.deleteElements({ nodes: target.selection.nodes, edges: [] }, 'hotkey');
   await settle(target);
   const after = { nodes: target.nodes.length, edges: target.edges.length };
   const vetoListener = (event: Event) => event.preventDefault();
   target.addEventListener('tp-delete', vetoListener);
-  const vetoed = target.deleteElements({ nodes: ['plan'] }, 'hotkey');
+  const vetoed = target.deleteElements({ nodes: ['urgent'] }, 'hotkey');
   target.removeEventListener('tp-delete', vetoListener);
   const kept = target.nodes.length;
   captured.stop();
@@ -1013,7 +1013,7 @@ export async function assertClipboard(id = 'monitor'): Promise<Report> {
   const target = flow(id);
   const captured = capture(target, ['tp-value-change', 'tp-value-commit']);
   const before = { nodes: target.nodes.length, edges: target.edges.length };
-  target.select({ nodes: ['enrich', 'deal'] });
+  target.select({ nodes: ['lookup', 'assign'] });
   const copied = await target.copy();
   const pasted = target.paste();
   await settle(target);
@@ -1032,7 +1032,7 @@ export async function assertClipboard(id = 'monitor'): Promise<Report> {
       check('copy succeeded', copied, copied),
       check(
         'paste adds the subgraph with fresh ids',
-        pasted.length === 2 && !pasted.includes('enrich') && afterPaste.nodes === before.nodes + 2,
+        pasted.length === 2 && !pasted.includes('lookup') && afterPaste.nodes === before.nodes + 2,
         pasted,
       ),
       check('internal edge pasted', pastedEdges.length === 1, pastedEdges.length),
@@ -1056,21 +1056,21 @@ export async function assertClipboard(id = 'monitor'): Promise<Report> {
 export async function assertUndoRedo(id = 'monitor'): Promise<Report> {
   const target = flow(id);
   target.model.clearHistory();
-  const start = target.model.getNode('notify')!.position.x;
-  target.select({ nodes: ['notify'] });
+  const start = target.model.getNode('reply')!.position.x;
+  target.select({ nodes: ['reply'] });
   target.nudgeSelection({ x: 16, y: 0 }, 'keyboard');
   target.nudgeSelection({ x: 16, y: 0 }, 'keyboard');
   target.nudgeSelection({ x: 16, y: 0 }, 'keyboard');
   const depthAfterNudges = target.model.history.depth;
-  target.updateNode('deal', { position: { x: 900, y: 60 } });
+  target.updateNode('assign', { position: { x: 900, y: 60 } });
   const depth = target.model.history.depth;
   target.undo();
   target.undo();
-  const restored = target.model.getNode('notify')!.position.x;
+  const restored = target.model.getNode('reply')!.position.x;
   const canRedo = target.canRedo;
   target.redo();
   target.redo();
-  const redone = target.model.getNode('notify')!.position.x;
+  const redone = target.model.getNode('reply')!.position.x;
   target.undo();
   target.undo();
   target.clearSelection();
@@ -1253,23 +1253,23 @@ export async function assertRunState(id = 'monitor'): Promise<Report> {
   await settle(target);
   const end = {
     index: target.player?.index,
-    enrich: target.runState?.nodes.get('enrich')?.status,
+    enrich: target.runState?.nodes.get('lookup')?.status,
     e3: target.runState?.edges.get('e3')?.status,
   };
   target.runTransport('start');
-  const start = target.runState?.nodes.get('form')?.status;
+  const start = target.runState?.nodes.get('ticket')?.status;
   target.runTransport('step');
   target.runTransport('step');
-  const stepped = target.runState?.nodes.get('form')?.status;
+  const stepped = target.runState?.nodes.get('ticket')?.status;
   target.runTransport('seek', 3);
   const sought = {
-    form: target.runState?.nodes.get('form')?.status,
+    ticket: target.runState?.nodes.get('ticket')?.status,
     e1: target.runState?.edges.get('e1')?.status,
   };
   target.runTransport('end');
   await settle(target);
   captured.stop();
-  const footer = host(target, 'enrich')
+  const footer = host(target, 'lookup')
     ?.shadowRoot?.querySelector('[part~="flow-node-status"]')
     ?.textContent?.trim();
   target.run = samples.sampleRun as TpFlow['run'];
@@ -1284,7 +1284,7 @@ export async function assertRunState(id = 'monitor'): Promise<Report> {
       check('edge not taken derived', end.e3 === 'not-taken', end.e3),
       check('start resets statuses', start === 'idle', start),
       check('step applies events', stepped === 'running', stepped),
-      check('seek replays', sought.form === 'success' && sought.e1 === 'taken', sought),
+      check('seek replays', sought.ticket === 'success' && sought.e1 === 'taken', sought),
       check('tp-run-change dispatched', captured.events.length >= 4, captured.events.length),
       check('status footer renders', Boolean(footer), footer),
     ],
@@ -1357,21 +1357,21 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
   await settle(target);
 
   // A selection alone never opens it.
-  target.select({ nodes: ['enrich'], edges: [] });
+  target.select({ nodes: ['lookup'], edges: [] });
   await settle(target);
   const selectedOnly = target.inspectorOpen;
-  const settingsForEnrich = toolbarSettings();
+  const settingsForLookup = toolbarSettings();
 
   // A double press on a node without inspector settings does nothing (its two clicks select it
   // first; the dispatched double click carries no presses).
-  target.select({ nodes: ['form'], edges: [] });
+  target.select({ nodes: ['ticket'], edges: [] });
   await settle(target);
-  await doublePress(canvas, titleOf('form'));
+  await doublePress(canvas, titleOf('ticket'));
   const formOpened = target.inspectorOpen;
-  const settingsForForm = toolbarSettings();
+  const settingsForTicket = toolbarSettings();
 
   // Inside a node's own control a double press keeps its meaning (text selection).
-  const channelInput = host(target, 'notify')!.shadowRoot!.querySelector('tp-input input')!;
+  const channelInput = host(target, 'reply')!.shadowRoot!.querySelector('tp-input input')!;
   await doublePress(channelInput);
   const controlOpened = target.inspectorOpen;
 
@@ -1389,7 +1389,7 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
   const complete = (event: Event) => completions.push((event as CustomEvent).detail);
   target.addEventListener('tp-open-change-complete', complete);
   const paneBefore = canvas.getBoundingClientRect().width;
-  const enrichNode = target.model.getNode('enrich')!;
+  const enrichNode = target.model.getNode('lookup')!;
   // Place the node under the panel first, so opening has something to reveal.
   const panelExtent = inspector.getBoundingClientRect().width || 352;
   await target.setViewport({
@@ -1401,7 +1401,7 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
       canvas.getBoundingClientRect().left,
   });
   await settle(target);
-  await doublePress(canvas, titleOf('enrich'));
+  await doublePress(canvas, titleOf('lookup'));
   const opened = {
     open: target.inspectorOpen,
     selection: target.selection.nodes,
@@ -1409,7 +1409,7 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
   };
   await wait(600);
   const panelRect = inspector.getBoundingClientRect();
-  const nodeRect = host(target, 'enrich')!.getBoundingClientRect();
+  const nodeRect = host(target, 'lookup')!.getBoundingClientRect();
   const floating = {
     position: getComputedStyle(inspector).position,
     pane: [paneBefore, canvas.getBoundingClientRect().width],
@@ -1420,10 +1420,10 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
   markers.clear();
 
   // While open it follows a node with settings and closes when the selection leaves them.
-  target.select({ nodes: ['notify'], edges: [] });
+  target.select({ nodes: ['reply'], edges: [] });
   await settle(target);
   const followed = { open: target.inspectorOpen, fields: fields() };
-  target.select({ nodes: ['form'], edges: [] });
+  target.select({ nodes: ['ticket'], edges: [] });
   await settle(target);
   const closedOnForm = target.inspectorOpen;
 
@@ -1451,8 +1451,8 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
     await settle(target);
     return values;
   };
-  const enrichMenu = await menuItems('enrich');
-  const formMenu = await menuItems('form');
+  const enrichMenu = await menuItems('lookup');
+  const formMenu = await menuItems('ticket');
 
   target.setInspectorOpen(false);
   target.clearSelection();
@@ -1490,21 +1490,21 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
       check('a selection alone leaves it closed', selectedOnly === false, selectedOnly),
       check(
         'toolbar Settings only for nodes with inspector settings',
-        settingsForEnrich && !settingsForForm,
-        { enrich: settingsForEnrich, form: settingsForForm },
+        settingsForLookup && !settingsForTicket,
+        { lookup: settingsForLookup, ticket: settingsForTicket },
       ),
       check('double press without inspector settings', formOpened === false, formOpened),
       check('double press inside a node control', controlOpened === false, controlOpened),
       check(
         'double press opens the inspector settings only',
         opened.open &&
-          opened.selection.join() === 'enrich' &&
+          opened.selection.join() === 'lookup' &&
           opened.fields.join() === 'Retries,Timeout (s)',
         opened,
       ),
       check(
         'follows a node with settings',
-        followed.open && followed.fields.join() === 'Mention',
+        followed.open && followed.fields.join() === 'Copy the team',
         followed,
       ),
       check('closes when the selection leaves them', closedOnForm === false, closedOnForm),
@@ -1524,7 +1524,7 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
  * right press on a node opens the menu and a right press on another node moves it; a press on the
  * pane closes it, clears the selection in the same press and keeps focus inside the widget.
  */
-export async function assertContextMenuDismiss(id = 'material'): Promise<Report> {
+export async function assertContextMenuDismiss(id = 'lighting'): Promise<Report> {
   const target = flow(id);
   target.scrollIntoView({ block: 'center' });
   // Hit-tested presses need the page at rest after the scroll from the previous instance.
@@ -1535,7 +1535,7 @@ export async function assertContextMenuDismiss(id = 'material'): Promise<Report>
     'tp-menu.context-menu',
   )!;
   // Two nodes clear of the panels and the floating node library.
-  const ids = ['normal', 'material'];
+  const ids = ['sweep', 'fixture'];
   const titleOf = (nodeId: string) =>
     host(target, nodeId)!.shadowRoot!.querySelector<HTMLElement>('[part~="flow-node-title"]')!;
   const press = async (point: FlowPoint, button = 0) => {
@@ -2101,7 +2101,7 @@ export async function assertPaletteSidebar(id = 'pipeline'): Promise<Report> {
         dropped === 1 && near(droppedCenter, spot, snapTolerance),
         { dropped, droppedCenter, spot },
       ),
-      check('the "+" closes it again', !reclosed.open && reclosed.hidden, reclosed),
+      check('the "+" closes it again', !reclosed.open && reclosed.hidden === true, reclosed),
     ],
     { definitions, categories: categories.size },
   );
@@ -2113,7 +2113,7 @@ export async function assertPaletteSidebar(id = 'pipeline'): Promise<Report> {
  * a click arms placement and closes the menu (Escape cancels it); dragging a chip turns the menu
  * transparent, a drop inserts at the point and closes it, a cancelled drag brings it back.
  */
-export async function assertPaletteMenu(id = 'material'): Promise<Report> {
+export async function assertPaletteMenu(id = 'lighting'): Promise<Report> {
   const target = flow(id);
   target.scrollIntoView({ block: 'center' });
   await settle(target);
@@ -2289,6 +2289,564 @@ export async function assertPaletteMenu(id = 'material'): Promise<Report> {
   ]);
 }
 
+// ---- execution: run requests, live runs, problems, header ------------------------------------
+
+interface RunRequest {
+  action: string;
+  scope?: string;
+  nodeId?: string;
+  nodeIds: readonly string[];
+  reason: string;
+}
+
+function runRequests(target: EventTarget) {
+  const requests: RunRequest[] = [];
+  const listener = (event: Event) => {
+    const { action, scope, nodeId, nodeIds, reason } = (event as CustomEvent<RunRequest>).detail;
+    requests.push({
+      action,
+      ...(scope ? { scope } : {}),
+      ...(nodeId ? { nodeId } : {}),
+      nodeIds,
+      reason,
+    });
+  };
+  target.addEventListener('tp-run-request', listener);
+  return { requests, stop: () => target.removeEventListener('tp-run-request', listener) };
+}
+
+/** The authored `tp-flow-controls` bar in a header slot. */
+function headerBar(target: TpFlow, slot: string): HTMLElement {
+  return target.querySelector<HTMLElement>(`tp-flow-controls[slot="${slot}"]`)!;
+}
+
+/** The deepest element under a point inside an element's own shadow tree. */
+function deepAt(element: Element): Element {
+  return topAt(center(element)) ?? element;
+}
+
+/** Opens the context menu on a node (a dispatched `contextmenu` at its center) and picks an item. */
+async function contextItem(target: TpFlow, nodeId: string, value: string): Promise<boolean> {
+  const node = host(target, nodeId)!;
+  const at = center(node);
+  deepAt(node).dispatchEvent(
+    new MouseEvent('contextmenu', {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      button: 2,
+      clientX: at.x,
+      clientY: at.y,
+    }),
+  );
+  await settle(target);
+  await wait(250);
+  const item = target.shadowRoot!.querySelector<HTMLElement>(
+    `tp-menu.context-menu tp-menu-item[value="${value}"]`,
+  );
+  item?.click();
+  await settle(target);
+  await wait(250);
+  return Boolean(item);
+}
+
+/**
+ * Run requests (`runnable`): Run in the header's `execute` control, its Menu scopes, the node
+ * toolbar's Run node, the context menu's Run node / from here / up to here, Mod+Enter and Stop
+ * while running each dispatch `tp-run-request` with the action, the scope and the node ids in
+ * execution order; a widget without `runnable` or a disabled one asks nothing, a read-only
+ * one still asks.
+ */
+export async function assertRunRequests(id = 'execution'): Promise<Report> {
+  const target = flow(id);
+  target.scrollIntoView({ block: 'center' });
+  target.clearRun();
+  target.clearSelection();
+  await settle(target);
+  await wait(300);
+  const recorder = runRequests(target);
+  const execute = headerBar(target, 'header-end').shadowRoot!;
+  // Run, the Button of the split control.
+  press(execute.querySelector<HTMLElement>('tp-button.run')!);
+  await settle(target);
+  // The node toolbar's Run node, over the selected node.
+  target.select({ nodes: ['moderate'], edges: [] });
+  await settle(target);
+  await wait(300);
+  const toolbar = target.shadowRoot!.querySelector<HTMLElement>('tp-flow-node-toolbar')!;
+  const toolbarRun = toolbar.querySelector<HTMLElement>('tp-button');
+  if (toolbarRun) press(toolbarRun);
+  await settle(target);
+  // The execute Menu's node scopes (selected node) and the context menu's.
+  press(execute.querySelector<HTMLElement>('tp-button.execute-trigger')!);
+  await settle(target);
+  await wait(350);
+  // Menu items answer their own activation (the context menu's are pressed the same way).
+  execute.querySelector<HTMLElement>('tp-menu-item[value="to"]')?.click();
+  await settle(target);
+  await wait(250);
+  const fromItem = await contextItem(target, 'moderate', 'run-from');
+  // Mod+Enter on the canvas.
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform);
+  target.shadowRoot!.querySelector<HTMLElement>('.canvas')!.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      ...(mac ? { metaKey: true } : { ctrlKey: true }),
+    }),
+  );
+  await settle(target);
+  // While a run is going the Button is Stop.
+  target.pushRunEvent({ type: 'run_started', at: 0 });
+  target.pushRunEvent({ type: 'node_started', nodeId: 'upload', at: 1 });
+  await settle(target);
+  await wait(100);
+  const runButton = execute.querySelector<HTMLElement>('tp-button.run')!;
+  const stopLabel = runButton.textContent?.trim();
+  press(runButton);
+  await settle(target);
+  recorder.stop();
+  target.clearRun();
+  target.clearSelection();
+  await settle(target);
+  // Without `runnable` nothing asks; a read-only runnable widget still does; a disabled one not.
+  const monitor = flow('monitor');
+  const monitorRecorder = runRequests(monitor);
+  const monitorAsked = monitor.requestRun('graph');
+  monitor.select({ nodes: ['urgent'], edges: [] });
+  await settle(monitor);
+  await wait(200);
+  const monitorToolbarRun = [
+    ...monitor.shadowRoot!.querySelectorAll<HTMLElement>('tp-flow-node-toolbar tp-button'),
+  ].some((button) => (button as HTMLElement & { ariaLabel: string }).ariaLabel === 'Run node');
+  monitor.clearSelection();
+  monitorRecorder.stop();
+  const readonly = flow('readonly');
+  readonly.runnable = true;
+  readonly.select({ nodes: ['urgent'], edges: [] });
+  await settle(readonly);
+  await wait(300);
+  const readonlyRecorder = runRequests(readonly);
+  const readonlyButtons = [
+    ...readonly.shadowRoot!.querySelectorAll<HTMLElement>('tp-flow-node-toolbar tp-button'),
+  ];
+  readonlyButtons[0]?.click();
+  readonlyRecorder.stop();
+  readonly.clearSelection();
+  readonly.runnable = false;
+  const disabled = flow('disabled');
+  disabled.runnable = true;
+  const disabledAsked = disabled.requestRun('graph');
+  disabled.runnable = false;
+  await settle(readonly);
+  const all = ['upload', 'resize', 'moderate', 'publish', 'flag', 'merchant', 'purge'];
+  const [graph, node, to, from, hotkey, stop] = recorder.requests;
+  return report(
+    [
+      check(
+        'Run asks for the whole graph in execution order',
+        graph?.action === 'run' &&
+          graph.scope === 'graph' &&
+          graph.reason === 'trigger-press' &&
+          JSON.stringify(graph.nodeIds) === JSON.stringify(all),
+        graph,
+      ),
+      check(
+        'the node toolbar runs the selected node alone',
+        Boolean(toolbarRun) &&
+          node?.scope === 'node' &&
+          node.nodeId === 'moderate' &&
+          JSON.stringify(node.nodeIds) === '["moderate"]',
+        node,
+      ),
+      check(
+        'the Run menu runs up to the selected node, upstream first',
+        to?.scope === 'to' &&
+          to.reason === 'item-press' &&
+          JSON.stringify(to.nodeIds) === '["upload","resize","moderate"]',
+        to,
+      ),
+      check(
+        'the context menu runs from a node through its downstream',
+        fromItem &&
+          from?.scope === 'from' &&
+          JSON.stringify(from.nodeIds) === '["moderate","publish","flag","merchant"]',
+        from,
+      ),
+      check(
+        'Mod+Enter asks for the graph',
+        hotkey?.scope === 'graph' && hotkey.reason === 'hotkey',
+        hotkey,
+      ),
+      check(
+        'while running the Button is Stop and asks to stop',
+        stopLabel === 'Stop' && stop?.action === 'stop' && stop.nodeIds.length === 0,
+        { stopLabel, stop },
+      ),
+      check(
+        'nothing without runnable; read-only asks with Run alone; disabled asks nothing',
+        !monitorAsked &&
+          monitorRecorder.requests.length === 0 &&
+          !monitorToolbarRun &&
+          readonlyButtons.length === 1 &&
+          readonlyRecorder.requests[0]?.scope === 'node' &&
+          !disabledAsked,
+        {
+          monitorAsked,
+          monitorToolbarRun,
+          readonlyButtons: readonlyButtons.length,
+          readonly: readonlyRecorder.requests,
+          disabledAsked,
+        },
+      ),
+    ],
+    { requests: recorder.requests.length },
+  );
+}
+
+/**
+ * Live runs (`pushRunEvent`): statuses with progress, waiting reasons, warnings and failures on
+ * the nodes, the summary chips, announcements, a scoped run that keeps the other results and
+ * leaves the nodes outside it alone, and the run graph following an edit.
+ */
+export async function assertLiveRun(id = 'execution'): Promise<Report> {
+  const target = flow(id);
+  target.scrollIntoView({ block: 'center' });
+  target.clearRun();
+  await settle(target);
+  const announced: string[] = [];
+  const observer = new MutationObserver(() => {
+    for (const region of target.shadowRoot!.querySelectorAll('[aria-live]'))
+      if (region.textContent?.trim()) announced.push(region.textContent.trim());
+  });
+  observer.observe(target.shadowRoot!, { subtree: true, childList: true, characterData: true });
+  const changes = capture(target, ['tp-run-change']);
+  let at = 0;
+  const push = (event: Record<string, unknown>) =>
+    target.pushRunEvent({ ...event, at: (at += 100) } as Parameters<TpFlow['pushRunEvent']>[0]);
+  push({ type: 'run_started' });
+  for (const nodeId of ['upload', 'resize']) {
+    push({ type: 'node_started', nodeId });
+    push({ type: 'node_completed', nodeId });
+  }
+  push({ type: 'node_started', nodeId: 'moderate' });
+  push({ type: 'node_progress', nodeId: 'moderate', progress: 0.4 });
+  await settle(target);
+  await wait(150);
+  const progress = host(target, 'moderate')!.shadowRoot!.querySelector<
+    HTMLElement & { value: number }
+  >('tp-progress');
+  const running = {
+    status: host(target, 'moderate')!.dataset['status'],
+    progress: progress?.value,
+  };
+  push({ type: 'node_completed', nodeId: 'moderate', port: 'safe' });
+  push({ type: 'node_started', nodeId: 'publish' });
+  push({ type: 'node_waiting', nodeId: 'publish', reason: 'Merchant approval' });
+  await settle(target);
+  await wait(150);
+  const waiting = host(target, 'publish')!.shadowRoot!.querySelector('.status-detail')?.textContent;
+  push({ type: 'node_warning', nodeId: 'publish', message: 'JPEG fallback used' });
+  push({ type: 'node_completed', nodeId: 'publish' });
+  push({ type: 'node_started', nodeId: 'merchant' });
+  push({ type: 'node_failed', nodeId: 'merchant', error: 'Mail service unavailable' });
+  push({ type: 'run_failed', error: 'Mail service unavailable' });
+  await settle(target);
+  await wait(250);
+  const post = host(target, 'publish')!;
+  const notify = host(target, 'merchant')!;
+  const notifyPart = notify.shadowRoot!.querySelector<HTMLElement>('[part~="flow-node"]')!;
+  const finished = {
+    warnings: post.shadowRoot!.querySelector('.status-warnings')?.textContent?.trim(),
+    postMarker: post
+      .shadowRoot!.querySelector('[part~="flow-node"]')!
+      .hasAttribute('data-warnings'),
+    failedDetail: notify.shadowRoot!.querySelector('.status-detail')?.textContent,
+    failedRing: getComputedStyle(notifyPart).boxShadow,
+    failedName: notify.getAttribute('aria-label'),
+    runError: target.runState?.error,
+  };
+  const summary = target.runSummary;
+  const chips = [
+    ...headerBar(target, 'header-center').shadowRoot!.querySelectorAll<HTMLElement>('tp-badge'),
+  ].map(
+    (chip) =>
+      `${chip.dataset['status']}:${chip.textContent?.replace(/\D+/g, ' ').trim().split(' ')[0]}`,
+  );
+  const lastChange = changes.events.at(-1) as unknown as { value?: unknown } | undefined;
+  const detailSummary = (
+    changes.events.length ? (lastChange as unknown as Record<string, unknown>) : undefined
+  ) as unknown;
+  // A scoped run of one node keeps the earlier results and leaves the downstream nodes alone.
+  push({ type: 'run_started', scope: ['moderate'] });
+  push({ type: 'node_started', nodeId: 'moderate' });
+  push({ type: 'node_completed', nodeId: 'moderate', port: 'safe' });
+  push({ type: 'run_completed' });
+  await settle(target);
+  const scoped = {
+    scope: target.runState?.scope,
+    upload: target.runState?.nodes.get('upload')?.status,
+    moderate: target.runState?.nodes.get('moderate')?.status,
+    publish: target.runState?.nodes.get('publish')?.status,
+    flag: target.runState?.nodes.get('flag')?.status,
+  };
+  // The run graph follows an edit: a new node joins idle; undo removes it again.
+  const [added] = target.addNodes([{ type: 'merchant', position: { x: 700, y: 720 }, data: {} }]);
+  await settle(target);
+  const joined = added ? target.runState?.nodes.get(added)?.status : undefined;
+  target.undo();
+  await settle(target);
+  const left = added ? target.runState?.nodes.has(added) : undefined;
+  observer.disconnect();
+  changes.stop();
+  target.clearRun();
+  await settle(target);
+  const cleared = {
+    run: target.runState ?? null,
+    chips: headerBar(target, 'header-center').shadowRoot!.querySelectorAll('tp-badge').length,
+  };
+  return report([
+    check(
+      'a running node shows its progress',
+      running.status === 'running' && running.progress === 40,
+      running,
+    ),
+    check(
+      'a waiting node shows what it waits for',
+      waiting === 'Waiting for: Merchant approval',
+      waiting,
+    ),
+    check(
+      'warnings count on the node, a failure rings it and shows its error',
+      finished.warnings === '1' &&
+        finished.postMarker &&
+        finished.failedDetail === 'Mail service unavailable' &&
+        finished.failedRing !== 'none' &&
+        Boolean(finished.failedName?.includes('error: Mail service unavailable')) &&
+        finished.runError === 'Mail service unavailable',
+      finished,
+    ),
+    check(
+      'the summary counts the nodes and its chips follow',
+      summary.success === 4 &&
+        summary.failed === 1 &&
+        summary.warnings === 1 &&
+        chips.join(',') === 'failed:1,warnings:1,success:4',
+      { summary, chips },
+    ),
+    check(
+      'transitions are announced and tp-run-change reports them',
+      announced.some((text) => text.includes('failed')) && changes.events.length >= 10,
+      {
+        announced: [...new Set(announced)].slice(0, 6),
+        changes: changes.events.length,
+        detailSummary: Boolean(detailSummary),
+      },
+    ),
+    check(
+      'a scoped run keeps the other results and leaves the nodes outside it alone',
+      JSON.stringify(scoped.scope) === '["moderate"]' &&
+        scoped.upload === 'success' &&
+        scoped.moderate === 'success' &&
+        scoped.publish === 'success' &&
+        scoped.flag === 'idle',
+      scoped,
+    ),
+    check('the run graph follows an edit', joined === 'idle' && left === false, { joined, left }),
+    check('clearRun clears it', cleared.run === null && cleared.chips === 0, cleared),
+  ]);
+}
+
+/**
+ * Problems: `validate` reports the unconnected required input on its node (indicator and
+ * outline) and port, `issues` adds supplied problems (an error on a node, a warning on an
+ * edge), `tp-issues-change` reports each change, and connecting the port clears its problem.
+ */
+export async function assertProblems(id = 'execution'): Promise<Report> {
+  const target = flow(id);
+  target.scrollIntoView({ block: 'center' });
+  target.clearRun();
+  await settle(target);
+  await wait(200);
+  const archive = host(target, 'purge')!;
+  const archivePart = archive.shadowRoot!.querySelector<HTMLElement>('[part~="flow-node"]')!;
+  const indicator = archive.shadowRoot!.querySelector<HTMLElement & { ariaLabel: string }>(
+    'tp-button.problem',
+  );
+  const portButton = archive
+    .shadowRoot!.querySelector('tp-flow-port[port-id="in"]')
+    ?.shadowRoot?.querySelector<HTMLElement>('[part~="flow-port"]');
+  const computed = {
+    problems: target.problems.map(
+      (issue) => `${issue.severity}:${issue.code}:${issue.nodeId}:${issue.portId}`,
+    ),
+    marker: archivePart.getAttribute('data-problem'),
+    outline: getComputedStyle(archivePart).outlineStyle,
+    indicator: indicator?.ariaLabel,
+    port: portButton?.getAttribute('data-issue'),
+  };
+  const events = capture(target, ['tp-issues-change']);
+  target.issues = [
+    { code: 'lint', severity: 'error', message: 'Catalog is read-only', nodeId: 'publish' },
+    { code: 'lint', severity: 'warning', message: 'Merchant was not notified', edgeId: 'i5' },
+  ];
+  await settle(target);
+  await wait(100);
+  const postPart = host(target, 'publish')!.shadowRoot!.querySelector('[part~="flow-node"]');
+  const edgeGroup = target.shadowRoot!.querySelector(`[part~="flow-edge"][data-edge="i5"]`);
+  const supplied = {
+    count: target.problems.length,
+    post: postPart?.getAttribute('data-problem'),
+    edge: edgeGroup?.getAttribute('data-issue'),
+    dash: edgeGroup
+      ? getComputedStyle(edgeGroup.querySelector('[part~="flow-edge-path"]')!).strokeDasharray
+      : '',
+  };
+  // Connecting the required input clears its problem; undo brings it back.
+  target.connect({ source: 'moderate', sourcePort: 'safe', target: 'purge', targetPort: 'in' });
+  await settle(target);
+  await wait(100);
+  const connected = {
+    problems: target.problems.filter((issue) => issue.code === 'required-port').length,
+    marker: host(target, 'purge')!
+      .shadowRoot!.querySelector('[part~="flow-node"]')!
+      .getAttribute('data-problem'),
+  };
+  target.undo();
+  target.issues = [];
+  await settle(target);
+  await wait(100);
+  const restored = target.problems.length;
+  events.stop();
+  return report([
+    check(
+      'validate reports the unconnected required input on its node and port',
+      computed.problems.join() === 'warning:required-port:purge:in' &&
+        computed.marker === 'warning' &&
+        computed.outline === 'dashed' &&
+        Boolean(
+          computed.indicator?.includes('"Images" of "Purge CDN cache" requires a connection.'),
+        ) &&
+        computed.port === 'warning',
+      computed,
+    ),
+    check(
+      'supplied issues mark their node and edge',
+      supplied.count === 3 &&
+        supplied.post === 'error' &&
+        supplied.edge === 'warning' &&
+        supplied.dash !== 'none',
+      supplied,
+    ),
+    check(
+      'connecting the port clears its problem; undo restores it',
+      connected.problems === 0 && connected.marker === null && restored === 1,
+      { connected, restored },
+    ),
+    // Changes in one task coalesce into one validation: the issues, the connection, the restore.
+    check('tp-issues-change reports each change', events.events.length >= 3, events.events.length),
+  ]);
+}
+
+/**
+ * The opt-in header: shown only with slotted content, the canvas, the sidebar and the panels
+ * below it, its menus opening downward, and a menu Dialog still covering the whole widget.
+ */
+export async function assertHeader(id = 'execution'): Promise<Report> {
+  const target = flow(id);
+  target.scrollIntoView({ block: 'center' });
+  await settle(target);
+  await wait(200);
+  const root = target.shadowRoot!;
+  const header = root.querySelector<HTMLElement>('.header')!;
+  const rect = target.getBoundingClientRect();
+  const headerRect = header.getBoundingClientRect();
+  const canvasTop = root.querySelector('.canvas')!.getBoundingClientRect().top;
+  const panelTop = root
+    .querySelector('.panel[data-position="top-start"]')!
+    .getBoundingClientRect().top;
+  target.setPaletteOpen(true, 'programmatic');
+  await settle(target);
+  await wait(400);
+  const sidebarTop = root.querySelector('tp-flow-palette')!.getBoundingClientRect().top;
+  target.setPaletteOpen(false, 'programmatic');
+  const shown = {
+    hidden: header.hidden,
+    height: Math.round(headerRect.height),
+    canvas: Math.round(canvasTop - headerRect.bottom),
+    panel: Math.round(panelTop - headerRect.bottom),
+    sidebar: Math.round(sidebarTop - headerRect.bottom),
+    regions: [...header.querySelectorAll('.header-region')].map((region) =>
+      Math.round(region.getBoundingClientRect().left - rect.left),
+    ),
+    menuSide: headerBar(target, 'header-end')
+      .shadowRoot!.querySelector('tp-menu.execute-menu')
+      ?.getAttribute('side'),
+  };
+  // A widget without header content has no header.
+  const monitor = flow('monitor');
+  const monitorHeader = monitor.shadowRoot!.querySelector<HTMLElement>('.header')!;
+  const absent = {
+    hidden: monitorHeader.hidden,
+    canvas: Math.round(
+      monitor.shadowRoot!.querySelector('.canvas')!.getBoundingClientRect().top -
+        monitor.getBoundingClientRect().top,
+    ),
+  };
+  // A menu Dialog covers the header too.
+  await settle(target);
+  await wait(300);
+  target.palette = 'menu';
+  await settle(target);
+  target.setPaletteOpen(true, 'programmatic');
+  await settle(target);
+  await wait(500);
+  const portal = [...root.querySelectorAll<HTMLElement>('.root > div')].find((element) =>
+    element.querySelector('tp-flow-palette'),
+  );
+  const backdrop = portal
+    ? [
+        ...portal.querySelectorAll<HTMLElement>('*'),
+        ...(portal.shadowRoot ? [...portal.shadowRoot.querySelectorAll<HTMLElement>('*')] : []),
+      ].find((element) => element.hasAttribute('data-backdrop'))
+    : undefined;
+  const cover = backdrop?.getBoundingClientRect();
+  const menu = {
+    backdrop: backdrop?.getAttribute('data-backdrop'),
+    top: cover ? Math.round(cover.top - rect.top) : null,
+    height: cover ? Math.round(cover.height - rect.height) : null,
+  };
+  target.setPaletteOpen(false, 'programmatic');
+  await settle(target);
+  await wait(400);
+  target.palette = 'sidebar';
+  await settle(target);
+  return report([
+    check(
+      'the header shows with its start, center and end regions',
+      !shown.hidden && shown.height > 0 && shown.regions.length === 3,
+      shown,
+    ),
+    check(
+      'the canvas, the start panel and the sidebar sit below it; its menus open downward',
+      shown.canvas >= 0 && shown.panel >= 0 && shown.sidebar >= 0 && shown.menuSide === 'bottom',
+      shown,
+    ),
+    check('no header without slotted content', absent.hidden && absent.canvas <= 1, absent),
+    check(
+      'the menu Dialog covers the whole widget over a blurred backdrop',
+      menu.backdrop === 'blur' &&
+        menu.top !== null &&
+        Math.abs(menu.top) <= 1 &&
+        Math.abs(menu.height ?? 9) <= 2,
+      menu,
+    ),
+  ]);
+}
+
 /**
  * `confirmDelete`: a user deletion that removes nodes asks in an Alert dialog modal to the widget
  * over a blurred backdrop; Cancel keeps everything, Delete removes the nodes in one change.
@@ -2329,7 +2887,7 @@ export async function assertDeleteConfirmation(id = 'monitor'): Promise<Report> 
   };
   const before = { nodes: target.nodes.length, edges: target.edges.length };
 
-  await pressDelete('enrich');
+  await pressDelete('lookup');
   const asked = {
     open: dialog.open,
     title: dialog.getAttribute('label'),
@@ -2342,7 +2900,7 @@ export async function assertDeleteConfirmation(id = 'monitor'): Promise<Report> 
   await decide('cancel');
   const cancelled = { open: dialog.open, nodes: target.nodes.length, edges: target.edges.length };
 
-  await pressDelete('enrich');
+  await pressDelete('lookup');
   const commitsBefore = captured.events.filter((event) => event.type === 'tp-value-commit').length;
   await decide('confirm');
   const confirmed = {
@@ -2351,7 +2909,7 @@ export async function assertDeleteConfirmation(id = 'monitor'): Promise<Report> 
     edges: target.edges.length,
     commits:
       captured.events.filter((event) => event.type === 'tp-value-commit').length - commitsBefore,
-    gone: !target.nodes.some((node) => node.id === 'enrich'),
+    gone: !target.nodes.some((node) => node.id === 'lookup'),
   };
   target.undo();
   await settle(target);
@@ -2374,9 +2932,9 @@ export async function assertDeleteConfirmation(id = 'monitor'): Promise<Report> 
   await wait(200);
   const edgeOnly = { open: dialog.open, edges: target.edges.length };
   if (edgeOnly.edges < before.edges) target.undo();
-  target.deleteElements({ nodes: ['notify'] });
+  target.deleteElements({ nodes: ['reply'] });
   await settle(target);
-  const api = { open: dialog.open, gone: !target.nodes.some((node) => node.id === 'notify') };
+  const api = { open: dialog.open, gone: !target.nodes.some((node) => node.id === 'reply') };
   target.undo();
   captured.stop();
   target.confirmDelete = false;
@@ -2387,7 +2945,7 @@ export async function assertDeleteConfirmation(id = 'monitor'): Promise<Report> 
       check(
         'a node deletion asks in a dialog modal to the widget over a blur',
         asked.open &&
-          asked.title === 'Delete Enrich company?' &&
+          asked.title === 'Delete Look up customer?' &&
           asked.container &&
           asked.backdrop === 'blur' &&
           String(asked.filter).includes('blur') &&

@@ -22,6 +22,7 @@ import { xIcon } from '../../../icons/x.js';
 import { gitBranchIcon } from '../../../icons/git-branch.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
 import { TpBadge } from '../../../components/badge/badge.js';
+import { TpProgress } from '../../../components/progress/progress.js';
 import { TpButton } from '../../../components/button/button.js';
 import { TpField } from '../../../components/field/field.js';
 import { TpForm } from '../../../components/form/form.js';
@@ -244,6 +245,7 @@ export class TpFlowInspector extends TpElement {
       TpListItem,
       TpListItemGroup,
       TpBadge,
+      TpProgress,
       TpInput,
       TpInputGroup,
       TpTextArea,
@@ -726,6 +728,23 @@ export class TpFlowInspector extends TpElement {
           : nothing
       }
       ${
+        run.status === 'running' && run.progress !== undefined
+          ? html`<dt>${strings.progress}</dt>
+              <dd>
+                <tp-progress
+                  .value=${Math.round(Math.min(1, Math.max(0, run.progress)) * 100)}
+                  label=${strings.progress}
+                ></tp-progress>
+              </dd>`
+          : nothing
+      }
+      ${
+        run.status === 'waiting' && run.waiting?.reason
+          ? html`<dt>${strings.waitingFor}</dt>
+              <dd>${run.waiting.reason}</dd>`
+          : nothing
+      }
+      ${
         run.message
           ? html`<dt>${strings.message}</dt>
               <dd>${run.message}</dd>`
@@ -735,6 +754,14 @@ export class TpFlowInspector extends TpElement {
         run.error
           ? html`<dt>${strings.error}</dt>
               <dd class="error">${run.error}</dd>`
+          : nothing
+      }
+      ${
+        run.warnings?.length
+          ? html`<dt>${strings.warnings}</dt>
+              <dd class="warnings">
+                ${run.warnings.map((warning) => html`<div>${warning}</div>`)}
+              </dd>`
           : nothing
       }
     </dl>`;

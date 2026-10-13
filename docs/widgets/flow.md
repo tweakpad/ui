@@ -397,51 +397,109 @@ its meaning (a press on the pane also clears the selection); a right press elsew
 menu to the new subject. Pointer presses focus nodes without the keyboard focus ring. The default items are duplicate, copy, cut, pin or unpin (in automatic layout)
 and delete for a node (preceded by align left, align top, distribute horizontally and distribute
 vertically when two or more nodes are selected); add waypoint and delete for an edge; paste, select
-all, fit view and lay out for the pane. Each item carries its icon and, where a key binding
+all, fit view and lay out for the pane. With `runnable`, Run node, Run from here and Run up to
+here lead the node items and Run graph the pane items. Each item carries its icon and, where a key binding
 exists, its shortcut as a Key hint (Mod+D, Mod+C, Mod+X, Mod+V, Mod+A, Shift+1, Backspace), as the
 theme's menus do; delete is the destructive variant. `contextMenu(subject)` renders the items instead: `subject` is
 `{ kind: 'node', nodeId, selection }`, `{ kind: 'edge', edgeId, selection }` or
 `{ kind: 'pane', point, selection }`;
 items with the built-in values (`duplicate`, `copy`, `cut`, `delete`, `pin`, `unpin`,
 `align-left`, `align-top`, `distribute-x`, `distribute-y`, `add-waypoint`, `paste`, `select-all`,
-`fit`, `layout`) keep their behavior, items with other
+`fit`, `layout`, `run-node`, `run-from`, `run-to`, `run-graph`) keep their behavior, items with other
 values handle their own activation, and `contextMenu = false` removes the menu. A node with
 inspector settings gets a Settings item first (`settings`; it opens the inspector and focuses its
 first field). The node toolbar appears above a single selected node with Settings (only when the
 node has inspector settings), duplicate, pin (in automatic layout; pressed while pinned) and
-delete; `nodeToolbar(context)` renders its
+delete, led by Run node with `runnable` (which also shows the toolbar, with Run alone, when the
+widget is read-only or in view mode); `nodeToolbar(context)` renders its
 content from `{ node, definition }` and `nodeToolbar = false` hides it.
 
-## Run state
+## Run state and execution
+
+The widget shows execution; it never runs anything. A backend (or a mock) owns the run and reports
+it as events, and every run control is opt-in.
 
 `run` binds execution state: a `FlowRun` snapshot
-(`{ id, status, startedAt, endedAt, nodes, edges, lastSeq, applied }` with a `Map` of node states
-and one of edge states) or a `FlowTrace`,
-an array of run events (`run_started`, `node_started`, `node_waiting`, `node_progress`,
-`node_completed`, `node_failed`, `node_skipped`, `node_cancelled`, `edge_taken`, `run_paused`,
-`run_resumed`, `run_completed`, `run_failed`, `run_cancelled`, each with `at` and an optional
-`seq`) that the built-in stepper plays. `null` clears it.
+(`{ id, status, startedAt, endedAt, error, scope, nodes, edges, lastSeq, applied }` with a `Map` of
+node states and one of edge states) or a `FlowTrace`, an array of run events (`run_started`,
+`node_started`, `node_waiting`, `node_progress`, `node_warning`, `node_completed`, `node_failed`,
+`node_skipped`, `node_cancelled`, `edge_taken`, `run_paused`, `run_resumed`, `run_completed`,
+`run_failed`, `run_cancelled`, each with `at` and an optional `seq`) that the built-in stepper
+plays. `pushRunEvent(event)` feeds a live run one event at a time: the first event starts a live
+player on the current graph, which follows later edits (added nodes join idle, removed ones leave).
+`clearRun()`, or `run = null`, clears it.
+
+- `node_progress` reports a fraction from 0 to 1 and an optional `message`; `node_waiting` a
+  `reason` (an approval, an external system); `node_warning` a `message` that does not fail the
+  node. Warnings accumulate until the node starts again.
+- `run_started` with `scope: string[]` is a partial run: only those nodes reset, the others keep
+  their earlier results, and the end of the run marks unreached and cancelled nodes inside the scope
+  only. `run_failed` keeps its `error` on the run.
 
 Node statuses (`idle`, `pending`, `running`, `waiting`, `success`, `failed`, `skipped`,
-`cancelled`) show in the status footer as a Marker and a Badge with the status text, attempts,
-duration or error, and on the host as `data-status`; a running node shows a Spinner. Edge statuses
-derive from their nodes: an explicit `edge_taken` marks an edge `taken`; a skipped or cancelled
-source makes it `disabled`; a source finished through this port with its target running or waiting
-makes it `active` (the dash flows), finished makes it `taken`, finished through another port makes
-it `not-taken`; otherwise `inactive`. Edges carry `data-status` and the not-taken and disabled ones
-dim; under reduced motion the dash stays still and the markers show the direction. No status is
-conveyed by color alone.
+`cancelled`) show in the status footer: a Spinner or a Marker, the detail and a status Badge. The
+detail is the error of a failed node, "Waiting for: reason" for a waiting one, a Progress bar while a
+running node reports progress, else its message or duration; a warning Badge counts its warnings. A
+running, waiting or failed node gets a ring in its status tone, and the host carries `data-status`
+and `data-warnings`. Edge statuses derive from their nodes: an explicit `edge_taken` marks an edge
+`taken`; a skipped or cancelled source makes it `disabled`; a source finished through this port with
+its target running or waiting makes it `active` (the dash flows), finished makes it `taken`,
+finished through another port makes it `not-taken`; otherwise `inactive`. Edges carry `data-status`
+and the not-taken and disabled ones dim; under reduced motion the dash stays still and the markers
+show the direction. No status is conveyed by color alone.
 
 A trace gets a `player` (`FlowRunPlayer`: `seek(index)`, `step()`, `back()`, `toStart()`,
-`toEnd()`, `play(speed)`, `pause()`, `push(event)` for live events, `setTrace(trace)`), and listing
-`run` in `controls` shows a transport in the controls toolbar: step back, play or pause, step
-forward and a position Slider over the steps. `runTransport(action, index?, speed?)` drives it from
-code (`play`, `pause`, `step`, `back`, `seek`, `start`, `end`), `runState` is the run currently
-shown, `tp-run-change` reports every transition with `{ run, index, length, playing, mode }`, the
-inspector's Run tab shows the selected node's state, the root carries `data-running`, and status
-transitions are announced. For a live run keep a `FlowRunState` over `flowRunGraph(document)` and
-assign its `snapshot()` as `run` after each event, or play a growing trace and `push` into the
-player.
+`toEnd()`, `play(speed)`, `pause()`, `push(event)`, `setTrace(trace)`, `setGraph(graph)`), and
+listing `run` in `controls` shows a transport in the controls toolbar: step back, play or pause,
+step forward and a position Slider over the steps. `runTransport(action, index?, speed?)` drives it
+from code (`play`, `pause`, `step`, `back`, `seek`, `start`, `end`), `runState` is the run currently
+shown, `runSummary` counts its nodes per status (plus `warnings` and `total`), `tp-run-change`
+reports every transition with `{ run, summary, index, length, playing, mode }`, the inspector's Run
+tab shows the selected node's status, attempts, duration, progress, waiting reason, message, error
+and warnings, the root carries `data-running`, and status transitions are announced.
+
+### Run requests
+
+`runnable` lets people ask for runs. The node toolbar gets Run node, the context menu Run node,
+Run from here and Run up to here (and Run graph on the pane), Mod+Enter runs the graph, and the
+`execute` control offers Run and its scopes. These work in read-only and view mode, for monitors,
+but not when the widget is disabled. Each asks through `tp-run-request` with
+`{ action, scope, nodeId, nodeIds, reason, sourceEvent }`:
+
+- `action` is `run`, `stop` (Stop, while a run is going) or `clear` (Clear run).
+- `scope` is `graph`, `node` (the node alone), `from` (the node and everything downstream of it) or
+  `to` (everything upstream of it, then the node); `nodeIds` lists the scope in execution order
+  (`flowRunScope(graph, scope, nodeId)` computes the same from the engine).
+- `requestRun(scope, nodeId?)` and `requestStop()` ask the same from your own controls.
+
+```js
+flow.addEventListener('tp-run-request', async (event) => {
+  const { action, scope, nodeIds } = event.detail;
+  if (action === 'clear') return flow.clearRun();
+  if (action === 'stop') return backend.cancel();
+  flow.pushRunEvent({
+    type: 'run_started',
+    at: Date.now(),
+    ...(scope === 'graph' ? {} : { scope: nodeIds }),
+  });
+  for await (const runEvent of backend.run(nodeIds)) flow.pushRunEvent(runEvent);
+});
+```
+
+## Problems
+
+`validate` shows the document's validation issues: the widget validates after loading and after
+every change that is not geometry (the schema's rules, required ports left unconnected, missing
+endpoints, a definition's own `validate(node, context)`). `issues` adds problems from elsewhere,
+such as a backend's lint, as `FlowIssue` objects
+(`{ code, severity, message, nodeId, edgeId, portId }`). `problems` is the merged list, and
+`tp-issues-change` reports it whenever it changes.
+
+- A node with problems carries `data-problem` (`error` or `warning`) and, without a run status, a
+  dashed outline in that tone; an icon Button in its header opens a Tooltip that lists the problems
+  and its run warnings (part `flow-node-problem`). Its accessible name includes them.
+- A port named by a problem carries `data-issue` and takes the problem's tone.
+- An edge named by a problem carries `data-issue` and draws dashed in the problem's tone.
 
 ## Modes
 
@@ -459,12 +517,18 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
   `top-end`, `center-start`, `center-end`, `bottom-start`, `bottom-center` and `bottom-end`
   (`FlowPanelPosition`, logical `block-inline` pairs). Every built-in panel takes a position, and a
   slot of each name places consumer content there.
+- Header (opt-in): the slots `header-start`, `header-center` and `header-end` place content in a bar
+  above the canvas (part `flow-header`): a breadcrumb at the start, the run summary in the center,
+  actions at the end. The bar renders only while one of its slots has content; the canvas, the
+  sidebars and the panels then start below it. An authored `tp-flow-controls` in a header slot is
+  kept in sync like one in a panel, and its menus open downward.
 - Controls: `controls` lists the actions of the built-in bar in display order:
   `zoom-in zoom-out fit tool undo redo lock` by default, with `zoom`, `layout` and `run` opting in
   and `controls=""` rendering no bar. Adjacent actions of one set (view, history) share a Button
   group of outline icon Buttons; the select and pan tools are a Toggle group, the lock a Toggle,
-  `zoom` the zoom field, `run` the transport (a Slider with its Buttons) and `palette` the node
-  library's "+" Toggle. Undo and Redo are
+  `zoom` the zoom field, `run` the transport (a Slider with its Buttons), `palette` the node
+  library's "+" Toggle, `execute` the Run split Button and `run-summary` the status counts (both
+  below). Undo and Redo are
   disabled until the history has a step to take. The bar sits in `controlsPosition`
   (`bottom-start`) laid out along `controlsOrientation` (`vertical`).
 - Zoom field (`zoom`): an Input group showing the current level; type a percentage and press Enter
@@ -472,6 +536,14 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
   fit (Shift+1) with their icons, then the levels of `zoomPresets` (`[0.5, 1, 2]`; 100% is
   Shift+0) as inset items aligned with them. In a bar at the bottom the menu opens upward,
   at the top downward and on a side edge toward the canvas.
+- Run (`execute`): a split Button, the Button group split pattern. Run asks for the whole graph
+  (Stop while a run is going); its Menu offers Run graph (Mod+Enter), Run selected node, Run from
+  selected node and Run up to selected node (with one selected node) and, once a run exists, Clear
+  run. It is disabled without `runnable`.
+- Run summary (`run-summary`): one status Badge per non-zero count of the run, in the variants of
+  the node status pills: failed, warnings, waiting, pending, running (a Spinner) and completed,
+  each with its icon and number on screen and its full label ("Failed: 1") for assistive
+  technology (part `flow-run-summary`). It shows nothing without a run.
 - Further bars: an authored `tp-flow-controls` child slotted into any panel
   (`<tp-flow-controls slot="center-end" actions="tool lock" orientation="vertical">`) is another
   standard bar; the widget keeps its tool, lock, history, zoom, run and disabled state in sync and
@@ -497,8 +569,8 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
     matching groups replace the sections. It stays open after an insertion; the panels at the
     inline start move clear of it, and fitting the view centers the graph in the canvas it leaves
     uncovered.
-  - `menu`: an "Add node" Dialog modal to the widget (container modality: the canvas behind it is
-    inert, Escape and its Close Button close it) whose groups lay out as columns under their
+  - `menu`: an "Add node" Dialog modal to the widget over a blurred backdrop (container modality:
+    the canvas behind it is inert, Escape and its Close Button close it) whose groups lay out as columns under their
     headings, wrapping to further rows when they do not fit. It closes after an insertion and
     focus moves to the new node.
 - Library items: each definition is a compact outline Button chip with its icon and label (the
@@ -621,7 +693,9 @@ the root as `data-renderer`.
 | `tp-delete`               | yes        | `{ nodes, edges, reason, sourceEvent }`: the nodes with their descendants and every dependent edge                                                                        |
 | `tp-layout-complete`      | no         | `{ direction, stats, bounds }`                                                                                                                                            |
 | `tp-history-change`       | no         | `{ canUndo, canRedo, undoLabel?, redoLabel?, depth }`                                                                                                                     |
-| `tp-run-change`           | no         | `{ run, index?, length?, playing?, mode? }`                                                                                                                               |
+| `tp-run-change`           | no         | `{ run, summary, index?, length?, playing?, mode? }`                                                                                                                      |
+| `tp-run-request`          | no         | `{ action, scope?, nodeId?, nodeIds, reason, sourceEvent? }` (`runnable`)                                                                                                 |
+| `tp-issues-change`        | no         | `{ issues }`: the problems shown changed                                                                                                                                  |
 | `tp-field-value`          | no         | the form value for a surrounding Field                                                                                                                                    |
 | `tp-diagnostic`           | no         | `{ code, message, severity }` with the codes `flow-state` and `flow-adoption-conflict`                                                                                    |
 
@@ -667,6 +741,7 @@ is Command on macOS and Control elsewhere.
     <tr><td><tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>Z</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>Shift</tp-key-hint><tp-key-hint>Z</tp-key-hint></tp-key-hint-group></td><td>Undo, redo</td></tr>
     <tr><td><tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>C</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>X</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>V</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>D</tp-key-hint></tp-key-hint-group></td><td>Copy, cut, paste, duplicate the selection</td></tr>
     <tr><td><tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>A</tp-key-hint></tp-key-hint-group></td><td>Select everything</td></tr>
+    <tr><td><tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint key="Enter"></tp-key-hint></tp-key-hint-group></td><td>Ask to run the graph (<code>runnable</code>)</td></tr>
     <tr><td><tp-key-hint>+</tp-key-hint> <tp-key-hint>-</tp-key-hint></td><td>Zoom in, zoom out</td></tr>
     <tr><td><tp-key-hint-group><tp-key-hint key="shift"></tp-key-hint><tp-key-hint>1</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint key="shift"></tp-key-hint><tp-key-hint>0</tp-key-hint></tp-key-hint-group></td><td>Zoom to fit, zoom to 100% (the digit key, whatever character Shift types on the layout)</td></tr>
     <tr><td><tp-key-hint>V</tp-key-hint> <tp-key-hint>H</tp-key-hint></td><td>Select tool, pan tool</td></tr>
@@ -694,7 +769,7 @@ The controls toolbar and the node toolbar are toolbars with arrow navigation, th
 with named pan buttons, the node library a region named "<label> node library" with a search field, headed groups
 (Accordion sections in the sidebar) and Button chips, inside a Dialog in the `menu` layout, the
 inspector a labelled panel whose Tabs and Fields keep their own semantics, the context menu a Menu.
-A polite live region announces moves ("Moved Notify sales to 700, 380"), connections, the
+A polite live region announces moves ("Moved Send auto-reply to 700, 380"), connections, the
 candidate during a keyboard connection, deletions, the selection count, layout completion, the
 zoom level after a keyboard zoom and run transitions. Under reduced motion the dash flow, the
 viewport and layout tweens and the selection transitions are off; under forced colors the strokes
@@ -715,16 +790,18 @@ One presentation family, `tp-flow`, covers the root and every constituent with t
 (`sm`, `default`, `lg`), which scales the node width, the ports, the handles, the edge width, the
 markers, the grid, the minimap, the palette, the inspector and the intrinsic height (the widget fills its box
 and has a minimum height on its own, so it needs no inline size). Public parts: `flow`,
-`flow-pane`, `flow-viewport`, `flow-background`, `flow-background-pattern`, `flow-node`,
+`flow-header`, `flow-pane`, `flow-viewport`, `flow-background`, `flow-background-pattern`,
+`flow-node`,
 `flow-node-card`, `flow-node-shell`, `flow-node-header`, `flow-node-icon`, `flow-node-title`,
 `flow-node-description`, `flow-node-body`, `flow-node-row`, `flow-node-row-label`,
-`flow-node-row-control`, `flow-node-footer`, `flow-node-status`, `flow-node-group`,
+`flow-node-row-control`, `flow-node-footer`, `flow-node-status`, `flow-node-problem`,
+`flow-node-group`,
 `flow-node-toolbar`, `flow-node-resizer`, `flow-node-resizer-line`, `flow-node-resizer-handle`,
 `flow-port`, `flow-port-dot`, `flow-port-label`, `flow-edge`, `flow-edge-path`, `flow-edge-hit`,
 `flow-edge-halo`, `flow-edge-marker`, `flow-edge-label`, `flow-edge-focus`, `flow-edge-waypoint`,
 `flow-edge-segment-handle`, `flow-edge-reconnect`, `flow-connection-line`, `flow-selection`,
 `flow-selection-bounds`, `flow-minimap`, `flow-minimap-node`, `flow-minimap-viewport`,
-`flow-controls`, `flow-control`, `flow-palette`, `flow-palette-header`, `flow-palette-body`,
+`flow-controls`, `flow-control`, `flow-run-summary`, `flow-palette`, `flow-palette-header`, `flow-palette-body`,
 `flow-palette-search`, `flow-palette-sections`, `flow-palette-group`, `flow-palette-group-label`,
 `flow-palette-items`, `flow-palette-item`, `flow-inspector`,
 `flow-inspector-header`, `flow-inspector-tabs`, `flow-inspector-body`, `flow-inspector-footer`,
@@ -742,12 +819,13 @@ State markers: the root carries `data-mode`, `data-tool`, `data-dragging`, `data
 `data-auto-layout`, `data-lod`, `data-renderer`, `data-inspector-open`, `data-palette` (the
 sidebar shows), `data-placing`, `data-running` and
 `data-pan-active`; a node `data-selected`, `data-focused`, `data-focus-visible`, `data-dragging`,
-`data-connecting`, `data-shape`, `data-tone`, `data-status`, `data-lod`, `data-pinned`,
-`data-parent`, `data-measured` and `data-resizable`; a port `data-direction`, `data-side`,
+`data-connecting`, `data-shape`, `data-tone`, `data-status`, `data-problem`, `data-warnings`,
+`data-lod`, `data-pinned`, `data-parent`, `data-measured` and `data-resizable`; a port
+`data-direction`, `data-side`, `data-issue`,
 `data-connected`, `data-candidate`, `data-candidate-focused`, `data-valid`, `data-invalid`,
 `data-click-connecting`, `data-multiple` and `data-required`; an edge `data-kind`,
 `data-selected`, `data-hover`, `data-focus-visible`, `data-animated`, `data-status`,
-`data-direction`, `data-reconnecting` and `data-routed`.
+`data-issue`, `data-direction`, `data-reconnecting` and `data-routed`.
 
 Every color resolves through tokens: the frame and the background through `--tp-background`,
 `--tp-foreground` and `--tp-border`, cards through the Card recipe, rows through List item, pills
@@ -796,14 +874,16 @@ a controlled owner see one layout transaction.
 
 xyflow (`library/external/xyflow`, `packages/system/src/xypanzoom`, `xyhandle`, `xydrag`,
 `xyresizer` and `utils`; `packages/react/src/container` and `components`) and the Workflow Builder
-(`library/external/workflowbuilder`: the node panel, handle, edge label, palette, properties bar
-and execution highlighting). Adopted: viewport transform ownership outside the render cycle,
+(`library/external/workflowbuilder`: the node panel, handle, edge label, palette, properties bar,
+and the AI studio's execution markers, highlighting and Run, Stop and Reset controls, which that
+app, not the SDK, owns). Adopted: viewport transform ownership outside the render cycle,
 visible-only rendering, node measurement through a shared resize observer, the invisible
 interaction path per edge, the connection radius and validation pipeline, click-to-connect, the
 node toolbar outside the zoom transform, the edge path, marker and viewport math (with the MIT
 notice), sub-flows with parent extents, the minimap and background patterns, and the card, panel,
 pill and palette compositions. Extended: the obstacle-aware orthogonal router with nudging, the
-layered automatic layout with transitions and pinning, run state and the trace stepper, keyboard
+layered automatic layout with transitions and pinning, run state and the trace stepper, run requests
+with scopes, live runs, warnings and problem display as opt-in widget features, keyboard
 connections, spatial keyboard navigation, built-in history, schema-driven nodes and the inspector,
 controlled lanes with reasons, declarative light-DOM nodes and edges, the renderer boundary and
 forms. Deviated: a single document lane instead of node and edge change arrays; the arrow keys
@@ -849,6 +929,8 @@ nodes; pooled node hosts instead of a React element per node. tweakpane has no g
 | `paletteOpen` / `defaultPaletteOpen`       | `palette-open` / `default-palette-open`        | `boolean`                                              | `false`                                    |
 | `paletteTrigger`                           | `palette-trigger`                              | `FlowPanelPosition \| 'none'`                          | `'top-start'`                              |
 | `confirmDelete`                            | `confirm-delete`                               | `boolean`                                              | `false`                                    |
+| `runnable`                                 | `runnable`                                     | `boolean`                                              | `false`                                    |
+| `validate`, `issues`                       | `validate`, —                                  | `boolean`, `FlowIssue[]`                               | `false`, `[]`                              |
 | `inspector`, `inspectorCommit`             | `inspector`, `inspector-commit`                | `'none' \| 'auto' \| 'manual'`, `'live' \| 'explicit'` | `'auto'`, `'live'`                         |
 | `locked`                                   | `locked` (reflected)                           | `boolean`                                              | `false`                                    |
 | `wheel`, `cooperativeGestures`             | `wheel`, `cooperative-gestures`                | `'pan' \| 'zoom' \| 'none'`, `boolean`                 | `'pan'`, `false`                           |
@@ -860,7 +942,8 @@ nodes; pooled node hosts instead of a React element per node. tweakpane has no g
 | `name`, `disabled`, `readOnly`, `required` | `name`, `disabled`, `readonly`, `required`     | form control contract                                  | contract defaults                          |
 | `onValueChange`, `onValueCommitted`        | —                                              | callbacks                                              | `undefined`                                |
 
-Read-only: `model`, `nodes`, `edges`, `routes`, `player`, `runState`, `controlled`, `editable`,
+Read-only: `model`, `nodes`, `edges`, `routes`, `player`, `runState`, `runSummary`, `problems`,
+`controlled`, `editable`,
 `dragging`, `connecting`, `selecting`, `canUndo`, `canRedo`, `focusedNodeId`, `visibleNodeIds`,
 `visibleEdgeIds`, `rendererCapabilities`, `lod`, `canvasSize`.
 
@@ -884,13 +967,16 @@ Methods: `setValue(document, reason?, sourceEvent?)`, `load(document)`,
 `nudgeSelection(delta, reason?)`, `alignSelection(mode, reason?)`,
 `distributeSelection(axis, spacing?, reason?)`, `layout(direction?, { ids?, sourceEvent?, before? })`,
 `routeEdges()`,
-`runTransport(action, index?, speed?)`.
+`runTransport(action, index?, speed?)`, `pushRunEvent(event)`, `clearRun()`,
+`requestRun(scope?, nodeId?, sourceEvent?, reason?)`, `requestStop(sourceEvent?, reason?)`.
 
 Events: `tp-value-change`, `tp-value-commit`, `tp-viewport-change`, `tp-selection-change`,
 `tp-tool-change`, `tp-mode-change`, `tp-open-change`, `tp-connect`, `tp-delete`,
-`tp-layout-complete`, `tp-history-change`, `tp-run-change`, `tp-field-value`, `tp-diagnostic`.
+`tp-layout-complete`, `tp-history-change`, `tp-run-change`, `tp-run-request`, `tp-issues-change`,
+`tp-field-value`, `tp-diagnostic`.
 Slots: `top-start`, `top-center`, `top-end`, `center-start`, `center-end`, `bottom-start`,
-`bottom-center`, `bottom-end`; the default slot takes `tp-flow-node` and `tp-flow-edge` children.
+`bottom-center`, `bottom-end`, `header-start`, `header-center`, `header-end`; the default slot takes
+`tp-flow-node` and `tp-flow-edge` children.
 
 ### `tp-flow-controls`
 
@@ -932,15 +1018,15 @@ Parts `flow-port`, `flow-port-dot` and `flow-port-label`.
 
 ### Engine exports (`@tweakpad/ui/flow`)
 
-| Group    | Exports                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Types    | `FlowDocument`, `FlowNode`, `FlowEdge`, `FlowPortInstance`, `FlowSchema`, `FlowNodeDefinition`, `FlowPortDefinition`, `FlowPropertyDefinition`, `FlowPropertyPlacement`, `FlowDataTypeDefinition`, `FlowSchemaRules`, `FlowChange`, `FlowChangeOrigin`, `FlowConnection`, `FlowViewport`, `FlowRect`, `FlowPoint`, `FlowSize`, `FlowIssue`, `FlowSelection`                                                                          |
-| Defaults | `FLOW_DOCUMENT_VERSION`, `DEFAULT_NODE_SIZE_BY_SHAPE`, `DEFAULT_PROPERTY_PLACEMENT_BY_SHAPE`, `propertyPlacement`, `inspectorProperties`, `DEFAULT_EDGE_KIND`, `DEFAULT_ROUTER_OPTIONS`, `DEFAULT_LAYOUT_OPTIONS`, `DEFAULT_ZOOM_LIMITS`                                                                                                                                                                                             |
-| Model    | `FlowModel`, `FlowHistory`, `applyFlowChanges`, `invertFlowChanges`, `squashFlowChanges`, `pruneNoopChanges`, `expandRemoveCascade`, `runBeforeHooks`, `runAfterHooks`, `validateConnection`, `validateDocument`, `serializeFlowDocument`, `parseFlowDocument`, `migrateFlowDocument`, `normalizeNodeOrder`, `topologicalOrder`, `hasCycle`, `wouldCreateCycle`, `reachable`, `connectedComponents`, `nodesBounds`, `nodeZ`, `edgeZ` |
-| Geometry | `clamp`, `rectsIntersect`, `expandRect`, `unionRects`, `overlapArea`, `snapPoint`, `SpatialIndex`                                                                                                                                                                                                                                                                                                                                    |
-| Viewport | `screenToFlow`, `flowToScreen`, `visibleRect`, `viewportForBounds`, `zoomToPoint`, `zoomBy`, `panBy`, `centerOn`, `clampViewport`, `wheelZoomFactor`, `autoPanVelocity`, `interpolateViewport`, `viewportsEqual`                                                                                                                                                                                                                     |
-| Edges    | `bezierPath`, `straightPath`, `stepPath`, `smoothStepPath`, `orthogonalPath`, `flattenBezier`, `resolveEndpoint`, `defaultPortGeometry`, `resolveSide`, `fallbackSide`, `pointAlongPath`, `labelAnchor`, `longestSegmentAnchor`, `markerId`, `collectMarkers`, `markerGeometry`, `distanceToSegment`, `distanceToPolyline`, `hitTestPath`                                                                                            |
-| Router   | `FlowRouter`, `FlowRoute`, `FlowRouteRequest`, `FlowRoutingPlanner`, `OrthogonalRouter`, `createRoutingPlanner`, `routeGeometryHash`, `packRoutes`, `unpackRoutes`, `PackedRoutes`                                                                                                                                                                                                                                                   |
-| Layout   | `FlowLayoutEngine`, `FlowLayoutRequest`, `FlowLayoutOptions`, `FlowLayoutResult`, `LayeredLayoutEngine`, `flowLayoutRequest`, `layoutFlow`, `alignNodes`, `distributeNodes`, `snapNodesToGrid`                                                                                                                                                                                                                                       |
-| Run      | `FlowRun`, `FlowRunEvent`, `FlowTrace`, `FlowNodeRunStatus`, `FlowEdgeRunStatus`, `flowRunGraph`, `FlowRunState`, `deriveEdgeStatus`, `FlowRunPlayer`, `FlowTicker`, `timeoutTicker`                                                                                                                                                                                                                                                 |
-| Renderer | `FlowRenderer`, `FlowRenderHost`, `FlowRendererCapabilities`, `RenderedEdge`, `RenderedEdgeLabel`, `ConnectionLineState`, `FlowRendererHit`                                                                                                                                                                                                                                                                                          |
+| Group    | Exports                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Types    | `FlowDocument`, `FlowNode`, `FlowEdge`, `FlowPortInstance`, `FlowSchema`, `FlowNodeDefinition`, `FlowPortDefinition`, `FlowPropertyDefinition`, `FlowPropertyPlacement`, `FlowDataTypeDefinition`, `FlowSchemaRules`, `FlowChange`, `FlowChangeOrigin`, `FlowConnection`, `FlowViewport`, `FlowRect`, `FlowPoint`, `FlowSize`, `FlowIssue`, `FlowSelection`                                                                                            |
+| Defaults | `FLOW_DOCUMENT_VERSION`, `DEFAULT_NODE_SIZE_BY_SHAPE`, `DEFAULT_PROPERTY_PLACEMENT_BY_SHAPE`, `propertyPlacement`, `inspectorProperties`, `DEFAULT_EDGE_KIND`, `DEFAULT_ROUTER_OPTIONS`, `DEFAULT_LAYOUT_OPTIONS`, `DEFAULT_ZOOM_LIMITS`                                                                                                                                                                                                               |
+| Model    | `FlowModel`, `FlowHistory`, `applyFlowChanges`, `invertFlowChanges`, `squashFlowChanges`, `pruneNoopChanges`, `expandRemoveCascade`, `runBeforeHooks`, `runAfterHooks`, `validateConnection`, `validateDocument`, `serializeFlowDocument`, `parseFlowDocument`, `migrateFlowDocument`, `normalizeNodeOrder`, `topologicalOrder`, `adjacencyOrder`, `hasCycle`, `wouldCreateCycle`, `reachable`, `connectedComponents`, `nodesBounds`, `nodeZ`, `edgeZ` |
+| Geometry | `clamp`, `rectsIntersect`, `expandRect`, `unionRects`, `overlapArea`, `snapPoint`, `SpatialIndex`                                                                                                                                                                                                                                                                                                                                                      |
+| Viewport | `screenToFlow`, `flowToScreen`, `visibleRect`, `viewportForBounds`, `zoomToPoint`, `zoomBy`, `panBy`, `centerOn`, `clampViewport`, `wheelZoomFactor`, `autoPanVelocity`, `interpolateViewport`, `viewportsEqual`                                                                                                                                                                                                                                       |
+| Edges    | `bezierPath`, `straightPath`, `stepPath`, `smoothStepPath`, `orthogonalPath`, `flattenBezier`, `resolveEndpoint`, `defaultPortGeometry`, `resolveSide`, `fallbackSide`, `pointAlongPath`, `labelAnchor`, `longestSegmentAnchor`, `markerId`, `collectMarkers`, `markerGeometry`, `distanceToSegment`, `distanceToPolyline`, `hitTestPath`                                                                                                              |
+| Router   | `FlowRouter`, `FlowRoute`, `FlowRouteRequest`, `FlowRoutingPlanner`, `OrthogonalRouter`, `createRoutingPlanner`, `routeGeometryHash`, `packRoutes`, `unpackRoutes`, `PackedRoutes`                                                                                                                                                                                                                                                                     |
+| Layout   | `FlowLayoutEngine`, `FlowLayoutRequest`, `FlowLayoutOptions`, `FlowLayoutResult`, `LayeredLayoutEngine`, `flowLayoutRequest`, `layoutFlow`, `alignNodes`, `distributeNodes`, `snapNodesToGrid`                                                                                                                                                                                                                                                         |
+| Run      | `FlowRun`, `FlowRunEvent`, `FlowTrace`, `FlowNodeRunStatus`, `FlowEdgeRunStatus`, `FlowRunScope`, `FlowRunSummary`, `flowRunGraph`, `flowRunScope`, `flowRunSummary`, `FlowRunState`, `deriveEdgeStatus`, `cloneRun`, `reconcileRun`, `FlowRunPlayer`, `FlowTicker`, `timeoutTicker`                                                                                                                                                                   |
+| Renderer | `FlowRenderer`, `FlowRenderHost`, `FlowRendererCapabilities`, `RenderedEdge`, `RenderedEdgeLabel`, `ConnectionLineState`, `FlowRendererHit`                                                                                                                                                                                                                                                                                                            |

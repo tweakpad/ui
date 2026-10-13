@@ -12,6 +12,8 @@ export const SELECT_ALL_KEYS = 'Mod+A';
 export const COPY_KEYS = 'Mod+C';
 export const CUT_KEYS = 'Mod+X';
 export const PASTE_KEYS = 'Mod+V';
+/** Runs the whole graph (`runnable`). */
+export const RUN_KEYS = 'Mod+Enter';
 /** The first chord is the hint: the Backspace key is the Mac keyboard's Delete. */
 export const DELETE_KEYS = ['Backspace', 'Delete'] as const;
 

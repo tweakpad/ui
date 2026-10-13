@@ -7,10 +7,12 @@ export const workflowSchema: FlowSchema;
 export const workflowDocument: FlowDocument;
 export const sampleRun: FlowRun;
 export const sampleTrace: FlowTrace;
-export const materialSchema: FlowSchema;
-export const materialDocument: FlowDocument;
+export const lightingSchema: FlowSchema;
+export const lightingDocument: FlowDocument;
 export const pipelineSchema: FlowSchema;
 export const pipelineDocument: FlowDocument;
+export const photoSchema: FlowSchema;
+export const photoDocument: FlowDocument;
 export const edgeKindsDocument: FlowDocument;
 export function generateDocument(
   count: number,

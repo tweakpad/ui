@@ -10,7 +10,9 @@ export type {
   FlowRunEventType,
   FlowRunGraph,
   FlowRunGraphEdge,
+  FlowRunScope,
   FlowRunStatus,
+  FlowRunSummary,
   FlowTicker,
   FlowTrace,
 } from './types.js';
@@ -19,6 +21,9 @@ export {
   cloneRun,
   deriveEdgeStatus,
   flowRunGraph,
+  flowRunScope,
+  flowRunSummary,
+  reconcileRun,
   type FlowRunStateOptions,
 } from './state.js';
 export {

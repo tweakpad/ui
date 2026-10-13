@@ -193,6 +193,7 @@ export class SvgFlowRenderer implements FlowRenderer {
     for (const [key, attribute] of MARKERS)
       group.group.toggleAttribute(attribute, Boolean(edge[key]));
     this.#setOrRemove(group.group, 'data-status', edge.status);
+    this.#setOrRemove(group.group, 'data-issue', edge.issue);
     this.#setOrRemove(group.group, 'data-direction', edge.direction);
     this.#setOrRemove(group.group, 'data-tone', edge.tone);
     group.group.toggleAttribute('data-interactive', edge.interactive);

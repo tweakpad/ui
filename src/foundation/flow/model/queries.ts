@@ -56,14 +56,18 @@ function kahn(adjacency: FlowAdjacency): { order: string[]; complete: boolean } 
   return { order: result, complete: result.length === adjacency.order.length };
 }
 
-/** Kahn order with document-order ties; nodes on cycles are appended in document order. */
-export function topologicalOrder(graph: FlowGraphLike): string[] {
-  const adjacency = buildAdjacency(graph);
+/** Kahn order over an adjacency, its order breaking ties; nodes on cycles are appended in it. */
+export function adjacencyOrder(adjacency: FlowAdjacency): string[] {
   const { order, complete } = kahn(adjacency);
   if (complete) return order;
   const placed = new Set(order);
   for (const id of adjacency.order) if (!placed.has(id)) order.push(id);
   return order;
+}
+
+/** Kahn order with document-order ties; nodes on cycles are appended in document order. */
+export function topologicalOrder(graph: FlowGraphLike): string[] {
+  return adjacencyOrder(buildAdjacency(graph));
 }
 
 export function hasCycle(graph: FlowGraphLike): boolean {

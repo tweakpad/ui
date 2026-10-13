@@ -43,6 +43,7 @@ export class TpFlowPort extends TpElement {
     candidateFocused: { type: Boolean, attribute: 'candidate-focused' },
     valid: { attribute: false },
     clickConnecting: { type: Boolean, attribute: 'click-connecting' },
+    issue: { type: String },
     labelPlacement: { type: String, attribute: 'label-placement' },
   };
   static override styles = [TpElement.styles, flowPortStyles];
@@ -65,6 +66,8 @@ export class TpFlowPort extends TpElement {
   /** Tri-state validity while a connection is in progress. */
   valid: boolean | null = null;
   clickConnecting = false;
+  /** A problem reported for the port: `error` or `warning` (an unconnected required input). */
+  issue: '' | 'error' | 'warning' = '';
   labelPlacement: 'before' | 'after' = 'after';
 
   get presentationOwner(): HTMLElement | null {
@@ -128,6 +131,7 @@ export class TpFlowPort extends TpElement {
           'data-click-connecting': this.clickConnecting,
           'data-multiple': this.multiple,
           'data-required': this.required,
+          'data-issue': this.issue || undefined,
           'data-tone': this.tone || undefined,
           'data-port': this.portId,
           'data-node': this.nodeId,

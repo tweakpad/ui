@@ -68,6 +68,8 @@ export interface RenderedEdge {
   fallback: boolean;
   /** Run visualization status, when a run is bound. */
   status?: FlowEdgeRunStatusMarker;
+  /** The worst problem reported for the edge (a missing endpoint, a backend's issue). */
+  issue?: 'error' | 'warning';
   /** Flow direction for dash animation (`forward` by default). */
   direction?: 'forward' | 'backward';
   tone?: string;

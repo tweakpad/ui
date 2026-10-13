@@ -1,6 +1,9 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import type { IconDefinition } from '../../../icons/types.js';
+import { circleXIcon } from '../../../icons/circle-x.js';
+import { triangleAlertIcon } from '../../../icons/triangle-alert.js';
 import type {
+  FlowIssue,
   FlowNode,
   FlowNodeDefinition,
   FlowPropertyDefinition,
@@ -21,6 +24,8 @@ export interface ShapeContext {
   tone: string | undefined;
   lod: FlowLod;
   status: FlowNodeRunState | undefined;
+  /** Problems the widget shows on the node (validation issues and supplied ones). */
+  issues: readonly FlowIssue[];
   strings: FlowStrings;
   ports: readonly FlowResolvedPort[];
   properties: readonly FlowPropertyDefinition[];
@@ -118,11 +123,65 @@ function iconTile(
   ></span>`;
 }
 
+/** The worst severity of a node's problems: its issues and the warnings of its run. */
+export function problemSeverity(
+  issues: readonly FlowIssue[],
+  status: FlowNodeRunState | undefined,
+): 'error' | 'warning' | undefined {
+  if (issues.some((issue) => issue.severity === 'error')) return 'error';
+  return issues.length || status?.warnings?.length ? 'warning' : undefined;
+}
+
+/**
+ * The node's problems behind one icon in their tone: a Tooltip lists the validation issues and
+ * the run's warnings (the run's error reads in the status row).
+ */
+function problemIndicator(context: ShapeContext): TemplateResult | typeof nothing {
+  const severity = problemSeverity(context.issues, context.status);
+  if (!severity || context.lod === 'low') return nothing;
+  const messages = [
+    ...context.issues.map((issue) => issue.message),
+    ...(context.status?.warnings ?? []),
+  ];
+  return html`<tp-tooltip class="problem-tip" side="top">
+    <tp-button
+      slot="trigger"
+      class="problem"
+      part="flow-node-problem"
+      data-severity=${severity}
+      variant="ghost"
+      size="icon-xs"
+      .icon=${severity === 'error' ? circleXIcon : triangleAlertIcon}
+      .ariaLabel=${`${context.strings.problems}: ${messages.join('; ')}`}
+    ></tp-button>
+    ${messages.map((message) => html`<div>${message}</div>`)}
+  </tp-tooltip>`;
+}
+
+/** Progress of a running node as a percentage (`node_progress` reports a fraction, 0 to 1). */
+function progressPercent(status: FlowNodeRunState): number | undefined {
+  if (status.status !== 'running' || status.progress === undefined) return undefined;
+  return Math.round(Math.min(1, Math.max(0, status.progress)) * 100);
+}
+
+/**
+ * The status row: an activity marker, the detail (the error of a failed node, what a waiting node
+ * waits for, the progress of a running one, else its message or duration), the warning count and
+ * the status pill.
+ */
 function statusRow(context: ShapeContext): TemplateResult | typeof nothing {
   const status = context.status;
   if (!status) return nothing;
-  const text = statusText(status, context.strings);
-  const detail = status.message ?? formatDuration(status.durationMs);
+  const strings = context.strings;
+  const text = statusText(status, strings);
+  const detail =
+    status.status === 'failed' && status.error
+      ? status.error
+      : status.status === 'waiting' && status.waiting?.reason
+        ? `${strings.waitingFor}: ${status.waiting.reason}`
+        : (status.message ?? formatDuration(status.durationMs));
+  const percent = progressPercent(status);
+  const warnings = status.warnings?.length ?? 0;
   const tone =
     status.status === 'success'
       ? 'success'
@@ -137,7 +196,23 @@ function statusRow(context: ShapeContext): TemplateResult | typeof nothing {
         ? html`<tp-spinner size="sm" label=${text}></tp-spinner>`
         : html`<tp-marker tone=${tone} variant="default"></tp-marker>`
     }
-    <span class="status-detail">${detail || text}</span>
+    ${
+      percent !== undefined
+        ? html`<tp-progress
+            class="status-progress"
+            .value=${percent}
+            label=${strings.progress}
+            title=${status.message ?? `${percent}%`}
+          ></tp-progress>`
+        : html`<span class="status-detail" title=${detail || text}>${detail || text}</span>`
+    }
+    ${
+      warnings
+        ? html`<tp-badge class="status-warnings" variant="warning" title=${strings.warnings}
+            ><tp-icon .icon=${triangleAlertIcon} aria-hidden="true"></tp-icon>${warnings}</tp-badge
+          >`
+        : nothing
+    }
     <tp-badge class="status-pill" variant=${STATUS_VARIANT[status.status] ?? 'outline'}
       >${text}</tp-badge
     >
@@ -232,6 +307,12 @@ export function renderCardShape(context: ShapeContext): TemplateResult {
           ${context.description ? html`<span class="description" part="flow-node-description">${context.description}</span>` : nothing}
         </span>
       </span>
+      ${(() => {
+        const problem = problemIndicator(context);
+        return problem === nothing
+          ? nothing
+          : html`<span slot="action" class="actions">${problem}</span>`;
+      })()}
       ${
         hasBody
           ? html`<div class="body" part="flow-node-body">${body}${context.slot ?? nothing}</div>`
@@ -273,6 +354,12 @@ export function renderCompactShape(context: ShapeContext): TemplateResult {
                 </span>`
               : nothing
           }
+          ${(() => {
+            const problem = problemIndicator(context);
+            return problem === nothing
+              ? nothing
+              : html`<span class="tile-problem">${problem}</span>`;
+          })()}
         </span>
         <span class="title" part="flow-node-title">${context.label}</span>
         ${
@@ -317,7 +404,9 @@ export function renderPanelShape(context: ShapeContext): TemplateResult {
         ${iconTile(context)}
         <span class="title" part="flow-node-title">${context.label}</span>
       </span>
-      <span slot="action" class="actions"><slot name="actions"></slot></span>
+      <span slot="action" class="actions"
+        >${problemIndicator(context)}<slot name="actions"></slot
+      ></span>
       <div class="body rows" part="flow-node-body">${rows}${context.slot ?? nothing}</div>
       ${context.status ? html`<span slot="footer" class="footer" part="flow-node-footer">${statusRow(context)}</span>` : nothing}
     </tp-card>

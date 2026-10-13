@@ -98,10 +98,11 @@ type Flow = HTMLElement & {
 };
 const flows = {
   monitor: document.getElementById('monitor') as Flow,
-  material: document.getElementById('material') as Flow,
+  lighting: document.getElementById('lighting') as Flow,
   declarative: document.getElementById('declarative') as Flow,
   large: document.getElementById('large') as Flow,
   pipeline: document.getElementById('pipeline') as Flow,
+  execution: document.getElementById('execution') as Flow,
   rtl: document.getElementById('rtl') as Flow,
   controlled: document.getElementById('controlled') as Flow,
   lateOwner: document.getElementById('late-owner') as Flow,
@@ -116,14 +117,16 @@ for (const flow of Object.values(flows)) {
   flow.schema = samples.workflowSchema;
   flow.icons = icons;
 }
-flows.material.schema = samples.materialSchema;
+flows.lighting.schema = samples.lightingSchema;
 flows.pipeline.schema = samples.pipelineSchema;
 flows.pipeline.load(samples.pipelineDocument);
+flows.execution.schema = samples.photoSchema;
+flows.execution.load(samples.photoDocument);
 flows.rtl.schema = samples.pipelineSchema;
 flows.rtl.load(samples.pipelineDocument);
 flows.monitor.load(samples.workflowDocument);
 flows.monitor.run = samples.sampleRun;
-flows.material.load(samples.materialDocument);
+flows.lighting.load(samples.lightingDocument);
 for (const key of ['readonly', 'view', 'disabled', 'narrow', 'field'] as const)
   flows[key].load(structuredClone(samples.workflowDocument));
 let ownerDocument = structuredClone(samples.workflowDocument);

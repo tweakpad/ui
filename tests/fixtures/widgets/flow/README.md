@@ -35,7 +35,11 @@ another driver). The record lives in `plans/widgets/flow/implementation-checklis
    positions, authored bars, zoom field, Shift+digit shortcuts, history events), `assertPaletteSidebar`
    (the "+" trigger, category sections, chips, search, keyboard insert, click-to-place, drop, fit),
    `assertPaletteMenu` (the "Add node" Dialog, columns, keyboard insert and focus, placement and
-   Escape, dispatched drag, drop and cancel), `assertDeleteConfirmation`, `assertModes`, `assertForms`,
+   Escape, dispatched drag, drop and cancel), `assertRunRequests` (every run affordance's request,
+   scope and node ids; nothing without `runnable`), `assertLiveRun` (`pushRunEvent` visuals,
+   summary chips, announcements, scoped runs, the run graph after an edit), `assertProblems`
+   (validation and supplied issues on nodes, ports and edges), `assertHeader` (the opt-in header,
+   the layout below it, a menu Dialog over it), `assertDeleteConfirmation`, `assertModes`, `assertForms`,
    `assertCleanup`, `assertPerformance`. Each helper returns `{ checks, records, passed }`. Run
    them in file order on a fresh load: several helpers mutate the instance they target and later
    helpers read the state the earlier ones leave behind.
@@ -47,7 +51,7 @@ another driver). The record lives in `plans/widgets/flow/implementation-checklis
    (`http://localhost:6006/?path=/story/widgets-flow--default`, Accessibility tab) and keep the
    accessibility-tree, keyboard and automated results as separate evidence.
 
-Instances: `#monitor` (workflow schema, card nodes, `sampleRun` bound), `#material` (panel nodes
+Instances: `#monitor` (workflow schema, card nodes, `sampleRun` bound), `#lighting` (panel nodes
 with Select, Slider, Color picker, Checkbox and NumberField controls, port labels, palette),
 `#declarative` (authored `tp-flow-node` / `tp-flow-edge` children and a `top-end` corner
 Button), `#pipeline` (vertical compact nodes, orthogonal edges, palette,

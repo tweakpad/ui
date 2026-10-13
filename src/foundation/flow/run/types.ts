@@ -18,7 +18,8 @@ export interface FlowRunEventBase {
 }
 
 export type FlowRunEventBody =
-  | { type: 'run_started' }
+  /** `scope` limits the run to those nodes; nodes outside it keep their earlier results. */
+  | { type: 'run_started'; scope?: readonly string[] | undefined }
   | { type: 'node_started'; nodeId: string; attempt?: number | undefined }
   | {
       type: 'node_waiting';
@@ -27,6 +28,8 @@ export type FlowRunEventBody =
       options?: readonly string[] | undefined;
     }
   | { type: 'node_progress'; nodeId: string; progress: number; message?: string | undefined }
+  /** A problem the node reported without failing; warnings accumulate until it starts again. */
+  | { type: 'node_warning'; nodeId: string; message: string }
   | { type: 'node_completed'; nodeId: string; port?: string | undefined; output?: unknown }
   | { type: 'node_failed'; nodeId: string; error: string; port?: string | undefined }
   | { type: 'node_skipped'; nodeId: string; reason?: string | undefined }
@@ -51,6 +54,7 @@ export interface FlowNodeRunState {
   message?: string | undefined;
   output?: unknown;
   error?: string | undefined;
+  warnings?: string[] | undefined;
   /** Output ports the node finished through; absent means every outgoing edge. */
   ports?: string[] | undefined;
   waiting?: { reason?: string | undefined; options?: readonly string[] | undefined } | undefined;
@@ -68,6 +72,10 @@ export interface FlowRun {
   status: FlowRunStatus;
   startedAt?: number | undefined;
   endedAt?: number | undefined;
+  /** The `run_failed` error. */
+  error?: string | undefined;
+  /** The nodes a scoped `run_started` limited the run to; absent for a whole-graph run. */
+  scope?: readonly string[] | undefined;
   nodes: Map<string, FlowNodeRunState>;
   edges: Map<string, FlowEdgeRunState>;
   /** Last applied sequence number, `-1` before the first sequenced event. */
@@ -92,6 +100,15 @@ export interface FlowRunGraph {
 }
 
 export type FlowTrace = readonly FlowRunEvent[];
+
+/** What a run request covers: every node, one node, a node and its downstream, or its upstream and it. */
+export type FlowRunScope = 'graph' | 'node' | 'from' | 'to';
+
+/** Node counts per status, the nodes with warnings and the node total. */
+export type FlowRunSummary = Record<FlowNodeRunStatus, number> & {
+  warnings: number;
+  total: number;
+};
 
 /** Injectable clock for playback; tests pass a fake, hosts the timer of their environment. */
 export interface FlowTicker {

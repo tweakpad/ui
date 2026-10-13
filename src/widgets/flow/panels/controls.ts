@@ -3,6 +3,7 @@ import { TpElement } from '../../../foundation/element.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import { ToolbarController, type ToolbarRegistration } from '../../../foundation/toolbar.js';
 import type { Orientation } from '../../../foundation/types.js';
+import { TpBadge } from '../../../components/badge/badge.js';
 import { TpButton } from '../../../components/button/button.js';
 import { TpButtonGroup } from '../../../components/button-group/button-group.js';
 import { TpIcon } from '../../../components/icon/icon.js';
@@ -14,9 +15,14 @@ import { TpMenu } from '../../../components/menu/menu.js';
 import { TpMenuItem } from '../../../components/menu/menu-item.js';
 import { TpSeparator } from '../../../components/separator/separator.js';
 import { TpSlider } from '../../../components/slider/slider.js';
+import { TpSpinner } from '../../../components/spinner/spinner.js';
 import { TpToggle } from '../../../components/toggle/toggle.js';
 import { TpToggleGroup } from '../../../components/toggle-group/toggle-group.js';
+import { checkIcon } from '../../../icons/check.js';
 import { chevronDownIcon } from '../../../icons/chevron-down.js';
+import { circlePauseIcon } from '../../../icons/circle-pause.js';
+import { circleXIcon } from '../../../icons/circle-x.js';
+import { clockIcon } from '../../../icons/clock.js';
 import { handIcon } from '../../../icons/hand.js';
 import { lockIcon } from '../../../icons/lock.js';
 import { scanIcon } from '../../../icons/map.js';
@@ -25,14 +31,19 @@ import { minusIcon } from '../../../icons/minus.js';
 import { mousePointerIcon } from '../../../icons/mouse-pointer.js';
 import { plusIcon } from '../../../icons/plus.js';
 import { redoIcon } from '../../../icons/redo.js';
+import { squareIcon } from '../../../icons/square.js';
+import { triangleAlertIcon } from '../../../icons/triangle-alert.js';
 import type { IconDefinition } from '../../../icons/types.js';
 import { undoIcon } from '../../../icons/undo.js';
 import { unlockIcon } from '../../../icons/unlock.js';
 import { workflowIcon } from '../../../icons/workflow.js';
+import { xIcon } from '../../../icons/x.js';
+import type { FlowRunScope } from '../../../foundation/flow/run/types.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
 import { format, resolveStrings } from '../strings.js';
 import {
   renderShortcut,
+  RUN_KEYS,
   ZOOM_FIT_KEYS,
   ZOOM_IN_KEYS,
   ZOOM_OUT_KEYS,
@@ -41,6 +52,7 @@ import {
 import {
   FLOW_CONTROL_ACTIONS,
   type FlowControlAction,
+  type FlowRunControlState,
   type FlowRunTransportState,
   type FlowStrings,
   type FlowTool,
@@ -49,6 +61,7 @@ import {
 export const CONTROL_ACTION = 'flow-control-action';
 export const TOOL_REQUEST = 'flow-tool-request';
 export const RUN_ACTION = 'flow-run-action';
+export const EXECUTE_REQUEST = 'flow-execute-request';
 export const ZOOM_REQUEST = 'flow-zoom-request';
 
 /** Zoom levels the zoom menu offers by default. */
@@ -75,7 +88,15 @@ export interface FlowZoomRequestDetail {
 export type FlowRunTransportAction = 'play' | 'pause' | 'step' | 'back' | 'seek';
 
 export interface FlowControlActionDetail {
-  action: Exclude<FlowControlAction, 'tool' | 'run' | 'zoom'>;
+  action: Exclude<FlowControlAction, 'tool' | 'run' | 'zoom' | 'execute' | 'run-summary'>;
+  sourceEvent: Event;
+}
+/** The `execute` control asked to run (a scope of the selected node), stop or clear. */
+export interface FlowExecuteRequestDetail {
+  action: 'run' | 'stop' | 'clear';
+  scope?: FlowRunScope;
+  /** Chosen in the control's menu rather than with its Button. */
+  menu: boolean;
   sourceEvent: Event;
 }
 export interface FlowToolRequestDetail {
@@ -90,14 +111,29 @@ export interface FlowRunActionDetail {
 }
 
 /** Actions rendered as plain Buttons, in the order the consumer lists them. */
-type ButtonAction = Exclude<FlowControlAction, 'tool' | 'run' | 'zoom' | 'palette'>;
+type ButtonAction = Exclude<
+  FlowControlAction,
+  'tool' | 'run' | 'zoom' | 'palette' | 'execute' | 'run-summary'
+>;
 type Segment =
   | { kind: 'buttons'; actions: ButtonAction[] }
   | { kind: 'tool' }
   | { kind: 'lock' }
   | { kind: 'palette' }
   | { kind: 'zoom' }
-  | { kind: 'run' };
+  | { kind: 'run' }
+  | { kind: 'execute' }
+  | { kind: 'summary' };
+
+/** The run summary's chips: count key, Badge variant (as the node status pills) and icon. */
+const SUMMARY_CHIPS = [
+  { key: 'failed', variant: 'destructive', icon: circleXIcon, label: 'summaryFailed' },
+  { key: 'warnings', variant: 'warning', icon: triangleAlertIcon, label: 'summaryWarnings' },
+  { key: 'waiting', variant: 'warning', icon: circlePauseIcon, label: 'summaryWaiting' },
+  { key: 'pending', variant: 'outline', icon: clockIcon, label: 'summaryPending' },
+  { key: 'running', variant: 'secondary', icon: undefined, label: 'summaryRunning' },
+  { key: 'success', variant: 'success', icon: checkIcon, label: 'summarySuccess' },
+] as const;
 
 const BUTTON_ICONS: Record<ButtonAction, IconDefinition> = {
   'zoom-in': plusIcon,
@@ -191,6 +227,18 @@ const controlsStyles = css`
     text-align: center;
   }
 
+  /* The run summary's chips sit in one row, as tags do, with the theme's tag gap. */
+  .summary {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--tp-space-1-5);
+  }
+
+  .summary[hidden] {
+    display: none;
+  }
+
   /* Consumer items (a Button, a Button group) follow the built-in sets. */
   slot.items {
     display: contents;
@@ -220,6 +268,8 @@ export class TpFlowControls extends TpElement {
     return [
       TpButtonGroup,
       TpButton,
+      TpBadge,
+      TpSpinner,
       TpToggleGroup,
       TpToggle,
       TpIcon,
@@ -243,6 +293,7 @@ export class TpFlowControls extends TpElement {
     canRedo: { type: Boolean, attribute: 'can-redo' },
     strings: { attribute: false },
     runState: { attribute: false },
+    runControl: { attribute: false },
     zoom: { type: Number },
     zoomPresets: { attribute: false },
   };
@@ -258,6 +309,8 @@ export class TpFlowControls extends TpElement {
   canRedo = false;
   strings: Partial<FlowStrings> | undefined;
   runState: FlowRunTransportState | undefined;
+  /** What `execute` and `run-summary` show (the root publishes it). */
+  runControl: FlowRunControlState | undefined;
   /** The current zoom factor shown by the zoom field (the root publishes it). */
   zoom = 1;
   zoomPresets: readonly number[] = DEFAULT_ZOOM_PRESETS;
@@ -363,6 +416,8 @@ export class TpFlowControls extends TpElement {
       else if (action === 'palette') segments.push({ kind: 'palette' });
       else if (action === 'run') segments.push({ kind: 'run' });
       else if (action === 'zoom') segments.push({ kind: 'zoom' });
+      else if (action === 'execute') segments.push({ kind: 'execute' });
+      else if (action === 'run-summary') segments.push({ kind: 'summary' });
       else {
         const last = segments[segments.length - 1];
         if (last?.kind === 'buttons' && BUTTON_SETS[last.actions[0]!] === BUTTON_SETS[action])
@@ -493,7 +548,7 @@ export class TpFlowControls extends TpElement {
       this.getAttribute('slot') ??
       this.closest('[data-position]')?.getAttribute('data-position') ??
       'bottom-start';
-    if (position.startsWith('top-')) return 'bottom';
+    if (position.startsWith('top-') || position.startsWith('header-')) return 'bottom';
     if (position === 'center-start') return 'inline-end';
     if (position === 'center-end') return 'inline-start';
     return 'top';
@@ -687,6 +742,137 @@ export class TpFlowControls extends TpElement {
     </tp-toggle-group>`;
   }
 
+  #execute(detail: Omit<FlowExecuteRequestDetail, 'sourceEvent'>, sourceEvent: Event): void {
+    this.dispatchEvent(
+      new CustomEvent<FlowExecuteRequestDetail>(EXECUTE_REQUEST, {
+        bubbles: true,
+        composed: false,
+        detail: { ...detail, sourceEvent },
+      }),
+    );
+  }
+
+  #executePress = (event: MouseEvent): void => {
+    const state = this.runControl;
+    if (this.disabled || !state?.runnable) return;
+    this.#execute(
+      state.running
+        ? { action: 'stop', menu: false }
+        : { action: 'run', scope: 'graph', menu: false },
+      event,
+    );
+  };
+
+  #executeMenuAction = (event: CustomEvent<{ value: unknown; sourceEvent?: Event }>): void => {
+    event.stopPropagation();
+    const value = String(event.detail?.value ?? '');
+    const source = event.detail?.sourceEvent ?? event;
+    if (value === 'clear') this.#execute({ action: 'clear', menu: true }, source);
+    else if (value === 'graph' || value === 'node' || value === 'from' || value === 'to')
+      this.#execute({ action: 'run', scope: value, menu: true }, source);
+  };
+
+  /**
+   * Run as a split Button (the Button group split pattern): Run (Stop while a run is going) and a
+   * Menu of the scopes, the node ones over the selected node, and Clear run once a run exists.
+   */
+  #renderExecute(): TemplateResult {
+    const strings = this.#strings;
+    const state = this.runControl;
+    const unavailable = this.disabled || !state?.runnable;
+    const running = Boolean(state?.running);
+    const node = state?.selectedNode;
+    return html`<tp-button-group
+      class="group execute"
+      orientation="horizontal"
+      label=${strings.run}
+    >
+      <tp-button
+        class="control run"
+        variant="outline"
+        data-execute=${running ? 'stop' : 'run'}
+        .focusableWhenDisabled=${true}
+        .disabled=${unavailable}
+        .icon=${running ? squareIcon : playIcon}
+        @click=${this.#executePress}
+        >${running ? strings.stop : strings.run}</tp-button
+      >
+      <tp-separator></tp-separator>
+      <tp-menu
+        class="execute-menu"
+        .portal=${false}
+        side=${this.#menuSide()}
+        align="end"
+        label=${strings.runOptions}
+        @tp-action=${this.#executeMenuAction}
+        @tp-open-change=${this.#contain}
+        @tp-open-change-complete=${this.#contain}
+      >
+        <tp-button
+          slot="trigger"
+          class="control execute-trigger"
+          variant="outline"
+          size="icon"
+          .icon=${chevronDownIcon}
+          .ariaLabel=${strings.runOptions}
+          .focusableWhenDisabled=${true}
+          .disabled=${unavailable}
+        ></tp-button>
+        <tp-menu-item value="graph"
+          ><tp-icon .icon=${playIcon}></tp-icon>${strings.runGraph}${renderShortcut(
+            RUN_KEYS,
+          )}</tp-menu-item
+        >
+        <tp-menu-item inset value="node" ?disabled=${!node || running}
+          >${strings.runSelected}</tp-menu-item
+        >
+        <tp-menu-item inset value="from" ?disabled=${!node || running}
+          >${strings.runFromSelected}</tp-menu-item
+        >
+        <tp-menu-item inset value="to" ?disabled=${!node || running}
+          >${strings.runToSelected}</tp-menu-item
+        >
+        ${
+          state?.hasRun
+            ? html`<tp-separator></tp-separator>
+                <tp-menu-item value="clear" ?disabled=${running}
+                  ><tp-icon .icon=${xIcon}></tp-icon>${strings.clearRun}</tp-menu-item
+                >`
+            : nothing
+        }
+      </tp-menu>
+    </tp-button-group>`;
+  }
+
+  /**
+   * The run's node counts as status Badges (the node pills' variants), one per non-zero count;
+   * each reads its full label to assistive technology, its icon and number on screen.
+   */
+  #renderSummary(): TemplateResult {
+    const strings = this.#strings;
+    const summary = this.runControl?.summary;
+    const chips = SUMMARY_CHIPS.filter((chip) => (summary?.[chip.key] ?? 0) > 0);
+    return html`<div
+      class="summary"
+      part="flow-run-summary"
+      role="group"
+      aria-label=${strings.runSummary}
+      ?hidden=${chips.length === 0}
+    >
+      ${chips.map((chip) => {
+        const count = summary![chip.key];
+        return html`<tp-badge variant=${chip.variant} data-status=${chip.key}
+          >${
+            chip.icon
+              ? html`<tp-icon .icon=${chip.icon} aria-hidden="true"></tp-icon>`
+              : html`<tp-spinner size="sm" label=""></tp-spinner>`
+          }<span aria-hidden="true">${count}</span
+          ><span class="visually-hidden">${format(strings[chip.label], { count })}</span></tp-badge
+        >`;
+      })}
+    </div>`;
+  }
+
   #renderRun(): TemplateResult {
     const strings = this.#strings;
     const run = this.runState;
@@ -771,7 +957,11 @@ export class TpFlowControls extends TpElement {
                     ? this.#renderPaletteToggle()
                     : segment.kind === 'zoom'
                       ? this.#renderZoom()
-                      : this.#renderRun(),
+                      : segment.kind === 'execute'
+                        ? this.#renderExecute()
+                        : segment.kind === 'summary'
+                          ? this.#renderSummary()
+                          : this.#renderRun(),
           )}<slot class="items" @slotchange=${this.#syncItems}></slot>`,
       },
     );

@@ -26,6 +26,7 @@ export const flowStyles = css`
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
     inline-size: 100%;
     block-size: 100%;
     min-block-size: inherit;
@@ -34,6 +35,47 @@ export const flowStyles = css`
 
   .root:dir(rtl) {
     --_tp-flow-inline-sign: -1;
+  }
+
+  /* The opt-in header takes the first row; the canvas and the sidebars share the second, so they
+     start below it (an absolute grid child's containing block is its grid area). */
+  .header {
+    grid-row: 1;
+    grid-column: 1;
+    min-inline-size: 0;
+  }
+
+  .header[hidden] {
+    display: none;
+  }
+
+  .header-region {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: inherit;
+    min-inline-size: 0;
+  }
+
+  .header-region[data-region='start'],
+  .header-region[data-region='end'] {
+    flex: 1 1 0;
+  }
+
+  .header-region[data-region='center'] {
+    flex: 0 1 auto;
+    justify-content: center;
+  }
+
+  .header-region[data-region='end'] {
+    justify-content: flex-end;
+  }
+
+  .canvas,
+  .root > tp-flow-palette,
+  .root > tp-flow-inspector {
+    grid-row: 2;
+    grid-column: 1;
   }
 
   .canvas {
@@ -429,8 +471,11 @@ export const flowNodeStyles = css`
     min-inline-size: 0;
   }
 
+  /* The detail fills what the pill leaves and never widens the card: a zero preferred size keeps
+     a long error or waiting reason out of the card's min-content, so it ellipsizes instead. */
   .status-detail {
-    flex: 1;
+    flex: 1 1 0;
+    inline-size: 0;
     min-inline-size: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -439,6 +484,17 @@ export const flowNodeStyles = css`
 
   .status-pill {
     margin-inline-start: auto;
+    flex: none;
+  }
+
+  /* A running node's progress takes the detail's place in the status row. */
+  .status-progress {
+    flex: 1 1 0;
+    inline-size: 0;
+    min-inline-size: 0;
+  }
+
+  .status-warnings {
     flex: none;
   }
 
@@ -521,6 +577,14 @@ export const flowNodeStyles = css`
     inset-block-end: calc(var(--tp-space-1) * -1);
     left: 50%;
     transform: translate(-50%, 50%);
+  }
+
+  /* The problem indicator sits on the tile's top inline-end corner. */
+  .tile-problem {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    translate: calc(50% * var(--_tp-flow-inline-sign, 1)) -50%;
   }
 
   /* The compact Card's content: the icon tile above a centered caption. */

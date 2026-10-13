@@ -4,6 +4,7 @@ import type {
   FlowChange,
   FlowEdge,
   FlowEdgeKind,
+  FlowIssue,
   FlowNode,
   FlowNodeDefinition,
   FlowPoint,
@@ -14,7 +15,11 @@ import type {
   FlowSide,
   FlowViewport,
 } from '../../foundation/flow/types.js';
-import type { FlowNodeRunState } from '../../foundation/flow/run/types.js';
+import type {
+  FlowNodeRunState,
+  FlowRunScope,
+  FlowRunSummary,
+} from '../../foundation/flow/run/types.js';
 
 export type { FlowViewport, FlowSelection };
 
@@ -41,6 +46,15 @@ export const FLOW_PANEL_POSITIONS = [
   'bottom-end',
 ] as const;
 export type FlowPanelPosition = (typeof FLOW_PANEL_POSITIONS)[number];
+/** The opt-in header's slots above the canvas: its start, center and end. */
+export const FLOW_HEADER_SLOTS = ['header-start', 'header-center', 'header-end'] as const;
+export type FlowHeaderSlot = (typeof FLOW_HEADER_SLOTS)[number];
+/** Named slots for authored content: the panels and the header. */
+export type FlowSlotRegion = FlowPanelPosition | FlowHeaderSlot;
+export const FLOW_SLOT_REGIONS: readonly FlowSlotRegion[] = [
+  ...FLOW_PANEL_POSITIONS,
+  ...FLOW_HEADER_SLOTS,
+];
 export const FLOW_WHEEL_POLICIES = ['pan', 'zoom', 'none'] as const;
 export type FlowWheelPolicy = (typeof FLOW_WHEEL_POLICIES)[number];
 export const FLOW_INSPECTOR_POLICIES = ['none', 'auto', 'manual'] as const;
@@ -60,6 +74,8 @@ export const FLOW_CONTROL_ACTIONS = [
   'redo',
   'run',
   'palette',
+  'execute',
+  'run-summary',
 ] as const;
 export type FlowControlAction = (typeof FLOW_CONTROL_ACTIONS)[number];
 export type FlowSelectionMode = 'partial' | 'full';
@@ -233,6 +249,37 @@ export interface FlowStrings {
 
 // ---- Constituent panels and handles ------------------------------------------------------------
 
+/**
+ * `tp-run-request`: a user (or `requestRun()`) asked the backend to run, stop or clear. The widget
+ * never executes anything; `nodeIds` is the scope in execution order over the current graph.
+ */
+export interface FlowRunRequestDetail {
+  action: 'run' | 'stop' | 'clear';
+  scope?: FlowRunScope;
+  nodeId?: string;
+  nodeIds: readonly string[];
+  reason: ChangeReason;
+  sourceEvent?: Event;
+}
+
+/** `tp-issues-change`: the problems shown changed (computed with `validate` plus `issues`). */
+export interface FlowIssuesChangeDetail {
+  issues: readonly FlowIssue[];
+}
+
+/** What the `execute` and `run-summary` controls show. */
+export interface FlowRunControlState {
+  /** The widget accepts run requests (`runnable`, not disabled). */
+  runnable: boolean;
+  /** A run is in progress (running or paused): Run becomes Stop. */
+  running: boolean;
+  /** A run exists to clear. */
+  hasRun: boolean;
+  /** The single selected node the node-scoped commands use. */
+  selectedNode: string | undefined;
+  summary: FlowRunSummary;
+}
+
 /** Playback state the controls' run transport shows while the `run` action is listed. */
 export interface FlowRunTransportState {
   playing: boolean;
@@ -269,4 +316,27 @@ export interface FlowStrings {
   message: string;
   error: string;
   noRun: string;
+  warnings: string;
+  progress: string;
+  waitingFor: string;
+  runGraph: string;
+  runNode: string;
+  runFrom: string;
+  runTo: string;
+  runSelected: string;
+  runFromSelected: string;
+  runToSelected: string;
+  runOptions: string;
+  stop: string;
+  clearRun: string;
+  runSummary: string;
+  summaryFailed: string;
+  summaryWarnings: string;
+  summaryWaiting: string;
+  summaryPending: string;
+  summaryRunning: string;
+  summarySuccess: string;
+  problems: string;
+  ariaWarnings: string;
+  ariaError: string;
 }

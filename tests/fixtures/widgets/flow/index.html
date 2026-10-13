@@ -43,40 +43,74 @@
 
       <section>
         <h2>Monitor (card nodes, run state)</h2>
-        <tp-flow id="monitor" label="Lead pipeline" name="monitor" fit-view></tp-flow>
+        <tp-flow id="monitor" label="Support triage" name="monitor" fit-view></tp-flow>
       </section>
 
       <section>
-        <h2>Material (panel nodes with controls)</h2>
-        <tp-flow id="material" label="Material" fit-view show-port-labels palette="menu"></tp-flow>
+        <h2>Stage lighting (panel nodes with controls)</h2>
+        <tp-flow
+          id="lighting"
+          label="Stage lighting"
+          fit-view
+          show-port-labels
+          palette="menu"
+        ></tp-flow>
       </section>
 
       <section>
         <h2>Declarative (authored light-DOM nodes and edges)</h2>
         <tp-flow id="declarative" label="Declarative" fit-view>
-          <tp-flow-node id="a" type="trigger" x="40" y="80" label="Webhook"></tp-flow-node>
-          <tp-flow-node id="b" type="action" x="360" y="80" label="Send email">
+          <tp-flow-node id="a" type="trigger" x="40" y="80" label="Doorbell pressed"></tp-flow-node>
+          <tp-flow-node id="b" type="action" x="360" y="80" label="Turn on porch light">
             <p>Authored content</p>
           </tp-flow-node>
           <tp-flow-edge id="ab" source="a" target="b" label="then"></tp-flow-edge>
-          <tp-button slot="top-end" variant="outline" size="sm">Publish</tp-button>
+          <tp-button slot="top-end" variant="outline" size="sm">Save</tp-button>
         </tp-flow>
       </section>
 
       <section>
-        <h2>Pipeline (vertical, compact nodes, orthogonal edges, palette)</h2>
+        <h2>Order fulfillment (vertical, compact nodes, orthogonal edges, palette)</h2>
         <tp-flow
           id="pipeline"
-          label="Release pipeline"
+          label="Order fulfillment"
           fit-view
           palette
           inspector-commit="explicit"
         ></tp-flow>
       </section>
 
+      <section>
+        <h2>Execution (run requests, problems, header)</h2>
+        <tp-flow
+          id="execution"
+          label="Product photo import"
+          runnable
+          validate
+          palette
+          palette-trigger="none"
+          fit-view
+        >
+          <tp-breadcrumb slot="header-start" label="Location"
+            ><a href="#execution">Workflows</a><span>Product photo import</span></tp-breadcrumb
+          >
+          <tp-flow-controls
+            slot="header-center"
+            actions="run-summary"
+            orientation="horizontal"
+          ></tp-flow-controls>
+          <tp-button slot="header-end" variant="outline" id="execution-add">Add step</tp-button>
+          <tp-flow-controls
+            slot="header-end"
+            actions="execute"
+            orientation="horizontal"
+          ></tp-flow-controls>
+        </tp-flow>
+      </section>
+
       <section dir="rtl">
         <h2>RTL</h2>
-        <tp-flow id="rtl" label="RTL pipeline" fit-view></tp-flow>
+        <tp-flow id="rtl" label="RTL fulfillment" fit-view></tp-flow>
       </section>
 
       <section>

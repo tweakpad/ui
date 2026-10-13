@@ -37,7 +37,7 @@ interface Args {
 const sourceFor = (markup: string) =>
   `<script type="module">\n  import '@tweakpad/ui/styles.css';\n  import '@tweakpad/ui/register';\n  import '@tweakpad/ui/register/widgets';\n</script>\n${markup}`;
 const source = sourceFor(
-  `<tp-flow label="Lead pipeline" name="pipeline" fit-view></tp-flow>
+  `<tp-flow label="Support triage" name="pipeline" fit-view></tp-flow>
 <script type="module">
   const flow = document.querySelector('tp-flow');
   flow.schema = workflowSchema; // typed node definitions (see Schema)
@@ -68,7 +68,7 @@ const meta: Meta<Args> = {
     controls: ['undo', 'redo', 'zoom-out', 'zoom', 'zoom-in', 'fit', 'tool', 'lock'],
     controlsPosition: 'bottom-center',
     controlsOrientation: 'horizontal',
-    label: 'Lead pipeline',
+    label: 'Support triage',
     readOnly: false,
     disabled: false,
   },

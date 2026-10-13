@@ -125,6 +125,15 @@ export const flowAppearance: PresentationDictionary = {
     { selector: '&[data-placing]', declarations: { cursor: 'copy' } },
   ],
   'flow-viewport': [],
+  // The opt-in header: a bar on the page background over the canvas, separated by a border.
+  'flow-header': [
+    {
+      declarations: {
+        background: 'var(--tp-background)',
+        'border-block-end': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
+      },
+    },
+  ],
   'flow-background': [],
   'flow-background-pattern': [
     { declarations: { fill: dots, stroke: hairline } },
@@ -162,9 +171,26 @@ export const flowAppearance: PresentationDictionary = {
       selector: '&[data-selected]',
       declarations: { 'box-shadow': '0 0 0 var(--tp-ring-width) var(--tp-ring)' },
     },
+    // A node with problems but no run status: a dashed outline in the problem's tone.
+    {
+      selector: '&[data-problem="warning"]',
+      declarations: { '--_tp-flow-problem': 'var(--tp-warning)' },
+    },
+    {
+      selector: '&[data-problem="error"]',
+      declarations: { '--_tp-flow-problem': 'var(--tp-destructive)' },
+    },
+    {
+      selector: '&[data-problem]:not([data-status])',
+      declarations: {
+        outline:
+          'var(--tp-ring-width) dashed color-mix(in oklab, var(--_tp-flow-problem) 70%, transparent)',
+        'outline-offset': 'var(--tp-ring-offset)',
+      },
+    },
     { selector: '&[data-focus-visible]', declarations: focusRing },
     {
-      selector: '&[data-status="running"], &[data-status="waiting"]',
+      selector: '&[data-status="running"], &[data-status="waiting"], &[data-status="failed"]',
       declarations: { 'box-shadow': `0 0 0 var(--tp-ring-width) ${statusRing}` },
     },
     {
@@ -245,6 +271,11 @@ export const flowAppearance: PresentationDictionary = {
     { declarations: { 'font-size': 'var(--tp-text-xs)', color: 'var(--tp-muted-foreground)' } },
   ],
   'flow-node-body': [],
+  // The problem indicator's icon takes the problem's tone.
+  'flow-node-problem': [
+    { selector: '&[data-severity="warning"]', declarations: { color: 'var(--tp-warning)' } },
+    { selector: '&[data-severity="error"]', declarations: { color: 'var(--tp-destructive)' } },
+  ],
   'flow-node-row': [{ declarations: { 'font-size': 'var(--tp-text-xs)' } }],
   'flow-node-row-label': [{ declarations: { color: 'var(--tp-muted-foreground)' } }],
   'flow-node-row-control': [],
@@ -339,6 +370,15 @@ export const flowAppearance: PresentationDictionary = {
         ...activeRing,
       },
     },
+    // A problem on the port (an unconnected required input): its paint and ring take the tone.
+    {
+      selector: '&[data-issue="warning"]',
+      declarations: { '--_tp-handle-paint': 'var(--tp-warning)', ...activeRing },
+    },
+    {
+      selector: '&[data-issue="error"]',
+      declarations: { '--_tp-handle-paint': 'var(--tp-destructive)', ...activeRing },
+    },
     { selector: '&[data-valid]', declarations: { '--_tp-handle-paint': 'var(--tp-success)' } },
     {
       selector: '&[data-invalid]',
@@ -368,6 +408,14 @@ export const flowAppearance: PresentationDictionary = {
       selector: '&[data-status="not-taken"], &[data-status="disabled"]',
       declarations: { opacity: 'var(--tp-opacity-disabled)' },
     },
+    {
+      selector: '&[data-issue="warning"]',
+      declarations: { '--_tp-flow-issue': 'var(--tp-warning)' },
+    },
+    {
+      selector: '&[data-issue="error"]',
+      declarations: { '--_tp-flow-issue': 'var(--tp-destructive)' },
+    },
   ],
   'flow-edge-path': [
     {
@@ -379,6 +427,15 @@ export const flowAppearance: PresentationDictionary = {
         'stroke-linejoin': 'round',
         'vector-effect': 'non-scaling-stroke',
         transition: motionTransition(['stroke', 'stroke-width'], 'fast'),
+      },
+    },
+    // An edge with a problem: dashed in the problem's tone (hover and selection still win).
+    {
+      selector: '[part~="flow-edge"][data-issue] > &',
+      declarations: {
+        stroke: 'var(--_tp-flow-issue)',
+        'stroke-dasharray':
+          'calc(var(--_tp-flow-edge-width) * 3) calc(var(--_tp-flow-edge-width) * 2)',
       },
     },
     { selector: '[part~="flow-edge"][data-hover] > &', declarations: { stroke: edgeHover } },
@@ -532,6 +589,7 @@ export const flowAppearance: PresentationDictionary = {
     },
   ],
   'flow-control': [],
+  'flow-run-summary': [],
   // The sidebar library floats at the inline start on the inspector's surface and enters and
   // leaves like it from its own side; the menu library lives in the root's Dialog.
   'flow-palette': [
@@ -661,8 +719,16 @@ export const flowStructure: PresentationDictionary = {
         padding: 'var(--_tp-flow-space)',
       },
     },
-    // In the menu the Dialog's sections pad the content.
-    { selector: '[data-layout="menu"] > &', declarations: { padding: '0' } },
+    // In the menu the Dialog's sections pad the content. The body still scrolls, which clips
+    // what paints outside it, so it keeps room for the focus rings of the search and the chips
+    // at its edges and gives the room back in its margin.
+    {
+      selector: '[data-layout="menu"] > &',
+      declarations: {
+        padding: 'var(--tp-ring-width)',
+        margin: 'calc(var(--tp-ring-width) * -1)',
+      },
+    },
   ],
   'flow-palette-group': [
     {
@@ -682,6 +748,19 @@ export const flowStructure: PresentationDictionary = {
   ],
   'flow-inspector-footer': [
     { declarations: { gap: 'var(--tp-space-2)', padding: 'var(--_tp-flow-space)' } },
+  ],
+  // Start, center and end regions in a wrapping row: the sides share the free space equally, so
+  // the center stays centered while everything fits, and the regions wrap when it does not.
+  'flow-header': [
+    {
+      declarations: {
+        display: 'flex',
+        'flex-wrap': 'wrap',
+        'align-items': 'center',
+        gap: 'var(--tp-space-2)',
+        padding: 'var(--_tp-flow-space)',
+      },
+    },
   ],
   'flow-panel-top-start': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
   'flow-panel-top-center': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],

@@ -43,6 +43,7 @@ export interface EdgeLayerOptions {
   hovered: () => string | undefined;
   focused: () => string | undefined;
   runEdge: (id: string) => FlowEdgeRunState | undefined;
+  issueEdge: (id: string) => 'error' | 'warning' | undefined;
   interactive: () => boolean;
   addable: () => boolean;
   nodeLabel: (id: string) => string;
@@ -138,6 +139,7 @@ export class EdgeLayer {
       const kind = model.edgeKind(edge);
       const routed = this.#options.route(edge);
       const run = this.#options.runEdge(id);
+      const issue = this.#options.issueEdge(id);
       const isSelected = selected.has(id) || Boolean(edge.selected);
       const z =
         Math.max(model.nodeZ(edge.source), model.nodeZ(edge.target)) +
@@ -148,7 +150,7 @@ export class EdgeLayer {
         `${endpoints.source.point.x},${endpoints.source.point.y},${endpoints.source.side},` +
         `${endpoints.target.point.x},${endpoints.target.point.y},${endpoints.target.side},` +
         `${kind},${z},${isSelected ? 1 : 0}${hovered === id ? 1 : 0}${focused === id ? 1 : 0}` +
-        `${isInteractive ? 1 : 0},${run?.status ?? ''},${prefix}`;
+        `${isInteractive ? 1 : 0},${run?.status ?? ''},${issue ?? ''},${prefix}`;
       const previous = this.#rendered.get(id);
       if (
         previous &&
@@ -200,6 +202,7 @@ export class EdgeLayer {
         interactive: isInteractive,
       };
       if (run) record.status = run.status;
+      if (issue) record.issue = issue;
       const markerStart = edge.markerStart ? this.#marker(edge.markerStart, prefix) : undefined;
       // Flowing edges always show direction statically: the dash pauses under reduced motion
       // and forced colors drop the tint, so an unmarked active edge gets a closed arrow.
