@@ -243,12 +243,18 @@ const modifierCount = (chord: KeyChord): number =>
  * Whether a chord matches a keyboard event. Keys compare case-insensitively. For a
  * pattern chord whose event key is a caseless character (`>`, `?`, digits), Shift
  * and Alt count only when the chord asks for them, because layouts use them to
- * produce the character. Every other modifier must match exactly.
+ * produce the character. Every other modifier must match exactly. A Shift chord on a
+ * digit (`Shift+1`) names the digit key: layouts report the shifted character (`!`, `=`)
+ * as the key, so the physical `Digit1` code matches it.
  */
 export function matchesKeyChord(chord: KeyChord, event: KeyboardEvent): boolean {
   const key = event.key;
-  if (typeof key !== 'string' || key === 'Unidentified' || key.toLowerCase() !== chord.key)
-    return false;
+  if (typeof key !== 'string' || key === 'Unidentified') return false;
+  if (key.toLowerCase() !== chord.key) {
+    const shiftedDigit =
+      chord.shiftKey && /^[0-9]$/.test(chord.key) && event.code === `Digit${chord.key}`;
+    if (!shiftedDigit) return false;
+  }
   const implicit =
     chord.implicit && key.length === 1 && key.toLowerCase() === key.toUpperCase() && key !== ' ';
   const shiftKey = implicit ? Boolean(event.shiftKey) && chord.shiftKey : Boolean(event.shiftKey);

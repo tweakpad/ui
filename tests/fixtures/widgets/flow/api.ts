@@ -1565,6 +1565,197 @@ export async function assertContextMenuDismiss(id = 'material'): Promise<Report>
   ]);
 }
 
+/**
+ * Panels and bars: the built-in bar anchors to each of the eight positions; an authored
+ * `tp-flow-controls` slotted into a panel takes the widget's zoom and history state, keeps a
+ * consumer Button in its roving focus and its presses reach the widget; the zoom field applies a
+ * typed level and its menu's fit and preset choices, opening toward the canvas; Shift+1 and
+ * Shift+0 (dispatched by physical key, as layouts type `!` and `)`) fit and reset the zoom; and
+ * `tp-history-change` reports the history as it fills and empties.
+ */
+export async function assertToolbars(id = 'monitor'): Promise<Report> {
+  const target = flow(id);
+  target.scrollIntoView({ block: 'center' });
+  await wait(300);
+  const original = {
+    controls: target.controls,
+    position: target.controlsPosition,
+    orientation: target.controlsOrientation,
+  };
+  const snapshot = structuredClone(target.value);
+  const canvas = () =>
+    target.shadowRoot!.querySelector<HTMLElement>('.canvas')!.getBoundingClientRect();
+  const builtIn = () => target.shadowRoot!.querySelector<HTMLElement>('tp-flow-controls.controls')!;
+  target.controls = ['undo', 'redo', 'zoom-out', 'zoom', 'zoom-in', 'fit'];
+  target.controlsOrientation = 'horizontal';
+
+  // Each position: the bar's box sits against the edges the position names.
+  const placement: Record<string, boolean> = {};
+  for (const position of [
+    'top-start',
+    'top-center',
+    'top-end',
+    'center-start',
+    'center-end',
+    'bottom-start',
+    'bottom-center',
+    'bottom-end',
+  ] as const) {
+    target.controlsPosition = position;
+    await settle(target);
+    const bar = builtIn().getBoundingClientRect();
+    const box = canvas();
+    const [block, inline] = position.split('-');
+    const near = (a: number, b: number) => Math.abs(a - b) <= 24;
+    const blockOk =
+      block === 'top'
+        ? near(bar.top, box.top)
+        : block === 'bottom'
+          ? near(bar.bottom, box.bottom)
+          : near(bar.top + bar.height / 2, box.top + box.height / 2);
+    const inlineOk =
+      inline === 'start'
+        ? near(bar.left, box.left)
+        : inline === 'end'
+          ? near(bar.right, box.right)
+          : near(bar.left + bar.width / 2, box.left + box.width / 2);
+    placement[position] = blockOk && inlineOk;
+  }
+  target.controlsPosition = 'bottom-center';
+  await settle(target);
+  const menuSide = builtIn().shadowRoot!.querySelector('tp-menu')?.getAttribute('side');
+
+  // An authored bar with a consumer Button, slotted into the top-end panel.
+  const authored = document.createElement('tp-flow-controls') as HTMLElement & {
+    zoom: number;
+    canUndo: boolean;
+  };
+  authored.setAttribute('slot', 'top-end');
+  authored.setAttribute('actions', 'undo redo');
+  authored.setAttribute('orientation', 'horizontal');
+  const consumer = document.createElement('tp-button');
+  consumer.textContent = 'Publish';
+  authored.append(consumer);
+  target.append(authored);
+  await wait(200);
+  await settle(target);
+  const synced = { zoom: authored.zoom, viewport: target.viewport.zoom };
+  // The toolbar manages the roving tab stop on the Button's native control.
+  const consumerRoving =
+    consumer.shadowRoot?.querySelector('button')?.getAttribute('tabindex') !== null &&
+    consumer.hasAttribute('data-orientation');
+
+  // History: a move fills it, the authored bar's Undo empties it.
+  const history: Array<{ canUndo: boolean; canRedo: boolean }> = [];
+  const onHistory = (event: Event) =>
+    history.push((event as CustomEvent<{ canUndo: boolean; canRedo: boolean }>).detail);
+  target.addEventListener('tp-history-change', onHistory);
+  const moved = target.nodes[0]!;
+  // updateNode proposes and commits: one history entry.
+  target.updateNode(moved.id, { position: { x: moved.position.x + 40, y: moved.position.y } });
+  await settle(target);
+  const undoEnabled = authored.canUndo;
+  authored.shadowRoot!.querySelector<HTMLElement>('tp-button[data-action="undo"]')!.click();
+  await settle(target);
+  const undone = target.model.getNode(moved.id)!.position.x === moved.position.x;
+  target.removeEventListener('tp-history-change', onHistory);
+
+  // The zoom field: a typed level, then the menu's preset and fit.
+  const field = builtIn().shadowRoot!.querySelector<HTMLElement & { value: string }>(
+    'tp-input.zoom-input',
+  )!;
+  field.dispatchEvent(
+    new CustomEvent('tp-value-change', {
+      bubbles: true,
+      composed: true,
+      detail: { value: '150', reason: 'input' },
+    }),
+  );
+  field.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true }),
+  );
+  await wait(400);
+  const typed = target.viewport.zoom;
+  const menu = builtIn().shadowRoot!.querySelector('tp-menu')!;
+  menu.dispatchEvent(
+    new CustomEvent('tp-action', { bubbles: true, composed: true, detail: { value: '0.5' } }),
+  );
+  await wait(400);
+  const preset = target.viewport.zoom;
+  const shownPreset = field.value;
+
+  // Shortcuts by physical key.
+  const canvasElement = target.shadowRoot!.querySelector<HTMLElement>('.canvas')!;
+  canvasElement.focus();
+  canvasElement.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: ')',
+      code: 'Digit0',
+      shiftKey: true,
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    }),
+  );
+  await wait(500);
+  const reset = target.viewport.zoom;
+  canvasElement.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: '!',
+      code: 'Digit1',
+      shiftKey: true,
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    }),
+  );
+  await wait(500);
+  const fitted = target.viewport.zoom;
+
+  authored.remove();
+  target.controls = original.controls;
+  target.controlsPosition = original.position;
+  target.controlsOrientation = original.orientation;
+  target.load(snapshot);
+  await settle(target);
+  return report(
+    [
+      check(
+        'the bar anchors to every position',
+        Object.values(placement).every(Boolean),
+        placement,
+      ),
+      check('a bottom bar opens its zoom menu upward', menuSide === 'top', menuSide),
+      check(
+        'an authored bar takes the widget zoom',
+        Math.abs(synced.zoom - synced.viewport) < 1e-6,
+        synced,
+      ),
+      check('a consumer Button joins its roving focus', consumerRoving, consumerRoving),
+      check(
+        'the history fills and the authored Undo empties it',
+        undoEnabled &&
+          undone &&
+          history.at(0)?.canUndo === true &&
+          history.at(-1)?.canRedo === true,
+        { undoEnabled, undone, history },
+      ),
+      check('a typed level applies', Math.abs(typed - 1.5) < 1e-6, typed),
+      check(
+        'a menu preset applies and shows',
+        Math.abs(preset - 0.5) < 1e-6 && shownPreset === '50%',
+        { preset, shownPreset },
+      ),
+      check(
+        'Shift+0 resets and Shift+1 fits',
+        Math.abs(reset - 1) < 1e-6 && Math.abs(fitted - 1) > 1e-3,
+        { reset, fitted },
+      ),
+    ],
+    { placement },
+  );
+}
+
 export async function assertModes(): Promise<Report> {
   const readonly = flow('readonly');
   const view = flow('view');

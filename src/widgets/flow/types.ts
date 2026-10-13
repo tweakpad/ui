@@ -26,8 +26,21 @@ export const FLOW_AUTO_LAYOUTS = ['none', 'horizontal', 'vertical', 'smart'] as 
 export type FlowAutoLayout = (typeof FLOW_AUTO_LAYOUTS)[number];
 export const FLOW_BACKGROUNDS = ['dots', 'lines', 'cross', 'none'] as const;
 export type FlowBackground = (typeof FLOW_BACKGROUNDS)[number];
-export const FLOW_CORNERS = ['top-start', 'top-end', 'bottom-start', 'bottom-end'] as const;
-export type FlowCorner = (typeof FLOW_CORNERS)[number];
+/**
+ * Where a floating panel anchors: the four corners and the middle of the four edges, as
+ * `block-inline` pairs (xyflow Panel positions in logical directions).
+ */
+export const FLOW_PANEL_POSITIONS = [
+  'top-start',
+  'top-center',
+  'top-end',
+  'center-start',
+  'center-end',
+  'bottom-start',
+  'bottom-center',
+  'bottom-end',
+] as const;
+export type FlowPanelPosition = (typeof FLOW_PANEL_POSITIONS)[number];
 export const FLOW_WHEEL_POLICIES = ['pan', 'zoom', 'none'] as const;
 export type FlowWheelPolicy = (typeof FLOW_WHEEL_POLICIES)[number];
 export const FLOW_INSPECTOR_POLICIES = ['none', 'auto', 'manual'] as const;
@@ -35,6 +48,7 @@ export type FlowInspectorPolicy = (typeof FLOW_INSPECTOR_POLICIES)[number];
 export const FLOW_CONTROL_ACTIONS = [
   'zoom-in',
   'zoom-out',
+  'zoom',
   'fit',
   'tool',
   'lock',
@@ -126,6 +140,11 @@ export interface FlowStrings {
   zoomIn: string;
   zoomOut: string;
   fitView: string;
+  /** Zoom field name and its menu (`{percent}` in `zoomToLevel`). */
+  zoomLevel: string;
+  zoomOptions: string;
+  zoomToFit: string;
+  zoomToLevel: string;
   selectTool: string;
   panTool: string;
   lock: string;

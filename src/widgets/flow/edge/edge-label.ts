@@ -14,7 +14,10 @@ const labelStyles = css`
     display: inline-flex;
     align-items: center;
     gap: var(--tp-space-1);
-    transform: translate(-50%, -50%);
+
+    /* Centered on the path anchor. The label layer writes the anchor as the inline \`transform\`,
+       which would replace a centering \`transform\` here; the individual property composes. */
+    translate: -50% -50%;
   }
 
   :host([hidden]) {

@@ -101,12 +101,19 @@ export function renderSidePorts(context: ShapeContext, only?: readonly string[])
     )}`;
 }
 
+/** The icon tile; beside a title and a description (`lines` 2) it spans both lines. */
 function iconTile(
   context: ShapeContext,
   size: 'default' | 'lg' = 'default',
+  lines: 1 | 2 = 1,
 ): TemplateResult | typeof nothing {
   if (!context.icon) return nothing;
-  return html`<span class="icon" part="flow-node-icon" data-size=${size} aria-hidden="true"
+  return html`<span
+    class="icon"
+    part="flow-node-icon"
+    data-size=${size}
+    data-lines=${lines}
+    aria-hidden="true"
     ><tp-icon .icon=${context.icon}></tp-icon
   ></span>`;
 }
@@ -219,7 +226,7 @@ export function renderCardShape(context: ShapeContext): TemplateResult {
   const hasBody = body.length > 0 || context.slotted;
   return html`<tp-card class="card" size="sm" part="flow-node-card" data-shape="card">
       <span slot="header" class="header" part="flow-node-header">
-        ${iconTile(context)}
+        ${iconTile(context, 'default', context.description ? 2 : 1)}
         <span class="titles">
           <span class="title" part="flow-node-title">${context.label}</span>
           ${context.description ? html`<span class="description" part="flow-node-description">${context.description}</span>` : nothing}

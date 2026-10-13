@@ -215,6 +215,15 @@ export const flowAppearance: PresentationDictionary = {
         border: `var(--tp-border-width) var(--tp-border-style) ${hairline}`,
       },
     },
+    // Beside a title and a description the tile spans both lines: the header's line (the title,
+    // `1lh` at the inherited leading) plus the description's (`--tp-text-xs` at the same leading).
+    {
+      selector: '&[data-lines="2"]',
+      declarations: {
+        'inline-size': 'calc(1lh + var(--tp-text-xs) * var(--tp-leading-tight))',
+        'block-size': 'calc(1lh + var(--tp-text-xs) * var(--tp-leading-tight))',
+      },
+    },
   ],
   'flow-node-title': [
     {
@@ -541,8 +550,12 @@ export const flowAppearance: PresentationDictionary = {
   'flow-inspector-body': [],
   'flow-inspector-footer': sectionFooterAppearance,
   'flow-panel-top-start': [],
+  'flow-panel-top-center': [],
   'flow-panel-top-end': [],
+  'flow-panel-center-start': [],
+  'flow-panel-center-end': [],
   'flow-panel-bottom-start': [],
+  'flow-panel-bottom-center': [],
   'flow-panel-bottom-end': [],
   'flow-instructions': [],
 };
@@ -568,8 +581,12 @@ export const flowStructure: PresentationDictionary = {
     { declarations: { gap: 'var(--tp-space-2)', padding: 'var(--_tp-flow-space)' } },
   ],
   'flow-panel-top-start': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
+  'flow-panel-top-center': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
   'flow-panel-top-end': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
+  'flow-panel-center-start': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
+  'flow-panel-center-end': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
   'flow-panel-bottom-start': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
+  'flow-panel-bottom-center': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
   'flow-panel-bottom-end': [{ declarations: { margin: 'var(--_tp-flow-space)' } }],
 };
 

@@ -83,9 +83,15 @@ import {
   CONTROL_ACTION,
   TOOL_REQUEST,
   RUN_ACTION,
+  ZOOM_REQUEST,
+  ZOOM_FIT_KEYS,
+  ZOOM_RESET_KEYS,
+  DEFAULT_ZOOM_PRESETS,
+  controlActionsConverter,
   type FlowControlActionDetail,
   type FlowToolRequestDetail,
   type FlowRunActionDetail,
+  type FlowZoomRequestDetail,
 } from './panels/controls.js';
 import {
   TpFlowMinimap,
@@ -189,15 +195,15 @@ import { defaultPropertyControls } from './node/property-controls.js';
 import { flowStyles } from './styles.js';
 import { DEFAULT_STRINGS, format, resolveStrings } from './strings.js';
 import {
-  FLOW_CORNERS,
-  FLOW_CONTROL_ACTIONS,
+  FLOW_PANEL_POSITIONS,
   type FlowControlAction,
   type FlowAutoLayout,
   type FlowBackground,
   type FlowChangeMetadata,
   type FlowContextMenuTemplate,
   type FlowContextSubject,
-  type FlowCorner,
+  type FlowPanelPosition,
+  type FlowRunTransportState,
   type FlowEdgeTemplate,
   type FlowInspectorPolicy,
   type FlowLod,
@@ -251,7 +257,7 @@ export const flowMotionRoles = {
   layout: stateRole('flow-layout'),
 } as const;
 
-/** Margins and gap kept between stacked corner panels (two panel margins plus a gap). */
+/** Margins and gap kept between stacked panels (two panel margins plus a gap). */
 const PANEL_RESERVE_GAP = 40;
 const CREATE_PER_FRAME_MIN = 1;
 const CREATE_SHELLS_PER_FRAME = 16;
@@ -263,17 +269,10 @@ const DEFAULT_CONTROLS: readonly FlowControlAction[] = [
   'zoom-out',
   'fit',
   'tool',
+  'undo',
+  'redo',
   'lock',
 ];
-const controlsConverter = {
-  fromAttribute: (value: string | null): FlowControlAction[] =>
-    (value ?? '')
-      .split(/[\s,]+/)
-      .filter((item): item is FlowControlAction =>
-        (FLOW_CONTROL_ACTIONS as readonly string[]).includes(item),
-      ),
-  toAttribute: (value: readonly FlowControlAction[]): string => value.join(' '),
-};
 
 /** Last copied payload, so paste works where the clipboard API is unavailable. */
 let clipboardFallback: FlowClipboardPayload | undefined;
@@ -442,7 +441,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     showPorts: { type: Boolean, attribute: 'show-ports' },
     inspector: { type: String },
     inspectorCommit: { type: String, attribute: 'inspector-commit' },
-    controls: { converter: controlsConverter },
+    controls: { converter: controlActionsConverter },
+    zoomPresets: { attribute: false },
     controlsPosition: { type: String, attribute: 'controls-position' },
     controlsOrientation: { type: String, attribute: 'controls-orientation' },
     minimap: { type: Boolean },
@@ -521,12 +521,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   inspectorCommit: 'live' | 'explicit' = 'live';
   /** Built-in controls; `layout`, `undo`, `redo` and `run` opt in. */
   controls: readonly FlowControlAction[] = DEFAULT_CONTROLS;
-  controlsPosition: FlowCorner = 'bottom-start';
+  /** Zoom levels the zoom field's menu offers (1 is 100%). */
+  zoomPresets: readonly number[] = DEFAULT_ZOOM_PRESETS;
+  controlsPosition: FlowPanelPosition = 'bottom-start';
   controlsOrientation: 'vertical' | 'horizontal' = 'vertical';
   minimap = false;
-  minimapPosition: FlowCorner = 'bottom-end';
+  minimapPosition: FlowPanelPosition = 'bottom-end';
   palette = false;
-  palettePosition: FlowCorner = 'top-start';
+  palettePosition: FlowPanelPosition = 'top-start';
   /** The lock control: editing refused while locked (pan, zoom and selection stay). */
   locked = false;
   onValueChange: ((event: TpValueChangeEvent<FlowDocument>) => void) | undefined;
@@ -746,7 +748,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           `Duplicate node or edge id "${id}" in the authored children.`,
         ),
       onChanged: () => {
-        this.assignCorners();
+        this.assignPanels();
+        // Authored control bars take the current state as soon as they are slotted.
+        this.#syncAuthoredControlBars();
         this.#schedule();
       },
     });
@@ -768,6 +772,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     target.addEventListener(CONTROL_ACTION, this.#controlAction as EventListener);
     target.addEventListener(TOOL_REQUEST, this.#toolRequest as EventListener);
     target.addEventListener(RUN_ACTION, this.#runAction as EventListener);
+    target.addEventListener(ZOOM_REQUEST, this.#zoomRequest as EventListener);
     target.addEventListener(MINIMAP_STEP, this.#minimapStep as EventListener);
     target.addEventListener(MINIMAP_PAN, this.#minimapPan as EventListener);
     target.addEventListener(PALETTE_INSERT, this.#paletteInsert as EventListener);
@@ -1504,8 +1509,15 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#arbiter.connect();
     this.#installKeys();
     this.#syncDock();
-    this.assignCorners();
-    this.#scope?.add(this.#model.on('history', () => this.requestUpdate()));
+    this.assignPanels();
+    this.#scope?.add(
+      this.#model.on('history', (state) => {
+        this.requestUpdate();
+        this.dispatchEvent(
+          new CustomEvent('tp-history-change', { bubbles: true, composed: true, detail: state }),
+        );
+      }),
+    );
     this.#schedule();
   }
 
@@ -1525,6 +1537,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    this.#syncAuthoredControlBars();
     this.#measureControls();
     this.#syncComposition();
     if (
@@ -2428,12 +2441,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       handler: () => void this.zoomOut({ reason: 'hotkey' }).then(() => this.#announceZoom()),
     });
     keys.register({
-      keys: '0',
+      keys: ZOOM_FIT_KEYS,
       action: 'fit',
       handler: () => void this.fitViewTo({ reason: 'hotkey' }).then(() => this.#announceZoom()),
     });
     keys.register({
-      keys: '1',
+      keys: ZOOM_RESET_KEYS,
       action: 'zoom-reset',
       handler: () => void this.zoomTo(1, { reason: 'hotkey' }).then(() => this.#announceZoom()),
     });
@@ -2607,11 +2620,45 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   // ---- constituents: panels, inspector, toolbar, editor ----------------------------------------
 
-  #renderCornerPanels(corner: FlowCorner): TemplateResult | typeof nothing {
-    const strings = this.#resolvedStrings;
+  #runTransportState(): FlowRunTransportState | undefined {
     const player = this.#player;
+    return player
+      ? { playing: player.playing, index: player.index, length: player.length }
+      : undefined;
+  }
+
+  /** Bars the root keeps in sync: the built-in one and authored ones slotted into panels. */
+  #controlBars(): TpFlowControls[] {
+    const bars: TpFlowControls[] = [];
+    const builtIn = this.renderRoot?.querySelector<TpFlowControls>('tp-flow-controls.controls');
+    if (builtIn) bars.push(builtIn);
+    for (const position of FLOW_PANEL_POSITIONS)
+      for (const element of this.#adoption.panel(position))
+        if (element.localName === 'tp-flow-controls') bars.push(element as TpFlowControls);
+    return bars;
+  }
+
+  /** Authored bars receive the state the built-in bar gets from the template. */
+  #syncAuthoredControlBars(): void {
+    for (const bar of this.#controlBars()) {
+      if (bar.classList.contains('controls') && bar.getRootNode() === this.renderRoot) continue;
+      bar.tool = this.tool;
+      bar.locked = this.locked;
+      bar.canUndo = this.canUndo;
+      bar.canRedo = this.canRedo;
+      bar.readOnly = !this.editable;
+      bar.disabled = this.effectiveDisabled;
+      bar.strings = this.#resolvedStrings;
+      bar.zoom = this.viewport.zoom;
+      bar.zoomPresets = this.zoomPresets;
+      bar.runState = this.#runTransportState();
+    }
+  }
+
+  #renderBuiltInPanels(position: FlowPanelPosition): TemplateResult | typeof nothing {
+    const strings = this.#resolvedStrings;
     const controls =
-      this.controls.length && this.controlsPosition === corner
+      this.controls.length && this.controlsPosition === position
         ? html`<tp-flow-controls
             class="controls"
             .actions=${this.controls}
@@ -2622,19 +2669,17 @@ export class TpFlow extends TpFormElement<FlowDocument> {
             .canRedo=${this.canRedo}
             .readOnly=${!this.editable}
             .strings=${strings}
-            .runState=${
-              player
-                ? { playing: player.playing, index: player.index, length: player.length }
-                : undefined
-            }
+            .zoom=${this.viewport.zoom}
+            .zoomPresets=${this.zoomPresets}
+            .runState=${this.#runTransportState()}
           ></tp-flow-controls>`
         : nothing;
     const minimap =
-      this.minimap && this.minimapPosition === corner
+      this.minimap && this.minimapPosition === position
         ? html`<tp-flow-minimap class="minimap" .strings=${strings}></tp-flow-minimap>`
         : nothing;
     const palette =
-      this.palette && this.palettePosition === corner
+      this.palette && this.palettePosition === position
         ? html`<tp-flow-palette
             class="palette"
             .definitions=${this.schema?.nodes ?? []}
@@ -2868,10 +2913,15 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   /** Per-frame state of the minimap, node toolbar and edge editor (no layout reads). */
   #syncOverlays(viewport: FlowViewport): void {
     const model = this.#model;
+    // The zoom field follows the view without re-rendering the root.
+    if (viewport.zoom !== this.#publishedZoom) {
+      this.#publishedZoom = viewport.zoom;
+      for (const bar of this.#controlBars()) bar.zoom = viewport.zoom;
+    }
     const palette = this.#paletteElement;
     if (palette) {
       // The Command list reads this hook for its max height; keep the palette clear of the
-      // opposite corner on short panes, including a controls stack docked below it.
+      // opposite panel on short panes, including a controls bar docked on the same side.
       const available = Math.min(
         this.#size.height * 0.55,
         this.#size.height - this.#paletteReserve(),
@@ -2985,6 +3035,15 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       default:
         break;
     }
+  };
+
+  /** The zoom field: a typed level (Enter) or a menu choice (fit, a preset). */
+  #zoomRequest = (event: CustomEvent<FlowZoomRequestDetail>): void => {
+    event.stopPropagation();
+    const { zoom, fit, sourceEvent } = event.detail;
+    const reason: ChangeReason = sourceEvent?.type.startsWith('key') ? 'keyboard' : 'trigger-press';
+    if (fit) void this.fitViewTo({ reason });
+    else if (zoom !== undefined) void this.zoomTo(zoom, { reason });
   };
 
   #toolRequest = (event: CustomEvent<FlowToolRequestDetail>): void => {
@@ -3734,13 +3793,20 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#controlsExtent = controls?.offsetHeight ?? 0;
   }
 
-  /** Height the palette leaves free when the controls share its inline side on the other corner. */
+  /**
+   * Height the palette leaves free when the controls share its inline side in another panel:
+   * the controls' extent at the opposite end, the lower or upper half beside a centered bar, both
+   * ends when the palette itself is centered.
+   */
   #paletteReserve(): number {
     if (!this.#controlsExtent) return 0;
     const [paletteBlock, paletteInline] = this.palettePosition.split('-');
     const [controlsBlock, controlsInline] = this.controlsPosition.split('-');
     if (paletteInline !== controlsInline || paletteBlock === controlsBlock) return 0;
-    return this.#controlsExtent + PANEL_RESERVE_GAP;
+    const extent = this.#controlsExtent + PANEL_RESERVE_GAP;
+    if (controlsBlock === 'center') return this.#size.height / 2 + extent / 2;
+    if (paletteBlock === 'center') return extent * 2;
+    return extent;
   }
 
   #bindNode(host: TpFlowNode, node: FlowNode): void {
@@ -4017,6 +4083,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     };
   }
   #spaceHeld = false;
+  #publishedZoom: number | undefined;
 
   /** Whether the pan/zoom owner may claim a pointer or wheel event. */
   #panFilter(event: PointerEvent | WheelEvent | MouseEvent): boolean {
@@ -4740,7 +4807,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
             >${this.#renderNodeToolbarContent()}</tp-flow-node-toolbar
           >
         </div>
-        ${FLOW_CORNERS.map((corner) => this.#renderCorner(corner))}
+        ${FLOW_PANEL_POSITIONS.map((position) => this.#renderPanel(position))}
         ${
           this.contextMenu === false
             ? nothing
@@ -4755,23 +4822,23 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     `;
   }
 
-  #renderCorner(corner: FlowCorner): TemplateResult {
+  #renderPanel(position: FlowPanelPosition): TemplateResult {
     return this.renderPart(
-      `flow-panel-${corner}`,
+      `flow-panel-${position}`,
       {},
       {
         tag: 'div',
-        properties: { part: `flow-panel-${corner}`, class: 'panel', 'data-corner': corner },
-        content: html`${this.#renderCornerPanels(corner)}<slot name=${corner}></slot>`,
+        properties: { part: `flow-panel-${position}`, class: 'panel', 'data-position': position },
+        content: html`${this.#renderBuiltInPanels(position)}<slot name=${position}></slot>`,
       },
     ) as TemplateResult;
   }
 
-  /** Assigns authored corner children to their panel slots (manual slot assignment). */
-  assignCorners(): void {
-    for (const corner of FLOW_CORNERS) {
-      const slot = this.renderRoot.querySelector<HTMLSlotElement>(`slot[name="${corner}"]`);
-      const elements = this.#adoption.corner(corner);
+  /** Assigns authored panel children to their slots (manual slot assignment). */
+  assignPanels(): void {
+    for (const position of FLOW_PANEL_POSITIONS) {
+      const slot = this.renderRoot.querySelector<HTMLSlotElement>(`slot[name="${position}"]`);
+      const elements = this.#adoption.panel(position);
       if (slot) slot.assign(...elements);
     }
   }

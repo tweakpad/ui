@@ -7,10 +7,12 @@ import type {
   FlowBackground,
   FlowControlAction,
   FlowMode,
+  FlowPanelPosition,
   FlowTool,
   FlowWheelPolicy,
   TpFlow,
 } from '../../widgets/flow/index.js';
+import { FLOW_PANEL_POSITIONS } from '../../widgets/flow/types.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import { flowExamples } from './flow.examples.js';
 import { flowIcons, sampleRun, workflowDocument, workflowSchema } from './flow-example.js';
@@ -26,6 +28,8 @@ interface Args {
   wheel: FlowWheelPolicy;
   minimap: boolean;
   controls: FlowControlAction[];
+  controlsPosition: FlowPanelPosition;
+  controlsOrientation: 'horizontal' | 'vertical';
   label: string;
   readOnly: boolean;
   disabled: boolean;
@@ -61,7 +65,9 @@ const meta: Meta<Args> = {
     size: 'default',
     wheel: 'pan',
     minimap: false,
-    controls: ['zoom-in', 'zoom-out', 'fit', 'tool', 'lock'],
+    controls: ['undo', 'redo', 'zoom-out', 'zoom', 'zoom-in', 'fit', 'tool', 'lock'],
+    controlsPosition: 'bottom-center',
+    controlsOrientation: 'horizontal',
     label: 'Lead pipeline',
     readOnly: false,
     disabled: false,
@@ -85,9 +91,27 @@ const meta: Meta<Args> = {
     minimap: { control: 'boolean' },
     controls: {
       control: 'check',
-      options: ['zoom-in', 'zoom-out', 'fit', 'tool', 'lock', 'layout', 'undo', 'redo', 'run'],
-      description: 'Built-in control actions; `layout`, `undo`, `redo` and `run` opt in.',
+      options: [
+        'undo',
+        'redo',
+        'zoom-out',
+        'zoom',
+        'zoom-in',
+        'fit',
+        'tool',
+        'lock',
+        'layout',
+        'run',
+      ],
+      description:
+        'Built-in bar actions in display order; `zoom` is the zoom field, `layout` and `run` opt in.',
     },
+    controlsPosition: {
+      control: 'select',
+      options: [...FLOW_PANEL_POSITIONS],
+      description: 'Corner or edge middle the built-in bar anchors to.',
+    },
+    controlsOrientation: { control: 'inline-radio', options: ['horizontal', 'vertical'] },
     label: { control: 'text' },
     readOnly: { control: 'boolean' },
     disabled: { control: 'boolean' },
@@ -112,6 +136,8 @@ const meta: Meta<Args> = {
       .wheel=${args.wheel}
       .minimap=${args.minimap}
       .controls=${args.controls}
+      .controlsPosition=${args.controlsPosition}
+      .controlsOrientation=${args.controlsOrientation}
       .label=${args.label}
       .readOnly=${args.readOnly}
       .disabled=${args.disabled}

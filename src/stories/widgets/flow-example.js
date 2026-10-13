@@ -461,6 +461,7 @@ export const pipelineDocument = {
     { id: 'p5', type: 'notify', position: { x: 360, y: 500 }, data: {}, label: 'Notify author' },
   ],
   edges: [
+    // The path a build takes flows: animated edges march their dash toward the target.
     {
       id: 'q1',
       source: 'p1',
@@ -468,6 +469,7 @@ export const pipelineDocument = {
       target: 'p2',
       targetPort: 'in',
       markerEnd: 'arrowclosed',
+      animated: true,
     },
     {
       id: 'q2',
@@ -476,6 +478,7 @@ export const pipelineDocument = {
       target: 'p3',
       targetPort: 'in',
       markerEnd: 'arrowclosed',
+      animated: true,
     },
     {
       id: 'q3',
@@ -650,6 +653,31 @@ export function setupFlowExample(root) {
         const { direction, stats } = event.detail;
         output.textContent = `${direction}: ${stats.layers} layers, ${stats.crossings} crossings, ${stats.components} components, ${Math.round(stats.elapsed)} ms`;
       });
+    }
+    // Undo and redo state: `tp-history-change` carries `canUndo`, `canRedo` and the labels of the
+    // steps they would take back or forward.
+    if (flow.hasAttribute('data-history-readout')) {
+      const output = readout(flow);
+      const show = (state) => {
+        const undo = state.canUndo ? (state.undoLabel ?? 'available') : 'nothing';
+        const redo = state.canRedo ? (state.redoLabel ?? 'available') : 'nothing';
+        output.textContent = `Undo: ${undo} · Redo: ${redo}`;
+      };
+      show({ canUndo: flow.canUndo, canRedo: flow.canRedo });
+      listen(flow, 'tp-history-change', (event) => show(event.detail));
+    }
+    // Consumer bars: a child Button calls the public method its `data-flow-call` names; one with
+    // `data-flow-enabled` follows that boolean getter on every history change.
+    const commands = [...flow.querySelectorAll('[data-flow-call]')];
+    if (commands.length) {
+      const refresh = () => {
+        for (const button of commands)
+          if (button.dataset.flowEnabled) button.disabled = !flow[button.dataset.flowEnabled];
+      };
+      for (const button of commands)
+        listen(button, 'click', () => flow[button.dataset.flowCall]('trigger-press'));
+      listen(flow, 'tp-history-change', refresh);
+      refresh();
     }
     // Live readout: proposals with their reason and change types, commits, connections.
     if (flow.hasAttribute('data-output')) {

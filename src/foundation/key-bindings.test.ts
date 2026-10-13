@@ -146,6 +146,23 @@ describe('Key chord matching', () => {
     const [space] = parseKeyPattern('Space', 'linux');
     expect(matchesKeyChord(space!, keyEvent({ key: ' ', shiftKey: true }))).toBe(false);
   });
+  it('matches a Shift chord on a digit by the physical key, whatever character it types', () => {
+    const [shiftOne] = parseKeyPattern('Shift+1', 'linux');
+    expect(matchesKeyChord(shiftOne!, keyEvent({ key: '!', code: 'Digit1', shiftKey: true }))).toBe(
+      true,
+    );
+    expect(matchesKeyChord(shiftOne!, keyEvent({ key: '1', code: 'Digit1', shiftKey: true }))).toBe(
+      true,
+    );
+    expect(matchesKeyChord(shiftOne!, keyEvent({ key: '1', code: 'Digit1' }))).toBe(false);
+    expect(matchesKeyChord(shiftOne!, keyEvent({ key: '!', code: 'Digit2', shiftKey: true }))).toBe(
+      false,
+    );
+    const [one] = parseKeyPattern('1', 'linux');
+    expect(matchesKeyChord(one!, keyEvent({ key: '!', code: 'Digit1', shiftKey: true }))).toBe(
+      false,
+    );
+  });
   it('never matches Unidentified (IME) keys', () => {
     const [unidentified] = parseKeyPattern('Unidentified', 'linux');
     expect(matchesKeyChord(unidentified!, keyEvent('Unidentified'))).toBe(false);

@@ -369,9 +369,11 @@ away or at the pointer, keeps the edges among them and selects what it pasted. K
 editable control inside a node stay with the control. `nudgeSelection(delta)` moves the selection
 by a delta; keyboard nudges coalesce into one history entry.
 
-Undo and redo (`Mod+Z`, `Mod+Shift+Z`; `undo()`, `redo()`, `canUndo`, `canRedo`) replay the
-engine's history: one entry per gesture, nudges coalesced, measurements, viewport and selection
-never recorded. Each step is proposed through the value lane with `metadata.history` set to
+Undo and redo (`Mod+Z`, `Mod+Shift+Z`, the Undo and Redo controls; `undo()`, `redo()`, `canUndo`,
+`canRedo`) replay the engine's history: one entry per gesture, nudges coalesced, measurements,
+viewport and selection never recorded. `tp-history-change` reports every history change with
+`{ canUndo, canRedo, undoLabel?, redoLabel?, depth }` (the labels name the step, such as `move` or
+`connect`), so a consumer bar can enable its own buttons. Each step is proposed through the value lane with `metadata.history` set to
 `undo` or `redo`, so a controlled owner can veto it. Delete and Backspace, the node toolbar and
 the context menu delete the selection: the cancelable `tp-delete` carries the nodes (with their
 descendants) and the dependent edges, the deletion is one transaction, focus moves to the nearest
@@ -441,12 +443,28 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
 
 ## Panels
 
-- Controls: `controls` lists the actions of the controls toolbar in order;
-  `zoom-in zoom-out fit tool lock` by default, `layout`, `undo`, `redo` and `run` opt in and
-  `controls=""` renders no
-  toolbar. The toolbar is a Button group of outline icon Buttons, the select and pan tools a
-  Toggle group, the lock a Toggle, and the run transport a Slider with its Buttons; it sits in
-  `controlsPosition` (`bottom-start`) laid out along `controlsOrientation` (`vertical`).
+- Panels anchor to the four corners and the middle of the four edges: `top-start`, `top-center`,
+  `top-end`, `center-start`, `center-end`, `bottom-start`, `bottom-center` and `bottom-end`
+  (`FlowPanelPosition`, logical `block-inline` pairs). Every built-in panel takes a position, and a
+  slot of each name places consumer content there.
+- Controls: `controls` lists the actions of the built-in bar in display order:
+  `zoom-in zoom-out fit tool undo redo lock` by default, with `zoom`, `layout` and `run` opting in
+  and `controls=""` rendering no bar. Adjacent actions of one set (view, history) share a Button
+  group of outline icon Buttons; the select and pan tools are a Toggle group, the lock a Toggle,
+  `zoom` the zoom field and `run` the transport (a Slider with its Buttons). Undo and Redo are
+  disabled until the history has a step to take. The bar sits in `controlsPosition`
+  (`bottom-start`) laid out along `controlsOrientation` (`vertical`).
+- Zoom field (`zoom`): an Input group showing the current level; type a percentage and press Enter
+  (Escape or leaving the field restores it). Its Menu offers Zoom to fit (Shift+1) and the levels
+  of `zoomPresets` (`[0.5, 1, 2]`; 100% is Shift+0). In a bar at the bottom the menu opens upward,
+  at the top downward and on a side edge toward the canvas.
+- Further bars: an authored `tp-flow-controls` child slotted into any panel
+  (`<tp-flow-controls slot="center-end" actions="tool lock" orientation="vertical">`) is another
+  standard bar; the widget keeps its tool, lock, history, zoom, run and disabled state in sync and
+  handles its presses. Consumer Buttons inside a `tp-flow-controls` (or a Button group of them)
+  follow its built-in sets and join its roving focus. Any other slotted content is a bar of its own,
+  such as a Button group whose Buttons call `selectAll()`, `undo()` or `layout()` and follow
+  `tp-history-change` for their state.
 - Minimap: `minimap` shows a canvas overview (an image named by `strings.minimap`) of the node
   boxes in their tones and the viewport mask, in `minimapPosition` (`bottom-end`); a press or drag
   pans, the wheel zooms, four named Buttons pan from the keyboard, and it repaints on theme and
@@ -474,9 +492,9 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
   local until Save proposes one change per edited key; Cancel reverts them). Opened by a double
   press the inspector leaves focus on the canvas; opened from Settings or the menu it focuses its
   first field; closing returns focus to the node.
-- Corner slots: `slot="top-start"`, `top-end`, `bottom-start` and `bottom-end` place consumer
-  panels (a Button, a Badge, a Card) over the canvas corners beside the built-in ones; the layers
-  only intercept the pointer over their content.
+- Panel slots: `slot="top-start"` and the seven other positions place consumer panels (a Button, a
+  Badge, a Card, a bar) over the canvas beside the built-in ones; the layers only intercept the
+  pointer over their content.
 - Background: `background` draws `dots` (default), `lines`, `cross` or `none` behind the graph at
   the `snapGrid` spacing, following the viewport.
 
@@ -558,6 +576,7 @@ the root as `data-renderer`.
 | `tp-connect`          | yes        | `{ connection, edge, reason, sourceEvent }`; cancelling drops the connection, mutating `edge` changes what is added                                                       |
 | `tp-delete`           | yes        | `{ nodes, edges, reason, sourceEvent }`: the nodes with their descendants and every dependent edge                                                                        |
 | `tp-layout-complete`  | no         | `{ direction, stats, bounds }`                                                                                                                                            |
+| `tp-history-change`   | no         | `{ canUndo, canRedo, undoLabel?, redoLabel?, depth }`                                                                                                                     |
 | `tp-run-change`       | no         | `{ run, index?, length?, playing?, mode? }`                                                                                                                               |
 | `tp-field-value`      | no         | the form value for a surrounding Field                                                                                                                                    |
 | `tp-diagnostic`       | no         | `{ code, message, severity }` with the codes `flow-state` and `flow-adoption-conflict`                                                                                    |
@@ -602,7 +621,8 @@ is Command on macOS and Control elsewhere.
     <tr><td><tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>Z</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>Shift</tp-key-hint><tp-key-hint>Z</tp-key-hint></tp-key-hint-group></td><td>Undo, redo</td></tr>
     <tr><td><tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>C</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>X</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>V</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>D</tp-key-hint></tp-key-hint-group></td><td>Copy, cut, paste, duplicate the selection</td></tr>
     <tr><td><tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>A</tp-key-hint></tp-key-hint-group></td><td>Select everything</td></tr>
-    <tr><td><tp-key-hint>+</tp-key-hint> <tp-key-hint>-</tp-key-hint> <tp-key-hint>0</tp-key-hint> <tp-key-hint>1</tp-key-hint></td><td>Zoom in, zoom out, fit the graph, zoom to 100%</td></tr>
+    <tr><td><tp-key-hint>+</tp-key-hint> <tp-key-hint>-</tp-key-hint></td><td>Zoom in, zoom out</td></tr>
+    <tr><td><tp-key-hint-group><tp-key-hint key="shift"></tp-key-hint><tp-key-hint>1</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint key="shift"></tp-key-hint><tp-key-hint>0</tp-key-hint></tp-key-hint-group></td><td>Zoom to fit, zoom to 100% (the digit key, whatever character Shift types on the layout)</td></tr>
     <tr><td><tp-key-hint>V</tp-key-hint> <tp-key-hint>H</tp-key-hint></td><td>Select tool, pan tool</td></tr>
     <tr><td><tp-key-hint>E</tp-key-hint></td><td>Cycle the focused node's edges</td></tr>
     <tr><td><tp-key-hint-group><tp-key-hint>Shift</tp-key-hint><tp-key-hint>F10</tp-key-hint></tp-key-hint-group> <tp-key-hint>ContextMenu</tp-key-hint></td><td>Open the context menu</td></tr>
@@ -658,8 +678,10 @@ and has a minimum height on its own, so it needs no inline size). Public parts: 
 `flow-edge-segment-handle`, `flow-edge-reconnect`, `flow-connection-line`, `flow-selection`,
 `flow-selection-bounds`, `flow-minimap`, `flow-minimap-node`, `flow-minimap-viewport`,
 `flow-controls`, `flow-control`, `flow-palette`, `flow-palette-item`, `flow-inspector`,
-`flow-inspector-header`, `flow-inspector-tabs`, `flow-inspector-body`, `flow-inspector-footer`, `flow-panel-top-start`,
-`flow-panel-top-end`, `flow-panel-bottom-start`, `flow-panel-bottom-end` and `flow-instructions`.
+`flow-inspector-header`, `flow-inspector-tabs`, `flow-inspector-body`, `flow-inspector-footer`,
+`flow-panel-top-start`, `flow-panel-top-center`, `flow-panel-top-end`, `flow-panel-center-start`,
+`flow-panel-center-end`, `flow-panel-bottom-start`, `flow-panel-bottom-center`,
+`flow-panel-bottom-end` and `flow-instructions`.
 The composed Card of a node is registered as `flow-node-card`, its List item rows as
 `flow-node-row`, the toolbar Buttons and Toggles as `flow-control` and the palette's List items as
 `flow-palette-item`; `tp-flow-node` exports its parts, so `tp-flow::part(flow-node-title)` reaches
@@ -743,46 +765,47 @@ nodes; pooled node hosts instead of a React element per node. tweakpane has no g
 
 ### `tp-flow`
 
-| Property                                   | Attribute                                      | Type                                                   | Default                                |
-| ------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------ | -------------------------------------- |
-| `value` / `defaultValue`                   | `value` / `default-value` (JSON)               | `FlowDocument`                                         | `{ version: 1, nodes: [], edges: [] }` |
-| `viewport` / `defaultViewport`             | `viewport` / `default-viewport` (`"x y zoom"`) | `FlowViewport`                                         | `0 0 1`, or the first fit              |
-| `selection` / `defaultSelection`           | `selection` / `default-selection` (JSON)       | `{ nodes: string[], edges: string[] }`                 | empty                                  |
-| `tool` / `defaultTool`                     | `tool` / `default-tool`                        | `'select' \| 'pan'`                                    | `'select'`                             |
-| `mode` / `defaultMode`                     | `mode` / `default-mode`                        | `'design' \| 'view'`                                   | `'design'`                             |
-| `inspectorOpen` / `defaultInspectorOpen`   | `inspector-open` / `default-inspector-open`    | `boolean`                                              | `false`                                |
-| `schema`                                   | —                                              | `FlowSchema`                                           | `undefined`                            |
-| `icons`                                    | —                                              | `Record<string, IconDefinition>`                       | `{}`                                   |
-| `nodeTemplates`, `edgeTemplates`           | —                                              | `Record<string, FlowNodeTemplate \| FlowEdgeTemplate>` | `{}`                                   |
-| `propertyControls`                         | —                                              | `FlowPropertyControls`                                 | `defaultPropertyControls`              |
-| `renderer`                                 | —                                              | `'svg' \| FlowRenderer`                                | `'svg'`                                |
-| `router`                                   | —                                              | `'auto' \| 'orthogonal' \| 'none' \| FlowRouter`       | `'auto'`                               |
-| `layoutEngine`                             | —                                              | `FlowLayoutEngine`                                     | layered engine                         |
-| `autoLayout`                               | `auto-layout` (reflected)                      | `'none' \| 'horizontal' \| 'vertical' \| 'smart'`      | `'none'`                               |
-| `isValidConnection`                        | —                                              | `FlowConnectionPredicate`                              | `undefined`                            |
-| `middleware`                               | —                                              | `FlowMiddleware[]`                                     | `[]`                                   |
-| `nodeToolbar`, `contextMenu`               | —                                              | template or `false`                                    | built-in content                       |
-| `getNodeAriaLabel`, `getEdgeAriaLabel`     | —                                              | functions                                              | built-in names                         |
-| `run`                                      | —                                              | `FlowRun \| FlowTrace \| null`                         | `null`                                 |
-| `snap`, `snapGrid`                         | `snap`, `snap-grid`                            | `boolean`, `number`                                    | `false`, `16`                          |
-| `minZoom`, `maxZoom`, `detailZoom`         | `min-zoom`, `max-zoom`, `detail-zoom`          | `number`                                               | `0.1`, `4`, `0.3`                      |
-| `virtualize`                               | `virtualize` (`"false"` to turn off)           | `boolean`                                              | `true`                                 |
-| `fitView`, `fitPadding`                    | `fit-view`, `fit-padding`                      | `boolean`, `number`                                    | `false`, `48`                          |
-| `background`                               | `background` (reflected)                       | `'dots' \| 'lines' \| 'cross' \| 'none'`               | `'dots'`                               |
-| `controls`                                 | `controls` (space-separated)                   | `FlowControlAction[]`                                  | `zoom-in zoom-out fit tool lock`       |
-| `controlsPosition`, `controlsOrientation`  | `controls-position`, `controls-orientation`    | `FlowCorner`, `'vertical' \| 'horizontal'`             | `'bottom-start'`, `'vertical'`         |
-| `minimap`, `minimapPosition`               | `minimap`, `minimap-position`                  | `boolean`, `FlowCorner`                                | `false`, `'bottom-end'`                |
-| `palette`, `palettePosition`               | `palette`, `palette-position`                  | `boolean`, `FlowCorner`                                | `false`, `'top-start'`                 |
-| `inspector`, `inspectorCommit`             | `inspector`, `inspector-commit`                | `'none' \| 'auto' \| 'manual'`, `'live' \| 'explicit'` | `'auto'`, `'live'`                     |
-| `locked`                                   | `locked` (reflected)                           | `boolean`                                              | `false`                                |
-| `wheel`, `cooperativeGestures`             | `wheel`, `cooperative-gestures`                | `'pan' \| 'zoom' \| 'none'`, `boolean`                 | `'pan'`, `false`                       |
-| `connectionRadius`, `connectionMode`       | `connection-radius`, `connection-mode`         | `number`, `'strict' \| 'loose'`                        | `20`, `'strict'`                       |
-| `connectOnClick`, `selectionMode`          | `connect-on-click`, `selection-mode`           | `boolean`, `'partial' \| 'full'`                       | `true`, `'partial'`                    |
-| `showPortLabels`                           | `show-port-labels`                             | `boolean`                                              | `false`                                |
-| `size`                                     | `size` (reflected)                             | `'sm' \| 'default' \| 'lg'`                            | `'default'`                            |
-| `label`, `locale`, `strings`               | `label`, `locale`, —                           | `string`, `string`, `Partial<FlowStrings>`             | `''`, `''`, `{}`                       |
-| `name`, `disabled`, `readOnly`, `required` | `name`, `disabled`, `readonly`, `required`     | form control contract                                  | contract defaults                      |
-| `onValueChange`, `onValueCommitted`        | —                                              | callbacks                                              | `undefined`                            |
+| Property                                   | Attribute                                      | Type                                                   | Default                                    |
+| ------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------ | ------------------------------------------ |
+| `value` / `defaultValue`                   | `value` / `default-value` (JSON)               | `FlowDocument`                                         | `{ version: 1, nodes: [], edges: [] }`     |
+| `viewport` / `defaultViewport`             | `viewport` / `default-viewport` (`"x y zoom"`) | `FlowViewport`                                         | `0 0 1`, or the first fit                  |
+| `selection` / `defaultSelection`           | `selection` / `default-selection` (JSON)       | `{ nodes: string[], edges: string[] }`                 | empty                                      |
+| `tool` / `defaultTool`                     | `tool` / `default-tool`                        | `'select' \| 'pan'`                                    | `'select'`                                 |
+| `mode` / `defaultMode`                     | `mode` / `default-mode`                        | `'design' \| 'view'`                                   | `'design'`                                 |
+| `inspectorOpen` / `defaultInspectorOpen`   | `inspector-open` / `default-inspector-open`    | `boolean`                                              | `false`                                    |
+| `schema`                                   | —                                              | `FlowSchema`                                           | `undefined`                                |
+| `icons`                                    | —                                              | `Record<string, IconDefinition>`                       | `{}`                                       |
+| `nodeTemplates`, `edgeTemplates`           | —                                              | `Record<string, FlowNodeTemplate \| FlowEdgeTemplate>` | `{}`                                       |
+| `propertyControls`                         | —                                              | `FlowPropertyControls`                                 | `defaultPropertyControls`                  |
+| `renderer`                                 | —                                              | `'svg' \| FlowRenderer`                                | `'svg'`                                    |
+| `router`                                   | —                                              | `'auto' \| 'orthogonal' \| 'none' \| FlowRouter`       | `'auto'`                                   |
+| `layoutEngine`                             | —                                              | `FlowLayoutEngine`                                     | layered engine                             |
+| `autoLayout`                               | `auto-layout` (reflected)                      | `'none' \| 'horizontal' \| 'vertical' \| 'smart'`      | `'none'`                                   |
+| `isValidConnection`                        | —                                              | `FlowConnectionPredicate`                              | `undefined`                                |
+| `middleware`                               | —                                              | `FlowMiddleware[]`                                     | `[]`                                       |
+| `nodeToolbar`, `contextMenu`               | —                                              | template or `false`                                    | built-in content                           |
+| `getNodeAriaLabel`, `getEdgeAriaLabel`     | —                                              | functions                                              | built-in names                             |
+| `run`                                      | —                                              | `FlowRun \| FlowTrace \| null`                         | `null`                                     |
+| `snap`, `snapGrid`                         | `snap`, `snap-grid`                            | `boolean`, `number`                                    | `false`, `16`                              |
+| `minZoom`, `maxZoom`, `detailZoom`         | `min-zoom`, `max-zoom`, `detail-zoom`          | `number`                                               | `0.1`, `4`, `0.3`                          |
+| `virtualize`                               | `virtualize` (`"false"` to turn off)           | `boolean`                                              | `true`                                     |
+| `fitView`, `fitPadding`                    | `fit-view`, `fit-padding`                      | `boolean`, `number`                                    | `false`, `48`                              |
+| `background`                               | `background` (reflected)                       | `'dots' \| 'lines' \| 'cross' \| 'none'`               | `'dots'`                                   |
+| `controls`                                 | `controls` (space-separated)                   | `FlowControlAction[]`                                  | `zoom-in zoom-out fit tool undo redo lock` |
+| `controlsPosition`, `controlsOrientation`  | `controls-position`, `controls-orientation`    | `FlowPanelPosition`, `'vertical' \| 'horizontal'`      | `'bottom-start'`, `'vertical'`             |
+| `zoomPresets`                              | —                                              | `number[]`                                             | `[0.5, 1, 2]`                              |
+| `minimap`, `minimapPosition`               | `minimap`, `minimap-position`                  | `boolean`, `FlowPanelPosition`                         | `false`, `'bottom-end'`                    |
+| `palette`, `palettePosition`               | `palette`, `palette-position`                  | `boolean`, `FlowPanelPosition`                         | `false`, `'top-start'`                     |
+| `inspector`, `inspectorCommit`             | `inspector`, `inspector-commit`                | `'none' \| 'auto' \| 'manual'`, `'live' \| 'explicit'` | `'auto'`, `'live'`                         |
+| `locked`                                   | `locked` (reflected)                           | `boolean`                                              | `false`                                    |
+| `wheel`, `cooperativeGestures`             | `wheel`, `cooperative-gestures`                | `'pan' \| 'zoom' \| 'none'`, `boolean`                 | `'pan'`, `false`                           |
+| `connectionRadius`, `connectionMode`       | `connection-radius`, `connection-mode`         | `number`, `'strict' \| 'loose'`                        | `20`, `'strict'`                           |
+| `connectOnClick`, `selectionMode`          | `connect-on-click`, `selection-mode`           | `boolean`, `'partial' \| 'full'`                       | `true`, `'partial'`                        |
+| `showPortLabels`                           | `show-port-labels`                             | `boolean`                                              | `false`                                    |
+| `size`                                     | `size` (reflected)                             | `'sm' \| 'default' \| 'lg'`                            | `'default'`                                |
+| `label`, `locale`, `strings`               | `label`, `locale`, —                           | `string`, `string`, `Partial<FlowStrings>`             | `''`, `''`, `{}`                           |
+| `name`, `disabled`, `readOnly`, `required` | `name`, `disabled`, `readonly`, `required`     | form control contract                                  | contract defaults                          |
+| `onValueChange`, `onValueCommitted`        | —                                              | callbacks                                              | `undefined`                                |
 
 Read-only: `model`, `nodes`, `edges`, `routes`, `player`, `runState`, `controlled`, `editable`,
 `dragging`, `connecting`, `selecting`, `canUndo`, `canRedo`, `focusedNodeId`, `visibleNodeIds`,
@@ -811,9 +834,19 @@ Methods: `setValue(document, reason?, sourceEvent?)`, `load(document)`,
 
 Events: `tp-value-change`, `tp-value-commit`, `tp-viewport-change`, `tp-selection-change`,
 `tp-tool-change`, `tp-mode-change`, `tp-open-change`, `tp-connect`, `tp-delete`,
-`tp-layout-complete`, `tp-run-change`, `tp-field-value`, `tp-diagnostic`. Slots: `top-start`,
-`top-end`, `bottom-start`, `bottom-end`; the default slot takes `tp-flow-node` and `tp-flow-edge`
-children.
+`tp-layout-complete`, `tp-history-change`, `tp-run-change`, `tp-field-value`, `tp-diagnostic`.
+Slots: `top-start`, `top-center`, `top-end`, `center-start`, `center-end`, `bottom-start`,
+`bottom-center`, `bottom-end`; the default slot takes `tp-flow-node` and `tp-flow-edge` children.
+
+### `tp-flow-controls`
+
+The built-in bar, and an authored standard bar when slotted into a panel of `tp-flow`. Attributes:
+`actions` (space-separated `FlowControlAction` list in display order) and `orientation`
+(`horizontal` or `vertical`). The widget writes `tool`, `locked`, `canUndo`, `canRedo`, `zoom`,
+`zoomPresets`, `runState`, `readOnly`, `disabled` and `strings`; presses reach the widget, never
+the page. The default slot takes consumer Buttons, Toggles or Button groups, which follow the
+built-in sets and join the bar's roving focus. Part: `flow-controls`; its Buttons and Toggles are
+`flow-control`.
 
 ### `tp-flow-node`
 

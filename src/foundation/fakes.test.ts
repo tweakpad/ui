@@ -100,6 +100,7 @@ export class FakeIntersectionObserver {
 
 export interface KeyEventInit {
   key: string;
+  code?: string;
   ctrlKey?: boolean;
   metaKey?: boolean;
   altKey?: boolean;

@@ -9,7 +9,7 @@ import type {
 } from '../../foundation/flow/types.js';
 import type { TpFlowNode } from './node/node.js';
 import type { TpFlowEdge } from './edge/flow-edge.js';
-import { FLOW_CORNERS, type FlowCorner } from './types.js';
+import { FLOW_PANEL_POSITIONS, type FlowPanelPosition } from './types.js';
 
 /** A shallow copy without the given keys (the record patch of an adopted element). */
 function omit<T extends object, K extends keyof T>(value: T, keys: readonly K[]): Omit<T, K> {
@@ -61,14 +61,14 @@ function waypoints(value: string | null): FlowPoint[] | undefined {
  * Declarative adoption (Widgets 6.3 Definition): `tp-flow-node` and `tp-flow-edge` light-DOM
  * children become document nodes and edges by id; authored node elements are the rendered
  * hosts while visible (manual slot assignment, `components/map` precedent). Gesture results
- * are written back only to the owned `x`, `y`, `width` and `height` attributes. Corner-slotted
+ * are written back only to the owned `x`, `y`, `width` and `height` attributes. Panel-slotted
  * children are collected for the panel slots.
  */
 export class LightDomAdoption {
   readonly #options: AdoptionOptions;
   readonly #nodes = new Map<string, TpFlowNode>();
   readonly #edges = new Map<string, TpFlowEdge>();
-  readonly #corners = new Map<FlowCorner, Element[]>();
+  readonly #panels = new Map<FlowPanelPosition, Element[]>();
   #observer: MutationObserver | undefined;
   #writing = false;
   #anonymous = 0;
@@ -85,8 +85,9 @@ export class LightDomAdoption {
     return this.#edges;
   }
 
-  corner(corner: FlowCorner): readonly Element[] {
-    return this.#corners.get(corner) ?? [];
+  /** Light-DOM children slotted into the panel at `position`, in document order. */
+  panel(position: FlowPanelPosition): readonly Element[] {
+    return this.#panels.get(position) ?? [];
   }
 
   connect(): void {
@@ -141,7 +142,7 @@ export class LightDomAdoption {
     this.#observer = undefined;
     this.#nodes.clear();
     this.#edges.clear();
-    this.#corners.clear();
+    this.#panels.clear();
   }
 
   /** Reads every light-DOM child and proposes the differences into the document. */
@@ -150,7 +151,7 @@ export class LightDomAdoption {
     const model = this.#options.model();
     const nodes = new Map<string, TpFlowNode>();
     const edges = new Map<string, TpFlowEdge>();
-    const corners = new Map<FlowCorner, Element[]>();
+    const panels = new Map<FlowPanelPosition, Element[]>();
     const changes: FlowChange[] = [];
     for (const child of host.children) {
       if (child.localName === 'tp-flow-node') {
@@ -178,11 +179,11 @@ export class LightDomAdoption {
         if (!model.getEdge(element.id))
           changes.push({ type: 'edge-add', edge: this.#readEdge(element) });
       } else {
-        const slot = child.getAttribute('slot') as FlowCorner | null;
-        if (slot && (FLOW_CORNERS as readonly string[]).includes(slot)) {
-          const list = corners.get(slot) ?? [];
+        const slot = child.getAttribute('slot') as FlowPanelPosition | null;
+        if (slot && (FLOW_PANEL_POSITIONS as readonly string[]).includes(slot)) {
+          const list = panels.get(slot) ?? [];
           list.push(child);
-          corners.set(slot, list);
+          panels.set(slot, list);
         }
       }
     }
@@ -194,8 +195,8 @@ export class LightDomAdoption {
     for (const [id, element] of nodes) this.#nodes.set(id, element);
     this.#edges.clear();
     for (const [id, element] of edges) this.#edges.set(id, element);
-    this.#corners.clear();
-    for (const [corner, list] of corners) this.#corners.set(corner, list);
+    this.#panels.clear();
+    for (const [position, list] of panels) this.#panels.set(position, list);
     if (changes.length) this.#options.adopt(changes);
     this.#options.onChanged();
   }

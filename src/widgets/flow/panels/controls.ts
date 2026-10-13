@@ -1,4 +1,4 @@
-import { css, html, type PropertyValues, type TemplateResult } from 'lit';
+import { css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { TpElement } from '../../../foundation/element.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import { ToolbarController, type ToolbarRegistration } from '../../../foundation/toolbar.js';
@@ -6,9 +6,17 @@ import type { Orientation } from '../../../foundation/types.js';
 import { TpButton } from '../../../components/button/button.js';
 import { TpButtonGroup } from '../../../components/button-group/button-group.js';
 import { TpIcon } from '../../../components/icon/icon.js';
+import { TpInput } from '../../../components/input/input.js';
+import { TpInputGroup } from '../../../components/input-group/input-group.js';
+import { TpKeyHint } from '../../../components/key-hint/key-hint.js';
+import { TpKeyHintGroup } from '../../../components/key-hint/key-hint-group.js';
+import { TpMenu } from '../../../components/menu/menu.js';
+import { TpMenuItem } from '../../../components/menu/menu-item.js';
+import { TpSeparator } from '../../../components/separator/separator.js';
 import { TpSlider } from '../../../components/slider/slider.js';
 import { TpToggle } from '../../../components/toggle/toggle.js';
 import { TpToggleGroup } from '../../../components/toggle-group/toggle-group.js';
+import { chevronDownIcon } from '../../../icons/chevron-down.js';
 import { handIcon } from '../../../icons/hand.js';
 import { lockIcon } from '../../../icons/lock.js';
 import { scanIcon } from '../../../icons/map.js';
@@ -22,17 +30,48 @@ import { undoIcon } from '../../../icons/undo.js';
 import { unlockIcon } from '../../../icons/unlock.js';
 import { workflowIcon } from '../../../icons/workflow.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
-import { resolveStrings } from '../strings.js';
-import type { FlowControlAction, FlowRunTransportState, FlowStrings, FlowTool } from '../types.js';
+import { format, resolveStrings } from '../strings.js';
+import {
+  FLOW_CONTROL_ACTIONS,
+  type FlowControlAction,
+  type FlowRunTransportState,
+  type FlowStrings,
+  type FlowTool,
+} from '../types.js';
 
 export const CONTROL_ACTION = 'flow-control-action';
 export const TOOL_REQUEST = 'flow-tool-request';
 export const RUN_ACTION = 'flow-run-action';
+export const ZOOM_REQUEST = 'flow-zoom-request';
+
+/** The zoom shortcuts the root binds and the zoom menu shows (Figma, tldraw, Excalidraw). */
+export const ZOOM_FIT_KEYS = 'Shift+1';
+export const ZOOM_RESET_KEYS = 'Shift+0';
+/** Zoom levels the zoom menu offers by default. */
+export const DEFAULT_ZOOM_PRESETS: readonly number[] = [0.5, 1, 2];
+
+/** `actions` / `controls` attribute: a space- or comma-separated list of known actions. */
+export const controlActionsConverter = {
+  fromAttribute: (value: string | null): FlowControlAction[] =>
+    (value ?? '')
+      .split(/[\s,]+/)
+      .filter((item): item is FlowControlAction =>
+        (FLOW_CONTROL_ACTIONS as readonly string[]).includes(item),
+      ),
+  toAttribute: (value: readonly FlowControlAction[]): string => value.join(' '),
+};
+
+export interface FlowZoomRequestDetail {
+  /** The requested zoom factor (1 is 100%); absent when `fit` is set. */
+  zoom?: number;
+  fit?: boolean;
+  sourceEvent: Event;
+}
 
 export type FlowRunTransportAction = 'play' | 'pause' | 'step' | 'back' | 'seek';
 
 export interface FlowControlActionDetail {
-  action: Exclude<FlowControlAction, 'tool' | 'run'>;
+  action: Exclude<FlowControlAction, 'tool' | 'run' | 'zoom'>;
   sourceEvent: Event;
 }
 export interface FlowToolRequestDetail {
@@ -47,11 +86,12 @@ export interface FlowRunActionDetail {
 }
 
 /** Actions rendered as plain Buttons, in the order the consumer lists them. */
-type ButtonAction = Exclude<FlowControlAction, 'tool' | 'run'>;
+type ButtonAction = Exclude<FlowControlAction, 'tool' | 'run' | 'zoom'>;
 type Segment =
   | { kind: 'buttons'; actions: ButtonAction[] }
   | { kind: 'tool' }
   | { kind: 'lock' }
+  | { kind: 'zoom' }
   | { kind: 'run' };
 
 const BUTTON_ICONS: Record<ButtonAction, IconDefinition> = {
@@ -71,6 +111,16 @@ const BUTTON_STRINGS: Record<ButtonAction, keyof FlowStrings> = {
   layout: 'layout',
   undo: 'undo',
   redo: 'redo',
+};
+/** Adjacent Buttons of one set share a Button group; another set starts a new group. */
+const BUTTON_SETS: Record<ButtonAction, 'view' | 'history' | 'arrange' | 'lock'> = {
+  'zoom-in': 'view',
+  'zoom-out': 'view',
+  fit: 'view',
+  undo: 'history',
+  redo: 'history',
+  layout: 'arrange',
+  lock: 'lock',
 };
 /** Actions that edit the document; read-only widgets disable them. */
 const EDITING_ACTIONS: ReadonlySet<FlowControlAction> = new Set(['layout', 'undo', 'redo']);
@@ -116,6 +166,25 @@ const controlsStyles = css`
     min-inline-size: calc(var(--tp-spacing) * 28);
   }
 
+  /* The zoom field holds "100%" and its menu trigger. */
+  tp-input-group.zoom {
+    inline-size: calc(var(--tp-spacing) * 24);
+    flex: none;
+  }
+
+  .controls[data-orientation='vertical'] tp-input-group.zoom {
+    inline-size: 100%;
+  }
+
+  tp-input.zoom-input {
+    text-align: center;
+  }
+
+  /* Consumer items (a Button, a Button group) follow the built-in sets. */
+  slot.items {
+    display: contents;
+  }
+
   .controls[data-orientation='vertical'] tp-slider.position {
     min-inline-size: 0;
     min-block-size: calc(var(--tp-spacing) * 28);
@@ -125,25 +194,45 @@ const controlsStyles = css`
 
 /**
  * The controls toolbar (Widgets 6.3 Anatomy): a Foundation toolbar of composed Buttons in a
- * Button group, the select/pan tool pair as a Toggle group and, when `run` is listed, a transport
- * (back, play/pause, step) with a Slider over the run steps. It owns no document state: every
- * press is reported to the root (`flow-control-action`, `flow-tool-request`, `flow-run-action`).
+ * Button group, the select/pan tool pair as a Toggle group, the zoom field (an Input group with
+ * the current zoom and a Menu of fit and preset levels) and, when `run` is listed, a transport
+ * (back, play/pause, step) with a Slider over the run steps. Consumer children follow the
+ * built-in sets and join the toolbar's roving focus. The root renders one bar from `controls`;
+ * authored `tp-flow-controls` children slotted into a panel are further bars the root keeps in
+ * sync. It owns no document state: every press is reported to the root (`flow-control-action`,
+ * `flow-tool-request`, `flow-zoom-request`, `flow-run-action`).
  */
 export class TpFlowControls extends TpElement {
   static tagName = 'tp-flow-controls';
   static override presentation = flowPresentation;
   static get elementDependencies() {
-    return [TpButtonGroup, TpButton, TpToggleGroup, TpToggle, TpIcon, TpSlider];
+    return [
+      TpButtonGroup,
+      TpButton,
+      TpToggleGroup,
+      TpToggle,
+      TpIcon,
+      TpSlider,
+      TpInputGroup,
+      TpInput,
+      TpMenu,
+      TpMenuItem,
+      TpSeparator,
+      TpKeyHintGroup,
+      TpKeyHint,
+    ];
   }
   static override properties = {
     ...TpElement.properties,
-    actions: { attribute: false },
+    actions: { converter: controlActionsConverter },
     tool: { type: String, reflect: true },
     locked: { type: Boolean, reflect: true },
     canUndo: { type: Boolean, attribute: 'can-undo' },
     canRedo: { type: Boolean, attribute: 'can-redo' },
     strings: { attribute: false },
     runState: { attribute: false },
+    zoom: { type: Number },
+    zoomPresets: { attribute: false },
   };
   static override styles = [TpElement.styles, controlsStyles];
 
@@ -155,16 +244,24 @@ export class TpFlowControls extends TpElement {
   canRedo = false;
   strings: Partial<FlowStrings> | undefined;
   runState: FlowRunTransportState | undefined;
+  /** The current zoom factor shown by the zoom field (the root publishes it). */
+  zoom = 1;
+  zoomPresets: readonly number[] = DEFAULT_ZOOM_PRESETS;
   override orientation: Orientation = 'vertical';
 
   #toolbar: ToolbarController | undefined;
   readonly #items = new Map<HTMLElement, ToolbarRegistration<unknown>>();
   /** Slider value accepted locally until the root publishes the next run state. */
   #seek: number | undefined;
+  /** Text typed in the zoom field, shown instead of the zoom until Enter, Escape or blur. */
+  #zoomDraft: string | undefined;
 
+  /** The flow: the shadow host of the built-in bar, the ancestor of an authored one. */
   get presentationOwner(): HTMLElement | null {
     const root = this.getRootNode();
-    return root instanceof ShadowRoot ? (root.host as HTMLElement) : null;
+    return root instanceof ShadowRoot
+      ? (root.host as HTMLElement)
+      : (this.closest<HTMLElement>('tp-flow') ?? null);
   }
 
   get #strings(): FlowStrings {
@@ -199,21 +296,42 @@ export class TpFlowControls extends TpElement {
     this.#syncItems();
   }
 
-  /** Registers every composed Button as a roving item and the Toggle group as a toolbar group. */
-  #syncItems(): void {
+  /**
+   * Registers every composed Button (and the zoom field and its trigger) as a roving item and
+   * the Toggle groups as toolbar groups, consumer children included.
+   */
+  #syncItems = (): void => {
     const toolbar = this.#toolbar;
     if (!toolbar) return;
     const present = new Set<HTMLElement>();
-    for (const element of this.renderRoot.querySelectorAll<HTMLElement>(
-      'tp-button.control, tp-toggle.lock, tp-toggle-group.tools',
-    )) {
+    const slotted = (
+      this.renderRoot.querySelector<HTMLSlotElement>('slot.items')?.assignedElements({
+        flatten: true,
+      }) ?? []
+    ).flatMap((element) =>
+      element.localName === 'tp-button-group'
+        ? [...element.querySelectorAll<HTMLElement>('tp-button, tp-toggle, button')]
+        : [element as HTMLElement],
+    );
+    const elements = [
+      ...this.renderRoot.querySelectorAll<HTMLElement>(
+        'tp-button.control, tp-toggle.lock, tp-toggle-group.tools, tp-input.zoom-input',
+      ),
+      ...slotted.filter((element) =>
+        ['tp-button', 'tp-toggle', 'tp-toggle-group', 'button'].includes(element.localName),
+      ),
+    ];
+    for (const element of elements) {
       present.add(element);
       if (this.#items.has(element)) continue;
       this.#items.set(
         element,
         element.localName === 'tp-toggle-group'
           ? toolbar.registerGroup(element)
-          : toolbar.registerItem(element, { kind: 'button' }),
+          : toolbar.registerItem(element, {
+              // The zoom field keeps its caret keys; the toolbar moves on past its edges.
+              kind: element.localName === 'tp-input' ? 'input' : 'button',
+            }),
       );
     }
     for (const [element, registration] of this.#items)
@@ -221,7 +339,7 @@ export class TpFlowControls extends TpElement {
         registration.dispose();
         this.#items.delete(element);
       }
-  }
+  };
 
   #segments(): Segment[] {
     const segments: Segment[] = [];
@@ -229,9 +347,11 @@ export class TpFlowControls extends TpElement {
       if (action === 'tool') segments.push({ kind: 'tool' });
       else if (action === 'lock') segments.push({ kind: 'lock' });
       else if (action === 'run') segments.push({ kind: 'run' });
+      else if (action === 'zoom') segments.push({ kind: 'zoom' });
       else {
         const last = segments[segments.length - 1];
-        if (last?.kind === 'buttons') last.actions.push(action);
+        if (last?.kind === 'buttons' && BUTTON_SETS[last.actions[0]!] === BUTTON_SETS[action])
+          last.actions.push(action);
         else segments.push({ kind: 'buttons', actions: [action] });
       }
     }
@@ -310,6 +430,134 @@ export class TpFlowControls extends TpElement {
   #contain = (event: Event): void => {
     event.stopPropagation();
   };
+
+  #zoomRequest(detail: Omit<FlowZoomRequestDetail, 'sourceEvent'>, sourceEvent: Event): void {
+    this.dispatchEvent(
+      new CustomEvent<FlowZoomRequestDetail>(ZOOM_REQUEST, {
+        bubbles: true,
+        composed: false,
+        detail: { ...detail, sourceEvent },
+      }),
+    );
+  }
+
+  #zoomInput = (event: TpValueChangeEvent<string>): void => {
+    event.stopPropagation();
+    this.#zoomDraft = String(event.detail.value ?? '');
+    this.requestUpdate();
+  };
+
+  /** Enter applies the typed level ("150", "150%"); Escape and blur restore the current one. */
+  #zoomKey = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape' && this.#zoomDraft !== undefined) {
+      event.stopPropagation();
+      this.#zoomDraft = undefined;
+      this.requestUpdate();
+      return;
+    }
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    const percent = Number.parseFloat((this.#zoomDraft ?? '').replace('%', '').trim());
+    this.#zoomDraft = undefined;
+    this.requestUpdate();
+    if (Number.isFinite(percent) && percent > 0) this.#zoomRequest({ zoom: percent / 100 }, event);
+  };
+
+  /** Focus selects the level, so typing replaces it (Figma's zoom field). */
+  #zoomFocus = (event: FocusEvent): void => {
+    const input = (event.currentTarget as TpInput).inputElement as HTMLInputElement | null;
+    requestAnimationFrame(() => input?.select());
+  };
+
+  /**
+   * The side the zoom menu opens toward: into the canvas from the panel the bar sits in (the
+   * slot of an authored bar, the panel of the built-in one).
+   */
+  #menuSide(): 'top' | 'bottom' | 'inline-start' | 'inline-end' {
+    const position =
+      this.getAttribute('slot') ??
+      this.closest('[data-position]')?.getAttribute('data-position') ??
+      'bottom-start';
+    if (position.startsWith('top-')) return 'bottom';
+    if (position === 'center-start') return 'inline-end';
+    if (position === 'center-end') return 'inline-start';
+    return 'top';
+  }
+
+  #zoomBlur = (): void => {
+    if (this.#zoomDraft === undefined) return;
+    this.#zoomDraft = undefined;
+    this.requestUpdate();
+  };
+
+  #zoomMenuAction = (event: CustomEvent<{ value: unknown; sourceEvent?: Event }>): void => {
+    event.stopPropagation();
+    const value = String(event.detail?.value ?? '');
+    const source = event.detail?.sourceEvent ?? event;
+    if (value === 'fit') this.#zoomRequest({ fit: true }, source);
+    else if (Number.isFinite(Number(value))) this.#zoomRequest({ zoom: Number(value) }, source);
+  };
+
+  #renderShortcut(keys: string): TemplateResult {
+    const [modifier, key] = keys.split('+');
+    return html`<tp-key-hint-group data-menu-shortcut separator="none"
+      ><tp-key-hint key=${modifier!.toLowerCase()}></tp-key-hint
+      ><tp-key-hint key=${key!}></tp-key-hint
+    ></tp-key-hint-group>`;
+  }
+
+  /** The zoom field: the current level (editable) and a Menu of fit and preset levels. */
+  #renderZoom(): TemplateResult {
+    const strings = this.#strings;
+    const percent = `${Math.round(this.zoom * 100)}%`;
+    return html`<tp-input-group class="zoom" ?disabled=${this.disabled}>
+      <tp-input
+        class="zoom-input control"
+        size="sm"
+        inputmode="decimal"
+        .value=${this.#zoomDraft ?? percent}
+        .ariaLabel=${strings.zoomLevel}
+        ?disabled=${this.disabled}
+        @tp-value-change=${this.#zoomInput}
+        @tp-value-commit=${this.#contain}
+        @keydown=${this.#zoomKey}
+        @focusin=${this.#zoomFocus}
+        @focusout=${this.#zoomBlur}
+      ></tp-input>
+      <tp-menu
+        slot="inline-end"
+        class="zoom-menu"
+        .portal=${false}
+        side=${this.#menuSide()}
+        label=${strings.zoomOptions}
+        @tp-action=${this.#zoomMenuAction}
+        @tp-open-change=${this.#contain}
+        @tp-open-change-complete=${this.#contain}
+      >
+        <tp-button
+          slot="trigger"
+          class="zoom-trigger"
+          variant="ghost"
+          size="icon-xs"
+          .icon=${chevronDownIcon}
+          .ariaLabel=${strings.zoomOptions}
+          ?disabled=${this.disabled}
+        ></tp-button>
+        <tp-menu-item value="fit"
+          >${strings.zoomToFit}${this.#renderShortcut(ZOOM_FIT_KEYS)}</tp-menu-item
+        >
+        <tp-separator></tp-separator>
+        ${this.zoomPresets.map(
+          (level) =>
+            html`<tp-menu-item value=${String(level)}
+              >${format(strings.zoomToLevel, { percent: `${Math.round(level * 100)}%` })}${
+                level === 1 ? this.#renderShortcut(ZOOM_RESET_KEYS) : nothing
+              }</tp-menu-item
+            >`,
+        )}
+      </tp-menu>
+    </tp-input-group>`;
+  }
 
   #renderButton(action: ButtonAction): TemplateResult {
     const strings = this.#strings;
@@ -462,14 +710,16 @@ export class TpFlowControls extends TpElement {
           'data-readonly': this.readOnly,
         },
         content: html`${segments.map((segment) =>
-          segment.kind === 'buttons'
-            ? this.#renderButtons(segment.actions)
-            : segment.kind === 'tool'
-              ? this.#renderTools()
-              : segment.kind === 'lock'
-                ? this.#renderLock()
-                : this.#renderRun(),
-        )}`,
+            segment.kind === 'buttons'
+              ? this.#renderButtons(segment.actions)
+              : segment.kind === 'tool'
+                ? this.#renderTools()
+                : segment.kind === 'lock'
+                  ? this.#renderLock()
+                  : segment.kind === 'zoom'
+                    ? this.#renderZoom()
+                    : this.#renderRun(),
+          )}<slot class="items" @slotchange=${this.#syncItems}></slot>`,
       },
     );
   }

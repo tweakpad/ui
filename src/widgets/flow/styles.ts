@@ -135,8 +135,9 @@ export const flowStyles = css`
     transform-origin: 0 0;
   }
 
-  /* Corner panels span the pane's full height so built-in panels can cap their own height;
-     only their children take pointer events. */
+  /* Panels span the pane along the edge they sit on (the full height at an inline side, the full
+     width for the top and bottom middles) so built-in panels can cap their own extent; only their
+     children take pointer events. Positions are \`block-inline\` pairs. */
   .panel {
     position: absolute;
     inset-block: 0;
@@ -151,25 +152,29 @@ export const flowStyles = css`
     pointer-events: auto;
   }
 
-  .panel[data-corner='top-start'] {
+  .panel[data-position$='-start'] {
     inset-inline-start: 0;
+  }
+
+  .panel[data-position$='-end'] {
+    inset-inline-end: 0;
+    flex-direction: row-reverse;
+  }
+
+  .panel[data-position$='-center'] {
+    inset-inline: 0;
+    justify-content: center;
+  }
+
+  .panel[data-position^='top-'] {
     align-items: flex-start;
   }
 
-  .panel[data-corner='top-end'] {
-    inset-inline-end: 0;
-    flex-direction: row-reverse;
-    align-items: flex-start;
+  .panel[data-position^='center-'] {
+    align-items: center;
   }
 
-  .panel[data-corner='bottom-start'] {
-    inset-inline-start: 0;
-    align-items: flex-end;
-  }
-
-  .panel[data-corner='bottom-end'] {
-    inset-inline-end: 0;
-    flex-direction: row-reverse;
+  .panel[data-position^='bottom-'] {
     align-items: flex-end;
   }
 
