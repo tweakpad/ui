@@ -188,7 +188,9 @@ export class PointerDrag {
     } catch {
       // Capture is unavailable for synthetic pointers; the gesture still runs on the element.
     }
-    this.#options.focusTarget?.()?.focus({ preventScroll: true });
+    // The prevented press skipped the native mouse focus; focus as a mouse press would, without
+    // the keyboard focus ring (a scripted focus otherwise matches `:focus-visible`).
+    this.#options.focusTarget?.()?.focus({ preventScroll: true, focusVisible: false });
     const scope = new CleanupScope();
     const session: DragSession = {
       pointerId: event.pointerId,

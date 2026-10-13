@@ -14,7 +14,12 @@ import {
   ChoiceCollectionController,
   type ChoiceRecord,
 } from '../../foundation/choice-collection.js';
-import { composedContains, composedParent, deepActiveElement } from '../../foundation/focus.js';
+import {
+  composedContains,
+  composedParent,
+  deepActiveElement,
+  restoreFocus,
+} from '../../foundation/focus.js';
 import { logicalPortalOwner } from '../../foundation/owned-portal.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { setPartComposition } from '../../presentation/controller.js';
@@ -158,7 +163,19 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
         if (this.isConnected && this.invocation === 'context') this.startPosition();
       });
     },
+    inside: (event) => {
+      const path = event.composedPath();
+      return path.includes(this) || (!!this.positioner && path.includes(this.positioner));
+    },
+    dismiss: (event) => {
+      this.#targetPressClose = true;
+      this.closeBranch('outside-press', event);
+      // A refused proposal leaves the menu open; the flag must not outlive this press.
+      if (this.open) this.#targetPressClose = false;
+    },
   });
+  /** The open menu closes for an ordinary press on its context target. */
+  #targetPressClose = false;
   protected override get triggerHasPopup(): string | null {
     return this.invocation === 'context' ? null : super.triggerHasPopup;
   }
@@ -178,6 +195,17 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     return () => {};
   }
   protected override focusOnClose(): void {
+    if (this.#targetPressClose) {
+      this.#targetPressClose = false;
+      // The press landed on the target: focus returns there (when it can take focus), as a press
+      // on it would have placed it, without the keyboard focus ring.
+      if (
+        this.popupElement &&
+        composedContains(this.popupElement, deepActiveElement(this.ownerDocument))
+      )
+        restoreFocus(this.triggerElement, { preventScroll: true, focusVisible: false });
+      return;
+    }
     const owner = this.rootMenu.#highlightOwner;
     const target = owner?.highlightedItem;
     let parent = this.parentMenu;

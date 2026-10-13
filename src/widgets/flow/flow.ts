@@ -4264,7 +4264,11 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       else if (!detail.value && this.#keyboardContextReturn) {
         const back = this.#keyboardContextReturn;
         this.#keyboardContextReturn = null;
-        if (back.isConnected) queueMicrotask(() => back.focus());
+        // A keyboard opening returns to its node; a pointer press that closed the menu shows no
+        // keyboard focus ring there.
+        const pointer = detail.sourceEvent?.type.startsWith('pointer') === true;
+        if (back.isConnected)
+          queueMicrotask(() => back.focus({ preventScroll: true, focusVisible: !pointer }));
       }
     }
   };

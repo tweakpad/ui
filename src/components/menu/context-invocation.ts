@@ -1,6 +1,7 @@
 import { rect, type AnchorGeometry, type VirtualAnchor } from '../../foundation/positioning.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { deepActiveElement, composedContains } from '../../foundation/focus.js';
+import { keyHintPlatform } from '../../foundation/key-notation.js';
 
 interface ContextInvocationOptions {
   document(): Document;
@@ -14,6 +15,10 @@ interface ContextInvocationOptions {
   registerTarget(target: HTMLElement): () => void;
   requestOpen(event: Event, target: HTMLElement): boolean;
   reposition(): void;
+  /** Whether a press landed inside the open menu's own branch (popup, items, submenus). */
+  inside(event: Event): boolean;
+  /** Closes the menu for an ordinary press on the target outside the popup. */
+  dismiss(event: PointerEvent): void;
 }
 
 /** Context targeting only. Open state, items, focus and positioning belong to Menu. */
@@ -78,6 +83,21 @@ export class ContextInvocation {
     this.#targetPart?.();
     this.#targetPart = undefined;
     this.#target = null;
+  }
+  #pointerDown = (event: PointerEvent): void => {
+    this.#targetPress(event);
+    this.#touchStart(event);
+  };
+  /**
+   * The target is the area the menu opens over, not a toggle: an ordinary press on it outside the
+   * popup closes the open menu as a press anywhere else does. A press that invokes the context
+   * menu again (the secondary button, Control-click on macOS) keeps it open and moves the anchor.
+   */
+  #targetPress(event: PointerEvent): void {
+    if (!this.options.isOpen() || this.options.inside(event)) return;
+    const mac = keyHintPlatform('auto', this.options.document().defaultView?.navigator) === 'mac';
+    if (event.button === 2 || (event.button === 0 && event.ctrlKey && mac)) return;
+    this.options.dismiss(event);
   }
   #touchStart = (event: PointerEvent): void => {
     if (event.pointerType !== 'touch') return;
@@ -157,7 +177,7 @@ export class ContextInvocation {
   #handlers = {
     contextmenu: this.#context,
     keydown: this.#key,
-    pointerdown: this.#touchStart,
+    pointerdown: this.#pointerDown,
   };
   #openAt(x: number, y: number, event: Event, keyboard: boolean, extent = 0): void {
     if (this.options.disabled() || !this.#target) return;

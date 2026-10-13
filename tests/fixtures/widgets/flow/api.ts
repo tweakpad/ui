@@ -1391,9 +1391,9 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
   const closedOnForm = target.inspectorOpen;
 
   // Context menu: a Settings item only for nodes with inspector settings.
-  const menu = target.shadowRoot!.querySelector<HTMLElement & { open: boolean }>(
-    'tp-menu.context-menu',
-  )!;
+  const menu = target.shadowRoot!.querySelector<
+    HTMLElement & { open: boolean; setOpen(open: boolean): boolean }
+  >('tp-menu.context-menu')!;
   const menuItems = async (nodeId: string) => {
     const point = center(titleOf(nodeId));
     titleOf(nodeId).dispatchEvent(
@@ -1409,7 +1409,8 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
     const values = [...menu.querySelectorAll('tp-menu-item')].map((item) =>
       item.getAttribute('value'),
     );
-    menu.open = false;
+    // Close through the uncontrolled lane; assigning `open` would make the menu controlled.
+    menu.setOpen(false);
     await settle(target);
     return values;
   };
@@ -1454,6 +1455,114 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
     ],
     { split },
   );
+}
+
+/**
+ * Presses outside the context menu and the pointer focus ring, at hit-tested elements (the MCP
+ * has no secondary button): a node press focuses the node without the keyboard focus ring; a
+ * right press on a node opens the menu and a right press on another node moves it; a press on the
+ * pane closes it, clears the selection in the same press and keeps focus inside the widget.
+ */
+export async function assertContextMenuDismiss(id = 'material'): Promise<Report> {
+  const target = flow(id);
+  target.scrollIntoView({ block: 'center' });
+  // Hit-tested presses need the page at rest after the scroll from the previous instance.
+  await wait(400);
+  target.clearSelection();
+  await settle(target);
+  const menu = target.shadowRoot!.querySelector<HTMLElement & { open: boolean }>(
+    'tp-menu.context-menu',
+  )!;
+  // Two nodes clear of the corner panels (the palette covers the first one).
+  const ids = ['normal', 'material'];
+  const titleOf = (nodeId: string) =>
+    host(target, nodeId)!.shadowRoot!.querySelector<HTMLElement>('[part~="flow-node-title"]')!;
+  const press = async (point: FlowPoint, button = 0) => {
+    const element = topAt(point)!;
+    pointer('pointerdown', element, point, { button, buttons: button === 2 ? 2 : 1 });
+    if (button === 2)
+      element.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          composed: true,
+          cancelable: true,
+          button: 2,
+          clientX: point.x,
+          clientY: point.y,
+        }),
+      );
+    pointer('pointerup', element, point, { button });
+    await settle(target);
+  };
+  const within = (element: Element | null) => {
+    for (let node: Node | null = element; node; node = node.parentNode ?? (node as ShadowRoot).host)
+      if (node === target) return true;
+    return false;
+  };
+  const deepActive = () => {
+    let active: Element | null = document.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    return active;
+  };
+  const titlePoint = (nodeId: string) => {
+    const box = titleOf(nodeId).getBoundingClientRect();
+    return { x: box.x + 8, y: box.y + box.height / 2 };
+  };
+  // An empty pane point: the canvas corner opposite the controls.
+  const canvas = target.shadowRoot!.querySelector<HTMLElement>('.canvas')!.getBoundingClientRect();
+  let pane: FlowPoint = { x: canvas.right - 24, y: canvas.top + 24 };
+  if (!topAt(pane)?.matches('.pane')) pane = { x: canvas.right - 24, y: canvas.bottom - 24 };
+
+  await press(titlePoint(ids[0]!));
+  const focusedNode = deepActive();
+  const pointerRing = {
+    selection: target.selection.nodes,
+    focusVisible: focusedNode?.matches(':focus-visible') ?? null,
+  };
+
+  await press(titlePoint(ids[0]!), 2);
+  const opened = { open: menu.open, selection: target.selection.nodes };
+  await press(titlePoint(ids[1]!), 2);
+  const moved = { open: menu.open, selection: target.selection.nodes };
+
+  await press(pane);
+  await wait(100);
+  const active = deepActive();
+  const closed = {
+    open: menu.open,
+    selection: target.selection.nodes,
+    focusInWidget: within(active),
+    focusVisible: active?.matches(':focus-visible') ?? null,
+  };
+  target.clearSelection();
+  await settle(target);
+  return report([
+    check(
+      'a node press focuses without the keyboard ring',
+      pointerRing.selection.join() === ids[0] && pointerRing.focusVisible === false,
+      pointerRing,
+    ),
+    check(
+      'a right press opens the menu',
+      opened.open && opened.selection.join() === ids[0],
+      opened,
+    ),
+    check(
+      'a right press on another node moves it',
+      moved.open && moved.selection.join() === ids[1],
+      moved,
+    ),
+    check(
+      'a pane press closes it and clears the selection',
+      !closed.open && closed.selection.length === 0,
+      closed,
+    ),
+    check(
+      'focus stays in the widget without the ring',
+      closed.focusInWidget && closed.focusVisible === false,
+      closed,
+    ),
+  ]);
 }
 
 export async function assertModes(): Promise<Report> {

@@ -1199,6 +1199,73 @@ export function installFamilyAPI(library: Library, built: boolean): void {
       });
     },
   });
+  cases.push({
+    id: 'A31-context-target-press-dismisses',
+    scenarios: 'V-11',
+    async run() {
+      // The target is the area the menu opens over (a canvas): an ordinary press on it closes the
+      // menu, a secondary press moves it, presses inside the popup keep it.
+      const target = document.createElement('div');
+      target.tabIndex = 0;
+      target.style.cssText = 'display: block; inline-size: 320px; block-size: 200px';
+      const spot = document.createElement('span');
+      spot.textContent = 'Area';
+      target.append(spot);
+      const root = new library.TpMenu();
+      root.invocation = 'context';
+      root.label = 'Area commands';
+      root.motionPolicy = 'reduce';
+      root.portal = false;
+      const item = new library.TpMenuItem();
+      item.textContent = 'Inspect';
+      root.append(item);
+      target.append(root);
+      const reasons: string[] = [];
+      root.addEventListener('tp-open-change', (event) =>
+        reasons.push((event as CustomEvent<{ reason: string }>).detail.reason),
+      );
+      const at = (element: Element, type: string, button: number, init: MouseEventInit = {}) => {
+        const box = spot.getBoundingClientRect();
+        const options = {
+          bubbles: true,
+          composed: true,
+          cancelable: true,
+          clientX: box.x + 4,
+          clientY: box.y + 4,
+          button,
+          buttons: button === 2 ? 2 : 1,
+          ...init,
+        };
+        element.dispatchEvent(
+          type === 'contextmenu'
+            ? new MouseEvent(type, options)
+            : new PointerEvent(type, { ...options, pointerId: 1, pointerType: 'mouse' }),
+        );
+      };
+      await mounted(target, async () => {
+        await updated(root);
+        at(spot, 'pointerdown', 2);
+        at(spot, 'contextmenu', 2);
+        await until(() => root.open && root.positioned, 'context menu opened at the press');
+        // Another context invocation keeps the menu open (the anchor moves).
+        at(spot, 'pointerdown', 2);
+        at(spot, 'contextmenu', 2, { clientX: spot.getBoundingClientRect().x + 40 });
+        await updated(root);
+        assert(root.open, 'A secondary press on the target closed the menu');
+        // A press inside the popup is not a target press.
+        at(item, 'pointerdown', 0);
+        await updated(root);
+        assert(root.open, 'A press inside the popup closed the menu');
+        // An ordinary press on the target closes it and focus returns to the target, ringless.
+        root.popupElement?.focus();
+        at(spot, 'pointerdown', 0);
+        await until(() => !root.open, 'target press closed the menu');
+        assert(reasons.at(-1) === 'outside-press', `Unexpected close reason ${reasons.at(-1)}`);
+        await until(() => document.activeElement === target, 'focus returned to the target');
+        assert(!target.matches(':focus-visible'), 'Pointer close left the keyboard focus ring');
+      });
+    },
+  });
   Object.assign(window, {
     familyAPIManifest: cases.map(({ id, scenarios }) => ({ id, scenarios })),
     async runFamilyAPI(start = 0, count = 4) {

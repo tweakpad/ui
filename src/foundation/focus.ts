@@ -146,9 +146,12 @@ export function isManagedFocus(document: Document): boolean {
   return managing.has(document);
 }
 
-export function restoreFocus(target: Element | null): boolean {
+export function restoreFocus(
+  target: Element | null,
+  options: FocusOptions = { preventScroll: true },
+): boolean {
   if (!target || !isAvailable(target)) return false;
-  focusManaged(target);
+  focusManaged(target as HTMLElement, options);
   return composedContains(target, deepActiveElement(target.ownerDocument));
 }
 

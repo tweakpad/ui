@@ -44,8 +44,10 @@ class FakeElement extends EventTarget {
   releasePointerCapture(id: number) {
     this.released.push(id);
   }
-  focus() {
+  focusOptions: FocusOptions | undefined;
+  focus(options?: FocusOptions) {
     this.focused++;
+    this.focusOptions = options;
   }
 }
 
@@ -111,6 +113,8 @@ describe('PointerDrag', () => {
     expect(down.defaultPrevented).toBe(true);
     expect(element.captured).toEqual([1]);
     expect(element.focused).toBe(1);
+    // A pointer press focuses without the keyboard focus ring, as a native mouse press does.
+    expect(element.focusOptions).toEqual({ preventScroll: true, focusVisible: false });
     expect(drag.active).toBe(true);
     expect(points[0]).toMatchObject({ x: 50, y: 50, width: 200, height: 100 });
 

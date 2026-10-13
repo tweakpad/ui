@@ -71,6 +71,10 @@ belong to the interaction policy, not theme spacing.
 Opening uses the same cancelable `tp-open-change` proposal with reason
 `trigger-press`. The native context action is prevented only after acceptance.
 Another context invocation moves the anchor without closing and reopening.
+An ordinary press on the target outside the popup (the primary button; Control-click on macOS
+invokes instead) closes the menu with `outside-press`, as a press anywhere else does, and keeps
+its own meaning. Focus that was in the menu returns to the target when the target can take focus,
+without the keyboard focus ring.
 Escape restores the invoking target only for keyboard opening when focus is in
 the menu. Removing/replacing the target closes its anchored menu and cleans up
 listeners. Detached handles and registered triggers apply only to trigger mode.

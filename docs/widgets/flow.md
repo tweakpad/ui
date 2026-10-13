@@ -380,7 +380,9 @@ remaining node, and `deletable: false` keeps an element out of it.
 
 The context menu is a Menu with the context invocation (right click, Shift+F10, the ContextMenu
 key, a long press). Its subject comes from the press: a node (or the selection it belongs to), an
-edge or the pane. The default items are duplicate, copy, cut, pin or unpin (in automatic layout)
+edge or the pane. A press anywhere outside the open menu, the canvas included, closes it and keeps
+its meaning (a press on the pane also clears the selection); a right press elsewhere moves the
+menu to the new subject. Pointer presses focus nodes without the keyboard focus ring. The default items are duplicate, copy, cut, pin or unpin (in automatic layout)
 and delete for a node (preceded by align left, align top, distribute horizontally and distribute
 vertically when two or more nodes are selected); add waypoint and delete for an edge; paste, select
 all, fit view and lay out for the pane. `contextMenu(subject)` renders the items instead: `subject` is
