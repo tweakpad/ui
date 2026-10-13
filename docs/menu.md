@@ -93,6 +93,7 @@ Each nested Menu retains its own ordinary submenu trigger and chevron.
 | `label`                                   | string                             | empty; accessible/typeahead override for rich content.                                             |
 | `disabled`                                | boolean                            | false; also respects nearest Menu disabled state.                                                  |
 | `variant`                                 | ghost / destructive / undefined    | inherit Root itemVariant.                                                                          |
+| `inset`                                   | boolean                            | false; indents the label to the text of items with a leading icon (a Label takes `data-inset`).    |
 | `nativeAction / native-action`            | boolean                            | false; default semantic div uses the shared synthetic press owner. True uses a native button.      |
 | `closeOnClick / close-on-click`           | boolean                            | true for Item; false for checks/radios and native links.                                           |
 | `onClick`                                 | `(event: Event) => void`           | Consumer activation hook before component handling.                                                |

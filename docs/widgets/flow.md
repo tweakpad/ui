@@ -386,7 +386,9 @@ its meaning (a press on the pane also clears the selection); a right press elsew
 menu to the new subject. Pointer presses focus nodes without the keyboard focus ring. The default items are duplicate, copy, cut, pin or unpin (in automatic layout)
 and delete for a node (preceded by align left, align top, distribute horizontally and distribute
 vertically when two or more nodes are selected); add waypoint and delete for an edge; paste, select
-all, fit view and lay out for the pane. `contextMenu(subject)` renders the items instead: `subject` is
+all, fit view and lay out for the pane. Each item carries its icon and, where a key binding
+exists, its shortcut as a Key hint (Mod+D, Mod+C, Mod+X, Mod+V, Mod+A, Shift+1, Backspace), as the
+theme's menus do; delete is the destructive variant. `contextMenu(subject)` renders the items instead: `subject` is
 `{ kind: 'node', nodeId, selection }`, `{ kind: 'edge', edgeId, selection }` or
 `{ kind: 'pane', point, selection }`;
 items with the built-in values (`duplicate`, `copy`, `cut`, `delete`, `pin`, `unpin`,
@@ -454,8 +456,9 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
   disabled until the history has a step to take. The bar sits in `controlsPosition`
   (`bottom-start`) laid out along `controlsOrientation` (`vertical`).
 - Zoom field (`zoom`): an Input group showing the current level; type a percentage and press Enter
-  (Escape or leaving the field restores it). Its Menu offers Zoom to fit (Shift+1) and the levels
-  of `zoomPresets` (`[0.5, 1, 2]`; 100% is Shift+0). In a bar at the bottom the menu opens upward,
+  (Escape or leaving the field restores it). Its Menu offers Zoom in (+), Zoom out (-) and Zoom to
+  fit (Shift+1) with their icons, then the levels of `zoomPresets` (`[0.5, 1, 2]`; 100% is
+  Shift+0) as inset items aligned with them. In a bar at the bottom the menu opens upward,
   at the top downward and on a side edge toward the canvas.
 - Further bars: an authored `tp-flow-controls` child slotted into any panel
   (`<tp-flow-controls slot="center-end" actions="tool lock" orientation="vertical">`) is another

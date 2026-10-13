@@ -22,6 +22,7 @@ export class TpMenuItem extends TpElement {
     ...TpElement.properties,
     label: { type: String },
     variant: { type: String, reflect: true },
+    inset: { type: Boolean, reflect: true },
     value: { type: String },
     nativeAction: { type: Boolean, attribute: 'native-action' },
     closeOnClick: { type: Boolean, attribute: 'close-on-click' },
@@ -73,6 +74,8 @@ export class TpMenuItem extends TpElement {
   ];
   label = '';
   variant: 'ghost' | 'destructive' | undefined;
+  /** Indents the label to the text of items with a leading icon (Nova `inset`). */
+  inset = false;
   get itemVariant(): 'ghost' | 'destructive' {
     return this.variant ?? this.#owner?.itemVariant ?? 'ghost';
   }
@@ -207,6 +210,7 @@ export class TpMenuItem extends TpElement {
         'aria-disabled': this.itemDisabled ? 'true' : undefined,
         'aria-checked': checked === undefined ? undefined : String(checked),
         'data-variant': this.itemVariant,
+        'data-inset': this.inset,
         'data-disabled': this.itemDisabled,
         'data-highlighted': this.highlighted,
         'data-focus-visible': this.highlighted && this.#keyboardHighlight,

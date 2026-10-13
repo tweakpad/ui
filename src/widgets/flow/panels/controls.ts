@@ -32,6 +32,13 @@ import { workflowIcon } from '../../../icons/workflow.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
 import { format, resolveStrings } from '../strings.js';
 import {
+  renderShortcut,
+  ZOOM_FIT_KEYS,
+  ZOOM_IN_KEYS,
+  ZOOM_OUT_KEYS,
+  ZOOM_RESET_KEYS,
+} from '../shortcuts.js';
+import {
   FLOW_CONTROL_ACTIONS,
   type FlowControlAction,
   type FlowRunTransportState,
@@ -44,9 +51,6 @@ export const TOOL_REQUEST = 'flow-tool-request';
 export const RUN_ACTION = 'flow-run-action';
 export const ZOOM_REQUEST = 'flow-zoom-request';
 
-/** The zoom shortcuts the root binds and the zoom menu shows (Figma, tldraw, Excalidraw). */
-export const ZOOM_FIT_KEYS = 'Shift+1';
-export const ZOOM_RESET_KEYS = 'Shift+0';
 /** Zoom levels the zoom menu offers by default. */
 export const DEFAULT_ZOOM_PRESETS: readonly number[] = [0.5, 1, 2];
 
@@ -495,17 +499,17 @@ export class TpFlowControls extends TpElement {
     event.stopPropagation();
     const value = String(event.detail?.value ?? '');
     const source = event.detail?.sourceEvent ?? event;
-    if (value === 'fit') this.#zoomRequest({ fit: true }, source);
+    if (value === 'zoom-in' || value === 'zoom-out')
+      this.dispatchEvent(
+        new CustomEvent<FlowControlActionDetail>(CONTROL_ACTION, {
+          bubbles: true,
+          composed: false,
+          detail: { action: value, sourceEvent: source },
+        }),
+      );
+    else if (value === 'fit') this.#zoomRequest({ fit: true }, source);
     else if (Number.isFinite(Number(value))) this.#zoomRequest({ zoom: Number(value) }, source);
   };
-
-  #renderShortcut(keys: string): TemplateResult {
-    const [modifier, key] = keys.split('+');
-    return html`<tp-key-hint-group data-menu-shortcut separator="none"
-      ><tp-key-hint key=${modifier!.toLowerCase()}></tp-key-hint
-      ><tp-key-hint key=${key!}></tp-key-hint
-    ></tp-key-hint-group>`;
-  }
 
   /** The zoom field: the current level (editable) and a Menu of fit and preset levels. */
   #renderZoom(): TemplateResult {
@@ -543,15 +547,27 @@ export class TpFlowControls extends TpElement {
           .ariaLabel=${strings.zoomOptions}
           ?disabled=${this.disabled}
         ></tp-button>
+        <tp-menu-item value="zoom-in"
+          ><tp-icon .icon=${plusIcon}></tp-icon>${strings.zoomIn}${renderShortcut(
+            ZOOM_IN_KEYS,
+          )}</tp-menu-item
+        >
+        <tp-menu-item value="zoom-out"
+          ><tp-icon .icon=${minusIcon}></tp-icon>${strings.zoomOut}${renderShortcut(
+            ZOOM_OUT_KEYS,
+          )}</tp-menu-item
+        >
         <tp-menu-item value="fit"
-          >${strings.zoomToFit}${this.#renderShortcut(ZOOM_FIT_KEYS)}</tp-menu-item
+          ><tp-icon .icon=${scanIcon}></tp-icon>${strings.zoomToFit}${renderShortcut(
+            ZOOM_FIT_KEYS,
+          )}</tp-menu-item
         >
         <tp-separator></tp-separator>
         ${this.zoomPresets.map(
           (level) =>
-            html`<tp-menu-item value=${String(level)}
+            html`<tp-menu-item inset value=${String(level)}
               >${format(strings.zoomToLevel, { percent: `${Math.round(level * 100)}%` })}${
-                level === 1 ? this.#renderShortcut(ZOOM_RESET_KEYS) : nothing
+                level === 1 ? renderShortcut(ZOOM_RESET_KEYS) : nothing
               }</tp-menu-item
             >`,
         )}

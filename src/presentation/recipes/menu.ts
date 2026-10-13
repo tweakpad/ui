@@ -13,6 +13,9 @@ export const menuSurface: readonly PresentationRule[] = [
   {
     declarations: {
       'min-inline-size': 'min(var(--tp-anchor-width, 0px), var(--tp-available-width, 100vw))',
+      // Nova menu content outline-none: a pointer-opened menu focuses its content, and the
+      // highlighted item, not a ring around the surface, shows where the keyboard is.
+      outline: 'none',
     },
   },
 ];

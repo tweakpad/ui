@@ -81,6 +81,9 @@ export const commandSurfaceAppearance: readonly PresentationRule[] = [
       border: popupBorder,
       'box-shadow': 'var(--tp-shadow-md)',
       'font-size': 'var(--tp-text-sm)',
+      // Nova portals this surface to the body; one kept in a shadow root (portal off) must not
+      // inherit its trigger's typography, such as an Input group addon's medium weight.
+      'font-weight': 'var(--tp-font-normal)',
     },
   },
   ...popupSpacingAppearance,

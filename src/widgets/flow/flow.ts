@@ -70,20 +70,48 @@ import { insertWaypoint } from './interaction/waypoints.js';
 import { TpMenu } from '../../components/menu/menu.js';
 import { TpMenuItem } from '../../components/menu/menu-item.js';
 import { TpSeparator } from '../../components/separator/separator.js';
+import { TpIcon } from '../../components/icon/icon.js';
+import { TpKeyHint } from '../../components/key-hint/key-hint.js';
+import { TpKeyHintGroup } from '../../components/key-hint/key-hint-group.js';
 import { TpOpenChangeEvent } from '../../foundation/events.js';
 import { TpButton } from '../../components/button/button.js';
 import { copyIcon } from '../../icons/copy.js';
 import { trashIcon } from '../../icons/trash.js';
 import { pinIcon } from '../../icons/pin.js';
 import { settingsIcon } from '../../icons/settings.js';
+import { copyPlusIcon } from '../../icons/copy-plus.js';
+import { scissorsIcon } from '../../icons/scissors.js';
+import { clipboardPasteIcon } from '../../icons/clipboard-paste.js';
+import { pinOffIcon } from '../../icons/pin-off.js';
+import { waypointsIcon } from '../../icons/waypoints.js';
+import { squareDashedMousePointerIcon } from '../../icons/square-dashed-mouse-pointer.js';
+import {
+  alignHorizontalDistributeCenterIcon,
+  alignStartHorizontalIcon,
+  alignStartVerticalIcon,
+  alignVerticalDistributeCenterIcon,
+} from '../../icons/align.js';
+import { scanIcon } from '../../icons/map.js';
+import { workflowIcon } from '../../icons/workflow.js';
+import {
+  COPY_KEYS,
+  CUT_KEYS,
+  DELETE_KEYS,
+  DUPLICATE_KEYS,
+  PASTE_KEYS,
+  renderShortcut,
+  SELECT_ALL_KEYS,
+  ZOOM_FIT_KEYS,
+  ZOOM_IN_KEYS,
+  ZOOM_OUT_KEYS,
+  ZOOM_RESET_KEYS,
+} from './shortcuts.js';
 import {
   TpFlowControls,
   CONTROL_ACTION,
   TOOL_REQUEST,
   RUN_ACTION,
   ZOOM_REQUEST,
-  ZOOM_FIT_KEYS,
-  ZOOM_RESET_KEYS,
   DEFAULT_ZOOM_PRESETS,
   controlActionsConverter,
   type FlowControlActionDetail,
@@ -357,6 +385,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       TpMenu,
       TpMenuItem,
       TpSeparator,
+      TpIcon,
+      TpKeyHint,
+      TpKeyHintGroup,
       TpButton,
       TpFlowControls,
       TpFlowMinimap,
@@ -2397,7 +2428,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     });
     keys.register({ keys: 'Enter', action: 'enter', handler: (event) => this.#enterKey(event) });
     keys.register({
-      keys: ['Delete', 'Backspace'],
+      keys: [...DELETE_KEYS],
       action: 'delete',
       handler: (event) => this.#deleteSelection(event),
     });
@@ -2412,22 +2443,22 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       handler: (event) => this.redo('hotkey', event),
     });
     keys.register({
-      keys: 'Mod+D',
+      keys: DUPLICATE_KEYS,
       action: 'duplicate',
       handler: (event) => this.duplicate('hotkey', event).length > 0,
     });
     keys.register({
-      keys: 'Mod+A',
+      keys: SELECT_ALL_KEYS,
       action: 'select-all',
       handler: (event) => this.selectAll('hotkey', event),
     });
     keys.register({
-      keys: ['+', '='],
+      keys: [ZOOM_IN_KEYS, '='],
       action: 'zoom-in',
       handler: () => void this.zoomIn({ reason: 'hotkey' }).then(() => this.#announceZoom()),
     });
     keys.register({
-      keys: '-',
+      keys: ZOOM_OUT_KEYS,
       action: 'zoom-out',
       handler: () => void this.zoomOut({ reason: 'hotkey' }).then(() => this.#announceZoom()),
     });
@@ -4400,63 +4431,93 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (this.contextMenu) return this.contextMenu(subject);
     const strings = this.#resolvedStrings;
     const editable = this.editable;
+    // Commands carry their icon and shortcut, as the theme's menus do; Delete is destructive.
+    const item = (
+      value: string,
+      icon: IconDefinition,
+      label: string,
+      options: { disabled?: boolean; keys?: string; destructive?: boolean } = {},
+    ) =>
+      html`<tp-menu-item
+        value=${value}
+        variant=${options.destructive ? 'destructive' : 'ghost'}
+        ?disabled=${options.disabled ?? false}
+        ><tp-icon .icon=${icon}></tp-icon>${label}${
+          options.keys ? renderShortcut(options.keys) : nothing
+        }</tp-menu-item
+      >`;
+    const remove = item('delete', trashIcon, strings.delete, {
+      disabled: !editable,
+      keys: DELETE_KEYS[0],
+      destructive: true,
+    });
     if (subject.kind === 'node') {
       const node = this.#model.getNode(subject.nodeId);
       const count = this.#selectionItems().length;
       const arrange =
         count >= 2
           ? html`
-              <tp-menu-item value="align-left" ?disabled=${!editable}
-                >${strings.alignLeft}</tp-menu-item
-              >
-              <tp-menu-item value="align-top" ?disabled=${!editable}
-                >${strings.alignTop}</tp-menu-item
-              >
-              <tp-menu-item value="distribute-x" ?disabled=${!editable || count < 3}
-                >${strings.distributeHorizontally}</tp-menu-item
-              >
-              <tp-menu-item value="distribute-y" ?disabled=${!editable || count < 3}
-                >${strings.distributeVertically}</tp-menu-item
-              >
+              ${item('align-left', alignStartVerticalIcon, strings.alignLeft, {
+                disabled: !editable,
+              })}
+              ${item('align-top', alignStartHorizontalIcon, strings.alignTop, {
+                disabled: !editable,
+              })}
+              ${item(
+                'distribute-x',
+                alignHorizontalDistributeCenterIcon,
+                strings.distributeHorizontally,
+                { disabled: !editable || count < 3 },
+              )}
+              ${item(
+                'distribute-y',
+                alignVerticalDistributeCenterIcon,
+                strings.distributeVertically,
+                { disabled: !editable || count < 3 },
+              )}
               <tp-separator></tp-separator>
             `
           : nothing;
       const settings =
         count < 2 && this.#inspectable(node)
-          ? html`<tp-menu-item value="settings">${strings.settings}</tp-menu-item>
-              <tp-separator></tp-separator>`
+          ? html`${item('settings', settingsIcon, strings.settings)}<tp-separator></tp-separator>`
           : nothing;
       return html`
         ${settings}${arrange}
-        <tp-menu-item value="duplicate" ?disabled=${!editable}>${strings.duplicate}</tp-menu-item>
-        <tp-menu-item value="copy">${strings.copy}</tp-menu-item>
-        <tp-menu-item value="cut" ?disabled=${!editable}>${strings.cut}</tp-menu-item>
+        ${item('duplicate', copyPlusIcon, strings.duplicate, {
+          disabled: !editable,
+          keys: DUPLICATE_KEYS,
+        })}
+        ${item('copy', copyIcon, strings.copy, { keys: COPY_KEYS })}
+        ${item('cut', scissorsIcon, strings.cut, { disabled: !editable, keys: CUT_KEYS })}
         <tp-separator></tp-separator>
         ${
           this.autoLayout === 'none'
             ? nothing
-            : html`<tp-menu-item value=${node?.pinned ? 'unpin' : 'pin'} ?disabled=${!editable}
-                >${node?.pinned ? strings.unpin : strings.pin}</tp-menu-item
-              >`
+            : node?.pinned
+              ? item('unpin', pinOffIcon, strings.unpin, { disabled: !editable })
+              : item('pin', pinIcon, strings.pin, { disabled: !editable })
         }
-        <tp-menu-item value="delete" ?disabled=${!editable}>${strings.delete}</tp-menu-item>
+        ${remove}
       `;
     }
     if (subject.kind === 'edge')
       return html`
-        <tp-menu-item value="add-waypoint" ?disabled=${!editable}
-          >${strings.addWaypoint}</tp-menu-item
-        >
-        <tp-menu-item value="delete" ?disabled=${!editable}>${strings.delete}</tp-menu-item>
+        ${item('add-waypoint', waypointsIcon, strings.addWaypoint, { disabled: !editable })}
+        <tp-separator></tp-separator>
+        ${remove}
       `;
     return html`
-      <tp-menu-item value="paste" ?disabled=${!editable || !clipboardFallback}
-        >${strings.paste}</tp-menu-item
-      >
-      <tp-menu-item value="select-all">${strings.selectAll}</tp-menu-item>
+      ${item('paste', clipboardPasteIcon, strings.paste, {
+        disabled: !editable || !clipboardFallback,
+        keys: PASTE_KEYS,
+      })}
+      ${item('select-all', squareDashedMousePointerIcon, strings.selectAll, {
+        keys: SELECT_ALL_KEYS,
+      })}
       <tp-separator></tp-separator>
-      <tp-menu-item value="fit">${strings.fitView}</tp-menu-item>
-      <tp-menu-item value="layout" ?disabled=${!editable}>${strings.layout}</tp-menu-item>
+      ${item('fit', scanIcon, strings.fitView, { keys: ZOOM_FIT_KEYS })}
+      ${item('layout', workflowIcon, strings.layout, { disabled: !editable })}
     `;
   }
 
