@@ -18,6 +18,7 @@ import type {
 } from '../../../foundation/flow/types.js';
 import type { FlowNodeRunState } from '../../../foundation/flow/run/types.js';
 import type { IconDefinition } from '../../../icons/types.js';
+import { propertyPlacement } from '../../../foundation/flow/defaults.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
 import { setPartComposition } from '../../../presentation/controller.js';
 import { TpCard } from '../../../components/card/card.js';
@@ -608,6 +609,9 @@ export class TpFlowNode extends TpElement {
 
   #slotChange = (event: Event): void => {
     const slot = event.target as HTMLSlotElement;
+    // A shape that moves the slot (the card body appears with authored content) removes the old
+    // slot, which reports an empty assignment; only the rendered slot counts.
+    if (!slot.isConnected) return;
     const occupied = slot
       .assignedNodes({ flatten: true })
       .some((node) => node.nodeType === 1 || (node.textContent ?? '').trim());
@@ -621,7 +625,10 @@ export class TpFlowNode extends TpElement {
     const node = this.node;
     const definition = this.definition;
     const icon = definition?.icon ? this.icons[definition.icon] : undefined;
-    const properties = (definition?.properties ?? []).filter((property) => this.#visible(property));
+    // The body holds the properties the schema places on the node; the rest live in the inspector.
+    const properties = (definition?.properties ?? []).filter(
+      (property) => propertyPlacement(definition, property) === 'node' && this.#visible(property),
+    );
     const slot = html`<slot @slotchange=${this.#slotChange}></slot>`;
     const context: ShapeContext = {
       node: node ?? { id: this.id, type: '', position: { x: 0, y: 0 }, data: {} },
@@ -638,6 +645,7 @@ export class TpFlowNode extends TpElement {
       port: this.#renderPort,
       control: this.#renderControl,
       slot,
+      slotted: this.#slotted,
     };
     const shape = this.shape;
     const body = this.template

@@ -33,6 +33,8 @@ export interface ShapeContext {
   control: (key: string) => TemplateResult;
   /** The authored light-DOM content slot (`null` when the node has no authored content). */
   slot: TemplateResult | null;
+  /** Whether authored content is assigned to the slot. */
+  slotted: boolean;
 }
 
 const STATUS_LABEL: Record<string, keyof FlowStrings> = {
@@ -212,6 +214,9 @@ export function renderShellShape(context: ShapeContext, shape: FlowNodeShape): T
 /** Card shape (image 28): Card with an icon tile, title, description and a status footer. */
 export function renderCardShape(context: ShapeContext): TemplateResult {
   const body = context.lod === 'low' ? [] : propertyRows(context);
+  // Without rows or authored content the card has no body section; the slot stays rendered
+  // (hidden) so authored content assigned later still announces itself.
+  const hasBody = body.length > 0 || context.slotted;
   return html`<tp-card class="card" size="sm" part="flow-node-card" data-shape="card">
       <span slot="header" class="header" part="flow-node-header">
         ${iconTile(context)}
@@ -221,12 +226,13 @@ export function renderCardShape(context: ShapeContext): TemplateResult {
         </span>
       </span>
       ${
-        body.length || context.slot
+        hasBody
           ? html`<div class="body" part="flow-node-body">${body}${context.slot ?? nothing}</div>`
           : nothing
       }
       ${context.status ? html`<span slot="footer" class="footer" part="flow-node-footer">${statusRow(context)}</span>` : nothing}
     </tp-card>
+    ${hasBody || !context.slot ? nothing : html`<span hidden>${context.slot}</span>`}
     ${renderSidePorts(context)}`;
 }
 
@@ -271,7 +277,13 @@ export function renderCompactShape(context: ShapeContext): TemplateResult {
 
 /** Panel shape (image 29): toned header, output rows, input rows with inline controls. */
 export function renderPanelShape(context: ShapeContext): TemplateResult {
-  const controlled = new Set(context.ports.filter((port) => port.control).map((port) => port.id));
+  // A port whose control is shown on the node shares that row; any other port gets its own.
+  const shown = new Set(context.properties.map((property) => property.key));
+  const controlled = new Set(
+    context.ports
+      .filter((port) => port.control !== undefined && shown.has(port.control))
+      .map((port) => port.id),
+  );
   const rows =
     context.lod === 'low'
       ? []

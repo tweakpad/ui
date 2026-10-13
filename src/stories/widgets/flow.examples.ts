@@ -28,7 +28,7 @@ export const flowExamples = [
   example(
     'Pipeline with inspector',
     `<tp-flow label="Release pipeline" inspector="auto" inspector-commit="explicit" default-inspector-open default-selection='{"nodes":["p3"],"edges":[]}' fit-view data-schema="pipeline" data-document="pipeline" data-output></tp-flow>`,
-    'The inspector docks inline-end inside the widget as a Resizable panel: Settings edits the selected node through the library control each property names, Wiring lists its connections, Run shows its status. `inspector="auto"` opens it when a node is selected; `inspector-commit="explicit"` keeps edits local until Save (one proposal per edited key) and Cancel reverts them.',
+    'The inspector holds the settings the schema keeps off the node: compact nodes have no body rows, so their properties default to `placement: "inspector"`. Double press a step or the approval (or use Settings in the node toolbar or the context menu) to open it; it docks inline-end inside the widget as a Resizable panel, follows a single selected node with settings and closes when the selection leaves them. Settings edits those properties through the library control each one names, Wiring lists the connections, Run shows the status. `inspector-commit="explicit"` keeps edits local until Save (one proposal per edited key) and Cancel reverts them.',
   ),
   example(
     'Auto-layout modes',

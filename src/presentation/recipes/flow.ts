@@ -537,6 +537,7 @@ export const flowAppearance: PresentationDictionary = {
       declarations: { 'font-size': 'var(--tp-text-xs)', color: 'var(--tp-muted-foreground)' },
     },
   ],
+  'flow-inspector-tabs': [],
   'flow-inspector-body': [],
   'flow-inspector-footer': sectionFooterAppearance,
   'flow-panel-top-start': [],
@@ -558,6 +559,8 @@ export const flowStructure: PresentationDictionary = {
   'flow-inspector-header': [
     { declarations: { gap: 'var(--tp-space-2)', padding: 'var(--_tp-flow-space)' } },
   ],
+  // The tab list starts where the header title and the fields start.
+  'flow-inspector-tabs': [{ declarations: { 'padding-inline': 'var(--_tp-flow-space)' } }],
   'flow-inspector-body': [
     { declarations: { padding: 'var(--_tp-flow-space)', gap: 'var(--tp-space-3)' } },
   ],

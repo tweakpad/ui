@@ -15,6 +15,7 @@ import type {
   FlowPropertyDefinition,
 } from '../../../foundation/flow/types.js';
 import type { FlowNodeRunState, FlowNodeRunStatus } from '../../../foundation/flow/run/types.js';
+import { inspectorProperties } from '../../../foundation/flow/defaults.js';
 import type { IconDefinition } from '../../../icons/types.js';
 import { xIcon } from '../../../icons/x.js';
 import { gitBranchIcon } from '../../../icons/git-branch.js';
@@ -222,8 +223,9 @@ const inspectorStyles = css`
 
 /**
  * The inspector (Widgets 6.3 Anatomy): the side panel the root docks inline-end inside its
- * Resizable panel, with Tabs for Settings (one Field per visible property definition, edited by
- * the library control its definition names), Wiring (the node's connections as List items) and
+ * Resizable panel, with Tabs for Settings (one Field per visible property the schema places in
+ * the inspector, edited by the library control its definition names), Wiring (the node's
+ * connections as List items) and
  * Run (status badge, attempts, duration, message, error). Edits are reported through
  * `flow-inspector-change`; in `explicit` mode they stay local until Save (one change per edited
  * key, then `flow-inspector-commit`) and Cancel reverts silently.
@@ -605,7 +607,8 @@ export class TpFlowInspector extends TpElement {
     if (!node || !definition) return html`<p class="empty">${strings.noSelection}</p>`;
     const data = this.#data();
     const fields: TemplateResult[] = [];
-    for (const property of definition.properties ?? []) {
+    // Only the properties the schema places here: the node body renders the rest.
+    for (const property of inspectorProperties(definition)) {
       if (!this.#visible(property, data)) continue;
       const factory = this.propertyControls[property.control];
       const context = this.#context(property);
@@ -815,7 +818,13 @@ export class TpFlowInspector extends TpElement {
           'data-dirty': dirty,
         },
         content: html`${header}
-          <tp-tabs class="tabs" variant="underline" label=${strings.inspector} .value=${this.tab}>
+          <tp-tabs
+            class="tabs"
+            part="flow-inspector-tabs"
+            variant="underline"
+            label=${strings.inspector}
+            .value=${this.tab}
+          >
             <button slot="tab" value="settings" id=${`${this.#id}-tab-settings`}>
               ${strings.settings}
             </button>

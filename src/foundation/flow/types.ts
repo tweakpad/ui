@@ -259,7 +259,16 @@ export interface FlowPropertyDefinition {
   visibleWhen?: FlowCondition | ((data: Record<string, unknown>) => boolean);
   /** Port whose connection overrides this property. */
   port?: string;
+  /**
+   * Where the control renders: in the node body or in the inspector, never both. Defaults per
+   * shape (`DEFAULT_PROPERTY_PLACEMENT_BY_SHAPE`): card and panel bodies hold their properties,
+   * compact and group nodes have no body rows. A node offers the inspector only when its
+   * definition places at least one property there.
+   */
+  placement?: FlowPropertyPlacement;
 }
+
+export type FlowPropertyPlacement = 'node' | 'inspector';
 
 export interface FlowIssue {
   code: string;

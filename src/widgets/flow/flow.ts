@@ -20,6 +20,7 @@ import {
 import type { ChangeReason } from '../../foundation/types.js';
 import type { PanZoomPolicy } from '../../foundation/pan-zoom.js';
 import { wheelScrollContainer } from '../../foundation/scroll.js';
+import { inspectorProperties } from '../../foundation/flow/defaults.js';
 import {
   createRoutingPlanner,
   type FlowRoutingPlannerOptions,
@@ -580,7 +581,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #unsubscribePlayer: (() => void) | undefined;
   #runState: FlowRun | undefined;
   #pendingInsert: { at: FlowPoint; source?: ConnectionStartInfo } | undefined;
-  #inspectorAuto = false;
   #resize:
     | {
         id: string;
@@ -2685,15 +2685,15 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const strings = this.#resolvedStrings;
     return html`
       ${
-        this.inspector === 'none'
-          ? nothing
-          : html`<tp-button
+        this.#inspectable(node)
+          ? html`<tp-button
               variant="ghost"
               size="icon-xs"
               .icon=${settingsIcon}
               .ariaLabel=${strings.settings}
               @click=${this.#toolbarSettings}
             ></tp-button>`
+          : nothing
       }
       <tp-button
         variant="ghost"
@@ -2730,9 +2730,25 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   /** Settings opens the inspector by activation: its first field takes focus once docked. */
   #toolbarSettings = (event: Event): void => {
-    const opened = this.inspectorOpen || this.setInspectorOpen(true, 'trigger-press', event);
-    if (opened) this.#focusInspectorWhenDocked();
+    this.#openSettings('trigger-press', event);
   };
+
+  #openSettings(reason: ChangeReason, event: Event): void {
+    const opened = this.inspectorOpen || this.setInspectorOpen(true, reason, event);
+    if (opened) this.#focusInspectorWhenDocked();
+  }
+
+  /**
+   * Whether a node offers the inspector: its definition places at least one property there
+   * (the schema decides; a node that shows all of its settings has no panel to open).
+   */
+  #inspectable(node: FlowNode | undefined): boolean {
+    return (
+      this.inspector !== 'none' &&
+      node !== undefined &&
+      inspectorProperties(this.#model.definitionOf(node)).length > 0
+    );
+  }
 
   /** The dock expands a frame after the lane opens; focus lands once the panel can take it. */
   #focusInspectorWhenDocked(attempts = 8): void {
@@ -2771,7 +2787,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   }
 
   #inspectedNode(): FlowNode | undefined {
-    return this.#singleSelectedNode();
+    const node = this.#singleSelectedNode();
+    return this.#inspectable(node) ? node : undefined;
   }
 
   #singleSelectedEdge(): FlowEdge | undefined {
@@ -2802,14 +2819,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           : this.#resolvedStrings.announceCleared,
       );
     }
-    if (this.inspector === 'auto') {
-      if (single && !this.inspectorOpen) {
-        this.#inspectorAuto = true;
-        this.#inspectorState.set(true, reason, undefined, { metadata: { surface: 'inspector' } });
-      } else if (!single && this.inspectorOpen && this.#inspectorAuto) {
-        this.#inspectorAuto = false;
+    // A double press opens the inspector; while open it follows a single node that has
+    // inspector settings and closes when the selection leaves them.
+    if (this.inspector === 'auto' && this.inspectorOpen) {
+      const node = single ? this.#model.getNode(value.nodes[0]!) : undefined;
+      if (!this.#inspectable(node))
         this.#inspectorState.set(false, reason, undefined, { metadata: { surface: 'inspector' } });
-      }
     }
     this.requestUpdate();
   }
@@ -3119,7 +3134,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   #inspectorClose = (event: CustomEvent<{ sourceEvent?: Event }>): void => {
     event.stopPropagation();
-    this.#inspectorAuto = false;
     this.#inspectorState.set(false, 'close-action', event.detail?.sourceEvent, {
       metadata: { surface: 'inspector' },
     });
@@ -4137,6 +4151,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return undefined;
   }
 
+  /** The node host under a pointer position (authored hosts through their light content). */
+  #nodeHostAt(point: { clientX: number; clientY: number }): TpFlowNode | undefined {
+    const root = this.renderRoot as ShadowRoot;
+    const element = root.elementFromPoint?.(point.clientX, point.clientY);
+    const host = element?.closest('tp-flow-node') as TpFlowNode | null | undefined;
+    return host?.node ? host : undefined;
+  }
+
   #edgeInPath(event: Event): string | undefined {
     for (const target of event.composedPath()) {
       if (target instanceof Element && target.getAttribute('part')?.includes('flow-edge-hit'))
@@ -4306,8 +4328,13 @@ export class TpFlow extends TpFormElement<FlowDocument> {
               <tp-separator></tp-separator>
             `
           : nothing;
+      const settings =
+        count < 2 && this.#inspectable(node)
+          ? html`<tp-menu-item value="settings">${strings.settings}</tp-menu-item>
+              <tp-separator></tp-separator>`
+          : nothing;
       return html`
-        ${arrange}
+        ${settings}${arrange}
         <tp-menu-item value="duplicate" ?disabled=${!editable}>${strings.duplicate}</tp-menu-item>
         <tp-menu-item value="copy">${strings.copy}</tp-menu-item>
         <tp-menu-item value="cut" ?disabled=${!editable}>${strings.cut}</tp-menu-item>
@@ -4345,6 +4372,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const subject = this.#contextSubject;
     const source = event.detail.sourceEvent;
     switch (event.detail.value) {
+      case 'settings':
+        if (subject?.kind === 'node') this.#openSettings('item-press', source);
+        break;
       case 'duplicate':
         this.duplicate('item-press', source);
         break;
@@ -4429,6 +4459,13 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   #canvasDoubleClick = (event: MouseEvent): void => {
     const edgeId = this.#edgeInPath(event);
+    // A press on a node body captures the pointer for the drag, so the click and the double
+    // click that follow target the capturing element: find the node under the pointer.
+    const host = this.#nodeHostInPath(event) ?? (edgeId ? undefined : this.#nodeHostAt(event));
+    if (host) {
+      this.#nodeDoubleClick(host, event);
+      return;
+    }
     if (!edgeId || !this.editable) return;
     event.preventDefault();
     this.#addWaypoint(
@@ -4438,6 +4475,28 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       event,
     );
   };
+
+  /**
+   * A double press on a node opens the inspector when the schema places settings there; presses
+   * on the node's own controls and ports keep their meaning (a double press selects text).
+   */
+  #nodeDoubleClick(host: TpFlowNode, event: MouseEvent): void {
+    const node = this.#model.getNode(host.nodeId);
+    if (
+      this.effectiveDisabled ||
+      event.button !== 0 ||
+      !this.#inspectable(node) ||
+      interactiveTargetInPath(event, host)
+    )
+      return;
+    event.preventDefault();
+    const selection = this.selection;
+    if (selection.nodes.length !== 1 || selection.nodes[0] !== node!.id || selection.edges.length)
+      this.#selectionState.set({ nodes: [node!.id], edges: [] }, 'item-press', event, {
+        metadata: { surface: 'node' },
+      });
+    if (!this.inspectorOpen) this.setInspectorOpen(true, 'item-press', event);
+  }
 
   /** Inserts a waypoint on an edge at the point, keeping existing waypoints ordered. */
   #addWaypoint(

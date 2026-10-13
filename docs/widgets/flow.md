@@ -129,7 +129,12 @@ A property definition (`FlowPropertyDefinition`) names the `key` of the node dat
 `label`, the `control` (`number`, `slider`, `text`, `textarea`, `select`, `switch`, `checkbox`,
 `color`, `easing` or `custom`), a `description`, a `placeholder`, `min`, `max`, `step`, the
 `options` of a select, a `default`, `visibleWhen` (a condition `{ key, equals, in, truthy }` or a
-predicate over the data) and `port`, the input port whose connection overrides the property. The
+predicate over the data), `port`, the input port whose connection overrides the property, and
+`placement`: `node` renders the control in the node body, `inspector` only in the inspector, never
+both. Without it a property goes where its shape can show it
+(`DEFAULT_PROPERTY_PLACEMENT_BY_SHAPE`): card and panel bodies hold their properties, compact and
+group nodes keep theirs in the inspector. Put the settings a reader scans on the node and the
+secondary ones in the inspector; a node whose definition places nothing there has no inspector. The
 built-in controls are library components: `slider` is a Slider, `number` an Input with the
 NumberField behavior (`min`, `max` and `step` form its validity grid), `text` an Input, `textarea`
 a Text area, `select` a Select, `switch` a Switch, `checkbox` a Checkbox, `color` a Color picker
@@ -384,10 +389,11 @@ all, fit view and lay out for the pane. `contextMenu(subject)` renders the items
 items with the built-in values (`duplicate`, `copy`, `cut`, `delete`, `pin`, `unpin`,
 `align-left`, `align-top`, `distribute-x`, `distribute-y`, `add-waypoint`, `paste`, `select-all`,
 `fit`, `layout`) keep their behavior, items with other
-values handle their own activation, and `contextMenu = false` removes the menu. The node toolbar
-appears above a single selected node with settings (unless `inspector="none"`; it opens the
-inspector and focuses its first field), duplicate, pin (in automatic layout; pressed while pinned)
-and delete; `nodeToolbar(context)` renders its
+values handle their own activation, and `contextMenu = false` removes the menu. A node with
+inspector settings gets a Settings item first (`settings`; it opens the inspector and focuses its
+first field). The node toolbar appears above a single selected node with Settings (only when the
+node has inspector settings), duplicate, pin (in automatic layout; pressed while pinned) and
+delete; `nodeToolbar(context)` renders its
 content from `{ node, definition }` and `nodeToolbar = false` hides it.
 
 ## Run state
@@ -450,17 +456,22 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
   connection), and the items are native drag sources that drop at the canvas point under the
   pointer. An insertion proposes with `metadata.insert: { type, at }` and selects the new node.
 - Inspector: a Resizable panel docked at the inline end inside the widget (collapsible, the handle
-  resizes it). Its header shows the node's icon, title and status Badge; Tabs switch Settings (one
-  Field per visible property, edited by the control its definition names), Wiring (the node's
-  incoming and outgoing connections as List items; activating one focuses the edge) and Run (the
-  node's status, attempts, duration, message and error). `inspector` is the policy: `auto`
-  (default) opens it when a single node is selected and closes it when that selection ends,
-  `manual` opens it only through the `inspectorOpen` lane (`inspector-open`,
-  `default-inspector-open`, `setInspectorOpen()`, `tp-open-change` with
-  `metadata.surface: 'inspector'`), `none` never renders it. `inspectorCommit` is `live` (every
-  edit proposes and commits at once) or `explicit` (edits stay local until Save proposes one change
-  per edited key; Cancel reverts them). Opened by a pointer selection the inspector leaves focus on
-  the canvas; opened by activation it focuses its first field; closing returns focus to the node.
+  resizes it) for the settings the schema keeps off the node. Only a node whose definition places
+  at least one property in the inspector (`placement`, see Schema) has one; its header shows the
+  node's title, and Tabs switch Settings (one Field per visible inspector property, edited by the
+  control its definition names; the node body shows the others), Wiring (the node's incoming and
+  outgoing connections as List items; activating one focuses the edge) and Run (the node's status,
+  attempts, duration, message and error). `inspector` is the policy: `auto` (default) opens it on a
+  double press on such a node (not on its ports or its own controls), from the node toolbar's
+  Settings or the context menu's Settings item; while open it follows a single selected node with
+  inspector settings and closes when the selection leaves them. `manual` leaves opening and closing
+  to the `inspectorOpen` lane (`inspector-open`, `default-inspector-open`, `setInspectorOpen()`,
+  `tp-open-change` with `metadata.surface: 'inspector'`; the double press, Settings and the menu
+  item propose on it); `none` never renders it. A selection alone never opens it.
+  `inspectorCommit` is `live` (every edit proposes and commits at once) or `explicit` (edits stay
+  local until Save proposes one change per edited key; Cancel reverts them). Opened by a double
+  press the inspector leaves focus on the canvas; opened from Settings or the menu it focuses its
+  first field; closing returns focus to the node.
 - Corner slots: `slot="top-start"`, `top-end`, `bottom-start` and `bottom-end` place consumer
   panels (a Button, a Badge, a Card) over the canvas corners beside the built-in ones; the layers
   only intercept the pointer over their content.
@@ -645,7 +656,7 @@ and has a minimum height on its own, so it needs no inline size). Public parts: 
 `flow-edge-segment-handle`, `flow-edge-reconnect`, `flow-connection-line`, `flow-selection`,
 `flow-selection-bounds`, `flow-minimap`, `flow-minimap-node`, `flow-minimap-viewport`,
 `flow-controls`, `flow-control`, `flow-palette`, `flow-palette-item`, `flow-inspector`,
-`flow-inspector-header`, `flow-inspector-body`, `flow-inspector-footer`, `flow-panel-top-start`,
+`flow-inspector-header`, `flow-inspector-tabs`, `flow-inspector-body`, `flow-inspector-footer`, `flow-panel-top-start`,
 `flow-panel-top-end`, `flow-panel-bottom-start`, `flow-panel-bottom-end` and `flow-instructions`.
 The composed Card of a node is registered as `flow-node-card`, its List item rows as
 `flow-node-row`, the toolbar Buttons and Toggles as `flow-control` and the palette's List items as
@@ -679,8 +690,9 @@ transform is written through the CSSOM, never through a background or layout tra
 
 `@tweakpad/ui/flow` is pure TypeScript without DOM, Lit or timers, so it runs in Node, in a Worker
 and on a server. Its modules: the types and defaults (`FLOW_DOCUMENT_VERSION`,
-`DEFAULT_NODE_SIZE_BY_SHAPE`, `DEFAULT_EDGE_KIND`, `DEFAULT_ROUTER_OPTIONS`,
-`DEFAULT_LAYOUT_OPTIONS`, `DEFAULT_ZOOM_LIMITS`); geometry and viewport math (`screenToFlow`,
+`DEFAULT_NODE_SIZE_BY_SHAPE`, `DEFAULT_PROPERTY_PLACEMENT_BY_SHAPE`, `propertyPlacement`,
+`inspectorProperties`, `DEFAULT_EDGE_KIND`, `DEFAULT_ROUTER_OPTIONS`, `DEFAULT_LAYOUT_OPTIONS`,
+`DEFAULT_ZOOM_LIMITS`); geometry and viewport math (`screenToFlow`,
 `flowToScreen`, `visibleRect`, `viewportForBounds`, `zoomToPoint`, `zoomBy`, `panBy`, `centerOn`,
 `clampViewport`, `snapPoint`, `wheelZoomFactor`, `autoPanVelocity`, `interpolateViewport`) and the
 `SpatialIndex`; the model (`FlowModel` with `apply`, `transaction`, `undo`, `redo`, `load`,
@@ -833,8 +845,8 @@ Parts `flow-port`, `flow-port-dot` and `flow-port-label`.
 
 | Group    | Exports                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Types    | `FlowDocument`, `FlowNode`, `FlowEdge`, `FlowPortInstance`, `FlowSchema`, `FlowNodeDefinition`, `FlowPortDefinition`, `FlowPropertyDefinition`, `FlowDataTypeDefinition`, `FlowSchemaRules`, `FlowChange`, `FlowChangeOrigin`, `FlowConnection`, `FlowViewport`, `FlowRect`, `FlowPoint`, `FlowSize`, `FlowIssue`, `FlowSelection`                                                                                                   |
-| Defaults | `FLOW_DOCUMENT_VERSION`, `DEFAULT_NODE_SIZE_BY_SHAPE`, `DEFAULT_EDGE_KIND`, `DEFAULT_ROUTER_OPTIONS`, `DEFAULT_LAYOUT_OPTIONS`, `DEFAULT_ZOOM_LIMITS`                                                                                                                                                                                                                                                                                |
+| Types    | `FlowDocument`, `FlowNode`, `FlowEdge`, `FlowPortInstance`, `FlowSchema`, `FlowNodeDefinition`, `FlowPortDefinition`, `FlowPropertyDefinition`, `FlowPropertyPlacement`, `FlowDataTypeDefinition`, `FlowSchemaRules`, `FlowChange`, `FlowChangeOrigin`, `FlowConnection`, `FlowViewport`, `FlowRect`, `FlowPoint`, `FlowSize`, `FlowIssue`, `FlowSelection`                                                                          |
+| Defaults | `FLOW_DOCUMENT_VERSION`, `DEFAULT_NODE_SIZE_BY_SHAPE`, `DEFAULT_PROPERTY_PLACEMENT_BY_SHAPE`, `propertyPlacement`, `inspectorProperties`, `DEFAULT_EDGE_KIND`, `DEFAULT_ROUTER_OPTIONS`, `DEFAULT_LAYOUT_OPTIONS`, `DEFAULT_ZOOM_LIMITS`                                                                                                                                                                                             |
 | Model    | `FlowModel`, `FlowHistory`, `applyFlowChanges`, `invertFlowChanges`, `squashFlowChanges`, `pruneNoopChanges`, `expandRemoveCascade`, `runBeforeHooks`, `runAfterHooks`, `validateConnection`, `validateDocument`, `serializeFlowDocument`, `parseFlowDocument`, `migrateFlowDocument`, `normalizeNodeOrder`, `topologicalOrder`, `hasCycle`, `wouldCreateCycle`, `reachable`, `connectedComponents`, `nodesBounds`, `nodeZ`, `edgeZ` |
 | Geometry | `clamp`, `rectsIntersect`, `expandRect`, `unionRects`, `overlapArea`, `snapPoint`, `SpatialIndex`                                                                                                                                                                                                                                                                                                                                    |
 | Viewport | `screenToFlow`, `flowToScreen`, `visibleRect`, `viewportForBounds`, `zoomToPoint`, `zoomBy`, `panBy`, `centerOn`, `clampViewport`, `wheelZoomFactor`, `autoPanVelocity`, `interpolateViewport`, `viewportsEqual`                                                                                                                                                                                                                     |

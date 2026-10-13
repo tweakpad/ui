@@ -41,6 +41,8 @@ export const workflowSchema: FlowSchema = {
         { id: 'in', label: 'In', direction: 'input', dataType: 'event' },
         { id: 'out', label: 'Record', direction: 'output', dataType: 'record' },
       ],
+      // Retry policy is secondary configuration: the card shows the lookup, the inspector (a
+      // double press on the node) holds the policy.
       properties: [
         {
           key: 'retries',
@@ -50,6 +52,17 @@ export const workflowSchema: FlowSchema = {
           max: 5,
           step: 1,
           default: 2,
+          placement: 'inspector',
+        },
+        {
+          key: 'timeout',
+          label: 'Timeout (s)',
+          control: 'number',
+          min: 1,
+          max: 60,
+          step: 1,
+          default: 4,
+          placement: 'inspector',
         },
       ],
     },
@@ -82,7 +95,13 @@ export const workflowSchema: FlowSchema = {
       ports: [{ id: 'in', label: 'In', direction: 'input', dataType: 'event' }],
       properties: [
         { key: 'channel', label: 'Channel', control: 'text', default: '#inbound-leads' },
-        { key: 'mention', label: 'Mention', control: 'switch', default: true },
+        {
+          key: 'mention',
+          label: 'Mention',
+          control: 'switch',
+          default: true,
+          placement: 'inspector',
+        },
       ],
     },
     {

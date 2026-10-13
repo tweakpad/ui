@@ -30,7 +30,8 @@ another driver). The record lives in `plans/widgets/flow/implementation-checklis
    scrollable node content; the MCP has no wheel input), `assertNodeDrag`, `assertConnection`, `assertEdgeHandles` (hit-tested
    presses on a selected edge's handles), `assertMarquee`,
    `assertSelectionAndDelete`, `assertClipboard`, `assertUndoRedo`, `assertRouting`,
-   `assertLayout`, `assertVirtualization`, `assertRunState`, `assertModes`, `assertForms`,
+   `assertLayout`, `assertVirtualization`, `assertRunState`, `assertInspector` (schema placement,
+   double press, follow and close), `assertModes`, `assertForms`,
    `assertCleanup`, `assertPerformance`. Each helper returns `{ checks, records, passed }`. Run
    them in file order on a fresh load: several helpers mutate the instance they target and later
    helpers read the state the earlier ones leave behind.

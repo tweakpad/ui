@@ -2,7 +2,10 @@ import type {
   FlowEdgeKind,
   FlowEdgeKindOptions,
   FlowLayoutSettings,
+  FlowNodeDefinition,
   FlowNodeShape,
+  FlowPropertyDefinition,
+  FlowPropertyPlacement,
   FlowSize,
 } from './types.js';
 
@@ -15,6 +18,33 @@ export const DEFAULT_NODE_SIZE_BY_SHAPE: Readonly<Record<FlowNodeShape, FlowSize
   panel: { width: 220, height: 160 },
   group: { width: 320, height: 240 },
 };
+
+/** Where a property renders when its definition names no `placement` (Widgets §6.3 Schema). */
+export const DEFAULT_PROPERTY_PLACEMENT_BY_SHAPE: Readonly<
+  Record<FlowNodeShape, FlowPropertyPlacement>
+> = {
+  card: 'node',
+  panel: 'node',
+  compact: 'inspector',
+  group: 'inspector',
+};
+
+/** The surface that renders a property's control: the node body or the inspector. */
+export function propertyPlacement(
+  definition: FlowNodeDefinition | undefined,
+  property: FlowPropertyDefinition,
+): FlowPropertyPlacement {
+  return property.placement ?? DEFAULT_PROPERTY_PLACEMENT_BY_SHAPE[definition?.shape ?? 'card'];
+}
+
+/** The properties a definition places in the inspector; empty means no inspector. */
+export function inspectorProperties(
+  definition: FlowNodeDefinition | undefined,
+): FlowPropertyDefinition[] {
+  return (definition?.properties ?? []).filter(
+    (property) => propertyPlacement(definition, property) === 'inspector',
+  );
+}
 
 export const DEFAULT_EDGE_KIND: FlowEdgeKind = 'smoothstep';
 

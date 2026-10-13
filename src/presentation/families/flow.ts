@@ -59,6 +59,7 @@ const definition: ComponentDefinition = {
     part('flow-palette-item'),
     part('flow-inspector'),
     part('flow-inspector-header'),
+    part('flow-inspector-tabs'),
     part('flow-inspector-body'),
     part('flow-inspector-footer'),
     part('flow-panel-top-start', 'top-start'),
@@ -149,6 +150,7 @@ export const flowPresentation = definePresentation({
     'tp-flow-inspector': {
       '[part~="flow-inspector"]': 'flow-inspector',
       '[part~="flow-inspector-header"]': 'flow-inspector-header',
+      '[part~="flow-inspector-tabs"]': 'flow-inspector-tabs',
       '[part~="flow-inspector-body"]': 'flow-inspector-body',
       '[part~="flow-inspector-footer"]': 'flow-inspector-footer',
     },

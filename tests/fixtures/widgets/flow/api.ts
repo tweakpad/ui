@@ -804,7 +804,7 @@ export async function assertEdgeHandles(): Promise<Report> {
       .map((handle) => Number(handle.dataset['index'])),
   };
   // A press on a control inside a node selects that node (the control keeps the press).
-  const field = host(monitor, 'enrich')?.shadowRoot?.querySelector<HTMLElement>(
+  const field = host(monitor, 'notify')?.shadowRoot?.querySelector<HTMLElement>(
     'tp-input, input, tp-number-field',
   );
   let nodeControlSelection: unknown = null;
@@ -901,7 +901,7 @@ export async function assertEdgeHandles(): Promise<Report> {
       ),
       check(
         'a press on a node control selects that node',
-        JSON.stringify(nodeControlSelection) === JSON.stringify({ nodes: ['enrich'], edges: [] }),
+        JSON.stringify(nodeControlSelection) === JSON.stringify({ nodes: ['notify'], edges: [] }),
         nodeControlSelection,
       ),
       check(
@@ -1288,6 +1288,171 @@ export async function assertRunState(id = 'monitor'): Promise<Report> {
       check('status footer renders', Boolean(footer), footer),
     ],
     { end },
+  );
+}
+
+/**
+ * The inspector holds only what the schema places there and opens on a double press: node
+ * bodies and inspector Settings never repeat a property; a selection alone never opens it; a
+ * double press on a node with inspector settings opens it (dispatched at the canvas, where the
+ * captured press retargets the real double click) while one on a node without them, or inside a
+ * node's own control, does not; while open it follows a single node with settings and closes
+ * when the selection leaves them; the toolbar Settings button and the context menu Settings item
+ * exist only for those nodes.
+ */
+export async function assertInspector(id = 'monitor'): Promise<Report> {
+  const target = flow(id);
+  target.scrollIntoView({ block: 'center' });
+  target.setInspectorOpen(false);
+  target.clearSelection();
+  await settle(target);
+  const inspector = target.shadowRoot!.querySelector('tp-flow-inspector')!;
+  const canvas = target.shadowRoot!.querySelector<HTMLElement>('.canvas')!;
+  const rowsOf = (nodeId: string) =>
+    [
+      ...(host(target, nodeId)?.shadowRoot?.querySelectorAll('[part~="flow-node-row-label"]') ??
+        []),
+    ].map((label) => label.textContent!.trim());
+  const fields = () =>
+    [...inspector.shadowRoot!.querySelectorAll<HTMLElement & { label: string }>('tp-field')].map(
+      (field) => field.label,
+    );
+  const toolbarSettings = () =>
+    [...target.shadowRoot!.querySelectorAll<HTMLElement>('tp-flow-node-toolbar tp-button')].some(
+      (button) => button.ariaLabel === 'Settings',
+    );
+  const titleOf = (nodeId: string) =>
+    host(target, nodeId)!.shadowRoot!.querySelector<HTMLElement>('[part~="flow-node-title"]')!;
+  const doublePress = async (element: Element, at: Element = element) => {
+    const point = center(at);
+    element.dispatchEvent(
+      new MouseEvent('dblclick', {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        clientX: point.x,
+        clientY: point.y,
+        detail: 2,
+      }),
+    );
+    await settle(target);
+  };
+
+  // Every node: the Settings fields and the body rows never share a property.
+  const overlap: Record<string, string[]> = {};
+  const split: Record<string, { node: string[]; inspector: string[] }> = {};
+  for (const node of target.nodes) {
+    target.select({ nodes: [node.id], edges: [] });
+    target.setInspectorOpen(true);
+    await settle(target);
+    const rows = rowsOf(node.id);
+    const inInspector = fields();
+    split[node.id] = { node: rows, inspector: inInspector };
+    const shared = rows.filter((row) => inInspector.includes(row));
+    if (shared.length) overlap[node.id] = shared;
+  }
+  target.setInspectorOpen(false);
+  target.clearSelection();
+  await settle(target);
+
+  // A selection alone never opens it.
+  target.select({ nodes: ['enrich'], edges: [] });
+  await settle(target);
+  const selectedOnly = target.inspectorOpen;
+  const settingsForEnrich = toolbarSettings();
+
+  // A double press on a node without inspector settings does nothing (its two clicks select it
+  // first; the dispatched double click carries no presses).
+  target.select({ nodes: ['form'], edges: [] });
+  await settle(target);
+  await doublePress(canvas, titleOf('form'));
+  const formOpened = target.inspectorOpen;
+  const settingsForForm = toolbarSettings();
+
+  // Inside a node's own control a double press keeps its meaning (text selection).
+  const channelInput = host(target, 'notify')!.shadowRoot!.querySelector('tp-input input')!;
+  await doublePress(channelInput);
+  const controlOpened = target.inspectorOpen;
+
+  // The captured press retargets the double click to the canvas: the node under it opens.
+  await doublePress(canvas, titleOf('enrich'));
+  const opened = {
+    open: target.inspectorOpen,
+    selection: target.selection.nodes,
+    fields: fields(),
+  };
+
+  // While open it follows a node with settings and closes when the selection leaves them.
+  target.select({ nodes: ['notify'], edges: [] });
+  await settle(target);
+  const followed = { open: target.inspectorOpen, fields: fields() };
+  target.select({ nodes: ['form'], edges: [] });
+  await settle(target);
+  const closedOnForm = target.inspectorOpen;
+
+  // Context menu: a Settings item only for nodes with inspector settings.
+  const menu = target.shadowRoot!.querySelector<HTMLElement & { open: boolean }>(
+    'tp-menu.context-menu',
+  )!;
+  const menuItems = async (nodeId: string) => {
+    const point = center(titleOf(nodeId));
+    titleOf(nodeId).dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        clientX: point.x,
+        clientY: point.y,
+      }),
+    );
+    await settle(target);
+    const values = [...menu.querySelectorAll('tp-menu-item')].map((item) =>
+      item.getAttribute('value'),
+    );
+    menu.open = false;
+    await settle(target);
+    return values;
+  };
+  const enrichMenu = await menuItems('enrich');
+  const formMenu = await menuItems('form');
+
+  target.setInspectorOpen(false);
+  target.clearSelection();
+  await settle(target);
+  return report(
+    [
+      check('no property in both the node and the inspector', !Object.keys(overlap).length, {
+        overlap,
+        split,
+      }),
+      check('a selection alone leaves it closed', selectedOnly === false, selectedOnly),
+      check(
+        'toolbar Settings only for nodes with inspector settings',
+        settingsForEnrich && !settingsForForm,
+        { enrich: settingsForEnrich, form: settingsForForm },
+      ),
+      check('double press without inspector settings', formOpened === false, formOpened),
+      check('double press inside a node control', controlOpened === false, controlOpened),
+      check(
+        'double press opens the inspector settings only',
+        opened.open &&
+          opened.selection.join() === 'enrich' &&
+          opened.fields.join() === 'Retries,Timeout (s)',
+        opened,
+      ),
+      check(
+        'follows a node with settings',
+        followed.open && followed.fields.join() === 'Mention',
+        followed,
+      ),
+      check('closes when the selection leaves them', closedOnForm === false, closedOnForm),
+      check(
+        'context menu Settings item only for nodes with inspector settings',
+        enrichMenu[0] === 'settings' && !formMenu.includes('settings'),
+        { enrich: enrichMenu, form: formMenu },
+      ),
+    ],
+    { split },
   );
 }
 
