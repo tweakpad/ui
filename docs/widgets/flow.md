@@ -152,7 +152,7 @@ description and a status footer (the workflow monitor); `compact` is an icon til
 (pipelines); `panel` is a Card with a toned header and List item rows of label and control, each
 row's port aligned with it (material and shader graphs); `group` is a dashed, resizable container
 with a label whose children are positioned relative to it. Before measurement a node takes its
-definition's `size`, else the shape default: card 240 × 96, compact 56 × 56, panel 220 × 160, group
+definition's `size`, else the shape default: card 240 × 96, compact 96 × 68, panel 220 × 160, group
 320 × 240. Measurement follows the rendered box and the port positions; a persisted `size` comes
 from a resize or a declaration.
 

@@ -20,6 +20,7 @@ import {
 import type { ChangeReason } from '../../foundation/types.js';
 import type { PanZoomPolicy } from '../../foundation/pan-zoom.js';
 import { wheelScrollContainer } from '../../foundation/scroll.js';
+import { surfaceInteraction } from '../../foundation/surface-focus.js';
 import { inspectorProperties } from '../../foundation/flow/defaults.js';
 import {
   createRoutingPlanner,
@@ -568,7 +569,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #resolvedStrings: FlowStrings = DEFAULT_STRINGS;
   #focusedNode: string | undefined;
   #hoveredEdge: string | undefined;
+  /** The edge whose focus proxy holds DOM focus (keyboard Delete and E cycling start there). */
   #focusedEdge: string | undefined;
+  /** The same edge while its proxy shows keyboard focus: the only one drawn as focused. */
+  #focusVisibleEdge: string | undefined;
   #portStates = new Map<string, Record<string, FlowPortState>>();
   #composed = new WeakSet<HTMLElement>();
   #composition: unknown;
@@ -728,7 +732,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       route: (edge) => this.#pendingPaths.get(edge.id),
       selected: () => new Set(this.#selectionState.value.edges),
       hovered: () => this.#hoveredEdge,
-      focused: () => this.#focusedEdge,
+      focused: () => this.#focusVisibleEdge,
       runEdge: (id) => this.#runEdge(id),
       interactive: () => !this.effectiveDisabled,
       addable: () => this.palette && this.editable,
@@ -1376,12 +1380,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#nodeLayer.hostOf(id)?.focus({ preventScroll: true });
   }
 
-  focusEdge(id: string): void {
+  focusEdge(id: string, options?: FocusOptions): void {
     this.#frameNow();
     const proxy = this.#edgeLayer.proxyElement(id);
     if (proxy) {
       this.#focusedEdge = id;
-      proxy.focus({ preventScroll: true });
+      proxy.focus({ preventScroll: true, ...options });
     }
   }
 
@@ -3188,7 +3192,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   #inspectorFocusEdge = (event: CustomEvent<FlowInspectorFocusEdgeDetail>): void => {
     event.stopPropagation();
-    this.focusEdge(event.detail.edgeId);
+    this.focusEdge(event.detail.edgeId, {
+      focusVisible: surfaceInteraction(event.detail.sourceEvent) === 'keyboard',
+    });
   };
 
   #inspectorClose = (event: CustomEvent<{ sourceEvent?: Event }>): void => {
@@ -4202,7 +4208,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       kind === 'node'
     )
       this.#setFocusedNode(id);
-    if (kind === 'edge') this.#focusedEdge = id;
   }
 
   #nodeHostInPath(event: Event): TpFlowNode | undefined {
@@ -4296,12 +4301,15 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const id = proxy.dataset['edge'];
     if (id) {
       this.#focusedEdge = id;
+      // A pointer-driven focus (an edge chosen from the inspector by a click) draws no ring.
+      this.#focusVisibleEdge = proxy.matches(':focus-visible') ? id : undefined;
       this.#schedule();
     }
   };
 
   #proxyBlur = (): void => {
     this.#focusedEdge = undefined;
+    this.#focusVisibleEdge = undefined;
     this.#schedule();
   };
 

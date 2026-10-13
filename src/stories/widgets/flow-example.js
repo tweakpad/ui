@@ -165,8 +165,16 @@ export const workflowDocument = {
       data: { channel: '#inbound-leads', mention: true },
     },
   ],
+  // The path the lead took flows: `animated` edges march their dash from source to target.
   edges: [
-    { id: 'e1', source: 'form', sourcePort: 'out', target: 'plan', targetPort: 'in' },
+    {
+      id: 'e1',
+      source: 'form',
+      sourcePort: 'out',
+      target: 'plan',
+      targetPort: 'in',
+      animated: true,
+    },
     {
       id: 'e2',
       source: 'plan',
@@ -174,6 +182,7 @@ export const workflowDocument = {
       target: 'enrich',
       targetPort: 'in',
       label: 'Yes',
+      animated: true,
     },
     { id: 'e3', source: 'plan', sourcePort: 'no', target: 'notify', targetPort: 'in', label: 'No' },
     {
@@ -541,8 +550,33 @@ export function generateDocument(count, columns = 25, kind) {
   return { version: 1, nodes, edges };
 }
 
+/** One trigger fanning out over every edge kind, each `animated` toward its target. */
+export const edgeKindsDocument = {
+  version: 1,
+  nodes: [
+    { id: 'hook', type: 'trigger', position: { x: 0, y: 160 }, data: {}, label: 'Webhook' },
+    ...['bezier', 'smoothstep', 'step', 'straight'].map((kind, index) => ({
+      id: kind,
+      type: 'action',
+      position: { x: 420, y: index * 120 },
+      data: {},
+      label: kind,
+    })),
+  ],
+  edges: ['bezier', 'smoothstep', 'step', 'straight'].map((kind) => ({
+    id: `hook-${kind}`,
+    source: 'hook',
+    sourcePort: 'out',
+    target: kind,
+    targetPort: 'in',
+    kind,
+    animated: true,
+  })),
+};
+
 const samples = {
   workflow: { schema: workflowSchema, document: workflowDocument },
+  edges: { schema: workflowSchema, document: edgeKindsDocument },
   material: { schema: materialSchema, document: materialDocument },
   pipeline: { schema: pipelineSchema, document: pipelineDocument },
 };

@@ -31,6 +31,11 @@ export const flowExamples = [
     'The inspector holds the settings the schema keeps off the node: compact nodes have no body rows, so their properties default to `placement: "inspector"`. Double press a step or the approval (or use Settings in the node toolbar or the context menu) to open it; it docks inline-end inside the widget as a Resizable panel, follows a single selected node with settings and closes when the selection leaves them. Settings edits those properties through the library control each one names, Wiring lists the connections, Run shows the status. `inspector-commit="explicit"` keeps edits local until Save (one proposal per edited key) and Cancel reverts them.',
   ),
   example(
+    'Animated edges',
+    '<tp-flow label="Edge kinds" fit-view controls="" data-schema="workflow" data-document="edges"></tp-flow>',
+    'An `animated` edge draws its stroke dashed and marches the dash from source to target, so the direction of flow reads at a glance on every kind (`bezier`, `smoothstep`, `step`, `straight`, `orthogonal`). An animated edge without its own `markerEnd` gets a closed arrow, which keeps the direction visible when reduced motion pauses the dash. Set it per edge (`animated: true`, or the `animated` attribute of a `tp-flow-edge`); a running node animates its active edges the same way.',
+  ),
+  example(
     'Toolbars and panels',
     `<tp-flow label="Lead pipeline" fit-view controls="zoom-out zoom zoom-in fit" controls-position="bottom-center" controls-orientation="horizontal" data-schema="workflow" data-document="workflow" data-history-readout>
   <tp-flow-controls slot="top-end" actions="undo redo" orientation="horizontal">

@@ -166,7 +166,8 @@ const controlsStyles = css`
     min-inline-size: calc(var(--tp-spacing) * 28);
   }
 
-  /* The zoom field holds "100%" and its menu trigger. */
+  /* The zoom field holds "100%" and its menu trigger. Inputs and Input groups have one height (the
+     default control height), so the bar's Buttons and Toggles use the default size to line up. */
   tp-input-group.zoom {
     inline-size: calc(var(--tp-spacing) * 24);
     flex: none;
@@ -513,7 +514,6 @@ export class TpFlowControls extends TpElement {
     return html`<tp-input-group class="zoom" ?disabled=${this.disabled}>
       <tp-input
         class="zoom-input control"
-        size="sm"
         inputmode="decimal"
         .value=${this.#zoomDraft ?? percent}
         .ariaLabel=${strings.zoomLevel}
@@ -566,7 +566,7 @@ export class TpFlowControls extends TpElement {
     return html`<tp-button
       class="control"
       variant="outline"
-      size="icon-sm"
+      size="icon"
       data-action=${action}
       .focusableWhenDisabled=${true}
       .disabled=${this.#actionDisabled(action)}
@@ -591,7 +591,6 @@ export class TpFlowControls extends TpElement {
     return html`<tp-toggle
       class="control lock"
       variant="outline"
-      size="sm"
       data-action="lock"
       .pressed=${this.locked}
       ?disabled=${this.disabled}
@@ -618,7 +617,6 @@ export class TpFlowControls extends TpElement {
     return html`<tp-toggle-group
       class="tools"
       variant="outline"
-      size="sm"
       spacing="0"
       .orientation=${this.orientation}
       .value=${[this.tool]}
@@ -647,7 +645,7 @@ export class TpFlowControls extends TpElement {
         <tp-button
           class="control"
           variant="outline"
-          size="icon-sm"
+          size="icon"
           data-transport="back"
           .focusableWhenDisabled=${true}
           .disabled=${unavailable || index <= 0}
@@ -658,7 +656,7 @@ export class TpFlowControls extends TpElement {
         <tp-button
           class="control"
           variant="outline"
-          size="icon-sm"
+          size="icon"
           data-transport="toggle"
           .focusableWhenDisabled=${true}
           .disabled=${unavailable}
@@ -669,7 +667,7 @@ export class TpFlowControls extends TpElement {
         <tp-button
           class="control"
           variant="outline"
-          size="icon-sm"
+          size="icon"
           data-transport="step"
           .focusableWhenDisabled=${true}
           .disabled=${unavailable || index >= length}

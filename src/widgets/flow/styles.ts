@@ -502,12 +502,12 @@ export const flowNodeStyles = css`
     transform: translate(-50%, 50%);
   }
 
-  .compact {
-    position: relative;
+  /* The compact Card's content: the icon tile above a centered caption. */
+  .compact-body {
     display: grid;
     justify-items: center;
     gap: var(--tp-space-1);
-    inline-size: max-content;
+    text-align: center;
   }
 
   .group {

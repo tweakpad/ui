@@ -197,10 +197,6 @@ export const flowAppearance: PresentationDictionary = {
           'color-mix(in oklab, var(--_tp-flow-tone, var(--tp-muted)) 25%, var(--tp-card))',
       },
     },
-    {
-      selector: '&[data-shape="compact"]',
-      declarations: { 'border-radius': 'var(--tp-radius-md)' },
-    },
   ],
   'flow-node-header': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-node-icon': [
@@ -508,7 +504,18 @@ export const flowAppearance: PresentationDictionary = {
   'flow-minimap-viewport': [],
   // A toolbar of sets, as Toolbar and nested Button groups compose them: the outline members carry
   // their own surface, so the bar adds none.
-  'flow-controls': [],
+  // Bars float over the canvas: every set (and every consumer item) sits on the page surface,
+  // as Map control groups do, so the controls' translucent fills never show the grid through.
+  'flow-controls': [
+    {
+      selector: '& > :not(slot), & > slot::slotted(*)',
+      declarations: {
+        'background-color': 'var(--tp-background)',
+        'border-radius': 'var(--tp-radius-md)',
+        'box-shadow': 'var(--tp-shadow-sm)',
+      },
+    },
+  ],
   'flow-control': [],
   // The root writes `--tp-available-height` on the palette host (55 % of the pane, less a
   // controls stack sharing its inline side); the host caps and scrolls, the part only paints.

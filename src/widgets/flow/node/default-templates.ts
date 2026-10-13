@@ -243,43 +243,49 @@ export function renderCardShape(context: ShapeContext): TemplateResult {
     ${renderSidePorts(context)}`;
 }
 
-/** Compact shape (image 31): an icon tile with the title and description as a caption. */
+/**
+ * Compact shape (image 31): a small Card enclosing the icon tile with the title and description
+ * as a caption. Like every shape it is one container, and its ports sit on the container's edges,
+ * clear of the caption.
+ */
 export function renderCompactShape(context: ShapeContext): TemplateResult {
-  return html`<div class="compact" part="flow-node-card" data-shape="compact">
-    <span class="tile">
-      ${iconTile(context, 'lg')}
-      ${
-        context.status
-          ? html`<span
-              class="tile-status"
-              part="flow-node-status"
-              data-status=${context.status.status}
-            >
-              ${
-                context.status.status === 'running'
-                  ? html`<tp-spinner
-                      size="sm"
-                      label=${statusText(context.status, context.strings)}
-                    ></tp-spinner>`
-                  : html`<tp-marker
-                      tone=${context.status.status === 'failed' ? 'danger' : context.status.status === 'success' ? 'success' : 'neutral'}
-                    ></tp-marker>`
-              }
-            </span>`
-          : nothing
-      }
-      ${renderSidePorts(context, ['top', 'left', 'right'])}
-    </span>
-    <span class="title" part="flow-node-title">${context.label}</span>
-    ${
-      context.description && context.lod === 'high'
-        ? html`<span class="description" part="flow-node-description">${context.description}</span>`
-        : nothing
-    }
-    ${context.slot ?? nothing}
-    ${/* Bottom ports sit on the box edge below the caption so a downward edge clears the text. */ ''}
-    ${renderSidePorts(context, ['bottom'])}
-  </div>`;
+  return html`<tp-card class="card compact" size="sm" part="flow-node-card" data-shape="compact">
+      <div class="compact-body">
+        <span class="tile">
+          ${iconTile(context, 'lg')}
+          ${
+            context.status
+              ? html`<span
+                  class="tile-status"
+                  part="flow-node-status"
+                  data-status=${context.status.status}
+                >
+                  ${
+                    context.status.status === 'running'
+                      ? html`<tp-spinner
+                          size="sm"
+                          label=${statusText(context.status, context.strings)}
+                        ></tp-spinner>`
+                      : html`<tp-marker
+                          tone=${context.status.status === 'failed' ? 'danger' : context.status.status === 'success' ? 'success' : 'neutral'}
+                        ></tp-marker>`
+                  }
+                </span>`
+              : nothing
+          }
+        </span>
+        <span class="title" part="flow-node-title">${context.label}</span>
+        ${
+          context.description && context.lod === 'high'
+            ? html`<span class="description" part="flow-node-description"
+                >${context.description}</span
+              >`
+            : nothing
+        }
+        ${context.slot ?? nothing}
+      </div>
+    </tp-card>
+    ${renderSidePorts(context)}`;
 }
 
 /** Panel shape (image 29): toned header, output rows, input rows with inline controls. */

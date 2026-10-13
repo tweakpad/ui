@@ -14,7 +14,7 @@ export const FLOW_DOCUMENT_VERSION = 1 as const;
 /** Size hints per shape, used until a node is measured (Widgets §6.3 Anatomy). */
 export const DEFAULT_NODE_SIZE_BY_SHAPE: Readonly<Record<FlowNodeShape, FlowSize>> = {
   card: { width: 240, height: 96 },
-  compact: { width: 56, height: 56 },
+  compact: { width: 96, height: 68 },
   panel: { width: 220, height: 160 },
   group: { width: 320, height: 240 },
 };

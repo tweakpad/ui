@@ -11,6 +11,7 @@ export const materialSchema: FlowSchema;
 export const materialDocument: FlowDocument;
 export const pipelineSchema: FlowSchema;
 export const pipelineDocument: FlowDocument;
+export const edgeKindsDocument: FlowDocument;
 export function generateDocument(
   count: number,
   columns?: number,
