@@ -1,7 +1,7 @@
 import { css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { TpElement } from '../../../foundation/element.js';
 import { applyKeyboardStep, stepForKey } from '../../../foundation/dimension-step.js';
-import type { FlowEdgeKind, FlowPoint } from '../../../foundation/flow/types.js';
+import type { FlowEdgeKind, FlowPoint, FlowSide } from '../../../foundation/flow/types.js';
 import { PointerDrag, type PointerDragPoint } from '../../../foundation/pointer-drag.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
 import { resolveStrings } from '../strings.js';
@@ -11,6 +11,8 @@ export const EDGE_WAYPOINT = 'flow-edge-waypoint';
 export const EDGE_WAYPOINT_REMOVE = 'flow-edge-waypoint-remove';
 export const EDGE_SEGMENT = 'flow-edge-segment';
 export const EDGE_RECONNECT = 'flow-edge-reconnect';
+/** Enter or Space on a reconnect anchor; the root cancels it when it handles the key. */
+export const EDGE_RECONNECT_KEY = 'flow-edge-reconnect-key';
 
 export interface FlowEdgeWaypointDetail {
   index: number;
@@ -35,6 +37,10 @@ export interface FlowEdgeSegmentDetail {
   input: 'pointer' | 'keyboard';
   sourceEvent: Event | null;
 }
+export interface FlowEdgeReconnectKeyDetail {
+  end: 'source' | 'target';
+  sourceEvent: KeyboardEvent;
+}
 export interface FlowEdgeReconnectDetail {
   end: 'source' | 'target';
   /** Pointer position in flow units. */
@@ -54,7 +60,13 @@ type Target =
   | { kind: 'segment'; index: number; axis: Axis }
   | { kind: 'reconnect'; end: 'source' | 'target' };
 
-const ORTHOGONAL_KINDS: ReadonlySet<FlowEdgeKind> = new Set(['orthogonal', 'step', 'smoothstep']);
+/** Outward unit vector of each socket side: a reconnect anchor sits on the edge beyond it. */
+const SIDE_NORMAL: Record<FlowSide, FlowPoint> = {
+  top: { x: 0, y: -1 },
+  right: { x: 1, y: 0 },
+  bottom: { x: 0, y: 1 },
+  left: { x: -1, y: 0 },
+};
 /** Segments shorter than this (flow units) get no handle. */
 const MIN_SEGMENT = 24;
 const COORDINATE_LIMIT = 1_000_000;
@@ -112,6 +124,19 @@ const editorStyles = css`
     pointer-events: none;
   }
 
+  /* xyflow EdgeAnchor: an invisible circle shifted outward by its radius, so it covers the edge
+     where it leaves the socket and never the socket itself (which keeps starting new
+     connections). Coarse pointers raise it to the minimum target. */
+  .reconnect {
+    --_tp-flow-reconnect-size: max(var(--tp-space-5), var(--_tp-coarse-target, 0px));
+
+    inline-size: var(--_tp-flow-reconnect-size);
+    block-size: var(--_tp-flow-reconnect-size);
+    border-radius: 50%;
+    translate: calc(var(--_tp-flow-reconnect-x, 0) * var(--_tp-flow-reconnect-size) / 2)
+      calc(var(--_tp-flow-reconnect-y, 0) * var(--_tp-flow-reconnect-size) / 2);
+  }
+
   :host(:not([editable])) .waypoint,
   :host(:not([editable])) .segment {
     display: none;
@@ -139,6 +164,9 @@ export class TpFlowEdgeEditor extends TpElement {
     zoom: { type: Number },
     editable: { type: Boolean, reflect: true },
     reconnectable: { attribute: false },
+    routed: { type: Boolean },
+    sourceSide: { attribute: false },
+    targetSide: { attribute: false },
     strings: { attribute: false },
     step: { type: Number },
     bigStep: { type: Number, attribute: 'big-step' },
@@ -154,6 +182,14 @@ export class TpFlowEdgeEditor extends TpElement {
   zoom = 1;
   editable = true;
   reconnectable: boolean | 'source' | 'target' = true;
+  /**
+   * The path came from the obstacle-aware router: only a routed path follows waypoints, so
+   * only it gets segment handles (Widgets §6.3: segment handles for orthogonal edges).
+   */
+  routed = false;
+  /** The sides the edge leaves its sockets from; the reconnect anchors sit beyond them. */
+  sourceSide: FlowSide = 'right';
+  targetSide: FlowSide = 'left';
   strings: Partial<FlowStrings> | undefined;
   /** Keyboard nudge in flow units. */
   step = 1;
@@ -163,6 +199,36 @@ export class TpFlowEdgeEditor extends TpElement {
 
   readonly #drags = new Map<HTMLElement, PointerDrag>();
   #session: { target: Target; origin: FlowPoint; press: FlowPoint } | undefined;
+  /**
+   * The selected handle (`waypoint:1`, `segment:2`): the one holding focus, whether a press or
+   * the keyboard put it there. It is the handle Delete and the arrow keys act on, so it shows.
+   */
+  #selected: string | undefined;
+
+  // Listened to on the shadow root: a focus move between two handles stays inside it, and the
+  // host never sees that focusin (its related target retargets to the host itself).
+  #focusOut = (): void => {
+    // Focus is still on the old handle while focusout runs.
+    queueMicrotask(this.#focusChanged);
+  };
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.renderRoot.addEventListener('focusin', this.#focusChanged);
+    this.renderRoot.addEventListener('focusout', this.#focusOut);
+  }
+
+  #focusChanged = (): void => {
+    const active = this.shadowRoot?.activeElement;
+    const handle =
+      active instanceof Element
+        ? active.closest<HTMLElement>('[data-handle="waypoint"], [data-handle="segment"]')
+        : null;
+    const selected = handle ? `${handle.dataset['handle']}:${handle.dataset['index']}` : undefined;
+    if (selected === this.#selected) return;
+    this.#selected = selected;
+    this.requestUpdate();
+  };
 
   get presentationOwner(): HTMLElement | null {
     const root = this.getRootNode();
@@ -173,11 +239,15 @@ export class TpFlowEdgeEditor extends TpElement {
     return resolveStrings(this.strings);
   }
 
-  /** The segment handles the current points and kind produce. */
+  /**
+   * The segment handles of a routed path: one per interior axis-aligned segment long enough to
+   * grab. The first and last segments end at a socket, so they cannot move along their normal
+   * (and their handles would sit under the reconnect anchors).
+   */
   get segments(): readonly Segment[] {
-    if (!ORTHOGONAL_KINDS.has(this.kind)) return [];
+    if (!this.routed) return [];
     const segments: Segment[] = [];
-    for (let index = 0; index + 1 < this.points.length; index++) {
+    for (let index = 1; index + 2 < this.points.length; index++) {
       const a = this.points[index]!;
       const b = this.points[index + 1]!;
       const dx = Math.abs(b.x - a.x);
@@ -206,6 +276,8 @@ export class TpFlowEdgeEditor extends TpElement {
   }
 
   override disconnectedCallback(): void {
+    this.renderRoot.removeEventListener('focusin', this.#focusChanged);
+    this.renderRoot.removeEventListener('focusout', this.#focusOut);
     for (const drag of this.#drags.values()) drag.disconnect();
     this.#drags.clear();
     this.#session = undefined;
@@ -244,10 +316,14 @@ export class TpFlowEdgeEditor extends TpElement {
             return true;
           },
           move: (point, event) => this.#movePointer(point, 'move', event),
-          end: (point, event) => {
-            this.#movePointer(point, 'end', event);
+          end: (point, event, dragged) => {
+            const session = this.#session;
             this.#session = undefined;
             handle.toggleAttribute('data-dragging', false);
+            if (!session) return;
+            // A press released without moving only focuses the handle: it changes nothing.
+            if (dragged) this.#movePointer(point, 'end', event, session);
+            else this.#report(session.target, session.origin, 'cancel', event, 'pointer');
           },
           cancel: (_reason, event) => {
             const session = this.#session;
@@ -291,8 +367,12 @@ export class TpFlowEdgeEditor extends TpElement {
     return point ? { ...point } : null;
   }
 
-  #movePointer(_point: PointerDragPoint, phase: 'move' | 'end', event: PointerEvent): void {
-    const session = this.#session;
+  #movePointer(
+    _point: PointerDragPoint,
+    phase: 'move' | 'end',
+    event: PointerEvent,
+    session = this.#session,
+  ): void {
     if (!session) return;
     const zoom = Math.max(0.01, this.zoom || 1);
     const current = {
@@ -413,6 +493,24 @@ export class TpFlowEdgeEditor extends TpElement {
     this.#report(target, next, 'end', event, 'keyboard', origin);
   };
 
+  #reconnectKeyDown = (event: KeyboardEvent): void => {
+    if (this.disabled || (event.key !== 'Enter' && event.key !== ' ')) return;
+    const end = (event.currentTarget as HTMLElement).dataset['end'] as 'source' | 'target';
+    const started = !this.dispatchEvent(
+      new CustomEvent<FlowEdgeReconnectKeyDetail>(EDGE_RECONNECT_KEY, {
+        bubbles: true,
+        composed: false,
+        cancelable: true,
+        detail: { end, sourceEvent: event },
+      }),
+    );
+    // The root handled the key (started, confirmed or cancelled a reconnect): the button keeps it.
+    if (started) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
   #restoreInput = (event: Event): void => {
     // The widget owns the value; the native default of a range key never publishes.
     const input = event.currentTarget as HTMLInputElement;
@@ -465,6 +563,7 @@ export class TpFlowEdgeEditor extends TpElement {
           'data-handle': 'waypoint',
           'data-index': String(index),
           'data-edge': this.edgeId,
+          'data-selected': this.#selected === `waypoint:${index}`,
         },
         content: html`${this.#dimensionInput(index, 'x', point.x, `${name} ${strings.horizontal}`)}${this.#dimensionInput(index, 'y', point.y, `${name} ${strings.vertical}`)}`,
       },
@@ -488,6 +587,7 @@ export class TpFlowEdgeEditor extends TpElement {
           'data-index': String(segment.index),
           'data-axis': segment.axis,
           'data-edge': this.edgeId,
+          'data-selected': this.#selected === `segment:${segment.index}`,
           'aria-label': name,
           disabled: this.disabled,
           '@keydown': this.#segmentKeyDown,
@@ -499,6 +599,7 @@ export class TpFlowEdgeEditor extends TpElement {
 
   #renderReconnect(end: 'source' | 'target', point: FlowPoint): TemplateResult {
     const strings = this.#strings;
+    const normal = SIDE_NORMAL[end === 'source' ? this.sourceSide : this.targetSide];
     const name = `${this.label ? `${this.label}: ` : ''}${end === 'source' ? strings.reconnectSource : strings.reconnectTarget}`;
     const handle = this.renderPart(
       'flow-edge-reconnect',
@@ -514,6 +615,11 @@ export class TpFlowEdgeEditor extends TpElement {
           'data-edge': this.edgeId,
           'aria-label': name,
           disabled: this.disabled,
+          style: {
+            '--_tp-flow-reconnect-x': String(normal.x),
+            '--_tp-flow-reconnect-y': String(normal.y),
+          },
+          '@keydown': this.#reconnectKeyDown,
         },
       },
     );

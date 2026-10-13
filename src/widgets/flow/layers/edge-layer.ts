@@ -7,7 +7,7 @@ import type {
   RenderedEdgeLabel,
 } from '../../../foundation/flow/renderer.js';
 import {
-  edgePath,
+  edgePathThrough,
   type FlowEdgePath,
   type FlowPathEndpoint,
 } from '../../../foundation/flow/edges/paths.js';
@@ -171,8 +171,16 @@ export class EdgeLayer {
         point: endpoints.target.point,
         side: endpoints.target.side,
       };
+      // Unrouted kinds draw through their waypoints themselves; the router honors them otherwise.
       const path =
-        routed ?? edgePath(kind === 'orthogonal' ? 'smoothstep' : kind, source, target, options);
+        routed ??
+        edgePathThrough(
+          kind === 'orthogonal' ? 'smoothstep' : kind,
+          source,
+          target,
+          edge.waypoints ?? [],
+          options,
+        );
       const labels = this.#labelAnchors(edge, path);
       const record: RenderedEdge = {
         id,

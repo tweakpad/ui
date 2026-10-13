@@ -422,20 +422,25 @@ export const flowAppearance: PresentationDictionary = {
     },
   ],
   'flow-edge-focus': [],
+  // The selected handle (the one Delete and the arrows act on, by pointer or keyboard) wears the
+  // handle recipe's active ring, as a dragged thumb does.
   'flow-edge-waypoint': [
     ...thumb('var(--_tp-flow-handle)'),
     { declarations: { '--_tp-handle-paint': 'var(--tp-primary)', cursor: 'move' } },
+    { selector: '&[data-selected]', declarations: activeRing },
   ],
   'flow-edge-segment-handle': [
     ...thumb('var(--_tp-flow-handle)'),
     { declarations: { '--_tp-handle-paint': 'var(--tp-primary)' } },
+    { selector: '&[data-selected]', declarations: activeRing },
     { selector: '&:focus-visible', declarations: focusRing },
     { selector: '&[data-axis="x"]', declarations: { cursor: 'ew-resize' } },
     { selector: '&[data-axis="y"]', declarations: { cursor: 'ns-resize' } },
   ],
+  // xyflow edge updater: an invisible grab area on the edge beside the socket (`cursor: move`);
+  // keyboard focus still shows the ring.
   'flow-edge-reconnect': [
-    ...thumb('var(--_tp-flow-handle)'),
-    { declarations: { '--_tp-handle-paint': 'var(--tp-primary)', cursor: 'crosshair' } },
+    { declarations: { background: 'transparent', border: '0', cursor: 'move' } },
     { selector: '&:focus-visible', declarations: focusRing },
   ],
   'flow-connection-line': [

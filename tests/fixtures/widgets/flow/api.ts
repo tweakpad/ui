@@ -519,6 +519,248 @@ export async function assertConnection(id = 'monitor'): Promise<Report> {
   );
 }
 
+/** The element a real pointer reaches at `point`, through every open shadow root. */
+function topAt(point: FlowPoint): Element | null {
+  let element = document.elementFromPoint(point.x, point.y);
+  while (element?.shadowRoot) {
+    const inner = element.shadowRoot.elementFromPoint(point.x, point.y);
+    if (!inner || inner === element) break;
+    element = inner;
+  }
+  return element;
+}
+
+interface EdgeEditorElement extends HTMLElement {
+  routed: boolean;
+  points: readonly FlowPoint[];
+}
+
+function edgeEditor(target: TpFlow): EdgeEditorElement {
+  return target.shadowRoot!.querySelector('tp-flow-edge-editor') as EdgeEditorElement;
+}
+
+function editorHandles(target: TpFlow): HTMLElement[] {
+  return [...edgeEditor(target).shadowRoot!.querySelectorAll<HTMLElement>('[data-handle]')];
+}
+
+/**
+ * The selected edge's handles under a real pointer: every handle is the element a press at its
+ * centre reaches (the editor layer sits over the paths, sockets and labels), a press released
+ * without moving changes nothing, reconnect anchors sit on the edge beside the sockets (never
+ * over them), segment handles exist only on the interior segments of routed paths, and drags
+ * started at the hit-tested element reconnect an end and move a segment.
+ */
+export async function assertEdgeHandles(): Promise<Report> {
+  // Smoothstep edge on #monitor: reconnect anchors only.
+  const monitor = flow('monitor');
+  const monitorOriginal = monitor.value;
+  monitor.scrollIntoView({ block: 'center' });
+  const plan = monitor.model.getNode('plan')!;
+  monitor.updateNode('plan', { position: { x: plan.position.x + 40, y: plan.position.y - 150 } });
+  monitor.addNodes([{ id: 'handles-x1', type: 'action', position: { x: 380, y: 420 }, data: {} }]);
+  await settle(monitor);
+  monitor.select({ nodes: [], edges: ['e1'] });
+  await settle(monitor);
+  await wait(100);
+  const smoothHandles = editorHandles(monitor).map((handle) => handle.dataset['handle']);
+  const reachable = editorHandles(monitor).every((handle) => {
+    const top = topAt(center(handle));
+    return top === handle || handle.contains(top);
+  });
+  const overlap = (a: DOMRect, b: DOMRect) =>
+    Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
+    Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+  const sockets = [port(monitor, 'form', 'out')!, port(monitor, 'plan', 'in')!];
+  const anchors = editorHandles(monitor).filter(
+    (handle) => handle.dataset['handle'] === 'reconnect',
+  );
+  const anchorOverlap = Math.max(
+    ...anchors.flatMap((anchor) =>
+      sockets.map((socket) =>
+        overlap(anchor.getBoundingClientRect(), socket.button!.getBoundingClientRect()),
+      ),
+    ),
+  );
+  const socketsFree = sockets.every((socket) => {
+    const top = topAt(center(socket.button!));
+    return top === socket.button || socket.button!.contains(top);
+  });
+  // A press released in place on each handle changes nothing.
+  const clicks = capture(monitor, ['tp-value-change', 'tp-value-commit']);
+  for (const handle of anchors) {
+    const at = center(handle);
+    const top = topAt(at)!;
+    pointer('pointerdown', top, at);
+    pointer('pointerup', top, at);
+    await frame();
+  }
+  clicks.stop();
+  const connectingAfterClicks = monitor.connecting;
+  // Drag the target anchor onto a free input: the same edge re-targets.
+  const reconnect = capture(monitor, ['tp-value-change', 'tp-value-commit']);
+  const targetAnchor = anchors.find((anchor) => anchor.dataset['end'] === 'target')!;
+  const free = port(monitor, 'handles-x1', 'in')!.button!;
+  await syntheticDrag(topAt(center(targetAnchor))!, center(targetAnchor), center(free));
+  reconnect.stop();
+  const retargeted = monitor.model.getEdge('e1');
+  monitor.load(monitorOriginal);
+  await settle(monitor);
+
+  // A pressed waypoint is the selected handle; Delete removes it and selects the next one.
+  monitor.updateEdge('e1', {
+    waypoints: [
+      { x: 320, y: 300 },
+      { x: 345, y: 240 },
+      { x: 365, y: 190 },
+    ],
+  });
+  monitor.select({ nodes: [], edges: ['e1'] });
+  await settle(monitor);
+  await wait(100);
+  const waypointHandles = () =>
+    editorHandles(monitor).filter((handle) => handle.dataset['handle'] === 'waypoint');
+  const middle = waypointHandles()[1]!;
+  const pressAt = center(middle);
+  const pressed = topAt(pressAt)!;
+  pointer('pointerdown', pressed, pressAt);
+  pointer('pointerup', pressed, pressAt);
+  await settle(monitor);
+  const selectedAfterPress = waypointHandles()
+    .filter((handle) => handle.hasAttribute('data-selected'))
+    .map((handle) => Number(handle.dataset['index']));
+  const focused = edgeEditor(monitor).shadowRoot!.activeElement as HTMLElement | null;
+  focused?.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: 'Delete',
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    }),
+  );
+  await settle(monitor);
+  await wait(100);
+  const afterDelete = {
+    waypoints: monitor.model.getEdge('e1')?.waypoints?.length ?? 0,
+    selected: waypointHandles()
+      .filter((handle) => handle.hasAttribute('data-selected'))
+      .map((handle) => Number(handle.dataset['index'])),
+  };
+  // A press on a control inside a node selects that node (the control keeps the press).
+  const field = host(monitor, 'enrich')?.shadowRoot?.querySelector<HTMLElement>(
+    'tp-input, input, tp-number-field',
+  );
+  let nodeControlSelection: unknown = null;
+  if (field) {
+    const at = center(field);
+    const top = topAt(at)!;
+    pointer('pointerdown', top, at);
+    pointer('pointerup', top, at);
+    await settle(monitor);
+    nodeControlSelection = monitor.selection;
+  }
+  monitor.load(monitorOriginal);
+  monitor.clearSelection();
+  await settle(monitor);
+
+  // Orthogonal edge on #pipeline: segment handles on interior segments only.
+  const pipeline = flow('pipeline');
+  const pipelineOriginal = pipeline.value;
+  pipeline.scrollIntoView({ block: 'center' });
+  const q1 = pipeline.model.getEdge('q1')!;
+  const end = pipeline.model.getNode(q1.target)!;
+  pipeline.updateNode(q1.target, {
+    position: { x: end.position.x + 220, y: end.position.y + 40 },
+  });
+  await settle(pipeline);
+  await wait(200);
+  pipeline.select({ nodes: [], edges: ['q1'] });
+  await settle(pipeline);
+  await wait(100);
+  const editor = edgeEditor(pipeline);
+  const segments = editorHandles(pipeline).filter(
+    (handle) => handle.dataset['handle'] === 'segment',
+  );
+  const indexes = segments.map((handle) => Number(handle.dataset['index']));
+  const interiorOnly = indexes.every((index) => index >= 1 && index + 2 < editor.points.length);
+  const segment = segments[0];
+  let moved: { waypoints: number; reason: string; commits: number } | null = null;
+  if (segment) {
+    const index = Number(segment.dataset['index']);
+    const axis = segment.dataset['axis'];
+    const before = editor.points[index]!;
+    const at = center(segment);
+    const to = axis === 'y' ? { x: at.x, y: at.y + 40 } : { x: at.x + 40, y: at.y };
+    const drag = capture(pipeline, ['tp-value-change', 'tp-value-commit']);
+    await syntheticDrag(topAt(at)!, at, to);
+    drag.stop();
+    const waypoints = pipeline.model.getEdge('q1')?.waypoints ?? [];
+    const shifted = waypoints.every((point) =>
+      axis === 'y' ? point.y > before.y + 1 : point.x > before.x + 1,
+    );
+    moved = {
+      waypoints: shifted ? waypoints.length : -waypoints.length,
+      reason: drag.events.find((event) => event.type === 'tp-value-commit')?.reason ?? '',
+      commits: drag.events.filter((event) => event.type === 'tp-value-commit').length,
+    };
+  }
+  pipeline.load(pipelineOriginal);
+  await settle(pipeline);
+  return report(
+    [
+      check(
+        'smoothstep edge: reconnect anchors only',
+        smoothHandles.every((kind) => kind === 'reconnect') && smoothHandles.length === 2,
+        smoothHandles,
+      ),
+      check('every handle is on top under a pointer', reachable, reachable),
+      // Edge contact at fractional zooms leaves sub-pixel slivers; a covered socket is pixels.
+      check('reconnect anchors leave the sockets uncovered', anchorOverlap < 1, anchorOverlap),
+      check('sockets still take presses', socketsFree, socketsFree),
+      check(
+        'a press released in place changes nothing',
+        clicks.events.length === 0 && !connectingAfterClicks,
+        { events: clicks.events.length, connecting: connectingAfterClicks },
+      ),
+      check(
+        'dragging the target anchor re-targets the edge',
+        retargeted?.target === 'handles-x1' &&
+          retargeted.targetPort === 'in' &&
+          reconnect.events.filter((event) => event.type === 'tp-value-commit').length === 1,
+        {
+          target: `${retargeted?.target}:${retargeted?.targetPort}`,
+          commits: reconnect.events.filter((event) => event.type === 'tp-value-commit').length,
+        },
+      ),
+      check(
+        'a pressed waypoint is the selected handle',
+        JSON.stringify(selectedAfterPress) === '[1]',
+        selectedAfterPress,
+      ),
+      check(
+        'Delete removes it and selects the next waypoint',
+        afterDelete.waypoints === 2 && JSON.stringify(afterDelete.selected) === '[1]',
+        afterDelete,
+      ),
+      check(
+        'a press on a node control selects that node',
+        JSON.stringify(nodeControlSelection) === JSON.stringify({ nodes: ['enrich'], edges: [] }),
+        nodeControlSelection,
+      ),
+      check(
+        'routed edge: segment handles on interior segments only',
+        segments.length > 0 && interiorOnly,
+        { indexes, points: editor.points.length },
+      ),
+      check(
+        'dragging a segment handle moves the segment',
+        moved !== null && moved.waypoints === 2 && moved.reason === 'drag' && moved.commits === 1,
+        moved,
+      ),
+    ],
+    { smoothHandles, indexes },
+  );
+}
+
 export async function assertMarquee(id = 'monitor'): Promise<Report> {
   const target = flow(id);
   const captured = capture(target, ['tp-selection-change']);

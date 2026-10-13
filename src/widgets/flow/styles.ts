@@ -72,6 +72,11 @@ export const flowStyles = css`
     z-index: 3;
   }
 
+  /* The selected edge's handles sit over its path, the sockets and the labels they edit. */
+  .layer.editor {
+    z-index: 4;
+  }
+
   .overlay > svg {
     position: absolute;
     inset: 0;

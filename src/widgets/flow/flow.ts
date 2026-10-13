@@ -117,12 +117,14 @@ import {
   EDGE_WAYPOINT_REMOVE,
   EDGE_SEGMENT,
   EDGE_RECONNECT,
+  EDGE_RECONNECT_KEY,
   type FlowEdgeWaypointDetail,
   type FlowEdgeWaypointRemoveDetail,
   type FlowEdgeSegmentDetail,
   type FlowEdgeReconnectDetail,
+  type FlowEdgeReconnectKeyDetail,
 } from './edge/edge-editor.js';
-import type { ConnectionSession } from './interaction/connect.js';
+import type { ConnectionSession, ConnectionStart } from './interaction/connect.js';
 import type { FlowChangeEvent, FlowMiddleware } from '../../foundation/flow/model/hooks.js';
 import {
   parseFlowDocument,
@@ -138,7 +140,7 @@ import {
   centerOn,
 } from '../../foundation/flow/viewport.js';
 import type { FlowRenderHost, FlowRenderer } from '../../foundation/flow/renderer.js';
-import type { FlowEdgePath } from '../../foundation/flow/edges/paths.js';
+import { pathPolyline, type FlowEdgePath } from '../../foundation/flow/edges/paths.js';
 import type {
   FlowChange,
   FlowConnection,
@@ -588,6 +590,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       }
     | undefined;
   #waypointTransaction: FlowTransaction | undefined;
+  /** After a waypoint is deleted: the waypoint to select next (-1 returns focus to the edge). */
+  #refocusWaypoint: { edgeId: string; index: number } | undefined;
   #segment: { waypoints: FlowPoint[]; a: FlowPoint; b: FlowPoint } | undefined;
   #reconnectSession: ConnectionSession | undefined;
   readonly #viewportTicks = new Set<() => void>();
@@ -775,6 +779,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     target.addEventListener(EDGE_WAYPOINT_REMOVE, this.#edgeWaypointRemove as EventListener);
     target.addEventListener(EDGE_SEGMENT, this.#edgeSegment as EventListener);
     target.addEventListener(EDGE_RECONNECT, this.#edgeReconnect as EventListener);
+    target.addEventListener(EDGE_RECONNECT_KEY, this.#edgeReconnectKey as EventListener);
   }
   #internalRoot: EventTarget | undefined;
 
@@ -2907,10 +2912,24 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         editor.edgeId = edge.id;
         editor.points = path.points;
         editor.waypoints = edge.waypoints ?? [];
+        const refocus = this.#refocusWaypoint;
+        if (refocus?.edgeId === edge.id) {
+          this.#refocusWaypoint = undefined;
+          void editor.updateComplete.then(() => {
+            if (refocus.index >= 0) editor.focusWaypoint(refocus.index);
+            else this.focusEdge(refocus.edgeId);
+          });
+        }
         editor.kind = model.edgeKind(edge);
         editor.zoom = viewport.zoom;
         editor.editable = true;
         editor.reconnectable = edge.reconnectable ?? true;
+        const rendered = this.#edgeLayer.rendered.get(edge.id);
+        editor.routed = rendered?.routed ?? false;
+        if (rendered) {
+          editor.sourceSide = rendered.source.side;
+          editor.targetSide = rendered.target.side;
+        }
         editor.label = this.#edgeAriaLabelOf(edge);
       } else if (!editor.hidden) {
         editor.hidden = true;
@@ -3243,8 +3262,15 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       { surface: 'edge', edgeId },
       event.detail.sourceEvent ?? undefined,
     );
-    if (result.applied)
-      this.commit('keyboard', event.detail.sourceEvent ?? undefined, { surface: 'edge', edgeId });
+    if (!result.applied) return;
+    this.commit('keyboard', event.detail.sourceEvent ?? undefined, { surface: 'edge', edgeId });
+    // The next waypoint (else the previous one) becomes the selected handle, so the next Delete
+    // shows its target; with none left, focus returns to the edge.
+    this.#refocusWaypoint = {
+      edgeId,
+      index: Math.min(event.detail.index, waypoints.length - 1),
+    };
+    this.#schedule();
   };
 
   #edgeSegment = (event: CustomEvent<FlowEdgeSegmentDetail>): void => {
@@ -3302,6 +3328,45 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     }
   };
 
+  /** The connection start that keeps an edge's other end while `end` is re-targeted. */
+  #reconnectStart(edgeId: string, end: 'source' | 'target'): ConnectionStart | undefined {
+    const edge = this.#model.getEdge(edgeId);
+    if (!edge) return undefined;
+    const fixed: ConnectionStartInfo =
+      end === 'target'
+        ? { nodeId: edge.source, portId: edge.sourcePort, direction: 'output' }
+        : { nodeId: edge.target, portId: edge.targetPort, direction: 'input' };
+    return { ...fixed, reconnect: { edgeId, end } };
+  }
+
+  /**
+   * Enter or Space on a reconnect anchor starts a keyboard reconnect: the arrows cycle the
+   * valid sockets (each announced), Enter or Space on the anchor confirms (a button keeps its
+   * activation keys, so the canvas never sees them) and Escape cancels.
+   */
+  #edgeReconnectKey = (event: CustomEvent<FlowEdgeReconnectKeyDetail>): void => {
+    event.stopPropagation();
+    const edgeId = this.#editorElement?.edgeId;
+    const arbiter = this.#arbiter;
+    if (!edgeId || !arbiter || !this.editable) return;
+    const pending = arbiter.connection;
+    if (pending) {
+      if (pending.mode === 'keyboard') pending.confirm(event.detail.sourceEvent);
+      else pending.cancel();
+      arbiter.finishConnection();
+      event.preventDefault();
+      return;
+    }
+    const start = this.#reconnectStart(edgeId, event.detail.end);
+    const session = start ? arbiter.startConnection(start, 'keyboard') : undefined;
+    if (!session) return;
+    event.preventDefault();
+    if (!session.cycle(1)) {
+      session.cancel();
+      arbiter.finishConnection();
+    }
+  };
+
   #edgeReconnect = (event: CustomEvent<FlowEdgeReconnectDetail>): void => {
     event.stopPropagation();
     const detail = event.detail;
@@ -3309,16 +3374,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const arbiter = this.#arbiter;
     if (!edgeId || !arbiter || !this.editable) return;
     if (detail.phase === 'start') {
-      const edge = this.#model.getEdge(edgeId);
-      if (!edge) return;
-      const fixed: ConnectionStartInfo =
-        detail.end === 'target'
-          ? { nodeId: edge.source, portId: edge.sourcePort, direction: 'output' }
-          : { nodeId: edge.target, portId: edge.targetPort, direction: 'input' };
-      this.#reconnectSession = arbiter.startConnection(
-        { ...fixed, reconnect: { edgeId, end: detail.end } },
-        'pointer',
-      );
+      const start = this.#reconnectStart(edgeId, detail.end);
+      if (!start) return;
+      this.#reconnectSession = arbiter.startConnection(start, 'pointer');
       this.#reconnectSession?.moveTo(detail.point);
       return;
     }
@@ -4382,7 +4440,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const edge = this.#model.getEdge(edgeId);
     const path = this.#edgeLayer.paths.get(edgeId);
     if (!edge || !path || !this.editable) return false;
-    const waypoints = insertWaypoint(path.points, edge.waypoints ?? [], point);
+    // Ordered along the drawn line (a bezier's points are its control polygon).
+    const waypoints = insertWaypoint(pathPolyline(path), edge.waypoints ?? [], point);
     const result = this.propose(
       [{ type: 'edge-waypoints', id: edgeId, waypoints }],
       reason,

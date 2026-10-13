@@ -214,9 +214,13 @@ connected at once.
 With `connectOnClick` (default) a click on a port starts a connection (`aria-pressed`) and a click
 on another port completes it. From the keyboard, Enter on a focused port starts a connection,
 arrows and Tab cycle the valid candidates (each announced), Enter confirms and Escape cancels. A
-selected edge shows reconnect anchors at the ends `reconnectable` allows; dragging one re-targets
-the edge after the same validation (`metadata.reconnect: { edgeId, end }`), the old edge hides
-while dragging and comes back when the drop lands nowhere. `connect(connection, edge?)` and
+selected edge has a reconnect anchor at each end `reconnectable` allows: as in xyflow, an invisible
+grab area on the edge just beyond the socket (a move cursor), so the socket itself keeps starting
+new connections. Dragging an anchor re-targets the edge after the same validation
+(`metadata.reconnect: { edgeId, end }`); the old edge hides while dragging and comes back when the
+drop lands nowhere. A focused anchor shows its ring, and Enter or Space on it starts a keyboard
+reconnect: the arrows cycle the valid sockets (each announced), Enter or Space confirms and
+Escape cancels. `connect(connection, edge?)` and
 `reconnect(edgeId, end, connection)` do the same from code; `getNodeConnections(id)` lists a node's
 edges.
 
@@ -238,9 +242,17 @@ kind, replaces the label content with a template `(context) => TemplateResult` o
 
 Each edge has a 20 px invisible hit path: a click selects it, hovering marks it, a double press on
 a segment adds a waypoint there (`track-press`), and `waypoints` are must-pass points the path
-visits in order. A selected edge shows its waypoint handles (focusable; arrows nudge, Delete
-removes) and, for orthogonal edges, segment handles that move a segment along its normal while the
-rest re-routes; both produce `edge-waypoints` changes. Edges take focus through hidden proxies
+visits in order: a `straight` edge becomes a polyline through them, `step` and `smoothstep` an
+axis-aligned path with their corners that leaves and enters along the port sides, a `bezier` a
+smooth curve, and routed edges route through them (`edgePathThrough` in the engine). A selected
+edge shows its waypoint handles (focusable; arrows nudge, Delete
+removes) and, on a routed (orthogonal) path, a handle on each interior segment that moves the
+segment along its normal while the rest re-routes (the segments at the sockets stay put); both
+produce `edge-waypoints` changes. The handles sit above the paths, sockets and labels, and a press
+released without moving only selects a handle: the selected handle (the one a press or the
+keyboard last focused) wears the active ring and is what Delete and the arrows act on. Delete
+removes a selected waypoint and selects the next one (else the previous one); with none left,
+focus returns to the selected edge. Edges take focus through hidden proxies
 (`E` cycles the focused node's edges, `focusEdge(id)` from code) and Delete removes the focused or
 selected edges.
 
@@ -333,7 +345,8 @@ gestures to the page. Node, connection, marquee and resize drags auto-pan near t
 ## Selection and editing
 
 The selection lane is `{ nodes, edges }` (`tp-selection-change`): a press selects, Shift adds,
-Command or Control toggles; in the select tool a press on the empty pane starts a marquee that
+Command or Control toggles, and a press on a control inside a node selects that node while the
+control keeps the press (as xyflow selects on any click inside a node); in the select tool a press on the empty pane starts a marquee that
 selects nodes it touches (`selectionMode="partial"`) or encloses (`full`), Shift extends it, a press
 without movement clears, and Shift with a press in the pan tool also starts a marquee. Command or
 Control with A selects everything and Escape clears. `select({ nodes, edges })`, `selectAll()` and

@@ -102,12 +102,25 @@ function subdivide(
   subdivide(mid, p123, p23, p1, tolerance, depth + 1, out);
 }
 
-/** Flattens a cubic `[p0, c1, c2, p1]` by de Casteljau subdivision; other arrays are returned as copies. */
+/**
+ * Flattens a cubic `[p0, c1, c2, p1]`, or a chain of cubics sharing their ends
+ * (`[p0, c1, c2, p1, c1', c2', p2, …]`), by de Casteljau subdivision; other arrays are returned
+ * as copies.
+ */
 export function flattenBezier(points: readonly FlowPoint[], tolerance = 0.25): FlowPoint[] {
-  if (points.length !== 4) return points.map((point) => ({ x: point.x, y: point.y }));
-  const [p0, c1, c2, p1] = points as [FlowPoint, FlowPoint, FlowPoint, FlowPoint];
-  const out: FlowPoint[] = [{ x: p0.x, y: p0.y }];
-  subdivide(p0, c1, c2, p1, Math.max(tolerance, 1e-6), 0, out);
+  if (points.length < 4 || (points.length - 1) % 3 !== 0)
+    return points.map((point) => ({ x: point.x, y: point.y }));
+  const out: FlowPoint[] = [{ x: points[0]!.x, y: points[0]!.y }];
+  for (let index = 0; index + 3 < points.length; index += 3)
+    subdivide(
+      points[index]!,
+      points[index + 1]!,
+      points[index + 2]!,
+      points[index + 3]!,
+      Math.max(tolerance, 1e-6),
+      0,
+      out,
+    );
   return out;
 }
 
@@ -396,6 +409,159 @@ export function orthogonalPath(points: readonly FlowPoint[], borderRadius: numbe
     center: longestSegmentCenter(copy),
     length: polylineLength(copy),
   };
+}
+
+/** `points` without repeated points or middle points on a straight run. */
+function simplifyPolyline(points: readonly FlowPoint[]): FlowPoint[] {
+  const out: FlowPoint[] = [];
+  for (const point of points) {
+    const last = out[out.length - 1];
+    if (last && Math.abs(last.x - point.x) < 1e-9 && Math.abs(last.y - point.y) < 1e-9) continue;
+    const before = out[out.length - 2];
+    if (before && last) {
+      const cross =
+        (last.x - before.x) * (point.y - last.y) - (last.y - before.y) * (point.x - last.x);
+      const dot =
+        (last.x - before.x) * (point.x - last.x) + (last.y - before.y) * (point.y - last.y);
+      if (Math.abs(cross) < 1e-9 && dot > 0) out.pop();
+    }
+    out.push({ x: point.x, y: point.y });
+  }
+  return out;
+}
+
+/**
+ * An axis-aligned polyline that leaves the source along its side, passes through every waypoint
+ * in order and enters the target along its side. Each leg keeps the current heading while that
+ * moves toward the next point and turns first otherwise, so a leg never doubles back.
+ */
+function orthogonalThrough(
+  source: FlowPathEndpoint,
+  target: FlowPathEndpoint,
+  waypoints: readonly FlowPoint[],
+  offset: number,
+): FlowPoint[] {
+  const out = sideNormal(source.side);
+  const into = sideNormal(target.side);
+  const points: FlowPoint[] = [
+    source.point,
+    { x: source.point.x + out.x * offset, y: source.point.y + out.y * offset },
+  ];
+  let horizontal = out.x !== 0;
+  let sign = horizontal ? out.x : out.y;
+  const visit = (next: FlowPoint): void => {
+    const current = points[points.length - 1]!;
+    if (current.x !== next.x && current.y !== next.y) {
+      const ahead = Math.sign(horizontal ? next.x - current.x : next.y - current.y) === sign;
+      points.push(horizontal === ahead ? { x: next.x, y: current.y } : { x: current.x, y: next.y });
+    }
+    const from = points[points.length - 1]!;
+    points.push(next);
+    if (from.y === next.y && from.x !== next.x) {
+      horizontal = true;
+      sign = Math.sign(next.x - from.x);
+    } else if (from.x === next.x && from.y !== next.y) {
+      horizontal = false;
+      sign = Math.sign(next.y - from.y);
+    }
+  };
+  for (const waypoint of waypoints) visit(waypoint);
+  visit({ x: target.point.x + into.x * offset, y: target.point.y + into.y * offset });
+  points.push(target.point);
+  return simplifyPolyline(points);
+}
+
+/**
+ * A smooth curve through the waypoints (Catmull-Rom converted to cubic segments) that leaves the
+ * source and enters the target along their sides, like the two-point bezier: the end control
+ * points sit on the side normals at half the first and last chords.
+ */
+function bezierThrough(
+  source: FlowPathEndpoint,
+  target: FlowPathEndpoint,
+  waypoints: readonly FlowPoint[],
+): FlowPoint[] {
+  const anchors = [source.point, ...waypoints, target.point];
+  const out = sideNormal(source.side);
+  const into = sideNormal(target.side);
+  const points: FlowPoint[] = [anchors[0]!];
+  for (let index = 0; index + 1 < anchors.length; index += 1) {
+    const from = anchors[index]!;
+    const to = anchors[index + 1]!;
+    const before = anchors[index - 1];
+    const after = anchors[index + 2];
+    const chord = distance(from, to);
+    const c1 = before
+      ? { x: from.x + (to.x - before.x) / 6, y: from.y + (to.y - before.y) / 6 }
+      : { x: from.x + out.x * chord * 0.5, y: from.y + out.y * chord * 0.5 };
+    const c2 = after
+      ? { x: to.x - (after.x - from.x) / 6, y: to.y - (after.y - from.y) / 6 }
+      : { x: to.x + into.x * chord * 0.5, y: to.y + into.y * chord * 0.5 };
+    points.push(c1, c2, to);
+  }
+  return points;
+}
+
+function polylineRecord(kind: FlowEdgeKind, points: FlowPoint[], d: string): FlowEdgePath {
+  const flattened = kind === 'bezier' ? flattenBezier(points) : points;
+  return {
+    kind,
+    points,
+    d,
+    bbox: pathBounds(flattened),
+    center: pointAtHalfLength(flattened),
+    length: polylineLength(flattened),
+  };
+}
+
+/** The point halfway along a polyline. */
+function pointAtHalfLength(points: readonly FlowPoint[]): FlowPoint {
+  const half = polylineLength(points) / 2;
+  let walked = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    const a = points[index - 1]!;
+    const b = points[index]!;
+    const length = distance(a, b);
+    if (walked + length >= half && length > 0) {
+      const t = (half - walked) / length;
+      return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    }
+    walked += length;
+  }
+  const last = points[points.length - 1] ?? { x: 0, y: 0 };
+  return { x: last.x, y: last.y };
+}
+
+/**
+ * The path of `kind` through `waypoints`, the must-pass points it visits in order (Widgets §6.3
+ * Edges): a polyline for `straight`, an axis-aligned path with the kind's corners for `step`,
+ * `smoothstep` and an unrouted `orthogonal`, and a smooth curve for `bezier`. Without waypoints
+ * it is `edgePath`. The obstacle-aware router honors waypoints for the edges it draws.
+ */
+export function edgePathThrough(
+  kind: FlowEdgeKind,
+  source: FlowPathEndpoint,
+  target: FlowPathEndpoint,
+  waypoints: readonly FlowPoint[],
+  options: Required<FlowEdgeKindOptions>,
+): FlowEdgePath {
+  if (waypoints.length === 0) return edgePath(kind, source, target, options);
+  if (kind === 'straight') {
+    const points = simplifyPolyline([source.point, ...waypoints, target.point]);
+    return polylineRecord('straight', points, roundedPolylineData(points, 0));
+  }
+  if (kind === 'bezier') {
+    const points = bezierThrough(source, target, waypoints);
+    let d = `M${formatNumber(points[0]!.x)},${formatNumber(points[0]!.y)}`;
+    for (let index = 1; index + 2 < points.length; index += 3) {
+      const [c1, c2, to] = [points[index]!, points[index + 1]!, points[index + 2]!];
+      d += ` C${formatNumber(c1.x)},${formatNumber(c1.y)} ${formatNumber(c2.x)},${formatNumber(c2.y)} ${formatNumber(to.x)},${formatNumber(to.y)}`;
+    }
+    return polylineRecord('bezier', points, d);
+  }
+  const points = orthogonalThrough(source, target, waypoints, options.offset);
+  const radius = kind === 'step' ? 0 : options.borderRadius;
+  return polylineRecord(kind, points, roundedPolylineData(points, radius));
 }
 
 /** Builds the path of `kind` between two endpoints (orthogonal without a router falls back to smoothstep). */

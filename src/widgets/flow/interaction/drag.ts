@@ -20,6 +20,33 @@ interface DragEntry {
  * `pointercancel` roll the transaction back with their own reasons; a lost capture settles at
  * the last accepted position.
  */
+/**
+ * Press selection (xyflow `handleNodeClick`): a press on an unselected node makes it the
+ * selection, Shift, Command or Control adding it; a selected node keeps the selection as is.
+ * Presses on a node's own controls select it too: they keep the press, the node takes the
+ * selection.
+ */
+export function selectNodeOnPress(
+  host: FlowInteractionHost,
+  nodeId: string,
+  event: PointerEvent,
+): void {
+  const node = host.model.getNode(nodeId);
+  if (!node || node.selectable === false) return;
+  const selection = host.selection;
+  if (selection.nodes.includes(nodeId)) return;
+  const additive = event.shiftKey || event.metaKey || event.ctrlKey;
+  host.setSelection(
+    {
+      nodes: additive ? [...selection.nodes, nodeId] : [nodeId],
+      edges: additive ? selection.edges : [],
+    },
+    'item-press',
+    event,
+    { surface: 'node' },
+  );
+}
+
 export class NodeDragSession {
   readonly kind = 'node-drag';
   readonly #host: FlowInteractionHost;
@@ -49,18 +76,7 @@ export class NodeDragSession {
     const model = host.model;
     const node = model.getNode(this.#primary);
     if (!node || node.draggable === false || !host.editable) return false;
-    const additive = event.shiftKey || event.metaKey || event.ctrlKey;
-    const selection = host.selection;
-    if (!selection.nodes.includes(this.#primary))
-      host.setSelection(
-        {
-          nodes: additive ? [...selection.nodes, this.#primary] : [this.#primary],
-          edges: additive ? selection.edges : [],
-        },
-        'item-press',
-        event,
-        { surface: 'node' },
-      );
+    selectNodeOnPress(host, this.#primary, event);
     host.setFocusedNode(this.#primary);
     const ids = new Set(
       host.selection.nodes.includes(this.#primary) ? host.selection.nodes : [this.#primary],

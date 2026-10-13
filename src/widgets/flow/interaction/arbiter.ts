@@ -1,7 +1,7 @@
 import { PointerDrag, type PointerDragCancelReason } from '../../../foundation/pointer-drag.js';
 import type { FlowInteractionHost } from './host.js';
 import { ConnectionSession, type ConnectionStart } from './connect.js';
-import { NodeDragSession } from './drag.js';
+import { NodeDragSession, selectNodeOnPress } from './drag.js';
 import { MarqueeSession } from './marquee.js';
 
 export type FlowPointerSession = NodeDragSession | MarqueeSession | ConnectionSession;
@@ -141,7 +141,12 @@ export class FlowPointerArbiter {
     const node = host.nodeHostInPath(event);
     if (node) {
       if (host.tool === 'pan' || !node.nodeId) return false;
-      if (host.interactiveInPath(event, node) || noDragInPath(event, node)) return false;
+      if (host.interactiveInPath(event, node) || noDragInPath(event, node)) {
+        // The control keeps the press; the node takes the selection (xyflow selects on a click
+        // anywhere inside a node), so an edge selected before is let go.
+        selectNodeOnPress(host, node.nodeId, event);
+        return false;
+      }
       const session = new NodeDragSession(host, node.nodeId);
       if (!session.begin(event)) return false;
       this.#session = session;
