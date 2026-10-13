@@ -25,11 +25,11 @@ Import `@tweakpad/ui/styles.css` once to install the default token set. Componen
 
 Every CSS custom property uses the `--tp-` prefix. For example, the `primary` role is exposed as `--tp-primary`.
 
-The default typography tuple is `font-sans`, `text-base`, `font-normal`, `leading-normal`, and `tracking-normal`. Text-bearing components inherit that tuple and change individual dimensions only through another role in the same family. Like Nova, controls, cards, dialogs, popovers, menus and labels set `text-sm`; titles use `text-base`; badges, tooltips, keyboard hints and the xs control step use `text-xs`.
+The default typography tuple is `font-sans`, `text-base`, `font-normal`, `leading-normal`, and `tracking-normal`. Text-bearing components inherit that tuple and change individual dimensions only through another role in the same family. Controls, cards, dialogs, popovers, menus and labels set `text-sm`; titles use `text-base`; badges, tooltips, keyboard hints and the xs control step use `text-xs`.
 
 ### Default scale
 
-The default theme follows the shadcn Nova metrics on a 4px seed:
+The default theme uses a 4px spacing seed:
 
 | Role                                               | Values                                                                  |
 | -------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -54,7 +54,7 @@ Every single-line control resolves its size from one step table (`CONTROL_STEPS`
 
 ## Derived interaction colors
 
-Library-authored percentage variations use existing semantic color roles with `color-mix(in oklab, …)`. The mix percentage is documented where the interaction rule is defined; it is not a new token such as `--tp-input-hover`. Base role values can still use any valid CSS color notation.
+Library-authored percentage variations use the semantic color roles with `color-mix(in oklab, …)`. The mix percentage is documented where the interaction rule is defined; it is not a new token such as `--tp-input-hover`. Base role values can still use any valid CSS color notation.
 
 For example, outline and ghost Buttons share the hover recipe `color-mix(in oklab, var(--tp-input) 50%, transparent)`. That translucent layer transitions over the opaque `--tp-background` fill, while text keeps `--tp-foreground`; outline alone paints the `--tp-border` boundary. Filled Button variants instead mix their paired base role toward a mode-aware contrast role. The link appearance never paints a background. `transparent` is an alpha operand or a no-paint value, not a replacement for a content-bearing surface role. Selected and focused states continue to use their semantic `accent` and `ring` roles; `--tp-opacity-disabled` remains a non-color state token.
 
@@ -68,11 +68,11 @@ import { assertCompatibleTokenModes } from '@tweakpad/ui';
 assertCompatibleTokenModes({ light: lightTokens, dark: darkTokens });
 ```
 
-Component-specific styling belongs in a documented presentation dictionary, public property, or justified token extension. Internal shadow elements and unpublished selectors are not a supported override surface. Motion remains governed by the separate motion-role and driver contract.
+Component-specific styling belongs in a documented presentation dictionary or public property. Internal shadow elements and unpublished selectors are not a supported override surface. Motion remains governed by the separate motion-role and driver contract.
 
 ## Presentation resolution and overrides
 
-Each component has a presentation family, exported as `<name>Presentation` (for example `buttonPresentation`). A family carries the component's definition (ordered axes, defaults and canonical public part keys), part bindings, structure and default `appearance` dictionary. `resolveComponentPresentation(definition, axes, dictionary)` resolves base keys followed by axes in declaration order. Its `missingKeys` diagnostic means no appearance was supplied for that contribution; it never silently reads another dictionary.
+Each component has a presentation family, exported as `<name>Presentation` (for example `buttonPresentation`). A family carries the component's definition (ordered axes, defaults and public part keys), part bindings, structure and default `appearance` dictionary. `resolveComponentPresentation(definition, axes, dictionary)` resolves base keys followed by axes in declaration order. Its `missingKeys` diagnostic means no appearance was supplied for that contribution; it never silently reads another dictionary.
 
 A document dictionary set with `setPresentationDictionary` replaces the default appearance of every component in that document. Build it from the families of the components you use, so the override stays as lean as the components themselves:
 
@@ -115,11 +115,11 @@ Compounds contribute through `setPartComposition` before consumer hooks. Native 
 
 Primitive variant interaction rules use low specificity so a composed Menu or Navigation role owns its highlight. Popup triggers keep their active background while open; Menu, Menubar and Navigation Menu transfer that background without a trailing fade. Restored focus does not create a hover background on a closed navigation trigger. Keyboard focus keeps its separate visible outline, and popup/content transitions retain their motion policy.
 
-Migration is partial: consult [the repair ledger](../plans/phase-1/first-pass-conformance.md) before relying on dictionary-only customization for a control. In particular, the remaining component-local appearance and cross-shadow compound overrides have not yet been fully migrated.
+Dictionary replacement does not yet reach every control's appearance: some component-local appearance and cross-shadow compound overrides remain outside the dictionary.
 
 ## Constituent rendering contracts
 
-Components that document `partContracts` support Foundation rendering contracts in addition to presentation hooks. Each key is a stable public part name. `classHook`, `styleHook` and `content` can resolve from the committed state; `elementReference` receives the host and `null` when it is replaced or disconnected. `hostProperties` merges neutral attributes, classes and styles while retaining behavior-owned semantics.
+Components that document `partContracts` support rendering contracts in addition to presentation hooks. Each key is a stable public part name. `classHook`, `styleHook` and `content` can resolve from the committed state; `elementReference` receives the host and `null` when it is replaced or disconnected. `hostProperties` merges neutral attributes, classes and styles while retaining behavior-owned semantics.
 
 ```ts
 import { html } from 'lit';
@@ -137,9 +137,9 @@ Put `bind` on the delegate's compatible semantic host to retain handlers, state,
 
 ## Default spacing
 
-Change `--tp-spacing` in the theme to scale library padding, gaps, control/icon extents and default anchored-surface geometry. Popup menus, navigation menus and selection lists use a one-unit outer inset (Nova `p-1`); Popover uses `space-2-5`. Anchored surfaces use a three-unit default trigger separation and collision inset; explicit numeric positioning overrides remain available for deliberate geometry. Popover content uses real flex gaps, including the close action. Switch derives track and thumb extents from one size-dependent spacing value. Example stories leave positioning overrides unset so they use these defaults.
+Change `--tp-spacing` in the theme to scale library padding, gaps, control/icon extents and default anchored-surface geometry. Popup menus, navigation menus and selection lists use a one-unit outer inset; Popover uses `space-2-5`. Anchored surfaces use a three-unit default trigger separation and collision inset; explicit numeric positioning overrides remain available for deliberate geometry. Popover content uses real flex gaps, including the close action. Switch derives track and thumb extents from one size-dependent spacing value.
 
-Menu, select and combobox items use the Nova item insets (`space-1` by `space-1-5`, at least `control-height-sm` tall), so they scale with `--tp-spacing`. Rows and triggers packed against their neighbours (navigation panel rows and group labels, navigation menu triggers and links) show their compact control extent on fine pointers. They cannot expand their pointer target without overlapping a neighbour, so on coarse pointers the default theme raises them to `--tp-target-size-min`.
+Menu, select and combobox items use `space-1` by `space-1-5` insets and are at least `control-height-sm` tall, so they scale with `--tp-spacing`. Rows and triggers packed against their neighbours (navigation panel rows and group labels, navigation menu triggers and links) show their compact control extent on fine pointers. They cannot expand their pointer target without overlapping a neighbour, so on coarse pointers the default theme raises them to `--tp-target-size-min`.
 
 Typography, line widths, shape seeds, responsive query thresholds and minimum accessible targets retain their independent roles. Screen-reader-only clipping dimensions and runtime-measured pixel coordinates are geometry, not visible spacing. Scoped complete themes should provide their derived `space-*` roles consistently with their spacing seed.
 
@@ -149,12 +149,12 @@ Drawer, Side Panel and Navigation Panel use one exposed-edge corner recipe. The
 viewport-attached edge stays flush; the two free corners use `--tp-radius-lg`.
 Floating panels and inset content use that same radius on all four corners.
 Logical navigation sides follow writing direction. Change the shared theme role
-or use the existing presentation dictionary/part hooks; no panel-specific radius
+or use the presentation dictionary/part hooks; no panel-specific radius
 or spacing attribute is needed.
 
 ### Composition owns spacing
 
-Use each control's existing regions for related content: Slider Label/Output,
+Use each control's own regions for related content: Slider Label/Output,
 Field Label/Description/Error, Form actions, InputGroup addons, Card Action/Footer,
 Bubble Content/Reactions, and unjoined ButtonGroup actions. Their structural layout
 arranges the children, and the active presentation dictionary selects token-based

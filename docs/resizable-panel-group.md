@@ -12,7 +12,7 @@ One group owns the layout of its direct panels and interactive handles. All poin
 </tp-resizable-panel-group>
 ```
 
-Panels and handles must be direct children in logical order. Nest another group inside a panel for a second axis. For compatibility, ordinary direct-child elements also serve as panels; omitted handles are generated between adjacent panels and use the same implementation. Stable authored panel IDs are required when saving a layout across page loads. Missing IDs are generated for the current document lifetime.
+Panels and handles must be direct children in logical order. Nest another group inside a panel for a second axis. Ordinary direct-child elements also serve as panels; omitted handles are generated between adjacent panels and use the same implementation. Stable authored panel IDs are required when saving a layout across page loads. Missing IDs are generated for the current document lifetime.
 
 ## Group
 
@@ -30,7 +30,7 @@ Panels and handles must be direct children in logical order. Nest another group 
 | `withHandle` / `with-handle`                             | boolean                                 | false                  | Decoration on generated handles. Authored handles configure this independently.                                                                                |
 | `persistenceKey` / `persistence-key`                     | string                                  | empty                  | Key passed to the injected persistence adapter.                                                                                                                |
 | `persistenceAdapter`                                     | `{load(key), save(key, layout)}`        | undefined              | Sync or async consumer storage. No built-in localStorage policy. Restore precedes the first uncontrolled commit; controlled sizes are never restored or saved. |
-| `min`                                                    | number                                  | undefined              | Legacy group-wide minimum percentage, used only when a panel has no explicit minimum.                                                                          |
+| `min`                                                    | number                                  | undefined              | Group-wide minimum percentage, used only when a panel has no explicit minimum.                                                                                 |
 
 `getLayout()` returns a record of panel IDs to current percentages. `setLayout(record)` proposes an identity-based percentage layout and returns the actual committed layout. Invalid/missing entries fall back to current values. Bounds and disabled sizes are normalized before publication. Infeasible bounds preserve valid panel sizes and expose overflow or unused space instead of violating constraints; the group scrolls only then (it exposes `data-infeasible`), and a feasible layout clips, so a handle's hit target at the group's edge never adds a scrollbar.
 
@@ -70,9 +70,9 @@ Axis arrows adjust by `keyboardStep`; Home/End reach allowed extremes; Enter tog
 
 ## Presentation
 
-Group, Panel and Handle expose their own standard `partContracts` and `partPresentation`. Canonical parts are `resizable-panel-group`, `resizable-panel-group-panel`, `resizable-panel-group-separator`, and `resizable-panel-group-handle-decoration`. Generated handles consume the group’s `withHandle`; authored constituents retain independent customization. Native legacy panels are registered with the group’s panel presentation part.
+Group, Panel and Handle expose their own standard `partContracts` and `partPresentation`. Public parts are `resizable-panel-group`, `resizable-panel-group-panel`, `resizable-panel-group-separator`, and `resizable-panel-group-handle-decoration`. Generated handles consume the group’s `withHandle`; authored constituents retain independent customization. Ordinary direct-child panels are registered with the group’s panel presentation part.
 
-The group exposes `data-infeasible`; panels expose `data-collapsed`; handle separator parts expose `data-disabled`, `data-dragging` and `data-orientation`. Hairline, decoration, radius, focus and spacing use common theme tokens. Measured panel extents and coarse/fine hit targets are behavioral geometry, not component spacing overrides.
+The group exposes `data-infeasible`; panels expose `data-collapsed`; handle separator parts expose `data-disabled`, `data-dragging` and `data-orientation`. Hairline, decoration, radius, focus and spacing use common theme tokens.
 
 An application can inject its existing storage policy before connecting an uncontrolled group:
 

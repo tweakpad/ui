@@ -70,8 +70,8 @@ lines and the custom points may reach past the box. A Badge in its bottom-right 
 matching preset or reads Custom. Bézier curves show two handles
 with their lines; custom curves show one point per entry. While a handle, point or Slider is
 dragged the progression range holds still; when the drag settles (or the value changes otherwise)
-the plot and the frames bar ease to the re-quantized range through the Foundation motion role
-`range` (instant under reduced motion), so the graph never jumps under the pointer.
+the plot and the frames bar ease to the re-quantized range through the motion role `range`
+(instant under reduced motion), so the graph never jumps under the pointer.
 A press inside a handle keeps the pointer's offset from its center for the whole gesture, so the
 handle moves with the pointer instead of jumping under it; a press elsewhere never moves a Bézier
 handle. On a custom curve a press on the empty graph adds a point there and drags it. Escape or
@@ -139,7 +139,7 @@ grows past it and stays visible; `rotation` turns a square sized to stay inside 
 true) a Button in the header shows the current mode and cycles to the next one on each press,
 replaying the preview. The preview replays on every settled change (a release, a key, a field
 commit, a preset, a conversion) and on the play Button, running for the duration with the CSS
-easing through the Foundation motion role `preview`. Under reduced motion it completes without
+easing through the motion role `preview`. Under reduced motion it completes without
 motion and the frames bar remains the timing reference.
 
 ## Frames bar
@@ -218,34 +218,27 @@ handles, the ticks and the preview); the curve geometry, thumbnails and tick pos
 the widget supplies as SVG. `partPresentation` hooks reach the widget parts and the registered
 Slider and Toggle parts.
 
-## Upstream reference
-
-tweakpane `packages/core/src/input-binding/point-2d/` (the pad's per-axis keyboard steps with
-fine and coarse modifiers, pointer emission, inline and popup layouts) and
-`monitor-binding/number/view/graph-log.ts` (the SVG plot). tweakpane's cubic-bézier blade lives in
-the separate `@tweakpane/plugin-essentials` package, which is not among the local references.
-
 ## API reference
 
-| Property                                     | Attribute                                       | Type                                                        | Default              |
-| -------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------- | -------------------- |
-| `value` / `defaultValue`                     | `value` / `default-value`                       | `string`                                                    | `''`                 |
-| `duration` / `defaultDuration`               | `duration` / `default-duration`                 | `number` (seconds)                                          | `0.7`                |
-| `durationMin`, `durationMax`, `durationStep` | `duration-min`, `duration-max`, `duration-step` | `number`                                                    | `0`, `3`, `0.01`     |
-| `timing`                                     | `timing`                                        | `boolean`                                                   | `true`               |
-| `adapter` / `defaultAdapter`                 | `adapter` / `default-adapter`                   | `string`                                                    | `'css'`              |
-| `adapters`                                   | —                                               | `EasingAdapter[]`                                           | `[cssEasingAdapter]` |
-| `presets`                                    | —                                               | `EasingPresetGroup[]`                                       | built-in table       |
-| `presetPicker`                               | `preset-picker`                                 | `boolean`                                                   | `true`               |
-| `layout`                                     | `layout`                                        | `'extended' \| 'compact'`                                   | `'extended'`         |
-| `presetsOpen` / `defaultPresetsOpen`         | `presets-open` / `default-presets-open`         | `boolean`                                                   | `false`              |
-| `size`                                       | `size`                                          | `'sm' \| 'default' \| 'lg'`                                 | `'default'`          |
-| `preview`                                    | `preview`                                       | `'none' \| 'scale' \| 'scale-x' \| 'scale-y' \| 'rotation'` | `'scale'`            |
-| `previewControls`                            | `preview-controls`                              | `boolean`                                                   | `true`               |
-| `frames`                                     | `frames`                                        | `boolean`                                                   | `true`               |
-| `label`, `locale`, `strings`                 | `label`, `locale`, —                            | `string`, `string`, `Partial<EasingEditorStrings>`          | `''`, `''`, `{}`     |
-| `name`, `disabled`, `readOnly`, `required`   | `name`, `disabled`, `readonly`, `required`      | form control contract                                       | contract defaults    |
-| `onValueChange`, `onValueCommitted`          | —                                               | callbacks                                                   | `undefined`          |
+| Property                                     | Attribute                                       | Type                                                        | Default                         |
+| -------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------- | ------------------------------- |
+| `value` / `defaultValue`                     | `value` / `default-value`                       | `string`                                                    | `''`                            |
+| `duration` / `defaultDuration`               | `duration` / `default-duration`                 | `number` (seconds)                                          | `0.7`                           |
+| `durationMin`, `durationMax`, `durationStep` | `duration-min`, `duration-max`, `duration-step` | `number`                                                    | `0`, `3`, `0.01`                |
+| `timing`                                     | `timing`                                        | `boolean`                                                   | `true`                          |
+| `adapter` / `defaultAdapter`                 | `adapter` / `default-adapter`                   | `string`                                                    | `'css'`                         |
+| `adapters`                                   | —                                               | `EasingAdapter[]`                                           | `[cssEasingAdapter]`            |
+| `presets`                                    | —                                               | `EasingPresetGroup[]`                                       | built-in table                  |
+| `presetPicker`                               | `preset-picker`                                 | `boolean`                                                   | `true`                          |
+| `layout`                                     | `layout`                                        | `'extended' \| 'compact'`                                   | `'extended'`                    |
+| `presetsOpen` / `defaultPresetsOpen`         | `presets-open` / `default-presets-open`         | `boolean`                                                   | `false`                         |
+| `size`                                       | `size`                                          | `'sm' \| 'default' \| 'lg'`                                 | `'default'`                     |
+| `preview`                                    | `preview`                                       | `'none' \| 'scale' \| 'scale-x' \| 'scale-y' \| 'rotation'` | `'scale'`                       |
+| `previewControls`                            | `preview-controls`                              | `boolean`                                                   | `true`                          |
+| `frames`                                     | `frames`                                        | `boolean`                                                   | `true`                          |
+| `label`, `locale`, `strings`                 | `label`, `locale`, —                            | `string`, `string`, `Partial<EasingEditorStrings>`          | `''`, `''`, `{}`                |
+| `name`, `disabled`, `readOnly`, `required`   | `name`, `disabled`, `readonly`, `required`      | `string`, `boolean`, `boolean`, `boolean`                   | `''`, `false`, `false`, `false` |
+| `onValueChange`, `onValueCommitted`          | —                                               | callbacks                                                   | `undefined`                     |
 
 Read-only: `curve`, `kind`, `category`, `easingFunction`, `output`, `presetId`, `controlled`, `dragging`,
 `playing`. Methods: `setValue(value, reason?, sourceEvent?)`, `play()`,

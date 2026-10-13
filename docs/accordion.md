@@ -2,9 +2,9 @@
 
 Accordion groups related disclosures in a vertical stack. `<tp-accordion>` coordinates selection and presence across direct `<tp-accordion-item>` children. Each Item supplies a semantic Heading, native button Trigger with content-agnostic positional regions, and Content panel.
 
-The normative contracts are UI Foundation §13.2 and UI Component Library §16.1. This page documents the Lit custom-element mapping. The Storybook Controls panel exposes Root properties and independently configurable Item examples.
+The Storybook Controls panel exposes Root properties and independently configurable Item examples.
 
-Each Item renders one internal `<tp-collapsible>`. Collapsible owns the Trigger–Content association, Heading wrapper, Leading and Trailing regions, default disclosure indicator, measured presence lifecycle, motion roles, and cleanup. Accordion remains the single owner of group selection and only drives each internal Collapsible's derived state and composition context.
+Each Item renders one internal `<tp-collapsible>`. Collapsible owns the Trigger–Content association, Heading wrapper, Leading and Trailing regions, default disclosure indicator, measured presence lifecycle, motion roles, and cleanup.
 
 ## Basic use
 
@@ -48,7 +48,7 @@ Set `disabled` on one `<tp-accordion-item>` to prevent that Item from opening or
 | `motionPolicy`     | `motion-policy`      | `'inherit' \| 'normal' \| 'reduce'`             | `'inherit'` | Resolves motion for the Accordion subtree from this boundary, its ancestors, or the environment.         |
 | `onValueChange`    | —                    | `(event: TpValueChangeEvent<string[]>) => void` | `undefined` | Callback after an accepted root value-change proposal. Property only; not an HTML attribute.             |
 
-`orientation` is fixed to vertical for Accordion. In this custom-element API, `selectionMode="multiple"` corresponds to the Foundation's `multiple` behavior.
+`orientation` is fixed to vertical for Accordion.
 
 ## Visual variants
 
@@ -61,7 +61,7 @@ Variants are closed, predefined recipes assembled from the foundational border, 
 <tp-accordion variant="separated">…</tp-accordion>
 ```
 
-The variant belongs to the Root because it describes the visual relationship among Items. It does not alter selection, presence, focus, indicator placement, or motion. Use the public parts for changes that do not fit one of the predefined recipes.
+The variant does not alter selection, presence, focus, indicator placement, or motion. Use the public parts for changes that do not fit one of the predefined recipes.
 
 ## Item properties and slots
 
@@ -95,7 +95,7 @@ The Root's `contentAlignment` supplies the default for every Item. `edge` starts
 
 Alignment follows writing direction and live layout changes. Each Item publishes its resolved value as `data-content-alignment`. In `edge` mode the baseline inline inset aligns content text with the Trigger label; in `label` mode Collapsible moves the ContentBody to the Label column and removes the redundant start inset. Padding overrides applied through `accordion-content-body` remain additive to the alignment model. Changing alignment does not affect selection, activation, focus, presence, motion, or accessibility relationships.
 
-The Foundation's Item is a generic public part, not necessarily this custom tag. A bare `<div>` directly inside this Lit Root is not registered as an Item. This implementation registers direct `<tp-accordion-item>` children; it does not yet implement arbitrary delegated Item hosts.
+Only direct `<tp-accordion-item>` children register as Items; a bare `<div>` directly inside the Root is not an Item.
 
 ## Events and interaction
 
@@ -113,7 +113,7 @@ accordion.addEventListener('tp-value-change', (event) => {
 
 ## Styling and motion
 
-The public parts are `accordion` on the Root, `accordion-item` on the Item host, and `accordion-heading`, `accordion-trigger`, `accordion-leading`, `accordion-label`, `accordion-trailing`, `accordion-content`, and `accordion-content-body` forwarded from the internal Collapsible. Collapsible supplies the token-based Trigger, Label, positional-content, focus-ring, and ContentBody baseline, so Accordion inherits the same complete default without Storybook or consumer CSS. Style the forwarded parts with `tp-accordion-item::part(...)`; no private nested selector is required. The Item host publishes `data-open`, `data-closed`, `data-disabled`, `data-indicator-position`, and `data-content-alignment`, so expanded, disabled, and alignment styling needs no private selector. Native `:hover` and `:focus-within` remain available for transient interaction styling.
+The public parts are `accordion` on the Root, `accordion-item` on the Item host, and `accordion-heading`, `accordion-trigger`, `accordion-leading`, `accordion-label`, `accordion-trailing`, `accordion-content`, and `accordion-content-body` forwarded from the internal Collapsible. Collapsible supplies the token-based Trigger, Label, positional-content, focus-ring, and ContentBody baseline, so Accordion inherits the same complete default without consumer CSS. Style the forwarded parts with `tp-accordion-item::part(...)`; no private nested selector is required. The Item host publishes `data-open`, `data-closed`, `data-disabled`, `data-indicator-position`, and `data-content-alignment`, so expanded, disabled, and alignment styling needs no private selector. Native `:hover` and `:focus-within` remain available for transient interaction styling.
 
 ```css
 tp-accordion-item {
@@ -137,7 +137,7 @@ tp-accordion-item::part(accordion-content-body) {
 
 The measured content panel publishes `--collapsible-panel-height` and `--collapsible-panel-width`, and its presence state is available through `data-open`, `data-closed`, `data-starting-style`, and `data-ending-style`. The ContentBody separates content padding from the animated panel extent.
 
-The internal Collapsible publishes the standard `disclosure`, `content`, and `indicator` roles. The default `disclosure` role animates the outer Content panel's measured height. The `indicator` role targets only the built-in disclosure indicator while that fallback is rendered; positional consumer content never inherits it. The `content` role targets ContentBody but deliberately has no default visual motion: a fade is one possible presentation, not part of disclosure behavior.
+The internal Collapsible publishes the standard `disclosure`, `content`, and `indicator` roles. The default `disclosure` role animates the outer Content panel's measured height. The `indicator` role targets only the built-in disclosure indicator while that fallback is rendered; positional consumer content never inherits it. The `content` role targets ContentBody and has no default visual motion.
 
 For Accordion composition, Collapsible scopes each request to its public `<tp-accordion-item>` owner and adds that Item's stable `value` and `index` context. A listener on one Item can therefore claim motion for that Item only, while a listener on the Accordion or document can provide a broader policy through event bubbling. The first synchronous claim wins.
 
@@ -177,10 +177,9 @@ The **External line-by-line motion** story uses this pattern with paragraphs of 
 
 Entry and exit follow the shared presence lifecycle. With reduced motion, starting and ending are still published, but finite motion completes at the next scheduling checkpoint. A normally closed panel reaches `absent`; `keepMounted` or `hiddenUntilFound` produces `retained`.
 
-## Current implementation limits
+## Limits
 
 - There is no distinct controlled-value mode: an accepted trigger interaction updates `value` even when the host set it externally.
-- On item registration or rebuild in non-collapsible single mode, an empty or unknown `value` is replaced by the first available item instead of preserving the request with a diagnostic. A programmatic multi-value list in single mode presents only its first available item, but the property can retain extra values until rebuild.
-- When the open item is removed or disabled, fallback selection uses the first enabled item rather than the nearest successor, then predecessor.
-- An `absent` panel is hidden but remains in the DOM; presence-state unmounting is not yet implemented.
-- The Foundation's Trigger `nativeAction` property and arbitrary delegated Item hosts are not exposed by this Lit mapping. Consumers can use the Item's `tp-open-change` event to observe or cancel change proposals.
+- On item registration or rebuild in non-collapsible single mode, an empty or unknown `value` is replaced by the first available item. A programmatic multi-value list in single mode presents only its first available item, but the property can retain extra values until rebuild.
+- When the open item is removed or disabled, fallback selection uses the first enabled item.
+- An `absent` panel is hidden but remains in the DOM.

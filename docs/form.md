@@ -1,6 +1,6 @@
 # Form
 
-`tp-form` owns a native form in light DOM and coordinates the existing Field and
+`tp-form` owns a native form in light DOM and coordinates Field and
 form-associated controls. It does not own transport or persistence.
 
 ```html
@@ -81,15 +81,14 @@ disabled action stays disabled. Field pending markers also participate.
 | `tp-reset`   | `{ form, values, sourceEvent }`; published after accepted reset, never for a cancelled reset                                        |
 
 Events bubble across shadow boundaries. Parts are `form`, `form-actions` and
-`form-error-summary`. Form reuses Field-group spacing and the shared theme; nested
-Input, Field and Button retain their own recipes. Customize through the existing
+`form-error-summary`. Form uses the theme's Field-group spacing. Customize through the
 presentation dictionary and `partPresentation`, without spacing attributes.
 Export: `TpForm`.
 
 ## Usage examples
 
 Docs include a bug report, individual field types, mixed profile settings, repeated
-email fields, external errors, and cross-field validation. Each uses the existing
+email fields, external errors, and cross-field validation. Each uses the
 Field and input components and displays the actual submitted values. These are
 compositions, not Form variants. Application code owns dynamic field collections
 and external validation errors.

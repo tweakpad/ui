@@ -11,12 +11,12 @@ the resulting rectangle and cannot enlarge it with intrinsic dimensions.
 
 Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`.
 
-| Property / attribute | Values                                                   | Default                  |
-| -------------------- | -------------------------------------------------------- | ------------------------ |
-| `ratio`              | finite number greater than zero; width divided by height | 16 / 9 for compatibility |
-| `fit`                | fill, contain, cover, none, scale-down                   | fill                     |
+| Property / attribute | Values                                                   | Default |
+| -------------------- | -------------------------------------------------------- | ------- |
+| `ratio`              | finite number greater than zero; width divided by height | 16 / 9  |
+| `fit`                | fill, contain, cover, none, scale-down                   | fill    |
 
-Supply a ratio explicitly for new usages. Invalid property assignments throw
+Supply a ratio explicitly. Invalid property assignments throw
 `RangeError` and preserve the previous valid ratio. Invalid attribute values also
 report the validation error instead of silently clamping geometry. `fit` controls
 native replaced content such as images; it does not change the box's ratio.
@@ -34,8 +34,6 @@ render the supplied `content`; this preserves component state and slot behavior.
 
 ## Ratio and size examples
 
-The rendered Docs include all four ratios from the Base shadcn reference: **16:9**,
-**21:9**, **1:1**, and **9:16**. The different-container-sizes example keeps 16:9
-while changing the available width. These are usage examples, not component
-variants. All examples use a solid muted theme color. Widths, spacing, and rounded
-corners use shared theme variables, with no image dependency or size attribute.
+The rendered Docs include four ratios: **16:9**, **21:9**, **1:1**, and **9:16**.
+The different-container-sizes example keeps 16:9 while changing the available
+width. These are usage examples, not component variants.

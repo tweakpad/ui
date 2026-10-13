@@ -1,11 +1,9 @@
 # File upload
 
 `tp-file-upload` collects files through a dashed drop surface, the host file picker, an opt-in
-clipboard paste or code. It
-validates each file against accepted types, size, count and your own rules, lists the files as
-[Attachment](attachment.md) rows, chips or image tiles, and submits them with its form. It never
-transfers files unless you give it an upload adapter. The normative contracts are UI Component
-Library §17 File upload and UI Foundation §14 File upload.
+clipboard paste or code. It validates each file against accepted types, size, count and your own
+rules, lists the files as [Attachment](attachment.md) rows, chips or image tiles, and submits them
+with its form. It never transfers files unless you give it an upload adapter.
 
 ```html
 <tp-field label="Contract" description="Signed PDF">
@@ -148,7 +146,7 @@ upload.uploader = async (item, { signal, onProgress }) => {
 <tp-file-upload multiple paste="document"></tp-file-upload>
 ```
 
-Paste is off by default. A paste that carries files goes through the same checks as a drop and is reported with reason `input-paste` and source `paste`; a paste without files, a paste into a text field or editable content outside the control, and a paste another handler already cancelled are left alone. Exactly one control takes each paste: the one that has focus, then the one under the pointer, then the `document` control that was focused, pressed or connected most recently. A disabled control takes no pastes; a read-only or full control takes the paste and refuses its files. One listener set per document serves every control and is removed with the last one. Pasted screenshots usually arrive named `image.png`.
+Paste is off by default. A paste that carries files goes through the same checks as a drop and is reported with reason `input-paste` and source `paste`; a paste without files, a paste into a text field or editable content outside the control, and a paste another handler already cancelled are left alone. Exactly one control takes each paste: the one that has focus, then the one under the pointer, then the `document` control that was focused, pressed or connected most recently. A disabled control takes no pastes; a read-only or full control takes the paste and refuses its files. Pasted screenshots usually arrive named `image.png`.
 
 ## Slots and parts
 

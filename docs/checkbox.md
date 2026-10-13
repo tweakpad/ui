@@ -1,6 +1,6 @@
 # Checkbox
 
-`tp-checkbox` is a Boolean form control. Mixed state is independent of the submitted Boolean. Its Checkbox owner is also consumed by Switch.
+`tp-checkbox` is a Boolean form control. Mixed state is independent of the submitted Boolean.
 
 ```html
 <tp-field label="Accept terms" description="Required to continue">
@@ -64,7 +64,7 @@ group.onValueChange = (event) => {
 group.disconnect();
 ```
 
-Options and writable properties are `value` (controlled string list), `defaultValue` (empty), `allValues`, `disabled` (false), and `onValueChange`. `setValue(list, reason?, event?)`, `reset(event?)`, `refresh()`, and `disconnect()` are public. `allValues` reports registered child values when omitted; parent aggregation is activated only by explicitly supplying it, as required by the Checkbox contract. Logical values may be unmounted. Mounted matching children submit individually; retained unmounted values do not submit. Children keep their form names and read-only/required flags. Parent `ariaControlsElements` references mounted matching child hosts. Native element references preserve the relationship across shadow boundaries; unresolved cross-shadow ID strings are not emitted.
+Options and writable properties are `value` (controlled string list), `defaultValue` (empty), `allValues`, `disabled` (false), and `onValueChange`. `setValue(list, reason?, event?)`, `reset(event?)`, `refresh()`, and `disconnect()` are public. `allValues` reports registered child values when omitted; parent aggregation is activated only by explicitly supplying it. Logical values may be unmounted. Mounted matching children submit individually; retained unmounted values do not submit. Children keep their form names and read-only/required flags. Parent `ariaControlsElements` references mounted matching child hosts. Native element references preserve the relationship across shadow boundaries; unresolved cross-shadow ID strings are not emitted.
 
 Checking appends; unchecking removes. Parent activation selects or clears eligible logical children while preserving checked disabled children. Group changes are published once by the controller host; child callbacks can veto. Nested controller hosts isolate descendants. Later duplicate values are excluded with a diagnostic. Reset runs one group transaction. Disconnect clears member ownership, listeners and observations.
 
@@ -78,7 +78,7 @@ Event detail includes `value`, `previousValue`, `reason`, `sourceEvent`, optiona
 
 `partContracts` maps a public part to `renderDelegate`, `hostProperties`, `classHook`, `styleHook`, `elementReference`, and `content`. Class, style and content may resolve from the same committed state used for ARIA and markers. References accept a callback or `{ current }` and clear on replacement/disconnection. A delegate must bind the supplied `bind` directive to its semantic element and render `content`. Required roles, native state and ARIA remain protected. Consumer initiating handlers run first; `preventComponentHandling(event)` suppresses component handling independently from native `preventDefault()`.
 
-`partPresentation`, `::part(...)`, semantic CSS tokens, and `setPresentationDictionary()` customize appearance without replacing state owners. `direction` / `dir` follows inherited writing direction; `motionPolicy` / `motion-policy` defaults to `inherit` (also `normal`, `reduce`). Defaults and documentation examples use the library's shared recipes.
+`partPresentation`, `::part(...)`, semantic CSS tokens, and `setPresentationDictionary()` customize appearance without replacing state owners. `direction` / `dir` follows inherited writing direction; `motionPolicy` / `motion-policy` defaults to `inherit` (also `normal`, `reduce`).
 
 ## Registration
 

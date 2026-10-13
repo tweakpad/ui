@@ -32,19 +32,19 @@ The complete [anchored surface API](anchored-surfaces.md) defines open/default
 ownership, events, focus, handles, payloads, positioning, portal, Arrow, Backdrop,
 Viewport, methods and customization. Menu's defaults and additional properties are:
 
-| Property / attribute                                 | Type                  | Default            | Meaning                                                                                    |
-| ---------------------------------------------------- | --------------------- | ------------------ | ------------------------------------------------------------------------------------------ |
-| `invocation`                                         | trigger / context     | trigger            | Choose ordinary trigger activation or context invocation.                                  |
-| `for`                                                | string                | empty              | Context target ID; otherwise the trigger slot, then parent region.                         |
-| `value`                                              | string                | empty              | Standalone legacy last-command value; inside Menubar this is the Menu's stable identifier. |
-| `itemVariant / item-variant`                         | ghost / destructive   | ghost              | Default visual treatment for Items without their own variant.                              |
-| `orientation`                                        | horizontal / vertical | vertical           | Direction of list navigation.                                                              |
-| `loopFocus / loop-focus`                             | boolean               | true               | Wrap enabled command navigation.                                                           |
-| `highlightItemOnHover / highlight-item-on-hover`     | boolean               | true               | Highlight enabled commands on pointer movement.                                            |
-| `modal`                                              | boolean               | true               | Root owns outside inertness and scroll lock; nested menus participate in its branch.       |
-| `closeParentOnEscape / close-parent-on-escape`       | boolean               | false              | Also close parent on Escape.                                                               |
-| `openOnHover / open-on-hover`                        | boolean               | false; nested true | Enable hover opening.                                                                      |
-| `openDelay / open-delay`, `closeDelay / close-delay` | number                | 100, 0             | Hover timing.                                                                              |
+| Property / attribute                                 | Type                  | Default            | Meaning                                                                              |
+| ---------------------------------------------------- | --------------------- | ------------------ | ------------------------------------------------------------------------------------ |
+| `invocation`                                         | trigger / context     | trigger            | Choose ordinary trigger activation or context invocation.                            |
+| `for`                                                | string                | empty              | Context target ID; otherwise the trigger slot, then parent region.                   |
+| `value`                                              | string                | empty              | Standalone last-command value; inside Menubar this is the Menu's stable identifier.  |
+| `itemVariant / item-variant`                         | ghost / destructive   | ghost              | Default visual treatment for Items without their own variant.                        |
+| `orientation`                                        | horizontal / vertical | vertical           | Direction of list navigation.                                                        |
+| `loopFocus / loop-focus`                             | boolean               | true               | Wrap enabled command navigation.                                                     |
+| `highlightItemOnHover / highlight-item-on-hover`     | boolean               | true               | Highlight enabled commands on pointer movement.                                      |
+| `modal`                                              | boolean               | true               | Root owns outside inertness and scroll lock; nested menus participate in its branch. |
+| `closeParentOnEscape / close-parent-on-escape`       | boolean               | false              | Also close parent on Escape.                                                         |
+| `openOnHover / open-on-hover`                        | boolean               | false; nested true | Enable hover opening.                                                                |
+| `openDelay / open-delay`, `closeDelay / close-delay` | number                | 100, 0             | Hover timing.                                                                        |
 
 Trigger Enter/Space or pointer press opens. ArrowDown/ArrowUp opens at the first/
 last enabled item. Inside, arrows, Home/End and locale-aware typeahead navigate;
@@ -79,10 +79,9 @@ Escape restores the invoking target only for keyboard opening when focus is in
 the menu. Removing/replacing the target closes its anchored menu and cleans up
 listeners. Detached handles and registered triggers apply only to trigger mode.
 
-There is no separate `tp-context-menu` element or presentation namespace. Migrate
-it to `tp-menu invocation="context"`; its commands, groups, shortcuts, separators,
-checks, radio choices and any number of nested Menu levels remain unchanged.
-Each nested Menu retains its own ordinary submenu trigger and chevron.
+A context menu supports the same commands, groups, shortcuts, separators, checks,
+radio choices and any number of nested Menu levels. Each nested Menu retains its
+own ordinary submenu trigger and chevron.
 
 ## Command constituents
 
@@ -94,7 +93,7 @@ Each nested Menu retains its own ordinary submenu trigger and chevron.
 | `disabled`                                | boolean                            | false; also respects nearest Menu disabled state.                                                  |
 | `variant`                                 | ghost / destructive / undefined    | inherit Root itemVariant.                                                                          |
 | `inset`                                   | boolean                            | false; indents the label to the text of items with a leading icon (a Label takes `data-inset`).    |
-| `nativeAction / native-action`            | boolean                            | false; default semantic div uses the shared synthetic press owner. True uses a native button.      |
+| `nativeAction / native-action`            | boolean                            | false; the default Item is a semantic div. True uses a native button.                              |
 | `closeOnClick / close-on-click`           | boolean                            | true for Item; false for checks/radios and native links.                                           |
 | `onClick`                                 | `(event: Event) => void`           | Consumer activation hook before component handling.                                                |
 | `activate(event)`                         | method                             | Propose activation through the owning Menu; no effect when unregistered/disabled/closed.           |
@@ -122,9 +121,9 @@ independent from Item mounting. No checkbox/radio here is a standalone form fiel
 `slot="trigger"` uses a real Button or native action host; default content holds
 the command tree. Native `role="group"` plus an authored accessible name groups
 commands. A child with `data-menu-label` is Label, `tp-key-hint data-menu-shortcut` is Shortcut,
-and the existing `tp-separator` is Separator. Use `tp-icon` for icons; nested trigger icons use Button's `icon-start` slot. A nested `tp-menu` supplies the
+and `tp-separator` is Separator. Use `tp-icon` for icons; nested trigger icons use Button's `icon-start` slot. A nested `tp-menu` supplies the
 SubTrigger/SubContent binding. Label text does not invent a keyboard shortcut.
-Native `[value]`/menuitem-role children remain a compatibility adapter; prefer the
+Native `[value]`/menuitem-role children are also supported; prefer the
 public constituents for controlled state and generic render contracts.
 
 ## Parts and state
@@ -139,11 +138,11 @@ data-focus-visible, data-disabled, data-checked/data-unchecked and data-variant;
 Indicators also publish presence markers. See the shared reference for delegate,
 reference, theme and positioning hooks.
 
-Popup menus derive their default anchor separation from three `--tp-spacing` units. Set `side-offset="0"` on the Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the existing positioning API.
+Popup menus derive their default anchor separation from three `--tp-spacing` units. Set `side-offset="0"` on the Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the positioning API.
 
 Menu, Menubar, Navigation Menu and selection lists share `--tp-space-2` popup padding on every edge. Menu item gaps use `--tp-space-3`; these defaults scale with the theme.
 
-Menu popups are at least as wide as their anchor, within the available viewport width. Longer content can widen the popup through the existing intrinsic layout.
+Menu popups are at least as wide as their anchor, within the available viewport width. Longer content can widen the popup through its intrinsic layout.
 
 Pointer highlighting preserves the current scroll position. Keyboard navigation brings the active item into the nearest scroll container without scrolling outer documentation or application regions.
 

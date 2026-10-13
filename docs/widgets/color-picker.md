@@ -54,6 +54,10 @@ with `metadata.formatChange: true`. The color itself is invariant across formats
 `device-cmyk()` strings are not parsable by the browser, so consumers that need CSS read `color`
 or pick another format.
 
+Typing a hex value without alpha digits keeps the current alpha, text that does not parse reverts
+to the current color, and a hue of 360 stays 360. A drag through black, white or gray keeps the
+last chromatic hue and saturation.
+
 ## Views and layout
 
 | View       | Surface and controls                                                                                                   |
@@ -101,7 +105,7 @@ The `footer` slot renders below the panel (for example an action row), hidden wh
 ## Harmony and schemes
 
 The wheel view derives up to five handles from the base color under `harmony`: `complementary`,
-`analogous`, `triad`, `compound` or `custom` (Adobe-like tables in HSV; `none` shows the base
+`analogous`, `triad`, `compound` or `custom` (rule tables in HSV; `none` shows the base
 handle only). Derived handles follow the base; under `custom` every handle is its own hue and
 saturation pair, seeded from the previous rule so the layout does not jump. The polyline connects
 the handles in wheel order. `harmony` / `defaultHarmony` form a lane with `tp-harmony-change`
@@ -111,7 +115,7 @@ format. Around the disc the harmony palette ring shows those colors as one segme
 in wheel order, each a [Copy button](../copy-button.md) clipped to its arc. Every segment has
 the same thickness; the scheme's principal hues (the base, centered at the top, with the
 complement, the triad hues, the split complements or the analogous ±30°) cover twice the arc of
-the calculated variants that the Adobe-like tables add beside each principal. Under `custom`
+the calculated variants that the rule tables add beside each principal. Under `custom`
 every handle is a principal. Pressing a segment copies that color in the active format;
 the copy mark sits at the arc's centroid and appears on hover, keyboard focus (ringed as the
 focus indicator) and while copied, in a color that reads on the fill. The fill is the value
@@ -169,9 +173,8 @@ moving, then commit once on release. Escape during a drag restores the pre-press
 (`escape-key`) and pointer cancellation restores it as well (`pointer`); neither commits. A capture
 lost before the release, or a move that reports no pressed button, ends the drag where the pointer
 last was and commits it (`drag`), so the last release always settles. Keyboard steps, wheel scrubbing (opt-in through `allowWheelScrub`), swatches, the
-eyedropper, hex Enter and blur, and `setValue()` commit immediately (a paste the Input reports
-as `input-paste` commits at once; the current Input reports it as typing, so it commits on Enter
-or blur). Numeric fields commit when the Number field commits (Enter or blur).
+eyedropper, hex Enter and blur, and `setValue()` commit immediately (a paste counts as typing,
+so it commits on Enter or blur). Numeric fields commit when the Number field commits (Enter or blur).
 
 ```js
 picker.value = '#6d5dfc';
@@ -235,8 +238,8 @@ Nested controls are the library's `tp-slider`, `tp-input` in `tp-input-group` in
 `tp-button-group` with `tp-button-group-text`, `tp-copy-button`, `tp-tabs`, `tp-toggle-group`
 with `tp-toggle`, `tp-label` and `tp-popover`. The three render surfaces (`tp-color-picker-area`,
 `tp-color-picker-wheel`, `tp-color-picker-triangle`) are widget constituents; the triangle
-rasterizes through the shared canvas surface owner at the device pixel ratio and repaints only on
-hue, size, pixel-ratio and theme changes, recovering from context loss.
+rasterizes at the device pixel ratio and repaints only on hue, size, pixel-ratio and theme
+changes, recovering from context loss.
 
 ## Forms and Field
 
@@ -293,17 +296,6 @@ keys follow `color-picker-<part>` plus the `-size-sm` / `-size-lg` and `-shape-r
 Every root part accepts the shared `partContracts` (`hostProperties`, `content`, `classHook`,
 `styleHook`, `elementReference`, `renderDelegate`); `partPresentation` composes into the nested
 components as well.
-
-## Upstream reference
-
-The behavior follows tweakpane's color input (`packages/core/src/input-binding/color/`): the
-saturation/brightness plane, hue and alpha palettes, text fields per channel, hex editing that
-keeps alpha unless alpha digits are typed, invalid text reverting to the current color, and hue
-text that keeps 360. The widget extends it with CSS Color 4 parsing and spaces, modern
-serialization, HWB, Lab, OKLab, OKLCH and device CMYK, the wheel and triangle surfaces, harmony
-and schemes, swatches and recents, pointer capture with Escape and cancellation restore, Home,
-End and Page keys, controlled mode, form participation and the eyedropper. It deviates by
-keeping the last chromatic hue and saturation when a drag passes through black, white or gray.
 
 ## Usage guide
 

@@ -109,7 +109,7 @@ The container (the root, or `tp-media-container`) gets `role="group"`, `tabindex
 
 ## Layouts
 
-Layouts are preset compositions of the constituents below. They make no visual substitutes. Place one inside the player next to the media; it fills the container.
+Layouts are preset compositions of the constituents below. Place one inside the player next to the media; it fills the container.
 
 ### `tp-media-video-layout`
 
@@ -156,8 +156,6 @@ Parts: `top`, `center`, `bottom-start`, `bottom-end`, `controls`, and on the vid
 | ---- | ------------------ | --------------------------------------------------------------------------------------- |
 | `lg` | 32rem              | Video: captions button shown, secondary group joins the bar. Audio: seek buttons shown. |
 | —    | 16rem (time group) | Below this width of the time group, its clocks hide and the slider remains.             |
-
-The remaining Video.js widths (17.5, 20, 22.5, 24, 28, 36 and 42 rem) are not used by the default layouts.
 
 ## Constituents
 
@@ -293,7 +291,7 @@ A double tap cancels the pending single tap. Taps on controls never reach the ge
 
 ## Customization
 
-Appearance comes from the presentation dictionary and existing token roles. Composed Buttons, Sliders, Menus, Popovers, Tooltips, Key hints, Spinners and Alert dialogs keep their own recipes. Media dictionary keys include `media-container`, `media-poster`, `media-title`, `media-controls` (with `media-controls-visibility-auto|always`), `media-controls-backdrop`, `media-controls-group`, `media-element`, `media-button`, `media-button-control`, `media-button-mark`, `media-button-text`, `media-button-text-control`, `media-button-live-dot`, `media-time`, `media-time-value`, `media-time-sign`, `media-time-slider`, `media-time-slider-preview`, `media-thumbnail`, `media-thumbnail-image`, `media-chapter-title`, `media-volume-slider`, `media-volume-popover`, `media-settings-menu`, `media-settings-hint`, `media-radio-group`, `media-buffering-indicator`, `media-error-dialog`, `media-indicator`, `media-indicator-content`, `media-indicator-value`, `media-indicator-fill`, `media-layout` and `media-layout-region`.
+Appearance comes from the presentation dictionary and token roles. Composed Buttons, Sliders, Menus, Popovers, Tooltips, Key hints, Spinners and Alert dialogs keep their own recipes. Media dictionary keys include `media-container`, `media-poster`, `media-title`, `media-controls` (with `media-controls-visibility-auto|always`), `media-controls-backdrop`, `media-controls-group`, `media-element`, `media-button`, `media-button-control`, `media-button-mark`, `media-button-text`, `media-button-text-control`, `media-button-live-dot`, `media-time`, `media-time-value`, `media-time-sign`, `media-time-slider`, `media-time-slider-preview`, `media-thumbnail`, `media-thumbnail-image`, `media-chapter-title`, `media-volume-slider`, `media-volume-popover`, `media-settings-menu`, `media-settings-hint`, `media-radio-group`, `media-buffering-indicator`, `media-error-dialog`, `media-indicator`, `media-indicator-content`, `media-indicator-value`, `media-indicator-fill`, `media-layout` and `media-layout-region`.
 
 - Over video, control groups placed in the controls region, the volume popup and the settings menus share one frosted translucent surface (a background-role mix with backdrop blur, defined on the container); buttons in them are round with a light highlight. Native captions sit at least 10% of the video height above the bottom edge and lift above visible controls by `--tp-media-caption-offset` (Chromium and WebKit, through the native text-track container) and use the library font.
 - Over video, the container, controls, title, indicators and preview use a scoped `color-scheme: dark`, so every `light-dark()` role resolves to its dark value without new color tokens. The scrim is an OKLab mix of `--tp-background`. The audio layout follows the page scheme.

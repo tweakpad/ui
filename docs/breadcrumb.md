@@ -48,13 +48,11 @@ ownership; native links and nested controls retain their own events.
 
 The Docs examples cover a collapsed ancestor Menu, a named ancestor Menu with a
 chevron, decorative ellipsis with consumer-owned links, custom separator text
-and responsive ancestor navigation.
-Each uses the shared code explorer with the same markup and setup as its live
-preview. Native anchors are intentional: they retain destinations, modified-click
-behavior and caller listeners without requiring a router dependency.
+and responsive ancestor navigation. Native anchors retain destinations,
+modified-click behavior and caller listeners without a router dependency.
 
 Responsive collapse is an application composition, not an implicit Breadcrumb
-breakpoint. The example follows the reference's 48rem policy: Menu on wide screens,
+breakpoint. The example switches at 48rem: Menu on wide screens,
 Drawer on small screens, with the same ancestor destinations. It closes and removes
 the inactive surface and moves focus to the replacement trigger when the previous
 surface was open. Menu and Drawer continue to own their modal, keyboard, dismissal

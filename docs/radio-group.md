@@ -1,6 +1,6 @@
 # Radio Group
 
-`tp-radio-group` owns one optional comparable selection and one form value. Compose it with `tp-radio-group-item` constituents, which are Radios within the existing Radio Group catalog identity.
+`tp-radio-group` owns one optional comparable selection and one form value. Compose it with `tp-radio-group-item` Radios.
 
 ```html
 <tp-field label="Delivery" description="Choose a delivery speed">
@@ -38,11 +38,11 @@ The group submits once only while a matching eligible Radio is mounted. String/n
 
 `setValue(value, reason?, sourceEvent?)`, `focus(options?)`, `blur()`, `checkValidity()` and `reportValidity()` are public. Shared form channels include `form`, `inputElement`, `validity`, `validationMessage`, and effective name/disabled/invalid state. Item focus and label activation forward to its semantic host.
 
-Nested groups isolate registration. Duplicate or missing values are composition errors; later duplicate members are excluded. Native `button[value]` and `input[type=radio][value]` children retain compatibility: their original attributes are restored on removal, native names are suppressed while owned to avoid duplicate form serialization. New compositions should use the complete Item constituent.
+Nested groups isolate registration. Duplicate or missing values are composition errors; later duplicate members are excluded. Native `button[value]` and `input[type=radio][value]` children also act as Radios: their original attributes are restored on removal, and native names are suppressed while owned to avoid duplicate form serialization. Prefer the complete Item constituent.
 
 ## Anatomy and customization
 
-`radio-group` is the Group part. Each Item owns `radio-group-item` and optional `radio-group-indicator`. Set Group's container contract on `group.partContracts['radio-group']`; set Item/Indicator contracts on that Item's `partContracts`. Group `partPresentation` contributions reach constituent parts, before each Item's terminal consumer hooks. Native compatibility children have the shared Group appearance registration; a full Item supplies delegated anatomy and Indicator options.
+`radio-group` is the Group part. Each Item owns `radio-group-item` and optional `radio-group-indicator`. Set Group's container contract on `group.partContracts['radio-group']`; set Item/Indicator contracts on that Item's `partContracts`. Group `partPresentation` contributions reach constituent parts, before each Item's terminal consumer hooks. Native children have the shared Group appearance registration; a full Item supplies delegated anatomy and Indicator options.
 
 Indicators use shared Presence and beginning/ending/retained markers. Roots expose checked/unchecked, disabled, read-only, required, invalid and focus-visible markers. The selected dot remains decorative. Scoped tokens, dictionaries and delegates retain group ownership and native form state.
 
@@ -56,7 +56,7 @@ Event detail includes `value`, `previousValue`, `reason`, `sourceEvent`, optiona
 
 `partContracts` maps a public part to `renderDelegate`, `hostProperties`, `classHook`, `styleHook`, `elementReference`, and `content`. Class, style and content may resolve from the same committed state used for ARIA and markers. References accept a callback or `{ current }` and clear on replacement/disconnection. A delegate must bind the supplied `bind` directive to its semantic element and render `content`. Required roles, native state and ARIA remain protected. Consumer initiating handlers run first; `preventComponentHandling(event)` suppresses component handling independently from native `preventDefault()`.
 
-`partPresentation`, `::part(...)`, semantic CSS tokens, and `setPresentationDictionary()` customize appearance without replacing state owners. `direction` / `dir` follows inherited writing direction; `motionPolicy` / `motion-policy` defaults to `inherit` (also `normal`, `reduce`). Defaults and documentation examples use the library's shared recipes.
+`partPresentation`, `::part(...)`, semantic CSS tokens, and `setPresentationDictionary()` customize appearance without replacing state owners. `direction` / `dir` follows inherited writing direction; `motionPolicy` / `motion-policy` defaults to `inherit` (also `normal`, `reduce`).
 
 ## Registration
 

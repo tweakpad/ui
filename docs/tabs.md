@@ -87,10 +87,10 @@ Disconnecting Tabs restores its authored children and releases observers and
 owned attributes. Do not replace or move internal comment placeholders.
 
 No panel animation is imposed. Author motion through the selected/starting/ending
-state hooks; the shared presence owner waits for actual running animations and
-transitions with a bounded fallback. Exiting panels are inert and hidden from
-accessibility immediately. Reopening reverses an in-progress exit. Tabs is
-non-dismissible and exposes no modal close/unmount methods.
+state hooks; Tabs waits for running animations and transitions, with a bounded
+fallback. Exiting panels are inert and hidden from accessibility immediately.
+Reopening reverses an in-progress exit. Tabs is non-dismissible and exposes no
+modal close/unmount methods.
 
 ### Methods and events
 

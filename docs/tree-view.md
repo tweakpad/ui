@@ -1,8 +1,7 @@
 # Tree view
 
 `tp-tree-view` presents a hierarchy that the reader expands, collapses, selects and activates:
-file explorers, outlines, permission pickers. Contract: `ucl20-tree-view`; behavior: Foundation
-§17.8 Tree, §19.24 Virtual list window and the tree reorder profile of §19.19 Drag-and-drop.
+file explorers, outlines, permission pickers.
 
 ```html
 <tp-tree-view label="Files" default-expanded='["src"]' default-value='["index.ts"]'>
@@ -75,8 +74,7 @@ chevron does. `expandAll()` expands every known expandable item in one proposal;
 
 Defaults and controlled values are applied before the first render: the tree appears already
 expanded and selected, without change events. The tab stop starts on the first visible selected
-item. A virtualized tree scrolls its first window to that item. `revealItem(id, { focus,
-select })` expands ancestors and scrolls an item into view later.
+item. A virtualized tree scrolls its first window to that item. `revealItem(id, { focus, select })` expands ancestors and scrolls an item into view later.
 
 ## Lazy loading
 
@@ -116,11 +114,9 @@ stays mounted, and keyboard navigation and `focusItem()` mount a row before focu
 
 An item can land before, after or inside any item, never inside itself. `canDrop(move)` vetoes
 moves (for example to keep files out of files). Every move is proposed through the cancelable
-`tp-items-change` with `detail.metadata.move = { itemId, fromParentId, fromIndex, toParentId,
-toIndex }` and the next records in `detail.value`; with `items` controlled, apply them yourself.
+`tp-items-change` with `detail.metadata.move = { itemId, fromParentId, fromIndex, toParentId, toIndex }` and the next records in `detail.value`; with `items` controlled, apply them yourself.
 Parents whose children change are rebuilt with `withItemChildren(record, children)` (default:
-`{ ...record, children }`); every other record keeps its identity. `moveItem(id, { parentId,
-index })` proposes a move from code.
+`{ ...record, children }`); every other record keeps its identity. `moveItem(id, { parentId, index })` proposes a move from code.
 
 ## Keyboard
 
@@ -225,7 +221,7 @@ items describe their keyboard shortcut.
 
 ## Customization
 
-Rows use the navigation row recipe (Nova `SidebarMenuButton`): small text, medium control height
+Rows use the navigation row recipe: small text, medium control height
 (`size="sm"`: small), accent fill on hover and when selected, medium weight when selected. Guides
 use `--tp-border` under each ancestor's chevron. Tokens:
 

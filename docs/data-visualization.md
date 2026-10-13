@@ -18,7 +18,7 @@ dataset through `tp-table`. Mobile bars also use stripes so color is not the onl
 | `tooltipOptions` (property) | `VisualizationTooltipOptions`       | `{}`                                           |
 | `legendOptions` (property)  | `VisualizationLegendOptions`        | `{}`                                           |
 
-Series records accept `label`, an actual `IconDefinition` in `icon`, opaque
+Series records accept `label`, an `IconDefinition` in `icon`, opaque
 `appearance`, and optional `color` or `theme: { light, dark }` colors. The default
 palette uses `--tp-chart-1` through `--tp-chart-5`. Renderers receive the original
 series and data objects plus the current resolved colors. `appearance` is passed
@@ -35,7 +35,7 @@ replacement and disconnect destroy the old instance; reconnect mounts a new one.
 Late callbacks from a destroyed instance are ignored.
 
 Report `inspect({ active, payload, label, anchor, source })`, where `source` is
-`pointer` or `focus` and `anchor` is the existing Tooltip anchor API (element or
+`pointer` or `focus` and `anchor` is the Tooltip anchor API (element or
 virtual bounding rectangle with `contextElement`). Both paths must report the
 same datum information. Pointer and keyboard availability follow `interaction`.
 Report `legend(payload)` in engine order. Payload entries accept `dataKey`, `name`,
@@ -49,7 +49,7 @@ Read-only getters: `dimensions`, `scopeIdentifier`, `inspection`, `legendPayload
 
 ## Tooltip and legend constituents
 
-The Root composes the existing `tp-tooltip`, retaining its positioning, lifecycle,
+The Root composes `tp-tooltip`, retaining its positioning, lifecycle,
 Escape dismissal, and tooltip role. Inactive and empty payloads produce no content.
 Its default noninteractive content supports:
 
@@ -66,24 +66,22 @@ Its default noninteractive content supports:
 Legend options: `hideIcon` (false), `placement` (`bottom` or `top`), `nameKey`,
 `formatter(resolvedLabel, originalItem, index)`. Formatters replace presentation,
 not series identity, payload ordering, or active state. Return text, Lit content,
-or existing library components; tooltip content must remain noninteractive.
+or library components; tooltip content must remain noninteractive.
 
 Foundation composition exports `VisualizationResponsiveViewport`,
 `visualizationTooltipContent(provider, inspection, options)`,
 `visualizationLegendContent(provider, payload, options)`, and
 `resolveVisualizationSeries(series, item, nameKey)`. Pass Root's `metadataProvider`
 to the content functions; missing/outside-Root providers throw an actionable error.
-These are constituents of the same control, not additional catalog entries.
 
 ## Content and appearance
 
-The default slot is supplementary content; `table` receives an actual `tp-table`.
+The default slot is supplementary content; `table` receives a `tp-table`.
 Canonical parts are `data-visualization`, `data-visualization-plot-region`,
 `data-visualization-series`, `data-visualization-legend`,
 `data-visualization-inspection-surface`, and `data-visualization-style-scope`.
 Use the common `partContracts`, `partPresentation`, and presentation dictionary.
-The inspection part is registered on the real Tooltip popup; it does not create a
-second overlay. Theme spacing, typography, radius, borders, and palette govern paint.
+The inspection part is registered on the Tooltip popup. Theme spacing, typography, radius, borders, and palette govern paint.
 Plot aspect ratio can be changed through the plot part's style hook.
 
 Each Root publishes `data-chart` as its stable scope. Explicit host `id` seeds the

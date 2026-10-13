@@ -15,7 +15,6 @@ comes from other library components.
 </tp-timeline>
 ```
 
-The normative contracts are UI Foundation §18.20 and UI Component Library §21.19 (Timeline).
 Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`. To bundle only the timeline, call
 `defineElement(TpTimeline.tagName, TpTimeline)`. That defines the items and the Separator used
 for connector tracks.

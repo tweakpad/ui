@@ -22,7 +22,17 @@ Browser verification runs through Google Chrome DevTools MCP against the fixture
 
 ## Sections
 
-Foundational components live in `src/components/<name>/` and ship through `@tweakpad/ui` and `@tweakpad/ui/register`. Widgets, the specialized controls, live in `src/widgets/<name>/` and ship only through `@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`; the main entries never reach a widget module. The [widgets guide](docs/widgets/README.md) lists every file a new widget adds.
+Foundational components live in `src/components/<name>/` and ship through `@tweakpad/ui` and `@tweakpad/ui/register`. Widgets, the specialized controls, live in `src/widgets/<name>/`, share the Foundation, presentation recipes and `src/components/shared` with components, and ship only through `@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`; the main entries never reach a widget module. [Adding a widget](#adding-a-widget) lists every file a new widget adds.
+
+## Adding a widget
+
+1. `src/widgets/<name>/index.ts` and `<name>.ts`: `static tagName = 'tp-<name>'`, `static get elementDependencies()`, `static override presentation` imported from `../../presentation/families/<name>.js`, and the element's own `HTMLElementTagNameMap` entry. Import foundation and component modules directly, never a barrel.
+2. One tuple in `src/widgets/catalog.ts`; one `export * from './<name>/index.js'` in `src/widgets/index.ts`; the import and `defineElement` call in `src/register/widgets.ts`.
+3. The family in `src/presentation/families/<name>.ts`, its recipe in `src/presentation/recipes/<name>.ts`, and the entry in `src/presentation/families/widgets.ts`.
+4. `docs/widgets/<name>.md`, `src/stories/widgets/<name>.stories.ts` (title `Widgets/<Name>`, first story `Default`), `src/stories/widgets/<name>.examples.ts` and an entry in `src/stories/widgets/examples.ts`; list the widget under Published widgets in `docs/widgets/README.md`.
+5. Browser fixtures under `tests/fixtures/widgets/<name>/` and the implementation record under `plans/widgets/<name>/implementation-checklist.md`.
+
+The tests enforce this structure: `src/widgets/catalog.test.ts` (catalog, families, folders, registration, and that the main entries never reach a widget), the extended source scanners, and `src/stories/stories.test.ts`. `node scripts/size-report.mjs` measures each widget from `@tweakpad/ui/widgets` and fails if `@tweakpad/ui/register` ships a widget module.
 
 ## Stories
 

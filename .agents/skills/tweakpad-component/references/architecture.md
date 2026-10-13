@@ -97,7 +97,7 @@ New and substantially implemented components belong in
 `src/components/<component>/`; widgets belong in `src/widgets/<widget>/` under the
 same folder rules, with their catalog tuple, `src/widgets/index.ts` export,
 `src/register/widgets.ts` definition and `src/presentation/families/widgets.ts`
-entry (the checklist in `docs/widgets/README.md`). Migrate the assigned
+entry (the checklist in `CONTRIBUTING.md`, Adding a widget). Migrate the assigned
 implementation out of grouped files when implementing it; preserve unrelated
 implementations and supported exports. Update importers, registration, types,
 stories and tests together.

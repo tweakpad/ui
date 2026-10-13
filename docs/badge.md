@@ -178,7 +178,7 @@ themes; per-instance presentation is terminal. See [Styling](./styling.md) for
 scoped theme tokens, dictionary replacement and the shared hook types. The eight
 variants use the library's shared semantic palette, including its solid
 destructive, success and warning treatments (`--tp-success`, `--tp-warning` and
-their foreground pairs). Badge-specific paint is not embedded in demo CSS.
+their foreground pairs).
 
 Reflected host attributes include `variant` and `interactive`; shared host markers
 include `data-disabled`, `data-readonly`, `data-invalid` and `data-orientation`.

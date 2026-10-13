@@ -3,7 +3,7 @@
 `tp-list-item` arranges media, a title, supporting text, independent actions and
 optional full-width header/footer content. It adds no selection or action state
 machine. `tp-list-item-group` is its list constituent; use `tp-list-item-separator` children to divide rows. This constituent composes
-the existing decorative Separator.
+the decorative Separator.
 
 ```html
 <tp-list-item-group aria-label="Documents">
@@ -53,8 +53,8 @@ For a rich command, place a presentational List Item directly inside `tp-menu-it
 Menu Item owns command semantics, keyboard navigation, highlighting and the outer
 inset. Its shared composition removes the inner row's padding and restores it if
 the row leaves the command. Do not add a second link or button inside that row.
-Avatar groups, square image headers and metadata use the existing Avatar Group,
-Aspect Ratio and public content rendering contracts, as shown in the examples.
+Avatar groups, square image headers and metadata use Avatar Group,
+Aspect Ratio and the public content rendering contracts, as shown in the examples.
 
 Group owns a list role and supplies `listitem` to direct rows without an authored
 role. Detaching a row or group releases only its owned roles. Authored roles are
@@ -62,7 +62,7 @@ preserved. Group does not implement selection, roving focus or keyboard navigati
 links and buttons retain their native tab order. List Item Separator is decorative
 and horizontal. Ordinary `tp-separator` children are also supported; Group registers
 their presentation as `list-item-separator`, while their rendering contract remains
-on the actual Separator component.
+on the Separator component.
 
 Spacing, shape, media extents and typography use shared theme tokens and the
 presentation dictionary. There are no per-row spacing properties. The component

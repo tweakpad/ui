@@ -1,7 +1,7 @@
 # Pagination
 
 Pagination is destination navigation. Every page and directional target is a real
-link rendered by the existing Button component. `page` describes the application's
+link rendered by the Button component. `page` describes the application's
 current page; following a link does not create a second page-state owner.
 
 ```html
@@ -61,6 +61,6 @@ The Simple example omits both direction links. With Select composes actual Field
 and Select controls for page size; the application updates `pages` and `page`.
 Both examples use the same setup code in the live preview and code explorer,
 including accepting navigation, canceling the browser's default route and updating
-the current page. Below the reference's 40rem breakpoint, Previous and Next retain
+the current page. Below a 40rem width, Previous and Next retain
 their accessible names and icons while their visible labels are hidden. Resizing
 does not replace links or reset the current page.

@@ -1,6 +1,6 @@
 # Field group
 
-`<tp-field-group>` arranges value editors that belong together, such as width and height, X/Y/Z coordinates or color channels, as one joined set. Each editor stays the same control with its own value, name, label, disabled or read-only state, form participation and validation; the group owns only the layout, the seams and the group name. It is the editor counterpart of [Button group](button-group.md) and shares its seam treatment through the same owner.
+`<tp-field-group>` arranges value editors that belong together, such as width and height, X/Y/Z coordinates or color channels, as one joined set. Each editor stays the same control with its own value, name, label, disabled or read-only state, form participation and validation; the group owns only the layout, the seams and the group name. It is the editor counterpart of [Button group](button-group.md) and shares its seam treatment.
 
 Field group is distinct from Field's `group` slot: Field stacks peer Fields with spacing (`field-field-group`), whereas Field group joins the editors of one related value and never owns a value of its own.
 

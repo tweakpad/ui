@@ -54,7 +54,7 @@ const meta: Meta<Args> = {
     motionPolicy: {
       control: 'radio',
       options: ['inherit', 'normal', 'reduce'],
-      description: 'Inherited Foundation motion policy. Default: inherit.',
+      description: 'Motion policy. Default: inherit.',
     },
   },
   render: (args) => {

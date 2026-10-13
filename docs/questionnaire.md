@@ -120,7 +120,7 @@ Every question has `name` and `title`. Optional fields are `description`, `kind`
 
 Choices have `value`, `label`, optional `description`, `disabled`, `shortcut`, `defaultChecked`, `checked` and `onCheckedChange(event)`. Controlled checked state uses the common Boolean proposal contract. Single choices render native radios; multiple choices render native checkboxes. Disabled answers do not contribute to answered status or successful form data.
 
-`input` adds a freeform answer alongside choices, or configures a text-only question. It accepts `label`, `type`, `placeholder`, `pattern`, `minLength`, `maxLength`, `disabled`, controlled `value`, `defaultValue` and `onValueChange(event)`. Input-only questions also accept the compatibility fields `inputType`, `placeholder`, `pattern`, `minLength` and `maxLength` directly on the question. A mixed single answer selects either a choice or entered text; an unselected text draft is preserved but has no successful form name. Multiple answers can combine fixed values and entered text. Input type defaults to text and retains browser editing/validation behavior.
+`input` adds a freeform answer alongside choices, or configures a text-only question. It accepts `label`, `type`, `placeholder`, `pattern`, `minLength`, `maxLength`, `disabled`, controlled `value`, `defaultValue` and `onValueChange(event)`. Input-only questions also accept the fields `inputType`, `placeholder`, `pattern`, `minLength` and `maxLength` directly on the question. A mixed single answer selects either a choice or entered text; an unselected text draft is preserved but has no successful form name. Multiple answers can combine fixed values and entered text. Input type defaults to text and retains browser editing/validation behavior.
 
 Status is exactly unanswered, answered or skipped. Entering/selecting an answer clears skipped status. Empty or whitespace-only text and empty multiple sets are unanswered. Defaults update reset targets without replacing current values. Dynamic definition changes update order, shortcuts and enabled focus targets. An uncontrolled removed active item selects the next remaining item, then previous. A controlled removed identifier is preserved until its owner supplies a valid item; progress reports no active item in the meantime.
 
@@ -159,7 +159,7 @@ The latter two default to false and can further restrict the component's own
 availability; they cannot enable an inapplicable action. Labels default to
 Previous, Skip, Next, and Submit. Size defaults to Button's `default`; Previous
 and Skip use `outline`, Next and Submit use `default`. Values for size and
-variant are the existing Button API. Replace the record to update it.
+variant are the Button API. Replace the record to update it.
 
 ```js
 questionnaire.actions = {
@@ -174,13 +174,12 @@ remain disabled; this does not change the validation or programmatic navigation
 policy. Enter/Space on an actual button activate that button, so Previous, Skip,
 Reset, and host actions retain their own behavior.
 
-## Constituent coverage and composition
+## Constituents and composition
 
-Tweakpad exposes the reference's constituents through ordered question definitions,
-the ten canonical public parts, and existing Button instances. It does not require
-separate custom elements for every React export.
+Questionnaire's constituents are ordered question definitions, the ten public parts,
+and Button instances.
 
-| Reference constituent           | Tweakpad public interface                                                                   | Render state / behavior                                                                                                       |
+| Constituent                     | Public interface                                                                            | Render state / behavior                                                                                                       |
 | ------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Root                            | `tp-questionnaire`, `questions`, `value`, `item`, form methods/events; `questionnaire` part | `current`, `total`, `first`, `last`, `status`, `disabled`, active `name`; `regions`                                           |
 | Progress                        | `questionnaire-progress` part                                                               | Common state; named progressbar with current/total and value text                                                             |
@@ -230,8 +229,7 @@ Do not animate each answer update or delay focus until the animation finishes.
 
 ## Usage examples
 
-The documentation demos follow the [shadcn base Questionnaire use cases](https://ui.shadcn.com/docs/components/base/questionnaire)
-and their prompts, choices, and flow:
+The documentation demos cover these use cases:
 
 | Use case           | What to try                                                                                     |
 | ------------------ | ----------------------------------------------------------------------------------------------- |
@@ -247,15 +245,15 @@ and their prompts, choices, and flow:
 | Navigation state   | Derive independent Next/Submit disabled state from the active item's status.                    |
 | Custom progress    | Compose the library Progress from the Progress part's state.                                    |
 | Animated items     | Animate only the entering fieldset, respecting reduced motion.                                  |
-| Card               | Recompose the original bound parts into the existing Card's slots.                              |
+| Card               | Recompose the bound parts into Card's slots.                                                    |
 | Dialog             | Host owns cancel, close and focus return; successful submission closes the dialog.              |
 
 Examples include copyable markup and setup/cleanup code using the same public
 controls. Configure `questions`, controlled values and defaults **before first
 connection/render**. A restored active item alone does not create saved answers;
 supply `defaultValue`, per-question defaults, or per-answer defaults as appropriate.
-Custom validation can be any host validator; the example uses a dependency-free
-cross-answer predicate instead of adding a schema runtime to the library.
+Custom validation can be any host validator; the example uses a cross-answer
+predicate.
 
 The host owns transport, persistence, completion feedback, cancellation, and
 conditional question definitions. Questionnaire does not save or send responses

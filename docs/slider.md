@@ -35,7 +35,7 @@ The default composition generates one Thumb per value. Author `tp-slider-thumb` 
 | ---------------------------------- | ----------------------------- | ----------------------------------------------------------- |
 | `value` / `defaultValue`           | undefined                     | A number or ordered number list; supply one source          |
 | `minimum`, `maximum`               | 0, 100                        | Bounds; an empty or non-finite domain is indeterminate      |
-| `min`, `max`                       | aliases                       | Compatibility aliases for the same bounds                   |
+| `min`, `max`                       | aliases                       | Aliases for the same bounds                                 |
 | `step`                             | 1                             | Positive finite lattice step, measured from minimum         |
 | `largeStep`                        | 10                            | Positive finite Page/modifier adjustment                    |
 | `minStepsBetweenValues`            | 0                             | Non-negative integer number of steps between neighbors      |
@@ -53,7 +53,7 @@ The default composition generates one Thumb per value. Author `tp-slider-thumb` 
 
 Values clamp to bounds and snap to the minimum-based step lattice. Invalid or infeasible configuration emits `tp-diagnostic` and disables adjustment. An empty or non-finite domain (`minimum >= maximum`, `NaN` or an infinite bound) is not a configuration error; it is the declared indeterminate state described under [Media extensions](#media-extensions). `push` moves adjacent enabled Thumbs while preserving separation; reversing the active Thumb retains values already pushed. `none` stops at neighbors. `swap` exchanges logical Thumb identities and retains focus/drag ownership. Disabled Thumbs are barriers and cannot be selected or pushed.
 
-The legacy `thumbCrossing` property maps explicitly authored `prevent` to `none`, and `swap` to `swap`. It has no implicit default that overrides canonical `push`. An explicitly authored canonical collision policy takes precedence when both channels are supplied.
+The `thumbCrossing` property maps explicitly authored `prevent` to `none`, and `swap` to `swap`. It has no implicit default that overrides `push`. An explicitly authored `thumbCollisionBehavior` takes precedence when both are supplied.
 
 `values`, `controlled`, `activeThumbIndex`, `dragging`, `indeterminate`, `pointing`, `pointerValue`, `pointerRatio` and `thumbMetadata` are read-only observations. Idle `activeThumbIndex` is `-1`. Metadata identifies each actual native input with `inputId`, logical `index`, current `value`, normalized `percentage` and `disabled`. Public part state contains committed values, min/max, step, separation, orientation and interaction/form state.
 
@@ -74,11 +74,11 @@ slider.onValueChange = (event) => {
 };
 ```
 
-`setValue(value, sourceEvent?)` preserves the legacy method and returns proposal acceptance. `setValue(value, reason, sourceEvent?)` additionally accepts the shared reason channel. Programmatic proposals use the same state owner and cancellation rules.
+`setValue(value, sourceEvent?)` proposes a value and returns proposal acceptance. `setValue(value, reason, sourceEvent?)` additionally accepts the shared reason channel. Programmatic proposals use the same state owner and cancellation rules.
 
 ## Media extensions
 
-Slider carries the optional media capabilities required by the Foundation Slider contract (`mp-slider-media`). Media sliders compose `tp-slider` with these APIs; there is no separate media slider implementation.
+Slider carries optional media capabilities. Media sliders compose `tp-slider` with these APIs.
 
 **Buffer ranges.** `buffered` accepts `readonly [start, end][]` in value units (property only). Ranges are clamped to the domain, ordered and merged; empty, inverted and non-finite ranges are dropped. Each remaining range renders one `slider-buffer` part inside the aria-hidden Track, below the Range. The Root publishes `--tp-slider-buffer`: the percentage position of the end of the range containing the current value (the last value of a range slider), or else of the last range; `0%` when nothing is buffered. Draw a single buffer bar from that variable, or style the per-range parts.
 
@@ -133,7 +133,7 @@ Removing an authored Thumb normalizes the uncontrolled list. A controlled list/T
 
 ## Parts and customization
 
-The public parts are `slider`, `slider-track`, `slider-range`, `slider-thumb`, `slider-label`, `slider-output`, `slider-buffer` (0..n) and `slider-chapter` (0..n), with their horizontal/vertical orientation keys. The structural Control and hidden input do not create additional paint identities.
+The public parts are `slider`, `slider-track`, `slider-range`, `slider-thumb`, `slider-label`, `slider-output`, `slider-buffer` (0..n) and `slider-chapter` (0..n), with their horizontal/vertical orientation keys.
 
 | Marker / variable            | Element           | Meaning                                                   |
 | ---------------------------- | ----------------- | --------------------------------------------------------- |
@@ -154,11 +154,11 @@ Every public part accepts the shared `renderDelegate`, `hostProperties`, `conten
 
 Thumb focus, blur, keydown and tabIndex host properties target the native input. Neutral properties, pointer handlers, class/style hooks and `elementReference` target the visual Thumb; `inputElementReference` targets its input. The native input remains present when Thumb content is customized. A Root Thumb contract supplies defaults; a constituent contract can override them.
 
-Presentation uses the existing dictionary, part composition and token system. The default appearance follows the local shadcn Base + Nova Slider styles. Nova's white Thumb fill resolves through the shared background role: it is white in the default light theme and follows the consumer's background token in alternate themes. Geometry and native input binding remain independent of paint overrides. Motion respects the shared motion policy and reduced-motion tokens.
+The Thumb fill resolves through the shared background role: it is white in the default light theme and follows the consumer's background token in alternate themes. Geometry and native input binding remain independent of paint overrides. Motion respects the shared motion policy and reduced-motion tokens.
 
 ## Usage guide
 
-The live examples cover scalar, range, multiple-thumb, vertical, controlled, disabled and RTL usage, plus the library's additional composition and form features. Each example includes registration and complete setup code.
+The live examples cover scalar, range, multiple-thumb, vertical, controlled, disabled and RTL usage, plus composition and form features. Each example includes registration and complete setup code.
 
 | Use case                    | Composition / API                                                    |
 | --------------------------- | -------------------------------------------------------------------- |
@@ -198,7 +198,7 @@ For controlled sliders, accept proposals synchronously through `value`, as shown
 
 ### Label and output spacing
 
-Use Slider's existing parts for both the label and formatted value. With a Label, the readout shares a header above the Track. Without a visible Label, horizontal Slider places Output beside the Track with endpoint clearance. Vertical Slider retains a stacked header. Slider owns this layout; its active presentation dictionary supplies the gaps. No sibling output, local margin, or demo gap is required.
+Use Slider's parts for both the label and formatted value. With a Label, the readout shares a header above the Track. Without a visible Label, horizontal Slider places Output beside the Track with endpoint clearance. Vertical Slider retains a stacked header. Slider owns this layout; its active presentation dictionary supplies the gaps. No sibling output or local margin is required.
 
 ```html
 <tp-slider aria-label="Previous context" minimum="64" maximum="128" default-value="64"></tp-slider>
@@ -222,7 +222,7 @@ Static `slot="value"` content remains consumer-owned and is not automatically re
 | `minStepsBetweenValues`                            | `min-steps-between-values`                                                     |
 | `thumbAlignment`                                   | `thumb-alignment`                                                              |
 | `thumbCollisionBehavior`                           | `thumb-collision-behavior`                                                     |
-| `thumbCrossing`                                    | `thumb-crossing`; legacy compatibility                                         |
+| `thumbCrossing`                                    | `thumb-crossing`; maps onto `thumbCollisionBehavior`                           |
 | `readOnly`                                         | `readonly`                                                                     |
 | `formOwner`                                        | `form`; ID or element via property                                             |
 | `format`                                           | Property only; `Intl.NumberFormatOptions`                                      |

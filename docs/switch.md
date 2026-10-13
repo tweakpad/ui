@@ -14,7 +14,7 @@ import { TpSwitch } from '@tweakpad/ui';
 </tp-field>
 ```
 
-Use actual Field or Label for names and descriptions. Legacy text in the default slot remains a visible label through the actual library Label component; authored host `aria-label` and Field association can supply the name instead.
+Use actual Field or Label for names and descriptions. Text in the default slot is a visible label through the library Label component; authored host `aria-label` and Field association can supply the name instead.
 Native HTML labels also work: a wrapping label or `for` matching the Switch host's `id` activates the existing Boolean owner. Their text supplies a fallback name, updates when label text changes, and clears when the association changes. Field and authored host names retain priority.
 
 | Property / attribute                 | Type                                         | Default / behavior                                                                                                                                              |
@@ -52,16 +52,16 @@ switchControl.onCheckedChange = (event) => {
 Press, Space and Enter activate once with reason `trigger-press`, carrying the actual source event and modifier properties. Repeats and native button defaults do not duplicate the toggle. `setChecked(value, reason = 'programmatic', sourceEvent?)` proposes an imperative change. `focus(options?)`, `blur()` and `activateFromLabel()` target the actual Control. Required `checkValidity()` and `reportValidity()` use the existing form owner. A canceled callback/DOM proposal preserves checked, native checked, ARIA and FormData together.
 Read-only channels include `controlElement`, `form`, `labels`, `validity`, `validationMessage`, `effectiveDisabled`, `effectiveName`, `effectiveInvalid`, and inherited `direction`. The global `dir` attribute follows composed writing direction. Field uses the shared `setFieldContext()` and `setFieldAssociation()` interfaces.
 
-Uncontrolled reset restores the latest declared default with `form-reset`; controlled reset keeps the owner value. Platform string restoration restores uncontrolled checked state. Native and explicit forms submit exactly one value; disabled controls submit none, readonly controls retain their entry. Field supplies Boolean dirty/filled/touched/focused state, descriptions, errors and change/blur/submit validation without a second validation implementation.
+Uncontrolled reset restores the latest declared default with `form-reset`; controlled reset keeps the owner value. Platform string restoration restores uncontrolled checked state. Native and explicit forms submit exactly one value; disabled controls submit none, readonly controls retain their entry. Field supplies Boolean dirty/filled/touched/focused state, descriptions, errors and change/blur/submit validation.
 
-Switch has no indeterminate or CheckboxGroup aggregate state. Assigning a truthy inherited `indeterminate` compatibility property is rejected with a diagnostic and remains false. Checkbox-only `parent` and `keepMounted` do not affect Switch policy or submission. A Switch placed beside a CheckboxGroup keeps its independent name, value and checked owner.
+Switch has no indeterminate or CheckboxGroup aggregate state. Assigning a truthy inherited `indeterminate` property is rejected with a diagnostic and remains false. Checkbox-only `parent` and `keepMounted` do not affect Switch policy or submission. A Switch placed beside a CheckboxGroup keeps its independent name, value and checked owner.
 
 | Part           | Default host / content                                                                                       |
 | -------------- | ------------------------------------------------------------------------------------------------------------ |
 | `switch`       | Semantic span or native button; role switch, checked state, action/focus/form binding and Thumb composition. |
 | `switch-thumb` | Presentational span; always mounted through on/off changes, no input or focus. Holds the `thumb` slot.       |
 
-Authored Thumb content goes in the `thumb` slot (Base UI `Switch.Thumb` children), for example an icon that moves with the Thumb. It is decorative: it inherits the Thumb's hidden accessibility state and never changes the Control's name, role, state or geometry. Theme switcher uses it for its sun and moon icons.
+Authored Thumb content goes in the `thumb` slot, for example an icon that moves with the Thumb. It is decorative: it inherits the Thumb's hidden accessibility state and never changes the Control's name, role, state or geometry. Theme switcher uses it for its sun and moon icons.
 
 ```html
 <tp-switch aria-label="Dark mode"><tp-icon slot="thumb" data-icon="moon"></tp-icon></tp-switch>
@@ -89,8 +89,8 @@ switchControl.partContracts = {
 switchControl.partContracts = { 'switch-thumb': { renderDelegate: () => nothing } };
 ```
 
-Consumer handlers run before component handlers. `preventDefault()` controls platform defaults; `preventComponentHandling(event)` explicitly stops the initiating component action. Shared merge bookkeeping prevents stale held Space state after a canceled handler.
+Consumer handlers run before component handlers. `preventDefault()` controls platform defaults; `preventComponentHandling(event)` explicitly stops the initiating component action.
 
-Nova paint uses existing primary/input/background/foreground/ring/destructive roles. Scoped `--tp-*` roles, dictionary replacement, `partPresentation` and independent part hooks customize paint. Mandatory Control hit geometry and two Thumb rest positions remain structural; container-relative translation adapts to actual Control and Thumb widths, including RTL. Thumb transitions only `transform`; track transitions only background color. Shared Motion `track` and `thumb` roles support driver replacement, rapid interruption, explicit normal/reduce and owner-window preference. Reduced motion reaches the final rest immediately. No presence exit delay applies to the always-mounted Thumb.
+The default paint uses the primary/input/background/foreground/ring/destructive roles. Scoped `--tp-*` roles, dictionary replacement, `partPresentation` and independent part hooks customize paint. Mandatory Control hit geometry and two Thumb rest positions remain structural; container-relative translation adapts to actual Control and Thumb widths, including RTL. Thumb transitions only `transform`; track transitions only background color. Shared Motion `track` and `thumb` roles support driver replacement, rapid interruption, explicit normal/reduce and owner-window preference. Reduced motion reaches the final rest immediately. No presence exit delay applies to the always-mounted Thumb.
 
 Field validation state `valid` is `true`, `false`, or `null` (unknown) in the shared immutable part snapshot. `data-valid` appears only for known-valid state; an independently authored invalid flag has priority. Unknown validity never creates a valid marker.

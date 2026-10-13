@@ -1,6 +1,6 @@
 # Button
 
-`<tp-button>` is one action control or navigation target. Its contract is UI Foundation §13.5 and UI Component Library §16.2. It does not own selection, open, or pending state.
+`<tp-button>` is one action control or navigation target. It does not own selection, open, or pending state.
 
 ## Properties
 
@@ -27,7 +27,7 @@
 
 ## Content and naming
 
-Default content is the visible label. For common single-mark cases, set `icon` with `iconPosition`, or set `loadingPosition` to compose the shared Spinner. `leading` and `trailing` are logical positions that follow writing direction. Position names select a discrete region; Alignment names are reserved for layout relationships such as Collapsible and Accordion `contentAlignment`.
+Default content is the visible label. For common single-mark cases, set `icon` with `iconPosition`, or set `loadingPosition` to compose the shared Spinner. `leading` and `trailing` are logical positions that follow writing direction.
 
 Optional `icon-start` and `icon-end` slots remain available for custom marks. Mark sources use this precedence: `loadingPosition`, then `icon`, then the slots. Clearing a higher-priority property restores the next source without removing slotted content. The convenience icon is decorative because the label names the control; custom decorative marks should use `aria-hidden="true"`.
 

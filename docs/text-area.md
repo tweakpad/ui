@@ -36,7 +36,7 @@ import '@tweakpad/ui/styles.css';
 
 `focus`, `blur`, `select`, `setSelectionRange`, `setRangeText`, `selectionStart`, `selectionEnd` and `selectionDirection` expose native text selection. `setValue(value)` proposes a programmatic update; `clear(sourceEvent?)` proposes a permitted clear. `setCustomValidity`, `checkValidity` and `reportValidity` expose validation. Read-only channels include `inputElement`, `form`, `labels`, `validity`, `validationMessage`, `controlled`, `effectiveDisabled`, `effectiveName` and `effectiveInvalid`.
 
-Controlled mode stays fixed for a lifetime; rejected edits restore committed text without unnecessary selection changes. Composition remains one edit. Enter inserts a newline and does not trigger the Input submission bridge. Resizing does not change the value or accessible relationships. Uncontrolled reset uses `form-reset`, while controlled reset preserves owner text without a synthetic proposal. Form restoration restores uncontrolled strings.
+Controlled mode stays fixed for a lifetime; rejected edits restore committed text without unnecessary selection changes. Composition remains one edit. Enter inserts a newline and does not submit the form. Resizing does not change the value or accessible relationships. Uncontrolled reset uses `form-reset`, while controlled reset preserves owner text without a synthetic proposal. Form restoration restores uncontrolled strings.
 
 ## Events
 
@@ -48,6 +48,6 @@ Native textarea publishes `text-area`, `text-area-resize-affordance` and `focusa
 
 `partContracts['text-area']` supports `renderDelegate`, `hostProperties`, `classHook`, `styleHook`, `elementReference` and `content`. Apply the supplied `bind` directive to a compatible native textarea. Consumer initiating handlers run first and may call `preventComponentHandling()` independently from native default cancellation.
 
-As in Base UI, the native `<textarea>` renders into the Text Area's light DOM (`tp-text-area > textarea`), shares its form owner and submits natively. Use semantic tokens, dictionary replacement, `partPresentation['text-area']`, or style `tp-text-area > textarea` directly; `::part(text-area)` no longer applies. Preserve scrolling, selection, resize affordance and visible error/focus indication. The canonical Storybook example is controlled and accepts changes; standalone uncontrolled usage remains the default.
+The native `<textarea>` renders into the Text Area's light DOM (`tp-text-area > textarea`), shares its form owner and submits natively. Use semantic tokens, dictionary replacement, `partPresentation['text-area']`, or style `tp-text-area > textarea` directly; `::part(text-area)` does not apply. Preserve scrolling, selection, resize affordance and visible error/focus indication.
 
 Native fixed sizing preserves rows by default. To opt into content sizing where supported, set `hostProperties = { style: { fieldSizing: "content" } }`; wrapping, writing mode and native selection properties use the same native channel. Native properties use a leading dot (for example `.inputMode`), attributes use their HTML names, and native event handlers use `@input`.

@@ -7,7 +7,7 @@ Key Hint displays one keyboard key. Key Hint Group arranges individual keys or n
 </tp-key-hint-group>
 ```
 
-This renders Command + K on macOS and Ctrl + K on Windows/Linux. Use `separator="none"` for the adjacent keycaps in the [shadcn Kbd examples](https://ui.shadcn.com/docs/components/base/kbd). Existing literal content remains supported, but compose one Key per key rather than placing an entire shortcut in one keycap.
+This renders Command + K on macOS and Ctrl + K on Windows/Linux. Use `separator="none"` for adjacent keycaps without a separator. Literal content is supported, but compose one Key per key rather than placing an entire shortcut in one keycap.
 
 ## Key API — `tp-key-hint`
 
@@ -46,7 +46,7 @@ group.keyLabels = {
 
 Use Group in Button's `icon-end`, Input Group's `prefix`/`suffix` (or logical addon slots), Menu's `data-menu-shortcut`, and Tooltip content. The owning control handles interaction. Keys within Tooltip receive its contextual palette through the shared presentation system.
 
-Default keys have a 20px height/minimum width, 12px text and default icons, muted colors, and logical insets. Group owns inter-key spacing. These dimensions scale with the theme's spacing/text tokens; do not add per-demo margins or icon sizing to repair them. Explicit `tp-icon size` values remain supported. `dir` controls sequence direction; set `dir="ltr"` on a group inside RTL prose when the notation needs a fixed direction.
+Default keys have a 20px height/minimum width, 12px text and default icons, muted colors, and logical insets. Group owns inter-key spacing. These dimensions scale with the theme's spacing/text tokens; keys need no extra margins or icon sizing. Explicit `tp-icon size` values remain supported. `dir` controls sequence direction; set `dir="ltr"` on a group inside RTL prose when the notation needs a fixed direction.
 
 Both components inherit `TpElement` presentation APIs (`partContracts`, dictionaries, tokens and render delegates). Customize `key-hint` or `key-hint-group` through their public contracts or CSS parts; keep native keyboard semantics when supplying a render delegate. They share the Key Hint presentation identity. There are no selected, pressed, expanded or disabled interaction states.
 

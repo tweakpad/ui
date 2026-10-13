@@ -121,7 +121,8 @@ until it loads, so a broken-image glyph never appears.
   half the depth either way, so the frame edges never show. Directions are physical and don't
   flip for right-to-left text, and any direction works with either axis; `left` and `right`
   suit a horizontal strip. Parallax only moves while the container actually scrolls past the
-  image.
+  image. An image is placed shortly before it scrolls into view, so it never jumps when it
+  appears.
 - **Scroll zoom**: `parallax="zoom-in"` scales the image from natural size up to
   `1 + parallax-depth` as it scrolls through. `zoom-out` goes from enlarged back to natural
   size. Combine it with a direction, for example `parallax="up zoom-in"`, to drift and zoom at
@@ -132,12 +133,6 @@ until it loads, so a broken-image glyph never appears.
   stops. The value is the share of the remaining distance still left after one 60 fps frame:
   `0.5` trails slightly, `0.9` glides slowly. It is clamped to 0.98, and it behaves the same at
   any frame rate.
-- **How it runs**: locked parallax runs entirely in CSS when a scroll-driven timeline would
-  follow the real scroller. Smoothed parallax, parallax under a clipping wrapper, and browsers
-  without scroll timelines update from one shared scroll subscription per container, once per
-  frame and only for images on or near the screen. An image is measured and placed shortly
-  before it scrolls into view, so it never jumps when it appears. Frames that only finish
-  trailing motion read no layout, and they stop once everything has settled.
 - **Reveal**: combine tokens, for example `reveal="fade up zoom-in"`. The image waits in its
   start state and animates to rest the first time it enters the viewport, then stays revealed.
   The reveal never starts before the image is ready. An image that enters while still loading
@@ -202,16 +197,8 @@ image's reveal (delay, duration and easing included) instead of time.
 
 ## Performance
 
-Image is built for pages with hundreds of images:
-
-- All Images share one IntersectionObserver.
-- An Image observes visibility only while it is waiting to reveal (always, with
-  `reveal-repeat`), showing an animated placeholder or running parallax. It stops after it reveals and loads.
-- Placeholders that are off screen pause their animation.
-- The parallax fallback keeps one scroll subscription per scrolling container. It measures
-  every visible image before writing any of them, once per frame.
-- A MutationObserver exists only on Images that have `<source>` children.
-- No `will-change` is applied, so idle images create no compositing layers.
+Image is built for pages with hundreds of images. Placeholders that are off screen pause their
+animation, and no `will-change` is applied, so idle images create no compositing layers.
 
 ## Accessibility
 

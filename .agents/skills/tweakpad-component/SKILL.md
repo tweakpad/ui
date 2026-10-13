@@ -22,8 +22,8 @@ curve editors, audio graphs), follow the same pipeline with their own paths: the
 UI Widgets Specification as the owning document, tweakpane as an additional
 upstream reference, `docs/widgets/`, `src/stories/widgets/`,
 `tests/fixtures/widgets/` and `plans/widgets/<widget>/`. They ship only through
-`@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`; `docs/widgets/README.md`
-lists every file a widget adds.
+`@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`; `CONTRIBUTING.md`
+(Adding a widget) lists every file a widget adds.
 
 - Read the live Foundation, Component Library and Widgets specifications, managed
   vocabulary, owning contracts, and dependencies through **direct Spec Blocks MCP
@@ -264,6 +264,8 @@ Default to one canonical base example plus the complete public API reference,
 including constituent APIs where public. Controls expose real APIs, with fixture
 setup kept separate. Document properties/attributes, types/defaults, methods,
 events/details, slots/parts, state hooks, customization, and usage constraints.
+Docs read as standalone consumer documentation: state behavior directly, without
+upstream library names, specification citations, internal records or design rationale.
 
 Do not create documentation stories merely to enumerate attribute combinations.
 Keep exhaustive verification fixtures outside curated Docs. Add further published

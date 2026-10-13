@@ -76,8 +76,7 @@ Canonical parts are `table`, `table-table`, `table-caption`, `table-header`,
 Each constituent exposes its corresponding native part with the same Table recipes,
 `partPresentation`, `partContracts`, and inherited theme/dictionary. Apply a cell
 part override on that cell constituent. The root owns `table` (overflow container)
-and `table-table`. Authored native-table descendants keep their existing root-level
-part registration for compatibility.
+and `table-table`. Authored native-table descendants register their parts on the root.
 
 The library theme controls type, spacing, borders, row emphasis and sticky
 backgrounds. Geometry markers are `data-sticky` on pinned header/footer,
@@ -85,13 +84,12 @@ backgrounds. Geometry markers are `data-sticky` on pinned header/footer,
 a body or footer, which drop their bottom border. Table exposes no component-specific state
 change events or imperative methods.
 
-The examples cover every reference use case: basic table, totals footer, simple
-rows, status badges, action menus, Select assignments and Input quantities. The
-sticky example combines scrolling with pinned headers, logical edge columns and
-totals. Its data and calculations are application-owned.
+The examples cover a basic table, totals footer, simple rows, status badges, action
+menus, Select assignments and Input quantities. The sticky example combines
+scrolling with pinned headers, logical edge columns and totals. Its data and
+calculations are application-owned.
 
 Constituent exports: `TpTableHeader`, `TpTableBody`, `TpTableFooter`, `TpTableRow`,
 `TpTableHead`, `TpTableCell`, `TpTableCaption`. Their default slots accept the next
 level of composition; cells/caption accept arbitrary content. `nativeElement` is a
-read-only reference to the rendered native constituent. Usage examples live in Docs;
-they are not extra Table variants or sidebar stories.
+read-only reference to the rendered native constituent.

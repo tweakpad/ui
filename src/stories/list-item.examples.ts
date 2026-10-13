@@ -119,14 +119,14 @@ export const listItemExamples = [
     'list-item-people-example',
     `<tp-list-item variant="outline">${avatar('evilrabbit')}Evil Rabbit<span slot="description">Last seen <tp-time mode="relative" datetime="${ago(150 * 86_400_000)}"></tp-time></span>${invite('Evil Rabbit')}</tp-list-item>
 <tp-list-item variant="outline" description="Invite your team to collaborate on this project."><tp-avatar-group slot="media" size="sm">${people.map((person, n) => avatar(person, '', n < 2 ? 'data-secondary-avatar' : '')).join('')}</tp-avatar-group>Project team${button('Invite')}</tp-list-item>
-<tp-list-item-group aria-label="People">${people.map((person) => `<tp-list-item description="${person}@vercel.com">${avatar(person)}${person}${invite(person)}</tp-list-item>`).join('\n<tp-list-item-separator></tp-list-item-separator>\n')}</tp-list-item-group>`,
+<tp-list-item-group aria-label="People">${people.map((person) => `<tp-list-item description="${person}@example.com">${avatar(person)}${person}${invite(person)}</tp-list-item>`).join('\n<tp-list-item-separator></tp-list-item-separator>\n')}</tp-list-item-group>`,
   ),
   example(
     'People menu',
     'list-item-menu-example',
     `<tp-menu label="People" placement="block-end start" data-people>
   <tp-button slot="trigger" variant="outline" size="sm" style="justify-self:start">Select person<tp-icon slot="icon-end" data-icon="chevronDown"></tp-icon></tp-button>
-  ${people.map((person) => `<tp-menu-item value="${person}" label="${person}"><tp-list-item size="xs" description="${person}@vercel.com">${avatar(person)}${person}</tp-list-item></tp-menu-item>`).join('\n  ')}
+  ${people.map((person) => `<tp-menu-item value="${person}" label="${person}"><tp-list-item size="xs" description="${person}@example.com">${avatar(person)}${person}</tp-list-item></tp-menu-item>`).join('\n  ')}
 </tp-menu>`,
   ),
   example(
@@ -178,7 +178,7 @@ export const listItemExamples = [
     'Navigation and external links',
     'list-item-navigation-example',
     `<tp-list-item data-link description="Learn how to get started with our components.">Visit our documentation<tp-icon slot="actions" data-icon="chevronRight"></tp-icon></tp-list-item>
-<tp-list-item variant="outline" data-link="https://ui.shadcn.com/" data-external description="Opens in a new tab with security attributes.">External resource<tp-icon slot="actions" data-icon="external"></tp-icon></tp-list-item>
+<tp-list-item variant="outline" data-link="https://example.com/" data-external description="Opens in a new tab with security attributes.">External resource<tp-icon slot="actions" data-icon="external"></tp-icon></tp-list-item>
 <tp-list-item variant="outline" size="sm" media-treatment="icon" data-link><tp-icon slot="media" data-icon="check"></tp-icon>Your profile has been verified.<tp-icon slot="actions" data-icon="chevronRight"></tp-icon></tp-list-item>`,
   ),
   example(

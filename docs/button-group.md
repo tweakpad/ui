@@ -58,7 +58,7 @@ Use the existing `<tp-separator>` between members. The group supplies a perpendi
 
 Nested Button Groups remain separate sets with the standard theme gap. Each nested group owns its own orientation and seams. Hidden members do not participate. Reordering, removing, reconnecting or replacing a Button's native button with a link updates group membership without replacing other controls.
 
-The group exposes `button-group-control` on actual interactive boundaries and `button-group-separator` on actual Separator hosts through the shared part registration system. Root `partPresentation` can address those aliases; each member's own terminal presentation overrides remain authoritative. `aria-label` and `aria-labelledby` on the group supply authored naming; `label` is the fallback. Grouping adds no roving focus or selection state.
+The group exposes `button-group-control` on actual interactive boundaries and `button-group-separator` on actual Separator hosts. Root `partPresentation` can address those aliases; each member's own terminal presentation overrides remain authoritative. `aria-label` and `aria-labelledby` on the group supply authored naming; `label` is the fallback. Grouping adds no roving focus or selection state.
 
 ## Pagination and selection
 

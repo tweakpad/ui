@@ -49,4 +49,4 @@ render the supplied `content`; this preserves component state and slot behavior.
 
 ## Compositions
 
-The rendered Docs include seven treatments, short/wrapping/multiparagraph bodies, separate sender groups, reaction summaries and actions, logical alignment, and native button/link bodies with quick replies. The expandable example replaces its preview with the full message using Collapsible and an existing link Button, with Show more/Show less derived from the shared disclosure state. Examples compose existing public controls and are not extra catalog variants.
+The rendered Docs include seven treatments, short/wrapping/multiparagraph bodies, separate sender groups, reaction summaries and actions, logical alignment, and native button/link bodies with quick replies. The expandable example replaces its preview with the full message using Collapsible and an existing link Button, with Show more/Show less derived from the shared disclosure state.

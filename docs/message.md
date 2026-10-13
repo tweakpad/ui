@@ -9,11 +9,11 @@ Use `align="start"` for other participants and `align="end"` for the current sen
 | `align`             | `start` | Logical sender side: `start` or `end`.                                                                                            |
 | `author`            | empty   | Sender name in the default header.                                                                                                |
 | `timestamp`         | empty   | Default-header time, rendered by [Time](./time.md). Accepts a `Date`, epoch number or text; unresolvable text is shown unchanged. |
-| `pending`, `failed` | false   | Compatibility display flags; the application supplies state.                                                                      |
+| `pending`, `failed` | false   | Display flags; the application supplies state.                                                                                    |
 
 Slots: default (content), `avatar`, `header` (replaces default metadata), and `footer` (status, reactions or controls). A missing optional region has no layout footprint. Actions remain ordinary focusable controls.
 
-Presentation parts: `message-root`, `message-avatar`, `message-content`, `message-header`, `message-footer`; previous `root`, `body`, `meta`, `content`, `author`, `timestamp` hooks remain; `timestamp` is now the `tp-time` host and re-exports its `time-value` part. Shared dictionary recipes own spacing and typography. Wrap chronological rows in `tp-message-scroller-item` when using Message Scroller.
+Presentation parts: `message-root`, `message-avatar`, `message-content`, `message-header`, `message-footer`, plus the `root`, `body`, `meta`, `content`, `author` and `timestamp` hooks; `timestamp` is the `tp-time` host and re-exports its `time-value` part. Shared dictionary recipes own spacing and typography. Wrap chronological rows in `tp-message-scroller-item` when using Message Scroller.
 
 ## Composition
 
@@ -32,7 +32,7 @@ Presentation parts: `message-root`, `message-avatar`, `message-content`, `messag
 
 Message supplies the row, avatar column, Header, Content and Footer. Put the actual visible surface in `tp-bubble`; place multiple surfaces in `tp-bubble-group`. Put images/files in `tp-attachment`. Content owns the gap between these blocks. The avatar aligns with Content's lower edge even when the Footer grows or wraps; no fixed footer-height offset is needed.
 
-`tp-message-group` stacks consecutive messages from one sender using the existing `message` presentation part. It has no selection, transport state, events or special keyboard behavior. Its default slot accepts Message rows; inherited `partContracts` and `partPresentation` customize the Group. It is exported as `TpMessageGroup` and registered by `@tweakpad/ui/register`.
+`tp-message-group` stacks consecutive messages from one sender using the `message` presentation part. It has no selection, transport state, events or special keyboard behavior. Its default slot accepts Message rows; inherited `partContracts` and `partPresentation` customize the Group. It is exported as `TpMessageGroup` and registered by `@tweakpad/ui/register`.
 
 ```html
 <tp-message-group>
@@ -49,9 +49,9 @@ Message supplies the row, avatar column, Header, Content and Footer. Put the act
 
 An empty avatar slot preserves the column for earlier rows. Omitting the slot removes the column entirely. The default column follows the default Avatar size; a custom avatar size can use the `message-avatar` part hook consistently across the group. Spacing within rows and groups belongs to the shared dictionary; application layout chooses distance between independent turns.
 
-## Reference use cases
+## Use cases
 
-The Docs match the six compositions on the [shadcn Message reference](https://ui.shadcn.com/docs/components/base/message), using original conversation text and the library theme:
+The Docs show six compositions:
 
 | Use case          | Public composition                                                                                 |
 | ----------------- | -------------------------------------------------------------------------------------------------- |

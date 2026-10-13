@@ -45,14 +45,15 @@ bubbling/cancelable event with previousValue, reason, sourceEvent and cancellati
 A later veto discards provisional callback publication. Unknown controlled values
 render no active content; later duplicate Item values are diagnosed and excluded.
 
-Navigation uses the [shared positioning, portal, Arrow, Backdrop, focus and
-customization API](anchored-surfaces.md), with bottom/center, a three-theme-unit side offset, zero alignment offset and
-absolute positioning. It remains nonmodal, and open is derived from value rather
-than an independent Boolean ownership lane. Trigger focus does not copy Tooltip's
-focus-open policy. Hover/press can open; ArrowDown enters an active horizontal
-panel; the logical forward arrow enters a vertical panel (Right in LTR, Left in RTL).
-Escape returns focus only when focus was in content. Native links continue
-to use ordinary Tab navigation. Outside focus/press closes without a focus trap.
+Navigation uses the
+[shared positioning, portal, Arrow, Backdrop, focus and customization API](anchored-surfaces.md),
+with bottom/center, a three-theme-unit side offset, zero alignment offset and
+absolute positioning. It is nonmodal, and open is derived from value. Trigger
+focus does not open a panel. Hover/press can open; ArrowDown enters an active
+horizontal panel; the logical forward arrow enters a vertical panel (Right in LTR,
+Left in RTL). Escape returns focus only when focus was in content. Native links
+continue to use ordinary Tab navigation. Outside focus/press closes without a
+focus trap.
 
 ## Item, Trigger, Content and Link
 

@@ -1,6 +1,6 @@
 # Spinner
 
-`tp-spinner` shows indeterminate activity. Its existing size variants use shared
+`tp-spinner` shows indeterminate activity. Its size variants use shared
 icon-size theme roles and scale with base spacing.
 
 | Property / attribute             | Values                                  | Default |
@@ -17,7 +17,7 @@ icon-size theme roles and scale with base spacing.
 
 Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`. A standalone spinner
 needs a meaningful label. Empty label renders no status announcement. For loading
-buttons, use the existing Button composition, which hides its internal spinner
+buttons, use the Button composition, which hides its internal spinner
 from assistive technology:
 
 ```html
@@ -30,6 +30,6 @@ and reduced-motion policy own playback. No progress value is implied. Spinner ha
 no form state, imperative actions or value events. Export: `TpSpinner`.
 
 Docs includes all sizes and compositions with Button, Badge, Input Group, and Empty
-State. Button's loading presentation uses its existing Spinner owner. Indicators
+State. Button's loading presentation uses Spinner. Indicators
 inside already named content use an empty label; standalone indicators retain a
 named status.

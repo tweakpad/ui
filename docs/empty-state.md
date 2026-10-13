@@ -37,5 +37,4 @@ render the supplied `content`; this preserves component state and slot behavior.
 
 Docs includes first-project actions, muted and bordered surfaces, search recovery,
 icon media, and a Card composition. Examples use public component parts and shared
-theme variables for surface customization. Input, Input Group, Key Hint, Icon and
-Button retain their existing implementations and default spacing.
+theme variables for surface customization.

@@ -11,11 +11,11 @@
 | `sectionColors` | `section-colors` | `on`, `off`     | `on`      |
 | `size`          | `size`           | `sm`, `default` | `default` |
 
-`elevated` changes only the shadow: medium when true, none when false. Borders, colors, spacing, dimensions, and semantics do not change. Card is the only control exposing this property in this pass.
+`elevated` changes only the shadow: medium when true, none when false. Borders, colors, spacing, dimensions, and semantics do not change.
 
 `borders` controls the outer outline and both section dividers, while `sectionColors` controls whether header, content, and footer have distinct solid fills or share the base surface fill. Both are `on` by default, and all four combinations work with or without elevation.
 
-The three section fills derive from the shared card and muted color roles. There are no new hard-coded colors. With `section-colors="off"`, all sections use the Card's base fill. With `borders="off"`, the outer line and dividers have zero width, not merely a transparent color.
+The three section fills derive from the shared card and muted color roles. With `section-colors="off"`, all sections use the Card's base fill. With `borders="off"`, the outer line and dividers have zero width, not merely a transparent color.
 
 ```html
 <tp-card borders="off" section-colors="on">…</tp-card>

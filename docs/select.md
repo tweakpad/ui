@@ -1,8 +1,7 @@
 # Select
 
 `tp-select` chooses from a finite list. Add `searchable` for an editable query.
-Both modes use the same collection, popup, selection and theme owners. Use
-`tp-native-select` for native browser selection.
+Use `tp-native-select` for native browser selection.
 
 ```html
 <script type="module">
@@ -26,8 +25,8 @@ Native `option` and `optgroup` children are source declarations. Select renders
 their text and values through its own semantic option parts. `items` supports
 rich labels and arbitrary values. Import Lit's `html` for rich content and use
 the library's actual Icon, Badge, and other components inside that content.
-Icon's `size` accepts a CSS length; use `size="var(--tp-icon-size-sm)"` for the
-source's small artwork and inherited sizing overrides.
+Icon's `size` accepts a CSS length; use `size="var(--tp-icon-size-sm)"` for
+small artwork and inherited sizing overrides.
 
 ```js
 select.items = [
@@ -109,9 +108,8 @@ authored flags. Read-only Select can open and navigate but cannot change value.
 
 ## Positioning and hidden constituents
 
-The Library flattens Foundation Positioner, Portal, Arrow, Backdrop and Indicator
-configuration onto their nearest public owners. These options preserve their
-behavior without adding catalog identities.
+Positioner, Portal, Arrow, Backdrop and Indicator configuration is set on their
+nearest public owners.
 
 | Root property / attribute                           | Type                                                                | Default                   |
 | --------------------------------------------------- | ------------------------------------------------------------------- | ------------------------- |
@@ -148,8 +146,8 @@ remeasures even when automatic tracking is disabled. Anchor loss requests close.
 
 An option has `value`, optional `label`/`text`, `disabled=false`,
 `nativeAction=false`, and `indicatorKeepMounted=false`. `partContract` configures
-its Option, `textContract` its Foundation ItemText, and `indicatorContract` its
-Foundation Indicator. Text is the typeahead string when the label is rich content.
+its Option, `textContract` its ItemText, and `indicatorContract` its
+Indicator. Text is the typeahead string when the label is rich content.
 Later duplicate values are diagnosed and excluded from navigation and selection.
 
 A group has `type:'group'`, `items`, optional `label`,
@@ -197,16 +195,15 @@ Published parts are `select`, `select-trigger`, `select-value`, `select-content`
 
 Use `partPresentation` or the presentation dictionary for replaceable appearance.
 Select has no visual size/variant axis; use public part presentation for deliberate
-consumer sizing. Source light/dark defaults reuse shared input/surface recipes.
+consumer sizing. Light and dark defaults use the shared input and surface recipes.
 Tokens, scoped themes and dictionaries reach explicit portals as well as local
 shadow parts.
 
-Each `partContracts[name]` accepts `renderDelegate({state, properties, content,
-bind})`, `hostProperties`, `classHook`, `styleHook`, `elementReference`, and
-`content`. Put `${bind}` on the delegate's semantic host. Per-record contracts
-refine their specific repeated constituent. Hidden Foundation `arrow`, `backdrop`,
-`indicator`, and `item-text` contracts use the same binding, with no new Library
-presentation identity. Preserve the appropriate `nativeAction` policy when
+Each `partContracts[name]` accepts
+`renderDelegate({state, properties, content, bind})`, `hostProperties`,
+`classHook`, `styleHook`, `elementReference`, and `content`. Put `${bind}` on the delegate's semantic host. Per-record contracts
+refine their specific repeated constituent. Hidden `arrow`, `backdrop`,
+`indicator`, and `item-text` contracts use the same binding. Preserve the appropriate `nativeAction` policy when
 replacing a native action host.
 
 Component-owned role, ARIA, native state, part and data markers are protected.
@@ -228,7 +225,6 @@ and stop repeating when the pointer leaves, the popup closes or the host detache
 
 Use actual `tp-field` for labels/descriptions/errors, `tp-icon` for rich choice
 artwork, `tp-button` for adjacent actions and `tp-dialog` for modal composition.
-Root/part API changes do not require reproducing any of these components locally.
 
 ## Searchable selection
 
@@ -289,7 +285,7 @@ Set a controlled property before connection to select that lane's controlled mod
 
 Searchable Select shares [Text search](autocomplete.md#matching) with Autocomplete and Command palette. `matching` selects how the query matches options: `contains` (the default; locale collation, so case, accents and punctuation are ignored), `prefix` (every query word begins a word), `exact`, or `fuzzy`, which ranks options by relevance and tolerates typos and words typed out of order. Results come from, in order: `filteredItems`, a `source`, a `filter`, and otherwise `matching`; `limit` applies last. With `source`, the source's results are the options: a query waits `searchDelay` milliseconds without typing, a newer query aborts the previous one, previous results stay visible while loading, and `searchStatus` (`idle`, `loading`, `loaded`, `error`) with the `tp-search-status` and `tp-search-error` events report progress. While loading the list is busy and a status row (spinner and text) replaces the empty state; after a failure it shows the error text. `highlightMatches` marks matched text in the `select-match` part.
 
-Filtering retains selected values even when their options are not visible. Both Select modes preserve the existing `SelectEntry` shape: `{value, label?, text?, disabled?, index?, row?}` and groups `{type:'group', label?, items}`. Object-valued choices use `{value: record, label: 'Display text'}`; use the factory for arbitrary application records with primitive IDs. `filteredItems` and `mountedItems` contain chosen values or factory-owned records. This avoids interpreting the same object differently between searchable and plain modes.
+Filtering retains selected values even when their options are not visible. Both Select modes use the `SelectEntry` shape: `{value, label?, text?, disabled?, index?, row?}` and groups `{type:'group', label?, items}`. Object-valued choices use `{value: record, label: 'Display text'}`; use the factory for arbitrary application records with primitive IDs. `filteredItems` and `mountedItems` contain chosen values or factory-owned records.
 
 `createSelectItems(data, {getValue, getLabel, diagnostic?})` lazily projects application records onto non-null primitive identifiers. It accepts absent loading data, flat data or groups, ignores holes and retains the first duplicate. Leaf records cannot themselves declare an `items` array. The returned collection provides `value`, `itemLabel`, `hasValue` and `label` (including equality and fallback arguments). `createSelectFilter({locale?, sensitivity?, ignorePunctuation?, ...Intl.CollatorOptions})` exposes locale-aware `contains`, `startsWith` and `endsWith`.
 
@@ -312,7 +308,7 @@ Single selection fills text unless that lane rejects it. Multiple selection clea
 
 Floating attributes use kebab case; element, record and resolver bindings use properties. Offset resolvers receive `{side, align, anchor:{width,height}, positioner:{width,height}}` during positioning. Modal mode preserves the editable control, contains Tab focus and leases outside inertness/scroll locking. Arrow and Backdrop visibility do not enable modality. Inline mode renders an in-flow list without its own portal, positioner or popup; accepted closing of its surrounding Dialog, Alert Dialog, Drawer or Popover resets transient query/highlight.
 
-Form submission contains selected values, never the query. Multiple values submit repeated entries in selection order; Field-provided names and explicit `formOwner` work through the common form owner. Required validates selection. Disabled controls do not submit; read-only selection submits and remains focusable. Reset and form state restoration resolve records through the source and serializer. Inherited Foundation APIs include `name`, `formOwner`, `disabled`, `readOnly`, `required`, `invalid`, validity methods, Field association, input references, `motionPolicy`, `partPresentation` and `partContracts`.
+Form submission contains selected values, never the query. Multiple values submit repeated entries in selection order; Field-provided names and explicit `formOwner` work through the common form owner. Required validates selection. Disabled controls do not submit; read-only selection submits and remains focusable. Reset and form state restoration resolve records through the source and serializer. Inherited APIs include `name`, `formOwner`, `disabled`, `readOnly`, `required`, `invalid`, validity methods, Field association, input references, `motionPolicy`, `partPresentation` and `partContracts`.
 
 | Method / callback                                                 | Contract                                                        |
 | ----------------------------------------------------------------- | --------------------------------------------------------------- |
@@ -333,10 +329,8 @@ Value/text events include value, previousValue, reason, sourceEvent, cancellatio
 
 The optional authored `tp-select-option` registers a source value without adding another interactive surface. It accepts required `value` (a string attribute or any property value), optional rich `label`, `index`, `row`, `disabled=false`, `nativeAction=false`, `indicatorKeepMounted=false`, `onClick`, `textContract`, `indicatorContract` and `partContracts['select-option']`. Its text content is the label fallback. Native `option`, `optgroup` and `hr` sources are supported, including inherited optgroup disability. Their rendered options share the same model, keyboard, selection and presence owners.
 
-The generated `tp-select-trigger`, `tp-select-clear` and `tp-select-chip-remove` inherit Button. Their own `partContracts.button` is a terminal override; Root ActionPart contracts are forwarded to the actual Button semantic control. Trigger/Clear remain out of the Tab sequence; Chip Remove remains keyboard accessible. Their icons use the existing Icon owner. Canonical Select action recipes and parent presentation contributions are consumed by the same Button controller; child terminal hooks apply last.
+The generated `tp-select-trigger`, `tp-select-clear` and `tp-select-chip-remove` inherit Button. Their own `partContracts.button` is a terminal override; Root ActionPart contracts are forwarded to the actual Button semantic control. Trigger/Clear remain out of the Tab sequence; Chip Remove remains keyboard accessible. Their icons use Icon. Select action recipes and parent presentation contributions are consumed by the same Button controller; child terminal hooks apply last.
 
 Parts: `select`, `select-anchor`, `select-input`, `select-trigger`, `select-clear`, `select-content`, `select-list`, `select-collection`, `select-option`, `select-group`, `select-label`, `select-separator`, `select-empty-state`, `select-status`, `select-match`, `select-chip-list`, `select-chip`, `select-chip-remove`; optional structural `select-row`, `select-list-container`, `item-text`, `indicator`, `arrow`, `backdrop`. Slots: `label` and `empty`; unnamed content supplies registered options.
 
 Each part contract supports render delegates with the protected behavior bundle, host properties, state-dependent class/style/content hooks and an actual semantic element reference. Option/Group configuration can provide individual contracts; references release on removal. `partPresentation` and the shared presentation dictionary customize appearance without replacing state/focus/form owners. Part snapshots expose committed open/value/inputValue/multiple/disabled/readOnly/required/invalid/loading/empty/presence; Options add selected/highlighted/index/value. Open/closed, selected/highlighted/disabled and presence markers follow that snapshot. Retained content is hidden and inert. Motion, positioning, portal inheritance and observers use the owning document/window and clean up on disconnection.
-
-Migration: the separate Combobox tag, class and catalog entry are removed. Use `TpSelect` with `searchable = true`, `createSelectItems`, `createSelectFilter`, and `select-*` parts. Plain Select defaults remain unchanged. Native Select remains a native selection control.

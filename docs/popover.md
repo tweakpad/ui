@@ -1,8 +1,7 @@
 # Popover
 
 `tp-popover` presents interactive content anchored to a real Trigger or independent
-Anchor. It uses the same surface/portal/focus infrastructure as Tooltip while
-keeping explicit interactive Popover behavior.
+Anchor.
 
 The default placement is `block-end center`: below the anchor in horizontal writing,
 to its left in `vertical-rl`, and to its right in `vertical-lr`. Use `bottom center`
@@ -38,7 +37,7 @@ Portal/Arrow/Backdrop/Viewport and generic part contracts.
 | `label`                                              | string              | empty   | Fallback accessible popup name when no Title is supplied.               |
 | `showViewport / show-viewport`                       | boolean             | false   | Optional payload viewport across trigger transfers.                     |
 
-Popover's Foundation contract permits modal and hover configurations. The default
+Popover supports modal and hover configurations. The default
 is nonmodal and explicit activation. Optional hover does not make focus alone
 open the Popover; a press can pin a hover-open popup. Outside press/focus, Escape,
 Close actions and imperative close all use the same cancelable owner. Nested

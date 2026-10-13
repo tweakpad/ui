@@ -1,6 +1,6 @@
 # Tweakpad UI
 
-Accessible web components built with [Lit](https://lit.dev). They implement the Tweakpad UI Foundation and Component Library specifications and work in any framework, or none.
+Accessible web components built with [Lit](https://lit.dev). They work in any framework, or none.
 
 > Pre-1.0: minor versions may contain breaking changes.
 
@@ -46,4 +46,4 @@ Current versions of Chrome, Edge, Firefox and Safari.
 
 ## License
 
-MIT. Ported portions of Swiper, shadcn/ui and dnd-kit keep their MIT notices in the package's `LICENSE.*` files.
+MIT. Ported portions of Swiper, shadcn/ui, dnd-kit and xyflow keep their MIT notices in the package's `LICENSE.*` files.

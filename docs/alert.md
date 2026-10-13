@@ -44,7 +44,7 @@ There are no Alert-specific methods, events, variant axes, motion roles, timers,
 
 Public parts and presentation keys are `alert`, `alert-title`, `alert-description`, `alert-mark`, and `alert-action`. Optional parts remain mounted but hidden when empty so dynamic slot updates retain child identity. Style them through `::part()`, `partPresentation`, or a scoped presentation dictionary.
 
-The default presentation follows shadcn base/nova: card surface, rounded border, small type, medium title and muted informational description. Success, warning and danger use the corresponding semantic color with a foreground blend for readable text. The layout uses logical inline tracks instead of an absolute action with a fixed reserved width. Severity has no separate variant axis or dictionary keys.
+The default presentation is a card surface with a rounded border, small type, a medium title and a muted informational description. Success, warning and danger use the corresponding semantic color with a foreground blend for readable text. Severity has no separate variant axis or dictionary keys.
 
 Use existing tokens such as `--tp-card`, `--tp-card-foreground`, `--tp-muted-foreground`, `--tp-success`, `--tp-warning`, `--tp-destructive`, spacing and typography. For example:
 

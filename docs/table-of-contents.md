@@ -1,8 +1,7 @@
 # Table of contents
 
 `tp-table-of-contents` lists links to targets on the page and marks the one the reader has
-reached. An indicator on the inline-start rail spans the active items. Contract:
-`ucl20-table-of-contents`; behavior: Foundation §18.15 Scroll spy.
+reached. An indicator on the inline-start rail spans the active items.
 
 ```html
 <div class="page">
@@ -90,8 +89,7 @@ tag names, heading levels, nesting or document order. Everything else comes from
 Many components can react to the same scrolling without adding listeners. Scroll observation is
 a shared service: each scroll container has one native listener per event type, the window one
 `ResizeObserver`, and each observed root one `MutationObserver`, however many components
-subscribe (`observeScroll`, `observeResize`, `observeSubtree` from `@tweakpad/ui`). Positioned
-popups, Scroll area, Message scroller and the Drawer keyboard tracking use the same sources.
+subscribe (`observeScroll`, `observeResize`, `observeSubtree` from `@tweakpad/ui`).
 
 Targets are measured only when layout changes: their size, the container's size or scroll
 height, or the DOM under the container. A scroll alone recomputes from the scroll position, with
@@ -103,8 +101,7 @@ default; `scroll-throttle` limits updates to one per interval (with a trailing u
 
 ## Building items from your content
 
-`collectTargets(root, selector, options)` (from `@tweakpad/ui`) returns `{ element, id, label,
-depth? }` records for the elements your selector matches. It has no default selector, assigns no
+`collectTargets(root, selector, options)` (from `@tweakpad/ui`) returns `{ element, id, label, depth? }` records for the elements your selector matches. It has no default selector, assigns no
 ids and returns a depth only when you supply a `depth` function. Render one item per record:
 
 ```js

@@ -78,9 +78,8 @@ remain editing operations until the text boundary. Consumer `preventDefault()` o
 A pointer or focus change updates the single tab stop; hovering never moves focus.
 Removing or fully disabling the focused item repairs focus to the nearest eligible
 item without activating it. It does not steal focus back after the user has left.
-Existing Button disabled guards and TextControl's native editing/form controller
-consume the same composition state. Disabling an enrolled library Input excludes
-its form value while retaining its authored `disabled` property for restoration.
+Disabling an enrolled library Input excludes its form value while retaining its
+authored `disabled` property for restoration.
 For native controls, an explicit registration `disabled` option overrides the initially authored native disabled attribute while enrolled; update that option to change composed disabled state. Library control disabled properties remain authoritative. Native interoperability retains native form behavior (a readonly focusable native
 input remains a successful form control); use the library Input for its integrated
 form-disabled semantics.

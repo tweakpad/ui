@@ -44,8 +44,8 @@ fallback whenever image loading may fail. Give status marks a textual accessible
 name; color alone is insufficient. `aria-hidden="true"` on the Avatar makes the
 whole composition decorative when an adjacent name already identifies the entity.
 
-Parts: `avatar` (host), `avatar-image`, `avatar-fallback`, `avatar-badge`. The earlier
-`image` and `fallback` aliases remain. Shared theme roles provide size, muted
+Parts: `avatar` (host), `avatar-image`, `avatar-fallback`, `avatar-badge`, with
+`image` and `fallback` as aliases. Shared theme roles provide size, muted
 fallback colors and circular shape. Use the presentation dictionary and
 `partPresentation` for customization; there are no spacing attributes.
 
@@ -71,6 +71,4 @@ Image and fallback badge rows use the same named status part. Group examples sho
 loaded images at each size; overflow icons scale through the shared count recipe,
 while their accessible name still communicates the omitted number. The custom
 shape example uses the shared radius token on the viewport and the public image
-part for grayscale. These are compositions, not extra Avatar variants. Interactive
-examples copy their complete markup, registration, imports and setup from the same
-source that renders them.
+part for grayscale.

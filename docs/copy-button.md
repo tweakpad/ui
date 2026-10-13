@@ -3,9 +3,8 @@
 `<tp-copy-button>` writes a value to the clipboard and confirms the result in place: its icon
 turns into a check, its accessible name becomes the copied message for a short time, and the
 result is announced politely. It composes one [Button](button.md) with an [Icon](icon.md), so
-variants, sizes, focus and disabled treatment are the Button's. It is the library's one copy
-control; [Code block](code-block.md), [QR code](qr-code.md) and the color picker compose it
-instead of owning clipboard logic.
+variants, sizes, focus and disabled treatment are the Button's. [Code block](code-block.md),
+[QR code](qr-code.md) and the color picker compose it for their copy actions.
 
 ## Properties
 

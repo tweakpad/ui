@@ -5,8 +5,7 @@ keyboard, swipe, optional wheel input, indicators and the scrollbar share one nu
 selection. Dragging and native scrolling expose provisional progress; they do not
 publish selection until the owner accepts a destination.
 
-The horizontal and vertical demos use five simple numbered Cards, following the
-[shadcn Carousel examples](https://ui.shadcn.com/docs/components/base/carousel).
+The horizontal and vertical demos use five simple numbered Cards.
 Cards retain the shared solid surface, border and radius; there are no slide actions.
 
 ```html
@@ -168,7 +167,7 @@ While a gesture is pending or active, the Carousel prevents text selection and n
 image dragging inside it, with no consumer CSS. A descendant marked `draggable="true"`
 keeps its own native drag. Controls, indicators and the scrollbar are not
 text-selectable, so repeated clicks on Next do not select slide content.
-`preventInteractionOnTransition` and `loopOptions.preventDuringTransition` restore
+`preventInteractionOnTransition` and `loopOptions.preventDuringTransition` enable
 transition locking.
 
 `keyboard` is enabled by default, with `pageKeys=false` and `homeEnd=true`; false
@@ -240,10 +239,9 @@ Visibility accepts `always`, `automatic`, `while-scrolling`, or `on-hover`.
 Optional `element` and `thumbElement` accept scoped targets. An interactive bar has
 scrollbar semantics (`aria-valuemin/max/now` plus human-readable `aria-valuetext`
 from `messages.position`, for example "3 of 8"), keyboard navigation and mandatory
-snap-on-release. Its common geometry/capture/rendering owner is also used by Scroll
-Area. With `visibility: 'while-scrolling'` any track movement reveals the bar:
+snap-on-release. With `visibility: 'while-scrolling'` any track movement reveals the bar:
 previous/next, indicators, swipe, wheel, keyboard, scrollbar input, autoplay and
-controller calls all report activity to the shared scrollbar owner. The bar hides
+controller calls all reveal it. The bar hides
 after 1000 ms without movement with a 400 ms fade, stays visible while hovered,
 focused or dragged, and uses the `scrollbar-visibility` motion role (parameters:
 previous/next visibility and `context.orientation`). The `auto-height` role
@@ -379,8 +377,8 @@ Public parts are `carousel`, `carousel-viewport`, `carousel-track`, `carousel-it
 `carousel-previous`, `carousel-next`, `carousel-indicator`, `carousel-controls`,
 `carousel-status`, `carousel-scrollbar`, `carousel-thumb`,
 `carousel-autoplay-control`, `carousel-announcements`, and, while an effect is active,
-`carousel-effect-surface`. Legacy `root`, `viewport`,
-`track`, `previous`, `next`, `controls`, and `status` aliases remain available.
+`carousel-effect-surface`. The aliases `root`, `viewport`,
+`track`, `previous`, `next`, `controls`, and `status` are also available.
 Action parts reach the actual Button through supported part registration/export.
 
 Orientation keys apply to root, viewport, track, item, previous, next, indicator,
@@ -504,5 +502,5 @@ The context provides the viewport, track, effect surface, orientation, direction
 
 Grid/multirow layout, unsnapped free momentum, zoom, linked controllers, thumbnail
 controllers, URL routing, raw HTML renderers and a public plugin/module injection
-system are outside this Carousel contract. Effects are typed presentation objects,
+system are not supported. Effects are typed presentation objects,
 not installable modules.

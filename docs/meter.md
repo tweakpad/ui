@@ -2,9 +2,8 @@
 
 Meter represents a scalar measurement, such as storage or temperature. It is
 exposed through `MeterController` and `meterState`, without a separate catalog
-element. Task completion uses `tp-progress`. Their numerical normalization and
-formatting share one Foundation owner; nonfinite measurement values clamp to a
-bound, whereas nonfinite Progress values remain indeterminate.
+element. Task completion uses `tp-progress`. Nonfinite measurement values clamp
+to a bound, whereas nonfinite Progress values remain indeterminate.
 
 ```html
 <span id="capacity-label">Storage used</span>

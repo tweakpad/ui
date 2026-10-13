@@ -137,11 +137,11 @@ export const attachmentExamples = [
       'Title',
       attachment({ name: 'Reference documentation', description: '', icon: '' }) +
         attachment({
-          name: 'shadcn/ui',
+          name: 'Design guidelines',
           description: '',
           icon: '',
           size: 'sm',
-          href: 'https://ui.shadcn.com',
+          href: 'https://example.com/design',
           removable: false,
         }),
     ) +
@@ -154,9 +154,9 @@ export const attachmentExamples = [
         }) +
           attachment({
             name: 'Accessible components',
-            description: 'ui.shadcn.com/docs',
+            description: 'example.com/docs/accessibility',
             icon: '',
-            href: 'https://ui.shadcn.com/docs',
+            href: 'https://example.com/docs/accessibility',
             removable: false,
           }),
       ),

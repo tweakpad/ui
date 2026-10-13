@@ -11,7 +11,7 @@ export const qrCodeExamples = [
       `<tp-qr-code value="https://ledger.app/connect/jd-4829" label="Scan to connect your mobile device"></tp-qr-code>` +
       `<tp-button slot="footer" variant="secondary">Got it</tp-button>` +
       `</tp-card>`,
-    'A Card around the code, as in the shadcn QR card. The tile stays light in a dark theme.',
+    'A Card around the code. The tile stays light in a dark theme.',
   ),
   markupExample(
     'Copy and download',

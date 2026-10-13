@@ -1,8 +1,6 @@
 # Collapsible
 
-Collapsible is the library's standalone disclosure element and the disclosure primitive used by Accordion Item. `<tp-collapsible>` owns its Trigger–Content relationship, positional presentation regions, default disclosure indicator, measured presence transition, motion-role requests, disabled handling, and cleanup. Accordion adds group selection by driving the `open` state of a Collapsible inside each Item; it does not reproduce those behaviors.
-
-The normative contract is UI Foundation §13.3 and UI Component Library §16.4.
+Collapsible is the library's standalone disclosure element and the disclosure primitive used by Accordion Item. `<tp-collapsible>` owns its Trigger–Content relationship, positional presentation regions, default disclosure indicator, measured presence transition, motion-role requests, disabled handling, and cleanup. Accordion adds group selection by driving the `open` state of a Collapsible inside each Item.
 
 ## Basic use
 
@@ -59,7 +57,7 @@ Positional content is inside the native button Trigger, so it must not contain l
 
 `contentAlignment="edge"` starts ContentBody at the component's logical inline edge and applies the standard inline content inset. `contentAlignment="label"` starts it at the Label position and removes the redundant logical inline-start inset. Both modes therefore align content text with the default Trigger label. Label alignment follows writing direction and the actual Leading layout, so arbitrary icons, badges, text, or multiple nodes do not require a hard-coded indent.
 
-The alignment applies to the ContentBody box. Consumer padding applied through that part overrides or extends the baseline token-based inset without changing the alignment contract.
+The alignment applies to the ContentBody box. Consumer padding applied through that part overrides or extends the baseline token-based inset without changing the alignment.
 
 The resolved value is available as `data-content-alignment`. Changing alignment does not change disclosure state, activation, focus, presence, motion, or accessibility relationships.
 
@@ -128,7 +126,7 @@ See the **External line-by-line motion** story and the [Motion guide](motion.md)
 
 ## Composition with Accordion
 
-Each `<tp-accordion-item>` renders one internal `<tp-collapsible>`. The Item maps Collapsible's Heading, Trigger, Leading, Label, Trailing, Content, and ContentBody through its Accordion part names and forwards the `leading`, `label`, `trailing`, and content slots. The Accordion Root supplies derived `open`, `disabled`, retention and content-alignment policies, and stable `value`/`index` motion context. An Item may override `contentAlignment`; Collapsible remains the only disclosure, layout-alignment, and motion implementation, while Accordion remains the only selection owner.
+Each `<tp-accordion-item>` renders one internal `<tp-collapsible>`. The Item maps Collapsible's Heading, Trigger, Leading, Label, Trailing, Content, and ContentBody through its Accordion part names and forwards the `leading`, `label`, `trailing`, and content slots. The Accordion Root supplies derived `open`, `disabled`, retention and content-alignment policies, and stable `value`/`index` motion context. An Item may override `contentAlignment`.
 
 Use `<tp-collapsible>` for one independent disclosure. Use `<tp-accordion>` with `<tp-accordion-item>` when several disclosures need coordinated single or multiple selection.
 

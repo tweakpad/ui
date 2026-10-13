@@ -1,9 +1,6 @@
 # Attribute, marker and event conventions
 
-These rules apply to every component and widget (`src/components/`, `src/widgets/`).
-`src/conventions.test.ts` checks the ones that can be read from the source; the rest are
-reviewed against the live specification (Component Library §10 Variant system, §11 State
-presentation; Foundation §5.3 ChangeEvent, Appendix B; the UI Widgets Specification for widgets).
+These rules apply to every component and widget.
 
 ## Properties and attributes
 
@@ -14,8 +11,8 @@ presentation; Foundation §5.3 ChangeEvent, Appendix B; the UI Widgets Specifica
   `autocomplete`, `colSpan` / `colspan`.
 - Internal reactive state is declared with `state: true` (leading underscore by
   convention) and never becomes an attribute. Object-valued inputs use `attribute: false`.
-- Boolean properties are positive (`showArrow`, `keepMounted`); a negative name is used only
-  when the upstream contract defines it that way (`noAutofill`, `disableHoverablePopup`).
+- Boolean properties are positive (`showArrow`, `keepMounted`), except a few established
+  negative names (`noAutofill`, `disableHoverablePopup`).
 - A property that controls a layout relationship uses Alignment terminology (`align`,
   `alignment`); one that selects a discrete logical region uses Position terminology
   (`leading`, `trailing`).
@@ -30,7 +27,7 @@ presentation; Foundation §5.3 ChangeEvent, Appendix B; the UI Widgets Specifica
 
 ## State markers
 
-- Marker names come from the specification's state vocabulary (`open`/`closed`,
+- Marker names come from one shared state vocabulary (`open`/`closed`,
   `starting`/`ending`, `checked`/`unchecked`, `selected`, `highlighted`, `active`,
   `disabled`/`readonly`/`required`, `valid`/`invalid`/`dirty`/`touched`/`filled`/`focused`,
   `focus-visible`, `orientation`/`side`/`align`). One canonical name per state; no parallel
@@ -54,8 +51,8 @@ presentation; Foundation §5.3 ChangeEvent, Appendix B; the UI Widgets Specifica
   settled notification after motion is `tp-<noun>-change-complete`. Past-tense suffixes
   (`-changed`) are not used.
 - Event detail carries `{ value, previousValue, reason, sourceEvent }` for value lanes, and
-  `reason` is one of the registered change reasons (Foundation Appendix B.8 plus the
-  component's own registry entries). `programmatic` is never a neutral fallback.
+  `reason` is one of the shared change reasons or a reason documented on the component's
+  page. `programmatic` is never a neutral fallback.
 - `tp-diagnostic` detail is `{ code, message, severity }`; the code is prefixed with the
   component name (`tabs-missing-panel`).
 - `tp-field-value` is the internal coordination event between a form control and its Field;

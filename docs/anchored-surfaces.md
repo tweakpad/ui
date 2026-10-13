@@ -1,7 +1,7 @@
 # Shared anchored surface API
 
-Menu (including context invocation), Popover and Navigation Menu use the same positioning,
-portal, presence and dismissal owners. Their individual references define the
+Menu (including context invocation), Popover and Navigation Menu share the positioning,
+portal, presence and dismissal options on this page. Their own pages define the
 state, focus, modality and trigger policies; sharing these options does not
 change those policies. Menubar configures these options on its child Menu.
 
@@ -20,11 +20,11 @@ Function, element, ref, record and callback values are JavaScript properties.
 
 | Property / attribute                                     | Type                                               | Menu / Context / Popover / Navigation default | Meaning                                                                                                                              |
 | -------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `placement`                                              | string                                             | `bottom center`; Popover: `block-end center`  | Compatibility pair of side and alignment.                                                                                            |
+| `placement`                                              | string                                             | `bottom center`; Popover: `block-end center`  | Combined side and alignment.                                                                                                         |
 | `side`                                                   | physical or logical side                           | `bottom`; Popover: `block-end`                | top, right, bottom, left, inline-start, inline-end, block-start or block-end. Nested Menu uses inline-end.                           |
 | `align`                                                  | start / center / end                               | center                                        | Independent alignment; nested Menu uses start.                                                                                       |
 | `sideOffset / side-offset`, `alignOffset / align-offset` | number or geometry resolver                        | three theme spacing units                     | Main-axis gap and alignment shift.                                                                                                   |
-| `offset`                                                 | number or geometry resolver                        | alias of sideOffset                           | Compatibility alias.                                                                                                                 |
+| `offset`                                                 | number or geometry resolver                        | alias of sideOffset                           | Alias.                                                                                                                               |
 | `anchor`                                                 | Element, VirtualAnchor, ref, resolver or undefined | current Trigger                               | VirtualAnchor exposes getBoundingClientRect and optional contextElement. Popover's anchor slot overrides its default Trigger anchor. |
 | `collisionAvoidance`                                     | CollisionPolicy                                    | side flip, align flip                         | Side and alignment correction; perpendicular fallback is opt-in.                                                                     |
 | `collisionBoundary`                                      | clipping ancestors, Element(s) or rectangle        | clipping-ancestors                            | Boundary used by the common overflow calculation.                                                                                    |
@@ -49,8 +49,7 @@ Function, element, ref, record and callback values are JavaScript properties.
 | `backdropForceRender / backdrop-force-render`            | boolean                                            | false                                         | Retain the inactive Backdrop; it stays hidden and inert.                                                                             |
 | `showViewport / show-viewport`                           | boolean                                            | false; Navigation true                        | Render the payload viewport with retained previous/current entries and measured dimensions.                                          |
 
-An offset resolver receives `{side, align, anchor: {width, height}, positioner:
-{width, height}}`. Side is resolved to a physical side for the current candidate;
+An offset resolver receives `{side, align, anchor: {width, height}, positioner: {width, height}}`. Side is resolved to a physical side for the current candidate;
 collision flips re-evaluate the callback with the new side. Return a finite
 number. Direction, writing mode, locale and document resources follow the
 nearest composed environment, including after adoption.
@@ -120,20 +119,18 @@ context-invoked Menu owns a single context target, and Navigation associates eac
 with its Item. Do not use detached trigger registration or a surface handle for
 those component policies.
 
-Menu and Popover expose `openOnHover / open-on-hover=false`, `openDelay /
-open-delay` (Menu 100ms; Popover 300ms), `closeDelay / close-delay=0`, and the `delay`
-compatibility alias for openDelay. Navigation uses hover with 50ms open/close.
+Menu and Popover expose `openOnHover / open-on-hover=false`, `openDelay / open-delay` (Menu 100ms; Popover 300ms), `closeDelay / close-delay=0`, and the `delay`
+alias for openDelay. Navigation uses hover with 50ms open/close.
 Hover respects pointer type, safe travel to interactive content and focus inside
 that content. Pressing a hover-open interactive surface can pin it open.
-`disableHoverablePopup / disable-hoverable-popup=false`, `closeOnClick /
-close-on-click=false`, `trackCursorAxis / track-cursor-axis='none'` (horizontal,
-vertical, both) and `provider` (DelayGroup) are shared compatibility controls;
+`disableHoverablePopup / disable-hoverable-popup=false`, `closeOnClick / close-on-click=false`, `trackCursorAxis / track-cursor-axis='none'` (horizontal,
+vertical, both) and `provider` (DelayGroup) are shared controls;
 only use them where the owning component's trigger policy applies. They do not
 turn context-invoked Menu into Tooltip or change Navigation's link semantics.
 
 ## Parts, rendering and theming
 
-Each component reference lists its public part names. Root `partContracts`
+Each component page lists its public part names. Root `partContracts`
 configures parts rendered by that Root. A child MenuItem, RadioGroup or
 NavigationMenuItem owns its own `partContracts`; configure that constituent's
 contract on the constituent. Root `partPresentation` contributions flow to their

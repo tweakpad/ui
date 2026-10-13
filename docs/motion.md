@@ -4,10 +4,10 @@ Tweakpad components provide CSS motion by default and publish semantic hooks for
 
 ## Default CSS motion
 
-Default motion is constructed in one shared presentation module. Feedback (color,
-track and thumb changes) and dialog fades use `--tp-duration-fast`; anchored surfaces, panel movement and
-layout changes use `--tp-duration-normal`. Every finite transition multiplies its
-duration by `--tp-motion-scale` and uses `--tp-easing-standard`. Focus rings appear
+Feedback (color, track and thumb changes) and dialog fades use
+`--tp-duration-fast`; anchored surfaces, panel movement and layout changes use
+`--tp-duration-normal`. Every finite transition multiplies its duration by
+`--tp-motion-scale` and uses `--tp-easing-standard`. Focus rings appear
 immediately. Component recipes list the properties they animate; none use
 `transition: all`.
 
@@ -16,7 +16,7 @@ popup share opacity, scale and side-relative entry/exit. Select's inline and
 item-aligned layouts preserve their anchoring geometry. Drawer and Side Panel
 slide from their attached viewport edge; their backdrop fades independently.
 Dialog and Alert Dialog fade their content and backdrop together from the first
-closing frame; neither waits visibly for the other to disappear. Existing semantic motion roles remain the driver boundary.
+closing frame; neither waits visibly for the other to disappear.
 
 Spinner and indeterminate Progress share a continuous activity cadence derived
 from the normal duration; Skeleton placeholders use twice that period. Rotation

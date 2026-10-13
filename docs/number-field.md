@@ -2,8 +2,8 @@
 
 `NumberFieldController` adds numeric entry to an existing `tp-input`. It is a
 Foundation capability, with no separate custom element or catalog entry. Compose
-the existing Field, InputGroup, Button and Icon controls; their theme, parts,
-spacing and rendering stay authoritative.
+it with Field, InputGroup, Button and Icon controls; their theme, parts, spacing
+and rendering stay authoritative.
 
 ```html
 <tp-field label="Quantity" name="quantity">
@@ -109,8 +109,7 @@ Scrubbing captures the pointer, converts accumulated movement divided by
 sensitivity into step units, and commits on release. Vertical upward movement
 increases. Teleport distance bounds the virtual cursor around the area; otherwise
 the owner viewport bounds it. Cancellation, removal, disabled/read-only changes
-and disposal release capture and transient portal/timer/listener work. There is
-no duplicate numeric state or independently painted drag control.
+and disposal release capture and transient portal/timer/listener work.
 
 ## Editing, events and forms
 
@@ -122,14 +121,14 @@ ArrowUp/Down step; Alt uses smallStep, Shift uses largeStep; Home/End select
 authored minimum/maximum. Wheel preserves horizontal and pinch/zoom gestures.
 
 Numeric `tp-value-change` proposals bubble from the actual Input through Root.
-They use the existing cancellation protocol and reasons `input`, `input-clear`,
+They use the shared cancellation protocol and reasons `input`, `input-clear`,
 `input-paste`, `input-blur`, `keyboard`, `increment`, `decrement`, `wheel`, `scrub`,
 `programmatic`, plus shared native `form-reset`. The callback runs before the
 bubbling event. Synchronous owner writes inside a canceled proposal do not publish.
 `tp-value-commit` fires on changed stored values: blur, step release, scrub release,
 or immediately for keyboard/wheel. Unchanged or canceled steps do not commit.
 
-Input's existing form participant submits a canonical numeric string, independent
+Input's form participant submits a canonical numeric string, independent
 of localized display, and the empty string for null. Disabled values are omitted;
 read-only values remain successful. Required empty, bad input, range and step
 validity use ElementInternals; custom validity remains supported. Native reset
@@ -138,10 +137,5 @@ Field validation sees the number rather than formatted text.
 
 Root and registered Group expose `data-disabled`, `data-readonly`, `data-required`,
 `data-valid`, `data-invalid`, `data-dirty`, `data-touched`, `data-filled`,
-`data-focused`, and `data-scrubbing`. Existing controls retain their own markers and
+`data-focused`, and `data-scrubbing`. Composed controls retain their own markers and
 parts. No component-specific spacing tokens or appearance attributes are added.
-
-Verification record: `plans/components/library-completion/number-field/implementation-checklist.md`.
-That record distinguishes real Chrome interactions from unsupported wheel, held
-pointer, touch and IME evidence; implementation availability is not a claim that
-every native input path has been verified.

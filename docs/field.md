@@ -1,6 +1,6 @@
 # Field
 
-`tp-field` owns one logical value's visible name, descriptions, errors, validation and state. Input and Text Area reuse the Field control owner; compatible selection and composite controls register through the same context and association channels.
+`tp-field` owns one logical value's visible name, descriptions, errors, validation and state. Input, Text Area and compatible selection and composite controls register with it.
 
 ```ts
 import '@tweakpad/ui/register';
@@ -25,7 +25,7 @@ import '@tweakpad/ui/styles.css';
 | `name`                                             | text                                             | registered control name           | Field name takes precedence while preserving authored control name.                                                                   |
 | `disabled`, `invalid`                              | Boolean                                          | false                             | Context disability and explicit invalidity; neither replaces authored control state. Explicit false clears only its own invalid lane. |
 | `dirty`, `touched`                                 | optional Boolean                                 | derived                           | Overrides corresponding observable state when supplied.                                                                               |
-| `validator`                                        | `(value, formValues) => error or Promise<error>` | absent                            | Lit binding for Foundation's custom validator; `validate()` remains the imperative action.                                            |
+| `validator`                                        | `(value, formValues) => error or Promise<error>` | absent                            | Custom validator; `validate()` remains the imperative action.                                                                         |
 | `validationMode` / `validation-mode`               | on-submit, on-blur, on-change                    | nearest Form, otherwise on-submit | Validation trigger policy.                                                                                                            |
 | `validationDebounce` / `validation-debounce`       | nonnegative milliseconds                         | 0                                 | Applies only to change validation.                                                                                                    |
 | `nativeLabel` / `native-label`                     | Boolean                                          | true                              | Enables label activation forwarding; false keeps naming while avoiding double activation of popup triggers.                           |
@@ -62,14 +62,14 @@ Custom validation receives the current value and all named Fields in the same fo
 
 Submission touches fields and prevents synchronous invalid submission. Async validation does not retroactively cancel native submission; cancel the submit event explicitly when awaiting async outcomes is required. Failed on-submit validation revalidates later edits. Reset compares current values with the original registration snapshot rather than replacing it.
 
-`tp-validation` bubbles and is composed with `{ run, state }` after current validation settles. Error uses shared Presence starting/ending markers and emits `tp-presence-complete` with `{ present }`. Tree, keyboard and automated accessibility checks are separate from assistive-technology testing.
+`tp-validation` bubbles and is composed with `{ run, state }` after current validation settles. Error uses shared Presence starting/ending markers and emits `tp-presence-complete` with `{ present }`.
 
 ## Customization
 
 Every published part supports `partContracts[part]`: renderDelegate, hostProperties, classHook, styleHook, elementReference and content. Delegates apply their supplied bind directive to retain shared semantics and initiating events. Consumer handlers may call preventComponentHandling() independently from native preventDefault(). Part contracts do not replace value/validation ownership.
 
-Use semantic tokens, presentation dictionary replacement, `partPresentation` or public `::part()` boundaries. Disabled/valid/invalid/dirty/touched/filled/focused/pending markers propagate across applicable parts and compatible controls. Canonical Docs contains one working base example; exhaustive validation and layout fixtures stay outside Docs.
+Use semantic tokens, presentation dictionary replacement, `partPresentation` or public `::part()` boundaries. Disabled/valid/invalid/dirty/touched/filled/focused/pending markers propagate across applicable parts and compatible controls.
 
-Fixed vertical and horizontal layouts retain intrinsic content sizing, including centered Select compositions. Only responsive orientation establishes size containment and fills its available container. Horizontal labels use their content width, leaving a theme gap beside the control rather than reserving a percentage column. Control, description and error regions use the shared theme gap.
+Fixed vertical and horizontal layouts retain intrinsic content sizing, including centered Select compositions. Only responsive orientation establishes size containment and fills its available container. Horizontal labels use their content width, leaving a theme gap beside the control. Control, description and error regions use the shared theme gap.
 
 For compact binary controls (Switch, Checkbox, and native checkbox/radio controls), horizontal layout groups the label, description and error in the text column and places the control at the logical end, aligned with the first text row. Responsive fields use this arrangement when their container is wide enough. Vertical fields retain the label/control/description stack.

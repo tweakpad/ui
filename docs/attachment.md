@@ -31,7 +31,7 @@ independent actions; activating Remove or Download cannot bubble into the trigge
 | Slot          | Role                                                                                                                  |
 | ------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `media`       | Icon or image; omitted without content. Busy states supply Spinner only when no media is authored.                    |
-| `preview`     | Compatibility alias for media when no `media` node is supplied.                                                       |
+| `preview`     | Alias for media when no `media` node is supplied.                                                                     |
 | `title`       | Resource title; falls back to `filename`. Keep `filename` for generated action names.                                 |
 | `description` | Description/status content; must explain failure or recovery for error status.                                        |
 | default       | Additional ordinary resource content.                                                                                 |
@@ -66,4 +66,4 @@ that would conflate its independent actions.
 
 ## Usage examples
 
-The rendered Docs demonstrate files, content-only resources, file states, images, image states, density, scrollable groups, and preview triggers. Examples compose existing public controls and are not extra catalog variants.
+The rendered Docs demonstrate files, content-only resources, file states, images, image states, density, scrollable groups, and preview triggers.

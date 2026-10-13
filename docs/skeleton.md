@@ -9,7 +9,7 @@ space it reserves; changing motion never changes that geometry. Import
 | `motion`                         | pulse, sweep, none                         | pulse   |
 | `animated`                       | boolean; false suppresses either animation | true    |
 | `motionPolicy` / `motion-policy` | inherit, normal, reduce                    | inherit |
-| `label`                          | legacy string; deliberately not announced  | Loading |
+| `label`                          | string; not announced                      | Loading |
 
 The shared reduced-motion policy and `tp-motion-request` loading role apply to both
 motion treatments. Shared duration tokens govern timing. The `skeleton` part is
@@ -26,13 +26,12 @@ needed. Skeleton does not own or announce the eventual content.
 Use normal layout to set width and height. Set the host border radius with a shared radius token for circular or other shapes.
 For example, `border-radius:var(--tp-radius-full)` inherits into the placeholder.
 Alternatively use `partPresentation.skeleton.styleHook` with shared radius tokens. The
-`skeleton` part also supports the existing part contract/delegate API. No local
-spacing attributes, interaction events, form value or focus behavior are added.
+`skeleton` part also supports the part contract/delegate API. Skeleton has no
+spacing attributes, interaction events, form value or focus behavior.
 Export: `TpSkeleton` and `skeletonMotionRoles`.
 
-Docs include the reference avatar, media preview, card, text, form and table loading layouts.
-All use the same Skeleton primitive with ordinary theme-relative layout; no new
-shape or spacing attributes are introduced. The media preview composes Aspect Ratio
-to reserve its two-to-one region; Card supplies the separate card composition's
-sections. Form and table placeholders are decorative layout, not empty interactive
-controls or fake table data. Each example uses the shared code explorer.
+Docs include avatar, media preview, card, text, form and table loading layouts.
+All use Skeleton with ordinary theme-relative layout. The media preview composes
+Aspect Ratio to reserve its two-to-one region; Card supplies the card
+composition's sections. Form and table placeholders are decorative layout, not
+empty interactive controls or fake table data.

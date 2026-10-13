@@ -1,6 +1,6 @@
 # Alert dialog
 
-Use `tp-alert-dialog` for a consequential decision that needs explicit acknowledgement or cancellation. It always traps focus and blocks background interaction: the whole document by default, or only one container with `modality="container"`. Outside presses never dismiss or confirm it. Use Dialog for general workflows. Alert Dialog extends the shared Dialog owner for state, native surface, focus, triggers, handles, nesting and presence; only its decision policy and public part names differ.
+Use `tp-alert-dialog` for a consequential decision that needs explicit acknowledgement or cancellation. It always traps focus and blocks background interaction: the whole document by default, or only one container with `modality="container"`. Outside presses never dismiss or confirm it. Use Dialog for general workflows. Alert Dialog shares Dialog's state, native surface, focus, triggers, handles, nesting and presence; only its decision policy and public part names differ.
 
 ```ts
 import '@tweakpad/ui/styles.css';
@@ -57,11 +57,11 @@ The inherited `motionPolicy` (`motion-policy`: inherit, normal, reduce) and `par
 
 `tp-open-change` bubbles, is composed and cancelable. Detail includes `value`, `previousValue`, `reason`, `sourceEvent`, optional `trigger`, `cancelled`, `allowPropagation`, and `preventUnmountOnClose()`. Call `event.preventDefault()` to veto. For externally animated exit, call `event.detail.preventUnmountOnClose()` synchronously, then `dialog.unmount()` after your animation. A canceled close does not retain the next close.
 
-`tp-open-change-complete` bubbles and is composed; detail is `{ open }`. `tp-diagnostic` identifies invalid state mode, missing required title/action, an unusable container for container modality (`alert-dialog-modality-container`) and unsupported modality values (`alert-dialog-modality-unsupported`). `tp-motion-request` is the Foundation motion customization channel.
+`tp-open-change-complete` bubbles and is composed; detail is `{ open }`. `tp-diagnostic` identifies invalid state mode, missing required title/action, an unusable container for container modality (`alert-dialog-modality-container`) and unsupported modality values (`alert-dialog-modality-unsupported`). `tp-motion-request` is the motion customization channel.
 
 ## Content, parts, and presentation
 
-Slots: `trigger` (one action), `title`, `description`, `media`, default body content, `cancel`, `confirm`, and `actions`. The legacy `footer` slot also flows into Actions; it adds no implicit close behavior. Use native text/structure for content and existing library components for controls, icons and status marks. Cancel and Confirm should remain clearly labelled even when their appearance is symmetric.
+Slots: `trigger` (one action), `title`, `description`, `media`, default body content, `cancel`, `confirm`, and `actions`. The `footer` slot also flows into Actions; it adds no implicit close behavior. Use native text/structure for content and existing library components for controls, icons and status marks. Cancel and Confirm should remain clearly labelled even when their appearance is symmetric.
 
 Actions use the same full-width section background, top border and padding treatment as Card footer. Alert Dialog has no generic corner Close: its named Cancel and Confirm actions communicate the decision.
 
@@ -71,7 +71,7 @@ Root/Content/Overlay publish open/closed and starting/ending markers (`data-open
 
 The `backdrop` motion role targets Overlay, supports enter/exit, and participates in Presence completion. It has no extra context fields. Claimed motion replaces that role's default opacity transition; it does not take ownership of focus, state or mounting.
 
-The current Lit binding uses a native dialog in the browser top layer to preserve slot ownership and inherited tokens while escaping clipping and transformed ancestors. The inherited Dialog portal properties move it to another destination; with container modality it renders in place inside the container. Generic renderDelegate/hostProperties/elementReference channels are not yet exposed by this binding; slotted action association preserves the supplied control and its native semantics. These remain parity gaps against the complete Foundation surface contract.
+Alert Dialog renders in a native dialog in the browser top layer, which escapes clipping and transformed ancestors while slotted content keeps inherited tokens. The inherited Dialog portal properties move it to another destination; with container modality it renders in place inside the container.
 
 Default motion runs on opening only. Accepted closing removes the surface and
 backdrop immediately, without waiting for an exit transition. A consumer may

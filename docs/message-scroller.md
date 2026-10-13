@@ -1,6 +1,6 @@
 # Message Scroller
 
-A native transcript viewport with turn anchoring, streaming follow, stable history loading and explicit scroll commands. The application owns messages and transport; Message and Bubble supply their presentation. The implementation follows the local [shadcn Message Scroller](https://ui.shadcn.com/docs/components/base/message-scroller) source through Tweakpad’s headless provider and Lit constituents.
+A native transcript viewport with turn anchoring, streaming follow, stable history loading and explicit scroll commands. The application owns messages and transport; Message and Bubble supply their presentation.
 
 ```ts
 import '@tweakpad/ui/register';
@@ -42,7 +42,7 @@ For shorthand, put Items directly inside Root. It supplies the same public Viewp
 | Property / attribute                        | Type / default                                   | Behavior                                                                                                                                            |
 | ------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `label`                                     | string, `Conversation`                           | Accessible viewport and log name; constituents can override it.                                                                                     |
-| `initialPosition` / `initial-position`      | `start \| end \| last-anchor \| preserve`, `end` | Once-only first nonempty visible placement. `preserve` is the compatibility spelling for `last-anchor`. Changing it later does not move the reader. |
+| `initialPosition` / `initial-position`      | `start \| end \| last-anchor \| preserve`, `end` | Once-only first nonempty visible placement. `preserve` is an alias of `last-anchor`. Changing it later does not move the reader.                    |
 | `follow`                                    | boolean, `true`                                  | Follow content growth while pinned; reaching the live end re-arms it. Set `.follow = false` to disable.                                             |
 | `pinned`                                    | boolean, uncontrolled until supplied             | Controlled pin state. Initialize before connection and accept proposals synchronously. Keep the same controlled/uncontrolled mode for the lifetime. |
 | `defaultPinned` / `default-pinned`          | boolean, `true`                                  | Initial uncontrolled state, not a reset command.                                                                                                    |
@@ -55,7 +55,7 @@ For shorthand, put Items directly inside Root. It supplies the same public Viewp
 | `returnDirection` / `return-direction`      | `start \| end`, `end`                            | Direction of the shorthand return control.                                                                                                          |
 | `provider`                                  | readonly `MessageScrollerProvider`               | Commands, native viewport and subscriptions for external controls.                                                                                  |
 
-Geometry values are nonnegative CSS pixels; negative or nonfinite input is normalized to zero. Boolean attributes express true by presence: `follow="false"` is still true. Assign properties to disable defaults (`root.follow = false`, `root.defaultPinned = false`, `root.preserveOnPrepend = false`). Tweakpad retains follow enabled and peek zero as compatibility defaults; the upstream primitive defaults differ.
+Geometry values are nonnegative CSS pixels; negative or nonfinite input is normalized to zero. Boolean attributes express true by presence: `follow="false"` is still true. Assign properties to disable defaults (`root.follow = false`, `root.defaultPinned = false`, `root.preserveOnPrepend = false`).
 
 Opening waits for measurable content; confirmed empty content clears pending paint, and later first content still receives the opening position. `last-anchor` opens at the latest anchor when that turn exceeds the viewport; short turns or no anchors fall back to the end. Following, free scrolling, anchored reading and settling a jump are distinct modes. A single new anchored turn holds its reading line while its reply consumes reserved space, then hands off to following. A batch of anchors while following retains the live end. Deliberate native scrolling releases automatic control.
 
@@ -103,15 +103,15 @@ During a reply, set `aria-busy` through this contract and clear it when the repl
 | `messageId` / `message-id`       | string, `''`, reflected     | Stable unique ID for commands and visibility.                 |
 | `scrollAnchor` / `scroll-anchor` | boolean, `false`, reflected | Marks a new turn; independent of author or message alignment. |
 
-The default slot accepts Message/Bubble, Marker, attachments, native prose or other public components. A user prompt often starts a turn; ordinary chat messages need no anchors. Preserve ID and element identity when updating streamed text. Anonymous Items still participate in layout but are excluded from addressable visibility. Duplicate IDs report a diagnostic and retain the first target. Legacy direct children receive stable per-element identities; Items are preferred for explicit addressing.
+The default slot accepts Message/Bubble, Marker, attachments, native prose or other public components. A user prompt often starts a turn; ordinary chat messages need no anchors. Preserve ID and element identity when updating streamed text. Anonymous Items still participate in layout but are excluded from addressable visibility. Duplicate IDs report a diagnostic and retain the first target. Without Items, the direct children of Content (or Root) are the rows and receive stable per-element identities; use Items for explicit addressing.
 
 Items expose `data-message-id` when nonempty and `data-scroll-anchor="true|false"`. They use content visibility and intrinsic-size estimation for long transcripts. This is not built-in virtualization: application virtualizers own their rendered window and spacers. Supply `knownMessageIds` before commanding an unmounted target, mount the requested row, then await the command receipt. Keep the same native viewport and stable visible row IDs when prepending history.
 
-For entrance animation, animate a message’s inner presentation with opacity/transform after mounting it. Keep the Item’s layout height stable, honor inherited `motion-policy`/`resolvesReducedMotion(element)`, and cancel application-owned animations on removal. There is no separate Item animation property or React motion dependency.
+For entrance animation, animate a message’s inner presentation with opacity/transform after mounting it. Keep the Item’s layout height stable, honor inherited `motion-policy`/`resolvesReducedMotion(element)`, and cancel application-owned animations on removal. There is no separate Item animation property.
 
 ## Return control API
 
-`TpMessageScrollerReturnControl` / `<tp-message-scroller-return-control>` is the actual [Button](?path=/docs/components-button--docs) implementation with edge-based activation. It is the live specification’s renamed Button constituent, not a second button owner.
+`TpMessageScrollerReturnControl` / `<tp-message-scroller-return-control>` is a [Button](?path=/docs/components-button--docs) with edge-based activation.
 
 | Property / attribute                   | Type / default                         | Behavior                                                                           |
 | -------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -199,13 +199,13 @@ For a standalone provider, `new MessageScrollerProvider(options)` takes these re
 
 All constituents inherit TpElement’s `partContracts`, `partPresentation`, theme/dictionary and motion policy APIs. Appearance comes from shared recipes; structural scrolling and spacer geometry remain with the provider.
 
-| Part                                           | Owner / state passed to contract hooks                                                                                            |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `message-scroller`                             | Root; `{ pinned }`                                                                                                                |
-| `message-scroller-viewport` (`viewport` alias) | Viewport; `{ pendingScroll, start, end }`                                                                                         |
-| `message-scroller-content`                     | Content; empty state                                                                                                              |
-| `message-scroller-item`                        | Item; `{ messageId, scrollAnchor }`                                                                                               |
-| `message-scroller-return-control`              | Actual Button root; inherited Button state (`disabled`, variant, size, etc.). Additional active/direction markers on its element. |
+| Part                                           | Owner / state passed to contract hooks                                                                                     |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `message-scroller`                             | Root; `{ pinned }`                                                                                                         |
+| `message-scroller-viewport` (`viewport` alias) | Viewport; `{ pendingScroll, start, end }`                                                                                  |
+| `message-scroller-content`                     | Content; empty state                                                                                                       |
+| `message-scroller-item`                        | Item; `{ messageId, scrollAnchor }`                                                                                        |
+| `message-scroller-return-control`              | Button root; inherited Button state (`disabled`, variant, size, etc.). Additional active/direction markers on its element. |
 
 Contracts support `hostProperties`, state-aware `classHook`/`styleHook`, `content` and `renderDelegate` with shared binding rules. Root contracts for constituent names project across the composition. An explicitly supplied constituent contract replaces that whole inherited contract; it does not recursively merge. Return control accepts its canonical key or `button` (the latter takes precedence); its internal Button label/mark parts keep their Button names. Preserve mandatory native scrolling/log anatomy and bound semantic state when delegating rendering; content replacement replaces the slot, so supply the intended transcript yourself.
 
@@ -224,25 +224,23 @@ scroller.partContracts = {
 
 Each constituent exposes its native part through its own `::part(...)`; Root also registers native constituent parts for `partPresentation`. Shorthand exports viewport, content and return-control parts. Items expose their part on the Item host. Use constituent selectors in explicit composition and Root’s projection API when crossing multiple shadows.
 
-Root and its native viewport expose presence markers `data-pending-scroll`, `data-scrollable-start`, `data-scrollable-end`, `data-autoscrolling`, a `data-scrollable` token list (`start end`) and `data-scroll-mode`. Root host also exposes `data-pinned`. Pending paint is hidden until opening placement completes; this is client-side placement, not a React SSR/hydration API.
+Root and its native viewport expose presence markers `data-pending-scroll`, `data-scrollable-start`, `data-scrollable-end`, `data-autoscrolling`, a `data-scrollable` token list (`start end`) and `data-scroll-mode`. Root host also exposes `data-pinned`. Pending paint is hidden until opening placement completes on the client.
 
-The default frame height is `120 × --tp-spacing`. Set `--tp-message-scroller-height: 24rem` for a different bound, or `100%` inside a height-constrained parent. Content padding/gaps, return-control appearance, colors and motion timings use shared tokens/dictionaries. The viewport recipe includes the reference’s native scroll-timeline bottom fade, which clears at the end; override `mask-image` through its presentation hook to remove it. RTL uses logical control placement. Keep motion policy inherited or set `motion-policy="reduce"` to make scroll commands immediate and remove decorative timed motion.
+The default frame height is `120 × --tp-spacing`. Set `--tp-message-scroller-height: 24rem` for a different bound, or `100%` inside a height-constrained parent. Content padding/gaps, return-control appearance, colors and motion timings use shared tokens/dictionaries. The viewport recipe includes a native scroll-timeline bottom fade, which clears at the end; override `mask-image` through its presentation hook to remove it. RTL uses logical control placement. Keep motion policy inherited or set `motion-policy="reduce"` to make scroll commands immediate and remove decorative timed motion.
 
-## Reference chat demo
+## Chat demo
 
-The main demo follows the shadcn base/Rhea chat composition: a bounded Card with
-header Reset action, an Empty state, Message/Bubble rows, and an Input group
-composer with a plus Menu and icon-only Send button. Press Send to submit each
-queued prompt; replies stream locally. Reset clears the conversation. Menu choices
-are illustrative and do not upload files or invoke external services.
+The main demo is a bounded Card with a header Reset action, an Empty state,
+Message/Bubble rows, and an Input group composer with a plus Menu and icon-only
+Send button. Press Send to submit each queued prompt; replies stream locally.
+Reset clears the conversation. Menu choices are illustrative and do not upload
+files or invoke external services.
 
-The base demo sets `follow=false` and `previousItemPeek=64` to match the reference
-provider settings; the component defaults remain `true` and `0`. The Streaming
-messages example enables following. Story Controls apply when messages are mounted;
-changing opening controls remounts the demo.
+The base demo sets `follow=false` and `previousItemPeek=64`; the component
+defaults remain `true` and `0`. The Streaming messages example enables following.
+Story Controls apply when messages are mounted; changing opening controls remounts
+the demo.
 
-The reference uses static text for its read-only prompt. Tweakpad Input group
-requires one Control, so this composition uses an accessible read-only Text area
-with two visible lines and resizing disabled. Its accessible label is “Queued
-message”; no visible Field label or separate action row is added. All nested
-controls are public library components, and sizing uses their public parts.
+The composer shows the queued prompt in an accessible read-only Text area with
+two visible lines and resizing disabled. Its accessible label is “Queued
+message”; no visible Field label or separate action row is added.

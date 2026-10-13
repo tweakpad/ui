@@ -1,13 +1,12 @@
 import { calendarIcon } from '../icons/calendar.js';
 
 /**
- * The shadcn date-picker trigger (base/style-nova `DatePickerSimple`): an outline Button that fills
- * its Field, starts its content, uses the field padding and normal weight, leads with a calendar
- * icon, and mutes its placeholder while no date is chosen. Applied through Button's public `icon`
- * property and `button` part contract, the library equivalent of the upstream class overrides.
- * The label is an authored `tp-time` (upstream `format(date, "PPP")` is `preset="date-long"`), so
- * its preset, pattern, format, locale and time zone stay configurable; its content is the
- * placeholder Time shows until it has a date.
+ * A date-picker trigger: an outline Button that fills its Field, starts its content, uses the
+ * field padding and normal weight, leads with a calendar icon, and mutes its placeholder while no
+ * date is chosen, applied through Button's public `icon` property and `button` part contract.
+ * The label is an authored `tp-time` (`preset="date-long"`), so its preset, pattern, format,
+ * locale and time zone stay configurable; its content is the placeholder Time shows until it has
+ * a date.
  */
 export function datePickerTriggerContracts(empty) {
   return {

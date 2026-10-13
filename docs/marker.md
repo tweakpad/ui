@@ -10,13 +10,13 @@ for a label above a rule. The default treatment has no boundary.
 
 Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css` once.
 
-| Property / attribute | Values                                                        | Default |
-| -------------------- | ------------------------------------------------------------- | ------- |
-| `variant`            | default, separator, border                                    | default |
-| `label`              | Text fallback when the default slot is empty                  | empty   |
-| `tone`               | neutral, accent, danger, success; compatibility color mapping | neutral |
+| Property / attribute | Values                                       | Default |
+| -------------------- | -------------------------------------------- | ------- |
+| `variant`            | default, separator, border                   | default |
+| `label`              | Text fallback when the default slot is empty | empty   |
+| `tone`               | neutral, accent, danger, success             | neutral |
 
-The default slot supplies content; the optional `icon` slot accepts an existing
+The default slot supplies content; the optional `icon` slot accepts an
 Icon or decorative Spinner. The icon region is hidden from accessibility, so its
 meaning must also appear in content. The Marker adds no status, separator, action,
 or link role automatically. A caller may supply `role="status"` when content is a
@@ -30,4 +30,4 @@ action state, methods or form participation; the application owns its actions.
 
 Spacing, colors, typography and boundaries inherit the shared theme. Use public
 part styling for application layout, such as centered or vertical content.
-`TpMarker` remains exported from the library and its existing grouped entrypoint.
+`TpMarker` is exported from the library and its grouped entrypoint.

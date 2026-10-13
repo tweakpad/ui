@@ -83,9 +83,9 @@ the element connects and a later switch is refused with a `flow-state` diagnosti
 loads the empty document and reports a `tp-diagnostic` with the code `flow-state`. `toJSON()`
 returns the canonical document: runtime state (measurements, routes, selection) stripped, parents
 before children, the current viewport included unless `{ viewport: false }`, selection flags kept
-with `{ selection: true }`. `parseFlowDocument` accepts earlier shapes: an xyflow-style document
-(`sourceHandle`/`targetHandle`, `type` on edges, `parentNode`, `width`/`height`/`measured`) is
-migrated to version 1.
+with `{ selection: true }`. `parseFlowDocument` also accepts a document without `version` whose
+edges name their ports with `sourceHandle`/`targetHandle` and their kind with `type`, and whose
+nodes use `parentNode` and `width`/`height`/`measured`; it converts such a document to version 1.
 
 Every change is a cancelable `tp-value-change` proposal carrying the next document and
 `metadata.changes`, the fine-grained `FlowChange` list (`node-add`, `node-remove`, `node-replace`,
@@ -224,7 +224,7 @@ and connected at once.
 With `connectOnClick` (default) a click on a port starts a connection (`aria-pressed`) and a click
 on another port completes it. From the keyboard, Enter on a focused port starts a connection,
 arrows and Tab cycle the valid candidates (each announced), Enter confirms and Escape cancels. A
-selected edge has a reconnect anchor at each end `reconnectable` allows: as in xyflow, an invisible
+selected edge has a reconnect anchor at each end `reconnectable` allows: an invisible
 grab area on the edge just beyond the socket (a move cursor), so the socket itself keeps starting
 new connections. Dragging an anchor re-targets the edge after the same validation
 (`metadata.reconnect: { edgeId, end }`); the old edge hides while dragging and comes back when the
@@ -287,11 +287,10 @@ neighbouring nodes' padding. Routes therefore keep at least half the edge spacin
 parallel runs wherever the gaps between nodes are at least two paddings plus half the edge spacing
 (30 px with the defaults); in a narrower gap, edges that meet at facing ports can share a short
 run, and an edge between facing ports closer than two paddings has no lane at all and takes the
-smoothstep fallback (which, like xyflow's, loops out past both ports). The planner keeps a dirty set (edges whose boxes intersect a changed node, plus incident
-edges), memoizes routes by geometry hash and routes, then nudges, within a per-frame budget,
-resuming on the next frame until `pending` is false, so a drag re-routes only what moved; a change
-during a nudge restarts it from the new routes. Routed edges carry `data-routed`; `routeEdges()`
-routes everything synchronously and `routes` reads the planner's current paths.
+smoothstep fallback (which loops out past both ports). Routing and nudging run within a
+per-frame budget and resume on the next frame, so a drag re-routes only what moved. Routed edges
+carry `data-routed`; `routeEdges()` routes everything synchronously and `routes` reads the current
+paths.
 
 ## Layout
 
@@ -338,9 +337,9 @@ viewport so nothing moves under the pointer); `minZoom` (0.1) and `maxZoom` (4) 
 `fitPadding` (48 px) pads the fit. `setViewport(viewport, { duration, reason })`,
 `fitViewTo({ padding, duration, nodes, maxZoom })` (the fit never magnifies past a zoom of 1 unless
 `maxZoom` allows), `zoomTo(zoom, { point, duration })`, `zoomIn()` and `zoomOut()` (a factor of
-1.2), `setCenter(point, { zoom, duration })` animate on the shared frame loop and resolve when the
-viewport settles, instantly under reduced motion. `screenToFlow(point)` and `flowToScreen(point)`
-convert client coordinates, `canvasSize` is the pane's size and `getNodesBounds(ids?)`,
+1.2), `setCenter(point, { zoom, duration })` animate and resolve when the viewport settles,
+instantly under reduced motion. `screenToFlow(point)` and `flowToScreen(point)` convert client
+coordinates, `canvasSize` is the pane's size and `getNodesBounds(ids?)`,
 `getIntersectingNodes(rect, partially?)` read the engine's indices.
 
 A left drag pans in the pan tool, while Space is held or with the middle button. `wheel` sets what
@@ -360,7 +359,7 @@ gestures to the page. Node, connection, marquee and resize drags auto-pan near t
 
 The selection lane is `{ nodes, edges }` (`tp-selection-change`): a press selects, Shift adds,
 Command or Control toggles, and a press on a control inside a node selects that node while the
-control keeps the press (as xyflow selects on any click inside a node); in the select tool a press on the empty pane starts a marquee that
+control keeps the press; in the select tool a press on the empty pane starts a marquee that
 selects nodes it touches (`selectionMode="partial"`) or encloses (`full`), Shift extends it, a press
 without movement clears, and Shift with a press in the pan tool also starts a marquee. Command or
 Control with A selects everything and Escape clears. `select({ nodes, edges })`, `selectAll()` and
@@ -368,7 +367,7 @@ Control with A selects everything and Escape clears. `select({ nodes, edges })`,
 
 Copy, cut, paste and duplicate (`Mod+C`, `Mod+X`, `Mod+V`, `Mod+D`; `copy()`, `cut()`,
 `paste(payload?, { at })`, `duplicate()`) exchange `application/x-tweakpad-flow+json` with a JSON
-text fallback through the shared clipboard owner: a paste remaps ids, drops the nodes one grid step
+text fallback through the clipboard: a paste remaps ids, drops the nodes one grid step
 away or at the pointer, keeps the edges among them and selects what it pasted. Keys typed into an
 editable control inside a node stay with the control. `nudgeSelection(delta)` moves the selection
 by a delta; keyboard nudges coalesce into one history entry.
@@ -399,8 +398,8 @@ and delete for a node (preceded by align left, align top, distribute horizontall
 vertically when two or more nodes are selected); add waypoint and delete for an edge; paste, select
 all, fit view and lay out for the pane. With `runnable`, Run node, Run from here and Run up to
 here lead the node items and Run graph the pane items. Each item carries its icon and, where a key binding
-exists, its shortcut as a Key hint (Mod+D, Mod+C, Mod+X, Mod+V, Mod+A, Shift+1, Backspace), as the
-theme's menus do; delete is the destructive variant. `contextMenu(subject)` renders the items instead: `subject` is
+exists, its shortcut as a Key hint (Mod+D, Mod+C, Mod+X, Mod+V, Mod+A, Shift+1, Backspace); delete is
+the destructive variant. `contextMenu(subject)` renders the items instead: `subject` is
 `{ kind: 'node', nodeId, selection }`, `{ kind: 'edge', edgeId, selection }` or
 `{ kind: 'pane', point, selection }`;
 items with the built-in values (`duplicate`, `copy`, `cut`, `delete`, `pin`, `unpin`,
@@ -585,9 +584,9 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
   connection) any activation inserts there and connects. An insertion proposes with
   `metadata.insert: { type, at }` and selects the new node.
 - Inspector: a panel floating over the canvas at the inline end, inset like the other panels and
-  painted as a Sheet (the shared floating surface), for the settings the schema keeps off the node.
-  It enters and leaves like a Sheet, fading while it slides 2.5rem from the inline end (instant
-  under reduced motion), keeps showing its node while it leaves, and reports the end of either
+  painted on the shared floating surface, for the settings the schema keeps off the node. It
+  enters and leaves fading while it slides 2.5rem from the inline end (instant under reduced
+  motion), keeps showing its node while it leaves, and reports the end of either
   motion through `tp-open-change-complete`. The canvas keeps its size: while it is open, panels at
   the inline end move clear of it and middle panels center in the space it leaves, and a node it
   covers when it opens on that node (or follows the selection to it) pans the least distance to sit
@@ -811,7 +810,7 @@ and has a minimum height on its own, so it needs no inline size). Public parts: 
 The composed Card of a node is registered as `flow-node-card`, its List item rows as
 `flow-node-row`, the toolbar Buttons and Toggles as `flow-control` and the node library's chips as
 `flow-palette-item`; `tp-flow-node` exports its parts, so `tp-flow::part(flow-node-title)` reaches
-pooled and authored nodes alike and `partPresentation` hooks reach the widget parts and the
+rendered and authored nodes alike and `partPresentation` hooks reach the widget parts and the
 registered nested parts.
 
 State markers: the root carries `data-mode`, `data-tool`, `data-dragging`, `data-connecting`,
@@ -835,8 +834,7 @@ run statuses through `--tp-warning` (pending, waiting), `--tp-primary` (running,
 `--tp-success` (success, taken), `--tp-destructive` (failed) and `--tp-muted-foreground` (skipped,
 cancelled, not taken, disabled), typed tones through `--tp-chart-1` to `--tp-chart-5` and the
 status tokens. Override the tokens on the host or in a scoped theme; the `--_tp-flow-*` custom
-properties the recipe derives from them are private and change with `size`. The viewport
-transform is written through the CSSOM, never through a background or layout transition.
+properties the recipe derives from them are private and change with `size`.
 
 ## Engine
 
@@ -856,8 +854,7 @@ geometry (`bezierPath`, `straightPath`, `stepPath`, `smoothStepPath`, `orthogona
 (`OrthogonalRouter`, `createRoutingPlanner`, `routeGeometryHash`, `packRoutes`, `unpackRoutes`);
 the layout (`LayeredLayoutEngine`, `flowLayoutRequest`, `layoutFlow`, `alignNodes`,
 `distributeNodes`, `snapNodesToGrid`); the run state (`flowRunGraph`, `FlowRunState`,
-`deriveEdgeStatus`, `FlowRunPlayer`, `timeoutTicker`) and the `FlowRenderer` contract. The
-xyflow-derived math carries its MIT notice in `LICENSE.xyflow`.
+`deriveEdgeStatus`, `FlowRunPlayer`, `timeoutTicker`) and the `FlowRenderer` contract.
 
 Routing and layout can leave the main thread. In a Worker, build a `FlowModel` from the document,
 create a planner with `createRoutingPlanner(model, options)`, run it in slices (`run(budgetMs)`
@@ -869,27 +866,6 @@ flags, hashes, radii and stubs into transferable buffers, and `unpackRoutes(pack
 sizes and the `changes` list; post the changes and apply them with
 `flow.propose(changes, 'layout')` followed by `flow.commit('layout')` so the lanes, the history and
 a controlled owner see one layout transaction.
-
-## Upstream reference
-
-xyflow (`library/external/xyflow`, `packages/system/src/xypanzoom`, `xyhandle`, `xydrag`,
-`xyresizer` and `utils`; `packages/react/src/container` and `components`) and the Workflow Builder
-(`library/external/workflowbuilder`: the node panel, handle, edge label, palette, properties bar,
-and the AI studio's execution markers, highlighting and Run, Stop and Reset controls, which that
-app, not the SDK, owns). Adopted: viewport transform ownership outside the render cycle,
-visible-only rendering, node measurement through a shared resize observer, the invisible
-interaction path per edge, the connection radius and validation pipeline, click-to-connect, the
-node toolbar outside the zoom transform, the edge path, marker and viewport math (with the MIT
-notice), sub-flows with parent extents, the minimap and background patterns, and the card, panel,
-pill and palette compositions. Extended: the obstacle-aware orthogonal router with nudging, the
-layered automatic layout with transitions and pinning, run state and the trace stepper, run requests
-with scopes, live runs, warnings and problem display as opt-in widget features, keyboard
-connections, spatial keyboard navigation, built-in history, schema-driven nodes and the inspector,
-controlled lanes with reasons, declarative light-DOM nodes and edges, the renderer boundary and
-forms. Deviated: a single document lane instead of node and edge change arrays; the arrow keys
-navigate and Shift with an arrow nudges; the wheel pans by default; one shared SVG with a group per
-edge instead of one SVG per edge; a Lit element per node with manual slot assignment for authored
-nodes; pooled node hosts instead of a React element per node. tweakpane has no graph editor.
 
 ## API reference
 
@@ -939,7 +915,7 @@ nodes; pooled node hosts instead of a React element per node. tweakpane has no g
 | `showPortLabels`                           | `show-port-labels`                             | `boolean`                                              | `false`                                    |
 | `size`                                     | `size` (reflected)                             | `'sm' \| 'default' \| 'lg'`                            | `'default'`                                |
 | `label`, `locale`, `strings`               | `label`, `locale`, —                           | `string`, `string`, `Partial<FlowStrings>`             | `''`, `''`, `{}`                           |
-| `name`, `disabled`, `readOnly`, `required` | `name`, `disabled`, `readonly`, `required`     | form control contract                                  | contract defaults                          |
+| `name`, `disabled`, `readOnly`, `required` | `name`, `disabled`, `readonly`, `required`     | `string`, `boolean`, `boolean`, `boolean`              | `''`, `false`, `false`, `false`            |
 | `onValueChange`, `onValueCommitted`        | —                                              | callbacks                                              | `undefined`                                |
 
 Read-only: `model`, `nodes`, `edges`, `routes`, `player`, `runState`, `runSummary`, `problems`,

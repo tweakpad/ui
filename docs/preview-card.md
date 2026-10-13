@@ -2,7 +2,7 @@
 
 `tp-preview-card` adds a supplementary preview to a link or other subject. Hover or keyboard focus opens it without activating the trigger. Use Popover when the content contains actions needed to finish a task.
 
-Preview Card uses the same hover-intent, safe-corridor, positioning, portal, presence and event owners as the other anchored controls. It never traps focus or makes outside content inert. Its optional backdrop is decorative and does not intercept input. Trigger activation keeps its normal link or button action.
+Preview Card never traps focus or makes outside content inert. Its optional backdrop is decorative and does not intercept input. Trigger activation keeps its normal link or button action.
 
 The [shared anchored surface API](anchored-surfaces.md) documents all inherited properties and methods: controlled/default open state and cancellation, completion events, trigger handles/identifiers/payloads, positioning and collision options, portal/container, Arrow, Viewport, retention and public part contracts.
 
@@ -10,7 +10,7 @@ The [shared anchored surface API](anchored-surfaces.md) documents all inherited 
 | --------------------------------------------------- | ---------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `openDelay` / `open-delay`                          | number, milliseconds                     | 600                 | Sustained hover or keyboard focus delay when the provider supplies none. Per-trigger options can override it. |
 | `closeDelay` / `close-delay`                        | number, milliseconds                     | 300                 | Time after leaving both trigger and popup, with safe-corridor travel preserved.                               |
-| `delay`                                             | number                                   | same as `openDelay` | Compatibility alias.                                                                                          |
+| `delay`                                             | number                                   | same as `openDelay` | Alias of `openDelay`.                                                                                         |
 | `provider`                                          | `DelayGroup`                             | private group       | Shared delay and recent-preview coordination.                                                                 |
 | `openOnHover` / `open-on-hover`                     | boolean                                  | true                | Enable hover opening; keyboard focus remains supported.                                                       |
 | `disableHoverablePopup` / `disable-hoverable-popup` | boolean                                  | false               | Disable pointer entry into supplementary content.                                                             |
@@ -20,7 +20,7 @@ The [shared anchored surface API](anchored-surfaces.md) documents all inherited 
 | `initialFocus`                                      | shared focus target                      | `none`              | Normally leave focus on the subject; explicit policies may move it.                                           |
 | `finalFocus`                                        | shared focus target                      | `trigger`           | Applied only when an explicit opening policy moved focus.                                                     |
 
-`modal` is inherited for compatibility but cannot make a Preview Card modal. A disabled preview leaves its subject's normal action available. `showBackdrop` cannot block outside interaction. Default `showArrow` is false; arrow geometry and surface separation derive from shared theme spacing.
+`modal` is inherited but cannot make a Preview Card modal. A disabled preview leaves its subject's normal action available. `showBackdrop` cannot block outside interaction. Default `showArrow` is false; arrow geometry and surface separation derive from shared theme spacing.
 
 The `trigger` slot accepts real Button/link/native subjects. The default slot supplies preview content; an optional `anchor` separates geometry from the trigger. Public parts are `preview-card`, `preview-card-trigger`, `preview-card-content`, `preview-card-positioner`, and `preview-card-portal`; flattened Arrow/Backdrop/Viewport use the shared contracts. Content has group semantics and contributes an accessible description to the active subject without replacing its name or adding menu/dialog expanded semantics.
 

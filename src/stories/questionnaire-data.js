@@ -1,4 +1,4 @@
-// Prompts and choices mirror the local shadcn base Questionnaire examples.
+// Prompts and choices for the Questionnaire stories and examples.
 export const questionnaireData = {
   multiple: {
     questions: [

@@ -3,8 +3,7 @@
 `tp-cursor` replaces the native pointer with a decorative cursor that trails the real pointer with
 a spring. Wrap any part of the page in `tp-cursor-zone` to give the cursor a state, a look, content
 or attraction while the pointer is inside it. The cursor serves mouse and pen users only: touch
-never engages it, and under reduced motion it follows instantly. The normative contracts are UI
-Foundation §18.22 Custom cursor and UI Component Library §21 Cursor.
+never engages it, and under reduced motion it follows instantly.
 
 ```html
 <tp-cursor></tp-cursor>
@@ -16,8 +15,7 @@ Foundation §18.22 Custom cursor and UI Component Library §21 Cursor.
 ```
 
 Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`, or define the two elements yourself
-with `defineElement(TpCursor.tagName, TpCursor)` and `defineElement(TpCursorZone.tagName,
-TpCursorZone)` from `@tweakpad/ui`. Place one `tp-cursor` anywhere in the document; it occupies no
+with `defineElement(TpCursor.tagName, TpCursor)` and `defineElement(TpCursorZone.tagName, TpCursorZone)` from `@tweakpad/ui`. Place one `tp-cursor` anywhere in the document; it occupies no
 space. The cursor surface lives in the top layer, so dialogs, menus and popovers never cover it.
 
 ## Following
@@ -27,8 +25,7 @@ host pointer is hidden over the scope while the cursor follows (`hide-native="fa
 an overlay look), and comes back the moment the pointer leaves the window, a touch arrives, the
 cursor is disabled or removed. The spring is tuned with `stiffness`, `damping` and `mass`; the
 follower settles once it moves slower than `rest-speed` and closer than `rest-delta`, and the frame
-loop stops until the pointer moves again. All cursors of a page share one frame loop and one
-native-cursor lease.
+loop stops until the pointer moves again.
 
 `scope="region"` limits following to one element: the element named by `region`, or the cursor's
 parent element. Outside it the surface hides and the host pointer returns.
@@ -51,8 +48,7 @@ While the pointer is inside the innermost zone that addresses a cursor, that zon
 - `for="<cursor id>"` addresses one cursor; without it a zone addresses every cursor of the
   document, so a dot and a lagging ring can share zones or have their own.
 
-Nested zones work; the innermost wins. Zones inside shadow roots work because zones register with
-the document, not through DOM ancestry. While the page or any scroll container scrolls under a still pointer, including one inside a
+Nested zones work; the innermost wins. Zones inside shadow roots work too. While the page or any scroll container scrolls under a still pointer, including one inside a
 shadow root such as Scroll area, the zones under the pointer are resolved again in every frame, so
 the state never waits for the browser's own hover update at the end of the scroll; `refresh()` does
 the same on demand.
@@ -158,7 +154,7 @@ scale with the motion policy.
 
 Touch and coarse pointers never engage the cursor. Pointer lock is not supported. No events arrive
 while the pointer is over an embedded document, so the cursor rests at the last point until the
-pointer leaves or moves. The native-cursor lease reaches library shadow parts through a style query;
+pointer leaves or moves. Hiding the host pointer reaches library shadow parts;
 third-party shadow roots that set their own `cursor` keep it, and the custom cursor draws on top.
 The cursor is not printed. A zone measures its element children for attraction, so a zone that
 wraps only text sticks to nothing.
