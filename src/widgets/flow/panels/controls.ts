@@ -90,11 +90,12 @@ export interface FlowRunActionDetail {
 }
 
 /** Actions rendered as plain Buttons, in the order the consumer lists them. */
-type ButtonAction = Exclude<FlowControlAction, 'tool' | 'run' | 'zoom'>;
+type ButtonAction = Exclude<FlowControlAction, 'tool' | 'run' | 'zoom' | 'palette'>;
 type Segment =
   | { kind: 'buttons'; actions: ButtonAction[] }
   | { kind: 'tool' }
   | { kind: 'lock' }
+  | { kind: 'palette' }
   | { kind: 'zoom' }
   | { kind: 'run' };
 
@@ -127,7 +128,12 @@ const BUTTON_SETS: Record<ButtonAction, 'view' | 'history' | 'arrange' | 'lock'>
   lock: 'lock',
 };
 /** Actions that edit the document; read-only widgets disable them. */
-const EDITING_ACTIONS: ReadonlySet<FlowControlAction> = new Set(['layout', 'undo', 'redo']);
+const EDITING_ACTIONS: ReadonlySet<FlowControlAction> = new Set([
+  'layout',
+  'undo',
+  'redo',
+  'palette',
+]);
 
 const controlsStyles = css`
   :host {
@@ -232,6 +238,7 @@ export class TpFlowControls extends TpElement {
     actions: { converter: controlActionsConverter },
     tool: { type: String, reflect: true },
     locked: { type: Boolean, reflect: true },
+    paletteOpen: { type: Boolean, attribute: false },
     canUndo: { type: Boolean, attribute: 'can-undo' },
     canRedo: { type: Boolean, attribute: 'can-redo' },
     strings: { attribute: false },
@@ -245,6 +252,8 @@ export class TpFlowControls extends TpElement {
   actions: readonly FlowControlAction[] = ['zoom-in', 'zoom-out', 'fit', 'tool', 'lock'];
   tool: FlowTool = 'select';
   locked = false;
+  /** Pressed state of the `palette` action: the node library is open. */
+  paletteOpen = false;
   canUndo = false;
   canRedo = false;
   strings: Partial<FlowStrings> | undefined;
@@ -351,6 +360,7 @@ export class TpFlowControls extends TpElement {
     for (const action of this.actions) {
       if (action === 'tool') segments.push({ kind: 'tool' });
       else if (action === 'lock') segments.push({ kind: 'lock' });
+      else if (action === 'palette') segments.push({ kind: 'palette' });
       else if (action === 'run') segments.push({ kind: 'run' });
       else if (action === 'zoom') segments.push({ kind: 'zoom' });
       else {
@@ -617,6 +627,33 @@ export class TpFlowControls extends TpElement {
     ></tp-toggle>`;
   }
 
+  /** The node library's trigger: a Toggle pressed while the library is open (the root owns it). */
+  #renderPaletteToggle(): TemplateResult {
+    const strings = this.#strings;
+    return html`<tp-toggle
+      class="control palette"
+      variant="outline"
+      data-action="palette"
+      .pressed=${this.paletteOpen}
+      ?disabled=${this.disabled || this.readOnly}
+      .ariaLabel=${strings.palette}
+      @tp-value-change=${this.#paletteChange}
+      @tp-value-commit=${this.#contain}
+      ><tp-icon .icon=${plusIcon}></tp-icon
+    ></tp-toggle>`;
+  }
+
+  #paletteChange = (event: Event): void => {
+    event.stopPropagation();
+    this.dispatchEvent(
+      new CustomEvent<FlowControlActionDetail>(CONTROL_ACTION, {
+        bubbles: true,
+        composed: false,
+        detail: { action: 'palette', sourceEvent: event },
+      }),
+    );
+  };
+
   #lockChange = (event: Event): void => {
     event.stopPropagation();
     this.dispatchEvent(
@@ -730,9 +767,11 @@ export class TpFlowControls extends TpElement {
                 ? this.#renderTools()
                 : segment.kind === 'lock'
                   ? this.#renderLock()
-                  : segment.kind === 'zoom'
-                    ? this.#renderZoom()
-                    : this.#renderRun(),
+                  : segment.kind === 'palette'
+                    ? this.#renderPaletteToggle()
+                    : segment.kind === 'zoom'
+                      ? this.#renderZoom()
+                      : this.#renderRun(),
           )}<slot class="items" @slotchange=${this.#syncItems}></slot>`,
       },
     );

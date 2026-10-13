@@ -32,7 +32,10 @@ another driver). The record lives in `plans/widgets/flow/implementation-checklis
    `assertSelectionAndDelete`, `assertClipboard`, `assertUndoRedo`, `assertRouting`,
    `assertLayout`, `assertVirtualization`, `assertRunState`, `assertInspector` (schema placement,
    double press, follow and close), `assertContextMenuDismiss`, `assertToolbars` (eight panel
-   positions, authored bars, zoom field, Shift+digit shortcuts, history events), `assertModes`, `assertForms`,
+   positions, authored bars, zoom field, Shift+digit shortcuts, history events), `assertPaletteSidebar`
+   (the "+" trigger, category sections, chips, search, keyboard insert, click-to-place, drop, fit),
+   `assertPaletteMenu` (the "Add node" Dialog, columns, keyboard insert and focus, placement and
+   Escape, dispatched drag, drop and cancel), `assertDeleteConfirmation`, `assertModes`, `assertForms`,
    `assertCleanup`, `assertPerformance`. Each helper returns `{ checks, records, passed }`. Run
    them in file order on a fresh load: several helpers mutate the instance they target and later
    helpers read the state the earlier ones leave behind.

@@ -45,6 +45,9 @@ export const FLOW_WHEEL_POLICIES = ['pan', 'zoom', 'none'] as const;
 export type FlowWheelPolicy = (typeof FLOW_WHEEL_POLICIES)[number];
 export const FLOW_INSPECTOR_POLICIES = ['none', 'auto', 'manual'] as const;
 export type FlowInspectorPolicy = (typeof FLOW_INSPECTOR_POLICIES)[number];
+/** How the node library shows: none, a sidebar at the inline start or a menu over the widget. */
+export const FLOW_PALETTE_LAYOUTS = ['none', 'sidebar', 'menu'] as const;
+export type FlowPaletteLayout = (typeof FLOW_PALETTE_LAYOUTS)[number];
 export const FLOW_CONTROL_ACTIONS = [
   'zoom-in',
   'zoom-out',
@@ -56,6 +59,7 @@ export const FLOW_CONTROL_ACTIONS = [
   'undo',
   'redo',
   'run',
+  'palette',
 ] as const;
 export type FlowControlAction = (typeof FLOW_CONTROL_ACTIONS)[number];
 export type FlowSelectionMode = 'partial' | 'full';
@@ -165,6 +169,14 @@ export interface FlowStrings {
   palette: string;
   /** Region name of the palette, `{flow}` = the graph's name (landmarks must be unique). */
   paletteLabel: string;
+  /** Shown when the library's search matches nothing. */
+  noResults: string;
+  /** Section of definitions without a category. */
+  uncategorized: string;
+  /** Announced when a click arms placement, `{label}` = the definition. */
+  announcePlacing: string;
+  /** Tooltip of a library item. */
+  dragToPlace: string;
   /** Region name of the inspector, `{flow}` = the graph's name. */
   inspectorLabel: string;
   searchNodes: string;

@@ -1817,41 +1817,150 @@ export async function assertToolbars(id = 'monitor'): Promise<Report> {
   );
 }
 
+interface PaletteElement extends HTMLElement {
+  open: boolean;
+  layout: string;
+}
+
+/** The node library inside a flow: the sidebar is a root child, the menu's lives in its portal. */
+function paletteOf(target: TpFlow): PaletteElement {
+  const root = target.shadowRoot!;
+  const direct = root.querySelector<PaletteElement>('tp-flow-palette');
+  if (direct) return direct;
+  const portal = [...root.querySelectorAll<HTMLElement>('.root > div')].find((element) =>
+    element.querySelector('tp-flow-palette'),
+  );
+  return portal!.querySelector<PaletteElement>('tp-flow-palette')!;
+}
+function paletteChips(palette: PaletteElement): HTMLElement[] {
+  return [...palette.shadowRoot!.querySelectorAll<HTMLElement>('tp-button.item')].filter(
+    (chip) => chip.getClientRects().length > 0,
+  );
+}
+function paletteTrigger(target: TpFlow): HTMLElement {
+  const bar = target.shadowRoot!.querySelector<HTMLElement>('.palette-trigger')!;
+  return bar.shadowRoot!.querySelector<HTMLElement>('tp-toggle')!;
+}
+/** A press the way a pointer reaches the element: the deep hit-tested target at its center. */
+function press(element: Element): void {
+  const at = center(element);
+  const hit = topAt(at) ?? element;
+  hit.dispatchEvent(
+    new MouseEvent('click', {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      detail: 1,
+      clientX: at.x,
+      clientY: at.y,
+    }),
+  );
+}
+/** A point on the bare pane inside the canvas the sidebars leave uncovered. */
+function barePanePoint(target: TpFlow, from = 0): FlowPoint | undefined {
+  const rect = target.getBoundingClientRect();
+  const left = Math.max(rect.left, from) + 24;
+  for (let y = rect.top + 24; y < rect.bottom - 24; y += 24)
+    for (let x = left; x < rect.right - 24; x += 24) {
+      const element = topAt({ x, y });
+      if (
+        element?.getRootNode() === target.shadowRoot &&
+        element.closest('[part~="flow-pane"], [part~="flow-background"]') &&
+        !element.closest('[part~="flow-edge"]')
+      )
+        return { x, y };
+    }
+  return undefined;
+}
+function focusPath(): string[] {
+  const path: string[] = [];
+  let element: Element | null = document.activeElement;
+  while (element) {
+    path.push(element.localName);
+    element = element.shadowRoot?.activeElement ?? null;
+  }
+  return path;
+}
+/** The center of a node the library added at `at`: positions center the definition's size. */
+function definitionCenter(target: TpFlow, nodeId: string | undefined): FlowPoint | undefined {
+  const node = nodeId ? target.model.getNode(nodeId) : undefined;
+  const definition = target.schema?.nodes.find((item) => item.type === node?.type);
+  if (!node || !definition) return undefined;
+  const size = definition.size ?? DEFAULT_NODE_SIZE_BY_SHAPE[definition.shape ?? 'card'];
+  return target.flowToScreen({
+    x: node.position.x + size.width / 2,
+    y: node.position.y + size.height / 2,
+  });
+}
+function dragEvent(type: string, target: EventTarget, at: FlowPoint, data: DataTransfer): void {
+  target.dispatchEvent(
+    new DragEvent(type, {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      clientX: at.x,
+      clientY: at.y,
+      dataTransfer: data,
+    }),
+  );
+}
+
 /**
- * The node library is a sidebar floating at the inline start: it spans the pane inside its inset,
- * lists every definition in a list filling the sidebar, filters on search, inserts at the center of the
- * uncovered canvas, and the start panels and the fit stay clear of it.
+ * The node library as a sidebar: the floating "+" toggles a bar at the inline start that groups
+ * the definitions in Accordion sections of outline chips, filters on search, inserts at the center
+ * of the uncovered canvas from the keyboard, arms placement on a click and places on the next pane
+ * press, inserts a dropped chip at the drop point, and keeps the start panels and the fit clear.
  */
 export async function assertPaletteSidebar(id = 'pipeline'): Promise<Report> {
   const target = flow(id);
   target.scrollIntoView({ block: 'center' });
-  await wait(300);
+  if (target.paletteOpen) target.setPaletteOpen(false, 'programmatic');
+  await settle(target);
+  await wait(400);
   const root = target.shadowRoot!;
-  const palette = root.querySelector<HTMLElement & { commandPalette: HTMLElement | null }>(
-    'tp-flow-palette',
-  )!;
+  const palette = paletteOf(target);
+  const trigger = paletteTrigger(target);
   const flowRect = target.getBoundingClientRect();
+  const closed = {
+    hidden: palette.hidden,
+    pressed: (trigger as HTMLElement & { pressed: boolean }).pressed,
+    triggerInset: Math.round(trigger.getBoundingClientRect().left - flowRect.left),
+  };
+  // The "+" opens the library and focuses its search.
+  press(trigger);
+  await settle(target);
+  await wait(400);
   const rect = palette.getBoundingClientRect();
   const inset = Math.round(rect.left - flowRect.left);
-  const list = palette.commandPalette!.shadowRoot!.querySelector('tp-command-list')!;
-  const items = () => [...list.shadowRoot!.querySelectorAll<HTMLElement>('tp-list-item.item')];
-  const visibleItems = () => items().filter((item) => item.getClientRects().length > 0).length;
-  const body = palette.shadowRoot!.querySelector<HTMLElement>('.body')!;
-  const listPart = list.shadowRoot!.querySelector<HTMLElement>('[part~="command-palette-list"]')!;
-  const definitions = (target.schema?.nodes ?? []).length;
-  const geometry = {
+  const opened = {
+    open: target.paletteOpen,
+    pressed: (trigger as HTMLElement & { pressed: boolean }).pressed,
+    focus: focusPath(),
     position: getComputedStyle(palette).position,
     inset,
     height: [Math.round(rect.height), Math.round(flowRect.height - inset * 2)],
-    items: [items().length, definitions],
-    listCap: getComputedStyle(listPart).maxBlockSize,
-    listScrolls: getComputedStyle(listPart).overflowY,
-    listInside: listPart.getBoundingClientRect().bottom <= body.getBoundingClientRect().bottom + 1,
   };
-  // Start panels sit past the sidebar and its gap.
+  // Start panels, the "+" among them, sit past the sidebar and its gap.
   const startPanels = [
     ...root.querySelectorAll<HTMLElement>('.panel[data-position$="-start"] > :not(slot)'),
   ].map((element) => Math.round(element.getBoundingClientRect().left - rect.right));
+  // Sections: one Accordion item per category, toned labels, outline chips that drag.
+  const shadow = palette.shadowRoot!;
+  const definitions = (target.schema?.nodes ?? []).length;
+  const categories = new Set((target.schema?.nodes ?? []).map((node) => node.category ?? ''));
+  const sections = shadow.querySelectorAll('tp-accordion-item').length;
+  const labels = [...shadow.querySelectorAll<HTMLElement>('[part~="flow-palette-group-label"]')];
+  const chips = paletteChips(palette);
+  const body = shadow.querySelector<HTMLElement>('[part~="flow-palette-body"]')!;
+  const structure = {
+    sections: [sections, categories.size],
+    tonedLabels: labels.filter((label) => label.dataset['tone']).length,
+    chips: [chips.length, definitions],
+    outline: chips.every((chip) => chip.getAttribute('variant') === 'outline'),
+    draggable: chips.every((chip) => chip.getAttribute('draggable') === 'true'),
+    bodyScrolls: getComputedStyle(body).overflowY,
+    bodyInside: body.getBoundingClientRect().bottom <= rect.bottom + 1,
+  };
   // The fit centers the graph in the canvas the sidebar leaves uncovered.
   await target.fitViewTo({ duration: 0 });
   await settle(target);
@@ -1859,80 +1968,323 @@ export async function assertPaletteSidebar(id = 'pipeline'): Promise<Report> {
   const graphCenter =
     (Math.min(...nodeRects.map((r) => r.left)) + Math.max(...nodeRects.map((r) => r.right))) / 2;
   const freeCenter = (rect.right + flowRect.right) / 2;
-  // Search filters the list; clearing it lists everything again.
-  const input = (palette.commandPalette as unknown as { inputElement: HTMLInputElement })
-    .inputElement;
-  input.focus();
-  input.value = 'appro';
-  input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
-  await settle(target);
-  await wait(100);
-  const filtered = visibleItems();
-  input.value = '';
-  input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
-  await settle(target);
-  await wait(100);
-  const unfiltered = visibleItems();
-  // Enter inserts the active definition at the center of the uncovered canvas.
+  const freeMiddle = (flowRect.top + flowRect.bottom) / 2;
+  // Search replaces the sections by the matching chips; clearing lists everything again.
+  const input = shadow.querySelector<HTMLElement>('tp-input')!;
+  // Input renders its native field in its own light DOM.
+  const field = input.querySelector<HTMLInputElement>('input')!;
+  const search = async (text: string) => {
+    field.value = text;
+    field.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
+    await settle(target);
+    await wait(100);
+  };
+  await search('appro');
+  const filtered = paletteChips(palette).length;
+  const flat = shadow.querySelectorAll('tp-accordion-item').length;
+  await search('');
+  const unfiltered = paletteChips(palette).length;
+  // A keyboard activation (click detail 0) inserts at the center of the uncovered canvas.
   const before = target.nodes.length;
-  input.focus();
-  input.dispatchEvent(
-    new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true, cancelable: true }),
-  );
+  paletteChips(palette)[0]!.click();
   await settle(target);
   await wait(300);
   const inserted = target.nodes.length - before;
-  const added = target.selection.nodes[0];
-  const addedRect = added ? host(target, added)?.getBoundingClientRect() : undefined;
-  // The insertion centers the definition's size there (the measured node may grow past it).
-  const addedNode = added ? target.model.getNode(added) : undefined;
-  const definition = target.schema?.nodes.find((item) => item.type === addedNode?.type);
-  const width =
-    definition?.size?.width ?? DEFAULT_NODE_SIZE_BY_SHAPE[definition?.shape ?? 'card'].width;
-  const insertCenter = addedRect ? addedRect.left + (width * target.viewport.zoom) / 2 : NaN;
-  // A snapped insertion lands within one grid step of the center.
+  const keyCenter = definitionCenter(target, target.selection.nodes[0]);
   const snapTolerance = (target.snap ? target.snapGrid * target.viewport.zoom : 0) + 2;
   if (inserted) target.undo();
+  // A pointer click arms placement; the next press on the bare pane places the node there.
+  press(paletteChips(palette)[1]!);
+  await settle(target);
+  const pane = root.querySelector<HTMLElement>('[part~="flow-pane"]')!;
+  const armed = {
+    placing: root.querySelector('.root')!.hasAttribute('data-placing'),
+    cursor: getComputedStyle(pane).cursor,
+    open: target.paletteOpen,
+  };
+  const spot = barePanePoint(target, rect.right);
+  const placedBefore = target.nodes.length;
+  if (spot) {
+    pointer('pointerdown', topAt(spot)!, spot);
+    pointer('pointerup', topAt(spot)!, spot);
+  }
+  await settle(target);
+  await wait(200);
+  const placed = target.nodes.length - placedBefore;
+  const placedCenter = definitionCenter(target, target.selection.nodes[0]);
+  if (placed) target.undo();
+  // A chip dropped on the canvas inserts at the drop point.
+  const data = new DataTransfer();
+  const chip = paletteChips(palette)[2]!;
+  dragEvent('dragstart', chip, center(chip), data);
+  const dropBefore = target.nodes.length;
+  if (spot) {
+    dragEvent('dragover', topAt(spot)!, spot, data);
+    dragEvent('drop', topAt(spot)!, spot, data);
+  }
+  dragEvent('dragend', chip, center(chip), data);
+  await settle(target);
+  await wait(200);
+  const dropped = target.nodes.length - dropBefore;
+  const droppedCenter = definitionCenter(target, target.selection.nodes[0]);
+  if (dropped) target.undo();
+  // The "+" toggles the sidebar closed again.
+  press(trigger);
+  await settle(target);
+  await wait(400);
+  const reclosed = { open: target.paletteOpen, hidden: palette.hidden };
   target.clearSelection();
   await settle(target);
+  const near = (a: FlowPoint | undefined, b: FlowPoint | undefined, tolerance: number) =>
+    Boolean(a && b && Math.abs(a.x - b.x) <= tolerance && Math.abs(a.y - b.y) <= tolerance);
+  return report(
+    [
+      check(
+        'closed by default: hidden, the "+" unpressed at the inset',
+        closed.hidden && !closed.pressed && closed.triggerInset > 0,
+        closed,
+      ),
+      check(
+        'the "+" opens it, pressed, with focus in the search',
+        opened.open && opened.pressed && opened.focus.includes('input'),
+        opened,
+      ),
+      check(
+        'floats at the inline start, spanning the pane inside its inset',
+        opened.position === 'absolute' &&
+          opened.inset > 0 &&
+          Math.abs(opened.height[0]! - opened.height[1]!) <= 1,
+        opened,
+      ),
+      check(
+        'start panels clear the sidebar',
+        startPanels.every((gap) => gap >= 0),
+        startPanels,
+      ),
+      check(
+        'sections per category with toned labels; draggable outline chips for every definition',
+        structure.sections[0] === structure.sections[1] &&
+          structure.tonedLabels === sections &&
+          structure.chips[0] === structure.chips[1] &&
+          structure.outline &&
+          structure.draggable &&
+          structure.bodyScrolls === 'auto' &&
+          structure.bodyInside,
+        structure,
+      ),
+      check(
+        'the fit centers the graph in the uncovered canvas',
+        Math.abs(graphCenter - freeCenter) <= 2,
+        { graphCenter, freeCenter },
+      ),
+      check(
+        'search shows the matches without sections; clearing lists all again',
+        filtered === 1 && flat === 0 && unfiltered === definitions,
+        { filtered, flat, unfiltered },
+      ),
+      check(
+        'a keyboard activation inserts at the center of the uncovered canvas',
+        inserted === 1 && near(keyCenter, { x: freeCenter, y: freeMiddle }, snapTolerance),
+        { inserted, keyCenter, freeCenter, freeMiddle },
+      ),
+      check(
+        'a click arms placement (copy cursor, library stays open); a pane press places it',
+        armed.placing &&
+          armed.cursor === 'copy' &&
+          armed.open &&
+          placed === 1 &&
+          near(placedCenter, spot, snapTolerance),
+        { armed, spot, placed, placedCenter },
+      ),
+      check(
+        'a dropped chip inserts at the drop point',
+        dropped === 1 && near(droppedCenter, spot, snapTolerance),
+        { dropped, droppedCenter, spot },
+      ),
+      check('the "+" closes it again', !reclosed.open && reclosed.hidden, reclosed),
+    ],
+    { definitions, categories: categories.size },
+  );
+}
+
+/**
+ * The node library as a menu: the "+" opens an "Add node" Dialog modal to the widget with the
+ * categories as toned columns of chips; the keyboard inserts at the center and focuses the node;
+ * a click arms placement and closes the menu (Escape cancels it); dragging a chip turns the menu
+ * transparent, a drop inserts at the point and closes it, a cancelled drag brings it back.
+ */
+export async function assertPaletteMenu(id = 'material'): Promise<Report> {
+  const target = flow(id);
+  target.scrollIntoView({ block: 'center' });
+  await settle(target);
+  await wait(300);
+  const root = target.shadowRoot!;
+  const trigger = paletteTrigger(target);
+  const flowRect = target.getBoundingClientRect();
+  press(trigger);
+  await settle(target);
+  await wait(500);
+  const menu = root.querySelector<HTMLElement & { open: boolean }>('tp-dialog.palette-menu')!;
+  const palette = paletteOf(target);
+  const portal = palette.closest<HTMLElement>('.root > *');
+  const shadow = palette.shadowRoot!;
+  const surface = shadow
+    .querySelector<HTMLElement>('[part~="flow-palette"]')!
+    .getBoundingClientRect();
+  const definitions = (target.schema?.nodes ?? []).length;
+  const groups = [...shadow.querySelectorAll<HTMLElement>('[part~="flow-palette-group"]')];
+  const tops = groups.map((group) => Math.round(group.getBoundingClientRect().top));
+  const opened = {
+    open: target.paletteOpen && menu.open,
+    label: menu.getAttribute('label'),
+    inPortal: Boolean(portal && portal !== palette),
+    insideWidget:
+      surface.left >= flowRect.left &&
+      surface.right <= flowRect.right &&
+      surface.top >= flowRect.top &&
+      surface.bottom <= flowRect.bottom,
+    canvasInert: Boolean(root.querySelector('[part~="flow-pane"]')?.closest('[inert]')),
+    focus: focusPath(),
+    columns: tops.filter((top) => top === tops[0]).length,
+    groups: groups.length,
+    tonedLabels: [
+      ...shadow.querySelectorAll<HTMLElement>('[part~="flow-palette-group-label"]'),
+    ].filter((label) => label.dataset['tone']).length,
+    chips: [paletteChips(palette).length, definitions],
+  };
+  // A keyboard activation inserts at the center, closes the menu and focuses the node.
+  const before = target.nodes.length;
+  paletteChips(palette)[0]!.click();
+  await settle(target);
+  await wait(600);
+  const keyInserted = target.nodes.length - before;
+  const keyId = target.selection.nodes[0];
+  const keyCenter = definitionCenter(target, keyId);
+  const keyed = {
+    inserted: keyInserted,
+    closed: !target.paletteOpen,
+    focus: focusPath(),
+    focusedNode: (root.activeElement as (Element & { nodeId?: string }) | null)?.nodeId,
+    keyId,
+  };
+  const middle = {
+    x: (flowRect.left + flowRect.right) / 2,
+    y: (flowRect.top + flowRect.bottom) / 2,
+  };
+  const snapTolerance = (target.snap ? target.snapGrid * target.viewport.zoom : 0) + 2;
+  if (keyInserted) target.undo();
+  // A pointer click arms placement and closes the menu; Escape cancels it.
+  target.setPaletteOpen(true, 'trigger-press');
+  await settle(target);
+  await wait(500);
+  press(paletteChips(paletteOf(target))[1]!);
+  await settle(target);
+  await wait(500);
+  const armed = {
+    placing: root.querySelector('.root')!.hasAttribute('data-placing'),
+    closed: !target.paletteOpen,
+  };
+  // Escape at the focused element (the menu returned focus to the "+").
+  let focused: Element = document.activeElement ?? target;
+  while (focused.shadowRoot?.activeElement) focused = focused.shadowRoot.activeElement;
+  focused.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    }),
+  );
+  await settle(target);
+  const cancelled = !root.querySelector('.root')!.hasAttribute('data-placing');
+  // Dragging a chip turns the menu transparent; a drop inserts at the point and closes it.
+  target.setPaletteOpen(true, 'trigger-press');
+  await settle(target);
+  await wait(500);
+  const dragPalette = paletteOf(target);
+  const dragPortal = dragPalette.closest<HTMLElement>('.root > *')!;
+  const chip = paletteChips(dragPalette)[2]!;
+  const data = new DataTransfer();
+  dragEvent('dragstart', chip, center(chip), data);
+  await wait(50);
+  const during = {
+    marker: dragPortal.hasAttribute('data-flow-dragging'),
+    opacity: getComputedStyle(dragPortal).opacity,
+  };
+  dragEvent('dragend', chip, center(chip), data);
+  await wait(50);
+  const restored = {
+    marker: dragPortal.hasAttribute('data-flow-dragging'),
+    opacity: getComputedStyle(dragPortal).opacity,
+    open: target.paletteOpen,
+  };
+  const spot = { x: flowRect.left + flowRect.width * 0.7, y: flowRect.top + flowRect.height * 0.3 };
+  const dropBefore = target.nodes.length;
+  dragEvent('dragstart', chip, center(chip), data);
+  await wait(50);
+  dragEvent('dragover', topAt(spot)!, spot, data);
+  dragEvent('drop', topAt(spot)!, spot, data);
+  dragEvent('dragend', chip, center(chip), data);
+  await settle(target);
+  await wait(600);
+  const dropped = target.nodes.length - dropBefore;
+  const droppedCenter = definitionCenter(target, target.selection.nodes[0]);
+  const afterDrop = {
+    closed: !target.paletteOpen,
+    marker: dragPortal.isConnected && dragPortal.hasAttribute('data-flow-dragging'),
+  };
+  if (dropped) target.undo();
+  target.clearSelection();
+  await settle(target);
+  const near = (a: FlowPoint | undefined, b: FlowPoint | undefined, tolerance: number) =>
+    Boolean(a && b && Math.abs(a.x - b.x) <= tolerance && Math.abs(a.y - b.y) <= tolerance);
   return report([
     check(
-      'floats at the inline start, spanning the pane inside its inset',
-      geometry.position === 'absolute' &&
-        geometry.inset > 0 &&
-        Math.abs(geometry.height[0]! - geometry.height[1]!) <= 1,
-      geometry,
+      'the "+" opens an "Add node" Dialog in the widget, the canvas inert, focus in the search',
+      opened.open &&
+        opened.label === 'Add node' &&
+        opened.inPortal &&
+        opened.insideWidget &&
+        opened.canvasInert &&
+        opened.focus.includes('input'),
+      opened,
     ),
     check(
-      'lists every definition in a list that fills the sidebar and scrolls',
-      geometry.items[0] === geometry.items[1] &&
-        geometry.listCap === 'none' &&
-        geometry.listScrolls === 'auto' &&
-        geometry.listInside,
-      geometry,
+      'the categories lay out as toned columns listing every definition',
+      opened.columns > 1 &&
+        opened.tonedLabels === opened.groups &&
+        opened.chips[0] === opened.chips[1],
+      opened,
     ),
     check(
-      'start panels clear the sidebar',
-      startPanels.every((gap) => gap >= 0),
-      startPanels,
+      'a keyboard activation inserts at the center, closes and focuses the node',
+      keyed.inserted === 1 &&
+        keyed.closed &&
+        keyed.focusedNode === keyed.keyId &&
+        near(keyCenter, middle, snapTolerance),
+      { keyed, keyCenter, middle },
     ),
     check(
-      'the fit centers the graph in the uncovered canvas',
-      Math.abs(graphCenter - freeCenter) <= 2,
-      { graphCenter, freeCenter },
+      'a click arms placement and closes the menu; Escape cancels it',
+      armed.placing && armed.closed && cancelled,
+      { armed, cancelled },
     ),
     check(
-      'search filters, clearing lists all again',
-      filtered === 1 && unfiltered === definitions,
-      {
-        filtered,
-        unfiltered,
-      },
+      'dragging turns the menu transparent; a cancelled drag brings it back',
+      during.marker &&
+        during.opacity === '0' &&
+        !restored.marker &&
+        restored.opacity === '1' &&
+        restored.open,
+      { during, restored },
     ),
     check(
-      'Enter inserts at the center of the uncovered canvas',
-      inserted === 1 && Math.abs(insertCenter - freeCenter) <= snapTolerance,
-      { inserted, insertCenter, freeCenter, snapTolerance },
+      'a drop inserts at the point and closes the menu',
+      dropped === 1 &&
+        afterDrop.closed &&
+        !afterDrop.marker &&
+        near(droppedCenter, spot, snapTolerance),
+      { dropped, droppedCenter, spot, afterDrop },
     ),
   ]);
 }

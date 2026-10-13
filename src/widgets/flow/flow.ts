@@ -1,4 +1,11 @@
-import { html, nothing, render, type PropertyValues, type TemplateResult } from 'lit';
+import {
+  html,
+  nothing,
+  render,
+  type PropertyDeclaration,
+  type PropertyValues,
+  type TemplateResult,
+} from 'lit';
 import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState, orderedValuesEqual } from '../../foundation/controllable-state.js';
 import { TpValueChangeEvent, type TpChangeEventOptions } from '../../foundation/events.js';
@@ -76,6 +83,7 @@ import { TpKeyHintGroup } from '../../components/key-hint/key-hint-group.js';
 import { TpOpenChangeEvent } from '../../foundation/events.js';
 import { TpButton } from '../../components/button/button.js';
 import { TpAlertDialog } from '../../components/alert-dialog/alert-dialog.js';
+import { TpDialog } from '../../components/dialog/dialog.js';
 import { copyIcon } from '../../icons/copy.js';
 import { trashIcon } from '../../icons/trash.js';
 import { pinIcon } from '../../icons/pin.js';
@@ -131,6 +139,8 @@ import {
   TpFlowPalette,
   PALETTE_INSERT,
   PALETTE_CLOSE,
+  PALETTE_DRAG_START,
+  PALETTE_DRAG_END,
   PALETTE_DRAG_TYPE,
   type FlowPaletteInsertDetail,
 } from './panels/palette.js';
@@ -236,6 +246,7 @@ import {
   type FlowRunTransportState,
   type FlowEdgeTemplate,
   type FlowInspectorPolicy,
+  type FlowPaletteLayout,
   type FlowLod,
   type FlowMode,
   type FlowNodeTemplate,
@@ -352,6 +363,13 @@ function viewportsEqual(a: FlowViewport, b: FlowViewport): boolean {
   return a.x === b.x && a.y === b.y && a.zoom === b.zoom;
 }
 
+/** `palette` alone (or any value but `menu` and `none`) is the sidebar; absent is none. */
+const paletteLayoutConverter = {
+  fromAttribute: (value: string | null): FlowPaletteLayout =>
+    value === null || value === 'none' ? 'none' : value === 'menu' ? 'menu' : 'sidebar',
+  toAttribute: (value: FlowPaletteLayout): string | null => (value === 'none' ? null : value),
+};
+
 const documentConverter = {
   fromAttribute: (value: string | null): FlowDocument | undefined => {
     if (value === null) return undefined;
@@ -390,6 +408,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       TpKeyHintGroup,
       TpButton,
       TpAlertDialog,
+      TpDialog,
       TpFlowControls,
       TpFlowMinimap,
       TpFlowPalette,
@@ -476,7 +495,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     controlsOrientation: { type: String, attribute: 'controls-orientation' },
     minimap: { type: Boolean },
     minimapPosition: { type: String, attribute: 'minimap-position' },
-    palette: { type: Boolean },
+    palette: { converter: paletteLayoutConverter },
+    paletteOpen: { type: Boolean, noAccessor: true, attribute: 'palette-open' },
+    defaultPaletteOpen: { type: Boolean, attribute: 'default-palette-open' },
+    paletteTrigger: { type: String, attribute: 'palette-trigger' },
     confirmDelete: { type: Boolean, attribute: 'confirm-delete' },
     locked: { type: Boolean, reflect: true },
     onValueChange: { attribute: false },
@@ -556,7 +578,11 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   controlsOrientation: 'vertical' | 'horizontal' = 'vertical';
   minimap = false;
   minimapPosition: FlowPanelPosition = 'bottom-end';
-  palette = false;
+  /** The node library: a sidebar at the inline start, a menu over the widget, or none. */
+  palette: FlowPaletteLayout = 'none';
+  defaultPaletteOpen: boolean | undefined;
+  /** Where the floating "+" that opens the library sits; `none` leaves opening to the API. */
+  paletteTrigger: FlowPanelPosition | 'none' = 'top-start';
   /** User deletions that remove nodes ask first, in a dialog over the blurred widget. */
   confirmDelete = false;
   /** The lock control: editing refused while locked (pan, zoom and selection stay). */
@@ -575,6 +601,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   readonly #toolState: ControllableState<FlowTool>;
   readonly #modeState: ControllableState<FlowMode>;
   readonly #inspectorState: ControllableState<boolean>;
+  readonly #paletteState: ControllableState<boolean>;
+  #providedPaletteOpen: boolean | undefined;
   readonly #viewportOwner: ViewportOwner;
   readonly #nodeLayer: NodeLayer;
   readonly #edgeLayer: EdgeLayer;
@@ -593,7 +621,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #size: FlowSize = { width: 0, height: 0 };
   #fitted = false;
   #userPanned = false;
-  #laneTick = false;
+  /** Inside a viewport lane proposal: the update it requests is a frame tick the root skips. */
+  #viewportTick = false;
+  /** Anything but a viewport tick asked for an update: the root renders. */
+  #renderRequested = false;
   #resolvedStrings: FlowStrings = DEFAULT_STRINGS;
   #focusedNode: string | undefined;
   #hoveredEdge: string | undefined;
@@ -611,6 +642,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     | undefined;
   /** The node that takes focus after a confirmed deletion closes the dialog. */
   #deletedFocus: string | undefined;
+  /** A definition armed by a click in the library: the next press on the pane places it. */
+  #placing: { type: string } | undefined;
+  /** A drag from the menu: the menu turns see-through and the root takes the drop. */
+  #menuDrag = false;
+  /** The node an insertion from the menu added: the menu's close focuses it, not the trigger. */
+  #menuInserted: string | undefined;
+  /** The menu Dialog whose content width the widget composed. */
+  #composedMenu: TpDialog | undefined;
   /** The confirmation's title, fixed when it opens so the exit motion keeps it. */
   #deleteTitle = '';
   /** The node the inspector shows; kept while the panel slides out after closing. */
@@ -731,6 +770,27 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         ),
       onCommit: () => this.requestUpdate(),
     });
+    this.#paletteState = new ControllableState<boolean>({
+      host: this,
+      initialValue: false,
+      readControlledValue: () => this.#providedPaletteOpen,
+      readDefaultValue: () => this.defaultPaletteOpen,
+      hasDefaultValue: () => this.defaultPaletteOpen !== undefined,
+      eventFactory: (value, previous, reason, sourceEvent, options) =>
+        new TpValueChangeEvent(
+          value,
+          previous,
+          reason,
+          sourceEvent,
+          { ...options, metadata: { ...options?.metadata, surface: 'palette' } },
+          'tp-open-change',
+        ),
+      onCommit: (open) => {
+        if (!open) this.#pendingInsert = undefined;
+        else this.#menuInserted = undefined;
+        this.requestUpdate();
+      },
+    });
     this.#viewportOwner = new ViewportOwner({
       pane: () => this.#pane,
       wheelTarget: () => this.#canvas,
@@ -778,7 +838,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       focused: () => this.#focusVisibleEdge,
       runEdge: (id) => this.#runEdge(id),
       interactive: () => !this.effectiveDisabled,
-      addable: () => this.palette && this.editable,
+      addable: () => this.palette !== 'none' && this.editable,
       nodeLabel: (id) => this.#nodeLabel(id),
       edgeAriaLabel: (edge) =>
         this.getEdgeAriaLabel?.(edge) ??
@@ -824,6 +884,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     target.addEventListener(MINIMAP_PAN, this.#minimapPan as EventListener);
     target.addEventListener(PALETTE_INSERT, this.#paletteInsert as EventListener);
     target.addEventListener(PALETTE_CLOSE, this.#paletteClose as EventListener);
+    target.addEventListener(PALETTE_DRAG_START, this.#paletteDragStart as EventListener);
+    target.addEventListener(PALETTE_DRAG_END, this.#paletteDragEnd as EventListener);
     target.addEventListener(INSPECTOR_CHANGE, this.#inspectorChange as EventListener);
     target.addEventListener(INSPECTOR_COMMIT, this.#inspectorCommit as EventListener);
     target.addEventListener(INSPECTOR_FOCUS_EDGE, this.#inspectorFocusEdge as EventListener);
@@ -909,6 +971,19 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       if (this.hasUpdated) this.#modeState.sync();
     } else if (next) this.#modeState.set(next, 'programmatic');
     this.requestUpdate('mode', previous);
+  }
+
+  get paletteOpen(): boolean {
+    return this.#paletteState.value;
+  }
+
+  set paletteOpen(next: boolean | undefined) {
+    const previous = this.paletteOpen;
+    if (!this.hasUpdated || this.#paletteState.controlled) {
+      this.#providedPaletteOpen = next;
+      if (this.hasUpdated) this.#paletteState.sync();
+    } else if (next !== undefined) this.#paletteState.set(next, 'programmatic');
+    this.requestUpdate('paletteOpen', previous);
   }
 
   get inspectorOpen(): boolean {
@@ -1421,6 +1496,16 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return this.#modeState.set(mode, reason, sourceEvent);
   }
 
+  /** Opens or closes the node library (`palette`), proposing on its open lane. */
+  setPaletteOpen(
+    open: boolean,
+    reason: ChangeReason = 'programmatic',
+    sourceEvent?: Event,
+  ): boolean {
+    if (this.palette === 'none') return false;
+    return this.#paletteState.set(open, reason, sourceEvent);
+  }
+
   setInspectorOpen(
     open: boolean,
     reason: ChangeReason = 'programmatic',
@@ -1607,13 +1692,24 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#announcer.dispose();
   }
 
+  override requestUpdate(
+    name?: PropertyKey,
+    oldValue?: unknown,
+    options?: PropertyDeclaration,
+    useNewValue?: boolean,
+    newValue?: unknown,
+  ): void {
+    // Lit requests the first update from its constructor, before the fields exist.
+    if (#viewportTick in this && name === undefined && !this.#viewportTick)
+      this.#renderRequested = true;
+    super.requestUpdate(name, oldValue, options, useNewValue, newValue);
+  }
+
+  /** Viewport ticks alone render nothing (the frame loop writes the transform); others do. */
   protected override shouldUpdate(changed: PropertyValues<this>): boolean {
-    if (this.#laneTick && changed.size === 0) {
-      this.#laneTick = false;
-      return false;
-    }
-    this.#laneTick = false;
-    return super.shouldUpdate(changed);
+    const tick = this.hasUpdated && changed.size === 0 && !this.#renderRequested;
+    this.#renderRequested = false;
+    return !tick && super.shouldUpdate(changed);
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {
@@ -1624,6 +1720,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#toolState.initialize();
     this.#modeState.initialize();
     this.#inspectorState.initialize();
+    this.#paletteState.initialize();
     if (changed.has('strings')) this.#resolvedStrings = resolveStrings(this.strings);
     if (changed.has('schema')) this.#model.schema = this.schema;
     if (changed.has('middleware')) this.#syncMiddleware();
@@ -1687,6 +1784,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#syncAuthoredControlBars();
     this.#revealInspectedNode();
     this.#revealArmed = true;
+    this.#syncPaletteMenu();
     this.#syncComposition();
     if (
       changed.has('run') ||
@@ -1841,9 +1939,13 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     sourceEvent: Event | null,
     animated: boolean,
   ): boolean {
-    this.#laneTick = true;
     const options: TpChangeEventOptions = { metadata: { animated } };
-    return this.#viewportState.set(viewport, reason, sourceEvent ?? undefined, options);
+    this.#viewportTick = true;
+    try {
+      return this.#viewportState.set(viewport, reason, sourceEvent ?? undefined, options);
+    } finally {
+      this.#viewportTick = false;
+    }
   }
 
   #lastLod: FlowLod = 'high';
@@ -2451,11 +2553,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       interactiveInPath: (event, within) => interactiveTargetInPath(event, within),
       setFocusedNode: (id) => this.#setFocusedNode(id),
       settleDrop: (ids, sourceEvent) => this.#settleDrop(ids, sourceEvent),
-      openPaletteAt: (point, source) => {
-        if (!this.palette) return;
-        this.#pendingInsert = { at: point, source };
-        this.#paletteElement?.focus();
-      },
+      openPaletteAt: (point, source) => this.#openPaletteAnchored({ at: point, source }),
       onViewportTick: (listener) => {
         this.#viewportTicks.add(listener);
         return () => this.#viewportTicks.delete(listener);
@@ -2791,6 +2889,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       if (bar.classList.contains('controls') && bar.getRootNode() === this.renderRoot) continue;
       bar.tool = this.tool;
       bar.locked = this.locked;
+      bar.paletteOpen = this.paletteOpen;
       bar.canUndo = this.canUndo;
       bar.canRedo = this.canRedo;
       bar.readOnly = !this.editable;
@@ -2804,6 +2903,18 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   #renderBuiltInPanels(position: FlowPanelPosition): TemplateResult | typeof nothing {
     const strings = this.#resolvedStrings;
+    // The floating "+" that opens the node library: a bar of its own, outside view mode.
+    const trigger =
+      this.palette !== 'none' && this.paletteTrigger === position && this.mode !== 'view'
+        ? html`<tp-flow-controls
+            class="controls palette-trigger"
+            .actions=${['palette']}
+            orientation=${this.controlsOrientation}
+            .paletteOpen=${this.paletteOpen}
+            .readOnly=${!this.editable}
+            .strings=${strings}
+          ></tp-flow-controls>`
+        : nothing;
     const controls =
       this.controls.length && this.controlsPosition === position
         ? html`<tp-flow-controls
@@ -2812,6 +2923,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
             orientation=${this.controlsOrientation}
             .tool=${this.tool}
             .locked=${this.locked}
+            .paletteOpen=${this.paletteOpen}
             .canUndo=${this.canUndo}
             .canRedo=${this.canRedo}
             .readOnly=${!this.editable}
@@ -2825,22 +2937,59 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       this.minimap && this.minimapPosition === position
         ? html`<tp-flow-minimap class="minimap" .strings=${strings}></tp-flow-minimap>`
         : nothing;
-    if (controls === nothing && minimap === nothing) return nothing;
-    return html`${controls}${minimap}`;
+    if (trigger === nothing && controls === nothing && minimap === nothing) return nothing;
+    return html`${trigger}${controls}${minimap}`;
   }
 
-  /** The node library: a sidebar floating over the canvas at the inline start. */
+  /**
+   * The node library: a sidebar floating over the canvas at the inline start, or a menu in a
+   * Dialog modal to the widget (`palette="menu"`), its categories as columns.
+   */
   #renderPalette(): TemplateResult | typeof nothing {
-    if (!this.palette) return nothing;
+    if (this.palette === 'none') return nothing;
     const strings = this.#resolvedStrings;
-    return html`<tp-flow-palette
+    const palette = html`<tp-flow-palette
       class="palette"
+      layout=${this.palette}
+      .open=${this.paletteOpen}
       .definitions=${this.schema?.nodes ?? []}
+      .categories=${this.schema?.categories ?? []}
       .icons=${this.icons}
       .strings=${strings}
       .label=${format(strings.paletteLabel, { flow: this.#name })}
       ?disabled=${!this.editable}
     ></tp-flow-palette>`;
+    if (this.palette === 'sidebar') return palette;
+    return html`<tp-dialog
+      class="palette-menu"
+      modality="container"
+      label=${strings.addNode}
+      .open=${this.paletteOpen}
+      .finalFocus=${this.#paletteFinalFocus}
+      >${palette}</tp-dialog
+    >`;
+  }
+
+  get #paletteMenu(): TpDialog | null {
+    return this.renderRoot?.querySelector<TpDialog>('tp-dialog.palette-menu') ?? null;
+  }
+
+  /** The menu Dialog is modal to the widget and wide enough for its category columns. */
+  #syncPaletteMenu(): void {
+    const menu = this.#paletteMenu;
+    if (!menu) return;
+    if (menu.container !== this.#root) menu.container = this.#root;
+    if (this.#composedMenu === menu) return;
+    this.#composedMenu = menu;
+    setPartComposition(menu, this, {
+      'dialog-content': {
+        styleHook: {
+          'inline-size': 'min(100% - var(--_tp-flow-space) * 4, calc(var(--tp-spacing) * 240))',
+          'max-inline-size': 'none',
+          'max-block-size': 'calc(100% - var(--_tp-flow-space) * 4)',
+        },
+      },
+    });
   }
 
   #renderInspector(): TemplateResult {
@@ -3186,6 +3335,11 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       case 'lock':
         this.locked = !this.locked;
         break;
+      case 'palette':
+        this.#placing = undefined;
+        if (this.setPaletteOpen(!this.paletteOpen, 'trigger-press', source) && this.paletteOpen)
+          this.#focusPaletteWhenShown();
+        break;
       case 'layout':
         this.layout(undefined, { sourceEvent: source });
         break;
@@ -3240,23 +3394,113 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     void this.setCenter(event.detail.center, { duration: 0, reason: 'drag' });
   };
 
+  /**
+   * An activated library item: at a pending anchor it inserts there; a pointer click arms
+   * placement (the next pane press places it); the keyboard inserts at the uncovered center.
+   */
   #paletteInsert = (event: CustomEvent<FlowPaletteInsertDetail>): void => {
     event.stopPropagation();
+    const { type, mode } = event.detail;
+    const source = event.detail.sourceEvent ?? undefined;
     const pending = this.#pendingInsert;
+    if (!pending && mode === 'place') {
+      this.#armPlacing(type, source);
+      return;
+    }
     this.#pendingInsert = undefined;
     const at = pending?.at ?? this.#viewportCenter();
-    this.#insertNode(
-      event.detail.type,
-      at,
-      'item-press',
-      event.detail.sourceEvent ?? undefined,
-      pending?.source,
-    );
+    const id = this.#insertNode(type, at, 'item-press', source, pending?.source);
+    if (this.palette !== 'menu') return;
+    this.#menuInserted = id;
+    this.setPaletteOpen(false, 'item-press', source);
   };
 
-  #paletteClose = (event: Event): void => {
+  /** A click armed a definition: the pane shows the placing cursor until a press places it. */
+  #armPlacing(type: string, sourceEvent?: Event): void {
+    const definition = this.schema?.nodes.find((item) => item.type === type);
+    if (!definition || !this.editable) return;
+    this.#placing = { type };
+    if (this.palette === 'menu') this.setPaletteOpen(false, 'item-press', sourceEvent);
+    this.#announcer.announce(
+      format(this.#resolvedStrings.announcePlacing, { label: definition.label }),
+    );
+    this.requestUpdate();
+  }
+
+  #disarmPlacing(): boolean {
+    if (!this.#placing) return false;
+    this.#placing = undefined;
+    this.requestUpdate();
+    return true;
+  }
+
+  /**
+   * A drag from the library. The menu stays mounted (its chip is the drag source) but turns
+   * see-through so the canvas shows; its overlay still takes the drag, which the root handles.
+   */
+  #paletteDragStart = (event: CustomEvent<{ sourceEvent: Event }>): void => {
     event.stopPropagation();
+    this.#disarmPlacing();
     this.#pendingInsert = undefined;
+    if (this.palette === 'menu') this.#setMenuDrag(true);
+  };
+
+  /** A drag that ended without a drop on the widget brings the menu back. */
+  #paletteDragEnd = (event: Event): void => {
+    event.stopPropagation();
+    this.#setMenuDrag(false);
+  };
+
+  #setMenuDrag(dragging: boolean): void {
+    this.#menuDrag = dragging;
+    // Open, the menu's content lives in the Dialog's portal: the root's child holding the palette.
+    this.#paletteElement?.closest('.root > *')?.toggleAttribute('data-flow-dragging', dragging);
+  }
+
+  /** While a drag from the menu runs, a drop anywhere on the widget places the node there. */
+  #rootDragOver = (event: DragEvent): void => {
+    if (!this.#menuDrag || !event.dataTransfer?.types.includes(PALETTE_DRAG_TYPE)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+  };
+
+  #rootDrop = (event: DragEvent): void => {
+    if (!this.#menuDrag) return;
+    const type = event.dataTransfer?.getData(PALETTE_DRAG_TYPE);
+    this.#setMenuDrag(false);
+    if (!type || !this.editable) return;
+    event.preventDefault();
+    const at = this.screenToFlow({ x: event.clientX, y: event.clientY });
+    this.#menuInserted = this.#insertNode(type, at, 'pointer', event);
+    this.setPaletteOpen(false, 'item-press', event);
+  };
+
+  /**
+   * The menu closed (its events stop at the widget boundary): an inserted node takes focus, an
+   * armed placement the canvas.
+   */
+  #paletteFinalFocus = (): HTMLElement | null => {
+    const id = this.#menuInserted;
+    this.#menuInserted = undefined;
+    // An armed placement continues on the canvas, where Escape cancels it.
+    if (this.#placing) return this.#canvas ?? null;
+    if (!id || !this.#model.getNode(id)) return null;
+    this.#setFocusedNode(id);
+    this.#frameNow();
+    return this.#nodeLayer.hostOf(id) ?? null;
+  };
+
+  /** Escape or Close in the library: an armed placement is dropped first, then it closes. */
+  #paletteClose = (event: CustomEvent<{ sourceEvent?: Event }>): void => {
+    event.stopPropagation();
+    if (this.#disarmPlacing()) return;
+    this.#pendingInsert = undefined;
+    const source = event.detail?.sourceEvent;
+    this.setPaletteOpen(
+      false,
+      source instanceof KeyboardEvent ? 'escape-key' : 'close-action',
+      source,
+    );
     this.focus();
   };
 
@@ -3270,6 +3514,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const type = event.dataTransfer?.getData(PALETTE_DRAG_TYPE);
     if (!type || !this.editable) return;
     event.preventDefault();
+    this.#disarmPlacing();
     this.#insertNode(
       type,
       this.screenToFlow({ x: event.clientX, y: event.clientY }),
@@ -3965,7 +4210,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (!canvas) return { left: 0, right: 0 };
     const covered = { left: 0, right: 0 };
     const sidebars = [
-      this.#paletteElement,
+      this.palette === 'sidebar' && this.paletteOpen ? this.#paletteElement : null,
       this.inspectorOpen ? this.#inspectorElement : null,
     ] as const;
     for (const sidebar of sidebars) {
@@ -4355,6 +4600,17 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#pressedPane = false;
     this.#pressStart = undefined;
     if (moved || this.#viewportOwner.active) return;
+    if (pane && this.#placing) {
+      const { type } = this.#placing;
+      this.#placing = undefined;
+      this.#insertNode(
+        type,
+        this.screenToFlow({ x: event.clientX, y: event.clientY }),
+        'pointer',
+        event,
+      );
+      return;
+    }
     if (node) this.#selectOnPress(node, 'node', event);
     else if (edge) this.#selectOnPress(edge, 'edge', event);
     else if (pane && !event.shiftKey)
@@ -4450,6 +4706,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       event.preventDefault();
     }
     if (event.key === 'Escape') {
+      if (this.#disarmPlacing()) {
+        event.preventDefault();
+        return;
+      }
       if (this.#arbiter?.session) {
         this.#arbiter.cancel('escape', event);
         event.preventDefault();
@@ -4499,6 +4759,17 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (!target || target === this) return;
     if (target.getRootNode() !== this.renderRoot) return;
     event.stopPropagation();
+    if (
+      event.type === 'tp-open-change' &&
+      target instanceof Element &&
+      target.classList.contains('palette-menu')
+    ) {
+      // The menu Dialog (Close, Escape, an outside press) proposes on the palette lane.
+      const detail = (event as TpOpenChangeEvent).detail;
+      if (!this.#paletteState.set(detail.value, detail.reason, detail.sourceEvent ?? undefined))
+        event.preventDefault();
+      return;
+    }
     if (
       event.type === 'tp-open-change' &&
       target instanceof Element &&
@@ -4854,13 +5125,36 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #labelAdd = (event: CustomEvent<{ edgeId: string; sourceEvent: Event }>): void => {
     const edge = this.#model.getEdge(event.detail.edgeId);
     const path = this.#edgeLayer.paths.get(event.detail.edgeId);
-    if (!edge || !path || !this.palette || !this.editable) return;
-    this.#pendingInsert = {
-      at: path.center,
-      source: { nodeId: edge.source, portId: edge.sourcePort, direction: 'output' },
-    };
-    this.#paletteElement?.focus();
+    if (!edge || !path || this.palette === 'none' || !this.editable) return;
+    this.#openPaletteAnchored(
+      {
+        at: path.center,
+        source: { nodeId: edge.source, portId: edge.sourcePort, direction: 'output' },
+      },
+      event.detail.sourceEvent,
+    );
   };
+
+  /** The "+" of an edge label or a released connection: the library inserts at that anchor. */
+  #openPaletteAnchored(
+    anchor: { at: FlowPoint; source?: ConnectionStartInfo },
+    sourceEvent?: Event,
+  ): void {
+    if (this.palette === 'none') return;
+    this.#placing = undefined;
+    if (!this.paletteOpen && !this.setPaletteOpen(true, 'trigger-press', sourceEvent)) return;
+    this.#pendingInsert = anchor;
+    this.#focusPaletteWhenShown();
+  }
+
+  /** The library takes focus (its search) once it has rendered open. */
+  #focusPaletteWhenShown(attempts = 8): void {
+    const palette = this.#paletteElement;
+    if (!palette || attempts <= 0 || !this.paletteOpen) return;
+    palette.focus();
+    if (!palette.matches(':focus-within'))
+      this.#scheduler?.animationFrame(() => this.#focusPaletteWhenShown(attempts - 1));
+  }
 
   #syncComposition(): void {
     const changed = this.#composition !== this.partPresentation;
@@ -4929,6 +5223,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           'aria-label': name,
           'aria-roledescription': 'node graph',
           'aria-describedby': instructionsId,
+          '@dragover': this.#rootDragOver,
+          '@drop': this.#rootDrop,
           'data-tool': this.tool,
           'data-mode': this.mode,
           'data-auto-layout': this.autoLayout,
@@ -4936,7 +5232,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           'data-readonly': this.readOnly,
           'data-disabled': this.effectiveDisabled,
           'data-inspector-open': this.inspectorOpen && this.inspector !== 'none',
-          'data-palette': this.palette,
+          'data-palette': this.palette === 'sidebar' && this.paletteOpen,
+          'data-placing': Boolean(this.#placing),
           'data-running': Boolean(this.#runState && this.#runState.status !== 'idle'),
           'data-lod': this.lod,
         },
@@ -4971,7 +5268,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         @dblclick=${this.#canvasDoubleClick}
         @contextmenu=${this.#canvasContextMenu}
       >
-        ${this.renderPart('flow-pane', { tool: this.tool }, { tag: 'div', properties: { part: 'flow-pane', class: 'pane', 'data-tool': this.tool, 'data-selecting': false } })}
+        ${this.renderPart('flow-pane', { tool: this.tool }, { tag: 'div', properties: { part: 'flow-pane', class: 'pane', 'data-tool': this.tool, 'data-selecting': false, 'data-placing': Boolean(this.#placing) } })}
         <tp-flow-background
           class="background"
           .pattern=${this.background}

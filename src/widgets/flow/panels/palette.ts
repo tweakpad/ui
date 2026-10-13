@@ -1,35 +1,53 @@
-import { css, html, type PropertyValues } from 'lit';
+import { css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { TpElement } from '../../../foundation/element.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
-import { composedContains, deepActiveElement } from '../../../foundation/focus.js';
-import { observeResize } from '../../../foundation/observation.js';
-import { preventComponentHandling, type ComponentPartContract } from '../../../foundation/part.js';
-import type { FlowNodeDefinition } from '../../../foundation/flow/types.js';
-import { TpCommandPalette } from '../../../components/command-palette/command-palette.js';
-import type { CommandEntry, CommandItem } from '../../../components/command-palette/model.js';
+import { PresenceController } from '../../../foundation/presence.js';
+import type { FlowCategoryDefinition, FlowNodeDefinition } from '../../../foundation/flow/types.js';
+import { TpAccordion } from '../../../components/accordion/accordion.js';
+import { TpAccordionItem } from '../../../components/accordion/accordion-item.js';
+import { TpButton } from '../../../components/button/button.js';
 import { TpIcon } from '../../../components/icon/icon.js';
-import { TpListItem } from '../../../components/list-item/list-item.js';
+import { TpInput } from '../../../components/input/input.js';
+import { TpInputGroup } from '../../../components/input-group/input-group.js';
+import { navigationIcons } from '../../../icons/navigation.js';
 import type { IconDefinition } from '../../../icons/types.js';
+import { xIcon } from '../../../icons/x.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
+import { setPartComposition } from '../../../presentation/controller.js';
 import { resolveStrings } from '../strings.js';
 import type { FlowStrings } from '../types.js';
 
 export const PALETTE_INSERT = 'flow-palette-insert';
 export const PALETTE_CLOSE = 'flow-palette-close';
+export const PALETTE_DRAG_START = 'flow-palette-drag-start';
+export const PALETTE_DRAG_END = 'flow-palette-drag-end';
 /** Drag payload type of a palette item; the root reads it on drop. */
 export const PALETTE_DRAG_TYPE = 'application/x-tweakpad-flow-node';
 
 export interface FlowPaletteInsertDetail {
   type: string;
+  /** `place` (a pointer click) arms placement; `insert` (the keyboard) inserts at once. */
+  mode: 'insert' | 'place';
   sourceEvent: Event;
 }
 export interface FlowPaletteCloseDetail {
   sourceEvent: Event;
 }
+export interface FlowPaletteDragStartDetail {
+  type: string;
+  sourceEvent: Event;
+}
+
+/** One category of the library with the definitions the search keeps. */
+interface PaletteGroup {
+  id: string;
+  label: string;
+  tone?: string;
+  open: boolean;
+  definitions: FlowNodeDefinition[];
+}
 
 const paletteStyles = css`
-  /* The root sizes the sidebar; under the header the search stays and the list fills the rest of
-     the sidebar and scrolls (the palette writes the list's available height from the body). */
   :host {
     display: flex;
     flex-direction: column;
@@ -52,78 +70,97 @@ const paletteStyles = css`
   }
 
   .title {
+    flex: 1 1 auto;
+    min-inline-size: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
+  .search {
+    flex: none;
+  }
+
+  /* The body scrolls the groups below the search. */
   .body {
     flex: 1 1 auto;
     min-block-size: 0;
-    overflow: hidden;
+    overflow: auto;
+    overscroll-behavior: contain;
   }
 
-  tp-command-palette {
-    display: block;
+  .groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tp-space-4);
+  }
+
+  /* The menu lays the groups out as columns. */
+  :host([layout='menu']) .groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(calc(var(--tp-spacing) * 36), 1fr));
+    gap: var(--tp-space-6) var(--tp-space-4);
+    align-items: start;
+  }
+
+  .items {
+    display: flex;
+    flex-direction: column;
     min-inline-size: 0;
+  }
+
+  .items > tp-button {
+    inline-size: 100%;
+    justify-content: flex-start;
+  }
+
+  .empty {
+    margin: 0;
   }
 `;
 
 /**
- * The node palette (Widgets 6.3 Anatomy): a sidebar the root floats over the canvas at its inline
- * start, holding a Command palette over the schema's node definitions, grouped by category, each
- * command a presentational List item with the definition's icon tile, label and description. The
- * whole list shows; the search only filters it, and the list fills the sidebar and scrolls. Activation
- * inserts (`flow-palette-insert`); the items are also native drag sources carrying the node type
- * so the root can drop them at a canvas point.
+ * The node library (Widgets 6.3 Anatomy): the schema's definitions grouped by category, each a
+ * compact outline Button chip with the definition's icon. In the `sidebar` layout it floats at
+ * the root's inline start, enters and leaves like the inspector from its side, and shows the
+ * groups as Accordion sections; in the `menu` layout (inside the root's Dialog) the groups are
+ * columns. A search filters both. A chip is dragged onto the canvas; a pointer click arms
+ * placement and Enter inserts at once (`flow-palette-insert`).
  */
 export class TpFlowPalette extends TpElement {
   static tagName = 'tp-flow-palette';
   static override presentation = flowPresentation;
   static get elementDependencies() {
-    return [TpCommandPalette, TpListItem, TpIcon];
+    return [TpButton, TpIcon, TpInput, TpInputGroup, TpAccordion, TpAccordionItem];
   }
   static override properties = {
     ...TpElement.properties,
     definitions: { attribute: false },
+    categories: { attribute: false },
     icons: { attribute: false },
     strings: { attribute: false },
+    layout: { type: String, reflect: true },
+    open: { type: Boolean, reflect: true },
     query: { type: String },
     label: { type: String },
   };
   static override styles = [TpElement.styles, paletteStyles];
 
   definitions: readonly FlowNodeDefinition[] = [];
+  categories: readonly FlowCategoryDefinition[] = [];
   /** Region name; unique per page when several graphs show a palette. */
   label = '';
   icons: Record<string, IconDefinition> = {};
   strings: Partial<FlowStrings> | undefined;
+  layout: 'sidebar' | 'menu' = 'sidebar';
+  /** The sidebar's presence; the menu's Dialog owns its own. */
+  open = false;
   query = '';
 
-  #entries: readonly CommandEntry[] = [];
-  #entriesFor: readonly FlowNodeDefinition[] | undefined;
-  #entriesIcons: Record<string, IconDefinition> | undefined;
-  readonly #registered = new WeakSet<HTMLElement>();
-  readonly #registrations: Array<() => void> = [];
-  #observedHeight = false;
-  /**
-   * A press on a draggable item keeps its native default: the Select's own press handling cancels
-   * it to hold focus in the query, which also cancels the native drag. Activation still runs
-   * through the Command palette's click path (`tp-execute`).
-   */
-  readonly #paletteContracts: Record<string, ComponentPartContract> = {
-    'command-palette-item': {
-      hostProperties: {
-        '@pointerdown': (event: PointerEvent) => {
-          if (event.button !== 0 || this.disabled) return;
-          const target = event.target as Element | null;
-          if (target?.closest?.('[draggable="true"]')) preventComponentHandling(event);
-        },
-      },
-    },
-    // The list takes the sidebar's whole remaining height, not the popup cap.
-    'command-palette-list': { styleHook: { 'max-block-size': 'none' } },
-  };
+  readonly #composed = new WeakSet<TpElement>();
+  readonly #presence = new PresenceController(this, {
+    surface: () => this.renderRoot?.querySelector('.palette') ?? null,
+  });
 
   get presentationOwner(): HTMLElement | null {
     const root = this.getRootNode();
@@ -134,205 +171,291 @@ export class TpFlowPalette extends TpElement {
     return resolveStrings(this.strings);
   }
 
-  get commandPalette(): TpCommandPalette | null {
-    return this.renderRoot?.querySelector('tp-command-palette') ?? null;
+  get #present(): boolean {
+    return this.layout === 'menu' || this.open;
   }
 
-  /** Focuses the palette's query input. */
+  /** Focuses the search. */
   override focus(options?: FocusOptions): void {
-    const input = this.commandPalette?.inputElement;
+    const input = this.renderRoot?.querySelector<HTMLElement>('tp-input.search-input');
     if (input) input.focus(options);
     else super.focus(options);
   }
 
-  override disconnectedCallback(): void {
-    for (const release of this.#registrations.splice(0)) release();
-    super.disconnectedCallback();
-  }
-
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
-    if (this.#entriesFor !== this.definitions || this.#entriesIcons !== this.icons) {
-      this.#entriesFor = this.definitions;
-      this.#entriesIcons = this.icons;
-      this.#entries = this.#buildEntries();
-    }
-  }
-
-  protected override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
-    void this.#registerItems();
-  }
-
-  #buildEntries(): CommandEntry[] {
-    const groups = new Map<string, CommandItem[]>();
-    const loose: CommandItem[] = [];
-    for (const definition of this.definitions) {
-      const item = this.#item(definition);
-      if (definition.category) {
-        const list = groups.get(definition.category) ?? [];
-        list.push(item);
-        groups.set(definition.category, list);
-      } else loose.push(item);
-    }
-    const entries: CommandEntry[] = [];
-    for (const [label, items] of groups) entries.push({ type: 'group', label, items });
-    entries.push(...loose);
-    return entries;
-  }
-
-  #item(definition: FlowNodeDefinition): CommandItem {
-    const icon = definition.icon ? this.icons[definition.icon] : undefined;
-    const keywords = [definition.type, definition.category ?? ''].filter(Boolean);
-    return {
-      value: definition.type,
-      text: definition.description
-        ? `${definition.label} ${definition.description}`
-        : definition.label,
-      keywords,
-      label: html`<tp-list-item
-        class="item"
-        size="sm"
-        draggable="true"
-        data-type=${definition.type}
-        data-tone=${definition.tone ?? ''}
-        description=${definition.description ?? ''}
-        @dragstart=${this.#dragStart}
-        >${
-          icon
-            ? html`<tp-icon slot="media" class="tile" .icon=${icon} aria-hidden="true"></tp-icon>`
-            : null
-        }${definition.label}</tp-list-item
-      >`,
-    };
-  }
-
-  /** The List items render inside the Command palette's list; register them as palette items. */
-  async #registerItems(): Promise<void> {
-    const palette = this.commandPalette;
-    if (!palette) return;
-    await palette.updateComplete;
-    const list = palette.shadowRoot?.querySelector<
-      HTMLElement & { updateComplete: Promise<unknown> }
-    >('tp-command-list');
-    if (!list) return;
-    await list.updateComplete;
-    if (!this.isConnected) return;
-    this.#observeHeight(palette, list);
-    for (const item of list.shadowRoot?.querySelectorAll<HTMLElement>('tp-list-item.item') ?? []) {
-      if (this.#registered.has(item)) continue;
-      this.#registered.add(item);
-      this.#registrations.push(this.presentationController.registerPart('flow-palette-item', item));
-    }
+    if (!this.hasUpdated) this.#presence.settle(this.#present);
+    else if (changed.has('open') || changed.has('layout')) this.#presence.setPresent(this.#present);
+    this.hidden = this.#presence.state === 'absent';
+    this.inert = !this.#present;
   }
 
   /**
-   * The list fills the sidebar below the search: the Command palette's content reads
-   * `--tp-available-height`, so the palette writes the body's height less the search row.
+   * Compact composition: a chip's label starts at its icon, and the sidebar's sections keep
+   * tight rows (the Button and Accordion recipes stay theirs).
    */
-  #observeHeight(palette: HTMLElement, list: HTMLElement): void {
-    const body = this.renderRoot.querySelector<HTMLElement>('.body');
-    const search = list.shadowRoot?.querySelector<HTMLElement>(
-      '[part~="command-palette-input-wrapper"]',
-    );
-    if (this.#observedHeight || !body || !search) return;
-    this.#observedHeight = true;
-    const sync = (): void => {
-      const height = `${Math.max(0, body.clientHeight - search.offsetHeight)}px`;
-      if (palette.style.getPropertyValue('--tp-available-height') !== height)
-        palette.style.setProperty('--tp-available-height', height);
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    for (const item of this.renderRoot.querySelectorAll<TpElement>('tp-button.item')) {
+      if (this.#composed.has(item)) continue;
+      this.#composed.add(item);
+      setPartComposition(item, this, {
+        button: { styleHook: { 'justify-content': 'flex-start' } },
+      });
+    }
+    const sections = this.renderRoot.querySelector<TpElement>('tp-accordion.sections');
+    if (sections && !this.#composed.has(sections)) {
+      this.#composed.add(sections);
+      setPartComposition(sections, this, {
+        'accordion-trigger': {
+          styleHook: { 'padding-block': 'var(--tp-space-1-5)', 'padding-inline': '0' },
+        },
+        'accordion-content-body': {
+          styleHook: { 'padding-block': '0 var(--tp-space-3)', 'padding-inline': '0' },
+        },
+      });
+    }
+  }
+
+  /** Categories in schema order, then any others in first-use order; the search filters them. */
+  #groups(): PaletteGroup[] {
+    const strings = this.#strings;
+    const query = this.query.trim().toLowerCase();
+    const known = new Map(this.categories.map((category) => [category.id, category]));
+    const groups = new Map<string, PaletteGroup>();
+    const group = (id: string): PaletteGroup => {
+      let found = groups.get(id);
+      if (!found) {
+        const category = known.get(id);
+        found = {
+          id,
+          label: id ? (category?.label ?? id) : strings.uncategorized,
+          ...(category?.tone ? { tone: category.tone } : {}),
+          open: category?.open ?? true,
+          definitions: [],
+        };
+        groups.set(id, found);
+      }
+      return found;
     };
-    sync();
-    this.#registrations.push(observeResize(body, sync), observeResize(search, sync), () => {
-      this.#observedHeight = false;
-    });
+    for (const category of this.categories) group(category.id);
+    for (const definition of this.definitions) {
+      const target = group(definition.category ?? '');
+      const text = [definition.label, definition.description, definition.type, target.label]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (!query || text.includes(query)) target.definitions.push(definition);
+    }
+    return [...groups.values()].filter((entry) => entry.definitions.length);
   }
 
   #dragStart = (event: DragEvent): void => {
     const item = event.currentTarget as HTMLElement;
     const type = item.dataset['type'];
-    if (!type || this.disabled || !event.dataTransfer) return;
+    if (!type || this.disabled || !event.dataTransfer) {
+      event.preventDefault();
+      return;
+    }
     event.dataTransfer.setData(PALETTE_DRAG_TYPE, type);
     event.dataTransfer.setData('text/plain', type);
     event.dataTransfer.effectAllowed = 'copy';
+    // Once the drag image is taken the root lets the canvas show (and take the drop) under the menu.
+    queueMicrotask(() =>
+      this.dispatchEvent(
+        new CustomEvent<FlowPaletteDragStartDetail>(PALETTE_DRAG_START, {
+          bubbles: true,
+          composed: true,
+          detail: { type, sourceEvent: event },
+        }),
+      ),
+    );
   };
 
-  #insert(type: string, sourceEvent: Event): void {
-    if (this.disabled) return;
+  #dragEnd = (event: DragEvent): void => {
+    this.dispatchEvent(
+      new CustomEvent<FlowPaletteCloseDetail>(PALETTE_DRAG_END, {
+        bubbles: true,
+        composed: true,
+        detail: { sourceEvent: event },
+      }),
+    );
+  };
+
+  /** A pointer click (detail 1 or more) arms placement; Enter and Space (detail 0) insert. */
+  #activate = (event: MouseEvent): void => {
+    const type = (event.currentTarget as HTMLElement).dataset['type'];
+    if (!type || this.disabled) return;
     this.dispatchEvent(
       new CustomEvent<FlowPaletteInsertDetail>(PALETTE_INSERT, {
         bubbles: true,
-        composed: false,
-        detail: { type, sourceEvent },
+        composed: true,
+        detail: { type, mode: event.detail > 0 ? 'place' : 'insert', sourceEvent: event },
       }),
     );
-    // A pointer activation moved focus to the command (its press kept the native default for
-    // the drag); the query takes it back unless the root closed the palette or moved focus.
-    const input = this.commandPalette?.inputElement;
-    const active = deepActiveElement(this.ownerDocument);
-    if (this.isConnected && input && active !== input && composedContains(this, active))
-      input.focus({ preventScroll: true });
-  }
-
-  /** Activation through the Command palette: Enter on the active command or a click on it. */
-  #execute = (event: CustomEvent<{ commandId: unknown; sourceEvent: Event }>): void => {
-    event.stopPropagation();
-    const type = event.detail.commandId;
-    if (typeof type === 'string') this.#insert(type, event.detail.sourceEvent);
   };
 
   #queryChange = (event: TpValueChangeEvent<string>): void => {
     event.stopPropagation();
-    this.query = event.detail.value;
+    this.query = String(event.detail.value ?? '');
   };
 
   #contain = (event: Event): void => {
     event.stopPropagation();
   };
 
-  #keyDown = (event: KeyboardEvent): void => {
-    if (event.key !== 'Escape' || event.defaultPrevented) return;
-    event.preventDefault();
-    event.stopPropagation();
+  #close = (event: Event): void => {
     this.dispatchEvent(
       new CustomEvent<FlowPaletteCloseDetail>(PALETTE_CLOSE, {
         bubbles: true,
-        composed: false,
+        composed: true,
         detail: { sourceEvent: event },
       }),
     );
   };
 
-  protected override render() {
-    const strings = this.#strings;
-    const header = this.renderPart(
-      'flow-palette-header',
+  #keyDown = (event: KeyboardEvent): void => {
+    if (event.key !== 'Escape' || event.defaultPrevented || this.layout === 'menu') return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.#close(event);
+  };
+
+  #renderItem(definition: FlowNodeDefinition): TemplateResult {
+    const icon = definition.icon ? this.icons[definition.icon] : undefined;
+    return html`<tp-button
+      class="item"
+      variant="outline"
+      size="xs"
+      draggable=${this.disabled ? 'false' : 'true'}
+      data-type=${definition.type}
+      data-tone=${definition.tone ?? nothing}
+      title=${definition.description ?? this.#strings.dragToPlace}
+      .icon=${icon}
+      ?disabled=${this.disabled}
+      @dragstart=${this.#dragStart}
+      @dragend=${this.#dragEnd}
+      @click=${this.#activate}
+      >${definition.label}</tp-button
+    >`;
+  }
+
+  #renderItems(group: PaletteGroup): TemplateResult {
+    return this.renderPart(
+      'flow-palette-items',
       {},
       {
-        tag: 'header',
-        properties: { part: 'flow-palette-header', class: 'header' },
-        content: html`<span class="title">${strings.palette}</span>`,
+        tag: 'div',
+        properties: { part: 'flow-palette-items', class: 'items' },
+        content: html`${group.definitions.map((definition) => this.#renderItem(definition))}`,
+      },
+    ) as TemplateResult;
+  }
+
+  #renderGroupLabel(group: PaletteGroup, tag: 'h3' | 'span', slot?: string): unknown {
+    return this.renderPart(
+      'flow-palette-group-label',
+      {},
+      {
+        tag,
+        properties: {
+          part: 'flow-palette-group-label',
+          class: 'group-label',
+          'data-tone': group.tone,
+          ...(slot ? { slot } : {}),
+        },
+        content: group.label,
       },
     );
+  }
+
+  /** A group with its label as a heading: the menu's columns and the sidebar while searching. */
+  #renderSection(group: PaletteGroup): TemplateResult {
+    return this.renderPart(
+      'flow-palette-group',
+      {},
+      {
+        tag: 'section',
+        properties: {
+          part: 'flow-palette-group',
+          class: 'group',
+          'data-tone': group.tone,
+          'aria-label': group.label,
+        },
+        content: html`${this.#renderGroupLabel(group, 'h3')}${this.#renderItems(group)}`,
+      },
+    ) as TemplateResult;
+  }
+
+  /** The sidebar's groups: Accordion sections, all of them open unless their category says. */
+  #renderSections(groups: readonly PaletteGroup[]): TemplateResult {
+    return html`<tp-accordion
+      class="sections"
+      part="flow-palette-sections"
+      selection-mode="multiple"
+      .defaultValue=${groups.filter((group) => group.open).map((group) => group.id || '-')}
+      @tp-value-change=${this.#contain}
+      @tp-value-commit=${this.#contain}
+      >${groups.map(
+        (group) =>
+          html`<tp-accordion-item value=${group.id || '-'}
+            >${this.#renderGroupLabel(group, 'span', 'label')}${this.#renderItems(
+              group,
+            )}</tp-accordion-item
+          >`,
+      )}</tp-accordion
+    >`;
+  }
+
+  protected override render() {
+    const strings = this.#strings;
+    const groups = this.#groups();
+    const sidebar = this.layout === 'sidebar';
+    const searching = this.query.trim().length > 0;
+    const state = this.#presence.state;
+    const header = sidebar
+      ? this.renderPart(
+          'flow-palette-header',
+          {},
+          {
+            tag: 'header',
+            properties: { part: 'flow-palette-header', class: 'header' },
+            content: html`<span class="title">${strings.palette}</span>
+              <tp-button
+                class="close"
+                variant="ghost"
+                size="icon-sm"
+                .ariaLabel=${strings.close}
+                .icon=${xIcon}
+                @click=${this.#close}
+              ></tp-button>`,
+          },
+        )
+      : nothing;
+    const search = html`<tp-input-group class="search" part="flow-palette-search">
+      <tp-icon slot="inline-start" .icon=${navigationIcons.search} aria-hidden="true"></tp-icon>
+      <tp-input
+        class="search-input"
+        type="search"
+        .value=${this.query}
+        placeholder=${strings.searchNodes}
+        .ariaLabel=${strings.searchNodes}
+        @tp-value-change=${this.#queryChange}
+        @tp-value-commit=${this.#contain}
+      ></tp-input>
+    </tp-input-group>`;
+    const content = !groups.length
+      ? html`<p class="empty">${strings.noResults}</p>`
+      : sidebar && !searching && groups.some((group) => group.id)
+        ? this.#renderSections(groups)
+        : html`<div class="groups">${groups.map((group) => this.#renderSection(group))}</div>`;
     const body = this.renderPart(
       'flow-palette-body',
       { query: this.query },
       {
         tag: 'div',
         properties: { part: 'flow-palette-body', class: 'body' },
-        content: html`<tp-command-palette
-          inline
-          label=${strings.palette}
-          placeholder=${strings.searchNodes}
-          .items=${this.#entries}
-          .query=${this.query}
-          .partContracts=${this.#paletteContracts}
-          ?disabled=${this.disabled}
-          @tp-execute=${this.#execute}
-          @tp-query-change=${this.#queryChange}
-          @tp-value-change=${this.#contain}
-          @tp-open-change=${this.#contain}
-        ></tp-command-palette>`,
+        content: html`${search}${content}`,
       },
     );
     return this.renderPart(
@@ -345,6 +468,10 @@ export class TpFlowPalette extends TpElement {
           class: 'palette',
           role: 'region',
           'aria-label': this.label || strings.palette,
+          'data-layout': this.layout,
+          'data-open': this.#present,
+          'data-starting-style': sidebar && state === 'starting',
+          'data-ending-style': sidebar && state === 'ending',
           '@keydown': this.#keyDown,
         },
         content: html`${header}${body}`,

@@ -182,8 +182,24 @@ export interface FlowSchemaRules {
   ) => boolean;
 }
 
+/**
+ * A group of node definitions (their `category`): its label, tone and order in the node library,
+ * and whether its section starts open there.
+ */
+export interface FlowCategoryDefinition {
+  /** The `category` value of the definitions in this group. */
+  id: string;
+  /** Default: the id. */
+  label?: string;
+  tone?: string;
+  /** Whether the group's section starts open in the sidebar library (default true). */
+  open?: boolean;
+}
+
 export interface FlowSchema {
   nodes: FlowNodeDefinition[];
+  /** Order, labels and tones of the categories; categories not listed follow in first-use order. */
+  categories?: FlowCategoryDefinition[];
   dataTypes?: FlowDataTypeDefinition[];
   edgeKinds?: Partial<Record<FlowEdgeKind, FlowEdgeKindOptions>>;
   rules?: FlowSchemaRules;

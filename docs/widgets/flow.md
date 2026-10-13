@@ -58,7 +58,7 @@ geometry helpers and the `FlowRenderer` contract) for workers and servers. Icons
 
 Supply `value` for a controlled widget or `defaultValue` for an uncontrolled one; the mode stays
 fixed for the element's lifetime. The same rule applies to the `viewport`, `selection`, `tool`,
-`mode` and `inspectorOpen` lanes. `load()` and `setValue()` replace the document programmatically
+`mode`, `inspectorOpen` and `paletteOpen` lanes. `load()` and `setValue()` replace the document programmatically
 on either kind of instance.
 
 ## Value and the document
@@ -103,13 +103,18 @@ history entry records it. `onValueChange` and `onValueCommitted` are the callbac
 
 ## Schema
 
-`schema` is a `FlowSchema`: `{ nodes, dataTypes?, edgeKinds?, rules? }`.
+`schema` is a `FlowSchema`: `{ nodes, categories?, dataTypes?, edgeKinds?, rules? }`.
 
 - A node definition (`FlowNodeDefinition`) names its `type`, `label`, `description`, `icon` (a
   key of `icons`), `tone` (`chart-1` to `chart-5`, `success`, `warning`, `destructive` or
-  `primary`), `category` (the palette group), `shape` (`card` by default, `compact`, `panel` or
+  `primary`), `category` (its group in the node library), `shape` (`card` by default, `compact`, `panel` or
   `group`), its `ports`, its `properties`, a `size` hint before measurement with `minSize` and
   `maxSize`, `resizable` and an optional `validate(node, context)` returning issues.
+- `categories` (`FlowCategoryDefinition[]`) orders and names the groups of the node library:
+  `{ id, label?, tone?, open? }` matches the `category` of definitions, `tone` colors the group's
+  heading and `open: false` starts its sidebar section collapsed. Groups follow this order, then
+  the first use of other categories (named by their id); definitions without a category gather
+  under `strings.uncategorized` ("Other"), and groups without definitions are left out.
 - A port definition (`FlowPortDefinition`) has an `id`, a `label`, a `direction` (`input` or
   `output`), a `dataType`, a `side` (derived from the layout direction when absent: inputs on the
   left and outputs on the right of a horizontal graph, top and bottom of a vertical one),
@@ -213,8 +218,8 @@ reorients an input-to-output drag, `loose` accepts any pair but the same port), 
 returns `true`, `false` or a message. A release then dispatches the cancelable `tp-connect` with
 `{ connection, edge, reason, sourceEvent }` (a handler may change `detail.edge`, for instance its
 `kind` or `label`), proposes the `edge-add` with the reason `connect` and commits. Releasing on the
-empty pane with `palette` on opens the palette at the drop point so a node can be inserted and
-connected at once.
+empty pane with a node library (`palette`) opens it at the drop point so a node can be inserted
+and connected at once.
 
 With `connectOnClick` (default) a click on a port starts a connection (`aria-pressed`) and a click
 on another port completes it. From the keyboard, Enter on a focused port starts a connection,
@@ -240,8 +245,8 @@ and paint with the edge's stroke.
 `markerEnd` gets a closed arrow, so the direction stays visible when the dash pauses under reduced
 motion. `label` is a shorthand for `labels: [{ text }]`; each label sits at
 `position` (0–1 along the path, 0.5 by default) with `align` and `placement` (`on`, `above`,
-`below`) and renders as an outline Badge pill. With `palette` on, every label carries a "+"
-Button that opens the palette for an insertion on that edge. `edgeTemplates`, keyed by edge id or
+`below`) and renders as an outline Badge pill. With a node library (`palette`), every label carries a "+"
+Button that opens it for an insertion on that edge. `edgeTemplates`, keyed by edge id or
 kind, replaces the label content with a template `(context) => TemplateResult` over
 `{ edge, kind, selected, label }`.
 
@@ -458,7 +463,8 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
   `zoom-in zoom-out fit tool undo redo lock` by default, with `zoom`, `layout` and `run` opting in
   and `controls=""` rendering no bar. Adjacent actions of one set (view, history) share a Button
   group of outline icon Buttons; the select and pan tools are a Toggle group, the lock a Toggle,
-  `zoom` the zoom field and `run` the transport (a Slider with its Buttons). Undo and Redo are
+  `zoom` the zoom field, `run` the transport (a Slider with its Buttons) and `palette` the node
+  library's "+" Toggle. Undo and Redo are
   disabled until the history has a step to take. The bar sits in `controlsPosition`
   (`bottom-start`) laid out along `controlsOrientation` (`vertical`).
 - Zoom field (`zoom`): an Input group showing the current level; type a percentage and press Enter
@@ -477,17 +483,35 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
   boxes in their tones and the viewport mask, in `minimapPosition` (`bottom-end`); a press or drag
   pans, the wheel zooms, four named Buttons pan from the keyboard, and it repaints on theme and
   pixel-ratio changes.
-- Palette: `palette` shows the node library as a sidebar floating over the canvas at the inline
-  start, on the same surface and inset as the inspector, its width set by the size axis. Under its
-  "Node library" header a Command palette lists every definition of the schema grouped by
-  `category`, as List items with the icon tile, label and description; the search above them only
-  filters (by label and category) and stays at the top while the list fills the rest of the sidebar
-  and scrolls. Enter inserts at the center of the uncovered canvas or at the pending anchor (the "+"
-  of an edge label or the point of a released connection), and the items are native drag sources
-  that drop at the canvas point under the pointer. An insertion proposes with
-  `metadata.insert: { type, at }` and selects the new node. While it shows, the panels at the
-  inline start move clear of it, and fitting the view centers the graph in the canvas the
-  sidebars leave uncovered.
+- Node library: `palette` picks its layout, `none` (default), `sidebar` (the bare attribute) or
+  `menu`. A floating "+" Toggle named by `strings.palette` ("Node library") sits in
+  `paletteTrigger` (`top-start`; `none` leaves opening to the API), pressed while the library
+  shows; `palette` is also a `controls` action for authored bars. Opening and closing go through
+  the `paletteOpen` lane (`palette-open`, `default-palette-open`,
+  `setPaletteOpen(open, reason?, sourceEvent?)`, `tp-open-change` with
+  `metadata.surface: 'palette'`), and opening moves focus to the library's search.
+  - `sidebar`: a bar floating over the canvas at the inline start, on the same surface and inset as
+    the inspector, its width set by the size axis, with a "Node library" header and a Close
+    Button (Escape closes it too). Under the search an Accordion section per group (several may be
+    open; `open` of the category sets the start) lists the definitions; while searching, the
+    matching groups replace the sections. It stays open after an insertion; the panels at the
+    inline start move clear of it, and fitting the view centers the graph in the canvas it leaves
+    uncovered.
+  - `menu`: an "Add node" Dialog modal to the widget (container modality: the canvas behind it is
+    inert, Escape and its Close Button close it) whose groups lay out as columns under their
+    headings, wrapping to further rows when they do not fit. It closes after an insertion and
+    focus moves to the new node.
+- Library items: each definition is a compact outline Button chip with its icon and label (the
+  description, or `strings.dragToPlace`, as its tooltip) under the toned heading of its group; the
+  search filters by label, description, type and group. Chips are dragged onto the canvas and a
+  drop inserts the node centered on the drop point; the menu turns transparent while a chip is
+  dragged, so the whole canvas takes the drop, and comes back when the drag is cancelled. A click on
+  a chip arms placement instead, the single-pointer alternative to dragging: the pane shows a copy
+  cursor, the live region reads `strings.announcePlacing`, the next press on the pane places the
+  node there and Escape cancels. Enter or Space on a focused chip inserts at the center of the
+  uncovered canvas. With a pending anchor (the "+" of an edge label or the point of a released
+  connection) any activation inserts there and connects. An insertion proposes with
+  `metadata.insert: { type, at }` and selects the new node.
 - Inspector: a panel floating over the canvas at the inline end, inset like the other panels and
   painted as a Sheet (the shared floating surface), for the settings the schema keeps off the node.
   It enters and leaves like a Sheet, fading while it slides 2.5rem from the inline end (instant
@@ -591,7 +615,7 @@ the root as `data-renderer`.
 | `tp-selection-change`     | yes        | `{ nodes, edges }`                                                                                                                                                        |
 | `tp-tool-change`          | yes        | `'select'` or `'pan'`                                                                                                                                                     |
 | `tp-mode-change`          | yes        | `'design'` or `'view'`                                                                                                                                                    |
-| `tp-open-change`          | yes        | the open state with `metadata.surface`: `inspector` or `context-menu`                                                                                                     |
+| `tp-open-change`          | yes        | the open state with `metadata.surface`: `inspector`, `palette` or `context-menu`                                                                                          |
 | `tp-open-change-complete` | no         | `{ open, surface: 'inspector' }` once the inspector's enter or exit motion finished                                                                                       |
 | `tp-connect`              | yes        | `{ connection, edge, reason, sourceEvent }`; cancelling drops the connection, mutating `edge` changes what is added                                                       |
 | `tp-delete`               | yes        | `{ nodes, edges, reason, sourceEvent }`: the nodes with their descendants and every dependent edge                                                                        |
@@ -611,7 +635,9 @@ lane: the value lane uses `drag`, `track-press`, `keyboard`, `item-press`, `trig
 `item-press`, `selection`, `keyboard`, `hotkey`, `imperative-action` and `programmatic`; the tool
 lane `trigger-press`, `hotkey` and `programmatic`; the mode lane `trigger-press` and
 `programmatic`; the inspector lane `trigger-press`, `item-press`, `keyboard`, `outside-press`,
-`escape-key`, `close-action`, `focus-outside`, `imperative-action` and `programmatic`.
+`escape-key`, `close-action`, `focus-outside`, `imperative-action` and `programmatic`; the palette
+lane `trigger-press`, `item-press`, `escape-key`, `close-action`, `outside-press`,
+`focus-outside`, `close-watcher`, `imperative-action` and `programmatic`.
 
 Lane events of the composed controls never leave the widget: a Slider inside a node stops at the
 node and becomes a `node-data` proposal with `metadata.nodeId`, `property` and `surface`; a vetoed
@@ -636,7 +662,7 @@ is Command on macOS and Control elsewhere.
     <tr><td><tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>Shift</tp-key-hint><tp-key-hint label="Arrow key">→</tp-key-hint></tp-key-hint-group></td><td>Nudge the selection by four grid steps</td></tr>
     <tr><td><tp-key-hint>Enter</tp-key-hint></td><td>Enter the focused node (Tab then cycles its ports and controls); on a port, start or confirm a connection</td></tr>
     <tr><td><tp-key-hint>Space</tp-key-hint></td><td>Toggle the focused node in the selection; held, pan with the pointer</td></tr>
-    <tr><td><tp-key-hint>Escape</tp-key-hint></td><td>Cancel the gesture, leave the node, clear the selection or close the inspector</td></tr>
+    <tr><td><tp-key-hint>Escape</tp-key-hint></td><td>Cancel the gesture or an armed placement, leave the node, clear the selection, close the inspector or the node library</td></tr>
     <tr><td><tp-key-hint>Delete</tp-key-hint> <tp-key-hint>Backspace</tp-key-hint></td><td>Delete the selection (after <code>tp-delete</code>)</td></tr>
     <tr><td><tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>Z</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>Shift</tp-key-hint><tp-key-hint>Z</tp-key-hint></tp-key-hint-group></td><td>Undo, redo</td></tr>
     <tr><td><tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>C</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>X</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>V</tp-key-hint></tp-key-hint-group> <tp-key-hint-group><tp-key-hint>Mod</tp-key-hint><tp-key-hint>D</tp-key-hint></tp-key-hint-group></td><td>Copy, cut, paste, duplicate the selection</td></tr>
@@ -665,7 +691,8 @@ order. Ports are native buttons named "Node: Port input" or "… output" with `a
 and `aria-pressed` while click-connecting. Edges are groups with the role description "edge" named
 "Edge from A to B, label", focusable through overlay proxies so focus works with every renderer.
 The controls toolbar and the node toolbar are toolbars with arrow navigation, the minimap an image
-with named pan buttons, the palette a Command palette with a search field and a listbox, the
+with named pan buttons, the node library a region named "<label> node library" with a search field, headed groups
+(Accordion sections in the sidebar) and Button chips, inside a Dialog in the `menu` layout, the
 inspector a labelled panel whose Tabs and Fields keep their own semantics, the context menu a Menu.
 A polite live region announces moves ("Moved Notify sales to 700, 380"), connections, the
 candidate during a keyboard connection, deletions, the selection count, layout completion, the
@@ -698,20 +725,22 @@ and has a minimum height on its own, so it needs no inline size). Public parts: 
 `flow-edge-segment-handle`, `flow-edge-reconnect`, `flow-connection-line`, `flow-selection`,
 `flow-selection-bounds`, `flow-minimap`, `flow-minimap-node`, `flow-minimap-viewport`,
 `flow-controls`, `flow-control`, `flow-palette`, `flow-palette-header`, `flow-palette-body`,
-`flow-palette-item`, `flow-inspector`,
+`flow-palette-search`, `flow-palette-sections`, `flow-palette-group`, `flow-palette-group-label`,
+`flow-palette-items`, `flow-palette-item`, `flow-inspector`,
 `flow-inspector-header`, `flow-inspector-tabs`, `flow-inspector-body`, `flow-inspector-footer`,
 `flow-panel-top-start`, `flow-panel-top-center`, `flow-panel-top-end`, `flow-panel-center-start`,
 `flow-panel-center-end`, `flow-panel-bottom-start`, `flow-panel-bottom-center`,
 `flow-panel-bottom-end` and `flow-instructions`.
 The composed Card of a node is registered as `flow-node-card`, its List item rows as
-`flow-node-row`, the toolbar Buttons and Toggles as `flow-control` and the palette's List items as
+`flow-node-row`, the toolbar Buttons and Toggles as `flow-control` and the node library's chips as
 `flow-palette-item`; `tp-flow-node` exports its parts, so `tp-flow::part(flow-node-title)` reaches
 pooled and authored nodes alike and `partPresentation` hooks reach the widget parts and the
 registered nested parts.
 
 State markers: the root carries `data-mode`, `data-tool`, `data-dragging`, `data-connecting`,
 `data-selecting`, `data-resizing`, `data-readonly`, `data-disabled`, `data-locked`, `data-empty`,
-`data-auto-layout`, `data-lod`, `data-renderer`, `data-inspector-open`, `data-palette`, `data-running` and
+`data-auto-layout`, `data-lod`, `data-renderer`, `data-inspector-open`, `data-palette` (the
+sidebar shows), `data-placing`, `data-running` and
 `data-pan-active`; a node `data-selected`, `data-focused`, `data-focus-visible`, `data-dragging`,
 `data-connecting`, `data-shape`, `data-tone`, `data-status`, `data-lod`, `data-pinned`,
 `data-parent`, `data-measured` and `data-resizable`; a port `data-direction`, `data-side`,
@@ -816,7 +845,9 @@ nodes; pooled node hosts instead of a React element per node. tweakpane has no g
 | `controlsPosition`, `controlsOrientation`  | `controls-position`, `controls-orientation`    | `FlowPanelPosition`, `'vertical' \| 'horizontal'`      | `'bottom-start'`, `'vertical'`             |
 | `zoomPresets`                              | —                                              | `number[]`                                             | `[0.5, 1, 2]`                              |
 | `minimap`, `minimapPosition`               | `minimap`, `minimap-position`                  | `boolean`, `FlowPanelPosition`                         | `false`, `'bottom-end'`                    |
-| `palette`                                  | `palette`                                      | `boolean`                                              | `false`                                    |
+| `palette`                                  | `palette` (bare means `sidebar`)               | `'none' \| 'sidebar' \| 'menu'`                        | `'none'`                                   |
+| `paletteOpen` / `defaultPaletteOpen`       | `palette-open` / `default-palette-open`        | `boolean`                                              | `false`                                    |
+| `paletteTrigger`                           | `palette-trigger`                              | `FlowPanelPosition \| 'none'`                          | `'top-start'`                              |
 | `confirmDelete`                            | `confirm-delete`                               | `boolean`                                              | `false`                                    |
 | `inspector`, `inspectorCommit`             | `inspector`, `inspector-commit`                | `'none' \| 'auto' \| 'manual'`, `'live' \| 'explicit'` | `'auto'`, `'live'`                         |
 | `locked`                                   | `locked` (reflected)                           | `boolean`                                              | `false`                                    |
@@ -842,6 +873,7 @@ Methods: `setValue(document, reason?, sourceEvent?)`, `load(document)`,
 `reconnect(edgeId, end, connection, sourceEvent?)`, `undo(reason?)`, `redo(reason?)`,
 `select({ nodes?, edges? }, reason?)`, `selectAll(reason?)`, `clearSelection(reason?)`,
 `setTool(tool, reason?)`, `setMode(mode, reason?)`, `setInspectorOpen(open, reason?)`,
+`setPaletteOpen(open, reason?, sourceEvent?)`,
 `setViewport(viewport, { duration?, reason? })`,
 `fitViewTo({ padding?, duration?, nodes?, reason?, maxZoom? })`,
 `zoomTo(zoom, { duration?, point?, reason? })`, `zoomIn(options?)`, `zoomOut(options?)`,

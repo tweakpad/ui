@@ -2,6 +2,12 @@
 import type { FlowDocument, FlowSchema, FlowEdgeKind } from '/src/foundation/flow/types.ts';
 
 export const workflowSchema: FlowSchema = {
+  categories: [
+    { id: 'triggers', label: 'Triggers', tone: 'chart-1' },
+    { id: 'logic', label: 'Logic', tone: 'chart-2' },
+    { id: 'data', label: 'Data', tone: 'chart-3' },
+    { id: 'actions', label: 'Actions', tone: 'chart-4' },
+  ],
   dataTypes: [
     { id: 'event', label: 'Event' },
     { id: 'record', label: 'Record', tone: 'chart-2' },
@@ -10,6 +16,7 @@ export const workflowSchema: FlowSchema = {
     {
       type: 'trigger',
       label: 'Trigger',
+      category: 'triggers',
       description: 'Webhook',
       icon: 'zap',
       tone: 'chart-1',
@@ -19,6 +26,7 @@ export const workflowSchema: FlowSchema = {
     {
       type: 'condition',
       label: 'Condition',
+      category: 'logic',
       description: 'Branch on a value',
       icon: 'git-branch',
       tone: 'chart-3',
@@ -34,6 +42,7 @@ export const workflowSchema: FlowSchema = {
     {
       type: 'enrich',
       label: 'Enrich company',
+      category: 'data',
       description: 'Clearbit lookup',
       icon: 'database',
       tone: 'chart-2',
@@ -69,6 +78,7 @@ export const workflowSchema: FlowSchema = {
     {
       type: 'deal',
       label: 'Create deal',
+      category: 'actions',
       description: 'HubSpot pipeline: Inbound',
       icon: 'zap',
       tone: 'chart-4',
@@ -89,6 +99,7 @@ export const workflowSchema: FlowSchema = {
     {
       type: 'notify',
       label: 'Notify sales',
+      category: 'actions',
       description: 'Slack #inbound-leads',
       icon: 'mail',
       tone: 'chart-5',
@@ -107,6 +118,7 @@ export const workflowSchema: FlowSchema = {
     {
       type: 'action',
       label: 'Action',
+      category: 'actions',
       description: 'Generic step',
       icon: 'mail',
       ports: [
@@ -166,6 +178,13 @@ export const workflowDocument: FlowDocument = {
 };
 
 export const materialSchema: FlowSchema = {
+  categories: [
+    { id: 'input', label: 'Input', tone: 'chart-4' },
+    { id: 'color', label: 'Color', tone: 'chart-3' },
+    { id: 'vector', label: 'Vector', tone: 'chart-1' },
+    { id: 'shader', label: 'Shader', tone: 'chart-2' },
+    { id: 'output', label: 'Output', tone: 'chart-5' },
+  ],
   dataTypes: [
     { id: 'color', label: 'Color', tone: 'chart-3' },
     { id: 'float', label: 'Float', tone: 'chart-5' },
@@ -177,6 +196,7 @@ export const materialSchema: FlowSchema = {
     {
       type: 'blend',
       label: 'Darken stone edges',
+      category: 'color',
       shape: 'panel',
       tone: 'chart-4',
       ports: [
@@ -210,6 +230,7 @@ export const materialSchema: FlowSchema = {
     {
       type: 'normal',
       label: 'Normal From Height',
+      category: 'vector',
       shape: 'panel',
       tone: 'chart-1',
       ports: [
@@ -231,6 +252,7 @@ export const materialSchema: FlowSchema = {
     {
       type: 'material',
       label: 'Material',
+      category: 'shader',
       shape: 'panel',
       tone: 'chart-2',
       resizable: true,
@@ -274,6 +296,7 @@ export const materialSchema: FlowSchema = {
     {
       type: 'output',
       label: 'Material Output',
+      category: 'output',
       shape: 'panel',
       tone: 'destructive',
       ports: [{ id: 'surface', label: 'Surface', direction: 'input', dataType: 'shader' }],
@@ -288,6 +311,197 @@ export const materialSchema: FlowSchema = {
           default: 1024,
         },
       ],
+    },
+    {
+      type: 'uv',
+      label: 'Texture Coordinate',
+      category: 'input',
+      shape: 'panel',
+      tone: 'chart-4',
+      ports: [{ id: 'uv', label: 'uv', direction: 'output', dataType: 'vector' }],
+    },
+    {
+      type: 'value',
+      label: 'Value',
+      category: 'input',
+      shape: 'panel',
+      tone: 'chart-4',
+      ports: [{ id: 'value', label: 'value', direction: 'output', dataType: 'float' }],
+      properties: [{ key: 'value', label: 'value', control: 'number', step: 0.01, default: 0.5 }],
+    },
+    {
+      type: 'rgb',
+      label: 'RGB',
+      category: 'input',
+      shape: 'panel',
+      tone: 'chart-4',
+      ports: [{ id: 'color', label: 'color', direction: 'output', dataType: 'color' }],
+      properties: [{ key: 'color', label: 'color', control: 'color', default: '#7f7f7f' }],
+    },
+    {
+      type: 'noise',
+      label: 'Noise Texture',
+      category: 'input',
+      shape: 'panel',
+      tone: 'chart-4',
+      ports: [
+        { id: 'fac', label: 'fac', direction: 'output', dataType: 'float' },
+        { id: 'vector', label: 'vector', direction: 'input', dataType: 'vector' },
+      ],
+      properties: [
+        { key: 'scale', label: 'scale', control: 'number', min: 0, step: 0.1, default: 5 },
+        { key: 'detail', label: 'detail', control: 'slider', min: 0, max: 15, step: 1, default: 2 },
+      ],
+    },
+    {
+      type: 'invert',
+      label: 'Invert',
+      category: 'color',
+      shape: 'panel',
+      tone: 'chart-3',
+      ports: [
+        { id: 'color', label: 'color', direction: 'output', dataType: 'color' },
+        { id: 'input', label: 'input', direction: 'input', dataType: 'color' },
+      ],
+    },
+    {
+      type: 'hsv',
+      label: 'Hue / Saturation',
+      category: 'color',
+      shape: 'panel',
+      tone: 'chart-3',
+      ports: [
+        { id: 'color', label: 'color', direction: 'output', dataType: 'color' },
+        { id: 'input', label: 'input', direction: 'input', dataType: 'color' },
+      ],
+      properties: [
+        { key: 'hue', label: 'hue', control: 'slider', min: 0, max: 1, step: 0.01, default: 0.5 },
+        {
+          key: 'saturation',
+          label: 'saturation',
+          control: 'slider',
+          min: 0,
+          max: 2,
+          step: 0.01,
+          default: 1,
+        },
+      ],
+    },
+    {
+      type: 'gamma',
+      label: 'Gamma',
+      category: 'color',
+      shape: 'panel',
+      tone: 'chart-3',
+      ports: [
+        { id: 'color', label: 'color', direction: 'output', dataType: 'color' },
+        { id: 'input', label: 'input', direction: 'input', dataType: 'color' },
+      ],
+      properties: [
+        { key: 'gamma', label: 'gamma', control: 'number', min: 0, step: 0.1, default: 1 },
+      ],
+    },
+    {
+      type: 'mapping',
+      label: 'Mapping',
+      category: 'vector',
+      shape: 'panel',
+      tone: 'chart-1',
+      ports: [
+        { id: 'vector', label: 'vector', direction: 'output', dataType: 'vector' },
+        { id: 'input', label: 'input', direction: 'input', dataType: 'vector' },
+      ],
+      properties: [
+        {
+          key: 'type',
+          label: 'type',
+          control: 'select',
+          options: [
+            { value: 'point', label: 'point' },
+            { value: 'texture', label: 'texture' },
+            { value: 'normal', label: 'normal' },
+          ],
+          default: 'point',
+        },
+      ],
+    },
+    {
+      type: 'bump',
+      label: 'Bump',
+      category: 'vector',
+      shape: 'panel',
+      tone: 'chart-1',
+      ports: [
+        { id: 'normal', label: 'normal', direction: 'output', dataType: 'vector' },
+        { id: 'height', label: 'height', direction: 'input', dataType: 'float' },
+      ],
+      properties: [
+        { key: 'distance', label: 'distance', control: 'number', min: 0, step: 0.1, default: 1 },
+      ],
+    },
+    {
+      type: 'displacement',
+      label: 'Displacement',
+      category: 'vector',
+      shape: 'panel',
+      tone: 'chart-1',
+      ports: [
+        { id: 'displacement', label: 'displacement', direction: 'output', dataType: 'vector' },
+        { id: 'height', label: 'height', direction: 'input', dataType: 'float' },
+      ],
+      properties: [
+        { key: 'scale', label: 'scale', control: 'number', min: 0, step: 0.1, default: 1 },
+      ],
+    },
+    {
+      type: 'emission',
+      label: 'Emission',
+      category: 'shader',
+      shape: 'panel',
+      tone: 'chart-2',
+      ports: [
+        { id: 'emission', label: 'emission', direction: 'output', dataType: 'shader' },
+        { id: 'color', label: 'color', direction: 'input', dataType: 'color' },
+      ],
+      properties: [
+        { key: 'strength', label: 'strength', control: 'number', min: 0, step: 0.1, default: 1 },
+      ],
+    },
+    {
+      type: 'mix-shader',
+      label: 'Mix Shader',
+      category: 'shader',
+      shape: 'panel',
+      tone: 'chart-2',
+      ports: [
+        { id: 'shader', label: 'shader', direction: 'output', dataType: 'shader' },
+        { id: 'fac', label: 'fac', direction: 'input', dataType: 'float' },
+        { id: 'a', label: 'a', direction: 'input', dataType: 'shader' },
+        { id: 'b', label: 'b', direction: 'input', dataType: 'shader' },
+      ],
+    },
+    {
+      type: 'transparent',
+      label: 'Transparent',
+      category: 'shader',
+      shape: 'panel',
+      tone: 'chart-2',
+      ports: [
+        { id: 'bsdf', label: 'bsdf', direction: 'output', dataType: 'shader' },
+        { id: 'color', label: 'color', direction: 'input', dataType: 'color' },
+      ],
+    },
+    {
+      type: 'aov',
+      label: 'AOV Output',
+      category: 'output',
+      shape: 'panel',
+      tone: 'destructive',
+      ports: [
+        { id: 'color', label: 'color', direction: 'input', dataType: 'color' },
+        { id: 'value', label: 'value', direction: 'input', dataType: 'float' },
+      ],
+      properties: [{ key: 'name', label: 'name', control: 'text', default: 'mask' }],
     },
   ],
 };
@@ -388,12 +602,19 @@ export const sampleTrace = [
 
 /** Vertical pipeline (reference images 30/31): compact icon nodes, branch labels, orthogonal edges. */
 export const pipelineSchema: FlowSchema = {
+  categories: [
+    { id: 'triggers', label: 'Triggers', tone: 'chart-1' },
+    { id: 'tasks', label: 'Tasks', tone: 'chart-3' },
+    { id: 'flow', label: 'Flow control', tone: 'chart-4' },
+    { id: 'notifications', label: 'Notifications', tone: 'chart-2' },
+  ],
   dataTypes: [{ id: 'event', label: 'Event' }],
   rules: { connectionMode: 'strict', cycles: 'forbid', defaultEdgeKind: 'orthogonal' },
   nodes: [
     {
       type: 'trigger',
       label: 'Trigger',
+      category: 'triggers',
       description: 'Starts the pipeline',
       icon: 'zap',
       tone: 'chart-1',
@@ -403,6 +624,7 @@ export const pipelineSchema: FlowSchema = {
     {
       type: 'step',
       label: 'Step',
+      category: 'tasks',
       description: 'Runs a task',
       icon: 'database',
       tone: 'chart-2',
@@ -418,6 +640,7 @@ export const pipelineSchema: FlowSchema = {
     {
       type: 'approval',
       label: 'Approval',
+      category: 'flow',
       description: 'Waits for a reviewer',
       icon: 'lock',
       tone: 'warning',
@@ -432,8 +655,98 @@ export const pipelineSchema: FlowSchema = {
     {
       type: 'notify',
       label: 'Notify',
+      category: 'notifications',
       description: 'Sends a message',
       icon: 'mail',
+      tone: 'chart-4',
+      shape: 'compact',
+      ports: [{ id: 'in', label: 'In', direction: 'input', dataType: 'event', side: 'top' }],
+    },
+    {
+      type: 'schedule',
+      label: 'Schedule',
+      category: 'triggers',
+      description: 'Runs on a timer',
+      icon: 'clock',
+      tone: 'chart-1',
+      shape: 'compact',
+      ports: [{ id: 'out', label: 'Out', direction: 'output', dataType: 'event', side: 'bottom' }],
+      properties: [{ key: 'cron', label: 'Cron', control: 'text', default: '0 * * * *' }],
+    },
+    {
+      type: 'artifact',
+      label: 'Artifact',
+      category: 'triggers',
+      description: 'Starts on a new upload',
+      icon: 'upload-cloud',
+      tone: 'chart-1',
+      shape: 'compact',
+      ports: [{ id: 'out', label: 'Out', direction: 'output', dataType: 'event', side: 'bottom' }],
+    },
+    {
+      type: 'script',
+      label: 'Script',
+      category: 'tasks',
+      description: 'Runs a shell command',
+      icon: 'file-text',
+      tone: 'chart-2',
+      shape: 'compact',
+      ports: [
+        { id: 'in', label: 'In', direction: 'input', dataType: 'event', side: 'top' },
+        { id: 'out', label: 'Out', direction: 'output', dataType: 'event', side: 'bottom' },
+      ],
+      properties: [{ key: 'command', label: 'Command', control: 'text', default: 'npm test' }],
+    },
+    {
+      type: 'cache',
+      label: 'Restore cache',
+      category: 'tasks',
+      description: 'Restores build files',
+      icon: 'download',
+      tone: 'chart-2',
+      shape: 'compact',
+      ports: [
+        { id: 'in', label: 'In', direction: 'input', dataType: 'event', side: 'top' },
+        { id: 'out', label: 'Out', direction: 'output', dataType: 'event', side: 'bottom' },
+      ],
+    },
+    {
+      type: 'branch',
+      label: 'Branch',
+      category: 'flow',
+      description: 'Splits on a condition',
+      icon: 'git-branch',
+      tone: 'warning',
+      shape: 'compact',
+      ports: [
+        { id: 'in', label: 'In', direction: 'input', dataType: 'event', side: 'top' },
+        { id: 'yes', label: 'Yes', direction: 'output', dataType: 'event', side: 'bottom' },
+        { id: 'no', label: 'No', direction: 'output', dataType: 'event', side: 'bottom' },
+      ],
+      properties: [{ key: 'condition', label: 'Condition', control: 'text', default: 'main' }],
+    },
+    {
+      type: 'wait',
+      label: 'Wait',
+      category: 'flow',
+      description: 'Pauses for a delay',
+      icon: 'clock',
+      tone: 'warning',
+      shape: 'compact',
+      ports: [
+        { id: 'in', label: 'In', direction: 'input', dataType: 'event', side: 'top' },
+        { id: 'out', label: 'Out', direction: 'output', dataType: 'event', side: 'bottom' },
+      ],
+      properties: [
+        { key: 'delay', label: 'Delay', control: 'number', min: 0, max: 3600, default: 60 },
+      ],
+    },
+    {
+      type: 'alert',
+      label: 'Alert',
+      category: 'notifications',
+      description: 'Pages the on-call',
+      icon: 'shield-alert',
       tone: 'chart-4',
       shape: 'compact',
       ports: [{ id: 'in', label: 'In', direction: 'input', dataType: 'event', side: 'top' }],

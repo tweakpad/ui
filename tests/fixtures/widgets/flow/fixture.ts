@@ -21,6 +21,24 @@ const icons = {
       /* @vite-ignore */ built ? '/dist/icons/git-branch.js' : '/src/icons/git-branch.ts'
     )
   ).gitBranchIcon,
+  clock: (await import(/* @vite-ignore */ built ? '/dist/icons/clock.js' : '/src/icons/clock.ts'))
+    .clockIcon,
+  'upload-cloud': (
+    await import(
+      /* @vite-ignore */ built ? '/dist/icons/upload-cloud.js' : '/src/icons/upload-cloud.ts'
+    )
+  ).uploadCloudIcon,
+  'file-text': (
+    await import(/* @vite-ignore */ built ? '/dist/icons/file-text.js' : '/src/icons/file-text.ts')
+  ).fileTextIcon,
+  download: (
+    await import(/* @vite-ignore */ built ? '/dist/icons/download.js' : '/src/icons/download.ts')
+  ).downloadIcon,
+  'shield-alert': (
+    await import(
+      /* @vite-ignore */ built ? '/dist/icons/shield-alert.js' : '/src/icons/shield-alert.ts'
+    )
+  ).shieldAlertIcon,
 };
 const samples = await import('./sample.ts');
 const assertions = await import('./api.ts');

@@ -52,6 +52,13 @@ const tones: readonly [tone: string, value: string][] = [
   ['destructive', 'var(--tp-destructive)'],
 ];
 
+/** `--_tp-flow-tone` from a `data-tone` marker. */
+const toneRules: readonly PresentationRule[] = tones.map(([tone, value]) => ({
+  selector: `&[data-tone="${tone}"]`,
+  declarations: { '--_tp-flow-tone': value },
+}));
+const sidebar = '&[data-layout="sidebar"]';
+
 export const flowAppearance: PresentationDictionary = {
   flow: [
     {
@@ -114,6 +121,8 @@ export const flowAppearance: PresentationDictionary = {
     { selector: '&[data-tool="pan"], &[data-pan-active]', declarations: { cursor: 'grab' } },
     { selector: '&[data-panning]', declarations: { cursor: 'grabbing' } },
     { selector: '&[data-selecting]', declarations: { cursor: 'crosshair' } },
+    // A library item armed by a click: the next press places it.
+    { selector: '&[data-placing]', declarations: { cursor: 'copy' } },
   ],
   'flow-viewport': [],
   'flow-background': [],
@@ -523,9 +532,30 @@ export const flowAppearance: PresentationDictionary = {
     },
   ],
   'flow-control': [],
-  // The node library floats over the canvas at the inline start on the same surface as the
-  // inspector; the root sizes it and its body scrolls.
-  'flow-palette': [...surfaceAppearance, { declarations: { padding: '0', overflow: 'clip' } }],
+  // The sidebar library floats at the inline start on the inspector's surface and enters and
+  // leaves like it from its own side; the menu library lives in the root's Dialog.
+  'flow-palette': [
+    ...surfaceAppearance.map((entry) => ({ ...entry, selector: sidebar })),
+    {
+      selector: sidebar,
+      declarations: {
+        padding: '0',
+        overflow: 'clip',
+        '--_tp-flow-palette-offset': 'calc(var(--tp-space-10) * -1)',
+        opacity: '1',
+        translate: '0 0',
+        transition: motionTransition(['opacity', 'translate']),
+      },
+    },
+    {
+      selector: `${sidebar}:dir(rtl)`,
+      declarations: { '--_tp-flow-palette-offset': 'var(--tp-space-10)' },
+    },
+    {
+      selector: '&:is([data-starting-style], [data-ending-style])',
+      declarations: { opacity: '0', translate: 'var(--_tp-flow-palette-offset) 0' },
+    },
+  ],
   'flow-palette-header': [
     {
       declarations: {
@@ -535,8 +565,28 @@ export const flowAppearance: PresentationDictionary = {
     { selector: '& .title', declarations: { 'font-weight': 'var(--tp-font-medium)' } },
   ],
   'flow-palette-body': [],
-  // Command items are native drag sources for the canvas; the Command palette paints the row.
-  'flow-palette-item': [{ declarations: { cursor: 'grab' } }],
+  'flow-palette-search': [],
+  'flow-palette-sections': [],
+  // A category's label takes its tone, else the muted label color of the theme.
+  'flow-palette-group': toneRules,
+  'flow-palette-group-label': [
+    ...toneRules,
+    {
+      declarations: {
+        margin: '0',
+        color: 'var(--_tp-flow-tone, var(--tp-muted-foreground))',
+        'font-size': 'var(--tp-text-xs)',
+        'font-weight': 'var(--tp-font-medium)',
+        'line-height': 'var(--tp-leading-tight)',
+      },
+    },
+  ],
+  'flow-palette-items': [],
+  // Outline Button chips, native drag sources for the canvas.
+  'flow-palette-item': [
+    { declarations: { cursor: 'grab' } },
+    { selector: '&:active', declarations: { cursor: 'grabbing' } },
+  ],
   // A Sheet floating over the canvas (shadcn base Sheet): the shared floating surface, sections
   // padded by the inspector, entering and leaving 2.5rem from the inline end with a fade.
   'flow-inspector': [
@@ -602,6 +652,29 @@ export const flowStructure: PresentationDictionary = {
   'flow-palette-header': [
     { declarations: { gap: 'var(--tp-space-2)', padding: 'var(--_tp-flow-space)' } },
   ],
+  'flow-palette-body': [
+    {
+      declarations: {
+        display: 'flex',
+        'flex-direction': 'column',
+        gap: 'var(--tp-space-3)',
+        padding: 'var(--_tp-flow-space)',
+      },
+    },
+    // In the menu the Dialog's sections pad the content.
+    { selector: '[data-layout="menu"] > &', declarations: { padding: '0' } },
+  ],
+  'flow-palette-group': [
+    {
+      declarations: {
+        display: 'flex',
+        'flex-direction': 'column',
+        gap: 'var(--tp-space-2)',
+        'min-inline-size': '0',
+      },
+    },
+  ],
+  'flow-palette-items': [{ declarations: { gap: 'var(--tp-space-1)' } }],
   // The tab list starts where the header title and the fields start.
   'flow-inspector-tabs': [{ declarations: { 'padding-inline': 'var(--_tp-flow-space)' } }],
   'flow-inspector-body': [

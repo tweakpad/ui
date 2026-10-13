@@ -17,13 +17,13 @@ function example(title: string, content: string, description: string) {
 export const flowExamples = [
   example(
     'Material graph',
-    '<tp-flow label="Material" show-port-labels fit-view data-schema="material" data-document="material" data-output></tp-flow>',
-    'Panel nodes from the schema: a toned header, rows of label + Select, Slider, Color picker, Checkbox or NumberField control, labelled typed ports and Bézier edges (`rules.defaultEdgeKind`). A control inside a node proposes a `node-data` change on the document lane with `metadata.nodeId` and `property`; the Material node is resizable.',
+    '<tp-flow label="Material" palette="menu" show-port-labels fit-view data-schema="material" data-document="material" data-output></tp-flow>',
+    'Panel nodes from the schema: a toned header, rows of label + Select, Slider, Color picker, Checkbox or NumberField control, labelled typed ports and Bézier edges (`rules.defaultEdgeKind`). A control inside a node proposes a `node-data` change on the document lane with `metadata.nodeId` and `property`; the Material node is resizable. `palette="menu"` puts the node library in a Dialog over the widget, opened by the floating "+": the schema\'s `categories` become columns, and a node is dragged onto the canvas (or clicked, then placed with a click on the canvas).',
   ),
   example(
     'Vertical pipeline',
     '<tp-flow label="Release pipeline" palette fit-view data-schema="pipeline" data-document="pipeline" data-output></tp-flow>',
-    'Compact icon nodes with ports on their top and bottom sides, orthogonal edges routed around the nodes, arrow markers and branch labels as Badge pills. The build path is `animated`: its dashed stroke marches from source to target (a closed arrow keeps the direction when reduced motion pauses it). With `palette` on, every label carries a "+" Button that opens the node library and inserts the chosen node on that edge; releasing a connection on the empty pane offers the same palette at the drop point.',
+    'Compact icon nodes with ports on their top and bottom sides, orthogonal edges routed around the nodes, arrow markers and branch labels as Badge pills. The build path is `animated`: its dashed stroke marches from source to target (a closed arrow keeps the direction when reduced motion pauses it). `palette` puts the node library in a sidebar at the inline start, opened by the floating "+", with a section per category of the schema; drag a chip onto the canvas, or click it and then the canvas. Every label carries a "+" Button that opens the library for an insertion on that edge, and releasing a connection on the empty pane does the same at the drop point.',
   ),
   example(
     'Pipeline with inspector',

@@ -256,6 +256,12 @@ export const flowStyles = css`
     inline-size: min(var(--_tp-flow-palette), 100% - var(--_tp-flow-space) * 2);
   }
 
+  /* During a drag from the menu library its portal stays (it holds the drag source) but shows
+     the canvas through; its overlay still receives the drag, which the root accepts. */
+  .root > [data-flow-dragging] {
+    opacity: 0;
+  }
+
   .root > tp-flow-inspector {
     inset-inline-end: var(--_tp-flow-space);
     inline-size: min(var(--_tp-flow-inspector), 100% - var(--_tp-flow-space) * 2);
