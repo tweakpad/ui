@@ -19,18 +19,23 @@ export const flowStyles = css`
   }
 
   .root {
+    --_tp-flow-inline-sign: 1;
+
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     inline-size: 100%;
     block-size: 100%;
     min-block-size: inherit;
     overflow: clip;
   }
 
+  .root:dir(rtl) {
+    --_tp-flow-inline-sign: -1;
+  }
+
   .canvas {
     position: relative;
-    grid-column: 1;
     min-inline-size: 0;
     overflow: clip;
     touch-action: none;
@@ -135,12 +140,12 @@ export const flowStyles = css`
     transform-origin: 0 0;
   }
 
-  /* Panels span the pane along the edge they sit on (the full height at an inline side, the full
-     width for the top and bottom middles) so built-in panels can cap their own extent; only their
-     children take pointer events. Positions are \`block-inline\` pairs. */
+  /* Every panel spans the pane inside its margin, so built-in panels can cap their own extent and
+     a percentage of the panel is the pane's free extent; only their children take pointer events.
+     Positions are \`block-inline\` pairs. */
   .panel {
     position: absolute;
-    inset-block: 0;
+    inset: 0;
     z-index: 5;
     display: flex;
     gap: var(--tp-space-2);
@@ -152,18 +157,30 @@ export const flowStyles = css`
     pointer-events: auto;
   }
 
-  .panel[data-position$='-start'] {
-    inset-inline-start: 0;
-  }
-
   .panel[data-position$='-end'] {
-    inset-inline-end: 0;
     flex-direction: row-reverse;
   }
 
   .panel[data-position$='-center'] {
-    inset-inline: 0;
     justify-content: center;
+  }
+
+  /* While the inspector is open, end panels move clear of it (its extent and the gap) and middle
+     panels by half, centering in the space it leaves. */
+  .root[data-inspector-open] .panel[data-position$='-end'] {
+    translate: calc(
+        var(--_tp-flow-inline-sign) * -1 *
+          (min(var(--_tp-flow-inspector), 100%) + var(--_tp-flow-space))
+      )
+      0;
+  }
+
+  .root[data-inspector-open] .panel[data-position$='-center'] {
+    translate: calc(
+        var(--_tp-flow-inline-sign) * -0.5 *
+          (min(var(--_tp-flow-inspector), 100%) + var(--_tp-flow-space))
+      )
+      0;
   }
 
   .panel[data-position^='top-'] {
@@ -219,31 +236,14 @@ export const flowStyles = css`
     visibility: hidden;
   }
 
-  /* Docked inspector: the resizable group spans the root; the canvas keeps the remaining space. */
-  .dock {
-    grid-column: 1 / -1;
-    min-inline-size: 0;
-    min-block-size: 0;
-    block-size: 100%;
-  }
-
-  .dock > .canvas {
-    flex: 1 1 auto;
-    min-inline-size: 0;
-    block-size: 100%;
-  }
-
-  .dock-panel {
-    display: flex;
-    min-inline-size: 0;
-    min-block-size: 0;
-    overflow: hidden;
-  }
-
-  .dock-panel > tp-flow-inspector {
-    flex: 1 1 auto;
-    min-inline-size: 0;
-    block-size: 100%;
+  /* The inspector floats over the canvas at the inline end, inset by the panel margin; the canvas
+     keeps its size, so opening it moves nothing under the pointer. */
+  .root > tp-flow-inspector {
+    position: absolute;
+    inset-block: var(--_tp-flow-space);
+    inset-inline-end: var(--_tp-flow-space);
+    z-index: 7;
+    inline-size: min(var(--_tp-flow-inspector), 100% - var(--_tp-flow-space) * 2);
   }
 
   .layer.editor > tp-flow-edge-editor {

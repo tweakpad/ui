@@ -567,8 +567,8 @@ export async function assertWheelLatching(id = 'declarative', nodeId = 'b'): Pro
 // ---- gestures (synthetic sequences; real ones through the MCP drag tool) --------------------
 
 /**
- * Drags the left-most node: the press selects it and the `auto` inspector docks on the inline
- * end, shrinking the canvas; a node near that edge would put the pointer in the auto-pan zone.
+ * Drags the left-most node: a node near the inline end would put the pointer in the auto-pan
+ * zone and under the panels that float there.
  */
 export async function assertNodeDrag(id = 'monitor', nodeId = 'form'): Promise<Report> {
   const target = flow(id);
@@ -625,7 +625,7 @@ export async function assertNodeDrag(id = 'monitor', nodeId = 'form'): Promise<R
 
 export async function assertConnection(id = 'monitor'): Promise<Report> {
   const target = flow(id);
-  // A docked inspector would cover the inline-end ports; gestures start from a clear selection.
+  // An open inspector floats over the inline-end ports; gestures start from a clear selection.
   target.clearSelection();
   const removed = target.deleteElements({ edges: ['e4'] }, 'imperative-action');
   await settle(target);
@@ -1375,12 +1375,48 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
   const controlOpened = target.inspectorOpen;
 
   // The captured press retargets the double click to the canvas: the node under it opens.
+  // The panel floats over the canvas (the pane keeps its size) and enters and leaves with
+  // presence motion; a node it covers pans clear of it.
+  const surface = inspector.shadowRoot!.querySelector<HTMLElement>('[part~="flow-inspector"]')!;
+  const markers = new Set<string>();
+  const observer = new MutationObserver((records) => {
+    for (const record of records)
+      if (surface.hasAttribute(record.attributeName!)) markers.add(record.attributeName!);
+  });
+  observer.observe(surface, { attributeFilter: ['data-starting-style', 'data-ending-style'] });
+  const completions: unknown[] = [];
+  const complete = (event: Event) => completions.push((event as CustomEvent).detail);
+  target.addEventListener('tp-open-change-complete', complete);
+  const paneBefore = canvas.getBoundingClientRect().width;
+  const enrichNode = target.model.getNode('enrich')!;
+  // Place the node under the panel first, so opening has something to reveal.
+  const panelExtent = inspector.getBoundingClientRect().width || 352;
+  await target.setViewport({
+    ...target.viewport,
+    x:
+      target.viewport.x +
+      (canvas.getBoundingClientRect().width - panelExtent / 2) -
+      target.flowToScreen(enrichNode.position).x +
+      canvas.getBoundingClientRect().left,
+  });
+  await settle(target);
   await doublePress(canvas, titleOf('enrich'));
   const opened = {
     open: target.inspectorOpen,
     selection: target.selection.nodes,
     fields: fields(),
   };
+  await wait(600);
+  const panelRect = inspector.getBoundingClientRect();
+  const nodeRect = host(target, 'enrich')!.getBoundingClientRect();
+  const floating = {
+    position: getComputedStyle(inspector).position,
+    pane: [paneBefore, canvas.getBoundingClientRect().width],
+    enter: [...markers],
+    revealGap: Math.round(panelRect.left - nodeRect.right),
+    completions: [...completions],
+  };
+  markers.clear();
 
   // While open it follows a node with settings and closes when the selection leaves them.
   target.select({ nodes: ['notify'], edges: [] });
@@ -1420,8 +1456,32 @@ export async function assertInspector(id = 'monitor'): Promise<Report> {
   target.setInspectorOpen(false);
   target.clearSelection();
   await settle(target);
+  await wait(600);
+  observer.disconnect();
+  target.removeEventListener('tp-open-change-complete', complete);
+  const left = { exit: [...markers], hidden: inspector.hidden, completions: completions.slice(1) };
   return report(
     [
+      check(
+        'floats over the canvas, which keeps its size',
+        floating.position === 'absolute' && floating.pane[0] === floating.pane[1],
+        floating,
+      ),
+      check(
+        'enters with presence motion and reports its completion',
+        floating.enter.includes('data-starting-style') &&
+          JSON.stringify(floating.completions[0]) ===
+            JSON.stringify({ open: true, surface: 'inspector' }),
+        floating,
+      ),
+      check('the inspected node pans clear of the panel', floating.revealGap >= 8, floating),
+      check(
+        'leaves with presence motion, then unmounts',
+        left.exit.includes('data-ending-style') &&
+          left.hidden &&
+          left.completions.some((detail) => (detail as { open?: boolean }).open === false),
+        left,
+      ),
       check('no property in both the node and the inspector', !Object.keys(overlap).length, {
         overlap,
         split,

@@ -2,6 +2,7 @@ import { css, html, nothing, type PropertyValues, type TemplateResult } from 'li
 import { TpElement } from '../../../foundation/element.js';
 import { CleanupScope } from '../../../foundation/services.js';
 import { focusableElements } from '../../../foundation/focus.js';
+import { PresenceController } from '../../../foundation/presence.js';
 import {
   NumberFieldController,
   type NumberFieldOptions,
@@ -45,6 +46,7 @@ export const INSPECTOR_CHANGE = 'flow-inspector-change';
 export const INSPECTOR_COMMIT = 'flow-inspector-commit';
 export const INSPECTOR_FOCUS_EDGE = 'flow-inspector-focus-edge';
 export const INSPECTOR_CLOSE = 'flow-inspector-close';
+export const INSPECTOR_PRESENCE = 'flow-inspector-presence';
 
 export type FlowInspectorTab = 'settings' | 'wiring' | 'run';
 export type FlowInspectorCommit = 'live' | 'explicit';
@@ -78,6 +80,10 @@ export interface FlowInspectorFocusEdgeDetail {
 }
 export interface FlowInspectorCloseDetail {
   sourceEvent: Event;
+}
+export interface FlowInspectorPresenceDetail {
+  /** The enter (true) or exit (false) motion that finished. */
+  open: boolean;
 }
 
 /** Lane events of the composed controls that stop at the inspector and become edits. */
@@ -138,11 +144,6 @@ const inspectorStyles = css`
     flex-direction: column;
     min-inline-size: 0;
     min-block-size: 0;
-    block-size: 100%;
-  }
-
-  :host(:not([open])) {
-    display: none;
   }
 
   .inspector {
@@ -222,8 +223,8 @@ const inspectorStyles = css`
 `;
 
 /**
- * The inspector (Widgets 6.3 Anatomy): the side panel the root docks inline-end inside its
- * Resizable panel, with Tabs for Settings (one Field per visible property the schema places in
+ * The inspector (Widgets 6.3 Anatomy): the panel the root floats over the canvas at its inline
+ * end, entering and leaving with presence motion like a Sheet, with Tabs for Settings (one Field per visible property the schema places in
  * the inspector, edited by the library control its definition names), Wiring (the node's
  * connections as List items) and
  * Run (status badge, attempts, duration, message, error). Edits are reported through
@@ -288,6 +289,18 @@ export class TpFlowInspector extends TpElement {
   #draftNodeId: string | undefined;
   readonly #numberFields = new Map<HTMLElement, NumberBinding>();
   readonly #id = `tp-flow-inspector-${Math.random().toString(36).slice(2, 8)}`;
+  // The surface is mounted from the enter until the exit motion finishes (Dialog's lifecycle).
+  readonly #presence = new PresenceController(this, {
+    surface: () => this.renderRoot?.querySelector('.inspector') ?? null,
+    onComplete: (open) =>
+      this.dispatchEvent(
+        new CustomEvent<FlowInspectorPresenceDetail>(INSPECTOR_PRESENCE, {
+          bubbles: true,
+          composed: false,
+          detail: { open },
+        }),
+      ),
+  });
 
   get presentationOwner(): HTMLElement | null {
     const root = this.getRootNode();
@@ -360,6 +373,13 @@ export class TpFlowInspector extends TpElement {
       this.#draftNodeId = id;
     }
     if (changed.has('commit') && this.commit === 'live') this.#draft.clear();
+    // A first render settles without motion (an inspector open by default appears in place).
+    if (!this.hasUpdated) this.#presence.settle(this.open);
+    else if (changed.has('open')) this.#presence.setPresent(this.open);
+    const state = this.#presence.state;
+    this.hidden = state === 'absent';
+    // Leaving, the panel keeps its content for the motion but takes no focus or input.
+    this.inert = !this.open;
   }
 
   protected override updated(changed: PropertyValues<this>): void {
@@ -804,6 +824,7 @@ export class TpFlowInspector extends TpElement {
             },
           )
         : nothing;
+    const state = this.#presence.state;
     return this.renderPart(
       'flow-inspector',
       { open: this.open, commit: this.commit, tab: this.tab, dirty },
@@ -816,6 +837,9 @@ export class TpFlowInspector extends TpElement {
           'aria-label': this.label || strings.inspector,
           'data-commit': this.commit,
           'data-dirty': dirty,
+          'data-open': this.open,
+          'data-starting-style': state === 'starting',
+          'data-ending-style': state === 'ending',
         },
         content: html`${header}
           <tp-tabs

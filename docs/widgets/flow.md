@@ -326,15 +326,14 @@ engine also exports `alignNodes`, `distributeNodes` and `snapNodesToGrid`.
 
 ## Viewport
 
-The viewport lane is `{ x, y, zoom }` (`viewport="x y zoom"` as an attribute), proposed through
-the cancelable `tp-viewport-change` at most once per frame with `metadata.animated` during
-animations. It starts at `0 0 1`, or at the first fit when `fitView` is set (later resizes, such as
-the inspector docking, keep the current viewport so nothing moves under the pointer); `minZoom` (0.1) and `maxZoom` (4) clamp it; `fitPadding`
-(48 px) pads the fit. `setViewport(viewport, { duration, reason })`,
-`fitViewTo({ padding, duration, nodes, maxZoom })` (the fit never magnifies past a zoom of 1
-unless `maxZoom` allows),
-`zoomTo(zoom, { point, duration })`, `zoomIn()` and `zoomOut()` (a factor of 1.2),
-`setCenter(point, { zoom, duration })` animate on the shared frame loop and resolve when the
+The viewport lane is `{ x, y, zoom }` (`viewport="x y zoom"` as an attribute), proposed through the
+cancelable `tp-viewport-change` at most once per frame with `metadata.animated` during animations.
+It starts at `0 0 1`, or at the first fit when `fitView` is set (later resizes keep the current
+viewport so nothing moves under the pointer); `minZoom` (0.1) and `maxZoom` (4) clamp it;
+`fitPadding` (48 px) pads the fit. `setViewport(viewport, { duration, reason })`,
+`fitViewTo({ padding, duration, nodes, maxZoom })` (the fit never magnifies past a zoom of 1 unless
+`maxZoom` allows), `zoomTo(zoom, { point, duration })`, `zoomIn()` and `zoomOut()` (a factor of
+1.2), `setCenter(point, { zoom, duration })` animate on the shared frame loop and resolve when the
 viewport settles, instantly under reduced motion. `screenToFlow(point)` and `flowToScreen(point)`
 convert client coordinates, `canvasSize` is the pane's size and `getNodesBounds(ids?)`,
 `getIntersectingNodes(rect, partially?)` read the engine's indices.
@@ -475,23 +474,29 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
   viewport center or at the pending anchor (the "+" of an edge label or the point of a released
   connection), and the items are native drag sources that drop at the canvas point under the
   pointer. An insertion proposes with `metadata.insert: { type, at }` and selects the new node.
-- Inspector: a Resizable panel docked at the inline end inside the widget (collapsible, the handle
-  resizes it) for the settings the schema keeps off the node. Only a node whose definition places
-  at least one property in the inspector (`placement`, see Schema) has one; its header shows the
-  node's title, and Tabs switch Settings (one Field per visible inspector property, edited by the
-  control its definition names; the node body shows the others), Wiring (the node's incoming and
-  outgoing connections as List items; activating one focuses the edge) and Run (the node's status,
-  attempts, duration, message and error). `inspector` is the policy: `auto` (default) opens it on a
-  double press on such a node (not on its ports or its own controls), from the node toolbar's
-  Settings or the context menu's Settings item; while open it follows a single selected node with
-  inspector settings and closes when the selection leaves them. `manual` leaves opening and closing
-  to the `inspectorOpen` lane (`inspector-open`, `default-inspector-open`, `setInspectorOpen()`,
-  `tp-open-change` with `metadata.surface: 'inspector'`; the double press, Settings and the menu
-  item propose on it); `none` never renders it. A selection alone never opens it.
-  `inspectorCommit` is `live` (every edit proposes and commits at once) or `explicit` (edits stay
-  local until Save proposes one change per edited key; Cancel reverts them). Opened by a double
-  press the inspector leaves focus on the canvas; opened from Settings or the menu it focuses its
-  first field; closing returns focus to the node.
+- Inspector: a panel floating over the canvas at the inline end, inset like the other panels and
+  painted as a Sheet (the shared floating surface), for the settings the schema keeps off the node.
+  It enters and leaves like a Sheet, fading while it slides 2.5rem from the inline end (instant
+  under reduced motion), keeps showing its node while it leaves, and reports the end of either
+  motion through `tp-open-change-complete`. The canvas keeps its size: while it is open, panels at
+  the inline end move clear of it and middle panels center in the space it leaves, and a node it
+  covers when it opens on that node (or follows the selection to it) pans the least distance to sit
+  clear of it. Only a node whose definition places at least one property in the inspector
+  (`placement`, see Schema) has one; its header shows the node's title, and Tabs switch Settings
+  (one Field per visible inspector property, edited by the control its definition names; the node
+  body shows the others), Wiring (the node's incoming and outgoing connections as List items;
+  activating one focuses the edge) and Run (the node's status, attempts, duration, message and
+  error). `inspector` is the policy: `auto` (default) opens it on a double press on such a node (not
+  on its ports or its own controls), from the node toolbar's Settings or the context menu's Settings
+  item; while open it follows a single selected node with inspector settings and closes when the
+  selection leaves them. `manual` leaves opening and closing to the `inspectorOpen` lane
+  (`inspector-open`, `default-inspector-open`, `setInspectorOpen()`, `tp-open-change` with
+  `metadata.surface: 'inspector'`; the double press, Settings and the menu item propose on it);
+  `none` never renders it. A selection alone never opens it. `inspectorCommit` is `live` (every edit
+  proposes and commits at once) or `explicit` (edits stay local until Save proposes one change per
+  edited key; Cancel reverts them). Opened by a double press the inspector leaves focus on the
+  canvas; opened from Settings or the menu it focuses its first field; closing returns focus to the
+  node.
 - Panel slots: `slot="top-start"` and the seven other positions place consumer panels (a Button, a
   Badge, a Card, a bar) over the canvas beside the built-in ones; the layers only intercept the
   pointer over their content.
@@ -564,22 +569,23 @@ the root as `data-renderer`.
 
 ## Events
 
-| Event                 | Cancelable | Detail                                                                                                                                                                    |
-| --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tp-value-change`     | yes        | `value`, `previousValue`, `reason`, `sourceEvent`, `metadata: { changes, transaction?, surface?, nodeId?, edgeId?, property?, history?, reconnect?, insert?, animated? }` |
-| `tp-value-commit`     | no         | the settled document with the same `reason` and `metadata`                                                                                                                |
-| `tp-viewport-change`  | yes        | `{ x, y, zoom }`, `metadata.animated`                                                                                                                                     |
-| `tp-selection-change` | yes        | `{ nodes, edges }`                                                                                                                                                        |
-| `tp-tool-change`      | yes        | `'select'` or `'pan'`                                                                                                                                                     |
-| `tp-mode-change`      | yes        | `'design'` or `'view'`                                                                                                                                                    |
-| `tp-open-change`      | yes        | the open state with `metadata.surface`: `inspector` or `context-menu`                                                                                                     |
-| `tp-connect`          | yes        | `{ connection, edge, reason, sourceEvent }`; cancelling drops the connection, mutating `edge` changes what is added                                                       |
-| `tp-delete`           | yes        | `{ nodes, edges, reason, sourceEvent }`: the nodes with their descendants and every dependent edge                                                                        |
-| `tp-layout-complete`  | no         | `{ direction, stats, bounds }`                                                                                                                                            |
-| `tp-history-change`   | no         | `{ canUndo, canRedo, undoLabel?, redoLabel?, depth }`                                                                                                                     |
-| `tp-run-change`       | no         | `{ run, index?, length?, playing?, mode? }`                                                                                                                               |
-| `tp-field-value`      | no         | the form value for a surrounding Field                                                                                                                                    |
-| `tp-diagnostic`       | no         | `{ code, message, severity }` with the codes `flow-state` and `flow-adoption-conflict`                                                                                    |
+| Event                     | Cancelable | Detail                                                                                                                                                                    |
+| ------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tp-value-change`         | yes        | `value`, `previousValue`, `reason`, `sourceEvent`, `metadata: { changes, transaction?, surface?, nodeId?, edgeId?, property?, history?, reconnect?, insert?, animated? }` |
+| `tp-value-commit`         | no         | the settled document with the same `reason` and `metadata`                                                                                                                |
+| `tp-viewport-change`      | yes        | `{ x, y, zoom }`, `metadata.animated`                                                                                                                                     |
+| `tp-selection-change`     | yes        | `{ nodes, edges }`                                                                                                                                                        |
+| `tp-tool-change`          | yes        | `'select'` or `'pan'`                                                                                                                                                     |
+| `tp-mode-change`          | yes        | `'design'` or `'view'`                                                                                                                                                    |
+| `tp-open-change`          | yes        | the open state with `metadata.surface`: `inspector` or `context-menu`                                                                                                     |
+| `tp-open-change-complete` | no         | `{ open, surface: 'inspector' }` once the inspector's enter or exit motion finished                                                                                       |
+| `tp-connect`              | yes        | `{ connection, edge, reason, sourceEvent }`; cancelling drops the connection, mutating `edge` changes what is added                                                       |
+| `tp-delete`               | yes        | `{ nodes, edges, reason, sourceEvent }`: the nodes with their descendants and every dependent edge                                                                        |
+| `tp-layout-complete`      | no         | `{ direction, stats, bounds }`                                                                                                                                            |
+| `tp-history-change`       | no         | `{ canUndo, canRedo, undoLabel?, redoLabel?, depth }`                                                                                                                     |
+| `tp-run-change`           | no         | `{ run, index?, length?, playing?, mode? }`                                                                                                                               |
+| `tp-field-value`          | no         | the form value for a surrounding Field                                                                                                                                    |
+| `tp-diagnostic`           | no         | `{ code, message, severity }` with the codes `flow-state` and `flow-adoption-conflict`                                                                                    |
 
 `metadata.surface` names where a proposal came from: `node` (a drag, a resize, a control inside a
 node), `edge`, `pane`, `inspector`, `toolbar`, `menu`, `palette`, `keyboard` or `api`. Reasons per

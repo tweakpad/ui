@@ -71,9 +71,6 @@ import { TpMenu } from '../../components/menu/menu.js';
 import { TpMenuItem } from '../../components/menu/menu-item.js';
 import { TpSeparator } from '../../components/separator/separator.js';
 import { TpOpenChangeEvent } from '../../foundation/events.js';
-import { TpResizablePanelGroup } from '../../components/resizable-panel-group/group.js';
-import { TpResizablePanel } from '../../components/resizable-panel-group/panel.js';
-import { TpResizableHandle } from '../../components/resizable-panel-group/handle.js';
 import { TpButton } from '../../components/button/button.js';
 import { copyIcon } from '../../icons/copy.js';
 import { trashIcon } from '../../icons/trash.js';
@@ -114,9 +111,11 @@ import {
   INSPECTOR_COMMIT,
   INSPECTOR_FOCUS_EDGE,
   INSPECTOR_CLOSE,
+  INSPECTOR_PRESENCE,
   type FlowInspectorChangeDetail,
   type FlowInspectorCommitDetail,
   type FlowInspectorFocusEdgeDetail,
+  type FlowInspectorPresenceDetail,
 } from './panels/inspector.js';
 import { TpFlowNodeResizer, NODE_RESIZE, type FlowNodeResizeDetail } from './node/resizer.js';
 import { TpFlowNodeToolbar } from './node/toolbar.js';
@@ -358,9 +357,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       TpMenu,
       TpMenuItem,
       TpSeparator,
-      TpResizablePanelGroup,
-      TpResizablePanel,
-      TpResizableHandle,
       TpButton,
       TpFlowControls,
       TpFlowMinimap,
@@ -573,6 +569,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #focusedEdge: string | undefined;
   /** The same edge while its proxy shows keyboard focus: the only one drawn as focused. */
   #focusVisibleEdge: string | undefined;
+  /** The node the inspector shows; kept while the panel slides out after closing. */
+  #inspectorNode: FlowNode | undefined;
+  /** The inspected node last kept clear of the panel (one reveal per node while open). */
+  #revealedInspectorNode: string | undefined;
+  /** Reveals start after the first update: an inspector open from the start keeps that view. */
+  #revealArmed = false;
   #portStates = new Map<string, Record<string, FlowPortState>>();
   #composed = new WeakSet<HTMLElement>();
   #composition: unknown;
@@ -683,10 +685,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           { ...options, metadata: { ...options?.metadata, surface: 'inspector' } },
           'tp-open-change',
         ),
-      onCommit: () => {
-        this.requestUpdate();
-        this.#syncDock();
-      },
+      onCommit: () => this.requestUpdate(),
     });
     this.#viewportOwner = new ViewportOwner({
       pane: () => this.#pane,
@@ -785,6 +784,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     target.addEventListener(INSPECTOR_COMMIT, this.#inspectorCommit as EventListener);
     target.addEventListener(INSPECTOR_FOCUS_EDGE, this.#inspectorFocusEdge as EventListener);
     target.addEventListener(INSPECTOR_CLOSE, this.#inspectorClose as EventListener);
+    target.addEventListener(INSPECTOR_PRESENCE, this.#inspectorPresence as EventListener);
     target.addEventListener(NODE_RESIZE, this.#nodeResize as EventListener);
     target.addEventListener(EDGE_WAYPOINT, this.#edgeWaypoint as EventListener);
     target.addEventListener(EDGE_WAYPOINT_REMOVE, this.#edgeWaypointRemove as EventListener);
@@ -1471,7 +1471,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (changed.has('renderer')) this.#syncRenderer();
     if (changed.has('router')) this.#syncRouter();
     if (changed.has('run')) this.#syncRun();
-    if (changed.has('inspector') && changed.get('inspector') !== undefined) this.#rebindCanvas();
     if (changed.has('locked')) {
       this.#nodeLayer.rebind();
       this.#schedule();
@@ -1512,7 +1511,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#arbiter = new FlowPointerArbiter(this.#interactionHost());
     this.#arbiter.connect();
     this.#installKeys();
-    this.#syncDock();
     this.assignPanels();
     this.#scope?.add(
       this.#model.on('history', (state) => {
@@ -1525,24 +1523,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#schedule();
   }
 
-  /** The canvas element was re-created (inspector policy changed): re-attach its owners. */
-  #rebindCanvas(): void {
-    this.#arbiter?.disconnect();
-    this.#keys?.dispose();
-    this.#keys = undefined;
-    this.#arbiter = new FlowPointerArbiter(this.#interactionHost());
-    this.#arbiter.connect();
-    this.#installKeys();
-    this.#viewportOwner.disconnect();
-    this.#viewportOwner.connect();
-    this.#syncDock();
-    this.#schedule();
-  }
-
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     this.#syncAuthoredControlBars();
     this.#measureControls();
+    this.#revealInspectedNode();
+    this.#revealArmed = true;
     this.#syncComposition();
     if (
       changed.has('run') ||
@@ -1564,7 +1550,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       this.#edgeLayer.invalidate();
       this.#schedule();
     }
-    if (changed.has('edgeTemplates')) this.#schedule();
+    // A minimap turned on later paints its scene on the next frame, not at the next pan.
+    if (changed.has('edgeTemplates') || changed.has('minimap')) this.#schedule();
   }
 
   override formStateRestoreCallback(state: string | File | FormData | null): void {
@@ -2698,32 +2685,33 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   }
 
   #renderInspector(): TemplateResult {
-    const node = this.#inspectedNode();
+    // Open, it follows the selection; closing, it keeps the last node through its exit motion.
+    const node = this.inspectorOpen ? this.#inspectedNode() : this.#inspectorNode;
+    if (this.inspectorOpen) this.#inspectorNode = node;
     const id = node?.id;
     const connected = id ? this.#model.connectedEdges([id]) : [];
     const label = (edge: FlowEdge) => this.#edgeAriaLabelOf(edge);
     return html`<tp-flow-inspector
-        class="inspector"
-        .node=${node}
-        .definition=${node ? this.#model.definitionOf(node) : undefined}
-        .propertyControls=${this.propertyControls}
-        .icons=${this.icons}
-        .strings=${this.#resolvedStrings}
-        .label=${format(this.#resolvedStrings.inspectorLabel, { flow: this.#name })}
-        .connections=${{
-          incoming: connected
-            .filter((edge) => edge.target === id)
-            .map((edge) => ({ edge, label: label(edge) })),
-          outgoing: connected
-            .filter((edge) => edge.source === id)
-            .map((edge) => ({ edge, label: label(edge) })),
-        }}
-        .run=${id ? this.#runNode(id) : undefined}
-        commit=${this.inspectorCommit}
-        .open=${this.inspectorOpen}
-        .readOnly=${!this.editable}
-      ></tp-flow-inspector>
-      <slot name="inspector"></slot>`;
+      class="inspector"
+      .node=${node}
+      .definition=${node ? this.#model.definitionOf(node) : undefined}
+      .propertyControls=${this.propertyControls}
+      .icons=${this.icons}
+      .strings=${this.#resolvedStrings}
+      .label=${format(this.#resolvedStrings.inspectorLabel, { flow: this.#name })}
+      .connections=${{
+        incoming: connected
+          .filter((edge) => edge.target === id)
+          .map((edge) => ({ edge, label: label(edge) })),
+        outgoing: connected
+          .filter((edge) => edge.source === id)
+          .map((edge) => ({ edge, label: label(edge) })),
+      }}
+      .run=${id ? this.#runNode(id) : undefined}
+      commit=${this.inspectorCommit}
+      .open=${this.inspectorOpen}
+      .readOnly=${!this.editable}
+    ></tp-flow-inspector>`;
   }
 
   #renderNodeToolbarContent(): TemplateResult | typeof nothing {
@@ -2777,14 +2765,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.duplicate('trigger-press', event);
   };
 
-  /** Settings opens the inspector by activation: its first field takes focus once docked. */
+  /** Settings opens the inspector by activation: its first field takes focus once shown. */
   #toolbarSettings = (event: Event): void => {
     this.#openSettings('trigger-press', event);
   };
 
   #openSettings(reason: ChangeReason, event: Event): void {
     const opened = this.inspectorOpen || this.setInspectorOpen(true, reason, event);
-    if (opened) this.#focusInspectorWhenDocked();
+    if (opened) this.#focusInspectorWhenShown();
   }
 
   /**
@@ -2799,14 +2787,50 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     );
   }
 
-  /** The dock expands a frame after the lane opens; focus lands once the panel can take it. */
-  #focusInspectorWhenDocked(attempts = 8): void {
+  /** The panel mounts with the lane's render; focus lands once the panel can take it. */
+  #focusInspectorWhenShown(attempts = 8): void {
     const inspector = this.#inspectorElement;
     if (!inspector || attempts <= 0 || !this.inspectorOpen) return;
     inspector.focus();
     // A shadow host matches :focus-within while focus is anywhere in its shadow tree.
     if (!inspector.matches(':focus-within'))
-      this.#scheduler?.animationFrame(() => this.#focusInspectorWhenDocked(attempts - 1));
+      this.#scheduler?.animationFrame(() => this.#focusInspectorWhenShown(attempts - 1));
+  }
+
+  /**
+   * The inspector floats over the canvas at its inline end: when it opens on a node, or follows
+   * the selection to another, a node it covers pans clear of it by the least distance.
+   */
+  #revealInspectedNode(): void {
+    const id = this.inspectorOpen ? this.#inspectorNode?.id : undefined;
+    if (id === this.#revealedInspectorNode) return;
+    this.#revealedInspectorNode = id;
+    if (!id || !this.#revealArmed) return;
+    this.#scheduler?.animationFrame(() => {
+      const inspector = this.#inspectorElement;
+      const rect = this.#model.nodeRect(id);
+      if (!inspector || !rect || id !== this.#revealedInspectorNode || !this.#canvas) return;
+      const canvas = this.#canvas.getBoundingClientRect();
+      const panel = inspector.getBoundingClientRect();
+      const panelStart = panel.left - canvas.left;
+      const panelEnd = panel.right - canvas.left;
+      const start = this.#viewportOwner.flowToScreen(rect).x;
+      const end = this.#viewportOwner.flowToScreen({ x: rect.x + rect.width, y: rect.y }).x;
+      // Only a node the panel covers moves; it stops the panel's gap away from it.
+      if (end <= panelStart || start >= panelEnd) return;
+      const rtl = getComputedStyle(this).direction === 'rtl';
+      const gap = rtl ? panelStart : canvas.width - panelEnd;
+      // A node wider than the free extent keeps its start in view.
+      const dx = rtl
+        ? Math.min(panelEnd + gap - start, canvas.width - gap - end)
+        : Math.max(panelStart - gap - end, gap - start);
+      const viewport = this.viewport;
+      void this.#viewportOwner.animateTo(
+        this.#clamp({ ...viewport, x: viewport.x + dx }),
+        'imperative-action',
+        250,
+      );
+    });
   }
 
   #toolbarPin = (event: Event): void => {
@@ -2876,22 +2900,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         this.#inspectorState.set(false, reason, undefined, { metadata: { surface: 'inspector' } });
     }
     this.requestUpdate();
-  }
-
-  #syncDock(): void {
-    const group = this.renderRoot.querySelector<TpResizablePanelGroup>(
-      'tp-resizable-panel-group.dock',
-    );
-    const panel = this.renderRoot.querySelector<TpResizablePanel>('tp-resizable-panel.dock-panel');
-    if (!group || !panel) return;
-    // The group measures its panels after its own first update; collapse/expand once it has.
-    void group.updateComplete.then(() =>
-      this.#scheduler?.animationFrame(() => {
-        if (!panel.isConnected) return;
-        if (this.inspectorOpen) panel.expand();
-        else panel.collapse();
-      }),
-    );
   }
 
   get #minimapElement(): TpFlowMinimap | null {
@@ -3195,6 +3203,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.focusEdge(event.detail.edgeId, {
       focusVisible: surfaceInteraction(event.detail.sourceEvent) === 'keyboard',
     });
+  };
+
+  /** The inspector's enter or exit motion finished (Dialog's `tp-open-change-complete`). */
+  #inspectorPresence = (event: CustomEvent<FlowInspectorPresenceDetail>): void => {
+    event.stopPropagation();
+    this.emit('tp-open-change-complete', { open: event.detail.open, surface: 'inspector' });
   };
 
   #inspectorClose = (event: CustomEvent<{ sourceEvent?: Event }>): void => {
@@ -3786,8 +3800,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   }
 
   #sizeChanged(): void {
-    // The initial fit runs once the pane has a size; later resizes (the inspector dock
-    // opening, window changes) keep the user's viewport instead of re-fitting mid-gesture.
+    // The initial fit runs once the pane has a size; later resizes (window changes) keep the
+    // user's viewport instead of re-fitting mid-gesture.
     this.#measureControls();
     this.#frameNow();
     this.#tryInitialFit();
@@ -4727,30 +4741,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           'data-renderer': this.renderer === 'svg' ? 'svg' : 'custom',
           'data-readonly': this.readOnly,
           'data-disabled': this.effectiveDisabled,
-          'data-inspector-open': this.inspectorOpen,
+          'data-inspector-open': this.inspectorOpen && this.inspector !== 'none',
           'data-running': Boolean(this.#runState && this.#runState.status !== 'idle'),
           'data-lod': this.lod,
         },
         content: html`
-          ${
-            this.inspector === 'none'
-              ? this.#renderCanvas()
-              : html`<tp-resizable-panel-group class="dock" orientation="horizontal">
-                  ${this.#renderCanvas()}
-                  <tp-resizable-handle
-                    class="dock-handle"
-                    label=${strings.inspector}
-                  ></tp-resizable-handle>
-                  <tp-resizable-panel
-                    class="dock-panel"
-                    collapsible
-                    default-size=${this.inspectorOpen ? '32' : '0'}
-                    min-size="20"
-                    collapsed-size="0"
-                    >${this.#renderInspector()}</tp-resizable-panel
-                  >
-                </tp-resizable-panel-group>`
-          }
+          ${this.#renderCanvas()} ${this.inspector === 'none' ? nothing : this.#renderInspector()}
           <p id=${instructionsId} class="visually-hidden" part="flow-instructions">
             ${strings.instructions}
           </p>

@@ -1,7 +1,7 @@
 import { ambientAnimation, motionTransition } from '../motion.js';
-import type { PresentationDictionary } from '../resolver.js';
+import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import { activeRing, focusRing, thumb } from './shared/handle.js';
-import { popupBorder, sectionFooterAppearance } from './shared/surface.js';
+import { popupBorder, sectionFooterAppearance, surfaceAppearance } from './shared/surface.js';
 
 // Widgets Specification 6.3 Presentation: path geometry, label anchors and port positions are
 // content supplied by the engine; every color below resolves through tokens. References:
@@ -20,6 +20,9 @@ const selectionFill = 'color-mix(in oklab, var(--tp-primary) 8%, transparent)';
 const selectionLine = 'color-mix(in oklab, var(--tp-primary) 80%, transparent)';
 const minimapNode = 'color-mix(in oklab, var(--tp-foreground) 15%, transparent)';
 const minimapMask = 'color-mix(in oklab, var(--tp-muted) 60%, transparent)';
+const panelMotion: readonly PresentationRule[] = [
+  { declarations: { transition: motionTransition(['translate']) } },
+];
 const statusRing =
   'color-mix(in oklab, var(--_tp-flow-status, var(--tp-primary)) 60%, transparent)';
 
@@ -532,13 +535,27 @@ export const flowAppearance: PresentationDictionary = {
   ],
   // Command items are native drag sources for the canvas; the Command palette paints the row.
   'flow-palette-item': [{ declarations: { cursor: 'grab' } }],
+  // A Sheet floating over the canvas (shadcn base Sheet): the shared floating surface, sections
+  // padded by the inspector, entering and leaving 2.5rem from the inline end with a fade.
   'flow-inspector': [
+    ...surfaceAppearance,
     {
       declarations: {
-        'background-color': 'var(--tp-card)',
-        color: 'var(--tp-card-foreground)',
-        'border-inline-start': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
+        padding: '0',
+        overflow: 'clip',
+        '--_tp-flow-inspector-offset': 'var(--tp-space-10)',
+        opacity: '1',
+        translate: '0 0',
+        transition: motionTransition(['opacity', 'translate']),
       },
+    },
+    {
+      selector: '&:dir(rtl)',
+      declarations: { '--_tp-flow-inspector-offset': 'calc(var(--tp-space-10) * -1)' },
+    },
+    {
+      selector: '&:is([data-starting-style], [data-ending-style])',
+      declarations: { opacity: '0', translate: 'var(--_tp-flow-inspector-offset) 0' },
     },
   ],
   'flow-inspector-header': [
@@ -556,14 +573,15 @@ export const flowAppearance: PresentationDictionary = {
   'flow-inspector-tabs': [],
   'flow-inspector-body': [],
   'flow-inspector-footer': sectionFooterAppearance,
-  'flow-panel-top-start': [],
-  'flow-panel-top-center': [],
-  'flow-panel-top-end': [],
-  'flow-panel-center-start': [],
-  'flow-panel-center-end': [],
-  'flow-panel-bottom-start': [],
-  'flow-panel-bottom-center': [],
-  'flow-panel-bottom-end': [],
+  // Panels move clear of the inspector with its motion.
+  'flow-panel-top-start': panelMotion,
+  'flow-panel-top-center': panelMotion,
+  'flow-panel-top-end': panelMotion,
+  'flow-panel-center-start': panelMotion,
+  'flow-panel-center-end': panelMotion,
+  'flow-panel-bottom-start': panelMotion,
+  'flow-panel-bottom-center': panelMotion,
+  'flow-panel-bottom-end': panelMotion,
   'flow-instructions': [],
 };
 
