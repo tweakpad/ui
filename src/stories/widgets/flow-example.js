@@ -655,30 +655,6 @@ export function setupFlowExample(root) {
         connection.target !== 'notify' ||
         connection.source === 'plan' ||
         'Notify sales only follows the condition.';
-    // Deletion confirmed in a Dialog: cancel `tp-delete`, ask, then delete the same elements.
-    const dialog = root.querySelector(`#${flow.getAttribute('data-confirm-delete')}`);
-    const confirm = dialog && dialog.querySelector('[data-confirm]');
-    if (dialog && confirm) {
-      let pending;
-      let confirmed = false;
-      listen(flow, 'tp-delete', (event) => {
-        if (confirmed) return;
-        event.preventDefault();
-        pending = {
-          nodes: event.detail.nodes.map((node) => node.id),
-          edges: event.detail.edges.map((edge) => edge.id),
-        };
-        dialog.setOpen(true, 'trigger-press');
-      });
-      listen(confirm, 'click', () => {
-        if (!pending) return;
-        confirmed = true;
-        flow.deleteElements(pending, 'item-press');
-        confirmed = false;
-        pending = undefined;
-        dialog.setOpen(false, 'close-action');
-      });
-    }
     // Layout readout: `tp-layout-complete` carries the direction, the stats and the bounds.
     if (flow.hasAttribute('data-layout-readout')) {
       const output = readout(flow);

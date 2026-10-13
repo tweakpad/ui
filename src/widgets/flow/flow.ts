@@ -75,6 +75,7 @@ import { TpKeyHint } from '../../components/key-hint/key-hint.js';
 import { TpKeyHintGroup } from '../../components/key-hint/key-hint-group.js';
 import { TpOpenChangeEvent } from '../../foundation/events.js';
 import { TpButton } from '../../components/button/button.js';
+import { TpAlertDialog } from '../../components/alert-dialog/alert-dialog.js';
 import { copyIcon } from '../../icons/copy.js';
 import { trashIcon } from '../../icons/trash.js';
 import { pinIcon } from '../../icons/pin.js';
@@ -174,6 +175,7 @@ import {
   visibleRect,
   zoomToPoint,
   centerOn,
+  viewportForBounds,
 } from '../../foundation/flow/viewport.js';
 import type { FlowRenderHost, FlowRenderer } from '../../foundation/flow/renderer.js';
 import { pathPolyline, type FlowEdgePath } from '../../foundation/flow/edges/paths.js';
@@ -285,8 +287,6 @@ export const flowMotionRoles = {
   layout: stateRole('flow-layout'),
 } as const;
 
-/** Margins and gap kept between stacked panels (two panel margins plus a gap). */
-const PANEL_RESERVE_GAP = 40;
 const CREATE_PER_FRAME_MIN = 1;
 const CREATE_SHELLS_PER_FRAME = 16;
 /** Frame interval (ms) treated as a missed deadline / as comfortably within budget. */
@@ -389,6 +389,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       TpKeyHint,
       TpKeyHintGroup,
       TpButton,
+      TpAlertDialog,
       TpFlowControls,
       TpFlowMinimap,
       TpFlowPalette,
@@ -476,7 +477,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     minimap: { type: Boolean },
     minimapPosition: { type: String, attribute: 'minimap-position' },
     palette: { type: Boolean },
-    palettePosition: { type: String, attribute: 'palette-position' },
+    confirmDelete: { type: Boolean, attribute: 'confirm-delete' },
     locked: { type: Boolean, reflect: true },
     onValueChange: { attribute: false },
     onValueCommitted: { attribute: false },
@@ -556,7 +557,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   minimap = false;
   minimapPosition: FlowPanelPosition = 'bottom-end';
   palette = false;
-  palettePosition: FlowPanelPosition = 'top-start';
+  /** User deletions that remove nodes ask first, in a dialog over the blurred widget. */
+  confirmDelete = false;
   /** The lock control: editing refused while locked (pan, zoom and selection stay). */
   locked = false;
   onValueChange: ((event: TpValueChangeEvent<FlowDocument>) => void) | undefined;
@@ -586,7 +588,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #createCap = CREATE_PER_FRAME_MAX;
   #movedAt = Number.NEGATIVE_INFINITY;
   #settleTimer: (() => void) | undefined;
-  #controlsExtent = 0;
   #createdLastFrame = 0;
   #lastFrameAt = 0;
   #size: FlowSize = { width: 0, height: 0 };
@@ -600,6 +601,18 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #focusedEdge: string | undefined;
   /** The same edge while its proxy shows keyboard focus: the only one drawn as focused. */
   #focusVisibleEdge: string | undefined;
+  /** A user deletion waiting for the confirmation dialog, and what follows once it is done. */
+  #pendingDeletion:
+    | {
+        ids: { nodes: readonly string[]; edges: readonly string[] };
+        reason: ChangeReason;
+        focusAfter?: string;
+      }
+    | undefined;
+  /** The node that takes focus after a confirmed deletion closes the dialog. */
+  #deletedFocus: string | undefined;
+  /** The confirmation's title, fixed when it opens so the exit motion keeps it. */
+  #deleteTitle = '';
   /** The node the inspector shows; kept while the panel slides out after closing. */
   #inspectorNode: FlowNode | undefined;
   /** The inspected node last kept clear of the panel (one reveal per node while open). */
@@ -1145,6 +1158,16 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     reason: ChangeReason = 'imperative-action',
     sourceEvent?: Event,
   ): boolean {
+    const plan = this.#deletionPlan(ids);
+    if (!plan || !this.#dispatchDelete(plan, reason, sourceEvent)) return false;
+    return this.#applyDeletion(plan, reason, sourceEvent);
+  }
+
+  /** The deletable nodes with their descendants and every edge that depends on them. */
+  #deletionPlan(ids: {
+    nodes?: readonly string[];
+    edges?: readonly string[];
+  }): { nodes: FlowNode[]; edges: FlowEdge[] } | undefined {
     const nodes = (ids.nodes ?? [])
       .map((id) => this.#model.getNode(id))
       .filter((node): node is FlowNode => Boolean(node) && node!.deletable !== false);
@@ -1161,17 +1184,34 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const nodeRecords = [...nodeIds]
       .map((id) => this.#model.getNode(id))
       .filter((node): node is FlowNode => Boolean(node));
-    if (!nodeRecords.length && !edges.length) return false;
-    const event = new CustomEvent('tp-delete', {
-      bubbles: true,
-      composed: true,
-      cancelable: true,
-      detail: { nodes: nodeRecords, edges, reason, sourceEvent },
-    });
-    if (!this.dispatchEvent(event)) return false;
+    if (!nodeRecords.length && !edges.length) return undefined;
+    return { nodes: nodeRecords, edges };
+  }
+
+  /** The cancelable `tp-delete`; false when a listener refused the deletion. */
+  #dispatchDelete(
+    plan: { nodes: FlowNode[]; edges: FlowEdge[] },
+    reason: ChangeReason,
+    sourceEvent?: Event,
+  ): boolean {
+    return this.dispatchEvent(
+      new CustomEvent('tp-delete', {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        detail: { nodes: plan.nodes, edges: plan.edges, reason, sourceEvent },
+      }),
+    );
+  }
+
+  #applyDeletion(
+    plan: { nodes: FlowNode[]; edges: FlowEdge[] },
+    reason: ChangeReason,
+    sourceEvent?: Event,
+  ): boolean {
     const changes: FlowChange[] = [
-      ...edges.map((edge): FlowChange => ({ type: 'edge-remove', id: edge.id })),
-      ...nodeRecords.map((node): FlowChange => ({ type: 'node-remove', id: node.id })),
+      ...plan.edges.map((edge): FlowChange => ({ type: 'edge-remove', id: edge.id })),
+      ...plan.nodes.map((node): FlowChange => ({ type: 'node-remove', id: node.id })),
     ];
     const result = this.propose(changes, reason, { surface: 'api' }, sourceEvent);
     if (!result.applied) return false;
@@ -1179,11 +1219,99 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.commit(reason, sourceEvent);
     this.#announcer.announce(
       format(this.#resolvedStrings.announceDeleted, {
-        nodes: nodeRecords.length,
-        edges: edges.length,
+        nodes: plan.nodes.length,
+        edges: plan.edges.length,
       }),
     );
     return true;
+  }
+
+  /**
+   * A user deletion (the Delete key, the node toolbar, the context menu). After `tp-delete`, one
+   * that removes nodes waits for the confirmation dialog when `confirmDelete` is set; `focusAfter`
+   * names the node that takes focus once the nodes are gone.
+   */
+  #requestDeletion(
+    ids: { nodes?: readonly string[]; edges?: readonly string[] },
+    reason: ChangeReason,
+    sourceEvent?: Event,
+    focusAfter?: string,
+  ): boolean {
+    const plan = this.#deletionPlan(ids);
+    if (!plan || !this.#dispatchDelete(plan, reason, sourceEvent)) return false;
+    if (this.confirmDelete && plan.nodes.length) {
+      const strings = this.#resolvedStrings;
+      this.#deleteTitle =
+        plan.nodes.length === 1
+          ? format(strings.confirmDeleteNode, { name: this.#nodeLabel(plan.nodes[0]!.id) })
+          : format(strings.confirmDeleteNodes, { count: plan.nodes.length });
+      this.#pendingDeletion = {
+        ids: { nodes: plan.nodes.map((node) => node.id), edges: plan.edges.map((edge) => edge.id) },
+        reason,
+        ...(focusAfter ? { focusAfter } : {}),
+      };
+      this.requestUpdate();
+      void this.updateComplete.then(() => {
+        const dialog = this.#deleteDialog;
+        if (!dialog || !this.#pendingDeletion) return;
+        dialog.container = this.#root;
+        // The widget opens it on the user's behalf; the source event keeps the input modality.
+        dialog.setOpen(true, 'imperative-action', sourceEvent);
+      });
+      return true;
+    }
+    const deleted = this.#applyDeletion(plan, reason, sourceEvent);
+    if (deleted && focusAfter) void this.focusNode(focusAfter);
+    return deleted;
+  }
+
+  get #deleteDialog(): TpAlertDialog | null {
+    return (
+      this.renderRoot?.querySelector<TpAlertDialog>('tp-alert-dialog.delete-confirmation') ?? null
+    );
+  }
+
+  /** Confirm: the same nodes and edges (as they are now) go in one change, then the dialog closes. */
+  #confirmDeletion = (event: Event): void => {
+    const pending = this.#pendingDeletion;
+    this.#pendingDeletion = undefined;
+    const plan = pending ? this.#deletionPlan(pending.ids) : undefined;
+    if (pending && plan && this.#applyDeletion(plan, pending.reason, event))
+      this.#deletedFocus = pending.focusAfter;
+    this.#deleteDialog?.setOpen(false, 'close-action', event);
+  };
+
+  /**
+   * The dialog closed (its events stop at the widget boundary): after a confirmed deletion focus
+   * moves to the nearest remaining node; Cancel drops the request and restores focus.
+   */
+  #deleteFinalFocus = (): HTMLElement | null => {
+    const id = this.#deletedFocus;
+    this.#deletedFocus = undefined;
+    this.#pendingDeletion = undefined;
+    if (!id || !this.#model.getNode(id)) return null;
+    this.#setFocusedNode(id);
+    this.#frameNow();
+    return this.#nodeLayer.hostOf(id) ?? null;
+  };
+
+  /** The confirmation of a user deletion: an Alert dialog modal to the widget over a blur. */
+  #renderDeleteConfirmation(): TemplateResult | typeof nothing {
+    if (!this.confirmDelete) return nothing;
+    const strings = this.#resolvedStrings;
+    return html`<tp-alert-dialog
+      class="delete-confirmation"
+      modality="container"
+      backdrop="blur"
+      label=${this.#deleteTitle}
+      description=${strings.confirmDeleteDescription}
+      .finalFocus=${this.#deleteFinalFocus}
+    >
+      <tp-button slot="cancel" variant="outline">${strings.cancel}</tp-button>
+      <tp-button slot="confirm" variant="destructive" @click=${this.#confirmDeletion}
+        >${strings.delete}</tp-button
+      >
+    </tp-alert-dialog>`;
   }
 
   /** The widget's `isValidConnection` predicate joins every validation (gesture or API). */
@@ -1324,9 +1452,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   ): Promise<boolean> {
     const bounds = this.#model.bounds(options.nodes);
     if (!bounds.width && !bounds.height) return false;
-    const target = this.#viewportOwner.fitViewport(
+    const target = this.#fitTarget(
       bounds,
-      `${options.padding ?? this.fitPadding}px`,
+      options.padding ?? this.fitPadding,
       Math.min(options.maxZoom ?? 1, this.maxZoom),
     );
     return this.#viewportOwner.animateTo(
@@ -1557,7 +1685,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     this.#syncAuthoredControlBars();
-    this.#measureControls();
     this.#revealInspectedNode();
     this.#revealArmed = true;
     this.#syncComposition();
@@ -2563,9 +2690,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         : [];
     if (!nodes.length && !edges.length) return false;
     const nearest = nodes[0] ? this.#nearestRemaining(nodes[0], new Set(nodes)) : undefined;
-    const deleted = this.deleteElements({ nodes, edges }, 'hotkey', event);
-    if (deleted && nearest) void this.focusNode(nearest);
-    return deleted;
+    return this.#requestDeletion({ nodes, edges }, 'hotkey', event, nearest);
   }
 
   #nearestRemaining(id: string, removed: ReadonlySet<string>): string | undefined {
@@ -2700,19 +2825,22 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       this.minimap && this.minimapPosition === position
         ? html`<tp-flow-minimap class="minimap" .strings=${strings}></tp-flow-minimap>`
         : nothing;
-    const palette =
-      this.palette && this.palettePosition === position
-        ? html`<tp-flow-palette
-            class="palette"
-            .definitions=${this.schema?.nodes ?? []}
-            .icons=${this.icons}
-            .strings=${strings}
-            .label=${format(strings.paletteLabel, { flow: this.#name })}
-            .open=${true}
-          ></tp-flow-palette>`
-        : nothing;
-    if (controls === nothing && minimap === nothing && palette === nothing) return nothing;
-    return html`${controls}${minimap}${palette}`;
+    if (controls === nothing && minimap === nothing) return nothing;
+    return html`${controls}${minimap}`;
+  }
+
+  /** The node library: a sidebar floating over the canvas at the inline start. */
+  #renderPalette(): TemplateResult | typeof nothing {
+    if (!this.palette) return nothing;
+    const strings = this.#resolvedStrings;
+    return html`<tp-flow-palette
+      class="palette"
+      .definitions=${this.schema?.nodes ?? []}
+      .icons=${this.icons}
+      .strings=${strings}
+      .label=${format(strings.paletteLabel, { flow: this.#name })}
+      ?disabled=${!this.editable}
+    ></tp-flow-palette>`;
   }
 
   #renderInspector(): TemplateResult {
@@ -2851,10 +2979,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       if (end <= panelStart || start >= panelEnd) return;
       const rtl = getComputedStyle(this).direction === 'rtl';
       const gap = rtl ? panelStart : canvas.width - panelEnd;
+      // The free extent lies between the sidebars (the palette covers the other side).
+      const covered = this.#coveredSides();
+      const freeLeft = covered.left + gap;
+      const freeRight = canvas.width - covered.right - gap;
       // A node wider than the free extent keeps its start in view.
       const dx = rtl
-        ? Math.min(panelEnd + gap - start, canvas.width - gap - end)
-        : Math.max(panelStart - gap - end, gap - start);
+        ? Math.min(freeLeft - start, freeRight - end)
+        : Math.max(freeRight - end, freeLeft - start);
       const viewport = this.viewport;
       void this.#viewportOwner.animateTo(
         this.#clamp({ ...viewport, x: viewport.x + dx }),
@@ -2877,7 +3009,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   };
 
   #toolbarDelete = (event: Event): void => {
-    this.deleteElements(
+    this.#requestDeletion(
       { nodes: this.selection.nodes, edges: this.selection.edges },
       'trigger-press',
       event,
@@ -2960,18 +3092,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (viewport.zoom !== this.#publishedZoom) {
       this.#publishedZoom = viewport.zoom;
       for (const bar of this.#controlBars()) bar.zoom = viewport.zoom;
-    }
-    const palette = this.#paletteElement;
-    if (palette) {
-      // The Command list reads this hook for its max height; keep the palette clear of the
-      // opposite panel on short panes, including a controls bar docked on the same side.
-      const available = Math.min(
-        this.#size.height * 0.55,
-        this.#size.height - this.#paletteReserve(),
-      );
-      const height = `${Math.round(Math.max(120, available))}px`;
-      if (palette.style.getPropertyValue('--tp-available-height') !== height)
-        palette.style.setProperty('--tp-available-height', height);
     }
     const minimap = this.#minimapElement;
     if (minimap) {
@@ -3158,10 +3278,13 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     );
   };
 
+  /** Flow point at the center of the pane the sidebars leave uncovered. */
   #viewportCenter(): FlowPoint {
     const viewport = this.viewport;
+    const covered = this.#coveredSides();
+    const centerX = (covered.left + this.#size.width - covered.right) / 2;
     return {
-      x: (this.#size.width / 2 - viewport.x) / viewport.zoom,
+      x: (centerX - viewport.x) / viewport.zoom,
       y: (this.#size.height / 2 - viewport.y) / viewport.zoom,
     };
   }
@@ -3821,11 +3944,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const bounds = model.bounds();
     if (!bounds.width && !bounds.height) return;
     this.#fitted = true;
-    const target = this.#viewportOwner.fitViewport(
-      bounds,
-      `${this.fitPadding}px`,
-      Math.min(1, this.maxZoom),
-    );
+    const target = this.#fitTarget(bounds, this.fitPadding, Math.min(1, this.maxZoom));
     if (this.#proposeViewport(target, 'window-resize', null, false))
       this.#viewportOwner.apply(this.viewport);
   }
@@ -3833,31 +3952,45 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #sizeChanged(): void {
     // The initial fit runs once the pane has a size; later resizes (window changes) keep the
     // user's viewport instead of re-fitting mid-gesture.
-    this.#measureControls();
     this.#frameNow();
     this.#tryInitialFit();
   }
 
-  /** Block extent of the controls stack (read outside the frame loop: on size and root updates). */
-  #measureControls(): void {
-    const controls = this.renderRoot?.querySelector<HTMLElement>('tp-flow-controls');
-    this.#controlsExtent = controls?.offsetHeight ?? 0;
+  /**
+   * Pane pixels the floating sidebars cover at each physical side (the palette at the inline
+   * start, an open inspector at the inline end), each with its inset.
+   */
+  #coveredSides(): { left: number; right: number } {
+    const canvas = this.#canvas?.getBoundingClientRect();
+    if (!canvas) return { left: 0, right: 0 };
+    const covered = { left: 0, right: 0 };
+    const sidebars = [
+      this.#paletteElement,
+      this.inspectorOpen ? this.#inspectorElement : null,
+    ] as const;
+    for (const sidebar of sidebars) {
+      if (!sidebar || sidebar.hidden) continue;
+      const rect = sidebar.getBoundingClientRect();
+      if (!rect.width) continue;
+      if (rect.left - canvas.left < canvas.right - rect.right)
+        covered.left = Math.max(covered.left, rect.right - canvas.left);
+      else covered.right = Math.max(covered.right, canvas.right - rect.left);
+    }
+    return covered;
   }
 
-  /**
-   * Height the palette leaves free when the controls share its inline side in another panel:
-   * the controls' extent at the opposite end, the lower or upper half beside a centered bar, both
-   * ends when the palette itself is centered.
-   */
-  #paletteReserve(): number {
-    if (!this.#controlsExtent) return 0;
-    const [paletteBlock, paletteInline] = this.palettePosition.split('-');
-    const [controlsBlock, controlsInline] = this.controlsPosition.split('-');
-    if (paletteInline !== controlsInline || paletteBlock === controlsBlock) return 0;
-    const extent = this.#controlsExtent + PANEL_RESERVE_GAP;
-    if (controlsBlock === 'center') return this.#size.height / 2 + extent / 2;
-    if (paletteBlock === 'center') return extent * 2;
-    return extent;
+  /** The viewport fitting bounds into the pane the sidebars leave uncovered, centered there. */
+  #fitTarget(bounds: FlowRect, padding: number, maxZoom: number): FlowViewport {
+    const covered = this.#coveredSides();
+    const target = viewportForBounds(
+      bounds,
+      {
+        width: Math.max(1, this.#size.width - covered.left - covered.right),
+        height: this.#size.height,
+      },
+      { minZoom: this.minZoom, maxZoom: Math.max(this.minZoom, maxZoom), padding: `${padding}px` },
+    );
+    return { ...target, x: target.x + covered.left };
   }
 
   #bindNode(host: TpFlowNode, node: FlowNode): void {
@@ -4540,9 +4673,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         break;
       case 'delete':
         if (subject?.kind === 'edge')
-          this.deleteElements({ edges: [subject.edgeId] }, 'item-press', source);
+          this.#requestDeletion({ edges: [subject.edgeId] }, 'item-press', source);
         else if (subject?.kind === 'node')
-          this.deleteElements(
+          this.#requestDeletion(
             {
               nodes: this.selection.nodes.length ? this.selection.nodes : [subject.nodeId],
               edges: this.selection.edges,
@@ -4803,11 +4936,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           'data-readonly': this.readOnly,
           'data-disabled': this.effectiveDisabled,
           'data-inspector-open': this.inspectorOpen && this.inspector !== 'none',
+          'data-palette': this.palette,
           'data-running': Boolean(this.#runState && this.#runState.status !== 'idle'),
           'data-lod': this.lod,
         },
         content: html`
-          ${this.#renderCanvas()} ${this.inspector === 'none' ? nothing : this.#renderInspector()}
+          ${this.#renderPalette()} ${this.#renderCanvas()}
+          ${this.inspector === 'none' ? nothing : this.#renderInspector()}
+          ${this.#renderDeleteConfirmation()}
           <p id=${instructionsId} class="visually-hidden" part="flow-instructions">
             ${strings.instructions}
           </p>

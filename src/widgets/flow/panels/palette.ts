@@ -2,6 +2,7 @@ import { css, html, type PropertyValues } from 'lit';
 import { TpElement } from '../../../foundation/element.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import { composedContains, deepActiveElement } from '../../../foundation/focus.js';
+import { observeResize } from '../../../foundation/observation.js';
 import { preventComponentHandling, type ComponentPartContract } from '../../../foundation/part.js';
 import type { FlowNodeDefinition } from '../../../foundation/flow/types.js';
 import { TpCommandPalette } from '../../../components/command-palette/command-palette.js';
@@ -27,38 +28,54 @@ export interface FlowPaletteCloseDetail {
 }
 
 const paletteStyles = css`
-  /* The root writes the available height; the panel shrinks to it and its body scrolls. */
+  /* The root sizes the sidebar; under the header the search stays and the list fills the rest of
+     the sidebar and scrolls (the palette writes the list's available height from the body). */
   :host {
     display: flex;
     flex-direction: column;
     min-inline-size: 0;
-    max-block-size: min(calc(var(--tp-spacing) * 94), var(--tp-available-height, 100%));
-  }
-
-  :host(:not([open])) {
-    display: none;
+    min-block-size: 0;
   }
 
   .palette {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
     min-inline-size: 0;
     min-block-size: 0;
-    overflow: auto;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    flex: none;
+  }
+
+  .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .body {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    overflow: hidden;
   }
 
   tp-command-palette {
     display: block;
     min-inline-size: 0;
-    min-block-size: 0;
   }
 `;
 
 /**
- * The node palette (Widgets 6.3 Anatomy): a Command palette over the schema's node definitions,
- * grouped by category, each command a presentational List item with the definition's icon tile,
- * label and description. Activation inserts (`flow-palette-insert`); the items are also native
- * drag sources carrying the node type so the root can drop them at a canvas point.
+ * The node palette (Widgets 6.3 Anatomy): a sidebar the root floats over the canvas at its inline
+ * start, holding a Command palette over the schema's node definitions, grouped by category, each
+ * command a presentational List item with the definition's icon tile, label and description. The
+ * whole list shows; the search only filters it, and the list fills the sidebar and scrolls. Activation
+ * inserts (`flow-palette-insert`); the items are also native drag sources carrying the node type
+ * so the root can drop them at a canvas point.
  */
 export class TpFlowPalette extends TpElement {
   static tagName = 'tp-flow-palette';
@@ -71,7 +88,6 @@ export class TpFlowPalette extends TpElement {
     definitions: { attribute: false },
     icons: { attribute: false },
     strings: { attribute: false },
-    open: { type: Boolean, reflect: true },
     query: { type: String },
     label: { type: String },
   };
@@ -82,7 +98,6 @@ export class TpFlowPalette extends TpElement {
   label = '';
   icons: Record<string, IconDefinition> = {};
   strings: Partial<FlowStrings> | undefined;
-  open = false;
   query = '';
 
   #entries: readonly CommandEntry[] = [];
@@ -90,6 +105,7 @@ export class TpFlowPalette extends TpElement {
   #entriesIcons: Record<string, IconDefinition> | undefined;
   readonly #registered = new WeakSet<HTMLElement>();
   readonly #registrations: Array<() => void> = [];
+  #observedHeight = false;
   /**
    * A press on a draggable item keeps its native default: the Select's own press handling cancels
    * it to hold focus in the query, which also cancels the native drag. Activation still runs
@@ -105,6 +121,8 @@ export class TpFlowPalette extends TpElement {
         },
       },
     },
+    // The list takes the sidebar's whole remaining height, not the popup cap.
+    'command-palette-list': { styleHook: { 'max-block-size': 'none' } },
   };
 
   get presentationOwner(): HTMLElement | null {
@@ -200,11 +218,34 @@ export class TpFlowPalette extends TpElement {
     if (!list) return;
     await list.updateComplete;
     if (!this.isConnected) return;
+    this.#observeHeight(palette, list);
     for (const item of list.shadowRoot?.querySelectorAll<HTMLElement>('tp-list-item.item') ?? []) {
       if (this.#registered.has(item)) continue;
       this.#registered.add(item);
       this.#registrations.push(this.presentationController.registerPart('flow-palette-item', item));
     }
+  }
+
+  /**
+   * The list fills the sidebar below the search: the Command palette's content reads
+   * `--tp-available-height`, so the palette writes the body's height less the search row.
+   */
+  #observeHeight(palette: HTMLElement, list: HTMLElement): void {
+    const body = this.renderRoot.querySelector<HTMLElement>('.body');
+    const search = list.shadowRoot?.querySelector<HTMLElement>(
+      '[part~="command-palette-input-wrapper"]',
+    );
+    if (this.#observedHeight || !body || !search) return;
+    this.#observedHeight = true;
+    const sync = (): void => {
+      const height = `${Math.max(0, body.clientHeight - search.offsetHeight)}px`;
+      if (palette.style.getPropertyValue('--tp-available-height') !== height)
+        palette.style.setProperty('--tp-available-height', height);
+    };
+    sync();
+    this.#registrations.push(observeResize(body, sync), observeResize(search, sync), () => {
+      this.#observedHeight = false;
+    });
   }
 
   #dragStart = (event: DragEvent): void => {
@@ -229,13 +270,7 @@ export class TpFlowPalette extends TpElement {
     // the drag); the query takes it back unless the root closed the palette or moved focus.
     const input = this.commandPalette?.inputElement;
     const active = deepActiveElement(this.ownerDocument);
-    if (
-      this.open &&
-      this.isConnected &&
-      input &&
-      active !== input &&
-      composedContains(this, active)
-    )
+    if (this.isConnected && input && active !== input && composedContains(this, active))
       input.focus({ preventScroll: true });
   }
 
@@ -270,18 +305,21 @@ export class TpFlowPalette extends TpElement {
 
   protected override render() {
     const strings = this.#strings;
-    return this.renderPart(
-      'flow-palette',
-      { open: this.open, query: this.query },
+    const header = this.renderPart(
+      'flow-palette-header',
+      {},
+      {
+        tag: 'header',
+        properties: { part: 'flow-palette-header', class: 'header' },
+        content: html`<span class="title">${strings.palette}</span>`,
+      },
+    );
+    const body = this.renderPart(
+      'flow-palette-body',
+      { query: this.query },
       {
         tag: 'div',
-        properties: {
-          part: 'flow-palette',
-          class: 'palette',
-          role: 'region',
-          'aria-label': this.label || strings.palette,
-          '@keydown': this.#keyDown,
-        },
+        properties: { part: 'flow-palette-body', class: 'body' },
         content: html`<tp-command-palette
           inline
           label=${strings.palette}
@@ -295,6 +333,21 @@ export class TpFlowPalette extends TpElement {
           @tp-value-change=${this.#contain}
           @tp-open-change=${this.#contain}
         ></tp-command-palette>`,
+      },
+    );
+    return this.renderPart(
+      'flow-palette',
+      { query: this.query },
+      {
+        tag: 'div',
+        properties: {
+          part: 'flow-palette',
+          class: 'palette',
+          role: 'region',
+          'aria-label': this.label || strings.palette,
+          '@keydown': this.#keyDown,
+        },
+        content: html`${header}${body}`,
       },
     );
   }

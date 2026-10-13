@@ -20,6 +20,8 @@ export const flowStyles = css`
 
   .root {
     --_tp-flow-inline-sign: 1;
+    --_tp-flow-start-reserve: 0px;
+    --_tp-flow-end-reserve: 0px;
 
     position: relative;
     display: grid;
@@ -157,30 +159,33 @@ export const flowStyles = css`
     pointer-events: auto;
   }
 
+  .panel[data-position$='-start'] {
+    translate: calc(var(--_tp-flow-inline-sign) * var(--_tp-flow-start-reserve)) 0;
+  }
+
   .panel[data-position$='-end'] {
     flex-direction: row-reverse;
+    translate: calc(var(--_tp-flow-inline-sign) * -1 * var(--_tp-flow-end-reserve)) 0;
   }
 
   .panel[data-position$='-center'] {
     justify-content: center;
-  }
-
-  /* While the inspector is open, end panels move clear of it (its extent and the gap) and middle
-     panels by half, centering in the space it leaves. */
-  .root[data-inspector-open] .panel[data-position$='-end'] {
     translate: calc(
-        var(--_tp-flow-inline-sign) * -1 *
-          (min(var(--_tp-flow-inspector), 100%) + var(--_tp-flow-space))
+        var(--_tp-flow-inline-sign) *
+          (var(--_tp-flow-start-reserve) - var(--_tp-flow-end-reserve)) / 2
       )
       0;
   }
 
-  .root[data-inspector-open] .panel[data-position$='-center'] {
-    translate: calc(
-        var(--_tp-flow-inline-sign) * -0.5 *
-          (min(var(--_tp-flow-inspector), 100%) + var(--_tp-flow-space))
-      )
-      0;
+  /* Panels move clear of the floating sidebars: start panels past the palette, end panels past an
+     open inspector (each its extent and the gap), middle panels center in the space between. A
+     percentage resolves against the panel, whose extent is the pane's inside the margins. */
+  .root[data-palette] {
+    --_tp-flow-start-reserve: calc(min(var(--_tp-flow-palette), 100%) + var(--_tp-flow-space));
+  }
+
+  .root[data-inspector-open] {
+    --_tp-flow-end-reserve: calc(min(var(--_tp-flow-inspector), 100%) + var(--_tp-flow-space));
   }
 
   .panel[data-position^='top-'] {
@@ -236,13 +241,23 @@ export const flowStyles = css`
     visibility: hidden;
   }
 
-  /* The inspector floats over the canvas at the inline end, inset by the panel margin; the canvas
-     keeps its size, so opening it moves nothing under the pointer. */
+  /* The sidebars float over the canvas, inset by the panel margin: the node library at the inline
+     start, the inspector at the inline end. The canvas keeps its size, so neither moves anything
+     under the pointer. */
+  .root > tp-flow-palette,
   .root > tp-flow-inspector {
     position: absolute;
     inset-block: var(--_tp-flow-space);
-    inset-inline-end: var(--_tp-flow-space);
     z-index: 7;
+  }
+
+  .root > tp-flow-palette {
+    inset-inline-start: var(--_tp-flow-space);
+    inline-size: min(var(--_tp-flow-palette), 100% - var(--_tp-flow-space) * 2);
+  }
+
+  .root > tp-flow-inspector {
+    inset-inline-end: var(--_tp-flow-space);
     inline-size: min(var(--_tp-flow-inspector), 100% - var(--_tp-flow-space) * 2);
   }
 

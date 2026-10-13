@@ -4,8 +4,7 @@ import {
   type PanZoomReason,
 } from '../../foundation/pan-zoom.js';
 import { frameLoopFor } from '../../foundation/frame-loop.js';
-import { viewportForBounds, type FlowFitPadding } from '../../foundation/flow/viewport.js';
-import type { FlowPoint, FlowRect, FlowSize, FlowViewport } from '../../foundation/flow/types.js';
+import type { FlowPoint, FlowSize, FlowViewport } from '../../foundation/flow/types.js';
 import type { ChangeReason } from '../../foundation/types.js';
 
 export interface ViewportOwnerOptions {
@@ -150,15 +149,6 @@ export class ViewportOwner {
       this.#animating = false;
       this.#programmaticReason = undefined;
     }
-  }
-
-  fitViewport(bounds: FlowRect, padding: FlowFitPadding, maxZoom?: number): FlowViewport {
-    const limits = this.#options.limits();
-    return viewportForBounds(bounds, this.#options.size(), {
-      minZoom: limits.minZoom,
-      maxZoom: maxZoom === undefined ? limits.maxZoom : Math.max(limits.minZoom, maxZoom),
-      padding,
-    });
   }
 
   autoPan(screenPoint: FlowPoint): void {

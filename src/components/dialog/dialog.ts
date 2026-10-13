@@ -113,6 +113,7 @@ export class TpDialog extends TpElement {
     label: { type: String },
     description: { type: String },
     forceRender: { type: Boolean, attribute: 'force-render' },
+    backdrop: { type: String },
     onOpenChange: { attribute: false },
     onOpenChangeComplete: { attribute: false },
     handle: { attribute: false },
@@ -128,6 +129,8 @@ export class TpDialog extends TpElement {
   label = '';
   description = '';
   forceRender = false;
+  /** Overlay treatment: a dark fill, or the same fill blurring what it covers (Nova backdrop-blur-xs). */
+  backdrop: 'dark' | 'blur' = 'dark';
   showCloseControl = true;
   portal = false;
   container: OwnedPortalContainer = null;
@@ -223,6 +226,7 @@ export class TpDialog extends TpElement {
         this.#payload = undefined;
         this.#openingEvent = undefined;
       }
+      if (open) this.#validateOpenContent();
       this.emit('tp-open-change-complete', { open });
       this.onOpenChangeComplete?.(open);
     },
@@ -310,7 +314,7 @@ export class TpDialog extends TpElement {
     this.requestUpdate('closeOnOutsideInteraction', previous);
   }
   protected get overlayProperties(): HostProperties {
-    return {};
+    return { 'data-backdrop': this.backdrop === 'blur' ? 'blur' : 'dark' };
   }
   protected get partPrefix(): string {
     return 'dialog';
@@ -719,16 +723,20 @@ export class TpDialog extends TpElement {
         if (!hadPart) element.part.remove(part);
       });
     }
-    if (this.open) {
-      if (!(this.#assigned('title')?.textContent?.trim() || this.label.trim()))
-        this.#diagnostic('title-missing', 'Dialog requires a non-empty title slot or label.');
-      if (this.#content && focusableElements(this.#content).length === 0)
-        this.#diagnostic(
-          'decision-missing',
-          'Dialog requires a clearly labelled, enabled decision action.',
-        );
-    }
+    // While the content is still entering, its named footer slots may not be filled yet.
+    if (this.#presence.state === 'open') this.#validateOpenContent();
   };
+  /** An open Dialog needs a title and a reachable decision; checked once its content is in place. */
+  #validateOpenContent(): void {
+    if (!this.open) return;
+    if (!(this.#assigned('title')?.textContent?.trim() || this.label.trim()))
+      this.#diagnostic('title-missing', 'Dialog requires a non-empty title slot or label.');
+    if (this.#content && focusableElements(this.#content).length === 0)
+      this.#diagnostic(
+        'decision-missing',
+        'Dialog requires a clearly labelled, enabled decision action.',
+      );
+  }
   #actionTarget(element: HTMLElement): HTMLElement {
     return (
       element.shadowRoot?.querySelector<HTMLElement>('button, a[href], [role="button"]') ?? element

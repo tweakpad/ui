@@ -66,12 +66,8 @@ export const flowExamples = [
   ),
   example(
     'Controlled owner',
-    `<tp-flow label="Lead pipeline" fit-view data-schema="workflow" data-document="workflow" data-controlled data-validate data-confirm-delete="flow-delete-dialog" data-output></tp-flow>
-<tp-dialog id="flow-delete-dialog" label="Delete from the pipeline?" description="Dependent edges are removed with their nodes.">
-  <tp-button slot="footer" variant="destructive" data-confirm>Delete</tp-button>
-  <tp-button slot="close" variant="outline">Cancel</tp-button>
-</tp-dialog>`,
-    'A controlled owner holds the document and writes every accepted proposal back to `value`; the widget keeps the proposed geometry while the owner is late and drops it when the owner refuses. `isValidConnection` refuses a connection into "Notify sales" from anything but the condition. Deleting cancels `tp-delete`, asks in a Dialog and then deletes the same nodes and dependent edges through `deleteElements()`.',
+    '<tp-flow label="Lead pipeline" fit-view confirm-delete data-schema="workflow" data-document="workflow" data-controlled data-validate data-output></tp-flow>',
+    'A controlled owner holds the document and writes every accepted proposal back to `value`; the widget keeps the proposed geometry while the owner is late and drops it when the owner refuses. `isValidConnection` refuses a connection into "Notify sales" from anything but the condition. `confirm-delete` asks before nodes are deleted from the keyboard, the node toolbar or the context menu: an Alert dialog over the blurred widget names the node (or the count), and Delete removes the nodes with their edges in one change.',
   ),
   example(
     'Declarative nodes',

@@ -42,6 +42,8 @@ export function dialogFamilyAppearance(
         background:
           'color-mix(in srgb, light-dark(var(--tp-foreground), var(--tp-background)) calc(var(--tp-opacity-backdrop) * 100%), transparent)',
       }),
+      // Nova supports-backdrop-filter:backdrop-blur-xs, opted into with `backdrop="blur"`.
+      rule({ 'backdrop-filter': 'blur(var(--tp-space-1))' }, '&[data-backdrop="blur"]'),
       ...surfaceFadeAppearance,
     ],
   };

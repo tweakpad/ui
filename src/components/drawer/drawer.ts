@@ -60,7 +60,6 @@ export class TpDrawer extends TpDialog {
       attribute: 'swipe-enabled',
       converter: defaultTrue,
     },
-    backdrop: { type: String },
   };
   static override styles = [TpDialog.styles, drawerStyles];
   edge: DrawerEdge = 'block-end';
@@ -70,10 +69,6 @@ export class TpDrawer extends TpDialog {
   dismissible = true;
   showSwipeHandle = false;
   swipeEnabled = true;
-  backdrop: 'dark' | 'blur' = 'dark';
-  protected override get overlayProperties(): HostProperties {
-    return { 'data-backdrop': this.backdrop === 'blur' ? 'blur' : 'dark' };
-  }
   onSnapPointChange: ((event: TpValueChangeEvent<DrawerSnapPoint | null>) => void) | undefined;
   #providedSnap: DrawerSnapPoint | null | undefined;
   #physicalDirection: DrawerDirection | undefined;

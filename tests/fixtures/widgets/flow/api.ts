@@ -6,6 +6,7 @@ import type {
   FlowPoint,
   FlowRect,
 } from '../../../../src/foundation/flow/types.js';
+import { DEFAULT_NODE_SIZE_BY_SHAPE } from '../../../../src/foundation/flow/defaults.js';
 
 interface Check {
   readonly name: string;
@@ -1533,7 +1534,7 @@ export async function assertContextMenuDismiss(id = 'material'): Promise<Report>
   const menu = target.shadowRoot!.querySelector<HTMLElement & { open: boolean }>(
     'tp-menu.context-menu',
   )!;
-  // Two nodes clear of the corner panels (the palette covers the first one).
+  // Two nodes clear of the panels and the floating node library.
   const ids = ['normal', 'material'];
   const titleOf = (nodeId: string) =>
     host(target, nodeId)!.shadowRoot!.querySelector<HTMLElement>('[part~="flow-node-title"]')!;
@@ -1813,6 +1814,258 @@ export async function assertToolbars(id = 'monitor'): Promise<Report> {
       ),
     ],
     { placement },
+  );
+}
+
+/**
+ * The node library is a sidebar floating at the inline start: it spans the pane inside its inset,
+ * lists every definition in a list filling the sidebar, filters on search, inserts at the center of the
+ * uncovered canvas, and the start panels and the fit stay clear of it.
+ */
+export async function assertPaletteSidebar(id = 'pipeline'): Promise<Report> {
+  const target = flow(id);
+  target.scrollIntoView({ block: 'center' });
+  await wait(300);
+  const root = target.shadowRoot!;
+  const palette = root.querySelector<HTMLElement & { commandPalette: HTMLElement | null }>(
+    'tp-flow-palette',
+  )!;
+  const flowRect = target.getBoundingClientRect();
+  const rect = palette.getBoundingClientRect();
+  const inset = Math.round(rect.left - flowRect.left);
+  const list = palette.commandPalette!.shadowRoot!.querySelector('tp-command-list')!;
+  const items = () => [...list.shadowRoot!.querySelectorAll<HTMLElement>('tp-list-item.item')];
+  const visibleItems = () => items().filter((item) => item.getClientRects().length > 0).length;
+  const body = palette.shadowRoot!.querySelector<HTMLElement>('.body')!;
+  const listPart = list.shadowRoot!.querySelector<HTMLElement>('[part~="command-palette-list"]')!;
+  const definitions = (target.schema?.nodes ?? []).length;
+  const geometry = {
+    position: getComputedStyle(palette).position,
+    inset,
+    height: [Math.round(rect.height), Math.round(flowRect.height - inset * 2)],
+    items: [items().length, definitions],
+    listCap: getComputedStyle(listPart).maxBlockSize,
+    listScrolls: getComputedStyle(listPart).overflowY,
+    listInside: listPart.getBoundingClientRect().bottom <= body.getBoundingClientRect().bottom + 1,
+  };
+  // Start panels sit past the sidebar and its gap.
+  const startPanels = [
+    ...root.querySelectorAll<HTMLElement>('.panel[data-position$="-start"] > :not(slot)'),
+  ].map((element) => Math.round(element.getBoundingClientRect().left - rect.right));
+  // The fit centers the graph in the canvas the sidebar leaves uncovered.
+  await target.fitViewTo({ duration: 0 });
+  await settle(target);
+  const nodeRects = hosts(target).map((node) => node.getBoundingClientRect());
+  const graphCenter =
+    (Math.min(...nodeRects.map((r) => r.left)) + Math.max(...nodeRects.map((r) => r.right))) / 2;
+  const freeCenter = (rect.right + flowRect.right) / 2;
+  // Search filters the list; clearing it lists everything again.
+  const input = (palette.commandPalette as unknown as { inputElement: HTMLInputElement })
+    .inputElement;
+  input.focus();
+  input.value = 'appro';
+  input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
+  await settle(target);
+  await wait(100);
+  const filtered = visibleItems();
+  input.value = '';
+  input.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
+  await settle(target);
+  await wait(100);
+  const unfiltered = visibleItems();
+  // Enter inserts the active definition at the center of the uncovered canvas.
+  const before = target.nodes.length;
+  input.focus();
+  input.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true, cancelable: true }),
+  );
+  await settle(target);
+  await wait(300);
+  const inserted = target.nodes.length - before;
+  const added = target.selection.nodes[0];
+  const addedRect = added ? host(target, added)?.getBoundingClientRect() : undefined;
+  // The insertion centers the definition's size there (the measured node may grow past it).
+  const addedNode = added ? target.model.getNode(added) : undefined;
+  const definition = target.schema?.nodes.find((item) => item.type === addedNode?.type);
+  const width =
+    definition?.size?.width ?? DEFAULT_NODE_SIZE_BY_SHAPE[definition?.shape ?? 'card'].width;
+  const insertCenter = addedRect ? addedRect.left + (width * target.viewport.zoom) / 2 : NaN;
+  // A snapped insertion lands within one grid step of the center.
+  const snapTolerance = (target.snap ? target.snapGrid * target.viewport.zoom : 0) + 2;
+  if (inserted) target.undo();
+  target.clearSelection();
+  await settle(target);
+  return report([
+    check(
+      'floats at the inline start, spanning the pane inside its inset',
+      geometry.position === 'absolute' &&
+        geometry.inset > 0 &&
+        Math.abs(geometry.height[0]! - geometry.height[1]!) <= 1,
+      geometry,
+    ),
+    check(
+      'lists every definition in a list that fills the sidebar and scrolls',
+      geometry.items[0] === geometry.items[1] &&
+        geometry.listCap === 'none' &&
+        geometry.listScrolls === 'auto' &&
+        geometry.listInside,
+      geometry,
+    ),
+    check(
+      'start panels clear the sidebar',
+      startPanels.every((gap) => gap >= 0),
+      startPanels,
+    ),
+    check(
+      'the fit centers the graph in the uncovered canvas',
+      Math.abs(graphCenter - freeCenter) <= 2,
+      { graphCenter, freeCenter },
+    ),
+    check(
+      'search filters, clearing lists all again',
+      filtered === 1 && unfiltered === definitions,
+      {
+        filtered,
+        unfiltered,
+      },
+    ),
+    check(
+      'Enter inserts at the center of the uncovered canvas',
+      inserted === 1 && Math.abs(insertCenter - freeCenter) <= snapTolerance,
+      { inserted, insertCenter, freeCenter, snapTolerance },
+    ),
+  ]);
+}
+
+/**
+ * `confirmDelete`: a user deletion that removes nodes asks in an Alert dialog modal to the widget
+ * over a blurred backdrop; Cancel keeps everything, Delete removes the nodes in one change.
+ * Edge-only deletions and `deleteElements()` never ask.
+ */
+export async function assertDeleteConfirmation(id = 'monitor'): Promise<Report> {
+  const target = flow(id);
+  target.scrollIntoView({ block: 'center' });
+  target.confirmDelete = true;
+  await settle(target);
+  const root = target.shadowRoot!;
+  const dialog = root.querySelector<
+    HTMLElement & { open: boolean; container: unknown; surfaceRoot: ShadowRoot }
+  >('tp-alert-dialog.delete-confirmation')!;
+  const captured = capture(target, ['tp-delete', 'tp-value-commit']);
+  const pressDelete = async (nodeId: string) => {
+    await target.focusNode(nodeId);
+    target.select({ nodes: [nodeId], edges: [] });
+    await settle(target);
+    host(target, nodeId)!.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Delete',
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      }),
+    );
+    await settle(target);
+    await wait(400);
+  };
+  const overlay = () => dialog.surfaceRoot.querySelector<HTMLElement>('.overlay');
+  // Container modality moves the actions into a portal inside the widget root.
+  const decide = async (slot: 'cancel' | 'confirm') => {
+    const button = root.querySelector<HTMLElement>(`tp-button[slot="${slot}"]`);
+    (button?.shadowRoot?.querySelector('button') ?? button)?.click();
+    await settle(target);
+    await wait(400);
+  };
+  const before = { nodes: target.nodes.length, edges: target.edges.length };
+
+  await pressDelete('enrich');
+  const asked = {
+    open: dialog.open,
+    title: dialog.getAttribute('label'),
+    container: dialog.container === root.querySelector('.root'),
+    backdrop: overlay()?.getAttribute('data-backdrop'),
+    filter: overlay() ? getComputedStyle(overlay()!).backdropFilter : null,
+    canvasInert: Boolean(root.querySelector('.canvas')?.closest('[inert]')),
+    nodes: target.nodes.length,
+  };
+  await decide('cancel');
+  const cancelled = { open: dialog.open, nodes: target.nodes.length, edges: target.edges.length };
+
+  await pressDelete('enrich');
+  const commitsBefore = captured.events.filter((event) => event.type === 'tp-value-commit').length;
+  await decide('confirm');
+  const confirmed = {
+    open: dialog.open,
+    nodes: target.nodes.length,
+    edges: target.edges.length,
+    commits:
+      captured.events.filter((event) => event.type === 'tp-value-commit').length - commitsBefore,
+    gone: !target.nodes.some((node) => node.id === 'enrich'),
+  };
+  target.undo();
+  await settle(target);
+  const restored = { nodes: target.nodes.length, edges: target.edges.length };
+
+  // An edge alone and the API delete at once.
+  const edgeId = target.edges[0]!.id;
+  target.select({ nodes: [], edges: [edgeId] });
+  await target.focusNode(target.edges[0]!.source);
+  target.focusEdge(edgeId);
+  root.querySelector<HTMLElement>('.focus-proxies [part~="flow-edge-focus"]:focus')?.dispatchEvent(
+    new KeyboardEvent('keydown', {
+      key: 'Delete',
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    }),
+  );
+  await settle(target);
+  await wait(200);
+  const edgeOnly = { open: dialog.open, edges: target.edges.length };
+  if (edgeOnly.edges < before.edges) target.undo();
+  target.deleteElements({ nodes: ['notify'] });
+  await settle(target);
+  const api = { open: dialog.open, gone: !target.nodes.some((node) => node.id === 'notify') };
+  target.undo();
+  captured.stop();
+  target.confirmDelete = false;
+  target.clearSelection();
+  await settle(target);
+  return report(
+    [
+      check(
+        'a node deletion asks in a dialog modal to the widget over a blur',
+        asked.open &&
+          asked.title === 'Delete Enrich company?' &&
+          asked.container &&
+          asked.backdrop === 'blur' &&
+          String(asked.filter).includes('blur') &&
+          asked.canvasInert &&
+          asked.nodes === before.nodes,
+        asked,
+      ),
+      check(
+        'Cancel keeps every node and edge',
+        !cancelled.open && cancelled.nodes === before.nodes && cancelled.edges === before.edges,
+        cancelled,
+      ),
+      check(
+        'Delete removes the node and its edges in one change',
+        !confirmed.open && confirmed.gone && confirmed.commits === 1,
+        confirmed,
+      ),
+      check(
+        'undo restores them',
+        restored.nodes === before.nodes && restored.edges === before.edges,
+        restored,
+      ),
+      check(
+        'an edge alone deletes without asking',
+        !edgeOnly.open && edgeOnly.edges === before.edges - 1,
+        edgeOnly,
+      ),
+      check('deleteElements() deletes without asking', !api.open && api.gone, api),
+    ],
+    { before },
   );
 }
 

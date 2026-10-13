@@ -376,8 +376,14 @@ viewport and selection never recorded. `tp-history-change` reports every history
 `undo` or `redo`, so a controlled owner can veto it. Delete and Backspace, the node toolbar and
 the context menu delete the selection: the cancelable `tp-delete` carries the nodes (with their
 descendants) and the dependent edges, the deletion is one transaction, focus moves to the nearest
-remaining node, and `deletable: false` keeps an element out of it.
-`deleteElements({ nodes, edges })` runs the same path.
+remaining node, and `deletable: false` keeps an element out of it. With `confirmDelete`
+(`confirm-delete`) such a deletion that removes nodes asks first, after `tp-delete`: an Alert
+Dialog modal to the widget (`modality="container"`, `backdrop="blur"`) blurs the whole widget,
+names the node or the count (`strings.confirmDeleteNode`, `confirmDeleteNodes`,
+`confirmDeleteDescription`), Delete removes the nodes as they are then and moves focus to the
+nearest remaining node, and Cancel or Escape keeps everything and returns focus. Edge-only
+deletions, Cut and `deleteElements({ nodes, edges })` never ask; the method runs the deletion at
+once, after `tp-delete`.
 
 The context menu is a Menu with the context invocation (right click, Shift+F10, the ContextMenu
 key, a long press). Its subject comes from the press: a node (or the selection it belongs to), an
@@ -471,12 +477,17 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
   boxes in their tones and the viewport mask, in `minimapPosition` (`bottom-end`); a press or drag
   pans, the wheel zooms, four named Buttons pan from the keyboard, and it repaints on theme and
   pixel-ratio changes.
-- Palette: `palette` shows the node library, a Command palette over the schema's definitions
-  grouped by `category` with List items showing the icon tile, label and description, in
-  `palettePosition` (`top-start`). Searching filters by label and category, Enter inserts at the
-  viewport center or at the pending anchor (the "+" of an edge label or the point of a released
-  connection), and the items are native drag sources that drop at the canvas point under the
-  pointer. An insertion proposes with `metadata.insert: { type, at }` and selects the new node.
+- Palette: `palette` shows the node library as a sidebar floating over the canvas at the inline
+  start, on the same surface and inset as the inspector, its width set by the size axis. Under its
+  "Node library" header a Command palette lists every definition of the schema grouped by
+  `category`, as List items with the icon tile, label and description; the search above them only
+  filters (by label and category) and stays at the top while the list fills the rest of the sidebar
+  and scrolls. Enter inserts at the center of the uncovered canvas or at the pending anchor (the "+"
+  of an edge label or the point of a released connection), and the items are native drag sources
+  that drop at the canvas point under the pointer. An insertion proposes with
+  `metadata.insert: { type, at }` and selects the new node. While it shows, the panels at the
+  inline start move clear of it, and fitting the view centers the graph in the canvas the
+  sidebars leave uncovered.
 - Inspector: a panel floating over the canvas at the inline end, inset like the other panels and
   painted as a Sheet (the shared floating surface), for the settings the schema keeps off the node.
   It enters and leaves like a Sheet, fading while it slides 2.5rem from the inline end (instant
@@ -675,7 +686,7 @@ the canvas when pressed, and the description and the error describe it. `readOnl
 
 One presentation family, `tp-flow`, covers the root and every constituent with the axis `size`
 (`sm`, `default`, `lg`), which scales the node width, the ports, the handles, the edge width, the
-markers, the grid, the minimap, the inspector and the intrinsic height (the widget fills its box
+markers, the grid, the minimap, the palette, the inspector and the intrinsic height (the widget fills its box
 and has a minimum height on its own, so it needs no inline size). Public parts: `flow`,
 `flow-pane`, `flow-viewport`, `flow-background`, `flow-background-pattern`, `flow-node`,
 `flow-node-card`, `flow-node-shell`, `flow-node-header`, `flow-node-icon`, `flow-node-title`,
@@ -686,7 +697,8 @@ and has a minimum height on its own, so it needs no inline size). Public parts: 
 `flow-edge-halo`, `flow-edge-marker`, `flow-edge-label`, `flow-edge-focus`, `flow-edge-waypoint`,
 `flow-edge-segment-handle`, `flow-edge-reconnect`, `flow-connection-line`, `flow-selection`,
 `flow-selection-bounds`, `flow-minimap`, `flow-minimap-node`, `flow-minimap-viewport`,
-`flow-controls`, `flow-control`, `flow-palette`, `flow-palette-item`, `flow-inspector`,
+`flow-controls`, `flow-control`, `flow-palette`, `flow-palette-header`, `flow-palette-body`,
+`flow-palette-item`, `flow-inspector`,
 `flow-inspector-header`, `flow-inspector-tabs`, `flow-inspector-body`, `flow-inspector-footer`,
 `flow-panel-top-start`, `flow-panel-top-center`, `flow-panel-top-end`, `flow-panel-center-start`,
 `flow-panel-center-end`, `flow-panel-bottom-start`, `flow-panel-bottom-center`,
@@ -699,7 +711,7 @@ registered nested parts.
 
 State markers: the root carries `data-mode`, `data-tool`, `data-dragging`, `data-connecting`,
 `data-selecting`, `data-resizing`, `data-readonly`, `data-disabled`, `data-locked`, `data-empty`,
-`data-auto-layout`, `data-lod`, `data-renderer`, `data-inspector-open`, `data-running` and
+`data-auto-layout`, `data-lod`, `data-renderer`, `data-inspector-open`, `data-palette`, `data-running` and
 `data-pan-active`; a node `data-selected`, `data-focused`, `data-focus-visible`, `data-dragging`,
 `data-connecting`, `data-shape`, `data-tone`, `data-status`, `data-lod`, `data-pinned`,
 `data-parent`, `data-measured` and `data-resizable`; a port `data-direction`, `data-side`,
@@ -804,7 +816,8 @@ nodes; pooled node hosts instead of a React element per node. tweakpane has no g
 | `controlsPosition`, `controlsOrientation`  | `controls-position`, `controls-orientation`    | `FlowPanelPosition`, `'vertical' \| 'horizontal'`      | `'bottom-start'`, `'vertical'`             |
 | `zoomPresets`                              | —                                              | `number[]`                                             | `[0.5, 1, 2]`                              |
 | `minimap`, `minimapPosition`               | `minimap`, `minimap-position`                  | `boolean`, `FlowPanelPosition`                         | `false`, `'bottom-end'`                    |
-| `palette`, `palettePosition`               | `palette`, `palette-position`                  | `boolean`, `FlowPanelPosition`                         | `false`, `'top-start'`                     |
+| `palette`                                  | `palette`                                      | `boolean`                                              | `false`                                    |
+| `confirmDelete`                            | `confirm-delete`                               | `boolean`                                              | `false`                                    |
 | `inspector`, `inspectorCommit`             | `inspector`, `inspector-commit`                | `'none' \| 'auto' \| 'manual'`, `'live' \| 'explicit'` | `'auto'`, `'live'`                         |
 | `locked`                                   | `locked` (reflected)                           | `boolean`                                              | `false`                                    |
 | `wheel`, `cooperativeGestures`             | `wheel`, `cooperative-gestures`                | `'pan' \| 'zoom' \| 'none'`, `boolean`                 | `'pan'`, `false`                           |

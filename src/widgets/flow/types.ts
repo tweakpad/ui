@@ -181,6 +181,10 @@ export interface FlowStrings {
   cut: string;
   paste: string;
   delete: string;
+  /** Delete confirmation title for one node (`{name}`) and for several (`{count}`). */
+  confirmDeleteNode: string;
+  confirmDeleteNodes: string;
+  confirmDeleteDescription: string;
   pin: string;
   unpin: string;
   editLabel: string;

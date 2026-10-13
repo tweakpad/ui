@@ -66,6 +66,7 @@ export const flowAppearance: PresentationDictionary = {
         '--_tp-flow-dash': '6 4',
         '--_tp-flow-minimap': 'calc(var(--tp-spacing) * 50)',
         '--_tp-flow-inspector': 'calc(var(--tp-spacing) * 88)',
+        '--_tp-flow-palette': 'calc(var(--tp-spacing) * 64)',
         '--_tp-flow-block-size': 'calc(var(--tp-spacing) * 120)',
         background: 'var(--tp-background)',
         color: 'var(--tp-foreground)',
@@ -87,6 +88,7 @@ export const flowAppearance: PresentationDictionary = {
         '--_tp-flow-marker': 'var(--tp-space-2-5)',
         '--_tp-flow-minimap': 'calc(var(--tp-spacing) * 40)',
         '--_tp-flow-inspector': 'calc(var(--tp-spacing) * 72)',
+        '--_tp-flow-palette': 'calc(var(--tp-spacing) * 56)',
         '--_tp-flow-block-size': 'calc(var(--tp-spacing) * 90)',
       },
     },
@@ -102,6 +104,7 @@ export const flowAppearance: PresentationDictionary = {
         '--_tp-flow-marker': 'var(--tp-space-4)',
         '--_tp-flow-minimap': 'calc(var(--tp-spacing) * 60)',
         '--_tp-flow-inspector': 'calc(var(--tp-spacing) * 96)',
+        '--_tp-flow-palette': 'calc(var(--tp-spacing) * 72)',
         '--_tp-flow-block-size': 'calc(var(--tp-spacing) * 150)',
       },
     },
@@ -520,19 +523,18 @@ export const flowAppearance: PresentationDictionary = {
     },
   ],
   'flow-control': [],
-  // The root writes `--tp-available-height` on the palette host (55 % of the pane, less a
-  // controls stack sharing its inline side); the host caps and scrolls, the part only paints.
-  'flow-palette': [
+  // The node library floats over the canvas at the inline start on the same surface as the
+  // inspector; the root sizes it and its body scrolls.
+  'flow-palette': [...surfaceAppearance, { declarations: { padding: '0', overflow: 'clip' } }],
+  'flow-palette-header': [
     {
       declarations: {
-        'inline-size': 'calc(var(--tp-spacing) * 64)',
-        'background-color': 'var(--tp-card)',
-        border: popupBorder,
-        'border-radius': 'var(--tp-radius-md)',
-        'box-shadow': 'var(--tp-shadow-sm)',
+        'border-block-end': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
       },
     },
+    { selector: '& .title', declarations: { 'font-weight': 'var(--tp-font-medium)' } },
   ],
+  'flow-palette-body': [],
   // Command items are native drag sources for the canvas; the Command palette paints the row.
   'flow-palette-item': [{ declarations: { cursor: 'grab' } }],
   // A Sheet floating over the canvas (shadcn base Sheet): the shared floating surface, sections
@@ -595,6 +597,9 @@ export const flowStructure: PresentationDictionary = {
   // The theme gap between sets (Nova button-group gap-2), as nested Button groups and toolbars use.
   'flow-controls': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-inspector-header': [
+    { declarations: { gap: 'var(--tp-space-2)', padding: 'var(--_tp-flow-space)' } },
+  ],
+  'flow-palette-header': [
     { declarations: { gap: 'var(--tp-space-2)', padding: 'var(--_tp-flow-space)' } },
   ],
   // The tab list starts where the header title and the fields start.

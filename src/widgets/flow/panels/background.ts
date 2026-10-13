@@ -19,6 +19,7 @@ const backgroundStyles = css`
     inset: 0;
     inline-size: 100%;
     block-size: 100%;
+    font: inherit;
   }
 `;
 
