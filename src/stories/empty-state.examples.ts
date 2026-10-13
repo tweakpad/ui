@@ -1,7 +1,7 @@
 import { moduleExample } from './documentation-examples.js';
 import { setupEmptyStateExample } from './empty-state-example.js';
 import setupSource from './empty-state-example.js?raw';
-import { ines, mara, samplePeople } from './avatars.js';
+import { ines, samplePeople } from './avatars.js';
 
 const icon = (name: string, slot = '') =>
   `<tp-icon data-icon="${name}"${slot ? ` slot="${slot}"` : ''}></tp-icon>`;
