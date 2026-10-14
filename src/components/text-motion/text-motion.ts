@@ -21,7 +21,7 @@ import {
   StandaloneReveal,
   transitionSpan,
 } from '../../foundation/reveal-playback.js';
-import { scheduleLinePass, type LinePass } from '../../foundation/text-split/scheduler.js';
+import { scheduleLayoutPass, type LayoutPass } from '../../foundation/layout-batch.js';
 import {
   TextSplitter,
   type SplitConfig,
@@ -274,11 +274,12 @@ export class TpTextMotion extends TpElement {
     coordinated: () => this.#membership.coordinated,
   });
 
-  readonly #linePass: LinePass = {
+  /** Line passes (Foundation §18.19 `tm-lines`): flatten, measure every splitter, relayout. */
+  readonly #linePass: LayoutPass<DOMRect[][]> = {
     active: () => this.isConnected && this.#splitter.measuresLines,
-    flatten: () => this.#splitter.flatten(),
+    write: () => this.#splitter.flatten(),
     measure: () => this.#splitter.measure(),
-    relayout: (boxes) => {
+    apply: (boxes) => {
       if (this.#splitter.relayout(boxes)) this.#afterSplit();
       else this.#discardOwnRecords();
     },
@@ -291,7 +292,7 @@ export class TpTextMotion extends TpElement {
     this.#releaseStyles = acquireRootStyles(this, textMotionPieceCss);
     this.#membership.connect();
     this.#observe();
-    if (this.#splitter.measuresLines) scheduleLinePass(this.#linePass);
+    if (this.#splitter.measuresLines) scheduleLayoutPass(this, this.#linePass);
     this.#waitForFonts();
   }
 
@@ -375,7 +376,7 @@ export class TpTextMotion extends TpElement {
     const config = this.#config;
     this.toggleAttribute('data-tp-masked', config.mask !== null);
     this.#splitter.split(config, true);
-    scheduleLinePass(this.#linePass);
+    scheduleLayoutPass(this, this.#linePass);
     this.#afterSplit();
     this.#observeContent();
   }
@@ -415,7 +416,7 @@ export class TpTextMotion extends TpElement {
       return;
     }
     void whenFontsReady(this.ownerDocument).then(() => {
-      if (this.#splitter.measuresLines) scheduleLinePass(this.#linePass);
+      if (this.#splitter.measuresLines) scheduleLayoutPass(this, this.#linePass);
       this.#fontsReady = true;
       queueMicrotask(() => this.#readinessChanged());
     });
@@ -435,10 +436,10 @@ export class TpTextMotion extends TpElement {
         // from outside (typography, content), since a line pass never changes the height.
         const widthMoves = width !== previousWidth && !this.#splitter.fits(width);
         const heightMoved = width === previousWidth && height !== previousHeight;
-        if (widthMoves || heightMoved) scheduleLinePass(this.#linePass);
+        if (widthMoves || heightMoved) scheduleLayoutPass(this, this.#linePass);
       }),
       observeFonts(this.ownerDocument, () => {
-        if (this.#splitter.measuresLines) scheduleLinePass(this.#linePass);
+        if (this.#splitter.measuresLines) scheduleLayoutPass(this, this.#linePass);
       }),
     );
     this.#observeContent();

@@ -128,7 +128,14 @@ const tweakpadEvents = ({ eventClasses, controllers }) => ({
         found.set(child.arguments[0].text, 'CustomEvent');
       if (ts.isNewExpression(child) && ts.isIdentifier(child.expression)) {
         const constructed = child.expression.text;
-        const name = eventClasses.get(constructed);
+        // A typed event class can be dispatched under its own name (`new TpValueChangeEvent(…,
+        // 'tp-snap-point-change')`); that name wins over the class default.
+        const named = (child.arguments ?? []).find(
+          (argument) => ts.isStringLiteralLike(argument) && /^tp-[a-z-]+$/u.test(argument.text),
+        );
+        const name = eventClasses.has(constructed)
+          ? (named?.text ?? eventClasses.get(constructed))
+          : undefined;
         if (name) found.set(name, constructed);
         for (const fired of controllers.get(constructed) ?? [])
           if (!found.has(fired)) found.set(fired, 'CustomEvent');
@@ -143,11 +150,14 @@ const tweakpadEvents = ({ eventClasses, controllers }) => ({
         declaration.events.push({ name, type: { text: type } });
   },
   packageLinkPhase({ customElementsManifest }) {
-    // The shared helper's `new CustomEvent(type)` is not an event name.
+    // The shared helper's `new CustomEvent(type)` is not an event name, and an event class
+    // dispatched with a computed first argument yields an empty one.
     for (const module of customElementsManifest.modules)
       for (const declaration of module.declarations ?? [])
         if (declaration.events)
-          declaration.events = declaration.events.filter((event) => event.name !== 'type');
+          declaration.events = declaration.events.filter(
+            (event) => event.name && event.name !== 'type',
+          );
   },
 });
 

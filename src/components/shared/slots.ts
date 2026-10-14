@@ -24,20 +24,20 @@ export function slotOccupied(
 }
 
 /**
- * Observes slot assignment on a host: children, their `slot` attributes and, when asked, text.
- * Returns the disconnect function.
+ * Observes slot assignment on a host: children, their `slot` attributes and, when asked, text
+ * and `hidden` attributes. Returns the disconnect function.
  */
 export function observeSlots(
   host: Element,
   callback: MutationCallback,
-  options: { characterData?: boolean } = {},
+  options: { characterData?: boolean; hidden?: boolean } = {},
 ): () => void {
   const observer = new (host.ownerDocument.defaultView ?? window).MutationObserver(callback);
   observer.observe(host, {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ['slot'],
+    attributeFilter: options.hidden ? ['slot', 'hidden'] : ['slot'],
     characterData: options.characterData ?? false,
   });
   return () => observer.disconnect();

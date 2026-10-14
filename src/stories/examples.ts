@@ -408,6 +408,15 @@ const examples = {
   'tp-message': () => html`
     <tp-message author="Ada" .timestamp=${Date.now() - 2 * 60_000}>A complete message.</tp-message>
   `,
+  'tp-overflow-list': () => html`
+    <tp-overflow-list limit="3">
+      <tp-badge variant="outline">Stoneware</tp-badge>
+      <tp-badge variant="outline">Matte glaze</tp-badge>
+      <tp-badge variant="outline">Hand-thrown</tp-badge>
+      <tp-badge variant="outline">Food-safe</tp-badge>
+      <tp-badge variant="outline">Speckled</tp-badge>
+    </tp-overflow-list>
+  `,
   'tp-time': () => html`<tp-time .datetime=${Date.now() - 5 * 60_000}></tp-time>`,
   'tp-text-transform': () =>
     html`<tp-text-transform preset="currency" currency="EUR" value="1234.5"></tp-text-transform>`,

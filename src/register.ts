@@ -115,6 +115,7 @@ import {
 } from './components/message-scroller/parts.js';
 import { TpMessageGroup } from './components/message/group.js';
 import { TpMessage } from './components/message/message.js';
+import { TpOverflowList } from './components/overflow-list/overflow-list.js';
 import { TpNativeSelect } from './components/native-select/native-select.js';
 import { TpNavigationMenuItem } from './components/navigation-menu/navigation-menu-item.js';
 import { TpNavigationMenu } from './components/navigation-menu/navigation-menu.js';
@@ -299,6 +300,7 @@ defineElement(TpListItem.tagName, TpListItem);
 defineElement(TpListSeparator.tagName, TpListSeparator);
 defineElement(TpMarker.tagName, TpMarker);
 defineElement(TpMessage.tagName, TpMessage);
+defineElement(TpOverflowList.tagName, TpOverflowList);
 defineElement(TpMessageGroup.tagName, TpMessageGroup);
 defineElement(TpSkeleton.tagName, TpSkeleton);
 defineElement(TpTable.tagName, TpTable);

@@ -29,6 +29,7 @@ export * from './duration-format.js';
 export * from './image-load.js';
 export * from './time/index.js';
 export * from './text-transform/index.js';
+export * from './overflow-fit.js';
 export * from './slider.js';
 export * from './store.js';
 export * from './surface-handle.js';

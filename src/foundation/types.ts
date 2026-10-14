@@ -63,7 +63,10 @@ export type ChangeReason =
   | 'scroll'
   /** Flow connection completed by pointer, click or keyboard (Appendix B.8: pointer or keyboard event). */
   | 'connect'
-  /** Flow layout engine output applied as one transaction (Appendix B.8: synthetic engine event). */
+  /**
+   * Layout-derived change, never cancelable: Flow layout engine output applied as one transaction
+   * (Appendix B.8: synthetic engine event) and Overflow list repartitions (Foundation §18.24).
+   */
   | 'layout';
 
 export type PresenceState = 'absent' | 'starting' | 'open' | 'ending' | 'retained';

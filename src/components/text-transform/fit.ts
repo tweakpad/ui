@@ -1,5 +1,7 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import { observeFonts, observeResize } from '../../foundation/observation.js';
+import { scheduleLayoutPass } from '../../foundation/layout-batch.js';
+import { inlineSize, isVerticalWritingMode as vertical } from '../../foundation/logical-size.js';
 import {
   fitCut,
   joinCut,
@@ -42,29 +44,6 @@ function textNode(element: Element, text: string): Text | undefined {
   for (const node of element.childNodes)
     if (node.nodeType === 3 && (node as Text).data === text) return node as Text;
   return undefined;
-}
-
-function vertical(element: Element): boolean {
-  const mode = getComputedStyle(element).writingMode;
-  return mode.startsWith('vertical') || mode.startsWith('sideways');
-}
-
-function inlineSize(rect: DOMRect, isVertical: boolean): number {
-  return isVertical ? rect.height : rect.width;
-}
-
-// Fits read layout. Updates of many elements queue their reads here and run them together after
-// those updates, so one layout serves them all instead of one per element.
-const pending = new Map<object, () => void>();
-
-function schedule(owner: object, read: () => void): void {
-  if (!pending.size)
-    queueMicrotask(() => {
-      const reads = [...pending.values()];
-      pending.clear();
-      for (const run of reads) run();
-    });
-  pending.set(owner, read);
 }
 
 /**
@@ -127,8 +106,11 @@ export class TruncationFitController implements ReactiveController {
     this.#request = request;
     this.#elements = elements;
     this.#observe(elements);
-    schedule(this, () => {
-      if (!this.#check()) this.#fit();
+    // Updates of many elements read layout together after those updates, one layout for all.
+    scheduleLayoutPass(this, {
+      measure: () => {
+        if (!this.#check()) this.#fit();
+      },
     });
   }
 

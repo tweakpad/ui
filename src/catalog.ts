@@ -84,6 +84,7 @@ export const catalog = [
   ['Drag Drop List', 'tp-drag-drop-list', 'preset-composition'],
   ['Marker', 'tp-marker', 'presentational-primitive'],
   ['Message', 'tp-message', 'presentational-primitive'],
+  ['Overflow list', 'tp-overflow-list', 'presentational-primitive'],
   ['Skeleton', 'tp-skeleton', 'thin-wrapper'],
   ['Table', 'tp-table', 'presentational-primitive'],
   ['Text transform', 'tp-text-transform', 'presentational-primitive'],
