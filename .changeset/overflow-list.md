@@ -1,5 +1,0 @@
----
-'@tweakpad/ui': minor
----
-
-Add `tp-overflow-list`, which wraps its element children in rows and replaces the items that do not fit with one count of the omitted items. `limit` shows at most that many items; `max-rows` fits as many items as the available width allows within that many rows, refitting as the container, the items, the count or the fonts change, without moving the content below for a stale fit and with an intrinsic size (for tables, flex and grid tracks) that does not depend on how many items show. `collapse-from` omits items from the `end` (default) or the `start`. The default count is a secondary Badge reading `+N` and announced as "N more" (`messages` replaces both); an element in the `count` slot replaces it. Omitted items stay in the document, inert and hidden from assistive technology; `hiddenCount`, `hiddenItems`, `data-overflowing` and a non-cancelable `tp-overflow-change` report them. Layout reads of Text motion, Text transform and Overflow list now share one batched pass per turn, and `observeSlots` can also watch `hidden` attributes.

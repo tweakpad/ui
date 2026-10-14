@@ -1,5 +1,0 @@
----
-'@tweakpad/ui': minor
----
-
-The default `--tp-font-mono` stack now starts with Cascadia Mono, followed by the platform monospace fonts. Everything that presents code or machine values uses it: Code block, code spans and blocks in Markdown, One-time code field characters (now in `font-mono`) and the Easing editor's curve notation. Input and Text area gain a `mono` attribute that shows the value in `font-mono` and turns off spell checking, autocorrection and autocapitalization; the widgets use it for their value editors (Color picker hex and channel fields, Easing editor parameters and duration, Flow number properties and the zoom level), and `FlowPropertyDefinition.mono` opts text properties in (number properties default to mono). The default stylesheet also gives native `code`, `kbd`, `samp` and `pre` elements `font-mono` at zero specificity. Font files are not bundled; install or load Cascadia Mono in your application, or set `--tp-font-mono` to your own stack. Code block lines now render in `font-mono`; before, the code inherited the browser's default monospace font instead of the token.
