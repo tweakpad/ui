@@ -163,6 +163,11 @@ export abstract class TpAnchoredSurface extends TpElement {
         display: contents;
       }
 
+      /* The reflected align attribute is a legacy text-align hint; content keeps its own. */
+      :host {
+        text-align: inherit;
+      }
+
       .positioner {
         position: fixed;
         inset: auto;

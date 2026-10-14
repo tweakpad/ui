@@ -10,11 +10,6 @@ export class TpPreviewCard extends TpHoverSurface {
   static override styles = [
     TpHoverSurface.styles,
     css`
-      /* A reflected align attribute is a legacy text-align hint; content keeps its own. */
-      :host {
-        text-align: inherit;
-      }
-
       .backdrop {
         pointer-events: none;
       }

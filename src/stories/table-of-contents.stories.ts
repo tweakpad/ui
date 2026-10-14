@@ -12,6 +12,10 @@ import { fillGeneratedText, generateParagraphs } from './text-generator.js';
 import { pageSections } from './table-of-contents.examples.js';
 
 interface Args {
+  variant: 'list' | 'compact';
+  side: 'inline-start' | 'inline-end';
+  openDelay: number;
+  closeDelay: number;
   label: string;
   navigation: 'fragment' | 'scroll';
   scrollBehavior: ScrollBehavior;
@@ -34,6 +38,10 @@ const meta = {
     },
   },
   args: {
+    variant: 'list',
+    side: 'inline-start',
+    openDelay: 300,
+    closeDelay: 0,
     label: '',
     navigation: 'fragment',
     scrollBehavior: 'smooth',
@@ -42,6 +50,31 @@ const meta = {
     scrollDebounce: 0,
   },
   argTypes: {
+    variant: {
+      control: 'inline-radio',
+      options: ['list', 'compact'],
+      description:
+        '`list` shows the title and links in place; `compact` shows one line per top-level item that opens them in a card.',
+      table: { defaultValue: { summary: 'list' } },
+    },
+    side: {
+      control: 'inline-radio',
+      options: ['inline-start', 'inline-end'],
+      description:
+        'Compact: the direction the card grows from the lines; it flips when it does not fit.',
+      table: { defaultValue: { summary: 'inline-start' } },
+    },
+    openDelay: {
+      control: { type: 'number', min: 0, step: 50 },
+      description: 'Compact `open-delay`: milliseconds of hover before the card opens.',
+      table: { defaultValue: { summary: '300' } },
+    },
+    closeDelay: {
+      control: { type: 'number', min: 0, step: 50 },
+      description:
+        'Compact `close-delay`: milliseconds before the card closes once the pointer leaves.',
+      table: { defaultValue: { summary: '0' } },
+    },
     label: {
       control: 'text',
       description: 'Title text; the `title` slot replaces it. Empty uses the title message.',
@@ -89,7 +122,12 @@ const meta = {
       ${unsafeHTML(
         pageMarkup({
           prefix: 'story-toc',
+          compact: args.variant === 'compact',
           attributes: [
+            attribute('variant', args.variant, 'list'),
+            attribute('side', args.side, 'inline-start'),
+            attribute('open-delay', args.openDelay, 300),
+            attribute('close-delay', args.closeDelay, 0),
             args.label ? ` label="${args.label}"` : '',
             attribute('navigation', args.navigation, 'fragment'),
             attribute('scroll-behavior', args.scrollBehavior, 'smooth'),

@@ -16,6 +16,7 @@ const modules: Record<string, () => Promise<Record<string, unknown>>> = {
   TpDescriptionList: () => import('../../../../src/components/description-list/index.js'),
   TpOverflowList: () => import('../../../../src/components/overflow-list/index.js'),
   TpStatusDot: () => import('../../../../src/components/status-dot/index.js'),
+  TpTableOfContents: () => import('../../../../src/components/table-of-contents/index.js'),
 };
 const markup: Record<string, string> = {
   TpButton: '<tp-button loading>Save</tp-button>',
@@ -37,6 +38,8 @@ const markup: Record<string, string> = {
     '<div style="inline-size:200px"><tp-overflow-list max-rows="1"><span>Stoneware</span><span>Matte glaze</span><span>Hand-thrown</span><span>Food-safe</span></tp-overflow-list></div>',
   TpStatusDot:
     '<tp-status-dot variant="success" label="Boarding" motion="ping"></tp-status-dot> <tp-status-dot variant="warning" label="Delayed" show-label></tp-status-dot>',
+  TpTableOfContents:
+    '<p id="sa-kiln">Kiln</p><p id="sa-glaze">Glaze</p><tp-table-of-contents variant="compact" navigation="scroll"><tp-table-of-contents-item href="#sa-kiln">Kiln</tp-table-of-contents-item><tp-table-of-contents-item href="#sa-glaze" depth="2">Glaze</tp-table-of-contents-item></tp-table-of-contents>',
 };
 const name = new URLSearchParams(location.search).get('component') ?? 'TpButton';
 const module = await modules[name]!();

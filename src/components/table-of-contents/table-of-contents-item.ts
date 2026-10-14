@@ -1,4 +1,4 @@
-import { css, html, nothing } from 'lit';
+import { css, html, nothing, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import { tableOfContentsPresentation } from '../../presentation/families/table-of-contents.js';
@@ -90,9 +90,12 @@ export class TpTableOfContentsItem extends TpElement {
     if (!this.hasAttribute('role')) this.setAttribute('role', 'listitem');
   }
 
-  protected override updated(): void {
+  protected override updated(changed: PropertyValues<this>): void {
     this.toggleAttribute('data-active', this.active);
     this.toggleAttribute('data-current', this.current);
+    // The table of contents draws compact marks from depths.
+    if (changed.has('depth'))
+      this.dispatchEvent(new Event('tp-table-of-contents-item-change', { bubbles: true }));
   }
 
   /** The link's href: the reference's id fragment, else `href`; null for an id-less reference. */

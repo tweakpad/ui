@@ -60,4 +60,60 @@ export const tableOfContentsAppearance: PresentationDictionary = {
       declarations: { 'outline-offset': 'calc(-1 * var(--tp-ring-width))' },
     },
   ],
+  // Compact: the strip is a ghost Button under the marks; the card is the Popover surface.
+  'table-of-contents-variant-compact': [{ declarations: { gap: '0' } }],
+  'table-of-contents-trigger': [
+    {
+      selector: '&::part(button)',
+      declarations: {
+        'inline-size': '100%',
+        'block-size': '100%',
+        'min-inline-size': '0',
+        'min-block-size': '0',
+        padding: '0',
+      },
+    },
+  ],
+  'table-of-contents-marks': [
+    {
+      declarations: {
+        // The Indicator's thickness; rows give up their spacing before a mark is clipped.
+        '--_tp-toc-mark-thickness': 'calc(var(--tp-border-width) * 2)',
+        '--_tp-toc-mark-pitch': 'var(--tp-space-2)',
+        padding: 'var(--tp-space-2) var(--tp-space-2)',
+      },
+    },
+  ],
+  'table-of-contents-mark': [
+    {
+      declarations: {
+        color: 'var(--tp-border)',
+        transition: motionTransition(['color'], 'fast'),
+      },
+    },
+    { selector: '&[data-active]', declarations: { color: 'var(--tp-muted-foreground)' } },
+    {
+      selector: '&[data-current]',
+      declarations: { color: 'var(--tp-table-of-contents-indicator, var(--tp-primary))' },
+    },
+    {
+      // A line painted with the mark's color, so only the color transitions.
+      selector: '&::after',
+      declarations: {
+        'inline-size': 'var(--tp-space-3)',
+        'block-size': 'var(--_tp-toc-mark-thickness)',
+        'border-radius': 'var(--tp-radius-full)',
+        background: 'currentColor',
+      },
+    },
+  ],
+  'table-of-contents-popover': [
+    {
+      selector: '&::part(popover-content)',
+      declarations: {
+        'inline-size': 'max-content',
+        'max-inline-size': 'min(calc(var(--tp-spacing) * 72), var(--tp-available-width, 100vw))',
+      },
+    },
+  ],
 };

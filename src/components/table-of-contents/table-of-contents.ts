@@ -1,9 +1,10 @@
-import { css, html, unsafeCSS, type PropertyValues } from 'lit';
+import { css, html, nothing, unsafeCSS, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
+import { composedContains } from '../../foundation/focus.js';
 import { createId } from '../../foundation/id.js';
 import { blockSpanGeometry } from '../../foundation/indicator-geometry.js';
 import {
@@ -15,8 +16,15 @@ import {
 import { observeResize } from '../../foundation/observation.js';
 import { scrollableAncestors } from '../../foundation/scroll.js';
 import { ScrollSpyController, type ScrollSpyResult } from '../../foundation/scroll-spy.js';
+import type { TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
 import { motionTransition } from '../../presentation/motion.js';
 import { tableOfContentsPresentation } from '../../presentation/families/table-of-contents.js';
+import { TpButton } from '../button/button.js';
+import { TpPopover } from '../popover/popover.js';
+import {
+  renderCompactTableOfContents,
+  type TableOfContentsMark,
+} from './table-of-contents-compact.js';
 import { TpTableOfContentsItem } from './table-of-contents-item.js';
 
 export interface TableOfContentsMessages {
@@ -49,6 +57,8 @@ const viewportOf = (element: Element): Element =>
  *
  * Items name their targets; nothing is scanned from the content. The current target is the
  * innermost one whose region contains the reading line of the targets' scroll container.
+ * `variant="compact"` shows one mark per top-level item in a trigger that opens the title and
+ * list in a popover card covering it.
  *
  * @slot - `tp-table-of-contents-item` elements.
  * @slot title - Title content; replaces `label` and the title message.
@@ -57,13 +67,17 @@ const viewportOf = (element: Element): Element =>
  * @csspart list - The list carrying the rail.
  * @csspart rail - The decorative line on the inline-start edge.
  * @csspart indicator - The mark spanning the active items.
+ * @csspart trigger - Compact: the composed Button opening the popover.
+ * @csspart marks - Compact: the decorative column of marks.
+ * @csspart mark - Compact: one top-level item's mark; `data-active`, `data-current`.
+ * @csspart popover - Compact: the composed Popover holding the title and list.
  * @fires tp-value-change - Non-cancelable `value` proposal (`scroll`, `link-press`).
  * @fires tp-diagnostic - Unresolved or duplicate targets.
  */
 export class TpTableOfContents extends TpElement {
   static tagName = 'tp-table-of-contents';
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
-    return [TpTableOfContentsItem];
+    return [TpTableOfContentsItem, TpPopover, TpButton];
   }
   static override presentation = tableOfContentsPresentation;
   static override properties = {
@@ -79,6 +93,10 @@ export class TpTableOfContents extends TpElement {
     scrollDebounce: { type: Number, attribute: 'scroll-debounce' },
     label: { type: String },
     messages: { attribute: false },
+    variant: { type: String, reflect: true },
+    side: { type: String, reflect: true },
+    openDelay: { type: Number, attribute: 'open-delay' },
+    closeDelay: { type: Number, attribute: 'close-delay' },
   };
   static override styles = [
     TpElement.styles,
@@ -117,6 +135,42 @@ export class TpTableOfContents extends TpElement {
         transition: none !important;
       }
 
+      /* Compact: the strip shrinks its mark rows when its block size is limited. */
+      :host([variant='compact']) {
+        display: inline-grid;
+        grid-template-rows: minmax(0, 1fr);
+        vertical-align: middle;
+      }
+
+      :host([variant='compact']) nav {
+        grid-template-rows: minmax(0, 1fr);
+        min-block-size: 0;
+      }
+
+      .trigger,
+      .marks {
+        grid-area: 1 / 1;
+      }
+
+      .marks {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        min-block-size: 0;
+        pointer-events: none;
+      }
+
+      .mark {
+        display: flex;
+        flex: 0 1 var(--_tp-toc-mark-pitch);
+        align-items: center;
+        min-block-size: var(--_tp-toc-mark-thickness);
+      }
+
+      .mark::after {
+        content: '';
+      }
+
       [hidden] {
         display: none !important;
       }
@@ -137,6 +191,14 @@ export class TpTableOfContents extends TpElement {
   scrollDebounce = 0;
   label = '';
   messages: TableOfContentsMessages = {};
+  /** `list` shows the title and list in place; `compact` shows marks that open them in a card. */
+  variant: 'list' | 'compact' = 'list';
+  /** Compact: the side of the trigger the card grows toward; it flips when it does not fit. */
+  side: 'inline-start' | 'inline-end' = 'inline-start';
+  /** Compact: hover delay before the card opens, in milliseconds. */
+  openDelay = 300;
+  /** Compact: delay before the card closes after the pointer leaves, in milliseconds. */
+  closeDelay = 0;
   /** Called with each `value` proposal. */
   onValueChange: ((event: TpValueChangeEvent<string | null>) => void) | undefined;
 
@@ -147,12 +209,14 @@ export class TpTableOfContents extends TpElement {
   #items: TpTableOfContentsItem[] = [];
   #active: readonly string[] = [];
   #reported = new Set<string>();
+  #list: Element | null = null;
   #listResize: (() => void) | null = null;
   #itemResize = new Map<Element, () => void>();
   #frame = 0;
   #animate = false;
   #motion: MotionHandle | null = null;
   #reason: ChangeReason | null = null;
+  #openReason: ChangeReason | null = null;
 
   constructor() {
     super();
@@ -175,6 +239,10 @@ export class TpTableOfContents extends TpElement {
         ...(this.scrollDebounce > 0 ? { debounce: this.scrollDebounce } : {}),
       }),
       onChange: (result) => this.#spied(result),
+    });
+    // Items report depth changes, which only the compact marks show.
+    this.addEventListener('tp-table-of-contents-item-change', () => {
+      if (this.variant === 'compact') this.requestUpdate();
     });
   }
 
@@ -230,6 +298,7 @@ export class TpTableOfContents extends TpElement {
     this.#spy.disconnect();
     this.#listResize?.();
     this.#listResize = null;
+    this.#list = null;
     for (const release of this.#itemResize.values()) release();
     this.#itemResize.clear();
     this.#motion?.cancel();
@@ -247,8 +316,6 @@ export class TpTableOfContents extends TpElement {
   }
 
   protected override firstUpdated(): void {
-    const list = this.renderRoot.querySelector('.list');
-    if (list) this.#listResize = observeResize(list, this.#layout);
     this.#slotChange();
     // A fragment present at load names the target the reader landed on.
     this.ownerDocument.defaultView?.requestAnimationFrame(() => {
@@ -258,6 +325,13 @@ export class TpTableOfContents extends TpElement {
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    // Switching the variant renders a new list.
+    const list = this.renderRoot.querySelector('.list');
+    if (list !== this.#list) {
+      this.#listResize?.();
+      this.#list = list;
+      this.#listResize = list && this.isConnected ? observeResize(list, this.#layout) : null;
+    }
     this.#applyItems();
   }
 
@@ -313,6 +387,7 @@ export class TpTableOfContents extends TpElement {
 
   #spied(result: ScrollSpyResult<string>): void {
     this.#active = result.active;
+    if (this.variant === 'compact') this.requestUpdate();
     const reason: ChangeReason = this.#reason ?? 'scroll';
     if (!Object.is(result.current, this.#value.value) || this.#value.controlled)
       this.#value.set(result.current, reason, result.sourceEvent ?? undefined, {
@@ -339,13 +414,19 @@ export class TpTableOfContents extends TpElement {
     this.#reported.clear();
     this.#applyItems();
     this.#spy.invalidate();
+    if (this.variant === 'compact') this.requestUpdate();
   };
+
+  /** Active keys, following a controlled value outside the spied set. */
+  #activeKeys(): string[] {
+    const current = this.value;
+    return current !== null && !this.#active.includes(current) ? [current] : [...this.#active];
+  }
 
   /** Pushes active and current states to items, following a controlled value. */
   #applyItems(): void {
     const current = this.value;
-    const active =
-      current !== null && !this.#active.includes(current) ? [current] : [...this.#active];
+    const active = this.#activeKeys();
     for (const item of this.#items) {
       item.active = active.includes(item.key);
       item.current = current !== null && item.key === current;
@@ -404,15 +485,20 @@ export class TpTableOfContents extends TpElement {
     this.#revealCurrent();
   }
 
-  /** Keeps the current link visible in this component's own scroll container only. */
+  /**
+   * Keeps the current link visible in this component's own scroll container only: the column
+   * around the list, or the compact card.
+   */
   #revealCurrent(): void {
     const item = this.#items.find((candidate) => candidate.current);
     if (!item) return;
-    const container = scrollableAncestors(this, true).find(
+    const compact = this.variant === 'compact';
+    const container = scrollableAncestors(item).find(
       (ancestor) =>
         ancestor !== this.ownerDocument.scrollingElement &&
         ancestor !== this.#spy.root &&
-        !ancestor.contains(this.#spy.root),
+        !ancestor.contains(this.#spy.root) &&
+        (!compact || !composedContains(ancestor, this)),
     );
     if (!container) return;
     const box = container.getBoundingClientRect(),
@@ -452,7 +538,65 @@ export class TpTableOfContents extends TpElement {
     if (!this.#spy.has(key)) return;
     event.preventDefault();
     this.#go(key, event, 'link-press', true);
+    const popover = this.#popover();
+    if (popover?.open) popover.setOpen(false, 'close-action', event);
   };
+
+  #popover(): TpPopover | null {
+    return this.renderRoot.querySelector<TpPopover>('tp-popover');
+  }
+
+  /** Text naming the compact trigger and card: the title slot's text, the label or the message. */
+  #titleText(): string {
+    const authored = [...this.children]
+      .filter((child) => child.slot === 'title')
+      .map((child) => child.textContent ?? '')
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return authored || this.label || this.tocMessages.title;
+  }
+
+  #titleChange = (): void => {
+    if (this.variant === 'compact') this.requestUpdate();
+  };
+
+  #openChange = (event: TpSurfaceOpenChangeEvent): void => {
+    if (event.target === this.#popover())
+      this.#openReason = event.detail.value ? event.detail.reason : null;
+  };
+
+  /** The opened card is sized by then, so the current link can be revealed in it. */
+  #openChangeComplete = (event: CustomEvent<{ open: boolean }>): void => {
+    if (event.target === this.#popover() && event.detail.open) this.#revealCurrent();
+  };
+
+  /** A press (pointer or keyboard) focuses the current link, or the first; other opens do not. */
+  #initialFocus = (): HTMLElement | false => {
+    if (this.#openReason !== 'trigger-press') return false;
+    const shown = this.#items.filter((item) => item.getClientRects().length);
+    const item = shown.find((candidate) => candidate.current) ?? shown[0];
+    return item?.linkElement ?? false;
+  };
+
+  /**
+   * One mark per top-level item (the shallowest depth present); deeper items count toward the
+   * mark before them, so it is current while any of its subsections is.
+   */
+  #marks(): TableOfContentsMark[] {
+    const current = this.value;
+    const active = this.#activeKeys();
+    const depth = (item: TpTableOfContentsItem) => Math.max(1, Math.floor(item.depth) || 1);
+    const top = Math.min(...this.#items.map(depth));
+    const marks: { active: boolean; current: boolean }[] = [];
+    for (const item of this.#items) {
+      if (depth(item) === top || !marks.length) marks.push({ active: false, current: false });
+      const mark = marks[marks.length - 1]!;
+      mark.active ||= active.includes(item.key);
+      mark.current ||= current !== null && item.key === current;
+    }
+    return marks;
+  }
 
   /** History traversal and other fragment changes navigate to a named target. */
   #hashChange = (event: Event): void => this.#followFragment(event);
@@ -489,18 +633,46 @@ export class TpTableOfContents extends TpElement {
       document.defaultView?.history.pushState(document.defaultView.history.state, '', hash);
   }
 
-  protected override render() {
+  /** The title and list: in place for `list`, in the card for `compact`. */
+  #renderBody() {
     const messages = this.tocMessages;
-    return html`<nav part="table-of-contents" class="root" aria-labelledby=${this.#titleId}>
-      <div part="title" class="title" id=${this.#titleId}>
-        <slot name="title">${this.label || messages.title}</slot>
+    return html`<div part="title" class="title" id=${this.#titleId}>
+        <slot name="title" @slotchange=${this.#titleChange}>${this.label || messages.title}</slot>
       </div>
       <div part="list" class="list" role="list">
         <span part="rail" class="rail" aria-hidden="true"
           ><span part="indicator" class="indicator" hidden></span
         ></span>
         <slot @slotchange=${this.#slotChange}></slot>
-      </div>
+      </div>`;
+  }
+
+  protected override render() {
+    const body = this.#renderBody();
+    const compact = this.variant === 'compact';
+    // The closed card renders no title, so the compact landmark carries the title text.
+    const name = compact ? this.#titleText() : '';
+    return html`<nav
+      part="table-of-contents"
+      class="root"
+      aria-labelledby=${compact ? nothing : this.#titleId}
+      aria-label=${compact ? name : nothing}
+    >
+      ${
+        compact
+          ? renderCompactTableOfContents({
+              name,
+              side: this.side,
+              openDelay: this.openDelay,
+              closeDelay: this.closeDelay,
+              marks: this.#marks(),
+              body,
+              initialFocus: this.#initialFocus,
+              onOpenChange: this.#openChange,
+              onOpenChangeComplete: this.#openChangeComplete,
+            })
+          : body
+      }
     </nav>`;
   }
 }

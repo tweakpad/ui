@@ -6,9 +6,11 @@ const definition: ComponentDefinition = {
   name: 'Table of contents',
   tagName: 'tp-table-of-contents',
   kind: 'compound-reexport',
+  axes: [{ name: 'variant', values: ['list', 'compact'], default: 'list' }],
   parts: [
     {
       name: 'table-of-contents',
+      axes: ['variant'],
     },
     {
       name: 'table-of-contents-title',
@@ -28,6 +30,18 @@ const definition: ComponentDefinition = {
     {
       name: 'table-of-contents-indicator',
     },
+    {
+      name: 'table-of-contents-trigger',
+    },
+    {
+      name: 'table-of-contents-marks',
+    },
+    {
+      name: 'table-of-contents-mark',
+    },
+    {
+      name: 'table-of-contents-popover',
+    },
   ],
 };
 
@@ -40,6 +54,10 @@ export const tableOfContentsPresentation = definePresentation({
       "[part~='list']": 'table-of-contents-list',
       "[part~='rail']": 'table-of-contents-rail',
       "[part~='indicator']": 'table-of-contents-indicator',
+      "[part~='trigger']": 'table-of-contents-trigger',
+      "[part~='marks']": 'table-of-contents-marks',
+      "[part~='mark']": 'table-of-contents-mark',
+      "[part~='popover']": 'table-of-contents-popover',
     },
     'tp-table-of-contents-item': {
       ':host': 'table-of-contents-item',

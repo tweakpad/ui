@@ -64,28 +64,35 @@ function items(prefix: string, sections: readonly PageSection[], depth = 1): str
 
 /**
  * A page: a scroll container holding the article and, beside it, a sticky table of contents
- * inside the same scroll container.
+ * inside the same scroll container. A compact table of contents sits in a narrow column,
+ * centered on the block axis of the page.
  */
 export function pageMarkup({
   prefix,
   sections = pageSections,
   side = 'end',
   attributes = '',
+  compact = false,
 }: {
   prefix: string;
   sections?: readonly PageSection[];
   side?: 'start' | 'end';
   attributes?: string;
+  compact?: boolean;
 }) {
   const article = `    <article>
 ${sectionMarkup(prefix, sections)}
     </article>`;
-  const toc = `    <aside style="position: sticky; top: 1.5rem; max-block-size: 31rem; overflow: auto">
+  const aside = compact
+    ? 'position: sticky; top: 50%; translate: 0 -50%'
+    : 'position: sticky; top: 1.5rem; max-block-size: 31rem; overflow: auto';
+  const toc = `    <aside style="${aside}">
       <tp-table-of-contents${attributes}>
 ${items(prefix, sections)}
       </tp-table-of-contents>
     </aside>`;
-  const columns = side === 'end' ? 'minmax(0, 1fr) 13rem' : '13rem minmax(0, 1fr)';
+  const column = compact ? 'auto' : '13rem';
+  const columns = side === 'end' ? `minmax(0, 1fr) ${column}` : `${column} minmax(0, 1fr)`;
   return `<tp-scroll-area style="block-size: 34rem">
   <div style="display: grid; grid-template-columns: ${columns}; gap: 2.5rem; padding: 1.5rem; align-items: start">
 ${side === 'end' ? `${article}\n${toc}` : `${toc}\n${article}`}
@@ -148,6 +155,17 @@ const collectedMarkup = `<tp-scroll-area style="block-size: 34rem">
 </tp-scroll-area>`;
 
 export const tableOfContentsExamples = [
+  example(
+    'Compact table of contents',
+    'toc-compact',
+    pageMarkup({
+      prefix: 'toc-compact',
+      sections: nestedSections,
+      attributes: ' variant="compact"',
+      compact: true,
+    }),
+    'variant="compact" shows one line per top-level section at the middle of the page edge and highlights the section you are reading, including while you read its subsections. Hover or press the lines to open the full list over them.',
+  ),
   example(
     'Table of contents on the start side',
     'toc-start',
