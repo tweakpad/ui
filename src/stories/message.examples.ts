@@ -59,7 +59,7 @@ export const messageExamples = [
         'start',
         avatar('Sam Rivera', 'SR'),
       ),
-      '<tp-marker role="status">Sam is typing…</tp-marker>',
+      '<tp-marker role="status" shimmer>Sam is typing…</tp-marker>',
     ].join('\n'),
     'Alternating senders, grouped bubbles, delivery metadata, a reaction summary and a typing Marker in one conversation.',
   ),

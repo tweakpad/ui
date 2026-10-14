@@ -81,12 +81,16 @@ export function fillLayerStyles(control: string, inset = '0') {
 }
 
 /** Shared activity cadence: continuous indicators and slower loading placeholders. */
+export function ambientPeriod(kind: 'continuous' | 'placeholder' = 'continuous') {
+  return `calc(var(--tp-duration-normal) * ${kind === 'placeholder' ? 8 : 4})`;
+}
+
 export function ambientAnimation(
   name: string,
   kind: 'continuous' | 'placeholder' = 'continuous',
   easing = 'linear',
 ) {
-  return `${name} calc(var(--tp-duration-normal) * ${kind === 'placeholder' ? 8 : 4}) ${easing} infinite`;
+  return `${name} ${ambientPeriod(kind)} ${easing} infinite`;
 }
 
 export function ambientCss(
@@ -95,6 +99,51 @@ export function ambientCss(
   easing = 'linear',
 ) {
   return unsafeCSS(ambientAnimation(name, kind, easing));
+}
+
+const shimmerPaint: PresentationDeclarations = {
+  '--_tp-shimmer-spread': 'var(--tp-shimmer-spread,calc(3ch + var(--tp-spacing) * 10))',
+  // Light schemes fade the text inside the band; dark schemes brighten it.
+  '--_tp-shimmer-highlight':
+    'var(--tp-shimmer-color,light-dark(' +
+    'oklch(from currentcolor l c h / calc(alpha * 0.2)),' +
+    'oklch(from currentcolor max(0.8, calc(l + 0.4)) c h / calc(alpha + 0.4))))',
+  '--_tp-shimmer-from': '100%',
+  '--_tp-shimmer-to': '0%',
+  'background-image':
+    'linear-gradient(calc(90deg + var(--tp-shimmer-angle,20deg)) in oklab,' +
+    'currentcolor calc(50% - var(--_tp-shimmer-spread)),' +
+    'var(--_tp-shimmer-highlight) 50%,' +
+    'currentcolor calc(50% + var(--_tp-shimmer-spread)))',
+  'background-repeat': 'no-repeat',
+  'background-size': 'calc(200% + var(--_tp-shimmer-spread) * 2) 100%',
+  'background-position': 'var(--_tp-shimmer-to) 0',
+  'background-clip': 'text',
+  '-webkit-text-fill-color': 'transparent',
+  animation:
+    `tp-shimmer var(--tp-shimmer-duration,${ambientPeriod('placeholder')}) linear ` +
+    'var(--tp-shimmer-iterations,infinite) var(--tp-shimmer-direction,normal)',
+  'animation-play-state': 'var(--tp-motion-play-state,running)',
+};
+
+/**
+ * Shimmer on a text part: the text is painted in its own color through `background-clip: text`
+ * while a highlight band derived from that color sweeps across it in the reading direction, at
+ * the loading-placeholder cadence. The `--tp-shimmer-*` hooks inherit, so a container can tune
+ * every shimmer inside it. Under the reduced-motion policy the text renders normally. A claimed
+ * motion driver replaces only the sweep; the paint stays for it to move.
+ */
+export function shimmerStyles(text: string) {
+  return unsafeCSS(
+    `${text}{${serializeDeclarations(shimmerPaint)}}` +
+      `${text}:dir(rtl){--_tp-shimmer-from:0%;--_tp-shimmer-to:100%}` +
+      `${text}[data-tp-motion-driven]{animation:none !important}` +
+      '@container style(--tp-motion-play-state: paused){' +
+      `${text}{animation:none;background-image:none;-webkit-text-fill-color:currentcolor}}` +
+      '@keyframes tp-shimmer{' +
+      'from{background-position:var(--_tp-shimmer-from) 0}' +
+      'to{background-position:var(--_tp-shimmer-to) 0}}',
+  );
 }
 
 /**

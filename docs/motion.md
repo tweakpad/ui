@@ -54,8 +54,9 @@ independently. Dialog and Alert Dialog fade their content and backdrop together
 from the first closing frame; neither waits visibly for the other to disappear.
 
 Spinner and indeterminate Progress share a continuous activity cadence of four
-times the normal duration; Skeleton placeholders use twice that period. Rotation
-and sweep remain linear, while pulse and progress use the standard easing.
+times the normal duration; Skeleton placeholders and the Marker shimmer use twice
+that period. Rotation and sweep remain linear, while pulse and progress use the
+standard easing.
 All ambient motion observes the inherited `--tp-motion-play-state`, which the
 reduced-motion policy pauses. Gesture-driven surfaces remain directly coupled to
 the pointer, then derive release timing from their published strength and the
@@ -183,6 +184,7 @@ Public context lists only stable values supplied by the component in addition to
 | Spinner                        | `rotation`          | Indicator or Root                           | ambient: `start`, `stop`                            | —                                                    | non-blocking |
 | Card                           | `interaction`       | Root                                        | state: `change`                                     | `input`                                              | non-blocking |
 | Skeleton                       | `loading`           | Placeholder                                 | ambient: `start`, `stop`                            | —                                                    | non-blocking |
+| Marker                         | `shimmer`           | Content                                     | ambient: `start`, `stop`                            | —                                                    | non-blocking |
 | Image                          | `reveal`            | Root                                        | state: `change`                                     | `effect`                                             | non-blocking |
 | Text motion                    | `reveal`            | Root                                        | state: `change`                                     | `effect`, `unit`, `count`                            | non-blocking |
 | Cursor                         | `state`             | Surface                                     | state: `change`                                     | `state`, `previousState`, `zone`, `stuck`            | non-blocking |

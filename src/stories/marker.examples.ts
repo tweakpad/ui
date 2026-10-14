@@ -30,6 +30,17 @@ export const markerExamples = [
 <p id="marker-details" style="margin:0">Activity details</p><tp-toast></tp-toast>`,
   ),
   interactive(
+    'Shimmer',
+    'marker-shimmer-example',
+    `<tp-marker role="status" shimmer><tp-spinner slot="icon" size="sm"></tp-spinner>Drafting a reply</tp-marker>
+<tp-marker variant="separator" role="status" shimmer>Reviewing three attachments</tp-marker>
+<tp-marker role="status" shimmer><strong>Priya</strong> is typing…</tp-marker>
+<div style="display:flex;align-items:center;gap:var(--tp-space-3)">
+  <tp-marker shimmer data-reveal style="--tp-shimmer-iterations:1">Reply ready</tp-marker>
+  <tp-button data-replay variant="outline" size="sm">Replay</tp-button>
+</div>`,
+  ),
+  interactive(
     'Border',
     'marker-border-example',
     `<tp-marker variant="border"><tp-icon slot="icon" data-icon="branch"></tp-icon>Switched to release candidate</tp-marker>

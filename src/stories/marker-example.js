@@ -55,8 +55,16 @@ export function setupMarkerExample(root) {
   const toast = root.querySelector('tp-toast');
   const activate = () => toast.add({ title: 'Marker action activated.' });
   action?.addEventListener('click', activate);
+  const replay = root.querySelector('[data-replay]');
+  const reveal = root.querySelector('[data-reveal]');
+  const play = () => {
+    reveal.shimmer = false;
+    reveal.shimmer = true;
+  };
+  replay?.addEventListener('click', play);
   return () => {
     action?.removeEventListener('click', activate);
+    replay?.removeEventListener('click', play);
     toast?.close();
   };
 }

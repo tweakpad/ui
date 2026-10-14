@@ -1,1 +1,1 @@
-export { TpMarker } from './marker.js';
+export { TpMarker, markerMotionRoles } from './marker.js';
