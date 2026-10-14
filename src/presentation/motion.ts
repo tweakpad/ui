@@ -101,9 +101,15 @@ export function ambientCss(
  * Structure of a measured disclosure region (Collapsible content, Tree view groups): the
  * block size follows the measured extent while open and collapses to zero otherwise.
  */
-export function disclosurePanelStyles(panel: string, blockExtent = '--collapsible-panel-height') {
+export function disclosurePanelStyles(
+  panel: string,
+  blockExtent = '--collapsible-panel-height',
+  /** Custom property holding the closed extent, for a region that stays partly shown. */
+  collapsedExtent?: string,
+) {
+  const closed = collapsedExtent ? `var(${collapsedExtent},0px)` : '0';
   return unsafeCSS(
-    `${panel}{overflow:clip;block-size:0;transition:${motionTransition(['block-size'])}}` +
+    `${panel}{overflow:clip;block-size:${closed};transition:${motionTransition(['block-size'])}}` +
       `${panel}[data-open]:not([data-starting-style]){block-size:var(${blockExtent})}` +
       `${panel}[data-tp-motion-driven~='disclosure']{transition:none !important}` +
       `${panel}[hidden]:not([hidden='until-found']){display:none !important}`,

@@ -53,6 +53,7 @@ import { buttonGroupPresentation } from './button-group.js';
 import { fieldGroupPresentation } from './field-group.js';
 import { cardPresentation } from './card.js';
 import { citationPresentation } from './citation.js';
+import { descriptionListPresentation } from './description-list.js';
 import { emptyStatePresentation } from './empty-state.js';
 import { fileUploadPresentation } from './file-upload.js';
 import { cursorPresentation } from './cursor.js';
@@ -134,6 +135,7 @@ export { buttonGroupPresentation } from './button-group.js';
 export { fieldGroupPresentation } from './field-group.js';
 export { cardPresentation } from './card.js';
 export { citationPresentation } from './citation.js';
+export { descriptionListPresentation } from './description-list.js';
 export { emptyStatePresentation } from './empty-state.js';
 export { fileUploadPresentation } from './file-upload.js';
 export { cursorPresentation } from './cursor.js';
@@ -217,6 +219,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   fieldGroupPresentation,
   cardPresentation,
   citationPresentation,
+  descriptionListPresentation,
   emptyStatePresentation,
   fileUploadPresentation,
   cursorPresentation,

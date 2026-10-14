@@ -21,6 +21,7 @@ export * from './collapsible/index.js';
 export * from './copy-button/index.js';
 export * from './command-palette/index.js';
 export * from './data-visualization/index.js';
+export * from './description-list/index.js';
 export * from './dialog/index.js';
 export * from './drag-drop-list/index.js';
 export * from './drawer/index.js';

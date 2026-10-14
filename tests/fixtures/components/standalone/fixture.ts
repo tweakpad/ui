@@ -13,6 +13,7 @@ const modules: Record<string, () => Promise<Record<string, unknown>>> = {
   TpFileUpload: () => import('../../../../src/components/file-upload/index.js'),
   TpQrCode: () => import('../../../../src/components/qr-code/index.js'),
   TpCursor: () => import('../../../../src/components/cursor/index.js'),
+  TpDescriptionList: () => import('../../../../src/components/description-list/index.js'),
 };
 const markup: Record<string, string> = {
   TpButton: '<tp-button loading>Save</tp-button>',
@@ -28,6 +29,8 @@ const markup: Record<string, string> = {
   TpQrCode: '<tp-qr-code value="https://tweakpad.github.io" copyable downloadable></tp-qr-code>',
   TpCursor:
     '<tp-cursor></tp-cursor><tp-cursor-zone state="view"><tp-button>Zone</tp-button></tp-cursor-zone>',
+  TpDescriptionList:
+    '<tp-description-list limit="1"><tp-description-list-item label="Plot">B-14</tp-description-list-item><tp-description-list-item label="Size">3 × 4 m</tp-description-list-item></tp-description-list>',
 };
 const name = new URLSearchParams(location.search).get('component') ?? 'TpButton';
 const module = await modules[name]!();

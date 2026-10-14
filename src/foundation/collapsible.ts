@@ -17,6 +17,13 @@ export interface CollapsibleControllerOptions {
   markers?: () => Iterable<HTMLElement | null>;
   keepMounted?: () => boolean;
   hiddenUntilFound?: () => boolean;
+  /** Names the content after the trigger (`aria-labelledby`); false leaves an unnamed region. */
+  labelContent?: () => boolean;
+  /**
+   * Hides closed content (`hidden`, or `until-found`). False keeps it rendered for a consumer
+   * that conceals only part of it; presence markers still follow the state.
+   */
+  hideContent?: () => boolean;
   onOpenRequest?: (open: boolean, reason: CollapsibleRequestReason, sourceEvent: Event) => void;
   onStateChange?: (state: PresenceState) => void;
   onComplete?: (open: boolean) => void;
@@ -205,12 +212,16 @@ export class CollapsibleController implements ReactiveController {
       attributes.set('data-panel-open', this.#open ? '' : null);
       if (trigger.localName === 'button') attributes.set('disabled', this.#disabled ? '' : null);
       if (content) {
+        const labelled = this.#options.labelContent?.() ?? true;
         content.id ||= this.#contentId;
         trigger.setAttribute('aria-controls', content.id);
-        content.setAttribute('aria-labelledby', trigger.id);
+        if (labelled) content.setAttribute('aria-labelledby', trigger.id);
         if (trigger.getRootNode() !== content.getRootNode()) {
           trigger.ariaControlsElements = [content];
-          content.ariaLabelledByElements = [shadowReferenceTarget(trigger, content.getRootNode())];
+          if (labelled)
+            content.ariaLabelledByElements = [
+              shadowReferenceTarget(trigger, content.getRootNode()),
+            ];
         }
       } else {
         trigger.removeAttribute('aria-controls');
@@ -236,6 +247,7 @@ export class CollapsibleController implements ReactiveController {
     if (!content) return;
     content.toggleAttribute('data-starting-style', state === 'starting');
     content.toggleAttribute('data-ending-style', state === 'ending');
+    if (this.#options.hideContent?.() === false) return;
     if (state === 'starting' || state === 'open' || state === 'ending') {
       content.removeAttribute('hidden');
       return;

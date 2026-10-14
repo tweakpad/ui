@@ -375,6 +375,17 @@ const examples = {
       <tp-citation href="https://tides.example/turbines">tides.example</tp-citation>.
     </p>
   `,
+  'tp-description-list': () => html`
+    <tp-description-list limit="3">
+      <tp-description-list-item label="Plot">B-14, east terrace</tp-description-list-item>
+      <tp-description-list-item label="Gardener">Mara Lindqvist</tp-description-list-item>
+      <tp-description-list-item label="Status">
+        <tp-badge variant="success">Active</tp-badge>
+      </tp-description-list-item>
+      <tp-description-list-item label="Size">3 × 4 m</tp-description-list-item>
+      <tp-description-list-item label="Water">Shared tap, row C</tp-description-list-item>
+    </tp-description-list>
+  `,
   'tp-empty-state': () => renderEmptyStateExample(),
   'tp-icon': () => html`<tp-icon .icon=${plusIcon} label="Add"></tp-icon>`,
   'tp-key-hint': () =>
