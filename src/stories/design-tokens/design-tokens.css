@@ -1,0 +1,426 @@
+/* The view is the themed surface: its theme switcher scopes the color scheme to it. */
+design-tokens-view {
+  display: block;
+  box-sizing: border-box;
+  min-block-size: 100vh;
+  padding: var(--tp-space-8) clamp(var(--tp-space-4), 4vw, var(--tp-space-10));
+  background: var(--tp-background);
+  color: var(--tp-foreground);
+}
+
+.design-tokens {
+  display: grid;
+  gap: var(--tp-space-6);
+  max-inline-size: 84rem;
+}
+
+.design-tokens-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tp-space-4);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.design-tokens-header h1 {
+  margin: 0;
+  font-size: var(--tp-text-2xl);
+  font-weight: var(--tp-font-semibold);
+}
+
+.design-tokens-header p,
+.design-tokens-section-header p {
+  margin: var(--tp-space-1) 0 0;
+  max-inline-size: 48rem;
+  color: var(--tp-muted-foreground);
+}
+
+.design-tokens-status {
+  display: flex;
+  gap: var(--tp-space-2);
+}
+
+.design-tokens-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tp-space-3);
+  align-items: flex-end;
+}
+
+.design-tokens-toolbar tp-input {
+  inline-size: min(24rem, 100%);
+}
+
+.design-tokens-toolbar p {
+  margin: 0;
+}
+
+.design-tokens-theme {
+  margin-inline-start: auto;
+}
+
+.design-tokens-muted {
+  color: var(--tp-muted-foreground);
+  font-size: var(--tp-text-xs);
+}
+
+.design-tokens-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12rem;
+  gap: var(--tp-space-8);
+  align-items: start;
+}
+
+.design-tokens-sections {
+  display: grid;
+  gap: var(--tp-space-10);
+  min-inline-size: 0;
+}
+
+.design-tokens-toc {
+  position: sticky;
+  inset-block-start: var(--tp-space-4);
+  max-block-size: calc(100vh - var(--tp-space-8));
+  overflow: auto;
+}
+
+/* Narrow canvases drop the side column; the filter still narrows the sections. */
+@media (width < 56rem) {
+  .design-tokens-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .design-tokens-toc {
+    display: none;
+  }
+}
+
+.design-tokens-section {
+  display: grid;
+  gap: var(--tp-space-3);
+  scroll-margin-block-start: var(--tp-space-4);
+}
+
+.design-tokens-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tp-space-3);
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.design-tokens-section-header h2 {
+  margin: 0;
+  font-size: var(--tp-text-lg);
+  font-weight: var(--tp-font-semibold);
+}
+
+/* Columns line up across every family; narrow canvases scroll the table, not the page. */
+.design-tokens-section table {
+  min-inline-size: 46rem;
+}
+
+.design-tokens-col-preview {
+  inline-size: 11rem;
+}
+
+.design-tokens-col-token {
+  inline-size: 15rem;
+}
+
+.design-tokens-col-value {
+  inline-size: 15rem;
+}
+
+.design-tokens-section :is(td, th[scope='row']) {
+  vertical-align: middle;
+  white-space: normal;
+}
+
+.design-tokens-section th[scope='row'] {
+  font-weight: var(--tp-font-normal);
+}
+
+.design-tokens-section :is(th[scope='row'], .design-tokens-value) code {
+  overflow-wrap: anywhere;
+}
+
+.design-tokens-description {
+  color: var(--tp-muted-foreground);
+}
+
+.design-tokens-value {
+  display: grid;
+  gap: var(--tp-space-1);
+}
+
+.design-tokens-definition {
+  color: var(--tp-muted-foreground);
+  font-size: var(--tp-text-xs);
+}
+
+.design-tokens-color {
+  display: flex;
+  gap: var(--tp-space-2);
+  align-items: center;
+}
+
+/* Specimens: each draws one role through --_token. Outlines, rings and shadows may extend past
+   a specimen into the cell padding; only text samples clip to their column. */
+.design-tokens-specimen {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--tp-space-10);
+}
+
+.design-tokens-tile {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  inline-size: var(--tp-space-12);
+  block-size: var(--tp-space-10);
+  border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+  border-radius: var(--tp-radius-md);
+  background: var(--tp-background);
+  color: var(--tp-foreground);
+}
+
+.design-tokens-tile[data-preview='fill'] {
+  background: var(--_token);
+}
+
+.design-tokens-tile[data-preview='line'] {
+  border: var(--tp-border-width-strong) var(--tp-border-style) var(--_token);
+}
+
+/* The ring is drawn outside the tile; the indent lines its outer edge up with the other swatches. */
+.design-tokens-tile[data-preview='ring'] {
+  margin-inline-start: calc(var(--tp-ring-width) + var(--tp-ring-offset));
+  outline: var(--tp-ring-width) solid var(--_token);
+  outline-offset: var(--tp-ring-offset);
+}
+
+.design-tokens-tile[data-preview='foreground'] {
+  background: var(--_surface);
+  color: var(--_token);
+  font-weight: var(--tp-font-medium);
+}
+
+.design-tokens-tile[data-preview='syntax'] {
+  inline-size: auto;
+  min-inline-size: var(--tp-space-12);
+  padding-inline: var(--tp-space-2);
+  color: var(--_token);
+  font-family: var(--tp-font-mono);
+  font-size: var(--tp-text-xs);
+  white-space: nowrap;
+}
+
+.design-tokens-specimen[data-preview='font-family'] {
+  font-family: var(--_token);
+}
+
+.design-tokens-specimen[data-preview='font-size'] {
+  font-size: var(--_token);
+  line-height: var(--tp-leading-tight);
+}
+
+.design-tokens-specimen[data-preview='font-weight'] {
+  font-weight: var(--_token);
+}
+
+.design-tokens-specimen[data-preview='tracking'] {
+  font-size: var(--tp-text-lg);
+  letter-spacing: var(--_token);
+}
+
+.design-tokens-specimen:is(
+  [data-preview='font-family'],
+  [data-preview='font-size'],
+  [data-preview='font-weight'],
+  [data-preview='tracking']
+) {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.design-tokens-specimen[data-preview='leading'] {
+  padding-inline: var(--tp-space-2);
+  border-radius: var(--tp-radius-sm);
+  background: var(--tp-muted);
+  font-size: var(--tp-text-sm);
+  line-height: var(--_token);
+}
+
+.design-tokens-specimen > span:empty {
+  display: block;
+  box-sizing: border-box;
+}
+
+.design-tokens-specimen[data-preview='bar'] > span {
+  inline-size: var(--_token);
+  block-size: var(--tp-space-3);
+  border-inline-start: var(--tp-border-width) var(--tp-border-style) var(--tp-foreground);
+  background: var(--tp-primary);
+}
+
+.design-tokens-specimen[data-preview='box-height'] > span {
+  inline-size: var(--tp-space-16);
+  block-size: var(--_token);
+  border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+  border-radius: var(--tp-radius-md);
+  background: var(--tp-muted);
+}
+
+/* The dashed frame sits on the icon's own edge, so it marks the exact extent. */
+.design-tokens-icon {
+  outline: var(--tp-border-width) dashed var(--tp-border);
+  outline-offset: calc(var(--tp-border-width) * -1);
+  color: var(--tp-foreground);
+}
+
+.design-tokens-specimen[data-preview='target'] > span {
+  inline-size: var(--_token);
+  block-size: var(--_token);
+  border: var(--tp-border-width) dashed var(--tp-muted-foreground);
+  border-radius: var(--tp-radius-sm);
+}
+
+.design-tokens-specimen:is(
+  [data-preview='border-width'],
+  [data-preview='border-style'],
+  [data-preview='ring-width'],
+  [data-preview='ring-offset'],
+  [data-preview='radius'],
+  [data-preview='shadow'],
+  [data-preview='opacity']
+) {
+  padding-inline: var(--tp-space-2);
+}
+
+.design-tokens-specimen:is(
+    [data-preview='border-width'],
+    [data-preview='border-style'],
+    [data-preview='ring-width'],
+    [data-preview='ring-offset'],
+    [data-preview='radius'],
+    [data-preview='shadow'],
+    [data-preview='opacity']
+  )
+  > span {
+  inline-size: var(--tp-space-12);
+  block-size: var(--tp-space-8);
+  border-radius: var(--tp-radius-sm);
+}
+
+.design-tokens-specimen[data-preview='border-width'] > span {
+  border: var(--_token) var(--tp-border-style) var(--tp-foreground);
+}
+
+.design-tokens-specimen[data-preview='border-style'] > span {
+  border: var(--tp-border-width-strong) var(--_token) var(--tp-foreground);
+}
+
+.design-tokens-specimen[data-preview='ring-width'] > span {
+  border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+  outline: var(--_token) solid var(--tp-ring);
+  outline-offset: var(--tp-ring-offset);
+}
+
+.design-tokens-specimen[data-preview='ring-offset'] > span {
+  border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+  outline: var(--tp-ring-width) solid var(--tp-ring);
+  outline-offset: var(--_token);
+}
+
+/* One large corner, so neighboring steps read apart. */
+.design-tokens-specimen[data-preview='radius'] > span {
+  block-size: var(--tp-space-12);
+  border-block-start: var(--tp-border-width-strong) var(--tp-border-style) var(--tp-foreground);
+  border-inline-start: var(--tp-border-width-strong) var(--tp-border-style) var(--tp-foreground);
+  border-start-start-radius: var(--_token);
+  background: linear-gradient(135deg, var(--tp-muted), transparent 70%);
+}
+
+/* Room for the largest blur inside the table's scroll region. */
+.design-tokens-specimen[data-preview='shadow'] {
+  padding: var(--tp-space-6) var(--tp-space-10);
+}
+
+.design-tokens-specimen[data-preview='shadow'] > span {
+  border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+  background: var(--tp-card);
+  box-shadow: var(--_token);
+}
+
+.design-tokens-specimen[data-preview='opacity'] > span {
+  background: var(--tp-foreground);
+  opacity: var(--_token);
+}
+
+/* Motion: the dot crosses its track when the section is played, and returns on the next play. */
+.design-tokens-track {
+  --_direction: 1;
+
+  position: relative;
+  container-type: inline-size;
+  min-block-size: 0;
+  block-size: var(--tp-space-3);
+  border-radius: var(--tp-radius-full);
+  background: var(--tp-muted);
+}
+
+.design-tokens-track:dir(rtl) {
+  --_direction: -1;
+}
+
+.design-tokens-dot {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  aspect-ratio: 1;
+  border-radius: var(--tp-radius-full);
+  background: var(--tp-primary);
+  transition: translate calc(var(--_duration) * var(--tp-motion-scale)) var(--_easing);
+}
+
+.design-tokens-section[data-at-end] .design-tokens-dot {
+  translate: calc((100cqi - 100%) * var(--_direction)) 0;
+}
+
+.design-tokens-easing {
+  gap: var(--tp-space-3);
+}
+
+.design-tokens-easing .design-tokens-track {
+  flex: 1 1 0;
+}
+
+.design-tokens-curve {
+  flex: none;
+  inline-size: var(--tp-space-10);
+  block-size: var(--tp-space-10);
+  overflow: visible;
+}
+
+.design-tokens-curve rect {
+  fill: none;
+  stroke: var(--tp-border);
+  stroke-width: var(--tp-border-width);
+  vector-effect: non-scaling-stroke;
+}
+
+.design-tokens-curve path {
+  fill: none;
+  stroke: var(--tp-primary);
+  stroke-width: var(--tp-border-width-strong);
+  vector-effect: non-scaling-stroke;
+}
+
+.design-tokens-probe {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  overflow: hidden;
+  visibility: hidden;
+}

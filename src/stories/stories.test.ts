@@ -67,6 +67,7 @@ describe('Storybook catalog entries', () => {
     expect(preview).toContain("tags: ['autodocs']");
     expect(preview).toContain("layout: 'padded'");
     expect(story('size-report')).toContain("tags: ['!autodocs']");
+    expect(story('design-tokens')).toContain("tags: ['!autodocs']");
     for (const [file, source] of [...stories, ...widgetStories]) {
       if (file !== 'size-report.stories.ts') expect(source).not.toContain("tags: ['autodocs']");
       expect(meta(source)).not.toContain("layout: 'padded'");

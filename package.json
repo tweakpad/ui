@@ -29,7 +29,8 @@
     "./dist/register/widgets.js",
     "./src/register.ts",
     "./src/register/icon.ts",
-    "./src/register/widgets.ts"
+    "./src/register/widgets.ts",
+    "./src/stories/**/*.ts"
   ],
   "files": [
     "dist",
