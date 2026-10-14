@@ -1,0 +1,8 @@
+# Text transform checks (Chrome DevTools MCP)
+
+1. Open `/tests/fixtures/components/text-transform/` on the existing Vite server. Run `await (await import('/tests/fixtures/components/text-transform/api.ts')).verifyTextTransform()` through MCP evaluation and expect every assertion message back (no thrown error). Repeat with `?package` after `npm run build`.
+2. At rest the presets read: Northern Lights Tour · Quiet harbor at dawn · DOCK FOUR · Shadow cascade count · shadow-cascade-count, then €1,234.50 · 25.6% · 15K · 42 km/h · 2.4 MB · 1:02:05 · twelve (the invalid fallback), then 1.234,50 € under `lang="de-DE"`. Each truncation box shows one line with `…` at the end, start or middle, `harbor.png` whole, the word cut ending on a whole word, and the right-to-left phrase with `…` on its left.
+3. Resize each box (or the window) and confirm the text refits on every width, never wraps, never changes height, and the line after the section never moves. No `ResizeObserver loop` error appears in the console.
+4. Press Tab from the page start: only shortened values receive focus, with the focus ring; hover or focus opens a tooltip with the full text. Widen a focused value's box until it fits: focus stays on it and the tooltip closes; Tab away and Shift+Tab back skips it.
+5. Inspect the accessibility tree: each shortened value exposes its complete text once; compact, unit, byte and duration values read their long forms ("15 thousand", "42 kilometers per hour", "2.4 megabytes", "1 hour, 2 minutes, 5 seconds"); the tooltip adds no description.
+6. Inspect light and dark themes, a 375px viewport and the right-to-left box: inherited typography, no surface, tabular figures on numbers, the omission at the logical end.

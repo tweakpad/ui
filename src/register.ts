@@ -181,6 +181,7 @@ import { TpFileUpload } from './components/file-upload/file-upload.js';
 import { TpCursor } from './components/cursor/cursor.js';
 import { TpCursorZone } from './components/cursor/cursor-zone.js';
 import { TpTextMotion } from './components/text-motion/text-motion.js';
+import { TpTextTransform } from './components/text-transform/text-transform.js';
 import { TpThemeSwitcher } from './components/theme-switcher/theme-switcher.js';
 import { TpTime } from './components/time/time.js';
 import { TpTimelineItem } from './components/timeline/timeline-item.js';
@@ -297,6 +298,7 @@ defineElement(TpMessage.tagName, TpMessage);
 defineElement(TpMessageGroup.tagName, TpMessageGroup);
 defineElement(TpSkeleton.tagName, TpSkeleton);
 defineElement(TpTable.tagName, TpTable);
+defineElement(TpTextTransform.tagName, TpTextTransform);
 defineElement(TpTime.tagName, TpTime);
 
 export * from './index.js';

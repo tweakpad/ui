@@ -3,6 +3,7 @@ import { defaultTrue } from '../../foundation/converters.js';
 import type { PropertyValues } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import { TpElement } from '../../foundation/element.js';
+import { observeSubtree } from '../../foundation/observation.js';
 import { resolveLocale } from '../../foundation/services.js';
 import {
   defaultDescriptionPattern,
@@ -32,6 +33,7 @@ import { TimeRefreshScheduler, type TimeRefreshTarget } from '../../foundation/t
 
 import { timePresentation } from '../../presentation/families/time.js';
 import { TpTooltip } from '../tooltip/tooltip.js';
+import { DescriptionTooltipController } from '../shared/description-tooltip.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type TimeUpdateInterval = 'auto' | 'none' | number;
@@ -147,12 +149,8 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
 
   #scheduler: TimeRefreshScheduler | undefined;
   #releaseScheduler: (() => void) | undefined;
-  #observer: MutationObserver | undefined;
-  #tooltip: TpTooltip | undefined;
-  #tooltipTarget: HTMLElement | undefined;
-  #releaseTrigger: (() => void) | undefined;
-  #releaseDescriptionPart: (() => void) | undefined;
-  #descriptionPopup: HTMLElement | undefined;
+  #releaseContent: (() => void) | undefined;
+  readonly #descriptionTooltip = new DescriptionTooltipController(this, 'time-description');
   #value: ResolvedTime | null = null;
   #text = '';
   #accessibleText = '';
@@ -176,11 +174,14 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
     if (owner) {
       this.#scheduler = TimeRefreshScheduler.for(owner);
       this.#releaseScheduler = this.#scheduler.register(this);
-      this.#observer = new owner.MutationObserver(() => {
-        if (this.datetime === undefined || this.datetime === null) this.requestUpdate();
-      });
-      this.#observer.observe(this, { childList: true, characterData: true, subtree: true });
     }
+    this.#releaseContent = observeSubtree(
+      this,
+      () => {
+        if (this.datetime === undefined || this.datetime === null) this.requestUpdate();
+      },
+      { content: true, attributes: false },
+    );
     // Reconnection resumes refresh, tooltip registration and current text.
     if (this.hasUpdated) this.requestUpdate();
   }
@@ -188,14 +189,8 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
   override disconnectedCallback(): void {
     this.#releaseScheduler?.();
     this.#releaseScheduler = undefined;
-    this.#observer?.disconnect();
-    this.#observer = undefined;
-    this.#releaseTrigger?.();
-    this.#releaseTrigger = undefined;
-    this.#tooltipTarget = undefined;
-    this.#releaseDescriptionPart?.();
-    this.#releaseDescriptionPart = undefined;
-    this.#descriptionPopup = undefined;
+    this.#releaseContent?.();
+    this.#releaseContent = undefined;
     super.disconnectedCallback();
   }
 
@@ -350,18 +345,18 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
         },
         content,
       },
-    )}${describing ? html`<tp-tooltip ${ref(this.#tooltipReference)} .content=${() => this.#description}></tp-tooltip>` : nothing}`;
+    )}${describing ? html`<tp-tooltip ${ref(this.#descriptionTooltip.reference)} .content=${() => this.#description}></tp-tooltip>` : nothing}`;
   }
-
-  readonly #tooltipReference = (element: Element | undefined): void => {
-    this.#tooltip = element as TpTooltip | undefined;
-  };
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     this.setAttribute('data-presentation', this.#presentation);
     this.#schedule();
-    this.#bindTooltip();
+    this.#descriptionTooltip.sync(
+      this.#describing
+        ? (this.renderRoot.querySelector<HTMLElement>('[part~="time-value"]') ?? undefined)
+        : undefined,
+    );
   }
 
   #schedule(): void {
@@ -376,38 +371,6 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
           : refreshDelay(this.#nextChange);
     if (delay === undefined) scheduler.cancel(this);
     else scheduler.schedule(this, delay);
-  }
-
-  #bindTooltip(): void {
-    const target = this.#describing
-      ? (this.renderRoot.querySelector<HTMLElement>('[part~="time-value"]') ?? undefined)
-      : undefined;
-    const tooltip = this.#describing ? this.#tooltip : undefined;
-    if (target !== this.#tooltipTarget || !tooltip) {
-      this.#releaseTrigger?.();
-      this.#releaseTrigger = undefined;
-      this.#tooltipTarget = undefined;
-      if (tooltip && target) {
-        this.#tooltipTarget = target;
-        this.#releaseTrigger = tooltip.registerTrigger(target);
-      }
-    }
-    if (!tooltip) {
-      this.#releaseDescriptionPart?.();
-      this.#releaseDescriptionPart = undefined;
-      this.#descriptionPopup = undefined;
-      return;
-    }
-    void tooltip.updateComplete.then(() => {
-      const popup = tooltip.popupElement ?? undefined;
-      if (!this.isConnected || !popup || popup === this.#descriptionPopup) return;
-      this.#releaseDescriptionPart?.();
-      this.#descriptionPopup = popup;
-      this.#releaseDescriptionPart = this.presentationController.registerPart(
-        'time-description',
-        popup,
-      );
-    });
   }
 }
 

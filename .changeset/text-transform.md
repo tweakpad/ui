@@ -1,0 +1,5 @@
+---
+'@tweakpad/ui': minor
+---
+
+Add `tp-text-transform`, which presents one value as text through a named preset: case (`uppercase`, `lowercase`, `capitalize`, `sentence`), identifier cases (`camel`, `pascal`, `kebab`, `snake`, `constant`, `humanize`), and localized `number`, `integer`, `decimal`, `percent`, `currency`, `compact`, `scientific`, `unit`, `bytes` and `duration` formatting with `currency`, `unit`, `decimals` and a `format` options record. `defineTextPreset` adds page-wide presets and `formatter` replaces the preset for one element. `truncate` shortens the text at its start, middle or end to fit its width, by characters or whole words (`truncate-by`), `max-length` caps the count, and a tooltip shows the full text while shortened; assistive technology always hears the complete, spelled-out text. Time's description tooltip popup now receives the `time-description` part, `formatBytes` takes a `long` display, and `observeLanguage` and a text-only `observeSubtree` option are shared by Time and Text transform.

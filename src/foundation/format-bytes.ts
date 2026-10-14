@@ -4,21 +4,35 @@ import { numberFormatter, type LocaleInput } from './intl.js';
 export const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const;
 export type ByteUnit = (typeof BYTE_UNITS)[number];
 
+/** Spoken names of `BYTE_UNITS`, in the same order. */
+const BYTE_UNIT_NAMES = ['byte', 'kilobyte', 'megabyte', 'gigabyte', 'terabyte'] as const;
+
 /**
  * Formats a byte count in binary units (1 KB = 1024 B) for a locale: whole bytes, and at most
- * one fraction digit above them, as in `2.4 MB`. Negative, non-finite and missing values format
+ * one fraction digit above them, as in `2.4 MB`. The `long` display spells the unit out for the
+ * locale (`2.4 megabytes`), for accessible text. Negative, non-finite and missing values format
  * as an empty string.
  */
-export function formatBytes(value: number, locale?: LocaleInput): string {
+export function formatBytes(
+  value: number,
+  locale?: LocaleInput,
+  display: 'short' | 'long' = 'short',
+): string {
   if (!Number.isFinite(value) || value < 0) return '';
   const index = Math.min(
     BYTE_UNITS.length - 1,
     Math.floor(Math.log(Math.max(value, 1)) / Math.log(1024)),
   );
-  const formatted = numberFormatter(locale, { maximumFractionDigits: index ? 1 : 0 }).format(
-    value / 1024 ** index,
-  );
-  return `${formatted} ${BYTE_UNITS[index]}`;
+  const scaled = value / 1024 ** index;
+  const maximumFractionDigits = index ? 1 : 0;
+  if (display === 'long')
+    return numberFormatter(locale, {
+      maximumFractionDigits,
+      style: 'unit',
+      unit: BYTE_UNIT_NAMES[index],
+      unitDisplay: 'long',
+    }).format(scaled);
+  return `${numberFormatter(locale, { maximumFractionDigits }).format(scaled)} ${BYTE_UNITS[index]}`;
 }
 
 const SIZE = /^\s*(\d+(?:\.\d+)?)\s*(b|kb|kib|k|mb|mib|m|gb|gib|g|tb|tib|t)?\s*$/i;

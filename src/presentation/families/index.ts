@@ -59,6 +59,7 @@ import { cursorPresentation } from './cursor.js';
 import { iconPresentation } from './icon.js';
 import { listPresentation } from './list.js';
 import { keyHintPresentation } from './key-hint.js';
+import { textTransformPresentation } from './text-transform.js';
 import { timePresentation } from './time.js';
 import { labelPresentation } from './label.js';
 import { markerPresentation } from './marker.js';
@@ -139,6 +140,7 @@ export { cursorPresentation } from './cursor.js';
 export { iconPresentation } from './icon.js';
 export { listPresentation } from './list.js';
 export { keyHintPresentation } from './key-hint.js';
+export { textTransformPresentation } from './text-transform.js';
 export { timePresentation } from './time.js';
 export { labelPresentation } from './label.js';
 export { markerPresentation } from './marker.js';
@@ -221,6 +223,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   iconPresentation,
   listPresentation,
   keyHintPresentation,
+  textTransformPresentation,
   timePresentation,
   labelPresentation,
   markerPresentation,

@@ -70,6 +70,7 @@ export * from './text-area/index.js';
 export * from './file-upload/index.js';
 export * from './cursor/index.js';
 export * from './text-motion/index.js';
+export * from './text-transform/index.js';
 export * from './theme-switcher/index.js';
 export * from './time/index.js';
 export * from './timeline/index.js';

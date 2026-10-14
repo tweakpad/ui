@@ -15,6 +15,13 @@ describe('formatBytes', () => {
     expect(formatBytes(1536, 'de')).toBe('1,5 KB');
   });
 
+  it('spells the unit out in the long display', () => {
+    expect(formatBytes(1, 'en', 'long')).toBe('1 byte');
+    expect(formatBytes(1536, 'en', 'long')).toBe('1.5 kilobytes');
+    expect(formatBytes(2.4 * 1024 ** 2, 'en', 'long')).toBe('2.4 megabytes');
+    expect(formatBytes(-1, 'en', 'long')).toBe('');
+  });
+
   it('formats invalid input as empty text', () => {
     expect(formatBytes(-1, 'en')).toBe('');
     expect(formatBytes(Number.NaN, 'en')).toBe('');

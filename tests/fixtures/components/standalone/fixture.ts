@@ -7,6 +7,7 @@ const modules: Record<string, () => Promise<Record<string, unknown>>> = {
   TpButton: () => import('../../../../src/components/button/button.js'),
   TpCarousel: () => import('../../../../src/components/carousel/index.js'),
   TpTime: () => import('../../../../src/components/time/index.js'),
+  TpTextTransform: () => import('../../../../src/components/text-transform/index.js'),
   TpMessage: () => import('../../../../src/components/message/index.js'),
   TpSwitch: () => import('../../../../src/components/switch/index.js'),
   TpFileUpload: () => import('../../../../src/components/file-upload/index.js'),
@@ -18,6 +19,8 @@ const markup: Record<string, string> = {
   TpCarousel:
     '<tp-carousel label="Numbers"><div>One</div><div>Two</div><div>Three</div></tp-carousel>',
   TpTime: '<tp-time datetime="2026-10-05T14:30:00Z"></tp-time>',
+  TpTextTransform:
+    '<span style="display:inline-block;inline-size:120px"><tp-text-transform truncate="middle">harbor-webcam-dawn-panorama.jpg</tp-text-transform></span>',
   TpMessage: '<tp-message author="Ada" timestamp="2026-10-05T14:30:00Z">Hello</tp-message>',
   TpSwitch: '<tp-switch>Notifications</tp-switch>',
   TpFileUpload:

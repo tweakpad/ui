@@ -398,6 +398,8 @@ const examples = {
     <tp-message author="Ada" .timestamp=${Date.now() - 2 * 60_000}>A complete message.</tp-message>
   `,
   'tp-time': () => html`<tp-time .datetime=${Date.now() - 5 * 60_000}></tp-time>`,
+  'tp-text-transform': () =>
+    html`<tp-text-transform preset="currency" currency="EUR" value="1234.5"></tp-text-transform>`,
   'tp-skeleton': skeletonProfile,
   'tp-table': () => html`
     <tp-table>

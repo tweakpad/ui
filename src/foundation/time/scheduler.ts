@@ -1,3 +1,5 @@
+import { observeLanguage } from '../observation.js';
+
 /** A registered refresh target; it reschedules itself after refreshing. */
 export interface TimeRefreshTarget {
   refreshTime(): void;
@@ -30,7 +32,7 @@ export class TimeRefreshScheduler {
   readonly #members = new Set<TimeRefreshTarget>();
   #timer: number | undefined;
   #timerDue = Number.POSITIVE_INFINITY;
-  #observer: MutationObserver | undefined;
+  #releaseLanguage: (() => void) | undefined;
 
   constructor(owner: Window, clock: TimeClock = { now: () => Date.now() }) {
     this.#owner = owner;
@@ -120,25 +122,13 @@ export class TimeRefreshScheduler {
 
   #listen(): void {
     this.#owner.document.addEventListener('visibilitychange', this.#refreshAll);
-    this.#owner.addEventListener('languagechange', this.#refreshAll);
-    const Observer = (this.#owner as Window & { MutationObserver?: typeof MutationObserver })
-      .MutationObserver;
-    if (Observer) {
-      const observer = new Observer(this.#refreshAll);
-      this.#observer = observer;
-      observer.observe(this.#owner.document.documentElement, {
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['lang'],
-      });
-    }
+    this.#releaseLanguage = observeLanguage(this.#owner, this.#refreshAll);
   }
 
   #unlisten(): void {
     this.#owner.document.removeEventListener('visibilitychange', this.#refreshAll);
-    this.#owner.removeEventListener('languagechange', this.#refreshAll);
-    this.#observer?.disconnect();
-    this.#observer = undefined;
+    this.#releaseLanguage?.();
+    this.#releaseLanguage = undefined;
     this.#clear();
   }
 }

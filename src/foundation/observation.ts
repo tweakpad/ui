@@ -309,12 +309,17 @@ const subtreeRegistries = new WeakMap<Node, Map<string, SubtreeRegistry>>();
 export interface SubtreeOptions {
   /** Observe text edits and every attribute, not only structure (content observation). */
   readonly content?: boolean;
+  /**
+   * Content observation only: `false` leaves attributes out, so an owner that writes its own
+   * host attributes is not woken by them.
+   */
+  readonly attributes?: boolean;
   /** Observe the whole subtree (default) or only the root's children. */
   readonly subtree?: boolean;
 }
 
 const subtreeKey = (options: SubtreeOptions) =>
-  `${options.content ? 'content' : 'structure'}|${options.subtree === false ? 'children' : 'subtree'}`;
+  `${options.content ? (options.attributes === false ? 'text' : 'content') : 'structure'}|${options.subtree === false ? 'children' : 'subtree'}`;
 
 /**
  * Observes changes under `root` through one shared MutationObserver per root and option set:
@@ -344,7 +349,7 @@ export function observeSubtree(
             subtree: options.subtree !== false,
             childList: true,
             characterData: true,
-            attributes: true,
+            attributes: options.attributes !== false,
           }
         : {
             subtree: options.subtree !== false,
@@ -374,6 +379,56 @@ export function observeSubtree(
  */
 export function discardSubtreeRecords(root: Node, options: SubtreeOptions = {}): void {
   subtreeRegistries.get(root)?.get(subtreeKey(options))?.observer.takeRecords();
+}
+
+type LanguageCallback = () => void;
+interface LanguageRegistry {
+  readonly callbacks: Set<LanguageCallback>;
+  readonly release: () => void;
+}
+const languageRegistries = new WeakMap<Window, LanguageRegistry>();
+
+/**
+ * Calls `callback` when a `lang` attribute changes anywhere in `view`'s document or the host's
+ * preferred languages change, through one shared observer and listener per window, released when
+ * its last subscriber leaves.
+ */
+export function observeLanguage(view: Window, callback: LanguageCallback): () => void {
+  let registry = languageRegistries.get(view);
+  if (!registry) {
+    const callbacks = new Set<LanguageCallback>();
+    const notify = () => {
+      for (const subscriber of [...callbacks]) subscriber();
+    };
+    view.addEventListener('languagechange', notify);
+    const Observer = (view as Window & { MutationObserver?: typeof MutationObserver })
+      .MutationObserver;
+    const observer = Observer ? new Observer(notify) : undefined;
+    observer?.observe(view.document.documentElement, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['lang'],
+    });
+    registry = {
+      callbacks,
+      release: () => {
+        view.removeEventListener('languagechange', notify);
+        observer?.disconnect();
+      },
+    };
+    languageRegistries.set(view, registry);
+  }
+  const current = registry;
+  current.callbacks.add(callback);
+  let active = true;
+  return () => {
+    if (!active) return;
+    active = false;
+    current.callbacks.delete(callback);
+    if (current.callbacks.size) return;
+    current.release();
+    languageRegistries.delete(view);
+  };
 }
 
 type FontsCallback = () => void;

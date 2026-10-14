@@ -1,6 +1,11 @@
 import { FakeIntersectionObserver } from './fakes.test.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { canObserveIntersection, observeIntersection, observeScroll } from './observation.js';
+import {
+  canObserveIntersection,
+  observeIntersection,
+  observeLanguage,
+  observeScroll,
+} from './observation.js';
 
 class CountingTarget extends EventTarget {
   added = 0;
@@ -184,5 +189,26 @@ describe('shared intersection observer', () => {
     const element = { ownerDocument: { defaultView: {} } } as unknown as Element;
     expect(canObserveIntersection(element)).toBe(false);
     expect(() => observeIntersection(element, () => {})()).not.toThrow();
+  });
+});
+
+describe('shared language observation', () => {
+  it('installs one listener per window and releases it with the last subscriber', () => {
+    const view = Object.assign(new CountingTarget(), {
+      document: { documentElement: {} },
+    }) as unknown as Window & CountingTarget;
+    const calls: string[] = [];
+    const releaseA = observeLanguage(view, () => calls.push('a'));
+    const releaseB = observeLanguage(view, () => calls.push('b'));
+    expect(view.added).toBe(1);
+    view.dispatchEvent(new Event('languagechange'));
+    expect(calls).toEqual(['a', 'b']);
+    releaseA();
+    releaseA();
+    expect(view.removed).toBe(0);
+    releaseB();
+    expect(view.removed).toBe(1);
+    view.dispatchEvent(new Event('languagechange'));
+    expect(calls).toEqual(['a', 'b']);
   });
 });

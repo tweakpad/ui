@@ -85,6 +85,7 @@ export const catalog = [
   ['Message', 'tp-message', 'presentational-primitive'],
   ['Skeleton', 'tp-skeleton', 'thin-wrapper'],
   ['Table', 'tp-table', 'presentational-primitive'],
+  ['Text transform', 'tp-text-transform', 'presentational-primitive'],
   ['Time', 'tp-time', 'presentational-primitive'],
   ['Navigation panel', 'tp-navigation-panel', 'compound-reexport'],
   ['Media player', 'tp-media-player', 'compound-reexport'],
