@@ -45,6 +45,7 @@ export default defineConfig({
         media: resolve(import.meta.dirname, 'src/foundation/media/index.ts'),
         map: resolve(import.meta.dirname, 'src/foundation/map/index.ts'),
         code: resolve(import.meta.dirname, 'src/foundation/code/index.ts'),
+        emoji: resolve(import.meta.dirname, 'src/foundation/emoji/index.ts'),
         markdown: resolve(import.meta.dirname, 'src/foundation/markdown/index.ts'),
         qr: resolve(import.meta.dirname, 'src/foundation/qr/index.ts'),
         flow: resolve(import.meta.dirname, 'src/foundation/flow/index.ts'),

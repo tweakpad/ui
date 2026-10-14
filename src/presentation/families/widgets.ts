@@ -2,6 +2,7 @@ import type { PresentationFamily } from '../family.js';
 import { colorPickerPresentation } from './color-picker.js';
 import { easingEditorPresentation } from './easing-editor.js';
 import { flowPresentation } from './flow.js';
+import { emojiPickerPresentation } from './emoji-picker.js';
 
 /**
  * Every widget family, in widget catalog order. Widgets never import this list; each widget
@@ -12,4 +13,5 @@ export const widgetPresentationFamilies: readonly PresentationFamily[] = [
   colorPickerPresentation,
   easingEditorPresentation,
   flowPresentation,
+  emojiPickerPresentation,
 ];

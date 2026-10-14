@@ -34,6 +34,7 @@ tokens; and input coalesced to one render per frame with every resource released
 
 - [Color picker](./color-picker.md): `tp-color-picker`.
 - [Easing editor](./easing-editor.md): `tp-easing-editor`.
+- [Emoji picker](./emoji-picker.md): `tp-emoji-picker`, with the data helpers in `@tweakpad/ui/emoji`.
 - [Flow](./flow.md): `tp-flow` with the public constituents `tp-flow-node`, `tp-flow-edge` and
   `tp-flow-port`, and the DOM-free engine `@tweakpad/ui/flow`.
 

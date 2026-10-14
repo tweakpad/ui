@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Emoji picker verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 960px;
+        display: grid;
+        gap: 32px;
+      }
+      section {
+        display: grid;
+        gap: 12px;
+        justify-items: start;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        align-items: start;
+      }
+      #fill {
+        block-size: 520px;
+      }
+      #dynamic {
+        display: grid;
+        gap: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Emoji picker verification</h1>
+      <tp-button id="before" variant="outline">Before picker</tp-button>
+      <form id="form">
+        <section>
+          <h2>Default (inline, built-in dataset)</h2>
+          <tp-emoji-picker id="default" label="Reaction" name="reaction"></tp-emoji-picker>
+        </section>
+        <section>
+          <h2>Popup</h2>
+          <tp-emoji-picker id="popup" picker="popup" label="Status" name="status"></tp-emoji-picker>
+        </section>
+        <section>
+          <h2>Field, required</h2>
+          <tp-field label="Mood">
+            <tp-emoji-picker id="required" picker="popup" name="mood" required></tp-emoji-picker>
+          </tp-field>
+        </section>
+        <section>
+          <h2>Recent and custom</h2>
+          <tp-emoji-picker id="custom" label="Team emoji" name="team"></tp-emoji-picker>
+        </section>
+        <tp-button id="reset" type="reset" variant="outline">Reset</tp-button>
+      </form>
+      <section>
+        <h2>Sizes</h2>
+        <div class="row">
+          <tp-emoji-picker id="sm" size="sm" label="Small"></tp-emoji-picker>
+          <tp-emoji-picker id="lg" size="lg" columns="7" label="Large"></tp-emoji-picker>
+        </div>
+      </section>
+      <section>
+        <h2>States</h2>
+        <div class="row">
+          <tp-emoji-picker id="disabled" disabled label="Disabled"></tp-emoji-picker>
+          <tp-emoji-picker id="readonly" readonly default-value="👍" label="Read only"></tp-emoji-picker>
+          <tp-emoji-picker
+            id="plain"
+            category-bar="false"
+            preview="false"
+            skin-tone-selector="false"
+            sticky="false"
+            label="Plain"
+          ></tp-emoji-picker>
+        </div>
+      </section>
+      <section>
+        <h2>Consumer block size, right to left</h2>
+        <div class="row">
+          <tp-emoji-picker id="fill" label="Fill"></tp-emoji-picker>
+          <tp-emoji-picker id="rtl" dir="rtl" label="RTL"></tp-emoji-picker>
+        </div>
+      </section>
+      <section>
+        <h2>Data sources</h2>
+        <div class="row">
+          <tp-emoji-picker id="adapter" label="Adapter"></tp-emoji-picker>
+          <tp-emoji-picker id="failing" label="Failing"></tp-emoji-picker>
+          <tp-emoji-picker id="large" label="Large dataset"></tp-emoji-picker>
+        </div>
+      </section>
+      <div id="dynamic"></div>
+      <tp-button id="after" variant="outline">After picker</tp-button>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

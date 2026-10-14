@@ -129,7 +129,11 @@ export const selectAppearance: PresentationDictionary = {
     { selector: '& .select-item-text', declarations: { gap: 'var(--tp-space-1-5)' } },
     { selector: '& .select-arrow', declarations: { color: 'var(--tp-popover)' } },
   ],
-  'select-list': popupSpacingAppearance,
+  'select-list': [
+    ...popupSpacingAppearance,
+    // Without options the list has no block extent; the empty state follows it.
+    { selector: '&[data-empty]', declarations: { 'padding-block': '0' } },
+  ],
   'select-group': [{ declarations: { padding: '0' } }],
   'select-label': [
     {

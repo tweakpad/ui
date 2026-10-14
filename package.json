@@ -46,6 +46,11 @@
       "import": "./dist/carousel.js",
       "default": "./dist/carousel.js"
     },
+    "./emoji": {
+      "types": "./dist/foundation/emoji/index.d.ts",
+      "import": "./dist/emoji.js",
+      "default": "./dist/emoji.js"
+    },
     "./drag-drop": {
       "types": "./dist/foundation/drag-drop/index.d.ts",
       "import": "./dist/drag-drop.js",

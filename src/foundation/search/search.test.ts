@@ -261,6 +261,28 @@ describe('exact matching modes', () => {
     expect(matchText('anything', '', 'exact')).toEqual([]);
   });
 
+  it('contains ignores case and punctuation but not symbols', () => {
+    expect(matchText('X-ray', 'xray', 'contains', 'en')).toEqual([[0, 5]]);
+    expect(matchText('Thumbs up', 'S U', 'contains', 'en')).toEqual([[5, 8]]);
+    expect(matchText('Heart $', '$', 'contains', 'en')).toEqual([[5, 7]]);
+    expect(matchText('a+b', 'ab', 'contains', 'en')).toBeNull();
+    expect(matchText('Face', 'facet', 'contains', 'en')).toBeNull();
+  });
+
+  it('contains finds the same ranges in English as without its ASCII shortcut', () => {
+    // French collation weighs printable ASCII like English but always compares every window.
+    let seed = 7;
+    const next = () => (seed = (seed * 48271) % 2147483647);
+    const word = (length: number) => Array.from({ length }, () => 'aB1-+ $x.'[next() % 9]).join('');
+    for (let run = 0; run < 400; run++) {
+      const text = word(1 + (next() % 9)),
+        query = word(1 + (next() % 3));
+      expect(matchText(text, query, 'contains', 'en')).toEqual(
+        matchText(text, query, 'contains', 'fr'),
+      );
+    }
+  });
+
   it('derives ranges from matched terms', () => {
     expect(termRanges('Blue berry pie', ['berry', 'pi'])).toEqual([
       [5, 10],

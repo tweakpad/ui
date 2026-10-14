@@ -35,8 +35,8 @@ export class CollectionRegistry {
   #items: CollectionItem[] = [];
 
   register(item: CollectionItem): () => void {
+    // Reads sort, so registering many items costs one sort rather than one per item.
     this.#items.push(item);
-    this.#sort();
     return () => {
       const index = this.#items.indexOf(item);
       if (index >= 0) this.#items.splice(index, 1);

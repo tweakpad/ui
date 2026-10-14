@@ -20,6 +20,42 @@ export function searchCollator(options: CollationOptions = {}): Intl.Collator {
   });
 }
 
+const printable = /^[\u0020-\u007e]*$/;
+const foldAscii = (value: string): string => value.replace(/[^0-9a-z]/gi, '').toLowerCase();
+const untailored = new WeakMap<Intl.Collator, boolean>();
+
+/**
+ * Whether a match is still possible. English collation weighs ASCII letters without case and
+ * digits as themselves, and every other printable ASCII character is ignorable or a symbol, so a
+ * window can only equal the query when the text's letters and digits contain the query's. Other
+ * locales and other characters always stay possible.
+ */
+function asciiFolding(
+  text: string,
+  query: string,
+  kind: CollationMatch,
+  collator: Intl.Collator,
+): boolean {
+  let plain = untailored.get(collator);
+  if (plain === undefined) {
+    const options = collator.resolvedOptions();
+    plain =
+      new Intl.Locale(options.locale).language === 'en' &&
+      options.collation === 'default' &&
+      !options.numeric;
+    untailored.set(collator, plain);
+  }
+  if (!plain || !printable.test(text) || !printable.test(query)) return true;
+  const folded = foldAscii(query);
+  if (!folded) return true;
+  const haystack = foldAscii(text);
+  return kind === 'startsWith'
+    ? haystack.startsWith(folded)
+    : kind === 'endsWith'
+      ? haystack.endsWith(folded)
+      : haystack.includes(folded);
+}
+
 /**
  * The first range of `text` that equals `query` under `collator`, anchored as `kind` asks, or
  * null. Collation can equate strings of different lengths (punctuation, ligatures, accents), so
@@ -33,6 +69,7 @@ export function collationRange(
   collator: Intl.Collator,
 ): SearchRange | null {
   if (!query) return [0, 0];
+  if (!asciiFolding(text, query, kind, collator)) return null;
   const characters = Array.from(text);
   const offsets = [0];
   for (const character of characters) offsets.push(offsets.at(-1)! + character.length);
@@ -40,7 +77,7 @@ export function collationRange(
     if (kind === 'startsWith' && start !== 0) break;
     for (let end = start + 1; end <= characters.length; end++) {
       if (kind === 'endsWith' && end !== characters.length) continue;
-      if (collator.compare(characters.slice(start, end).join(''), query) === 0)
+      if (collator.compare(text.slice(offsets[start], offsets[end]), query) === 0)
         return [offsets[start]!, offsets[end]!];
     }
   }

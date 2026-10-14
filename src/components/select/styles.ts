@@ -115,6 +115,15 @@ export const selectStyles = css`
       var(--_tp-select-scroll-down-height, 0);
     max-block-size: min(var(--tp-available-height, 80vh), calc(var(--tp-spacing) * 120));
     outline: 0;
+
+    /* A virtual window keeps its first visible row still itself; browser scroll anchoring
+       would follow reused window nodes and move the list by a row. */
+    overflow-anchor: none;
+  }
+
+  /* Without options the list keeps no extent; the empty state follows it. */
+  .select-list[data-empty] {
+    flex: none;
   }
 
   .select-option[hidden],

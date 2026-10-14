@@ -121,6 +121,14 @@ export class VirtualList implements ReactiveController {
     return result;
   }
 
+  /** Index of the first item at the viewport's block start (no overscan), or -1. */
+  firstVisible(): number {
+    const viewport = this.#viewport ?? this.#resolveViewport();
+    const list = this.#options.list();
+    if (!this.enabled || !viewport || !list || !this.#keys.length) return -1;
+    return this.#index.indexAt(Math.max(0, viewport.scrollTop - this.#listStart(viewport, list)));
+  }
+
   isMounted(index: number): boolean {
     return !this.enabled || (index >= this.#range.from && index < this.#range.to);
   }

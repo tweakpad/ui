@@ -25,6 +25,7 @@ import { TpElement } from '../../foundation/element.js';
 import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { ChoiceCollectionController } from '../../foundation/choice-collection.js';
+import { VirtualList } from '../../foundation/virtual-list.js';
 import { SurfaceState, type TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
 import { PresenceController } from '../../foundation/presence.js';
 import { FloatingDismissController } from '../../foundation/floating-dismiss.js';
@@ -91,6 +92,13 @@ import { TpBadge } from '../badge/badge.js';
 import { TpInputGroup } from '../input-group/input-group.js';
 import { TpSpinner } from '../spinner/spinner.js';
 
+type SelectGroupNode = ChoiceModelNode & { children: ChoiceModelNode[] };
+/** One rendered row of the self-owned window: a group label, a grid row or an option. */
+type SelectWindowUnit =
+  | { kind: 'label'; key: string; group: SelectGroupNode }
+  | { kind: 'row'; key: string; group: SelectGroupNode | undefined; records: ChoiceModelRecord[] }
+  | { kind: 'option'; key: string; group: SelectGroupNode | undefined; record: ChoiceModelRecord };
+
 export class TpSelect extends TpFormElement<unknown> {
   static tagName = 'tp-select';
   readonly [SURFACE_HOST] = true as const;
@@ -131,6 +139,7 @@ export class TpSelect extends TpFormElement<unknown> {
     keepHighlight: { type: Boolean, attribute: 'keep-highlight' },
     loopFocus: { type: Boolean, attribute: 'loop-focus' },
     grid: { type: Boolean },
+    columns: { type: Number },
     inline: { type: Boolean },
     virtualized: { type: Boolean },
     mountedItems: { attribute: false },
@@ -233,7 +242,13 @@ export class TpSelect extends TpFormElement<unknown> {
   keepHighlight = false;
   loopFocus = true;
   grid = false;
+  /** Grid mode: rows of this many options per group, formed from the displayed order. */
+  columns: number | undefined;
   inline = false;
+  /**
+   * Mounts only the rows near the list's viewport. Without `mountedItems` the Select owns the
+   * window; with it, the consumer does.
+   */
   virtualized = false;
   mountedItems: readonly unknown[] | undefined;
   /** Consumer-declared busy state (for example while options load); shows the loading status row. */
@@ -429,6 +444,7 @@ export class TpSelect extends TpFormElement<unknown> {
   readonly #collection = new ChoiceCollectionController<unknown, ChoiceModelRecord>({
     locale: () => this.locale ?? resolveLocale(this),
     equals: (a, b) => this.isItemEqual?.(a, b) ?? Object.is(a, b),
+    identity: () => !this.isItemEqual,
     diagnostic: (message) => this.#diagnose(message),
   });
   readonly #model = new ChoiceModel(this);
@@ -496,12 +512,33 @@ export class TpSelect extends TpFormElement<unknown> {
     metadata: (record) => ({
       source: this.#source.sources.get(record.option) ?? record.value,
       logicalIndex: record.option.index ?? this.#collection.source.indexOf(record),
-      row: Number(
-        (record.option as { row?: number }).row ??
-          (this.#source.sources.get(record.option) as { row?: number } | undefined)?.row ??
-          this.#collection.source.indexOf(record),
-      ),
+      row:
+        this.#gridRows.get(record) ??
+        Number(
+          (record.option as { row?: number }).row ??
+            (this.#source.sources.get(record.option) as { row?: number } | undefined)?.row ??
+            this.#collection.source.indexOf(record),
+        ),
     }),
+    order: (records) => this.#displayOrder(records),
+  });
+  /** Rows derived from `columns`: each group's visible records in displayed order. */
+  readonly #gridRows = new Map<ChoiceModelRecord, number>();
+  /** Group of every record, from the model nodes. */
+  readonly #groupOf = new Map<ChoiceModelRecord, SelectGroupNode>();
+  /** Self-owned window: the rendered rows (labels, grid rows, options) in displayed order. */
+  #units: readonly SelectWindowUnit[] = [];
+  #unitKeys: readonly string[] = [];
+  readonly #unitOf = new Map<ChoiceModelRecord, number>();
+  readonly #labelIndex = new Map<ChoiceModelNode, number>();
+  #collectionElement: HTMLElement | null = null;
+  #unitExtent = 0;
+  readonly #virtual = new VirtualList(this, {
+    list: () => (this.#selfWindow ? this.#collectionElement : null),
+    viewport: () => (this.#selfWindow ? this.#list : null),
+    estimate: () => this.#unitExtent,
+    overscan: () => 4,
+    enabled: () => this.#selfWindow,
   });
   #clear: HTMLElement | null = null;
   readonly #clearPresence = new PresenceController(this, {
@@ -713,15 +750,18 @@ export class TpSelect extends TpFormElement<unknown> {
     );
     this.#collection.setSource(this.#model.records);
     this.#query.sync(previousHighlight);
+    this.#layoutRows();
     if (this.searchable && this.virtualized && !this.items)
       this.#diagnose(
         'virtualized requires the complete ordered source items.',
         'select-virtualized',
       );
+    // The clear action shows only while the lane it clears has something to clear.
     this.#clearPresence.setPresent(
       this.searchable &&
         this.showClear &&
-        (!!this.inputValue || !!this.#values(this.#selection.value).length),
+        ((this.clearBehavior !== 'selection' && !!this.inputValue) ||
+          (this.clearBehavior !== 'query' && !!this.#values(this.#selection.value).length)),
     );
     this.#repairFocus =
       !!focusedOption &&
@@ -865,21 +905,25 @@ export class TpSelect extends TpFormElement<unknown> {
         id: `${this.identifier}-list`,
         role: 'listbox',
         tabindex: -1,
-        'aria-label': this.label || this.placeholder || 'Options',
+        'aria-label': this.listLabel,
         'aria-multiselectable': this.multiple ? 'true' : undefined,
         'aria-busy': this.#query.busy ? 'true' : undefined,
+        'data-empty': this.searchable && !this.#collection.visible.length,
         '@keydown': (event: KeyboardEvent) => {
           if (event.target === event.currentTarget) this.#keyDown(event, false);
         },
         '@keyup': (event: KeyboardEvent) => {
           if (event.target === event.currentTarget) this.#keyUp(event);
         },
-        '@scroll': () => this.#scrollState(),
+        '@scroll': () => {
+          this.#scrollState();
+          this.listScrolled();
+        },
       },
       reference: this.#ref('list', 'select-list', (element) => {
         this.#list = element;
       }),
-      content: html`${this.searchable ? this.#part('select-collection', state, { content: this.#nodes(this.#model.nodes) }) : this.#nodes(this.#model.nodes)}${this.#emptyContent(state)}`,
+      content: html`${this.searchable ? this.#part('select-collection', state, { properties: { class: 'select-collection' }, reference: this.#ref('collection', '', (element) => (this.#collectionElement = element)), content: this.#selfWindow ? this.#windowNodes() : this.#nodes(this.#model.nodes) }) : this.#nodes(this.#model.nodes)}`,
     });
     const content = this.#part('select-content', state, {
       properties: {
@@ -901,12 +945,243 @@ export class TpSelect extends TpFormElement<unknown> {
         this.#content = element;
       }),
       content: html`<div class="select-body">
-          ${this.#scrollControl(-1)}${list}${this.#scrollControl(1)}
+          ${this.#scrollControl(-1)}${list}${this.#emptyContent(state)}${this.#scrollControl(1)}
         </div>
         ${this.#renderArrow()}`,
     });
     return html`${this.showBackdrop && !this.inline ? this.#part('backdrop', state, { properties: { class: 'select-backdrop', 'aria-hidden': 'true', 'data-open': this.open, 'data-closed': !this.open, '@pointerdown': (event: Event) => this.setOpen(false, 'outside-press', event) } }) : nothing}${content}`;
   }
+  /** Whether the Select mounts its own window of rows (virtualized without `mountedItems`). */
+  get #selfWindow(): boolean {
+    return this.searchable && this.virtualized && this.mountedItems === undefined;
+  }
+  /** Ranked records in displayed order: groups by their best record, records by rank. */
+  #displayOrder(records: readonly ChoiceModelRecord[]): ChoiceModelRecord[] {
+    const rank = new Map(records.map((record, index) => [record, index]));
+    const order = (nodes: readonly ChoiceModelNode[]): ChoiceModelRecord[] =>
+      nodes
+        .flatMap((node): Array<{ best: number; items: ChoiceModelRecord[] }> => {
+          if ('children' in node) {
+            const items = order(node.children);
+            return items.length ? [{ best: rank.get(items[0]!)!, items }] : [];
+          }
+          const best = rank.get(node as ChoiceModelRecord);
+          return best === undefined ? [] : [{ best, items: [node as ChoiceModelRecord] }];
+        })
+        .sort((a, b) => a.best - b.best)
+        .flatMap((entry) => entry.items);
+    return order(this.#model.nodes);
+  }
+  /**
+   * Rows of `columns` options per group from the displayed order, and the units of the
+   * self-owned window: a group's label, then its rows (grid) or options.
+   */
+  #layoutRows(): void {
+    this.#groupOf.clear();
+    const visit = (nodes: readonly ChoiceModelNode[], group: SelectGroupNode | undefined): void => {
+      for (const node of nodes)
+        if ('children' in node) visit(node.children, group ?? (node as SelectGroupNode));
+        else if ('value' in node && group) this.#groupOf.set(node as ChoiceModelRecord, group);
+    };
+    visit(this.#model.nodes, undefined);
+    this.#gridRows.clear();
+    const columns = Math.floor(Number(this.columns));
+    const grid = this.searchable && this.grid;
+    if (grid && columns > 0) {
+      let row = -1,
+        count = 0,
+        group: SelectGroupNode | undefined | null = null;
+      for (const record of this.#collection.visible) {
+        const owner = this.#groupOf.get(record);
+        if (owner !== group || count === columns) {
+          row++;
+          count = 0;
+          group = owner;
+        }
+        count++;
+        this.#gridRows.set(record, row);
+      }
+    }
+    this.#unitOf.clear();
+    this.#labelIndex.clear();
+    if (!this.#selfWindow) {
+      this.#units = [];
+      return;
+    }
+    const units: SelectWindowUnit[] = [];
+    const rowIndex = new Map<SelectGroupNode | undefined, number>();
+    let group: SelectGroupNode | undefined | null = null;
+    let lastRow: number | undefined;
+    for (const record of this.#collection.visible) {
+      const owner = this.#groupOf.get(record);
+      if (owner !== group) {
+        group = owner;
+        lastRow = undefined;
+        if (owner && (owner as { label?: unknown }).label) {
+          this.#labelIndex.set(owner, units.length);
+          units.push({ kind: 'label', key: `${owner.id}-label`, group: owner });
+        }
+      }
+      const previous = units.at(-1);
+      if (grid) {
+        const row = this.#query.owner.metadata(record).row;
+        if (previous?.kind === 'row' && row === lastRow) previous.records.push(record);
+        else {
+          const ordinal = rowIndex.get(owner) ?? 0;
+          rowIndex.set(owner, ordinal + 1);
+          units.push({
+            kind: 'row',
+            key: `${owner?.id ?? 'root'}-row-${ordinal}`,
+            group: owner,
+            records: [record],
+          });
+        }
+        lastRow = row;
+      } else units.push({ kind: 'option', key: record.id, group: owner, record });
+      this.#unitOf.set(record, units.length - 1);
+    }
+    this.#units = units;
+    const keys = units.map((unit) => unit.key);
+    if (
+      keys.length !== this.#unitKeys.length ||
+      keys.some((key, index) => key !== this.#unitKeys[index])
+    ) {
+      this.#unitKeys = keys;
+      this.#virtual.setKeys(keys);
+    }
+  }
+  /**
+   * The mounted units of the self-owned window inside their group containers; unmounted runs
+   * become spaces of their measured or estimated extent, so a group spans all of its rows.
+   */
+  #windowNodes(): unknown {
+    const units = this.#units;
+    const count = units.length;
+    const range = this.#virtual.range;
+    const mounted = new Set<number>();
+    for (let index = range.from; index < Math.min(range.to, count); index++) mounted.add(index);
+    const highlighted = this.#collection.highlighted;
+    const pinned = highlighted ? this.#unitOf.get(highlighted) : undefined;
+    if (pinned !== undefined) mounted.add(pinned);
+    for (const index of [...mounted]) {
+      const group = units[index]?.group;
+      const label = group ? this.#labelIndex.get(group) : undefined;
+      if (label !== undefined) mounted.add(label);
+    }
+    const space = (from: number, to: number) =>
+      html`<div
+        class="select-window-space"
+        aria-hidden="true"
+        style=${`block-size:${this.#virtual.offsetOf(to) - this.#virtual.offsetOf(from)}px`}
+      ></div>`;
+    const blocks: Array<{ key: string; content: unknown }> = [];
+    let pending = -1;
+    let index = 0;
+    while (index < count) {
+      const group = units[index]!.group;
+      let end = index;
+      while (end < count && units[end]!.group === group) end++;
+      let any = false;
+      for (let probe = index; probe < end && !any; probe++) any = mounted.has(probe);
+      if (!any) {
+        if (pending < 0) pending = index;
+        index = end;
+        continue;
+      }
+      if (pending >= 0) {
+        blocks.push({ key: `space-${pending}`, content: space(pending, index) });
+        pending = -1;
+      }
+      const content: unknown[] = [];
+      let run = -1;
+      for (let unit = index; unit < end; unit++) {
+        if (!mounted.has(unit)) {
+          if (run < 0) run = unit;
+          continue;
+        }
+        if (run >= 0) content.push(space(run, unit));
+        run = -1;
+        content.push(this.#windowUnit(units[unit]!));
+      }
+      if (run >= 0) content.push(space(run, end));
+      blocks.push({
+        key: group ? group.id : `root-${index}`,
+        content: group ? this.#groupContainer(group, content) : content,
+      });
+      index = end;
+    }
+    if (pending >= 0) blocks.push({ key: `space-${pending}`, content: space(pending, count) });
+    return repeat(
+      blocks,
+      (block) => block.key,
+      (block) => block.content,
+    );
+  }
+  #windowUnit(unit: SelectWindowUnit): unknown {
+    if (unit.kind === 'label') return this.#groupLabel(unit.group, unit.key);
+    if (unit.kind === 'option')
+      return html`<div class="select-window-unit" data-tp-window-key=${unit.key}>
+        ${this.#node(unit.record)}
+      </div>`;
+    return this.#part('select-row', this.#state(), {
+      properties: { class: 'select-row', 'data-tp-window-key': unit.key },
+      content: unit.records.map((record) => this.#node(record)),
+    });
+  }
+  #groupLabel(group: SelectGroupNode, windowKey?: string): unknown {
+    const label = (group as { label?: unknown }).label;
+    if (!label) return nothing;
+    return this.#part(
+      'select-label',
+      this.#state(),
+      {
+        properties: {
+          class: 'select-label',
+          id: `${group.id}-label`,
+          ...(windowKey ? { 'data-tp-window-key': windowKey } : {}),
+        },
+        reference: this.#ref(`${group.id}-label`, 'select-label'),
+        content: label,
+      },
+      (group as { labelContract?: ComponentPartContract }).labelContract,
+    );
+  }
+  #groupContainer(group: SelectGroupNode, content: unknown): unknown {
+    return this.#part(
+      'select-group',
+      this.#state(),
+      {
+        properties: {
+          class: 'select-group',
+          role: 'group',
+          'aria-labelledby': (group as { label?: unknown }).label ? `${group.id}-label` : undefined,
+        },
+        reference: this.#ref(group.id, 'select-group'),
+        content,
+      },
+      (group as { partContract?: ComponentPartContract }).partContract,
+    );
+  }
+  /** Follows the extent of every mounted unit of the self-owned window. */
+  #observeUnits(): void {
+    const observed = new Set<string>();
+    if (this.#selfWindow && this.#collectionElement)
+      for (const element of this.#collectionElement.querySelectorAll<HTMLElement>(
+        '[data-tp-window-key]',
+      )) {
+        const key = element.dataset.tpWindowKey!;
+        observed.add(key);
+        this.#virtual.observe(key, element);
+        if (!this.#unitExtent && element.matches('.select-row, .select-window-unit')) {
+          // The first measured row becomes the estimate of the unmeasured ones.
+          this.#unitExtent = element.getBoundingClientRect().height;
+          if (this.#unitExtent) this.#virtual.setKeys([...this.#unitKeys]);
+        }
+      }
+    for (const key of this.#observedUnits) if (!observed.has(key)) this.#virtual.observe(key, null);
+    this.#observedUnits = observed;
+  }
+  #observedUnits = new Set<string>();
   #nodes(nodes: readonly ChoiceModelNode[]): unknown {
     if (this.searchable && this.#query.ranked) {
       const positions = (node: ChoiceModelNode): number[] =>
@@ -1014,7 +1289,7 @@ export class TpSelect extends TpFormElement<unknown> {
       state,
       {
         tag: 'span',
-        enabled: record.presence.mounted,
+        enabled: record.presence.mounted && this.optionIndicator(record),
         properties: {
           class: 'select-indicator',
           'aria-hidden': 'true',
@@ -1194,6 +1469,7 @@ export class TpSelect extends TpFormElement<unknown> {
       this.#query.restore();
     }
     if (this.inline) this.#syncOuter();
+    this.#observeUnits();
     if (this.#trigger && this.#list) this.#trigger.ariaControlsElements = [this.#list];
     if (this.open && this.#content) {
       if (!this.inline && !this.#content.matches(':popover-open')) this.#content.showPopover();
@@ -1489,7 +1765,8 @@ export class TpSelect extends TpFormElement<unknown> {
   }
   /**
    * With nothing to show: a loading status (spinner and text) while a source is pending, the
-   * error text after it fails, otherwise the empty state.
+   * error text after it fails, otherwise the empty state. It follows the list, which then holds
+   * no options; the status region announces the same text.
    */
   #emptyContent(state: PartState): unknown {
     if (!this.searchable || this.#collection.visible.length) return nothing;
@@ -1795,6 +2072,38 @@ export class TpSelect extends TpFormElement<unknown> {
   protected optionAccessibleName(record: ChoiceModelRecord): string | undefined {
     void record;
     return undefined;
+  }
+  /** Called when the list scrolls. */
+  protected listScrolled(): void {}
+  /** Group of the row at the block start of the self-owned window, or undefined. */
+  protected get topGroup(): unknown {
+    if (!this.#selfWindow) return undefined;
+    const index = this.#virtual.firstVisible();
+    return index < 0 ? undefined : this.#units[index]?.group;
+  }
+  /** Scrolls the self-owned window so the group holding `record` starts at the block start. */
+  protected revealGroupStart(record: ChoiceModelRecord): boolean {
+    const group = this.#groupOf.get(record);
+    const index = group ? (this.#labelIndex.get(group) ?? this.#unitOf.get(record)) : undefined;
+    if (!this.#selfWindow || index === undefined) {
+      this.#collection.element(record)?.scrollIntoView({ block: 'start' });
+      return false;
+    }
+    return this.#virtual.scrollToIndex(index, 'start');
+  }
+  /** Moves the highlight to a visible record without scrolling. */
+  protected highlightRecord(record: ChoiceModelRecord | undefined): void {
+    this.#collection.activeIndex = record ? this.#collection.visible.indexOf(record) : -1;
+    this.requestUpdate();
+  }
+  /** Accessible name of the list. */
+  protected get listLabel(): string {
+    return this.label || this.placeholder || 'Options';
+  }
+  /** Whether a selected option shows its check indicator. */
+  protected optionIndicator(record: ChoiceModelRecord): boolean {
+    void record;
+    return true;
   }
   protected optionAriaSelected(record: ChoiceModelRecord): boolean {
     return this.#selected(record.value);

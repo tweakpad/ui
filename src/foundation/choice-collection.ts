@@ -11,15 +11,21 @@ export interface ChoiceRecord<T = unknown> {
 
 export interface ChoiceCollectionOptions<T> {
   equals?: (a: T, b: T) => boolean;
+  /** Whether `equals` currently reduces to `Object.is`, so duplicates are found through a set. */
+  identity?: () => boolean;
   diagnostic?: (message: string) => void;
   locale?: () => string | undefined;
 }
+
+// Object.is tells -0 from 0; a set does not.
+const negativeZero = Symbol('negative zero');
 
 /** The common finite-choice owner. Editing/filter policy stays with searchable Select. */
 export class ChoiceCollectionController<T, R extends ChoiceRecord<T> = ChoiceRecord<T>> {
   readonly registry = new CollectionRegistry();
   readonly typeahead: TypeaheadController;
   #source: readonly R[] = [];
+  #members = new Set<R>();
   #visible: readonly R[] = [];
   #filter: (record: R) => boolean = () => true;
   #visibleOrder: readonly R[] | undefined;
@@ -51,14 +57,23 @@ export class ChoiceCollectionController<T, R extends ChoiceRecord<T> = ChoiceRec
   }
   setSource(records: readonly R[]): void {
     const unique: R[] = [];
+    // Identity-compared values dedupe through a set; a custom equality compares pairs.
+    const seen = !this.options.equals || this.options.identity?.() ? new Set<unknown>() : undefined;
     for (const record of records) {
-      if (unique.some((existing) => this.equal(existing.value, record.value))) {
+      const key = Object.is(record.value, -0) ? negativeZero : record.value;
+      if (
+        seen ? seen.has(key) : unique.some((existing) => this.equal(existing.value, record.value))
+      ) {
         this.options.diagnostic?.(
           'Duplicate choice values are excluded from navigation and selection.',
         );
-      } else unique.push(record);
+      } else {
+        unique.push(record);
+        seen?.add(key);
+      }
     }
     this.#source = unique;
+    this.#members = new Set(unique);
     this.#refresh();
   }
   setFilter(filter: (record: R) => boolean, order?: readonly R[]): void {
@@ -142,7 +157,7 @@ export class ChoiceCollectionController<T, R extends ChoiceRecord<T> = ChoiceRec
   #refresh(): void {
     const previous = this.#highlight;
     this.#visible = (this.#visibleOrder ?? this.#source).filter(
-      (record) => this.#source.includes(record) && this.#filter(record),
+      (record) => this.#members.has(record) && this.#filter(record),
     );
     this.#highlight = previous
       ? (this.#visible.find(
@@ -150,7 +165,7 @@ export class ChoiceCollectionController<T, R extends ChoiceRecord<T> = ChoiceRec
         ) ?? this.#visible.find((record) => !record.disabled))
       : undefined;
     for (const record of this.#mounted.keys())
-      if (!this.#source.includes(record)) this.#mounted.delete(record);
+      if (!this.#members.has(record)) this.#mounted.delete(record);
     this.#register();
   }
   #register(): void {

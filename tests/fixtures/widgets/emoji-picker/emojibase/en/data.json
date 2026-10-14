@@ -1,0 +1,26 @@
+[
+  { "label": "grinning face", "emoji": "😀", "group": 0, "subgroup": 0, "version": 1, "tags": ["face", "grin"] },
+  { "label": "beaming face with smiling eyes", "emoji": "😁", "group": 0, "subgroup": 0, "version": 0.6, "tags": ["eye", "grin"] },
+  { "label": "smiling face with halo", "emoji": "😇", "group": 0, "subgroup": 0, "version": 1, "tags": ["angel", "halo"] },
+  {
+    "label": "waving hand", "emoji": "👋", "group": 1, "subgroup": 1, "version": 0.6, "tags": ["hello", "wave"],
+    "skins": [
+      { "label": "waving hand: light skin tone", "emoji": "👋🏻", "tone": 1, "version": 1 },
+      { "label": "waving hand: medium-light skin tone", "emoji": "👋🏼", "tone": 2, "version": 1 },
+      { "label": "waving hand: medium skin tone", "emoji": "👋🏽", "tone": 3, "version": 1 },
+      { "label": "waving hand: medium-dark skin tone", "emoji": "👋🏾", "tone": 4, "version": 1 },
+      { "label": "waving hand: dark skin tone", "emoji": "👋🏿", "tone": 5, "version": 1 }
+    ]
+  },
+  {
+    "label": "ok hand", "emoji": "👌", "group": 1, "subgroup": 1, "version": 0.6, "tags": ["ok"],
+    "skins": [
+      { "label": "ok hand: light skin tone", "emoji": "👌🏻", "tone": 1, "version": 1 },
+      { "label": "ok hand: dark skin tone", "emoji": "👌🏿", "tone": 5, "version": 1 }
+    ]
+  },
+  { "label": "light skin tone", "emoji": "🏻", "group": 2, "subgroup": 2, "version": 1 },
+  { "label": "fox", "emoji": "🦊", "group": 3, "subgroup": 3, "version": 3, "tags": ["face"] },
+  { "label": "otter", "emoji": "🦦", "group": 3, "subgroup": 3, "version": 12, "tags": ["fishing", "playful"] },
+  { "label": "flag: Japan", "emoji": "🇯🇵", "group": 9, "subgroup": 9, "version": 0.6, "tags": ["flag"] }
+]

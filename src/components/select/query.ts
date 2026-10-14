@@ -23,6 +23,8 @@ interface QueryOwner {
   text(value: unknown): string;
   select(record: ChoiceModelRecord, event: Event): void;
   metadata(record: ChoiceModelRecord): SelectQueryRecordMetadata;
+  /** Ranked records in displayed order: groups by their best record, records by rank. */
+  order(records: readonly ChoiceModelRecord[]): ChoiceModelRecord[];
   /** Autocomplete: no selection lane; the text is the value. */
   selectionFree(): boolean;
   /** Event name of text-lane proposals. */
@@ -202,7 +204,8 @@ export class SelectQueryController {
     }
     const limited = h.limit < 0 ? candidates : candidates.slice(0, Math.floor(h.limit));
     const visible = new Set(limited);
-    c.setFilter((record) => visible.has(record), limited);
+    // Navigation follows the displayed order, where ranked groups gather their records.
+    c.setFilter((record) => visible.has(record), this.ranked ? this.owner.order(limited) : limited);
     if ((old && !c.visible.includes(old)) || (changed && !h.keepHighlight)) c.activeIndex = -1;
     if (
       (h.autoHighlight === 'always' || (h.autoHighlight && query !== '')) &&
@@ -501,6 +504,9 @@ export class SelectQueryController {
           this.editor?.setSelectionRange(this.value.length, this.completion.length);
       });
     }
+    // The highlighted row mounts in the next update (a virtual window may not hold it yet):
+    // request it before waiting for it.
+    this.host.requestUpdate();
     // Pointer highlighting never changes scroll position or refocuses the list.
     if (reason === 'list-navigation')
       void this.host.updateComplete.then(() => {

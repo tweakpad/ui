@@ -95,13 +95,14 @@ import * as map from '@tweakpad/ui/map';
 import * as code from '@tweakpad/ui/code';
 import * as markdown from '@tweakpad/ui/markdown';
 import * as qr from '@tweakpad/ui/qr';
+import * as emoji from '@tweakpad/ui/emoji';
 import * as flow from '@tweakpad/ui/flow';
 import packageJson from '@tweakpad/ui/package.json' with { type: 'json' };
 
 defineElement(TpButton.tagName, TpButton);
 const button: HTMLElementTagNameMap['tp-button'] = document.createElement('tp-button');
 button.variant = 'outline';
-export const used = [TpIcon, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, qr.encodeQr('x').size, flow.FLOW_DOCUMENT_VERSION, widgetEntries.length, packageJson.version];
+export const used = [TpIcon, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, qr.encodeQr('x').size, emoji.builtinEmojiData().emojis.length, flow.FLOW_DOCUMENT_VERSION, widgetEntries.length, packageJson.version];
 `,
 );
 writeFileSync(join(consumer, 'css.d.ts'), "declare module '*.css';\n");
@@ -137,6 +138,18 @@ run(
   consumer,
 );
 console.log('pack-smoke: @tweakpad/ui/qr runs in Node');
+
+// The emoji data helpers are DOM-free: the built-in dataset and the adapter run in Node.
+run(
+  process.execPath,
+  [
+    '--input-type=module',
+    '-e',
+    "const { builtinEmojiData, createEmojibaseData } = await import('@tweakpad/ui/emoji'); if (!builtinEmojiData().emojis.length || createEmojibaseData([], { groups: [], subgroups: [] }).emojis.length !== 0) process.exit(1);",
+  ],
+  consumer,
+);
+console.log('pack-smoke: @tweakpad/ui/emoji runs in Node');
 
 // The flow engine is DOM-free as well: model, routing and layout must run in Node (and workers).
 run(

@@ -68,6 +68,24 @@ describe('shared finite choice collection', () => {
     expect(owner.search('b')?.value).toBe('b');
     owner.disconnect();
   });
+  it('excludes duplicates by identity: 0 and -0 differ, NaN repeats, custom equality pairs', () => {
+    const owner = new ChoiceCollectionController<unknown>();
+    owner.setSource([
+      { value: 0, label: 'Zero' },
+      { value: -0, label: 'Negative zero' },
+      { value: NaN, label: 'NaN' },
+      { value: NaN, label: 'Again' },
+    ]);
+    expect(owner.source.map((record) => record.label)).toEqual(['Zero', 'Negative zero', 'NaN']);
+    const custom = new ChoiceCollectionController<{ id: number }>({
+      equals: (a, b) => a.id === b.id,
+    });
+    custom.setSource([
+      { value: { id: 1 }, label: 'One' },
+      { value: { id: 1 }, label: 'Same' },
+    ]);
+    expect(custom.source.map((record) => record.label)).toEqual(['One']);
+  });
   it('uses consumer identity for labels and ordered unique multiple selection', () => {
     const owner = new ChoiceCollectionController<{ id: number }>({
       equals: (a, b) => a.id === b.id,

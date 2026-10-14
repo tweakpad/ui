@@ -1,0 +1,23 @@
+{
+  "groups": [
+    { "key": "smileys-emotion", "message": "smileys & emotion", "order": 0 },
+    { "key": "people-body", "message": "people & body", "order": 1 },
+    { "key": "component", "message": "component", "order": 2 },
+    { "key": "animals-nature", "message": "animals & nature", "order": 3 },
+    { "key": "flags", "message": "flags", "order": 9 }
+  ],
+  "subgroups": [
+    { "key": "face-smiling", "message": "face smiling", "order": 0 },
+    { "key": "hand-fingers-open", "message": "hand fingers open", "order": 1 },
+    { "key": "skin-tone", "message": "skin tone", "order": 2 },
+    { "key": "animal-mammal", "message": "animal mammal", "order": 3 },
+    { "key": "country-flag", "message": "country flag", "order": 9 }
+  ],
+  "skinTones": [
+    { "key": "light", "message": "light skin tone" },
+    { "key": "medium-light", "message": "medium-light skin tone" },
+    { "key": "medium", "message": "medium skin tone" },
+    { "key": "medium-dark", "message": "medium-dark skin tone" },
+    { "key": "dark", "message": "dark skin tone" }
+  ]
+}
