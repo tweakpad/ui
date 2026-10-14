@@ -1,4 +1,4 @@
-import { ambientAnimation, motionTransition } from '../motion.js';
+import { ambientAnimation, motionTransition, presenceMotion } from '../motion.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import { activeRing, focusRing, thumb } from './shared/handle.js';
 import { popupBorder, sectionFooterAppearance, surfaceAppearance } from './shared/surface.js';
@@ -598,9 +598,11 @@ export const flowAppearance: PresentationDictionary = {
         '--_tp-flow-palette-offset': 'calc(var(--tp-space-10) * -1)',
         opacity: '1',
         translate: '0 0',
-        transition: motionTransition(['opacity', 'translate']),
       },
     },
+    ...presenceMotion(['opacity', 'translate'], 'normal', `${sidebar}[data-ending-style]`).map(
+      (entry) => ({ ...entry, selector: entry.selector ?? sidebar }),
+    ),
     {
       selector: `${sidebar}:dir(rtl)`,
       declarations: { '--_tp-flow-palette-offset': 'var(--tp-space-10)' },
@@ -652,9 +654,9 @@ export const flowAppearance: PresentationDictionary = {
         '--_tp-flow-inspector-offset': 'var(--tp-space-10)',
         opacity: '1',
         translate: '0 0',
-        transition: motionTransition(['opacity', 'translate']),
       },
     },
+    ...presenceMotion(['opacity', 'translate']),
     {
       selector: '&:dir(rtl)',
       declarations: { '--_tp-flow-inspector-offset': 'calc(var(--tp-space-10) * -1)' },

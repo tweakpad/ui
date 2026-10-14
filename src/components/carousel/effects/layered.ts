@@ -12,7 +12,6 @@ import {
   clamp01,
   easeOutCubic,
   smoothstep,
-  easings,
   type CarouselEffectTiming,
 } from './shared.js';
 
@@ -44,7 +43,7 @@ export function carouselLayeredEffect(options: CarouselLayeredOptions = {}): Car
   return {
     name: 'layered',
     duration: options.duration ?? 1000,
-    easing: options.easing ?? easings.inOut,
+    ...(options.easing ? { easing: options.easing } : {}),
     layout: 'stack',
     constrain: stackEffectConstraint('layered'),
     attach(context: CarouselEffectContext) {

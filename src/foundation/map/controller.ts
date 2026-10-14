@@ -33,12 +33,8 @@ import {
   projectFlat,
   unprojectFlat,
 } from './geo.js';
-import {
-  ZOOM_STEP_DURATION,
-  travelDuration,
-  tweenCamera,
-  type TweenFrameSource,
-} from './camera.js';
+import { travelDuration, tweenCamera, type TweenFrameSource } from './camera.js';
+import { resolveMotionTiming } from '../motion.js';
 import { MapStore, type MapState, type MapSubscribeOptions } from './state.js';
 import { mapThemesEqual, type ResolvedMapTheme } from './theme.js';
 
@@ -735,7 +731,7 @@ export class MapController {
         return this.#moveTo(
           mergeCamera(current, { zoom }),
           reason,
-          options.duration ?? ZOOM_STEP_DURATION,
+          options.duration ?? this.#stepDuration(),
         );
       }
       case 'reset': {
@@ -760,6 +756,12 @@ export class MapController {
       }
     }
     throw domError('NotSupportedError', `Unknown map action "${String(action)}".`);
+  }
+
+  /** A zoom step takes the normal duration; travel derives its own from the distance. */
+  #stepDuration(): number {
+    const viewport = this.#host.viewport();
+    return viewport ? resolveMotionTiming(viewport).duration : 0;
   }
 
   /** Moves the camera, animated unless reduced motion resolves (map-f-motion, map-f-pre-ready). */

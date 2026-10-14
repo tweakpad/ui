@@ -153,7 +153,8 @@ describe('MapController requests (map-f-request, map-f-motion, map-f-pre-ready)'
     setup.host.reduced = false;
     const animated = setup.controller.request('zoom-in', undefined);
     await flush();
-    expect(setup.instance.easeCalls[0]!.options.duration).toBe(250);
+    // A zoom step takes the normal duration role.
+    expect(setup.instance.easeCalls[0]!.options.duration).toBe(280);
     setup.instance.finishEase();
     await expect(animated).resolves.toBe('completed');
   });

@@ -6,10 +6,9 @@
 export const textMotionPieceCss = /* css */ `
 tp-text-motion {
   --_tp-tm-duration: calc(
-    var(--tp-text-motion-duration, calc(var(--tp-duration-normal, 280ms) * 2)) *
-      var(--tp-motion-scale, 1)
+    var(--tp-text-motion-duration, var(--tp-duration-slow)) * var(--tp-motion-scale, 1)
   );
-  --_tp-tm-easing: var(--tp-text-motion-easing, ease-out);
+  --_tp-tm-easing: var(--tp-text-motion-easing, var(--tp-easing-enter));
   --_tp-tm-bleed: var(--tp-text-motion-mask-bleed, 0.1em);
   --_tp-tm-distance: var(--tp-text-motion-distance, 0.4em);
   --_tp-tm-clip-block: -100vmax;

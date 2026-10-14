@@ -1,6 +1,7 @@
 /**
  * Shared camera motion (`sec-1812-map` map-f-motion): the fallback tween for engines without
- * native animation, and the default durations.
+ * native animation, and the distance-derived travel duration. Zoom steps take the normal duration
+ * role from the map's element.
  */
 import {
   type MapCamera,
@@ -12,7 +13,6 @@ import {
   wrapBearing,
 } from './geo.js';
 
-export const ZOOM_STEP_DURATION = 250;
 export const MIN_TRAVEL_DURATION = 600;
 export const MAX_TRAVEL_DURATION = 1500;
 

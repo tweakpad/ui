@@ -1,5 +1,6 @@
 import {
   prepareMotion,
+  resolveMotionTiming,
   resolvesReducedMotion,
   type MotionHandle,
   type MotionRequestOptions,
@@ -11,7 +12,7 @@ import { Scheduler } from '../services.js';
 import type { CarouselController } from './controller.js';
 import type { CarouselElements } from './input.js';
 import { CarouselKinetics, type CarouselMotionTiming } from './kinetics.js';
-import { carouselMotionRoles, carouselMotionTiming } from './timing.js';
+import { carouselMotionRoles } from './timing.js';
 import type { CarouselNavigationRequest } from './types.js';
 
 /**
@@ -210,7 +211,7 @@ export class TranslatePresenter extends CarouselFramePresenter {
     this.#track.set('transform', this.#transform(position));
   }
   protected motion(position: number, request: CarouselNavigationRequest): CarouselFrameMotion {
-    const timing = carouselMotionTiming(this.owner, request.speed);
+    const timing = resolveMotionTiming(this.owner, request.speed);
     return {
       target: this.elements.track,
       role: carouselMotionRoles.track,

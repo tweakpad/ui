@@ -4,6 +4,8 @@ import {
   type PanZoomReason,
 } from '../../foundation/pan-zoom.js';
 import { frameLoopFor } from '../../foundation/frame-loop.js';
+import { resolveMotionTiming } from '../../foundation/motion.js';
+import { parseEasing } from '../../foundation/motion-easing.js';
 import type { FlowPoint, FlowSize, FlowViewport } from '../../foundation/flow/types.js';
 import type { ChangeReason } from '../../foundation/types.js';
 
@@ -128,23 +130,29 @@ export class ViewportOwner {
     return { x: event.clientX - (rect?.left ?? 0), y: event.clientY - (rect?.top ?? 0) };
   }
 
+  /** Without `duration`, the move takes the normal duration; both follow the motion scale. */
   async animateTo(
     viewport: FlowViewport,
     reason: ChangeReason,
-    duration: number,
+    duration?: number,
   ): Promise<boolean> {
     const controller = this.#controller;
-    if (!controller) {
+    const pane = this.#options.pane();
+    if (!controller || !pane) {
       const accepted = this.#options.propose(viewport, reason, null, false);
       if (accepted) this.apply(this.#options.viewport());
       return accepted;
     }
-    const effective = this.#options.reducedMotion() ? 0 : duration;
+    const timing = resolveMotionTiming(pane, duration ?? 'normal');
+    const effective = this.#options.reducedMotion() ? 0 : timing.duration;
     this.#programmaticReason = reason;
     // `metadata.animated` tells owners a tween is in flight; an instant apply is not one.
     this.#animating = effective > 0;
     try {
-      return await controller.animateTo(viewport, { duration: effective });
+      return await controller.animateTo(viewport, {
+        duration: effective,
+        easing: parseEasing(timing.easing),
+      });
     } finally {
       this.#animating = false;
       this.#programmaticReason = undefined;

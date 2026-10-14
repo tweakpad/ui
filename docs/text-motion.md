@@ -160,8 +160,8 @@ Each piece carries `--tp-text-index` (its index within its unit) and the animati
 
 | Custom property               | Default                      | Purpose                                            |
 | ----------------------------- | ---------------------------- | -------------------------------------------------- |
-| `--tp-text-motion-duration`   | twice `--tp-duration-normal` | per-piece duration                                 |
-| `--tp-text-motion-easing`     | `ease-out`                   | easing                                             |
+| `--tp-text-motion-duration`   | `var(--tp-duration-slow)`    | per-piece duration                                 |
+| `--tp-text-motion-easing`     | `var(--tp-easing-enter)`     | easing                                             |
 | `--tp-text-motion-distance`   | `0.4em`                      | travel without a mask                              |
 | `--tp-text-motion-scale`      | `0.2`                        | scale offset for `zoom-in` and `zoom-out`          |
 | `--tp-text-motion-blur`       | `0.15em`                     | start blur for `blur`                              |

@@ -20,6 +20,7 @@ import { LiveAnnouncer } from '../../foundation/announcer.js';
 import {
   resolvesReducedMotion,
   prepareMotion,
+  resolveMotionTiming,
   stateRole,
   type MotionDriver,
   type MotionPlayback,
@@ -43,7 +44,6 @@ import { FlowModel, type FlowTransaction } from '../../foundation/flow/model/mod
 import { KeyBindingOwner } from '../../foundation/key-bindings.js';
 import { copyData } from '../../foundation/clipboard.js';
 import { layoutFlow } from '../../foundation/flow/layout/layered-layout.js';
-import { cssTimeMs } from '../../foundation/reveal-playback.js';
 import {
   alignNodes,
   distributeNodes,
@@ -1606,7 +1606,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return this.#viewportOwner.animateTo(
       target,
       options.reason ?? 'imperative-action',
-      options.duration ?? 250,
+      options.duration,
     );
   }
 
@@ -1622,7 +1622,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return this.#viewportOwner.animateTo(
       target,
       options.reason ?? 'imperative-action',
-      options.duration ?? 250,
+      options.duration,
     );
   }
 
@@ -1642,7 +1642,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return this.#viewportOwner.animateTo(
       this.#clamp(target),
       options.reason ?? 'imperative-action',
-      options.duration ?? 250,
+      options.duration,
     );
   }
 
@@ -2289,15 +2289,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     );
     const target = this.#nodesContainer;
     if (!moves.length || !target) return;
-    const style = getComputedStyle(this);
-    const scale = Number.parseFloat(style.getPropertyValue('--tp-motion-scale'));
-    const duration =
-      cssTimeMs(style.getPropertyValue('--tp-duration-normal')) *
-      (Number.isFinite(scale) ? scale : 1);
-    const easing = style.getPropertyValue('--tp-easing-standard').trim() || 'ease';
+    const timing = resolveMotionTiming(this);
+    const { duration } = timing;
     const driver: MotionDriver = {
       play: (): MotionPlayback => {
-        const timing = { duration, easing };
         const animations = [
           ...moves.map(({ host, dx, dy }) =>
             host.animate([{ translate: `${dx}px ${dy}px` }, { translate: '0px 0px' }], timing),
@@ -3238,7 +3233,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       void this.#viewportOwner.animateTo(
         this.#clamp({ ...viewport, x: viewport.x + dx }),
         'imperative-action',
-        250,
       );
     });
   }

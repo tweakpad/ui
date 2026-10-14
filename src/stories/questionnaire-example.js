@@ -135,13 +135,15 @@ export function setupQuestionnaireExample(root, questions, kind, submitLabel) {
             const style = view.getComputedStyle(element);
             const scale = Number(style.getPropertyValue('--tp-motion-scale').trim() || 1);
             if (!scale) return;
-            const duration = parseFloat(style.getPropertyValue('--tp-duration-normal')) || 200;
+            // Duration roles compute to seconds (`0.28s`).
+            const duration = parseFloat(style.getPropertyValue('--tp-duration-normal')) * 1000;
+            if (!duration) return;
             animation = element.animate(
               [
                 { opacity: 0, transform: 'translateY(0.5rem)' },
                 { opacity: 1, transform: 'none' },
               ],
-              { duration: duration * scale, easing: 'ease-out' },
+              { duration: duration * scale, easing: style.getPropertyValue('--tp-easing-enter') },
             );
           });
         },

@@ -4,6 +4,7 @@
  * the viewport trigger. Shared by every revealing component.
  */
 import {
+  cssTimeMs,
   prepareMotion,
   resolvesReducedMotion,
   type MotionRoleDefinition,
@@ -11,14 +12,6 @@ import {
 } from './motion.js';
 import { canObserveIntersection } from './observation.js';
 import { ViewportTrigger } from './viewport-trigger.js';
-
-/** Milliseconds of one CSS `<time>` value (`0.56s`, `560ms`); 0 when it does not parse. */
-export function cssTimeMs(text: string): number {
-  const value = text.trim();
-  const number = Number.parseFloat(value);
-  if (!Number.isFinite(number)) return 0;
-  return value.endsWith('ms') ? number : number * 1000;
-}
 
 /** The longest `duration + delay` among an element's transitions, in milliseconds. */
 export function transitionSpan(style: CSSStyleDeclaration): number {

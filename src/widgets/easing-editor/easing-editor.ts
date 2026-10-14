@@ -59,9 +59,11 @@ import { TpEasingEditorFrames } from './surfaces/frames.js';
 import {
   cancelMotions,
   prepareMotion,
+  resolveMotionTiming,
   stateRole,
   type MotionHandle,
 } from '../../foundation/motion.js';
+import { parseEasing } from '../../foundation/motion-easing.js';
 import { curveRange } from './surfaces/geometry.js';
 import { TpEasingEditorGraph, type EasingSurfaceChangeDetail } from './surfaces/graph.js';
 import { renderPresetGroups } from './views/presets.js';
@@ -130,8 +132,6 @@ const DEFAULT_CURVES: Readonly<Record<EasingCategory, string>> = {
 };
 /** The shown range eases to the re-quantized range once a drag settles (Widgets 6.2 Presentation). */
 const RANGE_ROLE = stateRole('range');
-const RANGE_TWEEN_MS = 200;
-const easeOutCubic = (t: number): number => 1 - (1 - t) ** 3;
 const sameRange = (a: ProgressionRange, b: ProgressionRange): boolean =>
   a.min === b.min && a.max === b.max;
 /** Springs are their own category; every other kind is an ease. */
@@ -740,16 +740,20 @@ export class TpEasingEditor extends TpFormElement<string> {
           let frame = 0;
           let cancelled = false;
           const start = performance.now();
+          // The range settles like other arrivals: fast duration on the enter curve.
+          const timing = resolveMotionTiming(graph, 'fast', 'enter');
+          const ease = parseEasing(timing.easing);
           const finished = new Promise<void>((resolve) => {
             const step = (now: number) => {
               if (cancelled) return;
-              const progress = easeOutCubic(Math.min(1, (now - start) / RANGE_TWEEN_MS));
+              const t = timing.duration > 0 ? Math.min(1, (now - start) / timing.duration) : 1;
+              const progress = ease(t);
               this.#displayRange = {
                 min: from.min + (target.min - from.min) * progress,
                 max: from.max + (target.max - from.max) * progress,
               };
               this.requestUpdate();
-              if (progress < 1) frame = requestAnimationFrame(step);
+              if (t < 1) frame = requestAnimationFrame(step);
               else resolve();
             };
             frame = requestAnimationFrame(step);

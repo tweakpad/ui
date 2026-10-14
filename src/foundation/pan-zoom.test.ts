@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ManualFrames } from './fakes.test.js';
+import { ManualFrames, styledDocument } from './fakes.test.js';
 import { FrameLoop } from './frame-loop.js';
 import {
   AUTO_PAN_SPEED,
@@ -61,6 +61,7 @@ class FakeWindow extends EventTarget {
 }
 
 class FakeElement extends EventTarget {
+  readonly ownerDocument = styledDocument();
   rect = { left: 10, top: 20, width: 200, height: 100 };
   captured: number[] = [];
   released: number[] = [];

@@ -22,6 +22,7 @@ Import `@tweakpad/ui/styles.css` once to install the default token set. Componen
 - Extents: `control-height-xs|sm|md|lg`, `icon-size-xs|sm|md|lg`, and `target-size-min`.
 - Lines and shape: `border-width`, `border-width-strong`, `border-style`, `ring-width`, `ring-offset`, and `radius-*`.
 - Elevation and opacity: `shadow-*`, `opacity-disabled`, and `opacity-backdrop`.
+- Motion: `duration-fast`, `duration-normal` and `duration-slow`, plus `easing-standard`, `easing-enter` and `easing-exit`. See [Motion](motion.md).
 
 Every CSS custom property uses the `--tp-` prefix. For example, the `primary` role is exposed as `--tp-primary`.
 
@@ -38,6 +39,10 @@ The default theme uses a 4px spacing seed:
 | `control-height-xs` … `lg`                         | 24, 28, 32, 36px (`spacing` × 6, 7, 8, 9)                               |
 | `icon-size-xs` … `lg`                              | 12, 14, 16, 20px                                                        |
 | `radius-sm`, `md`, `lg`, `xl`, `2xl`, `3xl`, `4xl` | `radius` × 0.6, 0.8, 1, 1.4, 1.8, 2.2, 2.6 (6, 8, 10, 14, 18, 22, 26px) |
+| `duration-fast`, `normal`, `slow`                  | 200, 280, 560ms                                                         |
+| `easing-standard`                                  | `cubic-bezier(0.2, 0, 0, 1)`                                            |
+| `easing-enter`                                     | `cubic-bezier(0.22, 1, 0.36, 1)`                                        |
+| `easing-exit`                                      | `cubic-bezier(0.4, 0, 1, 1)`                                            |
 
 ### Control sizes
 
@@ -68,7 +73,9 @@ import { assertCompatibleTokenModes } from '@tweakpad/ui';
 assertCompatibleTokenModes({ light: lightTokens, dark: darkTokens });
 ```
 
-Component-specific styling belongs in a documented presentation dictionary or public property. Internal shadow elements and unpublished selectors are not a supported override surface. Motion remains governed by the separate motion-role and driver contract.
+Component-specific styling belongs in a documented presentation dictionary or public property. Internal shadow elements and unpublished selectors are not a supported override surface.
+
+`--tp-motion-scale` and `--tp-motion-play-state` are not part of a token set. The reduced-motion policy writes them (`1` and `running` normally, `0` and `paused` under reduce), so a theme leaves them alone; use `motion-policy` to choose the policy for a subtree. Replacing a component's motion entirely goes through the motion driver hooks described in [Motion](motion.md).
 
 ## Presentation resolution and overrides
 

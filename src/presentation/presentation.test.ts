@@ -23,13 +23,65 @@ describe('foundational styling tokens', () => {
     (directory) => new URL(directory, import.meta.url),
   );
 
-  it('keeps bezier definitions out of component transition declarations', () => {
-    for (const directory of elementDirectories)
-      for (const file of readdirSync(directory).filter((name) => name.endsWith('.ts'))) {
-        const source = readFileSync(new URL(file, directory), 'utf8');
-        expect(source, file).not.toContain('cubic-bezier(');
-      }
-    expect(styles).toMatch(/--tp-easing-standard:\s*cubic-bezier\(/u);
+  describe('motion roles (CL §5.3, §5.6)', () => {
+    const tokenValue = (role: string) =>
+      new RegExp(`--tp-${role}:\\s*([^;]+);`, 'u').exec(styles)?.[1]?.trim() ?? '';
+
+    it('ships strictly increasing durations, registered as times', () => {
+      const durations = ['duration-fast', 'duration-normal', 'duration-slow'];
+      const ms = durations.map((role) => Number.parseFloat(tokenValue(role)));
+      expect(ms.every((value, index) => value > 0 && value > (ms[index - 1] ?? 0))).toBe(true);
+      for (const role of durations)
+        expect(styles).toMatch(
+          new RegExp(`@property --tp-${role} \\{\\s*syntax: '<time>';\\s*inherits: true;`, 'u'),
+        );
+    });
+
+    it('defines every easing role as a bezier and keeps the policy channels out of the roles', () => {
+      for (const role of ['easing-standard', 'easing-enter', 'easing-exit'])
+        expect(tokenValue(role), role).toMatch(/^cubic-bezier\(/u);
+      const roles: readonly string[] = TOKEN_FAMILIES.motion;
+      expect(roles).not.toContain('motion-scale');
+      expect(styles).toMatch(
+        /@media \(prefers-reduced-motion: reduce\) \{\s*:root \{\s*--tp-motion-scale: 0;\s*--tp-motion-play-state: paused;/u,
+      );
+    });
+
+    // Default presentation motion resolves duration and easing roles; zero durations suppress
+    // motion. Exempt: Text motion's stagger property default and the scroll-driven fade whose
+    // nominal timing never plays. The easing editor edits curves, so their notation is its data.
+    const exempt: Record<string, readonly string[]> = {
+      'components/text-motion/piece-styles.ts': ['30ms'],
+      'presentation/recipes/message-scroller.ts': ['1ms', 'ease-in-out'],
+    };
+    const sources = ['components', 'widgets', 'presentation'].flatMap((root) =>
+      readdirSync(new URL(`../${root}/`, import.meta.url), { recursive: true })
+        .map(String)
+        .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
+        .filter((file) => !(root === 'widgets' && file.startsWith('easing-editor/')))
+        .map((file) => {
+          const path = `${root}/${file}`;
+          const text = readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
+            .replace(/\/\*[\s\S]*?\*\//gu, '')
+            .replace(/^\s*\/\/.*$/gmu, '');
+          return [path, text] as const;
+        }),
+    );
+
+    it('keeps literal durations and curves out of components, widgets and recipes', () => {
+      const offenders = sources.flatMap(([path, text]) =>
+        [
+          ...text.matchAll(/(?<![\w.#-])(?:\d*\.\d+|\d+)m?s\b/gu),
+          ...text.matchAll(/\bease(?:-in-out|-in|-out)?\b(?![\w(-])/gu),
+          ...text.matchAll(/cubic-bezier\(/gu),
+        ]
+          .map((match) => match[0])
+          .filter((literal) => !/^0+(?:\.0+)?m?s$/u.test(literal))
+          .filter((literal) => !exempt[path]?.includes(literal))
+          .map((literal) => `${path}: ${literal}`),
+      );
+      expect(offenders).toEqual([]);
+    });
   });
 
   it('uses semantic roles and OKLab for every percentage-derived color', () => {

@@ -338,7 +338,8 @@ viewport so nothing moves under the pointer); `minZoom` (0.1) and `maxZoom` (4) 
 `fitViewTo({ padding, duration, nodes, maxZoom })` (the fit never magnifies past a zoom of 1 unless
 `maxZoom` allows), `zoomTo(zoom, { point, duration })`, `zoomIn()` and `zoomOut()` (a factor of
 1.2), `setCenter(point, { zoom, duration })` animate and resolve when the viewport settles,
-instantly under reduced motion. `screenToFlow(point)` and `flowToScreen(point)` convert client
+instantly under reduced motion. Without `duration` the move takes `--tp-duration-normal` on
+`--tp-easing-standard`; `setViewport` is instant unless given a `duration`. `screenToFlow(point)` and `flowToScreen(point)` convert client
 coordinates, `canvasSize` is the pane's size and `getNodesBounds(ids?)`,
 `getIntersectingNodes(rect, partially?)` read the engine's indices.
 

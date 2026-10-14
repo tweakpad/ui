@@ -1,4 +1,4 @@
-import { motionTransition } from '../motion.js';
+import { motionTransition, presenceMotion } from '../motion.js';
 import { popupBorder } from './shared/surface.js';
 import { packedExtent } from './shared/target.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
@@ -84,11 +84,7 @@ export const navigationMenuAppearance: PresentationDictionary = {
   ],
   'navigation-menu-content': [
     ...popupSpacingAppearance,
-    {
-      declarations: {
-        transition: motionTransition(['opacity', 'transform', 'translate']),
-      },
-    },
+    ...presenceMotion(['opacity', 'transform', 'translate']),
     { selector: '&:is([data-starting-style],[data-ending-style])', declarations: { opacity: '0' } },
     {
       selector:
@@ -151,8 +147,9 @@ export const navigationMenuAppearance: PresentationDictionary = {
   'navigation-menu-viewport': [
     ...popup,
     {
+      // The size morph between contents is on-screen movement; presence keeps its curves.
       declarations: {
-        transition: motionTransition(['inline-size', 'block-size', 'opacity', 'transform']),
+        transition: `${motionTransition(['inline-size', 'block-size'])}, ${motionTransition(['opacity', 'transform'], 'normal', 'enter')}`,
       },
     },
   ],

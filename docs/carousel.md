@@ -242,7 +242,8 @@ from `messages.position`, for example "3 of 8"), keyboard navigation and mandato
 snap-on-release. With `visibility: 'while-scrolling'` any track movement reveals the bar:
 previous/next, indicators, swipe, wheel, keyboard, scrollbar input, autoplay and
 controller calls all reveal it. The bar hides
-after 1000 ms without movement with a 400 ms fade, stays visible while hovered,
+after 1000 ms without movement, fading out over the normal duration on the exit easing; it
+stays visible while hovered,
 focused or dragged, and uses the `scrollbar-visibility` motion role (parameters:
 previous/next visibility and `context.orientation`). The `auto-height` role
 receives previous/next height and `context.snap`, the accepted snap index.
@@ -425,7 +426,9 @@ carousel.effect = null; // back to the moving track
 | `carouselFocusEffect()`     | track  | Items dim and shrink with distance from alignment; layers reveal as an item arrives.                                                                                                |
 
 Every factory accepts `duration` (ms) and `easing` (CSS easing), used when a navigation
-does not set a speed, plus the options in the table below.
+does not set a speed, plus the options in the table below. Without `easing`, Shader,
+Crossfade and Layered use `--tp-easing-standard`, and Parallax and Focus, whose items
+arrive along the track, use `--tp-easing-enter`.
 
 - **Stack** effects keep every item at the viewport origin and force one item per view
   and per movement. Conflicting layout options are overridden with a `tp-diagnostic`.
@@ -487,7 +490,8 @@ fallback and announcements are unchanged.
 `CarouselEffect` objects have:
 
 - `name` and `layout` (`track` or `stack`);
-- optional `duration`, `easing` and `constrain(input, diagnose)`;
+- optional `duration`, `easing`, `easingRole` (`standard`, `enter` or `exit`, the motion
+  token used without `easing`) and `constrain(input, diagnose)`;
 - `attach(context)`, which returns `{ frame(frame), update?(), detach() }`.
 
 Each frame provides:

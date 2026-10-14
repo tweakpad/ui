@@ -200,7 +200,10 @@ replaceable presentation owns appearance according to the live boundary. Preserv
 supported public geometry hooks without moving mandatory interaction structure
 into a replaceable theme. Reuse color pairs, typography, spacing and motion roles;
 avoid ad hoc colors, dimensions or animation values for which a role already
-exists. A justified extension requires contract/naming review and documentation.
+exists. Motion timing comes from the `duration-*` and `easing-*` token roles:
+`motionTransition`/`presenceMotion` in `src/presentation/motion.ts` for CSS and
+`resolveMotionTiming` in `src/foundation/motion.ts` for scripted motion. A justified
+extension requires contract/naming review and documentation.
 
 ### State fill motion
 

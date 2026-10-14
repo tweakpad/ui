@@ -1,6 +1,11 @@
-import { prepareMotion, resolvesReducedMotion, type MotionHandle } from '../motion.js';
+import {
+  prepareMotion,
+  resolveMotionTiming,
+  resolvesReducedMotion,
+  type MotionHandle,
+} from '../motion.js';
 import { TranslatePresenter, type CarouselPresenter } from './presenter.js';
-import { carouselAutoHeightMotion, carouselMotionRoles, carouselMotionTiming } from './timing.js';
+import { carouselAutoHeightMotion, carouselMotionRoles } from './timing.js';
 import { OwnedStyles } from '../owned-styles.js';
 import { CleanupScope, Scheduler } from '../services.js';
 import type { CarouselController } from './controller.js';
@@ -10,7 +15,6 @@ import type { CarouselNavigationRequest } from './types.js';
 export {
   carouselAutoHeightMotion,
   carouselMotionRoles,
-  carouselMotionTiming,
   carouselScrollbarVisibilityMotion,
 } from './timing.js';
 
@@ -219,7 +223,7 @@ export class CarouselTransport {
         play: () => {
           const animation = this.elements.viewport.animate(
             [{ height: `${previous}px` }, { height: `${height}px` }],
-            carouselMotionTiming(this.owner),
+            resolveMotionTiming(this.owner),
           );
           return {
             finished: animation.finished.then(() => undefined),

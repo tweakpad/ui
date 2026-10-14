@@ -96,6 +96,15 @@ export const TOKEN_FAMILIES = {
   ],
   shadow: ['shadow-none', 'shadow-sm', 'shadow-md', 'shadow-lg'],
   opacity: ['opacity-disabled', 'opacity-backdrop'],
+  /** Motion timing; `motion-scale` and `motion-play-state` are policy channels, not roles. */
+  motion: [
+    'duration-fast',
+    'duration-normal',
+    'duration-slow',
+    'easing-standard',
+    'easing-enter',
+    'easing-exit',
+  ],
 } as const;
 
 export type TokenFamily = keyof typeof TOKEN_FAMILIES;

@@ -1,6 +1,6 @@
 /**
  * Shared fakes for the foundation unit tests (node environment): a manual frame source, a
- * reactive-controller host, an IntersectionObserver and a keyboard event. A `*.test.ts` module
+ * reactive-controller host, an IntersectionObserver, a keyboard event and a styled document. A `*.test.ts` module
  * stays out of the build; the suite at the end keeps the file from counting as an empty one.
  */
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
@@ -132,6 +132,28 @@ export function keyEvent(
   return event as unknown as KeyboardEvent;
 }
 
+/** The default motion roles as a computed style reports them (registered durations). */
+export const MOTION_TOKENS: Readonly<Record<string, string>> = {
+  '--tp-duration-fast': '0.2s',
+  '--tp-duration-normal': '0.28s',
+  '--tp-duration-slow': '0.56s',
+  '--tp-easing-standard': 'cubic-bezier(0.2, 0, 0, 1)',
+  '--tp-easing-enter': 'cubic-bezier(0.22, 1, 0.36, 1)',
+  '--tp-easing-exit': 'cubic-bezier(0.4, 0, 1, 1)',
+  '--tp-motion-scale': '1',
+};
+
+/**
+ * An owner document whose window reports `values` as every element's computed custom
+ * properties, with the given reduced-motion preference.
+ */
+export function styledDocument(values = MOTION_TOKENS, reduced = false): Document {
+  const style = { getPropertyValue: (name: string) => values[name] ?? '' };
+  return {
+    defaultView: { getComputedStyle: () => style, matchMedia: () => ({ matches: reduced }) },
+  } as unknown as Document;
+}
+
 describe('foundation test fakes', () => {
   it('runs manual frames in order and reports pending callbacks', () => {
     const frames = new ManualFrames();
@@ -156,6 +178,13 @@ describe('foundation test fakes', () => {
     ]);
     expect(event.composedPath()).toEqual([host]);
     expect(keyEvent('Enter', { repeat: true }).repeat).toBe(true);
+  });
+
+  it('reports computed custom properties from a styled document', () => {
+    const view = styledDocument({ '--x': '1' }, true).defaultView!;
+    const style = view.getComputedStyle({} as Element);
+    expect([style.getPropertyValue('--x'), style.getPropertyValue('--y')]).toEqual(['1', '']);
+    expect(view.matchMedia('(prefers-reduced-motion: reduce)').matches).toBe(true);
   });
 
   it('tracks controllers on the fake host', () => {

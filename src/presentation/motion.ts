@@ -1,23 +1,52 @@
 import { unsafeCSS } from 'lit';
 import { serializeDeclarations } from './resolver.js';
-import type { PresentationDeclarations } from './resolver.js';
+import type { PresentationDeclarations, PresentationRule } from './resolver.js';
+import type {
+  MotionDurationRole as MotionDuration,
+  MotionEasingRole as MotionEasing,
+} from '../foundation/motion.js';
 
-export function motionDuration(timing: 'fast' | 'normal' = 'normal', factor = '1') {
+export function motionDuration(timing: MotionDuration = 'normal', factor = '1') {
   return `calc(var(--tp-duration-${timing}) * var(--tp-motion-scale) * ${factor})`;
+}
+
+export function motionEasing(easing: MotionEasing = 'standard') {
+  return `var(--tp-easing-${easing})`;
 }
 
 /** One timing policy for finite motion; state/lifecycle remain with Foundation. */
 export function motionTransition(
   properties: readonly string[],
-  timing: 'fast' | 'normal' = 'normal',
+  timing: MotionDuration = 'normal',
+  easing: MotionEasing = 'standard',
 ) {
   return properties
-    .map((property) => `${property} ${motionDuration(timing)} var(--tp-easing-standard)`)
+    .map((property) => `${property} ${motionDuration(timing)} ${motionEasing(easing)}`)
     .join(', ');
 }
 
-export function transitionCss(properties: readonly string[], timing: 'fast' | 'normal' = 'normal') {
-  return unsafeCSS(motionTransition(properties, timing));
+export function transitionCss(
+  properties: readonly string[],
+  timing: MotionDuration = 'normal',
+  easing: MotionEasing = 'standard',
+) {
+  return unsafeCSS(motionTransition(properties, timing, easing));
+}
+
+/**
+ * Presence motion: the surface arrives on the enter curve and leaves on the exit curve. A
+ * transition takes its timing from the style it moves to, so the ending style selects the
+ * exit curve for the whole departure. Place the pair before any rule that suppresses motion.
+ */
+export function presenceMotion(
+  properties: readonly string[],
+  timing: MotionDuration = 'normal',
+  ending = '&[data-ending-style]',
+): readonly PresentationRule[] {
+  return [
+    { declarations: { transition: motionTransition(properties, timing, 'enter') } },
+    { selector: ending, declarations: { 'transition-timing-function': motionEasing('exit') } },
+  ];
 }
 
 /**

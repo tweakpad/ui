@@ -5,16 +5,9 @@ import type { CarouselEffectItem } from '../../../foundation/carousel/effect.js'
 export interface CarouselEffectTiming {
   /** Transition duration in milliseconds when a navigation does not set a speed. */
   duration?: number;
-  /** CSS easing for those transitions. */
+  /** CSS easing for those transitions; defaults to the effect's easing role. */
   easing?: string;
 }
-
-export const easings = {
-  /** Smooth start and end for stacked transitions. */
-  inOut: 'cubic-bezier(0.65, 0, 0.35, 1)',
-  /** Fast start, long settle for moving tracks. */
-  out: 'cubic-bezier(0.16, 1, 0.3, 1)',
-} as const;
 
 /** Inline styles an effect writes, restored exactly when the effect detaches. */
 export class EffectStyles {

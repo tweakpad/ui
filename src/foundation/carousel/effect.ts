@@ -1,4 +1,4 @@
-import { resolvesReducedMotion } from '../motion.js';
+import { resolveMotionTiming, resolvesReducedMotion, type MotionEasingRole } from '../motion.js';
 import { parseEasing } from '../motion-easing.js';
 import { OwnedStyles } from '../owned-styles.js';
 import type { CarouselController, CarouselInput } from './controller.js';
@@ -8,7 +8,7 @@ import {
   carouselTrackTransform,
   type CarouselFrameMotion,
 } from './presenter.js';
-import { carouselMotionRoles, carouselMotionTiming } from './timing.js';
+import { carouselMotionRoles } from './timing.js';
 import type { CarouselId, CarouselNavigationRequest, CarouselOptions } from './types.js';
 
 /**
@@ -80,6 +80,8 @@ export interface CarouselEffect {
   readonly duration?: number;
   /** CSS easing for effect transitions when a navigation does not specify a speed. */
   readonly easing?: string;
+  /** Easing role used without `easing`: `standard` for in-place changes, `enter` for arrivals. */
+  readonly easingRole?: MotionEasingRole;
   /** Adjust the carousel input the effect requires, such as one item per view. */
   constrain?(input: CarouselInput, diagnose: (message: string) => void): CarouselInput;
   attach(context: CarouselEffectContext): CarouselEffectInstance;
@@ -216,7 +218,11 @@ export class EffectPresenter extends CarouselFramePresenter {
     this.#previous += shift;
   }
   protected motion(position: number, request: CarouselNavigationRequest): CarouselFrameMotion {
-    const timing = carouselMotionTiming(this.owner, request.speed ?? this.effect.duration);
+    const timing = resolveMotionTiming(
+      this.owner,
+      request.speed ?? this.effect.duration,
+      this.effect.easingRole,
+    );
     return {
       target: this.host.viewport,
       role: carouselMotionRoles.transition,

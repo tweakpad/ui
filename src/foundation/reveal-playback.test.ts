@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { cssTimeMs, transitionSpan } from './reveal-playback.js';
+import { cssTimeMs } from './motion.js';
+import { transitionSpan } from './reveal-playback.js';
 
 describe('CSS time parsing', () => {
   it('reads seconds and milliseconds, and 0 for anything else', () => {

@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
+import { MOTION_TOKENS, styledDocument } from './fakes.test.js';
 import {
   cancelMotions,
+  cssTimeMs,
   prepareMotion,
+  resolveMotionTiming,
   resolvesReducedMotion,
   type TpMotionRequestEvent,
 } from './motion.js';
@@ -43,6 +46,53 @@ describe('motion policy environment', () => {
     const target = element(null, element('normal'));
     Object.assign(target, { assignedSlot: element('reduce') });
     expect(resolvesReducedMotion(target)).toBe(true);
+  });
+});
+
+describe('motion timing roles (CL §5.3)', () => {
+  const styled = (values: Record<string, string> = MOTION_TOKENS, policy: string | null = null) =>
+    ({
+      nodeType: 1,
+      parentNode: null,
+      getAttribute: () => policy,
+      ownerDocument: styledDocument(values),
+    }) as unknown as Element;
+
+  it('parses CSS times, including the canonical form of registered durations', () => {
+    expect([cssTimeMs('0.28s'), cssTimeMs(' 560ms '), cssTimeMs('.2s'), cssTimeMs('auto')]).toEqual(
+      [280, 560, 200, 0],
+    );
+  });
+
+  it('resolves a duration role and an easing role from the computed style', () => {
+    expect(resolveMotionTiming(styled())).toEqual({
+      duration: 280,
+      easing: 'cubic-bezier(0.2, 0, 0, 1)',
+    });
+    expect(resolveMotionTiming(styled(), 'fast', 'enter')).toEqual({
+      duration: 200,
+      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    });
+    expect(resolveMotionTiming(styled(), 'slow', 'exit', 0.5).duration).toBe(280);
+  });
+
+  it('scales roles and documented option values by the motion scale', () => {
+    const slowed = styled({ ...MOTION_TOKENS, '--tp-motion-scale': '2' });
+    expect(resolveMotionTiming(slowed).duration).toBe(560);
+    expect(resolveMotionTiming(slowed, 100).duration).toBe(200);
+    expect(
+      resolveMotionTiming(styled({ ...MOTION_TOKENS, '--tp-motion-scale': '0' })).duration,
+    ).toBe(0);
+  });
+
+  it('follows a scoped override of a role', () => {
+    const scoped = styled({ ...MOTION_TOKENS, '--tp-duration-normal': '1s' });
+    expect(resolveMotionTiming(scoped).duration).toBe(1000);
+  });
+
+  it('resolves no motion under reduced motion and without a token set', () => {
+    expect(resolveMotionTiming(styled(MOTION_TOKENS, 'reduce')).duration).toBe(0);
+    expect(resolveMotionTiming(styled({}))).toEqual({ duration: 0, easing: 'linear' });
   });
 });
 

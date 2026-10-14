@@ -4,7 +4,7 @@ import type {
   CarouselEffectFrame,
 } from '../../../foundation/carousel/effect.js';
 import { parallaxGeometry } from '../../../foundation/parallax.js';
-import { EffectStyles, carouselItemMedia, easings, type CarouselEffectTiming } from './shared.js';
+import { EffectStyles, carouselItemMedia, type CarouselEffectTiming } from './shared.js';
 
 export interface CarouselParallaxOptions extends CarouselEffectTiming {
   /**
@@ -24,7 +24,8 @@ export function carouselParallaxEffect(options: CarouselParallaxOptions = {}): C
   return {
     name: 'parallax',
     duration: options.duration ?? 900,
-    easing: options.easing ?? easings.out,
+    ...(options.easing ? { easing: options.easing } : {}),
+    easingRole: 'enter',
     layout: 'track',
     attach(context: CarouselEffectContext) {
       const styles = new EffectStyles();

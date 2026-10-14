@@ -38,7 +38,7 @@ describe('size and spacing normalization (CL §5.3)', () => {
       // Runtime geometry outputs (--tp-anchor-width, --tp-toast-*) are not foundation roles.
       [
         ...value.matchAll(
-          /var\((--tp-(?:space|text|font|leading|tracking|control-height|icon-size-|radius|shadow|opacity|border|ring)[\w-]*)/g,
+          /var\((--tp-(?:space|text|font|leading|tracking|control-height|icon-size-|radius|shadow|opacity|border|ring|duration|easing|motion)[\w-]*)/g,
         ),
       ]
         .map((match) => match[1]!)

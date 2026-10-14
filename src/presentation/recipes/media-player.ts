@@ -1,4 +1,4 @@
-import { motionTransition } from '../motion.js';
+import { motionEasing, motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 
 /**
@@ -218,12 +218,16 @@ export const mediaPlayerAppearance: PresentationDictionary = {
         background: 'color-mix(in oklab, var(--tp-background) 70%, transparent)',
         'font-size': 'var(--tp-text-sm)',
         'font-weight': 'var(--tp-font-medium)',
-        transition: motionTransition(['opacity', 'scale'], 'fast'),
+        transition: motionTransition(['opacity', 'scale'], 'fast', 'enter'),
       },
     },
     {
       selector: ':host(:is([data-starting-style], [data-ending-style])) &',
       declarations: { opacity: '0', scale: '0.96' },
+    },
+    {
+      selector: ':host([data-ending-style]) &',
+      declarations: { 'transition-timing-function': motionEasing('exit') },
     },
     {
       selector: ':host(tp-media-seek-indicator) &',
@@ -237,7 +241,7 @@ export const mediaPlayerAppearance: PresentationDictionary = {
         'border-radius': 'var(--tp-radius-full)',
         background: 'color-mix(in oklab, var(--tp-background) 35%, transparent)',
         'backdrop-filter': 'blur(var(--tp-space-2-5))',
-        transition: motionTransition(['opacity', 'scale']),
+        transition: motionTransition(['opacity', 'scale'], 'normal', 'enter'),
       },
     },
     {

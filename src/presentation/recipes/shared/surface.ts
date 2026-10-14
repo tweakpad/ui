@@ -1,4 +1,4 @@
-import { motionTransition } from '../../motion.js';
+import { presenceMotion } from '../../motion.js';
 import type { PresentationRule } from '../../resolver.js';
 import { rule } from './variant.js';
 
@@ -16,7 +16,8 @@ export const surfaceAppearance: readonly PresentationRule[] = [
 
 // Surface and backdrop begin and finish together; no static popup during backdrop exit.
 export const surfaceFadeAppearance: readonly PresentationRule[] = [
-  rule({ opacity: '1', transition: motionTransition(['opacity'], 'fast') }),
+  rule({ opacity: '1' }),
+  ...presenceMotion(['opacity'], 'fast'),
   rule({ opacity: '0' }, '&:is([data-starting-style], [data-ending-style])'),
   rule({ transition: 'none' }, '&[data-tp-motion-driven]'),
 ];

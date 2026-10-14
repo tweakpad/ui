@@ -1,4 +1,4 @@
-import { ManualFrames } from '../fakes.test.js';
+import { ManualFrames, styledDocument } from '../fakes.test.js';
 import { describe, expect, it } from 'vitest';
 /** Fakes for map tests: a manual frame source, a recording engine and a controller host. */
 import type { ChangeReason } from '../types.js';
@@ -158,7 +158,7 @@ export function createHost(overrides: Partial<MapConfig> = {}) {
     cancel: false,
     selection: null as string | null,
     appearance: { scheme: 'light' as MapScheme, theme: null as ResolvedMapTheme | null },
-    viewportElement: {} as HTMLElement,
+    viewportElement: { ownerDocument: styledDocument() } as unknown as HTMLElement,
   };
   const controllerHost: MapControllerHost = {
     viewport: () => host.viewportElement,

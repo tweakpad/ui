@@ -111,7 +111,7 @@ until it loads, so a broken-image glyph never appears.
   scaled up and settles to natural size on hover. Set `zoomed` to apply the hover state from
   elsewhere, for example while a surrounding card is hovered. Hover zoom applies only to
   devices that can hover, and it never changes layout or the clipping frame. By default it
-  takes twice the normal duration (560ms) and eases out. Tune it with `--tp-image-zoom-duration`
+  takes the slow duration (560ms) on the enter easing. Tune it with `--tp-image-zoom-duration`
   and `--tp-image-zoom-easing`.
 - **Parallax**: the image moves inside its frame as the page, or the nearest container that
   actually scrolls, scrolls past it. Clipping wrappers that don't scroll, such as a card with
@@ -226,13 +226,13 @@ the frame.
 | ---------------------------- | ------------------------------------------------------------------------- |
 | `--tp-image-position`        | `50% 50%` (object position)                                               |
 | `--tp-image-zoom-scale`      | `1.1`                                                                     |
-| `--tp-image-zoom-duration`   | `calc(var(--tp-duration-normal) * 2)`; always scaled by the motion policy |
-| `--tp-image-zoom-easing`     | `ease-out`                                                                |
+| `--tp-image-zoom-duration`   | `var(--tp-duration-slow)`; always scaled by the motion policy             |
+| `--tp-image-zoom-easing`     | `var(--tp-easing-enter)`; any CSS easing                                  |
 | `--tp-image-reveal-distance` | `var(--tp-space-6)`                                                       |
 | `--tp-image-reveal-scale`    | `0.08` (scale offset for `zoom-in`/`zoom-out`)                            |
 | `--tp-image-reveal-delay`    | `0s`                                                                      |
-| `--tp-image-reveal-duration` | `calc(var(--tp-duration-normal) * 2)`; always scaled by the motion policy |
-| `--tp-image-reveal-easing`   | `var(--tp-easing-standard)`; any CSS easing                               |
+| `--tp-image-reveal-duration` | `var(--tp-duration-slow)`; always scaled by the motion policy             |
+| `--tp-image-reveal-easing`   | `var(--tp-easing-enter)`; any CSS easing                                  |
 
 Markers on the host: `data-status`; `data-in-view` (present while visibility is observed and
 the image intersects the viewport); `data-revealed`.

@@ -3,13 +3,7 @@ import {
   type CarouselEffect,
   type CarouselEffectFrame,
 } from '../../../foundation/carousel/effect.js';
-import {
-  EffectStyles,
-  easeInOutCubic,
-  smoothstep,
-  easings,
-  type CarouselEffectTiming,
-} from './shared.js';
+import { EffectStyles, easeInOutCubic, smoothstep, type CarouselEffectTiming } from './shared.js';
 
 export interface CarouselCrossfadeOptions extends CarouselEffectTiming {
   /**
@@ -25,7 +19,7 @@ export function carouselCrossfadeEffect(options: CarouselCrossfadeOptions = {}):
   return {
     name: 'crossfade',
     duration: options.duration ?? 600,
-    easing: options.easing ?? easings.inOut,
+    ...(options.easing ? { easing: options.easing } : {}),
     layout: 'stack',
     constrain: stackEffectConstraint('crossfade'),
     attach() {

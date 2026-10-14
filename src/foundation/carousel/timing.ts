@@ -39,18 +39,3 @@ export function carouselScrollbarVisibilityMotion(
 ): MotionRequestOptions {
   return { phase: 'change', fromState: previous, toState: next, context: { orientation } };
 }
-
-export function carouselMotionTiming(
-  owner: HTMLElement,
-  explicit?: number,
-): { duration: number; easing: string } {
-  const style = owner.ownerDocument.defaultView?.getComputedStyle(owner);
-  const token = style?.getPropertyValue('--tp-duration-normal').trim() ?? '';
-  const match = /^(\d+(?:\.\d+)?)(ms|s)$/.exec(token);
-  const duration = explicit ?? (match ? Number(match[1]) * (match[2] === 's' ? 1000 : 1) : 300);
-  const scale = Number(style?.getPropertyValue('--tp-motion-scale').trim() || 1);
-  return {
-    duration: Math.max(0, duration * (Number.isFinite(scale) ? scale : 1)),
-    easing: style?.getPropertyValue('--tp-easing-standard').trim() || 'ease',
-  };
-}

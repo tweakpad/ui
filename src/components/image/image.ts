@@ -6,6 +6,7 @@ import type { CustomElementConstructorWithTag } from '../../foundation/define.js
 import { TpElement } from '../../foundation/element.js';
 import { ImageLoadController, type ImageLoadStatus } from '../../foundation/image-load.js';
 import {
+  cssTimeMs,
   resolvesReducedMotion,
   type MotionRoleDefinition,
   stateRole,
@@ -25,7 +26,6 @@ import {
   RevealPlayback,
   StandaloneReveal,
   transitionSpan,
-  cssTimeMs,
 } from '../../foundation/reveal-playback.js';
 import { imageOffIcon } from '../../icons/image.js';
 import { imagePresentation } from '../../presentation/families/image.js';
@@ -92,6 +92,10 @@ export const imageMotionRoles = {
  * @cssprop --tp-image-reveal-distance - Reveal travel. Default `var(--tp-space-6)`.
  * @cssprop --tp-image-reveal-scale - Reveal scale offset for zoom-in/zoom-out. Default `0.08`.
  * @cssprop --tp-image-reveal-delay - Reveal delay, for staggering. Default `0s`.
+ * @cssprop --tp-image-reveal-duration - Reveal duration. Default `var(--tp-duration-slow)`.
+ * @cssprop --tp-image-reveal-easing - Reveal easing. Default `var(--tp-easing-enter)`.
+ * @cssprop --tp-image-zoom-duration - Hover zoom duration. Default `var(--tp-duration-slow)`.
+ * @cssprop --tp-image-zoom-easing - Hover zoom easing. Default `var(--tp-easing-enter)`.
  */
 export class TpImage extends TpElement {
   static tagName = 'tp-image';
@@ -144,10 +148,9 @@ export class TpImage extends TpElement {
 
         /* Reveal timing is consumer-tunable; the shared motion scale still applies. */
         --_reveal-duration: calc(
-          var(--tp-image-reveal-duration, calc(var(--tp-duration-normal) * 2)) *
-            var(--tp-motion-scale, 1)
+          var(--tp-image-reveal-duration, var(--tp-duration-slow)) * var(--tp-motion-scale, 1)
         );
-        --_reveal-easing: var(--tp-image-reveal-easing, var(--tp-easing-standard));
+        --_reveal-easing: var(--tp-image-reveal-easing, var(--tp-easing-enter));
       }
 
       /* Reveal start values (Foundation §18.17 img-reveal), shared by the timed start state and
@@ -257,13 +260,10 @@ export class TpImage extends TpElement {
         border-radius: inherit;
         scale: calc((1 + var(--_overscan, 0) * var(--_motion)) * var(--_zoom));
 
-        /* Hover zoom: slower than control feedback, settling with an ease-out by default. */
+        /* Hover zoom: slower than control feedback, settling on the enter curve by default. */
         transition: scale
-          calc(
-            var(--tp-image-zoom-duration, calc(var(--tp-duration-normal) * 2)) *
-              var(--tp-motion-scale, 1)
-          )
-          var(--tp-image-zoom-easing, ease-out);
+          calc(var(--tp-image-zoom-duration, var(--tp-duration-slow)) * var(--tp-motion-scale, 1))
+          var(--tp-image-zoom-easing, var(--tp-easing-enter));
       }
 
       /* With a ratio, Aspect-ratio box fits its slotted Media; the picture inherits that fit. */

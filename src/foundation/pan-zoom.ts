@@ -1,5 +1,7 @@
 import { frameLoopFor } from './frame-loop.js';
 import { keyHintPlatform } from './key-notation.js';
+import { resolveMotionTiming } from './motion.js';
+import { parseEasing } from './motion-easing.js';
 import { componentHandlingPrevented } from './part.js';
 import { CleanupScope, Scheduler } from './services.js';
 
@@ -139,14 +141,6 @@ export const AUTO_PAN_EDGE = 40;
 export const AUTO_PAN_SPEED = 15;
 /** Zoom factor of a double click. */
 export const DOUBLE_CLICK_ZOOM_FACTOR = 1.2;
-/** Default `animateTo` duration. */
-export const DEFAULT_ANIMATION_DURATION = 250;
-
-/** Cubic in-out easing, the default `animateTo` curve. */
-export function cubicInOut(t: number): number {
-  return ((t *= 2) <= 1 ? t * t * t : (t -= 2) * t * t + 2) / 2;
-}
-
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /**
@@ -339,7 +333,12 @@ export class PanZoomController {
   animateTo(viewport: PanZoomViewport, options: PanZoomAnimationOptions = {}): Promise<boolean> {
     this.cancelAnimation();
     const to = this.#clamp(viewport);
-    const duration = options.duration ?? DEFAULT_ANIMATION_DURATION;
+    // Unset timing follows the element's normal duration and standard easing (CL §5.3).
+    const timing =
+      options.duration === undefined || !options.easing
+        ? resolveMotionTiming(this.#options.element)
+        : undefined;
+    const duration = options.duration ?? timing!.duration;
     const loop = this.#frameLoop();
     if (!(duration > 0) || !loop) {
       this.#apply(to, 'programmatic', null);
@@ -350,7 +349,7 @@ export class PanZoomController {
         from: this.#options.viewport(),
         to,
         duration,
-        easing: options.easing ?? cubicInOut,
+        easing: options.easing ?? parseEasing(timing!.easing),
         resolve,
         elapsed: 0,
       };

@@ -123,10 +123,16 @@
   --tp-opacity-disabled: 0.55;
   --tp-opacity-backdrop: 0.48;
 
-  /* Motion remains a separate, replaceable contract. */
+  /* Motion roles (CL §5.3): durations strictly increase; standard serves state changes and
+     on-screen movement, enter serves arrivals, reveals and settlement, exit serves departures. */
   --tp-duration-fast: 200ms;
   --tp-duration-normal: 280ms;
+  --tp-duration-slow: 560ms;
   --tp-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --tp-easing-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --tp-easing-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Motion policy channels, written by the reduced-motion policy below; not theme roles. */
   --tp-motion-scale: 1;
   --tp-motion-play-state: running;
 
@@ -169,6 +175,26 @@ body {
 [motion-policy='reduce'] {
   --tp-motion-scale: 0;
   --tp-motion-play-state: paused;
+}
+
+/* Duration roles resolve to canonical times (`0.28s`) for scripted motion and external drivers;
+   an invalid override falls back to the default. */
+@property --tp-duration-fast {
+  syntax: '<time>';
+  inherits: true;
+  initial-value: 200ms;
+}
+
+@property --tp-duration-normal {
+  syntax: '<time>';
+  inherits: true;
+  initial-value: 280ms;
+}
+
+@property --tp-duration-slow {
+  syntax: '<time>';
+  inherits: true;
+  initial-value: 560ms;
 }
 
 /* Scroll-aware edge mask.

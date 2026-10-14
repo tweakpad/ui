@@ -8,7 +8,6 @@ import {
   carouselItemLayers,
   clamp01,
   easeOutCubic,
-  easings,
   type CarouselEffectTiming,
 } from './shared.js';
 
@@ -32,7 +31,8 @@ export function carouselFocusEffect(options: CarouselFocusOptions = {}): Carouse
   return {
     name: 'focus',
     duration: options.duration ?? 800,
-    easing: options.easing ?? easings.out,
+    ...(options.easing ? { easing: options.easing } : {}),
+    easingRole: 'enter',
     layout: 'track',
     attach(context: CarouselEffectContext) {
       const styles = new EffectStyles();

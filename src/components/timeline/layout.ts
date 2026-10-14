@@ -1,4 +1,5 @@
 import { unsafeCSS } from 'lit';
+import { motionTransition } from '../../presentation/motion.js';
 
 /** Inline size below which responsive is vertical and vertical alternation collapses to end. */
 export const TIMELINE_BREAKPOINT = '40rem';
@@ -171,7 +172,7 @@ export const timelineItemStyles = [
       inline-size: var(--tp-border-width);
       transform: scaleY(0);
       transform-origin: top;
-      transition: transform var(--tp-duration-normal) var(--tp-easing-standard);
+      transition: ${motionTransition(['transform'])};
     }
 
     .fill[data-status='complete'] {

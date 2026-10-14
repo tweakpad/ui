@@ -21,7 +21,6 @@ import {
   clamp01,
   easeOutCubic,
   smoothstep,
-  easings,
   type CarouselEffectTiming,
 } from '../shared.js';
 import {
@@ -72,7 +71,7 @@ export function carouselShaderEffect(options: CarouselShaderOptions = {}): Carou
   return {
     name: 'shader',
     duration: options.duration ?? 1200,
-    easing: options.easing ?? easings.inOut,
+    ...(options.easing ? { easing: options.easing } : {}),
     layout: 'stack',
     constrain: stackEffectConstraint('shader'),
     attach: (context) => new ShaderTransition(context, options),

@@ -331,6 +331,52 @@ export function resolvesReducedMotion(element: Element): boolean {
   );
 }
 
+/** Duration roles: feedback, surfaces and panels, reveals and large travel. */
+export type MotionDurationRole = 'fast' | 'normal' | 'slow';
+/** Easing roles: state change and on-screen movement, arrival, departure. */
+export type MotionEasingRole = 'standard' | 'enter' | 'exit';
+
+export interface MotionTiming {
+  /** Milliseconds, already multiplied by the motion scale. */
+  duration: number;
+  /** A CSS easing function. */
+  easing: string;
+}
+
+/** Milliseconds of one CSS `<time>` value (`0.56s`, `560ms`); 0 when it does not parse. */
+export function cssTimeMs(text: string): number {
+  const value = text.trim();
+  const number = Number.parseFloat(value);
+  if (!Number.isFinite(number)) return 0;
+  return value.endsWith('ms') ? number : number * 1000;
+}
+
+/**
+ * Timing of scripted default motion (CL §5.3): the element's computed duration role times the
+ * motion scale and an optional documented factor, with its easing role. A number is a documented
+ * option value in milliseconds that replaces the role and is still scaled. Reduced motion and a
+ * missing token set resolve to no motion, as a transition over an undefined token never runs.
+ */
+export function resolveMotionTiming(
+  element: Element,
+  duration: MotionDurationRole | number = 'normal',
+  easing: MotionEasingRole = 'standard',
+  factor = 1,
+): MotionTiming {
+  const style = element.ownerDocument.defaultView?.getComputedStyle(element);
+  const curve = style?.getPropertyValue(`--tp-easing-${easing}`).trim() || 'linear';
+  if (!style || resolvesReducedMotion(element)) return { duration: 0, easing: curve };
+  const scale = Number.parseFloat(style.getPropertyValue('--tp-motion-scale'));
+  const time =
+    typeof duration === 'number'
+      ? duration
+      : cssTimeMs(style.getPropertyValue(`--tp-duration-${duration}`));
+  return {
+    duration: Math.max(0, time * (Number.isFinite(scale) ? scale : 1) * factor),
+    easing: curve,
+  };
+}
+
 export function reportMotionDiagnostic(owner: HTMLElement, code: string, message: string): void {
   queueMicrotask(() => reportDiagnostic(owner, { code, message, severity: 'error' }));
 }

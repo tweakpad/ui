@@ -9,7 +9,13 @@ export function playLineByLine(request: MotionRequest): MotionPlayback {
   const lines = [...request.owner.querySelectorAll<HTMLElement>('p')];
   const exiting = request.phase === 'exit';
   const ordered = exiting ? [...lines].reverse() : lines;
-  const easing = getComputedStyle(request.owner).getPropertyValue('--tp-easing-standard').trim();
+  const style = getComputedStyle(request.owner);
+  const easing = style.getPropertyValue(exiting ? '--tp-easing-exit' : '--tp-easing-enter');
+  // Duration roles compute to seconds (`0.28s`); each line takes the normal duration.
+  const duration =
+    parseFloat(style.getPropertyValue('--tp-duration-normal')) *
+    1000 *
+    Number(style.getPropertyValue('--tp-motion-scale') || 1);
   const animations = ordered.map((line, index) =>
     line.animate(
       exiting
@@ -21,7 +27,7 @@ export function playLineByLine(request: MotionRequest): MotionPlayback {
             { opacity: 0, transform: 'translateY(var(--tp-space-3))' },
             { opacity: 1, transform: 'translateY(0)' },
           ],
-      { duration: 380, delay: index * 100, easing, fill: 'both' },
+      { duration, delay: index * 100, easing, fill: 'both' },
     ),
   );
   const finished = Promise.all(animations.map((animation) => animation.finished)).then(() => {

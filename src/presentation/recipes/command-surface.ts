@@ -1,4 +1,4 @@
-import { motionTransition } from '../motion.js';
+import { presenceMotion } from '../motion.js';
 import { popupBorder, popupBorderColor } from './shared/surface.js';
 import type { PresentationRule } from '../resolver.js';
 
@@ -26,13 +26,8 @@ export const popupItemSpacingAppearance: readonly PresentationRule[] = [
 
 /** Actual shared anchored Presence recipe; geometry remains in the surface owner. */
 export const anchoredPresenceAppearance: readonly PresentationRule[] = [
-  {
-    declarations: {
-      opacity: '1',
-      transform: 'scale(1) translate(0, 0)',
-      transition: motionTransition(['opacity', 'transform']),
-    },
-  },
+  { declarations: { opacity: '1', transform: 'scale(1) translate(0, 0)' } },
+  ...presenceMotion(['opacity', 'transform']),
   {
     selector: '&:is([data-starting-style], [data-ending-style])',
     declarations: {

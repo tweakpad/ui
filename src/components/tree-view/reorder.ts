@@ -3,7 +3,7 @@ import { Sortable } from '../../foundation/drag-drop/sortable.js';
 import { PointerSensor } from '../../foundation/drag-drop/sensors/index.js';
 import type { DragEvent } from '../../foundation/drag-drop/types.js';
 import { dragMotion, dragMotionContext } from '../../foundation/drag-drop/motion.js';
-import type { MotionHandle } from '../../foundation/motion.js';
+import { resolveMotionTiming, type MotionHandle } from '../../foundation/motion.js';
 import {
   dragDepth,
   projectDepth,
@@ -369,7 +369,7 @@ export class TreeReorder {
           element,
           'sort-displacement',
           [{ translate: `${x}px ${y}px` }, { translate: '0 0' }],
-          { duration: 200, easing: 'cubic-bezier(0.25, 1, 0.5, 1)' },
+          resolveMotionTiming(element, 'fast', 'enter'),
           dragMotionContext(id, { fromIndex: previous.index, toIndex: rows.indexOf(id) }, { x, y }),
         ),
       );

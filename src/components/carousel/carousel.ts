@@ -12,6 +12,7 @@ import { OwnedStyles } from '../../foundation/owned-styles.js';
 import { CleanupScope, Scheduler } from '../../foundation/services.js';
 import { CollectionRegistry } from '../../foundation/collection.js';
 import {
+  resolveMotionTiming,
   resolvesReducedMotion,
   prepareMotion,
   type MotionHandle,
@@ -32,7 +33,6 @@ import { CarouselVirtualCache } from '../../foundation/carousel/virtual.js';
 import {
   CarouselTransport,
   carouselMotionRoles,
-  carouselMotionTiming,
   carouselScrollbarVisibilityMotion,
 } from '../../foundation/carousel/transport.js';
 import {
@@ -1752,7 +1752,7 @@ export class TpCarousel<T = unknown> extends TpElement {
         play: () => {
           const animation = target.animate(
             [{ opacity: previous ? 1 : 0 }, { opacity: visible ? 1 : 0 }],
-            carouselMotionTiming(this, visible ? 0 : 400),
+            resolveMotionTiming(this, visible ? 0 : 'normal', visible ? 'standard' : 'exit'),
           );
           return {
             finished: animation.finished.then(() => undefined),

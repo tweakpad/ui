@@ -1,5 +1,5 @@
 import { css, html, type PropertyValues } from 'lit';
-import { stateRole } from '../../foundation/motion.js';
+import { cssTimeMs, stateRole } from '../../foundation/motion.js';
 import { TpElement } from '../../foundation/element.js';
 import type { MotionRoleDefinition } from '../../foundation/motion.js';
 import {
@@ -20,7 +20,6 @@ import {
   RevealPlayback,
   StandaloneReveal,
   transitionSpan,
-  cssTimeMs,
 } from '../../foundation/reveal-playback.js';
 import { scheduleLinePass, type LinePass } from '../../foundation/text-split/scheduler.js';
 import {
@@ -80,8 +79,8 @@ export function parseSplitUnits(value: string | null | undefined): Set<SplitUnit
  * @fires tp-text-split - `{ lines, words, chars, masks }` after every split.
  * @fires tp-reveal-change - `{ revealed, effect }` when the reveal starts or a repeat resets it.
  * @fires tp-reveal-change-complete - `{ revealed }` after the last piece settles.
- * @cssprop --tp-text-motion-duration - Per-piece reveal duration. Default twice the normal duration.
- * @cssprop --tp-text-motion-easing - Reveal easing. Default `ease-out`.
+ * @cssprop --tp-text-motion-duration - Per-piece reveal duration. Default `var(--tp-duration-slow)`.
+ * @cssprop --tp-text-motion-easing - Reveal easing. Default `var(--tp-easing-enter)`.
  * @cssprop --tp-text-motion-distance - Travel without a mask. Default `0.4em`.
  * @cssprop --tp-text-motion-scale - Scale offset for zoom-in and zoom-out. Default `0.2`.
  * @cssprop --tp-text-motion-blur - Start blur for `blur`. Default `0.15em`.
