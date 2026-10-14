@@ -67,6 +67,7 @@ import { markerPresentation } from './marker.js';
 import { messagePresentation } from './message.js';
 import { overflowListPresentation } from './overflow-list.js';
 import { skeletonPresentation } from './skeleton.js';
+import { statusDotPresentation } from './status-dot.js';
 import { tablePresentation } from './table.js';
 import { navigationPanelPresentation } from './navigation-panel.js';
 import { mediaPlayerPresentation } from './media-player.js';
@@ -150,6 +151,7 @@ export { markerPresentation } from './marker.js';
 export { messagePresentation } from './message.js';
 export { overflowListPresentation } from './overflow-list.js';
 export { skeletonPresentation } from './skeleton.js';
+export { statusDotPresentation } from './status-dot.js';
 export { tablePresentation } from './table.js';
 export { navigationPanelPresentation } from './navigation-panel.js';
 export { mediaPlayerPresentation } from './media-player.js';
@@ -235,6 +237,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   messagePresentation,
   overflowListPresentation,
   skeletonPresentation,
+  statusDotPresentation,
   tablePresentation,
   navigationPanelPresentation,
   mediaPlayerPresentation,

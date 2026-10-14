@@ -86,6 +86,7 @@ export const catalog = [
   ['Message', 'tp-message', 'presentational-primitive'],
   ['Overflow list', 'tp-overflow-list', 'presentational-primitive'],
   ['Skeleton', 'tp-skeleton', 'thin-wrapper'],
+  ['Status dot', 'tp-status-dot', 'presentational-primitive'],
   ['Table', 'tp-table', 'presentational-primitive'],
   ['Text transform', 'tp-text-transform', 'presentational-primitive'],
   ['Time', 'tp-time', 'presentational-primitive'],

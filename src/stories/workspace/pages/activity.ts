@@ -1,5 +1,6 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
+import type { StatusDotMotion, StatusDotVariant } from '../../../components/status-dot/index.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import { downloadIcon } from '../../../icons/download.js';
 import { fileTextIcon } from '../../../icons/file-text.js';
@@ -78,11 +79,14 @@ const events = [
   { title: 'Accessibility audit', detail: 'Keyboard and screen reader pass', hours: 50 },
   { title: 'Launch go/no-go', detail: 'Whole team · 1 h', hours: 98 },
 ];
-const presence: Record<string, { tone: string; label: string }> = {
-  'Alex Morgan': { tone: 'success', label: 'Online' },
-  'Sam Rivera': { tone: 'success', label: 'Available for review' },
-  'Jamie Chen': { tone: 'accent', label: 'In a meeting until 11:00' },
-  'Taylor Kim': { tone: 'neutral', label: 'Away · back tomorrow' },
+const presence: Record<
+  string,
+  { variant: StatusDotVariant; label: string; motion?: StatusDotMotion }
+> = {
+  'Alex Morgan': { variant: 'success', label: 'Online', motion: 'ping' },
+  'Sam Rivera': { variant: 'success', label: 'Available for review' },
+  'Jamie Chen': { variant: 'default', label: 'In a meeting until 11:00' },
+  'Taylor Kim': { variant: 'secondary', label: 'Away · back tomorrow' },
 };
 const roles: Record<string, string> = {
   'Alex Morgan': 'Product lead · Owner',
@@ -239,7 +243,7 @@ export function renderActivity(host: WorkspaceHost): TemplateResult {
         <p slot="description">${host.members.length} people on this project</p>
         <div class="activity-team">
           ${host.members.map((name) => {
-            const status = presence[name] ?? { tone: 'neutral', label: 'Offline' };
+            const status = presence[name] ?? { variant: 'secondary', label: 'Offline' };
             return html`<tp-preview-card .label=${name} placement="block-end start"
               ><tp-button class="activity-member" slot="trigger" variant="ghost"
                 ><tp-avatar slot="icon-start" .fallback=${initials(name)} .alt=${name}></tp-avatar
@@ -253,7 +257,12 @@ export function renderActivity(host: WorkspaceHost): TemplateResult {
                     <p class="workspace-muted">${roles[name] ?? 'Guest · Can view'}</p>
                   </div>
                 </div>
-                <tp-marker .tone=${status.tone} .label=${status.label}></tp-marker></div
+                <tp-status-dot
+                  show-label
+                  .variant=${status.variant}
+                  .label=${status.label}
+                  .motion=${status.motion ?? 'none'}
+                ></tp-status-dot></div
             ></tp-preview-card>`;
           })}
         </div>

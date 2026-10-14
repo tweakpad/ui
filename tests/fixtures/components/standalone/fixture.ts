@@ -15,6 +15,7 @@ const modules: Record<string, () => Promise<Record<string, unknown>>> = {
   TpCursor: () => import('../../../../src/components/cursor/index.js'),
   TpDescriptionList: () => import('../../../../src/components/description-list/index.js'),
   TpOverflowList: () => import('../../../../src/components/overflow-list/index.js'),
+  TpStatusDot: () => import('../../../../src/components/status-dot/index.js'),
 };
 const markup: Record<string, string> = {
   TpButton: '<tp-button loading>Save</tp-button>',
@@ -34,6 +35,8 @@ const markup: Record<string, string> = {
     '<tp-description-list limit="1"><tp-description-list-item label="Plot">B-14</tp-description-list-item><tp-description-list-item label="Size">3 × 4 m</tp-description-list-item></tp-description-list>',
   TpOverflowList:
     '<div style="inline-size:200px"><tp-overflow-list max-rows="1"><span>Stoneware</span><span>Matte glaze</span><span>Hand-thrown</span><span>Food-safe</span></tp-overflow-list></div>',
+  TpStatusDot:
+    '<tp-status-dot variant="success" label="Boarding" motion="ping"></tp-status-dot> <tp-status-dot variant="warning" label="Delayed" show-label></tp-status-dot>',
 };
 const name = new URLSearchParams(location.search).get('component') ?? 'TpButton';
 const module = await modules[name]!();

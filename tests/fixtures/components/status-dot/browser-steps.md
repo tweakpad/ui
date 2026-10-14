@@ -1,0 +1,9 @@
+# Status dot checks (Chrome DevTools MCP)
+
+1. Open `/tests/fixtures/components/status-dot/?scheme=light` on the Vite server (`npx vite`). Run `await (await import('/tests/fixtures/components/status-dot/api.ts')).verifyStatusDot()` through MCP evaluation (with `waitForStableDom: false`; the dots animate) and expect every assertion message back (no thrown error). Repeat with `?package&scheme=light` after `npm run build`.
+2. At rest: the label rows show a colored dot before each status (green ping, amber, red pulse, gray, purple); the tooltip row shows dots only; the wrapped label keeps the dot on its first line; table cells hold dots only; the hook row shows a sky, a pink and a larger green dot; the right-to-left row puts the dot on the right of its label; the reduced-motion row never animates.
+3. Press Tab from the page start: only the dots in "Label in a tooltip", "Inline in text", the table and the right-to-left row receive focus, each with the focus ring and its tooltip; the "Unstable" and empty dots are skipped. Escape closes the tooltip and keeps focus. Hover a dot (the `hover` tool): the tooltip opens after the delay.
+4. Focus a tooltip dot, set its `showLabel` to true through evaluation: focus stays on the dot and the tooltip closes; Tab away and Shift+Tab back skips it.
+5. Inspect the accessibility tree: shown labels appear once as text, hidden labels as an image named by the label, and the empty dot not at all. Inject `/node_modules/axe-core/axe.min.js` and run it on `main`: no violations.
+6. Sample the ping in one evaluation (pause `shadowRoot.getAnimations({ subtree: true })` at 10, 30 and 50 % of 2240 ms on zoomed copies): the ring grows from the dot and fades without moving the label. Repeat steps 2 and 6 with `?scheme=dark` and at a 400 px viewport.
+7. Open `/tests/fixtures/components/standalone/?component=TpStatusDot`: Status dot and Tooltip are defined, unrelated components are not, and both dots render.

@@ -421,6 +421,8 @@ const examples = {
   'tp-text-transform': () =>
     html`<tp-text-transform preset="currency" currency="EUR" value="1234.5"></tp-text-transform>`,
   'tp-skeleton': skeletonProfile,
+  'tp-status-dot': () =>
+    html`<tp-status-dot variant="success" label="Running" show-label></tp-status-dot>`,
   'tp-table': () => html`
     <tp-table>
       <table>

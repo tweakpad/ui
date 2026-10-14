@@ -64,6 +64,7 @@ export * from './separator/index.js';
 export * from './skeleton/index.js';
 export * from './slider/index.js';
 export * from './spinner/index.js';
+export * from './status-dot/index.js';
 export * from './switch/index.js';
 export * from './table/index.js';
 export * from './table-of-contents/index.js';
