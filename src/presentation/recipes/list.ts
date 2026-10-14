@@ -1,6 +1,6 @@
 import type { PresentationDictionary } from '../resolver.js';
-export const listItemAppearance: PresentationDictionary = {
-  'list-item': [
+export const listAppearance: PresentationDictionary = {
+  list: [
     { declarations: { gap: 'var(--tp-space-4)' } },
     {
       selector: ':host(:has(tp-list-item[size="sm"])) &',
@@ -11,7 +11,7 @@ export const listItemAppearance: PresentationDictionary = {
       declarations: { gap: 'var(--tp-space-2)' },
     },
   ],
-  'list-item-root': [
+  'list-item': [
     { selector: '.row:has(> &)', declarations: { 'column-gap': 'var(--tp-space-2-5)' } },
     {
       selector: ':host([size="xs"]) .row:has(> &)',
@@ -152,5 +152,5 @@ export const listItemAppearance: PresentationDictionary = {
       declarations: { 'padding-block-start': 'var(--tp-space-1)' },
     },
   ],
-  'list-item-separator': [{ declarations: { 'margin-block': 'var(--tp-space-2)' } }],
+  'list-separator': [{ declarations: { 'margin-block': 'var(--tp-space-2)' } }],
 };

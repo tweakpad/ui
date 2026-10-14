@@ -1,20 +1,33 @@
-# List item
+# List
 
-`tp-list-item` arranges media, a title, supporting text, independent actions and
-optional full-width header/footer content. It adds no selection or action state
-machine. `tp-list-item-group` is its list constituent; use `tp-list-item-separator` children to divide rows. This constituent composes
-the decorative Separator.
+`tp-list` presents a collection of rows. Each `tp-list-item` arranges media, a title,
+supporting text, independent actions and optional full-width header/footer content.
+`tp-list-separator` divides adjacent rows with the decorative Separator. The list adds no
+selection or action state machine, and a `tp-list-item` also works on its own, outside a list.
 
 ```html
-<tp-list-item-group aria-label="Documents">
+<tp-list aria-label="Documents">
   <tp-list-item variant="outline" description="Updated today">
     Project notes
     <tp-button slot="actions" variant="outline">Open</tp-button>
   </tp-list-item>
-</tp-list-item-group>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item variant="outline" description="Updated yesterday">Launch checklist</tp-list-item>
+</tp-list>
 ```
 
 Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css` once.
+
+## List
+
+| Property / attribute       | Values                      | Default |
+| -------------------------- | --------------------------- | ------- |
+| `ariaLabel` / `aria-label` | Accessible name of the list | none    |
+
+Slot: the default slot takes `tp-list-item` rows and `tp-list-separator` (or `tp-separator`)
+dividers. The list exposes the `list` part.
+
+## List item
 
 | Property / attribute                 | Values                                                           | Default |
 | ------------------------------------ | ---------------------------------------------------------------- | ------- |
@@ -32,10 +45,10 @@ is its compatibility fallback). `actions` accepts independently operable control
 Empty optional regions collapse, including when their content changes dynamically.
 Media aligns to the first content line when a description is present.
 
-Row parts are `list-item-root`, `list-item-media`, `list-item-content`,
+Row parts are `list-item`, `list-item-media`, `list-item-content`,
 `list-item-title`, `list-item-description`, `list-item-actions`, `list-item-header`
-and `list-item-footer`. Group exposes `list-item`; Separator exposes `list-item-separator`. Every rendered
-part supports the shared
+and `list-item-footer`. The list exposes `list`; the separator exposes `list-separator`. Every
+rendered part supports the shared
 `partContracts` and `partPresentation` APIs. Row contract state exposes `variant`,
 `size`, `mediaTreatment`, `selected`, `value` and inherited `disabled`.
 
@@ -49,20 +62,26 @@ not activate Root. The default row is presentational and has no activation handl
 Decorative `tp-icon` content in Actions lets pointer input reach the native Root;
 real action controls retain their own pointer targets.
 
-For a rich command, place a presentational List Item directly inside `tp-menu-item`.
+For a rich command, place a presentational List item directly inside `tp-menu-item`.
 Menu Item owns command semantics, keyboard navigation, highlighting and the outer
 inset. Its shared composition removes the inner row's padding and restores it if
 the row leaves the command. Do not add a second link or button inside that row.
 Avatar groups, square image headers and metadata use Avatar Group,
 Aspect Ratio and the public content rendering contracts, as shown in the examples.
 
-Group owns a list role and supplies `listitem` to direct rows without an authored
-role. Detaching a row or group releases only its owned roles. Authored roles are
-preserved. Group does not implement selection, roving focus or keyboard navigation;
-links and buttons retain their native tab order. List Item Separator is decorative
-and horizontal. Ordinary `tp-separator` children are also supported; Group registers
-their presentation as `list-item-separator`, while their rendering contract remains
-on the Separator component.
+## Accessibility
+
+The list host has the `list` role, named by `aria-label`, and supplies `listitem` to direct
+rows without an authored role. A row that leaves the list, or a list that leaves the page,
+releases only the roles the list set; authored roles are preserved, and a standalone
+`tp-list-item` has no list item role. The list does not implement selection, roving focus or
+keyboard navigation; links and buttons keep their native tab order.
+
+## List separator
+
+`tp-list-separator` is decorative and horizontal. Ordinary `tp-separator` children are also
+supported; the list registers their presentation as `list-separator`, while their rendering
+contract remains on the Separator component.
 
 Spacing, shape, media extents and typography use shared theme tokens and the
 presentation dictionary. There are no per-row spacing properties. The component

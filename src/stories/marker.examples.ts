@@ -61,11 +61,11 @@ export const markerExamples = [
     `<tp-marker variant="separator">
   <tp-drawer label="File activity" description="Files read while preparing the response." edge="inline-end" style="text-align:start">
     <tp-button slot="trigger" variant="outline"><tp-icon slot="icon-start" data-icon="search"></tp-icon>Explored three files</tp-button>
-    <div role="list" aria-label="Files read" style="display:grid;gap:var(--tp-space-3)">
-      <tp-list-item role="listitem" variant="outline" size="sm">app/chat/page.tsx<span slot="trailing" style="color:var(--tp-muted-foreground)">read</span></tp-list-item>
-      <tp-list-item role="listitem" variant="outline" size="sm">components/message.tsx<span slot="trailing" style="color:var(--tp-muted-foreground)">read</span></tp-list-item>
-      <tp-list-item role="listitem" variant="outline" size="sm">lib/ai.ts<span slot="trailing" style="color:var(--tp-muted-foreground)">read</span></tp-list-item>
-    </div>
+    <tp-list aria-label="Files read">
+      <tp-list-item variant="outline" size="sm">app/chat/page.tsx<span slot="actions" style="color:var(--tp-muted-foreground)">read</span></tp-list-item>
+      <tp-list-item variant="outline" size="sm">components/message.tsx<span slot="actions" style="color:var(--tp-muted-foreground)">read</span></tp-list-item>
+      <tp-list-item variant="outline" size="sm">lib/ai.ts<span slot="actions" style="color:var(--tp-muted-foreground)">read</span></tp-list-item>
+    </tp-list>
     <tp-button slot="close" variant="outline">Close</tp-button>
   </tp-drawer>
 </tp-marker>`,

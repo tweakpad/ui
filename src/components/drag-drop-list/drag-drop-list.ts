@@ -48,7 +48,7 @@ import type {
   MoveItemOutcome,
 } from './types.js';
 import { dragDropListPresentation } from '../../presentation/families/drag-drop-list.js';
-import { TpListItem } from '../list-item/list-item.js';
+import { TpListItem } from '../list/list-item.js';
 import { TpEmptyState } from '../empty-state/empty-state.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpButton } from '../button/button.js';

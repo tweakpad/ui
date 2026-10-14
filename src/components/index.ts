@@ -34,7 +34,7 @@ export * from './input/index.js';
 export * from './input-group/index.js';
 export * from './key-hint/index.js';
 export * from './label/index.js';
-export * from './list-item/index.js';
+export * from './list/index.js';
 export * from './map/index.js';
 export * from './markdown/index.js';
 export * from './marker/index.js';

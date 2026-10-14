@@ -79,7 +79,7 @@ export const catalog = [
   ['Icon', 'tp-icon', 'presentational-primitive'],
   ['Key hint', 'tp-key-hint', 'presentational-primitive'],
   ['Label', 'tp-label', 'preset-composition'],
-  ['List item', 'tp-list-item', 'preset-composition'],
+  ['List', 'tp-list', 'preset-composition'],
   ['Drag Drop List', 'tp-drag-drop-list', 'preset-composition'],
   ['Marker', 'tp-marker', 'presentational-primitive'],
   ['Message', 'tp-message', 'presentational-primitive'],

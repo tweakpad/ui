@@ -23,7 +23,7 @@ import { propertyPlacement } from '../../../foundation/flow/defaults.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
 import { setPartComposition } from '../../../presentation/controller.js';
 import { TpCard } from '../../../components/card/card.js';
-import { TpListItem } from '../../../components/list-item/list-item.js';
+import { TpListItem } from '../../../components/list/list-item.js';
 import { TpBadge } from '../../../components/badge/badge.js';
 import { TpMarker } from '../../../components/marker/marker.js';
 import { TpSpinner } from '../../../components/spinner/spinner.js';

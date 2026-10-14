@@ -1,16 +1,16 @@
 import { css } from 'lit';
 import { TpElement } from '../../foundation/element.js';
-import { listItemPresentation } from '../../presentation/families/list-item.js';
+import { listPresentation } from '../../presentation/families/list.js';
 import { TpSeparator } from '../separator/separator.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
-/** List Item presentation binding around the shared decorative Separator. */
-export class TpListItemSeparator extends TpElement {
-  static tagName = 'tp-list-item-separator';
+/** A List member dividing adjacent rows: the shared decorative Separator with List presentation. */
+export class TpListSeparator extends TpElement {
+  static tagName = 'tp-list-separator';
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
     return [TpSeparator];
   }
-  static override presentation = listItemPresentation;
+  static override presentation = listPresentation;
   static override styles = [
     TpElement.styles,
     css`
@@ -22,7 +22,7 @@ export class TpListItemSeparator extends TpElement {
   ];
   protected override render() {
     return this.renderPart(
-      'list-item-separator',
+      'list-separator',
       {},
       {
         tag: 'tp-separator',
@@ -34,6 +34,6 @@ export class TpListItemSeparator extends TpElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'tp-list-item-separator': TpListItemSeparator;
+    'tp-list-separator': TpListSeparator;
   }
 }

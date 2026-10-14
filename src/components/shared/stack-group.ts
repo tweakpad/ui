@@ -1,7 +1,7 @@
 import { css, html } from 'lit';
 import type { TpElement } from '../../foundation/element.js';
 
-/** A vertical stack of family members (Bubble, Message and List item groups). */
+/** A vertical stack of family members (Bubble and Message groups, and List). */
 export const stackGroupStyles = css`
   :host {
     display: block;

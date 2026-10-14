@@ -95,7 +95,7 @@ export class TpMenuItem extends TpElement {
       if (this.#rows.has(row)) continue;
       // The command owns the outer inset; the composed row owns its content layout.
       setPartComposition(row, this, {
-        'list-item-root': { styleHook: { padding: '0' } },
+        'list-item': { styleHook: { padding: '0' } },
         'list-item-actions': { styleHook: { 'padding-inline-end': 'var(--tp-border-width)' } },
       });
     }

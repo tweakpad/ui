@@ -264,7 +264,7 @@ export function renderActivity(host: WorkspaceHost): TemplateResult {
       <tp-card
         ><h2 slot="header">This week</h2>
         <p slot="description">Reviews and milestones on the calendar</p>
-        <tp-list-item-group aria-label="Upcoming events">
+        <tp-list aria-label="Upcoming events">
           ${events.map(
             (event) =>
               html`<tp-list-item size="sm" .description=${event.detail}
@@ -276,7 +276,7 @@ export function renderActivity(host: WorkspaceHost): TemplateResult {
                 ></tp-time
               ></tp-list-item>`,
           )}
-        </tp-list-item-group>
+        </tp-list>
       </tp-card>
     </div>
   </div>`;

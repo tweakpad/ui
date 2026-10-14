@@ -1,11 +1,11 @@
 import type { ComponentDefinition } from '../definition.js';
 import { definePresentation } from '../family.js';
-import { listItemAppearance } from '../recipes/list-item.js';
+import { listAppearance } from '../recipes/list.js';
 import { passiveVariantAppearance } from '../recipes/core/passive.js';
 
 const definition: ComponentDefinition = {
-  name: 'List item',
-  tagName: 'tp-list-item',
+  name: 'List',
+  tagName: 'tp-list',
   kind: 'preset-composition',
   axes: [
     {
@@ -21,11 +21,11 @@ const definition: ComponentDefinition = {
   ],
   parts: [
     {
-      name: 'list-item',
+      name: 'list',
       axes: ['variant', 'size'],
     },
     {
-      name: 'list-item-root',
+      name: 'list-item',
       axes: ['variant', 'size'],
     },
     {
@@ -57,23 +57,24 @@ const definition: ComponentDefinition = {
       axes: ['variant', 'size'],
     },
     {
-      name: 'list-item-separator',
+      name: 'list-separator',
       axes: ['variant', 'size'],
     },
   ],
 };
 
-export const listItemPresentation = definePresentation({
+/** The List container, its List item rows and the Separator members. */
+export const listPresentation = definePresentation({
   definition,
   bindings: {
-    'tp-list-item-separator': {
-      '.separator': 'list-item-separator',
+    'tp-list': {
+      '.group': 'list',
     },
-    'tp-list-item-group': {
-      '.group': 'list-item',
+    'tp-list-separator': {
+      '.separator': 'list-separator',
     },
     'tp-list-item': {
-      '.item': 'list-item-root',
+      '.item': 'list-item',
       '.description': 'list-item-description',
       '.media': 'list-item-media',
       '.content': 'list-item-content',
@@ -83,5 +84,5 @@ export const listItemPresentation = definePresentation({
       '.footer': 'list-item-footer',
     },
   },
-  sources: [listItemAppearance, passiveVariantAppearance(definition, 'list-item-root')],
+  sources: [listAppearance, passiveVariantAppearance(definition, 'list-item')],
 });

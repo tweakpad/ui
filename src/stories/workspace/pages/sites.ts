@@ -186,7 +186,7 @@ export function renderSites(host: WorkspaceHost): TemplateResult {
       <tp-card
         ><h2 slot="header">Launch cities</h2>
         <p slot="description">Rollout order and go-live dates</p>
-        <tp-list-item-group aria-label="Launch cities" data-map-list>
+        <tp-list aria-label="Launch cities" data-map-list>
           ${sites.map(
             (site) =>
               html`<tp-list-item
@@ -204,7 +204,7 @@ export function renderSites(host: WorkspaceHost): TemplateResult {
                 ></tp-list-item
               >`,
           )}
-        </tp-list-item-group>
+        </tp-list>
         <tp-button slot="footer" variant="outline" @click=${() => host.go('activity')}
           >Message pilot leads</tp-button
         >

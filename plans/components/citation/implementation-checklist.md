@@ -69,7 +69,7 @@ Record spec/reference conflicts here before dependent implementation:
 | Index (citation-index) | base / nova | typeset `sup a` footnote number | `currentColor` 15% tint from the Badge variant foreground (Tooltip Key hint contextual palette, `src/components/tooltip/tooltip.ts`), `--tp-radius-full`, `--tp-text-xs` | Leading count chip inside labeled pill; plain number when alone | V-04 |
 | Icon (citation-icon) | base / nova | `[&>svg]:size-3` in badge | badge `--_tp-icon-extent` (`--tp-icon-size-xs`) | Image/Icon at icon extent, radius-sm for images | V-05 |
 | Preview (citation-preview*) | base / nova | `.cn-hover-card-content` w-64 p-2.5 text-sm; demo title font-semibold, meta text-xs muted | `previewCardCoreAppearance` (surface) + new title/description/source recipe on typography roles | Muted source row, medium title, muted description | V-06 |
-| List (citation-list) | base / nova | GFM footnotes `ol` | flex column/row with `--tp-space-*` gap; entry `role=listitem` through `OwnedAttributes` (List group precedent, `src/components/list-item/group.ts`) | Orientation axis | V-09 |
+| List (citation-list) | base / nova | GFM footnotes `ol` | flex column/row with `--tp-space-*` gap; entry `role=listitem` through `OwnedAttributes` (List group precedent, `src/components/list/list.ts`) | Orientation axis | V-09 |
 
 ### Implementation and composition reuse map
 

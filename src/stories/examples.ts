@@ -387,8 +387,11 @@ const examples = {
       <tp-input id="story-name"></tp-input>
     </div>
   `,
-  'tp-list-item': () => html`
-    <tp-list-item description="Secondary text" selected>Primary text</tp-list-item>
+  'tp-list': () => html`
+    <tp-list aria-label="Recent files">
+      <tp-list-item description="Edited 2 minutes ago" selected>Launch plan</tp-list-item>
+      <tp-list-item description="Edited yesterday">Budget review</tp-list-item>
+    </tp-list>
   `,
   'tp-marker': () => html`<tp-marker tone="success" label="Online"></tp-marker>`,
   'tp-message': () => html`

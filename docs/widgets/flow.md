@@ -596,7 +596,7 @@ makes the canvas inert: nothing receives focus or pointer input and the form val
   clear of it. Only a node whose definition places at least one property in the inspector
   (`placement`, see Schema) has one; its header shows the node's title, and Tabs switch Settings
   (one Field per visible inspector property, edited by the control its definition names; the node
-  body shows the others), Wiring (the node's incoming and outgoing connections as List items;
+  body shows the others), Wiring (the node's incoming and outgoing connections as two Lists of List items;
   activating one focuses the edge) and Run (the node's status, attempts, duration, message and
   error). `inspector` is the policy: `auto` (default) opens it on a double press on such a node (not
   on its ports or its own controls), from the node toolbar's Settings or the context menu's Settings

@@ -57,7 +57,7 @@ import { emptyStatePresentation } from './empty-state.js';
 import { fileUploadPresentation } from './file-upload.js';
 import { cursorPresentation } from './cursor.js';
 import { iconPresentation } from './icon.js';
-import { listItemPresentation } from './list-item.js';
+import { listPresentation } from './list.js';
 import { keyHintPresentation } from './key-hint.js';
 import { timePresentation } from './time.js';
 import { labelPresentation } from './label.js';
@@ -137,7 +137,7 @@ export { emptyStatePresentation } from './empty-state.js';
 export { fileUploadPresentation } from './file-upload.js';
 export { cursorPresentation } from './cursor.js';
 export { iconPresentation } from './icon.js';
-export { listItemPresentation } from './list-item.js';
+export { listPresentation } from './list.js';
 export { keyHintPresentation } from './key-hint.js';
 export { timePresentation } from './time.js';
 export { labelPresentation } from './label.js';
@@ -219,7 +219,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   fileUploadPresentation,
   cursorPresentation,
   iconPresentation,
-  listItemPresentation,
+  listPresentation,
   keyHintPresentation,
   timePresentation,
   labelPresentation,

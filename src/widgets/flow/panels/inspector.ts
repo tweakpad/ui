@@ -29,8 +29,8 @@ import { TpForm } from '../../../components/form/form.js';
 import { TpIcon } from '../../../components/icon/icon.js';
 import { TpInput } from '../../../components/input/input.js';
 import { TpInputGroup } from '../../../components/input-group/input-group.js';
-import { TpListItem } from '../../../components/list-item/list-item.js';
-import { TpListItemGroup } from '../../../components/list-item/group.js';
+import { TpList } from '../../../components/list/list.js';
+import { TpListItem } from '../../../components/list/list-item.js';
 import { TpTabs } from '../../../components/tabs/tabs.js';
 import { TpTextArea } from '../../../components/text-area/text-area.js';
 import { TpSlider } from '../../../components/slider/slider.js';
@@ -242,8 +242,8 @@ export class TpFlowInspector extends TpElement {
       TpField,
       TpButton,
       TpIcon,
+      TpList,
       TpListItem,
-      TpListItemGroup,
       TpBadge,
       TpProgress,
       TpInput,
@@ -664,7 +664,7 @@ export class TpFlowInspector extends TpElement {
       data-edge=${edge.id}
       description=${edge.label ? `${edge.label} · ${ports}` : ports}
       .partContracts=${{
-        'list-item-root': {
+        'list-item': {
           renderDelegate: ({ bind, content }: { bind: unknown; content: unknown }) =>
             html`<button
               type="button"
@@ -695,8 +695,8 @@ export class TpFlowInspector extends TpElement {
       direction: 'in' | 'out',
     ) =>
       items.length
-        ? html`<tp-list-item-group class="connections" aria-label=${title}
-            >${items.map((item) => this.#renderConnection(item, direction))}</tp-list-item-group
+        ? html`<tp-list class="connections" aria-label=${title}
+            >${items.map((item) => this.#renderConnection(item, direction))}</tp-list
           >`
         : nothing;
     return html`${group(strings.incoming, incoming, 'in')}${group(strings.outgoing, outgoing, 'out')}`;

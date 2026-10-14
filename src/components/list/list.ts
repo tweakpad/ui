@@ -1,15 +1,30 @@
 import { html, type PropertyValues } from 'lit';
 import { stackGroupStyles } from '../shared/stack-group.js';
+import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpElement } from '../../foundation/element.js';
 import { OwnedAttributes } from '../../foundation/owned-attributes.js';
-import { listItemPresentation } from '../../presentation/families/list-item.js';
+import { listPresentation } from '../../presentation/families/list.js';
+import { TpListItem } from './list-item.js';
+import { TpListSeparator } from './separator.js';
 
-export class TpListItemGroup extends TpElement {
-  static tagName = 'tp-list-item-group';
-  static override presentation = listItemPresentation;
+/**
+ * List: a collection of List item rows. The host is the list, named by `aria-label`; each direct
+ * `tp-list-item` becomes a list item unless it has its own role, and loses that role when it leaves.
+ *
+ * @slot - `tp-list-item` rows and `tp-list-separator` (or `tp-separator`) dividers.
+ * @csspart list - The stack holding the rows.
+ */
+export class TpList extends TpElement {
+  static tagName = 'tp-list';
+  static override presentation = listPresentation;
+  /** Library elements this element contains; defining it defines them too. */
+  static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
+    return [TpListItem, TpListSeparator];
+  }
   static override properties = { ...TpElement.properties, ariaLabel: { attribute: 'aria-label' } };
   override ariaLabel: string | null = null;
   static override styles = [TpElement.styles, stackGroupStyles];
+  #ownRole = new OwnedAttributes(this);
   #members = new Map<HTMLElement, { attributes: OwnedAttributes; release?: () => void }>();
   #sync = (): void => {
     const children = new Set(
@@ -34,12 +49,18 @@ export class TpListItemGroup extends TpElement {
       } else if (child.localName === 'tp-separator') {
         this.#members.set(child, {
           attributes,
-          release: this.presentationController.registerPart('list-item-separator', child),
+          release: this.presentationController.registerPart('list-separator', child),
         });
       }
     }
   };
+  override connectedCallback(): void {
+    super.connectedCallback();
+    if (!this.#ownRole.original('role')) this.#ownRole.set('role', 'list');
+    this.requestUpdate();
+  }
   override disconnectedCallback(): void {
+    this.#ownRole.dispose();
     for (const owned of this.#members.values()) {
       owned.attributes.dispose();
       owned.release?.();
@@ -47,20 +68,16 @@ export class TpListItemGroup extends TpElement {
     this.#members.clear();
     super.disconnectedCallback();
   }
-  override connectedCallback(): void {
-    super.connectedCallback();
-    this.requestUpdate();
-  }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     this.#sync();
   }
   protected override render() {
     return this.renderPart(
-      'list-item',
+      'list',
       {},
       {
-        properties: { class: 'group', role: 'list', 'aria-label': this.ariaLabel ?? undefined },
+        properties: { class: 'group' },
         content: html`<slot @slotchange=${this.#sync}></slot>`,
       },
     );
@@ -69,6 +86,6 @@ export class TpListItemGroup extends TpElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'tp-list-item-group': TpListItemGroup;
+    'tp-list': TpList;
   }
 }

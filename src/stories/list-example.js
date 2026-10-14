@@ -17,15 +17,15 @@ const icons = {
   shield: shieldAlertIcon,
 };
 
-export function setupListItemExample(root) {
+export function setupListExample(root) {
   for (const icon of root.querySelectorAll('tp-icon[data-icon]'))
     icon.icon = icons[icon.dataset.icon];
   for (const item of root.querySelectorAll('tp-list-item[data-link]')) {
     item.partContracts = {
-      'list-item-root': {
+      'list-item': {
         renderDelegate: ({ bind, content }) =>
           html`<a
-            href=${item.dataset.link || '#list-item-destination'}
+            href=${item.dataset.link || '#list-destination'}
             target=${item.hasAttribute('data-external') ? '_blank' : '_self'}
             rel=${item.hasAttribute('data-external') ? 'noopener noreferrer' : ''}
             ${bind}
@@ -51,9 +51,9 @@ export function setupListItemExample(root) {
           </span>`,
       },
     };
-  for (const group of root.querySelectorAll('tp-list-item-group[data-grid]'))
-    group.partPresentation = {
-      'list-item': {
+  for (const list of root.querySelectorAll('tp-list[data-grid]'))
+    list.partPresentation = {
+      list: {
         styleHook: {
           display: 'grid',
           'grid-template-columns':

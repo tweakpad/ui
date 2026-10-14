@@ -69,7 +69,7 @@ const pinMarkup = () =>
     .join('\n    ');
 
 const listMarkup = (id: string) =>
-  `<tp-list-item-group aria-label="Lisbon sights" data-map-list>
+  `<tp-list aria-label="Lisbon sights" data-map-list>
     ${lisbonPlaces
       .map(
         (place) => `<tp-list-item value="${place.value}" description="${place.address}">
@@ -80,7 +80,7 @@ const listMarkup = (id: string) =>
     </tp-list-item>`,
       )
       .join('\n    ')}
-  </tp-list-item-group>`;
+  </tp-list>`;
 
 /** The canonical composition: map, external zoom/reset controls and a location list. */
 export function mapMarkup(options: MapMarkupOptions): string {

@@ -173,7 +173,7 @@ function members(host: SettingsHost) {
       ></tp-input-group>
       <tp-button @click=${() => host.open('invite')}>Invite</tp-button>
     </div>
-    <tp-list-item-group aria-label="Members">
+    <tp-list aria-label="Members">
       ${host.members.map((name) => {
         const role = host.memberAccess[name] ?? 'Can edit';
         return html`<tp-list-item .description=${email(name)}
@@ -209,7 +209,7 @@ function members(host: SettingsHost) {
           </div></tp-list-item
         >`;
       })}
-    </tp-list-item-group>
+    </tp-list>
     <div class="workspace-stack">
       <h4>Pending invitations</h4>
       ${pendingInvites.map(
@@ -306,7 +306,7 @@ function security(host: SettingsHost) {
     <tp-separator></tp-separator>
     <div class="workspace-stack">
       <h4>Active sessions</h4>
-      <tp-list-item-group aria-label="Active sessions">
+      <tp-list aria-label="Active sessions">
         ${sessions
           .filter((session) => !revoked.includes(session.id))
           .map(
@@ -336,7 +336,7 @@ function security(host: SettingsHost) {
                 }</tp-list-item
               >`,
           )}
-      </tp-list-item-group>
+      </tp-list>
     </div>
   </div>`;
 }

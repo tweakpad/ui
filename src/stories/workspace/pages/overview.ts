@@ -199,7 +199,7 @@ export function renderOverview(host: WorkspaceHost): TemplateResult {
           </div>
           <tp-progress label="Release readiness" .value=${percent}></tp-progress>
           <tp-separator></tp-separator>
-          <tp-list-item-group aria-label="Milestones">
+          <tp-list aria-label="Milestones">
             <tp-list-item size="sm">
               Design review
               <span slot="description">${date('2026-10-08')} · Sam Rivera</span>
@@ -215,7 +215,7 @@ export function renderOverview(host: WorkspaceHost): TemplateResult {
               <span slot="description">${date(host.deadline)} · Everyone</span>
               <tp-badge slot="actions" variant="outline">Upcoming</tp-badge>
             </tp-list-item>
-          </tp-list-item-group>
+          </tp-list>
         </div>
         <tp-button slot="footer" variant="outline" @click=${() => host.go('work')}
           >Open launch checklist</tp-button
@@ -266,7 +266,7 @@ export function renderOverview(host: WorkspaceHost): TemplateResult {
         <tp-button slot="action" variant="ghost" size="sm" @click=${() => host.newTask()}
           >New task</tp-button
         >
-        <tp-list-item-group aria-label="Upcoming tasks">
+        <tp-list aria-label="Upcoming tasks">
           ${upNext.map(
             (task) =>
               html`<tp-list-item>
@@ -286,7 +286,7 @@ export function renderOverview(host: WorkspaceHost): TemplateResult {
                 >
               </tp-list-item>`,
           )}
-        </tp-list-item-group>
+        </tp-list>
       </tp-card>
 
       <tp-card>
@@ -323,7 +323,7 @@ export function renderOverview(host: WorkspaceHost): TemplateResult {
                     </div>`,
                 )}
               </div>`
-            : html`<tp-list-item-group aria-label="Recent activity">
+            : html`<tp-list aria-label="Recent activity">
                 ${recent.map(
                   (item) =>
                     html`<tp-list-item size="sm">
@@ -340,7 +340,7 @@ export function renderOverview(host: WorkspaceHost): TemplateResult {
                       ></span>
                     </tp-list-item>`,
                 )}
-              </tp-list-item-group>`
+              </tp-list>`
         }
         <tp-button slot="footer" variant="link" @click=${() => host.go('activity')}
           >Join the conversation</tp-button

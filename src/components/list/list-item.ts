@@ -1,12 +1,12 @@
 import { css, html } from 'lit';
 import { observeSlots, slotOccupied } from '../shared/slots.js';
 import { TpElement } from '../../foundation/element.js';
-import { listItemPresentation } from '../../presentation/families/list-item.js';
+import { listPresentation } from '../../presentation/families/list.js';
 
 /** Presentational row. Native actions are supplied through the public part contract. */
 export class TpListItem extends TpElement {
   static tagName = 'tp-list-item';
-  static override presentation = listItemPresentation;
+  static override presentation = listPresentation;
   static override properties = {
     ...TpElement.properties,
     selected: { type: Boolean, reflect: true },
@@ -174,7 +174,7 @@ export class TpListItem extends TpElement {
         content,
       });
     return html`<div class="row">
-      ${part('list-item-root', {
+      ${part('list-item', {
         properties: {
           class: 'item',
           'data-variant': this.variant,
