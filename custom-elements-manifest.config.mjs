@@ -172,6 +172,26 @@ const tweakpadPublicMembers = () => ({
   },
 });
 
+/**
+ * Attributes inherited from a base element keep the base default even when the element
+ * overrides the field (`override orientation = 'vertical'`), and an attribute initialized from
+ * a constant shows the constant's name. The member entry carries the element's own resolved
+ * default, so each attribute takes its field's default.
+ */
+const tweakpadAttributeDefaults = () => ({
+  name: 'tweakpad-attribute-defaults',
+  packageLinkPhase({ customElementsManifest }) {
+    for (const module of customElementsManifest.modules)
+      for (const declaration of module.declarations ?? [])
+        for (const attribute of declaration.attributes ?? []) {
+          const member = declaration.members?.find(
+            (entry) => entry.kind === 'field' && entry.name === attribute.fieldName,
+          );
+          if (member?.default !== undefined) attribute.default = member.default;
+        }
+  },
+});
+
 export default {
   // Components plus the element bases they inherit attributes and members from.
   globs: [
@@ -187,5 +207,6 @@ export default {
     tweakpadTagNames(),
     tweakpadEvents(scanEventSources('src/components', 'src/widgets', 'src/foundation')),
     tweakpadPublicMembers(),
+    tweakpadAttributeDefaults(),
   ],
 };

@@ -168,5 +168,5 @@ Record spec/reference conflicts here before dependent implementation:
 - Documentation and demo composition reuse: passed (V-19).
 - Shared-consumer regressions / package boundaries: Collapsible story unchanged (V-20); standalone and `?package` fixtures pass (V-18).
 - Required failures or blocked checks: none.
-- Older out-of-scope gaps: dark-theme success Badge pair fails axe color contrast (known token gap, shown on the Design tokens page); the custom-elements manifest lists the inherited `orientation` attribute default (`horizontal`) for elements that override it (Citation list, Description list), while the member default is correct.
+- Older out-of-scope gaps: dark-theme success Badge pair fails axe color contrast (known token gap, shown on the Design tokens page); the custom-elements manifest attribute-default gap found here (inherited base defaults for overridden fields, constant names) is fixed by the `tweakpad-attribute-defaults` plugin in `custom-elements-manifest.config.mjs`: 80 attribute defaults corrected, no other manifest change (keyed comparison).
 - Changed source revisions / reopened gates: spec v0.25.0 → v0.28.0; gates 1–2 reopened by S-3/S-4 and by the S-5 follow-up and re-passed; browser rows re-run after each change.
