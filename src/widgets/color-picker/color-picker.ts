@@ -2111,9 +2111,10 @@ export class TpColorPicker extends TpFormElement<string> {
             ><span slot="prefix">#</span
             ><tp-input
               class="hex"
+              mono
               label=${dimensionLabel(this.label, strings.hex)}
               .value=${this.#hexText}
-              .hostProperties=${{ inputmode: 'text', spellcheck: 'false', autocapitalize: 'off', maxlength: 8 }}
+              .hostProperties=${{ inputmode: 'text', maxlength: 8 }}
               ?disabled=${this.effectiveDisabled}
               ?readonly=${this.readOnly}
               @tp-value-change=${this.#hexInput}
@@ -2184,6 +2185,7 @@ export class TpColorPicker extends TpFormElement<string> {
       data-field=${definition.key}
       data-number-field=${`${scope}:${definition.key}`}
       ><tp-input
+        mono
         label=${dimensionLabel(this.label, name)}
         ?disabled=${this.effectiveDisabled}
         ?readonly=${this.readOnly}

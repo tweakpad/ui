@@ -16,7 +16,9 @@ export const oneTimeCodeAppearance: PresentationDictionary = {
         ...fieldBoundary,
         padding: '0',
         'min-height': '0',
-        // Slots are field-height squares with the shared field typography.
+        // Slots are field-height squares with the shared field typography in the mono role:
+        // code characters keep equal widths and stay distinct (0 and O, 1 and l).
+        'font-family': 'var(--tp-font-mono)',
         'inline-size': 'var(--tp-control-height-md)',
         'block-size': 'var(--tp-control-height-md)',
         'border-inline-start-width': '0',

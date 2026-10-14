@@ -183,7 +183,7 @@ ${options(fruits, '      ')}
     </tp-autocomplete>
   </tp-field>
   <tp-button type="submit">Order</tp-button>
-  <output id="ordered" style="color: var(--tp-muted-foreground)"></output>
+  <output id="ordered" style="color: var(--tp-muted-foreground); font: var(--tp-text-sm) var(--tp-font-mono)"></output>
 </form>`,
     (root) => {
       const form = root.querySelector<HTMLFormElement>('#order')!;

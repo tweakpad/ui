@@ -74,15 +74,15 @@ export class SizeReportView extends LitElement {
           </p>
         </div>
         <div class="size-report-status">
-          <tp-badge variant="outline">v${report.version}</tp-badge>
+          <tp-badge variant="outline"><code>v${report.version}</code></tp-badge>
           <tp-badge>Tree-shaking verified</tp-badge>
         </div>
       </header>
 
       <section class="size-report-cards" aria-label="Summary">
         ${this.#card('Shared runtime', kb(report.shared.gzip), 'Paid once per application')}
-        ${this.#card('lit', kb(report.lit.gzip), 'Peer dependency, not counted below')}
-        ${this.#card('Whole library', kb(report.full.gzip), '@tweakpad/ui/register')}
+        ${this.#card(html`<code>lit</code>`, kb(report.lit.gzip), 'Peer dependency, not counted below')}
+        ${this.#card('Whole library', kb(report.full.gzip), html`<code>@tweakpad/ui/register</code>`)}
         ${this.#card(
           'Largest component',
           kb(largest.gzip),
@@ -91,7 +91,8 @@ export class SizeReportView extends LitElement {
         ${this.#card(
           'Widgets',
           kb(report.fullWidgets.gzip),
-          `@tweakpad/ui/register/widgets, ${widgetRows.length} published`,
+          html`<code>@tweakpad/<wbr />ui/<wbr />register/<wbr />widgets</code>, ${widgetRows.length}
+            published`,
         )}
       </section>
 
@@ -123,7 +124,7 @@ export class SizeReportView extends LitElement {
     </div>`;
   }
 
-  #card(title: string, value: string, description: string) {
+  #card(title: unknown, value: string, description: unknown) {
     return html`<tp-card>
       <h2 slot="header">${title}</h2>
       <p slot="description">${description}</p>

@@ -583,6 +583,7 @@ export class TpFlowControls extends TpElement {
     return html`<tp-input-group class="zoom" ?disabled=${this.disabled}>
       <tp-input
         class="zoom-input control"
+        mono
         inputmode="decimal"
         .value=${this.#zoomDraft ?? percent}
         .ariaLabel=${strings.zoomLevel}

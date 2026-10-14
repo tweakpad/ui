@@ -20,7 +20,7 @@ function example(title: string, content: string, description?: string) {
   return moduleExample({
     title,
     id,
-    markup: `${content}<output aria-live="polite"></output>`,
+    markup: `${content}<output aria-live="polite" style="font:var(--tp-text-sm) var(--tp-font-mono)"></output>`,
     description,
     wrapperStyle: 'display:grid;gap:var(--tp-space-5);max-inline-size:36rem',
     setup: setupButtonGroupExample,

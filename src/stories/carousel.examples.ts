@@ -34,7 +34,7 @@ export const carouselExamples = [
   const id = `carousel-${mode}-example`;
   return interactiveMarkupExample(
     title!,
-    `<style>${demoStyles}</style><section class="carousel-data-demo" id="${id}" data-example="${mode}"><p data-status role="status">Navigate the collection.</p></section>`,
+    `<style>${demoStyles}</style><section class="carousel-data-demo" id="${id}" data-example="${mode}"><p data-status role="status" style="font:var(--tp-text-sm) var(--tp-font-mono)">Navigate the collection.</p></section>`,
     setupCarouselExample,
     `${setupSource}\nconst cleanup = setupCarouselExample(document.getElementById('${id}'));\n// Call cleanup() when removing the example.`,
     description!,

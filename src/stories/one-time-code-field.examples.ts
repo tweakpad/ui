@@ -6,7 +6,7 @@ function interactiveExample(title: string, id: string, markup: string, descripti
   return moduleExample({
     title,
     id,
-    markup: `${markup}<output aria-live="polite"></output>`,
+    markup: `${markup}<output aria-live="polite" style="font:var(--tp-text-sm) var(--tp-font-mono)"></output>`,
     description,
     wrapperStyle: 'display:grid;gap:var(--tp-space-4)',
     setup: setupOneTimeCodeExample,

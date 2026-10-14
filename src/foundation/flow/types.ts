@@ -271,6 +271,12 @@ export interface FlowPropertyDefinition {
   max?: number;
   step?: number;
   options?: ReadonlyArray<{ value: string | number; label: string }>;
+  /**
+   * Edits the value with a mono Input or Text area: the mono font role and no spelling,
+   * correction or capitalization hints, for code-like values such as expressions and paths.
+   * Number properties default to `true`; text properties to `false`.
+   */
+  mono?: boolean;
   default?: unknown;
   visibleWhen?: FlowCondition | ((data: Record<string, unknown>) => boolean);
   /** Port whose connection overrides this property. */

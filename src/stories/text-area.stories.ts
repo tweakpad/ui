@@ -14,6 +14,7 @@ interface Args {
   disabled: boolean;
   readOnly: boolean;
   required: boolean;
+  mono: boolean;
 }
 const meta: Meta<Args> = {
   title: 'Components/Text area',
@@ -28,6 +29,7 @@ const meta: Meta<Args> = {
     disabled: false,
     readOnly: false,
     required: false,
+    mono: false,
   },
   argTypes: {
     value: { control: 'text', description: 'Controlled text; this example accepts proposals.' },
@@ -38,6 +40,10 @@ const meta: Meta<Args> = {
     disabled: { control: 'boolean' },
     readOnly: { control: 'boolean' },
     required: { control: 'boolean' },
+    mono: {
+      control: 'boolean',
+      description: 'Mono font, with spell checking, autocorrection and autocapitalization off.',
+    },
   },
   render: (args) => {
     const [, updateArgs] = useArgs<Args>();
@@ -52,6 +58,7 @@ const meta: Meta<Args> = {
       .disabled=${args.disabled}
       .readOnly=${args.readOnly}
       .required=${args.required}
+      .mono=${args.mono}
       .onValueChange=${(event: TpValueChangeEvent<string>) => {
         if (!event.defaultPrevented && !event.detail.cancelled && control.value) {
           const owner = control.value;

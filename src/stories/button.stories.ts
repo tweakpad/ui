@@ -190,7 +190,7 @@ export const FormActions: Story = {
     >
       <tp-button type="submit" name="intent" value="save">Save</tp-button>
       <tp-button type="reset" variant="outline">Reset</tp-button>
-      <output aria-live="polite"></output>
+      <output aria-live="polite" style="font:var(--tp-text-sm) var(--tp-font-mono)"></output>
     </form>
   `,
 };

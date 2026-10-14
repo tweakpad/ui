@@ -28,6 +28,8 @@ Every CSS custom property uses the `--tp-` prefix. For example, the `primary` ro
 
 The default typography tuple is `font-sans`, `text-base`, `font-normal`, `leading-normal`, and `tracking-normal`. Text-bearing components inherit that tuple and change individual dimensions only through another role in the same family. Controls, cards, dialogs, popovers, menus and labels set `text-sm`; titles use `text-base`; badges, tooltips, keyboard hints and the xs control step use `text-xs`.
 
+Three font roles cover all text: `font-sans` for interface text, `font-heading` for headings (it follows `font-sans` by default), and `font-mono` for code. Everything that presents code or machine values uses `font-mono`: Code block, code spans and blocks in Markdown, One-time code field characters and value readouts. Input and Text area take a `mono` attribute for code-like values; it also turns off spell checking, autocorrection and autocapitalization, and leaves the typography of an enclosing Field, Field group or Input group alone. The widgets use it for their value editors (Color picker hex and channel fields, Easing editor parameters and duration, Flow number properties and zoom level), and a Flow property definition can set `mono` for text properties such as expressions and paths. The default stylesheet also gives native `code`, `kbd`, `samp` and `pre` elements `font-mono`, without adding specificity, so your own markup matches the components. The default `font-mono` stack starts with Cascadia Mono, which has no programming ligatures, and falls back to the platform monospace font. Font files are not bundled: install or load Cascadia Mono (and Inter for `font-sans`) in your application, or replace the roles with your own stacks.
+
 ### Default scale
 
 The default theme uses a 4px spacing seed:
@@ -35,6 +37,7 @@ The default theme uses a 4px spacing seed:
 | Role                                               | Values                                                                  |
 | -------------------------------------------------- | ----------------------------------------------------------------------- |
 | `spacing`                                          | `0.25rem` (4px)                                                         |
+| `font-sans`, `font-mono`                           | Inter, Cascadia Mono, each followed by platform fallbacks               |
 | `text-xs` … `text-2xl`                             | 12, 14, 16, 18, 20, 24px                                                |
 | `control-height-xs` … `lg`                         | 24, 28, 32, 36px (`spacing` × 6, 7, 8, 9)                               |
 | `icon-size-xs` … `lg`                              | 12, 14, 16, 20px                                                        |

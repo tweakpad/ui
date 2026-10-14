@@ -1,4 +1,4 @@
-import { css, html, render } from 'lit';
+import { css, html, nothing, render } from 'lit';
 import type { PropertyValues } from 'lit';
 import { CompositeControlController } from '../../foundation/composite-control.js';
 import { TpFormElement } from '../../foundation/form-element.js';
@@ -46,6 +46,7 @@ export abstract class TpTextControl extends TpFormElement {
     minLength: { type: Number, attribute: 'minlength' },
     maxLength: { type: Number, attribute: 'maxlength' },
     label: { type: String },
+    mono: { type: Boolean, reflect: true },
   };
   static override styles = [
     TpFormElement.styles,
@@ -90,6 +91,11 @@ export abstract class TpTextControl extends TpFormElement {
   minLength = -1;
   maxLength = -1;
   label = '';
+  /**
+   * Presents the value in the mono font role and turns off spell checking, autocorrection and
+   * autocapitalization, for code-like values. Explicit hints in `hostProperties` still win.
+   */
+  mono = false;
   #composite = new CompositeControlController(
     this,
     () => this.inputElement,
@@ -330,6 +336,14 @@ export abstract class TpTextControl extends TpFormElement {
         'data-disabled': this.effectiveDisabled,
         tabindex: composite.tabIndex,
       };
+    // Code-like values: the mono role, and no spelling, correction or capitalization hints.
+    properties = {
+      ...properties,
+      'data-mono': this.mono ? '' : nothing,
+      spellcheck: this.mono ? 'false' : nothing,
+      autocorrect: this.mono ? 'off' : nothing,
+      autocapitalize: this.mono ? 'off' : nothing,
+    };
     this.#editor = renderPart(
       part,
       {

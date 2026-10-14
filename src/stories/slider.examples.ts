@@ -107,12 +107,12 @@ export const sliderExamples = [
   ),
   example(
     'Field and form submission',
-    '<tp-form><tp-field label="Daily budget" description="Choose between 10 and 100 units."><tp-slider name="budget" minimum="10" maximum="100" default-value="40" required data-output></tp-slider></tp-field><div slot="actions"><tp-button type="submit">Save budget</tp-button><tp-button type="reset" variant="outline">Reset</tp-button></div><output data-status aria-live="polite"></output></tp-form>',
+    '<tp-form><tp-field label="Daily budget" description="Choose between 10 and 100 units."><tp-slider name="budget" minimum="10" maximum="100" default-value="40" required data-output></tp-slider></tp-field><div slot="actions"><tp-button type="submit">Save budget</tp-button><tp-button type="reset" variant="outline">Reset</tp-button></div><output data-status aria-live="polite" style="font:var(--tp-text-sm) var(--tp-font-mono)"></output></tp-form>',
     'Field supplies the accessible label and description. Submit reports the numeric form value; Reset restores the uncontrolled default.',
   ),
   example(
     'Rejecting proposals and observing commits',
-    '<tp-form><tp-slider label="Safety ceiling" default-value="60" data-limit data-output></tp-slider><output data-status aria-live="polite">Values above 80 will be rejected.</output></tp-form>',
+    '<tp-form><tp-slider label="Safety ceiling" default-value="60" data-limit data-output></tp-slider><output data-status aria-live="polite" style="font:var(--tp-text-sm) var(--tp-font-mono)">Values above 80 will be rejected.</output></tp-form>',
     'Try End, then ArrowRight/Left. Canceled proposals preserve the prior value and do not commit; accepted keyboard changes commit immediately and drags commit on release.',
   ),
   example(

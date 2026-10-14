@@ -179,11 +179,8 @@ export const FontWeightSelector: Story = {
       </tp-toggle-group>
       <span slot="description"
         >Selected:
-        <tp-badge
-          ${ref(result)}
-          variant="secondary"
-          .textContent=${args.value.join(', ') || 'None'}
-        ></tp-badge
+        <tp-badge variant="secondary"
+          ><code ${ref(result)} .textContent=${args.value.join(', ') || 'None'}></code></tp-badge
       ></span>
     </tp-field>`;
   },

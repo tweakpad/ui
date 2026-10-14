@@ -35,6 +35,11 @@
   gap: var(--tp-space-4);
 }
 
+/* Package paths are long unbroken words in the mono role; let them wrap inside the card. */
+.size-report-cards code {
+  overflow-wrap: anywhere;
+}
+
 .size-report-cards h2 {
   margin: 0;
   font-size: var(--tp-text-sm);

@@ -76,7 +76,7 @@ const meta = {
           if (result) result.textContent = `Submitted: ${JSON.stringify(event.detail.answers)}`;
         }}
       ></tp-questionnaire>
-      <output aria-live="polite"></output>
+      <output aria-live="polite" style="font:var(--tp-text-sm) var(--tp-font-mono)"></output>
     </div>`,
 } satisfies Meta<Args>;
 export default meta;

@@ -134,7 +134,9 @@ A property definition (`FlowPropertyDefinition`) names the `key` of the node dat
 `label`, the `control` (`number`, `slider`, `text`, `textarea`, `select`, `switch`, `checkbox`,
 `color`, `easing` or `custom`), a `description`, a `placeholder`, `min`, `max`, `step`, the
 `options` of a select, a `default`, `visibleWhen` (a condition `{ key, equals, in, truthy }` or a
-predicate over the data), `port`, the input port whose connection overrides the property, and
+predicate over the data), `port`, the input port whose connection overrides the property, `mono`,
+which edits the value with a mono Input or Text area (mono font, no spell checking) for code-like
+values such as expressions and paths, and is on by default for `number` properties, and
 `placement`: `node` renders the control in the node body, `inspector` only in the inspector, never
 both. Without it a property goes where its shape can show it
 (`DEFAULT_PROPERTY_PLACEMENT_BY_SHAPE`): card and panel bodies hold their properties, compact and

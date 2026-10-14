@@ -29,6 +29,8 @@ export const disabledBackground = 'color-mix(in oklab, var(--tp-input) 50%, tran
 export const control: readonly PresentationRule[] = [
   { declarations: fieldBoundary },
   { selector: '&::placeholder', declarations: { color: 'var(--tp-muted-foreground)' } },
+  // A mono control presents code-like values (expressions, paths, numeric parameters).
+  { selector: '&[data-mono]', declarations: { 'font-family': 'var(--tp-font-mono)' } },
   { selector: '&:focus-visible', declarations: fieldFocus },
   { selector: '&[aria-invalid="true"]', declarations: fieldInvalid },
   {

@@ -104,7 +104,7 @@ export const cursorExamples = [
     <tp-toggle value="drag">Drag</tp-toggle>
     <tp-toggle value="go">Go</tp-toggle>
   </tp-toggle-group>
-  <tp-badge variant="secondary" data-readout>none → none</tp-badge>`),
+  <tp-badge variant="secondary"><code data-readout>none → none</code></tp-badge>`),
     setup: setupCursorExample,
     source: setupSource,
     call: `setupCursorExample(document.getElementById('cursor-state-example'));`,

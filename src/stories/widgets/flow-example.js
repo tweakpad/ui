@@ -56,7 +56,9 @@ export const workflowSchema = {
       icon: 'zap',
       tone: 'chart-1',
       ports: [{ id: 'out', label: 'Event', direction: 'output', dataType: 'event' }],
-      properties: [{ key: 'path', label: 'Path', control: 'text', default: '/support/tickets' }],
+      properties: [
+        { key: 'path', label: 'Path', control: 'text', mono: true, default: '/support/tickets' },
+      ],
     },
     {
       type: 'condition',
@@ -75,6 +77,7 @@ export const workflowSchema = {
           key: 'expression',
           label: 'Expression',
           control: 'text',
+          mono: true,
           default: 'priority == "urgent"',
         },
       ],

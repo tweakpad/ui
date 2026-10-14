@@ -22,6 +22,7 @@ export const defaultPropertyControls: FlowPropertyControls = {
       data-flow-property=${context.definition.key}
       id=${context.id}
       size="sm"
+      ?mono=${context.definition.mono === true}
       .value=${context.value == null ? '' : String(context.value)}
       placeholder=${context.definition.placeholder ?? ''}
       ?disabled=${context.disabled}
@@ -38,6 +39,7 @@ export const defaultPropertyControls: FlowPropertyControls = {
       ?disabled=${context.disabled}
       ?readonly=${context.readOnly}
       aria-label=${context.definition.label}
+      ?mono=${context.definition.mono === true}
       rows="2"
     ></tp-text-area>`,
   number: (context) =>
@@ -50,6 +52,7 @@ export const defaultPropertyControls: FlowPropertyControls = {
         id=${context.id}
         type="text"
         inputmode="decimal"
+        ?mono=${context.definition.mono !== false}
         ?disabled=${context.disabled}
         ?readonly=${context.readOnly}
         aria-label=${context.definition.label}

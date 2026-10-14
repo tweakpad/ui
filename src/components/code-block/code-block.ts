@@ -137,6 +137,7 @@ export class TpCodeBlock extends TpElement {
       pre {
         margin: 0;
         overflow: auto hidden;
+        font: inherit;
       }
 
       code {

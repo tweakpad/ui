@@ -11,7 +11,7 @@ function example(title: string, id: string, content: string, description?: strin
   return moduleExample({
     title,
     id,
-    markup: `${content}<output aria-live="polite"></output>`,
+    markup: `${content}<output aria-live="polite" style="font:var(--tp-text-sm) var(--tp-font-mono)"></output>`,
     description,
     wrapperStyle: 'display:grid;gap:var(--tp-space-4)',
     setup: setupBreadcrumbExample,

@@ -1641,6 +1641,7 @@ export class TpEasingEditor extends TpFormElement<string> {
   #renderField(key: string, name: string, suffix?: string) {
     return html`<tp-input-group class="field" part="easing-editor-field" data-number-field=${key}
       ><tp-input
+        mono
         label=${this.#dimensionLabel(name)}
         ?disabled=${this.effectiveDisabled}
         ?readonly=${this.readOnly}

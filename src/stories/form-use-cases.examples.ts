@@ -5,7 +5,7 @@ import type { TpForm } from '../components/form/index.js';
 import type { TpField } from '../components/field/index.js';
 import type { TpButton } from '../components/button/button.js';
 
-const actions = `<div slot="actions"><tp-button type="reset" variant="outline">Reset</tp-button><tp-button type="submit">Save</tp-button></div><output aria-live="polite"></output>`;
+const actions = `<div slot="actions"><tp-button type="reset" variant="outline">Reset</tp-button><tp-button type="submit">Save</tp-button></div><output aria-live="polite" style="font:var(--tp-text-sm) var(--tp-font-mono)"></output>`;
 function example(title: string, markup: string, setup?: (form: TpForm) => void, script = '') {
   return {
     title,
