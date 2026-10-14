@@ -63,6 +63,7 @@ export const catalog = [
   ['Button group', 'tp-button-group', 'preset-composition'],
   ['Field group', 'tp-field-group', 'preset-composition'],
   ['Card', 'tp-card', 'presentational-primitive'],
+  ['Citation', 'tp-citation', 'preset-composition'],
   ['Code block', 'tp-code-block', 'presentational-primitive'],
   ['Markdown', 'tp-markdown', 'preset-composition'],
   ['Image', 'tp-image', 'preset-composition'],

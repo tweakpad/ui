@@ -24,7 +24,7 @@ export const badgeAppearance: PresentationDictionary = {
       declarations: { appearance: 'none', cursor: 'pointer' },
     },
     {
-      selector: ':host([interactive]) &:is(button,a):focus-visible',
+      selector: ':host([interactive]) &:is(button,a):focus-visible, &[tabindex]:focus-visible',
       declarations: {
         'border-color': 'var(--tp-ring)',
         outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',

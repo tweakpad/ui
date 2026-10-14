@@ -13,6 +13,7 @@ export * from './button/index.js';
 export * from './button-group/index.js';
 export * from './calendar/index.js';
 export * from './card/index.js';
+export * from './citation/index.js';
 export * from './carousel/index.js';
 export * from './checkbox/index.js';
 export * from './code-block/index.js';

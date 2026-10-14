@@ -369,6 +369,12 @@ const examples = {
       <tp-button slot="footer" size="sm">Continue</tp-button>
     </tp-card>
   `,
+  'tp-citation': () => html`
+    <p>
+      Tidal turbines produce power on a timetable set by the moon
+      <tp-citation href="https://tides.example/turbines">tides.example</tp-citation>.
+    </p>
+  `,
   'tp-empty-state': () => renderEmptyStateExample(),
   'tp-icon': () => html`<tp-icon .icon=${plusIcon} label="Add"></tp-icon>`,
   'tp-key-hint': () =>
