@@ -1,5 +1,0 @@
----
-'@tweakpad/ui': minor
----
-
-Add `tp-citation` and `tp-citation-list`. A citation is an inline reference to a source: an outlined chip with muted text that can show a site icon (`src`, with a default mark when the image fails), a label and a number. With an accepted `href` it is a link; a site address opens in a new tab unless `target` is set, and while hovered or focused the chip brightens and shows an external-link mark over the end of its label without changing its width. A `description` or `preview` slot adds a Preview card with the site icon, host, title and description. `superscript` raises a footnote-style marker without changing the line height. A Citation list numbers its entries from `start`; in-text markers name an entry with `source` to take its number, title and preview, and a marker whose `href` is the entry's fragment moves focus to that entry when activated. Numbered markers keep a small space from the word they follow. Badge now shows its focus ring on any focusable badge part, and Preview card no longer centers its content when `align="center"` is set.
