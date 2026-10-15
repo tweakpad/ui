@@ -1,8 +1,9 @@
-import { LitElement, css } from 'lit';
+import { LitElement, css, unsafeCSS } from 'lit';
 import type { CSSResultGroup, PropertyDeclarations, PropertyValues } from 'lit';
 import type { Direction, Orientation } from './types.js';
 import { cancelMotions, type MotionPolicy } from './motion.js';
 import type { Diagnostic, DiagnosticSeverity } from './services.js';
+import { visuallyHiddenRule } from './visually-hidden.js';
 
 import { PresentationController } from '../presentation/controller.js';
 import type { PresentationFamily } from '../presentation/family.js';
@@ -85,17 +86,7 @@ export class TpElement extends LitElement {
       outline-color: var(--tp-destructive);
     }
 
-    .visually-hidden {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-      border: 0;
-    }
+    ${unsafeCSS(visuallyHiddenRule('.visually-hidden'))}
   `;
 
   disabled = false;

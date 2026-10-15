@@ -1,4 +1,4 @@
-import { css, html, type TemplateResult, type PropertyValues } from 'lit';
+import { css, html, unsafeCSS, type TemplateResult, type PropertyValues } from 'lit';
 import { shortcutKeys } from '../key-hint/shortcut.js';
 import { TpDialog } from '../dialog/dialog.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
@@ -7,6 +7,7 @@ import { composedContains, deepActiveElement } from '../../foundation/focus.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { ChoiceModelRecord } from '../../foundation/choice-model.js';
+import { visuallyHiddenRule } from '../../foundation/visually-hidden.js';
 import type { SelectEntry } from '../select/types.js';
 
 import type { CommandEntry, CommandItem, CommandFilter } from './model.js';
@@ -55,15 +56,7 @@ export class TpCommandPalette extends TpDialog {
         min-inline-size: 0;
       }
 
-      .header {
-        position: absolute;
-        inline-size: var(--tp-border-width);
-        block-size: var(--tp-border-width);
-        padding: 0;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
-      }
+      ${unsafeCSS(visuallyHiddenRule('.header'))}
 
       .body:has(~ .corner-close) tp-command-list::part(command-palette-input-wrapper) {
         padding-inline-end: calc(var(--tp-control-height-md) + var(--tp-space-2) * 2);

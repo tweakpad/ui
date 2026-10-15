@@ -33,7 +33,7 @@ Optional `icon-start` and `icon-end` slots remain available for custom marks. Ma
 
 `loadingPosition` sets `aria-busy="true"` and renders one Spinner at the requested side. The Spinner inherits the Button's resolved text color in every variant and state. Loading does not set `disabled`; set `disabled` and, when appropriate, `focusableWhenDisabled` explicitly for a pending operation.
 
-For an icon-only size, provide `aria-label`; the icon itself is not used as the accessible name. An unnamed Button emits a `tp-diagnostic` warning.
+In an icon size only the marks are visible: the label content is hidden visually and stays the accessible name, so write the action as the label (or set `aria-label`). The icon itself is never used as the accessible name. An unnamed Button emits a `tp-diagnostic` warning.
 
 The public shadow parts are `button`, `button-leading-mark`, `button-label`, and `button-trailing-mark`. Each part also receives its `-variant-*` and `-size-*` presentation keys. The host publishes `data-disabled` and `data-focus-visible` state markers.
 

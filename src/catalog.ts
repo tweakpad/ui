@@ -90,6 +90,7 @@ export const catalog = [
   ['Table', 'tp-table', 'presentational-primitive'],
   ['Text transform', 'tp-text-transform', 'presentational-primitive'],
   ['Time', 'tp-time', 'presentational-primitive'],
+  ['Visually hidden', 'tp-visually-hidden', 'presentational-primitive'],
   ['Navigation panel', 'tp-navigation-panel', 'compound-reexport'],
   ['Media player', 'tp-media-player', 'compound-reexport'],
   ['Map', 'tp-map', 'compound-reexport'],

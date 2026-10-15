@@ -265,18 +265,6 @@ export const flowStyles = css`
     white-space: nowrap;
   }
 
-  .visually-hidden {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
-  }
-
   /* Low detail: the node body is hidden without changing the host box. */
   .root[data-lod='low'] tp-flow-node::part(flow-node-body),
   .root[data-lod='low'] ::slotted(tp-flow-node)::part(flow-node-body) {

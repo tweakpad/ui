@@ -1,0 +1,10 @@
+# Visually hidden checks (Chrome DevTools MCP)
+
+1. Open `/tests/fixtures/components/visually-hidden/?scheme=light` on the Vite server (`npx vite`) and wait for `window.fixtureReady`. Evaluate in order: `await (await import('/tests/fixtures/components/visually-hidden/api.ts')).verifyVisuallyHidden()`, then `verifyStylesheet()`, then `verifySharedOwner()`. Each returns its assertion messages and throws on the first failure. Repeat with `?package&scheme=light` after `npm run build` (the live announcer check runs on source only).
+2. At rest: no hidden text is visible anywhere: the toggles show only icons, the icon Buttons only the trash mark, the table header has an empty third column, the paragraphs read "Ferns line the north fence." (also right to left and vertical), the scroll box shows only its visible sentence, without scrollbars.
+3. Take an accessibility snapshot: the toggles are named Campsites, Trail routes and Sun exposure; `#button-label` is "Remove plot", `#button-aria` "Clear plot", `#button-unnamed` has no name; the map link is "Open the garden map"; the Renew buttons are "Renew Orbital sander" and "Renew Pole saw"; the third column header is "Actions"; `#described` has the description "Partial shade, clay soil"; `#link-spaced` and `#link-unspaced` are both "Read more about pruning" (hidden text is a separate run, so edge spaces make no difference).
+4. Click "Count seedlings" with the click tool: the status region's text in the snapshot becomes "12 seedlings counted." and nothing appears on screen.
+5. Press Tab from the page start through the controls with the key tool: focus moves through the toggles, buttons, link and table buttons only; no Visually hidden element or its content receives focus.
+6. Inject `/node_modules/axe-core/axe.min.js` and run it on `main`: the only violation is `button-name` on `#button-unnamed`, the deliberately unnamed Button.
+7. Repeat steps 2 and 3 with `?scheme=dark` and at a 400 px viewport.
+8. Open `/tests/fixtures/components/standalone/?component=TpVisuallyHidden`: only Visually hidden is defined and the paragraph reads "Ferns line the fence."

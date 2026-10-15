@@ -3,6 +3,7 @@ import type { PropertyDeclarations, PropertyValues } from 'lit';
 import { createId } from './id.js';
 import type { ElementReference } from './part.js';
 import { TpElement } from './element.js';
+import { hideVisually } from './visually-hidden.js';
 
 export abstract class TpFormElement<TValue = string> extends TpElement {
   static formAssociated = true;
@@ -336,9 +337,7 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     // native editor gets a light-DOM node, hidden inline since shadow styles do not reach it.
     const target = this.#associationTarget;
     const container = target && target.getRootNode() !== this.renderRoot ? this : this.renderRoot;
-    if (container === this)
-      next.style.cssText =
-        'position:absolute;inline-size:1px;block-size:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0';
+    if (container === this) hideVisually(next);
     if (next.parentNode !== container) container.append(next);
     return next;
   }

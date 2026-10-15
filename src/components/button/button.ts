@@ -1,7 +1,8 @@
 import { fillLayerStyles, transitionCss } from '../../presentation/motion.js';
-import { css, html, nothing } from 'lit';
+import { css, html, nothing, unsafeCSS } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { visuallyHiddenRule } from '../../foundation/visually-hidden.js';
 import { CompositeControlController } from '../../foundation/composite-control.js';
 import { SyntheticPress } from '../../foundation/synthetic-press.js';
 import { componentHandlingPrevented, renderPart } from '../../foundation/part.js';
@@ -103,9 +104,7 @@ export class TpButton extends TpElement {
         display: none;
       }
 
-      :host([size^='icon']) [part~='button-label'] {
-        display: none;
-      }
+      ${unsafeCSS(visuallyHiddenRule(":host([size^='icon']) [part~='button-label']"))}
     `,
   ];
 
@@ -362,13 +361,14 @@ export class TpButton extends TpElement {
 
   #checkName = (): void => {
     const slot = this.renderRoot.querySelector<HTMLSlotElement>('slot:not([name])');
-    const visibleText =
+    // The Label names the Button; an icon size hides it visually and shows only the marks.
+    const labelText =
       slot
         ?.assignedNodes({ flatten: true })
         .map((node) => node.textContent ?? '')
         .join('')
         .trim() || this.renderRoot.querySelector('[part~="button-label"]')?.textContent?.trim();
-    const unnamed = !this.ariaLabel && (this.size.startsWith('icon') || !visibleText);
+    const unnamed = !this.ariaLabel && !labelText;
     if (!unnamed) {
       this.#unnamedReported = false;
     } else if (!this.#unnamedReported) {
@@ -376,7 +376,7 @@ export class TpButton extends TpElement {
       queueMicrotask(() =>
         this.diagnose(
           'button-accessible-name-missing',
-          'Button requires an accessible name; icon-only buttons need aria-label.',
+          'Button requires an accessible name; give icon-only buttons a label or aria-label.',
         ),
       );
     }

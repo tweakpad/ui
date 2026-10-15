@@ -1,3 +1,5 @@
+import { visuallyHiddenRule } from '../../foundation/visually-hidden.js';
+
 /**
  * Light-tree styles for Text motion pieces (CL Text motion `tml-presentation`), adopted once per
  * root. Pieces add no box size, so the split text lays out exactly like the original; start
@@ -66,17 +68,7 @@ tp-text-motion [data-tp-piece='mask'][data-tp-mask-unit='lines'] {
   display: block;
 }
 
-tp-text-motion [data-tp-text] {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  margin: -1px;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
+${visuallyHiddenRule('tp-text-motion [data-tp-text]')}
 
 tp-text-motion [data-tp-animate] {
   transition:

@@ -1,4 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { visuallyHiddenDeclarations } from '../../foundation/visually-hidden.js';
 import {
   solidNavigationRow,
   disclosureContext,
@@ -53,15 +54,7 @@ export const navigationPanelDisclosureStructure: PresentationDictionary = {
     },
     {
       selector: collapsedContext + '&',
-      declarations: {
-        position: 'absolute',
-        'inline-size': '1px',
-        'block-size': '1px',
-        padding: '0',
-        overflow: 'hidden',
-        'clip-path': 'inset(50%)',
-        'white-space': 'nowrap',
-      },
+      declarations: visuallyHiddenDeclarations,
     },
   ],
   'collapsible-content': [{ selector: collapsedContext + '&', declarations: { display: 'none' } }],

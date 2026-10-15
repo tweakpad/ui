@@ -1,4 +1,5 @@
 import { Scheduler } from './services.js';
+import { hideVisually } from './visually-hidden.js';
 
 /** Foundation live announcer (`sec-1923-live-announcer`). */
 export type AnnouncementPoliteness = 'polite' | 'assertive';
@@ -48,18 +49,6 @@ export interface LiveAnnouncerOptions {
 export const ANNOUNCEMENT_CLEAR_DELAY = 800;
 /** Delay before writing into a region created in the same turn, so assistive technology observes it first. */
 export const ANNOUNCEMENT_REGION_SETTLE_DELAY = 100;
-
-const HIDDEN_STYLE: ReadonlyArray<readonly [string, string]> = [
-  ['position', 'absolute'],
-  ['width', '1px'],
-  ['height', '1px'],
-  ['padding', '0'],
-  ['margin', '-1px'],
-  ['overflow', 'hidden'],
-  ['clip-path', 'inset(50%)'],
-  ['white-space', 'nowrap'],
-  ['border', '0'],
-];
 
 interface Entry {
   readonly key: string;
@@ -243,7 +232,7 @@ export class LiveAnnouncer {
       if (politeness === 'polite') element.setAttribute('role', 'status');
       element.setAttribute('aria-live', politeness);
       element.setAttribute('aria-atomic', 'true');
-      for (const [property, value] of HIDDEN_STYLE) element.style.setProperty(property, value);
+      hideVisually(element);
       state.element = element;
       state.spoken = '';
       created = true;

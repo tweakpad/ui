@@ -3,10 +3,13 @@ import { createId } from '../id.js';
 import { CleanupScope, Scheduler } from '../services.js';
 import { GeneratedStyleResource } from '../generated-style.js';
 import { OwnedAttributes } from '../owned-attributes.js';
+import { visuallyHiddenRule } from '../visually-hidden.js';
 import type { DragDropManager } from './manager.js';
 import type { Draggable } from './entities.js';
 import type { Announcements, DragEvent, DragEventName, ManagerOptions, Sensor } from './types.js';
 import { KeyboardSensor } from './sensors/keyboard.js';
+
+const hiddenRule = visuallyHiddenRule('[data-tp-drag-hidden]');
 
 const spokenLabel = (
   data: { data: Record<string, unknown>; id: string | number } | null | undefined,
@@ -129,9 +132,7 @@ export class DragAccessibility {
           throw new Error('Drag announcement IDs must be unique in their owner document.');
         doc.body.append(element);
         const styles = new GeneratedStyleResource(activator, doc);
-        styles.setText(
-          '[data-tp-drag-hidden]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}',
-        );
+        styles.setText(hiddenRule);
         this.#announcements.set(doc, (shared = { element, styles, count: 0 }));
       }
       shared.count++;
@@ -146,9 +147,7 @@ export class DragAccessibility {
       const parent = root.nodeType === 9 ? (root as Document).body : root;
       parent.append(description);
       const styles = new GeneratedStyleResource(activator, root);
-      styles.setText(
-        '[data-tp-drag-hidden]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}',
-      );
+      styles.setText(hiddenRule);
       this.#roots.set(
         root,
         (resources = {

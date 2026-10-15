@@ -194,6 +194,7 @@ import { TpToast } from './components/toast/toast.js';
 import { TpToggleGroup } from './components/toggle-group/toggle-group.js';
 import { TpToggle } from './components/toggle/toggle.js';
 import { TpTooltip } from './components/tooltip/tooltip.js';
+import { TpVisuallyHidden } from './components/visually-hidden/visually-hidden.js';
 import { TpTreeItem } from './components/tree-view/tree-item.js';
 import { TpTreeView } from './components/tree-view/tree-view.js';
 import { defineElement } from './foundation/define.js';
@@ -308,6 +309,7 @@ defineElement(TpStatusDot.tagName, TpStatusDot);
 defineElement(TpTable.tagName, TpTable);
 defineElement(TpTextTransform.tagName, TpTextTransform);
 defineElement(TpTime.tagName, TpTime);
+defineElement(TpVisuallyHidden.tagName, TpVisuallyHidden);
 
 export * from './index.js';
 

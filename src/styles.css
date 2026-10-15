@@ -254,6 +254,22 @@ tp-cursor-zone:not(:defined) {
   display: contents;
 }
 
+/* Visually hidden content stays hidden before definition and while generated styles are
+   suppressed (CL §22 Visually hidden); the element applies the same declarations itself. */
+tp-visually-hidden:not(:where([hidden])) {
+  display: block;
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin-block: -1px 0;
+  margin-inline: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* A pinned trigger is its full track before definition too (Foundation §18.18 vr-pin). */
 tp-scroll-trigger[pin] {
   block-size: calc(100cqb + var(--tp-scroll-trigger-pin-length, 200cqb));

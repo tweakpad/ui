@@ -12,6 +12,9 @@ import type { catalog } from '../catalog.js';
 import { plusIcon } from '../icons/plus.js';
 import { folderIcon } from '../icons/folder.js';
 import { fileTextIcon } from '../icons/file-text.js';
+import { mapPinIcon } from '../icons/map.js';
+import { sunIcon } from '../icons/sun.js';
+import { waypointsIcon } from '../icons/waypoints.js';
 import {
   sampleCaptionsEn,
   sampleCaptionsEs,
@@ -423,6 +426,22 @@ const examples = {
   'tp-skeleton': skeletonProfile,
   'tp-status-dot': () =>
     html`<tp-status-dot variant="success" label="Running" show-label></tp-status-dot>`,
+  'tp-visually-hidden': () => html`
+    <tp-toggle-group label="Trail map layers" multiple variant="outline">
+      <tp-toggle value="campsites">
+        <tp-icon .icon=${mapPinIcon}></tp-icon>
+        <tp-visually-hidden>Campsites</tp-visually-hidden>
+      </tp-toggle>
+      <tp-toggle value="routes">
+        <tp-icon .icon=${waypointsIcon}></tp-icon>
+        <tp-visually-hidden>Trail routes</tp-visually-hidden>
+      </tp-toggle>
+      <tp-toggle value="sun">
+        <tp-icon .icon=${sunIcon}></tp-icon>
+        <tp-visually-hidden>Sun exposure</tp-visually-hidden>
+      </tp-toggle>
+    </tp-toggle-group>
+  `,
   'tp-table': () => html`
     <tp-table>
       <table>

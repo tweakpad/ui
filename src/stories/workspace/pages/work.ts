@@ -201,7 +201,9 @@ function renderTable(host: WorkspaceHost): TemplateResult {
                     ? html`<tp-table-head scope="col" class="work-number">Hours</tp-table-head>`
                     : nothing
                 }
-                <tp-table-head scope="col"><span class="work-sr">Actions</span></tp-table-head>
+                <tp-table-head scope="col"
+                  ><tp-visually-hidden>Actions</tp-visually-hidden></tp-table-head
+                >
               </tp-table-row>
             </tp-table-header>
             <tp-table-body>

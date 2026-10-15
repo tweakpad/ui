@@ -292,18 +292,6 @@ export const colorPickerStyles = css`
     block-size: calc(var(--tp-control-height-md) - var(--tp-spacing) * 3);
     pointer-events: none;
   }
-
-  .visually-hidden {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
-  }
 `;
 
 /** Shared structure of the render surfaces (area, wheel, triangle). */

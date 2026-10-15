@@ -17,6 +17,7 @@ const modules: Record<string, () => Promise<Record<string, unknown>>> = {
   TpOverflowList: () => import('../../../../src/components/overflow-list/index.js'),
   TpStatusDot: () => import('../../../../src/components/status-dot/index.js'),
   TpTableOfContents: () => import('../../../../src/components/table-of-contents/index.js'),
+  TpVisuallyHidden: () => import('../../../../src/components/visually-hidden/index.js'),
 };
 const markup: Record<string, string> = {
   TpButton: '<tp-button loading>Save</tp-button>',
@@ -40,6 +41,8 @@ const markup: Record<string, string> = {
     '<tp-status-dot variant="success" label="Boarding" motion="ping"></tp-status-dot> <tp-status-dot variant="warning" label="Delayed" show-label></tp-status-dot>',
   TpTableOfContents:
     '<p id="sa-kiln">Kiln</p><p id="sa-glaze">Glaze</p><tp-table-of-contents variant="compact" navigation="scroll"><tp-table-of-contents-item href="#sa-kiln">Kiln</tp-table-of-contents-item><tp-table-of-contents-item href="#sa-glaze" depth="2">Glaze</tp-table-of-contents-item></tp-table-of-contents>',
+  TpVisuallyHidden:
+    '<p>Ferns <tp-visually-hidden>grow in damp shade</tp-visually-hidden>line the fence.</p>',
 };
 const name = new URLSearchParams(location.search).get('component') ?? 'TpButton';
 const module = await modules[name]!();
