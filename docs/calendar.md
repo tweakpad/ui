@@ -173,7 +173,7 @@ Diagnostic codes:
 
 ## Keyboard
 
-One day is in the tab order: the focused, selected, today or first available date. Arrow keys move by day and week, mirrored horizontally in right-to-left layouts. Home and End move to the start and end of the week, Page Up and Page Down by month, and Shift with Page Up or Page Down by year. Movement skips disabled and hidden dates and reveals other months within the navigation bounds. Enter and Space activate the focused day.
+One day is in the tab order: the focused, selected, today or first available date. Arrow keys move by day and week, mirrored horizontally in right-to-left layouts. Home and End move to the start and end of the week, Page Up and Page Down by month, and Shift with Page Up or Page Down by year. Movement skips disabled and hidden dates and reveals other months within the navigation bounds. Consumed keys and keys carrying Alt, Ctrl or Meta are left to the browser. Enter and Space activate the focused day.
 
 ## Parts and markers
 
