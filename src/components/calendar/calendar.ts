@@ -42,6 +42,7 @@ import type {
 } from './types.js';
 
 import { compositeControl } from '../../foundation/composite-control.js';
+import { navigationKeyPreempted } from '../../foundation/collection.js';
 import { chevronRightIcon } from '../../icons/chevron-right.js';
 import type { PartRenderOptions, PartState } from '../../foundation/part.js';
 import { calendarPresentation } from '../../presentation/families/calendar.js';
@@ -731,7 +732,8 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
   };
 
   #dayKeyDown = (event: KeyboardEvent): void => {
-    if (this.effectiveDisabled || this.#configurationError()) return;
+    if (this.effectiveDisabled || this.#configurationError() || navigationKeyPreempted(event))
+      return;
     const current = (event.currentTarget as HTMLButtonElement).dataset.date;
     if (!current) return;
     let target: string | null = null;
