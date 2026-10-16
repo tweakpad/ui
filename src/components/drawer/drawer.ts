@@ -7,6 +7,7 @@ import { ControllableState } from '../../foundation/controllable-state.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
 import { resolveSide } from '../../foundation/positioning.js';
 import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
+import { observeResize } from '../../foundation/observation.js';
 import type { HostProperties } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { DrawerGesture } from './gesture.js';
@@ -231,7 +232,7 @@ export class TpDrawer extends TpDialog {
   #swipeDismissed = false;
   #openingRelease = false;
   readonly visualState = new ObservableStore<DrawerVisualState>(inactiveDrawerState());
-  #resize: ResizeObserver | undefined;
+  #releaseResize: (() => void) | undefined;
   #observed: HTMLElement | null = null;
   #provider: TpDrawerProvider | null = null;
   #parentDrawer: TpDrawer | null = null;
@@ -396,14 +397,12 @@ export class TpDrawer extends TpDialog {
       this.#keyboard = value;
       this.#measure();
     }, true);
-    this.#resize = new (this.ownerDocument.defaultView ?? window).ResizeObserver(() =>
-      this.#measure(),
-    );
     this.ownerDocument.defaultView?.addEventListener('resize', this.#measure);
   }
   override disconnectedCallback(): void {
     this.gesture.dispose();
-    this.#resize?.disconnect();
+    this.#releaseResize?.();
+    this.#releaseResize = undefined;
     this.#observed = null;
     this.#environment.disconnect();
     this.ownerDocument.defaultView?.removeEventListener('resize', this.#measure);
@@ -441,8 +440,8 @@ export class TpDrawer extends TpDialog {
     }
     const surface = this.contentElement;
     if (surface !== this.#observed) {
-      this.#resize?.disconnect();
-      if (surface) this.#resize?.observe(surface);
+      this.#releaseResize?.();
+      this.#releaseResize = surface ? observeResize(surface, () => this.#measure()) : undefined;
       this.#observed = surface;
     }
     this.#measure();

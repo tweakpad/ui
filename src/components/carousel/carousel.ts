@@ -10,6 +10,7 @@ import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 import { composedContains, deepActiveElement } from '../../foundation/focus.js';
 import { OwnedStyles } from '../../foundation/owned-styles.js';
 import { CleanupScope, Scheduler } from '../../foundation/services.js';
+import { observeMediaQuery } from '../../foundation/observation.js';
 import { CollectionRegistry } from '../../foundation/collection.js';
 import {
   resolveMotionTiming,
@@ -1077,11 +1078,7 @@ export class TpCarousel<T = unknown> extends TpElement {
     };
     this.ownerDocument.addEventListener('visibilitychange', environment);
     scope.add(() => this.ownerDocument.removeEventListener('visibilitychange', environment));
-    const media = window?.matchMedia('(prefers-reduced-motion: reduce)');
-    if (media) {
-      media.addEventListener('change', environment);
-      scope.add(() => media.removeEventListener('change', environment));
-    }
+    scope.add(observeMediaQuery(window, '(prefers-reduced-motion: reduce)', environment));
     controller.autoplay.setReason('focus', elements.root.matches(':focus-within'));
     controller.autoplay.setReason('hover', elements.root.matches(':hover'));
     environment();

@@ -1,5 +1,6 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
 import { createId } from '../../foundation/id.js';
+import { observeResize, observeSubtree } from '../../foundation/observation.js';
 import { defaultTrue } from '../../foundation/converters.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
@@ -200,8 +201,8 @@ export class TpCodeBlock extends TpElement {
   #provided: boolean | undefined;
   #request: AbortController | undefined;
   #copiedTimer: ReturnType<typeof setTimeout> | undefined;
-  #resize: ResizeObserver | undefined;
-  #mutations: MutationObserver | undefined;
+  #releaseResize: (() => void)[] = [];
+  #releaseContent: (() => void) | undefined;
 
   constructor() {
     super();
@@ -261,16 +262,17 @@ export class TpCodeBlock extends TpElement {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#readLightCode();
-    this.#mutations = new (this.ownerDocument.defaultView ?? window).MutationObserver(() =>
-      this.#readLightCode(),
-    );
-    this.#mutations.observe(this, { childList: true, characterData: true, subtree: true });
+    this.#releaseContent = observeSubtree(this, () => this.#readLightCode(), {
+      content: true,
+      attributes: false,
+    });
   }
 
   override disconnectedCallback(): void {
-    this.#mutations?.disconnect();
-    this.#resize?.disconnect();
-    this.#resize = undefined;
+    this.#releaseContent?.();
+    this.#releaseContent = undefined;
+    for (const release of this.#releaseResize) release();
+    this.#releaseResize = [];
     this.#request?.abort();
     this.#request = undefined;
     clearTimeout(this.#copiedTimer);
@@ -291,12 +293,11 @@ export class TpCodeBlock extends TpElement {
 
   protected override firstUpdated(): void {
     const viewport = this.renderRoot.querySelector('pre');
-    const view = this.ownerDocument.defaultView;
-    if (viewport && view?.ResizeObserver) {
-      this.#resize = new view.ResizeObserver(() => this.#measure());
-      this.#resize.observe(viewport);
+    if (viewport) {
+      const measure = () => this.#measure();
+      this.#releaseResize.push(observeResize(viewport, measure));
       const code = viewport.querySelector('code');
-      if (code) this.#resize.observe(code);
+      if (code) this.#releaseResize.push(observeResize(code, measure));
     }
   }
 

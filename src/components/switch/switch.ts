@@ -1,6 +1,7 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { observeSubtree } from '../../foundation/observation.js';
 import {
   prepareMotion,
   type MotionHandle,
@@ -110,7 +111,7 @@ export class TpSwitch extends TpCheckbox {
   size: 'sm' | 'default' = 'default';
   #motion: MotionHandle[] = [];
   #labelText = '';
-  #labelObserver: MutationObserver | null = null;
+  #releaseLabel: (() => void) | undefined;
   protected override get supportsIndeterminate(): boolean {
     return false;
   }
@@ -141,11 +142,10 @@ export class TpSwitch extends TpCheckbox {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#syncLabel();
-    const Observer = this.ownerDocument.defaultView?.MutationObserver;
-    if (Observer) {
-      this.#labelObserver = new Observer(this.#syncLabel);
-      this.#labelObserver.observe(this, { childList: true, subtree: true, characterData: true });
-    }
+    this.#releaseLabel = observeSubtree(this, this.#syncLabel, {
+      content: true,
+      attributes: false,
+    });
     this.requestUpdate();
   }
   protected override willUpdate(changed: PropertyValues<this>): void {
@@ -216,8 +216,8 @@ export class TpSwitch extends TpCheckbox {
     }
   }
   override disconnectedCallback(): void {
-    this.#labelObserver?.disconnect();
-    this.#labelObserver = null;
+    this.#releaseLabel?.();
+    this.#releaseLabel = undefined;
     for (const handle of this.#motion) handle.cancel();
     this.#motion = [];
     super.disconnectedCallback();

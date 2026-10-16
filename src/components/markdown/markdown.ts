@@ -4,6 +4,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { dedentCode } from '../../foundation/dedent.js';
+import { observeSubtree } from '../../foundation/observation.js';
 import type { CodeHighlighter } from '../../foundation/code/index.js';
 import {
   completeMarkdown,
@@ -124,7 +125,7 @@ export class TpMarkdown extends TpElement {
   #version = 0;
   #signature = '';
   #reported = new Set<string>();
-  #mutations: MutationObserver | undefined;
+  #releaseContent: (() => void) | undefined;
   #fragmentPending = true;
 
   constructor() {
@@ -154,16 +155,17 @@ export class TpMarkdown extends TpElement {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#readLightSource();
-    this.#mutations = new (this.ownerDocument.defaultView ?? window).MutationObserver(() =>
-      this.#readLightSource(),
-    );
-    this.#mutations.observe(this, { childList: true, characterData: true, subtree: true });
+    this.#releaseContent = observeSubtree(this, () => this.#readLightSource(), {
+      content: true,
+      attributes: false,
+    });
     this.renderRoot.addEventListener('click', this.#click as EventListener);
     this.ownerDocument.defaultView?.addEventListener('hashchange', this.#hashChange);
   }
 
   override disconnectedCallback(): void {
-    this.#mutations?.disconnect();
+    this.#releaseContent?.();
+    this.#releaseContent = undefined;
     this.renderRoot.removeEventListener('click', this.#click as EventListener);
     this.ownerDocument.defaultView?.removeEventListener('hashchange', this.#hashChange);
     super.disconnectedCallback();

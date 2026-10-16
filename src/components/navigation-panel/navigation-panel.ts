@@ -10,6 +10,7 @@ import { TpButton } from '../button/button.js';
 import { NavigationPanelDrawer } from './drawer.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
+import { observeResize } from '../../foundation/observation.js';
 import { composedContains, deepActiveElement, restoreFocus } from '../../foundation/focus.js';
 import { prepareMotion, type MotionHandle } from '../../foundation/motion.js';
 import { setPartComposition } from '../../presentation/controller.js';
@@ -99,7 +100,7 @@ export class TpNavigationPanel extends TpElement {
   #viewPart: RootPart | undefined;
   #mountedCompact = false;
   #observer: MutationObserver | undefined;
-  #headerResize: ResizeObserver | undefined;
+  #releaseHeaderResize: (() => void) | undefined;
   #toolbarHeader: HTMLElement | null = null;
   #controls = new Map<HTMLElement, ControlRecord>();
   #slotRegistrations = new Map<HTMLElement, () => void>();
@@ -192,8 +193,8 @@ export class TpNavigationPanel extends TpElement {
     this.#viewStyle?.disconnect();
     this.#observer?.disconnect();
     this.#observer = undefined;
-    this.#headerResize?.disconnect();
-    this.#headerResize = undefined;
+    this.#releaseHeaderResize?.();
+    this.#releaseHeaderResize = undefined;
     this.#toolbarHeader = null;
     this.#environment.disconnect();
     for (const record of this.#controls.values()) record.activationCleanup?.();
@@ -410,13 +411,16 @@ export class TpNavigationPanel extends TpElement {
       : (this.#view?.shadowRoot?.querySelector<HTMLElement>('[part~="navigation-panel-header"]') ??
         this.#view?.querySelector<HTMLElement>(':scope > tp-navigation-panel-header') ??
         null);
-    if (header !== this.#toolbarHeader || !this.#headerResize) {
-      this.#headerResize?.disconnect();
+    if (header !== this.#toolbarHeader || !this.#releaseHeaderResize) {
+      this.#releaseHeaderResize?.();
       this.#toolbarHeader = header;
-      const Observer = this.ownerDocument.defaultView?.ResizeObserver;
-      this.#headerResize = header && Observer ? new Observer(this.#alignToolbar) : undefined;
-      if (header) this.#headerResize?.observe(header);
-      if (this.#wideMount) this.#headerResize?.observe(this.#wideMount);
+      if (header) {
+        const releases = [observeResize(header, this.#alignToolbar)];
+        if (this.#wideMount) releases.push(observeResize(this.#wideMount, this.#alignToolbar));
+        this.#releaseHeaderResize = () => {
+          for (const release of releases) release();
+        };
+      } else this.#releaseHeaderResize = undefined;
     }
     this.#alignToolbar();
   }
