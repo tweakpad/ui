@@ -6,6 +6,7 @@ import type { PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
 import { CleanupScope } from '../../foundation/services.js';
+import { observeMediaQuery, observeResize } from '../../foundation/observation.js';
 import {
   composedContains,
   deepActiveElement,
@@ -310,12 +311,12 @@ export class TpToast extends TpElement {
     this.#connectProvider();
     const scope = (this.#scope = new CleanupScope());
     scope.listen(this.ownerDocument.defaultView ?? this.ownerDocument, 'keydown', this.#shortcut);
-    const media = this.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)');
-    if (media)
-      scope.listen(media, 'change', () => {
+    scope.add(
+      observeMediaQuery(this.ownerDocument.defaultView, '(prefers-reduced-motion: reduce)', () => {
         this.#inheritPortalTheme();
         this.requestUpdate();
-      });
+      }),
+    );
     this.#observer = new (this.ownerDocument.defaultView ?? window).MutationObserver(() => {
       for (const [identifier, view] of this.#views) {
         if (
@@ -881,18 +882,13 @@ export class TpToast extends TpElement {
       if (!element || !view) continue;
       view.rendered(element);
       const content = element.querySelector<HTMLElement>('.content');
-      if (content && !view.observer) {
-        const Resize = this.ownerDocument.defaultView?.ResizeObserver;
-        if (Resize) {
-          view.observer = new Resize(() =>
-            this.manager.measure(toast.identifier, content.offsetHeight, element),
-          );
-          view.observer.observe(content);
-        }
-      }
+      if (content && !view.releaseResize && this.ownerDocument.defaultView?.ResizeObserver)
+        view.releaseResize = observeResize(content, () =>
+          this.manager.measure(toast.identifier, content.offsetHeight, element),
+        );
       // The observer's first callback measures after layout; measuring here would publish
       // a height that repaints within this update.
-      if (content && !view.observer)
+      if (content && !view.releaseResize)
         this.manager.measure(toast.identifier, content.offsetHeight, element);
       if (toast.positionerProperties?.anchor) this.#position(view, element);
       else if (view.positioner) {

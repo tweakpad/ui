@@ -12,7 +12,7 @@ export class ToastView {
   readonly presence: PresenceController;
   positioner: PositioningHandle | null = null;
   positioningKey: object | undefined;
-  observer: ResizeObserver | null = null;
+  releaseResize: (() => void) | null = null;
   motion: MotionHandle | null = null;
   element: HTMLElement | null = null;
   toast: ToastObject;
@@ -50,8 +50,8 @@ export class ToastView {
   rendered(element: HTMLElement): void {
     if (this.element && this.element !== element) {
       this.motion?.cancel();
-      this.observer?.disconnect();
-      this.observer = null;
+      this.releaseResize?.();
+      this.releaseResize = null;
       this.positioner?.destroy();
       this.positioner = null;
       this.positioningKey = undefined;
@@ -81,7 +81,7 @@ export class ToastView {
     this.motion?.cancel();
     this.presence.destroy();
     this.positioner?.destroy();
-    this.observer?.disconnect();
+    this.releaseResize?.();
     this.element = null;
   }
 }

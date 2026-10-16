@@ -4,6 +4,7 @@ import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import { composedParent } from '../../foundation/focus.js';
 import { resolveLocale } from '../../foundation/services.js';
+import { observeMediaQuery } from '../../foundation/observation.js';
 import { prepareMotion, resolvesReducedMotion } from '../../foundation/motion.js';
 import type { MotionHandle } from '../../foundation/motion.js';
 import { progressMotionRoles } from './motion.js';
@@ -146,7 +147,7 @@ export class TpProgress extends TpElement {
   #ambient = false;
   #reduced = false;
   #observer: MutationObserver | null = null;
-  #media: MediaQueryList | null = null;
+  #releaseMedia: (() => void) | undefined;
   #contentSignature = '';
   #diagnostics = new Set<string>();
   readonly #rootReference = (element: HTMLElement | null): void => {
@@ -184,8 +185,11 @@ export class TpProgress extends TpElement {
   override connectedCallback(): void {
     super.connectedCallback();
     const ownerWindow = this.ownerDocument.defaultView;
-    this.#media = ownerWindow?.matchMedia('(prefers-reduced-motion: reduce)') ?? null;
-    this.#media?.addEventListener('change', this.#contentChanged);
+    this.#releaseMedia = observeMediaQuery(
+      ownerWindow,
+      '(prefers-reduced-motion: reduce)',
+      this.#contentChanged,
+    );
     const Observer = ownerWindow?.MutationObserver;
     if (Observer) {
       this.#observer = new Observer(this.#contentChanged);
@@ -217,8 +221,8 @@ export class TpProgress extends TpElement {
   override disconnectedCallback(): void {
     this.#observer?.disconnect();
     this.#observer = null;
-    this.#media?.removeEventListener('change', this.#contentChanged);
-    this.#media = null;
+    this.#releaseMedia?.();
+    this.#releaseMedia = undefined;
     this.#valueMotion?.cancel();
     this.#ambientMotion?.cancel();
     this.#valueMotion = this.#ambientMotion = null;

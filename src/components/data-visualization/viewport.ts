@@ -1,15 +1,13 @@
+import { observeResize } from '../../foundation/observation.js';
 import type { VisualizationDimensions } from './types.js';
 
 /** Responsive measurement only; chart geometry and rendering remain in the adapter. */
 export class VisualizationResponsiveViewport {
   dimensions: VisualizationDimensions = { width: 320, height: 200 };
-  #observer: ResizeObserver | undefined;
+  #release: (() => void) | undefined;
   connect(element: HTMLElement, changed: (dimensions: VisualizationDimensions) => void): void {
     this.disconnect();
-    const Observer = element.ownerDocument.defaultView?.ResizeObserver;
-    if (!Observer) return;
-    this.#observer = new Observer(([entry]) => {
-      if (!entry) return;
+    this.#release = observeResize(element, (entry) => {
       const { width, height } = entry.contentRect;
       if (
         width <= 0 ||
@@ -20,10 +18,9 @@ export class VisualizationResponsiveViewport {
       this.dimensions = { width, height };
       changed(this.dimensions);
     });
-    this.#observer.observe(element);
   }
   disconnect(): void {
-    this.#observer?.disconnect();
-    this.#observer = undefined;
+    this.#release?.();
+    this.#release = undefined;
   }
 }

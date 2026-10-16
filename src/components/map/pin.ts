@@ -1,6 +1,7 @@
 import { arrowKeys } from '../../foundation/collection.js';
 import { css, html, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { observeSubtree } from '../../foundation/observation.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { normalizePosition, type MapPosition } from '../../foundation/map/geo.js';
 import type { MapState } from '../../foundation/map/state.js';
@@ -113,7 +114,7 @@ export class TpMapPin extends TpMapElement implements MapPinRecord {
 
   #release: (() => void) | undefined;
   #registered: (HTMLElement & MapApi) | null = null;
-  #children: MutationObserver | undefined;
+  #releaseChildren: (() => void) | undefined;
   #labelDiagnosed = false;
   #settled = false;
 
@@ -157,14 +158,17 @@ export class TpMapPin extends TpMapElement implements MapPinRecord {
 
   override connectedCallback(): void {
     super.connectedCallback();
-    const view = this.ownerDocument.defaultView;
-    this.#children = view ? new view.MutationObserver(() => this.#assign()) : undefined;
-    this.#children?.observe(this, { childList: true });
+    this.#releaseChildren = observeSubtree(this, () => this.#assign(), {
+      content: true,
+      attributes: false,
+      subtree: false,
+    });
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#children?.disconnect();
+    this.#releaseChildren?.();
+    this.#releaseChildren = undefined;
   }
 
   protected override bindOwner(owner: (HTMLElement & MapApi) | null): void {

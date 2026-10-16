@@ -5,6 +5,7 @@ import { ControllableState } from '../../foundation/controllable-state.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { GeneratedStyleResource } from '../../foundation/generated-style.js';
 import { resolvesReducedMotion } from '../../foundation/motion.js';
+import { observeMediaQuery, observeResize, observeSubtree } from '../../foundation/observation.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import { windowFrameSource } from '../../foundation/map/camera.js';
@@ -297,10 +298,10 @@ export class TpMap extends TpElement implements MapApi {
   #scheme: MapScheme = 'light';
   #resolvedTheme: ResolvedMapTheme | null = null;
   #styles = new Map<string, { resource: GeneratedStyleResource; count: number }>();
-  #resize: ResizeObserver | undefined;
-  #mutations: MutationObserver | undefined;
+  #releaseResize: (() => void) | undefined;
+  #releaseChildren: (() => void) | undefined;
   #schemeObserver: MutationObserver | undefined;
-  #media: MediaQueryList | undefined;
+  #releaseMedia: (() => void) | undefined;
   #canvas: CanvasRenderingContext2D | null | undefined;
   #colorCache = new Map<string, string | null>();
   #unsubscribe: (() => void) | undefined;
@@ -536,8 +537,11 @@ export class TpMap extends TpElement implements MapApi {
   override connectedCallback(): void {
     super.connectedCallback();
     const view = this.ownerDocument.defaultView;
-    this.#media = view?.matchMedia('(prefers-color-scheme: dark)');
-    this.#media?.addEventListener('change', this.#schemeChanged);
+    this.#releaseMedia = observeMediaQuery(
+      view,
+      '(prefers-color-scheme: dark)',
+      this.#schemeChanged,
+    );
     this.#schemeObserver = view ? new view.MutationObserver(this.#schemeChanged) : undefined;
     for (const element of [this.ownerDocument.documentElement, this.ownerDocument.body])
       if (element)
@@ -545,8 +549,11 @@ export class TpMap extends TpElement implements MapApi {
           attributes: true,
           attributeFilter: ['class', 'style', 'data-theme', 'data-color-scheme'],
         });
-    this.#mutations = view ? new view.MutationObserver(() => this.#assignSlots()) : undefined;
-    this.#mutations?.observe(this, { childList: true });
+    this.#releaseChildren = observeSubtree(this, () => this.#assignSlots(), {
+      content: true,
+      attributes: false,
+      subtree: false,
+    });
     this.#unsubscribe = this.controller.subscribe(
       (state) =>
         [state.status, state.moving, state.scheme, state.canZoomIn, state.canZoomOut] as const,
@@ -561,10 +568,13 @@ export class TpMap extends TpElement implements MapApi {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#media?.removeEventListener('change', this.#schemeChanged);
+    this.#releaseMedia?.();
+    this.#releaseMedia = undefined;
     this.#schemeObserver?.disconnect();
-    this.#mutations?.disconnect();
-    this.#resize?.disconnect();
+    this.#releaseChildren?.();
+    this.#releaseChildren = undefined;
+    this.#releaseResize?.();
+    this.#releaseResize = undefined;
     this.#unsubscribe?.();
     this.controller.disconnect();
   }
@@ -780,11 +790,9 @@ export class TpMap extends TpElement implements MapApi {
 
   #observeSize(): void {
     const surface = this.renderRoot.querySelector<HTMLElement>('.surface');
-    const view = this.ownerDocument.defaultView;
-    if (!surface || !view?.ResizeObserver) return;
-    this.#resize?.disconnect();
-    this.#resize = new view.ResizeObserver(() => this.controller.refresh());
-    this.#resize.observe(surface);
+    if (!surface) return;
+    this.#releaseResize?.();
+    this.#releaseResize = observeResize(surface, () => this.controller.refresh());
   }
 
   #adoptStyles(cssText: string): () => void {

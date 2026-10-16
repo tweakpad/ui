@@ -431,6 +431,36 @@ export function observeLanguage(view: Window, callback: LanguageCallback): () =>
   };
 }
 
+type MediaQueryCallback = (matches: boolean, event: MediaQueryListEvent | null) => void;
+
+export interface MediaQueryOptions {
+  /** Deliver the current match state at once, with no event, before any change. */
+  readonly immediate?: boolean;
+}
+
+/**
+ * Calls `callback` with the match state of `query` in `view` whenever it changes. Does nothing
+ * where `view` or media query matching is unavailable.
+ */
+export function observeMediaQuery(
+  view: Window | null | undefined,
+  query: string,
+  callback: MediaQueryCallback,
+  options: MediaQueryOptions = {},
+): () => void {
+  if (!view || typeof view.matchMedia !== 'function') return () => {};
+  const media = view.matchMedia(query);
+  const listener = (event: MediaQueryListEvent) => callback(event.matches, event);
+  media.addEventListener('change', listener);
+  if (options.immediate) callback(media.matches, null);
+  let active = true;
+  return () => {
+    if (!active) return;
+    active = false;
+    media.removeEventListener('change', listener);
+  };
+}
+
 type FontsCallback = () => void;
 interface FontRegistry {
   readonly callbacks: Set<FontsCallback>;

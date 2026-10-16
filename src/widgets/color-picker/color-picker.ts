@@ -12,6 +12,7 @@ import type { ChangeReason, ValueChangeDetail } from '../../foundation/types.js'
 import { defaultTrue } from '../../foundation/converters.js';
 import { bindPart, preventComponentHandling } from '../../foundation/part.js';
 import { CleanupScope } from '../../foundation/services.js';
+import { observeSubtree } from '../../foundation/observation.js';
 import { surfaceInteraction } from '../../foundation/surface-focus.js';
 import type { TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
@@ -317,7 +318,7 @@ export class TpColorPicker extends TpFormElement<string> {
   #composition: object | undefined;
   #panel: HTMLElement | null = null;
   #authoredTrigger = false;
-  #lightObserver: MutationObserver | undefined;
+  #releaseLight: (() => void) | undefined;
   #eyedropperAbort: AbortController | undefined;
   #strings: ColorPickerStrings = resolveStrings();
   #eyedropperSupported = false;
@@ -509,19 +510,19 @@ export class TpColorPicker extends TpFormElement<string> {
     // Safety net: no constituent lane event leaves this shadow root (Widgets 6.1 Events).
     for (const type of NESTED_EVENT_TYPES)
       this.renderRoot.addEventListener(type, this.#containNested);
-    const view = this.ownerDocument.defaultView;
-    if (view) {
-      this.#lightObserver = new view.MutationObserver(() => this.requestUpdate());
-      // Light-DOM children only: host attribute writes from updated() must not re-enter.
-      this.#lightObserver.observe(this, { childList: true });
-    }
+    // Light-DOM children only: host attribute writes from updated() must not re-enter.
+    this.#releaseLight = observeSubtree(this, () => this.requestUpdate(), {
+      content: true,
+      attributes: false,
+      subtree: false,
+    });
   }
 
   override disconnectedCallback(): void {
     for (const type of NESTED_EVENT_TYPES)
       this.renderRoot.removeEventListener(type, this.#containNested);
-    this.#lightObserver?.disconnect();
-    this.#lightObserver = undefined;
+    this.#releaseLight?.();
+    this.#releaseLight = undefined;
     this.#eyedropperAbort?.abort();
     this.#eyedropperAbort = undefined;
     this.#dragSnapshot = undefined;
