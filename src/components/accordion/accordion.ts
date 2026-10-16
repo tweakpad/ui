@@ -1,7 +1,7 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
-import { TpOpenChangeEvent, TpValueChangeEvent } from '../../foundation/events.js';
+import { TpOpenChangeEvent, TpValueChangeEvent, dispatchTpEvent } from '../../foundation/events.js';
 import { createId } from '../../foundation/id.js';
 import { assignedElements } from '../shared/events.js';
 import { TpAccordionItem, type AccordionContentAlignment } from './accordion-item.js';
@@ -229,13 +229,7 @@ export class TpAccordion extends TpElement {
       if (event.target !== collapsible) return;
       event.stopPropagation();
       const open = Boolean((event as CustomEvent<{ open: boolean }>).detail?.open);
-      item.dispatchEvent(
-        new CustomEvent('tp-open-change-complete', {
-          bubbles: true,
-          composed: true,
-          detail: { value, open },
-        }),
-      );
+      dispatchTpEvent(item, 'tp-open-change-complete', { value, open });
     };
     collapsible.addEventListener('tp-open-change', handleOpenChange);
     collapsible.addEventListener('tp-open-change-complete', handleOpenComplete);

@@ -88,18 +88,16 @@ export class TpFlowPort extends TpElement {
 
   #click = (event: MouseEvent): void => {
     if (this.disabled || !this.connectable) return;
-    this.dispatchEvent(
-      new CustomEvent<FlowPortActivateDetail>(PORT_ACTIVATE, {
-        bubbles: true,
-        composed: false,
-        detail: {
-          nodeId: this.nodeId,
-          portId: this.portId,
-          direction: this.portDirection,
-          keyboard: event.detail === 0,
-          sourceEvent: event,
-        },
-      }),
+    this.emit<FlowPortActivateDetail>(
+      PORT_ACTIVATE,
+      {
+        nodeId: this.nodeId,
+        portId: this.portId,
+        direction: this.portDirection,
+        keyboard: event.detail === 0,
+        sourceEvent: event,
+      },
+      { composed: false },
     );
   };
 

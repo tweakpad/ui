@@ -491,21 +491,8 @@ export class TpSelect extends TpFormElement<unknown> {
     },
     messages: () => this.resolvedMessages,
     searchStatus: (status, query, total, error) => {
-      this.dispatchEvent(
-        new CustomEvent('tp-search-status', {
-          detail: { status, query, total },
-          bubbles: true,
-          composed: true,
-        }),
-      );
-      if (status === 'error')
-        this.dispatchEvent(
-          new CustomEvent('tp-search-error', {
-            detail: { error, query },
-            bubbles: true,
-            composed: true,
-          }),
-        );
+      this.emit('tp-search-status', { status, query, total });
+      if (status === 'error') this.emit('tp-search-error', { error, query });
       this.requestUpdate();
     },
     submit: () => this.#submitForm(),

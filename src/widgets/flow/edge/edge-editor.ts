@@ -391,29 +391,23 @@ export class TpFlowEdgeEditor extends TpElement {
     origin: FlowPoint = point,
   ): void {
     if (target.kind === 'waypoint') {
-      this.dispatchEvent(
-        new CustomEvent<FlowEdgeWaypointDetail>(EDGE_WAYPOINT, {
-          bubbles: true,
-          composed: false,
-          detail: { index: target.index, point, phase, input, sourceEvent },
-        }),
+      this.emit<FlowEdgeWaypointDetail>(
+        EDGE_WAYPOINT,
+        { index: target.index, point, phase, input, sourceEvent },
+        { composed: false },
       );
     } else if (target.kind === 'segment') {
       const offset = target.axis === 'x' ? point.x - origin.x : point.y - origin.y;
-      this.dispatchEvent(
-        new CustomEvent<FlowEdgeSegmentDetail>(EDGE_SEGMENT, {
-          bubbles: true,
-          composed: false,
-          detail: { index: target.index, offset, axis: target.axis, phase, input, sourceEvent },
-        }),
+      this.emit<FlowEdgeSegmentDetail>(
+        EDGE_SEGMENT,
+        { index: target.index, offset, axis: target.axis, phase, input, sourceEvent },
+        { composed: false },
       );
     } else {
-      this.dispatchEvent(
-        new CustomEvent<FlowEdgeReconnectDetail>(EDGE_RECONNECT, {
-          bubbles: true,
-          composed: false,
-          detail: { end: target.end, point, phase, sourceEvent },
-        }),
+      this.emit<FlowEdgeReconnectDetail>(
+        EDGE_RECONNECT,
+        { end: target.end, point, phase, sourceEvent },
+        { composed: false },
       );
     }
   }
@@ -438,12 +432,10 @@ export class TpFlowEdgeEditor extends TpElement {
     if (!point) return;
     if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault();
-      this.dispatchEvent(
-        new CustomEvent<FlowEdgeWaypointRemoveDetail>(EDGE_WAYPOINT_REMOVE, {
-          bubbles: true,
-          composed: false,
-          detail: { index, sourceEvent: event },
-        }),
+      this.emit<FlowEdgeWaypointRemoveDetail>(
+        EDGE_WAYPOINT_REMOVE,
+        { index, sourceEvent: event },
+        { composed: false },
       );
       return;
     }
@@ -496,13 +488,10 @@ export class TpFlowEdgeEditor extends TpElement {
   #reconnectKeyDown = (event: KeyboardEvent): void => {
     if (this.disabled || (event.key !== 'Enter' && event.key !== ' ')) return;
     const end = (event.currentTarget as HTMLElement).dataset['end'] as 'source' | 'target';
-    const started = !this.dispatchEvent(
-      new CustomEvent<FlowEdgeReconnectKeyDetail>(EDGE_RECONNECT_KEY, {
-        bubbles: true,
-        composed: false,
-        cancelable: true,
-        detail: { end, sourceEvent: event },
-      }),
+    const started = !this.emit<FlowEdgeReconnectKeyDetail>(
+      EDGE_RECONNECT_KEY,
+      { end, sourceEvent: event },
+      { composed: false, cancelable: true },
     );
     // The root handled the key (started, confirmed or cancelled a reconnect): the button keeps it.
     if (started) {

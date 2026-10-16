@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { TpOpenChangeEvent, TpValueChangeEvent, TpValueCommitEvent } from './events.js';
+import {
+  TpOpenChangeEvent,
+  TpValueChangeEvent,
+  TpValueCommitEvent,
+  dispatchTpEvent,
+} from './events.js';
 
 describe('change events', () => {
   it('allows a consumer to cancel a value request', () => {
@@ -39,5 +44,53 @@ describe('change events', () => {
       new TpValueChangeEvent('next', 'previous', 'input', source, { trigger: explicit }).detail
         .trigger,
     ).toBe(explicit);
+  });
+});
+
+describe('dispatchTpEvent', () => {
+  it('dispatches a bubbling, composed custom event carrying the detail', () => {
+    const target = new EventTarget();
+    let received: CustomEvent<{ value: number }> | undefined;
+    target.addEventListener('tp-example', (event) => {
+      received = event as CustomEvent<{ value: number }>;
+    });
+
+    const result = dispatchTpEvent(target, 'tp-example', { value: 1 });
+
+    expect(result).toBe(true);
+    expect(received).toBeInstanceOf(CustomEvent);
+    expect(received?.type).toBe('tp-example');
+    expect(received?.detail).toEqual({ value: 1 });
+    expect(received?.bubbles).toBe(true);
+    expect(received?.composed).toBe(true);
+    expect(received?.cancelable).toBe(false);
+  });
+
+  it('lets init override the propagation defaults while detail always wins', () => {
+    const target = new EventTarget();
+    let received: CustomEvent<string> | undefined;
+    target.addEventListener('tp-example', (event) => {
+      received = event as CustomEvent<string>;
+    });
+
+    dispatchTpEvent(target, 'tp-example', 'detail', {
+      bubbles: false,
+      composed: false,
+      cancelable: true,
+      detail: 'ignored',
+    });
+
+    expect(received?.bubbles).toBe(false);
+    expect(received?.composed).toBe(false);
+    expect(received?.cancelable).toBe(true);
+    expect(received?.detail).toBe('detail');
+  });
+
+  it('reports cancellation of a cancelable event through the return value', () => {
+    const target = new EventTarget();
+    target.addEventListener('tp-example', (event) => event.preventDefault());
+
+    expect(dispatchTpEvent(target, 'tp-example', null, { cancelable: true })).toBe(false);
+    expect(dispatchTpEvent(target, 'tp-example', null)).toBe(true);
   });
 });

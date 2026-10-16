@@ -222,21 +222,19 @@ export class TpFlowNodeResizer extends TpElement {
     input: 'pointer' | 'keyboard',
   ): void {
     const modifiers = sourceEvent as (Event & { shiftKey?: boolean; altKey?: boolean }) | null;
-    this.dispatchEvent(
-      new CustomEvent<FlowNodeResizeDetail>(NODE_RESIZE, {
-        bubbles: true,
-        composed: false,
-        detail: {
-          phase,
-          corner,
-          dx,
-          dy,
-          shiftKey: !!modifiers?.shiftKey,
-          altKey: !!modifiers?.altKey,
-          input,
-          sourceEvent,
-        },
-      }),
+    this.emit<FlowNodeResizeDetail>(
+      NODE_RESIZE,
+      {
+        phase,
+        corner,
+        dx,
+        dy,
+        shiftKey: !!modifiers?.shiftKey,
+        altKey: !!modifiers?.altKey,
+        input,
+        sourceEvent,
+      },
+      { composed: false },
     );
   }
 

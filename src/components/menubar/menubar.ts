@@ -1,4 +1,4 @@
-import { stepIndex } from '../../foundation/collection.js';
+import { arrowKeys, stepIndex } from '../../foundation/collection.js';
 import { css, html, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
@@ -301,18 +301,7 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
     const enabled = this.#members.filter((member) => !member.menu.disabled && member.target);
     const index = enabled.findIndex((member) => member.menu === menu);
     if (index < 0) return false;
-    const forward =
-      this.orientation === 'vertical'
-        ? 'ArrowDown'
-        : this.direction === 'rtl'
-          ? 'ArrowLeft'
-          : 'ArrowRight';
-    const backward =
-      this.orientation === 'vertical'
-        ? 'ArrowUp'
-        : this.direction === 'rtl'
-          ? 'ArrowRight'
-          : 'ArrowLeft';
+    const { next: forward, previous: backward } = arrowKeys(this.orientation, this.direction);
     let next =
       event.key === forward
         ? index + 1

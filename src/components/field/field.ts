@@ -1,6 +1,7 @@
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { dispatchTpEvent } from '../../foundation/events.js';
 import { ValidationController, ValidationRun } from '../../foundation/validation.js';
 import { PresenceController } from '../../foundation/presence.js';
 import { renderPart } from '../../foundation/part.js';
@@ -715,14 +716,7 @@ export class TpField extends TpElement {
             this.#attribute(element, 'data-ending-style', phase === 'ending' ? '' : null);
             this.requestUpdate();
           },
-          onComplete: (present) =>
-            element.dispatchEvent(
-              new CustomEvent('tp-presence-complete', {
-                bubbles: true,
-                composed: true,
-                detail: { present },
-              }),
-            ),
+          onComplete: (present) => dispatchTpEvent(element, 'tp-presence-complete', { present }),
         });
         this.#errorsPresence.set(element, presence);
       }

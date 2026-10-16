@@ -262,37 +262,23 @@ export class TpFlowPalette extends TpElement {
     event.dataTransfer.effectAllowed = 'copy';
     // Once the drag image is taken the root lets the canvas show (and take the drop) under the menu.
     queueMicrotask(() =>
-      this.dispatchEvent(
-        new CustomEvent<FlowPaletteDragStartDetail>(PALETTE_DRAG_START, {
-          bubbles: true,
-          composed: true,
-          detail: { type, sourceEvent: event },
-        }),
-      ),
+      this.emit<FlowPaletteDragStartDetail>(PALETTE_DRAG_START, { type, sourceEvent: event }),
     );
   };
 
   #dragEnd = (event: DragEvent): void => {
-    this.dispatchEvent(
-      new CustomEvent<FlowPaletteCloseDetail>(PALETTE_DRAG_END, {
-        bubbles: true,
-        composed: true,
-        detail: { sourceEvent: event },
-      }),
-    );
+    this.emit<FlowPaletteCloseDetail>(PALETTE_DRAG_END, { sourceEvent: event });
   };
 
   /** A pointer click (detail 1 or more) arms placement; Enter and Space (detail 0) insert. */
   #activate = (event: MouseEvent): void => {
     const type = (event.currentTarget as HTMLElement).dataset['type'];
     if (!type || this.disabled) return;
-    this.dispatchEvent(
-      new CustomEvent<FlowPaletteInsertDetail>(PALETTE_INSERT, {
-        bubbles: true,
-        composed: true,
-        detail: { type, mode: event.detail > 0 ? 'place' : 'insert', sourceEvent: event },
-      }),
-    );
+    this.emit<FlowPaletteInsertDetail>(PALETTE_INSERT, {
+      type,
+      mode: event.detail > 0 ? 'place' : 'insert',
+      sourceEvent: event,
+    });
   };
 
   #queryChange = (event: TpValueChangeEvent<string>): void => {
@@ -305,13 +291,7 @@ export class TpFlowPalette extends TpElement {
   };
 
   #close = (event: Event): void => {
-    this.dispatchEvent(
-      new CustomEvent<FlowPaletteCloseDetail>(PALETTE_CLOSE, {
-        bubbles: true,
-        composed: true,
-        detail: { sourceEvent: event },
-      }),
-    );
+    this.emit<FlowPaletteCloseDetail>(PALETTE_CLOSE, { sourceEvent: event });
   };
 
   #keyDown = (event: KeyboardEvent): void => {

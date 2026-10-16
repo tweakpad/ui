@@ -1,3 +1,4 @@
+import { arrowKeys } from '../collection.js';
 import { CleanupScope, Scheduler } from '../services.js';
 import { componentHandlingPrevented } from '../part.js';
 import { KeyBindingOwner } from '../key-bindings.js';
@@ -101,18 +102,7 @@ export function bindCarouselKeyboard(
       const keyboard = controller.configuration.keyboard;
       if (!keyboard || !keyboard.enabled) return false;
       const state = controller.snapshot;
-      const previous =
-        state.orientation === 'vertical'
-          ? 'ArrowUp'
-          : state.direction === 'rtl'
-            ? 'ArrowRight'
-            : 'ArrowLeft';
-      const next =
-        state.orientation === 'vertical'
-          ? 'ArrowDown'
-          : state.direction === 'rtl'
-            ? 'ArrowLeft'
-            : 'ArrowRight';
+      const { previous, next } = arrowKeys(state.orientation, state.direction);
       const request = { reason: 'keyboard' as const, sourceEvent: event };
       // Prevent before requesting so listeners observe the same ordering as before.
       if (
