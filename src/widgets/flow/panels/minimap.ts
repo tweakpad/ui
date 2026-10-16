@@ -244,12 +244,10 @@ export class TpFlowMinimap extends TpElement {
           this.#markPanning();
           const scene = this.#scene;
           if (!scene) return;
-          this.dispatchEvent(
-            new CustomEvent<FlowMinimapPanDetail>(MINIMAP_PAN, {
-              bubbles: true,
-              composed: false,
-              detail: { center: rectCenter(scene.viewport), phase: 'cancel', sourceEvent: event },
-            }),
+          this.emit<FlowMinimapPanDetail>(
+            MINIMAP_PAN,
+            { center: rectCenter(scene.viewport), phase: 'cancel', sourceEvent: event },
+            { composed: false },
           );
         },
       },
@@ -296,12 +294,10 @@ export class TpFlowMinimap extends TpElement {
     if (!scene) return;
     const { scale, offsetX, offsetY } = this.#transform(scene, point.width, point.height);
     const center = { x: (point.x - offsetX) / scale, y: (point.y - offsetY) / scale };
-    this.dispatchEvent(
-      new CustomEvent<FlowMinimapPanDetail>(MINIMAP_PAN, {
-        bubbles: true,
-        composed: false,
-        detail: { center, phase, sourceEvent: event },
-      }),
+    this.emit<FlowMinimapPanDetail>(
+      MINIMAP_PAN,
+      { center, phase, sourceEvent: event },
+      { composed: false },
     );
   }
 
@@ -310,16 +306,14 @@ export class TpFlowMinimap extends TpElement {
     const key = (event.currentTarget as HTMLElement).dataset['direction'] as Direction;
     const direction = DIRECTIONS.find((candidate) => candidate.key === key);
     if (!scene || !direction || this.disabled) return;
-    this.dispatchEvent(
-      new CustomEvent<FlowMinimapStepDetail>(MINIMAP_STEP, {
-        bubbles: true,
-        composed: false,
-        detail: {
-          dx: (direction.dx * scene.viewport.width) / 10,
-          dy: (direction.dy * scene.viewport.height) / 10,
-          sourceEvent: event,
-        },
-      }),
+    this.emit<FlowMinimapStepDetail>(
+      MINIMAP_STEP,
+      {
+        dx: (direction.dx * scene.viewport.width) / 10,
+        dy: (direction.dy * scene.viewport.height) / 10,
+        sourceEvent: event,
+      },
+      { composed: false },
     );
   };
 

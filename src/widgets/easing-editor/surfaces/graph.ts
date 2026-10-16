@@ -186,13 +186,7 @@ export class TpEasingEditorGraph extends TpElement {
     if (this.#playing === playing) return;
     this.#playing = playing;
     this.requestUpdate();
-    this.dispatchEvent(
-      new CustomEvent('easing-preview-change', {
-        detail: { playing },
-        bubbles: true,
-        composed: false,
-      }),
-    );
+    this.emit('easing-preview-change', { playing }, { composed: false });
   }
 
   // ---- pointer -------------------------------------------------------------------------------
@@ -376,7 +370,7 @@ export class TpEasingEditorGraph extends TpElement {
       ...(axis ? { axis } : {}),
       ...(conversion ? { conversion: true } : {}),
     };
-    this.dispatchEvent(new CustomEvent(SURFACE_CHANGE, { detail, bubbles: true, composed: false }));
+    this.emit(SURFACE_CHANGE, detail, { composed: false });
   }
 
   // ---- keyboard ------------------------------------------------------------------------------

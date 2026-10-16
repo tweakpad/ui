@@ -10,7 +10,7 @@ import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 import { composedContains, deepActiveElement } from '../../foundation/focus.js';
 import { OwnedStyles } from '../../foundation/owned-styles.js';
 import { CleanupScope, Scheduler } from '../../foundation/services.js';
-import { CollectionRegistry } from '../../foundation/collection.js';
+import { CollectionRegistry, arrowKeys } from '../../foundation/collection.js';
 import {
   resolveMotionTiming,
   resolvesReducedMotion,
@@ -1684,18 +1684,7 @@ export class TpCarousel<T = unknown> extends TpElement {
     )
       return;
     const current = this.#snapshot?.snapIndex ?? 0;
-    const previous =
-      this.#config.orientation === 'vertical'
-        ? 'ArrowUp'
-        : this.direction === 'rtl'
-          ? 'ArrowRight'
-          : 'ArrowLeft';
-    const next =
-      this.#config.orientation === 'vertical'
-        ? 'ArrowDown'
-        : this.direction === 'rtl'
-          ? 'ArrowLeft'
-          : 'ArrowRight';
+    const { previous, next } = arrowKeys(this.#config.orientation, this.direction);
     const index =
       event.key === 'Home'
         ? 0

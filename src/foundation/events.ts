@@ -1,5 +1,26 @@
 import type { ChangeReason, ValueChangeDetail } from './types.js';
 
+/**
+ * Dispatches a `CustomEvent` on `target` with the library defaults: bubbling and composed
+ * unless `init` says otherwise, with `detail` always applied last. Returns the
+ * `dispatchEvent` result, so a cancelable event reports `false` once a listener prevents it.
+ */
+export function dispatchTpEvent<T>(
+  target: EventTarget,
+  type: string,
+  detail: T,
+  init: CustomEventInit<T> = {},
+): boolean {
+  return target.dispatchEvent(
+    new CustomEvent(type, {
+      bubbles: true,
+      composed: true,
+      ...init,
+      detail,
+    }),
+  );
+}
+
 export interface TpChangeEventOptions {
   /** Structural invariant repairs notify after commit and cannot be canceled. */
   cancelable?: boolean;
