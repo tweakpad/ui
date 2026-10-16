@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 
 /** Layout, containment, and hit regions. Appearance belongs to the dictionary. */
 export const dialogStyles = css`
@@ -98,9 +99,7 @@ export const dialogStyles = css`
     display: contents;
   }
 
-  [hidden] {
-    display: none !important;
-  }
+  ${hiddenStyles}
 
   @media (width < 32rem) {
     .footer {

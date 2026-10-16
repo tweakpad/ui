@@ -77,10 +77,6 @@ export class TpCopyButton extends TpElement {
         vertical-align: middle;
       }
 
-      :host([hidden]) {
-        display: none;
-      }
-
       /* The composed Button paints the unavailable state; the host is not dimmed twice. */
       :host([disabled]) {
         cursor: auto;

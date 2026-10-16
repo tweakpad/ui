@@ -1,4 +1,5 @@
 import { css, html, type PropertyValues } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { createId } from '../../foundation/id.js';
 import { TpElement } from '../../foundation/element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
@@ -56,9 +57,7 @@ export class TpMessageScroller extends TpElement {
         display: contents;
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
   readonly [messageScrollerContext] = true as const;

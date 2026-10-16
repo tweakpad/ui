@@ -1,5 +1,6 @@
 import { motionEasing, motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
+import { focusRing } from './shared/focus.js';
 
 /**
  * Media player appearance (Library mp-l-presentation). Only existing token roles are used:
@@ -33,10 +34,7 @@ export const mediaPlayerAppearance: PresentationDictionary = {
     },
     {
       selector: '&:focus-visible',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
-      },
+      declarations: focusRing,
     },
   ],
   // Native captions stay native (platform caption preferences apply), sit 10% of the video

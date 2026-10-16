@@ -1,4 +1,5 @@
 import { css, html, nothing } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { TpElement } from '../../foundation/element.js';
 import type { TimeInput } from '../../foundation/time/parse.js';
 import { messagePresentation } from '../../presentation/families/message.js';
@@ -118,9 +119,7 @@ export class TpMessage extends TpElement {
         justify-content: flex-end;
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
   align: 'start' | 'end' = 'start';

@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { fillLayerStyles } from '../../presentation/motion.js';
 
 /** Structure only: arrangement, geometry and hit targets. Appearance lives in the recipe. */
@@ -127,7 +128,5 @@ export const fileUploadStyles = css`
     display: block;
   }
 
-  [hidden] {
-    display: none !important;
-  }
+  ${hiddenStyles}
 `;

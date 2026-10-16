@@ -1,5 +1,6 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
+import { focusRing } from './shared/focus.js';
 
 /** Default Map appearance (`ucl21-map` map-l-presentation): existing token roles only. */
 export const mapAppearance: PresentationDictionary = {
@@ -52,8 +53,7 @@ export const mapAppearance: PresentationDictionary = {
     {
       selector: '&:focus-visible',
       declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
+        ...focusRing,
         'box-shadow':
           '0 0 0 calc(var(--tp-ring-width) + var(--tp-ring-offset)) var(--tp-background)',
       },

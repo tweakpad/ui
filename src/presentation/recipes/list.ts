@@ -1,4 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { focusRing } from './shared/focus.js';
 export const listAppearance: PresentationDictionary = {
   list: [
     { declarations: { gap: 'var(--tp-space-4)' } },
@@ -21,8 +22,7 @@ export const listAppearance: PresentationDictionary = {
     {
       selector: '&:is(a,button):focus-visible',
       declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
+        ...focusRing,
         'border-color': 'var(--tp-ring)',
       },
     },

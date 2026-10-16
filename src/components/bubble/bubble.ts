@@ -1,4 +1,5 @@
 import { css, html } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { renderStackGroup, stackGroupStyles } from '../shared/stack-group.js';
 import { TpElement } from '../../foundation/element.js';
 import { bubblePresentation } from '../../presentation/families/bubble.js';
@@ -88,9 +89,7 @@ export class TpBubble extends TpElement {
         translate: 0 -75%;
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
   align: 'start' | 'end' = 'start';

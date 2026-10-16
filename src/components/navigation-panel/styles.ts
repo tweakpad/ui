@@ -1,5 +1,6 @@
 import { transitionCss } from '../../presentation/motion.js';
 import { css } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 /** Placement and flow only; appearance is supplied by the replaceable family dictionary. */
 export const navigationPanelStyles = css`
   :host {
@@ -101,9 +102,7 @@ export const navigationPanelStyles = css`
     display: contents;
   }
 
-  [hidden] {
-    display: none !important;
-  }
+  ${hiddenStyles}
 `;
 export const navigationViewStyles = css`
   :host {

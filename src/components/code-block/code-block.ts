@@ -1,4 +1,5 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { createId } from '../../foundation/id.js';
 import { defaultTrue } from '../../foundation/converters.js';
 import { repeat } from 'lit/directives/repeat.js';
@@ -166,9 +167,7 @@ export class TpCodeBlock extends TpElement {
         justify-content: center;
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
 

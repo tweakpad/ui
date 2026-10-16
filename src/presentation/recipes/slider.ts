@@ -1,5 +1,6 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
+import { focusRing } from './shared/focus.js';
 
 // Slider paint; geometry belongs to the family.
 export const sliderAppearance: PresentationDictionary = {
@@ -84,10 +85,7 @@ export const sliderAppearance: PresentationDictionary = {
     {
       // The thumbless track carries keyboard focus indication.
       selector: '[part~="slider"][data-focus-visible] &',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
-      },
+      declarations: focusRing,
     },
   ],
   'slider-buffer-variant-bar': [

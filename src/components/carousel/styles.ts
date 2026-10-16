@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 export const carouselStyles = css`
   :host {
     display: block;
@@ -283,7 +284,5 @@ export const carouselStyles = css`
     pointer-events: none;
   }
 
-  [hidden] {
-    display: none !important;
-  }
+  ${hiddenStyles}
 `;

@@ -1,4 +1,5 @@
 import { css, html, type PropertyValues } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { TpElement } from '../../foundation/element.js';
 import { TpButton } from '../button/button.js';
 import { chevronDownIcon } from '../../icons/chevron-down.js';
@@ -115,9 +116,7 @@ export class TpMessageScrollerContent extends TpElement {
         overflow-anchor: none;
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
   label = '';

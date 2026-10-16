@@ -1,4 +1,5 @@
 import { css, html, type PropertyValues } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { TpElement } from '../../foundation/element.js';
 import {
   ambientRole,
@@ -52,9 +53,7 @@ export class TpMarker extends TpElement {
         overflow-wrap: anywhere;
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
     shimmerStyles(':host([shimmer]) .content'),
   ];

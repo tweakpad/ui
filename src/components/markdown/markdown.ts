@@ -1,4 +1,5 @@
 import { css, html, type PropertyValues } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { guard } from 'lit/directives/guard.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
@@ -99,9 +100,7 @@ export class TpMarkdown extends TpElement {
         max-inline-size: 100%;
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
 
