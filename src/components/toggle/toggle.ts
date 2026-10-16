@@ -1,6 +1,7 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
@@ -233,10 +234,11 @@ export class TpToggle extends TpFormElement {
         'aria-disabled': disabled ? 'true' : undefined,
         'aria-pressed': String(this.pressed),
         'aria-label': this.ariaLabel || undefined,
-        'data-pressed': this.pressed,
-        'data-unpressed': !this.pressed,
-        'data-disabled': disabled,
-        'data-focus-visible': this.#focusVisible,
+        ...stateMarkers({ pressed: this.pressed, disabled, focusVisible: this.#focusVisible }, [
+          'pressed',
+          'disabled',
+          'focusVisible',
+        ]),
         tabindex: disabled ? -1 : (this.#owner?.tabStop(this) ?? 0),
         '@click': (event: Event) => {
           queueMicrotask(() => {

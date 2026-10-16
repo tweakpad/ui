@@ -1,6 +1,7 @@
 import { css, html } from 'lit';
 import type { PropertyValues, PropertyDeclarations } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
@@ -33,6 +34,22 @@ export interface BooleanControlState extends Readonly<Record<string, unknown>> {
   filled: boolean;
   focused: boolean;
 }
+
+/** Markers every Boolean control part publishes from its `BooleanControlState`. */
+export const BOOLEAN_CONTROL_MARKERS = [
+  'checked',
+  'indeterminate',
+  'disabled',
+  'readOnly',
+  'required',
+  'invalid',
+  'valid',
+  'focused',
+  'focusVisible',
+  'touched',
+  'dirty',
+  'filled',
+] as const satisfies readonly (keyof BooleanControlState)[];
 
 /** Checkbox state/form owner, also consumed by the Switch family. */
 export class TpCheckbox extends TpFormElement {
@@ -277,21 +294,8 @@ export class TpCheckbox extends TpFormElement {
           '.ariaControlsElements': this.checkboxParent
             ? (this.#group?.controlledElements() ?? [])
             : [],
-          'data-checked': checked,
-          'data-unchecked': !checked,
-          'data-indeterminate': mixed,
-          'data-disabled': disabled,
-          'data-read-only': this.readOnly,
-          'data-required': this.required,
-          'data-focus-visible': this.#focusVisible,
-          'data-invalid': this.effectiveInvalid,
-          'data-valid': state.valid === true,
+          ...stateMarkers(state, BOOLEAN_CONTROL_MARKERS),
           'data-parent': this.checkboxParent,
-          'data-touched': state.touched,
-          'data-dirty': state.dirty,
-          'data-filled': state.filled,
-          'data-focused': state.focused,
-          'data-readonly': this.readOnly,
           '@click': this.#click,
           '@keydown': this.#keyDown,
           '@keyup': this.#keyUp,

@@ -2,6 +2,7 @@ import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { CollapsibleController } from '../../foundation/collapsible.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import { compositeControl } from '../../foundation/composite-control.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import {
@@ -454,9 +455,7 @@ export class TpDescriptionList extends TpElement {
       ...options,
       reference: this.presentationController.partReference(name),
       properties: {
-        'data-open': this.open,
-        'data-closed': !this.open,
-        'data-disabled': this.disabled,
+        ...stateMarkers({ open: this.open, disabled: this.disabled }, ['open', 'disabled']),
         ...options.properties,
       },
     });

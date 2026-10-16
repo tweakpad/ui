@@ -37,6 +37,11 @@ These rules apply to every component and widget.
 - Enumeration markers carry exactly one declared value (`data-side="top"`,
   `data-orientation="vertical"`).
 - Library-internal markers that are not part of a public contract use the `data-tp-` prefix.
+- Parts publish their markers through `stateMarkers(state, booleans, values)` from
+  `src/foundation/state-markers.ts`, which maps state keys to the canonical names
+  (`readOnly` → `data-readonly`, `focusVisible` → `data-focus-visible`) and emits the paired
+  complement (`unchecked`, `closed`, `unselected`, `unpressed`). Hosts that mirror a marker map
+  onto themselves imperatively use `applyMarkers`.
 - Published geometry outputs are read-only custom properties on the host, named
   `--tp-<component>-<measure>` (`--tp-cursor-x`, `--tp-cursor-stuck-width`); they are never part
   of the token set and never inputs.
