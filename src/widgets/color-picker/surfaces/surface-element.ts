@@ -1,5 +1,6 @@
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../../foundation/element.js';
+import { stateMarkers } from '../../../foundation/state-markers.js';
 import { createId } from '../../../foundation/id.js';
 import type { ChangeReason } from '../../../foundation/types.js';
 import { colorPickerPresentation } from '../../../presentation/families/color-picker.js';
@@ -88,13 +89,16 @@ export abstract class ColorSurfaceElement extends TpElement {
   }
 
   protected markers(): Record<string, unknown> {
-    return {
-      'data-disabled': this.disabled,
-      'data-readonly': this.readOnly,
-      'data-dragging': this.#dragging,
-      'data-focused': this.#focused,
-      'data-focus-visible': this.#focusVisible,
-    };
+    return stateMarkers(
+      {
+        disabled: this.disabled,
+        readOnly: this.readOnly,
+        dragging: this.#dragging,
+        focused: this.#focused,
+        focusVisible: this.#focusVisible,
+      },
+      ['disabled', 'readOnly', 'dragging', 'focused', 'focusVisible'],
+    );
   }
 
   /** Emits a change to the owning widget without crossing the widget's shadow boundary. */

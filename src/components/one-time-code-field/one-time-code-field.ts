@@ -1,5 +1,6 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
 import { autofillHint } from '../../foundation/autofill.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import { live } from 'lit/directives/live.js';
 import { TpElement } from '../../foundation/element.js';
 import { TpFormElement } from '../../foundation/form-element.js';
@@ -214,17 +215,22 @@ export class TpOneTimeCodeField extends TpFormElement {
       tag: 'span',
       properties: {
         class: 'slot',
-        'data-index': index,
-        'data-active': state.active,
-        'data-focused': state.focused,
+        ...stateMarkers(
+          state,
+          [
+            'active',
+            'focused',
+            'filled',
+            'complete',
+            'disabled',
+            'readOnly',
+            'required',
+            'invalid',
+          ],
+          ['index'],
+        ),
         'data-selected': state.selected,
-        'data-filled': state.filled,
         'data-empty': !state.filled,
-        'data-complete': state.complete,
-        'data-disabled': state.disabled,
-        'data-readonly': state.readOnly,
-        'data-required': state.required,
-        'data-invalid': state.invalid,
         'data-caret': state.active && !char,
       },
       content: char ? (this.mask ? '•' : char) : this.placeholder,

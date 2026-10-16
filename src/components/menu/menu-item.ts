@@ -1,5 +1,6 @@
 import { css, html, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import { SyntheticPress } from '../../foundation/synthetic-press.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
@@ -209,13 +210,18 @@ export class TpMenuItem extends TpElement {
         'aria-label': this.label || undefined,
         'aria-disabled': this.itemDisabled ? 'true' : undefined,
         'aria-checked': checked === undefined ? undefined : String(checked),
-        'data-variant': this.itemVariant,
-        'data-inset': this.inset,
-        'data-disabled': this.itemDisabled,
-        'data-highlighted': this.highlighted,
-        'data-focus-visible': this.highlighted && this.#keyboardHighlight,
-        'data-checked': checked === true,
-        'data-unchecked': checked === false,
+        ...stateMarkers(
+          {
+            variant: this.itemVariant,
+            inset: this.inset,
+            disabled: this.itemDisabled,
+            highlighted: this.highlighted,
+            focusVisible: this.highlighted && this.#keyboardHighlight,
+            checked,
+          },
+          ['inset', 'disabled', 'highlighted', 'focusVisible', 'checked'],
+          ['variant'],
+        ),
         '@click': this.#click,
         '@keydown': this.#keyDown,
         '@keyup': this.#keyUp,

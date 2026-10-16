@@ -1,5 +1,6 @@
 import { html, nothing, type PropertyDeclarations, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import { TpFormElement } from '../../foundation/form-element.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
 import { LiveAnnouncer } from '../../foundation/announcer.js';
@@ -1221,15 +1222,18 @@ export class TpFileUpload extends TpFormElement<readonly File[]> {
         : full
           ? this.#t('full', { max })
           : this.#t(this.multiple ? 'titleMultiple' : 'title');
-    const markers = {
-      'data-drop-target': this._dropTarget,
-      'data-drop-reject': this._dropTarget && this._dropReject,
-      'data-disabled': this.effectiveDisabled,
-      'data-readonly': this.readOnly,
-      'data-invalid': this.effectiveInvalid,
-      'data-full': full,
-      'data-focus-visible': this._focusVisible,
-    };
+    const markers = stateMarkers(
+      {
+        dropTarget: this._dropTarget,
+        dropReject: this._dropTarget && this._dropReject,
+        disabled: this.effectiveDisabled,
+        readOnly: this.readOnly,
+        invalid: this.effectiveInvalid,
+        full,
+        focusVisible: this._focusVisible,
+      },
+      ['dropTarget', 'dropReject', 'disabled', 'readOnly', 'invalid', 'full', 'focusVisible'],
+    );
     const dropzone = part('file-upload-dropzone', {
       properties: {
         class: 'dropzone',

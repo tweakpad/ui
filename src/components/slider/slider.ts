@@ -1,5 +1,6 @@
 import { html } from 'lit';
 import { defaultTrue } from '../../foundation/converters.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import type { PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
@@ -1221,18 +1222,23 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       dirty: !sameSliderValues(values, this.#initialValues ?? values),
     };
     const markers = {
-      'data-orientation': this.orientation,
-      'data-dragging': this.dragging,
-      'data-disabled': this.effectiveDisabled || indeterminate,
-      'data-indeterminate': indeterminate,
-      'data-pointing': this.pointing,
-      'data-invalid': this.effectiveInvalid,
-      'data-valid': !this.effectiveInvalid,
-      'data-readonly': this.readOnly,
-      'data-focused': state.focused,
+      ...stateMarkers(
+        state,
+        [
+          'dragging',
+          'disabled',
+          'indeterminate',
+          'pointing',
+          'invalid',
+          'readOnly',
+          'focused',
+          'touched',
+          'dirty',
+        ],
+        ['orientation'],
+      ),
+      'data-valid': !state.invalid,
       'data-focus-visible': this.#focusVisible,
-      'data-touched': state.touched,
-      'data-dirty': state.dirty,
     };
     const label =
       this.label || this.querySelector('[slot="label"]') || this.partContracts['slider-label'];

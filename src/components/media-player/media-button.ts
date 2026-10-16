@@ -1,5 +1,6 @@
 import { css, html, nothing, type PropertyDeclarations, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { applyMarkers } from '../../foundation/state-markers.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { MediaRequestAction, MediaRequestOptions } from '../../foundation/media/requests.js';
 import type { MediaState } from '../../foundation/media/state.js';
@@ -32,14 +33,7 @@ export function applyMediaMarkers(
   markers: MediaMarkers,
   previous: ReadonlySet<string>,
 ): Set<string> {
-  const names = new Set(Object.keys(markers));
-  for (const name of previous) if (!names.has(name)) host.removeAttribute(name);
-  for (const [name, value] of Object.entries(markers)) {
-    if (value === true) host.setAttribute(name, '');
-    else if (value === false || value === null) host.removeAttribute(name);
-    else host.setAttribute(name, value);
-  }
-  return names;
+  return applyMarkers(host, markers, previous);
 }
 
 const ATTACH_EVENTS = ['tp-media-attach', 'tp-media-detach'] as const;
