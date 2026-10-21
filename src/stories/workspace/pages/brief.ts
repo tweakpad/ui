@@ -115,12 +115,14 @@ export function renderBrief(host: WorkspaceHost): TemplateResult {
       <div class="workspace-row">
         <tp-toggle
           aria-label="Bold preview"
+          size="icon"
           .pressed=${bold}
           @tp-value-change=${own<boolean>((value) => host.setView('brief.bold', value))}
           ><tp-icon .icon=${boldIcon}></tp-icon
         ></tp-toggle>
         <tp-toggle
           aria-label="Italic preview"
+          size="icon"
           .pressed=${italic}
           @tp-value-change=${own<boolean>((value) => host.setView('brief.italic', value))}
           ><tp-icon .icon=${italicIcon}></tp-icon

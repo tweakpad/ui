@@ -61,13 +61,37 @@ Accordion uses `chevronRightIcon` for its default disclosure indicator. `indicat
 
 `@tweakpad/ui/icons/upload-cloud` exports `uploadCloudIcon`, the upload mark of File upload and the `cloud` entry of `@tweakpad/ui/icons/empty-state`. `@tweakpad/ui/icons/image` exports `imageIcon` (an image file) beside `imageOffIcon` (an image that could not load); `@tweakpad/ui/icons/file-text` exports `fileTextIcon` for other files.
 
+## Text editing icons
+
+Rich-text toolbars, menus and popovers can use these 24×24 outline definitions, drawn with the same 2-unit stroke as the single-icon modules. Each is a separate named export, so importing one keeps the others out of a bundled build:
+
+```ts
+import { strikethroughIcon } from '@tweakpad/ui/icons/text-formatting';
+import { bulletListIcon, quoteIcon } from '@tweakpad/ui/icons/text-blocks';
+```
+
+| Module                               | Named exports                                                                                                                                                                                                         | Use                                                                          |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `@tweakpad/ui/icons/text-formatting` | `boldIcon`, `italicIcon`, `underlineIcon`, `strikethroughIcon`, `codeIcon`, `superscriptIcon`, `subscriptIcon`, `highlighterIcon`, `baselineIcon`, `removeFormattingIcon`                                             | Marks, highlight, text color and clearing formatting                         |
+| `@tweakpad/ui/icons/text-blocks`     | `heading1Icon`, `heading2Icon`, `heading3Icon`, `pilcrowIcon`, `bulletListIcon`, `orderedListIcon`, `taskListIcon`, `quoteIcon`, `codeBlockIcon`, `calloutIcon`, `embedIcon`                                          | Block kinds                                                                  |
+| `@tweakpad/ui/icons/text-align`      | `textAlignLeftIcon`, `textAlignCenterIcon`, `textAlignRightIcon`, `textAlignJustifyIcon`                                                                                                                              | Text alignment                                                               |
+| `@tweakpad/ui/icons/link`            | `linkIcon`, `unlinkIcon`, `cornerDownLeftIcon`                                                                                                                                                                        | Adding, removing and applying links                                          |
+| `@tweakpad/ui/icons/table-editing`   | `tableIcon`, `insertRowAboveIcon`, `insertRowBelowIcon`, `insertColumnLeftIcon`, `insertColumnRightIcon`, `mergeCellsIcon`, `splitCellIcon`, `headerRowIcon`, `headerColumnIcon`, `paintBucketIcon`, `clearCellsIcon` | Table structure, header rows and columns, cell background and clearing cells |
+| `@tweakpad/ui/icons/arrows`          | `arrowUpIcon`, `arrowDownIcon`, `arrowLeftIcon`, `arrowRightIcon`                                                                                                                                                     | Moving blocks, rows and columns                                              |
+| `@tweakpad/ui/icons/ellipsis`        | `ellipsisVerticalIcon`                                                                                                                                                                                                | More actions, stacked                                                        |
+| `@tweakpad/ui/icons/image-plus`      | `imagePlusIcon`                                                                                                                                                                                                       | Adding an image                                                              |
+| `@tweakpad/ui/icons/at-sign`         | `atSignIcon`                                                                                                                                                                                                          | Mentions                                                                     |
+| `@tweakpad/ui/icons/ban`             | `banIcon`                                                                                                                                                                                                             | No color, or none of a set                                                   |
+
+The text-alignment and column icons are physical: in a right-to-left editor, start alignment shows `textAlignRightIcon` and a column inserted before the current one shows `insertColumnRightIcon`. The horizontal ellipsis is the `more` entry of `navigationIcons` (`@tweakpad/ui/icons/navigation`). `@tweakpad/ui/icons/text-formatting` also exports `bookmarkIcon` and `filledBookmarkIcon`. Editing surfaces reuse `undoIcon`, `redoIcon`, `imageIcon`, `trashIcon`, `copyIcon`, `copyPlusIcon`, `minusIcon`, `plusIcon`, `gripVerticalIcon`, `chevronDownIcon`, `checkIcon` and `externalLinkIcon` from their own modules, such as `@tweakpad/ui/icons/undo`.
+
 ## Properties
 
-| Property | Attribute | Type                          | Default     | Behavior                                                                                                               |
-| -------- | --------- | ----------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `icon`   | —         | `IconDefinition \| undefined` | `undefined` | SVG artwork; assign as a JavaScript property. No output when absent.                                                   |
-| `label`  | `label`   | `string`                      | `''`        | Non-empty text makes the host `role="img"` with that accessible name. Empty means decorative and `aria-hidden="true"`. |
-| `size`   | `size`    | CSS length                    | `'1em'`     | Sets the preferred square extent. CSS `width`/`height` rules on the host can override it.                              |
+| Property | Attribute | Type                          | Default     | Behavior                                                                                                                                                                                                |
+| -------- | --------- | ----------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `icon`   | —         | `IconDefinition \| undefined` | `undefined` | SVG artwork; assign as a JavaScript property. No output when absent.                                                                                                                                    |
+| `label`  | `label`   | `string`                      | `''`        | Non-empty text makes the host `role="img"` with that accessible name. Empty means decorative and `aria-hidden="true"`.                                                                                  |
+| `size`   | `size`    | CSS length                    | `''`        | Empty takes the icon extent of the enclosing control's size, otherwise the `--tp-icon-size-md` role. A length sets the preferred square extent; CSS `width`/`height` rules on the host can override it. |
 
 The host is non-focusable, non-interactive, `pointer-events: none`, and does not shrink in flex layouts. The SVG inherits `currentColor`. `part="icon-graphic"` exposes it for styling; `--tp-icon-size` holds the preferred extent. The host registers as the `icon` presentation part without changing its semantics.
 

@@ -38,6 +38,12 @@ export * from './types.js';
 export * from './validation.js';
 export { ToolbarController } from './toolbar.js';
 export type { ToolbarOptions, ToolbarItemOptions, ToolbarRegistration } from './toolbar.js';
+export { ContextualToolbarController } from './contextual-toolbar.js';
+export type {
+  ContextualToolbarLayer,
+  ContextualToolbarOptions,
+  ContextualToolbarPositioning,
+} from './contextual-toolbar.js';
 
 export { ContentSecurityService } from './content-security.js';
 export type { ContentSecurityOptions, ContentSecurityScope } from './content-security.js';
@@ -61,3 +67,4 @@ export * from './virtual-range.js';
 export * from './virtual-list.js';
 export * from './tree/index.js';
 export * from './search/index.js';
+export * from './resize-separator.js';

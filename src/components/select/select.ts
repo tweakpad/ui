@@ -1,4 +1,4 @@
-import { SelectQueryController } from './query.js';
+import { applyForwardedNavigation, SelectQueryController } from './query.js';
 import { SURFACE_HOST, isSurfaceHost } from '../../foundation/surface-brand.js';
 import { autofillHint } from '../../foundation/autofill.js';
 import { renderQuery } from './query-view.js';
@@ -36,7 +36,9 @@ import {
   focusableElements,
   isAvailable,
   restoreFocus,
+  shadowReferenceTarget,
 } from '../../foundation/focus.js';
+import { preserveFocusOnPress } from '../../foundation/press.js';
 import {
   componentHandlingPrevented,
   renderPart,
@@ -176,6 +178,7 @@ export class TpSelect extends TpFormElement<unknown> {
     sideOffset: { type: Number, attribute: 'side-offset', noAccessor: true },
     alignOffset: { type: Number, attribute: 'align-offset' },
     anchor: { attribute: false },
+    queryOwner: { attribute: false },
     disableAnchorTracking: { type: Boolean, attribute: 'disable-anchor-tracking' },
     collisionAvoidance: { attribute: false },
     collisionBoundary: { attribute: false },
@@ -350,6 +353,13 @@ export class TpSelect extends TpFormElement<unknown> {
   }
   alignOffset: GeometryOffset = 0;
   anchor: SelectAnchor = null;
+  /**
+   * The external query owner: an editing element that keeps focus, supplies the query through
+   * `inputValue`, controls `open` and forwards its navigation keys to `handleQueryKey` and
+   * `activateHighlighted`. While it is set the searchable render has no Input and the popup moves
+   * no focus. Property only; `null` by default.
+   */
+  protected queryOwner: HTMLElement | null = null;
   disableAnchorTracking = false;
   collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip', fallbackAxisSide: 'none' };
   collisionBoundary: CollisionBoundary = 'clipping-ancestors';
@@ -578,8 +588,11 @@ export class TpSelect extends TpFormElement<unknown> {
   });
   readonly #dismiss = new FloatingDismissController(this, {
     open: () => this.open && !this.inline,
-    anchor: () => this.#trigger,
-    insideElements: () => (this.#content ? [this.#content] : []),
+    anchor: () => this.#trigger ?? this.queryOwner,
+    insideElements: () => [
+      ...(this.#content ? [this.#content] : []),
+      ...(this.queryOwner ? [this.queryOwner] : []),
+    ],
     outside: () => true,
     escape: () => !this.#query.completion,
     topmostOnly: true,
@@ -686,6 +699,69 @@ export class TpSelect extends TpFormElement<unknown> {
     await this.#position?.update();
   }
 
+  // External query owner (Command external-input profile) -----------------------------------
+
+  /** Whether a searchable list takes its query from an external owner. */
+  get #externalQuery(): boolean {
+    return this.searchable && this.queryOwner !== null;
+  }
+
+  /**
+   * Applies a key forwarded by the query owner to the highlight, as the same key typed in the
+   * Input would: Arrow Up and Down move it (`loopFocus`), Home and End go to the first or last
+   * item. Returns whether it consumed the key: false while closed, composing, disabled, for an
+   * already prevented event, any other key, or with no item to highlight. Moves no focus.
+   */
+  protected handleQueryKey(event: KeyboardEvent): boolean {
+    if (
+      !this.open ||
+      event.defaultPrevented ||
+      componentHandlingPrevented(event) ||
+      event.isComposing ||
+      event.keyCode === 229 ||
+      this.#query.composing ||
+      this.effectiveDisabled
+    )
+      return false;
+    if (!applyForwardedNavigation(this.#collection, event.key, this.loopFocus)) return false;
+    this.#query.highlight('list-navigation');
+    return true;
+  }
+
+  /**
+   * Executes the highlighted item for a forwarded Enter or Tab (Tab acting like Enter). Returns
+   * false, so that the key reaches the owner, while closed, disabled, composing or with no
+   * highlighted item. Moves no focus.
+   */
+  protected activateHighlighted(event: Event): boolean {
+    const record = this.#collection.highlighted;
+    if (
+      !this.open ||
+      !record ||
+      record.disabled ||
+      this.effectiveDisabled ||
+      (event as KeyboardEvent).isComposing ||
+      this.#query.composing
+    )
+      return false;
+    this.selectOption(record, event);
+    return true;
+  }
+
+  /**
+   * The element an external owner references with `aria-activedescendant` and `aria-controls`:
+   * this element, whose shadow root forwards the reference to the highlighted option through
+   * `referenceTarget`; `null` with no highlighted option or where `referenceTarget` is not
+   * supported.
+   */
+  protected activeDescendantReference(): HTMLElement | null {
+    const option = this.#collection.element(this.#collection.highlighted);
+    const root = this.renderRoot as ShadowRoot & { referenceTarget?: string };
+    if (!option || !('referenceTarget' in root)) return null;
+    const target = shadowReferenceTarget(option, this.getRootNode());
+    return target === this ? this : null;
+  }
+
   override connectedCallback(): void {
     super.connectedCallback();
     this.#environment.connect();
@@ -764,12 +840,13 @@ export class TpSelect extends TpFormElement<unknown> {
           (this.clearBehavior !== 'query' && !!this.#values(this.#selection.value).length)),
     );
     this.#repairFocus =
+      !this.#externalQuery &&
       !!focusedOption &&
       (!this.#collection.source.includes(focusedOption) || !!focusedOption.disabled);
     if (this.open && !this.#wasOpen) {
       this.#pointer.opened();
       if (!this.searchable) this.#collection.openAt(this.#values(this.#selection.value));
-      this.#focusPending = !this.inline;
+      this.#focusPending = !this.inline && !this.#externalQuery;
     }
     this.#wasOpen = this.open;
     this.#presence.setPresent(this.open && this.isConnected);
@@ -784,24 +861,28 @@ export class TpSelect extends TpFormElement<unknown> {
     if (this.searchable)
       return html`${this.#part('select', state, {
           properties: { class: 'select-root', 'data-open': this.open, 'data-closed': !this.open },
-          content: renderQuery(this, this.#query, {
-            part: (name, state, options, contract) => this.#part(name, state, options, contract),
-            ref: (key, part, commit) => this.#ref(key, part, commit),
-            values: () => this.#values(this.#selection.value),
-            text: (value) => this.#text(value),
-            state,
-            prefix: this.renderQueryPrefix(),
-            focusOut: () => this.#focusOut(),
-            clearMounted: this.#clearPresence.mounted,
-            clearVisible: this.#clearPresence.mounted && this.#clearPresence.state !== 'retained',
-            bindClear: (element) => {
-              this.#clear = element;
-            },
-            bindEditor: (element) => {
-              this.#query.editor = element as HTMLInputElement | null;
-              this.#trigger = element;
-            },
-          }),
+          content: this.#externalQuery
+            ? nothing
+            : renderQuery(this, this.#query, {
+                part: (name, state, options, contract) =>
+                  this.#part(name, state, options, contract),
+                ref: (key, part, commit) => this.#ref(key, part, commit),
+                values: () => this.#values(this.#selection.value),
+                text: (value) => this.#text(value),
+                state,
+                prefix: this.renderQueryPrefix(),
+                focusOut: () => this.#focusOut(),
+                clearMounted: this.#clearPresence.mounted,
+                clearVisible:
+                  this.#clearPresence.mounted && this.#clearPresence.state !== 'retained',
+                bindClear: (element) => {
+                  this.#clear = element;
+                },
+                bindEditor: (element) => {
+                  this.#query.editor = element as HTMLInputElement | null;
+                  this.#trigger = element;
+                },
+              }),
         })}${!this.container || this.inline ? this.#popup() : nothing}
         <div class="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
           ${this.open ? this.#query.status : ''}
@@ -1357,7 +1438,8 @@ export class TpSelect extends TpFormElement<unknown> {
           },
           '@pointerdown': (event: PointerEvent) => {
             if (event.button !== 0 || disabled) return;
-            if (this.searchable) event.preventDefault();
+            // A searchable list keeps focus in its Input or its query owner.
+            if (this.searchable) preserveFocusOnPress(event);
             this.#pointer.down(record, event.pointerType);
             this.#highlight(record, false);
           },
@@ -1557,7 +1639,11 @@ export class TpSelect extends TpFormElement<unknown> {
         : this.anchor && 'current' in this.anchor
           ? this.anchor.current
           : this.anchor;
-    const anchor = configured ?? (this.searchable ? this.#query.anchor : null) ?? this.#trigger;
+    const anchor =
+      configured ??
+      (this.searchable ? this.#query.anchor : null) ??
+      this.#trigger ??
+      this.queryOwner;
     if (!anchor || !this.#content) return;
     const key = JSON.stringify([
       this.placement,
@@ -1856,8 +1942,10 @@ export class TpSelect extends TpFormElement<unknown> {
       this.#pointer.opened();
       this.#previousFocus = deepActiveElement(this.ownerDocument);
       if (!this.searchable) this.#collection.openAt(this.#values(this.#selection.value));
-      this.#focusPending = !this.inline;
+      this.#focusPending = !this.inline && !this.#externalQuery;
     } else {
+      // Closing a list under an external owner aborts its pending source call.
+      if (this.#externalQuery) this.#query.cancelSource();
       this.#pointer.reset();
       this.#openingPointerCleanup?.();
       this.#releaseModality();
@@ -1866,12 +1954,14 @@ export class TpSelect extends TpFormElement<unknown> {
       // Editable lists must not pull focus back after the user entered another
       // control. Explicit final-focus resolvers still own their chosen target.
       const active = deepActiveElement(this.ownerDocument);
+      // An external query owner keeps focus: closing moves none.
       if (
-        !this.searchable ||
-        this.finalFocus !== 'trigger' ||
-        !active ||
-        active === this.ownerDocument.body ||
-        this.#dismiss.contains(active)
+        !this.#externalQuery &&
+        (!this.searchable ||
+          this.finalFocus !== 'trigger' ||
+          !active ||
+          active === this.ownerDocument.body ||
+          this.#dismiss.contains(active))
       )
         restoreFocus(this.#focusTarget(this.finalFocus, false));
     }

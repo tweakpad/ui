@@ -1,4 +1,5 @@
-import { css, type PropertyValues } from 'lit';
+import { css, unsafeCSS, type PropertyValues } from 'lit';
+import { resizeSeparatorTargetCss } from '../../foundation/resize-separator.js';
 import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import type { TpResizablePanelGroup } from './group.js';
@@ -56,37 +57,13 @@ export class TpResizableHandle extends TpElement {
         cursor: col-resize;
       }
 
-      .separator::before {
-        content: '';
-        position: absolute;
-        inset-block: 0;
-        inset-inline-start: 50%;
-        translate: -50% 0;
-        inline-size: var(--tp-resize-target-fine);
-      }
-
       :host([orientation='vertical']) .separator {
         cursor: row-resize;
       }
 
-      :host([orientation='vertical']) .separator::before {
-        inset-inline: 0;
-        inset-block-start: 50%;
-        translate: 0 -50%;
-        inline-size: auto;
-        block-size: var(--tp-resize-target-fine);
-      }
+      ${unsafeCSS(resizeSeparatorTargetCss('.separator', 'horizontal'))}
 
-      @media (any-pointer: coarse) {
-        .separator::before {
-          inline-size: var(--tp-resize-target-coarse);
-        }
-
-        :host([orientation='vertical']) .separator::before {
-          inline-size: auto;
-          block-size: var(--tp-resize-target-coarse);
-        }
-      }
+      ${unsafeCSS(resizeSeparatorTargetCss(":host([orientation='vertical']) .separator", 'vertical'))}
 
       .decoration {
         position: relative;

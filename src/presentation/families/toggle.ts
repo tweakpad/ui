@@ -1,6 +1,7 @@
 import type { ComponentDefinition } from '../definition.js';
 import { definePresentation } from '../family.js';
 import { toggleAppearance } from '../recipes/toggle.js';
+import { buttonSizes } from '../recipes/core/button.js';
 import { toggleCoreAppearance } from '../recipes/core/toggle.js';
 
 const definition: ComponentDefinition = {
@@ -15,7 +16,7 @@ const definition: ComponentDefinition = {
     },
     {
       name: 'size',
-      values: ['sm', 'default', 'lg'],
+      values: buttonSizes,
       default: 'default',
     },
   ],

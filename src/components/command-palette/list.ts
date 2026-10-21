@@ -7,6 +7,8 @@ import { navigationIcons } from '../../icons/navigation.js';
 import { commandPalettePresentation } from '../../presentation/families/command-palette.js';
 import { selectPresentation } from '../../presentation/families/select.js';
 import { TpIcon } from '../icon/icon.js';
+import { TpKeyHintGroup } from '../key-hint/key-hint-group.js';
+import { TpKeyHint } from '../key-hint/key-hint.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 const parts: Record<string, string> = {
   'select-anchor': 'command-palette-input-wrapper',
@@ -22,7 +24,7 @@ export class TpCommandList extends TpSelect {
   static override tagName = 'tp-command-list';
   /** Library elements this element renders; defining it defines them too. */
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
-    return [TpIcon];
+    return [TpIcon, TpKeyHintGroup, TpKeyHint];
   }
   static override presentation = commandPalettePresentation;
   static override presentationFamilies = [selectPresentation];
@@ -39,6 +41,13 @@ export class TpCommandList extends TpSelect {
   override autoHighlight = 'always' as const;
   override keepHighlight = true;
   activeValue: unknown;
+  /**
+   * An editing element that keeps focus and supplies the query (`inputValue`) and the navigation
+   * keys (`handleQueryKey`, `activateHighlighted`); the list then renders no Input, and with
+   * `inline` false its popup sits at `anchor` (default this element) and moves no focus. The
+   * owner controls `open` and closes the list on the proposals of `onOpenChange`.
+   */
+  declare queryOwner: HTMLElement | null;
   onActiveChange:
     ((value: unknown, details: { index: number; reason: ChangeReason }) => unknown) | undefined;
   onExecute: ((record: ChoiceModelRecord, event: Event) => void) | undefined;
@@ -57,6 +66,21 @@ export class TpCommandList extends TpSelect {
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
     this.#restoreActive();
+  }
+  /** Applies a forwarded Arrow Up, Arrow Down, Home or End; returns whether it consumed it. */
+  override handleQueryKey(event: KeyboardEvent): boolean {
+    return super.handleQueryKey(event);
+  }
+  /** Executes the highlighted item for a forwarded Enter or Tab; false with none highlighted. */
+  override activateHighlighted(event: Event): boolean {
+    return super.activateHighlighted(event);
+  }
+  /**
+   * This element, forwarding `aria-activedescendant` to the highlighted item, or `null` where
+   * the reference cannot cross into its shadow root.
+   */
+  override activeDescendantReference(): HTMLElement | null {
+    return super.activeDescendantReference();
   }
   protected override render() {
     return html`${this.renderPart('command-palette', { empty: !this.choiceCollection.visible.length }, { content: super.render() })}`;

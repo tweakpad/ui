@@ -816,7 +816,7 @@ export async function runSelectionAPIChecks(api: API): Promise<Result[]> {
     );
     equal(
       getComputedStyle((t.children[0] as TpToggle).controlElement!).display,
-      'inline-flex',
+      'flex',
       'Adopted Toggle structural style lost',
     );
     const native = target.createElement('button');
@@ -869,9 +869,16 @@ export async function runSelectionAPIChecks(api: API): Promise<Result[]> {
       icon: boldIcon,
       size: 'var(--tp-icon-size-sm)',
     });
-    box.append(baseline);
+    const mdBaseline = Object.assign(new api.TpIcon(), {
+      icon: boldIcon,
+      size: 'var(--tp-icon-size-md)',
+    });
+    box.append(baseline, mdBaseline);
     await settle();
+    // Each control step maps its default icon extent to an icon-size-* role: icon-size-sm at sm,
+    // icon-size-md at default and lg (`req-cl-142-dictionary`, `req-cl-53-control-size`).
     const iconExtent = baseline.getBoundingClientRect().width;
+    const mdIconExtent = mdBaseline.getBoundingClientRect().width;
     for (const size of ['sm', 'default', 'lg'] as const) {
       const toggle = Object.assign(new api.TpToggle(), {
         size,
@@ -891,7 +898,7 @@ export async function runSelectionAPIChecks(api: API): Promise<Result[]> {
         'Content lacks flex/gap layout',
       );
       assert(
-        Math.abs(icon.getBoundingClientRect().width - iconExtent * (size === 'sm' ? 0.875 : 1)) <
+        Math.abs(icon.getBoundingClientRect().width - (size === 'sm' ? iconExtent : mdIconExtent)) <
           0.1,
         'Icon size context mismatch',
       );
@@ -960,7 +967,7 @@ export async function runSelectionAPIChecks(api: API): Promise<Result[]> {
       'Icon group forked Toggle ownership',
     );
     assert(
-      Math.abs(icon.getBoundingClientRect().width - iconExtent * 0.875) < 0.1,
+      Math.abs(icon.getBoundingClientRect().width - iconExtent) < 0.1,
       'Group size did not reach Icon',
     );
     const standalonePadding = parseFloat(

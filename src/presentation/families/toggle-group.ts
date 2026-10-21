@@ -1,5 +1,6 @@
 import type { ComponentDefinition } from '../definition.js';
 import { definePresentation } from '../family.js';
+import { buttonSizes } from '../recipes/core/button.js';
 import { toggleGroupAppearance } from '../recipes/toggle-group.js';
 
 const definition: ComponentDefinition = {
@@ -19,7 +20,7 @@ const definition: ComponentDefinition = {
     },
     {
       name: 'size',
-      values: ['sm', 'default', 'lg'],
+      values: buttonSizes,
       default: 'default',
     },
   ],

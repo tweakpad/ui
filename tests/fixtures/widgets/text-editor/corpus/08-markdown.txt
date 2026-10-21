@@ -1,0 +1,37 @@
+Tide pool field notes
+
+Low tide came at 06:42. Calm water, clear skies and strong light wind. A soft line break joins this line to the one before it.
+A backslash at the end of a line is a hard break.
+
+Species seen
+
+Ochre sea star
+Giant green anemone
+Hermit crab
+in a borrowed whelk shell
+Arrive before the turn of the tide
+Step only on bare rock
+
+Species	Count	Zone
+Sea star	4	mid
+Anemone	11	low
+Pagurus crab	2	high
+
+counts = {"sea star": 4, "anemone": 11}
+print(sum(counts.values()))
+
+Bring a hand lens and a towel.
+
+A plain quote over two lines.
+
+A nested quote leaves its parent.
+
+Send reports to www.tidepools.example or to logs@tidepools.example, or read https://tidepools.example/guide first.
+
+The survey follows a line transect.1 Raw HTML the policy admits: underlined, H2O, area = r2, red text, a blue mark, a plain mark and Ctrl. HTML it does not admit stays text: <script>alert(1)</script> and <div>a div</div>.
+
+A rock pool at dawn
+
+A reference link and a final paragraph.
+
+A twenty-meter line laid across the pool, with counts every meter.

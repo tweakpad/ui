@@ -12,7 +12,7 @@
 // Writes src/stories/size-report.json (rendered by the "Tweakpad UI/Bundle size" story) and
 // fails when importing a component through its barrel ships any module that importing its own
 // module directly does not (tree-shaking guard), or when `@tweakpad/ui/register` reaches the
-// widgets section.
+// widgets section or a widget's companion entry.
 import { mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
@@ -243,13 +243,16 @@ const litModules = new Set(
 );
 const fullModules = shipped('register-all');
 const widgetModules = shipped('register-widgets');
-// The widgets section is opt-in: `@tweakpad/ui/register` must not reach any widget module.
+// The widgets section is opt-in: `@tweakpad/ui/register` must not reach any widget module, nor
+// a module of a widget's companion entry (`@tweakpad/ui/<name>`, published from
+// `dist/foundation/<name>/` behind the `dist/<name>.js` facade).
 const isWidgetModule = (id) =>
-  /\/dist\/(?:widgets\/|widgets\.js$|presentation\/(?:families\/)?widgets\.js$)/u.test(id);
+  /\/dist\/(?:widgets\/|widgets\.js$|presentation\/(?:families\/)?widgets\.js$)/u.test(id) ||
+  /\/dist\/(?:foundation\/(?:text-editor|emoji|flow)\/|(?:text-editor|emoji|flow)\.js$)/u.test(id);
 const widgetLeaks = [...fullModules].filter(isWidgetModule);
 if (widgetLeaks.length)
   violations.push(
-    `register-all ships ${widgetLeaks.length} widget modules, e.g. ${widgetLeaks
+    `register-all ships ${widgetLeaks.length} widget or companion modules, e.g. ${widgetLeaks
       .slice(0, 3)
       .map((id) => id.slice(root.length + 1))
       .join(', ')}`,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { MapRequestAction } from './controller.js';
 import { DEFAULT_CAMERA, mergeCamera } from './geo.js';
 import { FakeEngine, createHost, flush } from './map-fakes.test.js';
 
@@ -56,6 +57,45 @@ describe('MapController lifecycle (map-f-mount, map-f-lifecycle, map-f-viewport)
     controller.disconnect();
     frames.run(2);
     expect(instance.destroyed).toBe(true);
+  });
+
+  it('V-835: keeps the instance across a move and releases it two frames after a removal', async () => {
+    const { controller, frames, engine, instance } = await ready();
+    controller.disconnect();
+    frames.tick();
+    controller.connect();
+    frames.run(3);
+    expect(instance.destroyed).toBe(false);
+    expect(engine.calls.filter((call) => call === 'mount')).toHaveLength(1);
+    expect(controller.state.status).toBe('ready');
+    controller.disconnect();
+    frames.tick();
+    expect(instance.destroyed).toBe(false);
+    frames.tick();
+    expect(instance.destroyed).toBe(true);
+    expect(controller.store.current.status).toBe('idle');
+    controller.connect();
+    await flush();
+    expect(engine.calls.filter((call) => call === 'mount')).toHaveLength(2);
+    expect(controller.state.status).toBe('ready');
+  });
+
+  it('V-835: destroys a superseded mount result on arrival and reports ready once', async () => {
+    const setup = createHost();
+    setup.controller.connect();
+    const first = new FakeEngine({ async: true });
+    setup.controller.setEngine(first);
+    const second = new FakeEngine();
+    setup.controller.setEngine(second);
+    const superseded = first.instances[0]!;
+    expect(first.context!.signal.aborted).toBe(true);
+    expect(superseded.destroyed).toBe(false);
+    await flush();
+    expect(superseded.destroyed).toBe(true);
+    expect(second.instances[0]!.destroyed).toBe(false);
+    expect(setup.of('ready')).toHaveLength(1);
+    expect(setup.controller.state.status).toBe('ready');
+    expect(setup.controller.instance).toBe(second.instances[0]);
   });
 
   it('replaces the engine preserving camera and placed overlays', async () => {
@@ -128,6 +168,37 @@ describe('MapController requests (map-f-request, map-f-motion, map-f-pre-ready)'
       name: 'NotSupportedError',
     });
     expect(of('request-failed')).toHaveLength(2);
+  });
+
+  it('V-838: keeps the rejection names and messages', async () => {
+    const { controller, config, of } = await ready();
+    const requests = [
+      () => controller.request('select-pin', 'missing'),
+      () => controller.request('reveal-pin', { value: 'missing' }),
+      () => controller.request('teleport' as MapRequestAction, undefined),
+      () => {
+        config.disabled = true;
+        return controller.request('zoom-in', undefined);
+      },
+    ];
+    const errors: Error[] = [];
+    for (const request of requests)
+      errors.push(
+        await request().then(
+          (outcome) => new Error(`resolved: ${outcome}`),
+          (error: Error) => error,
+        ),
+      );
+    expect(errors.map((error) => [error.name, error.message])).toEqual([
+      ['NotFoundError', 'No pin has the value "missing".'],
+      ['NotFoundError', 'No pin has the value "missing".'],
+      ['NotSupportedError', 'Unknown map action "teleport".'],
+      ['NotSupportedError', 'The map is disabled.'],
+    ]);
+    for (const error of errors) expect(error).toBeInstanceOf(DOMException);
+    expect(
+      of('request-failed').map((record) => (record.detail as { error: unknown }).error),
+    ).toEqual(errors);
   });
 
   it('applies camera requests made before ready at mount', async () => {

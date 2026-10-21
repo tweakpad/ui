@@ -833,6 +833,7 @@ Every color resolves through tokens: the frame and the background through `--tp-
 `--tp-foreground` and `--tp-border`, cards through the Card recipe, rows through List item, pills
 through Badge and Marker, ports, waypoints and handles through the shared thumb recipe painted with
 `--tp-primary`, edges through a foreground mix that turns `--tp-primary` when selected or focused,
+the marquee through a translucent `--tp-accent` fill with a dotted `--tp-primary` outline,
 run statuses through `--tp-warning` (pending, waiting), `--tp-primary` (running, active),
 `--tp-success` (success, taken), `--tp-destructive` (failed) and `--tp-muted-foreground` (skipped,
 cancelled, not taken, disabled), typed tones through `--tp-chart-1` to `--tp-chart-5` and the

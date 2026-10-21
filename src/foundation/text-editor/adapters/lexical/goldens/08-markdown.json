@@ -1,0 +1,1256 @@
+{
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Tide pool field notes",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "tag": "h1",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "heading",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000001"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Low tide came at 06:42. ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 2,
+            "mode": "normal",
+            "style": "",
+            "text": "Calm",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " water, ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 1,
+            "mode": "normal",
+            "style": "",
+            "text": "clear",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " skies and ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 4,
+            "mode": "normal",
+            "style": "",
+            "text": "strong",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " light wind. A soft line break joins this line to the one before it.",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "type": "linebreak",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "A backslash at the end of a line is a hard break.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000002"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Species seen",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "tag": "h2",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "heading",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000003"
+        }
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Ochre sea star",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "checked": true,
+            "indent": 0,
+            "value": 1,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "te00000004"
+            }
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Giant green anemone",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "checked": false,
+            "indent": 0,
+            "value": 2,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "te00000005"
+            }
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Hermit crab",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "checked": true,
+            "indent": 0,
+            "value": 3,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "te00000006"
+            }
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "in a borrowed whelk shell",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "indent": 1,
+                    "value": 1,
+                    "direction": null,
+                    "format": "",
+                    "type": "listitem",
+                    "version": 1,
+                    "$": {
+                      "tp-id": "te00000007"
+                    }
+                  }
+                ],
+                "listType": "bullet",
+                "start": 1,
+                "tag": "ul",
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "list",
+                "version": 1
+              }
+            ],
+            "checked": false,
+            "indent": 0,
+            "value": 4,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1
+          }
+        ],
+        "listType": "check",
+        "start": 1,
+        "tag": "ul",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "list",
+        "version": 1
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Arrive before the turn of the tide",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "indent": 0,
+            "value": 3,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "te00000008"
+            }
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Step only on bare rock",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "indent": 0,
+            "value": 4,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "te00000009"
+            }
+          }
+        ],
+        "listType": "number",
+        "start": 3,
+        "tag": "ol",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "list",
+        "version": 1
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Species",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 1,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Count",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "end",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 1,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Zone",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "center",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 1,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              }
+            ],
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "tablerow",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Sea star",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "4",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "end",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "mid",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "center",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              }
+            ],
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "tablerow",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Anemone",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "11",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "end",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "low",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "center",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              }
+            ],
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "tablerow",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 16,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Pagurus",
+                        "type": "text",
+                        "version": 1
+                      },
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": " crab",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "",
+                    "indent": 0,
+                    "textFormat": 16,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "2",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "end",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "high",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "center",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              }
+            ],
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "tablerow",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "table",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000010"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "counts = {\"sea star\": 4, \"anemone\": 11}",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "type": "linebreak",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "print(sum(counts.values()))",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "language": "python",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "code",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000011"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Bring a hand lens and a towel.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "quote",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000012"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "A plain quote over two lines.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "quote",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000013"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "A nested quote leaves its parent.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "quote",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000014"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Send reports to ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "www.tidepools.example",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "rel": null,
+            "target": null,
+            "title": null,
+            "url": "http://www.tidepools.example",
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "link",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " or to ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "logs@tidepools.example",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "rel": null,
+            "target": null,
+            "title": null,
+            "url": "mailto:logs@tidepools.example",
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "link",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", or read ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "https://tidepools.example/guide",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "rel": null,
+            "target": null,
+            "title": null,
+            "url": "https://tidepools.example/guide",
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "link",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " first.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000015"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "The survey follows a line transect.",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 64,
+            "mode": "normal",
+            "style": "",
+            "text": "1",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " Raw HTML the policy admits: ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 8,
+            "mode": "normal",
+            "style": "",
+            "text": "underlined",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", H",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 32,
+            "mode": "normal",
+            "style": "",
+            "text": "2",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "O, area = r",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 64,
+            "mode": "normal",
+            "style": "",
+            "text": "2",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "red text",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "red"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "a blue mark",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "blue"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "a plain mark",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "yellow"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " and Ctrl. HTML it does not admit stays text: <script>alert(1)</script> and <div>a div</div>.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000016"
+        }
+      },
+      {
+        "type": "tp-image",
+        "version": 1,
+        "src": "https://tidepools.example/dawn.jpg",
+        "alt": "A rock pool at dawn",
+        "$": {
+          "tp-id": "te00000017"
+        }
+      },
+      {
+        "type": "horizontalrule",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000018"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "A ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "reference link",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "rel": null,
+            "target": null,
+            "title": null,
+            "url": "https://tidepools.example/guide",
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "link",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " and a final paragraph.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000019"
+        }
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "A twenty-meter line laid across the pool, with counts every meter.",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "indent": 0,
+            "value": 1,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "te00000020"
+            }
+          }
+        ],
+        "listType": "number",
+        "start": 1,
+        "tag": "ol",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "list",
+        "version": 1
+      }
+    ],
+    "direction": null,
+    "format": "",
+    "indent": 0,
+    "type": "root",
+    "version": 1
+  }
+}

@@ -58,3 +58,24 @@ export function dialogSectionAppearance(wrapper = '') {
 /** The hairline of floating popups: a 10% foreground mix (popover, menu and command surfaces). */
 export const popupBorderColor = 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)';
 export const popupBorder = `var(--tp-border-width) var(--tp-border-style) ${popupBorderColor}`;
+
+/**
+ * The floating toolbar surface of the contextual Toolbar profile, shared by the flow node toolbar
+ * and the text editor's selection toolbar: a card fill with the popup hairline and a small shadow.
+ */
+export const floatingToolbarAppearance: readonly PresentationRule[] = [
+  {
+    declarations: {
+      'background-color': 'var(--tp-card)',
+      border: popupBorder,
+      'border-radius': 'var(--tp-radius-md)',
+      'box-shadow': 'var(--tp-shadow-sm)',
+      padding: 'var(--tp-space-1)',
+    },
+  },
+];
+
+/** The structural gap between the controls and groups of a floating toolbar. */
+export const floatingToolbarStructure: readonly PresentationRule[] = [
+  { declarations: { gap: 'var(--tp-space-1)' } },
+];

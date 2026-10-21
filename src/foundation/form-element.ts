@@ -5,6 +5,11 @@ import type { ElementReference } from './part.js';
 import { TpElement } from './element.js';
 import { hideVisually } from './visually-hidden.js';
 
+/** The Field association of a form element: each attribute's value, or `null` when it has none. */
+export type FieldAssociationAttributes = Readonly<
+  Record<'aria-label' | 'aria-describedby' | 'aria-errormessage' | 'aria-invalid', string | null>
+>;
+
 export abstract class TpFormElement<TValue = string> extends TpElement {
   static formAssociated = true;
 
@@ -146,6 +151,33 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     return this.inputElement ?? this.focusTarget();
   }
 
+  /**
+   * Applies the Field association where the element cannot write it to `associationTarget()`.
+   * Runs after every update with the current values, also when none of them changed, so an
+   * override must be idempotent: applying the same values again leaves the element as it was.
+   * The values are the ones the element would write: the Field label (else the host's
+   * `aria-label`), the description and error node ids, the error node id, and `'true'` while
+   * invalid, each `null` when absent. Return true once applied: the element then writes nothing
+   * to its association target and keeps the description and error nodes in its render root even
+   * without a target. It is not called on disconnect: the subclass keeps what it applied and
+   * applies the last values again when it rebuilds that element. The default returns false.
+   */
+  protected applyFieldAssociation(attributes: FieldAssociationAttributes): boolean {
+    void attributes;
+    return false;
+  }
+
+  /**
+   * The node that holds the Field description and error nodes. They must share a tree with the
+   * element that references them. The default keeps the host for an association target in another
+   * tree (the nodes are then hidden inline), otherwise the render root. A subclass may return a
+   * container inside its render root, such as the root part of its anatomy.
+   */
+  protected associationContainer(): ParentNode {
+    const target = this.#associationTarget;
+    return target && target.getRootNode() !== this.renderRoot ? this : this.renderRoot;
+  }
+
   setFieldAssociation(association: { label?: string; description?: string; error?: string }): void {
     if (
       (!('label' in association) || (association.label ?? '') === this.#fieldLabel) &&
@@ -278,17 +310,30 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     else target.setAttribute(name, value);
   }
 
+  /** The association this pass would write, before any merge with the target's own values. */
+  #fieldAssociationAttributes(): FieldAssociationAttributes {
+    const ids = [
+      this.#fieldDescription ? this.#fieldDescriptionId : null,
+      this.#fieldError ? this.#fieldErrorId : null,
+    ].filter(Boolean);
+    return {
+      'aria-label': this.#hasFieldLabel ? this.#fieldLabel : this.getAttribute('aria-label'),
+      'aria-describedby': ids.length ? ids.join(' ') : null,
+      'aria-errormessage': this.#fieldError ? this.#fieldErrorId : null,
+      'aria-invalid': this.effectiveInvalid ? 'true' : null,
+    };
+  }
+
   #syncFieldAssociation(): void {
     this.#restoreAssociation();
     const target = this.associationTarget();
     this.#associationTarget = target;
-    if (!target) return;
-    if (this.#hasFieldLabel) {
-      this.#associationAttribute('aria-label', this.#fieldLabel);
-    } else if (this.hasAttribute('aria-label')) {
-      this.#associationAttribute('aria-label', this.getAttribute('aria-label'));
-    }
-
+    const attributes = this.#fieldAssociationAttributes();
+    const applied = this.applyFieldAssociation(attributes);
+    if (!applied && !target) return;
+    const written = applied ? null : target;
+    const label = attributes['aria-label'];
+    if (written && label !== null) this.#associationAttribute('aria-label', label);
     this.#descriptionNode = this.#syncAssociationNode(
       this.#descriptionNode,
       this.#fieldDescriptionId,
@@ -299,24 +344,21 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
       this.#fieldErrorId,
       this.#fieldError,
     );
-
-    if (this.#descriptionNode || this.#errorNode)
+    if (!written) return;
+    const describedBy = attributes['aria-describedby'];
+    if (describedBy !== null)
       this.#associationAttribute(
         'aria-describedby',
-        [
-          target.getAttribute('aria-describedby'),
-          this.#descriptionNode ? this.#fieldDescriptionId : null,
-          this.#errorNode ? this.#fieldErrorId : null,
-        ]
-          .filter(Boolean)
-          .join(' '),
+        [written.getAttribute('aria-describedby'), describedBy].filter(Boolean).join(' '),
       );
-    if (this.#errorNode)
+    const errorMessage = attributes['aria-errormessage'];
+    if (errorMessage !== null)
       this.#associationAttribute(
         'aria-errormessage',
-        [target.getAttribute('aria-errormessage'), this.#fieldErrorId].filter(Boolean).join(' '),
+        [written.getAttribute('aria-errormessage'), errorMessage].filter(Boolean).join(' '),
       );
-    if (this.effectiveInvalid) this.#associationAttribute('aria-invalid', 'true');
+    const invalid = attributes['aria-invalid'];
+    if (invalid !== null) this.#associationAttribute('aria-invalid', invalid);
   }
 
   #syncAssociationNode(
@@ -335,8 +377,7 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     next.textContent = text;
     // IDREFs resolve within one tree: keep the node beside the association target. A light-DOM
     // native editor gets a light-DOM node, hidden inline since shadow styles do not reach it.
-    const target = this.#associationTarget;
-    const container = target && target.getRootNode() !== this.renderRoot ? this : this.renderRoot;
+    const container = this.associationContainer();
     if (container === this) hideVisually(next);
     if (next.parentNode !== container) container.append(next);
     return next;

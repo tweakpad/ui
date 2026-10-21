@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Diagnostic } from '../services.js';
+import { deferRelease, type Diagnostic } from '../services.js';
 import { shallowEqual } from '../store.js';
 import type { MediaStoreHooks } from './events.js';
 import {
@@ -15,7 +15,7 @@ import {
   flush,
   partialMedia,
 } from './media-fakes.test.js';
-import { deferMediaDestroy, MediaStore, type MediaStoreOptions } from './store.js';
+import { MediaStore, type MediaStoreOptions } from './store.js';
 import { DEFAULT_PLAYBACK_RATES, type MediaState, type MediaStateChange } from './state.js';
 import type { MediaTarget, VideoRenditionLike } from './target.js';
 
@@ -187,13 +187,13 @@ describe('MediaStore lifecycle', () => {
     vi.useFakeTimers();
     const view = new FakeWindow();
     const destroy = vi.fn();
-    const cancel = deferMediaDestroy(view as unknown as Window, destroy);
+    const cancel = deferRelease(view as unknown as Window, destroy);
     vi.advanceTimersByTime(16);
     expect(destroy).not.toHaveBeenCalled();
     cancel();
     vi.advanceTimersByTime(100);
     expect(destroy).not.toHaveBeenCalled();
-    deferMediaDestroy(view as unknown as Window, destroy);
+    deferRelease(view as unknown as Window, destroy);
     vi.advanceTimersByTime(32);
     expect(destroy).toHaveBeenCalledTimes(1);
   });

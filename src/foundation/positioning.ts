@@ -76,7 +76,21 @@ export interface AutoUpdatePolicy {
 
 export interface VirtualAnchor {
   getBoundingRectangle(): Rect;
+  /**
+   * The anchor's client rectangles in order, such as the line boxes of a text range; with two or
+   * more, the inline-fragment stage picks the reference rectangle among them.
+   */
+  getClientRectangles?(): readonly Rect[];
   contextElement?: Element;
+}
+
+/** Input of the inline-fragment stage (Foundation §10.7.2). */
+export interface InlineFragmentOptions {
+  /** A client point that selects the containing or nearest fragment. */
+  x?: number | undefined;
+  y?: number | undefined;
+  /** Widens the band that decides which line fragment holds the point; default 2. */
+  padding?: number | undefined;
 }
 export type AnchorGeometry = Element | VirtualAnchor;
 export type CollisionBoundary = 'clipping-ancestors' | Element | Element[] | Rect;
@@ -139,6 +153,8 @@ export interface PositioningOptions {
   padding?: number | Partial<Record<Side, number>>;
   transformPositioning?: boolean;
   tracking?: AutoUpdatePolicy | false;
+  /** Pointer coordinates and padding of the inline-fragment stage of a multi-rectangle anchor. */
+  inline?: InlineFragmentOptions | undefined;
 }
 
 export interface PositioningHandle {
@@ -350,12 +366,142 @@ function transformOrigin(placement: Placement, anchor: Rect, x: number, y: numbe
   return `left ${originY}px`;
 }
 
+/**
+ * The line fragments of an anchor's client rectangles: the rectangles in block order, those whose
+ * top lies within half the height of the previous one joined into one line box. Empty rectangles
+ * are left out while any other remains.
+ */
+function lineFragments(rectangles: readonly Rect[]): Rect[] {
+  const finite = rectangles.filter(finiteRect);
+  const sized = finite.filter((value) => value.width > 0 && value.height > 0);
+  const sorted = (sized.length ? sized : finite).slice().sort((a, b) => a.y - b.y);
+  const lines: Rect[][] = [];
+  let previous: Rect | null = null;
+  for (const value of sorted) {
+    if (!previous || value.y - previous.y > previous.height / 2) lines.push([value]);
+    else lines.at(-1)!.push(value);
+    previous = value;
+  }
+  return lines.map((line) => {
+    const left = Math.min(...line.map((value) => value.left));
+    const top = Math.min(...line.map((value) => value.top));
+    const right = Math.max(...line.map((value) => value.right));
+    const bottom = Math.max(...line.map((value) => value.bottom));
+    return rect(left, top, right - left, bottom - top);
+  });
+}
+
+/**
+ * The inline-fragment stage (Foundation §10.7.2): the reference rectangle of a multi-rectangle
+ * anchor for a side, or `null` for fewer than two rectangles. A supplied point selects the line
+ * fragment that holds it, within `padding` (default 2), else the nearest one. Without a point, a
+ * top or bottom side takes the block span from the first to the last line with the inline extent
+ * of the first line for top and of the last line for bottom; a left or right side takes the lines
+ * that reach furthest to that side, over their block span.
+ */
+export function inlineFragmentRect(
+  rectangles: readonly Rect[],
+  side: Side,
+  options: InlineFragmentOptions = {},
+): Rect | null {
+  if (rectangles.length < 2) return null;
+  const lines = lineFragments(rectangles);
+  if (!lines.length) return null;
+  const { x, y } = options;
+  if (typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y)) {
+    const padding = options.padding ?? 2;
+    const containing = lines.find(
+      (line) =>
+        x >= line.left - padding &&
+        x <= line.right + padding &&
+        y >= line.top - padding &&
+        y <= line.bottom + padding,
+    );
+    if (containing) return containing;
+    const distance = (line: Rect) =>
+      Math.hypot(
+        Math.max(line.left - x, 0, x - line.right),
+        Math.max(line.top - y, 0, y - line.bottom),
+      );
+    return lines.reduce((best, line) => (distance(line) < distance(best) ? line : best));
+  }
+  if (lines.length === 1) return lines[0]!;
+  const first = lines[0]!;
+  const last = lines.at(-1)!;
+  if (side === 'top' || side === 'bottom') {
+    const line = side === 'top' ? first : last;
+    return rect(line.left, first.top, line.width, last.bottom - first.top);
+  }
+  const edge =
+    side === 'left'
+      ? Math.min(...lines.map((line) => line.left))
+      : Math.max(...lines.map((line) => line.right));
+  const measured = lines.filter((line) => (side === 'left' ? line.left : line.right) === edge);
+  const left = Math.min(...measured.map((line) => line.left));
+  const right = Math.max(...measured.map((line) => line.right));
+  const top = measured[0]!.top;
+  const bottom = measured.at(-1)!.bottom;
+  return rect(left, top, right - left, bottom - top);
+}
+
+const sameRect = (a: Rect, b: Rect): boolean =>
+  a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+
+/**
+ * Computes the surface's position at `anchor`. With two or more `fragments` (the anchor's client
+ * rectangles), the inline-fragment stage picks the reference rectangle for the requested side; when
+ * collision handling moves to a side whose reference differs, one rectangle reset recomputes the
+ * position at that side with its reference.
+ */
 export function computeSurfacePosition(
   anchor: Rect,
   surface: Rect,
   clipping: Rect,
   options: PositioningOptions = {},
   direction: 'ltr' | 'rtl' = 'ltr',
+  fragments: readonly Rect[] = [],
+): PositioningResult | null {
+  if (fragments.length < 2) return computeStages(anchor, surface, clipping, options, direction);
+  const side = placementParts(options.placement ?? 'bottom').side;
+  const reference = inlineFragmentRect(fragments, side, options.inline) ?? anchor;
+  const result = computeStages(reference, surface, clipping, options, direction);
+  if (!result) return null;
+  const chosen = inlineFragmentRect(
+    fragments,
+    placementParts(result.placement).side,
+    options.inline,
+  );
+  if (!chosen || sameRect(chosen, reference)) return result;
+  const reset = computeStages(
+    chosen,
+    surface,
+    clipping,
+    {
+      ...options,
+      automatic: false,
+      placement: result.placement,
+      collision: { ...options.collision, side: 'none' },
+    },
+    direction,
+  );
+  if (!reset) return result;
+  const { flip, automaticPlacement } = result.stageData;
+  return {
+    ...reset,
+    stageData: {
+      ...reset.stageData,
+      ...(flip ? { flip } : {}),
+      ...(automaticPlacement ? { automaticPlacement } : {}),
+    },
+  };
+}
+
+function computeStages(
+  anchor: Rect,
+  surface: Rect,
+  clipping: Rect,
+  options: PositioningOptions,
+  direction: 'ltr' | 'rtl',
 ): PositioningResult | null {
   if (![anchor, surface, clipping].every(finiteRect)) return null;
   const initial = options.placement ?? 'bottom';
@@ -752,6 +898,8 @@ export function positionSurface(
       'getBoundingRectangle' in reference
         ? reference.getBoundingRectangle()
         : fromDomRect(reference.getBoundingClientRect());
+    const fragments =
+      'getBoundingRectangle' in reference ? (reference.getClientRectangles?.() ?? []) : [];
     const root = viewportRect(ownerWindow);
     const topLayer = surface.matches(':popover-open, :modal');
     const clipping =
@@ -782,6 +930,7 @@ export function positionSurface(
       clipping,
       currentOptions,
       direction,
+      fragments,
     );
     if (pass !== generation || destroyed) return null;
     if (!result) {
@@ -811,6 +960,7 @@ export function positionSurface(
           clipping,
           { ...options, placement: result.placement, collision: { side: 'none', align: 'shift' } },
           direction,
+          fragments,
         );
         if (resized)
           result = {

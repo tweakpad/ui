@@ -4,6 +4,7 @@ import {
   computeSurfacePosition,
   detectOverflow,
   geometryOffsets,
+  inlineFragmentRect,
   positionSurface,
   rect,
   type PositioningOffsetContext,
@@ -133,6 +134,91 @@ describe('anchored collision policy', () => {
   });
   it('rejects invalid virtual geometry', () => {
     expect(computeSurfacePosition(rect(NaN, 0, 1, 1), surface, viewport)).toBeNull();
+  });
+});
+
+describe('inline-fragment stage', () => {
+  // Two lines of a selection: the first from x 200 to 400, the second from x 20 to 120.
+  const lines = [rect(200, 100, 200, 20), rect(20, 120, 100, 20)];
+  const viewport = rect(0, 0, 800, 600);
+  const surface = rect(0, 0, 100, 30);
+
+  it('leaves a single rectangle unchanged', () => {
+    expect(inlineFragmentRect([rect(10, 10, 50, 20)], 'top')).toBeNull();
+    const single = computeSurfacePosition(rect(10, 100, 50, 20), surface, viewport, {
+      placement: 'top-start',
+      offset: 0,
+    });
+    const listed = computeSurfacePosition(
+      rect(10, 100, 50, 20),
+      surface,
+      viewport,
+      { placement: 'top-start', offset: 0 },
+      'ltr',
+      [rect(10, 100, 50, 20)],
+    );
+    expect(listed).toEqual(single);
+  });
+
+  it('takes the first line for top and the last line for bottom over the full block span', () => {
+    expect(inlineFragmentRect(lines, 'top')).toEqual(rect(200, 100, 200, 40));
+    expect(inlineFragmentRect(lines, 'bottom')).toEqual(rect(20, 100, 100, 40));
+  });
+
+  it('joins rectangles of one line and skips empty ones', () => {
+    const split = [rect(200, 100, 50, 20), rect(250, 101, 150, 19), rect(400, 100, 0, 20)];
+    expect(inlineFragmentRect([...split, ...lines.slice(1)], 'top')).toEqual(
+      rect(200, 100, 200, 40),
+    );
+  });
+
+  it('takes the lines nearest a side for side placements', () => {
+    expect(inlineFragmentRect(lines, 'left')).toEqual(rect(20, 120, 100, 20));
+    expect(inlineFragmentRect(lines, 'right')).toEqual(rect(200, 100, 200, 20));
+  });
+
+  it('selects the line that holds a point, within the padding, else the nearest one', () => {
+    expect(inlineFragmentRect(lines, 'top', { x: 50, y: 130 })).toEqual(lines[1]);
+    expect(inlineFragmentRect(lines, 'top', { x: 401, y: 99 })).toEqual(lines[0]);
+    expect(inlineFragmentRect(lines, 'top', { x: 405, y: 99, padding: 0 })).toEqual(lines[0]);
+    expect(inlineFragmentRect(lines, 'bottom', { x: 10, y: 300 })).toEqual(lines[1]);
+  });
+
+  it('places a top surface at the first line and a bottom surface at the last line', () => {
+    const top = computeSurfacePosition(
+      rect(20, 100, 380, 40),
+      surface,
+      viewport,
+      { placement: 'top-start', offset: 0 },
+      'ltr',
+      lines,
+    )!;
+    expect([top.x, top.y, top.anchorWidth]).toEqual([200, 70, 200]);
+    const bottom = computeSurfacePosition(
+      rect(20, 100, 380, 40),
+      surface,
+      viewport,
+      { placement: 'bottom-start', offset: 0 },
+      'ltr',
+      lines,
+    )!;
+    expect([bottom.x, bottom.y, bottom.anchorWidth]).toEqual([20, 140, 100]);
+  });
+
+  it('resets to the flipped side’s reference rectangle once', () => {
+    // No room above: the surface flips below and aligns with the last line.
+    const near = [rect(200, 10, 200, 20), rect(20, 30, 100, 20)];
+    const result = computeSurfacePosition(
+      rect(20, 10, 380, 40),
+      surface,
+      viewport,
+      { placement: 'top-start', offset: 0 },
+      'ltr',
+      near,
+    )!;
+    expect(result.placement).toBe('bottom-start');
+    expect([result.x, result.y]).toEqual([20, 50]);
+    expect(result.stageData.flip?.index).toBeGreaterThan(0);
   });
 });
 
@@ -319,6 +405,27 @@ function surfaceFixture() {
 }
 
 describe('anchor tracking', () => {
+  it('reads the client rectangles of a virtual anchor on every pass', () => {
+    const { anchor, surface, style } = surfaceFixture();
+    let lines = [rect(200, 100, 200, 20), rect(20, 120, 100, 20)];
+    const getClientRectangles = vi.fn(() => lines);
+    const handle = positionSurface(
+      {
+        getBoundingRectangle: () => rect(20, 100, 380, 40),
+        getClientRectangles,
+        contextElement: anchor,
+      },
+      surface,
+      { placement: 'top-start', offset: 0, tracking: false },
+    );
+    expect(style.translate).toBe('200px 40px');
+    lines = [rect(300, 100, 50, 20), rect(20, 120, 100, 20)];
+    void handle.update();
+    expect(getClientRectangles).toHaveBeenCalledTimes(2);
+    expect(style.translate).toBe('300px 40px');
+    handle.destroy();
+  });
+
   it('follows the anchor through observers by default, without an animation-frame loop', () => {
     const { requestAnimationFrame, anchor, surface, style } = surfaceFixture();
     const handle = positionSurface(anchor, surface);

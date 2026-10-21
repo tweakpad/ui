@@ -1,0 +1,20 @@
+A valid identifier is kept.
+
+A block without an identifier gets a fresh one.
+
+An invalid identifier is replaced.
+
+A duplicate is replaced; the first holder keeps it.
+
+- List items carry identifiers
+  - a nested duplicate is replaced
+
+|  |
+| --- |
+| Cell paragraphs carry none. |
+
+Sixty-five characters is too long.
+
+Mixed case, hyphens and underscores are valid.
+
+---

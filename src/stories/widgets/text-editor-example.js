@@ -1,0 +1,176 @@
+/**
+ * Documentation example wiring for `tp-text-editor`. The application installs an editing engine,
+ * imports its modules and passes them to an adapter factory of `@tweakpad/ui/text-editor`; the
+ * editor never imports an engine itself. Keep the imports and the factory of the engine you
+ * install. The `data-*` attributes are example setup, not editor properties.
+ */
+import * as core from '@tiptap/core';
+import * as state from '@tiptap/pm/state';
+import * as history from '@tiptap/pm/history';
+import * as starterKit from '@tiptap/starter-kit';
+import * as list from '@tiptap/extension-list';
+import * as table from '@tiptap/extension-table';
+import * as tables from '@tiptap/pm/tables';
+import * as lexical from 'lexical';
+import * as lexicalExtension from '@lexical/extension';
+import * as lexicalRichText from '@lexical/rich-text';
+import * as lexicalHistory from '@lexical/history';
+import * as lexicalSelection from '@lexical/selection';
+import * as lexicalList from '@lexical/list';
+import * as lexicalLink from '@lexical/link';
+import * as lexicalMarkdown from '@lexical/markdown';
+import * as lexicalCode from '@lexical/code';
+import * as lexicalA11y from '@lexical/a11y';
+import * as lexicalHtml from '@lexical/html';
+import * as lexicalTable from '@lexical/table';
+import {
+  createLexicalEngine,
+  createTiptapEngine,
+  defineTextEditorBlock,
+} from '../../foundation/text-editor/index.js';
+import { globeIcon } from '../../icons/globe.js';
+import { infoIcon } from '../../icons/info.js';
+
+/** Survey notes for the examples: a heading, two paragraphs and a list with bold lead words. */
+export const fieldNotes = [
+  '<h1>Tide pool survey, north cove</h1>',
+  '<p>Low tide reached 0.3 m at 07:40 and left the upper pools exposed for almost two hours. ',
+  'The water stayed clear, with a light swell from the west.</p>',
+  '<p>To log on the next visit:</p>',
+  '<ul>',
+  '<li><p><strong>Count the anemones</strong> in pools 4 to 7 before the sun reaches them.</p></li>',
+  '<li><p><strong>Photograph the hermit crabs</strong> and note which shells they moved into.</p></li>',
+  '<li><p><strong>Check the temperature logger</strong> under the ledge and swap its battery.</p></li>',
+  '</ul>',
+].join('');
+
+/**
+ * A callout: a textblock with a tone. It carries no paint of its own; `presents: 'callout'` lets
+ * the editor paint it as a callout. Its Markdown is an alert (`> [!NOTE]`), which `parse` restores.
+ */
+export const calloutBlock = defineTextEditorBlock({
+  name: 'callout',
+  content: 'inline',
+  element: 'aside',
+  presents: 'callout',
+  attrs: { tone: { type: 'enum', values: ['note', 'tip', 'warning'], default: 'note' } },
+  markdown: {
+    serialize: ({ attrs, markdown }) => `> [!${attrs.tone.toUpperCase()}]\n> ${markdown}`,
+    parse: (node) => {
+      if (node.type !== 'alert' || !['note', 'tip', 'warning'].includes(node.kind)) return null;
+      const paragraph = node.children.find((child) => child.type === 'paragraph');
+      return { attrs: { tone: node.kind }, content: paragraph ? paragraph.children : [] };
+    },
+  },
+  tool: { label: 'Callout', description: 'A highlighted note', icon: infoIcon, keywords: ['note'] },
+});
+
+/** Whether an embed source may load: an absolute https URL. */
+export function embedSource(src) {
+  try {
+    const url = new globalThis.URL(String(src ?? ''));
+    return url.protocol === 'https:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * An embed: an atom that shows an https page in a sandboxed frame with a required title. A
+ * missing title or another protocol shows the title or the source as text instead of a frame.
+ */
+export const embedBlock = defineTextEditorBlock({
+  name: 'embed',
+  content: 'none',
+  element: 'figure',
+  attrs: {
+    src: { type: 'string', default: null },
+    title: { type: 'string', default: null },
+  },
+  markdown: {
+    serialize: ({ attrs }) => (attrs.src ? `[${attrs.title ?? attrs.src}](${attrs.src})` : ''),
+  },
+  text: ({ attrs }) => attrs.title ?? attrs.src ?? '',
+  view(host, attrs) {
+    const src = embedSource(attrs.src);
+    const title = typeof attrs.title === 'string' ? attrs.title.trim() : '';
+    if (!src || !title) {
+      host.textContent = title || String(attrs.src ?? '');
+      return;
+    }
+    const frame = host.ownerDocument.createElement('iframe');
+    frame.setAttribute('sandbox', 'allow-scripts');
+    frame.setAttribute('referrerpolicy', 'no-referrer');
+    frame.setAttribute('loading', 'lazy');
+    frame.title = title;
+    frame.src = src;
+    host.append(frame);
+    return () => frame.remove();
+  },
+  css: '.tp-te-block-embed iframe { display: block; inline-size: 100%; aspect-ratio: 16 / 9; border: 0; }',
+  tool: { label: 'Embed', description: 'A page from an https address', icon: globeIcon },
+});
+
+/** Notes with a callout and an embed, for the custom block example. */
+export const customBlockNotes = [
+  '<h2>Mooring check</h2>',
+  '<aside data-type="callout" data-tone="warning">Wait for slack water before you board the dinghy.</aside>',
+  '<p>The tide table below is the harbour office page for this week.</p>',
+  '<figure data-type="embed" data-src="https://example.com/" data-title="Harbour tide table"></figure>',
+].join('');
+
+/** A new engine for one editor, with tables. */
+export function tiptapEngine() {
+  return createTiptapEngine({ core, state, history, starterKit, list, table, tables });
+}
+
+/** A new engine for one editor, with tables. */
+export function lexicalEngine() {
+  return createLexicalEngine({
+    lexical,
+    extension: lexicalExtension,
+    richText: lexicalRichText,
+    history: lexicalHistory,
+    selection: lexicalSelection,
+    list: lexicalList,
+    link: lexicalLink,
+    markdown: lexicalMarkdown,
+    code: lexicalCode,
+    a11y: lexicalA11y,
+    html: lexicalHtml,
+    table: lexicalTable,
+  });
+}
+
+/**
+ * Wires one example: each editor in `root` gets the sample notes when it carries `data-sample`, then
+ * an engine of its own from `createEngine`; a `tp-form[data-form-output]` shows what it submits in
+ * the `tp-code-block[data-submitted]` beside it. Returns cleanup.
+ * @param {HTMLElement} root
+ * @param {() => object} createEngine returns a new engine
+ * @returns {() => void} cleanup
+ */
+export function setupTextEditorExample(root, createEngine) {
+  const cleanups = [];
+  for (const editor of root.querySelectorAll('tp-text-editor')) {
+    if (editor.hasAttribute('data-sample')) editor.defaultValue = fieldNotes;
+    if (editor.hasAttribute('data-custom-blocks')) {
+      editor.nodes = [calloutBlock, embedBlock];
+      editor.defaultValue = customBlockNotes;
+    }
+    editor.engine = createEngine();
+    cleanups.push(() => (editor.engine = null));
+  }
+  const submitted = root.querySelector('tp-code-block[data-submitted]');
+  for (const form of root.querySelectorAll('tp-form[data-form-output]')) {
+    form.onFormSubmit = (_values, { data }) => {
+      if (!submitted) return;
+      submitted.code = String(data.get('notes') ?? '');
+      submitted.hidden = false;
+    };
+    cleanups.push(() => (form.onFormSubmit = undefined));
+  }
+  return () => {
+    for (const cleanup of cleanups.reverse()) cleanup();
+  };
+}

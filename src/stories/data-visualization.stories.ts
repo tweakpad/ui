@@ -3,6 +3,7 @@ import { html } from 'lit';
 import { dataVisualizationExample } from './data-visualization.examples.js';
 import documentation from '../../docs/data-visualization.md?raw';
 import source from './data-visualization.examples.ts?raw';
+import { publishedSource } from './documentation-examples.js';
 interface Args {
   interaction: 'none' | 'focus' | 'pointer' | 'both';
   indicator: 'dot' | 'line' | 'dashed';
@@ -15,7 +16,7 @@ const meta = {
   title: 'Components/Data visualization',
   component: 'tp-data-visualization',
   parameters: {
-    docs: { description: { component: documentation }, source: { code: source } },
+    docs: { description: { component: documentation }, source: { code: publishedSource(source) } },
   },
   args: {
     interaction: 'both',

@@ -127,7 +127,7 @@ ${row('Sam Rivera', bubble('The remaining review items are now assigned to the t
         bubble('The unresolved dependency is in the workspace package.'),
         'start',
         '',
-        `<tp-button slot="footer" variant="ghost" size="icon" aria-label="Copy message" title="Copy message" data-action="copy">${icon('copy')}</tp-button><tp-toggle slot="footer" size="sm" aria-label="Helpful" title="Helpful" data-feedback="Helpful">${icon('like')}</tp-toggle><tp-toggle slot="footer" size="sm" aria-label="Not helpful" title="Not helpful" data-feedback="Not helpful">${icon('dislike')}</tp-toggle>`,
+        `<tp-button slot="footer" variant="ghost" size="icon" aria-label="Copy message" title="Copy message" data-action="copy">${icon('copy')}</tp-button><tp-toggle slot="footer" size="icon-sm" aria-label="Helpful" title="Helpful" data-feedback="Helpful">${icon('like')}</tp-toggle><tp-toggle slot="footer" size="icon-sm" aria-label="Not helpful" title="Not helpful" data-feedback="Not helpful">${icon('dislike')}</tp-toggle>`,
       ),
       row(
         'Alex Morgan',

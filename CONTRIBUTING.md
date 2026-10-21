@@ -9,6 +9,7 @@ npm run dev
 npm run storybook
 npm run format
 npm test
+npm run typecheck
 npm run test:package
 npm run size:report
 npm run lint
@@ -16,7 +17,7 @@ npm run build
 npm run build-storybook
 ```
 
-`npm run lint` checks Prettier formatting, TypeScript and Lit templates, Lit accessibility, standalone CSS, and CSS embedded in Lit `css` templates. `npm run test:package` packs the library and checks the tarball as a consumer would install it. `npm run size:report` measures each catalog component and widget as published and guards tree-shaking.
+`npm run lint` checks Prettier formatting, TypeScript and Lit templates, Lit accessibility, standalone CSS, and CSS embedded in Lit `css` templates. `npm run typecheck` type-checks `src` with its tests and stories, `.storybook` and the configs, which the build's `tsconfig.build.json` leaves out. `npm run test:package` packs the library and checks the tarball as a consumer would install it. `npm run size:report` measures each catalog component and widget as published and guards tree-shaking.
 
 Browser verification runs through Google Chrome DevTools MCP against the fixtures in `tests/fixtures/components/<component>/` and `tests/fixtures/widgets/<widget>/` (served by `npm run dev`; append `?built` or `?package` where a fixture documents it to load the built package). Each fixture folder's `README.md` lists its checks. Storybook's accessibility addon reports Axe results per story.
 
@@ -31,8 +32,9 @@ Foundational components live in `src/components/<name>/` and ship through `@twea
 3. The family in `src/presentation/families/<name>.ts`, its recipe in `src/presentation/recipes/<name>.ts`, and the entry in `src/presentation/families/widgets.ts`.
 4. `docs/widgets/<name>.md`, `src/stories/widgets/<name>.stories.ts` (title `Widgets/<Name>`, first story `Default`), `src/stories/widgets/<name>.examples.ts` and an entry in `src/stories/widgets/examples.ts`; list the widget under Published widgets in `docs/widgets/README.md`.
 5. Browser fixtures under `tests/fixtures/widgets/<name>/` and the implementation record under `plans/widgets/<name>/implementation-checklist.md`.
+6. For a companion entry `@tweakpad/ui/<name>`, which publishes the widget's model, engine contract or data layer for use without the element (as `@tweakpad/ui/emoji` and `@tweakpad/ui/flow` do): `src/foundation/<name>/index.ts`, whose modules import only relative modules and `lit` and touch no DOM when imported, with export names that stay unique across `@tweakpad/ui/widgets`; the `./<name>` export in `package.json` beside the other companion entries (`types` from `./dist/foundation/<name>/index.d.ts`, `import` and `default` from `./dist/<name>.js`); the `<name>` entry in `vite.config.ts`; in `scripts/pack-smoke.mjs` the consumer import, its `used` entry and a Node run of the entry; and the folder in the companion patterns of `src/widgets/catalog.test.ts`, `scripts/size-report.mjs` and `scripts/pack-smoke.mjs`. The widget's `index.ts` re-exports the entry (`export * from '../../foundation/<name>/index.js'`); `src/foundation/index.ts` never does.
 
-The tests enforce this structure: `src/widgets/catalog.test.ts` (catalog, families, folders, registration, and that the main entries never reach a widget), the extended source scanners, and `src/stories/stories.test.ts`. `node scripts/size-report.mjs` measures each widget from `@tweakpad/ui/widgets` and fails if `@tweakpad/ui/register` ships a widget module.
+The tests enforce this structure: `src/widgets/catalog.test.ts` (catalog, families, folders, registration, that widget sources import only Lit and relative modules, and that the main entries never reach a widget or a companion entry), the extended source scanners, and `src/stories/stories.test.ts`. `node scripts/size-report.mjs` measures each widget from `@tweakpad/ui/widgets` and fails if `@tweakpad/ui/register` ships a widget or companion module; `npm run test:package` checks the same boundaries in the packed files.
 
 ## Stories
 

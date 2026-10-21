@@ -1,0 +1,300 @@
+/* tp-color-picker appearance */
+/* color-picker */
+&{--_tp-color-picker-space:var(--tp-space-3);--_tp-color-picker-area-base:calc(var(--tp-spacing) * 40);--_tp-color-picker-area:var(--_tp-color-picker-area-base);--_tp-color-picker-track:var(--tp-space-3);--_tp-color-picker-thumb:var(--tp-space-4);--_tp-color-picker-swatch:var(--tp-control-height-sm);--_tp-color-picker-checker:var(--tp-space-2);--_tp-color-picker-ring:var(--tp-space-5);--_tp-color-picker-popup:calc(var(--tp-spacing) * 88);color:var(--tp-foreground);font-size:var(--tp-text-sm)}
+&:dir(rtl){--_tp-color-picker-axis:to left}
+/* color-picker-size-sm */
+&{--_tp-color-picker-space:var(--tp-space-2);--_tp-color-picker-area-base:calc(var(--tp-spacing) * 32);--_tp-color-picker-track:var(--tp-space-2-5);--_tp-color-picker-thumb:var(--tp-space-3);--_tp-color-picker-swatch:var(--tp-control-height-xs);--_tp-color-picker-ring:var(--tp-space-4);--_tp-color-picker-popup:calc(var(--tp-spacing) * 78)}
+/* color-picker-size-default */
+/* color-picker-size-lg */
+&{--_tp-color-picker-space:var(--tp-space-4);--_tp-color-picker-area-base:calc(var(--tp-spacing) * 50);--_tp-color-picker-track:var(--tp-space-4);--_tp-color-picker-thumb:var(--tp-space-5);--_tp-color-picker-swatch:var(--tp-control-height-md);--_tp-color-picker-ring:var(--tp-space-6);--_tp-color-picker-popup:calc(var(--tp-spacing) * 98)}
+/* color-picker-picker-inline */
+/* color-picker-picker-popup */
+/* color-picker-label */
+&{font-size:var(--tp-text-sm);font-weight:var(--tp-font-medium)}
+/* color-picker-label-size-sm */
+/* color-picker-label-size-default */
+/* color-picker-label-size-lg */
+/* color-picker-tabs */
+/* color-picker-tabs-size-sm */
+/* color-picker-tabs-size-default */
+/* color-picker-tabs-size-lg */
+/* color-picker-tab */
+/* color-picker-tab-size-sm */
+/* color-picker-tab-size-default */
+/* color-picker-tab-size-lg */
+/* color-picker-area */
+&{border-radius:var(--tp-radius-lg);box-shadow:inset 0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 10%, transparent);background-image:var(--_tp-color-picker-paint);cursor:crosshair}
+&[data-disabled]{cursor:not-allowed}
+/* color-picker-area-size-sm */
+/* color-picker-area-size-default */
+/* color-picker-area-size-lg */
+/* color-picker-area-thumb */
+&{inline-size:var(--_tp-color-picker-thumb);block-size:var(--_tp-color-picker-thumb);border-radius:var(--tp-radius-full);border:var(--tp-border-width-strong) var(--tp-border-style) var(--tp-background);box-shadow:0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 30%, transparent), var(--tp-shadow-sm);background:var(--_tp-handle-paint, var(--tp-background));transition:box-shadow calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard), outline-color calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard)}
+&:has(input:focus-visible){outline:var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);outline-offset:var(--tp-ring-offset)}
+&[data-dragging]{box-shadow:0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 30%, transparent), 0 0 0 calc(var(--tp-ring-width) * 1.5) color-mix(in oklab, var(--tp-ring) 50%, transparent)}
+/* color-picker-area-thumb-size-sm */
+/* color-picker-area-thumb-size-default */
+/* color-picker-area-thumb-size-lg */
+/* color-picker-controls */
+/* color-picker-controls-size-sm */
+/* color-picker-controls-size-default */
+/* color-picker-controls-size-lg */
+/* color-picker-toolbar */
+/* color-picker-toolbar-size-sm */
+/* color-picker-toolbar-size-default */
+/* color-picker-toolbar-size-lg */
+/* color-picker-eyedropper */
+/* color-picker-eyedropper-size-sm */
+/* color-picker-eyedropper-size-default */
+/* color-picker-eyedropper-size-lg */
+/* color-picker-generate */
+/* color-picker-generate-size-sm */
+/* color-picker-generate-size-default */
+/* color-picker-generate-size-lg */
+/* color-picker-template */
+/* color-picker-template-size-sm */
+/* color-picker-template-size-default */
+/* color-picker-template-size-lg */
+/* color-picker-harmony */
+/* color-picker-harmony-size-sm */
+/* color-picker-harmony-size-default */
+/* color-picker-harmony-size-lg */
+/* color-picker-palette */
+/* color-picker-palette-size-sm */
+/* color-picker-palette-size-default */
+/* color-picker-palette-size-lg */
+/* color-picker-palette-swatch */
+/* color-picker-palette-swatch-size-sm */
+/* color-picker-palette-swatch-size-default */
+/* color-picker-palette-swatch-size-lg */
+/* color-picker-palette-item */
+&[part~="button"]{position:relative;inline-size:100%;block-size:100%;min-inline-size:0;min-block-size:0;padding:0;border:0;border-radius:0;clip-path:polygon(var(--_tp-color-picker-segment));pointer-events:auto;color:var(--_tp-color-picker-contrast, var(--tp-foreground));background-color:var(--tp-background);background-image:var(--_tp-color-picker-paint, none), linear-gradient(45deg, var(--tp-muted) 25%, transparent 25% 75%, var(--tp-muted) 75%), linear-gradient(45deg, var(--tp-muted) 25%, transparent 25% 75%, var(--tp-muted) 75%);background-size:auto, var(--_tp-color-picker-checker) var(--_tp-color-picker-checker), var(--_tp-color-picker-checker) var(--_tp-color-picker-checker);background-position:0 0, 0 0, calc(var(--_tp-color-picker-checker) / 2) calc(var(--_tp-color-picker-checker) / 2)}
+&[part~="button"] > [part~="button-leading-mark"]{position:absolute;left:var(--_tp-color-picker-mark-x, 50%);top:var(--_tp-color-picker-mark-y, 50%);translate:-50% -50%;opacity:var(--_tp-color-picker-mark, 0);transition:opacity calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard)}
+&[part~="button"]::before{content:none}
+&[part~="button"]:focus-visible{outline:none;box-shadow:none}
+&[part~="button"]:focus-visible > [part~="button-leading-mark"]{border-radius:var(--tp-radius-full);outline:var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);outline-offset:var(--tp-border-width)}
+/* color-picker-palette-item-size-sm */
+/* color-picker-palette-item-size-default */
+/* color-picker-palette-item-size-lg */
+/* color-picker-slider */
+/* color-picker-slider-size-sm */
+/* color-picker-slider-size-default */
+/* color-picker-slider-size-lg */
+/* color-picker-slider-track */
+&[part~="slider-track"]{height:var(--_tp-color-picker-track);border-radius:var(--tp-radius-full);background-color:var(--tp-background);background-image:var(--_tp-color-picker-paint);box-shadow:inset 0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 10%, transparent)}
+/* color-picker-slider-track-size-sm */
+/* color-picker-slider-track-size-default */
+/* color-picker-slider-track-size-lg */
+/* color-picker-alpha-track */
+&[part~="slider-track"]{height:var(--_tp-color-picker-track);border-radius:var(--tp-radius-full);background-color:var(--tp-background);background-image:var(--_tp-color-picker-paint, none), linear-gradient(45deg, var(--tp-muted) 25%, transparent 25% 75%, var(--tp-muted) 75%), linear-gradient(45deg, var(--tp-muted) 25%, transparent 25% 75%, var(--tp-muted) 75%);background-size:auto, var(--_tp-color-picker-checker) var(--_tp-color-picker-checker), var(--_tp-color-picker-checker) var(--_tp-color-picker-checker);background-position:0 0, 0 0, calc(var(--_tp-color-picker-checker) / 2) calc(var(--_tp-color-picker-checker) / 2);box-shadow:inset 0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 10%, transparent)}
+/* color-picker-alpha-track-size-sm */
+/* color-picker-alpha-track-size-default */
+/* color-picker-alpha-track-size-lg */
+/* color-picker-slider-range */
+&[part~="slider-range"]{display:none}
+/* color-picker-slider-range-size-sm */
+/* color-picker-slider-range-size-default */
+/* color-picker-slider-range-size-lg */
+/* color-picker-slider-thumb */
+&[part~="slider-thumb"]{width:var(--_tp-color-picker-thumb);height:var(--_tp-color-picker-thumb);border-radius:var(--tp-radius-full);border:var(--tp-border-width-strong) var(--tp-border-style) var(--tp-background);box-shadow:0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 30%, transparent), var(--tp-shadow-sm);background:var(--_tp-handle-paint, var(--tp-background));transition:box-shadow calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard), outline-color calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard)}
+&[part~="slider-thumb"]:has(input:focus-visible){outline:var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);outline-offset:var(--tp-ring-offset)}
+&[part~="slider-thumb"]:is(:hover, [data-active], [data-dragging]):not([data-disabled]){box-shadow:0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 30%, transparent), 0 0 0 calc(var(--tp-ring-width) * 1.5) color-mix(in oklab, var(--tp-ring) 50%, transparent)}
+/* color-picker-slider-thumb-size-sm */
+/* color-picker-slider-thumb-size-default */
+/* color-picker-slider-thumb-size-lg */
+/* color-picker-channel */
+/* color-picker-channel-size-sm */
+/* color-picker-channel-size-default */
+/* color-picker-channel-size-lg */
+/* color-picker-preview */
+&{inline-size:var(--tp-control-height-md);block-size:var(--tp-control-height-md);border-radius:var(--tp-radius-md);border:var(--tp-border-width) var(--tp-border-style) color-mix(in oklab, var(--tp-foreground) 10%, transparent);background-color:var(--tp-background);background-image:var(--_tp-color-picker-paint, none), linear-gradient(45deg, var(--tp-muted) 25%, transparent 25% 75%, var(--tp-muted) 75%), linear-gradient(45deg, var(--tp-muted) 25%, transparent 25% 75%, var(--tp-muted) 75%);background-size:auto, var(--_tp-color-picker-checker) var(--_tp-color-picker-checker), var(--_tp-color-picker-checker) var(--_tp-color-picker-checker);background-position:0 0, 0 0, calc(var(--_tp-color-picker-checker) / 2) calc(var(--_tp-color-picker-checker) / 2)}
+/* color-picker-preview-size-sm */
+/* color-picker-preview-size-default */
+/* color-picker-preview-size-lg */
+/* color-picker-preview-shape-square */
+/* color-picker-preview-shape-round */
+&{border-radius:var(--tp-radius-full)}
+/* color-picker-fields */
+/* color-picker-fields-size-sm */
+/* color-picker-fields-size-default */
+/* color-picker-fields-size-lg */
+/* color-picker-field-group */
+/* color-picker-field-group-size-sm */
+/* color-picker-field-group-size-default */
+/* color-picker-field-group-size-lg */
+/* color-picker-field */
+/* color-picker-field-size-sm */
+/* color-picker-field-size-default */
+/* color-picker-field-size-lg */
+/* color-picker-format */
+/* color-picker-format-size-sm */
+/* color-picker-format-size-default */
+/* color-picker-format-size-lg */
+/* color-picker-swatches */
+/* color-picker-swatches-size-sm */
+/* color-picker-swatches-size-default */
+/* color-picker-swatches-size-lg */
+/* color-picker-swatch-grid */
+/* color-picker-swatch-grid-size-sm */
+/* color-picker-swatch-grid-size-default */
+/* color-picker-swatch-grid-size-lg */
+/* color-picker-swatch-item */
+&[part~="toggle"]{position:relative;overflow:hidden;padding:0;inline-size:var(--_tp-color-picker-swatch);block-size:var(--_tp-color-picker-swatch);min-inline-size:0;min-block-size:0;border-radius:var(--tp-radius-md)}
+&[part~="toggle"] > [part~="toggle-content"]{position:static}
+&[part~="toggle"][data-pressed] slot::slotted(.swatch){box-shadow:inset 0 0 0 var(--tp-border-width-strong) var(--tp-background), inset 0 0 0 calc(var(--tp-border-width-strong) * 2) var(--tp-ring)}
+/* color-picker-swatch-item-size-sm */
+/* color-picker-swatch-item-size-default */
+/* color-picker-swatch-item-size-lg */
+/* color-picker-swatch-item-shape-square */
+/* color-picker-swatch-item-shape-round */
+&[part~="toggle"]{border-radius:var(--tp-radius-full)}
+/* color-picker-swatch */
+&{background-color:var(--tp-background);background-image:var(--_tp-color-picker-paint, none), linear-gradient(45deg, var(--tp-muted) 25%, transparent 25% 75%, var(--tp-muted) 75%), linear-gradient(45deg, var(--tp-muted) 25%, transparent 25% 75%, var(--tp-muted) 75%);background-size:auto, var(--_tp-color-picker-checker) var(--_tp-color-picker-checker), var(--_tp-color-picker-checker) var(--_tp-color-picker-checker);background-position:0 0, 0 0, calc(var(--_tp-color-picker-checker) / 2) calc(var(--_tp-color-picker-checker) / 2)}
+/* color-picker-swatch-size-sm */
+/* color-picker-swatch-size-default */
+/* color-picker-swatch-size-lg */
+/* color-picker-swatch-shape-square */
+/* color-picker-swatch-shape-round */
+/* color-picker-schemes */
+/* color-picker-schemes-size-sm */
+/* color-picker-schemes-size-default */
+/* color-picker-schemes-size-lg */
+/* color-picker-scheme */
+/* color-picker-scheme-size-sm */
+/* color-picker-scheme-size-default */
+/* color-picker-scheme-size-lg */
+/* color-picker-scheme-item */
+&[part~="toggle"]{position:relative;overflow:hidden;padding:0;border:0;inline-size:100%;block-size:var(--_tp-color-picker-swatch);min-inline-size:0;min-block-size:0}
+&[part~="toggle"] > [part~="toggle-content"]{position:static}
+&[part~="toggle"][data-pressed] slot::slotted(.swatch){box-shadow:inset 0 0 0 var(--tp-border-width-strong) var(--tp-background), inset 0 0 0 calc(var(--tp-border-width-strong) * 2) var(--tp-ring)}
+/* color-picker-scheme-item-size-sm */
+/* color-picker-scheme-item-size-default */
+/* color-picker-scheme-item-size-lg */
+/* color-picker-wheel */
+&{border-radius:var(--tp-radius-full);background-image:var(--_tp-color-picker-paint);box-shadow:inset 0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 10%, transparent)}
+&::after{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--_tp-color-picker-dim, transparent);pointer-events:none}
+/* color-picker-wheel-size-sm */
+/* color-picker-wheel-size-default */
+/* color-picker-wheel-size-lg */
+/* color-picker-wheel-handle */
+&{inline-size:var(--_tp-color-picker-thumb);block-size:var(--_tp-color-picker-thumb);border-radius:var(--tp-radius-full);border:var(--tp-border-width-strong) var(--tp-border-style) var(--tp-background);box-shadow:0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 30%, transparent), var(--tp-shadow-sm);background:var(--_tp-handle-paint, var(--tp-background));transition:box-shadow calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard), outline-color calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard)}
+&:has(input:focus-visible){outline:var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);outline-offset:var(--tp-ring-offset)}
+&[data-dragging]{box-shadow:0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 30%, transparent), 0 0 0 calc(var(--tp-ring-width) * 1.5) color-mix(in oklab, var(--tp-ring) 50%, transparent)}
+&[data-primary]{inline-size:calc(var(--_tp-color-picker-thumb) * 1.25);block-size:calc(var(--_tp-color-picker-thumb) * 1.25)}
+&[data-selected]{box-shadow:0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 30%, transparent), 0 0 0 calc(var(--tp-ring-width) * 2) var(--tp-background), 0 0 0 calc(var(--tp-ring-width) * 3) var(--tp-ring)}
+&:not([data-editable]){cursor:default}
+/* color-picker-wheel-handle-size-sm */
+/* color-picker-wheel-handle-size-default */
+/* color-picker-wheel-handle-size-lg */
+/* color-picker-wheel-line */
+&{stroke:color-mix(in oklab, var(--tp-foreground) 60%, transparent);stroke-width:var(--tp-border-width-strong);fill:none;stroke-linecap:round}
+/* color-picker-wheel-line-size-sm */
+/* color-picker-wheel-line-size-default */
+/* color-picker-wheel-line-size-lg */
+/* color-picker-ring */
+&{border-radius:var(--tp-radius-full);background-image:var(--_tp-color-picker-paint);box-shadow:inset 0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 10%, transparent)}
+/* color-picker-ring-size-sm */
+/* color-picker-ring-size-default */
+/* color-picker-ring-size-lg */
+/* color-picker-ring-thumb */
+&{inline-size:var(--_tp-color-picker-thumb);block-size:var(--_tp-color-picker-thumb);border-radius:var(--tp-radius-full);border:var(--tp-border-width-strong) var(--tp-border-style) var(--tp-background);box-shadow:0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 30%, transparent), var(--tp-shadow-sm);background:var(--_tp-handle-paint, var(--tp-background));transition:box-shadow calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard), outline-color calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard)}
+&:has(input:focus-visible){outline:var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);outline-offset:var(--tp-ring-offset)}
+&[data-dragging]{box-shadow:0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 30%, transparent), 0 0 0 calc(var(--tp-ring-width) * 1.5) color-mix(in oklab, var(--tp-ring) 50%, transparent)}
+/* color-picker-ring-thumb-size-sm */
+/* color-picker-ring-thumb-size-default */
+/* color-picker-ring-thumb-size-lg */
+/* color-picker-triangle */
+&{border-radius:var(--tp-radius-sm)}
+/* color-picker-triangle-size-sm */
+/* color-picker-triangle-size-default */
+/* color-picker-triangle-size-lg */
+/* color-picker-triangle-thumb */
+&{inline-size:var(--_tp-color-picker-thumb);block-size:var(--_tp-color-picker-thumb);border-radius:var(--tp-radius-full);border:var(--tp-border-width-strong) var(--tp-border-style) var(--tp-background);box-shadow:0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 30%, transparent), var(--tp-shadow-sm);background:var(--_tp-handle-paint, var(--tp-background));transition:box-shadow calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard), outline-color calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard)}
+&:has(input:focus-visible){outline:var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);outline-offset:var(--tp-ring-offset)}
+&[data-dragging]{box-shadow:0 0 0 var(--tp-border-width) color-mix(in oklab, var(--tp-foreground) 30%, transparent), 0 0 0 calc(var(--tp-ring-width) * 1.5) color-mix(in oklab, var(--tp-ring) 50%, transparent)}
+/* color-picker-triangle-thumb-size-sm */
+/* color-picker-triangle-thumb-size-default */
+/* color-picker-triangle-thumb-size-lg */
+/* color-picker-trigger */
+/* color-picker-trigger-size-sm */
+/* color-picker-trigger-size-default */
+/* color-picker-trigger-size-lg */
+/* color-picker-popup */
+/* color-picker-popup-size-sm */
+/* color-picker-popup-size-default */
+/* color-picker-popup-size-lg */
+/* color-picker-header */
+/* color-picker-header-size-sm */
+/* color-picker-header-size-default */
+/* color-picker-header-size-lg */
+/* color-picker-compare */
+/* color-picker-compare-size-sm */
+/* color-picker-compare-size-default */
+/* color-picker-compare-size-lg */
+/* color-picker-compare-original */
+&[part~="button"]{position:relative;overflow:hidden;padding:0;inline-size:var(--tp-control-height-md);block-size:var(--tp-control-height-md);min-inline-size:0}
+&[part~="button"] > [part~="button-leading-mark"]{position:static}
+/* color-picker-compare-original-size-sm */
+/* color-picker-compare-original-size-default */
+/* color-picker-compare-original-size-lg */
+/* color-picker-compare-current */
+&[part~="button-group-text-segment"]{position:relative;overflow:hidden;padding:0;inline-size:var(--tp-control-height-md);block-size:var(--tp-control-height-md);min-inline-size:0}
+/* color-picker-compare-current-size-sm */
+/* color-picker-compare-current-size-default */
+/* color-picker-compare-current-size-lg */
+/* color-picker-copy */
+/* color-picker-copy-size-sm */
+/* color-picker-copy-size-default */
+/* color-picker-copy-size-lg */
+/* color-picker-recent */
+/* color-picker-recent-size-sm */
+/* color-picker-recent-size-default */
+/* color-picker-recent-size-lg */
+/* color-picker-footer */
+/* color-picker-footer-size-sm */
+/* color-picker-footer-size-default */
+/* color-picker-footer-size-lg */
+
+/* tp-color-picker structure */
+/* color-picker */
+&{gap:var(--_tp-color-picker-space);container-type:inline-size}
+/* color-picker-popup */
+&{gap:var(--_tp-color-picker-space);inline-size:max(var(--_tp-color-picker-popup), calc(var(--tp-spacing) * var(--_tp-color-picker-popup-min, 0)));max-inline-size:100%;padding:calc(var(--_tp-color-picker-thumb) / 2 + var(--tp-space-2));--_tp-color-picker-area:max(calc(var(--tp-spacing) * 20), min(var(--_tp-color-picker-area-base), calc(var(--tp-available-height, 100dvh) - calc(var(--tp-spacing) * var(--_tp-color-picker-reserve, 70)))))}
+/* color-picker-area */
+&{block-size:var(--_tp-color-picker-area);overflow:visible}
+/* color-picker-controls */
+&{gap:var(--tp-space-2)}
+/* color-picker-toolbar */
+&{gap:var(--tp-space-2)}
+/* color-picker-palette */
+/* color-picker-palette-swatch */
+&{display:block;block-size:100%;pointer-events:none}
+/* color-picker-channel */
+&{gap:var(--tp-space-2)}
+/* color-picker-fields */
+&{gap:var(--tp-space-2)}
+/* color-picker-field-group */
+/* color-picker-field */
+&{min-inline-size:calc(var(--tp-spacing) * 14)}
+/* color-picker-swatch-grid */
+&[part~="toggle-group"]{display:grid;grid-template-columns:repeat(auto-fill, var(--_tp-color-picker-swatch));gap:var(--tp-space-1);justify-content:start}
+/* color-picker-swatch */
+&{display:block}
+/* color-picker-swatches */
+&{gap:var(--tp-space-3)}
+/* color-picker-schemes */
+&{gap:var(--tp-space-2)}
+/* color-picker-scheme */
+/* color-picker-wheel */
+&{position:relative;aspect-ratio:1;inline-size:min(100%, var(--_tp-color-picker-area));margin-inline:auto}
+/* color-picker-ring */
+&{position:absolute;inset:0}
+/* color-picker-triangle */
+&{position:absolute;inset:var(--_tp-color-picker-ring)}
+/* color-picker-footer */
+&{display:flex;justify-content:flex-end;gap:var(--tp-space-2)}
+/* color-picker-header */
+&{gap:var(--tp-space-2)}
+/* color-picker-compare */
+/* color-picker-copy */
+/* color-picker-recent */

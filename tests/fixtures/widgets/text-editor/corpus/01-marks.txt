@@ -1,0 +1,31 @@
+Keeper's log, Gull Rock light
+
+Plain text, then bold, italic, underlined, struck, inline code and a link.
+
+Four marks on one run, a bold link and https://gullrock.example/.
+
+Code inside a link: lens.rotate(90); bold code stays code: trim_wick().
+
+Lamp oil is C16H34, the beam reaches 24 miles, and the inner mark wins: raised lowered, lowered raised.
+
+Text colors: gray, brown, orange, yellow, green, blue, purple, pink, red.
+
+Highlights: gray, brown, orange, yellow, green, blue, purple, pink, red, and a mark with no name.
+
+Every outer mark around red bold and red.
+
+  Two leading spaces, then three   inside a line.
+
+Characters that are Markdown syntax stay text: *stars*, _underscores_, `ticks`, [brackets](not a link), <angle>, a & b, ~~tildes~~, a | pipe and a back\slash.
+
+# not a heading
+
+1. not an ordered item
+
+- not a bullet
+
+> not a quote
+
+מגדלור — منارة
+
+Weather symbols: 🌊 🌬️ ⛈️ and a family 👨‍👩‍👧.

@@ -2,6 +2,7 @@ import { motionTransition } from '../motion.js';
 import type { PresentationDeclarations, PresentationDictionary } from '../resolver.js';
 import { activeRing, focusRing, ringMix, thumb, thumbRing } from './shared/handle.js';
 import { popupBorder } from './shared/surface.js';
+import { swatchCorner, swatchFill } from './shared/swatch.js';
 
 // Widgets Specification 6.1 Presentation: value-domain paint arrives from the widget as the
 // inline custom properties `--_tp-color-picker-paint` (an <image> list) and
@@ -12,17 +13,10 @@ import { popupBorder } from './shared/surface.js';
 const hairline = 'color-mix(in oklab, var(--tp-foreground) 10%, transparent)';
 
 /** Checkerboard from the background and muted roles under the widget's paint layer. */
-const checker: PresentationDeclarations = {
-  'background-color': 'var(--tp-background)',
-  'background-image':
-    'var(--_tp-color-picker-paint, none), ' +
-    'linear-gradient(45deg, var(--tp-muted) 25%, transparent 25% 75%, var(--tp-muted) 75%), ' +
-    'linear-gradient(45deg, var(--tp-muted) 25%, transparent 25% 75%, var(--tp-muted) 75%)',
-  'background-size':
-    'auto, var(--_tp-color-picker-checker) var(--_tp-color-picker-checker), var(--_tp-color-picker-checker) var(--_tp-color-picker-checker)',
-  'background-position':
-    '0 0, 0 0, calc(var(--_tp-color-picker-checker) / 2) calc(var(--_tp-color-picker-checker) / 2)',
-};
+const checker = swatchFill(
+  'var(--_tp-color-picker-paint, none)',
+  'var(--_tp-color-picker-checker)',
+);
 
 const surfaceFrame: PresentationDeclarations = {
   'border-radius': 'var(--tp-radius-lg)',
@@ -131,7 +125,7 @@ export const colorPickerAppearance: PresentationDictionary = {
       declarations: {
         'inline-size': 'var(--tp-control-height-md)',
         'block-size': 'var(--tp-control-height-md)',
-        'border-radius': 'var(--tp-radius-md)',
+        'border-radius': swatchCorner,
         border: popupBorder,
         ...checker,
       },
@@ -156,7 +150,7 @@ export const colorPickerAppearance: PresentationDictionary = {
         'block-size': 'var(--_tp-color-picker-swatch)',
         'min-inline-size': '0',
         'min-block-size': '0',
-        'border-radius': 'var(--tp-radius-md)',
+        'border-radius': swatchCorner,
       },
     },
     {

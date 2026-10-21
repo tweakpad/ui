@@ -2,20 +2,34 @@
 // project and proves the published `exports`, types and tree-shaking work as a consumer sees
 // them. No browser: rendering is verified separately.
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, rmSync, writeFileSync, readdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+  readdirSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, posix, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { textEditorManifestProblems } from './pack-smoke-manifest.mjs';
 
 const root = resolve(import.meta.dirname, '..');
-const work = join(root, 'tmp', 'pack');
+// The work folder is a fresh one outside the library root: a dev server that watches the root
+// reloads its pages when a `tsconfig.json` under it changes, and the consumer project writes one.
+// A passing run removes the folder; a failure keeps it for inspection and prints its path.
+const work = mkdtempSync(join(tmpdir(), 'tweakpad-pack-smoke-'));
+process.on('exit', (code) => {
+  if (code !== 0) console.error(`pack-smoke: the work folder is kept for inspection: ${work}`);
+});
 const run = (command, args, cwd = root) =>
   execFileSync(command, args, { cwd, stdio: ['ignore', 'pipe', 'inherit'], encoding: 'utf8' });
 const fail = (message) => {
   console.error(`pack-smoke: ${message}`);
   process.exit(1);
 };
-
-rmSync(work, { recursive: true, force: true });
-mkdirSync(work, { recursive: true });
 
 // 1. Pack and inspect the tarball contents.
 const [pack] = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', work]));
@@ -34,10 +48,72 @@ for (const [subpath, target] of Object.entries(manifest.exports)) {
 }
 for (const required of ['LICENSE', 'README.md', 'dist/custom-elements.json'])
   if (!files.has(required)) fail(`${required} is not packed`);
-// The widgets section is opt-in: the main index and register never import a widget module.
-for (const entry of ['dist/index.js', 'dist/register.js'])
-  if (/from\s*["'][^"']*widgets/u.test(readFileSync(join(root, entry), 'utf8')))
-    fail(`${entry} imports the widgets section`);
+// Every license notice that the build emits for bundled third-party portions ships beside them.
+const notices = [
+  ...readFileSync(join(root, 'vite.config.ts'), 'utf8').matchAll(
+    /\[\s*'src\/[^']+',\s*'(LICENSE\.[^']+)'\s*\]/gu,
+  ),
+].map((match) => `dist/${match[1]}`);
+if (notices.length === 0) fail('vite.config.ts lists no bundled license notice');
+for (const notice of notices) if (!files.has(notice)) fail(`${notice} is not packed`);
+// Module specifiers of a published file: static imports and exports at line start (type-only ones
+// of declarations included), side-effect imports, and `import(…)` calls, which yield `null`
+// without a string specifier.
+const moduleSpecifiers = (code) => [
+  ...[
+    ...code.matchAll(
+      /^(?:import|export)\s+[^'"]*?from\s*['"]([^'"]+)['"]|^import\s*['"]([^'"]+)['"]/gmu,
+    ),
+  ].map((match) => match[1] ?? match[2]),
+  ...[...code.matchAll(/(?<![\w$.])import\s*\(\s*(?:(['"`])([^'"`]*)\1)?/gu)].map(
+    (match) => match[2] ?? null,
+  ),
+];
+const relativeSpecifier = /^\.\.?\//u;
+/** The packed modules that entries reach through relative imports, static or dynamic. */
+const publishedGraph = (...entries) => {
+  const graph = new Map();
+  const visit = (file) => {
+    if (graph.has(file)) return;
+    if (!files.has(file)) fail(`${file} is imported but not packed`);
+    const specifiers = moduleSpecifiers(readFileSync(join(root, file), 'utf8'));
+    graph.set(file, specifiers);
+    for (const specifier of specifiers)
+      if (specifier !== null && relativeSpecifier.test(specifier))
+        visit(posix.join(posix.dirname(file), specifier));
+  };
+  for (const entry of entries) visit(entry);
+  return graph;
+};
+// The widgets section and the widgets' companion entries are opt-in: the main index and register
+// reach no widget module and no module of `@tweakpad/ui/text-editor`, `/emoji` or `/flow`.
+const optInModule = (file) =>
+  /^dist\/(?:widgets\/|widgets\.js$|presentation\/(?:families\/)?widgets\.js$)/u.test(file) ||
+  /^dist\/(?:foundation\/(?:text-editor|emoji|flow)\/|(?:text-editor|emoji|flow)\.js$)/u.test(file);
+for (const entry of ['dist/index.js', 'dist/register.js']) {
+  const leaked = [...publishedGraph(entry).keys()].filter(optInModule);
+  if (leaked.length) fail(`${entry} reaches ${leaked.slice(0, 3).join(', ')}`);
+}
+// Engines come from the application: no module that `@tweakpad/ui/text-editor` or
+// `@tweakpad/ui/widgets` reaches, and no module or declaration published under a `text-editor`
+// folder, imports a package other than Lit.
+const litSpecifier = /^(?:lit(?:\/|$)|@lit\/)/u;
+const scanned = new Map([
+  ...publishedGraph('dist/text-editor.js', 'dist/widgets.js'),
+  ...[...files]
+    .filter((path) => /^dist\/(?:foundation|widgets)\/text-editor\/.*\.(?:js|d\.ts)$/u.test(path))
+    .map((path) => [path, moduleSpecifiers(readFileSync(join(root, path), 'utf8'))]),
+]);
+const bareImports = [...scanned].flatMap(([file, specifiers]) =>
+  specifiers
+    .filter(
+      (specifier) =>
+        specifier === null || !(relativeSpecifier.test(specifier) || litSpecifier.test(specifier)),
+    )
+    .map((specifier) => `${file}: ${specifier ?? 'import() without a string specifier'}`),
+);
+if (bareImports.length)
+  fail(`packages other than lit are imported: ${bareImports.slice(0, 10).join(', ')}`);
 const elementsManifest = JSON.parse(readFileSync(join(root, 'dist/custom-elements.json'), 'utf8'));
 const elements = new Map(
   elementsManifest.modules
@@ -51,11 +127,16 @@ if (
   fail('custom-elements.json lists the bogus `type` event');
 if (!elements.get('tp-input')?.events?.some((event) => event.name === 'tp-value-change'))
   fail('custom-elements.json misses tp-input tp-value-change');
+const editorProblems = textEditorManifestProblems(elementsManifest);
+if (editorProblems.length) fail(`custom-elements.json: ${editorProblems.join('; ')}`);
 const megabytes = (bytes) => bytes / 1024 / 1024;
 if (megabytes(pack.size) > 8)
   fail(`tarball is ${megabytes(pack.size).toFixed(1)} MB (budget 8 MB)`);
 console.log(
   `pack-smoke: ${pack.filename} ${megabytes(pack.size).toFixed(1)} MB packed, ${megabytes(pack.unpackedSize).toFixed(1)} MB unpacked, ${files.size} files`,
+);
+console.log(
+  `pack-smoke: the main entries reach no widget or companion module; ${scanned.size} files that the widgets and the text editor publish import only lit`,
 );
 
 // 2. Install the tarball into a consumer project.
@@ -97,12 +178,16 @@ import * as markdown from '@tweakpad/ui/markdown';
 import * as qr from '@tweakpad/ui/qr';
 import * as emoji from '@tweakpad/ui/emoji';
 import * as flow from '@tweakpad/ui/flow';
+import * as textEditor from '@tweakpad/ui/text-editor';
 import packageJson from '@tweakpad/ui/package.json' with { type: 'json' };
 
 defineElement(TpButton.tagName, TpButton);
 const button: HTMLElementTagNameMap['tp-button'] = document.createElement('tp-button');
 button.variant = 'outline';
-export const used = [TpIcon, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, qr.encodeQr('x').size, emoji.builtinEmojiData().emojis.length, flow.FLOW_DOCUMENT_VERSION, widgetEntries.length, packageJson.version];
+const editor: HTMLElementTagNameMap['tp-text-editor'] = document.createElement('tp-text-editor');
+// @ts-expect-error The text editor publishes no controlled value.
+editor.value = editor.value;
+export const used = [TpIcon, editor, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, qr.encodeQr('x').size, emoji.builtinEmojiData().emojis.length, flow.FLOW_DOCUMENT_VERSION, textEditor, widgetEntries.length, packageJson.version];
 `,
 );
 writeFileSync(join(consumer, 'css.d.ts'), "declare module '*.css';\n");
@@ -163,39 +248,117 @@ run(
 );
 console.log('pack-smoke: @tweakpad/ui/flow runs in Node');
 
+// The text editor companion is engine-free and DOM-free too: the built-in tools compose with the
+// default layouts and the strings in Node, which also keeps the icon modules they import data-only.
+const textEditorLabels = run(
+  process.execPath,
+  [
+    '--input-type=module',
+    '-e',
+    "const { textEditorTools, defaultTextEditorLayout, textEditorStrings } = await import('@tweakpad/ui/text-editor'); const context = { strings: textEditorStrings, direction: 'ltr' }; const ids = [...new Set(Object.values(defaultTextEditorLayout).flat(2))].filter((id) => typeof id === 'string' && id !== '*'); const labels = ids.map((id) => { const label = textEditorTools[id]?.label; return typeof label === 'function' ? label(context) : label; }); if (!ids.length || labels.some((label) => typeof label !== 'string' || !label)) process.exit(1); console.log(labels.length);",
+  ],
+  consumer,
+).trim();
+console.log(
+  `pack-smoke: @tweakpad/ui/text-editor runs in Node (${textEditorLabels} tools of the default layouts labeled)`,
+);
+
+// The engine factories need no engine package, which the consumer does not install: the check of
+// `pack-smoke-engine-factories.mjs` runs in the consumer against the published factories.
+const { BASE_CAPABILITIES } = await import(
+  pathToFileURL(join(root, 'dist/foundation/text-editor/capabilities.js')).href
+);
+const baseCapabilities = [...BASE_CAPABILITIES];
+if (baseCapabilities.length !== 30)
+  fail(`expected 30 base capabilities, read ${baseCapabilities.length}`);
+for (const engine of ['@tiptap', '@lexical', 'lexical', 'prosemirror-model'])
+  if (existsSync(join(consumer, 'node_modules', engine)))
+    fail(`the consumer has ${engine} installed`);
+writeFileSync(
+  join(consumer, 'engine-factories.mjs'),
+  `import { createLexicalEngine, createTiptapEngine } from '@tweakpad/ui/text-editor';
+import { engineFactoryProblems } from ${JSON.stringify(pathToFileURL(join(root, 'scripts/pack-smoke-engine-factories.mjs')).href)};
+const base = JSON.parse(process.argv[2]);
+const results = [];
+for (const [name, factory] of [['createTiptapEngine', createTiptapEngine], ['createLexicalEngine', createLexicalEngine]]) {
+  const { problems, engine } = engineFactoryProblems(name, factory, base);
+  if (problems.length) {
+    console.error(name + ': ' + problems.join('; '));
+    process.exit(1);
+  }
+  results.push(name + ' (' + engine.capabilities.size + ' capabilities, reserved ' + (engine.reservedKeys.join(' ') || 'none') + ')');
+}
+// A mount started behind the factory's back would reject or throw here, without a document.
+await new Promise((resolve) => setTimeout(resolve, 10));
+console.log(results.join(', '));
+`,
+);
+const engineFactories = run(
+  process.execPath,
+  ['engine-factories.mjs', JSON.stringify(baseCapabilities)],
+  consumer,
+).trim();
+console.log(
+  `pack-smoke: the engine factories run in Node without an engine package: ${engineFactories}`,
+);
+
 // 4. Type-check against the published declarations, including the library's own.
 run(join(root, 'node_modules/.bin/tsc'), ['-p', consumer]);
 console.log('pack-smoke: consumer type check passed (skipLibCheck: false)');
 
-// 5. Bundle a selective import and prove unrelated modules are dropped.
+// 5. Bundle the consumer, then a selective import in a build of its own, and prove unrelated
+// modules are dropped. A build of both entries would move the modules they share into a common
+// chunk, together with the definitions that only the full consumer uses.
 writeFileSync(
   join(consumer, 'icon-only.js'),
   `import '@tweakpad/ui/register/icon';
 import { plusIcon } from '@tweakpad/ui/icons/plus';
+import { strikethroughIcon } from '@tweakpad/ui/icons/text-formatting';
 document.querySelector('tp-icon').icon = plusIcon;
+document.querySelectorAll('tp-icon')[1].icon = strikethroughIcon;
 `,
 );
-writeFileSync(
-  join(consumer, 'vite.config.mjs'),
-  `export default {
+/** Builds one consumer entry alone and returns the JavaScript of every file the build emits. */
+const bundle = (name, entry) => {
+  const config = `${name}.vite.config.mjs`;
+  writeFileSync(
+    join(consumer, config),
+    `export default {
   logLevel: 'warn',
   build: {
-    outDir: 'out',
+    outDir: ${JSON.stringify(`out/${name}`)},
     minify: false,
-    lib: { entry: { full: 'consumer.ts', 'icon-only': 'icon-only.js' }, formats: ['es'] },
+    lib: { entry: { ${JSON.stringify(name)}: ${JSON.stringify(entry)} }, formats: ['es'] },
     rollupOptions: { external: [/^lit/] },
   },
 };
 `,
-);
-run(join(root, 'node_modules/.bin/vite'), ['build'], consumer);
-const out = join(consumer, 'out');
-const iconOnly = readdirSync(out)
-  .filter((file) => file.endsWith('.js'))
-  .map((file) => readFileSync(join(out, file), 'utf8'))
-  .find((source) => source.includes('M12 5v14M5 12h14') && !source.includes('tp-button'));
-if (!iconOnly)
-  fail('the icon-only bundle is missing the plus icon or includes unrelated components');
-if (iconOnly.includes('m9 18 6-6-6-6'))
-  fail('the icon-only bundle includes the unrelated chevron icon');
+  );
+  run(join(root, 'node_modules/.bin/vite'), ['build', '--config', config], consumer);
+  const out = join(consumer, 'out', name);
+  return readdirSync(out, { recursive: true })
+    .filter((file) => file.endsWith('.js'))
+    .map((file) => readFileSync(join(out, file), 'utf8'))
+    .join('\n');
+};
+bundle('full', 'consumer.ts');
+const iconOnly = bundle('icon-only', 'icon-only.js');
+if (!iconOnly.includes('M12 5v14M5 12h14')) fail('the icon-only bundle is missing the plus icon');
+if (iconOnly.includes('tp-button')) fail('the icon-only bundle includes unrelated components');
+// One definition of a module that holds several ships without its siblings.
+if (!iconOnly.includes('M14 12a4 4 0 0 1 0 8H6'))
+  fail('the icon-only bundle is missing the strikethrough icon');
+const publishedIcons = join(consumer, 'node_modules/@tweakpad/ui/dist/icons');
+for (const [name, module, d] of [
+  ['chevron', 'chevron-right', 'm9 18 6-6-6-6'],
+  ['bold', 'text-formatting', 'M6 12h8a4 4 0 0 1 0 8H6V4h7a4 4 0 0 1 0 8'],
+  ['bookmark', 'text-formatting', 'M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-4-7 4Z'],
+  ['code', 'text-formatting', 'M16 18L22 12L16 6'],
+]) {
+  // The artwork is published as the bundle would carry it, so its absence means it was dropped.
+  if (!readFileSync(join(publishedIcons, `${module}.js`), 'utf8').includes(d))
+    fail(`the published ${module} module has no ${name} artwork to look for`);
+  if (iconOnly.includes(d)) fail(`the icon-only bundle includes the unrelated ${name} icon`);
+}
 console.log('pack-smoke: consumer bundle built; selective imports tree-shake');
+rmSync(work, { recursive: true, force: true });

@@ -162,3 +162,38 @@ export class GeneratedStyleResource {
     this.#disposed = true;
   }
 }
+
+/**
+ * Style text adopted per root (a document or a shadow root): one generated resource per CSS text,
+ * created by the first adoption (under that owner's content-security policy) and disposed by the
+ * last release.
+ */
+const adoptedTexts = new WeakMap<
+  Document | ShadowRoot,
+  Map<string, { resource: GeneratedStyleResource; count: number }>
+>();
+
+/** Adopts CSS text into a document or shadow root under the owner's content-security policy; the release is idempotent. */
+export function adoptStyleText(
+  owner: HTMLElement,
+  root: Document | ShadowRoot,
+  cssText: string,
+): () => void {
+  let texts = adoptedTexts.get(root);
+  if (!texts) adoptedTexts.set(root, (texts = new Map()));
+  let entry = texts.get(cssText);
+  if (!entry) {
+    const resource = new GeneratedStyleResource(owner, root);
+    resource.setText(cssText);
+    texts.set(cssText, (entry = { resource, count: 0 }));
+  }
+  entry.count++;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    if (--entry.count > 0) return;
+    entry.resource.dispose();
+    texts.delete(cssText);
+  };
+}
