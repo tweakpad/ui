@@ -65,6 +65,7 @@ export function textEditorImages(options: TextEditorImagesOptions = {}): TextEdi
       });
       const shadow = () => host.renderRoot() as ShadowRoot;
       const alt = new TextEditorImageAltField({
+        element: host.element,
         get renderRoot() {
           return shadow();
         },
@@ -85,6 +86,7 @@ export function textEditorImages(options: TextEditorImagesOptions = {}): TextEdi
         name: 'images',
         views,
         stateChanged: () => image.sync(),
+        updated: () => alt.updated(),
         valueChanged: (change) => {
           // The pending image that the image tool inserts takes focus once its card renders, as
           // the popover it replaces did when it opened; a paste or a drop keeps focus in the root.

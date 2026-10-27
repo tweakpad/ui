@@ -5,9 +5,10 @@
  * holds. It shows while the editor is ready and editable and focus is in the widget, takes no
  * focus by itself, applies on Enter or its apply action through `block.set-attrs`, and Escape
  * returns focus to the editing root with the block still selected. Alt+F10 reaches it as a
- * contextual surface; Tab reaches it after the editing root.
+ * contextual surface; Tab reaches it after the editing root. It enters and leaves through the
+ * context bar presence (`TextEditorContextBarPresence`).
  */
-import { css, html, type TemplateResult } from 'lit';
+import { css, html, type ReactiveControllerHost, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import { composedContains, deepActiveElement } from '../../../foundation/focus.js';
@@ -24,8 +25,9 @@ import type {
 import type { TextEditorStrings } from '../../../foundation/text-editor/strings.js';
 import { checkIcon } from '../../../icons/check.js';
 import type { TextEditorContextualSurface } from '../focus.js';
-import type { BlockBand } from './selection-anchor.js';
 import type { OverlayInstance } from '../geometry.js';
+import { TextEditorContextBarPresence } from './context-bar.js';
+import type { BlockBand } from './selection-anchor.js';
 
 /** Structure of the alternative text field: a context bar entry (see `textEditorStyles`). */
 export const imageAltStyles = css`
@@ -99,6 +101,8 @@ export function imageAltProposal(
 export const IMAGE_ALT_ORDER = 0.5;
 
 export interface TextEditorImageAltHost {
+  /** The widget: the owner of the context bar motion role and the host of the presence. */
+  readonly element: HTMLElement & ReactiveControllerHost;
   readonly renderRoot: ShadowRoot;
   /** Re-renders the element. */
   requestUpdate(): void;
@@ -122,6 +126,7 @@ export interface TextEditorImageAltHost {
 export class TextEditorImageAltField {
   readonly #host: TextEditorImageAltHost;
   readonly #releaseContextual: () => void;
+  readonly #presence: TextEditorContextBarPresence;
   #element: HTMLElement | null = null;
   #input: HTMLElement | null = null;
   #target: ImageAltTarget | null = null;
@@ -130,6 +135,10 @@ export class TextEditorImageAltField {
 
   constructor(host: TextEditorImageAltHost) {
     this.#host = host;
+    this.#presence = new TextEditorContextBarPresence(
+      { element: host.element, surface: () => this.#element },
+      'image-alt',
+    );
     this.#releaseContextual = host.registerContextual({
       order: IMAGE_ALT_ORDER,
       applicable: () => this.#shown,
@@ -157,15 +166,21 @@ export class TextEditorImageAltField {
     return this.holdsFocus();
   }
 
-  /** Leaves the Alt+F10 cycle. */
-  dispose(): void {
-    this.#releaseContextual();
+  /** After the widget rendered: drives the entrance or the exit of the field. */
+  updated(): void {
+    this.#presence.updated();
   }
 
-  /** The band the field covers, in client coordinates, while it shows; null otherwise. */
+  /** Leaves the Alt+F10 cycle and the widget. */
+  dispose(): void {
+    this.#releaseContextual();
+    this.#presence.dispose();
+  }
+
+  /** The band the field covers, in client coordinates, while it renders; null otherwise. */
   band(): BlockBand | null {
     const element = this.#element;
-    if (!this.#shown || !element) return null;
+    if (!this.#presence.mounted || !element) return null;
     const box = element.getBoundingClientRect();
     return { top: box.top, bottom: box.bottom };
   }
@@ -201,12 +216,15 @@ export class TextEditorImageAltField {
       this.#draft = target?.alt ?? '';
     this.#target = target;
     this.#shown = imageAltVisible(visibility);
+    this.#presence.set(this.#shown);
     return html`<div
       part="text-editor-alt-input"
       class="context-bar"
       role="group"
       aria-label=${strings.imageAlt}
-      ?hidden=${!this.#shown}
+      ?hidden=${!this.#presence.mounted}
+      data-starting-style=${this.#presence.starting}
+      data-ending-style=${this.#presence.ending}
       ${ref(this.#bind)}
       @keydown=${this.#keyDown}
     >

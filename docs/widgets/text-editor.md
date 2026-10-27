@@ -747,6 +747,13 @@ before each, the editor dispatches a `tp-motion-request` (phase `enter` or `exit
 It never animates while it follows the selection, and `motionPolicy` `reduce` shows and hides it
 at once.
 
+The context bar editors, the alternative text field and the link editor, enter sliding down from
+under the toolbar while they fade in, and leave the way they came. Both declare the motion role
+`context-bar` (`textEditorMotionRoles.contextBar`), a presence role with the phases `enter` and
+`exit` and the context `editor` (`image-alt` or `link`); a claimed phase replaces the slide, and
+the editor stays mounted until a claimed exit settles. `motionPolicy` `reduce` shows and hides
+them at once.
+
 Host markers: `data-focused` (present while the editing root has focus), `data-filled`,
 `data-readonly`, `data-disabled` and `data-status` (`idle`, `loading`, `ready` or `error`).
 

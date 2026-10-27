@@ -6,7 +6,7 @@
  * for one widget over the host the widget provides. The host never imports a feature; a feature
  * never imports the host.
  */
-import type { CSSResult, nothing, TemplateResult } from 'lit';
+import type { CSSResult, nothing, ReactiveControllerHost, TemplateResult } from 'lit';
 import type { AnnounceOptions } from '../../foundation/announcer.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import type { KeyShortcut } from '../../foundation/key-bindings.js';
@@ -60,7 +60,8 @@ export const TEXT_EDITOR_FEATURE_ORDER: readonly TextEditorFeatureName[] = Objec
 
 /** What a feature reads and calls on the widget; the widget implements it once. */
 export interface TextEditorFeatureHost {
-  readonly element: HTMLElement;
+  /** The widget: the owner of its motion roles and the host of its controllers. */
+  readonly element: HTMLElement & ReactiveControllerHost;
   readonly geometry: OverlayGeometry;
   renderRoot(): ShadowRoot | null;
   /** The widget's window, or null. */

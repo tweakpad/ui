@@ -45,6 +45,7 @@ export function textEditorLinks(): TextEditorFeature {
         lane: (open, reason) => host.lane('link', open, reason),
       });
       const editor = new TextEditorLinkEditor({
+        element: host.element,
         get renderRoot() {
           return shadow();
         },
@@ -68,6 +69,7 @@ export function textEditorLinks(): TextEditorFeature {
           if (access.readOnly || access.disabled)
             link.close(access.disabled ? 'disabled' : 'programmatic');
         },
+        updated: () => editor.updated(),
         disconnected: () => link.close('programmatic'),
         dispose: () => {
           link.close('programmatic');

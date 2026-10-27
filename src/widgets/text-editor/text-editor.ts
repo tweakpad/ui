@@ -100,11 +100,15 @@ import {
   renderPlaceholder,
   TextEditorPlaceholderLayer,
 } from './views/placeholder.js';
+import { CONTEXT_BAR_MOTION } from './views/context-bar.js';
 import { TextEditorToolbar, type TextEditorToolbarHandlers } from './views/toolbar.js';
 import { reportTextEditorLane } from './views/lanes.js';
 
 /** The motion roles of the widget's surfaces. */
-export const textEditorMotionRoles = { surface: presenceRole('surface') } as const;
+export const textEditorMotionRoles = {
+  surface: presenceRole('surface'),
+  contextBar: CONTEXT_BAR_MOTION,
+} as const;
 
 /** The constituent events that stop at the widget's shadow root (`uwg-te-req-evt-6`). */
 const NESTED_EVENT_TYPES = Object.freeze([

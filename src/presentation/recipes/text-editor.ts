@@ -9,6 +9,7 @@ import {
   inputGroupAddonInsetInline,
   inputGroupBoundary,
 } from './input-group.js';
+import { presenceMotion } from '../motion.js';
 import { overflowListAppearance } from './overflow-list.js';
 import {
   alertKindSeverity,
@@ -48,6 +49,20 @@ import {
   popupBorderColor,
 } from './shared/surface.js';
 import { swatchCorner, swatchFill } from './shared/swatch.js';
+
+/**
+ * The context bar editors (`uwg-te-req-pres-9`) enter sliding down from under the fixed toolbar
+ * while they fade in, and leave the way they came; a claimed phase of the `context-bar` motion
+ * role replaces the styles. The structure centers the bar with `translate: -50% 0`, so the
+ * phases keep the inline half and move the block half.
+ */
+const contextBarPresence: readonly PresentationRule[] = [
+  ...presenceMotion(['opacity', 'translate']),
+  {
+    selector: '&:is([data-starting-style], [data-ending-style]):not([data-tp-motion-driven])',
+    declarations: { opacity: '0', translate: '-50% calc(-1 * var(--tp-space-3))' },
+  },
+];
 import {
   control,
   disabledBackground,
@@ -555,12 +570,14 @@ export const textEditorStructure: PresentationDictionary = {
   'text-editor-alt-input': [
     ...floatingToolbarAppearance,
     ...floatingToolbarStructure,
+    ...contextBarPresence,
     { declarations: { 'inline-size': '16rem' } },
   ],
   // The link editor at the caret: the popover's controls in the context bar.
   'text-editor-link-editor': [
     ...floatingToolbarAppearance,
     ...floatingToolbarStructure,
+    ...contextBarPresence,
     {
       selector: '& .link-editor',
       declarations: { display: 'flex', 'align-items': 'center', gap: 'var(--tp-space-1)' },

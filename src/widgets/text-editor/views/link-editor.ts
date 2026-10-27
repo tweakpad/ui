@@ -5,9 +5,10 @@
  * is in the widget, takes no focus by itself, applies on Enter or its apply action through the
  * link tool, removes through `link.unset`, and Escape returns focus to the editing root. Alt+F10
  * reaches it as a contextual surface; Tab reaches it after the editing root. The link popover,
- * which the link tool opens, hides it while it is open.
+ * which the link tool opens, hides it while it is open. It enters and leaves through the context
+ * bar presence (`TextEditorContextBarPresence`).
  */
-import { css, html, type TemplateResult } from 'lit';
+import { css, html, type ReactiveControllerHost, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import { composedContains, deepActiveElement } from '../../../foundation/focus.js';
@@ -25,6 +26,7 @@ import { checkIcon } from '../../../icons/check.js';
 import { externalLinkIcon } from '../../../icons/external-link.js';
 import { unlinkIcon } from '../../../icons/link.js';
 import type { TextEditorContextualSurface } from '../focus.js';
+import { TextEditorContextBarPresence } from './context-bar.js';
 import { linkApplyDecision, linkApplyProposal, linkRemoveProposal } from './link-popover.js';
 import type { BlockBand } from './selection-anchor.js';
 
@@ -76,6 +78,8 @@ export function sameLink(a: TextEditorLinkState | null, b: TextEditorLinkState |
 }
 
 export interface TextEditorLinkEditorHost {
+  /** The widget: the owner of the context bar motion role and the host of the presence. */
+  readonly element: HTMLElement & ReactiveControllerHost;
   readonly renderRoot: ShadowRoot;
   /** Re-renders the element. */
   requestUpdate(): void;
@@ -101,6 +105,7 @@ export interface TextEditorLinkEditorHost {
 export class TextEditorLinkEditor {
   readonly #host: TextEditorLinkEditorHost;
   readonly #releaseContextual: () => void;
+  readonly #presence: TextEditorContextBarPresence;
   #element: HTMLElement | null = null;
   #input: HTMLElement | null = null;
   #link: TextEditorLinkState | null = null;
@@ -110,6 +115,10 @@ export class TextEditorLinkEditor {
 
   constructor(host: TextEditorLinkEditorHost) {
     this.#host = host;
+    this.#presence = new TextEditorContextBarPresence(
+      { element: host.element, surface: () => this.#element },
+      'link',
+    );
     this.#releaseContextual = host.registerContextual({
       order: LINK_EDITOR_ORDER,
       applicable: () => this.#shown,
@@ -137,15 +146,21 @@ export class TextEditorLinkEditor {
     return this.holdsFocus();
   }
 
-  /** Leaves the Alt+F10 cycle. */
-  dispose(): void {
-    this.#releaseContextual();
+  /** After the widget rendered: drives the entrance or the exit of the editor. */
+  updated(): void {
+    this.#presence.updated();
   }
 
-  /** The band the editor covers, in client coordinates, while it shows; null otherwise. */
+  /** Leaves the Alt+F10 cycle and the widget. */
+  dispose(): void {
+    this.#releaseContextual();
+    this.#presence.dispose();
+  }
+
+  /** The band the editor covers, in client coordinates, while it renders; null otherwise. */
   band(): BlockBand | null {
     const element = this.#element;
-    if (!this.#shown || !element) return null;
+    if (!this.#presence.mounted || !element) return null;
     const box = element.getBoundingClientRect();
     return { top: box.top, bottom: box.bottom };
   }
@@ -181,12 +196,15 @@ export class TextEditorLinkEditor {
     }
     this.#link = link;
     this.#shown = linkEditorVisible(visibility);
+    this.#presence.set(this.#shown);
     return html`<div
       part="text-editor-link-editor"
       class="context-bar"
       role="group"
       aria-label=${strings.link}
-      ?hidden=${!this.#shown}
+      ?hidden=${!this.#presence.mounted}
+      data-starting-style=${this.#presence.starting}
+      data-ending-style=${this.#presence.ending}
       ${ref(this.#bind)}
       @keydown=${this.#keyDown}
     >
