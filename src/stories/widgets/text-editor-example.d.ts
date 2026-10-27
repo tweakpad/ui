@@ -19,6 +19,10 @@ export function uploadImage(
 ): Promise<string>;
 /** Every feature of the editor, with the sample upload hook. */
 export function allTextEditorFeatures(): TextEditorFeature[];
+/** The classic toolbar editor: links, tables and images, no block editing. */
+export function classicTextEditorFeatures(): TextEditorFeature[];
+/** The block editor: every feature, with the fixed toolbar turned off through `layout`. */
+export function blockTextEditorSetup(): { features: TextEditorFeature[]; layout: { toolbar: [] } };
 /** Wires the editors, sample notes, features and form readout inside `root`; returns cleanup. */
 export function setupTextEditorExample(
   root: HTMLElement,

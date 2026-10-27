@@ -24,22 +24,24 @@ import {
   applyTextEditorResolution,
   cancelsDisabledActivation,
   closedAncestorRoot,
-  formEventRoot,
   describeElement,
   effectiveTextEditorFormat,
-  textEditorFormatConverter,
-  textEditorCaretHidden,
-  textEditorToolingSeverity,
   effectiveTextEditorLayout,
+  formEventRoot,
+  initialFieldValueDetail,
   patchFormEntries,
   resolveTextEditorTooling,
+  TEXT_EDITOR_DEFAULT_MEASURE,
+  textEditorCaretHidden,
   textEditorFieldValue,
-  initialFieldValueDetail,
+  textEditorFormatConverter,
   textEditorFormValue,
+  textEditorMeasureLength,
   textEditorResolutionSteps,
   textEditorRootAttributes,
   textEditorRouterConfig,
   textEditorSuppressionFallback,
+  textEditorToolingSeverity,
   textEditorViewportTabIndex,
   TpTextEditor,
   type TextEditorResolutionInput,
@@ -99,6 +101,29 @@ const resolveModule = (from: string, specifier: string) =>
   specifier.startsWith('.') ? resolve(dirname(from), specifier.replace(/\.js$/u, '.ts')) : null;
 const isAdapter = (file: string) =>
   relative(src, file).split('\\').join('/').startsWith(GUARD_TOKENS.adapters);
+
+describe('measure (the longest line, in characters)', () => {
+  it('defaults to 65 characters and maps the property to a `ch` length, none for no limit', () => {
+    expect(TEXT_EDITOR_DEFAULT_MEASURE).toBe(65);
+    expect(textEditorMeasureLength(55)).toBe('55ch');
+    expect(textEditorMeasureLength(72.5)).toBe('72.5ch');
+    for (const none of [null, undefined, 0, -3, Number.NaN, Number.POSITIVE_INFINITY, '55'])
+      expect(textEditorMeasureLength(none), String(none)).toBe('none');
+  });
+
+  it('the root part carries the measure as a custom property and the content holds it', () => {
+    const source = readFileSync(new URL('./text-editor.ts', import.meta.url), 'utf8');
+    expect(source).toMatch(
+      /style=\$\{styleMap\(\{ '--_tp-text-editor-measure': textEditorMeasureLength\(this\.measure\) \}\)\}/u,
+    );
+    const rule = /(?:^|\n)\s*\[part~='text-editor-content'\] > \*\s*\{([^}]*)\}/u.exec(
+      textEditorStyles.cssText,
+    )?.[1];
+    expect(rule).toMatch(/max-inline-size:\s*var\(--_tp-text-editor-measure, none\);/u);
+    expect(rule).toMatch(/box-sizing:\s*content-box;/u);
+    expect(rule).toMatch(/margin-inline:\s*auto;/u);
+  });
+});
 
 describe('tp-text-editor source guards', () => {
   it('V-587: renders a focus change in the next frame unless a render ran before it, never in the focus event', () => {
@@ -320,7 +345,7 @@ describe('tp-text-editor structure', () => {
       'utf8',
     );
     expect(source).toMatch(
-      /<div part="text-editor" \?data-focus-within=\$\{this\.#focus\.focused\}>/u,
+      /<div\s+part="text-editor"\s+\?data-focus-within=\$\{this\.#focus\.focused\}\s+style=/u,
     );
   });
 });

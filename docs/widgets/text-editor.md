@@ -298,6 +298,34 @@ hook, the accepted types in File upload's `accept` forms (`image/*` by default) 
 accepted file, in bytes or as text with a unit such as `'10MB'` (no limit by default); without
 `upload` the image tool is disabled and pasted or dropped files are ignored.
 
+### Modes
+
+Two setups cover most editors. The classic toolbar editor keeps every control in the fixed
+toolbar and adds links, tables and images:
+
+```js
+editor.features = [textEditorLinks(), textEditorTables(), textEditorImages({ upload })];
+```
+
+The block editor assigns every feature and turns the fixed toolbar off, so the gutter beside each
+block, the slash menu and the floating selection toolbar carry every control:
+
+```js
+editor.features = [
+  textEditorBlocks(),
+  textEditorTables(),
+  textEditorImages({ upload }),
+  textEditorLinks(),
+  textEditorSelectionToolbar(),
+  textEditorSuggestions(),
+];
+editor.layout = { toolbar: [] };
+```
+
+Both appear as stories and as copyable examples. Keeping the fixed toolbar beside the block
+surfaces, as the default story does, is a third option; the core editor with no features is the
+smallest.
+
 A feature's tools exist only while the feature is assigned: the default layouts leave them out
 silently, and a layout of yours that places one reports `text-editor-layout-unknown` naming the
 feature. The tables feature also needs the engine's table modules, which declare the capability
@@ -405,7 +433,8 @@ the image policy, such as a `data:` URL, is reported and leaves the block waitin
 image with a known source is inserted with `run('image', { src, alt })`.
 
 Selecting an uploaded image block (a grip click, or Escape from a caret in the text beside it)
-shows an alternative text field inside the image's top-left corner; an image still waiting for
+shows an alternative text field in the context bar, centered just below the toolbar and in view
+whatever the viewport scrolls; an image still waiting for
 its upload shows its File upload alone. Enter or its apply button saves the text; Escape returns to the text with the block
 still selected. Alt+F10 moves focus into the field, and Tab reaches it after the editing root.
 
@@ -667,6 +696,18 @@ moved and deleted table rows and columns, merged and split cells, the size of a 
 copied block link. The highlights of selected blocks and cells, the drop line and the sticky
 table header are presentation only.
 
+## Measure
+
+`measure` caps the length of a line of text at that many characters, measured in `ch` of the
+content's font, 65 by default: the editing root and the pre-ready preview hold the measure and sit
+centered in a wider viewport, with the gutter and the table controls beside the text wherever it
+sits. The insets of the editing root lie outside the measure. `null` or `0` removes the limit, so
+the text fills the viewport.
+
+```html
+<tp-text-editor measure="72"></tp-text-editor>
+```
+
 ## Parts and customization
 
 The editor's chrome is styled through its parts (listed under [Parts](#parts)): the field
@@ -720,26 +761,27 @@ The editor needs Chrome or Edge 137 or later, Firefox 142 or later, or Safari 17
 
 ### Properties
 
-| Property           | Attribute       | Type                                  | Default             | Description                                                                                                              |
-| ------------------ | --------------- | ------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `engine`           | none            | `TextEditorEngine \| null`            | `null`              | The editing engine, built by an adapter factory (see Engines). Another engine remounts the editor with its content kept. |
-| `defaultValue`     | `default-value` | `string \| object \| null`            | `null`              | Initial content in `format`; for `json`, the engine's JSON as an object or text.                                         |
-| `format`           | `format`        | `TextEditorFormat`                    | `'html'`            | `html`, `markdown`, `text` or `json`. An unknown value acts as `html` and reports `text-editor-format-invalid`.          |
-| `placeholder`      | `placeholder`   | `string`                              | `''`                | Shown while the document is empty; also the editing root's `aria-placeholder`.                                           |
-| `label`            | `label`         | `string`                              | `''`                | Accessible name of the editing root when no Field labels it.                                                             |
-| `name`             | `name`          | `string`                              | `''`                | Name of the form entry.                                                                                                  |
-| `formOwner`        | `form`          | `HTMLFormElement \| null`             | `null`              | The form owner, when it is not an ancestor.                                                                              |
-| `readOnly`         | `readonly`      | `boolean`                             | `false`             | See Read-only and disabled.                                                                                              |
-| `disabled`         | `disabled`      | `boolean`                             | `false`             | See Read-only and disabled.                                                                                              |
-| `features`         | none            | `readonly TextEditorFeature[]`        | `[]`                | The features in use, created by their factories (see Features); none for the core editor.                                |
-| `tools`            | none            | `readonly TextEditorTool[]`           | `[]`                | Tools added to the built-in ones; an equal identifier replaces a built-in tool.                                          |
-| `layout`           | none            | `Partial<TextEditorLayout> \| null`   | the default layouts | Where tools appear. Reading it returns the effective layout.                                                             |
-| `nodes`            | none            | `readonly TextEditorNodeDefinition[]` | `[]`                | Custom blocks and inline nodes; a change remounts with the content kept.                                                 |
-| `strings`          | none            | `Partial<TextEditorStrings> \| null`  | `null`              | Replacements for the English `textEditorStrings`.                                                                        |
-| `invalid`          | `invalid`       | `boolean`                             | `false`             | No effect on the editor.                                                                                                 |
-| `required`         | `required`      | `boolean`                             | `false`             | No effect on the editor.                                                                                                 |
-| `motionPolicy`     | `motion-policy` | `MotionPolicy`                        | `'inherit'`         | Motion of the editor's own surfaces.                                                                                     |
-| `partPresentation` | none            | object                                | `{}`                | Presentation of the nested controls.                                                                                     |
+| Property           | Attribute       | Type                                  | Default             | Description                                                                                                                                                                                                                     |
+| ------------------ | --------------- | ------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `engine`           | none            | `TextEditorEngine \| null`            | `null`              | The editing engine, built by an adapter factory (see Engines). Another engine remounts the editor with its content kept.                                                                                                        |
+| `defaultValue`     | `default-value` | `string \| object \| null`            | `null`              | Initial content in `format`; for `json`, the engine's JSON as an object or text.                                                                                                                                                |
+| `format`           | `format`        | `TextEditorFormat`                    | `'html'`            | `html`, `markdown`, `text` or `json`. An unknown value acts as `html` and reports `text-editor-format-invalid`.                                                                                                                 |
+| `placeholder`      | `placeholder`   | `string`                              | `''`                | Shown while the document is empty; also the editing root's `aria-placeholder`.                                                                                                                                                  |
+| `label`            | `label`         | `string`                              | `''`                | Accessible name of the editing root when no Field labels it.                                                                                                                                                                    |
+| `measure`          | `measure`       | `number \| null`                      | `65`                | The longest line of text, in characters (`ch` of the content font). The editing root and the preview hold at most that many characters per line and sit centered in a wider viewport; `null` or `0` removes the limit.          |
+| `name`             | `name`          | `string`                              | `''`                | Name of the form entry.                                                                                                                                                                                                         |
+| `formOwner`        | `form`          | `HTMLFormElement \| null`             | `null`              | The form owner, when it is not an ancestor.                                                                                                                                                                                     |
+| `readOnly`         | `readonly`      | `boolean`                             | `false`             | See Read-only and disabled.                                                                                                                                                                                                     |
+| `disabled`         | `disabled`      | `boolean`                             | `false`             | See Read-only and disabled.                                                                                                                                                                                                     |
+| `features`         | none            | `readonly TextEditorFeature[]`        | `[]`                | The features in use, created by their factories (see Features and Modes): links, tables and images for the classic toolbar editor; every feature with `layout: { toolbar: [] }` for the block editor; none for the core editor. |
+| `tools`            | none            | `readonly TextEditorTool[]`           | `[]`                | Tools added to the built-in ones; an equal identifier replaces a built-in tool.                                                                                                                                                 |
+| `layout`           | none            | `Partial<TextEditorLayout> \| null`   | the default layouts | Where tools appear. Reading it returns the effective layout.                                                                                                                                                                    |
+| `nodes`            | none            | `readonly TextEditorNodeDefinition[]` | `[]`                | Custom blocks and inline nodes; a change remounts with the content kept.                                                                                                                                                        |
+| `strings`          | none            | `Partial<TextEditorStrings> \| null`  | `null`              | Replacements for the English `textEditorStrings`.                                                                                                                                                                               |
+| `invalid`          | `invalid`       | `boolean`                             | `false`             | No effect on the editor.                                                                                                                                                                                                        |
+| `required`         | `required`      | `boolean`                             | `false`             | No effect on the editor.                                                                                                                                                                                                        |
+| `motionPolicy`     | `motion-policy` | `MotionPolicy`                        | `'inherit'`         | Motion of the editor's own surfaces.                                                                                                                                                                                            |
+| `partPresentation` | none            | object                                | `{}`                | Presentation of the nested controls.                                                                                                                                                                                            |
 
 ### Read-only members
 
@@ -785,31 +827,31 @@ The editor needs Chrome or Edge 137 or later, Firefox 142 or later, or Safari 17
 
 ### Parts
 
-| Part                            | Description                                         |
-| ------------------------------- | --------------------------------------------------- |
-| `text-editor`                   | The field boundary and its focus ring.              |
-| `text-editor-toolbar`           | The toolbar above the content.                      |
-| `text-editor-viewport`          | The scroll container.                               |
-| `text-editor-content`           | The container of the document.                      |
-| `text-editor-overlay`           | The layer above the content.                        |
-| `text-editor-placeholder`       | The placeholder in the first block.                 |
-| `text-editor-gutter`            | The block gutter beside the hovered block.          |
-| `text-editor-insert`            | The gutter's insert button.                         |
-| `text-editor-grip`              | The gutter's block grip.                            |
-| `text-editor-drop-indicator`    | The line where dragged blocks drop.                 |
-| `text-editor-block-selection`   | The highlight of selected blocks.                   |
-| `text-editor-selection-toolbar` | The toolbar over selected text.                     |
-| `text-editor-suggestions`       | The popup of slash commands and mentions.           |
-| `text-editor-link-popover`      | The link popover.                                   |
-| `text-editor-alt-input`         | The alternative text field inside a selected image. |
-| `text-editor-table-picker`      | The table size picker.                              |
-| `text-editor-swatch`            | A color swatch of the color menus.                  |
-| `text-editor-status`            | The loading or error status.                        |
-| `text-editor-row-grip`          | A table row grip.                                   |
-| `text-editor-column-grip`       | A table column grip.                                |
-| `text-editor-cell-handle`       | The table cell handle.                              |
-| `text-editor-add-row`           | The button that adds a table row.                   |
-| `text-editor-add-column`        | The button that adds a table column.                |
-| `text-editor-resize-handle`     | A table column resize handle.                       |
-| `text-editor-table-selection`   | The outline of selected table cells.                |
-| `text-editor-sticky-header`     | The table header that stays in view.                |
+| Part                            | Description                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------------- |
+| `text-editor`                   | The field boundary and its focus ring.                                                |
+| `text-editor-toolbar`           | The toolbar above the content.                                                        |
+| `text-editor-viewport`          | The scroll container.                                                                 |
+| `text-editor-content`           | The container of the document.                                                        |
+| `text-editor-overlay`           | The layer above the content.                                                          |
+| `text-editor-placeholder`       | The placeholder in the first block.                                                   |
+| `text-editor-gutter`            | The block gutter beside the hovered block.                                            |
+| `text-editor-insert`            | The gutter's insert button.                                                           |
+| `text-editor-grip`              | The gutter's block grip.                                                              |
+| `text-editor-drop-indicator`    | The line where dragged blocks drop.                                                   |
+| `text-editor-block-selection`   | The highlight of selected blocks.                                                     |
+| `text-editor-selection-toolbar` | The toolbar over selected text.                                                       |
+| `text-editor-suggestions`       | The popup of slash commands and mentions.                                             |
+| `text-editor-link-popover`      | The link popover.                                                                     |
+| `text-editor-alt-input`         | The alternative text field of a selected image, in the context bar below the toolbar. |
+| `text-editor-table-picker`      | The table size picker.                                                                |
+| `text-editor-swatch`            | A color swatch of the color menus.                                                    |
+| `text-editor-status`            | The loading or error status.                                                          |
+| `text-editor-row-grip`          | A table row grip.                                                                     |
+| `text-editor-column-grip`       | A table column grip.                                                                  |
+| `text-editor-cell-handle`       | The table cell handle.                                                                |
+| `text-editor-add-row`           | The button that adds a table row.                                                     |
+| `text-editor-add-column`        | The button that adds a table column.                                                  |
+| `text-editor-resize-handle`     | A table column resize handle.                                                         |
+| `text-editor-table-selection`   | The outline of selected table cells.                                                  |
+| `text-editor-sticky-header`     | The table header that stays in view.                                                  |

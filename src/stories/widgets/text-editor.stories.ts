@@ -31,6 +31,7 @@ interface Args {
   format: TextEditorFormat;
   placeholder: string;
   label: string;
+  measure: number;
   name: string;
   readOnly: boolean;
   disabled: boolean;
@@ -48,6 +49,7 @@ const renderTextEditor = (args: Args, createEngine: () => TextEditorEngine): Tem
     .format=${args.format}
     .placeholder=${args.placeholder}
     .label=${args.label}
+    .measure=${args.measure}
     .name=${args.name}
     .readOnly=${args.readOnly}
     .disabled=${args.disabled}
@@ -72,6 +74,7 @@ const meta: Meta<Args> = {
     format: 'html',
     placeholder: 'Write what you observed',
     label: 'Field notes',
+    measure: 65,
     name: 'notes',
     readOnly: false,
     disabled: false,
@@ -101,6 +104,12 @@ const meta: Meta<Args> = {
       control: 'text',
       description: 'Accessible name of the editing root when no Field labels it.',
       table: { defaultValue: { summary: "''" } },
+    },
+    measure: {
+      control: { type: 'number', min: 0, step: 1 },
+      description:
+        'The longest line of text in characters (`ch` of the content font); the content sits centered in a wider viewport. 0 removes the limit.',
+      table: { defaultValue: { summary: '65' } },
     },
     name: {
       control: 'text',
@@ -168,6 +177,37 @@ export const Core: Story = {
   },
 };
 
+/** The layout of the block editor: no fixed toolbar, every control in the block surfaces. */
+const blockEditorLayout = { toolbar: [] as string[][] };
+
+export const BlockEditor: Story = {
+  name: 'Block editor',
+  args: { label: 'Field notes', placeholder: 'Type / for blocks' },
+  render: (args) =>
+    html`<tp-text-editor
+      .features=${allFeatures(false)}
+      .layout=${blockEditorLayout}
+      .defaultValue=${args.defaultValue}
+      .format=${args.format}
+      .placeholder=${args.placeholder}
+      .label=${args.label}
+      .readOnly=${args.readOnly}
+      .disabled=${args.disabled}
+      ${ref((element?: Element) => {
+        const editor = element as TpTextEditor | undefined;
+        if (editor && !editor.engine) editor.engine = tiptapEngine();
+      })}
+    ></tp-text-editor>`,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'The block editor mode: every feature assigned and the fixed toolbar turned off with `layout: { toolbar: [] }`. The gutter beside each block inserts and drags, `/` opens the slash menu, a text selection shows the floating toolbar, and Alt+F10 reaches the controls from the keyboard.',
+      },
+    },
+  },
+};
+
 /** The features of a classic toolbar editor: links, tables and images, no block editing. */
 const classicFeatures: readonly TextEditorFeature[] = [
   textEditorLinks(),
@@ -196,7 +236,7 @@ export const ClassicToolbar: Story = {
     docs: {
       description: {
         story:
-          'The links, tables and images features without block editing, the selection toolbar or the slash menu: every control sits in the fixed toolbar, as in a classic word processor.',
+          'The classic toolbar mode: the links, tables and images features without block editing, the selection toolbar or the slash menu, so every control sits in the fixed toolbar, as in a word processor.',
       },
     },
   },

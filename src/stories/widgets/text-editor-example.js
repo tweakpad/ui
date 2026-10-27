@@ -257,8 +257,27 @@ export function allTextEditorFeatures() {
 }
 
 /**
+ * The classic toolbar editor: every control in the fixed toolbar, with links, tables and images,
+ * and no block editing, floating toolbar or slash menu.
+ * @returns {object[]}
+ */
+export function classicTextEditorFeatures() {
+  return [textEditorLinks(), textEditorTables(), textEditorImages({ upload: uploadImage })];
+}
+
+/**
+ * The block editor: block editing with the gutter, the slash menu and the floating selection
+ * toolbar carry every control, so the fixed toolbar is turned off through `layout`.
+ * @returns {{ features: object[], layout: { toolbar: never[] } }}
+ */
+export function blockTextEditorSetup() {
+  return { features: allTextEditorFeatures(), layout: { toolbar: [] } };
+}
+
+/**
  * Wires one example: each editor in `root` gets the sample notes when it carries `data-sample`,
- * every feature with the sample upload hook, then an engine of its own from `createEngine`; a
+ * the features of its `data-mode` (`classic`, `blocks`, or every feature by default) with the
+ * sample upload hook, then an engine of its own from `createEngine`; a
  * `tp-form[data-form-output]` shows what it submits in the `tp-code-block[data-submitted]` beside
  * it. Returns cleanup.
  * @param {HTMLElement} root
@@ -275,7 +294,10 @@ export function setupTextEditorExample(root, createEngine) {
       editor.layout = { suggestions: ['slash', 'mention'] };
       editor.defaultValue = customBlockNotes;
     }
-    editor.features = allTextEditorFeatures();
+    const mode = editor.getAttribute('data-mode');
+    if (mode === 'classic') editor.features = classicTextEditorFeatures();
+    else if (mode === 'blocks') Object.assign(editor, blockTextEditorSetup());
+    else editor.features = allTextEditorFeatures();
     editor.engine = createEngine();
     cleanups.push(() => (editor.engine = null));
   }

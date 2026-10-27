@@ -1,10 +1,11 @@
 /**
- * The alternative text field (`uwg-te-req-surfaces-4`, `uwg-te-tab-anatomy-r16`): a floating
- * Input in the overlay, inside the top-left corner of the one image block that a block selection
- * holds, with its apply action. It shows while the editor is ready and editable and focus is in
- * the widget, takes no focus by itself, applies on Enter or its apply action through
- * `block.set-attrs`, and Escape returns focus to the editing root with the block still selected.
- * Alt+F10 reaches it as a contextual surface; Tab reaches it after the editing root.
+ * The alternative text field (`uwg-te-req-surfaces-4`, `uwg-te-tab-anatomy-r16`): an Input with
+ * its apply action in the context bar, the slot centered just below the fixed toolbar that the
+ * contextual editors of the widget share, for the one uploaded image block that a block selection
+ * holds. It shows while the editor is ready and editable and focus is in the widget, takes no
+ * focus by itself, applies on Enter or its apply action through `block.set-attrs`, and Escape
+ * returns focus to the editing root with the block still selected. Alt+F10 reaches it as a
+ * contextual surface; Tab reaches it after the editing root.
  */
 import { css, html, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
@@ -23,25 +24,10 @@ import type {
 import type { TextEditorStrings } from '../../../foundation/text-editor/strings.js';
 import { checkIcon } from '../../../icons/check.js';
 import type { TextEditorContextualSurface } from '../focus.js';
-import type {
-  OverlayBox,
-  OverlayGeometry,
-  OverlayInstance,
-  OverlayLayer,
-  OverlayMeasureContext,
-} from '../geometry.js';
+import type { OverlayInstance } from '../geometry.js';
 
-/** The image that the alternative text field edits: the one image of a block selection. */
-/** Structure of the alternative text field: an overlay mark placed from the layer origin. */
+/** Structure of the alternative text field: a context bar entry (see `textEditorStyles`). */
 export const imageAltStyles = css`
-  [part~='text-editor-alt-input'] {
-    position: absolute;
-    top: 0;
-    left: 0;
-    box-sizing: border-box;
-    pointer-events: auto;
-  }
-
   [part~='text-editor-alt-input'][hidden] {
     display: none !important;
   }
@@ -108,39 +94,11 @@ export function imageAltProposal(
   };
 }
 
-/** The inset of the field from the image's top and start edges, in CSS pixels. */
-export const IMAGE_ALT_INSET = 8;
-
 /** The place of the field in the Alt+F10 cycle: after the selection toolbar. */
 export const IMAGE_ALT_ORDER = 0.5;
 
-export interface ImageAltPlacement {
-  readonly left: number;
-  readonly top: number;
-  /** The widest the field may be: the image's width less the insets. */
-  readonly maxWidth: number;
-}
-
-/**
- * Where the field goes: inside the image's box at its top-left corner (top-right in a
- * right-to-left widget), inset by `IMAGE_ALT_INSET`, narrowed to the image when it is narrower
- * than the field.
- */
-export function imageAltPlacement(
-  box: OverlayBox,
-  size: { readonly width: number; readonly height: number },
-  rtl: boolean,
-): ImageAltPlacement {
-  const inset = IMAGE_ALT_INSET;
-  const maxWidth = Math.max(0, box.width - 2 * inset);
-  const width = Math.min(size.width, maxWidth);
-  const left = rtl ? box.left + box.width - inset - width : box.left + inset;
-  return { left, top: box.top + inset, maxWidth };
-}
-
 export interface TextEditorImageAltHost {
   readonly renderRoot: ShadowRoot;
-  readonly geometry: OverlayGeometry;
   /** Re-renders the element. */
   requestUpdate(): void;
   strings(): TextEditorStrings;
@@ -159,21 +117,18 @@ export interface TextEditorImageAltHost {
   registerContextual(surface: TextEditorContextualSurface): () => void;
 }
 
-/** The alternative text field of one widget: an overlay layer over the selected image. */
-export class TextEditorImageAltField implements OverlayLayer<ImageAltPlacement | null> {
+/** The alternative text field of one widget, in the context bar under the toolbar. */
+export class TextEditorImageAltField {
   readonly #host: TextEditorImageAltHost;
-  readonly #removeLayer: () => void;
   readonly #releaseContextual: () => void;
   #element: HTMLElement | null = null;
   #input: HTMLElement | null = null;
   #target: ImageAltTarget | null = null;
   #draft = '';
   #shown = false;
-  #placed = false;
 
   constructor(host: TextEditorImageAltHost) {
     this.#host = host;
-    this.#removeLayer = host.geometry.addLayer(this);
     this.#releaseContextual = host.registerContextual({
       order: IMAGE_ALT_ORDER,
       applicable: () => this.#shown,
@@ -201,11 +156,9 @@ export class TextEditorImageAltField implements OverlayLayer<ImageAltPlacement |
     return this.holdsFocus();
   }
 
-  /** Removes the layer and leaves the Alt+F10 cycle. */
+  /** Leaves the Alt+F10 cycle. */
   dispose(): void {
     this.#releaseContextual();
-    this.#removeLayer();
-    this.hide();
   }
 
   #visibility(): ImageAltVisibility {
@@ -230,7 +183,7 @@ export class TextEditorImageAltField implements OverlayLayer<ImageAltPlacement |
     };
   }
 
-  /** The field, rendered inside the overlay part; its draft follows the selected image. */
+  /** The field, rendered in the context bar; its draft follows the selected image. */
   render(): TemplateResult {
     const strings = this.#host.strings();
     const visibility = this.#visibility();
@@ -238,18 +191,13 @@ export class TextEditorImageAltField implements OverlayLayer<ImageAltPlacement |
     if (target?.id !== this.#target?.id || (target && target.alt !== this.#target?.alt))
       this.#draft = target?.alt ?? '';
     this.#target = target;
-    const shown = imageAltVisible(visibility);
-    if (shown !== this.#shown) {
-      this.#shown = shown;
-      if (!shown) this.hide();
-      this.#host.geometry.invalidate('state');
-    }
+    this.#shown = imageAltVisible(visibility);
     return html`<div
       part="text-editor-alt-input"
-      class="alt-input"
+      class="context-bar"
       role="group"
       aria-label=${strings.imageAlt}
-      hidden
+      ?hidden=${!this.#shown}
       ${ref(this.#bind)}
       @keydown=${this.#keyDown}
     >
@@ -274,56 +222,10 @@ export class TextEditorImageAltField implements OverlayLayer<ImageAltPlacement |
     </div>`;
   }
 
-  // Overlay layer -------------------------------------------------------------------------------
-
-  wanted(): boolean {
-    return this.#shown && this.#element !== null;
-  }
-
-  measure(context: OverlayMeasureContext): ImageAltPlacement | null {
-    const element = this.#element;
-    const id = this.#target?.id;
-    if (!this.#shown || !element || id === undefined || context.source.kind !== 'instance')
-      return null;
-    const rects = context.source.instance.blockRects(id);
-    if (!rects) return null;
-    return imageAltPlacement(
-      context.toOverlay(rects.content),
-      { width: element.offsetWidth, height: element.offsetHeight },
-      this.#host.direction() === 'rtl',
-    );
-  }
-
-  apply(placement: ImageAltPlacement | null): void {
-    const element = this.#element;
-    if (!element) return;
-    if (!placement) {
-      this.hide();
-      return;
-    }
-    element.style.setProperty('translate', `${placement.left}px ${placement.top}px`);
-    element.style.setProperty('max-inline-size', `${placement.maxWidth}px`);
-    if (!this.#placed) {
-      this.#placed = true;
-      element.hidden = false;
-    }
-  }
-
-  hide(): void {
-    const element = this.#element;
-    if (!element || !this.#placed) return;
-    this.#placed = false;
-    element.hidden = true;
-  }
-
   // Field ---------------------------------------------------------------------------------------
 
   readonly #bind = (element: Element | undefined): void => {
-    const next = (element as HTMLElement | undefined) ?? null;
-    if (next === this.#element) return;
-    this.#element = next;
-    this.#placed = false;
-    if (next) this.#host.geometry.invalidate('state');
+    this.#element = (element as HTMLElement | undefined) ?? null;
   };
 
   // The Input is controlled: a render of the element shows the draft it proposes.

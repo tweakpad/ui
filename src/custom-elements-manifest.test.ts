@@ -282,7 +282,9 @@ const describedEditor = (): Manifest => {
             name: 'TpTextEditor',
             tagName: 'tp-text-editor',
             attributes: [
-              ...['default-value', 'format', 'placeholder', 'label'].map((name) => ({ name })),
+              ...['default-value', 'format', 'placeholder', 'label', 'measure'].map((name) => ({
+                name,
+              })),
               inherited('name', 'TpFormElement'),
               inherited('form', 'TpFormElement'),
               inherited('disabled', 'TpElement'),

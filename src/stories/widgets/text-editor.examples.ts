@@ -47,8 +47,36 @@ const FORM_DESCRIPTION =
 const CUSTOM_BLOCKS_DESCRIPTION =
   'Nodes assigned to `nodes`: a callout, a textblock that the editor presents as a callout, and an embed, an atom that shows an https page in a sandboxed frame with a required title, both defined with `defineTextEditorBlock`; and a mention defined with `defineTextEditorInline`, which `@` inserts from a list searched after a short delay. Each block gets the gutter, the block menu, block selection and drag, and a tool in the slash menu, with the blocks and suggestions features assigned.';
 
+const CLASSIC_DESCRIPTION =
+  'The classic toolbar editor: `features` holds links, tables and images, so every control sits in the fixed toolbar, as in a word processor. Without the blocks, selection toolbar and suggestions features, the page bundles no gutter, drag, floating toolbar or slash menu.';
+
+const BLOCKS_DESCRIPTION =
+  'The block editor: every feature with the fixed toolbar turned off (`layout: { toolbar: [] }`). The gutter beside each block inserts and drags, `/` opens the slash menu, a text selection shows the floating toolbar, and Alt+F10 reaches the controls from the keyboard.';
+
 /** The Docs "Usage examples": distinct use cases of the editor. */
 export const textEditorExamples: readonly DocumentationExample[] = [
+  moduleExample({
+    title: 'Classic toolbar',
+    id: 'text-editor-classic',
+    markup:
+      '<tp-text-editor label="Report" placeholder="Write the report" data-sample data-mode="classic"></tp-text-editor>',
+    setup: (root) => setupTextEditorExample(root, tiptapEngine),
+    source: setupSource,
+    call: "setupTextEditorExample(document.getElementById('text-editor-classic'), tiptapEngine);",
+    description: CLASSIC_DESCRIPTION,
+    registerImports: WIDGET_REGISTER_IMPORTS,
+  }),
+  moduleExample({
+    title: 'Block editor',
+    id: 'text-editor-blocks',
+    markup:
+      '<tp-text-editor label="Field notes" placeholder="Type / for blocks" data-sample data-mode="blocks"></tp-text-editor>',
+    setup: (root) => setupTextEditorExample(root, tiptapEngine),
+    source: setupSource,
+    call: "setupTextEditorExample(document.getElementById('text-editor-blocks'), tiptapEngine);",
+    description: BLOCKS_DESCRIPTION,
+    registerImports: WIDGET_REGISTER_IMPORTS,
+  }),
   moduleExample({
     title: 'In a form',
     id: 'text-editor-in-a-form',

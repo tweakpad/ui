@@ -9,6 +9,7 @@ export const TEXT_EDITOR_OWN_ATTRIBUTES = Object.freeze([
   'format',
   'placeholder',
   'label',
+  'measure',
 ]);
 /** Attributes of the form control contract (uwg-te-req-prop-1). */
 export const TEXT_EDITOR_FORM_ATTRIBUTES = Object.freeze(['name', 'form']);

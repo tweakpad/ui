@@ -54,6 +54,14 @@ export const textEditorStyles = css`
     isolation: isolate;
   }
 
+  /* The measure (\`measure\`): the editing root and the preview hold at most that many characters per
+     line, centered in a wider viewport; their insets lie outside the measure. */
+  [part~='text-editor-content'] > * {
+    box-sizing: content-box;
+    max-inline-size: var(--_tp-text-editor-measure, none);
+    margin-inline: auto;
+  }
+
   /* No selection (a cleared one) or a block selection, which the overlay paints: the caret that the
      engine or the browser keeps in the focused root is not painted. */
   .surface[data-unplaced] [part~='text-editor-content'] > * {
@@ -96,6 +104,20 @@ export const textEditorStyles = css`
 
   [part~='text-editor-placeholder'][hidden] {
     display: none !important;
+  }
+
+  /* The context bar: the slot centered just below the fixed toolbar that the contextual editors
+     share (the alternative text field of a selected image; a link editor at the caret), outside
+     the scrolling viewport, so it stays in view whatever scrolls. */
+  .context-bar {
+    grid-area: viewport;
+    position: absolute;
+    inset-block-start: var(--tp-space-2);
+    inset-inline-start: 50%;
+    z-index: 1;
+    box-sizing: border-box;
+    max-inline-size: calc(100% - 2 * var(--tp-space-2));
+    translate: -50% 0;
   }
 
   [part~='text-editor-status'] {

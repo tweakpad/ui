@@ -3,7 +3,6 @@
  * that fills a pending image in, the pasted and dropped image files and the alternative text
  * field of a selected image. `textEditorImages()` creates it with the application's upload hook.
  */
-import { nothing } from 'lit';
 import { TpButton } from '../../../components/button/button.js';
 import { TpFileUpload } from '../../../components/file-upload/file-upload.js';
 import type { FileAcceptInput } from '../../../components/file-upload/types.js';
@@ -69,7 +68,6 @@ export function textEditorImages(options: TextEditorImagesOptions = {}): TextEdi
         get renderRoot() {
           return shadow();
         },
-        geometry: host.geometry,
         requestUpdate: () => host.requestUpdate(),
         strings: () => host.strings(),
         instance: () => host.instance(),
@@ -103,11 +101,11 @@ export function textEditorImages(options: TextEditorImagesOptions = {}): TextEdi
           image.release();
           alt.dispose();
         },
-        renderOverlay: () => alt.render(),
+        // The alternative text field sits in the context bar under the toolbar, outside the
+        // viewport; the upload views live in engine hosts, which a render of the widget refreshes.
         renderSurfaces: () => {
-          // The upload views live in engine hosts: a render of the widget refreshes them here.
           image.refresh();
-          return nothing;
+          return alt.render();
         },
         uploadImages: (files, at, reason, event) => image.uploadImages(files, at, reason, event),
         uploads: () => upload !== null,

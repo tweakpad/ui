@@ -5,6 +5,7 @@ import {
   type PropertyValues,
   type TemplateResult,
 } from 'lit';
+import { styleMap } from 'lit/directives/style-map.js';
 import { TpButtonGroup } from '../../components/button-group/button-group.js';
 import { TpButton } from '../../components/button/button.js';
 import { TpIcon } from '../../components/icon/icon.js';
@@ -264,6 +265,19 @@ export function describeElement(element: Element): string {
 }
 
 // Properties (uwg-te-req-prop-1, uwg-te-tab-props) ------------------------------------------
+
+/** The default measure: the longest line of text, in characters of the content's font. */
+export const TEXT_EDITOR_DEFAULT_MEASURE = 65;
+
+/**
+ * The CSS length of `measure`: that many `ch` of the content's font for a positive finite number,
+ * `none` for `null`, zero or anything else (no limit).
+ */
+export function textEditorMeasureLength(measure: unknown): string {
+  return typeof measure === 'number' && Number.isFinite(measure) && measure > 0
+    ? `${measure}ch`
+    : 'none';
+}
 
 /** The format in effect: the value when it is one of the four, else 'html'. */
 export function effectiveTextEditorFormat(format: unknown): TextEditorFormat {
@@ -583,6 +597,8 @@ export function textEditorRouterConfig(
  * @fires tp-text-editor-error - The engine failed to mount; `detail.error` is the reason.
  * @fires tp-diagnostic - A development diagnostic with a `text-editor-*` code.
  *
+ * @cssprop --_tp-text-editor-measure - Internal: the measure as a length, from `measure`.
+ *
  * @csspart text-editor - The root container.
  * @csspart text-editor-toolbar - The fixed toolbar.
  * @csspart text-editor-viewport - The scroll container of the editing surface.
@@ -641,6 +657,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     format: { converter: textEditorFormatConverter },
     placeholder: { type: String },
     label: { type: String },
+    measure: { type: Number },
     features: { attribute: false },
     tools: { attribute: false },
     layout: { attribute: false, noAccessor: true },
@@ -657,6 +674,8 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
   placeholder = '';
   /** The editing root's name when no Field labels it. */
   label = '';
+  /** The longest line of text in characters (`ch` of the content's font); `null` or 0 for no limit. */
+  measure: number | null = TEXT_EDITOR_DEFAULT_MEASURE;
   /** The optional features in use, created by their factories; none for the core editor. */
   features: readonly TextEditorFeature[] = EMPTY;
   /** Tools added to the built-in ones; an equal identifier replaces one. */
@@ -1071,7 +1090,11 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
   protected override render(): TemplateResult {
     const disabled = this.effectiveDisabled;
     // Focus anywhere in the widget, its top-layer popups included (`uwg-te-req-pres-1`).
-    return html`<div part="text-editor" ?data-focus-within=${this.#focus.focused}>
+    return html`<div
+      part="text-editor"
+      ?data-focus-within=${this.#focus.focused}
+      style=${styleMap({ '--_tp-text-editor-measure': textEditorMeasureLength(this.measure) })}
+    >
       ${this.#toolbar.render()}
       <div
         part="text-editor-viewport"
