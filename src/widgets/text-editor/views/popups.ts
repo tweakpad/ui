@@ -19,6 +19,8 @@ import type {
   TextEditorDiagnosticCode,
   TextEditorEngineInstance,
 } from '../../../foundation/text-editor/engine.js';
+import type { TextEditorEngineViews } from '../../../foundation/text-editor/engine.js';
+import type { OverlayGeometry } from '../geometry.js';
 import type { TextEditorLayout } from '../../../foundation/text-editor/layout.js';
 import type {
   TextEditorEngineState,
@@ -35,10 +37,10 @@ import type {
 } from '../../../foundation/text-editor/tools.js';
 import type { ChangeReason } from '../../../foundation/types.js';
 import type { TextEditorContextualSurface, TextEditorMenuModality } from '../focus.js';
-import type { OverlayGeometry } from '../geometry.js';
 import type { TextEditorToolActivation } from '../tools/controls.js';
 import { resolveSelectionToolbarView } from '../tools/resolve.js';
 import type { TextEditorImageUpload } from '../types.js';
+import { TextEditorImageAltField } from './image-alt.js';
 import { TextEditorImageUploads, type TextEditorImageLimits } from './image-upload.js';
 import { TextEditorLinkPopover } from './link-popover.js';
 import {
@@ -89,8 +91,9 @@ export interface TextEditorPopupsHost {
   imageUpload(): TextEditorImageUpload | null;
   /** The type and size limits of image files. */
   imageLimits(): TextEditorImageLimits;
-  /** The overlay geometry, which places the image upload cards. */
+  /** The overlay geometry, which places the alternative text field. */
   readonly geometry: OverlayGeometry;
+  direction(): 'ltr' | 'rtl';
   /** Focuses the editing root with its selection, through the adapter. */
   focusEditing(): void;
   announce(message: string, options?: AnnounceOptions): void;
@@ -140,6 +143,9 @@ export class TextEditorPopups {
   readonly suggestions: TextEditorSuggestions;
   readonly link: TextEditorLinkPopover;
   readonly image: TextEditorImageUploads;
+  readonly alt: TextEditorImageAltField;
+  /** The views the engines mount into the hosts they own (`views.pendingImage`). */
+  readonly views: TextEditorEngineViews;
   /** `aria-controls` and `aria-activedescendant` of the editing root while a list shows. */
   #reference: string | null = null;
   readonly #releaseContextual: () => void;
@@ -242,8 +248,6 @@ export class TextEditorPopups {
       lane: (open, reason) => host.lane?.('link', open, reason),
     });
     this.image = new TextEditorImageUploads({
-      geometry: host.geometry,
-      requestUpdate: () => host.requestUpdate(),
       strings: () => host.strings(),
       imageUpload: () => host.imageUpload(),
       limits: () => host.imageLimits(),
@@ -254,6 +258,27 @@ export class TextEditorPopups {
       diagnose: (message) => host.diagnose('text-editor-upload-rejected', message),
       announce: (message) => host.announce(message),
       focusEditing: () => host.focusEditing(),
+    });
+    this.views = Object.freeze({
+      pendingImage: (element: HTMLElement, id: string) => this.image.mount(element, id),
+    });
+    this.alt = new TextEditorImageAltField({
+      get renderRoot() {
+        return host.renderRoot;
+      },
+      geometry: host.geometry,
+      requestUpdate: () => host.requestUpdate(),
+      strings: () => host.strings(),
+      instance: ready,
+      state: () => host.state(),
+      access: () => host.access(),
+      direction: () => host.direction(),
+      toolbar: () => host.toolbar(),
+      dragging: () => host.dragging(),
+      surfaceOpen: () => this.surfaceOpen || (host.controlMenuOpen?.() ?? false),
+      request: (proposal) => host.request(proposal),
+      focusEditing: () => host.focusEditing(),
+      registerContextual: (surface) => host.registerContextual(surface),
     });
     const toolbar = this.selectionToolbar;
     this.#releaseContextual = host.registerContextual({
@@ -336,12 +361,14 @@ export class TextEditorPopups {
   }
 
   render(): TemplateResult {
+    // The upload views live in engine hosts: a render of the element refreshes them here.
+    this.image.refresh();
     return html`${this.selectionToolbar.render()}${this.suggestions.render()}${this.link.render()}`;
   }
 
-  /** The image upload cards, rendered inside the overlay part. */
+  /** The alternative text field, rendered inside the overlay part. */
   renderOverlay(): TemplateResult {
-    return this.image.render();
+    return this.alt.render();
   }
 
   updated(): void {
@@ -363,6 +390,7 @@ export class TextEditorPopups {
 
   dispose(): void {
     this.#releaseContextual();
+    this.alt.dispose();
   }
 
   #activate(activation: TextEditorToolActivation): void {

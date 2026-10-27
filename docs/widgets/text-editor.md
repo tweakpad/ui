@@ -342,6 +342,11 @@ with an abort signal and a progress callback and resolves to the image's source;
 the image policy, such as a `blob:` or `data:` URL, is reported and leaves the block waiting. An
 image with a known source is inserted with `run('image', { src, alt })`.
 
+Selecting an image block (a grip click, or Escape from a caret in the text beside it) shows an
+alternative text field inside the image's top-left corner, for the image that is waiting for its
+upload too. Enter or its apply button saves the text; Escape returns to the text with the block
+still selected. Alt+F10 moves focus into the field, and Tab reaches it after the editing root.
+
 ## Custom blocks and inline nodes
 
 `defineTextEditorBlock()` defines a block, a textblock (`content: 'inline'`) or an atom
@@ -587,8 +592,9 @@ are reached with Alt+F10 and left with Escape, which returns to the text with it
 Alt+F10 again moves on to the next of them. Menus and popovers take focus when they open and give
 it back when they close. The slash and mention lists leave focus in the text: the arrow keys move
 through their items, and the editing root points at the highlighted one. The File upload of an
-image block waiting for its image follows the editing root in the tab order and takes focus when
-the image tool inserts the block; Escape in it returns to the text.
+image block waiting for its image, and the alternative text field of a selected image, follow the
+editing root in the tab order; the File upload takes focus when the image tool inserts the block,
+the field is reached with Alt+F10 too, and Escape in either returns to the text.
 
 A live region announces what the screen alone shows: the size of a block selection, moved,
 duplicated and deleted blocks, each step of a block drag, the highlighted suggestion, inserted,
@@ -717,31 +723,31 @@ The editor needs Chrome or Edge 137 or later, Firefox 142 or later, or Safari 17
 
 ### Parts
 
-| Part                            | Description                                                |
-| ------------------------------- | ---------------------------------------------------------- |
-| `text-editor`                   | The field boundary and its focus ring.                     |
-| `text-editor-toolbar`           | The toolbar above the content.                             |
-| `text-editor-viewport`          | The scroll container.                                      |
-| `text-editor-content`           | The container of the document.                             |
-| `text-editor-overlay`           | The layer above the content.                               |
-| `text-editor-placeholder`       | The placeholder in the first block.                        |
-| `text-editor-gutter`            | The block gutter beside the hovered block.                 |
-| `text-editor-insert`            | The gutter's insert button.                                |
-| `text-editor-grip`              | The gutter's block grip.                                   |
-| `text-editor-drop-indicator`    | The line where dragged blocks drop.                        |
-| `text-editor-block-selection`   | The highlight of selected blocks.                          |
-| `text-editor-selection-toolbar` | The toolbar over selected text.                            |
-| `text-editor-suggestions`       | The popup of slash commands and mentions.                  |
-| `text-editor-link-popover`      | The link popover.                                          |
-| `text-editor-image-upload`      | The upload card over an image block waiting for its image. |
-| `text-editor-table-picker`      | The table size picker.                                     |
-| `text-editor-swatch`            | A color swatch of the color menus.                         |
-| `text-editor-status`            | The loading or error status.                               |
-| `text-editor-row-grip`          | A table row grip.                                          |
-| `text-editor-column-grip`       | A table column grip.                                       |
-| `text-editor-cell-handle`       | The table cell handle.                                     |
-| `text-editor-add-row`           | The button that adds a table row.                          |
-| `text-editor-add-column`        | The button that adds a table column.                       |
-| `text-editor-resize-handle`     | A table column resize handle.                              |
-| `text-editor-table-selection`   | The outline of selected table cells.                       |
-| `text-editor-sticky-header`     | The table header that stays in view.                       |
+| Part                            | Description                                         |
+| ------------------------------- | --------------------------------------------------- |
+| `text-editor`                   | The field boundary and its focus ring.              |
+| `text-editor-toolbar`           | The toolbar above the content.                      |
+| `text-editor-viewport`          | The scroll container.                               |
+| `text-editor-content`           | The container of the document.                      |
+| `text-editor-overlay`           | The layer above the content.                        |
+| `text-editor-placeholder`       | The placeholder in the first block.                 |
+| `text-editor-gutter`            | The block gutter beside the hovered block.          |
+| `text-editor-insert`            | The gutter's insert button.                         |
+| `text-editor-grip`              | The gutter's block grip.                            |
+| `text-editor-drop-indicator`    | The line where dragged blocks drop.                 |
+| `text-editor-block-selection`   | The highlight of selected blocks.                   |
+| `text-editor-selection-toolbar` | The toolbar over selected text.                     |
+| `text-editor-suggestions`       | The popup of slash commands and mentions.           |
+| `text-editor-link-popover`      | The link popover.                                   |
+| `text-editor-alt-input`         | The alternative text field inside a selected image. |
+| `text-editor-table-picker`      | The table size picker.                              |
+| `text-editor-swatch`            | A color swatch of the color menus.                  |
+| `text-editor-status`            | The loading or error status.                        |
+| `text-editor-row-grip`          | A table row grip.                                   |
+| `text-editor-column-grip`       | A table column grip.                                |
+| `text-editor-cell-handle`       | The table cell handle.                              |
+| `text-editor-add-row`           | The button that adds a table row.                   |
+| `text-editor-add-column`        | The button that adds a table column.                |
+| `text-editor-resize-handle`     | A table column resize handle.                       |
+| `text-editor-table-selection`   | The outline of selected table cells.                |
+| `text-editor-sticky-header`     | The table header that stays in view.                |

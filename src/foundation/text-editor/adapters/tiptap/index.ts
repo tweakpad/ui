@@ -331,6 +331,7 @@ class TiptapInstance implements TextEditorEngineInstance {
     const extensions = createTiptapExtensions(modules, {
       urls: context.urls,
       labels: context.labels,
+      views: context.views,
       plugins: [
         blockIdsPlugin(modules, createId),
         listMergePlugin(modules),

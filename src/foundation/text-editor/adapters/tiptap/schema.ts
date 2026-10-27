@@ -12,7 +12,11 @@
  */
 import { storedAlign } from '../../actions.js';
 import type { TextEditorAlign } from '../../model.js';
-import type { TextEditorEngineLabels, TextEditorUrlPolicy } from '../../engine.js';
+import type {
+  TextEditorEngineLabels,
+  TextEditorEngineViews,
+  TextEditorUrlPolicy,
+} from '../../engine.js';
 import type {
   TextEditorTiptapModules,
   TiptapExtensionLike,
@@ -420,10 +424,11 @@ const imageWidth = (value: unknown): number | null =>
 
 /**
  * An image: an atom block rendered as `tp-te-image-host` > `img.tp-te-image`, never draggable. A
- * pending image (an empty source, filled in by an upload) marks its host `tp-te-image-pending`
- * and hides its `img`; the widget overlays its upload card on the host.
+ * pending image (an empty source, filled in by an upload) marks its host `tp-te-image-pending`,
+ * hides its `img` and renders the widget's upload view into the host (`views.pendingImage`),
+ * whose events the engine leaves to that view.
  */
-function imageNode(modules: TextEditorTiptapModules) {
+function imageNode(modules: TextEditorTiptapModules, views?: TextEditorEngineViews) {
   return modules.core.Node.create({
     name: NATIVE.image,
     group: 'block',
@@ -464,6 +469,14 @@ function imageNode(modules: TextEditorTiptapModules) {
         const image = dom.appendChild(document.createElement('img'));
         image.className = 'tp-te-image';
         image.draggable = false;
+        // The widget's view while the image is pending, keyed by the block it renders for.
+        let cleanup: (() => void) | null = null;
+        let pendingId: string | null = null;
+        const unmount = () => {
+          cleanup?.();
+          cleanup = null;
+          pendingId = null;
+        };
         const apply = (node: TiptapNodeLike) => {
           const src = String(node.attrs.src ?? '');
           dom.className = imageHostClass(src);
@@ -474,6 +487,13 @@ function imageNode(modules: TextEditorTiptapModules) {
           const width = imageWidth(node.attrs.width);
           if (width === null) image.removeAttribute('width');
           else image.width = width;
+          const id = typeof node.attrs.id === 'string' ? node.attrs.id : '';
+          if (src !== '' || id === '') unmount();
+          else if (pendingId !== id) {
+            unmount();
+            pendingId = id;
+            cleanup = views?.pendingImage?.(dom, id) ?? null;
+          }
         };
         apply(current);
         return {
@@ -485,6 +505,10 @@ function imageNode(modules: TextEditorTiptapModules) {
             return true;
           },
           ignoreMutation: () => true,
+          // The upload view owns its presses, keys, drops and pastes while it shows.
+          stopEvent: (event) =>
+            pendingId !== null && event.target !== dom && dom.contains(event.target as Node),
+          destroy: unmount,
         };
       },
   });
@@ -920,6 +944,8 @@ export interface CustomNodeNames {
 export interface TiptapSchemaSetup {
   readonly urls: TextEditorUrlPolicy;
   readonly labels: TextEditorEngineLabels;
+  /** The widget's views for engine-owned hosts. */
+  readonly views?: TextEditorEngineViews | undefined;
   /** The adapter's plugins, in the order the engine runs them. */
   readonly plugins: readonly TiptapPluginLike[];
   /** The extensions of the custom nodes, generated or overridden. */
@@ -952,7 +978,7 @@ export function createTiptapExtensions(
     ...(setup.behaviors ?? []),
     starterKit(modules, setup.urls, stops),
     quoteNode(modules),
-    imageNode(modules),
+    imageNode(modules, setup.views),
     ...ownMarks(modules),
     ...listNodes(modules, setup.labels, stops),
     ...tableNodes(modules, stops),

@@ -153,8 +153,12 @@ export interface TextEditorStrings {
   readonly applyLink: string;
   readonly openLink: string;
   readonly removeLink: string;
-  /** The title of the upload card of a pending image. */
+  /** The title of the File upload of a pending image. */
   readonly imageUploadTitle: string;
+  /** The label of the alternative text Field of a selected image. */
+  readonly imageAlt: string;
+  /** The accessible name of the apply action of the alternative text popover. */
+  readonly applyAlt: string;
   /** `{name}`: a pasted or dropped image file that the accepted types refuse. */
   readonly imageRejectedType: string;
   /** `{name}` and `{size}`: a pasted or dropped image file larger than the size limit. */
@@ -345,6 +349,8 @@ export const textEditorStrings: TextEditorStrings = Object.freeze({
   openLink: 'Open link',
   removeLink: 'Remove link',
   imageUploadTitle: 'Drop an image here or choose one',
+  imageAlt: 'Alternative text',
+  applyAlt: 'Apply alternative text',
   imageRejectedType: '{name} is not an accepted image type.',
   imageRejectedSize: '{name} is larger than {size}.',
   rows: 'Rows',

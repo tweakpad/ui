@@ -441,6 +441,7 @@ export function recordEngine(engine: TextEditorEngine, sink: EngineRecorderSink)
         urls: context.urls,
         signal: context.signal,
         labels: context.labels,
+        views: context.views,
         createId: () => context.createId(),
         adoptStyles: (cssText) => {
           record('adoptStyles', [{ length: cssText.length }]);

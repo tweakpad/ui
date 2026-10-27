@@ -25,7 +25,7 @@ import { registerUndoGrouping } from './history.js';
 import { registerInputRules } from './input-rules.js';
 import { registerListKeys } from './lists.js';
 import { registerTextStyles } from './marks.js';
-import { registerNodeNormalization } from './nodes.js';
+import { bindEditorRuntime, registerNodeNormalization } from './nodes.js';
 import { registerCellKeys, registerCellRangeCaret, registerCellRangeDeletion } from './tables.js';
 import { registerRangeEdits } from './text.js';
 import type {
@@ -222,6 +222,7 @@ export function lexicalExtension(input: LexicalMountInput): LexicalExtensionInit
     onWarn: (error) => context.diagnostic('text-editor-engine-warning', error.message),
     register: (editor) => {
       rt.editor = editor;
+      bindEditorRuntime(editor, rt);
       const cleanups = LEXICAL_REGISTRATIONS.map((register) => register(input));
       return () => {
         for (const cleanup of cleanups.reverse()) cleanup();

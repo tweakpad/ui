@@ -47,6 +47,7 @@ import type {
   TextEditorEngineContext,
   TextEditorEngineInstance,
   TextEditorEngineLabels,
+  TextEditorEngineViews,
   TextEditorFormat,
   TextEditorPortableFormat,
   TextEditorSnapshot,
@@ -184,6 +185,8 @@ export interface TextEditorControllerHost {
   direction(): 'ltr' | 'rtl';
   /** Whether the widget uploads image files (its `imageUpload` hook is set); false when absent. */
   imageUpload?(): boolean;
+  /** The views the widget renders into engine-owned hosts, such as the pending image's upload. */
+  views?(): TextEditorEngineViews | undefined;
   /** Adopts engine styles into the widget's shadow root; returns their release. */
   adoptStyles(cssText: string): () => void;
   /** Dispatches the cancelable request; returns `false` when it was cancelled. */
@@ -1224,6 +1227,7 @@ export class TextEditorController {
         adoptStyles: (cssText) => this.#host.adoptStyles(cssText),
         signal: control.signal,
         labels,
+        views: this.#host.views?.(),
         ready: control.ready,
         state: () => {
           if (control.live()) this.#stage();

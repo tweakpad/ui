@@ -4,6 +4,7 @@
  * the counters of the normalized state. Every module of the adapter reads the engine through it.
  */
 import type {
+  TextEditorEngineViews,
   TextEditorContentChange,
   TextEditorDiagnostic,
   TextEditorUrlPolicy,
@@ -48,6 +49,8 @@ export class LexicalRuntime {
   readonly glue: TextEditorContentGlue;
   /** Set by the adapter's extension when the editor is built. */
   editor: LexicalEditorLike | null = null;
+  /** The widget's views for engine-owned hosts, such as the pending image's upload. */
+  readonly engineViews: TextEditorEngineViews | undefined;
   /** The editing root of the mount, which the engine renders into; `null` without a container. */
   root: HTMLElement | null = null;
   /** Block identifier → node key, as the identifier transforms last saw them. */
@@ -120,7 +123,10 @@ export class LexicalRuntime {
     readonly glue: TextEditorContentGlue;
     /** Classes that replace the generated ones, by custom node name. */
     readonly overrides: Readonly<Record<string, TextEditorLexicalNodeOverride>>;
+    /** The widget's views for engine-owned hosts. */
+    readonly views?: TextEditorEngineViews | undefined;
   }) {
+    this.engineViews = input.views;
     this.modules = input.modules;
     this.lexical = input.modules.lexical;
     this.states = lexicalStates(this.lexical);

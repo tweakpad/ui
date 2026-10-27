@@ -1,15 +1,14 @@
 /**
- * The image upload cards (`uwg-te-req-surfaces-4`, `uwg-te-tab-anatomy-r15`): one File upload
- * overlaid on each pending image block of the document, an image whose source is still empty.
- * The image tool inserts such a block; a pasted or dropped image file inserts one and feeds the
- * file to its card. The card validates the file against the widget's image limits, uploads it
+ * The image uploads (`uwg-te-req-surfaces-4`, `uwg-te-tab-anatomy-r15`): a File upload rendered
+ * into the host of each pending image block of the document, an image whose source is still empty.
+ * The engine creates the host and asks the widget for the view (`views.pendingImage`); the image
+ * tool inserts such a block, and a pasted or dropped image file inserts one and hands the file to
+ * its upload. The File upload validates the file against the widget's image limits, uploads it
  * through `imageUpload` with progress, error and Retry, and once the upload resolves a source that
- * passes the image policy, sets it on the block, which then renders as an image. Deleting the
- * block cancels its upload.
+ * passes the image policy, the widget sets it on the block, which then renders as the image.
+ * Deleting the block cancels its upload.
  */
-import { html, type TemplateResult } from 'lit';
-import { ref } from 'lit/directives/ref.js';
-import { repeat } from 'lit/directives/repeat.js';
+import { html, nothing, render } from 'lit';
 import { acceptsFile, normalizeAccept } from '../../../components/file-upload/accept.js';
 import type { TpFileUpload } from '../../../components/file-upload/file-upload.js';
 import type { FileUploadMessages } from '../../../components/file-upload/messages.js';
@@ -37,13 +36,7 @@ import type { TextEditorStrings } from '../../../foundation/text-editor/strings.
 import type { TextEditorRequestSurface } from '../../../foundation/text-editor/tools.js';
 import type { ChangeReason } from '../../../foundation/types.js';
 import { selectionInput } from '../focus.js';
-import type {
-  OverlayBox,
-  OverlayGeometry,
-  OverlayInstance,
-  OverlayLayer,
-  OverlayMeasureContext,
-} from '../geometry.js';
+import type { OverlayInstance } from '../geometry.js';
 import type { TextEditorImageUpload } from '../types.js';
 
 /** Whether an image source passes the image policy (`uwg-te-req-surfaces-4`). */
@@ -158,8 +151,6 @@ export function livePoint(
 }
 
 export interface TextEditorImageUploadsHost {
-  readonly geometry: OverlayGeometry;
-  requestUpdate(): void;
   strings(): TextEditorStrings;
   imageUpload(): TextEditorImageUpload | null;
   limits(): TextEditorImageLimits;
@@ -176,46 +167,38 @@ export interface TextEditorImageUploadsHost {
   focusEditing(): void;
 }
 
-/** A file that a paste or a drop hands to the card of the block it inserted. */
+/** A file that a paste or a drop hands to the upload of the block it inserted. */
 interface PendingFile {
   readonly file: File;
   readonly reason: ChangeReason;
   readonly surface: TextEditorRequestSurface;
 }
 
-/** The card of one pending image. */
+/** The upload view of one pending image, rendered into the engine's host. */
 interface Card {
-  element: HTMLElement | null;
+  readonly id: string;
+  readonly host: HTMLElement;
   upload: TpFileUpload | null;
-  /** A pasted or dropped file, until the card takes it. */
+  /** A pasted or dropped file, until the upload takes it. */
   pending: PendingFile | null;
   /** The reason of the File upload value change that added each file. */
   readonly reasons: WeakMap<File, ChangeReason>;
   /** The surface of the request that completes each file's upload. */
   readonly surfaces: WeakMap<File, TextEditorRequestSurface>;
-  shown: boolean;
-  translate: string;
-  width: string;
-  height: string;
-}
-
-interface CardPlacement {
-  readonly id: string;
-  readonly box: OverlayBox;
 }
 
 /**
- * The image upload cards of one widget: an overlay layer that places one File upload over each
- * pending image block, and the uploads that fill the blocks in.
+ * The image uploads of one widget: the view that the engines mount into each pending image host,
+ * and the uploads that fill the blocks in.
  */
-export class TextEditorImageUploads implements OverlayLayer<readonly CardPlacement[]> {
+export class TextEditorImageUploads {
   readonly #host: TextEditorImageUploadsHost;
-  readonly #remove: () => void;
-  #ids: readonly string[] = [];
   readonly #cards = new Map<string, Card>();
-  /** The next pending image that the image tool inserts takes focus once its card renders. */
+  readonly #byHost = new WeakMap<HTMLElement, Card>();
+  /** Files that pastes and drops handed over before their block's view mounted. */
+  readonly #handed = new Map<string, PendingFile>();
+  /** The next pending image that the image tool inserts takes focus once its view mounts. */
   #focusNext = false;
-  #focusId: string | null = null;
   #messages: Partial<FileUploadMessages> = {};
   #messagesFor: TextEditorStrings | null = null;
   /** Pastes and drops insert one after another, so that each one follows the image inserted before it. */
@@ -224,94 +207,87 @@ export class TextEditorImageUploads implements OverlayLayer<readonly CardPlaceme
 
   constructor(host: TextEditorImageUploadsHost) {
     this.#host = host;
-    this.#remove = host.geometry.addLayer(this);
   }
 
-  /** The identifiers of the pending images, in document order. */
+  /** The identifiers of the pending images whose view is mounted, in mount order. */
   get ids(): readonly string[] {
-    return this.#ids;
+    return [...this.#cards.keys()];
   }
 
-  /** Whether an upload card holds `node`. */
+  /** Whether the upload view of a pending image holds `node`. */
   contains(node: Node | null): boolean {
     if (!node) return false;
-    for (const card of this.#cards.values()) if (card.element?.contains(node)) return true;
+    for (const card of this.#cards.values()) if (card.host.contains(node)) return true;
     return false;
   }
 
   /**
-   * Every state publication: follows the pending images of the document. A card whose block is
-   * gone cancels its upload; a new pending image gets a card, which the next render mounts.
+   * The engine's view hook (`views.pendingImage`): renders the File upload into the host of the
+   * pending image `id`; the returned function removes it and cancels its upload.
    */
+  mount(host: HTMLElement, id: string): () => void {
+    if (this.#released) return () => undefined;
+    this.#cards.get(id)?.upload?.cancelUpload();
+    const card: Card = {
+      id,
+      host,
+      upload: null,
+      pending: this.#handed.get(id) ?? null,
+      reasons: new WeakMap(),
+      surfaces: new WeakMap(),
+    };
+    this.#handed.delete(id);
+    this.#cards.set(id, card);
+    this.#byHost.set(host, card);
+    this.#render(card);
+    if (card.pending) this.#feed(card);
+    if (this.#focusNext) {
+      this.#focusNext = false;
+      this.#focusCard(card);
+    }
+    return () => {
+      if (this.#cards.get(id) !== card) return;
+      card.upload?.cancelUpload();
+      this.#cards.delete(id);
+      render(nothing, host);
+      card.upload = null;
+    };
+  }
+
+  /** Re-renders every mounted view, so that a change of the limits, strings or access reaches it. */
+  refresh(): void {
+    for (const card of this.#cards.values()) this.#render(card);
+  }
+
+  /** Every state publication: an upload whose block is gone is cancelled. */
   sync(): void {
-    const ids = pendingImageIds(this.#host.instance()?.getBlocks() ?? null);
-    const same =
-      ids.length === this.#ids.length && ids.every((id, index) => id === this.#ids[index]);
-    if (same) return;
+    const ids = new Set(pendingImageIds(this.#host.instance()?.getBlocks() ?? null));
     for (const [id, card] of this.#cards)
-      if (!ids.includes(id)) {
+      if (!ids.has(id)) {
         card.upload?.cancelUpload();
         this.#cards.delete(id);
       }
-    for (const id of ids)
-      if (!this.#cards.has(id)) {
-        this.#cards.set(id, {
-          element: null,
-          upload: null,
-          pending: null,
-          reasons: new WeakMap(),
-          surfaces: new WeakMap(),
-          shown: false,
-          translate: '',
-          width: '',
-          height: '',
-        });
-        if (this.#focusNext) {
-          this.#focusNext = false;
-          this.#focusId = id;
-        }
-      }
-    this.#ids = ids;
-    this.#host.geometry.invalidate('state');
-    this.#host.requestUpdate();
+    for (const id of [...this.#handed.keys()]) if (!ids.has(id)) this.#handed.delete(id);
   }
 
   /**
-   * A document change that the image tool made: the pending image it inserted takes focus once
-   * its card renders, as the popover it replaces took focus when it opened.
+   * A document change that the image tool made: the pending image it inserted takes focus, as the
+   * popover it replaces took focus when it opened. One engine mounts the view before this call,
+   * the other after it.
    */
   toolInserted(): void {
-    // The publication of the change may run before or after this notification: once the cards
-    // already follow the document, the newest card takes focus; otherwise the next new one does.
     const ids = pendingImageIds(this.#host.instance()?.getBlocks() ?? null);
-    const synced =
-      ids.length === this.#ids.length && ids.every((id, index) => id === this.#ids[index]);
     const last = ids.at(-1);
-    if (synced && last !== undefined) this.#focusCard(last);
+    const card = last === undefined ? undefined : this.#cards.get(last);
+    if (card?.upload) this.#focusCard(card);
     else this.#focusNext = true;
-  }
-
-  /**
-   * Focuses a card's File upload once the card shows: a hidden card, one not yet rendered or not
-   * yet placed by the overlay pass, cannot take focus.
-   */
-  #focusCard(id: string): void {
-    this.#focusId = id;
-    const card = this.#cards.get(id);
-    const upload = card?.upload;
-    if (!card?.shown || !upload) return;
-    this.#focusId = null;
-    void Promise.resolve(upload.updateComplete).then(() => {
-      if (upload.isConnected && this.#cards.get(id)?.upload === upload)
-        upload.focus({ preventScroll: true });
-    });
   }
 
   /**
    * Pasted or dropped image files (`uwg-te-req-content-6`): each file the limits refuse is
    * reported and announced; each accepted one inserts a pending image, the first at the paste or
    * drop position, each later one right after the image inserted last, and hands the file to its
-   * card, which uploads it. Returns whether the widget uploads (an upload hook is set).
+   * upload. Returns whether the widget uploads (an upload hook is set).
    */
   uploadImages(
     files: readonly File[],
@@ -349,116 +325,30 @@ export class TextEditorImageUploads implements OverlayLayer<readonly CardPlaceme
         const inserted = insertedBlock(before, this.#blockIds());
         if (!inserted) return;
         point = { kind: 'after', id: inserted };
-        this.sync();
+        const handed: PendingFile = { file, reason, surface };
         const card = this.#cards.get(inserted);
-        if (!card) return;
-        card.pending = { file, reason, surface };
-        this.#feed(inserted, card);
+        if (card) {
+          card.pending = handed;
+          this.#feed(card);
+        } else this.#handed.set(inserted, handed);
       });
       this.#queue = run.catch(() => undefined);
     }
     return true;
   }
 
-  /** The cards, rendered inside the overlay part; one per pending image, hidden until placed. */
-  render(): TemplateResult {
-    const strings = this.#host.strings();
-    const access = this.#host.access();
-    const limits = this.#host.limits();
-    const upload = this.#host.imageUpload();
-    return html`${repeat(
-      this.#ids,
-      (id) => id,
-      (id) =>
-        html`<div
-          part="text-editor-image-upload"
-          data-block=${id}
-          hidden
-          @keydown=${this.#keyDown}
-          ${ref((element) => this.#bind(id, (element as HTMLElement | undefined) ?? null))}
-        >
-          <tp-file-upload
-            size="sm"
-            .accept=${limits.accept}
-            .maxFileSize=${limits.maxFileSize}
-            .messages=${this.#messagesOf(strings)}
-            .uploader=${this.#uploader}
-            .disabled=${!upload || access.disabled}
-            .readOnly=${access.readOnly}
-            .preventDocumentDrop=${false}
-            @tp-value-change=${this.#filesChanged}
-            @tp-upload-complete=${this.#uploaded}
-          ></tp-file-upload>
-        </div>`,
-    )}`;
-  }
-
-  /** Cancels every upload and removes the layer; called when the widget disconnects. */
+  /** Cancels every upload; called when the widget disconnects. */
   release(): void {
     this.#released = true;
-    for (const card of this.#cards.values()) card.upload?.cancelUpload();
+    for (const card of this.#cards.values()) {
+      card.upload?.cancelUpload();
+      render(nothing, card.host);
+    }
     this.#cards.clear();
-    this.#ids = [];
-    this.#remove();
-    this.hide();
+    this.#handed.clear();
   }
 
-  // Overlay layer -------------------------------------------------------------------------------
-
-  wanted(): boolean {
-    for (const card of this.#cards.values()) if (card.element) return true;
-    return false;
-  }
-
-  measure(context: OverlayMeasureContext): readonly CardPlacement[] {
-    const { source } = context;
-    if (source.kind !== 'instance') return [];
-    const placements: CardPlacement[] = [];
-    for (const [id, card] of this.#cards) {
-      if (!card.element) continue;
-      const rects = source.instance.blockRects(id);
-      if (!rects) continue;
-      placements.push({ id, box: context.toOverlay(rects.content) });
-    }
-    return placements;
-  }
-
-  apply(placements: readonly CardPlacement[]): void {
-    const placed = new Set<string>();
-    for (const { id, box } of placements) {
-      const card = this.#cards.get(id);
-      const element = card?.element;
-      if (!card || !element) continue;
-      placed.add(id);
-      const translate = `${box.left}px ${box.top}px`;
-      if (translate !== card.translate)
-        element.style.setProperty('translate', (card.translate = translate));
-      const width = `${box.width}px`;
-      if (width !== card.width) element.style.setProperty('width', (card.width = width));
-      const height = `${box.height}px`;
-      if (height !== card.height) element.style.setProperty('height', (card.height = height));
-      if (!card.shown) {
-        card.shown = true;
-        element.hidden = false;
-        if (this.#focusId === id) this.#focusCard(id);
-      }
-    }
-    for (const [id, card] of this.#cards)
-      if (!placed.has(id) && card.shown && card.element) {
-        card.shown = false;
-        card.element.hidden = true;
-      }
-  }
-
-  hide(): void {
-    for (const card of this.#cards.values())
-      if (card.shown && card.element) {
-        card.shown = false;
-        card.element.hidden = true;
-      }
-  }
-
-  // Cards ---------------------------------------------------------------------------------------
+  // Views ---------------------------------------------------------------------------------------
 
   #blockIds(): readonly string[] {
     return (
@@ -479,23 +369,42 @@ export class TextEditorImageUploads implements OverlayLayer<readonly CardPlaceme
     return this.#messages;
   }
 
-  #bind(id: string, element: HTMLElement | null): void {
-    const card = this.#cards.get(id);
-    if (!card) return;
-    if (element === card.element) return;
-    card.element = element;
-    card.upload = element?.querySelector<TpFileUpload>('tp-file-upload') ?? null;
-    card.shown = false;
-    card.translate = '';
-    card.width = '';
-    card.height = '';
-    if (!element) return;
-    this.#host.geometry.invalidate('state');
-    if (card.pending) this.#feed(id, card);
+  /** Renders the File upload into the card's host, beside the engine's hidden `img`. */
+  #render(card: Card): void {
+    const strings = this.#host.strings();
+    const access = this.#host.access();
+    const limits = this.#host.limits();
+    const upload = this.#host.imageUpload();
+    render(
+      html`<tp-file-upload
+        size="sm"
+        .accept=${limits.accept}
+        .maxFileSize=${limits.maxFileSize}
+        .messages=${this.#messagesOf(strings)}
+        .uploader=${this.#uploader}
+        .disabled=${!upload || access.disabled}
+        .readOnly=${access.readOnly}
+        .preventDocumentDrop=${false}
+        @keydown=${this.#keyDown}
+        @tp-value-change=${this.#filesChanged}
+        @tp-upload-complete=${this.#uploaded}
+      ></tp-file-upload>`,
+      card.host,
+    );
+    card.upload = card.host.querySelector<TpFileUpload>('tp-file-upload');
   }
 
-  /** Hands a pasted or dropped file to a mounted card, which validates and uploads it. */
-  #feed(id: string, card: Card): void {
+  #focusCard(card: Card): void {
+    const upload = card.upload;
+    if (!upload) return;
+    void Promise.resolve(upload.updateComplete).then(() => {
+      if (upload.isConnected && this.#cards.get(card.id)?.upload === upload)
+        upload.focus({ preventScroll: true });
+    });
+  }
+
+  /** Hands a pasted or dropped file to a mounted view, which validates and uploads it. */
+  #feed(card: Card): void {
     const pending = card.pending;
     const upload = card.upload;
     if (!pending || !upload) return;
@@ -503,7 +412,7 @@ export class TextEditorImageUploads implements OverlayLayer<readonly CardPlaceme
     card.reasons.set(pending.file, pending.reason);
     card.surfaces.set(pending.file, pending.surface);
     void Promise.resolve(upload.updateComplete).then(() => {
-      if (upload.isConnected && this.#cards.get(id)?.upload === upload)
+      if (upload.isConnected && this.#cards.get(card.id)?.upload === upload)
         void upload.addFiles([pending.file]);
     });
   }
@@ -517,19 +426,16 @@ export class TextEditorImageUploads implements OverlayLayer<readonly CardPlaceme
     });
   };
 
-  #cardOf(event: Event): [string, Card] | null {
-    const element = (event.currentTarget as HTMLElement | null)?.closest<HTMLElement>(
-      '[data-block]',
+  #cardOf(event: Event): Card | null {
+    const host = (event.currentTarget as HTMLElement | null)?.closest<HTMLElement>(
+      '.tp-te-image-pending',
     );
-    const id = element?.dataset['block'];
-    const card = id === undefined ? undefined : this.#cards.get(id);
-    return id !== undefined && card ? [id, card] : null;
+    return (host && this.#byHost.get(host)) || null;
   }
 
   readonly #filesChanged = (event: TpValueChangeEvent<readonly File[]>): void => {
-    const found = this.#cardOf(event);
-    if (!found) return;
-    const [, card] = found;
+    const card = this.#cardOf(event);
+    if (!card) return;
     const added = (event.detail.metadata as { added?: readonly File[] } | undefined)?.added ?? [];
     for (const file of added)
       if (!card.reasons.has(file)) card.reasons.set(file, event.detail.reason);
@@ -541,9 +447,8 @@ export class TextEditorImageUploads implements OverlayLayer<readonly CardPlaceme
    * reported and the block stays pending.
    */
   readonly #uploaded = (event: CustomEvent<{ item: FileUploadItem; response: unknown }>): void => {
-    const found = this.#cardOf(event);
-    if (!found) return;
-    const [id, card] = found;
+    const card = this.#cardOf(event);
+    if (!card) return;
     const { item, response } = event.detail;
     const src = typeof response === 'string' ? response : '';
     if (!imageSourceAllowed(src)) {
@@ -554,8 +459,8 @@ export class TextEditorImageUploads implements OverlayLayer<readonly CardPlaceme
     }
     void this.#host
       .request({
-        target: [{ type: 'block.set-attrs', id, attrs: { src } }],
-        surface: card.surfaces.get(item.file) ?? 'api',
+        target: [{ type: 'block.set-attrs', id: card.id, attrs: { src } }],
+        surface: card.surfaces.get(item.file) ?? 'content',
         reason: card.reasons.get(item.file) ?? 'input',
         sourceEvent: event,
         trigger: null,
@@ -564,7 +469,7 @@ export class TextEditorImageUploads implements OverlayLayer<readonly CardPlaceme
       .catch(() => undefined);
   };
 
-  /** Escape in a card returns focus to the editing root with its selection. */
+  /** Escape in the upload returns focus to the editing root with its selection. */
   readonly #keyDown = (event: KeyboardEvent): void => {
     if (event.key !== 'Escape' || event.isComposing || event.defaultPrevented) return;
     event.preventDefault();

@@ -67,6 +67,8 @@ export function textEditorKeyZone(
 ): TextEditorKeyZone {
   for (const node of path) {
     if (node === parts.content) return 'editing';
+    // The upload view inside a pending image host owns its keys, drops and pastes.
+    if ((node as Partial<Element>).classList?.contains('tp-te-image-pending')) return 'other';
     if (parts.selectionToolbar && node === parts.selectionToolbar) return 'toolbar';
     if ((node as Partial<Element>).hasAttribute?.('popover')) return 'popup';
     if (node === parts.toolbar) return 'toolbar';

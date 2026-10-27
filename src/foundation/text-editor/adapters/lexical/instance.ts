@@ -94,6 +94,7 @@ export function lexicalRuntime(
     urls: context.urls,
     glue: textEditorContentGlue(context, engine, lexicalToPortable, glueOptions),
     overrides: nodeOverrides(options),
+    views: context.views,
   });
 }
 

@@ -159,7 +159,7 @@ function createKit(lexical: LexicalCoreLike): LexicalNodeKit {
       });
     }
 
-    createDOM(): HTMLElement {
+    createDOM(_config: LexicalEditorConfigLike, editor: LexicalEditorLike): HTMLElement {
       const host = nonEditableHost(lexical.$getDocument(), 'div');
       host.className = LEXICAL_CLASSES.imageHost;
       // Every block element carries `dir="auto"` (`uwg-te-req-pres-2`).
@@ -168,13 +168,20 @@ function createKit(lexical: LexicalCoreLike): LexicalNodeKit {
       image.className = LEXICAL_CLASSES.image;
       image.draggable = false;
       host.append(image);
-      writeImage(host, image, imageValues(this));
+      const values = imageValues(this);
+      writeImage(host, image, values);
+      const rt = runtimeByEditor.get(editor);
+      if (rt) runtimeByHost.set(host, rt);
+      syncPendingImageView(rt, editor, this, host, values.src === '');
       return host;
     }
 
     updateDOM(_prevNode: unknown, dom: HTMLElement): boolean {
       const image = dom.firstElementChild;
-      if (image) writeImage(dom, image as HTMLImageElement, imageValues(this));
+      const values = imageValues(this);
+      if (image) writeImage(dom, image as HTMLImageElement, values);
+      const rt = runtimeByHost.get(dom);
+      syncPendingImageView(rt, rt?.editor, this, dom, values.src === '');
       return false;
     }
 
@@ -358,6 +365,43 @@ function writeImage(host: HTMLElement, image: HTMLImageElement, values: LexicalI
   if (image.getAttribute('alt') !== values.alt) image.setAttribute('alt', values.alt);
   if (values.width === null) image.removeAttribute('width');
   else image.setAttribute('width', String(values.width));
+}
+
+// The runtime of each built editor, for node classes shared by every mount of a namespace
+
+const runtimeByEditor = new WeakMap<object, LexicalRuntime>();
+const runtimeByHost = new WeakMap<HTMLElement, LexicalRuntime>();
+
+/** Binds a built editor to its mount's runtime; the node classes read the mount's views from it. */
+export function bindEditorRuntime(editor: unknown, rt: LexicalRuntime): void {
+  if (typeof editor === 'object' && editor !== null) runtimeByEditor.set(editor, rt);
+}
+
+/**
+ * Syncs the widget's upload view of an image host with its pending state: mounted through
+ * `views.pendingImage` while the source is empty, cleaned up once a source arrives, when the node
+ * leaves the document (`cleanUpViews`) or when the editor is destroyed.
+ */
+function syncPendingImageView(
+  rt: LexicalRuntime | undefined,
+  editor: unknown,
+  node: LexicalNodeLike,
+  host: HTMLElement,
+  pending: boolean,
+): void {
+  if (!rt) return;
+  const key = node.getKey();
+  if (!pending) {
+    if (viewCleanups.has(host)) cleanUpView(host);
+    return;
+  }
+  if (viewCleanups.has(host)) return;
+  const id = rt.lexical.$getState(node, rt.states.id);
+  if (typeof id !== 'string' || id === '') return;
+  const cleanup = rt.engineViews?.pendingImage?.(host, id);
+  if (typeof cleanup !== 'function') return;
+  viewCleanups.set(host, cleanup);
+  trackView(editor, key, host);
 }
 
 // View hosts per editor, so that a destroyed node or editor cleans up its views

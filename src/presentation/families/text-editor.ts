@@ -26,7 +26,7 @@ const definition: ComponentDefinition = {
     { name: 'text-editor-selection-toolbar' },
     { name: 'text-editor-suggestions' },
     { name: 'text-editor-link-popover' },
-    { name: 'text-editor-image-upload' },
+    { name: 'text-editor-alt-input' },
     { name: 'text-editor-table-picker' },
     { name: 'text-editor-swatch' },
     { name: 'text-editor-status' },

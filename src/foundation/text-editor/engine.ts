@@ -133,6 +133,16 @@ export interface TextEditorEngineLabels {
   readonly taskCheckbox: string;
 }
 
+/**
+ * Views that the widget renders into hosts the engine owns (`uwg-te-req-surfaces-4`): the engine
+ * creates the host and calls the hook; the returned function cleans the view up when the host
+ * leaves the pending state, the node leaves the document or the editor is destroyed.
+ */
+export interface TextEditorEngineViews {
+  /** The File upload of a pending image (an image whose source is empty), by block identifier. */
+  pendingImage?(host: HTMLElement, id: string): (() => void) | void;
+}
+
 export interface TextEditorEngineContext extends TextEditorEngineNotifications {
   /** Rendered as the editing root mounts, without history and without a content notification. */
   readonly initialContent: TextEditorContentInput | null;
@@ -153,6 +163,8 @@ export interface TextEditorEngineContext extends TextEditorEngineNotifications {
   /** Aborted when the widget destroys or supersedes this mount. */
   readonly signal: AbortSignal;
   readonly labels: TextEditorEngineLabels;
+  /** The widget's views for engine-owned hosts; none renders nothing into them. */
+  readonly views?: TextEditorEngineViews | undefined;
 }
 
 // Instance (uwg-te-tab-engine r1–r14)

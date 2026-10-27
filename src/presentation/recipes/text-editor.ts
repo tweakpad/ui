@@ -64,9 +64,6 @@ const flow: DocumentFlowVariables = {
 };
 
 /** The quick-add Buttons' extent, and their gap from the table, in the reserved wrapper space. */
-/** The block size of a pending image (`uwg-te-req-surfaces-4`): room for the File upload's compact drop surface and its item row. */
-const pendingImageSize = 'calc(var(--tp-space-4) * 9)';
-
 const tableAddExtent = valueOfStep('min-block-size');
 const tableAddGap = 'var(--tp-space-1)';
 
@@ -290,8 +287,8 @@ export const textEditorAppearance: PresentationDictionary = {
     ...documentLinkRules('& .tp-te-link'),
     ...documentStrongRules('& .tp-te-bold'),
     ...documentImageRules('& .tp-te-image'),
-    // A pending image reserves the box that the widget's upload card takes.
-    at('& .tp-te-image-host.tp-te-image-pending', { 'min-block-size': pendingImageSize }),
+    // A pending image holds the widget's File upload, which takes the block's width.
+    at('& .tp-te-image-host.tp-te-image-pending > tp-file-upload', { display: 'block' }),
     at('& .tp-te-divider', dividerLine),
     at('& .tp-te-callout', calloutSurface),
     ...calloutToneRules('& .tp-te-callout'),
@@ -554,8 +551,12 @@ export const textEditorStructure: PresentationDictionary = {
       declarations: { display: 'flex', 'align-items': 'center', gap: 'var(--tp-space-1)' },
     },
   ],
-  // The upload card over a pending image block: its File upload takes the block's box.
-  'text-editor-image-upload': [{ declarations: { 'align-content': 'stretch' } }],
+  // The alternative text field inside a selected image: a compact floating surface.
+  'text-editor-alt-input': [
+    ...floatingToolbarAppearance,
+    ...floatingToolbarStructure,
+    { declarations: { 'inline-size': '16rem' } },
+  ],
   // Blocks (M8): the gutter's row of Buttons, transparent while a drag keeps its capture.
   'text-editor-gutter': [
     { declarations: { display: 'flex', 'align-items': 'center', 'inline-size': gutterSize } },

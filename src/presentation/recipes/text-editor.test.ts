@@ -78,7 +78,7 @@ const anatomy = [
   'text-editor-selection-toolbar',
   'text-editor-suggestions',
   'text-editor-link-popover',
-  'text-editor-image-upload',
+  'text-editor-alt-input',
   'text-editor-table-picker',
   'text-editor-swatch',
   'text-editor-status',

@@ -595,7 +595,7 @@ export function textEditorRouterConfig(
  * @csspart text-editor-selection-toolbar - The floating selection toolbar.
  * @csspart text-editor-suggestions - The suggestion popup.
  * @csspart text-editor-link-popover - The link popover.
- * @csspart text-editor-image-upload - The upload card over a pending image block.
+ * @csspart text-editor-alt-input - The alternative text field inside a selected image.
  * @csspart text-editor-table-picker - The table size picker.
  * @csspart text-editor-swatch - A color swatch.
  * @csspart text-editor-status - The loading and error status.
@@ -1157,6 +1157,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       frames: () => windowFrames(this.ownerDocument.defaultView ?? window),
       direction: () => this.direction,
       imageUpload: () => this.imageUpload !== null,
+      views: () => this.#popups.views,
       adoptStyles: (cssText) => adoptStyleText(this, this.renderRoot as ShadowRoot, cssText),
       dispatchRequest: (detail) =>
         this.emit('tp-text-editor-request', detail, { cancelable: true }),
@@ -1198,6 +1199,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       imageUpload: () => this.imageUpload,
       imageLimits: () => ({ accept: this.imageAccept, maxFileSize: this.imageMaxFileSize }),
       geometry: this.#geometry,
+      direction: () => this.direction,
       focusEditing: () => void this.#focus.focusEditing('restore').catch(() => {}),
       announce: (message, options) => this.#announcer.announce(message, options),
       diagnose: (code, message) => this.diagnose(code, message),

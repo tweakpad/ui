@@ -77,6 +77,7 @@ export const textEditorStyles = css`
 
   /* Blocks (M8): overlay marks placed by transform from the layer origin; never in the flow. */
   [part~='text-editor-gutter'],
+  [part~='text-editor-alt-input'],
   [part~='text-editor-block-selection'],
   [part~='text-editor-drop-indicator'] {
     position: absolute;
@@ -85,8 +86,13 @@ export const textEditorStyles = css`
     box-sizing: border-box;
   }
 
-  [part~='text-editor-gutter'] {
+  [part~='text-editor-gutter'],
+  [part~='text-editor-alt-input'] {
     pointer-events: auto;
+  }
+
+  [part~='text-editor-alt-input'][hidden] {
+    display: none !important;
   }
 
   [part~='text-editor-block-selection'][hidden],
@@ -178,25 +184,6 @@ export const textEditorStyles = css`
 
   [part~='text-editor-placeholder'][hidden] {
     display: none !important;
-  }
-
-  /* The upload card of a pending image: placed over the block's box; its File upload fills it. */
-  [part~='text-editor-image-upload'] {
-    position: absolute;
-    top: 0;
-    left: 0;
-    box-sizing: border-box;
-    display: grid;
-    pointer-events: auto;
-  }
-
-  [part~='text-editor-image-upload'][hidden] {
-    display: none !important;
-  }
-
-  [part~='text-editor-image-upload'] > tp-file-upload {
-    min-inline-size: 0;
-    min-block-size: 0;
   }
 
   [part~='text-editor-status'] {
