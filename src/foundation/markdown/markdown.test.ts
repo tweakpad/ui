@@ -1109,7 +1109,7 @@ describe('shared policies (uwg-te-md-req-policy)', () => {
     expect(imageProtocols(undefined)).toBe(DEFAULT_IMAGE_PROTOCOLS);
     expect(linkProtocols({ images: ['https:'] })).toBe(DEFAULT_LINK_PROTOCOLS);
     expect(DEFAULT_LINK_PROTOCOLS).toEqual(['http:', 'https:', 'mailto:', 'tel:']);
-    expect(DEFAULT_IMAGE_PROTOCOLS).toEqual(['http:', 'https:']);
+    expect(DEFAULT_IMAGE_PROTOCOLS).toEqual(['http:', 'https:', 'blob:']);
     expect(LINK_URL_ATTRIBUTES).toEqual([
       'href',
       'action',

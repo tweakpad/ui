@@ -31,12 +31,13 @@ const tree = {
 };
 
 describe('alternative text field (uwg-te-req-surfaces-4)', () => {
-  it('targets the one image of a block selection, pending or not, and nothing else', () => {
+  it('targets the one uploaded image of a block selection, never a pending image or anything else', () => {
     expect(imageAltTarget({ kind: 'blocks', ids: ['i1'] }, tree)).toEqual({
       id: 'i1',
       alt: 'Shelf',
     });
-    expect(imageAltTarget({ kind: 'blocks', ids: ['i2'] }, tree)).toEqual({ id: 'i2', alt: '' });
+    // A pending image has no source yet: the field describes an image that is there.
+    expect(imageAltTarget({ kind: 'blocks', ids: ['i2'] }, tree)).toBeNull();
     expect(imageAltTarget({ kind: 'blocks', ids: ['p1'] }, tree)).toBeNull();
     expect(imageAltTarget({ kind: 'blocks', ids: ['i1', 'i2'] }, tree)).toBeNull();
     expect(imageAltTarget({ kind: 'text' }, tree)).toBeNull();

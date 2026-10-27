@@ -31,7 +31,7 @@ describe('image upload cards (uwg-te-req-surfaces-4)', () => {
     expect(imageSourceAllowed('https://harbor.example/pier.jpg')).toBe(true);
     expect(imageSourceAllowed('pantry-shelf.svg')).toBe(true);
     expect(imageSourceAllowed('')).toBe(false);
-    expect(imageSourceAllowed('blob:https://harbor.example/1')).toBe(false);
+    expect(imageSourceAllowed('blob:https://harbor.example/1')).toBe(true);
     expect(imageSourceAllowed('data:image/png;base64,AAAA')).toBe(false);
   });
 

@@ -40,7 +40,6 @@ const REJECTED_IMAGES = [
   'data:image/png;base64,AAAA',
   'mailto:frames@studio.example',
   'ftp://files.studio.example/kiln.png',
-  'blob:https://studio.example/1',
 ] as const;
 
 /** Destinations the policy keeps. */
@@ -53,7 +52,11 @@ const ALLOWED_LINKS = [
   '#firing',
   'notes/kiln.html',
 ] as const;
-const ALLOWED_IMAGES = ['https://studio.example/kiln.png', 'shelf/plate.svg'] as const;
+const ALLOWED_IMAGES = [
+  'https://studio.example/kiln.png',
+  'shelf/plate.svg',
+  'blob:https://studio.example/1',
+] as const;
 
 const escapeHtml = (value: string) =>
   value.replace(/&/gu, '&amp;').replace(/"/gu, '&quot;').replace(/</gu, '&lt;');

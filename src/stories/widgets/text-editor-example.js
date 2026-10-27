@@ -205,12 +205,10 @@ export function lexicalEngine() {
   });
 }
 
-const sampleImage = new globalThis.URL('../assets/ratio-landscape.svg', import.meta.url).href;
-
 /**
- * The upload hook of the examples: reports progress in eight steps over 1.6 s and resolves the
- * sample image; the signal aborts it. An application uploads the file to its storage here and
- * resolves the stored image's URL.
+ * The upload hook of the examples: reports progress in eight steps over 1.6 s and resolves an
+ * object URL of the file itself; the signal aborts it. An application uploads the file to its
+ * storage here and resolves the stored image's URL.
  * @param {File} file
  * @param {{ signal: AbortSignal, onProgress(loaded: number, total?: number): void }} options
  * @returns {Promise<string>}
@@ -224,7 +222,7 @@ export function uploadImage(file, { signal, onProgress }) {
       onProgress(sent, total);
       if (sent < total) return;
       globalThis.clearInterval(timer);
-      resolve(sampleImage);
+      resolve(globalThis.URL.createObjectURL(file));
     }, 200);
     signal.addEventListener(
       'abort',

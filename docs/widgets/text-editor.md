@@ -377,7 +377,8 @@ buttons, Escape returns to the text with its selection, and Alt+F10 moves on to 
 Link destinations and image sources pass one URL policy on every path into the document: initial
 content, `setContent()` in every format, paste and drop, the link and image tools, `run()`
 actions and typed input rules. Links allow `http`, `https`, `mailto` and `tel` URLs, relative
-references and fragments; images allow `http` and `https` URLs and relative references.
+references and fragments; images allow `http`, `https` and `blob` URLs (object URLs the page
+itself created) and relative references.
 
 - A link outside the policy keeps its text and loses the link.
 - An image outside the policy becomes a paragraph of its alternative text, which keeps the
@@ -400,12 +401,12 @@ such a block at the paste or drop point for each accepted file; a refused file i
 `tp-diagnostic` with the code `text-editor-upload-rejected` and announced. Without an `upload`
 hook the image tool is disabled and pasted or dropped files are ignored. The hook receives each file
 with an abort signal and a progress callback and resolves to the image's source; a source outside
-the image policy, such as a `blob:` or `data:` URL, is reported and leaves the block waiting. An
+the image policy, such as a `data:` URL, is reported and leaves the block waiting. An
 image with a known source is inserted with `run('image', { src, alt })`.
 
-Selecting an image block (a grip click, or Escape from a caret in the text beside it) shows an
-alternative text field inside the image's top-left corner, for the image that is waiting for its
-upload too. Enter or its apply button saves the text; Escape returns to the text with the block
+Selecting an uploaded image block (a grip click, or Escape from a caret in the text beside it)
+shows an alternative text field inside the image's top-left corner; an image still waiting for
+its upload shows its File upload alone. Enter or its apply button saves the text; Escape returns to the text with the block
 still selected. Alt+F10 moves focus into the field, and Tab reaches it after the editing root.
 
 ## Custom blocks and inline nodes

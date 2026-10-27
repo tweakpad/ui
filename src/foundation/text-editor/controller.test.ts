@@ -765,7 +765,7 @@ describe('TextEditorController mount context (uwg-te-par-engine-1)', () => {
     });
     expect(engine.context!.urls).toEqual({
       links: ['http:', 'https:', 'mailto:', 'tel:'],
-      images: ['http:', 'https:'],
+      images: ['http:', 'https:', 'blob:'],
     });
   });
 

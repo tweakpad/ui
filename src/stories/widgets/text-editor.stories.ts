@@ -25,7 +25,6 @@ import {
 } from './text-editor-example.js';
 import { textEditorExamples, textEditorStorySources } from './text-editor.examples.js';
 import documentation from '../../../docs/widgets/text-editor.md?raw';
-import sampleImage from '../assets/ratio-landscape.svg?no-inline';
 
 interface Args {
   defaultValue: string;
@@ -251,8 +250,9 @@ export const CustomNodes: Story = {
 };
 
 /**
- * A sample upload service: it reports progress in eight steps, stops on abort and answers the URL
- * of one sample image, since it stores nothing.
+ * A sample upload service: it reports progress in eight steps, stops on abort and answers an
+ * object URL of the file itself, since it stores nothing; an application uploads the file to its
+ * storage and resolves the stored image's URL.
  */
 const sampleUpload: TextEditorImageUpload = (file, { signal, onProgress }) =>
   new Promise((resolve, reject) => {
@@ -263,7 +263,7 @@ const sampleUpload: TextEditorImageUpload = (file, { signal, onProgress }) =>
       onProgress(sent, total);
       if (sent < total) return;
       clearInterval(timer);
-      resolve(sampleImage);
+      resolve(URL.createObjectURL(file));
     }, 200);
     signal.addEventListener(
       'abort',

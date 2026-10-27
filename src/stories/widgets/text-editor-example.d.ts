@@ -12,7 +12,7 @@ export const fieldNotes: string;
 export function tiptapEngine(): TextEditorEngine;
 /** A new engine for one editor, with tables. */
 export function lexicalEngine(): TextEditorEngine;
-/** The upload hook of the examples: reports progress and resolves the sample image. */
+/** The upload hook of the examples: reports progress and resolves an object URL of the file. */
 export function uploadImage(
   file: File,
   options: { readonly signal: AbortSignal; onProgress(loaded: number, total?: number): void },

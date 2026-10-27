@@ -10,7 +10,12 @@ export const DEFAULT_LINK_PROTOCOLS: readonly string[] = Object.freeze([
   'mailto:',
   'tel:',
 ]);
-export const DEFAULT_IMAGE_PROTOCOLS: readonly string[] = Object.freeze(['http:', 'https:']);
+/** Images also allow object URLs, which only the page itself can create (an upload's preview). */
+export const DEFAULT_IMAGE_PROTOCOLS: readonly string[] = Object.freeze([
+  'http:',
+  'https:',
+  'blob:',
+]);
 
 /**
  * Whether a destination passes a protocol list. Relative references and fragments always pass.

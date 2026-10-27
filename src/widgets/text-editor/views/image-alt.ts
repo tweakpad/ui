@@ -52,7 +52,10 @@ export interface ImageAltTarget {
   readonly alt: string;
 }
 
-/** The selected image, or `null` for any other selection. */
+/**
+ * The selected image, or `null` for any other selection and for a pending image: the field
+ * describes an image that is there, so it shows once the upload resolved the source.
+ */
 export function imageAltTarget(
   selection: Pick<TextEditorSelection, 'kind'> & { readonly ids?: readonly string[] },
   tree: Pick<TextEditorBlockTree, 'get'> | null,
@@ -60,6 +63,8 @@ export function imageAltTarget(
   if (selection.kind !== 'blocks' || !tree || selection.ids?.length !== 1) return null;
   const block = tree.get(selection.ids[0]!);
   if (!block || block.kind !== 'image') return null;
+  const src = block.attrs['src'];
+  if (typeof src !== 'string' || src === '') return null;
   const alt = block.attrs['alt'];
   return { id: block.id, alt: typeof alt === 'string' ? alt : '' };
 }
