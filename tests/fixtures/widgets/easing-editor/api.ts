@@ -450,6 +450,50 @@ export async function assertKinds(): Promise<Report> {
       tabs.value,
     ),
   );
+  target.setValue('sine(out)');
+  await settle(target);
+  const shownHandle = surface.querySelector<HTMLElement>('.handle[data-handle="2"]')!;
+  checks.push(
+    check(
+      'a sine curve shows its Bézier fit handles from the start',
+      surface.querySelectorAll('.handle').length === 2 && target.kind === 'parametric',
+      { handles: surface.querySelectorAll('.handle').length, kind: target.kind },
+    ),
+  );
+  pointer(surface, 'pointerdown', box.left + box.width * 0.5, box.top + box.height * 0.5);
+  await tick();
+  pointer(surface, 'pointerup', box.left + box.width * 0.5, box.top + box.height * 0.5);
+  await settle(target);
+  checks.push(
+    check(
+      'a bare press beside the shown handles keeps the sine curve',
+      target.value === 'sine(out)',
+      target.value,
+    ),
+  );
+  const handleBox = shownHandle.getBoundingClientRect();
+  const hx = handleBox.left + handleBox.width / 2;
+  const hy = handleBox.top + handleBox.height / 2;
+  pointer(shownHandle, 'pointerdown', hx, hy);
+  await tick();
+  pointer(shownHandle, 'pointermove', hx, hy + box.height * 0.1);
+  await frame();
+  pointer(shownHandle, 'pointerup', hx, hy + box.height * 0.1);
+  await settle(target);
+  checks.push(
+    check(
+      'dragging a shown handle converts the sine curve to a Bézier',
+      target.kind === 'bezier' &&
+        target.value.startsWith('cubic-bezier(') &&
+        badge() === 'Custom' &&
+        captured.events.some(
+          (e) =>
+            (e.metadata as { conversion?: boolean })?.conversion === true &&
+            (e.metadata as { handle?: number })?.handle !== undefined,
+        ),
+      { value: target.value, badge: badge() },
+    ),
+  );
   const veto = (event: Event) => event.preventDefault();
   target.addEventListener('tp-value-change', veto);
   tab('spring').click();

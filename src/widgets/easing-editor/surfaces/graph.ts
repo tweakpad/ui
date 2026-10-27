@@ -12,7 +12,7 @@ import {
 } from '../../../foundation/motion.js';
 import type { ChangeReason } from '../../../foundation/types.js';
 import { easingFunction, normalizePoints } from '../../../foundation/easing/evaluate.js';
-import { convertEasingCurve } from '../../../foundation/easing/convert.js';
+import { convertEasingCurve, hasBezierFit } from '../../../foundation/easing/convert.js';
 import { toCssEasing } from '../../../foundation/easing/css.js';
 import {
   PROGRESSION_MAX,
@@ -47,7 +47,7 @@ export interface EasingSurfaceChangeDetail {
   readonly handle?: number;
   readonly point?: number;
   readonly axis?: 'time' | 'progression';
-  /** The press converted a parametric curve into points before dragging one. */
+  /** The edit converted a parametric curve into its Bézier fit or into points first. */
   readonly conversion?: boolean;
 }
 export const SURFACE_CHANGE = 'easing-surface-change';
@@ -103,6 +103,8 @@ export class TpEasingEditorGraph extends TpElement {
   #playing = false;
   #motion: MotionHandle | undefined;
   #range: ProgressionRange = { min: 0, max: 1 };
+  /** The Bézier fit shown over a parametric ease, cached per record. */
+  #fit: { readonly source: EasingCurve; readonly curve: BezierCurve } | undefined;
 
   /** The widget hosting this surface, for axis resolution of the shared family. */
   get presentationOwner(): HTMLElement | null {
@@ -131,6 +133,22 @@ export class TpEasingEditorGraph extends TpElement {
 
   protected get editable(): boolean {
     return !this.disabled && !this.readOnly;
+  }
+
+  /**
+   * The record whose handles the graph shows: a Bézier or custom record itself, the Bézier fit of
+   * a sine, power, expo, circ or back ease (its handles are visible from the start, so the first
+   * press grabs one instead of moving the curve), or the record unchanged.
+   */
+  #shown(): EasingCurve | null {
+    const curve = this.curve;
+    if (curve?.kind !== 'parametric' || !hasBezierFit(curve)) return curve;
+    if (this.#fit?.source !== curve) {
+      const fit = convertEasingCurve(curve, 'bezier');
+      if (fit.kind !== 'bezier') return curve;
+      this.#fit = { source: curve, curve: fit };
+    }
+    return this.#fit.curve;
   }
 
   /** Focuses the time input of a handle (1 or 2) or a custom point. */
@@ -271,11 +289,15 @@ export class TpEasingEditorGraph extends TpElement {
         ? { kind: 'handle', index: Number(handle) }
         : { kind: 'point', index: Number(index) };
       this.#pressed = curve;
-      this.#propose(curve, 'track-press', event, 'press', this.#active);
+      // A handle shown over a parametric ease converts it to the Bézier fit it belongs to.
+      const shown = this.#shown() ?? curve;
+      this.#propose(shown, 'track-press', event, 'press', this.#active, undefined, shown !== curve);
       return undefined;
     }
     if (curve.kind === 'parametric') {
-      // A press on a parametric curve converts it to points and drags the nearest one.
+      // A bare press on an ease with visible Bézier handles edits nothing, like a Bézier; a press
+      // on an elastic, bounce or steps curve converts it to points and drags the nearest one.
+      if (hasBezierFit(curve)) return false;
       const converted = convertEasingCurve(curve, 'custom');
       if (converted.kind !== 'custom') return false;
       const at = this.#coordinates(point);
@@ -442,12 +464,14 @@ export class TpEasingEditorGraph extends TpElement {
       input: clampParameter(TIME_DIMENSION, next.input),
       output: clampParameter(PROGRESSION_DIMENSION, next.output),
     };
-    const moved = this.#withPosition(this.curve, active, clamped);
-    if (moved) this.#propose(moved, 'keyboard', event, 'commit', active, axis);
+    const shown = this.#shown();
+    const moved = shown ? this.#withPosition(shown, active, clamped) : null;
+    if (moved)
+      this.#propose(moved, 'keyboard', event, 'commit', active, axis, shown !== this.curve);
   };
 
   #position(active: Active): EasingPoint | null {
-    const curve = this.curve;
+    const curve = this.#shown();
     if (!curve) return null;
     if (active.kind === 'handle')
       return curve.kind !== 'bezier'
@@ -620,6 +644,7 @@ export class TpEasingEditorGraph extends TpElement {
 
   #renderPlot() {
     const curve = this.curve;
+    const shown = this.#shown();
     const range = this.#range;
     const top = (1 - progressionFraction(1, range)) * 100;
     const bottom = (1 - progressionFraction(0, range)) * 100;
@@ -635,8 +660,8 @@ export class TpEasingEditorGraph extends TpElement {
       }
     }
     const handleLines =
-      curve?.kind === 'bezier'
-        ? svg`<line part="easing-editor-graph-handle-line" class="handle-line" x1="0" y1=${bottom.toFixed(3)} x2=${(curve.x1 * 100).toFixed(3)} y2=${((1 - progressionFraction(curve.y1, range)) * 100).toFixed(3)} vector-effect="non-scaling-stroke"></line><line part="easing-editor-graph-handle-line" class="handle-line" x1="100" y1=${top.toFixed(3)} x2=${(curve.x2 * 100).toFixed(3)} y2=${((1 - progressionFraction(curve.y2, range)) * 100).toFixed(3)} vector-effect="non-scaling-stroke"></line>`
+      shown?.kind === 'bezier'
+        ? svg`<line part="easing-editor-graph-handle-line" class="handle-line" x1="0" y1=${bottom.toFixed(3)} x2=${(shown.x1 * 100).toFixed(3)} y2=${((1 - progressionFraction(shown.y1, range)) * 100).toFixed(3)} vector-effect="non-scaling-stroke"></line><line part="easing-editor-graph-handle-line" class="handle-line" x1="100" y1=${top.toFixed(3)} x2=${(shown.x2 * 100).toFixed(3)} y2=${((1 - progressionFraction(shown.y2, range)) * 100).toFixed(3)} vector-effect="non-scaling-stroke"></line>`
         : nothing;
     const path = curve
       ? svg`<polyline part="easing-editor-graph-curve" class="curve" points=${curvePolyline(easingFunction(curve), range, 100, 100, SAMPLES)} vector-effect="non-scaling-stroke"></polyline>`
@@ -686,11 +711,12 @@ export class TpEasingEditorGraph extends TpElement {
             },
             content: html`<span ${bindPart({ class: 'shape' }, [this.#shapeReference])}></span>`,
           });
+    const shown = this.#shown();
     const handles =
-      curve?.kind === 'bezier'
-        ? html`${this.#renderHandle(curve, 1)}${this.#renderHandle(curve, 2)}`
-        : curve?.kind === 'custom'
-          ? normalizePoints(curve.points).map((point, index) => this.#renderPoint(point, index))
+      shown?.kind === 'bezier'
+        ? html`${this.#renderHandle(shown, 1)}${this.#renderHandle(shown, 2)}`
+        : shown?.kind === 'custom'
+          ? normalizePoints(shown.points).map((point, index) => this.#renderPoint(point, index))
           : nothing;
     return this.renderPart('easing-editor-graph', state, {
       tag: 'div',
@@ -706,7 +732,7 @@ export class TpEasingEditorGraph extends TpElement {
         'data-readonly': this.readOnly,
         'data-dragging': this.#dragging,
         'data-playing': this.#playing,
-        'data-editable': curve?.kind === 'bezier' || curve?.kind === 'custom',
+        'data-editable': shown?.kind === 'bezier' || shown?.kind === 'custom',
       },
       content: html`${previewLayer}${this.#renderPlot()}
         <div ${bindPart({ class: 'frame' }, [this.#frameReference])}>${handles}</div>`,
