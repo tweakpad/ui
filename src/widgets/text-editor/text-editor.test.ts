@@ -305,6 +305,16 @@ describe('tp-text-editor structure', () => {
     expect(preview).toMatch(/background:\s*transparent;/u);
   });
 
+  it('uwg-te-req-tools-2: the fixed toolbar resolves with the widget focus record, so its controls disable while focus is outside', () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'text-editor.ts'),
+      'utf8',
+    );
+    expect(source).toMatch(
+      /resolveToolbarView\(\{[^}]*focused: this\.#focus\.focused,[^}]*context: \(surface\) => this\.#controller\.toolContext\(surface\),/u,
+    );
+  });
+
   it('uwg-te-req-pres-1: the root part carries the widget focus, so its ring stays while a top-layer popup of the widget holds focus', () => {
     const source = readFileSync(
       join(dirname(fileURLToPath(import.meta.url)), 'text-editor.ts'),

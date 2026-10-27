@@ -92,6 +92,11 @@ export interface TextEditorToolbarView {
   /** The widget is disabled. */
   readonly disabled: boolean;
   /**
+   * Focus is in the widget. While it is outside, no caret or selection shows what a tool would
+   * act on, so every control, the More trigger included, shows disabled semantics.
+   */
+  readonly focused: boolean;
+  /**
    * The groups with an available tool placed; a tool that reports itself invisible keeps its
    * place as a `hidden` item.
    */
@@ -117,24 +122,39 @@ export interface TextEditorToolbarViewInput {
   readonly expanded?: ((tool: TextEditorTool) => boolean) | undefined;
 }
 
+/** The fixed toolbar's input: the shared one and the widget's focus record. */
+export interface TextEditorFixedToolbarViewInput extends TextEditorToolbarViewInput {
+  /** Whether focus is in the widget: the editing root, the toolbar or one of its surfaces. */
+  readonly focused: boolean;
+}
+
 /**
  * The fixed toolbar's view from the resolved layout and the normalized state, or `null` only while
  * the resolved layout's `toolbar` key holds no available tool (`uwg-te-tab-anatomy-r2`). Visibility
  * never removes a control: a tool that reports itself invisible stays in its group as a `hidden`
- * item, so that the row keeps its partition and no control moves (`uwg-te-req-pres-5`).
+ * item, so that the row keeps its partition and no control moves (`uwg-te-req-pres-5`). While
+ * focus is outside the widget, no tool is enabled (`uwg-te-req-tools-2`): the controls keep their
+ * activity, values and labels, and stay focusable, so that Tab reaches the toolbar and enables
+ * them.
  */
 export function resolveToolbarView(
-  input: TextEditorToolbarViewInput,
+  input: TextEditorFixedToolbarViewInput,
 ): TextEditorToolbarView | null {
-  const { registry, layout } = input;
+  const { registry, layout, focused } = input;
   const placed = layout.toolbar.flat();
   if (!placed.some((id) => registry.tools.has(id) && registry.isAvailable(id))) return null;
   const context = input.context('toolbar');
-  const groups = resolveGroups(layout.toolbar, input, context, true);
+  const groups = resolveGroups(
+    layout.toolbar,
+    focused ? input : { ...input, enabled: () => false },
+    context,
+    true,
+  );
   return {
     label: context.strings.toolbar,
     moreTools: context.strings.moreTools,
     disabled: input.access.disabled,
+    focused,
     groups,
   };
 }

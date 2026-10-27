@@ -234,7 +234,7 @@ export class TextEditorToolbar {
               variant="ghost"
               size="icon"
               .icon=${ellipsisVerticalIcon}
-              .disabled=${this.#hiddenGroups.size > 0 && !omitted.length}
+              .disabled=${!view.focused || (this.#hiddenGroups.size > 0 && !omitted.length)}
               >${moreLabel}</tp-button
             >${omitted.map(
               (items, index) =>

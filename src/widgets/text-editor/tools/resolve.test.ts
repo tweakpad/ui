@@ -23,7 +23,7 @@ import {
   resolveSelectionToolbarView,
   resolveToolbarView,
   type TextEditorToolbarItem,
-  type TextEditorToolbarViewInput,
+  type TextEditorFixedToolbarViewInput,
 } from './resolve.js';
 
 const TABLE: readonly TextEditorCapability[] = ['block.table', 'table.merge', 'table.move'];
@@ -40,9 +40,10 @@ function view(
     shortcut?: (id: string) => KeyShortcut | undefined;
     expanded?: (tool: TextEditorTool) => boolean;
     can?: () => boolean;
+    focused?: boolean;
   } = {},
   resolve: (
-    input: TextEditorToolbarViewInput,
+    input: TextEditorFixedToolbarViewInput,
   ) => ReturnType<typeof resolveToolbarView> = resolveToolbarView,
 ) {
   const registry = resolveTextEditorTools({
@@ -69,6 +70,7 @@ function view(
     registry,
     layout,
     access,
+    focused: options.focused ?? true,
     context,
     enabled: (tool, toolContext) =>
       toolEnabled(tool, toolContext, {
@@ -91,6 +93,22 @@ const find = (result: ReturnType<typeof view>, id: string) =>
   all(result).find((item) => item.id === id && !item.pair)!;
 
 describe('text editor toolbar view', () => {
+  it('disables every control while focus is outside the widget, keeping it focusable with its activity (uwg-te-req-tools-2)', () => {
+    const focused = view();
+    const unfocused = view({ focused: false });
+    expect(focused!.focused).toBe(true);
+    expect(find(focused, 'bold').disabled).toBe(false);
+    expect(unfocused!.focused).toBe(false);
+    expect(all(unfocused).every((item) => item.disabled)).toBe(true);
+    expect(all(unfocused).every((item) => item.focusableWhenDisabled)).toBe(true);
+    expect(all(unfocused).map((item) => [item.id, item.active, item.hidden ?? false])).toEqual(
+      all(focused).map((item) => [item.id, item.active, item.hidden ?? false]),
+    );
+    // The widget's own disabled state still takes focusability away.
+    const disabled = view({ focused: false, access: { readOnly: false, disabled: true } });
+    expect(all(disabled).every((item) => !item.focusableWhenDisabled)).toBe(true);
+  });
+
   it('gives the default layout six groups in order, with merged pairs (uwg-te-tab-layout, uwg-te-req-tools-1)', () => {
     const result = view();
     expect(result).toMatchObject({
@@ -200,7 +218,7 @@ describe('text editor toolbar view', () => {
       all(
         view({ state }, (input) => {
           const selection = resolveSelectionToolbarView(input);
-          return selection && { ...selection, moreTools: '' };
+          return selection && { ...selection, moreTools: '', focused: true };
         }),
       ).map((item) => [item.id, item.hidden ?? false]);
     expect(floating()).toContainEqual(['turn-into', false]);

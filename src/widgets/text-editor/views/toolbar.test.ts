@@ -217,12 +217,13 @@ function toolItem(patch: Partial<TextEditorToolbarItem> = {}): TextEditorToolbar
   };
 }
 
-function toolbarView(disabled = false): TextEditorToolbarView {
+function toolbarView(disabled = false, focused = true): TextEditorToolbarView {
   const flags = { disabled, focusableWhenDisabled: !disabled };
   return {
     label: textEditorStrings.toolbar,
     moreTools: textEditorStrings.moreTools,
     disabled,
+    focused,
     groups: [
       {
         key: '0',
@@ -690,6 +691,16 @@ describe('text editor fixed toolbar', () => {
     const pairMarkup = templateMarkup(omit(['1']));
     expect(pairMarkup).toMatch(/<tp-menu-checkbox-item value=subscript /);
     expect(pairMarkup).not.toMatch(/value=(superscript|bold|block-type) /);
+  });
+
+  it('disables the More trigger while focus is outside the widget, so that its menu cannot take focus in (uwg-te-req-tools-2)', () => {
+    const moreDisabled = (template: unknown) =>
+      /class="?toolbar-more-trigger"?[^>]*\.disabled="?(true|false)/.exec(
+        templateMarkup(template),
+      )?.[1];
+    const t = setup({ view: toolbarView(false, false) });
+    expect(moreDisabled(t.update())).toBe('true');
+    expect(moreDisabled(t.update(toolbarView()))).toBe('false');
   });
 
   it('closes the open toolbar menu before another opens, recording its close first (uwg-te-req-surfaces-6, uwg-te-req-a11y-6)', () => {

@@ -213,7 +213,10 @@ editor.layout = {
 
 A fixed toolbar without room for every group moves the last ones into a More menu. A tool that
 cannot act at the selection shows disabled, and a tool that the engine cannot run, such as the
-table tools without the table modules, is left out. An unknown identifier is skipped and reported
+table tools without the table modules, is left out. While focus is outside the editor, no caret or
+selection shows what a tool would act on, so every control of the toolbar, the More menu's trigger
+included, shows disabled; focus anywhere in the editor, also on a toolbar control reached with
+Tab, enables them again. An unknown identifier is skipped and reported
 through `tp-diagnostic` with the code `text-editor-layout-unknown`.
 
 `tools` adds your own tools to the built-in ones, and a tool with the identifier of a built-in one

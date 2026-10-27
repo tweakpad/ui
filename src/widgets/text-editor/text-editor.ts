@@ -1435,6 +1435,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       registry: tooling.registry,
       layout: tooling.layout,
       access: this.#access(),
+      focused: this.#focus.focused,
       context: (surface) => this.#controller.toolContext(surface),
       enabled: (tool, context) => this.#controller.isToolEnabled(tool, context),
       shortcut: (id) => this.#router.shortcut(id),
