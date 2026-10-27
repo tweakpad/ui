@@ -24,7 +24,7 @@ import type { ChangeReason } from '../../../foundation/types.js';
 import { checkIcon } from '../../../icons/check.js';
 import { externalLinkIcon } from '../../../icons/external-link.js';
 import { unlinkIcon } from '../../../icons/link.js';
-import { selectionAnchor } from './selection-toolbar.js';
+import { selectionAnchor } from './selection-anchor.js';
 
 /** What applying a URL does: nothing for an empty URL, an invalid mark, or one `link.set`. */
 export type LinkApplyDecision =

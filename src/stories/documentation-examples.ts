@@ -42,12 +42,20 @@ const publishedEntryModule = new RegExp(
   'g',
 );
 
+/** A module of an engine adapter folder of a published entry, which ships at `@tweakpad/ui/<entry>/adapters/<engine>`. */
+const publishedAdapterModule = new RegExp(
+  `'(?:\\.\\.\\/)+foundation\\/(${PUBLISHED_FOUNDATION_ENTRIES.join('|')})\\/adapters\\/(?!shared\\/)([^/']+)\\/[^']+'`,
+  'g',
+);
+
 /**
- * Rewrites repository-relative foundation imports (any depth): a module of a published entry to
- * `@tweakpad/ui/<entry>`, every other foundation module to `@tweakpad/ui`.
+ * Rewrites repository-relative foundation imports (any depth): a module of an engine adapter folder
+ * to `@tweakpad/ui/<entry>/adapters/<engine>`, a module of a published entry to `@tweakpad/ui/<entry>`,
+ * every other foundation module to `@tweakpad/ui`.
  */
 const publishedFoundationImports = (raw: string) =>
   raw
+    .replace(publishedAdapterModule, "'@tweakpad/ui/$1/adapters/$2'")
     .replace(publishedEntryModule, "'@tweakpad/ui/$1'")
     .replace(/'(?:\.\.\/)+foundation\/[^']+'/g, "'@tweakpad/ui'");
 

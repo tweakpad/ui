@@ -28,6 +28,15 @@ const foundationEntries = Object.entries(packageExports).flatMap(([key, value]) 
     : [],
 );
 
+/** Engine adapter entries the package exports under a foundation entry's subpath. */
+const adapterEntries = Object.values(packageExports).flatMap((value) => {
+  const match =
+    typeof value !== 'string'
+      ? /^\.\/dist\/foundation\/([^/]+)\/adapters\/([^/]+)\/index\.d\.ts$/u.exec(value.types ?? '')
+      : null;
+  return match ? [[match[1]!, match[2]!] as const] : [];
+});
+
 /**
  * Whether `exports` publishes a package specifier. Every `src/icons/<name>.ts` ships declarations,
  * and all but `types.ts` ship a module, so `icons/types` serves type-only imports alone.
@@ -208,6 +217,28 @@ describe('copyable example sources (uwg-req-102)', () => {
     expect(
       publishedSource("import { b } from '../../foundation/text-editor/content/mechanics.js';"),
     ).toBe("import { b } from '@tweakpad/ui/text-editor';");
+    expect(
+      publishedSource("import { c } from '../foundation/text-editor/adapters/shared/options.js';"),
+    ).toBe("import { c } from '@tweakpad/ui/text-editor';");
+  });
+
+  it("publishes a module of an engine adapter folder at the entry's per-engine subpath, from any depth", () => {
+    expect(adapterEntries.length).toBe(2);
+    for (const [entry, engine] of adapterEntries) {
+      expect(packageExports[`./${entry}/adapters/${engine}`]).toBeDefined();
+      for (const depth of depths) {
+        expect(
+          publishedSource(
+            `import { a } from '${depth}foundation/${entry}/adapters/${engine}/index.js';`,
+          ),
+        ).toBe(`import { a } from '@tweakpad/ui/${entry}/adapters/${engine}';`);
+        expect(
+          publishedSource(
+            `import { a } from '${depth}foundation/${entry}/adapters/${engine}/modules.js';`,
+          ),
+        ).toBe(`import { a } from '@tweakpad/ui/${entry}/adapters/${engine}';`);
+      }
+    }
   });
 
   it('publishes every other foundation module from the package root', () => {

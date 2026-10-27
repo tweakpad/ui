@@ -8,10 +8,10 @@
  * again moves on to the next contextual controls. Leaving restores `tabindex=-1`.
  */
 import { deepActiveElement } from '../../../foundation/focus.js';
-import type { TextEditorContextualSurface } from '../focus.js';
+import { TEXT_EDITOR_CONTEXTUAL_ORDER, type TextEditorContextualSurface } from '../focus.js';
 
 /** The cycle position of the session: after the selection toolbar, before the gutter. */
-export const TABLE_CONTROLS_ORDER = 1;
+export const TABLE_CONTROLS_ORDER = TEXT_EDITOR_CONTEXTUAL_ORDER.tableControls;
 
 /** What the session needs from the chrome. */
 export interface TableControlsChrome {

@@ -4,6 +4,7 @@ import type {
   TextEditorInlineDefinition,
   TextEditorSuggestionRequest,
 } from '../../foundation/text-editor/index.js';
+import type { TextEditorFeature } from '../../widgets/text-editor/feature.js';
 
 /** Survey notes in HTML: a heading, two paragraphs and a list with bold lead words. */
 export const fieldNotes: string;
@@ -16,7 +17,9 @@ export function uploadImage(
   file: File,
   options: { readonly signal: AbortSignal; onProgress(loaded: number, total?: number): void },
 ): Promise<string>;
-/** Wires the editors, sample notes, upload hook and form readout inside `root`; returns cleanup. */
+/** Every feature of the editor, with the sample upload hook. */
+export function allTextEditorFeatures(): TextEditorFeature[];
+/** Wires the editors, sample notes, features and form readout inside `root`; returns cleanup. */
 export function setupTextEditorExample(
   root: HTMLElement,
   createEngine: () => TextEditorEngine,

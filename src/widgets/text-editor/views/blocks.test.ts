@@ -1,6 +1,6 @@
 import { render } from 'lit';
 import { describe, expect, it, vi } from 'vitest';
-import { textEditorTools } from '../../../foundation/text-editor/builtin-tools.js';
+import { textEditorTools } from '../../../foundation/text-editor/builtin-tools/index.js';
 import { BASE_CAPABILITIES } from '../../../foundation/text-editor/capabilities.js';
 import type { TextEditorRequestProposal } from '../../../foundation/text-editor/controller.js';
 import { resolveTextEditorLayout } from '../../../foundation/text-editor/layout.js';

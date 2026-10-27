@@ -3,16 +3,43 @@
 `tp-text-editor` edits one structured rich-text document: paragraphs, headings, quotes, code
 blocks, lists, dividers, images and tables, holding text with marks, links and hard breaks. An
 editing engine that your application supplies owns the document, the editing commands, input
-handling and history. The editor renders the toolbar and its other controls itself and reaches
-the engine only through an engine adapter from `@tweakpad/ui/text-editor`. It has no controlled
+handling and history. The editor renders the toolbar itself; its other controls are features you
+import and assign (see Features), so a page bundles only the ones it uses. It reaches
+the engine only through an engine adapter from that engine's own entry,
+`@tweakpad/ui/text-editor/adapters/tiptap` or `@tweakpad/ui/text-editor/adapters/lexical`. It has no controlled
 value: `defaultValue` supplies the initial content, and the content is serialized only when you
 ask for it.
 
 ## Setup
 
-Register the widgets, then give the editor an engine built by an adapter factory. The library
-does not depend on an engine: install the engine's packages and pass their modules to the
-factory. The table modules are optional; without them the editor offers no table tools.
+Register the widgets, assign the features you use, then give the editor an engine built by an
+adapter factory. The library does not depend on an engine: install the engine's packages and pass
+their modules to the factory. Each adapter is its own entry, so an application bundles only the
+adapter it imports; the engine contract, the tools and the node helpers stay in
+`@tweakpad/ui/text-editor`. The table modules are optional; without them the editor offers no
+table tools.
+
+```js
+import '@tweakpad/ui/register/widgets';
+import {
+  textEditorBlocks,
+  textEditorImages,
+  textEditorLinks,
+  textEditorSelectionToolbar,
+  textEditorSuggestions,
+  textEditorTables,
+} from '@tweakpad/ui/widgets';
+
+const editor = document.getElementById('notes');
+editor.features = [
+  textEditorBlocks(),
+  textEditorTables(),
+  textEditorImages({ upload: uploadImage }),
+  textEditorLinks(),
+  textEditorSelectionToolbar(),
+  textEditorSuggestions(),
+];
+```
 
 ### Tiptap
 
@@ -34,7 +61,7 @@ npm install @tiptap/core @tiptap/pm @tiptap/starter-kit @tiptap/extension-list @
   import * as list from '@tiptap/extension-list';
   import * as table from '@tiptap/extension-table';
   import * as tables from '@tiptap/pm/tables';
-  import { createTiptapEngine } from '@tweakpad/ui/text-editor';
+  import { createTiptapEngine } from '@tweakpad/ui/text-editor/adapters/tiptap';
 
   document.getElementById('notes').engine = createTiptapEngine({
     core,
@@ -73,7 +100,7 @@ npm install lexical @lexical/extension @lexical/rich-text @lexical/history @lexi
   import * as a11y from '@lexical/a11y';
   import * as html from '@lexical/html';
   import * as table from '@lexical/table';
-  import { createLexicalEngine } from '@tweakpad/ui/text-editor';
+  import { createLexicalEngine } from '@tweakpad/ui/text-editor/adapters/lexical';
 
   document.getElementById('notes').engine = createLexicalEngine({
     lexical,
@@ -94,8 +121,8 @@ npm install lexical @lexical/extension @lexical/rich-text @lexical/history @lexi
 
 ## Engines
 
-Both adapters give the editor the same properties, events, keyboard and appearance. Each factory
-call returns a new engine; assigning another engine to `engine` remounts the editor and keeps its
+Both adapters give the editor the same properties, events, keyboard and appearance. Importing one
+adapter's entry never loads the other adapter. Each factory call returns a new engine; assigning another engine to `engine` remounts the editor and keeps its
 content. A factory never throws: the adapter checks the modules when the editor mounts, and a
 missing or incompatible module, or modules from two copies of one engine, fail the mount with
 `tp-text-editor-error`. The adapters are verified with Tiptap 3.32 and Lexical 0.52; a Lexical
@@ -217,7 +244,9 @@ table tools without the table modules, is left out. While focus is outside the e
 selection shows what a tool would act on, so every control of the toolbar, the More menu's trigger
 included, shows disabled; focus anywhere in the editor, also on a toolbar control reached with
 Tab, enables them again. An unknown identifier is skipped and reported
-through `tp-diagnostic` with the code `text-editor-layout-unknown`.
+through `tp-diagnostic` with the code `text-editor-layout-unknown`. A built-in tool of a feature
+the editor does not include is left out of the default layouts silently; when your layout places
+it, the same diagnostic names the feature.
 
 `tools` adds your own tools to the built-in ones, and a tool with the identifier of a built-in one
 replaces it. Define a tool with `defineTextEditorTool` from `@tweakpad/ui/text-editor`: an `id`,
@@ -246,9 +275,39 @@ editor.layout = { toolbar: [...editor.layout.toolbar, ['insert-date']] };
 `strings` replaces any of the English labels, names, hints and announcements of
 `textEditorStrings`, from which the built-in tools also take their labels.
 
+## Features
+
+The editor's optional controls are features: plain objects that factories of `@tweakpad/ui/widgets`
+create and that you assign to `features`. The editor holds only the features assigned to it, and
+your bundler drops the code of every feature you do not import, the library components it renders
+included. Without any, the editor is its core: the fixed toolbar with history, the block kinds,
+marks, colors and alignment, the placeholder and the status.
+
+| Factory                        | Adds                                                                                                                 | Tools                                                                  |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `textEditorBlocks()`           | The gutter with its grip and insert button, the block menu, block mode, the block drag and the keyboard block moves. | `duplicate-block`, `copy-block-link`, `move-block-*`, `delete-block`   |
+| `textEditorTables(options?)`   | The table size picker, the row, column and cell grips and menus, the column resize and the sticky header.            | `table` and the `table-*` tools, `cell-background`, `table-cell-align` |
+| `textEditorImages(options?)`   | The upload card of a new image, pasted and dropped image files and the alternative text field.                       | `image`                                                                |
+| `textEditorLinks()`            | The link popover.                                                                                                    | `link`                                                                 |
+| `textEditorSelectionToolbar()` | The toolbar that floats over a text selection or a cell range.                                                       | none of its own                                                        |
+| `textEditorSuggestions()`      | The slash menu and the suggestion lists of custom inline nodes.                                                      | `slash`                                                                |
+
+`textEditorTables({ stickyHeaders: true })` keeps a copy of the header row in view while the rest
+of a long table scrolls. `textEditorImages({ upload, accept, maxFileSize })` takes the upload
+hook, the accepted types in File upload's `accept` forms (`image/*` by default) and the largest
+accepted file, in bytes or as text with a unit such as `'10MB'` (no limit by default); without
+`upload` the image tool is disabled and pasted or dropped files are ignored.
+
+A feature's tools exist only while the feature is assigned: the default layouts leave them out
+silently, and a layout of yours that places one reports `text-editor-layout-unknown` naming the
+feature. The tables feature also needs the engine's table modules, which declare the capability
+its tools require. Assigning another `features` list replaces the previous features; a list with
+two features of one name keeps the first and reports `text-editor-feature-duplicate`. The engine
+mounts the same whatever the features, so adding or removing one never remounts it.
+
 ## Blocks, tables, links and images
 
-A gutter with two buttons appears beside the block under the pointer: **Insert** adds a block
+With `textEditorBlocks()`, a gutter with two buttons appears beside the block under the pointer: **Insert** adds a block
 below it (Alt+click: above) and types `/` there, which opens the slash menu; in an empty paragraph
 or list item it types `/` in place. Beside a list item the new block is an item of the same list.
 The **grip** drags the block, or opens the block menu when clicked. The gutter hides while you
@@ -294,7 +353,7 @@ Screen readers hear the selected block count, moves, duplicates, deletions and e
 
 ### Tables
 
-The table tool opens a size picker: point at its grid, or type the number of rows, up to 100, and
+With `textEditorTables()`, the table tool opens a size picker: point at its grid, or type the number of rows, up to 100, and
 of columns, up to 20, then press Enter or Insert. In a table, Tab and Shift+Tab move to the next
 and the previous cell, and Tab in the last cell adds a row. A table wider than the editor scrolls
 sideways and keeps the cell with the caret in view.
@@ -306,8 +365,8 @@ by dragging and opens the cell menu (`layout.tableCell`): merge, split, backgrou
 clearing. Buttons past the last row and the last column add one. Dragging a column boundary
 resizes the column, down to 48 pixels; on the focused boundary the arrow keys resize it by 8
 pixels (32 with Shift, 1 with Alt), and Home and End set its minimum and maximum width.
-`stickyTableHeaders` keeps a copy of the header row in view while the rest of a long table
-scrolls.
+The feature's `stickyHeaders` option keeps a copy of the header row in view while the rest of a
+long table scrolls.
 
 Alt+F10 in a table moves focus to its controls: the cell handle when cells are selected, else the
 column grip. Tab and Shift+Tab move through the grips, the handle, the boundary and the add
@@ -328,16 +387,18 @@ references and fragments; images allow `http` and `https` URLs and relative refe
 - Typing `[text](url)`, or a URL followed by a space or Enter, links only a destination inside
   the policy, and so does pasting a single URL over selected text.
 
-Images are added by upload. The image tool inserts an image block without a source yet, which
-shows a File upload in its place: drop an image on it or click it to choose one. The file is
-checked against `imageAccept` (image types by default) and `imageMaxFileSize` (no limit by
-default), uploaded through `imageUpload` with its progress shown, and once the upload resolves the
+With `textEditorLinks()`, the link tool opens a popover at the selection to set or remove the
+destination. With `textEditorImages()`, images are added by upload. The image tool inserts an image
+block without a source yet, which shows a File upload in its place: drop an image on it or click it
+to choose one. The file is checked against the feature's `accept` (image types by default) and
+`maxFileSize` (no limit by default), uploaded through its `upload` hook with its progress shown,
+and once the upload resolves the
 image's source the block becomes the image. A failed upload shows its error with a Retry button;
 a refused file shows why. Deleting the block cancels its upload, and a block still waiting for its
 image is left out of the content. Pasted or dropped image files take the same limits and insert
 such a block at the paste or drop point for each accepted file; a refused file is reported through
-`tp-diagnostic` with the code `text-editor-upload-rejected` and announced. Without `imageUpload`
-the image tool is disabled and pasted or dropped files are ignored. The hook receives each file
+`tp-diagnostic` with the code `text-editor-upload-rejected` and announced. Without an `upload`
+hook the image tool is disabled and pasted or dropped files are ignored. The hook receives each file
 with an abort signal and a progress callback and resolves to the image's source; a source outside
 the image policy, such as a `blob:` or `data:` URL, is reported and leaves the block waiting. An
 image with a known source is inserted with `run('image', { src, alt })`.
@@ -655,29 +716,26 @@ The editor needs Chrome or Edge 137 or later, Firefox 142 or later, or Safari 17
 
 ### Properties
 
-| Property             | Attribute              | Type                                  | Default             | Description                                                                                                              |
-| -------------------- | ---------------------- | ------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `engine`             | none                   | `TextEditorEngine \| null`            | `null`              | The editing engine, built by an adapter factory (see Engines). Another engine remounts the editor with its content kept. |
-| `defaultValue`       | `default-value`        | `string \| object \| null`            | `null`              | Initial content in `format`; for `json`, the engine's JSON as an object or text.                                         |
-| `format`             | `format`               | `TextEditorFormat`                    | `'html'`            | `html`, `markdown`, `text` or `json`. An unknown value acts as `html` and reports `text-editor-format-invalid`.          |
-| `placeholder`        | `placeholder`          | `string`                              | `''`                | Shown while the document is empty; also the editing root's `aria-placeholder`.                                           |
-| `label`              | `label`                | `string`                              | `''`                | Accessible name of the editing root when no Field labels it.                                                             |
-| `name`               | `name`                 | `string`                              | `''`                | Name of the form entry.                                                                                                  |
-| `formOwner`          | `form`                 | `HTMLFormElement \| null`             | `null`              | The form owner, when it is not an ancestor.                                                                              |
-| `readOnly`           | `readonly`             | `boolean`                             | `false`             | See Read-only and disabled.                                                                                              |
-| `disabled`           | `disabled`             | `boolean`                             | `false`             | See Read-only and disabled.                                                                                              |
-| `stickyTableHeaders` | `sticky-table-headers` | `boolean`                             | `false`             | Keeps the header row of a table in view while the rest of the table scrolls.                                             |
-| `tools`              | none                   | `readonly TextEditorTool[]`           | `[]`                | Tools added to the built-in ones; an equal identifier replaces a built-in tool.                                          |
-| `layout`             | none                   | `Partial<TextEditorLayout> \| null`   | the default layouts | Where tools appear. Reading it returns the effective layout.                                                             |
-| `nodes`              | none                   | `readonly TextEditorNodeDefinition[]` | `[]`                | Custom blocks and inline nodes; a change remounts with the content kept.                                                 |
-| `strings`            | none                   | `Partial<TextEditorStrings> \| null`  | `null`              | Replacements for the English `textEditorStrings`.                                                                        |
-| `imageUpload`        | none                   | `TextEditorImageUpload \| null`       | `null`              | Uploads an image file and resolves to its source, for image blocks and for pasted or dropped images.                     |
-| `imageAccept`        | `image-accept`         | `FileAcceptInput`                     | `'image/*'`         | The accepted image types, in the forms of File upload's `accept`.                                                        |
-| `imageMaxFileSize`   | `image-max-file-size`  | `number \| null`                      | `null`              | The largest accepted image file in bytes, or size text such as `10MB` as an attribute; `null` is no limit.               |
-| `invalid`            | `invalid`              | `boolean`                             | `false`             | No effect on the editor.                                                                                                 |
-| `required`           | `required`             | `boolean`                             | `false`             | No effect on the editor.                                                                                                 |
-| `motionPolicy`       | `motion-policy`        | `MotionPolicy`                        | `'inherit'`         | Motion of the editor's own surfaces.                                                                                     |
-| `partPresentation`   | none                   | object                                | `{}`                | Presentation of the nested controls.                                                                                     |
+| Property           | Attribute       | Type                                  | Default             | Description                                                                                                              |
+| ------------------ | --------------- | ------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `engine`           | none            | `TextEditorEngine \| null`            | `null`              | The editing engine, built by an adapter factory (see Engines). Another engine remounts the editor with its content kept. |
+| `defaultValue`     | `default-value` | `string \| object \| null`            | `null`              | Initial content in `format`; for `json`, the engine's JSON as an object or text.                                         |
+| `format`           | `format`        | `TextEditorFormat`                    | `'html'`            | `html`, `markdown`, `text` or `json`. An unknown value acts as `html` and reports `text-editor-format-invalid`.          |
+| `placeholder`      | `placeholder`   | `string`                              | `''`                | Shown while the document is empty; also the editing root's `aria-placeholder`.                                           |
+| `label`            | `label`         | `string`                              | `''`                | Accessible name of the editing root when no Field labels it.                                                             |
+| `name`             | `name`          | `string`                              | `''`                | Name of the form entry.                                                                                                  |
+| `formOwner`        | `form`          | `HTMLFormElement \| null`             | `null`              | The form owner, when it is not an ancestor.                                                                              |
+| `readOnly`         | `readonly`      | `boolean`                             | `false`             | See Read-only and disabled.                                                                                              |
+| `disabled`         | `disabled`      | `boolean`                             | `false`             | See Read-only and disabled.                                                                                              |
+| `features`         | none            | `readonly TextEditorFeature[]`        | `[]`                | The features in use, created by their factories (see Features); none for the core editor.                                |
+| `tools`            | none            | `readonly TextEditorTool[]`           | `[]`                | Tools added to the built-in ones; an equal identifier replaces a built-in tool.                                          |
+| `layout`           | none            | `Partial<TextEditorLayout> \| null`   | the default layouts | Where tools appear. Reading it returns the effective layout.                                                             |
+| `nodes`            | none            | `readonly TextEditorNodeDefinition[]` | `[]`                | Custom blocks and inline nodes; a change remounts with the content kept.                                                 |
+| `strings`          | none            | `Partial<TextEditorStrings> \| null`  | `null`              | Replacements for the English `textEditorStrings`.                                                                        |
+| `invalid`          | `invalid`       | `boolean`                             | `false`             | No effect on the editor.                                                                                                 |
+| `required`         | `required`      | `boolean`                             | `false`             | No effect on the editor.                                                                                                 |
+| `motionPolicy`     | `motion-policy` | `MotionPolicy`                        | `'inherit'`         | Motion of the editor's own surfaces.                                                                                     |
+| `partPresentation` | none            | object                                | `{}`                | Presentation of the nested controls.                                                                                     |
 
 ### Read-only members
 

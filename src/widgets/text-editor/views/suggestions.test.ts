@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ANNOUNCEMENT_REGION_SETTLE_DELAY } from '../../../foundation/announcer.js';
 import type { TpSurfaceOpenChangeEvent } from '../../../foundation/surface-state.js';
-import { textEditorTools } from '../../../foundation/text-editor/builtin-tools.js';
+import { textEditorTools } from '../../../foundation/text-editor/builtin-tools/index.js';
 import { BASE_CAPABILITIES } from '../../../foundation/text-editor/capabilities.js';
 import { defaultTextEditorLayout } from '../../../foundation/text-editor/layout.js';
 import type { TextEditorEngineState } from '../../../foundation/text-editor/model.js';

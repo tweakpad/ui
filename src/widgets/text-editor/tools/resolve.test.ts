@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { KeyShortcut } from '../../../foundation/key-bindings.js';
-import { textEditorTools } from '../../../foundation/text-editor/builtin-tools.js';
+import { textEditorTools } from '../../../foundation/text-editor/builtin-tools/index.js';
 import {
   BASE_CAPABILITIES,
   type TextEditorCapability,

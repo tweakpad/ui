@@ -3,7 +3,7 @@
  * `uwg-te-req-blocks-5`, `uwg-te-req-content-8`): the gutter, the block menu, block mode, the block
  * drag, the keyboard block moves, copying a block link and the URL fragment navigation.
  */
-import type { nothing, TemplateResult } from 'lit';
+import { css, type nothing, type TemplateResult } from 'lit';
 import { copyText } from '../../../foundation/clipboard.js';
 import { preventComponentHandling } from '../../../foundation/part.js';
 import { preserveFocusOnPress } from '../../../foundation/press.js';
@@ -38,7 +38,7 @@ import {
   blocksMovedText,
   linkCopiedText,
 } from '../announcer.js';
-import type { TextEditorContextualSurface } from '../focus.js';
+import { TEXT_EDITOR_CONTEXTUAL_ORDER, type TextEditorContextualSurface } from '../focus.js';
 import type { OverlayGeometry } from '../geometry.js';
 import type { TextEditorToolActivation } from '../tools/controls.js';
 import { resolveMenuGroups } from '../tools/resolve.js';
@@ -46,6 +46,68 @@ import { keyboardMoveSlot, moveAction, TextEditorBlockDrag } from './block-drag.
 import { TextEditorBlockMenu, type TextEditorBlockMenuAction } from './block-menu.js';
 import { cellRangeKeyTarget, TextEditorBlockSelection, touchedBlocks } from './block-selection.js';
 import { headBlock, TextEditorGutter } from './gutter.js';
+
+/**
+ * Structure of the block controls (`uwg-te-req-blocks-2`, `uwg-te-req-blocks-5`): overlay marks
+ * placed by transform from the layer origin, never in the flow, and the drag feedback.
+ */
+export const blocksStyles = css`
+  [part~='text-editor-gutter'],
+  [part~='text-editor-block-selection'],
+  [part~='text-editor-drop-indicator'] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+  }
+
+  [part~='text-editor-gutter'] {
+    pointer-events: auto;
+  }
+
+  [part~='text-editor-block-selection'][hidden],
+  [part~='text-editor-drop-indicator'][hidden] {
+    display: none !important;
+  }
+
+  /* Hidden, the gutter keeps its box: its placement reads its own size before it shows. */
+  [part~='text-editor-gutter'][hidden] {
+    visibility: hidden !important;
+  }
+
+  /* The feedback sizes the preview to the gripped block; it grows to every copy of a group, and its
+     backdrop lies under the copies, a little beyond them, without moving them. */
+  .block-drag-preview {
+    margin: 0;
+    border: 0;
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+
+    /* The copies take the content's text colour, not the popover's system one. */
+    color: inherit;
+    block-size: auto !important;
+  }
+
+  .block-drag-preview:not(:popover-open) {
+    display: none;
+  }
+
+  .block-drag-preview::before {
+    content: '';
+    position: absolute;
+    inset: calc(-1 * var(--tp-space-1)) calc(-1 * var(--tp-space-2));
+    inset-inline-start: calc(-1 * (var(--tp-space-2) + var(--_tp-text-editor-preview-inset, 0px)));
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .block-drag-count {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+  }
+`;
 
 /** The longest block text that an announcement names a block by. */
 const LABEL_LENGTH = 40;
@@ -293,7 +355,7 @@ export class TextEditorBlocks {
 
   /** The gutter as an Alt+F10 surface, after the selection toolbar and the table controls. */
   readonly contextual: TextEditorContextualSurface = {
-    order: 2,
+    order: TEXT_EDITOR_CONTEXTUAL_ORDER.gutter,
     applicable: () =>
       this.gutter.enabled() &&
       this.#host.instance() !== null &&

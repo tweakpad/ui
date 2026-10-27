@@ -8,6 +8,7 @@
  * Resolution is pure: it returns the layout that surfaces render and the diagnostics to report.
  */
 import type { TextEditorDiagnostic } from './engine.js';
+import { BUILTIN_TOOL_FEATURES } from './builtin-tools/ids.js';
 import type { TextEditorSurface, TextEditorTool, TextEditorToolRegistry } from './tools.js';
 
 /** Groups of tool identifiers in order; `*` adds the remaining tools of the surface. */
@@ -130,6 +131,8 @@ export interface TextEditorResolvedLayout {
  * Resolves the application's layout over the registry. For each surface it takes the
  * application's groups, or the default ones for a key it leaves out, and in order:
  * - skips an unknown identifier, or a suggestion tool's, with `text-editor-layout-unknown`;
+ * - leaves out a built-in tool of a feature the editor does not include, which
+ *   `text-editor-layout-unknown` names only when the application's layout places it;
  * - leaves out an unavailable tool, which `text-editor-tool-unavailable` reports only when the
  *   application's layout places it, never a default layout;
  * - expands the first `*` into every available tool that declares the surface, is no suggestion
@@ -160,12 +163,23 @@ export function resolveTextEditorLayout(
       code: 'text-editor-tool-unavailable',
       message: `The layout places the tool "${id}", whose capabilities the engine does not declare; it is left out.`,
     });
+  /**
+   * Whether an identifier is a built-in tool of a feature the editor does not include: dropped
+   * silently from a default group, reported when the application's layout places it.
+   */
+  const absent = (layoutKey: string, id: string, explicit: boolean): boolean => {
+    if (!Object.hasOwn(BUILTIN_TOOL_FEATURES, id)) return false;
+    const feature = BUILTIN_TOOL_FEATURES[id as keyof typeof BUILTIN_TOOL_FEATURES];
+    if (explicit)
+      unknown(layoutKey, id, `a tool of the ${feature} feature, which the editor does not include`);
+    return true;
+  };
 
   /** The registered tool an identifier places, or `null` when it is skipped. */
   const place = (layoutKey: string, id: string, explicit: boolean): TextEditorTool | null => {
     const tool = registry.tools.get(id);
     if (!tool) {
-      unknown(layoutKey, id, 'which is no tool');
+      if (!absent(layoutKey, id, explicit)) unknown(layoutKey, id, 'which is no tool');
       return null;
     }
     if (tool.kind === 'suggestion') {
@@ -228,8 +242,11 @@ export function resolveTextEditorLayout(
     }
     if (suggestions.includes(id)) continue;
     const tool = registry.tools.get(id);
-    if (!tool) unknown('suggestions', id, 'which is no tool');
-    else if (tool.kind !== 'suggestion') unknown('suggestions', id, 'which is no suggestion tool');
+    if (!tool) {
+      if (!absent('suggestions', id, explicitSuggestions))
+        unknown('suggestions', id, 'which is no tool');
+    } else if (tool.kind !== 'suggestion')
+      unknown('suggestions', id, 'which is no suggestion tool');
     else if (!registry.isAvailable(id)) {
       if (explicitSuggestions) unavailable(id);
     } else suggestions.push(id);

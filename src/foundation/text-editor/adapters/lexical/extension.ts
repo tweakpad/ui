@@ -204,7 +204,7 @@ export const LEXICAL_REGISTRATIONS: readonly LexicalRegistration[] = Object.free
 export function lexicalExtension(input: LexicalMountInput): LexicalExtensionInitLike {
   const { rt, context } = input;
   return {
-    name: '@tweakpad/ui/text-editor',
+    name: '@tweakpad/ui/text-editor/adapters/lexical',
     namespace: 'tp-text-editor',
     theme: lexicalTheme(rt.lexical),
     editable: context.editable,

@@ -34,6 +34,7 @@ import { observeOverlayPasses } from '../../../../src/widgets/text-editor/geomet
 import { observeTextEditorLanes } from '../../../../src/widgets/text-editor/views/lanes.js';
 import { ignoreListener, markCreation } from './ledger.js';
 import type { TpTextEditor } from '../../../../src/widgets/text-editor/text-editor.js';
+import type { TextEditorFeature } from '../../../../src/widgets/text-editor/feature.js';
 import type {
   TextEditorFocusOptions,
   TextEditorImageUpload,
@@ -81,6 +82,8 @@ export type ElementVariant =
   | 'reduced'
   | 'custom'
   | 'upload'
+  | 'core'
+  | 'classic'
   | 'mention'
   | 'late'
   | 'failing'
@@ -115,7 +118,8 @@ export interface ElementFixtureEditorOptions {
   readonly tools?: readonly TextEditorTool[] | undefined;
   readonly layout?: Partial<TextEditorLayout> | null | undefined;
   readonly strings?: Partial<TextEditorStrings> | null | undefined;
-  readonly imageUpload?: TextEditorImageUpload | null | undefined;
+  /** The features assigned before connection; the page assigns every feature by default. */
+  readonly features?: readonly TextEditorFeature[] | undefined;
   /** Default true: appended at construction. */
   readonly connect?: boolean | undefined;
 }
@@ -218,7 +222,7 @@ export class ElementFixtureEditor implements FixtureEditorLike {
     if (options.tools) host.tools = options.tools;
     if (options.layout !== undefined) host.layout = options.layout;
     if (options.strings !== undefined) host.strings = options.strings;
-    if (options.imageUpload !== undefined) host.imageUpload = options.imageUpload;
+    if (options.features !== undefined) host.features = options.features;
     if (options.engine) this.engine = options.engine;
     elementEditors.set(this.id, this);
     if (options.connect !== false) this.connect();

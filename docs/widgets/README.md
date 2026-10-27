@@ -50,8 +50,9 @@ of a canvas.
 - [Emoji picker](./emoji-picker.md): `tp-emoji-picker`, with the data helpers in `@tweakpad/ui/emoji`.
 - [Flow](./flow.md): `tp-flow` with the public constituents `tp-flow-node`, `tp-flow-edge` and
   `tp-flow-port`, and the DOM-free engine `@tweakpad/ui/flow`.
-- [Text editor](./text-editor.md): `tp-text-editor`, with the engine contract, the engine
-  adapters and the editor tools in `@tweakpad/ui/text-editor`.
+- [Text editor](./text-editor.md): `tp-text-editor`, with the engine contract and the editor
+  tools in `@tweakpad/ui/text-editor` and one entry per engine adapter,
+  `@tweakpad/ui/text-editor/adapters/tiptap` and `@tweakpad/ui/text-editor/adapters/lexical`.
 
 ## Planned widgets
 

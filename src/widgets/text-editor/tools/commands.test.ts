@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CommandGroup, CommandItem } from '../../../components/command-palette/model.js';
-import { textEditorTools } from '../../../foundation/text-editor/builtin-tools.js';
+import { textEditorTools } from '../../../foundation/text-editor/builtin-tools/index.js';
 import { BASE_CAPABILITIES } from '../../../foundation/text-editor/capabilities.js';
 import { defaultTextEditorLayout } from '../../../foundation/text-editor/layout.js';
 import {

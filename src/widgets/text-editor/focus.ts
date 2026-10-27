@@ -94,6 +94,18 @@ export function selectionInput(selection: TextEditorSelection): TextEditorSelect
  * A surface of contextual controls that Alt+F10 moves focus into: the selection toolbar, the
  * table-controls session or the gutter, cycled in ascending `order`.
  */
+/**
+ * The Alt+F10 cycle positions of the contextual surfaces (`uwg-te-req-key-5`): the selection
+ * toolbar first for a text selection, the table-controls session, the selection toolbar for a cell
+ * range after it, then the gutter.
+ */
+export const TEXT_EDITOR_CONTEXTUAL_ORDER = Object.freeze({
+  selectionToolbar: 0,
+  tableControls: 1,
+  selectionToolbarCells: 1.5,
+  gutter: 2,
+});
+
 export interface TextEditorContextualSurface {
   /** The cycle position: lower comes first (selection toolbar, table controls, gutter). */
   readonly order: number;

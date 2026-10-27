@@ -1,8 +1,10 @@
 /**
  * Documentation example wiring for `tp-text-editor`. The application installs an editing engine,
- * imports its modules and passes them to an adapter factory of `@tweakpad/ui/text-editor`; the
- * editor never imports an engine itself. Keep the imports and the factory of the engine you
- * install. The `data-*` attributes are example setup, not editor properties.
+ * imports its modules and passes them to the adapter factory of that engine's entry,
+ * `@tweakpad/ui/text-editor/adapters/<engine>`; the editor never imports an engine itself. Keep the
+ * imports and the factory of the engine you install, and the features you use: the editor holds
+ * only the features assigned to it, so a page bundles no other. The `data-*` attributes are
+ * example setup, not editor properties.
  */
 import * as core from '@tiptap/core';
 import * as state from '@tiptap/pm/state';
@@ -23,12 +25,20 @@ import * as lexicalCode from '@lexical/code';
 import * as lexicalA11y from '@lexical/a11y';
 import * as lexicalHtml from '@lexical/html';
 import * as lexicalTable from '@lexical/table';
+import { createTiptapEngine } from '../../foundation/text-editor/adapters/tiptap/index.js';
+import { createLexicalEngine } from '../../foundation/text-editor/adapters/lexical/index.js';
 import {
-  createLexicalEngine,
-  createTiptapEngine,
   defineTextEditorBlock,
   defineTextEditorInline,
 } from '../../foundation/text-editor/index.js';
+import {
+  textEditorBlocks,
+  textEditorImages,
+  textEditorLinks,
+  textEditorSelectionToolbar,
+  textEditorSuggestions,
+  textEditorTables,
+} from '../../widgets/text-editor/features/index.js';
 import { globeIcon } from '../../icons/globe.js';
 import { infoIcon } from '../../icons/info.js';
 
@@ -195,7 +205,7 @@ export function lexicalEngine() {
   });
 }
 
-const sampleImage = new URL('../assets/ratio-landscape.svg', import.meta.url).href;
+const sampleImage = new globalThis.URL('../assets/ratio-landscape.svg', import.meta.url).href;
 
 /**
  * The upload hook of the examples: reports progress in eight steps over 1.6 s and resolves the
@@ -209,17 +219,17 @@ export function uploadImage(file, { signal, onProgress }) {
   return new Promise((resolve, reject) => {
     const total = Math.max(file.size, 1);
     let sent = 0;
-    const timer = setInterval(() => {
+    const timer = globalThis.setInterval(() => {
       sent = Math.min(total, sent + Math.ceil(total / 8));
       onProgress(sent, total);
       if (sent < total) return;
-      clearInterval(timer);
+      globalThis.clearInterval(timer);
       resolve(sampleImage);
     }, 200);
     signal.addEventListener(
       'abort',
       () => {
-        clearInterval(timer);
+        globalThis.clearInterval(timer);
         reject(signal.reason);
       },
       { once: true },
@@ -228,8 +238,24 @@ export function uploadImage(file, { signal, onProgress }) {
 }
 
 /**
+ * Every feature of the editor, with the sample upload hook: block editing, tables, images, links,
+ * the selection toolbar and the suggestion lists. Keep the ones you use.
+ * @returns {object[]}
+ */
+export function allTextEditorFeatures() {
+  return [
+    textEditorBlocks(),
+    textEditorTables(),
+    textEditorImages({ upload: uploadImage }),
+    textEditorLinks(),
+    textEditorSelectionToolbar(),
+    textEditorSuggestions(),
+  ];
+}
+
+/**
  * Wires one example: each editor in `root` gets the sample notes when it carries `data-sample`,
- * the sample upload hook, then an engine of its own from `createEngine`; a
+ * every feature with the sample upload hook, then an engine of its own from `createEngine`; a
  * `tp-form[data-form-output]` shows what it submits in the `tp-code-block[data-submitted]` beside
  * it. Returns cleanup.
  * @param {HTMLElement} root
@@ -246,7 +272,7 @@ export function setupTextEditorExample(root, createEngine) {
       editor.layout = { suggestions: ['slash', 'mention'] };
       editor.defaultValue = customBlockNotes;
     }
-    editor.imageUpload = uploadImage;
+    editor.features = allTextEditorFeatures();
     editor.engine = createEngine();
     cleanups.push(() => (editor.engine = null));
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { textEditorTools } from './builtin-tools.js';
+import { BUILTIN_TOOL_FEATURES } from './builtin-tools/ids.js';
 import {
   defineTextEditorBlock,
   defineTextEditorInline,
@@ -174,7 +174,12 @@ describe('node definitions (uwg-te-req-blocks-6, uwg-te-req-inline-1, uwg-te-req
       expect(() => block({ name }), name).toThrow(TypeError);
       expect(() => inline({ name }), name).toThrow(TypeError);
     }
-    for (const name of ['bold', 'slash', 'table-merge-cells', ...Object.keys(textEditorTools)]) {
+    for (const name of [
+      'bold',
+      'slash',
+      'table-merge-cells',
+      ...Object.keys(BUILTIN_TOOL_FEATURES),
+    ]) {
       expect(() => block({ name }), name).toThrow(TypeError);
       expect(() => inline({ name }), name).toThrow(TypeError);
     }

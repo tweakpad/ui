@@ -4,16 +4,14 @@ import type { MotionHandle } from '../../../foundation/motion.js';
 import { rect } from '../../../foundation/positioning.js';
 import type { TextEditorSelection } from '../../../foundation/text-editor/model.js';
 import type { TextEditorToolbarItem } from '../tools/resolve.js';
-import { sameTextSelection } from './popups.js';
+import { sameTextSelection } from './selection-anchor.js';
 import {
-  anchorRects,
   compactGroups,
-  selectionAnchor,
   selectionToolbarVisible,
-  unionRect,
   type SelectionToolbarVisibility,
   SelectionToolbarMotion,
 } from './selection-toolbar.js';
+import { anchorRects, selectionAnchor, unionRect } from './selection-anchor.js';
 
 const point = { block: 'a', offset: 0 };
 const text = (empty = false): TextEditorSelection => ({

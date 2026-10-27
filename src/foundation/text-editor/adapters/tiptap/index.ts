@@ -2,7 +2,8 @@
  * The Tiptap engine adapter of the text editor (Widgets `uwg-te-par-engine-1`, `uwg-te-tab-engine`
  * r1 to r14, `uwg-te-req-engine-1` to `uwg-te-req-engine-12`).
  *
- * The library does not depend on Tiptap: pass the modules you import yourself.
+ * Published as `@tweakpad/ui/text-editor/adapters/tiptap`, its own entry, so that an application bundles
+ * this adapter alone. The library does not depend on Tiptap: pass the modules you import yourself.
  *
  * ```ts
  * import * as core from '@tiptap/core';

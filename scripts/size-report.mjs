@@ -80,6 +80,28 @@ for (const { section, barrel, entries: sectionEntries } of sections)
     addEntries(entry.tagName, [entry.tagName], barrel);
     components.push({ name: entry.name, tagName: entry.tagName, section });
   }
+// The text editor's optional controls are features an application imports beside the element
+// (`features`); its own row is the core, and one more row measures it with every feature.
+const TEXT_EDITOR_FEATURES = [
+  'textEditorBlocks',
+  'textEditorTables',
+  'textEditorImages',
+  'textEditorLinks',
+  'textEditorSelectionToolbar',
+  'textEditorSuggestions',
+];
+const TEXT_EDITOR_ALL_FEATURES = 'tp-text-editor--features';
+{
+  const entry = join(work, 'entries', `${TEXT_EDITOR_ALL_FEATURES}.js`);
+  writeFileSync(
+    entry,
+    `import { TpTextEditor, ${TEXT_EDITOR_FEATURES.join(', ')} } from '@tweakpad/ui/widgets';\nimport { defineElement } from '@tweakpad/ui';\ndefineElement(TpTextEditor.tagName, TpTextEditor);\nexport const features = [${TEXT_EDITOR_FEATURES.map((factory) => `${factory}()`).join(', ')}];\n`,
+  );
+  entries[TEXT_EDITOR_ALL_FEATURES] = entry;
+}
+/** Modules only a text editor feature reaches: the core editor ships none of them. */
+const TEXT_EDITOR_FEATURE_MODULES =
+  /\/dist\/(?:foundation\/(?:drag-drop|number-field|search|contextual-toolbar|resize-separator)|components\/(?:file-upload|select|command-palette|popover|field)|widgets\/text-editor\/(?:features|views\/(?:table-|block-|gutter|image-|link-popover|suggestions|selection-toolbar)))/u;
 const fullEntry = join(work, 'entries', 'register-all.js');
 writeFileSync(fullEntry, "import '@tweakpad/ui/register';\n");
 entries['register-all'] = fullEntry;
@@ -151,10 +173,33 @@ for (const component of components) {
       .sort(),
   });
 }
+{
+  const core = results.get('tp-text-editor');
+  const full = results.get(TEXT_EDITOR_ALL_FEATURES);
+  const shipped = [...core.modules].filter((id) => TEXT_EDITOR_FEATURE_MODULES.test(id));
+  if (shipped.length)
+    violations.push(`tp-text-editor: the core ships feature modules: ${shipped.join(', ')}`);
+  if (![...full.modules].some((id) => TEXT_EDITOR_FEATURE_MODULES.test(id)))
+    violations.push('tp-text-editor with every feature ships no feature module');
+  components.push({
+    name: 'Text editor (all features)',
+    tagName: 'tp-text-editor',
+    section: 'widgets',
+    bytes: full.bytes,
+    gzip: full.gzip,
+    modules: full.modules.size,
+    includes: [...full.modules]
+      .map((id) => moduleTag.get(id))
+      .filter((tag) => tag && tag !== 'tp-text-editor')
+      .sort(),
+  });
+}
 components.sort((a, b) => b.gzip - a.gzip);
 const isWidgetModule = (id) =>
   /\/dist\/(?:widgets\/|widgets\.js$|presentation\/(?:families\/)?widgets\.js$)/u.test(id) ||
-  /\/dist\/(?:foundation\/(?:text-editor|emoji|flow)\/|(?:text-editor|emoji|flow)\.js$)/u.test(id);
+  /\/dist\/(?:foundation\/(?:text-editor|emoji|flow)\/|(?:text-editor|emoji|flow)(?:\/[^/]+)*\.js$)/u.test(
+    id,
+  );
 const full = results.get('register-all');
 const widgetLeaks = [...full.modules].filter(isWidgetModule);
 if (widgetLeaks.length) violations.push(`register-all reaches widgets: ${widgetLeaks.join(', ')}`);

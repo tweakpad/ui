@@ -54,7 +54,14 @@ import type { IconDefinition } from '../../icons/types.js';
 import { undoIcon } from '../../icons/undo.js';
 import { keyHintPlatform } from '../key-notation.js';
 import { imageProtocols, linkProtocols } from '../markdown/url.js';
-import { textEditorTools } from './builtin-tools.js';
+import { textEditorBlockTools } from './builtin-tools/blocks.js';
+import { textEditorCoreTools } from './builtin-tools/core.js';
+import { BUILTIN_TOOL_FEATURES, type TextEditorToolFeature } from './builtin-tools/ids.js';
+import { textEditorImageTools } from './builtin-tools/images.js';
+import { textEditorTools } from './builtin-tools/index.js';
+import { textEditorLinkTools } from './builtin-tools/links.js';
+import { textEditorSuggestionTools } from './builtin-tools/suggestions.js';
+import { textEditorTableTools } from './builtin-tools/tables.js';
 import {
   BASE_CAPABILITIES,
   OPTIONAL_CAPABILITIES,
@@ -893,7 +900,7 @@ describe('built-in tools on each platform (uwg-te-par-tools-1)', () => {
     for (const [navigator, redo] of platforms) {
       vi.stubGlobal('navigator', navigator);
       vi.resetModules();
-      const { textEditorTools: tools } = await import('./builtin-tools.js');
+      const { textEditorCoreTools: tools } = await import('./builtin-tools/core.js');
       expect(shortcuts(tools.redo), navigator?.platform ?? 'no navigator').toEqual(redo);
       expect(shortcuts(tools.undo)).toEqual(['Mod+Z']);
     }
@@ -2049,5 +2056,98 @@ describe('tool actions (uwg-te-req-tools-3, uwg-te-req-surfaces-2)', () => {
     // Outside a table the table tools have nothing to do.
     expect(actions('table-insert-row-before')).toBeNull();
     expect(enabled('table-insert-row-before', {})).toBe(false);
+  });
+});
+
+describe('built-in tool sets (uwg-te-par-tools-1)', () => {
+  const sets: Readonly<Record<TextEditorToolFeature, Readonly<Record<string, TextEditorTool>>>> = {
+    core: textEditorCoreTools,
+    links: textEditorLinkTools,
+    tables: textEditorTableTools,
+    images: textEditorImageTools,
+    suggestions: textEditorSuggestionTools,
+    blocks: textEditorBlockTools,
+  };
+
+  it('the feature sets partition the built-in tools, in the order of the tables', () => {
+    expect(Object.keys(textEditorTools)).toEqual(Object.keys(BUILTIN_TOOL_FEATURES));
+    const seen = new Set<string>();
+    for (const [feature, set] of Object.entries(sets)) {
+      for (const [id, tool] of Object.entries(set)) {
+        expect(BUILTIN_TOOL_FEATURES[id as keyof typeof BUILTIN_TOOL_FEATURES], id).toBe(feature);
+        expect(tool.id).toBe(id);
+        expect(textEditorTools[id as keyof typeof textEditorTools]).toBe(tool);
+        expect(seen.has(id), id).toBe(false);
+        seen.add(id);
+      }
+    }
+    expect(seen.size).toBe(Object.keys(textEditorTools).length);
+  });
+
+  const core = () =>
+    resolveTextEditorTools({ builtins: textEditorCoreTools, capabilities: BASE_CAPABILITIES });
+
+  it('the default layouts resolve over the core set without a diagnostic', () => {
+    const { layout, diagnostics } = resolveTextEditorLayout(undefined, core());
+    expect(diagnostics).toEqual([]);
+    expect(layout.toolbar).toEqual([
+      ['undo', 'redo'],
+      ['block-type', 'list-type', 'blockquote', 'code-block'],
+      ['bold', 'italic', 'strike', 'code', 'underline', 'highlight'],
+      ['superscript', 'subscript'],
+      ['align'],
+    ]);
+    expect(layout.selectionToolbar).toEqual([
+      ['turn-into'],
+      ['bold', 'italic', 'underline', 'strike', 'code'],
+      ['color'],
+      ['more'],
+    ]);
+    expect(layout.slash.flat()).not.toContain('table');
+    expect(layout.slash.flat()).not.toContain('image');
+    expect(layout.blockMenu).toEqual([['turn-into', 'color']]);
+    expect(layout.tableRow).toEqual([]);
+    expect(layout.tableColumn).toEqual([]);
+    expect(layout.tableCell).toEqual([]);
+    expect(layout.suggestions).toEqual([]);
+  });
+
+  it("a placed tool of a feature the editor does not include is reported with the feature's name", () => {
+    const { layout, diagnostics } = resolveTextEditorLayout(
+      { toolbar: [['bold', 'table']], suggestions: ['slash'] },
+      core(),
+    );
+    expect(layout.toolbar).toEqual([['bold']]);
+    expect(layout.suggestions).toEqual([]);
+    expect(diagnostics).toEqual([
+      {
+        code: 'text-editor-layout-unknown',
+        message:
+          'The toolbar layout lists "table", a tool of the tables feature, which the editor does not include; it is skipped.',
+      },
+      {
+        code: 'text-editor-layout-unknown',
+        message:
+          'The suggestions layout lists "slash", a tool of the suggestions feature, which the editor does not include; it is skipped.',
+      },
+    ]);
+  });
+
+  it("an application tool with a feature tool's identifier is placed over the core set", () => {
+    const table: TextEditorTool = {
+      id: 'table',
+      kind: 'button',
+      label: 'Table',
+      surfaces: ['toolbar'],
+      action: [],
+    };
+    const tools = resolveTextEditorTools({
+      builtins: textEditorCoreTools,
+      tools: [table],
+      capabilities: BASE_CAPABILITIES,
+    });
+    const { layout, diagnostics } = resolveTextEditorLayout({ toolbar: [['table']] }, tools);
+    expect(diagnostics).toEqual([]);
+    expect(layout.toolbar).toEqual([['table']]);
   });
 });

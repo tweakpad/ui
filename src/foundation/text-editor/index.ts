@@ -2,31 +2,22 @@
  * Companion entry of the text editor, published as `@tweakpad/ui/text-editor` (Widgets
  * `uwg-te-req-pkg-1`, `uwg-te-par-def-1`, `uwg-te-par-tools-1`).
  *
- * Engine-free and DOM-free: the two engine factories, which receive the engine modules from the
- * application, the engine contract, the normalized model, actions and capabilities, the built-in
- * tools and default layouts, the request types, custom node definitions, the palette and the
- * strings. Every name but the two factories carries a `TextEditor` prefix, so that the entry can
- * be re-exported beside other widgets' names. The controller itself and its store, the portable
- * model, the converters and the preview stay internal.
+ * Engine-free and DOM-free: the engine contract, the normalized model, actions and capabilities,
+ * the built-in tools and default layouts, the request types, custom node definitions, the palette
+ * and the strings. Every name carries a `TextEditor` prefix, so that the entry can be re-exported
+ * beside other widgets' names. The engine adapters, which receive the engine modules from the
+ * application, ship as their own entries, `@tweakpad/ui/text-editor/adapters/<engine>`, from
+ * `./adapters/<engine>/index.ts`; this entry never reaches them. The controller itself and its
+ * store, the portable model, the converters and the preview stay internal.
  */
 
 // Runtime
-export { textEditorTools } from './builtin-tools.js';
+export { textEditorTools } from './builtin-tools/index.js';
 export { defaultTextEditorLayout } from './layout.js';
 export { defineTextEditorTool } from './tools.js';
 export { defineTextEditorBlock, defineTextEditorInline } from './nodes.js';
 export { TEXT_EDITOR_COLORS } from './palette.js';
 export { textEditorStrings } from './strings.js';
-
-// Engines (uwg-te-par-engine-1, uwg-te-tab-engine): the factories take the engine modules that
-// the application imports, so the entry itself depends on no engine package
-export { createTiptapEngine } from './adapters/tiptap/index.js';
-export type { TextEditorTiptapModules, TextEditorTiptapOptions } from './adapters/tiptap/index.js';
-export { createLexicalEngine } from './adapters/lexical/index.js';
-export type {
-  TextEditorLexicalModules,
-  TextEditorLexicalOptions,
-} from './adapters/lexical/index.js';
 
 // Engine contract (uwg-te-par-engine-1, uwg-te-tab-engine)
 export type {
@@ -176,7 +167,7 @@ export type {
   TextEditorToolSuggestion,
   TextEditorTool,
 } from './tools.js';
-export type { TextEditorBuiltinToolId } from './builtin-tools.js';
+export type { TextEditorBuiltinToolId, TextEditorToolFeature } from './builtin-tools/ids.js';
 export type {
   TextEditorLayoutGroups,
   TextEditorLayout,

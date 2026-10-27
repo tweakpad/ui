@@ -5,7 +5,6 @@ import {
   type PropertyValues,
   type TemplateResult,
 } from 'lit';
-import { TpBadge } from '../../components/badge/badge.js';
 import { TpButtonGroup } from '../../components/button-group/button-group.js';
 import { TpButton } from '../../components/button/button.js';
 import { TpIcon } from '../../components/icon/icon.js';
@@ -22,15 +21,7 @@ import { TpSpinner } from '../../components/spinner/spinner.js';
 import { TpToggleGroup } from '../../components/toggle-group/toggle-group.js';
 import { TpToggle } from '../../components/toggle/toggle.js';
 import { TpTooltip } from '../../components/tooltip/tooltip.js';
-import { TpInput } from '../../components/input/input.js';
-import { TpField } from '../../components/field/field.js';
-import { TpPopover } from '../../components/popover/popover.js';
-import { TpCommandList } from '../../components/command-palette/list.js';
-import { TpFileUpload } from '../../components/file-upload/file-upload.js';
-import type { FileAcceptInput } from '../../components/file-upload/types.js';
-import { parseByteSize } from '../../foundation/format-bytes.js';
-import { TpInputGroup } from '../../components/input-group/input-group.js';
-import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+import { defineElement, type CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpElement } from '../../foundation/element.js';
 import { composedContains, deepActiveElement } from '../../foundation/focus.js';
 import { TpValueChangeEvent, TpValueCommitEvent } from '../../foundation/events.js';
@@ -40,7 +31,7 @@ import { adoptStyleText, SuppressionFallbackStyle } from '../../foundation/gener
 import { presenceRole } from '../../foundation/motion.js';
 import { containNestedEvents } from '../../foundation/nested-events.js';
 import { isTextEditorFormat, type TextEditorAction } from '../../foundation/text-editor/actions.js';
-import { textEditorTools } from '../../foundation/text-editor/builtin-tools.js';
+import { textEditorCoreTools } from '../../foundation/text-editor/builtin-tools/core.js';
 import { TEXT_MECHANICS_INHERITED } from '../../foundation/text-editor/content/mechanics.js';
 import type { TextEditorPortableDocument } from '../../foundation/text-editor/content/portable.js';
 import { renderPortablePreview } from '../../foundation/text-editor/content/view.js';
@@ -56,6 +47,7 @@ import type {
   TextEditorDiagnostic,
   TextEditorEngine,
   TextEditorEngineInstance,
+  TextEditorEngineViews,
   TextEditorFormat,
   TextEditorPortableFormat,
   TextEditorRootAttributes,
@@ -84,6 +76,12 @@ import {
 import { textEditorPresentation } from '../../presentation/families/text-editor.js';
 import { TextEditorAnnouncer } from './announcer.js';
 import { TextEditorCustomization } from './customization.js';
+import {
+  orderTextEditorFeatures,
+  type TextEditorFeature,
+  type TextEditorFeatureHost,
+  type TextEditorFeatureInstance,
+} from './feature.js';
 import { TextEditorFocus } from './focus.js';
 import { OverlayGeometry } from './geometry.js';
 import { TextEditorRouter, type TextEditorRouterConfig } from './router.js';
@@ -94,7 +92,6 @@ import type {
   TextEditorChangeMetadata,
   TextEditorErrorDetail,
   TextEditorFocusOptions,
-  TextEditorImageUpload,
   TextEditorReadyDetail,
 } from './types.js';
 import {
@@ -102,11 +99,8 @@ import {
   renderPlaceholder,
   TextEditorPlaceholderLayer,
 } from './views/placeholder.js';
-import { TextEditorBlocks, type TextEditorBlocksHost } from './views/blocks.js';
 import { TextEditorToolbar, type TextEditorToolbarHandlers } from './views/toolbar.js';
-import { TextEditorTables, type TextEditorTablesHost } from './views/tables.js';
 import { reportTextEditorLane } from './views/lanes.js';
-import { TextEditorPopups, type TextEditorPopupsHost } from './views/popups.js';
 
 /** The motion roles of the widget's surfaces. */
 export const textEditorMotionRoles = { surface: presenceRole('surface') } as const;
@@ -293,13 +287,6 @@ export const textEditorFormatConverter = {
   fromAttribute: (value: string | null): string => value ?? 'html',
 };
 
-/** A byte-count attribute: a number or text with a unit (`10MB`); unreadable is no limit. */
-const byteSizeConverter = {
-  fromAttribute: (value: string | null): number | null =>
-    value === null ? null : parseByteSize(value),
-  toAttribute: (value: number | null): string | null => (value === null ? null : String(value)),
-};
-
 const LAYOUT_KEYS = Object.keys(defaultTextEditorLayout) as (keyof TextEditorLayout)[];
 
 /**
@@ -394,6 +381,8 @@ export function patchFormEntries(
 
 export interface TextEditorResolutionInput {
   readonly engine: TextEditorEngine | null;
+  /** The attached features, in their order; their tools join the core set. */
+  readonly features: readonly TextEditorFeature[];
   readonly nodes: readonly TextEditorNodeDefinition[];
   readonly tools: readonly TextEditorTool[];
   /** The assigned partial, not the effective layout. */
@@ -437,6 +426,7 @@ export function textEditorResolutionSteps(
   const registry =
     first ||
     previous.engine !== next.engine ||
+    previous.features !== next.features ||
     previous.nodes !== next.nodes ||
     previous.tools !== next.tools ||
     previous.layout !== next.layout;
@@ -487,9 +477,19 @@ export interface TextEditorTooling {
   readonly diagnostics: readonly TextEditorDiagnostic[];
 }
 
+/** The built-in tools in effect: the core set with the set of each attached feature. */
+export function textEditorBuiltins(
+  features: readonly Pick<TextEditorFeature, 'tools'>[],
+): Readonly<Record<string, TextEditorTool>> {
+  if (features.length === 0) return textEditorCoreTools;
+  return Object.freeze(
+    Object.assign({ ...textEditorCoreTools }, ...features.map((feature) => feature.tools)),
+  ) as Readonly<Record<string, TextEditorTool>>;
+}
+
 export function resolveTextEditorTooling(input: TextEditorResolutionInput): TextEditorTooling {
   const registry = resolveTextEditorTools({
-    builtins: textEditorTools,
+    builtins: textEditorBuiltins(input.features),
     tools: input.tools,
     nodes: input.nodes,
     capabilities: resolveTextEditorCapabilities(input.engine, input.nodes),
@@ -571,7 +571,9 @@ export function textEditorRouterConfig(
 
 /**
  * A rich text editor: a fixed toolbar over an editing surface that an assigned engine renders,
- * with portable HTML, Markdown and text content, forms and Field support.
+ * with portable HTML, Markdown and text content, forms and Field support. The optional controls
+ * (block editing, tables, images, links, the selection toolbar and the suggestion lists) are
+ * features the application imports and assigns to `features`; without any, the core editor.
  *
  * @fires tp-text-editor-request - Cancelable; every proposed change, before it applies.
  * @fires tp-text-editor-request-failed - A request was rejected.
@@ -613,7 +615,6 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
     return [
       TpSpinner,
-      TpBadge,
       TpOverflowList,
       TpButtonGroup,
       TpSeparator,
@@ -629,12 +630,6 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       TpKeyHint,
       TpKeyHintGroup,
       TpIcon,
-      TpPopover,
-      TpField,
-      TpInput,
-      TpInputGroup,
-      TpFileUpload,
-      TpCommandList,
     ];
   }
   static override presentation = textEditorPresentation;
@@ -646,16 +641,13 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     format: { converter: textEditorFormatConverter },
     placeholder: { type: String },
     label: { type: String },
-    stickyTableHeaders: { type: Boolean, attribute: 'sticky-table-headers' },
+    features: { attribute: false },
     tools: { attribute: false },
     layout: { attribute: false, noAccessor: true },
     nodes: { attribute: false },
     strings: { attribute: false },
-    imageUpload: { attribute: false },
-    imageAccept: { attribute: 'image-accept' },
-    imageMaxFileSize: { attribute: 'image-max-file-size', converter: byteSizeConverter },
   };
-  static override styles = [TpElement.styles, textEditorStyles, ...TextEditorTables.styles];
+  static override styles = [TpElement.styles, textEditorStyles];
 
   /** The engine that renders the editing surface; replacing it remounts with the content kept. */
   engine: TextEditorEngine | null = null;
@@ -665,19 +657,14 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
   placeholder = '';
   /** The editing root's name when no Field labels it. */
   label = '';
-  stickyTableHeaders = false;
+  /** The optional features in use, created by their factories; none for the core editor. */
+  features: readonly TextEditorFeature[] = EMPTY;
   /** Tools added to the built-in ones; an equal identifier replaces one. */
   tools: readonly TextEditorTool[] = EMPTY;
   /** Custom node definitions; a change remounts with the content kept. */
   nodes: readonly TextEditorNodeDefinition[] = EMPTY;
   /** Overrides of the built-in strings. */
   strings: Partial<TextEditorStrings> | null = null;
-  /** Uploads an image file and resolves to its source. */
-  imageUpload: TextEditorImageUpload | null = null;
-  /** The accepted image types, in File upload's `accept` forms. */
-  imageAccept: FileAcceptInput = 'image/*';
-  /** The largest accepted image file in bytes, or `null` for no limit. */
-  imageMaxFileSize: number | null = null;
 
   #assignedLayout: Partial<TextEditorLayout> | null = null;
   #effectiveLayout: TextEditorLayout = defaultTextEditorLayout;
@@ -732,9 +719,27 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
   #suppressionFallback: SuppressionFallbackStyle | null = null;
   #overlay: HTMLElement | null = null;
   #underlay: HTMLElement | null = null;
-  readonly #blocks: TextEditorBlocks;
-  readonly #tables: TextEditorTables;
-  readonly #popups: TextEditorPopups;
+  /** The attached features' runtimes, in feature order. */
+  #features: readonly TextEditorFeatureInstance[] = EMPTY;
+  /** The `features` list the runtimes were attached for, by identity. */
+  #attachedFeatures: readonly TextEditorFeature[] = EMPTY;
+  /** The ordered features attached, which the resolution reads. */
+  #orderedFeatures: readonly TextEditorFeature[] = EMPTY;
+  /** The releases of the adopted feature styles. */
+  #featureStyles: (() => void)[] = [];
+  /** Whether the features received `partsConnected` and not yet `disconnected`. */
+  #featuresConnected = false;
+  readonly #featureHost: TextEditorFeatureHost;
+  /** The views the engines mount into their hosts: the first attached feature's that renders one. */
+  readonly #views: TextEditorEngineViews = Object.freeze({
+    pendingImage: (element: HTMLElement, id: string) => {
+      for (const feature of this.#features) {
+        const view = feature.views?.pendingImage;
+        if (view) return view.call(feature.views, element, id);
+      }
+      return undefined;
+    },
+  });
 
   readonly #linkGuard = {
     handleEvent: (event: Event) => {
@@ -765,14 +770,16 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       request: (proposal) => this.#controller.request(proposal),
       selectRootContent: (event) => this.#controller.selectContent(event),
       extendRootSelection: (event, direction) => this.#controller.extendSelection(direction, event),
-      editingKey: (event) => this.#blocks.editingKey(event),
-      blockTool: (id, event) => this.#blocks.blockTool(id, event),
+      editingKey: (event) => this.#features.some((feature) => feature.editingKey?.(event)),
+      blockTool: (id, event) => this.#features.some((feature) => feature.blockTool?.(id, event)),
       contextualControls: (event) => void this.#focus.cycleContextual(event),
-      tableTab: (event, backward) => this.#tables.tableTab(event, backward),
-      suggestionKey: (event) => this.#popups.suggestionKey(event),
-      pointAt: (x, y) => this.#popups.pointAt(x, y),
+      tableTab: (event, backward) =>
+        this.#features.some((feature) => feature.tableTab?.(event, backward)),
+      suggestionKey: (event) => this.#features.some((feature) => feature.suggestionKey?.(event)),
+      pointAt: (x, y) =>
+        (this.#controller.status === 'ready' ? this.#instance : null)?.pointAt(x, y) ?? null,
       uploadImages: (files, at, reason, event) =>
-        this.#popups.uploadImages(files, at, reason, event),
+        this.#features.some((feature) => feature.uploadImages?.(files, at, reason, event)),
       canLink: (href) => this.#controller.can({ type: 'link.set', href }),
     });
     this.#focus = new TextEditorFocus({
@@ -820,10 +827,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     });
     this.#placeholder = new TextEditorPlaceholderLayer(this.#geometry);
     this.#announcer = new TextEditorAnnouncer(() => this.#root);
-    this.#blocks = new TextEditorBlocks(this.#blocksHost());
-    this.#focus.registerContextual(this.#blocks.contextual);
-    this.#tables = new TextEditorTables(this.#tablesHost());
-    this.#popups = new TextEditorPopups(this.#popupsHost());
+    this.#featureHost = this.#buildFeatureHost();
     this.#customization = new TextEditorCustomization({
       owner: this,
       renderRoot: () => (this.renderRoot as ShadowRoot | undefined) ?? null,
@@ -957,21 +961,18 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       () => {
         this.#updatePlaceholder();
         this.#geometry.invalidate('state');
-        this.#blocks.stateChanged();
-        this.#tables.stateChanged();
-        this.#popups.stateChanged();
+        for (const feature of this.#features) feature.stateChanged?.();
         this.#requestRender();
       },
     );
-    this.#blocks.connected(this.ownerDocument.defaultView);
+    for (const feature of this.#features) feature.connected?.();
     this.#listenForms(formEventRoot(this));
-    this.#popups.connected();
     this.#checkPlacement();
     if (!this.hasUpdated) return;
     this.#suppressionFallback?.connect();
     this.#toolbar.connected();
     this.#observeGeometry();
-    this.#tables.connected();
+    this.#connectFeatures();
     this.#controller.connect();
     this.requestUpdate();
   }
@@ -984,14 +985,12 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     this.#toolbar.disconnected();
     this.#suppressionFallback?.disconnect();
     this.#geometry.release();
-    this.#tables.disconnected();
-    this.#popups.disconnected();
+    this.#disconnectFeatures();
     this.#unsubscribe?.();
     this.#unsubscribe = null;
     this.#listenForms(null);
     this.#announcer.release();
     this.#customization.release();
-    this.#blocks.disconnected();
     this.#controller.disconnect();
   }
 
@@ -1004,6 +1003,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
         'text-editor-format-invalid',
         `The format "${String(this.format)}" is not html, markdown, text or json; html is used.`,
       );
+    this.#applyFeatures();
     this.#resolve();
     if (this.#preReadyFieldValue !== undefined && this.value === null)
       this.#preReadyFieldValue = this.fieldValue as '' | null;
@@ -1027,7 +1027,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     if (!this.isConnected) return;
     this.#toolbar.connected();
     this.#observeGeometry();
-    this.#tables.connected();
+    this.#connectFeatures();
     // The mount's status renders in the next update, requested once this one has completed: an
     // update requested from inside `firstUpdated` would run again at once, so a mount that
     // settles (or fails) while the controller connects requests nothing itself.
@@ -1050,15 +1050,16 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     this.setAttribute('data-status', this.#controller.status);
     this.toggleAttribute('data-focused', state.focused);
     this.toggleAttribute('data-filled', !state.empty);
-    this.toggleAttribute('data-dragging', this.#blocks.drag.active);
-    this.toggleAttribute('data-gutter', this.#effectiveLayout.gutter);
+    this.toggleAttribute('data-dragging', this.#dragging());
+    this.toggleAttribute(
+      'data-gutter',
+      this.#features.some((feature) => feature.gutter?.() === true),
+    );
     // The removal released the views; an update requested before it and run after it must not set
     // them up again (observers, listeners, timers), which only a reconnection does.
     if (!this.isConnected) return;
     this.#toolbar.updated();
-    this.#tables.updated();
-    this.#blocks.updated();
-    this.#popups.updated();
+    for (const feature of this.#features) feature.updated?.();
     this.#customization.adoptNodeStyles(this.nodes ?? EMPTY);
     this.#customization.compose(this.partPresentation);
     this.#syncPreview();
@@ -1088,11 +1089,11 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
             @auxclick=${this.#linkGuard}
           ></div>
           <div part="text-editor-overlay">
-            ${renderPlaceholder(this.#placeholder)}${this.#blocks.render()}${this.#tables.renderOverlay()}${this.#popups.renderOverlay()}
+            ${renderPlaceholder(this.#placeholder)}${this.#features.map((feature) => feature.renderOverlay?.() ?? nothing)}
           </div>
         </div>
       </div>
-      ${this.#renderStatus()}${this.#blocks.renderMenu()}${this.#tables.renderSurfaces()}${this.#popups.render()}
+      ${this.#renderStatus()}${this.#features.map((feature) => feature.renderSurfaces?.() ?? nothing)}
       <div id=${TEXT_EDITOR_INSTRUCTIONS_ID} hidden>${this.#strings().instructions}</div>
     </div>`;
   }
@@ -1156,15 +1157,14 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       container: () => this.#content,
       frames: () => windowFrames(this.ownerDocument.defaultView ?? window),
       direction: () => this.direction,
-      imageUpload: () => this.imageUpload !== null,
-      views: () => this.#popups.views,
+      imageUpload: () => this.#features.some((feature) => feature.uploads?.() === true),
+      views: () => this.#views,
       adoptStyles: (cssText) => adoptStyleText(this, this.renderRoot as ShadowRoot, cssText),
       dispatchRequest: (detail) =>
         this.emit('tp-text-editor-request', detail, { cancelable: true }),
       requestFailed: (detail) => void this.emit('tp-text-editor-request-failed', detail),
-      // No surface exists yet.
       openSurface: (tool, detail) =>
-        this.#popups.openSurface(tool, detail) || this.#tables.openSurface(tool, detail),
+        this.#features.some((feature) => feature.openSurface?.(tool, detail) === true),
       attached: (instance) => this.#attached(instance),
       ready: (native) => this.#ready(native),
       failed: (error) => this.#failed(error),
@@ -1174,88 +1174,132 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     };
   }
 
-  /** What the floating surfaces read and call (M7). */
-  #popupsHost(): TextEditorPopupsHost {
+  /** What the features read and call, built once; every answer reads the widget's current state. */
+  #buildFeatureHost(): TextEditorFeatureHost {
     const ready = () => (this.#controller.status === 'ready' ? this.#instance : null);
-    const shadow = () => this.renderRoot as ShadowRoot;
     return {
-      get renderRoot() {
-        return shadow();
-      },
+      element: this,
+      geometry: this.#geometry,
+      renderRoot: () => (this.renderRoot as ShadowRoot | undefined) ?? null,
+      view: () => this.ownerDocument.defaultView,
       requestUpdate: () => this.requestUpdate(),
+      updateComplete: () => this.updateComplete,
       strings: () => this.#strings(),
       registry: () => this.#tooling?.registry ?? null,
-      layout: () => this.#tooling?.layout ?? null,
-      access: () => this.#access(),
-      state: () => this.#controller.state,
-      instance: ready,
-      content: () => this.#content,
-      toolbar: () => this.#query('text-editor-toolbar'),
-      toolContext: (surface) => this.#controller.toolContext(surface),
-      toolEnabled: (tool, context) => this.#controller.isToolEnabled(tool, context),
-      shortcut: (id) => this.#router.shortcut(id),
-      expanded: (tool) => this.#surfaceExpanded(tool),
-      request: (proposal) => this.#controller.request(proposal),
-      imageUpload: () => this.imageUpload,
-      imageLimits: () => ({ accept: this.imageAccept, maxFileSize: this.imageMaxFileSize }),
-      geometry: this.#geometry,
-      direction: () => this.direction,
-      focusEditing: () => void this.#focus.focusEditing('restore').catch(() => {}),
-      announce: (message, options) => this.#announcer.announce(message, options),
-      diagnose: (code, message) => this.diagnose(code, message),
-      dragging: () => this.#blocks.drag.active,
-      controlMenuOpen: () => this.#tables.chrome.menuOpen || this.#blocks.menu.open,
-      selectionKeepClear: () => this.#tables.chrome.columnGripBand(),
-      referencesChanged: () => this.#applyRootAttributes(),
-      menuOpened: (trigger, modality) => this.#focus.menuOpened(trigger, modality),
-      menuClosed: (changed) => this.#focus.menuClosed(changed),
-      transientOpened: (owner, close, reason) => this.#focus.transientOpened(owner, close, reason),
-      transientClosed: (owner) => this.#focus.transientClosed(owner),
-      lane: (surface, open, reason) => reportTextEditorLane({ host: this, surface, open, reason }),
-      editReason: () => this.#controller.lastChangeReason,
-      menuFinalFocus: this.#focus.menuFinalFocus,
-      registerContextual: (surface) => this.#focus.registerContextual(surface),
-      cycleContextual: (event) => this.#focus.cycleContextual(event),
-    };
-  }
-
-  /** What the block controls read and call (M8). */
-  #blocksHost(): TextEditorBlocksHost {
-    const ready = () => (this.#controller.status === 'ready' ? this.#instance : null);
-    return {
-      geometry: this.#geometry,
-      instance: ready,
-      selection: () => ready()?.getState().selection ?? this.#controller.state.selection,
-      wholeDocument: () => this.#controller.holdsWholeDocument(),
-      contentPressed: () => this.#popups.pressed(),
-      strings: () => this.#strings(),
       layout: () => this.#tooling?.layout ?? this.#effectiveLayout,
       access: () => this.#access(),
       direction: () => this.direction,
-      registry: () => this.#tooling?.registry ?? null,
+      state: () => this.#controller.state,
+      instance: ready,
+      selection: () => ready()?.getState().selection ?? this.#controller.state.selection,
+      wholeDocument: () => this.#controller.holdsWholeDocument(),
+      content: () => this.#content,
+      toolbar: () => this.#query('text-editor-toolbar'),
+      viewport: () => this.#viewport,
+      overlay: () => this.#overlay,
+      underlay: () => this.#underlay,
       toolContext: (surface, target) => this.#controller.toolContext(surface, undefined, target),
       toolEnabled: (tool, context) => this.#controller.isToolEnabled(tool, context),
       shortcut: (id) => this.#router.shortcut(id),
       request: (proposal) => this.#controller.request(proposal),
       can: (action) => this.#controller.can(action),
-      announce: (message) => this.#announcer.announce(message),
+      announce: (message, options) => this.#announcer.announce(message, options),
+      diagnose: (code, message) => this.diagnose(code, message),
       focusEditing: () => void this.#focus.focusEditing('restore').catch(() => {}),
       editingFocused: () => {
         const content = this.#content;
         return content !== null && composedContains(content, deepActiveElement(this.ownerDocument));
       },
-      cycleContextual: (event) => this.#focus.cycleContextual(event),
-      renderRoot: () => (this.renderRoot as ShadowRoot | undefined) ?? null,
-      viewport: () => this.#viewport,
-      content: () => this.#content,
-      overlay: () => this.#overlay,
-      underlay: () => this.#underlay,
-      dragChanged: (active) => this.toggleAttribute('data-dragging', active),
-      requestUpdate: () => this.requestUpdate(),
-      tableGripOutset: () => this.#tables.chrome.rowGripOutset(),
-      transientOpened: (owner, close) => this.#focus.transientOpened(owner, close),
+      focused: () => this.#focus.focused,
+      menuOpened: (trigger, modality) => this.#focus.menuOpened(trigger, modality),
+      menuClosed: (changed) => this.#focus.menuClosed(changed),
+      menuFinalFocus: this.#focus.menuFinalFocus,
+      transientOpened: (owner, close, reason) => this.#focus.transientOpened(owner, close, reason),
       transientClosed: (owner) => this.#focus.transientClosed(owner),
+      registerContextual: (surface) => this.#focus.registerContextual(surface),
+      cycleContextual: (event) => this.#focus.cycleContextual(event),
+      lane: (surface, open, reason) => reportTextEditorLane({ host: this, surface, open, reason }),
+      editReason: () => this.#controller.lastChangeReason,
+      expanded: (tool) => this.#surfaceExpanded(tool),
+      referencesChanged: () => this.#applyRootAttributes(),
+      dragChanged: (active) => this.toggleAttribute('data-dragging', active),
+      dragging: () => this.#dragging(),
+      menuOpen: () => this.#features.some((feature) => feature.menuOpen?.() === true),
+      surfaceOpen: () => this.#features.some((feature) => feature.surfaceOpen?.() === true),
+      keepClear: () => {
+        for (const feature of this.#features) {
+          const band = feature.keepClear?.();
+          if (band) return band;
+        }
+        return null;
+      },
+      gripOutset: () =>
+        this.#features.reduce(
+          (outset, feature) => Math.max(outset, feature.gripOutset?.() ?? 0),
+          0,
+        ),
+      contentPressed: () => {
+        for (const feature of this.#features) feature.contentPressed?.();
+      },
+      focusExcluded: (active) =>
+        this.#features.some((feature) => feature.focusExcluded?.(active) === true),
     };
+  }
+
+  #dragging(): boolean {
+    return this.#features.some((feature) => feature.dragging?.() === true);
+  }
+
+  /**
+   * Attaches the assigned features once per `features` identity, in feature order: the runtimes
+   * of the previous list are released, each feature's elements are defined and its styles adopted,
+   * and a feature attached while the widget is connected joins its lifecycle at once.
+   */
+  #applyFeatures(): void {
+    const assigned = Array.isArray(this.features) ? this.features : EMPTY;
+    if (assigned === this.#attachedFeatures) return;
+    this.#attachedFeatures = assigned;
+    this.#disconnectFeatures();
+    for (const feature of this.#features) feature.dispose();
+    for (const release of this.#featureStyles) release();
+    this.#featureStyles = [];
+    const ordered = orderTextEditorFeatures(assigned, (name) =>
+      this.diagnose(
+        'text-editor-feature-duplicate',
+        `The features hold more than one "${name}" feature; the first one is used.`,
+        { defer: true },
+      ),
+    );
+    this.#orderedFeatures = Object.freeze(ordered);
+    const root = this.renderRoot as ShadowRoot | undefined;
+    const defines = typeof customElements !== 'undefined';
+    this.#features = Object.freeze(
+      ordered.map((feature) => {
+        if (defines)
+          for (const element of feature.elements)
+            if (element.tagName) defineElement(element.tagName, element);
+        if (root)
+          for (const style of feature.styles ?? EMPTY)
+            this.#featureStyles.push(adoptStyleText(this, root, style.cssText));
+        return feature.attach(this.#featureHost);
+      }),
+    );
+    if (!this.isConnected) return;
+    for (const feature of this.#features) feature.connected?.();
+    if (this.hasUpdated) this.#connectFeatures();
+  }
+
+  /** The features' part set-up: once the parts rendered, on the first update or a reconnection. */
+  #connectFeatures(): void {
+    if (this.#featuresConnected) return;
+    this.#featuresConnected = true;
+    for (const feature of this.#features) feature.partsConnected?.();
+  }
+
+  #disconnectFeatures(): void {
+    if (!this.#featuresConnected) return;
+    this.#featuresConnected = false;
+    for (const feature of this.#features) feature.disconnected?.();
   }
 
   #attached(instance: TextEditorEngineInstance | null): void {
@@ -1263,7 +1307,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     this.#appliedRecord = null;
     if (instance) this.#applyRootAttributes();
     else {
-      this.#blocks.detached();
+      for (const feature of this.#features) feature.detached?.();
       this.#geometry.invalidate('instance');
     }
   }
@@ -1276,7 +1320,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     this.emit<TextEditorReadyDetail>('tp-text-editor-ready', { native });
     this.#refreshFormValue();
     this.#reportInitialFieldValue();
-    this.#blocks.ready();
+    for (const feature of this.#features) feature.ready?.();
     this.#focus.ready();
     this.#geometry.invalidate('instance');
     this.#requestRender();
@@ -1315,7 +1359,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
    */
   #focusChanged(): void {
     // The table chrome follows at once, in its own layer pass, without a render of the element.
-    this.#tables.focusChanged();
+    for (const feature of this.#features) feature.focusChanged?.();
     this.#focusPending = true;
     this.#focusFrame ??= frameLoopFor(this.ownerDocument.defaultView ?? window).subscribe(() => {
       if (!this.#focusPending || !this.isConnected) return false;
@@ -1350,16 +1394,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
         },
       ),
     );
-    this.#tables.valueChanged(change.actions, change.origin);
-    // The pending image that the image tool inserts takes focus once its card renders, as the
-    // popover it replaces did when it opened; a paste or a drop keeps focus in the editing root.
-    if (
-      change.origin === 'request' &&
-      change.tool === 'image' &&
-      change.reason !== 'input-paste' &&
-      change.reason !== 'drag'
-    )
-      this.#popups.image.toolInserted();
+    for (const feature of this.#features) feature.valueChanged?.(change);
     this.#geometry.invalidate('state');
   }
 
@@ -1375,6 +1410,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     const previous = this.#resolution;
     const next: TextEditorResolutionInput = {
       engine: this.engine ?? null,
+      features: this.#orderedFeatures,
       nodes: this.nodes ?? EMPTY,
       tools: this.tools ?? EMPTY,
       layout: this.#assignedLayout,
@@ -1422,41 +1458,6 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     );
   }
 
-  /** The table controls' view of the element (M9). */
-  #tablesHost(): TextEditorTablesHost {
-    const ready = () => (this.#controller.status === 'ready' ? this.#instance : null);
-    return {
-      element: this,
-      geometry: this.#geometry,
-      instance: ready,
-      state: () => ready()?.getState() ?? this.#controller.state,
-      strings: () => this.#strings(),
-      layout: () => this.#tooling?.layout ?? defaultTextEditorLayout,
-      access: () => this.#access(),
-      direction: () => this.direction,
-      registry: () => this.#tooling?.registry ?? null,
-      toolContext: (surface, target) => this.#controller.toolContext(surface, undefined, target),
-      toolEnabled: (tool, context) => this.#controller.isToolEnabled(tool, context),
-      shortcut: (id) => this.#router.shortcut(id),
-      request: (proposal) => this.#controller.request(proposal),
-      announce: (message) => this.#announcer.announce(message),
-      focusEditing: () => void this.#focus.focusEditing('restore').catch(() => {}),
-      focused: () => this.#focus.focused,
-      registerContextual: (surface) => this.#focus.registerContextual(surface),
-      cycleContextual: (event) => this.#focus.cycleContextual(event),
-      stickyHeaders: () => this.stickyTableHeaders,
-      viewport: () => this.#viewport,
-      content: () => this.#content,
-      toolbar: () => this.#query('text-editor-toolbar'),
-      requestUpdate: () => this.requestUpdate(),
-      updateComplete: () => this.updateComplete,
-      transientOpened: (owner, close, reason) => this.#focus.transientOpened(owner, close, reason),
-      transientClosed: (owner) => this.#focus.transientClosed(owner),
-      pickerLane: (open, reason) =>
-        reportTextEditorLane({ host: this, surface: 'table-size', open, reason }),
-    };
-  }
-
   #toolbarView() {
     const tooling = this.#tooling;
     if (!tooling) return null;
@@ -1477,14 +1478,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
    * expose (`uwg-te-req-a11y-2`).
    */
   #surfaceExpanded(tool: TextEditorTool): boolean {
-    switch (tool.kind) {
-      case 'link':
-        return this.#popups.link.isOpen;
-      case 'table-size':
-        return this.#tables.picker.open;
-      default:
-        return false;
-    }
+    return this.#features.some((feature) => feature.expanded?.(tool) === true);
   }
 
   /** Passes the root attribute record to the instance when it or the instance changed. */
@@ -1503,12 +1497,21 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       placeholder: this.placeholder,
       readOnly: this.readOnly,
       disabled: this.effectiveDisabled,
-      suggestionList: this.#popups.references.controls,
+      suggestionList: this.#suggestionList(),
     });
     const serialized = JSON.stringify(record);
     if (serialized === this.#appliedRecord) return;
     this.#appliedRecord = serialized;
     instance.setRootAttributes(record);
+  }
+
+  /** The id of the suggestion list the editing root references, from the feature that shows one. */
+  #suggestionList(): string | null {
+    for (const feature of this.#features) {
+      const id = feature.suggestionList?.();
+      if (id) return id;
+    }
+    return null;
   }
 
   /** Renders the pre-ready preview while idle or failed, never over an engine's root. */

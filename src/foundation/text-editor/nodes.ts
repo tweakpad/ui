@@ -10,7 +10,7 @@
 import type { IconDefinition } from '../../icons/types.js';
 import { VOID_ELEMENTS } from '../markdown/html.js';
 import type { MarkdownBlock, MarkdownInline } from '../markdown/types.js';
-import { textEditorTools } from './builtin-tools.js';
+import { BUILTIN_TOOL_FEATURES } from './builtin-tools/ids.js';
 import { isContainedCss } from './content/node-css.js';
 import type { TextEditorAttributeValue } from './model.js';
 
@@ -368,7 +368,7 @@ function checkName(name: unknown): string {
     );
   if (RESERVED_NODE_NAMES.has(name))
     throw new TypeError(`"${name}" is a reserved text editor node name.`);
-  if (Object.hasOwn(textEditorTools, name))
+  if (Object.hasOwn(BUILTIN_TOOL_FEATURES, name))
     throw new TypeError(`"${name}" is the identifier of a built-in text editor tool.`);
   return name;
 }

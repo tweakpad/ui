@@ -1,11 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
-import type {
-  TextEditorEngine,
-  TextEditorFormat,
-  TextEditorImageUpload,
-  TpTextEditor,
+import {
+  textEditorBlocks,
+  textEditorImages,
+  textEditorLinks,
+  textEditorSelectionToolbar,
+  textEditorSuggestions,
+  textEditorTables,
+  type TextEditorEngine,
+  type TextEditorFeature,
+  type TextEditorFormat,
+  type TextEditorImageUpload,
+  type TpTextEditor,
 } from '../../widgets/text-editor/index.js';
 import {
   calloutBlock,
@@ -32,12 +39,12 @@ interface Args {
 }
 
 /**
- * One editor with the story's properties and the sample upload hook, so that the image tool works;
- * its engine is assigned once, so no Control remounts it.
+ * One editor with the story's properties and every feature, with the sample upload hook so that
+ * the image tool works; its engine is assigned once, so no Control remounts it.
  */
 const renderTextEditor = (args: Args, createEngine: () => TextEditorEngine): TemplateResult =>
   html`<tp-text-editor
-    .imageUpload=${sampleUpload}
+    .features=${allFeatures(args.stickyTableHeaders)}
     .defaultValue=${args.defaultValue}
     .format=${args.format}
     .placeholder=${args.placeholder}
@@ -45,7 +52,6 @@ const renderTextEditor = (args: Args, createEngine: () => TextEditorEngine): Tem
     .name=${args.name}
     .readOnly=${args.readOnly}
     .disabled=${args.disabled}
-    .stickyTableHeaders=${args.stickyTableHeaders}
     ${ref((element?: Element) => {
       const editor = element as TpTextEditor | undefined;
       if (editor && !editor.engine) editor.engine = createEngine();
@@ -116,7 +122,8 @@ const meta: Meta<Args> = {
     },
     stickyTableHeaders: {
       control: 'boolean',
-      description: 'Keeps the header row of a table in view while the rest of the table scrolls.',
+      description:
+        'The `stickyHeaders` option of the tables feature: keeps the header row of a table in view while the rest of the table scrolls.',
       table: { defaultValue: { summary: 'false' } },
     },
   },
@@ -125,7 +132,76 @@ const meta: Meta<Args> = {
 export default meta;
 type Story = StoryObj<Args>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Every feature assigned: block editing, tables, images, links, the selection toolbar and the suggestion lists. An application imports only the features it uses.',
+      },
+    },
+  },
+};
+
+export const Core: Story = {
+  name: 'Core only',
+  args: { label: 'Plain notes' },
+  render: (args) =>
+    html`<tp-text-editor
+      .defaultValue=${args.defaultValue}
+      .format=${args.format}
+      .placeholder=${args.placeholder}
+      .label=${args.label}
+      .readOnly=${args.readOnly}
+      .disabled=${args.disabled}
+      ${ref((element?: Element) => {
+        const editor = element as TpTextEditor | undefined;
+        if (editor && !editor.engine) editor.engine = tiptapEngine();
+      })}
+    ></tp-text-editor>`,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'No feature assigned: the fixed toolbar with history, block kinds, marks, colors and alignment over the editing surface. The table, image and link tools, the gutter, the selection toolbar and the slash menu are absent, and the page bundles none of them.',
+      },
+    },
+  },
+};
+
+/** The features of a classic toolbar editor: links, tables and images, no block editing. */
+const classicFeatures: readonly TextEditorFeature[] = [
+  textEditorLinks(),
+  textEditorTables(),
+  textEditorImages({ upload: (file, options) => sampleUpload(file, options) }),
+];
+
+export const ClassicToolbar: Story = {
+  name: 'Classic toolbar',
+  args: { label: 'Report' },
+  render: (args) =>
+    html`<tp-text-editor
+      .features=${classicFeatures}
+      .defaultValue=${args.defaultValue}
+      .format=${args.format}
+      .placeholder=${args.placeholder}
+      .label=${args.label}
+      .readOnly=${args.readOnly}
+      .disabled=${args.disabled}
+      ${ref((element?: Element) => {
+        const editor = element as TpTextEditor | undefined;
+        if (editor && !editor.engine) editor.engine = tiptapEngine();
+      })}
+    ></tp-text-editor>`,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'The links, tables and images features without block editing, the selection toolbar or the slash menu: every control sits in the fixed toolbar, as in a classic word processor.',
+      },
+    },
+  },
+};
 
 export const Lexical: Story = {
   name: 'Lexical engine',
@@ -150,6 +226,7 @@ export const CustomNodes: Story = {
   args: { defaultValue: customBlockNotes, label: 'Mooring notes' },
   render: (args) =>
     html`<tp-text-editor
+      .features=${allFeatures(false)}
       .nodes=${customNodes}
       .layout=${customSuggestions}
       .defaultValue=${args.defaultValue}
@@ -198,12 +275,30 @@ const sampleUpload: TextEditorImageUpload = (file, { signal, onProgress }) =>
     );
   });
 
+/** Every feature, with the sample upload hook; one list per sticky-headers choice, so a render re-attaches nothing. */
+const featureSets = new Map<boolean, readonly TextEditorFeature[]>();
+function allFeatures(stickyHeaders: boolean): readonly TextEditorFeature[] {
+  let features = featureSets.get(stickyHeaders);
+  if (!features) {
+    features = [
+      textEditorBlocks(),
+      textEditorTables({ stickyHeaders }),
+      textEditorImages({ upload: sampleUpload }),
+      textEditorLinks(),
+      textEditorSelectionToolbar(),
+      textEditorSuggestions(),
+    ];
+    featureSets.set(stickyHeaders, features);
+  }
+  return features;
+}
+
 export const ImageUpload: Story = {
   name: 'Image upload',
   args: { label: 'Survey photos' },
   render: (args) =>
     html`<tp-text-editor
-      .imageUpload=${sampleUpload}
+      .features=${allFeatures(false)}
       .defaultValue=${args.defaultValue}
       .format=${args.format}
       .placeholder=${args.placeholder}
@@ -219,7 +314,7 @@ export const ImageUpload: Story = {
     docs: {
       description: {
         story:
-          'With `imageUpload`, the image tool inserts an image block that shows a File upload until its image is uploaded, and pasted or dropped image files are uploaded the same way. `imageAccept` and `imageMaxFileSize` limit the files; the hook receives each file with an abort signal and a progress callback and resolves to the image source.',
+          "With the images feature and its `upload` option, the image tool inserts an image block that shows a File upload until its image is uploaded, and pasted or dropped image files are uploaded the same way. The feature's `accept` and `maxFileSize` options limit the files; the hook receives each file with an abort signal and a progress callback and resolves to the image source.",
       },
     },
   },

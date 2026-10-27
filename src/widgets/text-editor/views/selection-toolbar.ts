@@ -5,18 +5,13 @@
  * rectangles let the inline-fragment stage pick the line. It shows without debounce and never
  * animates when it follows the selection.
  */
-import { html, nothing, type TemplateResult } from 'lit';
+import { css, html, nothing, type TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { TooltipProvider } from '../../../components/tooltip/handle.js';
 import type { TpMenu } from '../../../components/menu/menu.js';
 import { ContextualToolbarController } from '../../../foundation/contextual-toolbar.js';
 import { prepareMotion, presenceRole, type MotionHandle } from '../../../foundation/motion.js';
-import {
-  rect,
-  themeSpacing,
-  type Rect,
-  type VirtualAnchor,
-} from '../../../foundation/positioning.js';
+import { themeSpacing, type VirtualAnchor } from '../../../foundation/positioning.js';
 import { surfaceInteraction, type SurfaceInteraction } from '../../../foundation/surface-focus.js';
 import type { TpSurfaceOpenChangeEvent } from '../../../foundation/surface-state.js';
 import type { TextEditorSelection } from '../../../foundation/text-editor/model.js';
@@ -31,6 +26,7 @@ import type {
   TextEditorToolbarGroup,
   TextEditorToolbarItem,
 } from '../tools/resolve.js';
+import { anchorRects, selectionAnchor, type BlockBand } from './selection-anchor.js';
 import { TextEditorToolbarControls, toolbarTooltipContent } from './toolbar.js';
 
 // Visibility (uwg-te-req-surfaces-1) ---------------------------------------------------------
@@ -83,103 +79,6 @@ export function selectionToolbarVisible(input: SelectionToolbarVisibility): bool
   return selection.kind === 'text' && !selection.empty && input.hasText;
 }
 
-// Anchor (uwg-te-req-surfaces-1, Foundation §10.2) ------------------------------------------
-
-/** The client rectangles of the selection, as the adapter reports them. */
-export type SelectionRectsSource = () => readonly DOMRectReadOnly[];
-
-const toRect = (value: DOMRectReadOnly): Rect => rect(value.x, value.y, value.width, value.height);
-
-/** The union of rectangles, or an empty rectangle at the origin for none. */
-export function unionRect(rectangles: readonly Rect[]): Rect {
-  if (!rectangles.length) return rect(0, 0, 0, 0);
-  const left = Math.min(...rectangles.map((value) => value.left));
-  const top = Math.min(...rectangles.map((value) => value.top));
-  const right = Math.max(...rectangles.map((value) => value.right));
-  const bottom = Math.max(...rectangles.map((value) => value.bottom));
-  return rect(left, top, right - left, bottom - top);
-}
-
-/** A band of client coordinates across the block axis: from `top` to `bottom`. */
-export interface BlockBand {
-  readonly top: number;
-  readonly bottom: number;
-}
-
-/**
- * The rectangles the toolbar anchors to: the selection's, and, when the toolbar placed `reach`
- * above them would cover a band that must stay clear (the column grips above a cell range), a
- * rectangle over that band across the selection, so that the toolbar sits above the band.
- */
-export function anchorRects(
-  rects: readonly DOMRectReadOnly[],
-  keepClear: BlockBand | null,
-  reach: number,
-): readonly DOMRectReadOnly[] {
-  if (!keepClear || !rects.length) return rects;
-  const union = unionRect(rects.map(toRect));
-  if (union.top - reach >= keepClear.bottom || union.bottom <= keepClear.top) return rects;
-  const band = {
-    x: union.left,
-    y: keepClear.top,
-    width: union.width,
-    height: keepClear.bottom - keepClear.top,
-    left: union.left,
-    top: keepClear.top,
-    right: union.right,
-    bottom: keepClear.bottom,
-  } as DOMRectReadOnly;
-  return [band, ...rects];
-}
-
-/**
- * One stable virtual anchor over the selection: its bounding rectangle and its client rectangles
- * (line boxes of text, one per cell of a cell range) read at every positioning pass, with the
- * content part as its context element. A pass that finds no rectangle (the selection collapsed
- * before its surface hides, or while the surface's exit plays) keeps the last ones, so the surface
- * never moves to the viewport's origin.
- */
-export function selectionAnchor(
-  rects: SelectionRectsSource,
-  context: () => Element | null,
-): VirtualAnchor {
-  let last: readonly Rect[] = [];
-  const read = (): readonly Rect[] => {
-    const next = rects().map(toRect);
-    if (next.length) last = next;
-    return last;
-  };
-  return {
-    getBoundingRectangle: () => unionRect(read()),
-    getClientRectangles: () => read(),
-    // Read when positioning starts: the content part, rendered once the anchor is used.
-    get contextElement() {
-      return context() ?? undefined;
-    },
-  } as VirtualAnchor;
-}
-
-/**
- * The text of the document selection inside `root`, read through the composed ranges so that a
- * selection inside the shadow root is found; `null` without one.
- */
-export function composedSelectionText(root: ShadowRoot): string | null {
-  const document = root.ownerDocument;
-  const selection = document.getSelection?.() as
-    | (Selection & {
-        getComposedRanges?: (options: { shadowRoots: ShadowRoot[] }) => StaticRange[];
-      })
-    | null
-    | undefined;
-  if (!selection || selection.rangeCount === 0) return null;
-  const composed = selection.getComposedRanges?.({ shadowRoots: [root] })[0];
-  if (!composed) return selection.toString();
-  const range = document.createRange();
-  range.setStart(composed.startContainer, composed.startOffset);
-  range.setEnd(composed.endContainer, composed.endOffset);
-  return range.toString();
-}
-
 // View ---------------------------------------------------------------------------------------
 
 export interface TextEditorSelectionToolbarHost {
@@ -212,6 +111,22 @@ export interface TextEditorSelectionToolbarHost {
 }
 
 const PART = 'text-editor-selection-toolbar';
+
+/** Structure of the selection toolbar: a manual popover the positioning owner places. */
+export const selectionToolbarStyles = css`
+  [part~='text-editor-selection-toolbar'] {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    box-sizing: border-box;
+    overflow: visible;
+    color: inherit;
+  }
+
+  [part~='text-editor-selection-toolbar']:not(:popover-open) {
+    display: none;
+  }
+`;
 
 /**
  * The groups with each label trigger shown by its icon instead of its label, for a toolbar that

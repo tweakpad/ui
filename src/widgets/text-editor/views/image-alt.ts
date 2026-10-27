@@ -6,7 +6,7 @@
  * `block.set-attrs`, and Escape returns focus to the editing root with the block still selected.
  * Alt+F10 reaches it as a contextual surface; Tab reaches it after the editing root.
  */
-import { html, type TemplateResult } from 'lit';
+import { css, html, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import { composedContains, deepActiveElement } from '../../../foundation/focus.js';
@@ -32,6 +32,21 @@ import type {
 } from '../geometry.js';
 
 /** The image that the alternative text field edits: the one image of a block selection. */
+/** Structure of the alternative text field: an overlay mark placed from the layer origin. */
+export const imageAltStyles = css`
+  [part~='text-editor-alt-input'] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    pointer-events: auto;
+  }
+
+  [part~='text-editor-alt-input'][hidden] {
+    display: none !important;
+  }
+`;
+
 export interface ImageAltTarget {
   readonly id: string;
   readonly alt: string;

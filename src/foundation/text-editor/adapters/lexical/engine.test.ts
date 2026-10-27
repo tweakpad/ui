@@ -469,7 +469,7 @@ describe('uwg-te-req-engine-12: engine configuration', () => {
     const { record, modules } = stubMount();
     const [init] = record.extensions;
     expect(init).toMatchObject({
-      name: '@tweakpad/ui/text-editor',
+      name: '@tweakpad/ui/text-editor/adapters/lexical',
       namespace: 'tp-text-editor',
       editable: true,
     });

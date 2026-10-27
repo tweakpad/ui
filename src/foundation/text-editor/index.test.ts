@@ -70,7 +70,7 @@ const DOM_GLOBALS = [
   'navigator',
 ] as const;
 /** The one exception: the built-in tools resolve the platform of their chords at import. */
-const PLATFORM_READER = `${folder}/builtin-tools.ts`;
+const PLATFORM_READER = `${folder}/builtin-tools/core.ts`;
 
 /** The repository-relative file of the code that called the accessor whose stack this is. */
 function caller(stack: string | undefined): string {
@@ -138,20 +138,12 @@ const PUBLIC_RUNTIME = [
 ];
 /**
  * The guard's own list, the only part of this file that names an engine: the pattern of
- * engine names, the six engine-named exports of the entry, the two factories among them, which
- * alone carry no prefix, and the folders and files that may name an engine. The widget's guards
- * import it, so that no widget or recipe source spells an engine name.
+ * engine names, the two factories, which alone carry no prefix, and the folders that may name an
+ * engine, each of which is its own published entry. The widget's guards import it, so that no
+ * widget or recipe source spells an engine name.
  */
 export const ENGINES = {
   pattern: /tiptap|lexical|prosemirror/iu,
-  exports: [
-    'TextEditorLexicalModules',
-    'TextEditorLexicalOptions',
-    'TextEditorTiptapModules',
-    'TextEditorTiptapOptions',
-    'createLexicalEngine',
-    'createTiptapEngine',
-  ],
   factories: ['createLexicalEngine', 'createTiptapEngine'],
   folders: [`${folder}/adapters/lexical/`, `${folder}/adapters/tiptap/`],
 } as const;
@@ -169,33 +161,21 @@ const ADAPTER_TESTS = [
 ].map((name) => `${folder}/adapters/${name}.test.ts`);
 const GUARD = `${folder}/index.test.ts`;
 const GUARD_LIST = /^(?:export )?const ENGINES = \{$[\s\S]*?^\} as const;$/mu;
-/** The entry's export statements whose specifier names a module of an adapter folder. */
-const adapterExports = (code: string, file: string) =>
-  [...code.matchAll(/^export\s+(?:type\s+)?\{([^}]*)\}\s*from\s*'([^']+)';$/gmu)]
-    .filter((match) =>
-      ENGINES.folders.some((dir) => `${resolveFrom(file, match[2]!)}/`.startsWith(`${dir}`)),
-    )
-    .map((match) => ({
-      statement: match[0],
-      names: match[1]!
-        .split(',')
-        .map((item) => item.trim().replace(/^type\s+/u, ''))
-        .filter(Boolean),
-    }));
+/** The folder of a factory's adapter, from the engine its name spells. */
+const factoryFolder = (factory: string) =>
+  ENGINES.folders.find((path) =>
+    new RegExp(`/${factory.slice(6, -6).toLowerCase()}/`, 'u').test(path),
+  );
 
 /**
  * The lines of a file under the companion folder that name an engine, outside the admitted places:
- * the adapter folders and their integration tests are skipped, the entry's statements that export
- * only admitted names from an adapter folder are removed, and so is this guard's own list.
+ * the adapter folders and their integration tests are skipped, and so is this guard's own list.
+ * The entry names no engine: the adapters ship as their own entries.
  */
 function engineMentions(file: string, text: string): string[] {
   if (ENGINES.folders.some((dir) => file.startsWith(dir)) || ADAPTER_TESTS.includes(file))
     return [];
   let code = text;
-  if (file === entry)
-    for (const { statement, names } of adapterExports(text, file))
-      if (names.every((name) => (ENGINES.exports as readonly string[]).includes(name)))
-        code = code.replace(statement, '');
   if (file === GUARD) code = code.replace(GUARD_LIST, '');
   return code
     .split('\n')
@@ -226,6 +206,24 @@ describe('text editor companion sources (uwg-te-req-pkg-1, uwg-te-req-engine-1)'
       importSpecifiers(read(file))
         .filter((specifier) => specifier === null || !allowedSpecifier.test(specifier))
         .map((specifier) => `${file}: ${specifier ?? 'import() without a string specifier'}`),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('the converters and node definitions reach the built-in tools only through their identifiers', () => {
+    const ids = `${folder}/builtin-tools/ids.ts`;
+    expect(exists(ids)).toBe(true);
+    expect(
+      importSpecifiers(read(ids)).filter((specifier) => specifier !== null),
+      'ids.ts imports nothing at runtime',
+    ).toEqual([]);
+    const converters = [`${folder}/nodes.ts`, ...sources(`${folder}/content`)];
+    const offenders = converters.flatMap((file) =>
+      importSpecifiers(read(file))
+        .filter((specifier): specifier is string => specifier?.startsWith('.') === true)
+        .map((specifier) => resolveFrom(file, specifier))
+        .filter((target) => target.startsWith(`${folder}/builtin-tools/`) && target !== ids)
+        .map((target) => `${file} → ${target}`),
     );
     expect(offenders).toEqual([]);
   });
@@ -292,33 +290,43 @@ describe('text editor companion sources (uwg-te-req-pkg-1, uwg-te-req-engine-1)'
     ).toEqual([]);
   });
 
-  it('V-002: exports exactly the public surface, every name prefixed but the two factories', async () => {
+  it('V-002: exports exactly the public surface, every name prefixed', async () => {
     expect(exists(entry)).toBe(true);
     const code = withoutComments(read(entry));
     expect(code).not.toMatch(/^export\s+\*/mu);
     const names = exportedNames(code);
     expect(names.length).toBeGreaterThan(0);
-    expect(names.filter((name) => !/TextEditor|textEditor|TEXT_EDITOR/u.test(name)).sort()).toEqual(
-      [...ENGINES.factories],
-    );
-    expect(names.filter((name) => ENGINES.pattern.test(name)).sort()).toEqual([...ENGINES.exports]);
+    expect(names.filter((name) => !/TextEditor|textEditor|TEXT_EDITOR/u.test(name))).toEqual([]);
+    expect(names.filter((name) => ENGINES.pattern.test(name))).toEqual([]);
     expect(PUBLIC_REQUEST_TYPES.filter((name) => !names.includes(name))).toEqual([]);
     const api = (await import(/* @vite-ignore */ moduleUrl(entry))) as Record<string, unknown>;
-    expect(Object.keys(api).sort()).toEqual([...PUBLIC_RUNTIME, ...ENGINES.factories].sort());
-    for (const factory of ENGINES.factories) expect(typeof api[factory]).toBe('function');
+    expect(Object.keys(api).sort()).toEqual([...PUBLIC_RUNTIME].sort());
   });
 
-  it('uwg-te-req-engine-1: the entry exports the engine-named names only from the adapter folders', () => {
-    const statements = adapterExports(withoutComments(read(entry)), entry);
-    expect(statements.flatMap(({ names }) => names).sort()).toEqual([...ENGINES.exports]);
-    // Each factory comes from its own adapter folder.
+  it('uwg-te-req-engine-1: the entry reaches no adapter module', () => {
+    const offenders = importSpecifiers(withoutComments(read(entry)))
+      .filter((specifier): specifier is string => specifier?.startsWith('.') === true)
+      .map((specifier) => `${resolveFrom(entry, specifier)}/`)
+      .filter((target) => ENGINES.folders.some((dir) => target.startsWith(dir)));
+    expect(offenders).toEqual([]);
+  });
+
+  it('uwg-te-req-engine-1: each adapter index is its own entry and exports exactly its factory at runtime', async () => {
     for (const factory of ENGINES.factories) {
-      const statement = statements.find(({ names }) => names.includes(factory))?.statement ?? '';
-      const dir = ENGINES.folders.find((path) =>
-        new RegExp(`/${factory.slice(6, -6).toLowerCase()}/`, 'u').test(path),
-      );
+      const dir = factoryFolder(factory);
       expect(dir, factory).toBeDefined();
-      expect(statement, factory).toContain(`./${relative(folder, dir!)}/index.js`);
+      const file = `${dir}index.ts`;
+      expect(exists(file), file).toBe(true);
+      const code = withoutComments(read(file));
+      expect(code, file).not.toMatch(/^export\s+\*/mu);
+      const names = exportedNames(code);
+      expect(
+        names.filter((name) => name !== factory && !/^TextEditor/u.test(name)),
+        file,
+      ).toEqual([]);
+      const api = (await import(/* @vite-ignore */ moduleUrl(file))) as Record<string, unknown>;
+      expect(Object.keys(api), file).toEqual([factory]);
+      expect(typeof api[factory], file).toBe('function');
     }
   });
 
@@ -340,10 +348,9 @@ describe('text editor companion sources (uwg-te-req-pkg-1, uwg-te-req-engine-1)'
     ]);
     expect(engineMentions(adapter, `// ${named}`)).toEqual([]);
     expect(engineMentions(ADAPTER_TESTS[0]!, `// ${named}`)).toEqual([]);
-    // In the entry only a statement that exports admitted names from an adapter folder is kept.
+    // The entry has no exemption: an export from an adapter folder names an engine.
     const from = `'./${relative(folder, ENGINES.folders[0])}/index.js'`;
-    expect(engineMentions(entry, `export { ${ENGINES.factories[0]} } from ${from};`)).toEqual([]);
-    expect(engineMentions(entry, `export { ${named}Instance } from ${from};`)).toEqual([
+    expect(engineMentions(entry, `export { ${ENGINES.factories[0]} } from ${from};`)).toEqual([
       `${entry}:1`,
     ]);
     expect(engineMentions(entry, `// ${named}`)).toEqual([`${entry}:1`]);

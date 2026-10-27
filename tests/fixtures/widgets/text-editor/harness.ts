@@ -11,7 +11,7 @@
 import type { TextEditorAction } from '../../../../src/foundation/text-editor/actions.js';
 import { windowFrames } from '../../../../src/foundation/frame-loop.js';
 import { adoptStyleText } from '../../../../src/foundation/generated-style.js';
-import { textEditorTools } from '../../../../src/foundation/text-editor/builtin-tools.js';
+import { textEditorTools } from '../../../../src/foundation/text-editor/builtin-tools/index.js';
 import {
   TextEditorController,
   type TextEditorControllerHost,

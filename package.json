@@ -91,6 +91,16 @@
       "import": "./dist/text-editor.js",
       "default": "./dist/text-editor.js"
     },
+    "./text-editor/adapters/tiptap": {
+      "types": "./dist/foundation/text-editor/adapters/tiptap/index.d.ts",
+      "import": "./dist/text-editor/adapters/tiptap.js",
+      "default": "./dist/text-editor/adapters/tiptap.js"
+    },
+    "./text-editor/adapters/lexical": {
+      "types": "./dist/foundation/text-editor/adapters/lexical/index.d.ts",
+      "import": "./dist/text-editor/adapters/lexical.js",
+      "default": "./dist/text-editor/adapters/lexical.js"
+    },
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",

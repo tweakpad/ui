@@ -5,7 +5,7 @@
  * query, the text from a trigger to the caret that the one trigger matcher reads; the router
  * forwards the navigation keys; Escape dismisses the occurrence until its trigger is removed.
  */
-import { html, nothing, type TemplateResult } from 'lit';
+import { css, html, nothing, type TemplateResult } from 'lit';
 import type { TpCommandList } from '../../../components/command-palette/list.js';
 import type { CommandEntry } from '../../../components/command-palette/model.js';
 import type { AnnounceOptions } from '../../../foundation/announcer.js';
@@ -43,7 +43,7 @@ import {
   suggestionEntries,
 } from '../tools/commands.js';
 import { stableRecord } from '../tools/stable.js';
-import { selectionAnchor } from './selection-toolbar.js';
+import { selectionAnchor } from './selection-anchor.js';
 
 /**
  * The entries of a closed list, one array: the closed list renders with the element on every state
@@ -54,6 +54,19 @@ const NO_ENTRIES: readonly CommandEntry[] = Object.freeze([]);
 // Triggers and occurrences (uwg-te-req-inline-2) --------------------------------------------
 
 /** An active suggestion tool and its trigger. */
+/** Structure of the suggestion list's host: it takes no space; its popup lives in the top layer. */
+export const suggestionsStyles = css`
+  [part~='text-editor-suggestions'] {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    display: block;
+    inline-size: 0;
+    block-size: 0;
+    overflow: clip;
+  }
+`;
+
 export interface TextEditorSuggestionTrigger {
   readonly tool: string;
   readonly trigger: string;

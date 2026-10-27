@@ -86,22 +86,51 @@ const publishedGraph = (...entries) => {
   return graph;
 };
 // The widgets section and the widgets' companion entries are opt-in: the main index and register
-// reach no widget module and no module of `@tweakpad/ui/text-editor`, `/emoji` or `/flow`.
+// reach no widget module and no module of `@tweakpad/ui/text-editor` (its engine entries
+// included), `/emoji` or `/flow`.
 const optInModule = (file) =>
   /^dist\/(?:widgets\/|widgets\.js$|presentation\/(?:families\/)?widgets\.js$)/u.test(file) ||
-  /^dist\/(?:foundation\/(?:text-editor|emoji|flow)\/|(?:text-editor|emoji|flow)\.js$)/u.test(file);
+  /^dist\/(?:foundation\/(?:text-editor|emoji|flow)\/|(?:text-editor|emoji|flow)(?:\/[^/]+)*\.js$)/u.test(
+    file,
+  );
 for (const entry of ['dist/index.js', 'dist/register.js']) {
   const leaked = [...publishedGraph(entry).keys()].filter(optInModule);
   if (leaked.length) fail(`${entry} reaches ${leaked.slice(0, 3).join(', ')}`);
 }
-// Engines come from the application: no module that `@tweakpad/ui/text-editor` or
-// `@tweakpad/ui/widgets` reaches, and no module or declaration published under a `text-editor`
-// folder, imports a package other than Lit.
+// Each engine adapter is its own entry: the companion entry, the widgets and their registration
+// reach no adapter module, and an engine entry reaches no other engine's adapter.
+const engineEntries = Object.keys(manifest.exports)
+  .filter((key) => /^\.\/text-editor\/adapters\/[^/]+$/u.test(key))
+  .map((key) => `dist/${key.slice(2)}.js`);
+if (engineEntries.length !== 2) fail(`expected 2 engine entries, found ${engineEntries.length}`);
+const adapterFolder = (file) =>
+  /^dist\/foundation\/text-editor\/adapters\/([^/]+)\//u.exec(file)?.[1] ?? null;
+const engineOf = (entry) => entry.slice('dist/text-editor/adapters/'.length, -'.js'.length);
+const engineLeaks = [
+  ...publishedGraph('dist/text-editor.js', 'dist/widgets.js', 'dist/register/widgets.js').keys(),
+].filter((file) => engineEntries.includes(file) || (adapterFolder(file) ?? 'shared') !== 'shared');
+if (engineLeaks.length)
+  fail(`the engine-free entries reach an adapter: ${engineLeaks.slice(0, 3).join(', ')}`);
+for (const entry of engineEntries) {
+  const others = [...publishedGraph(entry).keys()].filter((file) => {
+    const folder = adapterFolder(file);
+    return (
+      (folder !== null && folder !== 'shared' && folder !== engineOf(entry)) ||
+      (engineEntries.includes(file) && file !== entry)
+    );
+  });
+  if (others.length) fail(`${entry} reaches another adapter: ${others.slice(0, 3).join(', ')}`);
+}
+// Engines come from the application: no module that `@tweakpad/ui/text-editor`, its engine
+// entries or `@tweakpad/ui/widgets` reach, and no module or declaration published under a
+// `text-editor` folder, imports a package other than Lit.
 const litSpecifier = /^(?:lit(?:\/|$)|@lit\/)/u;
 const scanned = new Map([
-  ...publishedGraph('dist/text-editor.js', 'dist/widgets.js'),
+  ...publishedGraph('dist/text-editor.js', ...engineEntries, 'dist/widgets.js'),
   ...[...files]
-    .filter((path) => /^dist\/(?:foundation|widgets)\/text-editor\/.*\.(?:js|d\.ts)$/u.test(path))
+    .filter((path) =>
+      /^dist\/(?:(?:foundation|widgets)\/text-editor\/|text-editor\/).*\.(?:js|d\.ts)$/u.test(path),
+    )
     .map((path) => [path, moduleSpecifiers(readFileSync(join(root, path), 'utf8'))]),
 ]);
 const bareImports = [...scanned].flatMap(([file, specifiers]) =>
@@ -179,6 +208,8 @@ import * as qr from '@tweakpad/ui/qr';
 import * as emoji from '@tweakpad/ui/emoji';
 import * as flow from '@tweakpad/ui/flow';
 import * as textEditor from '@tweakpad/ui/text-editor';
+import * as textEditorTiptap from '@tweakpad/ui/text-editor/adapters/tiptap';
+import * as textEditorLexical from '@tweakpad/ui/text-editor/adapters/lexical';
 import packageJson from '@tweakpad/ui/package.json' with { type: 'json' };
 
 defineElement(TpButton.tagName, TpButton);
@@ -187,7 +218,7 @@ button.variant = 'outline';
 const editor: HTMLElementTagNameMap['tp-text-editor'] = document.createElement('tp-text-editor');
 // @ts-expect-error The text editor publishes no controlled value.
 editor.value = editor.value;
-export const used = [TpIcon, editor, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, qr.encodeQr('x').size, emoji.builtinEmojiData().emojis.length, flow.FLOW_DOCUMENT_VERSION, textEditor, widgetEntries.length, packageJson.version];
+export const used = [TpIcon, editor, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, qr.encodeQr('x').size, emoji.builtinEmojiData().emojis.length, flow.FLOW_DOCUMENT_VERSION, textEditor, textEditorTiptap, textEditorLexical, widgetEntries.length, packageJson.version];
 `,
 );
 writeFileSync(join(consumer, 'css.d.ts'), "declare module '*.css';\n");
@@ -255,7 +286,7 @@ const textEditorLabels = run(
   [
     '--input-type=module',
     '-e',
-    "const { textEditorTools, defaultTextEditorLayout, textEditorStrings } = await import('@tweakpad/ui/text-editor'); const context = { strings: textEditorStrings, direction: 'ltr' }; const ids = [...new Set(Object.values(defaultTextEditorLayout).flat(2))].filter((id) => typeof id === 'string' && id !== '*'); const labels = ids.map((id) => { const label = textEditorTools[id]?.label; return typeof label === 'function' ? label(context) : label; }); if (!ids.length || labels.some((label) => typeof label !== 'string' || !label)) process.exit(1); console.log(labels.length);",
+    "const { textEditorTools, defaultTextEditorLayout, textEditorStrings } = await import('@tweakpad/ui/text-editor'); const context = { strings: textEditorStrings, direction: 'ltr' }; const ids = [...new Set(Object.values(defaultTextEditorLayout).flat(2))].filter((id) => typeof id === 'string' && id !== '*'); const labels = ids.map((id) => { const label = textEditorTools[id]?.label; return typeof label === 'function' ? label(context) : label; }); if (!ids.length || labels.some((label) => typeof label !== 'string' || !label)) process.exit(1); const api = await import('@tweakpad/ui/text-editor'); if (Object.keys(api).some((key) => key.startsWith('create'))) process.exit(2); console.log(labels.length);",
   ],
   consumer,
 ).trim();
@@ -276,7 +307,8 @@ for (const engine of ['@tiptap', '@lexical', 'lexical', 'prosemirror-model'])
     fail(`the consumer has ${engine} installed`);
 writeFileSync(
   join(consumer, 'engine-factories.mjs'),
-  `import { createLexicalEngine, createTiptapEngine } from '@tweakpad/ui/text-editor';
+  `import { createTiptapEngine } from '@tweakpad/ui/text-editor/adapters/tiptap';
+import { createLexicalEngine } from '@tweakpad/ui/text-editor/adapters/lexical';
 import { engineFactoryProblems } from ${JSON.stringify(pathToFileURL(join(root, 'scripts/pack-smoke-engine-factories.mjs')).href)};
 const base = JSON.parse(process.argv[2]);
 const results = [];
@@ -299,7 +331,7 @@ const engineFactories = run(
   consumer,
 ).trim();
 console.log(
-  `pack-smoke: the engine factories run in Node without an engine package: ${engineFactories}`,
+  `pack-smoke: the engine factories run in Node from their entries without an engine package: ${engineFactories}`,
 );
 
 // 4. Type-check against the published declarations, including the library's own.
@@ -360,5 +392,30 @@ for (const [name, module, d] of [
     fail(`the published ${module} module has no ${name} artwork to look for`);
   if (iconOnly.includes(d)) fail(`the icon-only bundle includes the unrelated ${name} icon`);
 }
-console.log('pack-smoke: consumer bundle built; selective imports tree-shake');
+// One engine entry alone ships its adapter and never the other's: the extension name of the
+// second adapter and the editing-root selectors of the first are the tell-tales.
+const lexicalName = '@tweakpad/ui/text-editor/adapters/lexical';
+writeFileSync(
+  join(consumer, 'engine-only.js'),
+  `import { createTiptapEngine } from '@tweakpad/ui/text-editor/adapters/tiptap';
+export const engine = createTiptapEngine({});
+`,
+);
+const engineOnly = bundle('engine-only', 'engine-only.js');
+if (!engineOnly.includes('ProseMirror')) fail('the single-engine bundle is missing its adapter');
+if (engineOnly.includes(lexicalName)) fail('the single-engine bundle includes the other adapter');
+writeFileSync(
+  join(consumer, 'other-engine-only.js'),
+  `import { createLexicalEngine } from '@tweakpad/ui/text-editor/adapters/lexical';
+export const engine = createLexicalEngine({});
+`,
+);
+const otherEngineOnly = bundle('other-engine-only', 'other-engine-only.js');
+if (!otherEngineOnly.includes(lexicalName))
+  fail('the other single-engine bundle is missing its adapter');
+if (otherEngineOnly.includes('ProseMirror'))
+  fail('the other single-engine bundle includes the first adapter');
+console.log(
+  'pack-smoke: consumer bundle built; selective imports tree-shake; each engine entry ships its adapter alone',
+);
 rmSync(work, { recursive: true, force: true });

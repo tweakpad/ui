@@ -16,7 +16,7 @@ import {
   type TextEditorAction,
   type TextEditorBlockSetTypeAction,
 } from './actions.js';
-import { textEditorTools } from './builtin-tools.js';
+import { textEditorTools } from './builtin-tools/index.js';
 import {
   BASE_CAPABILITIES,
   OPTIONAL_CAPABILITIES,

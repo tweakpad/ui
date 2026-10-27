@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TemplateResult } from 'lit';
-import { textEditorTools } from '../../../foundation/text-editor/builtin-tools.js';
+import { textEditorTools } from '../../../foundation/text-editor/builtin-tools/index.js';
 import { defaultTextEditorLayout } from '../../../foundation/text-editor/layout.js';
 import type {
   TextEditorEngineState,

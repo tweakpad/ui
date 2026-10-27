@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fillTemplate } from '../template.js';
-import { textEditorTools } from './builtin-tools.js';
+import { textEditorTools } from './builtin-tools/index.js';
 import { defaultTextEditorLayout } from './layout.js';
 import { TEXT_EDITOR_COLORS } from './palette.js';
 import { resolveTextEditorStrings, textEditorStrings, type TextEditorStrings } from './strings.js';

@@ -136,9 +136,15 @@ describe('block menu source guards', () => {
       element.indexOf('<div part="text-editor-overlay">'),
       element.indexOf('${this.#renderStatus()}'),
     );
-    expect(overlay).toContain('${this.#blocks.render()}');
-    expect(overlay).not.toContain('renderMenu');
-    expect(element).toContain('${this.#renderStatus()}${this.#blocks.renderMenu()}');
+    // The gutter renders through the blocks feature's overlay; the menu through its surfaces.
+    expect(overlay).toContain('feature.renderOverlay?.()');
+    expect(overlay).not.toContain('renderSurfaces');
+    expect(element).toContain(
+      '${this.#renderStatus()}${this.#features.map((feature) => feature.renderSurfaces?.() ?? nothing)}',
+    );
+    const feature = readFileSync(new URL('../features/blocks.ts', import.meta.url), 'utf8');
+    expect(feature).toContain('renderOverlay: () => blocks.render(),');
+    expect(feature).toContain('renderSurfaces: () => blocks.renderMenu(),');
     const blocks = readFileSync(new URL('./blocks.ts', import.meta.url), 'utf8');
     expect(blocks).toContain('return this.gutter.render();');
   });

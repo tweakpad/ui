@@ -326,7 +326,7 @@ describe('block drag preview of list items', () => {
     expect(fill).toContain('for (const source of previewSourcesOf(element))');
     expect(fill).toContain('keepListMarkers(clone.mapping, view)');
     expect(fill).toContain('preview.style.setProperty(PREVIEW_INSET, `${inset}px`);');
-    const styles = readFileSync(new URL('../styles.ts', import.meta.url), 'utf8');
+    const styles = readFileSync(new URL('./blocks.ts', import.meta.url), 'utf8');
     expect(styles).toContain('var(--_tp-text-editor-preview-inset, 0px)');
   });
 });

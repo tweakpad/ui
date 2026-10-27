@@ -9,7 +9,7 @@ import {
   TextEditorFocus,
   type TextEditorEscapeContext,
 } from './focus.js';
-import { selectionToolbarOrder } from './views/popups.js';
+import { selectionToolbarOrder } from './features/selection-toolbar.js';
 import { TABLE_CONTROLS_ORDER } from './views/table-controls.js';
 
 /** A node of a fake tree: `parentNode` links and a connected flag. */

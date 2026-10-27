@@ -9,20 +9,17 @@ export const TEXT_EDITOR_OWN_ATTRIBUTES = Object.freeze([
   'format',
   'placeholder',
   'label',
-  'sticky-table-headers',
-  'image-accept',
-  'image-max-file-size',
 ]);
 /** Attributes of the form control contract (uwg-te-req-prop-1). */
 export const TEXT_EDITOR_FORM_ATTRIBUTES = Object.freeze(['name', 'form']);
 /** Members that are properties only (uwg-te-req-prop-1). */
 export const TEXT_EDITOR_PROPERTY_ONLY = Object.freeze([
   'engine',
+  'features',
   'tools',
   'layout',
   'nodes',
   'strings',
-  'imageUpload',
 ]);
 /** Events the element dispatches (uwg-te-req-evt-1 to uwg-te-req-evt-5). */
 export const TEXT_EDITOR_EVENTS = Object.freeze([

@@ -35,7 +35,7 @@ import { tableChromeStyles, tableTabMove, TextEditorTableChrome } from './table-
 import { TextEditorTableControls } from './table-controls.js';
 import { TextEditorTablePicker } from './table-picker.js';
 import { renderTableSticky, TextEditorTableSticky } from './table-sticky.js';
-import { selectionAnchor } from './selection-toolbar.js';
+import { selectionAnchor } from './selection-anchor.js';
 
 /**
  * Whether the control that opened the size picker takes focus back when it closes: only while it

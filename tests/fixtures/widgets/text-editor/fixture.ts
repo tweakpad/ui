@@ -60,6 +60,21 @@ for (const link of document.querySelectorAll<HTMLLinkElement>('link[rel="stylesh
   if (built && link.getAttribute('href') === '/src/styles.css') link.href = '/dist/styles.css';
 await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
 await import(/* @vite-ignore */ built ? '/dist/register/widgets.js' : '/src/register/widgets.ts');
+/** The feature factories, from the graph the page runs the widget from. */
+const featureModule = (await import(
+  /* @vite-ignore */ built ? '/dist/widgets.js' : '/src/widgets/text-editor/features/index.ts'
+)) as typeof import('../../../../src/widgets/text-editor/features/index.js');
+/** Every feature, with an upload hook for the images feature when given. */
+function allFeatures(upload?: ReturnType<typeof uploadHook>) {
+  return [
+    featureModule.textEditorBlocks(),
+    featureModule.textEditorTables(),
+    featureModule.textEditorImages(upload ? { upload } : {}),
+    featureModule.textEditorLinks(),
+    featureModule.textEditorSelectionToolbar(),
+    featureModule.textEditorSuggestions(),
+  ];
+}
 
 // Page --------------------------------------------------------------------------------------
 
@@ -334,7 +349,25 @@ const SPECS: readonly InstanceSpec[] = [
     variant: 'upload',
     title: 'Image upload',
     label: 'Notes with uploads',
-    options: (id) => ({ imageUpload: uploadHook(id, 'pantry-shelf.svg') }),
+    options: (id) => ({ features: allFeatures(uploadHook(id, 'pantry-shelf.svg')) }),
+  },
+  {
+    variant: 'core',
+    title: 'Core only',
+    label: 'Notes without features',
+    options: () => ({ features: [] }),
+  },
+  {
+    variant: 'classic',
+    title: 'Classic toolbar',
+    label: 'Notes with a classic toolbar',
+    options: () => ({
+      features: [
+        featureModule.textEditorLinks(),
+        featureModule.textEditorTables(),
+        featureModule.textEditorImages(),
+      ],
+    }),
   },
   {
     variant: 'mention',
@@ -614,6 +647,7 @@ for (const { spec, engine, id, parent, levels, status } of planned) {
   const extra = spec.options?.(id, engine) ?? {};
   const editor = new ElementFixtureEditor({
     defaultValue: documentName ? html(documentName) : undefined,
+    features: allFeatures(),
     ...extra,
     attributes: { label: spec.label, ...extra.attributes },
     id,

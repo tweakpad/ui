@@ -30,15 +30,17 @@ import type * as tiptapTables from '@tiptap/pm/tables';
 import type * as tiptapStarterKit from '@tiptap/starter-kit';
 import type * as lexicalCore from 'lexical';
 import { describe, expect, it } from 'vitest';
+import type { TextEditorEngine } from '../index.js';
 import {
   createLexicalEngine,
-  createTiptapEngine,
-  type TextEditorEngine,
   type TextEditorLexicalModules,
   type TextEditorLexicalOptions,
+} from './lexical/index.js';
+import {
+  createTiptapEngine,
   type TextEditorTiptapModules,
   type TextEditorTiptapOptions,
-} from '../index.js';
+} from './tiptap/index.js';
 
 // The real module namespaces, as an application imports them.
 declare const core: typeof tiptapCore;

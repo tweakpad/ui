@@ -282,15 +282,7 @@ const describedEditor = (): Manifest => {
             name: 'TpTextEditor',
             tagName: 'tp-text-editor',
             attributes: [
-              ...[
-                'default-value',
-                'format',
-                'placeholder',
-                'label',
-                'sticky-table-headers',
-                'image-accept',
-                'image-max-file-size',
-              ].map((name) => ({ name })),
+              ...['default-value', 'format', 'placeholder', 'label'].map((name) => ({ name })),
               inherited('name', 'TpFormElement'),
               inherited('form', 'TpFormElement'),
               inherited('disabled', 'TpElement'),
@@ -298,7 +290,7 @@ const describedEditor = (): Manifest => {
             ],
             members: [
               { kind: 'field', name: 'value', readonly: true },
-              ...['engine', 'tools', 'layout', 'nodes', 'strings', 'imageUpload'].map(field),
+              ...['engine', 'features', 'tools', 'layout', 'nodes', 'strings'].map(field),
             ],
             events: [
               'tp-text-editor-request',

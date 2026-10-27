@@ -45,7 +45,7 @@ const FORM_DESCRIPTION =
   "With `name`, the editor submits its document in its `format`, Markdown here, refreshed at every commit and when the form is submitted; Enter never submits the form. Reset restores `default-value`. Inside a Field, the Field's label names the editor and its description describes it.";
 
 const CUSTOM_BLOCKS_DESCRIPTION =
-  'Nodes assigned to `nodes`: a callout, a textblock that the editor presents as a callout, and an embed, an atom that shows an https page in a sandboxed frame with a required title, both defined with `defineTextEditorBlock`; and a mention defined with `defineTextEditorInline`, which `@` inserts from a list searched after a short delay. Each block gets the gutter, the block menu, block selection and drag, and a tool in the slash menu.';
+  'Nodes assigned to `nodes`: a callout, a textblock that the editor presents as a callout, and an embed, an atom that shows an https page in a sandboxed frame with a required title, both defined with `defineTextEditorBlock`; and a mention defined with `defineTextEditorInline`, which `@` inserts from a list searched after a short delay. Each block gets the gutter, the block menu, block selection and drag, and a tool in the slash menu, with the blocks and suggestions features assigned.';
 
 /** The Docs "Usage examples": distinct use cases of the editor. */
 export const textEditorExamples: readonly DocumentationExample[] = [

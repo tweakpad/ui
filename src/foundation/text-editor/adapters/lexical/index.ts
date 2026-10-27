@@ -2,7 +2,9 @@
  * The Lexical engine of the text editor (Widgets `uwg-te-par-engine-1`, `uwg-te-tab-engine`,
  * `uwg-te-req-engine-1`–`-12`).
  *
- * The library does not depend on Lexical: pass the module namespaces you import yourself.
+ * Published as `@tweakpad/ui/text-editor/adapters/lexical`, its own entry, so that an application bundles
+ * this adapter alone. The library does not depend on Lexical: pass the module namespaces you
+ * import yourself.
  *
  * ```ts
  * import * as lexical from 'lexical';

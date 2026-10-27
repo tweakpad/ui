@@ -46,6 +46,7 @@ import {
   type TextEditorRootAttributeInput,
 } from './text-editor.js';
 import { textEditorStyles } from './styles.js';
+import { blocksStyles } from './views/blocks.js';
 
 // Guards ---------------------------------------------------------------------------------------
 
@@ -131,7 +132,7 @@ describe('tp-text-editor source guards', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('uwg-te-par-def-1: no widget module but its entry reaches the adapters through runtime imports', () => {
+  it('uwg-te-par-def-1: no widget module reaches the adapters through runtime imports', () => {
     const seen = new Map<string, string | null>();
     const reaches = (file: string): string | null => {
       if (seen.has(file)) return seen.get(file)!;
@@ -156,12 +157,10 @@ describe('tp-text-editor source guards', () => {
       }
       return null;
     };
-    const offenders = code
-      .filter((file) => name(file) !== 'index.ts')
-      .flatMap((file) => {
-        const reached = reaches(file);
-        return reached ? [`${name(file)} -> ${relative(src, reached)}`] : [];
-      });
+    const offenders = code.flatMap((file) => {
+      const reached = reaches(file);
+      return reached ? [`${name(file)} -> ${relative(src, reached)}`] : [];
+    });
     expect(offenders).toEqual([]);
   });
 
@@ -249,7 +248,7 @@ describe('tp-text-editor removal before the first update (V-585)', () => {
     for (const setup of [
       'this.#toolbar.connected();',
       'this.#observeGeometry();',
-      'this.#tables.connected();',
+      'this.#connectFeatures();',
       'this.#controller.connect();',
     ])
       expect(first.indexOf(setup), setup).toBeGreaterThan(guard);
@@ -261,7 +260,7 @@ describe('tp-text-editor removal before the first update (V-585)', () => {
       'this.#suppressionFallback?.connect();',
       'this.#toolbar.connected();',
       'this.#observeGeometry();',
-      'this.#tables.connected();',
+      'this.#connectFeatures();',
       'this.#controller.connect();',
     ])
       expect(reconnect.slice(0, reconnect.indexOf('\n  }\n')), setup).toContain(setup);
@@ -299,7 +298,7 @@ describe('tp-text-editor structure', () => {
 
   it('uwg-te-req-blocks-5: the drag preview copies inherit the content colour instead of the popover system colour', () => {
     const preview = /(?:^|[}/])\s*\.block-drag-preview\s*\{([^}]*)\}/u.exec(
-      textEditorStyles.cssText,
+      blocksStyles.cssText,
     )?.[1];
     expect(preview).toMatch(/color:\s*inherit;/u);
     expect(preview).toMatch(/background:\s*transparent;/u);
@@ -646,6 +645,7 @@ const resolution = (
   overrides: Partial<TextEditorResolutionInput> = {},
 ): TextEditorResolutionInput => ({
   engine: null,
+  features: [],
   nodes: [],
   tools: [],
   layout: null,

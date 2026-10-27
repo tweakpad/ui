@@ -176,8 +176,8 @@ export type LexicalOptions = Parameters<LexicalAdapter['createLexicalEngine']>[1
  */
 const ADAPTERS = new URLSearchParams(globalThis.location?.search ?? '').has('built')
   ? ({
-      tiptap: '/dist/foundation/text-editor/adapters/tiptap/index.js',
-      lexical: '/dist/foundation/text-editor/adapters/lexical/index.js',
+      tiptap: '/dist/text-editor/adapters/tiptap.js',
+      lexical: '/dist/text-editor/adapters/lexical.js',
     } as const)
   : ({
       tiptap: '/src/foundation/text-editor/adapters/tiptap/index.ts',

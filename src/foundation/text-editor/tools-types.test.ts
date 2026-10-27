@@ -8,7 +8,7 @@
  * cases only show that the definitions come back unchanged and resolve in a registry.
  */
 import { describe, expect, it } from 'vitest';
-import { textEditorTools } from './builtin-tools.js';
+import { textEditorTools } from './builtin-tools/index.js';
 import {
   defineTextEditorTool,
   textEditorStrings,

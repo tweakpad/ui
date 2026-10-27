@@ -97,6 +97,7 @@ export type TextEditorDiagnosticCode =
   | 'text-editor-block-id'
   | 'text-editor-layout-unknown'
   | 'text-editor-tool-duplicate'
+  | 'text-editor-feature-duplicate'
   | 'text-editor-tool-unavailable'
   | 'text-editor-format-invalid'
   | 'text-editor-upload-rejected'
