@@ -171,6 +171,18 @@ describe('uwg-te-tab-input-rules r8–r13: inline rules on the closing delimiter
     expect(htmlOf(code)).toBe('<pre data-id="c1"><code>**x** </code></pre>');
   });
 
+  it('a link rule typed inside a link links exactly its text; the rest of that link keeps its destination', () => {
+    const headless = at(
+      '<p data-id="p1"><a href="https://harbor.example/old">pier map</a></p>',
+      'p1',
+      4,
+    );
+    typeText(headless, ' [y](https://harbor.example/y)');
+    expect(htmlOf(headless)).toBe(
+      '<p data-id="p1"><a href="https://harbor.example/old">pier </a><a href="https://harbor.example/y">y</a><a href="https://harbor.example/old"> map</a></p>',
+    );
+  });
+
   it('a rule spans text of different formats and keeps the marks it does not set', () => {
     const headless = at('<p data-id="p1"><em>see</em></p>', 'p1');
     typeText(headless, ' **a**');

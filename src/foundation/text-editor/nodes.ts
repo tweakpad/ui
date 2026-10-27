@@ -124,7 +124,8 @@ export interface TextEditorBlockInit<
   readonly css?: string | undefined;
   /**
    * A presentation role of the content that the block takes: `callout` renders its element with
-   * `tp-te-callout` beside `tp-te-block-<name>`, so the widget paints it as a callout.
+   * `tp-te-callout` beside `tp-te-block-<name>`, so the widget paints it as a callout, in the tone
+   * that a `tone` attribute names as an alert kind or severity (`tip`, `warning`, `caution`).
    */
   readonly presents?: TextEditorBlockPresentation | undefined;
   readonly tool: TextEditorNodeTool;

@@ -18,9 +18,14 @@
  * holds a cell range, the DOM selection stays a caret in its anchor cell, so that the browser's
  * Copy and Cut commands fire in the root.
  */
-import type { TextEditorAction } from '../../actions.js';
-import type { TextEditorTextPoint } from '../../model.js';
+import type { TextEditorAction, TextEditorContentInsertAction } from '../../actions.js';
+import type { TextEditorCellSelection, TextEditorTextPoint } from '../../model.js';
 import { canonicalize, type TextEditorPortableTable } from '../../content/portable.js';
+import {
+  cellParagraphs,
+  prepareFragment,
+  type TextEditorFragmentContext,
+} from '../shared/fragment-insert.js';
 import { findBlock } from '../shared/blocks.js';
 import { isRightToLeft } from '../shared/dom-geometry.js';
 import {
@@ -29,7 +34,12 @@ import {
   cellCaretStays,
   cellRangeKey,
 } from '../shared/selection-state.js';
-import { keptTableSelection, tableCaret, tableEdit } from '../shared/table-edits.js';
+import {
+  cellRangeInsertEdit,
+  keptTableSelection,
+  tableCaret,
+  tableEdit,
+} from '../shared/table-edits.js';
 import { placedCell } from '../shared/tables.js';
 import { $locateBlock, $portableDocument, $textEdgeIn } from './document.js';
 import { LexicalGeometry } from './geometry.js';
@@ -102,6 +112,36 @@ const TABLE_TYPES: ReadonlySet<string> = new Set([
 export const isTableAction = (
   action: TextEditorAction,
 ): action is Extract<TextEditorAction, { table: string }> => TABLE_TYPES.has(action.type);
+
+/**
+ * `content.insert` over a cell range (`uwg-te-req-tables-5`) by the shared edit: the cells cleared
+ * and the fragment in the first cell, or a pasted table filling the range from its first cell, the
+ * caret where the edit leaves it; the converted diagnostic of the prepared fragment is reported
+ * once it applied.
+ */
+export function $prepareCellRangeInsert(
+  rt: LexicalRuntime,
+  action: TextEditorContentInsertAction & { readonly at: TextEditorCellSelection },
+  context: TextEditorFragmentContext,
+): (() => boolean) | null {
+  if (!rt.modules.table) return null;
+  const { table, range } = action.at;
+  const found = $tableOf(rt, table);
+  if (!found) return null;
+  const prepared = prepareFragment(action.content, context);
+  const edit = cellRangeInsertEdit(table, found.table, range, prepared.blocks, (blocks) =>
+    cellParagraphs(blocks, context),
+  );
+  if (!edit || edit.selection === 'keep') return null;
+  const selection = edit.selection;
+  return () => {
+    const current = $tableOf(rt, table);
+    if (!current) return false;
+    $rebuildTable(rt, current.node, canonicalTable(rt, edit.table));
+    rt.diagnostics.push(...prepared.diagnostics);
+    return $applySelection(rt, selection);
+  };
+}
 
 /** Prepares a table action; `move` and `merge` follow the engine's capabilities. */
 export function $prepareTable(

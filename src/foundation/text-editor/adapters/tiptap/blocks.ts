@@ -17,14 +17,15 @@ import type {
 import type { TextEditorSelection, TextEditorSelectionInput } from '../../model.js';
 import { NO_SELECTION } from '../../state.js';
 import {
-  alignBlocks,
   indentItems,
   outdentItems,
+  planAlign,
+  planBlockType,
   setBlockAttrs,
-  setBlockType,
   textblockTargets,
   touchedItems,
   type TextEditorEditContext,
+  type TextEditorPlannedEdit,
 } from '../shared/block-edits.js';
 import { withTrailingParagraph } from '../shared/blocks.js';
 import {
@@ -175,12 +176,24 @@ function keepingSelection(
 
 // Block attributes and nesting (uwg-te-tab-actions r2)
 
+/**
+ * Applies a planned edit and sets the selection that preceded it again. The dry run answers with
+ * the plan, as the Lexical adapter prepares it: building and committing the whole document would
+ * only repeat what `execute` does, for every block-type and alignment tool on every state.
+ */
+function applyPlan(work: TiptapWork, plan: TextEditorPlannedEdit | null): boolean {
+  if (!plan) return false;
+  if (work.dry) return true;
+  return keepingSelection(work, () => plan.build());
+}
+
 const setType: TiptapActionHandlers['block.set-type'] = (work, action) => {
   const ids = targetIds(work, action.ids);
   if (!ids) return false;
-  return keepingSelection(work, (document) =>
-    setBlockType(
-      document,
+  return applyPlan(
+    work,
+    planBlockType(
+      work.portable(),
       ids,
       { kind: action.kind, attrs: action.attrs, toggle: action.toggle },
       editContext(work),
@@ -191,9 +204,7 @@ const setType: TiptapActionHandlers['block.set-type'] = (work, action) => {
 const align: TiptapActionHandlers['block.align'] = (work, action) => {
   const ids = targetIds(work, action.ids);
   if (!ids) return false;
-  return keepingSelection(work, (document) =>
-    alignBlocks(document, ids, action.align, editContext(work)),
-  );
+  return applyPlan(work, planAlign(work.portable(), ids, action.align, editContext(work)));
 };
 
 // Blocks (uwg-te-tab-actions r3)
@@ -290,9 +301,12 @@ const insertBlock: TiptapActionHandlers['blocks.insert'] = (
 };
 
 const moveAction: TiptapActionHandlers['blocks.move'] = (work, action) => {
+  const moved = moveBlocks(work.portable(), action.ids, action.to, editContext(work));
+  // The dry run of every slot a block drag passes answers with the shared move, as the Lexical
+  // adapter prepares it, without committing the whole document.
+  if (work.dry) return moved !== null;
   const selection = selectionToKeep(work);
-  if (!applyDocument(work, moveBlocks(work.portable(), action.ids, action.to, editContext(work))))
-    return false;
+  if (!applyDocument(work, moved)) return false;
   // A block selection holds the moved blocks; a caret, text selection or cell range stays put, the
   // whole-document selection over the whole document.
   restoreSelection(

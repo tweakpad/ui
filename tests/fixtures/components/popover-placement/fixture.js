@@ -315,6 +315,39 @@ window.placementChecks = {
     }
     return results;
   },
+  /**
+   * A Popover anchored to a virtual anchor whose client rectangles are the line boxes of a span
+   * wrapped over three lines: block-start sits over the first line, block-end under the last,
+   * each centered on its line, as the inline-fragment stage picks the reference line.
+   */
+  async multiLine() {
+    const popover = document.getElementById('multiline');
+    const range = document.createRange();
+    range.selectNodeContents(document.getElementById('wrapped-span'));
+    const lines = () => [...range.getClientRects()].filter((rect) => rect.width > 0);
+    const union = () => range.getBoundingClientRect();
+    popover.anchor = { getBoundingRectangle: union, getClientRectangles: lines };
+    popover.collisionAvoidance = { side: 'none', align: 'none' };
+    popover.showArrow = false;
+    const results = [];
+    for (const placement of ['block-start', 'block-end']) {
+      popover.placement = placement;
+      popover.setOpen(true);
+      await settle(popover);
+      const rects = lines();
+      check(rects.length === 3, `Expected three line boxes, got ${rects.length}`);
+      const line = placement === 'block-start' ? rects[0] : rects[rects.length - 1];
+      const s = positioner(popover).getBoundingClientRect();
+      const gap = placement === 'block-start' ? line.top - s.bottom : s.top - line.bottom;
+      const offset = popover.sideOffset ?? 0;
+      const center = (s.left + s.right - line.left - line.right) / 2;
+      check(Math.abs(gap - offset) <= 1, `${placement}: gap ${gap}, side offset ${offset}`);
+      check(Math.abs(center) <= 1, `${placement}: center error ${center}`);
+      results.push({ placement, gap, offset, center, line: line.top, surface: s.top });
+      await close(popover);
+    }
+    return results;
+  },
 };
 await subject.updateComplete;
 window.placementReady = true;

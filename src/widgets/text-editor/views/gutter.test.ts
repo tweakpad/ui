@@ -7,6 +7,7 @@ import {
   gutterPlacement,
   gutterTarget,
   headBlock,
+  listMarkerOutset,
   type TextEditorGutterInput,
 } from './gutter.js';
 
@@ -42,8 +43,10 @@ describe('gutter reveal', () => {
     expect(gutterTarget({ ...base, pinned: true, current: 'b1', typing: true })).toBe('b1');
   });
 
-  it('sits beside the block at the selection head while it holds focus', () => {
+  it('stays beside its block while it holds focus, else beside the selection head', () => {
     expect(gutterTarget({ ...base, focusInside: true, hovered: 'b3', typing: true })).toBe('caret');
+    // A press on the grip of a block outside the selection focuses the grip: the block stays.
+    expect(gutterTarget({ ...base, focusInside: true, current: 'b2', hovered: 'b2' })).toBe('b2');
   });
 
   it('never shows while it cannot (read-only, disabled, not ready or the layout turns it off)', () => {
@@ -148,6 +151,23 @@ describe('gutter placement', () => {
     expect(gutterPlacement(rects, toOverlay, size, false, 12)).toEqual({ left: 0, top: 42 });
     expect(gutterPlacement(rects, toOverlay, size, true, 12)).toEqual({ left: 472, top: 42 });
   });
+
+  it('centres it on a block lower than a line, such as a divider', () => {
+    const rects = { content: rect(160, 90, 400, 1), firstLine: rect(160, 90, 400, 24) };
+    expect(gutterPlacement(rects, toOverlay, { width: 48, height: 24 }, false)).toEqual({
+      left: 12,
+      top: 28.5,
+    });
+  });
+
+  it('beside a list item sits outside its marker, at the inline start of its list', () => {
+    const list = { getBoundingClientRect: () => ({ left: 100, right: 600 }) as DOMRect };
+    // The marker's inset before the content, mirrored in RTL; none flush or without a list.
+    expect(listMarkerOutset({ left: 124, right: 600 }, list, false)).toBe(24);
+    expect(listMarkerOutset({ left: 100, right: 576 }, list, true)).toBe(24);
+    expect(listMarkerOutset({ left: 100, right: 600 }, list, false)).toBe(0);
+    expect(listMarkerOutset({ left: 124, right: 600 }, null, false)).toBe(0);
+  });
 });
 
 describe('gutter source guards', () => {
@@ -167,8 +187,17 @@ describe('gutter source guards', () => {
     expect(source).not.toMatch(/grip[^\n]*@pointerdown/);
   });
 
+  it('Alt+F10 focuses the insert Button with the focus indicator, which the chord does not give', () => {
+    expect(source).toContain('return this.#session?.focusFirst({ focusVisible: true }) ?? false;');
+  });
+
   it('writes no aria-grabbed or aria-pressed on the grip', () => {
     expect(source).not.toContain('aria-grabbed');
     expect(source).not.toContain('aria-pressed');
+  });
+
+  it('V-589: hit-tests the hovered block in the next frame, never in the move or scroll handler', () => {
+    expect(source).not.toContain('geometry.hitBlock(');
+    expect(source.match(/geometry\.requestHit\(/g)).toHaveLength(2);
   });
 });

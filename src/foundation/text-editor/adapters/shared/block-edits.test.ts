@@ -2,14 +2,16 @@
  * Block edits over the portable model (Widgets `uwg-te-tab-actions` r2, `uwg-te-req-blocks-1`,
  * `uwg-te-req-parity-1`, `uwg-te-req-key-3`, `uwg-te-tab-input-rules`).
  */
-import { describe, expect, it } from 'vitest';
-import type { TextEditorPortableDocument } from '../../content/portable.js';
+import { describe, expect, it, vi } from 'vitest';
+import type * as Portable from '../../content/portable.js';
+import { canonicalize, type TextEditorPortableDocument } from '../../content/portable.js';
 import {
-  alignBlocks,
   applyBlockRule,
   indentItems,
   listTab,
   outdentItems,
+  planAlign,
+  planBlockType,
   setBlockAttrs,
   setBlockType,
   textblockTargets,
@@ -22,6 +24,40 @@ import {
   ROW_SPAN_TABLE,
   writeHtml,
 } from './test-helpers.test.js';
+
+/** The aligned document, or `null` when no block takes the alignment. */
+const alignBlocks: (...args: Parameters<typeof planAlign>) => TextEditorPortableDocument | null = (
+  ...args
+) => planAlign(...args)?.build() ?? null;
+
+// Counts canonicalizations; the edits behave as with the original.
+vi.mock('../../content/portable.js', async (importOriginal) => {
+  const original = await importOriginal<typeof Portable>();
+  return { ...original, canonicalize: vi.fn(original.canonicalize) };
+});
+
+describe('uwg-te-req-perf-1: planned block edits', () => {
+  it('V-588: a plan settles whether set-type and align apply without canonicalizing, and builds once', () => {
+    const doc = readHtml('<p data-id="p1">one</p><pre data-id="c1"><code>x</code></pre>');
+    const context = editContext();
+    vi.mocked(canonicalize).mockClear();
+    const type = planBlockType(doc, ['p1'], { kind: 'quote' }, context);
+    const align = planAlign(doc, ['p1'], 'center', context);
+    // Refused exactly as the edits refuse: an unknown block, no alignable block, no heading level.
+    expect(planBlockType(doc, ['p1', 'missing'], { kind: 'quote' }, context)).toBeNull();
+    expect(planAlign(doc, ['c1'], 'center', context)).toBeNull();
+    expect(planBlockType(doc, ['p1'], { kind: 'heading' }, context)).toBeNull();
+    expect(setBlockType(doc, ['p1'], { kind: 'heading' }, context)).toBeNull();
+    expect(canonicalize).not.toHaveBeenCalled();
+    const built = type!.build();
+    expect(type!.build()).toBe(built);
+    expect(canonicalize).toHaveBeenCalledTimes(1);
+    expect(writeHtml(built)).toBe(writeHtml(setBlockType(doc, ['p1'], { kind: 'quote' }, context)));
+    expect(writeHtml(align!.build())).toBe(
+      writeHtml(planAlign(doc, ['p1'], 'center', context)!.build()),
+    );
+  });
+});
 
 describe('uwg-te-tab-actions r2: block.set-type, block.set-attrs, block.align', () => {
   it('turns textblocks into kinds keeping identifiers, and toggles back to paragraphs', () => {

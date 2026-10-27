@@ -46,6 +46,7 @@ interface Analyzer {
 }
 interface AnalyzedElement {
   attributes: string[];
+  methods: string[];
   member(name: string): ManifestMember | undefined;
 }
 
@@ -128,6 +129,23 @@ export class TpFixtureValueAgain extends TpFixtureFiles {
     value: { attribute: 'value', noAccessor: true },
   };
 }`,
+  'src/fixture/owner.ts': `
+import { LitElement } from 'lit';
+export class TpFixtureOwnerBase extends LitElement {
+  static tagName = 'tp-fixture-owner-base';
+  static override properties = { owner: { attribute: false } };
+  protected owner: HTMLElement | null = null;
+  protected forward(): boolean {
+    return false;
+  }
+}
+export class TpFixtureOwned extends TpFixtureOwnerBase {
+  static tagName = 'tp-fixture-owned';
+  override owner: HTMLElement | null = null;
+  override forward(): boolean {
+    return true;
+  }
+}`,
 };
 
 /** The manifest of `sources`, keyed by repository path, as the shipped config writes it. */
@@ -157,6 +175,9 @@ const analyze = async (): Promise<(tagName: string) => AnalyzedElement> => {
     if (!declaration) throw new Error(`${tagName} is not in the manifest`);
     return {
       attributes: (declaration.attributes ?? []).map((attribute) => attribute.name),
+      methods: (declaration.members ?? [])
+        .filter((member) => member.kind === 'method')
+        .map((member) => member.name),
       member: (name) =>
         declaration.members?.find(
           (member) => member.kind === 'field' && !member.static && member.name === name,
@@ -209,6 +230,22 @@ describe('custom elements manifest: inherited attributes of redeclared propertie
     const again = element('tp-fixture-value-again');
     expect(again.attributes).toEqual(['value', 'orientation']);
     expect(again.member('value')).toMatchObject({ attribute: 'value' });
+  });
+
+  it('publishes a protected base member that an element redeclares as public, and only there', async () => {
+    const element = await analyzed();
+    const base = element('tp-fixture-owner-base');
+    expect(base.member('owner')).toBeUndefined();
+    expect(base.methods).not.toContain('forward');
+    const owned = element('tp-fixture-owned');
+    expect(owned.member('owner')).toMatchObject({
+      type: { text: 'HTMLElement | null' },
+      default: 'null',
+    });
+    expect(owned.member('owner')).not.toHaveProperty('privacy');
+    expect(owned.member('owner')).not.toHaveProperty('attribute');
+    expect(owned.attributes).not.toContain('owner');
+    expect(owned.methods).toContain('forward');
   });
 });
 

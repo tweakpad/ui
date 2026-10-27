@@ -30,7 +30,9 @@ vi.mock('../../../foundation/toolbar.js', async (importOriginal) => {
     ) {
       log.push(`new ${this.id} ${JSON.stringify(options)}`);
     }
+    disabled = false;
     update(options: Partial<Toolbar.ToolbarOptions>): void {
+      if (options.disabled !== undefined) this.disabled = options.disabled;
       log.push(`update ${this.id} ${JSON.stringify(options)}`);
     }
     refresh(): void {
@@ -67,7 +69,8 @@ vi.mock('../../../foundation/toolbar.js', async (importOriginal) => {
   };
 });
 
-const { TextEditorToolbar, toolbarTooltipContent } = await import('./toolbar.js');
+const { TextEditorToolbar, TextEditorToolbarControls, toolbarTooltipContent } =
+  await import('./toolbar.js');
 
 // A light DOM stub: tags, classes and attributes, matched by simple selector lists.
 
@@ -441,6 +444,129 @@ describe('text editor fixed toolbar', () => {
     expect(log).toContain('item undo dispose');
   });
 
+  /** The toolbar of `setup()` over stubs that take focus: `focus()` makes an element active. */
+  function focusSetup() {
+    const t = setup();
+    const document = { body: el('body'), activeElement: null as unknown };
+    const renderRoot = t.dom.renderRoot as Stub & { activeElement: Stub | null };
+    const tree = (node: Stub): Stub[] => [node, ...node.children.flatMap(tree)];
+    for (const node of tree(t.dom.renderRoot))
+      Object.assign(node, {
+        ownerDocument: document,
+        classList: { contains: (name: string) => node.className.split(' ').includes(name) },
+        contains: (other: Stub) => tree(node).includes(other),
+        focus: vi.fn(() => {
+          renderRoot.activeElement = node;
+        }),
+      });
+    t.update();
+    /** One render with `focused` active before it; `after` runs between render and update. */
+    const pass = (focused: Stub, after: () => void) => {
+      renderRoot.activeElement = focused;
+      document.activeElement = null;
+      t.toolbar.render();
+      after();
+      t.toolbar.updated();
+    };
+    /** The render moved or removed the focused element: DOM focus fell to the body. */
+    const lost = () => {
+      renderRoot.activeElement = null;
+      document.activeElement = document.body;
+    };
+    return { t, document, renderRoot, pass, lost };
+  }
+
+  it('gives focus back to the control of its tool when the render moved it, and leaves a gone tool to the controller (node-010076)', () => {
+    const { t, pass, lost } = focusSetup();
+    const [superscript] = t.dom.root
+      .querySelectorAll('tp-toggle[data-tool]')
+      .filter((element) => element.dataset['tool'] === 'superscript');
+    pass(t.dom.bold, lost);
+    expect(t.dom.bold['focus']).toHaveBeenCalledWith({ preventScroll: true });
+    expect(t.dom.bold['focus']).toHaveBeenCalledTimes(1);
+    // A Toggle group member is restored as itself.
+    pass(superscript!, lost);
+    expect(superscript!['focus']).toHaveBeenCalledTimes(1);
+    // Focus that stayed on an element is left alone.
+    pass(t.dom.bold, () => undefined);
+    expect(t.dom.bold['focus']).toHaveBeenCalledTimes(1);
+    // A menu item is no row control: nothing to restore.
+    const item = t.dom.blockMenu.querySelector('tp-menu-radio-item')!;
+    pass(item, lost);
+    expect(item['focus']).not.toHaveBeenCalled();
+    // The tool is gone: the Toolbar controller moves focus to the nearest stop.
+    pass(t.dom.bold, () => {
+      lost();
+      const group = t.dom.bold.parentElement!;
+      group.children.splice(group.children.indexOf(t.dom.bold), 1);
+    });
+    expect(t.dom.bold['focus']).toHaveBeenCalledTimes(1);
+    expect(t.dom.undo['focus']).not.toHaveBeenCalled();
+    // A tool that hid keeps its control, inert: for focus it is gone as well (uwg-te-req-pres-5).
+    pass(superscript!, () => {
+      lost();
+      superscript!.parentElement!.attributes['inert'] = '';
+    });
+    expect(superscript!['focus']).toHaveBeenCalledTimes(1);
+  });
+
+  it('focuses a control that cannot take focus yet once the controller and its render made it focusable, unless focus left the toolbar (node-010076)', async () => {
+    const { t, document, renderRoot, pass, lost } = focusSetup();
+    const settle = async () => {
+      for (let index = 0; index < 4; index++) await Promise.resolve();
+    };
+    // Bold moved to another group: its new element is still natively disabled at the update.
+    const created = (outside: boolean) => {
+      let calls = 0;
+      t.dom.bold['focus'] = vi.fn(() => {
+        if (calls++) renderRoot.activeElement = t.dom.bold;
+      });
+      t.dom.bold['updateComplete'] = Promise.resolve(true);
+      pass(t.dom.bold, lost);
+      expect(t.dom.bold['focus']).toHaveBeenCalledTimes(1);
+      // Meanwhile the Toolbar controller repairs focus to a neighbour, or focus leaves the widget.
+      if (outside) document.activeElement = el('button');
+      else renderRoot.activeElement = t.dom.undo;
+    };
+    created(false);
+    await settle();
+    expect(t.dom.bold['focus']).toHaveBeenCalledTimes(2);
+    expect(renderRoot.activeElement).toBe(t.dom.bold);
+    created(true);
+    await settle();
+    expect(t.dom.bold['focus']).toHaveBeenCalledTimes(1);
+  });
+
+  it('answers whether focus that a render took from a tool stays nowhere for now, for the selection toolbar to return it to the editing root', () => {
+    const { t, renderRoot, lost } = focusSetup();
+    const controls = new TextEditorToolbarControls();
+    const root = t.dom.root as unknown as HTMLElement;
+    const shadow = renderRoot as unknown as ShadowRoot;
+    const after = (focused: Stub, change: () => void) => {
+      renderRoot.activeElement = focused;
+      controls.noteFocus(shadow, root);
+      change();
+      return controls.restoreFocus(shadow, root);
+    };
+    // Restored at once, or never lost: false.
+    expect(after(t.dom.bold, lost)).toBe(false);
+    expect(after(t.dom.bold, () => undefined)).toBe(false);
+    // The tool is gone: true.
+    expect(
+      after(t.dom.bold, () => {
+        lost();
+        const group = t.dom.bold.parentElement!;
+        group.children.splice(group.children.indexOf(t.dom.bold), 1);
+      }),
+    ).toBe(true);
+    // Its new control cannot take focus yet: true.
+    t.dom.undo['focus'] = vi.fn();
+    expect(after(t.dom.undo, lost)).toBe(true);
+    // A render before the first connection has no render root: nothing noted.
+    expect(() => controls.noteFocus(undefined, root)).not.toThrow();
+    expect(controls.restoreFocus(shadow, root)).toBe(false);
+  });
+
   it('registers every item as not focusable when disabled and disables the root while the widget is disabled (uwg-te-req-prop-3, node-010070)', () => {
     const t = setup({ view: toolbarView(true) });
     t.update();
@@ -450,6 +576,21 @@ describe('text editor fixed toolbar', () => {
     for (const entry of items) expect(entry).toContain('"focusableWhenDisabled":false');
     t.update(toolbarView(false));
     expect(log).toContain('item undo update {"focusableWhenDisabled":true}');
+  });
+
+  it('V-588: a render with the same access refreshes no roving item (each typed character renders the element)', () => {
+    const t = setup({ view: toolbarView(true) });
+    t.update();
+    t.update(toolbarView(false));
+    const settled = log.length;
+    t.update(toolbarView(false));
+    t.update(toolbarView(false));
+    expect(
+      log.slice(settled).filter((entry) => / update /.test(entry) || /^update /.test(entry)),
+    ).toEqual([]);
+    t.update(toolbarView(true));
+    expect(log.slice(settled)).toContain('update 1 {"disabled":true}');
+    expect(log.slice(settled)).toContain('item undo update {"focusableWhenDisabled":false}');
   });
 
   it('renders no part while no available tool is placed, and the part with its row for a view with no groups (uwg-te-tab-anatomy-r2)', () => {
@@ -490,6 +631,67 @@ describe('text editor fixed toolbar', () => {
     ]);
   });
 
+  it('keeps a hidden group in place unseen, and leaves hidden tools out of the More menu, disabling it when nothing shows (uwg-te-req-tools-5, uwg-te-req-pres-5)', () => {
+    const base = toolbarView();
+    const hide = (item: TextEditorToolbarItem): TextEditorToolbarItem => ({
+      ...item,
+      hidden: true,
+      items: item.pair ? item.items.map(hide) : item.items,
+    });
+    // Group 1 hides whole (its tools leave a table-free context), group 0 shows.
+    const view: TextEditorToolbarView = {
+      ...base,
+      groups: [
+        base.groups[0]!,
+        { ...base.groups[1]!, hidden: true, items: base.groups[1]!.items.map(hide) },
+      ],
+    };
+    const t = setup({ view });
+    const first = t.update();
+    // Every group keeps its element; the hidden one is marked for the widget's styles.
+    expect(bound(first, '?data-hidden')).toEqual([false, true]);
+    const overflow = bound(first, '@tp-overflow-change')[0] as (event: unknown) => void;
+    const omit = (keys: string[]) => {
+      const list = {
+        hiddenCount: keys.length,
+        hiddenItems: keys.map((key) => ({ getAttribute: () => key })),
+      };
+      overflow({ target: list, currentTarget: list });
+      return t.toolbar.render();
+    };
+    // Only the hidden group omitted: an empty More menu would open, so its trigger is disabled.
+    const moreDisabled = (template: unknown) =>
+      /class="?toolbar-more-trigger"?[^>]*\.disabled="?(true|false)/.exec(
+        templateMarkup(template),
+      )?.[1];
+    const hiddenOnly = omit(['1']);
+    expect(moreDisabled(hiddenOnly)).toBe('true');
+    expect(templateMarkup(hiddenOnly)).not.toMatch(/<tp-menu-(checkbox-)?item value=/);
+    // With a shown group omitted as well, the menu holds the shown tools only.
+    const both = omit(['0', '1']);
+    expect(moreDisabled(both)).toBe('false');
+    const markup = templateMarkup(both);
+    expect(markup).toMatch(/<tp-menu-item value=undo /);
+    expect(markup).not.toMatch(/value=(bold|superscript|subscript|paragraph) /);
+    // A pair with one hidden member keeps the other in the menu.
+    const partial: TextEditorToolbarView = {
+      ...base,
+      groups: [
+        base.groups[0]!,
+        {
+          ...base.groups[1]!,
+          items: base.groups[1]!.items.map((item) =>
+            item.pair ? { ...item, items: [hide(item.items[0]!), item.items[1]!] } : hide(item),
+          ),
+        },
+      ],
+    };
+    t.update(partial);
+    const pairMarkup = templateMarkup(omit(['1']));
+    expect(pairMarkup).toMatch(/<tp-menu-checkbox-item value=subscript /);
+    expect(pairMarkup).not.toMatch(/value=(superscript|bold|block-type) /);
+  });
+
   it('closes the open toolbar menu before another opens, recording its close first (uwg-te-req-surfaces-6, uwg-te-req-a11y-6)', () => {
     const t = setup();
     const template = t.update();
@@ -521,6 +723,23 @@ describe('text editor fixed toolbar', () => {
     expect(() => handle(t.dom.blockMenu, openChange(true))).not.toThrow();
     handle(t.dom.blockMenu, openChange(false));
     expect(t.calls).toEqual(['menuClosed false']);
+  });
+
+  it('records a pointer opening from the trigger of the proposal, which the Menu takes only once it accepts it (uwg-te-req-a11y-6)', () => {
+    const t = setup();
+    const handle = menuHandler(t.update());
+    const trigger = t.dom.blockMenu.triggerElement!;
+    t.dom.blockMenu.triggerElement = null;
+    handle(t.dom.blockMenu, {
+      detail: {
+        value: true,
+        reason: 'trigger-press',
+        sourceEvent: { type: 'click', detail: 1 },
+        trigger,
+      },
+    });
+    handle(t.dom.blockMenu, openChange(false, 'escape-key', { type: 'keydown' }));
+    expect(t.calls).toEqual(['menuOpened block-type pointer', 'menuClosed false']);
   });
 
   it('records the close, changed by an item press, before the Menu resolves its final focus (uwg-te-req-a11y-6)', () => {

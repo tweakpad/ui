@@ -78,6 +78,60 @@ describe('TextEditorTablePicker', () => {
   });
 });
 
+describe('table picker focus', () => {
+  /** Every value of a template tree, nested templates and directive arguments included. */
+  const valuesOf = (value: unknown, out: unknown[] = []): unknown[] => {
+    if (Array.isArray(value)) value.forEach((entry) => valuesOf(entry, out));
+    else if (value && typeof value === 'object' && 'values' in value) {
+      for (const entry of (value as { values: unknown[] }).values) {
+        out.push(entry);
+        valuesOf(entry, out);
+      }
+    }
+    return out;
+  };
+
+  it('focuses the Rows field input, and nothing until that field has rendered', () => {
+    const { picker } = setup();
+    picker.show({ anchor, surface: 'slash', opener: null });
+    const values = valuesOf(picker.render());
+    const initialFocus = values.find(
+      (value): value is () => unknown => typeof value === 'function' && value.length === 0,
+    )!;
+    // The Rows field renders with the opening, after the popover's initial focus.
+    expect(initialFocus()).toBe(false);
+    const bindRows = values.find(
+      (value): value is (element: unknown) => void =>
+        typeof value === 'function' && value.length === 1 && /rowsInput/.test(String(value)),
+    );
+    const input = { focus: vi.fn(), select: vi.fn(), value: '' };
+    bindRows?.({ inputElement: input });
+    // Rendered before its NumberField owner showed the size: focused, selected later.
+    expect(initialFocus()).toBe(input);
+    expect(input.select).not.toHaveBeenCalled();
+    input.value = '3';
+    expect(initialFocus()).toBe(input);
+    // The default size is selected, so typing replaces it.
+    expect(input.select).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps its body until the popover has closed, so that focus inside it can return', () => {
+    const { picker } = setup();
+    picker.show({ anchor, surface: 'slash', opener: null });
+    picker.close();
+    const closing = valuesOf(picker.render());
+    expect(closing).toContain(false);
+    expect(closing).toContain(anchor);
+    const complete = closing.find(
+      (value): value is (event: unknown) => void =>
+        typeof value === 'function' && /#shown = null/.test(String(value)),
+    )!;
+    const target = {};
+    complete({ target, currentTarget: target, detail: { open: false } });
+    expect(valuesOf(picker.render())).not.toContain(anchor);
+  });
+});
+
 describe('table picker as a transient surface (uwg-te-req-surfaces-6)', () => {
   it('reports its opening, so that another surface closes, and its closing', () => {
     const { host, picker } = setup();
@@ -89,5 +143,41 @@ describe('table picker as a transient surface (uwg-te-req-surfaces-6)', () => {
     picker.show({ anchor, surface: 'toolbar', opener: null });
     picker.insert(new Event('click'), null);
     expect(host.transients).toEqual(['opened', 'closed', 'opened', 'closed']);
+  });
+});
+
+describe('table picker open lane (uwg-te-tab-reasons r12, r13)', () => {
+  it('records the opening reason and each closing reason, and passes its opening reason on', () => {
+    const lanes: unknown[] = [];
+    const opened: unknown[] = [];
+    const picker = new TextEditorTablePicker({
+      strings: () => textEditorStrings,
+      disabled: () => false,
+      insert: vi.fn(),
+      restoreFocus: () => false,
+      requestUpdate: vi.fn(),
+      transientOpened: (_owner, close, reason) => void opened.push([close, reason]),
+      lane: (open, reason) => void lanes.push({ open, reason }),
+    });
+    picker.show({ anchor, surface: 'toolbar', opener: null, reason: 'trigger-press' });
+    picker.close('escape-key');
+    picker.show({ anchor, surface: 'slash', opener: null, reason: 'item-press' });
+    picker.insert(new Event('click'), null);
+    picker.show({ anchor, surface: 'api', opener: null });
+    // Another surface opening closes it through the register with the reason that opens it.
+    (opened.at(-1) as [(reason?: string) => void, string])[0]('hotkey');
+    expect(lanes).toEqual([
+      { open: true, reason: 'trigger-press' },
+      { open: false, reason: 'escape-key' },
+      { open: true, reason: 'item-press' },
+      { open: false, reason: 'item-press' },
+      { open: true, reason: 'imperative-action' },
+      { open: false, reason: 'hotkey' },
+    ]);
+    expect(opened.map((entry) => (entry as unknown[])[1])).toEqual([
+      'trigger-press',
+      'item-press',
+      'imperative-action',
+    ]);
   });
 });

@@ -36,7 +36,7 @@ import {
   type TextEditorPortableBlock,
   type TextEditorPortableDocument,
 } from './content/portable.js';
-import { firstTextEdge } from './content/edges.js';
+import { firstTextEdge, stepTextPoint, type TextEditorStepDirection } from './content/edges.js';
 import { readText, writeText } from './content/text.js';
 import { isPreviewFormat } from './content/view.js';
 import type {
@@ -54,12 +54,18 @@ import type {
 } from './engine.js';
 import { createBlockId } from './ids.js';
 import { defaultTextEditorLayout, type TextEditorLayout } from './layout.js';
-import type { TextEditorBlock, TextEditorEngineState } from './model.js';
+import type {
+  TextEditorBlock,
+  TextEditorEngineState,
+  TextEditorSelection,
+  TextEditorTextPoint,
+} from './model.js';
 import type { TextEditorNodeDefinition } from './nodes.js';
 import { preReadyState, TextEditorStore } from './state.js';
 import { textEditorStrings, type TextEditorStrings } from './strings.js';
 import {
   checkToolValue,
+  suggestionEntryTool,
   toolActions,
   toolEnabled,
   type TextEditorRequestSurface,
@@ -85,7 +91,10 @@ export type TextEditorRequestOutcome = 'applied' | 'unchanged' | 'cancelled' | '
 export interface TextEditorRequestDetail {
   /** The actions the request executes; none for a tool that acts outside the document. */
   readonly actions: readonly TextEditorAction[];
-  /** The identifier of the activated tool, or `null` for actions. */
+  /**
+   * The identifier of the activated tool, the executed entry's for a slash menu entry, or `null`
+   * for actions.
+   */
   readonly tool: string | null;
   /** The surface that issued the request. */
   readonly surface: TextEditorRequestSurface;
@@ -235,6 +244,25 @@ const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
 /**
+ * The blocks of an instance that can hold a text point, textblocks and tables, in document order;
+ * each is read through the library's HTML profile (`#edgeBlocks`), which keeps identifiers and
+ * text-point lengths, only when it is reached.
+ */
+/** Whether two text points name one position: the block, the cell if any, and the offset. */
+const sameTextPoint = (a: TextEditorTextPoint, b: TextEditorTextPoint): boolean =>
+  a.block === b.block &&
+  a.offset === b.offset &&
+  a.cell?.row === b.cell?.row &&
+  a.cell?.column === b.cell?.column &&
+  a.cell?.paragraph === b.cell?.paragraph;
+
+const textHolders = (instance: TextEditorEngineInstance): readonly TextEditorBlock[] =>
+  instance
+    .getBlocks()
+    .ordered()
+    .filter((block) => block.textblock || block.kind === 'table');
+
+/**
  * A snapshot handle that serializes its revision once per format: publishing a change hands the
  * handle on without serializing, and every reader of one revision shares its serializations.
  */
@@ -292,6 +320,71 @@ interface PendingRead {
 }
 
 /**
+ * What an engine's `can` answers depend on: the document, editability, the selection, the marks
+ * and the history. Focus and composition are left out: their changes publish a new state version,
+ * and a focus entering the widget renders it, which resolves every tool again.
+ */
+export function canStateKey(
+  state: Pick<
+    TextEditorEngineState,
+    'contentVersion' | 'editable' | 'selection' | 'marks' | 'history'
+  >,
+): string {
+  return `${state.contentVersion}|${state.editable}|${JSON.stringify([state.selection, state.marks, state.history])}`;
+}
+
+/**
+ * The block context that the answers of `block.set-type` and `block.align` on the selection depend
+ * on while the selection is a text selection in one block outside tables: editability, that block
+ * and its kind and attributes. Typing changes the document and the caret, not this context, so the
+ * block-type and alignment tools keep their answers across keystrokes (`uwg-te-req-perf-1`). `null`
+ * for any other action or selection, whose answers follow `canStateKey`.
+ */
+export function blockContextKey(
+  state: Pick<TextEditorEngineState, 'editable' | 'selection' | 'block'>,
+  action: TextEditorAction,
+): string | null {
+  // `can` also answers values that are no action.
+  const type = (action as { readonly type?: unknown } | null | undefined)?.type;
+  if (type !== 'block.set-type' && type !== 'block.align') return null;
+  const { selection, block } = state;
+  if ((action as { readonly ids?: unknown }).ids !== undefined) return null;
+  if (selection.kind !== 'text' || !block) return null;
+  const { anchor, head } = selection;
+  if (anchor.cell || head.cell || anchor.block !== head.block || block.id !== anchor.block)
+    return null;
+  return `${state.editable}|${block.id}|${block.kind}|${block.depth}|${JSON.stringify(block.attrs)}`;
+}
+
+/**
+ * The direction that the first block of a selection resolves from its text (`dir="auto"`), or the
+ * first paragraph of its first cell; `undefined` without an element to read. Read through `:dir()`,
+ * which needs no layout.
+ */
+export function textDirectionOf(
+  instance: Pick<TextEditorEngineInstance, 'blockElement' | 'cellElement'>,
+  selection: TextEditorSelection,
+): 'ltr' | 'rtl' | undefined {
+  let element: Element | null = null;
+  if (selection.kind === 'text') {
+    const { block, cell } = selection.anchor;
+    const holder = cell ? instance.cellElement(block, cell) : instance.blockElement(block);
+    element = cell ? (holder?.children[cell.paragraph] ?? holder) : holder;
+  } else if (selection.kind === 'blocks') {
+    element = selection.ids[0] === undefined ? null : instance.blockElement(selection.ids[0]);
+  } else if (selection.kind === 'cells') {
+    const cell = instance.cellElement(selection.table, selection.range.anchor);
+    element = cell?.firstElementChild ?? cell;
+  }
+  if (!element) return undefined;
+  try {
+    return element.matches(':dir(rtl)') ? 'rtl' : 'ltr';
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * The headless text editor. Before ready its state is the pre-ready state of
  * `uwg-te-req-prop-2`, its value is `null` and content reads return the pending content.
  */
@@ -342,6 +435,8 @@ export class TextEditorController {
   #uncommitted = false;
   /** A change the engine originated, with the cause of the latest one, waiting for its frame. */
   #engineChange: TextEditorContentChange | null = null;
+  /** The reason of the latest document change, staged or published; `null` before the first. */
+  #lastChangeReason: ChangeReason | null = null;
   #frame: number | undefined;
   #engineCheck: number | undefined;
   #engineReported = false;
@@ -350,8 +445,13 @@ export class TextEditorController {
   /** Content applies without a change: content queued while the mount loaded, or a restore. */
   #silent = false;
   #canInstance: TextEditorEngineInstance | null = null;
-  #canVersion = -1;
+  /** The state whose `canStateKey` was last read, and that key. */
+  #canState: TextEditorEngineState | null = null;
+  #canKey = '';
   readonly #canAnswers = new Map<string, boolean>();
+  /** The answers of the last block context (`blockContextKey`) and that context. */
+  #contextKey = '';
+  readonly #contextAnswers = new Map<string, boolean>();
 
   constructor(host: TextEditorControllerHost) {
     this.#host = host;
@@ -373,9 +473,23 @@ export class TextEditorController {
     return this.#status;
   }
 
+  /** Whether a staged state waits for the frame that publishes it. */
+  get publicationPending(): boolean {
+    return this.#frame !== undefined;
+  }
+
   /** The snapshot handle of the committed document; `null` before ready. */
   get value(): TextEditorSnapshot | null {
     return this.#status === 'ready' ? this.#value : null;
+  }
+
+  /**
+   * The reason of the latest document change, also while the engine's change waits for its frame:
+   * the open lanes of the suggestion lists read it on the state publication that precedes that
+   * value change (`uwg-te-tab-reasons` r12, r13).
+   */
+  get lastChangeReason(): ChangeReason | null {
+    return this.#lastChangeReason;
   }
 
   /** The engine's editor object while ready, or `null`. */
@@ -528,13 +642,17 @@ export class TextEditorController {
   request(proposal: TextEditorRequestProposal): Promise<TextEditorRequestOutcome> {
     const sourceEvent = proposal.sourceEvent ?? new Event('tp-programmatic-source');
     const tool = typeof proposal.target === 'string' ? proposal.target : null;
-    const detail = (actions: readonly TextEditorAction[]): TextEditorRequestDetail =>
+    // An entry of the slash menu reports the tool that it executes, which takes no value there.
+    const detail = (
+      actions: readonly TextEditorAction[],
+      entry: string | null = null,
+    ): TextEditorRequestDetail =>
       Object.freeze({
         actions,
-        tool,
+        tool: entry ?? tool,
         surface: proposal.surface,
         // Only a tool takes a value.
-        value: tool === null ? undefined : proposal.value,
+        value: tool === null || entry !== null ? undefined : proposal.value,
         reason: proposal.reason,
         sourceEvent,
         trigger: proposal.trigger ?? null,
@@ -556,15 +674,77 @@ export class TextEditorController {
     const instance = this.#readyInstance();
     const { readOnly, disabled } = this.#access;
     if (!instance || !readOnly || disabled) return;
-    // Only blocks that can hold a text point are read, each through the library's HTML profile,
-    // which keeps identifiers and text-point lengths; normally one block from each end.
-    const blocks = instance
-      .getBlocks()
-      .ordered()
-      .filter((block) => block.textblock || block.kind === 'table');
+    // Normally one block from each end is read.
+    const blocks = textHolders(instance);
     const anchor = firstTextEdge(this.#edgeBlocks(instance, blocks, 'start'), 'start');
     const head = anchor && firstTextEdge(this.#edgeBlocks(instance, blocks, 'end'), 'end');
     if (!anchor || !head) return;
+    this.#selectText(anchor, head, sourceEvent);
+  }
+
+  /**
+   * Whether the live selection is the whole-document selection (`uwg-te-req-engine-4`): a text
+   * selection that is not collapsed from the document's first to its last text point, either way
+   * round, however it was made. Escape turns it into every top-level block, atoms and tables before
+   * the first or after the last text point included (`uwg-te-req-blocks-4`). Normally one block
+   * from each end is read.
+   */
+  holdsWholeDocument(): boolean {
+    const instance = this.#readyInstance();
+    if (!instance) return false;
+    const { selection } = instance.getState();
+    if (selection.kind !== 'text' || selection.empty) return false;
+    const blocks = textHolders(instance);
+    const first = firstTextEdge(this.#edgeBlocks(instance, blocks, 'start'), 'start');
+    const last = first && firstTextEdge(this.#edgeBlocks(instance, blocks, 'end'), 'end');
+    if (!first || !last) return false;
+    const { anchor, head } = selection;
+    return (
+      (sameTextPoint(anchor, first) && sameTextPoint(head, last)) ||
+      (sameTextPoint(anchor, last) && sameTextPoint(head, first))
+    );
+  }
+
+  /**
+   * Extends a caret, or no selection, by one character while the editor is ready, read-only and
+   * not disabled (`uwg-te-req-a11y-1`, `uwg-te-req-prop-3`): a browser extends no collapsed
+   * selection in content that is not editable, and extends a non-empty one itself. The anchor is
+   * the caret, or without a selection the document's first text point (`forward`) or its last
+   * (`backward`); the head is one character from it (`stepTextPoint`), or, past the edge of a
+   * textblock, the nearest text point of the adjacent block that holds text. A selection-only
+   * change, as `selectContent` makes, that keeps focus where it is. Answers whether it set a
+   * selection: a non-empty text selection, a block or cell selection, the document's edge and a
+   * table cell's edge set none.
+   */
+  extendSelection(direction: TextEditorStepDirection, sourceEvent: Event): boolean {
+    const instance = this.#readyInstance();
+    const { readOnly, disabled } = this.#access;
+    if (!instance || !readOnly || disabled) return false;
+    const { selection } = instance.getState();
+    if (selection.kind !== 'none' && !(selection.kind === 'text' && selection.empty)) return false;
+    const blocks = textHolders(instance);
+    const side = direction === 'forward' ? 'start' : 'end';
+    const anchor =
+      selection.kind === 'text'
+        ? selection.head
+        : firstTextEdge(this.#edgeBlocks(instance, blocks, side), side);
+    const index = anchor ? blocks.findIndex((block) => block.id === anchor.block) : -1;
+    if (!anchor || index < 0) return false;
+    let head: TextEditorTextPoint | null = null;
+    for (const own of this.#edgeBlocks(instance, [blocks[index]!], side))
+      head = stepTextPoint(own, anchor, direction);
+    // A text selection leaves a table cell only through the engine's own cell selection.
+    if (!head && !anchor.cell) {
+      const rest = direction === 'forward' ? blocks.slice(index + 1) : blocks.slice(0, index);
+      head = firstTextEdge(this.#edgeBlocks(instance, rest, side), side);
+    }
+    if (!head) return false;
+    this.#selectText(anchor, head, sourceEvent);
+    return true;
+  }
+
+  /** Sets a text selection from a key, keeping focus where it is. */
+  #selectText(anchor: TextEditorTextPoint, head: TextEditorTextPoint, sourceEvent: Event): void {
     // A rejection is reported to the host as for any selection request.
     this.request({
       target: { type: 'selection.set', selection: { kind: 'text', anchor, head } },
@@ -591,12 +771,16 @@ export class TextEditorController {
 
   #request(
     proposal: TextEditorRequestProposal,
-    detail: (actions: readonly TextEditorAction[]) => TextEditorRequestDetail,
+    detail: (
+      actions: readonly TextEditorAction[],
+      entry?: string | null,
+    ) => TextEditorRequestDetail,
   ): Promise<TextEditorRequestOutcome> {
     const { target, value, surface } = proposal;
     let tool: TextEditorTool | null = null;
     let context: TextEditorToolContext | null = null;
     let actions: readonly TextEditorAction[];
+    let entry: string | null = null;
     if (typeof target === 'string') {
       const registry = this.#tools?.registry;
       tool = registry?.tools.get(target) ?? null;
@@ -627,18 +811,21 @@ export class TextEditorController {
       const resolved = toolActions(tool, context, registry);
       if (resolved === null) return Promise.resolve('unchanged');
       actions = frozenCopy(resolved);
+      // A slash entry's request names the executed tool with surface slash (uwg-te-sec-events).
+      if (surface === 'slash') entry = suggestionEntryTool(tool, context, registry)?.id ?? null;
     } else {
       actions = frozenCopy(isActionList(target) ? target : [target]);
       if (actions.length === 0) return Promise.resolve('unchanged');
       const problem = malformed(actions);
       if (problem) return this.#reject(detail(actions), domError('NotSupportedError', problem));
     }
-    if (isSelectionOnly(actions)) return this.#select(actions, detail(actions), proposal.focus);
+    if (isSelectionOnly(actions))
+      return this.#select(actions, detail(actions, entry), proposal.focus);
     const set = soleContentSet(actions);
     const { readOnly, disabled } = this.#access;
     if ((readOnly || disabled) && !set && actions.some(isMutatingAction))
       return this.#reject(
-        detail(actions),
+        detail(actions, entry),
         domError(
           'NotSupportedError',
           `The editor is ${disabled ? 'disabled' : 'read-only'}: only content.set changes it.`,
@@ -646,7 +833,7 @@ export class TextEditorController {
       );
     if (tool && context && this.#status === 'ready' && !this.#enabled(tool, context))
       return Promise.resolve('unchanged');
-    const request = detail(actions);
+    const request = detail(actions, entry);
     if (!this.#host.dispatchRequest(request)) return Promise.resolve('cancelled');
     return this.#accept(request, set, proposal.focus);
   }
@@ -871,27 +1058,37 @@ export class TextEditorController {
   }
 
   /**
-   * Whether an action would apply now: the engine's dry run, memoized per state version and
-   * action key; `false` before ready.
+   * Whether an action would apply now: the engine's dry run, memoized per state (`canStateKey`)
+   * and action key, or for the block-type and alignment actions per block context
+   * (`blockContextKey`); `false` before ready.
    */
   can(action: TextEditorAction): boolean {
     const instance = this.#readyInstance();
     if (!instance) return false;
-    const { version } = instance.getState();
-    if (instance !== this.#canInstance || version !== this.#canVersion) {
+    const state = instance.getState();
+    if (instance !== this.#canInstance || state !== this.#canState) {
+      const key = canStateKey(state);
+      if (instance !== this.#canInstance || key !== this.#canKey) this.#canAnswers.clear();
+      if (instance !== this.#canInstance) this.#contextAnswers.clear();
       this.#canInstance = instance;
-      this.#canVersion = version;
-      this.#canAnswers.clear();
+      this.#canState = state;
+      this.#canKey = key;
     }
+    const context = blockContextKey(state, action);
+    if (context !== null && context !== this.#contextKey) {
+      this.#contextAnswers.clear();
+      this.#contextKey = context;
+    }
+    const answers = context === null ? this.#canAnswers : this.#contextAnswers;
     const key = actionKey(action);
-    let answer = this.#canAnswers.get(key);
+    let answer = answers.get(key);
     if (answer === undefined) {
       try {
         answer = instance.can(action) === true;
       } catch {
         answer = false;
       }
-      this.#canAnswers.set(key, answer);
+      answers.set(key, answer);
     }
     return answer;
   }
@@ -930,6 +1127,7 @@ export class TextEditorController {
       surface,
       target,
       direction: this.#host.direction(),
+      textDirection: instance ? textDirectionOf(instance, state.selection) : undefined,
       layout: tools?.layout ?? defaultTextEditorLayout,
       table: !instance
         ? null
@@ -1130,7 +1328,9 @@ export class TextEditorController {
     this.#value = null;
     this.#committed = null;
     this.#canInstance = null;
+    this.#canState = null;
     this.#canAnswers.clear();
+    this.#contextAnswers.clear();
   }
 
   #applyEditable(instance: TextEditorEngineInstance): void {
@@ -1204,7 +1404,10 @@ export class TextEditorController {
       // One attribution per content notification; a request's own change is the request's.
       const attributed = this.#tracker.consume();
       const change = attributed.cause === 'engine' && reported ? reported : attributed;
-      if (!this.#executing) this.#engineChange = change;
+      if (!this.#executing) {
+        this.#engineChange = change;
+        this.#lastChangeReason = change.reason;
+      }
     }
     this.#stage();
   }
@@ -1300,6 +1503,7 @@ export class TextEditorController {
     if (!previousValue) return;
     const value = new SnapshotHandle(instance.snapshot());
     this.#value = value;
+    this.#lastChangeReason = change.reason;
     this.#host.valueChanged(Object.freeze({ ...change, value, previousValue }));
     if (!commit) {
       this.#uncommitted = true;

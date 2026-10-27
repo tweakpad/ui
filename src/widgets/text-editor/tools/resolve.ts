@@ -4,7 +4,7 @@ import type { TextEditorLayout } from '../../../foundation/text-editor/layout.js
 import {
   resolveToolMember,
   toolActive,
-  toolItemIds,
+  toolItemGroups,
   toolLabel,
   toolVisible,
   type TextEditorRequestSurface,
@@ -35,6 +35,13 @@ export interface TextEditorToolbarItem {
   readonly control: TextEditorToolbarControl;
   /** An exclusive pair (`uwg-te-req-tools-1`), whose `items` are its two Toggles. */
   readonly pair: boolean;
+  /**
+   * The fixed toolbar's tool that reports itself invisible in the current context: its control
+   * keeps its place, unseen and inert, so that hiding it moves no other control
+   * (`uwg-te-req-tools-5`, `uwg-te-req-pres-5`); a pair hides when both members do. Absent
+   * elsewhere, where an invisible tool is left out.
+   */
+  readonly hidden?: true | undefined;
   /** The accessible name: the tool's label. */
   readonly label: string;
   /** The visible text where the display or trigger shows one: `shortLabel`, else the label. */
@@ -48,6 +55,8 @@ export interface TextEditorToolbarItem {
   readonly value: string | null;
   /** Disabled semantics: the tool is not enabled, or the widget is disabled. */
   readonly disabled: boolean;
+  /** The tool's tone: a destructive tool shows as a destructive menu item. */
+  readonly tone?: 'default' | 'destructive' | undefined;
   /** False only while the widget is disabled (`uwg-te-req-prop-3`, `uwg-te-req-a11y-2`). */
   readonly focusableWhenDisabled: boolean;
   /** `dialog` for the link, image and table-size tools, whose surfaces are state-driven. */
@@ -58,6 +67,8 @@ export interface TextEditorToolbarItem {
   readonly shortcut: KeyShortcut | undefined;
   /** A pair's or an inline radio menu's Toggles, or a menu's or radio menu's items. */
   readonly items: readonly TextEditorToolbarItem[];
+  /** A menu item that starts a further group of its menu's items, after a separator. */
+  readonly separated?: true | undefined;
   /** A color tool's menu groups, one per channel (`uwg-te-req-surfaces-5`); none otherwise. */
   readonly colors?: readonly TextEditorColorGroup[] | undefined;
   /** A custom tool's control, rendered from the tool context; otherwise undefined. */
@@ -69,6 +80,8 @@ export interface TextEditorToolbarGroup {
   /** The index of the group in the resolved layout, which keys its DOM. */
   readonly key: string;
   readonly items: readonly TextEditorToolbarItem[];
+  /** Every item of the fixed toolbar's group is `hidden`: the group keeps its place unseen. */
+  readonly hidden?: true | undefined;
 }
 
 export interface TextEditorToolbarView {
@@ -78,7 +91,10 @@ export interface TextEditorToolbarView {
   readonly moreTools: string;
   /** The widget is disabled. */
   readonly disabled: boolean;
-  /** The groups with an item to show; empty while visibility hides every placed tool. */
+  /**
+   * The groups with an available tool placed; a tool that reports itself invisible keeps its
+   * place as a `hidden` item.
+   */
   readonly groups: readonly TextEditorToolbarGroup[];
 }
 
@@ -104,7 +120,8 @@ export interface TextEditorToolbarViewInput {
 /**
  * The fixed toolbar's view from the resolved layout and the normalized state, or `null` only while
  * the resolved layout's `toolbar` key holds no available tool (`uwg-te-tab-anatomy-r2`). Visibility
- * never removes the toolbar: a view whose placed tools are all hidden has no groups.
+ * never removes a control: a tool that reports itself invisible stays in its group as a `hidden`
+ * item, so that the row keeps its partition and no control moves (`uwg-te-req-pres-5`).
  */
 export function resolveToolbarView(
   input: TextEditorToolbarViewInput,
@@ -113,7 +130,7 @@ export function resolveToolbarView(
   const placed = layout.toolbar.flat();
   if (!placed.some((id) => registry.tools.has(id) && registry.isAvailable(id))) return null;
   const context = input.context('toolbar');
-  const groups = resolveGroups(layout.toolbar, input, context);
+  const groups = resolveGroups(layout.toolbar, input, context, true);
   return {
     label: context.strings.toolbar,
     moreTools: context.strings.moreTools,
@@ -141,22 +158,32 @@ const DIALOG_KINDS: ReadonlySet<TextEditorToolKind> = new Set<TextEditorToolKind
   'table-size',
 ]);
 
-/** Groups of items from layout groups, with the exclusive pairs merged and empty groups dropped. */
+/**
+ * Groups of items from layout groups, with the exclusive pairs merged and empty groups dropped.
+ * With `keepHidden` (the fixed toolbar), a placed tool that reports itself invisible stays as a
+ * `hidden` item, a pair and a group hiding when all of theirs do; otherwise it is left out.
+ */
 function resolveGroups(
   layoutGroups: TextEditorLayout['toolbar'],
   input: TextEditorToolbarViewInput,
   context: TextEditorToolContext,
+  keepHidden = false,
 ): TextEditorToolbarGroup[] {
-  const shown = (id: string): TextEditorTool | null => {
+  const placed = (id: string): TextEditorTool | null => {
     const tool = input.registry.tools.get(id);
-    return tool &&
-      input.registry.isAvailable(id) &&
-      tool.kind !== 'suggestion' &&
-      toolVisible(tool, context)
-      ? tool
-      : null;
+    return tool && input.registry.isAvailable(id) && tool.kind !== 'suggestion' ? tool : null;
   };
-  const listed = new Set(layoutGroups.flat().filter((id) => shown(id)));
+  const shown = (id: string): TextEditorTool | null => {
+    const tool = placed(id);
+    return tool && toolVisible(tool, context) ? tool : null;
+  };
+  const kept = keepHidden ? placed : shown;
+  const item = (id: string): TextEditorToolbarItem => {
+    const tool = kept(id)!;
+    const resolved = resolveItem(tool, input, context, shown, new Set());
+    return keepHidden && !toolVisible(tool, context) ? { ...resolved, hidden: true } : resolved;
+  };
+  const listed = new Set(layoutGroups.flat().filter((id) => kept(id)));
   // A pair whose two members are listed renders at its first listing; the other listing is removed.
   const pairAt = new Map<string, readonly [string, string]>();
   const removed = new Set<string>();
@@ -172,16 +199,13 @@ function resolveGroups(
     for (const id of ids) {
       if (removed.has(id) || !listed.has(id)) continue;
       const pair = pairAt.get(id);
-      items.push(
-        pair
-          ? pairItem(
-              pair.map((member) => resolveItem(shown(member)!, input, context, shown, new Set())),
-              id,
-            )
-          : resolveItem(shown(id)!, input, context, shown, new Set()),
-      );
+      items.push(pair ? pairItem(pair.map(item), id) : item(id));
     }
-    if (items.length) groups.push({ key: String(index), items });
+    if (!items.length) return;
+    const key = String(index);
+    groups.push(
+      items.every((entry) => entry.hidden) ? { key, items, hidden: true } : { key, items },
+    );
   });
   return groups;
 }
@@ -191,6 +215,7 @@ function pairItem(members: readonly TextEditorToolbarItem[], id: string): TextEd
   const active = members.find((member) => member.active) ?? null;
   return {
     ...first,
+    hidden: members.every((member) => member.hidden) || undefined,
     kind: 'toggle',
     control: 'toggle-group',
     pair: true,
@@ -228,16 +253,28 @@ function resolveItem(
   // A color tool's menu holds its channel groups, not tool items.
   const items =
     tool.kind === 'menu' || tool.kind === 'radio-menu'
-      ? toolItemIds(tool, context)
-          .filter((id) => !nested.has(id))
-          .map(shown)
-          .filter((child): child is TextEditorTool => child !== null)
-          .map((child) => resolveItem(child, input, context, shown, nested))
+      ? toolItemGroups(tool, context)
+          .map((group) =>
+            group
+              .filter((id) => !nested.has(id))
+              .map(shown)
+              .filter((child): child is TextEditorTool => child !== null)
+              .map((child) => resolveItem(child, input, context, shown, nested)),
+          )
+          .filter((group) => group.length)
+          .flatMap((group, index) =>
+            index ? [{ ...group[0]!, separated: true as const }, ...group.slice(1)] : group,
+          )
       : [];
   const activeItem = items.find((item) => item.active) ?? null;
   const showsActive = tool.trigger === 'active-icon' || tool.trigger === 'active-label';
   const shownItem = showsActive ? activeItem : null;
-  const disabled = !input.enabled(tool, context) || input.access.disabled;
+  // A menu that opens a submenu with no enabled item is disabled with it.
+  const disabled =
+    !input.enabled(tool, context) ||
+    input.access.disabled ||
+    ((tool.kind === 'radio-menu' || (tool.kind === 'menu' && items.length > 0)) &&
+      items.every((item) => item.disabled));
   const popup = DIALOG_KINDS.has(tool.kind) ? 'dialog' : null;
   const render = tool.kind === 'custom' && tool.render ? tool.render : undefined;
   return {
@@ -247,11 +284,17 @@ function resolveItem(
     pair: false,
     label,
     text: tool.trigger === 'active-label' && shownItem ? shownItem.text : own.text,
-    icon: tool.trigger === 'active-icon' && shownItem?.icon ? shownItem.icon : own.icon,
-    display: tool.display ?? 'icon',
+    // The active item's icon, also for an `active-label` trigger, which shows it in place of its
+    // label in a narrowed selection toolbar.
+    icon: shownItem?.icon ?? own.icon,
+    // A trigger that shows a label shows it in place of the icon unless the tool says otherwise.
+    display:
+      tool.display ??
+      (tool.trigger === 'label' || tool.trigger === 'active-label' ? 'label' : 'icon'),
     active: toolActive(tool, context),
     value: tool.kind === 'radio-menu' ? (activeItem?.id ?? null) : null,
     disabled,
+    tone: tool.tone ?? 'default',
     focusableWhenDisabled: !input.access.disabled,
     popup,
     expanded: popup !== null && (input.expanded?.(tool) ?? false),

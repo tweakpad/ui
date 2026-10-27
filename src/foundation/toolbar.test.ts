@@ -1321,6 +1321,39 @@ describe('Toolbar fully disabled mode', () => {
   });
 });
 
+describe('Toolbar roving stop', () => {
+  it('keeps the first eligible item the stop until focus or navigation chooses one, also when items before it become eligible later', async () => {
+    const { document, element } = world();
+    const bar = element();
+    const [x, y, more] = [element(bar, 'button'), element(bar, 'button'), element(bar, 'button')];
+    const stops = () => [x, y, more].map((item) => item.getAttribute('tabindex'));
+    // A row whose items show only once it has measured them: the trailing control shows first.
+    x.setAttribute('hidden', '');
+    y.setAttribute('hidden', '');
+    const toolbar = new ToolbarController(html(bar));
+    for (const item of [x, y, more]) toolbar.registerItem(html(item), { kind: 'button' });
+    await settle();
+    expect(stops()).toEqual(['-1', '-1', '0']);
+    x.removeAttribute('hidden');
+    y.removeAttribute('hidden');
+    toolbar.refresh();
+    await settle();
+    expect(stops()).toEqual(['0', '-1', '-1']);
+    // A focused item becomes the stop and stays it when an item before it shows again.
+    bar.dispatchEvent(
+      Object.assign(new Event('focusin'), { composedPath: () => [y, bar, document.body] }),
+    );
+    x.setAttribute('hidden', '');
+    toolbar.refresh();
+    await settle();
+    x.removeAttribute('hidden');
+    toolbar.refresh();
+    await settle();
+    expect(stops()).toEqual(['-1', '0', '-1']);
+    toolbar.dispose();
+  });
+});
+
 describe('Toolbar out of the sequential focus order', () => {
   it('keeps every item out of the Tab sequence until focus enters, and focuses the first enabled item', async () => {
     const { document, element } = world();
@@ -1377,6 +1410,18 @@ describe('Contextual toolbar focus model (`uwg-te-tb-req-context`)', () => {
     };
     return { document, target, surface, x, y, controller, press };
   }
+
+  it('passes focusVisible to the first enabled control on request, and nothing more by default', async () => {
+    const { x, controller } = contextual();
+    const focus = vi.spyOn(x, 'focus');
+    controller.show();
+    await settle();
+    expect(controller.focus({ focusVisible: true })).toBe(true);
+    expect(focus).toHaveBeenLastCalledWith({ preventScroll: true, focusVisible: true });
+    expect(controller.toolbar.focusFirst()).toBe(true);
+    expect(focus).toHaveBeenLastCalledWith({ preventScroll: true });
+    controller.dispose();
+  });
 
   it('shows without moving focus and focuses its first enabled control on request', async () => {
     const { document, target, surface, x, controller } = contextual();

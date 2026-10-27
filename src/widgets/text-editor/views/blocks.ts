@@ -3,10 +3,14 @@
  * `uwg-te-req-blocks-5`, `uwg-te-req-content-8`): the gutter, the block menu, block mode, the block
  * drag, the keyboard block moves, copying a block link and the URL fragment navigation.
  */
-import { html, type TemplateResult } from 'lit';
+import type { nothing, TemplateResult } from 'lit';
 import { copyText } from '../../../foundation/clipboard.js';
 import { preventComponentHandling } from '../../../foundation/part.js';
-import type { TextEditorAction } from '../../../foundation/text-editor/actions.js';
+import { preserveFocusOnPress } from '../../../foundation/press.js';
+import type {
+  TextEditorAction,
+  TextEditorBlockSlot,
+} from '../../../foundation/text-editor/actions.js';
 import type {
   TextEditorAccess,
   TextEditorRequestOutcome,
@@ -15,6 +19,7 @@ import type {
 import type { TextEditorEngineInstance } from '../../../foundation/text-editor/engine.js';
 import type { TextEditorLayout } from '../../../foundation/text-editor/layout.js';
 import type {
+  TextEditorBlock,
   TextEditorBlockTree,
   TextEditorSelection,
 } from '../../../foundation/text-editor/model.js';
@@ -24,6 +29,7 @@ import type {
   TextEditorTool,
   TextEditorToolContext,
   TextEditorToolRegistry,
+  TextEditorToolTarget,
 } from '../../../foundation/text-editor/tools.js';
 import type { KeyShortcut } from '../../../foundation/key-bindings.js';
 import {
@@ -38,7 +44,7 @@ import type { TextEditorToolActivation } from '../tools/controls.js';
 import { resolveMenuGroups } from '../tools/resolve.js';
 import { keyboardMoveSlot, moveAction, TextEditorBlockDrag } from './block-drag.js';
 import { TextEditorBlockMenu, type TextEditorBlockMenuAction } from './block-menu.js';
-import { TextEditorBlockSelection, touchedBlocks } from './block-selection.js';
+import { cellRangeKeyTarget, TextEditorBlockSelection, touchedBlocks } from './block-selection.js';
 import { headBlock, TextEditorGutter } from './gutter.js';
 
 /** The longest block text that an announcement names a block by. */
@@ -85,6 +91,58 @@ export function fragmentBlock(hash: string, tree: TextEditorBlockTree | null): s
   return tree.get(id) ? id : null;
 }
 
+/** The class of the non-editable span that holds a task item's checkbox (adapter view hooks). */
+const TASK_MARKER = 'tp-te-task-marker';
+
+/** The task checkbox an event targets, or `null`: a checkbox inside a task marker. */
+export function taskCheckboxOf(target: EventTarget | undefined): HTMLInputElement | null {
+  const element = target as Partial<HTMLInputElement> | undefined;
+  if (element?.tagName !== 'INPUT' || element.type !== 'checkbox') return null;
+  const input = element as HTMLInputElement;
+  return input.parentElement?.classList.contains(TASK_MARKER) ? input : null;
+}
+
+/**
+ * The task item a press on a checkbox toggles: the deepest task item whose element holds the
+ * checkbox, read through the adapter's block lookups (`holds`); `null` when none does.
+ */
+export function pressedTaskItem(
+  tree: TextEditorBlockTree,
+  holds: (id: string) => boolean,
+): TextEditorBlock | null {
+  let found: TextEditorBlock | null = null;
+  for (const block of tree.ordered())
+    if (block.kind === 'list-task' && (!found || block.depth > found.depth) && holds(block.id))
+      found = block;
+  return found;
+}
+
+/**
+ * The request of a task checkbox press (`uwg-te-req-blocks-7`, `uwg-te-tab-reasons` r3): the
+ * item's `checked` toggled, surface `content`, reason `trigger-press`; focus stays where the press
+ * primitive kept it.
+ */
+export function taskToggleProposal(
+  block: TextEditorBlock,
+  sourceEvent: Event,
+  trigger: Element,
+): TextEditorRequestProposal {
+  return {
+    target: [
+      {
+        type: 'block.set-attrs',
+        id: block.id,
+        attrs: { checked: block.attrs['checked'] !== true },
+      },
+    ],
+    surface: 'content',
+    reason: 'trigger-press',
+    sourceEvent,
+    trigger,
+    focus: false,
+  };
+}
+
 /** What the block controls need from the element. */
 export interface TextEditorBlocksHost {
   readonly geometry: OverlayGeometry;
@@ -92,12 +150,18 @@ export interface TextEditorBlocksHost {
   instance(): TextEditorEngineInstance | null;
   /** The live selection while ready, else the published one. */
   selection(): TextEditorSelection;
+  /** Whether the live selection is the whole-document selection (Escape selects every block). */
+  wholeDocument?(): boolean;
   strings(): TextEditorStrings;
   layout(): TextEditorLayout;
   access(): TextEditorAccess;
   direction(): 'ltr' | 'rtl';
   registry(): TextEditorToolRegistry | null;
-  toolContext(surface: TextEditorRequestSurface): TextEditorToolContext;
+  /** The tool context of `surface`; `target` is what the tools act on, the selection by default. */
+  toolContext(
+    surface: TextEditorRequestSurface,
+    target?: TextEditorToolTarget,
+  ): TextEditorToolContext;
   toolEnabled(tool: TextEditorTool, context: TextEditorToolContext): boolean;
   shortcut(toolId: string): KeyShortcut | undefined;
   request(proposal: TextEditorRequestProposal): Promise<TextEditorRequestOutcome>;
@@ -105,6 +169,8 @@ export interface TextEditorBlocksHost {
   announce(message: string): void;
   /** Restores editing focus and the selection through the adapter. */
   focusEditing(): void;
+  /** A primary press in the content part. */
+  contentPressed?(): void;
   /** Focus is in the editing root. */
   editingFocused(): boolean;
   /** Alt+F10: the next contextual controls. */
@@ -157,6 +223,7 @@ export class TextEditorBlocks {
       strings: () => host.strings(),
       announce: (message) => host.announce(message),
       editable,
+      wholeDocument: () => host.wholeDocument?.() ?? false,
       openMenu: (event) => this.openMenu(event),
       dragging: () => this.drag.active,
       cancelDrag: () => this.drag.cancel(),
@@ -236,9 +303,14 @@ export class TextEditorBlocks {
     leave: () => undefined,
   };
 
-  /** The overlay's block controls: the gutter and the block menu. */
-  render(): TemplateResult {
-    return html`${this.gutter.render()}${this.menu.render(this.gutter.enabled())}`;
+  /** The overlay's block controls: the gutter. */
+  render(): TemplateResult | typeof nothing {
+    return this.gutter.render();
+  }
+
+  /** The block menu, outside the viewport and the overlay like every floating surface. */
+  renderMenu(): TemplateResult | typeof nothing {
+    return this.menu.render(this.gutter.enabled());
   }
 
   /** After each render of the element. */
@@ -266,6 +338,8 @@ export class TextEditorBlocks {
     if (content && !content.dataset['tpBlocks']) {
       content.dataset['tpBlocks'] = '';
       content.addEventListener('mousedown', this.#onContentPress, { capture: true });
+      content.addEventListener('pointerdown', this.#onContentPointerDown, { capture: true });
+      content.addEventListener('click', this.#onTaskClick, { capture: true });
     }
   }
 
@@ -295,6 +369,8 @@ export class TextEditorBlocks {
     const content = this.#host.content();
     if (content) {
       content.removeEventListener('mousedown', this.#onContentPress, { capture: true });
+      content.removeEventListener('pointerdown', this.#onContentPointerDown, { capture: true });
+      content.removeEventListener('click', this.#onTaskClick, { capture: true });
       delete content.dataset['tpBlocks'];
     }
   }
@@ -319,9 +395,33 @@ export class TextEditorBlocks {
   /** A keydown in the editing root before the keymap: Escape and the block-mode keys. */
   editingKey(event: KeyboardEvent): boolean {
     if (!this.#host.instance()) return false;
+    // The Escape that cancelled a drag is its only step.
+    if (event.key === 'Escape' && this.drag.cancelledBy(event)) return true;
     if (event.key === 'Escape' && !event.altKey && !event.ctrlKey && !event.metaKey)
       return event.shiftKey ? false : this.selection.escape(event);
-    return this.selection.handleKey(event);
+    return this.#cellRangeKey(event) || this.selection.handleKey(event);
+  }
+
+  /**
+   * A printable key or Enter over a cell range while editable (`uwg-te-req-tables-5`): one request
+   * whose `content.insert` clears the range's cells and applies the key in its first cell, as one
+   * change on both engines.
+   */
+  #cellRangeKey(event: KeyboardEvent): boolean {
+    const access = this.#host.access();
+    if (event.isComposing || access.readOnly || access.disabled) return false;
+    const target = cellRangeKeyTarget(this.#host.selection(), event);
+    if (!target) return false;
+    void this.#host
+      .request({
+        target,
+        surface: 'keyboard',
+        reason: 'keyboard',
+        sourceEvent: event,
+        trigger: null,
+      })
+      .catch(ignore);
+    return true;
   }
 
   /** A block tool's shortcut that the widget performs; whether it handled it. */
@@ -353,6 +453,12 @@ export class TextEditorBlocks {
     this.#opening = true;
     try {
       if (!this.selection.range) this.selection.enterFromSelection(event);
+      // The menu anchors to the grip beside the first block, which is revealed first: a menu
+      // anchored out of view would not take focus.
+      this.#host
+        .instance()
+        ?.blockElement(first)
+        ?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
       if (!this.gutter.pinTo(first)) return false;
       return this.menu.openFromKey(event);
     } finally {
@@ -386,13 +492,50 @@ export class TextEditorBlocks {
         registry,
         layout,
         access: this.#host.access(),
-        context: (surface) => this.#host.toolContext(surface),
-        enabled: (tool, context) => this.#host.toolEnabled(tool, context),
+        // The tools act on the targeted blocks (`uwg-te-req-blocks-3`).
+        context: (surface) => this.#host.toolContext(surface, this.#toolTarget()),
+        // The moves resolve no action of their own: the widget finds their slot.
+        enabled: (tool, context) =>
+          tool.id === 'move-block-up' || tool.id === 'move-block-down'
+            ? this.#canMove(tool.id === 'move-block-up' ? 'up' : 'down')
+            : this.#host.toolEnabled(tool, context),
         shortcut: (id) => this.#host.shortcut(id),
       },
       'block-menu',
     );
   }
+
+  /**
+   * Whether the target blocks can move one slot up or down; kept while the tree and the targets
+   * stay the same, since the menu resolves its items on every render.
+   */
+  #canMove(direction: 'up' | 'down'): boolean {
+    const access = this.#host.access();
+    const tree = this.#host.instance()?.getBlocks();
+    const ids = this.#targets();
+    if (access.readOnly || access.disabled || !tree || !ids.length) return false;
+    const key = ids.join('\u0000');
+    let moves = this.#moves;
+    if (moves?.tree !== tree || moves.key !== key) {
+      const can = (slot: TextEditorBlockSlot | null) =>
+        slot !== null && this.#host.can(moveAction(tree, ids, slot));
+      moves = {
+        tree,
+        key,
+        up: can(keyboardMoveSlot(tree, ids, 'up')),
+        down: can(keyboardMoveSlot(tree, ids, 'down')),
+      };
+      this.#moves = moves;
+    }
+    return moves[direction];
+  }
+
+  #moves: {
+    readonly tree: TextEditorBlockTree;
+    readonly key: string;
+    readonly up: boolean;
+    readonly down: boolean;
+  } | null = null;
 
   /** The blocks a block action acts on: the block selection, else those the selection touches. */
   #targets(): readonly string[] {
@@ -401,12 +544,18 @@ export class TextEditorBlocks {
     return this.selection.range?.ids ?? touchedBlocks(tree, this.#host.selection());
   }
 
+  /** The block menu's tool target: the blocks it acts on. */
+  #toolTarget(): TextEditorToolTarget {
+    return { kind: 'blocks', ids: this.#targets() };
+  }
+
   #activate(activation: TextEditorToolActivation): void {
     const count = this.#targets().length;
     void this.#host
       .request({
         target: activation.tool,
         ...(activation.value === undefined ? {} : { value: activation.value }),
+        toolTarget: this.#toolTarget(),
         surface: activation.surface,
         reason: activation.reason,
         sourceEvent: activation.sourceEvent,
@@ -530,6 +679,34 @@ export class TextEditorBlocks {
       event.preventDefault();
       event.stopPropagation();
     }
+  };
+
+  /**
+   * A press in the content: the host learns of a primary one (a suggestion list's lane names it),
+   * and a press on a task checkbox keeps focus and the selection where they are (G2-D2).
+   */
+  readonly #onContentPointerDown = (event: PointerEvent): void => {
+    if (event.button === 0) this.#host.contentPressed?.();
+    if (taskCheckboxOf(event.composedPath()[0])) preserveFocusOnPress(event);
+  };
+
+  /** A task checkbox's activation toggles its item through one request (surface `content`). */
+  readonly #onTaskClick = (event: MouseEvent): void => {
+    const checkbox = taskCheckboxOf(event.composedPath()[0]);
+    if (!checkbox) return;
+    // The checkbox's own toggle stays cancelled: the item changes only through the request.
+    event.preventDefault();
+    const instance = this.#host.instance();
+    if (!instance) return;
+    const block = pressedTaskItem(
+      instance.getBlocks(),
+      (id) => instance.blockElement(id)?.contains(checkbox) === true,
+    );
+    if (!block) return;
+    const proposal = taskToggleProposal(block, event, checkbox);
+    // After the click's dispatch: cancelling it restores the checkbox's previous state at its end,
+    // which would overwrite the state that the applied request renders.
+    setTimeout(() => void this.#host.request(proposal).catch(() => undefined), 0);
   };
 
   /** URL fragment navigation (`uwg-te-req-content-8`): reveal and block-select, no request. */

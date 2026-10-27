@@ -88,6 +88,8 @@ export class ToolbarController {
   readonly #releases = new Set<() => void>();
   #options: ToolbarOptions;
   #current: HTMLElement | null = null;
+  /** Whether focus or navigation chose the roving stop; until then it is the first eligible item. */
+  #chosen = false;
   #ordered: HTMLElement[] = [];
   #domOrder = new Map<HTMLElement, number>();
   #focused: HTMLElement | null = null;
@@ -162,9 +164,10 @@ export class ToolbarController {
 
   /**
    * Moves focus to the first enabled item and makes it the roving stop; returns whether an item
-   * took focus.
+   * took focus. `focusVisible: true` shows the focus indicator where a keyboard command moved
+   * focus: browsers do not count a chord with Alt, Control or Meta as keyboard interaction.
    */
-  focusFirst(): boolean {
+  focusFirst(options: { readonly focusVisible?: boolean } = {}): boolean {
     if (this.#disposed) return false;
     this.#sync();
     const first = this.#collection
@@ -173,9 +176,10 @@ export class ToolbarController {
       .find((item): item is Item => !!item && !this.#disabled(item));
     if (!first) return false;
     this.#current = first.element;
+    this.#chosen = true;
     this.#sync();
     const target = compositeControl(first.element)?.target() ?? first.element;
-    target.focus({ preventScroll: true });
+    target.focus({ preventScroll: true, ...options });
     return composedContains(first.element, deepActiveElement(this.host.ownerDocument));
   }
 
@@ -359,7 +363,14 @@ export class ToolbarController {
     for (const sync of this.#separators) sync();
     const eligible = this.#collection.enabled().map((item) => item.element);
     const previous = this.#current;
-    if (!previous || !eligible.includes(previous)) {
+    // Before focus or navigation chooses a stop, the first eligible item is the stop, also when
+    // items before it become eligible later (a row whose items show once it has measured them).
+    if (!this.#chosen)
+      this.#current =
+        this.#collection.items
+          .map((item) => item.element)
+          .find((element) => eligible.includes(element)) ?? null;
+    else if (!previous || !eligible.includes(previous)) {
       const ordered = this.#collection.items.map((item) => item.element);
       const index = this.#position(previous, ordered);
       this.#current =
@@ -473,6 +484,7 @@ export class ToolbarController {
     const item = this.#eventItem(event);
     if (!item || !this.#eligible(item)) return;
     this.#current = this.#focused = item.element;
+    this.#chosen = true;
     this.refresh();
   };
   #focusOut = (event: FocusEvent): void => {
@@ -553,6 +565,7 @@ export class ToolbarController {
     });
     if (next) {
       this.#current = next;
+      this.#chosen = true;
       event.stopPropagation();
       this.refresh();
     }
@@ -571,6 +584,7 @@ export class ToolbarController {
     for (const release of [...this.#releases]) release();
     this.#attributes.dispose();
     this.#current = this.#focused = null;
+    this.#chosen = false;
     // Released members connect to an outer toolbar, or wait for the next one.
     reconnectMembers();
   }

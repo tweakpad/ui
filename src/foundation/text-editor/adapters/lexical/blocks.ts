@@ -23,13 +23,14 @@ import type {
 import type { TextEditorPortableDocument } from '../../content/portable.js';
 import type { TextEditorSelection, TextEditorSelectionInput } from '../../model.js';
 import {
-  alignBlocks,
   indentItems,
   outdentItems,
+  planAlign,
+  planBlockType,
   setBlockAttrs,
-  setBlockType,
   textblockTargets,
   touchedItems,
+  type TextEditorPlannedEdit,
 } from '../shared/block-edits.js';
 import { isTextblock, withTrailingParagraph } from '../shared/blocks.js';
 import type { TextEditorFragmentContext } from '../shared/fragment-insert.js';
@@ -176,6 +177,14 @@ function prepared(
   return next ? () => $commitDocument(rt, next, selection) : null;
 }
 
+/**
+ * Prepares a planned edit that keeps the selection: whether it applies is settled now, and the
+ * next document is built by the returned step only, so `can`'s dry run builds none.
+ */
+function planned(rt: LexicalRuntime, plan: TextEditorPlannedEdit | null): Prepared {
+  return plan ? () => $commitDocument(rt, plan.build(), 'keep') : null;
+}
+
 // block.set-type, block.set-attrs, block.align, block.indent, block.outdent
 
 export function $prepareSetType(
@@ -184,9 +193,9 @@ export function $prepareSetType(
 ): Prepared {
   const ids = $blockTargets(rt, action.ids);
   if (!ids) return null;
-  return prepared(
+  return planned(
     rt,
-    setBlockType(
+    planBlockType(
       $portableDocument(rt),
       ids,
       { kind: action.kind, attrs: action.attrs, toggle: action.toggle },
@@ -208,7 +217,7 @@ export function $prepareSetAttrs(
 export function $prepareAlign(rt: LexicalRuntime, action: TextEditorBlockAlignAction): Prepared {
   const ids = $blockTargets(rt, action.ids);
   if (!ids) return null;
-  return prepared(rt, alignBlocks($portableDocument(rt), ids, action.align, editContext(rt)));
+  return planned(rt, planAlign($portableDocument(rt), ids, action.align, editContext(rt)));
 }
 
 /**

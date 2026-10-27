@@ -3,6 +3,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { TemplateResult } from 'lit';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
+import { ContentSecurityService } from '../../foundation/content-security.js';
 import type { FieldAssociationAttributes } from '../../foundation/form-element.js';
 import type { TextEditorEngine, TextEditorSnapshot } from '../../foundation/text-editor/engine.js';
 import { ENGINES } from '../../foundation/text-editor/index.test.js';
@@ -23,21 +24,28 @@ import {
   applyTextEditorResolution,
   cancelsDisabledActivation,
   closedAncestorRoot,
+  formEventRoot,
   describeElement,
   effectiveTextEditorFormat,
+  textEditorFormatConverter,
+  textEditorCaretHidden,
+  textEditorToolingSeverity,
   effectiveTextEditorLayout,
   patchFormEntries,
   resolveTextEditorTooling,
   textEditorFieldValue,
+  initialFieldValueDetail,
   textEditorFormValue,
   textEditorResolutionSteps,
   textEditorRootAttributes,
   textEditorRouterConfig,
+  textEditorSuppressionFallback,
   textEditorViewportTabIndex,
   TpTextEditor,
   type TextEditorResolutionInput,
   type TextEditorRootAttributeInput,
 } from './text-editor.js';
+import { textEditorStyles } from './styles.js';
 
 // Guards ---------------------------------------------------------------------------------------
 
@@ -65,7 +73,7 @@ const name = (file: string) => relative(folder, file);
 const GUARD_TOKENS = {
   adapters: 'foundation/text-editor/adapters/',
   selection: ['getSelection(', '.anchorNode', '.isCollapsed', '.getRangeAt('],
-  engineApi: ['.view.', '$getRoot'],
+  engineApi: ['.view.', '.commands.', 'editor.update(', '$get'],
   native: '.native',
   partExport: 'exportparts',
   frames: [
@@ -92,6 +100,22 @@ const isAdapter = (file: string) =>
   relative(src, file).split('\\').join('/').startsWith(GUARD_TOKENS.adapters);
 
 describe('tp-text-editor source guards', () => {
+  it('V-587: renders a focus change in the next frame unless a render ran before it, never in the focus event', () => {
+    const source = readFileSync(new URL('./text-editor.ts', import.meta.url), 'utf8');
+    expect(source).toContain('focusChanged: () => this.#focusChanged(),');
+    const method = source.slice(source.indexOf('  #focusChanged(): void {'));
+    expect(method.slice(0, method.indexOf('\n  }\n'))).toMatch(
+      /this\.#focusPending = true;[\s\S]*frameLoopFor\([\s\S]*if \(!this\.#focusPending \|\| !this\.isConnected\) return false;\n\s*if \(this\.#controller\.publicationPending\) return true;\n\s*this\.requestUpdate\(\);[\s\S]*this\.#focusFrame\.wake\(\);/,
+    );
+    // Every render shows the current focus, and a removal cancels the frame.
+    expect(source).toMatch(
+      /willUpdate\(changed[^)]*\): void \{\n {4}super\.willUpdate\(changed\);\n[^\n]*\n {4}this\.#focusPending = false;/,
+    );
+    expect(source).toMatch(
+      /disconnectedCallback\(\): void \{\n {4}super\.disconnectedCallback\(\);\n {4}this\.#cancelFocusFrame\(\);/,
+    );
+  });
+
   it('finds its own token block', () => {
     expect(readFileSync(self, 'utf8')).toMatch(GUARD_BLOCK);
     expect(text(self)).not.toMatch(GUARD_BLOCK);
@@ -192,6 +216,106 @@ describe('tp-text-editor source guards', () => {
   });
 });
 
+describe('tp-text-editor form events', () => {
+  it('uwg-te-req-value-4: listens for the form events in its own tree, so a form inside a shadow root refreshes the entry before submission', () => {
+    const shadow = { nodeType: 11 } as unknown as ShadowRoot;
+    const document = { nodeType: 9 } as unknown as Document;
+    const inShadow = { getRootNode: () => shadow } as unknown as Node;
+    const inDocument = { getRootNode: () => document } as unknown as Node;
+    const detached = { nodeType: 1 } as unknown as Node;
+    Object.assign(detached, { getRootNode: () => detached });
+    expect(formEventRoot(inShadow)).toBe(shadow);
+    expect(formEventRoot(inDocument)).toBe(document);
+    expect(formEventRoot(detached)).toBeNull();
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'text-editor.ts'),
+      'utf8',
+    );
+    expect(source).toContain('this.#listenForms(formEventRoot(this));');
+  });
+});
+
+describe('tp-text-editor removal before the first update (V-585)', () => {
+  it('a first update that runs after the removal sets up no view; the reconnection does', () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'text-editor.ts'),
+      'utf8',
+    );
+    const start = source.indexOf('protected override firstUpdated(');
+    const first = source.slice(start, source.indexOf('\n  }\n', start));
+    const guard = first.indexOf('if (!this.isConnected) return;');
+    expect(guard).toBeGreaterThan(0);
+    // Every set-up that `disconnectedCallback` releases comes after the guard.
+    for (const setup of [
+      'this.#toolbar.connected();',
+      'this.#observeGeometry();',
+      'this.#tables.connected();',
+      'this.#controller.connect();',
+    ])
+      expect(first.indexOf(setup), setup).toBeGreaterThan(guard);
+    expect(first).toContain('if (this.isConnected) this.#suppressionFallback.connect();');
+    // The reconnection of an updated host sets the same views up.
+    const connect = source.slice(source.indexOf('override connectedCallback(): void {'));
+    const reconnect = connect.slice(connect.indexOf('if (!this.hasUpdated) return;'));
+    for (const setup of [
+      'this.#suppressionFallback?.connect();',
+      'this.#toolbar.connected();',
+      'this.#observeGeometry();',
+      'this.#tables.connected();',
+      'this.#controller.connect();',
+    ])
+      expect(reconnect.slice(0, reconnect.indexOf('\n  }\n')), setup).toContain(setup);
+  });
+});
+
+describe('tp-text-editor structure', () => {
+  it('uwg-te-req-tables-3, uwg-te-req-pres-1: the surface isolates the overlay marks, so the sticky toolbar paints over the raised table grips', () => {
+    const surface = /(?:^|[}/])\s*\.surface\s*\{([^}]*)\}/u.exec(textEditorStyles.cssText)?.[1];
+    expect(surface).toMatch(/isolation:\s*isolate;/u);
+    expect(surface).not.toMatch(/z-index/u);
+  });
+
+  it('uwg-te-req-tools-5, uwg-te-req-pres-5: a fixed-toolbar tool that hides keeps its box, unseen, with the separator of a group that hides whole', () => {
+    const rule =
+      /\[part~='text-editor-toolbar'\] \[data-tool-hidden\],\s*\[part~='text-editor-toolbar'\] \.toolbar-group\[data-hidden\] > tp-separator\s*\{([^}]*)\}/u.exec(
+        textEditorStyles.cssText,
+      )?.[1];
+    // Unseen, never removed from layout: no display, size or position change.
+    expect(rule?.trim()).toBe('visibility: hidden;');
+  });
+
+  it('uwg-te-req-a11y-1: the shadow root holds the hidden instructions text that the description lists', () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'text-editor.ts'),
+      'utf8',
+    );
+    expect(source).toContain(
+      '<div id=${TEXT_EDITOR_INSTRUCTIONS_ID} hidden>${this.#strings().instructions}</div>',
+    );
+    expect(source).toMatch(
+      /instructions: \(this\.#tooling\?\.layout \?\? this\.#effectiveLayout\)\.suggestions\.includes\('slash'\)\s*\?\s*TEXT_EDITOR_INSTRUCTIONS_ID\s*:\s*null,/u,
+    );
+  });
+
+  it('uwg-te-req-blocks-5: the drag preview copies inherit the content colour instead of the popover system colour', () => {
+    const preview = /(?:^|[}/])\s*\.block-drag-preview\s*\{([^}]*)\}/u.exec(
+      textEditorStyles.cssText,
+    )?.[1];
+    expect(preview).toMatch(/color:\s*inherit;/u);
+    expect(preview).toMatch(/background:\s*transparent;/u);
+  });
+
+  it('uwg-te-req-pres-1: the root part carries the widget focus, so its ring stays while a top-layer popup of the widget holds focus', () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'text-editor.ts'),
+      'utf8',
+    );
+    expect(source).toMatch(
+      /<div part="text-editor" \?data-focus-within=\$\{this\.#focus\.focused\}>/u,
+    );
+  });
+});
+
 // Root attribute record --------------------------------------------------------------------
 
 const rootInput = (overrides: Partial<TextEditorRootAttributeInput> = {}) =>
@@ -231,6 +355,27 @@ describe('tp-text-editor root attribute record', () => {
       'd e',
     );
     expect(textEditorRootAttributes(rootInput())['aria-describedby']).toBeNull();
+  });
+
+  it('uwg-te-req-a11y-1: the description ends with the hidden instructions, after the Field description and error', () => {
+    const described = (describedBy: string | null) =>
+      textEditorRootAttributes(rootInput({ describedBy, instructions: 'i' }))['aria-describedby'];
+    expect(described('d e')).toBe('d e i');
+    expect(described(null)).toBe('i');
+  });
+
+  it('uwg-te-req-a11y-1: the instructions join the description only while the editor is editable', () => {
+    for (const access of [{ readOnly: true }, { disabled: true }])
+      expect(
+        textEditorRootAttributes(rootInput({ describedBy: 'd', instructions: 'i', ...access }))[
+          'aria-describedby'
+        ],
+      ).toBe('d');
+    expect(
+      textEditorRootAttributes(rootInput({ instructions: 'i', readOnly: true }))[
+        'aria-describedby'
+      ],
+    ).toBeNull();
   });
 
   it('uwg-te-tab-props, uwg-te-req-a11y-1: aria-placeholder carries a non-empty placeholder', () => {
@@ -289,6 +434,26 @@ describe('tp-text-editor properties and forms', () => {
       expect(effectiveTextEditorFormat(format)).toBe('html');
   });
 
+  it('G2-D21: an explicitly placed, unavailable tool is reported as information, other tooling findings as warnings', () => {
+    expect(textEditorToolingSeverity('text-editor-tool-unavailable')).toBe('info');
+    expect(textEditorToolingSeverity('text-editor-layout-unknown')).toBe('warning');
+    expect(textEditorToolingSeverity('text-editor-tool-duplicate')).toBe('warning');
+  });
+
+  it('uwg-te-req-blocks-4: no caret is painted with no selection or a block selection', () => {
+    expect(textEditorCaretHidden('none')).toBe(true);
+    expect(textEditorCaretHidden('blocks')).toBe(true);
+    expect(textEditorCaretHidden('text')).toBe(false);
+    expect(textEditorCaretHidden('cells')).toBe(false);
+  });
+
+  it('uwg-te-tab-props-r3: removing the format attribute restores html, not an invalid null', () => {
+    expect(textEditorFormatConverter.fromAttribute('markdown')).toBe('markdown');
+    expect(textEditorFormatConverter.fromAttribute('xml')).toBe('xml');
+    expect(textEditorFormatConverter.fromAttribute(null)).toBe('html');
+    expect(effectiveTextEditorFormat(textEditorFormatConverter.fromAttribute(null))).toBe('html');
+  });
+
   it('uwg-te-req-value-4: the form entry is the serialization in format, json as JSON text', () => {
     expect(textEditorFormValue('html', false, () => '<p>Tide</p>')).toBe('<p>Tide</p>');
     expect(textEditorFormValue('json', false, () => ({ type: 'doc' }))).toBe('{"type":"doc"}');
@@ -307,9 +472,33 @@ describe('tp-text-editor properties and forms', () => {
 
   it('uwg-te-req-value-1: fieldValue is empty text for an empty document and otherwise the snapshot handle', () => {
     const handle = { revision: 1, empty: false } as unknown as TextEditorSnapshot;
-    expect(textEditorFieldValue(true, handle)).toBe('');
+    const blank = { revision: 2, empty: true } as unknown as TextEditorSnapshot;
+    expect(textEditorFieldValue(true, blank)).toBe('');
     expect(textEditorFieldValue(false, handle)).toBe(handle);
     expect(textEditorFieldValue(false, null)).toBeNull();
+    expect(textEditorFieldValue(true, null)).toBe('');
+  });
+
+  it('C-151: the first ready reports the mounted document to a Field as its initial value', () => {
+    const handle = { revision: 1, empty: false } as unknown as TextEditorSnapshot;
+    expect(initialFieldValueDetail(null, handle)).toEqual({
+      value: handle,
+      previousValue: null,
+      reason: 'initial',
+    });
+    expect(initialFieldValueDetail('', '')).toBeNull();
+    expect(initialFieldValueDetail('', handle)).toEqual({
+      value: handle,
+      previousValue: '',
+      reason: 'initial',
+    });
+  });
+
+  it('uwg-te-req-value-1: fieldValue follows the handle, which the change event carries before the state', () => {
+    const emptied = { revision: 2, empty: true } as unknown as TextEditorSnapshot;
+    const filled = { revision: 3, empty: false } as unknown as TextEditorSnapshot;
+    expect(textEditorFieldValue(false, emptied)).toBe('');
+    expect(textEditorFieldValue(true, filled)).toBe(filled);
   });
 
   it('uwg-te-req-value-4: form data built outside a submission holds the current serialization in place', () => {
@@ -408,6 +597,36 @@ describe('tp-text-editor while disabled', () => {
     expect(values()).toContain('-1');
     press(event);
     expect(event.preventDefault).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('tp-text-editor content security', () => {
+  it('uwg-te-req-render-1, node-003102: while generated styles are suppressed, the content part carries the text mechanics that the editing root inherits', () => {
+    const document = { nodeType: 9, defaultView: null } as unknown as Document;
+    const declarations = new Map<string, string>();
+    const style = {
+      getPropertyValue: (property: string) => declarations.get(property) ?? '',
+      setProperty: (property: string, value: string) => void declarations.set(property, value),
+      removeProperty: (property: string) => void declarations.delete(property),
+    };
+    const element = (parentNode: unknown) =>
+      ({ nodeType: 1, ownerDocument: document, parentNode, style }) as unknown as HTMLElement;
+    const scope = element(null);
+    const host = element(scope);
+    const fallback = textEditorSuppressionFallback(host, element(null));
+    fallback.connect();
+    expect([...declarations]).toEqual([]);
+
+    const policy = new ContentSecurityService(scope, { disableStyleElements: true });
+    expect(Object.fromEntries(declarations)).toEqual({
+      'white-space': 'pre-wrap',
+      'overflow-wrap': 'break-word',
+      'font-variant-ligatures': 'none',
+    });
+    policy.update({});
+    expect([...declarations]).toEqual([]);
+    policy.dispose();
+    fallback.dispose();
   });
 });
 

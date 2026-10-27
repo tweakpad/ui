@@ -273,6 +273,15 @@ function createKit(lexical: LexicalCoreLike): LexicalNodeKit {
           return !block;
         }
 
+        /**
+         * An inline node is one character to the caret: the arrow keys step over it as over a letter
+         * and Shift with an arrow extends over it, never selecting it as a node, as in the other
+         * engine (`uwg-te-req-parity-1`); a block atom stays selectable.
+         */
+        isKeyboardSelectable(): boolean {
+          return block;
+        }
+
         getTextContent(): string {
           if (block || definition.kind !== 'inline') return '';
           try {

@@ -3,19 +3,24 @@ import { renderShortcutHint } from '../../../components/key-hint/shortcut-hint.j
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import { activationMovesFocus } from '../focus.js';
 import type { TextEditorToolHandlers } from './controls.js';
-import { colorToolValue, renderColorMenuContent } from '../views/color-menu.js';
+import {
+  colorToolValue,
+  renderColorMenuContent,
+  type TextEditorColorMenuHandlers,
+} from '../views/color-menu.js';
 import type { TextEditorToolbarItem } from './resolve.js';
+import { stableValue } from './stable.js';
 
-/** One `item-press` activation on the toolbar surface, which moves focus into the editing root. */
+/** One `item-press` activation of a tool on the toolbar surface, which moves focus into the editing root. */
 function itemPress(
-  item: TextEditorToolbarItem,
+  tool: string,
   handlers: TextEditorToolHandlers,
   trigger: Element,
   sourceEvent: Event,
   value?: unknown,
 ): void {
   handlers.activate({
-    tool: item.id,
+    tool,
     ...(value === undefined ? {} : { value }),
     reason: 'item-press',
     surface: handlers.surface ?? 'toolbar',
@@ -31,11 +36,18 @@ function entryContent(item: TextEditorToolbarItem) {
 }
 
 function checkboxItem(item: TextEditorToolbarItem, handlers: TextEditorToolHandlers) {
-  // The item calls its callback as its own method, so `this` is the entry.
-  const onCheckedChange = function (this: Element, event: TpValueChangeEvent<boolean>) {
-    event.preventDefault();
-    itemPress(item, handlers, this, event.detail.sourceEvent);
-  };
+  const tool = item.id;
+  // The item calls its callback as its own method, so `this` is the entry. One callback per tool
+  // and handlers keeps the item unchanged across renders (`stableValue`).
+  const onCheckedChange = stableValue(
+    handlers,
+    `checked\u0000${tool}`,
+    () =>
+      function (this: Element, event: TpValueChangeEvent<boolean>) {
+        event.preventDefault();
+        itemPress(tool, handlers, this, event.detail.sourceEvent);
+      },
+  );
   return html`<tp-menu-checkbox-item
     value=${item.id}
     data-tool=${item.id}
@@ -48,12 +60,22 @@ function checkboxItem(item: TextEditorToolbarItem, handlers: TextEditorToolHandl
   >`;
 }
 
+/**
+ * The icon of a nested menu's trigger: the tool's own, else for a radio menu the checked item's,
+ * so that the trigger lines up with the entries that show icons.
+ */
+export function submenuIcon(item: TextEditorToolbarItem): TextEditorToolbarItem['icon'] {
+  if (item.icon || item.kind !== 'radio-menu') return item.icon;
+  return item.items.find((child) => child.id === item.value)?.icon;
+}
+
 /** A nested menu: unportaled and non-modal, with its default final focus and no open-change report. */
 function submenu(item: TextEditorToolbarItem, handlers: TextEditorToolHandlers) {
+  const icon = submenuIcon(item);
   return html`<tp-menu .portal=${false} .modal=${false} label=${item.label}
     ><tp-button slot="trigger" variant="ghost" data-tool=${item.id} .disabled=${item.disabled}
       >${
-        item.icon ? html`<tp-icon slot="icon-start" .icon=${item.icon}></tp-icon>` : nothing
+        icon ? html`<tp-icon slot="icon-start" .icon=${icon}></tp-icon>` : nothing
       }${item.label}</tp-button
     >${renderToolMenuContent(item, handlers)}</tp-menu
   >`;
@@ -68,12 +90,19 @@ function entry(item: TextEditorToolbarItem, handlers: TextEditorToolHandlers): u
   )
     return submenu(item, handlers);
   if (item.kind === 'toggle') return checkboxItem(item, handlers);
-  const onClick = function (this: Element, event: Event) {
-    itemPress(item, handlers, this, event);
-  };
+  const tool = item.id;
+  const onClick = stableValue(
+    handlers,
+    `click\u0000${tool}`,
+    () =>
+      function (this: Element, event: Event) {
+        itemPress(tool, handlers, this, event);
+      },
+  );
   return html`<tp-menu-item
     value=${item.id}
     data-tool=${item.id}
+    variant=${item.tone === 'destructive' ? 'destructive' : nothing}
     ?inset=${!item.icon}
     ?disabled=${item.disabled}
     .closeOnClick=${true}
@@ -82,12 +111,18 @@ function entry(item: TextEditorToolbarItem, handlers: TextEditorToolHandlers): u
   >`;
 }
 
-/** Toolbar items as menu entries, for the More menu's mirror of omitted groups. */
+/**
+ * Toolbar items as menu entries, for the More menu's mirror of omitted groups and a menu tool's
+ * own menu, whose further item groups each follow a separator.
+ */
 export function renderToolMenuItems(
   items: readonly TextEditorToolbarItem[],
   handlers: TextEditorToolHandlers,
 ): TemplateResult {
-  return html`${items.map((item) => entry(item, handlers))}`;
+  return html`${items.map(
+    (item) =>
+      html`${item.separated ? html`<tp-separator></tp-separator>` : nothing}${entry(item, handlers)}`,
+  )}`;
 }
 
 /** The content of a `menu` item's own menu: a radio group for a radio menu, entries otherwise. */
@@ -95,26 +130,36 @@ export function renderToolMenuContent(
   item: TextEditorToolbarItem,
   handlers: TextEditorToolHandlers,
 ): TemplateResult {
+  const tool = item.id;
   if (item.kind === 'color' && item.colors?.length) {
     const groups = item.colors;
-    return renderColorMenuContent(
-      groups,
-      {
+    // One chooser per tool and channel count (all `colorToolValue` reads of the groups), so the
+    // color groups keep their callbacks across renders.
+    const colorHandlers = stableValue(
+      handlers,
+      `color\u0000${tool}\u0000${groups.length > 1}`,
+      (): TextEditorColorMenuHandlers => ({
         choose: (channel, color, trigger, sourceEvent) =>
-          itemPress(item, handlers, trigger, sourceEvent, colorToolValue(groups, channel, color)),
-      },
-      item.disabled,
+          itemPress(tool, handlers, trigger, sourceEvent, colorToolValue(groups, channel, color)),
+      }),
     );
+    return renderColorMenuContent(groups, colorHandlers, item.disabled);
   }
   if (item.kind !== 'radio-menu') return renderToolMenuItems(item.items, handlers);
   // The group calls its callback as its own method, so `this` is the group.
-  const onValueChange = function (this: Element, event: TpValueChangeEvent<unknown>) {
-    event.preventDefault();
-    const value = event.detail.value;
-    if (typeof value === 'string') itemPress(item, handlers, this, event.detail.sourceEvent, value);
-  };
+  const onValueChange = stableValue(
+    handlers,
+    `radio\u0000${tool}`,
+    () =>
+      function (this: Element, event: TpValueChangeEvent<unknown>) {
+        event.preventDefault();
+        const value = event.detail.value;
+        if (typeof value === 'string')
+          itemPress(tool, handlers, this, event.detail.sourceEvent, value);
+      },
+  );
   return html`<tp-menu-radio-group
-    aria-label=${item.label}
+    .label=${item.label}
     .value=${item.value}
     .onValueChange=${onValueChange}
     >${item.items.map(

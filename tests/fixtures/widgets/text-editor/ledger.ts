@@ -33,6 +33,8 @@ const WINDOW_TARGETS = ['FontFaceSet', 'MediaQueryList', 'VisualViewport', 'Scre
 
 const entries: LedgerEntry[] = [];
 const creations = new Map<string, number>();
+/** The fixture's own listeners (the event recorders on the hosts), which the ledger leaves out. */
+const fixtureListeners = new WeakSet<object>();
 let seq = 0;
 let installed = false;
 
@@ -108,7 +110,7 @@ function wrapWindow(view: Window & typeof globalThis): void {
     options?: boolean | AddEventListenerOptions,
   ) {
     addListener.call(this, type, listener, options);
-    if (!listener || !tracked(this)) return;
+    if (!listener || !tracked(this) || fixtureListeners.has(listener)) return;
     const capture = captureOf(options);
     const key = `${type}\u0000${capture}`;
     let byKey = listeners.get(this);
@@ -216,6 +218,11 @@ export function wrapFrame(view: Window): void {
 }
 
 export const ledgerInstalled = (): boolean => installed;
+
+/** Leaves a listener of the fixture itself out of the ledger, such as a host's event recorder. */
+export function ignoreListener(listener: object): void {
+  fixtureListeners.add(listener);
+}
 
 /** Records where an instance's registrations start; called before its host is created. */
 export function markCreation(id: string): void {

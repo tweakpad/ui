@@ -403,6 +403,24 @@ describe('copyable example sources (uwg-req-102)', () => {
     }
   });
 
+  it('documents only package imports that the package exports, in every documentation page', () => {
+    const pages = (dir: string): string[] =>
+      readdirSync(join(root, dir), { withFileTypes: true }).flatMap((entry) =>
+        entry.isDirectory()
+          ? pages(posix.join(dir, entry.name))
+          : entry.name.endsWith('.md')
+            ? [posix.join(dir, entry.name)]
+            : [],
+      );
+    const findings = [...pages('docs'), 'README.md'].flatMap((page) =>
+      [...read(page).matchAll(/^```(?:js|ts|javascript|typescript|html)\n([\s\S]*?)^```/gmu)]
+        .flatMap((fence) => unpublishedSpecifiers(fence[1]!.replace(/^[ \t]+/gmu, '')))
+        .filter((specifier) => specifier.startsWith('@tweakpad/ui'))
+        .map((specifier) => `${page}: ${specifier}`),
+    );
+    expect(findings).toEqual([]);
+  });
+
   it('publishes the data visualization story source with package imports', async () => {
     const { default: meta } = await import('./data-visualization.stories.js');
     const code = meta.parameters.docs.source.code;

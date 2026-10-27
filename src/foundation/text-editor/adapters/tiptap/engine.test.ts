@@ -890,6 +890,35 @@ describe('uwg-te-req-engine-6, uwg-te-req-engine-4: notifications without a cont
   });
 });
 
+describe('a cleared selection and Tab (uwg-te-tab-keymap-host)', () => {
+  it('V-270: leaves Tab to the browser while the selection is cleared, so no engine key acts at the resting point', () => {
+    const { instance, view, log } = mountTiptap({
+      content: html('<ul><li><p data-id="a">one</p></li><li><p data-id="b">two</p></li></ul>'),
+    });
+    const keydown = (
+      log.editorOptions[0]!.editorProps as {
+        readonly handleDOMEvents: Readonly<
+          Record<string, (view: unknown, event: unknown) => boolean>
+        >;
+      }
+    ).handleDOMEvents.keydown!;
+    const key = (name: string, shiftKey = false) => ({ key: name, shiftKey, isComposing: false });
+    selectIn(instance, caretAt('b', 1));
+    // A placed caret: Tab is the engine's (nests the list item).
+    expect(keydown(view, key('Tab'))).toBe(false);
+    expect(runActions(instance, { type: 'selection.set', selection: { kind: 'none' } })).toBe(true);
+    expect(instance.getState().selection).toEqual({ kind: 'none' });
+    // Cleared: Tab and Shift+Tab are claimed before the engine's keymaps and stay cleared.
+    expect(keydown(view, key('Tab'))).toBe(true);
+    expect(keydown(view, key('Tab', true))).toBe(true);
+    expect(instance.getState().selection).toEqual({ kind: 'none' });
+    // An editing key places the resting caret and is the engine's again, Tab with it.
+    expect(keydown(view, key('a'))).toBe(false);
+    expect(instance.getState().selection).toMatchObject({ kind: 'text' });
+    expect(keydown(view, key('Tab'))).toBe(false);
+  });
+});
+
 describe('uwg-te-tab-engine r12, r13: the editing root and its first selection', () => {
   it('the root role is the widget’s, and null removes it', () => {
     const { instance, view } = mountTiptap();

@@ -109,9 +109,69 @@ export function focusableElements(root: ParentNode): HTMLElement[] {
     .sort((a, b) => (a.tabIndex || Infinity) - (b.tabIndex || Infinity));
 }
 
+/**
+ * The focusable elements of `root` that sequential navigation meets from `reference` in
+ * `direction` (1 forward, -1 backward), nearest first. A reference outside the sequence, such as a
+ * roving item with tab index -1, keeps its place in the tree, as the browser's sequential focus
+ * navigation starting point does: navigation moves on from there instead of from the start.
+ */
+export function focusableFrom(
+  root: ParentNode,
+  reference: Element | null,
+  direction: -1 | 1,
+): HTMLElement[] {
+  const order = composedElements(root);
+  const items = order
+    .filter(isFocusable)
+    .sort((a, b) => (a.tabIndex || Infinity) - (b.tabIndex || Infinity));
+  let start = reference ? items.indexOf(reference as HTMLElement) : -1;
+  const position = start < 0 && reference ? order.indexOf(reference as HTMLElement) : -1;
+  if (position >= 0) {
+    // Among the elements of tab index 0, which follow the positive ones in tree order.
+    const rank = new Map(order.map((element, index) => [element, index]));
+    const inOrder = (item: HTMLElement) => item.tabIndex <= 0;
+    if (direction > 0) {
+      const next = items.findIndex((item) => inOrder(item) && rank.get(item)! > position);
+      start = (next < 0 ? items.length : next) - 1;
+    } else {
+      start = 0;
+      items.forEach((item, index) => {
+        if (inOrder(item) && rank.get(item)! < position) start = index + 1;
+      });
+    }
+  }
+  const result: HTMLElement[] = [];
+  for (let index = start + direction; index >= 0 && index < items.length; index += direction)
+    result.push(items[index]!);
+  return result;
+}
+
+/**
+ * Whether sequential navigation reaches an element, as the browser decides: focusable and not
+ * natively disabled. A control that stays focusable while disabled (`aria-disabled`) is reached.
+ */
+export function isTabbable(element: Element): element is HTMLElement {
+  return (
+    isAvailable(element, true) &&
+    element.tabIndex >= 0 &&
+    !element.matches(':disabled, input[type="hidden"]')
+  );
+}
+
+/** The elements sequential navigation visits in a tree, in browser tab order. */
+export function tabbableElements(root: ParentNode): HTMLElement[] {
+  return composedElements(root)
+    .filter(isTabbable)
+    .sort((a, b) => (a.tabIndex || Infinity) - (b.tabIndex || Infinity));
+}
+
+/**
+ * Keeps Tab inside `root`: from its last stop (or from outside it) to its first, Shift+Tab the
+ * reverse. The stops are the browser's own, so a control focusable while disabled keeps its place.
+ */
 export function trapTabKey(event: KeyboardEvent, root: ParentNode): void {
   if (event.key !== 'Tab' || event.defaultPrevented) return;
-  const items = focusableElements(root);
+  const items = tabbableElements(root);
   const active = deepActiveElement((root as Node).ownerDocument ?? (root as Document));
   const index = items.findIndex((item) => item === active);
   if (!items.length || index < 0 || (event.shiftKey ? index === 0 : index === items.length - 1)) {

@@ -85,7 +85,13 @@ function $nearestToPress(
 ): TextEditorTextPoint | null {
   const { after, before } = $around(rt, root, index);
   const distance = (node: LexicalNodeLike | null) => {
-    const element = node ? rt.engine.getElementByKey(node.getKey()) : null;
+    const holder = node ? rt.engine.getElementByKey(node.getKey()) : null;
+    // A table measures by its own box: its scroll wrapper also holds the widget's reserved space,
+    // as the other engine reads the press.
+    const element =
+      holder && node && rt.isTable(node) && holder.tagName !== 'TABLE'
+        ? (holder.querySelector('table') ?? holder)
+        : holder;
     if (!element || element.getClientRects().length === 0) return Number.POSITIVE_INFINITY;
     const rect = element.getBoundingClientRect();
     const dx = Math.max(rect.left - press.x, 0, press.x - rect.right);
@@ -176,31 +182,48 @@ export function $verticalToAtom(
   key: 'ArrowUp' | 'ArrowDown',
   onEdgeLine: (point: TextEditorTextPoint, side: 'first' | 'last') => boolean,
 ): boolean {
+  const found = $atomBeside(rt, key);
+  if (!found || !onEdgeLine(found.point, key === 'ArrowUp' ? 'first' : 'last')) return false;
+  const id = $blockId(rt, found.atom);
+  return id !== '' && $selectBlocks(rt, [id]);
+}
+
+/**
+ * Whether the block beside a collapsed caret's textblock in the direction of ArrowUp or ArrowDown
+ * is an atom (from a table cell, only from the cell's edge row and paragraph), whatever line the
+ * caret is on.
+ */
+export function $atomBesideCaret(rt: LexicalRuntime, key: 'ArrowUp' | 'ArrowDown'): boolean {
+  return $atomBeside(rt, key) !== null;
+}
+
+function $atomBeside(
+  rt: LexicalRuntime,
+  key: 'ArrowUp' | 'ArrowDown',
+): { readonly point: TextEditorTextPoint; readonly atom: LexicalNodeLike } | null {
   const { lexical } = rt;
   const selection = lexical.$getSelection();
-  if (!lexical.$isRangeSelection(selection) || !selection.isCollapsed()) return false;
+  if (!lexical.$isRangeSelection(selection) || !selection.isCollapsed()) return null;
   const point = $textPointOf(rt, selection.anchor);
-  if (!point) return false;
+  if (!point) return null;
   const up = key === 'ArrowUp';
   const from = $holderById(rt, point.block);
-  if (!from) return false;
+  if (!from) return null;
   if (point.cell) {
-    if (!rt.isTable(from)) return false;
+    if (!rt.isTable(from)) return null;
     const placement = $tablePlacement(rt, from as LexicalElementLike);
     const cell = placement.at(point.cell.row, point.cell.column);
-    if (!cell) return false;
+    if (!cell) return null;
     const edge = up
       ? point.cell.row === 0 && point.cell.paragraph === 0
       : point.cell.row + cell.getRowSpan() >= placement.rows &&
         point.cell.paragraph === cell.getChildrenSize() - 1;
-    if (!edge) return false;
+    if (!edge) return null;
   }
   const holders = $holders(rt);
   const index = holders.findIndex((holder) => holder.is(from));
   const beside = index < 0 ? undefined : holders[up ? index - 1 : index + 1];
-  if (!beside || !isAtom(rt, beside) || !onEdgeLine(point, up ? 'first' : 'last')) return false;
-  const id = $blockId(rt, beside);
-  return id !== '' && $selectBlocks(rt, [id]);
+  return beside && isAtom(rt, beside) ? { point, atom: beside } : null;
 }
 
 // The DOM selection of a press
@@ -233,8 +256,8 @@ const $holdsBlocksOrCells = (rt: LexicalRuntime): boolean => {
  * selection (`uwg-te-req-engine-9`): the engine's click clears a block selection, and when the press
  * is short enough that its click runs before the press's selection change, the engine then finds no
  * DOM selection and leaves none. The press's DOM selection is read as a text selection instead (a
- * block cursor there moves to the text point nearest to the press). A click on an atom or inside a
- * selected block is the engine's. Answers whether it selected.
+ * block cursor there moves to the text point nearest to the press). A click on an atom is
+ * `$pressOnAtom`'s, one inside a selected block the engine's. Answers whether it selected.
  */
 export function $pressOutsideBlocks(rt: LexicalRuntime, event: MouseEvent): boolean {
   const { lexical } = rt;
@@ -255,16 +278,44 @@ export function $pressOutsideBlocks(rt: LexicalRuntime, event: MouseEvent): bool
 }
 
 /**
+ * A plain click on an atom block (an image or a custom atom; the engine's own divider selects
+ * itself) selects that block (`uwg-te-req-engine-9`), as the other engine selects a clicked atom:
+ * the engine leaves a click on a block decorator to the decorator, and without that the caret
+ * stays where it was while the DOM selection rests outside any text. Read-only too, since the
+ * document stays selectable (`uwg-te-tab-props` r7). A click with a modifier stays the engine's.
+ * Answers whether it selected.
+ */
+export function $pressOnAtom(rt: LexicalRuntime, event: MouseEvent): boolean {
+  const { lexical } = rt;
+  if (event.button > 0 || event.shiftKey || event.metaKey || event.ctrlKey || event.altKey)
+    return false;
+  const target = event.target as Node | null;
+  if (!target || !rt.root?.contains(target)) return false;
+  const node = lexical.$getNearestNodeFromDOMNode(target);
+  if (!node || !isAtom(rt, node)) return false;
+  const id = $blockId(rt, node);
+  if (id === '' || !$selectBlocks(rt, [id])) return false;
+  if (!rt.engine.isEditable()) rt.awaitsSelectionEcho = true;
+  return true;
+}
+
+/**
  * While the editor is read-only, a DOM selection change inside the root replaces a block selection
  * or a cell range with the DOM selection (`uwg-te-req-engine-4`): the engine follows the DOM
  * selection only from a text selection while it takes no presses, so a click or a selection of the
  * root's content would otherwise leave the earlier block selection, which a copy would write. Only
- * a `selectionchange` event counts, never the engine's own notification of a selection it set.
+ * a `selectionchange` event counts, never the engine's own notification of a selection it set, nor
+ * the first `selectionchange` after the adapter placed a block selection or cell range, which
+ * echoes the engine's own write of the DOM selection (`awaitsSelectionEcho`).
  */
 export function $followReadOnlySelection(rt: LexicalRuntime): boolean {
   if (rt.engine.isEditable() || !$holdsBlocksOrCells(rt)) return false;
   const view = rt.root?.ownerDocument.defaultView as (Window & { event?: Event }) | null;
   if (view?.event?.type !== 'selectionchange') return false;
+  if (rt.awaitsSelectionEcho) {
+    rt.awaitsSelectionEcho = false;
+    return false;
+  }
   const range = $domSelectionInRoot(rt);
   if (!range) return false;
   rt.lexical.$setSelection(range);
@@ -326,17 +377,24 @@ export function trackPresses(rt: LexicalRuntime, root: HTMLElement): () => void 
   const listener = (event: PointerEvent) => {
     rt.lastInput = { kind: 'press', x: event.clientX, y: event.clientY, shift: event.shiftKey };
     rt.pressPoint = null;
+    // A press places the selection where it lands, also after the selection was cleared.
+    rt.cleared = null;
+    rt.awaitsSelectionEcho = false;
   };
   // The press count comes with the mouse event, which follows the pointer event of a press.
   const anchor = (event: MouseEvent) => {
     const plain = event.button === 0 && !event.shiftKey && event.detail <= 1;
     rt.pressPoint = plain ? pressPointAt(rt, root, event.clientX, event.clientY) : null;
   };
+  // A key's selection change is the reader's, also while read-only, where no key command runs.
+  const key = () => void (rt.awaitsSelectionEcho = false);
   root.addEventListener('pointerdown', listener);
   root.addEventListener('mousedown', anchor);
+  root.addEventListener('keydown', key);
   return () => {
     root.removeEventListener('pointerdown', listener);
     root.removeEventListener('mousedown', anchor);
+    root.removeEventListener('keydown', key);
   };
 }
 
@@ -376,9 +434,14 @@ export function registerBlockCursor(rt: LexicalRuntime): () => void {
     if (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return false;
     if (!editor.isEditable()) return false;
     const geometry = new LexicalGeometry(rt);
-    if (!$verticalToAtom(rt, key, (point, side) => geometry.onEdgeLine(point, side))) return false;
-    event.preventDefault();
-    return true;
+    if ($verticalToAtom(rt, key, (point, side) => geometry.onEdgeLine(point, side))) {
+      event.preventDefault();
+      return true;
+    }
+    // From another line toward an atom the browser moves the caret: the engine's own line
+    // navigation toward a block decorator moves and restores the document's selection, which in a
+    // shadow root names the shadow host, and loses the caret.
+    return $atomBesideCaret(rt, key);
   };
   const arrows = [
     editor.registerCommand(
@@ -392,10 +455,10 @@ export function registerBlockCursor(rt: LexicalRuntime): () => void {
       lexical.COMMAND_PRIORITY_CRITICAL,
     ),
   ];
-  // Ahead of the engine's own click, which clears a block selection; after an atom's own.
+  // Ahead of the engine's own click, which clears a block selection; a click on an atom selects it.
   const press = editor.registerCommand(
     lexical.CLICK_COMMAND,
-    (event) => $pressOutsideBlocks(rt, event),
+    (event) => $pressOnAtom(rt, event) || $pressOutsideBlocks(rt, event),
     lexical.COMMAND_PRIORITY_LOW,
   );
   // The engine's reads of the DOM selection: a read-only change that replaces a block selection or

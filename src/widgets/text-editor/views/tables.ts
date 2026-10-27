@@ -15,7 +15,10 @@ import type {
 } from '../../../foundation/text-editor/controller.js';
 import type { TextEditorEngineInstance } from '../../../foundation/text-editor/engine.js';
 import type { TextEditorLayout } from '../../../foundation/text-editor/layout.js';
-import type { TextEditorEngineState } from '../../../foundation/text-editor/model.js';
+import type {
+  TextEditorCellAddress,
+  TextEditorEngineState,
+} from '../../../foundation/text-editor/model.js';
 import type { TextEditorStrings } from '../../../foundation/text-editor/strings.js';
 import type {
   TextEditorRequestSurface,
@@ -24,6 +27,7 @@ import type {
   TextEditorToolRegistry,
   TextEditorToolTarget,
 } from '../../../foundation/text-editor/tools.js';
+import type { ChangeReason } from '../../../foundation/types.js';
 import type { TextEditorContextualSurface } from '../focus.js';
 import type { OverlayGeometry } from '../geometry.js';
 import { resolveMenuGroups, type TextEditorToolbarGroup } from '../tools/resolve.js';
@@ -32,6 +36,15 @@ import { TextEditorTableControls } from './table-controls.js';
 import { TextEditorTablePicker } from './table-picker.js';
 import { renderTableSticky, TextEditorTableSticky } from './table-sticky.js';
 import { selectionAnchor } from './selection-toolbar.js';
+
+/**
+ * Whether the control that opened the size picker takes focus back when it closes: only while it
+ * is rendered, so the control of a selection toolbar that hid for the picker gives focus to the
+ * editing root instead.
+ */
+export function openerTakesFocus(opener: HTMLElement | null): opener is HTMLElement {
+  return !!opener?.isConnected && (opener.checkVisibility?.() ?? true);
+}
 
 /** What the table controls need from the element, which implements it. */
 export interface TextEditorTablesHost {
@@ -55,6 +68,8 @@ export interface TextEditorTablesHost {
   announce(message: string): void;
   /** Restores editing focus and the selection through the adapter. */
   focusEditing(): void;
+  /** Whether focus is within the widget, its top-layer surfaces included. */
+  focused(): boolean;
   /** Adds a surface to the Alt+F10 cycle. */
   registerContextual(surface: TextEditorContextualSurface): () => void;
   /** Alt+F10: the next contextual controls. */
@@ -68,8 +83,14 @@ export interface TextEditorTablesHost {
   /** Resolves once the element rendered. */
   updateComplete(): Promise<unknown>;
   /** The widget's one transient surface (`uwg-te-req-surfaces-6`): menus and the size picker. */
-  transientOpened?(owner: object, close: () => void): void;
+  transientOpened?(
+    owner: object,
+    close: (reason?: ChangeReason) => void,
+    reason?: ChangeReason,
+  ): void;
   transientClosed?(owner: object): void;
+  /** A change of the size picker's open lane (`uwg-te-tab-reasons` r12, r13). */
+  pickerLane?(open: boolean, reason: ChangeReason): void;
 }
 
 const ignore = (): void => undefined;
@@ -132,6 +153,7 @@ export class TextEditorTables {
       focusEditing: () => host.focusEditing(),
       announce: (message) => host.announce(message),
       requestUpdate: () => host.requestUpdate(),
+      focused: () => host.focused(),
       transientOpened: (owner, close) => host.transientOpened?.(owner, close),
       transientClosed: (owner) => host.transientClosed?.(owner),
     });
@@ -175,13 +197,14 @@ export class TextEditorTables {
           .catch(ignore),
       restoreFocus: (opener) => {
         if (host.access().disabled) return false;
-        if (opener?.isConnected) return opener;
+        if (openerTakesFocus(opener)) return opener;
         host.focusEditing();
         return false;
       },
       requestUpdate: () => host.requestUpdate(),
-      transientOpened: (owner, close) => host.transientOpened?.(owner, close),
+      transientOpened: (owner, close, reason) => host.transientOpened?.(owner, close, reason),
       transientClosed: (owner) => host.transientClosed?.(owner),
+      lane: (open, reason) => host.pickerLane?.(open, reason),
     });
     this.sticky = new TextEditorTableSticky({
       geometry: host.geometry,
@@ -224,7 +247,15 @@ export class TextEditorTables {
   stateChanged(): void {
     const access = this.#host.access();
     if (access.readOnly || access.disabled) this.controls.end();
-    if (access.disabled) this.picker.close();
+    if (access.disabled) this.picker.close('disabled');
+    this.chrome.update();
+  }
+
+  /**
+   * Focus entered or left the widget: the grips at the selection head and the cell range's outline
+   * show only with it (`uwg-te-req-tables-3`).
+   */
+  focusChanged(): void {
     this.chrome.update();
   }
 
@@ -241,9 +272,9 @@ export class TextEditorTables {
     return html`${renderTableSticky(this.sticky)}${this.chrome.render()}`;
   }
 
-  /** The size picker, outside the overlay. */
+  /** The size picker and the chrome's menus, outside the viewport and the overlay. */
   renderSurfaces(): TemplateResult {
-    return this.picker.render();
+    return html`${this.picker.render()}${this.chrome.renderMenus()}`;
   }
 
   // Requests --------------------------------------------------------------------------------------
@@ -256,6 +287,7 @@ export class TextEditorTables {
       anchor: this.#pickerAnchor(detail),
       surface: detail.surface,
       opener: trigger?.isConnected ? (trigger as HTMLElement) : null,
+      reason: detail.reason,
     });
   }
 
@@ -285,6 +317,7 @@ export class TextEditorTables {
           reason: 'keyboard',
           sourceEvent: event,
         })
+        .then((outcome) => this.#revealCell(outcome, table.id, move.cell))
         .catch(ignore);
     else if (move.kind === 'append')
       void this.#host
@@ -294,8 +327,21 @@ export class TextEditorTables {
           reason: 'keyboard',
           sourceEvent: event,
         })
+        .then((outcome) => this.#revealCell(outcome, table.id, { row: model.rows, column: 0 }))
         .catch(ignore);
     return true;
+  }
+
+  /**
+   * Scrolls the cell that Tab moved the caret into into view, also inside a table that scrolls
+   * sideways: a selection set from code scrolls nothing by itself.
+   */
+  #revealCell(outcome: TextEditorRequestOutcome, table: string, cell: TextEditorCellAddress): void {
+    if (outcome !== 'applied') return;
+    this.#host
+      .instance()
+      ?.cellElement(table, cell)
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
   }
 
   /** Whether a cell-handle drag or a column resize is in progress (the Escape order's gesture). */

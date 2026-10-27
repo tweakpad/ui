@@ -11,6 +11,7 @@ import type {
 } from '../../../foundation/text-editor/controller.js';
 import type {
   TextEditorBlock,
+  TextEditorBlockRects,
   TextEditorBlockTree,
   TextEditorNoSelection,
   TextEditorSelection,
@@ -156,6 +157,28 @@ export function nearestCaret(
   return null;
 }
 
+/**
+ * The paint of a run of selected blocks: the box from its first to its last block, at least as high
+ * as the first block's line, so that a block lower than a line, such as a divider, is painted
+ * around its line, centred on the block as the gutter is (`uwg-te-req-blocks-4`).
+ */
+export function selectionPaintRect(
+  first: Pick<TextEditorBlockRects, 'box' | 'firstLine'>,
+  last: Pick<TextEditorBlockRects, 'box'>,
+): Pick<DOMRectReadOnly, 'left' | 'top' | 'width' | 'height'> {
+  let top = Math.min(first.box.top, last.box.top);
+  let bottom = Math.max(first.box.bottom, last.box.bottom);
+  const left = Math.min(first.box.left, last.box.left);
+  const right = Math.max(first.box.right, last.box.right);
+  const line = first.firstLine.height;
+  if (bottom - top < line) {
+    const centre = (top + bottom) / 2;
+    top = centre - line / 2;
+    bottom = centre + line / 2;
+  }
+  return { left, top, width: right - left, height: bottom - top };
+}
+
 /** A block-mode key: Up, Down, or the arrow key that points to the inline start or end. */
 export type TextEditorBlockKey = 'up' | 'down' | 'start' | 'end';
 
@@ -217,17 +240,22 @@ export function blockKeyResult(
   return next ? { kind: 'select', range: blockRangeOf(tree, next.id, next.id) } : NOTHING;
 }
 
-/** The caret that Enter places in block mode: in the head block, or the nearest textblock. */
+/**
+ * The caret that Enter places in block mode (`uwg-te-tab-keymap-host` r5): at the end of the first
+ * selected block in document order, the end of its last cell for a table, or for an atom block at
+ * the start of the nearest textblock or cell after it (before it at the document's end).
+ */
 export function editCaret(
   tree: TextEditorBlockTree,
   range: TextEditorBlockRange,
 ): TextEditorSelectionInput | null {
   const ordered = tree.ordered();
-  const head = ordered.findIndex((block) => block.id === range.head);
-  const block = ordered[head];
+  const selected = new Set(range.ids);
+  const first = ordered.findIndex((block) => selected.has(block.id));
+  const block = ordered[first];
   if (!block) return null;
   if (block.textblock || block.kind === 'table') return caretIn(block, 'end');
-  return nearestCaret(ordered, head, 'after') ?? nearestCaret(ordered, head, 'before');
+  return nearestCaret(ordered, first, 'after') ?? nearestCaret(ordered, first, 'before');
 }
 
 /**
@@ -256,6 +284,36 @@ export function printableKey(event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'met
   return !event.ctrlKey && !event.metaKey && [...event.key].length === 1;
 }
 
+/**
+ * The request target of a printable key or Enter over a cell range (`uwg-te-req-tables-5`): one
+ * `content.insert` over the range, which clears its cells and applies the key at a caret in its
+ * first cell, typed text as the text of one paragraph and Enter as two empty paragraphs, the split
+ * of the cleared cell's paragraph; `null` for any other key or selection.
+ */
+export function cellRangeKeyTarget(
+  selection: TextEditorSelection,
+  event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'altKey' | 'shiftKey'>,
+): TextEditorRequestProposal['target'] | null {
+  if (selection.kind !== 'cells') return null;
+  const enter =
+    event.key === 'Enter' && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey;
+  if (!enter && !printableKey(event)) return null;
+  const paragraph = (text: string) => ({
+    type: 'paragraph' as const,
+    content: text ? [{ type: 'text' as const, text }] : [],
+  });
+  return [
+    {
+      type: 'content.insert',
+      content: {
+        kind: 'range',
+        blocks: enter ? [paragraph(''), paragraph('')] : [paragraph(event.key)],
+      },
+      at: { kind: 'cells', table: selection.table, range: selection.range },
+    },
+  ];
+}
+
 // Controller --------------------------------------------------------------------------------------
 
 /** What block mode needs from the element. */
@@ -270,6 +328,11 @@ export interface TextEditorBlockSelectionHost {
   announce(message: string): void;
   /** Whether the editor is editable: neither read-only nor disabled. */
   editable(): boolean;
+  /**
+   * Whether the selection is the whole-document selection, from the first to the last text point,
+   * whose Escape selects every top-level block.
+   */
+  wholeDocument?(): boolean;
   /** Opens the block menu for the block selection from a key. */
   openMenu(event: KeyboardEvent): boolean;
   /** A block drag is active: Escape cancels it first. */
@@ -321,7 +384,11 @@ export class TextEditorBlockSelection implements OverlayLayer<readonly OverlayBo
   sync(): void {
     const selection = this.#host.selection();
     if (selection.kind !== 'blocks' || !selection.ids.length) {
-      if (this.#range) this.#host.invalidate();
+      // The overlay passes measure wanted layers only: the paint goes with block mode.
+      if (this.#range) {
+        this.hide();
+        this.#host.invalidate();
+      }
       this.#range = null;
       this.#announced = '';
       return;
@@ -389,12 +456,18 @@ export class TextEditorBlockSelection implements OverlayLayer<readonly OverlayBo
     return true;
   }
 
-  /** Enters block mode on the blocks that the selection touches; `false` when it touches none. */
+  /**
+   * Enters block mode on the blocks that the selection touches, or on every top-level block from
+   * the whole-document selection; `false` when it touches none.
+   */
   enterFromSelection(sourceEvent?: Event): boolean {
     const tree = this.#host.tree();
     const selection = this.#host.selection();
     if (!tree) return false;
-    const ids = touchedBlocks(tree, selection);
+    const ids =
+      selection.kind === 'text' && this.#host.wholeDocument?.()
+        ? [...tree.roots]
+        : touchedBlocks(tree, selection);
     if (!ids.length) return false;
     void this.select({ anchor: ids[0]!, head: ids.at(-1)!, ids }, sourceEvent);
     return true;
@@ -455,8 +528,10 @@ export class TextEditorBlockSelection implements OverlayLayer<readonly OverlayBo
    */
   handleKey(event: KeyboardEvent): boolean {
     const range = this.#range;
+    if (!range || event.isComposing) return false;
+    // Read only in block mode: the tree of a changed document maps the whole document again.
     const tree = this.#host.tree();
-    if (!range || !tree || event.isComposing) return false;
+    if (!tree) return false;
     if (event.key === 'Escape') return false;
     const plain = !event.altKey && !event.ctrlKey && !event.metaKey;
     const rtl = this.#host.direction() === 'rtl';
@@ -534,6 +609,7 @@ export class TextEditorBlockSelection implements OverlayLayer<readonly OverlayBo
   /** Ends block mode with no selection, the editing root keeping focus (`uwg-te-req-surfaces-6`). */
   #end(event: KeyboardEvent): void {
     this.#range = null;
+    this.hide();
     this.#host.invalidate();
     void this.#selectInput({ kind: 'none' }, event);
   }
@@ -569,13 +645,7 @@ export class TextEditorBlockSelection implements OverlayLayer<readonly OverlayBo
       const first = instance.blockRects(run[0]!);
       const last = instance.blockRects(run.at(-1)!);
       if (!first || !last) continue;
-      const top = Math.min(first.box.top, last.box.top);
-      const bottom = Math.max(first.box.bottom, last.box.bottom);
-      const left = Math.min(first.box.left, last.box.left);
-      const right = Math.max(first.box.right, last.box.right);
-      boxes.push(
-        context.toOverlay({ left, top, width: right - left, height: bottom - top } as DOMRect),
-      );
+      boxes.push(context.toOverlay(selectionPaintRect(first, last) as DOMRect));
     }
     return boxes;
   }
@@ -583,8 +653,11 @@ export class TextEditorBlockSelection implements OverlayLayer<readonly OverlayBo
   apply(boxes: readonly OverlayBox[]): void {
     this.#fill.write(boxes);
     this.#outline.write(boxes);
-    for (const element of this.#fill.elements) element.dataset['layer'] = 'fill';
-    for (const element of this.#outline.elements) element.dataset['layer'] = 'outline';
+    // Marked once: a pass that only moves the marks (a scroll) writes no attribute.
+    for (const element of this.#fill.elements)
+      if (element.dataset['layer'] !== 'fill') element.dataset['layer'] = 'fill';
+    for (const element of this.#outline.elements)
+      if (element.dataset['layer'] !== 'outline') element.dataset['layer'] = 'outline';
   }
 
   hide(): void {

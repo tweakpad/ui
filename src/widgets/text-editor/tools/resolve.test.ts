@@ -19,7 +19,12 @@ import {
   type TextEditorTool,
   type TextEditorToolContext,
 } from '../../../foundation/text-editor/tools.js';
-import { resolveToolbarView, type TextEditorToolbarItem } from './resolve.js';
+import {
+  resolveSelectionToolbarView,
+  resolveToolbarView,
+  type TextEditorToolbarItem,
+  type TextEditorToolbarViewInput,
+} from './resolve.js';
 
 const TABLE: readonly TextEditorCapability[] = ['block.table', 'table.merge', 'table.move'];
 const EDITABLE: TextEditorAccess = { readOnly: false, disabled: false };
@@ -34,7 +39,11 @@ function view(
     tools?: readonly TextEditorTool[];
     shortcut?: (id: string) => KeyShortcut | undefined;
     expanded?: (tool: TextEditorTool) => boolean;
+    can?: () => boolean;
   } = {},
+  resolve: (
+    input: TextEditorToolbarViewInput,
+  ) => ReturnType<typeof resolveToolbarView> = resolveToolbarView,
 ) {
   const registry = resolveTextEditorTools({
     builtins: textEditorTools,
@@ -56,7 +65,7 @@ function view(
     layout,
     table: null,
   });
-  return resolveToolbarView({
+  return resolve({
     registry,
     layout,
     access,
@@ -67,7 +76,7 @@ function view(
         disabled: access.disabled,
         editable: !access.readOnly,
         registry,
-        can: () => true,
+        can: options.can ?? (() => true),
       }),
     shortcut: options.shortcut ?? ((id) => (id === 'bold' ? BOLD_SHORTCUT : undefined)),
     expanded: options.expanded,
@@ -129,7 +138,7 @@ describe('text editor toolbar view', () => {
     ]);
   });
 
-  it('hides block-kind tools in a table and drops the emptied group, keeping the part (uwg-te-req-tools-5, uwg-te-tab-anatomy-r2)', () => {
+  it('keeps the place of block-kind tools that hide in a table, so no control moves (uwg-te-req-tools-5, uwg-te-req-pres-5, uwg-te-tab-anatomy-r2)', () => {
     const table = {
       id: 't',
       cell: { row: 0, column: 0 },
@@ -141,14 +150,62 @@ describe('text editor toolbar view', () => {
       merged: false,
       cellMerged: false,
     };
+    const outside = view();
     const result = view({ state: { table } });
-    expect(result!.groups.map((group) => group.key)).toEqual(['0', '2', '3', '4', '5']);
+    // The same groups and items in the same order as outside a table: the partition of the row,
+    // and so the place of every control, stays.
+    const shape = (value: ReturnType<typeof view>) =>
+      value!.groups.map((group) => [group.key, ids(group.items)]);
+    expect(shape(result)).toEqual(shape(outside));
+    const hidden = (value: ReturnType<typeof view>) =>
+      value!.groups.map((group) => [
+        group.key,
+        group.hidden ?? false,
+        group.items.filter((item) => item.hidden).map((item) => item.id),
+      ]);
+    expect(hidden(result)).toEqual([
+      ['0', false, []],
+      ['1', true, ['block-type', 'list-type', 'blockquote']],
+      ['2', false, []],
+      ['3', false, []],
+      ['4', false, []],
+      ['5', false, []],
+    ]);
+    // Outside a table nothing hides.
+    expect(all(outside).some((item) => item.hidden)).toBe(false);
+    expect(outside!.groups.some((group) => group.hidden)).toBe(false);
+    // A pair hides with both members, each marked.
+    const pair = result!.groups[1]!.items[2]!;
+    expect([pair.pair, pair.hidden, pair.items.map((member) => member.hidden)]).toEqual([
+      true,
+      true,
+      [true, true],
+    ]);
+    // A group mixing a hidden and a shown tool keeps both, only the block tool hidden.
+    const mixed = view({ layout: { toolbar: [['bold', 'heading-1']] }, state: { table } });
+    expect(mixed!.groups.map((group) => [group.hidden ?? false, ids(group.items)])).toEqual([
+      [false, ['bold', 'heading-1']],
+    ]);
+    expect(mixed!.groups[0]!.items.map((item) => item.hidden ?? false)).toEqual([false, true]);
     const blocksOnly = view({
       layout: { toolbar: [['blockquote', 'code-block', 'block-type']] },
       state: { table },
     });
     expect(blocksOnly).not.toBeNull();
-    expect(blocksOnly!.groups).toEqual([]);
+    expect(blocksOnly!.groups.map((group) => [group.hidden, ids(group.items)])).toEqual([
+      [true, ['blockquote|code-block', 'block-type']],
+    ]);
+    // The selection toolbar, a floating surface, leaves an invisible tool out.
+    const floating = (state: Partial<TextEditorEngineState> = {}) =>
+      all(
+        view({ state }, (input) => {
+          const selection = resolveSelectionToolbarView(input);
+          return selection && { ...selection, moreTools: '' };
+        }),
+      ).map((item) => [item.id, item.hidden ?? false]);
+    expect(floating()).toContainEqual(['turn-into', false]);
+    expect(floating({ table }).map(([id]) => id)).not.toContain('turn-into');
+    expect(floating({ table }).some(([, hidden]) => hidden)).toBe(false);
   });
 
   it('expands `*`, skips unknown identifiers and leaves unavailable tools out (uwg-te-req-tools-1, uwg-te-req-tools-2)', () => {
@@ -207,6 +264,32 @@ describe('text editor toolbar view', () => {
     expect(find(result, 'bold').label).toBe(textEditorStrings.bold);
   });
 
+  it("shows an active-label trigger's active item as a label, else the tool's own", () => {
+    const heading = view({
+      layout: { toolbar: [['turn-into']] },
+      state: {
+        blockKinds: ['heading:2'],
+        block: { id: 'b', kind: 'heading', attrs: { level: 2 }, depth: 0 },
+      },
+    });
+    const turnInto = find(heading, 'turn-into');
+    expect([turnInto.display, turnInto.text, turnInto.label]).toEqual([
+      'label',
+      textEditorStrings.heading2,
+      textEditorStrings.turnInto,
+    ]);
+    const mixed = view({
+      layout: { toolbar: [['turn-into']] },
+      state: { blockKinds: ['paragraph', 'heading:2'] },
+    });
+    expect(find(mixed, 'turn-into').text).toBe(textEditorStrings.turnInto);
+    expect(find(view(), 'block-type').display).toBe('icon');
+    // The active item's icon too, which a narrowed selection toolbar shows in place of the label.
+    expect(turnInto.icon).toBe(textEditorTools['heading-2']!.icon);
+    expect(turnInto.icon).toBeDefined();
+    expect(find(mixed, 'turn-into').icon).toBeUndefined();
+  });
+
   it("shows the router's published shortcut only (uwg-te-req-key-2)", () => {
     const result = view();
     expect(find(result, 'bold').shortcut).toBe(BOLD_SHORTCUT);
@@ -232,6 +315,45 @@ describe('text editor toolbar view', () => {
     expect(find(result, 'image').expanded).toBe(false);
     // Only a dialog opener has an open state.
     expect(find(result, 'bold').expanded).toBe(false);
+  });
+
+  it('disables a menu whose items are all disabled, as turn-into for a selected table (uwg-te-req-blocks-3)', () => {
+    const blocked = view({ layout: { toolbar: [['turn-into']] }, can: () => false });
+    const turnInto = find(blocked, 'turn-into');
+    expect(turnInto.items.length).toBeGreaterThan(0);
+    expect(turnInto.items.every((item) => item.disabled)).toBe(true);
+    expect(turnInto.disabled).toBe(true);
+    expect(find(view({ layout: { toolbar: [['turn-into']] } }), 'turn-into').disabled).toBe(false);
+    const tools: TextEditorTool[] = [
+      { id: 'stamps', kind: 'menu', label: 'Stamps', items: ['stamp-a', 'stamp-b'] },
+      { id: 'stamp-a', kind: 'button', label: 'A', action: { type: 'text.insert', text: 'a' } },
+      { id: 'stamp-b', kind: 'button', label: 'B', action: { type: 'text.insert', text: 'b' } },
+      { id: 'stamp-none', kind: 'menu', label: 'None', items: [] },
+    ];
+    const layout = { toolbar: [['stamps', 'stamp-none']] };
+    expect(find(view({ tools, layout, can: () => false }), 'stamps').disabled).toBe(true);
+    expect(find(view({ tools, layout }), 'stamps').disabled).toBe(false);
+    // A menu without items opens no submenu: its own enablement stands.
+    expect(find(view({ tools, layout, can: () => false }), 'stamp-none').disabled).toBe(false);
+  });
+
+  it("marks the first item of each further group of a menu tool's items (uwg-te-tab-tools-r11)", () => {
+    const menu: TextEditorTool = {
+      id: 'fixture-more',
+      kind: 'menu',
+      label: 'More',
+      surfaces: ['toolbar'],
+      items: [['bold', 'italic'], ['missing'], ['underline'], 'strike', '*', 'code'],
+    };
+    const result = view({ tools: [menu], layout: { toolbar: [['fixture-more']] } });
+    const items = find(result, 'fixture-more').items;
+    expect(items.map((item) => `${item.separated ? '| ' : ''}${item.id}`)).toEqual([
+      'bold',
+      'italic',
+      '| underline',
+      '| strike',
+      'code',
+    ]);
   });
 
   it('renders a custom tool from its context (uwg-te-par-tools-1)', () => {

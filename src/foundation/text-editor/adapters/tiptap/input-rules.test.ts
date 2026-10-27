@@ -163,6 +163,24 @@ describe('Tiptap input rules (uwg-te-req-key-7, uwg-te-tab-input-rules)', () => 
     expect(blocks(code.env, code.view)).toEqual([{ type: 'code', id: 'c1', text: '**x** ' }]);
   });
 
+  it('V-279: a link rule typed inside a link links exactly its text; the rest of that link keeps its destination', () => {
+    const old = 'https://harbor.example/old';
+    const linked = {
+      type: 'paragraph' as const,
+      id: 'p1',
+      content: [{ type: 'text' as const, text: 'pier map', marks: { link: old } }],
+    };
+    const { view, env } = ruleView({ blocks: [linked] }, 5);
+    type(view, ' [y](https://harbor.example/y)');
+    expect(blocks(env, view)[0]).toMatchObject({
+      content: [
+        { text: 'pier ', marks: { link: old } },
+        { text: 'y', marks: { link: 'https://harbor.example/y' } },
+        { text: ' map', marks: { link: old } },
+      ],
+    });
+  });
+
   it('V-279: text typed after an inline rule continues without its mark', () => {
     const { view, env } = ruleView({ blocks: [paragraph()] });
     type(view, '**x**y');

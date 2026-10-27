@@ -13,6 +13,7 @@
 import type { TextEditorAction, TextEditorTableTarget } from '../../actions.js';
 import {
   tableGrid,
+  type TextEditorPortableBlock,
   type TextEditorPortableCellParagraph,
   type TextEditorPortableTable,
   type TextEditorPortableTableCell,
@@ -35,11 +36,13 @@ import {
   planMerge,
   placedCell,
   planSplit,
+  cellsInRect,
   tableModel,
   tableTargetCells,
   widthsAfter,
 } from './tables.js';
 import { inlineLength } from './blocks.js';
+import { cellRangeRect } from '../../table-range.js';
 
 type Cell = TextEditorPortableTableCell;
 
@@ -217,6 +220,13 @@ export interface TextEditorTableEdit {
    * without `cell`, or in another block, is returned as it is.
    */
   readonly mapPoint?: ((point: TextEditorTextPoint) => TextEditorTextPoint) | undefined;
+  /**
+   * The cell a kept cell range collapses to a caret in, or `null` to keep the range: a deletion
+   * removing every line of the range (the line a table menu selected) leaves the caret in the
+   * nearest cell, as `mapPoint` does for a point in a removed cell.
+   */
+  readonly collapseRange?:
+    ((range: TextEditorCellRange) => TextEditorCellAddress | null) | undefined;
 }
 
 function withGrid(
@@ -290,7 +300,7 @@ const inPlace = (edit: TextEditorTableEdit): TextEditorTableEdit => ({
 export function keptTableSelection(
   selection: TextEditorSelection,
   table: string,
-  edit: Pick<TextEditorTableEdit, 'mapCell' | 'mapPoint'>,
+  edit: Pick<TextEditorTableEdit, 'mapCell' | 'mapPoint' | 'collapseRange'>,
 ): TextEditorSelectionInput | null {
   switch (selection.kind) {
     case 'text': {
@@ -301,6 +311,8 @@ export function keptTableSelection(
     }
     case 'cells': {
       if (selection.table !== table || !edit.mapCell) return selection;
+      const caret = edit.collapseRange?.(selection.range);
+      if (caret) return tableCaret(table, caret.row, caret.column);
       const anchor = edit.mapCell(selection.range.anchor);
       const head = edit.mapCell(selection.range.head);
       return anchor && head ? { kind: 'cells', table, range: { anchor, head } } : null;
@@ -387,6 +399,7 @@ export function tableEdit(
         return kept === 0 ? null : along(cell, Math.min(start, action.from));
       };
       const nextTable = withGrid(table, next, nextWidths);
+      const across = axis === 'row' ? 'column' : 'row';
       return {
         table: nextTable,
         selection: 'keep',
@@ -394,6 +407,13 @@ export function tableEdit(
         mapPoint: pointMapper(nextTable, anchorOf, (cell) =>
           along(cell, Math.min(action.from, remaining - 1)),
         ),
+        collapseRange: ({ anchor, head }) =>
+          [anchor[axis], head[axis]].every((value) => value >= action.from && value <= action.to)
+            ? along(
+                { ...anchor, [across]: Math.min(anchor[across], head[across]) },
+                Math.min(action.from, remaining - 1),
+              )
+            : null,
       };
     }
     case 'table.move-row':
@@ -548,4 +568,129 @@ export function tableEdit(
     default:
       return null;
   }
+}
+
+// Keys and pastes over a cell range (uwg-te-req-tables-5)
+
+/** The caret at the end of a cell's last paragraph. */
+const cellEnd = (id: string, entry: TextEditorDenseCell): TextEditorSelectionInput => {
+  const paragraph = Math.max(0, entry.cell.paragraphs.length - 1);
+  const content = entry.cell.paragraphs[paragraph]?.content ?? [];
+  return {
+    kind: 'text',
+    anchor: {
+      block: id,
+      cell: { row: entry.row, column: entry.column, paragraph },
+      offset: inlineLength(content),
+    },
+  };
+};
+
+/**
+ * A fragment over a cell range (`uwg-te-req-tables-5`): the `content.insert` of a paste, or of a
+ * printable key or Enter, over the range grown over merged cells. Its cells are cleared and the
+ * fragment's blocks, as the paragraphs that `paragraphsOf` makes of them, fill its first cell, the
+ * caret after them. A fragment holding only a table instead fills the range from its first cell
+ * with the pasted cells, their spans, alignment and background names included, clipped to the
+ * range, without repetition: a merged cell it covers is split first (its content stays in its
+ * first cell in reading order unless the paste covers that one, and its other cells copy its
+ * background and alignment), cells it does not reach stay unchanged, and the caret goes to the end
+ * of the last cell it filled. `null` when nothing applies.
+ */
+export function cellRangeInsertEdit(
+  id: string,
+  table: TextEditorPortableTable,
+  range: TextEditorCellRange,
+  blocks: readonly TextEditorPortableBlock[],
+  paragraphsOf: (
+    blocks: readonly TextEditorPortableBlock[],
+  ) => readonly TextEditorPortableCellParagraph[],
+): TextEditorTableEdit | null {
+  const model = tableModel(id, table);
+  const rect = cellRangeRect(model, range);
+  if (!rect) return null;
+  const grid = denseTable(table);
+  const pasted = blocks.length === 1 && blocks[0]!.type === 'table' ? blocks[0] : null;
+  if (!pasted) {
+    const paragraphs = paragraphsOf(blocks);
+    if (paragraphs.length === 0) return null;
+    const targets = new Set(cellsInRect(model, rect));
+    let first: TextEditorDenseCell | null = null;
+    const placed = grid.placed.map((entry, index) => {
+      if (!targets.has(index)) return entry;
+      const starts = entry.row === rect.top && entry.column === rect.left;
+      const next = { ...entry, cell: { ...entry.cell, paragraphs: starts ? paragraphs : EMPTY } };
+      if (starts) first = next;
+      return next;
+    });
+    if (!first) return null;
+    return {
+      table: withGrid(table, { ...grid, placed }, model.widths),
+      selection: cellEnd(id, first),
+    };
+  }
+  const areas: TextEditorDenseCell[] = [];
+  for (const entry of denseTable(pasted).placed) {
+    const row = rect.top + entry.row;
+    const column = rect.left + entry.column;
+    if (row > rect.bottom || column > rect.right) continue;
+    const { rowSpan: _rowSpan, colSpan: _colSpan, ...cell } = copyCell(entry.cell);
+    void _rowSpan;
+    void _colSpan;
+    areas.push({
+      cell,
+      row,
+      column,
+      rowSpan: Math.min(entry.rowSpan, rect.bottom - row + 1),
+      colSpan: Math.min(entry.colSpan, rect.right - column + 1),
+    });
+  }
+  if (areas.length === 0) return null;
+  const covered = (row: number, column: number) =>
+    areas.some(
+      (area) =>
+        row >= area.row &&
+        row < area.row + area.rowSpan &&
+        column >= area.column &&
+        column < area.column + area.colSpan,
+    );
+  const placed: TextEditorDenseCell[] = [];
+  for (const entry of grid.placed) {
+    const positions: [number, number][] = [];
+    for (let row = entry.row; row < entry.row + entry.rowSpan; row++)
+      for (let column = entry.column; column < entry.column + entry.colSpan; column++)
+        positions.push([row, column]);
+    if (!positions.some(([row, column]) => covered(row, column))) {
+      placed.push(entry);
+      continue;
+    }
+    const { background, align } = entry.cell;
+    for (const [row, column] of positions) {
+      if (covered(row, column)) continue;
+      const first = row === entry.row && column === entry.column;
+      placed.push({
+        cell: first
+          ? entry.cell
+          : {
+              ...(background ? { background } : {}),
+              ...(align ? { align } : {}),
+              paragraphs: EMPTY,
+            },
+        row,
+        column,
+        rowSpan: 1,
+        colSpan: 1,
+      });
+    }
+  }
+  placed.push(...areas);
+  const last = areas.reduce((latest, area) =>
+    area.row > latest.row || (area.row === latest.row && area.column > latest.column)
+      ? area
+      : latest,
+  );
+  return {
+    table: withGrid(table, { ...grid, placed }, model.widths),
+    selection: cellEnd(id, last),
+  };
 }

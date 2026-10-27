@@ -14,6 +14,7 @@ import {
 import {
   dropProposal,
   imageFiles,
+  imagePasteRefusal,
   pasteProposal,
   transferContent,
   TextEditorRouter,
@@ -163,6 +164,25 @@ describe('text editor router', () => {
       ),
     ).toEqual(['editing', 'toolbar', 'popup', 'other']);
     expect(textEditorKeyZone([z.content], { content: null, toolbar: null })).toBe('other');
+  });
+
+  it('gives the selection toolbar, a top-layer surface, the toolbar zone, and a menu it opened the popup zone (uwg-te-tab-keymap)', () => {
+    const z = zones();
+    const selectionToolbar = Object.assign(new EventTarget(), {
+      hasAttribute: (name: string) => name === 'popover',
+    });
+    const parts = {
+      content: z.content as Element,
+      toolbar: z.toolbar as Element,
+      selectionToolbar: selectionToolbar as unknown as Element,
+    };
+    expect(textEditorKeyZone([new EventTarget(), selectionToolbar, z.root], parts)).toBe('toolbar');
+    expect(textEditorKeyZone([new EventTarget(), z.popup, selectionToolbar, z.root], parts)).toBe(
+      'popup',
+    );
+    expect(
+      textEditorKeyZone([selectionToolbar, z.root], { ...parts, selectionToolbar: null }),
+    ).toBe('popup');
   });
 
   it('consumes a tool chord in the editing root as one hotkey request and stops it (uwg-te-req-key-1, uwg-te-kb-req-capture)', async () => {
@@ -317,6 +337,74 @@ describe('text editor router', () => {
     expect(r.selectRootContent).toHaveBeenCalledTimes(1);
   });
 
+  it('extends a read-only caret by one character on the first Shift+Arrow and leaves the next to the browser (uwg-te-req-a11y-1)', async () => {
+    let direction: 'ltr' | 'rtl' = 'ltr';
+    const extend = vi.fn<NonNullable<TextEditorRouterHost['extendRootSelection']>>();
+    const r = await setup({
+      host: {
+        direction: () => direction,
+        extendRootSelection: (event, to) => {
+          extend(event, to);
+          return r.controller.extendSelection(to, event);
+        },
+      },
+    });
+    const right = { key: 'ArrowRight', shiftKey: true };
+    const left = { key: 'ArrowLeft', shiftKey: true };
+    const [first, second] = r.blocks;
+    // Editable: the engine extends the selection itself.
+    expect(r.press(right).consumed).toBe(false);
+    r.setAccess(READ_ONLY);
+    await selectText(r.controller, first!, 2);
+    const pressed = r.press(right);
+    expect([pressed.consumed, pressed.stopped]).toEqual([true, true]);
+    expect(extend.mock.calls).toEqual([[pressed.event, 'forward']]);
+    expect(r.instance.getState().selection).toMatchObject({
+      anchor: { block: first, offset: 2 },
+      head: { block: first, offset: 3 },
+      empty: false,
+    });
+    // A non-empty selection is the browser's to extend, also while the key repeats.
+    expect(r.press(right).consumed).toBe(false);
+    expect(r.press({ ...right, repeat: true }).consumed).toBe(false);
+    expect(r.press(left).consumed).toBe(false);
+    expect(extend).toHaveBeenCalledTimes(1);
+    // No selection: Shift+ArrowLeft extends backward from the document's last text point.
+    await r.controller.request({
+      target: { type: 'selection.set', selection: { kind: 'none' } },
+      surface: 'api',
+      reason: 'imperative-action',
+    });
+    expect(r.press(left).consumed).toBe(true);
+    expect(r.instance.getState().selection).toMatchObject({
+      anchor: { block: second, offset: 6 },
+      head: { block: second, offset: 5 },
+    });
+    // Right to left: the physical arrows are mirrored.
+    direction = 'rtl';
+    await selectText(r.controller, first!, 2);
+    expect(r.press(right).consumed).toBe(true);
+    expect(extend.mock.lastCall?.[1]).toBe('backward');
+    expect(r.instance.getState().selection).toMatchObject({
+      anchor: { block: first, offset: 2 },
+      head: { block: first, offset: 1 },
+    });
+    await selectText(r.controller, first!, 2);
+    expect(r.press(left).consumed).toBe(true);
+    expect(extend.mock.lastCall?.[1]).toBe('forward');
+    // Nothing to extend over: the key goes on unconsumed.
+    await selectText(r.controller, first!, 0);
+    expect(r.press(right).consumed).toBe(false);
+    // Other modifiers, other zones and a disabled editor are not this binding's.
+    await selectText(r.controller, first!, 2);
+    const calls = extend.mock.calls.length;
+    expect(r.press({ ...left, altKey: true }).consumed).toBe(false);
+    expect(r.press(left, 'toolbar').consumed).toBe(false);
+    r.setAccess(DISABLED);
+    expect(r.press(left).consumed).toBe(false);
+    expect(extend).toHaveBeenCalledTimes(calls);
+  });
+
   it('consumes Alt+F10 in the editing root with no effect and leaves Escape unconsumed (uwg-te-req-key-5, uwg-te-req-key-4)', async () => {
     const r = await setup();
     const before = requests(r.of);
@@ -445,6 +533,52 @@ describe('text editor router', () => {
     const again = dragEvent('drop', r.at.editing, { 'text/plain': 'x' });
     r.z.root.dispatchEvent(again);
     expect(again.defaultPrevented).toBe(true);
+  });
+});
+
+describe('links while editing (C-249)', () => {
+  function clickEvent(path: EventTarget[], init: MouseEventInit) {
+    const event = Object.assign(new Event('click', { cancelable: true }), {
+      button: 0,
+      metaKey: false,
+      ctrlKey: false,
+      altKey: false,
+      shiftKey: false,
+      ...init,
+    });
+    Object.defineProperty(event, 'composedPath', { value: () => path });
+    return event;
+  }
+  const link = (href: string) =>
+    Object.assign(new EventTarget(), { localName: 'a', getAttribute: () => href });
+
+  it('opens a link on Mod+click in a new browsing context without an opener, only while editable', async () => {
+    const r = await setup({ platform: 'mac' });
+    const view = r.z.root.ownerDocument!.defaultView as unknown as Record<string, unknown>;
+    const open = vi.fn();
+    view['open'] = open;
+    const path = (href: string) => [new EventTarget(), link(href), r.z.content, r.z.root];
+    const modClick = clickEvent(path('https://example.com/schedule'), { metaKey: true });
+    r.z.root.dispatchEvent(modClick);
+    expect(open).toHaveBeenCalledWith('https://example.com/schedule', '_blank', 'noopener');
+    expect([modClick.defaultPrevented, modClick.cancelBubble]).toEqual([true, true]);
+    // A plain click, Ctrl on Apple platforms, a disallowed scheme and a click outside a link stay
+    // with the engine.
+    for (const event of [
+      clickEvent(path('https://example.com'), {}),
+      clickEvent(path('https://example.com'), { ctrlKey: true }),
+      clickEvent(path('javascript:alert(1)'), { metaKey: true }),
+      clickEvent([new EventTarget(), r.z.content, r.z.root], { metaKey: true }),
+    ]) {
+      r.z.root.dispatchEvent(event);
+      expect(event.defaultPrevented).toBe(false);
+    }
+    // A read-only editor's link navigates natively.
+    r.setAccess(READ_ONLY);
+    const native = clickEvent(path('https://example.com'), { metaKey: true });
+    r.z.root.dispatchEvent(native);
+    expect(native.defaultPrevented).toBe(false);
+    expect(open).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -675,6 +809,24 @@ describe('text editor paste and drop routing (M7)', () => {
     expect((over('https://example.test', true)!.target as { type: string }[])[0]!.type).toBe(
       'content.insert',
     );
+    // A selection that a link cannot cover (one that holds no text, across a block boundary)
+    // takes the URL as text instead of a link that would not apply.
+    const boundary = pasteProposal({
+      ...base,
+      data: { getData: (type: string) => (type === 'text/plain' ? 'https://example.test' : '') },
+      selection: { kind: 'text', anchor, head: { block: 'b', offset: 0 }, empty: false },
+      canLink: () => false,
+    });
+    expect(boundary).toMatchObject({ surface: 'paste', reason: 'input-paste' });
+    expect((boundary!.target as { type: string }[])[0]!.type).toBe('content.insert');
+    expect(
+      pasteProposal({
+        ...base,
+        data: { getData: (type: string) => (type === 'text/plain' ? 'https://example.test' : '') },
+        selection: { kind: 'text', anchor, head, empty: false },
+        canLink: (href) => href === 'https://example.test',
+      })!.target,
+    ).toEqual([{ type: 'link.set', href: 'https://example.test' }]);
   });
 
   it('proposes a drop as one content.insert at the text point, reason drag', () => {
@@ -744,6 +896,53 @@ describe('text editor paste and drop routing (M7)', () => {
     r.setAccess(READ_ONLY);
     r.z.root.dispatchEvent(transferEvent('paste', r.at.editing, {}, [image]));
     expect(uploadImages).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a paste of image files alone while read-only or disabled, uploading nothing (uwg-te-req-content-6)', async () => {
+    const uploadImages = vi.fn<NonNullable<TextEditorRouterHost['uploadImages']>>(() => true);
+    const r = await setup({ host: { uploadImages } });
+    await selectText(r.controller, r.blocks[0]!, 2);
+    const content = r.instance.getContent('html');
+    const image = file('shot.png', 'image/png');
+    for (const access of [READ_ONLY, DISABLED]) {
+      r.setAccess(access);
+      const before = requests(r.of);
+      const paste = transferEvent('paste', r.at.editing, {}, [image]);
+      r.z.root.dispatchEvent(paste);
+      expect(paste.defaultPrevented).toBe(true);
+      await flush();
+      const failed = r
+        .of<{ error: DOMException; tool: unknown }>('request-failed')
+        .slice(before.failed);
+      expect(requests(r.of).request).toBe(before.request);
+      expect(failed).toHaveLength(1);
+      expect(failed[0]).toMatchObject({
+        tool: null,
+        surface: 'paste',
+        reason: 'input-paste',
+        sourceEvent: paste,
+        actions: [{ type: 'content.insert', content: { kind: 'blocks', blocks: [] } }],
+      });
+      expect(failed[0]!.error.name).toBe('NotSupportedError');
+    }
+    expect(uploadImages).not.toHaveBeenCalled();
+    expect(r.instance.getContent('html')).toBe(content);
+    // While editable the files go to the upload hook and the paste makes no content request.
+    r.setAccess(EDITABLE);
+    const before = requests(r.of);
+    r.z.root.dispatchEvent(transferEvent('paste', r.at.editing, {}, [image]));
+    await flush();
+    expect(uploadImages).toHaveBeenCalledTimes(1);
+    expect(requests(r.of)).toEqual(before);
+    const event = new Event('paste');
+    const at = { kind: 'text', anchor: { block: 'a', offset: 1 } } as const;
+    expect(imagePasteRefusal(at, event)).toEqual({
+      target: [{ type: 'content.insert', content: { kind: 'blocks', blocks: [] }, at }],
+      surface: 'paste',
+      reason: 'input-paste',
+      sourceEvent: event,
+      trigger: null,
+    });
   });
 
   it('forwards keys to a shown suggestion list before every other key handling (uwg-te-req-inline-2)', async () => {

@@ -6,9 +6,11 @@
  * animates when it follows the selection.
  */
 import { html, nothing, type TemplateResult } from 'lit';
+import { repeat } from 'lit/directives/repeat.js';
 import { TooltipProvider } from '../../../components/tooltip/handle.js';
 import type { TpMenu } from '../../../components/menu/menu.js';
 import { ContextualToolbarController } from '../../../foundation/contextual-toolbar.js';
+import { prepareMotion, presenceRole, type MotionHandle } from '../../../foundation/motion.js';
 import {
   rect,
   themeSpacing,
@@ -20,11 +22,15 @@ import type { TpSurfaceOpenChangeEvent } from '../../../foundation/surface-state
 import type { TextEditorSelection } from '../../../foundation/text-editor/model.js';
 import type { TextEditorMenuModality } from '../focus.js';
 import {
-  renderToolControl,
+  renderToolControls,
   type TextEditorToolActivation,
   type TextEditorToolHandlers,
 } from '../tools/controls.js';
-import type { TextEditorSelectionToolbarView } from '../tools/resolve.js';
+import type {
+  TextEditorSelectionToolbarView,
+  TextEditorToolbarGroup,
+  TextEditorToolbarItem,
+} from '../tools/resolve.js';
 import { TextEditorToolbarControls, toolbarTooltipContent } from './toolbar.js';
 
 // Visibility (uwg-te-req-surfaces-1) ---------------------------------------------------------
@@ -52,16 +58,25 @@ export interface SelectionToolbarVisibility {
   readonly dragging: boolean;
   /** A suggestion list or a popover is open. */
   readonly surfaceOpen: boolean;
+  /** A menu that a table grip, the cell handle or the block gutter opened is open. */
+  readonly menuOpen: boolean;
 }
 
 /**
  * Whether the selection toolbar shows: for a text selection holding more than whitespace or for
  * a cell range, while ready, editable, placed and focused, and never while composing, during a
- * pointer selection or a drag, while a suggestion or a popover is open, or in block mode.
+ * pointer selection or a drag, while a suggestion, a popover or a menu of a table grip, the cell
+ * handle or the gutter is open, or in block mode.
  */
 export function selectionToolbarVisible(input: SelectionToolbarVisibility): boolean {
   if (!input.ready || !input.editable || !input.placed || !input.focusInside) return false;
-  if (input.composing || input.pointerSelecting || input.dragging || input.surfaceOpen)
+  if (
+    input.composing ||
+    input.pointerSelecting ||
+    input.dragging ||
+    input.surfaceOpen ||
+    input.menuOpen
+  )
     return false;
   const { selection } = input;
   if (selection.kind === 'cells') return true;
@@ -85,18 +100,58 @@ export function unionRect(rectangles: readonly Rect[]): Rect {
   return rect(left, top, right - left, bottom - top);
 }
 
+/** A band of client coordinates across the block axis: from `top` to `bottom`. */
+export interface BlockBand {
+  readonly top: number;
+  readonly bottom: number;
+}
+
+/**
+ * The rectangles the toolbar anchors to: the selection's, and, when the toolbar placed `reach`
+ * above them would cover a band that must stay clear (the column grips above a cell range), a
+ * rectangle over that band across the selection, so that the toolbar sits above the band.
+ */
+export function anchorRects(
+  rects: readonly DOMRectReadOnly[],
+  keepClear: BlockBand | null,
+  reach: number,
+): readonly DOMRectReadOnly[] {
+  if (!keepClear || !rects.length) return rects;
+  const union = unionRect(rects.map(toRect));
+  if (union.top - reach >= keepClear.bottom || union.bottom <= keepClear.top) return rects;
+  const band = {
+    x: union.left,
+    y: keepClear.top,
+    width: union.width,
+    height: keepClear.bottom - keepClear.top,
+    left: union.left,
+    top: keepClear.top,
+    right: union.right,
+    bottom: keepClear.bottom,
+  } as DOMRectReadOnly;
+  return [band, ...rects];
+}
+
 /**
  * One stable virtual anchor over the selection: its bounding rectangle and its client rectangles
  * (line boxes of text, one per cell of a cell range) read at every positioning pass, with the
- * content part as its context element.
+ * content part as its context element. A pass that finds no rectangle (the selection collapsed
+ * before its surface hides, or while the surface's exit plays) keeps the last ones, so the surface
+ * never moves to the viewport's origin.
  */
 export function selectionAnchor(
   rects: SelectionRectsSource,
   context: () => Element | null,
 ): VirtualAnchor {
+  let last: readonly Rect[] = [];
+  const read = (): readonly Rect[] => {
+    const next = rects().map(toRect);
+    if (next.length) last = next;
+    return last;
+  };
   return {
-    getBoundingRectangle: () => unionRect(rects().map(toRect)),
-    getClientRectangles: () => rects().map(toRect),
+    getBoundingRectangle: () => unionRect(read()),
+    getClientRectangles: () => read(),
     // Read when positioning starts: the content part, rendered once the anchor is used.
     get contextElement() {
       return context() ?? undefined;
@@ -129,11 +184,18 @@ export function composedSelectionText(root: ShadowRoot): string | null {
 
 export interface TextEditorSelectionToolbarHost {
   readonly renderRoot: ShadowRoot;
+  /** Re-renders the widget. */
+  requestUpdate(): void;
   view(): TextEditorSelectionToolbarView | null;
   /** The visibility inputs other than the selection toolbar's own state. */
   visibility(): Omit<SelectionToolbarVisibility, 'placed' | 'pointerSelecting'>;
   /** The adapter's selection rectangles while ready, else none. */
   selectionRects(): readonly DOMRectReadOnly[];
+  /**
+   * The band the toolbar keeps clear above the selection, in client coordinates: the column grips
+   * of the table holding a cell range; null otherwise.
+   */
+  keepClear?(): BlockBand | null;
   /** The content part, the anchor's context element. */
   content(): HTMLElement | null;
   activate(activation: TextEditorToolActivation): void;
@@ -151,6 +213,79 @@ export interface TextEditorSelectionToolbarHost {
 
 const PART = 'text-editor-selection-toolbar';
 
+/**
+ * The groups with each label trigger shown by its icon instead of its label, for a toolbar that
+ * must narrow; a trigger with no icon to show (a mixed selection's Turn into) keeps its label.
+ */
+export function compactGroups(
+  groups: readonly TextEditorToolbarGroup[],
+): readonly TextEditorToolbarGroup[] {
+  const compact = (item: TextEditorToolbarItem): TextEditorToolbarItem =>
+    item.control === 'menu' && item.display === 'label' && item.icon
+      ? { ...item, display: 'icon' }
+      : item;
+  return groups.map((group) => ({ ...group, items: group.items.map(compact) }));
+}
+
+/** The surface motion role that the selection toolbar declares (`uwg-te-req-pres-7`). */
+const SURFACE_MOTION = presenceRole('surface');
+
+/**
+ * The surface motion of the selection toolbar (`uwg-te-req-pres-7`): an enter request when it
+ * shows and an exit request before it hides, which waits for a driver that claimed it; following
+ * the selection requests nothing. `motion` prepares the request of a phase.
+ */
+export class SelectionToolbarMotion {
+  readonly #motion: (phase: 'enter' | 'exit') => MotionHandle;
+  #handle: MotionHandle | null = null;
+  #exiting = false;
+  #generation = 0;
+
+  constructor(motion: (phase: 'enter' | 'exit') => MotionHandle) {
+    this.#motion = motion;
+  }
+
+  /** Whether a claimed exit is still playing, the toolbar not yet hidden. */
+  get exiting(): boolean {
+    return this.#exiting;
+  }
+
+  /** The toolbar shows, or shows again during its exit, which the enter request replaces. */
+  entered(): void {
+    this.#generation += 1;
+    this.#exiting = false;
+    this.#handle = this.#motion('enter');
+    this.#handle.start();
+  }
+
+  /** Hides through the exit request: at once unless a driver claimed it, else once it settles. */
+  exit(hide: () => void): void {
+    if (this.#exiting) return;
+    const generation = ++this.#generation;
+    const handle = this.#motion('exit');
+    this.#handle = handle;
+    handle.start();
+    if (!handle.claimed) {
+      hide();
+      return;
+    }
+    this.#exiting = true;
+    void handle.finished.then(() => {
+      if (generation !== this.#generation) return;
+      this.#exiting = false;
+      hide();
+    });
+  }
+
+  /** Stops a playing motion; a pending exit no longer hides. */
+  cancel(): void {
+    this.#generation += 1;
+    this.#exiting = false;
+    this.#handle?.cancel();
+    this.#handle = null;
+  }
+}
+
 /** The selection toolbar of one widget. */
 export class TextEditorSelectionToolbar {
   readonly #host: TextEditorSelectionToolbarHost;
@@ -167,11 +302,27 @@ export class TextEditorSelectionToolbar {
   #listening: ShadowRoot | null = null;
   /** The window that the release listeners went to, kept for their removal after a move. */
   #listeningWindow: Window | null = null;
+  /**
+   * Label triggers drop their labels while the full toolbar is wider than the viewport allows;
+   * `#fullWidth` is the full toolbar's width when it last showed.
+   */
+  #compact = false;
+  #fullWidth = 0;
+  readonly #motion = new SelectionToolbarMotion((phase) => {
+    const owner = this.#host.renderRoot.host as HTMLElement;
+    const surface = this.#surface;
+    return prepareMotion(owner, surface, SURFACE_MOTION, {
+      phase,
+      fromState: phase === 'enter' ? 'closed' : 'open',
+      toState: phase === 'enter' ? 'open' : 'closed',
+      context: { placement: surface?.getAttribute('data-placement') ?? 'top' },
+    });
+  });
 
   constructor(host: TextEditorSelectionToolbarHost) {
     this.#host = host;
     this.#anchor = selectionAnchor(
-      () => host.selectionRects(),
+      () => anchorRects(host.selectionRects(), host.keepClear?.() ?? null, this.#reach()),
       () => host.content(),
     );
     this.#handlers = {
@@ -196,24 +347,31 @@ export class TextEditorSelectionToolbar {
     return this.#contextual?.contains(node) ?? false;
   }
 
-  /** Moves focus to the first enabled control while the toolbar shows (Alt+F10). */
+  /**
+   * Moves focus to the first enabled control while the toolbar shows (Alt+F10), with its focus
+   * indicator: the chord moved focus by keyboard.
+   */
   focus(): boolean {
-    return this.#contextual?.focus() ?? false;
+    return this.#contextual?.focus({ focusVisible: true }) ?? false;
   }
 
   /** The surface part, or nothing while the layout places no available tool. */
   render(): TemplateResult | typeof nothing {
     const view = this.#host.view();
     this.#view = view;
+    this.#controls.noteFocus(this.#host.renderRoot, this.#surface);
     if (!view) return nothing;
     const handlers = this.#handlers;
+    const groups = this.#compact ? compactGroups(view.groups) : view.groups;
     return html`<div
       part=${PART}
       class="selection-toolbar"
       aria-label=${view.label}
       @keydown=${this.#keyDown}
     >
-      ${view.groups.map(
+      ${repeat(
+        groups,
+        (group) => group.key,
         (group, index) =>
           html`${
               index
@@ -222,8 +380,12 @@ export class TextEditorSelectionToolbar {
                     orientation="vertical"
                   ></tp-separator>`
                 : nothing
-            }<tp-button-group class="toolbar-buttons" .joined=${false} data-group=${group.key}
-              >${group.items.map((item) => renderToolControl(item, handlers))}</tp-button-group
+            }<tp-button-group
+              class="toolbar-buttons"
+              label=""
+              .joined=${false}
+              data-group=${group.key}
+              >${renderToolControls(group.items, handlers)}</tp-button-group
             >`,
       )}
       <tp-tooltip
@@ -250,7 +412,8 @@ export class TextEditorSelectionToolbar {
       this.#surface = surface;
       this.#contextual = new ContextualToolbarController(surface, {
         layer: 'top',
-        placement: 'top-start',
+        // Block-start, centered on the first line fragment (block-end on the last after a flip).
+        placement: 'top',
         offset: themeSpacing(surface, 2),
         collision: { side: 'flip', align: 'shift' },
         strategy: 'fixed',
@@ -266,6 +429,9 @@ export class TextEditorSelectionToolbar {
     const contextual = this.#contextual;
     contextual.update({ disabled: view.disabled });
     this.#controls.sync(contextual.toolbar, surface, view.groups, view.disabled);
+    // Focus that the render took from the toolbar returns to the editing root with its
+    // selection, as when the toolbar hides with focus inside; a shown toolbar stays shown.
+    if (this.#controls.restoreFocus(root, surface)) this.#host.focusEditing();
     this.sync();
   }
 
@@ -284,16 +450,44 @@ export class TextEditorSelectionToolbar {
       }) && this.#host.selectionRects().length > 0;
     // Focus in the toolbar or a menu it opened keeps it shown while the selection stays.
     if (visible) {
-      if (contextual.shown) void contextual.reposition();
-      else contextual.show(this.#anchor);
+      if (contextual.shown && !this.#motion.exiting) void contextual.reposition();
+      else {
+        contextual.show(this.#anchor);
+        this.#motion.entered();
+      }
+      this.#fit();
     } else {
       this.#openMenu?.setOpen(false, 'programmatic');
-      contextual.hide();
+      if (contextual.shown) this.#motion.exit(() => contextual.hide());
     }
   }
 
   connected(): void {
     this.#surface = null;
+  }
+
+  /** How far above the selection the shown toolbar reaches: its block size and its offset. */
+  #reach(): number {
+    const surface = this.#surface;
+    return surface ? surface.getBoundingClientRect().height + themeSpacing(surface, 2) : 0;
+  }
+
+  /**
+   * Drops the labels of label triggers while the shown toolbar is wider than the viewport less
+   * the collision padding on both sides, and shows them again once the full width fits.
+   */
+  #fit(): void {
+    const surface = this.#surface;
+    const view = surface?.ownerDocument.defaultView;
+    if (!surface || !view) return;
+    const available = view.innerWidth - 2 * themeSpacing(surface, 2);
+    const width = surface.getBoundingClientRect().width;
+    if (!width) return;
+    const compact = this.#compact ? this.#fullWidth > available : width > available;
+    if (!this.#compact) this.#fullWidth = width;
+    if (compact === this.#compact) return;
+    this.#compact = compact;
+    this.#host.requestUpdate();
   }
 
   disconnected(): void {
@@ -327,7 +521,9 @@ export class TextEditorSelectionToolbar {
     if (this.#openMenu && this.#openMenu !== menu) this.#openMenu.setOpen(false, 'programmatic');
     this.#openMenu = menu;
     this.#changed = false;
-    const trigger = menu.triggerElement;
+    // The Menu takes its trigger once it accepts the opening, after this proposal: read the
+    // proposal's own trigger first, so that the opening record exists (`uwg-te-req-a11y-6`).
+    const trigger = (event.detail.trigger as HTMLElement | undefined) ?? menu.triggerElement;
     if (!trigger) return;
     this.#host.menuOpened(
       trigger,
@@ -375,6 +571,7 @@ export class TextEditorSelectionToolbar {
   };
 
   #teardown(): void {
+    this.#motion.cancel();
     this.#controls.clear();
     this.#contextual?.dispose();
     this.#contextual = null;

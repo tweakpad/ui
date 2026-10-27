@@ -203,7 +203,10 @@ function deleteText(work: TiptapWork, range: TextEditorTextRange): boolean {
   return true;
 }
 
-/** `inline.insert`: the node of a custom inline definition and one space, the caret after both. */
+/**
+ * `inline.insert`: the node of a custom inline definition and one space, the caret after both;
+ * when whitespace already follows the range, that whitespace is the space (`uwg-te-req-inline-2`).
+ */
 function insertInline(
   work: TiptapWork,
   kind: string,
@@ -220,12 +223,19 @@ function insertInline(
   if (!takesInline($from.parent) || $from.parent !== tr.doc.resolve(range.to).parent) return false;
   const marks = insertedMarks(work, range);
   const node = type.create(definitionAttributes(definition, attrs));
-  tr.replaceWith(range.from, range.to, [node, schema.text(' ', marks)]);
+  const $to = tr.doc.resolve(range.to);
+  const spaced = FOLLOWING_SPACE.test(
+    tr.doc.textBetween(range.to, Math.min(range.to + 1, $to.end())),
+  );
+  tr.replaceWith(range.from, range.to, spaced ? node : [node, schema.text(' ', marks)]);
   tr.setSelection(
     work.env.modules.state.TextSelection.create(tr.doc, range.from + node.nodeSize + 1),
   );
   return true;
 }
+
+/** Whitespace other than a line break at the start of a text: an existing space after an inserted node. */
+const FOLLOWING_SPACE = /^[^\S\n]/u;
 
 export const INLINE_HANDLERS: TiptapActionHandlers = {
   'text.insert': (work, action) => insertText(work, action.text, action.range),

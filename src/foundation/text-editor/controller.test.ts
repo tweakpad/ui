@@ -3,7 +3,9 @@ import { imageProtocols, linkProtocols } from '../markdown/url.js';
 import type { TextEditorAction, TextEditorBlocksDeleteAction } from './actions.js';
 import { BASE_CAPABILITIES } from './capabilities.js';
 import {
+  blockContextKey,
   TextEditorController,
+  textDirectionOf,
   type TextEditorControllerHost,
   type TextEditorRequestDetail,
   type TextEditorRequestFailedDetail,
@@ -12,7 +14,7 @@ import {
   type TextEditorValueCommit,
 } from './controller.js';
 import type { TextEditorFormat, TextEditorSnapshot } from './engine.js';
-import type { TextEditorEngineState } from './model.js';
+import type { TextEditorEngineState, TextEditorTextPoint } from './model.js';
 import { defineTextEditorBlock, defineTextEditorInline } from './nodes.js';
 import {
   createHost,
@@ -206,6 +208,109 @@ describe('TextEditorController lifecycle (uwg-te-req-engine-7, uwg-te-req-engine
     expect(instance.canCalls - start).toBe(4);
     controller.setEngine(null);
     expect(controller.can(bold)).toBe(false);
+  });
+
+  it('V-587: can() keeps its answers across a focus change, which publishes a new state version only', async () => {
+    const { controller, instance } = await readyEditor({ content: HTML });
+    const bold: TextEditorAction = { type: 'mark.toggle', mark: 'bold' };
+    expect(controller.can(bold)).toBe(true);
+    const start = instance.canCalls;
+    const version = instance.getState().version;
+    instance.blur();
+    void instance.focus('restore');
+    expect(instance.getState().version).toBeGreaterThan(version);
+    expect(controller.can(bold)).toBe(true);
+    expect(instance.canCalls - start).toBe(0);
+    // A document change asks the engine again.
+    instance.type('Very ');
+    expect(controller.can(bold)).toBe(true);
+    expect(instance.canCalls - start).toBe(1);
+  });
+
+  it('V-588: block-type answers stay while typing keeps the selection in one block', async () => {
+    const { controller, instance } = await readyEditor({ content: HTML });
+    instance.type('Very ');
+    const quote: TextEditorAction = { type: 'block.set-type', kind: 'quote' };
+    const heading: TextEditorAction = {
+      type: 'block.set-type',
+      kind: 'heading',
+      attrs: { level: 2 },
+    };
+    const bold: TextEditorAction = { type: 'mark.toggle', mark: 'bold' };
+    expect([controller.can(quote), controller.can(heading), controller.can(bold)]).toEqual([
+      true,
+      true,
+      true,
+    ]);
+    const start = instance.canCalls;
+    instance.type('calm ');
+    expect([controller.can(quote), controller.can(heading), controller.can(bold)]).toEqual([
+      true,
+      true,
+      true,
+    ]);
+    // The marks answer per state; the block context is unchanged.
+    expect(instance.canCalls - start).toBe(1);
+    // Another kind of the block is another context.
+    expect(
+      instance.execute([{ type: 'block.set-type', kind: 'quote', ids: ['p1'] }], {
+        reason: 'imperative-action',
+      }),
+    ).toBe(true);
+    controller.can(quote);
+    expect(instance.canCalls - start).toBe(2);
+  });
+
+  it('V-587: reports a state publication that waits for its frame', async () => {
+    const { controller, frames, instance } = await readyEditor({ content: HTML });
+    frames.tick();
+    expect(controller.publicationPending).toBe(false);
+    instance.type('Very ');
+    expect(controller.publicationPending).toBe(true);
+    frames.tick();
+    expect(controller.publicationPending).toBe(false);
+  });
+
+  it('V-588: the block context is that of a text selection in one block outside tables', () => {
+    const block = { id: 'p1', kind: 'paragraph', attrs: {}, depth: 0 } as const;
+    const caret = (point: Record<string, unknown>) =>
+      ({ kind: 'text', anchor: point, head: point, empty: true }) as never;
+    const state = { editable: true, selection: caret({ block: 'p1', offset: 2 }), block };
+    const quote: TextEditorAction = { type: 'block.set-type', kind: 'quote' };
+    expect(blockContextKey(state, quote)).toBe('true|p1|paragraph|0|{}');
+    expect(blockContextKey({ ...state, selection: caret({ block: 'p1', offset: 4 }) }, quote)).toBe(
+      blockContextKey(state, quote),
+    );
+    expect(blockContextKey({ ...state, editable: false }, quote)).not.toBe(
+      blockContextKey(state, quote),
+    );
+    expect(blockContextKey(state, { ...quote, ids: ['p1'] })).toBeNull();
+    expect(blockContextKey(state, { type: 'mark.toggle', mark: 'bold' })).toBeNull();
+    expect(
+      blockContextKey(
+        {
+          ...state,
+          selection: {
+            kind: 'text',
+            anchor: { block: 'p1', offset: 0 },
+            head: { block: 'p2', offset: 0 },
+            empty: false,
+          } as never,
+        },
+        quote,
+      ),
+    ).toBeNull();
+    expect(
+      blockContextKey(
+        {
+          ...state,
+          selection: caret({ block: 't1', cell: { row: 0, column: 0, paragraph: 0 }, offset: 0 }),
+          block: { ...block, id: 't1' },
+        },
+        quote,
+      ),
+    ).toBeNull();
+    expect(blockContextKey({ ...state, block: null }, quote)).toBeNull();
   });
 
   it('reports the missing engine at the first frame after connection: once per connection and again after engine = null', async () => {
@@ -1050,6 +1155,55 @@ describe('TextEditorController requests (uwg-te-req-evt-1, uwg-te-req-evt-2)', (
     expect(of('open-surface')).toHaveLength(2);
   });
 
+  it('a slash entry requests with the tool it executes, surface slash and no value; a run names slash', async () => {
+    const { controller, of } = await readyEditor({
+      content: { content: '<p data-id="p1">/hea</p><p data-id="p2">/hea</p>', format: 'html' },
+    });
+    await selectText(controller, 'p1', 4);
+    await expect(
+      controller.request({
+        target: 'slash',
+        value: 'heading-1',
+        surface: 'slash',
+        reason: 'item-press',
+      }),
+    ).resolves.toBe('applied');
+    const [entry] = of<TextEditorRequestDetail>('request');
+    expect(entry).toMatchObject({
+      tool: 'heading-1',
+      surface: 'slash',
+      value: undefined,
+      reason: 'item-press',
+    });
+    expect(entry!.actions[0]).toEqual({
+      type: 'text.delete',
+      range: { block: 'p1', from: 0, to: 4 },
+    });
+    expect(of<TextEditorValueChange>('value-change')[0]).toMatchObject({ tool: 'heading-1' });
+    // The same entry run through the API names the slash tool with the entry as its value.
+    await selectText(controller, 'p2', 4);
+    await controller.request(api('slash', { value: 'heading-2' }));
+    expect(of<TextEditorRequestDetail>('request')[1]).toMatchObject({
+      tool: 'slash',
+      surface: 'api',
+      value: 'heading-2',
+    });
+    // An entry outside the menu fails as the slash tool's value.
+    await selectText(controller, 'p1', 0);
+    await expect(
+      controller.request({
+        target: 'slash',
+        value: 'bold',
+        surface: 'slash',
+        reason: 'item-press',
+      }),
+    ).rejects.toBeInstanceOf(TypeError);
+    expect(of<TextEditorRequestFailedDetail>('request-failed').at(-1)).toMatchObject({
+      tool: 'slash',
+      value: 'bold',
+    });
+  });
+
   it('the queued content call rejects with the error of the failed mount', async () => {
     const { controller, records, of } = createHost();
     const error = new Error('The engine module is missing.');
@@ -1396,6 +1550,21 @@ describe('TextEditorController publication (uwg-te-req-evt-3, uwg-te-req-evt-4, 
   });
 });
 
+describe('TextEditorController latest change reason (uwg-te-tab-reasons r12, r13)', () => {
+  it('reports the reason of an engine change before its frame and of an applied request', async () => {
+    const { controller, frames, instance } = await readyEditor({ content: HTML });
+    expect(controller.lastChangeReason).toBeNull();
+    instance.type('Very ');
+    expect(controller.lastChangeReason).toBe('input');
+    frames.tick();
+    await controller.request({
+      ...setContent('<p data-id="p2">pasted</p>'),
+      reason: 'input-paste',
+    });
+    expect(controller.lastChangeReason).toBe('input-paste');
+  });
+});
+
 describe('TextEditorController notifications (uwg-te-req-engine-6)', () => {
   it('V-032: ready is honored once per mount', async () => {
     const { engine, of } = await readyEditor();
@@ -1564,6 +1733,35 @@ describe('TextEditorController companion seams (uwg-te-req-evt-4, uwg-te-req-pre
     expect([of('request'), of('value-change'), of('value-commit')]).toEqual([[], [], []]);
   });
 
+  it('V-738: holdsWholeDocument answers for a text selection from the first to the last text point, either way round', async () => {
+    const content = {
+      content:
+        '<hr data-id="d1"><p data-id="a">one</p><p data-id="b">two words</p><hr data-id="d2">',
+      format: 'html',
+    } as const;
+    const { controller, instance } = await readyEditor({ content });
+    const state = vi.spyOn(instance, 'getState');
+    const select = (selection: unknown) =>
+      state.mockReturnValue({ ...instance.getState(), selection } as never);
+    const point = (block: string, offset: number) => ({ block, offset });
+    const range = (anchor: object, head: object, empty = false) => ({
+      kind: 'text',
+      anchor,
+      head,
+      empty,
+    });
+    select(range(point('a', 0), point('b', 9)));
+    expect(controller.holdsWholeDocument()).toBe(true);
+    select(range(point('b', 9), point('a', 0)));
+    expect(controller.holdsWholeDocument()).toBe(true);
+    select(range(point('a', 0), point('b', 8)));
+    expect(controller.holdsWholeDocument()).toBe(false);
+    select(range(point('a', 0), point('a', 0), true));
+    expect(controller.holdsWholeDocument()).toBe(false);
+    select({ kind: 'blocks', ids: ['d1', 'a', 'b', 'd2'] });
+    expect(controller.holdsWholeDocument()).toBe(false);
+  });
+
   it('selectContent does nothing while editable or disabled, or without text', async () => {
     for (const access of [
       { readOnly: false, disabled: false },
@@ -1581,6 +1779,125 @@ describe('TextEditorController companion seams (uwg-te-req-evt-4, uwg-te-req-pre
     const execute = vi.spyOn(instance, 'execute');
     controller.selectContent(new Event('keydown'));
     expect(execute).not.toHaveBeenCalled();
+  });
+
+  it('uwg-te-req-a11y-1: extendSelection selects one character from a caret while read-only', async () => {
+    const { controller, instance, of } = await readyEditor({
+      content: {
+        content: '<p data-id="a">one</p><hr data-id="d1"><p data-id="b">t😀</p>',
+        format: 'html',
+      },
+      access: { readOnly: true, disabled: false },
+    });
+    const execute = vi.spyOn(instance, 'execute');
+    const press = new Event('keydown');
+    const extend = (from: TextEditorTextPoint, direction: 'forward' | 'backward') => {
+      void controller.request(
+        api({ type: 'selection.set', selection: { kind: 'text', anchor: from } }),
+      );
+      return controller.extendSelection(direction, press) ? instance.getState().selection : null;
+    };
+    const text = (anchor: TextEditorTextPoint, head: TextEditorTextPoint) => ({
+      kind: 'text',
+      anchor,
+      head,
+      empty: false,
+    });
+    expect(extend({ block: 'a', offset: 0 }, 'forward')).toEqual(
+      text({ block: 'a', offset: 0 }, { block: 'a', offset: 1 }),
+    );
+    expect(execute.mock.calls.at(-1)).toEqual([
+      [
+        {
+          type: 'selection.set',
+          selection: {
+            kind: 'text',
+            anchor: { block: 'a', offset: 0 },
+            head: { block: 'a', offset: 1 },
+          },
+        },
+      ],
+      { reason: 'hotkey', sourceEvent: press, focus: false },
+    ]);
+    expect(extend({ block: 'a', offset: 2 }, 'backward')).toEqual(
+      text({ block: 'a', offset: 2 }, { block: 'a', offset: 1 }),
+    );
+    // Past a textblock's edge to the nearest block that holds text, an atom skipped.
+    expect(extend({ block: 'a', offset: 3 }, 'forward')).toEqual(
+      text({ block: 'a', offset: 3 }, { block: 'b', offset: 0 }),
+    );
+    expect(extend({ block: 'b', offset: 0 }, 'backward')).toEqual(
+      text({ block: 'b', offset: 0 }, { block: 'a', offset: 3 }),
+    );
+    // A surrogate pair is one character.
+    expect(extend({ block: 'b', offset: 1 }, 'forward')).toEqual(
+      text({ block: 'b', offset: 1 }, { block: 'b', offset: 3 }),
+    );
+    // The document's edges extend nothing.
+    expect(extend({ block: 'b', offset: 3 }, 'forward')).toBeNull();
+    expect(extend({ block: 'a', offset: 0 }, 'backward')).toBeNull();
+    expect([of('request'), of('value-change'), of('value-commit')]).toEqual([[], [], []]);
+  });
+
+  it('extendSelection starts from the document’s first or last text point without a selection', async () => {
+    const { controller, instance } = await readyEditor({
+      content: {
+        content: '<hr data-id="d1"><p data-id="a"></p><p data-id="b">two</p><hr data-id="d2">',
+        format: 'html',
+      },
+      access: { readOnly: true, disabled: false },
+    });
+    const none = () =>
+      controller.request(api({ type: 'selection.set', selection: { kind: 'none' } }));
+    await none();
+    expect(controller.extendSelection('forward', new Event('keydown'))).toBe(true);
+    // An empty first textblock: its only point to the next block's start.
+    expect(instance.getState().selection).toEqual({
+      kind: 'text',
+      anchor: { block: 'a', offset: 0 },
+      head: { block: 'b', offset: 0 },
+      empty: false,
+    });
+    await none();
+    expect(controller.extendSelection('backward', new Event('keydown'))).toBe(true);
+    expect(instance.getState().selection).toEqual({
+      kind: 'text',
+      anchor: { block: 'b', offset: 3 },
+      head: { block: 'b', offset: 2 },
+      empty: false,
+    });
+  });
+
+  it('extendSelection sets nothing while editable or disabled, over a selection, or without text', async () => {
+    for (const access of [
+      { readOnly: false, disabled: false },
+      { readOnly: true, disabled: true },
+    ]) {
+      const { controller, instance } = await readyEditor({ content: HTML, access });
+      const execute = vi.spyOn(instance, 'execute');
+      expect(controller.extendSelection('forward', new Event('keydown'))).toBe(false);
+      expect(execute).not.toHaveBeenCalled();
+    }
+    const { controller, instance } = await readyEditor({
+      content: HTML,
+      access: { readOnly: true, disabled: false },
+    });
+    // The browser extends a non-empty selection itself; a block selection is no caret.
+    for (const selection of [
+      { kind: 'text', anchor: { block: 'p1', offset: 0 }, head: { block: 'p1', offset: 2 } },
+      { kind: 'blocks', ids: ['p1'] },
+    ] as const) {
+      await controller.request(api({ type: 'selection.set', selection }));
+      const execute = vi.spyOn(instance, 'execute');
+      expect(controller.extendSelection('forward', new Event('keydown'))).toBe(false);
+      expect(execute).not.toHaveBeenCalled();
+      execute.mockRestore();
+    }
+    const empty = await readyEditor({
+      content: { content: '<hr data-id="d1">', format: 'html' },
+      access: { readOnly: true, disabled: false },
+    });
+    expect(empty.controller.extendSelection('forward', new Event('keydown'))).toBe(false);
   });
 });
 
@@ -1615,5 +1932,52 @@ describe('TextEditorController tool targets (uwg-te-req-tables-3)', () => {
     expect(contexts.at(-1)?.target).toEqual(target);
     await controller.request({ target: 'probe', surface: 'toolbar', reason: 'trigger-press' });
     expect(contexts.at(-1)?.target).toEqual({ kind: 'selection' });
+  });
+});
+
+describe('TextEditorController text direction (uwg-te-req-pres-2)', () => {
+  /** An element whose `:dir()` is `direction`, with child elements. */
+  const element = (direction: 'ltr' | 'rtl', children: Element[] = []) =>
+    ({
+      matches: (selector: string) => selector === `:dir(${direction})`,
+      children,
+      firstElementChild: children[0] ?? null,
+    }) as unknown as HTMLElement;
+  const paragraph = element('ltr');
+  const cell = element('rtl', [element('rtl'), paragraph]);
+  const instance = {
+    blockElement: (id: string) =>
+      id === 'p' ? element('ltr') : id === 'q' ? element('rtl') : null,
+    cellElement: () => cell,
+  };
+
+  it('reads the direction of the first block of a selection, or of the paragraph of a cell', () => {
+    expect(
+      textDirectionOf(instance, {
+        kind: 'text',
+        anchor: { block: 'p', offset: 0 },
+        head: { block: 'q', offset: 1 },
+        empty: false,
+      }),
+    ).toBe('ltr');
+    expect(textDirectionOf(instance, { kind: 'blocks', ids: ['q', 'p'] })).toBe('rtl');
+    expect(
+      textDirectionOf(instance, {
+        kind: 'text',
+        anchor: { block: 't', cell: { row: 0, column: 0, paragraph: 1 }, offset: 0 },
+        head: { block: 't', cell: { row: 0, column: 0, paragraph: 1 }, offset: 0 },
+        empty: true,
+      }),
+    ).toBe('ltr');
+    expect(
+      textDirectionOf(instance, {
+        kind: 'cells',
+        table: 't',
+        range: { anchor: { row: 0, column: 0 }, head: { row: 0, column: 0 } },
+      }),
+    ).toBe('rtl');
+    // Without an element, the widget's direction applies.
+    expect(textDirectionOf(instance, { kind: 'blocks', ids: ['gone'] })).toBeUndefined();
+    expect(textDirectionOf(instance, { kind: 'none' })).toBeUndefined();
   });
 });

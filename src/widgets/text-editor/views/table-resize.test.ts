@@ -7,6 +7,10 @@ vi.mock('../../../foundation/generated-style.js', () => ({
   },
 }));
 
+vi.mock('../../../foundation/drag-cursor.js', () => ({
+  leaseDragCursor: () => () => {},
+}));
+
 import {
   columnResizeMax,
   resizedWidths,

@@ -104,6 +104,11 @@ export interface OverlayMeasureContext {
   readonly owner: Window;
   /** A client rectangle in overlay coordinates (origin and scale read once per pass). */
   toOverlay(rect: DOMRectReadOnly): OverlayBox;
+  /**
+   * Why the pass runs: every invalidation since the previous pass measured. Absent outside the
+   * frame pass (`layoutNow`), where anything may have changed.
+   */
+  readonly reasons?: ReadonlySet<OverlayInvalidation>;
 }
 
 /** One kind of overlay mark. A pass runs only while some layer wants one. */
@@ -120,6 +125,9 @@ export interface OverlayLayer<M> {
   /** Hides every mark of the layer at once, with no read (source lost, release). */
   hide(): void;
 }
+
+/** Receives the block under a requested point, or `null` (see `OverlayGeometry.requestHit`). */
+export type HitResolver = (block: string | null) => void;
 
 /** One pass that ran, for the fixture's per-frame counter. */
 export interface OverlayPassRecord {
@@ -138,6 +146,8 @@ export class OverlayGeometry {
   /** Bumped by every release, so that a pass queued before it is dropped. */
   #generation = 0;
   #dirty = false;
+  /** The invalidations since the last pass measured. */
+  #reasons = new Set<OverlayInvalidation>();
   /** The content part has a layout box, from its size observation (0×0: none). */
   #boxed = false;
 
@@ -183,8 +193,12 @@ export class OverlayGeometry {
     scope.add(() => document.removeEventListener('visibilitychange', visibility));
     // An image that loads above a mark moves it without resizing a content part held at its minimum.
     scope.listen(parts.content, 'load', () => this.invalidate('content'), { capture: true });
+    // Inside the native event, which the browser fires in the rendering steps before the frame's
+    // animation frame callbacks: the wake below joins that frame, so the pass and the hit test of
+    // a stationary pointer run in the frame after the scroll rather than one frame later.
     scope.add(
       observeScroll(parts.viewport, {
+        timing: { immediate: true },
         scroll: () => {
           this.invalidate('scroll');
           for (const listener of [...this.#scrollListeners]) listener();
@@ -205,7 +219,7 @@ export class OverlayGeometry {
 
   /** Marks the geometry dirty and wakes one frame of the shared loop while a pass can run. */
   invalidate(reason: OverlayInvalidation): void {
-    void reason;
+    this.#reasons.add(reason);
     this.#dirty = true;
     if (!this.#source()) {
       this.#hideLayers();
@@ -264,11 +278,28 @@ export class OverlayGeometry {
     const end = box.right - (Number.parseFloat(style.paddingRight) || 0);
     const x = Math.min(Math.max(clientX, start + 1), Math.max(start + 1, end - 1));
     for (const element of root.elementsFromPoint(x, clientY)) {
-      if (element === parts.content || !parts.content.contains(element)) continue;
+      // The editing root shows between blocks; an engine maps it to a position of its own.
+      if (element === parts.content || element === editing || !parts.content.contains(element))
+        continue;
       const id = instance.blockAt(element);
       if (id) return id;
     }
     return null;
+  }
+
+  /** The pending hit requests by resolver; each keeps its latest point. */
+  readonly #hits = new Map<HitResolver, { readonly x: number; readonly y: number }>();
+
+  /**
+   * Hit-tests the block under a client point at the start of the next frame of the shared loop
+   * rather than in the input handler that asks: the moves of one frame share one hit test, whose
+   * layout and hit-test reads the frame performs anyway. A later request of the same resolver in
+   * that frame replaces its earlier one, resolvers asking at one point share one hit test, and a
+   * release drops them all. `resolve` receives what `hitBlock` answers.
+   */
+  requestHit(clientX: number, clientY: number, resolve: HitResolver): void {
+    this.#hits.set(resolve, { x: clientX, y: clientY });
+    this.#subscription?.wake();
   }
 
   /**
@@ -299,7 +330,9 @@ export class OverlayGeometry {
     this.#parts = null;
     this.#owner = null;
     this.#dirty = false;
+    this.#reasons = new Set();
     this.#boxed = false;
+    this.#hits.clear();
   }
 
   #hideLayers(): void {
@@ -327,12 +360,27 @@ export class OverlayGeometry {
   }
 
   readonly #frame = (_elapsed: number, time: number): boolean => {
+    if (this.#hits.size) {
+      const hits = [...this.#hits];
+      this.#hits.clear();
+      const answers = new Map<string, string | null>();
+      // Before the pass, so that a target a resolver changes is placed in this frame.
+      for (const [resolve, { x, y }] of hits) {
+        const key = `${x},${y}`;
+        if (!answers.has(key)) answers.set(key, this.hitBlock(x, y));
+        resolve(answers.get(key) ?? null);
+      }
+    }
     if (!this.#dirty || !this.#runnable()) return false;
     this.#dirty = false;
     const generation = this.#generation;
     scheduleLayoutPass(this, {
       active: () => generation === this.#generation && this.#runnable(),
-      measure: () => this.#measure(time),
+      measure: () => {
+        const reasons = this.#reasons;
+        this.#reasons = new Set();
+        return this.#measure(time, reasons);
+      },
       apply: (measured) => {
         for (const [layer, mark] of measured) layer.apply(mark);
       },
@@ -340,7 +388,10 @@ export class OverlayGeometry {
     return false;
   };
 
-  #measure(time: number): (readonly [OverlayLayer<unknown>, unknown])[] {
+  #measure(
+    time: number,
+    reasons: ReadonlySet<OverlayInvalidation>,
+  ): (readonly [OverlayLayer<unknown>, unknown])[] {
     const parts = this.#parts;
     const owner = this.#owner;
     const source = this.#source();
@@ -355,6 +406,7 @@ export class OverlayGeometry {
       source,
       owner,
       toOverlay: (rect) => overlayBox(rect, origin, scale),
+      reasons,
     };
     const measured = [...this.#layers]
       .filter((layer) => layer.wanted())

@@ -47,8 +47,6 @@ export interface LexicalMountInput {
   >;
   /** The detached element that owns the engine's live region; `null` without a document. */
   readonly announcer: HTMLElement | null;
-  /** The initial editor state as JSON text. */
-  readonly initialState: string;
   /** Called with the editor's errors; the adapter's own aborts are filtered by the caller. */
   readonly onError: (error: Error) => void;
   /** Writes the root's editability, if a root exists. */
@@ -217,7 +215,8 @@ export function lexicalExtension(input: LexicalMountInput): LexicalExtensionInit
       ),
     ],
     dependencies: lexicalDependencies(input),
-    $initialEditorState: input.initialState,
+    // No initial state: the mount loads the content in its own update once the root is set.
+    $initialEditorState: null,
     onError: (error) => input.onError(error),
     // The engine's development default throws on a warning; it is a diagnostic here.
     onWarn: (error) => context.diagnostic('text-editor-engine-warning', error.message),

@@ -22,9 +22,13 @@ export class TextEditorAnnouncer {
     this.#announcer.announce(message, options);
   }
 
-  /** Cancels pending messages and empties the regions; called at disconnection. */
-  clear(): void {
-    this.#announcer?.clear();
+  /**
+   * Cancels pending messages and removes the regions; called at disconnection. The next
+   * announcement creates them again.
+   */
+  release(): void {
+    this.#announcer?.dispose();
+    this.#announcer = null;
   }
 }
 

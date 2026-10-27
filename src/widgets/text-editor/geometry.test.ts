@@ -368,6 +368,20 @@ describe('overlay geometry', () => {
     }
   });
 
+  it('uwg-te-req-perf-1: a pass carries the invalidations since the previous pass measured', () => {
+    const { env, geometry, layer } = setup();
+    frame(env);
+    expect([...layer.contexts[0]!.reasons!]).toEqual(['resize']);
+    geometry.invalidate('scroll');
+    geometry.invalidate('scroll');
+    frame(env);
+    expect([...layer.contexts[1]!.reasons!]).toEqual(['scroll']);
+    geometry.invalidate('scroll');
+    geometry.invalidate('content');
+    frame(env);
+    expect([...layer.contexts[2]!.reasons!].sort()).toEqual(['content', 'scroll']);
+  });
+
   it('uwg-te-req-engine-10: release removes every observation and listener synchronously', () => {
     const { env, geometry, parts } = setup();
     geometry.invalidate('state');
@@ -466,7 +480,8 @@ describe('block hit testing and pooled marks (M8)', () => {
     const inside = new Set<unknown>([editing]);
     const points: { x: number; y: number }[] = [];
     const hits: unknown[] = [];
-    const ids = new Map<unknown, string>();
+    // An engine may map its editing root to its first block.
+    const ids = new Map<unknown, string>([[editing, 'b1']]);
     for (const id of ['b1', 'b2']) {
       const element = new FakeElement(env.document);
       inside.add(element);
@@ -508,6 +523,66 @@ describe('block hit testing and pooled marks (M8)', () => {
     expect(geometry.hitBlock(50, 5)).toBeNull();
     expect(geometry.hitBlock(50, 130)).toBeNull();
     expect(points).toHaveLength(probes);
+  });
+
+  it('V-589: a requested hit resolves once in the next frame, at the latest requested point', () => {
+    const { env, geometry, points } = hitSetup();
+    const answers: (string | null)[] = [];
+    const resolve = (id: string | null): void => void answers.push(id);
+    geometry.requestHit(50, 80, resolve);
+    geometry.requestHit(50, 40, resolve);
+    // The requesting task reads no layout and hit-tests nothing.
+    expect(points).toHaveLength(0);
+    frame(env);
+    expect(answers).toEqual(['b1']);
+    expect(points).toEqual([{ x: 50, y: 40 }]);
+    frame(env);
+    expect(answers).toEqual(['b1']);
+    expect(points).toHaveLength(1);
+  });
+
+  it('V-372: a viewport scroll re-runs the hit test of a scroll listener in the next frame', () => {
+    const { env, geometry, parts, points } = hitSetup();
+    // A node target, so the shared scroll source listens on it.
+    Object.assign(parts.viewport, { nodeType: 1 });
+    geometry.release();
+    geometry.observe(asParts(parts));
+    const answers: (string | null)[] = [];
+    let calls = 0;
+    geometry.onScroll(() => {
+      calls++;
+      geometry.requestHit(50, 40, (id) => void answers.push(id));
+    });
+    // The browser fires the scroll event in the rendering steps of the frame that follows the
+    // scroll, before that frame's animation frame callbacks: the listener runs inside the event.
+    parts.viewport.dispatchEvent(new Event('scroll'));
+    expect(calls).toBe(1);
+    expect(points).toHaveLength(0);
+    frame(env);
+    expect(answers).toEqual(['b1']);
+    expect(points).toEqual([{ x: 50, y: 40 }]);
+  });
+
+  it('V-589: resolvers asking at one point in a frame share one hit test', () => {
+    const { env, geometry, points } = hitSetup();
+    const gutter: (string | null)[] = [];
+    const table: (string | null)[] = [];
+    geometry.requestHit(50, 40, (id) => void gutter.push(id));
+    geometry.requestHit(50, 40, (id) => void table.push(id));
+    frame(env);
+    expect(gutter).toEqual(['b1']);
+    expect(table).toEqual(['b1']);
+    expect(points).toHaveLength(1);
+  });
+
+  it('V-589: a release drops a requested hit', () => {
+    const { env, geometry, points } = hitSetup();
+    const answers: (string | null)[] = [];
+    geometry.requestHit(50, 40, (id) => answers.push(id));
+    geometry.release();
+    frame(env);
+    expect(answers).toEqual([]);
+    expect(points).toHaveLength(0);
   });
 
   it('answers null without a ready instance or once released', () => {

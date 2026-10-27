@@ -28,12 +28,15 @@ describe('link popover (uwg-te-req-surfaces-3)', () => {
       reason: 'item-press',
       sourceEvent: event,
       trigger: null,
+      // The popover closes with item-press and returns focus itself (uwg-te-tab-reasons r13).
+      focus: false,
     });
     const range = { block: 'a', from: 1, to: 4 };
     expect(linkRemoveProposal(range, 'keyboard', event)).toMatchObject({
       target: [{ type: 'link.unset', range }],
       surface: 'keyboard',
       reason: 'item-press',
+      focus: false,
     });
     expect(linkRemoveProposal(undefined, 'api', undefined).target).toEqual([
       { type: 'link.unset' },

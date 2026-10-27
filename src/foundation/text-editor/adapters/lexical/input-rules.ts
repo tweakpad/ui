@@ -192,7 +192,11 @@ export function $applyInlineRule(
   let bit = 0;
   switch (rule.mark) {
     case 'link': {
-      const step = $prepareLinkSet(rt, { type: 'link.set', href: rule.href });
+      // Over the range, so exactly the rule's text is linked: in a link, the rest of that link
+      // keeps its destination, as on every engine (the action without a range would give the
+      // whole link the new one).
+      const range = { block: context.point.block, cell: context.point.cell, from, to: end };
+      const step = $prepareLinkSet(rt, { type: 'link.set', href: rule.href, range });
       if (!step || !step()) return false;
       break;
     }

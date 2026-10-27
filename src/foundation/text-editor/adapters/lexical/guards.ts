@@ -37,12 +37,16 @@
  *   plain caret in it.
  */
 import { isModifiedEnter, MODIFIED_ENTER_CHORDS } from '../shared/reserved-keys.js';
-import { isWholeDocumentSelection, mayBeWholeDocument } from '../shared/selection-state.js';
+import {
+  isWholeDocumentSelection,
+  mayBeWholeDocument,
+  placesClearedSelection,
+} from '../shared/selection-state.js';
 import { $wholeTextSelection } from './document.js';
 import { $repairId } from './ids.js';
 import type { LexicalNodeLike, LexicalPointLike } from './modules.js';
 import type { LexicalRuntime } from './runtime.js';
-import { $readSelection } from './selection.js';
+import { $applySelection, $readSelection } from './selection.js';
 
 /**
  * The chords the engine still prevents or acts on, which the adapter cannot turn off
@@ -184,11 +188,30 @@ export function registerGuards(rt: LexicalRuntime): () => void {
       lexical.KEY_DOWN_COMMAND,
       (event) => {
         rt.lastInput = { kind: 'key', key: event.key, shift: event.shiftKey };
+        // A key that edits places a cleared selection's resting caret first, where it then acts.
+        const resting = rt.cleared;
+        if (resting && placesClearedSelection(event)) {
+          rt.cleared = null;
+          $applySelection(rt, resting);
+        }
         keydown = event;
         queueMicrotask(() => {
           if (keydown === event) keydown = null;
         });
         return false;
+      },
+      CRITICAL,
+    ),
+    // While a selection is cleared, the engine's read of a DOM selection that no press and no key
+    // that edits made, such as the caret a browser puts at the start of a focused root holding no
+    // selection when a key arrives, leaves it cleared, and that caret where it is.
+    editor.registerCommand(
+      lexical.SELECTION_CHANGE_COMMAND,
+      () => {
+        if (!rt.cleared) return false;
+        lexical.$setSelection(null);
+        lexical.$addUpdateTag(lexical.SKIP_DOM_SELECTION_TAG);
+        return true;
       },
       CRITICAL,
     ),

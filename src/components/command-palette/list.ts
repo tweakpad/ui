@@ -1,6 +1,8 @@
 import { html, type PropertyValues } from 'lit';
 import { TpSelect } from '../select/select.js';
 import type { ChoiceModelRecord } from '../../foundation/choice-model.js';
+import { renderHighlighted } from '../../foundation/search/highlight.js';
+import type { SearchRange } from '../../foundation/search/types.js';
 import type { PartState } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { navigationIcons } from '../../icons/navigation.js';
@@ -10,6 +12,8 @@ import { TpIcon } from '../icon/icon.js';
 import { TpKeyHintGroup } from '../key-hint/key-hint-group.js';
 import { TpKeyHint } from '../key-hint/key-hint.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
+import { renderCommandItemContent } from './item.js';
+import type { CommandItem } from './model.js';
 const parts: Record<string, string> = {
   'select-anchor': 'command-palette-input-wrapper',
   'select-input': 'command-palette-input',
@@ -95,6 +99,22 @@ export class TpCommandList extends TpSelect {
   }
   protected override choicePart(name: string): string {
     return parts[name] ?? name;
+  }
+  /**
+   * A projected command item's row with the matched ranges of its text marked in its label, as
+   * the Command palette marks them; any other option as the Select renders it.
+   */
+  protected override optionContent(
+    record: ChoiceModelRecord,
+    ranges: readonly SearchRange[] | undefined,
+  ): unknown {
+    const item = record.option as Partial<CommandItem>;
+    if (!ranges?.length || record.label === record.text || item.text !== record.text)
+      return super.optionContent(record, ranges);
+    return renderCommandItemContent(
+      item as CommandItem,
+      renderHighlighted(record.text, ranges, 'command-palette-match'),
+    );
   }
   protected override choiceState(state: PartState): PartState {
     return { ...state, selected: !!state.highlighted };

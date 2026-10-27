@@ -14,8 +14,8 @@ layout and the run state.
   import '@tweakpad/ui/styles.css';
   import '@tweakpad/ui/register';
   import '@tweakpad/ui/register/widgets';
-  import { zapIcon } from '@tweakpad/ui/icons/zap.js';
-  import { mailIcon } from '@tweakpad/ui/icons/mail.js';
+  import { zapIcon } from '@tweakpad/ui/icons/zap';
+  import { mailIcon } from '@tweakpad/ui/icons/mail';
 
   const flow = document.querySelector('tp-flow');
   flow.schema = {

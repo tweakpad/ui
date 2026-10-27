@@ -3,7 +3,7 @@ import type { TextEditorRequestDetail } from '../../../foundation/text-editor/co
 import type { TextEditorEngineState } from '../../../foundation/text-editor/model.js';
 import { textEditorStrings } from '../../../foundation/text-editor/strings.js';
 import type { TextEditorTool } from '../../../foundation/text-editor/tools.js';
-import { TextEditorTables, type TextEditorTablesHost } from './tables.js';
+import { openerTakesFocus, TextEditorTables, type TextEditorTablesHost } from './tables.js';
 
 /** A 2 by 2 table without spans. */
 const MODEL = {
@@ -51,6 +51,8 @@ function setup(cell: { row: number; column: number } | null = { row: 0, column: 
   const request = vi.fn((proposal: unknown) =>
     Promise.resolve(proposal ? ('applied' as const) : ('unchanged' as const)),
   );
+  const scrollIntoView = vi.fn();
+  const cellElement = vi.fn(() => ({ scrollIntoView }));
   const toolbar = { contains: (node: unknown) => node === inToolbar || node === inMore };
   const moreTrigger = {} as HTMLElement;
   const inToolbar = { isConnected: true, closest: () => null } as unknown as HTMLElement;
@@ -65,7 +67,7 @@ function setup(cell: { row: number; column: number } | null = { row: 0, column: 
       invalidate: () => {},
       onScroll: () => () => {},
     } as never,
-    instance: () => ({ getTable: () => MODEL }) as never,
+    instance: () => ({ getTable: () => MODEL, cellElement }) as never,
     state: () => state,
     strings: () => textEditorStrings,
     layout: () => ({}) as never,
@@ -78,6 +80,7 @@ function setup(cell: { row: number; column: number } | null = { row: 0, column: 
     request,
     announce: vi.fn(),
     focusEditing: vi.fn(),
+    focused: () => true,
     registerContextual: vi.fn(() => () => {}),
     cycleContextual: () => false,
     stickyHeaders: () => false,
@@ -87,7 +90,15 @@ function setup(cell: { row: number; column: number } | null = { row: 0, column: 
     requestUpdate: vi.fn(),
     updateComplete: () => Promise.resolve(),
   };
-  return { tables: new TextEditorTables(host), request, inToolbar, inMore, moreTrigger };
+  return {
+    tables: new TextEditorTables(host),
+    request,
+    cellElement,
+    scrollIntoView,
+    inToolbar,
+    inMore,
+    moreTrigger,
+  };
 }
 
 const tab = (shift = false) =>
@@ -119,6 +130,31 @@ describe('TextEditorTables: Tab between cells', () => {
       surface: 'keyboard',
       reason: 'keyboard',
     });
+  });
+
+  it('scrolls the cell it moved the caret into into view once the move applied, also sideways', async () => {
+    const moved = setup({ row: 0, column: 1 });
+    moved.tables.tableTab(tab(), false);
+    expect(moved.scrollIntoView).not.toHaveBeenCalled();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(moved.cellElement).toHaveBeenCalledWith('t1', { row: 1, column: 0 });
+    expect(moved.scrollIntoView).toHaveBeenCalledWith({
+      block: 'nearest',
+      inline: 'nearest',
+      behavior: 'instant',
+    });
+    const appended = setup({ row: 1, column: 1 });
+    appended.tables.tableTab(tab(), false);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(appended.cellElement).toHaveBeenCalledWith('t1', { row: 2, column: 0 });
+    const refused = setup({ row: 0, column: 1 });
+    refused.request.mockResolvedValueOnce('unchanged' as never);
+    refused.tables.tableTab(tab(), false);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(refused.scrollIntoView).not.toHaveBeenCalled();
   });
 
   it('consumes Shift+Tab in the first cell without effect, and leaves Tab outside a table', () => {
@@ -169,5 +205,16 @@ describe('TextEditorTables: size picker', () => {
       reason: 'item-press',
       focus: true,
     });
+  });
+});
+
+describe('openerTakesFocus', () => {
+  it('returns focus to a rendered opener only, so a hidden selection toolbar control gives way', () => {
+    const opener = (connected: boolean, visible: boolean) =>
+      ({ isConnected: connected, checkVisibility: () => visible }) as unknown as HTMLElement;
+    expect(openerTakesFocus(opener(true, true))).toBe(true);
+    expect(openerTakesFocus(opener(true, false))).toBe(false);
+    expect(openerTakesFocus(opener(false, true))).toBe(false);
+    expect(openerTakesFocus(null)).toBe(false);
   });
 });

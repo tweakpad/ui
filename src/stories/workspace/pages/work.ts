@@ -285,7 +285,7 @@ function renderTable(host: WorkspaceHost): TemplateResult {
                         <tp-separator></tp-separator>
                         <span data-menu-label>Set status</span>
                         <tp-menu-radio-group
-                          aria-label="Set status"
+                          label="Set status"
                           .value=${task.status}
                           @tp-value-change=${(e: TpValueChangeEvent<string>) => {
                             if (

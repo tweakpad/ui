@@ -725,13 +725,17 @@ export function tableViewClass(
       /**
        * A table without widths sizes its columns automatically: the engine's minimum column and
        * table widths go, so that the 48-pixel minimum holds only for committed widths, which the
-       * shared table edit never sets below it (`uwg-te-req-tables-1`).
+       * shared table edit never sets below it (`uwg-te-req-tables-1`). The widths that a reused
+       * view still shows go too (the engine only adds a minimum when a width goes, so an undone
+       * resize or a replaced table kept the old columns).
        */
       #sizeAutomatically(node: TiptapNodeLike): void {
         if (hasColumnWidths(node)) return;
         this.table.style.removeProperty('min-width');
-        for (const col of Array.from(this.colgroup.children))
+        for (const col of Array.from(this.colgroup.children)) {
           (col as HTMLElement).style.removeProperty('min-width');
+          (col as HTMLElement).style.removeProperty('width');
+        }
       }
     };
     byTables.set(tables, View);

@@ -42,6 +42,7 @@ import {
 } from './blocks.js';
 import {
   copyBlock,
+  deleteBlocks,
   insertAfterBlock,
   isReplaceable,
   selectionAfterBlock,
@@ -200,31 +201,33 @@ function endCaret(document: TextEditorPortableDocument, block: Block): TextEdito
   return { block: found?.id ?? block.id ?? '', offset: 0 };
 }
 
-/** The result of inserting a fragment after a block selection. */
-export interface TextEditorFragmentAfterBlocks {
+/** The result of a fragment inserted over a block selection. */
+export interface TextEditorFragmentOverBlocks {
   readonly document: TextEditorPortableDocument;
   readonly selection: TextEditorSelectionInput;
   readonly diagnostics: readonly TextEditorDiagnostic[];
 }
 
 /**
- * `content.insert` at a block selection: the prepared fragment's blocks, with fresh identifiers,
- * follow the last selected block (`insertAfterBlock`), and the selection goes where
- * `selectionAfterBlock` puts it.
+ * `content.insert` over a block selection: the prepared fragment's blocks, with fresh identifiers,
+ * replace the selected blocks, each list item with its nested items, as a text range is replaced
+ * (a paste in block mode, `uwg-te-tab-keymap-host`); the selection goes where
+ * `selectionAfterBlock` puts it after the fragment's last block.
  */
-export function insertFragmentAfterBlocks(
+export function replaceBlocksWithFragment(
   document: TextEditorPortableDocument,
   ids: readonly string[],
   fragment: TextEditorPortableFragment,
   context: TextEditorFragmentContext,
-): TextEditorFragmentAfterBlocks | null {
+): TextEditorFragmentOverBlocks | null {
   const target = ids[ids.length - 1];
   if (target === undefined) return null;
   const prepared = prepareFragment(fragment, context);
   const blocks = freshBlocks(prepared.blocks, context);
   const last = blocks[blocks.length - 1];
   if (!last) return null;
-  const next = insertAfterBlock(document, target, blocks, context);
+  const inserted = insertAfterBlock(document, target, blocks, context);
+  const next = inserted ? deleteBlocks(inserted, ids, context)?.document : null;
   const selection = next ? selectionAfterBlock(next, last.id!) : null;
   return next && selection
     ? { document: next, selection, diagnostics: prepared.diagnostics }

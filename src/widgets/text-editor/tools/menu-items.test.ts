@@ -13,7 +13,7 @@ vi.mock('../focus.js', () => ({
     policy.asked.push(activation) as unknown as boolean,
 }));
 
-const { renderToolMenuItems, renderToolMenuContent } = await import('./menu-items.js');
+const { renderToolMenuItems, renderToolMenuContent, submenuIcon } = await import('./menu-items.js');
 
 const SHORTCUT: KeyShortcut = { aria: 'Control+B', display: 'Ctrl+B', keys: ['Control', 'B'] };
 const markupOf = (template: unknown) => templateMarkup(template).replaceAll('"', '');
@@ -74,6 +74,35 @@ const proposal = (value: unknown) => ({
 });
 
 describe('text editor tool menu entries', () => {
+  it('V-588: keeps each entry callback across renders of the same tools, so a render updates no entry', () => {
+    const { handlers, activations } = recordingHandlers();
+    const items = () => [
+      toolItem(),
+      toolItem({ id: 'undo', kind: 'button', control: 'button' }),
+      toolItem({
+        id: 'heading',
+        kind: 'radio-menu',
+        control: 'menu',
+        value: 'h1',
+        items: [toolItem({ id: 'h1' }), toolItem({ id: 'h2' })],
+      }),
+    ];
+    const callbacks = (template: unknown) =>
+      ['.onCheckedChange', '.onClick', '.onValueChange'].flatMap((name) => bound(template, name));
+    const first = callbacks(renderToolMenuItems(items(), handlers));
+    expect(first).toHaveLength(3);
+    expect(callbacks(renderToolMenuItems(items(), handlers))).toEqual(first);
+    for (const [index, value] of callbacks(renderToolMenuItems(items(), handlers)).entries())
+      expect(value).toBe(first[index]);
+    // A kept callback still activates its own tool.
+    (first[0] as Callback).call({}, proposal(true));
+    (first[2] as Callback).call({}, proposal('h2'));
+    expect(activations.map(({ tool, value }) => [tool, value])).toEqual([
+      ['bold', undefined],
+      ['heading', 'h2'],
+    ]);
+  });
+
   it('renders a button tool as a menu item with its icon and menu shortcut hint (ucl20-menu-q3, uwg-te-req-a11y-2)', () => {
     const markup = markupOf(
       renderToolMenuItems(
@@ -89,7 +118,7 @@ describe('text editor tool menu entries', () => {
         recordingHandlers().handlers,
       ),
     );
-    expect(markup).toMatch(/^<tp-menu-item value=undo data-tool=undo \?inset=false/);
+    expect(markup).toMatch(/^<tp-menu-item value=undo data-tool=undo variant=\S* \?inset=false/);
     expect(markup).toContain(
       '<tp-icon .icon=[object Object]></tp-icon>Undo<tp-key-hint-group data-menu-shortcut',
     );
@@ -163,7 +192,7 @@ describe('text editor tool menu entries', () => {
     expect(markup).toMatch(
       /^<tp-menu \.portal=false \.modal=false label=Align><tp-button slot=trigger variant=ghost/,
     );
-    expect(markup).toContain('<tp-menu-radio-group aria-label=Align .value=align-start');
+    expect(markup).toContain('<tp-menu-radio-group .label=Align .value=align-start');
     expect(markup.match(/<tp-menu-radio-item value=[\w-]+/g)).toHaveLength(2);
     const group = {};
     const event = proposal('align-center');
@@ -187,12 +216,49 @@ describe('text editor tool menu entries', () => {
     expect(content.match(/<tp-menu-checkbox-item value=[\w-]+/g)).toHaveLength(2);
   });
 
+  it('separates the further item groups of a menu with a separator (uwg-te-tab-tools-r11)', () => {
+    const items = [
+      toolItem({ id: 'superscript' }),
+      toolItem({ id: 'subscript' }),
+      toolItem({ id: 'clear-formatting', kind: 'button', control: 'button', separated: true }),
+    ];
+    const more = toolItem({ id: 'more', kind: 'menu', control: 'menu', label: 'More', items });
+    const content = markupOf(renderToolMenuContent(more, recordingHandlers().handlers));
+    expect(content.match(/<tp-separator>|data-tool=[\w-]+/g)).toEqual([
+      'data-tool=superscript',
+      'data-tool=subscript',
+      '<tp-separator>',
+      'data-tool=clear-formatting',
+    ]);
+  });
+
   it('insets entries without an icon (ucl-fl2-menu-props-inset)', () => {
     const template = renderToolMenuItems(
       [toolItem({ id: 'plain', kind: 'button', control: 'button', icon: undefined })],
       recordingHandlers().handlers,
     );
     expect(markupOf(template)).toContain('?inset=true');
+  });
+
+  it('shows a destructive tool as a destructive item', () => {
+    const items = [
+      toolItem({ id: 'delete-block', kind: 'button', control: 'button', tone: 'destructive' }),
+      toolItem({ id: 'duplicate-block', kind: 'button', control: 'button', tone: 'default' }),
+    ];
+    const values = bound(renderToolMenuItems(items, recordingHandlers().handlers), 'variant');
+    expect(values.slice(0, 2)).toEqual(['destructive', expect.anything()]);
+    expect(values[1]).not.toBe('destructive');
+  });
+
+  it("gives a radio menu's trigger without an icon the checked item's icon", () => {
+    const items = [
+      toolItem({ id: 'paragraph', kind: 'button', icon: boldIcon }),
+      toolItem({ id: 'heading-1', kind: 'button', icon: italicIcon }),
+    ];
+    const turnInto = toolItem({ id: 'turn-into', kind: 'radio-menu', icon: undefined, items });
+    expect(submenuIcon({ ...turnInto, value: 'heading-1' })).toBe(italicIcon);
+    expect(submenuIcon({ ...turnInto, value: null })).toBeUndefined();
+    expect(submenuIcon({ ...turnInto, icon: boldIcon, value: 'heading-1' })).toBe(boldIcon);
   });
 
   it('binds no final focus and reports no open change on nested menus (uwg-te-req-surfaces-6, uwg-te-req-a11y-6)', () => {

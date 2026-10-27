@@ -51,6 +51,17 @@ export interface DocumentListSelectors {
   readonly list: string;
   /** A task list. */
   readonly taskList: string;
+  /**
+   * A marked item whose own direction is opposite to its list's, so that its marker hangs at the
+   * other side of the list; omitted where items take their list's direction.
+   */
+  readonly oppositeItem?: string | undefined;
+  /**
+   * An element in its list's direction that stands where an opposite item stands, such as an item
+   * that only wraps the nested list of an opposite item: it takes that item's place, written in
+   * its own direction; omitted where no such element exists.
+   */
+  readonly oppositeItemStandIn?: string | undefined;
 }
 
 export interface DocumentListItemSelectors {
@@ -174,11 +185,36 @@ export function documentHeadingRules(
   ];
 }
 
-/** The `list` role on list elements (`dcp-roles-table-r3`): an inline-start inset, none for a task list. */
+/** The inline-start inset of a list, where the markers of its items hang. */
+const listInset = 'var(--tp-space-6)';
+
+/**
+ * The `list` role on list elements (`dcp-roles-table-r3`): an inline-start inset, none for a task
+ * list; an item in the opposite direction takes the inset at its own inline start, where its
+ * marker hangs, and gives back the list's; an element that stands in for such an item takes the
+ * same place from the other side.
+ */
 export function documentListRules(selectors: DocumentListSelectors): readonly PresentationRule[] {
+  const { oppositeItem, oppositeItemStandIn } = selectors;
   return [
-    at(selectors.list, { 'padding-inline-start': 'var(--tp-space-6)' }),
+    at(selectors.list, { 'padding-inline-start': listInset }),
     at(selectors.taskList, { 'list-style': 'none', 'padding-inline-start': '0' }),
+    ...(oppositeItem === undefined
+      ? []
+      : [
+          at(oppositeItem, {
+            'margin-inline-start': listInset,
+            'margin-inline-end': `calc(-1 * ${listInset})`,
+          }),
+        ]),
+    ...(oppositeItemStandIn === undefined
+      ? []
+      : [
+          at(oppositeItemStandIn, {
+            'margin-inline-start': `calc(-1 * ${listInset})`,
+            'margin-inline-end': listInset,
+          }),
+        ]),
   ];
 }
 

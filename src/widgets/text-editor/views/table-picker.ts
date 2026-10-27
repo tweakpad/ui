@@ -10,12 +10,14 @@ import { html, nothing, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import type { TpInput } from '../../../components/input/input.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
+import { focusManaged } from '../../../foundation/focus.js';
 import { NumberFieldController } from '../../../foundation/number-field/controller.js';
 import type { AnchorGeometry } from '../../../foundation/positioning.js';
 import type { TpSurfaceOpenChangeEvent } from '../../../foundation/surface-state.js';
 import { fillTemplate } from '../../../foundation/template.js';
 import type { TextEditorStrings } from '../../../foundation/text-editor/strings.js';
 import type { TextEditorRequestSurface } from '../../../foundation/text-editor/tools.js';
+import type { ChangeReason } from '../../../foundation/types.js';
 
 /** The pointer grid's side. */
 export const TABLE_PICKER_GRID = 8;
@@ -46,6 +48,8 @@ export interface TablePickerOpening {
   readonly surface: TextEditorRequestSurface;
   /** The element that opened it, which takes focus back when it closes without an insertion. */
   readonly opener: HTMLElement | null;
+  /** The reason of the opening (`uwg-te-tab-reasons` r12); `imperative-action` without one. */
+  readonly reason?: ChangeReason | undefined;
 }
 
 export interface TablePickerHost {
@@ -63,8 +67,14 @@ export interface TablePickerHost {
   restoreFocus(opener: HTMLElement | null): HTMLElement | boolean;
   requestUpdate(): void;
   /** The widget's one transient surface (`uwg-te-req-surfaces-6`). */
-  transientOpened?(owner: object, close: () => void): void;
+  transientOpened?(
+    owner: object,
+    close: (reason?: ChangeReason) => void,
+    reason?: ChangeReason,
+  ): void;
   transientClosed?(owner: object): void;
+  /** A change of the open lane with its reason (`uwg-te-tab-reasons` r12, r13). */
+  lane?(open: boolean, reason: ChangeReason): void;
 }
 
 interface FieldBinding {
@@ -78,11 +88,21 @@ interface FieldBinding {
 export class TextEditorTablePicker {
   readonly #host: TablePickerHost;
   #opening: TablePickerOpening | null = null;
+  /**
+   * The opening the body renders: kept after closing until the popover finished closing, so that
+   * focus inside it is still there for the popover to return.
+   */
+  #shown: TablePickerOpening | null = null;
   #rows = TABLE_PICKER_DEFAULT;
   #columns = TABLE_PICKER_DEFAULT;
   #inserted = false;
   readonly #fields = new Map<TablePickerAxis, FieldBinding>();
   #rowsInput: TpInput | null = null;
+  /**
+   * The Rows field takes focus once it has rendered: it renders with the opening, after the
+   * popover's own initial focus ran.
+   */
+  #focusPending = false;
 
   constructor(host: TablePickerHost) {
     this.#host = host;
@@ -100,19 +120,26 @@ export class TextEditorTablePicker {
   /** Opens the picker at an anchor, both fields at 3. Returns whether it opened. */
   show(opening: TablePickerOpening): boolean {
     if (this.#host.disabled()) return false;
-    this.#host.transientOpened?.(this, () => this.close());
+    const reason = opening.reason ?? 'imperative-action';
+    this.#host.transientOpened?.(this, (closing) => this.close(closing), reason);
+    const opened = !this.#opening;
     this.#opening = opening;
+    this.#shown = opening;
     this.#inserted = false;
+    this.#focusPending = true;
     this.#setSize(TABLE_PICKER_DEFAULT, TABLE_PICKER_DEFAULT);
+    if (opened) this.#host.lane?.(true, reason);
     this.#host.requestUpdate();
     return true;
   }
 
-  /** Closes the picker. */
-  close(): void {
+  /** Closes the picker; the lane records `reason`. */
+  close(reason: ChangeReason = 'programmatic'): void {
     if (!this.#opening) return;
     this.#opening = null;
+    this.#focusPending = false;
     this.#host.transientClosed?.(this);
+    this.#host.lane?.(false, reason);
     this.#host.requestUpdate();
   }
 
@@ -133,7 +160,9 @@ export class TextEditorTablePicker {
     if (typeof columns === 'number') this.#columns = tablePickerValue('columns', columns);
     this.#inserted = true;
     this.#opening = null;
+    this.#focusPending = false;
     this.#host.transientClosed?.(this);
+    this.#host.lane?.(false, 'item-press');
     this.#host.insert(
       { rows: this.#rows, columns: this.#columns },
       opening.surface,
@@ -152,6 +181,7 @@ export class TextEditorTablePicker {
 
   /** Binds the NumberField owners of the rendered fields; call after every render. */
   updated(root: ParentNode): void {
+    let created: TpInput | null = null;
     for (const axis of ['rows', 'columns'] as const) {
       const fieldRoot = root.querySelector<HTMLElement>(`[data-table-picker-field="${axis}"]`);
       const input = fieldRoot?.querySelector<TpInput>('tp-input') ?? null;
@@ -208,6 +238,17 @@ export class TextEditorTablePicker {
           controller.dispose();
         },
       });
+      if (axis === 'rows') created = input;
+    }
+    const rows = this.#focusPending && this.#opening ? this.#rowsInput?.inputElement : null;
+    if (rows) {
+      this.#focusPending = false;
+      focusManaged(rows);
+    }
+    // A new Rows field shows the size after its owner's update; then typing replaces it.
+    if (created) {
+      const field = created;
+      void field.updateComplete.then(() => this.#selectRows(field));
     }
   }
 
@@ -216,15 +257,37 @@ export class TextEditorTablePicker {
     for (const binding of this.#fields.values()) binding.release();
     this.#fields.clear();
     this.#opening = null;
+    this.#shown = null;
   }
 
   readonly #openChange = (event: TpSurfaceOpenChangeEvent): void => {
     if (event.target !== event.currentTarget) return;
     // The state-driven profile: the picker follows the dismissal and keeps its own lane.
-    if (!event.detail.value) this.close();
+    if (!event.detail.value) this.close(event.detail.reason);
   };
 
-  readonly #initialFocus = (): HTMLElement | boolean => this.#rowsInput ?? true;
+  readonly #openComplete = (event: CustomEvent<{ open: boolean }>): void => {
+    if (event.target !== event.currentTarget || event.detail.open || this.#opening) return;
+    this.#shown = null;
+    this.#host.requestUpdate();
+  };
+
+  /** The Rows field when it has rendered; otherwise `updated` focuses it once it has. */
+  readonly #initialFocus = (): HTMLElement | boolean => {
+    const rows = this.#rowsInput?.inputElement ?? null;
+    if (rows) {
+      this.#focusPending = false;
+      // Typing replaces the size; a field still without it is selected once it shows it.
+      if (rows.value !== '') rows.select();
+    }
+    return rows ?? false;
+  };
+
+  /** Selects the size in the focused Rows field, which shows it once it has rendered. */
+  #selectRows(field: TpInput): void {
+    const input = field.inputElement;
+    if (this.#opening && input && input.value !== '' && input.matches(':focus')) input.select();
+  }
 
   readonly #finalFocus = (): HTMLElement | boolean => {
     if (this.#inserted) {
@@ -245,6 +308,7 @@ export class TextEditorTablePicker {
     const strings = this.#host.strings();
     const opening = this.#opening;
     if (opening) this.#lastOpener = opening.opener;
+    const shown = opening ?? this.#shown;
     const rows = this.#rows;
     const columns = this.#columns;
     const cells: TemplateResult[] = [];
@@ -263,16 +327,19 @@ export class TextEditorTablePicker {
     return html`<tp-popover
       part="text-editor-table-picker"
       class="table-picker"
+      side="block-end"
+      align="start"
       .portal=${false}
       .modal=${false}
       .open=${opening !== null}
-      .anchor=${opening?.anchor}
+      .anchor=${shown?.anchor}
       label=${strings.table}
       .initialFocus=${this.#initialFocus}
       .finalFocus=${this.#finalFocus}
       @tp-open-change=${this.#openChange}
+      @tp-open-change-complete=${this.#openComplete}
       >${
-        opening
+        shown
           ? html`<div class="table-picker-body">
               <div
                 class="table-picker-grid"

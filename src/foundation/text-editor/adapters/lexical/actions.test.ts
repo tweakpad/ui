@@ -2,9 +2,11 @@
  * Actions on Lexical (Widgets `uwg-te-req-engine-5`, `uwg-te-tab-actions`, `uwg-te-tab-engine` r4):
  * one discrete update tagged `tp-action` per list, all or none.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type * as Portable from '../../content/portable.js';
 import { deepFreeze } from '../../../freeze.js';
 import type { TextEditorAction } from '../../actions.js';
+import { canonicalize } from '../../content/portable.js';
 import type { TextEditorExecuteOptions } from '../../engine.js';
 import { TEXT_EDITOR_COLORS } from '../../palette.js';
 import { corpusNodes } from '../../content/corpus.test.js';
@@ -195,6 +197,49 @@ describe('uwg-te-tab-actions r1: marks and links', () => {
     expect(html()).toBe('<p data-id="p1">calm sea sky</p>');
     select('p1', 2);
     expect(instance.can({ type: 'link.unset' })).toBe(false);
+  });
+});
+
+// Counts canonicalizations; every module behaves as with the original.
+vi.mock('../../content/portable.js', async (importOriginal) => {
+  const original = await importOriginal<typeof Portable>();
+  return { ...original, canonicalize: vi.fn(original.canonicalize) };
+});
+
+describe('uwg-te-req-perf-1: dry runs of block tools', () => {
+  it('V-588: can answers block-type and alignment from the shared plan, building no document', () => {
+    const { instance, select, run } = setup(
+      '<p data-id="p1">one</p><pre data-id="c1"><code>x</code></pre>',
+    );
+    expect(select('p1', 1)).toBe(true);
+    // The committed state's portable document, mapped once per state.
+    instance.getBlocks();
+    vi.mocked(canonicalize).mockClear();
+    const accepted: TextEditorAction[] = [
+      { type: 'block.set-type', kind: 'heading', attrs: { level: 2 } },
+      { type: 'block.set-type', kind: 'quote' },
+      { type: 'block.set-type', kind: 'list-task' },
+      { type: 'block.align', align: 'center' },
+    ];
+    for (const action of accepted) expect(instance.can(action), JSON.stringify(action)).toBe(true);
+    expect(instance.can({ type: 'block.set-type', kind: 'quote', ids: ['missing'] })).toBe(false);
+    expect(instance.can({ type: 'block.align', align: 'end', ids: ['c1'] })).toBe(false);
+    expect(canonicalize).not.toHaveBeenCalled();
+    // `execute` still builds the edited document.
+    expect(run({ type: 'block.set-type', kind: 'quote', ids: ['p1'] })).toBe(true);
+    expect(canonicalize).toHaveBeenCalled();
+    expect(instance.getBlocks().get('p1')?.kind).toBe('quote');
+  });
+
+  it('V-587: a selection change keeps the mapped document, so the dry runs after a press map none', () => {
+    const { instance, select } = setup('<p data-id="p1">one</p><p data-id="p2">two</p>');
+    expect(select('p1', 1)).toBe(true);
+    instance.getBlocks();
+    vi.mocked(canonicalize).mockClear();
+    expect(select('p2', 2)).toBe(true);
+    expect(instance.can({ type: 'block.set-type', kind: 'quote' })).toBe(true);
+    expect(instance.can({ type: 'block.align', align: 'center' })).toBe(true);
+    expect(canonicalize).not.toHaveBeenCalled();
   });
 });
 
@@ -484,6 +529,29 @@ describe('uwg-te-tab-actions r4: text and inline nodes', () => {
       false,
     );
   });
+
+  it('V-492: inline.insert takes a space that already follows as its space, the caret after it', () => {
+    const { run, select, html, instance } = setup('<p data-id="p1">hi @an there</p>', {
+      nodes: corpusNodes,
+    });
+    select('p1', 6);
+    expect(
+      run({
+        type: 'inline.insert',
+        kind: 'mention',
+        attrs: { person: 'ana', label: 'Ana' },
+        range: { block: 'p1', from: 3, to: 6 },
+      }),
+    ).toBe(true);
+    expect(html()).toBe(
+      '<p data-id="p1">hi <span data-type="mention" data-person="ana" data-label="Ana">@Ana</span> there</p>',
+    );
+    expect(instance.getState().selection).toMatchObject({
+      kind: 'text',
+      anchor: { block: 'p1', offset: 5 },
+      empty: true,
+    });
+  });
 });
 
 describe('uwg-te-tab-actions r5: content', () => {
@@ -556,6 +624,63 @@ describe('uwg-te-tab-actions r5: content', () => {
     );
   });
 
+  it('V-834: content.insert over a cell range clears its cells and fills the first, or fills the range from a pasted table', () => {
+    const doc =
+      '<table data-id="t1"><tbody><tr><td><p>a</p></td><td><p>b</p></td></tr><tr><td><p>c</p></td><td><p>d</p></td></tr></tbody></table>';
+    const { run, html, instance } = setup(doc);
+    const at = {
+      kind: 'cells' as const,
+      table: 't1',
+      range: { anchor: { row: 0, column: 0 }, head: { row: 1, column: 1 } },
+    };
+    run({ type: 'selection.set', selection: at });
+    expect(
+      run({
+        type: 'content.insert',
+        at,
+        content: {
+          kind: 'range',
+          blocks: [{ type: 'paragraph', content: [{ type: 'text', text: 'x' }] }],
+        },
+      }),
+    ).toBe(true);
+    expect(html()).toBe(
+      '<table data-id="t1"><tbody><tr><td><p>x</p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></tbody></table>',
+    );
+    expect(instance.getState().selection).toMatchObject({
+      kind: 'text',
+      anchor: { block: 't1', cell: { row: 0, column: 0, paragraph: 0 }, offset: 1 },
+    });
+    run({ type: 'history.undo' });
+    expect(html()).toBe(doc);
+    run({ type: 'selection.set', selection: at });
+    run({
+      type: 'content.insert',
+      at,
+      content: {
+        kind: 'blocks',
+        blocks: [
+          {
+            type: 'table',
+            headerRow: false,
+            headerColumn: false,
+            rows: [
+              {
+                cells: [
+                  { paragraphs: [{ content: [{ type: 'text', text: 'q1' }] }] },
+                  { background: 'blue', paragraphs: [{ content: [{ type: 'text', text: 'q2' }] }] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(html()).toBe(
+      '<table data-id="t1"><tbody><tr><td><p>q1</p></td><td data-background="blue"><p>q2</p></td></tr><tr><td><p>c</p></td><td><p>d</p></td></tr></tbody></table>',
+    );
+  });
+
   it('a fragment holding kinds the mount cannot represent is converted first, reported once applied', () => {
     const { run, html, recording, instance } = setup('<p data-id="p1">calm</p>', {
       modules: reducedLexicalModules,
@@ -587,7 +712,7 @@ describe('uwg-te-tab-actions r5: content', () => {
     ]);
   });
 
-  it('a fragment at a block selection follows its last block, the caret at the end of the inserted text', () => {
+  it('a fragment over a block selection replaces the blocks, the caret at the end of the inserted text', () => {
     const { run, html, instance } = setup('<p data-id="p1">a</p><p data-id="p2">b</p>');
     expect(
       run({
@@ -599,9 +724,7 @@ describe('uwg-te-tab-actions r5: content', () => {
         },
       }),
     ).toBe(true);
-    expect(html().replace(/data-id="gen\d+"/g, 'ID')).toBe(
-      '<p data-id="p1">a</p>\n<p ID>xy</p>\n<p data-id="p2">b</p>',
-    );
+    expect(html().replace(/data-id="gen\d+"/g, 'ID')).toBe('<p ID>xy</p>\n<p data-id="p2">b</p>');
     const selection = instance.getState().selection;
     expect(selection).toMatchObject({ kind: 'text', empty: true, head: { offset: 2 } });
   });
@@ -775,6 +898,35 @@ describe('uwg-te-req-engine-5: all or none', () => {
     expect(select('p1', 1)).toBe(true);
     expect(instance.can({ type: 'mark.toggle', mark: 'bold' })).toBe(false);
     expect(run({ type: 'text.insert', text: 'x' })).toBe(false);
+  });
+
+  it('uwg-te-req-a11y-1: read-only selection.set places a one-character range, also across a block edge', () => {
+    const { run, instance, html } = setup('<p data-id="p1">calm</p><p data-id="p2">sea</p>', {
+      editable: false,
+    });
+    const ranges = [
+      [
+        { block: 'p1', offset: 0 },
+        { block: 'p1', offset: 1 },
+      ],
+      [
+        { block: 'p1', offset: 3 },
+        { block: 'p1', offset: 2 },
+      ],
+      [
+        { block: 'p1', offset: 4 },
+        { block: 'p2', offset: 0 },
+      ],
+    ] as const;
+    for (const [anchor, head] of ranges) {
+      const set: TextEditorAction = {
+        type: 'selection.set',
+        selection: { kind: 'text', anchor, head },
+      };
+      expect(run(set, { reason: 'hotkey', focus: false })).toBe(true);
+      expect(instance.getState().selection).toEqual({ kind: 'text', anchor, head, empty: false });
+    }
+    expect(html()).toBe('<p data-id="p1">calm</p>\n<p data-id="p2">sea</p>');
   });
 });
 

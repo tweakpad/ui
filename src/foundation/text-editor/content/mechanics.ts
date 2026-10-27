@@ -31,13 +31,24 @@ ${root} .tp-te-list .tp-te-list {
 `;
 }
 
+/**
+ * The root's own mechanics, all inherited properties: text keeps its spaces and wraps, without
+ * ligatures. An engine relies on them to edit correctly, so the widget also writes them through
+ * the CSSOM on the container of the editing root while generated styles are suppressed.
+ */
+export const TEXT_MECHANICS_INHERITED: Readonly<Record<string, string>> = Object.freeze({
+  'white-space': 'pre-wrap',
+  'overflow-wrap': 'break-word',
+  'font-variant-ligatures': 'none',
+});
+
 /** The mechanics rules scoped to `root`, one selector without a top-level comma. */
 export function textMechanicsCss(root: string): string {
+  const inherited = Object.entries(TEXT_MECHANICS_INHERITED)
+    .map(([property, value]) => `  ${property}: ${value};\n`)
+    .join('');
   return `${root} {
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  font-variant-ligatures: none;
-}
+${inherited}}
 ${root} .tp-te-code-block {
   white-space: pre-wrap;
   tab-size: 2;

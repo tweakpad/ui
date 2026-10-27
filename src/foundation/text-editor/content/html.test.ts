@@ -5,7 +5,7 @@ import type {
   TextEditorNodeDefinition,
 } from '../nodes.js';
 import { TEXT_EDITOR_COLORS } from '../palette.js';
-import { parseHtmlDocument } from './dom.js';
+import { parseHtmlDocument, PARSED_STYLE_ATTRIBUTE, renameStyleAttributes } from './dom.js';
 import { htmlSource } from './html-source.test.js';
 import {
   importHtml,
@@ -727,5 +727,43 @@ describe('mdf-urls: an image the policy rejects', () => {
         '<p data-id="a">see <img data-id="x" src="javascript:x" alt="this"> here</p>loose <img data-id="y" src="ftp://f.example/i.png" alt="text">',
       ),
     ).toEqual([p('a', [text('see this here')]), p('n1', [text('loose text')])]);
+  });
+});
+
+describe('style attributes under a strict content-security policy (node-003102)', () => {
+  it('renames only the style attributes of tags before parsing, so the inert parse applies no inline style', () => {
+    const renamed = (html: string) => renameStyleAttributes(html);
+    expect(renamed('<p style="text-align: center">style="x" here</p>')).toBe(
+      `<p ${PARSED_STYLE_ATTRIBUTE}="text-align: center">style="x" here</p>`,
+    );
+    // Case, unquoted values, spacing around `=`, and other attributes kept as written.
+    expect(renamed('<TD class=a STYLE = \'width:4px\' title="b>style=c">x</TD>')).toBe(
+      `<TD class=a ${PARSED_STYLE_ATTRIBUTE} = 'width:4px' title="b>style=c">x</TD>`,
+    );
+    expect(renamed('<col style=width:120px><br/>')).toBe(
+      `<col ${PARSED_STYLE_ATTRIBUTE}=width:120px><br/>`,
+    );
+    // Comments, end tags, raw text and a lone `<` are copied unchanged.
+    for (const html of [
+      '<!-- <p style="x"> -->',
+      '</p style="x">',
+      '<script>if (a <b style="x") {}</script>',
+      '<style>p { color: red }</style>',
+      'a < b style=c',
+      '<p>no attributes</p>',
+    ])
+      expect(renamed(html)).toBe(html);
+    expect(renamed('<textarea><p style="x"></textarea><p style="y">')).toBe(
+      `<textarea><p style="x"></textarea><p ${PARSED_STYLE_ATTRIBUTE}="y">`,
+    );
+  });
+
+  it('reads the declarations of a renamed style as those of the style attribute', () => {
+    const source = htmlSource(
+      `<p ${PARSED_STYLE_ATTRIBUTE}="text-align: center; color: red">x</p>`,
+    );
+    expect(importHtml(source, { createId: sequence() }).document).toEqual({
+      blocks: [{ ...p('n1', [text('x')]), align: 'center' }],
+    });
   });
 });

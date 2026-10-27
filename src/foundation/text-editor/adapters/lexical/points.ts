@@ -179,11 +179,31 @@ export interface LexicalTablePlacement {
   at(row: number, column: number): LexicalTableCellLike | null;
 }
 
-/** The placement of the cells of a table node, as the portable grid places them. */
+/** The placements of the tables of committed states by table key; committed states never change. */
+const committedPlacements = new WeakMap<object, Map<string, LexicalTablePlacement>>();
+
+/**
+ * The placement of the cells of a table node, as the portable grid places them; in a read of the
+ * committed state it is placed once per state and table, so the cell lookups of a frame (a column
+ * band per column, `uwg-te-req-perf-1`) share it.
+ */
 export function $tablePlacement(
   rt: LexicalRuntime,
   table: LexicalElementLike,
 ): LexicalTablePlacement {
+  const state = rt.reading ? rt.engine.getEditorState() : null;
+  let placements = state ? committedPlacements.get(state) : undefined;
+  if (state && !placements) committedPlacements.set(state, (placements = new Map()));
+  const key = table.getKey();
+  let placement = placements?.get(key);
+  if (!placement) {
+    placement = placeTable(rt, table);
+    placements?.set(key, placement);
+  }
+  return placement;
+}
+
+function placeTable(rt: LexicalRuntime, table: LexicalElementLike): LexicalTablePlacement {
   const nodes: LexicalTableCellLike[][] = table
     .getChildren()
     .filter((row) => rt.isTableRow(row))

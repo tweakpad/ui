@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { adoptStyleText } from './generated-style.js';
+import { ContentSecurityService } from './content-security.js';
+import { adoptStyleText, SuppressionFallbackStyle } from './generated-style.js';
 
 /** A constructed sheet that records the text it was given. */
 class FakeSheet {
@@ -119,5 +120,73 @@ describe('adoptStyleText', () => {
     second();
     expect(children).toHaveLength(0);
     expect(adopted()).toHaveLength(0);
+  });
+});
+
+/** An element whose inline style records its declarations, under `parent` in `document`. */
+function fakeElement(document: Document, parent: unknown = null) {
+  const declarations = new Map<string, string>();
+  const style = {
+    getPropertyValue: (property: string) => declarations.get(property) ?? '',
+    setProperty: (property: string, value: string) => void declarations.set(property, value),
+    removeProperty: (property: string) => {
+      const value = declarations.get(property) ?? '';
+      declarations.delete(property);
+      return value;
+    },
+  };
+  const element = { nodeType: 1, ownerDocument: document, parentNode: parent, style };
+  return { element: element as unknown as HTMLElement, declarations };
+}
+
+describe('SuppressionFallbackStyle', () => {
+  const MECHANICS = { 'white-space': 'pre-wrap', 'overflow-wrap': 'break-word' };
+
+  it('writes its declarations only while the owner’s policy suppresses generated styles', () => {
+    const { document } = fakeDocument();
+    const scope = fakeElement(document);
+    const host = fakeElement(document, scope.element);
+    const content = fakeElement(document);
+    const fallback = new SuppressionFallbackStyle(host.element, content.element, MECHANICS);
+    fallback.connect();
+    expect(fallback.written).toBe(false);
+    expect([...content.declarations]).toEqual([]);
+
+    const policy = new ContentSecurityService(scope.element, { disableStyleElements: true });
+    expect(fallback.written).toBe(true);
+    expect(Object.fromEntries(content.declarations)).toEqual(MECHANICS);
+
+    policy.update({ nonce: 'n' });
+    expect([...content.declarations]).toEqual([]);
+    policy.update({ disableStyleElements: true });
+    expect(Object.fromEntries(content.declarations)).toEqual(MECHANICS);
+    policy.dispose();
+    expect([...content.declarations]).toEqual([]);
+    fallback.dispose();
+  });
+
+  it('keeps what it wrote while disconnected, follows the policy again on connect and removes only its own values on dispose', () => {
+    const { document } = fakeDocument();
+    const host = fakeElement(document);
+    const content = fakeElement(document);
+    const policy = new ContentSecurityService(document, { disableStyleElements: true });
+    const fallback = new SuppressionFallbackStyle(host.element, content.element, MECHANICS);
+    fallback.connect();
+    expect(Object.fromEntries(content.declarations)).toEqual(MECHANICS);
+
+    fallback.disconnect();
+    policy.update({});
+    expect(Object.fromEntries(content.declarations)).toEqual(MECHANICS);
+    fallback.connect();
+    expect([...content.declarations]).toEqual([]);
+
+    policy.update({ disableStyleElements: true });
+    content.declarations.set('white-space', 'normal');
+    fallback.dispose();
+    expect(Object.fromEntries(content.declarations)).toEqual({ 'white-space': 'normal' });
+    policy.update({ disableStyleElements: true });
+    fallback.connect();
+    expect(Object.fromEntries(content.declarations)).toEqual({ 'white-space': 'normal' });
+    policy.dispose();
   });
 });

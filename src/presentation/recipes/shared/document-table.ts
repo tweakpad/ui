@@ -2,6 +2,9 @@ import type { PresentationRule } from '../../resolver.js';
 import { at } from './document-content.js';
 import { selectionFill } from './selection.js';
 
+/** The inline and block padding of a document table cell: Table's cell padding. */
+export const documentCellPadding = 'var(--tp-space-2)';
+
 /** The consumer's selectors of a native table that a content scope renders (`uwg-te-table-req-document`). */
 export interface DocumentTableSelectors {
   /** The inline overflow container around the table. */
@@ -32,7 +35,7 @@ export function documentTableRules(selectors: DocumentTableSelectors): readonly 
     at(selectors.table, { 'inline-size': '100%', 'border-collapse': 'collapse' }),
     at(selectors.sizedTable, { 'table-layout': 'fixed', 'inline-size': 'fit-content' }),
     at(selectors.cell, {
-      padding: 'var(--tp-space-2)',
+      padding: documentCellPadding,
       'box-sizing': 'border-box',
       'text-align': 'start',
       'vertical-align': 'top',

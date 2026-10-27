@@ -50,7 +50,7 @@ import { tableModelOf } from '../shared/tables.js';
 import { isActionAbort, LexicalActions } from './actions.js';
 import { LEXICAL_BASE_CSS } from './css.js';
 import { trackPresses } from './cursor.js';
-import { $applyDocument, $portableDocument, $textEdgeIn } from './document.js';
+import { $applyDocument, $loadDocument, $portableDocument, $textEdgeIn } from './document.js';
 import { lexicalExtension, type LexicalMountInput } from './extension.js';
 import { LexicalGeometry } from './geometry.js';
 import type { TextEditorLexicalOptions } from './index.js';
@@ -125,15 +125,11 @@ export function openLexicalInstance(
   let release: (() => void) | null = null;
   let editor: LexicalBuiltEditorLike | null = null;
   try {
-    if (root && container) {
-      container.append(root);
-      release = context.adoptStyles(resolveCss(options.css, LEXICAL_BASE_CSS));
-    }
+    if (root && container) release = context.adoptStyles(resolveCss(options.css, LEXICAL_BASE_CSS));
     const input: LexicalMountInput = {
       rt,
       context,
       announcer,
-      initialState: JSON.stringify(portableToLexical(initial.document)),
       onError: (error) => {
         if (!isActionAbort(error)) context.error(error);
       },
@@ -146,9 +142,24 @@ export function openLexicalInstance(
     );
     const problem = lexicalVersionProblem(editor.constructor.version);
     if (problem) context.diagnostic('text-editor-engine-version', problem);
+    // The content loads in one update that builds its nodes from the native JSON objects, before
+    // the root is set: the transforms visit each new node once and no DOM selection is read.
+    // With a root, the root's commit reconciles it, into the root while it is still detached, so
+    // the load reads no style or layout of the page and writes no DOM selection.
+    const { lexical } = rt;
+    editor.update(
+      () => {
+        lexical.$addUpdateTag(lexical.SKIP_DOM_SELECTION_TAG);
+        $loadDocument(rt, initial.document);
+        lexical.$setSelection(null);
+      },
+      // Without a root nothing commits the update later, so it commits at once.
+      { ...(root ? {} : { discrete: true as const }), tag: lexical.HISTORY_MERGE_TAG },
+    );
     if (root) {
       editor.setRootElement(root);
       releaseEngineRootStyle(root);
+      container?.append(root);
       const untrack = trackPresses(rt, root);
       const undrag = cancelDragStarts(root);
       const released = release;
@@ -289,6 +300,7 @@ export class LexicalInstance implements TextEditorEngineInstance {
     const push = options.history === 'push';
     editor.read(() => undefined);
     rt.selectAll = false;
+    rt.cleared = null;
     if (!push) editor.dispatchCommand(lexical.CLEAR_HISTORY_COMMAND, undefined);
     // A DOM selection that an unfocused root kept goes before the load: the engine's selection
     // notification after it would otherwise adopt it as the next selection.
@@ -441,6 +453,8 @@ export class LexicalInstance implements TextEditorEngineInstance {
     if (this.#destroyed) return Promise.resolve();
     const rt = this.#rt;
     const root = this.#root;
+    // Focus places a selection, also after one was cleared.
+    rt.cleared = null;
     const last =
       position === 'restore'
         ? rt.readCommitted(() => ({

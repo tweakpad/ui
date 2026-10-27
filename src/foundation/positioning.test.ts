@@ -7,6 +7,7 @@ import {
   inlineFragmentRect,
   positionSurface,
   rect,
+  themeSpacing,
   type PositioningOffsetContext,
 } from './positioning.js';
 
@@ -404,6 +405,56 @@ function surfaceFixture() {
   };
 }
 
+describe('anchor clipping', () => {
+  it('shows a surface whose anchor lies in a top-layer element that a clipping ancestor of that element leaves out', () => {
+    const { anchor, surface } = surfaceFixture();
+    // Every fake node is an EventTarget, so it passes the element check.
+    vi.stubGlobal('Element', EventTarget);
+    const view = (anchor as unknown as { ownerDocument: { defaultView: Record<string, unknown> } })
+      .ownerDocument.defaultView;
+    const base = (view['getComputedStyle'] as () => Record<string, string>)();
+    const box = (left: number, top: number, width: number, height: number) => ({
+      nodeType: 1,
+      assignedSlot: null,
+      getBoundingClientRect: () => rect(left, top, width, height),
+      offsetWidth: width,
+      offsetHeight: height,
+      clientLeft: 0,
+      clientTop: 0,
+      clientWidth: width,
+      clientHeight: height,
+    });
+    let topLayer = true;
+    // A box that clips its content to 50 x 50, which leaves the anchor at (100, 100) out.
+    const clipper = Object.assign(new EventTarget(), box(0, 0, 50, 50), {
+      parentNode: null,
+      matches: () => false,
+    });
+    // A popup in the top layer, inside the clipping box, holding the anchor.
+    const popup = Object.assign(new EventTarget(), box(90, 90, 200, 200), {
+      parentNode: clipper,
+      matches: (selector: string) => topLayer && selector.includes(':popover-open'),
+    });
+    Object.assign(anchor, { parentNode: popup });
+    view['getComputedStyle'] = (element: unknown) =>
+      element === clipper
+        ? { ...base, overflow: 'clip', overflowX: 'clip', overflowY: 'clip' }
+        : base;
+    const hidden: boolean[] = [];
+    Object.assign(surface, {
+      toggleAttribute: (name: string, value: boolean) => {
+        if (name === 'data-anchor-hidden') hidden.push(value);
+      },
+    });
+    positionSurface(anchor, surface, { tracking: false }).destroy();
+    expect(hidden).toEqual([false]);
+    // Out of the top layer, the clipping ancestor hides the anchor.
+    topLayer = false;
+    positionSurface(anchor, surface, { tracking: false }).destroy();
+    expect(hidden).toEqual([false, true]);
+  });
+});
+
 describe('anchor tracking', () => {
   it('reads the client rectangles of a virtual anchor on every pass', () => {
     const { anchor, surface, style } = surfaceFixture();
@@ -494,5 +545,183 @@ describe('anchor tracking', () => {
       undefined,
     ]);
     expect(handle.current).toBeNull();
+  });
+});
+
+/**
+ * A body whose appends and removals reach the fixture's mutation observers as `childList`
+ * records (delivered by `deliver`, as the microtask would), and a theme spacing seed of
+ * `0.25rem` at 16 px (4 px per unit).
+ */
+function observedDocument(fixture: ReturnType<typeof surfaceFixture>) {
+  const document = (fixture.anchor as unknown as { ownerDocument: Record<string, unknown> })
+    .ownerDocument;
+  const view = document['defaultView'] as Record<string, unknown>;
+  const callbacks: Array<(records: unknown[]) => void> = [];
+  const queue: unknown[] = [];
+  view['MutationObserver'] = class {
+    constructor(callback: (records: unknown[]) => void) {
+      callbacks.push(callback);
+    }
+    observe() {}
+    disconnect() {}
+  };
+  const base = (view['getComputedStyle'] as () => Record<string, string>)();
+  let seed = '0.25rem';
+  view['getComputedStyle'] = () => ({
+    ...base,
+    fontSize: '16px',
+    getPropertyValue: (name: string) => (name === '--tp-spacing' ? seed : ''),
+  });
+  let probes = 0;
+  const body = { nodeType: 1, parentNode: null };
+  const record = (added: unknown[], removed: unknown[]) =>
+    queue.push({ type: 'childList', target: body, addedNodes: added, removedNodes: removed });
+  Object.assign(body, {
+    append: (node: unknown) => {
+      probes += 1;
+      record([node], []);
+    },
+  });
+  document['body'] = body;
+  document['createElement'] = () => {
+    const style: Record<string, string> = {};
+    const probe = {
+      nodeType: 1,
+      style,
+      // `calc(<seed> * <units>)` at 16 px per rem.
+      getBoundingClientRect: () => {
+        const [, value, units] = /calc\(([\d.]+)rem \* ([\d.]+)\)/.exec(style['inlineSize']!)!;
+        return rect(0, 0, Number(value) * 16 * Number(units), 0);
+      },
+      remove: () => record([], [probe]),
+    };
+    return probe;
+  };
+  return {
+    probes: () => probes,
+    setSeed: (value: string) => {
+      seed = value;
+    },
+    push: (records: unknown[]) => queue.push(...records),
+    deliver: () => {
+      const records = queue.splice(0);
+      if (records.length) for (const callback of callbacks) callback(records);
+    },
+  };
+}
+
+describe('open surfaces at rest', () => {
+  it('resolves the theme spacing once per seed instead of inserting a probe on every call', () => {
+    const fixture = surfaceFixture();
+    const document = observedDocument(fixture);
+    expect(themeSpacing(fixture.anchor, 2)).toBe(8);
+    expect(themeSpacing(fixture.anchor, 2)).toBe(8);
+    expect(themeSpacing(fixture.anchor, 3)).toBe(12);
+    expect(document.probes()).toBe(2);
+    // A theme that changes the seed is measured again.
+    document.setSeed('0.5rem');
+    expect(themeSpacing(fixture.anchor, 2)).toBe(16);
+    expect(document.probes()).toBe(3);
+  });
+
+  it('does not reposition after its own pass: the probe and other mutations off the anchor and surface chains are ignored', () => {
+    const fixture = surfaceFixture();
+    const document = observedDocument(fixture);
+    const onPosition = vi.fn();
+    const onInvalid = vi.fn();
+    // As anchored surfaces resolve their default side offset, on every pass.
+    const handle = positionSurface(fixture.anchor, fixture.surface, {
+      offset: () => themeSpacing(fixture.anchor, 3),
+      onPosition,
+      onInvalid,
+    });
+    expect(onPosition).toHaveBeenCalledTimes(1);
+    expect(fixture.style.translate).toBe('80px 152px');
+    // The probe's records reach the document observer: no pass follows (no frame loop).
+    document.deliver();
+    expect(fixture.requestAnimationFrame).not.toHaveBeenCalled();
+    // A later pass reads the resolved spacing and leaves the document untouched.
+    void handle.update();
+    expect(document.probes()).toBe(1);
+    document.deliver();
+    expect(fixture.requestAnimationFrame).not.toHaveBeenCalled();
+    // Content added elsewhere in the page.
+    document.push([
+      { type: 'childList', target: {}, addedNodes: [{ nodeType: 1 }], removedNodes: [] },
+    ]);
+    document.deliver();
+    expect(fixture.requestAnimationFrame).not.toHaveBeenCalled();
+    // Removing an ancestor of the anchor detaches it: the next pass reports the anchor gone.
+    vi.stubGlobal('Element', EventTarget);
+    const ancestor = Object.assign(new EventTarget(), {
+      nodeType: 1,
+      parentNode: null,
+      assignedSlot: null,
+    });
+    Object.assign(fixture.anchor, { parentNode: ancestor, isConnected: false });
+    document.push([{ type: 'childList', target: {}, addedNodes: [], removedNodes: [ancestor] }]);
+    document.deliver();
+    expect(fixture.requestAnimationFrame).toHaveBeenCalledTimes(1);
+    fixture.frame();
+    expect(onInvalid).toHaveBeenCalledTimes(1);
+    expect(fixture.style.translate).toBeUndefined();
+    handle.destroy();
+  });
+
+  it('writes the surface and its arrow only when a value changes', () => {
+    const fixture = surfaceFixture();
+    const writes: string[] = [];
+    const record = (target: string, style: Record<string, unknown>) => {
+      const setProperty = style['setProperty'] as (name: string, value: string) => void;
+      const removeProperty = style['removeProperty'] as (name: string) => void;
+      style['setProperty'] = (name: string, value: string) => {
+        writes.push(`${target} ${name}`);
+        setProperty(name, value);
+      };
+      style['removeProperty'] = (name: string) => {
+        writes.push(`${target} -${name}`);
+        removeProperty(name);
+      };
+      return new Proxy<Record<string, string>>(
+        {},
+        {
+          set(data, key, value: string) {
+            writes.push(`${target} data-${String(key)}`);
+            data[key as string] = value;
+            return true;
+          },
+        },
+      );
+    };
+    Object.assign(fixture.surface, { dataset: record('surface', fixture.style) });
+    const arrowStyle = fakeStyle();
+    const arrow = {
+      style: arrowStyle,
+      dataset: record('arrow', arrowStyle),
+      offsetWidth: 12,
+      offsetHeight: 6,
+      getBoundingClientRect: () => rect(0, 0, 12, 6),
+      toggleAttribute() {},
+      removeAttribute() {},
+    } as unknown as HTMLElement;
+    const handle = positionSurface(fixture.anchor, fixture.surface, {
+      arrow,
+      constrainSize: true,
+      matchReferenceWidth: true,
+      tracking: false,
+    });
+    expect(writes).toContain('surface translate');
+    expect(writes).toContain('arrow left');
+    writes.length = 0;
+    void handle.update();
+    expect(writes).toEqual([]);
+    // A moved anchor writes what moved.
+    fixture.moveAnchor(rect(100, 120, 80, 40));
+    void handle.update();
+    expect(writes).toContain('surface translate');
+    expect(writes).not.toContain('surface data-side');
+    expect(writes).not.toContain('arrow data-side');
+    handle.destroy();
   });
 });

@@ -943,11 +943,12 @@ export class TpToast extends TpElement {
       onInvalid: () => this.manager.close(view.toast.identifier, 'anchor-removed'),
       onPosition: (result: PositioningResult) => {
         const [side, alignment = 'center'] = result.placement.split('-');
-        wrapper.dataset.side = side!;
-        wrapper.dataset.align = alignment;
+        // Unchanged values are not written again: an unchanged pass leaves the toast untouched.
+        if (wrapper.dataset.side !== side) wrapper.dataset.side = side!;
+        if (wrapper.dataset.align !== alignment) wrapper.dataset.align = alignment;
         const arrow = element.querySelector<HTMLElement>('.arrow');
         if (arrow) {
-          arrow.dataset.side = side!;
+          if (arrow.dataset.side !== side) arrow.dataset.side = side!;
           arrow.toggleAttribute('data-uncentered', !!result.stageData.arrow?.centerOffset);
         }
       },

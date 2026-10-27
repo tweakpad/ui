@@ -17,6 +17,14 @@ registrations and the logs.
   `preserveFocusOnPress: true`; Note opts out per item. `toolbarFixture.press.select()` focuses
   the paragraph and selects the words "slate water"; `press.activations()` counts presses per
   Button.
+- `#contextual-case` (source mode only): an editable paragraph and a `ContextualToolbarController`
+  over the Selection tools (Bold, the disabled Link, Note) in the top layer, anchored to the
+  paragraph's selection. It shows while the selection in the paragraph is not collapsed and hides
+  when it collapses, stays out of the Tab sequence, keeps focus in the paragraph on presses, and
+  `Alt+F10` in the paragraph calls `focus()`; Escape, Tab and Shift+Tab return focus to the
+  paragraph with its selection. `toolbarFixture.contextual` exposes `controller()`, `text`,
+  `surface`, `presses()` (per Button), `log` (`show`, `hide`, `alt-f10:<result>`, `final-focus`)
+  and `range()`.
 
 ## Logs
 
@@ -48,3 +56,10 @@ registrations and the logs.
    stop moves to Grid. Repeat with Continuous by moving the whole Page view group: focus stays on
    Continuous, the group has its own tab stop again and the toolbar's stop moves to Ruler. Moving
    with `insertBefore()` instead drops focus, and the toolbar repairs it to its new stop.
+7. In the Contextual toolbar section, `click` the paragraph and press `Shift+ArrowRight`: the
+   toolbar shows above the selection with focus still in the paragraph; more `Shift+ArrowRight`
+   presses move it with the selection. `click` Bold: it activates once, focus and the selection
+   stay in the paragraph and Bold does not match `:focus-visible`. Press `Alt+F10` (focus on
+   Bold), `ArrowRight`, then `Escape`; repeat with `Tab` and `Shift+Tab` in place of `Escape`:
+   each returns focus to the paragraph with the same selection. Collapsing the selection hides
+   the toolbar and returns focus to the paragraph.

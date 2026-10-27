@@ -179,32 +179,6 @@ blocks. Pasted back into an editor, part of the text joins the text at the paste
 blocks, such as a block selection or a table, are inserted as blocks with fresh identifiers. HTML
 from other applications pastes as text.
 
-### Links and images
-
-Link destinations and image sources pass one URL policy on every path into the document: initial
-content, `setContent()` in every format, paste and drop, the link and image tools, `run()`
-actions and typed input rules. Links allow `http`, `https`, `mailto` and `tel` URLs, relative
-references and fragments; images allow `http` and `https` URLs and relative references.
-
-- A link outside the policy keeps its text and loses the link.
-- An image outside the policy becomes a paragraph of its alternative text, which keeps the
-  image's identifier, or is removed when it has none.
-- The link and image tools, and the `link.set`, `blocks.insert` and `block.set-attrs` actions,
-  refuse a destination outside the policy, and the request fails.
-- Typing `[text](url)`, or a URL followed by a space or Enter, links only a destination inside
-  the policy, and so does pasting a single URL over selected text.
-
-### Colors
-
-Text color and highlight take one of nine palette names, `gray`, `brown`, `orange`, `yellow`,
-`green`, `blue`, `purple`, `pink` and `red`, also exported as `TEXT_EDITOR_COLORS`; table cells
-take the same names as backgrounds. The document stores the names, never color values: HTML
-writes `span data-color`, `mark data-color` and `data-background` on cells, and the theme paints
-them through the content color tokens `--tp-content-<name>` (highlight and cell fill) and
-`--tp-content-<name>-foreground` (text). Override those tokens to restyle every document the same
-way on both engines. A text color over a highlight or a cell background of another name shows
-both, and colored link text keeps its color.
-
 ### Alignment and direction
 
 Alignment is logical: `start` (the default), `center`, `end` and `justify`, written as
@@ -215,7 +189,61 @@ the host's `dir` sets, and so is the preview before the engine is ready. HTML wh
 `left` or `right` reads them in the direction those elements set, else in the editor's direction:
 in a right-to-left editor `right` is the start.
 
-## Blocks
+## Tools and configuration
+
+Every control of the editor runs a tool. The fixed toolbar, the selection toolbar over selected
+text, the slash menu, the turn-into menu, the block menu and the row, column and cell menus of
+tables each place tools by identifier, and `layout` says which tools each of them shows, as groups
+of identifiers: `toolbar`, `selectionToolbar`, `slash`, `turnInto`, `blockMenu`, `tableRow`,
+`tableColumn` and `tableCell`. A key you leave out keeps its default groups and an empty list
+turns the surface off. `suggestions` names the suggestion lists that typing opens, only `slash`
+by default, and `gutter: false` hides the block gutter. Reading `layout` returns the effective
+layout, a good starting point for your own:
+
+```js
+editor.layout = {
+  toolbar: [
+    ['undo', 'redo'],
+    ['bold', 'italic', 'link'],
+    ['table', 'image'],
+  ],
+  selectionToolbar: [],
+};
+```
+
+A fixed toolbar without room for every group moves the last ones into a More menu. A tool that
+cannot act at the selection shows disabled, and a tool that the engine cannot run, such as the
+table tools without the table modules, is left out. An unknown identifier is skipped and reported
+through `tp-diagnostic` with the code `text-editor-layout-unknown`.
+
+`tools` adds your own tools to the built-in ones, and a tool with the identifier of a built-in one
+replaces it. Define a tool with `defineTextEditorTool` from `@tweakpad/ui/text-editor`: an `id`,
+a `kind` (`button`, `toggle`, `menu`, `radio-menu`, `color`, `link`, `image`, `table-size`,
+`suggestion` or `custom`), a `label`, an optional `icon`, `shortcut` and `keywords`, and the
+`action` it runs: one or more actions, or a function of the tool context that returns them.
+`isActive`, `isEnabled` and `isVisible` refine the state that the editor derives. A tool appears
+where the layout names it; with `surfaces`, it also joins the `*` entry that ends the default
+slash menu, turn-into menu and block menu. In the fixed toolbar, a tool that `isVisible` hides
+keeps its place, empty, so the other controls never move; the block tools hide this way while the
+selection is in a table.
+
+```js
+import { defineTextEditorTool } from '@tweakpad/ui/text-editor';
+
+const insertDate = defineTextEditorTool({
+  id: 'insert-date',
+  kind: 'button',
+  label: 'Insert date',
+  action: () => ({ type: 'text.insert', text: new Date().toLocaleDateString() }),
+});
+editor.tools = [insertDate];
+editor.layout = { toolbar: [...editor.layout.toolbar, ['insert-date']] };
+```
+
+`strings` replaces any of the English labels, names, hints and announcements of
+`textEditorStrings`, from which the built-in tools also take their labels.
+
+## Blocks, tables, links and images
 
 A gutter with two buttons appears beside the block under the pointer: **Insert** adds a block
 below it (Alt+click: above) and types `/` there, which opens the slash menu; in an empty paragraph
@@ -261,7 +289,48 @@ the list item above it or brings it out again. Only list items nest. Escape canc
 drop is one `tp-text-editor-request` with reason `drag`; cancel it to keep the document as it is.
 Screen readers hear the selected block count, moves, duplicates, deletions and every drag step.
 
-## Custom nodes
+### Tables
+
+The table tool opens a size picker: point at its grid, or type the number of rows, up to 100, and
+of columns, up to 20, then press Enter or Insert. In a table, Tab and Shift+Tab move to the next
+and the previous cell, and Tab in the last cell adds a row. A table wider than the editor scrolls
+sideways and keeps the cell with the caret in view.
+
+Grips beside the current row and column open the row and column menus (`layout.tableRow` and
+`layout.tableColumn`): move, insert, duplicate or delete, the cell background and alignment, and
+the header row or column. Selecting across cells outlines the range; its handle extends the range
+by dragging and opens the cell menu (`layout.tableCell`): merge, split, background, alignment and
+clearing. Buttons past the last row and the last column add one. Dragging a column boundary
+resizes the column, down to 48 pixels; on the focused boundary the arrow keys resize it by 8
+pixels (32 with Shift, 1 with Alt), and Home and End set its minimum and maximum width.
+`stickyTableHeaders` keeps a copy of the header row in view while the rest of a long table
+scrolls.
+
+Alt+F10 in a table moves focus to its controls: the cell handle when cells are selected, else the
+column grip. Tab and Shift+Tab move through the grips, the handle, the boundary and the add
+buttons, Escape returns to the text with its selection, and Alt+F10 moves on to the next controls.
+
+### Links and images
+
+Link destinations and image sources pass one URL policy on every path into the document: initial
+content, `setContent()` in every format, paste and drop, the link and image tools, `run()`
+actions and typed input rules. Links allow `http`, `https`, `mailto` and `tel` URLs, relative
+references and fragments; images allow `http` and `https` URLs and relative references.
+
+- A link outside the policy keeps its text and loses the link.
+- An image outside the policy becomes a paragraph of its alternative text, which keeps the
+  image's identifier, or is removed when it has none.
+- The link and image tools, and the `link.set`, `blocks.insert` and `block.set-attrs` actions,
+  refuse a destination outside the policy, and the request fails.
+- Typing `[text](url)`, or a URL followed by a space or Enter, links only a destination inside
+  the policy, and so does pasting a single URL over selected text.
+
+With `imageUpload`, the image popover offers a file upload, and pasted or dropped image files are
+uploaded too. The hook receives each file with an abort signal and a progress callback and
+resolves to the image's source; closing the popover aborts an upload in progress, and a source
+outside the image policy, such as a `blob:` or `data:` URL, fails the insertion.
+
+## Custom blocks and inline nodes
 
 `defineTextEditorBlock()` defines a block, a textblock (`content: 'inline'`) or an atom
 (`content: 'none'`), and `defineTextEditorInline()` an inline atom inside text. Assign the
@@ -300,7 +369,10 @@ Selectors in `css` are relative to the content part; rules that a style rule can
 comment or string open is rejected with a `TypeError`.
 
 A block that is a callout needs no paint of its own: `presents: 'callout'` adds the class
-`tp-te-callout`, and the editor paints the block as a callout, as it paints alerts:
+`tp-te-callout`, and the editor paints the block as a callout, as it paints alerts. A `tone`
+attribute tints it like an alert of the same kind: `tip` or `success` as a success, `warning` as a
+warning, `caution` or `danger` as a danger; `note`, `important` and any other tone keep the
+neutral paint:
 
 ```js
 const note = defineTextEditorBlock({
@@ -308,6 +380,7 @@ const note = defineTextEditorBlock({
   content: 'inline',
   element: 'aside',
   presents: 'callout',
+  attrs: { tone: { type: 'enum', values: ['note', 'tip', 'warning'], default: 'note' } },
   tool: { label: 'Note' },
 });
 ```
@@ -346,6 +419,60 @@ const embed = defineTextEditorBlock({
 Every custom block gets the gutter, the block menu, block selection, drag and a slash menu entry;
 a textblock also appears in the menu that turns blocks into another kind.
 
+An inline node is an atom inside text. With `suggest`, a trigger character opens a list whose
+`source` answers the text typed after it; a newer query, or the list closing, aborts the previous
+call through its signal. The list opens once `layout.suggestions` names the node, as in
+`editor.layout = { suggestions: ['slash', 'mention'] }`:
+
+```js
+import { defineTextEditorInline } from '@tweakpad/ui/text-editor';
+
+const mention = defineTextEditorInline({
+  name: 'mention',
+  element: 'span',
+  attrs: { person: { type: 'string', default: null }, label: { type: 'string', default: '' } },
+  text: (attrs) => `@${attrs.label}`,
+  suggest: {
+    trigger: '@',
+    source: ({ query, signal }) => searchPeople(query, { signal }),
+    label: (person) => person.name,
+    attrs: (person) => ({ person: person.id, label: person.name }),
+  },
+});
+```
+
+Without `markdown.serialize`, Markdown and text hold an inline node's text, and reading Markdown
+never restores an inline node: a mention read from Markdown is plain text. The callout, embed and
+mention here are examples to adapt; the library exports no ready-made nodes.
+
+## Colors
+
+Text color and highlight take one of nine palette names, `gray`, `brown`, `orange`, `yellow`,
+`green`, `blue`, `purple`, `pink` and `red`, also exported as `TEXT_EDITOR_COLORS`; table cells
+take the same names as backgrounds. The document stores the names, never color values: HTML
+writes `span data-color`, `mark data-color` and `data-background` on cells, and the theme paints
+them through the content color tokens `--tp-content-<name>` (highlight and cell fill) and
+`--tp-content-<name>-foreground` (text). Override those tokens to restyle every document the same
+way on both engines. A text color over a highlight or a cell background of another name shows
+both, and colored link text keeps its color.
+
+## Events
+
+Every change that the editor makes, from a tool, a shortcut, a paste or a drop, `run()` or
+`setContent()`, is first proposed as a cancelable `tp-text-editor-request`. Its detail names the
+`actions`, the `tool` and the `surface` it comes from, the `reason`, the source event and the
+control that triggered it; call `preventDefault()` to keep the document as it is. A request that
+cannot apply, such as any change while the editor is read-only, is reported by
+`tp-text-editor-request-failed`, and the promise of `run()` and `setContent()` resolves with the
+outcome.
+
+Typing goes straight to the engine, without a request. Every committed change, typed or requested,
+is reported by `tp-value-change`, which cannot be canceled; its `metadata.origin` is `request` or
+`engine`. `tp-value-commit` follows each applied request that changed the document, and the moment
+focus leaves the editor after typing, which suits saving. `tp-text-editor-ready` reports the
+mounted engine, `tp-text-editor-error` a failed mount, and `tp-diagnostic` the `text-editor-*`
+codes named on this page.
+
 ## Keyboard and input rules
 
 `Mod` is Command on Apple platforms and Control elsewhere.
@@ -367,8 +494,9 @@ toolbar does not show. A shortcut whose tool cannot act at the selection, such a
 block, does nothing, and the browser applies none of its own formatting. Chords that the engine
 reserves for itself are consumed without effect. Every other key, typing, Enter, Backspace,
 Delete, the arrow keys, copy and cut, and `Mod+A` while the editor is editable included, stays
-with the engine. In a list item or a code block, Tab indents; move the caret out of it with the
-arrow keys, and Tab then leaves the editor. While the editor is read-only, `Mod+A` selects its
+with the engine. In a list item, a code block or a table cell, Tab stays in the text; move the caret
+out with the arrow keys, or press Escape to select the block, and Tab then leaves the editor. While
+the editor is read-only, `Mod+A` selects its
 content.
 
 The toolbar is one tab stop before the editing root. The arrow keys, Home and End move between
@@ -424,10 +552,6 @@ describe it, and a press on the label focuses the editing root. Without a Field 
 names the editing root; without `label`, the host's `aria-label` does, and without either,
 `strings.label`. `placeholder` is also the root's `aria-placeholder`.
 
-`tp-value-change` reports every committed document change and cannot be canceled;
-`tp-value-commit` follows each applied request that changed the document, and the moment focus
-leaves the editor after typing.
-
 ### Read-only and disabled
 
 `readOnly` keeps the editing root focusable and its content selectable and copyable, keeps its
@@ -436,6 +560,27 @@ the toolbar's controls stay focusable with disabled semantics. `disabled`, set o
 inherited from a disabled fieldset or Field, makes nothing in the editor focusable, keeps its
 links from being followed, hides every tooltip and menu, and rejects every change except
 `setContent()`; the editing root and the toolbar's controls stay exposed as disabled.
+
+## Accessibility
+
+The editing root is a multi-line text box, named as Forms and Field describes, with
+`aria-placeholder`, `aria-readonly` and `aria-disabled` following the editor's state. While the
+editor is editable and its layout offers the slash command list, the description ends with short
+instructions (`strings.instructions`): the slash command list and Alt+F10. While the editor is
+editable or read-only the root is a tab stop, so that a scrolled document stays reachable from the
+keyboard; a disabled editor leaves the tab order.
+
+The fixed toolbar is one tab stop. The selection toolbar, the block gutter and a table's controls
+are reached with Alt+F10 and left with Escape, which returns to the text with its selection;
+Alt+F10 again moves on to the next of them. Menus and popovers take focus when they open and give
+it back when they close. The slash and mention lists leave focus in the text: the arrow keys move
+through their items, and the editing root points at the highlighted one.
+
+A live region announces what the screen alone shows: the size of a block selection, moved,
+duplicated and deleted blocks, each step of a block drag, the highlighted suggestion, inserted,
+moved and deleted table rows and columns, merged and split cells, the size of a cell range and a
+copied block link. The highlights of selected blocks and cells, the drop line and the sticky
+table header are presentation only.
 
 ## Parts and customization
 
@@ -459,13 +604,20 @@ editor.partPresentation = {
 ```
 
 The document itself has no parts, since the engine renders it: style it through the theme tokens,
-the content color tokens included, which apply the same way on both engines and in the preview, and style custom nodes through the `css` of their definitions
-(see [Custom nodes](#custom-nodes)).
+the content color tokens included, which apply the same way on both engines and in the preview,
+and style custom nodes through the `css` of their definitions (see
+[Custom blocks and inline nodes](#custom-blocks-and-inline-nodes)).
 
 The toolbar is one row of ghost controls; groups that do not fit move into its More menu. When
 the editor grows with its content, the toolbar stays at the top of the scrolling page on the
 editor's background; on a surface of another color, give `::part(text-editor-toolbar)` that
 surface's background.
+
+The selection toolbar enters and exits with the motion role `surface` (`textEditorMotionRoles`):
+before each, the editor dispatches a `tp-motion-request` (phase `enter` or `exit`, context
+`placement`) that a listener may claim with `respondWith`; it hides once a claimed exit settles.
+It never animates while it follows the selection, and `motionPolicy` `reduce` shows and hides it
+at once.
 
 Host markers: `data-focused` (present while the editing root has focus), `data-filled`,
 `data-readonly`, `data-disabled` and `data-status` (`idle`, `loading`, `ready` or `error`).
@@ -494,12 +646,12 @@ The editor needs Chrome or Edge 137 or later, Firefox 142 or later, or Safari 17
 | `formOwner`          | `form`                 | `HTMLFormElement \| null`             | `null`              | The form owner, when it is not an ancestor.                                                                              |
 | `readOnly`           | `readonly`             | `boolean`                             | `false`             | See Read-only and disabled.                                                                                              |
 | `disabled`           | `disabled`             | `boolean`                             | `false`             | See Read-only and disabled.                                                                                              |
-| `stickyTableHeaders` | `sticky-table-headers` | `boolean`                             | `false`             |                                                                                                                          |
+| `stickyTableHeaders` | `sticky-table-headers` | `boolean`                             | `false`             | Keeps the header row of a table in view while the rest of the table scrolls.                                             |
 | `tools`              | none                   | `readonly TextEditorTool[]`           | `[]`                | Tools added to the built-in ones; an equal identifier replaces a built-in tool.                                          |
 | `layout`             | none                   | `Partial<TextEditorLayout> \| null`   | the default layouts | Where tools appear. Reading it returns the effective layout.                                                             |
 | `nodes`              | none                   | `readonly TextEditorNodeDefinition[]` | `[]`                | Custom blocks and inline nodes; a change remounts with the content kept.                                                 |
 | `strings`            | none                   | `Partial<TextEditorStrings> \| null`  | `null`              | Replacements for the English `textEditorStrings`.                                                                        |
-| `imageUpload`        | none                   | `TextEditorImageUpload \| null`       | `null`              |                                                                                                                          |
+| `imageUpload`        | none                   | `TextEditorImageUpload \| null`       | `null`              | Uploads an image file and resolves to its source, for the image popover and for pasted or dropped images.                |
 | `invalid`            | `invalid`              | `boolean`                             | `false`             | No effect on the editor.                                                                                                 |
 | `required`           | `required`             | `boolean`                             | `false`             | No effect on the editor.                                                                                                 |
 | `motionPolicy`       | `motion-policy`        | `MotionPolicy`                        | `'inherit'`         | Motion of the editor's own surfaces.                                                                                     |

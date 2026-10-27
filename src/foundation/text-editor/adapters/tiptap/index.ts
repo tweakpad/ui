@@ -69,6 +69,7 @@ import {
 } from '../shared/content.js';
 import { nodeOverrides, resolveCss, type TextEditorAdapterOptions } from '../shared/options.js';
 import { TextEditorPressRead } from '../shared/presses.js';
+import { placesClearedSelection } from '../shared/selection-state.js';
 import { tableModelOf } from '../shared/tables.js';
 import { applyAction, kindLookup } from './actions.js';
 import { handleClipboardEvent, type TiptapClipboardViewLike } from './clipboard.js';
@@ -96,7 +97,13 @@ import {
   type TiptapTransactionLike,
 } from './modules.js';
 import { customNodeExtensions } from './nodes.js';
-import { domSelectionOf, edgeSelection, showReadOnlySelection } from './selection.js';
+import {
+  bindDocumentSelection,
+  domSelectionOf,
+  edgeSelection,
+  showReadOnlySelection,
+  type TiptapDomSelectionView,
+} from './selection.js';
 import { contentStopsActive } from '../shared/content-stops.js';
 import {
   createContentStops,
@@ -233,22 +240,6 @@ interface Observed {
 }
 
 /** A mounted Tiptap editor. */
-/** The keys that leave a cleared selection unplaced: Escape, Tab, a lone modifier and composition. */
-const KEEPS_CLEARED: ReadonlySet<string> = new Set([
-  'Escape',
-  'Tab',
-  'Shift',
-  'Control',
-  'Alt',
-  'AltGraph',
-  'Meta',
-  'CapsLock',
-]);
-
-/** Whether a key places a cleared selection before the engine handles it. */
-const placesClearedSelection = (event: KeyboardEvent): boolean =>
-  !event.isComposing && !KEEPS_CLEARED.has(event.key);
-
 class TiptapInstance implements TextEditorEngineInstance {
   readonly capabilities: ReadonlySet<TextEditorCapability>;
   readonly native: TiptapEditorLike;
@@ -285,8 +276,9 @@ class TiptapInstance implements TextEditorEngineInstance {
    */
   #placed = false;
   /**
-   * Whether `selection.set` with none left the selection unplaced: the root keeps focus without a
-   * DOM selection, and the next key or press places the engine's resting selection again.
+   * Whether `selection.set` with none left the selection unplaced: the root keeps focus, the DOM
+   * caret rests where the engine's selection rests, and the next key that edits or a press places
+   * the selection again.
    */
   #cleared = false;
   /**
@@ -380,6 +372,7 @@ class TiptapInstance implements TextEditorEngineInstance {
       this.#release();
       throw error;
     }
+    bindDocumentSelection(this.native.view as unknown as TiptapDomSelectionView);
     this.#geometry = new TiptapGeometry(this.#env, () => this.native.view);
     // The engine starts at the document's start, which may select a leading atom: the selection
     // waits at the first text point instead, unreported until placed.
@@ -436,6 +429,9 @@ class TiptapInstance implements TextEditorEngineInstance {
         },
         keydown: (_view: unknown, event: KeyboardEvent) => {
           if (placesClearedSelection(event)) this.#placeCleared(true);
+          // Tab leaves a cleared selection cleared: the engine's list keys would act at the
+          // unpainted resting point, so it is left to the browser, which moves focus.
+          else if (this.#cleared && event.key === 'Tab' && !event.isComposing) return true;
           return false;
         },
       },
@@ -750,17 +746,18 @@ class TiptapInstance implements TextEditorEngineInstance {
     };
   }
 
-  /** A work over the current state, as `execute` builds it. */
-  #work(): TiptapWork {
+  /** A work over the current state, as `execute` builds it; `dry` for `can`'s dry run. */
+  #work(dry = false): TiptapWork {
     return new TiptapWork(this.#env, this.native.state, {
       placed: this.#placed,
       editable: this.native.isEditable,
+      dry,
     });
   }
 
   can(action: TextEditorAction): boolean {
     return actionCan(action, this.#gate(), this.#glue, (allowed) =>
-      applyAction(this.#work(), allowed),
+      applyAction(this.#work(true), allowed),
     );
   }
 
@@ -829,21 +826,11 @@ class TiptapInstance implements TextEditorEngineInstance {
     if (this.#live())
       for (const { code, message } of work.diagnostics) this.#context.diagnostic(code, message);
     this.#focusAfter(options);
-    if (work.cleared) this.#dropDomSelection();
-    else showReadOnlySelection(this.#env.modules, this.native.view);
+    // A cleared selection keeps the view's DOM caret at its resting point, which the widget does
+    // not paint: without a DOM selection the browser would put its own caret at the start of the
+    // focused root at the next key, which the view would then read as the user's.
+    if (!work.cleared) showReadOnlySelection(this.#env.modules, this.native.view);
     return true;
-  }
-
-  /**
-   * Removes the DOM selection of the focused root after the selection was cleared, so that no
-   * caret shows; the view ignores a DOM selection outside its root, and the next press is read
-   * from the DOM (`TextEditorPressRead`).
-   */
-  #dropDomSelection(): void {
-    const view = this.native.view;
-    if (!view.hasFocus()) return;
-    view.dom.ownerDocument.getSelection?.()?.removeAllRanges();
-    this.#presses.changed(false);
   }
 
   /**

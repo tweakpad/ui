@@ -18,7 +18,7 @@ import {
 import { ellipsisVerticalIcon } from '../../../icons/ellipsis.js';
 import type { TextEditorMenuModality } from '../focus.js';
 import {
-  renderToolControl,
+  renderToolControls,
   type TextEditorToolActivation,
   type TextEditorToolHandlers,
 } from '../tools/controls.js';
@@ -119,6 +119,33 @@ function rowControl(element: Element, root: Element): boolean {
   );
 }
 
+/**
+ * The tool control that holds `element`: a row control or a Toggle group member of a row, never a
+ * menu item or a custom tool's own control; `null` otherwise.
+ */
+function toolControl(element: Element, root: Element): HTMLElement | null {
+  const control = element.closest<HTMLElement>('[data-tool]');
+  if (!control || !root.contains(control) || control.classList.contains('toolbar-custom'))
+    return null;
+  if (rowControl(control, root)) return control;
+  const row = control.parentElement?.closest('tp-toggle-group')?.parentElement;
+  return row && rowControl(row, root) ? control : null;
+}
+
+/**
+ * The items of a group that show in the current context: a `hidden` item keeps its place in the
+ * row only (`uwg-te-req-pres-5`), so a menu leaves it out, and a pair keeps its shown members.
+ */
+function shownItems(items: readonly TextEditorToolbarItem[]): TextEditorToolbarItem[] {
+  return items
+    .filter((item) => !item.hidden)
+    .map((item) =>
+      item.pair && item.items.some((member) => member.hidden)
+        ? { ...item, items: item.items.filter((member) => !member.hidden) }
+        : item,
+    );
+}
+
 /** Every item of a view by tool identifier, the members of Toggle groups included. */
 function itemsById(groups: readonly TextEditorToolbarGroup[]): Map<string, TextEditorToolbarItem> {
   const items = new Map<string, TextEditorToolbarItem>();
@@ -166,17 +193,22 @@ export class TextEditorToolbar {
   render(): TemplateResult | typeof nothing {
     const view = this.#host.toolbarView();
     this.#view = view;
+    this.#controls.noteFocus(this.#host.renderRoot, this.#root);
     if (!view) return nothing;
     const handlers = this.#handlers;
     const moreLabel = fillTemplate(view.moreTools, { count: this.#hiddenCount });
-    const hidden = view.groups.filter((group) => this.#hiddenGroups.has(group.key));
+    // The More menu mirrors the omitted groups' tools that show in the current context.
+    const omitted = view.groups
+      .filter((group) => this.#hiddenGroups.has(group.key))
+      .map((group) => shownItems(group.items))
+      .filter((items) => items.length);
     return html`<div part="text-editor-toolbar" aria-label=${view.label}>
       <tp-overflow-list class="toolbar-row" max-rows="1" @tp-overflow-change=${this.#onOverflow}
         >${repeat(
           view.groups,
           (group) => group.key,
           (group, index) =>
-            html`<span class="toolbar-group" data-group=${group.key}
+            html`<span class="toolbar-group" data-group=${group.key} ?data-hidden=${!!group.hidden}
               >${
                 index
                   ? html`<tp-separator
@@ -184,8 +216,8 @@ export class TextEditorToolbar {
                       orientation="vertical"
                     ></tp-separator>`
                   : nothing
-              }<tp-button-group class="toolbar-buttons" .joined=${false}
-                >${group.items.map((item) => renderToolControl(item, handlers))}</tp-button-group
+              }<tp-button-group class="toolbar-buttons" label="" .joined=${false}
+                >${renderToolControls(group.items, handlers)}</tp-button-group
               ></span
             >`,
         )}<span class="toolbar-more" slot="count"
@@ -202,11 +234,12 @@ export class TextEditorToolbar {
               variant="ghost"
               size="icon"
               .icon=${ellipsisVerticalIcon}
+              .disabled=${this.#hiddenGroups.size > 0 && !omitted.length}
               >${moreLabel}</tp-button
-            >${hidden.map(
-              (group, index) =>
+            >${omitted.map(
+              (items, index) =>
                 html`${index ? html`<tp-separator></tp-separator>` : nothing}${renderToolMenuItems(
-                  group.items,
+                  items,
                   handlers,
                 )}`,
             )}</tp-menu
@@ -249,7 +282,9 @@ export class TextEditorToolbar {
       setToolbarDisabledMode(this.#controller, 'fully');
     }
     const controller = this.#controller;
-    controller.update({ disabled: view.disabled });
+    // An update refreshes the roving items, a walk over every control: only when it changes, not
+    // on every render of the element (each typed character publishes a state).
+    if (controller.disabled !== view.disabled) controller.update({ disabled: view.disabled });
     if (view.disabled && this.#openMenu?.open) this.#openMenu.setOpen(false, 'disabled');
     this.#controls.sync(controller, root, view.groups, view.disabled, () => {
       const more = root.querySelector<HTMLElement>('.toolbar-more-trigger');
@@ -268,6 +303,7 @@ export class TextEditorToolbar {
           ]
         : [];
     });
+    this.#controls.restoreFocus(this.#host.renderRoot, root);
   }
 
   #activate(activation: TextEditorToolActivation): void {
@@ -306,7 +342,9 @@ export class TextEditorToolbar {
     }
     this.#openMenu = menu;
     this.#changed = false;
-    const trigger = menu.triggerElement;
+    // The Menu takes its trigger once it accepts the opening, after this proposal: read the
+    // proposal's own trigger first, so that the opening record exists (`uwg-te-req-a11y-6`).
+    const trigger = (event.detail.trigger as HTMLElement | undefined) ?? menu.triggerElement;
     if (!trigger) return;
     const modality: TextEditorMenuModality =
       surfaceInteraction(sourceEvent) === 'keyboard' ? 'keyboard' : 'pointer';
@@ -353,7 +391,11 @@ interface TooltipTarget {
 export class TextEditorToolbarControls {
   readonly #items = new Map<
     HTMLElement,
-    { kind: ToolbarItemOptions['kind']; registration: ToolbarRegistration<ToolbarItemOptions> }
+    {
+      kind: ToolbarItemOptions['kind'];
+      focusableWhenDisabled: boolean;
+      registration: ToolbarRegistration<ToolbarItemOptions>;
+    }
   >();
   readonly #groups = new Map<HTMLElement, ToolbarRegistration<{ disabled?: boolean }>>();
   readonly #pendingGroups = new Set<HTMLElement>();
@@ -361,6 +403,58 @@ export class TextEditorToolbarControls {
   #controller: ToolbarController | null = null;
   #tooltip: TpTooltip | null = null;
   readonly #triggers = new Map<HTMLElement, TooltipRecord>();
+  /** The tool whose control held focus before the render, for `restoreFocus`. */
+  #focusedTool: string | null = null;
+
+  /**
+   * Before a render: notes the tool whose control holds focus in `root`. Controls are keyed by
+   * tool, so a layout or state change keeps each tool's element; one that the render moves among
+   * its siblings loses DOM focus on the way, which `restoreFocus` gives back.
+   */
+  noteFocus(renderRoot: ShadowRoot | undefined, root: Element | null): void {
+    // A render before the first connection has no render root yet.
+    const active = renderRoot?.activeElement ?? null;
+    const control = root && active ? toolControl(active, root) : null;
+    this.#focusedTool = control?.dataset['tool'] ?? null;
+  }
+
+  /**
+   * After the render: when focus was on a tool's control and is now nowhere (the render moved or
+   * removed the element), focuses that tool's control again. Returns `true` when focus stays
+   * nowhere for now: the tool is gone, which a fixed toolbar leaves to the Toolbar controller's
+   * repair to the nearest remaining stop (`node-010076`), or its new control takes focus only
+   * once rendered.
+   */
+  restoreFocus(renderRoot: ShadowRoot, root: Element): boolean {
+    const tool = this.#focusedTool;
+    this.#focusedTool = null;
+    if (tool === null || renderRoot.activeElement) return false;
+    const document = root.ownerDocument;
+    if (document.activeElement && document.activeElement !== document.body) return false;
+    // A control that hides keeps its element, inert: for focus it is gone.
+    const element = [...root.querySelectorAll<HTMLElement>('[data-tool]')].find(
+      (candidate) =>
+        candidate.dataset['tool'] === tool &&
+        toolControl(candidate, root) === candidate &&
+        !candidate.closest('[inert]'),
+    );
+    if (!element) return true;
+    // Focus stays nowhere or inside this toolbar, where the controller's repair puts it.
+    const attempt = (): void => {
+      const active = renderRoot.activeElement;
+      if (active === element || !element.isConnected) return;
+      const outside = document.activeElement !== null && document.activeElement !== document.body;
+      if (active ? !root.contains(active) : outside) return;
+      element.focus({ preventScroll: true });
+    };
+    attempt();
+    if (renderRoot.activeElement === element) return false;
+    // A control the render created in another group takes focus only once the controller's
+    // sync and the control's render made it focusable (a disabled tool stays focusable).
+    const control = element as HTMLElement & { updateComplete?: unknown };
+    queueMicrotask(() => void Promise.resolve(control.updateComplete).then(attempt));
+    return true;
+  }
 
   /**
    * Syncs the registrations under `root` with `controller`, and the Tooltip in `root` with its
@@ -414,12 +508,17 @@ export class TextEditorToolbarControls {
       const kind = itemKind(element);
       const known = this.#items.get(element);
       if (known?.kind === kind) {
-        known.registration.update({ focusableWhenDisabled });
+        // Each registration update refreshes the roving items: only for a changed option.
+        if (known.focusableWhenDisabled !== focusableWhenDisabled) {
+          known.focusableWhenDisabled = focusableWhenDisabled;
+          known.registration.update({ focusableWhenDisabled });
+        }
         continue;
       }
       known?.registration.dispose();
       this.#items.set(element, {
         kind,
+        focusableWhenDisabled,
         registration: controller.registerItem(element, { kind, focusableWhenDisabled }),
       });
     }

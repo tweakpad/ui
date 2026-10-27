@@ -1,6 +1,8 @@
 import type {
   TextEditorBlockDefinition,
   TextEditorEngine,
+  TextEditorInlineDefinition,
+  TextEditorSuggestionRequest,
 } from '../../foundation/text-editor/index.js';
 
 /** Survey notes in HTML: a heading, two paragraphs and a list with bold lead words. */
@@ -20,5 +22,15 @@ export const calloutBlock: TextEditorBlockDefinition;
 export const embedBlock: TextEditorBlockDefinition;
 /** The https URL an embed may load, or null. */
 export function embedSource(src: unknown): string | null;
-/** Notes in HTML with a callout and an embed. */
+/** A crew member the mention list offers. */
+export interface CrewMember {
+  readonly id: string;
+  readonly name: string;
+  readonly role: string;
+}
+/** Searches the crew after a short delay; the signal aborts the call. */
+export function searchCrew(request: TextEditorSuggestionRequest): Promise<CrewMember[]>;
+/** A mention inline atom with an `@` suggestion over the crew. */
+export const mentionInline: TextEditorInlineDefinition;
+/** Notes in HTML with a callout, a mention and an embed. */
 export const customBlockNotes: string;

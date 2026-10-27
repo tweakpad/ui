@@ -103,6 +103,78 @@ const selectPressText = (words = 'slate water') => {
   return selection.toString();
 };
 
+// A contextual toolbar over the paragraph's selection (V-595), source mode only: shown while the
+// selection is not collapsed, out of the Tab sequence, Alt+F10 moves focus in, and Escape, Tab,
+// Shift+Tab and hiding return focus to the paragraph with its selection.
+const contextualText = document.getElementById('contextual-text')!;
+const contextualSurface = document.getElementById('contextual')!;
+let contextualRange: Range | null = null;
+const contextualPresses: Record<string, number> = {};
+const contextualLog: string[] = [];
+let contextual: {
+  shown: boolean;
+  show(anchor?: unknown): void;
+  hide(): void;
+  focus(): boolean;
+  reposition(): Promise<void>;
+  toolbar: { registerItem(element: HTMLElement, options: object): unknown };
+} | null = null;
+if (!built) {
+  const { ContextualToolbarController } = await import('/src/foundation/index.ts');
+  await settle(contextualSurface);
+  const range = () => contextualRange;
+  const anchor = {
+    getBoundingRectangle: () =>
+      range()?.getBoundingClientRect() ?? contextualText.getBoundingClientRect(),
+    getClientRectangles: () => [...(range()?.getClientRects() ?? [])],
+    contextElement: contextualText,
+  };
+  contextual = new ContextualToolbarController(contextualSurface, {
+    layer: 'top',
+    placement: 'top',
+    sequentialFocus: false,
+    preserveFocusOnPress: true,
+    finalFocus: () => {
+      contextualText.focus({ preventScroll: true });
+      if (contextualRange) {
+        const selection = getSelection()!;
+        selection.removeAllRanges();
+        selection.addRange(contextualRange.cloneRange());
+      }
+      contextualLog.push('final-focus');
+      return false;
+    },
+  }) as unknown as typeof contextual;
+  for (const id of ['ctx-bold', 'ctx-link', 'ctx-note'])
+    contextual!.toolbar.registerItem(document.getElementById(id)!, { kind: 'button' });
+  document.addEventListener('selectionchange', () => {
+    const selection = getSelection();
+    const current = selection && selection.rangeCount ? selection.getRangeAt(0) : null;
+    if (current && contextualText.contains(current.commonAncestorContainer)) {
+      if (current.collapsed) {
+        contextualRange = null;
+        if (contextual!.shown) contextualLog.push('hide');
+        contextual!.hide();
+      } else {
+        contextualRange = current.cloneRange();
+        if (!contextual!.shown) contextualLog.push('show');
+        contextual!.show(anchor);
+        void contextual!.reposition();
+      }
+    }
+  });
+  contextualText.addEventListener('keydown', (event) => {
+    if (event.key === 'F10' && event.altKey) {
+      event.preventDefault();
+      contextualLog.push(`alt-f10:${contextual!.focus()}`);
+    }
+  });
+  contextualSurface.addEventListener('click', (event) => {
+    const id = pathId(event);
+    if (id?.startsWith('ctx-')) contextualPresses[id] = (contextualPresses[id] ?? 0) + 1;
+  });
+}
+
 Object.assign(window, {
   toolbarFixture: {
     api,
@@ -121,6 +193,14 @@ Object.assign(window, {
       openLog.length = 0;
     },
     dialog: { review, toolbar: dialogToolbar, items: dialogItems, openLog },
+    contextual: {
+      controller: () => contextual,
+      text: contextualText,
+      surface: contextualSurface,
+      presses: () => ({ ...contextualPresses }),
+      log: contextualLog,
+      range: () => contextualRange,
+    },
     press: {
       toolbar: pressToolbar,
       items: pressItems,

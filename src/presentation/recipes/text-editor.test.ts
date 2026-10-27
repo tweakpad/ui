@@ -18,7 +18,12 @@ import {
   inputGroupAddonInsetInline,
   inputGroupBoundary,
 } from './input-group.js';
-import { calloutSurface } from './shared/callout-surface.js';
+import {
+  alertKindSeverity,
+  calloutSurface,
+  calloutTint,
+  calloutTints,
+} from './shared/callout-surface.js';
 import {
   codeInsetBlock,
   codeInsetInline,
@@ -38,10 +43,11 @@ import {
   documentScope,
   documentStrongRules,
 } from './shared/document-content.js';
-import { documentTableRules } from './shared/document-table.js';
+import { documentCellPadding, documentTableRules } from './shared/document-table.js';
 import { selectionFill } from './shared/selection.js';
 import { checkboxRules, nativeChoiceAppearance } from './shared/selection-control.js';
 import { statusAppearance } from './shared/status.js';
+import { floatingToolbarAppearance } from './shared/surface.js';
 import {
   control,
   disabledBackground,
@@ -289,7 +295,9 @@ describe('text editor recipe', () => {
     expect(root[0]?.declarations).toBe(inputGroupBoundary);
     expect(inputGroupBoundary).toMatchObject({ ...fieldBoundary, padding: '0' });
     expect(root[1]?.declarations).toEqual({ '--_tp-text-editor-fill': fieldBoundary.background });
-    expect(ruleAt(root, '&:focus-within')[0]?.declarations).toBe(fieldFocus);
+    expect(ruleAt(root, '&:is(:focus-within, [data-focus-within])')[0]?.declarations).toBe(
+      fieldFocus,
+    );
     expect(ruleAt(root, ':host([data-disabled]) &')[0]?.declarations).toEqual({
       background: disabledBackground,
       '--_tp-text-editor-fill': disabledBackground,
@@ -364,12 +372,23 @@ describe('text editor recipe', () => {
       dividers:
         '& > * > .tp-te-divider, & > * > .tp-te-divider + :not(.tp-te-block-cursor), & > * > .tp-te-divider + .tp-te-block-cursor + *',
       first:
-        '& > * > :nth-child(1 of :not(.tp-te-block-cursor)), & .tp-te-cell > :first-child, & .tp-te-item .tp-te-paragraph',
+        "& > * > :nth-child(1 of [class*='tp-te-']:not(.tp-te-block-cursor)), & .tp-te-cell > :first-child, & .tp-te-item .tp-te-paragraph",
     };
     expect(holdsRun(content, documentFlowRules(flow, selectors))).toBe(true);
     expect(ruleAt(content, selectors.first)[0]?.declarations).toEqual({
       'margin-block-start': '0',
     });
+  });
+
+  it('V-568, dcp-flow: the first block is the first vocabulary element, so an unclassed engine element ahead of a leading atom leaves it without a margin', () => {
+    const first = ruleAt(
+      content,
+      "& > * > :nth-child(1 of [class*='tp-te-']:not(.tp-te-block-cursor)), & .tp-te-cell > :first-child, & .tp-te-item .tp-te-paragraph",
+    );
+    expect(first[0]?.declarations).toEqual({ 'margin-block-start': '0' });
+    expect(content.some((rule) => /:nth-child\(1 of :not\(/u.test(rule.selector ?? ''))).toBe(
+      false,
+    );
   });
 
   it('dcp-binding: every role composes its shared set and restates none', () => {
@@ -537,6 +556,74 @@ describe('text editor recipe', () => {
     ).toContain(selectionFill);
     expect(ruleAt(content, '& .tp-te-callout')[0]?.declarations).toBe(calloutSurface);
   });
+
+  it('uwg-te-req-blocks-6: a callout tone tints the callout surface as an Alert of the same severity, by alert kind or severity name', () => {
+    const tones = content.filter((rule) => rule.selector?.includes('[data-tone='));
+    expect(tones.map((rule) => [rule.selector, rule.declarations])).toEqual([
+      [
+        '& .tp-te-callout[data-tone="tip"], & .tp-te-callout[data-tone="success"]',
+        calloutTint('success'),
+      ],
+      ['& .tp-te-callout[data-tone="warning"]', calloutTint('warning')],
+      [
+        '& .tp-te-callout[data-tone="caution"], & .tp-te-callout[data-tone="danger"]',
+        calloutTint('danger'),
+      ],
+    ]);
+    // The Alert recipe takes the same tints, and Markdown alerts the same kind severities.
+    expect(calloutTints).toEqual(['success', 'warning', 'danger']);
+    expect(alertKindSeverity).toMatchObject({ note: 'informational', tip: 'success' });
+    // The tones follow the surface rule, which they override by specificity.
+    const surface = content.findIndex((rule) => rule.selector === '& .tp-te-callout');
+    expect(content.indexOf(tones[0]!)).toBe(surface + 1);
+  });
+
+  it('uwg-te-req-blocks-5, uwg-te-req-pres-2: the drag preview lies on the floating toolbar surface, composed', () => {
+    const backdrop = ruleAt(content, '& > .block-drag-preview::before');
+    expect(backdrop).toHaveLength(1);
+    expect(backdrop[0]?.declarations).toBe(
+      floatingToolbarAppearance.find((rule) => !rule.selector)?.declarations,
+    );
+  });
+
+  it('uwg-te-req-pres-2: a marked item opposite to its list in direction takes the list inset at its own inline start', () => {
+    const inset = String(listRule('& .tp-te-list')?.declarations['padding-inline-start']);
+    const opposite = listRule(
+      '&:dir(rtl) .tp-te-item:not(:dir(rtl), .tp-te-nested-item, .tp-te-task-item)',
+    );
+    expect(opposite?.declarations).toEqual({
+      'margin-inline-start': inset,
+      'margin-inline-end': `calc(-1 * ${inset})`,
+    });
+    expect(opposite?.selector).toContain(
+      '&:dir(ltr) .tp-te-item:not(:dir(ltr), .tp-te-nested-item, .tp-te-task-item)',
+    );
+    expect(
+      holdsRun(
+        content,
+        documentListRules({ list: '& .tp-te-list', taskList: '& .tp-te-list-task' }),
+      ),
+    ).toBe(true);
+  });
+
+  it("uwg-te-req-pres-2: an item that only wraps the nested list of an opposite item takes that item's place, so the nested list indents as one inside it", () => {
+    const inset = String(listRule('& .tp-te-list')?.declarations['padding-inline-start']);
+    const after =
+      '&:dir(rtl) .tp-te-item:not(:dir(rtl), .tp-te-nested-item, .tp-te-task-item) + .tp-te-nested-item';
+    // A wrapper in the opposite item's direction shifts as that item does.
+    expect(listRule(`${after}:not(:dir(rtl))`)?.declarations).toEqual({
+      'margin-inline-start': inset,
+      'margin-inline-end': `calc(-1 * ${inset})`,
+    });
+    // A wrapper in the list's direction takes the same place, written from its own side.
+    expect(listRule(`${after}:dir(rtl)`)?.declarations).toEqual({
+      'margin-inline-start': `calc(-1 * ${inset})`,
+      'margin-inline-end': inset,
+    });
+    expect(listRule(`${after.replaceAll('rtl', 'ltr')}:dir(ltr)`)).toBeDefined();
+    // Without a stand-in, the shared rules add nothing (Markdown passes none).
+    expect(documentListRules({ list: 'ul', taskList: 'ul.t' })).toHaveLength(2);
+  });
 });
 
 describe('text editor recipe guards', () => {
@@ -615,7 +702,66 @@ describe('text editor recipe guards', () => {
   });
 });
 
+/** The content rule whose selector list holds `selector`. */
+function listRule(selector: string): PresentationRule | undefined {
+  return (textEditorAppearance['text-editor-content'] ?? []).find((rule) =>
+    // Split at the commas of the list, not those inside a pseudo-class's parentheses.
+    (rule.selector ?? '').split(/,\s*(?![^(]*\))/u).includes(selector),
+  );
+}
+
 /** Every declaration of a dictionary, merged, so a guard can assert a non-empty input. */
 function mergedDeclarations(dictionary: PresentationDictionary): Record<string, string | number> {
   return Object.assign({}, ...allRules([dictionary]).map((rule) => rule.declarations));
 }
+
+describe('the table marks', () => {
+  it('uwg-te-req-tables-5: the cell handle is round and two cell paddings across, so centred on the range outline it stays clear of the next cell', () => {
+    const declarations = (key: string) =>
+      mergedDeclarations({ [key]: textEditorAppearance[key] ?? [] });
+    const handle = declarations('text-editor-cell-handle');
+    expect(handle['inline-size']).toBe(`calc(2 * ${documentCellPadding})`);
+    expect(handle['block-size']).toBe(handle['inline-size']);
+    expect(handle['inline-size']).toBe(declarations('text-editor-row-grip')['inline-size']);
+  });
+
+  it('uwg-te-req-pres-6: the add-column Button keeps out of the reach of a cell handle on the last column, on both sides', () => {
+    const rules = textEditorAppearance['text-editor-add-column'] ?? [];
+    // Half the handle: the cell padding, so a handle centred on the table's end edge stops there.
+    expect(rules[0]?.declarations['margin-inline-start']).toBe(documentCellPadding);
+    // The Button is placed from the overlay's left origin: in a right-to-left widget the same gap
+    // is a pull to the left, its inline-end margin.
+    expect(rules[1]).toEqual({
+      selector: '&:dir(rtl)',
+      declarations: {
+        'margin-inline-start': '0',
+        'margin-inline-end': `calc(-1 * ${documentCellPadding})`,
+      },
+    });
+  });
+});
+
+describe('the sticky header copy', () => {
+  it('spaces the blocks of its cells as the content cells do, with no margin before the first', () => {
+    const rules = textEditorAppearance['text-editor-sticky-header'] ?? [];
+    const declarations = (selector: string) =>
+      rules.find((rule) => rule.selector === selector)?.declarations;
+    expect(declarations('& .tp-te-cell > *')).toMatchObject({ 'margin-block': expect.any(String) });
+    expect(declarations('& .tp-te-cell > :first-child')).toEqual({ 'margin-block-start': '0' });
+  });
+
+  it('paints over the raised table marks, so a grip of a row under it stays under it', () => {
+    const z = (key: string) =>
+      Math.max(
+        ...(textEditorAppearance[key] ?? []).map((rule) =>
+          Number(rule.declarations['z-index'] ?? 0),
+        ),
+      );
+    for (const mark of [
+      'text-editor-row-grip',
+      'text-editor-column-grip',
+      'text-editor-cell-handle',
+    ])
+      expect(z('text-editor-sticky-header')).toBeGreaterThan(z(mark));
+  });
+});

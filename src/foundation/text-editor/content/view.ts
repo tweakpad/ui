@@ -139,10 +139,18 @@ class PreviewWriter {
     return element;
   }
 
-  /** The element of a block: it resolves its own direction and takes its logical alignment. */
-  #block(tag: string, classes: string, align: string | null | undefined): HTMLElement {
+  /**
+   * The element of a block: it resolves its own direction (unless `ownDirection` is false) and
+   * takes its logical alignment.
+   */
+  #block(
+    tag: string,
+    classes: string,
+    align: string | null | undefined,
+    ownDirection = true,
+  ): HTMLElement {
     const element = this.element(tag, classes);
-    element.setAttribute('dir', 'auto');
+    if (ownDirection) element.setAttribute('dir', 'auto');
     if (align) element.style.setProperty('text-align', align);
     return element;
   }
@@ -164,14 +172,19 @@ class PreviewWriter {
     }
   }
 
-  /** A textblock: its inline content, with the line box an empty last line needs. */
+  /**
+   * A textblock: its inline content, with the line box an empty last line needs. A list item's
+   * paragraph takes no direction of its own (`ownDirection` false): the item resolves it from the
+   * paragraph's text, which `dir="auto"` would skip in a descendant with a `dir` of its own.
+   */
   textblock(
     tag: string,
     classes: string,
     content: readonly TextEditorPortableInline[],
     align: string | null | undefined,
+    ownDirection = true,
   ): HTMLElement {
-    const element = this.#block(tag, classes, align);
+    const element = this.#block(tag, classes, align, ownDirection);
     this.#inline(element, content);
     if (content.length === 0 || content[content.length - 1]!.type === 'hard-break')
       element.append(this.element('br'));
@@ -226,8 +239,9 @@ class PreviewWriter {
     const element = this.element('li', classes.join(' '));
     element.setAttribute('dir', 'auto');
     if (task) element.append(this.#taskMarker(item.checked));
-    // The alignment stays on the item's paragraph, so nested items do not inherit it.
-    element.append(this.textblock('p', 'tp-te-paragraph', item.content, item.align));
+    // The alignment stays on the item's paragraph, so nested items do not inherit it; its
+    // direction is the item's, as in the engines' item elements.
+    element.append(this.textblock('p', 'tp-te-paragraph', item.content, item.align, false));
     this.blocks(element, item.children);
     return element;
   }

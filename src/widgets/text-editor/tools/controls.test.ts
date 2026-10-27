@@ -16,7 +16,7 @@ vi.mock('../focus.js', () => ({
     policy.asked.push(activation) as unknown as boolean,
 }));
 
-const { renderToolControl } = await import('./controls.js');
+const { renderToolControl, renderToolControls, toolControlKeys } = await import('./controls.js');
 
 const SHORTCUT: KeyShortcut = { aria: 'Control+B', display: 'Ctrl+B', keys: ['Control', 'B'] };
 
@@ -83,6 +83,39 @@ const callback = (template: unknown, name: string, index = 0) =>
   ) => void;
 
 describe('text editor tool controls', () => {
+  it('V-588: renders the same property values for the same tool state, so a render updates no control', () => {
+    const { handlers } = recordingHandlers();
+    const pair = toolItem({
+      id: 'align',
+      kind: 'radio-menu',
+      control: 'toggle-group',
+      value: 'center',
+      items: [toolItem({ id: 'start' }), toolItem({ id: 'center' })],
+    });
+    const objects = (template: unknown) =>
+      bindings(template).filter(
+        ([, value]) => typeof value === 'object' || typeof value === 'function',
+      );
+    for (const item of [
+      toolItem({ shortcut: SHORTCUT }),
+      toolItem({ kind: 'button', control: 'button' }),
+      pair,
+    ]) {
+      const first = objects(renderToolControl(item, handlers));
+      // A new resolution of the same state: new item objects, the same values.
+      const copy = { ...item, items: item.items.map((member) => ({ ...member })) };
+      const again = objects(renderToolControl(copy, handlers));
+      expect(first.length).toBeGreaterThan(0);
+      for (const [index, [name, value]] of first.entries())
+        if (name !== '@click') expect(again[index]?.[1], name).toBe(value);
+    }
+    // The callback depends on the tool alone; the contract follows the shortcut.
+    const plain = renderToolControl(toolItem({ shortcut: undefined }), handlers);
+    const shortcut = renderToolControl(toolItem({ shortcut: SHORTCUT }), handlers);
+    expect(callback(plain, '.onPressedChange')).toBe(callback(shortcut, '.onPressedChange'));
+    expect(callback(plain, '.partContracts')).not.toBe(callback(shortcut, '.partContracts'));
+  });
+
   it('renders a button tool as a ghost icon Button of type button, labelled, with its shortcut (ucl16-button-props, uwg-te-req-a11y-2)', () => {
     const template = renderToolControl(
       toolItem({
@@ -214,6 +247,32 @@ describe('text editor tool controls', () => {
     expect(vi.mocked(handlers.menuOpenChange).mock.calls.map(([target]) => target)).toEqual([menu]);
   });
 
+  it('shows the text of a label trigger in place of its icon, still named by aria-label', () => {
+    const { handlers } = recordingHandlers();
+    const items = [toolItem({ id: 'paragraph', kind: 'toggle', active: true })];
+    const turnInto = toolItem({
+      id: 'turn-into',
+      kind: 'radio-menu',
+      control: 'menu',
+      label: 'Turn into',
+      text: 'Paragraph',
+      icon: undefined,
+      display: 'label',
+      items,
+    });
+    const markup = markupOf(renderToolControl(turnInto, handlers));
+    expect(markup).not.toContain('<tp-icon slot=icon-start');
+    expect(markup).toMatch(/data-tool=turn-into[^>]*>Paragraph<tp-icon slot=icon-end/);
+    expect(bindings(renderToolControl(turnInto, handlers))).toContainEqual([
+      '.ariaLabel',
+      'Turn into',
+    ]);
+    const both = markupOf(renderToolControl({ ...turnInto, display: 'icon-label' }, handlers));
+    expect(both).toMatch(
+      /<tp-icon slot=icon-start[^>]*><\/tp-icon>Paragraph<tp-icon slot=icon-end/,
+    );
+  });
+
   it('exposes a dialog popup and a disabled state on the control (uwg-te-req-a11y-2, uwg-te-req-tools-2)', () => {
     const template = renderToolControl(
       toolItem({ id: 'link', kind: 'link', control: 'button', popup: 'dialog', disabled: true }),
@@ -254,6 +313,73 @@ describe('text editor tool controls', () => {
       toolItem({ id: 'stamp', kind: 'custom', control: 'custom', render: () => 'STAMP' }),
       recordingHandlers().handlers,
     );
-    expect(markupOf(template)).toBe('<span class=toolbar-custom data-tool=stamp>STAMP</span>');
+    expect(markupOf(template)).toMatch(
+      /^<span\s+class=toolbar-custom\s+data-tool=stamp\s+\?data-tool-hidden=false\s+\?inert=false\s*>STAMP<\/span\s*>$/,
+    );
+  });
+
+  it('keeps a hidden tool in place as an unseen, inert control of every kind (uwg-te-req-tools-5, uwg-te-req-pres-5)', () => {
+    const { handlers } = recordingHandlers();
+    const kinds: Partial<TextEditorToolbarItem>[] = [
+      { id: 'undo', kind: 'button', control: 'button' },
+      { id: 'bold', kind: 'toggle', control: 'toggle' },
+      {
+        id: 'blockquote',
+        control: 'toggle-group',
+        pair: true,
+        items: [
+          toolItem({ id: 'blockquote', hidden: true }),
+          toolItem({ id: 'code-block', hidden: true }),
+        ],
+      },
+      {
+        id: 'block-type',
+        kind: 'radio-menu',
+        control: 'menu',
+        items: [toolItem({ id: 'paragraph' })],
+      },
+      { id: 'text-color', kind: 'color', control: 'menu' },
+      { id: 'stamp', kind: 'custom', control: 'custom', render: () => 'STAMP' },
+    ];
+    for (const patch of kinds) {
+      const outer = (hidden: boolean) =>
+        markupOf(renderToolControl(toolItem({ ...patch, hidden: hidden || undefined }), handlers))
+          // The control's own element: up to the end of its first tag.
+          .split('>')[0]!;
+      expect([patch.id, outer(true)]).toEqual([
+        patch.id,
+        expect.stringMatching(/\?data-tool-hidden=true\s+\?inert=true\s*$/),
+      ]);
+      expect([patch.id, outer(false)]).toEqual([
+        patch.id,
+        expect.stringMatching(/\?data-tool-hidden=false\s+\?inert=false\s*$/),
+      ]);
+    }
+    // The members of a hidden pair are marked as well.
+    const pair = markupOf(renderToolControl(toolItem({ ...kinds[2], hidden: true }), handlers));
+    expect(pair.match(/<tp-toggle [^>]*\?inert=true/g)).toHaveLength(2);
+  });
+
+  it('keys the controls of a group by tool, so each tool keeps its element across layout changes', () => {
+    const items = [
+      toolItem({ id: 'undo' }),
+      toolItem({ id: 'redo' }),
+      toolItem({ id: 'bold' }),
+      toolItem({ id: 'redo' }),
+    ];
+    expect(toolControlKeys(items)).toEqual(['undo', 'redo', 'bold', 'redo\u00001']);
+    // Redo keeps its key when the items before it change.
+    expect(toolControlKeys(items.slice(1))[0]).toBe(toolControlKeys(items)[1]);
+    const directive = renderToolControls(items, recordingHandlers().handlers) as unknown as {
+      values: [
+        readonly TextEditorToolbarItem[],
+        (item: TextEditorToolbarItem, index: number) => unknown,
+        (item: TextEditorToolbarItem, index: number) => unknown,
+      ];
+    };
+    const [listed, key, template] = directive.values;
+    expect(listed).toBe(items);
+    expect(listed.map((item, index) => key(item, index))).toEqual(toolControlKeys(items));
+    expect(markupOf(template(items[0]!, 0))).toContain('data-tool=undo');
   });
 });

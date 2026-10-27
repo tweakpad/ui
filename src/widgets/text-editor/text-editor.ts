@@ -33,12 +33,13 @@ import { TpElement } from '../../foundation/element.js';
 import { composedContains, deepActiveElement } from '../../foundation/focus.js';
 import { TpValueChangeEvent, TpValueCommitEvent } from '../../foundation/events.js';
 import { TpFormElement, type FieldAssociationAttributes } from '../../foundation/form-element.js';
-import { windowFrames } from '../../foundation/frame-loop.js';
-import { adoptStyleText } from '../../foundation/generated-style.js';
+import { frameLoopFor, windowFrames, type FrameSubscription } from '../../foundation/frame-loop.js';
+import { adoptStyleText, SuppressionFallbackStyle } from '../../foundation/generated-style.js';
 import { presenceRole } from '../../foundation/motion.js';
 import { containNestedEvents } from '../../foundation/nested-events.js';
 import { isTextEditorFormat, type TextEditorAction } from '../../foundation/text-editor/actions.js';
 import { textEditorTools } from '../../foundation/text-editor/builtin-tools.js';
+import { TEXT_MECHANICS_INHERITED } from '../../foundation/text-editor/content/mechanics.js';
 import type { TextEditorPortableDocument } from '../../foundation/text-editor/content/portable.js';
 import { renderPortablePreview } from '../../foundation/text-editor/content/view.js';
 import {
@@ -63,7 +64,10 @@ import {
   resolveTextEditorLayout,
   type TextEditorLayout,
 } from '../../foundation/text-editor/layout.js';
-import type { TextEditorEngineState } from '../../foundation/text-editor/model.js';
+import type {
+  TextEditorEngineState,
+  TextEditorSelection,
+} from '../../foundation/text-editor/model.js';
 import type { TextEditorNodeDefinition } from '../../foundation/text-editor/nodes.js';
 import {
   resolveTextEditorStrings,
@@ -99,6 +103,7 @@ import {
 import { TextEditorBlocks, type TextEditorBlocksHost } from './views/blocks.js';
 import { TextEditorToolbar, type TextEditorToolbarHandlers } from './views/toolbar.js';
 import { TextEditorTables, type TextEditorTablesHost } from './views/tables.js';
+import { reportTextEditorLane } from './views/lanes.js';
 import { TextEditorPopups, type TextEditorPopupsHost } from './views/popups.js';
 
 /** The motion roles of the widget's surfaces. */
@@ -129,6 +134,9 @@ const NESTED_EVENT_TYPES = Object.freeze([
   'tp-select-source-change',
 ]);
 
+/** The id of the hidden instructions text in the shadow root, which the editing root's description lists. */
+export const TEXT_EDITOR_INSTRUCTIONS_ID = 'tp-text-editor-instructions';
+
 /** One frozen empty list: the default tools and nodes, and the reserved keys without an engine. */
 const EMPTY: readonly never[] = Object.freeze([]);
 
@@ -142,6 +150,11 @@ export interface TextEditorRootAttributeInput {
   readonly hostLabel: string | null;
   /** The Field description and error node ids; null without them. */
   readonly describedBy: string | null;
+  /**
+   * The id of the hidden instructions text, which the description lists last while the editor is
+   * editable; null or absent without it (the slash menu inactive).
+   */
+  readonly instructions?: string | null | undefined;
   readonly strings: TextEditorStrings;
   readonly placeholder: string;
   readonly readOnly: boolean;
@@ -168,7 +181,11 @@ export function textEditorRootAttributes(
     role: 'textbox',
     'aria-multiline': 'true',
     'aria-label': name,
-    'aria-describedby': input.describedBy,
+    // The instructions name the slash trigger and Alt+F10, which act only while editable.
+    'aria-describedby':
+      [input.describedBy, input.readOnly || input.disabled ? null : input.instructions]
+        .filter((id) => id)
+        .join(' ') || null,
     'aria-placeholder': input.placeholder === '' ? null : input.placeholder,
     'aria-readonly': input.readOnly ? 'true' : null,
     'aria-disabled': input.disabled ? 'true' : null,
@@ -205,7 +222,30 @@ export function textEditorViewportTabIndex(disabled: boolean): '-1' | null {
   return disabled ? '-1' : null;
 }
 
+/**
+ * The inherited text mechanics of the content part while the content-security policy suppresses
+ * generated styles, the engine stylesheet included: the editing root and the preview inherit them,
+ * so that text keeps its spaces and wraps on every engine. Otherwise the stylesheet carries them.
+ */
+export function textEditorSuppressionFallback(
+  owner: HTMLElement,
+  content: HTMLElement,
+): SuppressionFallbackStyle {
+  return new SuppressionFallbackStyle(owner, content, TEXT_MECHANICS_INHERITED);
+}
+
 // Placement (uwg-te-req-engine-8, uwg-te-req-evt-5) -----------------------------------------
+
+/**
+ * The tree root whose capture listeners receive the form events of the element's form owner: its
+ * own root (the document, or the shadow root that holds it). A form owner is always in the
+ * element's tree, and `submit` and `formdata` do not cross shadow boundaries, so a listener on
+ * the document misses a form inside a shadow root. `null` while the element is not in a tree.
+ */
+export function formEventRoot(element: Node): Document | ShadowRoot | null {
+  const root = element.getRootNode();
+  return root.nodeType === 9 || root.nodeType === 11 ? (root as Document | ShadowRoot) : null;
+}
 
 /**
  * The innermost closed shadow root that `node` sits under, walking its root node and each root's
@@ -234,6 +274,23 @@ export function effectiveTextEditorFormat(format: unknown): TextEditorFormat {
   return isTextEditorFormat(format) ? format : 'html';
 }
 
+/**
+ * Whether the focused editing root paints no caret: with no selection (a cleared one) and with a
+ * block selection, which the overlay paints; the caret that the engine or the browser keeps in
+ * the root (one engine keeps a collapsed one at the root's start in block mode) is then hidden.
+ */
+export function textEditorCaretHidden(kind: TextEditorSelection['kind']): boolean {
+  return kind === 'none' || kind === 'blocks';
+}
+
+/**
+ * The `format` attribute's value as the property: a removed attribute restores the default
+ * `html` rather than `null`, so it is not reported as a format outside the domain.
+ */
+export const textEditorFormatConverter = {
+  fromAttribute: (value: string | null): string => value ?? 'html',
+};
+
 const LAYOUT_KEYS = Object.keys(defaultTextEditorLayout) as (keyof TextEditorLayout)[];
 
 /**
@@ -259,12 +316,31 @@ export function effectiveTextEditorLayout(
 
 // Field and forms (uwg-te-req-value-1, uwg-te-req-value-4, ucl17-field-q1) ------------------
 
-/** '' while the document is empty, otherwise the handle (null before ready); never a serialization. */
+/**
+ * '' while the document is empty, otherwise the handle (null before ready); never a serialization.
+ * The handle's own `empty` decides once there is one: Field reads the value on the change event,
+ * before the state of that revision is published.
+ */
 export function textEditorFieldValue(
   empty: boolean,
   value: TextEditorSnapshot | null,
 ): '' | TextEditorSnapshot | null {
-  return empty ? '' : value;
+  return (value ? value.empty : empty) ? '' : value;
+}
+
+/**
+ * The `tp-field-value` of the first ready (reason `initial`): the mounted document's field value
+ * after the one a Field read before ready; none when they are equal (an empty document).
+ */
+export function initialFieldValueDetail(
+  previousValue: '' | null,
+  value: '' | TextEditorSnapshot | null,
+): {
+  readonly value: '' | TextEditorSnapshot | null;
+  readonly previousValue: '' | null;
+  readonly reason: 'initial';
+} | null {
+  return value === previousValue ? null : { value, previousValue, reason: 'initial' };
 }
 
 /**
@@ -384,6 +460,14 @@ export function textEditorResolutionSteps(
   if (engine) steps.push('engine');
   if (router) steps.push('router');
   return steps;
+}
+
+/**
+ * The severity of a tooling diagnostic: an explicitly placed tool that the engine cannot serve is
+ * information (`text-editor-tool-unavailable`, G2-D21), every other finding a warning.
+ */
+export function textEditorToolingSeverity(code: string): 'info' | 'warning' {
+  return code === 'text-editor-tool-unavailable' ? 'info' : 'warning';
 }
 
 /** The resolved tooling of an input, with the registry's and the layout's diagnostics in order. */
@@ -550,7 +634,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     value: { attribute: false, noAccessor: true },
     engine: { attribute: false },
     defaultValue: { attribute: 'default-value' },
-    format: { type: String },
+    format: { converter: textEditorFormatConverter },
     placeholder: { type: String },
     label: { type: String },
     stickyTableHeaders: { type: Boolean, attribute: 'sticky-table-headers' },
@@ -613,13 +697,24 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
   /** The document the preview shows; undefined while none is rendered. */
   #previewDocument: TextEditorPortableDocument | null | undefined = undefined;
   #formEntry: string | null = null;
-  /** The document whose form events the widget listens to while connected. */
-  #formDocument: Document | null = null;
+  /** The tree root (document or shadow root) whose form events the widget listens to. */
+  #formRoot: Document | ShadowRoot | null = null;
   #edited = false;
+  /**
+   * The field value a Field read before the first ready (`''` or `null`), which the first ready
+   * reports as the previous value of its `initial` field value; `undefined` once reported.
+   */
+  #preReadyFieldValue: '' | null | undefined = null;
+  /** While `firstUpdated` connects the controller, whose mount can settle within that call. */
+  #connecting = false;
+  /** The frame that renders a focus change (`#focusChanged`), and whether no render followed it. */
+  #focusFrame: FrameSubscription | null = null;
+  #focusPending = false;
   #unsubscribe: (() => void) | null = null;
   #root: HTMLElement | null = null;
   #viewport: HTMLElement | null = null;
   #content: HTMLElement | null = null;
+  #suppressionFallback: SuppressionFallbackStyle | null = null;
   #overlay: HTMLElement | null = null;
   #underlay: HTMLElement | null = null;
   readonly #blocks: TextEditorBlocks;
@@ -644,6 +739,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     this.#router = new TextEditorRouter({
       parts: () => ({
         toolbar: this.#query('text-editor-toolbar'),
+        selectionToolbar: this.#query('text-editor-selection-toolbar'),
         content: this.#content,
       }),
       selection: () =>
@@ -653,6 +749,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       direction: () => this.direction,
       request: (proposal) => this.#controller.request(proposal),
       selectRootContent: (event) => this.#controller.selectContent(event),
+      extendRootSelection: (event, direction) => this.#controller.extendSelection(direction, event),
       editingKey: (event) => this.#blocks.editingKey(event),
       blockTool: (id, event) => this.#blocks.blockTool(id, event),
       contextualControls: (event) => void this.#focus.cycleContextual(event),
@@ -661,13 +758,14 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       pointAt: (x, y) => this.#popups.pointAt(x, y),
       uploadImages: (files, at, reason, event) =>
         this.#popups.uploadImages(files, at, reason, event),
+      canLink: (href) => this.#controller.can({ type: 'link.set', href }),
     });
     this.#focus = new TextEditorFocus({
       element: this,
       contentElement: () => this.#content,
       readyInstance: () => (this.#controller.status === 'ready' ? this.#instance : null),
       access: () => this.#access(),
-      focusChanged: () => this.requestUpdate(),
+      focusChanged: () => this.#focusChanged(),
       commitPending: (event) => this.#controller.commitPending(event),
     });
     this.#toolbarHandlers = Object.freeze<TextEditorToolbarHandlers>({
@@ -847,14 +945,15 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
         this.#blocks.stateChanged();
         this.#tables.stateChanged();
         this.#popups.stateChanged();
-        this.requestUpdate();
+        this.#requestRender();
       },
     );
     this.#blocks.connected(this.ownerDocument.defaultView);
-    this.#listenForms(this.ownerDocument);
+    this.#listenForms(formEventRoot(this));
     this.#popups.connected();
     this.#checkPlacement();
     if (!this.hasUpdated) return;
+    this.#suppressionFallback?.connect();
     this.#toolbar.connected();
     this.#observeGeometry();
     this.#tables.connected();
@@ -864,16 +963,18 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.#cancelFocusFrame();
     this.#router.detach();
     this.#focus.detach();
     this.#toolbar.disconnected();
+    this.#suppressionFallback?.disconnect();
     this.#geometry.release();
     this.#tables.disconnected();
     this.#popups.disconnected();
     this.#unsubscribe?.();
     this.#unsubscribe = null;
     this.#listenForms(null);
-    this.#announcer.clear();
+    this.#announcer.release();
     this.#customization.release();
     this.#blocks.disconnected();
     this.#controller.disconnect();
@@ -881,12 +982,16 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
 
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
+    // This render shows the current focus.
+    this.#focusPending = false;
     if (changed.has('format') && !isTextEditorFormat(this.format))
       this.diagnose(
         'text-editor-format-invalid',
         `The format "${String(this.format)}" is not html, markdown, text or json; html is used.`,
       );
     this.#resolve();
+    if (this.#preReadyFieldValue !== undefined && this.value === null)
+      this.#preReadyFieldValue = this.fieldValue as '' | null;
   }
 
   protected override firstUpdated(changed: PropertyValues<this>): void {
@@ -896,13 +1001,27 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     this.#content = this.#query('text-editor-content');
     this.#overlay = this.#query('text-editor-overlay');
     this.#underlay = (this.renderRoot as ShadowRoot).querySelector<HTMLElement>('.underlay');
+    // Before the engine mounts: it reads the root's mechanics once, at the first edit.
+    if (this.#content) {
+      this.#suppressionFallback = textEditorSuppressionFallback(this, this.#content);
+      if (this.isConnected) this.#suppressionFallback.connect();
+    }
     this.#syncPreview();
+    // A host removed before its first update ran sets up no views, which would keep it reachable
+    // (V-585); `connectedCallback` sets them up when it connects again.
+    if (!this.isConnected) return;
     this.#toolbar.connected();
     this.#observeGeometry();
     this.#tables.connected();
-    this.#controller.connect();
     // The mount's status renders in the next update, requested once this one has completed: an
-    // update requested from inside `firstUpdated` would run again at once.
+    // update requested from inside `firstUpdated` would run again at once, so a mount that
+    // settles (or fails) while the controller connects requests nothing itself.
+    this.#connecting = true;
+    try {
+      this.#controller.connect();
+    } finally {
+      this.#connecting = false;
+    }
     if (this.#controller.status !== 'idle')
       void this.updateComplete.then(
         () => this.requestUpdate(),
@@ -918,6 +1037,9 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     this.toggleAttribute('data-filled', !state.empty);
     this.toggleAttribute('data-dragging', this.#blocks.drag.active);
     this.toggleAttribute('data-gutter', this.#effectiveLayout.gutter);
+    // The removal released the views; an update requested before it and run after it must not set
+    // them up again (observers, listeners, timers), which only a reconnection does.
+    if (!this.isConnected) return;
     this.#toolbar.updated();
     this.#tables.updated();
     this.#blocks.updated();
@@ -932,14 +1054,18 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
   /* eslint-disable lit-a11y/click-events-have-key-events */
   protected override render(): TemplateResult {
     const disabled = this.effectiveDisabled;
-    return html`<div part="text-editor">
+    // Focus anywhere in the widget, its top-layer popups included (`uwg-te-req-pres-1`).
+    return html`<div part="text-editor" ?data-focus-within=${this.#focus.focused}>
       ${this.#toolbar.render()}
       <div
         part="text-editor-viewport"
         tabindex=${textEditorViewportTabIndex(disabled) ?? nothing}
         @mousedown=${this.#viewportPress}
       >
-        <div class="surface">
+        <div
+          class="surface"
+          ?data-unplaced=${textEditorCaretHidden(this.#controller.state.selection.kind)}
+        >
           <div class="underlay"></div>
           <div
             part="text-editor-content"
@@ -951,7 +1077,8 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
           </div>
         </div>
       </div>
-      ${this.#renderStatus()}${this.#tables.renderSurfaces()}${this.#popups.render()}
+      ${this.#renderStatus()}${this.#blocks.renderMenu()}${this.#tables.renderSurfaces()}${this.#popups.render()}
+      <div id=${TEXT_EDITOR_INSTRUCTIONS_ID} hidden>${this.#strings().instructions}</div>
     </div>`;
   }
 
@@ -1054,14 +1181,18 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       request: (proposal) => this.#controller.request(proposal),
       imageUpload: () => this.imageUpload,
       focusEditing: () => void this.#focus.focusEditing('restore').catch(() => {}),
-      announce: (message) => this.#announcer.announce(message, { key: 'suggestion' }),
+      announce: (message, options) => this.#announcer.announce(message, options),
       diagnose: (code, message) => this.diagnose(code, message),
       dragging: () => this.#blocks.drag.active,
+      controlMenuOpen: () => this.#tables.chrome.menuOpen || this.#blocks.menu.open,
+      selectionKeepClear: () => this.#tables.chrome.columnGripBand(),
       referencesChanged: () => this.#applyRootAttributes(),
       menuOpened: (trigger, modality) => this.#focus.menuOpened(trigger, modality),
       menuClosed: (changed) => this.#focus.menuClosed(changed),
-      transientOpened: (owner, close) => this.#focus.transientOpened(owner, close),
+      transientOpened: (owner, close, reason) => this.#focus.transientOpened(owner, close, reason),
       transientClosed: (owner) => this.#focus.transientClosed(owner),
+      lane: (surface, open, reason) => reportTextEditorLane({ host: this, surface, open, reason }),
+      editReason: () => this.#controller.lastChangeReason,
       menuFinalFocus: this.#focus.menuFinalFocus,
       registerContextual: (surface) => this.#focus.registerContextual(surface),
       cycleContextual: (event) => this.#focus.cycleContextual(event),
@@ -1075,12 +1206,14 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       geometry: this.#geometry,
       instance: ready,
       selection: () => ready()?.getState().selection ?? this.#controller.state.selection,
+      wholeDocument: () => this.#controller.holdsWholeDocument(),
+      contentPressed: () => this.#popups.pressed(),
       strings: () => this.#strings(),
       layout: () => this.#tooling?.layout ?? this.#effectiveLayout,
       access: () => this.#access(),
       direction: () => this.direction,
       registry: () => this.#tooling?.registry ?? null,
-      toolContext: (surface) => this.#controller.toolContext(surface),
+      toolContext: (surface, target) => this.#controller.toolContext(surface, undefined, target),
       toolEnabled: (tool, context) => this.#controller.isToolEnabled(tool, context),
       shortcut: (id) => this.#router.shortcut(id),
       request: (proposal) => this.#controller.request(proposal),
@@ -1122,16 +1255,60 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     this.#previewDocument = undefined;
     this.emit<TextEditorReadyDetail>('tp-text-editor-ready', { native });
     this.#refreshFormValue();
+    this.#reportInitialFieldValue();
     this.#blocks.ready();
     this.#focus.ready();
     this.#geometry.invalidate('instance');
-    this.requestUpdate();
+    this.#requestRender();
+  }
+
+  /**
+   * The first ready gives a Field the mounted document as its initial value (`tp-field-value`
+   * with reason `initial`), so that the content applied at mount is neither filled late nor
+   * dirty; an empty document keeps the empty text it read before.
+   */
+  #reportInitialFieldValue(): void {
+    const previousValue = this.#preReadyFieldValue;
+    if (previousValue === undefined) return;
+    this.#preReadyFieldValue = undefined;
+    const detail = initialFieldValueDetail(previousValue, this.fieldValue);
+    if (detail) this.emit('tp-field-value', detail);
   }
 
   #failed(error: unknown): void {
     this.emit<TextEditorErrorDetail>('tp-text-editor-error', { error });
     this.#geometry.invalidate('instance');
-    this.requestUpdate();
+    this.#requestRender();
+  }
+
+  /** Requests an update, unless `firstUpdated` is connecting: it requests one once it completed. */
+  #requestRender(): void {
+    if (!this.#connecting) this.requestUpdate();
+  }
+
+  /**
+   * Renders a focus change of the widget (the root's `data-focus-within`) in the next frame, unless
+   * a render ran before: the state that the same change publishes renders the element in its
+   * frame, so a press that moves focus between editors renders each once, not once in its focus
+   * event and again in the frame. While that publication waits, the check moves to the next frame.
+   * `:focus-within` styles the root at once (`uwg-te-req-perf-1`).
+   */
+  #focusChanged(): void {
+    // The table chrome follows at once, in its own layer pass, without a render of the element.
+    this.#tables.focusChanged();
+    this.#focusPending = true;
+    this.#focusFrame ??= frameLoopFor(this.ownerDocument.defaultView ?? window).subscribe(() => {
+      if (!this.#focusPending || !this.isConnected) return false;
+      if (this.#controller.publicationPending) return true;
+      this.requestUpdate();
+      return false;
+    });
+    this.#focusFrame.wake();
+  }
+
+  #cancelFocusFrame(): void {
+    this.#focusFrame?.release();
+    this.#focusFrame = null;
   }
 
   #valueChanged(change: TextEditorValueChange): void {
@@ -1188,7 +1365,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     if (steps.includes('registry') || !tooling) {
       tooling = resolveTextEditorTooling(next);
       for (const { code, message } of tooling.diagnostics)
-        this.diagnose(code, message, { defer: true });
+        this.diagnose(code, message, { defer: true, severity: textEditorToolingSeverity(code) });
     } else if (steps.includes('strings'))
       tooling = { ...tooling, strings: resolveTextEditorStrings(next.strings) };
     this.#tooling = tooling;
@@ -1198,6 +1375,8 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       else applyTextEditorResolution(this.#controller, [step], next, tooling);
     this.#resolution = next;
     this.#updatePlaceholder();
+    // Access and layout decide whether the description lists the instructions.
+    this.#applyRootAttributes();
     // Before ready the entry is the pending content as given, with no serialization.
     const enabled = previous !== null && previous.disabled && !next.disabled;
     if (this.#controller.status !== 'ready' || previous?.format !== next.format || enabled)
@@ -1233,6 +1412,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       request: (proposal) => this.#controller.request(proposal),
       announce: (message) => this.#announcer.announce(message),
       focusEditing: () => void this.#focus.focusEditing('restore').catch(() => {}),
+      focused: () => this.#focus.focused,
       registerContextual: (surface) => this.#focus.registerContextual(surface),
       cycleContextual: (event) => this.#focus.cycleContextual(event),
       stickyHeaders: () => this.stickyTableHeaders,
@@ -1241,8 +1421,10 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       toolbar: () => this.#query('text-editor-toolbar'),
       requestUpdate: () => this.requestUpdate(),
       updateComplete: () => this.updateComplete,
-      transientOpened: (owner, close) => this.#focus.transientOpened(owner, close),
+      transientOpened: (owner, close, reason) => this.#focus.transientOpened(owner, close, reason),
       transientClosed: (owner) => this.#focus.transientClosed(owner),
+      pickerLane: (open, reason) =>
+        reportTextEditorLane({ host: this, surface: 'table-size', open, reason }),
     };
   }
 
@@ -1286,6 +1468,9 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       label: this.label,
       hostLabel: this.getAttribute('aria-label'),
       describedBy: this.#describedBy,
+      instructions: (this.#tooling?.layout ?? this.#effectiveLayout).suggestions.includes('slash')
+        ? TEXT_EDITOR_INSTRUCTIONS_ID
+        : null,
       strings: this.#strings(),
       placeholder: this.placeholder,
       readOnly: this.readOnly,
@@ -1343,17 +1528,17 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
   };
 
   /**
-   * Listens to the form events of `document`, or of none: the document is remembered, since a
-   * move into another document has already changed `ownerDocument` when the widget disconnects.
+   * Listens to the form events of a tree root, or of none: the root is remembered, since a move
+   * into another tree has already changed it when the widget disconnects.
    */
-  #listenForms(document: Document | null): void {
-    const current = this.#formDocument;
-    if (current === document) return;
+  #listenForms(root: Document | ShadowRoot | null): void {
+    const current = this.#formRoot;
+    if (current === root) return;
     current?.removeEventListener('submit', this.#submitCapture, true);
     current?.removeEventListener('formdata', this.#formDataCapture, true);
-    this.#formDocument = document;
-    document?.addEventListener('submit', this.#submitCapture, true);
-    document?.addEventListener('formdata', this.#formDataCapture, true);
+    this.#formRoot = root;
+    root?.addEventListener('submit', this.#submitCapture, true);
+    root?.addEventListener('formdata', this.#formDataCapture, true);
   }
 
   /** Reports placement under a closed ancestor shadow root, once per connection. */

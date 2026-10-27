@@ -1,5 +1,6 @@
 import { composedParent } from './focus.js';
 import { observeResize, observeScroll } from './observation.js';
+import { POSITIONING_PROPERTIES } from './positioning-properties.js';
 import { visualViewportBox } from './scroll.js';
 export type Side = 'top' | 'right' | 'bottom' | 'left';
 export type LogicalSide = Side | 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
@@ -100,22 +101,58 @@ export interface PositioningOffsetContext {
   anchor: { width: number; height: number };
   positioner: { width: number; height: number };
 }
-/** Resolve the theme spacing seed for the numeric positioning API, including calc()/rem. */
+/** Resolved spacing per document, by everything a measurement of it depends on. */
+const resolvedSpacing = new WeakMap<Document, Map<string, number>>();
+
+/**
+ * Resolve the theme spacing seed for the numeric positioning API, including calc()/rem. A probe
+ * measures each distinct seed once: later calls with the same seed, units, font size, root font
+ * size (and viewport, for viewport units) read the cache and leave the document untouched, so
+ * positioning passes that ask for it do not mutate the DOM they observe.
+ */
 export function themeSpacing(element: HTMLElement, units = 1): number {
   const document = element.ownerDocument;
   const view = document.defaultView;
   if (!view || !document.body) return 0;
   const style = view.getComputedStyle(element);
+  const seed = style.getPropertyValue('--tp-spacing').trim() || '0px';
+  const root = /rem|rlh|rex|rch|ric|rcap/i.test(seed)
+    ? view.getComputedStyle(document.documentElement).fontSize
+    : '';
+  const viewport = /\d(?:d|s|l)?v(?:w|h|i|b|min|max)\b/i.test(seed)
+    ? `${view.innerWidth}x${view.innerHeight}`
+    : '';
+  const key = `${seed}|${units}|${style.fontSize}|${root}|${viewport}`;
+  let cache = resolvedSpacing.get(document);
+  if (!cache) resolvedSpacing.set(document, (cache = new Map()));
+  const cached = cache.get(key);
+  if (cached !== undefined) return cached;
   const probe = document.createElement('span');
   probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;contain:strict;';
-  probe.style.inlineSize = `calc(${style.getPropertyValue('--tp-spacing').trim() || '0px'} * ${units})`;
+  probe.style.inlineSize = `calc(${seed} * ${units})`;
   probe.style.fontSize = style.fontSize;
   document.body.append(probe);
   try {
-    return probe.getBoundingClientRect().width;
+    const width = probe.getBoundingClientRect().width;
+    if (cache.size >= 64) cache.clear();
+    cache.set(key, width);
+    return width;
   } finally {
     probe.remove();
   }
+}
+
+/** Sets an inline declaration only when its value changes (`null` removes it). */
+function writeStyle(element: HTMLElement, name: string, value: string | null): void {
+  const style = element.style;
+  if (value === null) {
+    if (style.getPropertyValue(name)) style.removeProperty(name);
+  } else if (style.getPropertyValue(name) !== value) style.setProperty(name, value);
+}
+
+/** Sets a `data-*` attribute only when its value changes. */
+function writeData(element: HTMLElement, key: string, value: string): void {
+  if (element.dataset[key] !== value) element.dataset[key] = value;
 }
 
 export type GeometryOffset = number | ((context: PositioningOffsetContext) => number);
@@ -646,7 +683,7 @@ function computeStages(
 
   if (options.arrow) {
     // Directional Arrow styles must settle before measuring cross-axis/depth extents.
-    options.arrow.dataset.side = side;
+    writeData(options.arrow, 'side', side);
     const measured = options.arrow.getBoundingClientRect();
     const arrowRect = rect(
       0,
@@ -717,7 +754,7 @@ export function resolveSide(side: LogicalSide, element: Element): Side {
   if (side === 'block-end') return oppositeSide(blockStart);
   return side;
 }
-function overflowAncestors(element: Element): Element[] {
+function overflowAncestors(element: Element, clipping = false): Element[] {
   const result: Element[] = [];
   for (let current = composedParent(element); current; current = composedParent(current)) {
     if (!(current instanceof Element)) continue;
@@ -732,6 +769,9 @@ function overflowAncestors(element: Element): Element[] {
       )
     )
       result.push(current);
+    // No ancestor of a top-layer element clips it or its content, such as an item of a
+    // menu that anchors a submenu.
+    if (clipping && current.matches(':popover-open, :modal')) break;
   }
   return result;
 }
@@ -766,7 +806,9 @@ function clippingRect(
     return intersect(root, boundary);
   const elements =
     boundary === 'clipping-ancestors'
-      ? overflowAncestors(element).filter((ancestor) => ancestor !== element.ownerDocument.body)
+      ? overflowAncestors(element, true).filter(
+          (ancestor) => ancestor !== element.ownerDocument.body,
+        )
       : Array.isArray(boundary)
         ? boundary
         : [boundary];
@@ -862,15 +904,24 @@ function clearPosition(surface: HTMLElement): void {
   surface.style.removeProperty('translate');
   surface.style.removeProperty('left');
   surface.style.removeProperty('top');
-  for (const property of [
-    '--tp-anchor-width',
-    '--tp-anchor-height',
-    '--tp-available-width',
-    '--tp-available-height',
-    '--tp-transform-origin',
-  ]) {
-    surface.style.removeProperty(property);
+  for (const property of POSITIONING_PROPERTIES) surface.style.removeProperty(property);
+}
+
+/**
+ * Whether mutation records can change the scroll ancestry of the nodes in `chain` (the anchor
+ * context and the surface with their composed ancestors): a node of the chain was added or
+ * removed. Mutations elsewhere, the surface's own content and the probes of `themeSpacing`
+ * among them, cannot.
+ */
+function movesChain(records: readonly MutationRecord[], chain: () => ReadonlySet<Node>): boolean {
+  let nodes: ReadonlySet<Node> | null = null;
+  for (const record of records) {
+    if (record.type !== 'childList') continue;
+    for (const list of [record.removedNodes, record.addedNodes])
+      for (let index = 0; index < list.length; index++)
+        if ((nodes ??= chain()).has(list[index]!)) return true;
   }
+  return false;
 }
 
 export function positionSurface(
@@ -910,11 +961,13 @@ export function positionSurface(
     // clamps its scroller to zero before the final available size is restored.
     if (options.constrainSize && !current) {
       const padding = paddingRecord(options.padding);
-      surface.style.setProperty(
+      writeStyle(
+        surface,
         '--tp-available-width',
         `${Math.max(0, clipping.width - padding.left - padding.right)}px`,
       );
-      surface.style.setProperty(
+      writeStyle(
+        surface,
         '--tp-available-height',
         `${Math.max(0, clipping.height - padding.top - padding.bottom)}px`,
       );
@@ -948,8 +1001,8 @@ export function positionSurface(
       anchorRect.right <= anchorClip.left ||
       anchorRect.left >= anchorClip.right;
     if (options.constrainSize) {
-      surface.style.setProperty('--tp-available-width', `${result.availableWidth}px`);
-      surface.style.setProperty('--tp-available-height', `${result.availableHeight}px`);
+      writeStyle(surface, '--tp-available-width', `${result.availableWidth}px`);
+      writeStyle(surface, '--tp-available-height', `${result.availableHeight}px`);
       if (
         surface.offsetWidth !== surfaceRect.width ||
         surface.offsetHeight !== surfaceRect.height
@@ -975,7 +1028,7 @@ export function positionSurface(
     }
     // Resolve the containing block using the requested strategy, including when
     // changing from fixed to absolute while the surface is already open.
-    surface.style.position = result.strategy;
+    writeStyle(surface, 'position', result.strategy);
     if (result.strategy !== 'fixed') {
       const offsetParent = topLayer ? null : surface.offsetParent;
       if (offsetParent instanceof HTMLElement) {
@@ -997,33 +1050,28 @@ export function positionSurface(
     }
     const x = roundToDevicePixel(result.x, ownerWindow);
     const y = roundToDevicePixel(result.y, ownerWindow);
-    if (options.transformPositioning ?? true) {
-      surface.style.left = '0px';
-      surface.style.top = '0px';
-      surface.style.translate = `${x}px ${y}px`;
-    } else {
-      surface.style.removeProperty('translate');
-      surface.style.left = `${x}px`;
-      surface.style.top = `${y}px`;
-    }
-    surface.dataset.positioned = '';
-    surface.dataset.placement = result.placement;
+    // Every write below happens only when its value changes: a pass whose geometry did not change
+    // leaves the surface untouched, so observers of the surface do not wake.
+    const transform = options.transformPositioning ?? true;
+    writeStyle(surface, 'left', transform ? '0px' : `${x}px`);
+    writeStyle(surface, 'top', transform ? '0px' : `${y}px`);
+    writeStyle(surface, 'translate', transform ? `${x}px ${y}px` : null);
+    writeData(surface, 'positioned', '');
+    writeData(surface, 'placement', result.placement);
     const resolved = placementParts(result.placement);
-    surface.dataset.side = resolved.side;
-    surface.dataset.align = resolved.alignment;
+    writeData(surface, 'side', resolved.side);
+    writeData(surface, 'align', resolved.alignment);
     surface.toggleAttribute('data-anchor-hidden', result.stageData.hide.referenceHidden);
     surface.toggleAttribute('data-reference-hidden', result.stageData.hide.referenceHidden);
     surface.toggleAttribute('data-escaped', result.stageData.hide.escaped);
-    surface.style.setProperty('--tp-anchor-width', `${result.anchorWidth}px`);
-    surface.style.setProperty('--tp-anchor-height', `${result.anchorHeight}px`);
-    surface.style.setProperty('--tp-available-width', `${result.availableWidth}px`);
-    surface.style.setProperty('--tp-available-height', `${result.availableHeight}px`);
-    surface.style.setProperty('--tp-transform-origin', result.transformOrigin);
-    if (options.matchReferenceWidth) surface.style.minWidth = `${result.anchorWidth}px`;
+    writeStyle(surface, '--tp-anchor-width', `${result.anchorWidth}px`);
+    writeStyle(surface, '--tp-anchor-height', `${result.anchorHeight}px`);
+    writeStyle(surface, '--tp-available-width', `${result.availableWidth}px`);
+    writeStyle(surface, '--tp-available-height', `${result.availableHeight}px`);
+    writeStyle(surface, '--tp-transform-origin', result.transformOrigin);
+    if (options.matchReferenceWidth) writeStyle(surface, 'min-width', `${result.anchorWidth}px`);
     if (options.arrow && result.stageData.arrow) {
       const arrow = result.stageData.arrow;
-      options.arrow.style.removeProperty('left');
-      options.arrow.style.removeProperty('top');
       const vertical = resolved.side === 'top' || resolved.side === 'bottom';
       const shifted = vertical ? result.stageData.shift.x !== 0 : result.stageData.shift.y !== 0;
       const staticOffset = !shifted ? options.arrowStaticOffset : undefined;
@@ -1035,11 +1083,11 @@ export function positionSurface(
             : /^-?\d+(?:\.\d+)?(?:%|px)$/.test(staticOffset)
               ? staticOffset
               : undefined;
-      if (arrow.x !== undefined) options.arrow.style.left = offset ?? `${arrow.x}px`;
-      if (arrow.y !== undefined) options.arrow.style.top = offset ?? `${arrow.y}px`;
+      writeStyle(options.arrow, 'left', arrow.x === undefined ? null : (offset ?? `${arrow.x}px`));
+      writeStyle(options.arrow, 'top', arrow.y === undefined ? null : (offset ?? `${arrow.y}px`));
       options.arrow.toggleAttribute('data-uncentered', Math.abs(arrow.centerOffset) > 0.5);
-      options.arrow.dataset.side = resolved.side;
-      options.arrow.dataset.align = resolved.alignment;
+      writeData(options.arrow, 'side', resolved.side);
+      writeData(options.arrow, 'align', resolved.alignment);
     }
     current = { ...result, x, y };
     options.onPosition?.(current);
@@ -1080,7 +1128,16 @@ export function positionSurface(
             );
       };
       bind();
-      const observer = new ownerWindow.MutationObserver(() => {
+      // Only a move of the anchor or the surface, or of one of their ancestors, can change the
+      // scroll ancestry or detach the anchor; layout shifts are the move observation's.
+      const chain = (): Set<Node> => {
+        const nodes = new Set<Node>();
+        for (const start of [context, surface])
+          for (let node: Node | null = start; node; node = composedParent(node)) nodes.add(node);
+        return nodes;
+      };
+      const observer = new ownerWindow.MutationObserver((records) => {
+        if (!movesChain(records, chain)) return;
         bind();
         schedule();
       });

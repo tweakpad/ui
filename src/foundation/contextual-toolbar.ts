@@ -191,10 +191,13 @@ export class ContextualToolbarController {
     await this.#handle.update();
   }
 
-  /** Moves focus to the first enabled control; returns whether one took focus. */
-  focus(): boolean {
+  /**
+   * Moves focus to the first enabled control; returns whether one took focus. `focusVisible`
+   * as for `ToolbarController.focusFirst`.
+   */
+  focus(options: { readonly focusVisible?: boolean } = {}): boolean {
     if (!this.#shown || this.#disposed) return false;
-    return this.toolbar.focusFirst();
+    return this.toolbar.focusFirst(options);
   }
 
   /** Whether `node` lies in the surface, its menus and popups included. */
@@ -241,7 +244,8 @@ export class ContextualToolbarController {
       ...(options.tracking === undefined ? {} : { tracking: options.tracking }),
       onPosition: () => {
         // Every later position follows a moved anchor: no movement transition runs.
-        if (this.#positioned) this.surface.setAttribute(CONTEXTUAL_TOOLBAR_REANCHORED, '');
+        if (this.#positioned && !this.surface.hasAttribute(CONTEXTUAL_TOOLBAR_REANCHORED))
+          this.surface.setAttribute(CONTEXTUAL_TOOLBAR_REANCHORED, '');
         this.#positioned = true;
       },
       onInvalid: () => {

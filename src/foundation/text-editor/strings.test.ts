@@ -79,8 +79,8 @@ describe('strings (uwg-te-tab-props r12)', () => {
     for (const key of read) expect(Object.hasOwn(textEditorStrings, key), key).toBe(true);
   });
 
-  it('names the sides of columns and of alignment by the direction of the widget', () => {
-    const label = (id: string, direction: 'ltr' | 'rtl') => {
+  it('names the sides of columns by the direction of the widget, and of alignment by that of the text', () => {
+    const label = (id: string, direction: 'ltr' | 'rtl', textDirection?: 'ltr' | 'rtl') => {
       const tool = (textEditorTools as Readonly<Record<string, TextEditorTool>>)[id]!;
       return contextual(tool.label, {
         state: STATE,
@@ -88,10 +88,18 @@ describe('strings (uwg-te-tab-props r12)', () => {
         surface: 'table-column',
         target: { kind: 'selection' },
         direction,
+        textDirection,
         layout: defaultTextEditorLayout,
         table: null,
       });
     };
+    // A left-to-right paragraph in a right-to-left editor aligns to its own sides.
+    expect(label('align-start', 'rtl', 'ltr')).toBe(textEditorStrings.alignLeft);
+    expect(label('align-end', 'rtl', 'ltr')).toBe(textEditorStrings.alignRight);
+    expect(label('align-end', 'ltr', 'rtl')).toBe(textEditorStrings.alignLeft);
+    expect(label('table-insert-column-before', 'rtl', 'ltr')).toBe(
+      textEditorStrings.tableInsertColumnRight,
+    );
     expect(label('table-insert-column-before', 'ltr')).toBe(
       textEditorStrings.tableInsertColumnLeft,
     );

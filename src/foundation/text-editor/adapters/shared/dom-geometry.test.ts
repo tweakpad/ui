@@ -11,6 +11,7 @@ import {
   isRightToLeft,
   rangeRects,
   taskContentRects,
+  taskContentStart,
   textPointOnLines,
   tieOffset,
   unionRect,
@@ -326,6 +327,27 @@ describe('client rectangles of computed boxes (uwg-te-req-engine-10)', () => {
       height: 20,
     });
     expect(Object.isFrozen(ltr)).toBe(true);
+  });
+});
+
+describe('a task item’s content start (uwg-te-req-engine-10: blockRects)', () => {
+  it('is the marker’s inline end with its margin, or the item’s content box when that is later', () => {
+    const marker = { left: 68, top: 4, right: 84, bottom: 20 };
+    // A hanging marker in the item's 24 px inline-start inset: the content starts at the inset.
+    expect(
+      taskContentStart(marker, 0, { left: 92, top: 0, right: 584, bottom: 24 }, false),
+    ).toEqual({ left: 68, top: 4, right: 92, bottom: 20 });
+    // A marker in the flow with a margin: the content starts after it.
+    expect(
+      taskContentStart(marker, 6, { left: 68, top: 0, right: 584, bottom: 24 }, false),
+    ).toEqual({ left: 68, top: 4, right: 90, bottom: 20 });
+    const end = { left: 568, top: 4, right: 584, bottom: 20 };
+    expect(taskContentStart(end, 0, { left: 68, top: 0, right: 560, bottom: 24 }, true)).toEqual({
+      left: 560,
+      top: 4,
+      right: 584,
+      bottom: 20,
+    });
   });
 });
 

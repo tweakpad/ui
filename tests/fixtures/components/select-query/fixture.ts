@@ -52,6 +52,126 @@ byId('portal').container = document.getElementById('portal-target');
 byId('inline').items = fruit;
 await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
 
+// External query owner (V-593, V-594, V-841): a fixture-only contenteditable keeps focus and
+// supplies the query; its capture listener forwards the navigation keys to the list and logs the
+// results. The owner controls `open` and applies the list's close proposals.
+const [{ fileTextIcon }, { folderIcon }, { clockIcon }] = await Promise.all(
+  ['file-text', 'folder', 'clock'].map(
+    (name) => import(/* @vite-ignore */ built ? `/dist/icons/${name}.js` : `/src/icons/${name}.ts`),
+  ),
+);
+type ExternalList = TpSelect & {
+  queryOwner: HTMLElement | null;
+  onExecute: ((record: unknown, event: Event) => void) | undefined;
+  handleQueryKey(event: KeyboardEvent): boolean;
+  activateHighlighted(event: Event): boolean;
+  activeDescendantReference(): HTMLElement | null;
+  updatePosition(): Promise<void>;
+};
+const owner = document.getElementById('external-owner')!;
+// Created by script so that `open` is controlled from its first update.
+const list = document.createElement('tp-command-list') as unknown as ExternalList;
+list.id = 'external-list';
+list.setAttribute('label', 'Log commands');
+list.setAttribute('placement', 'block-end start');
+list.open = false;
+list.inputValue = '';
+const externalLog: {
+  kind: string;
+  key?: string;
+  result?: unknown;
+  reason?: string;
+  value?: unknown;
+}[] = [];
+const externalItems = [
+  {
+    value: 'note',
+    text: 'Note',
+    icon: fileTextIcon,
+    description: 'A dated line in the log',
+    shortcut: 'Mod+Alt+N',
+  },
+  { value: 'watch', text: 'Watch change', icon: clockIcon, description: 'Hands over the bridge' },
+  {
+    value: 'folder',
+    text: 'Folder',
+    icon: folderIcon,
+    description: 'Groups entries by voyage',
+    shortcut: 'Mod+Shift+F',
+  },
+  { value: 'tide', text: 'Tide table', description: 'Heights for the next harbour' },
+  { value: 'crew', text: 'Crew roster' },
+];
+/** The caret of the owner as a client rectangle; the owner's box without a caret in it. */
+const caretRect = (): DOMRect => {
+  const selection = document.getSelection();
+  if (selection && selection.rangeCount && owner.contains(selection.anchorNode)) {
+    const range = selection.getRangeAt(0).cloneRange();
+    range.collapse(false);
+    const rect = range.getClientRects()[0];
+    if (rect) return DOMRect.fromRect(rect);
+  }
+  const box = owner.getBoundingClientRect();
+  return new DOMRect(box.left, box.top, 0, box.height);
+};
+/** The anchor the fixture can move: the caret rectangle unless a rectangle is set. */
+const anchorState: { rect: DOMRect | null } = { rect: null };
+list.queryOwner = owner;
+list.inline = false;
+// The rows the Command palette renders (icon, label, description, shortcut hint); source mode
+// only, since the projection is internal.
+const project = built
+  ? null
+  : (await import('../../../../src/components/command-palette/item.js')).projectCommandItem;
+list.items = externalItems.map((item) =>
+  project ? project({ ...item, label: item.text }) : { ...item, label: item.text },
+);
+list.itemToText = (value: unknown) =>
+  externalItems.find((item) => item.value === value)?.text ?? String(value);
+list.matchFields = (item: unknown) => {
+  const entry = item as { text?: string; description?: string };
+  return [entry.text ?? '', entry.description ?? ''];
+};
+(list as unknown as { anchor: unknown }).anchor = {
+  getBoundingRectangle: () => anchorState.rect ?? caretRect(),
+  getClientRectangles: () => [anchorState.rect ?? caretRect()],
+  contextElement: owner,
+};
+list.onOpenChange = (event: Event) => {
+  const { value, reason } = (event as CustomEvent<{ value: boolean; reason: string }>).detail;
+  externalLog.push({ kind: 'open-proposal', result: value, reason });
+  list.open = value;
+};
+list.onExecute = (record: unknown) => {
+  externalLog.push({ kind: 'execute', value: (record as { value: unknown }).value });
+  list.open = false;
+};
+document.getElementById('external-list-slot')!.replaceWith(list);
+const query = () => (owner.textContent ?? '').trim();
+owner.addEventListener('input', () => {
+  list.inputValue = query();
+  list.open = query().length > 0;
+});
+owner.addEventListener(
+  'keydown',
+  (event) => {
+    if (['ArrowUp', 'ArrowDown', 'Home', 'End', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+      const result = list.handleQueryKey(event);
+      externalLog.push({ kind: 'key', key: event.key, result });
+      if (result) event.preventDefault();
+    } else if (event.key === 'Enter' || event.key === 'Tab') {
+      const result = list.activateHighlighted(event);
+      externalLog.push({ kind: 'key', key: event.key, result });
+      if (result) event.preventDefault();
+    }
+  },
+  { capture: true },
+);
+document.addEventListener('tp-open-change', (event) => {
+  if (event.composedPath()[0] === list)
+    externalLog.push({ kind: 'open-change', result: (event as CustomEvent).detail?.open });
+});
+
 const settle = async (host: TpSelect) => {
   for (let n = 0; n < 3; n++)
     await Promise.race([
@@ -92,6 +212,14 @@ Object.assign(window, {
     settle,
     events,
     ready: true,
+    external: {
+      owner,
+      list,
+      log: externalLog,
+      anchor: anchorState,
+      caretRect,
+      clear: () => void (externalLog.length = 0),
+    },
     runAssertions: () => runSelectQueryAssertions({ create, settle, api }),
   },
 });

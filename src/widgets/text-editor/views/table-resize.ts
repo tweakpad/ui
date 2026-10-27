@@ -101,6 +101,11 @@ export class TextEditorTableResize {
     return this.#target;
   }
 
+  /** True while the separator holds focus. */
+  get focused(): boolean {
+    return this.#focused;
+  }
+
   /** True during a pointer drag. */
   get dragging(): boolean {
     return this.separator.dragging;

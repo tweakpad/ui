@@ -8,6 +8,7 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import type { TpCommandList } from '../../../components/command-palette/list.js';
 import type { CommandEntry } from '../../../components/command-palette/model.js';
+import type { AnnounceOptions } from '../../../foundation/announcer.js';
 import type { ChoiceModelRecord } from '../../../foundation/choice-model.js';
 import { createId } from '../../../foundation/id.js';
 import type { KeyShortcut } from '../../../foundation/key-bindings.js';
@@ -33,13 +34,22 @@ import type {
   TextEditorToolKind,
   TextEditorToolRegistry,
 } from '../../../foundation/text-editor/tools.js';
+import type { ChangeReason } from '../../../foundation/types.js';
 import {
+  commandEntriesKey,
   commandMatchFields,
   isSuggestionEntryValue,
   slashEntries,
   suggestionEntries,
 } from '../tools/commands.js';
+import { stableRecord } from '../tools/stable.js';
 import { selectionAnchor } from './selection-toolbar.js';
+
+/**
+ * The entries of a closed list, one array: the closed list renders with the element on every state
+ * publication, and a new array would update it each time.
+ */
+const NO_ENTRIES: readonly CommandEntry[] = Object.freeze([]);
 
 // Triggers and occurrences (uwg-te-req-inline-2) --------------------------------------------
 
@@ -154,6 +164,47 @@ export function entryOpensSurface(tool: TextEditorTool | undefined): boolean {
   return tool !== undefined && SURFACE_ENTRY_KINDS.has(tool.kind);
 }
 
+/**
+ * The item of an executed suggestion entry. A source's result is the list's value as it stands,
+ * so an executed record holds the whole command item, whose own value is the entry value.
+ */
+function suggestionItem(value: unknown): unknown {
+  if (isSuggestionEntryValue(value)) return value.item;
+  const entry = (value as { readonly value?: unknown } | null)?.value;
+  return isSuggestionEntryValue(entry) ? entry.item : value;
+}
+
+/**
+ * The text of a list value, the option's accessible name: a source's result is the whole command
+ * item, whose label renders as content, so its `text` names it; any other value names itself.
+ */
+/**
+ * The list's source for a suggestion tool: the tool's items as command entries, synchronously when
+ * the tool answers synchronously, so the list shows them without a loading state, else once its
+ * promise settles, unless a newer query aborted it.
+ */
+export function suggestionSource(tool: TextEditorTool): SearchSource {
+  return {
+    search: (query, context) => {
+      const result = tool.source ? tool.source({ query, signal: context.signal }) : [];
+      if (!isThenable(result)) return suggestionEntries(tool, result);
+      return Promise.resolve(result).then((items) => {
+        if (context.signal.aborted) throw context.signal.reason;
+        return suggestionEntries(tool, items);
+      });
+    },
+  };
+}
+
+function isThenable<T>(value: T | PromiseLike<T>): value is PromiseLike<T> {
+  return typeof (value as PromiseLike<T> | null)?.then === 'function';
+}
+
+export function suggestionText(value: unknown): string {
+  const text = (value as { readonly text?: unknown } | null)?.text;
+  return typeof text === 'string' ? text : String(value ?? '');
+}
+
 /** The request of an executed entry: the slash tool with the entry, or the node's tool with the item. */
 export function suggestionProposal(
   match: Pick<TextEditorSuggestionMatch, 'tool'>,
@@ -163,7 +214,7 @@ export function suggestionProposal(
   const slash = match.tool === 'slash';
   return {
     target: match.tool,
-    value: slash ? value : isSuggestionEntryValue(value) ? value.item : value,
+    value: slash ? value : suggestionItem(value),
     surface: slash ? 'slash' : 'suggestion',
     reason: 'item-press',
     sourceEvent,
@@ -175,7 +226,11 @@ export function suggestionProposal(
 /** A key that the router forwards while a list shows. */
 export type SuggestionKey = 'navigate' | 'activate' | 'dismiss' | null;
 
-/** How a forwarded key acts on the list: Up, Down, Home, End navigate; Enter, Tab activate. */
+/**
+ * How a forwarded key acts on the list: Up, Down, Home, End navigate; Enter, Tab activate
+ * (`uwg-te-tab-keymap-host` r9). Shift+Tab is no list key: it acts as it would with the list
+ * closed, and the list closes with the reason of what it did.
+ */
 export function suggestionKey(
   event: Pick<KeyboardEvent, 'key' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>,
 ): SuggestionKey {
@@ -183,9 +238,79 @@ export function suggestionKey(
   if (['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key))
     return event.shiftKey ? null : 'navigate';
   if (event.key === 'Enter') return event.shiftKey ? null : 'activate';
-  if (event.key === 'Tab') return 'activate';
+  if (event.key === 'Tab') return event.shiftKey ? null : 'activate';
   if (event.key === 'Escape') return 'dismiss';
   return null;
+}
+
+// Open lane (uwg-te-tab-reasons r12, r13) ----------------------------------------------------------
+
+/** What lets a list show, read on each state publication. */
+export interface TextEditorSuggestionGate {
+  /** An instance is ready: none while the engine loads or remounts. */
+  readonly ready: boolean;
+  /** The engine reports the document editable and the widget is not read-only. */
+  readonly editable: boolean;
+  readonly disabled: boolean;
+  /** Focus is in the editing root. */
+  readonly focused: boolean;
+}
+
+/** What reached the editing root since the previous state publication. */
+export interface TextEditorSuggestionInput {
+  /** The document changed. */
+  readonly edited: boolean;
+  /** A key that the list left reached the engine. */
+  readonly keyed: boolean;
+  /** A primary press in the editing root. */
+  readonly pressed?: boolean | undefined;
+  /** The reason of the document change (a paste's, a drop's, an undo's), else `input`. */
+  readonly edit?: ChangeReason | null | undefined;
+}
+
+/** A change of a list's open lane; internal, since no public event or state carries it. */
+export interface TextEditorSuggestionLane {
+  readonly open: boolean;
+  readonly reason: ChangeReason;
+}
+
+/** The announcement of a highlighted item: polite, one pending message replacing the previous. */
+export const SUGGESTION_ANNOUNCEMENT: AnnounceOptions = Object.freeze({
+  politeness: 'polite',
+  key: 'suggestion',
+});
+
+/** Whether the gate lets a list show. */
+export function suggestionAllowed(gate: TextEditorSuggestionGate): boolean {
+  return gate.ready && gate.editable && !gate.disabled && gate.focused;
+}
+
+/**
+ * The input that moved the caret onto or off a trigger context (`uwg-te-tab-reasons` r12, r13):
+ * an edit with the reason of its change (`input` for typing, `input-paste`, `drag`, `hotkey`,
+ * `engine` or `imperative-action` for a paste, a drop or an undo), else a key the list left
+ * (`keyboard`), else a press in the editing root (`pointer`), else a selection that a `run` set
+ * (`imperative-action`).
+ */
+export function suggestionInputReason(input: TextEditorSuggestionInput): ChangeReason {
+  if (input.edited) return input.edit ?? 'input';
+  if (input.keyed) return 'keyboard';
+  return input.pressed ? 'pointer' : 'imperative-action';
+}
+
+/**
+ * Why a shown list closes on a state publication: `disabled` when the widget becomes disabled,
+ * `programmatic` when read-only or a remount hides it, `focus-outside` when focus leaves the
+ * editing root, and otherwise the input that moved the caret out of the trigger context.
+ */
+export function suggestionCloseReason(
+  gate: TextEditorSuggestionGate,
+  input: TextEditorSuggestionInput,
+): ChangeReason {
+  if (gate.disabled) return 'disabled';
+  if (!gate.ready || !gate.editable) return 'programmatic';
+  if (!gate.focused) return 'focus-outside';
+  return suggestionInputReason(input);
 }
 
 // View -----------------------------------------------------------------------------------------
@@ -197,8 +322,8 @@ export interface TextEditorSuggestionsHost {
   layout(): TextEditorLayout | null;
   /** The published state. */
   state(): TextEditorEngineState;
-  /** Whether a list may show: ready, editable, focus in the editing root, not composing. */
-  allowed(): boolean;
+  /** What lets a list show: ready, editable, enabled, focus in the editing root. */
+  gate(): TextEditorSuggestionGate;
   /** The tool context of a surface. */
   context(surface: TextEditorRequestSurface): TextEditorToolContext;
   enabled(tool: TextEditorTool, context: TextEditorToolContext): boolean;
@@ -211,9 +336,13 @@ export interface TextEditorSuggestionsHost {
   openSurface(toolId: string, surface: TextEditorRequestSurface): void;
   /** Writes `aria-controls` and `aria-activedescendant` on the editing root, `null` removing them. */
   referenceList(id: string | null): void;
-  announce(message: string): void;
-  /** Another transient surface opens: close the others. */
-  opening(): void;
+  announce(message: string, options: AnnounceOptions): void;
+  /** The list opens, for `reason`: close the other transient surfaces with it. */
+  opening(reason?: ChangeReason): void;
+  /** The reason of the latest document change, read when a publication shows an edit. */
+  editReason?(): ChangeReason | null;
+  /** A change of the open lane with its reason (`uwg-te-tab-reasons` r12, r13). */
+  lane?(lane: TextEditorSuggestionLane): void;
 }
 
 /** The suggestion list of one widget. */
@@ -226,10 +355,20 @@ export class TextEditorSuggestions {
   #open = false;
   #list: TpCommandList | null = null;
   #active: unknown = undefined;
-  #announced: unknown = undefined;
+  /** The slash entries last rendered, kept while a render gives entries that render alike. */
+  #slash: { readonly key: string; readonly entries: readonly CommandEntry[] } | null = null;
+  /** The last announced highlight message, so that an unchanged highlight speaks once. */
+  #announced: string | undefined = undefined;
   #referenced = false;
   /** The source of the current suggestion tool, stable while its tool stays. */
   #source: { readonly tool: TextEditorTool; readonly source: SearchSource } | null = null;
+  #lane: TextEditorSuggestionLane | null = null;
+  /** A key the list left reached the engine since the last state publication. */
+  #keyed = false;
+  /** A primary press in the editing root since the last state publication. */
+  #pressed = false;
+  /** The content version of the last state publication, `null` before the first. */
+  #contentVersion: number | null = null;
 
   constructor(host: TextEditorSuggestionsHost) {
     this.#host = host;
@@ -261,19 +400,39 @@ export class TextEditorSuggestions {
     return this.#open ? this.#match : null;
   }
 
+  /** The last change of the open lane with its reason, `null` before the first. */
+  get lane(): TextEditorSuggestionLane | null {
+    return this.#lane;
+  }
+
   /** Reads the occurrence from the state; opens, follows or closes the list without a request. */
   sync(): void {
     const registry = this.#host.registry();
     const layout = this.#host.layout();
+    const state = this.#host.state();
     const match =
       registry && layout
-        ? currentSuggestion(this.#host.state(), activeSuggestionTriggers(registry, layout))
+        ? currentSuggestion(state, activeSuggestionTriggers(registry, layout))
         : null;
     this.#dismissals.retain(match?.key ?? null);
-    const open = match !== null && !this.#dismissals.isDismissed(match.key) && this.#host.allowed();
+    const edited = this.#contentVersion !== null && state.contentVersion !== this.#contentVersion;
+    const input: TextEditorSuggestionInput = {
+      edited,
+      keyed: this.#keyed,
+      pressed: this.#pressed,
+      edit: edited ? (this.#host.editReason?.() ?? null) : null,
+    };
+    this.#contentVersion = state.contentVersion;
+    this.#keyed = false;
+    this.#pressed = false;
+    const gate = this.#host.gate();
+    const open =
+      match !== null && !this.#dismissals.isDismissed(match.key) && suggestionAllowed(gate);
     const changed =
       open !== this.#open || match?.key !== this.#match?.key || match?.query !== this.#match?.query;
-    if (open && !this.#open) this.#host.opening();
+    const reason = open ? suggestionInputReason(input) : suggestionCloseReason(gate, input);
+    if (open && !this.#open) this.#host.opening(reason);
+    if (open !== this.#open) this.#setLane(open, reason);
     this.#match = match;
     this.#open = open;
     if (!open) this.#active = undefined;
@@ -281,23 +440,41 @@ export class TextEditorSuggestions {
   }
 
   /** Closes the list; with `dismiss`, the occurrence stays closed until its trigger goes. */
-  close(dismiss = false): void {
+  close(dismiss = false, reason: ChangeReason = 'programmatic'): void {
     if (dismiss && this.#match) this.#dismissals.dismiss(this.#match.key);
     if (!this.#open) return;
     this.#open = false;
     this.#active = undefined;
+    this.#setLane(false, reason);
     this.#host.requestUpdate();
   }
 
+  /** A primary press in the editing root: a caret it moves opens or closes with `pointer`. */
+  pressed(): void {
+    this.#pressed = true;
+  }
+
+  #setLane(open: boolean, reason: ChangeReason): void {
+    this.#lane = Object.freeze({ open, reason });
+    this.#host.lane?.(this.#lane);
+  }
+
   /**
-   * A key the router forwards while the list shows: whether the list consumed it, so that the
+   * A key the router forwards from the editing root: whether the list consumed it, so that the
    * router prevents and stops it; keys the list leaves reach the engine.
    */
   forwardKey(event: KeyboardEvent): boolean {
-    if (!this.#open || event.isComposing || event.keyCode === 229) return false;
+    if (event.isComposing || event.keyCode === 229) return false;
+    const consumed = this.#open && this.#consumeKey(event);
+    // A caret that a key the list leaves moves closes or reopens a list with `keyboard`.
+    if (!consumed) this.#keyed = true;
+    return consumed;
+  }
+
+  #consumeKey(event: KeyboardEvent): boolean {
     const kind = suggestionKey(event);
     if (kind === 'dismiss') {
-      this.close(true);
+      this.close(true, 'escape-key');
       return true;
     }
     const list = this.#list;
@@ -315,15 +492,17 @@ export class TextEditorSuggestions {
     const slash = match?.tool === 'slash';
     const items: readonly CommandEntry[] | undefined =
       this.#open && slash
-        ? slashEntries(layout.slash, {
-            registry,
-            context: this.#host.context('slash'),
-            enabled: (entry, context) => this.#host.enabled(entry, context),
-            shortcut: (id) => this.#host.shortcut(id),
-          })
+        ? this.#slashEntries(
+            slashEntries(layout.slash, {
+              registry,
+              context: this.#host.context('slash'),
+              enabled: (entry, context) => this.#host.enabled(entry, context),
+              shortcut: (id) => this.#host.shortcut(id),
+            }),
+          )
         : this.#open && tool
           ? undefined
-          : [];
+          : NO_ENTRIES;
     return html`<tp-command-list
       part="text-editor-suggestions"
       id=${this.#id}
@@ -340,7 +519,8 @@ export class TextEditorSuggestions {
       .items=${items}
       .source=${this.#open && tool && !slash ? this.#sourceFor(tool) : undefined}
       .matchFields=${commandMatchFields}
-      .messages=${{ empty: strings.noResults, loading: strings.suggestionsLoading }}
+      .itemToText=${suggestionText}
+      .messages=${stableRecord({ empty: strings.noResults, loading: strings.suggestionsLoading })}
       .initialFocus=${'none'}
       .finalFocus=${'none'}
       .activeValue=${this.#active}
@@ -348,6 +528,17 @@ export class TextEditorSuggestions {
       .onExecute=${this.#execute}
       .onOpenChange=${this.#openChange}
     ></tp-command-list>`;
+  }
+
+  /**
+   * The entries to render: the previous ones while the new ones render alike, so that a render
+   * the highlight itself caused (its reference on the editing root) keeps the list's records and
+   * the highlight, which a new array would reset to the first entry.
+   */
+  #slashEntries(entries: readonly CommandEntry[]): readonly CommandEntry[] {
+    const key = commandEntriesKey(entries);
+    if (this.#slash?.key !== key) this.#slash = { key, entries };
+    return this.#slash.entries;
   }
 
   /** After the render: follows the anchor and publishes the highlighted item. */
@@ -370,9 +561,13 @@ export class TextEditorSuggestions {
   /** Clears the dismissed occurrences and closes; called when the widget disconnects. */
   release(): void {
     this.#dismissals.clear();
+    if (this.#open) this.#setLane(false, 'programmatic');
     this.#open = false;
     this.#match = null;
     this.#source = null;
+    this.#keyed = false;
+    this.#pressed = false;
+    this.#contentVersion = null;
   }
 
   #publishActive(list: TpCommandList): void {
@@ -386,8 +581,7 @@ export class TextEditorSuggestions {
     this.#referenced = false;
     // Without a reference into the list, the live announcer speaks each new highlight.
     const value = list.highlightedValue;
-    if (value === undefined || value === null || Object.is(value, this.#announced)) return;
-    this.#announced = value;
+    if (value === undefined || value === null) return;
     const options = [
       ...(list.listElement?.querySelectorAll<HTMLElement>('[role="option"]') ?? []),
     ].filter((option) => !option.hidden);
@@ -396,36 +590,44 @@ export class TextEditorSuggestions {
     if (!option) return;
     const label = option.getAttribute('aria-label') ?? option.textContent?.trim() ?? '';
     const description = option.getAttribute('aria-description');
-    const position = fillTemplate(this.#host.strings().announceSuggestionActive, {
+    const message = fillTemplate(this.#host.strings().announceSuggestionActive, {
       label: description ? `${label}, ${description}` : label,
       position: index + 1,
       count: options.length,
     });
-    this.#host.announce(position);
+    // The highlighted option is read from the rendered list, which may still show the previous
+    // highlight; that message equals the last one and waits for the pass after the render.
+    if (message === this.#announced) return;
+    this.#announced = message;
+    this.#host.announce(message, SUGGESTION_ANNOUNCEMENT);
   }
 
   #sourceFor(tool: TextEditorTool): SearchSource {
     if (this.#source?.tool === tool) return this.#source.source;
-    const source: SearchSource = {
-      search: async (query, context) => {
-        const result = tool.source ? await tool.source({ query, signal: context.signal }) : [];
-        if (context.signal.aborted) throw context.signal.reason;
-        return suggestionEntries(tool, result);
-      },
-    };
+    const source = suggestionSource(tool);
     this.#source = { tool, source };
     return source;
   }
 
   readonly #activeChange = (value: unknown): unknown => {
     this.#active = value;
-    if (this.#list) this.#publishActive(this.#list);
+    const list = this.#list;
+    if (!list) return value;
+    this.#publishActive(list);
+    // The list commits the highlight after this proposal and renders it in the update it then
+    // requests; a highlight that comes with asynchronous results precedes the render of its option.
+    void Promise.resolve()
+      .then(() => list.updateComplete)
+      .then(() => {
+        if (this.#open && this.#list === list) this.#publishActive(list);
+      });
     return value;
   };
 
   readonly #openChange = (event: TpSurfaceOpenChangeEvent): void => {
-    // Escape and outside presses propose closing: the owner closes and dismisses the occurrence.
-    if (!event.detail.value) this.close(true);
+    // Escape, outside presses and focus leaving propose closing: the owner closes and dismisses
+    // the occurrence with the proposal's reason.
+    if (!event.detail.value) this.close(true, event.detail.reason);
   };
 
   readonly #execute = (record: ChoiceModelRecord, event: Event): void => {
@@ -433,7 +635,7 @@ export class TextEditorSuggestions {
     if (!match || !this.#open) return;
     const registry = this.#host.registry();
     const entry = match.tool === 'slash' ? registry?.tools.get(String(record.value)) : undefined;
-    this.close();
+    this.close(false, 'item-press');
     void this.#host
       .request(suggestionProposal(match, record.value, event))
       .then((outcome) => {

@@ -4,6 +4,7 @@ import { ref } from 'lit/directives/ref.js';
 import type {
   TextEditorEngine,
   TextEditorFormat,
+  TextEditorImageUpload,
   TpTextEditor,
 } from '../../widgets/text-editor/index.js';
 import {
@@ -12,10 +13,12 @@ import {
   embedBlock,
   fieldNotes,
   lexicalEngine,
+  mentionInline,
   tiptapEngine,
 } from './text-editor-example.js';
 import { textEditorExamples, textEditorStorySources } from './text-editor.examples.js';
 import documentation from '../../../docs/widgets/text-editor.md?raw';
+import sampleImage from '../assets/ratio-landscape.svg?no-inline';
 
 interface Args {
   defaultValue: string;
@@ -109,6 +112,7 @@ const meta: Meta<Args> = {
     },
     stickyTableHeaders: {
       control: 'boolean',
+      description: 'Keeps the header row of a table in view while the rest of the table scrolls.',
       table: { defaultValue: { summary: 'false' } },
     },
   },
@@ -133,14 +137,17 @@ export const Lexical: Story = {
   },
 };
 
-const customNodes = [calloutBlock, embedBlock];
+const customNodes = [calloutBlock, embedBlock, mentionInline];
+/** The slash list and the mention's `@` list. */
+const customSuggestions = { suggestions: ['slash', 'mention'] };
 
 export const CustomNodes: Story = {
-  name: 'Custom blocks',
+  name: 'Custom nodes',
   args: { defaultValue: customBlockNotes, label: 'Mooring notes' },
   render: (args) =>
     html`<tp-text-editor
       .nodes=${customNodes}
+      .layout=${customSuggestions}
       .defaultValue=${args.defaultValue}
       .format=${args.format}
       .placeholder=${args.placeholder}
@@ -156,7 +163,59 @@ export const CustomNodes: Story = {
     docs: {
       description: {
         story:
-          'A callout and an embed defined with `defineTextEditorBlock`. The callout defines no paint of its own; the embed shows an https page in a sandboxed frame and requires a title.',
+          'A callout and an embed defined with `defineTextEditorBlock`, and a mention defined with `defineTextEditorInline`. The callout defines no paint of its own; the embed shows an https page in a sandboxed frame and requires a title; typing `@` lists the crew, searched after a short delay.',
+      },
+    },
+  },
+};
+
+/**
+ * A sample upload service: it reports progress in eight steps, stops on abort and answers the URL
+ * of one sample image, since it stores nothing.
+ */
+const sampleUpload: TextEditorImageUpload = (file, { signal, onProgress }) =>
+  new Promise((resolve, reject) => {
+    const total = Math.max(file.size, 1);
+    let sent = 0;
+    const timer = setInterval(() => {
+      sent = Math.min(total, sent + Math.ceil(total / 8));
+      onProgress(sent, total);
+      if (sent < total) return;
+      clearInterval(timer);
+      resolve(sampleImage);
+    }, 200);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearInterval(timer);
+        reject(signal.reason);
+      },
+      { once: true },
+    );
+  });
+
+export const ImageUpload: Story = {
+  name: 'Image upload',
+  args: { label: 'Survey photos' },
+  render: (args) =>
+    html`<tp-text-editor
+      .imageUpload=${sampleUpload}
+      .defaultValue=${args.defaultValue}
+      .format=${args.format}
+      .placeholder=${args.placeholder}
+      .label=${args.label}
+      .readOnly=${args.readOnly}
+      .disabled=${args.disabled}
+      ${ref((element?: Element) => {
+        const editor = element as TpTextEditor | undefined;
+        if (editor && !editor.engine) editor.engine = tiptapEngine();
+      })}
+    ></tp-text-editor>`,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'With `imageUpload`, the image popover offers a file upload, and pasted or dropped image files are uploaded too. The hook receives each file with an abort signal and a progress callback and resolves to the image source.',
       },
     },
   },

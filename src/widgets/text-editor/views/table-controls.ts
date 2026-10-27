@@ -100,7 +100,8 @@ export class TextEditorTableControls implements TextEditorContextualSurface {
         return;
       }
       this.#host.chrome.reveal(start);
-      start.focus({ preventScroll: true });
+      // Alt+F10 moved focus by keyboard: show the indicator, which a modifier chord does not.
+      start.focus({ preventScroll: true, focusVisible: true });
     });
     return true;
   }

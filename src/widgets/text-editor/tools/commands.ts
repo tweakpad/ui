@@ -53,16 +53,27 @@ export function toolCommandItem(
 }
 
 /**
+ * Whether a tool makes or inserts blocks: it requires a block capability, as the block tools,
+ * divider, table, image and the tools of custom blocks and atoms do.
+ */
+function requiresBlock(tool: TextEditorTool): boolean {
+  return tool.requires?.some((capability) => capability.startsWith('block.')) ?? false;
+}
+
+/**
  * The slash menu's entries: the available, visible tools of the resolved `slash` layout in its
  * order, one group per layout group named by its tools' group (text, lists, insert), unnamed for
- * any other; a group that keeps no tool is left out. In a table cell the block tools report
- * themselves invisible, so only inline entries remain.
+ * any other; a group that keeps no tool is left out. Table cells hold paragraphs only, so while
+ * the selection lies in a table no tool that requires a block capability is offered and the
+ * inline entries remain (`uwg-te-req-tools-5`); an application's own tool states its visibility
+ * there through `isVisible`.
  */
 export function slashEntries(
   groups: readonly (readonly string[])[],
   input: TextEditorSlashEntriesInput,
 ): CommandEntry[] {
   const { registry, context } = input;
+  const inTable = context.state.table !== null;
   const entries: CommandEntry[] = [];
   for (const ids of groups) {
     const tools = ids
@@ -72,7 +83,8 @@ export function slashEntries(
           tool !== undefined &&
           tool.kind !== 'suggestion' &&
           registry.isAvailable(tool.id) &&
-          toolVisible(tool, context),
+          toolVisible(tool, context) &&
+          !(inTable && requiresBlock(tool)),
       );
     if (!tools.length) continue;
     const items = tools.map((tool) =>
@@ -111,6 +123,24 @@ export function suggestionEntries(tool: TextEditorTool, items: readonly unknown[
       label,
       ...(description ? { description } : {}),
     });
+  });
+}
+
+/** Icons by identity, numbered in the order the keys meet them. */
+const iconIds = new WeakMap<object, number>();
+let iconCount = 0;
+
+/**
+ * A key of the entries' content (values, labels, descriptions, groups, shortcuts, keywords,
+ * enablement and icons by reference): equal for entries that render alike, so a view can keep
+ * the previous entries and the list keeps its records and the highlight it controls.
+ */
+export function commandEntriesKey(entries: readonly CommandEntry[]): string {
+  return JSON.stringify(entries, (key, value: unknown) => {
+    if (key !== 'icon' || typeof value !== 'object' || value === null) return value;
+    let id = iconIds.get(value);
+    if (id === undefined) iconIds.set(value, (id = iconCount += 1));
+    return `icon:${String(id)}`;
   });
 }
 

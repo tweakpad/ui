@@ -170,11 +170,19 @@ export type TiptapOptions = Parameters<TiptapAdapter['createTiptapEngine']>[1];
 export type LexicalModules = Parameters<LexicalAdapter['createLexicalEngine']>[0];
 export type LexicalOptions = Parameters<LexicalAdapter['createLexicalEngine']>[1];
 
-/** The adapters by module path; a variable path keeps a missing adapter from failing the page. */
-const ADAPTERS = {
-  tiptap: '/src/foundation/text-editor/adapters/tiptap/index.ts',
-  lexical: '/src/foundation/text-editor/adapters/lexical/index.ts',
-} as const;
+/**
+ * The adapters by module path, from `dist/` on a page opened with `?built`; a variable path keeps
+ * a missing adapter from failing the page.
+ */
+const ADAPTERS = new URLSearchParams(globalThis.location?.search ?? '').has('built')
+  ? ({
+      tiptap: '/dist/foundation/text-editor/adapters/tiptap/index.js',
+      lexical: '/dist/foundation/text-editor/adapters/lexical/index.js',
+    } as const)
+  : ({
+      tiptap: '/src/foundation/text-editor/adapters/tiptap/index.ts',
+      lexical: '/src/foundation/text-editor/adapters/lexical/index.ts',
+    } as const);
 
 /** Factories over the page's modules, for engines with other options (`options.css`, `nodes`). */
 export interface FixtureEngineFactories {

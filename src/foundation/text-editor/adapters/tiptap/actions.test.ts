@@ -136,6 +136,35 @@ describe('Tiptap execute and can (uwg-te-req-engine-5)', () => {
     expect(instance.getContent('text')).toBe('storm');
   });
 
+  it('uwg-te-req-a11y-1: read-only selection.set places a one-character range, also across a block edge', () => {
+    const { instance } = editor('<p data-id="p1">calm</p><p data-id="p2">sea</p>', {
+      editable: false,
+    });
+    const ranges = [
+      [
+        { block: 'p1', offset: 0 },
+        { block: 'p1', offset: 1 },
+      ],
+      [
+        { block: 'p1', offset: 3 },
+        { block: 'p1', offset: 2 },
+      ],
+      [
+        { block: 'p1', offset: 4 },
+        { block: 'p2', offset: 0 },
+      ],
+    ] as const;
+    for (const [anchor, head] of ranges) {
+      const set: TextEditorAction = {
+        type: 'selection.set',
+        selection: { kind: 'text', anchor, head },
+      };
+      expect(instance.execute([set], { reason: 'hotkey', focus: false })).toBe(true);
+      expect(instance.getState().selection).toEqual({ kind: 'text', anchor, head, empty: false });
+    }
+    expect(instance.getContent('html')).toBe('<p data-id="p1">calm</p>\n<p data-id="p2">sea</p>');
+  });
+
   it('an action ends its history event: input after it is a separate undo step', () => {
     const { run, select, view, instance } = editor('<p data-id="p1">calm</p>');
     select('p1', 4);
@@ -315,7 +344,7 @@ describe('Tiptap block attributes (uwg-te-tab-actions r2)', () => {
 
   it('V-040: block.align writes each value and null restores the start', () => {
     for (const align of ['center', 'end', 'justify'] as const) {
-      const { run, content } = editor(
+      const { run, content, instance } = editor(
         '<p data-id="p1">tide</p><ul><li data-id="l1"><p>rope</p></li></ul>',
       );
       expect(run({ type: 'block.align', align, ids: ['p1', 'l1'] })).toBe(true);
@@ -326,6 +355,13 @@ describe('Tiptap block attributes (uwg-te-tab-actions r2)', () => {
       expect(content()).toBe(
         '<p data-id="p1">tide</p>\n<ul><li data-id="l1"><p>rope</p></li></ul>',
       );
+      // Back to the start through its own value: no empty style reaches the value.
+      run({ type: 'block.align', align, ids: ['p1'] });
+      run({ type: 'block.align', align: 'start', ids: ['p1'] });
+      expect(content()).toBe(
+        '<p data-id="p1">tide</p>\n<ul><li data-id="l1"><p>rope</p></li></ul>',
+      );
+      expect(instance.getContent('markdown')).not.toContain('style');
     }
   });
 
@@ -507,6 +543,25 @@ describe('Tiptap text and inline nodes (uwg-te-tab-actions r4)', () => {
     expect(instance.getState().selection).toMatchObject({ anchor: { block: 'p1', offset: 5 } });
     expect(instance.can({ type: 'inline.insert', kind: 'unknown', attrs: {} })).toBe(false);
   });
+
+  it('V-492: inline.insert takes a space that already follows as its space, the caret after it', () => {
+    const { run, select, content, instance } = editor('<p data-id="p1">hi @an there</p>', {
+      nodes: [mention],
+    });
+    select('p1', 6);
+    expect(
+      run({
+        type: 'inline.insert',
+        kind: 'mention',
+        attrs: { person: 'ana' },
+        range: { block: 'p1', from: 3, to: 6 },
+      }),
+    ).toBe(true);
+    expect(content()).toBe(
+      '<p data-id="p1">hi <span data-type="mention" data-person="ana">@ana</span> there</p>',
+    );
+    expect(instance.getState().selection).toMatchObject({ anchor: { block: 'p1', offset: 5 } });
+  });
 });
 
 describe('Tiptap content and selection actions (uwg-te-tab-actions r5, r6)', () => {
@@ -548,6 +603,58 @@ describe('Tiptap content and selection actions (uwg-te-tab-actions r5, r6)', () 
     });
     expect(content()).toBe(
       '<p data-id="p1">calm</p>\n<p data-id="n000000001">pasted</p>\n<hr data-id="n000000002">',
+    );
+  });
+
+  it('V-834: content.insert over a cell range clears its cells and fills the first, or fills the range from a pasted table, in one step', () => {
+    const doc =
+      '<table data-id="t1"><tbody><tr><td><p>a</p></td><td><p>b</p></td></tr><tr><td><p>c</p></td><td><p>d</p></td></tr></tbody></table>';
+    const { run, content, instance, dispatched } = editor(doc);
+    const at = {
+      kind: 'cells' as const,
+      table: 't1',
+      range: { anchor: { row: 0, column: 0 }, head: { row: 1, column: 1 } },
+    };
+    run({ type: 'selection.set', selection: at });
+    dispatched.length = 0;
+    expect(
+      run({ type: 'content.insert', at, content: { kind: 'range', blocks: [paragraph('x')] } }),
+    ).toBe(true);
+    expect(dispatched).toHaveLength(1);
+    expect(content()).toBe(
+      '<table data-id="t1"><tbody><tr><td><p>x</p></td><td><p></p></td></tr><tr><td><p></p></td><td><p></p></td></tr></tbody></table>',
+    );
+    expect(instance.getState().selection).toMatchObject({
+      kind: 'text',
+      anchor: { block: 't1', cell: { row: 0, column: 0, paragraph: 0 }, offset: 1 },
+    });
+    run({ type: 'history.undo' });
+    expect(content()).toBe(doc);
+    run({ type: 'selection.set', selection: at });
+    run({
+      type: 'content.insert',
+      at,
+      content: {
+        kind: 'blocks',
+        blocks: [
+          {
+            type: 'table',
+            headerRow: false,
+            headerColumn: false,
+            rows: [
+              {
+                cells: [
+                  { paragraphs: [{ content: [{ type: 'text', text: 'q1' }] }] },
+                  { background: 'blue', paragraphs: [{ content: [{ type: 'text', text: 'q2' }] }] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(content()).toBe(
+      '<table data-id="t1"><tbody><tr><td><p>q1</p></td><td data-background="blue"><p>q2</p></td></tr><tr><td><p>c</p></td><td><p>d</p></td></tr></tbody></table>',
     );
   });
 

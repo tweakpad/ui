@@ -19,6 +19,21 @@ vi.mock('./generated-style.js', () => ({
   },
 }));
 
+const cursors = vi.hoisted(() => ({
+  leases: [] as { cursor: string; released: boolean }[],
+}));
+
+// The document cursor of a drag: one lease of the shared drag cursor's layer per drag.
+vi.mock('./drag-cursor.js', () => ({
+  leaseDragCursor: (_document: Document, cursor: string) => {
+    const lease = { cursor, released: false };
+    cursors.leases.push(lease);
+    return () => {
+      lease.released = true;
+    };
+  },
+}));
+
 import {
   ResizeSeparatorController,
   resizeSeparatorKey,
@@ -200,13 +215,14 @@ describe('ResizeSeparatorController', () => {
     const state = setup();
     const element = state.element as unknown as HTMLElement;
     styles.created.length = 0;
+    cursors.leases.length = 0;
     const down = pointer('pointerdown');
     expect(state.controller.pointerDown(down, element)).toBe(true);
     expect(down.defaultPrevented).toBe(true);
     expect(state.element.focused).toBe(1);
     expect(state.element.captured).toEqual([1]);
-    expect(styles.created[0]?.text).toContain('user-select:none');
-    expect(styles.created[0]?.text).toContain('cursor:col-resize');
+    expect(styles.created[0]?.text).toBe('*{user-select:none!important;}');
+    expect(cursors.leases).toEqual([{ cursor: 'col-resize', released: false }]);
     state.controller.pointerMove(pointer('pointermove', { clientX: 130 }));
     expect(state.proposals.at(-1)).toMatchObject({ value: 130, delta: 30, phase: 'live' });
     state.controller.pointerMove(pointer('pointermove', { clientX: 1000 }));
@@ -220,7 +236,68 @@ describe('ResizeSeparatorController', () => {
     });
     expect(state.element.released).toEqual([1]);
     expect(styles.created[0]?.disposed).toBe(true);
+    expect(cursors.leases[0]?.released).toBe(true);
     expect(state.controller.dragging).toBe(false);
+  });
+
+  it('V-587: a mouse drag blocks selection through selectstart and shows its cursor through the drag cursor, with no rule', () => {
+    const state = setup();
+    const element = state.element as unknown as HTMLElement;
+    styles.created.length = 0;
+    cursors.leases.length = 0;
+    const view = state.view;
+    const selectStart = () => {
+      const event = new Event('selectstart', { cancelable: true });
+      view.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+    expect(
+      state.controller.pointerDown(pointer('pointerdown', { pointerType: 'mouse' }), element),
+    ).toBe(true);
+    // No rule restyles the document: the cursor is the drag cursor's, selection is held back by
+    // `selectstart`.
+    expect(styles.created).toEqual([]);
+    expect(cursors.leases).toEqual([{ cursor: 'col-resize', released: false }]);
+    expect(selectStart()).toBe(true);
+    state.controller.pointerUp(pointer('pointerup', { pointerType: 'mouse' }));
+    expect(cursors.leases[0]?.released).toBe(true);
+    expect(selectStart()).toBe(false);
+    // Touch keeps the rule against the long-press selection, and has no cursor to show.
+    state.controller.pointerDown(pointer('pointerdown', { pointerType: 'touch' }), element);
+    expect(styles.created[0]?.text).toBe('*{user-select:none!important;}');
+    expect(cursors.leases).toHaveLength(1);
+    expect(selectStart()).toBe(false);
+    state.controller.cancel();
+    expect(styles.created[0]?.disposed).toBe(true);
+  });
+
+  it('V-587: with a frame source the drag style follows in the next frame, and none after an early end', () => {
+    vi.useFakeTimers();
+    try {
+      const state = setup();
+      Object.assign(state.view, {
+        requestAnimationFrame: (callback: FrameRequestCallback) =>
+          setTimeout(() => callback(0), 16) as unknown as number,
+        cancelAnimationFrame: (id: number) => clearTimeout(id),
+      });
+      const element = state.element as unknown as HTMLElement;
+      styles.created.length = 0;
+      cursors.leases.length = 0;
+      state.controller.pointerDown(pointer('pointerdown', { pointerType: 'mouse' }), element);
+      expect(cursors.leases).toEqual([]);
+      vi.advanceTimersByTime(20);
+      expect(cursors.leases).toEqual([{ cursor: 'col-resize', released: false }]);
+      state.controller.pointerUp(pointer('pointerup'));
+      expect(cursors.leases[0]?.released).toBe(true);
+      state.controller.pointerDown(pointer('pointerdown', { pointerType: 'pen' }), element);
+      expect(styles.created[0]).toEqual({ text: '', disposed: false });
+      state.controller.cancel();
+      vi.advanceTimersByTime(40);
+      expect(styles.created[0]).toEqual({ text: '', disposed: true });
+      expect(cursors.leases).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('mirrors pointer movement in right-to-left content and divides by the scale', () => {
@@ -294,8 +371,10 @@ describe('ResizeSeparatorController', () => {
   it('omits the cursor when the owner turns it off', () => {
     const state = setup({ cursor: () => false, axis: () => 'vertical' });
     styles.created.length = 0;
+    cursors.leases.length = 0;
     state.controller.pointerDown(pointer('pointerdown'), state.element as unknown as HTMLElement);
     expect(styles.created[0]?.text).not.toContain('cursor');
+    expect(cursors.leases).toEqual([]);
   });
 });
 

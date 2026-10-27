@@ -259,6 +259,7 @@ describe('uwg-te-lis-up-i2, uwg-te-tab-vocabulary: what node views and render sp
       blocks: [
         { type: 'table', id: 't1', rows: [{ cells: [cell, cell, cell] }] },
         { type: 'table', id: 't2', widths: [48, 120], rows: [{ cells: [cell, cell] }] },
+        { type: 'table', id: 't3', rows: [{ cells: [cell, cell] }] },
       ],
     });
     const { nodeViews } = editor.extensionManager as unknown as {
@@ -274,6 +275,7 @@ describe('uwg-te-lis-up-i2, uwg-te-tab-vocabulary: what node views and render sp
       ) as unknown as {
         readonly table: FakeElement;
         readonly colgroup: FakeElement;
+        update(node: TiptapNodeLike, decorations: readonly unknown[]): boolean;
       };
     const automatic = build(state.doc.child(0));
     expect(automatic.table.style.minWidth).toBe('');
@@ -281,6 +283,10 @@ describe('uwg-te-lis-up-i2, uwg-te-tab-vocabulary: what node views and render sp
     const fixed = build(state.doc.child(1));
     expect(fixed.colgroup.children.map((col) => col.style.width)).toEqual(['48px', '120px']);
     expect(fixed.table.style.width).toBe('168px');
+    // The view of a table whose widths went (an undone resize) sizes automatically again.
+    expect(fixed.update(state.doc.child(2), [])).toBe(true);
+    expect(fixed.colgroup.children.map((col) => col.style.width)).toEqual(['', '']);
+    expect(fixed.colgroup.children.map((col) => col.style.minWidth)).toEqual(['', '']);
   });
 });
 

@@ -79,6 +79,28 @@ export function imageInsertActions(
   ];
 }
 
+/**
+ * The request of one image that the popover inserts. Focus stays where it is, in the popover, so
+ * that the uploads still running keep it open; closing returns focus to the editing root.
+ */
+export function imageInsertProposal(
+  point: ImageInsertionPoint,
+  src: string,
+  alt: string,
+  surface: TextEditorRequestSurface,
+  reason: ChangeReason,
+  sourceEvent: Event | undefined,
+): TextEditorRequestProposal {
+  return {
+    target: imageInsertActions(point, src, alt),
+    surface,
+    reason,
+    sourceEvent,
+    trigger: null,
+    focus: false,
+  };
+}
+
 /** The identifier of the image that an applied insert added: the first block that is new. */
 export function insertedBlock(before: readonly string[], after: readonly string[]): string | null {
   const known = new Set(before);
@@ -101,7 +123,10 @@ export interface TextEditorImagePopoverHost {
   request(proposal: TextEditorRequestProposal): Promise<TextEditorRequestOutcome>;
   diagnose(message: string): void;
   focusEditing(): void;
-  opening(): void;
+  /** This surface opens, for `reason`: close the other transient surfaces with it. */
+  opening(reason?: ChangeReason): void;
+  /** A change of the open lane with its reason (`uwg-te-tab-reasons` r12, r13). */
+  lane?(open: boolean, reason: ChangeReason): void;
 }
 
 /** The image popover of one widget. */
@@ -146,8 +171,13 @@ export class TextEditorImagePopover {
    * Opens for requests of `surface`, at `anchor` (a toolbar control or the More trigger) or else
    * at the selection, and remembers the insertion point.
    */
-  open(surface: TextEditorRequestSurface, anchor: Element | null): void {
-    this.#host.opening();
+  open(
+    surface: TextEditorRequestSurface,
+    anchor: Element | null,
+    reason: ChangeReason = 'imperative-action',
+  ): void {
+    this.#host.opening(reason);
+    const opened = !this.#open;
     const ids = this.#host.blockIds();
     this.#point = initialInsertionPoint(this.#host.selection(), ids.at(-1) ?? null);
     this.#anchor = anchor ?? this.#virtual;
@@ -159,14 +189,16 @@ export class TextEditorImagePopover {
     this.#uploads?.abort();
     this.#uploads = new AbortController();
     this.#open = true;
+    if (opened) this.#host.lane?.(true, reason);
     this.#host.requestUpdate();
   }
 
-  /** Closes and aborts the unfinished uploads. */
-  close(reason?: string, event?: Event): void {
+  /** Closes and aborts the unfinished uploads; the lane records `reason` (else `programmatic`). */
+  close(reason?: ChangeReason, event?: Event): void {
     if (!this.#open) return;
     this.#closing = { reason, event };
     this.#open = false;
+    this.#host.lane?.(false, reason ?? 'programmatic');
     this.#uploads?.abort();
     this.#uploads = null;
     this.#upload?.cancelUpload();
@@ -183,10 +215,6 @@ export class TextEditorImagePopover {
   render(): TemplateResult {
     const strings = this.#host.strings();
     const upload = this.#host.imageUpload();
-    const text = (assign: (value: string) => void) => (event: TpValueChangeEvent<unknown>) => {
-      assign(String(event.detail.value ?? ''));
-      this.#host.requestUpdate();
-    };
     return html`<tp-popover
       part="text-editor-image-popover"
       label=${strings.image}
@@ -196,7 +224,7 @@ export class TextEditorImagePopover {
       .modal=${false}
       .open=${this.#open}
       .anchor=${this.#anchor ?? this.#virtual}
-      .initialFocus=${() => this.#input ?? true}
+      .initialFocus=${this.#initialFocus}
       .finalFocus=${this.#finalFocus}
       @tp-open-change=${this.#openChange}
       ><div class="image-popover">
@@ -205,22 +233,15 @@ export class TextEditorImagePopover {
             type="url"
             .value=${this.#src}
             .invalid=${this.#invalid}
-            .onValueChange=${text((value) => {
-              this.#src = value;
-              this.#invalid = false;
-            })}
-            .inputElementReference=${(element: HTMLElement | null) => {
-              this.#input = element;
-            }}
+            .onValueChange=${this.#srcChange}
+            .inputElementReference=${this.#inputReference}
             @keydown=${this.#keyDown}
           ></tp-input
         ></tp-field>
         <tp-field label=${strings.imageAlt}
           ><tp-input
             .value=${this.#alt}
-            .onValueChange=${text((value) => {
-              this.#alt = value;
-            })}
+            .onValueChange=${this.#altChange}
             @keydown=${this.#keyDown}
           ></tp-input
         ></tp-field>
@@ -243,6 +264,23 @@ export class TextEditorImagePopover {
       </div></tp-popover
     >`;
   }
+
+  // Stable callbacks: the closed popover renders with the element on every state publication, and
+  // a new function in an input's property would update the input each time.
+  readonly #srcChange = (event: TpValueChangeEvent<unknown>): void => {
+    this.#src = String(event.detail.value ?? '');
+    this.#invalid = false;
+    this.#host.requestUpdate();
+  };
+
+  readonly #altChange = (event: TpValueChangeEvent<unknown>): void => {
+    this.#alt = String(event.detail.value ?? '');
+    this.#host.requestUpdate();
+  };
+
+  readonly #inputReference = (element: HTMLElement | null): void => {
+    this.#input = element;
+  };
 
   readonly #uploader = (item: FileUploadItem, context: FileUploadContext): Promise<unknown> => {
     const upload = this.#host.imageUpload();
@@ -274,8 +312,10 @@ export class TextEditorImagePopover {
       return;
     }
     const reason = this.#reasons.get(item.file) ?? 'input';
+    // The last upload to finish closes the popover with the reason that added its file
+    // (`uwg-te-tab-reasons` r13: `input`, `drag` or `input-paste`).
     void this.#enqueue(src, reason, event).then((applied) => {
-      if (applied && !this.#unfinished()) this.close('item-press', event);
+      if (applied && !this.#unfinished()) this.close(reason, event);
     });
   };
 
@@ -291,13 +331,9 @@ export class TextEditorImagePopover {
     const run = this.#queue.then(async () => {
       const before = this.#host.blockIds();
       const outcome = await this.#host
-        .request({
-          target: imageInsertActions(this.#point, src, this.#alt),
-          surface: this.#surface,
-          reason,
-          sourceEvent,
-          trigger: null,
-        })
+        .request(
+          imageInsertProposal(this.#point, src, this.#alt, this.#surface, reason, sourceEvent),
+        )
         .catch(() => 'unchanged' as const);
       if (outcome !== 'applied') return false;
       const inserted = insertedBlock(before, this.#host.blockIds());
@@ -314,8 +350,9 @@ export class TextEditorImagePopover {
       this.#host.requestUpdate();
       return;
     }
+    // Insert by URL finishes the popover: it closes and aborts the uploads still running.
     void this.#enqueue(this.#src, 'item-press', event).then((applied) => {
-      if (applied && !this.#unfinished()) this.close('item-press', event);
+      if (applied) this.close('item-press', event);
     });
   };
 
@@ -324,6 +361,12 @@ export class TextEditorImagePopover {
     event.preventDefault();
     this.#insert(event);
   };
+
+  /**
+   * The popover's input, else its first focusable; one stable reference, so that a render of the
+   * element leaves the closed popover as it is.
+   */
+  readonly #initialFocus = (): HTMLElement | boolean => this.#input ?? true;
 
   readonly #finalFocus = (): boolean => {
     const closing = this.#closing;
@@ -352,15 +395,52 @@ export interface TextEditorImageFilesInput {
   /** Aborts the uploads, when the widget disconnects. */
   readonly signal: AbortSignal;
   blockIds(): readonly string[];
+  /** The current selection, where an image goes once the paste or drop position is gone. */
+  selection?(): TextEditorSelection;
   request(proposal: TextEditorRequestProposal): Promise<TextEditorRequestOutcome>;
   diagnose(message: string): void;
+}
+
+/** The blocks that a selection input names. */
+function selectionBlocks(selection: TextEditorSelectionInput): readonly string[] {
+  switch (selection.kind) {
+    case 'text':
+      return selection.head
+        ? [selection.anchor.block, selection.head.block]
+        : [selection.anchor.block];
+    case 'caret':
+      return [selection.block];
+    case 'blocks':
+      return selection.ids;
+    case 'cells':
+      return [selection.table];
+  }
+}
+
+/**
+ * The point where an upload inserts: the remembered one while every block it names exists; once a
+ * block is gone (the HTML of the same paste replaced the selected blocks), the current selection,
+ * else right after the last block.
+ */
+function livePoint(
+  point: ImageInsertionPoint,
+  input: TextEditorImageFilesInput,
+): ImageInsertionPoint {
+  if (point.kind !== 'selection') return point;
+  const ids = input.blockIds();
+  if (selectionBlocks(point.selection).every((id) => ids.includes(id))) return point;
+  const current = input.selection ? selectionInput(input.selection()) : null;
+  if (current) return { kind: 'selection', selection: current };
+  const last = ids.at(-1);
+  return last ? { kind: 'after', id: last } : { kind: 'document' };
 }
 
 /**
  * Uploads pasted or dropped image files through `imageUpload`, all at once, and inserts each
  * source that passes the image policy once its upload completes: the first at the paste or drop
- * position, each later one right after the image inserted last. A source that fails the policy is
- * reported and inserted nowhere; an aborted or failed upload inserts nothing.
+ * position (or, once that position is gone, at the current selection), each later one right after
+ * the image inserted last. A source that fails the policy is reported and inserted nowhere; an
+ * aborted or failed upload inserts nothing.
  */
 export async function insertImageFiles(input: TextEditorImageFilesInput): Promise<void> {
   let point: ImageInsertionPoint = { kind: 'selection', selection: input.at };
@@ -369,6 +449,7 @@ export async function insertImageFiles(input: TextEditorImageFilesInput): Promis
     const run = queue.then(async () => {
       if (input.signal.aborted) return;
       const before = input.blockIds();
+      point = livePoint(point, input);
       const outcome = await input
         .request({
           target: imageInsertActions(point, src, ''),

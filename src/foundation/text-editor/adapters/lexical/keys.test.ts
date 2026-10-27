@@ -19,7 +19,7 @@ import {
   type FakeElement,
   type WholeDocumentInput,
 } from '../shared/test-helpers.test.js';
-import { $verticalToAtom, trackPresses } from './cursor.js';
+import { $atomBesideCaret, $verticalToAtom, trackPresses } from './cursor.js';
 import { LexicalGeometry } from './geometry.js';
 import { $blockId, $holders } from './ids.js';
 import {
@@ -503,6 +503,51 @@ describe('uwg-te-req-engine-9: the block cursor', () => {
     });
   });
 
+  it('a press between a table and a divider measures the table by its own box, not its scroll wrapper with the reserved space', () => {
+    const headless = headlessLexical({
+      html: '<table data-id="t1"><tbody><tr><td><p>c</p></td></tr></tbody></table><hr data-id="d1"><p data-id="p2">z</p>',
+    });
+    const box = (top: number, bottom: number) => ({
+      getClientRects: () => [{}],
+      getBoundingClientRect: () => ({
+        left: 0,
+        right: 400,
+        top,
+        bottom,
+        width: 400,
+        height: bottom - top,
+      }),
+    });
+    // The table ends at 100, its wrapper with the reserved quick-add space at 130; the divider at 140.
+    const table = { tagName: 'TABLE', ...box(0, 100) };
+    const wrapper = { tagName: 'DIV', ...box(0, 130), querySelector: () => table };
+    const divider = { tagName: 'HR', ...box(140, 141) };
+    const keys = headless.editor.read(() =>
+      lexical
+        .$getRoot()
+        .getChildren()
+        .map((node) => node.getKey()),
+    );
+    headless.editor.getElementByKey = ((key: string) =>
+      key === keys[0] ? wrapper : key === keys[1] ? divider : null) as never;
+    headless.rt.lastInput = { kind: 'press', x: 50, y: 125, shift: false };
+    headless.editor.update(
+      () => {
+        const selection = lexical.$createRangeSelection();
+        selection.anchor.set('root', 1, 'element');
+        selection.focus.set('root', 1, 'element');
+        lexical.$setSelection(selection);
+      },
+      { discrete: true },
+    );
+    headless.editor.read(() => undefined);
+    // 25 from the table, 15 from the divider: the start of the textblock after it.
+    expect(headless.instance.getState().selection).toMatchObject({
+      kind: 'text',
+      head: { block: 'p2', offset: 0 },
+    });
+  });
+
   it('with nothing in the key’s direction the selection goes back to where it was', () => {
     const headless = headlessLexical({ html: '<hr data-id="d1"><p data-id="p1">a</p>' });
     selectText(headless, { block: 'p1', offset: 0 });
@@ -554,6 +599,18 @@ describe('uwg-te-req-engine-9: ArrowUp and ArrowDown beside an atom', () => {
       sides: ['last'],
       selection: { kind: 'blocks', ids: ['i1'] },
     });
+  });
+
+  it('from another line toward an atom the key is the browser’s, never the engine’s line navigation', () => {
+    const headless = headlessLexical({ html: doc });
+    expect(vertical(headless, 'ArrowDown', { block: 'top', offset: 1 }, false).moved).toBe(false);
+    const beside = (key: 'ArrowUp' | 'ArrowDown') =>
+      headless.editor.read(() => $atomBesideCaret(headless.rt, key));
+    // The caret stays on the paragraph before the divider: the adapter takes the key unprevented.
+    expect(beside('ArrowDown')).toBe(true);
+    expect(beside('ArrowUp')).toBe(false);
+    selectText(headless, { block: 'end', offset: 1 });
+    expect(beside('ArrowDown')).toBe(false);
   });
 
   it('in a table only the first or last row’s first or last paragraph leads to the atom beside the table', () => {
@@ -642,7 +699,7 @@ describe('uwg-te-req-engine-9: a press after a block selection', () => {
       editor: rooted.instance.native as lexical.LexicalEditor,
     } as unknown as Headless;
     const setEvent = (event: Event | undefined) => void (view.event = event);
-    return { headless, target, atom, setEvent };
+    return { headless, target, atom, setEvent, root };
   }
   const click = (headless: Headless, target: unknown) => {
     headless.editor.dispatchCommand(lexical.CLICK_COMMAND, {
@@ -672,10 +729,30 @@ describe('uwg-te-req-engine-9: a press after a block selection', () => {
     });
   });
 
-  it('a click on an atom is left to the engine, which selects the atom it targets', () => {
+  it('a click on an atom selects the atom it targets', () => {
     const { headless, atom } = pressable(doc);
     blocks(headless, ['top']);
     expect(click(headless, atom).kind).not.toBe('text');
+  });
+
+  it('V-737: a plain click on an image selects it as a block, as the other engine does; a Shift click stays the engine’s', () => {
+    const image =
+      '<p data-id="top">Top</p><img data-id="i1" src="a.png" alt="A"><p data-id="after">After</p>';
+    const { headless, atom } = pressable(image);
+    selectText(headless, { block: 'top', offset: 1 });
+    expect(click(headless, atom)).toEqual({ kind: 'blocks', ids: ['i1'] });
+    selectText(headless, { block: 'top', offset: 1 });
+    headless.editor.dispatchCommand(lexical.CLICK_COMMAND, {
+      type: 'click',
+      target: atom,
+      detail: 1,
+      shiftKey: true,
+    } as unknown as MouseEvent);
+    headless.editor.read(() => undefined);
+    expect(headless.instance.getState().selection.kind).toBe('text');
+    // Read-only keeps the document selectable: the click selects the atom there too.
+    const readOnly = pressable(image, false);
+    expect(click(readOnly.headless, readOnly.atom)).toEqual({ kind: 'blocks', ids: ['i1'] });
   });
 
   it('while read-only, a DOM selection change inside the root replaces a block selection with the DOM selection', () => {
@@ -690,14 +767,39 @@ describe('uwg-te-req-engine-9: a press after a block selection', () => {
     headless.editor.dispatchCommand(lexical.SELECTION_CHANGE_COMMAND, undefined);
     headless.editor.read(() => undefined);
     expect(headless.instance.getState().selection.kind).toBe('blocks');
-    setEvent(new Event('selectionchange'));
-    headless.editor.dispatchCommand(lexical.SELECTION_CHANGE_COMMAND, undefined);
-    setEvent(undefined);
-    headless.editor.read(() => undefined);
+    const selectionChange = () => {
+      setEvent(new Event('selectionchange'));
+      headless.editor.dispatchCommand(lexical.SELECTION_CHANGE_COMMAND, undefined);
+      setEvent(undefined);
+      headless.editor.read(() => undefined);
+    };
+    // The first change echoes the engine's own write of the DOM selection for the placed blocks.
+    selectionChange();
+    expect(headless.instance.getState().selection.kind).toBe('blocks');
+    selectionChange();
     expect(headless.instance.getState().selection).toMatchObject({
       kind: 'text',
       head: { block: 'after', offset: 0 },
     });
+  });
+
+  it('V-438: while read-only, a placed block selection outlives the echo of its DOM selection write, and a press or a key ends the wait for it', () => {
+    const { headless, setEvent, root } = pressable(doc, false);
+    const selectionChange = () => {
+      setEvent(new Event('selectionchange'));
+      headless.editor.dispatchCommand(lexical.SELECTION_CHANGE_COMMAND, undefined);
+      setEvent(undefined);
+      headless.editor.read(() => undefined);
+      return headless.instance.getState().selection.kind;
+    };
+    for (const input of ['pointerdown', 'keydown']) {
+      blocks(headless, ['d1']);
+      expect(headless.instance.getState().selection).toEqual({ kind: 'blocks', ids: ['d1'] });
+      root.dispatchEvent(new Event(input));
+      expect(selectionChange()).toBe('text');
+    }
+    blocks(headless, ['d1']);
+    expect(selectionChange()).toBe('blocks');
   });
 });
 
@@ -2159,5 +2261,86 @@ describe('uwg-te-req-engine-4: a range that a press made keeps the press point a
     expect(pressWith({})).toEqual(AT_CD_END);
     untrack();
     expect([...listeners.keys()]).toEqual([]);
+  });
+});
+
+describe('uwg-te-req-surfaces-6: a cleared selection on Lexical', () => {
+  it('stays cleared through a DOM selection the engine reads until a key that edits places its resting caret', () => {
+    const headless = headlessLexical({
+      html: '<p data-id="p1">first</p><hr data-id="d1"><p data-id="p2">second</p>',
+    });
+    const set = (selection: TextEditorSelectionInput | { kind: 'none' }) =>
+      headless.instance.execute([{ type: 'selection.set', selection } as TextEditorAction], {
+        reason: 'programmatic',
+      });
+    expect(set({ kind: 'blocks', ids: ['d1'] })).toBe(true);
+    expect(set({ kind: 'none' })).toBe(true);
+    expect(headless.instance.getState().selection).toEqual({ kind: 'none' });
+    // The caret a browser puts at the start of a focused root that holds no selection when a key
+    // arrives, as the engine reads it.
+    headless.editor.update(
+      () => {
+        lexical.$getRoot().getFirstChildOrThrow<lexical.ElementNode>().select(0, 0);
+        headless.editor.dispatchCommand(lexical.SELECTION_CHANGE_COMMAND, undefined);
+      },
+      { discrete: true },
+    );
+    expect(headless.instance.getState().selection).toEqual({ kind: 'none' });
+    press(headless, lexical.KEY_DOWN_COMMAND, 'Escape');
+    press(headless, lexical.KEY_DOWN_COMMAND, 'Shift');
+    expect(headless.instance.getState().selection).toEqual({ kind: 'none' });
+    // The atom has no text: the caret rests at the start of the next textblock.
+    press(headless, lexical.KEY_DOWN_COMMAND, 'x');
+    expect(headless.instance.getState().selection).toMatchObject({
+      kind: 'text',
+      anchor: { block: 'p2', offset: 0 },
+      empty: true,
+    });
+  });
+
+  it('ends with any other action list and with focus', () => {
+    const headless = headlessLexical({ html: '<p data-id="p1">first</p><p data-id="p2">x</p>' });
+    const none = { type: 'selection.set', selection: { kind: 'none' } } as TextEditorAction;
+    headless.instance.execute(
+      [{ type: 'selection.set', selection: { kind: 'blocks', ids: ['p2'] } }],
+      { reason: 'programmatic' },
+    );
+    headless.instance.execute([none], { reason: 'programmatic' });
+    expect(headless.rt.cleared).toEqual({ kind: 'caret', block: 'p2', position: 'start' });
+    headless.instance.execute(
+      [{ type: 'selection.set', selection: { kind: 'caret', block: 'p1', position: 'end' } }],
+      { reason: 'programmatic' },
+    );
+    expect(headless.rt.cleared).toBeNull();
+    headless.instance.execute([none], { reason: 'programmatic' });
+    expect(headless.rt.cleared).not.toBeNull();
+    void headless.instance.focus('restore');
+    expect(headless.rt.cleared).toBeNull();
+  });
+});
+
+describe('uwg-te-req-parity-1: arrows over an inline node', () => {
+  const MENTION = '<span data-type="mention" data-person="u1" data-label="Ann">@Ann</span>';
+
+  it('steps over an inline node as one character and never selects it as a node', () => {
+    const headless = headlessLexical({
+      html: `<p data-id="p">a ${MENTION} b</p>`,
+      nodes: corpusNodes,
+    });
+    const flags = headless.editor.read(() => {
+      const found: boolean[] = [];
+      const visit = (node: lexical.LexicalNode): void => {
+        if (lexical.$isDecoratorNode(node))
+          found.push(node.isInline(), node.isKeyboardSelectable());
+        if (lexical.$isElementNode(node)) node.getChildren().forEach(visit);
+      };
+      visit(lexical.$getRoot());
+      return found;
+    });
+    expect(flags).toEqual([true, false]);
+    // Right after the node, ArrowLeft keeps a text selection: no node selection of the mention.
+    selectText(headless, { block: 'p', offset: 3 });
+    press(headless, lexical.KEY_ARROW_LEFT_COMMAND, 'ArrowLeft');
+    expect(headless.instance.getState().selection.kind).toBe('text');
   });
 });

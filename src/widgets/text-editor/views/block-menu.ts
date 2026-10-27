@@ -1,10 +1,12 @@
 /**
  * The block menu (`uwg-te-req-blocks-3`, `uwg-te-tab-layout-r5`): a Menu with the gutter's grip
  * as its detached trigger, built from `layout.blockMenu` for the block selection. Its items are
- * frozen while it is open; it opens from a grip click, Mod+/ and, in block mode or on a focused
- * grip, Shift+F10 and the ContextMenu key; closing it returns focus to the editing root.
+ * resolved and rendered into it when it opens, a render root of the view's own, and frozen while
+ * it is open: a closed menu resolves no tool, so typing does not dry-run its block actions. It
+ * opens from a grip click, Mod+/ and, in block mode or on a focused grip, Shift+F10 and the
+ * ContextMenu key; closing it returns focus to the editing root.
  */
-import { html, nothing, type TemplateResult } from 'lit';
+import { html, nothing, render, type TemplateResult } from 'lit';
 import type { TpMenu } from '../../../components/menu/menu.js';
 import type { SurfaceInteraction } from '../../../foundation/surface-focus.js';
 import type { TpSurfaceOpenChangeEvent } from '../../../foundation/surface-state.js';
@@ -21,6 +23,12 @@ const OWN_ACTIONS: ReadonlySet<string> = new Set<TextEditorBlockMenuAction>([
   'move-block-down',
   'copy-block-link',
 ]);
+
+/**
+ * The grip's trigger identifier, the menu's default trigger: a menu opened by a key, with no
+ * trigger pressed, anchors to the grip.
+ */
+const GRIP_TRIGGER = 'text-editor-grip';
 
 /** Whether the widget performs a block-menu tool itself. */
 export function ownBlockMenuAction(id: string): id is TextEditorBlockMenuAction {
@@ -96,26 +104,42 @@ export class TextEditorBlockMenu {
     return this.#menu;
   }
 
-  /** The Menu with the current or frozen items; nothing while the gutter cannot show. */
+  /**
+   * The Menu, whose items the view renders into it when it opens (`#renderItems`); nothing while
+   * the gutter cannot show.
+   */
   render(enabled: boolean): TemplateResult | typeof nothing {
     if (!enabled) return nothing;
-    const groups = this.#frozen ?? blockMenuGroups(this.#host.groups());
-    const handlers = this.#handlers;
     return html`<tp-menu
       class="block-menu"
       .portal=${false}
       .modal=${false}
       label=${this.#host.strings().blockMenu}
+      default-trigger-identifier=${GRIP_TRIGGER}
       .finalFocus=${this.#host.finalFocus}
       @tp-open-change=${this.#onOpenChange}
-      >${groups.map(
+    ></tp-menu>`;
+  }
+
+  /**
+   * Renders the frozen items into the menu, a render root of the view's own, so that they exist
+   * from the open request on, before the popup shows and moves focus to the first one.
+   */
+  #renderItems(menu: TpMenu, groups: readonly TextEditorToolbarGroup[]): void {
+    const handlers = this.#handlers;
+    // Listeners run with the element as `this`, as in the element's own template.
+    const root = menu.getRootNode() as Partial<ShadowRoot>;
+    render(
+      groups.map(
         (group, index) =>
           html`${index ? html`<tp-separator></tp-separator>` : nothing}${renderToolMenuItems(
             group.items,
             handlers,
           )}`,
-      )}</tp-menu
-    >`;
+      ),
+      menu,
+      { host: root.host ?? menu },
+    );
   }
 
   /** Registers the grip as the menu's detached trigger after each render. */
@@ -127,7 +151,7 @@ export class TextEditorBlockMenu {
     this.#menu = menu;
     this.#grip = grip;
     if (menu && grip && typeof menu.registerTrigger === 'function')
-      this.#unregister = menu.registerTrigger(grip);
+      this.#unregister = menu.registerTrigger(grip, { identifier: GRIP_TRIGGER });
   }
 
   /** Opens the menu from a key, with the grip as its trigger; whether it opened. */
@@ -153,8 +177,10 @@ export class TextEditorBlockMenu {
   readonly #onOpenChange = (event: TpSurfaceOpenChangeEvent): void => {
     if (event.target !== event.currentTarget) return;
     const open = event.detail.value;
-    // The view model is frozen at opening and released at closing.
+    // The view model is resolved and frozen at opening and released at closing; the items of a
+    // closed menu stay as they were, hidden, until the next opening renders new ones.
     this.#frozen = open ? blockMenuGroups(this.#host.groups()) : null;
+    if (this.#frozen) this.#renderItems(event.currentTarget as TpMenu, this.#frozen);
     this.#host.openChanged(open);
     this.#host.requestUpdate();
   };

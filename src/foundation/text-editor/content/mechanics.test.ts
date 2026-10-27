@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { textMechanicsCss } from './mechanics.js';
+import { TEXT_MECHANICS_INHERITED, textMechanicsCss } from './mechanics.js';
 
 /** Each rule of a sheet as its selector and its declarations. */
 function rules(css: string): Map<string, Record<string, string>> {
@@ -40,6 +40,15 @@ R .tp-te-list .tp-te-list {
   direction: var(--tp-te-direction);
 }
 `);
+  });
+
+  it('writes the root’s own rule from the inherited mechanics, which the widget also writes while generated styles are suppressed', () => {
+    expect(TEXT_MECHANICS_INHERITED).toEqual({
+      'white-space': 'pre-wrap',
+      'overflow-wrap': 'break-word',
+      'font-variant-ligatures': 'none',
+    });
+    expect(rules(textMechanicsCss('R')).get('R')).toEqual(TEXT_MECHANICS_INHERITED);
   });
 
   it('scopes every rule to the root and names no color', () => {

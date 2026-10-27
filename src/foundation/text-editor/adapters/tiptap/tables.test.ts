@@ -542,6 +542,85 @@ describe('Tiptap table actions (uwg-te-tab-actions r7, uwg-te-req-tables-1)', ()
   });
 });
 
+describe('Tiptap dry runs (uwg-te-req-perf-1)', () => {
+  it('V-587: can answers table actions and block moves from the shared edit, building no engine node', () => {
+    const { instance, view } = mountTiptap({ content: GRID() });
+    const schema = view.state.schema as { nodeFromJSON(json: unknown): unknown };
+    const nodeFromJSON = schema.nodeFromJSON;
+    let built = 0;
+    schema.nodeFromJSON = function (this: unknown, json: unknown) {
+      built += 1;
+      return nodeFromJSON.call(this, json);
+    };
+    const range = { anchor: { row: 0, column: 0 }, head: { row: 1, column: 1 } };
+    try {
+      const accepted: TextEditorAction[] = [
+        { type: 'table.insert-row', table: 't1', index: 1 },
+        { type: 'table.move-column', table: 't1', from: 2, to: 0 },
+        { type: 'table.merge-cells', table: 't1', range },
+        { type: 'table.align', table: 't1', target: { column: 1 }, align: 'center' },
+        { type: 'table.column-widths', table: 't1', widths: [100, 120, 140] },
+        { type: 'blocks.move', ids: ['p1'], to: { parent: null, index: 2 } },
+      ];
+      for (const action of accepted) expect(instance.can(action), action.type).toBe(true);
+      // Refusals stay refusals: every row deleted, an unknown table, a move into itself.
+      expect(instance.can({ type: 'table.delete-rows', table: 't1', from: 0, to: 2 })).toBe(false);
+      expect(instance.can({ type: 'table.insert-row', table: 'missing', index: 0 })).toBe(false);
+      expect(
+        instance.can({ type: 'blocks.move', ids: ['t1'], to: { parent: 't1', index: 0 } }),
+      ).toBe(false);
+      expect(built).toBe(0);
+      // `execute` still builds and commits the edited table.
+      expect(run(instance, { type: 'table.insert-row', table: 't1', index: 1 })).toBe(true);
+      expect(built).toBeGreaterThan(0);
+    } finally {
+      schema.nodeFromJSON = nodeFromJSON;
+    }
+  });
+
+  it('V-588: can answers block-type and alignment tools from the shared plan, building no engine node', () => {
+    const { instance, view } = mountTiptap({ content: GRID() });
+    const schema = view.state.schema as { nodeFromJSON(json: unknown): unknown };
+    const nodeFromJSON = schema.nodeFromJSON;
+    let built = 0;
+    schema.nodeFromJSON = function (this: unknown, json: unknown) {
+      built += 1;
+      return nodeFromJSON.call(this, json);
+    };
+    const caret = (anchor: { block: string; cell?: never } | Record<string, unknown>) =>
+      run(instance, { type: 'selection.set', selection: { kind: 'text', anchor } as never });
+    try {
+      expect(caret({ block: 'p1', offset: 2 })).toBe(true);
+      const accepted: TextEditorAction[] = [
+        { type: 'block.set-type', kind: 'heading', attrs: { level: 2 } },
+        { type: 'block.set-type', kind: 'quote' },
+        { type: 'block.set-type', kind: 'list-bullet' },
+        { type: 'block.set-type', kind: 'paragraph', toggle: true },
+        { type: 'block.align', align: 'center' },
+        { type: 'block.align', align: null, ids: ['p1'] },
+      ];
+      for (const action of accepted) expect(instance.can(action), action.type).toBe(true);
+      // Refusals stay refusals: a table is no textblock and takes no alignment, an unknown block.
+      expect(instance.can({ type: 'block.set-type', kind: 'quote', ids: ['t1'] })).toBe(false);
+      expect(instance.can({ type: 'block.align', align: 'end', ids: ['t1'] })).toBe(false);
+      expect(instance.can({ type: 'block.set-type', kind: 'quote', ids: ['missing'] })).toBe(false);
+      // A caret in a cell targets no block.
+      expect(caret({ block: 't1', cell: { row: 1, column: 1, paragraph: 0 }, offset: 0 })).toBe(
+        true,
+      );
+      expect(instance.can({ type: 'block.set-type', kind: 'quote' })).toBe(false);
+      expect(instance.can({ type: 'block.align', align: 'center' })).toBe(false);
+      expect(built).toBe(0);
+      // `execute` still builds and commits the edited document.
+      expect(run(instance, { type: 'block.set-type', kind: 'quote', ids: ['p1'] })).toBe(true);
+      expect(built).toBeGreaterThan(0);
+      expect(instance.getBlocks().get('p1')?.kind).toBe('quote');
+    } finally {
+      schema.nodeFromJSON = nodeFromJSON;
+    }
+  });
+});
+
 describe('Tiptap table carets (uwg-te-req-tables-1)', () => {
   it('a selection outside the inserted or deleted lines moves with its cells', () => {
     const { instance } = mountTiptap({

@@ -126,6 +126,12 @@ export interface TiptapWorkOptions {
   readonly placed?: boolean | undefined;
   /** Default true, as for keys and input rules, which the engine runs only while editable. */
   readonly editable?: boolean | undefined;
+  /**
+   * `can`'s dry run, whose transaction is dropped: an action whose answer is settled once its
+   * shared edit computes may answer without committing it, as the Lexical adapter's preparation
+   * does (`uwg-te-req-perf-1`).
+   */
+  readonly dry?: boolean | undefined;
 }
 
 /** The transaction that one list of actions builds. */
@@ -146,6 +152,8 @@ export class TiptapWork {
   cleared = false;
   /** Whether the mount is editable, which the action gate reads. */
   readonly editable: boolean;
+  /** Whether this work is `can`'s dry run (`TiptapWorkOptions.dry`). */
+  readonly dry: boolean;
 
   constructor(
     readonly env: TiptapEnv,
@@ -155,6 +163,7 @@ export class TiptapWork {
     this.tr = state.tr;
     this.placed = options.placed ?? true;
     this.editable = options.editable ?? true;
+    this.dry = options.dry ?? false;
   }
 
   get doc(): TiptapNodeLike {

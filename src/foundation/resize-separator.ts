@@ -1,4 +1,5 @@
 import { arrowKeys } from './collection.js';
+import { leaseDragCursor } from './drag-cursor.js';
 import { GeneratedStyleResource } from './generated-style.js';
 
 /**
@@ -115,8 +116,15 @@ interface DragSession {
   readonly start: number;
   readonly startValue: number;
   readonly scale: number;
-  readonly style: GeneratedStyleResource;
+  /** The `user-select` rule of a touch or pen drag; a mouse drag has none. */
+  readonly style: GeneratedStyleResource | null;
   readonly escape: ((event: KeyboardEvent) => void) | null;
+  /** Blocks text selection during a mouse drag (`selectstart`), or null. */
+  readonly select: ((event: Event) => void) | null;
+  /** The frame that writes the drag style, until it ran. */
+  frame: number | null;
+  /** Releases the drag cursor's lease, once the frame wrote it. */
+  cursor: (() => void) | null;
   delta: number;
 }
 
@@ -232,13 +240,35 @@ export class ResizeSeparatorController {
     element.focus({ preventScroll: true });
     const horizontal = this.#options.axis() === 'horizontal';
     const host = this.#options.host;
-    const style = new GeneratedStyleResource(host, host.ownerDocument);
     const cursor = this.#options.cursor?.() ?? true;
-    style.setText(
-      `*{user-select:none!important;${cursor ? `cursor:${horizontal ? 'col-resize' : 'row-resize'}!important;` : ''}}`,
-    );
-    const scale = this.#options.scale?.() ?? 1;
     const view = host.ownerDocument.defaultView;
+    // A mouse drag blocks text selection through `selectstart`: a `user-select` rule over the
+    // document recomputes every element's style and the document selection in the pressing task
+    // (V-587). Touch and pen keep the rule, which also holds back the long-press selection. The
+    // cursor shows through the drag cursor's layer, which styles one element, for every pointer
+    // with one.
+    const mouse = event.pointerType === 'mouse' && !!view;
+    const style = mouse ? null : new GeneratedStyleResource(host, host.ownerDocument);
+    const shape =
+      cursor && event.pointerType !== 'touch' ? (horizontal ? 'col-resize' : 'row-resize') : null;
+    // Written in the pressing task, the owner's reads there (its render after the focus moved)
+    // would force a style recalculation, so the drag style waits a frame.
+    const write = () => {
+      style?.setText('*{user-select:none!important;}');
+      if (shape && this.#session) this.#session.cursor = leaseDragCursor(host.ownerDocument, shape);
+    };
+    const frame = view?.requestAnimationFrame
+      ? view.requestAnimationFrame(() => {
+          if (this.#session) this.#session.frame = null;
+          write();
+        })
+      : null;
+    const select = mouse
+      ? (start: Event) => {
+          if (this.#session) start.preventDefault();
+        }
+      : null;
+    const scale = this.#options.scale?.() ?? 1;
     const escape =
       this.#options.escapeCancels === false || !view
         ? null
@@ -256,9 +286,14 @@ export class ResizeSeparatorController {
       scale: Number.isFinite(scale) && scale > 0 ? scale : 1,
       style,
       escape,
+      select,
+      frame,
+      cursor: null,
       delta: 0,
     };
+    if (frame === null) write();
     if (escape) view!.addEventListener('keydown', escape, { capture: true });
+    if (select) view!.addEventListener('selectstart', select, { capture: true });
     try {
       element.setPointerCapture(event.pointerId);
     } catch {
@@ -373,11 +408,12 @@ export class ResizeSeparatorController {
     } catch {
       // The pointer is already gone.
     }
-    session.style.dispose();
-    if (session.escape)
-      this.#options.host.ownerDocument.defaultView?.removeEventListener('keydown', session.escape, {
-        capture: true,
-      });
+    const view = this.#options.host.ownerDocument.defaultView;
+    if (session.frame !== null) view?.cancelAnimationFrame(session.frame);
+    session.style?.dispose();
+    session.cursor?.();
+    if (session.escape) view?.removeEventListener('keydown', session.escape, { capture: true });
+    if (session.select) view?.removeEventListener('selectstart', session.select, { capture: true });
     return session;
   }
 }

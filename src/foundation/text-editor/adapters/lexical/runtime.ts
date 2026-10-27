@@ -8,7 +8,7 @@ import type {
   TextEditorDiagnostic,
   TextEditorUrlPolicy,
 } from '../../engine.js';
-import type { TextEditorTextPoint } from '../../model.js';
+import type { TextEditorSelectionInput, TextEditorTextPoint } from '../../model.js';
 import type { TextEditorNodeDefinition } from '../../nodes.js';
 import type { TextEditorContentGlue } from '../shared/content.js';
 import type { TextEditorLexicalNodeOverride } from './index.js';
@@ -89,6 +89,18 @@ export class LexicalRuntime {
    * (`uwg-te-req-engine-5`).
    */
   typingAt: number | null = null;
+  /**
+   * The caret where a selection cleared by `selection.set` with none rests
+   * (`uwg-te-req-surfaces-6`), while the engine holds no selection and the root keeps focus: the
+   * next key that edits places it first; a press, focus, a load and any other action end it.
+   */
+  cleared: TextEditorSelectionInput | null = null;
+  /**
+   * A block selection or cell range placed while read-only waits for the `selectionchange` that the
+   * engine's own write of the DOM selection then causes, which is no change of the reader's
+   * (`$followReadOnlySelection`); a press or a key in the root ends the wait.
+   */
+  awaitsSelectionEcho = false;
   /** The last key or press in the editing root, which tells where a block cursor came from. */
   lastInput: LexicalLastInput | null = null;
   /**

@@ -233,16 +233,23 @@ function styles(id: string) {
 }
 
 /**
- * The policy checks of an instance (V-591): no violation on the page; with `sheets` the engine
- * CSS is an adopted sheet and no `style` element exists; with `nonce` it is a `style` element of
- * the shadow root and every `style` element in the instance's tree carries the nonce; with
- * `no-styles` neither exists. The editing steps run separately (real input).
+ * The policy checks of an instance (V-591): no violation on the page; the editing root keeps its
+ * spaces (`white-space: pre-wrap`) in every scope, from the engine CSS or, with `no-styles`, from
+ * the content part's inline mechanics; with `sheets` the engine CSS is an adopted sheet and no
+ * `style` element exists; with `nonce` it is a `style` element of the shadow root and every
+ * `style` element in the instance's tree carries the nonce; with `no-styles` neither exists. The
+ * editing steps run separately (real input).
  */
 function assertCsp(id: string): Report {
   const value = styles(id);
   const checks = [
     check('no policy violation on the page', violations.length === 0, violations.slice(0, 12)),
     check('ready', editorOf(id).status === 'ready', editorOf(id).status),
+    check(
+      'editing root white-space pre-wrap',
+      value.rootWhiteSpace === 'pre-wrap',
+      value.rootWhiteSpace,
+    ),
   ];
   switch (value.scope) {
     case 'sheets':

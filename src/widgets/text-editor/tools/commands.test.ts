@@ -3,6 +3,10 @@ import type { CommandGroup, CommandItem } from '../../../components/command-pale
 import { textEditorTools } from '../../../foundation/text-editor/builtin-tools.js';
 import { BASE_CAPABILITIES } from '../../../foundation/text-editor/capabilities.js';
 import { defaultTextEditorLayout } from '../../../foundation/text-editor/layout.js';
+import {
+  defineTextEditorBlock,
+  defineTextEditorInline,
+} from '../../../foundation/text-editor/nodes.js';
 import { preReadyState } from '../../../foundation/text-editor/state.js';
 import { textEditorStrings } from '../../../foundation/text-editor/strings.js';
 import {
@@ -11,6 +15,7 @@ import {
   type TextEditorToolContext,
 } from '../../../foundation/text-editor/tools.js';
 import {
+  commandEntriesKey,
   commandMatchFields,
   isSuggestionEntryValue,
   slashEntries,
@@ -18,8 +23,23 @@ import {
   toolCommandItem,
 } from './commands.js';
 
+const stamp = defineTextEditorBlock({
+  name: 'stamp',
+  content: 'none',
+  element: 'figure',
+  tool: { label: 'Stamp' },
+});
+const tag = defineTextEditorInline({
+  name: 'tag',
+  element: 'span',
+  attrs: { label: { type: 'string', default: 'tag' } },
+  text: (attrs) => `#${attrs.label ?? ''}`,
+  tool: { label: 'Tag' },
+});
+
 const registry = resolveTextEditorTools({
   builtins: textEditorTools,
+  nodes: [stamp, tag],
   tools: [
     defineTextEditorTool({
       id: 'callout',
@@ -36,6 +56,8 @@ const registry = resolveTextEditorTools({
     'block.heading',
     'block.list-bullet',
     'block.image',
+    'block.stamp',
+    'inline.tag',
   ] as never[]),
 });
 
@@ -102,13 +124,72 @@ describe('slash menu entries (uwg-te-req-surfaces-2)', () => {
     expect(commandMatchFields(callout)).toEqual(['note', 'A highlighted note']);
   });
 
-  it('offers only inline entries in a table cell', () => {
-    const groups = slashEntries([['paragraph', 'heading-1'], ['image']], input(true));
-    expect(
+  it('offers only inline entries in a table cell (uwg-te-req-tools-5)', () => {
+    const values = (groups: ReturnType<typeof slashEntries>) =>
       groups.flatMap((group) =>
         ((group as CommandGroup).items as CommandItem[]).map((item) => item.value),
-      ),
-    ).toEqual(['image']);
+      );
+    const layout = [
+      ['paragraph', 'heading-1', 'blockquote'],
+      ['bullet-list'],
+      ['image', 'divider'],
+      ['stamp', 'tag', 'callout'],
+    ];
+    expect(values(slashEntries(layout, input()))).toEqual([
+      'paragraph',
+      'heading-1',
+      'blockquote',
+      'bullet-list',
+      'image',
+      'divider',
+      'stamp',
+      'tag',
+      'callout',
+    ]);
+    // Block tools, block inserts and atoms leave; the inline node and the application's tool stay.
+    expect(values(slashEntries(layout, input(true)))).toEqual(['tag', 'callout']);
+    // The default layout, table included, offers nothing in a cell: the list shows its empty state.
+    const defaults = resolveTextEditorTools({
+      builtins: textEditorTools,
+      capabilities: new Set([...BASE_CAPABILITIES, 'block.table'] as never[]),
+    });
+    expect(
+      slashEntries(defaultTextEditorLayout.slash, { ...input(true), registry: defaults }),
+    ).toEqual([]);
+  });
+
+  it('describes every built-in entry of the default layout, its description a match field', () => {
+    const defaults = resolveTextEditorTools({
+      builtins: textEditorTools,
+      capabilities: new Set([...BASE_CAPABILITIES, 'block.table'] as never[]),
+    });
+    const items = slashEntries(defaultTextEditorLayout.slash, {
+      ...input(),
+      registry: defaults,
+    }).flatMap((group) => (group as CommandGroup).items as CommandItem[]);
+    expect(items.map((item) => item.value)).toEqual([
+      'paragraph',
+      'heading-1',
+      'heading-2',
+      'heading-3',
+      'blockquote',
+      'code-block',
+      'bullet-list',
+      'ordered-list',
+      'task-list',
+      'table',
+      'image',
+      'divider',
+    ]);
+    for (const item of items) {
+      expect(item.description, String(item.value)).toMatch(/\S/u);
+      expect(commandMatchFields(item), String(item.value)).toContain(item.description);
+    }
+    const ordered = items.find((item) => item.value === 'ordered-list')!;
+    expect(ordered.description).toBe(textEditorStrings.orderedListDescription);
+    expect(ordered.partContract?.hostProperties).toMatchObject({
+      'aria-description': textEditorStrings.orderedListDescription,
+    });
   });
 
   it('projects one tool as a command item', () => {
@@ -144,5 +225,31 @@ describe('suggestion entries (uwg-te-req-inline-2)', () => {
     expect(isSuggestionEntryValue(entries[0]!.value)).toBe(true);
     expect(isSuggestionEntryValue('paragraph')).toBe(false);
     expect(commandMatchFields(null)).toEqual([]);
+  });
+});
+
+describe('slash entries key', () => {
+  it('is equal for entries that render alike and differs when one would render otherwise', () => {
+    const icon = { name: 'a', paths: [] };
+    const entries = (label: string, disabled = false, ownIcon: object = icon) => [
+      {
+        type: 'group' as const,
+        label: 'Text',
+        items: [{ value: 'paragraph', label, icon: ownIcon, ...(disabled ? { disabled } : {}) }],
+      },
+    ];
+    expect(commandEntriesKey(entries('Paragraph') as never)).toBe(
+      commandEntriesKey(entries('Paragraph') as never),
+    );
+    expect(commandEntriesKey(entries('Paragraph') as never)).not.toBe(
+      commandEntriesKey(entries('Text') as never),
+    );
+    expect(commandEntriesKey(entries('Paragraph') as never)).not.toBe(
+      commandEntriesKey(entries('Paragraph', true) as never),
+    );
+    // Icons count by identity, not by their content.
+    expect(commandEntriesKey(entries('Paragraph') as never)).not.toBe(
+      commandEntriesKey(entries('Paragraph', false, { name: 'a', paths: [] }) as never),
+    );
   });
 });

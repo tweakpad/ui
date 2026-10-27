@@ -32,6 +32,13 @@ export const textEditorStyles = css`
     min-inline-size: 0;
   }
 
+  /* A tool that reports itself invisible keeps its place unseen (and inert), a group whose tools
+     all do with its separator, so that hiding it moves no other control. */
+  [part~='text-editor-toolbar'] [data-tool-hidden],
+  [part~='text-editor-toolbar'] .toolbar-group[data-hidden] > tp-separator {
+    visibility: hidden;
+  }
+
   [part~='text-editor-viewport'] {
     grid-area: viewport;
     min-block-size: 0;
@@ -40,8 +47,17 @@ export const textEditorStyles = css`
     scrollbar-gutter: stable;
   }
 
+  /* The overlay's raised marks (table grips and handle) stack inside the surface, so the sticky
+     toolbar paints over them when the page scrolls the content under it. */
   .surface {
     position: relative;
+    isolation: isolate;
+  }
+
+  /* No selection (a cleared one) or a block selection, which the overlay paints: the caret that the
+     engine or the browser keeps in the focused root is not painted. */
+  .surface[data-unplaced] [part~='text-editor-content'] > * {
+    caret-color: transparent;
   }
 
   .underlay,
@@ -69,31 +85,45 @@ export const textEditorStyles = css`
     box-sizing: border-box;
   }
 
-  [part~='text-editor-gutter'],
-  .block-menu {
+  [part~='text-editor-gutter'] {
     pointer-events: auto;
   }
 
-  [part~='text-editor-gutter'][hidden],
   [part~='text-editor-block-selection'][hidden],
   [part~='text-editor-drop-indicator'][hidden] {
     display: none !important;
   }
 
-  .block-menu {
-    position: absolute;
+  /* Hidden, the gutter keeps its box: its placement reads its own size before it shows. */
+  [part~='text-editor-gutter'][hidden] {
+    visibility: hidden !important;
   }
 
+  /* The feedback sizes the preview to the gripped block; it grows to every copy of a group, and its
+     backdrop lies under the copies, a little beyond them, without moving them. */
   .block-drag-preview {
     margin: 0;
     border: 0;
     padding: 0;
     overflow: visible;
     background: transparent;
+
+    /* The copies take the content's text colour, not the popover's system one. */
+    color: inherit;
+    block-size: auto !important;
   }
 
   .block-drag-preview:not(:popover-open) {
     display: none;
+  }
+
+  .block-drag-preview::before {
+    content: '';
+    position: absolute;
+    inset: calc(-1 * var(--tp-space-1)) calc(-1 * var(--tp-space-2));
+    inset-inline-start: calc(-1 * (var(--tp-space-2) + var(--_tp-text-editor-preview-inset, 0px)));
+    z-index: -1;
+    pointer-events: none;
   }
 
   .block-drag-count {

@@ -27,6 +27,7 @@ import {
   createLexicalEngine,
   createTiptapEngine,
   defineTextEditorBlock,
+  defineTextEditorInline,
 } from '../../foundation/text-editor/index.js';
 import { globeIcon } from '../../icons/globe.js';
 import { infoIcon } from '../../icons/info.js';
@@ -46,7 +47,8 @@ export const fieldNotes = [
 
 /**
  * A callout: a textblock with a tone. It carries no paint of its own; `presents: 'callout'` lets
- * the editor paint it as a callout. Its Markdown is an alert (`> [!NOTE]`), which `parse` restores.
+ * the editor paint it as a callout in its tone. Its Markdown is an alert (`> [!NOTE]`), which
+ * `parse` restores.
  */
 export const calloutBlock = defineTextEditorBlock({
   name: 'callout',
@@ -111,11 +113,62 @@ export const embedBlock = defineTextEditorBlock({
   tool: { label: 'Embed', description: 'A page from an https address', icon: globeIcon },
 });
 
-/** Notes with a callout and an embed, for the custom block example. */
+/** The crew that the mention list searches. */
+const crew = [
+  { id: 'maren-holt', name: 'Maren Holt', role: 'Dockmaster' },
+  { id: 'tobias-vik', name: 'Tobias Vik', role: 'Ferry pilot' },
+  { id: 'selma-raud', name: 'Selma Raud', role: 'Harbour office' },
+  { id: 'arno-petit', name: 'Arno Petit', role: 'Deckhand' },
+  { id: 'lia-moreno', name: 'Lia Moreno', role: 'Pilot boat' },
+];
+
+/**
+ * Searches the crew after a short delay, as a remote directory would. A newer query, or the list
+ * closing, aborts the call in flight.
+ */
+export function searchCrew({ query, signal }) {
+  return new Promise((resolve, reject) => {
+    const timer = globalThis.setTimeout(() => {
+      const needle = query.toLowerCase();
+      resolve(crew.filter((person) => person.name.toLowerCase().includes(needle)));
+    }, 250);
+    signal.addEventListener(
+      'abort',
+      () => {
+        globalThis.clearTimeout(timer);
+        reject(signal.reason);
+      },
+      { once: true },
+    );
+  });
+}
+
+/**
+ * A mention: an inline atom naming a crew member. Typing `@` opens a list that searches the crew;
+ * choosing an entry inserts the node. Markdown and text hold its text, `@` and the name.
+ */
+export const mentionInline = defineTextEditorInline({
+  name: 'mention',
+  element: 'span',
+  attrs: { person: { type: 'string', default: null }, label: { type: 'string', default: '' } },
+  text: (attrs) => `@${attrs.label}`,
+  css: '.tp-te-inline-mention { color: var(--tp-primary); }',
+  suggest: {
+    trigger: '@',
+    source: searchCrew,
+    label: (person) => person.name,
+    description: (person) => person.role,
+    attrs: (person) => ({ person: person.id, label: person.name }),
+  },
+});
+
+/** Notes with a callout, a mention and an embed, for the custom node example. */
 export const customBlockNotes = [
   '<h2>Mooring check</h2>',
   '<aside data-type="callout" data-tone="warning">Wait for slack water before you board the dinghy.</aside>',
-  '<p>The tide table below is the harbour office page for this week.</p>',
+  '<p>The tide table below is the harbour office page for this week; ',
+  '<span data-type="mention" data-person="selma-raud" data-label="Selma Raud">@Selma Raud</span> ',
+  'updates it on Mondays.</p>',
   '<figure data-type="embed" data-src="https://example.com/" data-title="Harbour tide table"></figure>',
 ].join('');
 
@@ -155,7 +208,9 @@ export function setupTextEditorExample(root, createEngine) {
   for (const editor of root.querySelectorAll('tp-text-editor')) {
     if (editor.hasAttribute('data-sample')) editor.defaultValue = fieldNotes;
     if (editor.hasAttribute('data-custom-blocks')) {
-      editor.nodes = [calloutBlock, embedBlock];
+      editor.nodes = [calloutBlock, embedBlock, mentionInline];
+      // A suggestion opens once `layout.suggestions` lists its node.
+      editor.layout = { suggestions: ['slash', 'mention'] };
       editor.defaultValue = customBlockNotes;
     }
     editor.engine = createEngine();

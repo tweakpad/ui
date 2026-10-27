@@ -98,6 +98,26 @@ export function editedDocument(
   return canonicalize({ blocks }, { nodes: context.nodes, createId: context.createId }).document;
 }
 
+/**
+ * An edit whose answer is settled before its document is built: `can`'s dry run reads only that
+ * the plan exists, and `execute` builds the canonical document once. Building canonicalizes the
+ * whole document, which the dry runs of every tool on every state must not repeat
+ * (`uwg-te-req-perf-1`).
+ */
+export interface TextEditorPlannedEdit {
+  /** The canonical document of the edit, built on the first call. */
+  build(): TextEditorPortableDocument;
+}
+
+/** The plan of edited blocks, canonicalized when it is built. */
+export function plannedEdit(
+  blocks: readonly TextEditorPortableDraftBlock[],
+  context: TextEditorEditContext,
+): TextEditorPlannedEdit {
+  let document: TextEditorPortableDocument | undefined;
+  return { build: () => (document ??= editedDocument(blocks, context)) };
+}
+
 /** A textblock with other inline content; a code block takes its text. */
 export function withInline(
   block: Block,
@@ -282,6 +302,16 @@ export function setBlockType(
   input: TextEditorSetTypeInput,
   context: TextEditorEditContext,
 ): TextEditorPortableDocument | null {
+  return planBlockType(document, ids, input, context)?.build() ?? null;
+}
+
+/** `setBlockType` as a plan: `null` exactly when it does not apply, built only by `execute`. */
+export function planBlockType(
+  document: TextEditorPortableDocument,
+  ids: readonly string[],
+  input: TextEditorSetTypeInput,
+  context: TextEditorEditContext,
+): TextEditorPlannedEdit | null {
   if (ids.length === 0) return null;
   const targets = ids.map((id) => findBlock(document.blocks, id));
   if (!targets.every((block): block is Block => block !== undefined && isTextblock(block)))
@@ -306,7 +336,7 @@ export function setBlockType(
         ? placeInList(blocks, path, 'replace', [converted])
         : replaceAt(blocks, path, [converted]);
   }
-  return editedDocument(blocks, context);
+  return plannedEdit(blocks, context);
 }
 
 // block.set-attrs and block.align
@@ -403,13 +433,16 @@ export function setBlockAttrs(
 
 const ALIGNABLE: ReadonlySet<string> = new Set(['paragraph', 'heading', 'quote', ...LIST_KINDS]);
 
-/** Aligns the blocks of `ids` that take an alignment; `null` when none does. */
-export function alignBlocks(
+/**
+ * Aligns the blocks of `ids` that take an alignment, as a plan: `null` exactly when none does,
+ * built only by `execute`.
+ */
+export function planAlign(
   document: TextEditorPortableDocument,
   ids: readonly string[],
   align: TextEditorAlign | null,
   context: TextEditorEditContext,
-): TextEditorPortableDocument | null {
+): TextEditorPlannedEdit | null {
   let blocks: Block[] = [...document.blocks];
   let changed = 0;
   const stored = storedAlign(align);
@@ -423,7 +456,7 @@ export function alignBlocks(
     blocks = replaceAt(blocks, path, [(stored ? { ...rest, align: stored } : rest) as Block]);
     changed += 1;
   }
-  return changed > 0 ? editedDocument(blocks, context) : null;
+  return changed > 0 ? plannedEdit(blocks, context) : null;
 }
 
 // block.indent and block.outdent (uwg-te-req-parity-1)

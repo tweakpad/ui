@@ -9,6 +9,8 @@ import {
   TextEditorFocus,
   type TextEditorEscapeContext,
 } from './focus.js';
+import { selectionToolbarOrder } from './views/popups.js';
+import { TABLE_CONTROLS_ORDER } from './views/table-controls.js';
 
 /** A node of a fake tree: `parentNode` links and a connected flag. */
 function node(parent: object | null = null, connected = true) {
@@ -135,6 +137,14 @@ describe('text editor focus', () => {
     t.activate(nodes.bold);
     focus.menuOpened(nodes.trigger, 'pointer');
     expect(focus.menuFinalFocus('mouse')).toBe(nodes.bold);
+    // A press that moved focus onto its trigger: the element focused when the press began.
+    t.root.dispatchEvent(new Event('pointerdown'));
+    t.activate(nodes.trigger);
+    focus.menuOpened(nodes.trigger, 'pointer');
+    expect(focus.menuFinalFocus('mouse')).toBe(nodes.bold);
+    // The press record serves one opening only.
+    focus.menuOpened(nodes.trigger, 'pointer');
+    expect(focus.menuFinalFocus('mouse')).toBe(nodes.trigger);
     t.activate(nodes.editingRoot);
     focus.menuOpened(nodes.trigger, 'pointer');
     expect([focus.menuFinalFocus('mouse'), calls]).toEqual([false, ['focus:restore']]);
@@ -196,6 +206,28 @@ describe('text editor focus', () => {
     t.focus.detach();
     t.focusEvent('focusin');
     expect(host.focusChanged).toHaveBeenCalledTimes(4);
+  });
+
+  it('stays focused while focus moves into a popup of the widget, whose top layer hides it from `:focus-within` outside (uwg-te-req-pres-1)', () => {
+    const t = setup();
+    const { host, nodes, root } = t;
+    // A toolbar menu: its positioner and content inside the widget's shadow tree.
+    const menu = Object.assign(new EventTarget(), {
+      nodeType: 11,
+      host: Object.assign(node(root), {}),
+    }) as unknown as ShadowRoot;
+    const content = node(node(menu));
+    t.focusEvent('focusin');
+    t.focusEvent('focusout', content);
+    t.focusEvent('focusin');
+    expect(t.focus.focused).toBe(true);
+    expect(host.focusChanged.mock.calls).toEqual([[true]]);
+    // From the popup back to the editing root, then out of the widget.
+    t.focusEvent('focusout', nodes.editingRoot);
+    expect(t.focus.focused).toBe(true);
+    t.focusEvent('focusout', nodes.outside);
+    expect(t.focus.focused).toBe(false);
+    expect(host.focusChanged.mock.calls).toEqual([[true], [false]]);
   });
 
   it('focuses through the adapter, deferred before ready (uwg-te-req-prop-2)', async () => {
@@ -265,6 +297,63 @@ describe('text editor focus', () => {
     outside.focus.ready();
     expect(outside.calls).toEqual([]);
   });
+
+  it('V-833: a remount closes the open transient surface, and the focus it returns to the editing root restores the remembered selection once ready', async () => {
+    const t = setup();
+    const closed: (string | undefined)[] = [];
+    t.focus.transientOpened({}, (reason) => closed.push(reason), 'hotkey');
+    t.activate(t.nodes.bold);
+    t.focus.beforeRemount();
+    expect(closed).toEqual(['programmatic']);
+    expect(t.focus.transientOwner).toBeNull();
+    // The popover's final focus runs while the new instance mounts.
+    t.setReady(false);
+    await t.focus.focusEditing();
+    t.setReady(true);
+    t.focus.ready();
+    expect(t.calls).toEqual([
+      'execute:[{"type":"selection.set","selection":{"kind":"text","anchor":{"block":"a","offset":1},"head":{"block":"a","offset":3}}}]:{"reason":"programmatic","focus":true}',
+    ]);
+    // Once ready, a focus request outside a remount waits as before.
+    t.setReady(false);
+    const later = t.focus.focusEditing('end');
+    t.setReady(true);
+    t.focus.ready();
+    await later;
+    expect(t.calls.at(-1)).toBe('focus:end');
+    // A surface whose focus return comes after ready restores the remembered selection too.
+    const late = setup();
+    late.focus.transientOpened({}, () => undefined);
+    late.activate(late.nodes.bold);
+    late.focus.beforeRemount();
+    late.focus.ready();
+    expect(late.calls).toEqual([]);
+    await late.focus.focusEditing();
+    expect(late.calls).toEqual([
+      'execute:[{"type":"selection.set","selection":{"kind":"text","anchor":{"block":"a","offset":1},"head":{"block":"a","offset":3}}}]:{"reason":"programmatic","focus":true}',
+    ]);
+    await late.focus.focusEditing();
+    expect(late.calls.at(-1)).toBe('focus:restore');
+  });
+});
+
+describe('V-833: focus on a control that a remount removes (uwg-te-req-engine-8)', () => {
+  it('goes to the new editing root with the remembered selection; a control that stays keeps it', () => {
+    const removed = setup();
+    removed.activate(removed.nodes.trigger);
+    removed.focus.beforeRemount();
+    // The tool's control goes with the registry of the new engine before it is ready.
+    Object.assign(removed.nodes.trigger, { isConnected: false });
+    removed.focus.ready();
+    expect(removed.calls).toEqual([
+      'execute:[{"type":"selection.set","selection":{"kind":"text","anchor":{"block":"a","offset":1},"head":{"block":"a","offset":3}}}]:{"reason":"programmatic","focus":true}',
+    ]);
+    const kept = setup();
+    kept.activate(kept.nodes.bold);
+    kept.focus.beforeRemount();
+    kept.focus.ready();
+    expect(kept.calls).toEqual([]);
+  });
 });
 
 describe('Alt+F10 contextual controls (uwg-te-tab-keymap-host-r2)', () => {
@@ -287,6 +376,16 @@ describe('Alt+F10 contextual controls (uwg-te-tab-keymap-host-r2)', () => {
     expect(nextContextualSurface([toolbar, table, focusedGutter])).toBe(table);
     expect(nextContextualSurface([surface(1, true, true)])).toBeNull();
     expect(nextContextualSurface([])).toBeNull();
+  });
+
+  it('puts the table controls before the selection toolbar for a cell range (uwg-te-req-key-5)', () => {
+    const table = surface(TABLE_CONTROLS_ORDER, true);
+    const range = surface(selectionToolbarOrder({ kind: 'cells' }), true);
+    expect(nextContextualSurface([range, table])).toBe(table);
+    const focusedTable = surface(TABLE_CONTROLS_ORDER, true, true);
+    expect(nextContextualSurface([range, focusedTable])).toBe(range);
+    const text = surface(selectionToolbarOrder({ kind: 'text' }), true);
+    expect(nextContextualSurface([table, text])).toBe(text);
   });
 
   it('leaves the focused surface and enters the next one, never while disabled', () => {
@@ -317,8 +416,10 @@ describe('one transient surface at a time (uwg-te-req-surfaces-6)', () => {
     // The same owner opening again (a menu that reopens) closes nothing.
     focus.transientOpened(menu, closeMenu);
     expect(closeMenu).not.toHaveBeenCalled();
-    focus.transientOpened(picker, closePicker);
+    focus.transientOpened(picker, closePicker, 'hotkey');
     expect(closeMenu).toHaveBeenCalledTimes(1);
+    // The surface that closes records the reason that opens the next one (uwg-te-tab-reasons r13).
+    expect(closeMenu).toHaveBeenCalledWith('hotkey');
     expect(focus.transientOwner).toBe(picker);
     // A surface that closed by itself is forgotten: the next opening closes nothing.
     focus.transientClosed(picker);

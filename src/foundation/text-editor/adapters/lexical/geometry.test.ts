@@ -168,6 +168,57 @@ describe('uwg-te-tab-engine r6: blockRects', () => {
   });
 });
 
+describe('uwg-te-tab-engine r6: blockRects of nested and hanging items', () => {
+  /** A layout element with a box, a computed style and an optional task marker. */
+  const element = (
+    box: ReturnType<typeof rect>,
+    style: Record<string, string>,
+    marker?: unknown,
+  ) => {
+    const view = {
+      getComputedStyle: (target: { readonly style: Record<string, string> }) => target.style,
+    };
+    return {
+      isConnected: true,
+      ownerDocument: { defaultView: view, createRange: () => null },
+      style,
+      getClientRects: () => [box],
+      getBoundingClientRect: () => box,
+      querySelector: (selector: string) =>
+        selector === ':scope > .tp-te-task-marker' ? (marker ?? null) : null,
+    };
+  };
+
+  it('a task item whose marker hangs in its inline-start inset starts its content at the inset', () => {
+    const headless = headlessLexical({
+      html: '<ul data-type="task"><li data-id="t1" data-checked="false"><p>todo</p></li></ul>',
+    });
+    const marker = element(rect(0, 2, 16, 16), { marginInlineEnd: '0px' });
+    const item = element(rect(0, 0, 200, 24), { direction: 'ltr', paddingLeft: '24px' }, marker);
+    headless.editor.getElementByKey = () => item as unknown as HTMLElement;
+    expect(headless.instance.blockRects('t1')?.content).toMatchObject({ left: 24, right: 200 });
+  });
+
+  it('an item with child lists of several kinds spans every wrapper item that follows it', () => {
+    const headless = headlessLexical({
+      html: '<ul><li data-id="b1"><p>parent</p><ol><li data-id="o1"><p>one</p></li></ol><ul data-type="task"><li data-id="t1" data-checked="false"><p>two</p></li></ul></li></ul>',
+    });
+    const keys = headless.editor.read(() => {
+      const list = lexical.$getRoot().getFirstChild() as lexical.ElementNode;
+      return list.getChildren().map((child) => child.getKey());
+    });
+    expect(keys.length).toBe(3);
+    const boxes = [rect(0, 0, 200, 24), rect(0, 32, 200, 24), rect(0, 64, 200, 24)];
+    headless.editor.getElementByKey = (asked: string) => {
+      const index = keys.indexOf(asked);
+      return (index < 0
+        ? null
+        : element(boxes[index]!, { direction: 'ltr' })) as unknown as HTMLElement;
+    };
+    expect(headless.instance.blockRects('b1')?.box).toMatchObject({ top: 0, height: 88 });
+  });
+});
+
 describe('uwg-te-req-engine-10: pointAt outside text', () => {
   it('a position between blocks or on an atom is outside text: null', () => {
     // The engine resolves the DOM position under the point to an element point on the root,

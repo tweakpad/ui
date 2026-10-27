@@ -17,6 +17,7 @@ import type { TextEditorEngineInstance } from '../../../foundation/text-editor/e
 import type {
   OverlayBox,
   OverlayGeometry,
+  OverlayInvalidation,
   OverlayLayer,
   OverlayMeasureContext,
 } from '../geometry.js';
@@ -53,6 +54,34 @@ export function stickyEdge(input: {
   return input.toolbarBottom === null ? 0 : Math.max(0, input.toolbarBottom);
 }
 
+/**
+ * The copy's clip box across the inline axis: the part of the wrapper that the table covers, so
+ * the copy never extends over the wrapper's reserved space beside the table (the quick-add
+ * Buttons) and follows the table's visible part while the wrapper scrolls.
+ */
+export function stickyClip(
+  scroller: { readonly left: number; readonly right: number },
+  table: { readonly left: number; readonly right: number },
+): { readonly left: number; readonly right: number; readonly width: number } {
+  const left = Math.max(scroller.left, table.left);
+  const right = Math.min(scroller.right, table.right);
+  return { left, right, width: Math.max(0, right - left) };
+}
+
+/**
+ * The physical shift of the copy from where its box lays it out: the box puts a table at its
+ * inline start, the left edge, or the right edge in right-to-left content, so the shift is the
+ * distance of the table's edge on that side from the clip box's.
+ */
+export function stickyOffset(
+  table: { readonly left: number; readonly right: number },
+  clip: { readonly left: number; readonly right: number },
+  rtl: boolean,
+  scale = 1,
+): number {
+  return (rtl ? table.right - clip.right : table.left - clip.left) / scale;
+}
+
 export interface TableStickyHost {
   readonly geometry: OverlayGeometry;
   /** `stickyTableHeaders`. */
@@ -64,6 +93,42 @@ export interface TableStickyHost {
   toolbar(): HTMLElement | null;
 }
 
+/** A header table's rows in the viewport's scrolled content, in CSS pixels from its top. */
+interface StickyExtent {
+  readonly id: string;
+  /** The header row's top and height. */
+  readonly top: number;
+  readonly height: number;
+  /** The bottom of the last row. */
+  readonly last: number;
+}
+
+/**
+ * The invalidations after which the tables may lie elsewhere in the scrolled content: a scroll
+ * moves them all alike and a layer's model change (`state`) moves none.
+ */
+const LAYOUT_REASONS: ReadonlySet<OverlayInvalidation> = new Set([
+  'content',
+  'resize',
+  'fonts',
+  'instance',
+  'visibility',
+]);
+
+/** Tolerance of the extents against the rows read live (subpixel scroll offsets). */
+const EXTENT_SLACK = 1;
+
+/** The header row and the last row of a table with at least two rows, or null. */
+function headerRows(
+  instance: TextEditorEngineInstance,
+  id: string,
+): { readonly header: HTMLTableRowElement; readonly last: HTMLTableRowElement } | null {
+  const rows = (instance.tableElements(id)?.table as HTMLTableElement | undefined)?.rows;
+  const header = rows?.[0];
+  const last = rows?.[rows.length - 1];
+  return header && last && rows.length >= 2 ? { header, last } : null;
+}
+
 interface StickyPlacement {
   readonly table: string;
   /** The header row to copy, compared by identity to reuse the copy. */
@@ -72,7 +137,7 @@ interface StickyPlacement {
   readonly version: number;
   /** The clip box: the wrapper's visible width at the edge. */
   readonly box: OverlayBox;
-  /** The table's inline offset from the clip box. */
+  /** The copy's physical shift from where its box lays it out (`stickyOffset`). */
   readonly offset: number;
   /** The table's width and the width of each header cell, in CSS pixels. */
   readonly width: number;
@@ -165,10 +230,65 @@ export class TextEditorTableSticky implements OverlayLayer<StickyPlacement | nul
     return this.#host.enabled() && this.#element !== null && this.#host.instance() !== null;
   }
 
+  /**
+   * The tables with a header row in document order, for the instance and the content version they
+   * were read at.
+   */
+  #headerTables: {
+    readonly instance: TextEditorEngineInstance;
+    readonly version: number;
+    readonly ids: readonly string[];
+  } | null = null;
+  /**
+   * Where those tables lie in the viewport's scrolled content, measured again after an edit, a
+   * resize, a font or image load (`LAYOUT_REASONS`): scrolling moves them all alike, so a pass
+   * that only scrolled reads the rows of the tables near the edge alone.
+   */
+  #extents: readonly StickyExtent[] | null = null;
+
+  #headerTableIds(instance: TextEditorEngineInstance): readonly string[] {
+    const cached = this.#headerTables;
+    if (cached?.instance === instance && cached.version === this.#version) return cached.ids;
+    const ids: string[] = [];
+    for (const block of instance.getBlocks().ordered())
+      if (block.kind === 'table' && instance.getTable(block.id)?.headerRow) ids.push(block.id);
+    this.#headerTables = { instance, version: this.#version, ids };
+    this.#extents = null;
+    return ids;
+  }
+
+  #tableExtents(
+    instance: TextEditorEngineInstance,
+    ids: readonly string[],
+    origin: number,
+    reasons: ReadonlySet<OverlayInvalidation> | undefined,
+  ): readonly StickyExtent[] {
+    const moved =
+      reasons === undefined || [...reasons].some((reason) => LAYOUT_REASONS.has(reason));
+    if (this.#extents && !moved) return this.#extents;
+    const tables: StickyExtent[] = [];
+    for (const id of ids) {
+      const rows = headerRows(instance, id);
+      if (!rows) continue;
+      const header = rows.header.getBoundingClientRect();
+      tables.push({
+        id,
+        top: header.top - origin,
+        height: header.height,
+        last: rows.last.getBoundingClientRect().bottom - origin,
+      });
+    }
+    this.#extents = tables;
+    return tables;
+  }
+
   measure(context: OverlayMeasureContext): StickyPlacement | null {
     const instance = this.#host.instance();
     const viewport = this.#host.viewport();
     if (!instance || !viewport) return null;
+    // No table with a header row: nothing to read.
+    const ids = this.#headerTableIds(instance);
+    if (!ids.length) return null;
     const viewportRect = viewport.getBoundingClientRect();
     const toolbar = this.#host.toolbar();
     const edge = stickyEdge({
@@ -176,21 +296,24 @@ export class TextEditorTableSticky implements OverlayLayer<StickyPlacement | nul
       viewportTop: viewportRect.top,
       toolbarBottom: toolbar ? toolbar.getBoundingClientRect().bottom : null,
     });
-    for (const block of instance.getBlocks().ordered()) {
-      if (block.kind !== 'table') continue;
-      const model = instance.getTable(block.id);
-      const elements = instance.tableElements(block.id);
-      if (!model?.headerRow || !elements) continue;
-      const rows = (elements.table as HTMLTableElement).rows;
-      const header = rows?.[0];
-      const last = rows?.[rows.length - 1];
-      if (!header || !last || rows.length < 2) continue;
+    // Client position of the scrolled content's top: the extents' origin.
+    const origin = viewportRect.top - viewport.scrollTop;
+    for (const extent of this.#tableExtents(instance, ids, origin, context.reasons)) {
+      // The extents are in document order: the first header at or below the edge ends the walk,
+      // and a table whose last row is above the edge cannot stick; only the others are read.
+      if (extent.top + origin >= edge + EXTENT_SLACK) break;
+      if (extent.last + origin <= edge + extent.height - EXTENT_SLACK) continue;
+      const elements = instance.tableElements(extent.id);
+      const rows = headerRows(instance, extent.id);
+      if (!elements || !rows) continue;
+      const { header, last } = rows;
       const headerRect = header.getBoundingClientRect();
       const lastRect = last.getBoundingClientRect();
       if (headerRect.top >= edge) break;
       if (!headerSticks({ edge, header: headerRect, last: lastRect.bottom })) continue;
-      const clip = elements.scroller.getBoundingClientRect();
       const tableRect = elements.table.getBoundingClientRect();
+      const clip = stickyClip(elements.scroller.getBoundingClientRect(), tableRect);
+      if (clip.width <= 0) continue;
       const box = context.toOverlay({
         left: clip.left,
         top: edge,
@@ -203,11 +326,16 @@ export class TextEditorTableSticky implements OverlayLayer<StickyPlacement | nul
       } as DOMRectReadOnly);
       const scale = clip.width && box.width ? clip.width / box.width : 1;
       return {
-        table: block.id,
+        table: extent.id,
         row: header,
         version: this.#version,
         box,
-        offset: (tableRect.left - clip.left) / scale,
+        offset: stickyOffset(
+          tableRect,
+          clip,
+          getComputedStyle(elements.table).direction === 'rtl',
+          scale,
+        ),
         width: tableRect.width / scale,
         cells: [...header.cells].map((cell) => cell.getBoundingClientRect().width / scale),
       };

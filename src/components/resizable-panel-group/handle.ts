@@ -3,6 +3,7 @@ import { resizeSeparatorTargetCss } from '../../foundation/resize-separator.js';
 import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import type { TpResizablePanelGroup } from './group.js';
+import { separatorValue } from './layout.js';
 import { resizablePanelGroupPresentation } from '../../presentation/families/resizable-panel-group.js';
 export interface ResizeHandleState {
   orientation: 'horizontal' | 'vertical';
@@ -134,9 +135,9 @@ export class TpResizableHandle extends TpElement {
         '.ariaControlsElements': this.group?.getPanelElement(state.controls)
           ? [this.group.getPanelElement(state.controls)]
           : [],
-        'aria-valuemin': state.min,
-        'aria-valuemax': state.max,
-        'aria-valuenow': state.now,
+        'aria-valuemin': separatorValue(state.min),
+        'aria-valuemax': separatorValue(state.max),
+        'aria-valuenow': separatorValue(state.now),
         'aria-disabled': String(state.disabled),
         'data-disabled': state.disabled,
         'data-dragging': state.dragging,

@@ -32,10 +32,12 @@ import {
   elementRect,
   rangeRects,
   taskContentRects,
+  taskContentStart,
   textPointOnLines,
   tieOffset,
   type TextEditorLineLookups,
 } from '../shared/dom-geometry.js';
+import { contentBox } from '../../content/box.js';
 import { textRangePoints } from '../shared/selection-state.js';
 import { tableModel, tableTargetCells } from '../shared/tables.js';
 import { $locateHolder } from './document.js';
@@ -162,10 +164,16 @@ export class LexicalGeometry implements TextEditorLineLookups {
     const keys = this.#read(() => {
       const holder = $holderById(rt, id);
       if (!holder) return null;
-      // A list item's nested items live in the wrapper item that follows it.
-      const next = holder.getNextSibling();
-      const nested =
-        rt.isListItem(holder) && next && $isWrapperItem(rt, next) ? [next.getKey()] : [];
+      // A list item's nested items live in the wrapper items that follow it, one per nested list
+      // (children of different kinds make several).
+      const nested: string[] = [];
+      if (rt.isListItem(holder))
+        for (
+          let next = holder.getNextSibling();
+          next && $isWrapperItem(rt, next);
+          next = next.getNextSibling()
+        )
+          nested.push(next.getKey());
       return { element: holder.getKey(), nested };
     });
     const element = keys ? rt.engine.getElementByKey(keys.element) : null;
@@ -182,13 +190,11 @@ export class LexicalGeometry implements TextEditorLineLookups {
     if (!rects || !marker || !markerBox) return rects;
     const view = element.ownerDocument.defaultView;
     const style = view?.getComputedStyle(marker);
-    const rtl = view?.getComputedStyle(element).direction === 'rtl';
+    const itemStyle = view?.getComputedStyle(element) ?? null;
+    const rtl = itemStyle?.direction === 'rtl';
     const margin = Number.parseFloat(style?.marginInlineEnd ?? '') || 0;
-    const { left, top, right, bottom } = markerBox;
-    const end = rtl
-      ? { left: left - margin, top, right, bottom }
-      : { left, top, right: right + margin, bottom };
-    return taskContentRects(rects, end, rtl, view);
+    const item = contentBox(element.getBoundingClientRect(), itemStyle);
+    return taskContentRects(rects, taskContentStart(markerBox, margin, item, rtl), rtl, view);
   }
 
   rangeRects(range: TextEditorTextRange): readonly DOMRectReadOnly[] {

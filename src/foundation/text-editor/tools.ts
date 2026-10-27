@@ -148,6 +148,11 @@ export interface TextEditorToolContext {
   readonly target: TextEditorToolTarget;
   /** The writing direction of the widget, which names the sides of table columns. */
   readonly direction: 'ltr' | 'rtl';
+  /**
+   * The direction that the first block of the selection resolves from its text (`dir="auto"`),
+   * which names the sides of the alignments; `direction` when absent.
+   */
+  readonly textDirection?: 'ltr' | 'rtl' | undefined;
   /** The resolved layout: every key present, `*` expanded and the identifiers it skips removed. */
   readonly layout: TextEditorLayout;
   /** The model of the table that the target or the selection lies in, or `null`. */
@@ -529,10 +534,28 @@ export function toolLabel(tool: TextEditorTool, context: TextEditorToolContext):
 
 /** The identifiers of a tool's items, groups flattened; the `*` of a layout is none. */
 export function toolItemIds(tool: TextEditorTool, context: TextEditorToolContext): string[] {
+  return toolItemGroups(tool, context).flat();
+}
+
+/**
+ * The item identifiers of a menu tool by group, as its menu separates them: each nested list is a
+ * group, and consecutive identifiers outside a nested list form one.
+ */
+export function toolItemGroups(tool: TextEditorTool, context: TextEditorToolContext): string[][] {
   if (tool.items === undefined) return [];
-  return resolveToolMember(tool.items, context)
-    .flatMap((item) => (typeof item === 'string' ? [item] : [...item]))
-    .filter((id) => id !== '*');
+  const groups: string[][] = [];
+  let loose: string[] | null = null;
+  for (const item of resolveToolMember(tool.items, context)) {
+    if (typeof item === 'string') {
+      if (item === '*') continue;
+      if (!loose) groups.push((loose = []));
+      loose.push(item);
+    } else {
+      loose = null;
+      groups.push([...item].filter((id) => id !== '*'));
+    }
+  }
+  return groups.filter((group) => group.length);
 }
 
 /** The channels of a color tool; `text` when it names none. */
@@ -685,6 +708,20 @@ function chosenItem(
   if (typeof value !== 'string' || !toolItemIds(tool, context).includes(value)) return null;
   const item = registry.tools.get(value);
   return item && registry.isAvailable(value) ? item : null;
+}
+
+/**
+ * The tool of the entry that the value of a suggestion tool with items, such as the slash menu,
+ * chooses: available and listed by the tool; `null` for any other tool or value.
+ */
+export function suggestionEntryTool(
+  tool: TextEditorTool,
+  context: TextEditorToolContext,
+  registry: TextEditorToolRegistry,
+): TextEditorTool | null {
+  return tool.kind === 'suggestion' && tool.items !== undefined
+    ? chosenItem(tool, context, registry)
+    : null;
 }
 
 // Derived state (uwg-te-req-tools-2)

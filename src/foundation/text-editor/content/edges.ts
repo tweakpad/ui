@@ -12,6 +12,7 @@ import {
   type TextEditorPortablePlacedCell,
   type TextEditorPortableTable,
 } from './portable.js';
+import { segmenter } from '../../text-split/segment.js';
 import type { TextEditorCellAddress, TextEditorTextPoint } from '../model.js';
 
 /** The length of one inline node in text-point units: a hard break or an inline node counts one. */
@@ -120,4 +121,101 @@ export function firstTextEdge(
     if (edge) return edge;
   }
   return null;
+}
+
+/** A direction in document order. */
+export type TextEditorStepDirection = 'forward' | 'backward';
+
+/** The UTF-16 length of the code point at an offset (`forward`) or before it (`backward`). */
+function codePointStep(text: string, offset: number, direction: TextEditorStepDirection): number {
+  const high = (code: number) => code >= 0xd800 && code <= 0xdbff;
+  const low = (code: number) => code >= 0xdc00 && code <= 0xdfff;
+  if (direction === 'forward')
+    return high(text.charCodeAt(offset)) && low(text.charCodeAt(offset + 1)) ? 2 : 1;
+  return low(text.charCodeAt(offset - 1)) && high(text.charCodeAt(offset - 2)) ? 2 : 1;
+}
+
+/**
+ * The offset one user-perceived character from an offset of a text, forward or backward: the
+ * next or previous grapheme boundary where the host segments text, else a whole code point, so
+ * that a surrogate pair is never split; `null` at the text's end (`forward`) or start (`backward`).
+ */
+export function textStep(
+  text: string,
+  offset: number,
+  direction: TextEditorStepDirection,
+): number | null {
+  if (direction === 'forward' ? offset >= text.length : offset <= 0) return null;
+  const graphemes = segmenter('grapheme', undefined);
+  if (!graphemes) {
+    const step = codePointStep(text, offset, direction);
+    return direction === 'forward' ? offset + step : offset - step;
+  }
+  let boundary = 0;
+  for (const { segment } of graphemes.segment(text)) {
+    const next = boundary + segment.length;
+    if (direction === 'forward' ? next > offset : next >= offset) {
+      return direction === 'forward' ? next : boundary;
+    }
+    boundary = next;
+  }
+  return direction === 'forward' ? text.length : boundary;
+}
+
+/**
+ * The offset one character from an offset of inline content, forward or backward, in text-point
+ * units: a grapheme of a text node (`textStep`), or a whole hard break or inline node; `null` at
+ * the content's end (`forward`) or start (`backward`).
+ */
+export function inlineStep(
+  content: readonly TextEditorPortableInline[],
+  offset: number,
+  direction: TextEditorStepDirection,
+): number | null {
+  let start = 0;
+  for (const node of content) {
+    const end = start + inlineUnitLength(node);
+    const inside =
+      direction === 'forward' ? offset >= start && offset < end : offset > start && offset <= end;
+    if (inside) {
+      if (node.type !== 'text') return direction === 'forward' ? end : start;
+      const step = textStep(node.text, offset - start, direction);
+      return step === null ? null : start + step;
+    }
+    start = end;
+  }
+  return null;
+}
+
+/**
+ * The text point one character from a text point of a block, forward or backward (`inlineStep`),
+ * staying in the point's textblock or table cell: at a cell paragraph's edge it moves to the
+ * adjacent paragraph of the same cell. `null` at the edge of the textblock or of the cell, or for
+ * a point that the block does not hold.
+ */
+export function stepTextPoint(
+  block: TextEditorPortableBlock,
+  point: TextEditorTextPoint,
+  direction: TextEditorStepDirection,
+): TextEditorTextPoint | null {
+  if (!point.cell) {
+    const content = blockInline(block);
+    const offset = content ? inlineStep(content, point.offset, direction) : null;
+    return offset === null ? null : { block: point.block, offset };
+  }
+  if (block.type !== 'table') return null;
+  const { row, column, paragraph } = point.cell;
+  const paragraphs = placedCell(block, row, column)?.cell.paragraphs;
+  const content = paragraphs?.[paragraph]?.content;
+  if (!paragraphs || !content) return null;
+  const offset = inlineStep(content, point.offset, direction);
+  if (offset !== null) return { block: point.block, cell: point.cell, offset };
+  const adjacent = direction === 'forward' ? paragraph + 1 : paragraph - 1;
+  const next = paragraphs[adjacent];
+  if (!next) return null;
+  return {
+    block: point.block,
+    cell: { row, column, paragraph: adjacent },
+    offset: direction === 'forward' ? 0 : inlineLength(next.content),
+  };
 }

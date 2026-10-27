@@ -258,6 +258,23 @@ export function taskContentRects(
   });
 }
 
+/**
+ * Where a task item's content starts, as the edges `taskContentRects` clips at: the marker's
+ * inline end with its margin, or the item's content box when that starts later, as with a hanging
+ * marker in the item's inline-start inset.
+ */
+export function taskContentStart(
+  marker: TextEditorEdges,
+  margin: number,
+  item: TextEditorEdges,
+  rtl: boolean,
+): TextEditorEdges {
+  const { left, top, right, bottom } = marker;
+  return rtl
+    ? { left: Math.min(left - margin, item.right), top, right, bottom }
+    : { left, top, right: Math.max(right + margin, item.left), bottom };
+}
+
 /** The border box of an element, or `null` when it is disconnected or has no layout box. */
 export function elementRect(element: Element): DOMRectReadOnly | null {
   if (!element.isConnected || element.getClientRects().length === 0) return null;

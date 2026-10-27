@@ -6,8 +6,13 @@ import { describe, expect, it } from 'vitest';
 import type { TextEditorAction } from '../../actions.js';
 import { htmlSource } from '../../content/html-source.test.js';
 import { importHtml, serializeHtml } from '../../content/html.js';
-import { canonicalize, type TextEditorPortableTable } from '../../content/portable.js';
 import {
+  canonicalize,
+  type TextEditorPortableBlock,
+  type TextEditorPortableTable,
+} from '../../content/portable.js';
+import {
+  cellRangeInsertEdit,
   deleteTableLines,
   denseRows,
   denseTable,
@@ -356,6 +361,29 @@ describe('uwg-te-req-tables-1, uwg-te-tab-actions r7: the selection a kept table
     });
   });
 
+  it('collapses a range of deleted lines to a caret in the nearest cell, and keeps any other', () => {
+    const table = tableOf(grid3);
+    const range = (r0: number, c0: number, r1: number, c1: number) => ({
+      kind: 'cells' as const,
+      table: 't1',
+      range: { anchor: { row: r0, column: c0 }, head: { row: r1, column: c1 } },
+    });
+    const caret = (row: number, column: number) => ({
+      kind: 'caret',
+      block: 't1',
+      cell: { row, column },
+      position: 'start',
+    });
+    const middle = edited(table, { type: 'table.delete-rows', table: 't1', from: 1, to: 1 })!;
+    expect(keptTableSelection(range(1, 0, 1, 2), 't1', middle)).toEqual(caret(1, 0));
+    // A range reaching past the deleted lines moves with its cells.
+    expect(keptTableSelection(range(0, 1, 1, 2), 't1', middle)).toEqual(range(0, 1, 1, 2));
+    const last = edited(table, { type: 'table.delete-rows', table: 't1', from: 1, to: 2 })!;
+    expect(keptTableSelection(range(2, 2, 2, 1), 't1', last)).toEqual(caret(0, 1));
+    const column = edited(table, { type: 'table.delete-columns', table: 't1', from: 2, to: 2 })!;
+    expect(keptTableSelection(range(0, 2, 2, 2), 't1', column)).toEqual(caret(0, 1));
+  });
+
   it('is null without a selection or for a cell range whose end lies in a removed cell', () => {
     expect(keptTableSelection({ kind: 'none' }, 't1', edit)).toBeNull();
     const range = { anchor: { row: 0, column: 0 }, head: { row: 1, column: 0 } };
@@ -369,5 +397,84 @@ describe('uwg-te-req-tables-1, uwg-te-tab-actions r7: the selection a kept table
       anchor: at(0, 0),
       head: at(0, 1),
     });
+  });
+});
+
+describe('uwg-te-req-tables-5: keys and pastes over a cell range', () => {
+  const paragraphsOf = (blocks: readonly TextEditorPortableBlock[]) =>
+    blocks.map((block) => ({ content: block.type === 'paragraph' ? block.content : [] }));
+  const insert = (
+    table: TextEditorPortableTable,
+    range: { anchor: { row: number; column: number }; head: { row: number; column: number } },
+    blocks: readonly TextEditorPortableBlock[],
+  ) => {
+    const edit = cellRangeInsertEdit('t1', table, range, blocks, paragraphsOf);
+    if (!edit) return null;
+    const block = canonicalize({ blocks: [edit.table] }).document.blocks[0];
+    return { ...edit, table: block as TextEditorPortableTable };
+  };
+  const paragraph = (text: string): TextEditorPortableBlock => ({
+    type: 'paragraph',
+    content: text ? [{ type: 'text', text }] : [],
+  });
+
+  it('V-834: a key clears the range and lands in its first cell; Enter leaves two paragraphs there', () => {
+    const range = { anchor: { row: 2, column: 1 }, head: { row: 1, column: 0 } };
+    const typed = insert(tableOf(grid3), range, [paragraph('x')]);
+    expect(texts(typed?.table)).toEqual([
+      ['a1', 'a2', 'a3'],
+      ['x', '', 'b3'],
+      ['', '', 'c3'],
+    ]);
+    expect(typed?.selection).toEqual({
+      kind: 'text',
+      anchor: { block: 't1', cell: { row: 1, column: 0, paragraph: 0 }, offset: 1 },
+    });
+    const enter = insert(tableOf(grid3), range, [paragraph(''), paragraph('')]);
+    expect(texts(enter?.table)?.[1]).toEqual(['|', '', 'b3']);
+    expect(enter?.selection).toEqual({
+      kind: 'text',
+      anchor: { block: 't1', cell: { row: 1, column: 0, paragraph: 1 }, offset: 0 },
+    });
+  });
+
+  it('V-834: a pasted table fills the range from its first cell, clipped, without repetition, splitting what it covers', () => {
+    const pasted = tableOf(
+      '<table><tbody><tr><td><p>p1</p></td><td data-background="blue" style="text-align: center"><p>p2</p></td><td><p>p3</p></td></tr></tbody></table>',
+    );
+    const range = { anchor: { row: 1, column: 0 }, head: { row: 2, column: 1 } };
+    const filled = insert(tableOf(grid3), range, [pasted]);
+    expect(texts(filled?.table)).toEqual([
+      ['a1', 'a2', 'a3'],
+      ['p1', 'p2', 'b3'],
+      ['c1', 'c2', 'c3'],
+    ]);
+    const cell = filled?.table.rows[1]?.cells[1];
+    expect([cell?.background, cell?.align]).toEqual(['blue', 'center']);
+    expect(filled?.selection).toEqual({
+      kind: 'text',
+      anchor: { block: 't1', cell: { row: 1, column: 1, paragraph: 0 }, offset: 2 },
+    });
+    // A merged cell the paste covers in part is split: its content stays in its first cell.
+    const merged = tableOf(
+      '<table data-id="t1"><tbody><tr><td><p>a</p></td><td data-background="green" colspan="2"><p>m</p></td></tr>' +
+        '<tr><td><p>b</p></td><td><p>c</p></td><td><p>d</p></td></tr></tbody></table>',
+    );
+    const spanning = tableOf(
+      '<table><tbody><tr><td colspan="2"><p>q</p></td></tr></tbody></table>',
+    );
+    const split = insert(merged, { anchor: { row: 0, column: 0 }, head: { row: 1, column: 1 } }, [
+      spanning,
+    ]);
+    expect(texts(split?.table)).toEqual([
+      ['q', ''],
+      ['b', 'c', 'd'],
+    ]);
+    expect(
+      split?.table.rows[0]?.cells.map((entry) => [entry.colSpan ?? 1, entry.background]),
+    ).toEqual([
+      [2, undefined],
+      [1, 'green'],
+    ]);
   });
 });

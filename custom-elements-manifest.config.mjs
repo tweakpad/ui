@@ -183,6 +183,41 @@ const tweakpadPublicMembers = () => ({
 });
 
 /**
+ * A class that redeclares an inherited member keeps its own visibility. The analyzer's
+ * inheritance step gives the redeclared member the base's privacy, so a protected base property
+ * that an element makes public (`override queryOwner = null`) was dropped with the protected
+ * members. Runs before `tweakpadPublicMembers`.
+ */
+const tweakpadRedeclaredPrivacy = () => {
+  /** Class name, static flag and member name → the privacy the class declares (none: public). */
+  const own = new Map();
+  const key = (declaration, member) =>
+    `${declaration.name}\0${member.static ? 'static' : ''}\0${member.name}`;
+  return {
+    name: 'tweakpad-redeclared-privacy',
+    initialize() {
+      own.clear();
+    },
+    moduleLinkPhase({ moduleDoc }) {
+      // The module's own members, before the package link phase applies inheritance.
+      for (const declaration of moduleDoc.declarations ?? [])
+        for (const member of declaration.members ?? [])
+          own.set(key(declaration, member), member.privacy);
+    },
+    packageLinkPhase({ customElementsManifest }) {
+      for (const module of customElementsManifest.modules)
+        for (const declaration of module.declarations ?? [])
+          for (const member of declaration.members ?? []) {
+            if (!member.inheritedFrom || !own.has(key(declaration, member))) continue;
+            const privacy = own.get(key(declaration, member));
+            if (privacy === undefined) delete member.privacy;
+            else member.privacy = privacy;
+          }
+    },
+  };
+};
+
+/**
  * Attributes inherited from a base element keep the base default even when the element
  * overrides the field (`override orientation = 'vertical'`), and an attribute initialized from
  * a constant shows the constant's name. The member entry carries the element's own resolved
@@ -335,6 +370,7 @@ export default {
   plugins: [
     tweakpadTagNames(),
     tweakpadEvents(scanEventSources('src/components', 'src/widgets', 'src/foundation')),
+    tweakpadRedeclaredPrivacy(),
     tweakpadPublicMembers(),
     tweakpadRedeclaredAttributes(),
     tweakpadAttributeDefaults(),

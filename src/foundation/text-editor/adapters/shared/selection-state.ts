@@ -49,6 +49,30 @@ import {
 
 export { blockTextEdge, firstTextEdge } from '../../content/edges.js';
 
+// A cleared selection (uwg-te-req-surfaces-6)
+
+/** The keys that leave a cleared selection unplaced: Escape, Tab, a lone modifier and composition. */
+const KEEPS_CLEARED: ReadonlySet<string> = new Set([
+  'Escape',
+  'Tab',
+  'Shift',
+  'Control',
+  'Alt',
+  'AltGraph',
+  'Meta',
+  'CapsLock',
+]);
+
+/**
+ * Whether a key places a cleared selection before the engine handles it: every key but Escape,
+ * Tab, a lone modifier and one of a composition. Browsers put a caret of their own at the start of
+ * a focused editing root that holds no selection when a key arrives, so a key that does not place
+ * the selection leaves it cleared whatever the DOM selection then is.
+ */
+export function placesClearedSelection(event: Pick<KeyboardEvent, 'key' | 'isComposing'>): boolean {
+  return !event.isComposing && !KEEPS_CLEARED.has(event.key);
+}
+
 // The block at the selection head
 
 /**

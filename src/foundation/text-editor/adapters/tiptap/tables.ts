@@ -40,6 +40,9 @@ function editTable(work: TiptapWork, action: TableAction): boolean {
     merge: capabilities.has('table.merge'),
   });
   if (!edit) return false;
+  // The dry run answers with the shared edit, as the Lexical adapter prepares a table action:
+  // canonicalizing and committing the whole document would only repeat what `execute` does.
+  if (work.dry) return true;
   const selection = modelSelection(work);
   const blocks = document.blocks.map((block) => (block === table ? edit.table : block));
   if (!applyDocument(work, work.canonical({ blocks }))) return false;

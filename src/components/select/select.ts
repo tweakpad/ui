@@ -3,7 +3,7 @@ import { SURFACE_HOST, isSurfaceHost } from '../../foundation/surface-brand.js';
 import { autofillHint } from '../../foundation/autofill.js';
 import { renderQuery } from './query-view.js';
 import { SelectSource } from './source.js';
-import { isSelectItemCollection, type SelectItemCollection } from './items.js';
+import { isSelectItemCollection, plainItemObjects, type SelectItemCollection } from './items.js';
 import {
   DEFAULT_SELECT_MESSAGES,
   type SelectClearBehavior,
@@ -14,6 +14,7 @@ import {
 import type { SearchSource } from '../../foundation/search/source.js';
 import type { SearchMatching, SearchStatus } from '../../foundation/search/types.js';
 import { renderHighlighted } from '../../foundation/search/highlight.js';
+import type { SearchRange } from '../../foundation/search/types.js';
 import type { TpValueChangeEvent as ValueChangeEvent } from '../../foundation/events.js';
 import { selectStateMarkers } from './state.js';
 import { composedParent, focusManaged } from '../../foundation/focus.js';
@@ -76,6 +77,7 @@ import {
   type ChoiceModelRecord,
 } from '../../foundation/choice-model.js';
 import { OwnedPortal } from '../../foundation/owned-portal.js';
+import { scheduleLayoutPass, type LayoutPass } from '../../foundation/layout-batch.js';
 import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
 import { SelectPointer } from './pointer.js';
 import { selectStyles } from './styles.js';
@@ -100,6 +102,13 @@ type SelectWindowUnit =
   | { kind: 'label'; key: string; group: SelectGroupNode }
   | { kind: 'row'; key: string; group: SelectGroupNode | undefined; records: ChoiceModelRecord[] }
   | { kind: 'option'; key: string; group: SelectGroupNode | undefined; record: ChoiceModelRecord };
+/** Whether the list scrolls above and below its viewport, with the scroll arrows' block extents. */
+interface SelectScrollExtent {
+  up: boolean;
+  down: boolean;
+  upHeight: number;
+  downHeight: number;
+}
 
 export class TpSelect extends TpFormElement<unknown> {
   static tagName = 'tp-select';
@@ -485,6 +494,8 @@ export class TpSelect extends TpFormElement<unknown> {
     diagnostic: (message) => this.#diagnose(message),
   });
   readonly #source = new SelectSource();
+  /** The option objects of a plain `items` array, which are the application's own items. */
+  #plainItems = new WeakSet<object>();
   readonly #query = new SelectQueryController(this, {
     collection: this.#collection,
     selection: this.#selection,
@@ -520,7 +531,9 @@ export class TpSelect extends TpFormElement<unknown> {
     },
     submit: () => this.#submitForm(),
     metadata: (record) => ({
-      source: this.#source.sources.get(record.option) ?? record.value,
+      source:
+        this.#source.sources.get(record.option) ??
+        (this.#plainItems.has(record.option) ? record.option : record.value),
       logicalIndex: record.option.index ?? this.#collection.source.indexOf(record),
       row:
         this.#gridRows.get(record) ??
@@ -807,6 +820,7 @@ export class TpSelect extends TpFormElement<unknown> {
     const previousHighlight = this.#collection.highlighted;
     this.#query.prepare();
     const resultItems = this.searchable ? this.#query.resultItems : undefined;
+    this.#plainItems = plainItemObjects(this.items);
     this.#model.update(
       isSelectItemCollection(this.items)
         ? this.#source.normalize(this.items, [])
@@ -1479,8 +1493,16 @@ export class TpSelect extends TpFormElement<unknown> {
             event.preventDefault();
             this.#startScroll(direction);
           },
-          '@pointerenter': (event: PointerEvent) => {
-            if (event.pointerType !== 'touch') this.#startScroll(direction);
+          // A pointer that moves over the arrow scrolls the list; an arrow that appears under a
+          // resting pointer does not, so the list keeps the highlight the keyboard moves.
+          '@pointermove': (event: PointerEvent) => {
+            if (
+              event.pointerType === 'touch' ||
+              (event.movementX === 0 && event.movementY === 0) ||
+              this.#scrollTimer !== undefined
+            )
+              return;
+            this.#startScroll(direction);
           },
           '@pointerleave': () => this.#stopScroll(),
           '@pointerup': () => this.#stopScroll(),
@@ -1585,7 +1607,7 @@ export class TpSelect extends TpFormElement<unknown> {
         void this.updatePosition().then(() => this.#initialFocus());
       }
       // Scroll arrows follow the committed list's layout; their presence renders after this update.
-      queueMicrotask(() => this.#scrollState());
+      this.#queueScrollState();
     } else {
       this.#releaseModality();
       this.#stopScroll();
@@ -1703,7 +1725,8 @@ export class TpSelect extends TpFormElement<unknown> {
       },
       onPosition: () => {
         this.#alignSelectedItem();
-        this.#scrollState();
+        // The first placement runs inside `updated()`.
+        this.#queueScrollState();
       },
     });
   }
@@ -1871,7 +1894,19 @@ export class TpSelect extends TpFormElement<unknown> {
   }
   /** Option text, with matched ranges marked when highlighting. */
   #optionText(record: ChoiceModelRecord): unknown {
-    const ranges = this.highlightMatches ? this.#query.rangesOf(record) : undefined;
+    return this.optionContent(
+      record,
+      this.highlightMatches ? this.#query.rangesOf(record) : undefined,
+    );
+  }
+  /**
+   * The content of an option: its label, with the matched ranges of its text marked when it is
+   * plain text. `ranges` are present while highlighting matches.
+   */
+  protected optionContent(
+    record: ChoiceModelRecord,
+    ranges: readonly SearchRange[] | undefined,
+  ): unknown {
     return ranges?.length && record.label === record.text
       ? renderHighlighted(record.text, ranges, this.choicePart('select-match'))
       : record.label;
@@ -2003,21 +2038,39 @@ export class TpSelect extends TpFormElement<unknown> {
     });
   }
   #scrollState(): void {
+    this.#applyScroll(this.#measureScroll());
+  }
+  /**
+   * Follows the list's scroll extent after the current update: the arrows' presence requests a
+   * render, which an update in progress (positioning runs inside `updated()`) must not schedule.
+   */
+  #queueScrollState(): void {
+    scheduleLayoutPass(this.#scrollPass, this.#scrollPass);
+  }
+  readonly #scrollPass: LayoutPass<SelectScrollExtent> = {
+    active: () => this.isConnected,
+    measure: () => this.#measureScroll(),
+    apply: (extent) => this.#applyScroll(extent),
+  };
+  /** Whether the list scrolls above and below its viewport, with the arrows' block extents. */
+  #measureScroll(): SelectScrollExtent {
     const list = this.#list;
     const up = !!list && this.open && list.scrollTop > 1;
     const down = !!list && this.open && list.scrollTop + list.clientHeight < list.scrollHeight - 1;
-    this.#upPresence.setPresent(up);
-    this.#downPresence.setPresent(down);
     // Scroll arrows overlay the list. Use their actual customized block extent so
     // native scrollIntoView also keeps keyboard focus clear of either overlay.
-    list?.style.setProperty(
-      '--_tp-select-scroll-up-height',
-      `${up ? (this.#up?.offsetHeight ?? 0) : 0}px`,
-    );
-    list?.style.setProperty(
-      '--_tp-select-scroll-down-height',
-      `${down ? (this.#down?.offsetHeight ?? 0) : 0}px`,
-    );
+    return {
+      up,
+      down,
+      upHeight: up ? (this.#up?.offsetHeight ?? 0) : 0,
+      downHeight: down ? (this.#down?.offsetHeight ?? 0) : 0,
+    };
+  }
+  #applyScroll(extent: SelectScrollExtent): void {
+    this.#upPresence.setPresent(extent.up);
+    this.#downPresence.setPresent(extent.down);
+    this.#list?.style.setProperty('--_tp-select-scroll-up-height', `${extent.upHeight}px`);
+    this.#list?.style.setProperty('--_tp-select-scroll-down-height', `${extent.downHeight}px`);
   }
   #startScroll(direction: number): void {
     this.#stopScroll();

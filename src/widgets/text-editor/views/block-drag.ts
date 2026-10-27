@@ -72,6 +72,24 @@ export function remainingRows(tree: TextEditorBlockTree, moved: readonly string[
   return rows;
 }
 
+/**
+ * The insertion index among the remaining rows at which the dragged blocks stay where they are:
+ * the remaining rows before the source block. Fixed for a drag, so a move compares only it.
+ */
+export function originIndex(
+  tree: TextEditorBlockTree,
+  rows: readonly ProjectedRow[],
+  source: string,
+): number {
+  const remaining = new Set(rows.map((row) => row.id));
+  let index = 0;
+  for (const block of tree.ordered()) {
+    if (block.id === source) return index;
+    if (remaining.has(block.id)) index += 1;
+  }
+  return -1;
+}
+
 /** A drop projection: the slot among the remaining rows, the depth, the parent and the move. */
 export interface TextEditorDropProjection {
   /** The insertion index among the remaining rows. */
@@ -140,16 +158,105 @@ export interface TextEditorRowBox {
   readonly bottom: number;
 }
 
+/** Row boxes read by index: a list, or boxes measured when first read (`TextEditorRowBoxes`). */
+export type TextEditorRowBoxSource =
+  readonly TextEditorRowBox[] | { readonly length: number; get(index: number): TextEditorRowBox };
+
 /**
  * The insertion index of a vertical position among row boxes: before the first row whose vertical
- * midpoint lies below it, else after the last (C-565).
+ * midpoint lies below it, else after the last (C-565). Rows follow each other down the content, so
+ * a binary search reads only the boxes it needs.
  */
-export function dropIndex(boxes: readonly TextEditorRowBox[], y: number): number {
-  for (let index = 0; index < boxes.length; index++) {
-    const box = boxes[index]!;
-    if (y < (box.top + box.bottom) / 2) return index;
+export function dropIndex(boxes: TextEditorRowBoxSource, y: number): number {
+  const at = (index: number): TextEditorRowBox =>
+    'get' in boxes && typeof boxes.get === 'function'
+      ? boxes.get(index)
+      : (boxes as readonly TextEditorRowBox[])[index]!;
+  let low = 0;
+  let high = boxes.length;
+  while (low < high) {
+    const middle = (low + high) >> 1;
+    const box = at(middle);
+    if (y < (box.top + box.bottom) / 2) high = middle;
+    else low = middle + 1;
   }
-  return boxes.length;
+  return low;
+}
+
+/** A row's content box relative to the content part. */
+export interface TextEditorRowGeometry extends TextEditorRowBox {
+  readonly left: number;
+  readonly right: number;
+}
+
+/**
+ * The content boxes of a drag's remaining rows, relative to the content part, each measured the
+ * first time it is read: a drag start reads a few rows, not the whole document. A row without a
+ * layout box takes the end of the row before it.
+ */
+export class TextEditorRowBoxes {
+  readonly #rows: readonly ProjectedRow[];
+  readonly #measure: (id: string) => DOMRectReadOnly | null;
+  readonly #origin: () => { readonly left: number; readonly top: number };
+  readonly #boxes: (TextEditorRowGeometry | undefined)[] = [];
+
+  constructor(
+    rows: readonly ProjectedRow[],
+    measure: (id: string) => DOMRectReadOnly | null,
+    origin: () => { readonly left: number; readonly top: number },
+  ) {
+    this.#rows = rows;
+    this.#measure = measure;
+    this.#origin = origin;
+  }
+
+  get length(): number {
+    return this.#rows.length;
+  }
+
+  get(index: number): TextEditorRowGeometry {
+    const known = this.#boxes[index];
+    if (known) return known;
+    const row = this.#rows[index];
+    const rect = row ? this.#measure(row.id) : null;
+    let box: TextEditorRowGeometry;
+    if (rect) {
+      const origin = this.#origin();
+      box = {
+        top: rect.top - origin.top,
+        bottom: rect.bottom - origin.top,
+        left: rect.left - origin.left,
+        right: rect.right - origin.left,
+      };
+    } else if (index > 0) {
+      const previous = this.get(index - 1);
+      box = { ...previous, top: previous.bottom };
+    } else box = { top: 0, bottom: 0, left: 0, right: 0 };
+    this.#boxes[index] = box;
+    return box;
+  }
+}
+
+/**
+ * The inline extent of top-level content, content-relative: the top-level rows that are not list
+ * items share the content column (a list item's content is inset by its list), so the first and
+ * last of them give it; without one, every top-level row does; without any, `fallback`.
+ */
+export function columnExtent(
+  tree: TextEditorBlockTree,
+  rows: readonly ProjectedRow[],
+  boxes: { get(index: number): TextEditorRowGeometry },
+  fallback: { readonly start: number; readonly end: number },
+): { start: number; end: number } {
+  const top = rows.flatMap((row, index) => (row.depth === 0 ? [{ row, index }] : []));
+  const plain = top.filter(({ row }) => !LIST_KINDS.has(tree.get(row.id)?.kind ?? ''));
+  const sample = plain.length ? [plain[0]!, plain.at(-1)!] : top;
+  if (!sample.length) return { ...fallback };
+  const measured = sample.map(({ index }) => boxes.get(index));
+  return {
+    start: Math.min(...measured.map((box) => box.left)),
+    end: Math.max(...measured.map((box) => box.right)),
+  };
 }
 
 /**
@@ -181,6 +288,14 @@ export function keyboardMoveSlot(
   return null;
 }
 
+/**
+ * The selection after an applied drop: the moved blocks, as a block selection
+ * (`uwg-te-req-key-8`); set without a request, as every selection-only change is.
+ */
+export function droppedSelection(ids: readonly string[]): TextEditorAction {
+  return { type: 'selection.set', selection: { kind: 'blocks', ids: [...ids] } };
+}
+
 /** The action of moving blocks, each list item with its nested items, to a slot. */
 export function moveAction(
   tree: TextEditorBlockTree,
@@ -188,6 +303,70 @@ export function moveAction(
   slot: TextEditorBlockSlot,
 ): TextEditorAction {
   return { type: 'blocks.move', ids: topmostBlocks(tree, ids), to: slot };
+}
+
+// Preview ----------------------------------------------------------------------------------------
+
+/** The preview's custom property: how far list markers reach before the copies, in pixels. */
+const PREVIEW_INSET = '--_tp-text-editor-preview-inset';
+
+/** The list a block's element is an item of (vocabulary classes), else `null`. */
+export function previewListOf(element: Element): Element | null {
+  const list = element.parentElement;
+  return element.classList.contains('tp-te-item') && list?.classList.contains('tp-te-list')
+    ? list
+    : null;
+}
+
+/**
+ * The elements whose copies show a block in the drag preview: its element and, for a list item
+ * whose nested items the engine renders in the following wrapper item, that wrapper too.
+ */
+export function previewSourcesOf(element: Element): Element[] {
+  const next = element.nextElementSibling;
+  return element.classList.contains('tp-te-item') &&
+    !element.classList.contains('tp-te-nested-item') &&
+    next?.classList.contains('tp-te-nested-item')
+    ? [element, next]
+    : [element];
+}
+
+/**
+ * The number an ordered list shows for an item: the list's `start` (1 when absent) for its first
+ * item, an item's own `value`, else one more than the item before.
+ */
+export function listItemOrdinal(item: Element): number {
+  const list = item.parentElement;
+  const start = Number.parseInt(list?.getAttribute('start') ?? '', 10);
+  let ordinal = (Number.isFinite(start) ? start : 1) - 1;
+  for (const child of list ? Array.from(list.children) : [item]) {
+    if (child.localName !== 'li') continue;
+    const value = Number.parseInt(child.getAttribute('value') ?? '', 10);
+    ordinal = Number.isFinite(value) ? value : ordinal + 1;
+    if (child === item) break;
+  }
+  return ordinal;
+}
+
+/**
+ * Gives every copied list item the marker of its original: the computed marker type (which the
+ * original's nesting decides) and, in an ordered list, the original's number; a copied task
+ * marker keeps its original's opacity, which the copy's disabled checkbox would otherwise dim.
+ */
+export function keepListMarkers(
+  mapping: ReadonlyMap<Element, Element>,
+  view: Pick<Window, 'getComputedStyle'>,
+): void {
+  for (const [original, copy] of mapping) {
+    if (!('style' in copy)) continue;
+    const style = (copy as HTMLElement).style;
+    if (original.classList.contains('tp-te-task-marker'))
+      style.opacity = view.getComputedStyle(original).opacity;
+    if (original.localName !== 'li') continue;
+    style.listStyleType = view.getComputedStyle(original).listStyleType;
+    if (original.parentElement?.localName === 'ol')
+      copy.setAttribute('value', String(listItemOrdinal(original)));
+  }
 }
 
 // Session ----------------------------------------------------------------------------------------
@@ -215,26 +394,24 @@ export interface TextEditorBlockDragHost {
   dragChanged(active: boolean): void;
 }
 
-interface RowGeometry extends TextEditorRowBox {
-  readonly left: number;
-  readonly right: number;
-}
-
 interface Session {
   readonly ids: readonly string[];
   readonly source: string;
   readonly tree: TextEditorBlockTree;
   readonly model: TreeModel<TextEditorBlock>;
   readonly rows: readonly ProjectedRow[];
-  readonly boxes: readonly RowGeometry[];
+  readonly boxes: TextEditorRowBoxes;
   /** The inline extent of top-level content, content-relative. */
   readonly start: number;
   readonly end: number;
   readonly indent: number;
   readonly initialDepth: number;
+  /** The insertion index that leaves the dragged blocks in place (`originIndex`). */
+  readonly origin: number;
   valid: TextEditorDropProjection | null;
   announced: string;
-  readonly clones: (() => void)[];
+  /** Removes the preview copies and the Escape listener of the drag. */
+  readonly cleanups: (() => void)[];
 }
 
 /** The fallback inline indentation of one nesting step, in CSS pixels. */
@@ -290,6 +467,21 @@ export class TextEditorBlockDrag implements OverlayLayer<OverlayBox | null> {
   cancel(): void {
     if (this.#session) void this.#manager?.actions.stop({ canceled: true });
   }
+
+  /**
+   * Whether this Escape keydown cancelled the drag: the pointer sensor ends a drag on Escape
+   * before the editing root sees the key, which must then take no further Escape step.
+   */
+  cancelledBy(event: Event): boolean {
+    return this.#escape === event;
+  }
+
+  /** The last Escape keydown during a drag, seen at the window before every other listener. */
+  #escape: Event | null = null;
+
+  readonly #onKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape' && this.#session) this.#escape = event;
+  };
 
   release(): void {
     for (const release of this.#releases) release();
@@ -355,34 +547,33 @@ export class TextEditorBlockDrag implements OverlayLayer<OverlayBox | null> {
     const ids = topmostBlocks(tree, selected?.includes(block) ? selected : [block]);
     const source = ids[0] ?? block;
     const rows = remainingRows(tree, ids);
-    const origin = content.getBoundingClientRect();
-    const boxes = rows.map((row): RowGeometry => {
-      const rect = instance.blockRects(row.id)?.content;
-      return rect
-        ? {
-            top: rect.top - origin.top,
-            bottom: rect.bottom - origin.top,
-            left: rect.left - origin.left,
-            right: rect.right - origin.left,
-          }
-        : { top: 0, bottom: 0, left: 0, right: 0 };
-    });
+    // The drag measures only the rows it reads (`uwg-te-req-perf-1`): the column, one nesting
+    // step, and later the rows around the pointer.
+    const boxes = new TextEditorRowBoxes(
+      rows,
+      (id) => instance.blockRects(id)?.content ?? null,
+      () => content.getBoundingClientRect(),
+    );
     const rtl = this.#host.direction() === 'rtl';
-    const top = boxes.filter((_, index) => rows[index]!.depth === 0);
-    const start = top.length ? Math.min(...top.map((box) => box.left)) : 0;
-    const end = top.length ? Math.max(...top.map((box) => box.right)) : origin.width;
+    const { start, end } = columnExtent(tree, rows, boxes, {
+      start: 0,
+      end: content.getBoundingClientRect().width,
+    });
     const nested = rows.findIndex((row) => row.depth > 0 && row.parentId !== null);
     let indent = DEFAULT_INDENT;
     if (nested >= 0) {
       const parent = rows.findIndex((row) => row.id === rows[nested]!.parentId);
       if (parent >= 0) {
-        const child = boxes[nested]!;
-        const owner = boxes[parent]!;
+        const child = boxes.get(nested);
+        const owner = boxes.get(parent);
         const step = rtl ? owner.right - child.right : child.left - owner.left;
         if (step > 0) indent = step;
       }
     }
-    const clones = this.#fillPreview(instance, content, ids);
+    const cleanups = this.#fillPreview(instance, content, ids);
+    const view = content.ownerDocument.defaultView;
+    view?.addEventListener('keydown', this.#onKeyDown, { capture: true });
+    cleanups.push(() => view?.removeEventListener('keydown', this.#onKeyDown, { capture: true }));
     const original = tree.get(source)!;
     this.#session = {
       ids,
@@ -395,9 +586,10 @@ export class TextEditorBlockDrag implements OverlayLayer<OverlayBox | null> {
       end,
       indent,
       initialDepth: original.depth,
+      origin: originIndex(tree, rows, source),
       valid: null,
       announced: '',
-      clones,
+      cleanups,
     };
     this.#host.dragChanged(true);
     this.#host.announce(
@@ -437,17 +629,10 @@ export class TextEditorBlockDrag implements OverlayLayer<OverlayBox | null> {
       session.valid = projection;
     else if (!projection) {
       // The original position stays a valid target: the drop then changes nothing.
-      session.valid = this.#atOrigin(session, index) ? null : session.valid;
+      session.valid = index === session.origin ? null : session.valid;
     }
     this.#indicatorChanged();
     this.#announceLater(session);
-  }
-
-  #atOrigin(session: Session, index: number): boolean {
-    const ordered = session.tree.ordered();
-    const remaining = new Set(session.rows.map((row) => row.id));
-    const position = ordered.findIndex((block) => block.id === session.source);
-    return ordered.slice(0, position).filter((block) => remaining.has(block.id)).length === index;
   }
 
   #dragEnd(event: DragEvent): void {
@@ -486,8 +671,13 @@ export class TextEditorBlockDrag implements OverlayLayer<OverlayBox | null> {
         reason: 'drag',
         trigger: null,
       });
-      if (outcome === 'applied') this.#host.announce(blockDragText(strings, 'dropped', place));
-      return outcome === 'applied';
+      if (outcome !== 'applied') return false;
+      this.#host.announce(blockDragText(strings, 'dropped', place));
+      // Focus in the editing root with the moved blocks selected (`uwg-te-req-key-8`).
+      const select = droppedSelection(session.ids);
+      const instance = this.#host.instance();
+      if (instance?.can(select)) instance.execute([select], { reason: 'drag', focus: true });
+      return true;
     } catch {
       return false;
     }
@@ -499,7 +689,7 @@ export class TextEditorBlockDrag implements OverlayLayer<OverlayBox | null> {
     this.#timer = undefined;
     if (!session) return;
     this.#session = null;
-    for (const dispose of session.clones) dispose();
+    for (const dispose of session.cleanups) dispose();
     this.#indicator.hide();
     this.#host.dragChanged(false);
   }
@@ -533,19 +723,44 @@ export class TextEditorBlockDrag implements OverlayLayer<OverlayBox | null> {
     content: HTMLElement,
     ids: readonly string[],
   ): (() => void)[] {
-    const preview = this.#previewElement(content.ownerDocument);
+    const document = content.ownerDocument;
+    const view = document.defaultView;
+    const preview = this.#previewElement(document);
     const badge = preview.querySelector<HTMLElement>('.block-drag-count');
     const disposers: (() => void)[] = [];
+    // Consecutive list items of one list share a copy of that list, so that their markers show.
+    let frame: { list: Element; element: HTMLElement } | null = null;
+    let inset = 0;
     for (const id of ids) {
       const element = instance.blockElement(id);
       if (!element) continue;
-      const clone = cloneFeedback(element);
-      preview.insertBefore(clone.element, badge);
-      disposers.push(() => {
-        clone.element.remove();
-        clone.dispose();
-      });
+      const list: Element | null = previewListOf(element);
+      const current: Element | null = frame === null ? null : frame.list;
+      if (!list) frame = null;
+      else if (current !== list) {
+        const copy: HTMLElement = document.createElement(list.localName);
+        copy.className = list.className;
+        // The copied item stays where the original sits; its marker takes the list's inset before it.
+        const start = Number.parseFloat(view?.getComputedStyle(list).paddingInlineStart ?? '') || 0;
+        copy.style.marginInlineStart = `${-start}px`;
+        inset = Math.max(inset, start);
+        preview.insertBefore(copy, badge);
+        disposers.push(() => copy.remove());
+        frame = { list, element: copy };
+      }
+      for (const source of previewSourcesOf(element)) {
+        const clone = cloneFeedback(source);
+        if (view) keepListMarkers(clone.mapping, view);
+        if (frame) frame.element.append(clone.element);
+        else preview.insertBefore(clone.element, badge);
+        disposers.push(() => {
+          clone.element.remove();
+          clone.dispose();
+        });
+      }
     }
+    // The backdrop reaches over the markers that lie before the copies.
+    preview.style.setProperty(PREVIEW_INSET, `${inset}px`);
     if (badge) {
       badge.textContent = String(ids.length);
       badge.hidden = ids.length < 2;
@@ -613,8 +828,8 @@ export class TextEditorBlockDrag implements OverlayLayer<OverlayBox | null> {
     const origin = context.toOverlay(content.getBoundingClientRect());
     const { boxes } = session;
     const index = projection.index;
-    const before = boxes[index - 1];
-    const after = boxes[index];
+    const before = index > 0 ? boxes.get(index - 1) : undefined;
+    const after = index < boxes.length ? boxes.get(index) : undefined;
     const y =
       before && after
         ? (before.bottom + after.top) / 2

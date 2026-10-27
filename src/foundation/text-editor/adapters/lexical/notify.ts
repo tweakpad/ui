@@ -21,6 +21,7 @@ import { engineChange } from '../../cause.js';
 import type { TextEditorEngineContext } from '../../engine.js';
 import { HISTORY_BOUNDARY_TAG } from './actions.js';
 import { CUT_TAG } from './clipboard.js';
+import { keepPortableDocument } from './document.js';
 import { $holdsWholeDocument } from './guards.js';
 import type {
   LexicalEditorStateLike,
@@ -136,6 +137,7 @@ export function registerNotifications(
     if (payload.editorState === payload.prevEditorState) return;
     if (payload.tags.has(HISTORY_BOUNDARY_TAG) || beforeRestore(rt, payload)) return;
     const changed = documentChanged(rt, payload);
+    if (!changed) keepPortableDocument(payload.prevEditorState, payload.editorState);
     const whole = payload.editorState.read(() => $holdsWholeDocument(rt));
     if (!changed && unobservable(rt, payload, whole)) return;
     rt.version += 1;

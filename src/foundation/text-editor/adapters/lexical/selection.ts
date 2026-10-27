@@ -235,6 +235,32 @@ export function $selectCells(
   return true;
 }
 
+/**
+ * The caret where a cleared selection rests (`uwg-te-req-surfaces-6`), from the selection of the
+ * state being read: at the anchor of a text selection; for blocks or a cell range, at the start of
+ * the first block from the first of them that holds text, else at the end of the nearest one
+ * before; `null` without a selection or text.
+ */
+export function $restingSelection(rt: LexicalRuntime): TextEditorSelectionInput | null {
+  const read = $readSelection(rt);
+  if (read.kind === 'text') return { kind: 'text', anchor: read.anchor };
+  const first = read.kind === 'blocks' ? read.ids[0] : read.kind === 'cells' ? read.table : null;
+  if (first === undefined || first === null) return null;
+  const document = $portableDocument(rt);
+  const ordered = blockTree(document, 0).ordered();
+  const index = ordered.findIndex((block) => block.id === first);
+  if (index < 0) return null;
+  for (let at = index; at < ordered.length; at++) {
+    const caret = caretSelection(document, ordered[at]!.id, 'start');
+    if (caret) return caret;
+  }
+  for (let at = index - 1; at >= 0; at--) {
+    const caret = caretSelection(document, ordered[at]!.id, 'end');
+    if (caret) return caret;
+  }
+  return null;
+}
+
 /** Sets a selection input; answers whether it named content of the document. */
 export function $applySelection(rt: LexicalRuntime, input: TextEditorSelectionInput): boolean {
   switch (input.kind) {

@@ -47,7 +47,13 @@ import {
   type TextEditorNodeDefinition,
 } from '../nodes.js';
 import { isTextEditorColor } from '../palette.js';
-import { isElementLike, isTextLike, type ElementLike, type NodeLike } from './dom.js';
+import {
+  isElementLike,
+  isTextLike,
+  PARSED_STYLE_ATTRIBUTE,
+  type ElementLike,
+  type NodeLike,
+} from './dom.js';
 import {
   canonicalize,
   customNodeAttributes,
@@ -548,7 +554,8 @@ const childElements = (element: ElementLike): ElementLike[] =>
  */
 function styleOf(element: ElementLike): ReadonlyMap<string, string> {
   const declarations = new Map<string, string>();
-  for (const declaration of (element.getAttribute('style') ?? '').split(';')) {
+  const style = element.getAttribute(PARSED_STYLE_ATTRIBUTE) ?? element.getAttribute('style');
+  for (const declaration of (style ?? '').split(';')) {
     const colon = declaration.indexOf(':');
     if (colon < 0) continue;
     const property = declaration.slice(0, colon).trim().toLowerCase();

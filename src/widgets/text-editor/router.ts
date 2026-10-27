@@ -7,8 +7,8 @@ import {
   type KeyBindingGuards,
   type KeyShortcut,
 } from '../../foundation/key-bindings.js';
-import type { KeyHintPlatform } from '../../foundation/key-notation.js';
-import { imageProtocols, linkProtocols } from '../../foundation/markdown/url.js';
+import { keyHintPlatform, type KeyHintPlatform } from '../../foundation/key-notation.js';
+import { allowedUrl, imageProtocols, linkProtocols } from '../../foundation/markdown/url.js';
 import type {
   TextEditorAction,
   TextEditorContentInsertAction,
@@ -17,6 +17,7 @@ import {
   parseHtmlDocument,
   type HtmlParserView,
 } from '../../foundation/text-editor/content/dom.js';
+import type { TextEditorStepDirection } from '../../foundation/text-editor/content/edges.js';
 import { readClipboardHtml } from '../../foundation/text-editor/content/html.js';
 import type { TextEditorPortableFragment } from '../../foundation/text-editor/content/portable.js';
 import { readMarkdown } from '../../foundation/text-editor/content/markdown.js';
@@ -45,15 +46,20 @@ export type TextEditorKeyZone = 'editing' | 'toolbar' | 'popup' | 'other';
 export interface TextEditorRouterParts {
   /** The `text-editor-toolbar` part, or null while the layout places no tool. */
   readonly toolbar: Element | null;
+  /**
+   * The `text-editor-selection-toolbar` part: a top-layer surface whose controls take the tool chords
+   * as the fixed toolbar's do (`uwg-te-tab-keymap`, scope "selection toolbar").
+   */
+  readonly selectionToolbar?: Element | null | undefined;
   /** The `text-editor-content` part, which holds the editing root. */
   readonly content: Element | null;
 }
 
 /**
  * The zone of an event from its composed path, walked from the target outwards: the content part gives
- * `editing`, an element with a `popover` attribute (a top-layer surface: a Menu or Popover popup) gives
- * `popup`, the toolbar part gives `toolbar`; the first one met wins, so a toolbar menu's popup is `popup`;
- * otherwise `other`.
+ * `editing`, the fixed or the selection toolbar part gives `toolbar`, any other element with a
+ * `popover` attribute (a top-layer surface: a Menu or Popover popup) gives `popup`; the first one met
+ * wins, so a toolbar menu's popup is `popup`; otherwise `other`.
  */
 export function textEditorKeyZone(
   path: readonly EventTarget[],
@@ -61,6 +67,7 @@ export function textEditorKeyZone(
 ): TextEditorKeyZone {
   for (const node of path) {
     if (node === parts.content) return 'editing';
+    if (parts.selectionToolbar && node === parts.selectionToolbar) return 'toolbar';
     if ((node as Partial<Element>).hasAttribute?.('popover')) return 'popup';
     if (node === parts.toolbar) return 'toolbar';
   }
@@ -94,12 +101,20 @@ export interface TextEditorRouterHost {
   parts(): TextEditorRouterParts;
   /** The selection now: the ready instance's live selection, else the published state's. */
   selection(): TextEditorSelection;
-  /** The writing direction of the widget, which maps a physical alignment of pasted HTML. */
+  /**
+   * The writing direction of the widget, which maps a physical alignment of pasted HTML and the
+   * physical arrows of a read-only extension.
+   */
   direction(): 'ltr' | 'rtl';
   /** The request pipeline. */
   request(proposal: TextEditorRequestProposal): Promise<TextEditorRequestOutcome>;
   /** Selects the content of the editing root while read-only (`uwg-te-tab-keymap-host-r13`). */
   selectRootContent(sourceEvent: KeyboardEvent): void;
+  /**
+   * Extends a caret, or no selection, of the read-only editing root by one character in document
+   * order (`uwg-te-req-a11y-1`); answers whether it set a selection.
+   */
+  extendRootSelection?(sourceEvent: KeyboardEvent, direction: TextEditorStepDirection): boolean;
   /** Alt+F10 in the editing root: moves focus to the contextual controls (`uwg-te-tab-keymap-host-r2`). */
   contextualControls?(sourceEvent: KeyboardEvent): void;
   /**
@@ -136,6 +151,8 @@ export interface TextEditorRouterHost {
     reason: 'input-paste' | 'drag',
     sourceEvent: Event,
   ): boolean;
+  /** Pastes: whether a link to `href` applies to the selection now (a dry run). */
+  canLink?(href: string): boolean;
 }
 
 /** The resolution that the bindings follow, handed over once per resolution. */
@@ -270,6 +287,27 @@ export class TextEditorRouter {
         return true;
       },
     });
+    // A browser extends no collapsed selection in content that is not editable: the first
+    // Shift+Arrow from a caret, or from no selection, of the read-only root selects one character,
+    // and the browser extends the selection from then on (`uwg-te-req-a11y-1`).
+    for (const [keys, right] of [
+      ['Shift+ArrowRight', true],
+      ['Shift+ArrowLeft', false],
+    ] as const)
+      register({
+        keys,
+        repeat: true,
+        guards: HOST_GUARDS,
+        handler: (event) => {
+          const access = this.#config?.access;
+          if (this.#zone !== 'editing' || !access?.readOnly || access.disabled) return false;
+          const selection = this.#host.selection();
+          if (selection.kind !== 'none' && !(selection.kind === 'text' && selection.empty))
+            return false;
+          const forward = right === (this.#host.direction() === 'ltr');
+          return this.#host.extendRootSelection?.(event, forward ? 'forward' : 'backward') ?? false;
+        },
+      });
     register({
       keys: 'Alt+F10',
       repeat: true,
@@ -385,15 +423,20 @@ export class TextEditorRouter {
     // Read-only and disabled editors upload nothing; the content request is rejected as usual.
     if (files.length && at && this.#editable())
       this.#host.uploadImages?.(files, at, 'input-paste', event);
+    const host = this.#host;
     const proposal = pasteProposal({
       data,
-      selection: this.#host.selection(),
+      selection: host.selection(),
       nodes: this.#config?.nodes ?? [],
-      direction: this.#host.direction(),
+      direction: host.direction(),
       parserWindow: this.#root?.ownerDocument?.defaultView ?? null,
       sourceEvent: event,
+      ...(host.canLink ? { canLink: (href: string) => host.canLink?.(href) ?? true } : {}),
     });
     if (proposal) this.#host.request(proposal).catch(ignore);
+    // A paste of image files alone is rejected too while the editor takes no changes.
+    else if (files.length && at && !this.#editable())
+      this.#host.request(imagePasteRefusal(at, event)).catch(ignore);
   };
 
   readonly #onDragStart = (event: Event): void => {
@@ -437,8 +480,28 @@ export class TextEditorRouter {
     if (proposal) this.#host.request(proposal).catch(ignore);
   };
 
+  /**
+   * Mod+click on a link while the editor is editable opens it in a new browsing context without an
+   * opener; a plain click stays the engine's, which never navigates, and a link of a read-only
+   * editor navigates natively (C-249, `uwg-te-req-surfaces-3`).
+   */
+  readonly #onClick = (event: Event): void => {
+    const click = event as MouseEvent;
+    if (click.button !== 0 || click.altKey || click.shiftKey || !this.#editable()) return;
+    const view = this.#root?.ownerDocument?.defaultView;
+    const mac = keyHintPlatform(this.#platform, view?.navigator) === 'mac';
+    if (!(mac ? click.metaKey && !click.ctrlKey : click.ctrlKey && !click.metaKey)) return;
+    if (this.#zoneOf(event) !== 'editing') return;
+    const href = linkHref(event.composedPath(), this.#host.parts().content);
+    if (!href || !allowedUrl(href, DEFAULT_URLS.links)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    view?.open(href, '_blank', 'noopener');
+  };
+
   #listeners(): readonly (readonly [string, (event: Event) => void])[] {
     return [
+      ['click', this.#onClick],
       ['keydown', this.#onKeyDown],
       ['compositionstart', this.#onCompositionStart],
       ['compositionend', this.#onCompositionEnd],
@@ -449,6 +512,16 @@ export class TextEditorRouter {
       ['drop', this.#onDrop],
     ];
   }
+}
+
+/** The `href` of the nearest link on a composed path inside the content part, or `null`. */
+function linkHref(path: readonly EventTarget[], content: Element | null): string | null {
+  for (const target of path) {
+    if (target === content) return null;
+    const element = target as Partial<Element>;
+    if (element.localName === 'a') return element.getAttribute?.('href') || null;
+  }
+  return null;
 }
 
 /** The shared URL policy of the editor's content. */
@@ -469,6 +542,11 @@ export interface TextEditorPasteInput {
   readonly sourceEvent: Event;
   /** The URL policy; default the shared Markdown protocols. */
   readonly urls?: TextEditorUrlPolicy | undefined;
+  /**
+   * Whether a link to `href` applies to the selection; a selection that a link cannot cover (one
+   * that holds no text, such as a block boundary) takes the URL as text. Default: it applies.
+   */
+  readonly canLink?: ((href: string) => boolean) | undefined;
 }
 
 /**
@@ -507,7 +585,8 @@ export function imageFiles(data: Pick<DataTransfer, 'files'> | null | undefined)
 
 /**
  * The one request of a paste (`uwg-te-req-content-6`): a single URL that passes the link policy,
- * pasted over a non-empty text selection, links that selection (`link.set`); otherwise the HTML
+ * pasted over a non-empty text selection that a link can cover, links that selection (`link.set`);
+ * otherwise the HTML
  * read by the shared clipboard reader, else (no HTML, or HTML that no parser reads) Markdown
  * labelled `text/markdown` read by the shared Markdown reader, else the text read as a text range, inserted by one `content.insert` at the selection. Surface `paste`, reason
  * `input-paste`; null when it holds neither (files only, or nothing) or nothing is selected.
@@ -526,12 +605,37 @@ export function pasteProposal(input: TextEditorPasteInput): TextEditorRequestPro
   const { selection } = input;
   if (selection.kind === 'text' && !selection.empty) {
     const url = matchUrl(data.getData('text/plain'), input.urls ?? DEFAULT_URLS);
-    if (url) return request([{ type: 'link.set', href: url }]);
+    if (url && (input.canLink?.(url) ?? true)) return request([{ type: 'link.set', href: url }]);
   }
   const content = transferContent(data, input);
   if (!content) return null;
   const action: TextEditorContentInsertAction = { type: 'content.insert', content, at };
   return request([action]);
+}
+
+/**
+ * The request of a paste of image files alone while the editor is read-only or disabled
+ * (`uwg-te-req-content-6`): the paste is rejected as every other document change is, so it is
+ * proposed as one `content.insert` at the selection, surface `paste` and reason `input-paste`,
+ * that holds no block, since the images would exist only after uploads that never start; the
+ * pipeline rejects it with a NotSupportedError and reports `tp-text-editor-request-failed`.
+ */
+export function imagePasteRefusal(
+  at: TextEditorSelectionInput,
+  sourceEvent: Event,
+): TextEditorRequestProposal {
+  const action: TextEditorContentInsertAction = {
+    type: 'content.insert',
+    content: { kind: 'blocks', blocks: [] },
+    at,
+  };
+  return {
+    target: [action],
+    surface: 'paste',
+    reason: 'input-paste',
+    sourceEvent,
+    trigger: null,
+  };
 }
 
 /** What a drop from outside the document carries. */

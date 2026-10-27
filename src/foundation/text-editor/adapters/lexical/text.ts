@@ -21,7 +21,7 @@ import { formatBits, LEXICAL_FORMAT, writeInline } from './mapping.js';
 import type { TextEditorBlockTextPoint } from '../shared/blocks.js';
 import {
   cellParagraphs,
-  insertFragmentAfterBlocks,
+  replaceBlocksWithFragment,
   insertFragmentAtPoint,
   prepareFragment,
 } from '../shared/fragment-insert.js';
@@ -37,6 +37,7 @@ import type { TextEditorSelection, TextEditorTextPoint } from '../../model.js';
 import type { LexicalRuntime } from './runtime.js';
 import { $caretMarks, $stateSelection } from './state.js';
 import { $applySelection, $selectionExists } from './selection.js';
+import { $prepareCellRangeInsert } from './tables.js';
 
 type Prepared = (() => boolean) | null;
 
@@ -197,6 +198,17 @@ export function $prepareTextDelete(
   };
 }
 
+/** Whether whitespace other than a line break starts the text right after the selection's end. */
+function $whitespaceFollows(rt: LexicalRuntime, selection: LexicalRangeSelectionLike): boolean {
+  const end = selection.isBackward() ? selection.anchor : selection.focus;
+  if (end.type !== 'text') return false;
+  const node = end.getNode();
+  const within = end.offset < node.getTextContentSize();
+  const text = within ? node : node.getNextSibling();
+  if (!rt.lexical.$isTextNode(text)) return false;
+  return /^[^\S\n]/u.test(text.getTextContent().slice(within ? end.offset : 0));
+}
+
 export function $prepareInlineInsert(
   rt: LexicalRuntime,
   action: TextEditorInlineInsertAction,
@@ -210,6 +222,14 @@ export function $prepareInlineInsert(
     const selection = $range(rt);
     if (!selection) return false;
     const node = binding.create(action.attrs);
+    // Whitespace that already follows is the space (`uwg-te-req-inline-2`); the caret goes after it.
+    if ($whitespaceFollows(rt, selection)) {
+      selection.insertNodes([node]);
+      const next = node.getNextSibling();
+      if (rt.lexical.$isTextNode(next)) next.select(1, 1);
+      else node.selectEnd();
+      return true;
+    }
     // The space takes the caret's format and colors, so text typed after it continues them.
     const space = rt.lexical.$createTextNode(' ');
     const colors = selection.isCollapsed() ? $caretColors(rt, selection) : {};
@@ -226,21 +246,22 @@ export function $prepareInlineInsert(
 
 /**
  * `content.insert` (`uwg-te-tab-actions` r5): at a text point or over a text range, whose text goes
- * first, or after a block selection; a cell range is the widget's own cell-range paste. The
- * fragment is prepared by the shared step (URL policy, then conversion of what the mount cannot
- * represent), whose converted diagnostic is reported once the action applied.
+ * first, over a block selection, which it replaces, or over a cell range
+ * (`$prepareCellRangeInsert`). The fragment is prepared by the shared step (URL policy, then
+ * conversion of what the mount cannot represent), whose converted diagnostic is reported once the
+ * action applied.
  */
 export function $prepareContentInsert(
   rt: LexicalRuntime,
   action: TextEditorContentInsertAction,
 ): Prepared {
   const at = action.at;
-  if (at.kind === 'cells') return null;
+  if (at.kind === 'cells') return $prepareCellRangeInsert(rt, { ...action, at }, editContext(rt));
   if (!$selectionExists(rt, at)) return null;
   if (action.content.blocks.length === 0) return null;
   const context = editContext(rt);
   if (at.kind === 'blocks') {
-    const result = insertFragmentAfterBlocks(
+    const result = replaceBlocksWithFragment(
       $portableDocument(rt),
       at.ids,
       action.content,

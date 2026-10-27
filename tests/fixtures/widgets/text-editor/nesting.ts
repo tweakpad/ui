@@ -491,18 +491,21 @@ meta.textContent = [
   .join('; ');
 
 const READY_TIMEOUT = 10_000;
+let readyTimer: ReturnType<typeof setTimeout> | undefined;
 const statuses = await Promise.race([
   api.ready(),
-  new Promise<Record<string, string>>((resolve) =>
-    setTimeout(
+  new Promise<Record<string, string>>((resolve) => {
+    readyTimer = setTimeout(
       () =>
         resolve(
           Object.fromEntries([...fixture.editors.keys()].map((id) => [id, editorOf(id).status])),
         ),
       READY_TIMEOUT,
-    ),
-  ),
+    );
+  }),
 ]);
+// The page's own timer ends here, so that the ledger counts none of it (`assertCleanup`).
+clearTimeout(readyTimer);
 const failed = Object.entries(statuses).filter(([, status]) => status !== 'ready');
 const count = Object.keys(statuses).length;
 summary.textContent =

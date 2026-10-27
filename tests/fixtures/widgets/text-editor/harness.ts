@@ -184,9 +184,16 @@ const isPrimitive = (value: unknown): boolean =>
 
 // Host DOM ------------------------------------------------------------------------------------
 
-/** Styles of an instance host's shadow root: the frame around the content container only. */
+/**
+ * Styles of an instance host's shadow root: the frame around the content container, and no block
+ * margins in the editing root. The engines render a block with different elements (a code block as
+ * `pre` or as `code`, a list item's text in a `p` or not), whose user-agent margins differ; the
+ * widget's content presentation sets the flow, which this page does not have, so geometry parity
+ * compares the blocks without either.
+ */
 const HOST_CSS = `
 :host { display: block; }
+.content > * * { margin-block: 0; }
 .content {
   box-sizing: border-box;
   min-block-size: 96px;

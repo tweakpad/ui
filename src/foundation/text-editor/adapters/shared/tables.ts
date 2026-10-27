@@ -24,9 +24,16 @@ import type {
   TextEditorTextPoint,
 } from '../../model.js';
 import { cellTextEdge } from '../../content/edges.js';
+import {
+  cellRangeRect,
+  cellRect as rectOf,
+  spanRect,
+  type TextEditorCellRect,
+} from '../../table-range.js';
 import { findBlock } from './blocks.js';
 
 export { cellTextEdge, placedCell } from '../../content/edges.js';
+export { cellRangeRect, type TextEditorCellRect } from '../../table-range.js';
 
 /** The least width of a column in CSS pixels. */
 export const TABLE_MIN_COLUMN_WIDTH = 48;
@@ -114,73 +121,10 @@ export function edgeCell(
   return (side === 'start' ? model.cells[0] : model.cells[model.cells.length - 1]) ?? null;
 }
 
-/** A rectangle of grid positions: rows `top` to `bottom` and columns `left` to `right`, inclusive. */
-export interface TextEditorCellRect {
-  readonly top: number;
-  readonly left: number;
-  readonly bottom: number;
-  readonly right: number;
-}
-
-/** The rectangle that a cell covers. */
-const rectOf = (cell: TextEditorTableCell): TextEditorCellRect =>
-  Object.freeze({
-    top: cell.row,
-    left: cell.column,
-    bottom: cell.row + cell.rowSpan - 1,
-    right: cell.column + cell.colSpan - 1,
-  });
-
-/** The rectangle of the cell covering a grid position, or `null` outside the grid. */
-function spanRect(
-  model: TextEditorTableModel,
-  at: TextEditorCellAddress,
-): TextEditorCellRect | null {
-  const index = model.grid[at.row]?.[at.column];
-  const cell = index === undefined ? undefined : model.cells[index];
-  return cell ? rectOf(cell) : null;
-}
-
-const unionOf = (a: TextEditorCellRect, b: TextEditorCellRect): TextEditorCellRect => ({
-  top: Math.min(a.top, b.top),
-  left: Math.min(a.left, b.left),
-  bottom: Math.max(a.bottom, b.bottom),
-  right: Math.max(a.right, b.right),
-});
-
-const sameRect = (a: TextEditorCellRect, b: TextEditorCellRect): boolean =>
-  a.top === b.top && a.left === b.left && a.bottom === b.bottom && a.right === b.right;
-
 /** The distinct cells of a line of grid indices, in row-major order; none for no line. */
 function coveringCells(line: readonly number[] | undefined): readonly number[] {
   const cells = new Set((line ?? []).filter((index) => index >= 0));
   return Object.freeze([...cells].sort((a, b) => a - b));
-}
-
-/**
- * The rectangle of a cell range: the anchor and head cells with their spans, grown until no
- * merged cell crosses its edge. `null` when the range lies outside the table.
- */
-export function cellRangeRect(
-  model: TextEditorTableModel,
-  range: TextEditorCellRange,
-): TextEditorCellRect | null {
-  const anchor = spanRect(model, range.anchor);
-  const head = spanRect(model, range.head);
-  if (!anchor || !head) return null;
-  let rect = unionOf(anchor, head);
-  for (let grown = true; grown;) {
-    grown = false;
-    for (let row = rect.top; row <= rect.bottom; row += 1)
-      for (let column = rect.left; column <= rect.right; column += 1) {
-        const next = unionOf(rect, spanRect(model, { row, column }) ?? rect);
-        if (!sameRect(next, rect)) {
-          rect = next;
-          grown = true;
-        }
-      }
-  }
-  return Object.freeze(rect);
 }
 
 /** The cells that start inside a rectangle, as indices into `model.cells`, in row-major order. */

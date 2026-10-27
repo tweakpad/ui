@@ -117,6 +117,18 @@ const sidedIcon =
   ({ direction }: TextEditorToolContext): IconDefinition =>
     direction === 'rtl' ? rightToLeft : leftToRight;
 
+/** A label of a side of the text: by the direction of the selected text, else the widget's. */
+const textSided =
+  (leftToRight: keyof TextEditorStrings, rightToLeft: keyof TextEditorStrings) =>
+  ({ strings, direction, textDirection }: TextEditorToolContext): string =>
+    strings[(textDirection ?? direction) === 'rtl' ? rightToLeft : leftToRight];
+
+/** An icon of a side of the text, as `textSided`. */
+const textSidedIcon =
+  (leftToRight: IconDefinition, rightToLeft: IconDefinition) =>
+  ({ direction, textDirection }: TextEditorToolContext): IconDefinition =>
+    (textDirection ?? direction) === 'rtl' ? rightToLeft : leftToRight;
+
 /** Freezes the lists and static actions of a definition, then the definition. */
 function builtin(tool: TextEditorTool): TextEditorTool {
   Object.freeze(tool.surfaces);
@@ -333,11 +345,14 @@ function tableTool(tool: Omit<TextEditorTool, 'group'>): TextEditorTool {
 
 const ALIGN_ITEMS = ['align-start', 'align-center', 'align-end', 'align-justify'] as const;
 
-/** The icon of each alignment: the start and end alignments show the side of the direction. */
+/**
+ * The icon of each alignment: the start and end alignments show the side of the text's direction,
+ * since a block aligns by the direction it resolves, whatever the widget's.
+ */
 const ALIGN_ICONS: Readonly<Record<TextEditorAlign, TextEditorToolContextual<IconDefinition>>> = {
-  start: sidedIcon(textAlignLeftIcon, textAlignRightIcon),
+  start: textSidedIcon(textAlignLeftIcon, textAlignRightIcon),
   center: textAlignCenterIcon,
-  end: sidedIcon(textAlignRightIcon, textAlignLeftIcon),
+  end: textSidedIcon(textAlignRightIcon, textAlignLeftIcon),
   justify: textAlignJustifyIcon,
 };
 
@@ -357,9 +372,9 @@ const inTable = (context: TextEditorToolContext): boolean =>
 function alignTool(id: (typeof ALIGN_ITEMS)[number], align: TextEditorAlign): TextEditorTool {
   const label =
     align === 'start'
-      ? sided('alignLeft', 'alignRight')
+      ? textSided('alignLeft', 'alignRight')
       : align === 'end'
-        ? sided('alignRight', 'alignLeft')
+        ? textSided('alignRight', 'alignLeft')
         : text(align === 'center' ? 'alignCenter' : 'alignJustify');
   return builtin({
     id,
@@ -397,12 +412,15 @@ function blockKindTool(
     readonly group: string;
     readonly keywords?: readonly string[];
     readonly icon?: IconDefinition | undefined;
+    /** The string of the tool's description, the secondary line of its slash menu entry. */
+    readonly description: keyof TextEditorStrings;
   },
 ): TextEditorTool {
   return builtin({
     id,
     kind: 'toggle',
     label: text(label),
+    description: text(options.description),
     ...(options.icon ? { icon: options.icon } : {}),
     group: options.group,
     surfaces: [...options.surfaces],
@@ -436,13 +454,14 @@ function headingTool(level: TextEditorHeadingLevel): TextEditorTool {
       group: 'text',
       keywords: [`h${level}`],
       icon: HEADING_ICONS[level],
+      description: `heading${level}Description`,
     },
   );
 }
 
 function listTool(
   id: string,
-  label: keyof TextEditorStrings,
+  label: 'bulletList' | 'orderedList' | 'taskList',
   kind: TextEditorListKind,
   shortcut: string,
   icon: IconDefinition,
@@ -453,6 +472,7 @@ function listTool(
     requires: `block.${kind}`,
     group: 'lists',
     icon,
+    description: `${label}Description`,
   });
 }
 
@@ -595,6 +615,7 @@ export const textEditorTools = Object.freeze({
     requires: 'block.paragraph',
     group: 'text',
     icon: pilcrowIcon,
+    description: 'paragraphDescription',
   }),
   'heading-1': headingTool(1),
   'heading-2': headingTool(2),
@@ -623,6 +644,7 @@ export const textEditorTools = Object.freeze({
     requires: 'block.quote',
     group: 'text',
     icon: quoteIcon,
+    description: 'blockquoteDescription',
   }),
   'code-block': blockKindTool('code-block', 'codeBlock', { kind: 'code' }, 'code', {
     surfaces: ['toolbar', ...BLOCK_MENUS],
@@ -630,11 +652,13 @@ export const textEditorTools = Object.freeze({
     requires: 'block.code',
     group: 'text',
     icon: codeBlockIcon,
+    description: 'codeBlockDescription',
   }),
   divider: builtin({
     id: 'divider',
     kind: 'button',
     label: text('divider'),
+    description: text('dividerDescription'),
     icon: minusIcon,
     group: 'insert',
     surfaces: ['slash'],
@@ -681,6 +705,7 @@ export const textEditorTools = Object.freeze({
     id: 'table',
     kind: 'table-size',
     label: text('table'),
+    description: text('tableDescription'),
     icon: tableIcon,
     group: 'insert',
     surfaces: ['toolbar', 'slash'],
@@ -701,6 +726,7 @@ export const textEditorTools = Object.freeze({
     id: 'image',
     kind: 'image',
     label: text('image'),
+    description: text('imageDescription'),
     icon: imageIcon,
     group: 'insert',
     surfaces: ['toolbar', 'slash'],

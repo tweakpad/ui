@@ -51,7 +51,12 @@ import {
 } from './marks.js';
 import type { LexicalRuntime } from './runtime.js';
 import { rootFocused } from './state.js';
-import { $applySelection, $readSelection, $selectionExists } from './selection.js';
+import {
+  $applySelection,
+  $readSelection,
+  $restingSelection,
+  $selectionExists,
+} from './selection.js';
 import { $prepareTable, isTableAction } from './tables.js';
 import {
   $prepareContentInsert,
@@ -124,11 +129,12 @@ export function $prepareAction(
       return $prepareContentInsert(rt, action);
     case 'selection.set': {
       const { selection } = action;
-      // No selection: the engine holds none and its DOM selection goes, the root keeping focus
-      // (`uwg-te-req-surfaces-6`).
+      // No selection: the engine holds none, the root keeping focus, and remembers where the
+      // next key that edits places the caret (`uwg-te-req-surfaces-6`).
       if (selection.kind === 'none')
         return () => {
           rt.selectAll = false;
+          rt.cleared = $restingSelection(rt);
           rt.lexical.$setSelection(null);
           return true;
         };
@@ -139,7 +145,10 @@ export function $prepareAction(
             // the whole-document selection all the same (`$holdsWholeDocument`,
             // `uwg-te-req-engine-4`). A discarded list restores the remembered one.
             rt.selectAll = false;
-            return $applySelection(rt, selection);
+            const applied = $applySelection(rt, selection);
+            if (applied && !rt.engine.isEditable())
+              rt.awaitsSelectionEcho = selection.kind === 'blocks' || selection.kind === 'cells';
+            return applied;
           }
         : null;
     }
@@ -234,10 +243,21 @@ export class LexicalActions {
         });
         return true;
       case 'history':
+        rt.cleared = null;
         this.#history(plan.action, options);
         return true;
-      case 'actions':
-        return this.#apply(plan.actions, options);
+      case 'actions': {
+        // Any other list ends a cleared selection; one that does not apply keeps it.
+        const cleared = rt.cleared;
+        rt.cleared = null;
+        let applied = false;
+        try {
+          applied = this.#apply(plan.actions, options);
+        } finally {
+          if (!applied) rt.cleared = cleared;
+        }
+        return applied;
+      }
     }
   }
 

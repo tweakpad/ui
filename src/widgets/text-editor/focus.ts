@@ -13,6 +13,7 @@ import type {
   TextEditorSelection,
   TextEditorSelectionInput,
 } from '../../foundation/text-editor/model.js';
+import type { ChangeReason } from '../../foundation/types.js';
 import type { TextEditorKeyZone } from './router.js';
 
 /** The states that Escape acts on, in the order of `uwg-te-req-key-4` and `uwg-te-req-surfaces-6`. */
@@ -161,7 +162,20 @@ export class TextEditorFocus {
   #focused = false;
   #pending: PendingFocus | null = null;
   #refocus = false;
+  /**
+   * A remount other than one on reconnection is under way, until the next ready: a focus request
+   * for the editing root then joins the remount's refocus (`uwg-te-req-engine-8`).
+   */
+  #remounting = false;
   #remembered: TextEditorSelection | null = null;
+  /**
+   * The selection a remount remembered while focus was in a surface that the remount closed, for
+   * that surface's focus return when it comes after ready; the next press or focus in the content
+   * part, or the next remount, drops it.
+   */
+  #late: TextEditorSelection | null = null;
+  /** The control of the widget outside the content part that held focus when a remount began. */
+  #control: Element | null = null;
   #menu: MenuRecord | null = null;
 
   /**
@@ -205,6 +219,7 @@ export class TextEditorFocus {
     this.#root = renderRoot;
     renderRoot.addEventListener('focusin', this.#onFocusIn);
     renderRoot.addEventListener('focusout', this.#onFocusOut);
+    renderRoot.addEventListener('pointerdown', this.#onPointerDown, { capture: true });
     const document = this.#document();
     this.#focused =
       document !== null && composedContains(this.#host.element, deepActiveElement(document));
@@ -215,8 +230,20 @@ export class TextEditorFocus {
     if (!root) return;
     root.removeEventListener('focusin', this.#onFocusIn);
     root.removeEventListener('focusout', this.#onFocusOut);
+    root.removeEventListener('pointerdown', this.#onPointerDown, { capture: true });
     this.#root = null;
+    this.#pressed = null;
   }
+
+  /** The element focused when the last press in the widget began, before the press moved focus. */
+  #pressed: Element | null = null;
+
+  readonly #onPointerDown = (): void => {
+    this.#late = null;
+    const document = this.#document();
+    const active = document ? deepActiveElement(document) : null;
+    this.#pressed = active === document?.body ? null : active;
+  };
 
   /** Whether focus is in the widget: the input of the blur commit. */
   get focused(): boolean {
@@ -233,7 +260,19 @@ export class TextEditorFocus {
     const instance = this.#host.readyInstance();
     if (instance) {
       if (this.#host.access().disabled) return Promise.resolve();
+      const late = this.#late;
+      this.#late = null;
+      if (late && position === 'restore') {
+        this.#restore(instance, late);
+        return Promise.resolve();
+      }
       return instance.focus(position).catch(() => undefined);
+    }
+    // Focus returning to the editing root during a remount, from a surface the remount closed, is
+    // the remount's refocus: the new root takes it once ready, with the remembered selection.
+    if (this.#remounting && position === 'restore') {
+      this.#refocus = true;
+      return Promise.resolve();
     }
     const document = this.#document();
     const active = document ? deepActiveElement(document) : null;
@@ -255,22 +294,36 @@ export class TextEditorFocus {
   /**
    * Called right before a setter that remounts, while an instance is mounted or mounting, never on
    * reconnection. Remembers the live selection and, when focus is in the content part, a pending refocus
-   * (`uwg-te-req-engine-8`).
+   * (`uwg-te-req-engine-8`). The open transient surface closes with reason `programmatic`, since
+   * what it acts on goes with the instance; focus that it returns to the editing root joins the
+   * refocus (`focusEditing`). Focus on a control that the remount removes, such as the toolbar
+   * control of a tool the new engine no longer offers, goes to the new editing root at ready too.
    */
   beforeRemount(): void {
     this.#remembered = this.#host.readyInstance()?.getState().selection ?? null;
     const content = this.#host.contentElement();
     const document = this.#document();
-    this.#refocus =
-      content !== null &&
-      document !== null &&
-      composedContains(content, deepActiveElement(document));
+    const active = document ? deepActiveElement(document) : null;
+    this.#refocus = content !== null && composedContains(content, active);
+    this.#control =
+      !this.#refocus && active !== null && composedContains(this.#host.element, active)
+        ? active
+        : null;
+    this.#remounting = true;
+    this.#late = null;
+    const transient = this.#transient;
+    this.#transient = null;
+    transient?.close('programmatic');
   }
 
   /** Called when the editor is ready: applies a pending focus, else a pending refocus. */
   ready(): void {
     const instance = this.#host.readyInstance();
     if (!instance) return;
+    const remounted = this.#remounting;
+    this.#remounting = false;
+    const control = this.#control;
+    this.#control = null;
     const pending = this.#pending;
     if (pending) {
       this.#pending = null;
@@ -291,11 +344,22 @@ export class TextEditorFocus {
         });
       return;
     }
-    if (!this.#refocus) return;
     const remembered = this.#remembered;
-    this.#refocus = false;
     this.#remembered = null;
+    // The control that held focus is gone with the tools the new instance offers.
+    if (remounted && control !== null && !control.isConnected) this.#refocus = true;
+    if (!this.#refocus) {
+      // A surface the remount closed may return focus to the editing root only after ready.
+      if (remounted) this.#late = remembered;
+      return;
+    }
+    this.#refocus = false;
     if (this.#host.access().disabled) return;
+    this.#restore(instance, remembered);
+  }
+
+  /** Focuses the editing root with a remembered selection where it resolves, else at the start. */
+  #restore(instance: TextEditorEngineInstance, remembered: TextEditorSelection | null): void {
     const input = remembered ? selectionInput(remembered) : null;
     const action = input ? ({ type: 'selection.set', selection: input } as const) : null;
     if (action && instance.can(action))
@@ -305,11 +369,20 @@ export class TextEditorFocus {
 
   /**
    * A top-level toolbar menu opens, before it takes focus: replaces any earlier record with the trigger,
-   * the modality and the element focused before the press.
+   * the modality and the element focused before the press. A press on a toolbar control may itself
+   * move focus within the toolbar, so a pointer opening takes the element focused when the press
+   * began.
    */
   menuOpened(trigger: HTMLElement, modality: TextEditorMenuModality): void {
     const document = this.#document();
-    const previous = document ? deepActiveElement(document) : null;
+    const pressed = this.#pressed;
+    this.#pressed = null;
+    const previous =
+      modality === 'pointer' && pressed?.isConnected
+        ? pressed
+        : document
+          ? deepActiveElement(document)
+          : null;
     this.#menu = {
       trigger,
       modality,
@@ -329,18 +402,26 @@ export class TextEditorFocus {
 
   // One transient surface at a time (uwg-te-req-surfaces-6) ----------------------------------
 
-  #transient: { readonly owner: object; readonly close: () => void } | null = null;
+  #transient: {
+    readonly owner: object;
+    readonly close: (reason?: ChangeReason) => void;
+  } | null = null;
 
   /**
    * A transient surface opens: a suggestion list, the link or image popover, the table size
    * picker, or a menu of the widget (a toolbar's, the block menu, a table menu); a submenu belongs
    * to its menu and never comes here. The surface that was open before closes through its `close`,
-   * which must do nothing once that surface has closed by itself. `owner` identifies the surface.
+   * which must do nothing once that surface has closed by itself, with the `reason` that opens the
+   * new one (`uwg-te-tab-reasons` r13). `owner` identifies the surface.
    */
-  transientOpened(owner: object, close: () => void): void {
+  transientOpened(
+    owner: object,
+    close: (reason?: ChangeReason) => void,
+    reason?: ChangeReason,
+  ): void {
     const previous = this.#transient;
     this.#transient = { owner, close };
-    if (previous && previous.owner !== owner) previous.close();
+    if (previous && previous.owner !== owner) previous.close(reason);
   }
 
   /** A transient surface closed by itself; forgets it while it is the open one. */
@@ -388,7 +469,10 @@ export class TextEditorFocus {
     if (pending) for (const settle of pending.settle) settle();
   }
 
-  readonly #onFocusIn = (): void => {
+  readonly #onFocusIn = (event: Event): void => {
+    const content = this.#host.contentElement();
+    if (content && composedContains(content, (event.composedPath()[0] as Node | undefined) ?? null))
+      this.#late = null;
     if (this.#focused) return;
     this.#focused = true;
     this.#host.focusChanged(true);

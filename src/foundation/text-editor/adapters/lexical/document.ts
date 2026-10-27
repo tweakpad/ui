@@ -49,6 +49,16 @@ export function portableOf(
 const committed = new WeakMap<object, TextEditorPortableDocument>();
 
 /**
+ * Carries the portable document of a committed state over to the next one, which an update that
+ * left the document as it was (a selection change, focus) committed: the dry runs of the tools
+ * after a press then map no document again (`uwg-te-req-perf-1`).
+ */
+export function keepPortableDocument(previous: object, next: object): void {
+  const document = committed.get(previous);
+  if (document && !committed.has(next)) committed.set(next, document);
+}
+
+/**
  * The portable document of the state being read or updated; in a read of the committed state it is
  * mapped once per state.
  */
@@ -105,6 +115,21 @@ export function $applyDocument(rt: LexicalRuntime, next: TextEditorPortableDocum
     for (const node of nodes) first.insertBefore(node);
   } else root.append(...nodes);
   return true;
+}
+
+/**
+ * Replaces every child of the root with the nodes of a document, built from its native JSON
+ * objects in the update being run (no text round trip, no comparison with the current children):
+ * the mount's load of the initial content.
+ */
+export function $loadDocument(rt: LexicalRuntime, document: TextEditorPortableDocument): void {
+  const { lexical } = rt;
+  const nodes = portableBlockSegments(document.blocks).map((segment) =>
+    lexical.$parseSerializedNode(segment.node),
+  );
+  const root = lexical.$getRoot();
+  root.clear();
+  root.append(...nodes);
 }
 
 // One top-level node at a time

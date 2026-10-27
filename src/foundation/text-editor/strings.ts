@@ -114,6 +114,23 @@ export interface TextEditorStrings {
   readonly cellBackground: string;
   readonly tableClearCells: string;
 
+  // Tool descriptions: the secondary line of a slash menu entry, matched by its query.
+  readonly paragraphDescription: string;
+  readonly heading1Description: string;
+  readonly heading2Description: string;
+  readonly heading3Description: string;
+  readonly heading4Description: string;
+  readonly heading5Description: string;
+  readonly heading6Description: string;
+  readonly bulletListDescription: string;
+  readonly orderedListDescription: string;
+  readonly taskListDescription: string;
+  readonly blockquoteDescription: string;
+  readonly codeBlockDescription: string;
+  readonly dividerDescription: string;
+  readonly tableDescription: string;
+  readonly imageDescription: string;
+
   // Colors
   /** The text color group of a color menu. */
   readonly textColor: string;
@@ -290,6 +307,22 @@ export const textEditorStrings: TextEditorStrings = Object.freeze({
   tableCellAlign: 'Cell alignment',
   cellBackground: 'Cell background',
   tableClearCells: 'Clear cells',
+
+  paragraphDescription: 'Plain running text',
+  heading1Description: 'Largest title, for the main parts',
+  heading2Description: 'Title of a section',
+  heading3Description: 'Title of a subsection',
+  heading4Description: 'Title at the fourth level',
+  heading5Description: 'Title at the fifth level',
+  heading6Description: 'Title at the sixth level',
+  bulletListDescription: 'Points in no particular order',
+  orderedListDescription: 'Steps counted in sequence',
+  taskListDescription: 'Items to check off when done',
+  blockquoteDescription: 'Words cited from another source',
+  codeBlockDescription: 'Lines of source in a fixed-width font',
+  dividerDescription: 'A line between parts of the document',
+  tableDescription: 'A grid of rows and columns',
+  imageDescription: 'A picture with its alternative text',
 
   textColor: 'Text color',
   background: 'Background',

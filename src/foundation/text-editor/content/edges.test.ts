@@ -5,7 +5,10 @@ import {
   cellTextEdge,
   firstTextEdge,
   inlineLength,
+  inlineStep,
   placedCell,
+  stepTextPoint,
+  textStep,
 } from './edges.js';
 import type {
   TextEditorPortableBlock,
@@ -100,5 +103,70 @@ describe('uwg-te-req-engine-3, uwg-te-req-engine-4: text edges of portable block
     expect(read).toEqual(['d', 'a', 'd', 'b']);
     expect(firstTextEdge([divider], 'start')).toBeNull();
     expect(blockTextEdge(paragraph(''), 'start')).toBeNull();
+  });
+});
+
+describe('uwg-te-req-a11y-1: one character from a text point', () => {
+  it('steps over a grapheme of text, never splitting a surrogate pair or a cluster', () => {
+    expect([textStep('ab', 0, 'forward'), textStep('ab', 1, 'forward')]).toEqual([1, 2]);
+    expect([textStep('ab', 2, 'forward'), textStep('ab', 0, 'backward')]).toEqual([null, null]);
+    expect(textStep('ab', 2, 'backward')).toBe(1);
+    expect([textStep('a😀b', 1, 'forward'), textStep('a😀b', 3, 'backward')]).toEqual([3, 1]);
+    // A combining accent stays with its letter, also from inside the cluster.
+    expect([textStep('e\u0301x', 0, 'forward'), textStep('e\u0301x', 2, 'backward')]).toEqual([
+      2, 0,
+    ]);
+    expect([textStep('e\u0301x', 1, 'forward'), textStep('e\u0301x', 1, 'backward')]).toEqual([
+      2, 0,
+    ]);
+    expect(textStep('🇫🇷!', 0, 'forward')).toBe(4);
+  });
+
+  it('steps over a hard break or an inline node as one unit', () => {
+    const content = [text('ab'), { type: 'hard-break' } as TextEditorPortableInline, text('c')];
+    expect(inlineStep(content, 2, 'forward')).toBe(3);
+    expect(inlineStep(content, 3, 'backward')).toBe(2);
+    expect(inlineStep(content, 3, 'forward')).toBe(4);
+    expect([inlineStep(content, 4, 'forward'), inlineStep(content, 0, 'backward')]).toEqual([
+      null,
+      null,
+    ]);
+    expect(inlineStep([], 0, 'forward')).toBeNull();
+  });
+
+  it('stays in a textblock; a block without text gives none', () => {
+    const block = paragraph('a', text('one'));
+    expect(stepTextPoint(block, { block: 'a', offset: 0 }, 'forward')).toEqual({
+      block: 'a',
+      offset: 1,
+    });
+    expect(stepTextPoint(block, { block: 'a', offset: 3 }, 'forward')).toBeNull();
+    expect(stepTextPoint(block, { block: 'a', offset: 0 }, 'backward')).toBeNull();
+    const code = { type: 'code', id: 'c', text: 'x\ny' } as TextEditorPortableBlock;
+    expect(stepTextPoint(code, { block: 'c', offset: 1 }, 'forward')).toEqual({
+      block: 'c',
+      offset: 2,
+    });
+    const divider = { type: 'divider', id: 'd' } as TextEditorPortableBlock;
+    expect(stepTextPoint(divider, { block: 'd', offset: 0 }, 'forward')).toBeNull();
+  });
+
+  it('moves between the paragraphs of a table cell and stops at the cell’s edges', () => {
+    const at = (paragraph: number, offset: number) => ({
+      block: 't1',
+      cell: { row: 1, column: 1, paragraph },
+      offset,
+    });
+    expect(stepTextPoint(table, at(0, 0), 'forward')).toEqual(at(0, 1));
+    expect(stepTextPoint(table, at(0, 1), 'forward')).toEqual(at(1, 0));
+    expect(stepTextPoint(table, at(1, 0), 'backward')).toEqual(at(0, 1));
+    expect(stepTextPoint(table, at(1, 5), 'forward')).toBeNull();
+    expect(stepTextPoint(table, at(0, 0), 'backward')).toBeNull();
+    // A covered position, and a cell point in a block that is no table, hold none.
+    const covered = { block: 't1', cell: { row: 1, column: 0, paragraph: 0 }, offset: 0 };
+    expect(stepTextPoint(table, covered, 'forward')).toBeNull();
+    expect(
+      stepTextPoint(paragraph('a', text('one')), { ...at(0, 0), block: 'a' }, 'forward'),
+    ).toBeNull();
   });
 });

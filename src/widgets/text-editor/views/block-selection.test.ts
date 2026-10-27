@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type {
   TextEditorRequestOutcome,
   TextEditorRequestProposal,
@@ -9,13 +9,16 @@ import type {
   TextEditorSelection,
 } from '../../../foundation/text-editor/model.js';
 import { textEditorStrings } from '../../../foundation/text-editor/strings.js';
+import type { OverlayMeasureContext } from '../geometry.js';
 import {
   blockKeyResult,
   blockRange,
   blockRangeOf,
   editCaret,
+  cellRangeKeyTarget,
   printableKey,
   replaceWithTextActions,
+  selectionPaintRect,
   selectionRuns,
   TextEditorBlockSelection,
   topmostBlocks,
@@ -192,11 +195,22 @@ describe('block selection model', () => {
     });
   });
 
-  it('Enter edits the head block, or the nearest textblock of an atom', () => {
+  it('Enter edits the first selected block in document order, or the nearest textblock after an atom (uwg-te-tab-keymap-host r5)', () => {
     expect(editCaret(doc, blockRangeOf(doc, 'p1', 'l1'))).toEqual({
+      kind: 'caret',
+      block: 'p1',
+      position: 'end',
+    });
+    // Extended upwards: the head is the first block.
+    expect(editCaret(doc, blockRangeOf(doc, 'l2', 'l1'))).toEqual({
       kind: 'caret',
       block: 'l1',
       position: 'end',
+    });
+    expect(editCaret(doc, blockRangeOf(doc, 'img', 'p2'))).toEqual({
+      kind: 'caret',
+      block: 'p2',
+      position: 'start',
     });
     expect(editCaret(doc, blockRangeOf(doc, 'img', 'img'))).toEqual({
       kind: 'caret',
@@ -220,6 +234,57 @@ describe('block selection model', () => {
     expect(printableKey({ key: 'é', ctrlKey: false, metaKey: false })).toBe(true);
     expect(printableKey({ key: 'a', ctrlKey: true, metaKey: false })).toBe(false);
     expect(printableKey({ key: 'Enter', ctrlKey: false, metaKey: false })).toBe(false);
+  });
+});
+
+describe('uwg-te-req-tables-5: keys over a cell range', () => {
+  const cells: TextEditorSelection = {
+    kind: 'cells',
+    table: 't1',
+    range: { anchor: { row: 1, column: 1 }, head: { row: 0, column: 0 } },
+  };
+  const press = (key: string, init: Partial<KeyboardEvent> = {}) => ({
+    key,
+    altKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    shiftKey: false,
+    ...init,
+  });
+
+  it('V-834: a printable key or Enter over a cell range is one content.insert over it', () => {
+    const at = { kind: 'cells', table: 't1', range: cells.kind === 'cells' ? cells.range : null };
+    expect(cellRangeKeyTarget(cells, press('x'))).toEqual([
+      {
+        type: 'content.insert',
+        content: {
+          kind: 'range',
+          blocks: [{ type: 'paragraph', content: [{ type: 'text', text: 'x' }] }],
+        },
+        at,
+      },
+    ]);
+    expect(cellRangeKeyTarget(cells, press('Enter'))).toEqual([
+      {
+        type: 'content.insert',
+        content: {
+          kind: 'range',
+          blocks: [
+            { type: 'paragraph', content: [] },
+            { type: 'paragraph', content: [] },
+          ],
+        },
+        at,
+      },
+    ]);
+    for (const other of [
+      press('Enter', { shiftKey: true }),
+      press('b', { metaKey: true }),
+      press('ArrowDown'),
+      press('Tab'),
+    ])
+      expect(cellRangeKeyTarget(cells, other)).toBeNull();
+    expect(cellRangeKeyTarget(text('p1', 'p1'), press('x'))).toBeNull();
   });
 });
 
@@ -308,6 +373,29 @@ describe('block mode controller', () => {
     expect(selection.range).toMatchObject({ anchor: 'p1', head: 'l1b' });
   });
 
+  it('V-738: Escape from the whole-document selection selects every top-level block, atoms before the first or after the last text point included', async () => {
+    let whole = true;
+    const { selection, requests, state } = harness({ wholeDocument: () => whole });
+    // The text from the first to the last text point touches only the textblocks between them.
+    state.selection = text('l1', 'p2');
+    expect(selection.escape(key({ key: 'Escape' }))).toBe(true);
+    await Promise.resolve();
+    expect(requests[0]).toMatchObject({
+      target: { type: 'selection.set', selection: { kind: 'blocks', ids: [...doc.roots] } },
+    });
+    whole = false;
+    state.selection = text('l1', 'p2');
+    selection.sync();
+    expect(selection.escape(key({ key: 'Escape' }))).toBe(true);
+    await Promise.resolve();
+    expect(requests[1]).toMatchObject({
+      target: {
+        type: 'selection.set',
+        selection: { kind: 'blocks', ids: ['l1', 'l1a', 'l1b', 'l2', 'img', 'hr', 'p2'] },
+      },
+    });
+  });
+
   it('follows the engine selection and announces the block count once per change', () => {
     const { selection, announcements, state } = harness();
     state.selection = { kind: 'blocks', ids: ['img'] };
@@ -318,6 +406,125 @@ describe('block mode controller', () => {
     state.selection = text('p2', 'p2');
     selection.sync();
     expect(selection.active).toBe(false);
+  });
+
+  it('hides its paint as soon as block mode ends, since passes skip a layer it no longer wants', () => {
+    const created: { hidden: boolean }[] = [];
+    const layer = () => {
+      const container = {
+        ownerDocument: {
+          createElement: () => {
+            const element = {
+              hidden: false,
+              parentNode: null as unknown,
+              style: {},
+              dataset: {},
+              setAttribute: () => undefined,
+              remove: () => undefined,
+            };
+            created.push(element);
+            return element;
+          },
+        },
+        append: (element: { parentNode: unknown }) => {
+          element.parentNode = container;
+        },
+      };
+      return container as unknown as HTMLElement;
+    };
+    const underlay = layer();
+    const overlay = layer();
+    const { selection, state } = harness({ underlay: () => underlay, overlay: () => overlay });
+    state.selection = { kind: 'blocks', ids: ['img'] };
+    selection.sync();
+    selection.apply([{ left: 0, top: 10, width: 200, height: 24 }]);
+    expect(created.map((element) => element.hidden)).toEqual([false, false]);
+    state.selection = text('p2', 'p2');
+    selection.sync();
+    expect(selection.wanted()).toBe(false);
+    expect(created.map((element) => element.hidden)).toEqual([true, true]);
+  });
+
+  it('paints a run at least one line high, centred on a block lower than a line (uwg-te-req-blocks-4)', () => {
+    const rect = (left: number, top: number, width: number, height: number) =>
+      ({ left, top, width, height, right: left + width, bottom: top + height }) as DOMRectReadOnly;
+    // A divider: a 1 px box whose line is 24 px high.
+    const divider = { box: rect(10, 100, 300, 1), firstLine: rect(10, 100, 300, 24) };
+    expect(selectionPaintRect(divider, divider)).toEqual({
+      left: 10,
+      top: 100.5 - 12,
+      width: 300,
+      height: 24,
+    });
+    // Blocks at least a line high keep their own extent.
+    const paragraph = { box: rect(10, 20, 300, 48), firstLine: rect(10, 20, 300, 24) };
+    const image = { box: rect(10, 80, 200, 120), firstLine: rect(10, 80, 200, 24) };
+    expect(selectionPaintRect(paragraph, image)).toEqual({
+      left: 10,
+      top: 20,
+      width: 300,
+      height: 180,
+    });
+    // The fill and the outline take the same painted box.
+    const created: { style: Record<string, string>; dataset: Record<string, string> }[] = [];
+    const layer = () => {
+      const container = {
+        ownerDocument: {
+          createElement: () => {
+            const element = {
+              hidden: false,
+              parentNode: null as unknown,
+              style: {} as Record<string, string>,
+              dataset: {} as Record<string, string>,
+              setAttribute: () => undefined,
+              remove: () => undefined,
+            };
+            created.push(element);
+            return element;
+          },
+        },
+        append: (element: { parentNode: unknown }) => {
+          element.parentNode = container;
+        },
+      };
+      return container as unknown as HTMLElement;
+    };
+    const underlay = layer();
+    const overlay = layer();
+    const { selection, state } = harness({ underlay: () => underlay, overlay: () => overlay });
+    state.selection = { kind: 'blocks', ids: ['hr'] };
+    selection.sync();
+    const instance = {
+      getBlocks: () => doc,
+      blockRects: (id: string) => (id === 'hr' ? divider : null),
+    };
+    const boxes = selection.measure({
+      source: { kind: 'instance', instance },
+      toOverlay: (box: DOMRectReadOnly) => ({
+        left: box.left,
+        top: box.top,
+        width: box.width,
+        height: box.height,
+      }),
+    } as unknown as OverlayMeasureContext);
+    expect(boxes).toEqual([{ left: 10, top: 88.5, width: 300, height: 24 }]);
+    selection.apply(boxes);
+    expect(created.map((element) => [element.dataset['layer'], element.style['height']])).toEqual([
+      ['fill', '24px'],
+      ['outline', '24px'],
+    ]);
+    // A later pass (a scroll moving the marks) marks no element again.
+    const writes: string[] = [];
+    for (const element of created)
+      element.dataset = new Proxy(element.dataset, {
+        set(target, key, value: string) {
+          writes.push(String(key));
+          target[key as string] = value;
+          return true;
+        },
+      });
+    selection.apply([{ left: 10, top: 60, width: 300, height: 24 }]);
+    expect(writes).toEqual([]);
   });
 
   it('Escape cancels a drag first, then ends block mode, then passes', async () => {
@@ -383,6 +590,15 @@ describe('block mode controller', () => {
       ],
       reason: 'keyboard',
     });
+  });
+
+  it('V-588: a key outside block mode reads no block tree', () => {
+    const tree = vi.fn(() => doc);
+    const { selection } = harness({ tree });
+    selection.sync();
+    expect(selection.handleKey(key({ key: 'a' }))).toBe(false);
+    expect(selection.handleKey(key({ key: 'ArrowDown' }))).toBe(false);
+    expect(tree).not.toHaveBeenCalled();
   });
 
   it('while read-only only navigation and the menu keys act', () => {

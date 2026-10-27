@@ -19,6 +19,7 @@ import {
   type TextEditorTool,
   type TextEditorToolContext,
 } from '../../../foundation/text-editor/tools.js';
+import { stableValue } from '../tools/stable.js';
 
 /** One item of a color group: Default or a hue. */
 export interface TextEditorColorItem {
@@ -183,20 +184,26 @@ export function renderColorMenuContent(
   disabled = false,
 ): TemplateResult {
   return html`${groups.map((group, index) => {
-    // The group calls its callback as its own method, so `this` is the group.
-    const onValueChange = function (this: Element, event: TpValueChangeEvent<unknown>) {
-      event.preventDefault();
-      const value = event.detail.value;
-      if (typeof value === 'string')
-        handlers.choose(
-          group.channel,
-          value as TextEditorColorChoice,
-          this,
-          event.detail.sourceEvent,
-        );
-    };
+    const { channel } = group;
+    // The group calls its callback as its own method, so `this` is the group. One callback per
+    // handlers and channel keeps the group unchanged across renders (`stableValue`).
+    const onValueChange = stableValue(
+      handlers,
+      `channel\u0000${channel}`,
+      () =>
+        function (this: Element, event: TpValueChangeEvent<unknown>) {
+          event.preventDefault();
+          const value = event.detail.value;
+          if (typeof value === 'string')
+            handlers.choose(
+              channel,
+              value as TextEditorColorChoice,
+              this,
+              event.detail.sourceEvent,
+            );
+        },
+    );
     return html`${index ? html`<tp-separator></tp-separator>` : nothing}<tp-menu-radio-group
-        aria-label=${group.label}
         data-channel=${group.channel}
         .value=${group.value}
         .onValueChange=${onValueChange}

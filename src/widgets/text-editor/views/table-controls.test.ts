@@ -68,13 +68,14 @@ describe('TextEditorTableControls', () => {
     expect(setup().controls.order).toBe(TABLE_CONTROLS_ORDER);
   });
 
-  it('starts the session, gives the controls tab stops and focuses the start control once rendered', async () => {
+  it('starts the session, gives the controls tab stops and focuses the start control once rendered, with its focus indicator', async () => {
     const { controls, chrome, start } = setup();
     expect(controls.enter()).toBe(true);
     expect(chrome.session).toBe(true);
     await flush();
     expect(chrome.reveal).toHaveBeenCalledWith(start);
-    expect(start.focus).toHaveBeenCalledWith({ preventScroll: true });
+    // Alt+F10 after a pointer press: the browser does not count the chord as keyboard input.
+    expect(start.focus).toHaveBeenCalledWith({ preventScroll: true, focusVisible: true });
   });
 
   it('does not start where it does not apply', () => {

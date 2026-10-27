@@ -183,8 +183,10 @@ Assertions; each returns `{ checks, records, passed }`:
 - `assertParity({ pair, ids, geometry, ignore, label })`: compares a pair as it is after the next
   frame: canonical HTML, Markdown as mdast without positions, text, the state by path (without
   `version`, `contentVersion` and `focused` unless `ignore` says otherwise), block trees and
-  geometry within 1 CSS pixel at equal width. Identifiers that both instances hold at the same
-  path compare by value; any other compares by its path (`@2.0`).
+  geometry within 1 CSS pixel at equal width. On this page the host frame removes block margins
+  inside the editing root, since the engines' different elements for one block (`pre` or `code`,
+  a list item's `p`) carry different user-agent margins. Identifiers that both instances hold at
+  the same path compare by value; any other compares by its path (`@2.0`).
 - `parity(scenario, options?)`: a corpus document name (both instances reset from it, on the
   `custom` pair when it needs the custom nodes), `'corpus'` (every document), `'actions'` and
   `'can'` (the action matrix), `'tools'` (V-191: every surface's resolved tools with the caret in
@@ -253,6 +255,7 @@ Query parameters (they combine; each narrows or changes the page on its own term
 | `?content=<name>`         | the content of the non-empty instances: a corpus name or `field-notes` (default `field-notes`); `#*-custom` keeps `05-custom` and `#swap` keeps `portable` |
 | `?defer`                  | every instance is created without its engine and expected `idle`; `assign(id)` assigns its configured engine                                               |
 | `?ledger`                 | installs the resource ledger before the first instance, for `assertCleanup(id)` ("Resource ledger")                                                        |
+| `?built`                  | runs the built library (`npm run build` first): `/dist/styles.css`, `/dist/register.js`, `/dist/register/widgets.js` and the adapters from `dist/`         |
 
 For example, `?level=0&defer&only=empty` gives both `#*-empty` instances with no engine.
 
@@ -275,6 +278,7 @@ Paired instances are `#tiptap-<variant>` and `#lexical-<variant>`; each pair sha
 | `reduced`                                          | without the table modules | `field-notes`                                                                                                             | ready    |
 | `custom`                                           | full                      | `05-custom` with the corpus custom nodes                                                                                  | ready    |
 | `upload`                                           | full                      | an image upload hook that records each call and resolves `pantry-shelf.svg` after 300 ms                                  | ready    |
+| `mention`                                          | full                      | the corpus mention with an `@` suggestion (asynchronous source, 400 ms) and `layout.suggestions` `['slash', 'mention']`   | ready    |
 | `late`                                             | none at load (full)       | `field-notes` as its default value, in `form#late-form`                                                                   | idle     |
 | `failing`                                          | failing                   | Tiptap without its history module; Lexical with a second copy of its core module                                          | error    |
 | `late-json`, `late-markdown`, `late-text` (Tiptap) | none at load (full)       | `format` json (an engine JSON document through the property), markdown and text                                           | idle     |
@@ -283,6 +287,7 @@ Paired instances are `#tiptap-<variant>` and `#lexical-<variant>`; each pair sha
 | `#mount`                                           | —                         | the container `create()` appends to, nested at the page's level                                                           | —        |
 | `#markdown-reference`                              | —                         | a `tp-markdown` with the `field-notes` Markdown, in a slot as wide as an editor                                           | —        |
 | `#before`, `#after`                                | —                         | light-DOM buttons around the instances                                                                                    | —        |
+| `#drop-source`                                     | —                         | a draggable paragraph before `#after` whose drag carries `text/html` and `text/plain` (external drop rows)                | —        |
 
 The fixture documents are added to `corpus()` on this page: `field-notes` (a heading, two
 paragraphs with links to `example.com`, a second-level heading, a paragraph, a divider, a
@@ -336,17 +341,31 @@ read `engines.html`'s instances.
 - `assign(id, engine?)`: no argument assigns the configured engine; `'full'`, `'reduced'` or
   `'failing'` a variant of its engine; `{ name, variant }` a named engine; an engine object; or
   `null`.
+- `assertLifecycle(ids?)`: for every instance expected `ready` (or `ids`): ready after one mount,
+  one ready event and no error event, a `textbox` editing root with content; `remount()` then
+  reaches `ready` again with a second mount and the same content. Run it on the source page and
+  with `?built` and compare the reports; `built` tells which one the page runs.
 - `holdMount(id, ms?)` and `releaseMount(id)`: the next mount waits until released (or for `ms`),
   so the loading state lasts long enough to inspect. `fatal(id)` reports `Error('fatal')` through
   the live mount's context.
 - `reasons()`: every `detail.reason` of every widget event since load, never cleared. Each batch
   saves it before closing its tab.
+- `lanes(id?)`: the lane probe. Every opening and closing of the link and image popovers, the
+  table size picker and the suggestion lists since load, with `surface`, `open` and `reason`
+  (`uwg-te-tab-reasons` r12, r13), of one instance with `id`; never cleared. The open lanes are
+  internal, so the probe reads the widget's lane instrumentation, not an event.
 - `layoutShifts({ since? })` and `passes({ since? })`: the layout shifts and overlay layout passes
   since load. The logs are never cleared; to start from a point, read
   `const since = performance.now()` first and pass it. `passes()` counts per frame
   (`perFrame`, `maxPerFrame`) and per instance (`byInstance`, `'?'` for an unknown content part),
   before ready included.
-- `uploads(id)`: the calls of an `-upload` instance's hook.
+- `uploads(id)`: the calls of an `-upload` instance's hook, each with `aborted` (the signal aborted
+  while the upload was unsettled) and `settled` (`resolved`, `rejected` or `null`).
+- `uploadMode(id, { delay, source, reject, holdAfterFirst })`: how the hook answers the uploads that
+  start afterwards: after `delay` ms (default 300), with `source` or rejecting; `holdAfterFirst` keeps
+  every upload after the first one pending until it is aborted. `uploadMode(id)` restores the default.
+- `mentionQueries()`: every query of the `mention` pair's source with `aborted` and `settled`;
+  `mentionDelay(ms = 400)` sets how long the source takes to answer.
 - `elements()`: the forms, the fieldset, the fields, the dialogs, the Markdown reference and
   `#mount`, which sit inside level shadow roots.
 - `calibrateEngineReactions()`: learns each engine's own root writes on focus and blur from a
@@ -485,9 +504,10 @@ Page API (with the `api.ts` helpers):
 - `styles(id)`: where the engine CSS went (`engineSheets`, `engineStyleElements`), the `style`
   elements of the instance's composed tree and those without the nonce, and the editing root's
   computed `white-space`.
-- `assertCsp(id)`: no violation on the page, the instance ready, and per variant the engine CSS
-  in one adopted sheet (`sheets`), in one nonced `style` element with every `style` element
-  nonced (`nonce`), or nowhere (`no-styles`) (V-591).
+- `assertCsp(id)`: no violation on the page, the instance ready, the editing root computing
+  `white-space: pre-wrap` in every variant, and per variant the engine CSS in one adopted sheet
+  (`sheets`), in one nonced `style` element with every `style` element nonced (`nonce`), or
+  nowhere (`no-styles`) (V-591).
 - `disposeServices()`, `nonce`, `factories`, `loadErrors()`.
 
 Order: `ready()`, `assertCsp(id)` per instance, then the real-input rows (typing, a mark through
@@ -529,7 +549,8 @@ On `index.html`, `nesting.html` and `large.html`; each probe starts and stops ar
   layout pass and one state publication, and no long task (C-443, C-444).
 - `startPointerProbe()` and `stopPointerProbe(budget = 1)`: the handling time of each real
   `pointermove`, from a window capture listener to a window bubble listener, so every handler of
-  the widget (the gutter's hit test included) is inside; p95 ≤ `budget` ms per instance (V-589).
+  the widget is inside (the gutter's block hit test runs in the next frame, outside the handler);
+  p95 ≤ `budget` ms per instance (V-589).
   `hoverSweep(id, count = 20)` times dispatched moves over the visible blocks (synthetic).
 - `startOverlayWatch(ids?)` and `stopOverlayWatch()`: child-list mutations in the overlay and
   underlay layers; none after warm-up, since pooled marks are hidden, not detached (V-589).

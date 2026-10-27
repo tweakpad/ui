@@ -31,7 +31,8 @@ import type {
   TextEditorToolRegistry,
 } from '../../../../src/foundation/text-editor/tools.js';
 import { observeOverlayPasses } from '../../../../src/widgets/text-editor/geometry.js';
-import { markCreation } from './ledger.js';
+import { observeTextEditorLanes } from '../../../../src/widgets/text-editor/views/lanes.js';
+import { ignoreListener, markCreation } from './ledger.js';
 import type { TpTextEditor } from '../../../../src/widgets/text-editor/text-editor.js';
 import type {
   TextEditorFocusOptions,
@@ -80,6 +81,7 @@ export type ElementVariant =
   | 'reduced'
   | 'custom'
   | 'upload'
+  | 'mention'
   | 'late'
   | 'failing'
   | 'late-json'
@@ -207,6 +209,7 @@ export class ElementFixtureEditor implements FixtureEditorLike {
     const host = document.createElement('tp-text-editor');
     host.id = options.id;
     this.host = host;
+    ignoreListener(this.#onEvent);
     for (const type of ELEMENT_EVENTS) host.addEventListener(type, this.#onEvent);
     for (const [name, value] of Object.entries(options.attributes ?? {}))
       host.setAttribute(name, value);
@@ -562,6 +565,16 @@ interface PassEntry {
 }
 const passLog: PassEntry[] = [];
 
+/** One change of a surface's open lane (`uwg-te-tab-reasons` r12, r13), from the lane probe. */
+export interface LaneRecord {
+  readonly id: string;
+  readonly surface: string;
+  readonly open: boolean;
+  readonly reason: string;
+  readonly time: number;
+}
+const laneLog: LaneRecord[] = [];
+
 interface LayoutShiftEntry extends PerformanceEntry {
   readonly value: number;
   readonly hadRecentInput: boolean;
@@ -595,6 +608,9 @@ export function installElementFixture(): void {
   }
   observeOverlayPasses((record) =>
     passLog.push({ content: record.content, time: record.time, at: performance.now() }),
+  );
+  observeTextEditorLanes(({ host, surface, open, reason }) =>
+    laneLog.push({ id: host.id, surface, open, reason, time: performance.now() }),
   );
 }
 
@@ -668,6 +684,14 @@ export const holdMount = (id: string, ms?: number): void => elementEditorOf(id).
 export const releaseMount = (id: string): void => elementEditorOf(id).releaseMount();
 export const fatal = (id: string): boolean => elementEditorOf(id).fatal();
 
+/**
+ * The lane probe: every change of an open lane since load (the link and image popovers, the table
+ * size picker, the suggestion lists), of one instance when `id` is given; never cleared.
+ */
+export function lanes(id?: string): LaneRecord[] {
+  return laneLog.filter((record) => id === undefined || record.id === id);
+}
+
 /** Every `detail.reason` of every widget event since load (never cleared by `clear()`). */
 export function reasons(): ReasonRecord[] {
   return [...reasonLog];
@@ -725,32 +749,68 @@ export interface UploadRecord {
   readonly name: string;
   readonly type: string;
   readonly size: number;
+  /** The signal aborted while the upload was unsettled. */
   readonly aborted: boolean;
+  readonly settled: 'resolved' | 'rejected' | null;
 }
 const uploadLog = new Map<string, { -readonly [K in keyof UploadRecord]: UploadRecord[K] }[]>();
 
-/** The stub upload hook of an `-upload` instance: records each call and resolves `source` after 300 ms. */
+/**
+ * How an instance's stub upload hook answers: after `delay` ms, with `source` (default the
+ * fixture image), or rejecting; `holdAfterFirst` keeps every upload after the first one pending
+ * until it is aborted.
+ */
+export interface UploadMode {
+  readonly delay?: number | undefined;
+  readonly source?: string | undefined;
+  readonly reject?: boolean | undefined;
+  readonly holdAfterFirst?: boolean | undefined;
+}
+const uploadModes = new Map<string, UploadMode & { readonly from: number }>();
+
+/** Sets the answer of an `-upload` instance's hook for the uploads that start afterwards. */
+export function uploadMode(id: string, mode: UploadMode = {}): void {
+  uploadModes.set(id, { ...mode, from: uploadLog.get(id)?.length ?? 0 });
+}
+
+/**
+ * The stub upload hook of an `-upload` instance: records each call and, by default, reports full
+ * progress and resolves `source` after 300 ms (see `uploadMode`).
+ */
 export function uploadHook(id: string, source: string): TextEditorImageUpload {
   return (file, { signal, onProgress }) => {
-    const record = {
+    const mode = uploadModes.get(id) ?? { from: 0 };
+    const record: { -readonly [K in keyof UploadRecord]: UploadRecord[K] } = {
       time: performance.now(),
       name: file.name,
       type: file.type,
       size: file.size,
       aborted: false,
+      settled: null,
     };
     let list = uploadLog.get(id);
     if (!list) uploadLog.set(id, (list = []));
+    const held = !!mode.holdAfterFirst && list.length > mode.from;
     list.push(record);
     return new Promise<string>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        onProgress(file.size, file.size);
-        resolve(source);
-      }, 300);
+      const timer = held
+        ? undefined
+        : setTimeout(() => {
+            if (mode.reject) {
+              record.settled = 'rejected';
+              reject(new Error('The fixture upload failed.'));
+              return;
+            }
+            onProgress(file.size, file.size);
+            record.settled = 'resolved';
+            resolve(mode.source ?? source);
+          }, mode.delay ?? 300);
       signal.addEventListener(
         'abort',
         () => {
+          if (record.settled) return;
           record.aborted = true;
+          record.settled = 'rejected';
           clearTimeout(timer);
           reject(signal.reason);
         },
@@ -974,13 +1034,16 @@ export async function calibrateEngineReactions(): Promise<Record<string, EngineR
         control.disconnect();
         continue;
       }
-      const observer = new MutationObserver(() => {});
+      // The records delivered while the steps settle, then those still queued.
+      const records: MutationRecord[] = [];
+      const observer = new MutationObserver((list) => records.push(...list));
       observer.observe(root, WATCH_OPTIONS);
       await control.focus();
       await settle();
       control.blur();
       await settle();
-      const mutations = toRootMutations(observer.takeRecords(), root);
+      records.push(...observer.takeRecords());
+      const mutations = toRootMutations(records, root);
       observer.disconnect();
       control.disconnect();
       const entries: EngineReactionSignature['entries'][number][] = [];

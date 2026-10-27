@@ -2,11 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import type { TextEditorRequestProposal } from '../../../foundation/text-editor/controller.js';
 import {
   imageInsertActions,
+  imageInsertProposal,
   imageSourceAllowed,
   initialInsertionPoint,
   insertedBlock,
   insertImageFiles,
+  TextEditorImagePopover,
 } from './image-popover.js';
+import { textEditorStrings } from '../../../foundation/text-editor/strings.js';
 
 const caret = {
   kind: 'text' as const,
@@ -52,6 +55,26 @@ describe('image popover (uwg-te-req-surfaces-4)', () => {
     ]);
     expect(insertedBlock(['a', 'b'], ['a', 'n', 'b'])).toBe('n');
     expect(insertedBlock(['a'], ['a'])).toBeNull();
+  });
+
+  it('inserts without moving focus, so that the uploads still running keep the popover open', () => {
+    const event = new Event('tp-upload-complete');
+    const proposal = imageInsertProposal(
+      { kind: 'after', id: 'img1' },
+      '/c.png',
+      'Shelf',
+      'toolbar',
+      'input',
+      event,
+    );
+    expect(proposal).toEqual({
+      target: imageInsertActions({ kind: 'after', id: 'img1' }, '/c.png', 'Shelf'),
+      surface: 'toolbar',
+      reason: 'input',
+      sourceEvent: event,
+      trigger: null,
+      focus: false,
+    });
   });
 });
 
@@ -120,6 +143,43 @@ describe('pasted and dropped image files (uwg-te-req-content-6)', () => {
     ]);
   });
 
+  it('inserts at the current selection once the paste position is gone, else after the last block', async () => {
+    const h = harness({ 'one.png': '/one.png', 'two.png': '/two.png' });
+    const gone = { kind: 'blocks' as const, ids: ['x'] };
+    const caret = {
+      kind: 'text' as const,
+      anchor: { block: 'a', offset: 3 },
+      head: { block: 'a', offset: 3 },
+      empty: true,
+    };
+    const first = insertImageFiles({
+      ...h.input([file('one.png')]),
+      at: gone,
+      selection: () => caret,
+    });
+    h.resolve('one.png');
+    await first;
+    expect(h.requests[0]!.target).toEqual([
+      {
+        type: 'selection.set',
+        selection: { kind: 'text', anchor: caret.anchor, head: caret.head },
+      },
+      { type: 'blocks.insert', kind: 'image', attrs: { src: '/one.png', alt: '' } },
+    ]);
+    // Without a selection to read, after the last block.
+    const second = insertImageFiles({ ...h.input([file('two.png')]), at: gone });
+    h.resolve('two.png');
+    await second;
+    expect(h.requests[1]!.target).toEqual([
+      {
+        type: 'blocks.insert',
+        kind: 'image',
+        attrs: { src: '/two.png', alt: '' },
+        at: { after: 'img1' },
+      },
+    ]);
+  });
+
   it('reports a source that fails the policy and inserts nothing for it, a failure or an abort', async () => {
     const h = harness({
       'bad.png': 'data:image/png;base64,AA',
@@ -136,5 +196,89 @@ describe('pasted and dropped image files (uwg-te-req-content-6)', () => {
     await done;
     expect(h.requests).toEqual([]);
     expect(h.diagnose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('image popover insert by URL (uwg-te-req-surfaces-4)', () => {
+  /** Every value of a template tree, nested templates and directive arguments included. */
+  const valuesOf = (value: unknown, out: unknown[] = []): unknown[] => {
+    if (Array.isArray(value)) value.forEach((entry) => valuesOf(entry, out));
+    else if (value && typeof value === 'object' && 'values' in value)
+      for (const entry of (value as { values: unknown[] }).values) {
+        out.push(entry);
+        valuesOf(entry, out);
+      }
+    return out;
+  };
+  const fn = (values: unknown[], pattern: RegExp) =>
+    values.find(
+      (value): value is (...args: unknown[]) => unknown =>
+        typeof value === 'function' && pattern.test(String(value)),
+    )!;
+
+  it('V-588: renders the closed popover with the same callbacks each time, so a render of the element updates none of its controls', () => {
+    const popover = new TextEditorImagePopover({
+      requestUpdate: () => undefined,
+      strings: () => textEditorStrings,
+      imageUpload: () => null,
+      selection: () => caret,
+      blockIds: () => ['a'],
+      selectionRects: () => [],
+      caretRect: () => null,
+      endRect: () => null,
+      content: () => null,
+      request: () => Promise.resolve('applied'),
+      diagnose: () => undefined,
+      focusEditing: () => undefined,
+      opening: () => undefined,
+      lane: () => undefined,
+    });
+    const functions = () =>
+      valuesOf(popover.render()).filter((value) => typeof value === 'function');
+    const first = functions();
+    expect(first.length).toBeGreaterThan(3);
+    expect(functions()).toEqual(first);
+    for (const [index, value] of functions().entries()) expect(value).toBe(first[index]);
+  });
+
+  it('closes on Insert and stops the uploads still running', async () => {
+    const requests: TextEditorRequestProposal[] = [];
+    const lanes: unknown[] = [];
+    const popover = new TextEditorImagePopover({
+      requestUpdate: () => undefined,
+      strings: () => textEditorStrings,
+      imageUpload: () => () => new Promise<string>(() => undefined),
+      selection: () => caret,
+      blockIds: () => ['a'],
+      selectionRects: () => [],
+      caretRect: () => null,
+      endRect: () => null,
+      content: () => null,
+      request: (proposal) => {
+        requests.push(proposal);
+        return Promise.resolve('applied');
+      },
+      diagnose: () => undefined,
+      focusEditing: () => undefined,
+      opening: (reason) => void lanes.push({ opening: reason }),
+      lane: (open, reason) => void lanes.push({ open, reason }),
+    });
+    popover.open('toolbar', null, 'trigger-press');
+    const values = valuesOf(popover.render());
+    const cancelUpload = vi.fn();
+    // A File upload with one upload still running.
+    fn(values, /#upload =/)({ items: [{ status: 'uploading' }], cancelUpload });
+    fn(values, /this\.#src = String/)({ detail: { value: '/pier.png' } });
+    fn(valuesOf(popover.render()), /imageSourceAllowed\(this\.#src\)/)(new Event('click'));
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(requests).toHaveLength(1);
+    expect(popover.isOpen).toBe(false);
+    expect(cancelUpload).toHaveBeenCalled();
+    // The open lane (uwg-te-tab-reasons r12, r13): opened by a control, closed by Insert.
+    expect(lanes).toEqual([
+      { opening: 'trigger-press' },
+      { open: true, reason: 'trigger-press' },
+      { open: false, reason: 'item-press' },
+    ]);
   });
 });

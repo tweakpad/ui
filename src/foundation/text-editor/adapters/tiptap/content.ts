@@ -8,19 +8,21 @@
  * the block at the point or replace it when it is an empty paragraph or list item, and a code
  * block takes the fragment's text. In a table cell the fragment enters the cell as paragraphs
  * (`cellParagraphs`) that merge into the text around the point. Inserted blocks get fresh
- * identifiers, and kinds the mount cannot represent are converted first. Filling cells from a
- * pasted table and inserting over a cell range are the widget's cell-range paste
+ * identifiers, and kinds the mount cannot represent are converted first. Over a cell range the
+ * shared edit clears its cells and fills the first one, or fills the range from a pasted table
  * (`uwg-te-req-tables-5`).
  */
 import type { TextEditorContentInsertAction } from '../../actions.js';
 import type { TextEditorTextPoint } from '../../model.js';
 import {
   cellParagraphs,
-  insertFragmentAfterBlocks,
+  replaceBlocksWithFragment,
   insertFragmentAtPoint,
   prepareFragment,
   type TextEditorFragmentContext,
 } from '../shared/fragment-insert.js';
+import { findBlock } from '../shared/blocks.js';
+import { cellRangeInsertEdit } from '../shared/table-edits.js';
 import type { TiptapActionHandlers } from './actions.js';
 import { applyDocument, editContext, inCell, restoreSelection } from './blocks.js';
 import { isItemNode, isListNode, toTiptapInline } from './mapping.js';
@@ -107,14 +109,37 @@ function atWholeDocument(work: TiptapWork, at: TextEditorContentInsertAction['at
   );
 }
 
-/** `content.insert`: a fragment at a point, over a text range or after a block selection. */
+/** `content.insert`: a fragment at a point, over a text range or over a block selection. */
+/**
+ * A fragment over a cell range (`uwg-te-req-tables-5`), by the shared edit: the cells cleared and
+ * the fragment in the first cell, or a pasted table filling the range from its first cell, in one
+ * transaction with the caret the edit leaves.
+ */
+function insertOverCells(work: TiptapWork, action: TextEditorContentInsertAction): boolean {
+  const { at } = action;
+  if (at.kind !== 'cells' || !work.env.tables) return false;
+  const context = fragmentContext(work);
+  const document = work.portable();
+  const table = findBlock(document.blocks, at.table);
+  if (table?.type !== 'table') return false;
+  const prepared = prepareFragment(action.content, context);
+  const edit = cellRangeInsertEdit(at.table, table, at.range, prepared.blocks, (blocks) =>
+    cellParagraphs(blocks, context),
+  );
+  if (!edit || edit.selection === 'keep') return false;
+  const blocks = document.blocks.map((block) => (block === table ? edit.table : block));
+  if (!applyDocument(work, work.canonical({ blocks }))) return false;
+  work.diagnostics.push(...prepared.diagnostics);
+  return restoreSelection(work, edit.selection);
+}
+
 function insertContent(work: TiptapWork, action: TextEditorContentInsertAction): boolean {
   const { at } = action;
-  if (at.kind === 'cells') return false;
+  if (at.kind === 'cells') return insertOverCells(work, action);
   const context = fragmentContext(work);
   if (at.kind === 'blocks') {
-    // After a block selection: the blocks follow its last block, with fresh identifiers.
-    const result = insertFragmentAfterBlocks(work.portable(), at.ids, action.content, context);
+    // Over a block selection: the blocks, with fresh identifiers, replace the selected blocks.
+    const result = replaceBlocksWithFragment(work.portable(), at.ids, action.content, context);
     if (!result || !applyDocument(work, result.document)) return false;
     work.diagnostics.push(...result.diagnostics);
     return restoreSelection(work, result.selection);

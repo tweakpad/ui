@@ -215,3 +215,46 @@ describe('TpFormElement Field association hook', () => {
     expect(nodeIds(shadow)).toEqual(ids);
   });
 });
+
+describe('TpFormElement disabled state', () => {
+  /** A probe whose update requests are counted. */
+  function counted() {
+    const { element } = probe();
+    let requests = 0;
+    element.requestUpdate = () => {
+      requests += 1;
+    };
+    // The probe never renders: its update completes at once.
+    Object.defineProperty(element, 'updateComplete', { get: () => Promise.resolve(true) });
+    const update = () => {
+      (element as unknown as { willUpdate(changed: PropertyValues): void }).willUpdate(new Map());
+      element.sync();
+    };
+    return { element, update, requests: () => requests };
+  }
+
+  it('requests another update when the disabled state changed while an update reflected it', async () => {
+    const { element, update, requests } = counted();
+    element.formDisabledCallback(true);
+    update();
+    expect(element.effectiveDisabled).toBe(true);
+    const before = requests();
+    // Clearing `disabled`: the update renders while the callback has not yet run; reflecting the
+    // attribute runs it inside the update, where its own request starts nothing.
+    (element as unknown as { willUpdate(changed: PropertyValues): void }).willUpdate(new Map());
+    element.formDisabledCallback(false);
+    const during = requests();
+    element.sync();
+    expect(element.effectiveDisabled).toBe(false);
+    // Once the update completes, not inside it (no change-in-update).
+    expect(requests()).toBe(during);
+    await element.updateComplete;
+    await Promise.resolve();
+    expect(requests()).toBe(during + 1);
+    expect(during).toBe(before + 1);
+    // The next update renders the current state and requests nothing more.
+    const settled = requests();
+    update();
+    expect(requests()).toBe(settled);
+  });
+});

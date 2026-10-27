@@ -8,9 +8,9 @@ import type { TextEditorPortableFragment } from '../../content/portable.js';
 import { selectionAfterBlock } from './structure-edits.js';
 import {
   cellParagraphs,
-  insertFragmentAfterBlocks,
   insertFragmentAtPoint,
   prepareFragment,
+  replaceBlocksWithFragment,
 } from './fragment-insert.js';
 import { corpusNodes, editContext, readHtml, textRun, writeHtml } from './test-helpers.test.js';
 
@@ -147,18 +147,23 @@ describe('uwg-te-tab-actions r5, uwg-te-req-content-6: content.insert of a fragm
     const divider: TextEditorPortableFragment = { kind: 'blocks', blocks: [{ type: 'divider' }] };
     const atom = insertFragmentAtPoint(doc, { block: 'p1', offset: 1 }, divider, editContext());
     expect(atom?.selection).toEqual({ kind: 'blocks', ids: ['new001'] });
-    const last = insertFragmentAfterBlocks(doc, ['p1', 'p2'], divider, editContext());
+    const last = replaceBlocksWithFragment(doc, ['p1', 'p2'], divider, editContext());
     expect(last?.selection).toEqual({ kind: 'blocks', ids: ['new001'] });
     const paragraph: TextEditorPortableFragment = {
       kind: 'blocks',
       blocks: [{ type: 'paragraph', content: [text('x')] }],
     };
-    const after = insertFragmentAfterBlocks(doc, ['p1'], paragraph, editContext());
-    expect(writeHtml(after?.document)).toBe(
-      '<p data-id="p1">a</p>\n<p data-id="new001">x</p>\n<p data-id="p2">bc</p>',
+    // Over a block selection the fragment replaces the selected blocks.
+    const over = replaceBlocksWithFragment(doc, ['p1'], paragraph, editContext());
+    expect(writeHtml(over?.document)).toBe('<p data-id="new001">x</p>\n<p data-id="p2">bc</p>');
+    expect(over?.selection).toEqual({ kind: 'caret', block: 'new001', position: 'end' });
+    const list = readHtml(
+      '<ul><li data-id="l1"><p>a</p><ul><li data-id="l2"><p>b</p></li></ul></li></ul><p data-id="p3">c</p>',
     );
-    expect(after?.selection).toEqual({ kind: 'caret', block: 'new001', position: 'end' });
-    expect(insertFragmentAfterBlocks(doc, [], paragraph, editContext())).toBeNull();
+    expect(
+      writeHtml(replaceBlocksWithFragment(list, ['l1', 'p3'], paragraph, editContext())?.document),
+    ).toBe('<p data-id="new001">x</p>');
+    expect(replaceBlocksWithFragment(doc, [], paragraph, editContext())).toBeNull();
     const table = readHtml(
       '<table data-id="t1"><tbody><tr><td><p>a</p></td><td colspan="2"><p>b</p></td></tr></tbody></table>',
     );

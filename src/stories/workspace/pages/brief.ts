@@ -96,7 +96,7 @@ export function renderBrief(host: WorkspaceHost): TemplateResult {
           <div role="group" aria-label="Preview font">
             <span data-menu-label>Preview font</span
             ><tp-menu-radio-group
-              aria-label="Preview font"
+              label="Preview font"
               .value=${font}
               @tp-value-change=${own<Font>((value) => host.setView('brief.font', value))}
               ><tp-menu-radio-item value="sans">Sans</tp-menu-radio-item

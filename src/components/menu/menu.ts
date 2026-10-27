@@ -276,6 +276,20 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   protected override get surfaceModal(): boolean {
     return !this.parentMenu && (this.#bar?.modal ?? super.surfaceModal);
   }
+  /**
+   * A submenu or a menubar menu renders no guard after its trigger: the trigger is an item of the
+   * parent menu or of the menubar, the menus handle Tab themselves (a press closes the branch and
+   * leaves the menubar), and the guard would be a focusable child of the `menu` or `menubar`
+   * among its items.
+   */
+  protected override get rendersTriggerGuard(): boolean {
+    return !this.parentMenu && !this.#bar && super.rendersTriggerGuard;
+  }
+  /** Tab out of a menubar's menu leaves the menubar, one stop: its other triggers are passed over. */
+  protected override focusOutsidePasses(element: HTMLElement): boolean {
+    const bar = this.rootMenu.#bar?.interactionElement;
+    return super.focusOutsidePasses(element) || (!!bar && composedContains(bar, element));
+  }
   protected override get surfaceBranchElements(): readonly Element[] {
     const elements = super.surfaceBranchElements;
     return this.#bar ? [...elements, this.#bar.interactionElement] : elements;
@@ -813,7 +827,9 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
       this.#highlight(this.#collection.highlighted, true);
     } else {
       this.#highlight(undefined, false);
-      this.popup?.focus({ preventScroll: true });
+      // The popup is never a focus-ring target; a scripted focus otherwise inherits
+      // `:focus-visible` from an element that always matches it, such as a contenteditable.
+      this.popup?.focus({ preventScroll: true, focusVisible: false });
     }
     this.#openingLast = false;
   }

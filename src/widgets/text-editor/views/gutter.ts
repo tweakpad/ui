@@ -41,7 +41,10 @@ export interface TextEditorGutterInput {
   /** Its menu is open or a drag is active: it stays beside `current`. */
   readonly pinned: boolean;
   readonly current: string | null;
-  /** Focus is inside the gutter: it sits beside the block at the selection head. */
+  /**
+   * Focus is inside the gutter: it stays beside its block, or sits beside the block at the
+   * selection head when it shows none.
+   */
   readonly focusInside: boolean;
   readonly headBlock: string | null;
   /** A key was typed since the pointer last moved or pressed. */
@@ -57,7 +60,8 @@ export interface TextEditorGutterInput {
 export function gutterTarget(input: TextEditorGutterInput): string | null {
   if (!input.enabled) return null;
   if (input.pinned) return input.current;
-  if (input.focusInside) return input.headBlock ?? input.current;
+  // A press on the grip focuses it and keeps its block; Alt+F10 places it at the head first.
+  if (input.focusInside) return input.current ?? input.headBlock;
   if (input.typing) return null;
   if (input.hovered) return input.hovered;
   if (input.coarse && input.editingFocused) return input.headBlock;
@@ -121,9 +125,10 @@ export function gutterInsertActions(
 
 /**
  * Where the gutter sits beside a block, in overlay coordinates: vertically centred on the block's
- * first line, at the block's inline start minus the gutter's own inline size (the right side in a
- * right-to-left widget), and a further `outset` away from the block, which for a table is the
- * reach of its row grips outside its edge.
+ * first line (on the block itself when it is lower than a line), at the block's inline start minus
+ * the gutter's own inline size (the right side in a right-to-left widget), and a further `outset`
+ * away from the block, which for a table is the reach of its row grips outside its edge and for a
+ * list item the inset holding its marker.
  */
 export function gutterPlacement(
   rects: Pick<TextEditorBlockRects, 'content' | 'firstLine'>,
@@ -133,11 +138,28 @@ export function gutterPlacement(
   outset = 0,
 ): { readonly left: number; readonly top: number } {
   const content = toOverlay(rects.content);
-  const line = toOverlay(rects.firstLine);
+  const firstLine = toOverlay(rects.firstLine);
+  // A block lower than a line, such as a divider, centres the gutter on itself.
+  const line = content.height < firstLine.height ? content : firstLine;
   return {
     left: rtl ? content.left + content.width + outset : content.left - size.width - outset,
     top: line.top + (line.height - size.height) / 2,
   };
+}
+
+/**
+ * How far a list item's marker (a bullet, a number or a task checkbox) reaches outside the inline
+ * start of its content: the distance to the inline start of the list holding the item, since the
+ * marker sits in the inset between the two.
+ */
+export function listMarkerOutset(
+  content: Pick<DOMRectReadOnly, 'left' | 'right'>,
+  list: Pick<Element, 'getBoundingClientRect'> | null | undefined,
+  rtl: boolean,
+): number {
+  if (!list) return 0;
+  const outer = list.getBoundingClientRect();
+  return Math.max(0, rtl ? outer.right - content.right : content.left - outer.left);
 }
 
 // View -------------------------------------------------------------------------------------------
@@ -325,7 +347,8 @@ export class TextEditorGutter implements OverlayLayer<Placement | null> {
 
   /**
    * Alt+F10 on the gutter (`uwg-te-req-blocks-2`): pins it beside the block at the selection head
-   * and focuses its insert Button; `false` when it cannot show.
+   * and focuses its insert Button with its focus indicator (a keyboard command moved focus);
+   * `false` when it cannot show.
    */
   focusSession(): boolean {
     if (!this.enabled() || !this.#host.ready() || !this.#element) return false;
@@ -336,7 +359,7 @@ export class TextEditorGutter implements OverlayLayer<Placement | null> {
     this.#element.hidden = false;
     this.#host.geometry.invalidate('state');
     this.#startSession();
-    return this.#session?.focusFirst() ?? false;
+    return this.#session?.focusFirst({ focusVisible: true }) ?? false;
   }
 
   /**
@@ -376,15 +399,25 @@ export class TextEditorGutter implements OverlayLayer<Placement | null> {
     if (!target || !element || context.source.kind !== 'instance') return null;
     const rects = context.source.instance.blockRects(target);
     if (!rects) return null;
+    const kind = this.#host.tree()?.get(target)?.kind ?? '';
+    const rtl = this.#host.direction() === 'rtl';
     // Beside a table the gutter sits outside its row grips, which share the grip's size until
-    // one has shown.
-    const table = this.#host.tree()?.get(target)?.kind === 'table';
-    const outset = table ? this.#host.tableGripOutset?.() || (this.#grip?.offsetWidth ?? 0) / 2 : 0;
+    // one has shown; beside a list item outside its marker.
+    const outset =
+      kind === 'table'
+        ? this.#host.tableGripOutset?.() || (this.#grip?.offsetWidth ?? 0) / 2
+        : LIST_KINDS.has(kind)
+          ? listMarkerOutset(
+              rects.content,
+              context.source.instance.blockElement(target)?.parentElement,
+              rtl,
+            )
+          : 0;
     return gutterPlacement(
       rects,
       context.toOverlay,
       { width: element.offsetWidth, height: element.offsetHeight },
-      this.#host.direction() === 'rtl',
+      rtl,
       outset,
     );
   }
@@ -393,7 +426,7 @@ export class TextEditorGutter implements OverlayLayer<Placement | null> {
     const element = this.#element;
     if (!element) return;
     if (!placement) {
-      element.hidden = true;
+      this.#conceal(element);
       return;
     }
     element.style.transform = `translate(${placement.left}px, ${placement.top}px)`;
@@ -401,7 +434,13 @@ export class TextEditorGutter implements OverlayLayer<Placement | null> {
   }
 
   hide(): void {
-    if (this.#element && !this.#host.pinned() && !this.#focusInside) this.#element.hidden = true;
+    if (this.#element && !this.#host.pinned() && !this.#focusInside) this.#conceal(this.#element);
+  }
+
+  /** Hidden, the gutter keeps its box for the next measure, at the overlay origin. */
+  #conceal(element: HTMLElement): void {
+    element.hidden = true;
+    element.style.transform = '';
   }
 
   // Keyboard session ---------------------------------------------------------------------------
@@ -488,8 +527,15 @@ export class TextEditorGutter implements OverlayLayer<Placement | null> {
     // Over the gutter itself the pointer keeps the block it came from.
     if (this.contains(event.composedPath()[0] as Node)) return;
     if (this.#host.pinned()) return;
-    const hit = this.#host.geometry.hitBlock(event.clientX, event.clientY);
-    if (hit !== null || !this.#hovered) this.#hovered = hit ?? this.#hovered;
+    // The hit test runs in the next frame (one per frame), not in the move handler.
+    this.#host.geometry.requestHit(event.clientX, event.clientY, this.#onHit);
+  };
+
+  /** The block under the latest pointer position, from the frame's hit test. */
+  readonly #onHit = (hit: string | null): void => {
+    // The pointer left, or a pin took over, before the frame.
+    if (!this.#pointer || this.#host.pinned()) return;
+    if (hit !== null) this.#hovered = hit;
     this.refresh();
   };
 
@@ -509,9 +555,7 @@ export class TextEditorGutter implements OverlayLayer<Placement | null> {
   #rehit(): void {
     const pointer = this.#pointer;
     if (!pointer || this.#host.pinned()) return;
-    const hit = this.#host.geometry.hitBlock(pointer.x, pointer.y);
-    if (hit !== null) this.#hovered = hit;
-    this.refresh();
+    this.#host.geometry.requestHit(pointer.x, pointer.y, this.#onHit);
   }
 
   readonly #onTyping = (event: KeyboardEvent): void => {

@@ -389,6 +389,44 @@ function domPosition(view: TiptapViewLike, node: Node, offset: number): number |
   }
 }
 
+/** The view members through which the engine reads and writes the DOM selection. */
+export interface TiptapDomSelectionView {
+  readonly dom: HTMLElement;
+  readonly root: Document | ShadowRoot;
+  domSelection(): Selection | null;
+  domSelectionRange(): {
+    anchorNode: Node | null;
+    anchorOffset: number;
+    focusNode: Node | null;
+    focusOffset: number;
+  };
+}
+
+/**
+ * Binds the view's DOM selection to its own document when its shadow root came from another one
+ * (`uwg-te-req-engine-8`, a move into a same-origin frame): the root keeps the methods of the
+ * window that created it, whose `getSelection()` sees nothing of this document's selection, so the
+ * engine would read no selection and write none. The view then writes through the document's
+ * selection and reads its composed range inside the root (`domSelectionIn`). A root of the
+ * document's own window keeps the engine's reading; answers whether it bound.
+ */
+export function bindDocumentSelection(view: TiptapDomSelectionView): boolean {
+  const root = view.root as (Document | ShadowRoot) | undefined;
+  const document = view.dom.ownerDocument as Document | undefined;
+  const window = document?.defaultView;
+  if (!root || !document || !window?.ShadowRoot) return false;
+  if (root.nodeType !== 11 || root instanceof window.ShadowRoot) return false;
+  view.domSelection = () => document.getSelection();
+  view.domSelectionRange = () =>
+    domSelectionIn(view.dom) ?? {
+      anchorNode: null,
+      anchorOffset: 0,
+      focusNode: null,
+      focusOffset: 0,
+    };
+  return true;
+}
+
 /**
  * The engine selection of the DOM selection inside the editing root, as the engine reads the
  * selection of a press (`uwg-te-req-engine-4`): the text selection between the positions of its

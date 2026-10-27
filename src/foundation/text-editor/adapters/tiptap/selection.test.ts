@@ -15,6 +15,7 @@ import {
 } from '../shared/test-helpers.test.js';
 import { handleClipboardEvent } from './clipboard.js';
 import { holderIndex } from './mapping.js';
+import { bindDocumentSelection } from './selection.js';
 import {
   caretAt,
   html,
@@ -357,5 +358,53 @@ describe('uwg-te-req-engine-4: a press after a load that the view did not own', 
     t.instance.setContent(DOC, 'html');
     t.press(outside, 1, () => void (t.document.selection = null));
     expect(t.instance.getState().selection.kind).toBe('none');
+  });
+});
+
+describe('Tiptap DOM selection of a moved root (uwg-te-req-engine-8)', () => {
+  /** A view whose root is a shadow root of `realm`, in a document of another window. */
+  function moved(sameRealm: boolean) {
+    class FrameShadowRoot {}
+    const selection = { rangeCount: 0 } as unknown as Selection;
+    const document = {
+      defaultView: { ShadowRoot: FrameShadowRoot },
+      getSelection: () => selection,
+    };
+    const root = Object.assign(sameRealm ? new FrameShadowRoot() : {}, {
+      nodeType: 11,
+      getSelection: () => null,
+    }) as unknown as ShadowRoot;
+    const view = {
+      dom: { ownerDocument: document, getRootNode: () => root } as unknown as HTMLElement,
+      root,
+      domSelection: () => null,
+      domSelectionRange: () => ({
+        anchorNode: null,
+        anchorOffset: 1,
+        focusNode: null,
+        focusOffset: 1,
+      }),
+    };
+    return { view, selection, bound: bindDocumentSelection(view) };
+  }
+
+  it("reads and writes through the document's selection when the root came from another window", () => {
+    const { view, selection, bound } = moved(false);
+    expect(bound).toBe(true);
+    expect(view.domSelection()).toBe(selection);
+    // No composed range inside the root: no selection, not the root's empty one.
+    expect(view.domSelectionRange()).toEqual({
+      anchorNode: null,
+      anchorOffset: 0,
+      focusNode: null,
+      focusOffset: 0,
+    });
+  });
+
+  it("keeps the engine's reading for a root of the document's own window", () => {
+    const { view, bound } = moved(true);
+    expect(bound).toBe(false);
+    expect(view.domSelection()).toBeNull();
+    expect(view.domSelectionRange().anchorOffset).toBe(1);
   });
 });

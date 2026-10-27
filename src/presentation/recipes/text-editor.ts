@@ -10,7 +10,12 @@ import {
   inputGroupBoundary,
 } from './input-group.js';
 import { overflowListAppearance } from './overflow-list.js';
-import { calloutSurface } from './shared/callout-surface.js';
+import {
+  alertKindSeverity,
+  calloutSurface,
+  calloutTint,
+  calloutTints,
+} from './shared/callout-surface.js';
 import {
   codeInsetBlock,
   codeInsetInline,
@@ -32,7 +37,7 @@ import {
   documentStrongRules,
   type DocumentFlowVariables,
 } from './shared/document-content.js';
-import { documentTableRules } from './shared/document-table.js';
+import { documentCellPadding, documentTableRules } from './shared/document-table.js';
 import { nativeChoiceAppearance } from './shared/selection-control.js';
 import { selectionFill, selectionLine } from './shared/selection.js';
 import { resizeSeparatorRules } from './shared/separator.js';
@@ -118,6 +123,22 @@ function contentColorRules(colors: readonly TextEditorColor[]): readonly Present
   ]);
 }
 
+/**
+ * The tones of a callout block (`uwg-te-req-blocks-6`): its `tone` attribute, which the HTML
+ * profile writes as `data-tone`, tints the callout surface as an Alert of the same severity. A tone
+ * names an alert kind or a severity; `note`, `important` and any other tone keep the surface's text.
+ */
+function calloutToneRules(callout: string): readonly PresentationRule[] {
+  return calloutTints.map((severity) => {
+    const kinds = Object.entries(alertKindSeverity).filter(([, of]) => of === severity);
+    const tones = new Set([...kinds.map(([kind]) => kind), severity]);
+    return at(
+      [...tones].map((tone) => `${callout}[data-tone="${tone}"]`).join(', '),
+      calloutTint(severity),
+    );
+  });
+}
+
 /** The Text area's growth rule: its minimum block size and block padding. */
 const growth = declarationsOf(
   textAreaRules,
@@ -134,17 +155,52 @@ const gutterControl = valueOf(
 /** The gutter's inline size: its two Buttons. */
 const gutterSize = `calc(2 * ${String(gutterControl)})`;
 
+/** The inline inset of the field boundary's padding. */
+const fieldInlineInset = fieldBoundary.padding.split(' ').at(-1)!;
+
+/** A table grip's length along the table's edge (the `icon-xs` step) and its thickness across it. */
+const gripLength = String(gutterControl);
+const gripThickness = `calc(2 * ${documentCellPadding})`;
+
+/** The gap before the add-column Button: half the round cell handle, which is a grip thick. */
+const addColumnGap = documentCellPadding;
+
+/** A marked item opposite to a root of `direction`, written in the other direction. */
+const oppositeItemOf = (direction: 'ltr' | 'rtl') =>
+  `&:dir(${direction}) .tp-te-item:not(:dir(${direction}), .tp-te-nested-item, .tp-te-task-item)`;
+
+/**
+ * The list selectors of the content: an item that only wraps a nested list (one engine's
+ * structure, `tp-te-nested-item`) follows the item whose list it holds, so after an opposite item
+ * it takes that item's place, and its list is laid out as a list nested in that item would be.
+ */
+const textEditorListSelectors = {
+  list: '& .tp-te-list',
+  taskList: '& .tp-te-list-task',
+  oppositeItem: (['ltr', 'rtl'] as const)
+    .flatMap((direction) => [
+      oppositeItemOf(direction),
+      `${oppositeItemOf(direction)} + .tp-te-nested-item:not(:dir(${direction}))`,
+    ])
+    .join(', '),
+  oppositeItemStandIn: (['ltr', 'rtl'] as const)
+    .map((direction) => `${oppositeItemOf(direction)} + .tp-te-nested-item:dir(${direction})`)
+    .join(', '),
+} as const;
+
 /**
  * Default appearance of the text editor (`uwg-te-req-pres-1`, `uwg-te-req-pres-2`): the root
  * boundary, the toolbar fill, divider and inset, the content binding, the placeholder and the
  * status.
  */
 export const textEditorAppearance: PresentationDictionary = {
-  // The Input group Root boundary without padding; its ring while focus is anywhere within.
+  // The Input group Root boundary without padding; its ring while focus is anywhere within. Focus
+  // in an open popup of the widget, which sits in the top layer, reaches `:focus-within` of no
+  // element outside that popup, so the widget marks the root itself (`data-focus-within`).
   'text-editor': [
     { declarations: inputGroupBoundary },
     { declarations: { [fill]: fieldBoundary.background } },
-    { selector: '&:focus-within', declarations: fieldFocus },
+    { selector: '&:is(:focus-within, [data-focus-within])', declarations: fieldFocus },
     {
       selector: ':host([data-disabled]) &',
       declarations: { background: disabledBackground, [fill]: disabledBackground },
@@ -175,13 +231,23 @@ export const textEditorAppearance: PresentationDictionary = {
     },
     // The root's ring is the only indication of the editing root.
     { selector: root, declarations: { outline: 'none' } },
-    // With a gutter the inline-start inset holds it beside top-level blocks.
+    // With a gutter the inline-start inset holds it beside top-level blocks, and beside a table
+    // outside the reach of the table's row grips (half an `icon-xs` control).
     {
       selector: ':host([data-gutter]) & > *',
       declarations: {
-        'padding-inline-start': `calc(${gutterSize} + ${String(valueOf(growth, 'padding-block'))})`,
+        'padding-inline-start': `calc(${gutterSize} + ${String(gutterControl)} / 2 + ${String(valueOf(growth, 'padding-block'))})`,
       },
     },
+    // Without a gutter the inset still keeps a table's row grips inside the widget.
+    {
+      selector: ':host(:not([data-gutter])) & > *',
+      declarations: {
+        'padding-inline-start': `max(${fieldInlineInset}, ${String(gutterControl)} / 2)`,
+      },
+    },
+    // The first block is the first vocabulary element: an engine element without a class (an
+    // anchor ahead of a leading atom) sits outside the flow and must not keep the block's margin.
     ...documentFlowRules(flow, {
       blocks:
         '& > * > :not(.tp-te-block-cursor), & .tp-te-cell > *, & .tp-te-item .tp-te-paragraph',
@@ -190,13 +256,14 @@ export const textEditorAppearance: PresentationDictionary = {
       dividers:
         '& > * > .tp-te-divider, & > * > .tp-te-divider + :not(.tp-te-block-cursor), & > * > .tp-te-divider + .tp-te-block-cursor + *',
       first:
-        '& > * > :nth-child(1 of :not(.tp-te-block-cursor)), & .tp-te-cell > :first-child, & .tp-te-item .tp-te-paragraph',
+        "& > * > :nth-child(1 of [class*='tp-te-']:not(.tp-te-block-cursor)), & .tp-te-cell > :first-child, & .tp-te-item .tp-te-paragraph",
     }),
     ...documentHeadingRules(flow, {
       heading: '& .tp-te-heading',
       level: (level) => `& h${level}.tp-te-heading`,
     }),
-    ...documentListRules({ list: '& .tp-te-list', taskList: '& .tp-te-list-task' }),
+    // Lists take the widget's direction (the text mechanics), and a marked item the one of its text.
+    ...documentListRules(textEditorListSelectors),
     ...documentListItemRules(flow, {
       nextItem: '& .tp-te-item + .tp-te-item',
       marker: '& .tp-te-item::marker',
@@ -222,6 +289,18 @@ export const textEditorAppearance: PresentationDictionary = {
     ...documentImageRules('& .tp-te-image'),
     at('& .tp-te-divider', dividerLine),
     at('& .tp-te-callout', calloutSurface),
+    ...calloutToneRules('& .tp-te-callout'),
+    // The drag preview's backdrop (`uwg-te-req-blocks-5`) is the floating toolbar surface, so that
+    // the copies stay readable over the content they pass.
+    at(
+      '& > .block-drag-preview::before',
+      declarationsOf(floatingToolbarAppearance, (rule) => !rule.selector),
+    ),
+    // A custom block's element keeps to the content column without its user agent's inline
+    // margins (a figure's); its own css may set them again.
+    at('& > * > :where([class^="tp-te-block-"]:not(.tp-te-block-cursor))', {
+      'margin-inline': '0',
+    }),
     ...within('.tp-te-task-marker', nativeChoiceAppearance('checkbox', 'input')),
     ...documentTableRules({
       wrapper: '& .tp-te-table-wrapper',
@@ -294,14 +373,40 @@ export const textEditorAppearance: PresentationDictionary = {
       },
     },
   ],
-  'text-editor-row-grip': [{ declarations: { 'z-index': '1' } }],
-  'text-editor-column-grip': [{ declarations: { 'z-index': '1' } }],
-  'text-editor-cell-handle': [{ declarations: { 'z-index': '1' } }],
+  // Pills straddling the table's edge: half their thickness is a cell's padding, so a grip stays
+  // clear of the cell's content (`uwg-te-req-tables-3`).
+  'text-editor-row-grip': [
+    {
+      declarations: { 'z-index': '1', 'inline-size': gripThickness, 'block-size': gripLength },
+    },
+  ],
+  'text-editor-column-grip': [
+    {
+      declarations: { 'z-index': '1', 'inline-size': gripLength, 'block-size': gripThickness },
+    },
+  ],
+  // A round Button centred on the range outline, as thick as a grip: half of it is a cell's
+  // padding, so it stays clear of the content of the cell beside the range.
+  'text-editor-cell-handle': [
+    {
+      declarations: { 'z-index': '1', 'inline-size': gripThickness, 'block-size': gripThickness },
+    },
+  ],
   'text-editor-add-row': [
     { declarations: { 'margin-block-start': tableAddGap, 'block-size': tableAddExtent } },
   ],
+  // Beside the last column, as far out as the round cell handle on that edge reaches (half its
+  // size), so the two never overlap (`uwg-te-req-pres-6`). The controls sit at the overlay's left
+  // origin, so in a right-to-left widget the gap pulls the Button to the left.
   'text-editor-add-column': [
-    { declarations: { 'margin-inline-start': tableAddGap, 'inline-size': tableAddExtent } },
+    { declarations: { 'margin-inline-start': addColumnGap, 'inline-size': tableAddExtent } },
+    {
+      selector: '&:dir(rtl)',
+      declarations: {
+        'margin-inline-start': '0',
+        'margin-inline-end': `calc(-1 * ${addColumnGap})`,
+      },
+    },
   ],
   'text-editor-table-picker': [
     {
@@ -371,6 +476,13 @@ export const textEditorAppearance: PresentationDictionary = {
   ],
   'text-editor-sticky-header': [
     { declarations: documentScope(flow, 'default') },
+    // The copied cells space their blocks as the content's cells do.
+    ...documentFlowRules(flow, {
+      blocks: '& .tp-te-cell > *',
+      afterHeading: '& .tp-te-cell > .tp-te-heading + *',
+      dividers: '& .tp-te-cell > .tp-te-divider',
+      first: '& .tp-te-cell > :first-child',
+    }),
     ...documentTableRules({
       wrapper: '& .tp-te-table-wrapper',
       table: '& .tp-te-table',
@@ -382,7 +494,8 @@ export const textEditorAppearance: PresentationDictionary = {
     // An opaque row over the content it covers.
     at('& .tp-te-table', { background: 'var(--tp-background)' }),
     ...contentColorRules(TEXT_EDITOR_COLORS),
-    { declarations: { 'box-shadow': 'var(--tp-shadow-sm)' } },
+    // Over the raised table marks (z-index 1): a grip of a row under the copy stays under it.
+    { declarations: { 'box-shadow': 'var(--tp-shadow-sm)', 'z-index': '2' } },
   ],
 };
 
@@ -496,6 +609,14 @@ export const textEditorStructure: PresentationDictionary = {
       selector: '& .tp-te-task-item',
       declarations: {
         position: 'relative',
+        'padding-inline-start': 'calc(var(--tp-icon-size-md) + var(--tp-space-2))',
+      },
+    },
+    // An item that only wraps a nested task list (one engine's structure) takes the task item's
+    // inset, so the nested items sit where they sit inside a task item.
+    {
+      selector: '& .tp-te-list-task > .tp-te-nested-item',
+      declarations: {
         'padding-inline-start': 'calc(var(--tp-icon-size-md) + var(--tp-space-2))',
       },
     },

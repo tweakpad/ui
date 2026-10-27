@@ -227,12 +227,24 @@ describe('the preview in a right-to-left widget (uwg-te-req-pres-2)', () => {
     const json = instance.getContent('json');
     const portable = CONTENT_ENGINES[0].fromNative(json);
     const elements = preview(portable);
-    const blocks = elements.filter((element) =>
-      ['p', 'h3', 'blockquote', 'li'].includes(element.localName),
+    // A list item's own paragraph takes the item's direction, as in the engines: `dir="auto"` on
+    // the item would skip it if it carried a `dir` of its own.
+    const itemParagraphs = new Set(
+      elements
+        .filter((element) => element.localName === 'li')
+        .flatMap((item) => item.children.filter((child) => child instanceof PreviewElement))
+        .filter((child) => (child as PreviewElement).localName === 'p'),
+    );
+    const blocks = elements.filter(
+      (element) =>
+        ['p', 'h3', 'blockquote', 'li'].includes(element.localName) && !itemParagraphs.has(element),
     );
     expect(blocks.length).toBeGreaterThan(10);
+    expect(itemParagraphs.size).toBeGreaterThan(0);
     for (const element of blocks)
       expect(element.attributes.get('dir'), element.localName).toBe('auto');
+    for (const element of itemParagraphs)
+      expect((element as PreviewElement).attributes.has('dir')).toBe(false);
     for (const element of elements.filter((item) =>
       ['ol', 'ul', 'table', 'tbody', 'tr', 'td', 'th'].includes(item.localName),
     ))

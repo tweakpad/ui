@@ -53,6 +53,8 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
   #formDisabled = false;
   #nativeInvalid = false;
   #lastEffectiveDisabled: boolean | undefined;
+  /** The effective disabled state that the current update renders with. */
+  #renderedDisabled: boolean | undefined;
   #formValue: FormData | File | string | null = null;
   #formState: FormData | File | string | null | undefined;
   #fieldContext: {
@@ -254,7 +256,18 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     this.requestUpdate();
   }
 
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    this.#renderedDisabled = this.effectiveDisabled;
+  }
+
   protected override updated(changed: PropertyValues<this>): void {
+    // Reflecting `disabled` runs `formDisabledCallback` inside the update, where a request starts
+    // no other update: one that rendered another disabled state than the current one requests the
+    // next once it completes, so that clearing `disabled` reaches the render and the subclasses'
+    // `willUpdate`.
+    if (this.#renderedDisabled !== undefined && this.#renderedDisabled !== this.effectiveDisabled)
+      void this.updateComplete.then(() => this.requestUpdate());
     if (this.#lastEffectiveDisabled !== this.effectiveDisabled) {
       changed.set('disabled', this.#lastEffectiveDisabled ?? this.disabled);
       this.#lastEffectiveDisabled = this.effectiveDisabled;

@@ -31,6 +31,18 @@
       .toolbar tp-separator[orientation='vertical'] {
         block-size: var(--tp-control-height-md);
       }
+      .toolbar.contextual:not(:popover-open) {
+        display: none;
+      }
+      .toolbar.contextual {
+        margin: 0;
+        padding: var(--tp-space-1);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+        border-radius: var(--tp-radius-md);
+        background: var(--tp-popover);
+        color: var(--tp-popover-foreground);
+      }
+      #contextual-text,
       #press-text {
         max-inline-size: calc(var(--tp-spacing) * 120);
         margin: 0;
@@ -94,6 +106,16 @@
           <tp-button id="press-highlight" variant="outline">Highlight</tp-button>
           <tp-button id="press-strike" variant="outline">Strike</tp-button>
           <tp-button id="press-note" variant="outline">Note</tp-button>
+        </div>
+      </section>
+      <section id="contextual-case" aria-label="Contextual toolbar">
+        <p id="contextual-text" contenteditable="true">
+          The pilot boat rounds the breakwater as the evening tide turns.
+        </p>
+        <div id="contextual" class="toolbar contextual" aria-label="Selection tools">
+          <tp-button id="ctx-bold" variant="outline">Bold</tp-button>
+          <tp-button id="ctx-link" variant="outline" disabled>Link</tp-button>
+          <tp-button id="ctx-note" variant="outline">Note</tp-button>
         </div>
       </section>
       <output id="events" aria-live="polite">No action</output>

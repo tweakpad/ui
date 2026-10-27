@@ -9,9 +9,9 @@ import type { TextEditorSelectionInput, TextEditorTableModel } from '../../model
 import { tableTargetCells } from '../shared/tables.js';
 import { keyEvent } from '../shared/test-helpers.test.js';
 import { $holderById } from './ids.js';
-import { $cellAddress } from './points.js';
+import { $cellAddress, $tablePlacement } from './points.js';
 import { headlessLexical, realLexicalModules, rootedLexical } from './lexical-stubs.test.js';
-import type { TextEditorLexicalModules } from './modules.js';
+import type { LexicalElementLike, TextEditorLexicalModules } from './modules.js';
 
 const grid3 =
   '<table data-id="t1"><thead><tr><th><p>a1</p></th><th><p>a2</p></th><th><p>a3</p></th></tr></thead>' +
@@ -443,5 +443,31 @@ describe('uwg-te-req-content-6: a cell range in a focused root keeps a DOM caret
     const { selection, cells } = focusedTable();
     expect(cells()).toBe(true);
     expect(selection.rangeCount).toBe(0);
+  });
+});
+
+describe('table placements (uwg-te-req-perf-1)', () => {
+  it('V-587: reads of a committed state share one placement per table; a change places it again', () => {
+    const { rt, run } = setup();
+    const read = () =>
+      rt.readCommitted(() => $tablePlacement(rt, $holderById(rt, 't1') as LexicalElementLike));
+    const first = read();
+    expect(read()).toBe(first);
+    expect(first.rows).toBe(3);
+    expect(first.at(1, 1)).not.toBeNull();
+    // Inside an update the state is not committed: every call places the table.
+    rt.engine.update(
+      () => {
+        const table = $holderById(rt, 't1') as LexicalElementLike;
+        expect($tablePlacement(rt, table)).not.toBe($tablePlacement(rt, table));
+      },
+      { discrete: true },
+    );
+    const range = { anchor: { row: 1, column: 0 }, head: { row: 1, column: 1 } };
+    expect(run({ type: 'table.merge-cells', table: 't1', range })).toBe(true);
+    const merged = read();
+    expect(merged).not.toBe(first);
+    expect(merged.at(1, 1)?.getKey()).toBe(merged.at(1, 0)?.getKey());
+    expect(read()).toBe(merged);
   });
 });

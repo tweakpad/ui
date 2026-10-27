@@ -1,5 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
-import { calloutSurface } from './shared/callout-surface.js';
+import { calloutSurface, calloutTint, calloutTints } from './shared/callout-surface.js';
 
 export const alertAppearance: PresentationDictionary = {
   alert: [
@@ -8,11 +8,9 @@ export const alertAppearance: PresentationDictionary = {
       selector: '& > .body',
       declarations: { gap: 'var(--tp-space-0-5)' },
     },
-    ...(['success', 'warning', 'danger'] as const).map((severity) => ({
+    ...calloutTints.map((severity) => ({
       selector: `:host([severity='${severity}']) &`,
-      declarations: {
-        color: `color-mix(in oklab, var(--tp-${severity === 'danger' ? 'destructive' : severity}) 85%, var(--tp-card-foreground))`,
-      },
+      declarations: calloutTint(severity),
     })),
   ],
   'alert-title': [
