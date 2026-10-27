@@ -1,22 +1,10 @@
-// Per-component bundle size report, measured on the published files in `dist` exactly as
-// `npm run build` lists them: bytes on disk and gzip per file, summed over the modules a
-// component ships. Every figure therefore reconciles with the build log (kB is 1000 bytes there;
-// the log's native gzip differs from Node's zlib by about one percent).
-//
-// Rolldown is used only to resolve which modules an application ships when it imports a catalog
-// component from `@tweakpad/ui`, or a widget from `@tweakpad/ui/widgets` (package `exports` and
-// `sideEffects`, tree-shaken as a consumer bundler does) and defines it, both alone (root) and as
-// documented (with the parts its canonical example composes). `lit` is a peer dependency, so it
-// is external and reported once.
-//
-// Writes src/stories/size-report.json (rendered by the "Tweakpad UI/Bundle size" story) and
-// fails when importing a component through its barrel ships any module that importing its own
-// module directly does not (tree-shaking guard), or when `@tweakpad/ui/register` reaches the
-// widgets section or a widget's companion entry.
+// Build independent, minified consumer bundles from fresh dist output.
+// npm run size:report builds the package first and regenerates the Storybook data.
 import { mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { rolldown } from 'rolldown';
+import { format, resolveConfig } from 'prettier';
 
 const root = resolve(import.meta.dirname, '..');
 const work = join(root, 'tmp', 'size-report');
@@ -54,33 +42,9 @@ const defineModule = realpathSync(join(root, 'dist', 'foundation', 'define.js'))
 const entries = {};
 const components = [];
 
-// Tags each catalog entry's canonical example renders (src/stories/examples.ts and
-// src/stories/widgets/examples.ts): the documented composition, e.g. tp-media-player with
-// tp-media-video-layout, or tp-accordion with its items. Parts authored as children are not
-// elementDependencies of the root.
-function exampleTagsOf(...path) {
-  const source = readFileSync(join(root, 'src', 'stories', ...path), 'utf8');
-  const tags = new Map();
-  for (const block of source.split(/\n(?= {2}'tp-[a-z0-9-]+': )/u).slice(1)) {
-    const tag = /^ {2}'(tp-[a-z0-9-]+)'/u.exec(block)?.[1];
-    if (tag)
-      tags.set(tag, [...new Set([...block.matchAll(/<(tp-[a-z0-9-]+)/gu)].map((m) => m[1]))]);
-  }
-  return tags;
-}
 const sections = [
-  {
-    section: 'components',
-    barrel: '@tweakpad/ui',
-    entries: catalogEntries,
-    examples: exampleTagsOf('examples.ts'),
-  },
-  {
-    section: 'widgets',
-    barrel: '@tweakpad/ui/widgets',
-    entries: widgetEntries,
-    examples: exampleTagsOf('widgets', 'examples.ts'),
-  },
+  { section: 'components', barrel: '@tweakpad/ui', entries: catalogEntries },
+  { section: 'widgets', barrel: '@tweakpad/ui/widgets', entries: widgetEntries },
 ];
 
 /**
@@ -111,24 +75,10 @@ function addEntries(name, tags, barrelSpecifier) {
   entries[`direct--${name}`] = direct;
 }
 
-for (const { section, barrel, entries: sectionEntries, examples } of sections)
+for (const { section, barrel, entries: sectionEntries } of sections)
   for (const entry of sectionEntries) {
-    const documented = [
-      entry.tagName,
-      ...(examples.get(entry.tagName) ?? []).filter(
-        (tag) => tag !== entry.tagName && classByTag.has(tag),
-      ),
-    ];
-    addEntries(`root--${entry.tagName}`, [entry.tagName], barrel);
-    addEntries(`doc--${entry.tagName}`, documented, barrel);
-    components.push({
-      name: entry.name,
-      tagName: entry.tagName,
-      className: classByTag.get(entry.tagName).name,
-      kind: entry.kind,
-      section,
-      uses: documented.slice(1),
-    });
+    addEntries(entry.tagName, [entry.tagName], barrel);
+    components.push({ name: entry.name, tagName: entry.tagName, section });
   }
 const fullEntry = join(work, 'entries', 'register-all.js');
 writeFileSync(fullEntry, "import '@tweakpad/ui/register';\n");
@@ -139,150 +89,101 @@ entries['register-widgets'] = widgetsEntry;
 const litEntry = join(work, 'entries', 'lit.js');
 writeFileSync(litEntry, "export * from 'lit';\n");
 
-// Module membership only: the code Rolldown emits is never measured, the published files are.
-const bundle = await rolldown({ input: entries, cwd: work, external: [/^lit($|\/)/] });
-const { output } = await bundle.generate({
-  format: 'esm',
-  entryFileNames: '[name].js',
-  chunkFileNames: 'chunks/[name]-[hash].js',
-});
-await bundle.close();
-const chunks = new Map(output.filter((item) => item.type === 'chunk').map((c) => [c.fileName, c]));
-const reachable = (fileName, seen = new Set()) => {
-  // `imports` also lists external `lit` specifiers, which are not chunks.
-  if (seen.has(fileName) || !chunks.has(fileName)) return seen;
-  seen.add(fileName);
-  for (const imported of chunks.get(fileName)?.imports ?? []) reachable(imported, seen);
-  return seen;
-};
-// Published modules only: no Rolldown virtual runtime ids (null byte) or measurement entries.
-const modulesOf = (files) =>
-  new Set(
-    [...files]
-      .flatMap((file) => Object.keys(chunks.get(file).modules))
-      .filter((id) => !id.startsWith('\0') && !id.includes('/tmp/size-report/entries/'))
-      .map((id) => realpathSync(id)),
-  );
-const shipped = (name) => modulesOf(reachable(`${name}.js`));
-
-// Each published file as `npm run build` lists it: bytes on disk and its own gzip size.
-const fileSizes = new Map();
-const sizeOf = (id) => {
-  let size = fileSizes.get(id);
-  if (!size) {
-    const code = readFileSync(id);
-    size = { bytes: code.length, gzip: gzipSync(code).length };
-    fileSizes.set(id, size);
+// Each entry is bundled independently: a multi-entry build would introduce shared chunks
+// and change the compression of a component used alone. Keep concurrency bounded.
+async function measure(input, external = [/^lit($|\/)/, /^@lit\//]) {
+  const bundle = await rolldown({
+    input,
+    cwd: work,
+    external,
+    platform: 'browser',
+    transform: { define: { 'process.env.NODE_ENV': JSON.stringify('production') } },
+    onLog(level, log, handler) {
+      if (log.code !== 'INEFFECTIVE_DYNAMIC_IMPORT') handler(level, log);
+    },
+  });
+  try {
+    const { output } = await bundle.generate({ format: 'esm', minify: true, sourcemap: false });
+    const chunks = output.filter((item) => item.type === 'chunk');
+    const modules = new Set(
+      chunks
+        .flatMap((chunk) => Object.keys(chunk.modules))
+        .filter((id) => !id.startsWith('\0') && !id.startsWith(join(work, 'entries')))
+        .map((id) => realpathSync(id)),
+    );
+    // Compress actual output chunks individually, including any lazy chunks.
+    return {
+      modules,
+      bytes: chunks.reduce((sum, chunk) => sum + Buffer.byteLength(chunk.code), 0),
+      gzip: chunks.reduce((sum, chunk) => sum + gzipSync(chunk.code).length, 0),
+    };
+  } finally {
+    await bundle.close();
   }
-  return size;
-};
-const sum = (ids) => {
-  const total = { bytes: 0, gzip: 0 };
-  for (const id of ids) {
-    const size = sizeOf(id);
-    total.bytes += size.bytes;
-    total.gzip += size.gzip;
-  }
-  return total;
-};
-
-// Modules every catalog component's root ships form the shared runtime (element base,
-// presentation). Widgets build on the same runtime, so it is derived from components only.
-const roots = components.map((c) => shipped(`root--${c.tagName}`));
-const componentRoots = roots.filter((_, index) => components[index].section === 'components');
-const shared = new Set(
-  [...componentRoots[0]].filter((id) => componentRoots.every((modules) => modules.has(id))),
+}
+const results = new Map();
+const queue = Object.entries(entries);
+await Promise.all(
+  Array.from({ length: 4 }, async () => {
+    for (;;) {
+      const next = queue.shift();
+      if (!next) return;
+      const [name, input] = next;
+      results.set(name, await measure(input));
+    }
+  }),
 );
 const moduleTag = new Map([...classByTag].map(([tag, declared]) => [declared.module, tag]));
-
 const violations = [];
-const leaks = (name) => {
-  const modules = shipped(name);
-  const minimum = shipped(`direct--${name}`);
-  const leaked = [...modules].filter((id) => !minimum.has(id));
+for (const component of components) {
+  const result = results.get(component.tagName);
+  const minimum = results.get(`direct--${component.tagName}`);
+  const leaked = [...result.modules].filter((id) => !minimum.modules.has(id));
   if (leaked.length)
-    violations.push(
-      `${name}: ${leaked.length} modules beyond its own graph, e.g. ${leaked
-        .slice(0, 3)
-        .map((id) => id.slice(root.length + 1))
-        .join(', ')}`,
-    );
-};
-for (const [index, component] of components.entries()) {
-  // As documented: the root plus the parts its canonical example composes.
-  const modules = shipped(`doc--${component.tagName}`);
-  const documented = sum(modules);
-  component.bytes = documented.bytes;
-  component.gzip = documented.gzip;
-  component.ownGzip = sum([...modules].filter((id) => !shared.has(id))).gzip;
-  component.modules = modules.size;
-  // The root element alone (what `defineElement(Root)` ships without authored parts).
-  const rootSize = sum(roots[index]);
-  component.rootBytes = rootSize.bytes;
-  component.rootGzip = rootSize.gzip;
-  // Library elements whose classes ship with the documented composition.
-  component.includes = [...modules]
-    .map((id) => moduleTag.get(id))
-    .filter((tag) => tag && tag !== component.tagName)
-    .sort();
-  leaks(`root--${component.tagName}`);
-  leaks(`doc--${component.tagName}`);
+    violations.push(`${component.tagName}: unrelated modules: ${leaked.join(', ')}`);
+  Object.assign(component, {
+    bytes: result.bytes,
+    gzip: result.gzip,
+    modules: result.modules.size,
+    includes: [...result.modules]
+      .map((id) => moduleTag.get(id))
+      .filter((tag) => tag && tag !== component.tagName)
+      .sort(),
+  });
 }
 components.sort((a, b) => b.gzip - a.gzip);
-
-// `lit` as published in node_modules (its files are already minified).
-const litBundle = await rolldown({ input: litEntry, cwd: work });
-const { output: litOutput } = await litBundle.generate({ format: 'esm' });
-await litBundle.close();
-const litModules = new Set(
-  litOutput
-    .filter((item) => item.type === 'chunk')
-    .flatMap((c) => Object.keys(c.modules))
-    .filter((id) => !id.startsWith('\0') && !id.includes('/tmp/size-report/entries/'))
-    .map((id) => realpathSync(id)),
-);
-const fullModules = shipped('register-all');
-const widgetModules = shipped('register-widgets');
-// The widgets section is opt-in: `@tweakpad/ui/register` must not reach any widget module, nor
-// a module of a widget's companion entry (`@tweakpad/ui/<name>`, published from
-// `dist/foundation/<name>/` behind the `dist/<name>.js` facade).
 const isWidgetModule = (id) =>
   /\/dist\/(?:widgets\/|widgets\.js$|presentation\/(?:families\/)?widgets\.js$)/u.test(id) ||
   /\/dist\/(?:foundation\/(?:text-editor|emoji|flow)\/|(?:text-editor|emoji|flow)\.js$)/u.test(id);
-const widgetLeaks = [...fullModules].filter(isWidgetModule);
-if (widgetLeaks.length)
-  violations.push(
-    `register-all ships ${widgetLeaks.length} widget or companion modules, e.g. ${widgetLeaks
-      .slice(0, 3)
-      .map((id) => id.slice(root.length + 1))
-      .join(', ')}`,
-  );
-
+const full = results.get('register-all');
+const widgetLeaks = [...full.modules].filter(isWidgetModule);
+if (widgetLeaks.length) violations.push(`register-all reaches widgets: ${widgetLeaks.join(', ')}`);
+if (violations.length)
+  throw new Error(`size-report: tree-shaking failed:\n${violations.join('\n')}`);
+const sizes = ({ bytes, gzip }) => ({ bytes, gzip });
 const report = {
   generatedAt: new Date().toISOString(),
   version: manifest.version,
   method:
-    'Each catalog component (from @tweakpad/ui) and widget (from @tweakpad/ui/widgets) as documented (the root plus the parts its canonical example composes), imported and defined; Rolldown resolves the modules that ships (lit external, tree-shaken) and each module is measured as published in dist, bytes on disk and gzip per file, the way the build log lists it.',
-  lit: { ...sum(litModules), modules: litModules.size },
-  shared: { ...sum(shared), modules: shared.size },
-  full: { ...sum(fullModules), modules: fullModules.size },
-  fullWidgets: { ...sum(widgetModules), modules: widgetModules.size },
+    'Each row imports and registers one component or widget from its public package entry. Rolldown tree-shakes and minifies an independent production JavaScript bundle, then measures its output before and after gzip. Required dependencies and embedded styles are included; Lit, optional engines, source maps and the separate global stylesheet are excluded. Sizes use kB of 1000 bytes.',
+  lit: sizes(await measure(litEntry, [])),
+  full: sizes(full),
+  fullWidgets: sizes(results.get('register-widgets')),
   components,
 };
+// Publish only a complete report that passed every guard.
+const reportPath = join(root, 'src', 'stories', 'size-report.json');
 writeFileSync(
-  join(root, 'src', 'stories', 'size-report.json'),
-  `${JSON.stringify(report, null, 2)}\n`,
+  reportPath,
+  await format(JSON.stringify(report), {
+    ...(await resolveConfig(reportPath)),
+    filepath: reportPath,
+  }),
 );
-
-// The build log's format: kB of 1000 bytes, truncated to two decimals.
-const kb = (bytes) => `${(Math.floor(bytes / 10) / 100).toFixed(2)} kB`;
-const widgetCount = components.filter((c) => c.section === 'widgets').length;
 console.log(
-  `size-report: ${components.length - widgetCount} components, ${widgetCount} widgets; shared runtime ${kb(report.shared.bytes)} (gzip ${kb(report.shared.gzip)}), lit ${kb(report.lit.gzip)} gzip, full register ${kb(report.full.bytes)} (gzip ${kb(report.full.gzip)}), widgets register ${kb(report.fullWidgets.bytes)} (gzip ${kb(report.fullWidgets.gzip)})`,
+  `size-report: generated ${components.length} independent component/widget bundles; tree-shaking verified`,
 );
 for (const c of components.slice(0, 5))
-  console.log(`  ${c.tagName.padEnd(28)} ${kb(c.bytes).padStart(10)} │ gzip: ${kb(c.gzip)}`);
-if (violations.length) {
-  console.error(`size-report: unrelated components shipped:\n  ${violations.join('\n  ')}`);
-  process.exit(1);
-}
+  console.log(
+    `  ${c.tagName}: ${(c.bytes / 1000).toFixed(2)} kB uncompressed, ${(c.gzip / 1000).toFixed(2)} kB gzip`,
+  );

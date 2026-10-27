@@ -3,25 +3,24 @@ import type {
   VisualizationSnapshot,
 } from '../../components/data-visualization/index.js';
 
-/** One bar: a component's documented gzip size split into shared runtime and its own code. */
+/** One bar: an independent component bundle, measured before and after gzip. */
 export interface SizeChartRow extends Record<string, unknown> {
   name: string;
-  shared: number;
-  component: number;
+  gzip: number;
+  bytes: number;
 }
 
 export const sizeChartSeries = {
-  shared: { label: 'Shared runtime', color: 'var(--tp-chart-2)', appearance: { striped: true } },
-  component: { label: 'Component', color: 'var(--tp-chart-1)', appearance: { striped: false } },
+  gzip: { label: 'Gzip', color: 'var(--tp-chart-1)' },
 };
 
 /** The build log's format: kB of 1000 bytes, truncated to two decimals. */
 export const kb = (bytes: number) => `${(Math.floor(bytes / 10) / 100).toFixed(2)} kB`;
 
 /**
- * Horizontal stacked bars (story-owned SVG adapter; geometry stays outside the library control).
+ * Horizontal bars (story-owned SVG adapter; geometry stays outside the library control).
  * Rows are focusable: Arrow keys move between them and both pointer and focus report the same
- * inspection payload, so the composed Tooltip shows the split for either input.
+ * inspection payload, so the composed Tooltip shows the gzip size for either input.
  */
 export const sizeChartRenderer: VisualizationRenderer = {
   mount(plot, context) {
@@ -32,9 +31,8 @@ export const sizeChartRenderer: VisualizationRenderer = {
     svg.setAttribute('aria-label', 'Largest components by gzip size');
     svg.style.display = 'block';
     svg.style.inlineSize = '100%';
-    const defs = doc.createElementNS(ns, 'defs');
     const body = doc.createElementNS(ns, 'g');
-    svg.append(defs, body);
+    svg.append(body);
     plot.append(svg);
     let snapshot: VisualizationSnapshot;
     const set = (element: Element, values: Record<string, string | number>) => {
@@ -44,9 +42,9 @@ export const sizeChartRenderer: VisualizationRenderer = {
       context.inspect({
         active: true,
         source,
-        label: `${row.name} · ${kb(row.shared + row.component)}`,
+        label: `${row.name} · ${kb(row.gzip)}`,
         anchor: { getBoundingRectangle: () => mark.getBoundingClientRect(), contextElement: mark },
-        payload: (['component', 'shared'] as const).map((key) => ({
+        payload: (['gzip'] as const).map((key) => ({
           dataKey: key,
           name: sizeChartSeries[key].label,
           value: kb(row[key]),
@@ -65,23 +63,8 @@ export const sizeChartRenderer: VisualizationRenderer = {
         const rowHeight = 26;
         const height = rows.length * rowHeight + 28;
         const plotWidth = width - label - 72;
-        const max = Math.max(1, ...rows.map((row) => row.shared + row.component));
+        const max = Math.max(1, ...rows.map((row) => row.gzip));
         set(svg, { viewBox: `0 0 ${width} ${height}`, height });
-        // Striped shared runtime: color is not the only encoding.
-        const pattern = doc.createElementNS(ns, 'pattern');
-        set(pattern, {
-          id: `${next.id}-shared`,
-          width: 6,
-          height: 6,
-          patternUnits: 'userSpaceOnUse',
-          patternTransform: 'rotate(45)',
-        });
-        const fill = doc.createElementNS(ns, 'rect');
-        set(fill, { width: 6, height: 6, fill: next.colors.shared! });
-        const stripe = doc.createElementNS(ns, 'line');
-        set(stripe, { y2: 6, stroke: 'var(--tp-background)', 'stroke-width': 2 });
-        pattern.append(fill, stripe);
-        defs.replaceChildren(pattern);
         body.replaceChildren();
         const marks: SVGGElement[] = [];
         rows.forEach((row, index) => {
@@ -90,7 +73,7 @@ export const sizeChartRenderer: VisualizationRenderer = {
           set(group, {
             tabindex: index === 0 ? 0 : -1,
             role: 'img',
-            'aria-label': `${row.name}: ${kb(row.shared + row.component)} gzip`,
+            'aria-label': `${row.name}: ${kb(row.gzip)} gzip`,
           });
           group.style.outline = 'none';
           const name = doc.createElementNS(ns, 'text');
@@ -102,41 +85,31 @@ export const sizeChartRenderer: VisualizationRenderer = {
             'font-size': 12,
           });
           name.textContent = row.name;
-          const sharedWidth = (row.shared / max) * plotWidth;
-          const componentWidth = (row.component / max) * plotWidth;
-          const shared = doc.createElementNS(ns, 'rect');
-          set(shared, {
-            x: label,
-            y,
-            width: sharedWidth,
-            height: 18,
-            rx: 3,
-            fill: `url(#${next.id}-shared)`,
-          });
+          const componentWidth = (row.gzip / max) * plotWidth;
           const own = doc.createElementNS(ns, 'rect');
           set(own, {
-            x: label + sharedWidth,
+            x: label,
             y,
             width: componentWidth,
             height: 18,
             rx: 3,
-            fill: next.colors.component!,
+            fill: next.colors.gzip!,
           });
           const value = doc.createElementNS(ns, 'text');
           set(value, {
-            x: label + sharedWidth + componentWidth + 6,
+            x: label + componentWidth + 6,
             y: y + 13,
             fill: 'var(--tp-muted-foreground)',
             'font-size': 11,
             'font-variant-numeric': 'tabular-nums',
           });
-          value.textContent = kb(row.shared + row.component);
+          value.textContent = kb(row.gzip);
           // A focus ring drawn as part of the mark, since SVG groups have no outline box.
           const ring = doc.createElementNS(ns, 'rect');
           set(ring, {
             x: label - 3,
             y: y - 3,
-            width: sharedWidth + componentWidth + 6,
+            width: componentWidth + 6,
             height: 24,
             rx: 5,
             fill: 'none',
@@ -144,7 +117,7 @@ export const sizeChartRenderer: VisualizationRenderer = {
             'stroke-width': 2,
             visibility: 'hidden',
           });
-          group.append(name, shared, own, value, ring);
+          group.append(name, own, value, ring);
           // The tooltip points at the bar, not the whole row with its label.
           group.addEventListener('pointerenter', () => inspect(own, row, 'pointer'));
           group.addEventListener('pointerleave', () => clear('pointer'));
