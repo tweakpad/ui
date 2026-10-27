@@ -189,6 +189,12 @@ export interface PositioningOptions {
   collision?: CollisionPolicy;
   padding?: number | Partial<Record<Side, number>>;
   transformPositioning?: boolean;
+  /**
+   * Anchors the surface box to the far edge of its containing block when it sits above (`bottom`)
+   * or before (`right`) its anchor, so a change of the box's own size keeps the edge next to the
+   * anchor in place: a viewport morphing inside a box that already has its settled size.
+   */
+  adaptiveOrigin?: boolean;
   tracking?: AutoUpdatePolicy | false;
   /** Pointer coordinates and padding of the inline-fragment stage of a multi-rectangle anchor. */
   inline?: InlineFragmentOptions | undefined;
@@ -904,7 +910,22 @@ function clearPosition(surface: HTMLElement): void {
   surface.style.removeProperty('translate');
   surface.style.removeProperty('left');
   surface.style.removeProperty('top');
+  surface.style.removeProperty('right');
+  surface.style.removeProperty('bottom');
   for (const property of POSITIONING_PROPERTIES) surface.style.removeProperty(property);
+}
+
+/** The padding box the surface's offsets resolve against, in the frame of `x` and `y`. */
+function containingBlockSize(
+  surface: HTMLElement,
+  strategy: PositioningStrategy,
+  topLayer: boolean,
+): { width: number; height: number } {
+  const offsetParent = strategy === 'fixed' || topLayer ? null : surface.offsetParent;
+  if (offsetParent instanceof HTMLElement && offsetParent !== surface.ownerDocument.body)
+    return { width: offsetParent.clientWidth, height: offsetParent.clientHeight };
+  const root = surface.ownerDocument.documentElement;
+  return { width: root.clientWidth, height: root.clientHeight };
 }
 
 /**
@@ -1050,15 +1071,32 @@ export function positionSurface(
     }
     const x = roundToDevicePixel(result.x, ownerWindow);
     const y = roundToDevicePixel(result.y, ownerWindow);
+    const resolved = placementParts(result.placement);
+    // Above or before the anchor, the box hangs from the far edge of its containing block: its
+    // offsets are the distances from that edge, so its own size change leaves the anchored edge.
+    let right: number | undefined, bottom: number | undefined;
+    if (options.adaptiveOrigin && (resolved.side === 'top' || resolved.side === 'left')) {
+      const block = containingBlockSize(surface, result.strategy, topLayer);
+      if (resolved.side === 'top')
+        bottom = roundToDevicePixel(block.height - (result.y + surface.offsetHeight), ownerWindow);
+      else right = roundToDevicePixel(block.width - (result.x + surface.offsetWidth), ownerWindow);
+    }
     // Every write below happens only when its value changes: a pass whose geometry did not change
     // leaves the surface untouched, so observers of the surface do not wake.
     const transform = options.transformPositioning ?? true;
-    writeStyle(surface, 'left', transform ? '0px' : `${x}px`);
-    writeStyle(surface, 'top', transform ? '0px' : `${y}px`);
-    writeStyle(surface, 'translate', transform ? `${x}px ${y}px` : null);
+    writeStyle(surface, 'left', right === undefined ? (transform ? '0px' : `${x}px`) : 'auto');
+    writeStyle(surface, 'right', right === undefined ? null : transform ? '0px' : `${right}px`);
+    writeStyle(surface, 'top', bottom === undefined ? (transform ? '0px' : `${y}px`) : 'auto');
+    writeStyle(surface, 'bottom', bottom === undefined ? null : transform ? '0px' : `${bottom}px`);
+    writeStyle(
+      surface,
+      'translate',
+      transform
+        ? `${right === undefined ? x : -right}px ${bottom === undefined ? y : -bottom}px`
+        : null,
+    );
     writeData(surface, 'positioned', '');
     writeData(surface, 'placement', result.placement);
-    const resolved = placementParts(result.placement);
     writeData(surface, 'side', resolved.side);
     writeData(surface, 'align', resolved.alignment);
     surface.toggleAttribute('data-anchor-hidden', result.stageData.hide.referenceHidden);

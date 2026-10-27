@@ -455,6 +455,53 @@ describe('anchor clipping', () => {
   });
 });
 
+describe('adaptive origin', () => {
+  it('hangs a surface above its anchor from the bottom of the containing block', () => {
+    const { anchor, surface, style } = surfaceFixture();
+    // Anchor 100,100 80x40; surface 120x60 above it: y = 40, x centered = 80. The document is 600 tall.
+    const handle = positionSurface(anchor, surface, {
+      placement: 'top',
+      offset: 0,
+      tracking: false,
+      adaptiveOrigin: true,
+    });
+    expect(style.top).toBe('auto');
+    expect(style.bottom).toBe('0px');
+    expect(style.left).toBe('0px');
+    expect(style.translate).toBe('80px -500px');
+    handle.destroy();
+    expect(style.bottom).toBeUndefined();
+  });
+
+  it('hangs a surface before its anchor from the right edge, and keeps plain offsets elsewhere', () => {
+    const { anchor, surface, style } = surfaceFixture();
+    // Surface 120x60 left of the anchor: x = -20 (shifted to 0 by the viewport), so right = 800 - 120.
+    const left = positionSurface(anchor, surface, {
+      placement: 'left',
+      offset: 0,
+      tracking: false,
+      adaptiveOrigin: true,
+      collision: { side: 'none', align: 'none' },
+    });
+    expect(style.left).toBe('auto');
+    expect(style.right).toBe('0px');
+    expect(style.translate).toBe('-700px 90px');
+    left.destroy();
+    const below = positionSurface(anchor, surface, {
+      placement: 'bottom',
+      offset: 0,
+      tracking: false,
+      adaptiveOrigin: true,
+    });
+    expect(style.left).toBe('0px');
+    expect(style.top).toBe('0px');
+    expect(style.right).toBeUndefined();
+    expect(style.bottom).toBeUndefined();
+    expect(style.translate).toBe('80px 140px');
+    below.destroy();
+  });
+});
+
 describe('anchor tracking', () => {
   it('reads the client rectangles of a virtual anchor on every pass', () => {
     const { anchor, surface, style } = surfaceFixture();

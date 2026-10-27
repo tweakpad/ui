@@ -48,6 +48,14 @@ export interface MenuPartTarget {
   element: HTMLElement;
   owner: TpElement;
 }
+/** Menubar changes between members: the bar stays, so neither menu animates. */
+const MENUBAR_GROUP_REASONS: ReadonlySet<ChangeReason> = new Set<ChangeReason>([
+  'trigger-focus',
+  'focus-outside',
+  'trigger-hover',
+  'list-navigation',
+  'sibling-open',
+]);
 interface CommandRecord extends ChoiceRecord<HTMLElement> {
   element: HTMLElement;
   item?: TpMenuItem;
@@ -121,6 +129,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
   #bar: MenuBarOwner | null = null;
+  #lastReason: ChangeReason | undefined;
   #indicators = new Map<HTMLElement, TpIcon>();
   #keyboard = false;
   #lastOpening = false;
@@ -260,6 +269,17 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   }
   protected override get surfaceDisabled(): boolean {
     return super.surfaceDisabled || !!this.#bar?.disabled || !!this.#parent?.menuDisabled;
+  }
+  /**
+   * A menu that another menu replaces changes without motion: one menubar menu handing over to the
+   * next, and a submenu closed by a sibling opening. Presence motion is for the whole branch
+   * appearing or leaving.
+   */
+  protected override get instant(): string | undefined {
+    const reason = this.#lastReason;
+    if (reason === 'sibling-open' || (this.#bar && reason && MENUBAR_GROUP_REASONS.has(reason)))
+      return 'group';
+    return super.instant;
   }
   get itemPartPrefix(): string {
     return this.partPrefix;
@@ -806,6 +826,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   }
   protected override accepted(open: boolean, reason: ChangeReason, event?: Event): void {
     super.accepted(open, reason);
+    this.#lastReason = reason;
     if (open) {
       this.#lastOpening =
         surfaceInteraction(event) === 'keyboard' ||

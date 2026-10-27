@@ -183,6 +183,23 @@ export abstract class TpAnchoredSurface extends TpElement {
         max-block-size: var(--tp-available-height, calc(100dvh - var(--tp-space-3) * 2));
       }
 
+      /* With a viewport the positioner holds the settled size of the current view; the viewport
+         morphs inside it from the anchored edge, so a size change never moves the anchored edge. */
+      .positioner[data-viewport] {
+        display: flex;
+        flex-direction: column;
+        inline-size: var(--tp-positioner-width, max-content);
+        block-size: var(--tp-positioner-height, auto);
+      }
+
+      .positioner[data-viewport][data-side='top'] {
+        justify-content: flex-end;
+      }
+
+      .positioner[data-viewport][data-side='left'] {
+        align-items: flex-end;
+      }
+
       .positioner:not([data-positioned]),
       .positioner[data-anchor-hidden] {
         visibility: hidden;
@@ -373,6 +390,7 @@ export abstract class TpAnchoredSurface extends TpElement {
   #viewport = new PopupViewportController(
     this,
     () => this.presentationController.partElement('viewport') ?? null,
+    () => this.positioner,
   );
   protected readonly state = new SurfaceState({
     read: () => this.#providedOpen,
@@ -675,6 +693,20 @@ export abstract class TpAnchoredSurface extends TpElement {
       '@pointerleave': this.popupLeave,
     };
   }
+  /** A viewport surface: the positioner holds the current view's settled size while it morphs. */
+  protected get viewportPositioning(): boolean {
+    return this.showViewport && !!this.content;
+  }
+  protected positionerProperties(): Record<string, unknown> {
+    return {
+      class: 'positioner',
+      popover: 'manual',
+      hidden: this.presence.state === 'retained',
+      '.inert': !this.open,
+      'aria-hidden': this.open ? undefined : 'true',
+      'data-viewport': this.viewportPositioning,
+    };
+  }
   protected popupViewContent(payload: unknown): unknown {
     return this.content
       ? this.content(payload)
@@ -684,6 +716,10 @@ export abstract class TpAnchoredSurface extends TpElement {
   }
   get viewportState() {
     return this.#viewport.state;
+  }
+  /** Sizes the viewport and positioner from the current view now, for content that arrived late. */
+  protected remeasureViewport(): void {
+    this.#viewport.measure();
   }
   protected popupContent(): unknown {
     if (this.showViewport && this.content)
@@ -721,7 +757,6 @@ export abstract class TpAnchoredSurface extends TpElement {
     return { w, h, path };
   }
   protected renderLayer(): unknown {
-    const state = this.presence.state;
     const arrow = this.showArrow ? this.#arrowGeometry() : null;
     const body = this.popupContent();
     const content = this.surfacePart('content', {
@@ -774,13 +809,7 @@ export abstract class TpAnchoredSurface extends TpElement {
         ? this.surfacePart('portal', {
             properties: { class: 'portal' },
             content: this.surfacePart('positioner', {
-              properties: {
-                class: 'positioner',
-                popover: 'manual',
-                hidden: state === 'retained',
-                '.inert': !this.open,
-                'aria-hidden': this.open ? undefined : 'true',
-              },
+              properties: this.positionerProperties(),
               content: html`${guards ? html`<span class="visually-hidden" tabindex="0" data-focus-guard @focus=${() => this.triggerElement?.focus()}></span>` : nothing}${content}${guards ? html`<span class="visually-hidden" tabindex="0" data-focus-guard @focus=${() => this.focusOutside(1)}></span>` : nothing}`,
             }),
           })
@@ -1303,6 +1332,7 @@ export abstract class TpAnchoredSurface extends TpElement {
       collision: this.collisionAvoidance,
       sticky: this.sticky,
       constrainSize: true,
+      adaptiveOrigin: this.viewportPositioning,
       arrow: this.showArrow ? (this.presentationController.partElement('arrow') ?? null) : null,
       get arrowPadding() {
         return arrowPadding();
