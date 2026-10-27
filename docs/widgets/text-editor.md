@@ -466,7 +466,7 @@ const note = defineTextEditorBlock({
 
 An atom renders through its `view`, which receives the node's host element and its attributes and
 may return a cleanup function. An embed shows a page in a frame; keep the frame sandboxed, load
-https sources only and give it a title:
+https or same-origin sources only and give it a title:
 
 ```js
 const embed = defineTextEditorBlock({
@@ -478,8 +478,11 @@ const embed = defineTextEditorBlock({
     title: { type: 'string', default: null },
   },
   view(host, attrs) {
-    const src = URL.canParse(attrs.src ?? '') ? new URL(attrs.src) : null;
-    if (src?.protocol !== 'https:' || !attrs.title) {
+    const src = URL.canParse(attrs.src ?? '', location.href)
+      ? new URL(attrs.src, location.href)
+      : null;
+    const allowed = src && (src.protocol === 'https:' || src.origin === location.origin);
+    if (!allowed || !attrs.title) {
       host.textContent = attrs.title ?? attrs.src ?? '';
       return;
     }
@@ -490,7 +493,7 @@ const embed = defineTextEditorBlock({
     host.append(frame);
     return () => frame.remove();
   },
-  css: '.tp-te-block-embed iframe { inline-size: 100%; aspect-ratio: 16 / 9; border: 0; }',
+  css: '.tp-te-block-embed iframe { inline-size: 100%; block-size: 21rem; border: 0; }',
   tool: { label: 'Embed' },
 });
 ```

@@ -77,19 +77,21 @@ export const calloutBlock = defineTextEditorBlock({
   tool: { label: 'Callout', description: 'A highlighted note', icon: infoIcon, keywords: ['note'] },
 });
 
-/** Whether an embed source may load: an absolute https URL. */
-export function embedSource(src) {
+/** Whether an embed source may load: an https URL, or a page of the document's own origin. */
+export function embedSource(src, base = globalThis.location?.href) {
   try {
-    const url = new globalThis.URL(String(src ?? ''));
-    return url.protocol === 'https:' ? url.href : null;
+    const url = new globalThis.URL(String(src ?? ''), base);
+    const own = base !== undefined && url.origin === new globalThis.URL(base).origin;
+    return url.protocol === 'https:' || own ? url.href : null;
   } catch {
     return null;
   }
 }
 
 /**
- * An embed: an atom that shows an https page in a sandboxed frame with a required title. A
- * missing title or another protocol shows the title or the source as text instead of a frame.
+ * An embed: an atom that shows an https or same-origin page in a sandboxed frame with a required
+ * title. A missing title or another source shows the title or the source as text instead of a
+ * frame.
  */
 export const embedBlock = defineTextEditorBlock({
   name: 'embed',
@@ -119,7 +121,7 @@ export const embedBlock = defineTextEditorBlock({
     host.append(frame);
     return () => frame.remove();
   },
-  css: '.tp-te-block-embed iframe { display: block; inline-size: 100%; aspect-ratio: 16 / 9; border: 0; }',
+  css: '.tp-te-block-embed iframe { display: block; inline-size: 100%; block-size: 21rem; border: 0; border-radius: var(--tp-radius-md); background: var(--tp-muted); }',
   tool: { label: 'Embed', description: 'A page from an https address', icon: globeIcon },
 });
 
@@ -172,6 +174,9 @@ export const mentionInline = defineTextEditorInline({
   },
 });
 
+/** The page the example embeds: a sample tide table served beside the examples. */
+const tideTablePage = '/pages/tide-table.html';
+
 /** Notes with a callout, a mention and an embed, for the custom node example. */
 export const customBlockNotes = [
   '<h2>Mooring check</h2>',
@@ -179,7 +184,7 @@ export const customBlockNotes = [
   '<p>The tide table below is the harbour office page for this week; ',
   '<span data-type="mention" data-person="selma-raud" data-label="Selma Raud">@Selma Raud</span> ',
   'updates it on Mondays.</p>',
-  '<figure data-type="embed" data-src="https://example.com/" data-title="Harbour tide table"></figure>',
+  `<figure data-type="embed" data-src="${tideTablePage}" data-title="Harbour tide table"></figure>`,
 ].join('');
 
 /** A new engine for one editor, with tables. */

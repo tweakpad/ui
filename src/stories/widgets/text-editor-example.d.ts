@@ -28,8 +28,8 @@ export function setupTextEditorExample(
 export const calloutBlock: TextEditorBlockDefinition;
 /** An embed atom: an https page in a sandboxed frame with a required title. */
 export const embedBlock: TextEditorBlockDefinition;
-/** The https URL an embed may load, or null. */
-export function embedSource(src: unknown): string | null;
+/** The https or same-origin URL an embed may load, or null. */
+export function embedSource(src: unknown, base?: string): string | null;
 /** A crew member the mention list offers. */
 export interface CrewMember {
   readonly id: string;

@@ -77,6 +77,14 @@ describe('custom block examples', () => {
     expect(embedSource('javascript:alert(1)')).toBeNull();
     expect(embedSource('/relative')).toBeNull();
     expect(embedSource(null)).toBeNull();
+    // A page of the document's own origin loads too, whatever its protocol; another origin does not.
+    const page = 'http://docs.example/notes/';
+    expect(embedSource('../tide-table.html', page)).toBe('http://docs.example/tide-table.html');
+    expect(embedSource('http://docs.example/tide.html', page)).toBe(
+      'http://docs.example/tide.html',
+    );
+    expect(embedSource('http://other.example/tide.html', page)).toBeNull();
+    expect(embedSource('javascript:alert(1)', page)).toBeNull();
   });
 
   it('renders a sandboxed frame with its title, and text without a title or https source', () => {
