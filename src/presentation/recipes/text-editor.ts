@@ -557,6 +557,15 @@ export const textEditorStructure: PresentationDictionary = {
     ...floatingToolbarStructure,
     { declarations: { 'inline-size': '16rem' } },
   ],
+  // The link editor at the caret: the popover's controls in the context bar.
+  'text-editor-link-editor': [
+    ...floatingToolbarAppearance,
+    ...floatingToolbarStructure,
+    {
+      selector: '& .link-editor',
+      declarations: { display: 'flex', 'align-items': 'center', gap: 'var(--tp-space-1)' },
+    },
+  ],
   // Blocks (M8): the gutter's row of Buttons, transparent while a drag keeps its capture.
   'text-editor-gutter': [
     { declarations: { display: 'flex', 'align-items': 'center', 'inline-size': gutterSize } },

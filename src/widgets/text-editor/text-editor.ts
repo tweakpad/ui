@@ -613,7 +613,8 @@ export function textEditorRouterConfig(
  * @csspart text-editor-selection-toolbar - The floating selection toolbar.
  * @csspart text-editor-suggestions - The suggestion popup.
  * @csspart text-editor-link-popover - The link popover.
- * @csspart text-editor-alt-input - The alternative text field inside a selected image.
+ * @csspart text-editor-alt-input - The alternative text field of a selected image, in the context bar.
+ * @csspart text-editor-link-editor - The link editor at the caret, in the context bar.
  * @csspart text-editor-table-picker - The table size picker.
  * @csspart text-editor-swatch - A color swatch.
  * @csspart text-editor-status - The loading and error status.

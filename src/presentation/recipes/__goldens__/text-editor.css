@@ -112,6 +112,7 @@
 /* text-editor-suggestions */
 /* text-editor-link-popover */
 /* text-editor-alt-input */
+/* text-editor-link-editor */
 /* text-editor-table-picker */
 & .table-picker-body{display:grid;gap:var(--tp-space-3);justify-items:start}
 & .table-picker-grid{display:grid;grid-template-columns:repeat(8, var(--tp-space-4));gap:var(--tp-space-0-5)}
@@ -205,6 +206,10 @@
 &{background-color:var(--tp-card);border:var(--tp-border-width) var(--tp-border-style) color-mix(in oklab, var(--tp-foreground) 10%, transparent);border-radius:var(--tp-radius-md);box-shadow:var(--tp-shadow-sm);padding:var(--tp-space-1)}
 &{gap:var(--tp-space-1)}
 &{inline-size:16rem}
+/* text-editor-link-editor */
+&{background-color:var(--tp-card);border:var(--tp-border-width) var(--tp-border-style) color-mix(in oklab, var(--tp-foreground) 10%, transparent);border-radius:var(--tp-radius-md);box-shadow:var(--tp-shadow-sm);padding:var(--tp-space-1)}
+&{gap:var(--tp-space-1)}
+& .link-editor{display:flex;align-items:center;gap:var(--tp-space-1)}
 /* text-editor-gutter */
 &{display:flex;align-items:center;inline-size:calc(2 * var(--tp-control-height-xs))}
 :host([data-dragging]) &{opacity:0}

@@ -417,7 +417,9 @@ itself created) and relative references.
   the policy, and so does pasting a single URL over selected text.
 
 With `textEditorLinks()`, the link tool opens a popover at the selection to set or remove the
-destination. With `textEditorImages()`, images are added by upload. The image tool inserts an image
+destination, and while the caret or the selection sits inside a link, the link editor shows the
+destination in the context bar just below the toolbar, with its apply, open and remove actions;
+Enter applies, Escape returns to the text, and Alt+F10 reaches it. With `textEditorImages()`, images are added by upload. The image tool inserts an image
 block without a source yet, which shows a File upload in its place: drop an image on it or click it
 to choose one. The file is checked against the feature's `accept` (image types by default) and
 `maxFileSize` (no limit by default), uploaded through its `upload` hook with its progress shown,
@@ -844,6 +846,7 @@ The editor needs Chrome or Edge 137 or later, Firefox 142 or later, or Safari 17
 | `text-editor-suggestions`       | The popup of slash commands and mentions.                                             |
 | `text-editor-link-popover`      | The link popover.                                                                     |
 | `text-editor-alt-input`         | The alternative text field of a selected image, in the context bar below the toolbar. |
+| `text-editor-link-editor`       | The link editor shown while the selection is inside a link, in the context bar.       |
 | `text-editor-table-picker`      | The table size picker.                                                                |
 | `text-editor-swatch`            | A color swatch of the color menus.                                                    |
 | `text-editor-status`            | The loading or error status.                                                          |

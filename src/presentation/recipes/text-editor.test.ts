@@ -79,6 +79,7 @@ const anatomy = [
   'text-editor-suggestions',
   'text-editor-link-popover',
   'text-editor-alt-input',
+  'text-editor-link-editor',
   'text-editor-table-picker',
   'text-editor-swatch',
   'text-editor-status',
@@ -93,13 +94,13 @@ const anatomy = [
 ];
 
 describe('text editor family', () => {
-  it('uwg-te-req-pres-1, uwg-te-tab-anatomy: one family for tp-text-editor with the 26 anatomy parts in anatomy order and no axis', () => {
+  it('uwg-te-req-pres-1, uwg-te-tab-anatomy: one family for tp-text-editor with the 27 anatomy parts in anatomy order and no axis', () => {
     const { definition, appearance } = textEditorPresentation;
     expect(definition.name).toBe('Text editor');
     expect(definition.tagName).toBe('tp-text-editor');
     expect(definition.kind).toBe('flattening-compound');
     expect(definition).not.toHaveProperty('axes');
-    expect(anatomy).toHaveLength(26);
+    expect(anatomy).toHaveLength(27);
     expect(definition.parts).toEqual(anatomy.map((name) => ({ name })));
     expect(Object.keys(appearance)).toEqual(anatomy);
   });

@@ -1,7 +1,9 @@
 /**
  * The links feature (`uwg-te-req-surfaces-3`, `uwg-te-req-tools-4`): the link popover that the
- * link tool opens at the selection. `textEditorLinks()` creates it.
+ * link tool opens at the selection, and the link editor that shows in the context bar under the
+ * toolbar while the selection lies inside a link. `textEditorLinks()` creates it.
  */
+import { html } from 'lit';
 import { TpButton } from '../../../components/button/button.js';
 import { TpField } from '../../../components/field/field.js';
 import { TpInputGroup } from '../../../components/input-group/input-group.js';
@@ -14,16 +16,19 @@ import type {
   TextEditorFeatureHost,
   TextEditorFeatureInstance,
 } from '../feature.js';
+import { linkEditorStyles, TextEditorLinkEditor } from '../views/link-editor.js';
 import { TextEditorLinkPopover } from '../views/link-popover.js';
 
-/** The link popover of the link tool. */
+/** The link popover of the link tool and the link editor at the caret. */
 export function textEditorLinks(): TextEditorFeature {
   return Object.freeze({
     name: 'links' as const,
     tools: textEditorLinkTools,
     elements: Object.freeze([TpPopover, TpField, TpInput, TpInputGroup, TpButton]),
+    styles: Object.freeze([linkEditorStyles]),
     attach: (host: TextEditorFeatureHost): TextEditorFeatureInstance => {
       const ready = () => host.instance();
+      const shadow = () => host.renderRoot() as ShadowRoot;
       const link = new TextEditorLinkPopover({
         requestUpdate: () => host.requestUpdate(),
         strings: () => host.strings(),
@@ -39,6 +44,23 @@ export function textEditorLinks(): TextEditorFeature {
           host.transientOpened(link, (closing) => link.close(closing ?? 'programmatic'), reason),
         lane: (open, reason) => host.lane('link', open, reason),
       });
+      const editor = new TextEditorLinkEditor({
+        get renderRoot() {
+          return shadow();
+        },
+        requestUpdate: () => host.requestUpdate(),
+        strings: () => host.strings(),
+        ready: () => ready() !== null,
+        state: () => host.state(),
+        link: () => ready()?.getState().link ?? host.state().link,
+        access: () => host.access(),
+        toolbar: () => host.toolbar(),
+        dragging: () => host.dragging(),
+        surfaceOpen: () => host.surfaceOpen() || host.menuOpen(),
+        request: (proposal) => host.request(proposal),
+        focusEditing: () => host.focusEditing(),
+        registerContextual: (surface) => host.registerContextual(surface),
+      });
       return {
         name: 'links',
         stateChanged: () => {
@@ -47,8 +69,11 @@ export function textEditorLinks(): TextEditorFeature {
             link.close(access.disabled ? 'disabled' : 'programmatic');
         },
         disconnected: () => link.close('programmatic'),
-        dispose: () => link.close('programmatic'),
-        renderSurfaces: () => link.render(),
+        dispose: () => {
+          link.close('programmatic');
+          editor.dispose();
+        },
+        renderSurfaces: () => html`${link.render()}${editor.render()}`,
         openSurface: (tool, detail) => {
           if (tool.kind !== 'link') return false;
           link.open(detail.surface, detail.reason);
