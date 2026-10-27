@@ -26,6 +26,7 @@ import { externalLinkIcon } from '../../../icons/external-link.js';
 import { unlinkIcon } from '../../../icons/link.js';
 import type { TextEditorContextualSurface } from '../focus.js';
 import { linkApplyDecision, linkApplyProposal, linkRemoveProposal } from './link-popover.js';
+import type { BlockBand } from './selection-anchor.js';
 
 /** Structure of the link editor: a context bar entry (see `textEditorStyles`). */
 export const linkEditorStyles = css`
@@ -141,6 +142,14 @@ export class TextEditorLinkEditor {
     this.#releaseContextual();
   }
 
+  /** The band the editor covers, in client coordinates, while it shows; null otherwise. */
+  band(): BlockBand | null {
+    const element = this.#element;
+    if (!this.#shown || !element) return null;
+    const box = element.getBoundingClientRect();
+    return { top: box.top, bottom: box.bottom };
+  }
+
   #visibility(): LinkEditorVisibility {
     const host = this.#host;
     const state = host.state();
@@ -182,26 +191,28 @@ export class TextEditorLinkEditor {
       @keydown=${this.#keyDown}
     >
       <div class="link-editor">
-        <tp-input-group .invalid=${this.#invalid}
-          ><tp-input
-            type="url"
-            size="sm"
-            placeholder=${strings.linkPlaceholder}
-            .ariaLabel=${strings.link}
-            .value=${this.#draft}
-            .invalid=${this.#invalid}
-            .onValueChange=${this.#draftChange}
-            .inputElementReference=${this.#inputReference}
-          ></tp-input
-          ><tp-button
-            slot="action"
-            variant="ghost"
-            size="icon-xs"
-            .icon=${checkIcon}
-            .ariaLabel=${strings.applyLink}
-            @click=${this.#apply}
-          ></tp-button
-        ></tp-input-group>
+        <!-- The Field owns the URL's validity, from the link policy rather than the url type's own check. -->
+        <tp-field .invalid=${this.#invalid}
+          ><tp-input-group .invalid=${this.#invalid}
+            ><tp-input
+              type="url"
+              size="sm"
+              placeholder=${strings.linkPlaceholder}
+              .ariaLabel=${strings.link}
+              .value=${this.#draft}
+              .invalid=${this.#invalid}
+              .onValueChange=${this.#draftChange}
+              .inputElementReference=${this.#inputReference}
+            ></tp-input
+            ><tp-button
+              slot="action"
+              variant="ghost"
+              size="icon-xs"
+              .icon=${checkIcon}
+              .ariaLabel=${strings.applyLink}
+              @click=${this.#apply}
+            ></tp-button></tp-input-group
+        ></tp-field>
         <tp-button
           variant="ghost"
           size="icon-xs"

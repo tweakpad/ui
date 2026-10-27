@@ -24,6 +24,7 @@ import type {
 import type { TextEditorStrings } from '../../../foundation/text-editor/strings.js';
 import { checkIcon } from '../../../icons/check.js';
 import type { TextEditorContextualSurface } from '../focus.js';
+import type { BlockBand } from './selection-anchor.js';
 import type { OverlayInstance } from '../geometry.js';
 
 /** Structure of the alternative text field: a context bar entry (see `textEditorStyles`). */
@@ -159,6 +160,14 @@ export class TextEditorImageAltField {
   /** Leaves the Alt+F10 cycle. */
   dispose(): void {
     this.#releaseContextual();
+  }
+
+  /** The band the field covers, in client coordinates, while it shows; null otherwise. */
+  band(): BlockBand | null {
+    const element = this.#element;
+    if (!this.#shown || !element) return null;
+    const box = element.getBoundingClientRect();
+    return { top: box.top, bottom: box.bottom };
   }
 
   #visibility(): ImageAltVisibility {

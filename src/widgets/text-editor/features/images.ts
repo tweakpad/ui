@@ -110,6 +110,8 @@ export function textEditorImages(options: TextEditorImagesOptions = {}): TextEdi
         uploadImages: (files, at, reason, event) => image.uploadImages(files, at, reason, event),
         uploads: () => upload !== null,
         focusExcluded: (active) => image.contains(active),
+        // The selection toolbar keeps clear of the alternative text field in the context bar.
+        keepClear: () => alt.band(),
       };
     },
   });

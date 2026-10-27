@@ -82,6 +82,8 @@ export function textEditorLinks(): TextEditorFeature {
         expanded: (tool) => tool.kind === 'link' && link.isOpen,
         surfaceOpen: () => link.isOpen,
         focusExcluded: () => link.isOpen,
+        // The selection toolbar keeps clear of the link editor in the context bar.
+        keepClear: () => editor.band(),
       };
     },
   });
