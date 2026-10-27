@@ -685,7 +685,7 @@ export const releaseMount = (id: string): void => elementEditorOf(id).releaseMou
 export const fatal = (id: string): boolean => elementEditorOf(id).fatal();
 
 /**
- * The lane probe: every change of an open lane since load (the link and image popovers, the table
+ * The lane probe: every change of an open lane since load (the link popover, the table
  * size picker, the suggestion lists), of one instance when `id` is given; never cleared.
  */
 export function lanes(id?: string): LaneRecord[] {

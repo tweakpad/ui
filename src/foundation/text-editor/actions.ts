@@ -688,8 +688,9 @@ function fitsKind(kind: string, attrs: unknown): boolean {
     case 'list-task':
       return align && optional(values.checked, isBoolean);
     case 'image':
+      // An empty source is a pending image, which the widget's upload fills in.
       return (
-        isFilled(values.src) &&
+        isString(values.src) &&
         optional(values.alt, isString) &&
         optional(values.width, orNull(isPositive))
       );

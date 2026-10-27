@@ -350,7 +350,7 @@ read `engines.html`'s instances.
   the live mount's context.
 - `reasons()`: every `detail.reason` of every widget event since load, never cleared. Each batch
   saves it before closing its tab.
-- `lanes(id?)`: the lane probe. Every opening and closing of the link and image popovers, the
+- `lanes(id?)`: the lane probe. Every opening and closing of the link popover, the
   table size picker and the suggestion lists since load, with `surface`, `open` and `reason`
   (`uwg-te-tab-reasons` r12, r13), of one instance with `id`; never cleared. The open lanes are
   internal, so the probe reads the widget's lane instrumentation, not an event.
@@ -629,7 +629,7 @@ webpage" (Settings, Advanced).
 - [ ] V-356: Chrome with a real IME, both engines: Escape during composition is ignored: no
       surface closes and block mode does not start.
 - [ ] V-364: Firefox 142 or later and Safari 17.5 or later, both engines, levels 0–2: the
-      selection toolbar, the slash and mention lists, the link and image popovers and the color
+      selection toolbar, the slash and mention lists, the link popover, the image upload cards and the color
       menus give the Chrome results, the selection kept on a toolbar press and every surface in
       the top layer of the widget's shadow root.
 - [ ] V-376: a coarse pointer and touch, both engines: tap into a block, type, tap again: the

@@ -79,7 +79,7 @@ export interface TextEditorStrings {
   readonly turnInto: string;
   /** The table tool and the table size picker. */
   readonly table: string;
-  /** The image tool and the image popover. */
+  /** The image tool. */
   readonly image: string;
   /** The slash menu. */
   readonly slash: string;
@@ -153,9 +153,12 @@ export interface TextEditorStrings {
   readonly applyLink: string;
   readonly openLink: string;
   readonly removeLink: string;
-  readonly imageUrl: string;
-  readonly imageAlt: string;
-  readonly insertImage: string;
+  /** The title of the upload card of a pending image. */
+  readonly imageUploadTitle: string;
+  /** `{name}`: a pasted or dropped image file that the accepted types refuse. */
+  readonly imageRejectedType: string;
+  /** `{name}` and `{size}`: a pasted or dropped image file larger than the size limit. */
+  readonly imageRejectedSize: string;
   readonly rows: string;
   readonly columns: string;
   /** `{rows}` and `{columns}`: the size that the table size picker shows. */
@@ -341,9 +344,9 @@ export const textEditorStrings: TextEditorStrings = Object.freeze({
   applyLink: 'Apply link',
   openLink: 'Open link',
   removeLink: 'Remove link',
-  imageUrl: 'Image address',
-  imageAlt: 'Alternative text',
-  insertImage: 'Insert image',
+  imageUploadTitle: 'Drop an image here or choose one',
+  imageRejectedType: '{name} is not an accepted image type.',
+  imageRejectedSize: '{name} is larger than {size}.',
   rows: 'Rows',
   columns: 'Columns',
   tableSize: '{rows} × {columns}',

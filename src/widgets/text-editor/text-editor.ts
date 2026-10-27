@@ -27,6 +27,8 @@ import { TpField } from '../../components/field/field.js';
 import { TpPopover } from '../../components/popover/popover.js';
 import { TpCommandList } from '../../components/command-palette/list.js';
 import { TpFileUpload } from '../../components/file-upload/file-upload.js';
+import type { FileAcceptInput } from '../../components/file-upload/types.js';
+import { parseByteSize } from '../../foundation/format-bytes.js';
 import { TpInputGroup } from '../../components/input-group/input-group.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpElement } from '../../foundation/element.js';
@@ -289,6 +291,13 @@ export function textEditorCaretHidden(kind: TextEditorSelection['kind']): boolea
  */
 export const textEditorFormatConverter = {
   fromAttribute: (value: string | null): string => value ?? 'html',
+};
+
+/** A byte-count attribute: a number or text with a unit (`10MB`); unreadable is no limit. */
+const byteSizeConverter = {
+  fromAttribute: (value: string | null): number | null =>
+    value === null ? null : parseByteSize(value),
+  toAttribute: (value: number | null): string | null => (value === null ? null : String(value)),
 };
 
 const LAYOUT_KEYS = Object.keys(defaultTextEditorLayout) as (keyof TextEditorLayout)[];
@@ -586,7 +595,7 @@ export function textEditorRouterConfig(
  * @csspart text-editor-selection-toolbar - The floating selection toolbar.
  * @csspart text-editor-suggestions - The suggestion popup.
  * @csspart text-editor-link-popover - The link popover.
- * @csspart text-editor-image-popover - The image popover.
+ * @csspart text-editor-image-upload - The upload card over a pending image block.
  * @csspart text-editor-table-picker - The table size picker.
  * @csspart text-editor-swatch - A color swatch.
  * @csspart text-editor-status - The loading and error status.
@@ -643,6 +652,8 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     nodes: { attribute: false },
     strings: { attribute: false },
     imageUpload: { attribute: false },
+    imageAccept: { attribute: 'image-accept' },
+    imageMaxFileSize: { attribute: 'image-max-file-size', converter: byteSizeConverter },
   };
   static override styles = [TpElement.styles, textEditorStyles, ...TextEditorTables.styles];
 
@@ -663,6 +674,10 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
   strings: Partial<TextEditorStrings> | null = null;
   /** Uploads an image file and resolves to its source. */
   imageUpload: TextEditorImageUpload | null = null;
+  /** The accepted image types, in File upload's `accept` forms. */
+  imageAccept: FileAcceptInput = 'image/*';
+  /** The largest accepted image file in bytes, or `null` for no limit. */
+  imageMaxFileSize: number | null = null;
 
   #assignedLayout: Partial<TextEditorLayout> | null = null;
   #effectiveLayout: TextEditorLayout = defaultTextEditorLayout;
@@ -1073,7 +1088,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
             @auxclick=${this.#linkGuard}
           ></div>
           <div part="text-editor-overlay">
-            ${renderPlaceholder(this.#placeholder)}${this.#blocks.render()}${this.#tables.renderOverlay()}
+            ${renderPlaceholder(this.#placeholder)}${this.#blocks.render()}${this.#tables.renderOverlay()}${this.#popups.renderOverlay()}
           </div>
         </div>
       </div>
@@ -1141,6 +1156,7 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       container: () => this.#content,
       frames: () => windowFrames(this.ownerDocument.defaultView ?? window),
       direction: () => this.direction,
+      imageUpload: () => this.imageUpload !== null,
       adoptStyles: (cssText) => adoptStyleText(this, this.renderRoot as ShadowRoot, cssText),
       dispatchRequest: (detail) =>
         this.emit('tp-text-editor-request', detail, { cancelable: true }),
@@ -1180,6 +1196,8 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       expanded: (tool) => this.#surfaceExpanded(tool),
       request: (proposal) => this.#controller.request(proposal),
       imageUpload: () => this.imageUpload,
+      imageLimits: () => ({ accept: this.imageAccept, maxFileSize: this.imageMaxFileSize }),
+      geometry: this.#geometry,
       focusEditing: () => void this.#focus.focusEditing('restore').catch(() => {}),
       announce: (message, options) => this.#announcer.announce(message, options),
       diagnose: (code, message) => this.diagnose(code, message),
@@ -1331,6 +1349,15 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       ),
     );
     this.#tables.valueChanged(change.actions, change.origin);
+    // The pending image that the image tool inserts takes focus once its card renders, as the
+    // popover it replaces did when it opened; a paste or a drop keeps focus in the editing root.
+    if (
+      change.origin === 'request' &&
+      change.tool === 'image' &&
+      change.reason !== 'input-paste' &&
+      change.reason !== 'drag'
+    )
+      this.#popups.image.toolInserted();
     this.#geometry.invalidate('state');
   }
 
@@ -1451,8 +1478,6 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
     switch (tool.kind) {
       case 'link':
         return this.#popups.link.isOpen;
-      case 'image':
-        return this.#popups.image.isOpen;
       case 'table-size':
         return this.#tables.picker.open;
       default:

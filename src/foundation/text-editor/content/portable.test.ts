@@ -229,8 +229,8 @@ describe('portable model canonicalization (uwg-te-req-content-3)', () => {
     });
   });
 
-  it('V-122: an empty document becomes one empty paragraph with a fresh identifier', () => {
-    for (const blocks of [[], [{ type: 'image', src: '', alt: 'x' }]] as const) {
+  it('V-122: an empty document becomes one empty paragraph with a fresh identifier; a pending image (an empty source) is kept, an image without a source is not', () => {
+    for (const blocks of [[], [{ type: 'image', alt: 'x' }]] as const) {
       const { document, diagnostics } = canonicalize(
         { blocks: blocks as unknown as TextEditorPortableBlock[] },
         { createId: sequence() },
@@ -240,6 +240,11 @@ describe('portable model canonicalization (uwg-te-req-content-3)', () => {
         [],
       ]);
     }
+    const pending = canonicalize(
+      { blocks: [{ type: 'image', src: '', alt: '' }] as unknown as TextEditorPortableBlock[] },
+      { createId: sequence() },
+    );
+    expect(pending.document.blocks).toEqual([{ type: 'image', id: 'n1', src: '', alt: '' }]);
   });
 
   it('V-365: a paragraph in a list item joins its text with a hard break; a list in a cell becomes paragraphs', () => {

@@ -1135,6 +1135,8 @@ describe('TextEditorController requests (uwg-te-req-evt-1, uwg-te-req-evt-2)', (
     expect(of('open-surface')).toMatchObject([
       { tool: 'link', detail: { actions: [], tool: 'link', surface: 'api' } },
     ]);
+    // The image tool opens no surface: without an upload hook it is not enabled, so its run
+    // without a value changes nothing (`uwg-te-req-surfaces-4`).
     host.opens = false;
     await expect(controller.request(api('image'))).resolves.toBe('unchanged');
     for (const tool of ['highlight', 'align', 'more', 'slash'])
@@ -1152,7 +1154,7 @@ describe('TextEditorController requests (uwg-te-req-evt-1, uwg-te-req-evt-2)', (
     host.opens = true;
     controller.setAccess({ readOnly: true, disabled: false });
     await expect(controller.request(api('table'))).resolves.toBe('unchanged');
-    expect(of('open-surface')).toHaveLength(2);
+    expect(of('open-surface')).toHaveLength(1);
   });
 
   it('a slash entry requests with the tool it executes, surface slash and no value; a run names slash', async () => {

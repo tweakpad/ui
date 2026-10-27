@@ -30,6 +30,7 @@ export const VOCABULARY_CLASSES: ReadonlySet<string> = new Set([
   'tp-te-bold',
   'tp-te-image',
   'tp-te-image-host',
+  'tp-te-image-pending',
   'tp-te-divider',
   'tp-te-table-wrapper',
   'tp-te-table',
@@ -91,7 +92,7 @@ const shippedModules = (dir: string): string[] =>
 
 describe('uwg-te-tab-vocabulary, uwg-te-req-pres-2: the engine-neutral class vocabulary', () => {
   it('names every class of the vocabulary table and the custom node classes', () => {
-    expect(VOCABULARY_CLASSES.size).toBe(34);
+    expect(VOCABULARY_CLASSES.size).toBe(35);
     for (const name of ['tp-te-block-callout', 'tp-te-inline-mention', 'tp-te-block-cursor'])
       expect(isVocabularyClass(name), name).toBe(true);
     for (const name of ['tp-te-row', 'tp-te-task-content', 'tp-te-block-', 'tp-te-inline-Bad'])

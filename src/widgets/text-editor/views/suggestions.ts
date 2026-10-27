@@ -155,7 +155,6 @@ export class SuggestionDismissals {
 /** Kinds of a slash entry that open a surface instead of acting at once. */
 const SURFACE_ENTRY_KINDS: ReadonlySet<TextEditorToolKind> = new Set<TextEditorToolKind>([
   'link',
-  'image',
   'table-size',
 ]);
 

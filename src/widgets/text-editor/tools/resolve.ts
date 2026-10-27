@@ -174,7 +174,6 @@ const BUTTON_KINDS: ReadonlySet<TextEditorToolKind> = new Set<TextEditorToolKind
 
 const DIALOG_KINDS: ReadonlySet<TextEditorToolKind> = new Set<TextEditorToolKind>([
   'link',
-  'image',
   'table-size',
 ]);
 

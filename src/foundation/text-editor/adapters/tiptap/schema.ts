@@ -410,11 +410,19 @@ function quoteNode(modules: TextEditorTiptapModules) {
   });
 }
 
+/** The classes of an image host: `tp-te-image-pending` added while the source is empty. */
+const imageHostClass = (src: string): string =>
+  src === '' ? 'tp-te-image-host tp-te-image-pending' : 'tp-te-image-host';
+
 /** The positive width of an image in CSS pixels, or `null`. */
 const imageWidth = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
 
-/** An image: an atom block rendered as `tp-te-image-host` > `img.tp-te-image`, never draggable. */
+/**
+ * An image: an atom block rendered as `tp-te-image-host` > `img.tp-te-image`, never draggable. A
+ * pending image (an empty source, filled in by an upload) marks its host `tp-te-image-pending`
+ * and hides its `img`; the widget overlays its upload card on the host.
+ */
 function imageNode(modules: TextEditorTiptapModules) {
   return modules.core.Node.create({
     name: NATIVE.image,
@@ -430,7 +438,7 @@ function imageNode(modules: TextEditorTiptapModules) {
     parseHTML: () => [{ tag: 'img[src]' }],
     renderHTML: ({ node }: { node: TiptapNodeLike }) => [
       'div',
-      { class: 'tp-te-image-host', dir: 'auto' },
+      { class: imageHostClass(String(node.attrs.src ?? '')), dir: 'auto' },
       [
         'img',
         {
@@ -439,6 +447,7 @@ function imageNode(modules: TextEditorTiptapModules) {
           alt: String(node.attrs.alt ?? ''),
           width: imageWidth(node.attrs.width),
           draggable: 'false',
+          hidden: node.attrs.src ? null : '',
         },
       ],
     ],
@@ -456,7 +465,11 @@ function imageNode(modules: TextEditorTiptapModules) {
         image.className = 'tp-te-image';
         image.draggable = false;
         const apply = (node: TiptapNodeLike) => {
-          image.src = String(node.attrs.src ?? '');
+          const src = String(node.attrs.src ?? '');
+          dom.className = imageHostClass(src);
+          image.hidden = src === '';
+          if (src === '') image.removeAttribute('src');
+          else image.src = src;
           image.alt = String(node.attrs.alt ?? '');
           const width = imageWidth(node.attrs.width);
           if (width === null) image.removeAttribute('width');

@@ -1,6 +1,6 @@
 /**
- * The open lanes of the transient surfaces (`uwg-te-tab-reasons` r12, r13): the link and image
- * popovers, the table size picker and the suggestion lists record each opening and closing with
+ * The open lanes of the transient surfaces (`uwg-te-tab-reasons` r12, r13): the link popover,
+ * the table size picker and the suggestion lists record each opening and closing with
  * its reason. The lanes are internal by design (no public event or state carries their reasons,
  * DD-024), so they are reported only to the observers of this instrumentation, such as a fixture's
  * lane probe.
@@ -8,7 +8,7 @@
 import type { ChangeReason } from '../../../foundation/types.js';
 
 /** A transient surface with an open lane. */
-export type TextEditorLaneSurface = 'link' | 'image' | 'table-size' | 'suggestions';
+export type TextEditorLaneSurface = 'link' | 'table-size' | 'suggestions';
 
 /** One change of a surface's open lane. */
 export interface TextEditorLaneChange {

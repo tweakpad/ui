@@ -21,6 +21,7 @@ export const LEXICAL_CLASSES = Object.freeze({
   color: 'tp-te-color',
   highlight: 'tp-te-highlight',
   imageHost: 'tp-te-image-host',
+  imagePending: 'tp-te-image-pending',
   image: 'tp-te-image',
   cellSelected: 'tp-te-cell-selected',
   tableSelection: 'tp-te-table-selection',

@@ -356,14 +356,20 @@ export function isAtomOrTable(block: TextEditorPortableBlock): boolean {
   );
 }
 
+/** Whether a block is a pending image: one with an empty source, which an upload fills in. */
+export function isPendingImage(block: TextEditorPortableBlock): boolean {
+  return block.type === 'image' && block.src === '';
+}
+
 /**
- * The blocks that HTML, Markdown and text write: every block but the empty paragraph that follows
- * a final atom block or table, which the engines keep and the formats omit (uwg-te-req-blocks-1).
+ * The blocks that HTML, Markdown and text write: every block but the pending images, which exist
+ * only while their upload runs, and the empty paragraph that follows a final atom block or table,
+ * which the engines keep and the formats omit (uwg-te-req-blocks-1).
  */
 export function outputBlocks(
   document: TextEditorPortableDocument,
 ): readonly TextEditorPortableBlock[] {
-  const { blocks } = document;
+  const blocks = document.blocks.filter((block) => !isPendingImage(block));
   const last = blocks[blocks.length - 1];
   const before = blocks[blocks.length - 2];
   return last?.type === 'paragraph' &&
@@ -959,8 +965,8 @@ class Fitter {
     else if (isListKind(type)) this.#item(block, type, null);
     else if (type === 'divider') this.blocks.push({ type, id: block.id, source: block });
     else if (type === 'image') {
-      if (typeof block.src === 'string' && block.src !== '')
-        this.blocks.push({ type, id: block.id, source: block });
+      // An empty source is a pending image (filled in by an upload), kept; a missing one is not.
+      if (typeof block.src === 'string') this.blocks.push({ type, id: block.id, source: block });
     } else if (type === 'table') {
       const table = this.#table(block);
       if (table) this.blocks.push(table);

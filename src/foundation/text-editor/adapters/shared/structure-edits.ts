@@ -370,9 +370,10 @@ export function newBlock(
     case 'divider':
       return { type: 'divider', id };
     case 'image':
+      // An empty source is a pending image, which the widget's upload fills in; any other source
+      // must pass the image policy.
       return typeof attrs['src'] === 'string' &&
-        attrs['src'] !== '' &&
-        allowedUrl(attrs['src'], imageProtocols(context.urls))
+        (attrs['src'] === '' || allowedUrl(attrs['src'], imageProtocols(context.urls)))
         ? {
             type: 'image',
             id,

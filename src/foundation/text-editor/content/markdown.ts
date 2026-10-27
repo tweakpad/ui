@@ -641,6 +641,8 @@ class MarkdownWriter {
 
   /** An image in a paragraph of its own; one whose source fails the policy is its alternative text. */
   #image(image: TextEditorPortableImage): MarkdownBlock[] {
+    // A pending image (an empty source) is transient and leaves no output and no diagnostic.
+    if (image.src === '') return [];
     if (allowedUrl(image.src, this.#images))
       return [
         {

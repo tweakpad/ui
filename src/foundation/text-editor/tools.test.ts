@@ -123,6 +123,7 @@ function state(members: Partial<TextEditorEngineState> = {}): TextEditorEngineSt
 function context(members: Partial<TextEditorToolContext> = {}): TextEditorToolContext {
   return {
     state: state(),
+    imageUpload: true,
     strings: textEditorStrings,
     surface: 'api',
     target: { kind: 'selection' },
@@ -1846,7 +1847,11 @@ describe('tool actions (uwg-te-req-tools-3, uwg-te-req-surfaces-2)', () => {
     expect(actions('slash', { state: typed, value: 'table' })).toEqual([
       { type: 'text.delete', range: { block: 'b1', from: 5, to: 9 } },
     ]);
-    expect(actions('slash', { state: typed, value: 'image' })).toHaveLength(1);
+    // The image entry acts at once: it removes the trigger and inserts a pending image.
+    expect(actions('slash', { state: typed, value: 'image' })).toEqual([
+      { type: 'text.delete', range: { block: 'b1', from: 5, to: 9 } },
+      { type: 'blocks.insert', kind: 'image', attrs: { src: '', alt: '' } },
+    ]);
     // The caret text may be cut to its last 64 units: offsets stay in the block's own content.
     const long = `${'w'.repeat(70)} /div`;
     const cut = state({

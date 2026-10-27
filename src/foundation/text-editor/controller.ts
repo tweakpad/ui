@@ -182,6 +182,8 @@ export interface TextEditorControllerHost {
   frames(): FrameSource;
   /** The writing direction of the widget, which names the sides of table columns. */
   direction(): 'ltr' | 'rtl';
+  /** Whether the widget uploads image files (its `imageUpload` hook is set); false when absent. */
+  imageUpload?(): boolean;
   /** Adopts engine styles into the widget's shadow root; returns their release. */
   adoptStyles(cssText: string): () => void;
   /** Dispatches the cancelable request; returns `false` when it was cancelled. */
@@ -221,7 +223,6 @@ const DEFAULT_LABELS: TextEditorEngineLabels = Object.freeze({
 /** Kinds that open their surface when run without a value (uwg-te-req-tools-4). */
 const OPENS_SURFACE_WITHOUT_VALUE: ReadonlySet<TextEditorToolKind> = new Set<TextEditorToolKind>([
   'link',
-  'image',
   'table-size',
 ]);
 /** Kinds whose `run` without a value settles unchanged. */
@@ -1136,6 +1137,7 @@ export class TextEditorController {
           : state.table
             ? instance.getTable(state.table.id)
             : null,
+      imageUpload: this.#host.imageUpload?.() ?? false,
       value,
     };
   }

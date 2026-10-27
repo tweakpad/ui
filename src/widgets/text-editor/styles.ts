@@ -180,6 +180,25 @@ export const textEditorStyles = css`
     display: none !important;
   }
 
+  /* The upload card of a pending image: placed over the block's box; its File upload fills it. */
+  [part~='text-editor-image-upload'] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    display: grid;
+    pointer-events: auto;
+  }
+
+  [part~='text-editor-image-upload'][hidden] {
+    display: none !important;
+  }
+
+  [part~='text-editor-image-upload'] > tp-file-upload {
+    min-inline-size: 0;
+    min-block-size: 0;
+  }
+
   [part~='text-editor-status'] {
     grid-area: viewport;
     position: absolute;

@@ -31,9 +31,13 @@ interface Args {
   stickyTableHeaders: boolean;
 }
 
-/** One editor with the story's properties; its engine is assigned once, so no Control remounts it. */
+/**
+ * One editor with the story's properties and the sample upload hook, so that the image tool works;
+ * its engine is assigned once, so no Control remounts it.
+ */
 const renderTextEditor = (args: Args, createEngine: () => TextEditorEngine): TemplateResult =>
   html`<tp-text-editor
+    .imageUpload=${sampleUpload}
     .defaultValue=${args.defaultValue}
     .format=${args.format}
     .placeholder=${args.placeholder}
@@ -215,7 +219,7 @@ export const ImageUpload: Story = {
     docs: {
       description: {
         story:
-          'With `imageUpload`, the image popover offers a file upload, and pasted or dropped image files are uploaded too. The hook receives each file with an abort signal and a progress callback and resolves to the image source.',
+          'With `imageUpload`, the image tool inserts an image block that shows a File upload until its image is uploaded, and pasted or dropped image files are uploaded the same way. `imageAccept` and `imageMaxFileSize` limit the files; the hook receives each file with an abort signal and a progress callback and resolves to the image source.',
       },
     },
   },

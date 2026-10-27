@@ -45,6 +45,7 @@
 & .tp-te-link:focus-visible{outline:var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);outline-offset:var(--tp-space-0-5);border-radius:var(--tp-radius-sm)}
 & .tp-te-bold{font-weight:var(--tp-font-semibold)}
 & .tp-te-image{max-inline-size:100%;block-size:auto;border-radius:var(--tp-radius-md)}
+& .tp-te-image-host.tp-te-image-pending{min-block-size:calc(var(--tp-space-4) * 9)}
 & .tp-te-divider{background-color:var(--tp-border)}
 & .tp-te-callout{column-gap:var(--tp-space-2);padding:var(--tp-space-2) var(--tp-space-2-5);border:var(--tp-border-width) var(--tp-border-style) var(--tp-border);border-radius:var(--tp-radius-lg);background:var(--tp-card);color:var(--tp-card-foreground);font-size:var(--tp-text-sm);box-shadow:var(--tp-shadow-none)}
 & .tp-te-callout[data-tone="tip"], & .tp-te-callout[data-tone="success"]{color:color-mix(in oklab, var(--tp-success) 85%, var(--tp-card-foreground))}
@@ -110,7 +111,7 @@
 &{background-color:var(--tp-card);border:var(--tp-border-width) var(--tp-border-style) color-mix(in oklab, var(--tp-foreground) 10%, transparent);border-radius:var(--tp-radius-md);box-shadow:var(--tp-shadow-sm);padding:var(--tp-space-1)}
 /* text-editor-suggestions */
 /* text-editor-link-popover */
-/* text-editor-image-popover */
+/* text-editor-image-upload */
 /* text-editor-table-picker */
 & .table-picker-body{display:grid;gap:var(--tp-space-3);justify-items:start}
 & .table-picker-grid{display:grid;grid-template-columns:repeat(8, var(--tp-space-4));gap:var(--tp-space-0-5)}
@@ -200,9 +201,8 @@
 &{display:inline-flex;align-items:center;justify-content:center;flex:none;inline-size:var(--tp-icon-size-md);block-size:var(--tp-icon-size-md)}
 /* text-editor-link-popover */
 & .link-popover{display:flex;align-items:center;gap:var(--tp-space-1)}
-/* text-editor-image-popover */
-& .image-popover{display:grid;gap:var(--tp-space-3)}
-& .image-popover > tp-button{justify-self:end}
+/* text-editor-image-upload */
+&{align-content:stretch}
 /* text-editor-gutter */
 &{display:flex;align-items:center;inline-size:calc(2 * var(--tp-control-height-xs))}
 :host([data-dragging]) &{opacity:0}

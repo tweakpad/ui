@@ -195,10 +195,43 @@ export function lexicalEngine() {
   });
 }
 
+const sampleImage = new URL('../assets/ratio-landscape.svg', import.meta.url).href;
+
 /**
- * Wires one example: each editor in `root` gets the sample notes when it carries `data-sample`, then
- * an engine of its own from `createEngine`; a `tp-form[data-form-output]` shows what it submits in
- * the `tp-code-block[data-submitted]` beside it. Returns cleanup.
+ * The upload hook of the examples: reports progress in eight steps over 1.6 s and resolves the
+ * sample image; the signal aborts it. An application uploads the file to its storage here and
+ * resolves the stored image's URL.
+ * @param {File} file
+ * @param {{ signal: AbortSignal, onProgress(loaded: number, total?: number): void }} options
+ * @returns {Promise<string>}
+ */
+export function uploadImage(file, { signal, onProgress }) {
+  return new Promise((resolve, reject) => {
+    const total = Math.max(file.size, 1);
+    let sent = 0;
+    const timer = setInterval(() => {
+      sent = Math.min(total, sent + Math.ceil(total / 8));
+      onProgress(sent, total);
+      if (sent < total) return;
+      clearInterval(timer);
+      resolve(sampleImage);
+    }, 200);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearInterval(timer);
+        reject(signal.reason);
+      },
+      { once: true },
+    );
+  });
+}
+
+/**
+ * Wires one example: each editor in `root` gets the sample notes when it carries `data-sample`,
+ * the sample upload hook, then an engine of its own from `createEngine`; a
+ * `tp-form[data-form-output]` shows what it submits in the `tp-code-block[data-submitted]` beside
+ * it. Returns cleanup.
  * @param {HTMLElement} root
  * @param {() => object} createEngine returns a new engine
  * @returns {() => void} cleanup
@@ -213,6 +246,7 @@ export function setupTextEditorExample(root, createEngine) {
       editor.layout = { suggestions: ['slash', 'mention'] };
       editor.defaultValue = customBlockNotes;
     }
+    editor.imageUpload = uploadImage;
     editor.engine = createEngine();
     cleanups.push(() => (editor.engine = null));
   }

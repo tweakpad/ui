@@ -168,13 +168,13 @@ function createKit(lexical: LexicalCoreLike): LexicalNodeKit {
       image.className = LEXICAL_CLASSES.image;
       image.draggable = false;
       host.append(image);
-      writeImage(image, imageValues(this));
+      writeImage(host, image, imageValues(this));
       return host;
     }
 
     updateDOM(_prevNode: unknown, dom: HTMLElement): boolean {
       const image = dom.firstElementChild;
-      if (image) writeImage(image as HTMLImageElement, imageValues(this));
+      if (image) writeImage(dom, image as HTMLImageElement, imageValues(this));
       return false;
     }
 
@@ -345,8 +345,16 @@ function createKit(lexical: LexicalCoreLike): LexicalNodeKit {
   });
 }
 
-function writeImage(image: HTMLImageElement, values: LexicalImageValues): void {
-  if (image.getAttribute('src') !== values.src) image.setAttribute('src', values.src);
+/**
+ * Writes an image's values to its elements. A pending image (an empty source, filled in by an
+ * upload) marks its host `tp-te-image-pending` and hides its `img`.
+ */
+function writeImage(host: HTMLElement, image: HTMLImageElement, values: LexicalImageValues): void {
+  const pending = values.src === '';
+  host.classList.toggle(LEXICAL_CLASSES.imagePending, pending);
+  image.hidden = pending;
+  if (pending) image.removeAttribute('src');
+  else if (image.getAttribute('src') !== values.src) image.setAttribute('src', values.src);
   if (image.getAttribute('alt') !== values.alt) image.setAttribute('alt', values.alt);
   if (values.width === null) image.removeAttribute('width');
   else image.setAttribute('width', String(values.width));

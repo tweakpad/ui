@@ -10,6 +10,8 @@ export const TEXT_EDITOR_OWN_ATTRIBUTES = Object.freeze([
   'placeholder',
   'label',
   'sticky-table-headers',
+  'image-accept',
+  'image-max-file-size',
 ]);
 /** Attributes of the form control contract (uwg-te-req-prop-1). */
 export const TEXT_EDITOR_FORM_ATTRIBUTES = Object.freeze(['name', 'form']);

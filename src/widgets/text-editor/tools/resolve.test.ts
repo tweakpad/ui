@@ -59,6 +59,7 @@ function view(
   };
   const context = (surface: TextEditorToolContext['surface']): TextEditorToolContext => ({
     state,
+    imageUpload: true,
     strings: textEditorStrings,
     surface,
     target: { kind: 'selection' },
@@ -314,15 +315,16 @@ describe('text editor toolbar view', () => {
     expect(find(result, 'italic').shortcut).toBeUndefined();
   });
 
-  it('marks link, image and table controls as closed dialog openers (uwg-te-req-a11y-2)', () => {
+  it('marks link and table controls as closed dialog openers; the image tool opens no surface (uwg-te-req-a11y-2, uwg-te-req-surfaces-4)', () => {
     const result = view();
-    for (const id of ['link', 'image', 'table'])
+    for (const id of ['link', 'table'])
       expect([id, find(result, id).popup, find(result, id).expanded]).toEqual([
         id,
         'dialog',
         false,
       ]);
     expect(find(result, 'bold').popup).toBeNull();
+    expect(find(result, 'image').popup).toBeNull();
   });
 
   it('reports the open state of the surface a link, image or table control opens', () => {

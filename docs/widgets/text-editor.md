@@ -328,10 +328,19 @@ references and fragments; images allow `http` and `https` URLs and relative refe
 - Typing `[text](url)`, or a URL followed by a space or Enter, links only a destination inside
   the policy, and so does pasting a single URL over selected text.
 
-With `imageUpload`, the image popover offers a file upload, and pasted or dropped image files are
-uploaded too. The hook receives each file with an abort signal and a progress callback and
-resolves to the image's source; closing the popover aborts an upload in progress, and a source
-outside the image policy, such as a `blob:` or `data:` URL, fails the insertion.
+Images are added by upload. The image tool inserts an image block without a source yet, which
+shows a File upload in its place: drop an image on it or click it to choose one. The file is
+checked against `imageAccept` (image types by default) and `imageMaxFileSize` (no limit by
+default), uploaded through `imageUpload` with its progress shown, and once the upload resolves the
+image's source the block becomes the image. A failed upload shows its error with a Retry button;
+a refused file shows why. Deleting the block cancels its upload, and a block still waiting for its
+image is left out of the content. Pasted or dropped image files take the same limits and insert
+such a block at the paste or drop point for each accepted file; a refused file is reported through
+`tp-diagnostic` with the code `text-editor-upload-rejected` and announced. Without `imageUpload`
+the image tool is disabled and pasted or dropped files are ignored. The hook receives each file
+with an abort signal and a progress callback and resolves to the image's source; a source outside
+the image policy, such as a `blob:` or `data:` URL, is reported and leaves the block waiting. An
+image with a known source is inserted with `run('image', { src, alt })`.
 
 ## Custom blocks and inline nodes
 
@@ -577,7 +586,9 @@ The fixed toolbar is one tab stop. The selection toolbar, the block gutter and a
 are reached with Alt+F10 and left with Escape, which returns to the text with its selection;
 Alt+F10 again moves on to the next of them. Menus and popovers take focus when they open and give
 it back when they close. The slash and mention lists leave focus in the text: the arrow keys move
-through their items, and the editing root points at the highlighted one.
+through their items, and the editing root points at the highlighted one. The File upload of an
+image block waiting for its image follows the editing root in the tab order and takes focus when
+the image tool inserts the block; Escape in it returns to the text.
 
 A live region announces what the screen alone shows: the size of a block selection, moved,
 duplicated and deleted blocks, each step of a block drag, the highlighted suggestion, inserted,
@@ -654,7 +665,9 @@ The editor needs Chrome or Edge 137 or later, Firefox 142 or later, or Safari 17
 | `layout`             | none                   | `Partial<TextEditorLayout> \| null`   | the default layouts | Where tools appear. Reading it returns the effective layout.                                                             |
 | `nodes`              | none                   | `readonly TextEditorNodeDefinition[]` | `[]`                | Custom blocks and inline nodes; a change remounts with the content kept.                                                 |
 | `strings`            | none                   | `Partial<TextEditorStrings> \| null`  | `null`              | Replacements for the English `textEditorStrings`.                                                                        |
-| `imageUpload`        | none                   | `TextEditorImageUpload \| null`       | `null`              | Uploads an image file and resolves to its source, for the image popover and for pasted or dropped images.                |
+| `imageUpload`        | none                   | `TextEditorImageUpload \| null`       | `null`              | Uploads an image file and resolves to its source, for image blocks and for pasted or dropped images.                     |
+| `imageAccept`        | `image-accept`         | `FileAcceptInput`                     | `'image/*'`         | The accepted image types, in the forms of File upload's `accept`.                                                        |
+| `imageMaxFileSize`   | `image-max-file-size`  | `number \| null`                      | `null`              | The largest accepted image file in bytes, or size text such as `10MB` as an attribute; `null` is no limit.               |
 | `invalid`            | `invalid`              | `boolean`                             | `false`             | No effect on the editor.                                                                                                 |
 | `required`           | `required`             | `boolean`                             | `false`             | No effect on the editor.                                                                                                 |
 | `motionPolicy`       | `motion-policy`        | `MotionPolicy`                        | `'inherit'`         | Motion of the editor's own surfaces.                                                                                     |
@@ -704,31 +717,31 @@ The editor needs Chrome or Edge 137 or later, Firefox 142 or later, or Safari 17
 
 ### Parts
 
-| Part                            | Description                                |
-| ------------------------------- | ------------------------------------------ |
-| `text-editor`                   | The field boundary and its focus ring.     |
-| `text-editor-toolbar`           | The toolbar above the content.             |
-| `text-editor-viewport`          | The scroll container.                      |
-| `text-editor-content`           | The container of the document.             |
-| `text-editor-overlay`           | The layer above the content.               |
-| `text-editor-placeholder`       | The placeholder in the first block.        |
-| `text-editor-gutter`            | The block gutter beside the hovered block. |
-| `text-editor-insert`            | The gutter's insert button.                |
-| `text-editor-grip`              | The gutter's block grip.                   |
-| `text-editor-drop-indicator`    | The line where dragged blocks drop.        |
-| `text-editor-block-selection`   | The highlight of selected blocks.          |
-| `text-editor-selection-toolbar` | The toolbar over selected text.            |
-| `text-editor-suggestions`       | The popup of slash commands and mentions.  |
-| `text-editor-link-popover`      | The link popover.                          |
-| `text-editor-image-popover`     | The image popover.                         |
-| `text-editor-table-picker`      | The table size picker.                     |
-| `text-editor-swatch`            | A color swatch of the color menus.         |
-| `text-editor-status`            | The loading or error status.               |
-| `text-editor-row-grip`          | A table row grip.                          |
-| `text-editor-column-grip`       | A table column grip.                       |
-| `text-editor-cell-handle`       | The table cell handle.                     |
-| `text-editor-add-row`           | The button that adds a table row.          |
-| `text-editor-add-column`        | The button that adds a table column.       |
-| `text-editor-resize-handle`     | A table column resize handle.              |
-| `text-editor-table-selection`   | The outline of selected table cells.       |
-| `text-editor-sticky-header`     | The table header that stays in view.       |
+| Part                            | Description                                                |
+| ------------------------------- | ---------------------------------------------------------- |
+| `text-editor`                   | The field boundary and its focus ring.                     |
+| `text-editor-toolbar`           | The toolbar above the content.                             |
+| `text-editor-viewport`          | The scroll container.                                      |
+| `text-editor-content`           | The container of the document.                             |
+| `text-editor-overlay`           | The layer above the content.                               |
+| `text-editor-placeholder`       | The placeholder in the first block.                        |
+| `text-editor-gutter`            | The block gutter beside the hovered block.                 |
+| `text-editor-insert`            | The gutter's insert button.                                |
+| `text-editor-grip`              | The gutter's block grip.                                   |
+| `text-editor-drop-indicator`    | The line where dragged blocks drop.                        |
+| `text-editor-block-selection`   | The highlight of selected blocks.                          |
+| `text-editor-selection-toolbar` | The toolbar over selected text.                            |
+| `text-editor-suggestions`       | The popup of slash commands and mentions.                  |
+| `text-editor-link-popover`      | The link popover.                                          |
+| `text-editor-image-upload`      | The upload card over an image block waiting for its image. |
+| `text-editor-table-picker`      | The table size picker.                                     |
+| `text-editor-swatch`            | A color swatch of the color menus.                         |
+| `text-editor-status`            | The loading or error status.                               |
+| `text-editor-row-grip`          | A table row grip.                                          |
+| `text-editor-column-grip`       | A table column grip.                                       |
+| `text-editor-cell-handle`       | The table cell handle.                                     |
+| `text-editor-add-row`           | The button that adds a table row.                          |
+| `text-editor-add-column`        | The button that adds a table column.                       |
+| `text-editor-resize-handle`     | A table column resize handle.                              |
+| `text-editor-table-selection`   | The outline of selected table cells.                       |
+| `text-editor-sticky-header`     | The table header that stays in view.                       |

@@ -157,6 +157,8 @@ export interface TextEditorToolContext {
   readonly layout: TextEditorLayout;
   /** The model of the table that the target or the selection lies in, or `null`. */
   readonly table: TextEditorTableModel | null;
+  /** Whether the widget uploads image files: its `imageUpload` hook is set. */
+  readonly imageUpload: boolean;
   /** The value of the activation; `undefined` without one. */
   readonly value?: unknown;
 }
@@ -656,7 +658,6 @@ const SURFACE_KINDS: ReadonlySet<TextEditorToolKind> = new Set<TextEditorToolKin
   'radio-menu',
   'color',
   'link',
-  'image',
   'table-size',
 ]);
 

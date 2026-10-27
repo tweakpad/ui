@@ -23,6 +23,7 @@ function context(
 ): TextEditorToolContext {
   return {
     state: { ...preReadyState({ editable: true, empty: false }), ...state },
+    imageUpload: true,
     strings: textEditorStrings,
     surface: 'selection-toolbar',
     target: { kind: 'selection' },

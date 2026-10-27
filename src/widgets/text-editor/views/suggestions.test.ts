@@ -218,7 +218,7 @@ describe('suggestion keys and requests', () => {
       ['image', 'link', 'table', 'paragraph'].map((id) =>
         entryOpensSurface((textEditorTools as Record<string, TextEditorTool>)[id]),
       ),
-    ).toEqual([true, true, true, false]);
+    ).toEqual([false, true, true, false]);
     expect(entryOpensSurface(undefined)).toBe(false);
   });
 });

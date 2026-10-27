@@ -78,7 +78,7 @@ const anatomy = [
   'text-editor-selection-toolbar',
   'text-editor-suggestions',
   'text-editor-link-popover',
-  'text-editor-image-popover',
+  'text-editor-image-upload',
   'text-editor-table-picker',
   'text-editor-swatch',
   'text-editor-status',
@@ -457,8 +457,8 @@ describe('text editor recipe', () => {
   });
 
   it('uwg-te-tab-vocabulary: every vocabulary class is bound or recorded with its reason, and no selector names a class outside it', () => {
-    expect(VOCABULARY_CLASSES.size).toBe(34);
-    expect(unboundVocabularyClasses([])).toHaveLength(29);
+    expect(VOCABULARY_CLASSES.size).toBe(35);
+    expect(unboundVocabularyClasses([])).toHaveLength(30);
     expect(unboundVocabularyClasses(dictionaries)).toEqual([]);
   });
 

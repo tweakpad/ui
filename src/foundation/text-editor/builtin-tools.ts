@@ -70,6 +70,7 @@ import type { TextEditorCapability } from './capabilities.js';
 import type {
   TextEditorAlign,
   TextEditorCellAddress,
+  TextEditorBlockAttributes,
   TextEditorCellRange,
   TextEditorHeadingLevel,
   TextEditorListKind,
@@ -487,6 +488,9 @@ const onBlocks =
   };
 
 /** The built-in tools by identifier. */
+/** The attributes of a pending image: an empty source that an upload fills in. */
+const PENDING_IMAGE: TextEditorBlockAttributes = Object.freeze({ src: '', alt: '' });
+
 export const textEditorTools = Object.freeze({
   // Formatting tools
   undo: builtin({
@@ -731,10 +735,19 @@ export const textEditorTools = Object.freeze({
     group: 'insert',
     surfaces: ['toolbar', 'slash'],
     requires: ['block.image'],
+    // Without a value, the tool inserts a pending image (an empty source) that the widget's
+    // upload card fills in (`uwg-te-req-surfaces-4`); that needs the upload hook. A run with a
+    // value inserts the image it names and needs no hook.
+    isEnabled: (context) => context.imageUpload || context.value !== undefined,
     action: (context) => {
       const value = context.value as TextEditorImageToolValue | undefined;
-      if (value === undefined) return null;
-      return [insertBlock(context, 'image', { src: value.src, alt: value.alt })];
+      return [
+        insertBlock(
+          context,
+          'image',
+          value === undefined ? PENDING_IMAGE : { src: value.src, alt: value.alt },
+        ),
+      ];
     },
   }),
   slash: builtin({

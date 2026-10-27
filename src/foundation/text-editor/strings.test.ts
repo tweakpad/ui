@@ -57,6 +57,7 @@ describe('strings (uwg-te-tab-props r12)', () => {
     for (const direction of ['ltr', 'rtl'] as const) {
       const context: TextEditorToolContext = {
         state: STATE,
+        imageUpload: true,
         strings: recordingStrings(read),
         surface: 'toolbar',
         target: { kind: 'selection' },
@@ -84,6 +85,7 @@ describe('strings (uwg-te-tab-props r12)', () => {
       const tool = (textEditorTools as Readonly<Record<string, TextEditorTool>>)[id]!;
       return contextual(tool.label, {
         state: STATE,
+        imageUpload: true,
         strings: textEditorStrings,
         surface: 'table-column',
         target: { kind: 'selection' },

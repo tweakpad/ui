@@ -35,10 +35,11 @@ import type {
 } from '../../../foundation/text-editor/tools.js';
 import type { ChangeReason } from '../../../foundation/types.js';
 import type { TextEditorContextualSurface, TextEditorMenuModality } from '../focus.js';
+import type { OverlayGeometry } from '../geometry.js';
 import type { TextEditorToolActivation } from '../tools/controls.js';
 import { resolveSelectionToolbarView } from '../tools/resolve.js';
 import type { TextEditorImageUpload } from '../types.js';
-import { insertImageFiles, TextEditorImagePopover } from './image-popover.js';
+import { TextEditorImageUploads, type TextEditorImageLimits } from './image-upload.js';
 import { TextEditorLinkPopover } from './link-popover.js';
 import {
   composedSelectionText,
@@ -86,6 +87,10 @@ export interface TextEditorPopupsHost {
   expanded?(tool: TextEditorTool): boolean;
   request(proposal: TextEditorRequestProposal): Promise<TextEditorRequestOutcome>;
   imageUpload(): TextEditorImageUpload | null;
+  /** The type and size limits of image files. */
+  imageLimits(): TextEditorImageLimits;
+  /** The overlay geometry, which places the image upload cards. */
+  readonly geometry: OverlayGeometry;
   /** Focuses the editing root with its selection, through the adapter. */
   focusEditing(): void;
   announce(message: string, options?: AnnounceOptions): void;
@@ -134,11 +139,9 @@ export class TextEditorPopups {
   readonly selectionToolbar: TextEditorSelectionToolbar;
   readonly suggestions: TextEditorSuggestions;
   readonly link: TextEditorLinkPopover;
-  readonly image: TextEditorImagePopover;
+  readonly image: TextEditorImageUploads;
   /** `aria-controls` and `aria-activedescendant` of the editing root while a list shows. */
   #reference: string | null = null;
-  /** Aborts the uploads of pasted and dropped image files when the widget disconnects. */
-  #uploads: AbortController | null = null;
   readonly #releaseContextual: () => void;
   /** Whether the text selection holds more than whitespace, read while the editing root has focus. */
   #selectedText: {
@@ -152,7 +155,7 @@ export class TextEditorPopups {
     const rects = () => ready()?.selectionRects() ?? [];
     const caret = () => ready()?.caretRect() ?? null;
     const opening =
-      (except: 'suggestions' | 'link' | 'image') =>
+      (except: 'suggestions' | 'link') =>
       (reason?: ChangeReason): void =>
         this.#closeOthers(except, reason);
     this.selectionToolbar = new TextEditorSelectionToolbar({
@@ -238,29 +241,19 @@ export class TextEditorPopups {
       opening: opening('link'),
       lane: (open, reason) => host.lane?.('link', open, reason),
     });
-    this.image = new TextEditorImagePopover({
+    this.image = new TextEditorImageUploads({
+      geometry: host.geometry,
       requestUpdate: () => host.requestUpdate(),
       strings: () => host.strings(),
       imageUpload: () => host.imageUpload(),
+      limits: () => host.imageLimits(),
+      access: () => host.access(),
+      instance: ready,
       selection: () => ready()?.getState().selection ?? host.state().selection,
-      blockIds: () =>
-        ready()
-          ?.getBlocks()
-          .ordered()
-          .map((block) => block.id) ?? [],
-      selectionRects: rects,
-      caretRect: caret,
-      endRect: () => {
-        const instance = ready();
-        const last = instance?.getBlocks().roots.at(-1);
-        return last ? (instance?.blockRects(last)?.box ?? null) : null;
-      },
-      content: () => host.content(),
       request: (proposal) => host.request(proposal),
       diagnose: (message) => host.diagnose('text-editor-upload-rejected', message),
+      announce: (message) => host.announce(message),
       focusEditing: () => host.focusEditing(),
-      opening: opening('image'),
-      lane: (open, reason) => host.lane?.('image', open, reason),
     });
     const toolbar = this.selectionToolbar;
     this.#releaseContextual = host.registerContextual({
@@ -280,23 +273,21 @@ export class TextEditorPopups {
 
   /** Whether a suggestion list or a popover is open. */
   get surfaceOpen(): boolean {
-    return this.suggestions.isOpen || this.link.isOpen || this.image.isOpen;
+    return this.suggestions.isOpen || this.link.isOpen;
   }
 
   /**
-   * Opens the surface of a link or image tool run without a value (`uwg-te-req-tools-4`): at the
-   * tool's control in the fixed toolbar, at the More trigger for its item in the More menu, or at
-   * the selection. Returns whether it opened one.
+   * Opens the surface of a link tool run without a value (`uwg-te-req-tools-4`): at the selection.
+   * Returns whether it opened one.
    */
   openSurface(tool: TextEditorTool, detail: TextEditorRequestDetail): boolean {
-    return this.openTool(tool.id, detail.surface, detail.trigger, tool.kind, detail.reason);
+    return this.openTool(tool.id, detail.surface, tool.kind, detail.reason);
   }
 
-  /** Opens the link or image popover for a tool identifier; false for any other tool. */
+  /** Opens the link popover for a tool identifier; false for any other tool. */
   openTool(
     toolId: string,
     surface: TextEditorRequestSurface,
-    trigger: Element | null,
     kind = this.#host.registry()?.tools.get(toolId)?.kind,
     reason?: ChangeReason,
   ): boolean {
@@ -304,22 +295,19 @@ export class TextEditorPopups {
       this.link.open(surface, reason);
       return true;
     }
-    if (kind === 'image') {
-      this.image.open(surface, this.#imageAnchor(surface, trigger), reason);
-      return true;
-    }
     return false;
   }
 
-  /** Every state publication: the suggestion occurrence and the selection toolbar follow it. */
+  /**
+   * Every state publication: the suggestion occurrence, the selection toolbar and the image upload
+   * cards follow it.
+   */
   stateChanged(): void {
     this.suggestions.sync();
+    this.image.sync();
     const access = this.#host.access();
-    if (access.readOnly || access.disabled) {
-      const reason = access.disabled ? 'disabled' : 'programmatic';
-      this.link.close(reason);
-      this.image.close(reason);
-    }
+    if (access.readOnly || access.disabled)
+      this.link.close(access.disabled ? 'disabled' : 'programmatic');
   }
 
   /** A primary press in the editing root, which a suggestion list's lane attributes. */
@@ -337,39 +325,23 @@ export class TextEditorPopups {
     return this.#host.instance()?.pointAt(x, y) ?? null;
   }
 
-  /** Uploads pasted or dropped image files through `imageUpload`; false without the hook. */
+  /** Uploads pasted or dropped image files in pending image blocks; false without the hook. */
   uploadImages(
     files: readonly File[],
     at: TextEditorSelectionInput,
     reason: 'input-paste' | 'drag',
     sourceEvent: Event,
   ): boolean {
-    const upload = this.#host.imageUpload();
-    if (!upload) return false;
-    this.#uploads ??= new AbortController();
-    const instance = () => this.#host.instance();
-    void insertImageFiles({
-      upload,
-      files,
-      at,
-      surface: reason === 'drag' ? 'drag' : 'paste',
-      reason,
-      sourceEvent,
-      signal: this.#uploads.signal,
-      blockIds: () =>
-        instance()
-          ?.getBlocks()
-          .ordered()
-          .map((block) => block.id) ?? [],
-      selection: () => (instance()?.getState() ?? this.#host.state()).selection,
-      request: (proposal) => this.#host.request(proposal),
-      diagnose: (message) => this.#host.diagnose('text-editor-upload-rejected', message),
-    });
-    return true;
+    return this.image.uploadImages(files, at, reason, sourceEvent);
   }
 
   render(): TemplateResult {
-    return html`${this.selectionToolbar.render()}${this.suggestions.render()}${this.link.render()}${this.image.render()}`;
+    return html`${this.selectionToolbar.render()}${this.suggestions.render()}${this.link.render()}`;
+  }
+
+  /** The image upload cards, rendered inside the overlay part. */
+  renderOverlay(): TemplateResult {
+    return this.image.render();
   }
 
   updated(): void {
@@ -386,8 +358,6 @@ export class TextEditorPopups {
     this.suggestions.release();
     this.image.release();
     this.link.close('programmatic');
-    this.#uploads?.abort();
-    this.#uploads = null;
     this.#reference = null;
   }
 
@@ -414,14 +384,13 @@ export class TextEditorPopups {
    * widget's register, which also closes the menus and the table size picker, else among these
    * three. A suggestion list that another surface closes stays dismissed until its trigger goes.
    */
-  #closeOthers(except: 'suggestions' | 'link' | 'image', reason?: ChangeReason): void {
+  #closeOthers(except: 'suggestions' | 'link', reason?: ChangeReason): void {
     // A surface that another one closes records the reason that opens it (r13).
     const closers = {
       suggestions: (closing?: ChangeReason) => {
         if (this.suggestions.isOpen) this.suggestions.close(true, closing ?? 'programmatic');
       },
       link: (closing?: ChangeReason) => this.link.close(closing ?? 'programmatic'),
-      image: (closing?: ChangeReason) => this.image.close(closing ?? 'programmatic'),
     } as const;
     const owner = this[except];
     if (this.#host.transientOpened) {
@@ -429,16 +398,6 @@ export class TextEditorPopups {
       return;
     }
     for (const [name, close] of Object.entries(closers)) if (name !== except) close(reason);
-  }
-
-  /** The image popover's anchor: the opening control in the fixed toolbar, or its More trigger. */
-  #imageAnchor(surface: TextEditorRequestSurface, trigger: Element | null): Element | null {
-    if (surface !== 'toolbar' || !trigger) return null;
-    const toolbar = this.#host.toolbar();
-    if (!toolbar || !composedContains(toolbar, trigger)) return null;
-    if (trigger.closest('.toolbar-more'))
-      return toolbar.querySelector('.toolbar-more-trigger') ?? null;
-    return trigger;
   }
 
   /** Focus is in the editing root. */
@@ -480,7 +439,7 @@ export class TextEditorPopups {
       composedContains(host.renderRoot.host, active) &&
       !(toolbar && composedContains(toolbar, active)) &&
       !this.link.isOpen &&
-      !this.image.isOpen;
+      !this.image.contains(active);
     const selection = state.selection;
     return {
       ready: instance !== null,

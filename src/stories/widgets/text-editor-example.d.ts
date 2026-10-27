@@ -11,7 +11,12 @@ export const fieldNotes: string;
 export function tiptapEngine(): TextEditorEngine;
 /** A new engine for one editor, with tables. */
 export function lexicalEngine(): TextEditorEngine;
-/** Wires the editors, sample notes and form readout inside `root`; returns cleanup. */
+/** The upload hook of the examples: reports progress and resolves the sample image. */
+export function uploadImage(
+  file: File,
+  options: { readonly signal: AbortSignal; onProgress(loaded: number, total?: number): void },
+): Promise<string>;
+/** Wires the editors, sample notes, upload hook and form readout inside `root`; returns cleanup. */
 export function setupTextEditorExample(
   root: HTMLElement,
   createEngine: () => TextEditorEngine,

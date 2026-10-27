@@ -62,6 +62,7 @@ const registry = resolveTextEditorTools({
 });
 
 const context = (inTable = false): TextEditorToolContext => ({
+  imageUpload: true,
   state: {
     ...preReadyState({ editable: true, empty: false }),
     ...(inTable
