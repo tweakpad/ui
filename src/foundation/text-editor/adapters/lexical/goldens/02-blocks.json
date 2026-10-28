@@ -1,0 +1,438 @@
+{
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Clayworks studio handbook",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "tag": "h1",
+        "direction": null,
+        "format": "center",
+        "indent": 0,
+        "type": "heading",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000001"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Members may use the wheels, the slab roller and the glaze room during open hours. Book the kilns a day ahead and label every shelf you load.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "justify",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000002"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Opening hours",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "tag": "h2",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "heading",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000003"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Firing schedule",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "tag": "h3",
+        "direction": null,
+        "format": "end",
+        "indent": 0,
+        "type": "heading",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000004"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Glazes",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "tag": "h4",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "heading",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000005"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Cleanup",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "tag": "h5",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "heading",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000006"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Fine print",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "tag": "h6",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "heading",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000007"
+        }
+      },
+      {
+        "children": [],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000008"
+        }
+      },
+      {
+        "children": [],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000009"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "The two empty paragraphs above stay in HTML.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000010"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Wedge the clay",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "type": "linebreak",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "until it is even,",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "type": "linebreak",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "then let it rest.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "quote",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000011"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "A quote of two paragraphs",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "type": "linebreak",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "becomes one quote with a line break.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "center",
+        "indent": 0,
+        "type": "quote",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000012"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "def kiln_ramp(target):",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "type": "linebreak",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "\t# a tab-indented comment",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "type": "linebreak",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "\treturn target - 40",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "type": "linebreak",
+            "version": 1
+          },
+          {
+            "type": "linebreak",
+            "version": 1
+          },
+          {
+            "type": "linebreak",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "print(\"``double`` and ```triple``` backticks\")",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "type": "linebreak",
+            "version": 1
+          }
+        ],
+        "language": "python",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "code",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000013"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "plain code, no language",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "code",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000014"
+        }
+      },
+      {
+        "type": "horizontalrule",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000015"
+        }
+      },
+      {
+        "type": "tp-image",
+        "version": 1,
+        "src": "https://clayworks.example/wheel.jpg",
+        "alt": "A wheel with a half-thrown bowl",
+        "width": 480,
+        "$": {
+          "tp-id": "te00000016"
+        }
+      },
+      {
+        "type": "tp-image",
+        "version": 1,
+        "src": "https://clayworks.example/kiln.jpg",
+        "$": {
+          "tp-id": "te00000017"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Signed, the studio team",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "end",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000018"
+        }
+      }
+    ],
+    "direction": null,
+    "format": "",
+    "indent": 0,
+    "type": "root",
+    "version": 1
+  }
+}

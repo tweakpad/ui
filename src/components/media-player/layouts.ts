@@ -2,7 +2,6 @@ import { css, html, nothing, type PropertyDeclarations, type PropertyValues } fr
 import { ref } from 'lit/directives/ref.js';
 import { DelayGroup } from '../../foundation/delay-group.js';
 import { TpElement } from '../../foundation/element.js';
-import type { KeyShortcut } from '../../foundation/key-bindings.js';
 
 import { TpMediaElement, mediaPopupScopeBrand, type MediaPlayerApi } from './context.js';
 import {
@@ -18,6 +17,7 @@ import { DEFAULT_SEEK_STEP } from './player.js';
 
 import { TpKeyHint } from '../key-hint/key-hint.js';
 import { TpKeyHintGroup } from '../key-hint/key-hint-group.js';
+import { renderShortcutHint } from '../key-hint/shortcut-hint.js';
 import { TpMediaPoster } from './poster.js';
 import { TpMediaTitle } from './title.js';
 import { TpMediaBufferingIndicator } from './feedback.js';
@@ -227,7 +227,7 @@ export abstract class TpMediaLayoutElement extends TpMediaElement {
     return html`<span
       data-media-tooltip-label
       style="display: inline-flex; align-items: center; gap: var(--tp-space-2)"
-      >${tip.label}${keyHint(shortcut)}</span
+      >${tip.label}${renderShortcutHint(shortcut, 'tooltip')}</span
     >`;
   }
 
@@ -278,16 +278,6 @@ export abstract class TpMediaLayoutElement extends TpMediaElement {
       if (menu.open && !this.#menuLocks.has(menu))
         this.#menuLocks.set(menu, { player, release: player.requestControlsLock('menu') });
   }
-}
-
-/** A shortcut as Key hints: one key, or a group for a chord. */
-function keyHint(shortcut: KeyShortcut | undefined): unknown {
-  const keys = shortcut?.keys ?? [];
-  if (!keys.length) return nothing;
-  if (keys.length === 1) return html`<tp-key-hint key=${keys[0]!}></tp-key-hint>`;
-  return html`<tp-key-hint-group
-    >${keys.map((key) => html`<tp-key-hint key=${key}></tp-key-hint>`)}</tp-key-hint-group
-  >`;
 }
 
 /**

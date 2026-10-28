@@ -1,4 +1,4 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { interactiveMarkupExample, publishedSource } from './documentation-examples.js';
 import { setupTableOfContentsExample } from './table-of-contents-example.js';
 import setupSource from './table-of-contents-example.js?raw';
 import generatorSource from './text-generator.js?raw';
@@ -101,12 +101,10 @@ ${side === 'end' ? `${article}\n${toc}` : `${toc}\n${article}`}
 }
 
 const script = (id: string) =>
-  `${generatorSource.replaceAll(/^export /gmu, '')}\n${setupSource
-    .replaceAll("'../foundation/collect-targets.js'", "'@tweakpad/ui'")
-    .replace(
-      /^import \{ fillGeneratedText \}.*\n/mu,
-      '',
-    )}\nsetupTableOfContentsExample(document.getElementById('${id}'));`;
+  `${generatorSource.replaceAll(/^export /gmu, '')}\n${publishedSource(setupSource).replace(
+    /^import \{ fillGeneratedText \}.*\n/mu,
+    '',
+  )}\nsetupTableOfContentsExample(document.getElementById('${id}'));`;
 
 const example = (title: string, id: string, markup: string, description: string) =>
   interactiveMarkupExample(

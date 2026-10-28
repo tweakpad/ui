@@ -10,6 +10,7 @@ import type { CustomElementConstructorWithTag } from '../../foundation/define.js
 import { TpButton } from '../button/button.js';
 import { formatBytes } from '../../foundation/format-bytes.js';
 import { resolveLocale } from '../../foundation/services.js';
+import { fillTemplate } from '../../foundation/template.js';
 
 export type AttachmentStatus = 'idle' | 'uploading' | 'processing' | 'error' | 'complete';
 /** Visible and accessible Attachment text. `{name}` is replaced with the filename. */
@@ -170,10 +171,10 @@ export class TpAttachment extends TpElement {
   };
   #text(key: keyof AttachmentMessages): string {
     const text = this.messages[key] ?? DEFAULT_ATTACHMENT_MESSAGES[key];
-    return text.replaceAll(
-      '{name}',
-      this.filename || (this.messages.fallbackName ?? DEFAULT_ATTACHMENT_MESSAGES.fallbackName),
-    );
+    return fillTemplate(text, {
+      name:
+        this.filename || (this.messages.fallbackName ?? DEFAULT_ATTACHMENT_MESSAGES.fallbackName),
+    });
   }
   protected override render() {
     const busy = this.status === 'uploading' || this.status === 'processing';

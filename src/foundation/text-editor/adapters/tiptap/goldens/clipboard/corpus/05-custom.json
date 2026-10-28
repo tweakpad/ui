@@ -1,0 +1,28 @@
+{
+  "copy-blocks": {
+    "payload": {
+      "text/html": "<div data-text-editor-fragment=\"blocks\"><h2 data-id=\"te00000001\">Release notes, tide app 3.2</h2><aside data-id=\"te00000002\" data-type=\"callout\" data-tone=\"warning\">Back up your logbook<br>before you update.</aside><p data-id=\"te00000003\">Thanks to <span data-type=\"mention\" data-person=\"u-17\" data-label=\"Mira Okafor\">@Mira Okafor</span> and <span data-type=\"mention\" data-person=\"u-4\" data-label=\"Teo\">@Teo</span> for testing the new chart.</p><figure data-id=\"te00000004\" data-type=\"embed\" data-url=\"https://tides.example/demo\" data-caption=\"A tour of the new tide chart\"></figure><aside data-id=\"te00000005\" data-type=\"callout\" data-tone=\"note\">A note in the default tone, with <strong>bold</strong> text.</aside><p data-id=\"te00000006\">A node without a definition is unwrapped.</p></div>",
+      "text/plain": "Release notes, tide app 3.2\n\nBack up your logbook\nbefore you update.\n\nThanks to @Mira Okafor and @Teo for testing the new chart.\n\nA tour of the new tide chart\n\nA note in the default tone, with bold text.\n\nA node without a definition is unwrapped."
+    }
+  },
+  "copy-range": {
+    "payload": {
+      "text/html": "<div data-text-editor-fragment=\"range\"><h2 data-id=\"te00000001\">Release notes, tide app 3.2</h2><aside data-id=\"te00000002\" data-type=\"callout\" data-tone=\"warning\">Back up your logbook<br>before you update.</aside><p data-id=\"te00000003\">Thanks to <span data-type=\"mention\" data-person=\"u-17\" data-label=\"Mira Okafor\">@Mira Okafor</span> and <span data-type=\"mention\" data-person=\"u-4\" data-label=\"Teo\">@Teo</span> for testing the new chart.</p><figure data-id=\"te00000004\" data-type=\"embed\" data-url=\"https://tides.example/demo\" data-caption=\"A tour of the new tide chart\"></figure><aside data-id=\"te00000005\" data-type=\"callout\" data-tone=\"note\">A note in the default tone, with <strong>bold</strong> text.</aside><p data-id=\"te00000006\">A node without a definition is unwrapped.</p></div>",
+      "text/plain": "Release notes, tide app 3.2\n\nBack up your logbook\nbefore you update.\n\nThanks to @Mira Okafor and @Teo for testing the new chart.\n\nA tour of the new tide chart\n\nA note in the default tone, with bold text.\n\nA node without a definition is unwrapped."
+    }
+  },
+  "cut-blocks": {
+    "payload": {
+      "text/html": "<div data-text-editor-fragment=\"blocks\"><aside data-id=\"te00000002\" data-type=\"callout\" data-tone=\"warning\">Back up your logbook<br>before you update.</aside><p data-id=\"te00000003\">Thanks to <span data-type=\"mention\" data-person=\"u-17\" data-label=\"Mira Okafor\">@Mira Okafor</span> and <span data-type=\"mention\" data-person=\"u-4\" data-label=\"Teo\">@Teo</span> for testing the new chart.</p><figure data-id=\"te00000004\" data-type=\"embed\" data-url=\"https://tides.example/demo\" data-caption=\"A tour of the new tide chart\"></figure><aside data-id=\"te00000005\" data-type=\"callout\" data-tone=\"note\">A note in the default tone, with <strong>bold</strong> text.</aside></div>",
+      "text/plain": "Back up your logbook\nbefore you update.\n\nThanks to @Mira Okafor and @Teo for testing the new chart.\n\nA tour of the new tide chart\n\nA note in the default tone, with bold text."
+    },
+    "html": "<h2 data-id=\"te00000001\">Release notes, tide app 3.2</h2>\n<p data-id=\"te00000006\">A node without a definition is unwrapped.</p>"
+  },
+  "cut-range": {
+    "payload": {
+      "text/html": "<div data-text-editor-fragment=\"range\"><h2 data-id=\"te00000001\">elease notes, tide app 3.2</h2><aside data-id=\"te00000002\" data-type=\"callout\" data-tone=\"warning\">Back up your logbook<br>before you update.</aside><p data-id=\"te00000003\">Thanks to <span data-type=\"mention\" data-person=\"u-17\" data-label=\"Mira Okafor\">@Mira Okafor</span> and <span data-type=\"mention\" data-person=\"u-4\" data-label=\"Teo\">@Teo</span> for testing the new chart.</p><figure data-id=\"te00000004\" data-type=\"embed\" data-url=\"https://tides.example/demo\" data-caption=\"A tour of the new tide chart\"></figure><aside data-id=\"te00000005\" data-type=\"callout\" data-tone=\"note\">A note in the default tone, with <strong>bold</strong> text.</aside><p data-id=\"te00000006\">A node without a definition is unwrapped</p></div>",
+      "text/plain": "elease notes, tide app 3.2\n\nBack up your logbook\nbefore you update.\n\nThanks to @Mira Okafor and @Teo for testing the new chart.\n\nA tour of the new tide chart\n\nA note in the default tone, with bold text.\n\nA node without a definition is unwrapped"
+    },
+    "html": "<h2 data-id=\"te00000001\">R.</h2>"
+  }
+}

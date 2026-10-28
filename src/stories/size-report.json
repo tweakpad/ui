@@ -1,41 +1,18 @@
 {
-  "generatedAt": "2026-10-14T23:22:31.535Z",
-  "version": "0.1.0",
-  "method": "Each catalog component (from @tweakpad/ui) and widget (from @tweakpad/ui/widgets) as documented (the root plus the parts its canonical example composes), imported and defined; Rolldown resolves the modules that ships (lit external, tree-shaken) and each module is measured as published in dist, bytes on disk and gzip per file, the way the build log lists it.",
-  "lit": {
-    "bytes": 16643,
-    "gzip": 7357,
-    "modules": 6
-  },
-  "shared": {
-    "bytes": 19753,
-    "gzip": 8321,
-    "modules": 9
-  },
-  "full": {
-    "bytes": 2540524,
-    "gzip": 871733,
-    "modules": 666
-  },
-  "fullWidgets": {
-    "bytes": 1728882,
-    "gzip": 578342,
-    "modules": 432
-  },
+  "generatedAt": "2026-10-27T16:39:03.361Z",
+  "version": "0.1.2",
+  "method": "Each row imports and registers one component or widget from its public package entry. Rolldown tree-shakes and minifies an independent production JavaScript bundle, then measures its output before and after gzip. Required dependencies and embedded styles are included; Lit, optional engines, source maps and the separate global stylesheet are excluded. Sizes use kB of 1000 bytes.",
+  "lit": { "bytes": 15769, "gzip": 6031 },
+  "full": { "bytes": 1830391, "gzip": 512380 },
+  "fullWidgets": { "bytes": 1506054, "gzip": 435383 },
   "components": [
     {
       "name": "Flow",
       "tagName": "tp-flow",
-      "className": "TpFlow",
-      "kind": "flattening-compound",
       "section": "widgets",
-      "uses": [],
-      "bytes": 1645296,
-      "gzip": 548522,
-      "ownGzip": 540201,
-      "modules": 414,
-      "rootBytes": 1645296,
-      "rootGzip": 548522,
+      "bytes": 1207665,
+      "gzip": 339818,
+      "modules": 428,
       "includes": [
         "tp-accordion",
         "tp-accordion-item",
@@ -102,18 +79,78 @@
       ]
     },
     {
+      "name": "Text editor (all features)",
+      "tagName": "tp-text-editor",
+      "section": "widgets",
+      "bytes": 984595,
+      "gzip": 291626,
+      "modules": 374,
+      "includes": [
+        "tp-aspect-ratio",
+        "tp-attachment",
+        "tp-badge",
+        "tp-button",
+        "tp-button-group",
+        "tp-command-list",
+        "tp-field",
+        "tp-file-upload",
+        "tp-icon",
+        "tp-image",
+        "tp-input",
+        "tp-input-group",
+        "tp-key-hint",
+        "tp-key-hint-group",
+        "tp-menu",
+        "tp-menu-checkbox-item",
+        "tp-menu-item",
+        "tp-menu-radio-group",
+        "tp-menu-radio-item",
+        "tp-overflow-list",
+        "tp-popover",
+        "tp-progress",
+        "tp-select",
+        "tp-separator",
+        "tp-skeleton",
+        "tp-spinner",
+        "tp-toggle",
+        "tp-toggle-group",
+        "tp-tooltip"
+      ]
+    },
+    {
+      "name": "Text editor",
+      "tagName": "tp-text-editor",
+      "section": "widgets",
+      "bytes": 494957,
+      "gzip": 149497,
+      "modules": 204,
+      "includes": [
+        "tp-badge",
+        "tp-button",
+        "tp-button-group",
+        "tp-icon",
+        "tp-key-hint",
+        "tp-key-hint-group",
+        "tp-menu",
+        "tp-menu-checkbox-item",
+        "tp-menu-item",
+        "tp-menu-radio-group",
+        "tp-menu-radio-item",
+        "tp-overflow-list",
+        "tp-separator",
+        "tp-spinner",
+        "tp-toggle",
+        "tp-toggle-group",
+        "tp-tooltip"
+      ]
+    },
+    {
       "name": "Color picker",
       "tagName": "tp-color-picker",
-      "className": "TpColorPicker",
-      "kind": "flattening-compound",
       "section": "widgets",
-      "uses": [],
-      "bytes": 677406,
-      "gzip": 234266,
-      "ownGzip": 225945,
-      "modules": 194,
-      "rootBytes": 677406,
-      "rootGzip": 234266,
+      "bytes": 497609,
+      "gzip": 143447,
+      "modules": 202,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -140,68 +177,12 @@
       ]
     },
     {
-      "name": "Media player",
-      "tagName": "tp-media-player",
-      "className": "TpMediaPlayer",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [
-        "tp-media-video-layout"
-      ],
-      "bytes": 635897,
-      "gzip": 223669,
-      "ownGzip": 215348,
-      "modules": 174,
-      "rootBytes": 198638,
-      "rootGzip": 73877,
-      "includes": [
-        "tp-alert-dialog",
-        "tp-badge",
-        "tp-button",
-        "tp-dialog",
-        "tp-icon",
-        "tp-key-hint",
-        "tp-key-hint-group",
-        "tp-media-audio-layout",
-        "tp-media-chapter-title",
-        "tp-media-controls-group",
-        "tp-media-error-dialog",
-        "tp-media-poster",
-        "tp-media-quality-radio-group",
-        "tp-media-remote-playback-button",
-        "tp-media-settings-menu",
-        "tp-media-thumbnail",
-        "tp-media-time",
-        "tp-media-time-slider",
-        "tp-media-time-slider-preview",
-        "tp-media-title",
-        "tp-media-volume-indicator",
-        "tp-media-volume-popover",
-        "tp-media-volume-slider",
-        "tp-menu",
-        "tp-menu-item",
-        "tp-menu-radio-group",
-        "tp-menu-radio-item",
-        "tp-popover",
-        "tp-slider",
-        "tp-slider-thumb",
-        "tp-spinner",
-        "tp-tooltip"
-      ]
-    },
-    {
       "name": "Easing editor",
       "tagName": "tp-easing-editor",
-      "className": "TpEasingEditor",
-      "kind": "flattening-compound",
       "section": "widgets",
-      "uses": [],
-      "bytes": 612239,
-      "gzip": 213492,
-      "ownGzip": 205171,
-      "modules": 181,
-      "rootBytes": 612239,
-      "rootGzip": 213492,
+      "bytes": 443638,
+      "gzip": 128239,
+      "modules": 187,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -226,16 +207,10 @@
     {
       "name": "Emoji picker",
       "tagName": "tp-emoji-picker",
-      "className": "TpEmojiPicker",
-      "kind": "flattening-compound",
       "section": "widgets",
-      "uses": [],
-      "bytes": 494440,
-      "gzip": 174934,
-      "ownGzip": 166613,
-      "modules": 144,
-      "rootBytes": 494440,
-      "rootGzip": 174934,
+      "bytes": 359803,
+      "gzip": 106088,
+      "modules": 148,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -256,16 +231,10 @@
     {
       "name": "Markdown",
       "tagName": "tp-markdown",
-      "className": "TpMarkdown",
-      "kind": "preset-composition",
       "section": "components",
-      "uses": [],
-      "bytes": 363241,
-      "gzip": 134174,
-      "ownGzip": 125853,
-      "modules": 124,
-      "rootBytes": 363241,
-      "rootGzip": 134174,
+      "bytes": 253946,
+      "gzip": 76713,
+      "modules": 128,
       "includes": [
         "tp-alert",
         "tp-button",
@@ -284,16 +253,10 @@
     {
       "name": "Command palette",
       "tagName": "tp-command-palette",
-      "className": "TpCommandPalette",
-      "kind": "preset-composition",
       "section": "components",
-      "uses": [],
-      "bytes": 359516,
-      "gzip": 129123,
-      "ownGzip": 120802,
-      "modules": 115,
-      "rootBytes": 359516,
-      "rootGzip": 129123,
+      "bytes": 254976,
+      "gzip": 75701,
+      "modules": 119,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -310,61 +273,37 @@
     {
       "name": "Tree view",
       "tagName": "tp-tree-view",
-      "className": "TpTreeView",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [
-        "tp-tree-item",
-        "tp-icon"
-      ],
-      "bytes": 336090,
-      "gzip": 123327,
-      "ownGzip": 115006,
-      "modules": 100,
-      "rootBytes": 336090,
-      "rootGzip": 123327,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-spinner",
-        "tp-tree-item"
-      ]
+      "bytes": 219362,
+      "gzip": 65776,
+      "modules": 99,
+      "includes": ["tp-button", "tp-icon", "tp-spinner", "tp-tree-item"]
     },
     {
       "name": "Autocomplete",
       "tagName": "tp-autocomplete",
-      "className": "TpAutocomplete",
-      "kind": "flattening-compound",
       "section": "components",
-      "uses": [],
-      "bytes": 300683,
-      "gzip": 108923,
-      "ownGzip": 100602,
-      "modules": 99,
-      "rootBytes": 300683,
-      "rootGzip": 108923,
-      "includes": [
-        "tp-badge",
-        "tp-button",
-        "tp-icon",
-        "tp-input-group",
-        "tp-select",
-        "tp-spinner"
-      ]
+      "bytes": 207884,
+      "gzip": 62179,
+      "modules": 101,
+      "includes": ["tp-badge", "tp-button", "tp-icon", "tp-input-group", "tp-select", "tp-spinner"]
+    },
+    {
+      "name": "Select",
+      "tagName": "tp-select",
+      "section": "components",
+      "bytes": 206094,
+      "gzip": 61648,
+      "modules": 98,
+      "includes": ["tp-badge", "tp-button", "tp-icon", "tp-input-group", "tp-spinner"]
     },
     {
       "name": "QR code",
       "tagName": "tp-qr-code",
-      "className": "TpQrCode",
-      "kind": "preset-composition",
       "section": "components",
-      "uses": [],
-      "bytes": 292237,
-      "gzip": 108297,
-      "ownGzip": 99976,
+      "bytes": 204085,
+      "gzip": 61623,
       "modules": 98,
-      "rootBytes": 292237,
-      "rootGzip": 108297,
       "includes": [
         "tp-button",
         "tp-button-group",
@@ -377,160 +316,39 @@
       ]
     },
     {
-      "name": "Select",
-      "tagName": "tp-select",
-      "className": "TpSelect",
-      "kind": "flattening-compound",
-      "section": "components",
-      "uses": [],
-      "bytes": 297497,
-      "gzip": 107537,
-      "ownGzip": 99216,
-      "modules": 96,
-      "rootBytes": 297497,
-      "rootGzip": 107537,
-      "includes": [
-        "tp-badge",
-        "tp-button",
-        "tp-icon",
-        "tp-input-group",
-        "tp-spinner"
-      ]
-    },
-    {
-      "name": "Map",
-      "tagName": "tp-map",
-      "className": "TpMap",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [
-        "tp-map-pin"
-      ],
-      "bytes": 277141,
-      "gzip": 101430,
-      "ownGzip": 93109,
-      "modules": 86,
-      "rootBytes": 155882,
-      "rootGzip": 60126,
-      "includes": [
-        "tp-button",
-        "tp-button-group",
-        "tp-icon",
-        "tp-map-control",
-        "tp-map-overlay",
-        "tp-map-pin",
-        "tp-popover",
-        "tp-spinner"
-      ]
-    },
-    {
-      "name": "Message scroller",
-      "tagName": "tp-message-scroller",
-      "className": "TpMessageScroller",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [
-        "tp-message-scroller-item",
-        "tp-message",
-        "tp-bubble"
-      ],
-      "bytes": 277063,
-      "gzip": 99370,
-      "ownGzip": 91049,
-      "modules": 84,
-      "rootBytes": 128316,
-      "rootGzip": 48111,
-      "includes": [
-        "tp-bubble",
-        "tp-button",
-        "tp-icon",
-        "tp-message",
-        "tp-message-scroller-return-control",
-        "tp-spinner",
-        "tp-time",
-        "tp-tooltip"
-      ]
-    },
-    {
       "name": "Carousel",
       "tagName": "tp-carousel",
-      "className": "TpCarousel",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [
-        "tp-card"
-      ],
-      "bytes": 273780,
-      "gzip": 98174,
-      "ownGzip": 89853,
-      "modules": 79,
-      "rootBytes": 264959,
-      "rootGzip": 94783,
-      "includes": [
-        "tp-button",
-        "tp-card",
-        "tp-icon",
-        "tp-progress",
-        "tp-spinner"
-      ]
+      "bytes": 191113,
+      "gzip": 58523,
+      "modules": 76,
+      "includes": ["tp-button", "tp-icon", "tp-progress", "tp-spinner"]
     },
     {
       "name": "Drag Drop List",
       "tagName": "tp-drag-drop-list",
-      "className": "TpDragDropList",
-      "kind": "preset-composition",
       "section": "components",
-      "uses": [],
-      "bytes": 263992,
-      "gzip": 96655,
-      "ownGzip": 88334,
-      "modules": 80,
-      "rootBytes": 263992,
-      "rootGzip": 96655,
-      "includes": [
-        "tp-button",
-        "tp-empty-state",
-        "tp-icon",
-        "tp-list-item",
-        "tp-spinner"
-      ]
+      "bytes": 174095,
+      "gzip": 51132,
+      "modules": 79,
+      "includes": ["tp-button", "tp-empty-state", "tp-icon", "tp-list-item", "tp-spinner"]
     },
     {
-      "name": "Navigation panel",
-      "tagName": "tp-navigation-panel",
-      "className": "TpNavigationPanel",
-      "kind": "compound-reexport",
+      "name": "Code block",
+      "tagName": "tp-code-block",
       "section": "components",
-      "uses": [],
-      "bytes": 270948,
-      "gzip": 96360,
-      "ownGzip": 88039,
-      "modules": 81,
-      "rootBytes": 270948,
-      "rootGzip": 96360,
-      "includes": [
-        "tp-button",
-        "tp-dialog",
-        "tp-drawer",
-        "tp-drawer-indent-background",
-        "tp-icon",
-        "tp-navigation-panel-drawer",
-        "tp-spinner"
-      ]
+      "bytes": 165290,
+      "gzip": 50410,
+      "modules": 85,
+      "includes": ["tp-button", "tp-copy-button", "tp-icon", "tp-spinner", "tp-tooltip"]
     },
     {
       "name": "File upload",
       "tagName": "tp-file-upload",
-      "className": "TpFileUpload",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [],
-      "bytes": 260863,
-      "gzip": 95745,
-      "ownGzip": 87424,
-      "modules": 94,
-      "rootBytes": 260863,
-      "rootGzip": 95745,
+      "bytes": 174946,
+      "gzip": 50196,
+      "modules": 97,
       "includes": [
         "tp-aspect-ratio",
         "tp-attachment",
@@ -544,322 +362,173 @@
       ]
     },
     {
-      "name": "Code block",
-      "tagName": "tp-code-block",
-      "className": "TpCodeBlock",
-      "kind": "presentational-primitive",
+      "name": "Navigation panel",
+      "tagName": "tp-navigation-panel",
       "section": "components",
-      "uses": [],
-      "bytes": 238735,
-      "gzip": 89026,
-      "ownGzip": 80705,
-      "modules": 84,
-      "rootBytes": 238735,
-      "rootGzip": 89026,
+      "bytes": 168273,
+      "gzip": 48499,
+      "modules": 79,
       "includes": [
         "tp-button",
-        "tp-copy-button",
+        "tp-dialog",
+        "tp-drawer",
+        "tp-drawer-indent-background",
         "tp-icon",
-        "tp-spinner",
-        "tp-tooltip"
-      ]
-    },
-    {
-      "name": "Menu",
-      "tagName": "tp-menu",
-      "className": "TpMenu",
-      "kind": "flattening-compound",
-      "section": "components",
-      "uses": [
-        "tp-button"
-      ],
-      "bytes": 237526,
-      "gzip": 85018,
-      "ownGzip": 76697,
-      "modules": 69,
-      "rootBytes": 220035,
-      "rootGzip": 78494,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-menu-item",
-        "tp-menu-radio-group",
+        "tp-navigation-panel-drawer",
         "tp-spinner"
-      ]
-    },
-    {
-      "name": "Menubar",
-      "tagName": "tp-menubar",
-      "className": "TpMenubar",
-      "kind": "flattening-compound",
-      "section": "components",
-      "uses": [
-        "tp-menu"
-      ],
-      "bytes": 232970,
-      "gzip": 83001,
-      "ownGzip": 74680,
-      "modules": 64,
-      "rootBytes": 88883,
-      "rootGzip": 34776,
-      "includes": [
-        "tp-icon",
-        "tp-menu",
-        "tp-menu-item",
-        "tp-menu-radio-group"
-      ]
-    },
-    {
-      "name": "Timeline",
-      "tagName": "tp-timeline",
-      "className": "TpTimeline",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [
-        "tp-timeline-item",
-        "tp-time"
-      ],
-      "bytes": 227519,
-      "gzip": 82219,
-      "ownGzip": 73898,
-      "modules": 67,
-      "rootBytes": 74391,
-      "rootGzip": 29571,
-      "includes": [
-        "tp-separator",
-        "tp-time",
-        "tp-timeline-item",
-        "tp-tooltip"
       ]
     },
     {
       "name": "Table of contents",
       "tagName": "tp-table-of-contents",
-      "className": "TpTableOfContents",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [
-        "tp-table-of-contents-item"
-      ],
-      "bytes": 226010,
-      "gzip": 81696,
-      "ownGzip": 73375,
+      "bytes": 158295,
+      "gzip": 47390,
       "modules": 67,
-      "rootBytes": 226010,
-      "rootGzip": 81696,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-popover",
-        "tp-spinner",
-        "tp-table-of-contents-item"
-      ]
+      "includes": ["tp-button", "tp-icon", "tp-popover", "tp-spinner", "tp-table-of-contents-item"]
     },
     {
-      "name": "Drawer",
-      "tagName": "tp-drawer",
-      "className": "TpDrawer",
-      "kind": "flattening-compound",
+      "name": "Menu",
+      "tagName": "tp-menu",
       "section": "components",
-      "uses": [
-        "tp-button"
-      ],
-      "bytes": 210693,
-      "gzip": 77488,
-      "ownGzip": 69167,
-      "modules": 68,
-      "rootBytes": 210693,
-      "rootGzip": 77488,
-      "includes": [
-        "tp-button",
-        "tp-dialog",
-        "tp-drawer-indent-background",
-        "tp-icon",
-        "tp-spinner"
-      ]
+      "bytes": 149064,
+      "gzip": 44437,
+      "modules": 59,
+      "includes": ["tp-icon", "tp-menu-item", "tp-menu-radio-group"]
     },
     {
       "name": "Message",
       "tagName": "tp-message",
-      "className": "TpMessage",
-      "kind": "presentational-primitive",
       "section": "components",
-      "uses": [],
-      "bytes": 210502,
-      "gzip": 75842,
-      "ownGzip": 67521,
+      "bytes": 142365,
+      "gzip": 44309,
       "modules": 58,
-      "rootBytes": 210502,
-      "rootGzip": 75842,
-      "includes": [
-        "tp-time",
-        "tp-tooltip"
-      ]
-    },
-    {
-      "name": "Text transform",
-      "tagName": "tp-text-transform",
-      "className": "TpTextTransform",
-      "kind": "presentational-primitive",
-      "section": "components",
-      "uses": [],
-      "bytes": 203040,
-      "gzip": 75144,
-      "ownGzip": 66823,
-      "modules": 62,
-      "rootBytes": 203040,
-      "rootGzip": 75144,
-      "includes": [
-        "tp-tooltip"
-      ]
-    },
-    {
-      "name": "Preview card",
-      "tagName": "tp-preview-card",
-      "className": "TpPreviewCard",
-      "kind": "flattening-compound",
-      "section": "components",
-      "uses": [
-        "tp-time"
-      ],
-      "bytes": 205414,
-      "gzip": 74482,
-      "ownGzip": 66161,
-      "modules": 57,
-      "rootBytes": 171160,
-      "rootGzip": 61752,
-      "includes": [
-        "tp-time",
-        "tp-tooltip"
-      ]
+      "includes": ["tp-time", "tp-tooltip"]
     },
     {
       "name": "Time",
       "tagName": "tp-time",
-      "className": "TpTime",
-      "kind": "presentational-primitive",
       "section": "components",
-      "uses": [],
-      "bytes": 203714,
-      "gzip": 73666,
-      "ownGzip": 65345,
+      "bytes": 137105,
+      "gzip": 43158,
       "modules": 55,
-      "rootBytes": 203714,
-      "rootGzip": 73666,
-      "includes": [
-        "tp-tooltip"
-      ]
+      "includes": ["tp-tooltip"]
+    },
+    {
+      "name": "Text transform",
+      "tagName": "tp-text-transform",
+      "section": "components",
+      "bytes": 135232,
+      "gzip": 42396,
+      "modules": 62,
+      "includes": ["tp-tooltip"]
     },
     {
       "name": "Citation",
       "tagName": "tp-citation",
-      "className": "TpCitation",
-      "kind": "preset-composition",
       "section": "components",
-      "uses": [],
-      "bytes": 199368,
-      "gzip": 73287,
-      "ownGzip": 64966,
+      "bytes": 133533,
+      "gzip": 40807,
       "modules": 65,
-      "rootBytes": 199368,
-      "rootGzip": 73287,
-      "includes": [
-        "tp-badge",
-        "tp-icon",
-        "tp-preview-card"
-      ]
-    },
-    {
-      "name": "Data visualization",
-      "tagName": "tp-data-visualization",
-      "className": "TpDataVisualization",
-      "kind": "presentational-primitive",
-      "section": "components",
-      "uses": [],
-      "bytes": 199087,
-      "gzip": 72668,
-      "ownGzip": 64347,
-      "modules": 61,
-      "rootBytes": 199087,
-      "rootGzip": 72668,
-      "includes": [
-        "tp-icon",
-        "tp-tooltip"
-      ]
+      "includes": ["tp-badge", "tp-icon", "tp-preview-card"]
     },
     {
       "name": "Navigation menu",
       "tagName": "tp-navigation-menu",
-      "className": "TpNavigationMenu",
-      "kind": "flattening-compound",
       "section": "components",
-      "uses": [],
-      "bytes": 200509,
-      "gzip": 71820,
-      "ownGzip": 63499,
-      "modules": 56,
-      "rootBytes": 200509,
-      "rootGzip": 71820,
-      "includes": [
-        "tp-icon",
-        "tp-navigation-menu-item"
-      ]
+      "bytes": 133100,
+      "gzip": 39702,
+      "modules": 54,
+      "includes": ["tp-icon", "tp-navigation-menu-item"]
+    },
+    {
+      "name": "Data visualization",
+      "tagName": "tp-data-visualization",
+      "section": "components",
+      "bytes": 126667,
+      "gzip": 38725,
+      "modules": 58,
+      "includes": ["tp-icon", "tp-tooltip"]
+    },
+    {
+      "name": "Media player",
+      "tagName": "tp-media-player",
+      "section": "components",
+      "bytes": 122662,
+      "gzip": 36895,
+      "modules": 62,
+      "includes": []
+    },
+    {
+      "name": "Drawer",
+      "tagName": "tp-drawer",
+      "section": "components",
+      "bytes": 124225,
+      "gzip": 36868,
+      "modules": 66,
+      "includes": ["tp-button", "tp-dialog", "tp-drawer-indent-background", "tp-icon", "tp-spinner"]
+    },
+    {
+      "name": "Status dot",
+      "tagName": "tp-status-dot",
+      "section": "components",
+      "bytes": 119822,
+      "gzip": 36675,
+      "modules": 50,
+      "includes": ["tp-tooltip"]
     },
     {
       "name": "Popover",
       "tagName": "tp-popover",
-      "className": "TpPopover",
-      "kind": "flattening-compound",
       "section": "components",
-      "uses": [
-        "tp-button"
-      ],
-      "bytes": 194346,
-      "gzip": 70669,
-      "ownGzip": 62348,
-      "modules": 60,
-      "rootBytes": 173390,
-      "rootGzip": 62498,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-spinner"
-      ]
+      "bytes": 112942,
+      "gzip": 34694,
+      "modules": 45,
+      "includes": []
     },
     {
       "name": "Tooltip",
       "tagName": "tp-tooltip",
-      "className": "TpTooltip",
-      "kind": "flattening-compound",
       "section": "components",
-      "uses": [
-        "tp-button"
-      ],
-      "bytes": 193278,
-      "gzip": 70449,
-      "ownGzip": 62128,
-      "modules": 60,
-      "rootBytes": 172322,
-      "rootGzip": 62278,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-spinner"
-      ]
+      "bytes": 112334,
+      "gzip": 34658,
+      "modules": 45,
+      "includes": []
+    },
+    {
+      "name": "Preview card",
+      "tagName": "tp-preview-card",
+      "section": "components",
+      "bytes": 110958,
+      "gzip": 34314,
+      "modules": 45,
+      "includes": []
+    },
+    {
+      "name": "Calendar",
+      "tagName": "tp-calendar",
+      "section": "components",
+      "bytes": 117182,
+      "gzip": 32956,
+      "modules": 53,
+      "includes": ["tp-button", "tp-icon", "tp-native-select", "tp-spinner"]
+    },
+    {
+      "name": "Toast",
+      "tagName": "tp-toast",
+      "section": "components",
+      "bytes": 103413,
+      "gzip": 32172,
+      "modules": 51,
+      "includes": ["tp-button", "tp-icon", "tp-spinner"]
     },
     {
       "name": "Theme switcher",
       "tagName": "tp-theme-switcher",
-      "className": "TpThemeSwitcher",
-      "kind": "preset-composition",
       "section": "components",
-      "uses": [],
-      "bytes": 171884,
-      "gzip": 66625,
-      "ownGzip": 58304,
+      "bytes": 109347,
+      "gzip": 30650,
       "modules": 73,
-      "rootBytes": 171884,
-      "rootGzip": 66625,
       "includes": [
         "tp-button",
         "tp-checkbox",
@@ -872,968 +541,507 @@
       ]
     },
     {
-      "name": "Status dot",
-      "tagName": "tp-status-dot",
-      "className": "TpStatusDot",
-      "kind": "presentational-primitive",
+      "name": "Map",
+      "tagName": "tp-map",
       "section": "components",
-      "uses": [],
-      "bytes": 182603,
-      "gzip": 66293,
-      "ownGzip": 57972,
-      "modules": 53,
-      "rootBytes": 182603,
-      "rootGzip": 66293,
-      "includes": [
-        "tp-tooltip"
-      ]
-    },
-    {
-      "name": "Calendar",
-      "tagName": "tp-calendar",
-      "className": "TpCalendar",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [],
-      "bytes": 172344,
-      "gzip": 61066,
-      "ownGzip": 52745,
-      "modules": 52,
-      "rootBytes": 172344,
-      "rootGzip": 61066,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-native-select",
-        "tp-spinner"
-      ]
-    },
-    {
-      "name": "Toast",
-      "tagName": "tp-toast",
-      "className": "TpToast",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [],
-      "bytes": 158419,
-      "gzip": 58329,
-      "ownGzip": 50008,
-      "modules": 51,
-      "rootBytes": 158419,
-      "rootGzip": 58329,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-spinner"
-      ]
+      "bytes": 99407,
+      "gzip": 30229,
+      "modules": 61,
+      "includes": ["tp-button", "tp-button-group", "tp-icon", "tp-map-control", "tp-spinner"]
     },
     {
       "name": "Alert dialog",
       "tagName": "tp-alert-dialog",
-      "className": "TpAlertDialog",
-      "kind": "flattening-compound",
       "section": "components",
-      "uses": [
-        "tp-button"
-      ],
-      "bytes": 145897,
-      "gzip": 55539,
-      "ownGzip": 47218,
+      "bytes": 96301,
+      "gzip": 28970,
       "modules": 56,
-      "rootBytes": 145897,
-      "rootGzip": 55539,
-      "includes": [
-        "tp-button",
-        "tp-dialog",
-        "tp-icon",
-        "tp-spinner"
-      ]
+      "includes": ["tp-button", "tp-dialog", "tp-icon", "tp-spinner"]
     },
     {
       "name": "Dialog",
       "tagName": "tp-dialog",
-      "className": "TpDialog",
-      "kind": "flattening-compound",
       "section": "components",
-      "uses": [
-        "tp-button"
-      ],
-      "bytes": 144313,
-      "gzip": 54816,
-      "ownGzip": 46495,
+      "bytes": 95440,
+      "gzip": 28770,
       "modules": 54,
-      "rootBytes": 144313,
-      "rootGzip": 54816,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-spinner"
-      ]
+      "includes": ["tp-button", "tp-icon", "tp-spinner"]
     },
     {
       "name": "Questionnaire",
       "tagName": "tp-questionnaire",
-      "className": "TpQuestionnaire",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [],
-      "bytes": 135643,
-      "gzip": 51156,
-      "ownGzip": 42835,
+      "bytes": 88186,
+      "gzip": 26035,
       "modules": 51,
-      "rootBytes": 135643,
-      "rootGzip": 51156,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-key-hint",
-        "tp-spinner"
-      ]
-    },
-    {
-      "name": "Cursor",
-      "tagName": "tp-cursor",
-      "className": "TpCursor",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [
-        "tp-cursor-zone",
-        "tp-button"
-      ],
-      "bytes": 123915,
-      "gzip": 48735,
-      "ownGzip": 40414,
-      "modules": 50,
-      "rootBytes": 97621,
-      "rootGzip": 38503,
-      "includes": [
-        "tp-button",
-        "tp-cursor-zone",
-        "tp-icon",
-        "tp-spinner"
-      ]
-    },
-    {
-      "name": "Field",
-      "tagName": "tp-field",
-      "className": "TpField",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [
-        "tp-input"
-      ],
-      "bytes": 128759,
-      "gzip": 47733,
-      "ownGzip": 39412,
-      "modules": 45,
-      "rootBytes": 113735,
-      "rootGzip": 41638,
-      "includes": [
-        "tp-input",
-        "tp-separator"
-      ]
-    },
-    {
-      "name": "Description list",
-      "tagName": "tp-description-list",
-      "className": "TpDescriptionList",
-      "kind": "preset-composition",
-      "section": "components",
-      "uses": [
-        "tp-description-list-item",
-        "tp-badge"
-      ],
-      "bytes": 120714,
-      "gzip": 46765,
-      "ownGzip": 38444,
-      "modules": 49,
-      "rootBytes": 116021,
-      "rootGzip": 44620,
-      "includes": [
-        "tp-badge",
-        "tp-button",
-        "tp-description-list-item",
-        "tp-icon",
-        "tp-spinner"
-      ]
-    },
-    {
-      "name": "Image",
-      "tagName": "tp-image",
-      "className": "TpImage",
-      "kind": "preset-composition",
-      "section": "components",
-      "uses": [],
-      "bytes": 119443,
-      "gzip": 45854,
-      "ownGzip": 37533,
-      "modules": 44,
-      "rootBytes": 119443,
-      "rootGzip": 45854,
-      "includes": [
-        "tp-aspect-ratio",
-        "tp-icon",
-        "tp-skeleton",
-        "tp-spinner"
-      ]
-    },
-    {
-      "name": "Form",
-      "tagName": "tp-form",
-      "className": "TpForm",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [],
-      "bytes": 124760,
-      "gzip": 45243,
-      "ownGzip": 36922,
-      "modules": 39,
-      "rootBytes": 124760,
-      "rootGzip": 45243,
-      "includes": [
-        "tp-field",
-        "tp-separator"
-      ]
-    },
-    {
-      "name": "Field group",
-      "tagName": "tp-field-group",
-      "className": "TpFieldGroup",
-      "kind": "preset-composition",
-      "section": "components",
-      "uses": [
-        "tp-input-group",
-        "tp-input"
-      ],
-      "bytes": 115432,
-      "gzip": 45204,
-      "ownGzip": 36883,
-      "modules": 47,
-      "rootBytes": 56887,
-      "rootGzip": 23987,
-      "includes": [
-        "tp-input",
-        "tp-input-group"
-      ]
-    },
-    {
-      "name": "Scroll trigger",
-      "tagName": "tp-scroll-trigger",
-      "className": "TpScrollTrigger",
-      "kind": "thin-wrapper",
-      "section": "components",
-      "uses": [
-        "tp-text-motion"
-      ],
-      "bytes": 115378,
-      "gzip": 43911,
-      "ownGzip": 35590,
-      "modules": 35,
-      "rootBytes": 77930,
-      "rootGzip": 30886,
-      "includes": [
-        "tp-text-motion"
-      ]
+      "includes": ["tp-button", "tp-icon", "tp-key-hint", "tp-spinner"]
     },
     {
       "name": "Slider",
       "tagName": "tp-slider",
-      "className": "TpSlider",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [],
-      "bytes": 121990,
-      "gzip": 43628,
-      "ownGzip": 35307,
-      "modules": 32,
-      "rootBytes": 121990,
-      "rootGzip": 43628,
-      "includes": [
-        "tp-slider-thumb"
-      ]
+      "bytes": 79453,
+      "gzip": 24599,
+      "modules": 33,
+      "includes": ["tp-slider-thumb"]
     },
     {
-      "name": "Accordion",
-      "tagName": "tp-accordion",
-      "className": "TpAccordion",
-      "kind": "compound-reexport",
+      "name": "Message scroller",
+      "tagName": "tp-message-scroller",
       "section": "components",
-      "uses": [
-        "tp-accordion-item"
-      ],
-      "bytes": 112537,
-      "gzip": 43237,
-      "ownGzip": 34916,
+      "bytes": 78476,
+      "gzip": 22998,
       "modules": 45,
-      "rootBytes": 112537,
-      "rootGzip": 43237,
-      "includes": [
-        "tp-accordion-item",
-        "tp-collapsible",
-        "tp-icon"
-      ]
+      "includes": ["tp-button", "tp-icon", "tp-message-scroller-return-control", "tp-spinner"]
+    },
+    {
+      "name": "Form",
+      "tagName": "tp-form",
+      "section": "components",
+      "bytes": 78647,
+      "gzip": 22400,
+      "modules": 36,
+      "includes": ["tp-field", "tp-separator"]
+    },
+    {
+      "name": "Description list",
+      "tagName": "tp-description-list",
+      "section": "components",
+      "bytes": 68462,
+      "gzip": 20448,
+      "modules": 44,
+      "includes": ["tp-button", "tp-description-list-item", "tp-icon", "tp-spinner"]
+    },
+    {
+      "name": "Field",
+      "tagName": "tp-field",
+      "section": "components",
+      "bytes": 69682,
+      "gzip": 20184,
+      "modules": 32,
+      "includes": ["tp-separator"]
+    },
+    {
+      "name": "Image",
+      "tagName": "tp-image",
+      "section": "components",
+      "bytes": 65918,
+      "gzip": 19909,
+      "modules": 41,
+      "includes": ["tp-aspect-ratio", "tp-icon", "tp-skeleton", "tp-spinner"]
     },
     {
       "name": "Text motion",
       "tagName": "tp-text-motion",
-      "className": "TpTextMotion",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [],
-      "bytes": 111001,
-      "gzip": 42230,
-      "ownGzip": 33909,
-      "modules": 33,
-      "rootBytes": 111001,
-      "rootGzip": 42230,
+      "bytes": 56964,
+      "gzip": 18967,
+      "modules": 26,
       "includes": []
     },
     {
       "name": "Switch",
       "tagName": "tp-switch",
-      "className": "TpSwitch",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [],
-      "bytes": 107500,
-      "gzip": 42173,
-      "ownGzip": 33852,
-      "modules": 44,
-      "rootBytes": 107500,
-      "rootGzip": 42173,
-      "includes": [
-        "tp-checkbox",
-        "tp-icon",
-        "tp-label"
-      ]
+      "bytes": 60940,
+      "gzip": 18212,
+      "modules": 42,
+      "includes": ["tp-checkbox", "tp-icon", "tp-label"]
+    },
+    {
+      "name": "Accordion",
+      "tagName": "tp-accordion",
+      "section": "components",
+      "bytes": 59547,
+      "gzip": 17514,
+      "modules": 43,
+      "includes": ["tp-accordion-item", "tp-collapsible", "tp-icon"]
     },
     {
       "name": "Native select",
       "tagName": "tp-native-select",
-      "className": "TpNativeSelect",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [],
-      "bytes": 107320,
-      "gzip": 40795,
-      "ownGzip": 32474,
-      "modules": 38,
-      "rootBytes": 107320,
-      "rootGzip": 40795,
-      "includes": [
-        "tp-icon"
-      ]
-    },
-    {
-      "name": "Input group",
-      "tagName": "tp-input-group",
-      "className": "TpInputGroup",
-      "kind": "preset-composition",
-      "section": "components",
-      "uses": [
-        "tp-input"
-      ],
-      "bytes": 105505,
-      "gzip": 40794,
-      "ownGzip": 32473,
-      "modules": 40,
-      "rootBytes": 71814,
-      "rootGzip": 28841,
-      "includes": [
-        "tp-input"
-      ]
-    },
-    {
-      "name": "Collapsible",
-      "tagName": "tp-collapsible",
-      "className": "TpCollapsible",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [],
-      "bytes": 98383,
-      "gzip": 38254,
-      "ownGzip": 29933,
-      "modules": 40,
-      "rootBytes": 98383,
-      "rootGzip": 38254,
-      "includes": [
-        "tp-icon"
-      ]
+      "bytes": 58752,
+      "gzip": 17039,
+      "modules": 32,
+      "includes": ["tp-icon"]
     },
     {
       "name": "Toggle group",
       "tagName": "tp-toggle-group",
-      "className": "TpToggleGroup",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [
-        "tp-toggle"
-      ],
-      "bytes": 95577,
-      "gzip": 37925,
-      "ownGzip": 29604,
-      "modules": 37,
-      "rootBytes": 95577,
-      "rootGzip": 37925,
-      "includes": [
-        "tp-toggle"
-      ]
+      "bytes": 55191,
+      "gzip": 16934,
+      "modules": 35,
+      "includes": ["tp-toggle"]
     },
     {
-      "name": "Attachment",
-      "tagName": "tp-attachment",
-      "className": "TpAttachment",
-      "kind": "preset-composition",
+      "name": "Cursor",
+      "tagName": "tp-cursor",
       "section": "components",
-      "uses": [],
-      "bytes": 95530,
-      "gzip": 37738,
-      "ownGzip": 29417,
-      "modules": 42,
-      "rootBytes": 95530,
-      "rootGzip": 37738,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-spinner"
-      ]
-    },
-    {
-      "name": "Label",
-      "tagName": "tp-label",
-      "className": "TpLabel",
-      "kind": "preset-composition",
-      "section": "components",
-      "uses": [
-        "tp-input"
-      ],
-      "bytes": 95329,
-      "gzip": 37554,
-      "ownGzip": 29233,
-      "modules": 38,
-      "rootBytes": 51373,
-      "rootGzip": 21691,
-      "includes": [
-        "tp-input"
-      ]
-    },
-    {
-      "name": "Pagination",
-      "tagName": "tp-pagination",
-      "className": "TpPagination",
-      "kind": "flattening-compound",
-      "section": "components",
-      "uses": [],
-      "bytes": 89356,
-      "gzip": 36497,
-      "ownGzip": 28176,
-      "modules": 42,
-      "rootBytes": 89356,
-      "rootGzip": 36497,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-spinner"
-      ]
+      "bytes": 51402,
+      "gzip": 16751,
+      "modules": 32,
+      "includes": ["tp-cursor-zone"]
     },
     {
       "name": "Copy button",
       "tagName": "tp-copy-button",
-      "className": "TpCopyButton",
-      "kind": "preset-composition",
       "section": "components",
-      "uses": [],
-      "bytes": 89153,
-      "gzip": 36465,
-      "ownGzip": 28144,
-      "modules": 41,
-      "rootBytes": 89153,
-      "rootGzip": 36465,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-spinner"
-      ]
+      "bytes": 52957,
+      "gzip": 16684,
+      "modules": 39,
+      "includes": ["tp-button", "tp-icon", "tp-spinner"]
     },
     {
-      "name": "Button group",
-      "tagName": "tp-button-group",
-      "className": "TpButtonGroup",
-      "kind": "preset-composition",
+      "name": "Resizable panel group",
+      "tagName": "tp-resizable-panel-group",
       "section": "components",
-      "uses": [
-        "tp-button"
-      ],
-      "bytes": 88365,
-      "gzip": 36247,
-      "ownGzip": 27926,
-      "modules": 41,
-      "rootBytes": 58445,
-      "rootGzip": 24574,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-spinner"
-      ]
+      "bytes": 51596,
+      "gzip": 16494,
+      "modules": 28,
+      "includes": ["tp-resizable-handle", "tp-resizable-panel"]
     },
     {
-      "name": "Overflow list",
-      "tagName": "tp-overflow-list",
-      "className": "TpOverflowList",
-      "kind": "presentational-primitive",
+      "name": "Attachment",
+      "tagName": "tp-attachment",
       "section": "components",
-      "uses": [
-        "tp-badge"
-      ],
-      "bytes": 88657,
-      "gzip": 36094,
-      "ownGzip": 27773,
-      "modules": 37,
-      "rootBytes": 88657,
-      "rootGzip": 36094,
-      "includes": [
-        "tp-badge"
-      ]
+      "bytes": 55364,
+      "gzip": 16447,
+      "modules": 41,
+      "includes": ["tp-button", "tp-icon", "tp-spinner"]
+    },
+    {
+      "name": "Pagination",
+      "tagName": "tp-pagination",
+      "section": "components",
+      "bytes": 51565,
+      "gzip": 16315,
+      "modules": 40,
+      "includes": ["tp-button", "tp-icon", "tp-spinner"]
+    },
+    {
+      "name": "Tabs",
+      "tagName": "tp-tabs",
+      "section": "components",
+      "bytes": 51914,
+      "gzip": 16172,
+      "modules": 27,
+      "includes": []
+    },
+    {
+      "name": "Collapsible",
+      "tagName": "tp-collapsible",
+      "section": "components",
+      "bytes": 49489,
+      "gzip": 15291,
+      "modules": 38,
+      "includes": ["tp-icon"]
+    },
+    {
+      "name": "Radio group",
+      "tagName": "tp-radio-group",
+      "section": "components",
+      "bytes": 47050,
+      "gzip": 14645,
+      "modules": 25,
+      "includes": ["tp-radio-group-item"]
+    },
+    {
+      "name": "Checkbox",
+      "tagName": "tp-checkbox",
+      "section": "components",
+      "bytes": 46989,
+      "gzip": 14583,
+      "modules": 31,
+      "includes": ["tp-icon"]
+    },
+    {
+      "name": "One-time code field",
+      "tagName": "tp-one-time-code-field",
+      "section": "components",
+      "bytes": 45307,
+      "gzip": 14083,
+      "modules": 28,
+      "includes": ["tp-icon"]
+    },
+    {
+      "name": "Toggle",
+      "tagName": "tp-toggle",
+      "section": "components",
+      "bytes": 43570,
+      "gzip": 13763,
+      "modules": 27,
+      "includes": []
+    },
+    {
+      "name": "Button",
+      "tagName": "tp-button",
+      "section": "components",
+      "bytes": 43070,
+      "gzip": 13681,
+      "modules": 32,
+      "includes": ["tp-icon", "tp-spinner"]
     },
     {
       "name": "Text area",
       "tagName": "tp-text-area",
-      "className": "TpTextArea",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [],
-      "bytes": 91183,
-      "gzip": 35562,
-      "ownGzip": 27241,
-      "modules": 34,
-      "rootBytes": 91183,
-      "rootGzip": 35562,
+      "bytes": 43654,
+      "gzip": 13542,
+      "modules": 25,
       "includes": []
     },
     {
       "name": "Input",
       "tagName": "tp-input",
-      "className": "TpInput",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [],
-      "bytes": 90916,
-      "gzip": 35440,
-      "ownGzip": 27119,
-      "modules": 34,
-      "rootBytes": 90916,
-      "rootGzip": 35440,
+      "bytes": 43485,
+      "gzip": 13509,
+      "modules": 25,
       "includes": []
     },
     {
-      "name": "Checkbox",
-      "tagName": "tp-checkbox",
-      "className": "TpCheckbox",
-      "kind": "compound-reexport",
+      "name": "Overflow list",
+      "tagName": "tp-overflow-list",
       "section": "components",
-      "uses": [],
-      "bytes": 90758,
-      "gzip": 35237,
-      "ownGzip": 26916,
-      "modules": 35,
-      "rootBytes": 90758,
-      "rootGzip": 35237,
-      "includes": [
-        "tp-icon"
-      ]
-    },
-    {
-      "name": "Card",
-      "tagName": "tp-card",
-      "className": "TpCard",
-      "kind": "presentational-primitive",
-      "section": "components",
-      "uses": [
-        "tp-button"
-      ],
-      "bytes": 85701,
-      "gzip": 34641,
-      "ownGzip": 26320,
-      "modules": 40,
-      "rootBytes": 64083,
-      "rootGzip": 26146,
-      "includes": [
-        "tp-button",
-        "tp-icon",
-        "tp-spinner"
-      ]
-    },
-    {
-      "name": "Tabs",
-      "tagName": "tp-tabs",
-      "className": "TpTabs",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [],
-      "bytes": 88627,
-      "gzip": 33790,
-      "ownGzip": 25469,
-      "modules": 30,
-      "rootBytes": 88627,
-      "rootGzip": 33790,
-      "includes": []
-    },
-    {
-      "name": "Radio group",
-      "tagName": "tp-radio-group",
-      "className": "TpRadioGroup",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [
-        "tp-radio-group-item"
-      ],
-      "bytes": 85491,
-      "gzip": 33417,
-      "ownGzip": 25096,
-      "modules": 30,
-      "rootBytes": 85491,
-      "rootGzip": 33417,
-      "includes": [
-        "tp-radio-group-item"
-      ]
-    },
-    {
-      "name": "Resizable panel group",
-      "tagName": "tp-resizable-panel-group",
-      "className": "TpResizablePanelGroup",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [],
-      "bytes": 85039,
-      "gzip": 32949,
-      "ownGzip": 24628,
-      "modules": 27,
-      "rootBytes": 85039,
-      "rootGzip": 32949,
-      "includes": [
-        "tp-resizable-handle",
-        "tp-resizable-panel"
-      ]
-    },
-    {
-      "name": "Toggle",
-      "tagName": "tp-toggle",
-      "className": "TpToggle",
-      "kind": "compound-reexport",
-      "section": "components",
-      "uses": [],
-      "bytes": 82010,
-      "gzip": 32505,
-      "ownGzip": 24184,
+      "bytes": 39794,
+      "gzip": 13271,
       "modules": 31,
-      "rootBytes": 82010,
-      "rootGzip": 32505,
+      "includes": ["tp-badge"]
+    },
+    {
+      "name": "Progress",
+      "tagName": "tp-progress",
+      "section": "components",
+      "bytes": 39224,
+      "gzip": 13256,
+      "modules": 26,
       "includes": []
     },
     {
       "name": "Scroll area",
       "tagName": "tp-scroll-area",
-      "className": "TpScrollArea",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [],
-      "bytes": 81945,
-      "gzip": 32421,
-      "ownGzip": 24100,
-      "modules": 30,
-      "rootBytes": 81945,
-      "rootGzip": 32421,
+      "bytes": 39179,
+      "gzip": 12680,
+      "modules": 25,
       "includes": []
     },
     {
-      "name": "One-time code field",
-      "tagName": "tp-one-time-code-field",
-      "className": "TpOneTimeCodeField",
-      "kind": "compound-reexport",
+      "name": "Timeline",
+      "tagName": "tp-timeline",
       "section": "components",
-      "uses": [],
-      "bytes": 82546,
-      "gzip": 32281,
-      "ownGzip": 23960,
-      "modules": 32,
-      "rootBytes": 82546,
-      "rootGzip": 32281,
-      "includes": [
-        "tp-icon"
-      ]
+      "bytes": 40367,
+      "gzip": 12536,
+      "modules": 28,
+      "includes": ["tp-separator", "tp-timeline-item"]
     },
     {
-      "name": "Button",
-      "tagName": "tp-button",
-      "className": "TpButton",
-      "kind": "compound-reexport",
+      "name": "Scroll trigger",
+      "tagName": "tp-scroll-trigger",
       "section": "components",
-      "uses": [],
-      "bytes": 76880,
-      "gzip": 31250,
-      "ownGzip": 22929,
-      "modules": 34,
-      "rootBytes": 76880,
-      "rootGzip": 31250,
-      "includes": [
-        "tp-icon",
-        "tp-spinner"
-      ]
+      "bytes": 36348,
+      "gzip": 12355,
+      "modules": 21,
+      "includes": []
+    },
+    {
+      "name": "Menubar",
+      "tagName": "tp-menubar",
+      "section": "components",
+      "bytes": 38344,
+      "gzip": 12302,
+      "modules": 26,
+      "includes": []
     },
     {
       "name": "List",
       "tagName": "tp-list",
-      "className": "TpList",
-      "kind": "preset-composition",
       "section": "components",
-      "uses": [
-        "tp-list-item"
-      ],
-      "bytes": 75385,
-      "gzip": 30118,
-      "ownGzip": 21797,
-      "modules": 33,
-      "rootBytes": 75385,
-      "rootGzip": 30118,
-      "includes": [
-        "tp-list-item",
-        "tp-list-separator",
-        "tp-separator"
-      ]
+      "bytes": 34667,
+      "gzip": 10488,
+      "modules": 28,
+      "includes": ["tp-list-item", "tp-list-separator", "tp-separator"]
+    },
+    {
+      "name": "Marker",
+      "tagName": "tp-marker",
+      "section": "components",
+      "bytes": 28945,
+      "gzip": 9883,
+      "modules": 18,
+      "includes": []
     },
     {
       "name": "Table",
       "tagName": "tp-table",
-      "className": "TpTable",
-      "kind": "presentational-primitive",
       "section": "components",
-      "uses": [],
-      "bytes": 65996,
-      "gzip": 26620,
-      "ownGzip": 18299,
-      "modules": 25,
-      "rootBytes": 65996,
-      "rootGzip": 26620,
-      "includes": [
-        "tp-table-caption"
-      ]
+      "bytes": 29915,
+      "gzip": 9841,
+      "modules": 19,
+      "includes": ["tp-table-caption"]
     },
     {
-      "name": "Progress",
-      "tagName": "tp-progress",
-      "className": "TpProgress",
-      "kind": "compound-reexport",
+      "name": "Input group",
+      "tagName": "tp-input-group",
       "section": "components",
-      "uses": [],
-      "bytes": 64933,
-      "gzip": 26114,
-      "ownGzip": 17793,
-      "modules": 25,
-      "rootBytes": 64933,
-      "rootGzip": 26114,
-      "includes": []
-    },
-    {
-      "name": "Bubble",
-      "tagName": "tp-bubble",
-      "className": "TpBubble",
-      "kind": "presentational-primitive",
-      "section": "components",
-      "uses": [],
-      "bytes": 63323,
-      "gzip": 25900,
-      "ownGzip": 17579,
-      "modules": 26,
-      "rootBytes": 63323,
-      "rootGzip": 25900,
-      "includes": []
-    },
-    {
-      "name": "Breadcrumb",
-      "tagName": "tp-breadcrumb",
-      "className": "TpBreadcrumb",
-      "kind": "flattening-compound",
-      "section": "components",
-      "uses": [],
-      "bytes": 60489,
-      "gzip": 25281,
-      "ownGzip": 16960,
-      "modules": 27,
-      "rootBytes": 60489,
-      "rootGzip": 25281,
-      "includes": [
-        "tp-icon"
-      ]
-    },
-    {
-      "name": "Badge",
-      "tagName": "tp-badge",
-      "className": "TpBadge",
-      "kind": "thin-wrapper",
-      "section": "components",
-      "uses": [],
-      "bytes": 59955,
-      "gzip": 24900,
-      "ownGzip": 16579,
-      "modules": 25,
-      "rootBytes": 59955,
-      "rootGzip": 24900,
+      "bytes": 29833,
+      "gzip": 9667,
+      "modules": 20,
       "includes": []
     },
     {
       "name": "Avatar",
       "tagName": "tp-avatar",
-      "className": "TpAvatar",
-      "kind": "compound-reexport",
       "section": "components",
-      "uses": [],
-      "bytes": 61253,
-      "gzip": 24563,
-      "ownGzip": 16242,
-      "modules": 23,
-      "rootBytes": 61253,
-      "rootGzip": 24563,
-      "includes": [
-        "tp-avatar-group"
-      ]
-    },
-    {
-      "name": "Marker",
-      "tagName": "tp-marker",
-      "className": "TpMarker",
-      "kind": "presentational-primitive",
-      "section": "components",
-      "uses": [],
-      "bytes": 57551,
-      "gzip": 23397,
-      "ownGzip": 15076,
-      "modules": 22,
-      "rootBytes": 57551,
-      "rootGzip": 23397,
-      "includes": []
-    },
-    {
-      "name": "Key hint",
-      "tagName": "tp-key-hint",
-      "className": "TpKeyHint",
-      "kind": "presentational-primitive",
-      "section": "components",
-      "uses": [
-        "tp-key-hint-group"
-      ],
-      "bytes": 55105,
-      "gzip": 23329,
-      "ownGzip": 15008,
-      "modules": 24,
-      "rootBytes": 53187,
-      "rootGzip": 22438,
-      "includes": [
-        "tp-key-hint-group"
-      ]
+      "bytes": 28876,
+      "gzip": 9550,
+      "modules": 17,
+      "includes": ["tp-avatar-group"]
     },
     {
       "name": "Skeleton",
       "tagName": "tp-skeleton",
-      "className": "TpSkeleton",
-      "kind": "thin-wrapper",
       "section": "components",
-      "uses": [],
-      "bytes": 55065,
-      "gzip": 22831,
-      "ownGzip": 14510,
-      "modules": 22,
-      "rootBytes": 55065,
-      "rootGzip": 22831,
+      "bytes": 25906,
+      "gzip": 9057,
+      "modules": 18,
+      "includes": []
+    },
+    {
+      "name": "Button group",
+      "tagName": "tp-button-group",
+      "section": "components",
+      "bytes": 26255,
+      "gzip": 8903,
+      "modules": 19,
+      "includes": []
+    },
+    {
+      "name": "Bubble",
+      "tagName": "tp-bubble",
+      "section": "components",
+      "bytes": 26460,
+      "gzip": 8874,
+      "modules": 20,
       "includes": []
     },
     {
       "name": "Spinner",
       "tagName": "tp-spinner",
-      "className": "TpSpinner",
-      "kind": "presentational-primitive",
       "section": "components",
-      "uses": [],
-      "bytes": 53667,
-      "gzip": 22446,
-      "ownGzip": 14125,
-      "modules": 22,
-      "rootBytes": 53667,
-      "rootGzip": 22446,
+      "bytes": 24592,
+      "gzip": 8808,
+      "modules": 18,
+      "includes": []
+    },
+    {
+      "name": "Breadcrumb",
+      "tagName": "tp-breadcrumb",
+      "section": "components",
+      "bytes": 26005,
+      "gzip": 8798,
+      "modules": 23,
+      "includes": ["tp-icon"]
+    },
+    {
+      "name": "Field group",
+      "tagName": "tp-field-group",
+      "section": "components",
+      "bytes": 24853,
+      "gzip": 8608,
+      "modules": 19,
+      "includes": []
+    },
+    {
+      "name": "Badge",
+      "tagName": "tp-badge",
+      "section": "components",
+      "bytes": 23963,
+      "gzip": 8294,
+      "modules": 19,
+      "includes": []
+    },
+    {
+      "name": "Card",
+      "tagName": "tp-card",
+      "section": "components",
+      "bytes": 24251,
+      "gzip": 8175,
+      "modules": 20,
+      "includes": []
+    },
+    {
+      "name": "Key hint",
+      "tagName": "tp-key-hint",
+      "section": "components",
+      "bytes": 22545,
+      "gzip": 8058,
+      "modules": 17,
+      "includes": []
+    },
+    {
+      "name": "Visually hidden",
+      "tagName": "tp-visually-hidden",
+      "section": "components",
+      "bytes": 21858,
+      "gzip": 7839,
+      "modules": 16,
       "includes": []
     },
     {
       "name": "Empty state",
       "tagName": "tp-empty-state",
-      "className": "TpEmptyState",
-      "kind": "presentational-primitive",
       "section": "components",
-      "uses": [],
-      "bytes": 53252,
-      "gzip": 21929,
-      "ownGzip": 13608,
-      "modules": 22,
-      "rootBytes": 53252,
-      "rootGzip": 21929,
+      "bytes": 22568,
+      "gzip": 7693,
+      "modules": 16,
       "includes": []
     },
     {
       "name": "Alert",
       "tagName": "tp-alert",
-      "className": "TpAlert",
-      "kind": "presentational-primitive",
       "section": "components",
-      "uses": [],
-      "bytes": 51722,
-      "gzip": 21473,
-      "ownGzip": 13152,
-      "modules": 21,
-      "rootBytes": 51722,
-      "rootGzip": 21473,
+      "bytes": 21959,
+      "gzip": 7655,
+      "modules": 16,
+      "includes": []
+    },
+    {
+      "name": "Label",
+      "tagName": "tp-label",
+      "section": "components",
+      "bytes": 21157,
+      "gzip": 7549,
+      "modules": 17,
       "includes": []
     },
     {
       "name": "Aspect-ratio box",
       "tagName": "tp-aspect-ratio",
-      "className": "TpAspectRatio",
-      "kind": "presentational-primitive",
       "section": "components",
-      "uses": [],
-      "bytes": 49525,
-      "gzip": 20676,
-      "ownGzip": 12355,
-      "modules": 20,
-      "rootBytes": 49525,
-      "rootGzip": 20676,
+      "bytes": 20127,
+      "gzip": 7155,
+      "modules": 14,
       "includes": []
     },
     {
       "name": "Separator",
       "tagName": "tp-separator",
-      "className": "TpSeparator",
-      "kind": "thin-wrapper",
       "section": "components",
-      "uses": [],
-      "bytes": 48996,
-      "gzip": 20650,
-      "ownGzip": 12329,
-      "modules": 21,
-      "rootBytes": 48996,
-      "rootGzip": 20650,
+      "bytes": 19426,
+      "gzip": 6980,
+      "modules": 16,
       "includes": []
     },
     {
       "name": "Icon",
       "tagName": "tp-icon",
-      "className": "TpIcon",
-      "kind": "presentational-primitive",
       "section": "components",
-      "uses": [],
-      "bytes": 23218,
-      "gzip": 9968,
-      "ownGzip": 1647,
-      "modules": 13,
-      "rootBytes": 23218,
-      "rootGzip": 9968,
+      "bytes": 12878,
+      "gzip": 4697,
+      "modules": 12,
       "includes": []
     }
   ]

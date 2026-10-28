@@ -55,8 +55,10 @@ curve to the default spring, switching to Ease fits a cubic Bézier to it, both 
 value lane with `conversion: true` in the metadata; a rejected conversion keeps the tab where it
 was. An empty editor starts from `ease` or `spring(1 100 10)`. Custom is not a tab: the badge over
 the graph names the matching preset and reads Custom as soon as a handle, point or parameter
-leaves every preset. A press on a parametric curve converts it into a point curve and drags the
-nearest point.
+leaves every preset. A sine, power, expo, circ or back curve shows the handles of its Bézier fit
+from the start: dragging or stepping one converts the curve into that Bézier, and a press beside
+them edits nothing. A press on an elastic, bounce or steps curve converts it into a point curve
+and drags the nearest point.
 
 ## Graph and overshoot
 

@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
-import { createSelectItems } from './items.js';
+import { createSelectItems, plainItemObjects } from './items.js';
 import { createSelectFilter } from './filter.js';
 
 describe('Select source and filter policies', () => {
@@ -92,3 +92,19 @@ export function selectFactoryTypes(): void {
   // @ts-expect-error A declared union containing an array cannot be a leaf.
   createSelectItems<UnionLeaf, number>([{ id: 1, items: 'Leaf' }], options);
 }
+
+describe('plain items as query sources', () => {
+  it('holds the option objects of a plain items array, groups included, so `matchFields` and `filter` receive the item', () => {
+    const table = { value: 'table', label: 'Table', description: 'A grid of rows and columns' };
+    const heading = { value: 'h1', label: 'Heading 1' };
+    const objects = plainItemObjects([{ label: 'Insert', items: [table] }, heading, 'plain']);
+    expect(objects.has(table)).toBe(true);
+    expect(objects.has(heading)).toBe(true);
+    const collection = createSelectItems([table], {
+      getValue: (item) => item.value,
+      getLabel: (item) => item.label,
+    });
+    expect(plainItemObjects(collection).has(table)).toBe(false);
+    expect(plainItemObjects(undefined).has(table)).toBe(false);
+  });
+});

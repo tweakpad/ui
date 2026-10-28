@@ -249,6 +249,41 @@ describe('Carousel selection and lifecycle owner', () => {
     expect((await f.controller.next()).status).toBe('accepted');
     f.controller.release();
   });
+  it('diagnoses a failing snapshot observer and still notifies the others', async () => {
+    const diagnostics: Array<[string, unknown]> = [];
+    const items = carouselItems(['a', 'b', 'c']);
+    const controller = new CarouselController({
+      host: fakeHost(),
+      read: () => ({ items }),
+      measure: () => ({
+        width: 100,
+        height: 100,
+        items: items.map((item) => ({ index: item.index, size: 100 })),
+      }),
+      render() {},
+      move() {},
+      cancel() {},
+      diagnose: (message, error) => diagnostics.push([message, error]),
+    });
+    const failure = new Error('observer');
+    expect(() =>
+      controller.subscribe(() => {
+        throw failure;
+      }),
+    ).toThrow(failure);
+    expect(diagnostics).toEqual([]);
+    const seen = vi.fn();
+    controller.subscribe(seen);
+    await controller.initialize();
+    expect((await controller.next()).status).toBe('accepted');
+    // The failing observer stays subscribed: each publication diagnoses it and reaches `seen`.
+    const publications = seen.mock.calls.length - 1;
+    expect(publications).toBeGreaterThan(0);
+    expect(diagnostics).toEqual(
+      Array.from({ length: publications }, () => ['Carousel snapshot observer failed.', failure]),
+    );
+    controller.release();
+  });
   it('invalidates pending renderer work before releasing a host lifetime', async () => {
     const host = fakeHost();
     const items = carouselItems(['a', 'b']);

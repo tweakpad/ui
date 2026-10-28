@@ -1,4 +1,4 @@
-import { CleanupScope, Scheduler, type Diagnostic } from '../services.js';
+import { CleanupScope, type Diagnostic } from '../services.js';
 import {
   ObservableStore,
   shallowEqual,
@@ -682,19 +682,4 @@ export class MediaStore {
     this.#hooks.stateChange?.({ changed: change.changed, state, previousState, reason });
     if (!previousState.error && state.error) this.#hooks.error?.({ error: state.error });
   }
-}
-
-/**
- * Defers destruction two animation frames (`mp-f-lifecycle`), so a DOM move that reconnects within
- * that window keeps the store. Returns the cancel operation reconnection calls. Without
- * `requestAnimationFrame` the frames fall back to timeouts.
- */
-export function deferMediaDestroy(view: Window | undefined, destroy: () => void): () => void {
-  const scheduler = new Scheduler(view);
-  const frame = (callback: () => void) =>
-    view && typeof view.requestAnimationFrame === 'function'
-      ? scheduler.animationFrame(callback)
-      : scheduler.timeout(callback, 16);
-  frame(() => frame(() => destroy()));
-  return () => scheduler.dispose();
 }

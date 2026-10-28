@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
-import { CleanupScope, Scheduler, reportDiagnostic } from './services.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ManualFrames } from './fakes.test.js';
+import { CleanupScope, Scheduler, deferRelease, reportDiagnostic } from './services.js';
 
 describe('cleanup ownership (drag-drop V-17/A11)', () => {
   it('releases every resource once in reverse order despite disposer and reporter failures', () => {
@@ -78,6 +79,97 @@ describe('owner scheduling (drag-drop V-12/V-41/V-65)', () => {
     scheduler.microtask(callback);
     await Promise.resolve();
     expect(callback).not.toHaveBeenCalled();
+  });
+});
+
+describe('deferRelease (map-f-lifecycle, mp-f-lifecycle)', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('V-835: releases after two frames and cancels on reconnection', () => {
+    const frames = new ManualFrames();
+    const release = vi.fn();
+    const cancel = deferRelease(frames, release);
+    frames.tick();
+    expect(release).not.toHaveBeenCalled();
+    cancel();
+    cancel();
+    frames.run(3);
+    expect(release).not.toHaveBeenCalled();
+    expect(frames.pending).toBe(0);
+    const late = deferRelease(frames, release);
+    frames.tick();
+    expect(release).not.toHaveBeenCalled();
+    frames.tick();
+    expect(release).toHaveBeenCalledTimes(1);
+    late();
+    frames.run(2);
+    expect(release).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses window frames when requestAnimationFrame exists', () => {
+    const frames = new Map<number, FrameRequestCallback>();
+    let next = 0;
+    const owner = {
+      requestAnimationFrame: vi.fn((callback: FrameRequestCallback) => {
+        frames.set(++next, callback);
+        return next;
+      }),
+      cancelAnimationFrame: vi.fn((id: number) => frames.delete(id)),
+      setTimeout: vi.fn(),
+      clearTimeout: vi.fn(),
+    } as unknown as Window;
+    const tick = () => {
+      const callbacks = [...frames.values()];
+      frames.clear();
+      for (const callback of callbacks) callback(0);
+    };
+    const release = vi.fn();
+    deferRelease(owner, release);
+    tick();
+    expect(release).not.toHaveBeenCalled();
+    tick();
+    expect(release).toHaveBeenCalledTimes(1);
+    const cancel = deferRelease(owner, release);
+    tick();
+    cancel();
+    expect(owner.cancelAnimationFrame).toHaveBeenCalledTimes(1);
+    expect(frames.size).toBe(0);
+    expect(owner.requestAnimationFrame).toHaveBeenCalledTimes(4);
+    expect(owner.setTimeout).not.toHaveBeenCalled();
+    expect(release).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to two 16 ms timeouts', () => {
+    vi.useFakeTimers();
+    const owner = {
+      setTimeout: vi.fn((callback: () => void, delay: number) =>
+        globalThis.setTimeout(callback, delay),
+      ),
+      clearTimeout: vi.fn((id: number) => globalThis.clearTimeout(id)),
+    } as unknown as Window;
+    const release = vi.fn();
+    const cancel = deferRelease(owner, release);
+    vi.advanceTimersByTime(16);
+    expect(release).not.toHaveBeenCalled();
+    cancel();
+    expect(vi.getTimerCount()).toBe(0);
+    vi.advanceTimersByTime(100);
+    expect(release).not.toHaveBeenCalled();
+    deferRelease(owner, release);
+    vi.advanceTimersByTime(31);
+    expect(release).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(release).toHaveBeenCalledTimes(1);
+    // Two timeouts per deferral, the cancelled one included: the window's timers, not the global ones.
+    expect(owner.setTimeout).toHaveBeenCalledTimes(4);
+    for (const view of [undefined, null]) {
+      const viewless = vi.fn();
+      deferRelease(view, viewless);
+      vi.advanceTimersByTime(16);
+      expect(viewless).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(16);
+      expect(viewless).toHaveBeenCalledTimes(1);
+    }
   });
 });
 

@@ -1,0 +1,1185 @@
+{
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Keeper's log, Gull Rock light",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "tag": "h1",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "heading",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000001"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Plain text, then ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 1,
+            "mode": "normal",
+            "style": "",
+            "text": "bold",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 2,
+            "mode": "normal",
+            "style": "",
+            "text": "italic",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 8,
+            "mode": "normal",
+            "style": "",
+            "text": "underlined",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 4,
+            "mode": "normal",
+            "style": "",
+            "text": "struck",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 16,
+            "mode": "normal",
+            "style": "",
+            "text": "inline code",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " and ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "a link",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "rel": null,
+            "target": null,
+            "title": null,
+            "url": "https://gullrock.example/log",
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "link",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ".",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000002"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 15,
+            "mode": "normal",
+            "style": "",
+            "text": "Four marks on one run",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 1,
+                "mode": "normal",
+                "style": "",
+                "text": "a bold link",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "rel": null,
+            "target": null,
+            "title": null,
+            "url": "https://gullrock.example/lamp",
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "link",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " and ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "https://gullrock.example/",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "rel": null,
+            "target": null,
+            "title": null,
+            "url": "https://gullrock.example/",
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "link",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ".",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 15,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000003"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Code inside a link: ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 16,
+                "mode": "normal",
+                "style": "",
+                "text": "lens.rotate(90)",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "rel": null,
+            "target": null,
+            "title": null,
+            "url": "https://gullrock.example/manual#lens",
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "link",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "; bold code stays code: ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 16,
+            "mode": "normal",
+            "style": "",
+            "text": "trim_wick()",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ".",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000004"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Lamp oil is C",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 32,
+            "mode": "normal",
+            "style": "",
+            "text": "16",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "H",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 32,
+            "mode": "normal",
+            "style": "",
+            "text": "34",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", the beam reaches 2",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 64,
+            "mode": "normal",
+            "style": "",
+            "text": "4",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " miles, and the inner mark wins: ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 64,
+            "mode": "normal",
+            "style": "",
+            "text": "raised ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 32,
+            "mode": "normal",
+            "style": "",
+            "text": "lowered",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 32,
+            "mode": "normal",
+            "style": "",
+            "text": "lowered ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 64,
+            "mode": "normal",
+            "style": "",
+            "text": "raised",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ".",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000005"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Text colors: ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "gray",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "gray"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "brown",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "brown"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "orange",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "orange"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "yellow",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "yellow"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "green",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "green"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "blue",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "blue"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "purple",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "purple"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "pink",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "pink"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "red",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "red"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ".",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000006"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Highlights: ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "gray",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "gray"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "brown",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "brown"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "orange",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "orange"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "yellow",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "yellow"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "green",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "green"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "blue",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "blue"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "purple",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "purple"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "pink",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "pink"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "red",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "red"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ", and ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "a mark with no name",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "yellow"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ".",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000007"
+        }
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 131,
+                "mode": "normal",
+                "style": "",
+                "text": "Every outer mark",
+                "type": "text",
+                "version": 1,
+                "$": {
+                  "tp-color": "blue",
+                  "tp-highlight": "yellow"
+                }
+              }
+            ],
+            "rel": null,
+            "target": null,
+            "title": null,
+            "url": "https://gullrock.example/storm",
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "link",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " around ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 1,
+            "mode": "normal",
+            "style": "",
+            "text": "red bold",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "red"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " and red",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "red"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": ".",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000008"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "  Two leading spaces, then three   inside a line.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000009"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Characters that are Markdown syntax stay text: *stars*, _underscores_, `ticks`, [brackets](not a link), <angle>, a & b, ~~tildes~~, a | pipe and a back\\slash.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000010"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "# not a heading",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000011"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "1. not an ordered item",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000012"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "- not a bullet",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000013"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "> not a quote",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000014"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "מגדלור — منارة",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000015"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Weather symbols: 🌊 🌬️ ⛈️ and a family 👨‍👩‍👧.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "te00000016"
+        }
+      }
+    ],
+    "direction": null,
+    "format": "",
+    "indent": 0,
+    "type": "root",
+    "version": 1
+  }
+}

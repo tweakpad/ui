@@ -6,6 +6,15 @@ import { assignedElements } from '../shared/events.js';
 import { inputGroupPresentation } from '../../presentation/families/input-group.js';
 
 type Edge = 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
+
+/**
+ * The trees of an editor that can hold its native control: the editor itself (a text control
+ * renders its native editor into its light DOM) and its shadow root.
+ */
+export function editorTrees(control: HTMLElement): Node[] {
+  return control.shadowRoot ? [control, control.shadowRoot] : [control];
+}
+
 /** Presentation composition only; the editor and actions retain their own behavior. */
 export class TpInputGroup extends TpElement {
   static tagName = 'tp-input-group';
@@ -167,14 +176,18 @@ export class TpInputGroup extends TpElement {
         ? this.presentationController.registerPart('input-group-control', native)
         : undefined;
     }
+    if (this.#readControlState()) this.requestUpdate();
+  };
+  /** Reads the invalid and disabled state of the native control; returns whether it changed. */
+  #readControlState(): boolean {
+    const native = this.#native;
     const invalid = !!native?.matches('[aria-invalid="true"],[invalid]');
     const disabled = !!native?.matches(':disabled,[disabled],[aria-disabled="true"]');
-    if (invalid !== this.#controlInvalid || disabled !== this.#controlDisabled) {
-      this.#controlInvalid = invalid;
-      this.#controlDisabled = disabled;
-      this.requestUpdate();
-    }
-  };
+    if (invalid === this.#controlInvalid && disabled === this.#controlDisabled) return false;
+    this.#controlInvalid = invalid;
+    this.#controlDisabled = disabled;
+    return true;
+  }
   #readControl = (): void => {
     const slot = this.renderRoot.querySelector<HTMLSlotElement>('slot:not([name])');
     if (!slot) return;
@@ -198,12 +211,13 @@ export class TpInputGroup extends TpElement {
         this.#editorObserver ??= new this.ownerDocument.defaultView!.MutationObserver(
           this.#syncNative,
         );
-        this.#editorObserver.observe(control.shadowRoot ?? control, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['aria-invalid', 'disabled', 'readonly'],
-        });
+        for (const tree of editorTrees(control))
+          this.#editorObserver.observe(tree, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['aria-invalid', 'disabled', 'readonly'],
+          });
         this.#syncNative();
       };
       if (control instanceof TpElement) void control.updateComplete.then(observe);
@@ -341,6 +355,11 @@ export class TpInputGroup extends TpElement {
     }
   };
 
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    // Rendered from the control's state as it stands, so the read after the update finds no change.
+    this.#readControlState();
+  }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     this.#syncRegions();

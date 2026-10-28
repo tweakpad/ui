@@ -106,7 +106,11 @@ export class ChoiceCollectionController<T, R extends ChoiceRecord<T> = ChoiceRec
   move(delta: number, loop = true): R | undefined {
     const enabled = this.#visible.filter((record) => !record.disabled);
     if (!enabled.length) return (this.#highlight = undefined);
-    if (enabled.every((record) => this.element(record))) {
+    if (!this.#highlight)
+      // Nothing highlighted (a list opened by a pointer): the first record forward, the last one
+      // backward, mounted or not.
+      this.#highlight = delta < 0 ? enabled.at(-1) : enabled[0];
+    else if (enabled.every((record) => this.element(record))) {
       const target = this.registry.move(this.element(this.#highlight), delta, loop);
       this.#highlight = enabled.find((record) => this.element(record) === target);
     } else {
@@ -170,10 +174,15 @@ export class ChoiceCollectionController<T, R extends ChoiceRecord<T> = ChoiceRec
   }
   #register(): void {
     this.#unregister.splice(0).forEach((release) => release());
-    for (const record of this.#visible) {
+    // The visible order is the navigation order: the controls of records often sit in different
+    // shadow roots (a menu item's own control, a submenu's trigger), where document position
+    // cannot order them.
+    this.#visible.forEach((record, index) => {
       const element = this.element(record);
       if (element)
-        this.#unregister.push(this.registry.register({ element, disabled: !!record.disabled }));
-    }
+        this.#unregister.push(
+          this.registry.register({ element, disabled: !!record.disabled, order: () => index }),
+        );
+    });
   }
 }

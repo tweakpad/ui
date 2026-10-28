@@ -19,6 +19,14 @@
         left: 720px;
         top: 450px;
       }
+      #wrapped {
+        position: absolute;
+        left: 32px;
+        top: 220px;
+        inline-size: 220px;
+        margin: 0;
+        line-height: 1.5;
+      }
       #anchor {
         position: fixed;
         left: 750px;
@@ -33,6 +41,11 @@
       <h1>Popover placement regression</h1>
       <p>Public API checks run through Chrome DevTools MCP.</p>
     </main>
+    <p id="wrapped">
+      Harbor notes:
+      <span id="wrapped-span">the evening ferry waits at the outer pier until the tide turns</span>.
+    </p>
+    <tp-popover id="multiline" label="Line note"><span slot="title">Line note</span></tp-popover>
     <div id="stage">
       <tp-popover id="subject" label="Placement settings">
         <tp-button slot="trigger" variant="outline">Placement settings</tp-button>

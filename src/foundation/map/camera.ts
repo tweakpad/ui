@@ -3,6 +3,7 @@
  * native animation, and the distance-derived travel duration. Zoom steps take the normal duration
  * role from the map's element.
  */
+import type { FrameSource } from '../frame-loop.js';
 import {
   type MapCamera,
   type MapPoint,
@@ -63,20 +64,6 @@ export function interpolateCamera(from: MapCamera, to: MapCamera, t: number): Ma
   });
 }
 
-export interface TweenFrameSource {
-  requestAnimationFrame(callback: (time: number) => void): number;
-  cancelAnimationFrame(handle: number): void;
-  now(): number;
-}
-
-export function windowFrameSource(view: Window): TweenFrameSource {
-  return {
-    requestAnimationFrame: (callback) => view.requestAnimationFrame(callback),
-    cancelAnimationFrame: (handle) => view.cancelAnimationFrame(handle),
-    now: () => view.performance.now(),
-  };
-}
-
 /**
  * Animates with `apply` once per frame from `from` to `to`. Resolves `true` when it reached the
  * target and `false` when `signal` aborted it (the camera stays where it was).
@@ -86,7 +73,7 @@ export function tweenCamera(
   to: MapCamera,
   duration: number,
   apply: (camera: MapCamera) => void,
-  frames: TweenFrameSource,
+  frames: FrameSource,
   signal?: AbortSignal,
 ): Promise<boolean> {
   if (duration <= 0 || signal?.aborted) {

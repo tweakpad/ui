@@ -1,0 +1,100 @@
+/* tp-button appearance */
+/* button */
+&{appearance:none;border:var(--tp-border-width) var(--tp-border-style) transparent;border-radius:var(--tp-radius-lg);font:inherit;font-weight:var(--tp-font-medium);text-decoration:none}
+/* button-variant-default */
+&{background:var(--tp-primary);color:var(--tp-primary-foreground);border-color:var(--tp-primary)}
+:where(&)::before{background-color:color-mix(in oklab, var(--tp-primary) 80%, light-dark(var(--tp-foreground), var(--tp-background)))}
+&:where(:not(:disabled, [aria-disabled="true"]):is(:hover, [data-popup-open]))::before{opacity:1}
+/* button-variant-secondary */
+&{background:var(--tp-secondary);color:var(--tp-secondary-foreground);border-color:var(--tp-secondary)}
+:where(&)::before{background-color:color-mix(in oklab, var(--tp-secondary) 80%, light-dark(var(--tp-foreground), var(--tp-background)))}
+&:where(:not(:disabled, [aria-disabled="true"]):is(:hover, [data-popup-open]))::before{opacity:1}
+/* button-variant-destructive */
+&{background:var(--tp-destructive);color:var(--tp-destructive-foreground);border-color:var(--tp-destructive)}
+:where(&)::before{background-color:color-mix(in oklab, var(--tp-destructive) 85%, light-dark(var(--tp-foreground), var(--tp-background)))}
+&:where(:not(:disabled, [aria-disabled="true"]):is(:hover, [data-popup-open]))::before{opacity:1}
+/* button-variant-outline */
+&{color:var(--tp-foreground);background:var(--tp-background);border-color:var(--tp-border);transition:color calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard), border-color calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard)}
+:where(&)::before{background-color:color-mix(in oklab, var(--tp-input) 50%, transparent)}
+&:where(:not(:disabled, [aria-disabled="true"]):is(:hover, [data-popup-open]))::before{opacity:1}
+&{background:light-dark(var(--tp-background), color-mix(in oklab, var(--tp-input) 30%, transparent));border-color:light-dark(var(--tp-border), var(--tp-input))}
+/* button-variant-ghost */
+&{color:var(--tp-foreground);background:transparent;border-color:transparent;transition:color calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard), border-color calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard)}
+:where(&)::before{background-color:color-mix(in oklab, var(--tp-input) 50%, transparent)}
+&:where(:not(:disabled, [aria-disabled="true"]):is(:hover, [data-popup-open]))::before{opacity:1}
+/* button-variant-link */
+&{color:var(--tp-foreground);background:transparent;border-color:transparent}
+&:not(:disabled, [aria-disabled="true"]):is(:hover, :focus-visible){text-decoration:underline}
+/* button-size-xs */
+&{min-block-size:var(--tp-control-height-xs);block-size:var(--tp-control-height-xs);padding-block:0;padding-inline:var(--tp-space-2);gap:var(--tp-space-1);font-size:var(--tp-text-xs);border-radius:var(--tp-radius-md);--_tp-icon-extent:var(--tp-icon-size-xs)}
+&:has(> [part~='button-leading-mark']:not([hidden])){padding-inline-start:var(--tp-space-1-5)}
+&:has(> [part~='button-trailing-mark']:not([hidden])){padding-inline-end:var(--tp-space-1-5)}
+/* button-size-sm */
+&{min-block-size:var(--tp-control-height-sm);block-size:var(--tp-control-height-sm);padding-block:0;padding-inline:var(--tp-space-2-5);gap:var(--tp-space-1);font-size:var(--tp-text-sm);border-radius:var(--tp-radius-md);--_tp-icon-extent:var(--tp-icon-size-sm)}
+&:has(> [part~='button-leading-mark']:not([hidden])){padding-inline-start:var(--tp-space-1-5)}
+&:has(> [part~='button-trailing-mark']:not([hidden])){padding-inline-end:var(--tp-space-1-5)}
+/* button-size-default */
+&{min-block-size:var(--tp-control-height-md);block-size:var(--tp-control-height-md);padding-block:0;padding-inline:var(--tp-space-2-5);gap:var(--tp-space-1-5);font-size:var(--tp-text-sm);border-radius:var(--tp-radius-lg);--_tp-icon-extent:var(--tp-icon-size-md)}
+&:has(> [part~='button-leading-mark']:not([hidden])){padding-inline-start:var(--tp-space-2)}
+&:has(> [part~='button-trailing-mark']:not([hidden])){padding-inline-end:var(--tp-space-2)}
+/* button-size-lg */
+&{min-block-size:var(--tp-control-height-lg);block-size:var(--tp-control-height-lg);padding-block:0;padding-inline:var(--tp-space-2-5);gap:var(--tp-space-1-5);font-size:var(--tp-text-sm);border-radius:var(--tp-radius-lg);--_tp-icon-extent:var(--tp-icon-size-md)}
+&:has(> [part~='button-leading-mark']:not([hidden])){padding-inline-start:var(--tp-space-2)}
+&:has(> [part~='button-trailing-mark']:not([hidden])){padding-inline-end:var(--tp-space-2)}
+/* button-size-icon-xs */
+&{min-block-size:var(--tp-control-height-xs);block-size:var(--tp-control-height-xs);padding-block:0;padding-inline:0;gap:var(--tp-space-1);font-size:var(--tp-text-xs);border-radius:var(--tp-radius-md);--_tp-icon-extent:var(--tp-icon-size-xs);inline-size:var(--tp-control-height-xs);min-inline-size:var(--tp-control-height-xs)}
+/* button-size-icon-sm */
+&{min-block-size:var(--tp-control-height-sm);block-size:var(--tp-control-height-sm);padding-block:0;padding-inline:0;gap:var(--tp-space-1);font-size:var(--tp-text-sm);border-radius:var(--tp-radius-md);--_tp-icon-extent:var(--tp-icon-size-sm);inline-size:var(--tp-control-height-sm);min-inline-size:var(--tp-control-height-sm)}
+/* button-size-icon */
+&{min-block-size:var(--tp-control-height-md);block-size:var(--tp-control-height-md);padding-block:0;padding-inline:0;gap:var(--tp-space-1-5);font-size:var(--tp-text-sm);border-radius:var(--tp-radius-lg);--_tp-icon-extent:var(--tp-icon-size-md);inline-size:var(--tp-control-height-md);min-inline-size:var(--tp-control-height-md)}
+/* button-size-icon-lg */
+&{min-block-size:var(--tp-control-height-lg);block-size:var(--tp-control-height-lg);padding-block:0;padding-inline:0;gap:var(--tp-space-1-5);font-size:var(--tp-text-sm);border-radius:var(--tp-radius-lg);--_tp-icon-extent:var(--tp-icon-size-md);inline-size:var(--tp-control-height-lg);min-inline-size:var(--tp-control-height-lg)}
+/* button-leading-mark */
+&{font-size:var(--_tp-icon-extent, var(--tp-icon-size-md))}
+/* button-leading-mark-variant-default */
+/* button-leading-mark-variant-secondary */
+/* button-leading-mark-variant-destructive */
+/* button-leading-mark-variant-outline */
+/* button-leading-mark-variant-ghost */
+/* button-leading-mark-variant-link */
+/* button-leading-mark-size-xs */
+/* button-leading-mark-size-sm */
+/* button-leading-mark-size-default */
+/* button-leading-mark-size-lg */
+/* button-leading-mark-size-icon-xs */
+/* button-leading-mark-size-icon-sm */
+/* button-leading-mark-size-icon */
+/* button-leading-mark-size-icon-lg */
+/* button-label */
+/* button-label-variant-default */
+/* button-label-variant-secondary */
+/* button-label-variant-destructive */
+/* button-label-variant-outline */
+/* button-label-variant-ghost */
+/* button-label-variant-link */
+/* button-label-size-xs */
+/* button-label-size-sm */
+/* button-label-size-default */
+/* button-label-size-lg */
+/* button-label-size-icon-xs */
+/* button-label-size-icon-sm */
+/* button-label-size-icon */
+/* button-label-size-icon-lg */
+/* button-trailing-mark */
+&{font-size:var(--_tp-icon-extent, var(--tp-icon-size-md))}
+/* button-trailing-mark-variant-default */
+/* button-trailing-mark-variant-secondary */
+/* button-trailing-mark-variant-destructive */
+/* button-trailing-mark-variant-outline */
+/* button-trailing-mark-variant-ghost */
+/* button-trailing-mark-variant-link */
+/* button-trailing-mark-size-xs */
+/* button-trailing-mark-size-sm */
+/* button-trailing-mark-size-default */
+/* button-trailing-mark-size-lg */
+/* button-trailing-mark-size-icon-xs */
+/* button-trailing-mark-size-icon-sm */
+/* button-trailing-mark-size-icon */
+/* button-trailing-mark-size-icon-lg */
+
+/* tp-button structure */

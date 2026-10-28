@@ -1,0 +1,688 @@
+{
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Pantry restock plan",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "tag": "h2",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "heading",
+        "version": 1,
+        "$": {
+          "tp-id": "lists00001"
+        }
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Dry goods",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "indent": 0,
+            "value": 1,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "lists00002"
+            }
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Grains",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "indent": 1,
+                    "value": 1,
+                    "direction": null,
+                    "format": "",
+                    "type": "listitem",
+                    "version": 1,
+                    "$": {
+                      "tp-id": "lists00003"
+                    }
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "detail": 0,
+                                "format": 0,
+                                "mode": "normal",
+                                "style": "",
+                                "text": "Short-grain rice",
+                                "type": "text",
+                                "version": 1
+                              }
+                            ],
+                            "indent": 2,
+                            "value": 1,
+                            "direction": null,
+                            "format": "",
+                            "type": "listitem",
+                            "version": 1,
+                            "$": {
+                              "tp-id": "lists00004"
+                            }
+                          },
+                          {
+                            "children": [
+                              {
+                                "detail": 0,
+                                "format": 0,
+                                "mode": "normal",
+                                "style": "",
+                                "text": "Rolled oats",
+                                "type": "text",
+                                "version": 1
+                              }
+                            ],
+                            "indent": 2,
+                            "value": 2,
+                            "direction": null,
+                            "format": "",
+                            "type": "listitem",
+                            "version": 1,
+                            "$": {
+                              "tp-id": "lists00005"
+                            }
+                          }
+                        ],
+                        "listType": "bullet",
+                        "start": 1,
+                        "tag": "ul",
+                        "direction": null,
+                        "format": "",
+                        "indent": 0,
+                        "type": "list",
+                        "version": 1
+                      }
+                    ],
+                    "indent": 1,
+                    "value": 2,
+                    "direction": null,
+                    "format": "",
+                    "type": "listitem",
+                    "version": 1
+                  },
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Lentils",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "indent": 1,
+                    "value": 2,
+                    "direction": null,
+                    "format": "",
+                    "type": "listitem",
+                    "version": 1,
+                    "$": {
+                      "tp-id": "lists00006"
+                    }
+                  }
+                ],
+                "listType": "bullet",
+                "start": 1,
+                "tag": "ul",
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "list",
+                "version": 1
+              }
+            ],
+            "indent": 0,
+            "value": 2,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Spices",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "indent": 0,
+            "value": 2,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "lists00007"
+            }
+          }
+        ],
+        "listType": "bullet",
+        "start": 1,
+        "tag": "ul",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "list",
+        "version": 1
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Empty the top shelf",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "indent": 0,
+            "value": 2,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "lists00008"
+            }
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Wipe it down",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "indent": 1,
+                    "value": 1,
+                    "direction": null,
+                    "format": "",
+                    "type": "listitem",
+                    "version": 1,
+                    "$": {
+                      "tp-id": "lists00009"
+                    }
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "detail": 0,
+                                "format": 0,
+                                "mode": "normal",
+                                "style": "",
+                                "text": "Let it dry",
+                                "type": "text",
+                                "version": 1
+                              }
+                            ],
+                            "indent": 2,
+                            "value": 1,
+                            "direction": null,
+                            "format": "",
+                            "type": "listitem",
+                            "version": 1,
+                            "$": {
+                              "tp-id": "lists00010"
+                            }
+                          }
+                        ],
+                        "listType": "number",
+                        "start": 1,
+                        "tag": "ol",
+                        "direction": null,
+                        "format": "",
+                        "indent": 0,
+                        "type": "list",
+                        "version": 1
+                      }
+                    ],
+                    "indent": 1,
+                    "value": 2,
+                    "direction": null,
+                    "format": "",
+                    "type": "listitem",
+                    "version": 1
+                  }
+                ],
+                "listType": "number",
+                "start": 1,
+                "tag": "ol",
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "list",
+                "version": 1
+              }
+            ],
+            "indent": 0,
+            "value": 3,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Restock by date",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "indent": 0,
+            "value": 3,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "lists00011"
+            }
+          }
+        ],
+        "listType": "number",
+        "start": 2,
+        "tag": "ol",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "list",
+        "version": 1
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Check the labels",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "checked": true,
+            "indent": 0,
+            "value": 1,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "lists00012"
+            }
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Reprint the faded ones",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "checked": false,
+                    "indent": 1,
+                    "value": 1,
+                    "direction": null,
+                    "format": "",
+                    "type": "listitem",
+                    "version": 1,
+                    "$": {
+                      "tp-id": "lists00013"
+                    }
+                  }
+                ],
+                "listType": "check",
+                "start": 1,
+                "tag": "ul",
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "list",
+                "version": 1
+              }
+            ],
+            "checked": false,
+            "indent": 0,
+            "value": 2,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Order jars",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "checked": false,
+            "indent": 0,
+            "value": 2,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "lists00014"
+            }
+          }
+        ],
+        "listType": "check",
+        "start": 1,
+        "tag": "ul",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "list",
+        "version": 1
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Item",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 1,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Jars",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 1,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              }
+            ],
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "tablerow",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Rice",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "3",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "end",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              }
+            ],
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "tablerow",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "table",
+        "version": 1,
+        "$": {
+          "tp-id": "lists00015"
+        }
+      },
+      {
+        "type": "tp-image",
+        "version": 1,
+        "src": "pantry-shelf.svg",
+        "alt": "A pantry shelf with labeled jars",
+        "width": 320,
+        "$": {
+          "tp-id": "lists00016"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Keep the oldest jars at the front.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "tp-block-callout",
+        "version": 1,
+        "attrs": {
+          "tone": "tip"
+        },
+        "$": {
+          "tp-id": "lists00017"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "End of the plan.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "lists00018"
+        }
+      }
+    ],
+    "direction": null,
+    "format": "",
+    "indent": 0,
+    "type": "root",
+    "version": 1
+  }
+}

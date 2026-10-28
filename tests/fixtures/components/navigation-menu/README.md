@@ -11,7 +11,8 @@ Served by the Vite dev server (`npm run dev`), driven only through Chrome DevToo
 3. `navigationMenuContract.nativeLinks()`: every `<a>` keeps native semantics (no `role`, in
    the tab order).
 4. Click the `Product` link area to focus it (or press `Tab` into the content), press `Escape`
-   with the key tool, then evaluate `navigationMenuContract.escapeRestored()`: the menu closes
+   with the key tool, let the exit transition finish, then evaluate
+   `navigationMenuContract.escapeRestored()`: the menu closes, the panel is no longer rendered
    and focus returns to the trigger.
 
 `navigationMenuContract.state()` returns the raw values for recording evidence.

@@ -1,4 +1,5 @@
 import { composedParent } from './focus.js';
+import type { FrameSource } from './frame-loop.js';
 import { collator as intlCollator, numberFormatter } from './intl.js';
 import { NumberLocale } from './number-locale.js';
 import {
@@ -130,6 +131,37 @@ export class Scheduler {
   dispose(): void {
     this.#scope.dispose();
   }
+}
+
+/**
+ * Runs `release` two animation frames later (Foundation `map-f-lifecycle`, `mp-f-lifecycle`), so a
+ * DOM move that reconnects within that window keeps what `release` would free. The frames come from
+ * `view`, a window or a frame source; where it has no `requestAnimationFrame`, two 16 ms timeouts
+ * stand in for them. Returns the cancel that a reconnection calls; it does nothing once `release`
+ * has run.
+ */
+export function deferRelease(
+  view: Window | FrameSource | null | undefined,
+  release: () => void,
+): () => void {
+  if (view && typeof view.requestAnimationFrame === 'function') {
+    const frames = view;
+    let pending = true;
+    let handle = frames.requestAnimationFrame(() => {
+      handle = frames.requestAnimationFrame(() => {
+        pending = false;
+        release();
+      });
+    });
+    return () => {
+      if (!pending) return;
+      pending = false;
+      frames.cancelAnimationFrame(handle);
+    };
+  }
+  const scheduler = new Scheduler(view && 'setTimeout' in view ? view : undefined);
+  scheduler.timeout(() => scheduler.timeout(release, 16), 16);
+  return () => scheduler.dispose();
 }
 
 export type DiagnosticSeverity = 'info' | 'warning' | 'error';

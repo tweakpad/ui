@@ -308,7 +308,12 @@ export class PresentationController implements ReactiveController {
       )
       .join('\n');
     if (isShadowRoot(this.host.renderRoot)) {
-      this.#recipeResource ??= new GeneratedStyleResource(this.host, this.host.renderRoot);
+      if (!this.#recipeResource) {
+        this.#recipeResource = new GeneratedStyleResource(this.host, this.host.renderRoot);
+        // An update that runs after the removal creates it without a policy subscription, which
+        // would hold the removed element for good; the reconnection subscribes (`hostConnected`).
+        if (!this.host.isConnected) this.#recipeResource.disconnect();
+      }
       this.#recipeResource.setText(css);
     }
     const missing = resolved.missingKeys.join(',');

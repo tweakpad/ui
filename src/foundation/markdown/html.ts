@@ -5,8 +5,8 @@
  */
 import { decodeEntities } from './entities.js';
 
-const TAG_NAME = '[A-Za-z][A-Za-z0-9-]*';
-const ATTRIBUTE_NAME = '[a-zA-Z_:][a-zA-Z0-9:._-]*';
+export const TAG_NAME = '[A-Za-z][A-Za-z0-9-]*';
+export const ATTRIBUTE_NAME = '[a-zA-Z_:][a-zA-Z0-9:._-]*';
 const ATTRIBUTE_VALUE = `(?:[^"'=<>\`\\x00-\\x20]+|'[^']*'|"[^"]*")`;
 const ATTRIBUTE = `(?:\\s+${ATTRIBUTE_NAME}(?:\\s*=\\s*${ATTRIBUTE_VALUE})?)`;
 export const OPEN_TAG = `<${TAG_NAME}${ATTRIBUTE}*\\s*/?>`;

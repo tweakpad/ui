@@ -5,3 +5,4 @@ coverage/
 tmp/
 plans/
 package-lock.json
+src/presentation/recipes/__goldens__/

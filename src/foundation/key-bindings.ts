@@ -109,7 +109,7 @@ export interface KeyBindingOwnerOptions {
   disabled?: () => boolean;
   /** Consumer-specific nested ownership: true means the target owns this key. */
   ownsKey?: (event: KeyboardEvent) => boolean;
-  /** Platform used for `Mod` and display notation. Default `auto`. */
+  /** Platform used for `Mod`, the platform matching rules and display notation. Default `auto`. */
   platform?: KeyHintPlatform;
   /** Dispatch `tp-shortcut-change` on the owner. Default true. */
   dispatch?: boolean;
@@ -239,24 +239,54 @@ function chordsFor(keys: KeyBindingKeys, platform: ResolvedKeyHintPlatform): Key
 const modifierCount = (chord: KeyChord): number =>
   Number(chord.ctrlKey) + Number(chord.metaKey) + Number(chord.altKey) + Number(chord.shiftKey);
 
+/** `Key<X>` for a letter chord key, `Digit<N>` for a digit, otherwise undefined. */
+function physicalCode(key: string): string | undefined {
+  if (/^[a-z]$/.test(key)) return `Key${key.toUpperCase()}`;
+  return /^[0-9]$/.test(key) ? `Digit${key}` : undefined;
+}
+
 /**
- * Whether a chord matches a keyboard event. Keys compare case-insensitively. For a
- * pattern chord whose event key is a caseless character (`>`, `?`, digits), Shift
- * and Alt count only when the chord asks for them, because layouts use them to
- * produce the character. Every other modifier must match exactly. A Shift chord on a
- * digit (`Shift+1`) names the digit key: layouts report the shifted character (`!`, `=`)
- * as the key, so the physical `Digit1` code matches it.
+ * Whether a chord matches a keyboard event on `platform` (`mp-kb-pattern`). Keys
+ * compare case-insensitively. For a pattern chord whose event key is a caseless
+ * character (`>`, `?`, digits), Shift and Alt count only when the chord asks for them,
+ * because layouts use them to produce the character. Every other modifier must match
+ * exactly. A Shift chord on a digit (`Shift+1`) names the digit key: layouts report the
+ * shifted character (`!`, `=`) as the key, so the physical `Digit1` code matches it. On
+ * `mac` a chord with Alt also matches its physical letter or digit key, because Option
+ * types another character there; that match compares every modifier exactly. While
+ * AltGraph is active, no chord with the platform's Mod and without Alt matches, so
+ * characters typed with AltGraph reach the target.
  */
-export function matchesKeyChord(chord: KeyChord, event: KeyboardEvent): boolean {
+export function matchesKeyChord(
+  chord: KeyChord,
+  event: KeyboardEvent,
+  platform: ResolvedKeyHintPlatform,
+): boolean {
   const key = event.key;
   if (typeof key !== 'string' || key === 'Unidentified') return false;
+  // mp-kb-pattern: no chord with the platform's Mod and without Alt while AltGraph is active.
+  const mod = platform === 'mac' ? chord.metaKey : chord.ctrlKey;
+  if (mod && !chord.altKey && event.getModifierState?.('AltGraph') === true) return false;
+  let optionLayer = false;
   if (key.toLowerCase() !== chord.key) {
     const shiftedDigit =
       chord.shiftKey && /^[0-9]$/.test(chord.key) && event.code === `Digit${chord.key}`;
-    if (!shiftedDigit) return false;
+    const code = physicalCode(chord.key);
+    // mp-kb-pattern: Apple platforms only, where Option typed another character.
+    optionLayer =
+      !shiftedDigit &&
+      platform === 'mac' &&
+      chord.altKey &&
+      code !== undefined &&
+      event.code === code;
+    if (!shiftedDigit && !optionLayer) return false;
   }
   const implicit =
-    chord.implicit && key.length === 1 && key.toLowerCase() === key.toUpperCase() && key !== ' ';
+    !optionLayer &&
+    chord.implicit &&
+    key.length === 1 &&
+    key.toLowerCase() === key.toUpperCase() &&
+    key !== ' ';
   const shiftKey = implicit ? Boolean(event.shiftKey) && chord.shiftKey : Boolean(event.shiftKey);
   const altKey = implicit ? Boolean(event.altKey) && chord.altKey : Boolean(event.altKey);
   return (
@@ -428,7 +458,7 @@ export class KeyBindingOwner {
   get disposed(): boolean {
     return this.#disposed;
   }
-  /** Platform resolved for `Mod` and display notation. */
+  /** Platform resolved for `Mod`, the platform matching rules and display notation. */
   get platform(): ResolvedKeyHintPlatform {
     return this.#platform;
   }
@@ -607,7 +637,7 @@ export class KeyBindingOwner {
     for (const binding of this.#bindings) {
       if ((binding.options.scope ?? 'owner') !== scope || !this.#enabled(binding)) continue;
       const chord = binding.chords
-        .filter((entry) => matchesKeyChord(entry, event))
+        .filter((entry) => matchesKeyChord(entry, event, this.#platform))
         .sort((a, b) => modifierCount(b) - modifierCount(a))[0];
       if (chord) matches.push({ binding, chord });
     }

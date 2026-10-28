@@ -1,0 +1,19 @@
+/* tp-alert appearance */
+/* alert */
+&{column-gap:var(--tp-space-2);padding:var(--tp-space-2) var(--tp-space-2-5);border:var(--tp-border-width) var(--tp-border-style) var(--tp-border);border-radius:var(--tp-radius-lg);background:var(--tp-card);color:var(--tp-card-foreground);font-size:var(--tp-text-sm);box-shadow:var(--tp-shadow-none)}
+& > .body{gap:var(--tp-space-0-5)}
+:host([severity='success']) &{color:color-mix(in oklab, var(--tp-success) 85%, var(--tp-card-foreground))}
+:host([severity='warning']) &{color:color-mix(in oklab, var(--tp-warning) 85%, var(--tp-card-foreground))}
+:host([severity='danger']) &{color:color-mix(in oklab, var(--tp-destructive) 85%, var(--tp-card-foreground))}
+/* alert-title */
+&{font-weight:var(--tp-font-medium)}
+/* alert-description */
+&{color:var(--tp-muted-foreground)}
+:host(:is([severity='success'], [severity='warning'], [severity='danger'])) &{color:inherit}
+& ::slotted(p){margin:0}
+/* alert-action */
+&{gap:var(--tp-space-2)}
+/* alert-mark */
+&{padding-block-start:var(--tp-space-0-5)}
+
+/* tp-alert structure */

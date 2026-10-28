@@ -5,10 +5,12 @@ import { catalogEntries } from '../catalog.js';
 import { presentationFamilies } from '../presentation/families/index.js';
 import { widgetPresentationFamilies } from '../presentation/families/widgets.js';
 import { widgetDefinitions } from '../presentation/widgets.js';
+import { allowedSpecifier, importSpecifiers, widgetModule } from '../source-imports.test.js';
 import { widgetEntries } from './catalog.js';
 
-// The widgets section mirrors the component rules with its own registries, and never leaks
-// into `@tweakpad/ui` or `@tweakpad/ui/register`. Every assertion holds with zero widgets.
+// The widgets section mirrors the component rules with its own registries, and neither it nor
+// a widget's companion entry leaks into `@tweakpad/ui` or `@tweakpad/ui/register`. Every
+// assertion holds with zero widgets.
 
 const root = new URL('../', import.meta.url).pathname;
 const read = (file: string) => readFileSync(join(root, file), 'utf8');
@@ -49,10 +51,22 @@ const reachable = (entry: string, seen = new Set<string>()): Set<string> => {
   for (const target of runtimeImports(entry)) reachable(target, seen);
   return seen;
 };
-const widgetModule = (file: string) =>
-  file.startsWith('widgets/') ||
-  file === 'presentation/widgets.ts' ||
-  file === 'presentation/families/widgets.ts';
+/** The folder of a widget's companion entry (`@tweakpad/ui/<name>`) that holds a module. */
+const companionFolder = (file: string): string | undefined =>
+  /^foundation\/(text-editor|emoji|flow)\//u.exec(file)?.[1];
+const mainEntries = [
+  'index.ts',
+  'register.ts',
+  'presentation/index.ts',
+  'components/index.ts',
+  'foundation/index.ts',
+];
+
+/** The specifiers of a source that the widget-source rule rejects. */
+const bareImports = (text: string): string[] =>
+  importSpecifiers(text)
+    .filter((specifier) => specifier === null || !allowedSpecifier.test(specifier))
+    .map((specifier) => specifier ?? 'import() without a string specifier');
 
 describe('widget catalog', () => {
   it('names each widget once with a tp- tag and a component kind', () => {
@@ -108,17 +122,73 @@ describe('widget catalog', () => {
   });
 
   it('never reaches a widget module from the main index, register or presentation', () => {
-    for (const entry of [
-      'index.ts',
-      'register.ts',
-      'presentation/index.ts',
-      'components/index.ts',
-    ]) {
+    for (const entry of mainEntries) {
       const leaked = [...reachable(entry)].filter(widgetModule);
       expect(leaked, entry).toEqual([]);
     }
     for (const file of [...sources('components'), ...sources('foundation')])
       for (const target of runtimeImports(file))
         expect(widgetModule(relative(root, join(root, target))), `${file} → ${target}`).toBe(false);
+  });
+
+  it('V-614: the main entries reach no companion entry', () => {
+    for (const entry of mainEntries) {
+      const leaked = [...reachable(entry)].filter(
+        (file) => widgetModule(file) || companionFolder(file) !== undefined,
+      );
+      expect(leaked, entry).toEqual([]);
+    }
+    // Components and Foundation reach a companion module only from inside its own folder.
+    for (const file of [...sources('components'), ...sources('foundation')])
+      for (const target of runtimeImports(file)) {
+        const folder = companionFolder(target);
+        if (folder !== undefined) expect(folder, `${file} → ${target}`).toBe(companionFolder(file));
+      }
+  });
+
+  it('V-613: widget sources import only lit or relative modules', () => {
+    const offenders = sources('widgets').flatMap((file) =>
+      bareImports(read(file)).map((specifier) => `${file}: ${specifier}`),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('V-613: the rule rejects a static and a dynamic bare import', () => {
+    expect(bareImports("import { Editor } from '@example/editor-core';\n")).toEqual([
+      '@example/editor-core',
+    ]);
+    expect(
+      bareImports("export async function load() {\n  return await import('example-engine');\n}\n"),
+    ).toEqual(['example-engine']);
+  });
+
+  it('V-613: reads type-only, side-effect, re-export and computed dynamic imports too', () => {
+    const source = [
+      "import type { EditorState } from '@example/editor-state';",
+      "import '@example/editor-core/style.css';",
+      "export * from 'example-engine';",
+      "export {\n  Engine,\n  type EngineOptions,\n} from 'example-engine/engine';",
+      'const load = (name: string) => import(name);',
+      "type Lazy = typeof import('example-engine/lazy');",
+    ].join('\n');
+    expect(bareImports(source)).toEqual([
+      '@example/editor-state',
+      '@example/editor-core/style.css',
+      'example-engine',
+      'example-engine/engine',
+      'import() without a string specifier',
+      'example-engine/lazy',
+    ]);
+    // Lit and relative modules pass in every form, and a 'from' string inside code is no import.
+    const allowed = [
+      "import { html, nothing } from 'lit';",
+      "import { repeat } from 'lit/directives/repeat.js';",
+      "import type { PropertyValues } from '@lit/reactive-element';",
+      "import './parts.js';",
+      "export * from '../../foundation/emoji/index.js';",
+      "const panel = () => import('./panel.js');",
+      "if (value === 'from' || value === 'to') run(value);",
+    ].join('\n');
+    expect(bareImports(allowed)).toEqual([]);
   });
 });

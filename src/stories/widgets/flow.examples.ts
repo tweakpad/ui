@@ -1,4 +1,8 @@
-import { WIDGET_REGISTER_IMPORTS, interactiveMarkupExample } from '../documentation-examples.js';
+import {
+  WIDGET_REGISTER_IMPORTS,
+  interactiveMarkupExample,
+  publishedSource,
+} from '../documentation-examples.js';
 import { setupFlowExample } from './flow-example.js';
 import setupSource from './flow-example.js?raw';
 
@@ -8,7 +12,7 @@ function example(title: string, content: string, description: string) {
     title,
     `<div id="${id}">${content}</div>`,
     setupFlowExample,
-    `${setupSource}\nsetupFlowExample(document.getElementById('${id}'));`,
+    `${publishedSource(setupSource)}\nsetupFlowExample(document.getElementById('${id}'));`,
     description,
     { registerImports: WIDGET_REGISTER_IMPORTS },
   );

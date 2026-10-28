@@ -1,3 +1,4 @@
+import { fillTemplate } from '../../foundation/template.js';
 import type { FileErrorCode } from './types.js';
 
 /** Values substituted into File upload messages. */
@@ -72,7 +73,7 @@ export interface FileUploadMessages extends Record<FileErrorCode, FileUploadMess
 }
 
 const plural = (count: number | undefined, one: string, other: string): string =>
-  (count ?? 0) === 1 ? one : other.replace('{count}', String(count ?? 0));
+  (count ?? 0) === 1 ? one : fillTemplate(other, { count: count ?? 0 });
 
 const WILDCARDS: Readonly<Record<string, string>> = {
   image: 'Images',
@@ -137,8 +138,5 @@ export function formatFileUploadMessage(
 ): string {
   const message = messages[key] ?? DEFAULT_FILE_UPLOAD_MESSAGES[key];
   if (typeof message === 'function') return message(params);
-  return message.replace(/\{(\w+)\}/g, (match, name: string) => {
-    const value = params[name as keyof FileUploadMessageParams];
-    return value === undefined ? match : String(value);
-  });
+  return fillTemplate(message, params);
 }

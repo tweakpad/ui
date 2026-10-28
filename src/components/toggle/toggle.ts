@@ -3,6 +3,7 @@ import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { stateMarkers } from '../../foundation/state-markers.js';
 import { TpFormElement } from '../../foundation/form-element.js';
+import { CompositeControlController } from '../../foundation/composite-control.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import { SyntheticPress } from '../../foundation/synthetic-press.js';
@@ -10,10 +11,17 @@ import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { togglePresentation } from '../../presentation/families/toggle.js';
 import { fillLayerStyles } from '../../presentation/motion.js';
+import type { TpButton } from '../button/button.js';
+
+/**
+ * Toggle and Toggle group sizes: the Button sizes, its control steps and their square `icon-*`
+ * steps.
+ */
+export type ToggleSize = TpButton['size'];
 
 export interface ToggleSelectionOwner {
   readonly variant: 'ghost' | 'outline';
-  readonly size: 'sm' | 'default' | 'lg';
+  readonly size: ToggleSize;
   isPressed(member: TpToggle): boolean;
   isDisabled(member: TpToggle): boolean;
   tabStop(member: TpToggle): number;
@@ -43,11 +51,13 @@ export class TpToggle extends TpFormElement {
       }
 
       /* The label never wraps. The visible toggle is the host's box, as Button's is, so a
-         stretched or sized host draws a matching toggle. */
+         stretched or sized host draws a matching toggle. A block-level control opens no line
+         box in the host, so the surrounding line height never makes the host taller than its
+         size step. */
       .control {
         position: relative;
         inline-size: 100%;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
         white-space: nowrap;
@@ -75,9 +85,16 @@ export class TpToggle extends TpFormElement {
   ];
   #provided: boolean | undefined;
   #variant: 'ghost' | 'outline' = 'ghost';
-  #size: 'sm' | 'default' | 'lg' = 'default';
+  #size: ToggleSize = 'default';
   #owner: ToggleSelectionOwner | null = null;
   #control: HTMLElement | null = null;
+  // Inside a Toolbar the tab stop and the disabled policy are the Toolbar's; the disabled source
+  // stays the Toggle's own and its group's state (`node-011941`, `node-010070`).
+  #composite = new CompositeControlController(
+    this,
+    () => this.#control,
+    () => this.toggleDisabled,
+  );
   #focusVisible = false;
   #contentObserver: MutationObserver | null = null;
   declare ariaLabel: string | null;
@@ -112,10 +129,10 @@ export class TpToggle extends TpFormElement {
     this.#variant = value;
     this.requestUpdate('variant', previous);
   }
-  get size(): 'sm' | 'default' | 'lg' {
+  get size(): ToggleSize {
     return this.#owner?.size ?? this.#size;
   }
-  set size(value: 'sm' | 'default' | 'lg') {
+  set size(value: ToggleSize) {
     const previous = this.size;
     this.#size = value;
     this.requestUpdate('size', previous);
@@ -133,6 +150,10 @@ export class TpToggle extends TpFormElement {
   }
   get toggleDisabled(): boolean {
     return this.effectiveDisabled || (this.#owner?.isDisabled(this) ?? false);
+  }
+  /** Own, group and Toolbar disabled state: what the control renders and what blocks activation. */
+  #blocked(): boolean {
+    return this.toggleDisabled || !!this.#composite.state?.disabled;
   }
   protected override focusTarget(): HTMLElement | null {
     return this.#control;
@@ -197,7 +218,8 @@ export class TpToggle extends TpFormElement {
     this.#syncIconEdges();
   }
   protected override render() {
-    const disabled = this.toggleDisabled;
+    const disabled = this.#blocked();
+    const composite = this.#composite.state;
     const state = {
       pressed: this.pressed,
       disabled,
@@ -230,7 +252,11 @@ export class TpToggle extends TpFormElement {
         class: 'control',
         role: 'button',
         type: this.nativeAction ? 'button' : undefined,
-        '.disabled': this.nativeAction ? disabled : undefined,
+        '.disabled': this.nativeAction
+          ? composite
+            ? composite.disabled && !composite.focusableWhenDisabled
+            : disabled
+          : undefined,
         'aria-disabled': disabled ? 'true' : undefined,
         'aria-pressed': String(this.pressed),
         'aria-label': this.ariaLabel || undefined,
@@ -239,7 +265,11 @@ export class TpToggle extends TpFormElement {
           'disabled',
           'focusVisible',
         ]),
-        tabindex: disabled ? -1 : (this.#owner?.tabStop(this) ?? 0),
+        tabindex: composite
+          ? composite.tabIndex
+          : disabled
+            ? -1
+            : (this.#owner?.tabStop(this) ?? 0),
         '@click': (event: Event) => {
           queueMicrotask(() => {
             if (this.isConnected && !componentHandlingPrevented(event)) this.#request(event);
@@ -266,7 +296,7 @@ export class TpToggle extends TpFormElement {
     });
   }
   #request(event: Event): void {
-    if (this.toggleDisabled || this.readOnly) return;
+    if (this.#blocked() || this.readOnly) return;
     if (this.#owner) this.#owner.requestToggle(this, !this.pressed, event);
     else this.#state.set(!this.pressed, 'trigger-press', event);
   }
@@ -281,7 +311,7 @@ export class TpToggle extends TpFormElement {
     this.#state.set(pressed, reason, event);
   }
   override activateFromLabel(): void {
-    if (this.toggleDisabled || this.readOnly) return;
+    if (this.#blocked() || this.readOnly) return;
     this.focus();
     this.#control?.click();
   }
@@ -290,7 +320,7 @@ export class TpToggle extends TpFormElement {
     this.#syncIconEdges();
     this.toggleAttribute('data-pressed', this.pressed);
     this.toggleAttribute('data-unpressed', !this.pressed);
-    this.toggleAttribute('data-disabled', this.toggleDisabled);
+    this.toggleAttribute('data-disabled', this.#blocked());
     this.toggleAttribute('data-focus-visible', this.#focusVisible);
     // Toggle is an action, not a checkbox/form participant (Foundation 13.6).
     this.setFormValue(null);

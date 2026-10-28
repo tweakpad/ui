@@ -6,6 +6,7 @@ import { TpValueChangeEvent, TpValueCommitEvent } from '../../foundation/events.
 import type { ChangeReason, ValueChangeDetail } from '../../foundation/types.js';
 import { defaultTrue } from '../../foundation/converters.js';
 import { CleanupScope } from '../../foundation/services.js';
+import { containNestedEvents } from '../../foundation/nested-events.js';
 import { surfaceInteraction } from '../../foundation/surface-focus.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { NumberFieldController } from '../../foundation/number-field/controller.js';
@@ -248,6 +249,11 @@ export class TpEasingEditor extends TpFormElement<string> {
   #pending: { curve: EasingCurve; text: string } | null = null;
   #immediate: ImmediateCommit | undefined;
   #dragSnapshot: DragSnapshot | undefined;
+  /**
+   * No constituent lane event leaves this shadow root (uwg-ee-req-evt-2); the root part binds
+   * these listeners too.
+   */
+  readonly #nestedListeners = containNestedEvents(this, { types: NESTED_EVENT_TYPES, on: 'root' });
   #frozenRange: ProgressionRange | undefined;
   #displayRange: ProgressionRange | undefined;
   #rangeTarget: ProgressionRange | undefined;
@@ -439,14 +445,9 @@ export class TpEasingEditor extends TpFormElement<string> {
     super.connectedCallback();
     // Field discovers its control through this marker (Field's selector list is closed).
     this.setAttribute('data-field-control', '');
-    // Safety net: no constituent lane event leaves this shadow root (Widgets 6.2 Events).
-    for (const type of NESTED_EVENT_TYPES)
-      this.renderRoot.addEventListener(type, this.#containNested);
   }
 
   override disconnectedCallback(): void {
-    for (const type of NESTED_EVENT_TYPES)
-      this.renderRoot.removeEventListener(type, this.#containNested);
     this.#dragSnapshot = undefined;
     this.#suppressedSlider = null;
     for (const binding of this.#numberFields.values()) this.#disposeField(binding);
@@ -670,11 +671,6 @@ export class TpEasingEditor extends TpFormElement<string> {
       });
     this.requestUpdate();
   }
-
-  /** Nested constituent events stop at this shadow root; the widget republishes its own lanes. */
-  #containNested = (event: Event): void => {
-    if (event.target !== this) event.stopPropagation();
-  };
 
   #activeAdapter(): EasingAdapter | undefined {
     const adapters = this.adapters.length ? this.adapters : DEFAULT_ADAPTERS;
@@ -1374,7 +1370,7 @@ export class TpEasingEditor extends TpFormElement<string> {
         'data-presets-open': state.presetsOpen,
         'data-disabled': this.effectiveDisabled,
         'data-readonly': this.readOnly,
-        ...this.#panelListeners(),
+        ...this.#nestedListeners,
       },
       content: html`${label}${this.#renderHeader()}${body}${this.renderPart(
         'easing-editor-footer',
@@ -1386,13 +1382,6 @@ export class TpEasingEditor extends TpFormElement<string> {
         },
       )}`,
     });
-  }
-
-  /** Listeners that keep every nested lane event inside the widget. */
-  #panelListeners(): Record<string, unknown> {
-    const listeners: Record<string, unknown> = {};
-    for (const type of NESTED_EVENT_TYPES) listeners[`@${type}`] = this.#containNested;
-    return listeners;
   }
 
   #title(): string {
@@ -1469,7 +1458,7 @@ export class TpEasingEditor extends TpFormElement<string> {
             class="presets-toggle"
             part="easing-editor-presets-toggle"
             variant="outline"
-            size="sm"
+            size="icon-sm"
             aria-label=${this.#dimensionLabel(strings.showPresets)}
             .pressed=${this.presetsOpen}
             ?disabled=${this.effectiveDisabled}

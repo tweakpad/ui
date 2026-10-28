@@ -1,4 +1,4 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { interactiveMarkupExample, publishedSource } from './documentation-examples.js';
 import { setupCarouselEffectExample } from './carousel-effects-example.js';
 import setupSource from './carousel-effects-example.js?raw';
 import demoStyles from './carousel-effects.stories.css?raw';
@@ -46,7 +46,7 @@ const slides = (layers: boolean) =>
     .join('\n    ');
 
 const script = (id: string) =>
-  `${setupSource.replaceAll("'../components/carousel/effects/index.js'", "'@tweakpad/ui'")}\nconst cleanup = setupCarouselEffectExample(document.getElementById('${id}'));\n// Call cleanup() when removing the example.`;
+  `${publishedSource(setupSource)}\nconst cleanup = setupCarouselEffectExample(document.getElementById('${id}'));\n// Call cleanup() when removing the example.`;
 
 function example(
   title: string,

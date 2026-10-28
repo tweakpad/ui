@@ -1,9 +1,13 @@
-import { interactiveMarkupExample, markupExample } from './documentation-examples.js';
+import {
+  interactiveMarkupExample,
+  markupExample,
+  publishedSource,
+} from './documentation-examples.js';
 import { setupTimeExample } from './time-example.js';
 import setupSource from './time-example.js?raw';
 
 const script = (id: string) =>
-  `${setupSource.replaceAll("'../", "'@tweakpad/ui/").replaceAll(".js';", "';")}\nsetupTimeExample(document.getElementById('${id}'));`;
+  `${publishedSource(setupSource)}\nsetupTimeExample(document.getElementById('${id}'));`;
 const live = (title: string, id: string, markup: string, description: string) =>
   interactiveMarkupExample(
     title,

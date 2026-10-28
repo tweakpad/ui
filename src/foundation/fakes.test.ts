@@ -5,10 +5,10 @@
  */
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import { describe, expect, it, vi } from 'vitest';
-import type { TweenFrameSource } from './map/camera.js';
+import type { FrameSource } from './frame-loop.js';
 
 /** Animation frames that run only when a test ticks them, with a clock they advance. */
-export class ManualFrames implements TweenFrameSource {
+export class ManualFrames implements FrameSource {
   time = 0;
   #next = 1;
   readonly #callbacks = new Map<number, (time: number) => void>();
@@ -107,6 +107,11 @@ export interface KeyEventInit {
   shiftKey?: boolean;
   repeat?: boolean;
   isComposing?: boolean;
+  /**
+   * Whether `getModifierState('AltGraph')` reports AltGraph as active. Without it the event has no
+   * `getModifierState`.
+   */
+  altGraph?: boolean;
 }
 
 /**
@@ -118,6 +123,7 @@ export function keyEvent(
   init: Partial<KeyEventInit> & { path?: EventTarget[] } = {},
 ): KeyboardEvent {
   const { path = [], ...flags } = init;
+  const { altGraph, ...fields } = { ...(typeof key === 'string' ? { key } : key), ...flags };
   const event = Object.assign(new Event('keydown', { cancelable: true }), {
     ctrlKey: false,
     metaKey: false,
@@ -125,10 +131,13 @@ export function keyEvent(
     shiftKey: false,
     repeat: false,
     isComposing: false,
-    ...(typeof key === 'string' ? { key } : key),
-    ...flags,
+    ...fields,
   });
   Object.defineProperty(event, 'composedPath', { value: () => path });
+  if (altGraph !== undefined)
+    Object.defineProperty(event, 'getModifierState', {
+      value: (name: string) => name === 'AltGraph' && altGraph,
+    });
   return event as unknown as KeyboardEvent;
 }
 
@@ -178,6 +187,20 @@ describe('foundation test fakes', () => {
     ]);
     expect(event.composedPath()).toEqual([host]);
     expect(keyEvent('Enter', { repeat: true }).repeat).toBe(true);
+  });
+
+  it('reports AltGraph through getModifierState only when the flag is given', () => {
+    const active = keyEvent({ key: '}', ctrlKey: true, altKey: true, altGraph: true });
+    expect([active.getModifierState('AltGraph'), active.getModifierState('Shift')]).toEqual([
+      true,
+      false,
+    ]);
+    expect('altGraph' in active).toBe(false);
+    expect(keyEvent('[', { altGraph: false }).getModifierState('AltGraph')).toBe(false);
+    expect(
+      keyEvent({ key: '[', altGraph: true }, { altGraph: false }).getModifierState('AltGraph'),
+    ).toBe(false);
+    expect('getModifierState' in keyEvent('[')).toBe(false);
   });
 
   it('reports computed custom properties from a styled document', () => {

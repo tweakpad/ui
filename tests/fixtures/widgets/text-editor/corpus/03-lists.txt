@@ -1,0 +1,23 @@
+Ridge hike packing list
+
+Shelter
+Tent body
+Poles in three sections
+Twelve stakes
+Ground sheet
+folded in four
+Water, two liters each
+Check the forecast
+File the route
+With the ranger station
+With a friend at home
+Boots waxed
+Map printed
+North section
+South section
+A bullet list right after the task list
+An ordered list right after the bullet list
+Kinds mixed under one item
+an ordered child
+a task child
+a bullet child

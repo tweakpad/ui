@@ -1,0 +1,384 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000001",
+        "align": "center"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Buoy maintenance notes"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000002",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Office suite spans carry inline styles that the profile drops."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000003",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Right in a right-to-left paragraph is its start."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000004",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A div soup line"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000005",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "and a second with a font tag"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000006",
+        "align": null
+      }
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000007",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "after an empty line"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000008",
+        "align": "center"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Handlers, classes, styles and unknown data attributes vanish; the center alignment stays."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000009",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A script link keeps its text, "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "#mooring"
+              }
+            }
+          ],
+          "text": "a fragment link"
+        },
+        {
+          "type": "text",
+          "text": " and "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "/manual/start"
+              }
+            }
+          ],
+          "text": "a relative link"
+        },
+        {
+          "type": "text",
+          "text": " stay."
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "attrs": {
+        "id": "te00000010",
+        "src": "/images/buoy.png",
+        "alt": "Buoy on its mooring",
+        "width": null
+      }
+    },
+    {
+      "type": "blockquote",
+      "attrs": {
+        "id": "te00000011",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A nested quote"
+        }
+      ]
+    },
+    {
+      "type": "blockquote",
+      "attrs": {
+        "id": "te00000012",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "and the outer quote's text"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000013",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "Bold alias"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "italic"
+            }
+          ],
+          "text": "italic alias"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "strike"
+            }
+          ],
+          "text": "deleted alias"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "yellow"
+              }
+            }
+          ],
+          "text": "an unnamed mark"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "yellow"
+              }
+            }
+          ],
+          "text": "a teal mark"
+        },
+        {
+          "type": "text",
+          "text": " and a color outside the palette."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000014",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ],
+          "text": "bold code"
+        },
+        {
+          "type": "text",
+          "text": " loses its bold; "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "subscript"
+            }
+          ],
+          "text": "subscript with "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "superscript"
+            }
+          ],
+          "text": "superscript inside"
+        },
+        {
+          "type": "text",
+          "text": " keeps the inner mark."
+        }
+      ]
+    },
+    {
+      "type": "taskList",
+      "content": [
+        {
+          "type": "taskItem",
+          "attrs": {
+            "id": "te00000015",
+            "checked": true
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "A task item copied from an editing root"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000016",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "Engine bold"
+        },
+        {
+          "type": "text",
+          "text": " and "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "purple"
+              }
+            }
+          ],
+          "text": "engine purple"
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "attrs": {
+        "id": "te00000017",
+        "src": "https://buoys.example/marker.png",
+        "alt": "Engine image",
+        "width": null
+      }
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "n000000001",
+        "align": null
+      }
+    }
+  ]
+}

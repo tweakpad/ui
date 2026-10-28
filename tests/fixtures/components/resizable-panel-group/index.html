@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Resizable panel group verification</title>
+    <style>
+      body.fixture {
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-family);
+        margin: var(--tp-space-6);
+      }
+      main {
+        display: grid;
+        gap: var(--tp-space-6);
+        justify-items: start;
+      }
+      .group {
+        border: 1px solid var(--tp-border);
+        border-radius: var(--tp-radius-lg);
+      }
+      #horizontal,
+      #rtl {
+        inline-size: 600px;
+        block-size: 9rem;
+      }
+      #vertical {
+        inline-size: 300px;
+        block-size: 14rem;
+      }
+      .pane {
+        padding: var(--tp-space-3);
+      }
+      #standalone {
+        display: flex;
+        align-items: stretch;
+        block-size: 6rem;
+        inline-size: 600px;
+        border: 1px solid var(--tp-border);
+        border-radius: var(--tp-radius-lg);
+      }
+      #standalone-pane {
+        flex: none;
+        padding: var(--tp-space-3);
+        background: var(--tp-muted);
+      }
+      #standalone-separator {
+        position: relative;
+        flex: none;
+        inline-size: 1px;
+        background: var(--tp-border);
+        outline-offset: 2px;
+      }
+      #standalone-separator:focus-visible {
+        outline: 2px solid var(--tp-ring);
+      }
+    </style>
+  </head>
+  <body class="fixture">
+    <main>
+      <h1>Resizable panel group verification</h1>
+      <tp-button id="before" variant="outline">Before groups</tp-button>
+      <section aria-label="Horizontal group">
+        <h2>Horizontal, collapsible first panel, locked second handle</h2>
+        <tp-resizable-panel-group id="horizontal" class="group" keyboard-step="5">
+          <tp-resizable-panel
+            id="h-files"
+            default-size="30%"
+            min-size="10%"
+            collapsible
+            collapsed-size="5%"
+            ><div class="pane">Files</div></tp-resizable-panel
+          >
+          <tp-resizable-handle
+            id="h-handle-1"
+            label="Resize files"
+            with-handle
+          ></tp-resizable-handle>
+          <tp-resizable-panel id="h-editor" min-size="20%"
+            ><div class="pane">Editor</div></tp-resizable-panel
+          >
+          <tp-resizable-handle
+            id="h-handle-2"
+            label="Resize outline"
+            disabled
+          ></tp-resizable-handle>
+          <tp-resizable-panel id="h-outline" default-size="25%" min-size="10%"
+            ><div class="pane">Outline</div></tp-resizable-panel
+          >
+        </tp-resizable-panel-group>
+      </section>
+      <section aria-label="Vertical group">
+        <h2>Vertical</h2>
+        <tp-resizable-panel-group id="vertical" class="group" orientation="vertical">
+          <tp-resizable-panel id="v-top" default-size="50%" min-size="20%"
+            ><div class="pane">Tide table</div></tp-resizable-panel
+          >
+          <tp-resizable-handle
+            id="v-handle"
+            label="Resize tide table"
+            with-handle
+          ></tp-resizable-handle>
+          <tp-resizable-panel id="v-bottom" min-size="20%"
+            ><div class="pane">Notes</div></tp-resizable-panel
+          >
+        </tp-resizable-panel-group>
+      </section>
+      <section aria-label="Right-to-left group" dir="rtl">
+        <h2>Right to left</h2>
+        <tp-resizable-panel-group id="rtl" class="group">
+          <tp-resizable-panel id="r-start" default-size="40%" min-size="10%"
+            ><div class="pane">Start</div></tp-resizable-panel
+          >
+          <tp-resizable-handle id="r-handle" label="Resize start" with-handle></tp-resizable-handle>
+          <tp-resizable-panel id="r-end" min-size="10%"
+            ><div class="pane">End</div></tp-resizable-panel
+          >
+        </tp-resizable-panel-group>
+      </section>
+      <section id="standalone-section" aria-label="Standalone separator">
+        <h2>Standalone separator controller</h2>
+        <div id="standalone">
+          <div id="standalone-pane">Log</div>
+          <div id="standalone-separator" aria-label="Resize log"></div>
+          <div class="pane">Map</div>
+        </div>
+      </section>
+      <tp-button id="after" variant="outline">After groups</tp-button>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

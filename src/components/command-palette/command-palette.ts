@@ -1,5 +1,4 @@
 import { css, html, unsafeCSS, type TemplateResult, type PropertyValues } from 'lit';
-import { shortcutKeys } from '../key-hint/shortcut.js';
 import { TpDialog } from '../dialog/dialog.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
@@ -17,6 +16,7 @@ import type { SearchRange } from '../../foundation/search/types.js';
 import { resolveLocale } from '../../foundation/services.js';
 import { commandPalettePresentation } from '../../presentation/families/command-palette.js';
 import { dialogPresentation } from '../../presentation/families/dialog.js';
+import { projectCommandItem } from './item.js';
 import { TpCommandList } from './list.js';
 import { TpIcon } from '../icon/icon.js';
 import { TpKeyHintGroup } from '../key-hint/key-hint-group.js';
@@ -235,13 +235,7 @@ export class TpCommandPalette extends TpDialog {
         retained.add(entry);
         let wrapper = this.#wrappers.get(entry) as CommandItem | undefined;
         if (!wrapper) this.#wrappers.set(entry, (wrapper = { value: item.value }));
-        for (const key of Object.keys(wrapper))
-          if (!(key in item)) delete (wrapper as unknown as Record<string, unknown>)[key];
-        Object.assign(wrapper, item, {
-          text: item.text ?? (typeof item.label === 'string' ? item.label : String(item.value)),
-          label: html`${item.icon ? html`<tp-icon .icon=${item.icon} size="var(--tp-icon-size-sm)" aria-hidden="true"></tp-icon>` : ''}<span>${this.#itemLabel(item)}</span>${item.shortcut ? html`<tp-key-hint-group separator="none" part="command-palette-shortcut-hint" aria-hidden="true">${shortcutKeys(item.shortcut).map((key) => html`<tp-key-hint>${key}</tp-key-hint>`)}</tp-key-hint-group>` : ''}`,
-        });
-        return wrapper;
+        return projectCommandItem(item, this.#itemLabel(item), wrapper);
       });
     this.#projected = project(source);
     for (const key of this.#wrappers.keys()) if (!retained.has(key)) this.#wrappers.delete(key);

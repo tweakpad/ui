@@ -91,7 +91,7 @@ export function renderFooter(options: FooterOptions) {
             >${options.toneSample}</span
           ></tp-button
         ><tp-menu-radio-group
-          aria-label=${options.toneMenuLabel}
+          .label=${options.toneMenuLabel}
           .value=${options.tone}
           @tp-value-change=${options.onTone}
           >${options.tones.map(

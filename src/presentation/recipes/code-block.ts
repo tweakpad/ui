@@ -1,9 +1,14 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import { CODE_SCOPES } from '../../foundation/code/types.js';
-
-/** The code surface: the card fill mixed halfway toward muted. */
-const surface = 'color-mix(in oklab, var(--tp-card) 50%, var(--tp-muted))';
+import {
+  codeFocusRing,
+  codeInsetBlock,
+  codeInsetInline,
+  codeSurface,
+  codeSurfaceFill,
+  codeTypography,
+} from './shared/code-surface.js';
 
 /** Scoped tokens read their `--tp-syntax-*` role; adapter colors win through `light-dark()`. */
 const tokenColors: PresentationRule[] = [
@@ -25,23 +30,8 @@ const tokenColors: PresentationRule[] = [
 
 /** Default Code block appearance (`ucl21-code-block`): existing roles plus the syntax extension. */
 export const codeBlockAppearance: PresentationDictionary = {
-  'code-block': [
-    {
-      declarations: {
-        // Code figure: the code surface, extra-large radius, small mono text, ligatures off.
-        border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-        'border-radius': 'var(--tp-radius-xl)',
-        background: surface,
-        color: 'var(--tp-foreground)',
-        overflow: 'clip',
-        'font-family': 'var(--tp-font-mono)',
-        'font-size': 'var(--tp-text-sm)',
-        'line-height': 'var(--tp-leading-normal)',
-        'font-feature-settings': '"liga" 0, "calt" 0',
-        'tab-size': '2',
-      },
-    },
-  ],
+  // Code figure: the code surface and code typography; the figure clips its scrolling viewport.
+  'code-block': [{ declarations: { ...codeSurface, overflow: 'clip', ...codeTypography } }],
   'code-block-header': [
     {
       declarations: {
@@ -74,7 +64,7 @@ export const codeBlockAppearance: PresentationDictionary = {
   'code-block-viewport': [
     {
       declarations: {
-        'padding-block': 'var(--tp-space-3)',
+        'padding-block': codeInsetBlock,
         'white-space': 'pre',
         'interpolate-size': 'allow-keywords',
         transition: motionTransition(['max-block-size'], 'normal'),
@@ -88,24 +78,18 @@ export const codeBlockAppearance: PresentationDictionary = {
     {
       selector: ':host([data-collapsed]) &',
       declarations: {
-        'max-block-size': 'calc(var(--_tp-code-collapsed-lines) * 1lh + var(--tp-space-3))',
+        'max-block-size': `calc(var(--_tp-code-collapsed-lines) * 1lh + ${codeInsetBlock})`,
         'mask-image':
           'linear-gradient(to bottom, black calc(100% - var(--tp-space-12)), transparent)',
       },
     },
-    {
-      selector: '&:focus-visible',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'calc(var(--tp-ring-width) * -1)',
-      },
-    },
+    { selector: '&:focus-visible', declarations: codeFocusRing },
   ],
   'code-block-line': [
     {
       declarations: {
         'min-block-size': '1lh',
-        'padding-inline': 'var(--tp-space-4)',
+        'padding-inline': codeInsetInline,
       },
     },
     { selector: ':host([line-numbers]) &', declarations: { 'padding-inline-start': '0' } },
@@ -138,7 +122,7 @@ export const codeBlockAppearance: PresentationDictionary = {
         'padding-inline-end': 'var(--tp-space-4)',
         'text-align': 'end',
         color: 'var(--tp-muted-foreground)',
-        background: surface,
+        background: codeSurfaceFill,
         'user-select': 'none',
       },
     },

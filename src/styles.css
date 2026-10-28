@@ -50,6 +50,28 @@
   --tp-syntax-inserted: light-dark(#116329, #aff5b4);
   --tp-syntax-deleted: light-dark(#82071e, #ffdcd7);
 
+  /* Token extension, content colors (ccx-roles, ccx-defined): per hue, a surface for highlights
+     and table cell backgrounds and a foreground for text, for colors that user content names.
+     Each foreground keeps at least 4.5:1 on the background and on its surface in both schemes. */
+  --tp-content-gray: light-dark(#ebedf0, #2f3033);
+  --tp-content-gray-foreground: light-dark(#575b62, #c4c7cd);
+  --tp-content-brown: light-dark(#f8e9e2, #3b2d25);
+  --tp-content-brown-foreground: light-dark(#74523f, #dec0b0);
+  --tp-content-orange: light-dark(#fee8da, #48270d);
+  --tp-content-orange-foreground: light-dark(#8b4501, #fdb584);
+  --tp-content-yellow: light-dark(#faeccb, #3d2e05);
+  --tp-content-yellow-foreground: light-dark(#715700, #e2c47c);
+  --tp-content-green: light-dark(#daf5de, #1a3821);
+  --tp-content-green-foreground: light-dark(#146d34, #9dd8a9);
+  --tp-content-blue: light-dark(#e0effe, #17324d);
+  --tp-content-blue-foreground: light-dark(#065da0, #9cccff);
+  --tp-content-purple: light-dark(#f0e8ff, #36284b);
+  --tp-content-purple-foreground: light-dark(#6a439b, #d3b8fe);
+  --tp-content-pink: light-dark(#fee5f0, #472235);
+  --tp-content-pink-foreground: light-dark(#913266, #fcabd1);
+  --tp-content-red: light-dark(#fee7e4, #4f1f1d);
+  --tp-content-red-foreground: light-dark(#a12628, #ffb0a9);
+
   /* One spacing seed and its closed derived scale. */
   --tp-spacing: 0.25rem;
   --tp-space-0: 0;

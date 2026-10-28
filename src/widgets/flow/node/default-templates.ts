@@ -13,7 +13,7 @@ import type {
 } from '../../../foundation/flow/types.js';
 import type { FlowNodeRunState } from '../../../foundation/flow/run/types.js';
 import type { FlowLod, FlowStrings } from '../types.js';
-import { format } from '../strings.js';
+import { fillTemplate } from '../../../foundation/template.js';
 
 export interface ShapeContext {
   node: FlowNode;
@@ -423,7 +423,7 @@ export function renderGroupShape(context: ShapeContext): TemplateResult {
 
 export function statusAnnouncement(context: ShapeContext): string {
   return context.status
-    ? format(context.strings.announceStatus, {
+    ? fillTemplate(context.strings.announceStatus, {
         label: context.label,
         status: statusText(context.status, context.strings),
       })

@@ -118,6 +118,16 @@ moves (for example to keep files out of files). Every move is proposed through t
 Parents whose children change are rebuilt with `withItemChildren(record, children)` (default:
 `{ ...record, children }`); every other record keeps its identity. `moveItem(id, { parentId, index })` proposes a move from code.
 
+A tree you drag yourself can reuse the level rule. `projectDepth(rows, index, requestedDepth, canNest)`
+from `@tweakpad/ui` takes the visible rows in order as `{ id, depth, parentId }` (the dragged row's
+descendants removed), the dragged row's index and the depth the pointer asks for. It returns
+`{ depth, minDepth, maxDepth, parentId, vetoed }`: the depth clamped between the next row's depth
+and one more than the previous row's, and the parent at that depth. The optional
+`canNest(parent, source)` decides whether a projected parent accepts the dragged row; the depth
+is then lowered to the deepest level whose parent accepts it, the top level is always accepted,
+and `vetoed` is true when no level within the clamp is. `dragDepth(offset, indentation, rtl)`
+turns an inline pointer offset into depth steps, mirrored for right-to-left.
+
 ## Keyboard
 
 | Key        | Action                                             |

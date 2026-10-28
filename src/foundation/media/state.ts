@@ -1,3 +1,4 @@
+import { deepFreeze } from '../freeze.js';
 import type { ChangeReason } from '../types.js';
 import type { MediaAvailability } from './availability.js';
 import type { MediaStreamType, MediaTimeRange } from './target.js';
@@ -335,9 +336,7 @@ export function sameMediaValue(a: unknown, b: unknown): boolean {
 
 /** Deep-freezes plain state data in place. */
 export function freezeMediaValue<T>(value: T): T {
-  if (typeof value !== 'object' || value === null || Object.isFrozen(value)) return value;
-  for (const item of Object.values(value)) freezeMediaValue(item);
-  return Object.freeze(value);
+  return deepFreeze(value);
 }
 
 /** Change notification for one published batch. */

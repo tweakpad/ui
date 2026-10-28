@@ -22,12 +22,12 @@ import {
   transitionSpan,
 } from '../../foundation/reveal-playback.js';
 import { scheduleLayoutPass, type LayoutPass } from '../../foundation/layout-batch.js';
+import { adoptStyleText } from '../../foundation/generated-style.js';
 import {
   TextSplitter,
   type SplitConfig,
   type SplitUnit,
 } from '../../foundation/text-split/splitter.js';
-import { acquireRootStyles } from '../../foundation/text-split/styles.js';
 import { textMotionPresentation } from '../../presentation/families/text-motion.js';
 import { textMotionPieceCss } from './piece-styles.js';
 
@@ -289,7 +289,13 @@ export class TpTextMotion extends TpElement {
     super.connectedCallback();
     this.addEventListener('focusin', this.#mirrorFocus);
     this.addEventListener('focusout', this.#mirrorFocus);
-    this.#releaseStyles = acquireRootStyles(this, textMotionPieceCss);
+    // Pieces live in the light tree, so their structure is shared by every instance in this root.
+    const root = this.getRootNode();
+    this.#releaseStyles = adoptStyleText(
+      this,
+      root.nodeType === 11 ? (root as ShadowRoot) : this.ownerDocument,
+      textMotionPieceCss,
+    );
     this.#membership.connect();
     this.#observe();
     if (this.#splitter.measuresLines) scheduleLayoutPass(this, this.#linePass);

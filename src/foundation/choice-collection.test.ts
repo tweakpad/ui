@@ -55,6 +55,39 @@ describe('shared finite choice collection', () => {
     expect(owner.highlighted?.value).toBe('c');
     owner.disconnect();
   });
+  it('navigates mounted records in visible order even where document position cannot order their controls', () => {
+    // Controls in different shadow roots: document position answers an arbitrary order, here the
+    // reverse of the visible one.
+    const following = 4;
+    const preceding = 2;
+    const control = (rank: number) =>
+      ({
+        rank,
+        hasAttribute: () => false,
+        compareDocumentPosition: (other: { rank: number }) =>
+          other.rank < rank ? following : preceding,
+      }) as unknown as HTMLElement;
+    const owner = new ChoiceCollectionController<string>();
+    const records = ['a', 'b', 'c'].map((value, rank) => ({
+      value,
+      label: value,
+      element: control(rank),
+    }));
+    owner.setSource(records);
+    owner.openAt([]);
+    expect(owner.highlighted?.value).toBe('a');
+    expect(owner.move(1)?.value).toBe('b');
+    expect(owner.move(1)?.value).toBe('c');
+    expect(owner.move(1)?.value).toBe('a');
+    expect(owner.move(-1)?.value).toBe('c');
+    // Nothing highlighted (a menu opened by a pointer): backward starts at the last record,
+    // forward at the first, as for records whose controls are not mounted yet.
+    owner.activeIndex = -1;
+    expect(owner.move(-1)?.value).toBe('c');
+    owner.activeIndex = -1;
+    expect(owner.move(1)?.value).toBe('a');
+    owner.disconnect();
+  });
   it('clears the shared typing session on every surface opening', () => {
     const owner = new ChoiceCollectionController<string>();
     owner.setSource([
