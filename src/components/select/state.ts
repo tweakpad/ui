@@ -1,28 +1,31 @@
 import type { PartState } from '../../foundation/part.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 
-/** Canonical markers describe the owning compound on each actual rendered part. */
+const SELECT_MARKERS = [
+  'open',
+  'searchable',
+  'disabled',
+  'readOnly',
+  'required',
+  'invalid',
+  'valid',
+  'empty',
+  'filled',
+  'touched',
+  'dirty',
+  'focused',
+  'selected',
+  'highlighted',
+  'loading',
+] as const;
+
+/**
+ * Canonical markers describe the owning compound on each actual rendered part. Only the
+ * states a part's state object carries are published, so a native part keeps its own keys.
+ */
 export function selectStateMarkers(state: PartState): Record<string, unknown> {
-  const markers: Record<string, unknown> = {};
-  for (const [attribute, key] of Object.entries({
-    'data-open': 'open',
-    'data-searchable': 'searchable',
-    'data-disabled': 'disabled',
-    'data-readonly': 'readOnly',
-    'data-required': 'required',
-    'data-invalid': 'invalid',
-    'data-valid': 'valid',
-    'data-empty': 'empty',
-    'data-filled': 'filled',
-    'data-touched': 'touched',
-    'data-dirty': 'dirty',
-    'data-focused': 'focused',
-    'data-selected': 'selected',
-    'data-highlighted': 'highlighted',
-    'data-loading': 'loading',
-  })) {
-    if (key in state) markers[attribute] = state[key] === true;
-  }
-  if (typeof state.open === 'boolean') markers['data-closed'] = !state.open;
-  if (typeof state.selected === 'boolean') markers['data-unselected'] = !state.selected;
-  return markers;
+  return stateMarkers(
+    state,
+    SELECT_MARKERS.filter((key) => key in state),
+  );
 }

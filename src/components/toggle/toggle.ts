@@ -1,6 +1,7 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import { TpFormElement } from '../../foundation/form-element.js';
 import { CompositeControlController } from '../../foundation/composite-control.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
@@ -259,10 +260,11 @@ export class TpToggle extends TpFormElement {
         'aria-disabled': disabled ? 'true' : undefined,
         'aria-pressed': String(this.pressed),
         'aria-label': this.ariaLabel || undefined,
-        'data-pressed': this.pressed,
-        'data-unpressed': !this.pressed,
-        'data-disabled': disabled,
-        'data-focus-visible': this.#focusVisible,
+        ...stateMarkers({ pressed: this.pressed, disabled, focusVisible: this.#focusVisible }, [
+          'pressed',
+          'disabled',
+          'focusVisible',
+        ]),
         tabindex: composite
           ? composite.tabIndex
           : disabled
