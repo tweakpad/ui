@@ -14,15 +14,11 @@ import {
   type TextEditorImageUpload,
   type TpTextEditor,
 } from '../../widgets/text-editor/index.js';
-import {
-  calloutBlock,
-  customBlockNotes,
-  embedBlock,
-  fieldNotes,
-  lexicalEngine,
-  mentionInline,
-  tiptapEngine,
-} from './text-editor-example.js';
+import { calloutBlock, embedBlock } from './text-editor-custom-blocks-example.js';
+import { createEngine as tiptapEngine } from './text-editor-engine.js';
+import { createEngine as lexicalEngine } from './text-editor-lexical-engine.js';
+import { mentionInline } from './text-editor-mentions-example.js';
+import { customBlockNotes, fieldNotes, mentionNotes } from './text-editor-samples.js';
 import { textEditorExamples, textEditorStorySources } from './text-editor.examples.js';
 import documentation from '../../../docs/widgets/text-editor.md?raw';
 
@@ -173,6 +169,7 @@ export const Core: Story = {
         story:
           'No feature assigned: the fixed toolbar with history, block kinds, marks, colors and alignment over the editing surface. The table, image and link tools, the gutter, the selection toolbar and the slash menu are absent, and the page bundles none of them.',
       },
+      source: { code: textEditorStorySources.Core, language: 'html' },
     },
   },
 };
@@ -204,6 +201,7 @@ export const BlockEditor: Story = {
         story:
           'The block editor mode: every feature assigned and the fixed toolbar turned off with `layout: { toolbar: [] }`. The gutter beside each block inserts and drags, `/` opens the slash menu, a text selection shows the floating toolbar, and Alt+F10 reaches the controls from the keyboard.',
       },
+      source: { code: textEditorStorySources.BlockEditor, language: 'html' },
     },
   },
 };
@@ -238,36 +236,24 @@ export const ClassicToolbar: Story = {
         story:
           'The classic toolbar mode: the links, tables and images features without block editing, the selection toolbar or the slash menu, so every control sits in the fixed toolbar, as in a word processor.',
       },
+      source: { code: textEditorStorySources.ClassicToolbar, language: 'html' },
     },
   },
 };
 
-export const Lexical: Story = {
-  name: 'Lexical engine',
-  render: (args) => renderTextEditor(args, lexicalEngine),
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'The same editor on the second engine adapter: properties, events, keyboard and appearance are identical.',
-      },
-      source: { code: textEditorStorySources.Lexical, language: 'html' },
-    },
-  },
-};
+/** The features and layout of the selection toolbar editor: no fixed toolbar. */
+const selectionFeatures: readonly TextEditorFeature[] = [
+  textEditorSelectionToolbar(),
+  textEditorLinks(),
+];
+const selectionLayout = { toolbar: [] as string[][] };
 
-const customNodes = [calloutBlock, embedBlock, mentionInline];
-/** The slash list and the mention's `@` list. */
-const customSuggestions = { suggestions: ['slash', 'mention'] };
-
-export const CustomNodes: Story = {
-  name: 'Custom nodes',
-  args: { defaultValue: customBlockNotes, label: 'Mooring notes' },
+export const SelectionToolbar: Story = {
+  name: 'Selection toolbar',
   render: (args) =>
     html`<tp-text-editor
-      .features=${allFeatures(false)}
-      .nodes=${customNodes}
-      .layout=${customSuggestions}
+      .features=${selectionFeatures}
+      .layout=${selectionLayout}
       .defaultValue=${args.defaultValue}
       .format=${args.format}
       .placeholder=${args.placeholder}
@@ -283,8 +269,87 @@ export const CustomNodes: Story = {
     docs: {
       description: {
         story:
-          'A callout and an embed defined with `defineTextEditorBlock`, and a mention defined with `defineTextEditorInline`. The callout defines no paint of its own; the embed shows an https page in a sandboxed frame and requires a title; typing `@` lists the crew, searched after a short delay.',
+          'Only the selection toolbar, with the fixed toolbar turned off: selecting text shows the formatting controls over it.',
       },
+      source: { code: textEditorStorySources.SelectionToolbar, language: 'html' },
+    },
+  },
+};
+
+export const Lexical: Story = {
+  name: 'Lexical engine',
+  render: (args) => renderTextEditor(args, lexicalEngine),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'The same editor on the second engine adapter: only the engine module changes; properties, events, keyboard and appearance are identical.',
+      },
+      source: { code: textEditorStorySources.Lexical, language: 'html' },
+    },
+  },
+};
+
+const customBlocks = [calloutBlock, embedBlock];
+
+export const CustomBlocks: Story = {
+  name: 'Custom blocks',
+  args: { defaultValue: customBlockNotes, label: 'Mooring notes' },
+  render: (args) =>
+    html`<tp-text-editor
+      .features=${allFeatures(false)}
+      .nodes=${customBlocks}
+      .defaultValue=${args.defaultValue}
+      .format=${args.format}
+      .placeholder=${args.placeholder}
+      .label=${args.label}
+      .readOnly=${args.readOnly}
+      .disabled=${args.disabled}
+      ${ref((element?: Element) => {
+        const editor = element as TpTextEditor | undefined;
+        if (editor && !editor.engine) editor.engine = tiptapEngine();
+      })}
+    ></tp-text-editor>`,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'A callout and an embed defined with `defineTextEditorBlock`. The callout defines no paint of its own; the embed renders an https page in a sandboxed frame and requires a title.',
+      },
+      source: { code: textEditorStorySources.CustomBlocks, language: 'html' },
+    },
+  },
+};
+
+const mentionNodes = [mentionInline];
+/** The slash list and the mention's `@` list. */
+const mentionSuggestions = { suggestions: ['slash', 'mention'] };
+
+export const Mentions: Story = {
+  args: { defaultValue: mentionNotes, label: 'Handover notes' },
+  render: (args) =>
+    html`<tp-text-editor
+      .features=${allFeatures(false)}
+      .nodes=${mentionNodes}
+      .layout=${mentionSuggestions}
+      .defaultValue=${args.defaultValue}
+      .format=${args.format}
+      .placeholder=${args.placeholder}
+      .label=${args.label}
+      .readOnly=${args.readOnly}
+      .disabled=${args.disabled}
+      ${ref((element?: Element) => {
+        const editor = element as TpTextEditor | undefined;
+        if (editor && !editor.engine) editor.engine = tiptapEngine();
+      })}
+    ></tp-text-editor>`,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'A mention defined with `defineTextEditorInline`: typing `@` lists the crew and inserts the person you choose.',
+      },
+      source: { code: textEditorStorySources.Mentions, language: 'html' },
     },
   },
 };

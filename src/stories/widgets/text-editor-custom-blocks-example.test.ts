@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import {
-  calloutBlock,
-  customBlockNotes,
-  embedBlock,
-  embedSource,
-  lexicalEngine,
-  tiptapEngine,
-} from './text-editor-example.js';
+import { calloutBlock, embedBlock, embedSource } from './text-editor-custom-blocks-example.js';
+import { createEngine as tiptapEngine } from './text-editor-engine.js';
+import { createEngine as lexicalEngine } from './text-editor-lexical-engine.js';
+import { textEditorExamples, textEditorStorySources } from './text-editor.examples.js';
+import { customBlockNotes } from './text-editor-samples.js';
 
 /** A host element whose document creates recording elements. */
 function host() {
@@ -113,5 +110,40 @@ describe('custom block examples', () => {
     embedBlock.view!(insecure as never, { src: 'http://example.com/', title: 'Page' } as never);
     expect(insecure.children).toHaveLength(0);
     expect(insecure.textContent).toBe('Page');
+  });
+});
+
+describe('text editor example code', () => {
+  const codes = [
+    ...textEditorExamples.map((example) => [example.title, example.code] as const),
+    ...Object.entries(textEditorStorySources),
+  ];
+
+  it('publishes one self-contained script per example, with its own engine', () => {
+    for (const [, code] of codes) {
+      expect(code).not.toMatch(/from '\.{1,2}\//u);
+      expect(code).not.toMatch(/^export /mu);
+      expect(code.match(/^function createEngine\(/gmu) ?? []).toHaveLength(1);
+      expect(code).not.toMatch(/data-(?:sample|mode|custom-blocks|form-output|submitted)/u);
+    }
+  });
+
+  it('shows only the API of each use case', () => {
+    const code = Object.fromEntries(codes);
+    expect(code['Core editor']).not.toContain('features');
+    expect(code['Classic toolbar']).toContain(
+      'editor.features = [textEditorLinks(), textEditorTables(), textEditorImages({ upload })];',
+    );
+    expect(code['Classic toolbar']).not.toContain('layout');
+    expect(code['Block editor']).toContain('editor.layout = { toolbar: [] };');
+    expect(code['Selection toolbar']).toContain(
+      'editor.features = [textEditorSelectionToolbar(), textEditorLinks()];',
+    );
+    expect(code['Custom blocks']).not.toContain('mention');
+    expect(code['Mentions']).not.toContain('defineTextEditorBlock');
+    // Only the Lexical story imports the Lexical engine, and no other story imports both engines.
+    for (const [title, text] of codes)
+      expect(text.includes('@tiptap/core') !== text.includes("from 'lexical'"), title).toBe(true);
+    expect(textEditorStorySources.Lexical).toContain("from 'lexical'");
   });
 });
