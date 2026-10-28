@@ -9,6 +9,12 @@ import { messageScrollerFadeKeyframes } from '../../presentation/recipes/message
 import { messageScrollerPresentation } from '../../presentation/families/message-scroller.js';
 import { buttonPresentation } from '../../presentation/families/button.js';
 
+/**
+ * The native scrolling region of a Message scroller, focusable so the keyboard scrolls it. Compose
+ * it explicitly to configure it or to reach its element.
+ *
+ * @slot - The content.
+ */
 export class TpMessageScrollerViewport extends TpElement {
   static tagName = 'tp-message-scroller-viewport';
   static override presentation = messageScrollerPresentation;
@@ -53,9 +59,12 @@ export class TpMessageScrollerViewport extends TpElement {
       }
     `,
   ];
+  /** The accessible name of the scrolling region; empty uses the scroller's label. */
   label = '';
+  /** Overrides the scroller's `preserve-on-prepend` for this viewport; false leaves only the browser's own anchoring. */
   preserveOnPrepend: boolean | undefined = undefined;
   readonly #member = new MessageScrollerMember(this, 'message-scroller-viewport');
+  /** The native scrolling element, for reading the scroll position or observing its size; null before the first render. */
   get viewportElement(): HTMLElement | null {
     return this.renderRoot.querySelector('.viewport');
   }
@@ -86,6 +95,12 @@ export class TpMessageScrollerViewport extends TpElement {
   }
 }
 
+/**
+ * The transcript inside a Message scroller's viewport: a polite log, so assistive technology hears
+ * new messages as they arrive.
+ *
+ * @slot - The items and any other transcript content.
+ */
 export class TpMessageScrollerContent extends TpElement {
   static tagName = 'tp-message-scroller-content';
   static override presentation = messageScrollerPresentation;
@@ -119,11 +134,14 @@ export class TpMessageScrollerContent extends TpElement {
       ${hiddenStyles}
     `,
   ];
+  /** The accessible name of the log; empty uses the scroller's label. */
   label = '';
   readonly #member = new MessageScrollerMember(this, 'message-scroller-content');
+  /** The element laying out the transcript; null before the first render. */
   get contentElement(): HTMLElement | null {
     return this.renderRoot.querySelector('.content');
   }
+  /** The hidden space at the end the scroller sizes itself; read it, but do not move or resize it. */
   get spacerElement(): HTMLElement | null {
     return this.renderRoot.querySelector('.spacer');
   }
@@ -152,6 +170,11 @@ export class TpMessageScrollerContent extends TpElement {
   }
 }
 
+/**
+ * One message row of a Message scroller, addressable by its id and optionally the anchor of a turn.
+ *
+ * @slot - The message, such as a Message with its Bubble.
+ */
 export class TpMessageScrollerItem extends TpElement {
   static tagName = 'tp-message-scroller-item';
   static override presentation = messageScrollerPresentation;
@@ -172,7 +195,9 @@ export class TpMessageScrollerItem extends TpElement {
       }
     `,
   ];
+  /** The id that `scrollToMessage` and `knownMessageIds` refer to. */
   messageId = '';
+  /** Marks the start of a turn, usually the reader's own prompt: a new anchored turn holds its place at the reading line while the reply streams below it. */
   scrollAnchor = false;
   readonly #member = new MessageScrollerMember(this, 'message-scroller-item');
   protected override render() {
@@ -193,7 +218,10 @@ export class TpMessageScrollerItem extends TpElement {
   }
 }
 
-/** The live Return control is a Button constituent, not a second action implementation. */
+/**
+ * The Button that returns a Message scroller to the end, shown only while there is somewhere to
+ * return to. Compose it explicitly to change its direction, behavior or label, or leave it out.
+ */
 export class TpMessageScrollerReturnControl extends TpButton {
   static override tagName = 'tp-message-scroller-return-control';
   static override presentation = buttonPresentation;
@@ -230,7 +258,9 @@ export class TpMessageScrollerReturnControl extends TpButton {
       }
     `,
   ];
+  /** Which end the control scrolls to. */
   returnDirection: 'start' | 'end' = 'end';
+  /** How the return scroll moves; reduced motion always jumps. */
   behavior: ScrollBehavior = 'smooth';
   readonly #member = new MessageScrollerMember(this, 'message-scroller-return-control', 'button');
   #activationFrame = 0;
@@ -240,6 +270,7 @@ export class TpMessageScrollerReturnControl extends TpButton {
     this.size = 'icon-sm';
     this.icon = chevronDownIcon;
   }
+  /** Whether there is content past the control's end to return from; the control is inert otherwise. */
   get active() {
     return this.#member.owner?.provider.scrollable.value[this.returnDirection] ?? false;
   }

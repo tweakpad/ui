@@ -1,0 +1,121 @@
+{
+  "id": "components/overflow-list",
+  "tag": "tp-overflow-list",
+  "sources": {
+    "story": "src/stories/overflow-list.stories.ts",
+    "markdown": "docs/overflow-list.md",
+    "examples": [
+      "src/stories/overflow-list.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "Overflow list wraps a set of items, such as tags, labels or people, and keeps it within a number of items or rows. The items that do not fit are replaced by one count of the omitted items, `+3` by default, at the end or at the start.\n\n```html\n<tp-overflow-list limit=\"3\">\n  <tp-badge variant=\"outline\">Stoneware</tp-badge>\n  <tp-badge variant=\"outline\">Matte glaze</tp-badge>\n  <tp-badge variant=\"outline\">Hand-thrown</tp-badge>\n  <tp-badge variant=\"outline\">Food-safe</tp-badge>\n  <tp-badge variant=\"outline\">Speckled</tp-badge>\n</tp-overflow-list>\n```"
+    },
+    {
+      "id": "md: Items",
+      "kind": "md",
+      "heading": "## Items",
+      "text": "The items are the element children of the list, in document order, except elements with the `hidden` attribute and the element in the `count` slot. Adding, removing, moving or hiding a child updates the list in place. Text directly inside the list is not shown; wrap it in an element.\n\nItems keep their own markup and attributes. The list does not add roles, names or focus behavior to them, so interactive items keep their own semantics."
+    },
+    {
+      "id": "md: Limits",
+      "kind": "md",
+      "heading": "## Limits",
+      "text": "`limit` shows at most that many items. Fractions are dropped, and a value below one means no limit.\n\n`max-rows` fits as many items as the available width allows within that many wrapped rows, with the count beside them. An item wider than a row takes a row of its own. With nothing to omit, every item shows and no count renders; when not even one item fits beside the count, the count shows alone.\n\nThe two combine: with both, the fit never shows more than `limit` items.\n\n`collapse-from` chooses which items are omitted. `end` (default) keeps the first items and places the count after them. `start` keeps the last items and places the count before them."
+    },
+    {
+      "id": "md: Fitting rows",
+      "kind": "md",
+      "heading": "## Fitting rows",
+      "text": "A list with `max-rows` takes its width from its container and refits when the container resizes, an item or the count changes size, fonts load, items change, or `limit`, `max-rows` or `collapse-from` change. Many lists that refit together share one layout pass.\n\nThe list never changes height for a partition that has not been refitted yet, so the content below it only moves when the number or height of its fitted rows changes.\n\nIn a table cell, a flex row or a grid track, the list asks for the width of its items on one row (the first `limit` items when there is a limit) and can shrink down to the width of the count, so the track sizes as if nothing were omitted. The list itself is a block that fills the width it is given; in a flex row, give it room to grow, for example `flex: 1`.\n\nItems should keep their own width: an item that grows to fill its row (`flex-grow`) or that generates no box (`display: contents`) cannot be measured as one item and emits a `tp-diagnostic`."
+    },
+    {
+      "id": "md: Omitted items",
+      "kind": "md",
+      "heading": "## Omitted items",
+      "text": "Omitted items stay in the document. They are not shown, cannot be focused or clicked, and are hidden from assistive technology. A focused item that becomes omitted loses focus, as any content that becomes inert does.\n\n`hiddenItems` returns the omitted items in document order and `hiddenCount` their number. Use them to show the omitted items elsewhere, for example their labels in a popover. Leave the items in the list: moving them out changes the list and triggers a refit."
+    },
+    {
+      "id": "md: The count",
+      "kind": "md",
+      "heading": "## The count",
+      "text": "The default count is a secondary Badge. It shows `+N` with tabular figures, and assistive technology hears \"N more\" instead. `messages` replaces both texts:\n\n```js\nlist.messages = {\n  count: (hidden) => `+${hidden}`,\n  countLabel: (hidden, total) => `${hidden} of ${total} skills hidden`,\n};\n```\n\nEach message is text or a function of the omitted and the total item counts."
+    },
+    {
+      "id": "md: The count › Custom count",
+      "kind": "md",
+      "heading": "### Custom count",
+      "text": "An element in the `count` slot replaces the default count while items are omitted and is not shown otherwise. It gets no generated content: update it from `tp-overflow-change`.\n\n```html\n<tp-overflow-list max-rows=\"1\">\n  <tp-badge variant=\"outline\">First aid</tp-badge>\n  <tp-badge variant=\"outline\">Forklift</tp-badge>\n  <tp-badge variant=\"outline\">Sound desk</tp-badge>\n  <span slot=\"count\">\n    <tp-popover label=\"More skills\">\n      <tp-button slot=\"trigger\" variant=\"outline\" size=\"xs\"></tp-button>\n      <ul></ul>\n    </tp-popover>\n  </span>\n</tp-overflow-list>\n```\n\n```js\nlist.addEventListener('tp-overflow-change', () => {\n  button.textContent = `+${list.hiddenCount}`;\n  button.setAttribute('aria-label', `${list.hiddenCount} more skills`);\n});\n```\n\nThe count element needs a box of its own: wrap components whose host has no box, such as Popover, in an element. A custom count must state the number of omitted items in text, visibly or through its accessible name. Only the first element in the `count` slot is used; further ones are not shown and emit a `tp-diagnostic`."
+    },
+    {
+      "id": "md: Accessibility",
+      "kind": "md",
+      "heading": "## Accessibility",
+      "text": "The list adds no role, name or landmark. Omitted items are absent from the accessibility tree and the focus order, and the default count is plain text that is not focusable, read as \"N more\". When the items form a list, give the list `role=\"list\"` and each item `role=\"listitem\"`."
+    },
+    {
+      "id": "md: API — `tp-overflow-list`",
+      "kind": "md",
+      "heading": "## API — `tp-overflow-list`",
+      "text": "| Property / attribute             | Type; default                          | Behavior                                                                                              |\n| -------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------- |\n| `limit`                          | number; unset                          | Most items shown. Fractions are dropped; below one means no limit.                                    |\n| `maxRows` / `max-rows`           | positive integer; unset                | Most rows of the available width; the items that do not fit are omitted.                              |\n| `collapseFrom` / `collapse-from` | `end \\| start`; `end`                  | Side whose items are omitted; the count takes their place. Reflected.                                 |\n| `messages`                       | `OverflowListMessages` (property only) | `count` (visible, `+N`) and `countLabel` (accessible, `N more`): text or `(hidden, total) => string`. |\n| `hiddenCount` (read only)        | number                                 | The number of omitted items.                                                                          |\n| `hiddenItems` (read only)        | `Element[]`                            | The omitted items, in document order.                                                                 |\n\nThe host reflects `data-overflowing` while at least one item is omitted."
+    },
+    {
+      "id": "md: API — `tp-overflow-list` › Slots",
+      "kind": "md",
+      "heading": "### Slots",
+      "text": "| Slot      | Content                                                             |\n| --------- | ------------------------------------------------------------------- |\n| (default) | The items: element children that are not `hidden`.                  |\n| `count`   | An element that replaces the default count while items are omitted. |"
+    },
+    {
+      "id": "md: API — `tp-overflow-list` › Events",
+      "kind": "md",
+      "heading": "### Events",
+      "text": "| Event                | Detail                                          | When                                                                                                                                                                                 |\n| -------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |\n| `tp-overflow-change` | `{ value, previousValue, reason, sourceEvent }` | The omitted items changed, after the list settled. `value` is the omitted count; `reason` is `initial` for the first partition after connecting, otherwise `layout`. Not cancelable. |\n| `tp-diagnostic`      | `{ code, message, severity }`                   | An invalid `limit` or `max-rows`, text children, an item that cannot be measured, or a second count element; once per case.                                                          |\n\nA list that is not rendered, for example inside a closed panel, waits until it renders before it fits or emits `tp-overflow-change`."
+    },
+    {
+      "id": "md: Composition and presentation",
+      "kind": "md",
+      "heading": "## Composition and presentation",
+      "text": "Use Badge for tags and labels, and Button with Popover, Menu or Dialog in the `count` slot when the omitted items should be reachable. The list paints no surface and separates items with the shared chip gap.\n\nParts: `overflow-list` (the wrapping row of items and the count) and `overflow-list-count` (the default count Badge). Customize through `partContracts`, `::part(overflow-list)` (for example its `gap`) or `::part(overflow-list-count)`.\n\nExported class: `TpOverflowList`. Exported types: `OverflowListMessages`, `OverflowListMessage`, `OverflowCollapseFrom`. Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`."
+    },
+    {
+      "id": "example: Item limit",
+      "kind": "example",
+      "title": "Item limit",
+      "description": "`limit` shows that many items and replaces the rest with a count. Omitted items stay in the document, out of the layout, the focus order and the accessibility tree; the count reads \"6 more\" to assistive technology.",
+      "code": "<tp-overflow-list limit=\"4\">\n  <tp-badge variant=\"outline\">First aid</tp-badge>\n  <tp-badge variant=\"outline\">Forklift</tp-badge>\n  <tp-badge variant=\"outline\">Spanish</tp-badge>\n  <tp-badge variant=\"outline\">Sound desk</tp-badge>\n  <tp-badge variant=\"outline\">Rigging</tp-badge>\n  <tp-badge variant=\"outline\">Catering</tp-badge>\n  <tp-badge variant=\"outline\">Photography</tp-badge>\n  <tp-badge variant=\"outline\">Signage</tp-badge>\n  <tp-badge variant=\"outline\">Night shifts</tp-badge>\n  <tp-badge variant=\"outline\">Radio</tp-badge>\n</tp-overflow-list>"
+    },
+    {
+      "id": "example: Row limit",
+      "kind": "example",
+      "title": "Row limit",
+      "description": "Drag the handle: `max-rows` keeps as many items as fit in two rows of the available width, with the count beside them. The list never grows taller than its fitted rows, so the content below it stays in place while it refits.",
+      "code": "<tp-resizable-panel-group style=\"block-size:9rem\">\n  <tp-resizable-panel default-size=\"28%\" min-size=\"10%\">\n    <div style=\"padding:var(--tp-space-3)\">\n      <tp-overflow-list max-rows=\"2\">\n  <tp-badge variant=\"outline\">First aid</tp-badge>\n  <tp-badge variant=\"outline\">Forklift</tp-badge>\n  <tp-badge variant=\"outline\">Spanish</tp-badge>\n  <tp-badge variant=\"outline\">Sound desk</tp-badge>\n  <tp-badge variant=\"outline\">Rigging</tp-badge>\n  <tp-badge variant=\"outline\">Catering</tp-badge>\n  <tp-badge variant=\"outline\">Photography</tp-badge>\n  <tp-badge variant=\"outline\">Signage</tp-badge>\n  <tp-badge variant=\"outline\">Night shifts</tp-badge>\n  <tp-badge variant=\"outline\">Radio</tp-badge>\n      </tp-overflow-list>\n    </div>\n  </tp-resizable-panel>\n  <tp-resizable-handle label=\"Resize the list\" with-handle></tp-resizable-handle>\n  <tp-resizable-panel min-size=\"20%\"></tp-resizable-panel>\n</tp-resizable-panel-group>"
+    },
+    {
+      "id": "example: In a table",
+      "kind": "example",
+      "title": "In a table",
+      "description": "In a table, flex row or grid track, the list asks for the width of all its items on one row and can shrink down to the count, so the column sizes as if nothing were omitted.",
+      "code": "<div style=\"max-inline-size:32rem\"><tp-table label=\"Volunteers\">\n  <tp-table-header\n    ><tp-table-row>\n      <tp-table-head scope=\"col\">Volunteer</tp-table-head>\n      <tp-table-head scope=\"col\">Skills</tp-table-head>\n    </tp-table-row></tp-table-header\n  >\n  <tp-table-body\n    ><tp-table-row>\n      <tp-table-head scope=\"row\">Noor Haddad</tp-table-head>\n      <tp-table-cell\n        ><tp-overflow-list max-rows=\"1\">\n  <tp-badge variant=\"outline\">First aid</tp-badge>\n  <tp-badge variant=\"outline\">Forklift</tp-badge>\n  <tp-badge variant=\"outline\">Spanish</tp-badge>\n  <tp-badge variant=\"outline\">Sound desk</tp-badge>\n  <tp-badge variant=\"outline\">Rigging</tp-badge>\n  <tp-badge variant=\"outline\">Catering</tp-badge>\n  <tp-badge variant=\"outline\">Photography</tp-badge>\n  <tp-badge variant=\"outline\">Signage</tp-badge>\n  <tp-badge variant=\"outline\">Night shifts</tp-badge>\n  <tp-badge variant=\"outline\">Radio</tp-badge>\n        </tp-overflow-list></tp-table-cell\n      >\n    </tp-table-row\n    ><tp-table-row>\n      <tp-table-head scope=\"row\">Tomás Rivera</tp-table-head>\n      <tp-table-cell\n        ><tp-overflow-list max-rows=\"1\">\n  <tp-badge variant=\"outline\">Sound desk</tp-badge>\n  <tp-badge variant=\"outline\">Rigging</tp-badge>\n  <tp-badge variant=\"outline\">Catering</tp-badge>\n        </tp-overflow-list></tp-table-cell\n      >\n    </tp-table-row></tp-table-body\n  >\n</tp-table></div>"
+    },
+    {
+      "id": "example: Collapse from the start",
+      "kind": "example",
+      "title": "Collapse from the start",
+      "description": "`collapse-from=\"start\"` keeps the last items and places the count before them, for lists where the most recent entries matter most.",
+      "code": "<tp-overflow-list limit=\"3\" collapse-from=\"start\">\n  <tp-badge variant=\"secondary\">Mon · Setup</tp-badge>\n  <tp-badge variant=\"secondary\">Tue · Workshops</tp-badge>\n  <tp-badge variant=\"secondary\">Wed · Market</tp-badge>\n  <tp-badge variant=\"secondary\">Thu · Concert</tp-badge>\n  <tp-badge variant=\"secondary\">Fri · Teardown</tp-badge>\n</tp-overflow-list>"
+    },
+    {
+      "id": "example: Custom count",
+      "kind": "example",
+      "title": "Custom count",
+      "description": "An element in the `count` slot replaces the default count while items are omitted. It gets no generated text: listen to `tp-overflow-change` and read `hiddenItems` to show the number and, here, the omitted labels in a Popover. The count element needs a box of its own, so a Popover is wrapped in a span.",
+      "code": "<div id=\"overflow-list-custom\"><div style=\"max-inline-size:24rem\"><tp-overflow-list max-rows=\"1\">\n  <tp-badge variant=\"outline\">First aid</tp-badge>\n  <tp-badge variant=\"outline\">Forklift</tp-badge>\n  <tp-badge variant=\"outline\">Spanish</tp-badge>\n  <tp-badge variant=\"outline\">Sound desk</tp-badge>\n  <tp-badge variant=\"outline\">Rigging</tp-badge>\n  <tp-badge variant=\"outline\">Catering</tp-badge>\n  <tp-badge variant=\"outline\">Photography</tp-badge>\n  <tp-badge variant=\"outline\">Signage</tp-badge>\n  <tp-badge variant=\"outline\">Night shifts</tp-badge>\n  <tp-badge variant=\"outline\">Radio</tp-badge>\n  <span slot=\"count\">\n    <tp-popover label=\"More skills\">\n      <tp-button slot=\"trigger\" id=\"more-skills-button\" variant=\"outline\" size=\"xs\"></tp-button>\n      <ul id=\"more-skills\" style=\"margin:0;padding-inline-start:var(--tp-space-4)\"></ul>\n    </tp-popover>\n  </span>\n</tp-overflow-list></div></div>",
+      "script": "/**\n * A custom Count: a Button that opens a Popover listing the omitted Items. The list announces\n * every change of its omitted Items, so the Count can show their number and their labels.\n */\nexport function setupOverflowListExample(root) {\n  const list = root.querySelector('tp-overflow-list');\n  const button = root.querySelector('#more-skills-button');\n  const names = root.querySelector('#more-skills');\n  if (!list || !button || !names) return () => {};\n  const update = () => {\n    const labels = list.hiddenItems.map((item) => item.textContent?.trim() ?? '');\n    button.textContent = `+${labels.length}`;\n    button.setAttribute('aria-label', `${labels.length} more skills`);\n    names.replaceChildren(\n      ...labels.map((label) =>\n        Object.assign(root.ownerDocument.createElement('li'), { textContent: label }),\n      ),\n    );\n  };\n  list.addEventListener('tp-overflow-change', update);\n  update();\n  return () => list.removeEventListener('tp-overflow-change', update);\n}\n\nsetupOverflowListExample(document.getElementById('overflow-list-custom'));"
+    }
+  ]
+}

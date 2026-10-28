@@ -1,0 +1,158 @@
+---
+title: Breadcrumb
+description: The trail of ancestor pages leading to the current one, as native links in a navigation landmark.
+tag: tp-breadcrumb
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Breadcrumb"
+  code={`<tp-breadcrumb>
+  <a href="#breadcrumb-home">Home</a>
+  <a href="#breadcrumb-settings">Settings</a>
+  <a href="#breadcrumb-billing">Billing</a>
+  <span>Invoices</span>
+</tp-breadcrumb>`}
+/>
+
+## Usage
+
+Put each step as a direct child: native `<a>` links for ancestors and a plain element for the current page, which is marked with `aria-current="page"` automatically. Links keep their destinations, modified clicks and listeners, so no router is needed. Name the landmark with `label` when a page has more than one navigation.
+
+### Separator
+
+<Preview
+  title="Custom separator"
+  code={`<tp-breadcrumb label="File path" separator="/">
+  <a href="#breadcrumb-workspace">northwind</a>
+  <a href="#breadcrumb-repo">web-app</a>
+  <a href="#breadcrumb-src">src</a>
+  <span>README.md</span>
+</tp-breadcrumb>`}
+/>
+
+The default separator is a chevron that mirrors in right-to-left layouts. `separator` swaps it for text, such as a slash for file paths. Separators are hidden from assistive technology.
+
+### Collapsed ancestors
+
+<Preview
+  title="Collapsed with a menu"
+  code={`<tp-breadcrumb label="Documentation">
+  <a href="#breadcrumb-docs">Docs</a>
+  <tp-menu label="Hidden pages" placement="block-end start">
+    <tp-button slot="trigger" variant="ghost" size="icon-sm" aria-label="Show 3 hidden pages">
+      <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+    </tp-button>
+    <a href="#breadcrumb-guides" close-on-click>Guides</a>
+    <a href="#breadcrumb-data" close-on-click>Data</a>
+    <a href="#breadcrumb-fetching" close-on-click>Fetching</a>
+  </tp-menu>
+  <a href="#breadcrumb-caching">Caching</a>
+  <span>Revalidating</span>
+</tp-breadcrumb>`}
+/>
+
+Collapsing is up to you: replace the middle ancestors with a named Button that opens a Menu of the hidden links. If the omission doesn't need to be reachable, use a decorative mark with `aria-hidden="true"` and `data-breadcrumb-ellipsis` instead.
+
+<Preview
+  title="Decorative ellipsis"
+  code={`<tp-breadcrumb label="Order">
+  <a href="#breadcrumb-account">Account</a>
+  <span data-breadcrumb-ellipsis aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span>
+  <a href="#breadcrumb-orders">Orders</a>
+  <span>#10482</span>
+</tp-breadcrumb>`}
+/>
+
+The mark gets separators like any step but is skipped by screen readers and never takes focus. Use it when the omitted pages are reachable another way, such as from the account menu.
+
+### Ancestor menu
+
+<Preview
+  title="Section menu on an ancestor"
+  code={`<tp-breadcrumb label="Settings" separator="/">
+  <a href="#breadcrumb-acme">Acme</a>
+  <tp-menu label="Settings sections" placement="block-end start">
+    <tp-button slot="trigger" variant="ghost" size="sm">
+      Settings
+      <svg slot="icon-end" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </tp-button>
+    <a href="#breadcrumb-general" close-on-click>General</a>
+    <a href="#breadcrumb-members" close-on-click>Members</a>
+    <a href="#breadcrumb-billing-menu" close-on-click>Billing</a>
+  </tp-menu>
+  <span>Security</span>
+</tp-breadcrumb>`}
+/>
+
+An ancestor can open a menu of its sibling sections, so readers jump sideways without going up a level first. The trigger shows the ancestor's own name, with a chevron to say it opens a list.
+
+### Responsive collapse
+
+<Preview
+  title="Menu on wide screens, drawer on narrow ones"
+  code={`<tp-breadcrumb label="Documentation">
+  <a href="#breadcrumb-docs-home">Docs</a>
+  <span id="breadcrumb-responsive">
+    <tp-menu label="Hidden pages" placement="block-end start">
+      <tp-button slot="trigger" variant="ghost" size="icon-sm" aria-label="Show 3 hidden pages">
+        <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+      </tp-button>
+      <a href="#breadcrumb-r-guides" close-on-click>Guides</a>
+      <a href="#breadcrumb-r-data" close-on-click>Data</a>
+      <a href="#breadcrumb-r-fetching" close-on-click>Fetching</a>
+    </tp-menu>
+    <tp-drawer label="Go to" description="Pages above Caching in the docs." hidden>
+      <tp-button slot="trigger" variant="ghost" size="icon-sm" aria-label="Show 3 hidden pages">
+        <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+      </tp-button>
+      <nav style="display:grid;gap:var(--tp-space-2)">
+        <a href="#breadcrumb-r-guides">Guides</a>
+        <a href="#breadcrumb-r-data">Data</a>
+        <a href="#breadcrumb-r-fetching">Fetching</a>
+      </nav>
+      <tp-button slot="close" variant="outline">Close</tp-button>
+    </tp-drawer>
+  </span>
+  <a href="#breadcrumb-r-caching">Caching</a>
+  <span>Revalidating</span>
+</tp-breadcrumb>`}
+  script={`await customElements.whenDefined('tp-drawer');
+const host = document.querySelector('#breadcrumb-responsive');
+const menu = host.querySelector('tp-menu');
+const drawer = host.querySelector('tp-drawer');
+const wide = matchMedia('(min-width: 48rem)');
+const update = () => {
+  if (!host.isConnected) return wide.removeEventListener('change', update);
+  const [active, inactive] = wide.matches ? [menu, drawer] : [drawer, menu];
+  inactive.setOpen(false);
+  inactive.hidden = true;
+  active.hidden = false;
+};
+wide.addEventListener('change', update);
+update();
+drawer.addEventListener('click', (event) => {
+  if (event.target.closest?.('nav a')) drawer.setOpen(false);
+});`}
+/>
+
+On a phone, a drawer of hidden pages is easier to tap than a menu. The breadcrumb keeps the same trail either way; your code picks the surface for the viewport, and each one keeps its own focus and dismissal. Resize the window across 768 px to switch.
+
+### Wrapping
+
+<Preview
+  title="Long trail"
+  align="stretch"
+  code={`<div style="inline-size:100%;max-inline-size:20rem;margin-inline:auto">
+  <tp-breadcrumb label="Product category">
+    <a href="#breadcrumb-shop">Shop</a>
+    <a href="#breadcrumb-home-office">Home office</a>
+    <a href="#breadcrumb-desks">Desks</a>
+    <a href="#breadcrumb-standing">Standing desks</a>
+    <span>Oak electric standing desk, 160 cm</span>
+  </tp-breadcrumb>
+</div>`}
+/>
+
+In a narrow container the trail wraps instead of overflowing. Collapse ancestors when a wrapped trail would push content too far down.

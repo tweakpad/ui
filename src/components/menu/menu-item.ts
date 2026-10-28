@@ -16,7 +16,13 @@ export interface MenuItemOwner extends HTMLElement {
   itemChanged(): void;
 }
 
-/** Command semantics, shared by plain, checkbox and radio Menu constituents. */
+/**
+ * A command in a Menu. Activating it fires the menu's `tp-action` with its `value` and closes the
+ * menu.
+ *
+ * @slot - The label, with an optional leading Icon and a trailing Key Hint group marked
+ *   `data-menu-shortcut`.
+ */
 export class TpMenuItem extends TpElement {
   static tagName = 'tp-menu-item';
   static override properties = {
@@ -73,16 +79,23 @@ export class TpMenuItem extends TpElement {
       }
     `,
   ];
+  /** Accessible name of the item, when its content does not say it in words. */
   label = '';
+  /** `destructive` marks a command that deletes or cannot be undone; by default the menu's `item-variant`. */
   variant: 'ghost' | 'destructive' | undefined;
   /** Indents the label to the text of items with a leading icon. */
   inset = false;
+  /** The treatment in effect: the item's `variant`, else the menu's. */
   get itemVariant(): 'ghost' | 'destructive' {
     return this.variant ?? this.#owner?.itemVariant ?? 'ghost';
   }
+  /** The value `tp-action` reports for this item. */
   value: unknown;
+  /** Renders a native button, so Enter and Space reach the item's own handlers as a native press. */
   nativeAction = false;
+  /** Whether activating the item closes the menu. */
   closeOnClick = true;
+  /** Called when the item is activated, before the menu handles it; `preventComponentHandling()` on the event stops the menu. */
   onClick: ((event: Event) => void) | undefined;
   #owner: MenuItemOwner | null = null;
   #control: HTMLElement | null = null;
@@ -109,32 +122,41 @@ export class TpMenuItem extends TpElement {
     this.#owner?.itemChanged();
   };
   #press = new SyntheticPress((event) => this.activate(event), false);
+  /** @internal The owning menu. */
   get menuOwner(): MenuItemOwner | null {
     return this.#owner;
   }
+  /** @internal Presentation family of the item. */
   get presentationTagName(): string {
     return `tp-${this.#owner?.itemPartPrefix ?? 'menu'}`;
   }
+  /** @internal Presentation owner of the item. */
   get presentationOwner(): HTMLElement | null {
     return this.#owner;
   }
+  /** @internal Presentation families the item takes part in. */
   get presentationFamilyTagNames(): readonly string[] {
     return this.#owner?.presentationFamilyTagNames ?? [];
   }
+  /** @internal The owning menu. */
   set menuOwner(owner: MenuItemOwner | null) {
     if (owner === this.#owner) return;
     this.#owner = owner;
     this.requestUpdate();
   }
+  /** @internal The rendered item control. */
   get controlElement(): HTMLElement | null {
     return this.#control;
   }
+  /** Whether the item is unavailable, by itself or because its menu is disabled. */
   get itemDisabled(): boolean {
     return this.disabled || !!this.#owner?.menuDisabled;
   }
+  /** Whether the item is highlighted. */
   get highlighted(): boolean {
     return this.#highlighted;
   }
+  /** @internal Highlights or clears the item. */
   setHighlight(highlighted: boolean, keyboard: boolean): void {
     if (this.#highlighted === highlighted && this.#keyboardHighlight === keyboard) return;
     this.#highlighted = highlighted;
@@ -161,15 +183,18 @@ export class TpMenuItem extends TpElement {
   protected get itemPart(): string {
     return `${this.#owner?.itemPartPrefix ?? 'menu'}-${this.itemSuffix}`;
   }
+  /** Activates the item as a press would. */
   activate(event: Event): void {
     if (this.itemDisabled || componentHandlingPrevented(event)) return;
     this.onClick?.(event);
     if (componentHandlingPrevented(event) || (this.nativeAction && event.defaultPrevented)) return;
     this.#owner?.requestItem(this, event, () => this.itemSelection(event, 'item-press'));
   }
+  /** Moves focus to the item. */
   override focus(options?: FocusOptions): void {
     this.#control?.focus(options);
   }
+  /** Clicks the item, activating it. */
   override click(): void {
     this.#control?.click();
   }

@@ -1,0 +1,100 @@
+---
+title: Empty state
+description: A title, description and recovery actions for a view with nothing to show yet.
+tag: tp-empty-state
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Empty state"
+  align="stretch"
+  code={`<tp-empty-state title="No projects yet" description="Projects group your documents, tasks and teammates. Create your first one to get started." media-treatment="icon">
+  <svg slot="media" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h6l2 2h10v12H3z"/></svg>
+  <div slot="actions" style="display:flex;flex-wrap:wrap;justify-content:center;gap:var(--tp-space-2)">
+    <tp-button>Create project</tp-button>
+    <tp-button variant="outline">Import from CSV</tp-button>
+  </div>
+</tp-empty-state>`}
+/>
+
+## Usage
+
+Use an Empty state where a list, table or search would otherwise render nothing. Say what is missing in `title`, why or what to do next in `description`, and offer the action that fills the view. Group several actions in one element in the `actions` slot. The component is presentational: it owns no value, events or form state.
+
+### Media
+
+Put an icon, illustration or avatar group in the `media` slot. `media-treatment="icon"` sizes a single glyph for the icon role; the default `plain` shows the media as authored, which suits illustrations or avatars. Mark decorative media `aria-hidden`.
+
+<Preview
+  title="Media treatments"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:var(--tp-space-6)">
+  <tp-empty-state title="No notifications" description="You're all caught up. New activity will appear here." media-treatment="icon">
+    <svg slot="media" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+  </tp-empty-state>
+  <tp-empty-state title="No teammates" description="Maya, Jordan and Ana are waiting for an invite to this workspace.">
+    <tp-avatar-group slot="media">
+      <tp-avatar src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" alt="Maya Patel" fallback="MP"></tp-avatar>
+      <tp-avatar src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop" alt="Jordan Lee" fallback="JL"></tp-avatar>
+      <tp-avatar src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" alt="Ana Ruiz" fallback="AR"></tp-avatar>
+    </tp-avatar-group>
+    <tp-button slot="actions" variant="outline">Invite teammates</tp-button>
+  </tp-empty-state>
+</div>`}
+/>
+
+### Search recovery
+
+Default content sits between the description and the actions. Use it for recovery that is more than a button, such as a new search, so people stay on the page instead of starting over.
+
+<Preview
+  title="No results"
+  align="stretch"
+  code={`<tp-empty-state title="No results for “quarterly invoice”" description="Check the spelling or search all workspaces instead.">
+  <tp-input-group style="inline-size:100%;max-inline-size:22rem">
+    <tp-input type="search" label="Search documents" default-value="quarterly invoice"></tp-input>
+  </tp-input-group>
+  <div slot="actions" style="display:flex;flex-wrap:wrap;justify-content:center;gap:var(--tp-space-2)">
+    <tp-button variant="outline">Clear filters</tp-button>
+    <tp-button variant="ghost" href="#search-recovery">Search all workspaces</tp-button>
+  </div>
+</tp-empty-state>`}
+/>
+
+### Inside a surface
+
+Empty states inherit their container's background, so they sit naturally inside a Card or a table body. Omit actions when the state is terminal and nothing can change it.
+
+<Preview
+  title="In a card"
+  align="stretch"
+  code={`<tp-card style="max-inline-size:28rem;margin-inline:auto">
+  <h3 slot="header" style="margin:0">Archived invoices</h3>
+  <tp-empty-state title="Nothing archived" description="Invoices move here 90 days after they are paid." media-treatment="icon">
+    <svg slot="media" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18v4H3z"/><path d="M5 8v12h14V8"/><path d="M10 12h4"/></svg>
+  </tp-empty-state>
+</tp-card>`}
+/>
+
+### Surface styles
+
+The component paints no surface of its own. Style its `empty-state` part for a border, a dashed drop-zone outline or a muted fill. Use the `description` slot when the description needs a link.
+
+<Preview
+  title="Bordered and filled"
+  align="stretch"
+  code={`<style>
+  #empty-state-surfaces .dashed::part(empty-state) { border:var(--tp-border-width) dashed var(--tp-border); border-radius:var(--tp-radius-xl); }
+  #empty-state-surfaces .muted::part(empty-state) { background:var(--tp-muted); border-radius:var(--tp-radius-xl); }
+</style>
+<div id="empty-state-surfaces" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:var(--tp-space-6)">
+  <tp-empty-state class="dashed" title="No files uploaded" media-treatment="icon">
+    <svg slot="media" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 1 0 6 17.7"/><path d="M12 12v9M8.5 15.5 12 12l3.5 3.5"/></svg>
+    <span slot="description">Drop contracts here or <a href="#surface-styles" style="color:inherit;text-underline-offset:var(--tp-space-1)">browse your computer</a>.</span>
+  </tp-empty-state>
+  <tp-empty-state class="muted" title="No saved filters" description="Save a search to reuse it from the sidebar.">
+    <tp-button slot="actions" variant="outline">Save current search</tp-button>
+  </tp-empty-state>
+</div>`}
+/>

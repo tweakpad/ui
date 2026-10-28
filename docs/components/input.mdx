@@ -1,0 +1,109 @@
+---
+title: Input
+description: One native text input bound to Field behavior for labels, descriptions, errors and validation.
+tag: tp-input
+---
+
+<Preview
+  title="Input"
+  align="stretch"
+  code={`<tp-field label="Email" description="Used for receipts" style="max-inline-size:22rem">
+  <tp-input name="email" type="email" placeholder="you@example.com"></tp-input>
+</tp-field>`}
+/>
+
+## Usage
+
+Labels, descriptions and errors belong to `tp-field`; the Input owns the native editor. A standalone Input can take `label` for its accessible name, but a Field is the usual home. Optional prefix and suffix content belongs to `tp-input-group`.
+
+### Types
+
+`type` keeps native editing, affordances and validation for every host-supported input type.
+
+<Preview
+  title="Types"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:22rem">
+  <tp-field label="Password">
+    <tp-input type="password" name="password" autocomplete="current-password"></tp-input>
+  </tp-field>
+  <tp-field label="Quantity">
+    <tp-input type="number" name="quantity" min="1" max="10" default-value="1"></tp-input>
+  </tp-field>
+  <tp-field label="Search">
+    <tp-input type="search" name="q" placeholder="Search projects"></tp-input>
+  </tp-field>
+</div>`}
+/>
+
+### Code-like values
+
+`mono` shows the value in the mono font and turns off spell checking, autocorrection and autocapitalization. Use it for identifiers, paths, expressions and keys, where a corrected character is a bug.
+
+<Preview
+  title="Mono"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:22rem">
+  <tp-field label="Webhook secret">
+    <tp-input mono name="secret" default-value="whsec_9f2b41c07a"></tp-input>
+  </tp-field>
+  <tp-field label="Branch">
+    <tp-input mono name="branch" default-value="release/2026-10"></tp-input>
+  </tp-field>
+</div>`}
+/>
+
+### Controlled value
+
+`default-value` leaves the text to the Input. Supply `value` instead, before the first render, and every edit becomes a proposal: `onValueChange` receives it, and what you assign back to `value` is what commits. Here the owner rewrites each edit into a URL-safe handle.
+
+<Preview
+  title="Owner-shaped value"
+  align="stretch"
+  code={`<tp-field label="Workspace handle" description="Lowercase letters, numbers and dashes." style="max-inline-size:22rem">
+  <tp-input id="input-controlled" mono value="northwind-studio"></tp-input>
+</tp-field>`}
+  script={`const input = document.querySelector('#input-controlled');
+input.onValueChange = (event) => {
+  input.value = event.detail.value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+};`}
+/>
+
+Without an assignment the proposal is rejected and the committed text stays. Mode stays fixed for an instance lifetime. A rejected or canceled edit restores committed text and preserves selection within its bounds. Composition keeps the native draft until composition ends.
+
+### Validation
+
+Native constraints such as `required`, `pattern` and `minlength` validate through the owning Field, which shows the error and wires `aria-describedby`. `error` and `invalid` set an explicit error from your own validation.
+
+<Preview
+  title="Error"
+  align="stretch"
+  code={`<tp-field label="Username" error="That username is taken." invalid style="max-inline-size:22rem">
+  <tp-input name="username" default-value="ada"></tp-input>
+</tp-field>`}
+/>
+
+### States
+
+<Preview
+  title="Disabled and read-only"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:22rem">
+  <tp-field label="Workspace" disabled>
+    <tp-input default-value="tweakpad"></tp-input>
+  </tp-field>
+  <tp-field label="Project ID">
+    <tp-input readonly default-value="prj_8f2c41"></tp-input>
+  </tp-field>
+</div>`}
+/>
+
+Disabled omits the value from form data. Read-only keeps it, along with selection and focus.
+
+Native form reset restores an uncontrolled default with `form-reset`; controlled reset does not propose or replace owner state. State restoration restores uncontrolled strings. Enter uses the associated form's default submitter; composition does not submit. File input retains its native file list and serializes files without duplicate participants.
+
+### Anatomy and customization
+
+The native `<input>` is a real element in your tree: it renders into the Input's light DOM (`tp-input > input`), shares the Input's form owner and submits natively, so browser autofill and password managers classify and fill it like any form field. Customize semantic tokens, the presentation dictionary, `partPresentation.input`, or style `tp-input > input` directly; `::part(input)` does not apply because the editor is not in the shadow root. Keep caret, selection, autofill and type-specific affordances visible.
+
+Native form serialization follows the editable input's current representation, including type sanitization, while the controlled owner value remains its supplied value. An empty named file input submits the native empty File; unnamed inputs do not contribute data.

@@ -1,0 +1,125 @@
+---
+title: Badge
+description: A compact, passive label for status, category, metadata or a count.
+tag: tp-badge
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Badge"
+  code={`<tp-badge>New</tp-badge>
+<tp-badge variant="secondary">12 unread</tp-badge>
+<tp-badge variant="outline">Draft</tp-badge>`}
+/>
+
+## Usage
+
+A Badge is a non-focusable label, so it never adds a tab stop. Its text should carry the meaning on its own: "Failed" says more than a red pill.
+
+### Variants
+
+<Preview
+  title="Variants"
+  code={`<tp-badge>Default</tp-badge>
+<tp-badge variant="secondary">Secondary</tp-badge>
+<tp-badge variant="destructive">Destructive</tp-badge>
+<tp-badge variant="success">Success</tp-badge>
+<tp-badge variant="warning">Warning</tp-badge>
+<tp-badge variant="outline">Outline</tp-badge>
+<tp-badge variant="ghost">Ghost</tp-badge>
+<tp-badge variant="link">Link</tp-badge>`}
+/>
+
+`variant` is visual emphasis only. Use `destructive` for failures and blocking problems, `success` and `warning` for healthy and degraded states, `secondary` or `outline` for neutral metadata, and the default for the one thing you want noticed.
+
+### Icons and progress
+
+<Preview
+  title="With marks"
+  code={`<tp-badge variant="secondary">
+  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+  Verified
+</tp-badge>
+<tp-badge variant="outline">
+  <tp-spinner size="sm" label=""></tp-spinner>
+  Processing
+</tp-badge>
+<tp-badge variant="destructive">
+  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+  Payment failed
+</tp-badge>`}
+/>
+
+The default slot takes text plus inline marks such as an icon or a Spinner. Keep them decorative, with `aria-hidden` or `label=""`, when the text already says what they mean.
+
+### In context
+
+<Preview
+  title="Status in a list"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);inline-size:100%;max-inline-size:28rem;margin-inline:auto;font-size:var(--tp-text-sm)">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--tp-space-3)">
+    <span>Website redesign</span>
+    <tp-badge variant="secondary">In review</tp-badge>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--tp-space-3)">
+    <span>Mobile onboarding</span>
+    <tp-badge>Shipped</tp-badge>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--tp-space-3)">
+    <span>Billing migration</span>
+    <tp-badge variant="destructive">Blocked</tp-badge>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--tp-space-3)">
+    <span>Q3 roadmap</span>
+    <tp-badge variant="outline">Draft</tp-badge>
+  </div>
+</div>`}
+/>
+
+Write counts with their noun, like "12 unread", rather than a bare number. A Badge inside a Button or link stays passive, so the composition keeps one interactive target.
+
+<Preview
+  title="Counts in buttons"
+  code={`<tp-button variant="outline">Inbox <tp-badge variant="secondary">8</tp-badge></tp-button>
+<tp-button variant="ghost">Pull requests <tp-badge variant="outline">3 open</tp-badge></tp-button>`}
+/>
+
+A bare number is fine here because the button text supplies the noun. The button owns the action and its accessible name includes the count.
+
+### Buttons and links
+
+<Preview
+  title="Interactive badges"
+  code={`<div id="badge-filters" style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-4);padding-block:var(--tp-space-2)">
+  <tp-badge interactive variant="secondary" data-filter="open">Open · 12</tp-badge>
+  <tp-badge interactive variant="outline" data-filter="mine">Assigned to me · 4</tp-badge>
+  <tp-badge interactive variant="outline" data-filter="archived" disabled>Archived · 0</tp-badge>
+  <tp-badge interactive variant="link" data-link>Release notes</tp-badge>
+</div>`}
+  script={`import { html } from 'lit';
+
+await customElements.whenDefined('tp-badge');
+const asButton = {
+  badge: {
+    renderDelegate: ({ state, bind, content }) =>
+      html\`<button type="button" ?disabled=\${state.disabled} \${bind}>\${content}</button>\`,
+  },
+};
+const asLink = {
+  badge: {
+    renderDelegate: ({ bind, content }) => html\`<a href="#buttons-and-links" \${bind}>\${content}</a>\`,
+  },
+};
+for (const badge of document.querySelectorAll('#badge-filters tp-badge')) {
+  badge.partContracts = badge.hasAttribute('data-link') ? asLink : asButton;
+  if (badge.dataset.filter) {
+    badge.addEventListener('click', () => {
+      badge.variant = badge.variant === 'secondary' ? 'outline' : 'secondary';
+    });
+  }
+}`}
+/>
+
+`interactive` declares that a badge acts, and `partContracts` supplies the native element that does: a `button` for filter chips, an `a` for a link. Keep `bind` on that element and render `content` inside it. The pill keeps its size while its pointer target grows to the minimum, so leave room between interactive badges. The `link` variant alone never navigates.

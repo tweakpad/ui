@@ -1,8 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import documentation from '../../docs/image.md?raw';
-import { imageDefaults, imageDefaultSource, imageExamples } from './image.examples.js';
+import { libraryDocs } from './library-docs.js';
+
+const photo = (id: string, width: number) =>
+  `https://images.unsplash.com/${id}?w=${width}&q=75&auto=format&fit=crop`;
+const widths = (id: string) =>
+  [480, 800, 1200, 1600].map((width) => `${photo(id, width)} ${width}w`).join(', ');
+const office = 'photo-1497366754035-f200968a6e72';
+
+const imageDefaults = {
+  src: photo(office, 1200),
+  srcset: widths(office),
+  alt: 'A bright open-plan office',
+};
 
 interface Args {
   ratio: number;
@@ -25,13 +36,7 @@ interface Args {
 const meta = {
   title: 'Components/Image',
   component: 'tp-image',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: imageExamples,
-      source: { code: imageDefaultSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/image') },
   args: {
     ratio: 16 / 9,
     fit: 'cover',

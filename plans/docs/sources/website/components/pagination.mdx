@@ -1,0 +1,158 @@
+---
+title: Pagination
+description: Real page links with previous and next destinations, for moving through a paged result set.
+tag: tp-pagination
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Pagination"
+  code={`<tp-pagination id="pagination-hero" label="Search results" page="4" pages="12"></tp-pagination>`}
+  script={`const pagination = document.querySelector('#pagination-hero');
+pagination.addEventListener('tp-value-change', (event) => {
+  event.detail.sourceEvent?.preventDefault();
+  pagination.page = event.detail.value;
+});`}
+/>
+
+## Usage
+
+Every page, Previous and Next target is a real link, so pages can be opened in a new tab, crawled and shared. `page` is owned by your application: Pagination never keeps its own page state, it only renders the window around the page you give it, keeping the first and last pages and collapsing the rest into ellipses.
+
+### Client-side routing
+
+By default each link points at the current URL with its `page` query parameter replaced. A client router listens for `tp-value-change`, prevents the original click and sets `page` itself; modifier-key clicks keep native link behavior.
+
+<Preview
+  title="Router handling"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-pagination id="pagination-routed" label="Invoices" page="1" pages="5"></tp-pagination>
+  <output id="pagination-routed-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Showing invoices 1–20 of 96</output>
+</div>`}
+  script={`const pagination = document.querySelector('#pagination-routed');
+const output = document.querySelector('#pagination-routed-output');
+pagination.addEventListener('tp-value-change', (event) => {
+  event.detail.sourceEvent?.preventDefault();
+  const page = event.detail.value;
+  pagination.page = page;
+  const first = (page - 1) * 20 + 1;
+  output.textContent = \`Showing invoices \${first}–\${Math.min(page * 20, 96)} of 96\`;
+});`}
+/>
+
+Set `hrefForPage` when your routes use paths instead of a query parameter, such as `/invoices/page/3`.
+
+### Numbered links
+
+`page-link-variant="text"` sizes numbered links to their content instead of a fixed square, which keeps large page numbers readable.
+
+<Preview
+  title="Text page links"
+  code={`<tp-pagination id="pagination-text" label="Audit log" page="118" pages="240" page-link-variant="text"></tp-pagination>`}
+  script={`const pagination = document.querySelector('#pagination-text');
+pagination.addEventListener('tp-value-change', (event) => {
+  event.detail.sourceEvent?.preventDefault();
+  pagination.page = event.detail.value;
+});`}
+/>
+
+### Compact
+
+Hide parts through their properties: `showPageLinks = false` leaves only the directions, and `showLabels = false` keeps the arrows with their accessible names. These default to true, so set them in JavaScript; an attribute set to `"false"` still counts as present.
+
+<Preview
+  title="Directions only"
+  code={`<tp-pagination id="pagination-compact" label="Photos" page="2" pages="8"></tp-pagination>`}
+  script={`await customElements.whenDefined('tp-pagination');
+const pagination = document.querySelector('#pagination-compact');
+pagination.showPageLinks = false;
+pagination.showLabels = false;
+pagination.addEventListener('tp-value-change', (event) => {
+  event.detail.sourceEvent?.preventDefault();
+  pagination.page = event.detail.value;
+});`}
+/>
+
+`showPrevious = false` and `showNext = false` do the opposite and leave only the numbered links, for short result sets where every page fits.
+
+<Preview
+  title="Page links only"
+  code={`<tp-pagination id="pagination-numbered" label="Release notes" page="2" pages="5"></tp-pagination>`}
+  script={`await customElements.whenDefined('tp-pagination');
+const pagination = document.querySelector('#pagination-numbered');
+pagination.showPrevious = false;
+pagination.showNext = false;
+pagination.addEventListener('tp-value-change', (event) => {
+  event.detail.sourceEvent?.preventDefault();
+  pagination.page = event.detail.value;
+});`}
+/>
+
+### Rows per page
+
+Pagination doesn't know about page size. Put a Select beside it, recompute `pages` when the size changes and send the reader back to page 1.
+
+<Preview
+  title="Rows per page"
+  align="stretch"
+  code={`<div id="pagination-rows" style="display:flex;align-items:center;justify-content:space-between;gap:var(--tp-space-4);flex-wrap:wrap;max-inline-size:40rem;margin-inline:auto;inline-size:100%">
+  <tp-field label="Rows per page" orientation="horizontal">
+    <tp-select default-value="25">
+      <option value="10">10</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </tp-select>
+  </tp-field>
+  <output style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">1–25 of 340 orders</output>
+  <tp-pagination label="Orders" page="1" pages="14"></tp-pagination>
+</div>`}
+  script={`await customElements.whenDefined('tp-pagination');
+const root = document.querySelector('#pagination-rows');
+const pagination = root.querySelector('tp-pagination');
+const rows = root.querySelector('tp-select');
+const output = root.querySelector('output');
+const total = 340;
+let size = 25;
+const report = () => {
+  const first = (pagination.page - 1) * size + 1;
+  output.textContent = \`\${first}–\${Math.min(pagination.page * size, total)} of \${total} orders\`;
+};
+pagination.showPageLinks = false;
+pagination.addEventListener('tp-value-change', (event) => {
+  event.detail.sourceEvent?.preventDefault();
+  pagination.page = event.detail.value;
+  report();
+});
+rows.addEventListener('tp-value-change', (event) => {
+  if (event.defaultPrevented || event.detail.cancelled) return;
+  size = Number(event.detail.value);
+  pagination.pages = Math.ceil(total / size);
+  pagination.page = 1;
+  report();
+});`}
+/>
+
+### Localized labels
+
+`previous-label` and `next-label` replace the visible and accessible direction names; page numbers follow the document locale.
+
+<Preview
+  title="Localized"
+  code={`<tp-pagination id="pagination-localized" label="Résultats" page="3" pages="9" previous-label="Précédent" next-label="Suivant"></tp-pagination>`}
+  script={`const pagination = document.querySelector('#pagination-localized');
+pagination.addEventListener('tp-value-change', (event) => {
+  event.detail.sourceEvent?.preventDefault();
+  pagination.page = event.detail.value;
+});`}
+/>
+
+### Disabled
+
+<Preview
+  title="Disabled"
+  code={`<tp-pagination label="Loading results" page="2" pages="6" disabled></tp-pagination>`}
+/>
+
+Disable Pagination while a page is loading so people cannot queue up navigations; the links keep their place in the layout.

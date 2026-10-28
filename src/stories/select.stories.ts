@@ -6,7 +6,7 @@ import type { TpSelect, SelectEntry } from '../components/select/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
 import { boldIcon, italicIcon, underlineIcon } from '../icons/text-formatting.js';
-import documentation from '../../docs/select.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   value: unknown;
@@ -37,8 +37,6 @@ const fruits = [
   { value: 'cherry', label: 'Cherry' },
   { value: 'grape', label: 'Grape' },
 ];
-const sourceImports = `import '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';`;
-const basicSource = `<script type="module">\n  ${sourceImports.replaceAll('\n', '\n  ')}\n</script>\n<tp-select label="Fruit" placeholder="Choose a fruit">\n  <option value="apple">Apple</option>\n  <option value="banana">Banana</option>\n  <option value="cherry">Cherry</option>\n  <option value="grape">Grape</option>\n</tp-select>`;
 function control(args: Args, items: readonly SelectEntry[] = fruits) {
   const [, updateArgs] = useArgs<Args>();
   const owner = createRef<TpSelect>();
@@ -94,7 +92,7 @@ const meta: Meta<Args> = {
   component: 'tp-select',
   parameters: {
     layout: 'centered',
-    docs: { description: { component: documentation }, source: { code: basicSource } },
+    docs: libraryDocs('components/select'),
   },
   args: {
     searchable: false,
@@ -197,17 +195,12 @@ const richItems: readonly SelectEntry[] = [
   },
 ];
 export const RichGroups: Story = {
+  tags: ['!autodocs'],
   args: { label: 'Text style', placeholder: 'Choose a style' },
   render: (args) => control(args, richItems),
-  parameters: {
-    docs: {
-      source: {
-        code: `import { html, render } from 'lit';\n${sourceImports}\nimport { boldIcon, italicIcon, underlineIcon } from '@tweakpad/ui/icons/text-formatting';\n\nconst items = [\n  { type: 'group', label: 'Formatting', items: [\n    { value: 'bold', text: 'Bold', label: html\`<tp-icon size="var(--tp-icon-size-sm)" .icon=\${boldIcon}></tp-icon>Bold\` },\n    { value: 'italic', text: 'Italic', label: html\`<tp-icon size="var(--tp-icon-size-sm)" .icon=\${italicIcon}></tp-icon>Italic\` },\n  ] },\n  { type: 'separator' },\n  { type: 'group', label: 'Decoration', items: [\n    { value: 'underline', text: 'Underline', label: html\`<tp-icon size="var(--tp-icon-size-sm)" .icon=\${underlineIcon}></tp-icon>Underline <tp-badge variant="secondary">New</tp-badge>\` },\n  ] },\n];\nrender(html\`<tp-select label="Text style" placeholder="Choose a style" .items=\${items}></tp-select>\`, document.body);`,
-      },
-    },
-  },
 };
 export const LargeList: Story = {
+  tags: ['!autodocs'],
   args: { label: 'Country', placeholder: 'Choose a country' },
   render: (args) =>
     control(
@@ -217,15 +210,9 @@ export const LargeList: Story = {
         label: `Country ${index + 1}`,
       })),
     ),
-  parameters: {
-    docs: {
-      source: {
-        code: `${sourceImports}\nconst select = document.createElement('tp-select');\nselect.label = 'Country';\nselect.placeholder = 'Choose a country';\nselect.items = Array.from({ length: 100 }, (_, index) => ({\n  value: \`country-\${index + 1}\`, label: \`Country \${index + 1}\`,\n}));\ndocument.body.append(select);`,
-      },
-    },
-  },
 };
 export const InDialog: Story = {
+  tags: ['!autodocs'],
   render: (args) =>
     html`<tp-dialog label="Choose delivery fruit"
       ><tp-button slot="trigger" variant="outline">Choose fruit</tp-button
@@ -233,11 +220,4 @@ export const InDialog: Story = {
         >${control(args)}</tp-field
       ><tp-button data-dialog-close variant="outline">Done</tp-button></tp-dialog
     >`,
-  parameters: {
-    docs: {
-      source: {
-        code: `<script type="module">\n  ${sourceImports.replaceAll('\n', '\n  ')}\n</script>\n<tp-dialog label="Choose delivery fruit">\n  <tp-button slot="trigger" variant="outline">Choose fruit</tp-button>\n  <tp-field label="Fruit" description="The Select popup belongs to this dialog">\n    <tp-select placeholder="Choose a fruit">\n      <option value="apple">Apple</option>\n      <option value="banana">Banana</option>\n      <option value="cherry">Cherry</option>\n    </tp-select>\n  </tp-field>\n  <tp-button data-dialog-close variant="outline">Done</tp-button>\n</tp-dialog>`,
-      },
-    },
-  },
 };

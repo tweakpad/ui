@@ -10,33 +10,44 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'questionnaire',
+      description: 'The native form that holds the question on screen and the submitted answers.',
     },
     {
       name: 'questionnaire-progress',
+      description:
+        'The progress indicator, with the position of the question on screen and the total.',
     },
     {
       name: 'questionnaire-question',
+      description: 'The native fieldset of the question on screen.',
     },
     {
       name: 'questionnaire-title',
+      description: 'The legend that names the question.',
     },
     {
       name: 'questionnaire-description',
+      description: "The help text below the question's title.",
     },
     {
       name: 'questionnaire-choices',
+      description: 'The list of choices, with the free-text input when the question has one.',
     },
     {
       name: 'questionnaire-choice',
+      description: 'One choice: its radio or checkbox, label, description and shortcut.',
     },
     {
       name: 'questionnaire-input-region',
+      description: 'The free-text input of the question.',
     },
     {
       name: 'questionnaire-error',
+      description: 'The error message of the question, announced as an alert.',
     },
     {
       name: 'questionnaire-actions',
+      description: 'The row of Previous, Skip, Next and Submit Buttons.',
     },
   ],
 };

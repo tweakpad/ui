@@ -1,0 +1,109 @@
+---
+title: Description list
+description: Label and value pairs for the details of a record, with an optional Show more for the rest.
+tag: tp-description-list
+parts: [tp-description-list-item]
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Description list"
+  code={`<tp-description-list limit="4" style="inline-size:100%;max-inline-size:24rem">
+  <tp-description-list-item label="Order">#48213</tp-description-list-item>
+  <tp-description-list-item label="Customer">Maya Chen</tp-description-list-item>
+  <tp-description-list-item label="Status"><tp-badge variant="success">Paid</tp-badge></tp-description-list-item>
+  <tp-description-list-item label="Placed"><tp-time datetime="2026-10-12T14:20:00Z" mode="absolute"></tp-time></tp-description-list-item>
+  <tp-description-list-item label="Shipping">Express, 2 business days</tp-description-list-item>
+  <tp-description-list-item label="Total">$248.00</tp-description-list-item>
+</tp-description-list>`}
+/>
+
+## Usage
+
+A Description list renders one native `dl`. Each `tp-description-list-item` names its value with `label` and holds the value as content. Place items directly inside the list, in reading order; other children are not shown.
+
+### Values
+
+A value can be any content: text, a link, or components such as a Badge, a Time or a Copy button. Set `layout="stacked"` on one item to run a long value under its label.
+
+<Preview
+  title="Record details"
+  code={`<tp-card style="inline-size:100%;max-inline-size:26rem">
+  <h3 slot="header" style="margin:0">Production API key</h3>
+  <p slot="description" style="margin:0">Used by the checkout service.</p>
+  <tp-description-list>
+    <tp-description-list-item label="Key ID">
+      <span style="display:inline-flex;align-items:center;gap:var(--tp-space-1)">
+        key_7f3a92 <tp-copy-button value="key_7f3a92" label="Copy key ID" size="xs"></tp-copy-button>
+      </span>
+    </tp-description-list-item>
+    <tp-description-list-item label="Status"><tp-badge variant="success">Active</tp-badge></tp-description-list-item>
+    <tp-description-list-item label="Created"><tp-time datetime="2026-03-04T09:00:00Z" mode="absolute"></tp-time></tp-description-list-item>
+    <tp-description-list-item label="Owner">Platform team</tp-description-list-item>
+    <tp-description-list-item label="Scopes" layout="stacked">orders:read, orders:write, payments:read, refunds:write</tp-description-list-item>
+  </tp-description-list>
+</tp-card>`}
+/>
+
+In a vertical list, inline labels share one column whose width follows the widest label, up to 40% of the list, so the values line up.
+
+### Show more
+
+`limit` is the number of items shown while the list is closed. A link-style Show more button below the list reveals the rest, which expand into place, and then reads Show less. Hidden items are not shown, focusable or announced. Set `default-open` to start open, or control `open` yourself.
+
+<Preview
+  title="Show more"
+  code={`<tp-description-list id="description-list-more" limit="3" style="inline-size:100%;max-inline-size:24rem">
+  <tp-description-list-item label="Plan">Team, billed yearly</tp-description-list-item>
+  <tp-description-list-item label="Seats">18 of 25 used</tp-description-list-item>
+  <tp-description-list-item label="Renews"><tp-time datetime="2027-02-01" mode="absolute"></tp-time></tp-description-list-item>
+  <tp-description-list-item label="Billing email">billing@northwind.co</tp-description-list-item>
+  <tp-description-list-item label="Tax ID">DE 318 442 901</tp-description-list-item>
+  <tp-description-list-item label="Payment">Visa ending 4242</tp-description-list-item>
+</tp-description-list>`}
+  script={`await customElements.whenDefined('tp-description-list');
+const list = document.getElementById('description-list-more');
+list.messages = {
+  showMore: ({ hidden }) => \`Show \${hidden} more\`,
+  showLess: 'Show fewer',
+};`}
+/>
+
+`messages` sets the button text. Each message is a string or a function that receives the number of hidden items and the total, as here. When a page has several lists, name each button specifically, such as "Show more billing details".
+
+### Summary row
+
+`orientation="horizontal"` places the pairs side by side and wraps them when space runs out. Combined with `layout="stacked"`, which puts each label above its value, it suits a summary strip above a record.
+
+<Preview
+  title="Summary row"
+  align="stretch"
+  code={`<tp-description-list orientation="horizontal" layout="stacked" style="max-inline-size:34rem;margin-inline:auto;inline-size:100%">
+  <tp-description-list-item label="Status"><tp-badge variant="warning">Degraded</tp-badge></tp-description-list-item>
+  <tp-description-list-item label="Region">eu-central-1</tp-description-list-item>
+  <tp-description-list-item label="Uptime (30d)">99.94%</tp-description-list-item>
+  <tp-description-list-item label="Last deploy"><tp-time datetime="2026-10-14T16:05:00Z" mode="absolute"></tp-time></tp-description-list-item>
+</tp-description-list>`}
+/>
+
+### Alignment and stacking
+
+`align="center"` aligns each label to the end of its column so it meets its value in the middle. In narrow panels, `layout="stacked"` on the list places every label above its value.
+
+<Preview
+  title="Alignment and stacking"
+  align="stretch"
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-8);justify-content:center">
+  <tp-description-list align="center" style="inline-size:20rem">
+    <tp-description-list-item label="Flight">LH 2034</tp-description-list-item>
+    <tp-description-list-item label="Departure">Munich, 07:15</tp-description-list-item>
+    <tp-description-list-item label="Arrival">Lisbon, 09:40</tp-description-list-item>
+    <tp-description-list-item label="Seat">14C</tp-description-list-item>
+  </tp-description-list>
+  <tp-description-list layout="stacked" style="inline-size:14rem">
+    <tp-description-list-item label="Baggage">One cabin bag, 8 kg</tp-description-list-item>
+    <tp-description-list-item label="Boarding">Gate G24, group 3</tp-description-list-item>
+  </tp-description-list>
+</div>`}
+/>

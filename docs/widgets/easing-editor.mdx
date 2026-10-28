@@ -1,0 +1,209 @@
+---
+title: Easing editor
+description: Edits one easing curve on a graph with Bézier handles, custom points or spring parameters, with presets, a duration, a live preview and export adapters.
+tag: tp-easing-editor
+---
+
+<Preview
+  title="Easing editor"
+  code={`<tp-easing-editor label="Motion" name="easing" default-value="ease-out" style="inline-size:36rem;max-inline-size:100%"></tp-easing-editor>`}
+/>
+
+## Usage
+
+The value is an easing string in the canonical notation of its kind: `cubic-bezier()`, `steps()` and `linear()` for CSS curves, `spring(mass stiffness damping)` for springs, and `sine(out)`, `power(in-out 3)` or `back(out 1.702)` for the classic families. Any of these, or a CSS keyword such as `ease-in-out`, goes in; `value` always reads back canonical. Give the editor an inline size: the extended layout grows to the graph plus the presets column and no further, and the compact layout fills up to 32rem.
+
+The Ease and Spring tabs switch the category, not the kind: switching converts the curve, and the badge over the graph names the matching preset or reads Custom once a handle leaves every preset. Progression is never clamped, so curves may overshoot; the graph widens its range to keep them visible. Switching to Spring converts the curve to the default spring, switching to Ease fits a cubic Bézier to it, both as a proposal on the value lane with `conversion: true` in the metadata; a rejected conversion keeps the tab where it was. An empty editor starts from `ease` or `spring(1 100 10)`. A sine, power, expo, circ or back curve shows the handles of its Bézier fit from the start: dragging or stepping one converts the curve into that Bézier, and a press beside them edits nothing. A press on an elastic, bounce or steps curve converts it into a point curve and drags the nearest point.
+
+### Curve kinds
+
+<Preview
+  title="Spring and custom points"
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-8);justify-content:center;align-items:start">
+  <tp-easing-editor label="Sheet entrance" layout="compact" default-value="spring(1 200 14)" style="inline-size:22rem;max-inline-size:100%"></tp-easing-editor>
+  <tp-easing-editor label="Bounce in" layout="compact" default-value="linear(0, 0.36 30%, 1.12 62%, 0.95 80%, 1)" timing="false" style="inline-size:22rem;max-inline-size:100%"></tp-easing-editor>
+</div>`}
+/>
+
+Springs show Sliders for mass, stiffness and damping, and their progression is normalized to their own settle time. Custom curves are CSS `linear()` point lists: press the empty graph to add a point, drag points along the time axis between their neighbours, and press Delete on a focused point to remove it. Springs and parametric families have no CSS notation, so the CSS export samples them into `linear()`.
+
+| Kind         | Notation                                                       | Parameters                                                            |
+| ------------ | -------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `bezier`     | `cubic-bezier(x1, y1, x2, y2)` (CSS)                           | x in 0–1; y free on input, edited within −1 to 2                      |
+| `spring`     | `spring(mass stiffness damping)`, optional velocity (not CSS)  | mass 0.1–10, stiffness 1–1000, damping 0–100, velocity −10 to 10      |
+| `parametric` | `sine(out)`, `power(in-out 3)`, `back(out 1.702)`, … (not CSS) | family, direction (`in`, `out`, `in-out`, `out-in`) and family values |
+| `parametric` | `steps(4, jump-end)` (CSS)                                     | count 1–50; the position follows the direction                        |
+| `custom`     | `linear(0, 0.3 20%, 1.15 60%, 1)` (CSS)                        | ordered points, inputs 0–1, outputs within −1 to 2                    |
+
+The widget accepts every notation above plus the CSS keywords `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out`, `step-start` and `step-end`, which parse to their records. Whatever an owner supplies, `value` reads back as the canonical text: lowercase, numbers with at most three decimals, `, ` between CSS arguments and single spaces inside the non-CSS functions. A spring's progression is normalized to its own settle time (shown under its controls, capped at 10 s); the exported and previewed time is the `duration` lane.
+
+A press inside a handle keeps the pointer's offset from its center, so the handle moves with the pointer instead of jumping under it; a press elsewhere never moves a Bézier handle. Escape or pointer cancellation restores the pre-drag value without a commit; a lost capture settles at the last position.
+
+Points stay between their neighbours on the time axis; the first and last points keep 0% and 100%. Delete or Backspace on a focused point removes it, and the Add point and Remove point Buttons do the same from the keyboard: Add inserts a point halfway between the focused point and the next, Remove drops the focused inner point.
+
+Spring rows (mass, stiffness, damping, velocity) and parametric rows (power exponent, back overshoot, elastic amplitude and period, steps count) show a Label, a Slider and a value field under the NumberField behavior; the Bézier control points have no rows: they are edited on the graph and in the expression field. The family and direction themselves come from the presets. Slider drags propose once per frame and commit on release; Escape during a Slider drag restores the pre-drag value, as the graph does.
+
+The curve model is exported from `@tweakpad/ui/widgets`: `parseEasingCurve`, `serializeEasingCurve`, `easingFunction`, `sampleEasing`, `toCssEasing`, `convertEasingCurve`, `springSettleTime` and the record types.
+
+### Layouts and sizes
+
+`layout="extended"` (the default) keeps the presets in a column beside the graph. `layout="compact"` moves them behind a Toggle in the header, where they overlay the graph; it fills its container up to 32rem, which suits a Dialog or a Popover. `size` (`sm`, `default`, `lg`) scales the graph, handles and thumbnails together. `layout="compact"` hides them behind an icon-only presets Toggle (named "Show presets") in the header: they overlay the graph on a translucent surface and scroll inside it, a pick closes them, Escape closes them and returns focus to the Toggle, and `presetsOpen` / `defaultPresetsOpen` form a lane with `tp-open-change`.
+
+<Preview
+  title="Compact in a dialog"
+  code={`<tp-button id="easing-dialog-trigger" variant="outline">Edit transition</tp-button>
+<tp-dialog id="easing-dialog" label="Card hover transition">
+  <tp-easing-editor label="Card hover" layout="compact" default-value="cubic-bezier(0.34, 1.56, 0.64, 1)"></tp-easing-editor>
+</tp-dialog>`}
+  script={`await customElements.whenDefined('tp-dialog');
+const dialog = document.querySelector('#easing-dialog');
+document.querySelector('#easing-dialog-trigger').addEventListener('click', () => {
+  dialog.setOpen(true, 'trigger-press');
+});`}
+/>
+
+### Duration and preview
+
+`duration` is the time in seconds that the preview, the frames bar and the exports use; `duration-min`, `duration-max` and `duration-step` set the range of its Slider. `timing="false"` hides the row and drops the time from the CSS export. `preview` picks what animates behind the graph: `scale` (the default), `scale-x`, `scale-y`, `rotation` or `none`.
+
+<Preview
+  title="Rotation preview"
+  code={`<tp-easing-editor label="Spinner" default-value="power(in-out 3)" default-duration="1.2" duration-max="4" duration-step="0.1" preview="rotation" style="inline-size:36rem;max-inline-size:100%"></tp-easing-editor>`}
+/>
+
+The frames bar under the graph draws 40 ticks at the eased positions, so they bunch where the motion is slow. `frames="false"` hides it, `preview-controls="false"` hides the play and preview mode Buttons, and `preset-picker="false"` removes the presets for a curve that should only be tuned by hand.
+
+With `previewControls` (default true) a Button in the header shows the current mode and cycles to the next one on each press, replaying the preview. The preview replays on every settled change (a release, a key, a field commit, a preset, a conversion), on every settled duration change (a Slider release or key, a field commit, a time typed in the expression field) and on the play Button, running for the duration with the CSS easing through the motion role `preview`. Under reduced motion it completes without motion and the frames bar remains the timing reference.
+
+### Presets
+
+Presets are a property, set from data. Each group becomes a section of tiles with a thumbnail of the curve; the tile whose value matches the current curve stays pressed. The preset picker lists the built-in table (Basic, Spring, and one group per easing family with its four directions) or the groups supplied through `presets`. Pressing a tile proposes and commits with `item-press` (`keyboard` from the keyboard) and `presetId` in the metadata, and restarts the preview from the start, also when the tile is already the current one.
+
+<Preview
+  title="Design system presets"
+  code={`<tp-easing-editor id="easing-presets" label="Motion token" default-value="cubic-bezier(0.2, 0, 0, 1)" style="inline-size:36rem;max-inline-size:100%"></tp-easing-editor>`}
+  script={`await customElements.whenDefined('tp-easing-editor');
+document.querySelector('#easing-presets').presets = [
+  {
+    id: 'standard',
+    label: 'Standard',
+    presets: [
+      { id: 'standard', label: 'Standard', value: 'cubic-bezier(0.2, 0, 0, 1)' },
+      { id: 'decelerate', label: 'Decelerate', value: 'cubic-bezier(0, 0, 0, 1)' },
+      { id: 'accelerate', label: 'Accelerate', value: 'cubic-bezier(0.3, 0, 1, 1)' },
+    ],
+  },
+  {
+    id: 'expressive',
+    label: 'Expressive',
+    presets: [
+      { id: 'emphasized', label: 'Emphasized', value: 'cubic-bezier(0.05, 0.7, 0.1, 1)' },
+      { id: 'overshoot', label: 'Overshoot', value: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+      { id: 'bouncy', label: 'Bouncy', value: 'spring(1 260 12)' },
+    ],
+  },
+];`}
+/>
+
+### Export adapters
+
+The footer shows the curve as text through the active adapter, CSS by default, with a Copy button. The field is editable: type any notation the editor accepts, with an optional leading time such as `500ms`, and press Enter. `adapters` replaces the list of serializers; each is `{ id, label, format(curve, context) }`, where `context` carries the `duration`, the CSS timing function and a `samples(count)` function. The field itself is the expression editor: its numbers are highlighted in the accent color; typing commits on Enter or blur (any notation the value model accepts, with an optional leading time such as `500ms` that sets the duration) and Escape reverts; Up and Down step the number at the caret by 0.01 (Shift, Control or Meta 0.1, Alt 0.001; milliseconds by 10) and commit at once, keeping the number selected; text that is not an easing is flagged and reverts on blur. The CSS adapter emits `cubic-bezier()`, `steps()` and `linear()` verbatim, samples springs and parametric families into `linear()` (at most 100 points, three decimals), and prefixes the duration (`700ms …`) when the time control is on.
+
+<Preview
+  title="Export for code"
+  code={`<tp-easing-editor id="easing-adapters" label="Toast entrance" default-value="back(out 1.702)" default-duration="0.45" style="inline-size:36rem;max-inline-size:100%"></tp-easing-editor>`}
+  script={`await customElements.whenDefined('tp-easing-editor');
+const ms = (seconds) => Math.round((seconds ?? 0) * 1000);
+document.querySelector('#easing-adapters').adapters = [
+  {
+    id: 'css',
+    label: 'CSS',
+    format: (curve, context) => \`transform \${ms(context.duration)}ms \${context.css}\`,
+  },
+  {
+    id: 'waapi',
+    label: 'WAAPI',
+    format: (curve, context) => \`{ duration: \${ms(context.duration)}, easing: '\${context.css}' }\`,
+  },
+];`}
+/>
+
+`default-adapter` picks the starting adapter and `output` reads the current text.
+
+### Listening to changes
+
+Every edit is a cancelable `tp-value-change`, and each settled interaction (a handle release, a key, a preset, a field commit) sends one `tp-value-commit`. Do expensive work, such as saving or regenerating styles, on the commit. `event.detail.metadata.curve` holds the parsed record, so a handler can refuse a curve by its parameters. Events of the composed Sliders, Selects, Tabs, Toggle groups, Inputs and the Copy button never leave the widget's shadow root; a rejected widget proposal reverts the nested control.
+
+<Preview
+  title="Commit and veto"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-easing-editor id="easing-events" label="Menu reveal" default-value="ease-in-out" preset-picker="false" style="inline-size:24rem;max-inline-size:100%"></tp-easing-editor>
+  <output id="easing-events-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Saved: cubic-bezier(0.42, 0, 0.58, 1)</output>
+</div>`}
+  script={`const editor = document.querySelector('#easing-events');
+const output = document.querySelector('#easing-events-output');
+// Refuse control points that overshoot beyond 1.25 either way.
+editor.addEventListener('tp-value-change', (event) => {
+  const curve = event.detail.metadata?.curve;
+  if (curve?.kind === 'bezier' && Math.max(Math.abs(curve.y1), Math.abs(curve.y2)) > 1.25) {
+    event.preventDefault();
+  }
+});
+editor.addEventListener('tp-value-commit', (event) => {
+  output.textContent = \`Saved: \${event.detail.value}\`;
+});`}
+/>
+
+### Controlled
+
+Supply `value` and `duration` to own the curve and the time. Every edit then arrives as a proposal, `tp-value-change` for the curve and `tp-duration-change` for the time, and the editor shows only what you write back. Here the accepted values feed a transition in your own styles. Supply `value` for a controlled editor or `defaultValue` for an uncontrolled one; the mode stays fixed for the element's lifetime. The same rule applies to the `duration`, `adapter` and `presetsOpen` lanes.
+
+<Preview
+  title="Controlled owner"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-easing-editor id="easing-controlled" label="Drawer slide" layout="compact" value="cubic-bezier(0.32, 0.72, 0, 1)" duration="0.5" style="inline-size:24rem;max-inline-size:100%"></tp-easing-editor>
+  <code id="easing-controlled-css" style="font-size:var(--tp-text-xs);color:var(--tp-muted-foreground)">transition: translate 0.5s cubic-bezier(0.32, 0.72, 0, 1);</code>
+</div>`}
+  script={`const editor = document.querySelector('#easing-controlled');
+const css = document.querySelector('#easing-controlled-css');
+await customElements.whenDefined('tp-easing-editor');
+const state = { value: editor.value, duration: editor.duration };
+const show = () => {
+  css.textContent = \`transition: translate \${state.duration}s \${state.value};\`;
+};
+editor.addEventListener('tp-value-change', (event) => {
+  if (event.target !== editor || event.defaultPrevented) return;
+  state.value = event.detail.value;
+  editor.value = state.value;
+  show();
+});
+editor.addEventListener('tp-duration-change', (event) => {
+  if (event.defaultPrevented) return;
+  state.duration = event.detail.value;
+  editor.duration = state.duration;
+  show();
+});`}
+/>
+
+Springs and parametric families have no CSS notation; for those, read `output` with the CSS adapter, which samples them into `linear()`.
+
+### In a form
+
+The editor is a form control: the canonical string submits under `name`, `required` validates, and a form reset restores `default-value`. Inside a Field the label focuses the first graph handle.
+
+<Preview
+  title="Field, small size"
+  code={`<tp-field label="Entrance easing" description="Applied to dialogs and sheets.">
+  <tp-easing-editor name="entrance" size="sm" layout="compact" default-value="ease-out" preview-controls="false" frames="false" style="inline-size:20rem"></tp-easing-editor>
+</tp-field>`}
+/>
+
+`readonly` keeps every handle and field focusable but ignores edits; `disabled` disables every nested control and withholds the value from the form.
+
+### Keyboard
+
+Every handle and point has a Time and a Progression range input: arrows step by 0.01, Shift, Control or Meta with an arrow and Page Up or Page Down by 0.1, Alt with an arrow by 0.001, Home and End reach the bounds of the focused axis (0–1 for time, −1 to 2 for progression). The time axis does not mirror in right-to-left writing. Keyboard changes commit immediately. The Tabs, Toggle groups, Selects, Sliders and fields keep their own keyboard contracts.
+
+### Constituents and accessibility
+
+The root is a group named by `label` (default "Easing"). Handle and point inputs are sliders named `Label: Control point 1 Time` or `Label: Point 2 Progression` with three-decimal value text; the graph is a group, the frames bar an image, the preview shape hidden. Presets are toggles named by the preset, one roving stop per group. Focus order: header (Tabs, play, preview mode Button, presets Toggle), presets in the extended layout, graph inputs, controls, duration, footer (adapter, output, Copy). `strings` overrides every visible and accessible name; `locale` formats the fields.

@@ -1,0 +1,146 @@
+---
+title: Popover
+description: Interactive content anchored to a trigger, such as a short form or a set of options.
+tag: tp-popover
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Popover"
+  code={`<tp-popover label="Dimensions">
+  <tp-button slot="trigger" variant="outline">Dimensions</tp-button>
+  <span slot="title">Dimensions</span>
+  <span slot="description">Set the size of the selected frame.</span>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--tp-space-3)">
+    <tp-field label="Width">
+      <tp-input type="number" name="width" default-value="1280"></tp-input>
+    </tp-field>
+    <tp-field label="Height">
+      <tp-input type="number" name="height" default-value="720"></tp-input>
+    </tp-field>
+  </div>
+  <tp-button slot="close">Apply</tp-button>
+</tp-popover>`}
+/>
+
+## Usage
+
+A Popover opens on press and holds content people interact with: fields, toggles, short lists of actions. It stays nonmodal by default, so the rest of the page remains usable, and closes on Escape, an outside press or its `close` action. For read-only supplementary content, use Tooltip or Preview Card instead.
+
+### Title and description
+
+The `title` and `description` slots name and describe the popup for assistive technology. Without a title, `label` supplies the accessible name.
+
+<Preview
+  title="Title and description"
+  code={`<tp-popover label="Notifications">
+  <tp-button slot="trigger" variant="outline">Notifications</tp-button>
+  <span slot="title">Notifications</span>
+  <span slot="description">Choose what reaches your inbox.</span>
+  <div style="display:grid;gap:var(--tp-space-3)">
+    <tp-checkbox default-checked>Mentions and replies</tp-checkbox>
+    <tp-checkbox default-checked>Weekly project digest</tp-checkbox>
+    <tp-checkbox>Product announcements</tp-checkbox>
+  </div>
+</tp-popover>`}
+/>
+
+### Placement
+
+`placement` takes a side and an alignment. The default is `block-end center`; logical sides follow the writing direction, and the popup flips when it would collide with the viewport edge. `show-arrow` points the popup at its trigger.
+
+<Preview
+  title="Placement and arrow"
+  code={`<tp-popover label="Filter by status" placement="block-end start">
+  <tp-button slot="trigger" variant="outline">Below, start</tp-button>
+  <span slot="title">Filter by status</span>
+  <tp-radio-group label="Status" default-value="open">
+    <tp-radio-group-item value="open">Open</tp-radio-group-item>
+    <tp-radio-group-item value="closed">Closed</tp-radio-group-item>
+  </tp-radio-group>
+</tp-popover>
+<tp-popover label="Rename file" placement="inline-end center" show-arrow>
+  <tp-button slot="trigger" variant="outline">Beside, with arrow</tp-button>
+  <tp-field label="File name">
+    <tp-input default-value="Q3 roadmap.pdf"></tp-input>
+  </tp-field>
+</tp-popover>`}
+/>
+
+### Modal
+
+`modal` contains focus inside the popup and makes the rest of the page inert while it is open. Use it when the popup holds a task that should finish before anything else happens.
+
+<Preview
+  title="Modal"
+  code={`<tp-popover label="Invite teammates" modal>
+  <tp-button slot="trigger">Invite teammates</tp-button>
+  <span slot="title">Invite teammates</span>
+  <span slot="description">They'll get an email with a link to join.</span>
+  <tp-field label="Email">
+    <tp-input type="email" placeholder="name@company.com"></tp-input>
+  </tp-field>
+  <tp-button slot="close">Send invite</tp-button>
+</tp-popover>`}
+/>
+
+### Hover
+
+`open-on-hover` also opens the popup after `open-delay` milliseconds of hover. Focus alone does not open it, and a press pins a hover-opened popup so it stays open.
+
+<Preview
+  title="Open on hover"
+  code={`<tp-popover label="Sync status" open-on-hover open-delay="200">
+  <tp-button slot="trigger" variant="ghost">Synced 2 min ago</tp-button>
+  <span slot="title">All changes saved</span>
+  <span slot="description">Last synced from MacBook Pro at 14:32.</span>
+  <tp-button slot="close" variant="outline" size="sm">Sync now</tp-button>
+</tp-popover>`}
+/>
+
+### Anchor
+
+The `anchor` slot positions the popup against a different element than the one that opens it. The Trigger still owns activation; the anchor only supplies geometry.
+
+<Preview
+  title="Separate anchor"
+  code={`<tp-popover label="Reschedule task" placement="block-end start" style="display:grid;justify-items:start;gap:var(--tp-space-3)">
+  <tp-button slot="trigger" variant="outline" size="sm">Reschedule</tp-button>
+  <div slot="anchor" style="display:flex;justify-content:space-between;gap:var(--tp-space-6);padding:var(--tp-space-3) var(--tp-space-4);border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg);font-size:var(--tp-text-sm)">
+    <span>Ship onboarding checklist</span>
+    <span style="color:var(--tp-muted-foreground)">Due Oct 14</span>
+  </div>
+  <span slot="title">Reschedule task</span>
+  <span slot="description">The popup aligns with the task row, not the button.</span>
+  <tp-field label="New due date">
+    <tp-input type="date" default-value="2026-10-21"></tp-input>
+  </tp-field>
+  <tp-button slot="close">Save</tp-button>
+</tp-popover>`}
+/>
+
+### Controlled
+
+Listen to `tp-open-change` to react to opening and closing, or set `open` yourself. The event is cancelable, so an owner can veto a close while work is pending.
+
+<Preview
+  title="Open change"
+  code={`<div style="display:grid;justify-items:center;gap:var(--tp-space-3)">
+  <tp-popover id="popover-controlled" label="Share document">
+    <tp-button slot="trigger" variant="outline">Share</tp-button>
+    <span slot="title">Share document</span>
+    <tp-field label="Link">
+      <tp-input readonly default-value="https://tweakpad.app/d/8f2c41"></tp-input>
+    </tp-field>
+    <tp-button slot="close">Done</tp-button>
+  </tp-popover>
+  <output id="popover-controlled-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Closed</output>
+</div>`}
+  script={`const popover = document.querySelector('#popover-controlled');
+const output = document.querySelector('#popover-controlled-output');
+popover.addEventListener('tp-open-change', (event) => {
+  if (event.target !== popover || event.detail.cancelled) return;
+  output.textContent = event.detail.value ? 'Open' : 'Closed';
+});`}
+/>

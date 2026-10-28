@@ -32,6 +32,11 @@ function state(host: TpTextControl): TextState {
  * submits natively. A semantic editing model (Number Field) keeps the native editor unnamed and
  * submits its raw value through the host instead, pairing a visible input with a hidden named
  * one.
+ *
+ * @fires tp-value-change - Cancelable proposal of new text before it commits; `detail.value`,
+ * `detail.previousValue` and the `detail.reason` for the change.
+ * @fires tp-field-value - After new text commits, with the same `value`, `previousValue` and
+ * `reason`; the enclosing Field listens for it.
  */
 export abstract class TpTextControl extends TpFormElement {
   static override properties = {

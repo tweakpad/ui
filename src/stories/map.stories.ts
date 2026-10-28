@@ -1,11 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/map.md?raw';
+import { libraryDocs } from './library-docs.js';
 import { openFreeMapEngine } from './map-example.js';
 import {
   externalControlsExample,
   googleMapsExample,
-  mapDemoSource,
   mapMarkup,
   renderMapExample,
   tokenThemeExample,
@@ -28,12 +27,7 @@ interface Args {
 const meta = {
   title: 'Components/Map',
   component: 'tp-map',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      source: { code: mapDemoSource() },
-    },
-  },
+  parameters: { docs: libraryDocs('components/map') },
   args: {
     controls: 'zoom-in zoom-out reset fit-pins',
     controlsPosition: 'top-end',
@@ -147,7 +141,6 @@ const exampleStory = (example: {
   parameters: {
     controls: { disable: true },
     docs: {
-      description: { story: example.description ?? '' },
       source: { code: example.code },
     },
   },
@@ -157,13 +150,19 @@ const googleKey = (import.meta as ImportMeta & { env?: Record<string, string | u
   ?.STORYBOOK_GOOGLE_MAPS_API_KEY;
 
 export const ExternalControls: Story = {
+  tags: ['!autodocs'],
   name: 'External controls',
   ...exampleStory(externalControlsExample),
 };
 
 export const GoogleMaps: Story = {
+  tags: ['!autodocs'],
   name: 'Google Maps engine',
   ...exampleStory(googleMapsExample(googleKey)),
 };
 
-export const TokenTheme: Story = { name: 'Token theme', ...exampleStory(tokenThemeExample) };
+export const TokenTheme: Story = {
+  tags: ['!autodocs'],
+  name: 'Token theme',
+  ...exampleStory(tokenThemeExample),
+};

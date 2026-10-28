@@ -1,0 +1,61 @@
+{
+  "id": "components/aspect-ratio",
+  "tag": "tp-aspect-ratio",
+  "sources": {
+    "story": "src/stories/aspect-ratio.stories.ts",
+    "markdown": "docs/aspect-ratio.md",
+    "examples": [
+      "src/stories/aspect-ratio.examples.ts",
+      "src/stories/presentation-primitives.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`tp-aspect-ratio` derives its height from its available width. Slotted content fills\nthe resulting rectangle and cannot enlarge it with intrinsic dimensions.\n\n```html\n<tp-aspect-ratio ratio=\"1.7777777778\">\n  <div style=\"inline-size:100%;block-size:100%;background:var(--tp-muted)\"></div>\n</tp-aspect-ratio>\n```\n\nImport `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`.\n\n| Property / attribute | Values                                                   | Default |\n| -------------------- | -------------------------------------------------------- | ------- |\n| `ratio`              | finite number greater than zero; width divided by height | 16 / 9  |\n| `fit`                | fill, contain, cover, none, scale-down                   | fill    |\n\nSupply a ratio explicitly. Invalid property assignments throw\n`RangeError` and preserve the previous valid ratio. Invalid attribute values also\nreport the validation error instead of silently clamping geometry. `fit` controls\nnative replaced content such as images; it does not change the box's ratio.\n\nThe default slot accepts content. Parts are `aspect-ratio-box` (also `root`) and\n`aspect-ratio-box-content`. Appearance can be customized through the shared\npresentation dictionary and `partPresentation`. The component does not create\nimage semantics or alternative text for its content. Export: `TpAspectRatio`.\nNo component events, form state or imperative methods are defined.\n\nCanonical rendered regions support the shared `partContracts` interface, including\nrender delegates, element references, host properties, and class/style hooks. A\nrender delegate must apply its supplied `bind` directive to the semantic host and\nrender the supplied `content`; this preserves component state and slot behavior."
+    },
+    {
+      "id": "md: Ratio and size examples",
+      "kind": "md",
+      "heading": "## Ratio and size examples",
+      "text": "The rendered Docs include four ratios: **16:9**, **21:9**, **1:1**, and **9:16**.\nThe different-container-sizes example keeps 16:9 while changing the available\nwidth. These are usage examples, not component variants."
+    },
+    {
+      "id": "example: 16:9",
+      "kind": "example",
+      "title": "16:9",
+      "description": "A 16:9 box that follows its available width.",
+      "code": "<tp-aspect-ratio ratio=\"1.7777777777777777\" style=\"inline-size:100%;max-inline-size:calc(var(--tp-spacing) * 100);border-radius:var(--tp-radius-lg)\">\n  <div style=\"inline-size:100%;block-size:100%;background:var(--tp-muted)\"></div>\n</tp-aspect-ratio>"
+    },
+    {
+      "id": "example: 21:9",
+      "kind": "example",
+      "title": "21:9",
+      "description": "A 21:9 box that follows its available width.",
+      "code": "<tp-aspect-ratio ratio=\"2.3333333333333335\" style=\"inline-size:100%;max-inline-size:calc(var(--tp-spacing) * 100);border-radius:var(--tp-radius-lg)\">\n  <div style=\"inline-size:100%;block-size:100%;background:var(--tp-muted)\"></div>\n</tp-aspect-ratio>"
+    },
+    {
+      "id": "example: 1:1",
+      "kind": "example",
+      "title": "1:1",
+      "description": "A 1:1 box that follows its available width.",
+      "code": "<tp-aspect-ratio ratio=\"1\" style=\"inline-size:100%;max-inline-size:calc(var(--tp-spacing) * 100);border-radius:var(--tp-radius-lg)\">\n  <div style=\"inline-size:100%;block-size:100%;background:var(--tp-muted)\"></div>\n</tp-aspect-ratio>"
+    },
+    {
+      "id": "example: 9:16",
+      "kind": "example",
+      "title": "9:16",
+      "description": "A 9:16 box that follows its available width.",
+      "code": "<tp-aspect-ratio ratio=\"0.5625\" style=\"inline-size:100%;max-inline-size:calc(var(--tp-spacing) * 100);border-radius:var(--tp-radius-lg)\">\n  <div style=\"inline-size:100%;block-size:100%;background:var(--tp-muted)\"></div>\n</tp-aspect-ratio>"
+    },
+    {
+      "id": "example: Different container sizes",
+      "kind": "example",
+      "title": "Different container sizes",
+      "description": "The same 16:9 ratio at three widths. Each box shrinks with its container; dimensions and spacing follow the theme.",
+      "code": "<div style=\"display:flex;align-items:start;flex-wrap:wrap;gap:var(--tp-space-4)\">\n  <tp-aspect-ratio ratio=\"1.7777777777777777\" style=\"inline-size:calc(var(--tp-spacing) * 40);max-inline-size:100%;border-radius:var(--tp-radius-lg)\"><div style=\"inline-size:100%;block-size:100%;background:var(--tp-muted)\"></div></tp-aspect-ratio>\n  <tp-aspect-ratio ratio=\"1.7777777777777777\" style=\"inline-size:calc(var(--tp-spacing) * 60);max-inline-size:100%;border-radius:var(--tp-radius-lg)\"><div style=\"inline-size:100%;block-size:100%;background:var(--tp-muted)\"></div></tp-aspect-ratio>\n  <tp-aspect-ratio ratio=\"1.7777777777777777\" style=\"inline-size:calc(var(--tp-spacing) * 80);max-inline-size:100%;border-radius:var(--tp-radius-lg)\"><div style=\"inline-size:100%;block-size:100%;background:var(--tp-muted)\"></div></tp-aspect-ratio>\n</div>"
+    }
+  ]
+}

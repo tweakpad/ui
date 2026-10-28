@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { useArgs } from 'storybook/preview-api';
 import { html } from 'lit';
-import collapsibleDocumentation from '../../docs/collapsible.md?raw';
+import { libraryDocs } from './library-docs.js';
 import type {
   CollapsibleContentAlignment,
   CollapsibleIndicatorPosition,
@@ -40,11 +40,7 @@ const meta: Meta<CollapsibleStoryArgs> = {
   title: 'Components/Collapsible',
   component: 'tp-collapsible',
   parameters: {
-    docs: {
-      description: {
-        component: collapsibleDocumentation.replace(/^# Collapsible\n/u, ''),
-      },
-    },
+    docs: libraryDocs('components/collapsible'),
   },
   args: {
     open: false,
@@ -191,14 +187,17 @@ type Story = StoryObj<CollapsibleStoryArgs>;
 export const Default: Story = {};
 
 export const LeadingContent: Story = {
+  tags: ['!autodocs'],
   render: (args) => renderCollapsible(args, { showLeadingContent: true }),
 };
 
 export const TrailingContent: Story = {
+  tags: ['!autodocs'],
   render: (args) => renderCollapsible(args, { showTrailingContent: true }),
 };
 
 export const ExternalLineByLineMotion: Story = {
+  tags: ['!autodocs'],
   args: { open: true },
   render: (args) => renderCollapsible(args, { contentMotion: 'line-by-line' }),
 };

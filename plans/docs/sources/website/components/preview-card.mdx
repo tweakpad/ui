@@ -1,0 +1,79 @@
+---
+title: Preview Card
+description: A supplementary preview of a link or subject, opened by hover or keyboard focus.
+tag: tp-preview-card
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Preview Card"
+  code={`<div style="font-size:var(--tp-text-sm)">
+  Reviewed by
+  <tp-preview-card label="Maya Lindqvist profile">
+    <tp-button slot="trigger" variant="link" href="#maya-lindqvist">@maya</tp-button>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:var(--tp-space-3);max-inline-size:18rem">
+      <tp-avatar fallback="ML" alt="Maya Lindqvist"></tp-avatar>
+      <div style="display:grid;gap:var(--tp-space-1)">
+        <strong>Maya Lindqvist</strong>
+        <span style="color:var(--tp-muted-foreground)">Design engineer on the Platform team. Maintains the component library.</span>
+        <span style="color:var(--tp-muted-foreground);font-size:var(--tp-text-xs)">Joined March 2024</span>
+      </div>
+    </div>
+  </tp-preview-card>
+  before release.
+</div>`}
+/>
+
+## Usage
+
+A Preview Card shows nonessential context about its subject, like a profile behind a mention or the summary behind a link. Hover or keyboard focus opens it after `open-delay`; pressing the trigger still follows the link. It never traps focus or blocks the page, so keep anything needed to finish a task in a Popover instead.
+
+### Delays
+
+`open-delay` (600ms by default) avoids flashing cards while the pointer passes over, and `close-delay` (300ms) gives the pointer time to travel into the card. Shorten them when previews are the point of the surface.
+
+<Preview
+  title="Delays"
+  code={`<tp-preview-card label="Release notes" open-delay="150" close-delay="100">
+  <tp-button slot="trigger" variant="link" href="#release-2-4">Release 2.4</tp-button>
+  <div style="display:grid;gap:var(--tp-space-2);max-inline-size:18rem;text-align:start">
+    <div style="display:flex;align-items:center;gap:var(--tp-space-2)">
+      <strong>Release 2.4</strong>
+      <tp-badge variant="secondary">Latest</tp-badge>
+    </div>
+    <span style="color:var(--tp-muted-foreground)">Shared workspaces, faster search indexing and 38 bug fixes.</span>
+  </div>
+</tp-preview-card>`}
+/>
+
+### Placement and arrow
+
+`placement` sets the preferred side and alignment, which flip on collision. `show-arrow` points the card at its subject.
+
+<Preview
+  title="Placement and arrow"
+  code={`<tp-preview-card label="Repository summary" placement="inline-end center" show-arrow>
+  <tp-button slot="trigger" variant="link" href="#tweakpad-ui">tweakpad/ui</tp-button>
+  <div style="display:grid;gap:var(--tp-space-2);max-inline-size:16rem;text-align:start">
+    <strong>tweakpad/ui</strong>
+    <span style="color:var(--tp-muted-foreground)">Accessible web components with a shared theme.</span>
+    <span style="font-size:var(--tp-text-xs);color:var(--tp-muted-foreground)">TypeScript · 2.1k stars · Updated today</span>
+  </div>
+</tp-preview-card>`}
+/>
+
+### Pointer entry
+
+By default the pointer can move into the card to select or scroll its content. `disable-hoverable-popup` closes the card as soon as the pointer leaves the trigger, for purely glanceable previews.
+
+<Preview
+  title="Not hoverable"
+  code={`<tp-preview-card label="Invoice INV-2041" disable-hoverable-popup>
+  <tp-button slot="trigger" variant="link" href="#inv-2041">INV-2041</tp-button>
+  <div style="display:grid;gap:var(--tp-space-1)">
+    <strong>$4,820.00</strong>
+    <span style="color:var(--tp-muted-foreground)">Due Nov 1 · Northwind Traders</span>
+  </div>
+</tp-preview-card>`}
+/>

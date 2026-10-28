@@ -4,19 +4,13 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import type { TpMessage } from '../components/message/index.js';
 import type { TpBubble } from '../components/bubble/index.js';
 import { messageExamples } from './message.examples.js';
-import documentation from '../../docs/message.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 const conversation = messageExamples[0]!;
 const meta = {
   title: 'Components/Message',
   component: 'tp-message',
-  parameters: {
-    docs: {
-      examples: messageExamples.slice(1),
-      description: { component: documentation },
-      source: { code: conversation.code, language: 'html' },
-    },
-  },
+  parameters: { docs: libraryDocs('components/message') },
   args: { align: 'end', author: '', timestamp: '' },
   argTypes: {
     align: {

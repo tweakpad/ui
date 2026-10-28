@@ -1,0 +1,278 @@
+---
+title: Table of contents
+description: An "On this page" list of links that marks the section the reader has scrolled to.
+tag: tp-table-of-contents
+parts: [tp-table-of-contents-item]
+---
+
+<Preview
+  title="Table of contents"
+  align="stretch"
+  code={`<tp-scroll-area label="Integration guide" style="block-size:24rem">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 11rem;gap:var(--tp-space-8);padding:var(--tp-space-6);align-items:start">
+    <article>
+      <h3 id="toc-demo-overview" style="margin-block:0 var(--tp-space-3)">Overview</h3>
+      <p style="margin-block:0 var(--tp-space-4)">Northwind Sync keeps customer records in your CRM and your billing system in step. Every change on either side becomes an event, and the sync service applies it to the other side within a few seconds.</p>
+      <p style="margin-block:0 var(--tp-space-4)">This guide walks through connecting both systems, choosing which fields to map, and rolling the integration out to your whole team without interrupting billing.</p>
+      <h3 id="toc-demo-connect" style="margin-block:0 var(--tp-space-3)">Connect accounts</h3>
+      <p style="margin-block:0 var(--tp-space-4)">Open Settings → Integrations and choose Northwind Sync. You will be asked to sign in to both systems with an administrator account; the service stores only scoped tokens, never passwords.</p>
+      <p style="margin-block:0 var(--tp-space-4)">Once both accounts are connected, a test record is created and deleted on each side to confirm permissions. If the check fails, the most common cause is a CRM role without API access.</p>
+      <h3 id="toc-demo-mapping" style="margin-block:0 var(--tp-space-3)">Field mapping</h3>
+      <p style="margin-block:0 var(--tp-space-4)">Standard fields such as company name, billing email and tax ID are mapped automatically. Custom fields appear in a second list where you choose a target and a direction.</p>
+      <p style="margin-block:0 var(--tp-space-4)">Use one-way mappings for values that have a single owner, such as plan tier from billing. Two-way mappings resolve conflicts by keeping the most recent edit.</p>
+      <h3 id="toc-demo-rollout" style="margin-block:0 var(--tp-space-3)">Rollout</h3>
+      <p style="margin-block:0 var(--tp-space-4)">Start with a single sales region. The sync dashboard shows applied, skipped and failed events per hour, so you can confirm the mapping before widening it.</p>
+      <p style="margin-block:0 var(--tp-space-4)">When the error rate stays under one percent for a week, enable the remaining regions. Historical records are backfilled overnight in batches of five thousand.</p>
+      <h3 id="toc-demo-troubleshooting" style="margin-block:0 var(--tp-space-3)">Troubleshooting</h3>
+      <p style="margin-block:0 var(--tp-space-4)">Failed events are retried with exponential backoff for up to 24 hours. After that they move to the review queue, where you can edit the payload and replay it.</p>
+      <p style="margin-block:0 var(--tp-space-4)">If records drift apart, run a reconciliation from the dashboard. It compares both systems field by field and lists every difference before changing anything.</p>
+      <div style="block-size:12rem"></div>
+    </article>
+    <aside style="position:sticky;top:0">
+      <tp-table-of-contents navigation="scroll">
+      <tp-table-of-contents-item href="#toc-demo-overview">Overview</tp-table-of-contents-item>
+      <tp-table-of-contents-item href="#toc-demo-connect">Connect accounts</tp-table-of-contents-item>
+      <tp-table-of-contents-item href="#toc-demo-mapping">Field mapping</tp-table-of-contents-item>
+      <tp-table-of-contents-item href="#toc-demo-rollout">Rollout</tp-table-of-contents-item>
+      <tp-table-of-contents-item href="#toc-demo-troubleshooting">Troubleshooting</tp-table-of-contents-item>
+      </tp-table-of-contents>
+    </aside>
+  </div>
+</tp-scroll-area>`}
+/>
+
+## Usage
+
+Each item names its target with `href="#id"`; the component never scans the page for headings. It finds the scroll container that holds every target, the document or a Scroll area as here, and marks the innermost target whose region crosses the reading line. Place it in a sticky column inside that same container.
+
+When the list is longer than its column, the current link is kept in view inside the column only.
+
+An item names one element by `href="#id"`, resolved in the item's own tree scope and then the document, or by the `target` property, which takes an element reference (useful inside shadow roots or for elements without ids). Headings, sections, cards and figures all work the same way. Hidden targets are skipped until they show again; unresolved targets raise a `tp-diagnostic`.
+
+Set `scroll-root` (an id) or `scrollRoot` (an element; a component with a `viewportElement`, such as Scroll area, resolves to its viewport) to choose it explicitly.
+
+### Navigation
+
+Activating an item scrolls only the content's container and keeps that item current until the reader scrolls again. The default `navigation="fragment"` also records the target in the URL as a history entry, so Back returns to the previous section. Use `navigation="scroll"`, as these examples do, when your application routes on the fragment or the list sits in an embedded panel.
+
+`scroll-behavior` chooses `smooth` (default), `instant`, or `auto` (the container's CSS `scroll-behavior`); reduced motion is always instant. Focus does not move.
+
+Links in the content work like the items: a heading's own `#` anchor or a cross-reference such as `<a href="#theming">` scrolls the same way and makes its target current. Back and forward through history and a fragment present at load do the same.
+
+### Depth and title
+
+<Preview
+  title="Nested items"
+  code={`<div style="inline-size:14rem">
+  <tp-table-of-contents label="In this guide" navigation="scroll">
+    <tp-table-of-contents-item href="#toc-demo-overview">Overview</tp-table-of-contents-item>
+    <tp-table-of-contents-item href="#toc-demo-connect">Connect accounts</tp-table-of-contents-item>
+    <tp-table-of-contents-item href="#toc-demo-mapping" depth="2">Field mapping</tp-table-of-contents-item>
+    <tp-table-of-contents-item href="#toc-demo-rollout" depth="2">Rollout</tp-table-of-contents-item>
+    <tp-table-of-contents-item href="#toc-demo-troubleshooting">Troubleshooting</tp-table-of-contents-item>
+  </tp-table-of-contents>
+</div>`}
+/>
+
+`depth` only indents an item; it is never used for tracking. `label` replaces the default "On this page" title, and a `title` slot accepts richer content. This list follows the article above: scroll it and both lists update.
+
+### Nested sections
+
+To keep a group current while the reader is inside one of its subsections, make the group a `section` that wraps them and point its item at the section. The indicator then spans the group and the subsection together. This list sits in the leading column and also sets `scroll-behavior="instant"`, so items jump without animation, and `scroll-debounce="120"`, so the current item settles only once scrolling pauses.
+
+<Preview
+  title="Nested sections"
+  align="stretch"
+  code={`<tp-scroll-area label="Admin handbook" style="block-size:22rem">
+  <div style="display:grid;grid-template-columns:11rem minmax(0,1fr);gap:var(--tp-space-8);padding:var(--tp-space-6);align-items:start">
+    <aside style="position:sticky;top:0">
+      <tp-table-of-contents navigation="scroll" scroll-behavior="instant" scroll-debounce="120" label="Handbook">
+        <tp-table-of-contents-item href="#toc-nested-people">People</tp-table-of-contents-item>
+        <tp-table-of-contents-item href="#toc-nested-invites" depth="2">Invitations</tp-table-of-contents-item>
+        <tp-table-of-contents-item href="#toc-nested-roles" depth="2">Roles</tp-table-of-contents-item>
+        <tp-table-of-contents-item href="#toc-nested-billing">Billing</tp-table-of-contents-item>
+        <tp-table-of-contents-item href="#toc-nested-invoices" depth="2">Invoices</tp-table-of-contents-item>
+        <tp-table-of-contents-item href="#toc-nested-tax" depth="2">Tax details</tp-table-of-contents-item>
+        <tp-table-of-contents-item href="#toc-nested-offboarding">Offboarding</tp-table-of-contents-item>
+      </tp-table-of-contents>
+    </aside>
+    <article>
+      <section id="toc-nested-people">
+        <h3 style="margin-block:0 var(--tp-space-3)">People</h3>
+        <p style="margin-block:0 var(--tp-space-4)">Everyone in the workspace has one account, shared across every project they can reach. Owners manage membership from Settings → People.</p>
+        <h4 id="toc-nested-invites" style="margin-block:0 var(--tp-space-3)">Invitations</h4>
+        <p style="margin-block:0 var(--tp-space-4)">Invite by email or share a join link limited to your company domain. Pending invitations expire after fourteen days and can be resent at any time.</p>
+        <h4 id="toc-nested-roles" style="margin-block:0 var(--tp-space-3)">Roles</h4>
+        <p style="margin-block:0 var(--tp-space-4)">Members edit the projects they belong to, admins also manage people and integrations, and owners control billing. A workspace always keeps at least one owner.</p>
+      </section>
+      <section id="toc-nested-billing">
+        <h3 style="margin-block:0 var(--tp-space-3)">Billing</h3>
+        <p style="margin-block:0 var(--tp-space-4)">Plans are billed per active member each month. Members who have not signed in for thirty days stop counting until they return.</p>
+        <h4 id="toc-nested-invoices" style="margin-block:0 var(--tp-space-3)">Invoices</h4>
+        <p style="margin-block:0 var(--tp-space-4)">Invoices are emailed to the billing contact on the first of the month and stay available as PDFs under Billing → History.</p>
+        <h4 id="toc-nested-tax" style="margin-block:0 var(--tp-space-3)">Tax details</h4>
+        <p style="margin-block:0 var(--tp-space-4)">Add a VAT or GST number before the next invoice is issued. Changes are not applied to invoices that were already sent.</p>
+      </section>
+      <h3 id="toc-nested-offboarding" style="margin-block:0 var(--tp-space-3)">Offboarding</h3>
+      <p style="margin-block:0 var(--tp-space-4)">Removing a member transfers their private projects to the owner who removed them. Their comments and history stay in place.</p>
+      <div style="block-size:12rem"></div>
+    </article>
+  </div>
+</tp-scroll-area>`}
+/>
+
+Depth still only indents. The grouping comes from the sections themselves, so a flat list over the same page tracks the same way.
+
+Targets are ordered by position. Each one covers from its start to the next target's start, or to its own end when that is further. A heading therefore covers the text below it, a section covers itself, and a section that contains other targets contains their regions, so the containing item stays active and the indicator spans the chain.
+
+### Building items from your content
+
+`collectTargets(root, selector, options)` from `@tweakpad/ui` returns a record for each element your selector matches; render one item per record and give it the element as `target`. Targets need no ids and need not be headings. Run it again when the content changes, as the button does here.
+
+<Preview
+  title="Collected targets"
+  align="stretch"
+  script={`import { collectTargets } from '@tweakpad/ui';
+
+const article = document.querySelector('#toc-collected-article');
+const toc = document.querySelector('#toc-collected-list');
+const add = document.querySelector('#toc-collected-add');
+
+function renderItems() {
+  const records = collectTargets(article, '[data-step]', {
+    label: (element) => element.dataset.step,
+  });
+  toc.replaceChildren(...records.map(({ element, label }) => {
+    const item = document.createElement('tp-table-of-contents-item');
+    item.target = element;
+    item.textContent = label;
+    return item;
+  }));
+}
+
+const extras = [
+  ['Invite your team', 'Send invitations from Settings → People. New members land in the onboarding project you just set up.'],
+  ['Connect your calendar', 'Due dates appear in Google or Outlook calendars, and moving an event there moves the task here.'],
+];
+add.addEventListener('click', () => {
+  const next = extras.shift();
+  if (!next) return;
+  const step = document.createElement('div');
+  step.dataset.step = next[0];
+  step.style.marginBlockEnd = 'var(--tp-space-5)';
+  step.innerHTML = '<strong></strong><p style="margin-block:var(--tp-space-2) 0"></p>';
+  step.querySelector('strong').textContent = next[0];
+  step.querySelector('p').textContent = next[1];
+  article.querySelector('[data-end]').before(step);
+  renderItems();
+  add.disabled = extras.length === 0;
+});
+
+renderItems();`}
+  code={`<tp-scroll-area label="Onboarding checklist" style="block-size:20rem">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 11rem;gap:var(--tp-space-8);padding:var(--tp-space-6);align-items:start">
+    <div id="toc-collected-article">
+      <div data-step="Create a project" style="margin-block-end:var(--tp-space-5)">
+        <strong>Create a project</strong>
+        <p style="margin-block:var(--tp-space-2) 0">Start from a blank board or a template. Templates bring their own columns, labels and a few example tasks you can delete.</p>
+      </div>
+      <div data-step="Import tasks" style="margin-block-end:var(--tp-space-5)">
+        <strong>Import tasks</strong>
+        <p style="margin-block:var(--tp-space-2) 0">Upload a CSV from your previous tool. Columns are matched by name, and anything unmatched becomes a custom field you can rename later.</p>
+      </div>
+      <div data-step="Set up automations" style="margin-block-end:var(--tp-space-5)">
+        <strong>Set up automations</strong>
+        <p style="margin-block:var(--tp-space-2) 0">Move a task to Review when its pull request opens, or assign a reviewer when a due date is two days away.</p>
+      </div>
+      <div data-end style="block-size:12rem"></div>
+    </div>
+    <aside style="position:sticky;top:0;display:grid;gap:var(--tp-space-3);justify-items:start">
+      <tp-table-of-contents id="toc-collected-list" navigation="scroll" label="Steps"></tp-table-of-contents>
+      <tp-button id="toc-collected-add" variant="outline" size="sm">Add a step</tp-button>
+    </aside>
+  </div>
+</tp-scroll-area>`}
+/>
+
+It has no default selector, assigns no ids and returns a depth only when you supply a `depth` function.
+
+<Code code={`import { collectTargets } from '@tweakpad/ui';
+
+const toc = document.querySelector('tp-table-of-contents');
+toc.replaceChildren(
+  ...collectTargets(document.querySelector('main'), 'h2, h3', {
+    depth: (heading) => (heading.tagName === 'H3' ? 2 : 1),
+  }).map(({ element, label, depth }) => {
+    const item = document.createElement('tp-table-of-contents-item');
+    item.target = element;
+    item.depth = depth ?? 1;
+    item.textContent = label;
+    return item;
+  }),
+);`} language="js" />
+
+The heading selector and depth rule are the page's choice here, not the library's.
+
+### Compact
+
+`variant="compact"` draws less attention: one short line per top-level item, with the current one marked. Hovering the lines opens the full list in a card after `open-delay`, and `close-delay` keeps it open briefly after the pointer leaves; the lines are also one Button for keyboard users. `side` is the direction the card grows: `inline-start` for lines on the end edge of the page, `inline-end` for lines on the start edge.
+
+<Preview
+  title="Compact"
+  align="stretch"
+  code={`<tp-scroll-area label="Release notes" style="block-size:18rem">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 2rem;gap:var(--tp-space-6);padding:var(--tp-space-6);align-items:start">
+    <article>
+      <h3 id="toc-compact-highlights" style="margin-block:0 var(--tp-space-3)">Highlights</h3>
+      <p style="margin-block:0 var(--tp-space-4)">Version 4.2 adds shared workspaces, a faster search index and a new export pipeline. Existing projects upgrade automatically the next time they open.</p>
+      <h3 id="toc-compact-workspaces" style="margin-block:0 var(--tp-space-3)">Shared workspaces</h3>
+      <p style="margin-block:0 var(--tp-space-4)">Invite collaborators to a workspace instead of to each project. Permissions follow the workspace, and owners can still restrict a single project to a smaller group.</p>
+      <h3 id="toc-compact-search" style="margin-block:0 var(--tp-space-3)">Search</h3>
+      <p style="margin-block:0 var(--tp-space-4)">Results now arrive as you type, ranked by recent activity. Filters for owner, type and date can be combined and saved.</p>
+      <h3 id="toc-compact-export" style="margin-block:0 var(--tp-space-3)">Export</h3>
+      <p style="margin-block:0 var(--tp-space-4)">Exports run in the background and notify you when they finish. PDF exports keep links and the document outline.</p>
+      <div style="block-size:10rem"></div>
+    </article>
+    <aside style="position:sticky;top:0">
+      <tp-table-of-contents variant="compact" navigation="scroll" label="In this release">
+        <tp-table-of-contents-item href="#toc-compact-highlights">Highlights</tp-table-of-contents-item>
+        <tp-table-of-contents-item href="#toc-compact-workspaces">Shared workspaces</tp-table-of-contents-item>
+        <tp-table-of-contents-item href="#toc-compact-search">Search</tp-table-of-contents-item>
+        <tp-table-of-contents-item href="#toc-compact-export">Export</tp-table-of-contents-item>
+      </tp-table-of-contents>
+    </aside>
+  </div>
+</tp-scroll-area>`}
+/>
+
+A deeper item counts toward the line before it, so a section's line stays highlighted while you read its subsections. The current section's line takes the indicator color, another active section's line the muted foreground, and the rest the border color. Only the color changes, never the size of the strip.
+
+Pressing the lines, or Enter or Space while they have focus, toggles the card and moves focus to the current link. Escape closes the card and returns focus to the lines. Activating a link scrolls as in the list and closes the card.
+
+The card covers the lines, aligned with their outer edge and centered on them. When the card does not fit on that side it grows the other way, and it shifts to stay in the viewport. A card taller than the viewport scrolls and keeps the current link in view.
+
+### Reading line
+
+The reading line defaults to the scroll container's `scroll-padding-block-start`, the same CSS you already use to clear a sticky header for anchor links, so a jump always lands on the item it marks. `activation-offset` overrides it with pixels or a percentage. For busy pages, `scroll-throttle` and `scroll-debounce` reduce how often the current item updates.
+
+Fragment navigation lands targets exactly there, after their own `scroll-margin-block-start`, so a jump always makes its target current.
+
+<Code code={`html {
+  scroll-padding-block-start: 4rem;
+} /* a sticky header */`} language="css" />
+
+There is always a current item. At the top, and whenever the reading line is still above the first target (an introduction, padding, or overscroll), the first target is current. Over the last screen of scrolling the reading line moves down to the end edge, so short final sections still become current in order and the last is current at the bottom, including overscroll.
+
+### Performance
+
+Many components can react to the same scrolling without adding listeners. Scroll observation is a shared service: each scroll container has one native listener per event type, the window one `ResizeObserver`, and each observed root one `MutationObserver`, however many components subscribe (`observeScroll`, `observeResize`, `observeSubtree` from `@tweakpad/ui`).
+
+Targets are measured only when layout changes: their size, the container's size or scroll height, or the DOM under the container. A scroll alone recomputes from the scroll position, with no layout reads of the targets.
+
+Each subscriber chooses its timing. The table of contents updates once per animation frame by default; `scroll-throttle` limits updates to one per interval (with a trailing update), and `scroll-debounce` updates only after scrolling pauses.
+
+### Accessibility
+
+The root is one `nav` landmark named by its title, and the items form a list. Only the current link carries `aria-current="location"`. The rail and indicator are hidden from assistive technology. Scrolling never moves focus or announces anything.
+
+In the compact variant the landmark is named by the title text and holds a button with the same name that reports whether the card is expanded. The lines are hidden from assistive technology. The card is a dialog named by the title and holds the same list; its links are in the focus order while it is open.

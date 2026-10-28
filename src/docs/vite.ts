@@ -23,7 +23,9 @@ export interface LiteralCodePlugin {
 }
 
 const LITERAL = /\b(code|script)=\{`((?:\\[\s\S]|[^`\\])*)`\}/g;
-const FRONTMATTER = /^---\n[\s\S]*?\n---\n/;
+// A checkout with CRLF line endings keeps its frontmatter otherwise, and MDX would render it
+// as a heading.
+const FRONTMATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/;
 
 /** The text of a template literal, with the three escapes the pages use resolved. */
 export function unescapeLiteral(raw: string): string {

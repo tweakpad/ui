@@ -1,0 +1,106 @@
+{
+  "id": "components/code-block",
+  "tag": "tp-code-block",
+  "sources": {
+    "story": "src/stories/code-block.stories.ts",
+    "markdown": "docs/code-block.md",
+    "examples": [
+      "src/stories/code-block.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`tp-code-block` presents source code with syntax colors, an optional title, a copy\naction, line numbers, highlighted and diff lines, and a collapsible height. The source\ncomes from `code` or, when that property is unset, from the element's text content\n(dedented, with the surrounding blank lines removed). Highlighting comes from a\n**highlighter**: the built-in tokenizer by default, or an adapter such as Shiki.\n\n```html\n<tp-code-block language=\"typescript\" label=\"counter.ts\" line-numbers highlight-lines=\"3\">\n  import { html } from 'lit'; export const view = (count: number) => html`\n  <p>Pressed ${count} times</p>\n  `;\n</tp-code-block>\n```\n\nAuthor source as text: escape `<` and `&` (`&lt;`, `&amp;`) in markup, or set `code` from\nscript. Text content is read when the element connects and whenever it changes."
+    },
+    {
+      "id": "md: Properties",
+      "kind": "md",
+      "heading": "## Properties",
+      "text": "| Property / attribute                                           | Values                                                                                                               | Default            |\n| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------ |\n| `code`                                                         | source text; unset reads the text content                                                                            | `undefined`        |\n| `language`                                                     | `typescript`, `javascript`, `html`, `css`, `json`, `bash`, `diff`, `plaintext` or any language the highlighter knows | `plaintext`        |\n| `label`                                                        | title text; the `title` slot replaces it                                                                             | `''` (no header)   |\n| `highlighter`                                                  | `CodeHighlighter` or `null` (property only)                                                                          | built-in tokenizer |\n| `lineNumbers` / `line-numbers`                                 | boolean                                                                                                              | `false`            |\n| `highlightLines` / `highlight-lines`                           | lines and ranges, such as `1,3-5`                                                                                    | `''`               |\n| `addedLines` / `added-lines`                                   | lines and ranges                                                                                                     | `''`               |\n| `removedLines` / `removed-lines`                               | lines and ranges                                                                                                     | `''`               |\n| `collapsible`                                                  | boolean                                                                                                              | `false`            |\n| `expanded` (property) / `defaultExpanded` / `default-expanded` | boolean; `expanded` is controlled, `undefined` uncontrolled                                                          | `false`            |\n| `collapsedLines` / `collapsed-lines`                           | visible lines while collapsed                                                                                        | `12`               |\n| `copyable`                                                     | boolean; `copyable=\"false\"` removes the copy action                                                                  | `true`             |\n| `wrap`                                                         | boolean; wraps long lines instead of scrolling                                                                       | `false`            |\n| `messages`                                                     | `CodeBlockMessages` (property only)                                                                                  | English            |\n\nMessages: `code` (the figure name without a title, after the language), `copy`, `copied`,\n`copyFailed`, `expand`, `collapse`, `added`, `removed`."
+    },
+    {
+      "id": "md: Methods and events",
+      "kind": "md",
+      "heading": "## Methods and events",
+      "text": "- `copy()` copies the source text and resolves to whether it succeeded; it runs through the\n  composed [Copy button](copy-button.md) when the copy action is shown.\n- `setExpanded(value, reason?)` proposes expansion and returns whether it was accepted.\n- `source` is the text the block shows and copies.\n\n| Event             | Cancelable | Detail                                                                                       |\n| ----------------- | ---------- | -------------------------------------------------------------------------------------------- |\n| `tp-code-copy`    | yes        | `text`; preventing it skips the copy                                                         |\n| `tp-value-change` | yes        | `expanded` proposal (`trigger-press` or `imperative-action`)                                 |\n| `tp-diagnostic`   | no         | `code-block-language` for unknown languages, `code-block-highlight` for highlighter failures |\n\nThe copy action is a [Copy button](copy-button.md): it uses the Clipboard API with a fallback\nfor documents where it is unavailable, shows a check for two seconds, takes the copied message\nas its name and announces \"Copied\" (or \"Copy failed\") politely. The block's `copy`, `copied` and\n`copyFailed` messages become the button's labels; `tp-code-copy` still fires before the write\nand preventing it skips the copy."
+    },
+    {
+      "id": "md: Highlighters",
+      "kind": "md",
+      "heading": "## Highlighters",
+      "text": "A highlighter implements `highlight(code, language, { signal })` and returns\n`CodeTokens` (lines of `{ text, scope?, light?, dark?, fontStyle? }` tokens) or a promise\nof them. The block renders plain text first and swaps in the tokens without changing the\ntext, so slow highlighters never shift the layout. A newer request aborts `signal`.\n\nThe built-in tokenizer (`builtinHighlighter`) covers TypeScript and JavaScript (including\nJSX and lit `html` templates), HTML, CSS, JSON, Bash and diffs. Other languages render as\nplain text with a diagnostic.\n\nFor full grammar coverage, adapt Shiki from `@tweakpad/ui/code`. The library never\nimports Shiki; you create the highlighter with the languages and themes you need:\n\n```js\nimport { createHighlighterCore } from 'shiki/core';\nimport { createJavaScriptRegexEngine } from 'shiki/engine/javascript';\nimport { createShikiHighlighter } from '@tweakpad/ui/code';\n\nconst shiki = await createHighlighterCore({\n  engine: createJavaScriptRegexEngine(),\n  themes: [\n    import('@shikijs/themes/github-light-default'),\n    import('@shikijs/themes/github-dark-default'),\n  ],\n  langs: [import('@shikijs/langs/typescript'), import('@shikijs/langs/html')],\n});\ndocument.querySelector('tp-code-block').highlighter = createShikiHighlighter(shiki, {\n  themes: { light: 'github-light-default', dark: 'github-dark-default' },\n});\n```\n\nLanguages Shiki has not loaded fall back to the built-in tokenizer."
+    },
+    {
+      "id": "md: Theming",
+      "kind": "md",
+      "heading": "## Theming",
+      "text": "Scoped tokens use the `--tp-syntax-*` roles: `comment`, `keyword`, `string`, `number`,\n`function`, `type`, `constant`, `variable`, `property`, `tag`, `attribute`, `operator`,\n`inserted` and `deleted`. Each default is a `light-dark()` pair, so the palette follows the\ncolor scheme; set any role on an ancestor to restyle the built-in highlighter. Tokens\nwith explicit colors (Shiki themes) use their light or dark color for the current scheme. Theme colors are the theme's own: check their contrast on the code surface (for example, `github-light-default` comments measure about 4.3:1 on the default surface). The built-in `--tp-syntax-*` defaults keep every role at 4.5:1 or more on the surface and on highlighted and diff lines in both schemes.\n\nParts: `code-block`, `header`, `title`, `language`, `viewport`, `line`, `line-number`,\n`line-marker`, `token` and `expand`; the presentation keys are prefixed `code-block-`.\nLines publish `data-highlighted`, `data-inserted` and `data-deleted`; tokens publish\n`data-scope`. The host reflects `data-collapsed` and `data-expanded`."
+    },
+    {
+      "id": "md: Accessibility",
+      "kind": "md",
+      "heading": "## Accessibility",
+      "text": "The block is a figure named by its title, or by the language and the `code` message.\nThe scroll region becomes focusable (and a labelled region) only when it overflows, so\nkeyboard users can scroll it. Code stays left-to-right in right-to-left pages. Line\nnumbers and diff markers are hidden from assistive technology; added and removed lines\ncarry visually hidden text. The Expand control exposes `aria-expanded` and controls the\nviewport. Reduced motion removes the height transition."
+    },
+    {
+      "id": "example: Title and copy",
+      "kind": "example",
+      "title": "Title and copy",
+      "description": "label (or the title slot) adds a header with the language; the copy action copies the original source and announces the result.",
+      "code": "<tp-code-block language=\"typescript\" label=\"counter.ts\">\nimport { LitElement, html } from 'lit';\n\n/** Counts presses and announces the total. */\nexport class TpCounter extends LitElement {\n  static properties = { count: { type: Number } };\n  count = 0;\n\n  render() {\n    return html`&lt;button @click=${() =&gt; this.count++}&gt;Pressed ${this.count} times&lt;/button&gt;`;\n  }\n}\n\ncustomElements.define('tp-counter', TpCounter);\n</tp-code-block>"
+    },
+    {
+      "id": "example: Line numbers and highlighted lines",
+      "kind": "example",
+      "title": "Line numbers and highlighted lines",
+      "description": "line-numbers adds a sticky gutter that stays in place while the code scrolls horizontally; highlight-lines takes lines and ranges.",
+      "code": "<tp-code-block language=\"typescript\" label=\"counter.ts\" line-numbers highlight-lines=\"5,7-9\">\nimport { LitElement, html } from 'lit';\n\n/** Counts presses and announces the total. */\nexport class TpCounter extends LitElement {\n  static properties = { count: { type: Number } };\n  count = 0;\n\n  render() {\n    return html`&lt;button @click=${() =&gt; this.count++}&gt;Pressed ${this.count} times&lt;/button&gt;`;\n  }\n}\n\ncustomElements.define('tp-counter', TpCounter);\n</tp-code-block>"
+    },
+    {
+      "id": "example: Diff",
+      "kind": "example",
+      "title": "Diff",
+      "description": "added-lines and removed-lines mark inserted and deleted lines with a marker, a tint and screen-reader text.",
+      "code": "<tp-code-block language=\"javascript\" label=\"total.js\" line-numbers added-lines=\"5\" removed-lines=\"2-4\">\nexport function total(items) {\n  let sum = 0;\n  for (const item of items) sum += item.price;\n  return sum;\n  return items.reduce((sum, item) =&gt; sum + item.price, 0);\n}\n</tp-code-block>"
+    },
+    {
+      "id": "example: Collapsible",
+      "kind": "example",
+      "title": "Collapsible",
+      "description": "collapsible clips the block to collapsed-lines and adds an Expand control; expanded is controllable and fires tp-value-change.",
+      "code": "<tp-code-block language=\"typescript\" label=\"steps.ts\" collapsible collapsed-lines=\"8\">\nconst step1 = await runStep(1); // \nconst step2 = await runStep(2); // ·\nconst step3 = await runStep(3); // ··\nconst step4 = await runStep(4); // ···\nconst step5 = await runStep(5); // ····\nconst step6 = await runStep(6); // ·····\nconst step7 = await runStep(7); // \nconst step8 = await runStep(8); // ·\nconst step9 = await runStep(9); // ··\nconst step10 = await runStep(10); // ···\nconst step11 = await runStep(11); // ····\nconst step12 = await runStep(12); // ·····\nconst step13 = await runStep(13); // \nconst step14 = await runStep(14); // ·\nconst step15 = await runStep(15); // ··\nconst step16 = await runStep(16); // ···\nconst step17 = await runStep(17); // ····\nconst step18 = await runStep(18); // ·····\nconst step19 = await runStep(19); // \nconst step20 = await runStep(20); // ·\nconst step21 = await runStep(21); // ··\nconst step22 = await runStep(22); // ···\nconst step23 = await runStep(23); // ····\nconst step24 = await runStep(24); // ·····\n</tp-code-block>"
+    },
+    {
+      "id": "example: Without header",
+      "kind": "example",
+      "title": "Without header",
+      "description": "Without a title the copy action floats in the top inline-end corner.",
+      "code": "<tp-code-block language=\"bash\">\n# Install the library and its only peer dependency\nnpm install @tweakpad/ui lit\nnpx storybook dev -p 6006 --no-open\n</tp-code-block>"
+    },
+    {
+      "id": "example: Languages",
+      "kind": "example",
+      "title": "Languages",
+      "description": "The built-in tokenizer covers TypeScript and JavaScript (with JSX and lit html), HTML, CSS, JSON, Bash and diffs. Other languages render as plain text.",
+      "code": "<div style=\"display:grid;gap:var(--tp-space-4)\">\n<tp-code-block language=\"html\" label=\"form.html\">\n&lt;tp-field label=\"Email\"&gt;\n  &lt;tp-input type=\"email\" placeholder=\"name@example.com\"&gt;&lt;/tp-input&gt;\n&lt;/tp-field&gt;\n&lt;!-- The Field labels and describes its control. --&gt;\n&lt;tp-button type=\"submit\"&gt;Subscribe&lt;/tp-button&gt;\n</tp-code-block>\n<tp-code-block language=\"css\" label=\"workspace.css\">\n.workspace {\n  --tp-radius: 0.75rem;\n  display: grid;\n  gap: var(--tp-space-4);\n}\n\n@media (width &lt;= 40rem) {\n  .workspace { grid-template-columns: 1fr; }\n}\n</tp-code-block>\n<tp-code-block language=\"json\" label=\"package.json\">\n{\n  \"name\": \"@tweakpad/ui\",\n  \"version\": \"0.1.0\",\n  \"peerDependencies\": { \"lit\": \"^3.3.0\" },\n  \"sideEffects\": [\"./dist/register.js\"]\n}\n</tp-code-block>\n<tp-code-block language=\"diff\" label=\"total.diff\">\nexport function total(items) {\n-  let sum = 0;\n-  for (const item of items) sum += item.price;\n-  return sum;\n+  return items.reduce((sum, item) =&gt; sum + item.price, 0);\n }\n</tp-code-block>\n</div>"
+    },
+    {
+      "id": "example: Token theme",
+      "kind": "example",
+      "title": "Token theme",
+      "description": "Syntax colors are --tp-syntax-* token roles; set them on any ancestor to restyle the built-in highlighter.",
+      "code": "<div style=\"--tp-syntax-keyword: light-dark(#6d28d9, #c4b5fd); --tp-syntax-string: light-dark(#047857, #6ee7b7); --tp-syntax-function: light-dark(#1d4ed8, #93c5fd); --tp-syntax-comment: var(--tp-muted-foreground)\">\n<tp-code-block language=\"typescript\" label=\"themed.ts\">\nimport { LitElement, html } from 'lit';\n\n/** Counts presses and announces the total. */\nexport class TpCounter extends LitElement {\n  static properties = { count: { type: Number } };\n  count = 0;\n\n  render() {\n    return html`&lt;button @click=${() =&gt; this.count++}&gt;Pressed ${this.count} times&lt;/button&gt;`;\n  }\n}\n\ncustomElements.define('tp-counter', TpCounter);\n</tp-code-block>\n</div>"
+    },
+    {
+      "id": "example: Shiki adapter",
+      "kind": "example",
+      "title": "Shiki adapter",
+      "description": "createShikiHighlighter adapts a Shiki highlighter you create; its GitHub light and dark themes follow the page color scheme. The block shows plain text until Shiki loads.",
+      "code": "<div id=\"code-block-shiki\">\n<tp-code-block data-shiki language=\"typescript\" label=\"counter.ts\" line-numbers>\nimport { LitElement, html } from 'lit';\n\n/** Counts presses and announces the total. */\nexport class TpCounter extends LitElement {\n  static properties = { count: { type: Number } };\n  count = 0;\n\n  render() {\n    return html`&lt;button @click=${() =&gt; this.count++}&gt;Pressed ${this.count} times&lt;/button&gt;`;\n  }\n}\n\ncustomElements.define('tp-counter', TpCounter);\n</tp-code-block>\n</div>",
+      "script": "import { createShikiHighlighter } from '@tweakpad/ui/code';\n\nlet shiki;\n/** One Shiki highlighter for the page: JavaScript regex engine (no WASM), fixed languages. */\nasync function loadShiki() {\n  shiki ??= (async () => {\n    const [{ createHighlighterCore }, { createJavaScriptRegexEngine }] = await Promise.all([\n      import('shiki/core'),\n      import('shiki/engine/javascript'),\n    ]);\n    const highlighter = await createHighlighterCore({\n      engine: createJavaScriptRegexEngine(),\n      themes: [\n        import('@shikijs/themes/github-light-default'),\n        import('@shikijs/themes/github-dark-default'),\n      ],\n      langs: [\n        import('@shikijs/langs/typescript'),\n        import('@shikijs/langs/html'),\n        import('@shikijs/langs/css'),\n        import('@shikijs/langs/json'),\n        import('@shikijs/langs/bash'),\n      ],\n    });\n    return createShikiHighlighter(highlighter, {\n      themes: { light: 'github-light-default', dark: 'github-dark-default' },\n    });\n  })();\n  return shiki;\n}\n\n/** Gives every `tp-code-block[data-shiki]` inside `root` the Shiki highlighter once it loads. */\nexport function setupCodeBlockExample(root) {\n  let active = true;\n  void loadShiki().then((highlighter) => {\n    if (!active) return;\n    for (const block of root.querySelectorAll('tp-code-block[data-shiki]'))\n      block.highlighter = highlighter;\n  });\n  return () => {\n    active = false;\n  };\n}\n\nsetupCodeBlockExample(document.getElementById('code-block-shiki'));"
+    }
+  ]
+}

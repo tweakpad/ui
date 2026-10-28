@@ -11,8 +11,7 @@ import type {
   SliderThumbAlignment,
 } from '../components/slider/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import { sliderExamples } from './slider.examples.js';
-import documentation from '../../docs/slider.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   value: SliderValue;
@@ -33,17 +32,10 @@ interface Args {
   indeterminateText: string;
   formAssociatedValue: boolean;
 }
-const source = `<script type="module">\n  import '@tweakpad/ui/styles.css';\n  import '@tweakpad/ui/register';\n</script>\n<tp-slider label="Volume" name="volume" default-value="40"\n  minimum="0" maximum="100" step="1" thumb-alignment="edge">\n</tp-slider>`;
 const meta: Meta<Args> = {
   title: 'Components/Slider',
   component: 'tp-slider',
-  parameters: {
-    docs: {
-      examples: sliderExamples,
-      description: { component: documentation },
-      source: { code: source, language: 'html' },
-    },
-  },
+  parameters: { docs: libraryDocs('components/slider') },
   args: {
     value: 40,
     minimum: 0,

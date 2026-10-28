@@ -1,0 +1,392 @@
+---
+title: Tree view
+description: A hierarchy to expand, collapse, select and activate, from nested markup or from records.
+tag: tp-tree-view
+parts: [tp-tree-item]
+---
+
+<Preview
+  title="Tree view"
+  code={`<tp-tree-view id="tree-view-hero" label="Project files" default-expanded='["src", "components"]' default-value='["button.ts"]' style="inline-size:16rem">
+  <tp-tree-item value="src">
+    <tp-icon slot="leading" data-icon="folder"></tp-icon>src
+    <tp-tree-item value="components">
+      <tp-icon slot="leading" data-icon="folder"></tp-icon>components
+      <tp-tree-item value="button.ts"><tp-icon slot="leading" data-icon="file"></tp-icon>button.ts</tp-tree-item>
+      <tp-tree-item value="card.ts"><tp-icon slot="leading" data-icon="file"></tp-icon>card.ts</tp-tree-item>
+      <tp-tree-item value="dialog.ts"><tp-icon slot="leading" data-icon="file"></tp-icon>dialog.ts</tp-tree-item>
+    </tp-tree-item>
+    <tp-tree-item value="index.ts"><tp-icon slot="leading" data-icon="file"></tp-icon>index.ts</tp-tree-item>
+  </tp-tree-item>
+  <tp-tree-item value="docs">
+    <tp-icon slot="leading" data-icon="folder"></tp-icon>docs
+    <tp-tree-item value="getting-started.md"><tp-icon slot="leading" data-icon="file"></tp-icon>getting-started.md</tp-tree-item>
+  </tp-tree-item>
+  <tp-tree-item value="package.json"><tp-icon slot="leading" data-icon="file"></tp-icon>package.json</tp-tree-item>
+</tp-tree-view>`}
+  script={`const icons = {
+  folder: { viewBox: '0 0 24 24', paths: [{ d: 'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z', strokeWidth: 2 }] },
+  file: { viewBox: '0 0 24 24', paths: [
+    { d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z', strokeWidth: 2 },
+    { d: 'M14 2v6h6M8 13h8M8 17h8', strokeWidth: 2 },
+  ] },
+};
+await customElements.whenDefined('tp-icon');
+for (const icon of document.querySelectorAll('#tree-view-hero tp-icon[data-icon]')) {
+  icon.icon = icons[icon.dataset.icon];
+}`}
+/>
+
+## Usage
+
+Nest `tp-tree-item` elements: text forms the label, `slot="leading"` and `slot="trailing"` hold marks and actions, and nested items are the children. `default-expanded` and `default-value` take JSON arrays of item values and apply before the first render, so the tree appears already open without change events. The tree is one tab stop; arrow keys move, Right expands and Left collapses or returns to the parent.
+
+The tab stop starts on the first visible selected item. A virtualized tree scrolls its first window to that item.
+
+Forms: with `name`, each selected identifier is submitted as one entry, in tree order. Reset restores the default selection; `required` is invalid while nothing is selected.
+
+### Multiple selection with checkboxes
+
+`selection-mode="multiple"` with `checkbox-selection` shows a checked indicator in every row. `selection-propagation` cascades a parent's selection to its descendants and derives mixed parents.
+
+Multiple: pressing or Space toggles; Shift extends from the anchor; Control/Command toggles without moving the anchor; Shift+Arrow extends while moving; Shift+Space selects the range; Control+Shift+Home/End selects to an end; Control+A selects every visible enabled item.
+
+<Preview
+  title="Permissions"
+  code={`<tp-tree-view label="Permissions" selection-mode="multiple" checkbox-selection selection-propagation default-expanded='["billing", "projects"]' default-value='["invoices", "create", "archive"]' style="inline-size:18rem">
+  <tp-tree-item value="billing">
+    Billing
+    <tp-tree-item value="invoices">View invoices</tp-tree-item>
+    <tp-tree-item value="payment">Manage payment methods</tp-tree-item>
+  </tp-tree-item>
+  <tp-tree-item value="projects">
+    Projects
+    <tp-tree-item value="create">Create projects</tp-tree-item>
+    <tp-tree-item value="archive">Archive projects</tp-tree-item>
+  </tp-tree-item>
+  <tp-tree-item value="admin" disabled>Workspace admin</tp-tree-item>
+</tp-tree-view>`}
+/>
+
+Disabled items stay focusable but are never selected by user input.
+
+### Activation
+
+Enter or a press fires a cancelable `tp-action` with the item's value, separately from selection. Use it to open a file or navigate; canceling it keeps the press from selecting or expanding.
+
+<Preview
+  title="Opening items"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-tree-view id="tree-view-action" label="Handbook" default-expanded='["engineering"]' style="inline-size:16rem">
+    <tp-tree-item value="engineering">
+      Engineering
+      <tp-tree-item value="On-call rotation">On-call rotation</tp-tree-item>
+      <tp-tree-item value="Code review">Code review</tp-tree-item>
+    </tp-tree-item>
+    <tp-tree-item value="People">People</tp-tree-item>
+  </tp-tree-view>
+  <output id="tree-view-action-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Nothing opened yet</output>
+</div>`}
+  script={`const tree = document.querySelector('#tree-view-action');
+const output = document.querySelector('#tree-view-action-output');
+tree.addEventListener('tp-action', (event) => {
+  if (event.detail.value === 'engineering') return;
+  output.textContent = \`Opened \${event.detail.value}\`;
+});`}
+/>
+
+### Expansion trigger
+
+By default pressing a row toggles it. `expansion-trigger="indicator"` reserves the row press for selection and expands only from the chevron, which suits folders that are also selectable.
+
+<Preview
+  title="Chevron only"
+  code={`<tp-tree-view label="Locations" expansion-trigger="indicator" default-expanded='["europe"]' default-value='["europe"]' style="inline-size:16rem">
+  <tp-tree-item value="europe">
+    Europe
+    <tp-tree-item value="berlin">Berlin</tp-tree-item>
+    <tp-tree-item value="lisbon">Lisbon</tp-tree-item>
+  </tp-tree-item>
+  <tp-tree-item value="north-america">
+    North America
+    <tp-tree-item value="toronto">Toronto</tp-tree-item>
+    <tp-tree-item value="austin">Austin</tp-tree-item>
+  </tp-tree-item>
+</tp-tree-view>`}
+/>
+
+### Records
+
+For large or data-driven trees, set `defaultItems` (or controlled `items`) to records of `{ id, label, children }`. Records mode renders flat rows, which enables `virtualized` and `reorderable`; give a virtualized tree a block size.
+
+The default record shape is `{ id, label, children?, hasChildren?, disabled? }`; any other shape works through `getItemId`, `getItemLabel`, `getItemChildren`, `isItemDisabled` and `itemHasChildren`. Identifiers are strings, unique within the tree. A repeated identifier keeps its first item and raises one `tp-diagnostic` (`tree-view-duplicate:<id>`).
+
+<Preview
+  title="From records, reorderable"
+  code={`<tp-tree-view id="tree-view-records" label="Sprint backlog" reorderable size="sm" style="inline-size:18rem"></tp-tree-view>`}
+  script={`await customElements.whenDefined('tp-tree-view');
+const tree = document.querySelector('#tree-view-records');
+tree.defaultExpanded = ['checkout', 'search'];
+tree.defaultItems = [
+  { id: 'checkout', label: 'Checkout redesign', children: [
+    { id: 'cart', label: 'Persist cart across devices' },
+    { id: 'wallets', label: 'Apple Pay and Google Pay' },
+  ] },
+  { id: 'search', label: 'Search', children: [
+    { id: 'typo', label: 'Typo tolerance' },
+    { id: 'filters', label: 'Saved filters' },
+  ] },
+  { id: 'onboarding', label: 'Onboarding emails' },
+];`}
+/>
+
+Drag a handle, or press Control+Enter (Command+Enter) on an item and move it with the arrow keys. Each move is proposed through a cancelable `tp-items-change`.
+
+- Pointer: drag the handle. Rows move as you drag; moving sideways changes the level by one indentation step per `--tp-tree-view-indent`.
+- Keyboard: on a focused item press Control+Enter (Command+Enter). Up/Down move it, Left/Right change its level, Space or Enter drop, Escape cancels. Each step is announced with the level and parent.
+
+An item can land before, after or inside any item, never inside itself. Every move is proposed through the cancelable `tp-items-change` with `detail.metadata.move = { itemId, fromParentId, fromIndex, toParentId, toIndex }` and the next records in `detail.value`; with `items` controlled, apply them yourself. Parents whose children change are rebuilt with `withItemChildren(record, children)` (default: `{ ...record, children }`); every other record keeps its identity. `moveItem(id, { parentId, index })` proposes a move from code.
+
+A tree you drag yourself can reuse the level rule. `projectDepth(rows, index, requestedDepth, canNest)` from `@tweakpad/ui` takes the visible rows in order as `{ id, depth, parentId }` (the dragged row's descendants removed), the dragged row's index and the depth the pointer asks for. It returns `{ depth, minDepth, maxDepth, parentId, vetoed }`: the depth clamped between the next row's depth and one more than the previous row's, and the parent at that depth. The optional `canNest(parent, source)` decides whether a projected parent accepts the dragged row; the depth is then lowered to the deepest level whose parent accepts it, the top level is always accepted, and `vetoed` is true when no level within the clamp is. `dragDepth(offset, indentation, rtl)` turns an inline pointer offset into depth steps, mirrored for right-to-left.
+
+### Custom rows
+
+In records mode, `renderItem(item, state)` returns each row's content, so the artwork can follow the row's state. Here folders open their icon while expanded and show a child count in the `trailing` slot, built with `html` from `lit`. `canDrop` vetoes moves before they are offered, so files cannot hold other items, and Enter or a press on a row fires `tp-action`.
+
+<Preview
+  title="Rendered rows"
+  code={`<div id="tree-view-render" style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <output id="tree-view-render-status" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Press a file to open it</output>
+</div>`}
+  script={`import { html } from 'lit';
+
+const folder = { viewBox: '0 0 24 24', paths: [{ d: 'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z', strokeWidth: 1.75 }] };
+const folderOpen = { viewBox: '0 0 24 24', paths: [{ d: 'm6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2', strokeWidth: 1.75 }] };
+const file = { viewBox: '0 0 24 24', paths: [{ d: 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4', strokeWidth: 1.75 }] };
+// Default items apply before the tree first renders, so configure it before connecting it.
+const tree = document.createElement('tp-tree-view');
+tree.label = 'Design system';
+tree.size = 'sm';
+tree.reorderable = true;
+tree.style.inlineSize = '18rem';
+const status = document.querySelector('#tree-view-render-status');
+tree.defaultExpanded = ['tokens', 'components'];
+tree.defaultItems = [
+  { id: 'tokens', label: 'tokens', children: [
+    { id: 'color.json', label: 'color.json' },
+    { id: 'spacing.json', label: 'spacing.json' },
+  ] },
+  { id: 'components', label: 'components', children: [
+    { id: 'button.tsx', label: 'button.tsx' },
+    { id: 'dialog.tsx', label: 'dialog.tsx' },
+    { id: 'select.tsx', label: 'select.tsx' },
+  ] },
+  { id: 'changelog.md', label: 'changelog.md' },
+];
+tree.renderItem = (item, state) => html\`<tp-icon slot="leading" .icon=\${state.expandable ? (state.expanded ? folderOpen : folder) : file}></tp-icon>\${item.label}\${
+  item.children ? html\`<tp-badge slot="trailing" variant="secondary">\${item.children.length}</tp-badge>\` : ''
+}\`;
+tree.canDrop = (move) => move.toParentId === null || !/\\.\\w+$/.test(move.toParentId);
+tree.addEventListener('tp-action', (event) => {
+  status.textContent = \`Opened \${event.detail.value}\`;
+});
+document.querySelector('#tree-view-render').prepend(tree);`}
+/>
+
+### Large trees
+
+`virtualized` mounts only the rows near the viewport, so tens of thousands of records stay fast. Keyboard navigation, typeahead and `focusItem()` mount a row before focusing it. Give the tree a block size so it has a viewport to fill.
+
+<Preview
+  title="Virtualized"
+  code={`<tp-tree-view id="tree-view-virtual" label="Log archive" virtualized size="sm" style="inline-size:18rem;block-size:16rem"></tp-tree-view>`}
+  script={`await customElements.whenDefined('tp-tree-view');
+const tree = document.querySelector('#tree-view-virtual');
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+tree.defaultItems = [2024, 2025, 2026].map((year) => ({
+  id: String(year),
+  label: String(year),
+  children: months.map((month, m) => ({
+    id: \`\${year}-\${m + 1}\`,
+    label: month,
+    children: Array.from({ length: 28 }, (_, d) => ({
+      id: \`\${year}-\${m + 1}-\${d + 1}\`,
+      label: \`\${month} \${d + 1} · 24 log files\`,
+      children: Array.from({ length: 24 }, (_, h) => ({
+        id: \`\${year}-\${m + 1}-\${d + 1}-\${h}\`,
+        label: \`\${String(h).padStart(2, '0')}:00.log\`,
+      })),
+    })),
+  })),
+}));
+tree.defaultExpanded = ['2026', '2026-10', '2026-10-14'];`}
+/>
+
+The archive holds about 25,000 records; only a few dozen rows exist in the document at a time.
+
+Give the tree a height (`block-size`, or a flex/grid track); without one it uses the nearest scrolling ancestor. `item-size` is the row estimate in pixels (default: the first measured row, which includes the separation between rows); rows are measured as they mount, so variable heights work. The focused row stays mounted.
+
+### Controlled
+
+To own selection and expansion yourself, set `items`, `value` and `expanded` and write back each accepted proposal from `tp-value-change` and `tp-expanded-change`. The tree then shows exactly your state; the methods still work and go through the same events.
+
+<Preview
+  title="Controlled lanes"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-tree-view id="tree-view-controlled" label="Help center" size="sm" style="inline-size:18rem"></tp-tree-view>
+  <div style="display:flex;align-items:center;gap:var(--tp-space-3)">
+    <output id="tree-view-controlled-status" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Selected: Refund policy</output>
+    <tp-button id="tree-view-controlled-reveal" variant="outline" size="sm">Reveal selection</tp-button>
+  </div>
+</div>`}
+  script={`await customElements.whenDefined('tp-tree-view');
+const tree = document.querySelector('#tree-view-controlled');
+const status = document.querySelector('#tree-view-controlled-status');
+const state = { value: ['refunds'], expanded: [] };
+tree.items = [
+  { id: 'account', label: 'Account', children: [
+    { id: 'password', label: 'Reset your password' },
+    { id: 'two-factor', label: 'Two-factor authentication' },
+  ] },
+  { id: 'billing', label: 'Billing', children: [
+    { id: 'invoices', label: 'Download invoices' },
+    { id: 'policies', label: 'Policies', children: [
+      { id: 'refunds', label: 'Refund policy' },
+      { id: 'cancellation', label: 'Cancellation' },
+    ] },
+  ] },
+];
+const labels = {};
+const index = (items) => items.forEach((item) => { labels[item.id] = item.label; if (item.children) index(item.children); });
+index(tree.items);
+tree.value = state.value;
+tree.expanded = state.expanded;
+tree.addEventListener('tp-value-change', (event) => {
+  state.value = event.detail.value;
+  tree.value = state.value;
+  const [id] = state.value;
+  status.textContent = id ? \`Selected: \${labels[id]}\` : 'Nothing selected';
+});
+tree.addEventListener('tp-expanded-change', (event) => {
+  state.expanded = event.detail.value;
+  tree.expanded = state.expanded;
+});
+document.querySelector('#tree-view-controlled-reveal').addEventListener('click', () => {
+  tree.revealItem(state.value[0] ?? 'refunds', { focus: true });
+});`}
+/>
+
+The selected article starts hidden inside collapsed groups; Reveal selection expands its ancestors through `tp-expanded-change`, which the owner accepts.
+
+### Loading children on demand
+
+A record with `hasChildren: true` shows a chevron before its children exist. On first expansion the tree calls `loadChildren(item, { signal })`, shows a loading row while it waits, and inserts the records it returns. The signal aborts if the item is removed or the tree disconnects first, and a failed load offers a retry.
+
+<Preview
+  title="Lazy folders"
+  code={`<tp-tree-view id="tree-view-lazy" label="Shared drive" size="sm" style="inline-size:18rem"></tp-tree-view>`}
+  script={`await customElements.whenDefined('tp-tree-view');
+const tree = document.querySelector('#tree-view-lazy');
+const folders = {
+  contracts: ['Northwind MSA 2026.pdf', 'Contoso NDA.pdf', 'Fabrikam renewal.pdf'],
+  invoices: ['September.xlsx', 'August.xlsx'],
+};
+tree.defaultItems = [
+  { id: 'contracts', label: 'Contracts', hasChildren: true },
+  { id: 'invoices', label: 'Invoices', hasChildren: true },
+  { id: 'budget', label: 'Budget 2027.xlsx' },
+];
+tree.loadChildren = async (item, { signal }) => {
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  if (signal.aborted) return [];
+  return folders[item.id].map((name) => ({ id: \`\${item.id}/\${name}\`, label: name }));
+};`}
+/>
+
+`reloadChildren(id)` discards loaded children so the next expansion fetches them again.
+
+Mark items with `hasChildren` (records) or `has-children` (markup) and set `loadChildren`:
+
+<Code code={`tree.loadChildren = async (item, { signal }) => {
+  const response = await fetch(\`/api/folders/\${item.id}\`, { signal });
+  return response.json(); // child records; markup trees append elements and return nothing
+};`} language="js" />
+
+A load that returns no children leaves the item expandable but empty.
+
+### Expanding from code
+
+`expandAll()`, `collapseAll()`, `expandItem(id)` and `collapseItem(id)` change expansion through the same `tp-expanded-change` as the keyboard. `revealItem(id, { focus: true })` opens the item's ancestors, scrolls it into view and focuses it.
+
+`expandAll({ load: true })` also loads and expands their descendants, breadth-first. Identifiers of items that do not exist yet are kept and take effect when the items appear, so a default can name items that load lazily.
+
+<Preview
+  title="Expand, collapse and reveal"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-2);justify-content:center">
+    <tp-button id="tree-view-methods-expand" variant="outline" size="sm">Expand all</tp-button>
+    <tp-button id="tree-view-methods-collapse" variant="outline" size="sm">Collapse all</tp-button>
+    <tp-button id="tree-view-methods-reveal" variant="outline" size="sm">Reveal pricing.ts</tp-button>
+  </div>
+  <tp-tree-view id="tree-view-methods" label="Repository" style="inline-size:16rem">
+    <tp-tree-item value="app">
+      app
+      <tp-tree-item value="routes">
+        routes
+        <tp-tree-item value="pricing.ts">pricing.ts</tp-tree-item>
+        <tp-tree-item value="checkout.ts">checkout.ts</tp-tree-item>
+      </tp-tree-item>
+      <tp-tree-item value="main.ts">main.ts</tp-tree-item>
+    </tp-tree-item>
+    <tp-tree-item value="tests">
+      tests
+      <tp-tree-item value="pricing.test.ts">pricing.test.ts</tp-tree-item>
+    </tp-tree-item>
+  </tp-tree-view>
+</div>`}
+  script={`const tree = document.querySelector('#tree-view-methods');
+document.querySelector('#tree-view-methods-expand').addEventListener('click', () => tree.expandAll());
+document.querySelector('#tree-view-methods-collapse').addEventListener('click', () => tree.collapseAll());
+document.querySelector('#tree-view-methods-reveal').addEventListener('click', () => {
+  tree.revealItem('pricing.ts', { focus: true, select: true });
+});`}
+/>
+
+### Size and guides
+
+<Preview
+  title="Small, no guides"
+  code={`<tp-tree-view label="Settings" size="sm" guides="none" default-expanded='["account"]' style="inline-size:14rem">
+  <tp-tree-item value="account">
+    Account
+    <tp-tree-item value="profile">Profile</tp-tree-item>
+    <tp-tree-item value="security">Security</tp-tree-item>
+  </tp-tree-item>
+  <tp-tree-item value="notifications">Notifications</tp-tree-item>
+</tp-tree-view>`}
+/>
+
+### Keyboard
+
+| Key        | Action                                             |
+| ---------- | -------------------------------------------------- |
+| Down / Up  | Next / previous visible item                       |
+| Right      | Expand; on an expanded item, go to its first child |
+| Left       | Collapse; otherwise go to the parent               |
+| Home / End | First / last visible item                          |
+| `*`        | Expand all siblings                                |
+| Enter      | Activate (`tp-action`); selects in single mode     |
+| Space      | Select (single) or toggle (multiple)               |
+| Letters    | Typeahead over visible labels                      |
+
+Right and Left swap in right-to-left documents. Keys typed into editable content inside an item are left alone, and controls placed in an item (a Button in `trailing`, for example) keep their own presses, Enter and Space.
+
+The tree is one tab stop: the last focused item, else the first selected item, else the first enabled item. When the focused item is hidden by a collapse, focus moves to the collapsed ancestor; when it is removed, focus moves to the next visible item, else the previous one.
+
+### Accessibility
+
+The root is a `tree` named by `label` (or `aria-label`), multiselectable in multiple mode. Each item is a `treeitem` with level, position, set size, expanded, selected, checked and busy states. There is one tab stop; arrows move focus. Indent, chevron and checked indicator are hidden from assistive technology. Loading, errors and reorder steps are announced politely. Reorderable items describe their keyboard shortcut.
+
+### Motion
+
+Rapid reversal turns around from the current height; bulk changes (`expandAll`, controlled updates with several items) and very large expansions apply instantly.

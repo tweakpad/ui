@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import buttonDocumentation from '../../docs/button.md?raw';
+import { libraryDocs } from './library-docs.js';
 import { plusIcon } from '../icons/plus.js';
 import type { IconDefinition } from '../icons/types.js';
 
@@ -27,7 +27,7 @@ const meta: Meta<ButtonStoryArgs> = {
   title: 'Components/Button',
   component: 'tp-button',
   parameters: {
-    docs: { description: { component: buttonDocumentation.replace(/^# Button\n/u, '') } },
+    docs: libraryDocs('components/button'),
   },
   args: {
     variant: 'default',
@@ -162,10 +162,15 @@ type Story = StoryObj<ButtonStoryArgs>;
 
 export const Default: Story = {};
 export const IconOnly: Story = {
+  tags: ['!autodocs'],
   args: { size: 'icon', ariaLabel: 'Add', icon: plusIcon },
 };
-export const AsLink: Story = { args: { variant: 'link', href: '#button-link-target' } };
+export const AsLink: Story = {
+  tags: ['!autodocs'],
+  args: { variant: 'link', href: '#button-link-target' },
+};
 export const WithMarks: Story = {
+  tags: ['!autodocs'],
   render: (args) => html`
     <tp-button variant=${args.variant} size=${args.size}>
       <span slot="icon-start" aria-hidden="true">←</span>
@@ -175,6 +180,7 @@ export const WithMarks: Story = {
   `,
 };
 export const FormActions: Story = {
+  tags: ['!autodocs'],
   render: () => html`
     <form
       @submit=${(event: SubmitEvent) => {

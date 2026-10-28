@@ -1,0 +1,189 @@
+---
+title: Cursor
+description: A decorative cursor that trails the pointer with a spring and changes its look inside zones.
+tag: tp-cursor
+parts: [tp-cursor-zone]
+---
+
+<Preview
+  title="Cursor"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);padding:var(--tp-space-6);border:var(--tp-border-width) dashed var(--tp-border);border-radius:var(--tp-radius-xl)">
+  <tp-cursor id="cursor-hero" scope="region"></tp-cursor>
+  <tp-cursor-zone for="cursor-hero" state="view">
+    <template><span style="display:grid;place-items:center;inline-size:4.5rem;block-size:4.5rem;border-radius:var(--tp-radius-full);background:var(--tp-foreground);color:var(--tp-background);font-size:var(--tp-text-xs);font-weight:500">View</span></template>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--tp-space-4)">
+      <figure style="margin:0;display:grid;gap:var(--tp-space-2)">
+        <div style="aspect-ratio:4/3;border-radius:var(--tp-radius-lg);background:linear-gradient(135deg,#e7e5e4,#a8a29e)"></div>
+        <figcaption style="font-size:var(--tp-text-sm)">Harbor house</figcaption>
+      </figure>
+      <figure style="margin:0;display:grid;gap:var(--tp-space-2)">
+        <div style="aspect-ratio:4/3;border-radius:var(--tp-radius-lg);background:linear-gradient(135deg,#d4d4d8,#52525b)"></div>
+        <figcaption style="font-size:var(--tp-text-sm)">Studio north</figcaption>
+      </figure>
+      <figure style="margin:0;display:grid;gap:var(--tp-space-2)">
+        <div style="aspect-ratio:4/3;border-radius:var(--tp-radius-lg);background:linear-gradient(135deg,#a3a3a3,#171717)"></div>
+        <figcaption style="font-size:var(--tp-text-sm)">Gallery annex</figcaption>
+      </figure>
+    </div>
+  </tp-cursor-zone>
+</div>`}
+/>
+
+## Usage
+
+Place one `tp-cursor` anywhere; it occupies no space and draws in the top layer, so dialogs and menus never cover it. With the default `scope="document"` it replaces the pointer on the whole page. Every example here sets `scope="region"`, which limits following to the cursor's parent element (or the element whose id is in `region`), so the rest of the page keeps the native pointer.
+
+The cursor is decorative: its surface is hidden from assistive technology and never a hit target, so focus order and activation are unchanged. Touch and coarse pointers never engage it, and under reduced motion it snaps to the pointer instead of trailing. Use it for portfolios, galleries and landing pages, not for dense application screens.
+
+### Following
+
+The spring is tuned with `stiffness`, `damping` and `mass`. Lower stiffness lags further behind; lower damping overshoots and settles. The frame loop stops once the cursor rests and starts again when the pointer moves.
+
+<Preview
+  title="Spring"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--tp-space-4)">
+  <div style="display:grid;place-items:center;min-block-size:10rem;border:var(--tp-border-width) dashed var(--tp-border);border-radius:var(--tp-radius-xl);color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">
+    <tp-cursor scope="region" stiffness="600" damping="40"></tp-cursor>
+    Tight: stiffness 600
+  </div>
+  <div style="display:grid;place-items:center;min-block-size:10rem;border:var(--tp-border-width) dashed var(--tp-border);border-radius:var(--tp-radius-xl);color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">
+    <tp-cursor scope="region" stiffness="80" damping="10" style="--tp-cursor-size:var(--tp-space-10)"></tp-cursor>
+    Loose: stiffness 80, damping 10
+  </div>
+</div>`}
+/>
+
+### Zones
+
+Wrap content in `tp-cursor-zone` to change the cursor while the pointer is inside it. A zone is layout-neutral (`display: contents`), so wrapping never changes the content's box. `for` addresses one cursor by id; without it, a zone addresses every cursor on the page.
+
+- `state` is published on the cursor as `data-cursor-state` and reported with `tp-cursor-state-change`.
+- `--tp-cursor-size`, `--tp-cursor-color`, `--tp-cursor-blend`, `--tp-cursor-opacity` and `--tp-cursor-radius` set on the zone are adopted while it is active.
+- A `<template>` child replaces the cursor's content, the default ring included, with a label, badge or icon. Keep it non-interactive.
+
+<Preview
+  title="Zones"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--tp-space-4);padding:var(--tp-space-6);border:var(--tp-border-width) dashed var(--tp-border);border-radius:var(--tp-radius-xl)">
+  <tp-cursor id="cursor-zones" scope="region"></tp-cursor>
+  <tp-cursor-zone for="cursor-zones" state="play" style="--tp-cursor-color:white;--tp-cursor-blend:difference">
+    <template><span style="display:grid;place-items:center;inline-size:4rem;block-size:4rem;border-radius:var(--tp-radius-full);background:white;color:black;font-size:var(--tp-text-xs);font-weight:500">Play</span></template>
+    <div style="display:grid;align-content:end;min-block-size:10rem;padding:var(--tp-space-4);border-radius:var(--tp-radius-lg);background:linear-gradient(160deg,#3f3f46,#09090b);color:#fafafa">
+      <strong>Launch film</strong>
+      <span style="font-size:var(--tp-text-sm);opacity:0.7">2 min 14 s</span>
+    </div>
+  </tp-cursor-zone>
+  <tp-cursor-zone for="cursor-zones" state="drag">
+    <template><tp-badge variant="secondary">Drag</tp-badge></template>
+    <div style="display:grid;align-content:end;min-block-size:10rem;padding:var(--tp-space-4);border-radius:var(--tp-radius-lg);background:var(--tp-muted)">
+      <strong>Case studies</strong>
+      <span style="font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">12 projects</span>
+    </div>
+  </tp-cursor-zone>
+</div>`}
+/>
+
+`--tp-cursor-blend: difference` inverts the cursor over what is beneath it, so a white cursor stays visible on light and dark areas alike. Nested zones work; the innermost wins. Zones inside shadow roots work too. While the page or any scroll container scrolls under a still pointer, including one inside a shadow root such as Scroll area, the zones under the pointer are resolved again in every frame, so the state never waits for the browser's own hover update at the end of the scroll; `refresh()` does the same on demand.
+
+### Sticking
+
+`stick="center"` pulls the cursor to the middle of the zone through the same spring. `stick="bounds"` also morphs the default ring into the zone's rectangle. Zones can carry their own `stiffness`, `damping` and `mass` while active.
+
+<Preview
+  title="Sticking"
+  align="stretch"
+  code={`<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:var(--tp-space-4);padding:var(--tp-space-8) var(--tp-space-6);border:var(--tp-border-width) dashed var(--tp-border);border-radius:var(--tp-radius-xl)">
+  <tp-cursor id="cursor-stick" scope="region"></tp-cursor>
+  <tp-cursor-zone for="cursor-stick" stick="bounds"><tp-button variant="ghost">Pricing</tp-button></tp-cursor-zone>
+  <tp-cursor-zone for="cursor-stick" stick="bounds"><tp-button variant="ghost">Customers</tp-button></tp-cursor-zone>
+  <tp-cursor-zone for="cursor-stick" stick="center" damping="40" style="--tp-cursor-size:var(--tp-space-12)"><tp-button>Start free trial</tp-button></tp-cursor-zone>
+</div>`}
+/>
+
+Bounds come from the zone's element children, so a zone that wraps only text sticks to nothing.
+
+### Custom look and several cursors
+
+Slot any content into `tp-cursor` to replace the default ring. Several cursors can share a region with their own physics, such as a stiff dot and a lagging ring, and a zone with `for` reacts on one of them only.
+
+<Preview
+  title="Dot and ring"
+  align="stretch"
+  code={`<div style="display:grid;place-items:center;gap:var(--tp-space-4);min-block-size:12rem;padding:var(--tp-space-6);border:var(--tp-border-width) dashed var(--tp-border);border-radius:var(--tp-radius-xl)">
+  <tp-cursor id="cursor-dot" scope="region" stiffness="900" damping="50">
+    <span style="display:block;inline-size:var(--tp-space-2);block-size:var(--tp-space-2);border-radius:var(--tp-radius-full);background:currentcolor"></span>
+  </tp-cursor>
+  <tp-cursor id="cursor-ring" scope="region" stiffness="120" damping="16" style="--tp-cursor-size:var(--tp-space-10)"></tp-cursor>
+  <tp-cursor-zone for="cursor-ring" state="grow" style="--tp-cursor-size:var(--tp-space-16);--tp-cursor-opacity:0.5">
+    <tp-button variant="outline">Only the ring reacts</tp-button>
+  </tp-cursor-zone>
+</div>`}
+/>
+
+### Native passthrough
+
+Put `native` on a zone around text entry, embedded documents, players or anything else that needs the real pointer. Inside it the native pointer returns and the cursor hides.
+
+Pointer lock is not supported. No events arrive while the pointer is over an embedded document, so the cursor rests at the last point until the pointer leaves or moves. Hiding the host pointer reaches library shadow parts; third-party shadow roots that set their own `cursor` keep it, and the custom cursor draws on top. The cursor is not printed.
+
+<Preview
+  title="Native passthrough"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);padding:var(--tp-space-6);border:var(--tp-border-width) dashed var(--tp-border);border-radius:var(--tp-radius-xl)">
+  <tp-cursor id="cursor-native" scope="region"></tp-cursor>
+  <tp-cursor-zone for="cursor-native" native>
+    <tp-field label="Message" description="The native text cursor returns over the field.">
+      <tp-text-area rows="3" placeholder="Tell us about your project"></tp-text-area>
+    </tp-field>
+  </tp-cursor-zone>
+  <tp-cursor-zone for="cursor-native" stick="bounds"><tp-button style="justify-self:start">Send inquiry</tp-button></tp-cursor-zone>
+</div>`}
+/>
+
+### Programmatic state
+
+`setState()` sets a state that persists until it is cleared with `null` or a zone takes over. Style each state from CSS through the `data-cursor-state` marker on the host.
+
+<Preview
+  title="Programmatic state"
+  align="stretch"
+  code={`<div id="cursor-state" style="display:grid;justify-items:center;gap:var(--tp-space-4);padding:var(--tp-space-8) var(--tp-space-6);border:var(--tp-border-width) dashed var(--tp-border);border-radius:var(--tp-radius-xl)">
+  <style>
+    #cursor-state tp-cursor[data-cursor-state="loading"] { --tp-cursor-size: var(--tp-space-12); --tp-cursor-opacity: 0.4; }
+    #cursor-state tp-cursor[data-cursor-state="blocked"] { --tp-cursor-color: var(--tp-destructive); --tp-cursor-radius: var(--tp-radius-sm); }
+  </style>
+  <tp-cursor scope="region"></tp-cursor>
+  <tp-toggle-group label="Cursor state" variant="outline">
+    <tp-toggle value="loading">Loading</tp-toggle>
+    <tp-toggle value="blocked">Blocked</tp-toggle>
+  </tp-toggle-group>
+</div>`}
+  script={`const root = document.getElementById('cursor-state');
+const cursor = root.querySelector('tp-cursor');
+root.querySelector('tp-toggle-group').addEventListener('tp-value-change', (event) => {
+  cursor.setState(event.detail.value[0] ?? null);
+});`}
+/>
+
+`tp-cursor-state-change` fires before every change with its `reason`, `hover` or `programmatic`, and can be canceled to keep the current state.
+
+### Reduced motion
+
+Under `prefers-reduced-motion`, or with `motion-policy="reduce"`, the cursor stays but follows the pointer instantly and zone transitions are immediate. `hide-native="false"` keeps the native pointer under the cursor, for an overlay look.
+
+<Preview
+  title="Reduced motion"
+  align="stretch"
+  code={`<div style="display:grid;place-items:center;min-block-size:10rem;padding:var(--tp-space-6);border:var(--tp-border-width) dashed var(--tp-border);border-radius:var(--tp-radius-xl)">
+  <tp-cursor id="cursor-reduced" scope="region" motion-policy="reduce" hide-native="false"></tp-cursor>
+  <tp-cursor-zone for="cursor-reduced" style="--tp-cursor-size:var(--tp-space-12)">
+    <tp-button variant="outline">No lag, no transitions</tp-button>
+  </tp-cursor-zone>
+</div>`}
+/>
+
+### External drivers
+
+The state change is a non-blocking state role named `state` on the surface. A listener for `tp-motion-request` can claim it with `respondWith` to morph the content with an animation library; the default presentation transitions size, radius, border color, opacity and scale. The per-frame follow is pointer-coupled positioning and is never offered to drivers.

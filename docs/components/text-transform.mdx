@@ -1,0 +1,208 @@
+---
+title: Text transform
+description: One value presented as text, with changed case, a readable label, a localized number or a shortened line.
+tag: tp-text-transform
+---
+
+<Preview
+  title="Text transform"
+  align="stretch"
+  code={`<dl style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--tp-space-3) var(--tp-space-6);inline-size:100%;max-inline-size:24rem;margin:0 auto;font-size:var(--tp-text-sm)">
+  <dt style="color:var(--tp-muted-foreground)">Monthly revenue</dt>
+  <dd style="margin:0;text-align:end"><tp-text-transform preset="currency" currency="EUR" value="48250"></tp-text-transform></dd>
+  <dt style="color:var(--tp-muted-foreground)">Conversion</dt>
+  <dd style="margin:0;text-align:end"><tp-text-transform preset="percent" decimals="1" value="0.0384"></tp-text-transform></dd>
+  <dt style="color:var(--tp-muted-foreground)">Storage used</dt>
+  <dd style="margin:0;text-align:end"><tp-text-transform preset="bytes" value="2516582400"></tp-text-transform></dd>
+  <dt style="color:var(--tp-muted-foreground)">Average session</dt>
+  <dd style="margin:0;text-align:end"><tp-text-transform preset="duration" value="252"></tp-text-transform></dd>
+  <dt style="color:var(--tp-muted-foreground)">Latest export</dt>
+  <dd style="margin:0;min-inline-size:0;max-inline-size:12rem;text-align:end"><tp-text-transform truncate="middle">revenue-report-2026-q3-final-approved.csv</tp-text-transform></dd>
+</dl>`}
+/>
+
+## Usage
+
+Set `value` to a number, a bigint or text, or leave it unset and write the input as the element's content, so server-rendered text upgrades in place. `preset` names the transform; the default, `text`, presents the input unchanged. The element paints no surface and inherits font and color, so it fits in table cells, list rows and labels. It paints no surface, inherits font and color from its context, and is isolated for bidirectional text like `<bdi>`, so a right-to-left value never reorders with the text around it.
+
+### Case and identifiers
+
+Case presets change how words are capitalized and follow the locale of the closest `lang`. Identifier presets split names at spaces, `-`, `_`, `.`, case changes and acronyms, so a property key such as `billingEmail` can become the label "Billing email". Case changes follow the locale: `uppercase` maps `istanbul` to `İSTANBUL` under `lang="tr"`. `capitalize` and `sentence` change only the first character of a word and leave the rest as written.
+
+<Preview
+  title="Case and identifiers"
+  code={`<dl style="display:grid;grid-template-columns:auto auto;gap:var(--tp-space-2) var(--tp-space-6);margin:0;font-size:var(--tp-text-sm)">
+  <dt style="color:var(--tp-muted-foreground)">capitalize</dt><dd style="margin:0"><tp-text-transform preset="capitalize">quarterly planning review</tp-text-transform></dd>
+  <dt style="color:var(--tp-muted-foreground)">sentence</dt><dd style="margin:0"><tp-text-transform preset="sentence">invoices are sent on the first of the month</tp-text-transform></dd>
+  <dt style="color:var(--tp-muted-foreground)">uppercase</dt><dd style="margin:0"><tp-text-transform preset="uppercase">eu-west-1</tp-text-transform></dd>
+  <dt style="color:var(--tp-muted-foreground)">humanize</dt><dd style="margin:0"><tp-text-transform preset="humanize">billingEmail</tp-text-transform></dd>
+  <dt style="color:var(--tp-muted-foreground)">kebab</dt><dd style="margin:0"><tp-text-transform preset="kebab">Billing Email</tp-text-transform></dd>
+  <dt style="color:var(--tp-muted-foreground)">constant</dt><dd style="margin:0"><tp-text-transform preset="constant">billingEmail</tp-text-transform></dd>
+</dl>`}
+/>
+
+`capitalize` and `sentence` change only the first letter of a word and leave the rest as written, so acronyms survive. `camel`, `pascal` and `snake` complete the identifier presets.
+
+### Numbers, currency and units
+
+Numeric presets format through `Intl.NumberFormat` with tabular figures. `currency` takes an ISO 4217 code for the `currency` preset, `unit` a unit identifier such as `kilometer` or `megabyte-per-second`, and `decimals` fixes the fraction digits. `percent` reads a ratio, so `0.82` is 82%. Dates and times belong to Time.
+
+<Preview
+  title="Plans"
+  align="stretch"
+  code={`<tp-table label="Plan usage" style="max-inline-size:40rem;margin-inline:auto;inline-size:100%">
+  <tp-table-header>
+    <tp-table-row>
+      <tp-table-head>Plan</tp-table-head>
+      <tp-table-head style="text-align:end">Price</tp-table-head>
+      <tp-table-head style="text-align:end">Seats used</tp-table-head>
+      <tp-table-head style="text-align:end">Bandwidth</tp-table-head>
+      <tp-table-head style="text-align:end">API calls</tp-table-head>
+    </tp-table-row>
+  </tp-table-header>
+  <tp-table-body>
+    <tp-table-row>
+      <tp-table-head scope="row">Starter</tp-table-head>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="currency" currency="USD" value="19"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="percent" value="0.6"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="unit" unit="megabyte-per-second" value="50"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="compact" value="48300"></tp-text-transform></tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">Team</tp-table-head>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="currency" currency="USD" value="79"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="percent" decimals="1" value="0.875"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="unit" unit="megabyte-per-second" value="250"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="compact" value="1240000"></tp-text-transform></tp-table-cell>
+    </tp-table-row>
+  </tp-table-body>
+</tp-table>`}
+/>
+
+Abbreviated forms are spelled out for assistive technology: "1.2M" is read as "1.2 million" and "50 MB/s" as "50 megabytes per second". Each numeric value renders as a `data` element carrying the raw number. Grouped text such as `1,234` is not read as a number; it stays as written and the element sets `invalid`. Decimal text is formatted exactly, so `12345678901234567890.25` keeps every digit. `bytes` and `duration` also reject negative values.
+
+### Bytes and durations
+
+`bytes` formats a byte count with binary units (1 KB = 1024 B). `duration` reads seconds and shows them as a clock, read aloud as "1 hour, 2 minutes, 5 seconds". Both reject negative values.
+
+<Preview
+  title="Uploads"
+  align="stretch"
+  code={`<tp-list aria-label="Uploads" style="max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <tp-list-item variant="outline">
+    Onboarding walkthrough.mp4
+    <span slot="actions" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"><tp-text-transform preset="duration" value="3725"></tp-text-transform> · <tp-text-transform preset="bytes" value="734003200"></tp-text-transform></span>
+  </tp-list-item>
+  <tp-list-item variant="outline">
+    Customer interview.m4a
+    <span slot="actions" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"><tp-text-transform preset="duration" value="1418"></tp-text-transform> · <tp-text-transform preset="bytes" value="22544384"></tp-text-transform></span>
+  </tp-list-item>
+</tp-list>`}
+/>
+
+### Locales
+
+Without `locale`, the closest `lang` decides separators, digits and currency placement, and a change to `lang` updates the text in place. Set `locale` to fix one value to a language regardless of the page. A `locale` that is not a valid language tag emits a `tp-diagnostic` and the browser's default locale applies.
+
+<Preview
+  title="Locales"
+  code={`<div style="display:grid;gap:var(--tp-space-2);font-size:var(--tp-text-sm)">
+  <span lang="en-US">en-US · <tp-text-transform preset="currency" currency="EUR" value="1234.5"></tp-text-transform> · <tp-text-transform preset="number" value="9876543.21"></tp-text-transform></span>
+  <span lang="de-DE">de-DE · <tp-text-transform preset="currency" currency="EUR" value="1234.5"></tp-text-transform> · <tp-text-transform preset="number" value="9876543.21"></tp-text-transform></span>
+  <span lang="fr-FR">fr-FR · <tp-text-transform preset="currency" currency="EUR" value="1234.5"></tp-text-transform> · <tp-text-transform preset="number" value="9876543.21"></tp-text-transform></span>
+  <span>ja-JP · <tp-text-transform locale="ja-JP" preset="currency" currency="JPY" value="1234500"></tp-text-transform></span>
+</div>`}
+/>
+
+### Truncation
+
+`truncate` keeps the text on one line that fits the element's width, placing the omission (`…`) at the `end`, the `middle` or the `start`. Use `middle` for file names whose extension matters and `start` for paths whose last segment matters. `truncate-by="words"` removes whole words instead of characters. Drag the handle to see each value refit. Start and end are logical: in right-to-left text the start is on the right. The text refits when the container resizes, fonts load, or the text, locale or truncation settings change.
+
+<Preview
+  title="Truncation"
+  align="stretch"
+  code={`<tp-resizable-panel-group style="block-size:11rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-resizable-panel default-size="40%" min-size="15%">
+    <div style="display:grid;gap:var(--tp-space-3);padding:var(--tp-space-4);font-size:var(--tp-text-sm)">
+      <tp-text-transform truncate="end">Migrate billing to usage-based pricing before the October release</tp-text-transform>
+      <tp-text-transform truncate="end" truncate-by="words">Migrate billing to usage-based pricing before the October release</tp-text-transform>
+      <tp-text-transform truncate="middle">design-review-2026-10-14-final-screenshots.zip</tp-text-transform>
+      <tp-text-transform truncate="start">/workspace/marketing/campaigns/autumn-launch/brief.pdf</tp-text-transform>
+    </div>
+  </tp-resizable-panel>
+  <tp-resizable-handle label="Resize the list" with-handle></tp-resizable-handle>
+  <tp-resizable-panel min-size="20%"></tp-resizable-panel>
+</tp-resizable-panel-group>`}
+/>
+
+While shortened, the value can be focused and shows the full text in a tooltip; `tooltip="false"` removes the tooltip and the tab stop. Assistive technology always hears the complete text once. Inside a flex or grid track the element can shrink below its full text without changing height. The tooltip repeats the full text visually only, so it is not announced twice. Updates are never announced through a live region.
+
+### Length limits
+
+`max-length` caps the characters or words kept. On its own it cuts at the end and the text still wraps; with `truncate`, the cap applies on top of the width and the omission goes where `truncate` places it.
+
+<Preview
+  title="Length limits"
+  code={`<div style="display:grid;gap:var(--tp-space-2);font-size:var(--tp-text-sm)">
+  <tp-text-transform max-length="32">Thanks for the quick turnaround on the pricing page copy, it reads much better now.</tp-text-transform>
+  <tp-text-transform max-length="6" truncate-by="words">Thanks for the quick turnaround on the pricing page copy, it reads much better now.</tp-text-transform>
+  <tp-text-transform max-length="24" truncate="middle">design-review-2026-10-14-final-screenshots.zip</tp-text-transform>
+</div>`}
+/>
+
+### Formatters
+
+The `formatter` property replaces the preset for one element. It receives a context with the input, the locale and `apply()`, which runs any preset, and returns text, or `{ text, accessibleText }` when assistive technology should hear something else. Its output is always text, never markup. A formatter that throws or returns something else emits one `tp-diagnostic` and the preset presents instead.
+
+<Preview
+  title="Formatter"
+  code={`<div id="text-transform-formatter" style="display:grid;gap:var(--tp-space-2);font-size:var(--tp-text-sm)">
+  <tp-text-transform data-format="seats" value="0.18"></tp-text-transform>
+  <tp-text-transform data-format="order" value="482"></tp-text-transform>
+</div>`}
+  script={`const formatters = {
+  seats: (context) => \`\${context.apply('percent')} of seats left\`,
+  order: ({ value }) => ({ text: \`#ORD-\${String(value).padStart(6, '0')}\`, accessibleText: \`Order \${value}\` }),
+};
+await customElements.whenDefined('tp-text-transform');
+for (const value of document.querySelectorAll('#text-transform-formatter tp-text-transform')) {
+  value.formatter = formatters[value.dataset.format];
+}`}
+/>
+
+For options beyond the attributes, assign `Intl.NumberFormatOptions` to the `format` property, or `{ style, guide }` for `duration`. Options resolve in this order, each overriding the previous: the preset's defaults, then `currency`, `unit` and `decimals`, then `format`. A `currency` preset without a currency, or a `unit` preset without a unit, formats a plain number. Options that `Intl` rejects fall back to the preset's defaults.
+
+### Named presets
+
+`defineTextPreset(name, definition)` from `@tweakpad/ui` names a format once for the whole page, either a built-in preset with options or a formatter. Elements then use it like any preset, and every element with that name updates when it is defined or replaced. Built-in names are reserved.
+
+<Preview
+  title="Named presets"
+  code={`<div style="display:grid;gap:var(--tp-space-2);font-size:var(--tp-text-sm)">
+  <span>Team plan <tp-text-transform preset="plan-price" value="480"></tp-text-transform> per year</span>
+  <span>Business plan <tp-text-transform preset="plan-price" value="1200"></tp-text-transform> per year</span>
+  <span>Assigned to <tp-text-transform preset="desk" value="14"></tp-text-transform></span>
+</div>`}
+  script={`import { defineTextPreset } from '@tweakpad/ui';
+
+defineTextPreset('plan-price', { preset: 'currency', format: { currency: 'EUR', maximumFractionDigits: 0 } });
+defineTextPreset('desk', ({ value }) => ({
+  text: \`D-\${String(value).padStart(3, '0')}\`,
+  accessibleText: \`Desk \${value}\`,
+}));`}
+/>
+
+An element that names a preset before it exists shows its input as text until the definition arrives. The same goes for input a numeric preset cannot read: it stays as written, and the element exposes `data-invalid` for styling.
+
+<Preview
+  title="Unreadable input"
+  code={`<p style="margin:0;font-size:var(--tp-text-sm)">Launch price <tp-text-transform preset="currency" currency="USD">to be announced</tp-text-transform></p>`}
+/>
+
+### Functions
+
+| Export                                      | Behavior                                                                                                    |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `defineTextPreset(name, definition)`        | Defines a page-wide preset (a formatter or `{ preset, format }`); returns a remove function.                |
+| `transformText(input, options)`             | The same transform outside the DOM; returns `{ text, accessibleText, machineValue, invalid, diagnostics }`. |
+| `TEXT_PRESETS`, `isBuiltInTextPreset(name)` | The built-in preset names.                                                                                  |

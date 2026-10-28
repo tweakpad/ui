@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/media-player.md?raw';
+import { libraryDocs } from './library-docs.js';
 import {
   sampleCaptionsEn,
   sampleCaptionsEs,
@@ -13,7 +13,6 @@ import {
   audioLayoutExample,
   headlessExample,
   liveExample,
-  mediaPlayerDemoSource,
   tracksExample,
 } from './media-player.examples.js';
 
@@ -39,12 +38,7 @@ interface Args {
 const meta = {
   title: 'Components/Media player',
   component: 'tp-media-player',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      source: { code: mediaPlayerDemoSource() },
-    },
-  },
+  parameters: { docs: libraryDocs('components/media-player') },
   args: {
     contentTitle: 'Sample clip',
     streamType: 'auto',
@@ -207,16 +201,28 @@ const exampleStory = (example: {
   parameters: {
     controls: { disable: true },
     docs: {
-      description: { story: example.description ?? '' },
       source: { code: example.code },
     },
   },
 });
 
-export const AudioLayout: Story = { name: 'Audio layout', ...exampleStory(audioLayoutExample) };
+export const AudioLayout: Story = {
+  tags: ['!autodocs'],
+  name: 'Audio layout',
+  ...exampleStory(audioLayoutExample),
+};
 export const Headless: Story = {
+  tags: ['!autodocs'],
   name: 'Headless composition',
   ...exampleStory(headlessExample),
 };
-export const LiveDvr: Story = { name: 'Live with DVR (simulated)', ...exampleStory(liveExample) };
-export const TracksAdapter: Story = { name: 'Tracks adapter', ...exampleStory(tracksExample) };
+export const LiveDvr: Story = {
+  tags: ['!autodocs'],
+  name: 'Live with DVR (simulated)',
+  ...exampleStory(liveExample),
+};
+export const TracksAdapter: Story = {
+  tags: ['!autodocs'],
+  name: 'Tracks adapter',
+  ...exampleStory(tracksExample),
+};

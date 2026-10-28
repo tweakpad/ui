@@ -1,0 +1,169 @@
+---
+title: Field
+description: A label, description, error and validation state for one form value, wired to the control inside it.
+tag: tp-field
+---
+
+<Preview
+  title="Field"
+  align="stretch"
+  code={`<tp-field label="Work email" description="We send invoices and security alerts here." style="max-inline-size:22rem">
+  <tp-input name="email" type="email" placeholder="maya@acme.com" required></tp-input>
+</tp-field>`}
+/>
+
+## Usage
+
+A Field owns everything around one value: the visible name, help text, errors and the dirty, touched and invalid state. Put one control inside it, such as an Input, Text area, Select, Checkbox or Switch, and the Field labels it and connects descriptions and errors for assistive technology.
+
+### Validation
+
+Native constraints on the control (`required`, `type`, `minlength`, `pattern`) validate through the Field. `validation-mode` decides when: `on-submit` (the default without a Form), `on-blur` or `on-change`. Type an invalid address and leave the input to see the error.
+
+<Preview
+  title="Validate on blur"
+  align="stretch"
+  code={`<tp-field label="Billing email" validation-mode="on-blur" style="max-inline-size:22rem">
+  <tp-input name="billing-email" type="email" required default-value="finance@acme"></tp-input>
+</tp-field>`}
+/>
+
+For server results or your own checks, set `error` with `invalid`. A `validator` property receives the value and every named value in the same form, and may return a promise.
+
+Duplicate names preserve ordered values, including nested list values; unnamed Fields are omitted. Explicit/server errors, custom validation and native constraints remain distinct lanes.
+
+Submission touches fields and prevents synchronous invalid submission. Async validation does not retroactively cancel native submission; cancel the submit event explicitly when awaiting async outcomes is required. Failed on-submit validation revalidates later edits.
+
+<Preview
+  title="Custom validator"
+  align="stretch"
+  code={`<tp-field id="field-demo-slug" label="Workspace URL" description="Lowercase letters, numbers and dashes." validation-mode="on-change" style="max-inline-size:22rem">
+  <tp-input name="slug" default-value="Acme Design"></tp-input>
+</tp-field>`}
+  script={`await Promise.all(['tp-field', 'tp-input'].map((tag) => customElements.whenDefined(tag)));
+const field = document.querySelector('#field-demo-slug');
+field.validator = (value) =>
+  /^[a-z0-9-]+$/.test(value) ? null : 'Use only lowercase letters, numbers and dashes.';
+await field.updateComplete;
+await field.querySelector('tp-input').updateComplete;
+field.validate();`}
+/>
+
+### Orientation
+
+`orientation="horizontal"` puts the label beside the control. Compact binary controls such as Switch and Checkbox move to the end of the row with the label and description stacked beside them, which is the usual settings layout.
+
+<Preview
+  title="Horizontal"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-6);max-inline-size:28rem">
+  <tp-field label="Marketing emails" description="Product news and tips, about once a month." orientation="horizontal">
+    <tp-switch name="marketing"></tp-switch>
+  </tp-field>
+  <tp-field label="Two-factor authentication" description="Require a code from your authenticator app at sign-in." orientation="horizontal">
+    <tp-switch name="mfa" default-checked></tp-switch>
+  </tp-field>
+</div>`}
+/>
+
+`orientation="responsive"` switches between the stacked and horizontal layouts based on the Field's own container width. Only responsive orientation establishes size containment and fills its available container.
+
+### Rich content
+
+The `label`, `description` and `error` slots take precedence over the attributes of the same name. Use them for a link or emphasis the plain-text attributes can't carry.
+
+<Preview
+  title="Slots"
+  align="stretch"
+  code={`<tp-field style="max-inline-size:22rem">
+  <span slot="label">API key <span style="color:var(--tp-muted-foreground);font-weight:normal">(optional)</span></span>
+  <tp-input name="api-key" placeholder="sk_live_…"></tp-input>
+  <span slot="description">Find it in <a href="#rich-content" style="color:inherit">Developer settings</a>.</span>
+</tp-field>`}
+/>
+
+### Groups of fields
+
+A Field renders a native `fieldset`. Give it a `legend` and put peer Fields in its `group` slot, here inside one wrapper that sets their spacing, to caption a section of a form, such as an address. `legend-scale="field"` sizes the caption like a field label instead of a section heading. To join the editors of one value into a single row, use Field group instead.
+
+<Preview
+  title="Legend and group"
+  align="stretch"
+  code={`<tp-field legend="Shipping address" style="max-inline-size:24rem">
+  <div slot="group" style="display:grid;gap:var(--tp-space-4)">
+    <tp-field label="Street address">
+      <tp-input name="street" autocomplete="street-address" default-value="221 Market Street"></tp-input>
+    </tp-field>
+    <tp-field label="City">
+      <tp-input name="city" autocomplete="address-level2" default-value="San Francisco"></tp-input>
+    </tp-field>
+    <tp-field label="Postal code">
+      <tp-input name="postal-code" autocomplete="postal-code" default-value="94105"></tp-input>
+    </tp-field>
+  </div>
+</tp-field>`}
+/>
+
+### Disabled
+
+`disabled` on the Field disables its control and dims the label and description together, so the whole row reads as unavailable.
+
+<Preview
+  title="Disabled"
+  align="stretch"
+  code={`<tp-field label="Plan" description="Contact your admin to change plans." disabled style="max-inline-size:22rem">
+  <tp-input name="plan" default-value="Business"></tp-input>
+</tp-field>`}
+/>
+
+### Custom controls
+
+A custom element joins a Field when it carries `data-field-control`. A `TpFormElement` subclass receives the Field context (disabled, name, invalid, state markers and the autofill opt-out) through `setFieldContext()`, and the Field's label, description and error through `setFieldAssociation()`. A Label's text arrives the same way.
+
+After each update the element writes `aria-label`, `aria-describedby`, `aria-errormessage` and `aria-invalid` on the element that `associationTarget()` returns. It keeps the description and error text as hidden nodes beside that element and restores the values it replaced once the association changes or the element disconnects.
+
+A control whose labelled element it cannot write directly overrides `applyFieldAssociation(attributes)`. It receives a `FieldAssociationAttributes` record with the four values, each a string or `null`: the Field label (else the host's `aria-label`), the description and error node ids, the error node id, and `'true'` while invalid. The hook runs after every update with the current values, also when none of them changed, so an override must be idempotent: applying the same record again must leave the element as it was. Returning `true` means the control applied them itself: the element then writes nothing to `associationTarget()`, and the description and error text stay in the control's shadow root even when `associationTarget()` returns `null`. The hook is not called on disconnect, and a control that rebuilds its labelled element applies the last values again.
+
+The description and error text sit in the node that the protected `associationContainer()` returns, which is the render root by default; a control whose labelled element lives inside one part of its shadow root can return that part instead, as long as it stays in the same tree.
+
+<Code code={`import { TpFormElement, type FieldAssociationAttributes } from '@tweakpad/ui';
+import { html } from 'lit';
+
+class SketchPad extends TpFormElement {
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.setAttribute('data-field-control', '');
+  }
+
+  protected override render() {
+    return html\`<div class="surface" role="application" tabindex="0"></div>\`;
+  }
+
+  protected override focusTarget(): HTMLElement | null {
+    return this.renderRoot.querySelector<HTMLElement>('.surface');
+  }
+
+  protected override associationTarget(): HTMLElement | null {
+    return null;
+  }
+
+  protected override applyFieldAssociation(attributes: FieldAssociationAttributes): boolean {
+    const surface = this.focusTarget();
+    if (!surface) return false;
+    for (const [name, value] of Object.entries(attributes)) {
+      if (value === null) surface.removeAttribute(name);
+      else surface.setAttribute(name, value);
+    }
+    if (attributes['aria-label'] === null) surface.setAttribute('aria-label', 'Sketch');
+    return true;
+  }
+
+  protected resetFormValue(): void {
+    this.value = '';
+  }
+}
+customElements.define('sketch-pad', SketchPad);`} language="ts" />
+
+<Code code={`<tp-field label="Trail map" description="Draw the route you plan to take">
+  <sketch-pad name="route"></sketch-pad>
+</tp-field>`} language="html" />

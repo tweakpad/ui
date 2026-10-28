@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import iconDocumentation from '../../docs/icon.md?raw';
+import { libraryDocs } from './library-docs.js';
 import { chevronRightIcon } from '../icons/chevron-right.js';
 import { plusIcon } from '../icons/plus.js';
 import type { IconDefinition } from '../icons/types.js';
@@ -14,9 +14,7 @@ interface IconStoryArgs {
 const meta: Meta<IconStoryArgs> = {
   title: 'Components/Icon',
   component: 'tp-icon',
-  parameters: {
-    docs: { description: { component: iconDocumentation.replace(/^# Icon\n/u, '') } },
-  },
+  parameters: { docs: libraryDocs('components/icon') },
   args: { icon: plusIcon, label: 'Add', size: '' },
   argTypes: {
     icon: {
@@ -45,4 +43,7 @@ export default meta;
 type Story = StoryObj<IconStoryArgs>;
 
 export const Default: Story = {};
-export const Decorative: Story = { args: { label: '', icon: chevronRightIcon } };
+export const Decorative: Story = {
+  tags: ['!autodocs'],
+  args: { label: '', icon: chevronRightIcon },
+};

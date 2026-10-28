@@ -1,0 +1,121 @@
+{
+  "id": "components/time",
+  "tag": "tp-time",
+  "sources": {
+    "story": "src/stories/time.stories.ts",
+    "markdown": "docs/time.md",
+    "examples": [
+      "src/stories/time.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "Time renders a native `<time datetime>` for one date, time or duration and presents it as relative (\"5 minutes ago\", \"in 3 days\"), calendar (\"Yesterday at 16:20\"), absolute or duration text. Relative text refreshes on a shared schedule, and a description tooltip shows the full date and time.\n\n```html\n<tp-time datetime=\"2026-10-05T14:30:00Z\"></tp-time>\n```\n\nInput is resolved best-effort and keeps its precision. A date-only value stays on its calendar day in every time zone; it never becomes midnight UTC. The `<time>` element always carries a valid machine-readable `datetime` at that precision. Time does not store values or synchronize clocks."
+    },
+    {
+      "id": "md: Input",
+      "kind": "md",
+      "heading": "## Input",
+      "text": "`datetime` accepts a `Date`, an epoch number, text, or a Temporal-like object with `epochMilliseconds` or an ISO `toString()`. When `datetime` is unset, the element's text content is read, so server-rendered text such as `<tp-time>2026-10-05T14:30Z</tp-time>` upgrades in place.\n\nResolution order:\n\n1. `Date` and objects with `epochMilliseconds`.\n2. Numbers, and text of 9–13 digits optionally prefixed with `@`: epoch seconds below `100000000000`, milliseconds otherwise.\n3. Time-element microsyntaxes: `2026` (year), `2026-10` (month), `2026-10-05` (date), `--10-05` or `10-05` (yearless), `2026-W40` (week), `14:30[:05[.123]]` (time), `2026-10-05T14:30` or with a space (local date-time), and the same with `Z` or `±HH:MM` (instant).\n4. Durations: `PT1H30M`, `P1DT2H`, `P1Y2M`, or `1h 30m`, `3w 2d`.\n5. Internet message dates: `Mon, 05 Oct 2026 14:30:00 GMT`.\n6. The browser's best-effort parser, marked loose. Set `strict` to reject it.\n\nA local date-time without an offset is a wall-clock value in the resolved time zone. Unresolvable input keeps the authored content, sets `invalid`/`data-invalid`, omits `datetime`, and emits one `tp-diagnostic` per distinct input."
+    },
+    {
+      "id": "md: Presentation",
+      "kind": "md",
+      "heading": "## Presentation",
+      "text": "| `mode`           | Presentation                                                                                                          |\n| ---------------- | --------------------------------------------------------------------------------------------------------------------- |\n| `auto` (default) | Relative while closer than `threshold` (default `P30D`); absolute otherwise.                                          |\n| `relative`       | Relative at every distance.                                                                                           |\n| `calendar`       | `messages` phrases for today, yesterday, tomorrow and six days either way; absolute otherwise.                        |\n| `absolute`       | Formatted date and time.                                                                                              |\n| `duration`       | A duration value, or the elapsed distance between an instant and now as the two largest units (\"2 hours, 5 minutes\"). |\n\nRelative text uses `Intl.RelativeTimeFormat` with one unit. Boundaries are 60 seconds, 60 minutes, 24 hours, 7 days, 30 days and 365 days. `rounding=\"floor\"` (default) shows \"1 hour ago\" until two hours have passed; `round` rounds to the nearest count and promotes to the next unit at a boundary. Distances below `now-threshold` (default `PT10S`) or below one `precision` unit read \"now\". With `numeric=\"auto\"` (default) the locale may say \"yesterday\" or \"last week\".\n\nDates (`2026-10-05`) compare calendar days in the time zone: \"today\", \"in 3 days\", \"last week\". Times, months, years, yearless dates and weeks are always absolute at their own precision.\n\nAbsolute text resolves in this order: `formatter`, then `pattern`, then `format`, then `preset`.\n\n| `preset`             | en-US example                      |\n| -------------------- | ---------------------------------- |\n| `time`               | 2:30 PM                            |\n| `time-seconds`       | 2:30:00 PM                         |\n| `date`               | 10/5/26                            |\n| `date-medium`        | Oct 5, 2026                        |\n| `date-long`          | October 5, 2026                    |\n| `datetime` (default) | Oct 5, 2026, 2:30 PM               |\n| `datetime-long`      | October 5, 2026 at 2:30 PM         |\n| `full`               | Monday, October 5, 2026 at 2:30 PM |\n| `iso`                | the machine value                  |\n\nPresets drop fields finer than the value: `datetime` on a date-only value shows only the date.\n\n`pattern` uses Unicode date-field symbols, localized through `Intl`: `y`, `yy`, `yyyy`; `M`, `MM`, `MMM`, `MMMM`, `MMMMM` (`L` is equivalent); `d`, `dd`; `E`–`EEE`, `EEEE`, `EEEEE`; `a`; `h`, `hh`, `H`, `HH`, `K`, `k`; `m`, `mm`; `s`, `ss`; `S`–`SSS`; `z`, `zzzz`; `X`–`XXX`, `x`–`xxx`. Quote literal text: `\"d MMM 'at' HH:mm\"`, with `''` for an apostrophe. Week-year `Y`, day-of-year `D` and other unsupported letters render literally and emit a `tp-diagnostic`. Moment-style `YYYY-MM-DD` is therefore visibly wrong rather than silently giving a different year; write `yyyy-MM-dd`."
+    },
+    {
+      "id": "md: Description",
+      "kind": "md",
+      "heading": "## Description",
+      "text": "While `tooltip` is enabled (default), Time composes Tooltip. The `<time>` becomes keyboard-focusable and shows `tooltip-pattern` (default `dd/MM/yy HH:mm`, 24-hour) on hover or focus. The default pattern is reduced to the value's precision: `dd/MM/yy` for dates, `HH:mm` for times, `MM/yy` for months. No description or tab stop is added when it would repeat the visible text, or for durations and weeks. `tooltip=\"false\"` removes both. Use `tooltipFormatter` for full control."
+    },
+    {
+      "id": "md: API — `tp-time`",
+      "kind": "md",
+      "heading": "## API — `tp-time`",
+      "text": "| Property / attribute                 | Type; default                                                        | Behavior                                                                                          |\n| ------------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |\n| `datetime`                           | `TimeInput`; text content                                            | Value to present.                                                                                 |\n| `strict`                             | boolean; `false`                                                     | Reject best-effort browser parsing.                                                               |\n| `mode`                               | `auto \\| relative \\| calendar \\| absolute \\| duration`; `auto`       | Presentation. Reflected.                                                                          |\n| `threshold`                          | duration text; `P30D`                                                | Distance at which `auto` becomes absolute.                                                        |\n| `preset`                             | see above; `datetime`                                                | Named absolute format.                                                                            |\n| `pattern`                            | string; `''`                                                         | Unicode date-field pattern; overrides `format` and `preset`.                                      |\n| `format`                             | `Intl.DateTimeFormatOptions` (property only)                         | Explicit absolute options; overrides `preset`.                                                    |\n| `formatter`                          | `(context: TimeFormatContext) => string` (property only)             | Replaces absolute text.                                                                           |\n| `relativeStyle` / `relative-style`   | `long \\| short \\| narrow`; `long`                                    | Relative and duration length. Abbreviated text keeps a long accessible form.                      |\n| `numeric`                            | `auto \\| always`; `auto`                                             | Permit \"yesterday\"-style phrases.                                                                 |\n| `tense`                              | `auto \\| past \\| future`; `auto`                                     | Clamp the other direction to \"now\".                                                               |\n| `precision`                          | `second \\| minute \\| hour \\| day \\| week \\| month \\| year`; `second` | Smallest relative unit.                                                                           |\n| `rounding`                           | `floor \\| round`; `floor`                                            | Relative rounding.                                                                                |\n| `nowThreshold` / `now-threshold`     | duration text; `PT10S`                                               | Distance presented as \"now\".                                                                      |\n| `locale`                             | string; closest `lang`                                               | Formatting locale. An explicit value is also set as `lang` on the value.                          |\n| `timeZone` / `time-zone`             | IANA zone; browser zone                                              | Zone for instants and calendar-day comparison.                                                    |\n| `hourCycle` / `hour-cycle`           | `h11 \\| h12 \\| h23 \\| h24`; locale                                   | Hour presentation for presets and `format`.                                                       |\n| `updateInterval` / `update-interval` | `auto \\| none \\|` milliseconds; `auto`                               | `auto` refreshes when the text can next change; a number refreshes at that period (minimum 1000). |\n| `now`                                | `TimeInput` (property only)                                          | Fixed reference instant; disables automatic refresh.                                              |\n| `messages`                           | `Partial<TimeMessages>` (property only); `{}`                        | Calendar and week phrases (below).                                                                |\n| `tooltip`                            | boolean; `true`                                                      | Description and tab stop. `tooltip=\"false\"` disables.                                             |\n| `tooltipPattern` / `tooltip-pattern` | string; `dd/MM/yy HH:mm`                                             | Description pattern.                                                                              |\n| `tooltipFormatter`                   | `(context: TimeFormatContext) => string` (property only)             | Replaces description text.                                                                        |\n| `value` (read only)                  | `ResolvedTime \\| null`                                               | Resolved `kind`, `instant`/`wall`, `machine` value and `loose` flag.                              |\n| `text` (read only)                   | string                                                               | Presented text.                                                                                   |\n\n`TimeMessages` entries are text with `{time}`, `{weekday}`, `{date}`, `{week}` and `{year}` placeholders, or functions of a `TimeMessageContext`. Defaults: `today` \"Today at {time}\", `yesterday` \"Yesterday at {time}\", `tomorrow` \"Tomorrow at {time}\", `lastWeekday` \"Last {weekday} at {time}\", `nextWeekday` \"{weekday} at {time}\", `week` \"Week {week}, {year}\". Relative words, month and weekday names come from `Intl` and need no messages. Diagnostics stay in English.\n\n```js\nconst time = document.querySelector('tp-time');\ntime.mode = 'calendar';\ntime.messages = { today: 'Hoy a las {time}', yesterday: 'Ayer a las {time}' };\ntime.formatter = ({ date }) => date.toLocaleDateString('es', { dateStyle: 'medium' });\n```"
+    },
+    {
+      "id": "md: API — `tp-time` › Events",
+      "kind": "md",
+      "heading": "### Events",
+      "text": "| Event            | Detail                          | When                                                                         |\n| ---------------- | ------------------------------- | ---------------------------------------------------------------------------- |\n| `tp-time-update` | `{ text, previousText, value }` | After the presented text changes following the first render. Not cancelable. |\n| `tp-diagnostic`  | `{ code, message }`             | Unresolvable input or an unsupported pattern symbol; once per distinct case. |\n\nUpdates are never announced through a live region."
+    },
+    {
+      "id": "md: Refresh",
+      "kind": "md",
+      "heading": "## Refresh",
+      "text": "All Time elements in a window share one timer. Each element schedules its next refresh for when its text can next change: every second under a minute, at the next minute boundary under an hour, and so on, up to one hour. Absolute presentations do not refresh. The timer stops while the page is hidden and every element refreshes when it becomes visible, after a `languagechange`, or when a `lang` attribute in the document changes. Changes to `lang` inside other shadow roots apply at the next refresh."
+    },
+    {
+      "id": "md: Composition and presentation",
+      "kind": "md",
+      "heading": "## Composition and presentation",
+      "text": "Message's `timestamp` renders a Time with defaults; use the Message `header` slot with your own `tp-time` for other options. Use Time inside List item footers, Table cells, Card or Alert text, Preview card content and Tooltip triggers wherever a date is displayed. For strings outside the DOM, such as a Toast description, use the exported `resolveTime` and `formatTime`.\n\nParts: `time` (Root, the host), `time-value` (the native `<time>`; it carries `lang` when `locale` is set), and `time-description` (the Tooltip content). The value inherits font and color from its context, uses tabular numerals, and does not wrap. Focus uses the shared ring. The description uses Tooltip's presentation. Customize through `partContracts` or `::part(time-value)`. Root exposes `data-presentation` (`relative`, `calendar`, `absolute`, `duration` or `invalid`); the value also exposes `data-kind`.\n\nExported class: `TpTime`. Exported functions: `resolveTime`, `formatTime`, `formatPattern`, `parseDuration`, `TimeRefreshScheduler`. Exported types: `TimeInput`, `ResolvedTime`, `TimeKind`, `TimeMode`, `TimePreset`, `TimeStyle`, `TimeMessages`, `TimeFormatContext`. Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`."
+    },
+    {
+      "id": "example: Relative",
+      "kind": "example",
+      "title": "Relative",
+      "description": "Auto mode is relative within 30 days and refreshes when the text can next change. Narrow and short styles keep the long form for assistive technology. Focus a value to read its full date and time.",
+      "code": "<div id=\"time-relative\"><p>Saved <tp-time data-offset=\"-5\"></tp-time>, edited <tp-time data-offset=\"-180\"></tp-time>, published <tp-time data-offset=\"-93600\"></tp-time>, expires <tp-time data-offset=\"266400\"></tp-time>.</p><p><tp-time data-offset=\"-180\" relative-style=\"narrow\"></tp-time> · <tp-time data-offset=\"-7200\" relative-style=\"short\" numeric=\"always\"></tp-time></p></div>",
+      "script": "/** Assign live datetimes so relative examples stay current. */\nexport function setupTimeExample(root) {\n  const now = Date.now();\n  for (const time of root.querySelectorAll('tp-time[data-offset]'))\n    time.datetime = new Date(now + Number(time.dataset.offset) * 1000);\n  for (const time of root.querySelectorAll('tp-time[data-days]')) {\n    const date = new Date(now + Number(time.dataset.days) * 86_400_000);\n    time.datetime = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;\n  }\n  for (const message of root.querySelectorAll('tp-message[data-offset]'))\n    message.timestamp = new Date(now + Number(message.dataset.offset) * 1000);\n  const calendar = root.querySelector('tp-time[data-messages]');\n  if (calendar) calendar.messages = { today: 'Hoy a las {time}', yesterday: 'Ayer a las {time}' };\n  return () => {};\n}\n\nsetupTimeExample(document.getElementById('time-relative'));"
+    },
+    {
+      "id": "example: Presets and patterns",
+      "kind": "example",
+      "title": "Presets and patterns",
+      "description": "Presets follow the locale. Patterns use Unicode date-field symbols; quote literal words.",
+      "code": "<p><tp-time mode=\"absolute\" preset=\"time\" datetime=\"2026-10-05T14:30:00Z\" time-zone=\"UTC\"></tp-time> · <tp-time mode=\"absolute\" preset=\"date-long\" datetime=\"2026-10-05T14:30:00Z\" time-zone=\"UTC\"></tp-time> · <tp-time mode=\"absolute\" preset=\"full\" datetime=\"2026-10-05T14:30:00Z\" time-zone=\"UTC\"></tp-time></p><p><tp-time mode=\"absolute\" pattern=\"EEE d MMM yyyy 'at' HH:mm\" datetime=\"2026-10-05T14:30:00Z\" time-zone=\"UTC\"></tp-time> · <tp-time mode=\"absolute\" preset=\"iso\" datetime=\"2026-10-05T14:30:00Z\"></tp-time></p>"
+    },
+    {
+      "id": "example: Calendar phrases",
+      "kind": "example",
+      "title": "Calendar phrases",
+      "description": "Calendar mode compares calendar days in the time zone. Replace its phrases through the messages property.",
+      "code": "<div id=\"time-calendar\"><p><tp-time mode=\"calendar\" data-offset=\"-3600\"></tp-time> · <tp-time mode=\"calendar\" data-offset=\"-90000\"></tp-time> · <tp-time mode=\"calendar\" data-offset=\"-259200\"></tp-time></p><p lang=\"es\"><tp-time mode=\"calendar\" data-offset=\"-3600\" data-messages></tp-time></p></div>",
+      "script": "/** Assign live datetimes so relative examples stay current. */\nexport function setupTimeExample(root) {\n  const now = Date.now();\n  for (const time of root.querySelectorAll('tp-time[data-offset]'))\n    time.datetime = new Date(now + Number(time.dataset.offset) * 1000);\n  for (const time of root.querySelectorAll('tp-time[data-days]')) {\n    const date = new Date(now + Number(time.dataset.days) * 86_400_000);\n    time.datetime = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;\n  }\n  for (const message of root.querySelectorAll('tp-message[data-offset]'))\n    message.timestamp = new Date(now + Number(message.dataset.offset) * 1000);\n  const calendar = root.querySelector('tp-time[data-messages]');\n  if (calendar) calendar.messages = { today: 'Hoy a las {time}', yesterday: 'Ayer a las {time}' };\n  return () => {};\n}\n\nsetupTimeExample(document.getElementById('time-calendar'));"
+    },
+    {
+      "id": "example: Due dates",
+      "kind": "example",
+      "title": "Due dates",
+      "description": "Date-only values stay on their calendar day in every time zone and compare by days.",
+      "code": "<div id=\"time-dates\"><tp-list-item description=\"Sam Rivera\">Design review<span slot=\"footer\">Due <tp-time data-days=\"0\"></tp-time></span></tp-list-item><tp-list-item description=\"Taylor Kim\">Release notes<span slot=\"footer\">Due <tp-time data-days=\"3\"></tp-time></span></tp-list-item><tp-list-item description=\"Ada Lovelace\">Retrospective<span slot=\"footer\">Due <tp-time data-days=\"-1\"></tp-time></span></tp-list-item></div>",
+      "script": "/** Assign live datetimes so relative examples stay current. */\nexport function setupTimeExample(root) {\n  const now = Date.now();\n  for (const time of root.querySelectorAll('tp-time[data-offset]'))\n    time.datetime = new Date(now + Number(time.dataset.offset) * 1000);\n  for (const time of root.querySelectorAll('tp-time[data-days]')) {\n    const date = new Date(now + Number(time.dataset.days) * 86_400_000);\n    time.datetime = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;\n  }\n  for (const message of root.querySelectorAll('tp-message[data-offset]'))\n    message.timestamp = new Date(now + Number(message.dataset.offset) * 1000);\n  const calendar = root.querySelector('tp-time[data-messages]');\n  if (calendar) calendar.messages = { today: 'Hoy a las {time}', yesterday: 'Ayer a las {time}' };\n  return () => {};\n}\n\nsetupTimeExample(document.getElementById('time-dates'));"
+    },
+    {
+      "id": "example: Message timestamp",
+      "kind": "example",
+      "title": "Message timestamp",
+      "description": "Message renders its timestamp through Time.",
+      "code": "<div id=\"time-message\"><tp-message author=\"Ada\" data-offset=\"-120\">The build is green again.</tp-message></div>",
+      "script": "/** Assign live datetimes so relative examples stay current. */\nexport function setupTimeExample(root) {\n  const now = Date.now();\n  for (const time of root.querySelectorAll('tp-time[data-offset]'))\n    time.datetime = new Date(now + Number(time.dataset.offset) * 1000);\n  for (const time of root.querySelectorAll('tp-time[data-days]')) {\n    const date = new Date(now + Number(time.dataset.days) * 86_400_000);\n    time.datetime = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;\n  }\n  for (const message of root.querySelectorAll('tp-message[data-offset]'))\n    message.timestamp = new Date(now + Number(message.dataset.offset) * 1000);\n  const calendar = root.querySelector('tp-time[data-messages]');\n  if (calendar) calendar.messages = { today: 'Hoy a las {time}', yesterday: 'Ayer a las {time}' };\n  return () => {};\n}\n\nsetupTimeExample(document.getElementById('time-message'));"
+    },
+    {
+      "id": "example: Durations and other precisions",
+      "kind": "example",
+      "title": "Durations and other precisions",
+      "description": "Durations, months, yearless dates, weeks and times keep their own precision.",
+      "code": "<p><tp-time datetime=\"PT1H30M\"></tp-time> · <tp-time datetime=\"2026-10\"></tp-time> · <tp-time datetime=\"--12-25\"></tp-time> · <tp-time datetime=\"2026-W40\"></tp-time> · <tp-time datetime=\"09:15\" hour-cycle=\"h23\"></tp-time></p>"
+    },
+    {
+      "id": "example: Description",
+      "kind": "example",
+      "title": "Description",
+      "description": "The description defaults to dd/MM/yy HH:mm. tooltip=\"false\" removes it and the tab stop.",
+      "code": "<p><tp-time datetime=\"2026-10-05T14:30:00Z\" mode=\"absolute\" preset=\"date-long\" tooltip-pattern=\"EEEE HH:mm:ss xxx\"></tp-time> · <tp-time datetime=\"2026-10-05T14:30:00Z\" tooltip=\"false\"></tp-time></p>"
+    },
+    {
+      "id": "example: Fallback",
+      "kind": "example",
+      "title": "Fallback",
+      "description": "Unresolvable input keeps the authored content and exposes data-invalid.",
+      "code": "<p>Last sync: <tp-time datetime=\"sometime yesterday\">sometime yesterday</tp-time></p>"
+    }
+  ]
+}

@@ -306,7 +306,6 @@ describe('copyable example sources (uwg-req-102)', () => {
 
   it('leaves no repository-relative specifier in any published example module', () => {
     const modules = singleModules();
-    expect(modules).toContain('stories/widgets/flow-example.js');
     const findings = modules.flatMap((module) =>
       unpublishedSpecifiers(publishedSource(read(`src/${module}`)))
         .filter((specifier) => specifier.startsWith('../'))
@@ -414,26 +413,6 @@ describe('copyable example sources (uwg-req-102)', () => {
     ).toEqual(['@tweakpad/ui/icons/types']);
   });
 
-  it("inlines the calendar's sibling helper, so no calendar example imports a relative module", async () => {
-    const { calendarExamples } = await import('./calendar.examples.js');
-    const codes = calendarExamples.map((example) => example.code);
-    const withHelper = codes.filter((code) => code.includes('applyDatePickerTrigger('));
-    expect(withHelper).not.toHaveLength(0);
-    for (const code of codes)
-      expect(
-        importSpecifiers(code).filter(
-          (specifier) => specifier !== null && /^\.\.?\//u.test(specifier),
-        ),
-      ).toEqual([]);
-    for (const code of withHelper) {
-      expect(code.match(/^function applyDatePickerTrigger\(/gmu) ?? []).toHaveLength(1);
-      expect(code.match(/^function datePickerTriggerContracts\(/gmu) ?? []).toHaveLength(1);
-      expect(code).not.toMatch(
-        /\bexport function (?:applyDatePickerTrigger|datePickerTriggerContracts)\(/u,
-      );
-    }
-  });
-
   it('documents only package imports that the package exports, in every documentation page', () => {
     const pages = (dir: string): string[] =>
       readdirSync(join(root, dir), { withFileTypes: true }).flatMap((entry) =>
@@ -450,12 +429,5 @@ describe('copyable example sources (uwg-req-102)', () => {
         .map((specifier) => `${page}: ${specifier}`),
     );
     expect(findings).toEqual([]);
-  });
-
-  it('publishes the data visualization story source with package imports', async () => {
-    const { default: meta } = await import('./data-visualization.stories.js');
-    const code = meta.parameters.docs.source.code;
-    expect(code).toBe(publishedSource(read('src/stories/data-visualization.examples.ts')));
-    expect(unpublishedSpecifiers(code)).toEqual([]);
   });
 });

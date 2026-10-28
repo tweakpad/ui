@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/progress.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   value: number | null;
@@ -14,28 +14,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Progress',
   component: 'tp-progress',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      source: {
-        code: `import { html, render } from 'lit';
-import '@tweakpad/ui/register';
-import '@tweakpad/ui/styles.css';
-
-const example = document.createElement('div');
-document.body.append(example);
-render(html\`<tp-progress
-  .value=\${56}
-  label="Upload progress"
-  .partContracts=\${{
-    'progress-value-output': { content: (state) => state.formattedValue },
-  }}
-  ><span slot="label">Upload progress</span></tp-progress
->\`, example);`,
-        language: 'ts',
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/progress') },
   args: {
     value: 56,
     minimum: 0,

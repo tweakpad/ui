@@ -1,0 +1,194 @@
+---
+title: Code block
+description: Source code with syntax colors, a title, a copy action, line numbers, diff lines and a collapsible height.
+tag: tp-code-block
+---
+
+<Preview
+  title="Code block"
+  align="stretch"
+  code={`<tp-code-block language="typescript" label="invoices.ts" style="max-inline-size:40rem;margin-inline:auto">
+  import type { Invoice } from './types';
+
+  /** Fetches the unpaid invoices for one workspace. */
+  export async function unpaidInvoices(id: string): Promise&lt;Invoice[]&gt; {
+    const url = \`/api/workspaces/\${id}/invoices?status=open\`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(\`HTTP \${response.status}\`);
+    return response.json();
+  }
+</tp-code-block>`}
+/>
+
+## Usage
+
+The source comes from the element's text content, dedented and trimmed, or from the `code` property. In markup, escape `<` and `&` as `&lt;` and `&amp;`, or set `code` from script. `label` adds a header with the title and language; the `title` slot replaces it with your own content. Text content is read when the element connects and whenever it changes.
+
+### Custom title
+
+<Preview
+  title="Title slot"
+  align="stretch"
+  code={`<tp-code-block language="bash" style="max-inline-size:40rem;margin-inline:auto">
+  <span slot="title" style="display:inline-flex;align-items:center;gap:var(--tp-space-2)">
+    Deploy to production
+    <tp-badge variant="warning">Requires approval</tp-badge>
+  </span>
+  npx tweakpad deploy --env production --confirm
+</tp-code-block>`}
+/>
+
+Content in the `title` slot replaces the `label` text in the header, for example to add a Badge. Slotted elements are not part of the source, so the copied code stays exactly the command.
+
+### Line numbers and highlights
+
+`line-numbers` adds a gutter that stays put while long lines scroll. `highlight-lines` takes lines and ranges such as `2,5-7` to draw attention to the part that matters.
+
+<Preview
+  title="Highlighted lines"
+  align="stretch"
+  code={`<tp-code-block language="html" label="signup.html" line-numbers highlight-lines="2-4" style="max-inline-size:40rem;margin-inline:auto">
+  &lt;form action="/signup" method="post"&gt;
+    &lt;tp-field label="Work email"&gt;
+      &lt;tp-input name="email" type="email" required&gt;&lt;/tp-input&gt;
+    &lt;/tp-field&gt;
+    &lt;tp-button type="submit"&gt;Create account&lt;/tp-button&gt;
+  &lt;/form&gt;
+</tp-code-block>`}
+/>
+
+### Diffs
+
+`added-lines` and `removed-lines` mark lines with a gutter marker, a tint and visually hidden text, so the change is clear without relying on color.
+
+<Preview
+  title="Diff"
+  align="stretch"
+  code={`<tp-code-block language="javascript" label="cart.js" line-numbers removed-lines="2-4" added-lines="5" style="max-inline-size:40rem;margin-inline:auto">
+  export function subtotal(items) {
+    let sum = 0;
+    for (const item of items) sum += item.total;
+    return sum;
+    return items.reduce((sum, item) => sum + item.total, 0);
+  }
+</tp-code-block>`}
+/>
+
+### Collapsible
+
+`collapsible` clips long files to `collapsed-lines` (12 by default) and adds an Expand control. Use it for reference files where the first lines tell most of the story.
+
+<Preview
+  title="Collapsible"
+  align="stretch"
+  code={`<tp-code-block language="json" label="tsconfig.json" collapsible collapsed-lines="8" style="max-inline-size:40rem;margin-inline:auto">
+  {
+    "compilerOptions": {
+      "target": "ES2022",
+      "module": "ESNext",
+      "moduleResolution": "bundler",
+      "lib": ["ES2022", "DOM", "DOM.Iterable"],
+      "strict": true,
+      "noUncheckedIndexedAccess": true,
+      "experimentalDecorators": true,
+      "useDefineForClassFields": false,
+      "declaration": true,
+      "sourceMap": true,
+      "outDir": "dist",
+      "skipLibCheck": true
+    },
+    "include": ["src"],
+    "exclude": ["**/*.test.ts"]
+  }
+</tp-code-block>`}
+/>
+
+### Without a header
+
+Without `label` the copy action floats in the top corner. Set `copyable="false"` to remove it, and `wrap` to wrap long lines instead of scrolling.
+
+<Preview
+  title="Shell"
+  align="stretch"
+  code={`<tp-code-block language="bash" style="max-inline-size:40rem;margin-inline:auto">
+  # Install the library and its peer dependency
+  npm install @tweakpad/ui lit
+</tp-code-block>`}
+/>
+
+### Languages and theming
+
+The built-in highlighter covers TypeScript, JavaScript, HTML, CSS, JSON, Bash and diffs; other languages render as plain text. Syntax colors are `--tp-syntax-*` tokens, so setting them on an ancestor restyles every block inside it.
+
+<Preview
+  title="CSS"
+  align="stretch"
+  code={`<tp-code-block language="css" label="theme.css" style="max-inline-size:40rem;margin-inline:auto">
+  :root {
+    --tp-radius: 0.75rem;
+    --tp-syntax-keyword: light-dark(#6d28d9, #c4b5fd);
+  }
+
+  @media (width &lt;= 40rem) {
+    .workspace { grid-template-columns: 1fr; }
+  }
+</tp-code-block>`}
+/>
+
+<Preview
+  title="Token theme"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:40rem;margin-inline:auto;--tp-syntax-keyword:light-dark(#6d28d9,#c4b5fd);--tp-syntax-string:light-dark(#047857,#6ee7b7);--tp-syntax-function:light-dark(#1d4ed8,#93c5fd);--tp-syntax-comment:var(--tp-muted-foreground)">
+  <tp-code-block language="typescript" label="webhooks.ts">
+    // Verify the signature before trusting the payload.
+    export async function handleWebhook(request: Request) {
+      const signature = request.headers.get('x-signature');
+      if (!signature) return new Response('Missing signature', { status: 401 });
+      return processEvent(await request.json());
+    }
+  </tp-code-block>
+  <tp-code-block language="diff" label="cache.diff">
+    @@ -12,3 +12,3 @@
+    -const KEY_TTL = 60 * 60 * 1000;
+    +const KEY_TTL = 5 * 60 * 1000;
+     export const verifier = createVerifier({ ttl: KEY_TTL });
+  </tp-code-block>
+</div>`}
+/>
+
+The wrapper above sets four `--tp-syntax-*` roles, and both blocks inside pick them up, light and dark alike. `language="diff"` colors a unified patch as written; use `added-lines` and `removed-lines` instead when you want to mark changes in highlighted source.
+
+For full grammar coverage, assign a Shiki-based highlighter from `@tweakpad/ui/code` to the `highlighter` property. The block renders plain text first and swaps in colors without shifting layout. The library never
+imports Shiki; you create the highlighter with the languages and themes you need:
+
+<Code code={`import { createHighlighterCore } from 'shiki/core';
+import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
+import { createShikiHighlighter } from '@tweakpad/ui/code';
+
+const shiki = await createHighlighterCore({
+  engine: createJavaScriptRegexEngine(),
+  themes: [
+    import('@shikijs/themes/github-light-default'),
+    import('@shikijs/themes/github-dark-default'),
+  ],
+  langs: [import('@shikijs/langs/typescript'), import('@shikijs/langs/html')],
+});
+document.querySelector('tp-code-block').highlighter = createShikiHighlighter(shiki, {
+  themes: { light: 'github-light-default', dark: 'github-dark-default' },
+});`} language="js" />
+
+Languages Shiki has not loaded fall back to the built-in tokenizer. Tokens
+with explicit colors (Shiki themes) use their light or dark color for the current scheme. Theme colors are the theme's own: check their contrast on the code surface (for example, `github-light-default` comments measure about 4.3:1 on the default surface). The built-in `--tp-syntax-*` defaults keep every role at 4.5:1 or more on the surface and on highlighted and diff lines in both schemes.
+
+A highlighter implements `highlight(code, language, { signal })` and returns
+`CodeTokens` (lines of `{ text, scope?, light?, dark?, fontStyle? }` tokens) or a promise
+of them. A newer request aborts `signal`.
+
+### Accessibility
+
+The block is a figure named by its title, or by the language and the `code` message.
+The scroll region becomes focusable (and a labelled region) only when it overflows, so
+keyboard users can scroll it. Code stays left-to-right in right-to-left pages. Line
+numbers and diff markers are hidden from assistive technology; added and removed lines
+carry visually hidden text. The Expand control exposes `aria-expanded` and controls the
+viewport. Reduced motion removes the height transition.

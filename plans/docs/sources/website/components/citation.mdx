@@ -1,0 +1,109 @@
+---
+title: Citation
+description: An inline chip that attributes a statement to its source, with an optional number, site icon and hover preview.
+tag: tp-citation
+parts: [tp-citation-list]
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Citation"
+  align="stretch"
+  code={`<p style="max-inline-size:34rem;margin:0 auto;line-height:1.75">
+  Tidal turbines generate on a timetable set by the moon
+  <tp-citation href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%2316a34a%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EE%3C%2Ftext%3E%3C%2Fsvg%3E">energy.example</tp-citation>,
+  so grid operators can plan storage weeks in advance
+  <tp-citation href="https://northwind.example/grid-storage" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%232563eb%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EN%3C%2Ftext%3E%3C%2Fsvg%3E">Grid storage notes</tp-citation>.
+</p>`}
+/>
+
+## Usage
+
+A Citation sits in running text after the statement it supports. Its label names the source, and with an `href` it is a link to it. Use one style per passage: labelled chips like the one above, or numbered markers that point to a Citation list.
+
+### Labels and icons
+
+The default slot is the label, such as a site name or a source title; long labels end in an ellipsis. `src` adds a site icon, which keeps its space while it loads. Without `src`, or when the image fails, the `icon` slot is used, else a generic web mark.
+
+<Preview
+  title="Labels and icons"
+  code={`<tp-citation href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%2316a34a%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EE%3C%2Ftext%3E%3C%2Fsvg%3E">energy.example</tp-citation>
+<tp-citation href="https://marine.example/survey">
+  <svg slot="icon" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8ZM14 2v6h6"/></svg>
+  Coastal survey 2025
+</tp-citation>
+<tp-citation href="https://northwind.example/grid-storage">Grid storage notes</tp-citation>
+<tp-citation>Interview with the site engineer</tp-citation>`}
+/>
+
+A site address, one that starts with `http://` or `https://`, opens in a new tab unless you set `target`. While a labelled site citation is hovered or focused, an external-link mark fades in over the end of the label without changing its width, so the surrounding text never moves. Without an accepted `href` the citation is plain text and takes no tab stop.
+
+### Source preview
+
+A `description` adds a preview card that opens after a short hover or on keyboard focus. It shows the site icon, the host, `source-title` and the description. Use `source-title` for the full title when the label is only the site name. The `preview` slot takes extra content for the card.
+
+<Preview
+  title="Source preview"
+  align="stretch"
+  code={`<p style="max-inline-size:34rem;margin:0 auto;line-height:1.75">
+  Turbine blades now last about twenty years underwater
+  <tp-citation
+    href="https://energy.example/tidal"
+    src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%2316a34a%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EE%3C%2Ftext%3E%3C%2Fsvg%3E"
+    source-title="Blade wear in fast tidal streams"
+    description="Ten-year inspection results from three test sites, with corrosion and fatigue measurements."
+  >energy.example</tp-citation>.
+</p>`}
+/>
+
+The preview is supplementary. The citation still activates its link normally, and the destination page should carry everything a reader needs.
+
+### Numbered references
+
+For footnote-style references, list the sources in a `tp-citation-list` and point to them from the text. The list numbers its entries in document order from `start`. An in-text citation names an entry by its `id` with `source` and takes its number, address, title and preview from it, so an empty `source` citation renders as a plain number. `superscript` raises it like a footnote marker.
+
+<Preview
+  title="Numbered references"
+  align="stretch"
+  code={`<article style="display:grid;gap:var(--tp-space-4);max-inline-size:34rem;margin-inline:auto;inline-size:100%">
+  <p style="margin:0;line-height:1.75">
+    Output is predictable<tp-citation source="tidal-1" href="#tidal-1" superscript></tp-citation>
+    and storage needs stay small<tp-citation source="tidal-2" href="#tidal-2" superscript></tp-citation>,
+    though flow varies with the season<tp-citation source="tidal-3" href="#tidal-3" superscript></tp-citation>.
+  </p>
+  <tp-citation-list label="Sources">
+    <tp-citation id="tidal-1" href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%2316a34a%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EE%3C%2Ftext%3E%3C%2Fsvg%3E" description="Ten-year inspection results from three test sites.">Blade wear in fast tidal streams</tp-citation>
+    <tp-citation id="tidal-2" href="https://northwind.example/grid-storage" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%232563eb%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EN%3C%2Ftext%3E%3C%2Fsvg%3E" description="How predictable generation reduces battery sizing.">Grid storage notes</tp-citation>
+    <tp-citation id="tidal-3" href="https://marine.example/survey" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%23d97706%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EM%3C%2Ftext%3E%3C%2Fsvg%3E" description="Seasonal flow records for estuary sites.">Coastal survey 2025</tp-citation>
+  </tp-citation-list>
+</article>`}
+/>
+
+Give each marker its entry's fragment as `href`, as above: activating the marker moves focus to the entry, and the entry opens the site. Without its own `href`, a marker links straight to the source. Editing an entry updates every citation that names it.
+
+### List layout
+
+`orientation="horizontal"` lets the entries wrap in rows, which suits a compact source strip under a generated answer. Set `index` on a citation to override its position.
+
+<Preview
+  title="Horizontal list"
+  align="stretch"
+  code={`<tp-citation-list label="Sources" orientation="horizontal" style="max-inline-size:34rem;margin-inline:auto;inline-size:100%">
+  <tp-citation href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%2316a34a%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EE%3C%2Ftext%3E%3C%2Fsvg%3E">energy.example</tp-citation>
+  <tp-citation href="https://northwind.example/grid-storage" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%232563eb%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EN%3C%2Ftext%3E%3C%2Fsvg%3E">northwind.example</tp-citation>
+  <tp-citation href="https://marine.example/survey" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%23d97706%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EM%3C%2Ftext%3E%3C%2Fsvg%3E">marine.example</tp-citation>
+</tp-citation-list>`}
+/>
+
+### Variants
+
+Citations use the Badge treatments through `variant`. The default `outline` is a border with muted text, so it reads below the surrounding copy; switch only when a citation needs more or less weight than the text around it.
+
+<Preview
+  title="Variants"
+  code={`<tp-citation href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%2316a34a%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EE%3C%2Ftext%3E%3C%2Fsvg%3E">Outline</tp-citation>
+<tp-citation variant="secondary" href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%2316a34a%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EE%3C%2Ftext%3E%3C%2Fsvg%3E">Secondary</tp-citation>
+<tp-citation variant="ghost" href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%2316a34a%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EE%3C%2Ftext%3E%3C%2Fsvg%3E">Ghost</tp-citation>
+<tp-citation variant="default" href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%2316a34a%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EE%3C%2Ftext%3E%3C%2Fsvg%3E">Default</tp-citation>`}
+/>

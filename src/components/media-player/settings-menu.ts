@@ -106,8 +106,15 @@ export function mediaSettingsEntries(
   return entries;
 }
 
+/** Settings popups share the media overlay surface. */
+const settingsMenuPresentation: PartPresentation = {
+  'menu-content': {
+    styleHook: { ...mediaPopupSurface, 'border-radius': 'var(--tp-radius-xl)' },
+  },
+};
+
 /**
- * `tp-media-settings-menu`: the settings preset (Library mp-l-menus). A composed `tp-button`
+ * A settings button that opens a menu of quality, audio, speed and captions. A composed `tp-button`
  * trigger (settings icon, `settings` label) opens a `tp-menu` with one nested submenu per
  * available group (`groups`, default `quality audio speed captions`), each containing the
  * matching media radio group. Submenus use the Menu's flyout nested-submenu behavior; each
@@ -121,13 +128,6 @@ export function mediaSettingsEntries(
  * @csspart trigger - The composed settings Button.
  * @csspart menu - The composed Menu.
  */
-/** Settings popups share the media overlay surface. */
-const settingsMenuPresentation: PartPresentation = {
-  'menu-content': {
-    styleHook: { ...mediaPopupSurface, 'border-radius': 'var(--tp-radius-xl)' },
-  },
-};
-
 export class TpMediaSettingsMenu extends TpMediaElement {
   static tagName = 'tp-media-settings-menu';
   /** Library elements this element renders; defining it defines them too. */

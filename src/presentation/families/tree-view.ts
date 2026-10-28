@@ -8,20 +8,34 @@ const definition: ComponentDefinition = {
   kind: 'compound-reexport',
   axes: [{ name: 'size', values: ['sm', 'default'], default: 'default' }],
   parts: [
-    { name: 'tree-view' },
-    { name: 'tree-view-viewport' },
-    { name: 'tree-view-item' },
-    { name: 'tree-view-row', axes: ['size'] },
-    { name: 'tree-view-indent' },
-    { name: 'tree-view-indicator' },
-    { name: 'tree-view-checkbox' },
-    { name: 'tree-view-leading' },
-    { name: 'tree-view-label' },
-    { name: 'tree-view-trailing' },
-    { name: 'tree-view-handle' },
-    { name: 'tree-view-status' },
-    { name: 'tree-view-group' },
-    { name: 'tree-view-empty' },
+    { name: 'tree-view', description: 'The tree itself, the single tab stop.' },
+    { name: 'tree-view-viewport', description: 'The scroll container of the rows.' },
+    { name: 'tree-view-item', description: 'An item host.' },
+    {
+      name: 'tree-view-row',
+      description: 'The pressable line of an item; marked while selected, expanded or disabled.',
+      axes: ['size'],
+    },
+    {
+      name: 'tree-view-indent',
+      description: 'The indentation of a row, carrying the guide lines.',
+    },
+    { name: 'tree-view-indicator', description: 'The disclosure chevron region.' },
+    {
+      name: 'tree-view-checkbox',
+      description: 'The checkbox of a row with checkbox selection; marked while checked or mixed.',
+    },
+    { name: 'tree-view-leading', description: 'The region before the label.' },
+    { name: 'tree-view-label', description: 'The label region.' },
+    { name: 'tree-view-trailing', description: 'The region after the label.' },
+    { name: 'tree-view-handle', description: 'The reorder handle region.' },
+    { name: 'tree-view-status', description: 'The loading or load-error line under an item.' },
+    {
+      name: 'tree-view-group',
+      description:
+        'The region holding the children of an item, which animates as it opens and closes.',
+    },
+    { name: 'tree-view-empty', description: 'The region shown when there are no items.' },
   ],
 };
 

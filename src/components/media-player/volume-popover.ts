@@ -18,22 +18,6 @@ export function volumePopupUsable(attached: boolean, availability: MediaAvailabi
 }
 
 /**
- * `tp-media-volume-popover`: the volume preset (Library mp-l-volume-slider, mp-l-menus). A
- * `tp-popover` opening on hover (`open-delay` 200 ms, `close-delay` 100 ms, `side` top) whose
- * trigger is a `tp-media-mute-button` and whose popup holds a vertical `tp-media-volume-slider`.
- *
- * - While volume cannot be set (unsupported, or no media), the popover is not rendered: the
- *   mute button stands alone without popup ARIA, so muting still works (`data-availability`,
- *   `data-hidden` describe the popup).
- * - The popup portals into the player container and holds a `popover` controls lock while
- *   open; `open`/`setOpen(open, reason)` forward to the popover so the player closes it when
- *   controls hide (`idle`) and on fullscreen entry (`imperative-action`).
- *
- * @csspart popover - The composed Popover.
- * @csspart mute-button - The composed mute button.
- * @csspart volume-slider - The composed volume slider.
- */
-/**
  * The volume popup is the media overlay surface: a frosted pill around a short vertical bar slider. The surface variables come from the player
  * container (`mediaSurfaceVariables`), which also makes them opaque under user preferences.
  */
@@ -49,6 +33,22 @@ const volumePopupPresentation: PartPresentation = {
   },
 };
 
+/**
+ * A mute button that opens a volume slider on hover: a
+ * `tp-popover` opening on hover (`open-delay` 200 ms, `close-delay` 100 ms, `side` top) whose
+ * trigger is a `tp-media-mute-button` and whose popup holds a vertical `tp-media-volume-slider`.
+ *
+ * - While volume cannot be set (unsupported, or no media), the popover is not rendered: the
+ *   mute button stands alone without popup ARIA, so muting still works (`data-availability`,
+ *   `data-hidden` describe the popup).
+ * - The popup portals into the player container and holds a `popover` controls lock while
+ *   open; `open`/`setOpen(open, reason)` forward to the popover so the player closes it when
+ *   controls hide (`idle`) and on fullscreen entry (`imperative-action`).
+ *
+ * @csspart popover - The composed Popover.
+ * @csspart mute-button - The composed mute button.
+ * @csspart volume-slider - The composed volume slider.
+ */
 export class TpMediaVolumePopover extends TpMediaElement {
   static tagName = 'tp-media-volume-popover';
   /** Library elements this element renders; defining it defines them too. */

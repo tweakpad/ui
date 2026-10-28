@@ -1,0 +1,172 @@
+---
+title: Native select
+description: The browser's own select picker, styled to match Input and wired into Field and form submission.
+tag: tp-native-select
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Native select"
+  align="stretch"
+  code={`<tp-field label="Region" description="Where your workspace data is stored." style="max-inline-size:22rem">
+  <tp-native-select name="region" default-value="eu-west">
+    <optgroup label="Europe">
+      <option value="eu-west">Ireland (eu-west-1)</option>
+      <option value="eu-central">Frankfurt (eu-central-1)</option>
+    </optgroup>
+    <optgroup label="North America">
+      <option value="us-east">Virginia (us-east-1)</option>
+      <option value="us-west">Oregon (us-west-2)</option>
+    </optgroup>
+    <optgroup label="Asia Pacific">
+      <option value="ap-southeast">Singapore (ap-southeast-1)</option>
+      <option value="ap-northeast" disabled>Tokyo (coming soon)</option>
+    </optgroup>
+  </tp-native-select>
+</tp-field>`}
+/>
+
+## Usage
+
+Author plain `option` and `optgroup` children and the component mirrors them into a real native select, so the platform picker, typeahead and mobile wheels all work unchanged. Reach for Select instead when options need icons, descriptions or custom layout.
+
+### Placeholder
+
+`placeholder` adds a disabled empty first option, so nothing is chosen until the person picks. Add `required` and the empty value fails validation on submit.
+
+<Preview
+  title="Placeholder"
+  align="stretch"
+  code={`<tp-field label="Team size" style="max-inline-size:22rem">
+  <tp-native-select name="team-size" placeholder="Select a range">
+    <option value="1-10">1–10 people</option>
+    <option value="11-50">11–50 people</option>
+    <option value="51-200">51–200 people</option>
+    <option value="200+">More than 200</option>
+  </tp-native-select>
+</tp-field>`}
+/>
+
+### Sizes
+
+`size` sets the control height to match Input and Button. It is independent of the native listbox row count.
+
+<Preview
+  title="Sizes"
+  code={`<div style="display:grid;gap:var(--tp-space-3);inline-size:14rem">
+  <tp-native-select size="sm" label="Sort" default-value="recent">
+    <option value="recent">Most recent</option>
+    <option value="name">Name</option>
+    <option value="size">File size</option>
+  </tp-native-select>
+  <tp-native-select label="Sort" default-value="recent">
+    <option value="recent">Most recent</option>
+    <option value="name">Name</option>
+    <option value="size">File size</option>
+  </tp-native-select>
+</div>`}
+/>
+
+### Multiple
+
+`multiple` renders the native multi-selection listbox and submits one entry per selected value, in option order. Set the value as an array through the `value` property.
+
+<Preview
+  title="Multiple"
+  align="stretch"
+  code={`<tp-field label="Notify on" description="Hold Ctrl or ⌘ to select several." style="max-inline-size:22rem">
+  <tp-native-select name="events" multiple>
+    <option value="deploy" selected>Deploy finished</option>
+    <option value="failed" selected>Build failed</option>
+    <option value="review">Review requested</option>
+    <option value="mention">Mentioned in a comment</option>
+  </tp-native-select>
+</tp-field>`}
+/>
+
+### Forms
+
+Native Select participates in forms like Input: it submits its `name`, resets to its default and restores on navigation. Listen for `tp-value-change` to react to changes.
+
+<Preview
+  title="Form value"
+  align="stretch"
+  code={`<form id="native-select-form" style="display:grid;gap:var(--tp-space-3);max-inline-size:22rem">
+  <tp-field label="Billing cycle">
+    <tp-native-select name="cycle" default-value="monthly">
+      <option value="monthly">Monthly — $12 per seat</option>
+      <option value="yearly">Yearly — $120 per seat</option>
+    </tp-native-select>
+  </tp-field>
+  <output id="native-select-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">cycle=monthly</output>
+</form>`}
+  script={`const form = document.querySelector('#native-select-form');
+const output = document.querySelector('#native-select-output');
+form.addEventListener('tp-value-change', () => {
+  queueMicrotask(() => {
+    output.textContent = new URLSearchParams(new FormData(form)).toString();
+  });
+});`}
+/>
+
+### Controlled
+
+Set `value` to own the selection and accept each proposal in `onValueChange` by assigning `event.detail.value`. Leave `value` unchanged to reject a pick; the native picker snaps back to the committed option.
+
+<Preview
+  title="Controlled value"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:22rem">
+  <tp-field label="Seat limit" description="18 members are active in this workspace.">
+    <tp-native-select id="native-select-seats" value="25">
+      <option value="10">10 seats — $96/mo</option>
+      <option value="25">25 seats — $240/mo</option>
+      <option value="50">50 seats — $480/mo</option>
+    </tp-native-select>
+  </tp-field>
+  <output id="native-select-seats-note" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Current plan: 25 seats.</output>
+</div>`}
+  script={`const select = document.querySelector('#native-select-seats');
+const note = document.querySelector('#native-select-seats-note');
+const activeMembers = 18;
+select.onValueChange = (event) => {
+  if (event.defaultPrevented || event.detail.cancelled) return;
+  const seats = Number(event.detail.value);
+  if (seats < activeMembers) {
+    note.textContent = \`Remove \${activeMembers - seats} members before dropping to \${seats} seats.\`;
+    return;
+  }
+  select.value = event.detail.value;
+  note.textContent = \`Current plan: \${seats} seats.\`;
+};`}
+/>
+
+### States
+
+<Preview
+  title="Disabled, read-only and invalid"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:22rem">
+  <tp-field label="Plan" disabled>
+    <tp-native-select default-value="team">
+      <option value="team">Team</option>
+      <option value="enterprise">Enterprise</option>
+    </tp-native-select>
+  </tp-field>
+  <tp-field label="Currency" description="Set by your billing country.">
+    <tp-native-select readonly default-value="eur">
+      <option value="eur">Euro (EUR)</option>
+      <option value="usd">US dollar (USD)</option>
+    </tp-native-select>
+  </tp-field>
+  <tp-field label="Timezone" error="Choose a timezone to schedule reports." invalid>
+    <tp-native-select placeholder="Select a timezone">
+      <option value="utc">UTC</option>
+      <option value="cet">Central European Time</option>
+    </tp-native-select>
+  </tp-field>
+</div>`}
+/>
+
+Native selects have no read-only mode, so `readonly` blocks changes while keeping the value focusable and submitted. Disabled omits it from form data.

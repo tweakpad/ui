@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import copyButtonDocumentation from '../../docs/copy-button.md?raw';
-import { copyButtonExamples } from './copy-button.examples.js';
+import { libraryDocs } from './library-docs.js';
 
 interface CopyButtonStoryArgs {
   value: string;
@@ -17,12 +16,7 @@ interface CopyButtonStoryArgs {
 const meta: Meta<CopyButtonStoryArgs> = {
   title: 'Components/Copy button',
   component: 'tp-copy-button',
-  parameters: {
-    docs: {
-      examples: copyButtonExamples,
-      description: { component: copyButtonDocumentation.replace(/^# Copy button\n/u, '') },
-    },
-  },
+  parameters: { docs: libraryDocs('components/copy-button') },
   args: {
     value: 'npm install @tweakpad/ui',
     label: 'Copy install command',

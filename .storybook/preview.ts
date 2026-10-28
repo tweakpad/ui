@@ -2,10 +2,17 @@ import { definePreview, setCustomElementsManifest } from '@storybook/web-compone
 import * as manifestArgTypes from '@storybook/web-components/entry-preview-argtypes';
 import addonDocs from '@storybook/addon-docs';
 import { create } from 'storybook/theming';
+import { html } from 'lit';
+import { ref } from 'lit/directives/ref.js';
 import DocumentationPage from './docs-page.mdx';
 import { manifest } from './manifest.js';
 import { elementApi } from '../src/docs/api.js';
-import { installPreviewModules } from '../src/docs/preview-runtime.js';
+import {
+  installPreviewModules,
+  mountPreview,
+  type MountedPreview,
+} from '../src/docs/preview-runtime.js';
+import type { LibraryDoc } from '../src/stories/library-docs.js';
 import '../src/styles.css';
 import './docs.css';
 import './density-compact.css';
@@ -44,6 +51,11 @@ installPreviewModules(
     return load ? load() : Promise.reject(new Error(`no icon module ${name}`));
   },
 );
+
+/** The hero mounted in each story root, so a re-render replaces it. */
+const mountedHeroes = new WeakMap<Element, MountedPreview>();
+const sameArgs = (args: Record<string, unknown>, initial: Record<string, unknown>) =>
+  Object.keys({ ...args, ...initial }).every((key) => Object.is(args[key], initial[key]));
 
 const preview = definePreview({
   // The framework's manifest reader (Controls rows and descriptions from `custom-elements.json`)
@@ -93,6 +105,23 @@ const preview = definePreview({
       if (context.globals.density === 'compact') root.dataset.tpDensity = 'compact';
       else delete root.dataset.tpDensity;
       return story();
+    },
+    // A documented element's Default story is the page's main use case: until its Controls change,
+    // it renders the page's hero, whose code is the story's source. Changed Controls render the
+    // story itself.
+    (story, context) => {
+      const doc = (context.parameters.docs as { library?: LibraryDoc } | undefined)?.library;
+      const hero = doc?.page.hero;
+      if (!hero || context.name !== 'Default' || !sameArgs(context.args, context.initialArgs))
+        return story();
+      return html`<div
+        class="tp-docs-example-preview"
+        data-align=${hero.align ?? 'center'}
+        ${ref((host) => {
+          if (!host || mountedHeroes.has(host)) return;
+          mountedHeroes.set(host, mountPreview(host as HTMLElement, hero));
+        })}
+      ></div>`;
     },
   ],
   parameters: {

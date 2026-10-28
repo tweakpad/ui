@@ -12,8 +12,7 @@ import type {
   TpColorPicker,
 } from '../../widgets/color-picker/index.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
-import { colorPickerExamples } from './color-picker.examples.js';
-import documentation from '../../../docs/widgets/color-picker.md?raw';
+import { libraryDocs } from '../library-docs.js';
 
 interface Args {
   value: string;
@@ -39,19 +38,10 @@ interface Args {
 }
 const sourceFor = (markup: string) =>
   `<script type="module">\n  import '@tweakpad/ui/styles.css';\n  import '@tweakpad/ui/register';\n  import '@tweakpad/ui/register/widgets';\n</script>\n${markup}`;
-const source = sourceFor(
-  '<tp-color-picker label="Accent" name="accent" default-value="#6d5dfc"></tp-color-picker>',
-);
 const meta: Meta<Args> = {
   title: 'Widgets/Color picker',
   component: 'tp-color-picker',
-  parameters: {
-    docs: {
-      examples: colorPickerExamples,
-      description: { component: documentation },
-      source: { code: source, language: 'html' },
-    },
-  },
+  parameters: { docs: libraryDocs('widgets/color-picker') },
   args: {
     value: '#6d5dfc',
     format: 'hex',
@@ -159,6 +149,7 @@ export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
 export const Popup: Story = {
+  tags: ['!autodocs'],
   args: { picker: 'popup', recent: ['#e53935', '#fb8c00', '#43a047', '#039be5', '#8e24aa'] },
   parameters: {
     docs: {
@@ -171,6 +162,7 @@ export const Popup: Story = {
   },
 };
 export const ChannelSliders: Story = {
+  tags: ['!autodocs'],
   args: {
     views: ['sliders'],
     view: 'sliders',
@@ -189,6 +181,7 @@ export const ChannelSliders: Story = {
   },
 };
 export const HarmonyWheel: Story = {
+  tags: ['!autodocs'],
   args: { views: ['wheel'], view: 'wheel', harmony: 'triad', value: '#e53935', label: 'Palette' },
   parameters: {
     docs: {
@@ -201,6 +194,7 @@ export const HarmonyWheel: Story = {
   },
 };
 export const HueTriangle: Story = {
+  tags: ['!autodocs'],
   args: { views: ['triangle'], view: 'triangle', value: '#43a047', label: 'Tint' },
   parameters: {
     docs: {
@@ -213,6 +207,7 @@ export const HueTriangle: Story = {
   },
 };
 export const Schemes: Story = {
+  tags: ['!autodocs'],
   args: {
     views: ['area', 'swatches', 'schemes'],
     view: 'schemes',

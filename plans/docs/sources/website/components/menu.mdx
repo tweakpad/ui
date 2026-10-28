@@ -1,0 +1,160 @@
+---
+title: Menu
+description: A popup list of commands, checks, radio choices and nested submenus, opened from a trigger or a context target.
+tag: tp-menu
+parts: [tp-menu-item, tp-menu-checkbox-item, tp-menu-radio-group, tp-menu-radio-item]
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Menu"
+  code={`<tp-menu label="Document actions">
+  <tp-button slot="trigger" variant="outline">Document actions</tp-button>
+  <tp-menu-item value="new">
+    New document
+    <tp-key-hint-group data-menu-shortcut separator="none" platform="mac">
+      <tp-key-hint key="command"></tp-key-hint><tp-key-hint key="N"></tp-key-hint>
+    </tp-key-hint-group>
+  </tp-menu-item>
+  <tp-menu-item value="duplicate">
+    Duplicate
+    <tp-key-hint-group data-menu-shortcut separator="none" platform="mac">
+      <tp-key-hint key="command"></tp-key-hint><tp-key-hint key="D"></tp-key-hint>
+    </tp-key-hint-group>
+  </tp-menu-item>
+  <tp-menu-item value="rename">Rename</tp-menu-item>
+  <tp-separator></tp-separator>
+  <tp-menu label="Share document">
+    <tp-button slot="trigger" variant="ghost">Share</tp-button>
+    <tp-menu-item value="link">Copy link</tp-menu-item>
+    <tp-menu-item value="email">Email invitation</tp-menu-item>
+  </tp-menu>
+  <tp-separator></tp-separator>
+  <tp-menu-item value="delete" variant="destructive">Delete</tp-menu-item>
+</tp-menu>`}
+/>
+
+## Usage
+
+A Menu holds commands, not navigation; use Navigation Menu for site links. Put a Button in the `trigger` slot and the command tree in the default slot. Arrow keys, Home/End and typeahead move through enabled items, and Tab closes the menu rather than trapping focus.
+
+### Commands
+
+Activating an item fires a cancelable `tp-action` with the item's `value`, then closes the menu. Listen on the Menu instead of wiring each item.
+
+<Preview
+  title="Handling commands"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-menu id="menu-actions" label="Invoice actions">
+    <tp-button slot="trigger" variant="outline">Invoice INV-2041</tp-button>
+    <tp-menu-item value="Download PDF">Download PDF</tp-menu-item>
+    <tp-menu-item value="Send reminder">Send reminder</tp-menu-item>
+    <tp-menu-item value="Mark as paid">Mark as paid</tp-menu-item>
+  </tp-menu>
+  <output id="menu-actions-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">No action yet</output>
+</div>`}
+  script={`const menu = document.querySelector('#menu-actions');
+const output = document.querySelector('#menu-actions-output');
+menu.addEventListener('tp-action', (event) => {
+  output.textContent = \`Last action: \${event.detail.value}\`;
+});`}
+/>
+
+### Inset items
+
+`inset` indents an item's label to line up with the text of items that have a leading icon, so a menu that mixes both keeps one text column.
+
+<Preview
+  title="Inset"
+  code={`<tp-menu id="menu-inset" label="Document">
+  <tp-button slot="trigger" variant="outline">Document</tp-button>
+  <tp-menu-item value="duplicate"><tp-icon data-icon="copy"></tp-icon>Duplicate</tp-menu-item>
+  <tp-menu-item value="share"><tp-icon data-icon="share"></tp-icon>Share</tp-menu-item>
+  <tp-menu-item value="rename" inset>Rename</tp-menu-item>
+  <tp-menu-item value="move" inset>Move to…</tp-menu-item>
+</tp-menu>`}
+  script={`const icons = {
+  copy: { viewBox: '0 0 24 24', paths: [{ d: 'M8 8h13v13H8zM16 8V3H3v13h5', strokeWidth: 2 }] },
+  share: { viewBox: '0 0 24 24', paths: [{ d: 'M4 12v8h16v-8M12 3v13M7 8l5-5 5 5', strokeWidth: 2 }] },
+};
+for (const icon of document.querySelectorAll('#menu-inset tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>
+
+### Checks and radio choices
+
+Checkbox items toggle independently; a radio group keeps exactly one choice. Both stay open on activation so several settings can change in one visit. A child with `data-menu-label` labels the group.
+
+<Preview
+  title="View options"
+  code={`<tp-menu label="View options">
+  <tp-button slot="trigger" variant="outline">View</tp-button>
+  <tp-menu-checkbox-item default-checked>Show sidebar</tp-menu-checkbox-item>
+  <tp-menu-checkbox-item default-checked>Show status bar</tp-menu-checkbox-item>
+  <tp-menu-checkbox-item>Word wrap</tp-menu-checkbox-item>
+  <tp-separator></tp-separator>
+  <tp-menu-radio-group aria-label="Density" default-value="comfortable">
+    <span data-menu-label>Density</span>
+    <tp-menu-radio-item value="compact">Compact</tp-menu-radio-item>
+    <tp-menu-radio-item value="comfortable">Comfortable</tp-menu-radio-item>
+    <tp-menu-radio-item value="spacious">Spacious</tp-menu-radio-item>
+  </tp-menu-radio-group>
+</tp-menu>`}
+/>
+
+### Submenus
+
+Nest a `tp-menu` with its own trigger to create a submenu at any depth. The inline-forward arrow opens it and the backward arrow returns to the parent item.
+
+<Preview
+  title="Nested menus"
+  code={`<tp-menu label="Project">
+  <tp-button slot="trigger" variant="outline">Project</tp-button>
+  <tp-menu-item value="settings">Settings</tp-menu-item>
+  <tp-menu label="Move to">
+    <tp-button slot="trigger" variant="ghost">Move to</tp-button>
+    <tp-menu-item value="marketing">Marketing</tp-menu-item>
+    <tp-menu-item value="design">Design</tp-menu-item>
+    <tp-menu label="Archive">
+      <tp-button slot="trigger" variant="ghost">Archive</tp-button>
+      <tp-menu-item value="2025">2025</tp-menu-item>
+      <tp-menu-item value="2024">2024</tp-menu-item>
+    </tp-menu>
+  </tp-menu>
+  <tp-menu-item value="archive" disabled>Archive project</tp-menu-item>
+</tp-menu>`}
+/>
+
+### Context menu
+
+`invocation="context"` turns the trigger slot into a context target: right-click, Shift+F10 or a long touch opens the menu at the pointer, and ordinary clicks keep the target's own behavior. Make the target focusable so keyboard users can reach it.
+
+<Preview
+  title="Context invocation"
+  code={`<tp-menu invocation="context" label="File actions">
+  <div slot="trigger" tabindex="0" style="display:grid;place-items:center;inline-size:28rem;max-inline-size:100%;min-block-size:9rem;border:1px dashed var(--tp-border);border-radius:var(--tp-radius-lg);color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">
+    Right-click or press Shift+F10
+  </div>
+  <tp-menu-item value="open">Open</tp-menu-item>
+  <tp-menu-item value="rename">Rename</tp-menu-item>
+  <tp-menu-item value="copy-path">Copy path</tp-menu-item>
+  <tp-separator></tp-separator>
+  <tp-menu-item value="trash" variant="destructive">Move to trash</tp-menu-item>
+</tp-menu>`}
+/>
+
+### Hover opening
+
+`open-on-hover` opens a top-level Menu on pointer hover after `open-delay`. Submenus already open on hover; keyboard and press activation keep working either way.
+
+<Preview
+  title="Open on hover"
+  code={`<tp-menu open-on-hover open-delay="150" label="Workspace">
+  <tp-button slot="trigger" variant="ghost">Acme Inc.</tp-button>
+  <tp-menu-item value="profile">Profile</tp-menu-item>
+  <tp-menu-item value="billing">Billing</tp-menu-item>
+  <tp-menu-item value="team">Invite teammates</tp-menu-item>
+  <tp-separator></tp-separator>
+  <tp-menu-item value="sign-out">Sign out</tp-menu-item>
+</tp-menu>`}
+/>

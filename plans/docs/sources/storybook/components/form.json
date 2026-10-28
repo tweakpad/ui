@@ -1,0 +1,103 @@
+{
+  "id": "components/form",
+  "tag": "tp-form",
+  "sources": {
+    "story": "src/stories/form.stories.ts",
+    "markdown": "docs/form.md",
+    "examples": [
+      "src/stories/form-use-cases.examples.ts",
+      "src/stories/form.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`tp-form` owns a native form in light DOM and coordinates Field and\nform-associated controls. It does not own transport or persistence.\n\n```html\n<tp-form id=\"profile\">\n  <tp-field label=\"Name\"><tp-input name=\"name\" required></tp-input></tp-field>\n  <div slot=\"actions\">\n    <tp-button type=\"submit\" name=\"intent\" value=\"save\">Save</tp-button>\n    <tp-button type=\"reset\" variant=\"outline\">Reset</tp-button>\n  </div>\n</tp-form>\n<script type=\"module\">\n  import '@tweakpad/ui/register';\n  import '@tweakpad/ui/styles.css';\n  document.querySelector('#profile').onFormSubmit = (values, details) => {\n    console.log(values, details.data);\n  };\n</script>\n```\n\n| Property / attribute                     | Values                                                        | Default                |\n| ---------------------------------------- | ------------------------------------------------------------- | ---------------------- |\n| `validationTiming` / `validation-timing` | on-submit, on-blur, on-change                                 | on-submit              |\n| `validationMode` / `validation-mode`     | same; explicit value takes precedence over timing             | timing                 |\n| `nativeValidation` / `native-validation` | enabled, suppressed                                           | enabled                |\n| `noAutofill` / `no-autofill`             | boolean                                                       | false                  |\n| `submissionPolicy` / `submission-policy` | always-enabled, disable-while-invalid, disable-while-pending  | always-enabled         |\n| `novalidate`                             | boolean native-interface suppression alias                    | false                  |\n| `errors`                                 | record of field name to string or string array; property only | empty record           |\n| `onFormSubmit`                           | callback `(values, details)`; property only                   | undefined              |\n| `disabled`                               | disables submission and submit actions                        | false                  |\n| `values`                                 | read-only normalized named Field values                       | current registry       |\n| `form`                                   | read-only native `HTMLFormElement` after connection           | null before connection |\n\n`no-autofill` opts every contained text-entry control (Input, Text area, Select and its query, One-time code field) out of browser and password-manager autofill. Use it for forms about other people or for app data, not for the user's own sign-in, address or payment details.\n\nNative form attributes `action`, `method`, `enctype`, `target`, `autocomplete`,\n`accept-charset`, `rel`, `name`, and the accessible label/description attributes are\nforwarded to the native form and remain live when changed. Slots are ordinary light\nDOM children. An optional container with `slot=\"actions\"` receives the actions part;\n`slot=\"error-summary\"` receives the summary part. Summary text and links remain\napplication content. Unnamed fields validate without entering `values`; duplicate\nnames aggregate in DOM registration order. External errors remain authoritative\nuntil replaced. Native suppression hides the host validation interface; Field's\nrequired synchronous validation still applies.\n\n| Method                                       | Result                                                                               |\n| -------------------------------------------- | ------------------------------------------------------------------------------------ |\n| `requestSubmit(submitter?)`                  | validates and requests native submission, preserving public or native submitter data |\n| `validate(name?)`, `actions.validate(name?)` | current `ValidationRun`, optionally restricted to matching names                     |\n| `reset()`                                    | requests native reset; restores uncontrolled defaults, preserves controlled values   |\n| `checkValidity()`, `reportValidity()`        | native validity result / native interface                                            |\n\nRequired synchronous failures prevent completion and focus the first available\ninvalid control. `onFormSubmit` prevents default navigation and receives the same\nvalues snapshot as `tp-submit`. Without a callback or event cancellation, valid\nsubmission retains native behavior. **Async validation does not block submission\nby default.** To await it, cancel `tp-submit` and use that event's current run:\n\n```js\nform.addEventListener('tp-submit', async (event) => {\n  event.preventDefault();\n  const { validationRun, values, data } = event.detail;\n  const snapshot = await validationRun.completion;\n  if (snapshot.status === 'valid') await save(values, data);\n});\n```\n\nThe run exposes generation, signal, status, fieldResults, completion and cancel().\nA new aggregate validation supersedes the previous one; cancelled field results\ncannot make a current aggregate appear valid. Pending policy disables only submit\ncontrols and restores only the disabled state that the policy applied. An authored\ndisabled action stays disabled. Field pending markers also participate.\n\n| Event        | Detail / cancellation                                                                                                               |\n| ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |\n| `tp-submit`  | `{ form, data, values, submitter, validationRun, reason: 'submit', sourceEvent }`; cancel to prevent native completion and callback |\n| `tp-invalid` | `{ form, validationRun?, control?, reason?, sourceEvent }`; describes synchronous rejection or native invalid event                 |\n| `tp-reset`   | `{ form, values, sourceEvent }`; published after accepted reset, never for a cancelled reset                                        |\n\nEvents bubble across shadow boundaries. Parts are `form`, `form-actions` and\n`form-error-summary`. Form uses the theme's Field-group spacing. Customize through the\npresentation dictionary and `partPresentation`, without spacing attributes.\nExport: `TpForm`."
+    },
+    {
+      "id": "md: Usage examples",
+      "kind": "md",
+      "heading": "## Usage examples",
+      "text": "Docs include a bug report, individual field types, mixed profile settings, repeated\nemail fields, external errors, and cross-field validation. Each uses the\nField and input components and displays the actual submitted values. These are\ncompositions, not Form variants. Application code owns dynamic field collections\nand external validation errors."
+    },
+    {
+      "id": "example: Bug report",
+      "kind": "example",
+      "title": "Bug report",
+      "code": "<tp-form aria-label=\"Bug report\">\n<tp-field label=\"Bug title\" description=\"Use 5–32 characters.\"><tp-input name=\"title\" required minlength=\"5\" maxlength=\"32\" placeholder=\"Login button not working\"></tp-input></tp-field>\n<tp-field label=\"Description\" description=\"Include steps to reproduce and expected behavior.\"><tp-input-group><tp-text-area name=\"description\" required minlength=\"20\" maxlength=\"100\" rows=\"4\"></tp-text-area><span slot=\"block-end\">Maximum 100 characters</span></tp-input-group></tp-field>\n<div slot=\"actions\"><tp-button type=\"reset\" variant=\"outline\">Reset</tp-button><tp-button type=\"submit\">Save</tp-button></div><output aria-live=\"polite\" style=\"font:var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</tp-form>",
+      "script": "const form = document.querySelector('tp-form');\n  form.onFormSubmit = (values) => {\n    form.querySelector('output').textContent = JSON.stringify(values);\n  };\n  form.addEventListener('tp-reset', () => { form.querySelector('output').textContent = ''; });"
+    },
+    {
+      "id": "example: Text input",
+      "kind": "example",
+      "title": "Text input",
+      "code": "<tp-form aria-label=\"Text input\">\n<tp-field label=\"Username\" description=\"This is your public display name.\"><tp-input name=\"username\" required minlength=\"2\" placeholder=\"alex\"></tp-input></tp-field>\n<div slot=\"actions\"><tp-button type=\"reset\" variant=\"outline\">Reset</tp-button><tp-button type=\"submit\">Save</tp-button></div><output aria-live=\"polite\" style=\"font:var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</tp-form>",
+      "script": "const form = document.querySelector('tp-form');\n  form.onFormSubmit = (values) => {\n    form.querySelector('output').textContent = JSON.stringify(values);\n  };\n  form.addEventListener('tp-reset', () => { form.querySelector('output').textContent = ''; });"
+    },
+    {
+      "id": "example: Multiline input",
+      "kind": "example",
+      "title": "Multiline input",
+      "code": "<tp-form aria-label=\"Multiline input\">\n<tp-field label=\"Bio\" description=\"Tell us about yourself.\"><tp-text-area name=\"bio\" required maxlength=\"160\" rows=\"4\"></tp-text-area></tp-field>\n<div slot=\"actions\"><tp-button type=\"reset\" variant=\"outline\">Reset</tp-button><tp-button type=\"submit\">Save</tp-button></div><output aria-live=\"polite\" style=\"font:var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</tp-form>",
+      "script": "const form = document.querySelector('tp-form');\n  form.onFormSubmit = (values) => {\n    form.querySelector('output').textContent = JSON.stringify(values);\n  };\n  form.addEventListener('tp-reset', () => { form.querySelector('output').textContent = ''; });"
+    },
+    {
+      "id": "example: Select",
+      "kind": "example",
+      "title": "Select",
+      "code": "<tp-form aria-label=\"Select\">\n<tp-field label=\"Email address\"><tp-select name=\"email\" required><option value=\"alex@example.com\">alex@example.com</option><option value=\"team@example.com\">team@example.com</option></tp-select></tp-field>\n<div slot=\"actions\"><tp-button type=\"reset\" variant=\"outline\">Reset</tp-button><tp-button type=\"submit\">Save</tp-button></div><output aria-live=\"polite\" style=\"font:var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</tp-form>",
+      "script": "const form = document.querySelector('tp-form');\n  form.onFormSubmit = (values) => {\n    form.querySelector('output').textContent = JSON.stringify(values);\n  };\n  form.addEventListener('tp-reset', () => { form.querySelector('output').textContent = ''; });"
+    },
+    {
+      "id": "example: Checkbox",
+      "kind": "example",
+      "title": "Checkbox",
+      "code": "<tp-form aria-label=\"Checkbox\">\n<tp-field label=\"Terms\" description=\"Accept the terms before saving.\"><tp-checkbox name=\"terms\" required>Accept terms and conditions</tp-checkbox></tp-field>\n<div slot=\"actions\"><tp-button type=\"reset\" variant=\"outline\">Reset</tp-button><tp-button type=\"submit\">Save</tp-button></div><output aria-live=\"polite\" style=\"font:var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</tp-form>",
+      "script": "const form = document.querySelector('tp-form');\n  form.onFormSubmit = (values) => {\n    form.querySelector('output').textContent = JSON.stringify(values);\n  };\n  form.addEventListener('tp-reset', () => { form.querySelector('output').textContent = ''; });"
+    },
+    {
+      "id": "example: Radio group",
+      "kind": "example",
+      "title": "Radio group",
+      "code": "<tp-form aria-label=\"Radio group\">\n<tp-field label=\"Notifications\"><tp-radio-group name=\"notifications\" required><tp-radio-group-item value=\"all\">All new messages</tp-radio-group-item><tp-radio-group-item value=\"direct\">Direct messages only</tp-radio-group-item><tp-radio-group-item value=\"none\">Nothing</tp-radio-group-item></tp-radio-group></tp-field>\n<div slot=\"actions\"><tp-button type=\"reset\" variant=\"outline\">Reset</tp-button><tp-button type=\"submit\">Save</tp-button></div><output aria-live=\"polite\" style=\"font:var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</tp-form>",
+      "script": "const form = document.querySelector('tp-form');\n  form.onFormSubmit = (values) => {\n    form.querySelector('output').textContent = JSON.stringify(values);\n  };\n  form.addEventListener('tp-reset', () => { form.querySelector('output').textContent = ''; });"
+    },
+    {
+      "id": "example: Switch",
+      "kind": "example",
+      "title": "Switch",
+      "code": "<tp-form aria-label=\"Switch\">\n<tp-field label=\"Security emails\" description=\"Receive email about account security.\" orientation=\"horizontal\"><tp-switch name=\"security\" default-checked></tp-switch></tp-field>\n<div slot=\"actions\"><tp-button type=\"reset\" variant=\"outline\">Reset</tp-button><tp-button type=\"submit\">Save</tp-button></div><output aria-live=\"polite\" style=\"font:var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</tp-form>",
+      "script": "const form = document.querySelector('tp-form');\n  form.onFormSubmit = (values) => {\n    form.querySelector('output').textContent = JSON.stringify(values);\n  };\n  form.addEventListener('tp-reset', () => { form.querySelector('output').textContent = ''; });"
+    },
+    {
+      "id": "example: Profile settings",
+      "kind": "example",
+      "title": "Profile settings",
+      "code": "<tp-form aria-label=\"Profile settings\">\n<tp-field label=\"Display name\"><tp-input name=\"name\" required></tp-input></tp-field>\n<tp-field label=\"Bio\"><tp-text-area name=\"bio\" maxlength=\"160\"></tp-text-area></tp-field>\n<tp-field label=\"Language\"><tp-native-select name=\"language\"><option value=\"en\">English</option><option value=\"es\">Español</option><option value=\"fr\">Français</option></tp-native-select></tp-field>\n<tp-field label=\"Email updates\" orientation=\"horizontal\"><tp-switch name=\"updates\"></tp-switch></tp-field>\n<div slot=\"actions\"><tp-button type=\"reset\" variant=\"outline\">Reset</tp-button><tp-button type=\"submit\">Save</tp-button></div><output aria-live=\"polite\" style=\"font:var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</tp-form>",
+      "script": "const form = document.querySelector('tp-form');\n  form.onFormSubmit = (values) => {\n    form.querySelector('output').textContent = JSON.stringify(values);\n  };\n  form.addEventListener('tp-reset', () => { form.querySelector('output').textContent = ''; });"
+    },
+    {
+      "id": "example: Repeated email fields",
+      "kind": "example",
+      "title": "Repeated email fields",
+      "code": "<tp-form aria-label=\"Repeated email fields\">\n<div data-emails><tp-field label=\"Email 1\"><tp-input-group><tp-input name=\"email\" type=\"email\" required></tp-input><tp-button slot=\"action\" type=\"button\" variant=\"ghost\" aria-label=\"Remove email 1\" disabled>Remove</tp-button></tp-input-group></tp-field></div>\n<tp-button type=\"button\" variant=\"outline\" data-add-email>Add email address</tp-button>\n<div slot=\"actions\"><tp-button type=\"reset\" variant=\"outline\">Reset</tp-button><tp-button type=\"submit\">Save</tp-button></div><output aria-live=\"polite\" style=\"font:var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</tp-form>",
+      "script": "const form = document.querySelector('tp-form');\n  form.onFormSubmit = (values) => {\n    form.querySelector('output').textContent = JSON.stringify(values);\n  };\n  form.addEventListener('tp-reset', () => { form.querySelector('output').textContent = ''; });\n  // Repeated field names serialize in registration order.\n  // Add/remove actual tp-field elements to update the registered collection.\n  const add = form.querySelector('[data-add-email]');\n  add.addEventListener('click', () => {\n    const fields = form.querySelector('[data-emails]');\n    if (fields.children.length >= 5) return;\n    const field = document.createElement('tp-field');\n    field.label = 'Additional email';\n    const input = document.createElement('tp-input');\n    input.name = 'email'; input.type = 'email'; input.required = true;\n    const remove = document.createElement('tp-button');\n    remove.type = 'button'; remove.variant = 'ghost'; remove.textContent = 'Remove email';\n    remove.addEventListener('click', () => field.remove());\n    field.append(input, remove); fields.append(field);\n  });"
+    },
+    {
+      "id": "example: External validation errors",
+      "kind": "example",
+      "title": "External validation errors",
+      "code": "<tp-form aria-label=\"External validation errors\">\n<tp-field label=\"Username\"><tp-input name=\"username\" default-value=\"alex\" required></tp-input></tp-field>\n<div slot=\"actions\"><tp-button type=\"reset\" variant=\"outline\">Reset</tp-button><tp-button type=\"submit\">Save</tp-button></div><output aria-live=\"polite\" style=\"font:var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</tp-form>",
+      "script": "const form = document.querySelector('tp-form');\n  form.onFormSubmit = (values) => {\n    form.querySelector('output').textContent = JSON.stringify(values);\n  };\n  form.addEventListener('tp-reset', () => { form.querySelector('output').textContent = ''; });\n  form.errors = { username: 'This username is already taken.' };\n  form.addEventListener('tp-value-change', () => { form.errors = {}; });"
+    },
+    {
+      "id": "example: Cross-field validation",
+      "kind": "example",
+      "title": "Cross-field validation",
+      "code": "<tp-form aria-label=\"Cross-field validation\">\n<tp-field label=\"Password\"><tp-input name=\"password\" type=\"password\" required></tp-input></tp-field>\n<tp-field label=\"Confirm password\"><tp-input name=\"confirm\" type=\"password\" required></tp-input></tp-field>\n<div slot=\"actions\"><tp-button type=\"reset\" variant=\"outline\">Reset</tp-button><tp-button type=\"submit\">Save</tp-button></div><output aria-live=\"polite\" style=\"font:var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</tp-form>",
+      "script": "const form = document.querySelector('tp-form');\n  form.onFormSubmit = (values) => {\n    form.querySelector('output').textContent = JSON.stringify(values);\n  };\n  form.addEventListener('tp-reset', () => { form.querySelector('output').textContent = ''; });\n  form.querySelectorAll('tp-field')[1].validator = (value, values) => value === values.password ? null : 'Passwords must match.';"
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+---
+title: One-time code field
+description: A fixed-length verification code shown as character slots, backed by one native input and one form value.
+tag: tp-one-time-code-field
+---
+
+<Preview
+  title="One-time code field"
+  code={`<tp-card style="inline-size:100%;max-inline-size:26rem">
+  <h3 slot="header" style="margin:0">Verify your login</h3>
+  <p slot="description" style="margin:0">Enter the code we sent to maya@northwind.io.</p>
+  <tp-button slot="action" variant="outline" size="sm">Resend</tp-button>
+  <tp-field label="Verification code">
+    <tp-one-time-code-field length="6" name="code" group-lengths="[3,3]"></tp-one-time-code-field>
+  </tp-field>
+  <tp-button slot="footer">Verify</tp-button>
+</tp-card>`}
+/>
+
+## Usage
+
+The slots are presentation over a single text editor, so typing, deletion, selection, paste and SMS autofill (`autocomplete="one-time-code"` by default) behave like one input. Screen readers hear one field with one name, and the form receives one value. Wrap it in a Field for the label.
+
+### Character types
+
+`validation-type` filters what can be entered: `numeric`, `alphabetic` or the default `alphanumeric`. Numeric codes also bring up the number keypad on touch devices.
+
+`onValueInvalid(detail)` and `tp-invalid-input` report `{ attemptedValue, reason: 'input' | 'paste', sourceEvent }` when normalization removes or changes attempted input. The normalizer removes whitespace, filters, applies `normalizeValue`, filters again, and truncates by Unicode code point.
+
+<Preview
+  title="Numeric"
+  code={`<tp-field label="SMS code" description="Enter the six digits from the text message.">
+  <tp-one-time-code-field length="6" name="sms-code" validation-type="numeric"></tp-one-time-code-field>
+</tp-field>`}
+/>
+
+### Groups
+
+`group-lengths` splits the slots into visual groups with a separator between them. The separator never enters the value or the accessibility tree.
+
+<Preview
+  title="Grouped"
+  code={`<div style="display:grid;gap:var(--tp-space-6)">
+  <tp-field label="Recovery code" description="Letters and numbers are accepted.">
+    <tp-one-time-code-field length="8" name="recovery-code" group-lengths="[4,4]"></tp-one-time-code-field>
+  </tp-field>
+  <tp-field label="Device pairing code">
+    <tp-one-time-code-field length="6" name="pairing-code" group-lengths="[2,2,2]" default-value="K7Q2M9"></tp-one-time-code-field>
+  </tp-field>
+</div>`}
+/>
+
+### Masking
+
+`mask` hides the entered characters on screen while the value stays intact. Use it for PINs entered where others can see.
+
+<Preview
+  title="Masked PIN"
+  code={`<tp-field label="Card PIN">
+  <tp-one-time-code-field length="4" name="pin" validation-type="numeric" mask></tp-one-time-code-field>
+</tp-field>`}
+/>
+
+### Completion
+
+`tp-complete` fires once the last slot is filled, which is the moment to verify. Add `auto-submit` to submit the owning form instead of waiting for a button press.
+
+Programmatic assignments and native resets do not simulate user completion. Completion precedes optional auto-submit.
+
+<Preview
+  title="Verify on completion"
+  code={`<form id="otc-form" style="display:grid;gap:var(--tp-space-3);justify-items:start">
+  <tp-field label="Email verification code" description="Use the code from your email.">
+    <tp-one-time-code-field id="otc-field" length="6" name="code" group-lengths="[3,3]" validation-type="numeric" auto-submit></tp-one-time-code-field>
+  </tp-field>
+  <output id="otc-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Waiting for 6 digits</output>
+</form>`}
+  script={`const form = document.querySelector('#otc-form');
+const output = document.querySelector('#otc-output');
+form.addEventListener('submit', (event) => {
+  event.preventDefault();
+  output.textContent = \`Submitted code \${new FormData(form).get('code')}\`;
+});`}
+/>
+
+### Controlled
+
+Set `value` to own the code, and accept each edit from `tp-value-change` by assigning `event.detail.value`. Your application can then clear or prefill the field directly, for example after requesting a new code.
+
+A controlled owner must publish the accepted value synchronously. Rejection restores the editor, visible slots, selection and caret; it cannot complete or submit. Keep controlled versus uncontrolled ownership stable for the element's lifetime.
+
+<Preview
+  title="Controlled value"
+  code={`<div id="otc-controlled" style="display:grid;gap:var(--tp-space-3);justify-items:start">
+  <tp-field label="Two-factor code">
+    <tp-one-time-code-field length="6" validation-type="numeric" group-lengths="[3,3]" value=""></tp-one-time-code-field>
+  </tp-field>
+  <div style="display:flex;gap:var(--tp-space-3);align-items:center">
+    <tp-button variant="outline" size="sm" data-resend>Send a new code</tp-button>
+    <output aria-live="polite" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">0 of 6 digits</output>
+  </div>
+</div>`}
+  script={`const root = document.querySelector('#otc-controlled');
+const field = root.querySelector('tp-one-time-code-field');
+const output = root.querySelector('output');
+field.addEventListener('tp-value-change', (event) => {
+  if (event.defaultPrevented || event.detail.cancelled) return;
+  field.value = event.detail.value;
+  output.textContent = \`\${field.value.length} of 6 digits\`;
+});
+root.querySelector('[data-resend]').addEventListener('click', () => {
+  field.value = '';
+  output.textContent = 'New code sent. The old one no longer works.';
+  field.focus();
+});`}
+/>
+
+### States
+
+<Preview
+  title="Disabled and invalid"
+  code={`<div style="display:grid;gap:var(--tp-space-6)">
+  <tp-field label="Verification unavailable">
+    <tp-one-time-code-field length="6" disabled default-value="482913" group-lengths="[3,3]"></tp-one-time-code-field>
+  </tp-field>
+  <tp-field label="Verification code" error="That code has expired. Request a new one." invalid>
+    <tp-one-time-code-field length="6" default-value="104857" group-lengths="[3,3]" validation-type="numeric" invalid></tp-one-time-code-field>
+  </tp-field>
+</div>`}
+/>
+
+Disabled codes are left out of form data. An invalid Field paints every slot and announces its error once for the whole code.

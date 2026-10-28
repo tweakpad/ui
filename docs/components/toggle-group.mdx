@@ -1,0 +1,190 @@
+---
+title: Toggle group
+description: A set of Toggles with one shared selection, single or multiple, and one tab stop.
+tag: tp-toggle-group
+parts: [tp-toggle]
+---
+
+<Preview
+  title="Toggle group"
+  code={`<tp-toggle-group label="Board layout" variant="outline" default-value='["board"]'>
+  <tp-toggle value="list">List</tp-toggle>
+  <tp-toggle value="board">Board</tp-toggle>
+  <tp-toggle value="timeline">Timeline</tp-toggle>
+</tp-toggle-group>`}
+/>
+
+## Usage
+
+Put `tp-toggle` elements with unique `value`s inside the group. The selection is always an ordered list of values, in both modes, so `default-value` takes a JSON array. Give the group a `label`; it is one tab stop and arrow keys move between items without selecting.
+
+A scalar attribute value is treated as one identifier; it is never split on spaces. Use properties or JSON arrays for lists.
+
+In multiple mode, membership is ordered by registered items and retains unmatched selected values. In a standalone Group, arrow keys follow orientation/direction and skip disabled members; Home/End move to boundary items. Action controls never submit a value or reset on native form reset; consumer-owned form participation must be explicit.
+
+### Multiple selection
+
+`multiple` lets each item toggle independently, as in a formatting toolbar. Icon-only items need an `aria-label`, and an `icon-*` size on the group makes them square. An explicitly supplied Icon size remains authoritative.
+
+<Preview
+  title="Text formatting"
+  code={`<tp-toggle-group id="toggle-group-format" label="Text formatting" size="icon" multiple default-value='["bold"]'>
+  <tp-toggle value="bold" aria-label="Bold"><tp-icon data-icon="bold"></tp-icon></tp-toggle>
+  <tp-toggle value="italic" aria-label="Italic"><tp-icon data-icon="italic"></tp-icon></tp-toggle>
+  <tp-toggle value="underline" aria-label="Underline"><tp-icon data-icon="underline"></tp-icon></tp-toggle>
+</tp-toggle-group>`}
+  script={`const icons = {
+  bold: { viewBox: '0 0 24 24', paths: [{ d: 'M6 12h8a4 4 0 0 1 0 8H6V4h7a4 4 0 0 1 0 8', strokeWidth: 2 }] },
+  italic: { viewBox: '0 0 24 24', paths: [{ d: 'M19 4h-9M14 20H5M15 4 9 20', strokeWidth: 2 }] },
+  underline: { viewBox: '0 0 24 24', paths: [{ d: 'M6 3v7a6 6 0 0 0 12 0V3M4 21h16', strokeWidth: 2 }] },
+};
+await customElements.whenDefined('tp-icon');
+for (const icon of document.querySelectorAll('#toggle-group-format tp-icon')) {
+  icon.icon = icons[icon.dataset.icon];
+}`}
+/>
+
+### Spacing
+
+`spacing` is the gap in spacing units (default 2). Zero joins the items into one segmented control with shared seams.
+
+<Preview
+  title="Joined"
+  code={`<tp-toggle-group label="Date range" variant="outline" spacing="0" default-value='["30d"]'>
+  <tp-toggle value="7d">7 days</tp-toggle>
+  <tp-toggle value="30d">30 days</tp-toggle>
+  <tp-toggle value="90d">90 days</tp-toggle>
+  <tp-toggle value="12m">12 months</tp-toggle>
+</tp-toggle-group>`}
+/>
+
+### Orientation and size
+
+The group's `size` and `variant` override the items' own. `size` takes the Button's set: `xs`, `sm`, the default and `lg` for text, and the square `icon-xs`, `icon-sm`, `icon` and `icon-lg` for icon-only items. `orientation="vertical"` stacks the items and switches arrow navigation to Up and Down.
+
+The host sizes to its members. An inline size set on the host (for example `inline-size: 100%` to span a column or a grid cell) is the group's own size: the `toggle-group` part fills the host, vertical members stretch across it, and a grid set on the part through `partPresentation` lays its tiles out over the full width.
+
+<Preview
+  title="Vertical, small"
+  code={`<tp-toggle-group label="Inbox filter" orientation="vertical" size="sm" default-value='["unread"]'>
+  <tp-toggle value="all">All messages</tp-toggle>
+  <tp-toggle value="unread">Unread</tp-toggle>
+  <tp-toggle value="mentions">Mentions</tp-toggle>
+  <tp-toggle value="starred">Starred</tp-toggle>
+</tp-toggle-group>`}
+/>
+
+### Icons with labels
+
+An item can pair an Icon with its text. With visible text the item needs no `aria-label`, and `data-icon="inline-start"` tightens the padding beside the icon.
+
+<Preview
+  title="View switcher"
+  code={`<tp-toggle-group id="toggle-group-views" label="View" variant="outline" default-value='["board"]'>
+  <tp-toggle value="list"><tp-icon data-icon="inline-start" data-glyph="list"></tp-icon> List</tp-toggle>
+  <tp-toggle value="board"><tp-icon data-icon="inline-start" data-glyph="board"></tp-icon> Board</tp-toggle>
+  <tp-toggle value="calendar"><tp-icon data-icon="inline-start" data-glyph="calendar"></tp-icon> Calendar</tp-toggle>
+</tp-toggle-group>`}
+  script={`const glyphs = {
+  list: { viewBox: '0 0 24 24', paths: [{ d: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01', strokeWidth: 2 }] },
+  board: { viewBox: '0 0 24 24', paths: [{ d: 'M5 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM15 3h4a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z', strokeWidth: 2 }] },
+  calendar: { viewBox: '0 0 24 24', paths: [{ d: 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z', strokeWidth: 2 }] },
+};
+await customElements.whenDefined('tp-icon');
+for (const icon of document.querySelectorAll('#toggle-group-views tp-icon')) icon.icon = glyphs[icon.dataset.glyph];`}
+/>
+
+### Rich items
+
+Items can hold more than a word, such as a sample above its name. Reshape an item through its `partContracts`: here `styleHook` stacks the content and gives each item its own weight. A Field names the group, and its description reports the selection.
+
+<Preview
+  title="Font weight"
+  code={`<tp-field label="Heading weight" style="inline-size:auto">
+  <tp-toggle-group id="toggle-group-weight" variant="outline" size="lg" default-value='["medium"]'>
+    <tp-toggle value="light" data-weight="300" aria-label="Light"><span aria-hidden="true">Aa</span><span>Light</span></tp-toggle>
+    <tp-toggle value="regular" data-weight="400" aria-label="Regular"><span aria-hidden="true">Aa</span><span>Regular</span></tp-toggle>
+    <tp-toggle value="medium" data-weight="500" aria-label="Medium"><span aria-hidden="true">Aa</span><span>Medium</span></tp-toggle>
+    <tp-toggle value="bold" data-weight="700" aria-label="Bold"><span aria-hidden="true">Aa</span><span>Bold</span></tp-toggle>
+  </tp-toggle-group>
+  <span slot="description">Headings use <strong id="toggle-group-weight-output">Medium</strong></span>
+</tp-field>`}
+  script={`const group = document.querySelector('#toggle-group-weight');
+const output = document.querySelector('#toggle-group-weight-output');
+await customElements.whenDefined('tp-toggle');
+for (const item of group.querySelectorAll('tp-toggle')) {
+  item.partContracts = {
+    toggle: { styleHook: { 'block-size': 'auto', 'padding-block': 'var(--tp-space-2)' } },
+    'toggle-content': { styleHook: { 'flex-direction': 'column', 'font-weight': item.dataset.weight } },
+  };
+}
+group.addEventListener('tp-value-change', (event) => {
+  if (event.target !== group) return;
+  const [value] = event.detail.value;
+  if (!value) {
+    event.preventDefault();
+    return;
+  }
+  output.textContent = group.querySelector(\`tp-toggle[value="\${value}"]\`).getAttribute('aria-label');
+});`}
+/>
+
+### Keeping one selected
+
+In single mode, pressing the selected item clears the selection. When an empty selection makes no sense, cancel that proposal in `tp-value-change`.
+
+<Preview
+  title="Required choice"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-toggle-group id="toggle-group-plan" label="Billing period" variant="outline" spacing="0" default-value='["yearly"]'>
+    <tp-toggle value="monthly">Monthly</tp-toggle>
+    <tp-toggle value="yearly">Yearly</tp-toggle>
+  </tp-toggle-group>
+  <output id="toggle-group-plan-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">$96 per seat, billed yearly</output>
+</div>`}
+  script={`const group = document.querySelector('#toggle-group-plan');
+const output = document.querySelector('#toggle-group-plan-output');
+group.addEventListener('tp-value-change', (event) => {
+  const [period] = event.detail.value;
+  if (!period) {
+    event.preventDefault();
+    return;
+  }
+  output.textContent = period === 'yearly' ? '$96 per seat, billed yearly' : '$10 per seat, billed monthly';
+});`}
+/>
+
+### Disabled
+
+<Preview
+  title="Disabled items"
+  code={`<tp-toggle-group label="Export format" variant="outline" default-value='["csv"]'>
+  <tp-toggle value="csv">CSV</tp-toggle>
+  <tp-toggle value="xlsx">Excel</tp-toggle>
+  <tp-toggle value="pdf" disabled>PDF</tp-toggle>
+</tp-toggle-group>`}
+/>
+
+Arrow navigation skips disabled items. `disabled` on the group disables every item while keeping each item's own setting for later.
+
+### Inside a Toolbar
+
+A Toggle group placed inside a `ToolbarController` root becomes one of its groups by itself; it needs no registration call. Its `toggle-group` part is registered as the toolbar group and keeps `role="group"` and the group's label, and its Toggles join the toolbar's single arrow-key sequence in order. The group then has no tab stop or arrow-key handling of its own: the toolbar's orientation, `loopFocus` and Home/End apply, while the group's `orientation` still lays out its Toggles. Selection mode, values and `tp-value-change` are unchanged. A disabled Toggle, or every Toggle of a disabled group, stays a focusable toolbar stop that does not activate; a Toggle excluded for a missing or duplicate value is skipped.
+
+Do not register the group's host, its part or its Toggles with the toolbar yourself; a Toggle that is already registered keeps that registration, and the group reports a `tp-diagnostic`. A group added to the toolbar later, or present before the toolbar is created, joins it once; a group removed from the toolbar, or a disposed toolbar, restores the standalone tab stop and arrow keys. A Toggle group inside a popup or dialog placed within the toolbar stays independent.
+
+<Code code={`<div id="view-tools" aria-label="View">
+  <tp-button id="fit">Fit</tp-button>
+  <tp-toggle-group label="Layout" default-value='["single"]'>
+    <tp-toggle value="single">Single</tp-toggle>
+    <tp-toggle value="spread">Spread</tp-toggle>
+  </tp-toggle-group>
+</div>`} language="html" />
+
+<Code code={`import { ToolbarController } from '@tweakpad/ui';
+import '@tweakpad/ui/register';
+
+await customElements.whenDefined('tp-button');
+const toolbar = new ToolbarController(document.getElementById('view-tools')!);
+toolbar.registerItem(document.getElementById('fit')!, { kind: 'button' });
+// The Layout group registers itself and its Toggles.`} language="ts" />

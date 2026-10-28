@@ -84,9 +84,8 @@ interface Stuck {
 }
 
 /**
- * `tp-cursor`: a decorative custom pointer (Foundation §18.22 Custom cursor, Component Library
- * Cursor). For mouse and pen users it hides the host pointer over its scope and trails the
- * pointer with a spring in the top layer; `tp-cursor-zone` elements around page content give it
+ * A decorative custom pointer. For mouse and pen users it hides the system pointer over its scope
+ * and trails the pointer with a spring in the top layer; Cursor zones around page content give it
  * a state, content, appearance, attraction and physics while the pointer is inside them. Touch
  * never engages it, and under reduced motion it follows instantly.
  *
@@ -94,7 +93,6 @@ interface Stuck {
  * `data-moving`, `data-native`, `data-stuck`.
  *
  * @slot - Resting content; without it the content part paints the default ring.
- * @csspart cursor - The host.
  * @csspart surface - The fixed, pointer-transparent box in the top layer.
  * @csspart content - The resting content, the default ring or the active zone's content.
  * @fires tp-cursor-state-change - Cancelable `{ value, previousValue, zone, reason, sourceEvent }`
@@ -178,6 +176,7 @@ export class TpCursor extends TpElement implements CursorParticipant {
   #content: HTMLElement | null = null;
   #cloneHost: HTMLElement | null = null;
 
+  /** @internal The element the cursor document tracks. */
   get element(): HTMLElement {
     return this;
   }
@@ -219,6 +218,7 @@ export class TpCursor extends TpElement implements CursorParticipant {
     return this.#pointer;
   }
 
+  /** Whether the followed pointer is pressed. */
   get pressed(): boolean {
     return this.#pressed;
   }
@@ -243,6 +243,7 @@ export class TpCursor extends TpElement implements CursorParticipant {
 
   // ---- Registry callbacks ------------------------------------------------------------------
 
+  /** @internal Called by the cursor document. */
   pointerMoved(point: CursorPoint, event: PointerEvent): void {
     if (this.disabled) return;
     const scopeElement = this.#scopeElement();
@@ -260,10 +261,12 @@ export class TpCursor extends TpElement implements CursorParticipant {
     if (this.#following) this.#subscription?.wake();
   }
 
+  /** @internal Called by the cursor document. */
   pointerLeft(): void {
     this.#setOutside(true);
   }
 
+  /** @internal Called by the cursor document. */
   gateChanged(event: Event | null): void {
     this.#setFollowing(
       !this.disabled && this.#pointer !== null && (this.#registry?.engaged ?? false),
@@ -272,11 +275,13 @@ export class TpCursor extends TpElement implements CursorParticipant {
     );
   }
 
+  /** @internal Called by the cursor document. */
   pressedChanged(pressed: boolean): void {
     this.#pressed = pressed;
     this.toggleAttribute('data-pressed', pressed);
   }
 
+  /** @internal Called by the cursor document. */
   zonesChanged(event: Event | null, updated: CursorZoneLike | null): void {
     if (updated && updated === (this.#zone as CursorZoneLike | null)) {
       this.#releaseZone();
@@ -298,7 +303,7 @@ export class TpCursor extends TpElement implements CursorParticipant {
     this.#remeasure();
   }
 
-  /** Re-enters the top layer above surfaces opened later (Foundation `cc-layer`). */
+  /** Re-enters the top layer, above surfaces such as dialogs opened since the cursor appeared. */
   raise(): void {
     const surface = this.#surface;
     if (!surface || !this.isConnected) return;

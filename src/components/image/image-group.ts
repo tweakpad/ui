@@ -12,18 +12,16 @@ import { imagePresentation } from '../../presentation/families/image.js';
 export type ImageGroupLoadingStatus = 'idle' | 'loading' | 'loaded';
 
 /**
- * `tp-image-group`: coordinates the `tp-image` elements inside it (Foundation §18.17 `img-group`,
- * a coordinator under §18.18). It fetches every member once the group nears the viewport, reports
- * the aggregate loading status, and reveals the members together in document order, `stagger`
- * milliseconds apart, only after all of them have settled (loaded and decoded, failed, or
- * unsourced) and nothing holds it. Inside a `tp-scroll-trigger` (or another group) it is a member
- * of that coordinator and plays its sequence when the outer one reveals it.
+ * Coordinates the Images inside it: it fetches every member once the group nears the viewport,
+ * reports the aggregate loading status, and reveals the members together in document order,
+ * `stagger` milliseconds apart, only after all of them have settled (loaded and decoded, failed,
+ * or unsourced) and nothing holds it. Inside a Scroll trigger (or another group) it is a member of
+ * that coordinator and plays its sequence when the outer one reveals it.
  *
  * Members never trigger their own reveal; the group owns their timing. Events share names with
  * the image events: check `event.target` to tell the group's from a member's, which bubble too.
  *
- * @slot - Content, including the member `tp-image` elements at any depth.
- * @csspart group - The host.
+ * @slot - Content, including the member Images at any depth.
  * @fires tp-loading-status-change - `{ status, loaded, failed, total }` when the aggregate
  * status changes.
  * @fires tp-reveal-change - `{ revealed }` when the group sequence starts or resets.
@@ -79,6 +77,7 @@ export class TpImageGroup extends TpElement {
     },
   });
 
+  /** @internal The coordination its member Images join. */
   readonly [revealCoordinatorHost]: RevealCoordinatorHost = this.#coordinator.host;
 
   /** Aggregate loading status of the members. */

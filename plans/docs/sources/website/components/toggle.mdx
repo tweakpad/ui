@@ -1,0 +1,144 @@
+---
+title: Toggle
+description: A two-state button that stays pressed or unpressed, for formatting, view and filter actions.
+tag: tp-toggle
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Toggle"
+  code={`<div id="toggle-hero" style="display:flex;gap:var(--tp-space-1)">
+  <tp-toggle aria-label="Bold" default-pressed><tp-icon data-icon="bold"></tp-icon></tp-toggle>
+  <tp-toggle aria-label="Italic"><tp-icon data-icon="italic"></tp-icon></tp-toggle>
+  <tp-toggle aria-label="Underline"><tp-icon data-icon="underline"></tp-icon></tp-toggle>
+</div>`}
+  script={`const icons = {
+  bold: { viewBox: '0 0 24 24', paths: [{ d: 'M6 12h8a4 4 0 0 1 0 8H6V4h7a4 4 0 0 1 0 8', strokeWidth: 2 }] },
+  italic: { viewBox: '0 0 24 24', paths: [{ d: 'M19 4h-9M14 20H5M15 4 9 20', strokeWidth: 2 }] },
+  underline: { viewBox: '0 0 24 24', paths: [{ d: 'M6 3v7a6 6 0 0 0 12 0V3M4 21h16', strokeWidth: 2 }] },
+};
+await customElements.whenDefined('tp-icon');
+for (const icon of document.querySelectorAll('#toggle-hero tp-icon[data-icon]')) {
+  icon.icon = icons[icon.dataset.icon];
+}`}
+/>
+
+## Usage
+
+A Toggle is an action with a remembered state, exposed as a button with `aria-pressed`. It does not submit a form value; use Checkbox for a Boolean field and Radio Group for a single choice. To coordinate several Toggles, put them in a Toggle Group.
+
+### Variants and sizes
+
+<Preview
+  title="Variants and sizes"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <div style="display:flex;gap:var(--tp-space-2)">
+    <tp-toggle default-pressed>Ghost</tp-toggle>
+    <tp-toggle variant="outline" default-pressed>Outline</tp-toggle>
+  </div>
+  <div style="display:flex;gap:var(--tp-space-2);align-items:center">
+    <tp-toggle variant="outline" size="xs">Extra small</tp-toggle>
+    <tp-toggle variant="outline" size="sm">Small</tp-toggle>
+    <tp-toggle variant="outline">Default</tp-toggle>
+    <tp-toggle variant="outline" size="lg">Large</tp-toggle>
+  </div>
+</div>`}
+/>
+
+Pressed paint stays distinct while hovered, so the state reads the same whether or not the pointer is over it.
+
+`icon-xs`, `icon-sm`, `icon` and `icon-lg` make square Toggles at the heights of `xs`, `sm`, the default and `lg`, with no inline padding, also inside a joined Toggle group. Use them for Toggles that hold only an icon, and name each with `aria-label`.
+
+<Preview
+  title="Icon sizes"
+  code={`<div id="toggle-icon-sizes" style="display:flex;gap:var(--tp-space-2);align-items:center">
+  <tp-toggle variant="outline" size="icon-xs" aria-label="Pin"><tp-icon></tp-icon></tp-toggle>
+  <tp-toggle variant="outline" size="icon-sm" aria-label="Pin"><tp-icon></tp-icon></tp-toggle>
+  <tp-toggle variant="outline" size="icon" aria-label="Pin" default-pressed><tp-icon></tp-icon></tp-toggle>
+  <tp-toggle variant="outline" size="icon-lg" aria-label="Pin"><tp-icon></tp-icon></tp-toggle>
+</div>`}
+  script={`const pin = { viewBox: '0 0 24 24', paths: [{ d: 'M12 17v5M9 10.76V6h6v4.76l2.5 2.74V17h-11v-3.5Z', strokeWidth: 2 }] };
+await customElements.whenDefined('tp-icon');
+for (const icon of document.querySelectorAll('#toggle-icon-sizes tp-icon')) icon.icon = pin;`}
+/>
+
+### Icons
+
+Compose a `tp-icon` in the default slot. Icons are decorative, so an icon-only Toggle needs an `aria-label`; with visible text the label is enough. `data-icon="inline-start"` tightens the edge padding beside the icon.
+
+<Preview
+  title="Icon and label"
+  code={`<div id="toggle-icons" style="display:flex;gap:var(--tp-space-2)">
+  <tp-toggle variant="outline" aria-label="Bookmark"><tp-icon data-glyph="bookmark"></tp-icon></tp-toggle>
+  <tp-toggle variant="outline" default-pressed><tp-icon data-icon="inline-start" data-glyph="bookmark"></tp-icon> Saved</tp-toggle>
+</div>`}
+  script={`const bookmark = { viewBox: '0 0 24 24', paths: [{ d: 'M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-4-7 4Z', strokeWidth: 2 }] };
+await customElements.whenDefined('tp-icon');
+for (const icon of document.querySelectorAll('#toggle-icons tp-icon')) icon.icon = bookmark;`}
+/>
+
+### Artwork that follows the state
+
+To swap artwork with the pressed state, such as an outlined bookmark that fills in, render the content from the state through `partContracts`. The `toggle-content` part's `content` receives the committed state, and `html` from `lit` builds the template.
+
+<Preview
+  title="Pressed artwork"
+  code={`<div id="toggle-artwork" style="display:flex;gap:var(--tp-space-2)">
+  <tp-toggle variant="outline" data-label="Save"></tp-toggle>
+  <tp-toggle variant="outline" data-label="Save" default-pressed></tp-toggle>
+</div>`}
+  script={`import { html } from 'lit';
+
+const bookmark = { viewBox: '0 0 24 24', paths: [{ d: 'M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-4-7 4Z', strokeWidth: 2 }] };
+const filled = { ...bookmark, paths: bookmark.paths.map((path) => ({ ...path, fill: 'currentColor' })) };
+await customElements.whenDefined('tp-toggle');
+for (const toggle of document.querySelectorAll('#toggle-artwork tp-toggle')) {
+  toggle.partContracts = {
+    'toggle-content': {
+      content: (state) => html\`<tp-icon data-icon="inline-start" .icon=\${state.pressed ? filled : bookmark}></tp-icon> \${state.pressed ? 'Saved' : 'Save'}\`,
+    },
+  };
+}`}
+/>
+
+### Beside Buttons
+
+Toggles share the Button's variants and sizes, so a Toggle and a Button of the same size line up in a toolbar. Use the Button for a one-off action and the Toggle for a state that stays on.
+
+<Preview
+  title="With Buttons"
+  code={`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-2)">
+  <tp-button variant="outline" size="sm">Insert link</tp-button>
+  <tp-toggle variant="outline" size="sm">Spell check</tp-toggle>
+  <tp-button variant="outline">Insert link</tp-button>
+  <tp-toggle variant="outline" default-pressed>Spell check</tp-toggle>
+</div>`}
+/>
+
+### Listening to changes
+
+Every press proposes the inverse state through a cancelable `tp-value-change`. Read `event.detail.value` to react, or call `event.preventDefault()` to keep the current state.
+
+<Preview
+  title="Change events"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-toggle id="toggle-mute" variant="outline">Mute notifications</tp-toggle>
+  <output id="toggle-mute-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Notifications are on</output>
+</div>`}
+  script={`const toggle = document.querySelector('#toggle-mute');
+const output = document.querySelector('#toggle-mute-output');
+toggle.addEventListener('tp-value-change', (event) => {
+  output.textContent = event.detail.value ? 'Notifications are muted' : 'Notifications are on';
+});`}
+/>
+
+### Disabled
+
+<Preview
+  title="Disabled"
+  code={`<tp-toggle variant="outline" disabled>Archived</tp-toggle>
+<tp-toggle variant="outline" disabled default-pressed>Pinned</tp-toggle>`}
+/>
+
+A disabled Toggle leaves the tab order and ignores presses; its pressed state is still shown.

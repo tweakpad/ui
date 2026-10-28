@@ -1,0 +1,130 @@
+---
+title: Command palette
+description: A searchable list of commands with groups, icons and shortcuts, shown inline or in a dialog.
+tag: tp-command-palette
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Command palette"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:28rem;margin-inline:auto">
+  <tp-command-palette id="command-palette-demo" inline label="Commands" placeholder="Search commands…"></tp-command-palette>
+  <output id="command-palette-demo-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"></output>
+</div>`}
+  script={`const outline = (...paths) => ({ viewBox: '0 0 24 24', paths: paths.map((d) => ({ d, strokeWidth: 1.75 })) });
+const icons = {
+  file: outline('M14 3H6v18h12V7z', 'M14 3v4h4'),
+  folder: outline('M3 6h6l2 2h10v12H3z'),
+  user: outline('M20 21v-2a6 6 0 0 0-6-6h-4a6 6 0 0 0-6 6v2', 'M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8'),
+  card: outline('M3 6h18v12H3z', 'M3 10h18'),
+  logout: outline('M15 4h4v16h-4', 'M10 8l-4 4 4 4', 'M6 12h10'),
+};
+const palette = document.querySelector('#command-palette-demo');
+palette.items = [
+  { type: 'group', label: 'Create', items: [
+    { value: 'new-document', label: 'New document', description: 'A blank page in this project', icon: icons.file, shortcut: '⌘N', keywords: ['page', 'write'] },
+    { value: 'new-project', label: 'New project', description: 'A workspace with its own members', icon: icons.folder, shortcut: '⌘⇧N' },
+  ] },
+  { type: 'separator' },
+  { type: 'group', label: 'Account', items: [
+    { value: 'profile', label: 'Profile', icon: icons.user, shortcut: '⌘P' },
+    { value: 'billing', label: 'Billing', icon: icons.card, keywords: ['invoice', 'plan', 'payment'] },
+    { value: 'sign-out', label: 'Sign out', icon: icons.logout, disabled: true },
+  ] },
+];
+palette.addEventListener('tp-execute', (event) => {
+  document.querySelector('#command-palette-demo-output').textContent = \`Ran “\${event.detail.commandId}”\`;
+});`}
+/>
+
+## Usage
+
+Feed commands through the `items` property: plain items, `{ type: 'group', label, items }` groups and `{ type: 'separator' }` dividers. Each item takes a `value`, `label`, optional `description`, `icon`, `shortcut`, `keywords` and `disabled`. A `description` is a secondary line after the label, in the `command-palette-item-description` part, and becomes the item's accessible description. Typing filters and ranks the list; arrow keys, Home and End move the active command, and Enter runs it.
+
+Running a command fires a cancelable `tp-execute` event with `{ commandId }`. The palette does not select, remember or close anything on its own, so your handler decides what happens next. Shortcuts are informative only: the palette never installs global key bindings.
+
+### In a dialog
+
+Leave `inline` off and put a Button in the `trigger` slot to present the palette in a modal Dialog, with the Dialog's focus trap, Escape and outside dismissal. For a quick list, native `option` children work instead of `items`.
+
+<Preview
+  title="Modal palette"
+  code={`<tp-command-palette id="command-palette-demo-modal" label="Go to" placeholder="Jump to a page…">
+  <tp-button slot="trigger" variant="outline">
+    Go to…
+    <tp-key-hint-group slot="icon-end" aria-hidden="true">
+      <tp-key-hint key="mod"></tp-key-hint>
+      <tp-key-hint>J</tp-key-hint>
+    </tp-key-hint-group>
+  </tp-button>
+  <option value="dashboard">Dashboard</option>
+  <option value="projects">Projects</option>
+  <option value="invoices">Invoices</option>
+  <option value="team">Team members</option>
+  <option value="settings">Workspace settings</option>
+</tp-command-palette>`}
+  script={`const palette = document.querySelector('#command-palette-demo-modal');
+palette.addEventListener('tp-execute', () => palette.close());
+document.addEventListener('keydown', (event) => {
+  if (!palette.isConnected) return;
+  if (event.key.toLowerCase() === 'j' && (event.metaKey || event.ctrlKey)) {
+    event.preventDefault();
+    palette.setOpen(true, 'programmatic', event);
+  }
+});`}
+/>
+
+Here the page owns the shortcut: a `keydown` listener opens the palette with `setOpen()`, and the `tp-execute` handler closes it after navigating.
+
+### Empty results
+
+When nothing matches, the palette shows “No results found.” Replace it with the `empty` slot to point people somewhere useful.
+
+<Preview
+  title="Custom empty state"
+  align="stretch"
+  code={`<tp-command-palette inline label="Teammates" default-query="priya" placeholder="Search teammates…" style="max-inline-size:28rem;margin-inline:auto">
+  <option value="maya">Maya Patel</option>
+  <option value="jordan">Jordan Lee</option>
+  <option value="ana">Ana Ruiz</option>
+  <span slot="empty">No teammates match. Invite them from Team settings.</span>
+</tp-command-palette>`}
+/>
+
+`default-query` sets the starting search text. Use `query` with `onQueryChange` when the application needs to own the query, for example to sync it with the URL.
+
+### Server results
+
+When a server does the searching, set the `shouldFilter` property to `false` so the palette shows `items` exactly as supplied, then replace `items` whenever the query changes. `tp-query-change` reports each proposed query in `detail.value`.
+
+<Preview
+  title="Server-filtered list"
+  align="stretch"
+  code={`<tp-command-palette id="command-palette-server" inline label="Search docs" placeholder="Search the documentation…" style="max-inline-size:28rem;margin-inline:auto"></tp-command-palette>`}
+  script={`const pages = [
+  'Installing the CLI', 'Inviting teammates', 'Managing billing', 'Exporting data as CSV',
+  'Connecting GitHub', 'Setting up single sign-on', 'Rotating API keys', 'Webhooks reference',
+  'Audit log retention', 'Deleting a workspace',
+];
+await customElements.whenDefined('tp-command-palette');
+const palette = document.getElementById('command-palette-server');
+palette.shouldFilter = false;
+const show = (titles) => {
+  palette.items = titles.map((title) => ({ value: title.toLowerCase().replaceAll(' ', '-'), label: title }));
+};
+show(pages.slice(0, 4));
+let request = 0;
+palette.addEventListener('tp-query-change', (event) => {
+  const query = event.detail.value.trim().toLowerCase();
+  const current = ++request;
+  // Stands in for fetch('/api/search?q=' + query); stale responses are ignored.
+  setTimeout(() => {
+    if (current !== request) return;
+    show(query ? pages.filter((page) => page.toLowerCase().includes(query)) : pages.slice(0, 4));
+  }, 300);
+});`}
+/>
+
+To keep local filtering but change the ranking, assign a `filter` function instead: return `false` to hide an item or a number to sort by, lowest first.

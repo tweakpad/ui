@@ -1,0 +1,203 @@
+---
+title: Tabs
+description: One panel at a time from a set of peers, with native tab buttons and roving keyboard focus.
+tag: tp-tabs
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Tabs"
+  align="stretch"
+  code={`<tp-tabs default-value="account" label="Settings" style="max-inline-size:26rem;margin-inline:auto">
+  <button slot="tab" value="account">Account</button>
+  <button slot="tab" value="password">Password</button>
+  <section slot="panel" value="account">
+    <tp-card>
+      <span slot="header">Account</span>
+      <span slot="description">Update how your name appears to teammates.</span>
+      <tp-field label="Display name">
+        <tp-input name="display-name" default-value="Maya Chen"></tp-input>
+      </tp-field>
+      <tp-button slot="footer">Save changes</tp-button>
+    </tp-card>
+  </section>
+  <section slot="panel" value="password">
+    <tp-card>
+      <span slot="header">Password</span>
+      <span slot="description">Use at least 12 characters.</span>
+      <tp-field label="New password">
+        <tp-input type="password" name="new-password" autocomplete="new-password"></tp-input>
+      </tp-field>
+      <tp-button slot="footer">Update password</tp-button>
+    </tp-card>
+  </section>
+</tp-tabs>`}
+/>
+
+## Usage
+
+Author each tab as a native `<button slot="tab">` and each panel as an element with `slot="panel"`, matched by `value`. Tabs supplies roles, `type="button"`, roving tabindex and the `aria-controls` and `aria-labelledby` links; `label` names the tab list.
+
+### Variants
+
+<Preview
+  title="Underline"
+  align="stretch"
+  code={`<tp-tabs variant="underline" default-value="overview" label="Project" style="max-inline-size:28rem;margin-inline:auto">
+  <button slot="tab" value="overview">Overview</button>
+  <button slot="tab" value="activity">Activity</button>
+  <button slot="tab" value="settings">Settings</button>
+  <p slot="panel" value="overview">Website redesign: 14 open tasks, due March 28.</p>
+  <p slot="panel" value="activity">Jonas Weber moved “Pricing page” to Review 2 hours ago.</p>
+  <p slot="panel" value="settings">Visibility, integrations and archive options.</p>
+</tp-tabs>`}
+/>
+
+`enclosed` (the default) suits tabs that switch a contained surface; `underline` sits lighter on page-level navigation. The indicator glides to the selected tab in both.
+
+### Vertical
+
+<Preview
+  title="Vertical"
+  align="stretch"
+  code={`<tp-tabs orientation="vertical" default-value="general" label="Workspace settings" style="max-inline-size:30rem;margin-inline:auto">
+  <button slot="tab" value="general">General</button>
+  <button slot="tab" value="members">Members</button>
+  <button slot="tab" value="billing">Billing</button>
+  <p slot="panel" value="general">Workspace name, URL and default language.</p>
+  <p slot="panel" value="members">12 members, 3 pending invitations.</p>
+  <p slot="panel" value="billing">Team plan, renews on April 1 for $480.</p>
+</tp-tabs>`}
+/>
+
+Vertical lists use Up and Down instead of Left and Right, and expose `aria-orientation`.
+
+### Keyboard and activation
+
+<Preview
+  title="Automatic activation"
+  align="stretch"
+  code={`<tp-tabs activation="automatic" default-value="day" label="Range" style="max-inline-size:24rem;margin-inline:auto">
+  <button slot="tab" value="day">Day</button>
+  <button slot="tab" value="week">Week</button>
+  <button slot="tab" value="month">Month</button>
+  <p slot="panel" value="day">1,204 visitors today.</p>
+  <p slot="panel" value="week">8,931 visitors this week.</p>
+  <p slot="panel" value="month">36,410 visitors this month.</p>
+</tp-tabs>`}
+/>
+
+By default activation is `manual`: arrow keys move focus and Enter or Space selects. Use `automatic` when panels are cheap to show, so selection follows focus. Arrows wrap at the ends unless the `loopFocus` property is set to `false`.
+
+### Responding to changes
+
+<Preview
+  title="Change event and setValue"
+  align="stretch"
+  script={`const tabs = document.querySelector('#tabs-demo-report');
+const status = document.querySelector('#tabs-demo-report-status');
+tabs.addEventListener('tp-value-change', (event) => {
+  if (event.target !== tabs) return;
+  status.textContent = \`Showing \${event.detail.value}\`;
+});
+document.querySelector('#tabs-demo-report-jump').addEventListener('click', () => {
+  tabs.setValue('refunds');
+});`}
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:26rem;margin-inline:auto">
+  <tp-tabs id="tabs-demo-report" default-value="revenue" label="Monthly report">
+    <button slot="tab" value="revenue">Revenue</button>
+    <button slot="tab" value="orders">Orders</button>
+    <button slot="tab" value="refunds">Refunds</button>
+    <p slot="panel" value="revenue">$84,210 in September, up 6% on August.</p>
+    <p slot="panel" value="orders">1,932 orders, 214 from new customers.</p>
+    <p slot="panel" value="refunds">37 refunds totalling $2,940; 9 still pending.</p>
+  </tp-tabs>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--tp-space-3)">
+    <output id="tabs-demo-report-status" aria-live="polite" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Showing revenue</output>
+    <tp-button id="tabs-demo-report-jump" variant="outline" size="sm">Review pending refunds</tp-button>
+  </div>
+</div>`}
+/>
+
+Selection publishes a cancelable `tp-value-change` with the proposed `value`; call `preventDefault()` to keep the current tab, for example while a panel has unsaved edits. `setValue()` selects a tab from code through the same proposal and returns whether it was accepted. For controlled Tabs, set the `value` property from the start and write each accepted `detail.value` back to it.
+
+### Guarding unsaved edits
+
+For controlled Tabs, set `value` from the start and accept proposals in `onValueChange`. Skipping the write-back, or calling `preventDefault()`, keeps the current tab. Edit the name below, then try to leave the tab. The profile panel is `keep-mounted`, so its draft survives while another tab is showing.
+
+<Preview
+  title="Controlled with a veto"
+  align="stretch"
+  script={`const tabs = document.querySelector('#tabs-guard');
+const name = document.querySelector('#tabs-guard-name');
+const status = document.querySelector('#tabs-guard-status');
+const save = document.querySelector('#tabs-guard-save');
+await customElements.whenDefined('tp-input');
+await name.updateComplete;
+let saved = name.value;
+const dirty = () => name.value !== saved;
+tabs.onValueChange = (event) => {
+  if (dirty()) {
+    event.preventDefault();
+    status.textContent = 'Save or discard your changes before leaving Profile.';
+    return;
+  }
+  status.textContent = '';
+  tabs.value = event.detail.value;
+};
+name.addEventListener('input', () => { status.textContent = ''; });
+save.addEventListener('click', () => {
+  saved = name.value;
+  status.textContent = 'Saved.';
+});
+document.querySelector('#tabs-guard-discard').addEventListener('click', () => {
+  name.setValue(saved);
+  status.textContent = '';
+});`}
+  code={`<tp-tabs id="tabs-guard" value="profile" label="Account settings" style="max-inline-size:26rem;margin-inline:auto">
+  <button slot="tab" value="profile">Profile</button>
+  <button slot="tab" value="notifications">Notifications</button>
+  <section slot="panel" value="profile" keep-mounted>
+    <tp-card>
+      <span slot="header">Profile</span>
+      <span slot="description">Shown on comments and assignments.</span>
+      <tp-field label="Display name">
+        <tp-input id="tabs-guard-name" name="display-name" default-value="Maya Chen"></tp-input>
+      </tp-field>
+      <p id="tabs-guard-status" role="status" style="margin:0;color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"></p>
+      <div slot="footer" style="display:flex;gap:var(--tp-space-2)">
+        <tp-button id="tabs-guard-save">Save</tp-button>
+        <tp-button id="tabs-guard-discard" variant="ghost">Discard</tp-button>
+      </div>
+    </tp-card>
+  </section>
+  <section slot="panel" value="notifications">
+    <tp-card>
+      <span slot="header">Notifications</span>
+      <span slot="description">Email me when someone mentions me or assigns me a task.</span>
+    </tp-card>
+  </section>
+</tp-tabs>`}
+/>
+
+### Disabled tabs
+
+<Preview
+  title="Disabled"
+  align="stretch"
+  code={`<tp-tabs default-value="details" label="Order" style="max-inline-size:26rem;margin-inline:auto">
+  <button slot="tab" value="details">Details</button>
+  <button slot="tab" value="shipping">Shipping</button>
+  <button slot="tab" value="returns" aria-disabled="true">Returns</button>
+  <p slot="panel" value="details">Order #10482, placed March 3.</p>
+  <p slot="panel" value="shipping">Delivered March 6 by UPS.</p>
+  <p slot="panel" value="returns">Returns open after delivery.</p>
+</tp-tabs>`}
+/>
+
+`aria-disabled="true"` keeps a tab discoverable through arrow navigation; native `disabled` removes it from focus. Neither can be activated. Setting `disabled` on Tabs itself locks the whole list, for example while the content behind it is loading.
+
+### Panel mounting
+
+Inactive panels are detached from the DOM after their exit and restored on activation, so heavy content costs nothing while hidden. Add `keep-mounted` to a panel that must stay in the document, for example one holding form fields that still submit, and it is kept hidden and inert instead.

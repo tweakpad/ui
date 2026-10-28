@@ -1,0 +1,140 @@
+---
+title: Avatar
+description: A person or entity's image, with initials as a fallback while it loads or if it fails.
+tag: tp-avatar
+parts: [tp-avatar-group]
+---
+
+<Preview
+  title="Avatar"
+  code={`<tp-avatar-group omitted="4">
+  <tp-avatar src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" fallback="MC" alt="Maya Chen"></tp-avatar>
+  <tp-avatar src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop" fallback="DK" alt="Daniel Kim"></tp-avatar>
+  <tp-avatar src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" fallback="AO" alt="Amara Okafor"></tp-avatar>
+  <tp-avatar src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop" fallback="NW" alt="Noah Williams"></tp-avatar>
+</tp-avatar-group>`}
+/>
+
+## Usage
+
+`alt` names the person for assistive technology and `fallback` holds the initials shown until the image loads, or when it fails. Always set a fallback: images can be missing, slow or blocked.
+
+### Fallback
+
+<Preview
+  title="Fallbacks"
+  code={`<tp-avatar fallback="LF" alt="Lucía Fernández"></tp-avatar>
+<tp-avatar src="https://example.invalid/missing.jpg" fallback="JR" alt="James Reid"></tp-avatar>
+<tp-avatar alt="Acme Inc.">
+  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2M10 6h4M10 10h4M10 14h4M10 18h4"/></svg>
+</tp-avatar>`}
+/>
+
+A broken `src` falls back without flashing. Default-slot content replaces the `fallback` text when initials don't fit, such as an icon for an organization. Use `fallback-delay` to avoid a brief flash of initials on fast connections. Changing the image source after an error retries loading. A fallback already shown is not hidden by a later delay change. `keep-mounted` preserves the native image for lazy loading; while unavailable it is visually and accessibility hidden, with fallback active.
+
+### Sizes
+
+<Preview
+  title="Sizes"
+  code={`<tp-avatar size="sm" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" fallback="MC" alt="Maya Chen"></tp-avatar>
+<tp-avatar src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" fallback="MC" alt="Maya Chen"></tp-avatar>
+<tp-avatar size="lg" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" fallback="MC" alt="Maya Chen"></tp-avatar>`}
+/>
+
+### Status
+
+<Preview
+  title="Status badge"
+  code={`<tp-avatar size="lg" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop" fallback="DK" alt="Daniel Kim">
+  <span slot="badge" role="img" aria-label="Online"></span>
+</tp-avatar>
+<tp-avatar size="lg" fallback="AO" alt="Amara Okafor">
+  <span slot="badge" role="img" aria-label="Online"></span>
+</tp-avatar>`}
+/>
+
+The `badge` slot adds a status dot on the edge of the avatar. Give it a text name such as "Online"; the color alone tells assistive technology nothing.
+
+<Preview
+  title="Icon badges"
+  code={`<tp-avatar size="lg" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" fallback="AO" alt="Amara Okafor">
+  <span slot="badge" role="img" aria-label="Verified"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+</tp-avatar>
+<tp-avatar size="lg" fallback="NW" alt="Noah Williams">
+  <span slot="badge" role="img" aria-label="Add to team"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+</tp-avatar>`}
+/>
+
+The badge grows to hold a small icon, which works for marks like verified or an add action. It still needs its own name. Small avatars hide the icon while retaining the badge's accessible status name.
+
+### Groups
+
+<Preview
+  title="Group with overflow"
+  code={`<tp-avatar-group size="sm" omitted="12">
+  <tp-avatar size="sm" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" fallback="AO" alt="Amara Okafor"></tp-avatar>
+  <tp-avatar size="sm" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop" fallback="NW" alt="Noah Williams"></tp-avatar>
+  <tp-avatar size="sm" fallback="LF" alt="Lucía Fernández"></tp-avatar>
+</tp-avatar-group>`}
+/>
+
+`tp-avatar-group` overlaps its avatars and, with `omitted`, ends with a named count of the people not shown. The group's `size` sets the count's size; each avatar keeps its own. Logical overlap supports RTL.
+
+<Preview
+  title="Icon count in an empty state"
+  align="stretch"
+  code={`<tp-empty-state title="Nobody has joined yet" description="Maya, Daniel and Amara were invited to Q3 planning, along with three others.">
+  <tp-avatar-group slot="media" id="avatar-icon-count" size="lg" omitted="3">
+    <tp-avatar size="lg" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" fallback="MC" alt="Maya Chen"></tp-avatar>
+    <tp-avatar size="lg" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop" fallback="DK" alt="Daniel Kim"></tp-avatar>
+    <tp-avatar size="lg" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" fallback="AO" alt="Amara Okafor"></tp-avatar>
+  </tp-avatar-group>
+  <tp-button slot="actions" variant="outline">Resend invites</tp-button>
+</tp-empty-state>`}
+  script={`import { html } from 'lit';
+
+await customElements.whenDefined('tp-avatar-group');
+document.querySelector('#avatar-icon-count').partContracts = {
+  'avatar-overflow-count': {
+    content: html\`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>\`,
+  },
+};`}
+/>
+
+The `avatar-overflow-count` part can render an icon in place of the number through `partContracts`. It still announces the three people who aren't shown.
+
+### Shape and grayscale
+
+<Preview
+  title="Custom shape and grayscale"
+  code={`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-4)">
+  <tp-avatar size="lg" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" fallback="MC" alt="Maya Chen" style="border-radius:var(--tp-radius-lg)"></tp-avatar>
+  <tp-avatar size="lg" fallback="AC" alt="Acme Inc." style="border-radius:var(--tp-radius-lg)"></tp-avatar>
+  <tp-avatar-group id="avatar-grayscale">
+    <tp-avatar src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop" fallback="DK" alt="Daniel Kim"></tp-avatar>
+    <tp-avatar src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" fallback="AO" alt="Amara Okafor"></tp-avatar>
+    <tp-avatar src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop" fallback="NW" alt="Noah Williams"></tp-avatar>
+  </tp-avatar-group>
+</div>`}
+  script={`await customElements.whenDefined('tp-avatar');
+for (const avatar of document.querySelectorAll('#avatar-grayscale tp-avatar')) {
+  avatar.partPresentation = { 'avatar-image': { styleHook: { filter: 'grayscale(1)' } } };
+}`}
+/>
+
+A `border-radius` on the avatar reshapes the image and the fallback alike, which suits companies and workspaces. `partPresentation` styles the `avatar-image` part alone, so a grayscale filter, for example for people who have left, leaves fallbacks and badges in color.
+
+### Beside a name
+
+<Preview
+  title="Decorative avatar"
+  code={`<div style="display:flex;align-items:center;gap:var(--tp-space-3)">
+  <tp-avatar aria-hidden="true" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" fallback="MC"></tp-avatar>
+  <div>
+    <div style="font-weight:var(--tp-font-medium)">Maya Chen</div>
+    <div style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">maya@northwind.io</div>
+  </div>
+</div>`}
+/>
+
+When a visible name sits next to the avatar, mark the avatar `aria-hidden="true"` so screen readers don't announce the person twice.

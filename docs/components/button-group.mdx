@@ -1,0 +1,365 @@
+---
+title: Button group
+description: Several existing controls presented as one joined set, horizontally or vertically.
+tag: tp-button-group
+parts: [tp-button-group-text]
+---
+
+<Preview
+  title="Button group"
+  code={`<tp-button-group label="Pull request actions">
+  <tp-button variant="outline">Merge</tp-button>
+  <tp-button variant="outline">Request changes</tp-button>
+  <tp-button variant="outline" size="icon" aria-label="More actions">
+    <span slot="icon-start" aria-hidden="true">⋯</span>
+  </tp-button>
+</tp-button-group>`}
+/>
+
+## Usage
+
+A Button group only arranges and joins its members; each `tp-button` keeps its full contract, including its own name, disabled state and activation. Give the group a `label` so assistive technology announces the set. `aria-label` and `aria-labelledby` on the group supply authored naming; `label` is the fallback. Grouping adds no roving focus or selection state.
+
+### Sizes
+
+The group does not force a size or variant on its members. Set the same `size` on every Button when the set should share one height.
+
+<Preview
+  title="Sizes"
+  code={`<div style="display:grid;gap:var(--tp-space-4);justify-items:center">
+  <tp-button-group label="Small actions">
+    <tp-button variant="outline" size="sm">Archive</tp-button>
+    <tp-button variant="outline" size="sm">Report</tp-button>
+    <tp-button variant="outline" size="sm" disabled>Snooze</tp-button>
+  </tp-button-group>
+  <tp-button-group label="Default actions">
+    <tp-button variant="outline">Archive</tp-button>
+    <tp-button variant="outline">Report</tp-button>
+    <tp-button variant="outline" disabled>Snooze</tp-button>
+  </tp-button-group>
+  <tp-button-group label="Large actions">
+    <tp-button variant="outline" size="lg">Archive</tp-button>
+    <tp-button variant="outline" size="lg">Report</tp-button>
+    <tp-button variant="outline" size="lg" disabled>Snooze</tp-button>
+  </tp-button-group>
+</div>`}
+/>
+
+### Orientation
+
+`orientation="vertical"` stacks members and moves the seams to the block axis. Members stretch to the widest one; order and keyboard behavior never change. Horizontal groups preserve the first Button's logical-start corners and the last Button's logical-end corners. The treatment follows writing direction.
+
+<Preview
+  title="Vertical"
+  code={`<tp-button-group orientation="vertical" label="Zoom controls">
+  <tp-button variant="outline" size="icon" aria-label="Zoom in"><span slot="icon-start" aria-hidden="true">+</span></tp-button>
+  <tp-button variant="outline" size="icon" aria-label="Zoom out"><span slot="icon-start" aria-hidden="true">−</span></tp-button>
+</tp-button-group>
+<tp-button-group orientation="vertical" label="Export">
+  <tp-button variant="outline">Export PDF</tp-button>
+  <tp-button variant="outline">Export CSV</tp-button>
+  <tp-button variant="outline">Print</tp-button>
+</tp-button-group>`}
+/>
+
+Groups nest. A vertical toolbar can hold several vertical groups, each with its own seams, so related tools read as sets. Hidden members do not participate.
+
+<Preview
+  title="Nested vertical groups"
+  code={`<tp-button-group orientation="vertical" label="Canvas tools">
+  <tp-button-group orientation="vertical" label="Selection">
+    <tp-button variant="outline" size="icon" aria-label="Select"><svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 4 7 17 2.5-7.5L21 11z"/></svg></tp-button>
+    <tp-button variant="outline" size="icon" aria-label="Hand"><svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg></tp-button>
+  </tp-button-group>
+  <tp-button-group orientation="vertical" label="Shapes">
+    <tp-button variant="outline" size="icon" aria-label="Rectangle"><svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/></svg></tp-button>
+    <tp-button variant="outline" size="icon" aria-label="Ellipse"><svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg></tp-button>
+    <tp-button variant="outline" size="icon" aria-label="Text"><svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></tp-button>
+  </tp-button-group>
+</tp-button-group>`}
+/>
+
+### Inputs and text
+
+Inputs, selects and toggles can sit next to Buttons and keep their value and form behavior. `tp-button-group-text` adds a noninteractive prefix or suffix segment. For an associated label, put `<tp-label for="amount">Amount</tp-label>` inside it and give the editor the matching ID.
+
+<Preview
+  title="Mixed controls"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:26rem;margin-inline:auto">
+  <tp-button-group label="Workspace address">
+    <tp-button-group-text>tweakpad.app/</tp-button-group-text>
+    <tp-input label="Workspace slug" placeholder="acme"></tp-input>
+  </tp-button-group>
+  <tp-button-group label="Invite teammate">
+    <tp-input label="Email" type="email" placeholder="name@company.com"></tp-input>
+    <tp-button variant="outline">Send invite</tp-button>
+  </tp-button-group>
+</div>`}
+/>
+
+Buttons can sit on either side of an input, and a text segment can hold a real `tp-label` or a live count.
+
+<Preview
+  title="Steppers, labels and counts"
+  align="stretch"
+  code={`<div id="button-group-segments" style="display:grid;gap:var(--tp-space-4);max-inline-size:26rem;margin-inline:auto">
+  <tp-button-group label="Seats">
+    <tp-button variant="outline" size="icon" aria-label="Remove a seat" data-step="-1"><span slot="icon-start" aria-hidden="true">−</span></tp-button>
+    <tp-input label="Seats" inputmode="numeric" default-value="12" style="inline-size:5rem"></tp-input>
+    <tp-button variant="outline" size="icon" aria-label="Add a seat" data-step="1"><span slot="icon-start" aria-hidden="true">+</span></tp-button>
+  </tp-button-group>
+  <tp-button-group label="Server port">
+    <tp-button-group-text><tp-label for="button-group-port">Port</tp-label></tp-button-group-text>
+    <tp-input id="button-group-port" inputmode="numeric" placeholder="8080"></tp-input>
+  </tp-button-group>
+  <tp-button-group label="Star this repository">
+    <tp-toggle variant="outline" data-star>Star</tp-toggle>
+    <tp-button-group-text data-star-count>2,418</tp-button-group-text>
+  </tp-button-group>
+</div>`}
+  script={`const root = document.querySelector('#button-group-segments');
+const seats = root.querySelector('tp-input[label="Seats"]');
+for (const button of root.querySelectorAll('[data-step]')) {
+  button.addEventListener('click', () => {
+    seats.setValue(String(Math.max(1, Number(seats.value || 0) + Number(button.dataset.step))));
+  });
+}
+root.querySelector('[data-star]').addEventListener('tp-value-change', (event) => {
+  root.querySelector('[data-star-count]').textContent = event.detail.value ? '2,419' : '2,418';
+});`}
+/>
+
+### Separators
+
+Place a `tp-separator` between filled members to keep a visible divide; the group orients it perpendicular to the row. An explicitly configured orientation is preserved, and removing the separator restores its previous default. The existing `decorative` property controls separator semantics; it never becomes an adjustable divider.
+
+<Preview
+  title="Split action"
+  code={`<tp-button-group label="Clipboard">
+  <tp-button variant="secondary">Copy</tp-button>
+  <tp-separator></tp-separator>
+  <tp-button variant="secondary">Paste</tp-button>
+</tp-button-group>`}
+/>
+
+The same divide makes a split button: the main action on one side, a Menu of alternatives on the other.
+
+<Preview
+  title="Split button with a menu"
+  code={`<tp-button-group label="Publish">
+  <tp-button variant="secondary">Publish</tp-button>
+  <tp-separator></tp-separator>
+  <tp-menu label="Publish options">
+    <tp-button slot="trigger" variant="secondary" size="icon" aria-label="Publish options">
+      <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </tp-button>
+    <tp-menu-item value="schedule">Schedule for later</tp-menu-item>
+    <tp-menu-item value="draft">Save as draft</tp-menu-item>
+    <tp-menu-item value="preview">Share preview link</tp-menu-item>
+  </tp-menu>
+</tp-button-group>`}
+/>
+
+### Menus and popovers
+
+Overlay triggers join the group like any Button, while the Menu or Popover keeps its own focus and dismissal. Menu, Popover and Tooltip participate through their slotted trigger; their popup content is not a member.
+
+<Preview
+  title="Menu and popover"
+  code={`<div style="display:grid;gap:var(--tp-space-4);justify-items:center">
+  <tp-button-group label="Document actions">
+    <tp-button variant="outline">Share</tp-button>
+    <tp-menu label="More document actions">
+      <tp-button slot="trigger" variant="outline" size="icon" aria-label="More document actions">
+        <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </tp-button>
+      <tp-menu-item value="duplicate">Duplicate</tp-menu-item>
+      <tp-menu-item value="move">Move to…</tp-menu-item>
+      <tp-separator></tp-separator>
+      <tp-menu-item value="delete" variant="destructive">Delete</tp-menu-item>
+    </tp-menu>
+  </tp-button-group>
+  <tp-button-group label="Reminder">
+    <tp-button variant="outline">Remind me tomorrow</tp-button>
+    <tp-popover label="Custom reminder">
+      <tp-button slot="trigger" variant="outline" size="icon" aria-label="Pick a reminder time">
+        <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </tp-button>
+      <span slot="title">Custom reminder</span>
+      <span slot="description">We'll notify you on every device.</span>
+      <tp-field label="Note">
+        <tp-text-area placeholder="Follow up with the design team"></tp-text-area>
+      </tp-field>
+      <tp-button slot="close">Set reminder</tp-button>
+    </tp-popover>
+  </tp-button-group>
+</div>`}
+/>
+
+### Selects
+
+Selects and native selects keep their values and submit with the form, so a currency and an amount can share one row.
+
+<Preview
+  title="Select and native select"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:26rem;margin-inline:auto">
+  <tp-form id="button-group-transfer" style="display:grid;gap:var(--tp-space-2)">
+    <tp-label for="button-group-amount">Transfer amount</tp-label>
+    <tp-button-group label="Transfer">
+      <tp-select label="Currency" name="currency" default-value="EUR">
+        <option value="EUR">EUR</option>
+        <option value="USD">USD</option>
+        <option value="GBP">GBP</option>
+      </tp-select>
+      <tp-input id="button-group-amount" name="amount" inputmode="decimal" placeholder="0.00"></tp-input>
+      <tp-button type="submit" variant="outline">Send</tp-button>
+    </tp-button-group>
+    <output style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"></output>
+  </tp-form>
+  <tp-button-group label="Trial length">
+    <tp-input label="Trial length" inputmode="numeric" default-value="14"></tp-input>
+    <tp-native-select label="Unit" default-value="days">
+      <option value="days">days</option>
+      <option value="weeks">weeks</option>
+      <option value="months">months</option>
+    </tp-native-select>
+  </tp-button-group>
+</div>`}
+  script={`const form = document.querySelector('#button-group-transfer');
+form.addEventListener('tp-submit', (event) => {
+  event.preventDefault();
+  const data = Object.fromEntries(event.detail.data);
+  form.querySelector('output').textContent = \`Sending \${data.amount || '0.00'} \${data.currency}\`;
+});`}
+/>
+
+### Input groups
+
+An Input group can be one member, keeping its addons inside the field's border. Groups also nest, which suits a message composer with an attachment button and a voice toggle.
+
+<Preview
+  title="Input groups and nesting"
+  align="stretch"
+  code={`<div id="button-group-composer" style="display:grid;gap:var(--tp-space-4);max-inline-size:28rem;margin-inline:auto">
+  <tp-field label="Canvas width">
+    <tp-button-group label="Canvas width">
+      <tp-input-group>
+        <span slot="inline-start">W</span>
+        <tp-input inputmode="decimal" default-value="1440"></tp-input>
+        <span slot="inline-end">px</span>
+      </tp-input-group>
+      <tp-button variant="outline" size="icon" aria-label="Lock aspect ratio">
+        <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      </tp-button>
+    </tp-button-group>
+  </tp-field>
+  <tp-button-group label="Message composer">
+    <tp-button-group label="Attachments">
+      <tp-button variant="outline" size="icon" aria-label="Attach a file">
+        <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </tp-button>
+    </tp-button-group>
+    <tp-button-group label="Message">
+      <tp-input-group>
+        <tp-input label="Message" placeholder="Reply to #design…"></tp-input>
+        <tp-toggle slot="inline-end" variant="ghost" size="sm" aria-label="Voice mode" data-voice>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4"/></svg>
+        </tp-toggle>
+      </tp-input-group>
+    </tp-button-group>
+  </tp-button-group>
+</div>`}
+  script={`const root = document.querySelector('#button-group-composer');
+root.querySelector('[data-voice]').addEventListener('tp-value-change', (event) => {
+  const message = root.querySelector('tp-input[label="Message"]');
+  message.disabled = event.detail.value;
+  message.placeholder = event.detail.value ? 'Listening…' : 'Reply to #design…';
+});`}
+/>
+
+### Links and icon actions
+
+Buttons with `href` render real links, so history navigation can be a group too. Icon-only members each need an `aria-label`.
+
+<Preview
+  title="Navigation and toolbar"
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-4);justify-content:center">
+  <tp-button-group label="Changelog navigation">
+    <tp-button variant="outline" href="#links-and-icon-actions">← v2.3</tp-button>
+    <tp-button variant="outline" href="#links-and-icon-actions">v2.5 →</tp-button>
+  </tp-button-group>
+  <tp-button-group label="Formatting">
+    <tp-button variant="outline" size="icon" aria-label="Bold"><svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 0 8H6zM6 12h9a4 4 0 0 1 0 8H6z"/></svg></tp-button>
+    <tp-button variant="outline" size="icon" aria-label="Italic"><svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 4h-9M14 20H5M15 4 9 20"/></svg></tp-button>
+    <tp-button variant="outline" size="icon" aria-label="Insert link"><svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></tp-button>
+  </tp-button-group>
+</div>`}
+/>
+
+### Pagination
+
+Pagination can sit in a group as one member, or split across nested groups that share the same page. A `partContracts` render delegate draws each link as an outline Button so the seams match. Removing Pagination from the group restores its standalone spacing and corners. For separate numbered and direction groups, nest two Button Groups containing Pagination instances. Configure `showPrevious`/`showNext` on the numbered instance and `showPageLinks`/`showLabels` on the direction instance, and bind both to the same application page.
+
+<Preview
+  title="Grouped pagination"
+  align="stretch"
+  code={`<div id="button-group-pages" style="display:grid;gap:var(--tp-space-4);justify-items:center">
+  <tp-button-group label="Order pages">
+    <tp-pagination label="Orders" page="2" pages="5"></tp-pagination>
+  </tp-button-group>
+  <tp-button-group label="Order navigation">
+    <tp-button-group label="Page numbers">
+      <tp-pagination label="Order pages" page="2" pages="5" data-pages-only></tp-pagination>
+    </tp-button-group>
+    <tp-button-group label="Previous and next">
+      <tp-pagination label="Previous and next orders" page="2" pages="5" data-directions-only></tp-pagination>
+    </tp-button-group>
+  </tp-button-group>
+</div>`}
+  script={`import { html } from 'lit';
+
+await customElements.whenDefined('tp-pagination');
+const paginations = [...document.querySelectorAll('#button-group-pages tp-pagination')];
+const asButton = {
+  renderDelegate: ({ state, properties, bind, content }) => {
+    properties['.variant'] = state.current ? 'secondary' : 'outline';
+    return html\`<tp-button \${bind}>\${content}</tp-button>\`;
+  },
+};
+for (const pagination of paginations) {
+  if (pagination.hasAttribute('data-pages-only')) {
+    pagination.showPrevious = false;
+    pagination.showNext = false;
+  }
+  if (pagination.hasAttribute('data-directions-only')) {
+    pagination.showPageLinks = false;
+    pagination.showLabels = false;
+  }
+  pagination.partContracts = {
+    'pagination-page-link': asButton,
+    'pagination-previous': asButton,
+    'pagination-next': asButton,
+  };
+  pagination.addEventListener('tp-value-change', (event) => {
+    event.detail.sourceEvent?.preventDefault();
+    for (const sibling of paginations) sibling.page = event.detail.value;
+  });
+}`}
+/>
+
+### Unjoined
+
+`joined` is on by default. Set the `joined` property to `false` to keep each Button's own corners and add the standard gap while keeping the group semantics. `joined` removes internal corner radii and one boundary from each seam without overlapping hit targets.
+
+<Preview
+  title="Unjoined"
+  code={`<tp-button-group id="button-group-unjoined" label="Dialog actions">
+  <tp-button variant="outline">Cancel</tp-button>
+  <tp-button>Save changes</tp-button>
+</tp-button-group>`}
+  script={`document.getElementById('button-group-unjoined').joined = false;`}
+/>
+
+Button group implies no selection. When the members choose one shared value, such as text alignment, use a Toggle group instead. Its single-selection state and keyboard behavior remain owned by Toggle Group. Its documented `spacing="0"` uses the shared joined-seam treatment; ordinary gaps and control appearance continue to follow theme tokens.

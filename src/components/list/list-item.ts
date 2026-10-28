@@ -4,7 +4,21 @@ import { observeSlots, slotOccupied } from '../shared/slots.js';
 import { TpElement } from '../../foundation/element.js';
 import { listPresentation } from '../../presentation/families/list.js';
 
-/** Presentational row. Native actions are supplied through the public part contract. */
+/**
+ * A row of media, a title, supporting text and independent actions, in a List or on its own. It
+ * has no activation of its own; a whole-row link or button comes from the `list-item` part
+ * contract, and the controls in `actions` stay separate tab stops beside it.
+ *
+ * @slot - The title.
+ * @slot title - A title with markup; it replaces the default slot.
+ * @slot description - Supporting text with markup; it replaces `description`.
+ * @slot media - An Icon, an Avatar or an image before the text.
+ * @slot leading - The former name of `media`, used when `media` is empty.
+ * @slot actions - Controls at the end of the row, each with its own focus and behavior.
+ * @slot trailing - The former name of `actions`, used when `actions` is empty.
+ * @slot header - Full-width content above the row, such as an eyebrow label or an image.
+ * @slot footer - Full-width content below the row, such as metadata.
+ */
 export class TpListItem extends TpElement {
   static tagName = 'tp-list-item';
   static override presentation = listPresentation;
@@ -119,11 +133,17 @@ export class TpListItem extends TpElement {
       ${hiddenStyles}
     `,
   ];
+  /** Marks the row as the current one with `aria-current`; the List keeps no selection of its own. */
   selected = false;
+  /** An identity for the application's own use; it changes nothing in the row. */
   value = '';
+  /** Supporting text under the title, when the `description` slot is empty. */
   description = '';
+  /** Visual treatment only: `outline` draws a boundary and `subdued` fills the row. */
   variant: 'ghost' | 'outline' | 'subdued' = 'ghost';
+  /** The row density; `sm` and `xs` suit tight panels and menus. */
   size: 'xs' | 'sm' | 'default' = 'default';
+  /** What the `media` slot holds, so it gets the matching extent: `icon` for an Icon, `image` for a square thumbnail. */
   mediaTreatment: 'plain' | 'icon' | 'image' = 'plain';
   #releaseSlots: (() => void) | undefined;
   #sync = (): void => {

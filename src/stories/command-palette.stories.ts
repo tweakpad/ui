@@ -5,7 +5,7 @@ import type { TpCommandPalette, CommandEntry } from '../components/command-palet
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
 import { navigationIcons } from '../icons/navigation.js';
-import documentation from '../../docs/command-palette.md?raw';
+import { libraryDocs } from './library-docs.js';
 interface Args {
   query: string;
   value: unknown;
@@ -33,29 +33,10 @@ const items: readonly CommandEntry[] = [
   { type: 'separator' },
   { value: 'settings', label: 'Settings', icon: navigationIcons.settings, shortcut: '⌘,' },
 ];
-const source = `import '@tweakpad/ui/register';
-import '@tweakpad/ui/styles.css';
-import { TpCommandPalette } from '@tweakpad/ui';
-import { navigationIcons } from '@tweakpad/ui/icons/navigation';
-const palette = new TpCommandPalette();
-palette.inline = true;
-palette.items = [
-  { type: 'group', label: 'Documents', items: [
-    { value: 'new', label: 'New document', icon: navigationIcons.folder, shortcut: '⌘N', keywords: ['create'] },
-    { value: 'open', label: 'Open document', icon: navigationIcons.folder, shortcut: '⌘O' },
-  ] },
-  { type: 'separator' },
-  { value: 'settings', label: 'Settings', icon: navigationIcons.settings, shortcut: '⌘,' },
-];
-palette.onExecute = event => console.log(event.detail.commandId);
-document.body.append(palette);`;
 const meta: Meta<Args> = {
   title: 'Components/Command palette',
   component: 'tp-command-palette',
-  parameters: {
-    layout: 'centered',
-    docs: { description: { component: documentation }, source: { code: source } },
-  },
+  parameters: { layout: 'centered', docs: libraryDocs('components/command-palette') },
   args: {
     query: '',
     value: null,
@@ -109,18 +90,6 @@ export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
 export const InDialog: Story = {
+  tags: ['!autodocs'],
   args: { inline: false },
-  parameters: {
-    docs: {
-      source: {
-        code: source.replace(
-          'palette.inline = true;',
-          `const trigger = document.createElement('tp-button');
-trigger.slot = 'trigger'; trigger.textContent = 'Open commands'; trigger.variant = 'outline';
-const close = document.createElement('tp-button'); close.slot = 'close'; close.textContent = 'Close commands'; close.variant = 'outline';
-palette.append(trigger, close);`,
-        ),
-      },
-    },
-  },
 };

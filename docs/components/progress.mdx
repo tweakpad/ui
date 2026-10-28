@@ -1,0 +1,115 @@
+---
+title: Progress
+description: A noninteractive bar that reports how much of a task is complete, or that it is still running.
+tag: tp-progress
+---
+
+<Preview
+  title="Progress"
+  align="stretch"
+  code={`<tp-progress value="56" label="Uploading design-review.fig" style="max-inline-size:22rem">
+  <span slot="label">Uploading design-review.fig</span>
+  <span slot="output">56%</span>
+</tp-progress>`}
+/>
+
+## Usage
+
+Progress reports a task the user is waiting on: an upload, an import, a multi-step setup. It has no form value and never changes on its own; update `value` as the work advances. Use Slider when people choose the number.
+
+### Label and value
+
+The `label` attribute names the progressbar for assistive technology. The `label` and `output` slots add a visible caption and value; both are optional, and Progress never fabricates the number for you.
+
+<Preview
+  title="Bare and captioned"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-6);max-inline-size:22rem">
+  <tp-progress value="33" label="Profile completion"></tp-progress>
+  <tp-progress value="82" label="Storage used">
+    <span slot="label">Storage used</span>
+    <span slot="output">41 of 50 GB</span>
+  </tp-progress>
+</div>`}
+/>
+
+### Indeterminate
+
+Leave out `value` when the amount of work is unknown. The bar switches to an ambient animation and omits the numeric value, which reduced motion stops.
+
+<Preview
+  title="Indeterminate"
+  align="stretch"
+  code={`<tp-progress label="Connecting to GitHub" style="max-inline-size:22rem">
+  <span slot="label">Connecting to GitHub…</span>
+</tp-progress>`}
+/>
+
+### Range
+
+`minimum` and `maximum` default to 0 and 100. Count steps or bytes directly and the fill is normalized for you; `value-text` gives screen readers the phrasing you show on screen. A finite value is clamped to the declared range; empty, `null`, NaN and infinite values are indeterminate.
+
+<Preview
+  title="Steps"
+  align="stretch"
+  code={`<tp-progress value="3" minimum="0" maximum="5" value-text="Step 3 of 5" label="Workspace setup" style="max-inline-size:22rem">
+  <span slot="label">Workspace setup</span>
+  <span slot="output">Step 3 of 5</span>
+</tp-progress>`}
+/>
+
+### Live updates
+
+Set `value` from your own task as it reports progress. Each part publishes `data-progressing` or `data-complete`, so styles can respond when the work finishes. No default live region announces rapid updates.
+
+<Preview
+  title="Import"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);justify-items:start;max-inline-size:22rem">
+  <tp-progress id="progress-import" value="0" label="Importing contacts" style="inline-size:100%">
+    <span slot="label">Importing contacts</span>
+    <span slot="output" id="progress-import-output">0 of 1,200</span>
+  </tp-progress>
+  <tp-button id="progress-import-start" variant="outline" size="sm">Start import</tp-button>
+</div>`}
+  script={`const bar = document.querySelector('#progress-import');
+const output = document.querySelector('#progress-import-output');
+const start = document.querySelector('#progress-import-start');
+let timer;
+start.addEventListener('click', () => {
+  clearInterval(timer);
+  let done = 0;
+  timer = setInterval(() => {
+    done = Math.min(1200, done + 60);
+    bar.value = (done / 1200) * 100;
+    output.textContent = done.toLocaleString('en-US') + ' of 1,200';
+    if (done === 1200) clearInterval(timer);
+  }, 120);
+});`}
+/>
+
+### Formatted value
+
+Instead of writing the `output` text yourself, let the value part render `state.formattedValue` through `partContracts`. It formats for `locale` (by default the nearest `lang`) as a percentage, or with your own `Intl.NumberFormat` options in `format`, which then apply to the raw value rather than the fraction.
+
+<Preview
+  title="Formatted value"
+  align="stretch"
+  code={`<div id="progress-formatted" style="display:grid;gap:var(--tp-space-6);max-inline-size:22rem">
+  <tp-progress value="56" label="Hochladen" lang="de">
+    <span slot="label">Hochladen</span>
+  </tp-progress>
+  <tp-progress value="41.5" maximum="50" label="Storage used" data-format="storage">
+    <span slot="label">Storage used</span>
+  </tp-progress>
+</div>`}
+  script={`await customElements.whenDefined('tp-progress');
+for (const bar of document.querySelectorAll('#progress-formatted tp-progress')) {
+  if (bar.dataset.format === 'storage') {
+    bar.format = { style: 'unit', unit: 'gigabyte', maximumFractionDigits: 1 };
+  }
+  bar.partContracts = {
+    'progress-value-output': { content: (state) => state.formattedValue },
+  };
+}`}
+/>

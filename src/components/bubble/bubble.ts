@@ -5,6 +5,11 @@ import { TpElement } from '../../foundation/element.js';
 import { bubblePresentation } from '../../presentation/families/bubble.js';
 import { fillLayerStyles } from '../../presentation/motion.js';
 
+/**
+ * A stack of consecutive Bubbles from the same sender, so spacing follows who is speaking.
+ *
+ * @slot - The sender's Bubbles, in order.
+ */
 export class TpBubbleGroup extends TpElement {
   static tagName = 'tp-bubble-group';
   static override presentation = bubblePresentation;
@@ -14,6 +19,13 @@ export class TpBubbleGroup extends TpElement {
   }
 }
 
+/**
+ * One chat message: content in a framed treatment, aligned to its sender's side, with an optional
+ * row of reactions on its edge. The application owns delivery, senders and reaction counts.
+ *
+ * @slot - The message content: text, paragraphs, links or a Collapsible for a long reply.
+ * @slot reactions - Reaction counts or reaction controls, each with an accessible name.
+ */
 export class TpBubble extends TpElement {
   static tagName = 'tp-bubble';
   static override presentation = bubblePresentation;
@@ -92,11 +104,16 @@ export class TpBubble extends TpElement {
       ${hiddenStyles}
     `,
   ];
+  /** The sender's side, in writing direction: `end` for the current user's own messages. */
   align: 'start' | 'end' = 'start';
+  /** The edge, top or bottom, that the reactions sit on. */
   reactionSide: 'block-start' | 'block-end' = 'block-end';
+  /** The inline edge the reactions line up with, independent of the message's alignment. */
   reactionsAlign: 'start' | 'end' = 'end';
+  /** The message's treatment: one per sender, `ghost` for unframed full-width text, `destructive` for a failed delivery. */
   variant: 'default' | 'secondary' | 'subdued' | 'tinted' | 'outline' | 'ghost' | 'destructive' =
     'secondary';
+  /** The name of the message's group for assistive technology; empty removes the group role. */
   label = 'Message';
   readonly #slotsChanged = (): void => {
     this.requestUpdate();

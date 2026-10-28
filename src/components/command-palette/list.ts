@@ -23,7 +23,11 @@ const parts: Record<string, string> = {
   'select-separator': 'command-palette-separator',
   'select-empty-state': 'command-palette-empty-state',
 };
-/** Execution policy on the actual Select collection; no alternative option renderer or popup. */
+/**
+ * The searchable command list a Command palette renders: a Select that runs its items instead of
+ * choosing a value. Use it through Command palette, which owns the query, the active command and
+ * the dialog.
+ */
 export class TpCommandList extends TpSelect {
   static override tagName = 'tp-command-list';
   /** Library elements this element renders; defining it defines them too. */
@@ -44,6 +48,7 @@ export class TpCommandList extends TpSelect {
   override showClear = false;
   override autoHighlight = 'always' as const;
   override keepHighlight = true;
+  /** The value of the active, highlighted command. */
   activeValue: unknown;
   /**
    * An editing element that keeps focus and supplies the query (`inputValue`) and the navigation
@@ -52,8 +57,10 @@ export class TpCommandList extends TpSelect {
    * owner controls `open` and closes the list on the proposals of `onOpenChange`.
    */
   declare queryOwner: HTMLElement | null;
+  /** Called when the highlight moves to another command; returns the value that becomes active. */
   onActiveChange:
     ((value: unknown, details: { index: number; reason: ChangeReason }) => unknown) | undefined;
+  /** Called when a command is run, with its record and the event that ran it. */
   onExecute: ((record: ChoiceModelRecord, event: Event) => void) | undefined;
   constructor() {
     super();

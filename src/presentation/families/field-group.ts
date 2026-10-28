@@ -16,14 +16,17 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'field-group',
+      description: 'The joined row or column that holds the editors.',
       axes: ['orientation'],
     },
     {
       name: 'field-group-control',
+      description: 'The outer edge of each editor, where neighboring borders meet in a seam.',
       axes: ['orientation'],
     },
     {
       name: 'field-group-separator',
+      description: 'A Separator between two editors.',
       axes: ['orientation'],
     },
   ],

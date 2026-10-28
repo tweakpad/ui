@@ -14,9 +14,8 @@ import type {
 } from '../../widgets/flow/index.js';
 import { FLOW_PANEL_POSITIONS } from '../../widgets/flow/types.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
-import { flowExamples } from './flow.examples.js';
 import { flowIcons, sampleRun, workflowDocument, workflowSchema } from './flow-example.js';
-import documentation from '../../../docs/widgets/flow.md?raw';
+import { libraryDocs } from '../library-docs.js';
 
 interface Args {
   tool: FlowTool;
@@ -34,28 +33,11 @@ interface Args {
   readOnly: boolean;
   disabled: boolean;
 }
-const sourceFor = (markup: string) =>
-  `<script type="module">\n  import '@tweakpad/ui/styles.css';\n  import '@tweakpad/ui/register';\n  import '@tweakpad/ui/register/widgets';\n</script>\n${markup}`;
-const source = sourceFor(
-  `<tp-flow label="Support triage" name="pipeline" fit-view></tp-flow>
-<script type="module">
-  const flow = document.querySelector('tp-flow');
-  flow.schema = workflowSchema; // typed node definitions (see Schema)
-  flow.icons = { zap, database, mail, 'git-branch': gitBranch }; // icon keys the schema names
-  flow.load(workflowDocument); // the flow document (see Value and the document)
-  flow.run = lastRun; // a FlowRun snapshot, or a trace played by the stepper
-</script>`,
-);
+
 const meta: Meta<Args> = {
   title: 'Widgets/Flow',
   component: 'tp-flow',
-  parameters: {
-    docs: {
-      examples: flowExamples,
-      description: { component: documentation },
-      source: { code: source, language: 'html' },
-    },
-  },
+  parameters: { docs: libraryDocs('widgets/flow') },
   args: {
     tool: 'select',
     mode: 'design',

@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/cursor.md?raw';
-import { cursorDefaultSource, cursorExamples } from './cursor.examples.js';
+import { libraryDocs } from './library-docs.js';
 import type { CursorScope } from '../components/cursor/index.js';
 import type { MotionPolicy } from '../foundation/motion.js';
 
@@ -20,13 +19,7 @@ interface Args {
 const meta = {
   title: 'Components/Cursor',
   component: 'tp-cursor',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: cursorExamples,
-      source: { code: cursorDefaultSource, language: 'javascript' },
-    },
-  },
+  parameters: { docs: libraryDocs('components/cursor') },
   args: {
     stiffness: 170,
     damping: 26,

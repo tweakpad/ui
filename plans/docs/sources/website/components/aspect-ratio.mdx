@@ -1,0 +1,85 @@
+---
+title: Aspect ratio
+description: A box whose height follows its width at a fixed ratio, so media never shifts the layout.
+tag: tp-aspect-ratio
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Aspect ratio"
+  align="stretch"
+  code={`<tp-aspect-ratio ratio="1.7778" fit="cover" style="inline-size:100%;max-inline-size:36rem;margin-inline:auto;border-radius:var(--tp-radius-lg);overflow:hidden;background:var(--tp-muted)">
+  <img style="color:transparent" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80" alt="A winding road through green hills at sunset">
+</tp-aspect-ratio>`}
+/>
+
+## Usage
+
+Set `ratio` to width divided by height, such as `1.7778` for 16:9 or `1` for a square. The box takes its width from the container and derives its height, so content can't stretch it. Always pass a ratio; the 16:9 default exists only for compatibility.
+
+### Ratios
+
+<Preview
+  title="Common ratios"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:2fr 1fr 0.75fr;align-items:start;gap:var(--tp-space-4)">
+  <tp-aspect-ratio ratio="2.3333" style="border-radius:var(--tp-radius-lg);overflow:hidden">
+    <div style="display:grid;place-items:center;inline-size:100%;block-size:100%;background:var(--tp-muted);color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">21:9</div>
+  </tp-aspect-ratio>
+  <tp-aspect-ratio ratio="1" style="border-radius:var(--tp-radius-lg);overflow:hidden">
+    <div style="display:grid;place-items:center;inline-size:100%;block-size:100%;background:var(--tp-muted);color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">1:1</div>
+  </tp-aspect-ratio>
+  <tp-aspect-ratio ratio="0.5625" style="border-radius:var(--tp-radius-lg);overflow:hidden">
+    <div style="display:grid;place-items:center;inline-size:100%;block-size:100%;background:var(--tp-muted);color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">9:16</div>
+  </tp-aspect-ratio>
+</div>`}
+/>
+
+Reserving the box before media loads prevents layout shift in feeds, galleries and video embeds. Width comes from the surrounding layout; the ratio is the only size input.
+
+### Container width
+
+<Preview
+  title="One ratio, three widths"
+  align="stretch"
+  code={`<div style="display:flex;flex-wrap:wrap;align-items:start;gap:var(--tp-space-4)">
+  <figure style="margin:0;inline-size:10rem;max-inline-size:100%">
+    <tp-aspect-ratio ratio="1.7778" fit="cover" style="border-radius:var(--tp-radius-md);overflow:hidden;background:var(--tp-muted)">
+      <img style="color:transparent" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80" alt="A winding road through green hills at sunset">
+    </tp-aspect-ratio>
+    <figcaption style="margin-block-start:var(--tp-space-2);font-size:var(--tp-text-xs);color:var(--tp-muted-foreground)">Sidebar · 160 px</figcaption>
+  </figure>
+  <figure style="margin:0;inline-size:15rem;max-inline-size:100%">
+    <tp-aspect-ratio ratio="1.7778" fit="cover" style="border-radius:var(--tp-radius-md);overflow:hidden;background:var(--tp-muted)">
+      <img style="color:transparent" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80" alt="A winding road through green hills at sunset">
+    </tp-aspect-ratio>
+    <figcaption style="margin-block-start:var(--tp-space-2);font-size:var(--tp-text-xs);color:var(--tp-muted-foreground)">Card · 240 px</figcaption>
+  </figure>
+  <figure style="margin:0;inline-size:20rem;max-inline-size:100%">
+    <tp-aspect-ratio ratio="1.7778" fit="cover" style="border-radius:var(--tp-radius-md);overflow:hidden;background:var(--tp-muted)">
+      <img style="color:transparent" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80" alt="A winding road through green hills at sunset">
+    </tp-aspect-ratio>
+    <figcaption style="margin-block-start:var(--tp-space-2);font-size:var(--tp-text-xs);color:var(--tp-muted-foreground)">Feature · 320 px</figcaption>
+  </figure>
+</div>`}
+/>
+
+The same 16:9 box keeps its shape in a sidebar, a card and a feature slot. Give it a width, or let the container shrink it, and the height follows.
+
+### Fit
+
+<Preview
+  title="Cover and contain"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--tp-space-4);inline-size:100%;max-inline-size:36rem;margin-inline:auto">
+  <tp-aspect-ratio ratio="1" fit="cover" style="border-radius:var(--tp-radius-lg);overflow:hidden;background:var(--tp-muted)">
+    <img style="color:transparent" src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80" alt="Mountain lake at dawn, cropped to fill">
+  </tp-aspect-ratio>
+  <tp-aspect-ratio ratio="1" fit="contain" style="border-radius:var(--tp-radius-lg);overflow:hidden;background:var(--tp-muted)">
+    <img style="color:transparent" src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80" alt="Mountain lake at dawn, shown whole">
+  </tp-aspect-ratio>
+</div>`}
+/>
+
+`fit` sets how images and video fill the box, like `object-fit`: `cover` crops, `contain` letterboxes and `fill` stretches. It never changes the ratio. The box adds no image semantics, so keep `alt` on the image itself.

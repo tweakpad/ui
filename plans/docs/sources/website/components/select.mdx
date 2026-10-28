@@ -1,0 +1,325 @@
+---
+title: Select
+description: Choose one or several values from a finite list, optionally with a search query.
+tag: tp-select
+parts: [tp-select-option]
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Select"
+  align="stretch"
+  code={`<tp-field label="Time zone" description="Used for due dates and reminders." style="max-inline-size:20rem">
+  <tp-select name="timezone" placeholder="Choose a time zone" default-value="europe-berlin">
+    <optgroup label="Americas">
+      <option value="america-new-york">New York (GMT−4)</option>
+      <option value="america-chicago">Chicago (GMT−5)</option>
+      <option value="america-los-angeles">Los Angeles (GMT−7)</option>
+    </optgroup>
+    <optgroup label="Europe">
+      <option value="europe-london">London (GMT+1)</option>
+      <option value="europe-berlin">Berlin (GMT+2)</option>
+      <option value="europe-helsinki">Helsinki (GMT+3)</option>
+    </optgroup>
+    <optgroup label="Asia Pacific">
+      <option value="asia-singapore">Singapore (GMT+8)</option>
+      <option value="asia-tokyo">Tokyo (GMT+9)</option>
+      <option value="australia-sydney">Sydney (GMT+11)</option>
+    </optgroup>
+  </tp-select>
+</tp-field>`}
+/>
+
+## Usage
+
+Select picks from a list that is too long, or too dynamic, to show as radios. Native `option`, `optgroup` and `hr` children declare the choices; the component renders its own list, keyboard navigation and typeahead, and submits the selected value under `name`. Use Native Select when the browser's own picker is preferable, such as on mobile-first forms.
+
+### Options
+
+Each `option` contributes a `value` and its text. `disabled` keeps an option visible but unselectable, `optgroup` labels a group and `hr` draws a separator. `placeholder` shows while nothing is selected.
+
+<Preview
+  title="Groups and disabled options"
+  align="stretch"
+  code={`<tp-field label="Plan" style="max-inline-size:20rem">
+  <tp-select name="plan" placeholder="Choose a plan">
+    <option value="free">Free</option>
+    <option value="team">Team · $12 per seat</option>
+    <option value="business">Business · $24 per seat</option>
+    <hr>
+    <option value="enterprise" disabled>Enterprise · Contact sales</option>
+  </tp-select>
+</tp-field>`}
+/>
+
+### Authored options
+
+`tp-select-option` is the library's own option element. It declares the same choice as a native `option`, accepts a non-string `value` when set as a property, and uses its text content as the label.
+
+<Preview
+  title="tp-select-option"
+  align="stretch"
+  code={`<tp-field label="Priority" style="max-inline-size:20rem">
+  <tp-select name="priority" default-value="medium">
+    <tp-select-option value="urgent">Urgent</tp-select-option>
+    <tp-select-option value="high">High</tp-select-option>
+    <tp-select-option value="medium">Medium</tp-select-option>
+    <tp-select-option value="low">Low</tp-select-option>
+  </tp-select>
+</tp-field>`}
+/>
+
+### Multiple
+
+`multiple` keeps the popup open while options toggle, and submits one form entry per selected value in selection order.
+
+<Preview
+  title="Multiple"
+  align="stretch"
+  code={`<tp-field label="Notify on" style="max-inline-size:20rem">
+  <tp-select name="events" multiple placeholder="Choose events">
+    <option value="comment">New comment</option>
+    <option value="mention">Mention</option>
+    <option value="assign">Assigned to me</option>
+    <option value="status">Status change</option>
+    <option value="due">Due date approaching</option>
+  </tp-select>
+</tp-field>`}
+/>
+
+### Searchable
+
+`searchable` swaps the trigger for an editable query that filters the list as people type. `matching` chooses `contains` (the default), `prefix`, `exact` or typo-tolerant `fuzzy`; `highlight-matches` marks the matched text. The query is never submitted, only the selection.
+
+<Preview
+  title="Searchable"
+  align="stretch"
+  code={`<tp-field label="Country" style="max-inline-size:20rem">
+  <tp-select name="country" searchable highlight-matches placeholder="Search countries">
+    <option value="AR">Argentina</option>
+    <option value="AU">Australia</option>
+    <option value="BR">Brazil</option>
+    <option value="CA">Canada</option>
+    <option value="DE">Germany</option>
+    <option value="IN">India</option>
+    <option value="JP">Japan</option>
+    <option value="NL">Netherlands</option>
+    <option value="SE">Sweden</option>
+    <option value="GB">United Kingdom</option>
+    <option value="US">United States</option>
+  </tp-select>
+</tp-field>`}
+/>
+
+### Searchable multiple
+
+With both `searchable` and `multiple`, selections show as removable chips beside the query. Backspace removes the last chip, and `show-clear` adds a button that clears the query or the selection.
+
+<Preview
+  title="Chips"
+  align="stretch"
+  code={`<tp-field label="Labels" style="max-inline-size:24rem">
+  <tp-select name="labels" searchable multiple show-clear placeholder="Add labels">
+    <option value="Bug">Bug</option>
+    <option value="Design">Design</option>
+    <option value="Documentation">Documentation</option>
+    <option value="Performance">Performance</option>
+    <option value="Security">Security</option>
+    <option value="UX research">UX research</option>
+  </tp-select>
+</tp-field>`}
+/>
+
+### Grid
+
+In a searchable Select with `grid`, `columns` lays each group's options out in rows of that many, and the arrow keys move in two dimensions. Filtering reflows the rows. It suits short, scannable options such as sizes, flags or symbols.
+
+<Preview
+  title="Columns"
+  align="stretch"
+  code={`<tp-field label="Size" style="max-inline-size:20rem">
+  <tp-select name="size" searchable grid columns="4" placeholder="Pick a size">
+    <option value="XS">XS</option>
+    <option value="S">S</option>
+    <option value="M">M</option>
+    <option value="L">L</option>
+    <option value="XL">XL</option>
+    <option value="2XL">2XL</option>
+    <option value="3XL">3XL</option>
+    <option value="4XL">4XL</option>
+  </tp-select>
+</tp-field>`}
+/>
+
+### Data
+
+Assign `items` when choices come from your data. Records take a `value` and `label`, groups take `type: 'group'` with nested `items`, and `type: 'separator'` divides them.
+
+<Preview
+  title="Items property"
+  align="stretch"
+  code={`<tp-field label="Assignee" style="max-inline-size:20rem">
+  <tp-select id="select-items" name="assignee" placeholder="Unassigned"></tp-select>
+</tp-field>`}
+  script={`const select = document.querySelector('#select-items');
+select.items = [
+  { type: 'group', label: 'Design', items: [
+    { value: 'u_102', label: 'Maya Lindqvist' },
+    { value: 'u_118', label: 'Tomás Herrera' },
+  ] },
+  { type: 'group', label: 'Engineering', items: [
+    { value: 'u_131', label: 'Priya Natarajan' },
+    { value: 'u_140', label: 'Jonas Becker' },
+    { value: 'u_152', label: 'Aiko Sato', disabled: true },
+  ] },
+];`}
+/>
+
+A record's `label` can be a Lit template for rich rows, such as an avatar or a badge. Give those records a plain `text` too; it drives typeahead and what the closed trigger reads.
+
+<Preview
+  title="Rich labels"
+  align="stretch"
+  code={`<tp-field label="Reviewer" style="max-inline-size:20rem">
+  <tp-select id="select-rich" name="reviewer" placeholder="Choose a reviewer"></tp-select>
+</tp-field>`}
+  script={`import { html } from 'lit';
+const person = (name, initials, badge) => html\`<tp-avatar size="sm" fallback=\${initials} alt=""></tp-avatar>\${name}\${badge ? html\` <tp-badge variant="secondary">\${badge}</tp-badge>\` : ''}\`;
+document.querySelector('#select-rich').items = [
+  { type: 'group', label: 'Suggested', items: [
+    { value: 'u_131', text: 'Priya Natarajan', label: person('Priya Natarajan', 'PN', 'Code owner') },
+    { value: 'u_118', text: 'Tomás Herrera', label: person('Tomás Herrera', 'TH') },
+  ] },
+  { type: 'separator' },
+  { type: 'group', label: 'Everyone else', items: [
+    { value: 'u_140', text: 'Jonas Becker', label: person('Jonas Becker', 'JB') },
+    { value: 'u_152', text: 'Aiko Sato', label: person('Aiko Sato', 'AS', 'Away') },
+  ] },
+];`}
+/>
+
+### Large lists
+
+`virtualized` mounts only the rows near the visible part of the list while keeping its full scroll height, so hundreds or thousands of `items` open instantly. Keyboard navigation and typeahead still cover every option.
+
+<Preview
+  title="Virtualized time zones"
+  align="stretch"
+  code={`<tp-field label="Time zone" style="max-inline-size:20rem">
+  <tp-select id="select-virtualized" name="time-zone" searchable virtualized placeholder="Search time zones"></tp-select>
+</tp-field>`}
+  script={`const select = document.querySelector('#select-virtualized');
+select.items = Intl.supportedValuesOf('timeZone').map((zone) => ({
+  value: zone,
+  label: zone.replaceAll('_', ' '),
+}));`}
+/>
+
+### Remote search
+
+A `source` supplies the options for each query, such as a server endpoint. A query waits `search-delay` milliseconds after the last keystroke, a newer query aborts the previous one through `signal`, and the list shows a loading row meanwhile.
+
+<Preview
+  title="Search source"
+  align="stretch"
+  code={`<tp-field label="Customer" style="max-inline-size:20rem">
+  <tp-select id="select-source" name="customer" searchable search-delay="250" placeholder="Search customers"></tp-select>
+</tp-field>`}
+  script={`const customers = [
+  'Acme Logistics', 'Birchwood Dental', 'Cobalt Robotics', 'Delta Freight', 'Evergreen Grocers',
+  'Fjord Outfitters', 'Granite Legal', 'Harbor Coffee', 'Ironclad Security', 'Juniper Health',
+  'Keystone Builders', 'Lumen Studios', 'Meridian Travel', 'Northwind Traders', 'Orchard Bakery',
+];
+const select = document.querySelector('#select-source');
+select.source = {
+  // Stands in for fetch('/api/customers?q=' + query, { signal }).
+  search: (query, { signal }) =>
+    new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        const needle = query.trim().toLowerCase();
+        resolve(customers
+          .filter((name) => name.toLowerCase().includes(needle))
+          .map((name) => ({ value: name.toLowerCase().replaceAll(' ', '-'), label: name })));
+      }, 600);
+      signal.addEventListener('abort', () => {
+        clearTimeout(timer);
+        reject(signal.reason);
+      });
+    }),
+};`}
+/>
+
+### Value changes
+
+`tp-value-change` reports each proposed selection with its `reason`, and is cancelable. Read the committed value from `value`.
+
+<Preview
+  title="Value change"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:20rem">
+  <tp-field label="Sort by">
+    <tp-select id="select-sort" default-value="updated">
+      <option value="updated">Last updated</option>
+      <option value="created">Date created</option>
+      <option value="name">Name</option>
+    </tp-select>
+  </tp-field>
+  <output id="select-sort-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Sorted by updated</output>
+</div>`}
+  script={`const select = document.querySelector('#select-sort');
+const output = document.querySelector('#select-sort-output');
+select.addEventListener('tp-value-change', (event) => {
+  if (event.target !== select || event.detail.cancelled) return;
+  output.textContent = 'Sorted by ' + event.detail.value;
+});`}
+/>
+
+### States
+
+A Field's `disabled`, `invalid` and `error` reach the Select. Read-only Selects still open and navigate, and keep their value in form data, but cannot change it.
+
+<Preview
+  title="Disabled, read-only and error"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:20rem">
+  <tp-field label="Workspace region" disabled>
+    <tp-select default-value="eu">
+      <option value="us">United States</option>
+      <option value="eu">European Union</option>
+    </tp-select>
+  </tp-field>
+  <tp-field label="Billing currency">
+    <tp-select readonly default-value="eur">
+      <option value="usd">US dollar</option>
+      <option value="eur">Euro</option>
+    </tp-select>
+  </tp-field>
+  <tp-field label="Department" error="Choose a department to continue." invalid>
+    <tp-select placeholder="Choose a department">
+      <option value="sales">Sales</option>
+      <option value="support">Support</option>
+    </tp-select>
+  </tp-field>
+</div>`}
+/>
+
+### In a dialog
+
+A Select works inside a Dialog without extra setup: its popup belongs to the dialog, so it opens above the modal and stays interactive while the rest of the page is inert.
+
+<Preview
+  title="Select in a dialog"
+  code={`<tp-dialog label="Move to project" description="The issue keeps its history and comments.">
+  <tp-button slot="trigger" variant="outline">Move issue</tp-button>
+  <tp-field label="Project">
+    <tp-select name="project" placeholder="Choose a project">
+      <option value="web">Web app</option>
+      <option value="mobile">Mobile app</option>
+      <option value="platform">Platform</option>
+      <option value="growth">Growth experiments</option>
+    </tp-select>
+  </tp-field>
+  <tp-button slot="close">Move</tp-button>
+</tp-dialog>`}
+/>

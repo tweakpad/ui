@@ -17,7 +17,7 @@ Import `@tweakpad/ui/styles.css` once to install the default token set. Componen
 
 - Color pairs: `background`/`foreground`, `card`/`card-foreground`, `popover`/`popover-foreground`, `primary`/`primary-foreground`, `secondary`/`secondary-foreground`, `muted`/`muted-foreground`, `accent`/`accent-foreground`, `destructive`/`destructive-foreground`, `success`/`success-foreground`, and `warning`/`warning-foreground`.
 - Unpaired colors: `border`, `input`, `ring`, and `chart-1` through `chart-5`.
-- Syntax colors: one role per scope of highlighted code: `syntax-comment`, `syntax-keyword`, `syntax-string`, `syntax-number`, `syntax-function`, `syntax-type`, `syntax-constant`, `syntax-variable`, `syntax-property`, `syntax-tag`, `syntax-attribute`, `syntax-operator`, `syntax-inserted` and `syntax-deleted`. See [Code block](code-block.md#theming).
+- Syntax colors: one role per scope of highlighted code: `syntax-comment`, `syntax-keyword`, `syntax-string`, `syntax-number`, `syntax-function`, `syntax-type`, `syntax-constant`, `syntax-variable`, `syntax-property`, `syntax-tag`, `syntax-attribute`, `syntax-operator`, `syntax-inserted` and `syntax-deleted`. See [Code block](components/code-block.mdx#theming).
 - Content colors: `content-<hue>` and `content-<hue>-foreground` for the hues `gray`, `brown`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink` and `red`. See [Content colors](#content-colors).
 - Spacing: `spacing` plus the derived `space-*` scale: `space-0`, `space-0-5`, `space-1`, `space-1-5`, `space-2`, `space-2-5`, `space-3`, `space-4`, `space-5`, `space-6`, `space-8`, `space-10`, `space-12` and `space-16`. Each equals `spacing` times its suffix; a trailing `-5` is the half step.
 - Typography: `font-*`, `text-*`, `leading-*`, and `tracking-*`.
@@ -88,7 +88,7 @@ A theme may leave the content colors out. A missing surface role then paints no 
 
 Library-authored percentage variations use the semantic color roles with `color-mix(in oklab, …)`. The mix percentage is documented where the interaction rule is defined; it is not a new token such as `--tp-input-hover`. Base role values can still use any valid CSS color notation.
 
-For example, a hovered Button paints its hover color as a layer between its own fill and its content. A ghost Button's layer is `color-mix(in oklab, var(--tp-input) 50%, transparent)`, a translucent mix that lets the surface behind the Button show through. [Button](button.md#hover-colors) lists the mix of each variant and the fill it sits on.
+For example, a hovered Button paints its hover color as a layer between its own fill and its content. A ghost Button's layer is `color-mix(in oklab, var(--tp-input) 50%, transparent)`, a translucent mix that lets the surface behind the Button show through. [Button](components/button.mdx#hover-colors) lists the mix of each variant and the fill it sits on.
 
 `transparent` is an alpha operand or a no-paint value, not a replacement for a content-bearing surface role. Selected and focused states continue to use their semantic `accent` and `ring` roles; `--tp-opacity-disabled` remains a non-color state token.
 

@@ -82,9 +82,26 @@ interface TriggerRecord {
   cleanup: () => void;
 }
 
-/** Shared Dialog-family owner. Subclasses supply policy and public part names. */
+/**
+ * A modal window for a focused task, with a title, body, footer actions and managed focus. It
+ * moves focus inside on open, keeps the rest of the page inert and returns focus on close. Alert
+ * Dialog, Drawer and Command palette are built on it.
+ *
+ * @slot - The body of the task.
+ * @slot trigger - The control that opens the dialog, usually a Button.
+ * @slot title - The title, in place of `label`.
+ * @slot description - The description, in place of `description`.
+ * @slot footer - Footer content with no close behavior, such as a secondary action.
+ * @slot close - An action that closes the dialog when pressed, after its own handlers.
+ * @fires tp-open-change - Cancelable proposal to open or close, before the dialog changes;
+ *   `detail.value` is the proposed state and `detail.reason` what asked (`trigger-press`,
+ *   `close-action`, `escape-key`, `outside-press`, `imperative-action` and others). On a close,
+ *   `detail.preventUnmountOnClose()` keeps the content mounted.
+ * @fires tp-open-change-complete - After the dialog finishes opening or closing; `detail.open`.
+ */
 export class TpDialog extends TpElement {
   static tagName = 'tp-dialog';
+  /** @internal Brand shared by the library's surfaces. */
   readonly [SURFACE_HOST] = true as const;
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
     return [TpButton];
@@ -121,30 +138,50 @@ export class TpDialog extends TpElement {
     defaultTriggerIdentifier: { attribute: 'default-trigger-identifier' },
   };
   static override styles: CSSResultGroup = [TpElement.styles, dialogStyles];
+  /** Opens the dialog when it first connects, when `open` is not set. */
   defaultOpen = false;
+  /** Keeps the content in the document after closing, hidden. */
   keepMounted = false;
+  /** Whether Escape proposes closing. */
   closeOnEscape = true;
+  /** Where focus goes on open: the `first` control, the `popup` itself, an element or a selector, or a resolver that receives how the dialog was opened. */
   initialFocus: DialogInitialFocus = 'first';
+  /** Where focus returns on close: the `trigger`, the `previous` focus, an element, a resolver, or `false` to leave it. */
   finalFocus: DialogFinalFocus = 'trigger';
+  /** The visible title, which also names the dialog for assistive technology. */
   label = '';
+  /** The visible description, announced with the title. */
   description = '';
+  /** Draws its own backdrop when opened from another dialog, which otherwise shows only its parent's. */
   forceRender = false;
   /** Overlay treatment: a dark fill, or the same fill blurring what it covers. */
   backdrop: 'dark' | 'blur' = 'dark';
+  /** Whether the corner Close button always shows; when `false` it still shows unless another close action is reachable. */
   showCloseControl = true;
+  /** Renders the dialog into a container at the end of the document, out of clipping or stacking ancestors. */
   portal = false;
+  /** The element the dialog renders into: the portal container, or the region that `container` modality scopes to. */
   container: OwnedPortalContainer = null;
+  /** Identifier of a shared portal container, for dialogs that should render into the same one. */
   portalIdentifier: string | undefined;
+  /** Whether the header with the title and the description shows; hidden, they still name the dialog. */
   showHeader = true;
+  /** Whether the footer shows. */
   showFooter = true;
   #modality: DialogModality = 'modal';
   #resolved: ResolvedDialogModality = { modality: 'modal', scope: null };
   #outsideDismissal = true;
+  /** Called with each open or close proposal before `tp-open-change` is dispatched. */
   onOpenChange: ((event: TpSurfaceOpenChangeEvent) => void) | undefined;
+  /** Called after the dialog finishes opening or closing. */
   onOpenChangeComplete: ((open: boolean) => void) | undefined;
+  /** A handle from `createDialogHandle()` that opens the dialog from triggers registered elsewhere, with a payload each. */
   handle: DialogHandle | undefined;
+  /** Identifier of the registered trigger the dialog belongs to while open; it opens only for that trigger. */
   triggerIdentifier: string | undefined;
+  /** Identifier of the trigger a dialog opened by `default-open` belongs to. */
   defaultTriggerIdentifier: string | undefined;
+  /** The `close` and `unmount` actions, for code that should not hold the dialog itself. */
   readonly actions = { close: () => this.close(), unmount: () => this.unmount() };
   readonly #contentId = createId('tp-dialog-content');
   readonly #titleId = createId('tp-dialog-title');
@@ -231,6 +268,7 @@ export class TpDialog extends TpElement {
       this.onOpenChangeComplete?.(open);
     },
   });
+  /** @internal Outside-press and Escape dismissal. */
   readonly dismissController = new FloatingDismissController(this, {
     open: () => this.open,
     anchor: () => this.#activeTrigger,
@@ -249,6 +287,7 @@ export class TpDialog extends TpElement {
   protected get allowSystemDismissal(): boolean {
     return this.closeOnEscape;
   }
+  /** Whether the dialog is open; set it to open or close from code without a proposal. */
   get open(): boolean {
     return this.#state.open;
   }
@@ -305,6 +344,7 @@ export class TpDialog extends TpElement {
       (this.#contained && !this.open && this.#presence.state !== 'ending')
     );
   }
+  /** Whether a press or focus outside the dialog proposes closing. */
   get closeOnOutsideInteraction(): boolean {
     return this.#outsideDismissal;
   }
@@ -374,12 +414,15 @@ export class TpDialog extends TpElement {
     if (!this.open) return this.#cornerDecision;
     return (this.#cornerDecision = !this.#hasCloseAlternative());
   }
+  /** The payload of the trigger or handle call that opened the dialog. */
   get payload(): unknown {
     return this.#payload;
   }
+  /** Identifier of the trigger that opened the dialog. */
   get activeTriggerIdentifier(): string | undefined {
     return this.#activeTrigger ? this.#triggers.get(this.#activeTrigger)?.identifier : undefined;
   }
+  /** @internal Presence lifecycle state. */
   get presenceState(): PresenceState {
     return this.#presence.state;
   }
@@ -745,6 +788,7 @@ export class TpDialog extends TpElement {
   protected triggerControlsTarget(): HTMLElement {
     return this.#portal.host ?? this;
   }
+  /** Makes an element elsewhere in the document a trigger: it opens the dialog and receives focus on close. Returns a cleanup function. */
   registerTrigger(element: HTMLElement, options: DialogTriggerOptions = {}): () => void {
     if (this.#triggers.has(element)) return () => {};
     if (element.ownerDocument !== this.ownerDocument) {
@@ -878,6 +922,7 @@ export class TpDialog extends TpElement {
       this.#triggers.delete(element);
     };
   }
+  /** Proposes opening or closing, with the reason the proposal carries. */
   setOpen(open: boolean, reason: ChangeReason = 'programmatic', sourceEvent?: Event): void {
     const allowed = [
       'programmatic',
@@ -898,9 +943,11 @@ export class TpDialog extends TpElement {
       return;
     this.#request(open, reason, sourceEvent);
   }
+  /** Proposes closing, as a close action would. */
   close(): void {
     this.setOpen(false, 'imperative-action');
   }
+  /** Removes content kept mounted after closing, closing first when open. */
   unmount(): void {
     if (this.open) {
       this.requestSurfaceChange(false, 'imperative-action', undefined, undefined, () => {
@@ -914,6 +961,7 @@ export class TpDialog extends TpElement {
     this.#presence.releaseRetained();
     this.requestUpdate();
   }
+  /** @internal Opens for a handle call. */
   openFromHandle(identifier?: string, payload?: unknown): void {
     const trigger = [...this.#triggers].find(([, record]) => record.identifier === identifier);
     this.#request(

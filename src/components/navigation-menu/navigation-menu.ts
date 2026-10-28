@@ -36,7 +36,15 @@ interface NavigationMember {
   container: HTMLElement | null;
   reference(element: Element | undefined): void;
 }
-/** Native navigation policy; its scalar value is the only state proposal owner. */
+/**
+ * Site navigation links with optional hover and press panels that keep native link behavior. Links
+ * keep their activation, modifier keys, targets and tab order; panels share one measured viewport
+ * that resizes as the reader moves between items.
+ *
+ * @slot - The Navigation Menu Items.
+ * @fires tp-value-change - Cancelable proposal of the open item's `value`, or an empty string when
+ *   the panel closes.
+ */
 export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOwner {
   static tagName = 'tp-navigation-menu';
   static override presentation = navigationMenuPresentation;
@@ -97,7 +105,9 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
       }
     `,
   ];
+  /** The item open at first, by its `value`, when `value` is not set. */
   defaultValue: string | undefined;
+  /** Called with each open-item proposal before `tp-value-change` is dispatched. */
   onValueChange: ((event: TpValueChangeEvent<string>) => void) | undefined;
   override portal = true;
   override modal = false;
@@ -149,6 +159,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
     });
     this.content = (payload) => this.#renderMember(payload as NavigationMember);
   }
+  /** The `value` of the item whose panel is open, empty when none is; set it from the start to own it, writing back each accepted proposal. */
   get value(): string {
     return this.#valueState.value;
   }
@@ -204,6 +215,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
   protected override syncSlot = (): void => {
     this.itemChanged();
   };
+  /** @internal Rereads the items. */
   itemChanged = (): void => {
     if (this.#queued) return;
     this.#queued = true;
@@ -215,6 +227,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
       }
     });
   };
+  /** @internal Registers an item's part element. */
   registerItemPart(name: string, element: HTMLElement): () => void {
     return this.presentationController.registerPart(name, element);
   }
@@ -243,6 +256,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
     }
     this.requestUpdate();
   }
+  /** @internal Closes the panel after a link press. */
   closeFromLink(event: Event): void {
     this.#select('', 'link-press', event);
   }

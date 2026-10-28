@@ -27,9 +27,6 @@ const MOTIONS = new Set<StatusDotMotion>(['pulse', 'ping']);
  * Marks a status with a small colored dot and a text label, shown beside the dot or presented
  * in a tooltip on hover and keyboard focus, optionally with a looping pulse or ping.
  *
- * @csspart status-dot-indicator - The dot.
- * @csspart status-dot-label - The label beside the dot, while `show-label` is set.
- * @csspart status-dot-description - The Tooltip presenting the label while it is not shown.
  * @cssprop --tp-status-dot-color - Dot color, replacing the variant color.
  * @cssprop --tp-status-dot-size - Dot diameter.
  */
@@ -158,7 +155,7 @@ export class TpStatusDot extends TpElement {
     `,
   ];
 
-  /** Status color: `default`, `secondary`, `success`, `warning` or `destructive`. */
+  /** The color of the status, from the theme's status roles; the label, not the color, carries the meaning. */
   variant: StatusDotVariant = 'default';
   /** Status text: shown beside the dot, or the dot's accessible name and tooltip. */
   label = '';

@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import qrCodeDocumentation from '../../docs/qr-code.md?raw';
-import { qrCodeExamples } from './qr-code.examples.js';
+import { libraryDocs } from './library-docs.js';
 
 interface QrCodeStoryArgs {
   value: string;
@@ -19,10 +18,7 @@ const meta: Meta<QrCodeStoryArgs> = {
   title: 'Components/QR code',
   component: 'tp-qr-code',
   parameters: {
-    docs: {
-      examples: qrCodeExamples,
-      description: { component: qrCodeDocumentation.replace(/^# QR code\n/u, '') },
-    },
+    docs: libraryDocs('components/qr-code'),
   },
   args: {
     value: 'https://ledger.app/connect/jd-4829',

@@ -1,0 +1,59 @@
+---
+title: Label
+description: Visible text that names one control, focuses it on click and marks it optional when it is not required.
+tag: tp-label
+reference: false
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Label"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:22rem">
+  <tp-label for="label-hero-name">Workspace name</tp-label>
+  <tp-input id="label-hero-name" default-value="Northwind Studio"></tp-input>
+</div>`}
+/>
+
+## Usage
+
+Use a Label when you lay out a control yourself. Inside `tp-field`, the Field's `label` attribute already renders and wires one, so a separate Label is not needed.
+
+### Association
+
+Point `for` at the control's id, or nest the control as the Label's child. Either way the Label becomes the control's accessible name, and clicking the text focuses or activates it.
+
+<Preview
+  title="By id and by nesting"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-5);max-inline-size:22rem">
+  <div style="display:grid;gap:var(--tp-space-2)">
+    <tp-label for="label-assoc-email">Billing email</tp-label>
+    <tp-input id="label-assoc-email" type="email" placeholder="billing@northwind.co"></tp-input>
+  </div>
+  <tp-label style="align-items:center;gap:var(--tp-space-3)">
+    <tp-switch default-checked></tp-switch>
+    Send weekly usage reports
+  </tp-label>
+</div>`}
+/>
+
+### Optional
+
+`optional` adds an "Optional" hint after the text. Mark the few fields people may skip rather than every required one. The hint hides itself while the associated control is `required`, so a shared form template can set `optional` unconditionally.
+
+<Preview
+  title="Optional"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-5);max-inline-size:22rem">
+  <div style="display:grid;gap:var(--tp-space-2)">
+    <tp-label for="label-optional-company" optional>Company</tp-label>
+    <tp-input id="label-optional-company" placeholder="Acme Inc."></tp-input>
+  </div>
+  <div style="display:grid;gap:var(--tp-space-2)">
+    <tp-label for="label-optional-vat" optional>VAT number</tp-label>
+    <tp-input id="label-optional-vat" placeholder="GB 123 4567 89"></tp-input>
+  </div>
+</div>`}
+/>

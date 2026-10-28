@@ -13,26 +13,32 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'theme-switcher',
+      description: 'The host, which holds the composed control.',
       axes: ['variant', 'size'],
     },
     {
       name: 'theme-switcher-switch',
+      description: 'The composed Switch of the `switch` control.',
       axes: ['size'],
     },
     {
       name: 'theme-switcher-button',
+      description: 'The composed Button of the `button` control.',
       axes: ['size'],
     },
     {
       name: 'theme-switcher-group',
+      description: 'The composed Toggle group of the `group` control.',
       axes: ['size'],
     },
     {
       name: 'theme-switcher-option',
+      description: 'One Toggle of the `group` control: light, dark or system.',
       axes: ['size'],
     },
     {
       name: 'theme-switcher-icon',
+      description: 'The sun, moon or monitor Icon that shows the scheme.',
       axes: ['size'],
     },
   ],

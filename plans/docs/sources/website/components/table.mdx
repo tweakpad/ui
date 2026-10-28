@@ -1,0 +1,273 @@
+---
+title: Table
+description: Native tabular data with captions, header, body and footer regions, and pinned edges for scrolling.
+tag: tp-table
+parts: [tp-table-row, tp-table-head, tp-table-cell]
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Table"
+  align="stretch"
+  code={`<tp-table label="Recent invoices">
+  <tp-table-caption>A list of your recent invoices.</tp-table-caption>
+  <tp-table-header>
+    <tp-table-row>
+      <tp-table-head>Invoice</tp-table-head>
+      <tp-table-head>Status</tp-table-head>
+      <tp-table-head>Method</tp-table-head>
+      <tp-table-head style="text-align:end">Amount</tp-table-head>
+    </tp-table-row>
+  </tp-table-header>
+  <tp-table-body>
+    <tp-table-row>
+      <tp-table-head scope="row">INV-1042</tp-table-head>
+      <tp-table-cell>Paid</tp-table-cell>
+      <tp-table-cell>Visa •••• 4242</tp-table-cell>
+      <tp-table-cell style="text-align:end">$250.00</tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">INV-1043</tp-table-head>
+      <tp-table-cell>Pending</tp-table-cell>
+      <tp-table-cell>PayPal</tp-table-cell>
+      <tp-table-cell style="text-align:end">$150.00</tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">INV-1044</tp-table-head>
+      <tp-table-cell>Unpaid</tp-table-cell>
+      <tp-table-cell>Bank transfer</tp-table-cell>
+      <tp-table-cell style="text-align:end">$350.00</tp-table-cell>
+    </tp-table-row>
+  </tp-table-body>
+  <tp-table-footer>
+    <tp-table-row>
+      <tp-table-head scope="row" colspan="3">Total</tp-table-head>
+      <tp-table-cell style="text-align:end">$750.00</tp-table-cell>
+    </tp-table-row>
+  </tp-table-footer>
+</tp-table>`}
+/>
+
+## Usage
+
+Each part renders its native table element, so column layout, `colspan`, `rowspan` and header relationships work as in plain HTML. Use `tp-table-head` with `scope="row"` for the cell that names a row. Table is for reading data; it has no grid keyboard model, so compose Buttons, Menus or Inputs in cells for actions.
+
+### Status and actions
+
+<Preview
+  title="Badges and menus"
+  align="stretch"
+  code={`<tp-table label="Project tasks">
+  <tp-table-header>
+    <tp-table-row>
+      <tp-table-head>Task</tp-table-head>
+      <tp-table-head>Owner</tp-table-head>
+      <tp-table-head>Status</tp-table-head>
+      <tp-table-head style="text-align:end">Actions</tp-table-head>
+    </tp-table-row>
+  </tp-table-header>
+  <tp-table-body>
+    <tp-table-row>
+      <tp-table-head scope="row">Redesign pricing page</tp-table-head>
+      <tp-table-cell>Maya Chen</tp-table-cell>
+      <tp-table-cell><tp-badge variant="secondary">In review</tp-badge></tp-table-cell>
+      <tp-table-cell style="text-align:end">
+        <tp-menu label="Actions for Redesign pricing page">
+          <tp-button slot="trigger" variant="ghost" size="sm">Manage</tp-button>
+          <tp-menu-item>Open task</tp-menu-item>
+          <tp-menu-item>Reassign</tp-menu-item>
+          <tp-menu-separator></tp-menu-separator>
+          <tp-menu-item variant="destructive">Delete task</tp-menu-item>
+        </tp-menu>
+      </tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">Migrate billing webhooks</tp-table-head>
+      <tp-table-cell>Jonas Weber</tp-table-cell>
+      <tp-table-cell><tp-badge>Done</tp-badge></tp-table-cell>
+      <tp-table-cell style="text-align:end">
+        <tp-menu label="Actions for Migrate billing webhooks">
+          <tp-button slot="trigger" variant="ghost" size="sm">Manage</tp-button>
+          <tp-menu-item>Open task</tp-menu-item>
+          <tp-menu-item>Reassign</tp-menu-item>
+          <tp-menu-separator></tp-menu-separator>
+          <tp-menu-item variant="destructive">Delete task</tp-menu-item>
+        </tp-menu>
+      </tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">Write onboarding emails</tp-table-head>
+      <tp-table-cell>Priya Patel</tp-table-cell>
+      <tp-table-cell><tp-badge variant="outline">Backlog</tp-badge></tp-table-cell>
+      <tp-table-cell style="text-align:end">
+        <tp-menu label="Actions for Write onboarding emails">
+          <tp-button slot="trigger" variant="ghost" size="sm">Manage</tp-button>
+          <tp-menu-item>Open task</tp-menu-item>
+          <tp-menu-item>Reassign</tp-menu-item>
+          <tp-menu-separator></tp-menu-separator>
+          <tp-menu-item variant="destructive">Delete task</tp-menu-item>
+        </tp-menu>
+      </tp-table-cell>
+    </tp-table-row>
+  </tp-table-body>
+</tp-table>`}
+/>
+
+Give each control in a row a name that includes the row, such as "Actions for Redesign pricing page", so it stays unambiguous out of visual context.
+
+### Editable cells
+
+<Preview
+  title="Inputs"
+  align="stretch"
+  code={`<tp-table label="Order">
+  <tp-table-header>
+    <tp-table-row>
+      <tp-table-head>Product</tp-table-head>
+      <tp-table-head style="inline-size:8rem">Quantity</tp-table-head>
+      <tp-table-head style="text-align:end">Unit price</tp-table-head>
+    </tp-table-row>
+  </tp-table-header>
+  <tp-table-body>
+    <tp-table-row>
+      <tp-table-head scope="row">Wireless mouse</tp-table-head>
+      <tp-table-cell><tp-input type="number" min="0" default-value="2" aria-label="Quantity for Wireless mouse"></tp-input></tp-table-cell>
+      <tp-table-cell style="text-align:end">$29.99</tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">Mechanical keyboard</tp-table-head>
+      <tp-table-cell><tp-input type="number" min="0" default-value="1" aria-label="Quantity for Mechanical keyboard"></tp-input></tp-table-cell>
+      <tp-table-cell style="text-align:end">$129.99</tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">USB-C hub</tp-table-head>
+      <tp-table-cell><tp-input type="number" min="0" default-value="1" aria-label="Quantity for USB-C hub"></tp-input></tp-table-cell>
+      <tp-table-cell style="text-align:end">$49.99</tp-table-cell>
+    </tp-table-row>
+  </tp-table-body>
+</tp-table>`}
+/>
+
+A Select in a cell works the same way for picking from a fixed list, such as reassigning work without leaving the table.
+
+<Preview
+  title="Selects"
+  align="stretch"
+  code={`<tp-table label="Task assignments">
+  <tp-table-header>
+    <tp-table-row>
+      <tp-table-head>Task</tp-table-head>
+      <tp-table-head>Assignee</tp-table-head>
+      <tp-table-head>Due</tp-table-head>
+    </tp-table-row>
+  </tp-table-header>
+  <tp-table-body>
+    <tp-table-row>
+      <tp-table-head scope="row">Review vendor contract</tp-table-head>
+      <tp-table-cell style="inline-size:12rem">
+        <tp-select label="Assignee for Review vendor contract" default-value="jonas">
+          <tp-select-option value="maya">Maya Chen</tp-select-option>
+          <tp-select-option value="jonas">Jonas Weber</tp-select-option>
+          <tp-select-option value="priya">Priya Patel</tp-select-option>
+        </tp-select>
+      </tp-table-cell>
+      <tp-table-cell>Due Friday</tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">Prepare Q3 board deck</tp-table-head>
+      <tp-table-cell style="inline-size:12rem">
+        <tp-select label="Assignee for Prepare Q3 board deck" default-value="maya">
+          <tp-select-option value="maya">Maya Chen</tp-select-option>
+          <tp-select-option value="jonas">Jonas Weber</tp-select-option>
+          <tp-select-option value="priya">Priya Patel</tp-select-option>
+        </tp-select>
+      </tp-table-cell>
+      <tp-table-cell>Due next week</tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">Renew SSL certificates</tp-table-head>
+      <tp-table-cell style="inline-size:12rem">
+        <tp-select label="Assignee for Renew SSL certificates" default-value="priya">
+          <tp-select-option value="maya">Maya Chen</tp-select-option>
+          <tp-select-option value="jonas">Jonas Weber</tp-select-option>
+          <tp-select-option value="priya">Priya Patel</tp-select-option>
+        </tp-select>
+      </tp-table-cell>
+      <tp-table-cell>Overdue</tp-table-cell>
+    </tp-table-row>
+  </tp-table-body>
+</tp-table>`}
+/>
+
+### Row selection
+
+<Preview
+  title="Selected rows"
+  align="stretch"
+  code={`<tp-table label="Team members" selection-presentation="row">
+  <tp-table-header>
+    <tp-table-row>
+      <tp-table-head>Name</tp-table-head>
+      <tp-table-head>Email</tp-table-head>
+      <tp-table-head>Role</tp-table-head>
+    </tp-table-row>
+  </tp-table-header>
+  <tp-table-body>
+    <tp-table-row selected>
+      <tp-table-head scope="row">Maya Chen</tp-table-head>
+      <tp-table-cell>maya@northwind.dev</tp-table-cell>
+      <tp-table-cell>Owner</tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">Jonas Weber</tp-table-head>
+      <tp-table-cell>jonas@northwind.dev</tp-table-cell>
+      <tp-table-cell>Admin</tp-table-cell>
+    </tp-table-row>
+    <tp-table-row selected>
+      <tp-table-head scope="row">Priya Patel</tp-table-head>
+      <tp-table-cell>priya@northwind.dev</tp-table-cell>
+      <tp-table-cell>Member</tp-table-cell>
+    </tp-table-row>
+  </tp-table-body>
+</tp-table>`}
+/>
+
+`selection-presentation="row"` paints rows marked `selected`. Selection itself belongs to your application, usually driven by a Checkbox in each row; hovering never selects.
+
+### Sticky header and columns
+
+<Preview
+  title="Sticky edges"
+  align="stretch"
+  code={`<tp-table label="Monthly revenue by region" sticky-header sticky-footer sticky-start-columns="1" sticky-end-columns="1" style="max-block-size:18rem">
+  <tp-table-header>
+    <tp-table-row>
+      <tp-table-head>Region</tp-table-head>
+      <tp-table-head style="text-align:end">January</tp-table-head>
+      <tp-table-head style="text-align:end">February</tp-table-head>
+      <tp-table-head style="text-align:end">March</tp-table-head>
+      <tp-table-head style="text-align:end">April</tp-table-head>
+      <tp-table-head style="text-align:end">May</tp-table-head>
+      <tp-table-head style="text-align:end">June</tp-table-head>
+      <tp-table-head style="text-align:end">Half year</tp-table-head>
+    </tp-table-row>
+  </tp-table-header>
+  <tp-table-body>
+    <tp-table-row><tp-table-head scope="row">North America</tp-table-head><tp-table-cell style="text-align:end">$48,200</tp-table-cell><tp-table-cell style="text-align:end">$51,900</tp-table-cell><tp-table-cell style="text-align:end">$55,300</tp-table-cell><tp-table-cell style="text-align:end">$53,800</tp-table-cell><tp-table-cell style="text-align:end">$58,100</tp-table-cell><tp-table-cell style="text-align:end">$61,400</tp-table-cell><tp-table-cell style="text-align:end"><strong>$328,700</strong></tp-table-cell></tp-table-row>
+    <tp-table-row><tp-table-head scope="row">South America</tp-table-head><tp-table-cell style="text-align:end">$12,400</tp-table-cell><tp-table-cell style="text-align:end">$13,100</tp-table-cell><tp-table-cell style="text-align:end">$12,800</tp-table-cell><tp-table-cell style="text-align:end">$14,600</tp-table-cell><tp-table-cell style="text-align:end">$15,200</tp-table-cell><tp-table-cell style="text-align:end">$16,000</tp-table-cell><tp-table-cell style="text-align:end"><strong>$84,100</strong></tp-table-cell></tp-table-row>
+    <tp-table-row><tp-table-head scope="row">Western Europe</tp-table-head><tp-table-cell style="text-align:end">$39,700</tp-table-cell><tp-table-cell style="text-align:end">$41,200</tp-table-cell><tp-table-cell style="text-align:end">$43,900</tp-table-cell><tp-table-cell style="text-align:end">$42,500</tp-table-cell><tp-table-cell style="text-align:end">$45,800</tp-table-cell><tp-table-cell style="text-align:end">$47,300</tp-table-cell><tp-table-cell style="text-align:end"><strong>$260,400</strong></tp-table-cell></tp-table-row>
+    <tp-table-row><tp-table-head scope="row">Eastern Europe</tp-table-head><tp-table-cell style="text-align:end">$9,800</tp-table-cell><tp-table-cell style="text-align:end">$10,400</tp-table-cell><tp-table-cell style="text-align:end">$11,100</tp-table-cell><tp-table-cell style="text-align:end">$10,900</tp-table-cell><tp-table-cell style="text-align:end">$11,700</tp-table-cell><tp-table-cell style="text-align:end">$12,300</tp-table-cell><tp-table-cell style="text-align:end"><strong>$66,200</strong></tp-table-cell></tp-table-row>
+    <tp-table-row><tp-table-head scope="row">Middle East</tp-table-head><tp-table-cell style="text-align:end">$7,200</tp-table-cell><tp-table-cell style="text-align:end">$7,900</tp-table-cell><tp-table-cell style="text-align:end">$8,300</tp-table-cell><tp-table-cell style="text-align:end">$8,100</tp-table-cell><tp-table-cell style="text-align:end">$8,800</tp-table-cell><tp-table-cell style="text-align:end">$9,400</tp-table-cell><tp-table-cell style="text-align:end"><strong>$49,700</strong></tp-table-cell></tp-table-row>
+    <tp-table-row><tp-table-head scope="row">Africa</tp-table-head><tp-table-cell style="text-align:end">$5,100</tp-table-cell><tp-table-cell style="text-align:end">$5,600</tp-table-cell><tp-table-cell style="text-align:end">$6,000</tp-table-cell><tp-table-cell style="text-align:end">$6,400</tp-table-cell><tp-table-cell style="text-align:end">$6,900</tp-table-cell><tp-table-cell style="text-align:end">$7,300</tp-table-cell><tp-table-cell style="text-align:end"><strong>$37,300</strong></tp-table-cell></tp-table-row>
+    <tp-table-row><tp-table-head scope="row">South Asia</tp-table-head><tp-table-cell style="text-align:end">$14,300</tp-table-cell><tp-table-cell style="text-align:end">$15,800</tp-table-cell><tp-table-cell style="text-align:end">$16,900</tp-table-cell><tp-table-cell style="text-align:end">$17,400</tp-table-cell><tp-table-cell style="text-align:end">$18,600</tp-table-cell><tp-table-cell style="text-align:end">$19,900</tp-table-cell><tp-table-cell style="text-align:end"><strong>$102,900</strong></tp-table-cell></tp-table-row>
+    <tp-table-row><tp-table-head scope="row">East Asia</tp-table-head><tp-table-cell style="text-align:end">$31,600</tp-table-cell><tp-table-cell style="text-align:end">$33,200</tp-table-cell><tp-table-cell style="text-align:end">$34,700</tp-table-cell><tp-table-cell style="text-align:end">$36,100</tp-table-cell><tp-table-cell style="text-align:end">$37,900</tp-table-cell><tp-table-cell style="text-align:end">$39,500</tp-table-cell><tp-table-cell style="text-align:end"><strong>$213,000</strong></tp-table-cell></tp-table-row>
+    <tp-table-row><tp-table-head scope="row">Oceania</tp-table-head><tp-table-cell style="text-align:end">$6,700</tp-table-cell><tp-table-cell style="text-align:end">$7,100</tp-table-cell><tp-table-cell style="text-align:end">$7,400</tp-table-cell><tp-table-cell style="text-align:end">$7,900</tp-table-cell><tp-table-cell style="text-align:end">$8,200</tp-table-cell><tp-table-cell style="text-align:end">$8,800</tp-table-cell><tp-table-cell style="text-align:end"><strong>$46,100</strong></tp-table-cell></tp-table-row>
+  </tp-table-body>
+  <tp-table-footer>
+    <tp-table-row><tp-table-head scope="row">Total</tp-table-head><tp-table-cell style="text-align:end">$175,000</tp-table-cell><tp-table-cell style="text-align:end">$186,200</tp-table-cell><tp-table-cell style="text-align:end">$196,400</tp-table-cell><tp-table-cell style="text-align:end">$197,700</tp-table-cell><tp-table-cell style="text-align:end">$211,200</tp-table-cell><tp-table-cell style="text-align:end">$221,900</tp-table-cell><tp-table-cell style="text-align:end"><strong>$1,188,400</strong></tp-table-cell></tp-table-row>
+  </tp-table-footer>
+</tp-table>`}
+/>
+
+Constrain the Table with ordinary CSS such as `max-block-size`, and it becomes a focusable scroll region named by `label`. `sticky-header`, `sticky-footer`, `sticky-start-columns` and `sticky-end-columns` pin each edge independently and follow RTL: here the region names and the half-year totals stay in view while the months scroll between them.

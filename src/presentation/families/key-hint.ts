@@ -10,9 +10,11 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'key-hint',
+      description: 'The keycap, a native keyboard-input element.',
     },
     {
       name: 'key-hint-group',
+      description: 'The native keyboard-input element around the keys of a shortcut.',
     },
   ],
 };

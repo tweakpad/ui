@@ -1,0 +1,141 @@
+---
+title: Scroll Area
+description: A native scroll viewport with slim, theme-consistent scrollbars.
+tag: tp-scroll-area
+---
+
+<Preview
+  title="Scroll Area"
+  code={`<tp-scroll-area label="Release history" style="block-size:18rem;inline-size:16rem;max-inline-size:100%;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">
+    <h4 style="margin:0 0 var(--tp-space-4);font-weight:var(--tp-font-medium)">Release history</h4>
+    <div>v2.4.0 · Shared workspaces</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.3.2 · Faster search indexing</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.3.1 · Fix CSV export encoding</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.3.0 · Usage reports</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.2.4 · SAML for all plans</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.2.3 · Audit log filters</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.2.0 · Billing self-service</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.1.5 · Dark mode polish</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.1.0 · Command palette</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.0.1 · Hotfix for invite links</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.0.0 · New editor</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v1.9.0 · Comments and mentions</div>
+  </div>
+</tp-scroll-area>`}
+/>
+
+## Usage
+
+A Scroll Area keeps the browser's own scrolling (wheel, touch, keyboard, focus and scroll anchoring) and replaces only the visible scrollbars. Constrain its height or width; its content decides how far it scrolls. A `label` names the viewport as a region, which helps when it holds a lot of content. Track clicks and drags preserve keyboard focus, temporarily suspend scroll snapping, and restore it on release, cancellation, disabling, removal or disconnection. Track wheel input leaves reached edges unconsumed for ancestor scrolling; control-wheel zoom is untouched.
+
+### Horizontal
+
+`orientation="horizontal"` shows the horizontal track. The content needs an intrinsic width wider than the area, such as a row that does not wrap.
+
+<Preview
+  title="Horizontal"
+  align="stretch"
+  code={`<tp-scroll-area label="Recent files" orientation="horizontal" style="max-inline-size:32rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <div style="display:flex;gap:var(--tp-space-3);padding:var(--tp-space-4);inline-size:max-content">
+    <tp-card style="inline-size:10rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Brand guidelines.pdf</tp-card>
+    <tp-card style="inline-size:10rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Q3 roadmap.key</tp-card>
+    <tp-card style="inline-size:10rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Pricing model.xlsx</tp-card>
+    <tp-card style="inline-size:10rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Hiring plan.docx</tp-card>
+    <tp-card style="inline-size:10rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Launch checklist.md</tp-card>
+  </div>
+</tp-scroll-area>`}
+/>
+
+### Both axes
+
+`axis="both"` shows both tracks for content that overflows in two directions, like a wide table. The corner fills the space where the tracks meet.
+
+<Preview
+  title="Both axes"
+  align="stretch"
+  code={`<tp-scroll-area label="Invoices" axis="both" style="block-size:12rem;max-inline-size:28rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <table style="border-collapse:collapse;font-size:var(--tp-text-sm);white-space:nowrap">
+    <thead>
+      <tr style="text-align:start;color:var(--tp-muted-foreground)">
+        <th style="padding:var(--tp-space-2) var(--tp-space-4);text-align:start;font-weight:var(--tp-font-medium)">Invoice</th>
+        <th style="padding:var(--tp-space-2) var(--tp-space-4);text-align:start;font-weight:var(--tp-font-medium)">Customer</th>
+        <th style="padding:var(--tp-space-2) var(--tp-space-4);text-align:start;font-weight:var(--tp-font-medium)">Issued</th>
+        <th style="padding:var(--tp-space-2) var(--tp-space-4);text-align:start;font-weight:var(--tp-font-medium)">Due</th>
+        <th style="padding:var(--tp-space-2) var(--tp-space-4);text-align:start;font-weight:var(--tp-font-medium)">Status</th>
+        <th style="padding:var(--tp-space-2) var(--tp-space-4);text-align:end;font-weight:var(--tp-font-medium)">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:var(--tp-space-2) var(--tp-space-4)">INV-2041</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Northwind Traders</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Oct 1, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Nov 1, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Open</td><td style="padding:var(--tp-space-2) var(--tp-space-4);text-align:end">$4,820.00</td></tr>
+      <tr><td style="padding:var(--tp-space-2) var(--tp-space-4)">INV-2040</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Contoso Ltd.</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Sep 28, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Oct 28, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Paid</td><td style="padding:var(--tp-space-2) var(--tp-space-4);text-align:end">$1,250.00</td></tr>
+      <tr><td style="padding:var(--tp-space-2) var(--tp-space-4)">INV-2039</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Fabrikam Inc.</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Sep 21, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Oct 21, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Paid</td><td style="padding:var(--tp-space-2) var(--tp-space-4);text-align:end">$9,400.00</td></tr>
+      <tr><td style="padding:var(--tp-space-2) var(--tp-space-4)">INV-2038</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Tailspin Toys</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Sep 14, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Oct 14, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Overdue</td><td style="padding:var(--tp-space-2) var(--tp-space-4);text-align:end">$615.00</td></tr>
+      <tr><td style="padding:var(--tp-space-2) var(--tp-space-4)">INV-2037</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Wide World Importers</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Sep 7, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Oct 7, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Paid</td><td style="padding:var(--tp-space-2) var(--tp-space-4);text-align:end">$2,180.00</td></tr>
+      <tr><td style="padding:var(--tp-space-2) var(--tp-space-4)">INV-2036</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Adventure Works</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Aug 31, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Sep 30, 2026</td><td style="padding:var(--tp-space-2) var(--tp-space-4)">Paid</td><td style="padding:var(--tp-space-2) var(--tp-space-4);text-align:end">$3,300.00</td></tr>
+    </tbody>
+  </table>
+</tp-scroll-area>`}
+/>
+
+### Scrollbar visibility
+
+`scrollbar-visibility` decides when tracks appear. The default, `automatic`, shows each overflowing axis; `on-hover` and `while-scrolling` keep quiet surfaces clean, and `always` keeps the track visible as a cue that more content exists.
+
+<Preview
+  title="Visibility"
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-6)">
+  <tp-scroll-area label="Members, hover to reveal" scrollbar-visibility="on-hover" style="block-size:9rem;inline-size:12rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+    <div style="display:grid;gap:var(--tp-space-2);padding:var(--tp-space-3) var(--tp-space-4);font-size:var(--tp-text-sm)">
+      <strong>on-hover</strong>
+      <span>Ada Okafor</span><span>Ben Carter</span><span>Chloé Martin</span><span>Diego Alvarez</span><span>Emi Tanaka</span><span>Farah Haddad</span>
+    </div>
+  </tp-scroll-area>
+  <tp-scroll-area label="Members, always visible" scrollbar-visibility="always" style="block-size:9rem;inline-size:12rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+    <div style="display:grid;gap:var(--tp-space-2);padding:var(--tp-space-3) var(--tp-space-4);font-size:var(--tp-text-sm)">
+      <strong>always</strong>
+      <span>Ada Okafor</span><span>Ben Carter</span><span>Chloé Martin</span><span>Diego Alvarez</span><span>Emi Tanaka</span><span>Farah Haddad</span>
+    </div>
+  </tp-scroll-area>
+</div>`}
+/>
+
+### Overflow markers
+
+The host exposes `data-overflow-y-start` and `data-overflow-y-end` while content is hidden past an edge. Use them for fades or shadows that tell people there is more to scroll. Scroll the viewport itself with the standard `scrollTo` and `scrollTop` APIs on `viewportElement`. No second scroll position or component change event is maintained. Horizontal offsets follow the native RTL model.
+
+<Preview
+  title="Edge fade"
+  code={`<style>
+  #scroll-area-fade[data-overflow-y-end] { mask-image: linear-gradient(to bottom, black 75%, transparent); }
+  #scroll-area-fade[data-overflow-y-start][data-overflow-y-end] { mask-image: linear-gradient(to bottom, transparent, black 25%, black 75%, transparent); }
+  #scroll-area-fade[data-overflow-y-start]:not([data-overflow-y-end]) { mask-image: linear-gradient(to bottom, transparent, black 25%); }
+</style>
+<div style="display:grid;gap:var(--tp-space-3);justify-items:start">
+  <tp-scroll-area id="scroll-area-fade" label="Terms of service" style="block-size:10rem;inline-size:18rem;max-inline-size:100%">
+    <div style="display:grid;gap:var(--tp-space-3);font-size:var(--tp-text-sm);line-height:var(--tp-leading-relaxed)">
+      <p style="margin:0">These terms govern your use of Tweakpad and any workspace you create or join.</p>
+      <p style="margin:0">You keep ownership of the content you upload. You grant us the rights needed to host and display it to the people you share it with.</p>
+      <p style="margin:0">Paid plans renew automatically each billing period until cancelled from the Billing page.</p>
+      <p style="margin:0">We may update these terms. Material changes are announced by email at least 30 days in advance.</p>
+    </div>
+  </tp-scroll-area>
+  <tp-button id="scroll-area-fade-top" variant="outline" size="sm">Back to top</tp-button>
+</div>`}
+  script={`await customElements.whenDefined('tp-scroll-area');
+const area = document.querySelector('#scroll-area-fade');
+document.querySelector('#scroll-area-fade-top').addEventListener('click', () => {
+  area.viewportElement?.scrollTo({ top: 0, behavior: 'smooth' });
+});`}
+/>

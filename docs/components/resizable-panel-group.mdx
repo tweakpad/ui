@@ -1,0 +1,263 @@
+---
+title: Resizable Panel Group
+description: Adjacent panels whose sizes people change by dragging or using the keyboard on the handles between them.
+tag: tp-resizable-panel-group
+parts: [tp-resizable-panel, tp-resizable-handle]
+---
+
+<Preview
+  title="Resizable Panel Group"
+  align="stretch"
+  code={`<tp-resizable-panel-group style="block-size:18rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-resizable-panel id="resizable-hero-nav" default-size="25%" min-size="15%">
+    <div style="display:grid;gap:var(--tp-space-2);padding:var(--tp-space-4);font-size:var(--tp-text-sm)">
+      <strong>Inbox</strong>
+      <span style="color:var(--tp-muted-foreground)">Assigned to me</span>
+      <span style="color:var(--tp-muted-foreground)">Mentions</span>
+      <span style="color:var(--tp-muted-foreground)">Archive</span>
+    </div>
+  </tp-resizable-panel>
+  <tp-resizable-handle label="Resize navigation" with-handle></tp-resizable-handle>
+  <tp-resizable-panel id="resizable-hero-content" min-size="40%">
+    <tp-resizable-panel-group orientation="vertical">
+      <tp-resizable-panel default-size="65%" min-size="25%">
+        <div style="display:grid;gap:var(--tp-space-2);padding:var(--tp-space-4);font-size:var(--tp-text-sm)">
+          <strong>Q3 planning notes</strong>
+          <span style="color:var(--tp-muted-foreground)">Priya Natarajan · Oct 8</span>
+          <span>Draft goals for the self-serve billing launch and the onboarding refresh.</span>
+        </div>
+      </tp-resizable-panel>
+      <tp-resizable-handle label="Resize reply" with-handle></tp-resizable-handle>
+      <tp-resizable-panel min-size="20%">
+        <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">Write a reply…</div>
+      </tp-resizable-panel>
+    </tp-resizable-panel-group>
+  </tp-resizable-panel>
+</tp-resizable-panel-group>`}
+/>
+
+## Usage
+
+One group owns the sizes of its panels. Panels and handles must be direct children in order, and every pointer, keyboard and programmatic change goes through the same constraint solver. Give the group a block size; panels share its space along `orientation`. Nest another group inside a panel for the second axis, as above.
+
+The resize handle is independent of the decorative `tp-separator` component. Ordinary direct-child elements also serve as panels; omitted handles are generated between adjacent panels and use the same implementation.
+
+### Sizes and limits
+
+`default-size`, `min-size` and `max-size` take percentages, pixels or other lengths; a unitless value is a percentage. Double-clicking a handle restores its panel's default size.
+
+The `target` selects the panel described by accessible values, keyboard commands and reset. Pointer dragging follows the physical boundary. An enabled handle is a focusable separator with native orientation, values and a relationship to the controlled panel. Its separator orientation is perpendicular to the group axis.
+
+Axis arrows adjust by `keyboardStep`; Home/End reach allowed extremes; Enter toggles a collapsible target. F6 and Shift+F6 cycle enabled handles.
+
+<Preview
+  title="Bounds"
+  align="stretch"
+  code={`<tp-resizable-panel-group style="block-size:12rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-resizable-panel default-size="30%" min-size="20%" max-size="45%">
+    <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Files<br><span style="color:var(--tp-muted-foreground)">20–45%</span></div>
+  </tp-resizable-panel>
+  <tp-resizable-handle label="Resize files" with-handle></tp-resizable-handle>
+  <tp-resizable-panel min-size="16rem">
+    <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Editor<br><span style="color:var(--tp-muted-foreground)">At least 16rem</span></div>
+  </tp-resizable-panel>
+</tp-resizable-panel-group>`}
+/>
+
+### Vertical
+
+`orientation="vertical"` stacks the panels; the handles then move with Up and Down.
+
+<Preview
+  title="Vertical"
+  align="stretch"
+  code={`<tp-resizable-panel-group orientation="vertical" style="block-size:16rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-resizable-panel default-size="70%" min-size="30%">
+    <div style="padding:var(--tp-space-4);font-family:var(--tp-font-mono);font-size:var(--tp-text-sm)">query.sql</div>
+  </tp-resizable-panel>
+  <tp-resizable-handle label="Resize results" with-handle></tp-resizable-handle>
+  <tp-resizable-panel min-size="15%">
+    <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">1,284 rows · 42 ms</div>
+  </tp-resizable-panel>
+</tp-resizable-panel-group>`}
+/>
+
+### Collapsible panels
+
+A `collapsible` panel snaps to `collapsed-size` when dragged below its minimum, and Enter on its handle toggles it. `collapse()`, `expand()` and `isCollapsed()` drive it from your own controls.
+
+Expansion restores the most recent valid expanded size, then the default or minimum.
+
+<Preview
+  title="Collapsible sidebar"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:start">
+  <tp-button id="resizable-toggle" variant="outline" size="sm">Toggle sidebar</tp-button>
+  <tp-resizable-panel-group style="inline-size:100%;block-size:12rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+    <tp-resizable-panel id="resizable-sidebar" default-size="28%" min-size="18%" collapsible>
+      <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Channels</div>
+    </tp-resizable-panel>
+    <tp-resizable-handle label="Resize sidebar" with-handle></tp-resizable-handle>
+    <tp-resizable-panel min-size="40%">
+      <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">#design-reviews</div>
+    </tp-resizable-panel>
+  </tp-resizable-panel-group>
+</div>`}
+  script={`await customElements.whenDefined('tp-resizable-panel');
+const panel = document.querySelector('#resizable-sidebar');
+document.querySelector('#resizable-toggle').addEventListener('click', () => {
+  if (panel.isCollapsed()) panel.expand();
+  else panel.collapse();
+});`}
+/>
+
+### Layout changes
+
+`tp-layout-change` reports each committed layout as panel IDs and percentages, and `tp-layout-change-complete` fires once when a drag settles. Save layouts from the settled event, keyed by stable panel IDs.
+
+Stable authored panel IDs are required when saving a layout across page loads. Missing IDs are generated for the current document lifetime.
+
+<Preview
+  title="Layout events"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3)">
+  <tp-resizable-panel-group id="resizable-layout" style="block-size:10rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+    <tp-resizable-panel id="resizable-preview" default-size="50%" min-size="20%">
+      <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Preview</div>
+    </tp-resizable-panel>
+    <tp-resizable-handle label="Resize preview" with-handle></tp-resizable-handle>
+    <tp-resizable-panel id="resizable-inspector" min-size="20%">
+      <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Inspector</div>
+    </tp-resizable-panel>
+  </tp-resizable-panel-group>
+  <output id="resizable-layout-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm);font-family:var(--tp-font-mono)">Drag the handle</output>
+</div>`}
+  script={`const group = document.querySelector('#resizable-layout');
+const output = document.querySelector('#resizable-layout-output');
+group.addEventListener('tp-layout-change', (event) => {
+  if (event.target !== group) return;
+  output.textContent = Object.entries(event.detail.layout)
+    .map(([id, size]) => id + ' ' + Math.round(size) + '%')
+    .join(' · ');
+});`}
+/>
+
+### Controlled sizes
+
+Set `sizes` to own the layout, in panel order, and accept each proposal in `onSizesChange` by assigning `event.detail.value` back; ignoring it keeps the previous layout. Strings are percentages and numbers are pixels. Like the persistence adapter, `sizes` must be set before the group connects.
+
+<Preview
+  title="Layout presets"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3)">
+  <div style="display:flex;gap:var(--tp-space-2)">
+    <tp-button id="resizable-preset-split" variant="outline" size="sm">Side by side</tp-button>
+    <tp-button id="resizable-preset-focus" variant="outline" size="sm">Focus on code</tp-button>
+  </div>
+  <tp-resizable-panel-group id="resizable-controlled" style="block-size:10rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+    <tp-resizable-panel id="resizable-controlled-code" min-size="20%">
+      <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">checkout.tsx</div>
+    </tp-resizable-panel>
+    <tp-resizable-handle label="Resize code" with-handle></tp-resizable-handle>
+    <tp-resizable-panel id="resizable-controlled-preview" min-size="15%">
+      <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Preview</div>
+    </tp-resizable-panel>
+  </tp-resizable-panel-group>
+</div>`}
+  script={`// sizes must be set before the group first connects, so this demo swaps in a fresh copy.
+await customElements.whenDefined('tp-resizable-panel-group');
+const authored = document.querySelector('#resizable-controlled');
+const group = authored.cloneNode(true);
+group.sizes = ['50%', '50%'];
+group.onSizesChange = (event) => {
+  if (!event.defaultPrevented) group.sizes = event.detail.value;
+};
+authored.replaceWith(group);
+document.querySelector('#resizable-preset-split').addEventListener('click', () => {
+  group.sizes = ['50%', '50%'];
+});
+document.querySelector('#resizable-preset-focus').addEventListener('click', () => {
+  group.sizes = ['80%', '20%'];
+});`}
+/>
+
+### Saved layout
+
+Give the group a `persistence-key` and a `persistenceAdapter` with `load(key)` and `save(key, layout)`, and it restores the saved layout on connect and saves each settled one. The library has no storage policy of its own, and the adapter must be in place before the group connects.
+
+<Preview
+  title="Persisted sizes"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3)">
+  <tp-resizable-panel-group id="resizable-saved" persistence-key="docs-mail-layout" style="block-size:10rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+    <tp-resizable-panel id="resizable-saved-folders" default-size="25%" min-size="15%">
+      <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Folders</div>
+    </tp-resizable-panel>
+    <tp-resizable-handle label="Resize folders" with-handle></tp-resizable-handle>
+    <tp-resizable-panel id="resizable-saved-messages" min-size="30%">
+      <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Messages</div>
+    </tp-resizable-panel>
+  </tp-resizable-panel-group>
+  <span style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Drag the handle, then press Refresh or reload the page.</span>
+</div>`}
+  script={`// The adapter must be set before the group first connects, so this demo swaps in a fresh copy.
+await customElements.whenDefined('tp-resizable-panel-group');
+const authored = document.querySelector('#resizable-saved');
+const group = authored.cloneNode(true);
+group.persistenceAdapter = {
+  load: (key) => {
+    try {
+      return JSON.parse(localStorage.getItem(key) ?? 'null');
+    } catch {
+      return null;
+    }
+  },
+  save: (key, layout) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(layout));
+    } catch {}
+  },
+};
+authored.replaceWith(group);`}
+/>
+
+### Disabled
+
+`disabled` on the group freezes every handle; on a panel, it keeps that panel's pixel size while the others adjust.
+
+<Preview
+  title="Disabled"
+  align="stretch"
+  code={`<tp-resizable-panel-group disabled style="block-size:8rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-resizable-panel default-size="40%">
+    <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Locked layout</div>
+  </tp-resizable-panel>
+  <tp-resizable-handle label="Resize panels" with-handle></tp-resizable-handle>
+  <tp-resizable-panel>
+    <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">Unlock editing to resize</div>
+  </tp-resizable-panel>
+</tp-resizable-panel-group>`}
+/>
+
+### Standalone separator
+
+`ResizeSeparatorController` is the Handle's separator behavior for one extent that its owner controls outside a group, such as a table column. The owner supplies the current value, its limits and the key steps, and applies the proposals it receives:
+
+<Code code={`import { ResizeSeparatorController, resizeSeparatorTargetCss } from '@tweakpad/ui';
+
+const separator = new ResizeSeparatorController({
+  host: element,
+  axis: () => 'horizontal',
+  direction: () => 'ltr',
+  value: () => width,
+  min: () => 48,
+  max: () => 600,
+  steps: () => ({ step: 8, shift: 32, alt: 1 }),
+  propose: ({ value, phase }) => {
+    if (phase === 'settled') width = value; // \`live\` previews a drag, \`cancelled\` restores
+  },
+});
+separator.connect(line);
+for (const [name, value] of Object.entries(separator.attributes())) line.setAttribute(name, value);`} language="js" />
+
+The arrow pointing to the end of the axis grows the extent and the opposite arrow shrinks it, mirrored in right-to-left content; Shift and Alt use their own steps, and Home and End reach the limits. A drag captures the pointer, blocks text selection and shows the resize cursor; Escape and pointer cancellation restore the start value. `resizeSeparatorTargetCss(selector, axis)` returns the structural rule of the enlarged pointer target, which reads `--tp-resize-target-fine` and `--tp-resize-target-coarse` with 10 and 20 pixel fallbacks.

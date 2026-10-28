@@ -1,0 +1,34 @@
+{
+  "id": "components/alert",
+  "tag": "tp-alert",
+  "sources": {
+    "story": "src/stories/alert.stories.ts",
+    "markdown": "docs/alert.md"
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "Alert presents a persistent message in the document flow. It never opens a modal, traps focus, or dismisses itself. Use Alert Dialog for a decision that must interrupt the current task.\n\n```ts\nimport { html } from 'lit';\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\nimport { plusIcon } from '@tweakpad/ui/icons/plus';\n\nhtml`<tp-alert severity=\"success\" announcement=\"polite\">\n  <tp-icon slot=\"icon\" .icon=${plusIcon} size=\"1rem\"></tp-icon>\n  <span slot=\"title\">Changes saved <tp-badge variant=\"secondary\">Synced</tp-badge></span>\n  Your changes are safely stored. You can continue editing.\n  <tp-button slot=\"actions\" variant=\"outline\" size=\"sm\" href=\"/history\">View history</tp-button>\n</tp-alert>`;\n```"
+    },
+    {
+      "id": "md:  › Properties and attributes",
+      "kind": "md",
+      "heading": "### Properties and attributes",
+      "text": "| Property / attribute | Type; default                                          | Behavior                                                                                                                                                                         |\n| -------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| `severity`           | informational, success, warning, danger; informational | Reflected. Selects visual emphasis using semantic theme colors. It does not select the announcement policy.                                                                      |\n| `announcement`       | off, polite, assertive; off                            | Reflected. Off has no live role; polite uses `status`; assertive uses `alert`. All modes set the corresponding `aria-live` value.                                                |\n| `title`              | string; empty                                          | Optional text fallback for the title slot. Attribute input is supported; property updates do not reflect. The story supplies “Update available”; the component default is empty. |\n| `partPresentation`   | object; `{}`                                           | Inherited per-instance public part hooks. Property only.                                                                                                                         |\n\n**Communicate severity in the words, not only the color or icon.** For example, use “Changes saved”, “Warning: storage almost full”, or “Could not save your changes”. Alert does not insert an English severity prefix into authored content. Supply the appropriate message in the application's language.\n\nKeep announcement off for static page content. Use polite for routine updates to an existing live region and assertive only for urgent conditions. Changing severity does not move focus, open a popup, or change the live policy. Actual announcement timing depends on assistive technology; rendering an accessibility role is not a guarantee of spoken output."
+    },
+    {
+      "id": "md:  › Slots and composition",
+      "kind": "md",
+      "heading": "### Slots and composition",
+      "text": "| Slot      | Content                                                                                                                                          |\n| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |\n| Default   | Optional description; text, paragraphs, lists, links and library components are supported.                                                       |\n| `title`   | Optional rich title, including emphasis, links or Badge. Assigned content replaces the `title` text fallback. Removing it restores the fallback. |\n| `icon`    | Optional mark, normally a decorative Icon. Do not rely on it alone to explain severity.                                                          |\n| `actions` | Optional action controls. Use Button with a label describing the result; the application owns their behavior.                                    |\n\nEmpty regions consume no spacing. Content wraps inside constrained containers; icon and actions occupy their intrinsic inline tracks. Native block content retains its own authored structure; direct description paragraphs have their outer margin reset. Apply typography to nested authored content as needed.\n\nThere are no Alert-specific methods, events, variant axes, motion roles, timers, close buttons, or `dismissible` property. Composed controls keep their own APIs. Removing an Alert after an action is application behavior. Inherited `TpElement` form-state flags do not propagate to action controls; configure each Button's disabled state directly. Native `hidden`, `dir` and `lang` work normally. The inherited orientation and motion-policy properties do not introduce an alternate Alert layout or animation."
+    },
+    {
+      "id": "md:  › Parts and customization",
+      "kind": "md",
+      "heading": "### Parts and customization",
+      "text": "Public parts and presentation keys are `alert`, `alert-title`, `alert-description`, `alert-mark`, and `alert-action`. Optional parts remain mounted but hidden when empty so dynamic slot updates retain child identity. Style them through `::part()`, `partPresentation`, or a scoped presentation dictionary.\n\nThe default presentation is a card surface with a rounded border, small type, a medium title and a muted informational description. Success, warning and danger use the corresponding semantic color with a foreground blend for readable text. Severity has no separate variant axis or dictionary keys.\n\nUse existing tokens such as `--tp-card`, `--tp-card-foreground`, `--tp-muted-foreground`, `--tp-success`, `--tp-warning`, `--tp-destructive`, spacing and typography. For example:\n\n```ts\nalert.partPresentation = {\n  alert: { styleHook: { 'border-radius': 'var(--tp-radius-sm)' } },\n  'alert-title': { styleHook: { 'font-weight': 'var(--tp-font-semibold)' } },\n};\n```\n\nReplacing a dictionary preserves content, semantics and child focus. Include all five keys; missing contributions supply structure only, without falling back to another surface."
+    }
+  ]
+}

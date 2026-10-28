@@ -1,0 +1,75 @@
+---
+title: Spinner
+description: An indeterminate activity indicator with a status label, in three sizes.
+tag: tp-spinner
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Spinner"
+  code={`<div style="display:flex;align-items:center;gap:var(--tp-space-3);color:var(--tp-muted-foreground)">
+  <tp-spinner label="Syncing workspace"></tp-spinner>
+  <span aria-hidden="true">Syncing workspace…</span>
+</div>`}
+/>
+
+## Usage
+
+A standalone Spinner is a status: its `label` is announced, so make it describe the work. When the surrounding content already says what is loading, set `label=""` to keep it decorative. A Spinner implies no progress value.
+
+### Sizes
+
+<Preview
+  title="Sizes"
+  code={`<tp-spinner size="sm" label="Loading projects"></tp-spinner>
+<tp-spinner label="Loading projects"></tp-spinner>
+<tp-spinner size="lg" label="Loading projects"></tp-spinner>`}
+/>
+
+Sizes follow the theme's icon sizes and scale with base spacing.
+
+### In buttons
+
+<Preview
+  title="Buttons"
+  code={`<tp-button loading-position="leading">Saving</tp-button>
+<tp-button loading-position="leading" variant="outline" disabled>Publishing</tp-button>
+<tp-button loading-position="leading" variant="outline" size="icon" aria-label="Refreshing feed" disabled></tp-button>`}
+/>
+
+Buttons compose their own Spinner through `loading-position`, which hides it from assistive technology and marks the Button busy. Prefer that over placing a Spinner inside a Button.
+
+### In badges
+
+<Preview
+  title="Badges"
+  code={`<tp-badge variant="secondary"><tp-spinner size="sm" label=""></tp-spinner> Deploying</tp-badge>
+<tp-badge variant="outline"><tp-spinner size="sm" label=""></tp-spinner> Indexing</tp-badge>`}
+/>
+
+The badge text already names the activity, so the Spinner stays decorative.
+
+### In an input group
+
+<Preview
+  title="Input group"
+  code={`<tp-field label="Teammates" description="Looking up people in your workspace.">
+  <tp-input-group>
+    <tp-input type="search" name="teammate" value="Priya" placeholder="Search by name or email"></tp-input>
+    <tp-spinner slot="prefix" size="sm" label="Searching teammates"></tp-spinner>
+  </tp-input-group>
+</tp-field>`}
+/>
+
+A small Spinner in the prefix slot shows a lookup in flight without moving the field.
+
+### In an empty state
+
+<Preview
+  title="Empty state"
+  code={`<tp-empty-state title="Importing contacts" description="This can take a minute for large address books." media-treatment="icon">
+  <tp-spinner slot="media" label=""></tp-spinner>
+  <tp-button variant="outline">Cancel import</tp-button>
+</tp-empty-state>`}
+/>

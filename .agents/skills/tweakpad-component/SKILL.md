@@ -261,26 +261,31 @@ scenarios rerun. An accessibility pass does not satisfy this gate.
 
 ### 7. Complete documentation and its compositions
 
-Every published component has one documentation page, `docs/components/<slug>.mdx`
-(widgets: `docs/widgets/<slug>.mdx`), written once in the library and rendered by both
-Storybook (through the story's `libraryDocs()`) and the website. Follow
-[documentation.md](references/documentation.md): the hero preview, Usage, one section per
-major use case shown in a typical scenario, Variants only for a `variant` axis, Keyboard
-only beyond native behavior. The API and Related sections are generated from the Custom
-Elements Manifest and `elementDependencies`, so the element's JSDoc (summary, slots, events,
-CSS properties, every public field and method) and the family's part descriptions are the
-API reference; prose never restates it. Controls expose real APIs, with fixture setup kept
+Every published component and widget has one documentation page, `docs/components/<slug>.mdx`
+(widgets: `docs/widgets/<slug>.mdx`), written once in the library. Storybook renders it with
+Storybook blocks, through the story's `libraryDocs()`. The website renders it with library
+components, from the installed package. **Follow the
+[tweakpad-docs skill](../tweakpad-docs/SKILL.md) for every documentation change.** It covers:
+
+- the mandatory structure: header, main use case, Usage, generated API Reference, and Related on
+  the website only;
+- the writing style;
+- the minimal-diff merge of the former website and Storybook material;
+- the checks.
+
+The generated API Reference is only as complete as the element's JSDoc (summary, every public
+attribute, property and method, `@fires`, `@slot`, `@cssprop`) and the family's part
+descriptions. Prose never restates it. Controls expose real APIs, with fixture setup kept
 separate.
 
-Do not create documentation stories or use cases merely to enumerate attribute combinations.
-Keep exhaustive verification fixtures outside the page and hidden from Docs. Audit both
-rendered previews and copyable code for library-component reuse. Code, comments, tests,
-samples and docs never name third-party libraries the implementation draws on; the only
-exception is the license notice files that ship with the package.
+Keep exhaustive verification fixtures outside the page and hidden from Docs. Audit both rendered
+previews and copyable code for library-component reuse. Code, comments, tests, samples and docs
+never name third-party libraries the implementation draws on; the only exception is the license
+notice files that ship with the package.
 
-**Exit:** the page exists and `npm test` and `npm run build` pass for it (skeleton, story
-pairing, manifest completeness), the hero renders as the Default story, and every preview
-runs in Storybook with the real library and no local substitutes.
+**Exit:** `node .agents/skills/tweakpad-docs/scripts/check-docs.mjs <section>/<slug>`,
+`npm test` and `npm run build` pass. The hero renders as the Default story, and both renderings
+were read in Chrome as the docs skill describes.
 
 ### 8. Regress and reconcile the delivery
 

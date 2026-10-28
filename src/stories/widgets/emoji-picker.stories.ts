@@ -10,8 +10,7 @@ import {
   type TpEmojiPicker,
 } from '../../widgets/emoji-picker/index.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
-import { emojiPickerExamples } from './emoji-picker.examples.js';
-import documentation from '../../../docs/widgets/emoji-picker.md?raw';
+import { libraryDocs } from '../library-docs.js';
 
 interface Args {
   value: string;
@@ -28,9 +27,6 @@ interface Args {
   readOnly: boolean;
   fullDataset: boolean;
 }
-const sourceFor = (markup: string) =>
-  `<script type="module">\n  import '@tweakpad/ui/styles.css';\n  import '@tweakpad/ui/register';\n  import '@tweakpad/ui/register/widgets';\n</script>\n${markup}`;
-const source = sourceFor('<tp-emoji-picker label="Reaction" name="reaction"></tp-emoji-picker>');
 // The full dataset is the application's choice: here a public copy of the dataset files.
 const fullDataset = createEmojibaseSource({
   url: 'https://cdn.jsdelivr.net/npm/emojibase-data@16',
@@ -39,13 +35,7 @@ const fullDataset = createEmojibaseSource({
 const meta: Meta<Args> = {
   title: 'Widgets/Emoji picker',
   component: 'tp-emoji-picker',
-  parameters: {
-    docs: {
-      examples: emojiPickerExamples,
-      description: { component: documentation },
-      source: { code: source, language: 'html' },
-    },
-  },
+  parameters: { docs: libraryDocs('widgets/emoji-picker') },
   args: {
     value: '',
     skinTone: 'none',
@@ -123,10 +113,12 @@ type Story = StoryObj<Args>;
 export const Default: Story = {};
 
 export const Popup: Story = {
+  tags: ['!autodocs'],
   args: { picker: 'popup', label: 'Status' },
 };
 
 export const FullDataset: Story = {
+  tags: ['!autodocs'],
   name: 'Full dataset',
   args: { fullDataset: true, label: 'All emoji' },
 };

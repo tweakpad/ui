@@ -1,0 +1,383 @@
+---
+title: Media Player
+description: Video and audio playback with composable controls, preset layouts, keyboard shortcuts and gestures over a native media element.
+tag: tp-media-player
+parts: [tp-media-video-layout, tp-media-controls, tp-media-play-button, tp-media-time-slider, tp-media-time, tp-media-hotkey]
+---
+
+<Preview
+  title="Media Player"
+  align="stretch"
+  code={`<tp-media-player
+  content-title="Spring bloom, time-lapse"
+  poster="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1280&q=80"
+  style="max-inline-size:44rem;margin-inline:auto"
+>
+  <video
+    src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    width="1280"
+    height="720"
+    preload="metadata"
+    playsinline
+  ></video>
+  <tp-media-video-layout></tp-media-video-layout>
+</tp-media-player>`}
+/>
+
+## Usage
+
+Put a native `<video>` or `<audio>` and one layout inside the player. The player owns a single media store; every control reads state from it and changes playback through its request pipeline, so buttons, keys and gestures always agree. The media store, request types, events and the target contract are also exported from `@tweakpad/ui/media`.
+
+**Media discovery.** A registered custom media element wins (the last registration). Otherwise the first `<video>` or `<audio>` in the player's light DOM is attached, and subtree changes re-run discovery. A custom media element implements the media target subset (any of playback, time, buffer, volume, rate, error, tracks, renditions, presentation, remote, live, content data) and registers on connection with `requestMediaRegistration(element)` from `@tweakpad/ui/media`. It calls the returned release on disconnection. Missing capabilities keep defaults and report `unsupported`.
+
+**Lifecycle.** Disconnection detaches synchronously. Destruction is deferred two frames and cancelled if the player reconnects (a DOM move), which keeps state and subscriptions.
+
+### Audio
+
+An `<audio>` element works the same way. `tp-media-audio-layout` is the standard audio player: an always-visible bar in the page's color scheme with play, the timeline, speed and volume, plus skip buttons when there is room. It takes the same `hide` and `seek-buttons` options as the video layout.
+
+<Preview
+  title="Audio layout"
+  align="stretch"
+  code={`<tp-media-player content-title="T-Rex roar" style="max-inline-size:36rem;margin-inline:auto;inline-size:100%">
+  <audio src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" preload="metadata"></audio>
+  <tp-media-audio-layout id="media-player-audio-layout"></tp-media-audio-layout>
+</tp-media-player>`}
+  script={`// In @tweakpad/ui 0.1.1 the audio layout's bar takes the dark over-video scheme;
+// this keeps it in the page's color scheme until the library fix ships.
+document.querySelector('#media-player-audio-layout').partPresentation = {
+  'media-controls': { styleHook: { 'color-scheme': 'inherit' } },
+};`}
+/>
+
+For your own selection of controls, use an in-flow `tp-media-controls` with `visibility="always"` so the bar stays visible in the page's color scheme, and pick the controls a podcast or voice note needs.
+
+<Preview
+  title="Audio"
+  align="stretch"
+  code={`<tp-media-player content-title="T-Rex roar" style="max-inline-size:36rem;margin-inline:auto;inline-size:100%">
+  <audio src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" preload="metadata"></audio>
+  <tp-media-controls visibility="always">
+    <tp-media-controls-group label="Playback">
+      <tp-media-play-button></tp-media-play-button>
+      <tp-media-time type="current"></tp-media-time>
+      <tp-media-time-slider></tp-media-time-slider>
+      <tp-media-time type="duration"></tp-media-time>
+      <tp-media-playback-rate-button></tp-media-playback-rate-button>
+      <tp-media-mute-button></tp-media-mute-button>
+    </tp-media-controls-group>
+  </tp-media-controls>
+</tp-media-player>`}
+/>
+
+### Choosing controls
+
+`hide` removes built-in controls from a layout by name, and `seek-buttons` adds skip back and forward next to play. Seek distance comes from the player's `seek-step`.
+
+<Preview
+  title="Trimmed layout"
+  align="stretch"
+  code={`<tp-media-player
+  content-title="Product walkthrough"
+  poster="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1280&q=80"
+  seek-step="15"
+  style="max-inline-size:44rem;margin-inline:auto"
+>
+  <video
+    src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    width="1280"
+    height="720"
+    preload="metadata"
+    playsinline
+  ></video>
+  <tp-media-video-layout seek-buttons hide="pip remote settings"></tp-media-video-layout>
+</tp-media-player>`}
+/>
+
+Hidden controls are gone, not disabled. Controls the media cannot support, such as picture-in-picture in some browsers, hide themselves.
+
+### Layout regions and speeds
+
+The video layout's `top`, `center`, `bottom-start` and `bottom-end` slots replace that region's default content, here the title in `top`. `playback-rates` sets the options of the speed menu as a space-separated list. Tooltips, menus and popovers portal into the container, so they stay visible in fullscreen. Layouts use container queries on the layout box, which fills the container. They never use viewport queries.
+
+<Preview
+  title="Custom top region"
+  align="stretch"
+  code={`<tp-media-player
+  content-title="Lesson 4: Composition"
+  poster="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1280&q=80"
+  playback-rates="0.75 1 1.25 1.5 2"
+  style="max-inline-size:44rem;margin-inline:auto"
+>
+  <video
+    src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    width="1280"
+    height="720"
+    preload="metadata"
+    playsinline
+  ></video>
+  <tp-media-video-layout>
+    <div slot="top" style="display:flex;align-items:center;gap:var(--tp-space-2);padding:var(--tp-space-4);color:white">
+      <tp-badge variant="secondary">Lesson 4 of 12</tp-badge>
+      <span style="font-weight:500">Composition</span>
+    </div>
+  </tp-media-video-layout>
+</tp-media-player>`}
+/>
+
+### Captions and chapters
+
+`<track>` children of the media drive the text-track controls. Caption and subtitle tracks add the captions button and a Captions submenu in settings; a `chapters` track splits the timeline and names the chapter under the pointer.
+
+<Preview
+  title="Text tracks"
+  align="stretch"
+  code={`<tp-media-player
+  content-title="Spring bloom, time-lapse"
+  poster="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1280&q=80"
+  style="max-inline-size:44rem;margin-inline:auto"
+>
+  <video
+    src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    width="1280"
+    height="720"
+    preload="metadata"
+    playsinline
+  >
+    <track kind="captions" srclang="en" label="English" default src="data:text/vtt,WEBVTT%0A%0A00:00.000 --> 00:02.500%0AA tulip bud opens in the morning light.%0A%0A00:02.500 --> 00:05.000%0AA bee arrives as the petals spread.">
+    <track kind="captions" srclang="es" label="Español" src="data:text/vtt,WEBVTT%0A%0A00:00.000 --> 00:02.500%0AUn tulipán se abre con la luz de la mañana.%0A%0A00:02.500 --> 00:05.000%0AUna abeja llega cuando se abren los pétalos.">
+    <track kind="chapters" srclang="en" src="data:text/vtt,WEBVTT%0A%0A00:00.000 --> 00:02.500%0AThe bud%0A%0A00:02.500 --> 00:05.000%0AThe visitor">
+  </video>
+  <tp-media-video-layout></tp-media-video-layout>
+</tp-media-player>`}
+/>
+
+The tracks here are inline `data:` URLs to keep the example self-contained; usually they are `.vtt` files served alongside the video.
+
+### Custom composition
+
+Skip the layout and place the constituents yourself when you need a different bar. Each control finds its player through the tree, and `tp-media-hotkey` adds or overrides a key binding. A control outside the player can name it with `player="<player id>"`.
+
+<Preview
+  title="Custom bar"
+  align="stretch"
+  code={`<tp-media-player
+  content-title="Onboarding, part 1"
+  poster="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1280&q=80"
+  style="max-inline-size:44rem;margin-inline:auto"
+>
+  <video
+    src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    width="1280"
+    height="720"
+    preload="metadata"
+    playsinline
+  ></video>
+  <tp-media-poster></tp-media-poster>
+  <tp-media-buffering-indicator></tp-media-buffering-indicator>
+  <tp-media-status-indicator></tp-media-status-indicator>
+  <tp-media-controls>
+    <tp-media-controls-group label="Playback">
+      <tp-media-play-button></tp-media-play-button>
+      <tp-media-time type="current"></tp-media-time>
+      <tp-media-time-slider></tp-media-time-slider>
+      <tp-media-time type="duration"></tp-media-time>
+      <tp-media-mute-button></tp-media-mute-button>
+      <tp-media-playback-rate-button></tp-media-playback-rate-button>
+      <tp-media-fullscreen-button></tp-media-fullscreen-button>
+    </tp-media-controls-group>
+  </tp-media-controls>
+  <tp-media-hotkey keys="s" action="seek-by" value="30"></tp-media-hotkey>
+</tp-media-player>`}
+/>
+
+### Live streams
+
+A stream is live when the media reports `streamType: 'live'` or an infinite duration, and it has a DVR window when it reports `targetLiveWindow`. The video layout then switches to its live variant: a live button that seeks to the edge and a timeline that spans only the window. Streaming engines report these members through their media element; this example adds them to a looping clip to simulate a 20-second window. Without DVR the time slider, rate controls and seek keys are disabled or hidden, and play jumps to the live edge.
+
+<Preview
+  title="Live with DVR (simulated)"
+  align="stretch"
+  code={`<tp-media-player id="media-player-live" content-title="Launch keynote" style="max-inline-size:44rem;margin-inline:auto">
+  <tp-media-video-layout></tp-media-video-layout>
+</tp-media-player>`}
+  script={`const player = document.querySelector('#media-player-live');
+const video = Object.assign(document.createElement('video'), {
+  src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+  loop: true,
+  playsInline: true,
+  preload: 'auto',
+  width: 1280,
+  height: 720,
+});
+// Simulation only: real live media reports these members itself.
+const seekableEnd = () => (video.seekable.length ? video.seekable.end(video.seekable.length - 1) : 0);
+Object.defineProperties(video, {
+  streamType: { get: () => 'live' },
+  targetLiveWindow: { get: () => 20 },
+  liveEdgeStart: { get: () => Math.max(0, seekableEnd() - 3) },
+});
+player.prepend(video);`}
+/>
+
+### Quality and audio tracks
+
+Media without native rendition or audio-track lists, such as an HLS or DASH engine, supplies them through `mediaAdapter`. Each list is array-like and an event target; renditions add `selectedIndex`, where `-1` means adaptive. The settings menu then gains Quality and Audio submenus. This mock records the selection without changing the video. Getters are re-read on `loadstart`. `selectVideoRendition('auto')` restores adaptive selection.
+
+<Preview
+  title="Tracks adapter (mock)"
+  align="stretch"
+  code={`<tp-media-player
+  id="media-player-tracks"
+  content-title="Product walkthrough"
+  poster="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1280&q=80"
+  style="max-inline-size:44rem;margin-inline:auto"
+>
+  <video
+    src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    width="1280"
+    height="720"
+    preload="metadata"
+    playsinline
+  ></video>
+  <tp-media-video-layout></tp-media-video-layout>
+</tp-media-player>`}
+  script={`const list = (items) => Object.assign(new EventTarget(), items, { length: items.length });
+
+let selected = -1;
+let active = 1;
+const renditions = list([
+  { id: '1080p', width: 1920, height: 1080, bitrate: 6_000_000 },
+  { id: '720p', width: 1280, height: 720, bitrate: 3_000_000 },
+  { id: '360p', width: 640, height: 360, bitrate: 800_000 },
+]);
+for (let index = 0; index < renditions.length; index++) {
+  Object.defineProperty(renditions[index], 'active', { get: () => index === active });
+}
+Object.defineProperty(renditions, 'selectedIndex', {
+  get: () => selected,
+  set(index) {
+    selected = index; // your engine would switch levels here
+    if (index >= 0) active = index;
+    renditions.dispatchEvent(new Event('change'));
+    renditions.dispatchEvent(new Event('activechange'));
+  },
+});
+
+const audioTracks = list([
+  { id: 'main', kind: 'main', label: 'English', language: 'en' },
+  { id: 'commentary', kind: 'commentary', label: 'Director commentary', language: 'en' },
+]);
+for (let index = 0; index < audioTracks.length; index++) {
+  let enabled = index === 0;
+  Object.defineProperty(audioTracks[index], 'enabled', {
+    get: () => enabled,
+    set(value) {
+      if (enabled === value) return;
+      enabled = value;
+      audioTracks.dispatchEvent(new Event('change'));
+    },
+  });
+}
+
+await customElements.whenDefined('tp-media-player');
+document.querySelector('#media-player-tracks').mediaAdapter = { videoRenditions: renditions, audioTracks };`}
+/>
+
+### Localization
+
+`messages` replaces any control text, as a string with `{placeholders}` or a function of the parameters, and `locale` formats times and rates. The locale only formats: clock text is digital with the duration as a guide (`1:05`, `01:05`, `1:01:05`), and spoken text uses `Intl` units ("1 minute, 5 seconds"). Rates use `1.5×`. Diagnostics are not localized.
+
+<Preview
+  title="French controls"
+  align="stretch"
+  code={`<tp-media-player
+  id="media-player-french"
+  content-title="Printemps en accéléré"
+  poster="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1280&q=80"
+  style="max-inline-size:44rem;margin-inline:auto"
+>
+  <video
+    src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    width="1280"
+    height="720"
+    preload="metadata"
+    playsinline
+  ></video>
+  <tp-media-video-layout seek-buttons></tp-media-video-layout>
+</tp-media-player>`}
+  script={`await customElements.whenDefined('tp-media-player');
+const player = document.querySelector('#media-player-french');
+player.locale = 'fr';
+player.messages = {
+  player: 'Lecteur vidéo',
+  play: 'Lecture',
+  pause: 'Pause',
+  mute: 'Couper le son',
+  unmute: 'Rétablir le son',
+  seekForward: ({ seconds }) => \`Avancer de \${seconds} secondes\`,
+  seekBackward: ({ seconds }) => \`Reculer de \${seconds} secondes\`,
+  enterFullscreen: 'Plein écran',
+  exitFullscreen: 'Quitter le plein écran',
+  enterPictureInPicture: 'Image dans l’image',
+  exitPictureInPicture: 'Quitter l’image dans l’image',
+  startRemotePlayback: 'Diffuser',
+  stopRemotePlayback: 'Arrêter la diffusion',
+  showDuration: 'Afficher la durée, {duration}.',
+  showRemaining: 'Afficher le temps restant, {duration}.',
+  showElapsed: 'Afficher le temps écoulé, {duration}.',
+  remainingSuffix: '{duration} restantes',
+  elapsedSuffix: '{duration} écoulées',
+  durationSuffix: '{duration} au total',
+  settings: 'Paramètres',
+  speed: 'Vitesse',
+  normalSpeed: 'Normale',
+  volume: 'Volume',
+  seek: 'Position',
+};`}
+/>
+
+### Keyboard
+
+With focus anywhere in the player, Space or K plays and pauses, the arrow keys seek and change volume, M mutes, F toggles fullscreen and C toggles captions. Shortcuts are published through `aria-keyshortcuts` and appear in the layout's tooltips. Set `hotkey-scope="document"` to route keys from anywhere on the page to the most recently used player. Keys are ignored while typing in inputs and editable content, and while a menu or dialog consumes them.
+
+| Keys                | Action                                               |
+| ------------------- | ---------------------------------------------------- |
+| Space, K            | Play / pause                                         |
+| M                   | Mute / unmute                                        |
+| ArrowRight, L       | Seek forward by `seek-step` (repeats while held)     |
+| ArrowLeft, J        | Seek backward by `seek-step`                         |
+| ArrowUp / ArrowDown | Volume ± `volume-step`                               |
+| 0–9                 | Seek to 0 %–90 %                                     |
+| Home / End          | Seek to the start / end                              |
+| `>` / `<`           | Playback rate up / down (clamped to `playbackRates`) |
+| F                   | Fullscreen                                           |
+| C                   | Captions                                             |
+| I                   | Picture-in-picture                                   |
+
+Live streams without DVR disable the seek keys; all live streams disable the rate keys. Sliders, menus and buttons keep their own keys while focused.
+
+### Gestures
+
+`gestures="default"` (enabled by the video layout) registers:
+
+| Gesture                   | Action                       |
+| ------------------------- | ---------------------------- |
+| Tap, mouse                | Play / pause                 |
+| Tap, touch                | Show / hide controls         |
+| Double tap, left region   | Seek backward by `seek-step` |
+| Double tap, right region  | Seek forward by `seek-step`  |
+| Double tap, center region | Fullscreen                   |
+
+A double tap cancels the pending single tap. Taps on controls never reach the gesture surface. Every gesture has a control and a key equivalent.
+
+### Accessibility
+
+- The container is a labelled group with a tab stop. Every control is a native button or a native range with a state-dependent name, published `aria-keyshortcuts` and focusable `aria-disabled` when unavailable.
+- Slider value text is localized: "1 minute, 5 seconds of 4 minutes" for time, the percent (or "50%, muted") for volume. Slider value changes are never announced through a live region.
+- One polite live region per player announces paused/playing, captions, fullscreen, picture-in-picture and rate changes at once. Volume, mute and completed seeks are debounced (200 ms) and suppressed while a slider has focus. Element-originated changes and buffering are not announced. `announcements="off"` disables it.
+- Indicators, the slider preview, thumbnails and chapter segments are `aria-hidden`. Layout tooltips are visual only (`describes="none"`) and add no description that would repeat the button's name.
+- Autohide never hides a focused control, and focus is never moved by hiding.
+- Captions render natively, so operating-system caption preferences apply. In the video layout they are reachable from the captions button (from `lg`) and from the settings menu; the live variant uses a captions menu.
+- Controls meet `--tp-target-size-min` on coarse pointers.
+- The error dialog is an `alertdialog`, modal within the container (container siblings inert, focus trapped, `aria-modal="false"` because the rest of the page stays available), that returns focus when dismissed.

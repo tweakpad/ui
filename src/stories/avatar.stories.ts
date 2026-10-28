@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/avatar.md?raw';
-import { avatarExamples } from './avatar.examples.js';
+import { libraryDocs } from './library-docs.js';
 interface Args {
   src: string;
   alt: string;
@@ -14,13 +13,7 @@ interface Args {
 const meta = {
   title: 'Components/Avatar',
   component: 'tp-avatar',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: avatarExamples,
-      source: { code: '<tp-avatar fallback="AM" alt="Alex Morgan"></tp-avatar>' },
-    },
-  },
+  parameters: { docs: libraryDocs('components/avatar') },
   args: {
     src: '',
     alt: 'Alex Morgan',

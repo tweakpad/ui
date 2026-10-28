@@ -85,6 +85,18 @@ interface Shell {
   attributes: OwnedAttributes;
   unregister: () => void;
 }
+/**
+ * Slides at discrete positions, with previous and next buttons, keyboard, swipe and indicators
+ * sharing one selection. Slides are its children, or come from `items` and `renderItem`; the
+ * current position is announced politely. Give it a `label` and size it through CSS.
+ *
+ * @slot - The slides, one per child.
+ * @slot previous - Replaces the built-in previous button.
+ * @slot next - Replaces the built-in next button.
+ * @slot indicators - Replaces the built-in indicators.
+ * @fires tp-value-change - Cancelable proposal of a new position before it commits; a controlled carousel must publish the accepted `value`.
+ * @fires tp-value-commit - After a new position commits, with the position and the previous one.
+ */
 export class TpCarousel<T = unknown> extends TpElement {
   static tagName = 'tp-carousel';
   /** Library elements this element renders; defining it defines them too. */
@@ -111,21 +123,34 @@ export class TpCarousel<T = unknown> extends TpElement {
     effect: { attribute: false },
   };
   static override styles = [TpElement.styles, scrollbarStyles, carouselStyles];
+  /** The selected position; set it before the carousel initializes to control selection, then publish each accepted proposal back. */
   value: number | undefined;
+  /** The position shown first, when the carousel owns its selection. */
   defaultValue: number | undefined;
+  /** Lets navigation wrap past either end. */
   loop = false;
+  /** How many slides one step of navigation moves. */
   itemsPerMovement = 1;
+  /** The interval between automatic advances, in milliseconds; zero turns autoplay off. Autoplay adds a pause control and pauses on hover, focus, reduced motion and hidden tabs. */
   autoplay = 0;
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
+  /** Builds the slides from data instead of children; any array, even an empty one, switches to data. */
   items: readonly T[] | undefined;
+  /** The stable identity of a data item, which keeps the selection when items reorder; defaults to the item itself or its `id`. */
   getItemId: ((item: T, index: number) => CarouselId) | undefined;
+  /** The name of a data item's slide, announced with its position. */
   getItemLabel: ((item: T, index: number) => string) | undefined;
+  /** Per-item behavior for a data item: disabled, its own autoplay delay, or a label. */
   getItemOptions: ((item: T, index: number) => CarouselItemOptions) | undefined;
+  /** Renders a data item's slide, with its id, index and whether it is selected or visible. */
   renderItem: ((item: T, context: CarouselRenderContext) => unknown) | undefined;
+  /** Layout, interaction, navigation, indicators, scrollbar, wheel, keyboard, autoplay, virtualization and breakpoint settings, merged over the defaults. */
   options: CarouselOptions = {};
+  /** Called with the carousel's controller once it initializes, and with null when it is released. */
   onControllerChange: ((controller: CarouselController | null) => void) | undefined;
+  /** The accessible name of the carousel, such as "Customer stories". */
   label = '';
-  /** Presentation extension created by an effect factory; null keeps the moving track. */
+  /** A transition created by an effect factory, such as `carouselCrossfadeEffect()`; null keeps the sliding track. Effects transform each slide's element marked `data-carousel-media` and reveal `data-carousel-layer` elements in order. */
   effect: CarouselEffect | null = null;
   #effectPresenter: EffectPresenter | null = null;
   #appliedEffect: CarouselEffect | null = null;
@@ -233,9 +258,11 @@ export class TpCarousel<T = unknown> extends TpElement {
     },
     error: (error) => this.#diagnose('Carousel scrollbar failed.', error),
   });
+  /** The handle for driving and observing the carousel from code (scroll to a slide, read its snapshot, control autoplay); null before it initializes. */
   get controller(): CarouselController | null {
     return this.#controller?.snapshot.initialized ? this.#controller : null;
   }
+  /** The committed position; setting it navigates there. */
   get index(): number {
     return this.#controller?.index ?? this.#initialIndex;
   }
@@ -249,9 +276,11 @@ export class TpCarousel<T = unknown> extends TpElement {
     this.#initialIndexExplicit = true;
     this.requestUpdate('index', previous);
   }
+  /** The indicator style in effect, from `options.indicators`. */
   get indicatorType(): string {
     return this.#config.indicators ? this.#config.indicators.type : 'fraction';
   }
+  /** Where the previous and next buttons sit, from `options.navigation`. */
   get controlsPlacement(): string {
     return this.#config.navigation.placement;
   }

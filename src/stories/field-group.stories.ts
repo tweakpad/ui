@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import fieldGroupDocumentation from '../../docs/field-group.md?raw';
-import { fieldGroupExamples } from './field-group.examples.js';
+import { libraryDocs } from './library-docs.js';
 
 interface FieldGroupStoryArgs {
   orientation: 'horizontal' | 'vertical';
@@ -12,12 +11,7 @@ interface FieldGroupStoryArgs {
 const meta: Meta<FieldGroupStoryArgs> = {
   title: 'Components/Field group',
   component: 'tp-field-group',
-  parameters: {
-    docs: {
-      examples: fieldGroupExamples,
-      description: { component: fieldGroupDocumentation.replace(/^# Field group\n/u, '') },
-    },
-  },
+  parameters: { docs: libraryDocs('components/field-group') },
   args: {
     orientation: 'horizontal',
     joined: true,

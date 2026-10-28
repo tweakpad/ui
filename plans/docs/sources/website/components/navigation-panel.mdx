@@ -1,0 +1,330 @@
+---
+title: Navigation panel
+description: Persistent app navigation beside the main content that collapses to an icon rail or moves into a drawer on small screens.
+tag: tp-navigation-panel
+parts: [tp-navigation-panel-link, tp-navigation-panel-action, tp-navigation-panel-trigger]
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Navigation panel"
+  align="stretch"
+  code={`<div style="block-size:34rem;overflow:hidden;border:1px solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-navigation-panel id="navigation-panel-hero" label="Workspace" collapse-mode="compact" compact="false">
+    <tp-navigation-panel-trigger data-icon="panel"></tp-navigation-panel-trigger>
+    <tp-navigation-panel-header>
+      <tp-navigation-panel-menu>
+        <tp-navigation-panel-item>
+          <tp-navigation-panel-action size="lg" tooltip="Northwind">
+            <tp-avatar slot="icon-start" size="sm" fallback="NW" alt=""></tp-avatar>
+            <span>Northwind</span><br><small>Team plan</small>
+          </tp-navigation-panel-action>
+        </tp-navigation-panel-item>
+      </tp-navigation-panel-menu>
+    </tp-navigation-panel-header>
+    <tp-navigation-panel-content>
+      <tp-navigation-panel-group>
+        <tp-navigation-panel-group-label>Workspace</tp-navigation-panel-group-label>
+        <tp-navigation-panel-menu>
+          <tp-navigation-panel-item>
+            <tp-navigation-panel-link href="#home" active tooltip="Home" data-icon="home">Home</tp-navigation-panel-link>
+          </tp-navigation-panel-item>
+          <tp-navigation-panel-item>
+            <tp-navigation-panel-link href="#inbox" tooltip="Inbox" data-icon="inbox">Inbox</tp-navigation-panel-link>
+            <tp-navigation-panel-badge>12</tp-navigation-panel-badge>
+          </tp-navigation-panel-item>
+          <tp-navigation-panel-item>
+            <tp-navigation-panel-link href="#projects" tooltip="Projects" data-icon="folder">Projects</tp-navigation-panel-link>
+          </tp-navigation-panel-item>
+          <tp-navigation-panel-item>
+            <tp-navigation-panel-link href="#reports" tooltip="Reports" data-icon="chart">Reports</tp-navigation-panel-link>
+          </tp-navigation-panel-item>
+        </tp-navigation-panel-menu>
+      </tp-navigation-panel-group>
+      <tp-navigation-panel-group>
+        <tp-navigation-panel-group-label>Teams</tp-navigation-panel-group-label>
+        <tp-navigation-panel-menu>
+          <tp-navigation-panel-item>
+            <tp-navigation-panel-link href="#design" tooltip="Design" data-icon="hash">Design</tp-navigation-panel-link>
+          </tp-navigation-panel-item>
+          <tp-navigation-panel-item>
+            <tp-navigation-panel-link href="#engineering" tooltip="Engineering" data-icon="hash">Engineering</tp-navigation-panel-link>
+          </tp-navigation-panel-item>
+        </tp-navigation-panel-menu>
+      </tp-navigation-panel-group>
+    </tp-navigation-panel-content>
+    <tp-navigation-panel-footer>
+      <tp-navigation-panel-menu>
+        <tp-navigation-panel-item>
+          <tp-navigation-panel-link href="#settings" tooltip="Settings" data-icon="settings">Settings</tp-navigation-panel-link>
+        </tp-navigation-panel-item>
+      </tp-navigation-panel-menu>
+    </tp-navigation-panel-footer>
+    <tp-navigation-panel-inset>
+      <h2 style="margin:0">Home</h2>
+      <p style="color:var(--tp-muted-foreground)">Use the toggle to collapse the panel to an icon rail.</p>
+    </tp-navigation-panel-inset>
+  </tp-navigation-panel>
+</div>`}
+  script={`const icons = {
+  panel: 'M9 3v18M4 3h16v18H4z',
+  home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
+  inbox: 'M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11',
+  folder: 'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z',
+  chart: 'M3 3v18h18M7 16v-5M12 16V8M17 16v-8',
+  hash: 'M4 9h16M4 15h16M10 3 8 21M16 3l-2 18',
+  settings: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z',
+};
+const panel = document.querySelector('#navigation-panel-hero');
+for (const control of panel.querySelectorAll('[data-icon]')) {
+  control.icon = { viewBox: '0 0 24 24', paths: [{ d: icons[control.dataset.icon], strokeWidth: 1.75 }] };
+}
+// In an app the panel fills the viewport height; this demo fits it to its frame.
+panel.partContracts = { 'navigation-panel': { styleHook: { blockSize: '34rem' } } };`}
+/>
+
+## Usage
+
+The panel owns layout and state: navigation in a sticky column, your page in `tp-navigation-panel-inset`, and a trigger that toggles between them. Links are real anchors, so mark the current page with `active`.
+
+`compact="false"` states that this is wide mode. The panel has no built-in breakpoint: set `compact` from your own layout logic, or give it a `responsiveAdapter` that observes the viewport and reports when to switch.
+
+### Collapse modes
+
+`collapse-mode="compact"` collapses to an icon rail that keeps every destination reachable, with each link's `tooltip` naming it. The default `off-canvas` slides the panel away entirely, and `none` keeps it open.
+
+<Preview
+  title="Off-canvas"
+  align="stretch"
+  code={`<div style="block-size:22rem;overflow:hidden;border:1px solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-navigation-panel id="navigation-panel-offcanvas" label="Docs" compact="false" wide-width="calc(var(--tp-spacing) * 56)">
+    <tp-navigation-panel-trigger data-icon="panel"></tp-navigation-panel-trigger>
+    <tp-navigation-panel-content>
+      <tp-navigation-panel-group>
+        <tp-navigation-panel-group-label>Getting started</tp-navigation-panel-group-label>
+        <tp-navigation-panel-menu>
+          <tp-navigation-panel-item><tp-navigation-panel-link href="#introduction" active>Introduction</tp-navigation-panel-link></tp-navigation-panel-item>
+          <tp-navigation-panel-item><tp-navigation-panel-link href="#installation">Installation</tp-navigation-panel-link></tp-navigation-panel-item>
+          <tp-navigation-panel-item><tp-navigation-panel-link href="#theming">Theming</tp-navigation-panel-link></tp-navigation-panel-item>
+        </tp-navigation-panel-menu>
+      </tp-navigation-panel-group>
+    </tp-navigation-panel-content>
+    <tp-navigation-panel-inset>
+      <h2 style="margin:0">Introduction</h2>
+      <p style="color:var(--tp-muted-foreground)">Collapse the panel to give the article the full width.</p>
+    </tp-navigation-panel-inset>
+  </tp-navigation-panel>
+</div>`}
+  script={`const panel = document.querySelector('#navigation-panel-offcanvas');
+panel.querySelector('[data-icon="panel"]').icon = { viewBox: '0 0 24 24', paths: [{ d: 'M9 3v18M4 3h16v18H4z', strokeWidth: 1.75 }] };
+panel.partContracts = { 'navigation-panel': { styleHook: { blockSize: '22rem' } } };`}
+/>
+
+### Nested destinations
+
+Put a `tp-collapsible` inside an item to group sublinks under a disclosure. Each disclosure keeps its own open state, including while the panel is collapsed.
+
+<Preview
+  title="Collapsible groups"
+  align="stretch"
+  code={`<div style="block-size:26rem;overflow:hidden;border:1px solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-navigation-panel id="navigation-panel-nested" label="Settings" compact="false" collapse-mode="none" wide-width="calc(var(--tp-spacing) * 60)">
+    <tp-navigation-panel-content>
+      <tp-navigation-panel-group>
+        <tp-navigation-panel-group-label>Settings</tp-navigation-panel-group-label>
+        <tp-navigation-panel-menu>
+          <tp-navigation-panel-item>
+            <tp-collapsible default-open>
+              <tp-icon slot="leading" data-icon="user"></tp-icon>
+              <span slot="label">Account</span>
+              <tp-navigation-panel-submenu>
+                <tp-navigation-panel-subitem><tp-navigation-panel-sublink href="#profile" active>Profile</tp-navigation-panel-sublink></tp-navigation-panel-subitem>
+                <tp-navigation-panel-subitem><tp-navigation-panel-sublink href="#security">Security</tp-navigation-panel-sublink></tp-navigation-panel-subitem>
+                <tp-navigation-panel-subitem><tp-navigation-panel-sublink href="#sessions">Sessions</tp-navigation-panel-sublink></tp-navigation-panel-subitem>
+              </tp-navigation-panel-submenu>
+            </tp-collapsible>
+          </tp-navigation-panel-item>
+          <tp-navigation-panel-item>
+            <tp-collapsible>
+              <tp-icon slot="leading" data-icon="card"></tp-icon>
+              <span slot="label">Billing</span>
+              <tp-navigation-panel-submenu>
+                <tp-navigation-panel-subitem><tp-navigation-panel-sublink href="#plan">Plan</tp-navigation-panel-sublink></tp-navigation-panel-subitem>
+                <tp-navigation-panel-subitem><tp-navigation-panel-sublink href="#invoices">Invoices</tp-navigation-panel-sublink></tp-navigation-panel-subitem>
+              </tp-navigation-panel-submenu>
+            </tp-collapsible>
+          </tp-navigation-panel-item>
+        </tp-navigation-panel-menu>
+      </tp-navigation-panel-group>
+    </tp-navigation-panel-content>
+    <tp-navigation-panel-inset>
+      <h2 style="margin:0">Profile</h2>
+      <p style="color:var(--tp-muted-foreground)">Name, avatar and contact details.</p>
+    </tp-navigation-panel-inset>
+  </tp-navigation-panel>
+</div>`}
+  script={`const panel = document.querySelector('#navigation-panel-nested');
+const icons = {
+  user: 'M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8',
+  card: 'M2 10h20M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',
+};
+for (const icon of panel.querySelectorAll('[data-icon]')) {
+  icon.icon = { viewBox: '0 0 24 24', paths: [{ d: icons[icon.dataset.icon], strokeWidth: 1.75 }] };
+}
+panel.partContracts = { 'navigation-panel': { styleHook: { blockSize: '26rem' } } };`}
+/>
+
+### Compact screens
+
+With `compact` set, the navigation moves into a modal Drawer and the trigger opens it. The same elements move across, so links, disclosure state and form fields survive the switch.
+
+<Preview
+  title="Drawer mode"
+  align="stretch"
+  code={`<div style="block-size:16rem;overflow:hidden;border:1px solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-navigation-panel id="navigation-panel-compact" label="Store" compact>
+    <tp-navigation-panel-trigger data-icon="panel"></tp-navigation-panel-trigger>
+    <tp-navigation-panel-content>
+      <tp-navigation-panel-group>
+        <tp-navigation-panel-group-label>Store</tp-navigation-panel-group-label>
+        <tp-navigation-panel-menu>
+          <tp-navigation-panel-item><tp-navigation-panel-link href="#orders" active>Orders</tp-navigation-panel-link><tp-navigation-panel-badge>3</tp-navigation-panel-badge></tp-navigation-panel-item>
+          <tp-navigation-panel-item><tp-navigation-panel-link href="#products">Products</tp-navigation-panel-link></tp-navigation-panel-item>
+          <tp-navigation-panel-item><tp-navigation-panel-link href="#customers">Customers</tp-navigation-panel-link></tp-navigation-panel-item>
+        </tp-navigation-panel-menu>
+      </tp-navigation-panel-group>
+    </tp-navigation-panel-content>
+    <tp-navigation-panel-inset>
+      <h2 style="margin:0">Orders</h2>
+      <p style="color:var(--tp-muted-foreground)">Open the menu to browse the store.</p>
+    </tp-navigation-panel-inset>
+  </tp-navigation-panel>
+</div>`}
+  script={`const panel = document.querySelector('#navigation-panel-compact');
+panel.querySelector('[data-icon="panel"]').icon = { viewBox: '0 0 24 24', paths: [{ d: 'M9 3v18M4 3h16v18H4z', strokeWidth: 1.75 }] };`}
+/>
+
+### Variants
+
+`variant="floating"` and `variant="inset"` change only the panel's surface; layout and behavior are the same as the default `integrated`.
+
+<Preview
+  title="Floating"
+  align="stretch"
+  code={`<div style="block-size:20rem;overflow:hidden;border:1px solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-navigation-panel id="navigation-panel-floating" label="Mail" compact="false" collapse-mode="none" variant="floating" wide-width="calc(var(--tp-spacing) * 56)">
+    <tp-navigation-panel-content>
+      <tp-navigation-panel-group>
+        <tp-navigation-panel-group-label>Mail</tp-navigation-panel-group-label>
+        <tp-navigation-panel-menu>
+          <tp-navigation-panel-item><tp-navigation-panel-link href="#mail-inbox" active>Inbox</tp-navigation-panel-link><tp-navigation-panel-badge>24</tp-navigation-panel-badge></tp-navigation-panel-item>
+          <tp-navigation-panel-item><tp-navigation-panel-link href="#mail-drafts">Drafts</tp-navigation-panel-link></tp-navigation-panel-item>
+          <tp-navigation-panel-item><tp-navigation-panel-link href="#mail-sent">Sent</tp-navigation-panel-link></tp-navigation-panel-item>
+          <tp-navigation-panel-item><tp-navigation-panel-link href="#mail-archive">Archive</tp-navigation-panel-link></tp-navigation-panel-item>
+        </tp-navigation-panel-menu>
+      </tp-navigation-panel-group>
+    </tp-navigation-panel-content>
+    <tp-navigation-panel-inset>
+      <h2 style="margin:0">Inbox</h2>
+      <p style="color:var(--tp-muted-foreground)">24 unread conversations.</p>
+    </tp-navigation-panel-inset>
+  </tp-navigation-panel>
+</div>`}
+  script={`document.querySelector('#navigation-panel-floating').partContracts = {
+  'navigation-panel': { styleHook: { blockSize: 'calc(20rem - var(--tp-space-4))' } },
+};`}
+/>
+
+### Menus
+
+A `tp-menu` can be an item's main content, like a team switcher or account menu, or sit beside a link as its row actions. Put a `tp-navigation-panel-action` in the menu's `trigger` slot; `show-on-hover` hides a row action until its item is hovered or focused, while still reserving its space.
+
+<Preview
+  title="Team switcher and row actions"
+  align="stretch"
+  code={`<div style="block-size:30rem;overflow:hidden;border:1px solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-navigation-panel id="navigation-panel-menus" label="Projects" compact="false" collapse-mode="none" wide-width="calc(var(--tp-spacing) * 64)">
+    <tp-navigation-panel-header>
+      <tp-navigation-panel-menu>
+        <tp-navigation-panel-item>
+          <tp-menu label="Teams" placement="inline-end start">
+            <tp-navigation-panel-action slot="trigger" size="lg" aria-label="Switch team">
+              <tp-avatar slot="icon-start" size="sm" fallback="NW" alt="" data-team-avatar></tp-avatar>
+              <span data-team-name>Northwind</span><br><small data-team-plan>Team plan</small>
+            </tp-navigation-panel-action>
+            <tp-menu-item value="northwind">Northwind</tp-menu-item>
+            <tp-menu-item value="lumen">Lumen Labs</tp-menu-item>
+            <tp-menu-item value="harbor">Harbor Studio</tp-menu-item>
+          </tp-menu>
+        </tp-navigation-panel-item>
+      </tp-navigation-panel-menu>
+    </tp-navigation-panel-header>
+    <tp-navigation-panel-content>
+      <tp-navigation-panel-group>
+        <tp-navigation-panel-group-label>Projects</tp-navigation-panel-group-label>
+        <tp-navigation-panel-menu>
+          <tp-navigation-panel-item>
+            <tp-navigation-panel-link href="#website-refresh" active>Website refresh</tp-navigation-panel-link>
+            <tp-menu label="Website refresh actions" placement="inline-end start">
+              <tp-navigation-panel-action slot="trigger" show-on-hover size="icon" aria-label="Website refresh actions" data-icon="more"></tp-navigation-panel-action>
+              <tp-menu-item value="Share Website refresh">Share project</tp-menu-item>
+              <tp-menu-item value="Archive Website refresh">Archive</tp-menu-item>
+            </tp-menu>
+          </tp-navigation-panel-item>
+          <tp-navigation-panel-item>
+            <tp-navigation-panel-link href="#mobile-onboarding">Mobile onboarding</tp-navigation-panel-link>
+            <tp-menu label="Mobile onboarding actions" placement="inline-end start">
+              <tp-navigation-panel-action slot="trigger" show-on-hover size="icon" aria-label="Mobile onboarding actions" data-icon="more"></tp-navigation-panel-action>
+              <tp-menu-item value="Share Mobile onboarding">Share project</tp-menu-item>
+              <tp-menu-item value="Archive Mobile onboarding">Archive</tp-menu-item>
+            </tp-menu>
+          </tp-navigation-panel-item>
+        </tp-navigation-panel-menu>
+      </tp-navigation-panel-group>
+    </tp-navigation-panel-content>
+    <tp-navigation-panel-footer>
+      <tp-navigation-panel-menu>
+        <tp-navigation-panel-item>
+          <tp-menu label="Account" placement="inline-end end">
+            <tp-navigation-panel-action slot="trigger" size="lg" aria-label="Account: Priya Shah">
+              <tp-avatar slot="icon-start" size="sm" fallback="PS" alt=""></tp-avatar>
+              <span>Priya Shah</span><br><small>priya@northwind.io</small>
+            </tp-navigation-panel-action>
+            <tp-menu-item value="Profile">Profile</tp-menu-item>
+            <tp-menu-item value="Billing">Billing</tp-menu-item>
+            <tp-separator></tp-separator>
+            <tp-menu-item value="Log out">Log out</tp-menu-item>
+          </tp-menu>
+        </tp-navigation-panel-item>
+      </tp-navigation-panel-menu>
+    </tp-navigation-panel-footer>
+    <tp-navigation-panel-inset>
+      <h2 style="margin:0">Website refresh</h2>
+      <p id="navigation-panel-menus-status" role="status" style="color:var(--tp-muted-foreground)">Northwind workspace</p>
+    </tp-navigation-panel-inset>
+  </tp-navigation-panel>
+</div>`}
+  script={`const panel = document.querySelector('#navigation-panel-menus');
+const status = document.querySelector('#navigation-panel-menus-status');
+const teams = {
+  northwind: ['Northwind', 'Team plan', 'NW'],
+  lumen: ['Lumen Labs', 'Enterprise', 'LL'],
+  harbor: ['Harbor Studio', 'Free', 'HS'],
+};
+for (const action of panel.querySelectorAll('[data-icon="more"]')) {
+  action.icon = { viewBox: '0 0 24 24', paths: [{ d: 'M5 12h.01M12 12h.01M19 12h.01', strokeWidth: 3 }] };
+}
+panel.partContracts = { 'navigation-panel': { styleHook: { blockSize: '30rem' } } };
+panel.addEventListener('tp-action', (event) => {
+  const team = teams[event.detail.value];
+  if (!team) {
+    status.textContent = \`Selected: \${event.detail.value}\`;
+    return;
+  }
+  panel.querySelector('[data-team-name]').textContent = team[0];
+  panel.querySelector('[data-team-plan]').textContent = team[1];
+  panel.querySelector('[data-team-avatar]').fallback = team[2];
+  status.textContent = \`\${team[0]} workspace\`;
+});`}
+/>

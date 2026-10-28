@@ -1,0 +1,135 @@
+{
+  "id": "components/text-transform",
+  "tag": "tp-text-transform",
+  "sources": {
+    "story": "src/stories/text-transform.stories.ts",
+    "markdown": "docs/text-transform.md",
+    "examples": [
+      "src/stories/text-transform.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "Text transform presents one value as text: changed case, a readable label from an identifier, or a localized number, price, percentage, unit, byte size or duration. It can also shorten the text at its start, middle or end, to a number of characters or words or to the width it has, and shows the full text in a tooltip while shortened.\n\n```html\n<tp-text-transform preset=\"currency\" currency=\"EUR\" value=\"1234.5\"></tp-text-transform>\n<tp-text-transform preset=\"capitalize\">northern lights ferry tour</tp-text-transform>\n<tp-text-transform truncate=\"middle\">harbor-webcam-2026-10-14-dawn-panorama.jpg</tp-text-transform>\n```"
+    },
+    {
+      "id": "md: Input",
+      "kind": "md",
+      "heading": "## Input",
+      "text": "`value` accepts a number, a bigint or text. When it is unset, the element's trimmed text content is the input, so server-rendered text such as `<tp-text-transform preset=\"uppercase\">gate b</tp-text-transform>` upgrades in place, and edits to the content update the text. Empty input presents nothing.\n\nNumeric presets read a finite number, a bigint, or text in decimal form (`-12.5`, `1e3`, `.5`). Decimal text is formatted exactly, so `12345678901234567890.25` keeps every digit. Grouped or localized text such as `1,234` is not read as a number: it stays as written, the element sets `invalid` / `data-invalid`, and a `tp-diagnostic` reports the input. `bytes` and `duration` also reject negative values."
+    },
+    {
+      "id": "md: Presets",
+      "kind": "md",
+      "heading": "## Presets",
+      "text": "`preset` names the transform. The default, `text`, presents the input unchanged.\n\n| `preset`     | Input              | en-US example                                                         |\n| ------------ | ------------------ | --------------------------------------------------------------------- |\n| `text`       | anything           | the input as text                                                     |\n| `uppercase`  | text               | `dock four` → DOCK FOUR                                               |\n| `lowercase`  | text               | `DOCK FOUR` → dock four                                               |\n| `capitalize` | text               | `northern lights tour` → Northern Lights Tour                         |\n| `sentence`   | text               | `quiet harbor at dawn` → Quiet harbor at dawn                         |\n| `camel`      | text               | `return trip discount` → returnTripDiscount                           |\n| `pascal`     | text               | `return trip discount` → ReturnTripDiscount                           |\n| `kebab`      | text               | `ReturnTripDiscount` → return-trip-discount                           |\n| `snake`      | text               | `ReturnTripDiscount` → return_trip_discount                           |\n| `constant`   | text               | `returnTripDiscount` → RETURN_TRIP_DISCOUNT                           |\n| `humanize`   | text               | `returnTripDiscount` → Return trip discount                           |\n| `number`     | number             | `1234.567` → 1,234.567                                                |\n| `integer`    | number             | `1234.567` → 1,235                                                    |\n| `decimal`    | number             | `3` → 3.00 (`decimals`, 2 by default)                                 |\n| `percent`    | number, a ratio    | `0.25` → 25%                                                          |\n| `currency`   | number             | `1234.5` with `currency=\"EUR\"` → €1,234.50                            |\n| `compact`    | number             | `15300` → 15K, read as \"15 thousand\"                                  |\n| `scientific` | number             | `15300` → 1.53E4                                                      |\n| `unit`       | number             | `42` with `unit=\"kilometer-per-hour\"` → 42 km/h                       |\n| `bytes`      | bytes, 0 or more   | `2516582` → 2.4 MB (binary units, 1 KB = 1024 B), read as \"megabytes\" |\n| `duration`   | seconds, 0 or more | `3725` → 1:02:05, read as \"1 hour, 2 minutes, 5 seconds\"              |\n\nCase changes follow the locale: `uppercase` maps `istanbul` to `İSTANBUL` under `lang=\"tr\"`. `capitalize` and `sentence` change only the first character of a word and leave the rest as written. Identifier presets split words at spaces, `-`, `_` and `.`, where a lowercase letter or digit meets an uppercase letter, and between an acronym and the next word (`XMLHttpRequest` → xml, http, request); letters and digits next to each other stay one word (`base64Encode` → base64-encode).\n\nNumeric presets format through `Intl.NumberFormat` for the locale and show tabular figures. Dates and times belong to Time."
+    },
+    {
+      "id": "md: Presets › Options",
+      "kind": "md",
+      "heading": "### Options",
+      "text": "`currency` (an ISO 4217 code), `unit` (a unit identifier such as `kilometer`, `liter` or `megabyte-per-second`) and `decimals` (0 to 20; sets both the minimum and the maximum fraction digits) cover the common choices as attributes. `format` takes the full options record as a property and wins over them:\n\n```js\nconst fare = document.querySelector('tp-text-transform');\nfare.format = { currencyDisplay: 'name', maximumFractionDigits: 0 };\n```\n\nOptions resolve in this order, each overriding the previous: the preset's defaults, then `currency`, `unit` and `decimals`, then `format`. Numeric presets take `Intl.NumberFormatOptions`; `duration` takes `{ style, guide }`, where `style` is `digital` (default), `long`, `short` or `narrow` and `guide` is a reference length in seconds that keeps the digital fields stable. Setting `format` with the `text` preset formats a number.\n\nA `currency` preset without a currency, or a `unit` preset without a unit, formats a plain number. Options that `Intl` rejects fall back to the preset's defaults. Each case emits one `tp-diagnostic`."
+    },
+    {
+      "id": "md: Custom presets and formatters",
+      "kind": "md",
+      "heading": "## Custom presets and formatters",
+      "text": "`defineTextPreset(name, definition)` names a preset for the page and returns a function that removes it. A definition is either a built-in preset with options, or a formatter:\n\n```js\nimport { defineTextPreset } from '@tweakpad/ui';\n\ndefineTextPreset('fare', { preset: 'currency', format: { currency: 'EUR' } });\ndefineTextPreset('berth', ({ value }) => ({\n  text: `B-${String(value).padStart(3, '0')}`,\n  accessibleText: `Berth ${value}`,\n}));\n```\n\n```html\n<tp-text-transform preset=\"fare\" value=\"36\"></tp-text-transform>\n<tp-text-transform preset=\"berth\" value=\"7\"></tp-text-transform>\n```\n\nBuilt-in names are reserved. Defining, replacing or removing a preset updates every element that uses its name; an element that names a preset before it is defined presents its input as text, emits one `tp-diagnostic`, and switches once the preset exists. A preset with options sits between the base preset's defaults and the element's own `currency`, `unit`, `decimals` and `format`.\n\n`formatter` replaces the preset for one element:\n\n```js\nseatsLeft.formatter = (context) => `${context.apply('percent')} of seats left`;\n```\n\nA formatter receives a `TextFormatContext` and returns text, or `{ text, accessibleText }` when assistive technology should hear something else:\n\n| Context member                 | Meaning                                                       |\n| ------------------------------ | ------------------------------------------------------------- |\n| `value`                        | The input as supplied.                                        |\n| `text`                         | The input as text.                                            |\n| `locale`                       | The resolved locale.                                          |\n| `preset`                       | The element's preset name.                                    |\n| `format`                       | The element's `format` options.                               |\n| `apply(preset, value, format)` | Applies any preset to `value` (the input when omitted); text. |\n\nFormatter output is always text, never markup. A formatter that throws or returns something else emits one `tp-diagnostic` and the preset presents instead."
+    },
+    {
+      "id": "md: Truncation",
+      "kind": "md",
+      "heading": "## Truncation",
+      "text": "`truncate` shortens the text to one line that fits the element's width, placing the omission (`…`) at the `end`, the `middle` or the `start`. Start and end are logical: in right-to-left text the start is on the right. `truncate-by` chooses what is removed: `chars` (default) removes whole characters, so emoji and accented letters are never split; `words` removes whole words, so the text never ends in half a word. If not even one word fits, the first word is cut by characters rather than showing only `…`. Whitespace next to the omission is dropped, and line breaks become spaces.\n\nA truncating element is an inline block that shrinks with its container: inside a flex or grid track it can become narrower than its full text, and it never changes height or moves the content after it. The text refits when the container resizes, fonts load, or the text, locale or truncation settings change. Measuring is done once per text and font, so resizing many values stays cheap.\n\n`max-length` caps the number of characters or words kept. With `truncate`, the cap applies on top of the width; without it, the text is cut at the end and wraps normally. A middle cut splits the kept units between both ends, the beginning taking the extra one.\n\nWhile the text is shortened, the value can be focused and a tooltip shows the full text on hover or focus. `tooltip=\"false\"` removes the tooltip and the tab stop. A value that stops being shortened while focused keeps focus until it is left."
+    },
+    {
+      "id": "md: Accessibility",
+      "kind": "md",
+      "heading": "## Accessibility",
+      "text": "Assistive technology always hears the complete text once. Shortened text is hidden from it and the full text is exposed instead. Abbreviated forms are spelled out: compact numbers (\"15 thousand\"), short units (\"42 kilometers per hour\"), byte sizes (\"2.4 megabytes\") and digital durations (\"1 hour, 2 minutes, 5 seconds\"). The tooltip repeats the full text visually only, so it is not announced twice. Updates are never announced through a live region."
+    },
+    {
+      "id": "md: Locale",
+      "kind": "md",
+      "heading": "## Locale",
+      "text": "`locale` sets the formatting and case-mapping locale; without it, the closest `lang` attribute applies. A change to `lang` anywhere in the document, or to the browser's languages, updates the text in place. A `locale` that is not a valid language tag emits a `tp-diagnostic` and the browser's default locale applies."
+    },
+    {
+      "id": "md: API — `tp-text-transform`",
+      "kind": "md",
+      "heading": "## API — `tp-text-transform`",
+      "text": "| Property / attribute         | Type; default                                                         | Behavior                                                                    |\n| ---------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------- |\n| `value`                      | number, bigint or string; text content                                | The input.                                                                  |\n| `preset`                     | built-in or custom preset name; `text`                                | The transform. Reflected.                                                   |\n| `format`                     | `TextFormatOptions` (property only)                                   | Preset options; win over the attributes below.                              |\n| `formatter`                  | `(context: TextFormatContext) => TextFormatterResult` (property only) | Replaces the preset.                                                        |\n| `currency`                   | string; `''`                                                          | Currency code of the `currency` preset.                                     |\n| `unit`                       | string; `''`                                                          | Unit identifier of the `unit` preset.                                       |\n| `decimals`                   | number 0–20; unset                                                    | Exact fraction digits (`decimal` defaults to 2).                            |\n| `locale`                     | string; closest `lang`                                                | Formatting and case-mapping locale.                                         |\n| `truncate`                   | `none \\| start \\| middle \\| end`; `none`                              | Where the omission goes; any value but `none` fits one line. Reflected.     |\n| `truncateBy` / `truncate-by` | `chars \\| words`; `chars`                                             | What truncation removes.                                                    |\n| `maxLength` / `max-length`   | non-negative integer; unset                                           | Most characters or words kept.                                              |\n| `tooltip`                    | boolean; `true`                                                       | Full-text tooltip and tab stop while shortened. `tooltip=\"false\"` disables. |\n| `text` (read only)           | string                                                                | The complete presented text, before shortening.                             |\n| `accessibleText` (read only) | string                                                                | The text assistive technology hears.                                        |\n| `truncated` (read only)      | boolean                                                               | Whether the presented text is shortened.                                    |\n\nThe host reflects `data-truncated` while shortened and `invalid` / `data-invalid` when a numeric preset cannot read the input. The default slot holds the text content: the input when `value` is unset, and the presentation when the input is invalid."
+    },
+    {
+      "id": "md: API — `tp-text-transform` › Events",
+      "kind": "md",
+      "heading": "### Events",
+      "text": "| Event           | Detail              | When                                                                                                    |\n| --------------- | ------------------- | ------------------------------------------------------------------------------------------------------- |\n| `tp-diagnostic` | `{ code, message }` | Invalid input, a missing or rejected option, an undefined preset or a failing formatter; once per case. |"
+    },
+    {
+      "id": "md: API — `tp-text-transform` › Functions",
+      "kind": "md",
+      "heading": "### Functions",
+      "text": "| Export                                      | Behavior                                                                                                    |\n| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |\n| `defineTextPreset(name, definition)`        | Defines a page-wide preset (a formatter or `{ preset, format }`); returns a remove function.                |\n| `transformText(input, options)`             | The same transform outside the DOM; returns `{ text, accessibleText, machineValue, invalid, diagnostics }`. |\n| `TEXT_PRESETS`, `isBuiltInTextPreset(name)` | The built-in preset names.                                                                                  |"
+    },
+    {
+      "id": "md: Composition and presentation",
+      "kind": "md",
+      "heading": "## Composition and presentation",
+      "text": "Use Text transform wherever a value is shown as text: Table cells, List item footers, Card and Alert text, Badge or Citation labels, and file names in narrow sidebars. It paints no surface, inherits font and color from its context, and is isolated for bidirectional text like `<bdi>`, so a right-to-left value never reorders with the text around it.\n\nParts: `text-transform` (the host), `text-transform-value` (the presented text: a `data` element whose `value` is the raw number for numeric input, otherwise a `span`), and `text-transform-description` (the tooltip content). Customize through `partContracts` or `::part(text-transform-value)`. Focus uses the shared ring.\n\nExported class: `TpTextTransform`. Exported types: `TextFormatContext`, `TextFormatter`, `TextFormatterResult`, `TextFormatOptions`, `TextDurationOptions`, `TextPresetDefinition`, `TextTransformOptions`, `TextTransformResult`, `TruncatePosition`, `TruncateUnit`. Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`."
+    },
+    {
+      "id": "example: Case and identifiers",
+      "kind": "example",
+      "title": "Case and identifiers",
+      "description": "Case presets follow the locale of the closest `lang`. Identifier presets split names at separators, case changes and acronyms, so a property key can become a readable label.",
+      "code": "<div style=\"display:grid;gap:var(--tp-space-2)\"><span><tp-text-transform preset=\"capitalize\">northern lights ferry tour</tp-text-transform></span>\n<span><tp-text-transform preset=\"sentence\">boarding closes ten minutes before departure</tp-text-transform></span>\n<span><tp-text-transform preset=\"uppercase\">gate b</tp-text-transform></span>\n<span><tp-text-transform preset=\"humanize\">returnTripDiscount</tp-text-transform> · <tp-text-transform preset=\"kebab\">Return Trip Discount</tp-text-transform> · <tp-text-transform preset=\"constant\">returnTripDiscount</tp-text-transform></span></div>"
+    },
+    {
+      "id": "example: Numbers, currency and units",
+      "kind": "example",
+      "title": "Numbers, currency and units",
+      "description": "Numeric presets format with the locale and use tabular figures. `percent` reads a ratio, `decimals` fixes the fraction digits, and compact numbers and units keep their spelled-out form for assistive technology. Each value is a `data` element carrying the raw number.",
+      "code": "<tp-table label=\"Ferry routes\">\n  <tp-table-header\n    ><tp-table-row>\n      <tp-table-head scope=\"col\">Route</tp-table-head>\n      <tp-table-head scope=\"col\">Fare</tp-table-head>\n      <tp-table-head scope=\"col\">Occupancy</tp-table-head>\n      <tp-table-head scope=\"col\">Distance</tp-table-head>\n      <tp-table-head scope=\"col\">Passengers this year</tp-table-head>\n    </tp-table-row></tp-table-header\n  >\n  <tp-table-body\n    ><tp-table-row>\n      <tp-table-head scope=\"row\">Harbor – Lighthouse Isle</tp-table-head>\n      <tp-table-cell><tp-text-transform preset=\"currency\" currency=\"EUR\" value=\"18.5\"></tp-text-transform></tp-table-cell>\n      <tp-table-cell><tp-text-transform preset=\"percent\" value=\"0.82\"></tp-text-transform></tp-table-cell>\n      <tp-table-cell><tp-text-transform preset=\"unit\" unit=\"kilometer\" value=\"24.6\"></tp-text-transform></tp-table-cell>\n      <tp-table-cell><tp-text-transform preset=\"compact\" value=\"148300\"></tp-text-transform></tp-table-cell>\n    </tp-table-row\n    ><tp-table-row>\n      <tp-table-head scope=\"row\">Harbor – North Bay</tp-table-head>\n      <tp-table-cell><tp-text-transform preset=\"currency\" currency=\"EUR\" value=\"9\"></tp-text-transform></tp-table-cell>\n      <tp-table-cell><tp-text-transform preset=\"percent\" decimals=\"1\" value=\"0.476\"></tp-text-transform></tp-table-cell>\n      <tp-table-cell><tp-text-transform preset=\"unit\" unit=\"kilometer\" value=\"7.2\"></tp-text-transform></tp-table-cell>\n      <tp-table-cell><tp-text-transform preset=\"compact\" value=\"61900\"></tp-text-transform></tp-table-cell>\n    </tp-table-row></tp-table-body\n  >\n</tp-table>"
+    },
+    {
+      "id": "example: Locales",
+      "kind": "example",
+      "title": "Locales",
+      "description": "Without a `locale`, the closest `lang` decides separators, digits and currency placement, and a change to it updates the text in place. `bytes` uses binary units and `duration` reads seconds.",
+      "code": "<div style=\"display:grid;gap:var(--tp-space-2)\"><span lang=\"en-US\"><tp-text-transform preset=\"currency\" currency=\"EUR\" value=\"1234.5\"></tp-text-transform> · <tp-text-transform preset=\"bytes\" value=\"5242880\"></tp-text-transform> · <tp-text-transform preset=\"duration\" value=\"5025\"></tp-text-transform></span>\n<span lang=\"de-DE\"><tp-text-transform preset=\"currency\" currency=\"EUR\" value=\"1234.5\"></tp-text-transform> · <tp-text-transform preset=\"bytes\" value=\"5242880\"></tp-text-transform> · <tp-text-transform preset=\"duration\" value=\"5025\"></tp-text-transform></span>\n<span lang=\"ar-EG\" dir=\"rtl\"><tp-text-transform preset=\"currency\" currency=\"EUR\" value=\"1234.5\"></tp-text-transform> · <tp-text-transform preset=\"bytes\" value=\"5242880\"></tp-text-transform> · <tp-text-transform preset=\"duration\" value=\"5025\"></tp-text-transform></span></div>"
+    },
+    {
+      "id": "example: Truncation",
+      "kind": "example",
+      "title": "Truncation",
+      "description": "Drag the handle: each value keeps as much as fits on one line. `truncate` places the omission at the end, the middle or the start; `truncate-by=\"words\"` removes whole words. Shortened values can be focused and show the full text in a tooltip, and assistive technology always reads the full text.",
+      "code": "<tp-resizable-panel-group style=\"block-size:12rem\">\n  <tp-resizable-panel default-size=\"30%\" min-size=\"15%\">\n    <div style=\"display:grid;gap:var(--tp-space-2);padding:var(--tp-space-3)\">\n      <tp-text-transform truncate=\"end\">Overnight crossing to Lighthouse Isle with a cabin and breakfast on board</tp-text-transform>\n      <tp-text-transform truncate=\"end\" truncate-by=\"words\">Overnight crossing to Lighthouse Isle with a cabin and breakfast on board</tp-text-transform>\n      <tp-text-transform truncate=\"middle\">harbor-webcam-2026-10-14-dawn-panorama.jpg</tp-text-transform>\n      <tp-text-transform truncate=\"start\">/fleet/vessels/northern-star/maintenance/hull-inspection.pdf</tp-text-transform>\n    </div>\n  </tp-resizable-panel>\n  <tp-resizable-handle label=\"Resize the list\" with-handle></tp-resizable-handle>\n  <tp-resizable-panel min-size=\"20%\"></tp-resizable-panel>\n</tp-resizable-panel-group>"
+    },
+    {
+      "id": "example: Length limits",
+      "kind": "example",
+      "title": "Length limits",
+      "description": "`max-length` caps the characters or words kept, at the end unless `truncate` places the omission elsewhere. Without `truncate`, the text still wraps normally.",
+      "code": "<div style=\"display:grid;gap:var(--tp-space-2)\"><span><tp-text-transform max-length=\"24\">Overnight crossing to Lighthouse Isle with a cabin</tp-text-transform></span>\n<span><tp-text-transform max-length=\"5\" truncate-by=\"words\">Overnight crossing to Lighthouse Isle with a cabin</tp-text-transform></span>\n<span><tp-text-transform max-length=\"20\" truncate=\"middle\">harbor-webcam-2026-10-14-dawn-panorama.jpg</tp-text-transform></span></div>"
+    },
+    {
+      "id": "example: Custom presets and formatters",
+      "kind": "example",
+      "title": "Custom presets and formatters",
+      "description": "`defineTextPreset` names a preset for the whole page, either a built-in preset with options or a formatter; elements that already use the name update when it is defined. A `formatter` on one element replaces its preset and can apply any preset through its context.",
+      "code": "<div id=\"text-transform-custom\"><div style=\"display:grid;gap:var(--tp-space-2)\"><span>Return fare <tp-text-transform preset=\"fare\" value=\"36\"></tp-text-transform></span>\n<span>Moored at <tp-text-transform preset=\"berth\" value=\"7\"></tp-text-transform></span>\n<span><tp-text-transform id=\"seats-left\" value=\"0.18\"></tp-text-transform></span></div></div>",
+      "script": "import { defineTextPreset } from '@tweakpad/ui';\n\n/** Define app-wide presets once, then give one value its own formatter. */\nexport function setupTextTransformExample(root) {\n  const releases = [\n    // A preset built on another one, with its own options.\n    defineTextPreset('fare', { preset: 'currency', format: { currency: 'EUR' } }),\n    // A formatter preset: berth numbers read as codes such as \"B-007\".\n    defineTextPreset('berth', ({ value }) => ({\n      text: `B-${String(value).padStart(3, '0')}`,\n      accessibleText: `Berth ${value}`,\n    })),\n  ];\n  const seats = root.querySelector('#seats-left');\n  if (seats) seats.formatter = (context) => `${context.apply('percent')} of seats left`;\n  return () => {\n    for (const release of releases) release();\n  };\n}\n\nsetupTextTransformExample(document.getElementById('text-transform-custom'));"
+    },
+    {
+      "id": "example: Fallback",
+      "kind": "example",
+      "title": "Fallback",
+      "description": "Content that a numeric preset cannot read stays as written and the element exposes `data-invalid`.",
+      "code": "<p>Platform <tp-text-transform preset=\"number\">to be announced</tp-text-transform></p>"
+    }
+  ]
+}

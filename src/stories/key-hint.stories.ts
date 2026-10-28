@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/key-hint.md?raw';
-import { keyHintExamples } from './key-hint.examples.js';
 import type { KeyHintPlatform, KeyHintSeparator } from '../components/key-hint/index.js';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   platform: KeyHintPlatform;
@@ -11,15 +10,7 @@ interface Args {
 const meta = {
   title: 'Components/Key hint',
   component: 'tp-key-hint',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: keyHintExamples,
-      source: {
-        code: '<tp-key-hint-group separator="none"><tp-key-hint key="control"></tp-key-hint><tp-key-hint key="alt"></tp-key-hint><tp-key-hint key="shift"></tp-key-hint><tp-key-hint key="command"></tp-key-hint></tp-key-hint-group>',
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/key-hint') },
   args: { platform: 'auto', separator: 'none' },
   argTypes: {
     platform: {

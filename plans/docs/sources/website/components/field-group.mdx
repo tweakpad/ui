@@ -1,0 +1,115 @@
+---
+title: Field group
+description: Joins the editors of one compound value, such as width and height or RGB channels, into a single seamed row.
+tag: tp-field-group
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Field group"
+  align="stretch"
+  code={`<tp-field-group label="Canvas size" style="max-inline-size:20rem">
+  <tp-input-group>
+    <span slot="prefix">W</span>
+    <tp-input label="Width" name="width" default-value="1280"></tp-input>
+    <span slot="suffix">px</span>
+  </tp-input-group>
+  <tp-input-group>
+    <span slot="prefix">H</span>
+    <tp-input label="Height" name="height" default-value="720"></tp-input>
+    <span slot="suffix">px</span>
+  </tp-input-group>
+</tp-field-group>`}
+/>
+
+## Usage
+
+Field group lays out related editors and joins their borders. It owns only the layout, the seams and the group name: each editor keeps its own value, `name`, label, state and validation, and the group submits nothing itself. `label` names the tuple ("Canvas size"); every editor still needs its own complete `label`, because prefixes like `W` are visual shorthand.
+
+To stack separate Fields with spacing, use Field's `group` slot instead.
+
+### Tuples
+
+Editors share the main axis equally. Keep a related value that is not part of the tuple, such as opacity, outside the group so it reads as separate.
+
+<Preview
+  title="Color channels"
+  align="stretch"
+  code={`<div style="display:flex;align-items:center;gap:var(--tp-space-2);max-inline-size:26rem">
+  <tp-field-group label="RGB" style="flex:1 1 0;min-inline-size:0">
+    <tp-input-group><span slot="prefix">R</span><tp-input label="Red" default-value="109"></tp-input></tp-input-group>
+    <tp-input-group><span slot="prefix">G</span><tp-input label="Green" default-value="93"></tp-input></tp-input-group>
+    <tp-input-group><span slot="prefix">B</span><tp-input label="Blue" default-value="252"></tp-input></tp-input-group>
+  </tp-field-group>
+  <tp-input-group style="flex:0 0 6rem">
+    <tp-input label="Opacity" default-value="100"></tp-input>
+    <span slot="suffix">%</span>
+  </tp-input-group>
+</div>`}
+/>
+
+### Mixed members
+
+Buttons and Toggles can join beside the editors, for example a lock between width and height. A Separator divides editors and takes the perpendicular orientation automatically.
+
+<Preview
+  title="Toggle and separator"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:24rem">
+  <tp-field-group label="Image size">
+    <tp-input-group><span slot="prefix">W</span><tp-input label="Width" default-value="1920"></tp-input></tp-input-group>
+    <tp-toggle variant="outline" aria-label="Lock aspect ratio" default-pressed>Lock</tp-toggle>
+    <tp-input-group><span slot="prefix">H</span><tp-input label="Height" default-value="1080"></tp-input></tp-input-group>
+  </tp-field-group>
+  <tp-field-group label="Price range">
+    <tp-input-group><span slot="prefix">$</span><tp-input label="Minimum price" default-value="20"></tp-input></tp-input-group>
+    <tp-separator></tp-separator>
+    <tp-input-group><span slot="prefix">$</span><tp-input label="Maximum price" default-value="150"></tp-input></tp-input-group>
+  </tp-field-group>
+</div>`}
+/>
+
+### Member states
+
+Each editor keeps its own state inside the group. A read-only or disabled editor shows its usual treatment while its neighbours stay editable.
+
+<Preview
+  title="Read-only and disabled"
+  align="stretch"
+  code={`<tp-field-group label="Retry policy" style="max-inline-size:24rem">
+  <tp-input-group><tp-input label="Timeout" default-value="30" readonly></tp-input><span slot="suffix">s</span></tp-input-group>
+  <tp-input-group><tp-input label="Retries" default-value="3"></tp-input></tp-input-group>
+  <tp-input-group><tp-input label="Backoff" default-value="2" disabled></tp-input><span slot="suffix">×</span></tp-input-group>
+</tp-field-group>`}
+/>
+
+### Orientation
+
+`orientation="vertical"` stacks the editors, stretches them to the widest one and joins their block edges. Use it for long tuples that would become unreadable in one row.
+
+<Preview
+  title="Vertical"
+  align="stretch"
+  code={`<tp-field-group label="Shipping address" orientation="vertical" style="max-inline-size:20rem">
+  <tp-input label="Street address" placeholder="Street address" default-value="221 Market Street"></tp-input>
+  <tp-input label="Apartment, suite" placeholder="Apartment, suite (optional)"></tp-input>
+  <tp-input label="City" placeholder="City" default-value="San Francisco"></tp-input>
+</tp-field-group>`}
+/>
+
+### Separate editors
+
+Set the `joined` property to `false` to keep every editor's own corners with the standard gap, while still grouping and naming them.
+
+<Preview
+  title="Unjoined"
+  align="stretch"
+  code={`<tp-field-group id="field-group-demo-unjoined" label="Padding" style="max-inline-size:24rem">
+  <tp-input-group><span slot="prefix">T</span><tp-input label="Top" default-value="16"></tp-input></tp-input-group>
+  <tp-input-group><span slot="prefix">R</span><tp-input label="Right" default-value="24"></tp-input></tp-input-group>
+  <tp-input-group><span slot="prefix">B</span><tp-input label="Bottom" default-value="16"></tp-input></tp-input-group>
+  <tp-input-group><span slot="prefix">L</span><tp-input label="Left" default-value="24"></tp-input></tp-input-group>
+</tp-field-group>`}
+  script={`document.querySelector('#field-group-demo-unjoined').joined = false;`}
+/>

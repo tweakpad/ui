@@ -1,0 +1,162 @@
+---
+title: Button
+description: One action or navigation target, in six visual treatments and four sizes.
+tag: tp-button
+---
+
+<Preview
+  title="Button"
+  code={`<tp-button>Continue</tp-button>`}
+/>
+
+## Usage
+
+<Preview
+  title="Variants"
+  code={`<tp-button>Default</tp-button>
+<tp-button variant="secondary">Secondary</tp-button>
+<tp-button variant="outline">Outline</tp-button>
+<tp-button variant="ghost">Ghost</tp-button>
+<tp-button variant="destructive">Destructive</tp-button>
+<tp-button variant="link">Link</tp-button>`}
+/>
+
+`variant` is visual emphasis only. A Button does not own selection, open or pending state; pair it with a Toggle or a disclosure component for those.
+
+### Sizes
+
+<Preview
+  title="Sizes"
+  code={`<tp-button size="xs">Extra small</tp-button>
+<tp-button size="sm">Small</tp-button>
+<tp-button>Default</tp-button>
+<tp-button size="lg">Large</tp-button>`}
+/>
+
+### Icon only
+
+In an icon size only the marks are visible. The label stays in the content, hidden visually, and names the Button for assistive technology, so write the action as the label instead of adding `aria-label`.
+
+The icon itself is never used as the accessible name. An unnamed Button emits a `tp-diagnostic` warning.
+
+<Preview
+  title="Icon only"
+  code={`<tp-button size="icon" variant="outline">
+  <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+  New document
+</tp-button>
+<tp-button size="icon-sm" variant="ghost">
+  <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+  Delete
+</tp-button>`}
+/>
+
+`icon-xs`, `icon-sm`, `icon` and `icon-lg` make square Buttons that match the heights of `xs`, `sm`, the default and `lg`, so an icon action lines up with text Buttons of the same size.
+
+<Preview
+  title="Icon sizes"
+  code={`<tp-button size="icon-xs" variant="outline">
+  <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+  Edit
+</tp-button>
+<tp-button size="icon-sm" variant="outline">
+  <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+  Edit
+</tp-button>
+<tp-button size="icon" variant="outline">
+  <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+  Edit
+</tp-button>
+<tp-button size="icon-lg" variant="outline">
+  <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+  Edit
+</tp-button>`}
+/>
+
+### Marks
+
+Use the `icon-start` and `icon-end` slots for custom marks, and mark them decorative. `loading-position` composes the library's Spinner and exposes busy semantics without disabling the action.
+
+For common single-mark cases, set `icon` with `iconPosition`, or set `loadingPosition` to compose the shared Spinner. `leading` and `trailing` are logical positions that follow writing direction.
+
+Mark sources use this precedence: `loadingPosition`, then `icon`, then the slots. Clearing a higher-priority property restores the next source without removing slotted content. The convenience icon is decorative because the label names the control; custom decorative marks should use `aria-hidden="true"`.
+
+The Spinner inherits the Button's resolved text color in every variant and state. Loading does not set `disabled`; set `disabled` and, when appropriate, `focusableWhenDisabled` explicitly for a pending operation.
+
+<Preview
+  title="Marks and loading"
+  code={`<tp-button variant="outline">
+  <span slot="icon-start" aria-hidden="true">←</span>
+  Back
+</tp-button>
+<tp-button>
+  Next
+  <span slot="icon-end" aria-hidden="true">→</span>
+</tp-button>
+<tp-button loading-position="leading">Saving</tp-button>`}
+/>
+
+A Button in a text size whose label is empty shows only its marks, with one gap between them and the icon padding at both edges, as in a trigger that pairs an icon with a chevron. Nothing visible names it, so give it an `aria-label`. Text added to the label later shows the label again.
+
+<Preview
+  title="Icon and chevron"
+  code={`<tp-button variant="outline" size="sm" aria-label="Text color">
+  <svg slot="icon-start" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 16l6-12 6 12M8 12h8"/></svg>
+  <svg slot="icon-end" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+</tp-button>`}
+/>
+
+### Links
+
+Set `href` and the Button renders a native anchor while keeping any visual variant. `target`, `rel` and `download` are forwarded.
+
+Link hosting ignores `type`, `name`, `value`, and `nativeAction`; removing `href` restores action behavior.
+
+`variant="link"` alone changes appearance only, so an action can still use link styling without becoming navigation. A disabled link retains its `href` for inspection but prevents navigation; `focusableWhenDisabled` controls whether it remains in the tab order.
+
+<Preview
+  title="As a link"
+  code={`<tp-button href="#links">Read the guide</tp-button>
+<tp-button variant="outline" href="#links" download="report.csv">Download report</tp-button>`}
+/>
+
+### Forms
+
+The default `type` is `button`, so a Button never submits by accident. A named submit Button contributes its `name` and `value` as the submitter.
+
+Each completed pointer or keyboard gesture activates at most once. A consumer may cancel the initiating `click` with `preventDefault()` before a submit or reset action runs.
+
+<Preview
+  title="Form actions"
+  code={`<form style="display:flex;gap:var(--tp-space-2)">
+  <tp-button type="submit" name="intent" value="save">Save</tp-button>
+  <tp-button type="reset" variant="outline">Reset</tp-button>
+</form>`}
+/>
+
+### Disabled
+
+<Preview
+  title="Disabled"
+  code={`<tp-button disabled>Unavailable</tp-button>
+<tp-button disabled focusable-when-disabled variant="outline">Discoverable</tp-button>`}
+/>
+
+`focusable-when-disabled` keeps a disabled Button in the tab order, exposing `aria-disabled` without allowing activation.
+
+### Part customization
+
+`partContracts` configures each of `button`, `button-label`, `button-leading-mark`, and `button-trailing-mark`. Contracts accept `hostProperties`, `classHook`, `styleHook`, `content`, `elementReference`, and `renderDelegate`. The reference receives the actual rendered element and becomes `null` when it is replaced or disconnected. `focus()`, `blur()`, and `click()` follow the actual control.
+
+A delegate must apply its supplied `bind` to the semantic host. A substituted action host retains Button semantics and receives synthesized Enter/Space activation. A Button with `href` requires an actual anchor; a non-anchor delegate emits a diagnostic and falls back to the native anchor. Owned action type, disabled/focus policy, ARIA, state and part markers, and the `hidden` state of the label and the marks survive neutral property and appearance overrides.
+
+<Code code={`import { html } from 'lit';
+button.partContracts = {
+  button: {
+    hostProperties: { title: 'Save changes' },
+    renderDelegate: ({ bind, content }) => html\`<span \${bind}>\${content}</span>\`,
+    elementReference: (element) => console.log(element),
+  },
+};`} language="js" />
+
+Consumer handlers run before the corresponding Button handler. Call `event.preventComponentHandling()` to suppress that component action while preserving native default prevention as a separate channel. `preventDefault()` still cancels a queued submit/reset. Disabled controls block activation before consumer click handlers. For a link, suppressing its click action also prevents navigation.

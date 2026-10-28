@@ -1,0 +1,196 @@
+---
+title: Collapsible
+description: One disclosure that shows and hides its content behind a labelled native button.
+tag: tp-collapsible
+---
+
+<Preview
+  title="Collapsible"
+  align="stretch"
+  code={`<tp-collapsible default-open style="inline-size:100%;max-inline-size:28rem;margin-inline:auto">
+  <span slot="label">Order #10482 details</span>
+  <p style="margin:0">Shipped October 6 via UPS Ground. Tracking 1Z 84A 7F2 03 9281 4410.</p>
+  <p style="margin:0">Delivery to 221 Mission St, San Francisco, CA 94105.</p>
+</tp-collapsible>`}
+/>
+
+## Usage
+
+The `label` slot is the trigger text and the default slot is the content. The trigger is a native button wired with `aria-expanded` and `aria-controls`, so Enter, Space and pointer all work without extra code. Use Collapsible for one independent disclosure, and Accordion when several need to coordinate.
+
+### Indicator and alignment
+
+`indicator-position` puts the chevron on the `leading` or `trailing` side. `content-alignment="label"` lines the content up with the label instead of the outer edge, which reads better when there is leading content.
+
+Label alignment follows writing direction and the actual Leading layout, so arbitrary icons, badges, text, or multiple nodes do not require a hard-coded indent.
+
+<Preview
+  title="Leading indicator"
+  align="stretch"
+  code={`<tp-collapsible indicator-position="leading" content-alignment="label" default-open style="inline-size:100%;max-inline-size:28rem;margin-inline:auto">
+  <span slot="label">Advanced settings</span>
+  <p style="margin:0">Webhook retries, request signing and IP allowlists. Most teams never need to change these.</p>
+</tp-collapsible>`}
+/>
+
+### Leading and trailing content
+
+The `leading` and `trailing` slots hold non-interactive extras such as a step number or status. They sit inside the trigger button, so they become part of its accessible name; mark purely decorative marks `aria-hidden`. Filling the indicator's side replaces the default chevron.
+
+Assigning any content to the selected position suppresses the fallback; the assigned nodes retain their own semantics and never acquire disclosure-indicator state or motion automatically. Positional content is inside the native button Trigger, so it must not contain links, buttons, inputs, or other interactive descendants.
+
+<Preview
+  title="Positional slots"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);inline-size:100%;max-inline-size:28rem;margin-inline:auto">
+  <tp-collapsible content-alignment="label">
+    <span slot="leading" aria-hidden="true" style="font-variant-numeric:tabular-nums;color:var(--tp-muted-foreground)">01</span>
+    <span slot="label">Connect your repository</span>
+    <p style="margin:0">Install the GitHub app and choose which repositories Tweakpad can read.</p>
+  </tp-collapsible>
+  <tp-collapsible content-alignment="label">
+    <span slot="leading" aria-hidden="true" style="font-variant-numeric:tabular-nums;color:var(--tp-muted-foreground)">02</span>
+    <span slot="label">Configure build settings</span>
+    <span slot="trailing" style="font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">Optional</span>
+    <p style="margin:0">Set the install command, output directory and environment variables.</p>
+  </tp-collapsible>
+</div>`}
+/>
+
+### Headings
+
+`heading-level` wraps the trigger in a heading of that level, so screen reader users can jump between disclosures from the page outline. Leave it at `0` when the Collapsible is not a section of the page.
+
+<Preview
+  title="As a heading"
+  align="stretch"
+  code={`<tp-collapsible heading-level="3" style="inline-size:100%;max-inline-size:28rem;margin-inline:auto">
+  <span slot="label">What happens when my trial ends?</span>
+  <p style="margin:0">Your workspace moves to the Free plan. Projects stay intact; members beyond the first three become read-only.</p>
+</tp-collapsible>`}
+/>
+
+### Find in page
+
+`hidden-until-found` keeps closed content in the page as `hidden="until-found"`, so the browser's find-in-page can search it and opens the disclosure on a match. `keep-mounted` retains closed content without making it searchable.
+
+<Preview
+  title="Searchable"
+  align="stretch"
+  code={`<tp-collapsible hidden-until-found style="inline-size:100%;max-inline-size:28rem;margin-inline:auto">
+  <span slot="label">Refund policy</span>
+  <p style="margin:0">Annual plans can be refunded in full within 30 days of purchase. Monthly plans are not prorated.</p>
+</tp-collapsible>`}
+/>
+
+### Events
+
+Each toggle dispatches a cancelable `tp-open-change` with the proposed `value` before `open` changes; call `preventDefault()` to keep the current state.
+
+<Code code={`const collapsible = document.querySelector('tp-collapsible');
+
+collapsible.addEventListener('tp-open-change', (event) => {
+  if (!canRevealDetails && event.detail.value) event.preventDefault();
+});`} language="js" />
+
+After presence reaches its stable open or closed state, `tp-open-change-complete` is dispatched with `{ open }`.
+
+<Preview
+  title="Open change"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);inline-size:100%;max-inline-size:28rem;margin-inline:auto">
+  <tp-collapsible id="collapsible-events">
+    <span slot="label">API key</span>
+    <p style="margin:0;font-family:var(--tp-font-mono)">tp_live_4f9a…c21e</p>
+  </tp-collapsible>
+  <output id="collapsible-events-output" style="font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">Hidden</output>
+</div>`}
+  script={`const collapsible = document.getElementById('collapsible-events');
+const output = document.getElementById('collapsible-events-output');
+collapsible.addEventListener('tp-open-change', (event) => {
+  output.textContent = event.detail.value ? 'Revealed' : 'Hidden';
+});`}
+/>
+
+### Disabled
+
+<Preview
+  title="Disabled"
+  align="stretch"
+  code={`<tp-collapsible disabled style="inline-size:100%;max-inline-size:28rem;margin-inline:auto">
+  <span slot="label">Billing history (owners only)</span>
+  <p style="margin:0">Invoices and payment methods.</p>
+</tp-collapsible>`}
+/>
+
+`disabled` blocks the trigger but keeps the current open state, so a disclosure can be locked open or closed.
+
+### Content motion
+
+<Preview
+  title="Line-by-line reveal"
+  align="stretch"
+  code={`<tp-collapsible id="collapsible-motion" style="inline-size:100%;max-inline-size:28rem;margin-inline:auto">
+  <span slot="label">What's new in 2.4</span>
+  <ul style="display:grid;gap:var(--tp-space-2);margin:0;padding-inline-start:var(--tp-space-5)">
+    <li>Single sign-on with SAML and OIDC on every plan</li>
+    <li>An audit log that keeps permission changes for 400 days</li>
+    <li>CSV exports that finish up to five times sooner</li>
+    <li>Scheduled reports, emailed every Monday</li>
+  </ul>
+</tp-collapsible>`}
+  script={`const collapsible = document.getElementById('collapsible-motion');
+
+collapsible.addEventListener('tp-motion-request', (event) => {
+  if (event.request.role !== 'content') return;
+  event.respondWith({
+    play(request) {
+      const entering = request.phase === 'enter';
+      const items = [...request.owner.querySelectorAll('li')];
+      if (!entering) items.reverse();
+      const animations = items.map((item, index) =>
+        item.animate(
+          entering
+            ? [{ opacity: 0, transform: 'translateX(-8px)' }, { opacity: 1, transform: 'none' }]
+            : [{ opacity: 1 }, { opacity: 0 }],
+          { duration: entering ? 240 : 120, delay: index * 60, easing: 'ease-out', fill: 'both' },
+        ),
+      );
+      const finished = Promise.all(animations.map((animation) => animation.finished)).then(() =>
+        animations.forEach((animation) => animation.cancel()),
+      );
+      return { finished, cancel: () => animations.forEach((animation) => animation.cancel()) };
+    },
+  });
+});`}
+/>
+
+The Collapsible asks for motion through a bubbling `tp-motion-request` for three roles: `disclosure` animates the panel's height, `indicator` turns the chevron and `content` targets the panel body, which has no motion by default. Claiming `content` lets you stagger the list items while the Collapsible still measures the panel, keeps it in the page during the exit and hides it once your animation finishes.
+
+Claim a role synchronously from `tp-motion-request` to replace only that role's CSS presentation.
+
+### Styling
+
+The measured panel exposes `--collapsible-panel-height` and `--collapsible-panel-width`. Its default Trigger, Label, positional content, focus ring, and ContentBody inset are token-based baseline presentation shared by standalone Collapsible and Accordion Item. Override those public parts when a product needs a different treatment. Put content padding on ContentBody, not Content, so padding is included in the measured animated extent.
+
+<Code code={`tp-collapsible::part(collapsible-content-body) {
+  padding-block-end: var(--tp-space-6);
+}`} language="css" />
+
+### Public rendering contracts
+
+All eight parts accept the inherited `partContracts` interface, including content,
+host properties, render delegates and element references. A delegate must retain
+its supplied `bind` and `content`. The default Trigger is a native button; it may
+also delegate to the existing `tp-button`. Collapsible resolves that component's
+registered native action for disabled state, focus and Trigger–Panel relationships.
+Consumer trigger event hooks run before disclosure handling and may call
+`preventComponentHandling()`; the cancellable `tp-open-change` proposal remains
+available independently.
+
+Changing a delegate releases the former trigger's listeners and composed control
+policy. Content measurement follows the current ContentBody. Disconnecting removes
+trigger listeners and measurement observation; reconnecting restores current state.
+Layout hooks may rearrange regions, but cannot make a normally hidden closed Panel
+visible by overriding its display. `hidden-until-found` retains its native reveal
+semantics.

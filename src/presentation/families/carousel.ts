@@ -22,55 +22,69 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'carousel',
+      description: 'The root region holding the viewport and its controls.',
       axes: ['orientation'],
     },
     {
       name: 'carousel-viewport',
+      description: 'The clipping window the slides move through.',
       axes: ['orientation'],
     },
     {
       name: 'carousel-track',
+      description: 'The moving strip of slides.',
       axes: ['orientation'],
     },
     {
       name: 'carousel-effect-surface',
+      description: 'The layer an effect draws on in place of the moving track.',
     },
     {
       name: 'carousel-item',
+      description: 'The shell around one slide.',
       axes: ['orientation'],
     },
     {
       name: 'carousel-previous',
+      description: 'The built-in previous button.',
       axes: ['orientation'],
     },
     {
       name: 'carousel-next',
+      description: 'The built-in next button.',
       axes: ['orientation'],
     },
     {
       name: 'carousel-indicator',
+      description: 'The indicators: a fraction, bullets or a progress bar.',
       axes: ['orientation', 'indicatorType'],
     },
     {
       name: 'carousel-controls',
+      description: 'The row of controls, placed in the footer, inside or outside the viewport.',
       axes: ['controlsPlacement'],
     },
     {
       name: 'carousel-status',
+      description: 'The visible position text.',
     },
     {
       name: 'carousel-scrollbar',
+      description: 'The optional scrollbar track.',
       axes: ['orientation'],
     },
     {
       name: 'carousel-thumb',
+      description: 'The thumb of the scrollbar.',
       axes: ['orientation'],
     },
     {
       name: 'carousel-autoplay-control',
+      description: 'The pause and resume button autoplay adds.',
     },
     {
       name: 'carousel-announcements',
+      description: 'The polite live region announcing the position.',
     },
   ],
 };

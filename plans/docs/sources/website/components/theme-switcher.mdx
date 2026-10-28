@@ -1,0 +1,135 @@
+---
+title: Theme switcher
+description: Chooses the light, dark or system color scheme as a switch, an icon button or a segmented group.
+tag: tp-theme-switcher
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Theme switcher"
+  code={`<tp-card id="theme-switcher-hero" style="inline-size:22rem;max-inline-size:100%">
+  <h3 slot="header">Appearance</h3>
+  <p slot="description">This card follows the scheme you pick.</p>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--tp-space-4)">
+    <span style="font-size:var(--tp-text-sm)">Dark mode</span>
+    <tp-theme-switcher storage-key="docs-theme-switcher-hero"></tp-theme-switcher>
+  </div>
+</tp-card>`}
+  script={`// Theme only this card, so the rest of the documentation keeps its scheme.
+await customElements.whenDefined('tp-theme-switcher');
+const card = document.querySelector('#theme-switcher-hero');
+card.querySelector('tp-theme-switcher').target = card;`}
+/>
+
+## Usage
+
+The switcher binds a shared preference store: it applies the scheme to its target (the document root by default), persists it under `storage-key` (`tp-theme` by default), follows the device while on `system`, and keeps every switcher on the same target and key in sync. It composes the library's Switch, Button or Toggle group rather than drawing its own control.
+
+### Variants
+
+`switch` (the default) toggles between explicit light and dark. `button` cycles dark, light and system from one icon button, and `group` shows all three as a segmented Toggle group.
+
+<Preview
+  title="Variants"
+  code={`<tp-card id="theme-switcher-variants" style="inline-size:24rem;max-inline-size:100%">
+  <div style="display:flex;align-items:center;justify-content:space-around;gap:var(--tp-space-4)">
+    <tp-theme-switcher storage-key="docs-theme-switcher-variants"></tp-theme-switcher>
+    <tp-theme-switcher variant="button" storage-key="docs-theme-switcher-variants"></tp-theme-switcher>
+    <tp-theme-switcher variant="group" storage-key="docs-theme-switcher-variants"></tp-theme-switcher>
+  </div>
+</tp-card>`}
+  script={`await customElements.whenDefined('tp-theme-switcher');
+const card = document.querySelector('#theme-switcher-variants');
+for (const switcher of card.querySelectorAll('tp-theme-switcher')) switcher.target = card;`}
+/>
+
+These three share a target and a storage key, so changing one updates the others.
+
+### The whole page
+
+Without a `target`, the switcher themes the document root. This one shares the default store with the switcher in the site header, so they stay in step.
+
+<Preview
+  title="Page theme"
+  code={`<tp-theme-switcher variant="group" size="sm"></tp-theme-switcher>`}
+/>
+
+Every color role is a `light-dark()` pair, so popups and portaled content follow the target's scheme without rewriting tokens. A module script runs after first paint, so apply the stored preference from `<head>` to avoid a flash of the wrong scheme; the reference docs include the snippet.
+
+### Default and size
+
+`default-value` applies only when nothing is persisted yet. `size="sm"` uses the smaller sizes of the composed controls.
+
+<Preview
+  title="Small, defaulting to dark"
+  code={`<tp-card id="theme-switcher-default" size="sm" style="inline-size:18rem;max-inline-size:100%">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--tp-space-4)">
+    <span style="font-size:var(--tp-text-sm)">Editor theme</span>
+    <tp-theme-switcher variant="button" size="sm" default-value="dark" storage-key="docs-theme-switcher-default"></tp-theme-switcher>
+  </div>
+</tp-card>`}
+  script={`await customElements.whenDefined('tp-theme-switcher');
+const card = document.querySelector('#theme-switcher-default');
+card.querySelector('tp-theme-switcher').target = card;`}
+/>
+
+### Vetoing a change
+
+`tp-value-change` is cancelable: `event.detail.value` is the proposed preference and `detail.metadata.resolved` the scheme it resolves to.
+
+<Preview
+  title="Explicit choices only"
+  code={`<tp-card id="theme-switcher-veto" style="inline-size:22rem;max-inline-size:100%">
+  <div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+    <tp-theme-switcher variant="group" default-value="light" storage-key="docs-theme-switcher-veto"></tp-theme-switcher>
+    <output id="theme-switcher-veto-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Workspace theme: light</output>
+  </div>
+</tp-card>`}
+  script={`await customElements.whenDefined('tp-theme-switcher');
+const card = document.querySelector('#theme-switcher-veto');
+const switcher = card.querySelector('tp-theme-switcher');
+const output = document.querySelector('#theme-switcher-veto-output');
+switcher.target = card;
+switcher.addEventListener('tp-value-change', (event) => {
+  if (event.detail.value === 'system') {
+    event.preventDefault();
+    output.textContent = 'Pick light or dark for this workspace';
+  } else {
+    output.textContent = \`Workspace theme: \${event.detail.value}\`;
+  }
+});`}
+/>
+
+### Your own control
+
+The preference store behind the switcher is exported as `colorSchemeStore(target, { storageKey })`. Use it to drive the scheme from any control: `set()` applies and persists a preference, and `subscribe()` reports every change, including ones made by switchers on the same target and key. Here a Radio group and a button switcher share one store.
+
+<Preview
+  title="Color scheme store"
+  code={`<tp-card id="theme-switcher-store" style="inline-size:22rem;max-inline-size:100%">
+  <span slot="header">Appearance</span>
+  <tp-theme-switcher slot="action" variant="button" storage-key="docs-theme-switcher-store"></tp-theme-switcher>
+  <tp-radio-group id="theme-switcher-store-choice" label="Appearance" value="system">
+    <tp-radio-group-item value="light">Light</tp-radio-group-item>
+    <tp-radio-group-item value="dark">Dark</tp-radio-group-item>
+    <tp-radio-group-item value="system">Match system</tp-radio-group-item>
+  </tp-radio-group>
+</tp-card>`}
+  script={`import { colorSchemeStore } from '@tweakpad/ui';
+
+await customElements.whenDefined('tp-theme-switcher');
+const card = document.querySelector('#theme-switcher-store');
+const choice = document.querySelector('#theme-switcher-store-choice');
+card.querySelector('tp-theme-switcher').target = card;
+
+const scheme = colorSchemeStore(card, { storageKey: 'docs-theme-switcher-store' });
+choice.value = scheme.preference;
+choice.onValueChange = (event) => {
+  if (scheme.set(event.detail.value)) choice.value = event.detail.value;
+};
+const stop = scheme.subscribe(({ preference }) => {
+  if (!card.isConnected) return stop();
+  choice.value = preference;
+});`}
+/>

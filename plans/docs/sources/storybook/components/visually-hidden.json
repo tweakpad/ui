@@ -1,0 +1,66 @@
+{
+  "id": "components/visually-hidden",
+  "tag": "tp-visually-hidden",
+  "sources": {
+    "story": "src/stories/visually-hidden.stories.ts",
+    "markdown": "docs/visually-hidden.md",
+    "examples": [
+      "src/stories/visually-hidden.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "Visually hidden keeps text in the accessibility tree while hiding it on screen. Screen readers and other assistive technology read it like any other content; sighted users never see it, and it takes no space in the layout.\n\n```html\n<tp-toggle value=\"campsites\">\n  <tp-icon></tp-icon>\n  <tp-visually-hidden>Campsites</tp-visually-hidden>\n</tp-toggle>\n```"
+    },
+    {
+      "id": "md: Uses",
+      "kind": "md",
+      "heading": "## Uses",
+      "text": "- **Names for icon-only controls.** Put the name beside the icon, inside the control. It becomes the control's accessible name, just as visible text would. An icon-only [Button](button.md) needs no Visually hidden element: in an icon size its label is already hidden, so write the name as the label.\n- **Announcements.** Give the element `role=\"status\"` (or `aria-live=\"polite\"`) and change its text when something happens that sighted users notice from the layout, such as a list shrinking as they type. Keep the element in the page from the start and change only its content: a region that appears together with its message is often not announced.\n- **Context.** Complete text that is clear on screen but not when read alone. Repeated \"Renew\" buttons in a table become \"Renew Pole saw\" with the item name hidden inside each button, and an actions column gets a heading without printing one."
+    },
+    {
+      "id": "md: Rules",
+      "kind": "md",
+      "heading": "## Rules",
+      "text": "- Never put focusable or interactive content inside. A focused element that cannot be seen leaves keyboard users lost. When assigned content contains a focusable element, the element emits a `tp-diagnostic` warning with the code `visually-hidden-focusable-content`. Visually hidden never appears on focus; it is not a skip link.\n- The `hidden` attribute removes the element and its content from the accessibility tree as well. Use it to withdraw text, not to hide it visually.\n- Content inside an element with `aria-hidden=\"true\"` is never read, hidden or not.\n- `aria-labelledby` and `aria-describedby` find an `id` only within the same document or shadow root.\n- Hide whole words. Hidden text is read as a separate run, apart from the words around it, so it cannot complete a visible word: `Tool<tp-visually-hidden>s</tp-visually-hidden>` is read as \"Tool s\"."
+    },
+    {
+      "id": "md: Styling",
+      "kind": "md",
+      "heading": "## Styling",
+      "text": "Visually hidden has no appearance to customize. Its hiding declarations take precedence over page, theme and presentation styles, so nothing can give it size or reveal its content. The library stylesheet hides the content before the element is defined and when generated styles are turned off."
+    },
+    {
+      "id": "md: API — `tp-visually-hidden`",
+      "kind": "md",
+      "heading": "## API — `tp-visually-hidden`",
+      "text": "Visually hidden has no properties, parts or custom properties of its own, and its only slot is its content. Its only event is the `tp-diagnostic` warning below. Attributes you set on it apply unchanged, for example `id`, `lang`, `role`, `aria-live`, `aria-atomic` and `hidden`; it adds no role, name or live region by itself.\n\n| Diagnostic code                     | When                                           |\n| ----------------------------------- | ---------------------------------------------- |\n| `visually-hidden-focusable-content` | Assigned content contains a focusable element. |\n\nThe host is the `visually-hidden` presentation part.\n\nExported class: `TpVisuallyHidden`. Import `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`."
+    },
+    {
+      "id": "example: Icon-only controls",
+      "kind": "example",
+      "title": "Icon-only controls",
+      "description": "Each Toggle shows only its icon. The hidden text beside the icon is the name that assistive technology announces for the Toggle.",
+      "code": "<div id=\"visually-hidden-layers\"><tp-toggle-group label=\"Trail map layers\" multiple variant=\"outline\" size=\"icon\" default-value='[\"campsites\"]'>\n  <tp-toggle value=\"campsites\"><tp-icon data-layer-icon=\"campsites\"></tp-icon><tp-visually-hidden>Campsites</tp-visually-hidden></tp-toggle>\n  <tp-toggle value=\"routes\"><tp-icon data-layer-icon=\"routes\"></tp-icon><tp-visually-hidden>Trail routes</tp-visually-hidden></tp-toggle>\n  <tp-toggle value=\"sun\"><tp-icon data-layer-icon=\"sun\"></tp-icon><tp-visually-hidden>Sun exposure</tp-visually-hidden></tp-toggle>\n</tp-toggle-group></div>",
+      "script": "import { mapPinIcon } from '@tweakpad/ui/icons/map';\nimport { sunIcon } from '@tweakpad/ui/icons/sun';\nimport { waypointsIcon } from '@tweakpad/ui/icons/waypoints';\n\nexport function setupVisuallyHiddenExample(root) {\n  for (const icon of root.querySelectorAll('tp-icon[data-layer-icon]'))\n    icon.icon = { campsites: mapPinIcon, routes: waypointsIcon, sun: sunIcon }[\n      icon.dataset.layerIcon\n    ];\n  const input = root.querySelector('tp-input');\n  const status = root.querySelector('[data-match-count]');\n  if (!input || !status) return () => {};\n  const items = [...root.querySelectorAll('tp-list-item')];\n  // The list shows the matches; the hidden status region says how many there are.\n  const filter = () => {\n    const query = String(input.value).trim().toLowerCase();\n    const matches = items.filter((item) => {\n      const shown = item.textContent.toLowerCase().includes(query);\n      item.hidden = !shown;\n      return shown;\n    });\n    status.textContent = query\n      ? `${matches.length} of ${items.length} tools match “${query}”.`\n      : `All ${items.length} tools shown.`;\n  };\n  input.addEventListener('input', filter);\n  return () => input.removeEventListener('input', filter);\n}\n\nsetupVisuallyHiddenExample(document.getElementById('visually-hidden-layers'));"
+    },
+    {
+      "id": "example: Announce a change",
+      "kind": "example",
+      "title": "Announce a change",
+      "description": "Sighted users see the list shrink as they type. A hidden status region, present from the start, announces how many tools match.",
+      "code": "<div id=\"visually-hidden-tools\" style=\"display:grid;gap:var(--tp-space-3);max-inline-size:22rem\"><tp-input label=\"Find a tool\" placeholder=\"Saw, drill, ladder…\"></tp-input>\n<tp-list aria-label=\"Tools\">\n  <tp-list-item>Orbital sander</tp-list-item>\n  <tp-list-item>Jigsaw</tp-list-item>\n  <tp-list-item>Pole saw</tp-list-item>\n  <tp-list-item>Cordless drill</tp-list-item>\n  <tp-list-item>Step ladder</tp-list-item>\n  <tp-list-item>Tile cutter</tp-list-item>\n</tp-list>\n<tp-visually-hidden role=\"status\" data-match-count></tp-visually-hidden></div>",
+      "script": "import { mapPinIcon } from '@tweakpad/ui/icons/map';\nimport { sunIcon } from '@tweakpad/ui/icons/sun';\nimport { waypointsIcon } from '@tweakpad/ui/icons/waypoints';\n\nexport function setupVisuallyHiddenExample(root) {\n  for (const icon of root.querySelectorAll('tp-icon[data-layer-icon]'))\n    icon.icon = { campsites: mapPinIcon, routes: waypointsIcon, sun: sunIcon }[\n      icon.dataset.layerIcon\n    ];\n  const input = root.querySelector('tp-input');\n  const status = root.querySelector('[data-match-count]');\n  if (!input || !status) return () => {};\n  const items = [...root.querySelectorAll('tp-list-item')];\n  // The list shows the matches; the hidden status region says how many there are.\n  const filter = () => {\n    const query = String(input.value).trim().toLowerCase();\n    const matches = items.filter((item) => {\n      const shown = item.textContent.toLowerCase().includes(query);\n      item.hidden = !shown;\n      return shown;\n    });\n    status.textContent = query\n      ? `${matches.length} of ${items.length} tools match “${query}”.`\n      : `All ${items.length} tools shown.`;\n  };\n  input.addEventListener('input', filter);\n  return () => input.removeEventListener('input', filter);\n}\n\nsetupVisuallyHiddenExample(document.getElementById('visually-hidden-tools'));"
+    },
+    {
+      "id": "example: Context for repeated actions",
+      "kind": "example",
+      "title": "Context for repeated actions",
+      "description": "Every row shows the same Renew button. Hidden text completes each name, such as \"Renew Pole saw\", and names the actions column without printing a heading over it.",
+      "code": "<div style=\"max-inline-size:30rem\"><tp-table label=\"Your loans\">\n  <tp-table-header\n    ><tp-table-row>\n      <tp-table-head scope=\"col\">Tool</tp-table-head>\n      <tp-table-head scope=\"col\">Due</tp-table-head>\n      <tp-table-head scope=\"col\"><tp-visually-hidden>Actions</tp-visually-hidden></tp-table-head>\n    </tp-table-row></tp-table-header\n  >\n  <tp-table-body\n    ><tp-table-row>\n      <tp-table-head scope=\"row\">Orbital sander</tp-table-head>\n      <tp-table-cell>Fri 18 Oct</tp-table-cell>\n      <tp-table-cell><tp-button size=\"sm\" variant=\"outline\">Renew<tp-visually-hidden> Orbital sander</tp-visually-hidden></tp-button></tp-table-cell>\n    </tp-table-row\n    ><tp-table-row>\n      <tp-table-head scope=\"row\">Pole saw</tp-table-head>\n      <tp-table-cell>Mon 21 Oct</tp-table-cell>\n      <tp-table-cell><tp-button size=\"sm\" variant=\"outline\">Renew<tp-visually-hidden> Pole saw</tp-visually-hidden></tp-button></tp-table-cell>\n    </tp-table-row\n    ><tp-table-row>\n      <tp-table-head scope=\"row\">Tile cutter</tp-table-head>\n      <tp-table-cell>Wed 23 Oct</tp-table-cell>\n      <tp-table-cell><tp-button size=\"sm\" variant=\"outline\">Renew<tp-visually-hidden> Tile cutter</tp-visually-hidden></tp-button></tp-table-cell>\n    </tp-table-row\n    ></tp-table-body\n  >\n</tp-table></div>"
+    }
+  ]
+}

@@ -1,7 +1,43 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/markdown.md?raw';
-import { markdownDefaultSource, markdownExamples, markdownSample } from './markdown.examples.js';
+import { libraryDocs } from './library-docs.js';
+
+const markdownSample = `# A Small Markdown Specimen
+
+*An editorial sample for quickly testing typography and basic Markdown rendering.*
+
+Good Markdown should feel like a document first and a syntax demonstration second. A renderer needs to handle **emphasis**, *italics*, [links](https://commonmark.org/), \`inline code\`, and ordinary prose without disturbing the reading rhythm.
+
+## Structure and Rhythm
+
+Headings should establish hierarchy without overwhelming the page. Paragraphs should remain comfortable to read, with enough spacing to make sections distinct.
+
+> Typography gives structure to information before decoration ever enters the picture.
+
+A short list is often enough to expose spacing and alignment:
+
+- Clear hierarchy
+- Consistent vertical rhythm
+- Comfortable line length
+- Distinct links and emphasis
+
+### Code
+
+\`\`\`js
+const clamp = (value, min, max) =>
+  Math.min(max, Math.max(min, value));
+\`\`\`
+
+Tables introduce another layout constraint:
+
+| Element | Purpose |
+|---|---|
+| Heading | Hierarchy |
+| Paragraph | Reading |
+| Quote | Emphasis |
+| Code | Literal content |
+
+The important test is whether all of these elements still feel like parts of the same document.`;
 
 interface Args {
   size: 'default' | 'sm';
@@ -13,13 +49,7 @@ interface Args {
 const meta = {
   title: 'Components/Markdown',
   component: 'tp-markdown',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: markdownExamples,
-      source: { code: markdownDefaultSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/markdown') },
   args: {
     size: 'default',
     headingOffset: 0,

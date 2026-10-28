@@ -14,6 +14,20 @@ export const markerMotionRoles = {
   shimmer: ambientRole('shimmer'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
+/**
+ * A quiet line of status or activity text in a stream, such as a chat transcript or an activity
+ * log, with an optional icon, plain or set between rules. It adds no role: its text carries the
+ * meaning, and `role="status"` makes a live update announce itself.
+ *
+ * @slot - The text, or inline content such as a link or a Button.
+ * @slot icon - A decorative Icon or Spinner before the text, hidden from assistive technology.
+ * @cssprop --tp-shimmer-color - The color of the highlight; by default derived from the text color.
+ * @cssprop --tp-shimmer-duration - The time one sweep takes.
+ * @cssprop --tp-shimmer-spread - Half the width of the highlight band.
+ * @cssprop --tp-shimmer-angle - The tilt of the highlight band.
+ * @cssprop --tp-shimmer-iterations - How many times the sweep plays; `1` plays a single sweep, as a reveal when a step completes.
+ * @cssprop --tp-shimmer-direction - `reverse` runs the sweep against the reading direction.
+ */
 export class TpMarker extends TpElement {
   static tagName = 'tp-marker';
   static override presentation = markerPresentation;
@@ -57,9 +71,11 @@ export class TpMarker extends TpElement {
     `,
     shimmerStyles(':host([shimmer]) .content'),
   ];
+  /** Visual treatment only: `separator` sets the content between two rules, `border` above one. */
   variant: 'default' | 'separator' | 'border' = 'default';
-  /** Retained compatibility metadata; new compositions use semantic theme colors. */
+  /** Colors the text and the icon: `accent`, `success` or `danger` for an outcome the words also state. */
   tone = 'neutral';
+  /** The text when the default slot is empty. */
   label = '';
   /** Sweeps a highlight across the content text, for streaming or in-progress status. */
   shimmer = false;

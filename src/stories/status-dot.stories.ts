@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/status-dot.md?raw';
-import { statusDotExamples } from './status-dot.examples.js';
+import { libraryDocs } from './library-docs.js';
 import type { StatusDotMotion, StatusDotVariant } from '../index.js';
 
 interface Args {
@@ -15,15 +14,7 @@ interface Args {
 const meta = {
   title: 'Components/Status dot',
   component: 'tp-status-dot',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: statusDotExamples,
-      source: {
-        code: `<tp-status-dot variant="success" label="Running" show-label></tp-status-dot>`,
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/status-dot') },
   args: {
     variant: 'success',
     label: 'Running',

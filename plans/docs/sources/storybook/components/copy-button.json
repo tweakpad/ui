@@ -1,0 +1,70 @@
+{
+  "id": "components/copy-button",
+  "tag": "tp-copy-button",
+  "sources": {
+    "story": "src/stories/copy-button.stories.ts",
+    "markdown": "docs/copy-button.md",
+    "examples": [
+      "src/stories/copy-button.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`<tp-copy-button>` writes a value to the clipboard and confirms the result in place: its icon\nturns into a check, its accessible name becomes the copied message for a short time, and the\nresult is announced politely. It composes one [Button](button.md) with an [Icon](icon.md), so\nvariants, sizes, focus and disabled treatment are the Button's. [Code block](code-block.md),\n[QR code](qr-code.md) and the color picker compose it for their copy actions."
+    },
+    {
+      "id": "md: Properties",
+      "kind": "md",
+      "heading": "## Properties",
+      "text": "| Property      | Attribute      | Values                                                            | Default       |\n| ------------- | -------------- | ----------------------------------------------------------------- | ------------- |\n| `value`       | `value`        | Text written to the clipboard                                     | `\"\"`          |\n| `data`        | (property)     | Provider of further representations, see below                    | `null`        |\n| `label`       | `label`        | Accessible name at rest; visible text when `showLabel` is true    | `Copy`        |\n| `copiedLabel` | `copied-label` | Name, visible text and announcement after a successful copy       | `Copied`      |\n| `failedLabel` | `failed-label` | Announcement after a failed copy                                  | `Copy failed` |\n| `showLabel`   | `show-label`   | Boolean; renders the label beside the icon                        | `false`       |\n| `variant`     | `variant`      | `default`, `secondary`, `destructive`, `outline`, `ghost`, `link` | `ghost`       |\n| `size`        | `size`         | `xs`, `sm`, `default`, `lg`                                       | `sm`          |\n| `duration`    | `duration`     | Milliseconds the copied state lasts                               | `2000`        |\n| `disabled`    | `disabled`     | Boolean                                                           | `false`       |\n\nIcon-only buttons (the default) use the matching Button icon size (`icon-xs`, `icon-sm`, `icon`,\n`icon-lg`) and carry the label as `aria-label`; with `showLabel` the Button renders the icon in\nits start slot and the label as text."
+    },
+    {
+      "id": "md: Base example",
+      "kind": "md",
+      "heading": "## Base example",
+      "text": "```html\n<tp-copy-button value=\"npm install @tweakpad/ui\" label=\"Copy install command\"></tp-copy-button>\n```\n\nSet `value` to the exact text to copy. For a visible action next to a read-only value, put the\nbutton in an Input group action:\n\n```html\n<tp-input-group>\n  <tp-input label=\"API key\" readonly default-value=\"sk_live_4f2…\"></tp-input>\n  <tp-copy-button slot=\"action\" value=\"sk_live_4f2…\" label=\"Copy API key\"></tp-copy-button>\n</tp-input-group>\n```"
+    },
+    {
+      "id": "md: Methods and events",
+      "kind": "md",
+      "heading": "## Methods and events",
+      "text": "- `copy()` runs the same sequence as a click and resolves to whether the clipboard accepted the\n  value (`false` when disabled, cancelled or failed).\n- `copied` is true while the check icon and the copied message are shown.\n- `focus()` moves focus to the composed Button.\n\n| Event           | Cancelable | Detail                                                           |\n| --------------- | ---------- | ---------------------------------------------------------------- |\n| `tp-copy`       | yes        | `value`; preventing it skips the write                           |\n| `tp-copied`     | no         | `value` and `types`, the media types written                     |\n| `tp-copy-error` | no         | `value` and empty `types`, after a failed write (also announced) |\n\nCopying uses the Clipboard API and falls back to a selection-based copy where it is unavailable\nor denied; success is reported only after the write succeeded."
+    },
+    {
+      "id": "md: Copying more than text",
+      "kind": "md",
+      "heading": "## Copying more than text",
+      "text": "`data` is a function that receives `value` and returns further representations keyed by media\ntype, each a string, a `Blob` or a promise of either. They are written with `value` as\n`text/plain` in one clipboard item, so a paste target picks the type it understands: an image\neditor takes the picture and a text field takes the text. The function runs during the click,\nso return pending work as promises instead of awaiting it; browsers that tie clipboard access to\nthe click (Safari) reject a write that starts later.\n\n```js\nconst button = document.querySelector('tp-copy-button');\nbutton.value = 'https://example.com/invite/42';\nbutton.data = () => ({ 'image/png': renderInviteCard() }); // renderInviteCard(): Promise<Blob>\n```\n\nTypes the browser cannot write are left out. When the browser refuses the item, the text alone is\ncopied and `tp-copied` reports `types: ['text/plain']`. [QR code](qr-code.md) uses this to copy its\nimage together with its value."
+    },
+    {
+      "id": "md: Semantics and styling",
+      "kind": "md",
+      "heading": "## Semantics and styling",
+      "text": "The composed Button keeps its native button semantics, Enter and Space activation and focus\nring. While copied the host and the Button carry `data-copied`. Public parts: `copy-button` (the\nhost, with the `variant` and `size` keys), `copy-button-button`, `copy-button-icon` and\n`copy-button-label`; `partPresentation` on the host reaches them, and the Button and Icon recipes\nown the appearance. In a [Button group](button-group.md) or [Field group](field-group.md) the\ncomposed Button is the member boundary."
+    },
+    {
+      "id": "example: Labelled and sized",
+      "kind": "example",
+      "title": "Labelled and sized",
+      "description": "Icon-only buttons map their size to the Button icon sizes; `show-label` renders the label and the copied message as text beside the icon.",
+      "code": "<div style=\"display:grid;gap:var(--tp-space-5);max-inline-size:calc(var(--tp-spacing) * 100)\"><div style=\"display:flex;align-items:center;flex-wrap:wrap;gap:var(--tp-space-3)\"><tp-copy-button size=\"xs\" value=\"tp-copy-button xs\" label=\"Copy xs\"></tp-copy-button><tp-copy-button size=\"sm\" value=\"tp-copy-button sm\" label=\"Copy sm\"></tp-copy-button><tp-copy-button size=\"default\" value=\"tp-copy-button default\" label=\"Copy default\"></tp-copy-button><tp-copy-button size=\"lg\" value=\"tp-copy-button lg\" label=\"Copy lg\"></tp-copy-button><tp-copy-button variant=\"outline\" show-label value=\"https://tweakpad.dev\" label=\"Copy link\" copied-label=\"Link copied\"></tp-copy-button></div></div>"
+    },
+    {
+      "id": "example: Beside a value",
+      "kind": "example",
+      "title": "Beside a value",
+      "description": "An Input group action or a Field group member: the composed Button is the seam boundary and keeps the editors untouched.",
+      "code": "<div style=\"display:grid;gap:var(--tp-space-5);max-inline-size:calc(var(--tp-spacing) * 100)\"><tp-input-group><tp-input label=\"API key\" readonly default-value=\"sk_live_4f2c9e1b7a\"></tp-input><tp-copy-button slot=\"action\" value=\"sk_live_4f2c9e1b7a\" label=\"Copy API key\"></tp-copy-button></tp-input-group><tp-field-group label=\"Position\"><tp-input-group><span slot=\"prefix\">X</span><tp-input label=\"X\" default-value=\"24\"></tp-input></tp-input-group><tp-input-group><span slot=\"prefix\">Y</span><tp-input label=\"Y\" default-value=\"48\"></tp-input></tp-input-group><tp-copy-button value=\"24, 48\" label=\"Copy position\"></tp-copy-button></tp-field-group></div>"
+    },
+    {
+      "id": "example: In a Code block",
+      "kind": "example",
+      "title": "In a Code block",
+      "description": "Code block composes the same control for its copy action; its `copy`, `copied` and `copyFailed` messages become the button labels.",
+      "code": "<tp-code-block language=\"ts\" label=\"install.ts\">import { TpCopyButton } from '@tweakpad/ui';</tp-code-block>"
+    }
+  ]
+}

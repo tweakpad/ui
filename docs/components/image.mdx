@@ -1,0 +1,303 @@
+---
+title: Image
+description: A responsive image in an optional fixed-ratio frame, with a loading placeholder, a failure fallback, hover zoom, parallax and scroll reveal.
+tag: tp-image
+parts: [tp-image-group]
+---
+
+<Preview
+  title="Image"
+  align="stretch"
+  code={`<tp-image
+  ratio="1.7777777778"
+  zoom="in"
+  style="max-inline-size:40rem;margin-inline:auto;border-radius:var(--tp-radius-xl)"
+  src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&q=75&auto=format&fit=crop"
+  srcset="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=640&q=75&auto=format&fit=crop 640w, https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&q=75&auto=format&fit=crop 1200w"
+  alt="A bright open-plan office with long shared desks"
+></tp-image>`}
+/>
+
+## Usage
+
+The browser still picks and loads the file: Image passes `src`, `srcset`, `sizes` and `<source>` children to a native `<picture>`, so lazy loading and responsive candidates work as usual. With a lazy `srcset` of width descriptors and no `sizes`, it sets `sizes="auto, 100vw"` so the browser fetches the laid-out width. Set `alt=""` for a decorative image.
+
+An explicit `sizes` is passed through unchanged. An eager image without `sizes` keeps the browser default (`100vw`).
+
+### Ratio and fit
+
+`ratio` (width ÷ height) reserves a fixed frame before the image loads, so nothing shifts. `fit` decides how the picture fills it, as `object-fit` does. Round the frame with `border-radius` on the host.
+
+Setting an invalid `ratio` throws `RangeError` and keeps the previous value. Without `ratio`, the image keeps its own proportions. Give `width` and `height` (or set them on the selected `<source>`) so the space is reserved before the image loads. When the host has an explicit block size, `fit` applies within it.
+
+<Preview
+  title="Ratio and fit"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--tp-space-3);max-inline-size:40rem;margin-inline:auto;inline-size:100%">
+  <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=480&q=75&auto=format&fit=crop" alt="Desks by a window"></tp-image>
+  <tp-image ratio="0.75" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=480&q=75&auto=format&fit=crop" alt="A building facade"></tp-image>
+  <tp-image ratio="1" fit="contain" style="border-radius:var(--tp-radius-lg);background:var(--tp-muted)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=480&q=75&auto=format&fit=crop" alt="A rooftop terrace"></tp-image>
+</div>`}
+/>
+
+### Placeholder and fallback
+
+While loading, Image shows a pulsing skeleton; `placeholder="spinner"` adds a spinner and `none` shows nothing. If the image fails or has no source, it shows a muted surface with a broken-image icon, or your `fallback` slot content, which stays exposed to assistive technology.
+
+Once loaded, the image fades in. A cached image appears without a loading phase or fade. The image stays hidden until it loads, so a broken-image glyph never appears.
+
+The placeholder and the default fallback are hidden from assistive technology and never announce anything, so a gallery doesn't create dozens of live regions. The frame reports `aria-busy` while loading.
+
+Image paints no surface of its own. The placeholder and fallback surfaces are the composed Skeleton, so theme tokens such as `--tp-muted` apply.
+
+<Preview
+  title="Fallbacks"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--tp-space-3);max-inline-size:32rem;margin-inline:auto;inline-size:100%">
+  <tp-image ratio="1.5" style="border-radius:var(--tp-radius-lg)" alt="Project cover"></tp-image>
+  <tp-image ratio="1.5" style="border-radius:var(--tp-radius-lg)" alt="Project cover">
+    <span slot="fallback" style="display:grid;place-items:center;inline-size:100%;block-size:100%;background:var(--tp-muted);color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">No cover yet</span>
+  </tp-image>
+</div>`}
+/>
+
+For a gentler load, put a tiny blurred version of the photo in the `placeholder` slot; it shows until the full image is ready.
+
+<Preview
+  title="Loading placeholders"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--tp-space-3);max-inline-size:32rem;margin-inline:auto;inline-size:100%">
+  <tp-image ratio="1.5" placeholder="spinner" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=640&q=75&auto=format&fit=crop" alt="A building facade"></tp-image>
+  <tp-image ratio="1.5" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=640&q=75&auto=format&fit=crop" alt="A rooftop terrace">
+    <img slot="placeholder" alt="" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=24&q=50&auto=format&fit=crop" style="inline-size:100%;block-size:100%;object-fit:cover;filter:blur(12px)">
+  </tp-image>
+</div>`}
+/>
+
+### Hover zoom
+
+`zoom="in"` scales the picture up while the pointer hovers, and `zoom="out"` settles it from enlarged to natural size. The frame never changes size. Set `zoomed` to drive the effect from a surrounding card instead.
+
+Hover zoom applies only to devices that can hover, and it never changes layout or the clipping frame. Tune it with `--tp-image-zoom-duration` and `--tp-image-zoom-easing`.
+
+<Preview
+  title="Hover zoom"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--tp-space-3);max-inline-size:32rem;margin-inline:auto;inline-size:100%">
+  <tp-image ratio="1" zoom="in" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=640&q=75&auto=format&fit=crop" alt="Desks by a window"></tp-image>
+  <tp-image ratio="1" zoom="out" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=640&q=75&auto=format&fit=crop" alt="A bicycle in a wet alley"></tp-image>
+</div>`}
+/>
+
+Here the whole card drives the zoom, so the photo responds wherever the pointer enters the card.
+
+<Preview
+  title="Card hover"
+  align="stretch"
+  code={`<tp-card id="image-card-hover" style="max-inline-size:22rem;margin-inline:auto">
+  <h3 slot="header" style="margin:0">Quiet floor</h3>
+  <p slot="description" style="margin:0">12 bookable desks with natural light.</p>
+  <tp-image ratio="1.7777777778" zoom="in" style="border-radius:var(--tp-radius-md)" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=640&q=75&auto=format&fit=crop" alt="Desks by a window"></tp-image>
+</tp-card>`}
+  script={`const card = document.querySelector('#image-card-hover');
+const image = card.querySelector('tp-image');
+card.addEventListener('pointerenter', () => (image.zoomed = true));
+card.addEventListener('pointerleave', () => (image.zoomed = false));`}
+/>
+
+### Reveal and groups
+
+`reveal` animates an image into place the first time it scrolls into view, from tokens such as `fade up` or `zoom-in`. Wrap a set in `tp-image-group` to wait until every image has loaded, then reveal them in order, `stagger` milliseconds apart.
+
+The group starts fetching every member once it is within 25% of the viewport, so lazy members don't hold the set back. It reveals nothing until every member has settled (loaded and decoded, or failed and showing its fallback). Members that have no `reveal` of their own use the group's `reveal`. Inside a group, members never trigger their own reveal; the group owns their timing. Lay the group out like any block, for example as a grid.
+
+Members' events bubble through the group with the same names, so check `event.target === group` to handle only the group's.
+
+<Preview
+  title="Staggered group"
+  align="stretch"
+  code={`<tp-image-group reveal="fade up" stagger="120" style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--tp-space-3);max-inline-size:40rem;margin-inline:auto;inline-size:100%">
+  <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+</tp-image-group>`}
+/>
+
+Images outside a group reveal on their own as each loads. Tune them with `--tp-image-reveal-duration`, `--tp-image-reveal-easing` and `--tp-image-reveal-delay`, set on a container to apply to every image inside; a growing delay staggers a grid. Add `reveal-repeat` to replay the reveal each time an image scrolls back into view. Scroll the box to see it.
+
+<Preview
+  title="Reveal timing and repeat"
+  align="stretch"
+  code={`<div style="block-size:20rem;overflow-y:auto;padding:var(--tp-space-4);border:1px solid var(--tp-border);border-radius:var(--tp-radius-xl);max-inline-size:36rem;margin-inline:auto;inline-size:100%;--tp-image-reveal-duration:900ms;--tp-image-reveal-easing:cubic-bezier(0.16, 1, 0.3, 1)">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--tp-space-3)">
+    <tp-image loading="eager" ratio="1" reveal="fade up" reveal-repeat style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+    <tp-image loading="eager" ratio="1" reveal="fade up" reveal-repeat style="border-radius:var(--tp-radius-lg);--tp-image-reveal-delay:100ms" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+    <tp-image loading="eager" ratio="1" reveal="fade up" reveal-repeat style="border-radius:var(--tp-radius-lg);--tp-image-reveal-delay:200ms" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+  </div>
+  <p style="block-size:22rem;display:grid;place-items:center;margin:0;color:var(--tp-muted-foreground)">Keep scrolling</p>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--tp-space-3)">
+    <tp-image loading="eager" ratio="1" reveal="fade up zoom-in" reveal-repeat style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+    <tp-image loading="eager" ratio="1" reveal="fade up zoom-in" reveal-repeat style="border-radius:var(--tp-radius-lg);--tp-image-reveal-delay:100ms" src="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+    <tp-image loading="eager" ratio="1" reveal="fade up zoom-in" reveal-repeat style="border-radius:var(--tp-radius-lg);--tp-image-reveal-delay:200ms" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+  </div>
+</div>`}
+/>
+
+The reveal never starts before the image is ready. An image that enters while still loading stays in its start state until it has loaded and decoded, then reveals if it is still in view. An image that fails to load reveals its fallback, and one with no source reveals at once. Add `reveal-repeat` to play it again on every entry: once the image is fully out of view, it returns to its start state instantly, out of sight, and reveals again when it is back at least 10% inside the viewport. That margin stops it flickering at an edge.
+
+To sequence images with surrounding text, wrap them in a [Scroll trigger](../scroll-trigger/). It waits for the group's images to load, then reveals the heading, the images and the caption in order.
+
+<Preview
+  title="Headline, group and caption"
+  align="stretch"
+  code={`<tp-scroll-trigger stagger="200" style="display:grid;gap:var(--tp-space-4);max-inline-size:40rem;margin-inline:auto;inline-size:100%">
+  <h3 style="margin:0"><tp-text-motion split="words lines" mask="lines" reveal="up">Spaces that work the way you do</tp-text-motion></h3>
+  <tp-image-group reveal="fade up" stagger="120" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--tp-space-3)">
+    <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+    <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+    <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+  </tp-image-group>
+  <p style="margin:0;color:var(--tp-muted-foreground)"><tp-text-motion reveal="fade">Open desks, quiet rooms and a terrace, all bookable from the app.</tp-text-motion></p>
+</tp-scroll-trigger>`}
+/>
+
+An image belongs to its nearest group or trigger, and a group inside a trigger or another group is one member of it, playing its own stagger after the delay it receives. Images added later join the set and reveal as soon as they settle. For other motion, hold the group, wait for what you need, then clear `reveal-hold`. Inside a scrubbing trigger the scroll position drives the image's reveal (delay, duration and easing included) instead of time.
+
+Under reduced motion, from `motion-policy="reduce"` or the system preference, images appear already revealed and zoom is instant.
+
+### Parallax
+
+`parallax` moves the picture inside its frame as the page, or the nearest scrolling container, scrolls past. The image is enlarged by `parallax-depth` so the frame edges never show; add `zoom-in` or `zoom-out` to scale it as it travels.
+
+Clipping wrappers that don't scroll, such as a card with `overflow: hidden`, are skipped. Directions are physical and don't flip for right-to-left text, and any direction works with either axis; `left` and `right` suit a horizontal strip. Parallax only moves while the container actually scrolls past the image. An image is placed shortly before it scrolls into view, so it never jumps when it appears.
+
+<Preview
+  title="Parallax in a scroller"
+  align="stretch"
+  code={`<div style="block-size:20rem;overflow-y:auto;display:grid;gap:var(--tp-space-4);padding:var(--tp-space-4);border:1px solid var(--tp-border);border-radius:var(--tp-radius-xl);max-inline-size:36rem;margin-inline:auto;inline-size:100%">
+  <tp-image loading="eager" ratio="1.7777777778" parallax="up" parallax-depth="0.4" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=900&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image loading="eager" ratio="1.7777777778" parallax="up zoom-in" parallax-depth="0.4" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=900&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image loading="eager" ratio="1.7777777778" parallax="down" parallax-depth="0.4" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=900&q=75&auto=format&fit=crop" alt=""></tp-image>
+</div>`}
+/>
+
+Scroll zoom scales the image instead of moving it: `zoom-in` grows it as it passes through the box, and `zoom-out` settles it from enlarged to natural size. Combine zoom with a direction, such as `up zoom-in`, to zoom and drift at once.
+
+<Preview
+  title="Scroll zoom in a vertical scroller"
+  align="stretch"
+  code={`<div style="block-size: 24rem; overflow-y: auto; display: grid; gap: var(--tp-space-4); padding: var(--tp-space-4); border: 1px solid var(--tp-border); border-radius: var(--tp-radius-xl)">
+  <tp-image
+    loading="eager"
+    ratio="1.7777777778"
+    parallax="zoom-in"
+    parallax-depth="0.4"
+    style="border-radius: var(--tp-radius-lg)"
+    src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&q=75&auto=format&fit=crop"
+    srcset="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=480&q=75&auto=format&fit=crop 480w, https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&q=75&auto=format&fit=crop 800w, https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&q=75&auto=format&fit=crop 1200w, https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1600&q=75&auto=format&fit=crop 1600w"
+    alt=""
+  ></tp-image>
+  <tp-image
+    loading="eager"
+    ratio="1.7777777778"
+    parallax="zoom-out"
+    parallax-depth="0.4"
+    style="border-radius: var(--tp-radius-lg)"
+    src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&q=75&auto=format&fit=crop"
+    srcset="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=480&q=75&auto=format&fit=crop 480w, https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=800&q=75&auto=format&fit=crop 800w, https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&q=75&auto=format&fit=crop 1200w, https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1600&q=75&auto=format&fit=crop 1600w"
+    alt=""
+  ></tp-image>
+  <tp-image
+    loading="eager"
+    ratio="1.7777777778"
+    parallax="up zoom-in"
+    parallax-depth="0.4"
+    style="border-radius: var(--tp-radius-lg)"
+    src="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=1200&q=75&auto=format&fit=crop"
+    srcset="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=480&q=75&auto=format&fit=crop 480w, https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=800&q=75&auto=format&fit=crop 800w, https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=1200&q=75&auto=format&fit=crop 1200w, https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=1600&q=75&auto=format&fit=crop 1600w"
+    alt=""
+  ></tp-image>
+  <tp-image
+    loading="eager"
+    ratio="1.7777777778"
+    parallax="down zoom-out"
+    parallax-depth="0.4"
+    style="border-radius: var(--tp-radius-lg)"
+    src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=1200&q=75&auto=format&fit=crop"
+    srcset="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=480&q=75&auto=format&fit=crop 480w, https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=800&q=75&auto=format&fit=crop 800w, https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=1200&q=75&auto=format&fit=crop 1200w, https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=1600&q=75&auto=format&fit=crop 1600w"
+    alt=""
+  ></tp-image>
+  <tp-image
+    loading="eager"
+    ratio="1.7777777778"
+    parallax="zoom-in"
+    parallax-depth="0.4"
+    style="border-radius: var(--tp-radius-lg)"
+    src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=1200&q=75&auto=format&fit=crop"
+    srcset="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=480&q=75&auto=format&fit=crop 480w, https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=800&q=75&auto=format&fit=crop 800w, https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=1200&q=75&auto=format&fit=crop 1200w, https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=1600&q=75&auto=format&fit=crop 1600w"
+    alt=""
+  ></tp-image>
+</div>`}
+/>
+
+Scroll zoom scales the picture inside the moving layer, so it also combines with hover `zoom`, and it only ever enlarges, so the frame edges never show.
+
+A container that scrolls only sideways measures progress along its inline axis, so `parallax="left"` drifts each image as the strip moves.
+
+<Preview
+  title="Horizontal strip"
+  align="stretch"
+  code={`<div style="display:flex;gap:var(--tp-space-4);overflow-x:auto;padding:var(--tp-space-4);border:1px solid var(--tp-border);border-radius:var(--tp-radius-xl);max-inline-size:40rem;margin-inline:auto;inline-size:100%">
+  <tp-image loading="eager" ratio="0.75" parallax="left" parallax-depth="0.4" style="flex:0 0 min(60%,12rem);border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=600&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image loading="eager" ratio="0.75" parallax="left" parallax-depth="0.4" style="flex:0 0 min(60%,12rem);border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=600&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image loading="eager" ratio="0.75" parallax="left" parallax-depth="0.4" style="flex:0 0 min(60%,12rem);border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=600&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image loading="eager" ratio="0.75" parallax="left" parallax-depth="0.4" style="flex:0 0 min(60%,12rem);border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=75&auto=format&fit=crop" alt=""></tp-image>
+</div>`}
+/>
+
+`parallax-smoothing`, from 0 to 1, makes the picture trail the scroll and ease into place after it stops. In this scroller the first image is locked to the scroll and each following one is smoother.
+
+<Preview
+  title="Smoothing"
+  align="stretch"
+  code={`<div style="block-size:20rem;overflow-y:auto;display:grid;gap:var(--tp-space-4);padding:var(--tp-space-4);border:1px solid var(--tp-border);border-radius:var(--tp-radius-xl);max-inline-size:36rem;margin-inline:auto;inline-size:100%">
+  <tp-image loading="eager" ratio="1.7777777778" parallax="up zoom-in" parallax-depth="0.4" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image loading="eager" ratio="1.7777777778" parallax="up zoom-in" parallax-depth="0.4" parallax-smoothing="0.6" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=900&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image loading="eager" ratio="1.7777777778" parallax="up zoom-in" parallax-depth="0.4" parallax-smoothing="0.85" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=900&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image loading="eager" ratio="1.7777777778" parallax="up zoom-in" parallax-depth="0.4" parallax-smoothing="0.92" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=900&q=75&auto=format&fit=crop" alt=""></tp-image>
+</div>`}
+/>
+
+The value is the share of the remaining distance still left after one 60 fps frame: `0.5` trails slightly, `0.9` glides slowly. It is clamped to 0.98, and it behaves the same at any frame rate.
+
+### Art direction
+
+`<source>` children give the native picture other candidates, such as a tighter crop for narrow screens through `media`. For a hero that is the largest content on first paint, set `loading="eager"` and `fetchpriority="high"`.
+
+Use `media` to switch crops between layouts and `type` for AVIF or WebP with a fallback. The authored `<source>` elements never request anything themselves. Adding, removing or editing a source reloads the image.
+
+When the browser switches candidates after loading, for example when you resize across a `media` breakpoint, `currentSrc` updates and the status stays `loaded`.
+
+<Preview
+  title="Hero with a narrow-screen crop"
+  align="stretch"
+  code={`<tp-image
+  ratio="2.4"
+  parallax="up"
+  parallax-depth="0.3"
+  loading="eager"
+  fetchpriority="high"
+  style="border-radius:var(--tp-radius-xl)"
+  src="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=1600&q=75&auto=format&fit=crop"
+  srcset="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=900&q=75&auto=format&fit=crop 900w, https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=1600&q=75&auto=format&fit=crop 1600w"
+  sizes="100vw"
+  alt="A bicycle leaning on a wall in a wet alley"
+>
+  <source media="(max-width: 600px)" srcset="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=600&h=450&q=75&auto=format&fit=crop&crop=entropy 600w, https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=1000&h=750&q=75&auto=format&fit=crop&crop=entropy 1000w" sizes="100vw">
+</tp-image>`}
+/>
+
+### Performance
+
+Image is built for pages with hundreds of images. Placeholders that are off screen pause their animation, and no `will-change` is applied, so idle images create no compositing layers.

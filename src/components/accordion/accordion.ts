@@ -34,6 +34,18 @@ function sameAccordionValue(a: readonly string[], b: readonly string[]): boolean
   return a.length === b.length && a.every((value, index) => value === b[index]);
 }
 
+/**
+ * A vertical stack of disclosures that opens one item at a time, or several. The accordion owns
+ * which items are open; each Accordion Item is a heading with a native button and its content.
+ *
+ * @slot - The Accordion Items.
+ * @fires tp-value-change - Cancelable proposal of the open items, after the items' own proposals;
+ *   `detail.value` lists their values in order.
+ * @fires tp-open-change - Cancelable proposal to open or close one item, dispatched from that item
+ *   for each item whose state would change.
+ * @fires tp-open-change-complete - From an item after its content finishes opening or closing;
+ *   `detail.value` and `detail.open`.
+ */
 export class TpAccordion extends TpElement {
   static tagName = 'tp-accordion';
   static override presentation = accordionPresentation;
@@ -65,14 +77,23 @@ export class TpAccordion extends TpElement {
       }
     `,
   ];
+  /** Whether one item can be open at a time, or several, for sections readers compare side by side. */
   selectionMode: 'single' | 'multiple' = 'single';
+  /** How the items relate visually, from no chrome to separated surfaces; never changes behavior. */
   variant: AccordionVariant = 'plain';
+  /** The values of the open items, in order; accepted interactions update it. */
   value: AccordionValue = [];
+  /** Items open at first when `value` is empty; later changes do not reset the selection. */
   defaultValue: AccordionValue = [];
+  /** In single selection, lets the last open item close. */
   collapsible = false;
+  /** Keeps the content of closed items in the page instead of removing it. */
   keepMounted = false;
+  /** Keeps the content of closed items searchable by the browser's find in page, which opens the matching item. */
   hiddenUntilFound = false;
+  /** Default alignment of every item's content: at the outer edge, or lined up with the label. */
   contentAlignment: AccordionContentAlignment = 'edge';
+  /** Called after a proposal of the open items is accepted. */
   onValueChange: ((event: TpValueChangeEvent<AccordionValue>) => void) | undefined;
   override orientation = 'vertical' as const;
   #records: AccordionItemRecord[] = [];

@@ -1,9 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/tree-view.md?raw';
 import { folderIcon } from '../icons/folder.js';
 import { fileTextIcon } from '../icons/file-text.js';
-import { treeViewDefaultSource, treeViewExamples } from './tree-view.examples.js';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   label: string;
@@ -20,13 +19,7 @@ interface Args {
 const meta = {
   title: 'Components/Tree view',
   component: 'tp-tree-view',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: treeViewExamples,
-      source: { code: treeViewDefaultSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/tree-view') },
   args: {
     label: 'Files',
     selectionMode: 'single',

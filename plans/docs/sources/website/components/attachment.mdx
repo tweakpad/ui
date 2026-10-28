@@ -1,0 +1,182 @@
+---
+title: Attachment
+description: A named file or resource with its status, a media mark and independent actions.
+tag: tp-attachment
+parts: [tp-attachment-group]
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Attachment"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);inline-size:100%;max-inline-size:26rem;margin-inline:auto">
+  <tp-attachment filename="Q2-board-deck.pdf" description="PDF · 4.2 MB" status="complete" removable>
+    <svg slot="media" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>
+  </tp-attachment>
+  <tp-attachment filename="customer-interviews.csv" description="Uploading · 61%" status="uploading" removable></tp-attachment>
+</div>`}
+/>
+
+## Usage
+
+`filename` names the resource and the actions generated for it; `description` carries type, size or progress. Your application owns uploading, retrying, previewing and removing: `status` only changes how the attachment looks.
+
+### Status
+
+<Preview
+  title="Statuses"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);inline-size:100%;max-inline-size:26rem;margin-inline:auto">
+  <tp-attachment filename="contract-v3.docx" description="Ready to upload · 220 KB" status="idle" removable></tp-attachment>
+  <tp-attachment filename="product-demo.mp4" description="Uploading · 38%" status="uploading"></tp-attachment>
+  <tp-attachment filename="survey-results.xlsx" description="Scanning for viruses" status="processing"></tp-attachment>
+  <tp-attachment filename="receipt-0412.heic" status="error" error-message="HEIC isn't supported. Export as JPG or PNG and try again." removable></tp-attachment>
+  <tp-attachment filename="brand-guidelines.pdf" file-size="3355443" status="complete" href="#attachment-status" removable></tp-attachment>
+</div>`}
+/>
+
+Busy states show a spinner when no media is supplied. An error must explain recovery, through `error-message` or the description. Without a description, `file-size` is formatted for you. `href` turns the attachment into a link to the resource.
+
+### Images
+
+<Preview
+  title="Image cards"
+  align="stretch"
+  code={`<tp-attachment-group aria-label="Moodboard images" style="inline-size:100%;inline-size:100%;max-inline-size:36rem;margin-inline:auto">
+  <tp-attachment filename="studio-desk.jpg" description="JPG · 1.8 MB" orientation="vertical" media-treatment="image" status="complete" removable>
+    <div slot="media" style="inline-size:100%;block-size:100%;background:var(--tp-muted) url(https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80) center/cover"></div>
+  </tp-attachment>
+  <tp-attachment filename="meeting-room.jpg" description="JPG · 2.1 MB" orientation="vertical" media-treatment="image" status="complete" removable>
+    <div slot="media" style="inline-size:100%;block-size:100%;background:var(--tp-muted) url(https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&q=80) center/cover"></div>
+  </tp-attachment>
+  <tp-attachment filename="lobby.jpg" description="Uploading · 72%" orientation="vertical" media-treatment="image" status="uploading">
+    <div slot="media" style="inline-size:100%;block-size:100%;background:var(--tp-muted) url(https://images.unsplash.com/photo-1497215842964-222b430dc094?w=400&q=80) center/cover"></div>
+  </tp-attachment>
+  <tp-attachment filename="kitchen.jpg" description="JPG · 1.4 MB" orientation="vertical" media-treatment="image" status="complete" removable>
+    <div slot="media" style="inline-size:100%;block-size:100%;background:var(--tp-muted) url(https://images.unsplash.com/photo-1556911220-bff31c812dba?w=400&q=80) center/cover"></div>
+  </tp-attachment>
+</tp-attachment-group>`}
+/>
+
+`orientation="vertical"` with `media-treatment="image"` makes a thumbnail card. `tp-attachment-group` lays attachments out in a horizontally scrolling row with snap points; give it an `aria-label`.
+
+### File cards and rows in a group
+
+<Preview
+  title="Scrollable groups"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);inline-size:100%;max-inline-size:30rem;margin-inline:auto">
+  <tp-attachment-group aria-label="Handoff files">
+    <tp-attachment filename="launch-brief.pdf" description="PDF · 2.4 MB" orientation="vertical" status="complete" removable>
+      <svg slot="media" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>
+    </tp-attachment>
+    <tp-attachment filename="pricing-model.xlsx" description="Excel · 86 KB" orientation="vertical" status="complete" removable>
+      <svg slot="media" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+    </tp-attachment>
+    <tp-attachment filename="brand-assets.zip" description="ZIP · 48 MB" orientation="vertical" status="complete" removable>
+      <svg slot="media" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+    </tp-attachment>
+    <tp-attachment filename="studio-desk.jpg" description="JPG · 1.8 MB" orientation="vertical" media-treatment="image" status="complete" removable>
+      <div slot="media" style="inline-size:100%;block-size:100%;background:var(--tp-muted) url(https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80) center/cover"></div>
+    </tp-attachment>
+  </tp-attachment-group>
+  <tp-attachment-group aria-label="Sources attached to this message">
+    <tp-attachment filename="launch-brief.pdf" description="PDF · 2.4 MB" status="complete" removable>
+      <svg slot="media" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>
+    </tp-attachment>
+    <tp-attachment filename="pricing-model.xlsx" description="Excel · 86 KB" status="complete" removable>
+      <svg slot="media" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+    </tp-attachment>
+    <tp-attachment filename="meeting-room.jpg" description="JPG · 2.1 MB" media-treatment="image" status="complete" removable>
+      <div slot="media" style="inline-size:100%;block-size:100%;background:var(--tp-muted) url(https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&q=80) center/cover"></div>
+    </tp-attachment>
+  </tp-attachment-group>
+</div>`}
+/>
+
+File marks work in vertical cards too, and a group mixes files and images freely. Rows scroll the same way as cards, which suits a composer's attachment tray. The group is focusable so keyboard users can scroll it.
+
+### Without media
+
+<Preview
+  title="Title and description only"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);inline-size:100%;max-inline-size:26rem;margin-inline:auto">
+  <tp-attachment filename="Onboarding checklist" status="complete" removable></tp-attachment>
+  <tp-attachment filename="Security review notes" description="Shared by Priya · Edited 2 hours ago" status="complete" removable></tp-attachment>
+  <tp-attachment size="sm" filename="Release policy" description="handbook.acme.dev/release-policy" href="#attachment-without-media" status="complete"></tp-attachment>
+</div>`}
+/>
+
+Media is optional. Notes, linked pages and other resources without a file type read cleanly as a title, with or without a description.
+
+### Triggers and actions
+
+<Preview
+  title="Preview trigger, download and retry"
+  align="stretch"
+  code={`<div id="attachment-actions" style="display:grid;gap:var(--tp-space-2);inline-size:100%;max-inline-size:26rem;margin-inline:auto">
+  <tp-attachment filename="research-summary.txt" description="Text · 1 KB · Select to preview" status="complete" removable>
+    <svg slot="media" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>
+    <tp-button slot="trigger" id="attachment-preview-trigger" aria-label="Preview research-summary.txt"></tp-button>
+    <tp-button slot="actions" id="attachment-download" variant="ghost" size="sm" download="research-summary.txt">Download</tp-button>
+  </tp-attachment>
+  <tp-attachment id="attachment-retry-target" filename="interview-notes.docx" status="error" error-message="The upload was interrupted. Retry to continue." removable>
+    <tp-button slot="actions" id="attachment-retry" variant="ghost" size="sm">Retry</tp-button>
+  </tp-attachment>
+  <tp-dialog id="attachment-preview-dialog" label="research-summary.txt" description="Uploaded by Priya Shah · 2 June">
+    <p style="margin:0">Twelve of fifteen customers asked for shared dashboards. Most export to spreadsheets today and rebuild the same charts every week.</p>
+    <tp-button slot="close">Close</tp-button>
+  </tp-dialog>
+</div>`}
+  script={`await customElements.whenDefined('tp-dialog');
+const root = document.querySelector('#attachment-actions');
+const summary = 'Research summary\\n\\nTwelve of fifteen customers asked for shared dashboards.';
+const url = URL.createObjectURL(new Blob([summary], { type: 'text/plain' }));
+root.querySelector('#attachment-download').href = url;
+root.querySelector('#attachment-preview-dialog').registerTrigger(root.querySelector('#attachment-preview-trigger'));
+
+root.querySelector('#attachment-retry').addEventListener('click', (event) => {
+  const attachment = root.querySelector('#attachment-retry-target');
+  event.currentTarget.remove();
+  attachment.status = 'uploading';
+  attachment.description = 'Uploading · 40%';
+  setTimeout(() => {
+    attachment.status = 'complete';
+    attachment.description = 'Word · 64 KB';
+  }, 1600);
+});
+root.addEventListener('tp-remove', (event) => event.target.remove());`}
+/>
+
+A `trigger` button makes the whole attachment open something, here a preview dialog registered with `registerTrigger()`. Buttons in the `actions` slot stay separate controls, so Download, Retry and Remove never set the trigger off.
+
+### Sizes
+
+<Preview
+  title="Sizes"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);inline-size:100%;max-inline-size:26rem;margin-inline:auto">
+  <tp-attachment size="xs" filename="notes.md" description="Markdown · 4 KB" status="complete"></tp-attachment>
+  <tp-attachment size="sm" filename="notes.md" description="Markdown · 4 KB" status="complete"></tp-attachment>
+  <tp-attachment filename="notes.md" description="Markdown · 4 KB" status="complete"></tp-attachment>
+</div>`}
+/>
+
+### Removing
+
+<Preview
+  title="Remove event"
+  align="stretch"
+  code={`<div id="attachment-remove-list" style="display:grid;gap:var(--tp-space-2);inline-size:100%;max-inline-size:26rem;margin-inline:auto">
+  <tp-attachment filename="invoice-march.pdf" description="PDF · 180 KB" status="complete" removable></tp-attachment>
+  <tp-attachment filename="invoice-april.pdf" description="PDF · 176 KB" status="complete" removable></tp-attachment>
+  <tp-attachment filename="invoice-may.pdf" description="PDF · 191 KB" status="complete" removable></tp-attachment>
+</div>`}
+  script={`document.querySelector('#attachment-remove-list').addEventListener('tp-remove', (event) => {
+  event.target.remove();
+});`}
+/>
+
+`removable` adds a Remove button that emits a cancelable `tp-remove` with the `filename`. Nothing is removed until your handler does it, so you can confirm first or delete the file on the server.

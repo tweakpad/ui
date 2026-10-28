@@ -4,7 +4,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpInput } from '../components/input/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import documentation from '../../docs/input.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   value: string;
@@ -19,7 +19,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Input',
   component: 'tp-input',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/input') },
   args: {
     value: '',
     type: 'text',

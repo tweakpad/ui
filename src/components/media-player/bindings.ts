@@ -54,7 +54,7 @@ abstract class MediaBindingElement extends TpMediaElement {
 }
 
 /**
- * `tp-media-hotkey`: a declarative key binding for its player (Library mp-l-bindings). `keys` is
+ * A declarative key binding for its player. `keys` is
  * a key pattern (comma-separated alternatives, `Mod`, `Space`, `0-9`), `action` a media request
  * action, and `value` overrides the action's default value (the root `seek-step` for `seek-by`,
  * `volume-step` for `step-volume`). A binding with the same keys as a default overrides it; a
@@ -70,8 +70,11 @@ export class TpMediaHotkey extends MediaBindingElement implements MediaHotkeyInp
     value: { attribute: 'value', converter: numberOrNull },
   };
 
+  /** The key pattern, such as `k, Space` or `Mod+ArrowRight`: comma-separated alternatives. */
   keys = '';
+  /** The media request the keys run, such as `toggle-paused` or `seek-by`. */
   action: MediaRequestAction | '' = '';
+  /** The request's value in place of its default, such as the seconds of a `seek-by`. */
   value: number | null = null;
 
   protected registerWith(registry: BindingRegistry): (() => void) | undefined {
@@ -80,7 +83,7 @@ export class TpMediaHotkey extends MediaBindingElement implements MediaHotkeyInp
 }
 
 /**
- * `tp-media-gesture`: a declarative tap gesture for its player (Library mp-l-bindings). `type`
+ * A declarative tap gesture for its player. `type`
  * is `tap` or `doubletap`; `pointer` restricts it to `mouse`, `touch` or `pen`; `region` to the
  * `left`, `center` or `right` part of the container. A gesture with the same type, pointer and
  * region as a default replaces it; a `disabled` one still claims its taps. Non-visual.
@@ -97,10 +100,15 @@ export class TpMediaGesture extends MediaBindingElement implements MediaGestureI
     region: { type: String },
   };
 
+  /** A single or a double tap. */
   type: TapGestureType = 'tap';
+  /** The media request the gesture runs. */
   action: MediaRequestAction | '' = '';
+  /** The request's value in place of its default. */
   value: number | null = null;
+  /** Limits the gesture to one kind of pointer: mouse, touch or pen. */
   pointer: TapGesturePointer | null = null;
+  /** Limits the gesture to the left, center or right of the container. */
   region: TapGestureRegion | null = null;
 
   protected registerWith(registry: BindingRegistry): (() => void) | undefined {

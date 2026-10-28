@@ -40,7 +40,7 @@ export function applyMediaMarkers(
 const ATTACH_EVENTS = ['tp-media-attach', 'tp-media-detach'] as const;
 
 /**
- * Shared media button (Library mp-l-buttons). Composes `tp-button` (`variant="ghost"`,
+ * Shared media button. Composes `tp-button` (`variant="ghost"`,
  * `size="icon"`, `focusable-when-disabled`) and `tp-icon`:
  *
  * - The accessible name is the state-dependent label (`aria-label` on the native control); no
@@ -55,6 +55,7 @@ const ATTACH_EVENTS = ['tp-media-attach', 'tp-media-detach'] as const;
  *   `sourceEvent`. A rejected request already emitted `tp-media-request-failed` and is swallowed.
  *
  * @csspart button - The native control of the composed Button.
+ * @csspart mark - The wrapper of the state's icon or text.
  * @csspart icon - The fallback state icon (`tp-icon`).
  * @csspart text - Visible text of text-bearing buttons (playback rate, live).
  */

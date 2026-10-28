@@ -1,0 +1,37 @@
+{
+  "id": "components/data-visualization",
+  "tag": "tp-data-visualization",
+  "sources": {
+    "story": "src/stories/data-visualization.stories.ts",
+    "markdown": "docs/data-visualization.md",
+    "examples": [
+      "src/stories/data-visualization.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`tp-data-visualization` connects a chart renderer to shared responsive measurement,\nseries metadata, inspection, legend, and theme. It does not implement a chart engine.\nThe example supplies an SVG adapter, a textual interpretation, and the complete\ndataset through `tp-table`. Mobile bars also use stripes so color is not the only encoding."
+    },
+    {
+      "id": "md: Root API",
+      "kind": "md",
+      "heading": "## Root API",
+      "text": "| Property / attribute        | Type                                | Default                                        |\n| --------------------------- | ----------------------------------- | ---------------------------------------------- |\n| `data` (property)           | readonly ordered records            | `[]`; supply your dataset                      |\n| `series` (property)         | keyed `VisualizationSeries` records | `{}`; supply stable keys                       |\n| `renderer` (property)       | `VisualizationRenderer`             | required                                       |\n| `description`               | meaningful text                     | `''`; text or equivalent `table` slot required |\n| `label`                     | accessible figure name              | `Data visualization`                           |\n| `interaction`               | `none`, `focus`, `pointer`, `both`  | `none`                                         |\n| `tooltipOptions` (property) | `VisualizationTooltipOptions`       | `{}`                                           |\n| `legendOptions` (property)  | `VisualizationLegendOptions`        | `{}`                                           |\n\nSeries records accept `label`, an `IconDefinition` in `icon`, opaque\n`appearance`, and optional `color` or `theme: { light, dark }` colors. The default\npalette uses `--tp-chart-1` through `--tp-chart-5`. Renderers receive the original\nseries and data objects plus the current resolved colors. `appearance` is passed\nthrough unchanged. Stable keys, accessible labels, and a non-color encoding remain\nthe renderer author's responsibility.\n\n`renderer.mount(plot, { inspect, legend })` returns `{ update(snapshot), destroy() }`.\n`snapshot` contains `id`, `width`, `height`, `data`, `series`, `interaction`, and\n`colors`. The initial dimensions are 320 × 200; ResizeObserver replaces them when\nthe plot becomes measurable. Zero-sized parents retain the last nonzero dimensions.\nResizing, data, and theme updates call `update` without remounting. `destroy` must\nremove engine-owned nodes, pointer/keyboard listeners, and subscriptions. Adapter\nreplacement and disconnect destroy the old instance; reconnect mounts a new one.\nLate callbacks from a destroyed instance are ignored.\n\nReport `inspect({ active, payload, label, anchor, source })`, where `source` is\n`pointer` or `focus` and `anchor` is the Tooltip anchor API (element or\nvirtual bounding rectangle with `contextElement`). Both paths must report the\nsame datum information. Pointer and keyboard availability follow `interaction`.\nReport `legend(payload)` in engine order. Payload entries accept `dataKey`, `name`,\n`value`, `color`, `type`, original `payload`, and engine-specific keys. `type: 'none'`\nentries are omitted. Unknown series use engine labels and values.\n\nThe equivalent public methods are `setInspection(state)` and `setLegend(payload)`.\nRead-only getters: `dimensions`, `scopeIdentifier`, `inspection`, `legendPayload`,\n`metadataProvider`. `tp-resize` is a noncancelable notification with `{ width, height }`.\n`tp-diagnostic` reports a missing accessible description/table."
+    },
+    {
+      "id": "md: Tooltip and legend constituents",
+      "kind": "md",
+      "heading": "## Tooltip and legend constituents",
+      "text": "The Root composes `tp-tooltip`, retaining its positioning, lifecycle,\nEscape dismissal, and tooltip role. Inactive and empty payloads produce no content.\nIts default noninteractive content supports:\n\n| Tooltip option                                                        | Default / meaning                    |\n| --------------------------------------------------------------------- | ------------------------------------ |\n| `hideLabel`, `hideIndicator`                                          | `false`, independent visibility      |\n| `indicator`                                                           | `dot`; also `line`, `dashed`         |\n| `color`                                                               | optional indicator override          |\n| `nameKey`                                                             | optional declared series-key field   |\n| `labelKey`                                                            | optional field for the header label  |\n| `labelFormatter(label, originalPayload)`                              | optional replacement header          |\n| `formatter(value, resolvedLabel, originalItem, index, originalDatum)` | optional complete entry presentation |\n\nLegend options: `hideIcon` (false), `placement` (`bottom` or `top`), `nameKey`,\n`formatter(resolvedLabel, originalItem, index)`. Formatters replace presentation,\nnot series identity, payload ordering, or active state. Return text, Lit content,\nor library components; tooltip content must remain noninteractive.\n\nFoundation composition exports `VisualizationResponsiveViewport`,\n`visualizationTooltipContent(provider, inspection, options)`,\n`visualizationLegendContent(provider, payload, options)`, and\n`resolveVisualizationSeries(series, item, nameKey)`. Pass Root's `metadataProvider`\nto the content functions; missing/outside-Root providers throw an actionable error."
+    },
+    {
+      "id": "md: Content and appearance",
+      "kind": "md",
+      "heading": "## Content and appearance",
+      "text": "The default slot is supplementary content; `table` receives a `tp-table`.\nCanonical parts are `data-visualization`, `data-visualization-plot-region`,\n`data-visualization-series`, `data-visualization-legend`,\n`data-visualization-inspection-surface`, and `data-visualization-style-scope`.\nUse the common `partContracts`, `partPresentation`, and presentation dictionary.\nThe inspection part is registered on the Tooltip popup. Theme spacing, typography, radius, borders, and palette govern paint.\nPlot aspect ratio can be changed through the plot part's style hook.\n\nEach Root publishes `data-chart` as its stable scope. Explicit host `id` seeds the\nscope; generated identifiers use the shared ID sequence and are encoded before\nselector use. Preserve server-emitted `data-chart` during hydration. The style scope\npublishes `--color-${visualizationIdentifier(seriesKey)}`; use the exported encoder\nwhen a renderer needs those variables. Theme changes preserve payload objects and\nactive inspection, and only update renderer appearance."
+    }
+  ]
+}

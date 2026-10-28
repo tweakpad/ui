@@ -45,12 +45,12 @@ of a canvas.
 
 ## Published widgets
 
-- [Color picker](./color-picker.md): `tp-color-picker`.
-- [Easing editor](./easing-editor.md): `tp-easing-editor`.
-- [Emoji picker](./emoji-picker.md): `tp-emoji-picker`, with the data helpers in `@tweakpad/ui/emoji`.
-- [Flow](./flow.md): `tp-flow` with the public constituents `tp-flow-node`, `tp-flow-edge` and
+- [Color picker](color-picker.mdx): `tp-color-picker`.
+- [Easing editor](easing-editor.mdx): `tp-easing-editor`.
+- [Emoji picker](emoji-picker.mdx): `tp-emoji-picker`, with the data helpers in `@tweakpad/ui/emoji`.
+- [Flow](flow.mdx): `tp-flow` with the public constituents `tp-flow-node`, `tp-flow-edge` and
   `tp-flow-port`, and the DOM-free engine `@tweakpad/ui/flow`.
-- [Text editor](./text-editor.md): `tp-text-editor`, with the engine contract and the editor
+- [Text editor](text-editor.mdx): `tp-text-editor`, with the engine contract and the editor
   tools in `@tweakpad/ui/text-editor` and one entry per engine adapter,
   `@tweakpad/ui/text-editor/adapters/tiptap` and `@tweakpad/ui/text-editor/adapters/lexical`.
 

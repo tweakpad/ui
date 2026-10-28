@@ -1,0 +1,52 @@
+{
+  "id": "components/skeleton",
+  "tag": "tp-skeleton",
+  "sources": {
+    "story": "src/stories/skeleton.stories.ts",
+    "markdown": "docs/skeleton.md",
+    "examples": [
+      "src/stories/skeleton.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`tp-skeleton` is a decorative placeholder. Its containing layout determines the\nspace it reserves; changing motion never changes that geometry. Import\n`@tweakpad/ui/register` and `@tweakpad/ui/styles.css`.\n\n| Property / attribute             | Values                                     | Default |\n| -------------------------------- | ------------------------------------------ | ------- |\n| `motion`                         | pulse, sweep, none                         | pulse   |\n| `animated`                       | boolean; false suppresses either animation | true    |\n| `motionPolicy` / `motion-policy` | inherit, normal, reduce                    | inherit |\n| `label`                          | string; not announced                      | Loading |\n\nThe shared reduced-motion policy and `tp-motion-request` loading role apply to both\nmotion treatments. Shared duration tokens govern timing. The `skeleton` part is\nalways `aria-hidden`; provide one loading status on the surrounding region when\nneeded. Skeleton does not own or announce the eventual content.\n\n```html\n<div aria-busy=\"true\" aria-label=\"Loading profile\">\n  <tp-skeleton></tp-skeleton>\n  <tp-skeleton motion=\"sweep\"></tp-skeleton>\n</div>\n```\n\nUse normal layout to set width and height. Set the host border radius with a shared radius token for circular or other shapes.\nFor example, `border-radius:var(--tp-radius-full)` inherits into the placeholder.\nAlternatively use `partPresentation.skeleton.styleHook` with shared radius tokens. The\n`skeleton` part also supports the part contract/delegate API. Skeleton has no\nspacing attributes, interaction events, form value or focus behavior.\nExport: `TpSkeleton` and `skeletonMotionRoles`.\n\nDocs include avatar, media preview, card, text, form and table loading layouts.\nAll use Skeleton with ordinary theme-relative layout. The media preview composes\nAspect Ratio to reserve its two-to-one region; Card supplies the card\ncomposition's sections. Form and table placeholders are decorative layout, not\nempty interactive controls or fake table data."
+    },
+    {
+      "id": "example: Media preview",
+      "kind": "example",
+      "title": "Media preview",
+      "description": "Reserve a two-to-one media region and its captions while content loads.",
+      "code": "<div aria-busy=\"true\" style=\"display:grid;gap:var(--tp-space-3);max-inline-size:calc(var(--tp-spacing) * 64)\">\n  <tp-aspect-ratio ratio=\"2\" style=\"border-radius:var(--tp-radius-xl)\">\n    <tp-skeleton style=\"border-radius:inherit\"></tp-skeleton>\n  </tp-aspect-ratio>\n  <div style=\"display:grid;gap:var(--tp-space-2)\">\n    <tp-skeleton style=\"inline-size:100%;block-size:var(--tp-space-4)\"></tp-skeleton>\n    <tp-skeleton style=\"inline-size:80%;block-size:var(--tp-space-4)\"></tp-skeleton>\n  </div>\n</div>"
+    },
+    {
+      "id": "example: Card",
+      "kind": "example",
+      "title": "Card",
+      "code": "<tp-card aria-busy=\"true\" style=\"max-inline-size:calc(var(--tp-spacing) * 80)\">\n  <div slot=\"header\" style=\"display:grid;gap:var(--tp-space-2)\">\n    <tp-skeleton style=\"inline-size:66%;block-size:var(--tp-space-4)\"></tp-skeleton>\n    <tp-skeleton style=\"inline-size:50%;block-size:var(--tp-space-4)\"></tp-skeleton>\n  </div>\n  <tp-skeleton style=\"aspect-ratio:1;inline-size:100%\"></tp-skeleton>\n</tp-card>"
+    },
+    {
+      "id": "example: Text",
+      "kind": "example",
+      "title": "Text",
+      "code": "<div aria-busy=\"true\" style=\"display:grid;gap:var(--tp-space-2);max-inline-size:calc(var(--tp-spacing) * 100)\">\n  <tp-skeleton style=\"inline-size:100%;block-size:var(--tp-space-4)\"></tp-skeleton>\n  <tp-skeleton style=\"inline-size:100%;block-size:var(--tp-space-4)\"></tp-skeleton>\n  <tp-skeleton style=\"inline-size:75%;block-size:var(--tp-space-4)\"></tp-skeleton>\n</div>"
+    },
+    {
+      "id": "example: Form",
+      "kind": "example",
+      "title": "Form",
+      "description": "Reserve the labels, inputs and submit action while form data loads.",
+      "code": "<div aria-busy=\"true\" style=\"display:grid;gap:calc(var(--tp-spacing) * 7);max-inline-size:calc(var(--tp-spacing) * 100)\">\n  <div style=\"display:grid;gap:var(--tp-space-3)\">\n  <tp-skeleton style=\"inline-size:calc(var(--tp-spacing) * 20);block-size:var(--tp-space-4)\"></tp-skeleton>\n  <tp-skeleton style=\"block-size:var(--tp-control-height-md)\"></tp-skeleton>\n</div>\n  <div style=\"display:grid;gap:var(--tp-space-3)\">\n  <tp-skeleton style=\"inline-size:calc(var(--tp-spacing) * 24);block-size:var(--tp-space-4)\"></tp-skeleton>\n  <tp-skeleton style=\"block-size:var(--tp-control-height-md)\"></tp-skeleton>\n</div>\n  <tp-skeleton style=\"inline-size:calc(var(--tp-spacing) * 24);block-size:var(--tp-control-height-md)\"></tp-skeleton>\n</div>"
+    },
+    {
+      "id": "example: Table",
+      "kind": "example",
+      "title": "Table",
+      "description": "Reserve repeated row geometry without exposing fake data or focusable controls.",
+      "code": "<div aria-busy=\"true\" style=\"display:grid;gap:var(--tp-space-2);max-inline-size:calc(var(--tp-spacing) * 120)\">\n  <div style=\"display:flex;gap:var(--tp-space-4)\">\n  <tp-skeleton style=\"flex:1;block-size:var(--tp-space-4)\"></tp-skeleton>\n  <tp-skeleton style=\"inline-size:calc(var(--tp-spacing) * 24);block-size:var(--tp-space-4)\"></tp-skeleton>\n  <tp-skeleton style=\"inline-size:calc(var(--tp-spacing) * 20);block-size:var(--tp-space-4)\"></tp-skeleton>\n</div>\n  <div style=\"display:flex;gap:var(--tp-space-4)\">\n  <tp-skeleton style=\"flex:1;block-size:var(--tp-space-4)\"></tp-skeleton>\n  <tp-skeleton style=\"inline-size:calc(var(--tp-spacing) * 24);block-size:var(--tp-space-4)\"></tp-skeleton>\n  <tp-skeleton style=\"inline-size:calc(var(--tp-spacing) * 20);block-size:var(--tp-space-4)\"></tp-skeleton>\n</div>\n  <div style=\"display:flex;gap:var(--tp-space-4)\">\n  <tp-skeleton style=\"flex:1;block-size:var(--tp-space-4)\"></tp-skeleton>\n  <tp-skeleton style=\"inline-size:calc(var(--tp-spacing) * 24);block-size:var(--tp-space-4)\"></tp-skeleton>\n  <tp-skeleton style=\"inline-size:calc(var(--tp-spacing) * 20);block-size:var(--tp-space-4)\"></tp-skeleton>\n</div>\n</div>"
+    }
+  ]
+}

@@ -1,8 +1,34 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import documentation from '../../docs/timeline.md?raw';
-import { timelineDefaultSource, timelineExamples } from './timeline.examples.js';
+import { libraryDocs } from './library-docs.js';
+
+const date = (value: string) =>
+  `<tp-time datetime="${value}" mode="absolute" pattern="MMM d"></tp-time>`;
+const muted = 'color: var(--tp-muted-foreground)';
+
+const timelineDefaultSource = `<tp-timeline value="shipped" aria-label="Order status" style="max-inline-size: 24rem">
+  <tp-timeline-item value="placed">
+    <strong>Placed</strong>
+    <div style="${muted}">${date('2026-03-18')}</div>
+  </tp-timeline-item>
+  <tp-timeline-item value="confirmed">
+    <strong>Confirmed</strong>
+    <div style="${muted}">${date('2026-03-18')}</div>
+  </tp-timeline-item>
+  <tp-timeline-item value="shipped">
+    <strong>Shipped</strong>
+    <div style="${muted}">${date('2026-03-19')}</div>
+  </tp-timeline-item>
+  <tp-timeline-item value="transit">
+    <strong>In transit</strong>
+    <div style="${muted}">${date('2026-03-20')}</div>
+  </tp-timeline-item>
+  <tp-timeline-item value="delivered">
+    <strong>Delivered</strong>
+    <div style="${muted}">${date('2026-03-21')}</div>
+  </tp-timeline-item>
+</tp-timeline>`;
 
 interface Args {
   orientation: 'vertical' | 'horizontal' | 'responsive';
@@ -15,13 +41,7 @@ const values = ['', 'placed', 'confirmed', 'shipped', 'transit', 'delivered'];
 const meta = {
   title: 'Components/Timeline',
   component: 'tp-timeline',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: timelineExamples,
-      source: { code: timelineDefaultSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/timeline') },
   args: { orientation: 'vertical', align: 'end', value: 'shipped' },
   argTypes: {
     orientation: {

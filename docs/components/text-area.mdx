@@ -1,0 +1,120 @@
+---
+title: Text area
+description: A native multi-line text editor bound to Field behavior for labels, limits and validation.
+tag: tp-text-area
+---
+
+<Preview
+  title="Text area"
+  align="stretch"
+  code={`<tp-field label="Feedback" description="Tell us what worked and what didn't." style="max-inline-size:26rem;margin-inline:auto">
+  <tp-text-area name="feedback" placeholder="The new dashboard is faster, but…"></tp-text-area>
+</tp-field>`}
+/>
+
+## Usage
+
+Text area shares Input's value, editing and form model, but keeps newlines: Enter inserts a line instead of submitting. Labels, descriptions and errors belong to `tp-field`; a standalone Text area can take `label` for its accessible name.
+
+### Sizing
+
+<Preview
+  title="Content and fixed sizing"
+  align="stretch"
+  script={`const notes = document.querySelector('#text-area-demo-notes');
+notes.hostProperties = { style: { fieldSizing: 'fixed' } };`}
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:26rem;margin-inline:auto">
+  <tp-field label="Commit message" description="Grows as you type.">
+    <tp-text-area resize="none" default-value="Fix rounding in invoice totals"></tp-text-area>
+  </tp-field>
+  <tp-field label="Release notes" description="Fixed at six rows; drag the corner to resize.">
+    <tp-text-area id="text-area-demo-notes" rows="6" placeholder="Summarize the changes in this release"></tp-text-area>
+  </tp-field>
+</div>`}
+/>
+
+The default theme sizes the editor to its content from a minimum height, so short replies stay compact and long ones never scroll. For a fixed height, set native fixed sizing through `hostProperties` and choose the height with `rows`. `resize` follows writing mode: `block` (the default) lets people drag it taller, `none` removes the handle, and `inline` or `both` allow width changes.
+
+### Code-like values
+
+`mono` shows the value in the mono font and turns off spell checking, autocorrection and autocapitalization, for JSON, queries and other text where autocorrection would break the value.
+
+<Preview
+  title="Mono"
+  align="stretch"
+  code={`<tp-field label="Request body" style="max-inline-size:28rem">
+  <tp-text-area mono name="body" rows="5" default-value='{
+  "event": "invoice.paid",
+  "retry": 3
+}'></tp-text-area>
+</tp-field>`}
+/>
+
+### Validation
+
+Native constraints such as `required`, `minlength` and `maxlength` validate through the owning Field, which shows the error and wires `aria-describedby`.
+
+<Preview
+  title="Error"
+  align="stretch"
+  code={`<tp-field label="Bio" description="Up to 160 characters." error="Your bio is too long." invalid style="max-inline-size:26rem;margin-inline:auto">
+  <tp-text-area name="bio" default-value="Product designer at Northwind. I write about type, color and the craft of small interfaces, and I am currently building an open-source icon set for dashboards and admin tools."></tp-text-area>
+</tp-field>`}
+/>
+
+### Listening to changes
+
+<Preview
+  title="Character count"
+  align="stretch"
+  script={`const message = document.querySelector('#text-area-demo-status');
+const count = document.querySelector('#text-area-demo-count');
+message.addEventListener('tp-value-change', (event) => {
+  count.textContent = \`\${event.detail.value.length} / 280\`;
+});`}
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:26rem;margin-inline:auto">
+  <tp-field label="Status update">
+    <tp-text-area id="text-area-demo-status" name="status" maxlength="280" default-value="Shipping the new billing dashboard to all workspaces this afternoon."></tp-text-area>
+  </tp-field>
+  <output id="text-area-demo-count" style="justify-self:end;color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">68 / 280</output>
+</div>`}
+/>
+
+Typing, pasting and clearing each publish a cancelable `tp-value-change` with the proposed `value`. Use it for live counters or previews; calling `preventDefault()` rolls the edit back. Controlled mode stays fixed for a lifetime; rejected edits restore committed text without unnecessary selection changes. Composition remains one edit.
+
+### Forms
+
+<Preview
+  title="Form"
+  align="stretch"
+  code={`<tp-form style="max-inline-size:26rem;margin-inline:auto">
+  <tp-field label="Reply to Maya Chen">
+    <tp-text-area name="reply" required maxlength="500" placeholder="Write a reply"></tp-text-area>
+  </tp-field>
+  <div slot="actions">
+    <tp-button type="submit">Send reply</tp-button>
+    <tp-button type="reset" variant="outline">Discard</tp-button>
+  </div>
+</tp-form>`}
+/>
+
+The native textarea renders in light DOM and submits with its form; Reset restores `default-value`. Uncontrolled reset uses `form-reset`, while controlled reset preserves owner text without a synthetic proposal. Form restoration restores uncontrolled strings.
+
+### States
+
+<Preview
+  title="Disabled and read-only"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:26rem;margin-inline:auto">
+  <tp-field label="Internal notes" disabled>
+    <tp-text-area default-value="Waiting on legal review."></tp-text-area>
+  </tp-field>
+  <tp-field label="Shipping address">
+    <tp-text-area readonly default-value="Maya Chen
+221 Mission Street, Suite 400
+San Francisco, CA 94105"></tp-text-area>
+  </tp-field>
+</div>`}
+/>
+
+Disabled omits the value from form data. Read-only keeps it, along with selection and focus.

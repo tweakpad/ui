@@ -1,0 +1,151 @@
+---
+title: Menubar
+description: A persistent application command bar that coordinates several Menus so only one is open at a time.
+tag: tp-menubar
+---
+
+<Preview
+  title="Menubar"
+  code={`<tp-menubar aria-label="Editor">
+  <tp-menu value="file" label="File">
+    <tp-button slot="trigger" variant="ghost">File</tp-button>
+    <tp-menu-item value="new">
+      New document
+      <tp-key-hint-group data-menu-shortcut separator="none" platform="mac">
+        <tp-key-hint key="command"></tp-key-hint><tp-key-hint key="N"></tp-key-hint>
+      </tp-key-hint-group>
+    </tp-menu-item>
+    <tp-menu-item value="open">
+      Open…
+      <tp-key-hint-group data-menu-shortcut separator="none" platform="mac">
+        <tp-key-hint key="command"></tp-key-hint><tp-key-hint key="O"></tp-key-hint>
+      </tp-key-hint-group>
+    </tp-menu-item>
+    <tp-separator></tp-separator>
+    <tp-menu label="Share document">
+      <tp-button slot="trigger" variant="ghost">Share</tp-button>
+      <tp-menu-item value="invite">Invite people</tp-menu-item>
+      <tp-menu-item value="link">Copy link</tp-menu-item>
+    </tp-menu>
+    <tp-separator></tp-separator>
+    <tp-menu-item value="delete" variant="destructive">Delete document</tp-menu-item>
+  </tp-menu>
+  <tp-menu value="edit" label="Edit">
+    <tp-button slot="trigger" variant="ghost">Edit</tp-button>
+    <tp-menu-item value="undo">
+      Undo
+      <tp-key-hint-group data-menu-shortcut separator="none" platform="mac">
+        <tp-key-hint key="command"></tp-key-hint><tp-key-hint key="Z"></tp-key-hint>
+      </tp-key-hint-group>
+    </tp-menu-item>
+    <tp-menu-item value="paste" disabled>Paste</tp-menu-item>
+    <tp-separator></tp-separator>
+    <tp-menu-checkbox-item default-checked>Word wrap</tp-menu-checkbox-item>
+    <tp-menu-checkbox-item>Show ruler</tp-menu-checkbox-item>
+  </tp-menu>
+  <tp-menu value="view" label="View">
+    <tp-button slot="trigger" variant="ghost">View</tp-button>
+    <tp-menu-radio-group label="Zoom" default-value="100">
+      <span data-menu-label>Zoom</span>
+      <tp-menu-radio-item value="75">75%</tp-menu-radio-item>
+      <tp-menu-radio-item value="100">100%</tp-menu-radio-item>
+      <tp-menu-radio-item value="150">150%</tp-menu-radio-item>
+    </tp-menu-radio-group>
+  </tp-menu>
+  <tp-menu value="help" label="Help">
+    <tp-button slot="trigger" variant="ghost">Help</tp-button>
+    <tp-menu-item value="docs">Documentation</tp-menu-item>
+    <tp-menu-item value="shortcuts">Keyboard shortcuts</tp-menu-item>
+  </tp-menu>
+</tp-menubar>`}
+/>
+
+## Usage
+
+Each child is a full Menu, so items, checks, radios and submenus work exactly as they do in [Menu](../menu/). The bar adds one shared active-menu value: opening one Menu closes the other, and once a menu is open, hovering another trigger switches to it. Use it for application commands, not site navigation.
+
+Shortcut hints are labels and do not install keyboard shortcuts. Hovering a closed Menubar does not open it. All sibling triggers remain interactive in modal mode. Clicking outside dismisses the menus; hovering alone then stays inactive until another menu is opened. Switching between menus, by pointer or by keyboard, replaces the open menu in place without entrance or exit motion; presence motion plays only when the bar's menus open or close entirely.
+
+Popup menus derive their default anchor separation from three theme spacing units. Set `side-offset="0"` on the Menu (or participating Menu inside Menubar) for a flush popup, or supply a custom offset through the positioning API.
+
+### Keyboard
+
+Only one trigger is in the tab order. Arrow keys, Home and End move between triggers, and ArrowDown opens the focused Menu. Give each Menu a `value` so the bar can identify it; an `aria-label` names the bar itself.
+
+Each child Menu uses its nonempty `value`, otherwise its generated/stable `id`. Later duplicate identifiers are diagnosed and excluded.
+
+<Preview
+  title="Compact bar"
+  code={`<tp-menubar aria-label="Spreadsheet">
+  <tp-menu value="file" label="File">
+    <tp-button slot="trigger" variant="ghost" size="sm">File</tp-button>
+    <tp-menu-item value="export">Export as CSV</tp-menu-item>
+    <tp-menu-item value="print">Print</tp-menu-item>
+  </tp-menu>
+  <tp-menu value="insert" label="Insert">
+    <tp-button slot="trigger" variant="ghost" size="sm">Insert</tp-button>
+    <tp-menu-item value="row">Row above</tp-menu-item>
+    <tp-menu-item value="column">Column left</tp-menu-item>
+    <tp-menu-item value="chart">Chart</tp-menu-item>
+  </tp-menu>
+  <tp-menu value="format" label="Format">
+    <tp-button slot="trigger" variant="ghost" size="sm">Format</tp-button>
+    <tp-menu-item value="currency">Currency</tp-menu-item>
+    <tp-menu-item value="percent">Percent</tp-menu-item>
+    <tp-menu-item value="date">Date</tp-menu-item>
+  </tp-menu>
+</tp-menubar>`}
+/>
+
+### Tracking the open menu
+
+`tp-value-change` reports the active Menu's `value`, or an empty string when everything closes. Cancel it to keep the current menu active.
+
+`onValueChange` receives the same event first; preventDefault or `detail.cancelled = true` vetoes. Configure the bar's controlled or uncontrolled mode before connection; do not also control a child's open state. Unknown controlled values open no child; removal of an uncontrolled active child clears selection.
+
+<Preview
+  title="Active menu"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <output id="menubar-tracked-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">No menu open</output>
+  <tp-menubar id="menubar-tracked" aria-label="Mail">
+    <tp-menu value="message" label="Message">
+      <tp-button slot="trigger" variant="ghost">Message</tp-button>
+      <tp-menu-item value="reply">Reply</tp-menu-item>
+      <tp-menu-item value="forward">Forward</tp-menu-item>
+    </tp-menu>
+    <tp-menu value="mailbox" label="Mailbox">
+      <tp-button slot="trigger" variant="ghost">Mailbox</tp-button>
+      <tp-menu-item value="archive">Archive</tp-menu-item>
+      <tp-menu-item value="junk">Move to junk</tp-menu-item>
+    </tp-menu>
+  </tp-menubar>
+</div>`}
+  script={`const bar = document.querySelector('#menubar-tracked');
+const output = document.querySelector('#menubar-tracked-output');
+bar.addEventListener('tp-value-change', (event) => {
+  if (event.target !== bar) return;
+  output.textContent = event.detail.value ? \`Open: \${event.detail.value}\` : 'No menu open';
+});`}
+/>
+
+### Disabled
+
+`disabled` on the bar disables every trigger without overwriting each Menu's own state; a single Menu can also be disabled on its own.
+
+<Preview
+  title="Disabled menu"
+  code={`<tp-menubar aria-label="Editor">
+  <tp-menu value="file" label="File">
+    <tp-button slot="trigger" variant="ghost">File</tp-button>
+    <tp-menu-item value="save">Save</tp-menu-item>
+  </tp-menu>
+  <tp-menu value="review" label="Review" disabled>
+    <tp-button slot="trigger" variant="ghost">Review</tp-button>
+    <tp-menu-item value="comments">Show comments</tp-menu-item>
+  </tp-menu>
+  <tp-menu value="help" label="Help">
+    <tp-button slot="trigger" variant="ghost">Help</tp-button>
+    <tp-menu-item value="docs">Documentation</tp-menu-item>
+  </tp-menu>
+</tp-menubar>`}
+/>

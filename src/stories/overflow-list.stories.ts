@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/overflow-list.md?raw';
-import { overflowListExamples } from './overflow-list.examples.js';
+import { libraryDocs } from './library-docs.js';
 import type { OverflowCollapseFrom } from '../index.js';
 
 interface Args {
@@ -31,19 +30,7 @@ const meta = {
   title: 'Components/Overflow list',
   component: 'tp-overflow-list',
   parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: overflowListExamples,
-      source: {
-        code: `<tp-overflow-list limit="3">
-  <tp-badge variant="outline">Stoneware</tp-badge>
-  <tp-badge variant="outline">Matte glaze</tp-badge>
-  <tp-badge variant="outline">Hand-thrown</tp-badge>
-  <tp-badge variant="outline">Food-safe</tp-badge>
-  <tp-badge variant="outline">Speckled</tp-badge>
-</tp-overflow-list>`,
-      },
-    },
+    docs: libraryDocs('components/overflow-list'),
   },
   args: {
     limit: 3,

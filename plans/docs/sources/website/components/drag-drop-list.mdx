@@ -1,0 +1,316 @@
+---
+title: Drag drop list
+description: An ordered list people reorder by pointer or keyboard, committing a new immutable value on each drop.
+tag: tp-drag-drop-list
+reference: false
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Drag drop list"
+  align="stretch"
+  code={`<tp-drag-drop-list id="drag-drop-list-hero" label="Launch checklist" variant="outline" style="max-inline-size:26rem;margin-inline:auto;inline-size:100%"></tp-drag-drop-list>`}
+  script={`document.querySelector('#drag-drop-list-hero').defaultValue = [
+  { id: 'brief', label: 'Write the launch brief' },
+  { id: 'pricing', label: 'Finalize pricing page' },
+  { id: 'email', label: 'Schedule announcement email' },
+  { id: 'changelog', label: 'Publish changelog' },
+];`}
+/>
+
+## Usage
+
+Items are plain data, so the list is fed from script: set `defaultValue` (uncontrolled) or `value` (controlled) before the first render, with each item's `id` and `label`. Each drag hovers a preview order; a drop commits a new array, and Escape or a drop outside restores the committed order.
+
+### Keyboard
+
+Every row has a named handle Button. Focus it, press Space or Enter to pick the item up, move it with the arrow keys, and press Space or Enter again to drop it; Escape cancels. A live region announces each step.
+
+### Reading the value
+
+`tp-value-change` fires with each proposed order and can be cancelled; `tp-value-commit` fires once the drop has settled. Read `value` then to save the order.
+
+<Preview
+  title="Commit events"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:26rem;margin-inline:auto;inline-size:100%">
+  <tp-drag-drop-list id="drag-drop-list-commit" label="Sprint priorities" variant="outline" size="sm"></tp-drag-drop-list>
+  <output id="drag-drop-list-commit-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Drag a row to reprioritize.</output>
+</div>`}
+  script={`const list = document.querySelector('#drag-drop-list-commit');
+list.defaultValue = [
+  { id: 'sso', label: 'SAML single sign-on' },
+  { id: 'export', label: 'CSV export for reports' },
+  { id: 'mobile', label: 'Mobile push notifications' },
+];
+list.addEventListener('tp-value-commit', (event) => {
+  if (event.target !== list) return;
+  document.querySelector('#drag-drop-list-commit-output').textContent =
+    'Saved order: ' + list.value.map((item) => item.label).join(' → ');
+});`}
+/>
+
+### Variants and sizes
+
+`variant` is `ghost` (the default, rows without a boundary), `outline` or `subdued`. `size` steps the rows down from `default` through `sm` to `xs` for side panels and settings popovers.
+
+<Preview
+  title="Variants and sizes"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:var(--tp-space-6);max-inline-size:40rem;margin-inline:auto;inline-size:100%">
+  <tp-drag-drop-list id="drag-drop-list-ghost" label="Table columns"></tp-drag-drop-list>
+  <tp-drag-drop-list id="drag-drop-list-xs" label="Layer order" variant="subdued" size="xs"></tp-drag-drop-list>
+</div>`}
+  script={`document.querySelector('#drag-drop-list-ghost').defaultValue = [
+  { id: 'customer', label: 'Customer' },
+  { id: 'status', label: 'Status' },
+  { id: 'amount', label: 'Amount' },
+];
+document.querySelector('#drag-drop-list-xs').defaultValue = [
+  { id: 'logo', label: 'Logo' },
+  { id: 'headline', label: 'Headline' },
+  { id: 'photo', label: 'Hero photo' },
+  { id: 'background', label: 'Background' },
+];`}
+/>
+
+### Activation and swapping
+
+By default only the handle starts a pointer drag, which keeps text in the row selectable. `activation="item"` lets the whole row start one, after a short delay or movement so clicks still work. `reorder-mode="swap"` exchanges two items instead of shifting the ones between them. The `feedback` property picks the drag feedback; `'clone'`, used here, leaves a copy in the row's layout position while the item moves.
+
+<Preview
+  title="Whole-row drag with swap"
+  align="stretch"
+  code={`<tp-drag-drop-list id="drag-drop-list-swap" label="Dashboard widgets" variant="subdued" activation="item" reorder-mode="swap" style="max-inline-size:26rem;margin-inline:auto;inline-size:100%"></tp-drag-drop-list>`}
+  script={`const list = document.querySelector('#drag-drop-list-swap');
+list.feedback = 'clone';
+list.defaultValue = [
+  { id: 'revenue', label: 'Monthly revenue' },
+  { id: 'signups', label: 'New signups' },
+  { id: 'churn', label: 'Churn rate' },
+  { id: 'tickets', label: 'Open support tickets' },
+];`}
+/>
+
+### Rich rows
+
+`renderItem` returns the content of each row from its item and a context, so rows can carry Badges and their own actions; a control in the `actions` slot stays separately operable. The context's `preview` flag marks the copy shown while dragging. `renderOverlay` draws the row that follows the pointer.
+
+<Preview
+  title="Custom rows and overlay"
+  align="stretch"
+  code={`<div id="drag-drop-list-rich" style="display:grid;gap:var(--tp-space-3);max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <output id="drag-drop-list-rich-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Drag to reorder, or open a release.</output>
+</div>`}
+  script={`import { html } from 'lit';
+
+// Configure the list before it first renders, then mount it.
+const list = document.createElement('tp-drag-drop-list');
+list.label = 'Release queue';
+list.variant = 'outline';
+const output = document.querySelector('#drag-drop-list-rich-output');
+const tone = { Ready: 'success', 'In review': 'secondary', Blocked: 'destructive' };
+list.renderItem = (item, context) => html\`<span>\${item.label} <tp-badge variant=\${tone[item.status]}>\${item.status}</tp-badge></span>
+  <tp-button slot="actions" size="sm" variant="outline" .disabled=\${context.preview}
+    @click=\${() => (output.textContent = 'Opened ' + item.label)}>Open</tp-button>\`;
+list.renderOverlay = (item) => html\`<tp-list-item variant="outline">\${item.label}
+  <tp-badge slot="actions" variant="outline">Moving</tp-badge></tp-list-item>\`;
+list.defaultValue = [
+  { id: 'v2-4', label: 'v2.4 Billing', status: 'Ready' },
+  { id: 'v2-5', label: 'v2.5 Audit log', status: 'In review' },
+  { id: 'v2-6', label: 'v2.6 SSO groups', status: 'Blocked' },
+];
+document.querySelector('#drag-drop-list-rich').prepend(list);`}
+/>
+
+### Horizontal
+
+`orientation="horizontal"` lays the items out in a row and moves them with the left and right arrow keys, mirrored for right-to-left text.
+
+<Preview
+  title="Horizontal"
+  align="stretch"
+  code={`<tp-drag-drop-list id="drag-drop-list-row" label="Board columns" variant="outline" size="sm" orientation="horizontal" style="margin-inline:auto"></tp-drag-drop-list>`}
+  script={`document.querySelector('#drag-drop-list-row').defaultValue = [
+  { id: 'todo', label: 'To do' },
+  { id: 'doing', label: 'In progress' },
+  { id: 'review', label: 'In review' },
+  { id: 'done', label: 'Done' },
+];`}
+/>
+
+### Disabled and read-only
+
+`disabled` and `readonly` stop reordering and cancel a drag in progress, while leaving the rows readable. Use `readonly` when the order is visible but locked, such as while a save is pending.
+
+<Preview
+  title="Read-only"
+  align="stretch"
+  code={`<tp-drag-drop-list id="drag-drop-list-locked" label="Approval chain" variant="outline" readonly style="max-inline-size:26rem;margin-inline:auto;inline-size:100%"></tp-drag-drop-list>`}
+  script={`document.querySelector('#drag-drop-list-locked').defaultValue = [
+  { id: 'lead', label: 'Team lead' },
+  { id: 'finance', label: 'Finance' },
+  { id: 'legal', label: 'Legal' },
+];`}
+/>
+
+### Connected lists
+
+Lists that share one `DragDropManager` from `@tweakpad/ui/drag-drop`, each with a unique `group`, can pass items between them, such as columns on a board. `moveItem()` performs the same atomic move from code, for example from a "Move to Ready" menu action. Configure each list before it first renders; here the script creates them. An empty list stays a drop target, and keyboard users can move an item into it with the arrow keys.
+
+<Preview
+  title="Board lanes"
+  align="stretch"
+  code={`<section id="drag-drop-list-board" style="display:grid;gap:var(--tp-space-4);max-inline-size:40rem;margin-inline:auto;inline-size:100%">
+  <div data-lanes style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:var(--tp-space-4)"></div>
+  <tp-button data-move variant="outline" style="justify-self:start">Move first item to Ready</tp-button>
+  <output data-status role="status" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Drag a card between lanes.</output>
+</section>`}
+  script={`import { DragDropManager } from '@tweakpad/ui/drag-drop';
+
+const root = document.querySelector('#drag-drop-list-board');
+const status = root.querySelector('[data-status]');
+const manager = new DragDropManager();
+const lane = (group, label, items) => {
+  const list = document.createElement('tp-drag-drop-list');
+  Object.assign(list, { manager, group, label, variant: 'outline', defaultValue: items });
+  list.addEventListener('tp-value-commit', (event) => {
+    if (event.target !== list) return;
+    status.textContent = \`\${backlog.label}: \${backlog.value.length} · \${ready.label}: \${ready.value.length}\`;
+  });
+  root.querySelector('[data-lanes]').append(list);
+  return list;
+};
+const backlog = lane('backlog', 'Backlog', [
+  { id: 'invoices', label: 'PDF invoices' },
+  { id: 'sso', label: 'SAML single sign-on' },
+  { id: 'audit', label: 'Audit log export' },
+]);
+const ready = lane('ready', 'Ready', []);
+root.querySelector('[data-move]').addEventListener('click', () => {
+  const first = backlog.value[0];
+  if (first) status.textContent = 'moveItem: ' + backlog.moveItem(first.id, { list: ready, index: ready.value.length });
+});`}
+/>
+
+### One controlled owner
+
+With `value` instead of `defaultValue`, the lists propose and your code decides. A move between lanes proposes one `tp-value-change` per lane, sharing `metadata.operationId`; stage both, then assign both values synchronously to accept the move. Leaving them unassigned rejects it.
+
+<Preview
+  title="Controlled lanes"
+  align="stretch"
+  code={`<section id="drag-drop-list-owner" style="display:grid;gap:var(--tp-space-4);max-inline-size:40rem;margin-inline:auto;inline-size:100%">
+  <div data-lanes style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:var(--tp-space-4)"></div>
+  <output data-status role="status" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm);font-family:var(--tp-font-mono)"></output>
+</section>`}
+  script={`import { DragDropManager } from '@tweakpad/ui/drag-drop';
+
+const root = document.querySelector('#drag-drop-list-owner');
+const status = root.querySelector('[data-status]');
+const manager = new DragDropManager();
+// The application's state; the lists only render it.
+let state = {
+  todo: [{ id: 'copy', label: 'Write launch copy' }, { id: 'qa', label: 'Regression pass' }],
+  done: [{ id: 'pricing', label: 'Pricing page' }],
+};
+const show = () => (status.textContent = JSON.stringify({ todo: state.todo.map((i) => i.id), done: state.done.map((i) => i.id) }));
+const staged = new Map();
+const lists = Object.keys(state).map((group) => {
+  const list = document.createElement('tp-drag-drop-list');
+  Object.assign(list, { manager, group, label: group === 'todo' ? 'To do' : 'Done', variant: 'outline', value: state[group] });
+  list.addEventListener('tp-value-change', (event) => {
+    if (event.target !== list || event.defaultPrevented || event.detail.cancelled) return;
+    const { operationId, sourceGroup, destinationGroup } = event.detail.metadata;
+    const proposal = staged.get(operationId) ?? new Map();
+    staged.set(operationId, proposal.set(group, event.detail.value));
+    if ([sourceGroup, destinationGroup].every((lane) => proposal.has(lane))) {
+      for (const member of lists) if (proposal.has(member.group)) member.value = proposal.get(member.group);
+      staged.delete(operationId);
+    }
+  });
+  list.addEventListener('tp-value-commit', (event) => {
+    if (event.target !== list) return;
+    state = Object.fromEntries(lists.map((member) => [member.group, member.value]));
+    show();
+  });
+  root.querySelector('[data-lanes]').append(list);
+  return list;
+});
+show();`}
+/>
+
+### Authorizing a drop
+
+The manager's `monitor` reports each operation. Call `event.suspend()` inside `dragend` to hold the drop: the feedback stays where it was dropped and no value changes until you call `resume()` or `abort()` on the returned handle, for example after a permission check or a server call. `settled` reports the outcome.
+
+<Preview
+  title="Approve before committing"
+  align="stretch"
+  code={`<section id="drag-drop-list-approve" style="display:grid;gap:var(--tp-space-4);max-inline-size:40rem;margin-inline:auto;inline-size:100%">
+  <div data-lanes style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:var(--tp-space-4)"></div>
+  <div data-decision hidden>
+    <div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-2)">
+      <tp-button data-approve size="sm">Approve move</tp-button>
+      <tp-button data-reject size="sm" variant="outline">Reject</tp-button>
+    </div>
+  </div>
+  <output data-status role="status" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Moving a teammate between teams needs approval.</output>
+</section>`}
+  script={`import { DragDropManager } from '@tweakpad/ui/drag-drop';
+
+const root = document.querySelector('#drag-drop-list-approve');
+const status = root.querySelector('[data-status]');
+const controls = root.querySelector('[data-decision]');
+const manager = new DragDropManager();
+for (const [group, label, items] of [
+  ['design', 'Design team', [{ id: 'maya', label: 'Maya Chen' }, { id: 'omar', label: 'Omar Haddad' }]],
+  ['platform', 'Platform team', [{ id: 'grace', label: 'Grace Kim' }]],
+]) {
+  const list = document.createElement('tp-drag-drop-list');
+  Object.assign(list, { manager, group, label, variant: 'outline', defaultValue: items });
+  root.querySelector('[data-lanes]').append(list);
+}
+let decision;
+manager.monitor.addEventListener('dragend', (event) => {
+  if (event.canceled) return;
+  decision = event.suspend();
+  controls.hidden = false;
+  status.textContent = 'Waiting for approval…';
+});
+manager.monitor.addEventListener('settled', (event) => {
+  decision = undefined;
+  controls.hidden = true;
+  status.textContent = 'Drop ' + event.outcome + '.';
+});
+root.querySelector('[data-approve]').addEventListener('click', () => decision?.resume());
+root.querySelector('[data-reject]').addEventListener('click', () => decision?.abort());`}
+/>
+
+### Restricting movement
+
+`modifiers` take factories for the manager's movement modifiers. `RestrictToVerticalAxis` keeps the dragged row on its column, which suits a long single list dragged by the whole row.
+
+<Preview
+  title="Vertical axis only"
+  align="stretch"
+  code={`<div id="drag-drop-list-axis" style="max-inline-size:26rem;margin-inline:auto;inline-size:100%"></div>`}
+  script={`import { RestrictToVerticalAxis } from '@tweakpad/ui/drag-drop';
+
+const list = document.createElement('tp-drag-drop-list');
+Object.assign(list, {
+  label: 'Onboarding steps',
+  variant: 'subdued',
+  activation: 'item',
+  feedback: 'clone',
+  modifiers: [() => new RestrictToVerticalAxis()],
+  defaultValue: [
+    { id: 'profile', label: 'Complete your profile' },
+    { id: 'invite', label: 'Invite two teammates' },
+    { id: 'connect', label: 'Connect your calendar' },
+    { id: 'project', label: 'Create a first project' },
+  ],
+});
+document.querySelector('#drag-drop-list-axis').append(list);`}
+/>

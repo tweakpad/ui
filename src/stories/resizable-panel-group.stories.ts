@@ -5,7 +5,7 @@ import type {
   TpResizablePanelGroup,
 } from '../components/resizable-panel-group/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import documentation from '../../docs/resizable-panel-group.md?raw';
+import { libraryDocs } from './library-docs.js';
 interface Args {
   orientation: 'horizontal' | 'vertical';
   disabled: boolean;
@@ -13,17 +13,10 @@ interface Args {
   keyboardStep: number;
   disableDoubleClickReset: boolean;
 }
-const source = `<tp-resizable-panel-group style="height:18rem">
-  <tp-resizable-panel id="sidebar" default-size="25%" min-size="15%" collapsible>Sidebar</tp-resizable-panel>
-  <tp-resizable-handle label="Resize sidebar" with-handle></tp-resizable-handle>
-  <tp-resizable-panel id="content" min-size="30%">Content</tp-resizable-panel>
-</tp-resizable-panel-group>`;
 const meta = {
   title: 'Components/Resizable panel group',
   component: 'tp-resizable-panel-group',
-  parameters: {
-    docs: { description: { component: documentation }, source: { code: source, language: 'html' } },
-  },
+  parameters: { docs: libraryDocs('components/resizable-panel-group') },
   args: {
     orientation: 'horizontal',
     disabled: false,
@@ -60,6 +53,7 @@ export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
 export const NestedWorkspace: Story = {
+  tags: ['!autodocs'],
   render: () =>
     html`<tp-resizable-panel-group
       style="height:24rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)"
@@ -79,6 +73,7 @@ export const NestedWorkspace: Story = {
     >`,
 };
 export const Controlled: Story = {
+  tags: ['!autodocs'],
   render: () =>
     html`<tp-resizable-panel-group
       .sizes=${['30%', '70%']}
@@ -96,6 +91,7 @@ export const Controlled: Story = {
     >`,
 };
 export const CollapsibleSidebar: Story = {
+  tags: ['!autodocs'],
   render: () =>
     html`<div style="display:grid;gap:var(--tp-space-4)">
       <tp-button
@@ -118,55 +114,4 @@ export const CollapsibleSidebar: Story = {
         ></tp-resizable-panel-group
       >
     </div>`,
-};
-
-// Each distinct composition exposes matching copyable markup in Docs.
-NestedWorkspace.parameters = {
-  docs: {
-    source: {
-      code: `<tp-resizable-panel-group style="height:24rem">
-  <tp-resizable-panel default-size="25%" min-size="15%">Navigation</tp-resizable-panel>
-  <tp-resizable-handle with-handle label="Resize navigation"></tp-resizable-handle>
-  <tp-resizable-panel>
-    <tp-resizable-panel-group orientation="vertical">
-      <tp-resizable-panel default-size="65%" min-size="20%">Editor</tp-resizable-panel>
-      <tp-resizable-handle with-handle label="Resize editor"></tp-resizable-handle>
-      <tp-resizable-panel min-size="15%">Console</tp-resizable-panel>
-    </tp-resizable-panel-group>
-  </tp-resizable-panel>
-</tp-resizable-panel-group>`,
-    },
-  },
-};
-Controlled.parameters = {
-  docs: {
-    source: {
-      code: `<template id="controlled-layout"><tp-resizable-panel-group id="controlled" style="height:18rem">
-  <tp-resizable-panel id="controlled-left" min-size="20%">Controlled sidebar</tp-resizable-panel>
-  <tp-resizable-handle with-handle label="Resize controlled sidebar"></tp-resizable-handle>
-  <tp-resizable-panel id="controlled-right" min-size="30%">Controlled content</tp-resizable-panel>
-</tp-resizable-panel-group></template>
-<script type="module">
-  const fragment = document.querySelector('#controlled-layout').content.cloneNode(true);
-  const group = fragment.querySelector('#controlled');
-  group.sizes = ['30%', '70%']; // Configure before connection.
-  group.onSizesChange = event => { if (!event.defaultPrevented) group.sizes = event.detail.value; };
-  document.body.append(fragment);
-</script>`,
-    },
-  },
-};
-CollapsibleSidebar.parameters = {
-  docs: {
-    source: {
-      code: `<tp-button id="toggle-sidebar" variant="outline">Toggle sidebar</tp-button>
-${source}
-<script type="module">
-  const panel = document.querySelector('#sidebar');
-  document.querySelector('#toggle-sidebar').addEventListener('click', () => {
-    if (panel.isCollapsed()) panel.expand(); else panel.collapse();
-  });
-</script>`,
-    },
-  },
 };

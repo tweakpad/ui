@@ -21,8 +21,20 @@ import type { CustomElementConstructorWithTag } from '../../foundation/define.js
 export type CollapsibleIndicatorPosition = LogicalPosition;
 export type CollapsibleContentAlignment = 'edge' | 'label';
 
-/** Collapsible owns the shared disclosure roles; compositions delegate to them. */
-
+/**
+ * One disclosure that shows and hides its content behind a labelled native button. Accordion
+ * Items are built on it; use it alone for a single independent disclosure.
+ *
+ * @slot - The content shown when open.
+ * @slot label - The trigger text.
+ * @slot leading - Non-interactive content before the label, such as a step number; it replaces the
+ *   chevron when the indicator sits on this side.
+ * @slot trailing - Non-interactive content after the label, such as a status; it replaces the
+ *   chevron when the indicator sits on this side.
+ * @fires tp-open-change - Cancelable proposal to open or close, before `open` changes;
+ *   `detail.value` is the proposed state.
+ * @fires tp-open-change-complete - After the content finishes opening or closing; `detail.open`.
+ */
 export class TpCollapsible extends TpElement {
   static tagName = 'tp-collapsible';
   /** Library elements this element renders; defining it defines them too. */
@@ -136,13 +148,21 @@ export class TpCollapsible extends TpElement {
       }
     `,
   ];
+  /** Whether the content is shown; accepted trigger presses update it. */
   open = false;
+  /** Initial state when `open` is not set; later changes do not reset it. */
   defaultOpen = false;
+  /** Keeps closed content in the page instead of removing it. */
   keepMounted = false;
+  /** Keeps closed content searchable by the browser's find in page, which opens the disclosure on a match. */
   hiddenUntilFound = false;
+  /** The side of the trigger that draws the chevron, in writing direction. */
   indicatorPosition: CollapsibleIndicatorPosition = 'trailing';
+  /** Starts the content at the outer edge, or lined up with the label, which reads better after leading content. */
   contentAlignment: CollapsibleContentAlignment = 'edge';
+  /** Wraps the trigger in a heading of this level, 1 to 6, so the disclosure joins the page outline; `0` adds no heading. */
   headingLevel = 0;
+  /** Called after an open or close proposal is accepted. */
   onOpenChange: ((event: TpOpenChangeEvent) => void) | undefined;
   #motionOwner: HTMLElement = this;
   #motionContext: Readonly<Record<string, MotionValue>> = Object.freeze({});
@@ -191,10 +211,12 @@ export class TpCollapsible extends TpElement {
     },
   });
 
+  /** @internal Part element for compositions such as Accordion Item. */
   get rootElement(): HTMLElement | null {
     return this.presentationController.partElement('collapsible') ?? null;
   }
 
+  /** @internal Part element for compositions such as Accordion Item. */
   get triggerElement(): HTMLButtonElement | null {
     const host = this.presentationController.partElement('collapsible-trigger');
     if (!host) return null;
@@ -202,22 +224,27 @@ export class TpCollapsible extends TpElement {
     return (control ? control.target() : host) as HTMLButtonElement | null;
   }
 
+  /** @internal Part element for compositions such as Accordion Item. */
   get panelElement(): HTMLElement | null {
     return this.presentationController.partElement('collapsible-content') ?? null;
   }
 
+  /** @internal Part element for compositions such as Accordion Item. */
   get bodyElement(): HTMLElement | null {
     return this.presentationController.partElement('collapsible-content-body') ?? null;
   }
 
+  /** @internal Part element for compositions such as Accordion Item. */
   get leadingElement(): HTMLElement | null {
     return this.presentationController.partElement('collapsible-leading') ?? null;
   }
 
+  /** @internal Part element for compositions such as Accordion Item. */
   get labelElement(): HTMLElement | null {
     return this.presentationController.partElement('collapsible-label') ?? null;
   }
 
+  /** @internal Part element for compositions such as Accordion Item. */
   get trailingElement(): HTMLElement | null {
     return this.presentationController.partElement('collapsible-trailing') ?? null;
   }

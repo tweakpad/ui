@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import buttonGroupDocumentation from '../../docs/button-group.md?raw';
 import { navigationIcons } from '../icons/navigation.js';
-import { buttonGroupExamples } from './button-group.examples.js';
+import { libraryDocs } from './library-docs.js';
 
 interface ButtonGroupStoryArgs {
   orientation: 'horizontal' | 'vertical';
@@ -13,12 +12,7 @@ interface ButtonGroupStoryArgs {
 const meta: Meta<ButtonGroupStoryArgs> = {
   title: 'Components/Button group',
   component: 'tp-button-group',
-  parameters: {
-    docs: {
-      examples: buttonGroupExamples,
-      description: { component: buttonGroupDocumentation.replace(/^# Button group\n/u, '') },
-    },
-  },
+  parameters: { docs: libraryDocs('components/button-group') },
   args: {
     orientation: 'horizontal',
     joined: true,

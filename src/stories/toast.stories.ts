@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import type { TpToast, ToastPosition, ToastSwipeDirection } from '../components/toast/index.js';
-import documentation from '../../docs/toast.md?raw';
 import { formatTime, resolveTime } from '../foundation/time/index.js';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   timeout: number;
@@ -17,34 +17,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Toast',
   component: 'tp-toast',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      source: {
-        language: 'html',
-        code: `<tp-button id="show-notification" variant="outline">Show notification</tp-button>
-<tp-toast id="notifications" timeout="5000" limit="3"></tp-toast>
-
-<script type="module">
-import '@tweakpad/ui/register';
-import '@tweakpad/ui/styles.css';
-import { formatTime, resolveTime } from '@tweakpad/ui';
-
-const notifications = document.querySelector('tp-toast#notifications');
-document.querySelector('tp-button#show-notification').addEventListener('click', () => {
-  notifications.add({
-    title: 'Event created',
-    description: formatTime(resolveTime('2023-12-03T09:00'), Date.now(), {
-      mode: 'absolute',
-      preset: 'full',
-    }).text,
-    type: 'success',
-  });
-});
-</script>`,
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/toast') },
   args: {
     timeout: 5000,
     limit: 3,

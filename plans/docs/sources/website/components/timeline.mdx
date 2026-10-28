@@ -1,0 +1,228 @@
+---
+title: Timeline
+description: An ordered sequence of items along a vertical or horizontal axis, with complete, current and upcoming status.
+tag: tp-timeline
+parts: [tp-timeline-item]
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Timeline"
+  align="stretch"
+  code={`<tp-timeline value="shipped" aria-label="Order status" style="max-inline-size:20rem;margin-inline:auto">
+  <tp-timeline-item value="placed">
+    <strong>Order placed</strong>
+    <div style="color:var(--tp-muted-foreground)"><tp-time datetime="2026-03-18" mode="absolute" pattern="MMM d"></tp-time></div>
+  </tp-timeline-item>
+  <tp-timeline-item value="confirmed">
+    <strong>Payment confirmed</strong>
+    <div style="color:var(--tp-muted-foreground)"><tp-time datetime="2026-03-18" mode="absolute" pattern="MMM d"></tp-time></div>
+  </tp-timeline-item>
+  <tp-timeline-item value="shipped">
+    <strong>Shipped</strong>
+    <div style="color:var(--tp-muted-foreground)">Out with UPS · <tp-time datetime="2026-03-19" mode="absolute" pattern="MMM d"></tp-time></div>
+  </tp-timeline-item>
+  <tp-timeline-item value="delivered">
+    <strong>Delivered</strong>
+    <div style="color:var(--tp-muted-foreground)">Expected Mar 21</div>
+  </tp-timeline-item>
+</tp-timeline>`}
+/>
+
+## Usage
+
+Set the timeline's `value` to the current item's `value`: earlier items become complete, later ones upcoming, and the connectors fill up to the current step. Status is also given as visually hidden text, never by color alone. Timeline is display-only; links and buttons inside items keep their own behavior.
+
+### Horizontal
+
+`orientation="horizontal"` lays items along the inline axis, sharing the width equally. `responsive` switches from vertical to horizontal above a 40rem container.
+
+<Preview
+  title="Step tracker"
+  align="stretch"
+  code={`<tp-timeline orientation="horizontal" value="review" aria-label="Release checklist" style="max-inline-size:40rem;margin-inline:auto">
+  <tp-timeline-item value="draft"><strong>Draft</strong><div style="color:var(--tp-muted-foreground)">Oct 2</div></tp-timeline-item>
+  <tp-timeline-item value="review"><strong>Review</strong><div style="color:var(--tp-muted-foreground)">2 approvals left</div></tp-timeline-item>
+  <tp-timeline-item value="staging"><strong>Staging</strong><div style="color:var(--tp-muted-foreground)">Oct 14</div></tp-timeline-item>
+  <tp-timeline-item value="release"><strong>Release</strong><div style="color:var(--tp-muted-foreground)">Oct 16</div></tp-timeline-item>
+</tp-timeline>`}
+/>
+
+With `align="alternate"`, horizontal items take turns above and below the axis, and every marker stays on the axis however tall its content is. `--tp-timeline-item-min-size` keeps items readable; when they no longer fit, the timeline overflows, so place it in a horizontal Scroll area.
+
+<Preview
+  title="Roadmap"
+  align="stretch"
+  code={`<tp-scroll-area orientation="horizontal" label="Product roadmap" style="max-inline-size:44rem;margin-inline:auto">
+  <tp-timeline orientation="horizontal" align="alternate" aria-label="Product roadmap" style="--tp-timeline-item-min-size:12rem;padding-block-end:var(--tp-space-4)">
+    <tp-timeline-item>
+      <div style="color:var(--tp-muted-foreground)">Q1 2026</div>
+      <strong>Shared workspaces</strong>
+      <p style="margin:var(--tp-space-1) 0 0;color:var(--tp-muted-foreground)">Invite people to a workspace instead of to each project.</p>
+    </tp-timeline-item>
+    <tp-timeline-item>
+      <div style="color:var(--tp-muted-foreground)">Q2 2026</div>
+      <strong>Offline mode</strong>
+      <p style="margin:var(--tp-space-1) 0 0;color:var(--tp-muted-foreground)">Edit without a connection; changes sync when you are back.</p>
+    </tp-timeline-item>
+    <tp-timeline-item>
+      <div style="color:var(--tp-muted-foreground)">Q3 2026</div>
+      <strong>Public API</strong>
+      <p style="margin:var(--tp-space-1) 0 0;color:var(--tp-muted-foreground)">Read and write projects, tasks and comments from your own tools.</p>
+    </tp-timeline-item>
+    <tp-timeline-item>
+      <div style="color:var(--tp-muted-foreground)">Q4 2026</div>
+      <strong>Audit log</strong>
+      <p style="margin:var(--tp-space-1) 0 0;color:var(--tp-muted-foreground)">Every permission change and export, searchable for a year.</p>
+    </tp-timeline-item>
+    <tp-timeline-item>
+      <div style="color:var(--tp-muted-foreground)">Q1 2027</div>
+      <strong>Data residency</strong>
+      <p style="margin:var(--tp-space-1) 0 0;color:var(--tp-muted-foreground)">Choose to store a workspace in the EU or the US.</p>
+    </tp-timeline-item>
+    <tp-timeline-item>
+      <div style="color:var(--tp-muted-foreground)">Q2 2027</div>
+      <strong>Automations</strong>
+      <p style="margin:var(--tp-space-1) 0 0;color:var(--tp-muted-foreground)">Rules that move, assign and notify without a script.</p>
+    </tp-timeline-item>
+  </tp-timeline>
+</tp-scroll-area>`}
+/>
+
+### Markers
+
+The `marker` slot replaces the dot with a number, an Icon or an Avatar. Hide a visible step number from assistive technology, since the list already conveys position.
+
+<Preview
+  title="Numbered steps"
+  align="stretch"
+  code={`<tp-timeline value="domain" aria-label="Workspace setup" style="max-inline-size:24rem;margin-inline:auto">
+  <tp-timeline-item value="account">
+    <span slot="marker" aria-hidden="true">1</span>
+    <strong>Create your account</strong>
+    <p style="margin:var(--tp-space-1) 0 0;color:var(--tp-muted-foreground)">Signed in as maya@northwind.io</p>
+  </tp-timeline-item>
+  <tp-timeline-item value="domain">
+    <span slot="marker" aria-hidden="true">2</span>
+    <strong>Verify your domain</strong>
+    <p style="margin:var(--tp-space-1) 0 0;color:var(--tp-muted-foreground)">Add a TXT record to northwind.io.</p>
+  </tp-timeline-item>
+  <tp-timeline-item value="invite">
+    <span slot="marker" aria-hidden="true">3</span>
+    <strong>Invite teammates</strong>
+    <p style="margin:var(--tp-space-1) 0 0;color:var(--tp-muted-foreground)">Bring in the people you work with.</p>
+  </tp-timeline-item>
+</tp-timeline>`}
+/>
+
+### Expandable items
+
+Item content can be any component. Here each phase is a Collapsible, so expanding one is the Collapsible's own disclosure and the connectors stretch while it opens. The Collapsible pads its trigger by `--tp-space-2-5`, so `--tp-timeline-marker-offset` adds the same inset to keep each marker beside the trigger's first line.
+
+<Preview
+  title="Expandable phases"
+  align="stretch"
+  code={`<tp-timeline id="timeline-phases" value="build" aria-label="Admin console redesign" style="max-inline-size:32rem;margin-inline:auto;--tp-timeline-gap:0;--tp-timeline-marker-offset:var(--tp-space-2-5)">
+  <tp-timeline-item value="research">
+    <tp-icon slot="marker" data-icon="check"></tp-icon>
+    <tp-collapsible indicator-position="trailing" content-alignment="label">
+      <span slot="label"><strong>Research</strong> <span style="color:var(--tp-muted-foreground)">Jan 6 – Jan 24</span></span>
+      <p style="margin:0">Twelve customer interviews and a survey of 480 admins.</p>
+    </tp-collapsible>
+  </tp-timeline-item>
+  <tp-timeline-item value="design">
+    <tp-icon slot="marker" data-icon="check"></tp-icon>
+    <tp-collapsible indicator-position="trailing" content-alignment="label">
+      <span slot="label"><strong>Design</strong> <span style="color:var(--tp-muted-foreground)">Jan 27 – Feb 21</span></span>
+      <p style="margin:0">Prototype tested with eight teams; navigation simplified to four sections.</p>
+    </tp-collapsible>
+  </tp-timeline-item>
+  <tp-timeline-item value="build">
+    <tp-collapsible indicator-position="trailing" content-alignment="label" default-open>
+      <span slot="label"><strong>Build</strong> <span style="color:var(--tp-muted-foreground)">Feb 24 – Apr 4</span></span>
+      <p style="margin:0 0 var(--tp-space-2)">Settings, billing and member pages are done. Notifications are in review, and the import flow starts next week.</p>
+      <tp-badge variant="secondary">In progress</tp-badge>
+    </tp-collapsible>
+  </tp-timeline-item>
+  <tp-timeline-item value="beta">
+    <tp-collapsible indicator-position="trailing" content-alignment="label">
+      <span slot="label"><strong>Beta</strong> <span style="color:var(--tp-muted-foreground)">Apr 7 – Apr 25</span></span>
+      <p style="margin:0">Opt-in for workspaces on the Business plan.</p>
+    </tp-collapsible>
+  </tp-timeline-item>
+  <tp-timeline-item value="launch">
+    <tp-collapsible indicator-position="trailing" content-alignment="label">
+      <span slot="label"><strong>Launch</strong> <span style="color:var(--tp-muted-foreground)">Apr 28</span></span>
+      <p style="margin:0">Rollout to all workspaces over one week.</p>
+    </tp-collapsible>
+  </tp-timeline-item>
+</tp-timeline>`}
+  script={`const check = { viewBox: '0 0 24 24', paths: [{ d: 'M5 12l4 4L19 6', strokeWidth: 2.5 }] };
+for (const icon of document.querySelectorAll('#timeline-phases tp-icon[data-icon="check"]')) icon.icon = check;`}
+/>
+
+### Sides
+
+`align` puts content on the `end` side (default), the `start` side, or alternating sides. An item's own `align` overrides its position, so a conversation keeps each author on one side.
+
+<Preview
+  title="Conversation"
+  align="stretch"
+  code={`<tp-timeline align="alternate" aria-label="Support conversation" style="max-inline-size:40rem;margin-inline:auto;--tp-timeline-gap:var(--tp-space-4)">
+  <tp-timeline-item align="start">
+    <tp-avatar slot="marker" size="sm" fallback="SC" alt="Sarah Chen"></tp-avatar>
+    <tp-bubble align="start">The Stripe webhook PR is ready to merge.</tp-bubble>
+  </tp-timeline-item>
+  <tp-timeline-item align="end">
+    <tp-avatar slot="marker" size="sm" fallback="JW" alt="Jonas Weber"></tp-avatar>
+    <tp-bubble align="end" variant="outline">Great, I'll review the auth middleware today.</tp-bubble>
+  </tp-timeline-item>
+  <tp-timeline-item align="start">
+    <tp-avatar slot="marker" size="sm" fallback="SC" alt="Sarah Chen"></tp-avatar>
+    <tp-bubble align="start">Run the token migration against staging first.</tp-bubble>
+  </tp-timeline-item>
+</tp-timeline>`}
+/>
+
+### Logs and changelogs
+
+Without a `value`, items have no status and stay neutral. The `opposite` slot holds content on the other side of the axis, such as a version or a date.
+
+<Preview
+  title="Changelog"
+  align="stretch"
+  code={`<tp-timeline aria-label="Changelog" style="max-inline-size:32rem;margin-inline:auto;--tp-timeline-gap:var(--tp-space-8)">
+  <tp-timeline-item>
+    <code slot="opposite">2.4.0</code>
+    <strong>Team workspaces</strong>
+    <div style="color:var(--tp-muted-foreground)"><tp-time datetime="2026-03-22" mode="absolute" pattern="MMM d, y"></tp-time></div>
+    <div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-2);margin-block-start:var(--tp-space-2)"><tp-badge variant="secondary">Added</tp-badge><tp-badge variant="outline">Fixed</tp-badge></div>
+  </tp-timeline-item>
+  <tp-timeline-item>
+    <code slot="opposite">2.3.1</code>
+    <strong>Faster search indexing</strong>
+    <div style="color:var(--tp-muted-foreground)"><tp-time datetime="2026-03-15" mode="absolute" pattern="MMM d, y"></tp-time></div>
+  </tp-timeline-item>
+  <tp-timeline-item>
+    <code slot="opposite">2.3.0</code>
+    <strong>Custom dashboards</strong>
+    <div style="color:var(--tp-muted-foreground)"><tp-time datetime="2026-03-08" mode="absolute" pattern="MMM d, y"></tp-time></div>
+  </tp-timeline-item>
+</tp-timeline>`}
+/>
+
+### Item status
+
+An item's `status` overrides only its own derived status, for statuses set item by item or a step that was skipped.
+
+<Preview
+  title="Explicit status"
+  align="stretch"
+  code={`<tp-timeline aria-label="Incident response" style="max-inline-size:22rem;margin-inline:auto">
+  <tp-timeline-item status="complete"><strong>Alert acknowledged</strong><div style="color:var(--tp-muted-foreground)">09:12</div></tp-timeline-item>
+  <tp-timeline-item status="complete"><strong>Rollback deployed</strong><div style="color:var(--tp-muted-foreground)">09:31</div></tp-timeline-item>
+  <tp-timeline-item status="current"><strong>Monitoring</strong><div style="color:var(--tp-muted-foreground)">Error rate back to baseline</div></tp-timeline-item>
+  <tp-timeline-item status="upcoming"><strong>Postmortem</strong><div style="color:var(--tp-muted-foreground)">Due Friday</div></tp-timeline-item>
+</tp-timeline>`}
+/>

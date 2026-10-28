@@ -30,7 +30,14 @@ export const syncTimeline = Symbol('tp-timeline-sync');
 
 type Connector = 'before' | 'after';
 
-/** One entry on the timeline axis: marker, connectors, content and opposite content. */
+/**
+ * One entry of a Timeline: a marker on the axis, the lines to its neighbors, content on one side
+ * and optional content on the other.
+ *
+ * @slot - The content.
+ * @slot marker - Replaces the dot with an Icon, a number or an Avatar.
+ * @slot opposite - Content across the axis, such as a date or a version.
+ */
 export class TpTimelineItem extends TpElement {
   static tagName = 'tp-timeline-item';
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
@@ -50,9 +57,9 @@ export class TpTimelineItem extends TpElement {
 
   /** Identity matched by the Timeline value. */
   value = '';
-  /** Overrides the derived status: complete, current or upcoming; empty derives. */
+  /** Sets this item's status directly, for a skipped step or statuses given item by item; empty follows the Timeline `value`. */
   status: '' | Exclude<TimelineStatus, 'none'> = '';
-  /** Places this item on one side; empty follows the Timeline align. */
+  /** Keeps this item on one side of the axis, as for one author in a conversation; empty follows the Timeline `align`. */
   align: '' | TimelineSide = '';
   override orientation: Orientation = 'vertical';
   _record: TimelineItemRecord | null = null;
@@ -84,6 +91,7 @@ export class TpTimelineItem extends TpElement {
     return this._record?.state.side ?? 'end';
   }
 
+  /** @internal */
   [applyTimelineRecord](record: TimelineItemRecord | null): void {
     this._record = record;
     this.orientation = record?.orientation ?? 'vertical';

@@ -298,9 +298,9 @@ element actually rendered and exercise its public behavior/theming in context.
 Each component is documented once, in `docs/components/<slug>.mdx` (widgets:
 `docs/widgets/<slug>.mdx`), and both renderings read that page: Storybook through
 `parameters: { docs: libraryDocs('components/<slug>') }` in the story file, the website from
-the installed package. [documentation.md](documentation.md) is the guide; `src/docs/` is the
-tooling (page reader, API rows from the manifest, Related from `elementDependencies`, preview
-runtime, Vite plugin), `scripts/docs/build.mjs` writes `dist/docs.json` and checks the manifest
+the installed package. The [tweakpad-docs skill](../../tweakpad-docs/SKILL.md) is the guide;
+`src/docs/` is the tooling (page reader, API rows from the manifest, Related from
+`elementDependencies`, preview runtime, Vite plugin), `scripts/docs/build.mjs` writes `dist/docs.json` and checks the manifest
 descriptions of every documented element, and `scripts/docs/pending.json` lists the tags whose
 pages are not written yet.
 
@@ -311,7 +311,7 @@ fixture configuration out of Controls; use render-level setup instead.
 Separate the page from test matrices. State combinations may be fixtures outside the page
 (`tests/fixtures/`, or a story tagged `!autodocs`), without becoming separate catalog
 components. The hero preview is the first demonstration and the Default story; further
-previews are distinct use cases warranted by the task.
+previews show the features and configurations the docs skill asks for.
 
 Reuse suitable existing verification fixtures. When a durable fixture is missing,
 place it at `tests/fixtures/components/<component>/index.html` with adjacent

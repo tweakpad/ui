@@ -1,0 +1,248 @@
+---
+title: Form
+description: A native form that coordinates Field validation, submission, reset and server errors for the controls inside it.
+tag: tp-form
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Form"
+  align="stretch"
+  code={`<tp-form id="form-demo-bug" aria-label="Report a bug" style="max-inline-size:28rem">
+  <tp-field label="Summary" description="5 to 60 characters.">
+    <tp-input name="summary" required minlength="5" maxlength="60" placeholder="Export to CSV skips archived rows"></tp-input>
+  </tp-field>
+  <tp-field label="Severity">
+    <tp-native-select name="severity" default-value="medium">
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </tp-native-select>
+  </tp-field>
+  <tp-field label="Steps to reproduce">
+    <tp-text-area name="steps" rows="3" required placeholder="1. Open Reports  2. Export as CSV"></tp-text-area>
+  </tp-field>
+  <div slot="actions">
+    <tp-button type="reset" variant="outline">Reset</tp-button>
+    <tp-button type="submit">Submit report</tp-button>
+  </div>
+  <output id="form-demo-bug-output" style="color:var(--tp-muted-foreground);font-family:var(--tp-font-mono);font-size:var(--tp-text-sm)"></output>
+</tp-form>`}
+  script={`const form = document.querySelector('#form-demo-bug');
+const output = document.querySelector('#form-demo-bug-output');
+form.onFormSubmit = (values) => { output.textContent = JSON.stringify(values); };
+form.addEventListener('tp-reset', () => { output.textContent = ''; });`}
+/>
+
+## Usage
+
+`tp-form` renders a native `form` in light DOM and coordinates the Fields and form-associated controls inside it. Submitting validates every Field, focuses the first invalid control and blocks submission until the errors are fixed. A valid submission calls `onFormSubmit` with the named values and prevents navigation; without a callback the native submission proceeds. The Form does not send anything itself, so transport and persistence stay in your code.
+
+Put submit and reset Buttons in an element with `slot="actions"` to get the footer layout. Native attributes such as `action`, `method` and `name` are forwarded to the inner form.
+
+### Control types
+
+Every form-associated control takes part the same way: Select, Checkbox, Radio group and Switch validate `required` through their Field and submit under their `name`. A horizontal Field suits the Switch.
+
+<Preview
+  title="Notification settings"
+  align="stretch"
+  code={`<tp-form id="form-demo-controls" aria-label="Notification settings" style="max-inline-size:28rem">
+  <tp-field label="Send to">
+    <tp-select name="email" required placeholder="Choose an address">
+      <option value="maya@acme.com">maya@acme.com</option>
+      <option value="team@acme.com">team@acme.com</option>
+    </tp-select>
+  </tp-field>
+  <tp-field label="Notify me about">
+    <tp-radio-group name="scope" required>
+      <tp-radio-group-item value="all">All activity</tp-radio-group-item>
+      <tp-radio-group-item value="mentions">Mentions and replies</tp-radio-group-item>
+      <tp-radio-group-item value="none">Nothing</tp-radio-group-item>
+    </tp-radio-group>
+  </tp-field>
+  <tp-field label="Security alerts" description="Sign-ins from new devices and password changes." orientation="horizontal">
+    <tp-switch name="security" default-checked></tp-switch>
+  </tp-field>
+  <tp-field label="Terms">
+    <tp-checkbox name="terms" required>I agree to the notification policy</tp-checkbox>
+  </tp-field>
+  <div slot="actions">
+    <tp-button type="reset" variant="outline">Reset</tp-button>
+    <tp-button type="submit">Save settings</tp-button>
+  </div>
+  <output id="form-demo-controls-output" style="color:var(--tp-muted-foreground);font-family:var(--tp-font-mono);font-size:var(--tp-text-sm)"></output>
+</tp-form>`}
+  script={`const form = document.querySelector('#form-demo-controls');
+const output = document.querySelector('#form-demo-controls-output');
+form.onFormSubmit = (values) => { output.textContent = JSON.stringify(values); };
+form.addEventListener('tp-reset', () => { output.textContent = ''; });`}
+/>
+
+### Validation timing
+
+By default errors appear on submit. Set `validationTiming` to `on-blur` or `on-change` to validate earlier for every Field in the form; a Field's own `validation-mode` still wins.
+
+<Preview
+  title="Validate on blur"
+  align="stretch"
+  code={`<tp-form id="form-demo-timing" aria-label="Create account" style="max-inline-size:24rem">
+  <tp-field label="Email">
+    <tp-input name="email" type="email" required autocomplete="email" placeholder="maya@acme.com"></tp-input>
+  </tp-field>
+  <tp-field label="Password" description="At least 12 characters.">
+    <tp-input name="password" type="password" required minlength="12" autocomplete="new-password"></tp-input>
+  </tp-field>
+  <div slot="actions"><tp-button type="submit">Create account</tp-button></div>
+</tp-form>`}
+  script={`const form = document.querySelector('#form-demo-timing');
+form.validationTiming = 'on-blur';
+form.onFormSubmit = () => {};`}
+/>
+
+### Server errors
+
+Assign `errors`, a record of field name to message, to show results from your server. They stay until you replace them, so clear them when the user edits the value.
+
+<Preview
+  title="External errors"
+  align="stretch"
+  code={`<tp-form id="form-demo-errors" aria-label="Claim workspace URL" style="max-inline-size:24rem">
+  <tp-field label="Workspace URL" description="acme.app/your-team">
+    <tp-input name="slug" required default-value="design"></tp-input>
+  </tp-field>
+  <div slot="actions"><tp-button type="submit">Claim URL</tp-button></div>
+</tp-form>`}
+  script={`const form = document.querySelector('#form-demo-errors');
+form.errors = { slug: 'design is already taken. Try design-team.' };
+form.addEventListener('tp-value-change', () => { form.errors = {}; });
+form.onFormSubmit = (values) => {
+  if (values.slug === 'design') form.errors = { slug: 'design is already taken. Try design-team.' };
+};`}
+/>
+
+### Cross-field validation
+
+A Field's `validator` receives its value and every named value in the form, which covers rules that compare two fields.
+
+<Preview
+  title="Matching passwords"
+  align="stretch"
+  code={`<tp-form id="form-demo-match" aria-label="Change password" style="max-inline-size:24rem">
+  <tp-field label="New password">
+    <tp-input name="password" type="password" required autocomplete="new-password"></tp-input>
+  </tp-field>
+  <tp-field id="form-demo-match-confirm" label="Confirm password">
+    <tp-input name="confirm" type="password" required autocomplete="new-password"></tp-input>
+  </tp-field>
+  <div slot="actions"><tp-button type="submit">Update password</tp-button></div>
+  <output id="form-demo-match-output" style="color:var(--tp-muted-foreground)"></output>
+</tp-form>`}
+  script={`const form = document.querySelector('#form-demo-match');
+document.querySelector('#form-demo-match-confirm').validator = (value, values) =>
+  value === values.password ? null : 'Passwords must match.';
+form.onFormSubmit = () => {
+  document.querySelector('#form-demo-match-output').textContent = 'Password updated.';
+};`}
+/>
+
+### Async validation
+
+A `validator` may return a promise, but submission does not wait for it. To wait, cancel `tp-submit` and await `event.detail.validationRun.completion` before saving.
+
+<Preview
+  title="Wait for async checks"
+  align="stretch"
+  code={`<tp-form id="form-demo-async" aria-label="Choose a username" style="max-inline-size:24rem">
+  <tp-field id="form-demo-async-field" label="Username" description="Try maya, which is already taken.">
+    <tp-input name="username" required default-value="maya"></tp-input>
+  </tp-field>
+  <div slot="actions"><tp-button type="submit">Save username</tp-button></div>
+  <output id="form-demo-async-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"></output>
+</tp-form>`}
+  script={`const form = document.querySelector('#form-demo-async');
+const output = document.querySelector('#form-demo-async-output');
+// Stands in for a request to your server.
+document.querySelector('#form-demo-async-field').validator = (value) =>
+  new Promise((resolve) => {
+    setTimeout(() => resolve(value === 'maya' ? 'maya is already taken.' : null), 600);
+  });
+form.addEventListener('tp-submit', async (event) => {
+  event.preventDefault();
+  output.textContent = 'Checking availability…';
+  const { validationRun, values } = event.detail;
+  const result = await validationRun.completion;
+  output.textContent = result.status === 'valid' ? \`Saved @\${values.username}.\` : '';
+});`}
+/>
+
+### Repeated fields
+
+Fields can be added and removed while the form is open; each registers as it connects. Controls that share a `name` submit together, in document order.
+
+<Preview
+  title="Repeated emails"
+  align="stretch"
+  code={`<tp-form id="form-demo-repeat" aria-label="Invite teammates" style="max-inline-size:28rem">
+  <div id="form-demo-repeat-list" style="display:grid;gap:var(--tp-space-4)">
+    <tp-field label="Email 1">
+      <tp-input-group>
+        <tp-input name="email" type="email" required placeholder="jordan@acme.com"></tp-input>
+        <tp-button slot="action" type="button" variant="ghost" data-remove disabled>Remove</tp-button>
+      </tp-input-group>
+    </tp-field>
+  </div>
+  <tp-button id="form-demo-repeat-add" type="button" variant="outline" style="justify-self:start">Add another email</tp-button>
+  <div slot="actions"><tp-button type="submit">Send invites</tp-button></div>
+  <output id="form-demo-repeat-output" style="color:var(--tp-muted-foreground);font-family:var(--tp-font-mono);font-size:var(--tp-text-sm)"></output>
+</tp-form>`}
+  script={`const form = document.querySelector('#form-demo-repeat');
+const list = document.querySelector('#form-demo-repeat-list');
+const add = document.querySelector('#form-demo-repeat-add');
+const sync = () => {
+  const fields = [...list.querySelectorAll('tp-field')];
+  fields.forEach((field, index) => {
+    field.label = 'Email ' + (index + 1);
+    field.querySelector('[data-remove]').disabled = fields.length === 1;
+  });
+  add.disabled = fields.length >= 5;
+};
+add.addEventListener('click', () => {
+  const field = document.createElement('tp-field');
+  field.innerHTML = \`<tp-input-group>
+    <tp-input name="email" type="email" required></tp-input>
+    <tp-button slot="action" type="button" variant="ghost" data-remove>Remove</tp-button>
+  </tp-input-group>\`;
+  list.append(field);
+  sync();
+});
+list.addEventListener('click', (event) => {
+  const remove = event.target.closest('[data-remove]');
+  if (remove) (remove.closest('tp-field').remove(), sync());
+});
+form.onFormSubmit = (values, { data }) => {
+  document.querySelector('#form-demo-repeat-output').textContent = JSON.stringify(data.getAll('email'));
+};`}
+/>
+
+### Submission policy
+
+`submissionPolicy` can disable the submit Buttons while the form is invalid or while async validation is pending. Disabled actions are hard to discover, so prefer the default `always-enabled` unless the form is short and the requirements are obvious.
+
+<Preview
+  title="Disable while invalid"
+  align="stretch"
+  code={`<tp-form id="form-demo-policy" aria-label="Join the beta" style="max-inline-size:24rem">
+  <tp-field label="Work email">
+    <tp-input name="email" type="email" required placeholder="maya@acme.com"></tp-input>
+  </tp-field>
+  <tp-field label="Company">
+    <tp-input name="company" required placeholder="Acme Inc."></tp-input>
+  </tp-field>
+  <div slot="actions"><tp-button type="submit">Join the beta</tp-button></div>
+</tp-form>`}
+  script={`const form = document.querySelector('#form-demo-policy');
+form.submissionPolicy = 'disable-while-invalid';
+form.onFormSubmit = () => {};`}
+/>

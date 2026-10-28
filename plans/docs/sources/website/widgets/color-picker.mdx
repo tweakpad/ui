@@ -1,0 +1,210 @@
+---
+title: Color picker
+description: Edits one CSS color through a saturation plane, channel sliders, a harmony wheel or swatches, inline or in a popup.
+tag: tp-color-picker
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Color picker"
+  code={`<tp-color-picker label="Brand accent" name="accent" default-value="#6d5dfc" style="inline-size:18rem"></tp-color-picker>`}
+/>
+
+## Usage
+
+The value is a CSS Color 4 string serialized in the active format, while the widget keeps a floating-point color internally, so switching formats or dragging never accumulates rounding. Give the picker an inline size; its surfaces fill the width they get.
+
+### Popup
+
+`picker="popup"` puts the panel in a Popover opened from a swatch Button. The popup header compares the original and current colors, copies the value and offers the eyedropper; pressing the original restores it.
+
+<Preview
+  title="Popup in a field"
+  code={`<tp-field label="Button color" description="Used for primary actions in the theme.">
+  <tp-color-picker picker="popup" name="button-color" default-value="#0f766e"></tp-color-picker>
+</tp-field>`}
+/>
+
+### In a form
+
+With a `name`, the picker submits its string through the surrounding form and takes part in reset. Recent colors are application state: record each commit and hand the last few back through `recent`, and they appear in the popup's swatch strip.
+
+<Preview
+  title="Popup in a form"
+  align="stretch"
+  code={`<form id="color-picker-form" style="display:grid;gap:var(--tp-space-4);max-inline-size:24rem;margin-inline:auto">
+  <tp-field label="Workspace color" description="Shown in the sidebar and on invitations.">
+    <tp-color-picker picker="popup" name="workspace-color" default-value="#6d5dfc"></tp-color-picker>
+  </tp-field>
+  <div style="display:flex;gap:var(--tp-space-2)">
+    <tp-button type="submit">Save</tp-button>
+    <tp-button type="reset" variant="outline">Reset</tp-button>
+  </div>
+</form>
+<output id="color-picker-form-output" style="display:block;margin-block-start:var(--tp-space-3);text-align:center;color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Pick a color, then save.</output>`}
+  script={`const form = document.querySelector('#color-picker-form');
+const picker = form.querySelector('tp-color-picker');
+const output = document.querySelector('#color-picker-form-output');
+let recent = [];
+picker.addEventListener('tp-value-commit', (event) => {
+  if (!event.detail.value || event.detail.metadata?.formatChange) return;
+  recent = [event.detail.value, ...recent.filter((color) => color !== event.detail.value)];
+  picker.recent = recent.slice(0, 5);
+});
+form.addEventListener('submit', (event) => {
+  event.preventDefault();
+  output.textContent = \`Saved \${new FormData(form).get('workspace-color')}\`;
+});`}
+/>
+
+### Formats
+
+`format` never follows the notation you supply: any CSS color goes in, and `value` reads back in the active format. `formats` limits the format Select; `alpha="false"` drops alpha and keeps every published value opaque.
+
+<Preview
+  title="Limited formats, no alpha"
+  code={`<tp-color-picker label="Text color" default-value="rgb(30 41 59)" default-format="oklch" formats="hex rgb oklch" alpha="false" style="inline-size:18rem"></tp-color-picker>`}
+/>
+
+### Views
+
+`views` lists the available views; more than one renders a tab strip. Channel sliders edit each channel of the format, the wheel derives harmony colors from a base, and the triangle is the classic hue ring around an HSV triangle.
+
+<Preview
+  title="Channel sliders"
+  code={`<tp-color-picker label="Surface" views="sliders" default-format="oklch" default-value="oklch(0.586 0.227 281.3)" style="inline-size:18rem"></tp-color-picker>`}
+/>
+
+<Preview
+  title="Harmony wheel and triangle"
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-8);justify-content:center">
+  <tp-color-picker label="Campaign palette" views="wheel" default-harmony="triad" default-value="#e53935" style="inline-size:18rem"></tp-color-picker>
+  <tp-color-picker label="Tint" views="triangle" default-value="#43a047" style="inline-size:18rem"></tp-color-picker>
+</div>`}
+/>
+
+`default-harmony` sets the starting rule; a `harmony` attribute makes the rule controlled. The ring around the wheel copies each harmony color on press.
+
+`harmonyColors` lists the base color first and then the derived ones, in the active format, so the palette can drive the rest of your interface.
+
+<Preview
+  title="Reading the palette"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-color-picker id="color-picker-harmony" label="Chart palette" views="wheel" default-harmony="analogous" default-value="#039be5" style="inline-size:18rem"></tp-color-picker>
+  <div id="color-picker-harmony-chips" style="display:flex;gap:var(--tp-space-2)"></div>
+</div>`}
+  script={`const picker = document.querySelector('#color-picker-harmony');
+const chips = document.querySelector('#color-picker-harmony-chips');
+const render = () => {
+  chips.replaceChildren(...picker.harmonyColors.map((color, index) => {
+    const chip = document.createElement('span');
+    chip.title = color;
+    chip.setAttribute('aria-label', index === 0 ? \`Base \${color}\` : color);
+    chip.style.cssText = \`inline-size:2.5rem;block-size:1.5rem;border-radius:var(--tp-radius-md);background:\${color}\`;
+    return chip;
+  }));
+};
+await customElements.whenDefined('tp-color-picker');
+await picker.updateComplete;
+render();
+picker.addEventListener('tp-value-commit', render);
+picker.addEventListener('tp-harmony-change', () => queueMicrotask(render));`}
+/>
+
+### Swatches and schemes
+
+Saved swatches are a property, set from data; recent colors are application-owned too, since the widget keeps no history. The schemes view generates tints, shades and related strips from the current color.
+
+<Preview
+  title="Brand swatches"
+  code={`<tp-color-picker id="color-picker-swatches" label="Chart series" views="area swatches schemes" default-view="swatches" default-value="#fb8c00" style="inline-size:18rem"></tp-color-picker>`}
+  script={`await customElements.whenDefined('tp-color-picker');
+const picker = document.querySelector('#color-picker-swatches');
+picker.swatches = [
+  { label: 'Brand', colors: ['#6d5dfc', '#0f766e', '#fb8c00', '#e53935'] },
+  { label: 'Neutrals', colors: ['#0f172a', '#475569', '#cbd5e1', '#f8fafc'] },
+];
+picker.recent = ['#039be5', '#8e24aa', '#43a047'];`}
+/>
+
+### Listening to changes
+
+Drags publish `tp-value-change` while moving and one `tp-value-commit` on release, so expensive work belongs on the commit. Cancel a `tp-value-change` to reject a proposal.
+
+<Preview
+  title="Commit events"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-color-picker id="color-picker-events" label="Highlight" default-value="#facc15" style="inline-size:18rem"></tp-color-picker>
+  <output id="color-picker-events-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Saved: #facc15</output>
+</div>`}
+  script={`const picker = document.querySelector('#color-picker-events');
+const output = document.querySelector('#color-picker-events-output');
+picker.addEventListener('tp-value-commit', (event) => {
+  output.textContent = \`Saved: \${event.detail.value}\`;
+});`}
+/>
+
+### Controlled, with limits
+
+Set `value` to own the color: each proposal arrives in `onValueChange`, and only the values you write back are shown. `event.detail.metadata.color` carries the proposal as floating-point coordinates, so you can check it before accepting. This one refuses colors too light for white button text; drag toward white and the handle stops.
+
+<Preview
+  title="Controlled owner"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-color-picker id="color-picker-controlled" label="Button color" value="#2622a5" default-format="hex" alpha="false" style="inline-size:18rem"></tp-color-picker>
+  <tp-button id="color-picker-controlled-sample" style="--tp-primary:#2622a5;--tp-primary-foreground:#fff">Start free trial</tp-button>
+</div>`}
+  script={`const picker = document.querySelector('#color-picker-controlled');
+const sample = document.querySelector('#color-picker-controlled-sample');
+picker.onValueChange = (event) => {
+  const color = event.detail.metadata?.color;
+  if (color?.space === 'srgb') {
+    const [r, g, b] = color.coords;
+    if (0.2126 * r + 0.7152 * g + 0.0722 * b > 0.45) {
+      event.preventDefault();
+      return;
+    }
+  }
+  picker.value = event.detail.value;
+  sample.style.setProperty('--tp-primary', event.detail.value);
+};`}
+/>
+
+A refused proposal leaves the value, every surface, the fields and the form state unchanged.
+
+### Trimming the panel
+
+The controls around the color surface can each be turned off. `fields="false"` removes the row of value boxes, `format-select="false"` the format Select, `preview="false"` the color swatch and `eyedropper="false"` the screen picker, leaving a surface for quick, approximate choices.
+
+<Preview
+  title="Surface only, and fields without a format choice"
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-8);justify-content:center;align-items:start">
+  <tp-color-picker label="Sticky note color" fields="false" eyedropper="false" alpha="false" default-value="#fdd835" style="inline-size:15rem"></tp-color-picker>
+  <tp-color-picker label="Link color" format-select="false" preview="false" default-format="hex" alpha="false" default-value="#3949ab" style="inline-size:15rem"></tp-color-picker>
+</div>`}
+/>
+
+### Sizes and states
+
+<Preview
+  title="Small and read-only"
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-8);justify-content:center;align-items:start">
+  <tp-color-picker label="Badge color" size="sm" shape="round" default-value="#8e24aa" style="inline-size:15rem"></tp-color-picker>
+  <tp-color-picker label="Locked brand color" readonly default-value="#6d5dfc" style="inline-size:15rem"></tp-color-picker>
+</div>`}
+/>
+
+`readonly` keeps focus and form submission but blocks every edit; `disabled` removes both.
+
+### Right-to-left
+
+Under `dir="rtl"` the area and the Sliders mirror with the writing direction, so dragging toward the end edge still raises the value. Angular surfaces, the wheel and the hue ring, keep their geometry.
+
+<Preview
+  title="Right-to-left"
+  code={`<div dir="rtl" style="display:flex;flex-wrap:wrap;gap:var(--tp-space-8);justify-content:center;align-items:start">
+  <tp-color-picker label="لون العلامة" default-value="#00897b" style="inline-size:15rem"></tp-color-picker>
+  <tp-color-picker label="لون الخلفية" views="sliders" default-format="hsl" default-value="hsl(36 100% 50%)" style="inline-size:15rem"></tp-color-picker>
+</div>`}
+/>

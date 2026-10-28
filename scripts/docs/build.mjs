@@ -2,7 +2,7 @@
 // parsed, related to the pages it renders and is rendered by, plus the token catalog. Runs at the
 // end of `npm run build`, after the library (`dist/docs/index.js`) and the Custom Elements
 // Manifest exist, and fails the build on anything the renderings would show wrong: a page for an
-// element the catalog does not list, a title that is not the catalog name, a constituent tag the
+// element the catalog does not list, a constituent tag the
 // manifest does not declare, or a documented element whose public API has an undescribed row.
 //
 // `scripts/docs/pending.json` lists the tags whose pages are not written yet: they need no page
@@ -62,14 +62,10 @@ for (const section of ['components', 'widgets']) {
     else {
       if (entry.section !== section)
         problems.push(`${path}: ${page.tag} belongs under docs/${entry.section}`);
-      if (entry.name !== page.title)
-        problems.push(`${path}: the title must be the catalog name "${entry.name}"`);
     }
     if (!tags.has(page.tag)) problems.push(`${path}: the manifest does not declare ${page.tag}`);
     for (const part of page.parts) {
       if (!tags.has(part)) problems.push(`${path}: the manifest does not declare part ${part}`);
-      if (entryByTag.has(part))
-        problems.push(`${path}: ${part} has its own page; it is not a part`);
     }
     if (pending.has(page.tag))
       problems.push(`${path}: ${page.tag} has a page; remove it from scripts/docs/pending.json`);

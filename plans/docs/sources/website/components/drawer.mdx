@@ -1,0 +1,119 @@
+---
+title: Drawer
+description: A dialog attached to a screen edge, with swipe-to-dismiss, snap points and side-panel layouts.
+tag: tp-drawer
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Drawer"
+  code={`<tp-drawer label="Notifications" description="Choose what Acme sends to your inbox." show-swipe-handle>
+  <tp-button slot="trigger" variant="outline">Notification settings</tp-button>
+  <div style="display:grid;gap:var(--tp-space-4)">
+    <tp-field label="Mentions and replies" description="When someone mentions you or replies to your comment." orientation="horizontal">
+      <tp-switch name="mentions" default-checked></tp-switch>
+    </tp-field>
+    <tp-field label="Weekly digest" description="A summary of project activity every Monday." orientation="horizontal">
+      <tp-switch name="digest"></tp-switch>
+    </tp-field>
+  </div>
+  <tp-button slot="close">Done</tp-button>
+</tp-drawer>`}
+/>
+
+## Usage
+
+Drawer is a Dialog attached to an edge of the viewport. It shares Dialog's slots (`trigger`, `title`, `description`, default body, `footer`, `close`), focus management and dismissal, and adds edge placement and swipe gestures. Swiping toward the closing edge dismisses it; the trigger and the close action keep working without gestures.
+
+### Side panels
+
+`edge` takes a logical edge, so `inline-end` is the right side in left-to-right pages and flips in right-to-left ones. Set `swipe-enabled="false"` for a desktop side panel that should not react to drags.
+
+<Preview
+  title="Edges"
+  code={`<tp-drawer edge="inline-end" swipe-enabled="false" label="Edit task" description="DES-214 · Design review">
+  <tp-button slot="trigger" variant="outline">Edit task</tp-button>
+  <div style="display:grid;gap:var(--tp-space-4)">
+    <tp-field label="Title">
+      <tp-input name="title" default-value="Review onboarding flow"></tp-input>
+    </tp-field>
+    <tp-field label="Notes">
+      <tp-text-area name="notes" rows="4" default-value="Check empty states on the projects page."></tp-text-area>
+    </tp-field>
+  </div>
+  <tp-button slot="close">Save task</tp-button>
+</tp-drawer>
+<tp-drawer edge="inline-start" swipe-enabled="false" label="Workspaces">
+  <tp-button slot="trigger" variant="outline">Switch workspace</tp-button>
+  <p style="margin:0">You belong to Acme Inc, Northwind and Personal.</p>
+  <tp-button slot="close" variant="outline">Close</tp-button>
+</tp-drawer>`}
+/>
+
+### Backdrop
+
+`backdrop="blur"` keeps the dark fill and blurs the page behind it, which helps when the page content would compete with the drawer. It changes appearance only; `modality` decides whether a backdrop is shown at all.
+
+<Preview
+  title="Blurred backdrop"
+  code={`<tp-drawer backdrop="blur" label="Share “Q3 roadmap”" description="Anyone with the link can view." show-swipe-handle>
+  <tp-button slot="trigger" variant="outline">Share</tp-button>
+  <tp-field label="Link">
+    <tp-input readonly default-value="https://acme.app/d/q3-roadmap"></tp-input>
+  </tp-field>
+  <tp-button slot="close">Copy link</tp-button>
+</tp-drawer>`}
+/>
+
+### Snap points
+
+Set `snapPoints` to let a sheet rest at partial heights. Numbers up to `1` are viewport fractions, larger numbers are pixels, and strings accept CSS lengths. With `show-swipe-handle`, the handle also works as a keyboard slider with the arrow keys, Home and End.
+
+<Preview
+  title="Snap points"
+  code={`<tp-drawer id="drawer-demo-snap" label="Nearby places" description="12 results within 2 km." show-swipe-handle>
+  <tp-button slot="trigger" variant="outline">Explore nearby</tp-button>
+  <p style="margin:0">Drag the handle to expand the list, or release below the lowest point to close.</p>
+  <tp-button slot="close" variant="outline">Done</tp-button>
+</tp-drawer>`}
+  script={`const drawer = document.querySelector('#drawer-demo-snap');
+drawer.snapPoints = [0.25, 0.5, 1];
+drawer.defaultSnapPoint = 0.5;`}
+/>
+
+`onSnapPointChange` receives each proposed snap point as a cancelable event, and `setSnapPoint()` moves the sheet from code.
+
+### Nested drawers
+
+Put a Drawer inside another Drawer's body to open a follow-up step on top of it. The parent stays open and recedes behind the new sheet; closing the child returns to the parent where it left off.
+
+<Preview
+  title="Nested"
+  code={`<tp-drawer label="Workspace members" description="Northwind · 6 members" show-swipe-handle>
+  <tp-button slot="trigger" variant="outline">Manage members</tp-button>
+  <p style="margin:0">Maya Chen, Jonas Weber, Amara Okafor and 3 others have access.</p>
+  <tp-drawer label="Invite a member" description="They get an email with a join link." show-swipe-handle>
+    <tp-button slot="trigger" variant="outline">Invite member</tp-button>
+    <tp-field label="Email">
+      <tp-input type="email" name="invite-email" placeholder="lee@northwind.co"></tp-input>
+    </tp-field>
+    <tp-button slot="close">Send invite</tp-button>
+  </tp-drawer>
+  <tp-button slot="close" variant="outline">Done</tp-button>
+</tp-drawer>`}
+/>
+
+### Non-dismissible
+
+Set the `dismissible` property to `false` when outside presses, Escape and swipes must not close the drawer, such as a required acknowledgement. The explicit close action still works.
+
+<Preview
+  title="Non-dismissible"
+  code={`<tp-drawer id="drawer-demo-terms" label="Updated terms of service" description="Effective November 1, 2026.">
+  <tp-button slot="trigger" variant="outline">Review terms</tp-button>
+  <p style="margin:0">We changed how workspace data is retained after an account is closed. Review the summary before you continue.</p>
+  <tp-button slot="close">I agree</tp-button>
+</tp-drawer>`}
+  script={`document.querySelector('#drawer-demo-terms').dismissible = false;`}
+/>

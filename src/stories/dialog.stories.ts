@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
 import type { TpDialog } from '../components/dialog/index.js';
-import documentation from '../../docs/dialog.md?raw';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   open: boolean;
@@ -21,7 +21,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Dialog',
   component: 'tp-dialog',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/dialog') },
   args: {
     open: false,
     label: 'Edit profile',

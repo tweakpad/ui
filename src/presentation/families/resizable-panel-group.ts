@@ -16,18 +16,23 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'resizable-panel-group',
+      description: 'The flex container laying the panels out along the group axis.',
       axes: ['orientation'],
     },
     {
       name: 'resizable-panel-group-panel',
+      description: 'A panel; marked while collapsed.',
       axes: ['orientation'],
     },
     {
       name: 'resizable-panel-group-separator',
+      description:
+        'The focusable separator of a handle, with its enlarged pointer target; marked while dragging or disabled.',
       axes: ['orientation'],
     },
     {
       name: 'resizable-panel-group-handle-decoration',
+      description: 'The grip a handle shows with `with-handle`.',
       axes: ['orientation'],
     },
   ],

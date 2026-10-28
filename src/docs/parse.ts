@@ -4,13 +4,15 @@
  * MDX that both renderings (Storybook and the website) compile natively while tooling reads it
  * here without an MDX compiler. The page contract:
  *
- * - YAML frontmatter with flat scalar and `[a, b]` fields: `title`, `description`, `tag`, `parts`.
+ * - YAML frontmatter with flat scalar and list fields (`[a, b]` or a block list): `title`,
+ *   `description`, `tag`, `parts`.
  * - Markdown prose with `##` and `###` headings.
- * - Two self-closing elements and nothing else from MDX: `<Preview … />` (a live example whose
- *   `code` is both what renders and the copyable source, plus an optional `script`) and
+ * - Three self-closing elements and nothing else from MDX: `<Preview … />` (a live example whose
+ *   `code` is both what renders and the copyable source, plus an optional `script`),
+ *   `<Code code={`…`} />` (a standalone sample with an optional `language` and `label`) and
  *   `<Keys keys="…" />` inside a Keyboard table. Multi-line attribute values are template
  *   literals (`code={`…`}`) that use only the escapes `` \` ``, `\$` and `\\`.
- * - No `import` or `export` statements: the renderings supply the two elements.
+ * - No `import` or `export` statements: the renderings supply the three elements.
  *
  * The parser reads positions (which heading each preview sits under, which preview is the hero)
  * and the attribute grammar; the page rules themselves (section order, allowed headings, variant
@@ -75,13 +77,14 @@ export interface ParsedDoc extends DocFrontmatter {
 }
 
 export class DocParseError extends Error {
-  constructor(
-    readonly id: string,
-    readonly line: number,
-    detail: string,
-  ) {
+  readonly id: string;
+  readonly line: number;
+
+  constructor(id: string, line: number, detail: string) {
     super(`${id}:${line}: ${detail}`);
     this.name = 'DocParseError';
+    this.id = id;
+    this.line = line;
   }
 }
 
@@ -94,6 +97,7 @@ const PREVIEW_ATTRIBUTES = new Set([
   'viewport',
   'codeOnly',
 ]);
+const CODE_ATTRIBUTES = new Set(['code', 'language', 'label']);
 const ALIGNMENTS = new Set(['center', 'start', 'stretch']);
 
 /** The heading id the renderings produce: lowercase, punctuation dropped, spaces as hyphens. */
@@ -128,6 +132,16 @@ function parseFrontmatter(lines: readonly string[], id: string): Frontmatter {
     if (!match) throw new DocParseError(id, index + 1, `unreadable frontmatter line: ${line}`);
     const [, key, raw] = match;
     const value = raw!.trim();
+    if (!value && /^\s+-\s/.test(lines[index + 1] ?? '')) {
+      // A YAML block list: `parts:` followed by `  - tp-a` lines.
+      const items: string[] = [];
+      while (/^\s+-\s/.test(lines[index + 1] ?? '')) {
+        index += 1;
+        items.push(unquote(lines[index]!.replace(/^\s+-\s+/, '').trim()));
+      }
+      fields[key!] = items;
+      continue;
+    }
     if (value.startsWith('[')) {
       if (!value.endsWith(']'))
         throw new DocParseError(id, index + 1, `frontmatter list must close on its line: ${key}`);
@@ -315,12 +329,26 @@ export function parseDoc(source: string, id: string): ParsedDoc {
   const consumed: [number, number][] = [];
   // Inline code never holds an element, and a code fence was blanked already.
   const scannable = body.replace(/`[^`\n]*`/g, (code) => ' '.repeat(code.length));
+  let consumedEnd = 0;
   for (const match of scannable.matchAll(/<[A-Z][\w.]*(?=[\s/>])/g)) {
+    // Text inside an element's attribute values (`Promise<Blob>` in a code sample) is not markup.
+    if (match.index < consumedEnd) continue;
     const start = bodyStart + match.index;
     const element = readElement(text, start, id, lineAt);
     const line = lineAt(start);
     elements.push({ name: element.name, line });
     consumed.push([match.index, element.end - bodyStart]);
+    consumedEnd = element.end - bodyStart;
+    if (element.name === 'Code') {
+      for (const [name, attribute] of element.attributes) {
+        if (!CODE_ATTRIBUTES.has(name))
+          throw new DocParseError(id, attribute.line, `unknown Code attribute: ${name}`);
+        if (attribute.value === true)
+          throw new DocParseError(id, attribute.line, `Code ${name} needs a value`);
+      }
+      if (!element.attributes.has('code')) throw new DocParseError(id, line, 'Code needs code');
+      continue;
+    }
     if (element.name !== 'Preview') continue;
     for (const [name, attribute] of element.attributes) {
       if (!PREVIEW_ATTRIBUTES.has(name))

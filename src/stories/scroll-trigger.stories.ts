@@ -1,8 +1,36 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { html } from 'lit';
-import documentation from '../../docs/scroll-trigger.md?raw';
-import { scrollTriggerDefaultSource, scrollTriggerExamples } from './scroll-trigger.examples.js';
+import { libraryDocs } from './library-docs.js';
+
+const photo = (id: string, width: number) =>
+  `https://images.unsplash.com/${id}?w=${width}&q=75&auto=format&fit=crop`;
+const widths = (id: string) =>
+  [480, 800, 1200].map((width) => `${photo(id, width)} ${width}w`).join(', ');
+const rooms = [
+  'photo-1497366754035-f200968a6e72',
+  'photo-1497215728101-856f4ea42174',
+  'photo-1548516173-3cabfa4607e9',
+];
+
+const scrollTriggerDefaultSource = `<tp-scroll-trigger stagger="200">
+  <h3 style="margin: 0 0 var(--tp-space-3); font-size: 2rem; line-height: 1.1">
+    <tp-text-motion split="words lines" mask="lines" reveal="up">Quiet spaces, open light</tp-text-motion>
+  </h3>
+  <tp-image-group reveal="fade up" stagger="120">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--tp-space-3)">
+${rooms
+  .map(
+    (id) =>
+      `      <tp-image ratio="1" src="${photo(id, 800)}" srcset="${widths(id)}" sizes="(min-width: 48rem) 15rem, 33vw" alt=""></tp-image>`,
+  )
+  .join('\n')}
+    </div>
+  </tp-image-group>
+  <p style="margin: var(--tp-space-3) 0 0; color: var(--tp-muted-foreground)">
+    <tp-text-motion reveal="fade">Three rooms designed for focused work.</tp-text-motion>
+  </p>
+</tp-scroll-trigger>`;
 
 interface Args {
   stagger: number;
@@ -19,13 +47,7 @@ interface Args {
 const meta = {
   title: 'Components/Scroll trigger',
   component: 'tp-scroll-trigger',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: scrollTriggerExamples,
-      source: { code: scrollTriggerDefaultSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/scroll-trigger') },
   args: {
     stagger: 200,
     staggerFrom: 'first',

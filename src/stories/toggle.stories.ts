@@ -10,7 +10,7 @@ import {
   bookmarkIcon,
   filledBookmarkIcon,
 } from '../icons/text-formatting.js';
-import documentation from '../../docs/toggle.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   pressed: boolean;
@@ -56,10 +56,7 @@ const meta: Meta<Args> = {
   component: 'tp-toggle',
   parameters: {
     layout: 'centered',
-    docs: {
-      description: { component: documentation },
-      source: { code: '<tp-toggle>Bold</tp-toggle>' },
-    },
+    docs: libraryDocs('components/toggle'),
   },
   args: {
     pressed: false,
@@ -100,11 +97,13 @@ export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
 export const IconOnly: Story = {
+  tags: ['!autodocs'],
   args: { ariaLabel: 'Bold', size: 'icon' },
   render: (args) => renderToggle(args, html`<tp-icon .icon=${boldIcon}></tp-icon>`),
   parameters: { docs: { source: { code: iconSource('boldIcon', boldIcon, '', 'Bold', 'icon') } } },
 };
 export const IconWithLabel: Story = {
+  tags: ['!autodocs'],
   args: { variant: 'outline' },
   render: (args) =>
     renderToggle(
@@ -114,6 +113,7 @@ export const IconWithLabel: Story = {
   parameters: { docs: { source: { code: iconSource('italicIcon', italicIcon, 'Italic') } } },
 };
 export const StatefulIcon: Story = {
+  tags: ['!autodocs'],
   args: { variant: 'outline' },
   render: (args) => renderToggle(args, 'Bookmark', true),
   parameters: {
@@ -125,6 +125,7 @@ export const StatefulIcon: Story = {
   },
 };
 export const WithButton: Story = {
+  tags: ['!autodocs'],
   render: (args) => {
     // Text content takes the text step of the chosen size, icon-only content its square step.
     const textSize = (

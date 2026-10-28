@@ -1,0 +1,249 @@
+---
+title: Time
+description: One date, time or duration as relative, calendar, absolute or duration text, on a native time element.
+tag: tp-time
+---
+
+<Preview
+  title="Time"
+  align="stretch"
+  code={`<ul id="time-hero" style="display:grid;gap:var(--tp-space-3);max-inline-size:24rem;margin:0 auto;padding:0;list-style:none;font-size:var(--tp-text-sm)">
+  <li style="display:flex;justify-content:space-between;gap:var(--tp-space-4)">
+    <span><strong>Maya Chen</strong> merged #482</span>
+    <tp-time data-offset="-45" style="color:var(--tp-muted-foreground)"></tp-time>
+  </li>
+  <li style="display:flex;justify-content:space-between;gap:var(--tp-space-4)">
+    <span><strong>Jonas Weber</strong> deployed to production</span>
+    <tp-time data-offset="-1500" style="color:var(--tp-muted-foreground)"></tp-time>
+  </li>
+  <li style="display:flex;justify-content:space-between;gap:var(--tp-space-4)">
+    <span><strong>Priya Natarajan</strong> opened #479</span>
+    <tp-time data-offset="-97200" style="color:var(--tp-muted-foreground)"></tp-time>
+  </li>
+</ul>`}
+  script={`// Demo data: instants relative to the moment the page loads.
+for (const time of document.querySelectorAll('#time-hero tp-time')) {
+  time.datetime = new Date(Date.now() + Number(time.dataset.offset) * 1000);
+}`}
+/>
+
+## Usage
+
+Set `datetime` to an ISO string, an epoch number or a `Date`; without it the element reads its own text, so server-rendered dates upgrade in place. Relative text refreshes on one shared timer when it can next change, and focusing or hovering a value shows the full date and time.
+
+`datetime` accepts a `Date`, an epoch number, text, or a Temporal-like object with `epochMilliseconds` or an ISO `toString()`. The `<time>` element always carries a valid machine-readable `datetime` at that precision. Time does not store values or synchronize clocks.
+
+Absolute presentations do not refresh. The timer stops while the page is hidden and every element refreshes when it becomes visible, after a `languagechange`, or when a `lang` attribute in the document changes. Changes to `lang` inside other shadow roots apply at the next refresh. Updates are never announced through a live region.
+
+Message's `timestamp` renders a Time with defaults; use the Message `header` slot with your own `tp-time` for other options. Use Time inside List item footers, Table cells, Card or Alert text, Preview card content and Tooltip triggers wherever a date is displayed. For strings outside the DOM, such as a Toast description, use the exported `resolveTime` and `formatTime`.
+
+### Modes
+
+`auto` (the default) is relative within 30 days and absolute beyond. `calendar` says "Yesterday at 16:20"; `duration` shows a length of time.
+
+<Preview
+  title="Modes"
+  code={`<dl id="time-modes" style="display:grid;grid-template-columns:auto auto;gap:var(--tp-space-2) var(--tp-space-6);margin:0;font-size:var(--tp-text-sm)">
+  <dt style="color:var(--tp-muted-foreground)">relative</dt><dd style="margin:0"><tp-time mode="relative" data-offset="-10800"></tp-time></dd>
+  <dt style="color:var(--tp-muted-foreground)">calendar</dt><dd style="margin:0"><tp-time mode="calendar" data-offset="-86400"></tp-time></dd>
+  <dt style="color:var(--tp-muted-foreground)">absolute</dt><dd style="margin:0"><tp-time mode="absolute" datetime="2026-10-05T14:30:00Z"></tp-time></dd>
+  <dt style="color:var(--tp-muted-foreground)">duration</dt><dd style="margin:0"><tp-time datetime="PT1H30M"></tp-time></dd>
+</dl>`}
+  script={`for (const time of document.querySelectorAll('#time-modes tp-time[data-offset]')) {
+  time.datetime = new Date(Date.now() + Number(time.dataset.offset) * 1000);
+}`}
+/>
+
+### Presets and patterns
+
+`preset` names a locale-aware format. `pattern` takes Unicode date-field symbols for an exact layout; quote literal words.
+
+Absolute text resolves in this order: `formatter`, then `pattern`, then `format`, then `preset`.
+
+| `preset`             | en-US example                      |
+| -------------------- | ---------------------------------- |
+| `time`               | 2:30 PM                            |
+| `time-seconds`       | 2:30:00 PM                         |
+| `date`               | 10/5/26                            |
+| `date-medium`        | Oct 5, 2026                        |
+| `date-long`          | October 5, 2026                    |
+| `datetime` (default) | Oct 5, 2026, 2:30 PM               |
+| `datetime-long`      | October 5, 2026 at 2:30 PM         |
+| `full`               | Monday, October 5, 2026 at 2:30 PM |
+| `iso`                | the machine value                  |
+
+Presets drop fields finer than the value: `datetime` on a date-only value shows only the date.
+
+<Preview
+  title="Absolute formats"
+  code={`<div style="display:grid;gap:var(--tp-space-2);justify-items:center;font-size:var(--tp-text-sm)">
+  <tp-time mode="absolute" preset="date-long" datetime="2026-10-05T14:30:00Z" time-zone="UTC"></tp-time>
+  <tp-time mode="absolute" preset="full" datetime="2026-10-05T14:30:00Z" time-zone="UTC"></tp-time>
+  <tp-time mode="absolute" pattern="EEE d MMM yyyy 'at' HH:mm" datetime="2026-10-05T14:30:00Z" time-zone="UTC"></tp-time>
+</div>`}
+/>
+
+Write `yyyy-MM-dd`, not Moment-style `YYYY-MM-DD`: unsupported letters render literally and raise a diagnostic instead of silently formatting a different year.
+
+`pattern` uses Unicode date-field symbols, localized through `Intl`: `y`, `yy`, `yyyy`; `M`, `MM`, `MMM`, `MMMM`, `MMMMM` (`L` is equivalent); `d`, `dd`; `E`–`EEE`, `EEEE`, `EEEEE`; `a`; `h`, `hh`, `H`, `HH`, `K`, `k`; `m`, `mm`; `s`, `ss`; `S`–`SSS`; `z`, `zzzz`; `X`–`XXX`, `x`–`xxx`. Quote literal text: `"d MMM 'at' HH:mm"`, with `''` for an apostrophe. Week-year `Y`, day-of-year `D` and other unsupported letters render literally and emit a `tp-diagnostic`.
+
+### Dates and time zones
+
+A date-only value stays on its calendar day in every time zone and compares by days. Instants format in the browser's zone unless `time-zone` names one, and `hour-cycle` forces 12- or 24-hour clocks.
+
+<Preview
+  title="Dates and zones"
+  code={`<div style="display:grid;gap:var(--tp-space-2);justify-items:center;font-size:var(--tp-text-sm)">
+  <span>Invoice due <tp-time mode="absolute" preset="date-medium" datetime="2026-11-01"></tp-time></span>
+  <span>Standup: <tp-time mode="absolute" preset="time" datetime="2026-10-12T09:30:00Z" time-zone="America/New_York"></tp-time> New York · <tp-time mode="absolute" preset="time" datetime="2026-10-12T09:30:00Z" time-zone="Europe/Berlin" hour-cycle="h23"></tp-time> Berlin</span>
+</div>`}
+/>
+
+Relative date-only values compare by calendar days too, which suits due dates in a task list.
+
+<Preview
+  title="Due dates"
+  align="stretch"
+  code={`<tp-list id="time-due" aria-label="Your tasks" style="max-inline-size:24rem;margin-inline:auto;inline-size:100%">
+  <tp-list-item description="Maya Chen">Design review<span slot="footer">Due <tp-time data-days="0"></tp-time></span></tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item description="Jonas Weber">Release notes<span slot="footer">Due <tp-time data-days="3"></tp-time></span></tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item description="Priya Patel">Vendor contract<span slot="footer" style="color:var(--tp-destructive)">Due <tp-time data-days="-1"></tp-time></span></tp-list-item>
+</tp-list>`}
+  script={`const pad = (value) => String(value).padStart(2, '0');
+for (const time of document.querySelectorAll('#time-due tp-time')) {
+  const date = new Date(Date.now() + Number(time.dataset.days) * 86400000);
+  time.datetime = \`\${date.getFullYear()}-\${pad(date.getMonth() + 1)}-\${pad(date.getDate())}\`;
+}`}
+/>
+
+### Calendar phrases
+
+`mode="calendar"` names nearby days, such as "Today at 09:12" or "Last Friday at 16:40", and falls back to an absolute date beyond a week. Month and weekday names come from the locale; the surrounding phrases come from the `messages` property, with `{time}`, `{weekday}` and `{date}` placeholders, so you can translate or reword them.
+
+<Preview
+  title="Calendar"
+  code={`<dl id="time-calendar" style="display:grid;grid-template-columns:auto auto;gap:var(--tp-space-2) var(--tp-space-6);margin:0;font-size:var(--tp-text-sm)">
+  <dt style="color:var(--tp-muted-foreground)">Last login</dt><dd style="margin:0"><tp-time mode="calendar" data-offset="-3600"></tp-time></dd>
+  <dt style="color:var(--tp-muted-foreground)">Invoice sent</dt><dd style="margin:0"><tp-time mode="calendar" data-offset="-90000"></tp-time></dd>
+  <dt style="color:var(--tp-muted-foreground)">Plan changed</dt><dd style="margin:0"><tp-time mode="calendar" data-offset="-345600"></tp-time></dd>
+  <dt lang="es" style="color:var(--tp-muted-foreground)">Último acceso</dt><dd lang="es" style="margin:0"><tp-time mode="calendar" data-offset="-3600" data-spanish></tp-time></dd>
+</dl>`}
+  script={`for (const time of document.querySelectorAll('#time-calendar tp-time')) {
+  time.datetime = new Date(Date.now() + Number(time.dataset.offset) * 1000);
+}
+document.querySelector('#time-calendar [data-spanish]').messages = {
+  today: 'Hoy a las {time}',
+  yesterday: 'Ayer a las {time}',
+};`}
+/>
+
+### Relative style
+
+`relative-style` shortens relative text for dense layouts; the long form stays available to assistive technology. `numeric="always"` replaces phrases like "yesterday" with counts.
+
+Relative text uses `Intl.RelativeTimeFormat` with one unit. Boundaries are 60 seconds, 60 minutes, 24 hours, 7 days, 30 days and 365 days. `rounding="floor"` (default) shows "1 hour ago" until two hours have passed; `round` rounds to the nearest count and promotes to the next unit at a boundary. Distances below `now-threshold` (default `PT10S`) or below one `precision` unit read "now". With `numeric="auto"` (default) the locale may say "yesterday" or "last week".
+
+<Preview
+  title="Short and narrow"
+  code={`<div id="time-styles" style="display:flex;gap:var(--tp-space-6);font-size:var(--tp-text-sm)">
+  <tp-time data-offset="-7200"></tp-time>
+  <tp-time data-offset="-7200" relative-style="short"></tp-time>
+  <tp-time data-offset="-7200" relative-style="narrow"></tp-time>
+  <tp-time data-offset="-86400" numeric="always"></tp-time>
+</div>`}
+  script={`for (const time of document.querySelectorAll('#time-styles tp-time')) {
+  time.datetime = new Date(Date.now() + Number(time.dataset.offset) * 1000);
+}`}
+/>
+
+### Other precisions
+
+A value keeps the precision it was written with: a month, a yearless date such as a birthday, an ISO week or a time of day each format as exactly that, never as a full date with invented parts.
+
+<Preview
+  title="Precisions"
+  code={`<dl style="display:grid;grid-template-columns:auto auto;gap:var(--tp-space-2) var(--tp-space-6);margin:0;font-size:var(--tp-text-sm)">
+  <dt style="color:var(--tp-muted-foreground)">Billing period</dt><dd style="margin:0"><tp-time datetime="2026-10"></tp-time></dd>
+  <dt style="color:var(--tp-muted-foreground)">Birthday</dt><dd style="margin:0"><tp-time datetime="--03-14"></tp-time></dd>
+  <dt style="color:var(--tp-muted-foreground)">Sprint</dt><dd style="margin:0"><tp-time datetime="2026-W42"></tp-time></dd>
+  <dt style="color:var(--tp-muted-foreground)">Daily backup</dt><dd style="margin:0"><tp-time datetime="02:30" hour-cycle="h23"></tp-time></dd>
+  <dt style="color:var(--tp-muted-foreground)">Average response</dt><dd style="margin:0"><tp-time datetime="PT2H15M"></tp-time></dd>
+</dl>`}
+/>
+
+### Countdowns and elapsed time
+
+`mode="duration"` on an instant shows the time until or since it as a ticking length, such as a call timer or a sale countdown. `precision` sets the smallest unit shown, which also slows the updates. `tense="past"` shows a slightly future instant, for example from a server clock that runs ahead, as "now" instead of "in 3 seconds".
+
+<Preview
+  title="Timers"
+  code={`<dl id="time-timers" style="display:grid;grid-template-columns:auto auto;gap:var(--tp-space-2) var(--tp-space-6);margin:0;font-size:var(--tp-text-sm)">
+  <dt style="color:var(--tp-muted-foreground)">On call for</dt><dd style="margin:0"><tp-time mode="duration" data-offset="-754"></tp-time></dd>
+  <dt style="color:var(--tp-muted-foreground)">Sale ends in</dt><dd style="margin:0"><tp-time mode="duration" precision="minute" data-offset="9000"></tp-time></dd>
+  <dt style="color:var(--tp-muted-foreground)">Last heartbeat</dt><dd style="margin:0"><tp-time tense="past" data-offset="3"></tp-time></dd>
+</dl>`}
+  script={`for (const time of document.querySelectorAll('#time-timers tp-time')) {
+  time.datetime = new Date(Date.now() + Number(time.dataset.offset) * 1000);
+}`}
+/>
+
+In `auto` mode, `threshold` (an ISO duration, `P30D` by default) sets how far from now values stay relative before they switch to absolute text.
+
+### Description
+
+The tooltip shows `tooltip-pattern` (default `dd/MM/yy HH:mm`) and makes the value focusable. It is skipped when it would repeat the visible text; `tooltip="false"` removes it and the tab stop.
+
+The default pattern is reduced to the value's precision: `dd/MM/yy` for dates, `HH:mm` for times, `MM/yy` for months. No description or tab stop is added when it would repeat the visible text, or for durations and weeks. Use `tooltipFormatter` for full control.
+
+<Preview
+  title="Description"
+  code={`<span style="font-size:var(--tp-text-sm)">Published <tp-time mode="absolute" preset="date-long" datetime="2026-10-05T14:30:00Z" tooltip-pattern="EEEE HH:mm xxx"></tp-time></span>`}
+/>
+
+### Unreadable input
+
+Input that cannot be read as a date, time or duration keeps the authored content and exposes `data-invalid`, so a server-rendered label never turns into a wrong date.
+
+Resolution order:
+
+1. `Date` and objects with `epochMilliseconds`.
+2. Numbers, and text of 9–13 digits optionally prefixed with `@`: epoch seconds below `100000000000`, milliseconds otherwise.
+3. Time-element microsyntaxes: `2026` (year), `2026-10` (month), `2026-10-05` (date), `--10-05` or `10-05` (yearless), `2026-W40` (week), `14:30[:05[.123]]` (time), `2026-10-05T14:30` or with a space (local date-time), and the same with `Z` or `±HH:MM` (instant).
+4. Durations: `PT1H30M`, `P1DT2H`, `P1Y2M`, or `1h 30m`, `3w 2d`.
+5. Internet message dates: `Mon, 05 Oct 2026 14:30:00 GMT`.
+6. The browser's best-effort parser, marked loose. Set `strict` to reject it.
+
+A local date-time without an offset is a wall-clock value in the resolved time zone.
+
+<Preview
+  title="Fallback"
+  code={`<span style="font-size:var(--tp-text-sm)">Last sync: <tp-time>sometime yesterday</tp-time></span>`}
+/>
+
+### Message timestamp
+
+Message renders its timestamp through Time.
+
+<Preview
+  title="Message timestamp"
+  code={`<div id="time-message"><tp-message author="Ada" data-offset="-120">The build is green again.</tp-message></div>`}
+  script={`/** Assign live datetimes so relative examples stay current. */
+export function setupTimeExample(root) {
+  const now = Date.now();
+  for (const time of root.querySelectorAll('tp-time[data-offset]'))
+    time.datetime = new Date(now + Number(time.dataset.offset) * 1000);
+  for (const time of root.querySelectorAll('tp-time[data-days]')) {
+    const date = new Date(now + Number(time.dataset.days) * 86_400_000);
+    time.datetime = \`\${date.getFullYear()}-\${String(date.getMonth() + 1).padStart(2, '0')}-\${String(date.getDate()).padStart(2, '0')}\`;
+  }
+  for (const message of root.querySelectorAll('tp-message[data-offset]'))
+    message.timestamp = new Date(now + Number(message.dataset.offset) * 1000);
+  const calendar = root.querySelector('tp-time[data-messages]');
+  if (calendar) calendar.messages = { today: 'Hoy a las {time}', yesterday: 'Ayer a las {time}' };
+  return () => {};
+}
+
+setupTimeExample(document.getElementById('time-message'));`}
+/>

@@ -1,0 +1,8 @@
+{
+  "id": "components/label",
+  "tag": "tp-label",
+  "sources": {
+    "story": "src/stories/label.stories.ts"
+  },
+  "items": []
+}

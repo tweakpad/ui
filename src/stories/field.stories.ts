@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/field.md?raw';
+import { libraryDocs } from './library-docs.js';
 interface Args {
   label: string;
   description: string;
@@ -14,7 +14,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Field',
   component: 'tp-field',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/field') },
   args: {
     label: 'Email',
     description: 'Used for receipts and project updates.',

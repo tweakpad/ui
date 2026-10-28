@@ -1,0 +1,183 @@
+---
+title: Easing editor
+description: Edits one easing curve on a graph with Bézier handles, custom points or spring parameters, with presets, a duration, a live preview and export adapters.
+tag: tp-easing-editor
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Easing editor"
+  code={`<tp-easing-editor label="Motion" name="easing" default-value="ease-out" style="inline-size:36rem;max-inline-size:100%"></tp-easing-editor>`}
+/>
+
+## Usage
+
+The value is an easing string in the canonical notation of its kind: `cubic-bezier()`, `steps()` and `linear()` for CSS curves, `spring(mass stiffness damping)` for springs, and `sine(out)`, `power(in-out 3)` or `back(out 1.702)` for the classic families. Any of these, or a CSS keyword such as `ease-in-out`, goes in; `value` always reads back canonical. Give the editor an inline size: the extended layout grows to the graph plus the presets column and no further, and the compact layout fills up to 32rem.
+
+The Ease and Spring tabs switch the category, not the kind: switching converts the curve, and the badge over the graph names the matching preset or reads Custom once a handle leaves every preset. Progression is never clamped, so curves may overshoot; the graph widens its range to keep them visible.
+
+### Curve kinds
+
+<Preview
+  title="Spring and custom points"
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-8);justify-content:center;align-items:start">
+  <tp-easing-editor label="Sheet entrance" layout="compact" default-value="spring(1 200 14)" style="inline-size:22rem;max-inline-size:100%"></tp-easing-editor>
+  <tp-easing-editor label="Bounce in" layout="compact" default-value="linear(0, 0.36 30%, 1.12 62%, 0.95 80%, 1)" timing="false" style="inline-size:22rem;max-inline-size:100%"></tp-easing-editor>
+</div>`}
+/>
+
+Springs show Sliders for mass, stiffness and damping, and their progression is normalized to their own settle time. Custom curves are CSS `linear()` point lists: press the empty graph to add a point, drag points along the time axis between their neighbours, and press Delete on a focused point to remove it. Springs and parametric families have no CSS notation, so the CSS export samples them into `linear()`.
+
+### Layouts and sizes
+
+`layout="extended"` (the default) keeps the presets in a column beside the graph. `layout="compact"` moves them behind a Toggle in the header, where they overlay the graph; it fills its container up to 32rem, which suits a Dialog or a Popover. `size` (`sm`, `default`, `lg`) scales the graph, handles and thumbnails together.
+
+<Preview
+  title="Compact in a dialog"
+  code={`<tp-button id="easing-dialog-trigger" variant="outline">Edit transition</tp-button>
+<tp-dialog id="easing-dialog" label="Card hover transition">
+  <tp-easing-editor label="Card hover" layout="compact" default-value="cubic-bezier(0.34, 1.56, 0.64, 1)"></tp-easing-editor>
+</tp-dialog>`}
+  script={`await customElements.whenDefined('tp-dialog');
+const dialog = document.querySelector('#easing-dialog');
+document.querySelector('#easing-dialog-trigger').addEventListener('click', () => {
+  dialog.setOpen(true, 'trigger-press');
+});`}
+/>
+
+### Duration and preview
+
+`duration` is the time in seconds that the preview, the frames bar and the exports use; `duration-min`, `duration-max` and `duration-step` set the range of its Slider. `timing="false"` hides the row and drops the time from the CSS export. `preview` picks what animates behind the graph: `scale` (the default), `scale-x`, `scale-y`, `rotation` or `none`.
+
+<Preview
+  title="Rotation preview"
+  code={`<tp-easing-editor label="Spinner" default-value="power(in-out 3)" default-duration="1.2" duration-max="4" duration-step="0.1" preview="rotation" style="inline-size:36rem;max-inline-size:100%"></tp-easing-editor>`}
+/>
+
+The frames bar under the graph draws 40 ticks at the eased positions, so they bunch where the motion is slow. `frames="false"` hides it, `preview-controls="false"` hides the play and preview mode Buttons, and `preset-picker="false"` removes the presets for a curve that should only be tuned by hand.
+
+### Presets
+
+Presets are a property, set from data. Each group becomes a section of tiles with a thumbnail of the curve; the tile whose value matches the current curve stays pressed.
+
+<Preview
+  title="Design system presets"
+  code={`<tp-easing-editor id="easing-presets" label="Motion token" default-value="cubic-bezier(0.2, 0, 0, 1)" style="inline-size:36rem;max-inline-size:100%"></tp-easing-editor>`}
+  script={`await customElements.whenDefined('tp-easing-editor');
+document.querySelector('#easing-presets').presets = [
+  {
+    id: 'standard',
+    label: 'Standard',
+    presets: [
+      { id: 'standard', label: 'Standard', value: 'cubic-bezier(0.2, 0, 0, 1)' },
+      { id: 'decelerate', label: 'Decelerate', value: 'cubic-bezier(0, 0, 0, 1)' },
+      { id: 'accelerate', label: 'Accelerate', value: 'cubic-bezier(0.3, 0, 1, 1)' },
+    ],
+  },
+  {
+    id: 'expressive',
+    label: 'Expressive',
+    presets: [
+      { id: 'emphasized', label: 'Emphasized', value: 'cubic-bezier(0.05, 0.7, 0.1, 1)' },
+      { id: 'overshoot', label: 'Overshoot', value: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+      { id: 'bouncy', label: 'Bouncy', value: 'spring(1 260 12)' },
+    ],
+  },
+];`}
+/>
+
+### Export adapters
+
+The footer shows the curve as text through the active adapter, CSS by default, with a Copy button. The field is editable: type any notation the editor accepts, with an optional leading time such as `500ms`, and press Enter. `adapters` replaces the list of serializers; each is `{ id, label, format(curve, context) }`, where `context` carries the `duration`, the CSS timing function and a `samples(count)` function.
+
+<Preview
+  title="Export for code"
+  code={`<tp-easing-editor id="easing-adapters" label="Toast entrance" default-value="back(out 1.702)" default-duration="0.45" style="inline-size:36rem;max-inline-size:100%"></tp-easing-editor>`}
+  script={`await customElements.whenDefined('tp-easing-editor');
+const ms = (seconds) => Math.round((seconds ?? 0) * 1000);
+document.querySelector('#easing-adapters').adapters = [
+  {
+    id: 'css',
+    label: 'CSS',
+    format: (curve, context) => \`transform \${ms(context.duration)}ms \${context.css}\`,
+  },
+  {
+    id: 'waapi',
+    label: 'WAAPI',
+    format: (curve, context) => \`{ duration: \${ms(context.duration)}, easing: '\${context.css}' }\`,
+  },
+];`}
+/>
+
+`default-adapter` picks the starting adapter and `output` reads the current text.
+
+### Listening to changes
+
+Every edit is a cancelable `tp-value-change`, and each settled interaction (a handle release, a key, a preset, a field commit) sends one `tp-value-commit`. Do expensive work, such as saving or regenerating styles, on the commit. `event.detail.metadata.curve` holds the parsed record, so a handler can refuse a curve by its parameters.
+
+<Preview
+  title="Commit and veto"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-easing-editor id="easing-events" label="Menu reveal" default-value="ease-in-out" preset-picker="false" style="inline-size:24rem;max-inline-size:100%"></tp-easing-editor>
+  <output id="easing-events-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Saved: cubic-bezier(0.42, 0, 0.58, 1)</output>
+</div>`}
+  script={`const editor = document.querySelector('#easing-events');
+const output = document.querySelector('#easing-events-output');
+// Refuse control points that overshoot beyond 1.25 either way.
+editor.addEventListener('tp-value-change', (event) => {
+  const curve = event.detail.metadata?.curve;
+  if (curve?.kind === 'bezier' && Math.max(Math.abs(curve.y1), Math.abs(curve.y2)) > 1.25) {
+    event.preventDefault();
+  }
+});
+editor.addEventListener('tp-value-commit', (event) => {
+  output.textContent = \`Saved: \${event.detail.value}\`;
+});`}
+/>
+
+### Controlled
+
+Supply `value` and `duration` to own the curve and the time. Every edit then arrives as a proposal, `tp-value-change` for the curve and `tp-duration-change` for the time, and the editor shows only what you write back. Here the accepted values feed a transition in your own styles.
+
+<Preview
+  title="Controlled owner"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-easing-editor id="easing-controlled" label="Drawer slide" layout="compact" value="cubic-bezier(0.32, 0.72, 0, 1)" duration="0.5" style="inline-size:24rem;max-inline-size:100%"></tp-easing-editor>
+  <code id="easing-controlled-css" style="font-size:var(--tp-text-xs);color:var(--tp-muted-foreground)">transition: translate 0.5s cubic-bezier(0.32, 0.72, 0, 1);</code>
+</div>`}
+  script={`const editor = document.querySelector('#easing-controlled');
+const css = document.querySelector('#easing-controlled-css');
+await customElements.whenDefined('tp-easing-editor');
+const state = { value: editor.value, duration: editor.duration };
+const show = () => {
+  css.textContent = \`transition: translate \${state.duration}s \${state.value};\`;
+};
+editor.addEventListener('tp-value-change', (event) => {
+  if (event.target !== editor || event.defaultPrevented) return;
+  state.value = event.detail.value;
+  editor.value = state.value;
+  show();
+});
+editor.addEventListener('tp-duration-change', (event) => {
+  if (event.defaultPrevented) return;
+  state.duration = event.detail.value;
+  editor.duration = state.duration;
+  show();
+});`}
+/>
+
+Springs and parametric families have no CSS notation; for those, read `output` with the CSS adapter, which samples them into `linear()`.
+
+### In a form
+
+The editor is a form control: the canonical string submits under `name`, `required` validates, and a form reset restores `default-value`. Inside a Field the label focuses the first graph handle.
+
+<Preview
+  title="Field, small size"
+  code={`<tp-field label="Entrance easing" description="Applied to dialogs and sheets.">
+  <tp-easing-editor name="entrance" size="sm" layout="compact" default-value="ease-out" preview-controls="false" frames="false" style="inline-size:20rem"></tp-easing-editor>
+</tp-field>`}
+/>
+
+`readonly` keeps every handle and field focusable but ignores edits; `disabled` disables every nested control and withholds the value from the form.

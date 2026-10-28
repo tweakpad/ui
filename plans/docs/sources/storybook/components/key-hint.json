@@ -1,0 +1,88 @@
+{
+  "id": "components/key-hint",
+  "tag": "tp-key-hint",
+  "sources": {
+    "story": "src/stories/key-hint.stories.ts",
+    "markdown": "docs/key-hint.md",
+    "examples": [
+      "src/stories/key-hint.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "Key Hint displays one keyboard key. Key Hint Group arranges individual keys or nested groups into a shortcut or sequence. Both are informative; neither registers shortcuts or receives keyboard focus.\n\n```html\n<tp-key-hint-group>\n  <tp-key-hint key=\"mod\"></tp-key-hint>\n  <tp-key-hint>K</tp-key-hint>\n</tp-key-hint-group>\n```\n\nThis renders Command + K on macOS and Ctrl + K on Windows/Linux. Use `separator=\"none\"` for adjacent keycaps without a separator. Literal content is supported, but compose one Key per key rather than placing an entire shortcut in one keycap."
+    },
+    {
+      "id": "md: Key API — `tp-key-hint`",
+      "kind": "md",
+      "heading": "## Key API — `tp-key-hint`",
+      "text": "| Property / attribute | Type                              | Default | Meaning                                                                                                                                                                                                                                                                                        |\n| -------------------- | --------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| `key`                | string                            | `''`    | Generated notation when the default slot is empty. Supports `mod`, `command`/`cmd`/`meta`, `control`/`ctrl`, `alt`/`option`, `shift`, `enter`/`return`, `escape`/`esc`, `backspace`, `delete`, `tab`, `space`, and `arrowup`/`arrowdown`/`arrowleft`/`arrowright`. Other names remain literal. |\n| `platform`           | `auto \\| mac \\| windows \\| linux` | `auto`  | Inherits the parent Group or detects the browser platform. An explicit platform overrides the parent.                                                                                                                                                                                          |\n| `label`              | string                            | `''`    | Accessible replacement for the visual key. Generated notation already supplies a readable name. Set a label for slotted icons or when replacing generated notation with a different meaning.                                                                                                   |\n| `keyLabels`          | `KeyHintLabels` (property only)   | `{}`    | Localized display/name overrides, merged over the parent mapping.                                                                                                                                                                                                                              |\n\nThe default slot accepts text or actual `tp-icon` elements. Slotted content replaces generated visual notation, while `label` or the generated key name supplies its accessible equivalent. The public `key-hint` part renders native `<kbd>`. A key has no component-specific events or action methods."
+    },
+    {
+      "id": "md: Group API — `tp-key-hint-group`",
+      "kind": "md",
+      "heading": "## Group API — `tp-key-hint-group`",
+      "text": "| Property / attribute | Type                              | Default | Meaning                                                                                        |\n| -------------------- | --------------------------------- | ------- | ---------------------------------------------------------------------------------------------- |\n| `separator`          | `plus \\| then \\| none`            | `plus`  | Separator between visible direct Keys or Groups. Each nested Group controls its own separator. |\n| `platform`           | `auto \\| mac \\| windows \\| linux` | `auto`  | Platform context inherited by descendants.                                                     |\n| `keyLabels`          | `KeyHintLabels` (property only)   | `{}`    | Inherited localized key display/names. The `then` entry localizes sequence text.               |\n| `label`              | string                            | `''`    | Optional accessible group name.                                                                |\n\nThe default slot accepts ordered `tp-key-hint` and `tp-key-hint-group` children. Keep these as direct children; arbitrary wrappers do not participate in separator/context calculation. Hidden children do not contribute separators. Reordering, moving, removing, and reconnecting children updates context without overwriting authored properties. The public `key-hint-group` part renders native `<kbd>` with no extra keycap background. Group has no component-specific events or action methods.\n\n```js\nconst group = document.querySelector('tp-key-hint-group');\ngroup.keyLabels = {\n  control: { text: 'Ctrl', label: 'Contrôle' },\n  command: { text: '⌘', label: 'Commande' },\n  then: 'puis',\n};\n```\n\n`KeyHintLabels` maps a supplied key or canonical name to a string or `{ text, label? }`. A string supplies both visible and accessible text. `mod` resolves to Command on Mac and Control elsewhere before canonical lookup. Literal slotted content is authored content and is not translated automatically. Keep essential shortcuts available in equivalent prose or the owning control's accessible description."
+    },
+    {
+      "id": "md: Composition and presentation",
+      "kind": "md",
+      "heading": "## Composition and presentation",
+      "text": "Use Group in Button's `icon-end`, Input Group's `prefix`/`suffix` (or logical addon slots), Menu's `data-menu-shortcut`, and Tooltip content. The owning control handles interaction. Keys within Tooltip receive its contextual palette through the shared presentation system.\n\nDefault keys have a 20px height/minimum width, 12px text and default icons, muted colors, and logical insets. Group owns inter-key spacing. These dimensions scale with the theme's spacing/text tokens; keys need no extra margins or icon sizing. Explicit `tp-icon size` values remain supported. `dir` controls sequence direction; set `dir=\"ltr\"` on a group inside RTL prose when the notation needs a fixed direction.\n\nBoth components inherit `TpElement` presentation APIs (`partContracts`, dictionaries, tokens and render delegates). Customize `key-hint` or `key-hint-group` through their public contracts or CSS parts; keep native keyboard semantics when supplying a render delegate. They share the Key Hint presentation identity. There are no selected, pressed, expanded or disabled interaction states.\n\n```js\nconst key = document.querySelector('tp-key-hint');\nkey.partContracts = { 'key-hint': { styleHook: { 'min-inline-size': '24px' } } };\n```\n\nExported classes: `TpKeyHint`, `TpKeyHintGroup`. Exported types: `KeyHintPlatform`, `KeyHintSeparator`, `KeyHintLabels`. Import `@tweakpad/ui/register` to register both elements and `@tweakpad/ui/styles.css` for the theme."
+    },
+    {
+      "id": "example: Group",
+      "kind": "example",
+      "title": "Group",
+      "description": "Group owns the spacing between individual keys. The hint only describes a shortcut; the application implements it.",
+      "code": "<p>Use <tp-key-hint-group separator=\"none\" ><tp-key-hint key=\"mod\"></tp-key-hint><tp-key-hint>B</tp-key-hint></tp-key-hint-group> to open the command menu.</p>"
+    },
+    {
+      "id": "example: Button",
+      "kind": "example",
+      "title": "Button",
+      "description": "The Button owns focus and activation. Key Hint remains informative.",
+      "code": "<tp-button variant=\"outline\">Accept<tp-key-hint slot=\"icon-end\" key=\"enter\"></tp-key-hint></tp-button>"
+    },
+    {
+      "id": "example: Tooltip",
+      "kind": "example",
+      "title": "Tooltip",
+      "description": "Nested keys automatically use the tooltip palette.",
+      "code": "<tp-button-group label=\"Document actions\"><tp-tooltip><tp-button slot=\"trigger\" variant=\"outline\">Save</tp-button>Save changes <tp-key-hint-group separator=\"none\" ><tp-key-hint key=\"mod\"></tp-key-hint><tp-key-hint>S</tp-key-hint></tp-key-hint-group></tp-tooltip><tp-tooltip><tp-button slot=\"trigger\" variant=\"outline\">Print</tp-button>Print document <tp-key-hint-group separator=\"none\" ><tp-key-hint key=\"mod\"></tp-key-hint><tp-key-hint>P</tp-key-hint></tp-key-hint-group></tp-tooltip></tp-button-group>"
+    },
+    {
+      "id": "example: Input Group",
+      "kind": "example",
+      "title": "Input Group",
+      "description": "Input Group owns the addon layout; Key Hint Group owns shortcut spacing.",
+      "code": "<div id=\"key-hint-input\"><tp-input-group><tp-icon slot=\"prefix\" data-key-icon=\"search\"></tp-icon><tp-input label=\"Search\" placeholder=\"Search...\"></tp-input><tp-key-hint-group separator=\"none\" slot=\"suffix\"><tp-key-hint key=\"mod\"></tp-key-hint><tp-key-hint>K</tp-key-hint></tp-key-hint-group></tp-input-group></div>",
+      "script": "import { chevronDownIcon } from '@tweakpad/ui/icons/chevron-down';\nimport { chevronRightIcon } from '@tweakpad/ui/icons/chevron-right';\nimport { navigationIcons } from '@tweakpad/ui/icons/navigation';\nexport function setupKeyHintExample(root) {\n  for (const icon of root.querySelectorAll('tp-icon[data-key-icon]'))\n    icon.icon = { ...navigationIcons, down: chevronDownIcon, right: chevronRightIcon }[\n      icon.dataset.keyIcon\n    ];\n  return () => {};\n}\n\nsetupKeyHintExample(document.getElementById('key-hint-input'));"
+    },
+    {
+      "id": "example: Right to left",
+      "kind": "example",
+      "title": "Right to left",
+      "description": "Logical spacing follows direction. Set dir=\"ltr\" on a Group when a shortcut must retain left-to-right notation.",
+      "code": "<div dir=\"rtl\"><p>استخدم <tp-key-hint-group separator=\"none\" ><tp-key-hint key=\"mod\"></tp-key-hint><tp-key-hint>K</tp-key-hint></tp-key-hint-group> لفتح قائمة الأوامر.</p><tp-button variant=\"outline\">قبول<tp-key-hint slot=\"icon-end\" key=\"enter\" label=\"إدخال\"></tp-key-hint></tp-button></div>"
+    },
+    {
+      "id": "example: Sequences and platform notation",
+      "kind": "example",
+      "title": "Sequences and platform notation",
+      "description": "Nested groups express chords followed by another chord. Platform and localized keyLabels flow from the parent; a child can override them.",
+      "code": "<tp-key-hint-group separator=\"then\" label=\"Comment selection\"><tp-key-hint-group><tp-key-hint key=\"mod\"></tp-key-hint><tp-key-hint>K</tp-key-hint></tp-key-hint-group><tp-key-hint-group><tp-key-hint key=\"mod\"></tp-key-hint><tp-key-hint>C</tp-key-hint></tp-key-hint-group></tp-key-hint-group>"
+    },
+    {
+      "id": "example: Icon keys",
+      "kind": "example",
+      "title": "Icon keys",
+      "description": "Real Icon components inherit the 12px key icon size. Supply a meaningful label for icon-only keys. An explicit Icon size remains supported.",
+      "code": "<div id=\"key-hint-icons\"><tp-key-hint-group separator=\"none\"><tp-key-hint label=\"Right arrow\"><tp-icon data-key-icon=\"right\"></tp-icon></tp-key-hint><tp-key-hint label=\"Down arrow\"><tp-icon data-key-icon=\"down\"></tp-icon></tp-key-hint><tp-key-hint label=\"More\"><tp-icon data-key-icon=\"more\"></tp-icon></tp-key-hint></tp-key-hint-group></div>",
+      "script": "import { chevronDownIcon } from '@tweakpad/ui/icons/chevron-down';\nimport { chevronRightIcon } from '@tweakpad/ui/icons/chevron-right';\nimport { navigationIcons } from '@tweakpad/ui/icons/navigation';\nexport function setupKeyHintExample(root) {\n  for (const icon of root.querySelectorAll('tp-icon[data-key-icon]'))\n    icon.icon = { ...navigationIcons, down: chevronDownIcon, right: chevronRightIcon }[\n      icon.dataset.keyIcon\n    ];\n  return () => {};\n}\n\nsetupKeyHintExample(document.getElementById('key-hint-icons'));"
+    }
+  ]
+}

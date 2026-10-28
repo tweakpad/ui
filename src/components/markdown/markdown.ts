@@ -38,7 +38,8 @@ import {
 const DEFINITION_LINE = /^ {0,3}\[\^?[^\]\n]+\]:.*$/gm;
 
 /**
- * Markdown presentation (`ucl21-markdown`, behavior Foundation §18.16 Markdown).
+ * A Markdown document rendered as native, themed content, with code blocks, tables, alerts and
+ * task items composed from library components.
  *
  * The source comes from `source` or, when unset, the element's text content (or a
  * `<script type="text/markdown">` child), dedented. It renders through the component as native
@@ -105,16 +106,27 @@ export class TpMarkdown extends TpElement {
     `,
   ];
 
+  /** The Markdown source, in place of the element's text content; set it from script for dynamic content. */
   source: string | undefined = undefined;
+  /** Marks the source as arriving in chunks: unfinished emphasis, code and links in the last block are completed before parsing. */
   streaming = false;
+  /** The typography scale; `sm` for chat bubbles, side panels and other dense surfaces. */
   size: 'default' | 'sm' = 'default';
+  /** Shifts every heading level, so with 2 a `#` heading renders as `h3`, to fit under the page's own outline. */
   headingOffset = 0;
+  /** A prefix for heading ids, for several documents on one page. */
   idPrefix = '';
+  /** The HTML tags the source may use, each with the attributes it keeps; any other tag shows as literal text. */
   elements: MarkdownElementPolicy | null = null;
+  /** Functions that replace how one node type renders; returning `undefined` keeps the default. */
   renderers: MarkdownRenderers = {};
+  /** The protocols links and images may use; others are blocked and reported. */
   urlPolicy: MarkdownUrlPolicy | null = null;
+  /** A parser of your own in place of the built-in one, producing the same tree. */
   parser: MarkdownParser | null = null;
+  /** The highlighter of fenced code; the Code block's built-in one when unset. */
   highlighter: CodeHighlighter | null = null;
+  /** Replacements for the built-in text, such as the alert titles; missing entries keep the defaults. */
   messages: MarkdownMessages = {};
 
   declare _lightSource: string;
@@ -137,11 +149,12 @@ export class TpMarkdown extends TpElement {
     return this.#tree;
   }
 
-  /** Rendered headings in the collected-target shape of scroll spy. */
+  /** The rendered headings as `{ element, id, label, depth }`, for a table of contents. */
   get headings(): MarkdownHeadingTarget[] {
     return collectHeadings(this.renderRoot);
   }
 
+  /** The text in use: `messages` over the defaults. */
   get markdownMessages(): Required<MarkdownMessages> {
     return { ...DEFAULT_MARKDOWN_MESSAGES, ...this.messages };
   }

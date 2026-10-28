@@ -1,0 +1,315 @@
+---
+title: Map
+description: An interactive geographic viewport with declarative pins, a selection overlay and zoom controls over the basemap engine you supply.
+tag: tp-map
+parts: [tp-map-pin, tp-map-overlay, tp-map-control]
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Map"
+  align="stretch"
+  code={`<tp-map
+  id="map-hero"
+  data-engine="tiles"
+  label="Lisbon sights"
+  default-bounds="38.685,-9.235,38.77,-9.085"
+  reveal="always"
+  controls="zoom-in zoom-out reset"
+  cooperative-gestures
+>
+  <tp-map-pin value="belem" latitude="38.6916" longitude="-9.216" label="Belém Tower" style="color:var(--tp-chart-1)">
+    <svg viewBox="0 0 32 40" width="32" height="40" aria-hidden="true" focusable="false">
+      <path d="M16 1C7.7 1 1 7.6 1 15.8 1 26.9 16 39 16 39s15-12.1 15-23.2C31 7.6 24.3 1 16 1z" fill="currentColor" stroke="white" stroke-width="2" />
+      <circle cx="16" cy="15.5" r="5.5" fill="white" />
+    </svg>
+    <tp-map-overlay>
+      <span slot="title">Belém Tower</span>
+      <span slot="description">Av. Brasília, 1400-038 Lisboa</span>
+    </tp-map-overlay>
+  </tp-map-pin>
+  <tp-map-pin value="lx-factory" latitude="38.7032" longitude="-9.1784" label="LX Factory" style="color:var(--tp-chart-2)">
+    <svg viewBox="0 0 32 40" width="32" height="40" aria-hidden="true" focusable="false">
+      <path d="M16 1C7.7 1 1 7.6 1 15.8 1 26.9 16 39 16 39s15-12.1 15-23.2C31 7.6 24.3 1 16 1z" fill="currentColor" stroke="white" stroke-width="2" />
+      <circle cx="16" cy="15.5" r="5.5" fill="white" />
+    </svg>
+    <tp-map-overlay>
+      <span slot="title">LX Factory</span>
+      <span slot="description">R. Rodrigues de Faria 103, 1300-501 Lisboa</span>
+    </tp-map-overlay>
+  </tp-map-pin>
+  <tp-map-pin value="castle" latitude="38.7139" longitude="-9.1335" label="São Jorge Castle" style="color:var(--tp-chart-3)">
+    <svg viewBox="0 0 32 40" width="32" height="40" aria-hidden="true" focusable="false">
+      <path d="M16 1C7.7 1 1 7.6 1 15.8 1 26.9 16 39 16 39s15-12.1 15-23.2C31 7.6 24.3 1 16 1z" fill="currentColor" stroke="white" stroke-width="2" />
+      <circle cx="16" cy="15.5" r="5.5" fill="white" />
+    </svg>
+    <tp-map-overlay>
+      <span slot="title">São Jorge Castle</span>
+      <span slot="description">R. de Santa Cruz do Castelo, 1100-129 Lisboa</span>
+    </tp-map-overlay>
+  </tp-map-pin>
+</tp-map>`}
+  script={`// A small raster engine: OpenStreetMap tiles on the flat Web Mercator plane, drag to pan.
+// Applications usually pass createMapLibreEngine(maplibregl) from '@tweakpad/ui/map' instead.
+// Every map on this page marked data-engine="tiles" uses it.
+const TILE = 256;
+const toWorld = (p) => {
+  const s = Math.sin((p.latitude * Math.PI) / 180);
+  return { x: ((p.longitude + 180) / 360) * TILE, y: (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * TILE };
+};
+const fromWorld = (w) => ({
+  longitude: (w.x / TILE) * 360 - 180,
+  latitude: (Math.atan(Math.sinh(Math.PI * (1 - (2 * w.y) / TILE))) * 180) / Math.PI,
+});
+
+const osmTiles = {
+  name: 'osm-raster',
+  mount(viewport, context) {
+    let camera = context.initialCamera;
+    let interactive = context.interactive;
+    const overlays = new Map();
+    const images = new Map();
+    const surface = document.createElement('div');
+    const tiles = document.createElement('div');
+    const pane = document.createElement('div');
+    const credit = document.createElement('a');
+    surface.style.cssText = 'position:absolute;inset:0;overflow:hidden;touch-action:none;cursor:grab;background-color:var(--tp-muted);background-image:linear-gradient(var(--tp-border) 1px,transparent 1px),linear-gradient(90deg,var(--tp-border) 1px,transparent 1px)';
+    tiles.style.cssText = 'position:absolute;inset:0';
+    pane.style.cssText = 'position:absolute;inset:0;pointer-events:none';
+    credit.href = 'https://www.openstreetmap.org/copyright';
+    credit.textContent = '© OpenStreetMap contributors';
+    credit.style.cssText = 'position:absolute;inset-block-end:0;inset-inline-end:0;padding:2px 6px;font-size:var(--tp-text-xs);color:var(--tp-muted-foreground);background:var(--tp-background)';
+    surface.append(tiles);
+    viewport.append(surface, pane, credit);
+
+    const size = () => ({ width: viewport.clientWidth, height: viewport.clientHeight });
+    const project = (p) => {
+      const c = toWorld(camera.center), w = toWorld(p), k = 2 ** camera.zoom, s = size();
+      return { x: s.width / 2 + (w.x - c.x) * k, y: s.height / 2 + (w.y - c.y) * k };
+    };
+    const unproject = (pt) => {
+      const c = toWorld(camera.center), k = 2 ** camera.zoom, s = size();
+      return fromWorld({ x: c.x + (pt.x - s.width / 2) / k, y: c.y + (pt.y - s.height / 2) / k });
+    };
+    const draw = () => {
+      const { width, height } = size();
+      const z = Math.max(0, Math.min(19, Math.round(camera.zoom)));
+      const n = 2 ** z, side = TILE * 2 ** (camera.zoom - z);
+      const c = toWorld(camera.center), k = 2 ** camera.zoom;
+      const left = c.x * k - width / 2, top = c.y * k - height / 2;
+      surface.style.backgroundSize = side / 4 + 'px ' + side / 4 + 'px';
+      surface.style.backgroundPosition = -left + 'px ' + -top + 'px';
+      const used = new Set();
+      for (let y = Math.max(0, Math.floor(top / side)); y <= Math.min(n - 1, Math.floor((top + height) / side)); y++) {
+        for (let x = Math.floor(left / side); x <= Math.floor((left + width) / side); x++) {
+          const key = z + '/' + (((x % n) + n) % n) + '/' + y;
+          let img = images.get(key);
+          if (!img) {
+            img = Object.assign(new Image(), { alt: '', draggable: false, src: 'https://tile.openstreetmap.org/' + key + '.png' });
+            img.style.cssText = 'position:absolute;left:0;top:0;user-select:none';
+            img.onerror = () => (img.style.visibility = 'hidden');
+            images.set(key, img);
+            tiles.append(img);
+          }
+          used.add(key);
+          img.style.width = img.style.height = side + 0.5 + 'px';
+          img.style.transform = 'translate(' + (x * side - left) + 'px,' + (y * side - top) + 'px)';
+        }
+      }
+      for (const [key, img] of images) if (!used.has(key)) (img.remove(), images.delete(key));
+      for (const [element, position] of overlays) {
+        const p = project(position);
+        element.style.transform = 'translate(' + p.x + 'px,' + p.y + 'px)';
+      }
+    };
+
+    let drag = null;
+    surface.addEventListener('pointerdown', (event) => {
+      if (!interactive) return;
+      drag = { x: event.clientX, y: event.clientY, center: toWorld(camera.center), moved: false };
+      surface.setPointerCapture(event.pointerId);
+    });
+    surface.addEventListener('pointermove', (event) => {
+      if (!drag) return;
+      const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) < 3) return;
+      drag.moved = true;
+      const k = 2 ** camera.zoom;
+      const y = Math.min(TILE, Math.max(0, drag.center.y - dy / k));
+      camera = { ...camera, center: fromWorld({ x: drag.center.x - dx / k, y }) };
+      draw();
+      context.camera('engine', event);
+    });
+    surface.addEventListener('pointerup', (event) => {
+      if (!drag) return;
+      if (drag.moved) context.cameraEnd('engine', event);
+      else {
+        const box = surface.getBoundingClientRect();
+        const point = { x: event.clientX - box.left, y: event.clientY - box.top };
+        context.press(unproject(point), point, event);
+      }
+      drag = null;
+    });
+
+    const setAppearance = (scheme) => {
+      tiles.style.filter = scheme === 'dark' ? 'invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9)' : '';
+    };
+    setAppearance(context.scheme);
+    draw();
+    queueMicrotask(() => context.ready());
+
+    return {
+      native: surface,
+      getCamera: () => camera,
+      getBounds() {
+        const s = size(), nw = unproject({ x: 0, y: 0 }), se = unproject({ x: s.width, y: s.height });
+        return { south: se.latitude, west: nw.longitude, north: nw.latitude, east: se.longitude };
+      },
+      jumpTo(next) {
+        camera = next;
+        draw();
+      },
+      project,
+      unproject,
+      attachOverlay(element, position) {
+        element.style.cssText += ';position:absolute;left:0;top:0;pointer-events:auto';
+        overlays.set(element, position);
+        pane.append(element);
+        draw();
+        return {
+          setPosition(next) {
+            overlays.set(element, next);
+            draw();
+          },
+          remove() {
+            overlays.delete(element);
+            element.remove();
+          },
+        };
+      },
+      setInteractive(enabled) {
+        interactive = enabled;
+      },
+      setAppearance,
+      resize: draw,
+      destroy() {
+        surface.remove();
+        pane.remove();
+        credit.remove();
+      },
+    };
+  },
+};
+
+await customElements.whenDefined('tp-map');
+for (const map of document.querySelectorAll('tp-map[data-engine="tiles"]')) map.engine = osmTiles;`}
+/>
+
+## Usage
+
+The map owns the camera, pins, selection, overlays and controls; the basemap comes from an engine you assign to `engine`. In an application that is `createMapLibreEngine(maplibregl)` or `createGoogleMapsEngine(importLibrary)` from `@tweakpad/ui/map`. This site ships no map library, so its examples use the small OpenStreetMap raster engine from the first example, written against the same public `MapEngine` contract.
+
+### Pins and overlays
+
+A pin's default slot replaces the marker with your own markup; SVG using `currentColor` follows the pin's `color`. Selecting a pin opens its `tp-map-overlay`, a non-modal Popover that follows the pin while the camera moves and closes on Escape or an outside press.
+
+<Preview
+  title="Selected pin"
+  align="stretch"
+  code={`<tp-map
+  data-engine="tiles"
+  label="Office locations"
+  default-center="38.7223,-9.1393"
+  default-zoom="13"
+  default-selected-pin="hq"
+  style="block-size:calc(var(--tp-space-16) * 5)"
+>
+  <tp-map-pin value="hq" latitude="38.7223" longitude="-9.1393" label="Lisbon office" style="color:var(--tp-primary)">
+    <tp-map-overlay>
+      <span slot="title">Lisbon office</span>
+      <span slot="description">Av. da Liberdade 110, 4th floor · Open 9:00–18:00</span>
+      <tp-button size="sm" variant="outline" href="#selected-pin">Get directions</tp-button>
+    </tp-map-overlay>
+  </tp-map-pin>
+</tp-map>`}
+/>
+
+Without authored content a pin renders the default marker. Pins form one tab stop: arrow keys move between them, Enter or Space selects and Escape clears the selection.
+
+### Location list
+
+When pins carry essential information, pair the map with a list of the same places bound to the selection. `subscribe` keeps the list in step with the map, and `selectPin` moves the map from the list.
+
+<Preview
+  title="Map with a list"
+  align="stretch"
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-4);align-items:start">
+  <tp-map
+    id="map-list-demo"
+    data-engine="tiles"
+    label="Coffee near the office"
+    default-bounds="38.705,-9.16,38.725,-9.13"
+    reveal="if-hidden"
+    controls="fit-pins"
+    style="flex:2 1 24rem;min-inline-size:0"
+  >
+    <tp-map-pin value="copenhagen" latitude="38.7106" longitude="-9.1446" label="Copenhagen Coffee Lab"></tp-map-pin>
+    <tp-map-pin value="fabrica" latitude="38.7180" longitude="-9.1430" label="Fábrica Coffee Roasters"></tp-map-pin>
+    <tp-map-pin value="hello-kristof" latitude="38.7135" longitude="-9.1505" label="Hello, Kristof"></tp-map-pin>
+  </tp-map>
+  <tp-list id="map-list-places" aria-label="Coffee near the office" style="flex:1 1 14rem">
+    <tp-list-item value="copenhagen" description="R. Nova da Piedade 10">Copenhagen Coffee Lab</tp-list-item>
+    <tp-list-item value="fabrica" description="R. das Portas de Santo Antão 136">Fábrica Coffee Roasters</tp-list-item>
+    <tp-list-item value="hello-kristof" description="R. do Poço dos Negros 103">Hello, Kristof</tp-list-item>
+  </tp-list>
+</div>`}
+  script={`await customElements.whenDefined('tp-map');
+const map = document.getElementById('map-list-demo');
+const list = document.getElementById('map-list-places');
+map.subscribe((state) => state.selectedPin, (selected) => {
+  for (const item of list.querySelectorAll('tp-list-item')) item.selected = item.value === selected;
+});
+list.addEventListener('click', (event) => {
+  const item = event.target.closest('tp-list-item');
+  if (item) map.selectPin(item.value);
+});`}
+/>
+
+### Controls
+
+`controls` floats a joined Button group over the map, in the order you list the actions; `controls-position` and `controls-orientation` place it. `tp-map-control` with `map="id"` puts the same buttons anywhere on the page.
+
+<Preview
+  title="External controls"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3)">
+  <tp-button-group label="Map view">
+    <tp-map-control map="map-controls-demo" action="zoom-in"></tp-map-control>
+    <tp-map-control map="map-controls-demo" action="zoom-out"></tp-map-control>
+    <tp-map-control map="map-controls-demo" action="reset"></tp-map-control>
+  </tp-button-group>
+  <tp-map
+    id="map-controls-demo"
+    data-engine="tiles"
+    label="Delivery area"
+    default-center="38.7369,-9.1427"
+    default-zoom="12"
+    style="block-size:calc(var(--tp-space-16) * 4)"
+  ></tp-map>
+</div>`}
+/>
+
+Controls stay focusable and become `aria-disabled` while the map is loading or at a zoom limit, so keyboard users always find them in the same place.
+
+### Status
+
+Until an engine is ready the map shows a status message. Replace it through the `status` slot, for example when the basemap waits for consent.
+
+<Preview
+  title="Status slot"
+  align="stretch"
+  code={`<tp-map label="Store location" style="block-size:calc(var(--tp-space-16) * 3)">
+  <p slot="status" style="margin:0;color:var(--tp-muted-foreground)">Accept map cookies to see the store location.</p>
+</tp-map>`}
+/>

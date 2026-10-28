@@ -1,19 +1,25 @@
 import React, { Fragment } from 'react';
-import { Canvas, DocsContext, useOf } from '@storybook/addon-docs/blocks';
+import {
+  Canvas,
+  Description,
+  PureArgsTable,
+  Source,
+  Title,
+  useOf,
+} from '@storybook/addon-docs/blocks';
 import { MDXProvider } from '@storybook/addon-docs/mdx-react-shim';
 import { manifest } from './manifest.js';
 import { elementApi } from '../src/docs/api.js';
 import { mountPreview, previewSource } from '../src/docs/preview-runtime.js';
-import { relatedPages } from '../src/docs/related.js';
-import { libraryDocPages } from '../src/stories/library-docs.js';
 
 export const LibraryDocContext = React.createContext(null);
 
 export function PreviewCanvas({ preview }) {
-  // The library's documentation page of a component, rendered on its Docs page: the page's own
-  // content (`LibraryDoc`), then the generated API and Related sections. `Preview` and `Keys`
-  // are the two elements the pages use; the website renders the same pages with its own
-  // versions. Top-level comments are prose to MDX, so the notes live inside the blocks.
+  // The library's documentation page of a component, rendered on its Docs page with Storybook's
+  // own blocks: the header, the main use case (the Default story), the page's Usage
+  // (`LibraryDoc`), then the generated API Reference. `Preview`, `Code` and `Keys` are the
+  // elements the pages use; the website renders the same pages with its own components. Top-level
+  // comments are prose to MDX, so the notes live inside the blocks.
   const host = React.useRef(null);
   React.useEffect(() => {
     const mounted = mountPreview(host.current, preview);
@@ -75,6 +81,16 @@ export function Preview(props) {
   );
 }
 
+export function Code({ code, language, label }) {
+  // A standalone sample with nothing to render: Storybook's Source block, under its label.
+  return (
+    <figure className="tp-docs-example">
+      {label && <figcaption>{label}</figcaption>}
+      <Source code={code.trim()} language={language || 'html'} format={false} />
+    </figure>
+  );
+}
+
 export const KEY_ALIASES = {
   up: 'arrowup',
   down: 'arrowdown',
@@ -109,11 +125,34 @@ export function useLibraryDoc() {
   return resolved.preparedMeta.parameters.docs?.library ?? null;
 }
 
+export function PageHeader() {
+  // Name, description and tag, from the page's frontmatter. A story file without a page (an
+  // internal Storybook page) keeps Storybook's own title and description.
+  const doc = useLibraryDoc();
+  if (!doc)
+    return (
+      <>
+        <Title />
+        <Description />
+      </>
+    );
+  const { page } = doc;
+  return (
+    <>
+      <Title>{page.title}</Title>
+      <Description />
+      <p className="tp-docs-tag">
+        <code>&lt;{page.tag}&gt;</code>
+      </p>
+    </>
+  );
+}
+
 export function LibraryDoc() {
   const doc = useLibraryDoc();
   if (!doc) return null;
   const { page, Content } = doc;
-  const components = { Preview, Keys };
+  const components = { Preview, Code, Keys };
   // MDX resolves member-expression elements through its provider, so the context provider is
   // created directly.
   return React.createElement(
@@ -125,39 +164,35 @@ export function LibraryDoc() {
   );
 }
 
-export function Prose({ text }) {
-  if (!text) return '—';
-  return text.split('`').map((part, index) => (index % 2 ? <code key={index}>{part}</code> : part));
-}
-
-export function ApiRows({ label, columns, rows }) {
+export function ApiRows({ label, id, level, rows }) {
+  // One group of API rows in Storybook's own args table (the look of the Controls table above),
+  // read-only: no args, so no Control column. Descriptions are Markdown, so code spans render.
   if (!rows.length) return null;
+  const Heading = level;
+  const argTypes = Object.fromEntries(
+    rows.map((row) => [
+      row.name,
+      {
+        name: row.name,
+        description: row.description,
+        table: {
+          ...(row.type ? { type: { summary: row.type } } : {}),
+          ...(row.default ? { defaultValue: { summary: row.default } } : {}),
+        },
+      },
+    ]),
+  );
   return (
-    <table className="tp-docs-api">
-      <caption>{label}</caption>
-      <thead>
-        <tr>
-          {columns.map((column) => (
-            <th key={column.title}>{column.title}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, index) => (
-          <tr key={index}>
-            {columns.map((column) => (
-              <td key={column.title}>{column.cell(row)}</td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <>
+      <Heading id={id}>{label}</Heading>
+      <PureArgsTable rows={argTypes} sort="none" />
+    </>
   );
 }
 
-export const code = (value) => (value ? <code>{value}</code> : '—');
-
-export function ElementApi({ tag, attributes }) {
+export function ElementApi({ tag, level }) {
+  // Attributes, Properties and Events, then Methods, Slots, CSS parts and CSS custom properties,
+  // each only when the element has rows for it.
   const api = elementApi(manifest, tag);
   if (!api)
     return (
@@ -165,82 +200,45 @@ export function ElementApi({ tag, attributes }) {
         No manifest entry for <code>{tag}</code>.
       </p>
     );
+  const group = (name) => ({
+    label: name,
+    id: `api-${tag}-${name.toLowerCase().replace(/\s+/g, '-')}`,
+    level,
+  });
+  const described = (text, note) => [text, note].filter(Boolean).join('\n\n');
   return (
     <>
-      {attributes && (
-        <ApiRows
-          label="Attributes"
-          columns={[
-            { title: 'Attribute', cell: (row) => <code>{row.name}</code> },
-            { title: 'Property', cell: (row) => code(row.property) },
-            { title: 'Type', cell: (row) => code(row.type) },
-            { title: 'Default', cell: (row) => code(row.default) },
-            { title: 'Description', cell: (row) => <Prose text={row.description} /> },
-          ]}
-          rows={api.attributes}
-        />
-      )}
       <ApiRows
-        label="Properties"
-        columns={[
-          {
-            title: 'Property',
-            cell: (row) => (
-              <>
-                <code>{row.name}</code>
-                {row.readonly && ' (read-only)'}
-              </>
-            ),
-          },
-          { title: 'Type', cell: (row) => code(row.type) },
-          { title: 'Default', cell: (row) => code(row.default) },
-          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
-        ]}
-        rows={api.properties}
+        {...group('Attributes')}
+        rows={api.attributes.map((row) => ({
+          ...row,
+          description: described(
+            row.description,
+            row.property && row.property !== row.name && `Property: \`${row.property}\``,
+          ),
+        }))}
       />
       <ApiRows
-        label="Methods"
-        columns={[
-          { title: 'Method', cell: (row) => <code>{row.signature}</code> },
-          { title: 'Returns', cell: (row) => code(row.returns) },
-          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
-        ]}
-        rows={api.methods}
+        {...group('Properties')}
+        rows={api.properties.map((row) => ({
+          ...row,
+          description: described(row.description, row.readonly && 'Read-only.'),
+        }))}
+      />
+      <ApiRows {...group('Events')} rows={api.events} />
+      <ApiRows
+        {...group('Methods')}
+        rows={api.methods.map((row) => ({ ...row, name: row.signature, type: row.returns }))}
       />
       <ApiRows
-        label="Events"
-        columns={[
-          { title: 'Event', cell: (row) => <code>{row.name}</code> },
-          { title: 'Type', cell: (row) => code(row.type) },
-          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
-        ]}
-        rows={api.events}
+        {...group('Slots')}
+        rows={api.slots.map((row) => ({ ...row, name: row.name || 'default' }))}
       />
       <ApiRows
-        label="Slots"
-        columns={[
-          { title: 'Slot', cell: (row) => (row.name ? <code>{row.name}</code> : 'default') },
-          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
-        ]}
-        rows={api.slots}
+        {...group('CSS parts')}
+        rows={api.cssParts.map((row) => ({ ...row, name: `::part(${row.name})` }))}
       />
-      <ApiRows
-        label="CSS parts"
-        columns={[
-          { title: 'Part', cell: (row) => <code>::part({row.name})</code> },
-          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
-        ]}
-        rows={api.cssParts}
-      />
-      <ApiRows
-        label="CSS custom properties"
-        columns={[
-          { title: 'Property', cell: (row) => <code>{row.name}</code> },
-          { title: 'Default', cell: (row) => code(row.default) },
-          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
-        ]}
-        rows={api.cssProperties}
-      />
+      <ApiRows {...group('CSS custom properties')} rows={api.cssProperties} />
     </>
   );
 }
@@ -251,83 +249,19 @@ export function Api() {
   const { page } = doc;
   return (
     <>
-      <h2 id="api">API</h2>
+      <h2 id="api-reference">API Reference</h2>
       <p>
-        Attributes and properties of <code>&lt;{page.tag}&gt;</code> are the public properties
-        above. Every element also accepts <code>disabled</code> and <code>motion-policy</code>.
+        Every element also accepts <code>motion-policy</code>.
       </p>
-      <ElementApi tag={page.tag} attributes={false} />
+      <ElementApi tag={page.tag} level="h3" />
       {page.parts.map((part) => (
         <Fragment key={part}>
           <h3 id={`api-${part}`}>
             <code>&lt;{part}&gt;</code>
           </h3>
-          <ElementApi tag={part} attributes />
+          <ElementApi tag={part} level="h4" />
         </Fragment>
       ))}
-    </>
-  );
-}
-
-export const docsStoryId = (page) =>
-  `${page.section}-${page.slug.replace(/[^a-z0-9]+/g, '-')}--docs`;
-
-export function PageLink({ page }) {
-  const context = React.useContext(DocsContext);
-  const storyId = docsStoryId(page);
-  const open = (event) => {
-    event.preventDefault();
-    context.channel.emit('selectStory', { storyId, viewMode: 'docs' });
-  };
-  return (
-    <a href={`?path=/docs/${storyId}`} onClick={open}>
-      {page.title}
-    </a>
-  );
-}
-
-export function PageList({ title, ids }) {
-  if (!ids.length) return null;
-  const pages = ids
-    .map((id) => libraryDocPages.find((doc) => doc.page.id === id)?.page)
-    .filter(Boolean);
-  return (
-    <>
-      <h3>{title}</h3>
-      <ul>
-        {pages.map((page) => (
-          <li key={page.id}>
-            <PageLink page={page} />
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-
-export function Related() {
-  const doc = useLibraryDoc();
-  const related = React.useMemo(
-    () =>
-      doc &&
-      relatedPages(
-        manifest,
-        libraryDocPages.map((entry) => entry.page),
-      ).get(doc.page.id),
-    [doc],
-  );
-  if (!related) return null;
-  return (
-    <>
-      <h2 id="related">Related</h2>
-      {related.renders.length || related.renderedBy.length ? (
-        <>
-          <PageList title="Renders" ids={related.renders} />
-          <PageList title="Used by" ids={related.renderedBy} />
-        </>
-      ) : (
-        <p>No other documented component renders this one or is rendered by it.</p>
-      )}
     </>
   );
 }

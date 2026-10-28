@@ -140,9 +140,9 @@ at the work boundaries specified in SKILL.md.
 
 ## Documentation synchronization
 
-- [ ] `docs/components/<slug>.mdx` follows the skeleton; the story renders it with `libraryDocs()`; the tag is off `scripts/docs/pending.json`.
+- [ ] `docs/components/<slug>.mdx` follows the tweakpad-docs skill (structure, style, merge ledger); `check-docs.mjs <section>/<slug>` passes; the story renders it with `libraryDocs()`; the tag is off `scripts/docs/pending.json`.
 - [ ] JSDoc covers the element summary, every public field and method, slots, events and CSS properties; parts carry a description in the family; `npm run build` reports no undescribed row.
-- [ ] `elementDependencies` is complete, so Related lists what the element renders.
+- [ ] `elementDependencies` is complete, so the website's Related lists what renders the element.
 - [ ] Verification fixtures are separate from the page (tests/fixtures or `!autodocs` stories).
 - [ ] Rendered and copyable previews reuse existing components; scripts import only what previews may.
 - [ ] Preview code works outside Storybook: registration is the page's, imports are the package's.

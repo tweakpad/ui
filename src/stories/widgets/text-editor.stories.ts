@@ -6,8 +6,8 @@ import { setupBlockEditor } from './text-editor-blocks-example.js';
 import { setupClassicEditor } from './text-editor-classic-example.js';
 import { fieldNotes } from './text-editor-samples.js';
 import { setupSelectionToolbarEditor } from './text-editor-selection-example.js';
-import { textEditorExamples, textEditorStorySources } from './text-editor.examples.js';
-import documentation from '../../../docs/widgets/text-editor.md?raw';
+import { textEditorStorySources } from './text-editor.examples.js';
+import { libraryDocs } from '../library-docs.js';
 
 interface Args {
   defaultValue: string;
@@ -43,12 +43,7 @@ const renderEditor = (args: Args, setup: (editor: TpTextEditor) => void): Templa
 const meta: Meta<Args> = {
   title: 'Widgets/Text editor',
   component: 'tp-text-editor',
-  parameters: {
-    docs: {
-      examples: textEditorExamples,
-      description: { component: documentation },
-    },
-  },
+  parameters: { docs: libraryDocs('widgets/text-editor') },
   args: {
     defaultValue: fieldNotes,
     format: 'html',
@@ -116,41 +111,26 @@ export const Default: Story = {
   name: 'Classic toolbar',
   args: { label: 'Report' },
   render: (args) => renderEditor(args, setupClassicEditor),
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Every control sits in the fixed toolbar, as in a word processor: the links, tables and images features add their tools to it.',
-      },
-      source: { code: textEditorStorySources.Default, language: 'html' },
-    },
-  },
 };
 
 export const SelectionToolbar: Story = {
+  tags: ['!autodocs'],
   name: 'Selection toolbar',
   render: (args) => renderEditor(args, setupSelectionToolbarEditor),
   parameters: {
     docs: {
-      description: {
-        story:
-          'The fixed toolbar is off (`layout: { toolbar: [] }`) and the selection toolbar feature carries the formatting: select a few words to format them or add a link. Alt+F10 moves focus to it from the keyboard.',
-      },
       source: { code: textEditorStorySources.SelectionToolbar, language: 'html' },
     },
   },
 };
 
 export const BlockEditor: Story = {
+  tags: ['!autodocs'],
   name: 'Block editor',
   args: { placeholder: 'Type / for blocks' },
   render: (args) => renderEditor(args, setupBlockEditor),
   parameters: {
     docs: {
-      description: {
-        story:
-          'The selection toolbar editor with blocks: the gutter beside each block inserts, drags and opens the block menu, and `/` opens the slash menu, which also inserts tables and images.',
-      },
       source: { code: textEditorStorySources.BlockEditor, language: 'html' },
     },
   },

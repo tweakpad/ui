@@ -1,0 +1,159 @@
+---
+title: Tooltip
+description: A brief description of a focusable control, shown on hover after a delay and on keyboard focus at once.
+tag: tp-tooltip
+---
+
+<Preview
+  title="Tooltip"
+  code={`<tp-tooltip id="tooltip-hero">
+  <tp-button slot="trigger" variant="outline" size="icon" aria-label="Download invoice"></tp-button>
+  Download invoice as PDF
+</tp-tooltip>`}
+  script={`const download = { viewBox: '0 0 24 24', paths: [
+  { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', strokeWidth: 2 },
+  { d: 'm7 10 5 5 5-5M12 15V3', strokeWidth: 2 },
+] };
+await customElements.whenDefined('tp-button');
+document.querySelector('#tooltip-hero tp-button').icon = download;`}
+/>
+
+## Usage
+
+Put the control in the `trigger` slot and the description in the default slot. Hover opens after 600 ms, focus opens immediately, and Escape closes without moving focus. The text becomes the trigger's accessible description; it never replaces the control's name, so an icon button still needs its own `aria-label`. Pointer movement from the trigger into the content keeps it open. Touch does not create a persistent tooltip. Its description is associated with the actual focusable native control, including a Button's shadow root.
+
+### Sides
+
+`side` takes physical or logical values (`block-start` by default) and `align` positions the tooltip along that side. Collisions with the viewport can flip the resolved side. The positioner uses the browser top layer without moving authored content out of its theme or slot context. Flip, shift, available-size constraints, arrow placement and anchor visibility are recomputed on scroll, resize, content changes and layout movement. Hidden or disconnected anchors cannot leave a visible stale popup.
+
+<Preview
+  title="Sides"
+  code={`<tp-tooltip side="block-start"><tp-button slot="trigger" variant="outline">Above</tp-button>Shown above</tp-tooltip>
+<tp-tooltip side="inline-end"><tp-button slot="trigger" variant="outline">After</tp-button>Shown after the trigger</tp-tooltip>
+<tp-tooltip side="block-end"><tp-button slot="trigger" variant="outline">Below</tp-button>Shown below</tp-tooltip>
+<tp-tooltip side="inline-start"><tp-button slot="trigger" variant="outline">Before</tp-button>Shown before the trigger</tp-tooltip>`}
+/>
+
+### Keyboard hints
+
+Descriptions can include an Icon or Key Hint. Links, buttons and inputs cannot go inside; use Popover for interactive content.
+
+<Preview
+  title="With a shortcut"
+  code={`<tp-tooltip>
+  <tp-button slot="trigger" variant="outline">New issue</tp-button>
+  Create an issue
+  <tp-key-hint-group separator="none" platform="mac">
+    <tp-key-hint key="command"></tp-key-hint><tp-key-hint key="I"></tp-key-hint>
+  </tp-key-hint-group>
+</tp-tooltip>`}
+/>
+
+### Delay
+
+`open-delay` and `close-delay` tune pointer timing in milliseconds. Keep the open delay for dense toolbars so tooltips don't flash as the pointer passes; shorten it where the description is the point.
+
+<Preview
+  title="Delays"
+  code={`<tp-tooltip open-delay="0"><tp-button slot="trigger" variant="outline">Instant</tp-button>Opens with no delay</tp-tooltip>
+<tp-tooltip open-delay="1200" close-delay="300"><tp-button slot="trigger" variant="outline">Patient</tp-button>Waits 1.2 seconds to open</tp-tooltip>`}
+/>
+
+### Following the pointer
+
+`track-cursor-axis` positions the tooltip at the pointer along one or both axes, which suits wide targets such as a chart or a progress track.
+
+<Preview
+  title="Cursor tracking"
+  code={`<tp-tooltip track-cursor-axis="horizontal" side="block-start">
+  <div slot="trigger" tabindex="0" style="display:grid;place-items:center;inline-size:28rem;max-inline-size:100%;min-block-size:5rem;border:1px dashed var(--tp-border);border-radius:var(--tp-radius-lg);color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">
+    Storage: 42 GB of 100 GB used
+  </div>
+  Photos 28 GB · Documents 9 GB · Other 5 GB
+</tp-tooltip>`}
+/>
+
+### Toolbar groups
+
+In a toolbar, the first tooltip should wait but the next ones should not. Give the tooltips one `TooltipProvider` from `@tweakpad/ui`: after one opens, moving to a neighbour opens its tooltip at once, until the pointer has rested away for `restTimeout` (400 ms by default). Only one tooltip in the group is open at a time.
+
+<Preview
+  title="Shared provider"
+  code={`<div id="tooltip-toolbar" role="toolbar" aria-label="Formatting" style="display:flex;gap:var(--tp-space-1)">
+  <tp-tooltip>
+    <tp-button slot="trigger" variant="ghost" size="icon-sm" aria-label="Bold" data-glyph="bold"></tp-button>
+    Bold
+  </tp-tooltip>
+  <tp-tooltip>
+    <tp-button slot="trigger" variant="ghost" size="icon-sm" aria-label="Italic" data-glyph="italic"></tp-button>
+    Italic
+  </tp-tooltip>
+  <tp-tooltip>
+    <tp-button slot="trigger" variant="ghost" size="icon-sm" aria-label="Underline" data-glyph="underline"></tp-button>
+    Underline
+  </tp-tooltip>
+  <tp-tooltip>
+    <tp-button slot="trigger" variant="ghost" size="icon-sm" aria-label="Insert link" data-glyph="link"></tp-button>
+    Insert link
+  </tp-tooltip>
+</div>`}
+  script={`import { TooltipProvider } from '@tweakpad/ui';
+
+const glyphs = {
+  bold: { viewBox: '0 0 24 24', paths: [{ d: 'M6 12h8a4 4 0 0 1 0 8H6V4h7a4 4 0 0 1 0 8', strokeWidth: 2 }] },
+  italic: { viewBox: '0 0 24 24', paths: [{ d: 'M19 4h-9M14 20H5M15 4 9 20', strokeWidth: 2 }] },
+  underline: { viewBox: '0 0 24 24', paths: [{ d: 'M6 3v7a6 6 0 0 0 12 0V3M4 21h16', strokeWidth: 2 }] },
+  link: { viewBox: '0 0 24 24', paths: [{ d: 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71', strokeWidth: 2 }] },
+};
+const provider = new TooltipProvider({ openDelay: 600, restTimeout: 400 });
+await customElements.whenDefined('tp-tooltip');
+for (const tooltip of document.querySelectorAll('#tooltip-toolbar tp-tooltip')) {
+  tooltip.provider = provider;
+  const button = tooltip.querySelector('tp-button');
+  button.icon = glyphs[button.dataset.glyph];
+}`}
+/>
+
+### One tooltip for many triggers
+
+A long list does not need a tooltip per row. Create a handle with `createTooltipHandle()`, attach one Tooltip to it, and register each trigger with a `payload`. The Tooltip's `content` renders the payload of whichever trigger is active, here with `html` from `lit`.
+
+<Preview
+  title="Shared handle"
+  code={`<div id="tooltip-handle" style="display:flex;gap:var(--tp-space-2)">
+  <tp-avatar fallback="MC" alt="Maya Chen" tabindex="0" data-name="Maya Chen" data-role="Design lead"></tp-avatar>
+  <tp-avatar fallback="JW" alt="Jonas Weber" tabindex="0" data-name="Jonas Weber" data-role="Backend engineer"></tp-avatar>
+  <tp-avatar fallback="PP" alt="Priya Patel" tabindex="0" data-name="Priya Patel" data-role="Product manager"></tp-avatar>
+  <tp-avatar fallback="LR" alt="Luca Rossi" tabindex="0" data-name="Luca Rossi" data-role="Support"></tp-avatar>
+</div>
+<tp-tooltip id="tooltip-handle-tip"></tp-tooltip>`}
+  script={`import { createTooltipHandle } from '@tweakpad/ui';
+import { html } from 'lit';
+
+const handle = createTooltipHandle();
+const tooltip = document.querySelector('#tooltip-handle-tip');
+tooltip.handle = handle;
+tooltip.content = (person) =>
+  person ? html\`<span style="display:grid"><strong>\${person.name}</strong>\${person.role}</span>\` : '';
+for (const avatar of document.querySelectorAll('#tooltip-handle tp-avatar')) {
+  handle.registerTrigger(avatar, {
+    identifier: avatar.dataset.name,
+    payload: { name: avatar.dataset.name, role: avatar.dataset.role },
+    openDelay: 200,
+  });
+}`}
+/>
+
+`registerTrigger()` returns a cleanup function, and `handle.open(identifier)` opens the tooltip for one trigger from code.
+
+### Disabled
+
+<Preview
+  title="Disabled tooltip"
+  code={`<tp-tooltip disabled>
+  <tp-button slot="trigger" variant="outline">Archive</tp-button>
+  Move this project to the archive
+</tp-tooltip>`}
+/>
+
+`disabled` on the Tooltip suppresses the description only; the Button it describes stays active and keeps its hover appearance.

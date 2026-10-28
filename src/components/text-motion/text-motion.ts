@@ -63,19 +63,12 @@ export function parseSplitUnits(value: string | null | undefined): Set<SplitUnit
 }
 
 /**
- * `tp-text-motion`: splits its text into lines, words and characters, optionally masked, and
- * reveals the pieces with a staggered effect (Foundation §18.19, Component Library Text motion).
- *
- * Pieces are built in the light tree so page typography and links keep working; the original
- * nodes are kept and restored by `revert()`. Lines are recalculated before paint when the width
- * changes or fonts finish loading, and splitting never changes the space the text occupies.
- * Standalone it reveals on entering the viewport; inside a `tp-scroll-trigger` (or an image group)
- * that coordinator owns the timing.
- *
- * Markers: `data-split-ready`, `data-in-view` (while observed), `data-revealed`.
+ * Splits its text into lines, words or characters and reveals the pieces one after another as the
+ * text enters the view. The pieces are built around the original text, so links and inline
+ * formatting keep working, and splitting never changes the space the text takes. Inside a Scroll
+ * trigger the trigger decides when the reveal plays.
  *
  * @slot - The text, with inline formatting and interactive elements.
- * @csspart text-motion - The host.
  * @fires tp-text-split - `{ lines, words, chars, masks }` after every split.
  * @fires tp-reveal-change - `{ revealed, effect }` when the reveal starts or a repeat resets it.
  * @fires tp-reveal-change-complete - `{ revealed }` after the last piece settles.

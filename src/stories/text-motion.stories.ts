@@ -1,12 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import documentation from '../../docs/text-motion.md?raw';
-import {
-  textMotionDefaults,
-  textMotionDefaultSource,
-  textMotionExamples,
-} from './text-motion.examples.js';
+import { libraryDocs } from './library-docs.js';
+
+const textMotionDefaults = {
+  text: 'Quiet spaces, open light, and rooms that breathe',
+};
 
 interface Args {
   split: string;
@@ -21,13 +20,7 @@ interface Args {
 const meta = {
   title: 'Components/Text motion',
   component: 'tp-text-motion',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: textMotionExamples,
-      source: { code: textMotionDefaultSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/text-motion') },
   args: {
     split: 'words lines',
     mask: 'lines',

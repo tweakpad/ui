@@ -8,14 +8,12 @@ import { tooltipPresentation } from '../../presentation/families/tooltip.js';
 export type TooltipDescribes = 'trigger' | 'none';
 
 /**
- * Descriptive, non-modal hover/focus surface. Rich children must remain noninteractive.
+ * A brief description of a focusable control, shown on hover after a delay and on keyboard focus at
+ * once. The text becomes the control's accessible description, never its name; anything
+ * interactive belongs in a Popover.
  *
- * `describes` (attribute `describes`, default `trigger`): with `trigger`, the open content is the
- * active trigger's accessible description (`aria-describedby`). With `none`, the tooltip is visual
- * only: the trigger gets no description and the content is `aria-hidden`. Use `none` only when
- * the trigger's accessible name already carries the same information (for example, an icon
- * button named "Play" whose tooltip shows "Play" and its key hint, with the shortcut published
- * through `aria-keyshortcuts`), so the description would repeat the name.
+ * @slot - The description: text, with an Icon or a Key Hint.
+ * @slot trigger - The focusable control the tooltip describes.
  */
 export class TpTooltip extends TpHoverSurface {
   static tagName = 'tp-tooltip';
@@ -24,7 +22,11 @@ export class TpTooltip extends TpHoverSurface {
     ...TpHoverSurface.properties,
     describes: { type: String, reflect: true },
   } satisfies PropertyDeclarations;
-  /** `trigger` describes the active trigger; `none` keeps the tooltip visual only. */
+  /**
+   * `trigger` makes the text the trigger's accessible description; `none` keeps the tooltip visual
+   * only, for a trigger whose name already says the same, such as a Play button whose tooltip shows
+   * "Play" and its shortcut.
+   */
   describes: TooltipDescribes = 'trigger';
   constructor() {
     super();

@@ -1,0 +1,124 @@
+{
+  "id": "components/autocomplete",
+  "tag": "tp-autocomplete",
+  "sources": {
+    "story": "src/stories/autocomplete.stories.ts",
+    "markdown": "docs/autocomplete.md",
+    "examples": [
+      "src/stories/autocomplete.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`tp-autocomplete` is a text field that suggests matching items as you type. Its value is the\ntext: accepting a suggestion replaces the text, and a form receives the text. Suggestions come\nfrom its items through ranked, typo-tolerant search by default, from the exact matching modes,\nor from a search source such as a server endpoint or another search engine.\n\n```html\n<tp-autocomplete label=\"Fruit\" placeholder=\"Search fruit\">\n  <option>Apple</option>\n  <option>Banana</option>\n  <option>Raspberry</option>\n  <option>Strawberry</option>\n</tp-autocomplete>\n```\n\nTyping `rasberry` suggests Raspberry; typing `berry` suggests the berries. Matched text is marked\nin each suggestion.\n\nImport `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`. To bundle only Autocomplete, call\n`defineElement(TpAutocomplete.tagName, TpAutocomplete)`; it defines the components it renders.\n\nAutocomplete is the library's editable choice control (the searchable [Select](select.md)) without\na selection: it shares Select's input group, suggestion surface, positioning, keyboard handling,\ncompletion and presentation. Use Select with `searchable` when the value must be one of the items."
+    },
+    {
+      "id": "md: Items",
+      "kind": "md",
+      "heading": "## Items",
+      "text": "Items are options in the element (`<option>`, `<optgroup>`, `<hr>`) or the `items` property: strings,\n`{ value, label?, text?, disabled? }` records, and groups `{ type: 'group', label, items }`. The text\nof an item is what is matched and what replaces the value; `itemToText` converts other values.\n`matchFields` adds searchable text that is not displayed, such as keywords or descriptions:\n\n```js\nconst autocomplete = document.querySelector('tp-autocomplete');\nautocomplete.items = countries.map((country) => ({ value: country.name, label: country.name }));\nautocomplete.matchFields = (item) => countries.find((c) => c.name === item.value)?.aliases;\n```"
+    },
+    {
+      "id": "md: Matching",
+      "kind": "md",
+      "heading": "## Matching",
+      "text": "`matching` chooses how the text matches items:\n\n| `matching`        | Matches                                                                                                                                                                     | Order        |\n| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |\n| `fuzzy` (default) | every typed word, as a whole word, a word start, a part of a word (three or more letters) or with a typo (one edit per five letters, a swap of two letters counting as one) | by relevance |\n| `contains`        | the text anywhere, ignoring case, accents and punctuation                                                                                                                   | as given     |\n| `prefix`          | every typed word at the start of a word                                                                                                                                     | as given     |\n| `exact`           | the whole text, ignoring case, accents and punctuation                                                                                                                      | as given     |\n\nFuzzy matching uses the built-in index of Text search, which ranks with BM25 (rarer and denser\nmatches rank higher), weighs exact words over word starts, parts and typos, and counts the item\ntext twice as much as `matchFields`. It is rebuilt only when the items change. `limit` keeps the\nfirst results. `filter` (`(item, query, text) => boolean`) replaces matching with your own\npredicate, `filter = null` shows every item, and `filteredItems` supplies the results yourself.\n\n`highlightMatches` (on by default) marks matched text in the `autocomplete-match` part."
+    },
+    {
+      "id": "md: Server search",
+      "kind": "md",
+      "heading": "## Server search",
+      "text": "A search source supplies the suggestions instead of the items. Its `search(query, context)`\nreturns the results, directly or as a promise; `context` holds an `AbortSignal` for the query, the\n`limit` and the `locale`. Results are presented in the order given.\n\n```js\nimport { createRequestSource } from '@tweakpad/ui';\n\nautocomplete.searchDelay = 250;\nautocomplete.source = createRequestSource({\n  url: (query) => `/api/cities?q=${encodeURIComponent(query)}`,\n  map: (response) => response.cities.map((city) => city.name),\n  minLength: 1,\n});\n```\n\nA query waits `search-delay` milliseconds without typing. A newer query aborts the previous one\n(the signal is passed to `fetch`), and results that settle for an older query are ignored. While a\nquery is pending the previous suggestions stay visible and the list is busy; with nothing to show,\na status row with a spinner reads \"Loading suggestions.\". A failure shows \"Suggestions could not be\nloaded.\". `searchStatus` is `idle`, `loading`, `loaded` or `error`, and `tp-search-status`\n(`{ status, query, total }`) and `tp-search-error` (`{ error, query }`) report changes. Queries run\nwhile the suggestions are shown, including the empty query.\n\nResults may be plain items or hits `{ item, score?, terms?, matches? }`. Matched ranges come from\n`matches` (`[{ field: 'text', ranges: [[start, end], …] }]`), else from `terms`, else from the\ntyped words, so a server that reports what matched is highlighted exactly."
+    },
+    {
+      "id": "md: Other search engines",
+      "kind": "md",
+      "heading": "## Other search engines",
+      "text": "Any engine plugs in as a source; the library depends on none of them. For example, with an engine\nthat returns ranked items and match positions:\n\n```js\nautocomplete.source = {\n  search(query) {\n    return engine.search(query).map((result) => ({\n      item: result.item,\n      score: result.score,\n      matches: [\n        { field: 'text', ranges: result.positions.map(([start, end]) => [start, end + 1]) },\n      ],\n    }));\n  },\n};\n```\n\nThe built-in index is available on its own as `createIndexSource(items, options)` and `TextIndex`,\nfor example to search records over several fields with boosts:\n\n```js\nimport { createIndexSource } from '@tweakpad/ui';\n\nautocomplete.source = createIndexSource(articles, {\n  fields: ['title', 'summary'],\n  boost: { title: 3 },\n  extract: (article, field) => article[field],\n});\nautocomplete.itemToText = (article) => article.title;\n```"
+    },
+    {
+      "id": "md: Completion modes",
+      "kind": "md",
+      "heading": "## Completion modes",
+      "text": "| `completion-mode` | Suggestions                | While navigating                                                                |\n| ----------------- | -------------------------- | ------------------------------------------------------------------------------- |\n| `list` (default)  | filtered by the text       | the text is unchanged                                                           |\n| `both`            | filtered by the typed text | the highlighted suggestion completes the text, with the completed part selected |\n| `inline`          | all items                  | as `both`                                                                       |\n| `none`            | all items                  | the text is unchanged                                                           |\n\n`auto-highlight` highlights the first suggestion after typing (`auto-highlight=\"always\"` also on\nopening), so Enter accepts it. `keep-highlight` keeps the highlight when the pointer leaves."
+    },
+    {
+      "id": "md: Keyboard and forms",
+      "kind": "md",
+      "heading": "## Keyboard and forms",
+      "text": "Down and Up open the suggestions and move through them; Home and End go to the first and last.\nEnter accepts the highlighted suggestion; with nothing highlighted the text stands and the owning\nform submits. Escape first removes a completion, then closes, and while closed clears the text.\nTyping opens the suggestions; clearing the text closes them unless `open-on-input-click` is set.\nComposition (IME) input never navigates or accepts.\n\nWith `name`, the form receives the text. `required` requires text; `disabled` and `read-only`\nbehave as for text inputs. `submit-on-item-click` submits the form after a suggestion is accepted.\nForm reset restores `default-value`."
+    },
+    {
+      "id": "md: Properties",
+      "kind": "md",
+      "heading": "## Properties",
+      "text": "| Property / attribute                                           | Values                                      | Default               |\n| -------------------------------------------------------------- | ------------------------------------------- | --------------------- |\n| `value`                                                        | the text (controlled)                       | —                     |\n| `defaultValue` / `default-value`                               | initial text                                | `''`                  |\n| `items`                                                        | items, records or groups                    | element options       |\n| `matching`                                                     | `fuzzy`, `contains`, `prefix`, `exact`      | `fuzzy`               |\n| `matchFields`                                                  | `(item) => string \\| string[]`              | —                     |\n| `source`                                                       | search source                               | —                     |\n| `searchDelay` / `search-delay`                                 | milliseconds                                | `0`                   |\n| `highlightMatches` / `highlight-matches`                       | boolean                                     | `true`                |\n| `filter`, `filteredItems`                                      | predicate or `null`, ordered results        | —                     |\n| `limit`                                                        | maximum suggestions, `-1` for all           | `-1`                  |\n| `completionMode` / `completion-mode`                           | `list`, `both`, `inline`, `none`            | `list`                |\n| `autoHighlight` / `auto-highlight`                             | `false`, `true`, `always`                   | `false`               |\n| `keepHighlight` / `keep-highlight`, `loopFocus` / `loop-focus` | boolean                                     | `false`, `true`       |\n| `openOnInputClick` / `open-on-input-click`                     | boolean                                     | `false`               |\n| `submitOnItemClick` / `submit-on-item-click`                   | boolean                                     | `false`               |\n| `showTrigger` / `show-trigger`, `showClear` / `show-clear`     | boolean                                     | `false`, `false`      |\n| `open`, `defaultOpen` / `default-open`                         | boolean                                     | `false`               |\n| `label`, `placeholder`                                         | accessible name, placeholder                | `'Suggestions'`, `''` |\n| `messages`                                                     | `{ loading, error, empty, results(count) }` | English texts         |\n| `locale`, `itemToText`, `itemToLabel`                          | matching locale, text and label of a value  | inherited             |\n| `name`, `required`, `disabled`, `readOnly`                     | form attributes                             | —                     |\n\nPlacement (`placement`, `side`, `align`, offsets, collision options), `inline`, `modal`, `grid`,\n`virtualized` and `container` work as in [Select](select.md).\n\nRead-only: `searchStatus`, `inputElement`, `highlightedValue`. Methods: `clear()`, `setOpen(open)`,\n`updatePosition()`, `actions.unmount()`."
+    },
+    {
+      "id": "md: Events",
+      "kind": "md",
+      "heading": "## Events",
+      "text": "| Event                     | Detail                             | When                                                                        |\n| ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |\n| `tp-value-change`         | `{ value, previousValue, reason }` | the text changes: `input`, `item-press`, `clear`, `escape-key` (cancelable) |\n| `tp-open-change`          | `{ open, reason }`                 | the suggestions open or close (cancelable)                                  |\n| `tp-open-change-complete` | `{ open }`                         | the suggestions finished opening or closing, after motion                   |\n| `tp-search-status`        | `{ status, query, total }`         | a search source's status changes                                            |\n| `tp-search-error`         | `{ error, query }`                 | a search source fails                                                       |\n\n`onValueChange`, `onOpenChange` and `onItemHighlighted(value, { index, reason })` are the callback\nforms."
+    },
+    {
+      "id": "md: Accessibility",
+      "kind": "md",
+      "heading": "## Accessibility",
+      "text": "The input is a combobox with `aria-autocomplete` matching the completion mode; DOM focus stays in\nit while the highlight moves through the listbox (`aria-activedescendant`). Suggestions are options\nwithout a selected state. A polite status region announces the result count, loading and errors,\nin the `messages` texts. Give the field a label with `label` or a [Field](field.md)."
+    },
+    {
+      "id": "md: Styling",
+      "kind": "md",
+      "heading": "## Styling",
+      "text": "Parts: `autocomplete`, `autocomplete-input-group`, `autocomplete-input`, `autocomplete-trigger`,\n`autocomplete-clear`, `autocomplete-content`, `autocomplete-list`, `autocomplete-group`,\n`autocomplete-group-label`, `autocomplete-item`, `autocomplete-match`, `autocomplete-row`,\n`autocomplete-separator`, `autocomplete-empty-state` and `autocomplete-status`. They present as\nthe searchable Select's parts; the match part adds weight to matched text. Slot `empty` replaces\nthe empty-state content."
+    },
+    {
+      "id": "example: Exact matching",
+      "kind": "example",
+      "title": "Exact matching",
+      "description": "`matching=\"prefix\"` suggests only items with a word starting with each typed word (`un st` finds United States), in their own order. `contains` and `exact` match anywhere or the whole text; all three ignore case and accents. The default, `fuzzy`, ranks by relevance and tolerates typos.",
+      "code": "<tp-field label=\"Country\">\n  <tp-autocomplete matching=\"prefix\" placeholder=\"Type the start of a word\">\n    <option>United Kingdom</option>\n    <option>United States</option>\n    <option>United Arab Emirates</option>\n    <option>South Africa</option>\n    <option>South Korea</option>\n    <option>New Zealand</option>\n  </tp-autocomplete>\n</tp-field>"
+    },
+    {
+      "id": "example: Server search",
+      "kind": "example",
+      "title": "Server search",
+      "description": "A search source supplies the suggestions: typing waits for a 250ms pause (`search-delay`), a newer query aborts the previous request, and the previous suggestions stay while the next ones load. With `createRequestSource({ url, map })` a JSON endpoint needs no code beyond the URL.",
+      "code": "<tp-field label=\"City\" description=\"Simulated server with 500ms latency\">\n  <tp-autocomplete id=\"city\" placeholder=\"Search cities\" show-clear></tp-autocomplete>\n</tp-field>",
+      "script": "import { createIndexSource } from '@tweakpad/ui';\nconst cities = [\"Amsterdam\",\"Athens\",\"Barcelona\",\"Berlin\",\"Bruges\",\"Brussels\",\"Budapest\",\"Copenhagen\",\"Dublin\",\"Edinburgh\",\"Florence\",\"Lisbon\",\"London\",\"Madrid\",\"Milan\",\"Munich\",\"Paris\",\"Prague\",\"Rome\",\"Stockholm\",\"Vienna\",\"Warsaw\",\"Zurich\"];\n// A stand-in for a search endpoint: 500ms latency, abortable, ranked by the built-in index.\nconst index = createIndexSource(cities);\nconst autocomplete = document.querySelector('#city');\nautocomplete.searchDelay = 250;\nautocomplete.source = {\n  search: (query, { signal, limit, locale }) =>\n    new Promise((resolve, reject) => {\n      const timer = setTimeout(() => resolve(index.search(query, { signal, limit: 8, locale })), 500);\n      signal.addEventListener('abort', () => {\n        clearTimeout(timer);\n        reject(signal.reason);\n      });\n    }),\n};"
+    },
+    {
+      "id": "example: Records over several fields",
+      "kind": "example",
+      "title": "Records over several fields",
+      "description": "The built-in index on its own, over records: `createIndexSource` searches the title and summary of each article, weighting the title three times. Any other search engine plugs in the same way, as a source returning items or hits with matched ranges.",
+      "code": "<tp-field label=\"Documentation\" description=\"Matches titles and summaries; titles rank higher\">\n  <tp-autocomplete id=\"docs-search\" placeholder=\"Search the docs\"></tp-autocomplete>\n</tp-field>",
+      "script": "import { createIndexSource } from '@tweakpad/ui';\nconst articles = [\n  {\n    \"title\": \"Getting started\",\n    \"summary\": \"Install the package, import the styles and register the elements.\"\n  },\n  {\n    \"title\": \"Theming\",\n    \"summary\": \"Tokens, color schemes and scoped themes for every component.\"\n  },\n  {\n    \"title\": \"Forms\",\n    \"summary\": \"Fields, validation, form association and submission.\"\n  },\n  {\n    \"title\": \"Motion\",\n    \"summary\": \"Reveal effects, reduced motion and scroll-linked animation.\"\n  },\n  {\n    \"title\": \"Accessibility\",\n    \"summary\": \"Keyboard support, focus management and screen readers.\"\n  },\n  {\n    \"title\": \"Server rendering\",\n    \"summary\": \"Declarative shadow DOM and hydration of components.\"\n  }\n];\nconst autocomplete = document.querySelector('#docs-search');\nautocomplete.itemToText = (article) => article.title;\nautocomplete.source = createIndexSource(articles, {\n  fields: ['title', 'summary'],\n  boost: { title: 3 },\n  extract: (article, field) => article[field],\n});"
+    },
+    {
+      "id": "example: Inline completion",
+      "kind": "example",
+      "title": "Inline completion",
+      "description": "`completion-mode=\"both\"` completes the text with the highlighted suggestion and selects the completed part, so typing continues over it; `auto-highlight` highlights the first suggestion, so Enter accepts it. Escape removes the completion.",
+      "code": "<tp-field label=\"Fruit\">\n  <tp-autocomplete completion-mode=\"both\" auto-highlight placeholder=\"Type ap\">\n    <option>Apple</option>\n    <option>Apricot</option>\n    <option>Banana</option>\n    <option>Blackberry</option>\n    <option>Blueberry</option>\n    <option>Cherry</option>\n    <option>Grape</option>\n    <option>Mango</option>\n    <option>Passion fruit</option>\n    <option>Pineapple</option>\n    <option>Raspberry</option>\n    <option>Strawberry</option>\n  </tp-autocomplete>\n</tp-field>"
+    },
+    {
+      "id": "example: Grouped suggestions",
+      "kind": "example",
+      "title": "Grouped suggestions",
+      "description": "Groups keep their labels while their matching suggestions are shown; groups without matches are hidden.",
+      "code": "<tp-field label=\"Ingredient\">\n  <tp-autocomplete placeholder=\"Search ingredients\">\n    <optgroup label=\"Fruit\">\n      <option>Apple</option>\n      <option>Lemon</option>\n      <option>Orange</option>\n    </optgroup>\n    <optgroup label=\"Herbs\">\n      <option>Basil</option>\n      <option>Mint</option>\n      <option>Rosemary</option>\n      <option>Thyme</option>\n    </optgroup>\n  </tp-autocomplete>\n</tp-field>"
+    },
+    {
+      "id": "example: In a form",
+      "kind": "example",
+      "title": "In a form",
+      "description": "The form receives the text. Accepting a suggestion submits (`submit-on-item-click`); Enter with nothing highlighted submits whatever was typed.",
+      "code": "<form id=\"order\" style=\"display: grid; gap: var(--tp-space-3); max-inline-size: 20rem\">\n  <tp-field label=\"Fruit\">\n    <tp-autocomplete name=\"fruit\" required submit-on-item-click placeholder=\"Search fruit\">\n      <option>Apple</option>\n      <option>Apricot</option>\n      <option>Banana</option>\n      <option>Blackberry</option>\n      <option>Blueberry</option>\n      <option>Cherry</option>\n      <option>Grape</option>\n      <option>Mango</option>\n      <option>Passion fruit</option>\n      <option>Pineapple</option>\n      <option>Raspberry</option>\n      <option>Strawberry</option>\n    </tp-autocomplete>\n  </tp-field>\n  <tp-button type=\"submit\">Order</tp-button>\n  <output id=\"ordered\" style=\"color: var(--tp-muted-foreground); font: var(--tp-text-sm) var(--tp-font-mono)\"></output>\n</form>",
+      "script": "const form = document.querySelector('#order');\nform.addEventListener('submit', (event) => {\n  event.preventDefault();\n  document.querySelector('#ordered').value = `Ordered: ${new FormData(form).get('fruit')}`;\n});"
+    }
+  ]
+}

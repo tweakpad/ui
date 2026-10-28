@@ -1,0 +1,7 @@
+interface:
+  display_name: 'Tweakpad Docs'
+  short_description: 'Keep each component page single-sourced, structured and in sync'
+  default_prompt: 'Use $tweakpad-docs to write, merge or change the documentation page of the requested Tweakpad component or widget, keeping the mandatory structure, the website-first minimal merge, the shared writing style, and both renderings checked in Chrome.'
+
+policy:
+  allow_implicit_invocation: true

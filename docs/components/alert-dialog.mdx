@@ -1,0 +1,101 @@
+---
+title: Alert dialog
+description: A modal confirmation for a consequential decision, with explicit Cancel and Confirm actions.
+tag: tp-alert-dialog
+---
+
+<Preview
+  title="Alert dialog"
+  code={`<tp-alert-dialog
+  id="alert-dialog-hero"
+  label="Delete project?"
+  description="This permanently deletes Website redesign and its 128 files. This action cannot be undone."
+>
+  <tp-button slot="trigger" variant="outline">Delete project</tp-button>
+  <tp-button slot="cancel" variant="outline">Cancel</tp-button>
+  <tp-button slot="confirm" variant="destructive" id="alert-dialog-hero-confirm">Delete project</tp-button>
+</tp-alert-dialog>`}
+  script={`const dialog = document.querySelector('#alert-dialog-hero');
+document.querySelector('#alert-dialog-hero-confirm').addEventListener('click', (event) => {
+  dialog.setOpen(false, 'close-action', event);
+});`}
+/>
+
+## Usage
+
+Put the opening control in `slot="trigger"` and the two decisions in `slot="cancel"` and `slot="confirm"`. `label` and `description` become the visible title and consequence text. Outside clicks never close an Alert Dialog; only Cancel, Confirm or Escape do.
+
+It always traps focus and blocks background interaction: the whole document by default, or only one container with `modality="container"`. Use Dialog for general workflows. Alert Dialog shares Dialog's state, native surface, focus, triggers, handles, nesting and presence; only its decision policy and public part names differ.
+
+### Confirming
+
+Cancel closes on its own. Confirm only supplies the button: clicking it does nothing until your handler performs the work and then closes the dialog with `setOpen(false, 'close-action', event)`. State mode is fixed at first render. Use `setOpen()` for programmatic changes in uncontrolled mode. In controlled mode, accept `tp-open-change` by assigning `dialog.open = event.detail.value`.
+
+<Preview
+  title="Asynchronous confirm"
+  code={`<tp-alert-dialog
+  id="alert-dialog-async"
+  label="Revoke API key?"
+  description="Integrations using the key ending in 4f2a will stop working immediately."
+>
+  <tp-button slot="trigger" variant="outline">Revoke key</tp-button>
+  <tp-button slot="cancel" variant="outline" id="alert-dialog-async-cancel">Cancel</tp-button>
+  <tp-button slot="confirm" variant="destructive" id="alert-dialog-async-confirm">Revoke key</tp-button>
+</tp-alert-dialog>`}
+  script={`const dialog = document.querySelector('#alert-dialog-async');
+const cancel = document.querySelector('#alert-dialog-async-cancel');
+const confirm = document.querySelector('#alert-dialog-async-confirm');
+confirm.addEventListener('click', async (event) => {
+  cancel.disabled = true;
+  confirm.loadingPosition = 'leading';
+  await new Promise((resolve) => setTimeout(resolve, 1200));
+  cancel.disabled = false;
+  confirm.loadingPosition = null;
+  dialog.setOpen(false, 'close-action', event);
+});`}
+/>
+
+For slow work, keep the dialog open, show progress on Confirm and lock Cancel until the request settles. If it fails, put the error in the dialog content instead of closing.
+
+### Content
+
+<Preview
+  title="Media and body"
+  code={`<tp-alert-dialog id="alert-dialog-media" label="Leave without saving?">
+  <tp-button slot="trigger" variant="outline">Close editor</tp-button>
+  <svg slot="media" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></svg>
+  <p slot="description">You have unsaved changes to <strong>Onboarding checklist</strong>. They will be lost if you leave now.</p>
+  <tp-button slot="cancel" variant="outline">Keep editing</tp-button>
+  <tp-button slot="confirm" id="alert-dialog-media-confirm">Discard changes</tp-button>
+</tp-alert-dialog>`}
+  script={`const dialog = document.querySelector('#alert-dialog-media');
+document.querySelector('#alert-dialog-media-confirm').addEventListener('click', (event) => {
+  dialog.setOpen(false, 'close-action', event);
+});`}
+/>
+
+The `title`, `description` and `media` slots take rich content when the attributes are not enough. Label both actions with their outcome, such as "Keep editing" and "Discard changes", rather than "OK". Alert Dialog has no generic corner Close: its named Cancel and Confirm actions communicate the decision.
+
+Alert Dialog renders in a native dialog in the browser top layer, which escapes clipping and transformed ancestors while slotted content keeps inherited tokens. The inherited Dialog portal properties move it to another destination; with container modality it renders in place inside the container.
+
+### Focus
+
+<Preview
+  title="Initial focus on Confirm"
+  code={`<tp-alert-dialog
+  id="alert-dialog-focus"
+  initial-focus="confirm"
+  label="Publish changes?"
+  description="Your edits to Pricing will be visible to everyone with the link."
+>
+  <tp-button slot="trigger">Publish</tp-button>
+  <tp-button slot="cancel" variant="outline">Not yet</tp-button>
+  <tp-button slot="confirm" id="alert-dialog-focus-confirm">Publish</tp-button>
+</tp-alert-dialog>`}
+  script={`const dialog = document.querySelector('#alert-dialog-focus');
+document.querySelector('#alert-dialog-focus-confirm').addEventListener('click', (event) => {
+  dialog.setOpen(false, 'close-action', event);
+});`}
+/>
+
+Opening focuses Cancel by default, so a stray Enter never confirms a destructive action. `initial-focus="confirm"` suits safe, expected confirmations. Focus stays inside the dialog while it is open and returns to the trigger when it closes.

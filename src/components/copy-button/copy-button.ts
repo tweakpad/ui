@@ -39,11 +39,11 @@ const ICON_SIZES: Record<CopyButtonSize, 'icon-xs' | 'icon-sm' | 'icon' | 'icon-
 };
 
 /**
- * Writes `value` to the clipboard and confirms in place (Component Library §16 Copy button,
- * Foundation §19.25 Clipboard write): the composed Button swaps its copy Icon for a check and
- * takes the copied message as its name for `duration`, every result is announced politely, and
- * `tp-copy` (cancelable) / `tp-copied` / `tp-copy-error` report the sequence. With `data` set,
- * one clipboard item carries its representations together with `value` as `text/plain`.
+ * Writes `value` to the clipboard and confirms in place: the composed Button swaps its copy Icon
+ * for a check and takes the copied message as its name for `duration`, every result is announced
+ * politely, and `tp-copy` (cancelable) / `tp-copied` / `tp-copy-error` report the sequence. With
+ * `data` set, one clipboard item carries its representations together with `value` as
+ * `text/plain`.
  *
  * @fires tp-copy - Cancelable, before writing; `detail.value`.
  * @fires tp-copied - After a successful write; `detail.value` and the written `detail.types`.
@@ -88,15 +88,32 @@ export class TpCopyButton extends TpElement {
       }
     `,
   ];
+  /** The exact text to copy. */
   value = '';
   /** Further representations written with `value` in one clipboard item; null copies text. */
   data: CopyDataProvider | null = null;
+  /**
+   * The accessible name, or the visible text with `show-label`; make it specific, such as "Copy
+   * invite link", so it makes sense out of context.
+   */
   label = 'Copy';
+  /** The name and announcement after a successful copy, shown for `duration`. */
   copiedLabel = 'Copied';
+  /** The announcement when the browser refuses the clipboard write. */
   failedLabel = 'Copy failed';
+  /** Shows the label as text beside the Icon instead of an Icon-only button. */
   showLabel = false;
+  /**
+   * The paint of the composed Button: `ghost` beside inline values, `outline` or `secondary` when
+   * copying is the main action.
+   */
   variant: CopyButtonVariant = 'ghost';
+  /** The size of the composed Button; Icon-only buttons take the square size of the same height. */
   size: CopyButtonSize = 'sm';
+  /**
+   * How long, in milliseconds, the check and the copied message stay before the button returns to
+   * its resting state.
+   */
   duration = 2000;
   disabled = false;
   declare _copied: boolean;
@@ -158,6 +175,7 @@ export class TpCopyButton extends TpElement {
     return copyData(document, record);
   }
 
+  /** Moves focus to the composed Button. */
   override focus(options?: FocusOptions): void {
     this.renderRoot?.querySelector<HTMLElement>('tp-button')?.focus(options);
   }

@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/calendar.md?raw';
-import { calendarExamples } from './calendar.examples.js';
+import { libraryDocs } from './library-docs.js';
 import type {
   TpCalendar,
   CalendarCaptionLayout,
@@ -29,43 +28,7 @@ interface Args {
 const meta = {
   title: 'Components/Calendar',
   component: 'tp-calendar',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: calendarExamples,
-      source: {
-        transform: (_source: string, context: { args: Args }) => {
-          const args = context.args;
-          const attributes = [
-            'label="Date"',
-            args.selectionMode !== 'single' && `selection-mode="${args.selectionMode}"`,
-            args.captionLayout !== 'label' && `caption-layout="${args.captionLayout}"`,
-            args.visibleMonths !== 1 && `visible-months="${args.visibleMonths}"`,
-            args.pagedNavigation && 'paged-navigation',
-            args.fixedWeeks && 'fixed-weeks',
-            args.showWeekNumber && 'show-week-number',
-            args.buttonVariant !== 'ghost' && `button-variant="${args.buttonVariant}"`,
-            args.weekStartsOn >= 0 && `week-starts-on="${args.weekStartsOn}"`,
-            args.locale && `locale="${args.locale}"`,
-            args.disabled && 'disabled',
-            args.readOnly && 'readonly',
-            args.required && 'required',
-          ].filter(Boolean);
-          const markup = `<tp-calendar ${attributes.join(' ')}></tp-calendar>`;
-          // show-outside-days defaults to true; like other default-true booleans it is
-          // disabled through the property. messages is property-only.
-          const properties = [
-            !args.showOutsideDays && 'calendar.showOutsideDays = false;',
-            Object.keys(args.messages ?? {}).length &&
-              `calendar.messages = ${JSON.stringify(args.messages, null, 2).replaceAll('\n', '\n  ')};`,
-          ].filter(Boolean);
-          return properties.length
-            ? `${markup}\n<script type="module">\n  const calendar = document.querySelector('tp-calendar');\n  ${properties.join('\n  ')}\n</script>`
-            : markup;
-        },
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/calendar') },
   args: {
     selectionMode: 'single',
     captionLayout: 'label',

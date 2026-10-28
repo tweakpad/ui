@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import cardDocumentation from '../../docs/card.md?raw';
+import { libraryDocs } from './library-docs.js';
 import './card.stories.css';
 
 interface CardStoryArgs {
@@ -15,7 +15,7 @@ const meta: Meta<CardStoryArgs> = {
   component: 'tp-card',
   parameters: {
     layout: 'centered',
-    docs: { description: { component: cardDocumentation.replace(/^# Card\n/u, '') } },
+    docs: libraryDocs('components/card'),
   },
   args: {
     elevated: false,
@@ -79,6 +79,7 @@ type Story = StoryObj<CardStoryArgs>;
 export const Default: Story = {};
 
 export const ContentOnly: Story = {
+  tags: ['!autodocs'],
   render: () => html`
     <tp-card class="card-story">
       <p>Your project summary is ready to share.</p>

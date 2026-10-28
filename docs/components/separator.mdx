@@ -1,0 +1,67 @@
+---
+title: Separator
+description: A thin rule that divides content horizontally or vertically, decorative by default.
+tag: tp-separator
+---
+
+<Preview
+  title="Separator"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:22rem;margin-inline:auto">
+  <div style="display:grid;gap:var(--tp-space-1)">
+    <strong>Tweakpad UI</strong>
+    <span style="color:var(--tp-muted-foreground)">Accessible web components for product teams.</span>
+  </div>
+  <tp-separator></tp-separator>
+  <div style="display:flex;align-items:center;gap:var(--tp-space-4);block-size:var(--tp-space-5)">
+    <span>Docs</span>
+    <tp-separator orientation="vertical"></tp-separator>
+    <span>Components</span>
+    <tp-separator orientation="vertical"></tp-separator>
+    <span>Changelog</span>
+  </div>
+</div>`}
+/>
+
+## Usage
+
+A Separator fills its container along its axis: full width when horizontal, full height when vertical. It reserves no spacing of its own, so the surrounding layout sets the gap.
+
+### Orientation
+
+<Preview
+  title="Vertical"
+  code={`<div style="display:flex;align-items:center;gap:var(--tp-space-3);block-size:var(--tp-space-6)">
+  <tp-button variant="ghost" size="sm">Edit</tp-button>
+  <tp-separator orientation="vertical"></tp-separator>
+  <tp-button variant="ghost" size="sm">Duplicate</tp-button>
+  <tp-separator orientation="vertical"></tp-separator>
+  <tp-button variant="ghost" size="sm">Archive</tp-button>
+</div>`}
+/>
+
+A vertical Separator takes the height of its container, so give the row a block size or let a flex row stretch it.
+
+### Sections
+
+<Preview
+  title="Between sections"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:24rem;margin-inline:auto">
+  <div style="display:flex;justify-content:space-between">
+    <span>Plan</span>
+    <strong>Team, billed yearly</strong>
+  </div>
+  <div style="display:flex;justify-content:space-between">
+    <span>Seats</span>
+    <strong>12 of 15</strong>
+  </div>
+  <tp-separator></tp-separator>
+  <div style="display:flex;justify-content:space-between">
+    <span>Next invoice</span>
+    <strong>$1,440.00 on March 1</strong>
+  </div>
+</div>`}
+/>
+
+Separators are decorative by default and hidden from assistive technology. Set the `decorative` property to `false` when the rule marks a real boundary between groups; it then exposes `role="separator"` with its orientation.

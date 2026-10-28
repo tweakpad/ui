@@ -5,7 +5,7 @@ import type { ToggleSize } from '../components/toggle/toggle.js';
 import type { TpToggleGroup } from '../components/toggle-group/index.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import documentation from '../../docs/toggle-group.md?raw';
+import { libraryDocs } from './library-docs.js';
 import {
   boldIcon,
   italicIcon,
@@ -78,12 +78,7 @@ const meta: Meta<Args> = {
   component: 'tp-toggle-group',
   parameters: {
     layout: 'centered',
-    docs: {
-      source: {
-        code: '<tp-toggle-group label="Text alignment">\n  <tp-toggle value="start">Start</tp-toggle>\n  <tp-toggle value="center">Center</tp-toggle>\n  <tp-toggle value="end">End</tp-toggle>\n</tp-toggle-group>',
-      },
-      description: { component: documentation },
-    },
+    docs: libraryDocs('components/toggle-group'),
   },
   args: {
     value: [],
@@ -122,16 +117,19 @@ export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
 export const IconOnly: Story = {
+  tags: ['!autodocs'],
   args: { label: 'Text formatting', multiple: true, variant: 'outline', size: 'icon' },
   render: (args) => renderGroup(args, true),
   parameters: { docs: { source: { code: iconGroupSource(false) } } },
 };
 export const IconWithLabel: Story = {
+  tags: ['!autodocs'],
   args: { label: 'Text formatting', multiple: true, variant: 'outline' },
   render: (args) => renderGroup(args, true, true),
   parameters: { docs: { source: { code: iconGroupSource(true) } } },
 };
 export const FontWeightSelector: Story = {
+  tags: ['!autodocs'],
   args: { label: 'Font weight', value: ['normal'], variant: 'outline', size: 'lg' },
   render: (args) => {
     const [, updateArgs] = useArgs<Args>();
@@ -213,6 +211,7 @@ show();`,
   },
 };
 export const StatefulArtwork: Story = {
+  tags: ['!autodocs'],
   args: { label: 'Saved formatting', multiple: true, variant: 'outline' },
   render: (args) => {
     const [, updateArgs] = useArgs<Args>();

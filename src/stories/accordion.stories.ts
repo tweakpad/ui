@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { useArgs } from 'storybook/preview-api';
 import { html } from 'lit';
-import accordionDocumentation from '../../docs/accordion.md?raw';
+import { libraryDocs } from './library-docs.js';
 import type { AccordionValue, AccordionVariant } from '../components/accordion/accordion.js';
 import type { AccordionContentAlignment } from '../components/accordion/accordion-item.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
@@ -36,13 +36,7 @@ const defaultAccordionFixture: AccordionFixtureOptions = {
 const meta: Meta<AccordionStoryArgs> = {
   title: 'Components/Accordion',
   component: 'tp-accordion',
-  parameters: {
-    docs: {
-      description: {
-        component: accordionDocumentation.replace(/^# Accordion\n/u, ''),
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/accordion') },
   args: {
     selectionMode: 'single',
     variant: 'plain',
@@ -205,26 +199,12 @@ type Story = StoryObj<AccordionStoryArgs>;
 export const Default: Story = {};
 
 export const PositionalContent: Story = {
+  tags: ['!autodocs'],
   args: { variant: 'separated', contentAlignment: 'label' },
   render: (args) => renderAccordion(args, { showLeadingContent: true }),
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Adds numbered content through the generic positional slots while the built-in indicator remains in the opposite position.',
-      },
-    },
-  },
 };
 
 export const ExternalLineByLineMotion: Story = {
+  tags: ['!autodocs'],
   render: (args) => renderAccordion(args, { contentMotion: 'line-by-line' }),
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Claims only the per-Item content role and staggers the Item paragraphs. Accordion still owns disclosure measurement, presence, and selection.',
-      },
-    },
-  },
 };

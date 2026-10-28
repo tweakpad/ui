@@ -1,0 +1,119 @@
+---
+title: Status dot
+description: A small colored dot with a label that marks the state of a service, person or job.
+tag: tp-status-dot
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Status dot"
+  code={`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-6)">
+  <tp-status-dot variant="success" label="Operational" show-label motion="ping"></tp-status-dot>
+  <tp-status-dot variant="warning" label="Degraded" show-label></tp-status-dot>
+  <tp-status-dot variant="destructive" label="Outage" show-label></tp-status-dot>
+</div>`}
+/>
+
+## Usage
+
+Color alone never carries the meaning, so give every dot a `label` unless nearby text already states the status. The label is shown beside the dot with `show-label`, or kept as the dot's accessible name and shown in a tooltip.
+
+### Variants
+
+`variant` picks the color from the theme's status roles: `default` for active or informational states, `secondary` for neutral ones such as paused or offline, and `success`, `warning` and `destructive` for healthy, degraded and failed.
+
+<Preview
+  title="Variants"
+  code={`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-6)">
+  <tp-status-dot label="Syncing" show-label></tp-status-dot>
+  <tp-status-dot variant="secondary" label="Paused" show-label></tp-status-dot>
+  <tp-status-dot variant="success" label="Healthy" show-label></tp-status-dot>
+  <tp-status-dot variant="warning" label="Delayed" show-label></tp-status-dot>
+  <tp-status-dot variant="destructive" label="Failed" show-label></tp-status-dot>
+</div>`}
+/>
+
+For any other color, set `--tp-status-dot-color` on the dot or an ancestor; `--tp-status-dot-size` sets its diameter.
+
+### Label beside the dot
+
+With `show-label`, the label renders as text after the dot. It takes the font and color of its context and wraps when space runs out, with the dot centered on its first line. Here each status is the supporting text of a list row.
+
+<Preview
+  title="Service status"
+  align="stretch"
+  code={`<tp-list aria-label="Services" style="max-inline-size:28rem;margin-inline:auto;inline-size:100%">
+  <tp-list-item>
+    API
+    <tp-status-dot slot="description" variant="success" label="Operational" show-label motion="ping"></tp-status-dot>
+  </tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item>
+    Webhooks
+    <tp-status-dot slot="description" variant="warning" label="Delivery delayed by about 4 minutes" show-label></tp-status-dot>
+  </tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item>
+    Dashboard
+    <tp-status-dot slot="description" variant="success" label="Operational" show-label></tp-status-dot>
+  </tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item>
+    Legacy exports
+    <tp-status-dot slot="description" variant="secondary" label="Retired" show-label></tp-status-dot>
+  </tp-list-item>
+</tp-list>`}
+/>
+
+### Label in a tooltip
+
+Without `show-label`, the dot stands alone: the label becomes its accessible name and appears in a tooltip on hover and keyboard focus, so the dot joins the tab order. Hover a dot, or press Tab to reach it. Set `tooltip="false"` for dense layouts where the status is also stated elsewhere: the label stays the name, without a tooltip or a tab stop.
+
+<Preview
+  title="Compact column"
+  align="stretch"
+  code={`<div style="max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <tp-table label="Deployments">
+    <tp-table-header><tp-table-row>
+      <tp-table-head scope="col">Environment</tp-table-head>
+      <tp-table-head scope="col">State</tp-table-head>
+      <tp-table-head scope="col">Commit</tp-table-head>
+    </tp-table-row></tp-table-header>
+    <tp-table-body>
+      <tp-table-row>
+        <tp-table-head scope="row">Production</tp-table-head>
+        <tp-table-cell><tp-status-dot variant="success" label="Live"></tp-status-dot></tp-table-cell>
+        <tp-table-cell>a41f9c2</tp-table-cell>
+      </tp-table-row>
+      <tp-table-row>
+        <tp-table-head scope="row">Staging</tp-table-head>
+        <tp-table-cell><tp-status-dot label="Building" motion="pulse"></tp-status-dot></tp-table-cell>
+        <tp-table-cell>e07b318</tp-table-cell>
+      </tp-table-row>
+      <tp-table-row>
+        <tp-table-head scope="row">Preview</tp-table-head>
+        <tp-table-cell><tp-status-dot variant="destructive" label="Build failed"></tp-status-dot></tp-table-cell>
+        <tp-table-cell>9c2d4aa</tp-table-cell>
+      </tp-table-row>
+    </tp-table-body>
+  </tp-table>
+</div>`}
+/>
+
+A dot with an empty `label` is decorative: it is hidden from assistive technology and never focusable.
+
+### Motion
+
+`motion="pulse"` fades the dot out and in; `motion="ping"` sends a ring out of it. Neither moves the dot, its label or the content around it, and both rest under reduced motion. Keep motion for live or changing states, so it keeps its meaning.
+
+<Preview
+  title="Pulse and ping"
+  code={`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-6)">
+  <tp-status-dot variant="destructive" label="Recording" show-label motion="pulse"></tp-status-dot>
+  <tp-status-dot variant="success" label="Live" show-label motion="ping"></tp-status-dot>
+  <tp-status-dot variant="secondary" label="Idle" show-label></tp-status-dot>
+</div>`}
+/>
+
+Status dot adds no live region. Wrap dots whose changes must be announced in an element with `role="status"`.

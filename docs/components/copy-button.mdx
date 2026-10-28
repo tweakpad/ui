@@ -1,0 +1,123 @@
+---
+title: Copy button
+description: Writes a value to the clipboard and confirms the result in place with a check and an announcement.
+tag: tp-copy-button
+---
+
+<Preview
+  title="Copy button"
+  align="stretch"
+  code={`<tp-field label="API key" description="Use this key from server code only." style="inline-size:100%;max-inline-size:24rem;margin-inline:auto">
+  <tp-input-group>
+    <tp-input readonly default-value="tp_live_4f2c9e1b7a"></tp-input>
+    <tp-copy-button slot="action" value="tp_live_4f2c9e1b7a" label="Copy API key"></tp-copy-button>
+  </tp-input-group>
+</tp-field>`}
+/>
+
+## Usage
+
+Set `value` to the exact text to copy. After a click the icon turns into a check, the accessible name becomes `copied-label` for `duration` milliseconds, and the result is announced politely. The control composes a Button, so focus, disabled and keyboard behavior are the Button's.
+
+### Labels
+
+Icon-only is the default, with `label` as the accessible name; make it specific, such as "Copy invite link", so it makes sense out of context. `show-label` renders the label as text, and the copied message replaces it while confirmed.
+
+<Preview
+  title="Visible label"
+  code={`<tp-copy-button variant="outline" size="default" show-label value="https://tweakpad.app/invite/k7Qm2x" label="Copy invite link" copied-label="Link copied"></tp-copy-button>`}
+/>
+
+### Variants and sizes
+
+`variant` and `size` follow Button. The default `ghost` at `sm` fits beside inline values; reach for `outline` or `secondary` when copying is the main action.
+
+<Preview
+  title="Variants and sizes"
+  code={`<tp-copy-button size="xs" value="#6D5DFC" label="Copy hex color"></tp-copy-button>
+<tp-copy-button value="#6D5DFC" label="Copy hex color"></tp-copy-button>
+<tp-copy-button size="default" variant="outline" value="#6D5DFC" label="Copy hex color"></tp-copy-button>
+<tp-copy-button size="lg" variant="secondary" value="#6D5DFC" label="Copy hex color"></tp-copy-button>`}
+/>
+
+### Inline values
+
+Next to a short read-only value, an icon-only Copy button keeps the row compact while staying a real, focusable button.
+
+<Preview
+  title="Beside a value"
+  align="stretch"
+  code={`<dl style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;column-gap:var(--tp-space-4);row-gap:var(--tp-space-2);margin:0 auto;inline-size:100%;max-inline-size:26rem;font-size:var(--tp-text-sm)">
+  <dt style="color:var(--tp-muted-foreground)">Project ID</dt>
+  <dd style="margin:0;font-family:var(--tp-font-mono)">prj_8f2c41</dd>
+  <tp-copy-button value="prj_8f2c41" label="Copy project ID"></tp-copy-button>
+  <dt style="color:var(--tp-muted-foreground)">Region</dt>
+  <dd style="margin:0;font-family:var(--tp-font-mono)">eu-central-1</dd>
+  <tp-copy-button value="eu-central-1" label="Copy region"></tp-copy-button>
+</dl>`}
+/>
+
+Inside an Input group's `action` slot or as a Field group member, the Copy button joins the control's border while the input next to it stays untouched.
+
+<Preview
+  title="In an input group and a field group"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);inline-size:100%;max-inline-size:26rem;margin-inline:auto">
+  <tp-field label="Webhook signing secret">
+    <tp-input-group>
+      <tp-input readonly default-value="whsec_9b1e7c42d0"></tp-input>
+      <tp-copy-button slot="action" value="whsec_9b1e7c42d0" label="Copy signing secret"></tp-copy-button>
+    </tp-input-group>
+  </tp-field>
+  <tp-field-group label="Map center">
+    <tp-input-group>
+      <span slot="prefix">Lat</span>
+      <tp-input label="Latitude" default-value="38.7223"></tp-input>
+    </tp-input-group>
+    <tp-input-group>
+      <span slot="prefix">Lng</span>
+      <tp-input label="Longitude" default-value="-9.1393"></tp-input>
+    </tp-input-group>
+    <tp-copy-button variant="outline" size="default" value="38.7223, -9.1393" label="Copy coordinates"></tp-copy-button>
+  </tp-field-group>
+</div>`}
+/>
+
+The copy action in a [Code block](../code-block/) is this same control, labelled by the block's `copy`, `copied` and `copyFailed` messages.
+
+<Preview
+  title="In a Code block"
+  code={`<tp-code-block language="ts" label="install.ts">import { TpCopyButton } from '@tweakpad/ui';</tp-code-block>`}
+/>
+
+### Events
+
+`tp-copy` fires before the write and can be canceled to skip it. `tp-copied` and `tp-copy-error` report the outcome; both are already announced, so use them for analytics or follow-up UI rather than duplicate messages.
+
+<Preview
+  title="Copy events"
+  code={`<div style="display:grid;gap:var(--tp-space-2);justify-items:center">
+  <tp-copy-button id="copy-button-events" variant="outline" size="default" show-label value="npm install @tweakpad/ui" label="Copy install command"></tp-copy-button>
+  <output id="copy-button-events-output" style="font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">Not copied yet</output>
+</div>`}
+  script={`const button = document.getElementById('copy-button-events');
+const output = document.getElementById('copy-button-events-output');
+button.addEventListener('tp-copied', (event) => {
+  output.textContent = 'Copied "' + event.detail.value + '"';
+});
+button.addEventListener('tp-copy-error', () => {
+  output.textContent = 'The browser blocked clipboard access';
+});`}
+/>
+
+The Clipboard API is used where available, with a selection-based fallback; success is reported only after the write succeeds. `copy()` runs the same sequence from code and resolves to whether it worked.
+
+### Copying more than text
+
+`data` is a function that receives `value` and returns further representations keyed by media type, each a string, a `Blob` or a promise of either. They are written with `value` as `text/plain` in one clipboard item, so a paste target picks the type it understands: an image editor takes the picture and a text field takes the text. The function runs during the click, so return pending work as promises instead of awaiting it; browsers that tie clipboard access to the click (Safari) reject a write that starts later.
+
+<Code code={`const button = document.querySelector('tp-copy-button');
+button.value = 'https://example.com/invite/42';
+button.data = () => ({ 'image/png': renderInviteCard() }); // renderInviteCard(): Promise<Blob>`} language="js" />
+
+Types the browser cannot write are left out. When the browser refuses the item, the text alone is copied and `tp-copied` reports `types: ['text/plain']`. [QR code](../qr-code/) uses this to copy its image together with its value.

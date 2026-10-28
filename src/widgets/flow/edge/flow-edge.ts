@@ -3,10 +3,10 @@ import { TpElement } from '../../../foundation/element.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
 
 /**
- * A declarative edge record (Widgets 6.3 Definition): a light-DOM child of `tp-flow` that the
- * widget adopts into the document by id. It renders nothing; the renderer paints the edge.
- * Attributes: `source`, `target`, `source-port`, `target-port`, `kind`, `label`, `animated`,
- * `waypoints` (`x,y x,y …`), `data` (JSON), `marker-start`, `marker-end`, `hidden`.
+ * An edge declared in markup: a child of `tp-flow` that the flow adopts into the document by id.
+ * It renders nothing itself; the flow draws the edge from its attributes: `id`, `source`,
+ * `target`, `source-port`, `target-port`, `kind`, `label`, `animated`, `waypoints` (`x,y x,y …`),
+ * `data` (JSON), `marker-start`, `marker-end` and `hidden`.
  */
 export class TpFlowEdge extends TpElement {
   static tagName = 'tp-flow-edge';

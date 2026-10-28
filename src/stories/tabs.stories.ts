@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import documentation from '../../docs/tabs.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   value: string;
@@ -17,7 +17,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Tabs',
   component: 'tp-tabs',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/tabs') },
   args: {
     value: 'account',
     label: 'Settings',

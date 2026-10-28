@@ -1,0 +1,8 @@
+{
+  "id": "components/separator",
+  "tag": "tp-separator",
+  "sources": {
+    "story": "src/stories/separator.stories.ts"
+  },
+  "items": []
+}

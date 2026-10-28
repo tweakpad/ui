@@ -1,0 +1,92 @@
+---
+title: Icon
+description: One SVG mark drawn from a path definition, decorative by default and named when it carries meaning.
+tag: tp-icon
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Icon"
+  code={`<div id="icon-hero" style="display:flex;gap:var(--tp-space-5);color:var(--tp-muted-foreground)">
+  <tp-icon data-icon="search" label="Search" size="1.5rem"></tp-icon>
+  <tp-icon data-icon="folder" label="Projects" size="1.5rem"></tp-icon>
+  <tp-icon data-icon="calendar" label="Schedule" size="1.5rem"></tp-icon>
+  <tp-icon data-icon="bell" label="Notifications" size="1.5rem"></tp-icon>
+  <tp-icon data-icon="branch" label="Branches" size="1.5rem"></tp-icon>
+  <tp-icon data-icon="shield" label="Security" size="1.5rem"></tp-icon>
+</div>`}
+  script={`const icons = {
+  search: { viewBox: '0 0 24 24', paths: [{ d: 'M21 21l-5-5M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15', strokeWidth: 1.75 }] },
+  folder: { viewBox: '0 0 24 24', paths: [{ d: 'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z', strokeWidth: 1.75 }] },
+  calendar: { viewBox: '0 0 24 24', paths: [{ d: 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z', strokeWidth: 1.75 }] },
+  bell: { viewBox: '0 0 24 24', paths: [{ d: 'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4', strokeWidth: 1.75 }] },
+  branch: { viewBox: '0 0 24 24', paths: [{ d: 'M6 3v12M6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6M18 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6M18 9a9 9 0 0 1-9 9', strokeWidth: 1.75 }] },
+  shield: { viewBox: '0 0 24 24', paths: [{ d: 'm12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6zM12 8v4M12 16h.01', strokeWidth: 1.75 }] },
+};
+for (const icon of document.querySelectorAll('#icon-hero tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>
+
+## Usage
+
+An Icon has no catalog of names: assign an `IconDefinition` to its `icon` property. In an app you import one definition module, such as `@tweakpad/ui/icons/plus`, so only the artwork you use is bundled. The examples here inline their definitions.
+
+### Meaning
+
+Without `label` an Icon is decorative and hidden from assistive technology, which is right when text beside it already says the same thing. A non-empty `label` gives it `role="img"` and an accessible name, for the case where the icon is the only signal.
+
+<Preview
+  title="Decorative and labelled"
+  code={`<div id="icon-meaning" style="display:grid;gap:var(--tp-space-3)">
+  <tp-button variant="outline">
+    <tp-icon slot="icon-start" data-icon="plus"></tp-icon>
+    New project
+  </tp-button>
+  <span style="display:inline-flex;align-items:center;gap:var(--tp-space-2)">
+    Maya Chen
+    <tp-icon data-icon="check" label="Verified" style="color:var(--tp-success)"></tp-icon>
+  </span>
+</div>`}
+  script={`const icons = {
+  plus: { viewBox: '0 0 24 24', paths: [{ d: 'M12 5v14M5 12h14', strokeWidth: 2 }] },
+  check: { viewBox: '0 0 24 24', paths: [{ d: 'M5 12l4 4L19 6', strokeWidth: 2 }] },
+};
+for (const icon of document.querySelectorAll('#icon-meaning tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>
+
+### Size and color
+
+`size` takes any CSS length and sets a square extent; without it the Icon uses the theme's medium icon size. The artwork strokes with `currentColor`, so it follows the surrounding text color.
+
+<Preview
+  title="Size and color"
+  code={`<div id="icon-size" style="display:flex;align-items:center;gap:var(--tp-space-5)">
+  <tp-icon data-icon="clock" size="1rem"></tp-icon>
+  <tp-icon data-icon="clock" size="1.25rem"></tp-icon>
+  <tp-icon data-icon="clock" size="1.5rem" style="color:var(--tp-muted-foreground)"></tp-icon>
+  <tp-icon data-icon="clock" size="2rem" style="color:var(--tp-primary)"></tp-icon>
+</div>`}
+  script={`const clock = { viewBox: '0 0 24 24', paths: [{ d: 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0M12 6v6l4 2', strokeWidth: 2 }] };
+for (const icon of document.querySelectorAll('#icon-size tp-icon')) icon.icon = clock;`}
+/>
+
+### Custom artwork
+
+A definition is a `viewBox` and a list of paths, never an HTML string, so your own marks render on the same path as the library's. Paths default to a 2-unit `currentColor` stroke with no fill; set `fill: 'currentColor'` and `stroke: 'none'` for solid shapes.
+
+<Preview
+  title="Custom definition"
+  code={`<div style="display:flex;gap:var(--tp-space-5)">
+  <tp-icon id="icon-custom-outline" label="Starred" size="1.5rem"></tp-icon>
+  <tp-icon id="icon-custom-solid" label="Starred" size="1.5rem" style="color:var(--tp-warning)"></tp-icon>
+</div>`}
+  script={`const star = 'm12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z';
+document.querySelector('#icon-custom-outline').icon = {
+  viewBox: '0 0 24 24',
+  paths: [{ d: star, strokeWidth: 1.75 }],
+};
+document.querySelector('#icon-custom-solid').icon = {
+  viewBox: '0 0 24 24',
+  paths: [{ d: star, fill: 'currentColor', stroke: 'none' }],
+};`}
+/>

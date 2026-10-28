@@ -1,0 +1,69 @@
+---
+title: Alert
+description: A persistent, in-flow message with a title, description, optional mark and actions.
+tag: tp-alert
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Alert"
+  align="stretch"
+  code={`<tp-alert title="Update available" style="max-inline-size:36rem">
+  <svg slot="icon" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+  Version 2.4 adds shared templates and faster exports. Review the changes before updating.
+  <tp-button slot="actions" variant="outline" size="sm" href="#alert-release-notes">Release notes</tp-button>
+</tp-alert>`}
+/>
+
+## Usage
+
+An Alert stays in the document flow until your application removes it. It never traps focus, times out or opens over content; use Alert Dialog when the user must decide before continuing.
+
+### Severity
+
+<Preview
+  title="Severity"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:36rem">
+  <tp-alert title="Scheduled maintenance">The API will be read-only on Sunday, 14 June, from 02:00 to 03:00 UTC.</tp-alert>
+  <tp-alert severity="success" title="Payment received">Invoice INV-2048 for $1,240.00 was paid on 3 June.</tp-alert>
+  <tp-alert severity="warning" title="Storage almost full">You've used 9.6 GB of 10 GB. Uploads will pause when the limit is reached.</tp-alert>
+  <tp-alert severity="danger" title="Could not sync your changes">The connection to GitHub expired. Reconnect to resume syncing.</tp-alert>
+</div>`}
+/>
+
+`severity` changes color only. Say what happened in the title, such as "Storage almost full", so the message holds up without color or an icon.
+
+### Rich title and actions
+
+<Preview
+  title="Title slot and actions"
+  align="stretch"
+  code={`<tp-alert severity="success" style="max-inline-size:36rem">
+  <svg slot="icon" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+  <span slot="title">Domain verified <tp-badge variant="secondary">acme.com</tp-badge></span>
+  Teammates who sign up with an @acme.com address now join your workspace automatically.
+  <tp-button slot="actions" variant="outline" size="sm">Manage domains</tp-button>
+</tp-alert>`}
+/>
+
+The `title` slot replaces the `title` attribute when you need emphasis, a link or a Badge. The `icon` slot is decorative and the `actions` slot holds Buttons whose behavior your application owns. Empty slots take up no space.
+
+### Announcements
+
+<Preview
+  title="Live update"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:start;max-inline-size:36rem">
+  <tp-button id="alert-demo-trigger" variant="outline">Export report</tp-button>
+  <tp-alert id="alert-demo-status" announcement="polite" title="Export ready" hidden>
+    Q2 revenue report.csv has been saved to Downloads.
+  </tp-alert>
+</div>`}
+  script={`document.querySelector('#alert-demo-trigger').addEventListener('click', () => {
+  document.querySelector('#alert-demo-status').hidden = false;
+});`}
+/>
+
+`announcement` defaults to `off`, which suits alerts that render with the page. Use `polite` for an alert that appears after a user action, and `assertive` only for urgent problems.

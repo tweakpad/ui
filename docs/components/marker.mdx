@@ -1,0 +1,196 @@
+---
+title: Marker
+description: A quiet line of status or activity text with an optional icon, plain or set between rules.
+tag: tp-marker
+---
+
+<Preview
+  title="Marker"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-6);max-inline-size:32rem;margin-inline:auto;inline-size:100%">
+  <tp-marker><tp-spinner slot="icon" size="sm"></tp-spinner>Reading 4 files</tp-marker>
+  <tp-marker variant="separator">Worked for 42s</tp-marker>
+  <tp-marker variant="border">Switched to release-2.4</tp-marker>
+</div>`}
+/>
+
+## Usage
+
+A Marker annotates a stream, such as a chat transcript or an activity log, without becoming a message itself. It adds no role, so meaning lives in its text; supply `role="status"` yourself when the content is a live update.
+
+### Variants
+
+The default has no boundary. `separator` centres the content between two rules, for breaks in a timeline; `border` sets it above a rule, for a step that closes a section.
+
+<Preview
+  title="Variants"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-8);max-inline-size:32rem;margin-inline:auto;inline-size:100%">
+  <tp-marker>Priya joined the project</tp-marker>
+  <tp-marker variant="separator">Today</tp-marker>
+  <tp-marker variant="border">Deployed to production</tp-marker>
+</div>`}
+/>
+
+### Tones
+
+`tone` colors the text and icon: `neutral` (the default), `accent`, `success` or `danger`. Keep the outcome in the words too, since color alone is not announced.
+
+<Preview
+  title="Tones"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-6);max-inline-size:32rem;margin-inline:auto;inline-size:100%">
+  <tp-marker>Build queued</tp-marker>
+  <tp-marker tone="accent">Review requested from Priya</tp-marker>
+  <tp-marker variant="separator" tone="success">All 128 checks passed</tp-marker>
+  <tp-marker variant="border" tone="danger">Deploy to production failed</tp-marker>
+</div>`}
+/>
+
+### Icons
+
+The `icon` slot takes an Icon or a decorative Spinner. The icon region is hidden from assistive technology, so the text must carry the meaning on its own.
+
+<Preview
+  title="With icons"
+  align="stretch"
+  code={`<div id="marker-icons" style="display:grid;gap:var(--tp-space-6);max-inline-size:32rem;margin-inline:auto;inline-size:100%">
+  <tp-marker role="status"><tp-spinner slot="icon" size="sm"></tp-spinner>Compacting conversation</tp-marker>
+  <tp-marker variant="separator"><tp-icon slot="icon" data-icon="check"></tp-icon>Conversation compacted</tp-marker>
+  <tp-marker variant="border"><tp-icon slot="icon" data-icon="branch"></tp-icon>Opened pull request #482</tp-marker>
+</div>`}
+  script={`const icons = {
+  check: { viewBox: '0 0 24 24', paths: [{ d: 'M5 12l4 4L19 6', strokeWidth: 2 }] },
+  branch: { viewBox: '0 0 24 24', paths: [{ d: 'M6 3v12M6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6M18 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6M18 9a9 9 0 0 1-9 9', strokeWidth: 2 }] },
+};
+for (const icon of document.querySelectorAll('#marker-icons tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>
+
+### Shimmer
+
+`shimmer` sweeps a highlight across the text while a status is still streaming, such as an agent step in progress. Remove it when the step finishes; reduced motion shows the text without the sweep. `--tp-shimmer-color`, `--tp-shimmer-duration`, `--tp-shimmer-spread` and `--tp-shimmer-angle` tune it.
+
+`shimmer` works with every variant and leaves the icon and rules unchanged.
+
+The highlight is derived from the text color: in a light color scheme the band fades the text, in a dark scheme it brightens it, so it follows `tone` and inherited colors. The band sweeps in the reading direction, right to left in a right-to-left context, and repeats every eight times `--tp-duration-normal` (2.24 s by default). Clearing `shimmer` restores ordinary text; setting it again restarts the sweep, also when it was cleared in the same frame.
+
+Tune the effect with custom properties on the Marker or on any ancestor; they inherit, so one container can adjust every shimmer inside it.
+
+The shimmer paints the text through the content's background, so it suits text and inline phrasing such as `strong` or a link. A control placed in shimmering content loses its text paint. Shimmer changes no role, name or announcement.
+
+Marker declares the ambient `shimmer` motion role on its `marker-content` part, with the `start` and `stop` phases, no context and non-blocking completion. A driver that claims it replaces the sweep; the gradient paint stays on the content for the driver to move through `background-position`.
+
+<Preview
+  title="Shimmer"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-6);max-inline-size:32rem;margin-inline:auto;inline-size:100%">
+  <tp-marker role="status" shimmer>Searching 14 files for “retry policy”</tp-marker>
+  <tp-marker variant="separator" role="status" shimmer>Thinking</tp-marker>
+</div>`}
+/>
+
+### Actions
+
+A Marker owns no action state, but its content can hold a link or a Button. The control keeps its own focus and semantics.
+
+<Preview
+  title="With an action"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-6);max-inline-size:32rem;margin-inline:auto;inline-size:100%">
+  <tp-marker variant="separator">Older messages hidden. <a href="#actions">Show all</a></tp-marker>
+  <tp-marker variant="separator"><tp-button variant="outline" size="sm">Review 3 changes</tp-button></tp-marker>
+</div>`}
+/>
+
+To make the whole Marker the control, render its `marker` part as a native link or button through `partContracts`, keeping the supplied `bind` and `content`. `partPresentation` arranges the parts, for example to center the content or stack the icon above it.
+
+A delegated link or button must preserve `bind` and `content`, supply its native attributes and have an accessible name.
+
+<Preview
+  title="Native hosts and layout"
+  align="stretch"
+  code={`<div id="marker-hosts" style="display:grid;gap:var(--tp-space-6);max-inline-size:32rem;margin-inline:auto;inline-size:100%">
+  <tp-marker data-host="link"><tp-icon slot="icon" data-icon="branch"></tp-icon>Opened pull request #482</tp-marker>
+  <tp-marker data-host="button"><tp-icon slot="icon" data-icon="clock"></tp-icon>Worked for 42s<tp-icon data-icon="chevron" style="flex:none;inline-size:var(--tp-icon-size-sm);block-size:var(--tp-icon-size-sm)"></tp-icon></tp-marker>
+  <tp-marker data-layout="center"><strong>Priya</strong>&nbsp;left the conversation</tp-marker>
+  <tp-marker data-layout="stack"><tp-icon slot="icon" data-icon="check"></tp-icon>All 128 checks passed</tp-marker>
+  <output id="marker-hosts-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"></output>
+</div>`}
+  script={`import { html } from 'lit';
+
+const icons = {
+  branch: { viewBox: '0 0 24 24', paths: [{ d: 'M6 3v12M6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6M18 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6M18 9a9 9 0 0 1-9 9', strokeWidth: 2 }] },
+  clock: { viewBox: '0 0 24 24', paths: [{ d: 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0M12 6v6l4 2', strokeWidth: 2 }] },
+  chevron: { viewBox: '0 0 24 24', paths: [{ d: 'm9 18 6-6-6-6', strokeWidth: 2 }] },
+  check: { viewBox: '0 0 24 24', paths: [{ d: 'M5 12l4 4L19 6', strokeWidth: 2 }] },
+};
+const root = document.querySelector('#marker-hosts');
+for (const icon of root.querySelectorAll('tp-icon')) icon.icon = icons[icon.dataset.icon];
+const output = root.querySelector('#marker-hosts-output');
+const link = root.querySelector('[data-host="link"]');
+link.partContracts = {
+  marker: { renderDelegate: ({ bind, content }) => html\`<a href="#actions" \${bind}>\${content}</a>\` },
+};
+const button = root.querySelector('[data-host="button"]');
+button.partContracts = {
+  marker: {
+    renderDelegate: ({ bind, content }) =>
+      html\`<button type="button" @click=\${() => (output.textContent = 'Showing the 6 steps behind this reply.')} \${bind}>\${content}</button>\`,
+  },
+};
+button.partPresentation = {
+  'marker-content': { styleHook: { display: 'flex', flex: '1', 'align-items': 'center', 'justify-content': 'space-between', gap: 'var(--tp-space-2)' } },
+};
+root.querySelector('[data-layout="center"]').partPresentation = { marker: { styleHook: { 'justify-content': 'center' } } };
+root.querySelector('[data-layout="stack"]').partPresentation = { marker: { styleHook: { 'flex-direction': 'column' } } };`}
+/>
+
+### Single sweep
+
+`--tp-shimmer-iterations: 1` plays one sweep instead of looping, which suits a reveal when a step completes. Set `shimmer` again to replay it.
+
+<Preview
+  title="Completion reveal"
+  code={`<div style="display:flex;align-items:center;gap:var(--tp-space-3)">
+  <tp-marker id="marker-sweep" tone="success" shimmer style="--tp-shimmer-iterations:1">Summary ready</tp-marker>
+  <tp-button id="marker-sweep-replay" variant="outline" size="sm">Replay</tp-button>
+</div>`}
+  script={`const marker = document.querySelector('#marker-sweep');
+document.querySelector('#marker-sweep-replay').addEventListener('click', () => {
+  marker.shimmer = false;
+  requestAnimationFrame(() => (marker.shimmer = true));
+});`}
+/>
+
+### Compositions
+
+A Marker can label an Accordion item, so a step summary expands into its details, or sit around a Drawer trigger that opens the full record.
+
+<Preview
+  title="Accordion label and drawer"
+  align="stretch"
+  code={`<div id="marker-compositions" style="display:grid;gap:var(--tp-space-6);max-inline-size:32rem;margin-inline:auto;inline-size:100%">
+  <tp-accordion collapsible>
+    <tp-accordion-item value="steps">
+      <tp-marker slot="label"><tp-icon slot="icon" data-icon="clock"></tp-icon>Worked for 1m 12s</tp-marker>
+      Read the billing service, updated the proration rule and added two tests for mid-cycle seat changes.
+    </tp-accordion-item>
+  </tp-accordion>
+  <tp-marker variant="separator">
+    <tp-drawer label="Files read" description="Opened while preparing this reply." edge="inline-end" style="text-align:start">
+      <tp-button slot="trigger" variant="outline" size="sm"><tp-icon slot="icon-start" data-icon="search"></tp-icon>Explored 3 files</tp-button>
+      <tp-list aria-label="Files read">
+        <tp-list-item variant="outline" size="sm">billing/proration.ts</tp-list-item>
+        <tp-list-item variant="outline" size="sm">billing/seats.ts</tp-list-item>
+        <tp-list-item variant="outline" size="sm">billing/proration.test.ts</tp-list-item>
+      </tp-list>
+      <tp-button slot="close" variant="outline">Close</tp-button>
+    </tp-drawer>
+  </tp-marker>
+</div>`}
+  script={`const icons = {
+  clock: { viewBox: '0 0 24 24', paths: [{ d: 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0M12 6v6l4 2', strokeWidth: 2 }] },
+  search: { viewBox: '0 0 24 24', paths: [{ d: 'M21 21l-5-5M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15', strokeWidth: 2 }] },
+};
+for (const icon of document.querySelectorAll('#marker-compositions tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>

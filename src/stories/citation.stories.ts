@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html, nothing } from 'lit';
-import documentation from '../../docs/citation.md?raw';
-import { citationExamples, siteMark } from './citation.examples.js';
+import { libraryDocs } from './library-docs.js';
+import { siteMark } from './citation.examples.js';
 import type { TpCitation } from '../components/citation/citation.js';
 
 interface Args {
@@ -20,15 +20,7 @@ const mark = siteMark('#2563eb', 'T');
 const meta = {
   title: 'Components/Citation',
   component: 'tp-citation',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: citationExamples,
-      source: {
-        code: '<tp-citation href="https://tides.example/turbines">tides.example</tp-citation>',
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/citation') },
   args: {
     label: 'tides.example',
     index: null,

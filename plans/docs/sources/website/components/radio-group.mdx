@@ -1,0 +1,155 @@
+---
+title: Radio Group
+description: One choice from a short, visible set of options, with a single form value.
+tag: tp-radio-group
+parts: [tp-radio-group-item]
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Radio Group"
+  code={`<tp-field label="Delivery" description="Arrives at your office address.">
+  <tp-radio-group name="delivery" default-value="standard">
+    <tp-radio-group-item value="standard">Standard · 4–6 business days</tp-radio-group-item>
+    <tp-radio-group-item value="express">Express · 2 business days</tp-radio-group-item>
+    <tp-radio-group-item value="overnight">Overnight · Next morning</tp-radio-group-item>
+  </tp-radio-group>
+</tp-field>`}
+/>
+
+## Usage
+
+Use a Radio Group when every option should stay visible and exactly one applies. For long lists, use Select; for an on/off setting, use Switch. The group owns the value and the single tab stop; each `tp-radio-group-item` supplies a `value` and its label as content.
+
+### Labelling
+
+A Field provides the visible label, description and error. Without one, give the group a `label` so it still has an accessible name.
+
+<Preview
+  title="Standalone"
+  code={`<tp-radio-group label="Theme" default-value="system">
+  <tp-radio-group-item value="light">Light</tp-radio-group-item>
+  <tp-radio-group-item value="dark">Dark</tp-radio-group-item>
+  <tp-radio-group-item value="system">Match system</tp-radio-group-item>
+</tp-radio-group>`}
+/>
+
+### Orientation
+
+`orientation="horizontal"` lays items in a row and switches the arrow keys to Left and Right. Keep horizontal groups to a few short labels.
+
+<Preview
+  title="Horizontal"
+  code={`<tp-field label="Billing period">
+  <tp-radio-group name="period" default-value="yearly" orientation="horizontal">
+    <tp-radio-group-item value="monthly">Monthly</tp-radio-group-item>
+    <tp-radio-group-item value="yearly">Yearly</tp-radio-group-item>
+  </tp-radio-group>
+</tp-field>`}
+/>
+
+### Disabled and read-only
+
+Disable one item when its option is temporarily unavailable, or the whole group when the choice does not apply. Arrow keys skip disabled items.
+
+<Preview
+  title="Disabled"
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-12)">
+  <tp-field label="Plan">
+    <tp-radio-group name="plan" default-value="pro">
+      <tp-radio-group-item value="starter">Starter</tp-radio-group-item>
+      <tp-radio-group-item value="pro">Pro</tp-radio-group-item>
+      <tp-radio-group-item value="enterprise" disabled>Enterprise · Contact sales</tp-radio-group-item>
+    </tp-radio-group>
+  </tp-field>
+  <tp-field label="Region" description="Set when the workspace was created." disabled>
+    <tp-radio-group name="region" default-value="eu">
+      <tp-radio-group-item value="us">United States</tp-radio-group-item>
+      <tp-radio-group-item value="eu">European Union</tp-radio-group-item>
+    </tp-radio-group>
+  </tp-field>
+</div>`}
+/>
+
+`readonly` keeps the current choice visible, focusable and submitted, but blocks changing it.
+
+<Preview
+  title="Read-only"
+  code={`<tp-field label="Billing interval" description="Locked until your contract renews on March 1.">
+  <tp-radio-group name="interval" default-value="yearly" readonly>
+    <tp-radio-group-item value="monthly">Monthly</tp-radio-group-item>
+    <tp-radio-group-item value="yearly">Yearly</tp-radio-group-item>
+  </tp-radio-group>
+</tp-field>`}
+/>
+
+### Controlled
+
+Set `value` to own the selection and accept each proposal in `onValueChange`; an empty value starts with nothing selected. Because your code holds the value, it can also change it from elsewhere, such as a recommendation.
+
+<Preview
+  title="Controlled value"
+  code={`<div id="radio-group-controlled" style="display:grid;gap:var(--tp-space-4);justify-items:start">
+  <tp-field label="Delivery">
+    <tp-radio-group value="">
+      <tp-radio-group-item value="standard">Standard · 3–5 days · Free</tp-radio-group-item>
+      <tp-radio-group-item value="express">Express · Next day · $9</tp-radio-group-item>
+      <tp-radio-group-item value="pickup">Pick up in store · Today</tp-radio-group-item>
+    </tp-radio-group>
+  </tp-field>
+  <tp-button variant="outline" size="sm" data-recommend>Choose the fastest for my address</tp-button>
+</div>`}
+  script={`const root = document.querySelector('#radio-group-controlled');
+const group = root.querySelector('tp-radio-group');
+group.onValueChange = (event) => {
+  if (event.defaultPrevented || event.detail.cancelled) return;
+  group.value = event.detail.value;
+};
+root.querySelector('[data-recommend]').addEventListener('click', () => {
+  group.value = 'pickup';
+});`}
+/>
+
+### Forms
+
+The group submits once under its `name`, or the Field's. `required` blocks submission while nothing is chosen, and reset restores `default-value`.
+
+<Preview
+  title="Required"
+  code={`<form style="display:grid;gap:var(--tp-space-4);justify-items:start">
+  <tp-field label="Reason for cancelling">
+    <tp-radio-group name="reason" required default-value="features">
+      <tp-radio-group-item value="price">Too expensive</tp-radio-group-item>
+      <tp-radio-group-item value="features">Missing features</tp-radio-group-item>
+      <tp-radio-group-item value="switching">Switching to another tool</tp-radio-group-item>
+    </tp-radio-group>
+  </tp-field>
+  <div style="display:flex;gap:var(--tp-space-2)">
+    <tp-button type="submit">Continue</tp-button>
+    <tp-button type="reset" variant="outline">Reset</tp-button>
+  </div>
+</form>`}
+/>
+
+### Value changes
+
+`tp-value-change` reports each selection with its `reason`. Arrow keys select as they move, so listen to this event rather than to clicks.
+
+<Preview
+  title="Value change"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:start">
+  <tp-radio-group id="radio-group-size" label="Team size" default-value="small" orientation="horizontal">
+    <tp-radio-group-item value="solo">Just me</tp-radio-group-item>
+    <tp-radio-group-item value="small">2–10</tp-radio-group-item>
+    <tp-radio-group-item value="large">11+</tp-radio-group-item>
+  </tp-radio-group>
+  <output id="radio-group-size-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Selected: small</output>
+</div>`}
+  script={`const group = document.querySelector('#radio-group-size');
+const output = document.querySelector('#radio-group-size-output');
+group.addEventListener('tp-value-change', (event) => {
+  if (event.target !== group || event.detail.cancelled) return;
+  output.textContent = 'Selected: ' + event.detail.value;
+});`}
+/>

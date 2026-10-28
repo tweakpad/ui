@@ -189,6 +189,7 @@ export class TpMediaTimeSliderPreview extends TpMediaElement implements MediaPre
     mediaTextPreferenceStyles(':host'),
   ];
 
+  /** @internal Marks the element as a preview source. */
   readonly [mediaPreviewSourceBrand] = true as const;
 
   /** `clamp` keeps the preview inside the track; `visible` lets it overflow. */
@@ -199,26 +200,32 @@ export class TpMediaTimeSliderPreview extends TpMediaElement implements MediaPre
   #handle: PositioningHandle | undefined;
   #options: PositioningOptions | undefined;
 
+  /** The time slider whose preview this is. */
   get timeSlider(): TpMediaTimeSlider | null {
     return this.#slider;
   }
 
+  /** The time under the pointer or drag, kept after leaving; `null` before any. */
   get previewTime(): number | null {
     return this.#slider?.previewTime ?? null;
   }
 
+  /** Where `previewTime` sits along the timeline, from 0 to 1; `null` before any. */
   get previewRatio(): number | null {
     return this.#slider?.previewRatio ?? null;
   }
 
+  /** Whether the pointer is over the track or a drag is in progress. */
   get previewing(): boolean {
     return this.#slider?.previewing ?? false;
   }
 
+  /** Whether the slider has keyboard focus without pointing or dragging. */
   get keyboardInteraction(): boolean {
     return this.#slider?.keyboardInteraction ?? false;
   }
 
+  /** The value the slider shows: the media time, or the drag value. */
   get sliderValue(): number {
     return this.#slider?.sliderValue ?? 0;
   }
@@ -258,8 +265,9 @@ export class TpMediaTimeSliderPreview extends TpMediaElement implements MediaPre
 
   #changed = (event: Event): void => {
     this.requestUpdate();
+    // The literal name, so the element manifest lists the event by its name.
     this.dispatchEvent(
-      new CustomEvent<MediaPreviewDetail>(MEDIA_PREVIEW_CHANGE_EVENT, {
+      new CustomEvent<MediaPreviewDetail>('tp-media-preview-change', {
         detail: (event as CustomEvent<MediaPreviewDetail>).detail,
       }),
     );

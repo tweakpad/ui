@@ -1,0 +1,101 @@
+{
+  "id": "components/text-motion",
+  "tag": "tp-text-motion",
+  "sources": {
+    "story": "src/stories/text-motion.stories.ts",
+    "markdown": "docs/text-motion.md",
+    "examples": [
+      "src/stories/text-motion.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`tp-text-motion` splits its text into lines, words and characters, optionally clips them behind\nmasks, and reveals the pieces one after another when the text scrolls into view. The split never\nchanges how the text reads, wraps or how much space it takes: lines are measured from the\noriginal text's own layout and recalculated before paint when the width changes or fonts load,\nso content below never moves.\n\n```html\n<h2>\n  <tp-text-motion split=\"words lines\" mask=\"lines\" reveal=\"up\">\n    Quiet spaces, open light\n  </tp-text-motion>\n</h2>\n```\n\nImport `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`. The stylesheet keeps the text\nhidden, in its final space, until the element is defined, so the unsplit text never flashes\n(it appears anyway after three seconds if the script never loads). To bundle only Text motion,\ncall `defineElement(TpTextMotion.tagName, TpTextMotion)`.\n\nText motion is a block. Put it inside the heading or paragraph whose text it animates, and keep\ntypography on that element: the pieces inherit it."
+    },
+    {
+      "id": "md: Properties",
+      "kind": "md",
+      "heading": "## Properties",
+      "text": "| Property / attribute             | Values                                                                                         | Default                                         |\n| -------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------- |\n| `split`                          | tokens of `chars`, `words`, `lines`; the finest animates                                       | `words`                                         |\n| `mask`                           | `none`, `lines`, `words`, `chars` (must be a split unit)                                       | `none`                                          |\n| `reveal`                         | tokens of `fade`, `up`, `down`, `left`, `right`, `zoom-in`, `zoom-out`, `blur`; empty disables | unset: the coordinator's `reveal`, or `fade up` |\n| `stagger`                        | milliseconds between consecutive pieces                                                        | `30`                                            |\n| `staggerFrom` / `stagger-from`   | `first`, `last`, `center`                                                                      | `first`                                         |\n| `revealRepeat` / `reveal-repeat` | reveal again on every viewport entry                                                           | `false`                                         |\n| `revealHold` / `reveal-hold`     | a ready reveal waits until cleared                                                             | `false`                                         |\n\nRead-only: `lines`, `words`, `chars`, `masks` (arrays of the current pieces, in order) and\n`revealed`. Methods: `splitText()` splits again from the original content (also after\n`revert()`), and `revert()` restores the original nodes and stops splitting."
+    },
+    {
+      "id": "md: Splitting",
+      "kind": "md",
+      "heading": "## Splitting",
+      "text": "- **Words** follow the browser's word segmentation for the text's `lang`, so Chinese, Japanese\n  and Thai split at word boundaries. Spaces stay plain text between pieces, and words break\n  only where the line could already break (after hyphens and dashes), so punctuation stays with\n  its word.\n- **Characters** are user-perceived characters: accents, emoji sequences and flags are never\n  divided. Characters cannot kern or form ligatures, so `split` with `chars` switches both off\n  from the first frame, before splitting, and the text never re-wraps when it splits.\n- **Scripts whose letters join** when shaped (Arabic, the Indic scripts and similar) are never\n  split into characters: such words stay whole and animate as one piece, and a `tp-diagnostic`\n  warning reports it.\n- **Lines** are measured from a hidden copy of the original text, so every line-breaking rule\n  the browser applies to the original (alignment, `text-wrap: balance`, CJK punctuation) applies\n  to the pieces. Lines are laid out for every split, so words and characters wrap exactly as the\n  original would; `lines` lists them only when `split` includes `lines`.\n- **Formatting** such as `<strong>`, `<em>` and `<code>` is kept around its pieces, cloned once\n  per line when it spans lines, so page styles apply unchanged. `<br>` and preserved whitespace\n  are kept.\n- **Links** wrap like ordinary text. The original `<a>` keeps the first fragment, so its\n  listeners, focus and identity stay; fragments on later lines are inert continuations that\n  forward clicks to it. Buttons, form controls, images and other custom elements are kept as the\n  original elements, whole, as one piece.\n\nInline boxes cannot shape across their edges, so kerning against the neighbouring space is lost\nand a line can be a fraction of a pixel wider than the original; its breaks and height are still\nthe original's."
+    },
+    {
+      "id": "md: Reveal",
+      "kind": "md",
+      "heading": "## Reveal",
+      "text": "Every piece of the finest unit starts in the effect's start state and moves to rest after a\ndelay of its stagger position times `stagger`. `stagger-from=\"center\"` reveals from the middle\noutward. With a mask on the moving unit (or a coarser one), `up`, `down`, `left` and `right`\ntravel the piece's own size, so pieces emerge from behind the clip; without a mask they travel\n`--tp-text-motion-distance`. Effects only change opacity, translate, scale and filter, so\nnothing around the text moves.\n\nStandalone, a text reveals the first time it enters the viewport, once its fonts are ready.\n`reveal-repeat` resets it instantly once it has left the viewport entirely and plays again when\nit comes back 10% into view. Inside a [Scroll trigger](scroll-trigger.md) (or an Image group),\nthat coordinator owns the timing.\n\nInside a scrubbing [Scroll trigger](scroll-trigger.md) the scroll position drives the same\nreveal: every piece shows its eased state at the scrubbed time, in stagger order."
+    },
+    {
+      "id": "md: Reveal › Responsive behaviour",
+      "kind": "md",
+      "heading": "### Responsive behaviour",
+      "text": "Lines are recalculated in the same frame as the width change, before paint, and only when the\nchange can actually move a word to another line. All texts on the page are measured in one pass.\nUntil then a stale line never wraps, so the page does not jump. A recalculation keeps the reveal\nstate: pending pieces stay hidden, revealed pieces stay at rest, and a reveal in progress\ncompletes at once.\n\nChanging the content (for example `textContent`, or a template library updating the text) is\npicked up and split again before the next paint. Typography changes that alter the text's height\n(font size, line height, a web font loading) recalculate the lines too; after a change that keeps\nthe height, such as letter spacing or weight, call `splitText()`."
+    },
+    {
+      "id": "md: Events",
+      "kind": "md",
+      "heading": "## Events",
+      "text": "| Event                       | Detail                           | When                                                |\n| --------------------------- | -------------------------------- | --------------------------------------------------- |\n| `tp-text-split`             | `{ lines, words, chars, masks }` | after every split or line change                    |\n| `tp-reveal-change`          | `{ revealed, effect }`           | the reveal starts, or a repeat resets it            |\n| `tp-reveal-change-complete` | `{ revealed }`                   | the last piece has settled (or right after a reset) |\n| `tp-diagnostic`             | `{ code, message, severity }`    | a joined script was kept in words                   |"
+    },
+    {
+      "id": "md: Events › External animation libraries",
+      "kind": "md",
+      "heading": "### External animation libraries",
+      "text": "The reveal runs through the Text motion `reveal` motion role. Claim it from a\n`tp-motion-request` listener to animate the pieces with an external animation library: the\nrequest context carries `effect`, `unit` and `count`, and `request.owner.words` (or `chars`,\n`lines`) holds the pieces. While a driver plays, the CSS transitions are off. Rebuild your\nanimation on `tp-text-split`, which fires when lines change.\n\n```js\ndocument.addEventListener('tp-motion-request', (event) => {\n  const { owner, role } = event.request;\n  if (owner.localName !== 'tp-text-motion' || role !== 'reveal') return;\n  event.respondWith({\n    play: () => {\n      const animations = owner.words.map((word, index) =>\n        word.animate(\n          [\n            { opacity: 0, translate: '0 0.5em' },\n            { opacity: 1, translate: '0 0' },\n          ],\n          {\n            duration: 500,\n            delay: index * 40,\n            easing: 'ease-out',\n            fill: 'backwards',\n          },\n        ),\n      );\n      return {\n        finished: Promise.all(animations.map((animation) => animation.finished)),\n        cancel: () => animations.forEach((animation) => animation.cancel()),\n      };\n    },\n  });\n});\n```"
+    },
+    {
+      "id": "md: Accessibility",
+      "kind": "md",
+      "heading": "## Accessibility",
+      "text": "Pieces and masks are hidden from assistive technology. The original text of each run is exposed\nonce, in reading order, through visually hidden text, so screen readers, translation and search\nread the sentence normally. Links keep their role and get their full text as their accessible\nname; buttons and other controls keep theirs. No `aria-label` is put on a generic element.\n\nUnder reduced motion every piece is shown at rest immediately and the events still fire."
+    },
+    {
+      "id": "md: Styling",
+      "kind": "md",
+      "heading": "## Styling",
+      "text": "Pieces are light-DOM elements with `data-tp-piece=\"line\"`, `\"word\"`, `\"char\"` or `\"mask\"`, so\nstyle them from your page, for example `tp-text-motion [data-tp-piece='char'] { color: … }`.\nEach piece carries `--tp-text-index` (its index within its unit) and the animating pieces carry\n`--tp-text-order` (its stagger position).\n\n| Custom property               | Default                      | Purpose                                            |\n| ----------------------------- | ---------------------------- | -------------------------------------------------- |\n| `--tp-text-motion-duration`   | `var(--tp-duration-slow)`    | per-piece duration                                 |\n| `--tp-text-motion-easing`     | `var(--tp-easing-enter)`     | easing                                             |\n| `--tp-text-motion-distance`   | `0.4em`                      | travel without a mask                              |\n| `--tp-text-motion-scale`      | `0.2`                        | scale offset for `zoom-in` and `zoom-out`          |\n| `--tp-text-motion-blur`       | `0.15em`                     | start blur for `blur`                              |\n| `--tp-text-motion-mask-bleed` | `0.1em`                      | how far masks extend over ascenders and descenders |\n\nAll durations and delays are scaled by `--tp-motion-scale`. Markers on the host:\n`data-split-ready`, `data-in-view` (while observed) and `data-revealed`."
+    },
+    {
+      "id": "md: Limits",
+      "kind": "md",
+      "heading": "## Limits",
+      "text": "- `::first-line` and `::first-letter` do not apply to split text.\n- `text-align: justify` stretches lines as usual, but every recalculation measures again.\n- `hyphens: auto` can break inside a word in the original; such a word is presented whole.\n- SVG `<text>` and vertical writing modes are not split.\n- A nested `tp-text-motion` is treated as one piece of the outer one."
+    },
+    {
+      "id": "example: Characters from the center",
+      "kind": "example",
+      "title": "Characters from the center",
+      "description": "Characters fade in from a soft blur, starting in the middle of the phrase and spreading outward. Kerning is switched off from the first frame, so the text never re-wraps when it splits.",
+      "code": "<p style=\"margin: 0; font-size: 2.5rem; font-weight: 600; letter-spacing: -0.02em\">\n  <tp-text-motion split=\"chars\" reveal=\"fade blur\" stagger=\"25\" stagger-from=\"center\">Open light</tp-text-motion>\n</p>"
+    },
+    {
+      "id": "example: Words behind a mask",
+      "kind": "example",
+      "title": "Words behind a mask",
+      "description": "Each word rises from behind its own clip. The mask extends a little over ascenders and descenders, so tight line heights never cut a glyph.",
+      "code": "<p style=\"margin: 0; font-size: 2rem; line-height: 1.1; font-weight: 600\">\n  <tp-text-motion split=\"words\" mask=\"words\" reveal=\"up\" stagger=\"60\">Gently jumping quaintly by</tp-text-motion>\n</p>"
+    },
+    {
+      "id": "example: Rich text with a link",
+      "kind": "example",
+      "title": "Rich text with a link",
+      "description": "Formatting is kept around the pieces and the link stays the original element, wrapping like ordinary text. Screen readers read the sentence once, with the link and its full name.",
+      "code": "<p style=\"margin: 0; max-inline-size: 32rem; font-size: 1.125rem; line-height: 1.6\">\n  <tp-text-motion split=\"words lines\" reveal=\"fade up\" stagger=\"15\">Read the <a href=\"#\">documentation for every component</a> and <em>its configurable options</em> before you ship, <code>tp-text-motion</code> included.</tp-text-motion>\n</p>"
+    },
+    {
+      "id": "example: Every time it enters",
+      "kind": "example",
+      "title": "Every time it enters",
+      "description": "With `reveal-repeat`, the words return to their start state once the text has left the viewport and reveal again when it comes back.",
+      "code": "<p style=\"margin: 0; font-size: 2rem; font-weight: 600\">\n  <tp-text-motion split=\"words\" reveal=\"fade zoom-in\" stagger=\"80\" reveal-repeat>Every time it enters</tp-text-motion>\n</p>"
+    }
+  ]
+}

@@ -2,17 +2,8 @@ import { html } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import type { TpMessageScroller } from '../components/message-scroller/index.js';
-import './message-scroller.examples.js';
-import { publishedSource } from './documentation-examples.js';
-import { messageScrollerExamples } from './message-scroller.examples.js';
-import documentation from '../../docs/message-scroller.md?raw';
-
-import demoSource from './message-scroller-streaming.ts?raw';
-
-const baseSource = `import '@tweakpad/ui/register';
-import '@tweakpad/ui/styles.css';
-${publishedSource(demoSource)}
-// Mount <message-scroller-demo></message-scroller-demo>`;
+import './message-scroller-streaming.js';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   label: string;
@@ -29,13 +20,7 @@ interface Args {
 const meta = {
   title: 'Components/Message scroller',
   component: 'tp-message-scroller',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: messageScrollerExamples,
-      source: { code: baseSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/message-scroller') },
   args: {
     label: 'Conversation',
     initialPosition: 'end',

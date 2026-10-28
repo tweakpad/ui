@@ -8,6 +8,13 @@ import { checkIcon } from '../../icons/check.js';
 import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
+/**
+ * A Menu item that turns a setting on or off and shows a check while it is on. It keeps the menu
+ * open, so several settings can change in one visit.
+ *
+ * @slot - The label.
+ * @fires tp-value-change - Cancelable proposal of the new checked state; `detail.value`.
+ */
 export class TpMenuCheckboxItem extends TpMenuItem {
   static override tagName = 'tp-menu-checkbox-item';
   /** Library elements this element renders; defining it defines them too. */
@@ -22,8 +29,11 @@ export class TpMenuCheckboxItem extends TpMenuItem {
     onCheckedChange: { attribute: false },
   };
   override closeOnClick = false;
+  /** Initial checked state when `checked` is not set. */
   defaultChecked: boolean | undefined;
+  /** Keeps the check mark in the document while unchecked, hidden. */
   keepMounted = false;
+  /** Called with each checked-state proposal before `tp-value-change` is dispatched. */
   onCheckedChange: ((event: TpValueChangeEvent<boolean>) => void) | undefined;
   #checked: boolean | undefined;
   #indicator: HTMLElement | null = null;
@@ -44,6 +54,7 @@ export class TpMenuCheckboxItem extends TpMenuItem {
     surface: () => this.#indicator,
     keepMounted: () => this.keepMounted,
   });
+  /** Whether the setting is on; set it from the start to own the state, writing back each accepted proposal. */
   get checked(): boolean {
     return this.#state.value;
   }

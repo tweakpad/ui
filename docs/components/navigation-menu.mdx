@@ -1,0 +1,114 @@
+---
+title: Navigation menu
+description: Site navigation links with optional hover and press panels that keep native link behavior.
+tag: tp-navigation-menu
+parts: [tp-navigation-menu-item]
+---
+
+<Preview
+  title="Navigation menu"
+  code={`<tp-navigation-menu aria-label="Main">
+  <tp-navigation-menu-item value="product">
+    <tp-button slot="trigger" variant="ghost">Product</tp-button>
+    <div slot="content" style="display:grid;grid-template-columns:repeat(2,minmax(0,13rem));gap:var(--tp-space-1)">
+      <a href="#analytics" style="display:grid;align-content:start;gap:var(--tp-space-1)">
+        <strong>Analytics</strong>
+        <span style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Dashboards for every team.</span>
+      </a>
+      <a href="#automation" style="display:grid;align-content:start;gap:var(--tp-space-1)">
+        <strong>Automation</strong>
+        <span style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Workflows that run on schedule.</span>
+      </a>
+      <a href="#integrations" style="display:grid;align-content:start;gap:var(--tp-space-1)">
+        <strong>Integrations</strong>
+        <span style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Connect Slack, Linear and more.</span>
+      </a>
+      <a href="#security" style="display:grid;align-content:start;gap:var(--tp-space-1)">
+        <strong>Security</strong>
+        <span style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">SSO, audit logs and SCIM.</span>
+      </a>
+    </div>
+  </tp-navigation-menu-item>
+  <tp-navigation-menu-item value="resources">
+    <tp-button slot="trigger" variant="ghost">Resources</tp-button>
+    <div slot="content" style="display:grid;min-inline-size:12rem">
+      <a href="#docs">Documentation</a>
+      <a href="#changelog">Changelog</a>
+      <a href="#community">Community</a>
+    </div>
+  </tp-navigation-menu-item>
+  <tp-navigation-menu-item><a href="#pricing">Pricing</a></tp-navigation-menu-item>
+</tp-navigation-menu>`}
+/>
+
+## Usage
+
+Navigation Menu is for moving between pages: links keep native activation, modifier keys, targets and Tab order, and nothing gets command-menu roles. For application commands, use Menu or Menubar.
+
+It is nonmodal, and open is derived from value. Trigger focus does not open a panel. Hover/press can open; ArrowDown enters an active horizontal panel; the logical forward arrow enters a vertical panel (Right in LTR, Left in RTL). Escape returns focus only when focus was in content. Native links continue to use ordinary Tab navigation. Outside focus/press closes without a focus trap.
+
+### Panels and direct links
+
+An Item with a `trigger` and `content` slot opens a panel on hover or press; an Item holding only a link is a plain destination. Panels share one measured viewport, so switching between Items animates size instead of reopening. Hovering a top-level direct link closes the active panel without activating the link. Links inside an open panel keep it open on hover.
+
+<Preview
+  title="Mixed items"
+  code={`<tp-navigation-menu aria-label="Documentation">
+  <tp-navigation-menu-item value="guides">
+    <tp-button slot="trigger" variant="ghost">Guides</tp-button>
+    <div slot="content" style="display:grid;min-inline-size:12rem">
+      <a href="#quick-start">Quick start</a>
+      <a href="#theming">Theming</a>
+      <a href="#accessibility">Accessibility</a>
+    </div>
+  </tp-navigation-menu-item>
+  <tp-navigation-menu-item><a href="#components">Components</a></tp-navigation-menu-item>
+  <tp-navigation-menu-item><a href="#blog">Blog</a></tp-navigation-menu-item>
+</tp-navigation-menu>`}
+/>
+
+### Current page
+
+Mark the current destination with the `active` attribute so it is exposed as `aria-current="page"`. Add `close-on-click` to a link when following it should also close the panel, such as an in-page anchor.
+
+<Preview
+  title="Active link"
+  code={`<tp-navigation-menu aria-label="Account">
+  <tp-navigation-menu-item value="settings">
+    <tp-button slot="trigger" variant="ghost">Settings</tp-button>
+    <div slot="content" style="display:grid;min-inline-size:12rem">
+      <a href="#profile" active>Profile</a>
+      <a href="#billing" close-on-click>Billing</a>
+      <a href="#notifications" close-on-click>Notifications</a>
+    </div>
+  </tp-navigation-menu-item>
+  <tp-navigation-menu-item><a href="#support">Support</a></tp-navigation-menu-item>
+</tp-navigation-menu>`}
+/>
+
+### Vertical
+
+With `orientation="vertical"`, open the panel beside the list using `placement="inline-end start"` so the remaining destinations stay reachable. Vertical Lists stretch their top-level controls to a shared width; popup links retain their authored layout, including grids. Orientation chooses the List arrangement independently of placement.
+
+<Preview
+  title="Vertical"
+  align="start"
+  code={`<tp-navigation-menu aria-label="Help center" orientation="vertical" placement="inline-end start">
+  <tp-navigation-menu-item value="billing">
+    <tp-button slot="trigger" variant="ghost">Billing</tp-button>
+    <div slot="content" style="display:grid;min-inline-size:12rem">
+      <a href="#invoices">Invoices</a>
+      <a href="#payment-methods">Payment methods</a>
+      <a href="#tax">Tax settings</a>
+    </div>
+  </tp-navigation-menu-item>
+  <tp-navigation-menu-item value="workspace">
+    <tp-button slot="trigger" variant="ghost">Workspace</tp-button>
+    <div slot="content" style="display:grid;min-inline-size:12rem">
+      <a href="#members">Members</a>
+      <a href="#roles">Roles</a>
+    </div>
+  </tp-navigation-menu-item>
+  <tp-navigation-menu-item><a href="#contact">Contact us</a></tp-navigation-menu-item>
+</tp-navigation-menu>`}
+/>

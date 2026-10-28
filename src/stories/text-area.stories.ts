@@ -4,7 +4,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpTextArea } from '../components/text-area/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import documentation from '../../docs/text-area.md?raw';
+import { libraryDocs } from './library-docs.js';
 interface Args {
   value: string;
   label: string;
@@ -19,7 +19,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Text area',
   component: 'tp-text-area',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/text-area') },
   args: {
     value: '',
     label: 'Message',

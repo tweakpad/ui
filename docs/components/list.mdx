@@ -1,0 +1,386 @@
+---
+title: List
+description: Rows of media, a title, supporting text and independent actions, as a named list or one row on its own.
+tag: tp-list
+parts: [tp-list-item, tp-list-separator]
+---
+
+<Preview
+  title="List"
+  align="stretch"
+  code={`<tp-list aria-label="Workspace members" style="max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <tp-list-item description="maya.chen@northwind.co">
+    <tp-avatar slot="media" size="sm" fallback="MC" alt=""></tp-avatar>
+    Maya Chen
+    <tp-badge slot="actions" variant="secondary">Owner</tp-badge>
+  </tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item description="jonas.weber@northwind.co">
+    <tp-avatar slot="media" size="sm" fallback="JW" alt=""></tp-avatar>
+    Jonas Weber
+    <tp-button slot="actions" variant="outline" size="sm">Manage</tp-button>
+  </tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item description="Invited 2 days ago">
+    <tp-avatar slot="media" size="sm" fallback="AO" alt=""></tp-avatar>
+    Amara Okafor
+    <tp-button slot="actions" variant="outline" size="sm">Resend</tp-button>
+  </tp-list-item>
+</tp-list>`}
+/>
+
+## Usage
+
+`tp-list` holds `tp-list-item` rows and `tp-list-separator` dividers. Both are layout only: there is no selection, activation or keyboard model of their own. Controls in the `actions` slot keep their own focus and behavior, so one row can hold several independent actions.
+
+### Content and actions
+
+The default slot is the title and `description` adds supporting text; use the `title` and `description` slots when either needs markup. Empty regions collapse, so a title-only row needs nothing extra.
+
+<Preview
+  title="Content and actions"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <tp-list-item variant="outline">Two-factor authentication
+    <tp-badge slot="actions" variant="secondary">On</tp-badge>
+  </tp-list-item>
+  <tp-list-item variant="outline" description="Signed in from Chrome on macOS, Berlin.">
+    MacBook Pro
+    <tp-button slot="actions" variant="outline" size="sm">Sign out</tp-button>
+  </tp-list-item>
+  <tp-list-item variant="outline" description="Your plan renews on March 1. Downgrading takes effect then.">
+    Pro plan
+    <tp-button slot="actions" variant="ghost" size="sm">Downgrade</tp-button>
+    <tp-button slot="actions" size="sm">Upgrade</tp-button>
+  </tp-list-item>
+</div>`}
+/>
+
+### Variants and sizes
+
+`variant` is `ghost`, `outline` or `subdued`; `size` steps the density down through `sm` and `xs` for tight panels and menus.
+
+<Preview
+  title="Variants and sizes"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <tp-list-item description="Ghost is the default.">Release notes</tp-list-item>
+  <tp-list-item variant="outline" description="Outline draws a boundary.">Release notes</tp-list-item>
+  <tp-list-item variant="subdued" description="Subdued fills the row.">Release notes</tp-list-item>
+  <tp-list-item variant="outline" size="sm" description="Small">Release notes</tp-list-item>
+  <tp-list-item variant="outline" size="xs" description="Extra small">Release notes</tp-list-item>
+</div>`}
+/>
+
+### Media
+
+The `media` slot takes an Icon, Avatar or image. `media-treatment` tells the row what it holds, `icon` or `image`, so the media gets the matching extent. With a description, media aligns to the first line of text.
+
+<Preview
+  title="Media"
+  align="stretch"
+  code={`<tp-list id="list-item-media" aria-label="Recent files" style="max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <tp-list-item variant="outline" media-treatment="icon" description="Edited by Maya · 12 minutes ago">
+    <tp-icon slot="media" data-icon="file"></tp-icon>
+    Q3 roadmap.md
+  </tp-list-item>
+  <tp-list-item variant="outline" media-treatment="icon" description="14 files · Shared with Design">
+    <tp-icon slot="media" data-icon="folder"></tp-icon>
+    Brand assets
+  </tp-list-item>
+  <tp-list-item variant="outline" media-treatment="icon" description="New sign-in from an unknown device.">
+    <tp-icon slot="media" data-icon="shield"></tp-icon>
+    Security alert
+    <tp-button slot="actions" variant="outline" size="sm">Review</tp-button>
+  </tp-list-item>
+</tp-list>`}
+  script={`const icons = {
+  file: { viewBox: '0 0 24 24', paths: [{ d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8ZM14 2v6h6M8 13h8M8 17h8', strokeWidth: 2 }] },
+  folder: { viewBox: '0 0 24 24', paths: [{ d: 'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z', strokeWidth: 2 }] },
+  shield: { viewBox: '0 0 24 24', paths: [{ d: 'm12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6zM12 8v4M12 16h.01', strokeWidth: 2 }] },
+};
+for (const icon of document.querySelectorAll('#list-item-media tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>
+
+### Lists and separators
+
+`tp-list` carries the `list` role and its `aria-label` on the host, and its direct `tp-list-item` rows become list items. Name every list. Put `tp-list-separator` between rows for a divided list. A single `tp-list-item` also works on its own, outside a list, as in the examples above. A row that leaves the list, or a list that leaves the page, releases only the roles the list set; authored roles are preserved, and a standalone `tp-list-item` has no list item role. Ordinary `tp-separator` children are also supported; the list registers their presentation as `list-separator`, while their rendering contract remains on the Separator component.
+
+<Preview
+  title="Divided list"
+  align="stretch"
+  code={`<tp-list aria-label="Notification channels" style="max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <tp-list-item description="Mentions, replies and direct messages.">
+    Email
+    <tp-switch slot="actions" label="Email notifications" default-checked></tp-switch>
+  </tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item description="Only when you are away from the desktop app.">
+    Push
+    <tp-switch slot="actions" label="Push notifications" default-checked></tp-switch>
+  </tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item description="A summary of activity every Monday.">
+    Weekly digest
+    <tp-switch slot="actions" label="Weekly digest"></tp-switch>
+  </tp-list-item>
+</tp-list>`}
+/>
+
+### Header and footer
+
+`header` and `footer` span the full row above and below the main content, for an eyebrow label or metadata.
+
+<Preview
+  title="Header and footer"
+  align="stretch"
+  code={`<tp-list-item variant="outline" description="Redesign the onboarding flow and pricing page." style="max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <span slot="header" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-xs)">Marketing site</span>
+  Website refresh
+  <tp-button slot="actions" variant="outline" size="sm">Open</tp-button>
+  <span slot="footer" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-xs)">Updated <tp-time datetime="2026-10-08T09:30:00Z" mode="absolute" pattern="MMM d"></tp-time> · 6 contributors</span>
+</tp-list-item>`}
+/>
+
+Header media works too: a square Aspect ratio image in `header` turns each row into a card. Lay the list out as a grid through the `list` part's `partPresentation`.
+
+<Preview
+  title="Card grid"
+  align="stretch"
+  code={`<tp-list id="list-card-grid" aria-label="Office spaces" style="max-inline-size:40rem;margin-inline:auto;inline-size:100%">
+  <tp-list-item variant="outline" description="Long tables for 24 people.">
+    <tp-aspect-ratio slot="header" ratio="1" fit="cover" style="inline-size:100%;border-radius:var(--tp-radius-sm)"><img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=480&q=75&auto=format&fit=crop" alt=""></tp-aspect-ratio>
+    Open studio
+  </tp-list-item>
+  <tp-list-item variant="outline" description="Bookable desks by the windows.">
+    <tp-aspect-ratio slot="header" ratio="1" fit="cover" style="inline-size:100%;border-radius:var(--tp-radius-sm)"><img src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=480&q=75&auto=format&fit=crop" alt=""></tp-aspect-ratio>
+    Quiet floor
+  </tp-list-item>
+  <tp-list-item variant="outline" description="Outdoor seating with Wi-Fi.">
+    <tp-aspect-ratio slot="header" ratio="1" fit="cover" style="inline-size:100%;border-radius:var(--tp-radius-sm)"><img src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=480&q=75&auto=format&fit=crop" alt=""></tp-aspect-ratio>
+    Roof terrace
+  </tp-list-item>
+</tp-list>`}
+  script={`document.querySelector('#list-card-grid').partPresentation = {
+  list: {
+    styleHook: {
+      display: 'grid',
+      'grid-template-columns': 'repeat(auto-fit, minmax(min(100%, 10rem), 1fr))',
+      gap: 'var(--tp-space-4)',
+    },
+  },
+};`}
+/>
+
+### Links
+
+A whole row can be a native link: give the `list-item` part a `renderDelegate` that renders an `a` around the supplied `bind` and `content`. Controls in `actions` render beside the link, so they stay separate tab stops; decorative icons there let clicks reach the link. Put independent controls in `actions` (or `trailing`), not in the title, description, media, header or footer of an interactive Root. Native Tab order reaches Root before its actions; activating an action does not activate Root.
+
+<Preview
+  title="Link rows"
+  align="stretch"
+  code={`<tp-list id="list-links" aria-label="Help resources" style="max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <tp-list-item variant="outline" data-href="#links" description="Set up your workspace in ten minutes.">
+    Getting started guide
+    <tp-icon slot="actions" data-icon="chevron"></tp-icon>
+  </tp-list-item>
+  <tp-list-item variant="outline" data-href="#links" description="Invoices, seats and tax settings.">
+    Billing questions
+    <tp-button slot="actions" variant="outline" size="sm">Contact sales</tp-button>
+  </tp-list-item>
+  <tp-list-item variant="outline" data-href="https://status.example.com/" data-external description="Opens the status page in a new tab.">
+    System status
+    <tp-icon slot="actions" data-icon="external"></tp-icon>
+  </tp-list-item>
+</tp-list>`}
+  script={`import { html } from 'lit';
+
+const icons = {
+  chevron: { viewBox: '0 0 24 24', paths: [{ d: 'm9 18 6-6-6-6', strokeWidth: 2 }] },
+  external: { viewBox: '0 0 24 24', paths: [{ d: 'M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6', strokeWidth: 2 }] },
+};
+for (const item of document.querySelectorAll('#list-links tp-list-item')) {
+  const external = item.hasAttribute('data-external');
+  item.partContracts = {
+    'list-item': {
+      renderDelegate: ({ bind, content }) => html\`<a href=\${item.dataset.href} target=\${external ? '_blank' : '_self'} rel=\${external ? 'noopener noreferrer' : ''} \${bind}>\${content}</a>\`,
+    },
+  };
+}
+for (const icon of document.querySelectorAll('#list-links tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>
+
+### Custom content layout
+
+Each part's `renderDelegate` can also wrap its content, for example to add a trailing duration column to the `list-item-content` part. With `media-treatment="image"`, an `img` in `media` gets a square thumbnail.
+
+<Preview
+  title="Recordings"
+  align="stretch"
+  code={`<tp-list id="list-recordings" aria-label="Workshop recordings" style="max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <tp-list-item variant="outline" media-treatment="image" description="Maya Chen" data-duration="42:10">
+    <img slot="media" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=96&h=96&q=75&auto=format&fit=crop" alt="">
+    <span slot="title">Designing for density <span style="color:var(--tp-muted-foreground)">· Day 1</span></span>
+  </tp-list-item>
+  <tp-list-item variant="outline" media-treatment="image" description="Jordan Lee" data-duration="35:48">
+    <img slot="media" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=96&h=96&q=75&auto=format&fit=crop" alt="">
+    <span slot="title">Accessible data tables <span style="color:var(--tp-muted-foreground)">· Day 1</span></span>
+  </tp-list-item>
+  <tp-list-item variant="outline" media-treatment="image" description="Ana Ruiz" data-duration="51:02">
+    <img slot="media" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=96&h=96&q=75&auto=format&fit=crop" alt="">
+    <span slot="title">Motion with restraint <span style="color:var(--tp-muted-foreground)">· Day 2</span></span>
+  </tp-list-item>
+</tp-list>`}
+  script={`import { html } from 'lit';
+
+for (const item of document.querySelectorAll('#list-recordings tp-list-item')) {
+  item.partContracts = {
+    'list-item-content': {
+      renderDelegate: ({ bind, content }) => html\`<span \${bind} style="display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--tp-space-3);align-items:center">
+        <span style="display:flex;flex-direction:column;gap:inherit;min-inline-size:0">\${content}</span>
+        <span style="color:var(--tp-muted-foreground);font-variant-numeric:tabular-nums">\${item.dataset.duration}</span>
+      </span>\`,
+    },
+  };
+}`}
+/>
+
+### In a menu
+
+For a rich command, put a List item directly inside a Menu item. The Menu item keeps the command semantics, keyboard navigation and highlight, and the row drops its own padding. Do not add a second link or button inside that row.
+
+<Preview
+  title="People picker"
+  code={`<tp-menu id="list-people-menu" label="Assign to">
+  <tp-button slot="trigger" variant="outline" size="sm"><span id="list-people-label">Assign to…</span></tp-button>
+  <tp-menu-item value="Maya Patel" label="Maya Patel">
+    <tp-list-item size="xs" description="maya@acme.com"><tp-avatar slot="media" size="sm" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" alt="" fallback="MP"></tp-avatar>Maya Patel</tp-list-item>
+  </tp-menu-item>
+  <tp-menu-item value="Jordan Lee" label="Jordan Lee">
+    <tp-list-item size="xs" description="jordan@acme.com"><tp-avatar slot="media" size="sm" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop" alt="" fallback="JL"></tp-avatar>Jordan Lee</tp-list-item>
+  </tp-menu-item>
+  <tp-menu-item value="Ana Ruiz" label="Ana Ruiz">
+    <tp-list-item size="xs" description="ana@acme.com"><tp-avatar slot="media" size="sm" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" alt="" fallback="AR"></tp-avatar>Ana Ruiz</tp-list-item>
+  </tp-menu-item>
+</tp-menu>`}
+  script={`document.querySelector('#list-people-menu').addEventListener('tp-action', (event) => {
+  document.querySelector('#list-people-label').textContent = event.detail.value;
+});`}
+/>
+
+### People and invitations
+
+<Preview
+  title="People and invitations"
+  align="stretch"
+  code={`<div id="list-people-example" style="display:grid;gap:var(--tp-space-4);max-inline-size:calc(var(--tp-spacing) * 150);min-inline-size:0"><tp-list-item variant="outline"><tp-avatar slot="media" size="sm" src="avatars/ravi-castellano.svg" fallback="RC" alt="Ravi Castellano" ></tp-avatar>Ravi Castellano<span slot="description">Last seen <tp-time mode="relative" datetime="2026-05-31T21:38:55.759Z"></tp-time></span><tp-button slot="actions" variant="outline" size="icon-sm" aria-label="Invite Ravi Castellano" data-round data-feedback><tp-icon slot="icon-start" data-icon="plus"></tp-icon></tp-button></tp-list-item>
+<tp-list-item variant="outline" description="Invite your team to collaborate on this project."><tp-avatar-group slot="media" size="sm"><tp-avatar slot="" size="sm" src="avatars/mara-voss.svg" fallback="MV" alt="Mara Voss" data-secondary-avatar></tp-avatar><tp-avatar slot="" size="sm" src="avatars/theo-lindqvist.svg" fallback="TL" alt="Theo Lindqvist" data-secondary-avatar></tp-avatar><tp-avatar slot="" size="sm" src="avatars/ines-okafor.svg" fallback="IO" alt="Ines Okafor" ></tp-avatar></tp-avatar-group>Project team<tp-button slot="actions" variant="outline" size="sm" data-feedback>Invite</tp-button></tp-list-item>
+<tp-list aria-label="People"><tp-list-item description="maravoss@example.com"><tp-avatar slot="media" size="sm" src="avatars/mara-voss.svg" fallback="MV" alt="Mara Voss" ></tp-avatar>Mara Voss<tp-button slot="actions" variant="outline" size="icon-sm" aria-label="Invite Mara Voss" data-round data-feedback><tp-icon slot="icon-start" data-icon="plus"></tp-icon></tp-button></tp-list-item>
+<tp-list-separator></tp-list-separator>
+<tp-list-item description="theolind@example.com"><tp-avatar slot="media" size="sm" src="avatars/theo-lindqvist.svg" fallback="TL" alt="Theo Lindqvist" ></tp-avatar>Theo Lindqvist<tp-button slot="actions" variant="outline" size="icon-sm" aria-label="Invite Theo Lindqvist" data-round data-feedback><tp-icon slot="icon-start" data-icon="plus"></tp-icon></tp-button></tp-list-item>
+<tp-list-separator></tp-list-separator>
+<tp-list-item description="inesokafor@example.com"><tp-avatar slot="media" size="sm" src="avatars/ines-okafor.svg" fallback="IO" alt="Ines Okafor" ></tp-avatar>Ines Okafor<tp-button slot="actions" variant="outline" size="icon-sm" aria-label="Invite Ines Okafor" data-round data-feedback><tp-icon slot="icon-start" data-icon="plus"></tp-icon></tp-button></tp-list-item></tp-list><tp-toast></tp-toast></div>`}
+  script={`import { html } from 'lit';
+import { navigationIcons } from '@tweakpad/ui/icons/navigation';
+import { plusIcon } from '@tweakpad/ui/icons/plus';
+import { checkIcon } from '@tweakpad/ui/icons/check';
+import { chevronRightIcon } from '@tweakpad/ui/icons/chevron-right';
+import { chevronDownIcon } from '@tweakpad/ui/icons/chevron-down';
+import { externalLinkIcon } from '@tweakpad/ui/icons/external-link';
+import { shieldAlertIcon } from '@tweakpad/ui/icons/shield-alert';
+
+const icons = {
+  ...navigationIcons,
+  plus: plusIcon,
+  check: checkIcon,
+  chevronRight: chevronRightIcon,
+  chevronDown: chevronDownIcon,
+  external: externalLinkIcon,
+  shield: shieldAlertIcon,
+};
+
+export function setupListExample(root) {
+  for (const icon of root.querySelectorAll('tp-icon[data-icon]'))
+    icon.icon = icons[icon.dataset.icon];
+  for (const item of root.querySelectorAll('tp-list-item[data-link]')) {
+    item.partContracts = {
+      'list-item': {
+        renderDelegate: ({ bind, content }) =>
+          html\`<a
+            href=\${item.dataset.link || '#list-destination'}
+            target=\${item.hasAttribute('data-external') ? '_blank' : '_self'}
+            rel=\${item.hasAttribute('data-external') ? 'noopener noreferrer' : ''}
+            \${bind}
+            >\${content}</a
+          >\`,
+      },
+    };
+  }
+  for (const item of root.querySelectorAll('tp-list-item[data-duration]'))
+    item.partContracts = {
+      ...item.partContracts,
+      'list-item-content': {
+        renderDelegate: ({ bind, content }) =>
+          html\`<span
+            \${bind}
+            style="display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--tp-space-3);align-items:center"
+            ><span style="display:flex;flex-direction:column;gap:inherit;min-inline-size:0"
+              >\${content}</span
+            >
+            <span style="color:var(--tp-muted-foreground);font-weight:var(--tp-font-normal)"
+              >\${item.dataset.duration}</span
+            >
+          </span>\`,
+      },
+    };
+  for (const list of root.querySelectorAll('tp-list[data-grid]'))
+    list.partPresentation = {
+      list: {
+        styleHook: {
+          display: 'grid',
+          'grid-template-columns':
+            'repeat(auto-fit, minmax(min(100%, calc(var(--tp-spacing) * 40)), 1fr))',
+          gap: 'var(--tp-space-4)',
+        },
+      },
+    };
+  for (const action of root.querySelectorAll('tp-button[data-round]'))
+    action.partPresentation = {
+      button: { styleHook: { 'border-radius': 'var(--tp-radius-full)' } },
+    };
+  const toast = root.querySelector('tp-toast');
+  const activate = (event) => {
+    const action = event
+      .composedPath()
+      .find((node) => node?.localName === 'tp-button' && node.hasAttribute('data-feedback'));
+    if (action)
+      toast?.add({
+        title: \`\${action.getAttribute('aria-label') || action.textContent.trim()} activated.\`,
+      });
+  };
+  const selectPerson = (event) => {
+    if (!event.defaultPrevented) toast?.add({ title: \`Selected \${event.detail.value}.\` });
+  };
+  const menus = [...root.querySelectorAll('tp-menu[data-people]')];
+  menus.forEach((menu) => menu.addEventListener('tp-action', selectPerson));
+  const secondaryAvatars = [...root.querySelectorAll('tp-avatar[data-secondary-avatar]')];
+  const wide = root.ownerDocument.defaultView.matchMedia('(min-width: 40rem)');
+  const resize = () =>
+    secondaryAvatars.forEach((avatar) => {
+      avatar.hidden = !wide.matches;
+    });
+  if (secondaryAvatars.length) {
+    wide.addEventListener('change', resize);
+    resize();
+  }
+  root.addEventListener('click', activate);
+  return () => {
+    root.removeEventListener('click', activate);
+    menus.forEach((menu) => menu.removeEventListener('tp-action', selectPerson));
+    wide.removeEventListener('change', resize);
+    toast?.close();
+  };
+}
+
+setupListExample(document.getElementById('list-people-example'));`}
+/>

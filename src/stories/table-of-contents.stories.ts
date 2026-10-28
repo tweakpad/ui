@@ -2,12 +2,8 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import documentation from '../../docs/table-of-contents.md?raw';
-import {
-  pageMarkup,
-  tableOfContentsDefaultSource,
-  tableOfContentsExamples,
-} from './table-of-contents.examples.js';
+import { libraryDocs } from './library-docs.js';
+import { pageMarkup } from './table-of-contents.examples.js';
 import { fillGeneratedText, generateParagraphs } from './text-generator.js';
 import { pageSections } from './table-of-contents.examples.js';
 
@@ -30,13 +26,7 @@ const attribute = (name: string, value: string | number, fallback: string | numb
 const meta = {
   title: 'Components/Table of contents',
   component: 'tp-table-of-contents',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: tableOfContentsExamples,
-      source: { code: tableOfContentsDefaultSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/table-of-contents') },
   args: {
     variant: 'list',
     side: 'inline-start',

@@ -1,0 +1,342 @@
+---
+title: Markdown
+description: A Markdown document rendered as native, themed content, with code blocks, tables, alerts and task items composed from library components.
+tag: tp-markdown
+---
+
+<Preview
+  title="Markdown"
+  align="stretch"
+  code={`<tp-markdown heading-offset="1" style="max-inline-size:36rem;margin-inline:auto">
+  ## Release 2.4
+
+  Shared workspaces are here. Invite up to **50 teammates**, assign roles, and keep billing in one place. See the [migration notes](#usage) before you upgrade.
+
+  - [x] Workspace roles and permissions
+  - [x] Consolidated invoices
+  - [ ] Audit log export
+
+  | Plan | Seats | Price |
+  | :--- | ---: | ---: |
+  | Starter | 5 | $0 |
+  | Team | 50 | $12 / seat |
+</tp-markdown>`}
+/>
+
+## Usage
+
+Markdown is parsed by a built-in CommonMark and GitHub Flavored Markdown parser and rendered as real elements, never injected as HTML. The source comes from the `source` property or, when that is unset, from the element's text content, dedented. Set `source` from script for dynamic content.
+
+CommonMark blocks and inlines, plus GitHub Flavored Markdown tables (with column alignment), task list items, strikethrough, `www.`/URL/email autolinks and footnotes. Numeric character references and the HTML 4 named references decode; other names stay literal.
+
+### Authored source
+
+Plain text content is parsed by the browser first, so a literal `<tag>` in it would become an element. Wrap the source in a `<script type="text/markdown">` child to keep `<` and `&` exactly as written; HTML the element policy allows, such as `kbd`, still renders.
+
+<Preview
+  title="Script child"
+  align="stretch"
+  code={`<tp-markdown style="max-inline-size:36rem;margin-inline:auto">
+  <script type="text/markdown">
+    Embed the widget with a \`<script async>\` tag and set \`data-theme="dark" & data-compact\` on it.
+
+    Press <kbd>Ctrl</kbd> + <kbd>K</kbd> to open the command palette, then:
+
+    3. Search for **Widgets**
+    4. Copy the *embed snippet*
+  </script>
+</tp-markdown>`}
+/>
+
+### Headings
+
+`heading-offset` shifts every heading level so the document fits under the page's own outline: with an offset of 2, `#` renders as `h3`. Headings get ids, prefixed with `id-prefix` when several documents share a page.
+
+Links to a heading or footnote of the same document (`#section`, footnote references and back-links) scroll to it and update the URL fragment. A URL that already names one of them scrolls there on the first render.
+
+<Preview
+  title="Heading offset"
+  align="stretch"
+  code={`<tp-markdown heading-offset="2" id-prefix="changelog-" style="max-inline-size:36rem;margin-inline:auto">
+  # Billing
+
+  Invoices now show usage per workspace.
+
+  ## Fixes
+
+  - Tax IDs are validated before checkout.
+  - Receipts use the account's locale.
+</tp-markdown>`}
+/>
+
+### Composed blocks
+
+Fenced code becomes a Code block, and the fence can set a title, highlighted lines and line numbers. Blockquotes starting with `[!NOTE]`, `[!TIP]`, `[!WARNING]` and similar become Alerts.
+
+Prose becomes native semantic elements; fenced code, tables, rules, task items, alerts and keys compose the library's Code block, Table, Separator, Checkbox, Alert and Key hint.
+
+The first word of a fence's info string is the language. The rest of the line can set Code block options: `title="file.ts"` (the label), `{1,3-5}` (highlighted lines) and `showLineNumbers`.
+
+<Preview
+  title="Code and alerts"
+  align="stretch"
+  code={`<tp-markdown style="max-inline-size:36rem;margin-inline:auto">
+  Rotate your key from the dashboard, then update the client:
+
+  \`\`\`ts title="client.ts" {2}
+  const client = new Tweakpad({
+    apiKey: process.env.TWEAKPAD_KEY,
+  });
+  \`\`\`
+
+  > [!WARNING]
+  > The old key stops working 24 hours after rotation.
+</tp-markdown>`}
+/>
+
+### Size
+
+`size="sm"` steps body text and headings down one size, for chat bubbles, side panels and other dense surfaces.
+
+<Preview
+  title="Small"
+  align="stretch"
+  code={`<tp-markdown size="sm" style="max-inline-size:24rem;margin-inline:auto">
+  **Deploy finished** in 1m 12s.
+
+  1. Built 214 pages
+  2. Purged the CDN cache
+  3. Notified #releases
+
+  Preview it at \`northwind-pr-482.tweakpad.app\`.
+</tp-markdown>`}
+/>
+
+### Streaming
+
+For replies that arrive in chunks, set `streaming` and call `append()`. Unfinished emphasis, code and links in the last block are completed before parsing, so their markers never flash, and blocks that did not change keep their DOM.
+
+Blocks whose text did not change keep their DOM, and spacing only flows from each block's start edge, so new content never restyles what is already on screen. Clear `streaming` when the source is complete.
+
+<Code code={`markdown.streaming = true;
+for await (const chunk of reply) markdown.append(chunk);
+markdown.streaming = false;`} language="js" />
+
+<Preview
+  title="Streaming"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);justify-items:start;max-inline-size:36rem;margin-inline:auto;inline-size:100%">
+  <tp-markdown id="markdown-stream" style="min-block-size:12rem;inline-size:100%"></tp-markdown>
+  <tp-button id="markdown-stream-replay" variant="outline" size="sm">Replay</tp-button>
+</div>`}
+  script={`const markdown = document.querySelector('#markdown-stream');
+const reply = 'To **invite a teammate**, open *Settings* and choose \`Members\`:\\n\\n1. Enter their work email.\\n2. Pick a role, such as **Editor**.\\n3. Select [Send invite](#streaming).\\n\\nThey get access as soon as they accept.';
+let timer;
+function play() {
+  clearInterval(timer);
+  markdown.source = '';
+  markdown.streaming = true;
+  let index = 0;
+  timer = setInterval(() => {
+    markdown.append(reply.slice(index, index + 5));
+    index += 5;
+    if (index >= reply.length) {
+      clearInterval(timer);
+      markdown.streaming = false;
+    }
+  }, 40);
+}
+document.querySelector('#markdown-stream-replay').addEventListener('click', play);
+await customElements.whenDefined('tp-markdown');
+play();`}
+/>
+
+### Custom elements
+
+Raw HTML is never inserted as markup. Tags in the `elements` policy become real elements with only the attributes you list; anything else shows as literal text. Here the policy admits `tp-badge`.
+
+<Preview
+  title="Element policy"
+  align="stretch"
+  code={`<tp-markdown id="markdown-elements" style="max-inline-size:36rem;margin-inline:auto"></tp-markdown>`}
+  script={`const markdown = document.querySelector('#markdown-elements');
+markdown.elements = { 'tp-badge': ['variant'] };
+markdown.source = 'Workspace analytics <tp-badge variant="secondary">Beta</tp-badge>\\n\\nTrack active members and storage per project. Press <kbd>G</kbd> then <kbd>A</kbd> to open it.';`}
+/>
+
+The default policy admits `abbr`, `b`, `br`, `del`, `details`, `em`, `i`, `ins`, `kbd`, `mark`, `s`, `small`, `strong`, `sub`, `summary`, `sup` and `u`, with `title`, `lang` and `dir` on every tag and `open` on `details`. Your policy adds to it; `false` removes a tag.
+
+<Code code={`markdown.elements = {
+  'tp-badge': ['variant'],
+  'my-chart': ['data-series'],
+  '*': ['title', 'lang', 'dir', 'class'],
+  u: false,
+};`} language="js" />
+
+<Code code={`Status <tp-badge variant="secondary">Beta</tp-badge>
+
+<my-chart data-series="sales">
+
+Markdown **content** between an open and a close tag becomes the element's children.
+
+</my-chart>`} language="md" />
+
+Event-handler attributes, `style` and `srcdoc` are always removed, and URL attributes (`href`, `src`, …) must pass the URL policy. Elements are created in the element's document, so custom elements upgrade once they are defined.
+
+### Renderers
+
+`renderers` replaces how one node type renders. Each renderer receives the parsed node and a context with `children()` and `fallback()`, the default rendering, and returns DOM or a Lit template, or `undefined` to keep the default. Here a `checklist` fence becomes a list of Checkboxes and links to other hosts get an outbound marker, while every other node renders as usual.
+
+<Preview
+  title="Custom node rendering"
+  align="stretch"
+  code={`<tp-markdown id="markdown-renderers" style="max-inline-size:36rem;margin-inline:auto"></tp-markdown>`}
+  script={`import { html } from 'lit';
+
+const markdown = document.querySelector('#markdown-renderers');
+markdown.renderers = {
+  code: (node) => {
+    if (node.lang !== 'checklist') return undefined;
+    return html\`<div style="display:grid;gap:var(--tp-space-2);margin-block:var(--tp-space-3)">
+      \${node.value.split('\\n').map((step) => html\`<tp-checkbox>\${step}</tp-checkbox>\`)}
+    </div>\`;
+  },
+  link: (node, { fallback }) =>
+    node.url.startsWith('http') ? html\`\${fallback()}<span aria-hidden="true"> ↗</span>\` : undefined,
+};
+markdown.source = [
+  'Before the launch call, read the [rollout plan](#renderers) and the [status page](https://status.example.com/).',
+  '',
+  '\`\`\`checklist',
+  'Freeze the release branch',
+  'Run the migration on staging',
+  'Post the changelog',
+  '\`\`\`',
+].join('\\n');`}
+/>
+
+Return `undefined` to keep the default; return Lit `nothing` to render nothing. A renderer that throws falls back to the default and reports `markdown-renderer`.
+
+Node types: `heading`, `paragraph`, `blockquote`, `list`, `listItem`, `code`, `table`, `thematicBreak`, `alert`, `footnotes`, `text`, `emphasis`, `strong`, `delete`, `inlineCode`, `break`, `link`, `image`, `footnoteReference` and `element` (admitted raw HTML, with `tagName` and `attributes`).
+
+### Outline
+
+`headings` lists the rendered headings as `{ element, id, label, depth }`, and `tp-markdown-render` fires after every render, so a Table of contents can follow a document whose source changes. Each item targets a heading element directly.
+
+<Preview
+  title="With a table of contents"
+  align="stretch"
+  code={`<tp-scroll-area label="Onboarding guide" style="block-size:22rem">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 10rem;gap:var(--tp-space-8);padding:var(--tp-space-6);align-items:start">
+    <tp-markdown id="markdown-outline" id-prefix="onboarding-">
+      <script type="text/markdown">
+        ## Create your workspace
+
+        Pick a name and a URL. The URL can change later, but links shared before the change stop working, so choose one your team will keep.
+
+        Invite at least one other admin so the workspace never depends on a single account.
+
+        ## Connect your tools
+
+        ### Calendar
+
+        Connecting a calendar lets due dates appear next to meetings. Only events you create in the workspace are written back.
+
+        ### Chat
+
+        Choose which channels receive project updates. Mentions always reach the person directly, whatever the channel settings.
+
+        ## Invite your team
+
+        Send invites from Members, or share a join link limited to your company's email domain. Guests see only the projects they are added to.
+
+        Once everyone has joined, archive the sample project so new members start from a clean list.
+      </script>
+    </tp-markdown>
+    <aside style="position:sticky;top:0">
+      <tp-table-of-contents id="markdown-outline-toc" label="On this page" navigation="scroll"></tp-table-of-contents>
+    </aside>
+  </div>
+</tp-scroll-area>`}
+  script={`const markdown = document.querySelector('#markdown-outline');
+const toc = document.querySelector('#markdown-outline-toc');
+const update = () => {
+  toc.replaceChildren(...markdown.headings.map((heading) => {
+    const item = document.createElement('tp-table-of-contents-item');
+    item.target = heading.element;
+    item.depth = heading.depth - 1;
+    item.textContent = heading.label;
+    return item;
+  }));
+};
+await customElements.whenDefined('tp-markdown');
+await markdown.updateComplete;
+update();
+markdown.addEventListener('tp-markdown-render', update);`}
+/>
+
+### Parser adapters
+
+The `parser` property accepts any `{ name?, parse(source) }` that returns an mdast root, for example an adapter around a markdown engine your application already uses. The library never imports a parser package. Reference links and definitions in the returned tree are resolved; a parser that throws or returns something other than a root falls back to the built-in parser and reports `markdown-parser`. The built-in parser is also available as `parseMarkdown` from `@tweakpad/ui/markdown`, with `resolveMarkdown`, `completeMarkdown` and `serializeMarkdown`.
+
+### Serializer
+
+`serializeMarkdown(root)` writes a tree back as markdown in the same dialect. Parsing the result with `parseMarkdown` gives the same tree, apart from source positions, so a document can be read, changed as a tree and written again.
+
+<Code code={`import { parseMarkdown, serializeMarkdown } from '@tweakpad/ui/markdown';
+
+const tree = parseMarkdown('# Notes');
+tree.children.push({ type: 'paragraph', children: [{ type: 'text', value: 'Added *as text*' }] });
+const markdown = serializeMarkdown(tree);`} language="js" />
+
+<Code code={`# Notes
+
+Added \\*as text\\*`} language="md" />
+
+- The same tree always gives the same text, and no value makes it throw.
+- Text is escaped only where it would otherwise be read as syntax: `5*3` and `a * b` stay as they are, `*x*` in text becomes `\*x\*`, and a line that would start a heading, quote or list item gets a backslash before its marker. Whitespace the parser would strip, such as a leading space, is written as a character reference (`&#32;`).
+- Each construct has one form: `*emphasis*`, `**strong**`, `~~strikethrough~~`, `-` bullets, `1.` ordered items, `***` rules, `#` headings, fenced code whose fence no line of the code repeats, and links as `[text](url "title")`, or `<url>` when the text is the address. Where two spans meet, `_` replaces `*` so that their delimiters stay apart. A heading that holds a line break is underlined at levels 1 and 2; deeper, the break becomes `<br>`.
+- An `html` node is written as its value. A node of a type the serializer does not know is written as its children, or its value as text.
+- Content a position cannot hold changes form without breaking the structure around it: a line break in a table cell becomes `<br>`, a pipe in a cell is escaped, and a paragraph without content is written as a no-break space, which reads back as an empty paragraph.
+- What `resolveMarkdown` adds resolves again: alerts are written as `> [!NOTE]` quotes, elements the element policy admitted as their HTML with escaped attribute values, and the footnotes section as footnote definitions.
+
+The text ends with a line break; an empty tree gives an empty string.
+
+### Security
+
+Links allow `http:`, `https:`, `mailto:`, `tel:`, relative references and fragments; images allow `http:`, `https:` and relative references. A blocked link renders its text and a blocked image its alternative text, and both report `markdown-url`. Change the lists with `urlPolicy`:
+
+<Code code={`markdown.urlPolicy = { links: ['https:'], images: ['https:', 'data:'] };`} language="js" />
+
+### Shared policies
+
+The rules the resolve step applies are exported from `@tweakpad/ui/markdown`, so code that cleans imported HTML, such as an editor's paste handling, applies the same definitions instead of keeping a copy:
+
+| Export                                              | Definition                                                                                  |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `DEFAULT_MARKDOWN_ELEMENTS`                         | the default element policy                                                                  |
+| `mergeElementPolicy(policy)`                        | the default policy with yours merged in, as a map of tag to attribute names                 |
+| `isAlwaysRemovedAttribute(name)`                    | `true` for event handlers (`on…`), `style` and `srcdoc`, whatever a policy lists            |
+| `LINK_URL_ATTRIBUTES`                               | attributes whose value is a link: `href`, `action`, `formaction`, `cite`, …                 |
+| `IMAGE_URL_ATTRIBUTES`                              | attributes whose value is an image source: `src`, `poster`, `srcset`                        |
+| `DEFAULT_LINK_PROTOCOLS`, `DEFAULT_IMAGE_PROTOCOLS` | the default protocol lists                                                                  |
+| `linkProtocols(policy)`, `imageProtocols(policy)`   | the protocols of a URL policy, the defaults where it sets none                              |
+| `allowedUrl(url, protocols)`                        | whether a destination passes a protocol list; relative references and fragments always pass |
+
+The lists and the default element policy are frozen. A value that cleaned content keeps in its own model, such as an alignment read from `style`, is read before the attribute is removed; the attribute itself is never kept.
+
+<Code code={`import {
+  allowedUrl,
+  isAlwaysRemovedAttribute,
+  LINK_URL_ATTRIBUTES,
+  linkProtocols,
+} from '@tweakpad/ui/markdown';
+
+function keeps(name, value) {
+  if (isAlwaysRemovedAttribute(name)) return false;
+  return !LINK_URL_ATTRIBUTES.includes(name) || allowedUrl(value, linkProtocols(null));
+}`} language="js" />
+
+### Accessibility
+
+Headings, lists, quotations, emphasis, links and images keep their native semantics; `heading-offset` keeps the document outline consistent with the page. An image without alternative text is decorative. Task checkboxes are read-only and named by their item text. The footnotes section is a region named by the `footnotes` message, and each back-link is named by the `backReference` message and number. The element adds no landmark or tab stop of its own; composed tables and overflowing code blocks become focusable only to scroll.

@@ -8,8 +8,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpMenubar } from '../components/menubar/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import { sourceImports, configuredSource } from './menu-family-controls.js';
-import documentation from '../../docs/menubar.md?raw';
+import { libraryDocs } from './library-docs.js';
 interface Args {
   value: string;
   disabled: boolean;
@@ -50,19 +49,6 @@ const menuContent = `
     <tp-menu-item value="docs"><tp-icon data-menubar-icon="book"></tp-icon>Documentation</tp-menu-item>
     <tp-menu-item value="shortcuts"><tp-icon data-menubar-icon="terminal"></tp-icon>Keyboard shortcuts<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="/"></tp-key-hint></tp-key-hint-group></tp-menu-item>
   </tp-menu>`;
-const source = `${sourceImports}
-<tp-menubar aria-label="Editor">${menuContent}
-</tp-menubar>`;
-const iconSetup = `document.querySelectorAll('[data-menubar-icon]').forEach((icon) => {
-    icon.icon = icon.dataset.menubarIcon === 'plus' ? plusIcon : navigationIcons[icon.dataset.menubarIcon];
-  });`;
-const exampleSource = (args: Args): string =>
-  configuredSource(source, args, 'value')
-    .replace(
-      "  import '@tweakpad/ui/register';",
-      "  import '@tweakpad/ui/register';\n  import { navigationIcons } from '@tweakpad/ui/icons/navigation';\n  import { plusIcon } from '@tweakpad/ui/icons/plus';",
-    )
-    .replace('</script>', `  ${iconSetup}\n</script>`);
 const setupIcons = (element: Element | undefined): void => {
   queueMicrotask(() => {
     for (const icon of element?.querySelectorAll<TpIcon>('[data-menubar-icon]') ?? []) {
@@ -76,19 +62,7 @@ const meta: Meta<Args> = {
   component: 'tp-menubar',
   parameters: {
     layout: 'centered',
-    docs: {
-      description: { component: documentation },
-      source: {
-        code: exampleSource({
-          value: '',
-          disabled: false,
-          orientation: 'horizontal',
-          loopFocus: true,
-          modal: true,
-        }),
-        transform: (_code: string, context: { args: Args }) => exampleSource(context.args),
-      },
-    },
+    docs: libraryDocs('components/menubar'),
   },
   args: { value: '', disabled: false, orientation: 'horizontal', loopFocus: true, modal: true },
   argTypes: {

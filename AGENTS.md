@@ -5,6 +5,12 @@ to component documentation or demo compositions, read and follow the repository
 [tweakpad-component skill](.agents/skills/tweakpad-component/SKILL.md).
 Apply it to every existing and future component; examples do not restrict scope.
 
+For any component or widget documentation work — the `docs/components/*.mdx` and
+`docs/widgets/*.mdx` pages, their previews, story pairing, the JSDoc behind the API Reference,
+or the Storybook and website renderings — read and follow the
+[tweakpad-docs skill](.agents/skills/tweakpad-docs/SKILL.md). Its structure, merge and style
+rules are mandatory and its checker must pass.
+
 - Fresh live Foundation and Component Library specifications govern contracts;
   the UI Widgets Specification governs the widgets section. Access Spec Blocks
   through registered direct MCP tools; report unavailable tools instead of

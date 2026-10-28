@@ -1,0 +1,104 @@
+---
+title: QR code
+description: A scannable QR code for a text value on a light tile, with optional copy and download actions.
+tag: tp-qr-code
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="QR code"
+  code={`<tp-qr-code value="https://tweakpad.github.io" label="Open Tweakpad on your phone"></tp-qr-code>`}
+/>
+
+## Usage
+
+Set `value` to the text to encode and `label` to what scanning does. The label names the image for assistive technology and titles SVG exports; the value itself is never announced, because it may be private. Show the link or the text beside the code for people who cannot scan it. The encoder is built in, so there is nothing else to install.
+
+### In context
+
+The tile stays light in a dark theme, like a printed sticker, because many scanners cannot read a light code on a dark background.
+
+<Preview
+  title="Connect a device"
+  code={`<tp-card style="max-inline-size:20rem">
+  <h3 slot="header">Connect your phone</h3>
+  <p slot="description">Open the app on your phone and scan the code to sign in to this workspace.</p>
+  <tp-qr-code value="https://app.northwind.co/pair/7KD-2Q9" label="Scan to sign in on your phone" style="justify-self:center"></tp-qr-code>
+  <tp-button slot="footer" variant="secondary">Done</tp-button>
+</tp-card>`}
+/>
+
+### Copy and download
+
+`copyable` adds a Copy button that writes the image as PNG and the value as text in one clipboard item, so an image editor pastes the picture and a text field pastes the value. `downloadable` adds a menu with PNG, SVG and JPG. Files are named after `filename` and exported at `export-size` pixels, 1024 by default.
+
+<Preview
+  title="Copy and download"
+  code={`<tp-qr-code
+  value="https://northwind.co/invite/team-42"
+  label="Invite link for the design team"
+  copyable
+  downloadable
+  filename="design-team-invite"
+  export-size="2048"
+></tp-qr-code>`}
+/>
+
+Both actions are disabled while there is no code. The `copy()`, `download()`, `toBlob()` and `toSVG()` methods do the same work without the actions row, for a button or flow of your own.
+
+### Live value
+
+Assign `value` as the source changes and the code re-encodes. `status` is `empty`, `encoded` or `error`, reflected as `data-status`, and the tile keeps its size while empty. The button here calls `download()` with a larger size of its own for printing.
+
+<Preview
+  title="Live value"
+  code={`<div id="qr-code-live" style="display:grid;gap:var(--tp-space-4);justify-items:center;inline-size:18rem;max-inline-size:100%">
+  <tp-field label="Wi-Fi network" style="inline-size:100%">
+    <tp-input default-value="Northwind Guest"></tp-input>
+  </tp-field>
+  <tp-qr-code size="lg" error-correction="Q" label="Scan to join the guest Wi-Fi"></tp-qr-code>
+  <tp-button variant="outline" size="sm" data-download>Download print-ready PNG</tp-button>
+</div>`}
+  script={`const root = document.getElementById('qr-code-live');
+const input = root.querySelector('tp-input');
+const code = root.querySelector('tp-qr-code');
+const encode = (name) => \`WIFI:T:WPA;S:\${name};P:welcome-2026;;\`;
+await customElements.whenDefined('tp-input');
+code.value = encode(input.value);
+input.addEventListener('tp-value-change', (event) => {
+  code.value = String(event.detail.value ?? '').trim() ? encode(event.detail.value) : '';
+});
+root.querySelector('[data-download]').addEventListener('click', () => {
+  code.download('png', { size: 2048, filename: 'guest-wifi' });
+});`}
+/>
+
+### Error correction
+
+`error-correction` restores about 7% (`L`), 15% (`M`, the default), 25% (`Q`) or 30% (`H`) of a damaged code. Higher levels need more modules for the same value, so the code gets denser at the same size. Use `H` when a logo or sticker may cover part of the code.
+
+<Preview
+  title="Error correction"
+  code={`<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:var(--tp-space-5)">
+  <tp-qr-code size="sm" error-correction="L" value="https://northwind.co/menu/table-12" label="Table 12 menu, level L"></tp-qr-code>
+  <tp-qr-code size="sm" error-correction="M" value="https://northwind.co/menu/table-12" label="Table 12 menu, level M"></tp-qr-code>
+  <tp-qr-code size="sm" error-correction="Q" value="https://northwind.co/menu/table-12" label="Table 12 menu, level Q"></tp-qr-code>
+  <tp-qr-code size="sm" error-correction="H" value="https://northwind.co/menu/table-12" label="Table 12 menu, level H"></tp-qr-code>
+</div>`}
+/>
+
+`quiet-zone` is the light border scanners need around the modules, 4 modules by default. Keep it unless the code sits on a light surface that already provides the margin.
+
+### Sizes and colors
+
+`size` is `sm` (128 px), `default` (192 px) or `lg` (256 px), and `--tp-qr-code-size` sets any other size. `--tp-qr-code-foreground` and `--tp-qr-code-background` change the colors on screen and in every export; keep dark modules on a light background with enough contrast, or the element raises a diagnostic.
+
+<Preview
+  title="Sizes and colors"
+  code={`<div style="display:flex;flex-wrap:wrap;align-items:end;justify-content:center;gap:var(--tp-space-5)">
+  <tp-qr-code size="sm" value="https://tweakpad.github.io" label="Small"></tp-qr-code>
+  <tp-qr-code value="https://tweakpad.github.io" label="Default"></tp-qr-code>
+  <tp-qr-code value="https://tweakpad.github.io" label="Brand colors" error-correction="H" style="--tp-qr-code-size:12rem;--tp-qr-code-foreground:#1e3a8a;--tp-qr-code-background:#eff6ff"></tp-qr-code>
+</div>`}
+/>

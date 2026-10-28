@@ -1,0 +1,37 @@
+{
+  "id": "components/table",
+  "tag": "tp-table",
+  "sources": {
+    "story": "src/stories/table.stories.ts",
+    "markdown": "docs/table.md",
+    "examples": [
+      "src/stories/table.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "Compose `tp-table` with `tp-table-header`, `tp-table-body`, `tp-table-footer`,\n`tp-table-row`, `tp-table-head`, `tp-table-cell`, and `tp-table-caption`.\nThe components render native table elements internally and preserve their column\nlayout and accessible row/header relationships. Table does not own interactive-grid\nstate. Compose existing Input, Select, Menu, Button, Badge and Pagination controls.\n\n```html\n<tp-table label=\"Recent invoices\">\n  <tp-table-caption>Recent invoices</tp-table-caption>\n  <tp-table-header\n    ><tp-table-row>\n      <tp-table-head scope=\"col\">Invoice</tp-table-head>\n      <tp-table-head scope=\"col\">Amount</tp-table-head>\n    </tp-table-row></tp-table-header\n  >\n  <tp-table-body\n    ><tp-table-row>\n      <tp-table-head scope=\"row\">INV001</tp-table-head>\n      <tp-table-cell>$250.00</tp-table-cell>\n    </tp-table-row></tp-table-body\n  >\n  <tp-table-footer\n    ><tp-table-row>\n      <tp-table-head scope=\"row\">Total</tp-table-head>\n      <tp-table-cell>$250.00</tp-table-cell>\n    </tp-table-row></tp-table-footer\n  >\n</tp-table>\n```\n\nImport `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`."
+    },
+    {
+      "id": "md: Properties",
+      "kind": "md",
+      "heading": "## Properties",
+      "text": "| Property / attribute                               | Type                 | Default      | Meaning                                                                                             |\n| -------------------------------------------------- | -------------------- | ------------ | --------------------------------------------------------------------------------------------------- |\n| `label`                                            | string               | `Data table` | Name of the focusable overflow region. A native caption names/describes the table itself.           |\n| `layout`                                           | `automatic`, `fixed` | `automatic`  | Native table layout algorithm.                                                                      |\n| `selectionPresentation` / `selection-presentation` | `none`, `row`        | `none`       | Enables appearance for explicit application-owned row selection.                                    |\n| `stickyHeader` / `sticky-header`                   | boolean              | `false`      | Pins the complete header, including multiple header rows, to the scrollport's block start.          |\n| `stickyFooter` / `sticky-footer`                   | boolean              | `false`      | Pins the footer/totals to block end. Independent of the header.                                     |\n| `stickyStartColumns` / `sticky-start-columns`      | nonnegative integer  | `0`          | Number of first logical columns pinned at inline start.                                             |\n| `stickyEndColumns` / `sticky-end-columns`          | nonnegative integer  | `0`          | Number of last logical columns pinned at inline end. Start columns take priority if counts overlap. |\n\nThe default slot accepts the constituent regions above. Head and Cell expose\n`colSpan`/`colspan` (default 1) and `rowSpan`/`rowspan` (default 1; zero spans the\nremaining region). Head exposes `scope` (`col` by default, or `row`, `colgroup`,\n`rowgroup`). Row exposes `selected` (false); enable root `selectionPresentation=\"row\"`\nto show application-owned selection. Hover never changes selection.\n\nOne authored native `table` is also supported; its selected rows carry\n`data-selected`. Native and custom composition\nshare the same overflow, geometry and theme owner. Do not mix the two anatomies\nwithin one Table or add interactive-grid roles."
+    },
+    {
+      "id": "md: Sticky composition",
+      "kind": "md",
+      "heading": "## Sticky composition",
+      "text": "Constrain the Table host with ordinary CSS, such as\n`max-block-size: calc(var(--tp-spacing) * 72)`. Use normal table/column CSS for\ncontent width. The component measures actual column geometry; it has no fixed\ncolumn-width or spacing attributes. Logical edges follow RTL automatically.\nHeader, footer and either group of columns can be enabled independently.\n\nRowspan/colspan relationships remain native. A cell spanning across a pinned/unpinned\nboundary stays unpinned. Column offsets update after native layout changes,\nresizing, inserted/removed rows or changed spans. Neither pointer movement nor\nremeasurement resets the scroll position. Owned geometry is released on disconnect\nor when the native table is replaced; author styles are restored."
+    },
+    {
+      "id": "md: Parts and appearance",
+      "kind": "md",
+      "heading": "## Parts and appearance",
+      "text": "Canonical parts are `table`, `table-table`, `table-caption`, `table-header`,\n`table-body`, `table-footer`, `table-row`, `table-column-header`, and `table-cell`.\nEach constituent exposes its corresponding native part with the same Table recipes,\n`partPresentation`, `partContracts`, and inherited theme/dictionary. Apply a cell\npart override on that cell constituent. The root owns `table` (overflow container)\nand `table-table`. Authored native-table descendants register their parts on the root.\n\nThe library theme controls type, spacing, borders, row emphasis and sticky\nbackgrounds. Geometry markers are `data-sticky` on pinned header/footer,\n`data-sticky-column` on pinned cells and `data-last-row` on cells that reach the end of\na body or footer, which drop their bottom border. Table exposes no component-specific state\nchange events or imperative methods.\n\nThe examples cover a basic table, totals footer, simple rows, status badges, action\nmenus, Select assignments and Input quantities. The sticky example combines\nscrolling with pinned headers, logical edge columns and totals. Its data and\ncalculations are application-owned.\n\nConstituent exports: `TpTableHeader`, `TpTableBody`, `TpTableFooter`, `TpTableRow`,\n`TpTableHead`, `TpTableCell`, `TpTableCaption`. Their default slots accept the next\nlevel of composition; cells/caption accept arbitrary content. `nativeElement` is a\nread-only reference to the rendered native constituent."
+    }
+  ]
+}

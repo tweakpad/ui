@@ -1,0 +1,49 @@
+{
+  "id": "components/spinner",
+  "tag": "tp-spinner",
+  "sources": {
+    "story": "src/stories/spinner.stories.ts",
+    "markdown": "docs/spinner.md",
+    "examples": [
+      "src/stories/spinner.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`tp-spinner` shows indeterminate activity. Its size variants use shared\nicon-size theme roles and scale with base spacing.\n\n| Property / attribute             | Values                                  | Default |\n| -------------------------------- | --------------------------------------- | ------- |\n| `size`                           | sm, default, lg                         | default |\n| `label`                          | status text; empty for decorative usage | Loading |\n| `motionPolicy` / `motion-policy` | inherit, normal, reduce                 | inherit |\n\n```html\n<tp-spinner size=\"sm\" label=\"Loading projects\"></tp-spinner>\n<tp-spinner size=\"default\" label=\"Loading projects\"></tp-spinner>\n<tp-spinner size=\"lg\" label=\"Loading projects\"></tp-spinner>\n```\n\nImport `@tweakpad/ui/register` and `@tweakpad/ui/styles.css`. A standalone spinner\nneeds a meaningful label. Empty label renders no status announcement. For loading\nbuttons, use the Button composition, which hides its internal spinner\nfrom assistive technology:\n\n```html\n<tp-button loading-position=\"leading\" disabled>Saving</tp-button>\n```\n\nParts: `spinner` and `spinner-accessible-label`. Use the shared theme, dictionary\nor `partPresentation` for presentation. The shared `rotation` ambient motion role\nand reduced-motion policy own playback. No progress value is implied. Spinner has\nno form state, imperative actions or value events. Export: `TpSpinner`.\n\nDocs includes all sizes and compositions with Button, Badge, Input Group, and Empty\nState. Button's loading presentation uses Spinner. Indicators\ninside already named content use an empty label; standalone indicators retain a\nnamed status."
+    },
+    {
+      "id": "example: Sizes",
+      "kind": "example",
+      "title": "Sizes",
+      "code": "<div style=\"display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-4)\"><tp-spinner size=\"sm\" label=\"Loading projects\"></tp-spinner>\n<tp-spinner size=\"default\" label=\"Loading projects\"></tp-spinner>\n<tp-spinner size=\"lg\" label=\"Loading projects\"></tp-spinner></div>"
+    },
+    {
+      "id": "example: In buttons",
+      "kind": "example",
+      "title": "In buttons",
+      "code": "<div style=\"display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-4)\"><tp-button loading-position=\"leading\">Submit</tp-button>\n<tp-button loading-position=\"leading\" disabled>Disabled</tp-button>\n<tp-button loading-position=\"leading\" variant=\"outline\" disabled>Outline</tp-button>\n<tp-button loading-position=\"leading\" variant=\"outline\" size=\"icon\" aria-label=\"Loading\" disabled></tp-button></div>"
+    },
+    {
+      "id": "example: In badges",
+      "kind": "example",
+      "title": "In badges",
+      "code": "<div style=\"display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-4)\"><tp-badge variant=\"default\"><tp-spinner size=\"sm\" label=\"\"></tp-spinner> Processing</tp-badge>\n<tp-badge variant=\"secondary\"><tp-spinner size=\"sm\" label=\"\"></tp-spinner> Processing</tp-badge>\n<tp-badge variant=\"destructive\"><tp-spinner size=\"sm\" label=\"\"></tp-spinner> Processing</tp-badge>\n<tp-badge variant=\"outline\"><tp-spinner size=\"sm\" label=\"\"></tp-spinner> Processing</tp-badge></div>"
+    },
+    {
+      "id": "example: In an input group",
+      "kind": "example",
+      "title": "In an input group",
+      "code": "<tp-field label=\"Search\" description=\"Searching available projects.\">\n  <tp-input-group>\n    <tp-input type=\"search\" name=\"search\" placeholder=\"Search projects\"></tp-input>\n    <tp-spinner slot=\"prefix\" size=\"sm\" label=\"Searching\"></tp-spinner>\n  </tp-input-group>\n</tp-field>"
+    },
+    {
+      "id": "example: In an empty state",
+      "kind": "example",
+      "title": "In an empty state",
+      "code": "<tp-empty-state title=\"Loading projects\" description=\"Your projects will appear here once loading finishes.\" media-treatment=\"icon\">\n  <tp-spinner slot=\"media\" label=\"\"></tp-spinner>\n  <tp-button variant=\"outline\">Cancel</tp-button>\n</tp-empty-state>"
+    }
+  ]
+}

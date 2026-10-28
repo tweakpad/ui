@@ -75,18 +75,16 @@ describe('Storybook catalog entries', () => {
   });
 
   it('puts an unstyled Default example before public-API configurations', () => {
-    expect(docsPage.indexOf('## Default')).toBeLessThan(docsPage.indexOf('<Primary />'));
+    // The page structure: header, main use case (the Default story and its Controls), the
+    // page's Usage, then the generated API Reference. Storybook never shows Related.
+    const order = ['<PageHeader />', '<MainUseCase />', '<LibraryDoc />', '<Api />'].map((block) =>
+      docsPage.indexOf(block),
+    );
+    expect(order.every((index) => index !== -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(docsPage.indexOf('<Primary />')).toBeLessThan(docsPage.indexOf('<Controls />'));
-    expect(docsPage).toContain('## Public properties');
-    expect(docsPage).toContain('example setup is not a component property');
-    // After the controls, a component's library documentation page, then its generated API and
-    // Related sections; a component without a page keeps its stories, reference and examples.
-    expect(docsPage.indexOf('<Controls />')).toBeLessThan(docsPage.indexOf('<Body />'));
-    const body = docsPage.slice(docsPage.indexOf('export function Body'));
-    expect(body.indexOf('<LibraryDoc />')).toBeLessThan(body.indexOf('<Api />'));
-    expect(body.indexOf('<Api />')).toBeLessThan(body.indexOf('<Related />'));
-    expect(body.indexOf('<Stories title="Examples"')).toBeLessThan(body.indexOf('<Description />'));
-    expect(body.indexOf('<Description />')).toBeLessThan(body.indexOf('<Examples />'));
+    expect(docsPage).not.toMatch(/Related|<Stories\b|<Examples\b/u);
+    expect(read('../../.storybook/docs-library.mdx')).not.toMatch(/Related|<tp-table/u);
 
     for (const source of elementStories) {
       expect(source.match(/export const \w+: Story/u)?.[0]).toBe('export const Default: Story');
@@ -250,7 +248,7 @@ describe('Storybook catalog entries', () => {
     for (const property of ['orientation', 'joined', 'label']) {
       expect(buttonGroupStory).toContain(`    ${property}: {`);
     }
-    expect(buttonGroupStory).toContain('examples: buttonGroupExamples');
+    expect(buttonGroupStory).toContain("libraryDocs('components/button-group')");
     expect(buttonGroupStory).not.toMatch(
       /export const (?:Sizes|Vertical|MultipleGroups|Unjoined):/,
     );

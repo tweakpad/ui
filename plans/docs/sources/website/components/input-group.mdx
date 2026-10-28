@@ -1,0 +1,245 @@
+---
+title: Input group
+description: One Input or Text area joined with text, icons, shortcuts and actions inside a single shared border.
+tag: tp-input-group
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Input group"
+  align="stretch"
+  code={`<tp-field id="input-group-hero" label="Search" style="max-inline-size:24rem;margin-inline:auto;inline-size:100%">
+  <tp-input-group>
+    <tp-icon slot="inline-start" data-icon="search"></tp-icon>
+    <tp-input type="search" placeholder="Search docs, issues and people"></tp-input>
+    <tp-key-hint-group slot="inline-end" separator="none">
+      <tp-key-hint key="mod"></tp-key-hint>
+      <tp-key-hint>K</tp-key-hint>
+    </tp-key-hint-group>
+  </tp-input-group>
+</tp-field>`}
+  script={`document.querySelector('#input-group-hero tp-icon').icon = {
+  viewBox: '0 0 24 24',
+  paths: [{ d: 'M21 21l-5-5M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15', strokeWidth: 1.75 }],
+};`}
+/>
+
+## Usage
+
+The group owns the outside border and the focus and invalid ring; the editor inside keeps its native editing, validation and form value. Put exactly one `tp-input`, `tp-text-area` or native editor in the default slot, and label it with a Field as usual.
+
+### Addons
+
+`inline-start` and `inline-end` hold text or icons beside the editor. Clicking a non-interactive addon focuses the editor, so units and prefixes behave like part of the field.
+
+<Preview
+  title="Text addons"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:24rem;margin-inline:auto;inline-size:100%">
+  <tp-field label="Monthly budget">
+    <tp-input-group>
+      <span slot="inline-start">$</span>
+      <tp-input inputmode="decimal" default-value="2,400.00"></tp-input>
+      <span slot="inline-end">USD</span>
+    </tp-input-group>
+  </tp-field>
+  <tp-field label="Workspace URL">
+    <tp-input-group>
+      <span slot="inline-start">https://</span>
+      <tp-input placeholder="northwind"></tp-input>
+      <span slot="inline-end">.tweakpad.app</span>
+    </tp-input-group>
+  </tp-field>
+</div>`}
+/>
+
+Addons also report status: a result count, a check for an accepted value, or a Spinner while the value is being verified or saved.
+
+<Preview
+  title="Status addons"
+  align="stretch"
+  code={`<div id="input-group-status" style="display:grid;gap:var(--tp-space-4);max-inline-size:24rem;margin-inline:auto;inline-size:100%">
+  <tp-field label="Search invoices">
+    <tp-input-group>
+      <tp-icon slot="inline-start" data-icon="search"></tp-icon>
+      <tp-input type="search" default-value="northwind"></tp-input>
+      <span slot="inline-end">12 results</span>
+    </tp-input-group>
+  </tp-field>
+  <tp-field label="Username" description="maya.chen is available.">
+    <tp-input-group>
+      <tp-input default-value="maya.chen"></tp-input>
+      <tp-icon slot="inline-end" data-icon="check" style="color:var(--tp-success)"></tp-icon>
+    </tp-input-group>
+  </tp-field>
+  <tp-field label="Custom domain">
+    <tp-input-group>
+      <tp-input disabled default-value="docs.northwind.co"></tp-input>
+      <tp-spinner slot="inline-end" size="sm" label="Verifying domain"></tp-spinner>
+    </tp-input-group>
+  </tp-field>
+</div>`}
+  script={`const icons = {
+  search: { viewBox: '0 0 24 24', paths: [{ d: 'M21 21l-5-5M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15', strokeWidth: 1.75 }] },
+  check: { viewBox: '0 0 24 24', paths: [{ d: 'M5 12l4 4L19 6', strokeWidth: 2 }] },
+};
+for (const icon of document.querySelectorAll('#input-group-status tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>
+
+### Actions
+
+Buttons in the `action` slot sit after the editor and stay independently operable, even when the editor is read-only or disabled. `action-variant` and `action-size` set their defaults; an explicitly configured Button wins.
+
+<Preview
+  title="Actions"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:24rem;margin-inline:auto;inline-size:100%">
+  <tp-field label="Invite link">
+    <tp-input-group>
+      <tp-input id="input-group-copy-input" readonly default-value="https://tweakpad.app/join/8f2c41"></tp-input>
+      <tp-button id="input-group-copy" slot="action">Copy</tp-button>
+    </tp-input-group>
+  </tp-field>
+  <tp-field label="Coupon code" description="Codes are case-insensitive.">
+    <tp-input-group action-variant="secondary">
+      <tp-input placeholder="SPRING25"></tp-input>
+      <tp-button slot="action">Apply</tp-button>
+    </tp-input-group>
+  </tp-field>
+</div>`}
+  script={`const button = document.querySelector('#input-group-copy');
+button.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(document.querySelector('#input-group-copy-input').value);
+    button.textContent = 'Copied';
+  } catch {
+    button.textContent = 'Select to copy';
+  }
+  setTimeout(() => (button.textContent = 'Copy'), 1600);
+});`}
+/>
+
+### In a button group
+
+An Input group can join a Button group as one member, beside Buttons or a static text segment, so a search field and its submit Button share one seamed edge.
+
+<Preview
+  title="Button group composition"
+  align="stretch"
+  code={`<div id="input-group-joined" style="display:grid;gap:var(--tp-space-4);max-inline-size:28rem;margin-inline:auto;inline-size:100%">
+  <tp-button-group label="Search the help center" style="inline-size:100%">
+    <tp-input-group style="flex:1">
+      <tp-icon slot="inline-start" data-icon="search"></tp-icon>
+      <tp-input label="Search query" type="search" placeholder="How do I export invoices?"></tp-input>
+    </tp-input-group>
+    <tp-button variant="outline">Search</tp-button>
+  </tp-button-group>
+  <tp-button-group label="Webhook endpoint" style="inline-size:100%">
+    <tp-button-group-text>https://</tp-button-group-text>
+    <tp-input-group style="flex:1">
+      <tp-input label="Webhook host" mono default-value="hooks.northwind.co/billing"></tp-input>
+    </tp-input-group>
+  </tp-button-group>
+</div>`}
+  script={`document.querySelector('#input-group-joined tp-icon').icon = {
+  viewBox: '0 0 24 24',
+  paths: [{ d: 'M21 21l-5-5M10.5 3a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15', strokeWidth: 1.75 }],
+};`}
+/>
+
+### Menus and tooltips in addons
+
+Addon slots also take interactive components, such as a Menu that picks a country code or a Tooltip that explains the expected format. They keep their own focus and keyboard behavior; give an icon-only trigger an `aria-label`.
+
+<Preview
+  title="Interactive addons"
+  align="stretch"
+  code={`<div id="input-group-addons" style="display:grid;gap:var(--tp-space-4);max-inline-size:24rem;margin-inline:auto;inline-size:100%">
+  <tp-field label="Phone number">
+    <tp-input-group>
+      <tp-menu id="input-group-country" slot="inline-start" label="Country code">
+        <tp-button slot="trigger" variant="ghost" size="xs"><span id="input-group-country-label">+1</span><tp-icon slot="icon-end" data-icon="down"></tp-icon></tp-button>
+        <tp-menu-item value="+1">United States +1</tp-menu-item>
+        <tp-menu-item value="+44">United Kingdom +44</tp-menu-item>
+        <tp-menu-item value="+49">Germany +49</tp-menu-item>
+      </tp-menu>
+      <tp-input type="tel" name="phone" autocomplete="tel-national" placeholder="415 555 0132"></tp-input>
+    </tp-input-group>
+  </tp-field>
+  <tp-field label="Project identifier">
+    <tp-input-group>
+      <tp-input mono placeholder="checkout-service"></tp-input>
+      <tp-tooltip slot="inline-end" label="Lowercase letters, numbers and hyphens.">
+        <tp-button slot="trigger" variant="ghost" size="icon-xs" aria-label="Identifier format"><tp-icon slot="icon-start" data-icon="help"></tp-icon></tp-button>
+      </tp-tooltip>
+    </tp-input-group>
+  </tp-field>
+</div>`}
+  script={`const icons = {
+  down: { viewBox: '0 0 24 24', paths: [{ d: 'm6 9 6 6 6-6', strokeWidth: 2 }] },
+  help: { viewBox: '0 0 24 24', paths: [{ d: 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01', strokeWidth: 2 }] },
+};
+for (const icon of document.querySelectorAll('#input-group-addons tp-icon')) icon.icon = icons[icon.dataset.icon];
+document.querySelector('#input-group-country').addEventListener('tp-action', (event) => {
+  document.querySelector('#input-group-country-label').textContent = event.detail.value;
+});`}
+/>
+
+### Block edges
+
+`block-start` and `block-end` span the group above and below the editor. With a Text area they make a composer: a context line on top, a character count and submit actions in the footer.
+
+<Preview
+  title="Composer"
+  align="stretch"
+  code={`<tp-field label="Reply" style="max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <tp-input-group>
+    <span slot="block-start">Replying to Jonas Weber</span>
+    <tp-text-area id="input-group-reply" maxlength="280" placeholder="Share an update with the team"></tp-text-area>
+    <span id="input-group-count" slot="block-end" style="margin-inline-end:auto">0/280</span>
+    <tp-button slot="block-end" variant="ghost" size="sm">Cancel</tp-button>
+    <tp-button slot="block-end" size="sm">Post reply</tp-button>
+  </tp-input-group>
+</tp-field>`}
+  script={`const reply = document.querySelector('#input-group-reply');
+reply.addEventListener('input', () => {
+  document.querySelector('#input-group-count').textContent = reply.value.length + '/280';
+});`}
+/>
+
+### Native editors
+
+A native `textarea` or `input` in the default slot shares the same border and focus ring and keeps all of its own behavior, for example a textarea that grows with its content through `field-sizing: content`.
+
+<Preview
+  title="Native textarea"
+  align="stretch"
+  code={`<tp-input-group style="max-inline-size:30rem;margin-inline:auto;inline-size:100%">
+  <textarea aria-label="Release notes" placeholder="Summarize what changed in this release. The box grows as you type." style="field-sizing:content;min-block-size:calc(var(--tp-control-height-md) * 2);inline-size:100%;font:inherit;padding:var(--tp-space-2);resize:vertical"></textarea>
+  <span slot="block-end">Markdown supported</span>
+</tp-input-group>`}
+/>
+
+### States
+
+The group reflects the editor's disabled and invalid states on its border. Errors still come from the Field.
+
+<Preview
+  title="Disabled and invalid"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:24rem;margin-inline:auto;inline-size:100%">
+  <tp-field label="Subdomain" error="That subdomain is already taken." invalid>
+    <tp-input-group>
+      <tp-input default-value="acme"></tp-input>
+      <span slot="inline-end">.tweakpad.app</span>
+    </tp-input-group>
+  </tp-field>
+  <tp-field label="Project ID" disabled>
+    <tp-input-group>
+      <span slot="inline-start">prj_</span>
+      <tp-input default-value="8f2c41"></tp-input>
+    </tp-input-group>
+  </tp-field>
+</div>`}
+/>

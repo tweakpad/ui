@@ -40,7 +40,21 @@ interface ControlRecord {
   compact: boolean | undefined;
   relationshipSync: (() => void) | undefined;
 }
-/** Responsive navigation composition. Modal/focus/dismissal ownership belongs to the actual Drawer. */
+/**
+ * Persistent app navigation beside the main content. On wide screens it stays in the page and
+ * collapses off canvas or to an icon rail; in compact mode the same navigation moves into a modal
+ * Drawer. Compose it from the header, content, footer, groups, menus and items, with the page
+ * itself in the inset.
+ *
+ * @slot - The navigation: content, groups and menus.
+ * @slot header - The top of the navigation, such as a team switcher; a Navigation panel header authored directly inside lands here.
+ * @slot footer - The bottom of the navigation, such as the account menu; a Navigation panel footer lands here.
+ * @slot trigger - The control that toggles the navigation; a Navigation panel trigger lands here.
+ * @slot resize-rail - The thin edge control between navigation and page that toggles it; a Navigation panel resize rail lands here.
+ * @slot inset - The page beside the navigation; a Navigation panel inset lands here.
+ * @fires tp-value-change - Cancelable proposal to expand or collapse the wide navigation; a controlled panel must publish the accepted `expanded`.
+ * @fires tp-open-change - Cancelable proposal to open or close the compact Drawer.
+ */
 export class TpNavigationPanel extends TpElement {
   static tagName = 'tp-navigation-panel';
   /** Library elements this element renders; defining it defines them too. */
@@ -71,24 +85,41 @@ export class TpNavigationPanel extends TpElement {
     onCompactOpenChange: { attribute: false },
   };
   static override styles = [TpElement.styles, navigationPanelStyles];
+  /** @internal Marks the element as a navigation panel for its constituents. */
   readonly [navigationPanelContext] = true as const;
+  /** Whether the wide navigation starts expanded, when the panel owns that preference. */
   defaultExpanded = true;
+  /** Switches to the compact Drawer presentation; leave it unset and supply a `responsiveAdapter` to follow the screen. */
   compact: boolean | undefined;
+  /** The edge the navigation sits on, following the writing direction. */
   side: NavigationPanelSide = 'inline-start';
+  /** What collapsing does on wide screens: slide the navigation away, keep a narrow icon rail, or never collapse. */
   collapseMode: NavigationPanelCollapseMode = 'off-canvas';
+  /** The surface treatment: part of the page, a floating card, or a frame around an inset page. */
   variant: NavigationPanelVariant = 'integrated';
+  /** The width of the expanded wide navigation, as a CSS length or pixels. */
   wideWidth: string | number = 'calc(var(--tp-spacing) * 64)';
+  /** The width of the compact Drawer, as a CSS length or pixels. */
   compactWidth: string | number = 'calc(var(--tp-spacing) * 72)';
+  /** The accessible name of the navigation and of the compact Drawer. */
   label = 'Primary';
+  /** Decides when the panel is compact: `observe(host, publish)` calls `publish(true)` below your breakpoint and returns a cleanup. There is no built-in breakpoint. */
   responsiveAdapter: NavigationPanelResponsiveAdapter | undefined;
+  /** Registers the keyboard shortcut that toggles the navigation, scoped as your application decides. */
   shortcutAdapter: NavigationPanelShortcutAdapter | undefined;
+  /** The key and modifiers of the toggle shortcut, such as Ctrl or Cmd with B. */
   shortcut: NavigationPanelShortcut | undefined;
+  /** Your storage for the wide preference: `load(key)` restores it and `save(key, expanded)` stores each change. */
   persistenceAdapter: NavigationPanelPersistenceAdapter | undefined;
+  /** The key the persistence adapter loads and saves the preference under. */
   persistenceKey: string | undefined;
+  /** Called with each expand or collapse proposal, as `tp-value-change` is dispatched. */
   onExpandedChange: NavigationPanelExpandedChangeCallback | undefined;
+  /** Called with each proposal to open or close the compact Drawer, as `tp-open-change` is dispatched. */
   onCompactOpenChange: NavigationPanelCompactOpenChangeCallback | undefined;
   #providedExpanded: boolean | undefined;
   #compactRequested = false;
+  /** The state owner shared with every constituent; `subscribe` reports each committed state (expanded, compact, open, side, collapse mode, variant). */
   readonly provider = new NavigationPanelProvider(this);
   readonly #environment = new ComposedEnvironmentObserver(this, () => this.requestUpdate());
   readonly #navigationId = createId('tp-navigation-panel');
@@ -111,12 +142,15 @@ export class TpNavigationPanel extends TpElement {
   #compositionSignatures = new WeakMap<TpElement, string>();
   #lastExpanded: boolean | undefined;
   #collapseMotion: MotionHandle | undefined;
+  /** @internal The expanded value the application last published. */
   get controlledExpanded(): boolean | undefined {
     return this.#providedExpanded;
   }
+  /** @internal Whether the author supplied a default. */
   get hasExpandedDefault(): boolean {
     return this.authoredAttributes.has('default-expanded') || this.defaultExpanded !== true;
   }
+  /** Whether the wide navigation is expanded; set it to control the preference, then publish each accepted proposal back. */
   get expanded(): boolean {
     return this.provider.expanded;
   }
@@ -125,6 +159,7 @@ export class TpNavigationPanel extends TpElement {
     if (this.isConnected || this.hasUpdated) this.provider.publishExpanded();
     this.requestUpdate();
   }
+  /** Whether the compact Drawer is open; separate from the wide preference, and closed again whenever the panel becomes compact. */
   get compactOpen(): boolean {
     return this.provider.compactOpen;
   }
@@ -133,12 +168,14 @@ export class TpNavigationPanel extends TpElement {
     else this.provider.setCompactOpen(Boolean(value));
     this.requestUpdate();
   }
+  /** The same as `compactOpen`. */
   get open(): boolean {
     return this.compactOpen;
   }
   set open(value: boolean) {
     this.compactOpen = value;
   }
+  /** The inverse of `expanded`. */
   get collapsed(): boolean {
     return !this.expanded;
   }
@@ -146,6 +183,7 @@ export class TpNavigationPanel extends TpElement {
     if (this.hasUpdated) this.provider.setExpanded(!value);
     else this.expanded = !value;
   }
+  /** Proposes expanding or collapsing the wide navigation; returns whether it was accepted. */
   setExpanded(
     value: boolean,
     reason: Parameters<NavigationPanelProvider['setExpanded']>[1] = 'programmatic',
@@ -153,6 +191,7 @@ export class TpNavigationPanel extends TpElement {
   ): boolean {
     return this.provider.setExpanded(value, reason, source);
   }
+  /** Proposes opening or closing the compact Drawer; returns whether it was accepted. */
   setCompactOpen(
     value: boolean,
     reason: Parameters<NavigationPanelProvider['setCompactOpen']>[1] = 'programmatic',
@@ -160,9 +199,11 @@ export class TpNavigationPanel extends TpElement {
   ): boolean {
     return this.provider.setCompactOpen(value, reason, source);
   }
+  /** Toggles the navigation for the current mode, as the trigger does; returns whether it was accepted. */
   toggle(source?: Event): boolean {
     return this.provider.toggle(source?.type === 'keydown' ? 'keyboard' : 'trigger-press', source);
   }
+  /** @internal The provider reports a misconfiguration once. */
   reportProviderDiagnostic(code: string, message: string): void {
     if (this.#diagnosed.has(code)) return;
     this.#diagnosed.add(code);
@@ -551,6 +592,7 @@ export class TpNavigationPanel extends TpElement {
         this.#slotObservers.delete(member);
       }
   };
+  /** @internal A constituent registers its part with the panel. */
   registerNavigationPart(part: string, element: HTMLElement, member?: TpElement): () => void {
     const existing = this.#controls.get(element);
     if (existing?.part === part && existing.member === member) {

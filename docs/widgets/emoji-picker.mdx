@@ -1,0 +1,241 @@
+---
+title: Emoji picker
+description: Chooses one emoji from a searchable, categorized grid with skin tones, recent and custom emoji, inline or in a popup.
+tag: tp-emoji-picker
+---
+
+<Preview
+  title="Emoji picker"
+  code={`<tp-emoji-picker label="Reaction"></tp-emoji-picker>`}
+/>
+
+## Usage
+
+The value is the emoji sequence itself, with the skin tone applied, and it submits with a form under `name`. Typing filters by name and keywords, the arrow keys move through the grid and Enter picks. The grid is virtualized, so a full dataset of several thousand emoji stays fast. Without `data` the picker uses a compact English dataset that covers every standard category, and it hides emoji newer than the platform can draw. Country flags are hidden where the platform draws them as letters. Set `emojiVersion` to cap the versions yourself.
+
+Every pick dispatches `tp-action` with the emoji and its record, even when the same emoji is picked again. A pick that changes the value also proposes a cancelable `tp-value-change`, followed by `tp-value-commit`. Cancelling `tp-action` leaves the value and the popup unchanged. Supply `value` for a controlled picker or `defaultValue` for an uncontrolled one; the mode stays fixed for the element's lifetime. The same rule applies to the `query`, `skinTone` and `open` lanes.
+
+<Preview
+  title="Picks"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-emoji-picker id="emoji-picker-picks" label="Status emoji" default-value="🎧"></tp-emoji-picker>
+  <output id="emoji-picker-picks-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Status: 🎧 Headphone</output>
+</div>`}
+  script={`const picker = document.querySelector('#emoji-picker-picks');
+const output = document.querySelector('#emoji-picker-picks-output');
+picker.addEventListener('tp-action', (event) => {
+  output.textContent = \`Status: \${event.detail.value} \${event.detail.item.label}\`;
+});`}
+/>
+
+### Popup
+
+`picker="popup"` renders a trigger Button showing the current emoji and opens the picker in a Popover. A pick closes it; cancel the `tp-open-change` with reason `item-press` to keep it open for several picks, as a message composer does. The trigger, Escape and outside presses still close it. Put your own trigger in the `trigger` slot to replace the Button.
+
+<Preview
+  title="Insert into a message"
+  align="stretch"
+  code={`<div style="display:flex;gap:var(--tp-space-2);align-items:end;inline-size:100%;max-inline-size:28rem;margin-inline:auto">
+  <tp-field label="Message" style="flex:1">
+    <tp-text-area id="emoji-picker-message" rows="3" default-value="Release notes are ready "></tp-text-area>
+  </tp-field>
+  <tp-emoji-picker id="emoji-picker-insert" picker="popup" label="Insert emoji"></tp-emoji-picker>
+</div>`}
+  script={`const message = document.querySelector('#emoji-picker-message');
+const picker = document.querySelector('#emoji-picker-insert');
+picker.addEventListener('tp-action', (event) => {
+  const text = message.value ?? '';
+  const start = message.selectionStart ?? text.length;
+  const end = message.selectionEnd ?? text.length;
+  message.setValue(text.slice(0, start) + event.detail.value + text.slice(end));
+});
+picker.addEventListener('tp-open-change', (event) => {
+  if (!event.detail.value && event.detail.reason === 'item-press') event.preventDefault();
+});`}
+/>
+
+### Skin tone
+
+The skin tone Button in the footer opens a menu of tones. Emoji that accept a tone show it in the grid, the preview and their names, and picks carry it. `default-skin-tone` sets the starting tone: `none`, `light`, `medium-light`, `medium`, `medium-dark` or `dark`. The widget does not remember the choice, so store the tone from `tp-skin-tone-change` and pass it back next time; `skin-tone` makes it controlled.
+
+<Preview
+  title="Remembered tone"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:center">
+  <tp-emoji-picker id="emoji-picker-tone" label="Hand signs" default-skin-tone="medium" default-query="hand"></tp-emoji-picker>
+  <output id="emoji-picker-tone-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Saved tone: medium</output>
+</div>`}
+  script={`const picker = document.querySelector('#emoji-picker-tone');
+const output = document.querySelector('#emoji-picker-tone-output');
+picker.addEventListener('tp-skin-tone-change', (event) => {
+  if (!event.defaultPrevented) output.textContent = \`Saved tone: \${event.detail.value}\`;
+});`}
+/>
+
+Set `skin-tone-selector="false"` to hide the Button when tones do not apply.
+
+### Recent emoji
+
+`recent` is a property listing emoji to show in a Recent category at the top. The widget keeps no history of its own, so the application decides what counts as recent and where it is stored: per device, per account or per workspace. Entries the dataset does not know are skipped. The Recent category is hidden while searching.
+
+<Preview
+  title="Recent picks"
+  code={`<tp-emoji-picker id="emoji-picker-recent" label="Reaction"></tp-emoji-picker>`}
+  script={`await customElements.whenDefined('tp-emoji-picker');
+const picker = document.querySelector('#emoji-picker-recent');
+picker.recent = ['👍', '🎉', '🙏', '👀', '🔥'];
+picker.addEventListener('tp-action', (event) => {
+  const value = event.detail.value;
+  picker.recent = [value, ...picker.recent.filter((entry) => entry !== value)].slice(0, 18);
+});`}
+/>
+
+### Custom emoji
+
+`custom` takes groups of the application's own image emoji, each with an `id`, `label` and `emojis`. Every custom emoji has an `id`, a `label`, optional `keywords` and an image `src`. Custom groups follow Recent and precede the dataset categories, they are searchable by label and keywords, and a custom pick publishes `:id:` as its value, which `recent` accepts too. `icon` sets the group's category bar icon; without it the first image is used.
+
+<Preview
+  title="Workspace emoji"
+  code={`<tp-emoji-picker id="emoji-picker-custom" label="Team reaction"></tp-emoji-picker>`}
+  script={`await customElements.whenDefined('tp-emoji-picker');
+// A rounded tile with a letter, standing in for the workspace's own artwork.
+const tile = (color, letter) => 'data:image/svg+xml,' + encodeURIComponent(
+  \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="\${color}"/><text x="16" y="22" font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" fill="#fff">\${letter}</text></svg>\`,
+);
+const picker = document.querySelector('#emoji-picker-custom');
+picker.custom = [{
+  id: 'workspace',
+  label: 'Workspace',
+  // An outline icon, like the built-in categories; a string shows an emoji instead.
+  icon: { viewBox: '0 0 24 24', paths: [{ d: 'M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 9l2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9M12 3v6', strokeWidth: 2 }] },
+  emojis: [
+    { id: 'ship-it', label: 'Ship it', keywords: ['deploy', 'release'], src: tile('#16a34a', 'S') },
+    { id: 'looks-good', label: 'Looks good', keywords: ['approve', 'review'], src: tile('#2563eb', 'L') },
+    { id: 'on-it', label: 'On it', keywords: ['working', 'busy'], src: tile('#d97706', 'O') },
+    { id: 'blocked', label: 'Blocked', keywords: ['stop', 'waiting'], src: tile('#dc2626', 'B') },
+  ],
+}];`}
+/>
+
+### Datasets
+
+`data` takes a dataset, or a function that loads one per `locale`; the picker shows a loading state and a Retry action while a source loads or fails. A dataset lists `categories` in display order and `emojis`, each with its `emoji`, `label`, `keywords` and `category`. A small, curated set suits a reaction bar, together with `category-bar="false"`, `preview="false"` and fewer `columns`. The picker calls a source after it connects, when `data` or `locale` changes and on `reload()`, aborting the previous call. Every status change dispatches `tp-loading-status-change` with `{ status, error }`.
+
+<Preview
+  title="Curated reactions"
+  code={`<tp-emoji-picker id="emoji-picker-data" label="Reaction" size="lg" columns="6" category-bar="false" preview="false" skin-tone-selector="false" sticky="false"></tp-emoji-picker>`}
+  script={`await customElements.whenDefined('tp-emoji-picker');
+const reaction = (emoji, label, keywords) => ({ emoji, label, keywords, category: 'reactions' });
+document.querySelector('#emoji-picker-data').data = {
+  locale: 'en',
+  categories: [{ id: 'reactions', label: 'Reactions' }],
+  emojis: [
+    reaction('👍', 'Thumbs up', ['yes', 'agree']),
+    reaction('❤️', 'Red heart', ['love']),
+    reaction('😂', 'Face with tears of joy', ['funny']),
+    reaction('🎉', 'Party popper', ['celebrate']),
+    reaction('👀', 'Eyes', ['looking']),
+    reaction('🚀', 'Rocket', ['launch', 'ship']),
+  ],
+};`}
+/>
+
+The `@tweakpad/ui/emoji` entry point holds the dataset helpers. `builtinEmojiData()` returns the built-in dataset, `getEmojiDetails()` looks up the record of a sequence (toned or not) for showing a reaction's name, and `applySkinTone()` and `stripSkinTone()` convert stored values. For the full Unicode set in another language, `createEmojibaseSource()` loads Emojibase data files from a URL you host, per locale, and caches them in local storage; `createEmojibaseData()` converts files you bundle yourself. The library never imports Emojibase itself. The locale comes from `locale` (or the document language) and falls back to English when the dataset does not publish it. Concurrent pickers share one load.
+
+<Code language="typescript" code={`import {
+  createEmojibaseSource,
+  getEmojiDetails,
+  stripSkinTone,
+} from '@tweakpad/ui/emoji';
+
+picker.data = createEmojibaseSource({ url: '/emoji/emojibase' });
+picker.locale = 'de';
+
+// A stored reaction, shown with its name and without a tone.
+const record = getEmojiDetails('👍🏽', picker.emojiData);
+console.log(record?.label, stripSkinTone('👍🏽'));`} />
+
+Here the source reads the published `emojibase-data` package from a public CDN, which brings every Unicode emoji with its skin tones and search keywords. While the files load the picker shows its loading state, and if the request fails it offers Retry; later visits read from the cache.
+
+<Preview
+  title="Full Unicode set"
+  code={`<tp-emoji-picker id="emoji-picker-full" label="All emoji"></tp-emoji-picker>`}
+  script={`import { createEmojibaseSource } from '@tweakpad/ui/emoji';
+
+document.querySelector('#emoji-picker-full').data = createEmojibaseSource({
+  url: 'https://cdn.jsdelivr.net/npm/emojibase-data@16',
+});`}
+/>
+
+### In a field
+
+The picker is a form control: the emoji submits under `name`, `required` validates, and Reset restores `default-value`. Inside a Field, the label names the picker and the Field shows its error.
+
+<Preview
+  title="Popup in a form"
+  align="stretch"
+  code={`<form id="emoji-picker-form" style="display:grid;gap:var(--tp-space-4);max-inline-size:24rem;margin-inline:auto">
+  <tp-field label="Status emoji" description="Shown next to your name in the workspace.">
+    <tp-emoji-picker picker="popup" name="status" default-value="🏠" required></tp-emoji-picker>
+  </tp-field>
+  <div style="display:flex;gap:var(--tp-space-2)">
+    <tp-button type="submit">Save status</tp-button>
+    <tp-button type="reset" variant="outline">Reset</tp-button>
+  </div>
+</form>
+<output id="emoji-picker-form-output" style="display:block;margin-block-start:var(--tp-space-3);text-align:center;color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Pick an emoji, then save.</output>`}
+  script={`const form = document.querySelector('#emoji-picker-form');
+const output = document.querySelector('#emoji-picker-form-output');
+form.addEventListener('submit', (event) => {
+  event.preventDefault();
+  output.textContent = \`Status set to \${new FormData(form).get('status')}\`;
+});`}
+/>
+
+### Sizes and states
+
+<Preview
+  title="Small and read-only"
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-8);justify-content:center;align-items:start">
+  <tp-emoji-picker label="Board icon" size="sm" default-value="📌"></tp-emoji-picker>
+  <tp-emoji-picker label="Channel emoji" picker="popup" readonly default-value="🔔"></tp-emoji-picker>
+</div>`}
+/>
+
+`readonly` keeps focus, browsing and form submission but blocks picks; `disabled` removes all three. The list shows seven rows by default and fills a block size you set on the picker. Emoji glyphs use the `--tp-font-emoji` role, which you can point at an emoji web font.
+
+### Categories
+
+The category bar is a row of icon tabs, one per category, underlined like `variant="underline"`
+Tabs; a Tooltip names the tab under the pointer or focus. The selected category follows the top of
+the list; pressing one scrolls its label to the top and highlights its first emoji, clearing an
+active search, and it stays selected until the list scrolls or the highlight moves. `scrollToCategory(id)` does the same from code. Category labels stay at the top of the
+list while their category scrolls; `sticky="false"` turns that off. `category-bar="false"` hides
+the bar.
+
+### Keyboard
+
+Focus stays in the search field while the highlight moves through the grid.
+
+| Key                        | Action                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| Down, Up                   | Next or previous row, keeping the column; the first emoji when nothing is highlighted |
+| Left, Right                | Previous or next emoji in the row, following the writing direction                    |
+| Home, End                  | First or last emoji                                                                   |
+| Enter                      | Pick the highlighted emoji                                                            |
+| Tab                        | Move to the skin tone Button and the footer                                           |
+| Arrows in the category bar | Move between categories; Enter or Space jumps                                         |
+| Enter on the skin tone     | Open the tone menu; arrows move, Enter chooses, Escape closes                         |
+
+Hovering an emoji with a mouse highlights it; pressing it picks it without moving focus.
+
+### Constituents and accessibility
+
+The search field is a combobox named "Search emoji" that points its active descendant at the
+highlighted emoji. The grid is a listbox named by `label`; each category is a group named by its
+label, and each emoji is an option named by its name (and tone) with its position in the whole
+list. A polite status announces the number of matches, loading and errors; tone changes are
+announced. The category bar is a tab list named "Categories" whose tabs are named by their
+categories. The skin tone Button is named by "Skin tone" and the current tone and opens a menu of
+radio items with the current tone checked. The preview and custom images
+are decorative. Only the rows near the visible part of the list are rendered, so large datasets
+stay fast.

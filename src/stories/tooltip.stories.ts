@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
-import documentation from '../../docs/tooltip.md?raw';
+import { libraryDocs } from './library-docs.js';
 import { plusIcon } from '../icons/plus.js';
 import type { TooltipSide, TooltipAlign, TooltipDescribes } from '../components/tooltip/index.js';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
@@ -25,7 +25,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Tooltip',
   component: 'tp-tooltip',
-  parameters: { layout: 'centered', docs: { description: { component: documentation } } },
+  parameters: { layout: 'centered', docs: libraryDocs('components/tooltip') },
   args: {
     open: false,
     label: 'Save changes',
@@ -103,14 +103,7 @@ export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
 export const RichContent: Story = {
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Descriptive content can include an Icon and KeyHint. Interactive content belongs in Popover.',
-      },
-    },
-  },
+  tags: ['!autodocs'],
   render: () =>
     html`<tp-tooltip
       ><tp-button slot="trigger" variant="outline">Add item</tp-button

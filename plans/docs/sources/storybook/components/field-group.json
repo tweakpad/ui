@@ -1,0 +1,89 @@
+{
+  "id": "components/field-group",
+  "tag": "tp-field-group",
+  "sources": {
+    "story": "src/stories/field-group.stories.ts",
+    "markdown": "docs/field-group.md",
+    "examples": [
+      "src/stories/field-group.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`<tp-field-group>` arranges value editors that belong together, such as width and height, X/Y/Z coordinates or color channels, as one joined set. Each editor stays the same control with its own value, name, label, disabled or read-only state, form participation and validation; the group owns only the layout, the seams and the group name. It is the editor counterpart of [Button group](button-group.md) and shares its seam treatment.\n\nField group is distinct from Field's `group` slot: Field stacks peer Fields with spacing (`field-field-group`), whereas Field group joins the editors of one related value and never owns a value of its own."
+    },
+    {
+      "id": "md: Properties",
+      "kind": "md",
+      "heading": "## Properties",
+      "text": "| Property      | Attribute     | Values                     | Default      |\n| ------------- | ------------- | -------------------------- | ------------ |\n| `orientation` | `orientation` | `horizontal`, `vertical`   | `horizontal` |\n| `joined`      | `joined`      | Boolean                    | `true`       |\n| `label`       | `label`       | Accessible group name text | `Values`     |\n\n`orientation` changes the layout and joined-seam axis only; it never reorders editors or changes their behavior. `joined` removes the internal corner radii and one boundary from each seam without overlapping hit targets or focus rings. Set the JavaScript property to `false` to keep every editor's own corners with the standard theme gap."
+    },
+    {
+      "id": "md: Base example",
+      "kind": "md",
+      "heading": "## Base example",
+      "text": "```html\n<tp-field-group label=\"Size\">\n  <tp-input-group>\n    <span slot=\"prefix\">W</span>\n    <tp-input label=\"Width\" name=\"width\" default-value=\"1280\" inputmode=\"numeric\"></tp-input>\n    <span slot=\"suffix\">px</span>\n  </tp-input-group>\n  <tp-input-group>\n    <span slot=\"prefix\">H</span>\n    <tp-input label=\"Height\" name=\"height\" default-value=\"720\" inputmode=\"numeric\"></tp-input>\n    <span slot=\"suffix\">px</span>\n  </tp-input-group>\n</tp-field-group>\n```\n\nUse Input group prefixes for the per-editor markers (`W`, `H`, `X`, `Y`, `R`, `G`, `B`) and keep each editor's accessible `label` complete, because the marker is visual shorthand. The group name (`label`, or an authored `aria-label` / `aria-labelledby`) names the tuple: \"Size\", \"Position\", \"RGB\"."
+    },
+    {
+      "id": "md: Members",
+      "kind": "md",
+      "heading": "## Members",
+      "text": "Input, Input group, Text area, Select and Native select are editor members. Button and Toggle can join beside them, for example a lock toggle next to a width/height pair, and Menu or Popover participate through their slotted trigger; popup content is never a member. The group applies seams to each existing control's public boundary and does not touch values, focus, validation or form participation. Use the existing `<tp-separator>` between editors; the group supplies the perpendicular orientation when the separator has no authored orientation and restores it when the separator leaves.\n\nHidden members (`hidden`) do not participate. Reordering, removing or replacing a member updates the seams and part registrations without replacing other controls. Content that is not a member splits the group into independent seam runs."
+    },
+    {
+      "id": "md: Sizing",
+      "kind": "md",
+      "heading": "## Sizing",
+      "text": "The group fills its container and gives each editor an equal share of the main axis. An editor that declares its own `inline-size` or `flex` keeps it. Vertical groups stretch every editor to the widest one. Inside a container with a definite inline size the editors shrink below their intrinsic width; an ancestor that is sized by its content (a grid auto track, `fit-content`) keeps each native input's intrinsic minimum, so give such containers an inline size. Put long tuples in a vertical group or in two groups when the editors would become unreadable."
+    },
+    {
+      "id": "md: Forms and states",
+      "kind": "md",
+      "heading": "## Forms and states",
+      "text": "Every editor submits its own `name`; the group has no form value and no `name`. Disable or make read-only the editors individually (`disabled`, `readonly`), or wrap the group in a disabled fieldset through Field. The group adds no selection state: it never implies that one member is chosen."
+    },
+    {
+      "id": "md: Semantics and styling",
+      "kind": "md",
+      "heading": "## Semantics and styling",
+      "text": "The shadow root exposes `field-group`; the internal container uses `role=\"group\"` and the `label` as its accessible name unless `aria-label` or `aria-labelledby` is authored. Each member boundary receives the `field-group-control` alias and each Separator host the `field-group-separator` alias through the shared part registration, so root `partPresentation` can address them; a member's own terminal presentation still wins. Appearance follows the theme tokens of the members (`--tp-radius-lg` outer corners, `--tp-input` seam and separator color, `--tp-space-2` unjoined gap); the dictionary keys are `field-group`, `field-group-control`, `field-group-separator` and their `-orientation-horizontal` / `-orientation-vertical` variants."
+    },
+    {
+      "id": "md: In widgets",
+      "kind": "md",
+      "heading": "## In widgets",
+      "text": "The color picker composes a Field group for its channel editors (R/G/B, H/S/L, …, or the single hex editor) and keeps the alpha editor apart with the row gap, so every format reads as one tuple plus opacity."
+    },
+    {
+      "id": "example: Coordinates and channels",
+      "kind": "example",
+      "title": "Coordinates and channels",
+      "description": "Three editors share the width equally; the prefixes mark each dimension while every Input keeps a complete accessible label.",
+      "code": "<div style=\"display:grid;gap:var(--tp-space-5);max-inline-size:calc(var(--tp-spacing) * 100)\"><tp-field-group label=\"Position\" ><tp-input-group><span slot=\"prefix\">X</span><tp-input label=\"X\" default-value=\"24\" inputmode=\"numeric\" ></tp-input></tp-input-group><tp-input-group><span slot=\"prefix\">Y</span><tp-input label=\"Y\" default-value=\"48\" inputmode=\"numeric\" ></tp-input></tp-input-group><tp-input-group><span slot=\"prefix\">Z</span><tp-input label=\"Z\" default-value=\"0\" inputmode=\"numeric\" ></tp-input></tp-input-group></tp-field-group><tp-field-group label=\"Color\" ><tp-input-group><span slot=\"prefix\">R</span><tp-input label=\"Red\" default-value=\"109\" inputmode=\"numeric\" ></tp-input></tp-input-group><tp-input-group><span slot=\"prefix\">G</span><tp-input label=\"Green\" default-value=\"93\" inputmode=\"numeric\" ></tp-input></tp-input-group><tp-input-group><span slot=\"prefix\">B</span><tp-input label=\"Blue\" default-value=\"252\" inputmode=\"numeric\" ></tp-input></tp-input-group></tp-field-group></div>"
+    },
+    {
+      "id": "example: Tuple with a separate value",
+      "kind": "example",
+      "title": "Tuple with a separate value",
+      "description": "A related value that is not part of the tuple, such as opacity, stays outside the group with the ordinary gap.",
+      "code": "<div style=\"display:flex;align-items:center;gap:var(--tp-space-2);max-inline-size:calc(var(--tp-spacing) * 100)\"><tp-field-group label=\"RGB\"  style=\"flex:1 1 0;min-inline-size:0\"><tp-input-group><span slot=\"prefix\">R</span><tp-input label=\"Red\" default-value=\"109\" inputmode=\"numeric\" ></tp-input></tp-input-group><tp-input-group><span slot=\"prefix\">G</span><tp-input label=\"Green\" default-value=\"93\" inputmode=\"numeric\" ></tp-input></tp-input-group><tp-input-group><span slot=\"prefix\">B</span><tp-input label=\"Blue\" default-value=\"252\" inputmode=\"numeric\" ></tp-input></tp-input-group></tp-field-group><tp-input-group style=\"flex:0 1 calc(var(--tp-spacing) * 24)\"><tp-input label=\"Alpha\" default-value=\"100\" inputmode=\"numeric\"></tp-input><span slot=\"suffix\">%</span></tp-input-group></div>"
+    },
+    {
+      "id": "example: Vertical and separated",
+      "kind": "example",
+      "title": "Vertical and separated",
+      "description": "Vertical groups stretch editors to the widest one and join block edges; a Separator divides editors and takes the perpendicular axis.",
+      "code": "<div style=\"display:grid;gap:var(--tp-space-5);max-inline-size:calc(var(--tp-spacing) * 100)\"><tp-field-group label=\"Margins\" orientation=\"vertical\" style=\"max-inline-size:calc(var(--tp-spacing) * 40)\"><tp-input-group><span slot=\"prefix\">T</span><tp-input label=\"Top\" default-value=\"8\" inputmode=\"numeric\" ></tp-input><span slot=\"suffix\">px</span></tp-input-group><tp-input-group><span slot=\"prefix\">B</span><tp-input label=\"Bottom\" default-value=\"8\" inputmode=\"numeric\" ></tp-input><span slot=\"suffix\">px</span></tp-input-group></tp-field-group><tp-field-group label=\"Range\" ><tp-input-group><span slot=\"prefix\">Min</span><tp-input label=\"Minimum\" default-value=\"0\" inputmode=\"numeric\" ></tp-input></tp-input-group><tp-separator></tp-separator><tp-input-group><span slot=\"prefix\">Max</span><tp-input label=\"Maximum\" default-value=\"100\" inputmode=\"numeric\" ></tp-input></tp-input-group></tp-field-group></div>"
+    },
+    {
+      "id": "example: Mixed members and states",
+      "kind": "example",
+      "title": "Mixed members and states",
+      "description": "A Toggle joins beside the editors with its own pressed state; read-only and disabled editors keep their own treatment. Toggle the `joined` control on the Default story to see every editor keep its corners with the theme gap.",
+      "code": "<div style=\"display:grid;gap:var(--tp-space-5);max-inline-size:calc(var(--tp-spacing) * 100)\"><tp-field-group label=\"Size\" ><tp-input-group><span slot=\"prefix\">W</span><tp-input label=\"Width\" default-value=\"1280\" inputmode=\"numeric\" ></tp-input><span slot=\"suffix\">px</span></tp-input-group><tp-input-group><span slot=\"prefix\">H</span><tp-input label=\"Height\" default-value=\"720\" inputmode=\"numeric\" ></tp-input><span slot=\"suffix\">px</span></tp-input-group><tp-toggle aria-label=\"Lock aspect ratio\" variant=\"outline\">Lock</tp-toggle></tp-field-group><tp-field-group label=\"Timeout\" ><tp-input-group><span slot=\"prefix\"></span><tp-input label=\"Seconds\" default-value=\"30\" inputmode=\"numeric\" readonly></tp-input><span slot=\"suffix\">s</span></tp-input-group><tp-input-group><span slot=\"prefix\"></span><tp-input label=\"Retries\" default-value=\"3\" inputmode=\"numeric\" disabled></tp-input></tp-input-group></tp-field-group></div>"
+    }
+  ]
+}

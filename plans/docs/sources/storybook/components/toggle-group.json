@@ -1,0 +1,94 @@
+{
+  "id": "components/toggle-group",
+  "tag": "tp-toggle-group",
+  "sources": {
+    "story": "src/stories/toggle-group.stories.ts",
+    "markdown": "docs/toggle-group.md"
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`tp-toggle-group` coordinates actual `tp-toggle` action controls. Selection is always an ordered string list, in both single and multiple modes. It adds no implicit checkbox or form participation.\n\n```html\n<tp-toggle-group label=\"Text formatting\" multiple variant=\"outline\">\n  <tp-toggle value=\"bold\">Bold</tp-toggle>\n  <tp-toggle value=\"italic\">Italic</tp-toggle>\n  <tp-toggle value=\"underline\">Underline</tp-toggle>\n</tp-toggle-group>\n```"
+    },
+    {
+      "id": "md: Group properties",
+      "kind": "md",
+      "heading": "## Group properties",
+      "text": "| Property / attribute                | Type                   | Default                 | Meaning                                                                                 |\n| ----------------------------------- | ---------------------- | ----------------------- | --------------------------------------------------------------------------------------- |\n| `value`                             | ordered string list    | uncontrolled empty list | Controlled selection. Property binding preserves spaces; attributes accept JSON arrays. |\n| `defaultValue` / `default-value`    | ordered string list    | empty list              | Initial uncontrolled selection; use JSON arrays in HTML.                                |\n| `onValueChange`                     | list change callback   | absent                  | Accept/rewrite/veto a group proposal.                                                   |\n| `multiple`                          | Boolean                | false                   | Multiple selection when true.                                                           |\n| `selectionMode` / `selection-mode`  | single or multiple     | single                  | Alias for the same mode.                                                                |\n| `loopFocus` / `loop-focus`          | Boolean                | true                    | Wrap arrow navigation. Bind the property to false to disable wrapping.                  |\n| `orientation`                       | horizontal or vertical | horizontal              | Layout and keyboard axis.                                                               |\n| `variant`                           | ghost or outline       | ghost                   | Overrides grouped Toggle appearance.                                                    |\n| `size`                              | `ToggleSize`           | default                 | Overrides grouped Toggle size; icon-only items use an `icon-*` size.                    |\n| `spacing`                           | nonnegative number     | 2                       | Gap in shared spacing units. Zero reuses ButtonGroup logical seams.                     |\n| `label`                             | string                 | empty                   | Accessible group name.                                                                  |\n| `disabled`, `readOnly` / `readonly` | Boolean                | false                   | Interaction constraints; authored child flags remain intact.                            |\n| `partContracts`, `partPresentation` | records                | empty                   | Group/Item customization.                                                               |\n\nA scalar attribute value is treated as one identifier; it is never split on spaces. Use properties or JSON arrays for lists."
+    },
+    {
+      "id": "md: Item and standalone Toggle",
+      "kind": "md",
+      "heading": "## Item and standalone Toggle",
+      "text": "Use `tp-toggle` with a unique nonempty `value`. Grouped Toggle `pressed`, `variant` and `size` derive from the owner. Its optional `onPressedChange` callback can veto before the single Group event; the child does not emit a second composed value event. Removing a member releases ownership and preserves its authored variant/size/disabled settings.\n\nStandalone Toggle has optional controlled `pressed`, `defaultPressed` / `default-pressed` (false), `onPressedChange`, `nativeAction` / `native-action` (true), `variant` (ghost), `size` (default), optional `value`, `disabled` (false) and `readOnly` / `readonly` (false). It renders a native button by default; a non-native action supplies Enter/Space activation. `setPressed(boolean, reason?, event?)` proposes standalone state. Group members instead use Group `setValue(list, reason?, event?)`."
+    },
+    {
+      "id": "md: Interaction and state",
+      "kind": "md",
+      "heading": "## Interaction and state",
+      "text": "Click, Enter and Space propose `trigger-press`. In single mode, pressing the selected Toggle clears selection. In multiple mode, membership is ordered by registered items and retains unmatched selected values. Missing or duplicate identities emit diagnostics and later invalid items are excluded. Single mode derives only the first controlled value and diagnoses larger cardinality.\n\nIn a standalone Group, arrow keys follow orientation/direction and skip disabled members; Home/End move to boundary items. Consumed keys and keys carrying Alt, Ctrl or Meta are left to the browser. Navigation changes focus without selecting. A standalone Group is one tab stop and exposes group semantics, while items remain buttons with `aria-pressed`. Nested groups isolate members. Removal preserves stored values for matching remount. Action controls never submit a value or reset on native form reset; consumer-owned form participation must be explicit.\n\nPublic methods include `setValue`, `focus(options?)`, `blur()` and shared Field association/context. Toggle exposes `controlElement`, `toggleDisabled` and label activation. The group forwards focus to its current tab stop."
+    },
+    {
+      "id": "md: Inside a Toolbar",
+      "kind": "md",
+      "heading": "## Inside a Toolbar",
+      "text": "A Toggle group placed inside a `ToolbarController` root becomes one of its groups by itself; it needs no registration call. Its `toggle-group` part is registered as the toolbar group and keeps `role=\"group\"` and the group's label, and its Toggles join the toolbar's single arrow-key sequence in order. The group then has no tab stop or arrow-key handling of its own: the toolbar's orientation, `loopFocus` and Home/End apply, while the group's `orientation` still lays out its Toggles. Selection mode, values and `tp-value-change` are unchanged. A disabled Toggle, or every Toggle of a disabled group, stays a focusable toolbar stop that does not activate; a Toggle excluded for a missing or duplicate value is skipped.\n\nDo not register the group's host, its part or its Toggles with the toolbar yourself; a Toggle that is already registered keeps that registration, and the group reports a `tp-diagnostic`. A group added to the toolbar later, or present before the toolbar is created, joins it once; a group removed from the toolbar, or a disposed toolbar, restores the standalone tab stop and arrow keys. A Toggle group inside a popup or dialog placed within the toolbar stays independent.\n\n```html\n<div id=\"view-tools\" aria-label=\"View\">\n  <tp-button id=\"fit\">Fit</tp-button>\n  <tp-toggle-group label=\"Layout\" default-value='[\"single\"]'>\n    <tp-toggle value=\"single\">Single</tp-toggle>\n    <tp-toggle value=\"spread\">Spread</tp-toggle>\n  </tp-toggle-group>\n</div>\n```\n\n```ts\nimport { ToolbarController } from '@tweakpad/ui';\nimport '@tweakpad/ui/register';\n\nawait customElements.whenDefined('tp-button');\nconst toolbar = new ToolbarController(document.getElementById('view-tools')!);\ntoolbar.registerItem(document.getElementById('fit')!, { kind: 'button' });\n// The Layout group registers itself and its Toggles.\n```"
+    },
+    {
+      "id": "md: Anatomy and customization",
+      "kind": "md",
+      "heading": "## Anatomy and customization",
+      "text": "`toggle-group` is the Group part. Actual Toggle roots publish both `toggle` and `toggle-group-item`; content is `toggle-content`. Configure the Group's container contract on the Group; Item and Content contracts on the corresponding Toggle. `partContracts['toggle-group-item']` takes precedence over the Toggle root contract while grouped. Group item appearance hooks and zero-spacing seam contributions precede terminal child hooks.\n\nPressed/unpressed and disabled markers follow committed state. Group exposes orientation and multiple state. Default and outline paint, sizes, focus rings and icons match Toggle.\n\nThe host sizes to its members. An inline size set on the host (for example `inline-size: 100%` to span a column or a grid cell) is the group's own size: the `toggle-group` part fills the host, vertical members stretch across it, and a grid set on the part through `partPresentation` lays its tiles out over the full width."
+    },
+    {
+      "id": "md: Ownership and notifications",
+      "kind": "md",
+      "heading": "## Ownership and notifications",
+      "text": "The first update fixes controlled versus uncontrolled ownership. Supply either the controlled property or its default. A controlled callback accepts or rewrites a proposal by assigning the controlled property; without an owner return, committed state remains unchanged. Cancel with `event.preventDefault()` or `event.detail.cancelled = true`. Callbacks run before the composed, bubbling `tp-value-change` notification. Reentrant requests are queued after the current transaction.\n\nEvent detail includes `value`, `previousValue`, `reason`, `sourceEvent`, optional `trigger`, `cancelled`, `allowPropagation`, and optional `metadata`. Programmatic proposals use `programmatic`; an external controlled assignment publishes state without fabricating a proposal. Invalid ownership/composition emits `tp-diagnostic`."
+    },
+    {
+      "id": "md: Shared customization",
+      "kind": "md",
+      "heading": "## Shared customization",
+      "text": "`partContracts` maps a public part to `renderDelegate`, `hostProperties`, `classHook`, `styleHook`, `elementReference`, and `content`. Class, style and content may resolve from the same committed state used for ARIA and markers. References accept a callback or `{ current }` and clear on replacement/disconnection. A delegate must bind the supplied `bind` directive to its semantic element and render `content`. Required roles, native state and ARIA remain protected. Consumer initiating handlers run first; `preventComponentHandling(event)` suppresses component handling independently from native `preventDefault()`.\n\n`partPresentation`, `::part(...)`, semantic CSS tokens, and `setPresentationDictionary()` customize appearance. `direction` / `dir` follows inherited writing direction; `motionPolicy` / `motion-policy` defaults to `inherit` (also `normal`, `reduce`)."
+    },
+    {
+      "id": "md: Registration",
+      "kind": "md",
+      "heading": "## Registration",
+      "text": "```ts\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\n```"
+    },
+    {
+      "id": "md: Icon compositions",
+      "kind": "md",
+      "heading": "## Icon compositions",
+      "text": "Group items are actual `tp-toggle` controls. Put decorative `tp-icon` components in their default content and give icon-only items an `aria-label`; icon-with-label items use visible text. The Icon Only, Icon With Label and Stateful Artwork stories include complete copyable Lit artwork setup. Group size and appearance still take precedence over each item's authored values, and the same orientation, spacing, multiple, disabled and loopFocus APIs apply. Icon-only items take an icon size from the group: `icon-xs`, `icon-sm`, `icon` and `icon-lg` match the height of `xs`, `sm`, `default` and `lg` and draw square items with no inline padding, also when zero spacing joins them. Zero-spacing groups keep joined seams. An explicitly supplied Icon size remains authoritative.\n\nThe Font Weight Selector composes a real Field label and description, rich Toggle content through public part hooks, and a Badge showing the committed selection. Stateful Artwork uses each member's committed Content state to choose outline or filled Icon data."
+    },
+    {
+      "id": "story: IconOnly",
+      "kind": "story",
+      "name": "IconOnly",
+      "code": "import { html, render } from 'lit';\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\nconst items = [\n  {\n    \"value\": \"bold\",\n    \"label\": \"Bold\",\n    \"icon\": {\n      \"viewBox\": \"0 0 24 24\",\n      \"paths\": [\n        {\n          \"d\": \"M6 12h8a4 4 0 0 1 0 8H6V4h7a4 4 0 0 1 0 8\",\n          \"strokeWidth\": 2\n        }\n      ]\n    }\n  },\n  {\n    \"value\": \"italic\",\n    \"label\": \"Italic\",\n    \"icon\": {\n      \"viewBox\": \"0 0 24 24\",\n      \"paths\": [\n        {\n          \"d\": \"M19 4h-9M14 20H5M15 4 9 20\",\n          \"strokeWidth\": 2\n        }\n      ]\n    }\n  },\n  {\n    \"value\": \"underline\",\n    \"label\": \"Underline\",\n    \"icon\": {\n      \"viewBox\": \"0 0 24 24\",\n      \"paths\": [\n        {\n          \"d\": \"M6 3v7a6 6 0 0 0 12 0V3M4 21h16\",\n          \"strokeWidth\": 2\n        }\n      ]\n    }\n  }\n];\nrender(html`<tp-toggle-group label=\"Text formatting\" multiple variant=\"outline\" size=\"icon\">${items.map(item => html`<tp-toggle .value=${item.value} .ariaLabel=${item.label}><tp-icon .icon=${item.icon}></tp-icon></tp-toggle>`)}</tp-toggle-group>`, document.querySelector('#app'));"
+    },
+    {
+      "id": "story: IconWithLabel",
+      "kind": "story",
+      "name": "IconWithLabel",
+      "code": "import { html, render } from 'lit';\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\nconst items = [\n  {\n    \"value\": \"bold\",\n    \"label\": \"Bold\",\n    \"icon\": {\n      \"viewBox\": \"0 0 24 24\",\n      \"paths\": [\n        {\n          \"d\": \"M6 12h8a4 4 0 0 1 0 8H6V4h7a4 4 0 0 1 0 8\",\n          \"strokeWidth\": 2\n        }\n      ]\n    }\n  },\n  {\n    \"value\": \"italic\",\n    \"label\": \"Italic\",\n    \"icon\": {\n      \"viewBox\": \"0 0 24 24\",\n      \"paths\": [\n        {\n          \"d\": \"M19 4h-9M14 20H5M15 4 9 20\",\n          \"strokeWidth\": 2\n        }\n      ]\n    }\n  },\n  {\n    \"value\": \"underline\",\n    \"label\": \"Underline\",\n    \"icon\": {\n      \"viewBox\": \"0 0 24 24\",\n      \"paths\": [\n        {\n          \"d\": \"M6 3v7a6 6 0 0 0 12 0V3M4 21h16\",\n          \"strokeWidth\": 2\n        }\n      ]\n    }\n  }\n];\nrender(html`<tp-toggle-group label=\"Text formatting\" multiple variant=\"outline\">${items.map(item => html`<tp-toggle .value=${item.value} .ariaLabel=${''}><tp-icon .icon=${item.icon}></tp-icon> ${item.label}</tp-toggle>`)}</tp-toggle-group>`, document.querySelector('#app'));"
+    },
+    {
+      "id": "story: FontWeightSelector",
+      "kind": "story",
+      "name": "FontWeightSelector",
+      "code": "import { html, render } from 'lit';\nimport { createRef, ref } from 'lit/directives/ref.js';\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\nconst group = createRef();\nconst weights = [['light','Light','300'],['normal','Normal','400'],['medium','Medium','500'],['bold','Bold','700']];\nfunction show(value = ['normal']) {\n  render(html`<tp-field label=\"Font weight\">\n    <tp-toggle-group ${ref(group)} .value=${value} variant=\"outline\" size=\"lg\" .onValueChange=${event => { const owner = group.value; if (!owner || event.defaultPrevented || event.detail.cancelled) return; owner.value = event.detail.value; queueMicrotask(() => { if (owner.isConnected && !event.defaultPrevented && !event.detail.cancelled) show(owner.value); }); }}>\n      ${weights.map(([value,label,weight]) => html`<tp-toggle .value=${value} .ariaLabel=${label} .partContracts=${{ toggle: { styleHook: { 'block-size': 'auto', 'padding-block': 'var(--tp-space-2)' } }, 'toggle-content': { styleHook: { 'flex-direction': 'column', 'font-weight': weight } } }}><span aria-hidden=\"true\">Aa</span><span>${label}</span></tp-toggle>`)}\n    </tp-toggle-group>\n    <span slot=\"description\">Selected: <tp-badge variant=\"secondary\">${value.join(', ') || 'None'}</tp-badge></span>\n  </tp-field>`, document.querySelector('#app'));\n}\nshow();"
+    },
+    {
+      "id": "story: StatefulArtwork",
+      "kind": "story",
+      "name": "StatefulArtwork",
+      "code": "import { html, render } from 'lit';\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\nconst bookmark = {\"viewBox\":\"0 0 24 24\",\"paths\":[{\"d\":\"M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16l-7-4-7 4Z\",\"strokeWidth\":2}]};\nconst bold = {\"viewBox\":\"0 0 24 24\",\"paths\":[{\"d\":\"M6 12h8a4 4 0 0 1 0 8H6V4h7a4 4 0 0 1 0 8\",\"strokeWidth\":2}]};\nconst filled = { ...bookmark, paths: bookmark.paths.map(path => ({ ...path, fill: 'currentColor' })) };\nconst parts = { 'toggle-content': { content: state => html`<tp-icon .icon=${state.pressed ? filled : bookmark}></tp-icon> Bookmark` } };\nrender(html`<tp-toggle-group label=\"Saved formatting\" multiple variant=\"outline\"><tp-toggle value=\"bookmark\" .partContracts=${parts}></tp-toggle><tp-toggle value=\"bold\"><tp-icon .icon=${bold}></tp-icon> Bold</tp-toggle></tp-toggle-group>`, document.querySelector('#app'));"
+    }
+  ]
+}

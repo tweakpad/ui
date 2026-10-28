@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import type { AlertAnnouncement, AlertSeverity } from '../components/alert/index.js';
 import { plusIcon } from '../icons/plus.js';
-import documentation from '../../docs/alert.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   severity: AlertSeverity;
@@ -13,7 +13,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Alert',
   component: 'tp-alert',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/alert') },
   args: { severity: 'informational', announcement: 'off', title: 'Update available' },
   argTypes: {
     severity: {

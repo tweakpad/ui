@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
-import documentation from '../../docs/alert-dialog.md?raw';
+import { libraryDocs } from './library-docs.js';
 import type { TpAlertDialog, TpSurfaceOpenChangeEvent } from '../components/alert-dialog/index.js';
 
 interface Args {
@@ -16,7 +16,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Alert dialog',
   component: 'tp-alert-dialog',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/alert-dialog') },
   args: {
     open: false,
     label: 'Delete project?',

@@ -1,0 +1,109 @@
+{
+  "id": "components/citation",
+  "tag": "tp-citation",
+  "sources": {
+    "story": "src/stories/citation.stories.ts",
+    "markdown": "docs/citation.md",
+    "examples": [
+      "src/stories/citation.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`tp-citation` attributes content to a source inline: in a generated answer, an article, or anywhere a statement needs its provenance. It is an outlined chip that can show a source icon, a label and a number. With an address it is a link to the source; with a description it also previews the source on hover or keyboard focus. `tp-citation-list` presents the numbered sources that in-text citations refer to.\n\n```html\n<p>\n  Tidal turbines produce power on a timetable set by the moon\n  <tp-citation href=\"https://tides.example/turbines\" src=\"/icons/tides.svg\"\n    >tides.example</tp-citation\n  >.\n</p>\n```"
+    },
+    {
+      "id": "md: Content",
+      "kind": "md",
+      "heading": "## Content",
+      "text": "- **Label**: the default slot, such as the site or the source title. Long labels end in an ellipsis.\n- **Number**: `index`. A citation that shows only a number is a compact round chip; with a label, the number leads the chip.\n- **Source icon**: `src` takes an image address, such as a site icon. The icon keeps its space while it loads. When it fails, the `icon` slot is used, else a generic web mark. Put a `tp-icon` in the `icon` slot to show an icon without an image.\n- **Preview**: a `description`, or content in the `preview` slot, adds a preview card with the source icon, host, title and description. It opens after a short hover or on keyboard focus and closes when the pointer leaves both the citation and the card. The citation still activates its link normally."
+    },
+    {
+      "id": "md: Links",
+      "kind": "md",
+      "heading": "## Links",
+      "text": "An `href` renders a native link that carries `href`, `target` and `rel`. Relative addresses, `#fragment` addresses and `http`, `https`, `mailto` and `tel` addresses are accepted. Any other address, or no address, renders plain text that is not focusable, unless a preview needs a focus target.\n\nA site address, one that starts with `http://` or `https://`, opens in a new tab. Set `target`, such as `target=\"_self\"`, to open it elsewhere. While a labelled site citation is hovered or focused, an external-link mark appears over the end of its label and the label fades out beneath it. The citation never changes width, so the surrounding text does not move. Only labelled citations with a site address show the mark; numbered markers and other addresses do not.\n\nLinked citations brighten their text and strengthen their border on hover, and show the focus ring and the minimum hit area; plain citations do not."
+    },
+    {
+      "id": "md: Placement",
+      "kind": "md",
+      "heading": "## Placement",
+      "text": "Citations sit on the text baseline. Set `superscript` to raise one like a footnote marker; its size does not change. A citation that shows only a number keeps a small space from the word it follows, so markers can be written directly after the word.\n\nUse one style per passage: labelled citations after the statements they support, or numbered markers that point to a Citation list. A number and a label can be combined in one citation, but mixing both styles in a passage makes it harder to scan."
+    },
+    {
+      "id": "md: Citation list",
+      "kind": "md",
+      "heading": "## Citation list",
+      "text": "`tp-citation-list` presents sources as a list. Each child `tp-citation` is a list item, numbered from `start` in document order unless it sets its own `index`. Numbers update when entries are added, removed or moved.\n\nAn in-text citation can name a list entry by its `id` with `source`. It then takes every value it does not set itself from that entry: number, address, target, relation, title, description and the icon shown in its preview. Its visible label and icon stay its own, so a `source` citation without content is a plain number. Edit the entry and every citation that names it follows, including citations rendered before the list exists.\n\n```html\n<p>\n  Output is predictable<tp-citation source=\"tidal-1\" href=\"#tidal-1\" superscript></tp-citation> and\n  storage needs stay small<tp-citation source=\"tidal-2\" href=\"#tidal-2\" superscript></tp-citation>.\n</p>\n<tp-citation-list label=\"Sources\">\n  <tp-citation\n    id=\"tidal-1\"\n    href=\"https://tides.example/turbines\"\n    description=\"Ten-year inspection results.\"\n  >\n    Blade wear in fast tidal streams\n  </tp-citation>\n  <tp-citation\n    id=\"tidal-2\"\n    href=\"https://grid.example/storage\"\n    description=\"Battery sizing for predictable generation.\"\n  >\n    Grid storage notes\n  </tp-citation>\n</tp-citation-list>\n```\n\nNumbered markers usually link to their entry: give each one the entry's fragment as its own `href`, such as `href=\"#tidal-1\"`. Activating the marker moves focus to the entry, its preview shows the entry's source, and the entry opens the site. Without its own `href`, a marker links straight to the source."
+    },
+    {
+      "id": "md: Accessibility",
+      "kind": "md",
+      "heading": "## Accessibility",
+      "text": "A citation's accessible name is the citation word, its number and its label, else its source title, else the address host, for example \"Citation 1: Blade wear in fast tidal streams\". When the link opens in a new tab, the name ends with \"(opens in a new tab)\". Numbers follow the locale of the nearest `lang`. A plain citation is announced as a note with the same name. The preview is supplementary: its text describes the citation without replacing its name, and the destination page must carry everything a reader needs. The list is announced as a list named by `label`."
+    },
+    {
+      "id": "md: API",
+      "kind": "md",
+      "heading": "## API",
+      "text": ""
+    },
+    {
+      "id": "md: API › `tp-citation`",
+      "kind": "md",
+      "heading": "### `tp-citation`",
+      "text": "| Property / attribute           | Type                                                                                    | Default   | Meaning                                                                     |\n| ------------------------------ | --------------------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------- |\n| `href`                         | string \\| null                                                                          | `null`    | Source address. An accepted address renders a link.                         |\n| `target`                       | string \\| null                                                                          | `null`    | Link target. Unset, a site address opens in a new tab.                      |\n| `rel`                          | string \\| null                                                                          | `null`    | Link relation.                                                              |\n| `index`                        | number \\| null                                                                          | `null`    | Displayed number. Inside a Citation list, the entry's position by default.  |\n| `src`                          | string                                                                                  | `''`      | Source icon image address.                                                  |\n| `sourceTitle` / `source-title` | string                                                                                  | `''`      | Full source title for the preview and the accessible-name fallback.         |\n| `description`                  | string                                                                                  | `''`      | Preview text. Enables the preview.                                          |\n| `source`                       | string                                                                                  | `''`      | `id` of a citation in the same document or shadow root to take values from. |\n| `superscript`                  | boolean                                                                                 | `false`   | Raises the citation like a footnote marker.                                 |\n| `variant`                      | `outline`, `secondary`, `default`, `ghost`, `link`, `success`, `warning`, `destructive` | `outline` | Badge treatment.                                                            |\n| `messages`                     | `{ citation?: string; newTab?: string }` (property only)                                | English   | Accessible-name text: `Citation` and `opens in a new tab`.                  |\n| `resolvedSource`               | read-only: `{ href, target, rel, number, src, sourceTitle, description }`               | —         | The values the citation presents after taking unset ones from `source`.     |\n\nSlots: the default slot (label), `icon` (source icon used when `src` is unset or fails) and `preview` (extra preview content)."
+    },
+    {
+      "id": "md: API › `tp-citation-list`",
+      "kind": "md",
+      "heading": "### `tp-citation-list`",
+      "text": "| Property / attribute | Type                                   | Default    | Meaning                                     |\n| -------------------- | -------------------------------------- | ---------- | ------------------------------------------- |\n| `label`              | string                                 | `''`       | Accessible list name; `Sources` if empty.   |\n| `start`              | number                                 | `1`        | Number of the first entry.                  |\n| `orientation`        | `vertical`, `horizontal`               | `vertical` | Stack the entries or let them wrap in rows. |\n| `messages`           | `{ sources?: string }` (property only) | English    | Default list name.                          |\n\nSlot: the default slot takes `tp-citation` entries."
+    },
+    {
+      "id": "md: Styling",
+      "kind": "md",
+      "heading": "## Styling",
+      "text": "The chip is a composed Badge, so Badge tokens, variants and dictionary entries apply. The default `outline` chip is only a border: it has no hover fill. Outline and ghost citations show their text in the muted foreground, so they read below the surrounding text, and switch to the foreground while a link is hovered or focused. Public parts:\n\n| Part                           | Element                                    |\n| ------------------------------ | ------------------------------------------ |\n| `citation-badge`               | The composed `tp-badge`.                   |\n| `citation-index`               | The number.                                |\n| `citation-icon`                | The source icon.                           |\n| `citation-label`               | The label.                                 |\n| `citation-external`            | The external-link mark over the label end. |\n| `citation-preview`             | The composed `tp-preview-card`.            |\n| `citation-preview-source`      | Preview row with the source icon and host. |\n| `citation-preview-title`       | Preview title.                             |\n| `citation-preview-description` | Preview description.                       |\n| `citation-list`                | The list in `tp-citation-list`.            |\n\nHost markers: `data-linked` while the citation is a link, `data-external` while it shows the external-link mark, and `data-number-only` while it shows only a number. Use `partPresentation` or the presentation dictionary to change a part, for example a wider label with `partPresentation = { 'citation-label': { styleHook: { 'max-inline-size': '20rem' } } }`."
+    },
+    {
+      "id": "example: Inline citations",
+      "kind": "example",
+      "title": "Inline citations",
+      "description": "A label names the source and `src` adds its site icon. A site address opens in a new tab; while the citation is hovered or focused, an external-link mark appears over the end of its label without changing its width. Set `target=\"_self\"` to open it in the same tab.",
+      "code": "<p style=\"max-inline-size:36rem\">\n  Tidal turbines produce power on a timetable set by the moon\n  <tp-citation href=\"https://tides.example/turbines\" src=\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%232563eb%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ET%3C%2Ftext%3E%3C%2Fsvg%3E\">tides.example</tp-citation>,\n  so grid operators can plan storage weeks ahead\n  <tp-citation href=\"https://grid.example/storage\" src=\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%2316a34a%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EG%3C%2Ftext%3E%3C%2Fsvg%3E\">Grid storage notes</tp-citation>.\n</p>"
+    },
+    {
+      "id": "example: Source preview",
+      "kind": "example",
+      "title": "Source preview",
+      "description": "A `description`, or content in the `preview` slot, adds a preview card with the site icon, host, title and description. It opens after a short hover or on keyboard focus; the link still opens the site.",
+      "code": "<p style=\"max-inline-size:36rem\">\n  Turbine blades now last about twenty years underwater\n  <tp-citation\n    href=\"https://tides.example/turbines\"\n    src=\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%232563eb%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ET%3C%2Ftext%3E%3C%2Fsvg%3E\"\n    source-title=\"Blade wear in fast tidal streams\"\n    description=\"Ten-year inspection results from three test sites, with corrosion and fatigue measurements.\"\n  >tides.example</tp-citation>.\n</p>"
+    },
+    {
+      "id": "example: Numbered references",
+      "kind": "example",
+      "title": "Numbered references",
+      "description": "For footnote-style references, raise numbered markers with `superscript` and list the sources in a Citation list, which numbers its entries in order. Each marker names its entry with `source`, taking its number, title and preview, and links to it with the entry's fragment: activating a marker moves focus to its entry, and the entry opens the site.",
+      "code": "<article style=\"display:grid;gap:var(--tp-space-4);max-inline-size:36rem\">\n  <p style=\"margin:0\">\n    Output is predictable<tp-citation source=\"tidal-1\" href=\"#tidal-1\" superscript></tp-citation>\n    and storage needs stay small<tp-citation source=\"tidal-2\" href=\"#tidal-2\" superscript></tp-citation>,\n    though sites vary with the season<tp-citation source=\"tidal-3\" href=\"#tidal-3\" superscript></tp-citation>.\n  </p>\n  <tp-citation-list label=\"Sources\">\n    <tp-citation id=\"tidal-1\" href=\"https://tides.example/turbines\" src=\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%232563eb%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ET%3C%2Ftext%3E%3C%2Fsvg%3E\" description=\"Ten-year inspection results from three test sites.\">Blade wear in fast tidal streams</tp-citation>\n    <tp-citation id=\"tidal-2\" href=\"https://grid.example/storage\" src=\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%2316a34a%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EG%3C%2Ftext%3E%3C%2Fsvg%3E\" description=\"How predictable generation reduces battery sizing.\">Grid storage notes</tp-citation>\n    <tp-citation id=\"tidal-3\" href=\"https://coast.example/survey\" src=\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%23d97706%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3EC%3C%2Ftext%3E%3C%2Fsvg%3E\" description=\"Seasonal flow records for estuary sites.\">Coastal survey 2025</tp-citation>\n  </tp-citation-list>\n</article>"
+    },
+    {
+      "id": "example: Source marks",
+      "kind": "example",
+      "title": "Source marks",
+      "description": "The source mark leads the label: a site icon through `src`, or an Icon in the `icon` slot. Without an accepted `href` the citation is plain text, not a link. Long labels end in an ellipsis.",
+      "code": "<div id=\"citation-marks\"><div style=\"display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-3)\"><tp-citation href=\"https://tides.example/turbines\" src=\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%232563eb%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ET%3C%2Ftext%3E%3C%2Fsvg%3E\">tides.example</tp-citation>\n<tp-citation href=\"https://coast.example/survey\"><tp-icon slot=\"icon\" data-icon=\"file\"></tp-icon>Coastal survey 2025</tp-citation>\n<tp-citation href=\"https://grid.example/storage\">Grid storage notes</tp-citation>\n<tp-citation>Field interview</tp-citation></div></div>",
+      "script": "import { fileTextIcon } from '@tweakpad/ui/icons/file-text';\n\n/** Gives slotted source-mark Icons their artwork. */\nexport function setupCitationExample(root) {\n  for (const icon of root.querySelectorAll('tp-icon[data-icon=\"file\"]')) icon.icon = fileTextIcon;\n  return () => {};\n}\n\nsetupCitationExample(document.getElementById('citation-marks'));"
+    },
+    {
+      "id": "example: Variants",
+      "kind": "example",
+      "title": "Variants",
+      "description": "Citations use the Badge treatments; `outline` is the default.",
+      "code": "<div style=\"display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-3)\"><tp-citation variant=\"outline\" href=\"https://tides.example/turbines\" src=\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%232563eb%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ET%3C%2Ftext%3E%3C%2Fsvg%3E\">outline</tp-citation>\n<tp-citation variant=\"secondary\" href=\"https://tides.example/turbines\" src=\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%232563eb%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ET%3C%2Ftext%3E%3C%2Fsvg%3E\">secondary</tp-citation>\n<tp-citation variant=\"ghost\" href=\"https://tides.example/turbines\" src=\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%232563eb%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ET%3C%2Ftext%3E%3C%2Fsvg%3E\">ghost</tp-citation>\n<tp-citation variant=\"default\" href=\"https://tides.example/turbines\" src=\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Crect%20width%3D%2216%22%20height%3D%2216%22%20rx%3D%224%22%20fill%3D%22%232563eb%22%2F%3E%3Ctext%20x%3D%228%22%20y%3D%2211.5%22%20font-family%3D%22system-ui%2Csans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3ET%3C%2Ftext%3E%3C%2Fsvg%3E\">default</tp-citation></div>"
+    }
+  ]
+}

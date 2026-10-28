@@ -1,0 +1,108 @@
+{
+  "id": "components/qr-code",
+  "tag": "tp-qr-code",
+  "sources": {
+    "story": "src/stories/qr-code.stories.ts",
+    "markdown": "docs/qr-code.md",
+    "examples": [
+      "src/stories/qr-code.examples.ts"
+    ]
+  },
+  "items": [
+    {
+      "id": "md: (intro)",
+      "kind": "md",
+      "heading": null,
+      "text": "`<tp-qr-code>` turns a text value into a scannable QR code on a light tile. It can copy the code\nand download it as PNG, SVG or JPG, at any size and with any error correction level. The encoder\nis built in (ISO/IEC 18004, QR Code Model 2), so there is no dependency to install, and it is\nalso published on its own as `@tweakpad/ui/qr`."
+    },
+    {
+      "id": "md: Base example",
+      "kind": "md",
+      "heading": "## Base example",
+      "text": "```html\n<tp-qr-code\n  value=\"https://ledger.app/connect/jd-4829\"\n  label=\"Scan to connect your mobile device\"\n></tp-qr-code>\n```\n\nGive every code a `label` that says what scanning does; it names the image for assistive\ntechnology and titles SVG exports. The value itself is never announced, because it may be\nprivate. Show a link or the text beside the code for people who cannot scan."
+    },
+    {
+      "id": "md: Properties",
+      "kind": "md",
+      "heading": "## Properties",
+      "text": "| Property          | Attribute          | Values                                             | Default   |\n| ----------------- | ------------------ | -------------------------------------------------- | --------- |\n| `value`           | `value`            | Text to encode                                     | `\"\"`      |\n| `errorCorrection` | `error-correction` | `L`, `M`, `Q`, `H`                                 | `M`       |\n| `quietZone`       | `quiet-zone`       | Light border in modules, a non-negative integer    | `4`       |\n| `size`            | `size`             | `sm` (128 px), `default` (192 px), `lg` (256 px)   | `default` |\n| `label`           | `label`            | Accessible name and export title                   | `\"\"`      |\n| `copyable`        | `copyable`         | Boolean; shows the Copy button                     | `false`   |\n| `downloadable`    | `downloadable`     | Boolean; shows the Download menu                   | `false`   |\n| `exportSize`      | `export-size`      | Side of exports and of the copied image, in pixels | `1024`    |\n| `filename`        | `filename`         | Download file name without its extension           | `qr-code` |\n| `messages`        | (property)         | Built-in strings, see below                        | English   |\n\nError correction restores about 7 % (`L`), 15 % (`M`), 25 % (`Q`) or 30 % (`H`) of a damaged\ncode. Higher levels need more modules for the same value, so the code becomes denser at the same\nsize. Use `H` when a logo or sticker may cover part of the code.\n\nThe quiet zone is the light border scanners need around the modules. It is drawn inside the tile\nand included in every export. Keep the default of 4 modules unless the code sits on a light\nsurface that already provides the margin."
+    },
+    {
+      "id": "md: Copy and download",
+      "kind": "md",
+      "heading": "## Copy and download",
+      "text": "`copyable` and `downloadable` add an actions row below the tile, independently of each other.\nBoth actions are disabled while there is no code to show.\n\n- **Copy** writes one clipboard item holding the PNG image at `exportSize` and the value as\n  text. An image editor or chat pastes the picture, and a text field pastes the value. When the\n  browser refuses images, the text alone is copied. The button confirms and announces the\n  result like any [Copy button](copy-button.md).\n- **Download** opens a menu with PNG, SVG and JPG. The file is named after `filename`\n  (`qr-code.png` by default) and is exported at `exportSize`.\n\n```html\n<tp-qr-code\n  value=\"https://tweakpad.github.io/invite/42\"\n  label=\"Invite link\"\n  copyable\n  downloadable\n  filename=\"invite\"\n  export-size=\"2048\"\n></tp-qr-code>\n```\n\nThe same work is available without the actions row:\n\n- `copy()` copies the image and the value and resolves to whether anything was written.\n- `download(format, options)` downloads `png`, `svg` or `jpeg`. `options` can set `size`,\n  `filename` and JPEG `quality` (0 to 1, default 0.92).\n- `toBlob(format, options)` resolves to the image file, and `toSVG(options)` returns the SVG\n  document as text. Both give `null` while there is no code.\n\n```js\nconst code = document.querySelector('tp-qr-code');\nawait code.download('svg', { size: 512, filename: 'poster-code' });\nconst png = await code.toBlob('png', { size: 300 });\n```\n\nPNG and JPEG files are exactly the requested size. Every module is the same whole number of\npixels, so the code never blurs; the pixels left over widen the quiet zone. JPEG has no\ntransparency and is painted on white. Sizes are clamped between the module count and 4096\npixels."
+    },
+    {
+      "id": "md: Events",
+      "kind": "md",
+      "heading": "## Events",
+      "text": "| Event               | Cancelable | Detail                                                        |\n| ------------------- | ---------- | ------------------------------------------------------------- |\n| `tp-copy`           | yes        | `value`; preventing it skips the copy                         |\n| `tp-copied`         | no         | `value` and `types`, the media types written                  |\n| `tp-copy-error`     | no         | `value` and empty `types`                                     |\n| `tp-download`       | yes        | `format`, `size`, `filename`, `sourceEvent`; preventing skips |\n| `tp-download-error` | no         | the same detail and `error`; the failure is also announced    |\n| `tp-diagnostic`     | no         | `code`, `message`, `severity`                                 |\n\nBrowsers do not report whether a downloaded file was saved, so there is no completion event.\nDiagnostics report an unknown error correction level or quiet zone (the defaults are used), a\nvalue too long for the largest code (`qr-code-capacity`, with the limit), a clamped export size,\nand colors with too little contrast (`qr-code-contrast`)."
+    },
+    {
+      "id": "md: Status",
+      "kind": "md",
+      "heading": "## Status",
+      "text": "`status` is `empty` without a value, `encoded`, or `error` when the value does not fit. The host\nreflects it as `data-status`. `version` (1 to 40) and `moduleCount` (modules per side, without\nthe quiet zone) describe the encoded code and are `null` otherwise. While empty or in error the\ntile keeps its size and shows the light background alone.\n\nThe value is encoded in the most compact mode: digits only, upper-case letters with digits and\n`$%*+-./:` and spaces, or any text as UTF-8 bytes. The largest code holds:\n\n| Level | Digits | Upper-case letters | UTF-8 bytes |\n| ----- | ------ | ------------------ | ----------- |\n| L     | 7089   | 4296               | 2953        |\n| M     | 5596   | 3391               | 2331        |\n| Q     | 3993   | 2420               | 1663        |\n| H     | 3057   | 1852               | 1273        |"
+    },
+    {
+      "id": "md: Messages",
+      "kind": "md",
+      "heading": "## Messages",
+      "text": "`messages` replaces any of the built-in strings: `qrCode` (the image name when `label` is\nempty), `actions` (the actions group name), `copy`, `copied`, `copyFailed`, `download`,\n`downloadPng`, `downloadSvg`, `downloadJpeg` and `downloadFailed`."
+    },
+    {
+      "id": "md: Size and colors",
+      "kind": "md",
+      "heading": "## Size and colors",
+      "text": "The tile is square. `size` picks one of three sizes, and `--tp-qr-code-size` sets any other\nsize; it can be set on the element or any ancestor. The tile never grows wider than the space\naround it.\n\nThe code is dark on light in every color scheme, because many scanners cannot read a light code\non a dark background. The tile stays light in a dark theme, like a printed sticker.\n`--tp-qr-code-foreground` and `--tp-qr-code-background` change the colors; downloads and copies\nuse the same colors. A diagnostic warns when the modules are lighter than the background or the\ncontrast is below 3:1.\n\n```html\n<tp-qr-code\n  value=\"https://tweakpad.github.io\"\n  label=\"Tweakpad UI\"\n  style=\"--tp-qr-code-size: 12rem; --tp-qr-code-foreground: #3b2fc9\"\n></tp-qr-code>\n```"
+    },
+    {
+      "id": "md: Accessibility",
+      "kind": "md",
+      "heading": "## Accessibility",
+      "text": "The code is an image named by `label`, or by the `qrCode` message when `label` is empty. It is\nhidden from assistive technology while there is no code. The actions are a group named by the\n`actions` message; the Copy button and the Download menu keep their own keyboard behavior and\nannouncements. The image never mirrors in right-to-left layouts, and in forced-colors mode it\nkeeps its own colors so it stays scannable."
+    },
+    {
+      "id": "md: Theming",
+      "kind": "md",
+      "heading": "## Theming",
+      "text": "Public parts: `tile`, `symbol` (the SVG), `background`, `modules`, `actions`, `copy`, `download`,\n`download-trigger` and `download-item`. Presentation keys use the `qr-code-` prefix\n(`qr-code`, `qr-code-size-sm`, `qr-code-size-default`, `qr-code-size-lg`, `qr-code-tile`,\n`qr-code-symbol`, `qr-code-background`, `qr-code-modules`, `qr-code-actions`, `qr-code-copy`,\n`qr-code-download`, `qr-code-download-trigger`, `qr-code-download-item`). The tile uses the\nborder role and the extra-large radius. The actions keep the appearance of the\n[Button group](button-group.md), [Copy button](copy-button.md), [Button](button.md) and\n[Menu](menu.md) they compose. Colors set through parts, keys or the variables reach the screen\nand every export."
+    },
+    {
+      "id": "md: Encoding without the element",
+      "kind": "md",
+      "heading": "## Encoding without the element",
+      "text": "`@tweakpad/ui/qr` encodes without a browser, for servers, workers and build scripts:\n\n```js\nimport { encodeQr, qrPathData } from '@tweakpad/ui/qr';\n\nconst code = encodeQr('https://tweakpad.github.io', { errorCorrection: 'Q' });\nconst quietZone = 4;\nconst extent = code.size + quietZone * 2;\nconst svg = `<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ${extent} ${extent}\"><path d=\"${qrPathData(code, quietZone)}\"/></svg>`;\n```\n\n`encodeQr(text, { errorCorrection, minVersion, maxVersion, mask })` returns the version, size,\nmask, mode and modules (row by row, 1 for dark). It throws `QrCapacityError`, carrying the\nlimit, when the value does not fit. `qrCapacity(mode, level, version)` gives the limits above."
+    },
+    {
+      "id": "example: Connect a device",
+      "kind": "example",
+      "title": "Connect a device",
+      "description": "A Card around the code. The tile stays light in a dark theme.",
+      "code": "<tp-card style=\"max-inline-size:calc(var(--tp-spacing) * 80)\"><h3 slot=\"header\">Connect your phone</h3><p slot=\"description\">Open the app on your phone and scan the code to pair this account.</p><tp-qr-code value=\"https://ledger.app/connect/jd-4829\" label=\"Scan to connect your mobile device\"></tp-qr-code><tp-button slot=\"footer\" variant=\"secondary\">Got it</tp-button></tp-card>"
+    },
+    {
+      "id": "example: Copy and download",
+      "kind": "example",
+      "title": "Copy and download",
+      "description": "Copy writes the image and the link in one clipboard item. Download offers PNG, SVG and JPG at `export-size` pixels (1024 by default).",
+      "code": "<tp-qr-code value=\"https://tweakpad.github.io/invite/42\" label=\"Invite link\" copyable downloadable filename=\"invite\"></tp-qr-code>"
+    },
+    {
+      "id": "example: Live value",
+      "kind": "example",
+      "title": "Live value",
+      "description": "The code follows the field as you type. The button calls `download()` with a size of its own.",
+      "code": "<div id=\"qr-code-live\"><div style=\"display:grid;gap:var(--tp-space-4);justify-items:start;max-inline-size:calc(var(--tp-spacing) * 80)\"><tp-field label=\"Link\"><tp-input default-value=\"https://tweakpad.github.io\"></tp-input></tp-field><tp-qr-code size=\"lg\" error-correction=\"Q\" label=\"Link\"></tp-qr-code><tp-button variant=\"outline\">Download 2048 px PNG</tp-button></div></div>",
+      "script": "/** Encode what is typed and download the code at a chosen size. */\nexport function setupQrCodeExample(root) {\n  const input = root.querySelector('tp-input');\n  const code = root.querySelector('tp-qr-code');\n  const button = root.querySelector('tp-button');\n  const update = (event) => {\n    code.value = String(event.detail.value ?? '');\n  };\n  const download = () => code.download('png', { size: 2048, filename: 'link' });\n  input.addEventListener('tp-value-change', update);\n  button.addEventListener('click', download);\n  code.value = input.value;\n  return () => {\n    input.removeEventListener('tp-value-change', update);\n    button.removeEventListener('click', download);\n  };\n}\n\nsetupQrCodeExample(document.getElementById('qr-code-live'));"
+    },
+    {
+      "id": "example: Sizes and colors",
+      "kind": "example",
+      "title": "Sizes and colors",
+      "description": "`size` picks 128, 192 or 256 pixels; `--tp-qr-code-size` sets any size. The color variables change the screen and every export.",
+      "code": "<div style=\"display:flex;flex-wrap:wrap;align-items:end;gap:var(--tp-space-5)\"><tp-qr-code size=\"sm\" value=\"https://tweakpad.github.io\" label=\"Small\"></tp-qr-code><tp-qr-code value=\"https://tweakpad.github.io\" label=\"Default\"></tp-qr-code><tp-qr-code size=\"lg\" value=\"https://tweakpad.github.io\" label=\"Large\"></tp-qr-code><tp-qr-code value=\"https://tweakpad.github.io\" label=\"Brand colors\" error-correction=\"H\" style=\"--tp-qr-code-size:12rem;--tp-qr-code-foreground:#3b2fc9;--tp-qr-code-background:#f4f2ff\"></tp-qr-code></div>"
+    }
+  ]
+}

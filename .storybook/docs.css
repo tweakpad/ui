@@ -31,13 +31,7 @@
   flex: 1 1 100%;
 }
 
-.tp-docs-api {
-  margin-block: var(--tp-space-6);
-}
-
-.tp-docs-api caption {
-  caption-side: top;
-  text-align: start;
-  font-weight: var(--tp-font-medium);
-  padding-block-end: var(--tp-space-2);
+/* The page's tag under its description, as Storybook styles inline code. */
+.tp-docs-tag {
+  margin-block: 0 var(--tp-space-6);
 }

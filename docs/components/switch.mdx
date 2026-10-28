@@ -1,0 +1,159 @@
+---
+title: Switch
+description: A binary setting that applies immediately, with Checkbox's form and validation behavior.
+tag: tp-switch
+---
+
+<Preview
+  title="Switch"
+  code={`<tp-field orientation="horizontal" label="Product updates" description="Email me about new features and releases.">
+  <tp-switch name="product-updates" default-checked></tp-switch>
+</tp-field>`}
+/>
+
+## Usage
+
+Use a Switch for a setting that takes effect as soon as it flips, such as turning notifications on. When the choice only applies after a Save or Submit, a Checkbox reads more honestly. Name the Switch with a horizontal `tp-field`, which also carries its description and errors. Text in the default slot is a visible label through the library Label component; authored host `aria-label` and Field association can supply the name instead. Native HTML labels also work: a wrapping label or `for` matching the Switch host's `id` activates the existing Boolean owner.
+
+### Settings list
+
+<Preview
+  title="Settings"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-5);max-inline-size:26rem;margin-inline:auto">
+  <tp-field orientation="horizontal" label="Two-factor authentication" description="Require a code from your authenticator app.">
+    <tp-switch name="two-factor" default-checked></tp-switch>
+  </tp-field>
+  <tp-field orientation="horizontal" label="Login alerts" description="Notify me when a new device signs in.">
+    <tp-switch name="login-alerts"></tp-switch>
+  </tp-field>
+  <tp-field orientation="horizontal" label="Session timeout" description="Sign out after 30 minutes of inactivity.">
+    <tp-switch name="session-timeout" default-checked></tp-switch>
+  </tp-field>
+</div>`}
+/>
+
+### Sizes
+
+<Preview
+  title="Sizes"
+  code={`<tp-switch size="sm" aria-label="Compact mode" default-checked></tp-switch>
+<tp-switch aria-label="Compact mode" default-checked></tp-switch>`}
+/>
+
+Without a visible label, name the Switch with `aria-label`.
+
+### Forms
+
+A checked Switch submits its `value` (`on` by default) under its `name`; an unchecked one submits nothing unless you set `unchecked-value`. `required` makes unchecked a missing value that blocks submission.
+
+<Preview
+  title="Form value"
+  align="stretch"
+  code={`<tp-form style="display:grid;gap:var(--tp-space-5);max-inline-size:26rem;margin-inline:auto">
+  <tp-field orientation="horizontal" label="Public profile" description="Show your name and avatar to other workspaces.">
+    <tp-switch name="visibility" value="public" unchecked-value="private"></tp-switch>
+  </tp-field>
+  <tp-field orientation="horizontal" label="Weekly digest" description="A Monday summary of activity in your projects.">
+    <tp-switch name="digest" default-checked></tp-switch>
+  </tp-field>
+  <div slot="actions">
+    <tp-button type="submit">Save preferences</tp-button>
+  </div>
+</tp-form>`}
+/>
+
+### States
+
+<Preview
+  title="Disabled and read-only"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-5);max-inline-size:26rem;margin-inline:auto">
+  <tp-field orientation="horizontal" label="Single sign-on" description="Available on the Enterprise plan.">
+    <tp-switch name="sso" disabled></tp-switch>
+  </tp-field>
+  <tp-field orientation="horizontal" label="Audit logging" description="Managed by your organization.">
+    <tp-switch name="audit" default-checked readonly></tp-switch>
+  </tp-field>
+</div>`}
+/>
+
+Disabled removes the Switch from the tab order and from form data. Read-only stays focusable and submitted, but rejects changes.
+
+### Controlled
+
+Set `checked` to drive the Switch from your own state. Every flip then arrives as a proposal in `onCheckedChange`, and the Switch only moves when you write the accepted value back synchronously. Here the digest follows the master setting: turning email off also turns it off and locks it. The callback runs before the cancelable DOM event. A later DOM veto rolls back a synchronous owner return, so read the committed getter after the transaction when publishing outside state.
+
+<Preview
+  title="Controlled"
+  align="stretch"
+  script={`const state = { email: true, digest: true };
+const email = document.querySelector('#switch-controlled-email');
+const digest = document.querySelector('#switch-controlled-digest');
+const render = () => {
+  email.checked = state.email;
+  digest.checked = state.email && state.digest;
+  digest.disabled = !state.email;
+};
+email.onCheckedChange = (event) => {
+  if (event.defaultPrevented || event.detail.cancelled) return;
+  state.email = event.detail.value;
+  render();
+};
+digest.onCheckedChange = (event) => {
+  if (event.defaultPrevented || event.detail.cancelled) return;
+  state.digest = event.detail.value;
+  render();
+};
+render();`}
+  code={`<div style="display:grid;gap:var(--tp-space-5);max-inline-size:26rem;margin-inline:auto">
+  <tp-field orientation="horizontal" label="Email notifications" description="Mentions, assignments and review requests.">
+    <tp-switch id="switch-controlled-email" name="email"></tp-switch>
+  </tp-field>
+  <tp-field orientation="horizontal" label="Weekly digest" description="Needs email notifications.">
+    <tp-switch id="switch-controlled-digest" name="digest"></tp-switch>
+  </tp-field>
+</div>`}
+/>
+
+### Thumb icon
+
+Content in the `thumb` slot rides along with the Thumb, such as an icon that confirms the state at a glance. It is decorative, so the Switch still needs its own name.
+
+<Preview
+  title="Thumb icon"
+  script={`const icons = {
+  check: { viewBox: '0 0 24 24', paths: [{ d: 'M5 12l4 4L19 6', strokeWidth: 3 }] },
+  close: { viewBox: '0 0 24 24', paths: [{ d: 'M6 6l12 12M18 6 6 18', strokeWidth: 3 }] },
+};
+const control = document.querySelector('#switch-thumb-icon');
+const icon = control.querySelector('tp-icon');
+const show = (checked) => { icon.icon = checked ? icons.check : icons.close; };
+await customElements.whenDefined('tp-switch');
+show(control.checked);
+control.addEventListener('tp-value-change', (event) => {
+  if (!event.defaultPrevented) show(event.detail.value);
+});`}
+  code={`<tp-field orientation="horizontal" label="Auto-renew subscription">
+  <tp-switch id="switch-thumb-icon" name="auto-renew" default-checked>
+    <tp-icon slot="thumb" size="0.625rem" style="color:var(--tp-foreground)"></tp-icon>
+  </tp-switch>
+</tp-field>`}
+/>
+
+### Events
+
+<Preview
+  title="Change event"
+  script={`const control = document.querySelector('#switch-demo-wifi');
+const status = document.querySelector('#switch-demo-status');
+control.addEventListener('tp-value-change', (event) => {
+  status.textContent = event.detail.value ? 'Wi-Fi is on' : 'Wi-Fi is off';
+});`}
+  code={`<div style="display:flex;align-items:center;gap:var(--tp-space-4)">
+  <tp-switch id="switch-demo-wifi" aria-label="Wi-Fi" default-checked></tp-switch>
+  <output id="switch-demo-status" aria-live="polite">Wi-Fi is on</output>
+</div>`}
+/>
+
+`tp-value-change` is cancelable and carries the proposed `checked` value. Calling `preventDefault()` keeps the current state, which is how you veto a change that needs confirmation first.

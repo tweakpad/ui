@@ -1,0 +1,117 @@
+---
+title: Skeleton
+description: A decorative placeholder that reserves the shape of content while it loads.
+tag: tp-skeleton
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Skeleton"
+  code={`<div aria-busy="true" aria-label="Loading profile" style="display:flex;align-items:center;gap:var(--tp-space-4)">
+  <tp-skeleton style="inline-size:var(--tp-space-10);block-size:var(--tp-space-10);border-radius:var(--tp-radius-full);flex:none"></tp-skeleton>
+  <div style="display:grid;gap:var(--tp-space-2)">
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 38);block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 25);block-size:var(--tp-space-4)"></tp-skeleton>
+  </div>
+</div>`}
+/>
+
+## Usage
+
+A Skeleton has no size or shape attributes: ordinary layout sets its width and height, and a radius token on the host shapes it. It is always hidden from assistive technology, so put `aria-busy` and a label on the region that is loading.
+
+### Motion
+
+<Preview
+  title="Pulse, sweep and none"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);max-inline-size:20rem;margin-inline:auto">
+  <tp-skeleton style="block-size:var(--tp-space-4)"></tp-skeleton>
+  <tp-skeleton motion="sweep" style="block-size:var(--tp-space-4)"></tp-skeleton>
+  <tp-skeleton motion="none" style="block-size:var(--tp-space-4)"></tp-skeleton>
+</div>`}
+/>
+
+`motion` picks the treatment and never changes geometry. Reduced-motion preferences stop either animation; `animated` turns it off for a single placeholder.
+
+### Card
+
+<Preview
+  title="Card"
+  code={`<tp-card aria-busy="true" aria-label="Loading article" style="inline-size:20rem">
+  <div slot="header" style="display:grid;gap:var(--tp-space-2)">
+    <tp-skeleton style="inline-size:66%;block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:50%;block-size:var(--tp-space-4)"></tp-skeleton>
+  </div>
+  <tp-skeleton style="aspect-ratio:16 / 9;inline-size:100%;border-radius:var(--tp-radius-lg)"></tp-skeleton>
+</tp-card>`}
+/>
+
+Compose placeholders inside the real container so the page does not shift when content arrives.
+
+### Media and text
+
+Wrap a Skeleton in Aspect Ratio to hold the exact frame of an image or video, and use a few full-width lines with a shorter last one for a paragraph.
+
+<Preview
+  title="Video and description"
+  align="stretch"
+  code={`<div aria-busy="true" aria-label="Loading video" style="display:grid;gap:var(--tp-space-3);max-inline-size:24rem;margin-inline:auto;inline-size:100%">
+  <tp-aspect-ratio ratio="2" style="border-radius:var(--tp-radius-xl)">
+    <tp-skeleton style="border-radius:inherit"></tp-skeleton>
+  </tp-aspect-ratio>
+  <tp-skeleton style="inline-size:60%;block-size:var(--tp-space-5)"></tp-skeleton>
+  <div style="display:grid;gap:var(--tp-space-2)">
+    <tp-skeleton style="block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:75%;block-size:var(--tp-space-4)"></tp-skeleton>
+  </div>
+</div>`}
+/>
+
+### Forms
+
+Reserve each label, control and the submit button at their real heights, using the control-height tokens, so the form lands in place when its data arrives.
+
+<Preview
+  title="Settings form"
+  align="stretch"
+  code={`<div aria-busy="true" aria-label="Loading account settings" style="display:grid;gap:var(--tp-space-6);max-inline-size:24rem;margin-inline:auto;inline-size:100%">
+  <div style="display:grid;gap:var(--tp-space-2)">
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 20);block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="block-size:var(--tp-control-height-md)"></tp-skeleton>
+  </div>
+  <div style="display:grid;gap:var(--tp-space-2)">
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 28);block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="block-size:var(--tp-control-height-md)"></tp-skeleton>
+  </div>
+  <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 24);block-size:var(--tp-control-height-md)"></tp-skeleton>
+</div>`}
+/>
+
+### Lists
+
+<Preview
+  title="Table rows"
+  align="stretch"
+  code={`<div aria-busy="true" aria-label="Loading invoices" style="display:grid;gap:var(--tp-space-3);max-inline-size:30rem;margin-inline:auto">
+  <div style="display:flex;gap:var(--tp-space-4)">
+    <tp-skeleton style="flex:1;block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 20);block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 16);block-size:var(--tp-space-4)"></tp-skeleton>
+  </div>
+  <div style="display:flex;gap:var(--tp-space-4)">
+    <tp-skeleton style="flex:1;block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 20);block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 16);block-size:var(--tp-space-4)"></tp-skeleton>
+  </div>
+  <div style="display:flex;gap:var(--tp-space-4)">
+    <tp-skeleton style="flex:1;block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 20);block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 16);block-size:var(--tp-space-4)"></tp-skeleton>
+  </div>
+</div>`}
+/>
+
+Reserve repeated row geometry rather than rendering empty tables or disabled controls, which would expose fake structure.

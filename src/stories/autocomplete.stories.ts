@@ -1,8 +1,30 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { html } from 'lit';
-import documentation from '../../docs/autocomplete.md?raw';
-import { autocompleteDefaultSource, autocompleteExamples } from './autocomplete.examples.js';
+import { libraryDocs } from './library-docs.js';
+
+const fruits = [
+  'Apple',
+  'Apricot',
+  'Banana',
+  'Blackberry',
+  'Blueberry',
+  'Cherry',
+  'Grape',
+  'Mango',
+  'Passion fruit',
+  'Pineapple',
+  'Raspberry',
+  'Strawberry',
+];
+const options = (items: readonly string[], indent = '  ') =>
+  items.map((item) => `${indent}<option>${item}</option>`).join('\n');
+
+const autocompleteDefaultSource = `<tp-field label="Fruit" description="Try a typo: rasberry, bluebery">
+  <tp-autocomplete name="fruit" placeholder="Search fruit">
+${options(fruits, '    ')}
+  </tp-autocomplete>
+</tp-field>`;
 
 interface Args {
   matching: 'fuzzy' | 'contains' | 'prefix' | 'exact';
@@ -19,13 +41,7 @@ interface Args {
 const meta = {
   title: 'Components/Autocomplete',
   component: 'tp-autocomplete',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: autocompleteExamples,
-      source: { code: autocompleteDefaultSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/autocomplete') },
   args: {
     matching: 'fuzzy',
     completionMode: 'list',

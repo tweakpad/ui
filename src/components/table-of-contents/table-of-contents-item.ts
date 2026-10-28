@@ -12,10 +12,11 @@ function generatedTargetKey(target: Element): string {
 }
 
 /**
- * One entry of a table of contents (`ucl20-table-of-contents` Item). It names one target by
- * `href` (a fragment) or by the `target` element reference, which wins; `depth` only indents.
+ * One entry of a Table of contents: a link that names one target by `href` (a fragment) or by the
+ * `target` element reference, which wins. `depth` only indents; it never affects tracking.
  *
  * @slot - The link label.
+ * @fires tp-table-of-contents-item-change - Bubbles when `depth` changes, so the table of contents redraws its compact marks.
  * @csspart link - The native link; `data-active`, `data-current`.
  */
 export class TpTableOfContentsItem extends TpElement {
@@ -42,8 +43,11 @@ export class TpTableOfContentsItem extends TpElement {
     `,
   ];
 
+  /** The target as a fragment link, such as `#install`, resolved in this item's tree scope, then the document. */
   href: string | null = null;
+  /** The target as an element reference, for elements without ids or inside shadow roots; wins over `href`. */
   target: Element | null = null;
+  /** The indentation level, from 1; it does not change which item is current. */
   depth = 1;
   /** Set by the table of contents: the target's region contains the reading line. */
   active = false;

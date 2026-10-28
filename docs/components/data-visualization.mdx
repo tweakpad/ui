@@ -1,0 +1,235 @@
+---
+title: Data visualization
+description: A chart frame that connects your renderer to responsive sizing, series colors, tooltips, a legend and an accessible data table.
+tag: tp-data-visualization
+---
+
+<Preview
+  title="Data visualization"
+  align="stretch"
+  code={`<tp-data-visualization id="data-visualization-demo" label="Monthly revenue" description="Subscriptions grew every month from January to June; services peaked in April." interaction="both" style="max-inline-size:40rem;margin-inline:auto"></tp-data-visualization>`}
+  script={`const data = [
+  { month: 'Jan', subscriptions: 42, services: 18 },
+  { month: 'Feb', subscriptions: 48, services: 22 },
+  { month: 'Mar', subscriptions: 55, services: 19 },
+  { month: 'Apr', subscriptions: 61, services: 31 },
+  { month: 'May', subscriptions: 66, services: 24 },
+  { month: 'Jun', subscriptions: 74, services: 27 },
+];
+const svgNS = 'http://www.w3.org/2000/svg';
+const node = (name, attributes = {}) => {
+  const element = document.createElementNS(svgNS, name);
+  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value);
+  return element;
+};
+/** A minimal grouped bar renderer. Geometry and marks belong to you, not the library. */
+const barRenderer = {
+  mount(plot, { inspect, legend }) {
+    const svg = node('svg', { role: 'group', 'aria-label': 'Revenue by month, in thousands of dollars' });
+    plot.append(svg);
+    return {
+      update({ width, height, data, series, colors, interaction }) {
+        svg.setAttribute('viewBox', \`0 0 \${width} \${height}\`);
+        svg.replaceChildren();
+        const keys = Object.keys(series);
+        const max = Math.ceil(Math.max(...data.flatMap((row) => keys.map((key) => row[key]))) / 20) * 20;
+        const left = 44, bottom = height - 24, top = 8, plotHeight = bottom - top;
+        for (let tick = 0; tick <= 4; tick++) {
+          const y = bottom - (tick * plotHeight) / 4;
+          svg.append(node('line', { x1: left, x2: width, y1: y, y2: y, stroke: 'var(--tp-border)', 'stroke-dasharray': tick ? '3 4' : '' }));
+          const label = node('text', { x: left - 10, y: y + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'currentColor' });
+          label.textContent = '$' + (max * tick) / 4 + 'k';
+          svg.append(label);
+        }
+        const band = (width - left) / data.length;
+        data.forEach((row, index) => {
+          const x = left + index * band;
+          const label = node('text', { x: x + band / 2, y: height - 4, 'text-anchor': 'middle', 'font-size': 12, fill: 'currentColor' });
+          label.textContent = row.month;
+          svg.append(label);
+          const group = node('g', {
+            role: 'img',
+            tabindex: interaction === 'focus' || interaction === 'both' ? 0 : -1,
+            'aria-label': row.month + ': ' + keys.map((key) => series[key].label + ' $' + row[key] + 'k').join(', '),
+          });
+          group.style.outline = 'none';
+          const hit = node('rect', { x: x + 4, y: top, width: band - 8, height: plotHeight, rx: 6, fill: 'transparent' });
+          group.append(hit);
+          const barWidth = Math.min(28, (band - 24) / keys.length);
+          const start = x + (band - barWidth * keys.length) / 2;
+          keys.forEach((key, i) => {
+            const barHeight = (row[key] / max) * plotHeight;
+            group.append(node('rect', { x: start + i * barWidth + 2, y: bottom - barHeight, width: barWidth - 4, height: barHeight, rx: 4, fill: colors[key] }));
+          });
+          const report = (active, source) => inspect(active ? {
+            active: true, source, label: row.month,
+            anchor: { getBoundingRectangle: () => hit.getBoundingClientRect(), contextElement: hit },
+            payload: keys.map((key) => ({ dataKey: key, name: series[key].label, value: '$' + row[key] + 'k', color: colors[key], payload: row })),
+          } : { active: false, source, payload: [] });
+          const highlight = (on) => hit.setAttribute('fill', on ? 'var(--tp-muted)' : 'transparent');
+          group.addEventListener('pointerenter', () => { highlight(true); report(true, 'pointer'); });
+          group.addEventListener('pointerleave', () => { highlight(false); report(false, 'pointer'); });
+          group.addEventListener('focus', () => { highlight(true); report(true, 'focus'); });
+          group.addEventListener('blur', () => { highlight(false); report(false, 'focus'); });
+          svg.append(group);
+        });
+        legend(keys.map((key) => ({ dataKey: key, value: series[key].label, color: colors[key] })));
+      },
+      destroy() { svg.remove(); },
+    };
+  },
+};
+const chart = document.querySelector('#data-visualization-demo');
+chart.series = {
+  subscriptions: { label: 'Subscriptions', color: 'var(--tp-chart-1)' },
+  services: { label: 'Services', color: 'var(--tp-chart-2)' },
+};
+chart.data = data;
+chart.renderer = barRenderer;`}
+/>
+
+## Usage
+
+Data visualization is the frame around a chart, not a chart engine. You supply `data`, keyed `series` (label and color) and a `renderer`; the component measures the plot, resolves series colors from the theme (`--tp-chart-1` to `--tp-chart-5` by default), and draws the tooltip and legend from what your renderer reports. Use plain SVG, as above, or wrap a charting library in the same adapter.
+
+Series records accept `label`, an `IconDefinition` in `icon`, opaque `appearance`, and optional `color` or `theme: { light, dark }` colors.
+
+A renderer is an object with `mount(plot, { inspect, legend })` that returns `{ update(snapshot), destroy() }`. `update` runs on resize, data and theme changes with the current `width`, `height`, `data`, `series`, `colors` and `interaction`; `destroy` removes your nodes and listeners.
+
+The initial dimensions are 320 × 200; ResizeObserver replaces them when the plot becomes measurable. Zero-sized parents retain the last nonzero dimensions. Adapter replacement and disconnect destroy the old instance; reconnect mounts a new one. Late callbacks from a destroyed instance are ignored.
+
+### Inspection
+
+`interaction` sets how people inspect values: `none`, `pointer`, `focus` or `both`. Your renderer calls `inspect()` with the active datum and the same payload for pointer and keyboard, and the component shows it in the library Tooltip. `tooltipOptions` adjusts that tooltip, for example `indicator: 'line'`, and `legendOptions` moves the legend to the `top`.
+
+The Root composes `tp-tooltip`, retaining its positioning, lifecycle, Escape dismissal, and tooltip role. Inactive and empty payloads produce no content.
+
+Formatters replace presentation, not series identity, payload ordering, or active state. Return text, Lit content, or library components; tooltip content must remain noninteractive.
+
+<Preview
+  title="Line chart"
+  align="stretch"
+  code={`<tp-data-visualization id="data-visualization-demo-line" label="Weekly active users" description="Active users rose from 1,240 to 2,180 over eight weeks, with a dip in week 5." interaction="both" style="max-inline-size:40rem;margin-inline:auto"></tp-data-visualization>`}
+  script={`const data = [1240, 1380, 1460, 1610, 1520, 1790, 1960, 2180].map((users, i) => ({ week: 'Week ' + (i + 1), users }));
+const svgNS = 'http://www.w3.org/2000/svg';
+const node = (name, attributes = {}) => {
+  const element = document.createElementNS(svgNS, name);
+  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value);
+  return element;
+};
+const lineRenderer = {
+  mount(plot, { inspect, legend }) {
+    const svg = node('svg', { role: 'group', 'aria-label': 'Weekly active users' });
+    plot.append(svg);
+    return {
+      update({ width, height, data, series, colors }) {
+        svg.setAttribute('viewBox', \`0 0 \${width} \${height}\`);
+        svg.replaceChildren();
+        const color = colors.users;
+        const left = 16, right = width - 16, bottom = height - 28, top = 12;
+        const x = (i) => left + (i * (right - left)) / (data.length - 1);
+        const y = (value) => bottom - ((value - 1000) / 1400) * (bottom - top);
+        const points = data.map((row, i) => x(i) + ',' + y(row.users)).join(' ');
+        svg.append(node('line', { x1: left, x2: right, y1: bottom, y2: bottom, stroke: 'var(--tp-border)' }));
+        svg.append(node('polygon', { points: \`\${left},\${bottom} \${points} \${right},\${bottom}\`, fill: color, 'fill-opacity': 0.12 }));
+        svg.append(node('polyline', { points, fill: 'none', stroke: color, 'stroke-width': 2.5, 'stroke-linejoin': 'round' }));
+        data.forEach((row, i) => {
+          const label = node('text', { x: x(i), y: height - 6, 'text-anchor': i === 0 ? 'start' : i === data.length - 1 ? 'end' : 'middle', 'font-size': 12, fill: 'currentColor' });
+          label.textContent = row.week;
+          svg.append(label);
+          const dot = node('circle', { cx: x(i), cy: y(row.users), r: 4, fill: 'var(--tp-background)', stroke: color, 'stroke-width': 2, tabindex: 0, role: 'img', 'aria-label': row.week + ': ' + row.users + ' users' });
+          dot.style.outline = 'none';
+          const report = (active, source) => inspect(active ? {
+            active: true, source, label: row.week,
+            anchor: { getBoundingRectangle: () => dot.getBoundingClientRect(), contextElement: dot },
+            payload: [{ dataKey: 'users', name: series.users.label, value: row.users.toLocaleString(), color, payload: row }],
+          } : { active: false, source, payload: [] });
+          dot.addEventListener('pointerenter', () => report(true, 'pointer'));
+          dot.addEventListener('pointerleave', () => report(false, 'pointer'));
+          dot.addEventListener('focus', () => { dot.setAttribute('r', 6); report(true, 'focus'); });
+          dot.addEventListener('blur', () => { dot.setAttribute('r', 4); report(false, 'focus'); });
+          svg.append(dot);
+        });
+        legend([{ dataKey: 'users', value: series.users.label, color }]);
+      },
+      destroy() { svg.remove(); },
+    };
+  },
+};
+const chart = document.querySelector('#data-visualization-demo-line');
+chart.series = { users: { label: 'Active users', color: 'var(--tp-chart-3)' } };
+chart.tooltipOptions = { indicator: 'line' };
+chart.legendOptions = { placement: 'top' };
+chart.data = data;
+chart.renderer = lineRenderer;`}
+/>
+
+### Accessible data
+
+Every chart needs a text equivalent. `description` should state the takeaway, not restate the axes, and the `table` slot takes a `tp-table` with the complete dataset for people who can't read the graphic. Without either, the component reports a `tp-diagnostic`. Give each mark an accessible name too, and don't rely on color alone when series need telling apart.
+
+<Preview
+  title="Description and table"
+  align="stretch"
+  code={`<style>
+  #data-visualization-demo-table::part(data-visualization-plot-region) { aspect-ratio: 3 / 1; }
+</style>
+<tp-data-visualization id="data-visualization-demo-table" label="Storage by team" description="Design and Marketing use most of their storage on media; Engineering stores mostly files." style="max-inline-size:40rem;margin-inline:auto">
+  <tp-table slot="table" label="Storage by team">
+    <table>
+      <caption>Storage used by team, in GB</caption>
+      <thead><tr><th scope="col">Team</th><th scope="col">Files</th><th scope="col">Media</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Design</th><td>120</td><td>340</td></tr>
+        <tr><th scope="row">Engineering</th><td>210</td><td>45</td></tr>
+        <tr><th scope="row">Marketing</th><td>80</td><td>260</td></tr>
+      </tbody>
+    </table>
+  </tp-table>
+</tp-data-visualization>`}
+  script={`const svgNS = 'http://www.w3.org/2000/svg';
+const node = (name, attributes = {}) => {
+  const element = document.createElementNS(svgNS, name);
+  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value);
+  return element;
+};
+/** Stacked horizontal bars; the table carries the exact values. */
+const stackedRenderer = {
+  mount(plot, { legend }) {
+    const svg = node('svg', { role: 'img', 'aria-label': 'Storage by team, files and media stacked' });
+    plot.append(svg);
+    return {
+      update({ width, height, data, series, colors }) {
+        svg.setAttribute('viewBox', \`0 0 \${width} \${height}\`);
+        svg.replaceChildren();
+        const keys = Object.keys(series);
+        const left = 96, max = 500, row = height / data.length;
+        data.forEach((item, index) => {
+          const y = index * row + row * 0.32;
+          const label = node('text', { x: 0, y: y + row * 0.18 + 4, 'font-size': 12, fill: 'currentColor' });
+          label.textContent = item.team;
+          svg.append(label);
+          let x = left;
+          keys.forEach((key) => {
+            const w = (item[key] / max) * (width - left);
+            svg.append(node('rect', { x, y, width: Math.max(0, w - 2), height: row * 0.36, rx: 4, fill: colors[key] }));
+            x += w;
+          });
+        });
+        legend(keys.map((key) => ({ dataKey: key, value: series[key].label, color: colors[key] })));
+      },
+      destroy() { svg.remove(); },
+    };
+  },
+};
+const chart = document.querySelector('#data-visualization-demo-table');
+chart.series = { files: { label: 'Files', color: 'var(--tp-chart-1)' }, media: { label: 'Media', color: 'var(--tp-chart-4)' } };
+chart.data = [
+  { team: 'Design', files: 120, media: 340 },
+  { team: 'Engineering', files: 210, media: 45 },
+  { team: 'Marketing', files: 80, media: 260 },
+];
+chart.renderer = stackedRenderer;`}
+/>
+
+Keep the table in sync with `data`; it is the exact source for anyone using a screen reader or copying values. The plot is 16:9 by default; the `data-visualization-plot-region` part changes that, as here for a short bar list.

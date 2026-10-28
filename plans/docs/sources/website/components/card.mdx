@@ -1,0 +1,104 @@
+---
+title: Card
+description: A token-based surface with header, content and an action footer for related content.
+tag: tp-card
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Card"
+  code={`<tp-card style="inline-size:100%;max-inline-size:28rem">
+  <h3 slot="header" style="margin:0">Invite teammates</h3>
+  <p slot="description" style="margin:0">Members can view projects and leave comments.</p>
+  <tp-field label="Email addresses" description="Separate addresses with commas">
+    <tp-input name="emails" type="email" placeholder="alex@acme.com, sam@acme.com"></tp-input>
+  </tp-field>
+  <tp-button slot="footer" variant="outline" size="sm">Copy invite link</tp-button>
+  <tp-button slot="footer" size="sm">Send invites</tp-button>
+</tp-card>`}
+/>
+
+## Usage
+
+The Card owns the surface, header, content and footer layout; everything you slot stays yours. Use a real heading element in the `header` slot so the card appears in the document outline, and `tp-button` in the `footer` for actions.
+
+### Slots
+
+`header`, `description` and `action` make up the header, the default slot is the content and `footer` holds trailing actions or metadata. Empty sections take no space, so a content-only Card is just a padded surface.
+
+<Preview
+  title="Header action"
+  code={`<tp-card style="inline-size:100%;max-inline-size:28rem">
+  <h3 slot="header" style="margin:0">Billing</h3>
+  <p slot="description" style="margin:0">Pro plan · renews on November 1, 2026</p>
+  <tp-button slot="action" variant="outline" size="sm">Manage</tp-button>
+  <p style="margin:0">12 of 15 seats in use. Seats added mid-cycle are prorated on the next invoice.</p>
+  <span slot="footer" style="font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">Last invoice paid October 1</span>
+</tp-card>`}
+/>
+
+Every slot is optional. Without a header or footer, the card is a single padded surface for a short note or summary.
+
+<Preview
+  title="Content only"
+  code={`<tp-card style="inline-size:100%;max-inline-size:28rem">
+  <p style="margin:0">Your weekly report is ready: 18 tasks closed, 4 opened, and the Q3 launch is on track.</p>
+</tp-card>`}
+/>
+
+### Borders and section colors
+
+`borders` and `section-colors` are independent. Turn section colors off for one uniform fill, or borders off when the card sits on a contrasting surface.
+
+<Preview
+  title="Surface options"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:var(--tp-space-4)">
+  <tp-card section-colors="off">
+    <h3 slot="header" style="margin:0">Uniform fill</h3>
+    <p style="margin:0">Header, content and footer share the base surface.</p>
+    <tp-button slot="footer" size="sm" variant="outline">Details</tp-button>
+  </tp-card>
+  <tp-card borders="off">
+    <h3 slot="header" style="margin:0">No borders</h3>
+    <p style="margin:0">Sections are separated by fill alone.</p>
+    <tp-button slot="footer" size="sm" variant="outline">Details</tp-button>
+  </tp-card>
+  <tp-card borders="off" section-colors="off">
+    <h3 slot="header" style="margin:0">Plain</h3>
+    <p style="margin:0">A single flat surface for dense layouts.</p>
+    <tp-button slot="footer" size="sm" variant="outline">Details</tp-button>
+  </tp-card>
+</div>`}
+/>
+
+### Elevation
+
+`elevated` adds a medium shadow and changes nothing else, so it combines with every border and color setting. Use it for cards that float above the page, not for every card in a grid.
+
+<Preview
+  title="Elevated"
+  code={`<tp-card elevated style="inline-size:100%;max-inline-size:22rem">
+  <h3 slot="header" style="margin:0">Storage almost full</h3>
+  <p slot="description" style="margin:0">9.2 GB of 10 GB used</p>
+  <p style="margin:0">Upgrade to keep syncing new files and version history.</p>
+  <tp-button slot="footer" variant="ghost" size="sm">Dismiss</tp-button>
+  <tp-button slot="footer" size="sm">Upgrade</tp-button>
+</tp-card>`}
+/>
+
+### Sizes
+
+`size="sm"` tightens section padding for sidebars, dashboards and nested content.
+
+<Preview
+  title="Small"
+  code={`<tp-card size="sm" style="inline-size:100%;max-inline-size:18rem">
+  <h3 slot="header" style="margin:0">Monthly active users</h3>
+  <p style="margin:0;font-size:var(--tp-text-2xl);font-weight:var(--tp-font-semibold)">48,210</p>
+  <span slot="footer" style="font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">+6.4% from September</span>
+</tp-card>`}
+/>
+
+Card has no whole-card click target. When a card should navigate, put a link on its heading or a Button in its footer so the interactive element has its own name and focus.
