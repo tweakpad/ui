@@ -1,6 +1,7 @@
 import { ambientAnimation, motionTransition, presenceMotion } from '../motion.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
-import { activeRing, focusRing, thumb } from './shared/handle.js';
+import { focusRing } from './shared/focus.js';
+import { activeRing, thumb } from './shared/handle.js';
 import { popupBorder, sectionFooterAppearance, surfaceAppearance } from './shared/surface.js';
 
 // Widgets Specification 6.3 Presentation: path geometry, label anchors and port positions are

@@ -1,6 +1,7 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 import { fillColor, fillShown } from './shared/fill.js';
+import { focusRing } from './shared/focus.js';
 const invalidPaint = {
   'border-color':
     'light-dark(var(--tp-destructive), color-mix(in oklab, var(--tp-destructive) 50%, transparent))',
@@ -30,7 +31,7 @@ export const switchAppearance: PresentationDictionary = {
     {
       selector: '&[data-focus-visible]:focus-visible',
       declarations: {
-        outline: 'none',
+        ...focusRing,
         'border-color': 'var(--tp-ring)',
         'box-shadow':
           '0 0 0 var(--tp-ring-width) color-mix(in oklab, var(--tp-ring) 50%, transparent)',
@@ -38,7 +39,7 @@ export const switchAppearance: PresentationDictionary = {
     },
     {
       selector: '&[data-invalid][data-focus-visible]:focus-visible',
-      declarations: { outline: 'none', ...invalidPaint },
+      declarations: { 'outline-color': 'var(--tp-destructive)', ...invalidPaint },
     },
     {
       selector: '&[data-invalid]',

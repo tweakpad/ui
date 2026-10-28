@@ -21,7 +21,11 @@ export const menuSurface: readonly PresentationRule[] = [
 ];
 // Menu's tree owns active paint; focus, checked values and expanded paths are independent.
 export const menuItem: readonly PresentationRule[] = [
-  ...commandItemRules('&[data-highlighted]:not([data-disabled], [aria-disabled="true"])'),
+  // A pointer highlights rows too; only the keyboard-highlighted row carries the ring.
+  ...commandItemRules(
+    '&[data-highlighted]:not([data-disabled], [aria-disabled="true"])',
+    '&:is(:focus-visible, [data-focus-visible]):not([data-disabled], [aria-disabled="true"])',
+  ),
   // Submenu triggers reuse Button, but active Menu rows must switch together.
   // An inherited Button fade leaves the previous row painted after ownership moves.
   { declarations: { transition: 'none' } },
