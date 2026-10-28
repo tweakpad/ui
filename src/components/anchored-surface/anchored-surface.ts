@@ -2,6 +2,7 @@ import { anchoredArrowStyles } from '../shared/anchored-arrow.js';
 import { SURFACE_HOST } from '../../foundation/surface-brand.js';
 import { css, html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { PopupViewportController } from '../../foundation/popup-viewport.js';
 import type { CSSResultGroup, PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
@@ -253,9 +254,7 @@ export abstract class TpAnchoredSurface extends TpElement {
         pointer-events: none;
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
   #defaultOpen = false;

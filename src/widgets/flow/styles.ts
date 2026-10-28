@@ -338,10 +338,6 @@ export const flowNodeStyles = css`
     outline: none;
   }
 
-  :host([hidden]) {
-    display: none;
-  }
-
   .host {
     position: relative;
     display: block;

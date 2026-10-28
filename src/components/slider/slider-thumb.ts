@@ -4,6 +4,7 @@ import { TpElement } from '../../foundation/element.js';
 import { TpFormElement } from '../../foundation/form-element.js';
 import { bindPart, mergePartProperties, renderPart } from '../../foundation/part.js';
 import { createId } from '../../foundation/id.js';
+import { applyMarkers, stateMarkers } from '../../foundation/state-markers.js';
 import { sliderThumbStyles } from './styles.js';
 import type { SliderThumbOwner, SliderThumbState, SliderVariant } from './types.js';
 import { sliderPresentation } from '../../presentation/families/slider.js';
@@ -124,7 +125,6 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
         '.step': String(state.step),
         '.value': finite(state.value) ?? nativeMinimum,
         '.disabled': state.disabled,
-        '.required': state.required,
         tabindex: state.disabled ? -1 : this.tabIndex,
         'aria-label': state.label || undefined,
         'aria-valuetext': state.valueText,
@@ -134,7 +134,6 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
         'aria-disabled': state.indeterminate ? 'true' : undefined,
         'aria-orientation': state.orientation,
         'aria-readonly': state.readOnly ? 'true' : undefined,
-        'aria-required': state.required ? 'true' : undefined,
         'aria-invalid': state.invalid ? 'true' : undefined,
         '@input': (event: Event) => {
           if (!this.#canceledAdjustmentKey)
@@ -191,18 +190,22 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
   }
   #markers(state: SliderThumbState): Record<string, unknown> {
     return {
-      'data-index': state.index,
-      'data-orientation': state.orientation,
-      'data-disabled': state.disabled,
-      'data-indeterminate': state.indeterminate,
-      'data-dragging': state.dragging,
-      'data-active': state.active,
-      'data-invalid': state.invalid,
+      ...stateMarkers(
+        state,
+        [
+          'disabled',
+          'indeterminate',
+          'dragging',
+          'active',
+          'invalid',
+          'readOnly',
+          'focused',
+          'touched',
+          'dirty',
+        ],
+        ['index', 'orientation'],
+      ),
       'data-valid': !state.invalid,
-      'data-readonly': state.readOnly,
-      'data-focused': state.focused,
-      'data-touched': state.touched,
-      'data-dirty': state.dirty,
     };
   }
   #cancelAdjustmentInput(event: KeyboardEvent): void {
@@ -244,10 +247,7 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
     this.setFormValue(null);
     if (this.#owner) {
       const state = this.#owner.thumbState(this);
-      for (const [key, value] of Object.entries(this.#markers(state))) {
-        if (value === false || value === undefined) this.removeAttribute(key);
-        else this.setAttribute(key, value === true ? '' : String(value));
-      }
+      applyMarkers(this, this.#markers(state));
       for (const [key, value] of Object.entries(this.#owner.thumbPosition(this)))
         this.style.setProperty(key, value);
     }

@@ -10,10 +10,6 @@ export const emojiPickerStyles = css`
     min-block-size: 0;
   }
 
-  :host([hidden]) {
-    display: none;
-  }
-
   .root,
   .panel {
     display: flex;

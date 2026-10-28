@@ -40,7 +40,7 @@ Standalone Toggle has optional controlled `pressed`, `defaultPressed` / `default
 
 Click, Enter and Space propose `trigger-press`. In single mode, pressing the selected Toggle clears selection. In multiple mode, membership is ordered by registered items and retains unmatched selected values. Missing or duplicate identities emit diagnostics and later invalid items are excluded. Single mode derives only the first controlled value and diagnoses larger cardinality.
 
-In a standalone Group, arrow keys follow orientation/direction and skip disabled members; Home/End move to boundary items. Navigation changes focus without selecting. A standalone Group is one tab stop and exposes group semantics, while items remain buttons with `aria-pressed`. Nested groups isolate members. Removal preserves stored values for matching remount. Action controls never submit a value or reset on native form reset; consumer-owned form participation must be explicit.
+In a standalone Group, arrow keys follow orientation/direction and skip disabled members; Home/End move to boundary items. Consumed keys and keys carrying Alt, Ctrl or Meta are left to the browser. Navigation changes focus without selecting. A standalone Group is one tab stop and exposes group semantics, while items remain buttons with `aria-pressed`. Nested groups isolate members. Removal preserves stored values for matching remount. Action controls never submit a value or reset on native form reset; consumer-owned form participation must be explicit.
 
 Public methods include `setValue`, `focus(options?)`, `blur()` and shared Field association/context. Toggle exposes `controlElement`, `toggleDisabled` and label activation. The group forwards focus to its current tab stop.
 

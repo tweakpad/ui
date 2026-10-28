@@ -7,6 +7,7 @@ import { css, html, type PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
+import { observeResize, observeSubtree } from '../../foundation/observation.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import { dispatchTpEvent, type TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
@@ -142,8 +143,8 @@ export class TpResizablePanelGroup extends TpElement {
   #expanded = new Map<string, number>();
   #registrations = new Map<HTMLElement, () => void>();
   #oldFlex = new Map<HTMLElement, string>();
-  #resize: ResizeObserver | undefined;
-  #mutation: MutationObserver | undefined;
+  #releaseResize: (() => void) | undefined;
+  #releaseChildren: (() => void) | undefined;
   #frame: number | undefined;
   #restoring = false;
   #restoreVersion = 0;
@@ -666,19 +667,22 @@ export class TpResizablePanelGroup extends TpElement {
     super.connectedCallback();
     if (!this.id) this.id = createId('tp-panel-group');
     this.addEventListener('tp-resizable-member-change', this.#memberChange);
-    const view = this.ownerDocument.defaultView!;
-    this.#resize = new view.ResizeObserver(this.#schedule);
-    this.#resize.observe(this);
-    this.#mutation = new view.MutationObserver(this.#sync);
-    this.#mutation.observe(this, { childList: true });
+    this.#releaseResize = observeResize(this, this.#schedule);
+    this.#releaseChildren = observeSubtree(this, this.#sync, {
+      content: true,
+      attributes: false,
+      subtree: false,
+    });
     void this.#restore();
     this.#sync();
   }
   override disconnectedCallback(): void {
     this.#stop();
     this.#restoreVersion++;
-    this.#resize?.disconnect();
-    this.#mutation?.disconnect();
+    this.#releaseResize?.();
+    this.#releaseResize = undefined;
+    this.#releaseChildren?.();
+    this.#releaseChildren = undefined;
     this.removeEventListener('tp-resizable-member-change', this.#memberChange);
     if (this.#frame !== undefined)
       this.ownerDocument.defaultView?.cancelAnimationFrame(this.#frame);

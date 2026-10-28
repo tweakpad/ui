@@ -19,10 +19,6 @@ const labelStyles = css`
        which would replace a centering \`transform\` here; the individual property composes. */
     translate: -50% -50%;
   }
-
-  :host([hidden]) {
-    display: none;
-  }
 `;
 
 /**

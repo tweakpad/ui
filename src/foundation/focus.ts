@@ -180,6 +180,21 @@ export function trapTabKey(event: KeyboardEvent, root: ParentNode): void {
   }
 }
 
+/**
+ * Keeps keyboard focus in a list after one entry is removed: the entry now at the removed
+ * index (the former next one), else the last remaining entry (the former previous one), else
+ * the fallback control that owns the list. `candidates` are the entries left after removal.
+ */
+export function focusAfterRemoval(
+  candidates: readonly HTMLElement[],
+  index: number,
+  fallback: HTMLElement | null,
+  options: FocusOptions = { preventScroll: true },
+): void {
+  const target = candidates[Math.min(index, candidates.length - 1)] ?? fallback;
+  target?.focus(options);
+}
+
 const managing = new WeakSet<Document>();
 
 /**

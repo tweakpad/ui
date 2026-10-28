@@ -1,5 +1,6 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
+import { focusRing } from './shared/focus.js';
 
 // Slider paint; geometry belongs to the family.
 export const sliderAppearance: PresentationDictionary = {
@@ -49,6 +50,8 @@ export const sliderAppearance: PresentationDictionary = {
           '0 0 0 calc(var(--tp-ring-width) * 1.5) color-mix(in oklab, var(--tp-ring) 50%, transparent)',
       },
     },
+    // The halo is shared with hover; keyboard focus adds the ring.
+    { selector: '&:has(input:focus-visible)', declarations: focusRing },
     // The host already applies the disabled opacity; dimming the thumb too would double it.
     { selector: '&[data-disabled]', declarations: { cursor: 'not-allowed' } },
     { selector: '&[data-invalid]', declarations: { 'border-color': 'var(--tp-destructive)' } },
@@ -84,10 +87,7 @@ export const sliderAppearance: PresentationDictionary = {
     {
       // The thumbless track carries keyboard focus indication.
       selector: '[part~="slider"][data-focus-visible] &',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
-      },
+      declarations: focusRing,
     },
   ],
   'slider-buffer-variant-bar': [
@@ -108,6 +108,8 @@ export const sliderAppearance: PresentationDictionary = {
         '&:hover:not([data-disabled]), &:has(input:focus-visible), &[data-active]:not([data-disabled])',
       declarations: { 'box-shadow': 'none' },
     },
+    // The Track carries the ring; the unpainted Thumb draws none.
+    { selector: '&:has(input:focus-visible)', declarations: { outline: 'none' } },
   ],
   'slider-label': [
     { declarations: { 'font-size': 'var(--tp-text-sm)', 'font-weight': 'var(--tp-font-medium)' } },

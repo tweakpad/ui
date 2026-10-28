@@ -1,13 +1,15 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { observeSubtree } from '../../foundation/observation.js';
 import {
   prepareMotion,
   type MotionHandle,
   type MotionRoleDefinition,
   stateRole,
 } from '../../foundation/motion.js';
-import { TpCheckbox } from '../checkbox/index.js';
+import { BOOLEAN_CONTROL_MARKERS, TpCheckbox } from '../checkbox/checkbox.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import type { SwitchState } from './types.js';
 import { switchPresentation } from '../../presentation/families/switch.js';
 import { fillLayerStyles } from '../../presentation/motion.js';
@@ -21,6 +23,9 @@ export const switchMotionRoles = {
   track: stateRole('track'),
   thumb: stateRole('thumb'),
 } as const satisfies Record<string, MotionRoleDefinition>;
+
+/** The Thumb is never mixed, so it omits the indeterminate marker. */
+const SWITCH_THUMB_MARKERS = BOOLEAN_CONTROL_MARKERS.filter((key) => key !== 'indeterminate');
 
 /** Binary setting policy bound to the existing Checkbox Boolean/action/form owner. */
 export class TpSwitch extends TpCheckbox {
@@ -110,7 +115,7 @@ export class TpSwitch extends TpCheckbox {
   size: 'sm' | 'default' = 'default';
   #motion: MotionHandle[] = [];
   #labelText = '';
-  #labelObserver: MutationObserver | null = null;
+  #releaseLabel: (() => void) | undefined;
   protected override get supportsIndeterminate(): boolean {
     return false;
   }
@@ -141,11 +146,10 @@ export class TpSwitch extends TpCheckbox {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#syncLabel();
-    const Observer = this.ownerDocument.defaultView?.MutationObserver;
-    if (Observer) {
-      this.#labelObserver = new Observer(this.#syncLabel);
-      this.#labelObserver.observe(this, { childList: true, subtree: true, characterData: true });
-    }
+    this.#releaseLabel = observeSubtree(this, this.#syncLabel, {
+      content: true,
+      attributes: false,
+    });
     this.requestUpdate();
   }
   protected override willUpdate(changed: PropertyValues<this>): void {
@@ -179,20 +183,7 @@ export class TpSwitch extends TpCheckbox {
         class: 'thumb',
         'aria-hidden': 'true',
         tabindex: -1,
-        'data-checked': state.checked,
-        'data-unchecked': !state.checked,
-        'data-disabled': state.disabled,
-        'data-readonly': state.readOnly,
-        'data-read-only': state.readOnly,
-        'data-required': state.required,
-        'data-invalid': state.invalid,
-        'data-valid': state.valid === true,
-        'data-focused': state.focused,
-        'data-focus-visible': state.focusVisible,
-        'data-touched': state.touched,
-        'data-dirty': state.dirty,
-        'data-filled': state.filled,
-        'data-size': state.size,
+        ...stateMarkers(state, SWITCH_THUMB_MARKERS, ['size']),
       },
       // The Thumb accepts authored content; it is decorative.
       content: html`<slot name="thumb"></slot>`,
@@ -216,8 +207,8 @@ export class TpSwitch extends TpCheckbox {
     }
   }
   override disconnectedCallback(): void {
-    this.#labelObserver?.disconnect();
-    this.#labelObserver = null;
+    this.#releaseLabel?.();
+    this.#releaseLabel = undefined;
     for (const handle of this.#motion) handle.cancel();
     this.#motion = [];
     super.disconnectedCallback();

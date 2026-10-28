@@ -1,5 +1,6 @@
 import { html, nothing, svg, type PropertyValues } from 'lit';
 import { TpElement } from '../../../foundation/element.js';
+import { stateMarkers } from '../../../foundation/state-markers.js';
 import { createId } from '../../../foundation/id.js';
 import { bindPart } from '../../../foundation/part.js';
 import { PointerDrag, type PointerDragPoint } from '../../../foundation/pointer-drag.js';
@@ -669,13 +670,16 @@ export class TpEasingEditorGraph extends TpElement {
       this.#active !== undefined &&
       this.#active.kind === active.kind &&
       this.#active.index === active.index;
-    return {
-      'data-disabled': this.disabled,
-      'data-readonly': this.readOnly,
-      'data-dragging': isDragging,
-      'data-focused': isFocused,
-      'data-focus-visible': isFocused && this.#focusVisible,
-    };
+    return stateMarkers(
+      {
+        disabled: this.disabled,
+        readOnly: this.readOnly,
+        dragging: isDragging,
+        focused: isFocused,
+        focusVisible: isFocused && this.#focusVisible,
+      },
+      ['disabled', 'readOnly', 'dragging', 'focused', 'focusVisible'],
+    );
   }
 
   #renderHandle(curve: BezierCurve, index: 1 | 2) {

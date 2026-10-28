@@ -1,4 +1,5 @@
 import { presenceMotion } from '../motion.js';
+import { insetFocusRing } from './shared/focus.js';
 import { popupBorder, popupBorderColor } from './shared/surface.js';
 import type { PresentationRule } from '../resolver.js';
 
@@ -96,8 +97,13 @@ export const popupTriggerAppearance: readonly PresentationRule[] = [
   { declarations: { transition: 'none' } },
 ];
 
+/**
+ * Command rows. The highlight fill marks the active row; `focusSelector` names the rows that
+ * also carry the inset focus ring, since the fill alone is a color-only cue.
+ */
 export function commandItemRules(
   highlightSelector = '&:is(:focus, [data-highlighted]):not([data-disabled], [aria-disabled="true"])',
+  focusSelector = '&:is(:focus-visible, [data-focus-visible], [data-highlighted]):not([data-disabled], [aria-disabled="true"])',
 ): readonly PresentationRule[] {
   return [
     {
@@ -117,6 +123,7 @@ export function commandItemRules(
       selector: highlightSelector,
       declarations: commandItemHighlightAppearance,
     },
+    { selector: focusSelector, declarations: insetFocusRing },
     // The translucent surface explicitly overrides the destructive descendant text.
     {
       selector: '&[variant="destructive"]',

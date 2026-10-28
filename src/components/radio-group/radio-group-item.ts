@@ -1,6 +1,7 @@
 import { css, html } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import { TpFormElement } from '../../foundation/form-element.js';
 import { PresenceController } from '../../foundation/presence.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
@@ -117,7 +118,15 @@ export class TpRadioGroupItem extends TpFormElement<unknown> {
       disabled = this.radioDisabled,
       required = this.required || !!this.#owner?.required;
     const invalid = this.effectiveInvalid || !!this.#owner?.effectiveInvalid;
-    const state = { checked, disabled, readOnly: this.radioReadOnly, required, invalid };
+    const state = {
+      checked,
+      disabled,
+      readOnly: this.radioReadOnly,
+      required,
+      invalid,
+      valid: !invalid,
+      focusVisible: this.#focusVisible,
+    };
     const indicator = this.renderPart('radio-group-indicator', state, {
       tag: 'span',
       enabled: this.#presence.mounted,
@@ -151,17 +160,16 @@ export class TpRadioGroupItem extends TpFormElement<unknown> {
           tabindex: disabled ? -1 : (this.#owner?.tabStop(this) ?? -1),
           'aria-checked': String(checked),
           'aria-disabled': disabled ? 'true' : undefined,
-          'aria-required': required ? 'true' : undefined,
-          'aria-readonly': this.radioReadOnly ? 'true' : undefined,
           'aria-invalid': invalid ? 'true' : undefined,
-          'data-checked': checked,
-          'data-unchecked': !checked,
-          'data-disabled': disabled,
-          'data-read-only': this.radioReadOnly,
-          'data-required': required,
-          'data-focus-visible': this.#focusVisible,
-          'data-invalid': invalid,
-          'data-valid': !invalid,
+          ...stateMarkers(state, [
+            'checked',
+            'disabled',
+            'readOnly',
+            'required',
+            'focusVisible',
+            'invalid',
+            'valid',
+          ]),
           '@click': this.#click,
           '@keydown': this.#keyDown,
           '@keyup': this.#keyUp,

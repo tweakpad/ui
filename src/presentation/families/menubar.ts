@@ -1,6 +1,6 @@
 import type { ComponentDefinition } from '../definition.js';
 import { definePresentation } from '../family.js';
-import { coarseTarget } from '../recipes/shared/target.js';
+import { menuItemStructure, menuShortcutStructure } from '../recipes/shared/menu-item.js';
 import { menubarAppearance } from '../recipes/menubar.js';
 
 const definition: ComponentDefinition = {
@@ -45,60 +45,9 @@ const definition: ComponentDefinition = {
 export const menubarPresentation = definePresentation({
   definition,
   structure: {
-    'menubar-shortcut': [
-      {
-        declarations: {
-          'margin-inline-start': 'auto',
-          flex: 'none',
-        },
-      },
-    ],
-    'menubar-item': [
-      {
-        declarations: {
-          'box-sizing': 'border-box',
-          display: 'flex',
-          'align-items': 'center',
-          'inline-size': '100%',
-          // Items have no fixed or minimum extent (a reused Button sub-trigger
-          // included); touch keeps the accessible target.
-          'block-size': 'auto',
-          'min-block-size': coarseTarget,
-          'text-align': 'start',
-          'justify-content': 'start',
-          cursor: 'pointer',
-        },
-      },
-      {
-        selector: '&[aria-disabled="true"]',
-        declarations: {
-          cursor: 'not-allowed',
-        },
-      },
-    ],
-    'menubar-sub-trigger': [
-      {
-        declarations: {
-          'box-sizing': 'border-box',
-          display: 'flex',
-          'align-items': 'center',
-          'inline-size': '100%',
-          // Items have no fixed or minimum extent (a reused Button sub-trigger
-          // included); touch keeps the accessible target.
-          'block-size': 'auto',
-          'min-block-size': coarseTarget,
-          'text-align': 'start',
-          'justify-content': 'start',
-          cursor: 'pointer',
-        },
-      },
-      {
-        selector: '&[aria-disabled="true"]',
-        declarations: {
-          cursor: 'not-allowed',
-        },
-      },
-    ],
+    'menubar-shortcut': menuShortcutStructure,
+    'menubar-item': menuItemStructure,
+    'menubar-sub-trigger': menuItemStructure,
   },
   sources: [menubarAppearance],
 });

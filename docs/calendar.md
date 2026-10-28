@@ -63,7 +63,7 @@ calendar.addEventListener('tp-value-change', (event) => {
 | `fixedWeeks` / `fixed-weeks`                                              | boolean                                                  | `false`    | Always render six weeks instead of the month's natural four to six.                                        |
 | `showWeekNumber` / `show-week-number`                                     | boolean                                                  | `false`    | Add a week-number column using the locale's week rules. Requires the adapter's `weekNumber`.               |
 | `buttonVariant` / `button-variant`                                        | Button variant                                           | `ghost`    | Variant of the previous and next Buttons.                                                                  |
-| `locale` / `locale`                                                       | BCP 47 tag                                               | empty      | Formatting locale. Empty uses the document language, then the browser language.                            |
+| `locale` / `locale`                                                       | BCP 47 tag                                               | empty      | Formatting locale. Empty uses the closest `lang`, then the browser language.                               |
 | `weekStartsOn` / `week-starts-on`                                         | `0`–`6`, or `-1`                                         | `-1`       | First weekday (0 is Sunday). `-1` uses the locale.                                                         |
 | `today` / `today`                                                         | ISO date                                                 | local date | The date marked as today.                                                                                  |
 | `label` / `label`                                                         | string                                                   | `Date`     | Accessible name of the calendar group.                                                                     |
@@ -173,7 +173,7 @@ Diagnostic codes:
 
 ## Keyboard
 
-One day is in the tab order: the focused, selected, today or first available date. Arrow keys move by day and week, mirrored horizontally in right-to-left layouts. Home and End move to the start and end of the week, Page Up and Page Down by month, and Shift with Page Up or Page Down by year. Movement skips disabled and hidden dates and reveals other months within the navigation bounds. Enter and Space activate the focused day.
+One day is in the tab order: the focused, selected, today or first available date. Arrow keys move by day and week, mirrored horizontally in right-to-left layouts. Home and End move to the start and end of the week, Page Up and Page Down by month, and Shift with Page Up or Page Down by year. Movement skips disabled and hidden dates and reveals other months within the navigation bounds. Consumed keys and keys carrying Alt, Ctrl or Meta are left to the browser. Enter and Space activate the focused day.
 
 ## Parts and markers
 

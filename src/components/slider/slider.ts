@@ -1,5 +1,6 @@
 import { html } from 'lit';
 import { defaultTrue } from '../../foundation/converters.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import type { PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
@@ -30,8 +31,9 @@ import {
 } from '../../foundation/slider.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import { createId } from '../../foundation/id.js';
-import { CleanupScope, LocaleService, resolveLocale } from '../../foundation/services.js';
+import { LocaleService, resolveLocale } from '../../foundation/services.js';
 import { composedParent } from '../../foundation/focus.js';
+import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
 import { CollectionRegistry } from '../../foundation/collection.js';
 
 import { sliderStyles } from './styles.js';
@@ -200,7 +202,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   #dragging = false;
   #control: HTMLElement | null = null;
   #observer: MutationObserver | undefined;
-  #environmentScope: CleanupScope | undefined;
+  readonly #environment = new ComposedEnvironmentObserver(this, () => this.#environmentChanged());
   #environmentSignature = '';
   #resize: ResizeObserver | undefined;
   #measurements = new Map<string, number>();
@@ -1021,28 +1023,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     return false;
   }
   #observeEnvironment(): void {
-    this.#environmentScope?.dispose();
-    const scope = (this.#environmentScope = new CleanupScope());
-    const observer = new this.ownerDocument.defaultView!.MutationObserver((records) => {
-      if (records.some((record) => record.attributeName === 'slot')) this.#observeEnvironment();
-      else this.#environmentChanged();
-    });
-    scope.add(() => observer.disconnect());
-    const roots = new Set<ShadowRoot>();
-    const ancestors: Node[] = [this];
-    for (let node = composedParent(this); node; node = composedParent(node)) ancestors.push(node);
-    for (const node of ancestors) {
-      if (node.nodeType !== 1) continue;
-      const element = node as Element;
-      observer.observe(element, {
-        attributes: true,
-        attributeFilter: ['dir', 'lang', 'class', 'style', 'slot'],
-      });
-      const root = element.getRootNode();
-      if (root.nodeType === 11 && 'host' in root) roots.add(root as ShadowRoot);
-      if (element.shadowRoot) roots.add(element.shadowRoot);
-    }
-    for (const root of roots) scope.listen(root, 'slotchange', () => this.#observeEnvironment());
+    this.#environment.connect();
     this.#environmentChanged();
   }
   #environmentChanged(): void {
@@ -1221,18 +1202,23 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       dirty: !sameSliderValues(values, this.#initialValues ?? values),
     };
     const markers = {
-      'data-orientation': this.orientation,
-      'data-dragging': this.dragging,
-      'data-disabled': this.effectiveDisabled || indeterminate,
-      'data-indeterminate': indeterminate,
-      'data-pointing': this.pointing,
-      'data-invalid': this.effectiveInvalid,
-      'data-valid': !this.effectiveInvalid,
-      'data-readonly': this.readOnly,
-      'data-focused': state.focused,
+      ...stateMarkers(
+        state,
+        [
+          'dragging',
+          'disabled',
+          'indeterminate',
+          'pointing',
+          'invalid',
+          'readOnly',
+          'focused',
+          'touched',
+          'dirty',
+        ],
+        ['orientation'],
+      ),
+      'data-valid': !state.invalid,
       'data-focus-visible': this.#focusVisible,
-      'data-touched': state.touched,
-      'data-dirty': state.dirty,
     };
     const label =
       this.label || this.querySelector('[slot="label"]') || this.partContracts['slider-label'];
@@ -1422,8 +1408,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     this.#pointerRatio = null;
     this.#proposals = [];
     this.#observer?.disconnect();
-    this.#environmentScope?.dispose();
-    this.#environmentScope = undefined;
+    this.#environment.disconnect();
     this.#resize?.disconnect();
     this.#observer = undefined;
     this.#resize = undefined;

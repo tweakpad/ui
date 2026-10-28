@@ -1,4 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { insetFocusRing } from './shared/focus.js';
 import { popupBorderColor } from './shared/surface.js';
 import {
   anchoredPresenceAppearance,
@@ -88,9 +89,7 @@ export const selectAppearance: PresentationDictionary = {
     { selector: '&[data-invalid]', declarations: { 'border-color': 'var(--tp-destructive)' } },
     {
       selector: '&[data-invalid]:focus-visible',
-      declarations: {
-        'outline-color': 'color-mix(in oklab, var(--tp-destructive) 20%, transparent)',
-      },
+      declarations: { 'outline-color': 'var(--tp-destructive)' },
     },
     { selector: '&[data-disabled]', declarations: { cursor: 'not-allowed' } },
   ].map((rule) => ({
@@ -163,6 +162,11 @@ export const selectAppearance: PresentationDictionary = {
     {
       selector: '&[data-highlighted]:not([data-disabled])',
       declarations: { background: 'var(--tp-accent)', color: 'var(--tp-accent-foreground)' },
+    },
+    // The highlighted option is where the keyboard is; its fill alone is a color-only cue.
+    {
+      selector: '&:is(:focus-visible, [data-highlighted]):not([data-disabled])',
+      declarations: insetFocusRing,
     },
     {
       selector: '&[data-disabled]',

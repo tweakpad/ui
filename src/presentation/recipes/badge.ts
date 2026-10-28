@@ -1,4 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { focusRing } from './shared/focus.js';
 
 export const badgeAppearance: PresentationDictionary = {
   badge: [
@@ -27,8 +28,7 @@ export const badgeAppearance: PresentationDictionary = {
       selector: ':host([interactive]) &:is(button,a):focus-visible, &[tabindex]:focus-visible',
       declarations: {
         'border-color': 'var(--tp-ring)',
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
+        ...focusRing,
       },
     },
     // Solid status pills keep their own fill color as the focused border.

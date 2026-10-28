@@ -57,7 +57,7 @@
 & .tp-te-task-marker > input[type="checkbox"]{border:var(--tp-border-width) var(--tp-border-style) var(--tp-input);background:light-dark(transparent, color-mix(in oklab, var(--tp-input) 30%, transparent));box-shadow:var(--tp-shadow-sm)}
 & .tp-te-task-marker > input[type="checkbox"]:focus-visible{border-color:var(--tp-ring);outline:var(--tp-ring-width) var(--tp-border-style) color-mix(in oklab, var(--tp-ring) 50%, transparent);outline-offset:0}
 & .tp-te-task-marker > input[type="checkbox"][aria-invalid="true"]{border-color:var(--tp-destructive)}
-& .tp-te-task-marker > input[type="checkbox"][aria-invalid="true"]:focus-visible{outline-color:color-mix(in oklab, var(--tp-destructive) 20%, transparent)}
+& .tp-te-task-marker > input[type="checkbox"][aria-invalid="true"]:focus-visible{outline-color:var(--tp-destructive)}
 & .tp-te-task-marker:has(> input[type="checkbox"]:disabled){opacity:.5;cursor:not-allowed}
 & .tp-te-task-marker > input[type="checkbox"]{border-radius:min(var(--tp-radius-sm), var(--tp-space-1))}
 & .tp-te-task-marker > input[type="checkbox"]:checked, & .tp-te-task-marker > input[type="checkbox"]:indeterminate{background:var(--tp-primary);color:var(--tp-primary-foreground);border-color:var(--tp-primary)}

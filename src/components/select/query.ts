@@ -3,6 +3,7 @@ import { ControllableState } from '../../foundation/controllable-state.js';
 import type { ChoiceCollectionController } from '../../foundation/choice-collection.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
 import { resolveLocale } from '../../foundation/services.js';
+import { focusAfterRemoval } from '../../foundation/focus.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { ChoiceModelRecord } from '../../foundation/choice-model.js';
@@ -388,14 +389,10 @@ export class SelectQueryController {
     );
     if (this.owner.values(this.owner.selection.value).some((item) => c.equal(item, value))) return;
     void h.updateComplete.then(() => {
-      const count = this.owner.values(this.owner.selection.value).length;
-      const target =
-        fromEditor || !count
-          ? this.editor
-          : (h.renderRoot.querySelector<HTMLElement>(
-              `[data-chip-index="${Math.min(index, count - 1)}"]`,
-            ) ?? this.editor);
-      target?.focus({ preventScroll: true });
+      const chips = fromEditor
+        ? []
+        : [...h.renderRoot.querySelectorAll<HTMLElement>('[data-chip-index]')];
+      focusAfterRemoval(chips, index, this.editor);
     });
   }
   chipKey(event: KeyboardEvent, index: number): void {

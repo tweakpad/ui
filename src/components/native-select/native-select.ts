@@ -2,6 +2,7 @@ import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { TpFormElement } from '../../foundation/form-element.js';
+import { stateMarkers } from '../../foundation/state-markers.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
@@ -450,14 +451,7 @@ export class TpNativeSelect extends TpFormElement<NativeSelectValue> {
     });
   }
   #markers(state: NativeSelectState): Record<string, unknown> {
-    return {
-      'data-disabled': state.disabled ? '' : nothing,
-      'data-readonly': state.readOnly ? '' : nothing,
-      'data-required': state.required ? '' : nothing,
-      'data-invalid': state.invalid ? '' : nothing,
-      'data-filled': state.filled ? '' : nothing,
-      'data-size': state.size,
-    };
+    return stateMarkers(state, ['disabled', 'readOnly', 'required', 'invalid', 'filled'], ['size']);
   }
   #option(option: NativeOption, state: NativeSelectState): unknown {
     const selected = new Set(typeof state.value === 'string' ? [state.value] : state.value).has(

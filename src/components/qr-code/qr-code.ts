@@ -125,10 +125,6 @@ export class TpQrCode extends TpElement {
         vertical-align: middle;
       }
 
-      :host([hidden]) {
-        display: none;
-      }
-
       /* Square at the size axis or --tp-qr-code-size, never wider than the available space. */
       .tile {
         box-sizing: border-box;

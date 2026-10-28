@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { fillLayerStyles } from '../../presentation/motion.js';
 export const questionnaireStyles = css`
   :host {
@@ -105,7 +106,5 @@ export const questionnaireStyles = css`
     grid-row: 1;
   }
 
-  [hidden] {
-    display: none !important;
-  }
+  ${hiddenStyles}
 `;

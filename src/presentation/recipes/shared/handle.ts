@@ -1,5 +1,8 @@
 import { motionTransition } from '../../motion.js';
 import type { PresentationDeclarations, PresentationRule } from '../../resolver.js';
+import { focusRing } from './focus.js';
+
+export { focusRing };
 
 // Widget handle rings (the color picker's area thumb, wheel handles, ring and triangle thumbs;
 // the easing editor's control handles and points): a round marker ringed in the background
@@ -14,10 +17,6 @@ export const thumbRing: PresentationDeclarations = {
   'box-shadow': `0 0 0 var(--tp-border-width) ${ringMix}, var(--tp-shadow-sm)`,
   background: 'var(--_tp-handle-paint, var(--tp-background))',
   transition: motionTransition(['box-shadow', 'outline-color'], 'fast'),
-};
-export const focusRing: PresentationDeclarations = {
-  outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-  'outline-offset': 'var(--tp-ring-offset)',
 };
 export const activeRing: PresentationDeclarations = {
   'box-shadow': `0 0 0 var(--tp-border-width) ${ringMix}, 0 0 0 calc(var(--tp-ring-width) * 1.5) color-mix(in oklab, var(--tp-ring) 50%, transparent)`,

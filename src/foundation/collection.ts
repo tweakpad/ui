@@ -1,4 +1,5 @@
 import type { Direction, Orientation } from './types.js';
+import { keyEventPreempted } from './key-bindings.js';
 
 /**
  * The index `delta` steps from `index` among `length` items: wrapping past either end when `loop`,
@@ -19,6 +20,14 @@ export function arrowKeys(
   return direction === 'rtl'
     ? { previous: 'ArrowRight', next: 'ArrowLeft' }
     : { previous: 'ArrowLeft', next: 'ArrowRight' };
+}
+
+/**
+ * A navigation key a collection leaves alone: already consumed or composing, or carrying a
+ * modifier (Alt, Ctrl, Meta) that belongs to the browser or platform shortcut.
+ */
+export function navigationKeyPreempted(event: KeyboardEvent): boolean {
+  return keyEventPreempted(event) || event.altKey || event.ctrlKey || event.metaKey;
 }
 
 export interface CollectionItem {
@@ -74,6 +83,7 @@ export class CollectionRegistry {
     direction: Direction,
     options: { loop?: boolean; includeDisabled?: boolean } = {},
   ): HTMLElement | null {
+    if (navigationKeyPreempted(event)) return null;
     const { previous, next } = arrowKeys(orientation, direction);
     let target: HTMLElement | null = null;
     if (event.key === previous)

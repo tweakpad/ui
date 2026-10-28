@@ -1,4 +1,5 @@
 import type { PresentationDeclarations, PresentationDictionary } from '../resolver.js';
+import { invalidFocusRing } from './shared/focus.js';
 import {
   disabledBackground,
   fieldBoundary,
@@ -27,6 +28,7 @@ export const inputGroupAppearance: PresentationDictionary = {
     { declarations: inputGroupBoundary },
     { selector: '&:focus-within', declarations: fieldFocus },
     { selector: '&[data-invalid]', declarations: fieldInvalid },
+    { selector: '&[data-invalid]:focus-within', declarations: invalidFocusRing },
     {
       selector: '&[data-disabled]',
       declarations: { background: disabledBackground },

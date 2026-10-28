@@ -1,4 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { focusRing } from './shared/focus.js';
 
 export const markerAppearance: PresentationDictionary = {
   marker: [
@@ -54,10 +55,7 @@ export const markerAppearance: PresentationDictionary = {
     { selector: '&:is(button,a):hover', declarations: { color: 'var(--tp-foreground)' } },
     {
       selector: '&:is(button,a):focus-visible',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
-      },
+      declarations: focusRing,
     },
   ],
   'marker-icon': [

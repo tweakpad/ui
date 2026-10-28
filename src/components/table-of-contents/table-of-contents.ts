@@ -1,4 +1,5 @@
 import { css, html, nothing, unsafeCSS, type PropertyValues } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { TpElement } from '../../foundation/element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
@@ -171,9 +172,7 @@ export class TpTableOfContents extends TpElement {
         content: '';
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
 

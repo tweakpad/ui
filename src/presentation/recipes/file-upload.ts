@@ -2,6 +2,7 @@ import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import { motionTransition } from '../motion.js';
 import { emptyStateAppearance } from './empty-state.js';
 import { fillColor, fillShown } from './shared/fill.js';
+import { invalidFocusRing } from './shared/focus.js';
 import { fieldFocus, fieldInvalid } from './shared/text-control.js';
 
 /**
@@ -40,7 +41,10 @@ export const fileUploadAppearance: PresentationDictionary = {
     { selector: '&[data-drop-target]', declarations: { 'border-color': 'var(--tp-ring)' } },
     { selector: '&[data-focus-visible]', declarations: fieldFocus },
     { selector: '&[data-invalid]', declarations: { 'border-color': 'var(--tp-destructive)' } },
-    { selector: '&[data-invalid][data-focus-visible]', declarations: fieldInvalid },
+    {
+      selector: '&[data-invalid][data-focus-visible]',
+      declarations: { ...fieldInvalid, ...invalidFocusRing },
+    },
     {
       selector: '&[data-drop-reject]',
       declarations: {

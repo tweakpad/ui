@@ -1,4 +1,5 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { observeSlots, slotOccupied } from '../shared/slots.js';
 import { TpElement } from '../../foundation/element.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
@@ -147,9 +148,7 @@ export class TpAttachment extends TpElement {
         inset-inline-end: var(--tp-space-3);
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
   filename = '';
