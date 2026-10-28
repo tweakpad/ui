@@ -34,7 +34,7 @@ import { previewKeyframes } from '../preview.js';
 import { DEFAULT_STRINGS, resolveStrings } from '../strings.js';
 import { easingSurfaceStyles } from '../styles.js';
 import type { EasingEditorStrings, EasingPreviewMode } from '../types.js';
-import { curvePolyline, curveRange, progressionAt, progressionFraction } from './geometry.js';
+import { axisAt, axisFraction, curvePolyline, curveRange, shownCurve } from './geometry.js';
 
 /** What the graph proposes to its owner: a whole record, the cause and the commit policy. */
 export interface EasingSurfaceChangeDetail {
@@ -57,7 +57,26 @@ interface Active {
   readonly kind: 'handle' | 'point';
   readonly index: number;
 }
+/**
+ * Where the drag measures from: a surface position and the value it stands for. Pointer movement
+ * is converted at the current scale from here, and the anchor moves to the latest position
+ * whenever the shown range changes, so a zoom never moves the value under a still pointer.
+ */
+interface DragAnchor {
+  readonly x: number;
+  readonly y: number;
+  readonly input: number;
+  readonly output: number;
+}
 const PREVIEW_ROLE = stateRole('preview');
+
+/** Time stays within 0–1; progression within the progression dimension. */
+function clampPosition(at: EasingPoint): EasingPoint {
+  return {
+    input: Math.min(1, Math.max(0, at.input)),
+    output: clampParameter(PROGRESSION_DIMENSION, at.output),
+  };
+}
 const SAMPLES = 200;
 
 /**
@@ -73,7 +92,7 @@ export class TpEasingEditorGraph extends TpElement {
   static override properties = {
     ...TpElement.properties,
     curve: { attribute: false },
-    heldRange: { attribute: false },
+    shownRange: { attribute: false },
     label: { type: String },
     strings: { attribute: false },
     preview: { type: String },
@@ -82,8 +101,8 @@ export class TpEasingEditorGraph extends TpElement {
   static override styles = [TpElement.styles, easingSurfaceStyles];
 
   curve: EasingCurve | null = null;
-  /** The range the owner holds during a drag; otherwise the range follows the curve. */
-  heldRange: ProgressionRange | null = null;
+  /** The range the owner shows (eased toward the curve's range); otherwise the curve's range. */
+  shownRange: ProgressionRange | null = null;
   label = '';
   strings: Partial<EasingEditorStrings> = {};
   preview: EasingPreviewMode = 'scale';
@@ -102,9 +121,12 @@ export class TpEasingEditorGraph extends TpElement {
   #focusVisible = false;
   #playing = false;
   #motion: MotionHandle | undefined;
+  /** The preview's own animation while it runs, retimed in place when the duration changes. */
+  #animation: Animation | undefined;
+  #anchor: DragAnchor | undefined;
+  /** The latest drag position and the unclamped value it maps to. */
+  #latest: DragAnchor | undefined;
   #range: ProgressionRange = { min: 0, max: 1 };
-  /** The Bézier fit shown over a parametric ease, cached per record. */
-  #fit: { readonly source: EasingCurve; readonly curve: BezierCurve } | undefined;
 
   /** The widget hosting this surface, for axis resolution of the shared family. */
   get presentationOwner(): HTMLElement | null {
@@ -118,7 +140,7 @@ export class TpEasingEditorGraph extends TpElement {
   get playing(): boolean {
     return this.#playing;
   }
-  /** The shown progression range (quarter steps around the unit box). */
+  /** The shown range of both axes (quarter steps around the unit box, centered). */
   get range(): ProgressionRange {
     return this.#range;
   }
@@ -141,14 +163,7 @@ export class TpEasingEditorGraph extends TpElement {
    * press grabs one instead of moving the curve), or the record unchanged.
    */
   #shown(): EasingCurve | null {
-    const curve = this.curve;
-    if (curve?.kind !== 'parametric' || !hasBezierFit(curve)) return curve;
-    if (this.#fit?.source !== curve) {
-      const fit = convertEasingCurve(curve, 'bezier');
-      if (fit.kind !== 'bezier') return curve;
-      this.#fit = { source: curve, curve: fit };
-    }
-    return this.#fit.curve;
+    return this.curve ? shownCurve(this.curve) : null;
   }
 
   /** Focuses the time input of a handle (1 or 2) or a custom point. */
@@ -169,18 +184,28 @@ export class TpEasingEditorGraph extends TpElement {
     }
     const keyframes = previewKeyframes(this.preview);
     const easing = toCssEasing(this.curve);
-    const duration = Math.max(1, Math.round(this.duration * 1000));
+    const duration = this.#durationMs();
     const handle = prepareMotion(
       this,
       shape,
       PREVIEW_ROLE,
       { phase: 'change', context: { easing, duration, property: this.preview } },
       {
-        play() {
+        play: () => {
           const animation = shape.animate(keyframes, { duration, easing, fill: 'none' });
+          this.#animation = animation;
+          const release = () => {
+            if (this.#animation === animation) this.#animation = undefined;
+          };
           return {
-            finished: animation.finished.then(() => undefined),
-            cancel: () => animation.cancel(),
+            finished: animation.finished.then(release, (error: unknown) => {
+              release();
+              throw error;
+            }),
+            cancel: () => {
+              release();
+              animation.cancel();
+            },
           };
         },
       },
@@ -192,6 +217,25 @@ export class TpEasingEditorGraph extends TpElement {
       () => this.#settlePlayback(handle),
       () => this.#settlePlayback(handle),
     );
+  }
+
+  #durationMs(): number {
+    return Math.max(1, Math.round(this.duration * 1000));
+  }
+
+  /** A running preview takes a new duration where it is, keeping its progress. */
+  #retime(): void {
+    const animation = this.#animation;
+    if (!animation || animation.playState !== 'running') return;
+    const effect = animation.effect;
+    const timing = effect?.getTiming();
+    if (!effect || !timing) return;
+    const previous = Number(timing.duration) || 1;
+    const next = this.#durationMs();
+    if (previous === next) return;
+    const progress = Math.min(1, Number(animation.currentTime ?? 0) / previous);
+    effect.updateTiming({ duration: next });
+    animation.currentTime = progress * next;
   }
 
   #settlePlayback(handle: MotionHandle): void {
@@ -240,11 +284,13 @@ export class TpEasingEditorGraph extends TpElement {
         },
         end: (point, event, dragged) => {
           const active = this.#active;
+          const next = active ? (this.#moved(active, point) ?? this.curve) : null;
           this.#dragging = false;
           this.#active = undefined;
           this.#pressed = undefined;
+          this.#anchor = undefined;
+          this.#latest = undefined;
           if (!active) return;
-          const next = this.#moved(active, point) ?? this.curve;
           if (next) this.#propose(next, dragged ? 'drag' : 'track-press', event, 'commit', active);
           this.requestUpdate();
         },
@@ -254,6 +300,8 @@ export class TpEasingEditorGraph extends TpElement {
           this.#dragging = false;
           this.#active = undefined;
           this.#pressed = undefined;
+          this.#anchor = undefined;
+          this.#latest = undefined;
           this.requestUpdate();
           if (!pressed || !active) return;
           this.#propose(
@@ -291,6 +339,7 @@ export class TpEasingEditorGraph extends TpElement {
       this.#pressed = curve;
       // A handle shown over a parametric ease converts it to the Bézier fit it belongs to.
       const shown = this.#shown() ?? curve;
+      this.#anchorAt(point, this.#positionIn(shown, this.#active));
       this.#propose(shown, 'track-press', event, 'press', this.#active, undefined, shown !== curve);
       return undefined;
     }
@@ -312,32 +361,63 @@ export class TpEasingEditorGraph extends TpElement {
       });
       this.#active = { kind: 'point', index };
       this.#pressed = curve;
+      // The nearest point follows the pointer from where it was pressed.
+      this.#anchorAt(point, null);
       this.#propose(converted, 'track-press', event, 'press', this.#active, undefined, true);
       return undefined;
     }
     if (curve.kind !== 'custom') return false;
     // A press on the empty custom graph adds a point there and drags it.
-    const added = this.#insertPoint(curve, this.#coordinates(point));
+    const at = this.#coordinates(point);
+    const added = this.#insertPoint(curve, at);
     this.#active = { kind: 'point', index: added.index };
     this.#pressed = curve;
+    this.#anchorAt(point, at);
     this.#propose(added.curve, 'track-press', event, 'press', this.#active);
     return undefined;
   }
 
-  /** Maps a pointer position on the surface into the inset plot frame. */
-  #coordinates(point: PointerDragPoint): EasingPoint {
+  /** The inset plot frame inside the surface, in CSS pixels. */
+  #frameBox(point: PointerDragPoint): { left: number; top: number; width: number; height: number } {
     const frame = this.#frame;
-    const left = frame?.offsetLeft ?? 0;
-    const top = frame?.offsetTop ?? 0;
-    const width = frame?.offsetWidth || point.width || 1;
-    const height = frame?.offsetHeight || point.height || 1;
     return {
-      input: Math.min(1, Math.max(0, (point.x - left) / width)),
-      output: clampParameter(
-        PROGRESSION_DIMENSION,
-        progressionAt(1 - (point.y - top) / height, this.#range),
-      ),
+      left: frame?.offsetLeft ?? 0,
+      top: frame?.offsetTop ?? 0,
+      width: frame?.offsetWidth || point.width || 1,
+      height: frame?.offsetHeight || point.height || 1,
     };
+  }
+
+  /** Maps a pointer position on the surface into the inset plot frame (presses only). */
+  #coordinates(point: PointerDragPoint): EasingPoint {
+    const box = this.#frameBox(point);
+    return clampPosition({
+      input: axisAt((point.x - box.left) / box.width, this.#range),
+      output: axisAt(1 - (point.y - box.top) / box.height, this.#range),
+    });
+  }
+
+  #anchorAt(point: PointerDragPoint, at: EasingPoint | null): void {
+    const value = at ?? this.#coordinates(point);
+    this.#anchor = { x: point.x, y: point.y, input: value.input, output: value.output };
+    this.#latest = this.#anchor;
+  }
+
+  /**
+   * The unclamped value under a drag position: the anchor's value plus the pointer's movement at
+   * the current scale. Without an anchor the position maps directly into the plot frame.
+   */
+  #dragValue(point: PointerDragPoint): EasingPoint {
+    const anchor = this.#anchor;
+    if (!anchor) return this.#coordinates(point);
+    const box = this.#frameBox(point);
+    const span = this.#range.max - this.#range.min || 1;
+    const value = {
+      input: anchor.input + ((point.x - anchor.x) / box.width) * span,
+      output: anchor.output - ((point.y - anchor.y) / box.height) * span,
+    };
+    this.#latest = { x: point.x, y: point.y, ...value };
+    return value;
   }
 
   #insertPoint(curve: CustomCurve, at: EasingPoint): { curve: CustomCurve; index: number } {
@@ -352,8 +432,7 @@ export class TpEasingEditorGraph extends TpElement {
   #moved(active: Active, point: PointerDragPoint): EasingCurve | null {
     const curve = this.curve;
     if (!curve) return null;
-    const at = this.#coordinates(point);
-    return this.#withPosition(curve, active, at);
+    return this.#withPosition(curve, active, clampPosition(this.#dragValue(point)));
   }
 
   #withPosition(curve: EasingCurve, active: Active, at: EasingPoint): EasingCurve | null {
@@ -472,7 +551,10 @@ export class TpEasingEditorGraph extends TpElement {
 
   #position(active: Active): EasingPoint | null {
     const curve = this.#shown();
-    if (!curve) return null;
+    return curve ? this.#positionIn(curve, active) : null;
+  }
+
+  #positionIn(curve: EasingCurve, active: Active): EasingPoint | null {
     if (active.kind === 'handle')
       return curve.kind !== 'bezier'
         ? null
@@ -520,18 +602,32 @@ export class TpEasingEditorGraph extends TpElement {
     this.#surface = null;
     cancelMotions(this);
     this.#motion = undefined;
+    this.#animation = undefined;
+    this.#anchor = undefined;
+    this.#latest = undefined;
     this.#playing = false;
     super.disconnectedCallback();
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
-    if (changed.has('curve') || changed.has('heldRange'))
-      this.#range = this.heldRange ?? curveRange(this.curve);
+    if (changed.has('curve') || changed.has('shownRange')) {
+      const range = this.shownRange ?? curveRange(this.curve);
+      // A zoom during a drag re-anchors at the latest position, so the value under a still
+      // pointer never moves and later movement converts at the new scale.
+      if (
+        this.#anchor &&
+        this.#latest &&
+        (range.min !== this.#range.min || range.max !== this.#range.max)
+      )
+        this.#anchor = this.#latest;
+      this.#range = range;
+    }
   }
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    if (changed.has('duration')) this.#retime();
     const active = this.renderRoot.querySelector<HTMLInputElement>('input:focus');
     if (active && active.matches(':focus-visible') !== this.#focusVisible) {
       this.#focusVisible = active.matches(':focus-visible');
@@ -605,8 +701,8 @@ export class TpEasingEditorGraph extends TpElement {
           class: 'handle',
           'data-handle': String(index),
           style: {
-            left: `${(x * 100).toFixed(3)}%`,
-            top: `${((1 - progressionFraction(y, this.#range)) * 100).toFixed(3)}%`,
+            left: `${(axisFraction(x, this.#range) * 100).toFixed(3)}%`,
+            top: `${((1 - axisFraction(y, this.#range)) * 100).toFixed(3)}%`,
           },
           ...this.#handleMarkers(active),
         },
@@ -632,8 +728,8 @@ export class TpEasingEditorGraph extends TpElement {
           'data-end':
             index === 0 || index === normalizePoints((this.curve as CustomCurve).points).length - 1,
           style: {
-            left: `${(point.input * 100).toFixed(3)}%`,
-            top: `${((1 - progressionFraction(point.output, this.#range)) * 100).toFixed(3)}%`,
+            left: `${(axisFraction(point.input, this.#range) * 100).toFixed(3)}%`,
+            top: `${((1 - axisFraction(point.output, this.#range)) * 100).toFixed(3)}%`,
           },
           ...this.#handleMarkers(active),
         },
@@ -646,12 +742,18 @@ export class TpEasingEditorGraph extends TpElement {
     const curve = this.curve;
     const shown = this.#shown();
     const range = this.#range;
-    const top = (1 - progressionFraction(1, range)) * 100;
-    const bottom = (1 - progressionFraction(0, range)) * 100;
+    const top = (1 - axisFraction(1, range)) * 100;
+    const bottom = (1 - axisFraction(0, range)) * 100;
+    const start = axisFraction(0, range) * 100;
+    const end = axisFraction(1, range) * 100;
+    const at = (point: EasingPoint) => ({
+      x: (axisFraction(point.input, range) * 100).toFixed(3),
+      y: ((1 - axisFraction(point.output, range)) * 100).toFixed(3),
+    });
     // A dot at every tenth of the unit box; zero-length round-capped lines keep a pixel size.
     const dots: unknown[] = [];
     for (let column = 0; column <= 10; column++) {
-      const x = column * 10;
+      const x = (start + ((end - start) * column) / 10).toFixed(3);
       for (let row = 0; row <= 10; row++) {
         const y = (bottom - ((bottom - top) * row) / 10).toFixed(3);
         dots.push(
@@ -659,10 +761,12 @@ export class TpEasingEditorGraph extends TpElement {
         );
       }
     }
-    const handleLines =
-      shown?.kind === 'bezier'
-        ? svg`<line part="easing-editor-graph-handle-line" class="handle-line" x1="0" y1=${bottom.toFixed(3)} x2=${(shown.x1 * 100).toFixed(3)} y2=${((1 - progressionFraction(shown.y1, range)) * 100).toFixed(3)} vector-effect="non-scaling-stroke"></line><line part="easing-editor-graph-handle-line" class="handle-line" x1="100" y1=${top.toFixed(3)} x2=${(shown.x2 * 100).toFixed(3)} y2=${((1 - progressionFraction(shown.y2, range)) * 100).toFixed(3)} vector-effect="non-scaling-stroke"></line>`
-        : nothing;
+    let handleLines: unknown = nothing;
+    if (shown?.kind === 'bezier') {
+      const one = at({ input: shown.x1, output: shown.y1 });
+      const two = at({ input: shown.x2, output: shown.y2 });
+      handleLines = svg`<line part="easing-editor-graph-handle-line" class="handle-line" x1=${start.toFixed(3)} y1=${bottom.toFixed(3)} x2=${one.x} y2=${one.y} vector-effect="non-scaling-stroke"></line><line part="easing-editor-graph-handle-line" class="handle-line" x1=${end.toFixed(3)} y1=${top.toFixed(3)} x2=${two.x} y2=${two.y} vector-effect="non-scaling-stroke"></line>`;
+    }
     const path = curve
       ? svg`<polyline part="easing-editor-graph-curve" class="curve" points=${curvePolyline(easingFunction(curve), range, 100, 100, SAMPLES)} vector-effect="non-scaling-stroke"></polyline>`
       : nothing;
@@ -703,10 +807,6 @@ export class TpEasingEditorGraph extends TpElement {
               class: 'preview-layer',
               'aria-hidden': 'true',
               'data-mode': this.preview,
-              // The square at progression 1 leaves room for the shown overshoot (scale > 1).
-              style: {
-                '--_tp-easing-editor-headroom': (1 / Math.max(1, this.#range.max)).toFixed(4),
-              },
               'data-playing': this.#playing,
             },
             content: html`<span ${bindPart({ class: 'shape' }, [this.#shapeReference])}></span>`,

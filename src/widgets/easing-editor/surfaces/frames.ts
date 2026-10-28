@@ -19,15 +19,15 @@ export class TpEasingEditorFrames extends TpElement {
   static override properties = {
     ...TpElement.properties,
     curve: { attribute: false },
-    heldRange: { attribute: false },
+    shownRange: { attribute: false },
     label: { type: String },
     strings: { attribute: false },
   };
   static override styles = [TpElement.styles, easingSurfaceStyles];
 
   curve: EasingCurve | null = null;
-  /** The range the owner holds during a drag, shared with the graph. */
-  heldRange: ProgressionRange | null = null;
+  /** The range the owner shows, shared with the graph. */
+  shownRange: ProgressionRange | null = null;
   label = '';
   strings: Partial<EasingEditorStrings> = {};
 
@@ -44,8 +44,8 @@ export class TpEasingEditorFrames extends TpElement {
 
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
-    if (changed.has('curve') || changed.has('heldRange'))
-      this.#range = this.heldRange ?? curveRange(this.curve);
+    if (changed.has('curve') || changed.has('shownRange'))
+      this.#range = this.shownRange ?? curveRange(this.curve);
   }
 
   protected override render() {
