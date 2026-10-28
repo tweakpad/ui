@@ -56,24 +56,12 @@ export class TpFlowEdgeLabel extends TpElement {
   }
 
   #press = (event: Event): void => {
-    this.dispatchEvent(
-      new CustomEvent(LABEL_PRESS, {
-        bubbles: true,
-        composed: false,
-        detail: { edgeId: this.edgeId, sourceEvent: event },
-      }),
-    );
+    this.emit(LABEL_PRESS, { edgeId: this.edgeId, sourceEvent: event }, { composed: false });
   };
 
   #add = (event: Event): void => {
     event.stopPropagation();
-    this.dispatchEvent(
-      new CustomEvent(LABEL_ADD, {
-        bubbles: true,
-        composed: false,
-        detail: { edgeId: this.edgeId, sourceEvent: event },
-      }),
-    );
+    this.emit(LABEL_ADD, { edgeId: this.edgeId, sourceEvent: event }, { composed: false });
   };
 
   protected override render() {

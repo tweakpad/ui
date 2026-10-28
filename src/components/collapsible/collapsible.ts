@@ -187,13 +187,7 @@ export class TpCollapsible extends TpElement {
     onOpenRequest: (open, reason, sourceEvent) => this.#requestOpen(open, reason, sourceEvent),
     onStateChange: (state) => this.#panel.sync(state),
     onComplete: (open) => {
-      this.dispatchEvent(
-        new CustomEvent('tp-open-change-complete', {
-          bubbles: true,
-          composed: true,
-          detail: { open },
-        }),
-      );
+      this.emit('tp-open-change-complete', { open });
     },
   });
 

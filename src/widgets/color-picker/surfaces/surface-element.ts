@@ -103,7 +103,7 @@ export abstract class ColorSurfaceElement extends TpElement {
 
   /** Emits a change to the owning widget without crossing the widget's shadow boundary. */
   protected propose(detail: ColorSurfaceChangeDetail): void {
-    this.dispatchEvent(new CustomEvent(SURFACE_CHANGE, { detail, bubbles: true, composed: false }));
+    this.emit(SURFACE_CHANGE, detail, { composed: false });
   }
 
   /** Native range input properties for one dimension (`lit` property bindings through spread). */

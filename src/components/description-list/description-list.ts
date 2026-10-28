@@ -277,13 +277,7 @@ export class TpDescriptionList extends TpElement {
       this.#panel.sync(state);
     },
     onComplete: (open) => {
-      this.dispatchEvent(
-        new CustomEvent('tp-open-change-complete', {
-          bubbles: true,
-          composed: true,
-          detail: { open },
-        }),
-      );
+      this.emit('tp-open-change-complete', { open });
     },
   });
 

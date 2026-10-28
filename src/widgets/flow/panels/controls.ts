@@ -444,12 +444,10 @@ export class TpFlowControls extends TpElement {
     const button = event.currentTarget as HTMLElement;
     const action = button.dataset['action'] as ButtonAction | undefined;
     if (!action || this.#actionDisabled(action)) return;
-    this.dispatchEvent(
-      new CustomEvent<FlowControlActionDetail>(CONTROL_ACTION, {
-        bubbles: true,
-        composed: false,
-        detail: { action, sourceEvent: event },
-      }),
+    this.emit<FlowControlActionDetail>(
+      CONTROL_ACTION,
+      { action, sourceEvent: event },
+      { composed: false },
     );
   };
 
@@ -464,25 +462,17 @@ export class TpFlowControls extends TpElement {
     if (next === this.tool) return;
     // The root owns the tool lane; the group reverts unless the root publishes the new tool.
     event.preventDefault();
-    this.dispatchEvent(
-      new CustomEvent<FlowToolRequestDetail>(TOOL_REQUEST, {
-        bubbles: true,
-        composed: false,
-        detail: { tool: next, sourceEvent: event.detail.sourceEvent ?? event },
-      }),
+    this.emit<FlowToolRequestDetail>(
+      TOOL_REQUEST,
+      { tool: next, sourceEvent: event.detail.sourceEvent ?? event },
+      { composed: false },
     );
   };
 
   #run(action: FlowRunTransportAction, sourceEvent: Event, index?: number): void {
     const detail: FlowRunActionDetail = { action, sourceEvent };
     if (index !== undefined) detail.index = index;
-    this.dispatchEvent(
-      new CustomEvent<FlowRunActionDetail>(RUN_ACTION, {
-        bubbles: true,
-        composed: false,
-        detail,
-      }),
-    );
+    this.emit<FlowRunActionDetail>(RUN_ACTION, detail, { composed: false });
   }
 
   #transportPress = (event: MouseEvent): void => {
@@ -507,13 +497,7 @@ export class TpFlowControls extends TpElement {
   };
 
   #zoomRequest(detail: Omit<FlowZoomRequestDetail, 'sourceEvent'>, sourceEvent: Event): void {
-    this.dispatchEvent(
-      new CustomEvent<FlowZoomRequestDetail>(ZOOM_REQUEST, {
-        bubbles: true,
-        composed: false,
-        detail: { ...detail, sourceEvent },
-      }),
-    );
+    this.emit<FlowZoomRequestDetail>(ZOOM_REQUEST, { ...detail, sourceEvent }, { composed: false });
   }
 
   #zoomInput = (event: TpValueChangeEvent<string>): void => {
@@ -570,12 +554,10 @@ export class TpFlowControls extends TpElement {
     const value = String(event.detail?.value ?? '');
     const source = event.detail?.sourceEvent ?? event;
     if (value === 'zoom-in' || value === 'zoom-out')
-      this.dispatchEvent(
-        new CustomEvent<FlowControlActionDetail>(CONTROL_ACTION, {
-          bubbles: true,
-          composed: false,
-          detail: { action: value, sourceEvent: source },
-        }),
+      this.emit<FlowControlActionDetail>(
+        CONTROL_ACTION,
+        { action: value, sourceEvent: source },
+        { composed: false },
       );
     else if (value === 'fit') this.#zoomRequest({ fit: true }, source);
     else if (Number.isFinite(Number(value))) this.#zoomRequest({ zoom: Number(value) }, source);
@@ -705,23 +687,19 @@ export class TpFlowControls extends TpElement {
 
   #paletteChange = (event: Event): void => {
     event.stopPropagation();
-    this.dispatchEvent(
-      new CustomEvent<FlowControlActionDetail>(CONTROL_ACTION, {
-        bubbles: true,
-        composed: false,
-        detail: { action: 'palette', sourceEvent: event },
-      }),
+    this.emit<FlowControlActionDetail>(
+      CONTROL_ACTION,
+      { action: 'palette', sourceEvent: event },
+      { composed: false },
     );
   };
 
   #lockChange = (event: Event): void => {
     event.stopPropagation();
-    this.dispatchEvent(
-      new CustomEvent<FlowControlActionDetail>(CONTROL_ACTION, {
-        bubbles: true,
-        composed: false,
-        detail: { action: 'lock', sourceEvent: event },
-      }),
+    this.emit<FlowControlActionDetail>(
+      CONTROL_ACTION,
+      { action: 'lock', sourceEvent: event },
+      { composed: false },
     );
   };
 
@@ -749,12 +727,10 @@ export class TpFlowControls extends TpElement {
   }
 
   #execute(detail: Omit<FlowExecuteRequestDetail, 'sourceEvent'>, sourceEvent: Event): void {
-    this.dispatchEvent(
-      new CustomEvent<FlowExecuteRequestDetail>(EXECUTE_REQUEST, {
-        bubbles: true,
-        composed: false,
-        detail: { ...detail, sourceEvent },
-      }),
+    this.emit<FlowExecuteRequestDetail>(
+      EXECUTE_REQUEST,
+      { ...detail, sourceEvent },
+      { composed: false },
     );
   }
 

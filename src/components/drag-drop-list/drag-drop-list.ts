@@ -725,14 +725,8 @@ export class TpDragDropList<T = unknown> extends TpElement {
         this.#overlaySource?.update({ overlay });
       }
     }
-    const observed = new CustomEvent(eventNames[name], {
-      bubbles: true,
-      composed: true,
-      cancelable: event.cancelable,
-      detail: event,
-    });
-    this.dispatchEvent(observed);
-    if (observed.defaultPrevented) event.preventDefault();
+    if (!this.emit(eventNames[name], event, { cancelable: event.cancelable }))
+      event.preventDefault();
     if (name === 'settled') {
       this.#clearOverlay();
       const id = event.operation.source?.id;

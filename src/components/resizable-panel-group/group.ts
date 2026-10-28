@@ -9,7 +9,7 @@ import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import { observeResize, observeSubtree } from '../../foundation/observation.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
-import type { TpValueChangeEvent } from '../../foundation/events.js';
+import { dispatchTpEvent, type TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { TpResizablePanel } from './panel.js';
 import { TpResizableHandle } from './handle.js';
@@ -443,13 +443,7 @@ export class TpResizablePanelGroup extends TpElement {
               ? undefined
               : { inPixels: old, asPercentage: this.#extent ? (old / this.#extent) * 100 : 0 };
         panel.onResize?.(next, panel.id, prev);
-        panel.dispatchEvent(
-          new CustomEvent('tp-panel-resize', {
-            detail: { size: next, previousSize: prev, id: panel.id },
-            bubbles: true,
-            composed: true,
-          }),
-        );
+        dispatchTpEvent(panel, 'tp-panel-resize', { size: next, previousSize: prev, id: panel.id });
       }
     }
     this.#updateHandles();

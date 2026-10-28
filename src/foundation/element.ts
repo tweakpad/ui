@@ -2,6 +2,7 @@ import { LitElement, css, unsafeCSS } from 'lit';
 import type { CSSResultGroup, PropertyDeclarations, PropertyValues } from 'lit';
 import type { Direction, Orientation } from './types.js';
 import { cancelMotions, type MotionPolicy } from './motion.js';
+import { dispatchTpEvent } from './events.js';
 import type { Diagnostic, DiagnosticSeverity } from './services.js';
 import { visuallyHiddenRule } from './visually-hidden.js';
 
@@ -126,14 +127,7 @@ export class TpElement extends LitElement {
   }
 
   protected emit<T>(type: string, detail: T, init: CustomEventInit<T> = {}): boolean {
-    return this.dispatchEvent(
-      new CustomEvent(type, {
-        bubbles: true,
-        composed: true,
-        ...init,
-        detail,
-      }),
-    );
+    return dispatchTpEvent(this, type, detail, init);
   }
 
   #diagnostics: Set<string> | undefined;

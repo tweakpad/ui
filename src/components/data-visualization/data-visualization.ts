@@ -227,9 +227,7 @@ export class TpDataVisualization extends TpElement {
         });
         this.#viewport.connect(plot, (dimensions) => {
           this.#updateEngine();
-          this.dispatchEvent(
-            new CustomEvent('tp-resize', { detail: dimensions, bubbles: true, composed: true }),
-          );
+          this.emit('tp-resize', dimensions);
         });
         this.#updateEngine();
       }

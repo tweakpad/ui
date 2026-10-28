@@ -514,7 +514,7 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
     } else if (
       (event.key === 'ArrowDown' && this.orientation === 'horizontal') ||
       (this.orientation === 'vertical' &&
-        event.key === (this.direction === 'rtl' ? 'ArrowLeft' : 'ArrowRight'))
+        event.key === arrowKeys('horizontal', this.direction).next)
     ) {
       const member = this.#members.find((member) => member.trigger === controls[index]);
       if (

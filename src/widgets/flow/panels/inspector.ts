@@ -300,13 +300,7 @@ export class TpFlowInspector extends TpElement {
   readonly #presence = new PresenceController(this, {
     surface: () => this.renderRoot?.querySelector('.inspector') ?? null,
     onComplete: (open) =>
-      this.dispatchEvent(
-        new CustomEvent<FlowInspectorPresenceDetail>(INSPECTOR_PRESENCE, {
-          bubbles: true,
-          composed: false,
-          detail: { open },
-        }),
-      ),
+      this.emit<FlowInspectorPresenceDetail>(INSPECTOR_PRESENCE, { open }, { composed: false }),
   });
 
   constructor() {
@@ -457,23 +451,19 @@ export class TpFlowInspector extends TpElement {
   #settle(key: string, sourceEvent: Event): void {
     if (this.commit !== 'live' || !this.node) return;
     this.#pendingLive.delete(key);
-    this.dispatchEvent(
-      new CustomEvent<FlowInspectorCommitDetail>(INSPECTOR_COMMIT, {
-        bubbles: true,
-        composed: false,
-        detail: { nodeId: this.node.id, keys: [key], sourceEvent },
-      }),
+    this.emit<FlowInspectorCommitDetail>(
+      INSPECTOR_COMMIT,
+      { nodeId: this.node.id, keys: [key], sourceEvent },
+      { composed: false },
     );
   }
 
   #change(key: string, value: unknown, reason: ChangeReason, sourceEvent: Event | null): void {
     if (!this.node) return;
-    this.dispatchEvent(
-      new CustomEvent<FlowInspectorChangeDetail>(INSPECTOR_CHANGE, {
-        bubbles: true,
-        composed: false,
-        detail: { nodeId: this.node.id, key, value, reason, sourceEvent },
-      }),
+    this.emit<FlowInspectorChangeDetail>(
+      INSPECTOR_CHANGE,
+      { nodeId: this.node.id, key, value, reason, sourceEvent },
+      { composed: false },
     );
   }
 
@@ -486,12 +476,10 @@ export class TpFlowInspector extends TpElement {
     this.#draft.clear();
     this.requestUpdate();
     if (!keys.length) return;
-    this.dispatchEvent(
-      new CustomEvent<FlowInspectorCommitDetail>(INSPECTOR_COMMIT, {
-        bubbles: true,
-        composed: false,
-        detail: { nodeId: node.id, keys, sourceEvent },
-      }),
+    this.emit<FlowInspectorCommitDetail>(
+      INSPECTOR_COMMIT,
+      { nodeId: node.id, keys, sourceEvent },
+      { composed: false },
     );
   }
 
@@ -505,24 +493,20 @@ export class TpFlowInspector extends TpElement {
   #cancel = (): void => this.cancel();
 
   #close = (event: MouseEvent): void => {
-    this.dispatchEvent(
-      new CustomEvent<FlowInspectorCloseDetail>(INSPECTOR_CLOSE, {
-        bubbles: true,
-        composed: false,
-        detail: { sourceEvent: event },
-      }),
+    this.emit<FlowInspectorCloseDetail>(
+      INSPECTOR_CLOSE,
+      { sourceEvent: event },
+      { composed: false },
     );
   };
 
   #focusEdge = (event: Event): void => {
     const edgeId = (event.currentTarget as HTMLElement).dataset['edge'];
     if (!edgeId) return;
-    this.dispatchEvent(
-      new CustomEvent<FlowInspectorFocusEdgeDetail>(INSPECTOR_FOCUS_EDGE, {
-        bubbles: true,
-        composed: false,
-        detail: { edgeId, sourceEvent: event },
-      }),
+    this.emit<FlowInspectorFocusEdgeDetail>(
+      INSPECTOR_FOCUS_EDGE,
+      { edgeId, sourceEvent: event },
+      { composed: false },
     );
   };
 

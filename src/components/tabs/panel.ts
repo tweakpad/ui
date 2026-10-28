@@ -1,4 +1,5 @@
 import type { ReactiveControllerHost } from 'lit';
+import { dispatchTpEvent } from '../../foundation/events.js';
 import { PresenceController } from '../../foundation/presence.js';
 import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 
@@ -26,14 +27,7 @@ export class TabsPanel {
         this.apply();
         changed();
       },
-      onComplete: (open) =>
-        element.dispatchEvent(
-          new CustomEvent('tp-presence-complete', {
-            bubbles: true,
-            composed: true,
-            detail: { present: open },
-          }),
-        ),
+      onComplete: (open) => dispatchTpEvent(element, 'tp-presence-complete', { present: open }),
     });
   }
   update(selected: boolean, keepMounted: boolean): void {

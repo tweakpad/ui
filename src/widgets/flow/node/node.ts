@@ -373,14 +373,7 @@ export class TpFlowNode extends TpElement {
         if (this.isConnected) this.#positionRowPorts();
       });
     }
-    if (moved && notify)
-      this.dispatchEvent(
-        new CustomEvent(NODE_PORTS_MOVED, {
-          bubbles: true,
-          composed: false,
-          detail: { nodeId: this.nodeId },
-        }),
-      );
+    if (moved && notify) this.emit(NODE_PORTS_MOVED, { nodeId: this.nodeId }, { composed: false });
   }
   #rowsRetry = false;
 
@@ -395,12 +388,10 @@ export class TpFlowNode extends TpElement {
   #relayResize = (event: Event): void => {
     if (event.target === this) return;
     event.stopPropagation();
-    this.dispatchEvent(
-      new CustomEvent(NODE_RESIZE, {
-        bubbles: true,
-        composed: false,
-        detail: { ...(event as CustomEvent).detail, nodeId: this.nodeId },
-      }),
+    this.emit(
+      NODE_RESIZE,
+      { ...(event as CustomEvent).detail, nodeId: this.nodeId },
+      { composed: false },
     );
   };
 
@@ -408,13 +399,7 @@ export class TpFlowNode extends TpElement {
   #relayPortActivate = (event: Event): void => {
     if (event.target === this) return;
     event.stopPropagation();
-    this.dispatchEvent(
-      new CustomEvent(PORT_ACTIVATE, {
-        bubbles: true,
-        composed: false,
-        detail: (event as CustomEvent).detail,
-      }),
-    );
+    this.emit(PORT_ACTIVATE, (event as CustomEvent).detail, { composed: false });
   };
 
   /** A contained constituent event: a bound control's change becomes a node data proposal. */
@@ -451,14 +436,10 @@ export class TpFlowNode extends TpElement {
       sourceEvent,
       phase: 'propose',
     };
-    return this.dispatchEvent(
-      new CustomEvent<FlowNodePropertyDetail>(NODE_PROPERTY, {
-        bubbles: true,
-        composed: false,
-        cancelable: true,
-        detail,
-      }),
-    );
+    return this.emit<FlowNodePropertyDetail>(NODE_PROPERTY, detail, {
+      composed: false,
+      cancelable: true,
+    });
   }
 
   #commit(key: string, value: unknown, reason: ChangeReason, sourceEvent: Event): void {
@@ -470,13 +451,7 @@ export class TpFlowNode extends TpElement {
       sourceEvent,
       phase: 'commit',
     };
-    this.dispatchEvent(
-      new CustomEvent<FlowNodePropertyDetail>(NODE_PROPERTY, {
-        bubbles: true,
-        composed: false,
-        detail,
-      }),
-    );
+    this.emit<FlowNodePropertyDetail>(NODE_PROPERTY, detail, { composed: false });
   }
 
   // ---- number fields -----------------------------------------------------------------------------

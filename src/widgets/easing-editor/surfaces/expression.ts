@@ -175,14 +175,7 @@ export class TpEasingEditorExpression extends TpElement {
       reason,
       sourceEvent,
     };
-    return this.dispatchEvent(
-      new CustomEvent(EXPRESSION_CHANGE, {
-        detail,
-        bubbles: true,
-        composed: false,
-        cancelable: true,
-      }),
-    );
+    return this.emit(EXPRESSION_CHANGE, detail, { composed: false, cancelable: true });
   }
 
   protected override render() {

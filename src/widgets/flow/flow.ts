@@ -1344,13 +1344,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     reason: ChangeReason,
     sourceEvent?: Event,
   ): boolean {
-    return this.dispatchEvent(
-      new CustomEvent('tp-delete', {
-        bubbles: true,
-        composed: true,
-        cancelable: true,
-        detail: { nodes: plan.nodes, edges: plan.edges, reason, sourceEvent },
-      }),
+    return this.emit(
+      'tp-delete',
+      { nodes: plan.nodes, edges: plan.edges, reason, sourceEvent },
+      { cancelable: true },
     );
   }
 
@@ -1492,13 +1489,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     };
     if (connection.sourcePort !== undefined) proposed.sourcePort = connection.sourcePort;
     if (connection.targetPort !== undefined) proposed.targetPort = connection.targetPort;
-    const event = new CustomEvent('tp-connect', {
-      bubbles: true,
-      composed: true,
-      cancelable: true,
-      detail: { connection, edge: proposed, reason, sourceEvent },
-    });
-    if (!this.dispatchEvent(event)) return undefined;
+    if (
+      !this.emit(
+        'tp-connect',
+        { connection, edge: proposed, reason, sourceEvent },
+        { cancelable: true },
+      )
+    )
+      return undefined;
     const result = this.propose(
       [{ type: 'edge-add', edge: proposed }],
       reason,
@@ -1848,9 +1846,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#scope?.add(
       this.#model.on('history', (state) => {
         this.requestUpdate();
-        this.dispatchEvent(
-          new CustomEvent('tp-history-change', { bubbles: true, composed: true, detail: state }),
-        );
+        this.emit('tp-history-change', state);
       }),
     );
     this.#schedule();
@@ -2421,13 +2417,11 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       this.commit('layout', options.sourceEvent);
       this.#transitionLayout(previous, anchorId, anchorBefore);
     } else transaction.rollback('layout');
-    this.dispatchEvent(
-      new CustomEvent('tp-layout-complete', {
-        bubbles: true,
-        composed: true,
-        detail: { direction: result.direction, stats: result.stats, bounds: result.bounds },
-      }),
-    );
+    this.emit('tp-layout-complete', {
+      direction: result.direction,
+      stats: result.stats,
+      bounds: result.bounds,
+    });
     this.#announcer.announce(
       fillTemplate(this.#resolvedStrings.announceLayout, { count: result.positions.size }),
     );
@@ -4583,13 +4577,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       if (!detail.nodeIds.length) return false;
     }
     if (sourceEvent) detail.sourceEvent = sourceEvent;
-    this.dispatchEvent(
-      new CustomEvent<FlowRunRequestDetail>('tp-run-request', {
-        bubbles: true,
-        composed: true,
-        detail,
-      }),
-    );
+    this.emit<FlowRunRequestDetail>('tp-run-request', detail);
     return true;
   }
 
@@ -4657,24 +4645,18 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.requestUpdate();
     this.#announceStatuses(run);
     const player = this.#player;
-    this.dispatchEvent(
-      new CustomEvent('tp-run-change', {
-        bubbles: true,
-        composed: true,
-        detail: {
-          run,
-          summary: flowRunSummary(run),
-          ...(player
-            ? {
-                index: player.index,
-                length: player.length,
-                playing: player.playing,
-                mode: player.mode,
-              }
-            : {}),
-        },
-      }),
-    );
+    this.emit('tp-run-change', {
+      run,
+      summary: flowRunSummary(run),
+      ...(player
+        ? {
+            index: player.index,
+            length: player.length,
+            playing: player.playing,
+            mode: player.mode,
+          }
+        : {}),
+    });
   }
 
   /**
@@ -4748,13 +4730,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#nodeLayer.rebind();
     this.#edgeLayer.invalidate();
     this.#schedule();
-    this.dispatchEvent(
-      new CustomEvent<FlowIssuesChangeDetail>('tp-issues-change', {
-        bubbles: true,
-        composed: true,
-        detail: { issues: problems },
-      }),
-    );
+    this.emit<FlowIssuesChangeDetail>('tp-issues-change', { issues: problems });
   }
 
   #statusLabel(status: FlowNodeRunState['status']): string {
