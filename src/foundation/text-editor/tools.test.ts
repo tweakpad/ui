@@ -52,7 +52,6 @@ import {
 import { trashIcon } from '../../icons/trash.js';
 import type { IconDefinition } from '../../icons/types.js';
 import { undoIcon } from '../../icons/undo.js';
-import { keyHintPlatform } from '../key-notation.js';
 import { imageProtocols, linkProtocols } from '../markdown/url.js';
 import { textEditorBlockTools } from './builtin-tools/blocks.js';
 import { textEditorCoreTools } from './builtin-tools/core.js';
@@ -183,7 +182,7 @@ const shortcuts = (tool: TextEditorTool): readonly string[] =>
     ? []
     : typeof tool.shortcut === 'string'
       ? [tool.shortcut]
-      : tool.shortcut;
+      : tool.shortcut.map((entry) => (typeof entry === 'string' ? entry : entry.pattern));
 
 /** The surface identities of `uwg-te-par-tools-1`. */
 const SURFACES: readonly TextEditorSurface[] = [
@@ -720,16 +719,12 @@ describe('built-in tools (uwg-te-par-tools-1)', () => {
     const tables = { ...TABLE_ROWS, ...TABLE_TOOL_ROWS };
     expect(Object.keys(textEditorTools).sort()).toEqual(Object.keys(tables).sort());
     expect(Object.keys(textEditorTools)).toHaveLength(66);
-    const redo =
-      keyHintPlatform('auto', globalThis.navigator) === 'mac' ? ['Mod+Shift+Z'] : NON_APPLE_REDO;
     for (const [id, row] of Object.entries(TABLE_ROWS)) {
       const tool = builtin(id);
       expect(tool.id, id).toBe(id);
       expect(tool.kind, `${id} kind (${row.row})`).toBe(row.kind);
       expect(tool.surfaces ?? [], `${id} surfaces (${row.row})`).toEqual(row.surfaces);
-      expect(shortcuts(tool), `${id} shortcut (${row.row})`).toEqual(
-        id === 'redo' ? redo : row.shortcut,
-      );
+      expect(shortcuts(tool), `${id} shortcut (${row.row})`).toEqual(row.shortcut);
       expect(tool.requires ?? [], `${id} requires (${row.row})`).toEqual(row.requires);
     }
     // Every built-in: surfaces only from the eight identities, requires only capability ids,
@@ -876,32 +871,24 @@ describe('built-in tools on each platform (uwg-te-par-tools-1)', () => {
     vi.resetModules();
   });
 
-  it('V-155: redo lists Ctrl+Y only outside Apple platforms', async () => {
-    const platforms: [Pick<Navigator, 'platform' | 'userAgent'> | undefined, readonly string[]][] =
-      [
-        [
-          { platform: 'MacIntel', userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)' },
-          ['Mod+Shift+Z'],
-        ],
-        [
-          { platform: 'iPad', userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X)' },
-          ['Mod+Shift+Z'],
-        ],
-        [
-          { platform: 'Win32', userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-          NON_APPLE_REDO,
-        ],
-        [
-          { platform: 'Linux x86_64', userAgent: 'Mozilla/5.0 (X11; Linux x86_64)' },
-          NON_APPLE_REDO,
-        ],
-        [undefined, NON_APPLE_REDO],
-      ];
-    for (const [navigator, redo] of platforms) {
+  it('V-155: redo scopes Ctrl+Y to non-Apple platforms, whatever machine loads the module', async () => {
+    // The chord is scoped in the definition; the key-binding owner resolves it against the
+    // platform the editor is configured for, so the module never reads the host navigator.
+    const hosts: (Pick<Navigator, 'platform' | 'userAgent'> | undefined)[] = [
+      { platform: 'MacIntel', userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)' },
+      { platform: 'iPad', userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X)' },
+      { platform: 'Win32', userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      { platform: 'Linux x86_64', userAgent: 'Mozilla/5.0 (X11; Linux x86_64)' },
+      undefined,
+    ];
+    for (const navigator of hosts) {
       vi.stubGlobal('navigator', navigator);
       vi.resetModules();
       const { textEditorCoreTools: tools } = await import('./builtin-tools/core.js');
-      expect(shortcuts(tools.redo), navigator?.platform ?? 'no navigator').toEqual(redo);
+      expect(tools.redo.shortcut, navigator?.platform ?? 'no navigator').toEqual([
+        'Mod+Shift+Z',
+        { pattern: 'Ctrl+Y', platforms: ['windows', 'linux'] },
+      ]);
       expect(shortcuts(tools.undo)).toEqual(['Mod+Z']);
     }
   });

@@ -864,3 +864,34 @@ describe('Key name aliases', () => {
     expect(handler).toHaveBeenCalledOnce();
   });
 });
+
+describe('Platform-scoped patterns', () => {
+  const redo = ['Mod+Shift+Z', { pattern: 'Ctrl+Y', platforms: ['windows', 'linux'] }] as const;
+
+  it('binds a scoped pattern on its platforms only, by the owner platform', () => {
+    for (const platform of ['windows', 'linux'] as const) {
+      const target = owner(element(), { platform });
+      target.register({ keys: redo, action: 'redo', handler: () => true });
+      expect(target.list()[0]!.chords.map((chord) => chord.pattern)).toEqual([
+        'Mod+Shift+Z',
+        'Ctrl+Y',
+      ]);
+      expect(target.shortcut('redo')?.aria).toBe('Control+Shift+Z Control+Y');
+    }
+    const mac = owner(element(), { platform: 'mac' });
+    mac.register({ keys: redo, action: 'redo', handler: () => true });
+    expect(mac.list()[0]!.chords.map((chord) => chord.pattern)).toEqual(['Mod+Shift+Z']);
+    expect(mac.shortcut('redo')?.aria).toBe('Shift+Meta+Z');
+  });
+
+  it('publishes no shortcut for a binding whose patterns all belong elsewhere', () => {
+    const target = owner(element(), { platform: 'mac' });
+    target.register({
+      keys: { pattern: 'Ctrl+Y', platforms: ['windows'] },
+      action: 'redo',
+      handler: () => true,
+    });
+    expect(target.list()[0]!.chords).toEqual([]);
+    expect(target.shortcut('redo')).toBeUndefined();
+  });
+});
