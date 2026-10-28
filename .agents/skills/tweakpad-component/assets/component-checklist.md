@@ -140,7 +140,7 @@ at the work boundaries specified in SKILL.md.
 
 ## Documentation synchronization
 
-- [ ] `docs/components/<slug>.mdx` follows the skeleton; the story renders it with `libraryDocs()`.
+- [ ] `docs/components/<slug>.mdx` follows the skeleton; the story renders it with `libraryDocs()`; the tag is off `scripts/docs/pending.json`.
 - [ ] JSDoc covers the element summary, every public field and method, slots, events and CSS properties; parts carry a description in the family; `npm run build` reports no undescribed row.
 - [ ] `elementDependencies` is complete, so Related lists what the element renders.
 - [ ] Verification fixtures are separate from the page (tests/fixtures or `!autodocs` stories).

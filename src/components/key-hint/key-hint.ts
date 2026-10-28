@@ -3,12 +3,7 @@ import { KeyHintElement } from './base.js';
 import { keyHintNotation } from '../../foundation/key-notation.js';
 import { keyHintPresentation } from '../../presentation/families/key-hint.js';
 
-/**
- * One keycap of a keyboard shortcut, in the notation of the reader's platform. It describes a
- * shortcut and never registers one; the application implements it.
- *
- * @slot - Text or an Icon that replaces the generated notation; give an icon a `label`.
- */
+/** One informative key; authored content can replace the generated notation. */
 export class TpKeyHint extends KeyHintElement {
   static tagName = 'tp-key-hint';
   static override presentation = keyHintPresentation;
@@ -28,7 +23,6 @@ export class TpKeyHint extends KeyHintElement {
       }
     `,
   ];
-  /** The key to draw, such as `mod`, `shift`, `enter` or `K`; `mod` is Command on macOS and Ctrl elsewhere. */
   key = '';
   protected override render() {
     const notation = keyHintNotation(this.key, this.resolvedPlatform, this.resolvedLabels);

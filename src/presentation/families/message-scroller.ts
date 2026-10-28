@@ -10,23 +10,18 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'message-scroller',
-      description: 'The root region that positions the return control over the viewport.',
     },
     {
       name: 'message-scroller-viewport',
-      description: 'The native scrolling region.',
     },
     {
       name: 'message-scroller-content',
-      description: 'The transcript log.',
     },
     {
       name: 'message-scroller-item',
-      description: 'A message row.',
     },
     {
       name: 'message-scroller-return-control',
-      description: 'The return Button.',
     },
   ],
 };

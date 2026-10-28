@@ -4,7 +4,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import type { TpCheckbox } from '../components/checkbox/index.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import { libraryDocs } from './library-docs.js';
+import documentation from '../../docs/checkbox.md?raw';
 interface Args {
   checked: boolean;
   indeterminate: boolean;
@@ -19,7 +19,10 @@ const meta: Meta<Args> = {
   component: 'tp-checkbox',
   parameters: {
     layout: 'centered',
-    docs: libraryDocs('components/checkbox'),
+    docs: {
+      source: { code: '<tp-checkbox>Accept terms and conditions</tp-checkbox>' },
+      description: { component: documentation },
+    },
   },
   args: {
     checked: false,
@@ -31,7 +34,10 @@ const meta: Meta<Args> = {
     nativeAction: false,
   },
   argTypes: {
-    checked: { control: 'boolean' },
+    checked: {
+      control: 'boolean',
+      description: 'Controlled checked state; this example accepts proposals.',
+    },
     indeterminate: { control: 'boolean' },
     disabled: { control: 'boolean' },
     readOnly: { control: 'boolean' },

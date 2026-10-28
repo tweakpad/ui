@@ -51,17 +51,7 @@ export const BOOLEAN_CONTROL_MARKERS = [
   'filled',
 ] as const satisfies readonly (keyof BooleanControlState)[];
 
-/**
- * A Boolean form control with an inline label: checked, unchecked or mixed, submitted with its
- * form and validated by the Field around it. Pointer and Space toggle it; Enter does not, so it
- * never competes with a form's submit key.
- *
- * @slot - The inline label; a press on it toggles the box.
- * @fires tp-value-change - Cancelable proposal of a new checked state before it commits;
- * `detail.value`, `detail.previousValue` and the `detail.reason` for the change.
- * @fires tp-field-value - After the checked state commits, with the same `value`, `previousValue`
- * and `reason`; the enclosing Field listens for it.
- */
+/** Checkbox state/form owner, also consumed by the Switch family. */
 export class TpCheckbox extends TpFormElement {
   static tagName = 'tp-checkbox';
   /** Library elements this element renders; defining it defines them too. */
@@ -154,32 +144,12 @@ export class TpCheckbox extends TpFormElement {
     if (this.usesIndicatorPresence) this.#presence.setPresent(this.checked || this.indeterminate);
   }
   #identifier = createId('tp-checkbox');
-  /**
-   * The checked state at first render and after a form reset, when the page does not own `checked`.
-   */
   defaultChecked: boolean | undefined;
-  /**
-   * Called with each proposed change before it commits; assign `checked` to accept it or cancel the
-   * event to reject it.
-   */
   onCheckedChange: ((event: TpValueChangeEvent<boolean>) => void) | undefined;
-  /** The value submitted while unchecked; without it an unchecked box submits nothing. */
   uncheckedValue: string | undefined;
-  /**
-   * Renders the control as a native button instead of a span, for a form layout that expects one.
-   */
   nativeAction = false;
-  /**
-   * Makes this the select-all box of a checkbox group: checked when every child is, mixed when some
-   * are, and pressing it checks or clears them all.
-   */
   parent = false;
-  /**
-   * Keeps the hidden check mark in the tree while unchecked, so a custom style can transition it
-   * out.
-   */
   keepMounted = false;
-  /** The id of the inner control, for references from outside the element; generated when empty. */
   identifier = '';
   #state = new ControllableState({
     host: this,
@@ -196,10 +166,6 @@ export class TpCheckbox extends TpFormElement {
     },
     diagnostic: (message) => this.diagnose('checkbox-state', message),
   });
-  /**
-   * Whether the box is checked. Set it to own the state: the box then proposes changes and shows
-   * only what you assign.
-   */
   get checked(): boolean {
     return this.#group?.isChecked(this) ?? this.#state.value;
   }
@@ -209,10 +175,6 @@ export class TpCheckbox extends TpFormElement {
     if (this.hasUpdated) this.#state.sync();
     this.requestUpdate('checked', previous);
   }
-  /**
-   * Shows the mixed state, as on a select-all box whose children are partly checked; a press
-   * proposes checked, and your code clears it.
-   */
   get indeterminate(): boolean {
     return (
       this.supportsIndeterminate &&
@@ -230,7 +192,6 @@ export class TpCheckbox extends TpFormElement {
     this.#indeterminate = this.supportsIndeterminate && Boolean(value);
     this.requestUpdate('indeterminate', previous);
   }
-  /** The checkbox group that owns this box's state, if any; set by the group itself. */
   get checkboxGroup(): CheckboxGroupController | null {
     return this.#group;
   }
@@ -240,11 +201,9 @@ export class TpCheckbox extends TpFormElement {
     this.#group = value;
     this.requestUpdate();
   }
-  /** Whether the box is disabled, by itself, its Field or its checkbox group. */
   get checkboxDisabled(): boolean {
     return this.effectiveDisabled || (this.#group?.isDisabled(this) ?? false);
   }
-  /** The inner element that carries the checkbox role and receives focus. */
   get controlElement(): HTMLElement | null {
     return this.#control ?? this.renderRoot.querySelector<HTMLElement>('input');
   }
@@ -443,10 +402,6 @@ export class TpCheckbox extends TpFormElement {
     input.indeterminate = this.indeterminate;
     this.syncCheckboxForm();
   };
-  /**
-   * Proposes a new checked state as if the user had made it, notifying listeners first; a box in a
-   * checkbox group ignores it.
-   */
   setChecked(value: boolean, reason: ChangeReason = 'programmatic', source?: Event): void {
     if (this.#group) return;
     this.#state.set(value, reason, source);

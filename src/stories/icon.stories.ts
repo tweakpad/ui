@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import iconDocumentation from '../../docs/icon.md?raw';
+import { chevronRightIcon } from '../icons/chevron-right.js';
 import { plusIcon } from '../icons/plus.js';
 import type { IconDefinition } from '../icons/types.js';
 
@@ -13,19 +14,26 @@ interface IconStoryArgs {
 const meta: Meta<IconStoryArgs> = {
   title: 'Components/Icon',
   component: 'tp-icon',
-  parameters: { docs: libraryDocs('components/icon') },
+  parameters: {
+    docs: { description: { component: iconDocumentation.replace(/^# Icon\n/u, '') } },
+  },
   args: { icon: plusIcon, label: 'Add', size: '' },
   argTypes: {
     icon: {
       control: 'object',
+      description:
+        'Property-only artwork definition. Import one definition module or supply your own.',
       table: { type: { summary: 'IconDefinition' }, defaultValue: { summary: 'undefined' } },
     },
     label: {
       control: 'text',
+      description: 'Accessible name; leave empty for a decorative icon.',
       table: { type: { summary: 'string' }, defaultValue: { summary: "''" } },
     },
     size: {
       control: 'text',
+      description:
+        "Preferred square CSS extent. Empty takes the icon extent of the enclosing control's size, otherwise the `--tp-icon-size-md` role. Explicit host width and height can override it.",
       table: { type: { summary: 'CSS length' }, defaultValue: { summary: "''" } },
     },
   },
@@ -37,3 +45,4 @@ export default meta;
 type Story = StoryObj<IconStoryArgs>;
 
 export const Default: Story = {};
+export const Decorative: Story = { args: { label: '', icon: chevronRightIcon } };

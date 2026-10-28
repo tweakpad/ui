@@ -16,21 +16,17 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'status-dot',
-      description: 'The host, around the dot and the label.',
       axes: ['variant'],
     },
     {
       name: 'status-dot-indicator',
-      description: 'The dot, in the variant color.',
       axes: ['variant'],
     },
     {
       name: 'status-dot-label',
-      description: 'The label beside the dot, while `show-label` is set.',
     },
     {
       name: 'status-dot-description',
-      description: 'The Tooltip presenting the label while it is not shown.',
     },
   ],
 };

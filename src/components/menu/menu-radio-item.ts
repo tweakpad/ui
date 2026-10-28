@@ -14,11 +14,6 @@ const radioMark: IconDefinition = {
   paths: [{ d: 'M4 0a4 4 0 1 0 0 8a4 4 0 0 0 0-8', fill: 'currentColor', stroke: 'none' }],
 };
 
-/**
- * One choice of a Menu Radio Group, marked while it is the group's value. It keeps the menu open.
- *
- * @slot - The label.
- */
 export class TpMenuRadioItem extends TpMenuItem {
   static override tagName = 'tp-menu-radio-item';
   /** Library elements this element renders; defining it defines them too. */
@@ -30,7 +25,6 @@ export class TpMenuRadioItem extends TpMenuItem {
     keepMounted: { type: Boolean, attribute: 'keep-mounted' },
   };
   override closeOnClick = false;
-  /** Keeps the choice mark in the document while unselected, hidden. */
   keepMounted = false;
   #group: TpMenuRadioGroup | null = null;
   #release: (() => void) | undefined;
@@ -42,11 +36,9 @@ export class TpMenuRadioItem extends TpMenuItem {
     surface: () => this.#indicator,
     keepMounted: () => this.keepMounted,
   });
-  /** The Menu Radio Group the item belongs to. */
   get radioGroup(): TpMenuRadioGroup | null {
     return this.#group;
   }
-  /** Whether the item is the group's value. */
   get checked(): boolean {
     return !!this.#group && Object.is(this.#group.value, this.value);
   }

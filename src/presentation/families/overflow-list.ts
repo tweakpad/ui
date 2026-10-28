@@ -10,11 +10,9 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'overflow-list',
-      description: 'The wrapping row of the shown items and the count.',
     },
     {
       name: 'overflow-list-count',
-      description: 'The default count, a Badge of the omitted items.',
     },
   ],
 };

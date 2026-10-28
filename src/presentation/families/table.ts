@@ -10,40 +10,30 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'table',
-      description:
-        'The focusable overflow region that scrolls the table and holds its pinned edges.',
     },
     {
       name: 'table-table',
-      description: 'The native table.',
     },
     {
       name: 'table-caption',
-      description: 'The native caption.',
     },
     {
       name: 'table-header',
-      description: 'The native header region.',
     },
     {
       name: 'table-body',
-      description: 'The native body region.',
     },
     {
       name: 'table-footer',
-      description: 'The native footer region.',
     },
     {
       name: 'table-row',
-      description: 'A native row; selected rows carry the row emphasis.',
     },
     {
       name: 'table-column-header',
-      description: 'A native header cell.',
     },
     {
       name: 'table-cell',
-      description: 'A native data cell.',
     },
   ],
 };

@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
+import documentation from '../../docs/tree-view.md?raw';
 import { folderIcon } from '../icons/folder.js';
 import { fileTextIcon } from '../icons/file-text.js';
-import { libraryDocs } from './library-docs.js';
+import { treeViewDefaultSource, treeViewExamples } from './tree-view.examples.js';
 
 interface Args {
   label: string;
@@ -19,7 +20,13 @@ interface Args {
 const meta = {
   title: 'Components/Tree view',
   component: 'tp-tree-view',
-  parameters: { docs: libraryDocs('components/tree-view') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      examples: treeViewExamples,
+      source: { code: treeViewDefaultSource },
+    },
+  },
   args: {
     label: 'Files',
     selectionMode: 'single',
@@ -32,27 +39,31 @@ const meta = {
     readOnly: false,
   },
   argTypes: {
-    label: { control: 'text' },
+    label: { control: 'text', description: 'Accessible name of the tree.' },
     selectionMode: {
       control: 'inline-radio',
       options: ['none', 'single', 'multiple'],
+      description: '`selection-mode`.',
       table: { defaultValue: { summary: 'single' } },
     },
     checkboxSelection: {
       control: 'boolean',
+      description: '`checkbox-selection`: a checked indicator in every row.',
     },
     selectionPropagation: {
       control: 'boolean',
+      description: '`selection-propagation`: multiple mode cascades to descendants.',
     },
     expansionTrigger: {
       control: 'inline-radio',
       options: ['item', 'indicator'],
+      description: '`expansion-trigger`: what toggles expansion on press.',
       table: { defaultValue: { summary: 'item' } },
     },
-    size: { control: 'inline-radio', options: ['sm', 'default'] },
-    guides: { control: 'inline-radio', options: ['line', 'none'] },
+    size: { control: 'inline-radio', options: ['sm', 'default'], description: 'Row size.' },
+    guides: { control: 'inline-radio', options: ['line', 'none'], description: 'Indent guides.' },
     disabled: { control: 'boolean' },
-    readOnly: { control: 'boolean' },
+    readOnly: { control: 'boolean', description: '`readonly`: expansion only.' },
   },
   render: (args) => html`
     <tp-tree-view

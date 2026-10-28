@@ -92,30 +92,7 @@ const complexProperties = Object.fromEntries(
   ].map((name) => [name, { attribute: false }]),
 );
 
-/** The live regions a list renders its keyboard instructions and announcements into. */
-type AccessibilityRegion = 'instructions' | 'announcements';
-
-/**
- * An ordered list people reorder by pointer or keyboard, committing a new immutable array on each
- * drop. Hovering changes only the preview order; Escape, a drop outside or a rejected proposal
- * restores the committed order. Lists that share a `manager` move items between each other.
- *
- * @csspart list - The native ordered list.
- * @csspart item - The list element around each row.
- * @csspart handle - The grip Button that picks a row up.
- * @csspart empty - The row shown while the list has no items.
- * @csspart placeholder - The stand-in that keeps the dragged row's place.
- * @csspart overlay - The custom drag overlay drawn by `renderOverlay`.
- * @fires tp-value-change - Cancelable proposal of the new array before it commits, with the moved item, both lists and both indexes in `metadata`; a controlled list must publish the accepted `value`.
- * @fires tp-value-commit - After a drop commits, once per changed list.
- * @fires tp-before-drag-start - Cancelable, before a drag starts; preventing it keeps the item in place.
- * @fires tp-drag-start - When a drag starts.
- * @fires tp-drag-move - Cancelable, as the dragged item moves.
- * @fires tp-collision - Cancelable, when the item under the drag is chosen.
- * @fires tp-drag-over - Cancelable, when the drag moves over a new place; preventing it keeps the preview order.
- * @fires tp-drag-end - When the item is dropped; `detail.suspend()` defers the decision for an asynchronous check.
- * @fires tp-drag-settled - When the operation finishes, with an `outcome` of `committed`, `canceled` or `rejected`.
- */
+/** Immutable collection binding; entities and services belong to Foundation. */
 export class TpDragDropList<T = unknown> extends TpElement {
   static tagName = 'tp-drag-drop-list';
   /** Library elements this element renders; defining it defines them too. */
@@ -135,71 +112,39 @@ export class TpDragDropList<T = unknown> extends TpElement {
     label: { type: String },
   };
   static override styles = [TpElement.styles, dragDropListStyles];
-  /** The items the list starts with, when it owns its value; set it before the list connects. */
   defaultValue: readonly T[] | undefined;
   #provided: readonly T[] | undefined;
-  /** Called with each proposal, before `tp-value-change` is dispatched. */
   onValueChange: ((event: TpValueChangeEvent<readonly T[]>) => void) | undefined;
-  /** The stable identity of an item, which must not change as it moves; defaults to the item itself or its `id`. */
   getItemId: ((item: T, index: number) => UniqueIdentifier) | undefined;
-  /** The readable name of an item, used in the handle's name and in announcements; defaults to its `label`, then its id. */
   getItemLabel: ((item: T, index: number) => string) | undefined;
-  /** Renders the content of an item's row, with its position and drag state; without it the row shows the label. */
   renderItem: ((item: T, context: DragDropItemContext<T>) => unknown) | undefined;
-  /** Per-item drag settings, such as disabling dragging or dropping for one item. */
   getItemOptions: ((item: T, context: DragDropItemContext<T>) => DragDropItemOptions) | undefined;
-  /** The drag manager shared by lists that exchange items; a list without one owns its own. */
   manager: DragDropManager | undefined;
-  /** The identity of this list among lists sharing a manager; unique and stable. */
   group: UniqueIdentifier = createId('drag-list');
   override orientation: 'vertical' | 'horizontal' = 'vertical';
-  /** Where a pointer picks a row up: its handle, or anywhere on the row; the handle stays the keyboard target. */
   activation: 'handle' | 'item' = 'handle';
-  /** How a drop rearranges the list: `move` inserts the item, `swap` exchanges it with the item it lands on. */
   reorderMode: 'move' | 'swap' = 'move';
-  /** The row treatment, shared with List item. */
   variant: 'ghost' | 'outline' | 'subdued' = 'ghost';
-  /** The row density. */
   size: 'xs' | 'sm' | 'default' = 'default';
-  /** The accessible name of the list, such as "Release checklist". */
   label = 'Items';
-  /** The kind of item this list's rows are, matched against the `accept` of other lists. */
   type: DraggableInput['type'];
-  /** Which items may be dropped into this list: a type, a list of types, or a predicate on the dragged item. */
   accept: DroppableInput['accept'];
-  /** The input sensors that start a drag, replacing or extending the pointer and keyboard defaults. */
   sensors: ManagerOptions['sensors'];
-  /** Transforms of the drag movement, such as locking it to an axis or snapping it to a grid. */
   modifiers: ManagerOptions['modifiers'];
-  /** How the item under the drag is chosen. */
   collisionDetector: DroppableInput['collisionDetector'];
-  /** The priority of this list's targets when targets overlap. */
   collisionPriority: DroppableInput['collisionPriority'];
-  /** Which point of the dragged row follows the pointer. */
   alignment: DraggableInput['alignment'];
-  /** How the dragged row is shown: moved with a hidden placeholder, cloned, moved without a placeholder, or not at all. */
   feedback: ManagerOptions['feedback'];
-  /** Renders a custom overlay that follows the pointer while an item is dragged. */
   renderOverlay: ((item: T, context: DragDropItemContext<T>) => unknown) | undefined;
-  /** The element the drag feedback is attached to. */
   rootElement: ManagerOptions['rootElement'];
-  /** Turns the custom overlay off, for every item or for some. */
   overlayDisabled: ManagerOptions['overlayDisabled'];
-  /** The animation of rows making room during a pointer drag; null turns it off. */
   transition: SortTransition | null | undefined;
-  /** The animation of rows making room during a keyboard move; null turns it off. */
   keyboardTransition: ManagerOptions['keyboardTransition'];
-  /** The animation of the dropped row settling into place; null turns it off. */
   dropAnimation: ManagerOptions['dropAnimation'];
-  /** Scrolls the nearest scroll container while a drag nears its edge. */
   autoScroll: ManagerOptions['autoScroll'];
-  /** Replaces the keyboard instructions read with each handle. */
   instructions: ManagerOptions['instructions'];
-  /** Replaces the announcements made as a drag starts, moves and ends; return undefined to stay silent. */
   announcements: ManagerOptions['announcements'];
-  /** Configures, or turns off with false, the instructions and live announcements. */
   accessibility: ManagerOptions['accessibility'];
-  /** @internal The drag that produced the proposal in progress. */
   pendingCommit: { event: Event; eventOptions: TpChangeEventOptions } | undefined;
   readonly #state = new ControllableState<readonly T[]>({
     host: this,
@@ -224,7 +169,6 @@ export class TpDragDropList<T = unknown> extends TpElement {
     },
     diagnostic: (message) => reportDragDropDiagnostic('value', message),
   });
-  /** The list's binding to its drag manager, shared with connected lists. */
   readonly controller = new ListController(this, this.#state);
   #ownedManager: DragDropManager | undefined;
   #connectedManager: DragDropManager | undefined;
@@ -235,7 +179,6 @@ export class TpDragDropList<T = unknown> extends TpElement {
   #handleRefs = new Map<UniqueIdentifier, (element: HTMLElement | null) => void>();
   #itemRefs = new Map<UniqueIdentifier, (element: HTMLElement | null) => void>();
   #list: HTMLElement | null = null;
-  /** @internal The drop target that accepts items over the empty space of the list. */
   containerTarget: Droppable | undefined;
   #containerId = createId('drag-list-target');
   #oldRects = new Map<
@@ -254,7 +197,6 @@ export class TpDragDropList<T = unknown> extends TpElement {
   #content = new Map<UniqueIdentifier, unknown>();
   #overlaySource: Draggable | undefined;
   #boundRecords = new Map<UniqueIdentifier, ItemRecord<T>>();
-  /** The items in their committed order; set it before the list connects to control it, then publish each accepted proposal back. The list never mutates the array. */
   get value(): readonly T[] {
     return this.#state.value;
   }
@@ -289,23 +231,18 @@ export class TpDragDropList<T = unknown> extends TpElement {
       return this.#coherentInput;
     }
   }
-  /** @internal The value the application last published. */
   get controlledInput(): readonly T[] | undefined {
     return this.#provided;
   }
-  /** The committed array; the same as `value`. */
   get committedValue(): readonly T[] {
     return this.value;
   }
-  /** The order shown during a drag, before anything commits; otherwise the committed array. */
   get previewValue(): readonly T[] {
     return this.controller.preview;
   }
-  /** Moves an item to an index in this list or a connected one, through the same proposal as a drop; returns `accepted`, `no-op` or `rejected`. */
   moveItem(id: UniqueIdentifier, destination: DragDropDestination<T>): MoveItemOutcome {
     return this.controller.moveItem(id, destination);
   }
-  /** Cancels a drag involving this list and restores the committed order. */
   cancelDrag(): void {
     this.controller.cancel();
   }
@@ -757,7 +694,6 @@ export class TpDragDropList<T = unknown> extends TpElement {
       content,
     });
   }
-  /** @internal The manager reports a drag event to each connected list. */
   observeDragEvent(name: DragEventName, event: DragEvent): void {
     if (
       name === 'beforedragstart' &&
@@ -827,13 +763,15 @@ export class TpDragDropList<T = unknown> extends TpElement {
       }
     }
   }
-  /** @internal Renders the instructions or announcements into their live region. */
-  renderAccessibilityPart(part: AccessibilityRegion, element: HTMLElement, text: string): void {
+  renderAccessibilityPart(
+    part: 'instructions' | 'announcements',
+    element: HTMLElement,
+    text: string,
+  ): void {
     render(this.renderPart(`drag-drop-list-${part}`, {}, { tag: 'span', content: text }), element, {
       host: this,
     });
   }
-  /** @internal Renders the placeholder that keeps a dragged row's place. */
   createFeedbackPreview(id: UniqueIdentifier): HTMLElement {
     const record = this.#boundRecords.get(id);
     if (!record) throw new Error('The source item has no coherent preview.');

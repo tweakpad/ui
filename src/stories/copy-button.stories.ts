@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import copyButtonDocumentation from '../../docs/copy-button.md?raw';
+import { copyButtonExamples } from './copy-button.examples.js';
 
 interface CopyButtonStoryArgs {
   value: string;
@@ -16,7 +17,12 @@ interface CopyButtonStoryArgs {
 const meta: Meta<CopyButtonStoryArgs> = {
   title: 'Components/Copy button',
   component: 'tp-copy-button',
-  parameters: { docs: libraryDocs('components/copy-button') },
+  parameters: {
+    docs: {
+      examples: copyButtonExamples,
+      description: { component: copyButtonDocumentation.replace(/^# Copy button\n/u, '') },
+    },
+  },
   args: {
     value: 'npm install @tweakpad/ui',
     label: 'Copy install command',
@@ -28,17 +34,20 @@ const meta: Meta<CopyButtonStoryArgs> = {
     disabled: false,
   },
   argTypes: {
-    value: { control: 'text' },
+    value: { control: 'text', description: 'Text written to the clipboard.' },
     label: {
       control: 'text',
+      description: 'Accessible name at rest; visible with show-label.',
       table: { defaultValue: { summary: 'Copy' } },
     },
     copiedLabel: {
       control: 'text',
+      description: 'Name, text and announcement after a successful copy.',
       table: { defaultValue: { summary: 'Copied' } },
     },
     showLabel: {
       control: 'boolean',
+      description: 'Renders the label beside the icon.',
       table: { defaultValue: { summary: 'false' } },
     },
     variant: {
@@ -53,6 +62,7 @@ const meta: Meta<CopyButtonStoryArgs> = {
     },
     duration: {
       control: 'number',
+      description: 'Milliseconds the copied state lasts.',
       table: { defaultValue: { summary: '2000' } },
     },
     disabled: { control: 'boolean' },

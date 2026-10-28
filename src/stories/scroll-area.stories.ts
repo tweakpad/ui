@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import { scrollAreaExamples } from './scroll-area.examples.js';
+import documentation from '../../docs/scroll-area.md?raw';
 import type { ScrollbarVisibility } from '../components/scroll-area/index.js';
 interface Args {
   orientation: 'vertical' | 'horizontal';
@@ -22,7 +23,21 @@ const defaults: Args = {
 const meta = {
   title: 'Components/Scroll area',
   component: 'tp-scroll-area',
-  parameters: { docs: libraryDocs('components/scroll-area') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      examples: scrollAreaExamples,
+      source: {
+        code: `<tp-scroll-area label="Release history" style="block-size:calc(var(--tp-spacing) * 90);inline-size:calc(var(--tp-spacing) * 60);max-inline-size:100%">
+  <div style="padding:var(--tp-space-4)">
+    <h3 style="margin:0 0 var(--tp-space-4);font-size:var(--tp-text-sm)">Release history</h3>
+    ${records.map((record, i) => `${i ? '<tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>' : ''}<div style="font-size:var(--tp-text-sm)">${record}</div>`).join('\n    ')}
+  </div>
+</tp-scroll-area>`,
+        language: 'html',
+      },
+    },
+  },
   args: defaults,
   argTypes: {
     orientation: { control: 'select', options: ['vertical', 'horizontal'] },

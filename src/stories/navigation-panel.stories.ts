@@ -7,7 +7,9 @@ import {
   navigationPanelExampleMarkup,
   setupNavigationPanelExample,
 } from './navigation-panel-example.js';
-import { libraryDocs } from './library-docs.js';
+import exampleSource from './navigation-panel-example.js?raw';
+import { publishedSource } from './documentation-examples.js';
+import documentation from '../../docs/navigation-panel.md?raw';
 import type { TpNavigationPanel } from '../components/navigation-panel/index.js';
 interface Args {
   expanded: boolean;
@@ -18,10 +20,36 @@ interface Args {
   label: string;
   motionPolicy: 'inherit' | 'normal' | 'reduce';
 }
+function source(args: Args): string {
+  const module = publishedSource(exampleSource).replaceAll('export ', '');
+  return `import '@tweakpad/ui/register';
+import '@tweakpad/ui/styles.css';
+${module}
+const example = document.createElement('div');
+document.body.append(example);
+example.innerHTML = navigationPanelExampleMarkup;
+const panel = example.querySelector('tp-navigation-panel');
+Object.assign(panel, ${JSON.stringify(args)});
+await panel.updateComplete;
+setupNavigationPanelExample(panel);
+panel.addEventListener('tp-value-change', event => {
+  if (event.target === panel && !event.defaultPrevented && !event.detail.cancelled)
+    panel.expanded = event.detail.value;
+});`;
+}
 const meta: Meta<Args> = {
   title: 'Components/Navigation panel',
   component: 'tp-navigation-panel',
-  parameters: { layout: 'fullscreen', docs: libraryDocs('components/navigation-panel') },
+  parameters: {
+    layout: 'fullscreen',
+    docs: {
+      description: { component: documentation },
+      source: {
+        transform: (_source: string, { args }: { args: Args }) => source(args),
+        language: 'ts',
+      },
+    },
+  },
   args: {
     expanded: true,
     compact: false,

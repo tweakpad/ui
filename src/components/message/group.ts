@@ -2,11 +2,7 @@ import { TpElement } from '../../foundation/element.js';
 import { renderStackGroup, stackGroupStyles } from '../shared/stack-group.js';
 import { messagePresentation } from '../../presentation/families/message.js';
 
-/**
- * A stack of consecutive Messages from one sender, with tighter spacing between them.
- *
- * @slot - The sender's Messages, in order.
- */
+/** Consecutive messages share a density owner without introducing conversation state. */
 export class TpMessageGroup extends TpElement {
   static tagName = 'tp-message-group';
   static override presentation = messagePresentation;

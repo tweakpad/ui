@@ -9,23 +9,18 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'text-motion',
-      description: 'The host, around the text and its pieces.',
     },
     {
       name: 'text-motion-line',
-      description: 'A line piece, when the text is split into lines.',
     },
     {
       name: 'text-motion-word',
-      description: 'A word piece.',
     },
     {
       name: 'text-motion-char',
-      description: 'A character piece, when the text is split into characters.',
     },
     {
       name: 'text-motion-mask',
-      description: 'The clipping wrapper around a masked piece, which the piece emerges from.',
     },
   ],
 };

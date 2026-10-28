@@ -9,7 +9,8 @@ import type {
   TpEasingEditor,
 } from '../../widgets/easing-editor/index.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
-import { libraryDocs } from '../library-docs.js';
+import { easingEditorExamples } from './easing-editor.examples.js';
+import documentation from '../../../docs/widgets/easing-editor.md?raw';
 
 interface Args {
   value: string;
@@ -25,10 +26,21 @@ interface Args {
   disabled: boolean;
   readOnly: boolean;
 }
+const sourceFor = (markup: string) =>
+  `<script type="module">\n  import '@tweakpad/ui/styles.css';\n  import '@tweakpad/ui/register';\n  import '@tweakpad/ui/register/widgets';\n</script>\n${markup}`;
+const source = sourceFor(
+  '<tp-easing-editor label="Motion" name="easing" default-value="ease-out"></tp-easing-editor>',
+);
 const meta: Meta<Args> = {
   title: 'Widgets/Easing editor',
   component: 'tp-easing-editor',
-  parameters: { docs: libraryDocs('widgets/easing-editor') },
+  parameters: {
+    docs: {
+      examples: easingEditorExamples,
+      description: { component: documentation },
+      source: { code: source, language: 'html' },
+    },
+  },
   args: {
     value: 'ease-out',
     duration: 0.7,
@@ -44,7 +56,10 @@ const meta: Meta<Args> = {
     readOnly: false,
   },
   argTypes: {
-    value: { control: 'text' },
+    value: {
+      control: 'text',
+      description: 'Controlled easing string; the example accepts proposals.',
+    },
     duration: { control: { type: 'number', min: 0.01, max: 1, step: 0.01 } },
     timing: { control: 'boolean' },
     layout: { control: 'select', options: ['extended', 'compact'] },
@@ -98,3 +113,15 @@ export default meta;
 type Story = StoryObj<Args>;
 
 export const Default: Story = {};
+
+export const Compact: Story = {
+  args: { layout: 'compact', value: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+};
+
+export const Spring: Story = {
+  args: { value: 'spring(1 200 8)', duration: 0.6 },
+};
+
+export const Custom: Story = {
+  args: { value: 'linear(0, 0.3 20%, 1.15 60%, 1)', timing: false, preview: 'scale' },
+};

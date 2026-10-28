@@ -3,12 +3,6 @@ import { autofillProperties } from '../../foundation/autofill.js';
 import { TpTextControl } from '../field/text-control.js';
 import { textAreaPresentation } from '../../presentation/families/text-area.js';
 
-/**
- * Several lines of text for a form value: a native textarea in the page's own tree that submits
- * with its form and joins the Field around it for its label, help text, errors and validation.
- *
- * @slot - Holds the native textarea the element renders; leave it empty.
- */
 export class TpTextArea extends TpTextControl {
   static tagName = 'tp-text-area';
   static override presentation = textAreaPresentation;
@@ -37,9 +31,7 @@ export class TpTextArea extends TpTextControl {
       }
     `,
   ];
-  /** The visible number of text lines before the content scrolls. */
   rows = 2;
-  /** Which directions the user can drag the corner to resize the editor. */
   resize: 'none' | 'block' | 'inline' | 'both' = 'block';
   protected override render() {
     return this.renderControl('text-area', 'textarea', {

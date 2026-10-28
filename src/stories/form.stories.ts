@@ -1,10 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
-import { libraryDocs } from './library-docs.js';
+import { formExamples } from './form-use-cases.examples.js';
+import documentation from '../../docs/form.md?raw';
 import { renderFormExample, formDefaults, type FormArgs } from './form.examples.js';
 const meta = {
   title: 'Components/Form',
   component: 'tp-form',
-  parameters: { docs: libraryDocs('components/form') },
+  parameters: {
+    docs: { description: { component: documentation }, examples: formExamples },
+  },
   args: formDefaults,
   argTypes: {
     validationTiming: { control: 'select', options: ['on-submit', 'on-blur', 'on-change'] },

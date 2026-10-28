@@ -1,4 +1,4 @@
-/** The sample document the text editor story opens with; never part of copied code. */
+/** Sample documents the text editor stories and examples open with; never part of copied code. */
 
 /** Survey notes: a heading, two paragraphs and a list with bold lead words. */
 export const fieldNotes = [
@@ -11,4 +11,22 @@ export const fieldNotes = [
   '<li><p><strong>Photograph the hermit crabs</strong> and note which shells they moved into.</p></li>',
   '<li><p><strong>Check the temperature logger</strong> under the ledge and swap its battery.</p></li>',
   '</ul>',
+].join('');
+
+/** The page the embed example shows: a sample tide table served beside the examples. */
+const tideTablePage = '/pages/tide-table.html';
+
+/** Notes with a callout and an embed. */
+export const customBlockNotes = [
+  '<h2>Mooring check</h2>',
+  '<aside data-type="callout" data-tone="warning">Wait for slack water before you board the dinghy.</aside>',
+  '<p>The tide table below is the harbour office page for this week.</p>',
+  `<figure data-type="embed" data-src="${tideTablePage}" data-title="Harbour tide table"></figure>`,
+].join('');
+
+/** Notes with a mention. */
+export const mentionNotes = [
+  '<h2>Handover</h2>',
+  '<p><span data-type="mention" data-person="selma-raud" data-label="Selma Raud">@Selma Raud</span> ',
+  'updates the tide table on Mondays. Type @ to mention someone else.</p>',
 ].join('');

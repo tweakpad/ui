@@ -47,15 +47,11 @@ export abstract class KeyHintElement extends TpElement {
       }
     `,
   ];
-  /** The platform whose notation to draw; `auto` follows the enclosing group, then the browser. */
   platform: KeyHintPlatform = 'auto';
-  /** Localized visible text and spoken names for keys, passed down to the keys inside a group. */
   keyLabels: KeyHintLabels = {};
-  /** The spoken name, for an icon key or a group that names its shortcut. */
   label = '';
   #groupOwner: HTMLElement | undefined;
   #groupContext: GroupContext | undefined;
-  /** The platform the notation is drawn for. */
   get resolvedPlatform(): ResolvedKeyHintPlatform {
     return this.platform === 'auto' && this.#groupContext
       ? this.#groupContext.platform

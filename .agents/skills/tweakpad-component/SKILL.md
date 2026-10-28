@@ -263,23 +263,24 @@ scenarios rerun. An accessibility pass does not satisfy this gate.
 
 Every published component has one documentation page, `docs/components/<slug>.mdx`
 (widgets: `docs/widgets/<slug>.mdx`), written once in the library and rendered by both
-Storybook (through the story's `libraryDocs()`) and the website; write it by
-[documentation.md](references/documentation.md). The API and Related sections are
-generated from the Custom Elements Manifest and `elementDependencies`, so the element's
-JSDoc and the family's part descriptions are the API reference and prose never restates it.
-Controls expose real APIs, with fixture setup kept separate.
+Storybook (through the story's `libraryDocs()`) and the website. Follow
+[documentation.md](references/documentation.md): the hero preview, Usage, one section per
+major use case shown in a typical scenario, Variants only for a `variant` axis, Keyboard
+only beyond native behavior. The API and Related sections are generated from the Custom
+Elements Manifest and `elementDependencies`, so the element's JSDoc (summary, slots, events,
+CSS properties, every public field and method) and the family's part descriptions are the
+API reference; prose never restates it. Controls expose real APIs, with fixture setup kept
+separate.
 
-Do not create use cases or stories merely to enumerate attribute combinations; keep
-verification fixtures outside the page and hidden from Docs. Audit rendered previews and
-copyable code for library-component reuse. Code, comments, tests, samples and docs never
-name third-party libraries the implementation draws on; the only exception is the license
-notice files that ship with the package.
+Do not create documentation stories or use cases merely to enumerate attribute combinations.
+Keep exhaustive verification fixtures outside the page and hidden from Docs. Audit both
+rendered previews and copyable code for library-component reuse. Code, comments, tests,
+samples and docs never name third-party libraries the implementation draws on; the only
+exception is the license notice files that ship with the package.
 
-**Exit:** `npm test` and `npm run build` pass for the page, and the rendered Docs page has
-been read top to bottom as a developer meeting the component: nothing said twice, each
-example laid out for its own canvas rather than copied from the other rendering, every
-sentence earning its place, every preview running with the real library. A page that reads
-badly is not done; say what the read found and fixed.
+**Exit:** the page exists and `npm test` and `npm run build` pass for it (skeleton, story
+pairing, manifest completeness), the hero renders as the Default story, and every preview
+runs in Storybook with the real library and no local substitutes.
 
 ### 8. Regress and reconcile the delivery
 

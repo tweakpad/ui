@@ -97,20 +97,6 @@ const defaultValidityMessages: Record<CalendarValidityCode, string> = {
   ...selectionDiagnostics,
 };
 
-/**
- * Month grids that select one date, several dates or a date range, as date-only ISO strings that
- * never shift with time zones. Days and navigation are Buttons; caption dropdowns are Native
- * Selects.
- *
- * @slot footer - Content under the months, such as a summary of the selection; an empty footer
- * takes no space.
- * @fires tp-value-change - Cancelable proposal of a new selection, before it commits;
- * `detail.value`, `detail.previousValue` and `detail.reason`.
- * @fires tp-displayed-month-change - Cancelable proposal to show another month, from the
- * navigation, the caption dropdowns or the keyboard; `detail.value` and `detail.previousValue`.
- * @cssprop --tp-calendar-cell-size - Size of every day, weekday and navigation cell; raise it for
- * richer day content.
- */
 export class TpCalendar extends TpFormElement<CalendarValue> {
   static tagName = 'tp-calendar';
   /** Library elements this element renders; defining it defines them too. */
@@ -165,113 +151,43 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
   override set value(value: CalendarValue) {
     super.value = value;
   }
-  /**
-   * The month caption as text, or as dropdowns for the month and year, the month only or the year
-   * only.
-   */
   captionLayout: CalendarCaptionLayout = 'label';
-  /** Always shows six weeks, so the height does not change between months. */
   fixedWeeks = false;
-  /** Adds a column of week numbers, following the locale's week rules. */
   showWeekNumber = false;
-  /** Button variant of the previous and next month controls. */
   buttonVariant: TpButton['variant'] = 'ghost';
-  /**
-   * Renders passive content inside each day button from its state; return `undefined` for the plain
-   * day number.
-   */
   renderDay: ((state: CalendarDayState) => unknown) | undefined;
-  /**
-   * Display functions for the caption, dropdown entries, weekdays, day numbers and week numbers.
-   */
   formatters: CalendarFormatters = {};
-  /** Control names and validity messages, replacing the English texts. */
   messages: CalendarMessages = {};
-  /**
-   * Named sets or tests of dates, each marking its days with a `data-` attribute and a flag in the
-   * day state.
-   */
   dayModifiers: Record<string, CalendarDateMatcher> = {};
   #hasFooter = false;
   #childGeneration = 0;
   #registered = new Map<HTMLElement, { release: () => void; member: TpButton | TpNativeSelect }>();
-  /**
-   * Whether a click selects a single date, toggles one of several dates, or starts and completes a
-   * range.
-   */
   selectionMode: CalendarSelectionMode = 'single';
-  /** Earliest selectable date; earlier days are shown but disabled. */
   min = '';
-  /** Latest selectable date; later days are shown but disabled. */
   max = '';
-  /**
-   * The initial selection of an uncontrolled calendar, restored on form reset. As an attribute,
-   * several dates are separated by spaces and a range is written `from/to`.
-   */
   defaultValue: CalendarValue = undefined;
-  /** How many consecutive months are shown side by side. */
   visibleMonths = 1;
-  /**
-   * The first month shown, as any date in it. Setting it controls navigation: accept proposals in
-   * `onDisplayedMonthChange`.
-   */
   displayedMonth: string | undefined = undefined;
-  /** The first month shown initially, when it should not follow the selection or today. */
   defaultDisplayedMonth = '';
-  /** Earliest month navigation reaches, independent of the selectable dates. */
   navigationStart = '';
-  /** Latest month navigation reaches, independent of the selectable dates. */
   navigationEnd = '';
-  /** In multiple selection, the fewest dates the selection can shrink to. */
   minimumSelectionCount = 0;
-  /** In multiple selection, the most dates that can be selected. */
   maximumSelectionCount = Number.POSITIVE_INFINITY;
-  /** In range selection, the shortest range in nights. */
   minimumNights = 0;
-  /** In range selection, the longest range in nights. */
   maximumNights = Number.POSITIVE_INFINITY;
-  /**
-   * What completing a range across an excluded date does: reject the click, or restart the range
-   * there.
-   */
   rangeExclusion: 'reject' | 'restart' = 'reject';
-  /** Moves the previous and next controls by all visible months instead of one. */
   pagedNavigation = false;
-  /** Whether a previous or next control that cannot move is disabled or removed. */
   disabledNavigation: 'disable' | 'hide' = 'disable';
-  /** Shows the days of adjacent months that fill the first and last weeks. */
   showOutsideDays = true;
-  /**
-   * Locale of captions, weekdays, day numbers and accessible dates, when it differs from the
-   * page's.
-   */
   locale = '';
-  /** First day of the week, from 0 for Sunday to 6; negative follows the locale. */
   weekStartsOn = -1;
-  /** The date marked as today. */
   today = localCalendarDate();
-  /** Accessible name of the calendar. */
   label = 'Date';
-  /**
-   * Dates that cannot be chosen because they are taken, such as booked nights; marked apart from
-   * disabled dates.
-   */
   unavailableDates: CalendarDateMatcher;
-  /** Dates that are shown but cannot be focused or selected. */
   disabledDates: CalendarDateMatcher;
-  /** Dates left as empty cells, keeping the grid's shape. */
   hiddenDates: CalendarDateMatcher;
-  /** Date arithmetic and formatting, to show a calendar system other than the Gregorian one. */
   calendarAdapter: CalendarAdapter = gregorianCalendarAdapter;
-  /**
-   * Called with each proposed selection before `tp-value-change`; a controlled owner accepts it by
-   * setting `value`.
-   */
   onValueChange: ((event: TpValueChangeEvent<CalendarValue>) => void) | undefined;
-  /**
-   * Called with each proposed month before `tp-displayed-month-change`; a controlled owner accepts
-   * it by setting `displayedMonth`.
-   */
   onDisplayedMonthChange:
     | ((event: CustomEvent<{ value: string; previousValue: string; sourceEvent: Event }>) => void)
     | undefined;
@@ -292,17 +208,14 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
   #ignoredModifiers: string[] = [];
   readonly #calendarId = createId('tp-calendar');
 
-  /** A copy of the committed selection. */
   get selection(): CalendarValue {
     return cloneCalendarValue(this.#selection);
   }
 
-  /** The first month shown, as the ISO date of its first day. */
   get displayedMonthValue(): string {
     return this.#displayed;
   }
 
-  /** Proposes a selection as if made on the grid, and returns whether it was committed. */
   setValue(value: CalendarValue, sourceEvent?: Event): boolean {
     return this.#requestSelection(
       value,

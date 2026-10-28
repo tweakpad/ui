@@ -27,22 +27,18 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'bubble',
-      description: 'The stack of a Bubble group.',
       axes: ['variant', 'align'],
     },
     {
       name: 'bubble-root',
-      description: 'The message container: its alignment and its named group.',
       axes: ['variant', 'align'],
     },
     {
       name: 'bubble-content',
-      description: 'The framed content and the treatment of the variant.',
       axes: ['variant', 'align'],
     },
     {
       name: 'bubble-reactions',
-      description: 'The row of reactions on the edge of the message.',
       axes: ['variant', 'reactionsAlign'],
     },
   ],

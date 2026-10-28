@@ -16,12 +16,10 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'spinner',
-      description: 'The rotating ring.',
       axes: ['size'],
     },
     {
       name: 'spinner-accessible-label',
-      description: 'The visually hidden status holding the label.',
       axes: ['size'],
     },
   ],

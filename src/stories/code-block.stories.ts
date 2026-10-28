@@ -1,20 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
-
-const typescriptSample = `import { LitElement, html } from 'lit';
-
-/** Counts presses and announces the total. */
-export class TpCounter extends LitElement {
-  static properties = { count: { type: Number } };
-  count = 0;
-
-  render() {
-    return html\`<button @click=\${() => this.count++}>Pressed \${this.count} times</button>\`;
-  }
-}
-
-customElements.define('tp-counter', TpCounter);`;
+import documentation from '../../docs/code-block.md?raw';
+import {
+  codeBlockDefaultSource,
+  codeBlockExamples,
+  typescriptSample,
+} from './code-block.examples.js';
 
 interface Args {
   language: string;
@@ -30,7 +21,13 @@ interface Args {
 const meta = {
   title: 'Components/Code block',
   component: 'tp-code-block',
-  parameters: { docs: libraryDocs('components/code-block') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      examples: codeBlockExamples,
+      source: { code: codeBlockDefaultSource },
+    },
+  },
   args: {
     language: 'typescript',
     label: '',
@@ -45,34 +42,42 @@ const meta = {
     language: {
       control: 'select',
       options: ['typescript', 'javascript', 'html', 'css', 'json', 'bash', 'diff', 'plaintext'],
+      description: 'Language passed to the highlighter; unknown languages render as plain text.',
       table: { defaultValue: { summary: 'plaintext' } },
     },
     label: {
       control: 'text',
+      description: 'Title in the header (the `title` slot replaces it). Empty hides the header.',
       table: { defaultValue: { summary: "''" } },
     },
     lineNumbers: {
       control: 'boolean',
+      description: '`line-numbers`: sticky line number gutter.',
       table: { defaultValue: { summary: 'false' } },
     },
     highlightLines: {
       control: 'text',
+      description: '`highlight-lines`: lines and ranges, such as `1,3-5`.',
       table: { defaultValue: { summary: "''" } },
     },
     collapsible: {
       control: 'boolean',
+      description: 'Clips to `collapsed-lines` with an Expand control.',
       table: { defaultValue: { summary: 'false' } },
     },
     collapsedLines: {
       control: { type: 'number', min: 1, max: 40, step: 1 },
+      description: '`collapsed-lines`: visible lines while collapsed.',
       table: { defaultValue: { summary: '12' } },
     },
     copyable: {
       control: 'boolean',
+      description: 'Shows the copy action; `copyable="false"` removes it.',
       table: { defaultValue: { summary: 'true' } },
     },
     wrap: {
       control: 'boolean',
+      description: 'Wraps long lines instead of scrolling horizontally.',
       table: { defaultValue: { summary: 'false' } },
     },
   },

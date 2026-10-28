@@ -4,6 +4,9 @@
 // Manifest exist, and fails the build on anything the renderings would show wrong: a page for an
 // element the catalog does not list, a title that is not the catalog name, a constituent tag the
 // manifest does not declare, or a documented element whose public API has an undescribed row.
+//
+// `scripts/docs/pending.json` lists the tags whose pages are not written yet: they need no page
+// and their API descriptions are not checked. A page for a pending tag takes it off the list.
 // With `--check`, nothing is written.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -27,6 +30,9 @@ const { catalogEntries } = await import(pathToFileURL(join(root, 'dist/catalog.j
 const { widgetEntries } = await import(pathToFileURL(join(root, 'dist/widgets/catalog.js')).href);
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+const pending = new Set(
+  JSON.parse(readFileSync(join(root, 'scripts/docs/pending.json'), 'utf8')).tags,
+);
 
 const problems = [];
 const pages = [];
@@ -65,12 +71,19 @@ for (const section of ['components', 'widgets']) {
       if (entryByTag.has(part))
         problems.push(`${path}: ${part} has its own page; it is not a part`);
     }
+    if (pending.has(page.tag))
+      problems.push(`${path}: ${page.tag} has a page; remove it from scripts/docs/pending.json`);
     pages.push({ ...page, file: path });
   }
 }
 for (const entry of entries)
-  if (!pages.some((page) => page.tag === entry.tagName))
-    problems.push(`${entry.tagName} has no page under docs/${entry.section}`);
+  if (!pending.has(entry.tagName) && !pages.some((page) => page.tag === entry.tagName))
+    problems.push(
+      `${entry.tagName} has no page under docs/${entry.section} and is not listed in scripts/docs/pending.json`,
+    );
+for (const tag of pending)
+  if (!entryByTag.has(tag))
+    problems.push(`scripts/docs/pending.json lists ${tag}, which is not a catalog entry`);
 
 // Every documented element, and each of its constituent tags, carries a description on every API row.
 for (const page of pages)
@@ -93,5 +106,7 @@ const index = {
   pages: pages.map((page) => ({ ...page, related: related.get(page.id) })),
   tokens: tokenCatalog(),
 };
-console.log(`docs: ${pages.length} pages indexed`);
+console.log(
+  `docs: ${pages.length} page${pages.length === 1 ? '' : 's'} indexed, ${pending.size} tag${pending.size === 1 ? '' : 's'} pending`,
+);
 if (!check) writeFileSync(join(root, 'dist/docs.json'), `${JSON.stringify(index)}\n`);

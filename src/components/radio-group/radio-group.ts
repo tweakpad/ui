@@ -13,17 +13,6 @@ import { radioGroupPresentation } from '../../presentation/families/radio-group.
 
 type Member = TpRadioGroupItem | HTMLButtonElement | HTMLInputElement;
 const valueOf = (member: Member): unknown => member.value;
-/**
- * One choice from a short, visible set of options. The group owns the single value, the one tab
- * stop and arrow-key selection, and submits once under its name; each Radio group item supplies a
- * value and its label.
- *
- * @slot - The Radio group items, in order, optionally inside layout wrappers.
- * @fires tp-value-change - Cancelable proposal of a new selection before it commits;
- * `detail.value`, `detail.previousValue` and the `detail.reason` for the change.
- * @fires tp-field-value - After the selection commits, with the same `value`, `previousValue` and
- * `reason`; the enclosing Field listens for it.
- */
 export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelectionOwner {
   static tagName = 'tp-radio-group';
   static override presentation = radioGroupPresentation;
@@ -54,16 +43,8 @@ export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelecti
     `,
   ];
   #provided: unknown;
-  /**
-   * The selected value at first render and after a form reset, when the page does not own `value`.
-   */
   defaultValue: unknown;
-  /**
-   * Called with each proposed selection before it commits; assign `value` to accept it or cancel
-   * the event to reject it.
-   */
   onValueChange: ((event: TpValueChangeEvent<unknown>) => void) | undefined;
-  /** The accessible name of the group when no Field or visible heading names it. */
   label = '';
   override orientation: 'horizontal' | 'vertical' = 'vertical';
   #members: Member[] = [];
@@ -114,12 +95,10 @@ export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelecti
   protected override focusTarget(): HTMLElement | null {
     return this.#members.find((member) => this.tabStop(member) === 0) ?? null;
   }
-  /** Whether the given item holds the selected value; items call it to render their state. */
   isChecked(element: HTMLElement): boolean {
     const member = element as Member;
     return !this.#excluded.has(member) && Object.is(valueOf(member), this.value);
   }
-  /** Whether the given item is disabled, by itself or by the group. */
   isDisabled(element: HTMLElement): boolean {
     const member = element as Member;
     return (
@@ -128,16 +107,11 @@ export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelecti
       (member instanceof TpRadioGroupItem ? member.effectiveDisabled : member.disabled)
     );
   }
-  /**
-   * The tab index of the given item: `0` for the selected item, or the first enabled one, and `-1`
-   * for the rest.
-   */
   tabStop(member: HTMLElement): number {
     if (this.isDisabled(member)) return -1;
     const enabled = this.#members.filter((item) => !this.isDisabled(item));
     return member === (enabled.find((item) => this.isChecked(item)) ?? enabled[0]) ? 0 : -1;
   }
-  /** Proposes the given item's value as the selection; items call it when pressed. */
   requestSelection(element: HTMLElement, event: Event, reason: 'item-press' = 'item-press'): void {
     const member = element as Member;
     if (
@@ -151,7 +125,6 @@ export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelecti
     this.#syncMembers();
     this.#syncForm();
   }
-  /** Proposes a new selection as if the user had made it, notifying listeners first. */
   setValue(value: unknown, reason: ChangeReason = 'programmatic', source?: Event): void {
     this.#state.set(value, reason, source);
   }
@@ -193,7 +166,6 @@ export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelecti
     });
     this.memberChanged();
   }
-  /** Re-reads the items after one is added, removed or changes its value or disabled state. */
   memberChanged = (): void => {
     if (this.#scheduled || !this.isConnected) return;
     this.#scheduled = true;

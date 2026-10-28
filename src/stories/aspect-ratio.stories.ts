@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
-import { libraryDocs } from './library-docs.js';
+import { aspectRatioExamples } from './aspect-ratio.examples.js';
+import documentation from '../../docs/aspect-ratio.md?raw';
 import {
   renderAspectRatioExample,
   aspectRatioDefaults,
@@ -8,7 +9,15 @@ import {
 const meta = {
   title: 'Components/Aspect-ratio box',
   component: 'tp-aspect-ratio',
-  parameters: { docs: libraryDocs('components/aspect-ratio') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      examples: aspectRatioExamples,
+      source: {
+        code: '<tp-aspect-ratio ratio="1.7777777777777777"><div style="inline-size:100%;block-size:100%;background:var(--tp-muted)"></div></tp-aspect-ratio>',
+      },
+    },
+  },
   args: aspectRatioDefaults,
   argTypes: {
     ratio: { control: { type: 'number', min: 0.1, step: 0.1 } },

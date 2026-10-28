@@ -13,15 +13,26 @@ import { scrollTriggerPresentation } from '../../presentation/families/scroll-tr
 export type ScrollTriggerStatus = 'idle' | 'loading' | 'ready';
 
 /**
- * Reveals the Images, Image groups, Text motions and nested Scroll triggers inside it as one
- * sequence. As it nears the view it asks them to prepare, so images start loading; once it is in
- * view and every member is ready, it reveals them in document order, a stagger apart. It never
- * changes its own box, so adding it moves nothing around it. With `scrub` the scroll position
- * drives the sequence instead of time, and with `pin` the content holds in place while the page
- * scrolls on.
+ * `tp-scroll-trigger`: reveals the revealing components inside it together (Foundation §18.18,
+ * Component Library Scroll trigger). Once it nears the viewport it asks every member to prepare
+ * (images start loading); once it is in view, every member is ready and nothing holds, it reveals
+ * them in document order, `stagger` milliseconds apart from `stagger-from`.
+ *
+ * Members are the `tp-image`, `tp-image-group`, `tp-text-motion` and nested `tp-scroll-trigger`
+ * elements whose nearest coordinator it is, at any depth and across shadow roots. Each keeps its
+ * own effect (or takes `reveal` as a default) and motion role. The trigger is an ordinary block
+ * that never changes its own box, so binding it never moves the content around it.
+ *
+ * With `scrub`, the scroll position drives the same choreography instead of time: progress over
+ * `scrub-range` follows the scroll both ways, or only forward with `scrub-once`. With `pin`, the trigger
+ * becomes a track one viewport plus `--tp-scroll-trigger-pin-length` tall whose content sticks in
+ * the `stage` part, so a pinned section can reveal as the scroll advances.
+ *
+ * Markers: `data-status`, `data-in-view` (while observed), `data-revealed`.
  *
  * @slot - Content, including the members at any depth.
- * @csspart stage - The wrapper of the content, which sticks in place while pinned.
+ * @csspart scroll-trigger - The host.
+ * @csspart stage - Wraps the content; sticky while pinned.
  * @fires tp-scroll-progress - `{ progress }` in each frame scrubbed progress changes.
  * @cssprop --tp-scroll-trigger-pin-length - Extra scroll length while pinned. Default `200cqb`
  * (twice the visible extent: the nearest size container, otherwise the viewport).
@@ -116,7 +127,6 @@ export class TpScrollTrigger extends TpElement {
     scrubOnce: () => this.scrubOnce,
     marker: true,
     emit: (type, detail) => this.emit(type, detail),
-    progress: (progress) => this.emit('tp-scroll-progress', { progress }),
     status: ({ status, ready, failed, total }) => {
       if (status === this.#status) return;
       this.#status = status;
@@ -125,7 +135,6 @@ export class TpScrollTrigger extends TpElement {
     },
   });
 
-  /** @internal */
   readonly [revealCoordinatorHost]: RevealCoordinatorHost = this.#coordinator.host;
 
   /** Aggregate readiness of the members. */

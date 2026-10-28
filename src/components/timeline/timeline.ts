@@ -12,18 +12,7 @@ import { timelineState } from './state.js';
 import type { TimelineAlign } from './state.js';
 import { TpTimelineItem, applyTimelineRecord, syncTimeline } from './timeline-item.js';
 
-/**
- * An ordered sequence of items along a vertical or horizontal axis. One `value` marks the current
- * item, so earlier items read as complete and later ones as upcoming. It is display-only: it adds
- * no focus stop and dispatches no change events.
- *
- * @slot - The Timeline items, in order.
- * @cssprop --tp-timeline-gap - The space between items along the axis.
- * @cssprop --tp-timeline-rail-gap - The space between the axis and the content on either side.
- * @cssprop --tp-timeline-item-min-size - The narrowest a horizontal item gets before the timeline overflows.
- * @cssprop --tp-timeline-dot-size - The size of the default dot.
- * @cssprop --tp-timeline-marker-offset - Extra space above a vertical marker, to line it up with content whose first line is inset.
- */
+/** Display-only ordered sequence: owns membership, derived status, sides and list semantics. */
 export class TpTimeline extends TpElement {
   static tagName = 'tp-timeline';
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
@@ -58,12 +47,10 @@ export class TpTimeline extends TpElement {
     return this.#items;
   }
 
-  /** The status texts in use: `messages` over the English defaults. */
   get timelineMessages(): Required<TimelineMessages> {
     return { ...DEFAULT_TIMELINE_MESSAGES, ...this.messages };
   }
 
-  /** @internal */
   [syncTimeline](): void {
     this.#sync();
   }

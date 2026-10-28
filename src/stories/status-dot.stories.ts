@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import documentation from '../../docs/status-dot.md?raw';
+import { statusDotExamples } from './status-dot.examples.js';
 import type { StatusDotMotion, StatusDotVariant } from '../index.js';
 
 interface Args {
@@ -14,7 +15,15 @@ interface Args {
 const meta = {
   title: 'Components/Status dot',
   component: 'tp-status-dot',
-  parameters: { docs: libraryDocs('components/status-dot') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      examples: statusDotExamples,
+      source: {
+        code: `<tp-status-dot variant="success" label="Running" show-label></tp-status-dot>`,
+      },
+    },
+  },
   args: {
     variant: 'success',
     label: 'Running',
@@ -24,24 +33,29 @@ const meta = {
   },
   argTypes: {
     variant: {
+      description: 'Dot color from the theme status roles.',
       control: 'select',
       options: ['default', 'secondary', 'success', 'warning', 'destructive'],
       table: { defaultValue: { summary: 'default' } },
     },
     label: {
+      description: "Status text: shown beside the dot, or the dot's accessible name and tooltip.",
       control: 'text',
       table: { defaultValue: { summary: "''" } },
     },
     showLabel: {
       name: 'show-label',
+      description: 'Shows the label beside the dot instead of in a tooltip.',
       control: 'boolean',
       table: { defaultValue: { summary: 'false' } },
     },
     tooltip: {
+      description: 'Presents a hidden label in a tooltip on hover and keyboard focus.',
       control: 'boolean',
       table: { defaultValue: { summary: 'true' } },
     },
     motion: {
+      description: 'Looping motion of the dot.',
       control: 'inline-radio',
       options: ['none', 'pulse', 'ping'],
       table: { defaultValue: { summary: 'none' } },

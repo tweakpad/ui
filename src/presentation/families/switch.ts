@@ -16,12 +16,10 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'switch',
-      description: 'The track with the switch role that receives focus and presses.',
       axes: ['size'],
     },
     {
       name: 'switch-thumb',
-      description: 'The thumb that slides along the track; holds the `thumb` slot.',
       axes: ['size'],
     },
   ],

@@ -161,17 +161,23 @@ describe('Toggle and Toggle group sizes', () => {
     expectTypeOf<ToggleSelectionOwner['size']>().toEqualTypeOf<ToggleSize>();
   });
 
-  it('the stories offer every size as a control and the documentation shows icon-only Toggles at an icon size (`uwg-te-toggle-req-icon`, `uwg-te-toggle-group-req-icon`)', () => {
+  it('the stories offer every size as a control and their icon-only stories use an icon size (`uwg-te-toggle-req-icon`, `uwg-te-toggle-group-req-icon`)', () => {
     const options = `options: [${sizes.map((size) => `'${size}'`).join(', ')}],`;
     for (const name of ['toggle', 'toggle-group']) {
       const source = story(name);
       const control = source.slice(source.indexOf('    size: {'));
       expect(control.slice(0, control.indexOf('},'))).toContain(options);
+      const iconOnly = source.slice(source.indexOf('export const IconOnly'));
+      expect(iconOnly.slice(0, iconOnly.indexOf('};'))).toContain("size: 'icon'");
     }
-    const page = (name: string) =>
-      readFileSync(new URL(`../../../docs/components/${name}.mdx`, import.meta.url), 'utf8');
-    expect(page('toggle')).toMatch(/<tp-toggle [^>]*size="icon-sm" aria-label="[^"]+"/u);
-    expect(page('toggle-group')).toMatch(/<tp-toggle-group [^>]*size="icon"/u);
-    expect(page('toggle-group')).toContain('<tp-toggle value="bold" aria-label="Bold">');
+    const toggle = story('toggle');
+    expect(toggle).toContain("iconSource('boldIcon', boldIcon, '', 'Bold', 'icon')");
+    expect(toggle).toContain('<tp-toggle aria-label="Bold" size="icon">');
+    const group = story('toggle-group');
+    const groupSource = group.slice(
+      group.indexOf('const iconGroupSource'),
+      group.indexOf('const meta'),
+    );
+    expect(groupSource).toContain('size="icon"');
   });
 });

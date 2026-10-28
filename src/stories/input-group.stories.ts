@@ -1,16 +1,34 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import documentation from '../../docs/input-group.md?raw';
+import { inputGroupExamples } from './input-group.examples.js';
 interface Args {
   addonPosition: 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
   actionSize: 'xs' | 'sm' | 'icon-xs' | 'icon-sm';
   actionVariant: 'ghost' | 'default' | 'secondary' | 'destructive' | 'outline' | 'link';
   invalid: boolean;
 }
+const imports = `<script type="module">
+  import '@tweakpad/ui/register';
+  import '@tweakpad/ui/styles.css';
+</script>`;
+const markup = `<tp-field label="Website">
+  <tp-input-group>
+    <span slot="prefix">https://</span>
+    <tp-input name="website" placeholder="example.com"></tp-input>
+    <tp-key-hint-group slot="suffix" separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="K"></tp-key-hint></tp-key-hint-group>
+  </tp-input-group>
+</tp-field>`;
 const meta = {
   title: 'Components/Input group',
   component: 'tp-input-group',
-  parameters: { docs: libraryDocs('components/input-group') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      source: { code: `${imports}\n${markup}` },
+      examples: inputGroupExamples,
+    },
+  },
   args: { addonPosition: 'inline-start', actionSize: 'xs', actionVariant: 'ghost', invalid: false },
   argTypes: {
     addonPosition: {

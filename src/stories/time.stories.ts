@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import documentation from '../../docs/time.md?raw';
+import { timeExamples } from './time.examples.js';
 import type { TimeMode, TimePreset, TimeStyle } from '../components/time/index.js';
 
 interface Args {
@@ -13,7 +14,13 @@ interface Args {
 const meta = {
   title: 'Components/Time',
   component: 'tp-time',
-  parameters: { docs: libraryDocs('components/time') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      examples: timeExamples,
+      source: { code: '<tp-time datetime="2026-10-05T14:30:00Z"></tp-time>' },
+    },
+  },
   args: { secondsAgo: 300, mode: 'auto', preset: 'datetime', relativeStyle: 'long', tooltip: true },
   argTypes: {
     secondsAgo: {

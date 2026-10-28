@@ -56,11 +56,22 @@ const isItem = (node: Node): node is TpDescriptionListItem =>
   (node as Element).localName === TpDescriptionListItem.tagName;
 
 /**
- * Label and value pairs for the details of a record, rendered as one native description list.
- * With a `limit`, only the first items show and a Show more button reveals the rest, which stay
- * laid out but concealed, so every label keeps the shared label column.
+ * Description list: label–value pairs, such as the properties of a record. With a `limit`, only
+ * the first Items show and a Show more trigger reveals the rest.
  *
- * @slot - The Description list items, in reading order, as direct children.
+ * The list renders one native `dl`: a term (`dt`) and description (`dd`) per Item, with the Item
+ * itself presented as the description. Items beyond the limit stay laid out but concealed, so
+ * their labels keep the shared label column; the Viewport clips the list to the visible Items.
+ *
+ * @slot - `tp-description-list-item` elements.
+ * @csspart description-list - The list (`dl`).
+ * @csspart description-list-viewport - The region that clips the list while it is closed.
+ * @csspart description-list-item - One label–value pair.
+ * @csspart description-list-label - A term (`dt`).
+ * @csspart description-list-value - A description (`dd`).
+ * @csspart description-list-trigger - The composed `tp-button` that shows or hides Items.
+ * @csspart description-list-trigger-label - The trigger text.
+ * @csspart description-list-indicator - The trigger chevron.
  * @fires tp-open-change - Cancelable proposal to show or hide the Items beyond the limit.
  * @fires tp-open-change-complete - After the list finishes opening or closing.
  */
@@ -228,7 +239,6 @@ export class TpDescriptionList extends TpElement {
   align: 'start' | 'center' = 'start';
   /** Trigger text: strings, or functions of the hidden and total Item counts. */
   messages: DescriptionListMessages = {};
-  /** Called with each accepted proposal to show or hide the items beyond the limit, after the `tp-open-change` event. */
   onOpenChange: ((event: TpOpenChangeEvent) => void) | undefined;
 
   #items: TpDescriptionListItem[] = [];

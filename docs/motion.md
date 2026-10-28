@@ -152,7 +152,7 @@ const gsapDriver = {
 
 Web Animations and third-party tween libraries do not inherit a component's CSS transition declaration. Resolve the motion roles from the request's owner, as shown above, when the driver should follow the Tweakpad motion theme: duration roles always compute to seconds (`0.28s`), and easing roles to CSS easing functions. The `reducedMotion` field already reflects the resolved policy. Application-specific drivers may instead use durations and easings from their own centralized motion system.
 
-The library splits text only through [Text motion](components/text-motion.mdx), whose `reveal` role hands a claimed driver the split pieces, and sequences reveals only through [Scroll trigger](components/scroll-trigger.mdx) and Image groups. It does not construct timelines or define choreography between arbitrary descendants. A consumer may do that inside `play()` using its own light-DOM content. A Collapsible's content can be staggered that way by claiming only its `content` role; panel measurement and presence remain owned by Collapsible.
+The library splits text only through [Text motion](text-motion.md), whose `reveal` role hands a claimed driver the split pieces, and sequences reveals only through [Scroll trigger](scroll-trigger.md) and Image groups. It does not construct timelines or define choreography between arbitrary descendants. A consumer may do that inside `play()` using its own light-DOM content. The Collapsible and Accordion **External line-by-line motion** stories demonstrate this boundary by claiming only the `content` role and staggering their paragraphs; panel measurement and presence remain owned by Collapsible.
 
 ## Current role inventory
 

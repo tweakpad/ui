@@ -16,18 +16,14 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'marker',
-      description:
-        'The row holding the icon and the content, and the rules of the separator and border treatments; a link or button delegate replaces it.',
       axes: ['variant'],
     },
     {
       name: 'marker-icon',
-      description: 'The wrapper of the `icon` slot, hidden from assistive technology.',
       axes: ['variant'],
     },
     {
       name: 'marker-content',
-      description: 'The wrapper of the text, which the shimmer sweeps.',
       axes: ['variant'],
     },
   ],

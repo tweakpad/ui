@@ -16,27 +16,22 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'native-select',
-      description: 'The wrapper around the native select and its chevron.',
       axes: ['size'],
     },
     {
       name: 'native-select-control',
-      description: 'The native select element.',
       axes: ['size'],
     },
     {
       name: 'native-select-option-group',
-      description: 'A native option group.',
       axes: ['size'],
     },
     {
       name: 'native-select-option',
-      description: 'A native option, including the placeholder.',
       axes: ['size'],
     },
     {
       name: 'native-select-indicator',
-      description: 'The chevron at the end of a single select.',
       axes: ['size'],
     },
   ],

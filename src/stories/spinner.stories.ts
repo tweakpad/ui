@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import documentation from '../../docs/spinner.md?raw';
+import { spinnerExamples } from './spinner.examples.js';
 interface Args {
   size: 'sm' | 'default' | 'lg';
   label: string;
@@ -9,7 +10,13 @@ interface Args {
 const meta = {
   title: 'Components/Spinner',
   component: 'tp-spinner',
-  parameters: { docs: libraryDocs('components/spinner') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      examples: spinnerExamples,
+      source: { code: '<tp-spinner label="Loading projects"></tp-spinner>' },
+    },
+  },
   args: { size: 'default', label: 'Loading projects', motionPolicy: 'inherit' },
   argTypes: {
     size: { control: 'select', options: ['sm', 'default', 'lg'] },

@@ -10,19 +10,15 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'one-time-code-field',
-      description: 'The root that holds the character slots over the native input.',
     },
     {
       name: 'one-time-code-field-group',
-      description: 'One group of character slots.',
     },
     {
       name: 'one-time-code-field-slot',
-      description: 'One character position; shows the active and filled states.',
     },
     {
       name: 'one-time-code-field-separator',
-      description: 'The mark between two groups of slots; never part of the value.',
     },
   ],
 };

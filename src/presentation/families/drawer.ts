@@ -11,55 +11,42 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'drawer',
-      description: 'The host around the trigger and the drawer.',
     },
     {
       name: 'drawer-trigger',
-      description: 'The element in the `trigger` slot.',
     },
     {
       name: 'drawer-close',
-      description: 'The corner Close button.',
     },
     {
       name: 'drawer-portal',
-      description: 'The container the drawer renders into when portaled.',
     },
     {
       name: 'drawer-overlay',
-      description: 'The backdrop behind a modal drawer.',
     },
     {
       name: 'drawer-viewport',
-      description: 'The layer that positions the drawer against its edge.',
     },
     {
       name: 'drawer-surface',
-      description: 'The drawer surface that moves with a swipe.',
     },
     {
       name: 'drawer-swipe-handle',
-      description: 'The handle on the closing edge, a slider with several snap points.',
     },
     {
       name: 'drawer-content',
-      description: 'The scrolling content inside the surface.',
     },
     {
       name: 'drawer-header',
-      description: 'The header that holds the title and the description.',
     },
     {
       name: 'drawer-title',
-      description: 'The title heading.',
     },
     {
       name: 'drawer-description',
-      description: 'The description text.',
     },
     {
       name: 'drawer-footer',
-      description: 'The footer that holds the `footer` and `close` slots.',
     },
   ],
 };

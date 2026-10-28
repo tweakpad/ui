@@ -9,11 +9,9 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'scroll-trigger',
-      description: 'The host, an ordinary block around the content.',
     },
     {
       name: 'scroll-trigger-stage',
-      description: 'The wrapper of the content, which sticks in place while pinned.',
     },
   ],
 };

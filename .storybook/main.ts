@@ -17,7 +17,11 @@ const config: StorybookConfig = {
     },
   ],
   // Original sample portraits for avatar examples, served at `avatars/`.
-  staticDirs: [{ from: '../src/stories/assets/avatars', to: '/avatars' }],
+  staticDirs: [
+    { from: '../src/stories/assets/avatars', to: '/avatars' },
+    // Sample pages the examples embed (the text editor's tide table).
+    { from: '../src/stories/assets/pages', to: '/pages' },
+  ],
   framework: {
     name: '@storybook/web-components-vite',
     options: {},

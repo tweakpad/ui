@@ -1,7 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { generateParagraphs } from './text-generator.js';
-import { libraryDocs } from './library-docs.js';
+import { ref } from 'lit/directives/ref.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import documentation from '../../docs/table-of-contents.md?raw';
+import {
+  pageMarkup,
+  tableOfContentsDefaultSource,
+  tableOfContentsExamples,
+} from './table-of-contents.examples.js';
+import { fillGeneratedText, generateParagraphs } from './text-generator.js';
+import { pageSections } from './table-of-contents.examples.js';
 
 interface Args {
   variant: 'list' | 'compact';
@@ -16,42 +24,19 @@ interface Args {
   scrollDebounce: number;
 }
 
-/** The sections of the generated page the stories scroll through. */
-const pageSections = [
-  { id: 'installation', title: 'Installation', paragraphs: 4 },
-  { id: 'registration', title: 'Registration', paragraphs: 5 },
-  { id: 'theming', title: 'Theming', paragraphs: 6 },
-  { id: 'composition', title: 'Composition', paragraphs: 5 },
-  { id: 'accessibility', title: 'Accessibility', paragraphs: 4 },
-  { id: 'performance', title: 'Performance', paragraphs: 6 },
-  { id: 'release-notes', title: 'Release notes', paragraphs: 1 },
-] as const;
-
-const article = (prefix: string, extra = 0) =>
-  pageSections.map(
-    (section, index) =>
-      html`<h2
-          id="${prefix}-${section.id}"
-          style="margin-block: 0 0.75rem; scroll-margin-block-start: 1.5rem"
-        >
-          ${section.title}
-          <a href="#${prefix}-${section.id}" aria-label="Link to ${section.title}">#</a>
-        </h2>
-        ${generateParagraphs(index + 11, section.paragraphs + extra).map((text) => html`<p>${text}</p>`)}`,
-  );
-
-const items = (prefix: string) =>
-  pageSections.map(
-    (section) =>
-      html`<tp-table-of-contents-item href="#${prefix}-${section.id}"
-        >${section.title}</tp-table-of-contents-item
-      >`,
-  );
+const attribute = (name: string, value: string | number, fallback: string | number) =>
+  value === fallback || value === '' ? '' : ` ${name}="${value}"`;
 
 const meta = {
   title: 'Components/Table of contents',
   component: 'tp-table-of-contents',
-  parameters: { docs: libraryDocs('components/table-of-contents') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      examples: tableOfContentsExamples,
+      source: { code: tableOfContentsDefaultSource },
+    },
+  },
   args: {
     variant: 'list',
     side: 'inline-start',
@@ -68,81 +53,91 @@ const meta = {
     variant: {
       control: 'inline-radio',
       options: ['list', 'compact'],
+      description:
+        '`list` shows the title and links in place; `compact` shows one line per top-level item that opens them in a card.',
       table: { defaultValue: { summary: 'list' } },
     },
     side: {
       control: 'inline-radio',
       options: ['inline-start', 'inline-end'],
+      description:
+        'Compact: the direction the card grows from the lines; it flips when it does not fit.',
       table: { defaultValue: { summary: 'inline-start' } },
     },
     openDelay: {
       control: { type: 'number', min: 0, step: 50 },
+      description: 'Compact `open-delay`: milliseconds of hover before the card opens.',
       table: { defaultValue: { summary: '300' } },
     },
     closeDelay: {
       control: { type: 'number', min: 0, step: 50 },
+      description:
+        'Compact `close-delay`: milliseconds before the card closes once the pointer leaves.',
       table: { defaultValue: { summary: '0' } },
     },
     label: {
       control: 'text',
+      description: 'Title text; the `title` slot replaces it. Empty uses the title message.',
       table: { defaultValue: { summary: "''" } },
     },
     navigation: {
       control: 'inline-radio',
       options: ['fragment', 'scroll'],
+      description: '`fragment` records the target in the URL; `scroll` leaves the URL untouched.',
       table: { defaultValue: { summary: 'fragment' } },
     },
     scrollBehavior: {
       control: 'inline-radio',
       options: ['smooth', 'instant', 'auto'],
+      description:
+        '`scroll-behavior`: how the content scrolls when navigating. `auto` follows the CSS of the scroll container; reduced motion is always instant.',
       table: { defaultValue: { summary: 'smooth' } },
     },
     activationOffset: {
       control: 'text',
+      description:
+        '`activation-offset`: reading line in pixels or a percentage of the scroll container. Empty uses its scroll padding plus one pixel.',
       table: { defaultValue: { summary: 'null' } },
     },
     scrollThrottle: {
       control: { type: 'number', min: 0, step: 10 },
+      description:
+        '`scroll-throttle`: milliseconds between updates while scrolling; 0 is every frame.',
       table: { defaultValue: { summary: '0' } },
     },
     scrollDebounce: {
       control: { type: 'number', min: 0, step: 10 },
+      description:
+        '`scroll-debounce`: update only after scrolling pauses this long; wins over throttle.',
       table: { defaultValue: { summary: '0' } },
     },
   },
-  render: (args) => {
-    const compact = args.variant === 'compact';
-    return html`<tp-scroll-area style="block-size: 34rem">
-      <div
-        style="display: grid; grid-template-columns: minmax(0, 1fr) ${
-          compact ? 'auto' : '13rem'
-        }; gap: 2.5rem; padding: 1.5rem; align-items: start"
-      >
-        <article>${article('story-toc')}</article>
-        <aside
-          style=${
-            compact
-              ? 'position: sticky; top: 50%; translate: 0 -50%'
-              : 'position: sticky; top: 1.5rem; max-block-size: 31rem; overflow: auto'
-          }
-        >
-          <tp-table-of-contents
-            .variant=${args.variant}
-            .side=${args.side}
-            .openDelay=${args.openDelay}
-            .closeDelay=${args.closeDelay}
-            .label=${args.label}
-            .navigation=${args.navigation}
-            .scrollBehavior=${args.scrollBehavior}
-            .activationOffset=${args.activationOffset || null}
-            .scrollThrottle=${args.scrollThrottle}
-            .scrollDebounce=${args.scrollDebounce}
-            >${items('story-toc')}</tp-table-of-contents
-          >
-        </aside>
-      </div>
-    </tp-scroll-area>`;
-  },
+  render: (args) =>
+    html`<div
+      ${ref((node) => {
+        // The page markup is inserted after the ref runs.
+        if (node) queueMicrotask(() => fillGeneratedText(node));
+      })}
+    >
+      ${unsafeHTML(
+        pageMarkup({
+          prefix: 'story-toc',
+          compact: args.variant === 'compact',
+          attributes: [
+            attribute('variant', args.variant, 'list'),
+            attribute('side', args.side, 'inline-start'),
+            attribute('open-delay', args.openDelay, 300),
+            attribute('close-delay', args.closeDelay, 0),
+            args.label ? ` label="${args.label}"` : '',
+            attribute('navigation', args.navigation, 'fragment'),
+            attribute('scroll-behavior', args.scrollBehavior, 'smooth'),
+            attribute('activation-offset', args.activationOffset, ''),
+            attribute('scroll-throttle', args.scrollThrottle, 0),
+            attribute('scroll-debounce', args.scrollDebounce, 0),
+          ].join(''),
+        }),
+      )}
+    </div>`,
 } satisfies Meta<Args>;
 export default meta;
 type Story = StoryObj<Args>;
@@ -158,9 +153,27 @@ export const DocumentScroll: Story = {
     html`<div
       style="display: grid; grid-template-columns: minmax(0, 1fr) 14rem; gap: 3rem; padding: 2rem; align-items: start"
     >
-      <article>${article('document', 2)}</article>
+      <article>
+        ${pageSections.map(
+          (section, index) =>
+            html`<h2 id="document-${section.id}" style="scroll-margin-block-start: 2rem">
+                ${section.title}
+                <a href="#document-${section.id}" aria-label="Link to ${section.title}">#</a>
+              </h2>
+              ${generateParagraphs(index + 11, section.paragraphs + 2).map(
+                (text) => html`<p>${text}</p>`,
+              )}`,
+        )}
+      </article>
       <aside style="position: sticky; top: 2rem">
-        <tp-table-of-contents>${items('document')}</tp-table-of-contents>
+        <tp-table-of-contents>
+          ${pageSections.map(
+            (section) =>
+              html`<tp-table-of-contents-item href="#document-${section.id}"
+                >${section.title}</tp-table-of-contents-item
+              >`,
+          )}
+        </tp-table-of-contents>
       </aside>
     </div>`,
 };

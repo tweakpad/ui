@@ -31,8 +31,7 @@ describe('Menu radio group name', () => {
       '../../stories/menubar.stories.ts',
       '../../stories/workspace/pages/brief.ts',
       '../../stories/workspace/pages/work.ts',
-      '../../../docs/components/menu.mdx',
-      '../../../docs/components/menubar.mdx',
+      '../../../docs/menu.md',
     ];
     for (const path of consumers) {
       const source = readFileSync(new URL(path, import.meta.url), 'utf8');

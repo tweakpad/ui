@@ -9,16 +9,12 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'time',
-      description: 'The host, which inherits font and color from its context.',
     },
     {
       name: 'time-value',
-      description:
-        'The native time element: tabular numerals that do not wrap, and the focus ring while a tooltip is available.',
     },
     {
       name: 'time-description',
-      description: 'The tooltip with the full date and time.',
     },
   ],
 };

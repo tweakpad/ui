@@ -4,7 +4,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import type { TpRadioGroup } from '../components/radio-group/index.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import { libraryDocs } from './library-docs.js';
+import documentation from '../../docs/radio-group.md?raw';
 interface Args {
   value: string;
   orientation: 'horizontal' | 'vertical';
@@ -18,7 +18,12 @@ const meta: Meta<Args> = {
   component: 'tp-radio-group',
   parameters: {
     layout: 'centered',
-    docs: libraryDocs('components/radio-group'),
+    docs: {
+      source: {
+        code: '<tp-radio-group label="Delivery method">\n  <tp-radio-group-item value="standard">Standard</tp-radio-group-item>\n  <tp-radio-group-item value="express">Express</tp-radio-group-item>\n  <tp-radio-group-item value="priority">Priority</tp-radio-group-item>\n</tp-radio-group>',
+      },
+      description: { component: documentation },
+    },
   },
   args: {
     value: '',
@@ -32,6 +37,7 @@ const meta: Meta<Args> = {
     value: {
       control: 'select',
       options: ['', 'standard', 'express', 'priority'],
+      description: 'Controlled value; empty starts unmatched. The example accepts proposals.',
     },
     orientation: { control: 'select', options: ['horizontal', 'vertical'] },
     disabled: { control: 'boolean' },

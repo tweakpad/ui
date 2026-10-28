@@ -12,7 +12,7 @@ interface OverlayPin extends HTMLElement {
 }
 
 /**
- * The panel of a Map pin, open while the pin is selected.
+ * The selected pin's overlay (`ucl21-map` Overlay; behavior `sec-1812-map` map-f-overlay).
  *
  * A non-modal Popover whose open state follows its pin's selection. It is anchored to the pin,
  * uses the map viewport as collision boundary, re-positions on every camera frame and publishes
@@ -40,7 +40,7 @@ export class TpMapOverlay extends TpPopover {
     this.addEventListener('tp-open-change', this.#openChange as EventListener);
   }
 
-  /** @internal Called by the owning pin after each update. */
+  /** Called by the owning pin after each update. */
   syncFromPin(pin: OverlayPin, selected: boolean): void {
     this.#pin = pin;
     const map = mapOf(pin, pin.map);

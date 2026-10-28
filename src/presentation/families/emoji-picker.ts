@@ -2,6 +2,12 @@ import type { ComponentDefinition } from '../definition.js';
 import { definePresentation } from '../family.js';
 import { emojiPickerAppearance, emojiPickerStructure } from '../recipes/emoji-picker.js';
 
+const sized = (name: string, slot?: string) => ({
+  name,
+  axes: ['size'],
+  ...(slot ? { slot } : {}),
+});
+
 /** UI Widgets Specification 6.4 Emoji picker: one family, axes size and picker. */
 const definition: ComponentDefinition = {
   name: 'Emoji picker',
@@ -12,86 +18,28 @@ const definition: ComponentDefinition = {
     { name: 'picker', values: ['inline', 'popup'], default: 'inline' },
   ],
   parts: [
-    {
-      name: 'emoji-picker',
-      axes: ['size', 'picker'],
-      description: 'The root: the category bar, the search field, the list and the footer.',
-    },
-    {
-      name: 'emoji-picker-categories',
-      axes: ['size'],
-      description: 'The Tabs of the category bar.',
-    },
-    {
-      name: 'emoji-picker-category',
-      axes: ['size'],
-      description: 'One category tab with its icon.',
-    },
-    { name: 'emoji-picker-search', axes: ['size'], description: "The search field's frame." },
-    { name: 'emoji-picker-input', axes: ['size'], description: 'The search text input.' },
-    {
-      name: 'emoji-picker-clear',
-      axes: ['size'],
-      description: 'The Button that clears the search.',
-    },
-    { name: 'emoji-picker-list', axes: ['size'], description: 'The scrolling grid of emoji.' },
-    { name: 'emoji-picker-group', axes: ['size'], description: 'One category in the grid.' },
-    {
-      name: 'emoji-picker-group-label',
-      axes: ['size'],
-      description: "A category's label in the grid.",
-    },
-    { name: 'emoji-picker-row', axes: ['size'], description: 'One row of emoji.' },
-    { name: 'emoji-picker-item', axes: ['size'], description: 'One emoji cell.' },
-    { name: 'emoji-picker-image', axes: ['size'], description: 'The image of a custom emoji.' },
-    {
-      name: 'emoji-picker-empty',
-      axes: ['size'],
-      description: 'The message shown when a search matches nothing.',
-    },
-    { name: 'emoji-picker-status', axes: ['size'], description: 'The loading and error message.' },
-    {
-      name: 'emoji-picker-retry',
-      axes: ['size'],
-      description: 'The Button that loads the dataset again after an error.',
-    },
-    {
-      name: 'emoji-picker-footer',
-      axes: ['size'],
-      slot: 'footer',
-      description: 'The footer row: the preview, the skin tone Button and the footer slot.',
-    },
-    {
-      name: 'emoji-picker-preview',
-      axes: ['size'],
-      description: 'The preview of the highlighted emoji.',
-    },
-    {
-      name: 'emoji-picker-preview-emoji',
-      axes: ['size'],
-      description: 'The previewed emoji glyph.',
-    },
-    {
-      name: 'emoji-picker-preview-label',
-      axes: ['size'],
-      description: "The previewed emoji's name.",
-    },
-    {
-      name: 'emoji-picker-skin-tone',
-      axes: ['size'],
-      description: 'The Button that opens the skin tone menu.',
-    },
-    {
-      name: 'emoji-picker-trigger',
-      axes: ['size'],
-      slot: 'trigger',
-      description: 'The Button that opens the popup picker and shows the chosen emoji.',
-    },
-    {
-      name: 'emoji-picker-popup',
-      axes: ['size'],
-      description: 'The Popover holding the popup picker.',
-    },
+    { name: 'emoji-picker', axes: ['size', 'picker'] },
+    sized('emoji-picker-categories'),
+    sized('emoji-picker-category'),
+    sized('emoji-picker-search'),
+    sized('emoji-picker-input'),
+    sized('emoji-picker-clear'),
+    sized('emoji-picker-list'),
+    sized('emoji-picker-group'),
+    sized('emoji-picker-group-label'),
+    sized('emoji-picker-row'),
+    sized('emoji-picker-item'),
+    sized('emoji-picker-image'),
+    sized('emoji-picker-empty'),
+    sized('emoji-picker-status'),
+    sized('emoji-picker-retry'),
+    sized('emoji-picker-footer', 'footer'),
+    sized('emoji-picker-preview'),
+    sized('emoji-picker-preview-emoji'),
+    sized('emoji-picker-preview-label'),
+    sized('emoji-picker-skin-tone'),
+    sized('emoji-picker-trigger', 'trigger'),
+    sized('emoji-picker-popup'),
   ],
 };
 

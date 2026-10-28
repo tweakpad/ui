@@ -11,11 +11,9 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'text-area',
-      description: "The native textarea, rendered in the page's own tree.",
     },
     {
       name: 'text-area-resize-affordance',
-      description: 'The same native textarea, named for styling its resize corner.',
     },
   ],
 };

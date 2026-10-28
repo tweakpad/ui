@@ -158,23 +158,11 @@ const interactionReason = (source: Event | undefined): ChangeReason =>
   surfaceInteraction(source) === 'keyboard' ? 'keyboard' : 'item-press';
 
 /**
- * Edits one easing curve: Bézier handles or custom points on a graph, parameter Sliders and
- * fields for springs and the classic easing families, a preset picker with thumbnails, an
- * optional duration, a preview that replays the motion, a frames bar and export adapters. The
- * value is the canonical easing text; progression is never clamped, so curves may overshoot.
- * Form-associated: `name` submits the easing string.
- *
- * @slot footer - Content at the bottom of the editor, such as an action row.
- *
- * @fires tp-value-change - Cancelable curve proposal; `detail.metadata` carries the parsed `curve`
- * and, when they apply, the edited `surface`, `parameter`, `handle`, `point` and `presetId`.
- * @fires tp-value-commit - A settled curve: once per drag on release, and at once for keys,
- * presets and field commits.
- * @fires tp-duration-change - Cancelable duration proposal, in seconds.
- * @fires tp-adapter-change - Cancelable proposal of another export adapter.
- * @fires tp-open-change - Cancelable proposal to show or hide the presets overlay of the compact
- * layout.
- * @fires tp-field-value - Each committed value, for a surrounding Field's validation state.
+ * Easing editor widget (UI Widgets Specification 6.2): one easing curve edited on a graph with
+ * Bézier handles or custom points, parameter Sliders and fields for springs and parametric
+ * families, a preset picker with thumbnails, an optional duration control, a background
+ * preview, a frames bar and export adapters. Every constituent is a library component; only
+ * the graph and the frames bar are widget-owned surfaces.
  */
 export class TpEasingEditor extends TpFormElement<string> {
   static tagName = 'tp-easing-editor';
@@ -230,65 +218,26 @@ export class TpEasingEditor extends TpFormElement<string> {
   };
   static override styles = [TpElement.styles, easingEditorStyles];
 
-  /**
-   * Starting curve of an uncontrolled editor, in any easing notation the editor reads; form reset
-   * returns to it.
-   */
   defaultValue: string | undefined;
-  /** Starting duration in seconds of an uncontrolled duration. */
   defaultDuration: number | undefined;
-  /** Shortest duration in seconds the duration row allows. */
   durationMin = 0;
-  /** Longest duration in seconds the duration row allows. */
   durationMax = 3;
-  /** Step in seconds of the duration Slider and field. */
   durationStep = 0.01;
-  /** Shows the duration row; turned off, the exported text carries no time. */
   timing = true;
-  /** Starting export adapter of an uncontrolled adapter choice, by id. */
   defaultAdapter: string | undefined;
-  /**
-   * The export formats offered in the footer, each turning the curve into text; CSS alone by
-   * default.
-   */
   adapters: readonly EasingAdapter[] = DEFAULT_ADAPTERS;
-  /** Groups of named curves for the preset picker, replacing the built-in table. */
   presets: readonly EasingPresetGroup[] = [];
-  /** Shows the preset picker. */
   presetPicker = true;
-  /**
-   * Places the presets in a column beside the graph, or behind a header Toggle over the graph for
-   * tight spaces such as a Dialog.
-   */
   layout: EasingEditorLayout = 'extended';
-  /** Opens the presets overlay of the compact layout on first render. */
   defaultPresetsOpen = false;
-  /** Scales the graph, the handles, the thumbnails and the presets column together. */
   size: EasingEditorSize = 'default';
-  /**
-   * How the shape behind the graph replays the motion: growing, stretching on one axis, turning, or
-   * not at all.
-   */
   preview: EasingPreviewMode = 'scale';
-  /** Shows the header Button that cycles through the preview modes. */
   previewControls = true;
-  /** Shows the bar of ticks under the graph that marks where the frames fall. */
   frames = true;
-  /**
-   * Accessible name of the editor's group and the prefix of every handle's name; a surrounding
-   * Field supplies it otherwise.
-   */
   label = '';
-  /** Locale used to format the numbers in the fields. */
   locale = '';
-  /** Replaces built-in names and messages (tabs, preset names, control names) for localization. */
   strings: Partial<EasingEditorStrings> = {};
-  /**
-   * Called synchronously with each `tp-value-change` proposal, before listeners; a controlled owner
-   * writes `value` back here to accept it.
-   */
   onValueChange: EasingEditorValueChangeCallback | undefined;
-  /** Called with each settled value, once per drag, keystroke, preset or field commit. */
   onValueCommitted: EasingEditorValueCommitCallback | undefined;
 
   #provided: string | undefined;
@@ -401,10 +350,6 @@ export class TpEasingEditor extends TpFormElement<string> {
       this.#durationState.set(this.#clampDuration(next), 'programmatic');
     this.requestUpdate('duration', previous);
   }
-  /**
-   * Id of the active export adapter, whose text the footer shows and copies; setting it makes the
-   * choice controlled.
-   */
   get adapter(): string {
     return this.#adapterState.value;
   }
@@ -435,10 +380,6 @@ export class TpEasingEditor extends TpFormElement<string> {
   get curve(): EasingCurve | null {
     return this.#curve;
   }
-  /**
-   * The kind of the current curve (Bézier, spring, parametric or custom points), read from the
-   * value; null when empty.
-   */
   get kind(): EasingKind | null {
     return this.#curve?.kind ?? null;
   }
@@ -466,15 +407,12 @@ export class TpEasingEditor extends TpFormElement<string> {
       for (const preset of group.presets) if (this.#presetText(preset) === text) return preset.id;
     return null;
   }
-  /** Whether the value is owned by the application through `value`. */
   get controlled(): boolean {
     return this.#state.controlled;
   }
-  /** Whether a handle, point or Slider drag is in progress. */
   get dragging(): boolean {
     return this.#dragging;
   }
-  /** Whether the preview is replaying the motion. */
   get playing(): boolean {
     return this.#playing;
   }

@@ -54,10 +54,12 @@ const viewportOf = (element: Element): Element =>
   (element as Element & { viewportElement?: Element | null }).viewportElement ?? element;
 
 /**
- * An "On this page" list of links that marks the section the reader has scrolled to. Items name
- * their targets; nothing is scanned from the content. The current target is the innermost one
- * whose region contains the reading line of the targets' scroll container. `variant="compact"`
- * shows one mark per top-level item in a trigger that opens the title and list in a card over it.
+ * "On this page" navigation (`ucl20-table-of-contents`, behavior Foundation §18.15 Scroll spy).
+ *
+ * Items name their targets; nothing is scanned from the content. The current target is the
+ * innermost one whose region contains the reading line of the targets' scroll container.
+ * `variant="compact"` shows one mark per top-level item in a trigger that opens the title and
+ * list in a popover card covering it.
  *
  * @slot - `tp-table-of-contents-item` elements.
  * @slot title - Title content; replaces `label` and the title message.
@@ -174,13 +176,9 @@ export class TpTableOfContents extends TpElement {
     `,
   ];
 
-  /** The target that is current before the first measurement. */
   defaultValue: string | null = null;
-  /** The scroll container to observe, when it is not the nearest one holding every target; a Scroll area resolves to its viewport. */
   scrollRoot: Element | null = null;
-  /** The id of the scroll container to observe, resolved in this tree scope, then the document. */
   scrollRootId: string | null = null;
-  /** The reading line, in pixels or a percentage of the scroll container; without it, the container's `scroll-padding-block-start`. */
   activationOffset: string | number | null = null;
   /** `fragment` uses native fragment navigation; `scroll` leaves the URL untouched. */
   navigation: 'fragment' | 'scroll' = 'fragment';
@@ -190,9 +188,7 @@ export class TpTableOfContents extends TpElement {
   scrollThrottle = 0;
   /** Milliseconds of quiet scrolling before an update; wins over `scrollThrottle`. */
   scrollDebounce = 0;
-  /** The visible title; the `title` slot replaces it, and without either the title message shows. */
   label = '';
-  /** Replaces built-in text, such as the default "On this page" title. */
   messages: TableOfContentsMessages = {};
   /** `list` shows the title and list in place; `compact` shows marks that open them in a card. */
   variant: 'list' | 'compact' = 'list';
@@ -283,7 +279,6 @@ export class TpTableOfContents extends TpElement {
     this.#spy.invalidate();
   }
 
-  /** The text in effect: `messages` over the built-in defaults. */
   get tocMessages(): Required<TableOfContentsMessages> {
     return { ...DEFAULT_TABLE_OF_CONTENTS_MESSAGES, ...this.messages };
   }

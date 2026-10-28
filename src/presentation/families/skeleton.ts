@@ -10,7 +10,6 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'skeleton',
-      description: 'The placeholder surface that fills the host and carries the motion.',
     },
   ],
 };

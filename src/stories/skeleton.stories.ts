@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
-import { libraryDocs } from './library-docs.js';
-import { skeletonProfile } from './skeleton.examples.js';
+import { skeletonProfile, skeletonExamples, skeletonSource } from './skeleton.examples.js';
+import documentation from '../../docs/skeleton.md?raw';
 interface Args {
   motion: 'pulse' | 'sweep' | 'none';
   animated: boolean;
@@ -9,7 +9,13 @@ interface Args {
 const meta = {
   title: 'Components/Skeleton',
   component: 'tp-skeleton',
-  parameters: { docs: libraryDocs('components/skeleton') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      source: { code: skeletonSource },
+      examples: skeletonExamples,
+    },
+  },
   args: { motion: 'pulse', animated: true, motionPolicy: 'inherit' },
   argTypes: {
     motion: { control: 'select', options: ['pulse', 'sweep', 'none'] },

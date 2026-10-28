@@ -421,49 +421,11 @@ const documentConverter = {
 };
 
 /**
- * A node graph editor and monitor: nodes with typed ports on a pannable, zoomable canvas, routed
- * edges, a schema that describes the node types and the control each property shows, a node
- * library, an inspector, automatic layout, optional run state and rendering of only what is in
- * view. The value is the flow document; the DOM-free engine in `@tweakpad/ui/flow` owns the
- * document, its history, routing, layout and run state. Form-associated: `name` submits the
- * document as JSON.
- *
- * @slot - `tp-flow-node` and `tp-flow-edge` children, adopted into the document by id.
- * @slot top-start - Content over the canvas at the top start corner, such as a panel or a bar.
- * @slot top-center - Content over the canvas at the middle of the top edge.
- * @slot top-end - Content over the canvas at the top end corner.
- * @slot center-start - Content over the canvas at the middle of the start edge.
- * @slot center-end - Content over the canvas at the middle of the end edge.
- * @slot bottom-start - Content over the canvas at the bottom start corner.
- * @slot bottom-center - Content over the canvas at the middle of the bottom edge.
- * @slot bottom-end - Content over the canvas at the bottom end corner.
- * @slot header-start - The start of a bar above the canvas, such as a breadcrumb; the bar shows
- * while one of its slots has content.
- * @slot header-center - The middle of the bar above the canvas, such as a run summary.
- * @slot header-end - The end of the bar above the canvas, such as actions.
- *
- * @fires tp-value-change - Cancelable document proposal; `detail.metadata.changes` lists the
- * fine-grained changes and `metadata.surface` where they came from.
- * @fires tp-value-commit - A settled document, once per gesture, connection, key or field commit.
- * @fires tp-viewport-change - Cancelable viewport proposal, at most once per frame.
- * @fires tp-selection-change - Cancelable selection proposal, `{ nodes, edges }`.
- * @fires tp-tool-change - Cancelable proposal of the select or pan tool.
- * @fires tp-mode-change - Cancelable proposal of design or view mode.
- * @fires tp-open-change - Cancelable proposal to open or close the inspector, the node library or
- * the context menu; `detail.metadata.surface` names which.
- * @fires tp-open-change-complete - After the inspector finishes entering or leaving.
- * @fires tp-connect - Cancelable, before a connection is added; `detail.connection` and the
- * `detail.edge` to add, which a listener may change.
- * @fires tp-delete - Cancelable, before a deletion; `detail.nodes` with their descendants and
- * every dependent `detail.edges`.
- * @fires tp-history-change - The undo history changed; `{ canUndo, canRedo, undoLabel, redoLabel,
- * depth }`, for a bar of your own.
- * @fires tp-layout-complete - A layout applied; `{ direction, stats, bounds }`.
- * @fires tp-run-request - With `runnable`, a request to run or stop the graph or part of it; the
- * widget never runs anything itself.
- * @fires tp-run-change - The run state changed; `{ run, summary }` and the stepper's position.
- * @fires tp-issues-change - The problems shown on nodes, ports and edges changed; `{ issues }`.
- * @fires tp-shortcut-change - The canvas's keyboard shortcuts changed, for hints that show them.
+ * The flow widget (Widgets Specification 6.3): a node graph on a pannable, zoomable canvas with
+ * typed ports, routed edges, schema-driven nodes, optional execution state, design and view
+ * modes, automatic layout and visible-only rendering. The engine (`@tweakpad/ui/flow`) owns the
+ * document, indices, history, routing, layout and run state; this element owns the lanes, the
+ * layers and the interaction.
  */
 export class TpFlow extends TpFormElement<FlowDocument> {
   static tagName = 'tp-flow';
@@ -588,75 +550,33 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   // ---- lanes -----------------------------------------------------------------------------------
 
   #providedValue: FlowDocument | undefined;
-  /**
-   * Starting document of an uncontrolled flow, as JSON in the attribute; form reset returns to it.
-   */
   defaultValue: FlowDocument | undefined;
   #providedViewport: FlowViewport | undefined;
-  /** Starting viewport of an uncontrolled viewport, as `x y zoom` in the attribute. */
   defaultViewport: FlowViewport | undefined;
   #providedSelection: FlowSelection | undefined;
-  /** Starting selection of an uncontrolled selection, as JSON in the attribute. */
   defaultSelection: FlowSelection | undefined;
   #providedTool: FlowTool | undefined;
-  /** Starting pointer tool of an uncontrolled tool choice. */
   defaultTool: FlowTool | undefined;
   #providedMode: FlowMode | undefined;
-  /** Starting mode of an uncontrolled mode choice. */
   defaultMode: FlowMode | undefined;
   #providedInspectorOpen: boolean | undefined;
-  /** Opens the inspector on first render, for an uncontrolled inspector. */
   defaultInspectorOpen: boolean | undefined;
 
   // ---- configuration ---------------------------------------------------------------------------
 
-  /**
-   * The node library: node types with their ports, properties and shapes, data types, categories
-   * and connection rules.
-   */
   schema: FlowSchema | undefined;
-  /** Templates that replace the body of a node type, keyed by type. */
   nodeTemplates: Readonly<Record<string, FlowNodeTemplate>> = {};
-  /** Templates that replace an edge's label content, keyed by edge id or kind. */
   edgeTemplates: Readonly<Record<string, FlowEdgeTemplate>> = {};
-  /**
-   * The control factories that edit node properties, keyed by control name; replace any built-in
-   * one and supply `custom`.
-   */
   propertyControls: FlowPropertyControls = defaultPropertyControls;
-  /** Icon definitions, keyed by the names the schema's definitions use. */
   icons: Readonly<Record<string, IconDefinition>> = {};
-  /**
-   * What paints edges, the connection line and the marquee: the built-in SVG renderer or another
-   * implementation of the renderer contract.
-   */
   renderer: 'svg' | FlowRenderer = 'svg';
-  /**
-   * How edges are routed: obstacle-aware routing for orthogonal edges only, for every edge, for
-   * none, or a router of your own.
-   */
   router: 'auto' | 'orthogonal' | 'none' | FlowRouter = 'auto';
-  /** Replaces the built-in layered layout used by `layout()` and automatic layout. */
   layoutEngine: FlowLayoutEngine | undefined;
-  /**
-   * Lays the graph out automatically after every change, in a direction or the one that fits best;
-   * dragged nodes are pinned where they drop.
-   */
   autoLayout: FlowAutoLayout = 'none';
-  /**
-   * Final check of a connection after the schema rules; return false, or a message, to refuse it.
-   */
   isValidConnection: FlowConnectionPredicate | undefined;
-  /**
-   * Hooks that run inside the engine for every change, undo and redo included: rewrite or veto
-   * changes before they apply, observe them after.
-   */
   middleware: readonly FlowMiddleware[] = [];
-  /** Content of the toolbar over a selected node; `false` hides the toolbar. */
   nodeToolbar: FlowNodeToolbarTemplate | false | undefined;
-  /** Items of the context menu for a node, an edge or the pane; `false` removes the menu. */
   contextMenu: FlowContextMenuTemplate | false | undefined;
-  /** Builds a node's accessible name; by default its label, type, run status and selection. */
   getNodeAriaLabel:
     | ((
         node: FlowNode,
@@ -664,83 +584,43 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         status: FlowNodeRunState | undefined,
       ) => string)
     | undefined;
-  /** Builds an edge's accessible name; by default the nodes it connects and its label. */
   getEdgeAriaLabel: ((edge: FlowEdge) => string) | undefined;
   /** A run snapshot, or a trace of run events played through the built-in stepper. */
   run: FlowRun | FlowTrace | null = null;
-  /** Snaps dragged nodes to the grid. */
   snap = false;
-  /** Grid spacing in flow units, for snapping, nudging and the background pattern. */
   snapGrid = 16;
-  /** Smallest zoom factor. */
   minZoom = 0.1;
-  /** Largest zoom factor. */
   maxZoom = 4;
-  /**
-   * Zoom below which nodes render at low detail, keeping their size, so a zoomed-out graph stays
-   * fast.
-   */
   detailZoom = 0.3;
-  /** Renders only the nodes and edges in view; turn it off to keep every element in the page. */
   virtualize = true;
-  /** Fits the graph into view on first render. */
   fitView = false;
-  /** Padding in pixels around the graph when fitting it into view. */
   fitPadding = 48;
-  /** The pattern behind the graph, drawn at the grid spacing. */
   background: FlowBackground = 'dots';
-  /**
-   * What a plain mouse wheel does over the canvas: pan, zoom, or nothing so the page scrolls; a
-   * pinch always zooms.
-   */
   wheel: FlowWheelPolicy = 'pan';
-  /**
-   * Leaves plain wheel and one-finger gestures to the page, for a flow embedded in a scrolling
-   * document.
-   */
   cooperativeGestures = false;
-  /** Distance in pixels within which a dragged connection snaps to a port. */
   connectionRadius = 20;
-  /** Connects outputs to inputs only, or any two ports. */
   connectionMode: 'strict' | 'loose' = 'strict';
-  /** Lets a click on one port and then another connect them, as an alternative to dragging. */
   connectOnClick = true;
-  /** Whether the marquee selects the nodes it touches or only those it encloses. */
   selectionMode: FlowSelectionMode = 'partial';
-  /** Scales the nodes, ports, edges, grid, panels and the minimum height together. */
   size: 'sm' | 'default' | 'lg' = 'default';
-  /** Accessible name of the canvas; a surrounding Field supplies it otherwise. */
   label = '';
-  /** Locale used to format the numbers in node and inspector fields. */
   locale = '';
-  /** Replaces built-in texts and accessible names for localization. */
   strings: Partial<FlowStrings> = {};
-  /** Shows each port's label beside it. */
   showPortLabels = false;
   /** Keeps ports visible in `mode="view"` (they hide there by default). */
   showPorts = false;
-  /**
-   * When the inspector panel shows: opened from a node by a double press, its toolbar or its menu;
-   * only through the open state; or never.
-   */
   inspector: FlowInspectorPolicy = 'auto';
-  /** Whether inspector edits apply as they happen, or wait for its Save button. */
   inspectorCommit: 'live' | 'explicit' = 'live';
   /** Built-in controls; `layout`, `undo`, `redo` and `run` opt in. */
   controls: readonly FlowControlAction[] = DEFAULT_CONTROLS;
   /** Zoom levels the zoom field's menu offers (1 is 100%). */
   zoomPresets: readonly number[] = DEFAULT_ZOOM_PRESETS;
-  /** Where the built-in controls bar sits over the canvas. */
   controlsPosition: FlowPanelPosition = 'bottom-start';
-  /** Lays the built-in controls bar out in a column or a row. */
   controlsOrientation: 'vertical' | 'horizontal' = 'vertical';
-  /** Shows an overview of the whole graph that pans and zooms the view. */
   minimap = false;
-  /** Where the minimap sits over the canvas. */
   minimapPosition: FlowPanelPosition = 'bottom-end';
   /** The node library: a sidebar at the inline start, a menu over the widget, or none. */
   palette: FlowPaletteLayout = 'none';
-  /** Opens the node library on first render, for an uncontrolled library. */
   defaultPaletteOpen: boolean | undefined;
   /** Where the floating "+" that opens the library sits; `none` leaves opening to the API. */
   paletteTrigger: FlowPanelPosition | 'none' = 'top-start';
@@ -757,18 +637,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   issues: readonly FlowIssue[] = [];
   /** The lock control: editing refused while locked (pan, zoom and selection stay). */
   locked = false;
-  /**
-   * Called synchronously with each `tp-value-change` proposal, before listeners; a controlled owner
-   * writes `value` back here to accept it.
-   */
   onValueChange: ((event: TpValueChangeEvent<FlowDocument>) => void) | undefined;
-  /** Called with each settled document, once per gesture, connection, key or field commit. */
   onValueCommitted:
     ((value: FlowDocument, previous: FlowDocument, reason: ChangeReason) => void) | undefined;
 
   // ---- internals -------------------------------------------------------------------------------
 
-  /** A unique id of this flow, prefixed on the ids its rendering creates. */
   readonly flowId = createId('tp-flow');
   readonly #model: FlowModel;
   readonly #lane: DocumentLane;
@@ -1119,10 +993,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.requestUpdate('value', previous);
   }
 
-  /**
-   * The pan and zoom of the canvas, `x y zoom` as an attribute; setting it makes the viewport
-   * controlled.
-   */
   get viewport(): FlowViewport {
     return this.#viewportState.value;
   }
@@ -1137,10 +1007,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.requestUpdate('viewport', previous);
   }
 
-  /**
-   * The selected nodes and edges, JSON as an attribute; setting it makes the selection controlled.
-   * It is never written into the document.
-   */
   get selection(): FlowSelection {
     return this.#selectionState.value;
   }
@@ -1156,10 +1022,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.requestUpdate('selection', previous);
   }
 
-  /**
-   * The pointer tool: select, where a drag on the pane draws a marquee, or pan; setting it makes
-   * the tool controlled.
-   */
   get tool(): FlowTool {
     return this.#toolState.value;
   }
@@ -1173,10 +1035,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.requestUpdate('tool', previous);
   }
 
-  /**
-   * Design for editing, or view for reading and monitoring with editing off; setting it makes the
-   * mode controlled.
-   */
   get mode(): FlowMode {
     return this.#modeState.value;
   }
@@ -1190,7 +1048,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.requestUpdate('mode', previous);
   }
 
-  /** Whether the node library shows; setting it makes the open state controlled. */
   get paletteOpen(): boolean {
     return this.#paletteState.value;
   }
@@ -1204,7 +1061,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.requestUpdate('paletteOpen', previous);
   }
 
-  /** Whether the inspector panel shows; setting it makes the open state controlled. */
   get inspectorOpen(): boolean {
     return this.#inspectorState.value;
   }
@@ -1220,80 +1076,62 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   // ---- read-only API ---------------------------------------------------------------------------
 
-  /**
-   * The live engine model, for queries such as incomers, outgoers or cycles; change the graph
-   * through the widget's methods.
-   */
   get model(): FlowModel {
     return this.#model;
   }
 
-  /** The nodes of the current document. */
   get nodes(): readonly FlowNode[] {
     return this.#model.nodes;
   }
 
-  /** The edges of the current document. */
   get edges(): readonly FlowEdge[] {
     return this.#model.edges;
   }
 
-  /** Whether the document is owned by the application through `value`. */
   get controlled(): boolean {
     return this.#lane.state.controlled;
   }
 
-  /** Whether the history has a step to undo. */
   get canUndo(): boolean {
     return this.#model.history.canUndo;
   }
 
-  /** Whether the history has a step to redo. */
   get canRedo(): boolean {
     return this.#model.history.canRedo;
   }
 
-  /** The node that holds or last held keyboard focus. */
   get focusedNodeId(): string | undefined {
     return this.#focusedNode;
   }
 
-  /** The nodes currently rendered: those in view plus a margin. */
   get visibleNodeIds(): readonly string[] {
     return [...this.#nodeLayer.visibleIds];
   }
 
-  /** The edges currently rendered. */
   get visibleEdgeIds(): readonly string[] {
     return [...this.#edgeLayer.rendered.keys()];
   }
 
-  /** What the active renderer supports, such as painting edge focus itself. */
   get rendererCapabilities() {
     return this.#renderer.capabilities;
   }
 
-  /** Whether nodes are being dragged. */
   get dragging(): boolean {
     return this.#arbiter?.dragging ?? false;
   }
 
-  /** Whether a connection is being drawn. */
   get connecting(): boolean {
     return this.#arbiter?.connection !== undefined;
   }
 
-  /** Whether a marquee selection is being drawn. */
   get selecting(): boolean {
     return this.#arbiter?.selecting ?? false;
   }
 
-  /** Whether the graph accepts edits: design mode, not read-only, disabled or locked. */
   get editable(): boolean {
     return this.mode === 'design' && !this.readOnly && !this.effectiveDisabled && !this.locked;
   }
 
-  /** The level of detail nodes render at, low below `detailZoom`. */
   get lod(): FlowLod {
     return this.viewport.zoom < this.detailZoom ? 'low' : 'high';
   }
@@ -1303,51 +1141,32 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return this.#size;
   }
 
-  /** The layer that renders the node hosts in view; used by the widget's own parts. */
   get nodeLayer(): NodeLayer {
     return this.#nodeLayer;
   }
 
-  /**
-   * The layer that resolves the edges in view and hands them to the renderer; used by the widget's
-   * own parts.
-   */
   get edgeLayer(): EdgeLayer {
     return this.#edgeLayer;
   }
 
-  /**
-   * The live region that announces moves, connections and run changes; used by the widget's own
-   * parts.
-   */
   get announcer(): LiveAnnouncer {
     return this.#announcer;
   }
 
-  /** The built-in strings with `strings` applied. */
   get resolvedStrings(): FlowStrings {
     return this.#resolvedStrings;
   }
 
-  /** The controller that pans, zooms and animates the canvas; used by the widget's own parts. */
   get viewportOwner(): ViewportOwner {
     return this.#viewportOwner;
   }
 
-  /**
-   * The controller of the document's proposals, commits and rollbacks; used by the widget's own
-   * parts.
-   */
   get lane(): DocumentLane {
     return this.#lane;
   }
 
   // ---- methods ---------------------------------------------------------------------------------
 
-  /**
-   * Replaces the document from an object or JSON text as one proposal; returns whether it was
-   * accepted.
-   */
   setValue(
     document: FlowDocument | string,
     reason: ChangeReason = 'programmatic',
@@ -1372,15 +1191,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     }
   }
 
-  /** Replaces the document programmatically; returns whether it was accepted. */
   load(document: FlowDocument | string): boolean {
     return this.setValue(document, 'programmatic');
   }
 
-  /**
-   * The canonical document, without runtime state, with the current viewport unless `viewport` is
-   * false and the selection flags when `selection` is true.
-   */
   toJSON(options: { selection?: boolean; viewport?: boolean } = {}): FlowDocument {
     const serialized = serializeFlowDocument(this.#model.document, {
       selection: options.selection ?? false,
@@ -1390,10 +1204,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return serialized;
   }
 
-  /**
-   * Proposes a list of fine-grained changes on the document lane; follow with `commit()` to settle
-   * them.
-   */
   propose(
     changes: readonly FlowChange[],
     reason: ChangeReason = 'imperative-action',
@@ -1407,7 +1217,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     });
   }
 
-  /** Settles the proposed changes as one history entry and one `tp-value-commit`. */
   commit(
     reason: ChangeReason = 'imperative-action',
     sourceEvent?: Event,
@@ -1416,7 +1225,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return this.#lane.commit(reason, sourceEvent, metadata);
   }
 
-  /** Adds nodes, creating ids where missing; returns the ids, or none when refused. */
   addNodes(
     nodes: readonly (Omit<FlowNode, 'id'> & { id?: string })[],
     reason: ChangeReason = 'imperative-action',
@@ -1432,7 +1240,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return result.applied ? ids : [];
   }
 
-  /** Adds edges, creating ids where missing; returns the ids, or none when refused. */
   addEdges(
     edges: readonly (Omit<FlowEdge, 'id'> & { id?: string })[],
     reason: ChangeReason = 'imperative-action',
@@ -1448,7 +1255,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return result.applied ? ids : [];
   }
 
-  /** Changes a node's position, data or other fields; returns whether it was accepted. */
   updateNode(
     id: string,
     patch: Extract<FlowChange, { type: 'node-update' }>['patch'] & {
@@ -1467,7 +1273,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return result.applied;
   }
 
-  /** Merges values into a node's data; returns whether it was accepted. */
   updateNodeData(
     id: string,
     data: Record<string, unknown>,
@@ -1484,7 +1289,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return result.applied;
   }
 
-  /** Changes an edge's fields; returns whether it was accepted. */
   updateEdge(
     id: string,
     patch: Extract<FlowChange, { type: 'edge-update' }>['patch'],
@@ -1710,7 +1514,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return proposed.id;
   }
 
-  /** Undoes the last history step through the value lane; returns whether it applied. */
   undo(reason: ChangeReason = 'imperative-action', sourceEvent?: Event): boolean {
     if (!this.editable) return false;
     const done = this.#lane.withProposal(
@@ -1721,7 +1524,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return done;
   }
 
-  /** Redoes the next history step through the value lane; returns whether it applied. */
   redo(reason: ChangeReason = 'imperative-action', sourceEvent?: Event): boolean {
     if (!this.editable) return false;
     const done = this.#lane.withProposal(
@@ -1732,7 +1534,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return done;
   }
 
-  /** Proposes a selection of nodes and edges; returns whether it was accepted. */
   select(
     selection: Partial<FlowSelection>,
     reason: ChangeReason = 'imperative-action',
@@ -1745,7 +1546,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     );
   }
 
-  /** Selects every selectable node and edge. */
   selectAll(reason: ChangeReason = 'imperative-action', sourceEvent?: Event): boolean {
     return this.select(
       {
@@ -1757,17 +1557,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     );
   }
 
-  /** Clears the selection. */
   clearSelection(reason: ChangeReason = 'imperative-action', sourceEvent?: Event): boolean {
     return this.select({}, reason, sourceEvent);
   }
 
-  /** Proposes another pointer tool; returns whether it was accepted. */
   setTool(tool: FlowTool, reason: ChangeReason = 'programmatic', sourceEvent?: Event): boolean {
     return this.#toolState.set(tool, reason, sourceEvent);
   }
 
-  /** Proposes another mode; returns whether it was accepted. */
   setMode(mode: FlowMode, reason: ChangeReason = 'programmatic', sourceEvent?: Event): boolean {
     return this.#modeState.set(mode, reason, sourceEvent);
   }
@@ -1782,7 +1579,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return this.#paletteState.set(open, reason, sourceEvent);
   }
 
-  /** Proposes to open or close the inspector; returns whether it was accepted. */
   setInspectorOpen(
     open: boolean,
     reason: ChangeReason = 'programmatic',
@@ -1791,7 +1587,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return this.#inspectorState.set(open, reason, sourceEvent);
   }
 
-  /** Moves the view to a viewport, animated over `duration`; resolves when it settles. */
   async setViewport(
     viewport: FlowViewport,
     options: { duration?: number; reason?: ChangeReason } = {},
@@ -1803,10 +1598,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     );
   }
 
-  /**
-   * Fits the graph, or the given nodes, into view; resolves when the view settles. The fit never
-   * magnifies past 1 unless `maxZoom` allows it.
-   */
   async fitViewTo(
     options: {
       padding?: number;
@@ -1831,7 +1622,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     );
   }
 
-  /** Zooms to a factor around a point, the center by default; resolves when the view settles. */
   async zoomTo(
     zoom: number,
     options: { duration?: number; point?: FlowPoint; reason?: ChangeReason } = {},
@@ -1848,20 +1638,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     );
   }
 
-  /** Zooms in one step. */
   zoomIn(options: { duration?: number; reason?: ChangeReason } = {}): Promise<boolean> {
     return this.zoomTo(this.viewport.zoom * 1.2, options);
   }
 
-  /** Zooms out one step. */
   zoomOut(options: { duration?: number; reason?: ChangeReason } = {}): Promise<boolean> {
     return this.zoomTo(this.viewport.zoom / 1.2, options);
   }
 
-  /**
-   * Centers the view on a point in flow coordinates, optionally at a zoom; resolves when the view
-   * settles.
-   */
   async setCenter(
     point: FlowPoint,
     options: { zoom?: number; duration?: number; reason?: ChangeReason } = {},
@@ -1888,22 +1672,18 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return { x: local.x - origin.x, y: local.y - origin.y };
   }
 
-  /** The box around the given nodes, or around every node, in flow coordinates. */
   getNodesBounds(ids?: readonly string[]): FlowRect {
     return this.#model.bounds(ids);
   }
 
-  /** The nodes inside a rectangle in flow coordinates, or touching it when `partially` is true. */
   getIntersectingNodes(rect: FlowRect, partially = true): string[] {
     return this.#model.nodesInRect(rect, partially);
   }
 
-  /** The edges connected to a node. */
   getNodeConnections(id: string): FlowEdge[] {
     return this.#model.connectedEdges([id]);
   }
 
-  /** Focuses a node, first bringing it into view unless `reveal` is false. */
   async focusNode(id: string, options: { reveal?: boolean } = {}): Promise<void> {
     if (!this.#model.getNode(id)) return;
     this.#setFocusedNode(id);
@@ -1917,7 +1697,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#nodeLayer.hostOf(id)?.focus({ preventScroll: true });
   }
 
-  /** Focuses an edge. */
   focusEdge(id: string, options?: FocusOptions): void {
     this.#frameNow();
     const proxy = this.#edgeLayer.proxyElement(id);
@@ -1927,7 +1706,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     }
   }
 
-  /** Focuses a port of a node. */
   focusPort(nodeId: string, portId: string): void {
     this.#setFocusedNode(nodeId);
     this.#frameNow();
@@ -2319,7 +2097,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return result.copied || clipboardFallback === payload;
   }
 
-  /** Copies the selection to the clipboard and deletes it; resolves with whether it did. */
   async cut(reason: ChangeReason = 'imperative-action', sourceEvent?: Event): Promise<boolean> {
     if (!this.editable) return false;
     const copied = await this.copy();
@@ -2413,10 +2190,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return true;
   }
 
-  /**
-   * Moves the selected nodes, or the focused one, by a delta; successive nudges share one history
-   * step.
-   */
   nudgeSelection(
     delta: FlowPoint,
     reason: ChangeReason = 'keyboard',
@@ -4684,7 +4457,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (host && node) this.#bindNode(host, node);
   }
 
-  /** Clears every transient port state, such as connection candidates and their validity. */
   clearPortStates(): void {
     const ids = [...this.#portStates.keys()];
     this.#portStates.clear();

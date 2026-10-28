@@ -79,20 +79,7 @@ function semanticTarget(element: HTMLElement): HTMLElement {
   );
 }
 
-/**
- * A popup list of commands, checks, radio choices and nested submenus, opened from a trigger or a
- * context target. Arrow keys, Home, End and typeahead move through its items; activating a command
- * fires `tp-action` and closes the menu.
- *
- * @slot - The items: Menu Items, checkbox and radio items, Separators, nested Menus as submenus,
- *   and links.
- * @slot trigger - The Button that opens the menu, or with `invocation="context"` the area that
- *   opens it on a context click.
- * @fires tp-action - Cancelable, when an item is activated, before it is committed and the menu
- *   closes; `detail.value` is the item's value and `detail.item` the item.
- * @fires tp-value-change - When a native element with a checkbox or radio item role changes its
- *   checked state; `detail.value`.
- */
+/** Actual command-menu owner, with trigger/context invocation, nested Menu and Menubar. */
 export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   /** Menu restores lost focus to its last item. */
   protected override get surfaceRestoreFocus(): 'popup' | 'previous' {
@@ -127,19 +114,12 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
       }
     `,
   ];
-  /** The value of the last activated command. */
   value = '';
-  /** `trigger` opens from a press on the trigger; `context` turns the trigger into a context target that opens the menu at the pointer on a right-click, Shift+F10 or a long touch. */
   invocation: 'trigger' | 'context' = 'trigger';
-  /** The `id` of a trigger elsewhere in the document. */
   for = '';
-  /** Default treatment of the items, `ghost` or `destructive`; an item's own `variant` wins. */
   itemVariant: 'ghost' | 'destructive' = 'ghost';
-  /** Whether the arrow keys wrap from the last item to the first; set the property to `false` to stop at the ends. */
   loopFocus = true;
-  /** Whether the pointer highlights the item under it. */
   highlightItemOnHover = true;
-  /** Makes Escape in a submenu close the whole menu instead of only the submenu. */
   closeParentOnEscape = false;
   override orientation: 'horizontal' | 'vertical' = 'vertical';
   override portal = true;
@@ -277,15 +257,12 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     const nested = this.#parent && (suffix === 'content' || suffix === 'trigger');
     return `${this.partPrefix}-${nested ? `sub-${suffix}` : suffix}`;
   }
-  /** @internal Whether the menu or an owning menu or menubar is disabled. */
   get menuDisabled(): boolean {
     return this.surfaceDisabled;
   }
-  /** @internal Whether typeahead is in progress. */
   get typing(): boolean {
     return this.#collection.typeahead.typing;
   }
-  /** @internal Joins or leaves a menubar. */
   setMenuBar(owner: MenuBarOwner | null): void {
     this.#bar = owner;
     this.requestUpdate();
@@ -304,11 +281,9 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
       return 'group';
     return super.instant;
   }
-  /** @internal Part name prefix of the items. */
   get itemPartPrefix(): string {
     return this.partPrefix;
   }
-  /** @internal Presentation families the items take part in. */
   get presentationFamilyTagNames(): readonly string[] {
     return this.rootMenu.#bar ? ['tp-menubar'] : [];
   }
@@ -351,28 +326,23 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   protected override get defaultCloseDelay(): number {
     return 0;
   }
-  /** @internal The top-level menu of this branch. */
   get rootMenu(): TpMenu {
     return this.parentMenu?.rootMenu ?? this;
   }
-  /** @internal The menu this one is a submenu of. */
   get parentMenu(): TpMenu | null {
     return this.#parent;
   }
-  /** @internal The trigger host. */
   get menuTriggerHost(): HTMLElement | null {
     return this.trigger ?? this.records.keys().next().value ?? null;
   }
-  /** @internal The trigger's control. */
   get menuTrigger(): HTMLElement | null {
     const trigger = this.menuTriggerHost;
     return trigger ? semanticTarget(trigger) : null;
   }
-  /** @internal The item elements. */
   get commandItems(): readonly HTMLElement[] {
     return this.#items.map((record) => record.element);
   }
-  /** @internal Part targets for an owning menubar. */
+  /** Current targets retain their actual constituent's presentation owner. */
   get menubarPartTargets(): readonly MenuPartTarget[] {
     const targets: MenuPartTarget[] = [{ name: 'menubar-menu', element: this, owner: this }];
     const add = (name: string, element: HTMLElement | null, owner: TpElement = this): void => {
@@ -393,13 +363,11 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     }
     return targets;
   }
-  /** @internal The highlighted item element. */
   get highlightedItem(): HTMLElement | null {
     return this.open && this.rootMenu.#highlightOwner === this
       ? this.#collection.element(this.#collection.highlighted)
       : null;
   }
-  /** @internal Rereads the items. */
   itemChanged = (): void => {
     if (this.#scheduled) return;
     this.#scheduled = true;
@@ -657,7 +625,6 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
       record?.element.scrollIntoView(scrollOptions);
     }
   }
-  /** @internal Activates an item. */
   requestItem(item: TpMenuItem, event: Event, commit: () => boolean): void {
     const record = this.#items.find((record) => record.item === item);
     if (!record || record.disabled || !this.open) return;
@@ -673,7 +640,6 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
     if (!this.#bar) this.value = String(item.value ?? item.label ?? item.textContent ?? '');
     if (item.closeOnClick) this.closeBranch('item-press', event);
   }
-  /** @internal Closes this menu and its parent menus. */
   closeBranch(reason: ChangeReason, event?: Event): void {
     if (this.setOpen(false, reason, event)) this.parentMenu?.closeBranch(reason, event);
   }

@@ -37,6 +37,8 @@ const POSITIONS = new Set<TruncatePosition>(['none', 'start', 'middle', 'end']);
  *
  * @slot - Fallback content: the input when `value` is unset, and the presentation when a numeric
  *   preset cannot read the input.
+ * @csspart text-transform-value - The presented text: a `data` element for numeric input.
+ * @csspart text-transform-description - The Tooltip showing the complete text while truncated.
  */
 export class TpTextTransform extends TpElement {
   static tagName = 'tp-text-transform';

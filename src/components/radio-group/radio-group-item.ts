@@ -19,17 +19,10 @@ export interface RadioSelectionOwner {
   memberChanged(): void;
 }
 
-/**
- * One option of a Radio group: a radio with its label, whose checked state is read from the group's
- * value.
- *
- * @slot - The option's label; a press on it selects the option.
- */
 export class TpRadioGroupItem extends TpFormElement<unknown> {
   static tagName = 'tp-radio-group-item';
   // Constituent of its group's family; presented with the group's definition and axes.
   static override presentation = radioGroupPresentation;
-  /** The Radio group whose presentation settings this item follows. */
   get presentationOwner(): HTMLElement | null {
     return this.closest('tp-radio-group');
   }
@@ -76,9 +69,7 @@ export class TpRadioGroupItem extends TpFormElement<unknown> {
     this.#itemValue = value;
     this.requestUpdate('value', previous);
   }
-  /** Renders the radio as a native button instead of a span, for a form layout that expects one. */
   nativeAction = false;
-  /** Keeps the hidden dot in the tree while unselected, so a custom style can transition it out. */
   keepMounted = false;
   #owner: RadioSelectionOwner | null = null;
   #control: HTMLElement | null = null;
@@ -95,7 +86,6 @@ export class TpRadioGroupItem extends TpFormElement<unknown> {
     super.willUpdate(changed);
     this.#presence.setPresent(this.checked);
   }
-  /** The group that owns this item's selection; set by the group itself. */
   get radioGroup(): RadioSelectionOwner | null {
     return this.#owner;
   }
@@ -105,22 +95,15 @@ export class TpRadioGroupItem extends TpFormElement<unknown> {
       this.requestUpdate();
     }
   }
-  /** Whether this item holds the group's value. */
   get checked(): boolean {
     return this.#owner?.isChecked(this) ?? false;
   }
-  /**
-   * Whether the item is disabled, by itself or by its group; an item outside a group is always
-   * disabled.
-   */
   get radioDisabled(): boolean {
     return this.effectiveDisabled || (this.#owner?.isDisabled(this) ?? true);
   }
-  /** Whether the item ignores presses because it or its group is read-only. */
   get radioReadOnly(): boolean {
     return this.readOnly || !!this.#owner?.readOnly;
   }
-  /** The inner element that carries the radio role and receives focus. */
   get controlElement(): HTMLElement | null {
     return this.#control;
   }

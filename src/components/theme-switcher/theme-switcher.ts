@@ -48,13 +48,8 @@ const icons: Record<ColorSchemePreference, IconDefinition> = {
 };
 
 /**
- * A light/dark/system preference control bound to the shared color scheme preference store.
- * It composes Switch, Button or Toggle group; the store applies the preference to its target,
- * persists it and keeps every switcher on the same target and storage key in sync.
- *
- * @fires tp-value-change - Cancelable proposal of a new preference before it applies;
- * `detail.value` is `light`, `dark` or `system`, and `detail.metadata.resolved` the scheme it
- * resolves to.
+ * A light/dark/system preference control bound to the shared Color scheme preference store.
+ * It composes Switch, Button or Toggle group; the store applies the preference to its target.
  */
 export class TpThemeSwitcher extends TpElement {
   static tagName = 'tp-theme-switcher';
@@ -97,28 +92,14 @@ export class TpThemeSwitcher extends TpElement {
     `,
   ];
 
-  /**
-   * The control: `switch` flips between light and dark, `button` cycles dark, light and system from
-   * one icon button, and `group` shows all three as a segmented Toggle group.
-   */
   variant: ThemeSwitcherVariant = 'switch';
-  /** The preference to start with when nothing is stored yet and the page does not own `value`. */
   defaultValue: ColorSchemePreference | undefined;
-  /**
-   * Called with each proposed preference before it applies; assign `value` to accept it or cancel
-   * the event to reject it.
-   */
   onValueChange: ((event: TpValueChangeEvent<ColorSchemePreference>) => void) | undefined;
   /** Local storage key; `null` disables persistence. */
   storageKey: string | null = DEFAULT_COLOR_SCHEME_STORAGE_KEY;
   /** The element the preference applies to; the document root by default. */
   target: HTMLElement | null = null;
-  /** The size of the composed control; `sm` uses the small Switch, Button or Toggles. */
   size: ThemeSwitcherSize = 'default';
-  /**
-   * The accessible name of the control; defaults to "Dark mode" for the switch and "Theme"
-   * otherwise.
-   */
   label = '';
 
   #provided: ColorSchemePreference | undefined;

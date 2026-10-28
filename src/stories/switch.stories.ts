@@ -4,7 +4,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpSwitch } from '../components/switch/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import { libraryDocs } from './library-docs.js';
+import documentation from '../../docs/switch.md?raw';
 
 interface Args {
   checked: boolean;
@@ -18,7 +18,33 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Switch',
   component: 'tp-switch',
-  parameters: { docs: libraryDocs('components/switch') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      source: {
+        transform: (_source: string, { args }: { args: Args }) => `import '@tweakpad/ui/styles.css';
+import '@tweakpad/ui/register';
+import { TpField, TpSwitch } from '@tweakpad/ui';
+
+const field = new TpField();
+field.orientation = 'horizontal';
+field.label = ${JSON.stringify(args.label)};
+const setting = new TpSwitch();
+setting.name = 'notifications';
+setting.size = ${JSON.stringify(args.size)};
+setting.checked = ${args.checked};
+setting.disabled = ${args.disabled};
+setting.readOnly = ${args.readOnly};
+setting.required = ${args.required};
+setting.nativeAction = ${args.nativeAction};
+setting.onCheckedChange = (event) => {
+  if (!event.defaultPrevented && !event.detail.cancelled) setting.checked = event.detail.value;
+};
+field.append(setting);
+document.body.append(field);`,
+      },
+    },
+  },
   args: {
     checked: false,
     label: 'Notifications',

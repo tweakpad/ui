@@ -2,11 +2,7 @@ import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { buttonGroupPresentation } from '../../presentation/families/button-group.js';
 
-/**
- * A read-only segment of a Button group, such as a fixed prefix, a unit or a count.
- *
- * @slot - The segment content: text, an Icon or a Label for the neighboring editor.
- */
+/** Noninteractive content; Label and Icon remain their existing public controls. */
 export class TpButtonGroupText extends TpElement {
   static tagName = 'tp-button-group-text';
   static override presentation = buttonGroupPresentation;

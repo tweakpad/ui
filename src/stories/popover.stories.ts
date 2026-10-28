@@ -1,11 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpPopover } from '../components/popover/index.js';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
-import { surfaceArgs, surfaceArgTypes, type SurfaceArgs } from './menu-family-controls.js';
+import {
+  surfaceArgs,
+  surfaceArgTypes,
+  sourceImports,
+  configuredSource,
+  type SurfaceArgs,
+} from './menu-family-controls.js';
+import documentation from '../../docs/popover.md?raw';
 interface Args extends SurfaceArgs {
   preserveOnTriggerHover: boolean;
   modal: boolean;
@@ -13,12 +19,27 @@ interface Args extends SurfaceArgs {
   openDelay: number;
   closeDelay: number;
 }
+const source = `${sourceImports}
+<tp-popover label="Document settings">
+  <tp-button slot="trigger" variant="outline">Document settings</tp-button>
+  <span slot="title">Document settings</span>
+      <span slot="description">Update the document name.</span>
+      <tp-field><label slot="label">Name</label><tp-input default-value="Notes"></tp-input></tp-field>
+      <tp-button slot="close">Done</tp-button>
+</tp-popover>`;
 const meta: Meta<Args> = {
   title: 'Components/Popover',
   component: 'tp-popover',
   parameters: {
     layout: 'centered',
-    docs: libraryDocs('components/popover'),
+    docs: {
+      description: { component: documentation },
+      source: {
+        code: source,
+        transform: (_code: string, context: { args: Args }) =>
+          configuredSource(source, context.args, 'open'),
+      },
+    },
   },
   args: {
     ...surfaceArgs,
