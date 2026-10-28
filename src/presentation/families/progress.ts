@@ -10,18 +10,25 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'progress',
+      description:
+        'The progress bar: the element assistive technology reads, around the label, the value and the track.',
     },
     {
       name: 'progress-label',
+      description: 'The wrapper of the `label` slot.',
     },
     {
       name: 'progress-value-output',
+      description:
+        'The wrapper of the visible value, hidden from assistive technology since the bar already reads it.',
     },
     {
       name: 'progress-track',
+      description: 'The full range of the bar.',
     },
     {
       name: 'progress-indicator',
+      description: 'The fill for the completed share, or the moving fill while indeterminate.',
     },
   ],
 };

@@ -1,0 +1,222 @@
+---
+title: Select
+description: Choose one or several values from a finite list, optionally with a search query.
+tag: tp-select
+parts: [tp-select-option]
+---
+
+<Preview
+  code={`<tp-field label="Time zone" description="Used for due dates and reminders." style="inline-size:20rem">
+  <tp-select name="timezone" placeholder="Choose a time zone" default-value="europe-berlin">
+    <optgroup label="Americas">
+      <option value="america-new-york">New York (GMT−4)</option>
+      <option value="america-chicago">Chicago (GMT−5)</option>
+      <option value="america-los-angeles">Los Angeles (GMT−7)</option>
+    </optgroup>
+    <optgroup label="Europe">
+      <option value="europe-london">London (GMT+1)</option>
+      <option value="europe-berlin">Berlin (GMT+2)</option>
+      <option value="europe-helsinki">Helsinki (GMT+3)</option>
+    </optgroup>
+    <optgroup label="Asia Pacific">
+      <option value="asia-singapore">Singapore (GMT+8)</option>
+      <option value="asia-tokyo">Tokyo (GMT+9)</option>
+      <option value="australia-sydney">Sydney (GMT+11)</option>
+    </optgroup>
+  </tp-select>
+</tp-field>`}
+/>
+
+## Usage
+
+Select picks from a list that is too long, or too dynamic, to show as a Radio group. Native `option`, `optgroup` and `hr` children declare the choices, and the Select renders its own list with keyboard navigation and typeahead, then submits the selected value under `name`. Prefer Native Select when the browser's own picker suits the form better, as on mobile-first pages, and Autocomplete when people may type a value that is not in the list.
+
+Put the Select in a Field: the Field supplies its label and description, and its `disabled`, `invalid` and `error` reach the Select. The popup belongs to the surface it opens from, so a Select inside a Dialog or Drawer works without setup.
+
+### Notification preferences
+
+<Preview
+  code={`<tp-field label="Notify me about" style="inline-size:20rem">
+  <tp-select name="events" multiple placeholder="Choose events" default-value="mention">
+    <option value="comment">New comments</option>
+    <option value="mention">Mentions</option>
+    <option value="assign">Issues assigned to me</option>
+    <option value="status">Status changes</option>
+    <hr>
+    <option value="digest" disabled>Weekly digest · Coming soon</option>
+  </tp-select>
+</tp-field>`}
+/>
+
+With `multiple`, the list stays open while people toggle options, and the form receives one entry per selected value in the order they were chosen. A disabled option still tells people the choice exists; an `hr` sets it apart from the rest.
+
+### Country search
+
+<Preview
+  code={`<tp-field label="Country" style="inline-size:20rem">
+  <tp-select name="country" searchable highlight-matches placeholder="Search countries">
+    <option value="AR">Argentina</option>
+    <option value="AU">Australia</option>
+    <option value="BR">Brazil</option>
+    <option value="CA">Canada</option>
+    <option value="DE">Germany</option>
+    <option value="IN">India</option>
+    <option value="JP">Japan</option>
+    <option value="NL">Netherlands</option>
+    <option value="SE">Sweden</option>
+    <option value="GB">United Kingdom</option>
+    <option value="US">United States</option>
+  </tp-select>
+</tp-field>`}
+/>
+
+Once a list runs past a dozen or so options, `searchable` turns the trigger into a query that filters as people type, and `highlight-matches` shows why each option matched. Matching ignores case and accents; `matching="fuzzy"` also tolerates typos. The query is never submitted, only the selection.
+
+### Issue labels
+
+<Preview
+  code={`<tp-field label="Labels" style="inline-size:24rem">
+  <tp-select name="labels" searchable multiple show-clear placeholder="Add labels">
+    <option value="bug">Bug</option>
+    <option value="design">Design</option>
+    <option value="docs">Documentation</option>
+    <option value="performance">Performance</option>
+    <option value="security">Security</option>
+    <option value="research">UX research</option>
+  </tp-select>
+</tp-field>`}
+/>
+
+Searchable and multiple together show the selection as chips beside the query, each with its own remove button, and `show-clear` adds one button that clears the query, or the whole selection once the query is empty. Choosing an option clears the query, ready for the next label.
+
+### Clothing sizes
+
+<Preview
+  code={`<tp-field label="Size" style="inline-size:20rem">
+  <tp-select name="size" searchable grid columns="4" placeholder="Pick a size">
+    <option value="XS">XS</option>
+    <option value="S">S</option>
+    <option value="M">M</option>
+    <option value="L">L</option>
+    <option value="XL">XL</option>
+    <option value="2XL">2XL</option>
+    <option value="3XL">3XL</option>
+    <option value="4XL">4XL</option>
+  </tp-select>
+</tp-field>`}
+/>
+
+Short, scannable options read faster as a grid: `grid` with `columns` lays each group out in rows, the arrow keys move in two dimensions, and filtering reflows the rows.
+
+### Reviewers from your data
+
+<Preview
+  code={`<tp-field label="Reviewer" style="inline-size:20rem">
+  <tp-select id="select-reviewer" name="reviewer" placeholder="Choose a reviewer"></tp-select>
+</tp-field>`}
+  script={`import { html } from 'lit';
+
+await customElements.whenDefined('tp-select');
+const person = (name, initials, badge) =>
+  html\`<tp-avatar size="sm" fallback=\${initials} alt=""></tp-avatar>\${name}\${
+    badge ? html\` <tp-badge variant="secondary">\${badge}</tp-badge>\` : ''
+  }\`;
+document.getElementById('select-reviewer').items = [
+  { type: 'group', label: 'Suggested', items: [
+    { value: 'u_131', text: 'Priya Natarajan', label: person('Priya Natarajan', 'PN', 'Code owner') },
+    { value: 'u_118', text: 'Tomás Herrera', label: person('Tomás Herrera', 'TH') },
+  ] },
+  { type: 'separator' },
+  { type: 'group', label: 'Everyone else', items: [
+    { value: 'u_140', text: 'Jonas Becker', label: person('Jonas Becker', 'JB') },
+    { value: 'u_152', text: 'Aiko Sato', label: person('Aiko Sato', 'AS', 'Away'), disabled: true },
+  ] },
+];`}
+/>
+
+When the choices come from application data, assign `items` instead of writing children: records with a `value` and a `label`, groups with nested `items`, and separators. A label can be a template holding an Avatar or a Badge; give such a record a plain `text` too, which typeahead and the closed trigger read. Values can be any type; `isItemEqual` decides which records are the same choice.
+
+### Every currency
+
+<Preview
+  code={`<tp-field label="Currency" style="inline-size:20rem">
+  <tp-select id="select-currency" name="currency" searchable virtualized placeholder="Search currencies"></tp-select>
+</tp-field>`}
+  script={`await customElements.whenDefined('tp-select');
+const names = new Intl.DisplayNames(['en'], { type: 'currency' });
+document.getElementById('select-currency').items = Intl.supportedValuesOf('currency').map(
+  (code) => ({ value: code, label: \`\${names.of(code)} (\${code})\` }),
+);`}
+/>
+
+`virtualized` keeps a list of hundreds or thousands of options fast: only the rows near the visible part of the list are mounted, while the scroll height, keyboard navigation and typeahead still cover every option.
+
+### Customers from a server
+
+<Preview
+  code={`<tp-field label="Customer" style="inline-size:20rem">
+  <tp-select id="select-customer" name="customer" searchable search-delay="250" placeholder="Search customers"></tp-select>
+</tp-field>`}
+  script={`const customers = [
+  'Acme Logistics', 'Birchwood Dental', 'Cobalt Robotics', 'Delta Freight', 'Evergreen Grocers',
+  'Fjord Outfitters', 'Granite Legal', 'Harbor Coffee', 'Ironclad Security', 'Juniper Health',
+  'Keystone Builders', 'Lumen Studios', 'Meridian Travel', 'Northwind Traders', 'Orchard Bakery',
+];
+
+await customElements.whenDefined('tp-select');
+document.getElementById('select-customer').source = {
+  // Stands in for fetch('/api/customers?q=' + query, { signal }).
+  search: (query, { signal }) =>
+    new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        const needle = query.trim().toLowerCase();
+        resolve(customers
+          .filter((name) => name.toLowerCase().includes(needle))
+          .map((name) => ({ value: name.toLowerCase().replaceAll(' ', '-'), label: name })));
+      }, 600);
+      signal.addEventListener('abort', () => {
+        clearTimeout(timer);
+        reject(signal.reason);
+      });
+    }),
+};`}
+/>
+
+A `source` answers each query, typically from a server. The query waits `search-delay` milliseconds after the last keystroke, a newer query aborts the one in flight through `signal`, and the list shows a loading row meanwhile and the error text if the search fails.
+
+### Sorting a list
+
+<Preview
+  code={`<div style="display:flex;align-items:end;gap:var(--tp-space-4)">
+  <tp-field label="Sort by" style="inline-size:14rem">
+    <tp-select id="select-sort" default-value="updated">
+      <tp-select-option value="updated">Last updated</tp-select-option>
+      <tp-select-option value="created">Date created</tp-select-option>
+      <tp-select-option value="title">Title</tp-select-option>
+    </tp-select>
+  </tp-field>
+  <output id="select-sort-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Sorted by last updated</output>
+</div>`}
+  script={`const select = document.getElementById('select-sort');
+const output = document.getElementById('select-sort-output');
+
+select.addEventListener('tp-value-change', (event) => {
+  if (event.defaultPrevented) return;
+  const option = select.querySelector(\`tp-select-option[value="\${event.detail.value}"]\`);
+  output.textContent = 'Sorted by ' + option.textContent.toLowerCase();
+});`}
+/>
+
+A Select that drives the page right away, outside a form, listens for `tp-value-change`: it reports each proposed value with its `reason` before the value commits, and cancelling it keeps the current one. Select Option elements declare the same choices as native options, and take a value of any type when it is set as a property.
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="enter" /> <Keys keys="space" /> <Keys keys="alt+down" /> | Opens the list on the selected option; with the list open, Enter and Space select the highlighted option. |
+| <Keys keys="down" /> <Keys keys="up" /> | Move the highlight through the enabled options; in a grid, Left and Right move along a row. |
+| <Keys keys="Home" /> <Keys keys="End" /> | Move the highlight to the first or the last option. |
+| Typing | Highlights the next option whose text starts with the typed characters; in a searchable Select, filters the list. |
+| <Keys keys="escape" /> | Closes the list without changing the selection. |
+| <Keys keys="tab" /> | Closes the list and moves focus on. |
+| <Keys keys="Backspace" /> | In an empty query, removes the last chip of a searchable multiple selection. |

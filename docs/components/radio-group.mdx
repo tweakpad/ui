@@ -1,0 +1,96 @@
+---
+title: Radio group
+description: One choice from a short, visible set of options, with a single form value.
+tag: tp-radio-group
+parts: [tp-radio-group-item]
+---
+
+<Preview
+  code={`<tp-field label="Delivery" description="Arrives at your office address.">
+  <tp-radio-group name="delivery" default-value="standard">
+    <tp-radio-group-item value="standard">Standard · 4–6 business days</tp-radio-group-item>
+    <tp-radio-group-item value="express">Express · 2 business days</tp-radio-group-item>
+    <tp-radio-group-item value="overnight">Overnight · Next morning</tp-radio-group-item>
+  </tp-radio-group>
+</tp-field>`}
+/>
+
+## Usage
+
+Use a Radio group when every option should stay visible and exactly one applies. For a long list, use Select; for an on-off setting, use Switch. The group owns the value and the single tab stop, and each Radio group item supplies a `value` and its label. A Field gives the group its visible name, description and error; without one, set `label` so the group still has an accessible name. Arrow keys select as they move, so react to `tp-value-change` rather than to clicks.
+
+### Billing period
+
+<Preview
+  code={`<tp-field label="Billing period">
+  <tp-radio-group name="period" default-value="yearly" orientation="horizontal">
+    <tp-radio-group-item value="monthly">Monthly</tp-radio-group-item>
+    <tp-radio-group-item value="yearly">Yearly · 2 months free</tp-radio-group-item>
+  </tp-radio-group>
+</tp-field>`}
+/>
+
+A horizontal group suits two or three short options; the arrow keys then follow the row. Longer labels read better stacked.
+
+### Plans with an unavailable option
+
+<Preview
+  code={`<tp-field label="Plan">
+  <tp-radio-group name="plan" default-value="pro">
+    <tp-radio-group-item value="starter">Starter</tp-radio-group-item>
+    <tp-radio-group-item value="pro">Pro</tp-radio-group-item>
+    <tp-radio-group-item value="enterprise" disabled>Enterprise · Contact sales</tp-radio-group-item>
+  </tp-radio-group>
+</tp-field>
+<tp-field label="Billing interval" description="Locked until your contract renews on March 1.">
+  <tp-radio-group name="interval" default-value="yearly" readonly>
+    <tp-radio-group-item value="monthly">Monthly</tp-radio-group-item>
+    <tp-radio-group-item value="yearly">Yearly</tp-radio-group-item>
+  </tp-radio-group>
+</tp-field>`}
+/>
+
+Disable an item whose option exists but is not available now, so people still learn it exists; the arrow keys skip it. Make the whole group `readonly` when the choice is fixed for a while: it stays focusable and submitted, but cannot change.
+
+### Recommended choice
+
+<Preview
+  code={`<div id="radio-group-recommend" style="display:grid;gap:var(--tp-space-4);justify-items:start">
+  <tp-field label="Shipping">
+    <tp-radio-group name="shipping" value="">
+      <tp-radio-group-item value="standard">Standard · 3–5 days · Free</tp-radio-group-item>
+      <tp-radio-group-item value="express">Express · Next day · $9</tp-radio-group-item>
+      <tp-radio-group-item value="pickup">Pick up in store · Today</tp-radio-group-item>
+    </tp-radio-group>
+  </tp-field>
+  <tp-button variant="outline" size="sm">Choose the fastest for my address</tp-button>
+</div>`}
+  script={`const root = document.getElementById('radio-group-recommend');
+const group = root.querySelector('tp-radio-group');
+group.onValueChange = (event) => {
+  if (event.defaultPrevented || event.detail.cancelled) return;
+  group.value = event.detail.value;
+};
+root.querySelector('tp-button').addEventListener('click', () => {
+  group.value = 'pickup';
+});`}
+/>
+
+When your code holds the selection, set `value` and accept each proposal in `onValueChange`; it can then change the selection from elsewhere, such as a recommendation. An empty `value` starts with nothing selected.
+
+### Cancellation survey
+
+<Preview
+  code={`<form style="display:grid;gap:var(--tp-space-4);justify-items:start">
+  <tp-field label="Reason for cancelling">
+    <tp-radio-group name="reason" required>
+      <tp-radio-group-item value="price">Too expensive</tp-radio-group-item>
+      <tp-radio-group-item value="features">Missing features</tp-radio-group-item>
+      <tp-radio-group-item value="switching">Switching to another tool</tp-radio-group-item>
+    </tp-radio-group>
+  </tp-field>
+  <tp-button type="submit">Continue</tp-button>
+</form>`}
+/>
+
+The group submits once under its `name`, or the Field's. With `required` and no default, submitting before a choice is made shows the Field's error instead of guessing an answer for the person.

@@ -1,10 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
-import { paginationExamples } from './pagination.examples.js';
 import { html } from 'lit';
+import { libraryDocs } from './library-docs.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpPagination } from '../components/pagination/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import documentation from '../../docs/pagination.md?raw';
 interface Args {
   page: number;
   pages: number;
@@ -18,18 +17,6 @@ interface Args {
   showPageLinks: boolean;
   showLabels: boolean;
 }
-const source = `<script type="module">
-  import '@tweakpad/ui/register';
-  import '@tweakpad/ui/styles.css';
-  const paging = document.querySelector('tp-pagination');
-  paging.hrefForPage = page => '#page-' + page;
-  paging.onPageChange = event => {
-    if (event.defaultPrevented || event.detail.cancelled) return;
-    event.detail.sourceEvent.preventDefault(); // This example routes in place.
-    paging.page = event.detail.value;
-  };
-</script>
-<tp-pagination label="Results pages" page="4" pages="12"></tp-pagination>`;
 function control(args: Args, updateArgs: (args: Partial<Args>) => void) {
   return html`<tp-pagination
     .page=${args.page}
@@ -55,13 +42,7 @@ function control(args: Args, updateArgs: (args: Partial<Args>) => void) {
 const meta = {
   title: 'Components/Pagination',
   component: 'tp-pagination',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      source: { code: source },
-      examples: paginationExamples,
-    },
-  },
+  parameters: { docs: libraryDocs('components/pagination') },
   args: {
     page: 4,
     pages: 12,

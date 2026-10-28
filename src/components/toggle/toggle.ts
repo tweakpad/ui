@@ -29,7 +29,16 @@ export interface ToggleSelectionOwner {
   memberChanged(member: TpToggle): void;
 }
 
-/** Shared action owner for standalone Toggle and ToggleGroup items. */
+/**
+ * A two-state button that stays pressed or unpressed, announced with its pressed state. It is an
+ * action with a remembered state, not a form value; inside a Toggle group the group owns its
+ * state, size and paint.
+ *
+ * @slot - The label: text, an Icon, or both. Mark a leading or trailing Icon with
+ * `data-icon="inline-start"` or `data-icon="inline-end"` to tighten the padding on that edge.
+ * @fires tp-value-change - Cancelable proposal of the inverse pressed state on each press of a
+ * standalone Toggle; `detail.value`, `detail.previousValue` and the `detail.reason`.
+ */
 export class TpToggle extends TpFormElement {
   static tagName = 'tp-toggle';
   static override presentation = togglePresentation;
@@ -97,9 +106,19 @@ export class TpToggle extends TpFormElement {
   );
   #focusVisible = false;
   #contentObserver: MutationObserver | null = null;
+  /** The accessible name of a Toggle that shows only an Icon. */
   declare ariaLabel: string | null;
+  /** The pressed state at first render, when the page does not own `pressed`. */
   defaultPressed: boolean | undefined;
+  /**
+   * Called with each proposed state before it commits; assign `pressed` to accept it or cancel the
+   * event to reject it.
+   */
   onPressedChange: ((event: TpValueChangeEvent<boolean>) => void) | undefined;
+  /**
+   * Renders the control as a native button; turn it off only when a part contract supplies another
+   * element.
+   */
   nativeAction = true;
   #state = new ControllableState({
     host: this,
@@ -112,6 +131,10 @@ export class TpToggle extends TpFormElement {
     diagnostic: (message) => this.diagnose('toggle-state', message),
   });
   #press = new SyntheticPress((event) => this.#request(event), false);
+  /**
+   * Whether the Toggle is pressed. Set it to own the state: presses then propose changes and the
+   * Toggle shows only what you assign.
+   */
   get pressed(): boolean {
     return this.#owner?.isPressed(this) ?? this.#state.value;
   }
@@ -121,6 +144,10 @@ export class TpToggle extends TpFormElement {
     if (this.hasUpdated) this.#state.sync();
     this.requestUpdate('pressed', previous);
   }
+  /**
+   * The paint: `ghost` shows a fill only while pressed or hovered, `outline` adds a border for a
+   * Toggle that stands alone.
+   */
   get variant(): 'ghost' | 'outline' {
     return this.#owner?.variant ?? this.#variant;
   }
@@ -129,6 +156,10 @@ export class TpToggle extends TpFormElement {
     this.#variant = value;
     this.requestUpdate('variant', previous);
   }
+  /**
+   * The height and padding, matching the Button sizes; the `icon-*` sizes make a square Toggle for
+   * an Icon alone.
+   */
   get size(): ToggleSize {
     return this.#owner?.size ?? this.#size;
   }
@@ -137,6 +168,7 @@ export class TpToggle extends TpFormElement {
     this.#size = value;
     this.requestUpdate('size', previous);
   }
+  /** The Toggle group that owns this Toggle's state, if any; set by the group itself. */
   get selectionOwner(): ToggleSelectionOwner | null {
     return this.#owner;
   }
@@ -145,9 +177,11 @@ export class TpToggle extends TpFormElement {
     this.#owner = owner;
     this.requestUpdate();
   }
+  /** The inner button that carries the pressed state and receives focus. */
   get controlElement(): HTMLElement | null {
     return this.#control;
   }
+  /** Whether the Toggle is disabled, by itself or by its Toggle group. */
   get toggleDisabled(): boolean {
     return this.effectiveDisabled || (this.#owner?.isDisabled(this) ?? false);
   }
@@ -300,6 +334,10 @@ export class TpToggle extends TpFormElement {
     if (this.#owner) this.#owner.requestToggle(this, !this.pressed, event);
     else this.#state.set(!this.pressed, 'trigger-press', event);
   }
+  /**
+   * Proposes a new pressed state as if the user had made it, notifying listeners first; a grouped
+   * Toggle ignores it, since its group owns the value.
+   */
   setPressed(pressed: boolean, reason: ChangeReason = 'programmatic', event?: Event): void {
     if (this.#owner) {
       this.diagnose(

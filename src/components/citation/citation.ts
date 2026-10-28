@@ -74,10 +74,11 @@ const compactBadge = {
 };
 
 /**
- * Citation: an inline, badge-styled reference to a source. An accepted `href`
- * renders a link; a number, a source mark and a label are optional; a description or `preview`
- * content adds a Preview card with the source details.
+ * An inline, badge-styled reference to a source. An accepted `href` renders a link; a number, a
+ * source mark and a label are optional; a description or `preview` content adds a Preview card
+ * with the source details.
  *
+ * @attr id - Names the citation, so that others repeat its values by naming it in `source`.
  * @slot - Visible label, such as the source site or title.
  * @slot icon - Source mark used when `src` is unset or fails, such as a `tp-icon`.
  * @slot preview - Extra preview content.
@@ -185,16 +186,27 @@ export class TpCitation extends TpElement {
       }
     `,
   ];
+  /** The source's address; a web address the citation accepts makes it a link. */
   href: string | null = null;
+  /** Where the link opens; links to other sites open in a new tab unless this is set. */
   target: string | null = null;
+  /** The link's relationship to the page, as on a native link. */
   rel: string | null = null;
+  /** The source's number; inside a Citation list, entries are numbered in order unless they set it. */
   index: number | null = null;
+  /** The URL of the source's mark, such as a site icon; the `icon` slot or a globe shows when it is unset or fails. */
   src = '';
+  /** The source's title in the preview. */
   sourceTitle = '';
+  /** A summary of the source; with it, the citation shows a preview on hover and focus. */
   description = '';
+  /** The `id` of another citation whose values this one takes where its own are unset. */
   source = '';
+  /** Raises the citation like a footnote marker, without growing the line. */
   superscript = false;
+  /** The badge's treatment. */
   variant: CitationVariant = 'outline';
+  /** Replacements for the text of the accessible name; missing entries keep the defaults. */
   messages: CitationMessages = {};
   readonly #image = new ImageLoadController(this);
   #requestedSource = '';
@@ -354,6 +366,7 @@ export class TpCitation extends TpElement {
     if (target && this.#preview) this.#releaseTrigger = this.#preview.registerTrigger(target);
   }
 
+  /** Focuses the citation's link. */
   override focus(options?: FocusOptions): void {
     this.#badge?.shadowRoot?.querySelector<HTMLElement>('[part~="badge"]')?.focus(options);
   }

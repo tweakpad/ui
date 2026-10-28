@@ -9,6 +9,15 @@ import type { CustomElementConstructorWithTag } from '../../foundation/define.js
 
 export type AvatarLoadingStatus = ImageLoadStatus;
 
+/**
+ * A person's or entity's image, with initials or other fallback content shown while the image
+ * loads or when it fails. A new source starts a fresh load, and a late result from an earlier
+ * source never replaces it.
+ *
+ * @slot - Fallback content that replaces the `fallback` text, such as an icon for an organization.
+ * @slot badge - A status mark on the avatar's edge; give it a text name, since color alone says nothing.
+ * @fires tp-loading-status-change - The image's loading status changed; `detail.status` is the new status.
+ */
 export class TpAvatar extends TpElement {
   static tagName = 'tp-avatar';
   static override presentation = avatarPresentation;
@@ -73,17 +82,29 @@ export class TpAvatar extends TpElement {
       ${hiddenStyles}
     `,
   ];
+  /** The image URL. */
   src = '';
+  /** The person's or entity's name for assistive technology, used by the image and the fallback. */
   alt = '';
+  /** Text shown while the image is unavailable, usually initials. */
   fallback = '';
+  /** The avatar's size. */
   size: 'sm' | 'default' | 'lg' = 'default';
+  /** Milliseconds to wait before showing the fallback, so a fast image load does not flash it. */
   fallbackDelay = 0;
+  /** Renders the image before it has loaded, so the browser's own lazy loading applies. */
   keepMounted = false;
+  /** The image's loading strategy; `lazy` takes effect with `keep-mounted`. */
   loading: 'eager' | 'lazy' = 'eager';
+  /** Responsive image candidates, as on a native image. */
   srcSet = '';
+  /** The image's display sizes for choosing among `srcset` candidates. */
   sizes = '';
+  /** The image request's CORS mode. */
   crossOrigin: '' | 'anonymous' | 'use-credentials' = '';
+  /** The referrer policy of the image request. */
   referrerPolicy: ReferrerPolicy = '';
+  /** Called with each new loading status, as an alternative to listening for the event. */
   onLoadingStatusChange: ((status: AvatarLoadingStatus) => void) | undefined;
   readonly #image = new ImageLoadController(this, {
     onStatusChange: (status) => {
@@ -99,6 +120,7 @@ export class TpAvatar extends TpElement {
   #fallbackReady = false;
   #needsLoad = true;
   #releaseSlots: (() => void) | undefined;
+  /** The current image's loading status. */
   get imageLoadingStatus(): AvatarLoadingStatus {
     return this.#image.status;
   }
@@ -227,7 +249,11 @@ export class TpAvatar extends TpElement {
   }
 }
 
-/** Composition uses the same Avatar for omitted-member presentation. */
+/**
+ * A row of overlapping avatars that can end with a count of the people not shown.
+ *
+ * @slot - The avatars.
+ */
 export class TpAvatarGroup extends TpElement {
   static tagName = 'tp-avatar-group';
   /** Library elements this element renders; defining it defines them too. */
@@ -264,7 +290,9 @@ export class TpAvatarGroup extends TpElement {
       }
     `,
   ];
+  /** The size of the omitted count; each avatar keeps its own size. */
   size: 'sm' | 'default' | 'lg' = 'default';
+  /** How many people the group leaves out, shown as a named count after the avatars. */
   omitted = 0;
   protected override render() {
     const count = Math.max(0, Math.trunc(Number.isFinite(this.omitted) ? this.omitted : 0));

@@ -22,18 +22,23 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'button',
+      description:
+        'The native button or link: the target of focus, activation and the variant appearance.',
       axes: ['variant', 'size'],
     },
     {
       name: 'button-leading-mark',
+      description: 'The mark before the label: the icon, the Spinner or the `icon-start` slot.',
       axes: ['variant', 'size'],
     },
     {
       name: 'button-label',
+      description: 'The label; hidden visually in an icon size and when it has no content.',
       axes: ['variant', 'size'],
     },
     {
       name: 'button-trailing-mark',
+      description: 'The mark after the label: the icon, the Spinner or the `icon-end` slot.',
       axes: ['variant', 'size'],
     },
   ],

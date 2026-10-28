@@ -27,7 +27,13 @@ export const switchMotionRoles = {
 /** The Thumb is never mixed, so it omits the indeterminate marker. */
 const SWITCH_THUMB_MARKERS = BOOLEAN_CONTROL_MARKERS.filter((key) => key !== 'indeterminate');
 
-/** Binary setting policy bound to the existing Checkbox Boolean/action/form owner. */
+/**
+ * A binary setting that takes effect as soon as it flips, with Checkbox's form, Field and
+ * validation behavior. Pointer, Space and Enter toggle it; it has no mixed state.
+ *
+ * @slot - The inline label; a press on it toggles the switch.
+ * @slot thumb - Decorative content inside the thumb, such as a small icon.
+ */
 export class TpSwitch extends TpCheckbox {
   static tagName = 'tp-switch';
   /** Library elements this element renders; defining it defines them too. */
@@ -112,6 +118,7 @@ export class TpSwitch extends TpCheckbox {
       }
     `,
   ];
+  /** The size of the track and thumb; `sm` suits dense rows and toolbars. */
   size: 'sm' | 'default' = 'default';
   #motion: MotionHandle[] = [];
   #labelText = '';

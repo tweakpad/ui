@@ -1,0 +1,432 @@
+---
+title: Questionnaire
+description: An ordered native form that asks one question at a time, with choices, free text, skipping and submission.
+tag: tp-questionnaire
+---
+
+<Preview
+  code={`<tp-questionnaire id="questionnaire-hero" label="Project kickoff" shortcut-mode="letters"></tp-questionnaire>`}
+  script={`const questionnaire = document.getElementById('questionnaire-hero');
+questionnaire.questions = [
+  {
+    name: 'goal',
+    title: 'What should this project deliver first?',
+    description: 'Choose one, or describe something else.',
+    required: true,
+    choices: [
+      { value: 'onboarding', label: 'Faster onboarding', description: 'Get new accounts to their first project sooner.' },
+      { value: 'billing', label: 'Self-serve billing', description: 'Let admins change plans without contacting sales.' },
+      { value: 'reporting', label: 'Usage reports', description: 'Show teams where their seats and credits go.' },
+    ],
+    input: { label: 'Something else', placeholder: 'Describe another goal…' },
+  },
+  {
+    name: 'signals',
+    title: 'What should every status update include?',
+    description: 'Select all that apply, or skip this question.',
+    kind: 'multiple',
+    skippable: true,
+    choices: [
+      { value: 'progress', label: 'Progress' },
+      { value: 'decisions', label: 'Decisions' },
+      { value: 'risks', label: 'Risks' },
+      { value: 'next-step', label: 'Next step' },
+    ],
+  },
+  {
+    name: 'start',
+    title: 'When should work begin?',
+    required: true,
+    choices: [
+      { value: 'now', label: 'This week' },
+      { value: 'next-cycle', label: 'Next cycle' },
+      { value: 'backlog', label: 'Add it to the backlog' },
+    ],
+  },
+];
+questionnaire.actions = { submit: { label: 'Save plan' } };
+questionnaire.addEventListener('tp-submit', (event) => event.preventDefault());`}
+/>
+
+## Usage
+
+A Questionnaire walks people through a short, ordered set of questions, one at a time, inside a single native form. Use it for intake flows, setup wizards and feedback, where one question in focus beats a long page of fields; for a form people scan and fill in any order, use a Form with Fields. Questions are data: assign the `questions` property before the element renders, then handle `tp-submit`, whose detail carries the answers and the native form data. Cancel it to handle the submission yourself instead of navigating; saving and sending the answers stay in your code. `shortcut-mode` gives every choice a letter or number key, shown beside it.
+
+### Assistant context sources
+
+<Preview
+  code={`<tp-questionnaire id="questionnaire-sources" label="Context sources"></tp-questionnaire>`}
+  script={`const questionnaire = document.getElementById('questionnaire-sources');
+questionnaire.questions = [
+  {
+    name: 'sources',
+    title: 'Which sources should the assistant read?',
+    description: 'Select every source it may use.',
+    kind: 'multiple',
+    required: true,
+    choices: [
+      { value: 'docs', label: 'Product docs', defaultChecked: true },
+      { value: 'tickets', label: 'Support tickets' },
+      { value: 'changelog', label: 'Changelog' },
+    ],
+    input: { label: 'Another source', placeholder: 'Paste a URL…', type: 'url' },
+  },
+  {
+    name: 'tone',
+    title: 'Describe the tone of its replies',
+    required: true,
+    input: { label: 'Tone', placeholder: 'Friendly, concise, no jargon…' },
+  },
+];
+questionnaire.addEventListener('tp-submit', (event) => event.preventDefault());`}
+/>
+
+A question with choices takes one answer, or several with `kind: 'multiple'`. An `input` adds a free answer beside the choices for the case your list did not foresee, and a question with only an `input` is a plain text question.
+
+### Workspace setup
+
+<Preview
+  code={`<tp-questionnaire id="questionnaire-setup" label="Workspace setup"></tp-questionnaire>`}
+  script={`const questionnaire = document.getElementById('questionnaire-setup');
+questionnaire.questions = [
+  {
+    name: 'constraints',
+    title: 'Any constraints we should know about?',
+    description: 'Optional. Skip if there are none.',
+    skippable: true,
+    input: { label: 'Constraints', placeholder: 'Must stay in the EU region…' },
+  },
+  {
+    name: 'seats',
+    title: 'How many seats do you need?',
+    required: true,
+    input: { label: 'Seats', type: 'number', placeholder: '12' },
+    validate: (answer) => (Number(answer) > 500 ? 'For more than 500 seats, contact sales.' : null),
+  },
+];
+questionnaire.actions = { submit: { label: 'Create workspace' } };
+questionnaire.addEventListener('tp-submit', (event) => event.preventDefault());`}
+/>
+
+A `required` question must be answered before Next. An optional one can offer Skip with `skippable`, and a skipped answer stays out of the submitted data. A question's `validate` returns a message for an answer that is present but wrong, such as a seat count only sales can handle.
+
+### Resume a draft
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-4);justify-items:start">
+  <tp-questionnaire id="questionnaire-resume" label="Migration plan" default-item="verification"></tp-questionnaire>
+  <tp-button id="questionnaire-resume-reset" variant="outline" size="sm">Discard changes</tp-button>
+</div>`}
+  script={`const questionnaire = document.getElementById('questionnaire-resume');
+questionnaire.questions = [
+  {
+    name: 'approach',
+    title: 'How should the database move?',
+    required: true,
+    choices: [
+      { value: 'incremental', label: 'Incremental migration', defaultChecked: true },
+      { value: 'cutover', label: 'Single cutover' },
+    ],
+  },
+  {
+    name: 'verification',
+    title: 'How should the migration be verified?',
+    description: 'Saved in your draft on Oct 12.',
+    kind: 'multiple',
+    required: true,
+    choices: [
+      { value: 'tests', label: 'Run migration tests', defaultChecked: true },
+      { value: 'row-counts', label: 'Compare row counts', defaultChecked: true },
+      { value: 'smoke', label: 'Manual smoke test' },
+    ],
+  },
+  {
+    name: 'notes',
+    title: 'Anything else the team should know?',
+    skippable: true,
+    input: { label: 'Notes', defaultValue: 'Keep the public API stable during the move.' },
+  },
+];
+questionnaire.actions = { submit: { label: 'Update draft' } };
+questionnaire.addEventListener('tp-submit', (event) => event.preventDefault());
+document.getElementById('questionnaire-resume-reset').addEventListener('click', () => questionnaire.reset());`}
+/>
+
+To resume a saved draft, give its choices `defaultChecked`, its inputs a `defaultValue`, and open on the question where it left off with `default-item`. These defaults are also what `reset()` restores, so discarding changes returns to the saved draft rather than to an empty form.
+
+### Deployment follow-up
+
+<Preview
+  code={`<tp-questionnaire id="questionnaire-deploy" label="Deployment"></tp-questionnaire>`}
+  script={`const questionnaire = document.getElementById('questionnaire-deploy');
+const questions = [
+  {
+    name: 'target',
+    title: 'Where should this service run?',
+    description: 'Cloud deployments ask for a region next.',
+    required: true,
+    choices: [
+      { value: 'on-premises', label: 'Our own servers' },
+      { value: 'cloud', label: 'Managed cloud' },
+    ],
+  },
+  {
+    name: 'region',
+    title: 'Which region should host it?',
+    required: true,
+    choices: [
+      { value: 'eu-west', label: 'EU West (Dublin)' },
+      { value: 'us-east', label: 'US East (Virginia)' },
+      { value: 'ap-south', label: 'Asia Pacific (Mumbai)' },
+    ],
+  },
+  {
+    name: 'alerts',
+    title: 'Who should be paged when it goes down?',
+    required: true,
+    choices: [
+      { value: 'on-call', label: 'The on-call engineer' },
+      { value: 'team', label: 'The whole platform team' },
+    ],
+  },
+];
+const synchronize = (answers) => {
+  questionnaire.value = answers;
+  questionnaire.questions = questions.map((question) => ({
+    ...question,
+    disabled: question.name === 'region' && answers.target !== 'cloud',
+  }));
+};
+synchronize({});
+questionnaire.addEventListener('tp-value-change', (event) => {
+  if (event.target === questionnaire && !event.defaultPrevented && !event.detail.cancelled) {
+    synchronize(event.detail.value);
+  }
+});
+questionnaire.actions = { submit: { label: 'Deploy' } };
+questionnaire.addEventListener('tp-submit', (event) => event.preventDefault());`}
+/>
+
+A question with `disabled: true` drops out of navigation, progress, validation and submission. To ask a follow-up only when an answer calls for it, own the answers with `value`, and on each `tp-value-change` reassign `questions` with the follow-up enabled or not.
+
+### Incident report
+
+<Preview
+  code={`<div id="questionnaire-incident" style="display:grid;gap:var(--tp-space-4)">
+  <output style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"></output>
+</div>`}
+  script={`const root = document.getElementById('questionnaire-incident');
+const output = root.querySelector('output');
+const questionnaire = document.createElement('tp-questionnaire');
+questionnaire.label = 'Incident report';
+questionnaire.questions = [
+  {
+    name: 'detail',
+    title: 'How much detail should the report include?',
+    required: true,
+    choices: [
+      { value: 'summary', label: 'Short summary' },
+      { value: 'timeline', label: 'Full timeline with root cause' },
+    ],
+  },
+  {
+    name: 'audience',
+    title: 'Who will read it?',
+    description: 'Customer-facing reports need the full timeline.',
+    required: true,
+    choices: [
+      { value: 'internal', label: 'Engineering only' },
+      { value: 'customers', label: 'Affected customers' },
+    ],
+  },
+];
+questionnaire.actions = { submit: { label: 'Publish report' } };
+const titleOf = (name) => questionnaire.questions.find((question) => question.name === name).title;
+questionnaire.item = 'detail';
+questionnaire.onItemChange = (event) => {
+  if (event.defaultPrevented || event.detail.cancelled) return;
+  questionnaire.item = event.detail.value;
+  output.textContent = 'Checkpoint: ' + titleOf(event.detail.value);
+};
+questionnaire.addEventListener('tp-value-change', () => {
+  questionnaire.questions = questionnaire.questions.map((question) => ({ ...question, invalid: false, error: '' }));
+});
+questionnaire.addEventListener('tp-submit', (event) => {
+  event.preventDefault();
+  const { detail, audience } = event.detail.answers;
+  if (audience === 'customers' && detail === 'summary') {
+    questionnaire.questions = questionnaire.questions.map((question) => ({
+      ...question,
+      invalid: question.name === 'detail',
+      error: question.name === 'detail' ? 'Customers need the full timeline. Choose it to publish.' : '',
+    }));
+    questionnaire.item = 'detail';
+    output.textContent = 'Checkpoint: ' + titleOf('detail');
+    return;
+  }
+  output.textContent = 'Published: ' + JSON.stringify(event.detail.answers);
+});
+output.textContent = 'Checkpoint: ' + titleOf('detail');
+root.prepend(questionnaire);`}
+/>
+
+Set `item` and accept each move in `onItemChange` to own which question is on screen, for example to keep it in the URL. Owners are fixed when the element connects, so this one is created in script and configured first. Owning the position also lets a submit handler check answers against each other, mark a question `invalid` with an `error`, and send the person back to it.
+
+### Access request
+
+<Preview
+  code={`<tp-questionnaire id="questionnaire-access" label="Access request"></tp-questionnaire>`}
+  script={`const questionnaire = document.getElementById('questionnaire-access');
+const synchronize = () => {
+  const disabled = questionnaire.status !== 'answered';
+  questionnaire.actions = {
+    next: { variant: 'secondary', disabled },
+    submit: { label: 'Request access', disabled },
+  };
+};
+questionnaire.questions = [
+  {
+    name: 'resource',
+    title: 'Which environment do you need?',
+    required: true,
+    choices: [
+      { value: 'staging', label: 'Staging' },
+      { value: 'production-read', label: 'Production, read-only' },
+      { value: 'production', label: 'Production, full access' },
+    ],
+  },
+  {
+    name: 'duration',
+    title: 'For how long?',
+    required: true,
+    choices: [
+      { value: '1h', label: 'One hour' },
+      { value: '1d', label: 'Until end of day' },
+      { value: '1w', label: 'One week' },
+    ],
+  },
+].map((question) => ({ ...question, onStatusChange: synchronize }));
+questionnaire.addEventListener('tp-item-change', () => queueMicrotask(synchronize));
+questionnaire.addEventListener('tp-submit', (event) => event.preventDefault());
+await questionnaire.updateComplete;
+synchronize();`}
+/>
+
+`actions` sets the label, size and paint of the Previous, Skip, Next and Submit Buttons, and can disable or hide them. Derive their availability from `status`, in each question's `onStatusChange` and after `tp-item-change`, as here to keep Next and Submit disabled until the question on screen has an answer.
+
+### Bug report with a progress bar
+
+<Preview
+  code={`<tp-questionnaire id="questionnaire-progress" label="Bug report"></tp-questionnaire>`}
+  script={`import { html } from 'lit';
+
+const questionnaire = document.getElementById('questionnaire-progress');
+questionnaire.partContracts = {
+  'questionnaire-progress': {
+    renderDelegate: ({ bind, state }) => html\`<div \${bind} style="display:grid;gap:var(--tp-space-2)">
+      <tp-progress aria-hidden="true" .value=\${state.current} .maximum=\${state.total}></tp-progress>
+      <span>Step \${state.current} of \${state.total}</span>
+    </div>\`,
+  },
+};
+questionnaire.questions = [
+  {
+    name: 'area',
+    title: 'Where did it happen?',
+    required: true,
+    choices: [
+      { value: 'editor', label: 'Editor' },
+      { value: 'billing', label: 'Billing' },
+      { value: 'api', label: 'Public API' },
+    ],
+  },
+  {
+    name: 'frequency',
+    title: 'How often does it happen?',
+    required: true,
+    choices: [
+      { value: 'always', label: 'Every time' },
+      { value: 'sometimes', label: 'Sometimes' },
+      { value: 'once', label: 'Only once' },
+    ],
+  },
+  {
+    name: 'steps',
+    title: 'What were you doing?',
+    required: true,
+    input: { label: 'Steps to reproduce', placeholder: 'Opened a shared doc, then…' },
+  },
+];
+questionnaire.actions = { submit: { label: 'File report' } };
+questionnaire.addEventListener('tp-submit', (event) => event.preventDefault());`}
+/>
+
+The `questionnaire-progress` part takes `content` for other wording, or a `renderDelegate` that draws its own indicator, here a Progress bar, from `state.current` and `state.total`. Bind `bind` to the element you return so it keeps the part's semantics.
+
+### Plan upgrade in a Card
+
+<Preview
+  code={`<tp-questionnaire id="questionnaire-card" label="Plan upgrade" shortcut-mode="numbers"></tp-questionnaire>`}
+  script={`import { html } from 'lit';
+
+const questionnaire = document.getElementById('questionnaire-card');
+questionnaire.partContracts = {
+  questionnaire: {
+    renderDelegate: ({ bind, state }) => html\`<form \${bind}>\${state.regions.answers}\${state.regions.question}</form>\`,
+  },
+  'questionnaire-question': {
+    renderDelegate: ({ bind, state }) => html\`<fieldset \${bind}>
+      <tp-card>
+        \${state.regions.title}\${state.regions.description}\${state.regions.progress}
+        \${state.regions.choices}\${state.regions.error}\${state.regions.actions}
+      </tp-card>
+    </fieldset>\`,
+  },
+  'questionnaire-title': {
+    hostProperties: { slot: 'header' },
+    renderDelegate: ({ bind, content }) => html\`<span \${bind}>\${content}</span>\`,
+  },
+  'questionnaire-description': { hostProperties: { slot: 'description' } },
+  'questionnaire-progress': {
+    hostProperties: { slot: 'action' },
+    content: (state) => state.current + ' / ' + state.total,
+  },
+  'questionnaire-actions': { hostProperties: { slot: 'footer' } },
+};
+questionnaire.questions = [
+  {
+    name: 'plan',
+    title: 'Which plan fits your team?',
+    description: 'You can change plans at any time.',
+    required: true,
+    choices: [
+      { value: 'team', label: 'Team', description: '$12 per seat, up to 50 seats.' },
+      { value: 'business', label: 'Business', description: '$24 per seat with SSO and audit logs.' },
+    ],
+  },
+  {
+    name: 'billing',
+    title: 'How would you like to pay?',
+    description: 'Yearly billing saves two months.',
+    required: true,
+    choices: [
+      { value: 'monthly', label: 'Monthly' },
+      { value: 'yearly', label: 'Yearly' },
+    ],
+  },
+];
+questionnaire.actions = { submit: { label: 'Upgrade' } };
+questionnaire.addEventListener('tp-submit', (event) => event.preventDefault());`}
+/>
+
+Delegates can rearrange the regions the Questionnaire has already rendered: each part's `state.regions` holds them, so a Card can take the title, description and progress in its header, the choices in its body and the Buttons in its footer, with the fieldset's name and the native form untouched. Render each region once.
+
+## Keyboard
+
+| Key                                       | Action                                                                      |
+| ----------------------------------------- | --------------------------------------------------------------------------- |
+| <Keys keys="down" /> <Keys keys="up" />   | Moves focus between the answers of the question on screen.                  |
+| <Keys keys="right" />                     | Moves to the next question once the current one has a valid answer.         |
+| <Keys keys="left" />                      | Moves back to the previous question.                                        |
+| <Keys keys="enter" />                     | Confirms a filled answer and moves on, or submits on the last question.     |
+| <Keys keys="a" /> or <Keys keys="1" />    | With `shortcut-mode`, selects the choice that shows that key.               |

@@ -1,0 +1,191 @@
+---
+title: File upload
+description: Collects files by drop, picker or paste, validates them and lists them as attachments, chips or image tiles.
+tag: tp-file-upload
+---
+
+<Preview
+  code={`<tp-file-upload name="attachments" multiple accept="image/*,application/pdf" max-file-size="10MB" show-trigger style="inline-size:30rem"></tp-file-upload>`}
+/>
+
+## Usage
+
+A visually hidden native file input is the control: it takes focus, opens the picker with Enter or Space and carries the Field label and errors. Clicking anywhere on the drop surface also opens the picker, and dropping files on it adds them. The surface writes its own title and hint from `accept` and the size limits, and accepted files submit with the form under `name`. Nothing is transferred unless you give it an upload adapter.
+
+`readonly` keeps the control focusable and its files submitted, but refuses changes and hides the Remove buttons; `disabled` refuses every change and submits nothing.
+
+### Restoring a backup
+
+<Preview
+  code={`<tp-file-upload name="backup" accept=".sql,.sql.gz,.dump" max-file-size="10GB" style="inline-size:30rem">
+  <span slot="title">Restore from a backup</span>
+  <span slot="description">A .sql, .sql.gz or .dump file, up to 10 GB</span>
+</tp-file-upload>`}
+/>
+
+Without `multiple`, a new file replaces the current one, which suits a single backup, logo or avatar. The `title` and `description` slots replace the generated wording when the task deserves its own, and the `media` slot replaces the upload mark.
+
+### Expense receipts
+
+<Preview
+  code={`<tp-file-upload id="file-upload-receipts" name="receipts" multiple max-files="5" accept=".pdf,.jpg,.png" max-file-size="5MB" hint-treatment="badges" style="inline-size:30rem">
+  <span slot="title">Add receipts</span>
+</tp-file-upload>`}
+  script={`await customElements.whenDefined('tp-file-upload');
+const upload = document.getElementById('file-upload-receipts');
+const file = (name, size, type) => new File([new Uint8Array(size)], name, { type });
+upload.addFiles([
+  file('taxi-berlin-0412.pdf', 184_000, 'application/pdf'),
+  file('hotel-folio-scan.png', 7_400_000, 'image/png'),
+  file('dinner-receipt.heic', 1_200_000, 'image/heic'),
+]);`}
+/>
+
+`accept` filters the picker and checks every dropped file too; size limits take bytes or size text such as `25MB`, and `max-files` caps the count, so a batch fills the remaining slots and rejects the rest. Rejected files stay in the list as error items with the reason and block submission until they are removed; with `keep-rejected="false"` they are only announced and reported through `tp-file-reject`. Badges list the rules more compactly than the default sentence.
+
+### Contact import
+
+<Preview
+  code={`<tp-file-upload id="file-upload-contacts" name="contacts" multiple accept=".csv" style="inline-size:30rem">
+  <span slot="title">Import contacts</span>
+  <span slot="description">CSV with name, email and phone columns</span>
+</tp-file-upload>`}
+  script={`await customElements.whenDefined('tp-file-upload');
+const upload = document.getElementById('file-upload-contacts');
+upload.fileValidator = async (file) => {
+  const [header = '', ...rows] = (await file.text()).trim().split(/\\r?\\n/);
+  const columns = header.toLowerCase().split(',').map((cell) => cell.trim());
+  const missing = ['name', 'email', 'phone'].filter((column) => !columns.includes(column));
+  if (missing.length) return { code: 'csv-columns', message: \`Missing columns: \${missing.join(', ')}.\` };
+  return { meta: { rows: rows.length }, description: \`\${rows.length} contacts\` };
+};
+upload.addFiles([
+  new File(['name,email,phone\\nMaya Chen,maya@northwind.co,555-0101\\nJonas Weber,jonas@northwind.co,555-0102\\n'], 'crm-export.csv', { type: 'text/csv' }),
+  new File(['full_name,email\\nAmara Okafor,amara@northwind.co\\n'], 'newsletter-list.csv', { type: 'text/csv' }),
+]);`}
+/>
+
+Rules about a file's contents belong in `fileValidator`. It receives each file in turn and returns nothing to accept it, a message or `{ code, message }` to reject it, or `{ meta, description }` to attach what it learned, here a row count. A thrown error or a rejected promise rejects the file, so a broken check never lets one through.
+
+### Message attachments
+
+<Preview
+  code={`<tp-file-upload id="file-upload-chips" name="attachments" multiple size="sm" item-size="xs" clearable show-trigger style="inline-size:30rem"></tp-file-upload>`}
+  script={`await customElements.whenDefined('tp-file-upload');
+const file = (name, size, type) => new File([new Uint8Array(size)], name, { type });
+document.getElementById('file-upload-chips').value = [
+  file('Q4-report-final.pdf', 2_400_000, 'application/pdf'),
+  file('budget-2026.xlsx', 890_000, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+  file('meeting-notes.docx', 156_000, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+];`}
+/>
+
+In a composer or a comment box, a compact surface and files wrapped as chips keep the form short, and `clearable` adds a Clear all button beside the count. Assigning `value`, as here, sets files without validation or an event, which suits restoring a draft; use `addFiles()` when the files should be checked.
+
+### Listing photos
+
+<Preview
+  code={`<tp-file-upload id="file-upload-photos" name="listing-photos" multiple layout="grid" max-files="6" accept="image/jpeg,image/png,image/webp" paste="control" style="inline-size:30rem"></tp-file-upload>`}
+  script={`await customElements.whenDefined('tp-file-upload');
+const photo = (name, hue) => new Promise((resolve) => {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 320;
+  const context = canvas.getContext('2d');
+  const gradient = context.createLinearGradient(0, 0, 320, 320);
+  gradient.addColorStop(0, \`hsl(\${hue} 45% 62%)\`);
+  gradient.addColorStop(1, \`hsl(\${hue + 40} 40% 28%)\`);
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 320, 320);
+  canvas.toBlob((blob) => resolve(new File([blob], name, { type: 'image/jpeg' })), 'image/jpeg');
+});
+document.getElementById('file-upload-photos').value = await Promise.all([
+  photo('living-room.jpg', 24),
+  photo('kitchen.jpg', 190),
+  photo('terrace.jpg', 140),
+  photo('bedroom.jpg', 260),
+]);`}
+/>
+
+For images, `layout="grid"` shows previews as tiles, with the drop surface as a final Add tile that hides once `max-files` is reached. `paste="control"` also takes a screenshot pasted while the grid has focus or the pointer is over it.
+
+### Asset uploads
+
+<Preview
+  code={`<tp-file-upload id="file-upload-assets" name="assets" multiple upload-concurrency="2" style="inline-size:30rem">
+  <span slot="description">Files upload as soon as they are added</span>
+</tp-file-upload>`}
+  script={`await customElements.whenDefined('tp-file-upload');
+const upload = document.getElementById('file-upload-assets');
+const attempts = new Map();
+
+// Stands in for fetch or XMLHttpRequest: reports progress, and fails a file named "*-fail*" once.
+upload.uploader = (item, { signal, onProgress }) => new Promise((resolve, reject) => {
+  const total = item.file.size || 1;
+  let loaded = 0;
+  const timer = setInterval(() => {
+    loaded = Math.min(total, loaded + total / 12);
+    onProgress(loaded, total);
+    if (loaded < total) return;
+    clearInterval(timer);
+    const attempt = (attempts.get(item.id) ?? 0) + 1;
+    attempts.set(item.id, attempt);
+    if (item.file.name.includes('-fail') && attempt === 1) reject(new Error('Server returned 503. Try again.'));
+    else resolve({ url: \`/files/\${encodeURIComponent(item.file.name)}\` });
+  }, 250);
+  signal.addEventListener('abort', () => {
+    clearInterval(timer);
+    reject(signal.reason);
+  });
+});
+
+const file = (name, size, type) => new File([new Uint8Array(size)], name, { type });
+upload.addFiles([
+  file('launch-video-cut.mp4', 4_800_000, 'video/mp4'),
+  file('press-kit.zip', 2_100_000, 'application/zip'),
+  file('pricing-sheet-fail.pdf', 640_000, 'application/pdf'),
+]);`}
+/>
+
+An `uploader` transfers each accepted file, with an abort signal and an `onProgress(loaded, total)` callback, and its result is kept as the item's `response`. Files queue in order with `upload-concurrency` in flight; a failure shows its message with a Retry button, and removing a file aborts its upload. `tp-upload-complete` and `tp-upload-error` keep your own state in step. Without an adapter, files stay selected and `setItemState()` drives their status from your own transfer code.
+
+### Signed contract
+
+<Preview
+  code={`<tp-form id="file-upload-form" aria-label="Upload signed contract" style="inline-size:30rem">
+  <tp-field label="Signed contract" description="PDF up to 5 MB">
+    <tp-file-upload name="contract" required accept="application/pdf" max-file-size="5MB" hint-treatment="none" size="sm" show-trigger></tp-file-upload>
+  </tp-field>
+  <div slot="actions">
+    <tp-button type="reset" variant="outline">Reset</tp-button>
+    <tp-button type="submit">Submit</tp-button>
+  </div>
+  <output id="file-upload-form-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"></output>
+</tp-form>`}
+  script={`const form = document.getElementById('file-upload-form');
+const output = document.getElementById('file-upload-form-output');
+form.onFormSubmit = (values, { data }) => {
+  output.textContent = \`Submitted \${data.getAll('contract').map((file) => file.name).join(', ')}\`;
+};
+form.addEventListener('tp-reset', () => {
+  output.textContent = '';
+});`}
+/>
+
+Inside a Field, the label names the control, `required` reports a missing file and a rejected file shows its message. The Field's description already states the rules, so the generated hint is turned off. Each accepted file is appended to the form data under `name`, and Reset clears the files.
+
+### Duplicate invoices
+
+<Preview
+  code={`<tp-file-upload id="file-upload-invoices" name="invoices" multiple accept="application/pdf" size="sm" style="inline-size:30rem"></tp-file-upload>`}
+  script={`await customElements.whenDefined('tp-file-upload');
+const upload = document.getElementById('file-upload-invoices');
+const invoice = (name) => new File(['%PDF-1.7'], name, { type: 'application/pdf' });
+const { accepted } = await upload.addFiles([invoice('INV-2048.pdf'), invoice('INV-2031.pdf')]);
+// A simulated server already holds INV-2031 and refuses it a moment later.
+setTimeout(() => {
+  const duplicate = accepted.find((file) => file.name === 'INV-2031.pdf');
+  if (upload.isConnected && duplicate) upload.rejectFile(duplicate, 'INV-2031 was already submitted on Oct 2.');
+}, 800);`}
+/>
+
+Some checks only the server can make. `rejectFile()` moves an accepted file to the error items with the server's message, and it blocks submission like any other rejection until it is removed.

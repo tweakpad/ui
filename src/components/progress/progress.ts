@@ -23,7 +23,15 @@ const maximumConverter = {
   fromAttribute: (value: string | null): number => (value === null ? 100 : Number(value)),
 };
 
-/** Noninteractive task progress; every part observes one semantic and formatting snapshot. */
+/**
+ * A noninteractive bar that reports how much of a task is complete, or that it is still running.
+ * It has no form value and changes only when the application sets `value`.
+ *
+ * @attr aria-label - Names the progress bar when no visible label does; it takes precedence over the `label` slot and `label`.
+ * @attr aria-labelledby - Names the progress bar from other elements on the page, such as a heading above it.
+ * @slot label - A visible name for the task; it also names the progress bar.
+ * @slot output - The visible value, written by the application, such as "41 of 50 GB".
+ */
 export class TpProgress extends TpElement {
   static tagName = 'tp-progress';
   static override presentation = progressPresentation;
@@ -113,21 +121,30 @@ export class TpProgress extends TpElement {
     `,
   ];
 
+  /** How far the task has come, between `minimum` and `maximum`; leave it empty while the amount of work is unknown. */
   value: number | null = null;
+  /** The value at which the task starts. */
   minimum = 0;
+  /** The value at which the task is complete, such as a step count or a byte total. */
   maximum = 100;
-  /** Legacy accessible-name fallback; a Label slot supplies the visible operation name. */
+  /** The accessible name when neither the `label` slot nor `aria-label` supplies one. */
   label = 'Progress';
+  /** The locale the value is formatted for; by default the nearest `lang`. */
   locale: string | string[] | undefined;
+  /** Number format options for the value; with them the raw value is formatted instead of a percentage. */
   format: Intl.NumberFormatOptions | undefined;
+  /** The value as assistive technology reads it, such as "Step 3 of 5". */
   valueText: string | undefined;
+  /** Builds the spoken value from the formatted and the raw value, when it depends on the value. */
   getAccessibleValueText: AccessibleProgressText | undefined;
+  /** Another name for `minimum`. */
   get min(): number {
     return this.minimum;
   }
   set min(value: number) {
     this.minimum = value;
   }
+  /** Another name for `maximum`. */
   get max(): number {
     return this.maximum;
   }
@@ -160,16 +177,19 @@ export class TpProgress extends TpElement {
     this.#indicator = element;
   };
 
-  /** Current immutable raw/clamped/format/status snapshot, also supplied to every part resolver. */
+  /** The current value, range, formatting and status in one read-only snapshot, the same one every part receives. */
   get state(): ProgressState {
     return this.#state;
   }
+  /** Whether the task is `indeterminate`, `progressing` or `complete`. */
   get status(): ProgressState['status'] {
     return this.#state.status;
   }
+  /** The completed share from 0 to 100, or `null` while indeterminate. */
   get percentage(): number | null {
     return this.#state.percentage;
   }
+  /** The value formatted for the locale, empty while indeterminate. */
   get formattedValue(): string {
     return this.#state.formattedValue;
   }

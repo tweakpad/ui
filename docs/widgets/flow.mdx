@@ -1,0 +1,543 @@
+---
+title: Flow
+description: A node graph editor with typed ports, routed edges, schema-driven nodes, a node library, an inspector, automatic layout and optional run state.
+tag: tp-flow
+parts: [tp-flow-node, tp-flow-edge, tp-flow-controls]
+---
+
+<Preview
+  align="stretch"
+  code={`<tp-flow id="flow-hero" label="Voice chain" show-port-labels fit-view fit-padding="32" controls="zoom-in zoom-out fit undo redo" controls-orientation="horizontal" style="block-size:30rem"></tp-flow>`}
+  script={`await customElements.whenDefined('tp-flow');
+const flow = document.getElementById('flow-hero');
+const audio = (id, label, direction) => ({ id, label, direction, dataType: 'audio' });
+flow.schema = {
+  dataTypes: [{ id: 'audio', label: 'Audio', tone: 'chart-2' }],
+  rules: { defaultEdgeKind: 'bezier' },
+  nodes: [
+    {
+      type: 'input', label: 'Microphone', shape: 'panel', tone: 'chart-1',
+      ports: [audio('out', 'out', 'output')],
+      properties: [
+        { key: 'gain', label: 'gain', control: 'slider', min: 0, max: 1, step: 0.01, default: 0.7 },
+        { key: 'gate', label: 'noise gate', control: 'switch', default: true },
+      ],
+    },
+    {
+      type: 'compressor', label: 'Compressor', shape: 'panel', tone: 'chart-3',
+      ports: [audio('in', 'in', 'input'), audio('out', 'out', 'output')],
+      properties: [{ key: 'ratio', label: 'ratio', control: 'number', min: 1, max: 20, step: 0.5, default: 4 }],
+    },
+    {
+      type: 'reverb', label: 'Reverb', shape: 'panel', tone: 'chart-4',
+      ports: [audio('in', 'in', 'input'), audio('out', 'out', 'output')],
+      properties: [{
+        key: 'room', label: 'room', control: 'select', default: 'hall',
+        options: [{ value: 'room', label: 'Room' }, { value: 'hall', label: 'Hall' }, { value: 'plate', label: 'Plate' }],
+      }],
+    },
+    {
+      type: 'mixer', label: 'Stream output', shape: 'panel', tone: 'chart-5',
+      ports: [audio('dry', 'dry', 'input'), audio('wet', 'wet', 'input')],
+      properties: [
+        { key: 'mix', label: 'wet mix', control: 'slider', min: 0, max: 1, step: 0.01, default: 0.25 },
+        { key: 'level', label: 'level', control: 'slider', min: 0, max: 1, step: 0.01, default: 0.9 },
+      ],
+    },
+  ],
+};
+flow.load({
+  version: 1,
+  nodes: [
+    { id: 'mic', type: 'input', position: { x: 0, y: 120 }, data: { gain: 0.7, gate: true } },
+    { id: 'comp', type: 'compressor', position: { x: 360, y: 0 }, data: { ratio: 4 } },
+    { id: 'verb', type: 'reverb', position: { x: 360, y: 250 }, data: { room: 'hall' } },
+    { id: 'out', type: 'mixer', position: { x: 720, y: 110 }, data: { mix: 0.25, level: 0.9 } },
+  ],
+  edges: [
+    { id: 'e1', source: 'mic', sourcePort: 'out', target: 'comp', targetPort: 'in' },
+    { id: 'e2', source: 'mic', sourcePort: 'out', target: 'verb', targetPort: 'in' },
+    { id: 'e3', source: 'comp', sourcePort: 'out', target: 'out', targetPort: 'dry' },
+    { id: 'e4', source: 'verb', sourcePort: 'out', target: 'out', targetPort: 'wet' },
+  ],
+});`}
+/>
+
+## Usage
+
+Use a Flow where people build or read a graph of steps: an automation, a data pipeline, a signal chain, a dependency map, a run of a workflow. The value is a flow document, `{ version: 1, nodes, edges }`: each node names a type, a position and its data, and each edge connects a port of one node to a port of another. `schema` describes the node types, their ports and the control each property shows, so it, and the `icons` its types name, are set from script; `load()` replaces the document, and `default-value` seeds an uncontrolled one.
+
+In the signal chain above every port carries a data type, which decides what may connect and paints the port, and each property of a panel node is edited by the library control its definition names, inside the node. Editing a control is a change to the document like any other, so it can be undone. An edge's kind sets its path, from the default smooth steps to curves, straight lines and routed right angles; the schema's rules choose it for new connections, curves here.
+
+The widget fills its container's inline size and needs a block size: give it one directly or let it fill a sized parent of at least its minimum height. Drag nodes to move them, drag from a port to another port to connect, scroll or pinch to pan and zoom, and press <Keys keys="delete" /> to remove the selection; <Keys keys="mod+z" /> undoes any of it. The DOM-free engine in `@tweakpad/ui/flow` reads, validates, lays out and migrates the same documents in a worker or on a server; rendering a flow does not need it.
+
+### Workflow builder
+
+<Preview
+  align="stretch"
+  code={`<tp-flow id="flow-library" label="Event pipeline" palette inspector-commit="explicit" default-selection='{"nodes":["filter"],"edges":[]}' fit-view style="block-size:34rem"></tp-flow>`}
+  script={`import { databaseIcon } from '@tweakpad/ui/icons/database';
+import { gitBranchIcon } from '@tweakpad/ui/icons/git-branch';
+import { waypointsIcon } from '@tweakpad/ui/icons/waypoints';
+import { workflowIcon } from '@tweakpad/ui/icons/workflow';
+import { zapIcon } from '@tweakpad/ui/icons/zap';
+
+await customElements.whenDefined('tp-flow');
+const flow = document.getElementById('flow-library');
+flow.icons = {
+  webhook: zapIcon,
+  filter: waypointsIcon,
+  join: gitBranchIcon,
+  warehouse: databaseIcon,
+  metrics: workflowIcon,
+};
+const port = (id, label, direction) => ({ id, label, direction, dataType: 'event', side: direction === 'input' ? 'top' : 'bottom' });
+flow.schema = {
+  categories: [
+    { id: 'sources', label: 'Sources', tone: 'chart-1' },
+    { id: 'transform', label: 'Transform', tone: 'chart-3' },
+    { id: 'sinks', label: 'Destinations', tone: 'chart-4' },
+  ],
+  dataTypes: [{ id: 'event', label: 'Event' }],
+  rules: { defaultEdgeKind: 'orthogonal' },
+  nodes: [
+    { type: 'webhook', label: 'Webhook', category: 'sources', description: 'Receives HTTP events', icon: 'webhook', tone: 'chart-1', shape: 'compact',
+      ports: [port('out', 'Out', 'output')],
+      properties: [{ key: 'path', label: 'Path', control: 'text', mono: true, default: '/hooks/checkout' }] },
+    { type: 'filter', label: 'Filter', category: 'transform', description: 'Drops events by rule', icon: 'filter', tone: 'chart-3', shape: 'compact',
+      ports: [port('in', 'In', 'input'), port('out', 'Out', 'output')],
+      properties: [
+        { key: 'expression', label: 'Keep when', control: 'text', mono: true, default: 'amount > 0' },
+        { key: 'sample', label: 'Sample rate', control: 'slider', min: 0, max: 1, step: 0.05, default: 1 },
+      ] },
+    { type: 'join', label: 'Join', category: 'transform', description: 'Merges two streams', icon: 'join', tone: 'chart-3', shape: 'compact',
+      ports: [port('in', 'In', 'input'), port('out', 'Out', 'output')] },
+    { type: 'warehouse', label: 'Warehouse', category: 'sinks', description: 'Appends rows to a table', icon: 'warehouse', tone: 'chart-4', shape: 'compact',
+      ports: [port('in', 'In', 'input')],
+      properties: [{ key: 'table', label: 'Table', control: 'text', mono: true, default: 'events.checkout' }] },
+    { type: 'metrics', label: 'Metrics', category: 'sinks', description: 'Counts events per minute', icon: 'metrics', tone: 'chart-4', shape: 'compact',
+      ports: [port('in', 'In', 'input')] },
+  ],
+};
+flow.load({
+  version: 1,
+  layout: { direction: 'vertical' },
+  nodes: [
+    { id: 'hook', type: 'webhook', position: { x: 160, y: 0 }, label: 'Checkout events', data: { path: '/hooks/checkout' } },
+    { id: 'filter', type: 'filter', position: { x: 160, y: 150 }, label: 'Paid orders', data: { expression: 'status == "paid"', sample: 1 } },
+    { id: 'table', type: 'warehouse', position: { x: 40, y: 300 }, label: 'Orders table', data: { table: 'events.orders' } },
+    { id: 'rate', type: 'metrics', position: { x: 280, y: 300 }, label: 'Order rate', data: {} },
+  ],
+  edges: [
+    { id: 'p1', source: 'hook', sourcePort: 'out', target: 'filter', targetPort: 'in', markerEnd: 'arrowclosed' },
+    { id: 'p2', source: 'filter', sourcePort: 'out', target: 'table', targetPort: 'in', markerEnd: 'arrowclosed', label: 'store' },
+    { id: 'p3', source: 'filter', sourcePort: 'out', target: 'rate', targetPort: 'in', markerEnd: 'arrowclosed', label: 'count' },
+  ],
+});`}
+/>
+
+A builder needs a place to pick nodes from and a place to tune them. `palette` adds the node library, a sidebar grouped by the schema's categories, or a menu of columns with `palette="menu"`: drag a chip onto the canvas, or click it and then click where the node goes. Every edge label carries a "+" that inserts a node on that edge, and releasing a new connection on the empty pane opens the library at the drop point.
+
+The inspector holds the settings a definition keeps off the node; compact nodes keep all their properties there. A double press on such a node opens it, as on "Paid orders" here, and it then follows the selection; `inspector-commit="explicit"` holds its edits until Save. Both panels can also be opened from your own controls through their open state.
+
+### Pipeline declared in markup
+
+<Preview
+  align="stretch"
+  code={`<tp-flow id="flow-declarative" label="Nightly export" fit-view controls="zoom-in zoom-out fit" size="sm" style="block-size:22.5rem">
+  <tp-flow-node id="nightly" type="schedule" x="0" y="40" label="Nightly, 02:00"></tp-flow-node>
+  <tp-flow-node id="orders" type="query" x="290" y="40" label="Query new orders">
+    <tp-field orientation="horizontal" label="Include refunds">
+      <tp-switch data-flow-property="refunds"></tp-switch>
+    </tp-field>
+  </tp-flow-node>
+  <tp-flow-node id="upload" type="upload" x="580" y="40" label="Upload CSV"></tp-flow-node>
+  <tp-flow-edge id="nightly-orders" source="nightly" source-port="out" target="orders" target-port="in" marker-end="arrowclosed"></tp-flow-edge>
+  <tp-flow-edge id="orders-upload" source="orders" source-port="out" target="upload" target-port="in" label="CSV" animated></tp-flow-edge>
+</tp-flow>`}
+  script={`import { clockIcon } from '@tweakpad/ui/icons/clock';
+import { databaseIcon } from '@tweakpad/ui/icons/database';
+import { uploadCloudIcon } from '@tweakpad/ui/icons/upload-cloud';
+
+await customElements.whenDefined('tp-flow');
+const flow = document.getElementById('flow-declarative');
+flow.icons = { clock: clockIcon, database: databaseIcon, upload: uploadCloudIcon };
+flow.schema = {
+  nodes: [
+    { type: 'schedule', label: 'Schedule', description: 'Cron trigger', icon: 'clock', tone: 'chart-1',
+      ports: [{ id: 'out', label: 'Out', direction: 'output' }] },
+    { type: 'query', label: 'Query', description: 'Orders database', icon: 'database', tone: 'chart-2',
+      ports: [{ id: 'in', label: 'In', direction: 'input' }, { id: 'out', label: 'Rows', direction: 'output' }] },
+    { type: 'upload', label: 'Upload', description: 'File storage', icon: 'upload', tone: 'chart-4',
+      ports: [{ id: 'in', label: 'File', direction: 'input' }] },
+  ],
+};`}
+/>
+
+A fixed or server-rendered graph can be written as `tp-flow-node` and `tp-flow-edge` children, adopted into the document by `id`. Content inside a node renders in its body, and a library control with `data-flow-property` edits that key of the node's data. Dragging writes back only a node's position and size attributes. An animated edge marches its dash toward the target, so the direction of data reads at a glance. For graphs people build and save, keep the document as data instead.
+
+### Release pipeline with its own toolbars
+
+<Preview
+  align="stretch"
+  code={`<tp-flow id="flow-panels" label="Release pipeline" fit-view controls="zoom-out zoom zoom-in fit" controls-position="bottom-center" controls-orientation="horizontal" minimap background="lines" style="block-size:30rem">
+  <tp-flow-controls slot="top-end" actions="undo redo" orientation="horizontal">
+    <tp-button id="flow-panels-layout" variant="outline" size="sm">Tidy up</tp-button>
+  </tp-flow-controls>
+  <tp-flow-controls slot="center-start" actions="tool lock" orientation="vertical"></tp-flow-controls>
+</tp-flow>`}
+  script={`await customElements.whenDefined('tp-flow');
+const flow = document.getElementById('flow-panels');
+const step = (type, label, description) => ({
+  type, label, description, tone: 'chart-2',
+  ports: [{ id: 'in', label: 'In', direction: 'input' }, { id: 'out', label: 'Out', direction: 'output' }],
+});
+flow.schema = {
+  nodes: [
+    step('build', 'Build', 'Container image from main'),
+    step('test', 'Test', 'Must pass to continue'),
+    step('deploy', 'Deploy', 'Rolling update'),
+  ],
+};
+flow.load({
+  version: 1,
+  nodes: [
+    { id: 'build', type: 'build', position: { x: 0, y: 100 }, label: 'Build image', data: {} },
+    { id: 'unit', type: 'test', position: { x: 300, y: 0 }, label: 'Unit tests', data: {} },
+    { id: 'e2e', type: 'test', position: { x: 300, y: 200 }, label: 'Browser tests', data: {} },
+    { id: 'staging', type: 'deploy', position: { x: 600, y: 100 }, label: 'Deploy to staging', data: {} },
+  ],
+  edges: [
+    { id: 'r1', source: 'build', sourcePort: 'out', target: 'unit', targetPort: 'in' },
+    { id: 'r2', source: 'build', sourcePort: 'out', target: 'e2e', targetPort: 'in' },
+    { id: 'r3', source: 'unit', sourcePort: 'out', target: 'staging', targetPort: 'in' },
+    { id: 'r4', source: 'e2e', sourcePort: 'out', target: 'staging', targetPort: 'in' },
+  ],
+});
+document.getElementById('flow-panels-layout').addEventListener('click', () => flow.layout('horizontal'));`}
+/>
+
+The built-in bar holds the actions `controls` lists, in order, and sits where `controls-position` puts it. When the tools belong elsewhere, a `tp-flow-controls` child slotted into a corner or edge middle is another standard bar that the widget keeps in sync, and your own Buttons inside it join its arrow-key navigation; any other slotted content is a panel of your own. The minimap gives an overview of a graph larger than the view. `layout()` arranges the graph as one undoable step.
+
+### Graph that arranges itself
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3)">
+  <tp-toggle-group id="flow-layout-mode" label="Layout direction" variant="outline" spacing="0" default-value='["horizontal"]' style="justify-self:start">
+    <tp-toggle value="horizontal">Horizontal</tp-toggle>
+    <tp-toggle value="vertical">Vertical</tp-toggle>
+    <tp-toggle value="smart">Smart</tp-toggle>
+  </tp-toggle-group>
+  <tp-flow id="flow-layout" label="Support triage" auto-layout="horizontal" controls="fit layout undo redo" controls-position="bottom-center" controls-orientation="horizontal" fit-view size="sm" style="block-size:24rem"></tp-flow>
+</div>`}
+  script={`await customElements.whenDefined('tp-flow');
+const flow = document.getElementById('flow-layout');
+const mode = document.getElementById('flow-layout-mode');
+const ports = [{ id: 'in', label: 'In', direction: 'input' }, { id: 'out', label: 'Out', direction: 'output' }];
+flow.schema = {
+  nodes: [
+    { type: 'trigger', label: 'Trigger', tone: 'chart-1', ports: [{ id: 'out', label: 'Out', direction: 'output' }] },
+    { type: 'step', label: 'Step', tone: 'chart-3', ports },
+    { type: 'branch', label: 'Condition', tone: 'chart-2',
+      ports: [{ id: 'in', label: 'In', direction: 'input' }, { id: 'yes', label: 'Urgent', direction: 'output' }, { id: 'no', label: 'Normal', direction: 'output' }] },
+  ],
+};
+flow.load({
+  version: 1,
+  nodes: [
+    { id: 'ticket', type: 'trigger', position: { x: 0, y: 0 }, label: 'New ticket', data: {} },
+    { id: 'classify', type: 'step', position: { x: 0, y: 0 }, label: 'Classify topic', data: {} },
+    { id: 'urgent', type: 'branch', position: { x: 0, y: 0 }, label: 'Is it urgent?', data: {} },
+    { id: 'page', type: 'step', position: { x: 0, y: 0 }, label: 'Page on-call', data: {} },
+    { id: 'queue', type: 'step', position: { x: 0, y: 0 }, label: 'Add to queue', data: {} },
+  ],
+  edges: [
+    { id: 't1', source: 'ticket', sourcePort: 'out', target: 'classify', targetPort: 'in' },
+    { id: 't2', source: 'classify', sourcePort: 'out', target: 'urgent', targetPort: 'in' },
+    { id: 't3', source: 'urgent', sourcePort: 'yes', target: 'page', targetPort: 'in', label: 'yes' },
+    { id: 't4', source: 'urgent', sourcePort: 'no', target: 'queue', targetPort: 'in', label: 'no' },
+  ],
+});
+flow.layout('horizontal');
+mode.addEventListener('tp-value-change', (event) => {
+  const [direction] = event.detail.value;
+  if (!direction) {
+    event.preventDefault();
+    return;
+  }
+  flow.autoLayout = direction;
+  flow.layout(direction);
+});
+flow.addEventListener('tp-layout-complete', () => flow.fitViewTo({ duration: 200 }));`}
+/>
+
+When people should not have to tidy the graph by hand, `auto-layout` keeps it laid out as nodes are added, in a direction or the one that suits the graph's shape. A node someone drags is pinned where it drops and the rest flows around it, in one undoable step; a node with `pinned: true` in the document starts that way. `tp-layout-complete` reports each layout, here to fit the result into view.
+
+### Graph owned by the application
+
+<Preview
+  align="stretch"
+  code={`<div id="flow-controlled"></div>`}
+  script={`await customElements.whenDefined('tp-flow');
+const host = document.getElementById('flow-controlled');
+const ports = [{ id: 'in', label: 'In', direction: 'input' }, { id: 'out', label: 'Out', direction: 'output' }];
+let graph = {
+  version: 1,
+  nodes: [
+    { id: 'ticket', type: 'step', position: { x: 0, y: 60 }, label: 'New ticket', data: {} },
+    { id: 'classify', type: 'step', position: { x: 290, y: 0 }, label: 'Classify topic', data: {} },
+    { id: 'urgent', type: 'step', position: { x: 290, y: 140 }, label: 'Is it urgent?', data: {} },
+    { id: 'reply', type: 'step', position: { x: 580, y: 60 }, label: 'Send auto-reply', data: {} },
+  ],
+  edges: [
+    { id: 'c1', source: 'ticket', sourcePort: 'out', target: 'classify', targetPort: 'in' },
+    { id: 'c2', source: 'ticket', sourcePort: 'out', target: 'urgent', targetPort: 'in' },
+  ],
+};
+
+// Whether the document is owned is fixed when the element connects, so set value first.
+const flow = document.createElement('tp-flow');
+flow.label = 'Support triage';
+flow.setAttribute('fit-view', '');
+flow.setAttribute('confirm-delete', '');
+flow.setAttribute('size', 'sm');
+flow.setAttribute('controls', 'fit undo redo');
+flow.style.blockSize = '22.5rem';
+flow.schema = { nodes: [{ type: 'step', label: 'Step', tone: 'chart-3', ports }] };
+flow.value = graph;
+flow.isValidConnection = (connection) =>
+  connection.target !== 'reply' || connection.source === 'urgent' || 'The auto-reply only follows the urgency check.';
+flow.addEventListener('tp-value-change', (event) => {
+  if (event.defaultPrevented) return;
+  graph = event.detail.value;
+  flow.value = graph;
+});
+flow.addEventListener('tp-value-commit', () => {
+  // Save the settled document, for instance flow.toJSON(), to your backend here.
+});
+host.append(flow);`}
+/>
+
+When the graph lives in your application state, set `value` before the element connects and write each accepted proposal back. Every edit is a cancelable `tp-value-change` that lists its fine-grained changes, and one `tp-value-commit` follows each settled interaction, such as a drag release or a new connection, so save there; `toJSON()` returns the document without runtime state. `isValidConnection` refuses connections the schema cannot express, with a message: here the auto-reply may only follow the urgency check. `confirm-delete` asks before a deletion removes nodes.
+
+### Run monitor
+
+<Preview
+  title="A finished run"
+  align="stretch"
+  code={`<tp-flow id="flow-run" label="Invoice sync" mode="view" fit-view controls="fit" size="sm" style="block-size:22.5rem"></tp-flow>`}
+  script={`await customElements.whenDefined('tp-flow');
+const flow = document.getElementById('flow-run');
+const ports = [{ id: 'in', label: 'In', direction: 'input' }, { id: 'out', label: 'Out', direction: 'output' }];
+flow.schema = {
+  nodes: [
+    { type: 'fetch', label: 'Fetch', description: 'Billing API', tone: 'chart-1', ports },
+    { type: 'map', label: 'Map', description: 'Invoice to ledger rows', tone: 'chart-3', ports },
+    { type: 'write', label: 'Write', description: 'Accounting ledger', tone: 'chart-4', ports },
+  ],
+};
+flow.load({
+  version: 1,
+  nodes: [
+    { id: 'fetch', type: 'fetch', position: { x: 0, y: 0 }, label: 'Fetch invoices', data: {} },
+    { id: 'map', type: 'map', position: { x: 320, y: 0 }, label: 'Map fields', data: {} },
+    { id: 'write', type: 'write', position: { x: 640, y: 0 }, label: 'Write to ledger', data: {} },
+  ],
+  edges: [
+    { id: 'f1', source: 'fetch', sourcePort: 'out', target: 'map', targetPort: 'in' },
+    { id: 'f2', source: 'map', sourcePort: 'out', target: 'write', targetPort: 'in' },
+  ],
+});
+flow.run = {
+  id: 'run-42',
+  status: 'failed',
+  startedAt: 0,
+  endedAt: 5200,
+  error: 'Ledger locked for period close',
+  lastSeq: 7,
+  applied: 7,
+  nodes: new Map([
+    ['fetch', { status: 'success', attempts: 1, durationMs: 1400 }],
+    ['map', { status: 'success', attempts: 1, durationMs: 300 }],
+    ['write', { status: 'failed', attempts: 2, durationMs: 3500, error: 'Ledger locked for period close' }],
+  ]),
+  edges: new Map([
+    ['f1', { status: 'taken', explicit: false }],
+    ['f2', { status: 'taken', explicit: false }],
+  ]),
+};`}
+/>
+
+<Preview
+  title="Run requests"
+  align="stretch"
+  code={`<tp-flow id="flow-execute" label="Product photo import" runnable validate fit-view controls="fit" size="sm" style="block-size:26rem">
+  <strong slot="header-start">Product photo import</strong>
+  <tp-flow-controls slot="header-center" actions="run-summary" orientation="horizontal"></tp-flow-controls>
+  <tp-flow-controls slot="header-end" actions="execute" orientation="horizontal"></tp-flow-controls>
+</tp-flow>`}
+  script={`await customElements.whenDefined('tp-flow');
+const flow = document.getElementById('flow-execute');
+const input = { id: 'in', label: 'In', direction: 'input', required: true };
+const output = { id: 'out', label: 'Out', direction: 'output' };
+flow.schema = {
+  nodes: [
+    { type: 'source', label: 'Source', tone: 'chart-1', ports: [output] },
+    { type: 'step', label: 'Step', tone: 'chart-3', ports: [input, output] },
+    { type: 'sink', label: 'Destination', tone: 'chart-4', ports: [input] },
+  ],
+};
+flow.load({
+  version: 1,
+  nodes: [
+    { id: 'upload', type: 'source', position: { x: 0, y: 0 }, label: 'New uploads', data: {} },
+    { id: 'resize', type: 'step', position: { x: 300, y: 0 }, label: 'Resize images', data: {} },
+    { id: 'review', type: 'step', position: { x: 600, y: 0 }, label: 'Art director review', data: { wait: 'Waiting for approval' } },
+    { id: 'publish', type: 'sink', position: { x: 600, y: 160 }, label: 'Publish to store', data: { error: 'Store API returned 503' } },
+    { id: 'purge', type: 'sink', position: { x: 300, y: 160 }, label: 'Purge CDN cache', data: {} },
+  ],
+  edges: [
+    { id: 'x1', source: 'upload', sourcePort: 'out', target: 'resize', targetPort: 'in' },
+    { id: 'x2', source: 'resize', sourcePort: 'out', target: 'review', targetPort: 'in' },
+    { id: 'x3', source: 'review', sourcePort: 'out', target: 'publish', targetPort: 'in' },
+  ],
+});
+
+// A stand-in backend: it answers each request with run events, waits on the review and fails
+// the publish step.
+let token = 0;
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const push = (event) => flow.pushRunEvent({ ...event, at: performance.now() });
+flow.addEventListener('tp-run-request', async (event) => {
+  const { action, scope, nodeIds } = event.detail;
+  const run = ++token;
+  const alive = () => run === token && flow.isConnected;
+  if (action === 'clear') return flow.clearRun();
+  if (action === 'stop') return push({ type: 'run_cancelled' });
+  push({ type: 'run_started', ...(scope === 'graph' ? {} : { scope: nodeIds }) });
+  for (const nodeId of nodeIds) {
+    const node = flow.nodes.find((item) => item.id === nodeId);
+    if (!flow.edges.some((edge) => edge.target === nodeId) && node.type !== 'source') {
+      push({ type: 'node_skipped', nodeId, reason: 'not connected' });
+      continue;
+    }
+    push({ type: 'node_started', nodeId });
+    await wait(500);
+    if (!alive()) return;
+    if (node.data.wait) {
+      push({ type: 'node_waiting', nodeId, reason: node.data.wait });
+      await wait(1500);
+      if (!alive()) return;
+    }
+    if (node.data.error) {
+      push({ type: 'node_failed', nodeId, error: node.data.error });
+      push({ type: 'run_failed', error: node.data.error });
+      return;
+    }
+    push({ type: 'node_completed', nodeId });
+  }
+  push({ type: 'run_completed' });
+});`}
+/>
+
+The widget shows execution but never runs anything. Assign a run snapshot, or a trace of run events to step through, to `run`, and each node shows its status, duration or error while the edges show which branches were taken; `mode="view"` hides the ports and editing tools for a monitor. `runnable` adds Run actions that dispatch `tp-run-request` with the nodes to run in order, and your backend answers with events through `pushRunEvent()`. In the header slots, which show only when one has content, bars with `execute` and `run-summary` hold Run and the status counts. `validate` shows design problems before any run: here the CDN purge has an unconnected required input.
+
+### Dependency map
+
+<Preview
+  align="stretch"
+  code={`<tp-flow id="flow-viewer" label="Service dependencies" mode="view" readonly router="orthogonal" minimap fit-view controls="zoom-in zoom-out fit" size="sm" style="block-size:26rem"></tp-flow>`}
+  script={`await customElements.whenDefined('tp-flow');
+const flow = document.getElementById('flow-viewer');
+flow.schema = {
+  nodes: [{
+    type: 'service', label: 'Service', tone: 'chart-2', shape: 'compact',
+    ports: [{ id: 'in', label: 'In', direction: 'input', multiple: true }, { id: 'out', label: 'Out', direction: 'output' }],
+  }],
+};
+const layers = [
+  ['web', 'mobile-api', 'admin'],
+  ['auth', 'catalog', 'checkout', 'search'],
+  ['payments', 'inventory', 'notifications'],
+  ['postgres', 'redis', 'queue'],
+];
+const nodes = layers.flatMap((layer, column) =>
+  layer.map((id, row) => ({ id, type: 'service', position: { x: column * 260, y: row * 110 + (4 - layer.length) * 55 }, label: id, data: {} })));
+const links = [
+  ['web', 'auth'], ['web', 'catalog'], ['web', 'checkout'], ['web', 'search'],
+  ['mobile-api', 'auth'], ['mobile-api', 'catalog'], ['mobile-api', 'checkout'],
+  ['admin', 'auth'], ['admin', 'inventory'],
+  ['checkout', 'payments'], ['checkout', 'inventory'], ['checkout', 'notifications'],
+  ['catalog', 'inventory'], ['search', 'redis'], ['auth', 'postgres'],
+  ['payments', 'postgres'], ['inventory', 'postgres'], ['notifications', 'queue'], ['catalog', 'redis'],
+];
+flow.load({
+  version: 1,
+  nodes,
+  edges: links.map(([source, target]) => ({ id: source + '-' + target, source, sourcePort: 'out', target, targetPort: 'in', kind: 'orthogonal' })),
+});`}
+/>
+
+For a graph people read rather than edit, `readonly` refuses every edit while pan, zoom, selection and the minimap keep working. `router="orthogonal"` routes every edge around the nodes and spreads parallel segments apart, which keeps a dense map legible. Only the nodes and edges in view are rendered, and far zoomed out nodes draw at low detail, so graphs of thousands of nodes stay responsive.
+
+### Approval chain in a form
+
+<Preview
+  align="stretch"
+  code={`<tp-form id="flow-form">
+  <tp-field label="Approval chain" description="Submitted as JSON under its name.">
+    <tp-flow id="flow-form-editor" name="approval-chain" required fit-view controls="fit undo redo" size="sm" style="block-size:22.5rem"></tp-flow>
+  </tp-field>
+  <div slot="actions">
+    <tp-button type="submit">Save chain</tp-button>
+    <tp-button type="reset" variant="outline">Reset</tp-button>
+  </div>
+</tp-form>
+<tp-code-block id="flow-form-submitted" language="json" label="Submitted" hidden></tp-code-block>`}
+  script={`await customElements.whenDefined('tp-flow');
+const flow = document.getElementById('flow-form-editor');
+const submitted = document.getElementById('flow-form-submitted');
+const ports = [{ id: 'in', label: 'In', direction: 'input' }, { id: 'out', label: 'Out', direction: 'output' }];
+flow.schema = { nodes: [{ type: 'approver', label: 'Approver', tone: 'chart-5', ports }] };
+const chain = {
+  version: 1,
+  nodes: [
+    { id: 'manager', type: 'approver', position: { x: 0, y: 40 }, label: 'Team manager', data: {} },
+    { id: 'finance', type: 'approver', position: { x: 290, y: 40 }, label: 'Finance', data: {} },
+    { id: 'legal', type: 'approver', position: { x: 580, y: 40 }, label: 'Legal', data: {} },
+  ],
+  edges: [{ id: 'a1', source: 'manager', sourcePort: 'out', target: 'finance', targetPort: 'in' }],
+};
+flow.defaultValue = chain;
+flow.load(chain);
+document.getElementById('flow-form').onFormSubmit = (values, { data }) => {
+  submitted.code = JSON.stringify(JSON.parse(data.get('approval-chain')), null, 2);
+  submitted.hidden = false;
+};`}
+/>
+
+When a graph is one answer in a form, the document submits as JSON under `name`, `required` refuses an empty graph, and a reset restores the default document. Inside a Field the label names the canvas and the description describes it.
+
+## Keyboard
+
+The canvas is one tab stop that enters at the last focused node. Inside a node, <Keys keys="tab" /> moves through its ports and controls, and keys typed into a control stay with it.
+
+| Key | Action |
+| --- | --- |
+| Arrow keys | Move focus to the nearest node in that direction |
+| <Keys keys="Home" /> <Keys keys="End" /> | Focus the first or the last node |
+| <Keys keys="shift" /> with an arrow | Nudge the selection by one grid step; with <Keys keys="mod+shift" />, four |
+| <Keys keys="enter" /> | Enter the focused node; on a port, start or confirm a connection, choosing among the candidates with the arrows |
+| <Keys keys="space" /> | Toggle the focused node in the selection; held, pan with the pointer |
+| <Keys keys="escape" /> | Cancel the gesture, leave the node, clear the selection, or close the inspector or the node library |
+| <Keys keys="delete" /> <Keys keys="backspace" /> | Delete the selection |
+| <Keys keys="mod+z" /> <Keys keys="mod+shift+z" /> | Undo, redo |
+| <Keys keys="mod+c" /> <Keys keys="mod+x" /> <Keys keys="mod+v" /> <Keys keys="mod+d" /> | Copy, cut, paste, duplicate the selection |
+| <Keys keys="mod+a" /> | Select everything |
+| <Keys keys="mod+enter" /> | Ask to run the graph, with `runnable` |
+| `+` `-` | Zoom in, zoom out |
+| <Keys keys="shift+1" /> <Keys keys="shift+0" /> | Zoom to fit, zoom to 100% |
+| <Keys keys="v" /> <Keys keys="h" /> | Select tool, pan tool |
+| <Keys keys="e" /> | Cycle through the focused node's edges |
+| <Keys keys="shift+F10" /> | Open the context menu |

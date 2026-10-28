@@ -17,46 +17,65 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'menu',
+      description: 'The host around the trigger and the menu.',
     },
     {
       name: 'menu-trigger',
+      description: 'The element in the `trigger` slot.',
     },
     {
       name: 'menu-target',
+      description: 'The context target, with `invocation="context"`.',
     },
     {
       name: 'menu-content',
+      description: 'The menu surface.',
     },
     {
       name: 'menu-item',
+      description: 'Each Menu Item.',
       axes: ['itemVariant'],
     },
     {
       name: 'menu-checkbox-item',
+      description: 'Each Menu Checkbox Item.',
     },
     {
       name: 'menu-radio-group',
+      description: 'Each Menu Radio Group.',
     },
     {
       name: 'menu-radio-item',
+      description: 'Each Menu Radio Item.',
     },
     {
       name: 'menu-group',
+      description: 'A group of items.',
     },
     {
       name: 'menu-label',
+      description: 'The label of a group, the child marked `data-menu-label`.',
     },
     {
       name: 'menu-sub-trigger',
+      description: 'The item that opens a submenu.',
     },
     {
       name: 'menu-sub-content',
+      description: 'The surface of a submenu.',
     },
     {
       name: 'menu-separator',
+      description: 'A Separator between items.',
     },
     {
       name: 'menu-shortcut',
+      description: 'The shortcut of an item, the child marked `data-menu-shortcut`.',
+    },
+    {
+      name: 'indicator',
+      description:
+        'The check of a checkbox item or the mark of a radio item, shown while it is on.',
     },
   ],
 };

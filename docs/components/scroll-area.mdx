@@ -1,0 +1,116 @@
+---
+title: Scroll area
+description: A native scroll viewport with slim, theme-consistent scrollbars.
+tag: tp-scroll-area
+---
+
+<Preview
+  code={`<tp-scroll-area label="Release history" style="block-size:18rem;inline-size:16rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <div style="padding:var(--tp-space-4);font-size:var(--tp-text-sm)">
+    <div>v2.4.0 · Shared workspaces</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.3.2 · Faster search indexing</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.3.1 · Fix CSV export encoding</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.3.0 · Usage reports</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.2.4 · SAML for all plans</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.2.3 · Audit log filters</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.2.0 · Billing self-service</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.1.5 · Dark mode polish</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.1.0 · Command palette</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.0.1 · Hotfix for invite links</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v2.0.0 · New editor</div>
+    <tp-separator style="margin-block:var(--tp-space-2)"></tp-separator>
+    <div>v1.9.0 · Comments and mentions</div>
+  </div>
+</tp-scroll-area>`}
+/>
+
+## Usage
+
+A Scroll area keeps the browser's own scrolling (wheel, touch, keyboard, focus and scroll anchoring) and replaces only the visible scrollbars, so a panel, a sidebar list or a popover body scrolls like the page does while its tracks match the theme. Constrain its height or width; its content decides how far it scrolls. A `label` names the viewport as a region, which helps when it holds a lot of content.
+
+### A row that scrolls sideways
+
+<Preview
+  align="stretch"
+  code={`<tp-scroll-area label="Recent files" orientation="horizontal" style="border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <div style="display:flex;gap:var(--tp-space-3);padding:var(--tp-space-4);inline-size:max-content">
+    <tp-card style="inline-size:12rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Brand guidelines.pdf</tp-card>
+    <tp-card style="inline-size:12rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Q3 roadmap.key</tp-card>
+    <tp-card style="inline-size:12rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Pricing model.xlsx</tp-card>
+    <tp-card style="inline-size:12rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Hiring plan.docx</tp-card>
+    <tp-card style="inline-size:12rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Launch checklist.md</tp-card>
+    <tp-card style="inline-size:12rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Customer interviews.mp4</tp-card>
+    <tp-card style="inline-size:12rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Board update.pdf</tp-card>
+    <tp-card style="inline-size:12rem;padding:var(--tp-space-4);font-size:var(--tp-text-sm)">Support macros.csv</tp-card>
+  </div>
+</tp-scroll-area>`}
+/>
+
+The horizontal track needs content with an intrinsic width wider than the area, such as a row that does not wrap; here the area fills its container and the shelf of files runs past it.
+
+### Panning a large image
+
+<Preview
+  code={`<tp-scroll-area label="Site plan" axis="both" style="block-size:16rem;inline-size:28rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <img src="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?auto=format&fit=crop&w=1200&q=80" alt="Aerial view of the site" width="1200" height="800" style="display:block" />
+</tp-scroll-area>`}
+/>
+
+`axis="both"` shows a track for each direction when content overflows both ways, like an image at full resolution or a wide document. The corner fills the square where the two tracks meet.
+
+### Quiet surfaces
+
+<Preview
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-6)">
+  <tp-scroll-area label="Members" scrollbar-visibility="on-hover" style="block-size:9rem;inline-size:12rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+    <div style="display:grid;gap:var(--tp-space-2);padding:var(--tp-space-3) var(--tp-space-4);font-size:var(--tp-text-sm)">
+      <span>Ada Okafor</span><span>Ben Carter</span><span>Chloé Martin</span><span>Diego Alvarez</span><span>Emi Tanaka</span><span>Farah Haddad</span>
+    </div>
+  </tp-scroll-area>
+  <tp-scroll-area label="Pending invitations" scrollbar-visibility="always" style="block-size:9rem;inline-size:12rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+    <div style="display:grid;gap:var(--tp-space-2);padding:var(--tp-space-3) var(--tp-space-4);font-size:var(--tp-text-sm)">
+      <span>gina@northwind.dev</span><span>hiro@northwind.dev</span><span>ines@northwind.dev</span><span>jack@northwind.dev</span><span>kemal@northwind.dev</span><span>lena@northwind.dev</span>
+    </div>
+  </tp-scroll-area>
+</div>`}
+/>
+
+By default a track shows whenever its axis overflows. A sidebar or a dense dashboard can hide tracks until the pointer is over the area (the members on the left) or until the reader scrolls; a list whose overflow is easy to miss keeps its track visible as a cue that more is below (the invitations on the right).
+
+### Fading the edges
+
+<Preview
+  code={`<style>
+  #scroll-area-terms[data-overflow-y-end] { mask-image: linear-gradient(to bottom, black 75%, transparent); }
+  #scroll-area-terms[data-overflow-y-start][data-overflow-y-end] { mask-image: linear-gradient(to bottom, transparent, black 25%, black 75%, transparent); }
+  #scroll-area-terms[data-overflow-y-start]:not([data-overflow-y-end]) { mask-image: linear-gradient(to bottom, transparent, black 25%); }
+</style>
+<div style="display:grid;gap:var(--tp-space-3);justify-items:start">
+  <tp-scroll-area id="scroll-area-terms" label="Terms of service" style="block-size:10rem;inline-size:24rem">
+    <div style="display:grid;gap:var(--tp-space-3);font-size:var(--tp-text-sm);line-height:var(--tp-leading-relaxed)">
+      <p style="margin:0">These terms govern your use of the service and any workspace you create or join.</p>
+      <p style="margin:0">You keep ownership of the content you upload. You grant us the rights needed to host and display it to the people you share it with.</p>
+      <p style="margin:0">Paid plans renew automatically each billing period until cancelled from the Billing page.</p>
+      <p style="margin:0">We may update these terms. Material changes are announced by email at least 30 days in advance.</p>
+    </div>
+  </tp-scroll-area>
+  <tp-button id="scroll-area-terms-top" variant="outline" size="sm">Back to top</tp-button>
+</div>`}
+  script={`await customElements.whenDefined('tp-scroll-area');
+const area = document.getElementById('scroll-area-terms');
+document.getElementById('scroll-area-terms-top').addEventListener('click', () => {
+  area.viewportElement?.scrollTo({ top: 0, behavior: 'smooth' });
+});`}
+/>
+
+The host marks each edge past which content is hidden, so a style can fade or shadow exactly the edges that have more to show. Scrolling from code goes through the native viewport, `viewportElement`, with the standard `scrollTo` and `scrollTop`; there is no second scroll position to keep in sync.

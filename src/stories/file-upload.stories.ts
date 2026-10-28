@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/file-upload.md?raw';
-import { fileUploadExamples } from './file-upload.examples.js';
+import { libraryDocs } from './library-docs.js';
 import type {
   FileUploadHintTreatment,
   FileUploadItemSize,
@@ -30,27 +29,10 @@ interface Args {
   readOnly: boolean;
 }
 
-const source = `import '@tweakpad/ui/register';
-import '@tweakpad/ui/styles.css';
-
-const upload = document.createElement('tp-file-upload');
-upload.name = 'files';
-upload.multiple = true;
-upload.accept = '.pdf,image/png,image/jpeg';
-upload.maxFileSize = 10 * 1024 * 1024;
-upload.addEventListener('tp-value-change', (event) => console.log(event.detail.value));
-document.body.append(upload);`;
-
 const meta = {
   title: 'Components/File upload',
   component: 'tp-file-upload',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      source: { code: source, language: 'javascript' },
-      examples: fileUploadExamples,
-    },
-  },
+  parameters: { docs: libraryDocs('components/file-upload') },
   args: {
     multiple: true,
     accept: '.pdf,image/png,image/jpeg',

@@ -1,0 +1,110 @@
+---
+title: Marker
+description: A quiet line of status or activity text with an optional icon, plain or set between rules.
+tag: tp-marker
+---
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-6);max-inline-size:32rem">
+  <tp-marker><tp-spinner slot="icon" size="sm"></tp-spinner>Reading 4 files</tp-marker>
+  <tp-marker variant="separator">Worked for 42s</tp-marker>
+  <tp-marker variant="border">Switched to release-2.4</tp-marker>
+</div>`}
+/>
+
+## Usage
+
+A Marker annotates a stream, such as a chat transcript or an activity log, without becoming an entry itself. It adds no role, so its text carries the meaning: "Deploy failed" rather than a red line. The icon is decorative and hidden from assistive technology.
+
+### Agent activity
+
+<Preview
+  align="stretch"
+  code={`<div id="marker-activity" style="display:grid;gap:var(--tp-space-6);max-inline-size:32rem">
+  <tp-marker role="status" shimmer><tp-spinner slot="icon" size="sm"></tp-spinner>Searching 14 files for “retry policy”</tp-marker>
+  <tp-marker variant="separator"><tp-icon slot="icon" data-icon="check"></tp-icon>Conversation compacted</tp-marker>
+  <tp-marker variant="border"><tp-icon slot="icon" data-icon="branch"></tp-icon>Opened pull request #482</tp-marker>
+</div>`}
+  script={`import { checkIcon } from '@tweakpad/ui/icons/check';
+import { gitBranchIcon } from '@tweakpad/ui/icons/git-branch';
+
+const icons = { check: checkIcon, branch: gitBranchIcon };
+for (const icon of document.querySelectorAll('#marker-activity tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>
+
+A step still in progress takes a Spinner, `role="status"` so it announces itself, and `shimmer`, which sweeps a highlight across the text while it streams. Remove the shimmer when the step finishes; with reduced motion the text shows without the sweep.
+
+### Build outcomes
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-6);max-inline-size:32rem">
+  <tp-marker>Build queued</tp-marker>
+  <tp-marker tone="accent">Review requested from Priya</tp-marker>
+  <tp-marker variant="separator" tone="success">All 128 checks passed</tp-marker>
+  <tp-marker variant="border" tone="danger">Deploy to production failed</tp-marker>
+</div>`}
+/>
+
+`tone` colors the text and the icon for an outcome. Keep the outcome in the words as well, since color alone is not announced.
+
+### Collapsed history
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-6);max-inline-size:32rem">
+  <tp-marker variant="separator">Older messages hidden. <a href="#collapsed-history">Show all</a></tp-marker>
+  <tp-marker variant="separator"><tp-button variant="outline" size="sm">Review 3 changes</tp-button></tp-marker>
+</div>`}
+/>
+
+A Marker holds no action of its own, but its content can be a link or a Button, which keeps its own focus and behavior.
+
+### Linked event
+
+<Preview
+  align="stretch"
+  code={`<tp-marker id="marker-link" variant="border" style="max-inline-size:32rem">
+  <tp-icon id="marker-link-icon" slot="icon"></tp-icon>Opened pull request #482
+</tp-marker>`}
+  script={`import { html } from 'lit';
+import { gitBranchIcon } from '@tweakpad/ui/icons/git-branch';
+
+document.getElementById('marker-link-icon').icon = gitBranchIcon;
+document.getElementById('marker-link').partContracts = {
+  marker: { renderDelegate: ({ bind, content }) => html\`<a href="#linked-event" \${bind}>\${content}</a>\` },
+};`}
+/>
+
+When the whole line leads somewhere, render the `marker` part as a native link or button through its part contract, keeping the supplied `bind` and `content`. The link then carries the text as its name.
+
+### Step details
+
+<Preview
+  align="stretch"
+  code={`<tp-accordion collapsible style="max-inline-size:32rem">
+  <tp-accordion-item value="steps">
+    <tp-marker slot="label"><tp-icon id="marker-steps-icon" slot="icon"></tp-icon>Worked for 1m 12s</tp-marker>
+    Read the billing service, updated the proration rule and added two tests for mid-cycle seat changes.
+  </tp-accordion-item>
+</tp-accordion>`}
+  script={`import { clockIcon } from '@tweakpad/ui/icons/clock';
+
+document.getElementById('marker-steps-icon').icon = clockIcon;`}
+/>
+
+As the label of an Accordion item, a Marker summarizes a step that expands into its details; the Accordion owns the disclosure and the keyboard.
+
+### Variants
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-8);max-inline-size:32rem">
+  <tp-marker>Priya joined the project</tp-marker>
+  <tp-marker variant="separator">Today</tp-marker>
+  <tp-marker variant="border">Deployed to production</tp-marker>
+</div>`}
+/>
+
+`variant` is visual treatment only: the default has no boundary, `separator` centers the content between two rules for a break in the stream, and `border` sets it above a rule for a step that closes a section.

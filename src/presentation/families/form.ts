@@ -10,12 +10,16 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'form',
+      description: 'The native form element the Form moves its children into.',
     },
     {
       name: 'form-error-summary',
+      description: 'A child with `slot="error-summary"`, laid out as the summary of errors.',
     },
     {
       name: 'form-actions',
+      description:
+        'A child with `slot="actions"`, laid out as the row of submit and reset Buttons.',
     },
   ],
 };

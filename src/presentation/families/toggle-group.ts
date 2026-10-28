@@ -27,10 +27,12 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'toggle-group',
+      description: 'The element with the group role that holds the Toggles.',
       axes: ['orientation', 'variant', 'size'],
     },
     {
       name: 'toggle-group-item',
+      description: 'Each Toggle in the group, joined at its seams when the spacing is zero.',
       axes: ['orientation', 'variant', 'size'],
     },
   ],

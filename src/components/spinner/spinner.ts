@@ -9,6 +9,10 @@ export const spinnerMotionRoles = {
   rotation: ambientRole('rotation'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
+/**
+ * An indeterminate activity indicator. On its own it is a status that announces its `label`; with
+ * an empty label it is decorative, for activity the text around it already names.
+ */
 export class TpSpinner extends TpElement {
   static tagName = 'tp-spinner';
   static override presentation = spinnerPresentation;
@@ -37,7 +41,9 @@ export class TpSpinner extends TpElement {
       }
     `,
   ];
+  /** The status announced while the Spinner is shown; describe the work, or leave it empty when nearby text names it. */
   label = 'Loading';
+  /** The extent, following the theme's icon sizes: `sm` inside badges and fields, `lg` for a panel that is loading. */
   size: 'sm' | 'default' | 'lg' = 'default';
   #rotationMotion: MotionHandle | null = null;
   override connectedCallback(): void {

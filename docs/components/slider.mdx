@@ -1,0 +1,156 @@
+---
+title: Slider
+description: One number or an ordered range of numbers, chosen by dragging or with the keyboard.
+tag: tp-slider
+parts: [tp-slider-thumb]
+---
+
+<Preview
+  code={`<tp-slider id="slider-volume" label="Volume" name="volume" default-value="40" style="inline-size:20rem"></tp-slider>`}
+  script={`await customElements.whenDefined('tp-slider');
+document.getElementById('slider-volume').partContracts = {
+  'slider-output': { content: (state) => state.formattedValues[0] + '%' },
+};`}
+/>
+
+## Usage
+
+A Slider suits values where the position within a range matters more than the exact number: a volume, a price window, an opacity. When people know the number they want, a number field is faster. Each value is a native range input inside a thumb, so the keyboard, form and assistive-technology behavior come from the platform.
+
+`label` shows a visible label and names the thumbs; a Field can supply it instead, with a description and errors. The readout beside the label is opt-in: giving the `slider-output` part a contract, as above, shows the formatted values there. With a `name`, every value is submitted under it and form reset restores `default-value`. Read-only thumbs stay focusable and submitted but do not move.
+
+### Price filter
+
+<Preview
+  code={`<tp-slider id="slider-price" label="Price" name="price" default-value="200 650" maximum="1000" step="25" min-steps-between-values="4" style="inline-size:20rem"></tp-slider>`}
+  script={`await customElements.whenDefined('tp-slider');
+const price = document.getElementById('slider-price');
+price.format = { style: 'currency', currency: 'USD', maximumFractionDigits: 0 };
+price.partContracts = { 'slider-output': {} };`}
+/>
+
+Two values in `default-value` make a range with one thumb each. `min-steps-between-values` keeps the window from collapsing to nothing, and `format` writes the readout and the spoken values as currency while the submitted values stay plain numbers.
+
+### Rollout stages
+
+<Preview
+  code={`<tp-slider id="slider-rollout" label="Rollout stages (% of users)" default-value="10 50 90" step="5" min-steps-between-values="2" style="inline-size:20rem"></tp-slider>`}
+  script={`await customElements.whenDefined('tp-slider');
+document.getElementById('slider-rollout').partContracts = {
+  'slider-output': { content: (state) => state.formattedValues.join(' · ') },
+};`}
+/>
+
+Any number of values gives one thumb each, and every thumb is its own tab stop. Dragging a stage into the next pushes it along, so the stages keep their order; `thumb-collision-behavior` can instead let thumbs swap places, as gradient stops do, or stop at their neighbor.
+
+### Inspector panel
+
+<Preview
+  code={`<div id="slider-inspector" style="display:grid;grid-template-columns:auto 14rem;align-items:center;gap:var(--tp-space-3) var(--tp-space-4);font-size:var(--tp-text-sm)">
+  <span>Corner radius</span>
+  <tp-slider aria-label="Corner radius" default-value="8" maximum="32" data-unit="px"></tp-slider>
+  <span>Border width</span>
+  <tp-slider aria-label="Border width" default-value="1" maximum="8" data-unit="px"></tp-slider>
+  <span>Opacity</span>
+  <tp-slider id="slider-opacity" aria-label="Opacity" default-value="0.6" maximum="1" step="0.05" large-step="0.1"></tp-slider>
+</div>`}
+  script={`await customElements.whenDefined('tp-slider');
+document.getElementById('slider-opacity').format = { style: 'percent', maximumFractionDigits: 0 };
+for (const slider of document.querySelectorAll('#slider-inspector tp-slider')) {
+  const unit = slider.dataset.unit ? ' ' + slider.dataset.unit : '';
+  slider.partContracts = {
+    'slider-output': { content: (state) => state.formattedValues[0] + unit },
+  };
+}`}
+/>
+
+In a dense settings panel, leave out the visible label and name each slider with `aria-label`: the readout then moves to the end of the track. A percent `format` shows a value from 0 to 1 as a percentage without changing the value, and a fractional `step` with a coarser `large-step` keeps both fine and fast adjustment.
+
+### Equalizer
+
+<Preview
+  code={`<div style="display:flex;gap:var(--tp-space-8);block-size:12rem">
+  <tp-slider aria-label="Bass" orientation="vertical" default-value="60"></tp-slider>
+  <tp-slider aria-label="Mid" orientation="vertical" default-value="45"></tp-slider>
+  <tp-slider aria-label="Treble" orientation="vertical" default-value="70"></tp-slider>
+</div>`}
+/>
+
+Vertical sliders suit controls that read as levels, side by side in a row whose height they take. Up and Down move them.
+
+### Working hours
+
+<Preview
+  code={`<tp-slider id="slider-hours" label="Working hours" name="hours" default-value="9 17" maximum="24" style="inline-size:20rem">
+  <tp-slider-thumb index="0"></tp-slider-thumb>
+  <tp-slider-thumb index="1"></tp-slider-thumb>
+</tp-slider>`}
+  script={`await customElements.whenDefined('tp-slider');
+const hours = document.getElementById('slider-hours');
+const [start, end] = hours.querySelectorAll('tp-slider-thumb');
+start.getAccessibleLabel = () => 'Start of day';
+end.getAccessibleLabel = () => 'End of day';
+hours.getAccessibleValueText = (formatted, value) => value + ':00';
+hours.partContracts = {
+  'slider-output': { content: (state) => state.values.map((value) => value + ':00').join(' – ') },
+};`}
+/>
+
+Author Slider Thumbs when the thumbs of a range need their own names, here "Start of day" and "End of day", or their own value text, a disabled state or a reference to their native input. Each thumb needs its `index`; the values still live on the Slider.
+
+### Episode timeline
+
+<Preview
+  code={`<tp-slider id="slider-timeline" variant="bar" label="Episode 42: Shipping on Fridays" default-value="84" maximum="225" style="inline-size:24rem"></tp-slider>`}
+  script={`await customElements.whenDefined('tp-slider');
+const timeline = document.getElementById('slider-timeline');
+const clock = (seconds) => Math.floor(seconds / 60) + ':' + String(Math.round(seconds % 60)).padStart(2, '0');
+timeline.buffered = [[0, 150]];
+timeline.getAccessibleValueText = (formatted, value) => clock(value) + ' of 3:45';
+timeline.partContracts = {
+  'slider-output': { content: (state) => clock(state.values[0]) + ' / 3:45' },
+};`}
+/>
+
+The `bar` variant paints a thumbless track for scrubbing, as in a media timeline; the thumb's input stays for the keyboard and assistive technology. `buffered` shades loaded ranges on the track, and `getAccessibleValueText` makes the spoken value a time rather than a number of seconds.
+
+### Rate limit
+
+<Preview
+  code={`<tp-slider id="slider-rate" label="Rate limit" default-value="500" maximum="1000" step="50" style="inline-size:20rem"></tp-slider>
+<output id="slider-rate-status" aria-live="polite" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Plans above 800 req/s need an upgrade.</output>`}
+  script={`await customElements.whenDefined('tp-slider');
+const rate = document.getElementById('slider-rate');
+const status = document.getElementById('slider-rate-status');
+rate.partContracts = {
+  'slider-output': { content: (state) => state.formattedValues[0] + ' req/s' },
+};
+rate.addEventListener('tp-value-change', (event) => {
+  if (Number(event.detail.value) > 800) {
+    event.preventDefault();
+    status.textContent = 'Your plan allows up to 800 requests per second.';
+  }
+});
+rate.addEventListener('tp-value-commit', (event) => {
+  status.textContent = 'Rate limit set to ' + event.detail.value + ' requests per second.';
+});`}
+/>
+
+`tp-value-change` reports every proposed value while dragging, and cancelling it keeps the thumb where it was; here it holds the limit at what the plan allows. `tp-value-commit` arrives once, on release or after a key press, which is the moment to save.
+
+### Variants
+
+<Preview
+  code={`<tp-slider label="Brightness" default-value="70" style="inline-size:20rem"></tp-slider>
+<tp-slider variant="bar" label="Playback" default-value="40" style="inline-size:20rem"></tp-slider>`}
+/>
+
+The default slider shows a thumb on the track; `bar` hides it for scrubbing tracks, where the fill itself shows the position.
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="left" /> <Keys keys="right" /> <Keys keys="up" /> <Keys keys="down" /> | Move the focused thumb by one `step`; Left and Right follow the writing direction. |
+| <Keys keys="shift" /> with an arrow, <Keys keys="PageUp" /> <Keys keys="PageDown" /> | Move by `large-step`. |
+| <Keys keys="Home" /> <Keys keys="End" /> | Move to the lowest or the highest value. |

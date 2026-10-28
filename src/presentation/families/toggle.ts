@@ -23,10 +23,13 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'toggle',
+      description: 'The native button that carries the pressed state.',
       axes: ['variant', 'size'],
     },
     {
       name: 'toggle-content',
+      description:
+        'The label inside the button; its part contract can render content from the pressed state.',
       axes: ['variant', 'size'],
     },
   ],

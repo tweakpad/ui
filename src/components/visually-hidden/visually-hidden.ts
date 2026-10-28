@@ -5,7 +5,13 @@ import { Scheduler } from '../../foundation/services.js';
 import { visuallyHiddenText } from '../../foundation/visually-hidden.js';
 import { visuallyHiddenPresentation } from '../../presentation/families/visually-hidden.js';
 
-/** Content in the accessibility tree that paints nothing and takes no layout space. */
+/**
+ * Text that assistive technology reads but that is hidden on screen and takes no space. It adds no
+ * role, name or live region of its own, so attributes such as `role` and `aria-live` set on it
+ * apply unchanged.
+ *
+ * @slot - The text to read; never focusable or interactive content, whose focus could not be seen.
+ */
 export class TpVisuallyHidden extends TpElement {
   static tagName = 'tp-visually-hidden';
   static override presentation = visuallyHiddenPresentation;

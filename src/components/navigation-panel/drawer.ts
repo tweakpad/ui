@@ -1,10 +1,14 @@
 import { css } from 'lit';
 import { TpDrawer } from '../drawer/index.js';
 import { drawerPresentation } from '../../presentation/families/drawer.js';
-/** Private composition: the existing Drawer owns every modal and presence behavior. */
+/**
+ * The Drawer the panel renders for compact mode; it owns every modal, focus and presence behavior.
+ * The panel creates it; it is not authored directly.
+ */
 export class NavigationPanelDrawer extends TpDrawer {
   static override tagName = 'tp-navigation-panel-drawer';
   static override presentation = drawerPresentation;
+  /** The navigation the Drawer's trigger controls. */
   controlsTarget: HTMLElement | undefined;
   protected override triggerControlsTarget(): HTMLElement {
     return this.controlsTarget ?? super.triggerControlsTarget();

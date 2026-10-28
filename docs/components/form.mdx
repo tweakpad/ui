@@ -1,0 +1,210 @@
+---
+title: Form
+description: A native form that coordinates Field validation, submission, reset and server errors for the controls inside it.
+tag: tp-form
+---
+
+<Preview
+  code={`<tp-form id="form-bug" aria-label="Report a bug">
+  <tp-field label="Summary" description="5 to 60 characters.">
+    <tp-input name="summary" required minlength="5" maxlength="60" placeholder="Export to CSV skips archived rows"></tp-input>
+  </tp-field>
+  <tp-field label="Severity">
+    <tp-native-select name="severity" default-value="medium">
+      <option value="low">Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </tp-native-select>
+  </tp-field>
+  <tp-field label="Steps to reproduce">
+    <tp-text-area name="steps" rows="3" required placeholder="1. Open Reports  2. Export as CSV"></tp-text-area>
+  </tp-field>
+  <div slot="actions">
+    <tp-button type="reset" variant="outline">Reset</tp-button>
+    <tp-button type="submit">Submit report</tp-button>
+  </div>
+  <output id="form-bug-output" style="color:var(--tp-muted-foreground);font-family:var(--tp-font-mono);font-size:var(--tp-text-sm)"></output>
+</tp-form>`}
+  script={`const form = document.getElementById('form-bug');
+const output = document.getElementById('form-bug-output');
+form.onFormSubmit = (values) => { output.textContent = JSON.stringify(values); };
+form.addEventListener('tp-reset', () => { output.textContent = ''; });`}
+/>
+
+## Usage
+
+A Form renders a native form around its children and coordinates the Fields inside it. Submitting validates every Field, focuses the first invalid control and holds the submission until the errors are fixed. A valid submission calls `onFormSubmit` with the named values and stays on the page; without a callback the native submission proceeds. The Form sends nothing itself, so transport and persistence stay in your code. Put the submit and reset Buttons in an element with `slot="actions"` for the footer layout; native attributes such as `action`, `method` and `name` pass through to the inner form.
+
+### Notification settings
+
+<Preview
+  code={`<tp-form id="form-settings" aria-label="Notification settings">
+  <tp-field label="Send to">
+    <tp-select name="email" required placeholder="Choose an address">
+      <option value="maya@acme.com">maya@acme.com</option>
+      <option value="team@acme.com">team@acme.com</option>
+    </tp-select>
+  </tp-field>
+  <tp-field label="Notify me about">
+    <tp-radio-group name="scope" required>
+      <tp-radio-group-item value="all">All activity</tp-radio-group-item>
+      <tp-radio-group-item value="mentions">Mentions and replies</tp-radio-group-item>
+      <tp-radio-group-item value="none">Nothing</tp-radio-group-item>
+    </tp-radio-group>
+  </tp-field>
+  <tp-field label="Security alerts" description="Sign-ins from new devices and password changes." orientation="horizontal">
+    <tp-switch name="security" default-checked></tp-switch>
+  </tp-field>
+  <tp-field label="Terms">
+    <tp-checkbox name="terms" required>I agree to the notification policy</tp-checkbox>
+  </tp-field>
+  <div slot="actions">
+    <tp-button type="reset" variant="outline">Reset</tp-button>
+    <tp-button type="submit">Save settings</tp-button>
+  </div>
+  <output id="form-settings-output" style="color:var(--tp-muted-foreground);font-family:var(--tp-font-mono);font-size:var(--tp-text-sm)"></output>
+</tp-form>`}
+  script={`const form = document.getElementById('form-settings');
+const output = document.getElementById('form-settings-output');
+form.onFormSubmit = (values) => { output.textContent = JSON.stringify(values); };
+form.addEventListener('tp-reset', () => { output.textContent = ''; });`}
+/>
+
+Every form control takes part the same way: a Select, Radio group, Switch or Checkbox validates `required` through its Field and submits under its `name`, so one Form handles a mixed settings page as easily as a page of text fields.
+
+### Create account
+
+<Preview
+  code={`<tp-form id="form-account" aria-label="Create account" validation-mode="on-blur">
+  <tp-field label="Email">
+    <tp-input name="email" type="email" required autocomplete="email" placeholder="maya@acme.com"></tp-input>
+  </tp-field>
+  <tp-field label="Password" description="At least 12 characters.">
+    <tp-input name="password" type="password" required minlength="12" autocomplete="new-password"></tp-input>
+  </tp-field>
+  <div slot="actions"><tp-button type="submit">Create account</tp-button></div>
+</tp-form>`}
+  script={`document.getElementById('form-account').onFormSubmit = () => {};`}
+/>
+
+Errors appear on submit by default. On a short sign-up form, `validation-mode="on-blur"` checks each Field as people leave it, so they learn about a short password before they press the button; a Field's own `validation-mode` still wins. `submission-policy` can instead disable the submit Button while the form is invalid, but a disabled action does not say what is missing, so keep the default unless the requirements are obvious.
+
+### Claim a workspace URL
+
+<Preview
+  code={`<tp-form id="form-claim" aria-label="Claim workspace URL">
+  <tp-field label="Workspace URL" description="acme.app/your-team">
+    <tp-input name="slug" required default-value="design"></tp-input>
+  </tp-field>
+  <div slot="actions"><tp-button type="submit">Claim URL</tp-button></div>
+</tp-form>`}
+  script={`const form = document.getElementById('form-claim');
+form.errors = { slug: 'design is already taken. Try design-team.' };
+form.addEventListener('tp-value-change', () => { form.errors = {}; });
+form.onFormSubmit = (values) => {
+  if (values.slug === 'design') form.errors = { slug: 'design is already taken. Try design-team.' };
+};`}
+/>
+
+Assign `errors`, a record from Field name to message, to show what your server rejected on the matching Fields. The errors stay until you replace them, so clear them as soon as the person edits the value.
+
+### Change password
+
+<Preview
+  code={`<tp-form id="form-password" aria-label="Change password">
+  <tp-field label="New password">
+    <tp-input name="password" type="password" required autocomplete="new-password"></tp-input>
+  </tp-field>
+  <tp-field id="form-password-confirm" label="Confirm password">
+    <tp-input name="confirm" type="password" required autocomplete="new-password"></tp-input>
+  </tp-field>
+  <div slot="actions"><tp-button type="submit">Update password</tp-button></div>
+  <output id="form-password-output" style="color:var(--tp-muted-foreground)"></output>
+</tp-form>`}
+  script={`const form = document.getElementById('form-password');
+document.getElementById('form-password-confirm').validator = (value, values) =>
+  value === values.password ? null : 'Passwords must match.';
+form.onFormSubmit = () => {
+  document.getElementById('form-password-output').textContent = 'Password updated.';
+};`}
+/>
+
+A Field's `validator` receives its value and every named value in the Form, which covers rules that compare two fields.
+
+### Username availability
+
+<Preview
+  code={`<tp-form id="form-username" aria-label="Choose a username">
+  <tp-field id="form-username-field" label="Username" description="Try maya, which is already taken.">
+    <tp-input name="username" required default-value="maya"></tp-input>
+  </tp-field>
+  <div slot="actions"><tp-button type="submit">Save username</tp-button></div>
+  <output id="form-username-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"></output>
+</tp-form>`}
+  script={`const form = document.getElementById('form-username');
+const output = document.getElementById('form-username-output');
+// Stands in for a request to your server.
+document.getElementById('form-username-field').validator = (value) =>
+  new Promise((resolve) => {
+    setTimeout(() => resolve(value === 'maya' ? 'maya is already taken.' : null), 600);
+  });
+form.addEventListener('tp-submit', async (event) => {
+  event.preventDefault();
+  output.textContent = 'Checking availability…';
+  const { validationRun, values } = event.detail;
+  const result = await validationRun.completion;
+  output.textContent = result.status === 'valid' ? 'Saved @' + values.username + '.' : '';
+});`}
+/>
+
+A `validator` may return a promise, such as a request to your server, but the submission does not wait for it. To wait, cancel `tp-submit` and await `event.detail.validationRun.completion` before saving.
+
+### Invite teammates
+
+<Preview
+  code={`<tp-form id="form-invite" aria-label="Invite teammates">
+  <div id="form-invite-list" style="display:grid;gap:var(--tp-space-4)">
+    <tp-field label="Email 1">
+      <tp-input-group>
+        <tp-input name="email" type="email" required placeholder="jordan@acme.com"></tp-input>
+        <tp-button slot="action" type="button" variant="ghost" data-remove disabled>Remove</tp-button>
+      </tp-input-group>
+    </tp-field>
+  </div>
+  <tp-button id="form-invite-add" type="button" variant="outline" style="justify-self:start">Add another email</tp-button>
+  <div slot="actions"><tp-button type="submit">Send invites</tp-button></div>
+  <output id="form-invite-output" style="color:var(--tp-muted-foreground);font-family:var(--tp-font-mono);font-size:var(--tp-text-sm)"></output>
+</tp-form>`}
+  script={`const form = document.getElementById('form-invite');
+const list = document.getElementById('form-invite-list');
+const add = document.getElementById('form-invite-add');
+const sync = () => {
+  const fields = [...list.querySelectorAll('tp-field')];
+  fields.forEach((field, index) => {
+    field.label = 'Email ' + (index + 1);
+    field.querySelector('[data-remove]').disabled = fields.length === 1;
+  });
+  add.disabled = fields.length >= 5;
+};
+add.addEventListener('click', () => {
+  const field = document.createElement('tp-field');
+  field.innerHTML = \`<tp-input-group>
+    <tp-input name="email" type="email" required></tp-input>
+    <tp-button slot="action" type="button" variant="ghost" data-remove>Remove</tp-button>
+  </tp-input-group>\`;
+  list.append(field);
+  sync();
+});
+list.addEventListener('click', (event) => {
+  const remove = event.target.closest('[data-remove]');
+  if (remove) {
+    remove.closest('tp-field').remove();
+    sync();
+  }
+});
+form.onFormSubmit = (values, { data }) => {
+  document.getElementById('form-invite-output').textContent = JSON.stringify(data.getAll('email'));
+};`}
+/>
+
+Fields can come and go while the form is open: each registers with the Form as it connects. Controls that share a `name` submit together, in document order.

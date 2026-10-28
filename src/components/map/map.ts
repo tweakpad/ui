@@ -98,13 +98,14 @@ interface PinEntry {
 }
 
 /**
- * Interactive geographic map (`ucl21-map`, behavior `sec-1812-map`).
+ * An interactive geographic map with selectable pins, an overlay for the selected pin and floating
+ * controls.
  *
- * The basemap is rendered by a consumer-supplied engine (`engine`). Pins (`tp-map-pin`) are
- * light-DOM children projected to engine-placed anchors by manual slot assignment; their content
- * is never copied. The selected pin's `tp-map-overlay` opens anchored to it. `controls` renders
- * floating action buttons in the `controls-position` corner; `tp-map-control` elements may also
- * be authored inside the map (in a corner slot) or anywhere with `map="id"`.
+ * The basemap is rendered by an engine the application supplies (`engine`). Map pins are children
+ * placed at engine-projected anchors; their content is never copied. The selected pin's Map
+ * overlay opens anchored to it. `controls` renders floating action buttons in the
+ * `controls-position` corner; Map controls may also be authored inside the map (in a corner slot)
+ * or anywhere with `map="id"`.
  *
  * @slot - Floating content in the `controls-position` corner, after the built-in controls.
  * @slot top-start - Floating content in the top inline-start corner.
@@ -246,6 +247,7 @@ export class TpMap extends TpElement implements MapApi {
     `,
   ];
 
+  /** @internal Marks the element as a map for its constituents. */
   readonly [mapBrand] = true as const;
 
   /** The engine adapter that renders the basemap (property only). */
@@ -256,7 +258,9 @@ export class TpMap extends TpElement implements MapApi {
   defaultZoom = 1;
   /** Home region (`south,west,north,east`), fitted with `fitPadding`. */
   defaultBounds: MapBounds | null = null;
+  /** The farthest the camera can zoom out. */
   minZoom = 0;
+  /** The closest the camera can zoom in. */
   maxZoom = 20;
   /** Padding in CSS pixels for fitting and reveal visibility. */
   fitPadding = 48;
@@ -285,6 +289,7 @@ export class TpMap extends TpElement implements MapApi {
   /** Observes selection proposals before dispatch. */
   onSelectedPinChange: ((event: TpValueChangeEvent<string | null>) => void) | undefined;
 
+  /** @internal The camera, selection and request state the map and its constituents share. */
   readonly controller: MapController;
   #provided: string | null | undefined;
   readonly #selection: ControllableState<string | null>;
@@ -309,6 +314,7 @@ export class TpMap extends TpElement implements MapApi {
 
   constructor() {
     super();
+    /** @internal The camera, selection and request state the map and its constituents share. */
     this.controller = new MapController(this.#controllerHost());
     this.#selection = new ControllableState<string | null>({
       host: this,
@@ -350,14 +356,17 @@ export class TpMap extends TpElement implements MapApi {
     return this.controller.instance;
   }
 
+  /** The text in use: `messages` over the defaults. */
   get mapMessages(): Required<MapMessages> {
     return { ...DEFAULT_MAP_MESSAGES, ...this.messages };
   }
 
+  /** @internal The viewport an overlay is positioned within. */
   get viewportElement(): HTMLElement | null {
     return this.renderRoot?.querySelector<HTMLElement>("[part~='viewport']") ?? null;
   }
 
+  /** Proposes a camera or selection request by its action name, through the cancelable `tp-map-request`; resolves with the outcome. */
   request<A extends MapRequestAction>(
     action: A,
     value: MapRequestValues[A],
@@ -369,22 +378,27 @@ export class TpMap extends TpElement implements MapApi {
     });
   }
 
+  /** Zooms in by `step` levels, one by default. */
   zoomIn(step?: number, options?: MapRequestOptions): Promise<MapRequestOutcome> {
     return this.request('zoom-in', step, options);
   }
 
+  /** Zooms out by `step` levels, one by default. */
   zoomOut(step?: number, options?: MapRequestOptions): Promise<MapRequestOutcome> {
     return this.request('zoom-out', step, options);
   }
 
+  /** Returns the camera to the home view of `default-center`, `default-zoom` or `default-bounds`. */
   resetView(options?: MapRequestOptions): Promise<MapRequestOutcome> {
     return this.request('reset', undefined, options);
   }
 
+  /** Moves the camera to a center, zoom or both. */
   flyTo(target: MapCameraTarget, options?: MapRequestOptions): Promise<MapRequestOutcome> {
     return this.request('fly-to', target, options);
   }
 
+  /** Fits a region (`south,west,north,east`) in the viewport, with optional padding and a zoom limit. */
   fitBounds(
     bounds: MapBounds | string,
     fit: { padding?: MapPadding; maxZoom?: number } = {},
@@ -395,6 +409,7 @@ export class TpMap extends TpElement implements MapApi {
     return this.request('fit-bounds', { bounds: parsed, ...fit }, options);
   }
 
+  /** Fits every selectable pin in the viewport. */
   fitPins(
     fit?: { padding?: MapPadding; maxZoom?: number },
     options?: MapRequestOptions,
@@ -412,14 +427,17 @@ export class TpMap extends TpElement implements MapApi {
     return this.request('reveal-pin', zoom === undefined ? { value } : { value, zoom }, options);
   }
 
+  /** The viewport point, in CSS pixels, of a geographic position. */
   project(position: MapPosition): MapPoint {
     return this.controller.project(position);
   }
 
+  /** The geographic position under a viewport point in CSS pixels. */
   unproject(point: MapPoint): MapPosition {
     return this.controller.unproject(point);
   }
 
+  /** Calls `callback` whenever the part of the map state that `selector` picks changes; returns the unsubscribe function. */
   subscribe<S>(
     selector: (state: MapState) => S,
     callback: (selected: S) => void,
@@ -436,6 +454,7 @@ export class TpMap extends TpElement implements MapApi {
 
   // Pin registry (MapApi) ---------------------------------------------------------------------
 
+  /** @internal Called by the map's constituents. */
   registerPin(pin: MapPinRecord): () => void {
     if (!this.#entries.has(pin)) {
       const wrapper = this.ownerDocument.createElement('div');
@@ -452,6 +471,7 @@ export class TpMap extends TpElement implements MapApi {
     return () => this.#unregisterPin(pin);
   }
 
+  /** @internal Called by the map's constituents. */
   pinChanged(pin: MapPinRecord): void {
     if (!this.#entries.has(pin)) return;
     this.#placePin(pin);
@@ -464,6 +484,7 @@ export class TpMap extends TpElement implements MapApi {
     });
   }
 
+  /** @internal Called by the map's constituents. */
   isPinSelectable(pin: MapPinRecord): boolean {
     const entry = this.#entries.get(pin);
     return (
@@ -471,20 +492,24 @@ export class TpMap extends TpElement implements MapApi {
     );
   }
 
+  /** @internal Called by the map's constituents. */
   isPinSelected(pin: MapPinRecord): boolean {
     return this.#effectiveSelection() === pin.value && !this.#duplicates.has(pin);
   }
 
+  /** @internal Called by the map's constituents. */
   isPinTabStop(pin: MapPinRecord): boolean {
     return this.#tabStop() === pin;
   }
 
+  /** @internal Called by the map's constituents. */
   pinFocused(pin: MapPinRecord): void {
     if (this.#lastFocused === pin) return;
     this.#lastFocused = pin;
     this.#updatePins();
   }
 
+  /** @internal Called by the map's constituents. */
   focusPin(from: MapPinRecord, target: 'previous' | 'next' | 'first' | 'last'): boolean {
     const eligible = this.#eligiblePins();
     if (!eligible.length) return false;
@@ -514,6 +539,7 @@ export class TpMap extends TpElement implements MapApi {
     return true;
   }
 
+  /** @internal Called by the map's constituents. */
   pressPin(pin: MapPinRecord, reason: ChangeReason, sourceEvent: Event): void {
     if (!this.isPinSelectable(pin)) return;
     this.#pinPress = true;
@@ -526,6 +552,7 @@ export class TpMap extends TpElement implements MapApi {
     }
   }
 
+  /** @internal Called by the map's constituents. */
   onCameraFrame(callback: () => void): () => void {
     this.#frameCallbacks.add(callback);
     return () => this.#frameCallbacks.delete(callback);

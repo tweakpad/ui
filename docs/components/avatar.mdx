@@ -1,0 +1,119 @@
+---
+title: Avatar
+description: A person's or entity's image, with initials as a fallback while it loads or if it fails.
+tag: tp-avatar
+parts: [tp-avatar-group]
+---
+
+<Preview
+  code={`<tp-avatar-group omitted="4">
+  <tp-avatar src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" fallback="MC" alt="Maya Chen"></tp-avatar>
+  <tp-avatar src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop" fallback="DK" alt="Daniel Kim"></tp-avatar>
+  <tp-avatar src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" fallback="AO" alt="Amara Okafor"></tp-avatar>
+  <tp-avatar src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop" fallback="NW" alt="Noah Williams"></tp-avatar>
+</tp-avatar-group>`}
+/>
+
+## Usage
+
+`alt` names the person for assistive technology and `fallback` holds the initials shown until the image loads, or when it fails. Always set a fallback: images can be missing, slow or blocked.
+
+### Missing images
+
+<Preview
+  code={`<tp-avatar fallback="LF" alt="Lucía Fernández"></tp-avatar>
+<tp-avatar src="https://example.invalid/missing.jpg" fallback="JR" alt="James Reid"></tp-avatar>
+<tp-avatar alt="Invitation sent to dana@northwind.io">
+  <tp-icon id="avatar-invite-icon"></tp-icon>
+</tp-avatar>`}
+  script={`import { mailIcon } from '@tweakpad/ui/icons/mail';
+
+document.getElementById('avatar-invite-icon').icon = mailIcon;`}
+/>
+
+A broken image falls back to the initials without a flash of the browser's broken-image mark. Content in the avatar replaces the initials when there are none to show, such as an icon for someone invited by email who has no profile yet. On fast connections, `fallback-delay` keeps the initials from flashing before the image arrives.
+
+### Presence and marks
+
+<Preview
+  code={`<tp-avatar size="lg" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop" fallback="DK" alt="Daniel Kim">
+  <span slot="badge" role="img" aria-label="Online"></span>
+</tp-avatar>
+<tp-avatar size="lg" fallback="AO" alt="Amara Okafor">
+  <span slot="badge" role="img" aria-label="Online"></span>
+</tp-avatar>
+<tp-avatar size="lg" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" fallback="MC" alt="Maya Chen">
+  <tp-icon slot="badge" id="avatar-verified-icon" label="Verified"></tp-icon>
+</tp-avatar>`}
+  script={`import { checkIcon } from '@tweakpad/ui/icons/check';
+
+document.getElementById('avatar-verified-icon').icon = checkIcon;`}
+/>
+
+The `badge` slot puts a mark on the avatar's edge: an empty element for a presence dot, or an Icon for a mark such as verified. Either way it needs its own text name; the color alone tells assistive technology nothing.
+
+### Participants in a group
+
+<Preview
+  code={`<tp-avatar-group size="sm" omitted="12">
+  <tp-avatar size="sm" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" fallback="AO" alt="Amara Okafor"></tp-avatar>
+  <tp-avatar size="sm" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop" fallback="NW" alt="Noah Williams"></tp-avatar>
+  <tp-avatar size="sm" fallback="LF" alt="Lucía Fernández"></tp-avatar>
+</tp-avatar-group>`}
+/>
+
+A group overlaps its avatars and, with `omitted`, ends with a count of the people not shown that is announced as "12 additional participants". The group's `size` sizes that count; each avatar keeps its own.
+
+### Invitees in an empty state
+
+<Preview
+  align="stretch"
+  code={`<tp-empty-state title="Nobody has joined yet" description="Maya, Daniel and Amara were invited to Q3 planning, along with three others.">
+  <tp-avatar-group slot="media" id="avatar-icon-count" size="lg" omitted="3">
+    <tp-avatar size="lg" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" fallback="MC" alt="Maya Chen"></tp-avatar>
+    <tp-avatar size="lg" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop" fallback="DK" alt="Daniel Kim"></tp-avatar>
+    <tp-avatar size="lg" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" fallback="AO" alt="Amara Okafor"></tp-avatar>
+  </tp-avatar-group>
+  <tp-button slot="actions" variant="outline">Resend invites</tp-button>
+</tp-empty-state>`}
+  script={`import { html } from 'lit';
+import { plusIcon } from '@tweakpad/ui/icons/plus';
+
+await customElements.whenDefined('tp-avatar-group');
+document.getElementById('avatar-icon-count').partContracts = {
+  'avatar-overflow-count': { content: html\`<tp-icon .icon=\${plusIcon}></tp-icon>\` },
+};`}
+/>
+
+The `avatar-overflow-count` part contract can draw an icon in place of the number when the description already says how many people are left out; the count is still announced.
+
+### Workspaces and former members
+
+<Preview
+  code={`<tp-avatar size="lg" fallback="NW" alt="Northwind workspace" style="border-radius:var(--tp-radius-lg)"></tp-avatar>
+<tp-avatar-group id="avatar-former-members">
+  <tp-avatar src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop" fallback="DK" alt="Daniel Kim"></tp-avatar>
+  <tp-avatar src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop" fallback="AO" alt="Amara Okafor"></tp-avatar>
+  <tp-avatar src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop" fallback="NW" alt="Noah Williams"></tp-avatar>
+</tp-avatar-group>`}
+  script={`await customElements.whenDefined('tp-avatar');
+for (const avatar of document.querySelectorAll('#avatar-former-members tp-avatar')) {
+  avatar.partPresentation = { 'avatar-image': { styleHook: { filter: 'grayscale(1)' } } };
+}`}
+/>
+
+A `border-radius` on the avatar reshapes the image and the fallback alike, which tells a workspace or a company apart from a person. Styling the `avatar-image` part alone, here in grayscale for people who have left, leaves fallbacks and badges in color.
+
+### Beside a name
+
+<Preview
+  code={`<div style="display:flex;align-items:center;gap:var(--tp-space-3)">
+  <tp-avatar aria-hidden="true" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop" fallback="MC"></tp-avatar>
+  <div>
+    <div style="font-weight:var(--tp-font-medium)">Maya Chen</div>
+    <div style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">maya@northwind.io</div>
+  </div>
+</div>`}
+/>
+
+When a visible name sits next to the avatar, `aria-hidden="true"` keeps screen readers from announcing the person twice.

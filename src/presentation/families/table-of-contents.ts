@@ -10,37 +10,48 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'table-of-contents',
+      description: 'The navigation landmark.',
       axes: ['variant'],
     },
     {
       name: 'table-of-contents-title',
+      description: 'The visible title naming the list.',
     },
     {
       name: 'table-of-contents-list',
+      description: 'The list of items, carrying the rail and the indicator.',
     },
     {
       name: 'table-of-contents-item',
+      description: 'An item host.',
     },
     {
       name: 'table-of-contents-link',
+      description: 'The native link of an item; marked while its target is active or current.',
     },
     {
       name: 'table-of-contents-rail',
+      description: 'The decorative line along the inline-start edge of the list.',
     },
     {
       name: 'table-of-contents-indicator',
+      description: 'The mark on the rail spanning the active items.',
     },
     {
       name: 'table-of-contents-trigger',
+      description: 'Compact: the Button over the marks that opens the card.',
     },
     {
       name: 'table-of-contents-marks',
+      description: 'Compact: the decorative column of marks.',
     },
     {
       name: 'table-of-contents-mark',
+      description: 'Compact: the mark of one top-level item.',
     },
     {
       name: 'table-of-contents-popover',
+      description: 'Compact: the Popover card holding the title and list.',
     },
   ],
 };

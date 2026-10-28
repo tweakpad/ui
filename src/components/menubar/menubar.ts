@@ -32,7 +32,17 @@ const samePartTargets = (a: readonly MenuPartTarget[], b: readonly MenuPartTarge
       target.element === b[index]!.element &&
       target.owner === b[index]!.owner,
   );
-/** One scalar value commits the entire bar; child surfaces are passive derived views. */
+/**
+ * A persistent application command bar that coordinates several Menus so only one is open at a
+ * time. Its triggers share one tab stop and the arrow keys move between them; once a menu is open,
+ * hovering another trigger switches to it.
+ *
+ * @slot - The Menus, each with a `value` and a trigger.
+ * @fires tp-value-change - Cancelable proposal of the open menu's `value`, or an empty string when
+ *   every menu closes.
+ * @fires tp-open-change - From a member Menu, its cancelable proposal to open or close; cancelling
+ *   it keeps the current menu.
+ */
 export class TpMenubar extends TpElement implements MenuBarOwner {
   static tagName = 'tp-menubar';
   static override presentation = menubarPresentation;
@@ -62,10 +72,15 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
       }
     `,
   ];
+  /** The menu open at first, by its `value`, when `value` is not set. */
   defaultValue: string | undefined;
+  /** Called with each open-menu proposal before `tp-value-change` is dispatched. */
   onValueChange: ((event: TpValueChangeEvent<string>) => void) | undefined;
+  /** Whether the arrow keys wrap from the last trigger to the first; set the property to `false` to stop at the ends. */
   loopFocus = true;
+  /** Whether an open menu makes the rest of the page inert, as a single Menu does. */
   modal = true;
+  /** @internal The element that receives the bar's keyboard handling. */
   get interactionElement(): HTMLElement {
     return this;
   }
@@ -77,6 +92,7 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
   #pending = new Map<TpMenu, TpSurfaceOpenChangeEvent>();
   #compositions = new Map<TpElement, PartPresentation>();
   #partsQueued = false;
+  /** @internal Rereads the member menus. */
   itemChanged = (): void => {
     if (this.#partsQueued) return;
     this.#partsQueued = true;
@@ -95,6 +111,7 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
     onCommit: (value, previous, reason) => this.#commit(value, previous, reason),
     diagnostic: (message) => this.#diagnose('state', message),
   });
+  /** The `value` of the open menu, empty when none is open; set it from the start to own it, writing back each accepted proposal. */
   get value(): string {
     return this.#state.value;
   }
@@ -117,6 +134,7 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
       attributeFilter: ['value', 'id', 'disabled'],
     });
   }
+  /** @internal Opens or closes a member menu. */
   requestMenu(menu: TpMenu, open: boolean, reason: ChangeReason, event?: Event): boolean {
     const member = this.#members.find((member) => member.menu === menu);
     if (!member || this.disabled || menu.disabled) return false;
@@ -296,6 +314,7 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
         this.#compositions.delete(owner);
       }
   }
+  /** @internal Handles a key in a member menu. */
   handleMenuKey(menu: TpMenu, event: KeyboardEvent): boolean {
     if (event.defaultPrevented || componentHandlingPrevented(event) || this.disabled) return false;
     const enabled = this.#members.filter((member) => !member.menu.disabled && member.target);

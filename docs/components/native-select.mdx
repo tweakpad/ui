@@ -1,0 +1,103 @@
+---
+title: Native select
+description: The browser's own select picker, styled to match Input and wired into Field and form submission.
+tag: tp-native-select
+---
+
+<Preview
+  code={`<tp-field label="Region" description="Where your workspace data is stored." style="inline-size:20rem">
+  <tp-native-select name="region" default-value="eu-west">
+    <optgroup label="Europe">
+      <option value="eu-west">Ireland (eu-west-1)</option>
+      <option value="eu-central">Frankfurt (eu-central-1)</option>
+    </optgroup>
+    <optgroup label="North America">
+      <option value="us-east">Virginia (us-east-1)</option>
+      <option value="us-west">Oregon (us-west-2)</option>
+    </optgroup>
+    <optgroup label="Asia Pacific">
+      <option value="ap-southeast">Singapore (ap-southeast-1)</option>
+      <option value="ap-northeast" disabled>Tokyo (coming soon)</option>
+    </optgroup>
+  </tp-native-select>
+</tp-field>`}
+/>
+
+## Usage
+
+Native Select mirrors plain `option` and `optgroup` children into a real native select, so the platform's picker, typeahead and mobile wheels work unchanged. It suits forms filled in on phones and lists of plain text; reach for Select when options need icons, descriptions, search or a custom layout.
+
+It takes part in forms like Input: it submits under its `name`, resets to its default value and restores on back navigation, and `tp-value-change` reports each pick. A Field's `disabled`, `invalid` and `error` reach it. Native selects have no read-only mode of their own, so `readonly` refuses changes while the value stays focusable and submitted.
+
+### Team size
+
+<Preview
+  code={`<tp-field label="Team size" style="inline-size:20rem">
+  <tp-native-select name="team-size" placeholder="Select a range" required>
+    <option value="1-10">1–10 people</option>
+    <option value="11-50">11–50 people</option>
+    <option value="51-200">51–200 people</option>
+    <option value="200+">More than 200</option>
+  </tp-native-select>
+</tp-field>`}
+/>
+
+A `placeholder` adds a disabled empty first option, so nothing is chosen until the person picks; with `required`, the empty value fails validation when the form is submitted, instead of quietly sending the first range.
+
+### File list toolbar
+
+<Preview
+  code={`<div style="display:flex;align-items:center;gap:var(--tp-space-2)">
+  <tp-native-select size="sm" label="Sort files" default-value="recent" style="inline-size:10rem">
+    <option value="recent">Most recent</option>
+    <option value="name">Name</option>
+    <option value="size">File size</option>
+  </tp-native-select>
+  <tp-button size="sm" variant="outline">Upload</tp-button>
+</div>`}
+/>
+
+In a compact toolbar, `size="sm"` matches the height of small Inputs and Buttons. Without a visible label, `label` gives the select its accessible name.
+
+### Notification events
+
+<Preview
+  code={`<tp-field label="Notify on" description="Hold Ctrl or ⌘ to select several." style="inline-size:20rem">
+  <tp-native-select name="events" multiple>
+    <option value="deploy" selected>Deploy finished</option>
+    <option value="failed" selected>Build failed</option>
+    <option value="review">Review requested</option>
+    <option value="mention">Mentioned in a comment</option>
+  </tp-native-select>
+</tp-field>`}
+/>
+
+`multiple` shows the native list box rather than a dropdown, and submits one entry per selected value in option order; its value is an array. The list box needs a keyboard modifier to select several, so say so in the description, or prefer Select for people who will not know it.
+
+### Seat limit
+
+<Preview
+  code={`<tp-field label="Seat limit" description="18 members are active in this workspace." style="inline-size:20rem">
+  <tp-native-select id="native-select-seats" value="25">
+    <option value="10">10 seats · $96/mo</option>
+    <option value="25">25 seats · $240/mo</option>
+    <option value="50">50 seats · $480/mo</option>
+  </tp-native-select>
+</tp-field>
+<output id="native-select-seats-note" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Current plan: 25 seats.</output>`}
+  script={`const select = document.getElementById('native-select-seats');
+const note = document.getElementById('native-select-seats-note');
+const activeMembers = 18;
+select.onValueChange = (event) => {
+  if (event.defaultPrevented || event.detail.cancelled) return;
+  const seats = Number(event.detail.value);
+  if (seats < activeMembers) {
+    note.textContent = \`Remove \${activeMembers - seats} members before dropping to \${seats} seats.\`;
+    return;
+  }
+  select.value = event.detail.value;
+  note.textContent = \`Current plan: \${seats} seats.\`;
+};`}
+/>
+
+Setting `value` makes the application the owner of the selection: `onValueChange` accepts a pick by assigning `event.detail.value`, and leaving `value` unchanged refuses it, so the native picker snaps back to the committed option. Here a plan smaller than the active team is refused with a reason.

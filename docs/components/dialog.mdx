@@ -1,0 +1,132 @@
+---
+title: Dialog
+description: A modal window for a focused task, with a title, body, footer actions and managed focus.
+tag: tp-dialog
+---
+
+<Preview
+  code={`<tp-dialog label="Edit profile" description="Changes are visible to everyone in Acme Inc.">
+  <tp-button slot="trigger" variant="outline">Edit profile</tp-button>
+  <div style="display:grid;gap:var(--tp-space-4)">
+    <tp-field label="Name">
+      <tp-input name="name" default-value="Maya Patel"></tp-input>
+    </tp-field>
+    <tp-field label="Username">
+      <tp-input name="username" default-value="maya.patel"></tp-input>
+    </tp-field>
+  </div>
+  <tp-button slot="close">Save changes</tp-button>
+</tp-dialog>`}
+/>
+
+## Usage
+
+Put the opening Button in the `trigger` slot and the task in the default slot. `label` and `description` are the visible title and description, and they name the dialog for assistive technology. The dialog moves focus inside when it opens, keeps the rest of the page inert and returns focus to the trigger when it closes. When the reader must confirm a consequential decision, use Alert Dialog; for a task that belongs beside the page rather than over it, use Drawer.
+
+### Inviting teammates
+
+<Preview
+  code={`<tp-dialog label="Invite teammates" description="Invites expire after 7 days.">
+  <tp-button slot="trigger">Invite teammates</tp-button>
+  <tp-field label="Email addresses" description="Separate addresses with commas.">
+    <tp-input name="emails" placeholder="jordan@acme.com, lee@acme.com"></tp-input>
+  </tp-field>
+  <tp-button slot="footer" variant="outline">Copy invite link</tp-button>
+  <tp-button slot="close">Send invites</tp-button>
+</tp-dialog>`}
+/>
+
+The action in the `close` slot closes the dialog when pressed, after its own handlers run. Anything in `footer` is ordinary content with no close behavior, which suits a secondary action such as copying a link while the dialog stays open. The corner Close button stays unless another close action is reachable, so a dialog can always be dismissed.
+
+### Shortcut reference
+
+<Preview
+  code={`<tp-dialog modality="non-modal" label="Keyboard shortcuts" description="Available anywhere in the editor.">
+  <tp-button slot="trigger" variant="outline">Keyboard shortcuts</tp-button>
+  <dl style="display:grid;grid-template-columns:1fr auto;gap:var(--tp-space-2) var(--tp-space-6);margin:0">
+    <dt>Search</dt><dd style="margin:0"><tp-key-hint-group><tp-key-hint key="mod"></tp-key-hint><tp-key-hint>K</tp-key-hint></tp-key-hint-group></dd>
+    <dt>New document</dt><dd style="margin:0"><tp-key-hint-group><tp-key-hint key="mod"></tp-key-hint><tp-key-hint>N</tp-key-hint></tp-key-hint-group></dd>
+    <dt>Toggle sidebar</dt><dd style="margin:0"><tp-key-hint-group><tp-key-hint key="mod"></tp-key-hint><tp-key-hint>B</tp-key-hint></tp-key-hint-group></dd>
+  </dl>
+</tp-dialog>`}
+/>
+
+A list of shortcuts is read while people keep working, so `modality="non-modal"` leaves the page interactive and scrollable behind the dialog.
+
+### Session expiry in an editor
+
+<Preview
+  align="stretch"
+  code={`<section id="dialog-region" aria-label="Invoice editor" style="position:relative;isolation:isolate;overflow:clip;display:grid;gap:var(--tp-space-3);min-block-size:16rem;padding:var(--tp-space-5);border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-xl)">
+  <strong>Invoice INV-2048</strong>
+  <tp-field label="Billing contact">
+    <tp-input default-value="Maya Chen"></tp-input>
+  </tp-field>
+  <tp-dialog id="dialog-contained" modality="container" label="Session expired" description="Sign in again to keep editing this invoice.">
+    <tp-button slot="trigger" variant="outline" style="justify-self:start">Simulate timeout</tp-button>
+    <tp-button slot="close">Sign in again</tp-button>
+  </tp-dialog>
+</section>`}
+  script={`await customElements.whenDefined('tp-dialog');
+document.getElementById('dialog-contained').container = document.getElementById('dialog-region');`}
+/>
+
+`modality="container"` makes the dialog modal within one region instead of the whole page: assigned to the `container` property, the region holds the dialog, only its other content turns inert, and the rest of the page stays usable. Give the region `position: relative` and `isolation: isolate`. Without a usable region the dialog falls back to page-wide modality.
+
+### Sharing over a busy screen
+
+<Preview
+  code={`<tp-dialog backdrop="blur" label="Share “Q3 planning”" description="Anyone with the link can view.">
+  <tp-button slot="trigger" variant="outline">Share</tp-button>
+  <tp-field label="Link">
+    <tp-input readonly default-value="https://acme.com/d/q3-planning"></tp-input>
+  </tp-field>
+  <tp-button slot="close">Done</tp-button>
+</tp-dialog>`}
+/>
+
+`backdrop="blur"` keeps the dark fill and blurs the page behind it, which quiets a busy screen during a short task. It changes only the appearance; the modality decides whether there is a backdrop at all.
+
+### Renaming from a row
+
+<Preview
+  code={`<tp-button id="dialog-rename" variant="ghost">Rename “Q3 planning”</tp-button>
+<tp-dialog id="dialog-rename-dialog" label="Rename document">
+  <tp-field label="Document name">
+    <tp-input name="title" default-value="Q3 planning"></tp-input>
+  </tp-field>
+  <tp-button slot="close">Rename</tp-button>
+</tp-dialog>`}
+  script={`await customElements.whenDefined('tp-dialog');
+const dialog = document.getElementById('dialog-rename-dialog');
+dialog.registerTrigger(document.getElementById('dialog-rename'));`}
+/>
+
+When the opening control lives elsewhere, such as in a table row or a menu, `registerTrigger()` makes it the trigger: it opens the dialog and gets focus back when it closes, as a slotted trigger would. For many rows sharing one dialog, a handle from `createDialogHandle()` registers each trigger with its own payload.
+
+### Keeping a draft
+
+<Preview
+  code={`<tp-dialog id="dialog-draft" label="New comment" description="Visible to everyone with access to this document.">
+  <tp-button slot="trigger" variant="outline">Write a comment</tp-button>
+  <tp-field label="Comment">
+    <tp-text-area name="comment" rows="3" default-value="Looks good, one note on the pricing table."></tp-text-area>
+  </tp-field>
+  <tp-button slot="close">Post comment</tp-button>
+</tp-dialog>`}
+  script={`const dialog = document.getElementById('dialog-draft');
+dialog.addEventListener('tp-open-change', (event) => {
+  const draft = dialog.querySelector('tp-text-area').value;
+  const dismissing = ['escape-key', 'outside-press'].includes(event.detail.reason);
+  if (!event.detail.value && dismissing && draft) event.preventDefault();
+});`}
+/>
+
+Every way of closing first proposes it with a cancelable `tp-open-change` that says what asked. Here the close action still posts the comment, while Escape and outside presses are refused until the text area is empty.
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="esc" /> | Proposes closing the dialog. |
+| <Keys keys="tab" /> <Keys keys="shift+tab" /> | Moves focus through the dialog's controls, wrapping inside a modal dialog. |

@@ -26,6 +26,15 @@ const listConverter = {
     value === undefined ? null : JSON.stringify(value),
 };
 
+/**
+ * A set of Toggles with one shared selection, single or multiple, and one tab stop: arrow keys move
+ * between the Toggles without pressing them. The selection is an ordered list of the pressed
+ * Toggles' values in both modes. It submits no form value.
+ *
+ * @slot - The Toggles, each with a unique `value`.
+ * @fires tp-value-change - Cancelable proposal of a new selection before it commits; `detail.value`
+ * is the list of pressed values, with `detail.previousValue` and the `detail.reason`.
+ */
 export class TpToggleGroup
   extends TpFormElement<readonly string[]>
   implements ToggleSelectionOwner
@@ -77,12 +86,31 @@ export class TpToggleGroup
   ];
   #provided: readonly string[] | undefined;
   #multiple = false;
+  /**
+   * The pressed values at first render, as a JSON array in the attribute, when the page does not
+   * own `value`.
+   */
   defaultValue: readonly string[] | undefined;
+  /**
+   * Called with each proposed selection before it commits; assign `value` to accept it or cancel
+   * the event to reject it.
+   */
   onValueChange: ((event: TpValueChangeEvent<readonly string[]>) => void) | undefined;
+  /** Whether the arrow keys wrap from the last Toggle to the first and back. */
   loopFocus = true;
+  /** The paint of every Toggle in the group, overriding their own. */
   variant: 'ghost' | 'outline' = 'ghost';
+  /**
+   * The size of every Toggle in the group, overriding their own; the `icon-*` sizes make square
+   * Toggles for Icons alone.
+   */
   size: ToggleSize = 'default';
+  /**
+   * The gap between the Toggles in spacing units; `0` joins them into one segmented control with
+   * shared seams.
+   */
   spacing = 2;
+  /** The accessible name of the group when no Field names it. */
   label = '';
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   #members: TpToggle[] = [];
@@ -130,6 +158,7 @@ export class TpToggleGroup
     if (this.hasUpdated) this.#state.sync();
     this.requestUpdate('value', previous);
   }
+  /** Lets each Toggle be pressed independently; otherwise pressing one releases the others. */
   get multiple(): boolean {
     return this.#multiple;
   }
@@ -139,6 +168,7 @@ export class TpToggleGroup
     this.requestUpdate('multiple', previous);
     this.requestUpdate('selectionMode');
   }
+  /** The same choice as `multiple`, as a word: `single` or `multiple`. */
   get selectionMode(): 'single' | 'multiple' {
     return this.multiple ? 'multiple' : 'single';
   }
@@ -151,13 +181,21 @@ export class TpToggleGroup
   protected override focusTarget(): HTMLElement | null {
     return this.#members.find((member) => this.tabStop(member) === 0)?.controlElement ?? null;
   }
+  /**
+   * Whether the given Toggle's value is in the selection; Toggles call it to render their state.
+   */
   isPressed(member: TpToggle): boolean {
     const value = this.multiple ? this.value : this.value.slice(0, 1);
     return !this.#excluded.has(member) && value.includes(member.value);
   }
+  /** Whether the group disables the given Toggle. */
   isDisabled(member: TpToggle): boolean {
     return this.effectiveDisabled || this.#excluded.has(member);
   }
+  /**
+   * The tab index of the given Toggle: `0` for the one the group's tab stop lands on, `-1` for the
+   * rest.
+   */
   tabStop(member: TpToggle): number {
     if (this.isDisabled(member) || member.effectiveDisabled) return -1;
     const enabled = this.#members.filter(
@@ -169,9 +207,11 @@ export class TpToggleGroup
         : (enabled.find((item) => this.isPressed(item)) ?? enabled[0]);
     return member === target ? 0 : -1;
   }
+  /** Re-reads the Toggles after one is added, removed or changes its value or disabled state. */
   memberChanged(): void {
     this.#schedule();
   }
+  /** Proposes pressing or releasing the given Toggle; Toggles call it when pressed. */
   requestToggle(member: TpToggle, pressed: boolean, source: Event): void {
     if (
       !this.#members.includes(member) ||
@@ -198,6 +238,10 @@ export class TpToggleGroup
     );
     this.#state.set(next, 'trigger-press', source);
   }
+  /**
+   * Proposes a new selection as if the user had made it, notifying listeners first; single mode
+   * keeps only the first value.
+   */
   setValue(value: readonly string[], reason: ChangeReason = 'programmatic', source?: Event): void {
     const normalized = normalizeToggleValues(value);
     this.#state.set(this.multiple ? normalized : normalized.slice(0, 1), reason, source);

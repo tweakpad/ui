@@ -9,9 +9,11 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'aspect-ratio-box',
+      description: 'The box that holds the ratio; also exposed as `root`.',
     },
     {
       name: 'aspect-ratio-box-content',
+      description: 'The layer the content fills, the full size of the box.',
     },
   ],
 };

@@ -13,6 +13,16 @@ import { TpMessageScrollerContent } from './parts.js';
 import { TpMessageScrollerReturnControl } from './parts.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
+/**
+ * A transcript viewport that opens at the latest message, follows streaming replies while the
+ * reader is at the end, and leaves them alone once they scroll away. Scrolling stays the browser's
+ * own; the application owns the messages. Put items directly inside it, or compose the viewport,
+ * content and return control yourself to configure them.
+ *
+ * @slot - The items, or an explicit viewport and return control.
+ * @fires tp-value-change - Cancelable proposal of a new pinned state, as the reader reaches or leaves the end; a controlled scroller must publish the accepted `pinned`.
+ * @cssprop --tp-message-scroller-height - The block size of the frame; use `100%` inside a parent whose height is set.
+ */
 export class TpMessageScroller extends TpElement {
   static tagName = 'tp-message-scroller';
   /** Library elements this element renders; defining it defines them too. */
@@ -60,21 +70,33 @@ export class TpMessageScroller extends TpElement {
       ${hiddenStyles}
     `,
   ];
+  /** @internal Marks the element as a message scroller for its constituents. */
   readonly [messageScrollerContext] = true as const;
   #members = new Map<HTMLElement, { name: string; member: TpElement }>();
   #explicit = false;
   #membershipObserver: MutationObserver | undefined;
   #pinnedInput: boolean | undefined;
+  /** Whether the scroller starts pinned to the end, when it owns the pinned state. Set the property to false to open free. */
   defaultPinned = true;
+  /** Keeps the newest content in view as it grows while the reader is pinned to the end. Set the property to false to stop following. */
   follow = true;
+  /** How close to the end, in pixels, still counts as at the end. */
   threshold = 8;
+  /** Where the transcript first opens: at the start, at the end, or at the latest anchored turn when it is taller than the viewport. */
   initialPosition: 'start' | 'end' | 'preserve' | 'last-anchor' = 'end';
+  /** The reading offset below the top padding, in pixels, where an anchored turn and a jumped-to message land. */
   readingLine = 0;
+  /** How much of the previous message, in pixels, stays visible above an anchored turn. */
   previousItemPeek = 0;
+  /** Extra space at the end, in pixels, so the return control never covers the last message. */
   returnControlPeek = 0;
+  /** Keeps the first visible message in place when earlier history is inserted above it. */
   preserveOnPrepend = true;
+  /** Ids of messages the application knows but has not mounted yet, so a jump to one waits for it instead of failing. */
   knownMessageIds: readonly string[] = [];
+  /** The accessible name of the viewport and the log, such as "Support chat". */
   label = 'Conversation';
+  /** Which end the built-in return control scrolls to, for transcripts read from the top. */
   returnDirection: 'start' | 'end' = 'end';
   #pin = new ControllableState<boolean>({
     host: this,
@@ -82,6 +104,7 @@ export class TpMessageScroller extends TpElement {
     readControlledValue: () => this.#pinnedInput,
     readDefaultValue: () => this.defaultPinned,
   });
+  /** Whether the reader is pinned to the end, where new content stays in view; set it before the scroller connects to control it, then publish each accepted proposal back. */
   get pinned() {
     return this.#pin.value;
   }
@@ -92,6 +115,7 @@ export class TpMessageScroller extends TpElement {
     this.requestUpdate('pinned', old);
   }
   #legacyIds = new WeakMap<HTMLElement, string>();
+  /** The scrolling engine: the same commands, the native viewport and subscriptions, for controls outside the scroller. */
   readonly provider: MessageScrollerProvider = new MessageScrollerProvider({
     rows: () => {
       const items = [
@@ -253,12 +277,15 @@ export class TpMessageScroller extends TpElement {
     if (changed.size) this.provider.schedule();
     this.#publish();
   }
+  /** Scrolls to the start of the transcript; returns a receipt whose `status` is accepted, pending or rejected and whose `finished` settles when the scroll ends. */
   scrollToStart(options?: ScrollOptions) {
     return this.provider.scrollToStart(options);
   }
+  /** Scrolls to the end and resumes following; returns the same receipt as `scrollToStart`. */
   scrollToEnd(options?: ScrollOptions) {
     return this.provider.scrollToEnd(options);
   }
+  /** Scrolls a message into view by its id, aligned to the start by default; a known message that is not mounted yet waits as pending. */
   scrollToMessage(id: string, options?: ScrollOptions) {
     return this.provider.scrollToMessage(id, options);
   }

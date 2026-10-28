@@ -1,9 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import type { QuestionnaireQuestion } from '../foundation/questionnaire.js';
-import documentation from '../../docs/questionnaire.md?raw';
+import { libraryDocs } from './library-docs.js';
 import { questionnaireData } from './questionnaire-data.js';
-import { questionnaireExamples } from './questionnaire.examples.js';
 const questions = questionnaireData.default.questions as readonly QuestionnaireQuestion[];
 interface Args {
   flow: 'linear' | 'free';
@@ -15,26 +14,10 @@ interface Args {
   readOnly: boolean;
   label: string;
 }
-const source = `<tp-questionnaire label="Project questionnaire" shortcut-mode="letters"></tp-questionnaire>
-<script>
-  const questionnaire = document.querySelector('tp-questionnaire');
-  questionnaire.questions = ${JSON.stringify(questions, null, 2)};
-  questionnaire.actions = { submit: { label: 'Save plan' } };
-  questionnaire.addEventListener('tp-submit', event => {
-    event.preventDefault();
-    console.log(event.detail.answers, [...event.detail.data]);
-  });
-</script>`;
 const meta = {
   title: 'Components/Questionnaire',
   component: 'tp-questionnaire',
-  parameters: {
-    docs: {
-      examples: questionnaireExamples,
-      description: { component: documentation },
-      source: { code: source },
-    },
-  },
+  parameters: { docs: libraryDocs('components/questionnaire') },
   args: {
     flow: 'linear',
     choiceMode: 'single',
@@ -56,7 +39,7 @@ const meta = {
     label: { control: 'text' },
   },
   render: (args) =>
-    html`<div style="max-inline-size:28rem;margin-inline:auto">
+    html`<div style="max-inline-size:28rem">
       <tp-questionnaire
         .questions=${questions}
         .actions=${{ submit: { label: 'Save plan' } }}

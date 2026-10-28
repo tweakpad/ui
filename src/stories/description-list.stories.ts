@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html, nothing } from 'lit';
-import documentation from '../../docs/description-list.md?raw';
-import { descriptionListExamples } from './description-list.examples.js';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   limit: number | null;
@@ -18,21 +17,7 @@ interface Args {
 const meta = {
   title: 'Components/Description list',
   component: 'tp-description-list',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: descriptionListExamples,
-      source: {
-        code: `<tp-description-list limit="3">
-  <tp-description-list-item label="Plot">B-14, east terrace</tp-description-list-item>
-  <tp-description-list-item label="Gardener">Mara Lindqvist</tp-description-list-item>
-  <tp-description-list-item label="Status"><tp-badge variant="success">Active</tp-badge></tp-description-list-item>
-  <tp-description-list-item label="Size">3 × 4 m</tp-description-list-item>
-  <tp-description-list-item label="Water access">Shared tap, row C</tp-description-list-item>
-</tp-description-list>`,
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/description-list') },
   args: {
     limit: 3,
     orientation: 'vertical',

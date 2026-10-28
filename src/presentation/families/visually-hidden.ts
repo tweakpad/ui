@@ -9,6 +9,7 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'visually-hidden',
+      description: 'The host, which nothing can give size or reveal.',
     },
   ],
 };

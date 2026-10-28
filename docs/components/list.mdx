@@ -1,0 +1,218 @@
+---
+title: List
+description: Rows of media, a title, supporting text and independent actions, as a named list or one row on its own.
+tag: tp-list
+parts: [tp-list-item, tp-list-separator]
+---
+
+<Preview
+  code={`<tp-list aria-label="Workspace members" style="max-inline-size:30rem">
+  <tp-list-item description="maya.chen@northwind.co">
+    <tp-avatar slot="media" size="sm" fallback="MC" alt=""></tp-avatar>
+    Maya Chen
+    <tp-badge slot="actions" variant="secondary">Owner</tp-badge>
+  </tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item description="jonas.weber@northwind.co">
+    <tp-avatar slot="media" size="sm" fallback="JW" alt=""></tp-avatar>
+    Jonas Weber
+    <tp-button slot="actions" variant="outline" size="sm">Manage</tp-button>
+  </tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item description="Invited 2 days ago">
+    <tp-avatar slot="media" size="sm" fallback="AO" alt=""></tp-avatar>
+    Amara Okafor
+    <tp-button slot="actions" variant="outline" size="sm">Resend</tp-button>
+  </tp-list-item>
+</tp-list>`}
+/>
+
+## Usage
+
+A List lays out rows that share a shape: something to recognize, a title, a line of detail and what you can do with it. It is layout only, with no selection, activation or keyboard model of its own, so the controls in a row's `actions` slot keep their own focus and behavior and one row can hold several independent actions. Name every List with `aria-label`; it is announced as a list of that many items. A List item also works on its own, outside a List.
+
+### Security settings
+
+<Preview
+  code={`<tp-list aria-label="Security" style="max-inline-size:30rem">
+  <tp-list-item variant="outline">
+    Two-factor authentication
+    <tp-badge slot="actions" variant="secondary">On</tp-badge>
+  </tp-list-item>
+  <tp-list-item variant="outline" description="Signed in from Chrome on macOS, Berlin.">
+    MacBook Pro
+    <tp-button slot="actions" variant="outline" size="sm">Sign out</tp-button>
+  </tp-list-item>
+  <tp-list-item variant="outline" description="Your plan renews on March 1. Downgrading takes effect then.">
+    Pro plan
+    <tp-button slot="actions" variant="ghost" size="sm">Downgrade</tp-button>
+    <tp-button slot="actions" size="sm">Upgrade</tp-button>
+  </tp-list-item>
+</tp-list>`}
+/>
+
+The default slot is the title and `description` the line under it; the `title` and `description` slots take over when either needs markup. Empty regions collapse, so a row with only a title needs nothing extra.
+
+### Recent files
+
+<Preview
+  code={`<tp-list id="list-files" aria-label="Recent files" style="max-inline-size:30rem">
+  <tp-list-item media-treatment="icon" description="Edited by Maya, 12 minutes ago">
+    <tp-icon slot="media" data-icon="file"></tp-icon>
+    Q3 roadmap.md
+  </tp-list-item>
+  <tp-list-item media-treatment="icon" description="14 files, shared with Design">
+    <tp-icon slot="media" data-icon="folder"></tp-icon>
+    Brand assets
+  </tp-list-item>
+  <tp-list-item media-treatment="icon" description="New sign-in from an unknown device.">
+    <tp-icon slot="media" data-icon="alert"></tp-icon>
+    Security alert
+    <tp-button slot="actions" variant="outline" size="sm">Review</tp-button>
+  </tp-list-item>
+</tp-list>`}
+  script={`import { fileTextIcon } from '@tweakpad/ui/icons/file-text';
+import { folderIcon } from '@tweakpad/ui/icons/folder';
+import { shieldAlertIcon } from '@tweakpad/ui/icons/shield-alert';
+
+const icons = { file: fileTextIcon, folder: folderIcon, alert: shieldAlertIcon };
+for (const icon of document.querySelectorAll('#list-files tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>
+
+The `media` slot takes an Icon, an Avatar or an image, and `media-treatment` tells the row which, so the media gets the matching extent. With a description, the media lines up with the first line of text.
+
+### Notification channels
+
+<Preview
+  code={`<tp-list aria-label="Notification channels" style="max-inline-size:30rem">
+  <tp-list-item description="Mentions, replies and direct messages.">
+    Email
+    <tp-switch slot="actions" label="Email notifications" default-checked></tp-switch>
+  </tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item description="Only when you are away from the desktop app.">
+    Push
+    <tp-switch slot="actions" label="Push notifications" default-checked></tp-switch>
+  </tp-list-item>
+  <tp-list-separator></tp-list-separator>
+  <tp-list-item description="A summary of activity every Monday.">
+    Weekly digest
+    <tp-switch slot="actions" label="Weekly digest"></tp-switch>
+  </tp-list-item>
+</tp-list>`}
+/>
+
+List separators divide rows that sit on the same surface. Each Switch carries its own label, because the row's title is not its name.
+
+### Project with metadata
+
+<Preview
+  code={`<tp-list-item variant="outline" description="Redesign the onboarding flow and pricing page." style="max-inline-size:30rem">
+  <span slot="header" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-xs)">Marketing site</span>
+  Website refresh
+  <tp-button slot="actions" variant="outline" size="sm">Open</tp-button>
+  <span slot="footer" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-xs)">Updated <tp-time datetime="2026-10-08T09:30:00Z" mode="absolute" pattern="MMM d"></tp-time>, 6 contributors</span>
+</tp-list-item>`}
+/>
+
+The `header` and `footer` slots span the whole row above and below the main content, for an eyebrow label or metadata that does not belong in the description.
+
+### Office spaces
+
+<Preview
+  align="stretch"
+  code={`<tp-list id="list-spaces" aria-label="Office spaces" style="max-inline-size:40rem">
+  <tp-list-item variant="outline" description="Long tables for 24 people.">
+    <tp-aspect-ratio slot="header" ratio="1" fit="cover" style="inline-size:100%;border-radius:var(--tp-radius-sm)"><img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=480&q=75&auto=format&fit=crop" alt=""></tp-aspect-ratio>
+    Open studio
+  </tp-list-item>
+  <tp-list-item variant="outline" description="Bookable desks by the windows.">
+    <tp-aspect-ratio slot="header" ratio="1" fit="cover" style="inline-size:100%;border-radius:var(--tp-radius-sm)"><img src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=480&q=75&auto=format&fit=crop" alt=""></tp-aspect-ratio>
+    Quiet floor
+  </tp-list-item>
+  <tp-list-item variant="outline" description="Outdoor seating with Wi-Fi.">
+    <tp-aspect-ratio slot="header" ratio="1" fit="cover" style="inline-size:100%;border-radius:var(--tp-radius-sm)"><img src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=480&q=75&auto=format&fit=crop" alt=""></tp-aspect-ratio>
+    Roof terrace
+  </tp-list-item>
+</tp-list>`}
+  script={`document.getElementById('list-spaces').partPresentation = {
+  list: {
+    styleHook: {
+      display: 'grid',
+      'grid-template-columns': 'repeat(auto-fit, minmax(min(100%, 10rem), 1fr))',
+      gap: 'var(--tp-space-4)',
+    },
+  },
+};`}
+/>
+
+A square image in the header turns each row into a card, and the `list` part's presentation lays the rows out as a grid. The List stays one list for assistive technology.
+
+### Help links
+
+<Preview
+  code={`<tp-list id="list-links" aria-label="Help resources" style="max-inline-size:30rem">
+  <tp-list-item variant="outline" data-href="#help-links" description="Set up your workspace in ten minutes.">
+    Getting started guide
+    <tp-icon slot="actions" data-icon="chevron"></tp-icon>
+  </tp-list-item>
+  <tp-list-item variant="outline" data-href="#help-links" description="Invoices, seats and tax settings.">
+    Billing questions
+    <tp-button slot="actions" variant="outline" size="sm">Contact sales</tp-button>
+  </tp-list-item>
+  <tp-list-item variant="outline" data-href="https://status.example.com/" data-external description="Opens the status page in a new tab.">
+    System status
+    <tp-icon slot="actions" data-icon="external"></tp-icon>
+  </tp-list-item>
+</tp-list>`}
+  script={`import { html } from 'lit';
+import { chevronRightIcon } from '@tweakpad/ui/icons/chevron-right';
+import { externalLinkIcon } from '@tweakpad/ui/icons/external-link';
+
+const icons = { chevron: chevronRightIcon, external: externalLinkIcon };
+for (const item of document.querySelectorAll('#list-links tp-list-item')) {
+  const external = item.hasAttribute('data-external');
+  item.partContracts = {
+    'list-item': {
+      renderDelegate: ({ bind, content }) => html\`<a href=\${item.dataset.href} target=\${external ? '_blank' : '_self'} rel=\${external ? 'noopener noreferrer' : ''} \${bind}>\${content}</a>\`,
+    },
+  };
+}
+for (const icon of document.querySelectorAll('#list-links tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>
+
+A whole row becomes a native link when the `list-item` part's render delegate draws an anchor around the supplied `bind` and `content`. The actions render beside the link, so a Button there is a separate tab stop and never follows the link; a decorative Icon there lets clicks reach the link.
+
+### People picker
+
+<Preview
+  code={`<tp-menu id="list-people" label="Assign to">
+  <tp-button slot="trigger" variant="outline" size="sm"><span id="list-people-label">Assign to…</span></tp-button>
+  <tp-menu-item value="Maya Patel" label="Maya Patel">
+    <tp-list-item size="xs" description="maya@acme.com"><tp-avatar slot="media" size="sm" fallback="MP" alt=""></tp-avatar>Maya Patel</tp-list-item>
+  </tp-menu-item>
+  <tp-menu-item value="Jordan Lee" label="Jordan Lee">
+    <tp-list-item size="xs" description="jordan@acme.com"><tp-avatar slot="media" size="sm" fallback="JL" alt=""></tp-avatar>Jordan Lee</tp-list-item>
+  </tp-menu-item>
+  <tp-menu-item value="Ana Ruiz" label="Ana Ruiz">
+    <tp-list-item size="xs" description="ana@acme.com"><tp-avatar slot="media" size="sm" fallback="AR" alt=""></tp-avatar>Ana Ruiz</tp-list-item>
+  </tp-menu-item>
+</tp-menu>`}
+  script={`document.getElementById('list-people').addEventListener('tp-action', (event) => {
+  document.getElementById('list-people-label').textContent = event.detail.value;
+});`}
+/>
+
+For a rich command, put a List item directly inside a Menu item. The Menu item keeps the command semantics, the keyboard navigation and the highlight, and the row drops its own padding; the smallest size keeps the menu compact.
+
+### Variants
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:30rem">
+  <tp-list-item variant="ghost" description="No boundary, for rows on a shared surface.">Ghost</tp-list-item>
+  <tp-list-item variant="outline" description="A boundary around each row.">Outline</tp-list-item>
+  <tp-list-item variant="subdued" description="A muted fill behind each row.">Subdued</tp-list-item>
+</div>`}
+/>
+
+`variant` is visual treatment only: `ghost` for rows divided by separators or a surrounding surface, `outline` for rows that stand apart, `subdued` for rows that need a quiet fill.

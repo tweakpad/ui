@@ -1,50 +1,39 @@
 import { html } from 'lit';
-import { ref } from 'lit/directives/ref.js';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
-import type { TpMessage } from '../components/message/index.js';
-import type { TpBubble } from '../components/bubble/index.js';
-import { messageExamples } from './message.examples.js';
-import documentation from '../../docs/message.md?raw';
+import { libraryDocs } from './library-docs.js';
 
-const conversation = messageExamples[0]!;
+interface Args {
+  align: 'start' | 'end';
+  author: string;
+  timestamp: string;
+  pending: boolean;
+  failed: boolean;
+}
+
 const meta = {
   title: 'Components/Message',
   component: 'tp-message',
-  parameters: {
-    docs: {
-      examples: messageExamples.slice(1),
-      description: { component: documentation },
-      source: { code: conversation.code, language: 'html' },
-    },
-  },
-  args: { align: 'end', author: '', timestamp: '' },
+  parameters: { docs: libraryDocs('components/message') },
+  args: { align: 'start', author: 'Sam Rivera', timestamp: '', pending: false, failed: false },
   argTypes: {
-    align: {
-      control: 'select',
-      options: ['start', 'end'],
-      description: 'Alignment of the third conversation row.',
-    },
-    author: { control: 'text', description: 'Optional sender header on the third row.' },
-    timestamp: { control: 'text', description: 'Optional timestamp on the third row.' },
+    align: { control: 'select', options: ['start', 'end'] },
+    author: { control: 'text' },
+    timestamp: { control: 'text' },
+    pending: { control: 'boolean' },
+    failed: { control: 'boolean' },
   },
   render: (args) =>
-    html`<div
-      ${ref((node) => {
-        if (!node) return;
-        queueMicrotask(() => {
-          const row = node.querySelectorAll<TpMessage>('tp-message')[2];
-          if (!row) return;
-          row.align = args.align as 'start' | 'end';
-          row.author = args.author;
-          row.timestamp = args.timestamp;
-          const bubble = row.querySelector<TpBubble>('tp-bubble');
-          if (bubble) bubble.align = row.align;
-        });
-      })}
+    html`<tp-message
+      .align=${args.align}
+      .author=${args.author}
+      .timestamp=${args.timestamp}
+      .pending=${args.pending}
+      .failed=${args.failed}
     >
-      ${conversation.render()}
-    </div>`,
-} satisfies Meta;
+      <tp-avatar slot="avatar" fallback="SR" alt="Sam Rivera"></tp-avatar>
+      <tp-bubble .align=${args.align}>Have you included the keyboard review?</tp-bubble>
+    </tp-message>`,
+} satisfies Meta<Args>;
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<Args>;
 export const Default: Story = {};

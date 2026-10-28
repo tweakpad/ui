@@ -7,7 +7,16 @@ export type {
   DialogFinalFocus as AlertDialogFinalFocus,
 } from '../dialog/dialog.js';
 
-/** Alert Dialog shares Dialog anatomy/lifecycle, with mandatory decision policy. */
+/**
+ * A modal confirmation for a consequential decision, with explicit Cancel and Confirm actions. An
+ * outside press never closes it, opening focuses Cancel, and it has no corner Close button.
+ *
+ * @slot media - An Icon or image above the title that marks the kind of decision.
+ * @slot cancel - The action that declines; it closes the dialog when pressed.
+ * @slot confirm - The action that carries out the decision; its handler does the work, then closes
+ *   the dialog.
+ * @slot actions - Further footer actions beside Cancel and Confirm.
+ */
 export class TpAlertDialog extends TpDialog {
   static override tagName = 'tp-alert-dialog';
   static override presentation = alertDialogPresentation;

@@ -98,9 +98,28 @@ interface ImmediateCommit {
 }
 
 /**
- * Emoji picker widget (UI Widgets Specification 6.4): one emoji chosen from a dataset through a
- * search input over a virtualized, categorized grid (Select), with a category bar, skin tones,
- * recent and custom emoji, a preview footer and an inline or popup picker.
+ * Chooses one emoji: a search field filters a categorized grid by name and keyword, a category
+ * bar jumps between categories, a skin tone menu tones the emoji that accept one, and a footer
+ * previews the highlighted emoji, inline or in a popup. A small English dataset is built in;
+ * `data` takes a complete or localized one. Form-associated: `name` submits the emoji.
+ *
+ * @slot footer - Content at the end of the footer, after the preview and the skin tone Button.
+ * @slot trigger - Replaces the popup picker's default trigger Button.
+ *
+ * @fires tp-action - Cancelable, on every pick, also of the current emoji; `detail.value`,
+ * `detail.item` and `detail.sourceEvent`. Listen here to insert emoji into text; cancelling it
+ * leaves the value and the popup unchanged.
+ * @fires tp-value-change - Cancelable proposal of a different emoji; `detail.metadata` carries the
+ * picked `item` and its `category`.
+ * @fires tp-value-commit - The settled emoji, right after an accepted pick.
+ * @fires tp-query-change - Cancelable search text proposal.
+ * @fires tp-skin-tone-change - Cancelable skin tone proposal from the tone menu.
+ * @fires tp-loading-status-change - Each dataset loading status change; `detail.status` and
+ * `detail.error`.
+ * @fires tp-open-change - Cancelable proposal to open or close the popup; cancel the close after a
+ * pick to keep it open for several picks.
+ * @fires tp-open-change-complete - After the popup finishes opening or closing; `detail.open`.
+ * @fires tp-field-value - Each committed value, for a surrounding Field's validation state.
  */
 export class TpEmojiPicker extends TpFormElement<string> {
   static tagName = 'tp-emoji-picker';
@@ -148,28 +167,60 @@ export class TpEmojiPicker extends TpFormElement<string> {
   };
   static override styles = [TpElement.styles, emojiPickerStyles];
 
+  /** Starting emoji of an uncontrolled picker; form reset returns to it. */
   defaultValue: string | undefined;
+  /** Starting search text of an uncontrolled search. */
   defaultQuery: string | undefined;
+  /** Starting skin tone of an uncontrolled tone choice. */
   defaultSkinTone: SkinTone | undefined;
+  /**
+   * Renders the picker in place, or in a Popover opened from a trigger Button that shows the chosen
+   * emoji.
+   */
   picker: EmojiPickerPicker = 'inline';
+  /** Opens the popup on first render, for an uncontrolled popup picker. */
   defaultOpen = false;
   /** A dataset or a data source; the built-in English dataset by default. */
   data: EmojiData | EmojiDataSource | undefined;
   /** Highest Emoji version shown; detected from the platform when unset. */
   emojiVersion: number | undefined;
+  /** Number of emoji per row of the grid. */
   columns: number = DEFAULT_COLUMNS;
+  /** Keeps each category's label at the top of the list while its emoji scroll. */
   sticky = true;
   /** Recent emoji supplied by the application; the widget keeps no history of its own. */
   recent: readonly string[] = [];
+  /**
+   * Your own image emoji, in categories of their own after the recent ones; a custom emoji's value
+   * is `:id:`.
+   */
   custom: readonly CustomEmojiGroup[] = [];
+  /** Shows the row of category tabs above the list. */
   categoryBar = true;
+  /** Shows the footer that previews the highlighted emoji and its name. */
   preview = true;
+  /** Shows the Button that opens the skin tone menu. */
   skinToneSelector = true;
+  /** Scales the cells and the emoji in them. */
   size: EmojiPickerSize = 'default';
+  /**
+   * Accessible name of the emoji list and of the popup trigger; a surrounding Field supplies it
+   * otherwise.
+   */
   label = '';
+  /**
+   * Language of the emoji names and keywords, passed to a data source; the document language when
+   * empty.
+   */
   locale = '';
+  /** Replaces built-in texts (search placeholder, status messages, tone names) for localization. */
   strings: Partial<EmojiPickerStrings> = {};
+  /**
+   * Called synchronously with each `tp-value-change` proposal, before listeners; a controlled owner
+   * writes `value` back here to accept it.
+   */
   onValueChange: EmojiPickerValueChangeCallback | undefined;
+  /** Called with each settled pick. */
   onValueCommitted: EmojiPickerValueCommitCallback | undefined;
 
   #provided: string | undefined;
@@ -265,6 +316,10 @@ export class TpEmojiPicker extends TpFormElement<string> {
     if (this.hasUpdated) this.#state.sync();
     this.requestUpdate('value', previous);
   }
+  /**
+   * The search text that filters the emoji by name and keyword; setting it makes the search
+   * controlled.
+   */
   get query(): string {
     return this.#queryState.value;
   }
@@ -277,6 +332,9 @@ export class TpEmojiPicker extends TpFormElement<string> {
     } else if (next !== undefined) this.#queryState.set(next, 'programmatic');
     this.requestUpdate('query', previous);
   }
+  /**
+   * The skin tone applied to emoji that accept one; setting it makes the tone choice controlled.
+   */
   get skinTone(): SkinTone {
     return this.#toneState.value;
   }
@@ -305,6 +363,7 @@ export class TpEmojiPicker extends TpFormElement<string> {
   get emojiData(): EmojiData | null {
     return this.#filteredData();
   }
+  /** Loading state of the dataset; an error shows a Retry button. */
   get status(): EmojiPickerStatus {
     return this.#status;
   }
@@ -319,6 +378,7 @@ export class TpEmojiPicker extends TpFormElement<string> {
     if (this.query.trim()) return undefined;
     return this.#jumpedCategory ?? this.#topCategory ?? this.#pickerModel().categories[0]?.id;
   }
+  /** Whether the value is owned by the application through `value`. */
   get controlled(): boolean {
     return this.#state.controlled;
   }
@@ -339,6 +399,7 @@ export class TpEmojiPicker extends TpFormElement<string> {
     if (!popover) return false;
     return popover.setOpen(open, reason, event);
   }
+  /** Closes the popup picker. */
   close(): void {
     this.setOpen(false, 'imperative-action');
   }

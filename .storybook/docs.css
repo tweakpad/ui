@@ -8,7 +8,8 @@
   margin-block: var(--tp-space-8);
 }
 
-/* A documentation page's preview: the canvas, aligned as the example asks, and its source. */
+/* A documentation page's preview: in flow and start-aligned like the Default story above it;
+   `stretch` fills the canvas. */
 .tp-docs-example > figcaption {
   margin-block-end: var(--tp-space-2);
   font-weight: var(--tp-font-medium);
@@ -21,10 +22,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--tp-space-4);
-}
-
-.tp-docs-example-preview[data-align='center'] {
-  justify-content: center;
 }
 
 .tp-docs-example-preview[data-align='stretch'] > * {

@@ -16,26 +16,32 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'avatar',
+      description: 'The avatar host: its size and circular shape.',
       axes: ['size'],
     },
     {
       name: 'avatar-image',
+      description: 'The image.',
       axes: ['size'],
     },
     {
       name: 'avatar-fallback',
+      description: 'The fallback shown while the image is unavailable.',
       axes: ['size'],
     },
     {
       name: 'avatar-badge',
+      description: "The enclosure of the status mark on the avatar's edge.",
       axes: ['size'],
     },
     {
       name: 'avatar-group',
+      description: 'The row that overlaps the avatars.',
       axes: ['size'],
     },
     {
       name: 'avatar-overflow-count',
+      description: 'The avatar that counts the people the group leaves out.',
       axes: ['size'],
     },
   ],

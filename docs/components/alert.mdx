@@ -1,0 +1,68 @@
+---
+title: Alert
+description: A persistent, in-flow message with a title, description, optional mark and actions.
+tag: tp-alert
+---
+
+<Preview
+  align="stretch"
+  code={`<tp-alert title="Update available" style="max-inline-size:36rem">
+  <tp-icon id="alert-update-icon" slot="icon"></tp-icon>
+  Version 2.4 adds shared templates and faster exports. Review the changes before updating.
+  <tp-button slot="actions" variant="outline" size="sm" href="#usage">Release notes</tp-button>
+</tp-alert>`}
+  script={`import { infoIcon } from '@tweakpad/ui/icons/info';
+
+document.getElementById('alert-update-icon').icon = infoIcon;`}
+/>
+
+## Usage
+
+An Alert stays in the flow of the page until the application removes it. It never opens over content, traps focus or times out; when the person must decide before going on, use an Alert dialog. Say what happened in the words, "Storage almost full" rather than "Warning", so the message holds up without its color or its mark.
+
+### Account notices
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:36rem">
+  <tp-alert title="Scheduled maintenance">The API will be read-only on Sunday, 14 June, from 02:00 to 03:00 UTC.</tp-alert>
+  <tp-alert severity="success" title="Payment received">Invoice INV-2048 for $1,240.00 was paid on 3 June.</tp-alert>
+  <tp-alert severity="warning" title="Storage almost full">You've used 9.6 GB of 10 GB. Uploads will pause when the limit is reached.</tp-alert>
+  <tp-alert severity="danger" title="Could not sync your changes">The connection to GitHub expired. Reconnect to resume syncing.</tp-alert>
+</div>`}
+/>
+
+The severity colors the message for the outcome it reports; the title already names that outcome, so a reader who cannot tell the colors apart loses nothing.
+
+### Confirmation with a next step
+
+<Preview
+  align="stretch"
+  code={`<tp-alert severity="success" style="max-inline-size:36rem">
+  <tp-icon id="alert-verified-icon" slot="icon"></tp-icon>
+  <span slot="title">Domain verified <tp-badge variant="secondary">acme.com</tp-badge></span>
+  Teammates who sign up with an @acme.com address now join your workspace automatically.
+  <tp-button slot="actions" variant="outline" size="sm">Manage domains</tp-button>
+</tp-alert>`}
+  script={`import { circleCheckIcon } from '@tweakpad/ui/icons/circle-check';
+
+document.getElementById('alert-verified-icon').icon = circleCheckIcon;`}
+/>
+
+The `title` slot takes over from the plain-text title when it needs emphasis, a link or a Badge. The mark is decorative, and the actions are Buttons whose behavior the application owns, including removing the Alert once it is handled. Empty slots take no space.
+
+### Result of an action
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:start;max-inline-size:36rem">
+  <tp-button id="alert-export" variant="outline">Export report</tp-button>
+  <tp-alert id="alert-export-status" announcement="polite" title="Export ready" hidden>
+    Q2 revenue report.csv has been saved to Downloads.
+  </tp-alert>
+</div>`}
+  script={`document.getElementById('alert-export').addEventListener('click', () => {
+  document.getElementById('alert-export-status').hidden = false;
+});`}
+/>
+
+An Alert that renders with the page is read in place and needs no announcement. One that appears after an action announces itself politely, so a screen reader hears the result without losing its place; keep an assertive announcement for urgent problems.

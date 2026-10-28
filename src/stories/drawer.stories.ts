@@ -3,7 +3,7 @@ import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
 import type { TpDrawer, DrawerEdge } from '../components/drawer/index.js';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
-import documentation from '../../docs/drawer.md?raw';
+import { libraryDocs } from './library-docs.js';
 interface Args {
   open: boolean;
   swipeEnabled: boolean;
@@ -18,17 +18,12 @@ interface Args {
   keepMounted: boolean;
   portal: boolean;
 }
-const source = `<tp-drawer label="Workspace settings" description="Update your profile and preferences." show-swipe-handle>
-  <tp-button slot="trigger" variant="outline">Open settings</tp-button>
-  <tp-field label="Display name"><tp-input value="Alex Morgan"></tp-input></tp-field>
-  <tp-button slot="close" variant="outline">Done</tp-button>
-</tp-drawer>`;
 const meta = {
   title: 'Components/Drawer',
   component: 'tp-drawer',
   parameters: {
     layout: 'centered',
-    docs: { description: { component: documentation }, source: { code: source } },
+    docs: libraryDocs('components/drawer'),
   },
   args: {
     open: false,
@@ -93,56 +88,3 @@ const meta = {
 export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
-
-const snapSource = `<tp-drawer label="Explore places" show-swipe-handle>
-  <tp-button slot="trigger" variant="outline">Explore places</tp-button>
-  <p>Drag the handle, or focus it and use Arrow keys, Home and End.</p>
-  <tp-button slot="close" variant="outline">Done</tp-button>
-</tp-drawer>
-<script>
-  const drawer = document.querySelector('tp-drawer');
-  drawer.snapPoints = [0.25, 0.5, 1];
-  drawer.defaultSnapPoint = 0.5;
-</script>`;
-export const SnapPoints: Story = {
-  parameters: { controls: { disable: true }, docs: { source: { code: snapSource } } },
-  render: () =>
-    html`<tp-drawer
-      label="Explore places"
-      show-swipe-handle
-      .snapPoints=${[0.25, 0.5, 1]}
-      .defaultSnapPoint=${0.5}
-    >
-      <tp-button slot="trigger" variant="outline">Explore places</tp-button>
-      <p>Drag the handle, or focus it and use Arrow keys, Home and End.</p>
-      <tp-button slot="close" variant="outline">Done</tp-button>
-    </tp-drawer>`,
-};
-const nestedSource = `<tp-drawer-provider>
-  <tp-drawer label="Workspace" show-swipe-handle>
-    <tp-button slot="trigger" variant="outline">Open workspace</tp-button>
-    <tp-drawer label="Invite a member" show-swipe-handle>
-      <tp-button slot="trigger" variant="outline">Invite member</tp-button>
-      <tp-field label="Email"><tp-input type="email" placeholder="name@example.com"></tp-input></tp-field>
-      <tp-button slot="close" variant="outline">Done</tp-button>
-    </tp-drawer>
-    <tp-button slot="close" variant="outline">Close workspace</tp-button>
-  </tp-drawer>
-</tp-drawer-provider>`;
-export const Nested: Story = {
-  parameters: { controls: { disable: true }, docs: { source: { code: nestedSource } } },
-  render: () =>
-    html`<tp-drawer-provider>
-      <tp-drawer label="Workspace" show-swipe-handle>
-        <tp-button slot="trigger" variant="outline">Open workspace</tp-button>
-        <tp-drawer label="Invite a member" show-swipe-handle>
-          <tp-button slot="trigger" variant="outline">Invite member</tp-button>
-          <tp-field label="Email"
-            ><tp-input type="email" placeholder="name@example.com"></tp-input
-          ></tp-field>
-          <tp-button slot="close" variant="outline">Done</tp-button>
-        </tp-drawer>
-        <tp-button slot="close" variant="outline">Close workspace</tp-button>
-      </tp-drawer>
-    </tp-drawer-provider>`,
-};

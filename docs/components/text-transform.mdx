@@ -1,0 +1,147 @@
+---
+title: Text transform
+description: One value presented as text, with changed case, a readable label, a localized number or a shortened line.
+tag: tp-text-transform
+---
+
+<Preview
+  code={`<tp-description-list style="inline-size:24rem;max-inline-size:100%">
+  <tp-description-list-item label="Monthly revenue"><tp-text-transform preset="currency" currency="EUR" value="48250"></tp-text-transform></tp-description-list-item>
+  <tp-description-list-item label="Conversion"><tp-text-transform preset="percent" decimals="1" value="0.0384"></tp-text-transform></tp-description-list-item>
+  <tp-description-list-item label="Storage used"><tp-text-transform preset="bytes" value="2516582400"></tp-text-transform></tp-description-list-item>
+  <tp-description-list-item label="Average session"><tp-text-transform preset="duration" value="252"></tp-text-transform></tp-description-list-item>
+  <tp-description-list-item label="Latest export"><tp-text-transform truncate="middle">revenue-report-2026-q3-final-approved.csv</tp-text-transform></tp-description-list-item>
+</tp-description-list>`}
+/>
+
+## Usage
+
+A Text transform shows one value as text: a number formatted for the reader, a field name turned into a label, a long name shortened to fit. Set `value` to a number, a bigint or text, or leave it unset and write the input as the content, so text rendered on the server upgrades in place. `preset` names the transform. The element paints no surface and inherits font and color, so it sits in table cells, list rows and labels. Input that a numeric preset cannot read, such as "to be announced" for a price, stays as written.
+
+### Labels from field names
+
+<Preview
+  code={`<tp-list aria-label="Profile fields" style="max-inline-size:24rem">
+  <tp-list-item variant="outline" size="sm" description="billingEmail"><tp-text-transform preset="humanize">billingEmail</tp-text-transform></tp-list-item>
+  <tp-list-item variant="outline" size="sm" description="tax_id"><tp-text-transform preset="humanize">tax_id</tp-text-transform></tp-list-item>
+  <tp-list-item variant="outline" size="sm" description="primary-region"><tp-text-transform preset="humanize">primary-region</tp-text-transform></tp-list-item>
+</tp-list>`}
+/>
+
+Identifier presets split a name at spaces, hyphens, underscores, dots, case changes and acronyms, so a property key becomes a readable label, and the same split turns a label back into a kebab, camel, snake or constant identifier. Case presets follow the language of the closest `lang`; capitalizing only changes the first letter of each word, so acronyms survive.
+
+### Plan usage
+
+<Preview
+  align="stretch"
+  code={`<tp-table label="Plan usage" style="max-inline-size:40rem">
+  <tp-table-header>
+    <tp-table-row>
+      <tp-table-head>Plan</tp-table-head>
+      <tp-table-head style="text-align:end">Price</tp-table-head>
+      <tp-table-head style="text-align:end">Seats used</tp-table-head>
+      <tp-table-head style="text-align:end">Bandwidth</tp-table-head>
+      <tp-table-head style="text-align:end">API calls</tp-table-head>
+    </tp-table-row>
+  </tp-table-header>
+  <tp-table-body>
+    <tp-table-row>
+      <tp-table-head scope="row">Starter</tp-table-head>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="currency" currency="USD" value="19"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="percent" value="0.6"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="unit" unit="megabyte-per-second" value="50"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="compact" value="48300"></tp-text-transform></tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">Team</tp-table-head>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="currency" currency="USD" value="79"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="percent" decimals="1" value="0.875"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="unit" unit="megabyte-per-second" value="250"></tp-text-transform></tp-table-cell>
+      <tp-table-cell style="text-align:end"><tp-text-transform preset="compact" value="1240000"></tp-text-transform></tp-table-cell>
+    </tp-table-row>
+  </tp-table-body>
+</tp-table>`}
+/>
+
+Numbers use tabular figures, so a column of them lines up. A percentage reads a ratio, 0.82 for 82%, and `decimals` fixes the fraction digits. Abbreviated forms are spelled out for assistive technology: "1.2M" is read as "1.2 million" and "50 MB/s" as "50 megabytes per second". Each number renders as a data element that carries the raw value.
+
+### Upload sizes and lengths
+
+<Preview
+  code={`<tp-list aria-label="Uploads" style="max-inline-size:30rem">
+  <tp-list-item variant="outline">
+    Onboarding walkthrough.mp4
+    <span slot="actions" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"><tp-text-transform preset="duration" value="3725"></tp-text-transform>, <tp-text-transform preset="bytes" value="734003200"></tp-text-transform></span>
+  </tp-list-item>
+  <tp-list-item variant="outline">
+    Customer interview.m4a
+    <span slot="actions" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"><tp-text-transform preset="duration" value="1418"></tp-text-transform>, <tp-text-transform preset="bytes" value="22544384"></tp-text-transform></span>
+  </tp-list-item>
+</tp-list>`}
+/>
+
+A byte count shows in binary units, where 1 KB is 1024 bytes. A duration reads seconds and shows them as a clock, read aloud as "1 hour, 2 minutes, 5 seconds".
+
+### Prices for each reader
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-2);font-size:var(--tp-text-sm)">
+  <span lang="en-US">en-US: <tp-text-transform preset="currency" currency="EUR" value="1234.5"></tp-text-transform>, <tp-text-transform preset="number" value="9876543.21"></tp-text-transform></span>
+  <span lang="de-DE">de-DE: <tp-text-transform preset="currency" currency="EUR" value="1234.5"></tp-text-transform>, <tp-text-transform preset="number" value="9876543.21"></tp-text-transform></span>
+  <span lang="fr-FR">fr-FR: <tp-text-transform preset="currency" currency="EUR" value="1234.5"></tp-text-transform>, <tp-text-transform preset="number" value="9876543.21"></tp-text-transform></span>
+  <span>ja-JP: <tp-text-transform locale="ja-JP" preset="currency" currency="JPY" value="1234500"></tp-text-transform></span>
+</div>`}
+/>
+
+The closest `lang` decides separators, digits and where the currency sign goes, and a change to it updates the text in place. `locale` fixes one value to a language whatever the page says.
+
+### File names in a narrow column
+
+<Preview
+  align="stretch"
+  code={`<tp-resizable-panel-group style="block-size:11rem;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg)">
+  <tp-resizable-panel default-size="40%" min-size="15%">
+    <div style="display:grid;gap:var(--tp-space-3);padding:var(--tp-space-4);font-size:var(--tp-text-sm)">
+      <tp-text-transform truncate="end">Migrate billing to usage-based pricing before the October release</tp-text-transform>
+      <tp-text-transform truncate="end" truncate-by="words">Migrate billing to usage-based pricing before the October release</tp-text-transform>
+      <tp-text-transform truncate="middle">design-review-2026-10-14-final-screenshots.zip</tp-text-transform>
+      <tp-text-transform truncate="start">/workspace/marketing/campaigns/autumn-launch/brief.pdf</tp-text-transform>
+    </div>
+  </tp-resizable-panel>
+  <tp-resizable-handle label="Resize the list" with-handle></tp-resizable-handle>
+  <tp-resizable-panel min-size="20%"></tp-resizable-panel>
+</tp-resizable-panel-group>`}
+/>
+
+`truncate` keeps the text on one line that fits the width and refits it when the width changes. Cut a title at the end, by words when half a word would mislead; cut a file name in the middle, where its extension survives; cut a path at the start, where its last segment survives. While shortened, the value can be focused and shows the full text in a Tooltip, and assistive technology always hears the complete text once.
+
+### Comment previews
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-2);font-size:var(--tp-text-sm)">
+  <tp-text-transform max-length="32">Thanks for the quick turnaround on the pricing page copy, it reads much better now.</tp-text-transform>
+  <tp-text-transform max-length="6" truncate-by="words">Thanks for the quick turnaround on the pricing page copy, it reads much better now.</tp-text-transform>
+</div>`}
+/>
+
+`max-length` caps the characters or words kept, whatever the width. On its own it cuts at the end and the text still wraps; with `truncate`, the cap applies on top of the width.
+
+### House formats
+
+<Preview
+  code={`<div id="text-transform-house" style="display:grid;gap:var(--tp-space-2);font-size:var(--tp-text-sm)">
+  <span>Team plan <tp-text-transform preset="plan-price" value="480"></tp-text-transform> per year</span>
+  <span>Business plan <tp-text-transform preset="plan-price" value="1200"></tp-text-transform> per year</span>
+  <span>Your order <tp-text-transform id="text-transform-order" value="482"></tp-text-transform></span>
+</div>`}
+  script={`import { defineTextPreset } from '@tweakpad/ui';
+
+defineTextPreset('plan-price', { preset: 'currency', format: { currency: 'EUR', maximumFractionDigits: 0 } });
+await customElements.whenDefined('tp-text-transform');
+document.getElementById('text-transform-order').formatter = ({ value }) => ({
+  text: '#ORD-' + String(value).padStart(6, '0'),
+  accessibleText: 'Order ' + value,
+});`}
+/>
+
+`defineTextPreset` names a format once for the whole page, a built-in preset with its options or a formatter of your own, and every element using that name follows it, also when it is defined after them. For a single element, the `formatter` property replaces the preset; it returns text, or a text and a different text for assistive technology, never markup.

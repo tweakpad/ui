@@ -6,8 +6,10 @@ import { paginationMembers, type GroupMember } from '../shared/group-members.js'
 import { buttonGroupPresentation } from '../../presentation/families/button-group.js';
 
 /**
- * Arranges existing action and choice controls as one visual set; the shared joined-group
- * owner applies seams and part aliases while every member keeps its own behavior.
+ * Presents existing controls (Buttons, inputs, selects, Toggles, menu triggers, Pagination) as
+ * one joined set with a group name, while every member keeps its own behavior.
+ *
+ * @slot - The members, with Separators between them and Button group texts for read-only segments.
  */
 export class TpButtonGroup extends TpJoinedGroup {
   static tagName = 'tp-button-group';

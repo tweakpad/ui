@@ -112,21 +112,23 @@ export interface ElementApi {
   cssProperties: ApiCssProperty[];
 }
 
-/** Base-element plumbing every component accepts; said once per page, not per row. */
-const SHARED_BASE = 'TpElement';
-const SHARED_KEPT = new Set(['disabled']);
 const DIAGNOSTIC_EVENT = 'tp-diagnostic';
 
-const isShared = (entry: { inheritedFrom?: { name?: string } }) =>
-  entry.inheritedFrom?.name === SHARED_BASE;
+/**
+ * An element's table lists what it declares itself. Members and attributes it inherits from a
+ * base class (the shared element, form-control and surface bases, or another component it
+ * extends) are not repeated on every page that inherits them. A member the element redeclares
+ * is its own.
+ */
+const inherited = (entry: { inheritedFrom?: { name?: string } }) => !!entry.inheritedFrom;
 
-/** Public API the element exposes itself; base-element plumbing is left out. */
+/** Public API the element declares itself. */
 const ownPublic = (member: ManifestMember) =>
   !member.static &&
   (member.privacy ?? 'public') === 'public' &&
   !member.name.startsWith('_') &&
   !member.name.startsWith('#') &&
-  (!isShared(member) || SHARED_KEPT.has(member.name));
+  !inherited(member);
 
 function methodsOf(members: ManifestMember[]): ApiMethod[] {
   const byName = new Map<string, ManifestMember[]>();
@@ -183,11 +185,7 @@ export function elementApi(manifest: Manifest, tagName: string): ElementApi | un
     members.filter((member) => member.kind === 'field').map((member) => [member.name, member]),
   );
   const attributes = (declaration.attributes ?? [])
-    .filter(
-      (attribute) =>
-        !attribute.name.startsWith('_') &&
-        (!isShared(attribute) || SHARED_KEPT.has(attribute.name)),
-    )
+    .filter((attribute) => !attribute.name.startsWith('_') && !inherited(attribute))
     .map((attribute) => {
       const field = attribute.fieldName ? fieldByName.get(attribute.fieldName) : undefined;
       return {

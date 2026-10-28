@@ -101,7 +101,10 @@ describe('text editor family', () => {
     expect(definition.kind).toBe('flattening-compound');
     expect(definition).not.toHaveProperty('axes');
     expect(anatomy).toHaveLength(27);
-    expect(definition.parts).toEqual(anatomy.map((name) => ({ name })));
+    // Parts carry only a name and the description the API reference shows: no slot, no axis.
+    expect(definition.parts.map((part) => part.name)).toEqual(anatomy);
+    for (const part of definition.parts)
+      expect(Object.keys(part).filter((key) => key !== 'description')).toEqual(['name']);
     expect(Object.keys(appearance)).toEqual(anatomy);
   });
 

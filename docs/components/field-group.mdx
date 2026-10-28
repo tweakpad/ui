@@ -1,0 +1,107 @@
+---
+title: Field group
+description: Joins the editors of one compound value, such as width and height or RGB channels, into a single seamed row.
+tag: tp-field-group
+---
+
+<Preview
+  code={`<tp-field-group label="Canvas size">
+  <tp-input-group>
+    <span slot="prefix">W</span>
+    <tp-input label="Width" name="width" default-value="1280"></tp-input>
+    <span slot="suffix">px</span>
+  </tp-input-group>
+  <tp-input-group>
+    <span slot="prefix">H</span>
+    <tp-input label="Height" name="height" default-value="720"></tp-input>
+    <span slot="suffix">px</span>
+  </tp-input-group>
+</tp-field-group>`}
+/>
+
+## Usage
+
+A Field group lays out the editors of one value, joins their borders and names the whole. It owns only the layout, the seams and the group name: each editor keeps its own value, `name`, state and validation, and the group submits nothing itself. Its `label` names the tuple, such as "Canvas size", and every editor still needs its own complete `label`, because a prefix like `W` is visual shorthand. To stack separate Fields with spacing, use a Field's `group` slot instead.
+
+### Color channels
+
+<Preview
+  code={`<div style="display:flex;align-items:center;gap:var(--tp-space-2)">
+  <tp-field-group label="RGB">
+    <tp-input-group><span slot="prefix">R</span><tp-input label="Red" default-value="109"></tp-input></tp-input-group>
+    <tp-input-group><span slot="prefix">G</span><tp-input label="Green" default-value="93"></tp-input></tp-input-group>
+    <tp-input-group><span slot="prefix">B</span><tp-input label="Blue" default-value="252"></tp-input></tp-input-group>
+  </tp-field-group>
+  <tp-input-group style="inline-size:6rem">
+    <tp-input label="Opacity" default-value="100"></tp-input>
+    <span slot="suffix">%</span>
+  </tp-input-group>
+</div>`}
+/>
+
+The editors share the row equally. A related value that is not part of the tuple, such as opacity, stays outside the group so it reads as separate.
+
+### Locked aspect ratio
+
+<Preview
+  code={`<tp-field-group label="Image size">
+  <tp-input-group><span slot="prefix">W</span><tp-input label="Width" default-value="1920"></tp-input></tp-input-group>
+  <tp-toggle variant="outline" size="icon" aria-label="Lock aspect ratio" default-pressed><tp-icon id="field-group-lock"></tp-icon></tp-toggle>
+  <tp-input-group><span slot="prefix">H</span><tp-input label="Height" default-value="1080"></tp-input></tp-input-group>
+</tp-field-group>`}
+  script={`import { lockIcon } from '@tweakpad/ui/icons/lock';
+
+document.getElementById('field-group-lock').icon = lockIcon;`}
+/>
+
+A Toggle or a Button can join between the editors when it acts on the pair, such as a lock that keeps width and height in proportion.
+
+### Price range
+
+<Preview
+  code={`<tp-field-group label="Price range">
+  <tp-input-group><span slot="prefix">$</span><tp-input label="Minimum price" default-value="20"></tp-input></tp-input-group>
+  <tp-separator></tp-separator>
+  <tp-input-group><span slot="prefix">$</span><tp-input label="Maximum price" default-value="150"></tp-input></tp-input-group>
+</tp-field-group>`}
+/>
+
+A Separator between the editors marks the two ends of a range; it takes the orientation across the group by itself.
+
+### Retry policy
+
+<Preview
+  code={`<tp-field-group label="Retry policy">
+  <tp-input-group><tp-input label="Timeout" default-value="30" readonly></tp-input><span slot="suffix">s</span></tp-input-group>
+  <tp-input-group><tp-input label="Retries" default-value="3"></tp-input></tp-input-group>
+  <tp-input-group><tp-input label="Backoff" default-value="2" disabled></tp-input><span slot="suffix">×</span></tp-input-group>
+</tp-field-group>`}
+/>
+
+Each editor keeps its own state inside the group: a read-only or disabled editor shows its usual treatment while its neighbors stay editable.
+
+### Address lines
+
+<Preview
+  code={`<tp-field-group label="Shipping address" orientation="vertical">
+  <tp-input label="Street address" placeholder="Street address" default-value="221 Market Street"></tp-input>
+  <tp-input label="Apartment, suite" placeholder="Apartment, suite (optional)"></tp-input>
+  <tp-input label="City" placeholder="City" default-value="San Francisco"></tp-input>
+</tp-field-group>`}
+/>
+
+A vertical group stacks the editors, stretches them to the widest and joins their top and bottom edges, for a tuple too long to read in one row.
+
+### Box padding
+
+<Preview
+  code={`<tp-field-group id="field-group-padding" label="Padding">
+  <tp-input-group><span slot="prefix">T</span><tp-input label="Top" default-value="16"></tp-input></tp-input-group>
+  <tp-input-group><span slot="prefix">R</span><tp-input label="Right" default-value="24"></tp-input></tp-input-group>
+  <tp-input-group><span slot="prefix">B</span><tp-input label="Bottom" default-value="16"></tp-input></tp-input-group>
+  <tp-input-group><span slot="prefix">L</span><tp-input label="Left" default-value="24"></tp-input></tp-input-group>
+</tp-field-group>`}
+  script={`document.getElementById('field-group-padding').joined = false;`}
+/>
+
+With `joined` set to `false`, every editor keeps its own corners and the standard gap while the group still names them. Four sides read more easily apart than as one long seamed bar.

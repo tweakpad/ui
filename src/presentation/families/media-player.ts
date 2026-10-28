@@ -19,95 +19,122 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'media-player',
+      description: 'The player root.',
     },
     {
       name: 'media-container',
+      description: 'The container that holds the media and its controls and goes fullscreen.',
     },
     {
       name: 'media-element',
+      description: 'The video or audio element.',
     },
-    { name: 'media-poster' },
+    { name: 'media-poster', description: 'The poster shown before playback.' },
     {
       name: 'media-poster-image',
+      description: 'The poster image.',
     },
-    { name: 'media-title' },
+    { name: 'media-title', description: 'The title of the media.' },
     {
       name: 'media-controls',
+      description: 'The controls overlay; `visibility` decides whether it hides while idle.',
       axes: ['visibility'],
     },
     {
       name: 'media-controls-backdrop',
+      description: 'The shade behind overlaid controls.',
       axes: ['visibility'],
     },
-    { name: 'media-controls-group' },
-    { name: 'media-button' },
+    { name: 'media-controls-group', description: 'A row of controls.' },
+    { name: 'media-button', description: 'A media button host.' },
     {
       name: 'media-button-control',
+      description: 'The composed Button of a media button.',
     },
     {
       name: 'media-button-mark',
+      description: 'The icon or text of a media button.',
     },
     {
       name: 'media-button-text',
+      description: 'The visible text of a text button, such as the playback rate.',
     },
     {
       name: 'media-button-text-control',
+      description: 'The composed Button of a text button.',
     },
     {
       name: 'media-button-live-dot',
+      description: 'The live indicator dot of the live button.',
     },
-    { name: 'media-time-slider' },
+    { name: 'media-time-slider', description: 'The seek timeline.' },
     {
       name: 'media-time-slider-preview',
+      description: 'The preview that follows the pointer over the timeline.',
     },
-    { name: 'media-thumbnail' },
+    { name: 'media-thumbnail', description: 'A thumbnail of the media at a time.' },
     {
       name: 'media-thumbnail-image',
+      description: 'The thumbnail image.',
     },
     {
       name: 'media-chapter-title',
+      description: 'The title of the current chapter.',
     },
-    { name: 'media-volume-slider' },
+    { name: 'media-volume-slider', description: 'The volume slider.' },
     {
       name: 'media-volume-popover',
+      description: 'The volume popover host.',
     },
     {
       name: 'media-settings-menu',
+      description: 'The settings menu host.',
     },
     {
       name: 'media-settings-hint',
+      description: 'The selected option shown beside a settings group.',
     },
-    { name: 'media-time' },
+    { name: 'media-time', description: 'A time readout.' },
     {
       name: 'media-time-value',
+      description: 'The formatted time.',
     },
     {
       name: 'media-time-sign',
+      description: 'The minus sign of a remaining time.',
     },
     {
       name: 'media-radio-group',
+      description: 'A settings radio group, such as playback speed.',
     },
     {
       name: 'media-buffering-indicator',
+      description: 'The spinner shown while the media buffers.',
     },
-    { name: 'media-error-dialog' },
+    { name: 'media-error-dialog', description: 'The dialog shown when the media fails.' },
     {
       name: 'media-indicator',
+      description: 'A transient indicator of a change, such as the volume.',
     },
     {
       name: 'media-indicator-content',
+      description: 'The content of an indicator.',
     },
     {
       name: 'media-indicator-value',
+      description: 'The value an indicator shows.',
     },
     {
       name: 'media-indicator-fill',
+      description: 'The level bar of an indicator.',
     },
     {
       name: 'media-layout',
+      description: 'A default layout host.',
     },
     {
       name: 'media-layout-region',
+      description: 'A region of a default layout, such as the bottom bar.',
     },
   ],
 };

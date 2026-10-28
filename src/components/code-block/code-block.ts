@@ -54,19 +54,25 @@ export interface CodeCopyDetail {
 const COPIED_DURATION = 2000;
 
 /**
- * Highlighted source code (`ucl21-code-block`, behavior Foundation §18.13 Code highlighting).
+ * Source code with syntax colors, an optional title, a copy action, line numbers, diff lines and a
+ * collapsible height.
  *
  * The source comes from `code` or, when unset, the element's text content (dedented). Tokens come
- * from `highlighter` (the built-in tokenizer by default, or an adapter such as
- * `createShikiHighlighter` from `@tweakpad/ui/code`); plain text renders until they arrive.
+ * from `highlighter` (the built-in tokenizer by default, or an adapter from `@tweakpad/ui/code`);
+ * plain text renders until they arrive.
  *
- * @slot title - Title content; replaces `label`.
+ * @slot title - Title content in the header, in place of `label`; it is never part of the copied source.
  * @csspart code-block - The figure.
  * @csspart header - Title row with the language and the copy action.
+ * @csspart title - The title in the header.
+ * @csspart language - The language name in the header.
+ * @csspart copy - The Copy button.
  * @csspart viewport - The scrollable `pre`.
  * @csspart line - One source line; `data-highlighted`, `data-inserted` or `data-deleted`.
  * @csspart line-number - The line number gutter cell.
+ * @csspart line-marker - The added or removed marker of a diff line.
  * @csspart token - A token span with `data-scope`.
+ * @csspart expand - The row with the Expand control of a collapsible block.
  * @fires tp-code-copy - Cancelable, before copying; `detail.text`.
  * @fires tp-value-change - Cancelable `expanded` proposal (`trigger-press`, `imperative-action`).
  * @fires tp-diagnostic - Highlighting failures and unknown languages.
@@ -172,19 +178,33 @@ export class TpCodeBlock extends TpElement {
     `,
   ];
 
+  /** The source, in place of the element's text content; set it from script to avoid escaping markup. */
   code: string | undefined = undefined;
+  /** The language the highlighter colors; one it does not know renders as plain text. */
   language = 'plaintext';
+  /** A title such as the file name, shown in a header with the language and the copy action. */
   label = '';
+  /** Produces the syntax tokens: the built-in tokenizer, an adapter from `@tweakpad/ui/code`, or `null` for plain text. */
   highlighter: CodeHighlighter | null = builtinHighlighter;
+  /** Adds a gutter of line numbers that stays put while long lines scroll. */
   lineNumbers = false;
+  /** Lines to emphasize, as numbers and ranges such as `2,5-7`. */
   highlightLines = '';
+  /** Lines marked as added, as numbers and ranges. */
   addedLines = '';
+  /** Lines marked as removed, as numbers and ranges. */
   removedLines = '';
+  /** Clips a long block to `collapsed-lines` and adds an Expand control. */
   collapsible = false;
+  /** Starts a collapsible block expanded. */
   defaultExpanded = false;
+  /** How many lines a collapsed block shows. */
   collapsedLines = 12;
+  /** Shows the copy action; `copyable="false"` removes it. */
   copyable = true;
+  /** Wraps long lines instead of scrolling them sideways. */
   wrap = false;
+  /** Replacements for the built-in text, such as the copy action's name; missing entries keep the defaults. */
   messages: CodeBlockMessages = {};
   /** Called with each accepted or vetoed `expanded` proposal. */
   onExpandedChange: ((event: TpValueChangeEvent<boolean>) => void) | undefined;
@@ -237,6 +257,7 @@ export class TpCodeBlock extends TpElement {
     return this.code ?? this._lightCode;
   }
 
+  /** The text in use: `messages` over the defaults. */
   get codeMessages(): Required<CodeBlockMessages> {
     return { ...DEFAULT_CODE_BLOCK_MESSAGES, ...this.messages };
   }

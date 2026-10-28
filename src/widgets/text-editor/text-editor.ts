@@ -600,36 +600,8 @@ export function textEditorRouterConfig(
  * @fires tp-text-editor-ready - The editor is ready; the detail carries the engine's editor object.
  * @fires tp-text-editor-error - The engine failed to mount; `detail.error` is the reason.
  * @fires tp-diagnostic - A development diagnostic with a `text-editor-*` code.
- *
- * @cssprop --_tp-text-editor-measure - Internal: the measure as a length, from `measure`.
- *
- * @csspart text-editor - The root container.
- * @csspart text-editor-toolbar - The fixed toolbar.
- * @csspart text-editor-viewport - The scroll container of the editing surface.
- * @csspart text-editor-content - The container of the editing root.
- * @csspart text-editor-overlay - The layer of overlay marks over the content.
- * @csspart text-editor-placeholder - The placeholder text.
- * @csspart text-editor-gutter - The block gutter.
- * @csspart text-editor-insert - The gutter's insert button.
- * @csspart text-editor-grip - The gutter's block grip.
- * @csspart text-editor-drop-indicator - The block drop indicator.
- * @csspart text-editor-block-selection - The selected-block highlight.
- * @csspart text-editor-selection-toolbar - The floating selection toolbar.
- * @csspart text-editor-suggestions - The suggestion popup.
- * @csspart text-editor-link-popover - The link popover.
- * @csspart text-editor-alt-input - The alternative text field of a selected image, in the context bar.
- * @csspart text-editor-link-editor - The link editor at the caret, in the context bar.
- * @csspart text-editor-table-picker - The table size picker.
- * @csspart text-editor-swatch - A color swatch.
- * @csspart text-editor-status - The loading and error status.
- * @csspart text-editor-row-grip - A table row grip.
- * @csspart text-editor-column-grip - A table column grip.
- * @csspart text-editor-cell-handle - The table cell handle.
- * @csspart text-editor-add-row - The add-row button of a table.
- * @csspart text-editor-add-column - The add-column button of a table.
- * @csspart text-editor-resize-handle - A table column resize handle.
- * @csspart text-editor-table-selection - The table cell selection.
- * @csspart text-editor-sticky-header - The sticky table header.
+ * @fires tp-field-value - Once, when the engine first mounts, so a surrounding Field takes the
+ * mounted content as its initial value rather than as an edit.
  */
 export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
   static tagName = 'tp-text-editor';
@@ -675,7 +647,9 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
   engine: TextEditorEngine | null = null;
   /** The initial content in `format`; form reset restores it. */
   defaultValue: string | object | null = null;
+  /** The notation of `defaultValue`, of a submitted value and of `getContent()` without a format. */
   format: TextEditorFormat = 'html';
+  /** Text shown while the document is empty. */
   placeholder = '';
   /** The editing root's name when no Field labels it. */
   label = '';

@@ -67,16 +67,14 @@ export const imageMotionRoles = {
 } as const satisfies Record<string, MotionRoleDefinition>;
 
 /**
- * `tp-image`: a responsive image in an optional fixed-ratio frame, with a placeholder while it
- * loads, a fallback when it fails, and optional hover zoom, scroll parallax and viewport reveal
- * (Foundation §18.17, Component Library Image).
+ * A responsive image in an optional fixed-ratio frame, with a placeholder while it loads, a
+ * fallback when it fails, and optional hover zoom, scroll parallax and a reveal as it enters the
+ * viewport.
  *
  * The browser selects and loads the resource: request attributes and `<source>` children are
  * passed to a native `<picture>`, and loading status is read from that image, so native lazy
  * loading is never defeated by a preload. Visibility and parallax subscribe to shared observers
  * only while they are needed, so a page can hold hundreds of images.
- *
- * Markers: `data-status`, `data-in-view` (present while observed and intersecting), `data-revealed`.
  *
  * @slot - `<source>` children (media, type, srcset, sizes, width, height), in priority order.
  * @slot placeholder - Replaces the default loading placeholder.
@@ -86,7 +84,9 @@ export const imageMotionRoles = {
  * @csspart picture - The native image.
  * @csspart placeholder - The loading surface.
  * @csspart fallback - The failure surface.
- * @fires tp-loading-status-change - `{ status }` after each accepted loading status change.
+ * @fires tp-loading-status-change - The current source's loading status changed; `detail.status` is the new status.
+ * @fires tp-reveal-change - The reveal started, or reset for a repeat; `detail.revealed` and the `detail.effect` played.
+ * @fires tp-reveal-change-complete - The reveal finished settling; `detail.revealed`.
  * @cssprop --tp-image-position - Object position of the image. Default `50% 50%`.
  * @cssprop --tp-image-zoom-scale - Hover zoom scale. Default `1.1`.
  * @cssprop --tp-image-reveal-distance - Reveal travel. Default `var(--tp-space-6)`.
@@ -423,24 +423,41 @@ export class TpImage extends TpElement {
     `,
   ];
 
+  /** The image URL. */
   src = '';
+  /** What the image shows, for assistive technology; empty marks it decorative. */
   alt = '';
+  /** Responsive image candidates; with width descriptors and lazy loading, `sizes` defaults to the rendered width. */
   srcSet = '';
+  /** The image's display sizes for choosing among `srcset` candidates. */
   sizes = '';
+  /** The image request's CORS mode. */
   crossOrigin: '' | 'anonymous' | 'use-credentials' = '';
+  /** The referrer policy of the image request. */
   referrerPolicy: ReferrerPolicy = '';
+  /** A hint for how urgently to fetch the image: `high` for the largest image above the fold. */
   fetchPriority: '' | 'high' | 'low' | 'auto' = '';
+  /** The intrinsic width in pixels, which reserves space before the image loads. */
   width: number | undefined;
+  /** The intrinsic height in pixels, which reserves space before the image loads. */
   height: number | undefined;
+  /** Defers loading until the image nears the viewport; `eager` for images visible on load. */
   loading: 'lazy' | 'eager' = 'lazy';
+  /** How the image fills its frame: cropped, letterboxed, stretched or at its own size. */
   fit: ImageFit = 'cover';
+  /** The surface shown while the image loads. */
   placeholder: ImagePlaceholder = 'skeleton';
+  /** Scales the image in or out on hover, inside its frame. */
   zoom: ImageZoom = 'none';
+  /** Applies the zoom without hover, for example while an enclosing card is hovered. */
   zoomed = false;
+  /** Scroll-linked effects: one direction the image travels, a scroll zoom, or both, such as `up zoom-in`. */
   parallax: ImageParallax = 'none';
+  /** How strongly the parallax image is enlarged and travels, from 0 to 1. */
   parallaxDepth = 0.3;
-  /** Share of the remaining scroll-linked motion left after a 60 Hz frame; 0 is locked to scroll. */
+  /** How far parallax and scroll zoom trail the scroll, from 0 (locked to it) toward 1. */
   parallaxSmoothing = 0;
+  /** Effects played as the image first enters the viewport: any of `fade`, `up`, `down`, `left`, `right`, `zoom-in` and `zoom-out`. */
   reveal = '';
   /** Reveal again on every viewport entry instead of only the first. */
   revealRepeat = false;

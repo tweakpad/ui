@@ -1,0 +1,69 @@
+---
+title: Skeleton
+description: A decorative placeholder that reserves the shape of content while it loads.
+tag: tp-skeleton
+---
+
+<Preview
+  code={`<div role="group" aria-busy="true" aria-label="Loading profile" style="display:flex;align-items:center;gap:var(--tp-space-4)">
+  <tp-skeleton style="inline-size:var(--tp-space-10);block-size:var(--tp-space-10);border-radius:var(--tp-radius-full);flex:none"></tp-skeleton>
+  <div style="display:grid;gap:var(--tp-space-2)">
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 38);block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 25);block-size:var(--tp-space-4)"></tp-skeleton>
+  </div>
+</div>`}
+/>
+
+## Usage
+
+A Skeleton holds the place of content that is on its way, so the page does not jump when it arrives. It has no size or shape of its own: ordinary layout sets its width and height, and a radius token on the host rounds it into a line, a block or a circle. It is always hidden from assistive technology, so mark the region that is loading with `aria-busy` and a name. It pulses by default; `motion="sweep"` passes a highlight across it instead, and a reduced-motion preference stops either.
+
+### Article card
+
+<Preview
+  code={`<tp-card aria-busy="true" aria-label="Loading article" style="inline-size:20rem">
+  <div slot="header" style="display:grid;gap:var(--tp-space-2)">
+    <tp-skeleton style="inline-size:66%;block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:50%;block-size:var(--tp-space-4)"></tp-skeleton>
+  </div>
+  <tp-skeleton style="aspect-ratio:16 / 9;inline-size:100%;border-radius:var(--tp-radius-lg)"></tp-skeleton>
+</tp-card>`}
+/>
+
+Place the placeholders inside the real container, here the Card the article will fill, so only the content changes when it arrives.
+
+### Video and description
+
+<Preview
+  code={`<div role="group" aria-busy="true" aria-label="Loading video" style="display:grid;gap:var(--tp-space-3);inline-size:24rem;max-inline-size:100%">
+  <tp-aspect-ratio ratio="2" style="border-radius:var(--tp-radius-xl)">
+    <tp-skeleton style="border-radius:inherit"></tp-skeleton>
+  </tp-aspect-ratio>
+  <tp-skeleton style="inline-size:60%;block-size:var(--tp-space-5)"></tp-skeleton>
+  <div style="display:grid;gap:var(--tp-space-2)">
+    <tp-skeleton style="block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="inline-size:75%;block-size:var(--tp-space-4)"></tp-skeleton>
+  </div>
+</div>`}
+/>
+
+An Aspect-ratio box holds the exact frame of the coming image or video, and a few full-width lines with a shorter last one read as a paragraph.
+
+### Settings form
+
+<Preview
+  code={`<div role="group" aria-busy="true" aria-label="Loading account settings" style="display:grid;gap:var(--tp-space-6);inline-size:24rem;max-inline-size:100%">
+  <div style="display:grid;gap:var(--tp-space-2)">
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 20);block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="block-size:var(--tp-control-height-md)"></tp-skeleton>
+  </div>
+  <div style="display:grid;gap:var(--tp-space-2)">
+    <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 28);block-size:var(--tp-space-4)"></tp-skeleton>
+    <tp-skeleton style="block-size:var(--tp-control-height-md)"></tp-skeleton>
+  </div>
+  <tp-skeleton style="inline-size:calc(var(--tp-spacing) * 24);block-size:var(--tp-control-height-md)"></tp-skeleton>
+</div>`}
+/>
+
+Each label, field and the submit button is reserved at its real height, using the control height tokens, so the form lands in place. Placeholders stand in for controls instead of empty or disabled ones, which would offer structure that cannot be used yet.

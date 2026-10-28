@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
-import { bubbleExamples } from './bubble.examples.js';
-import documentation from '../../docs/bubble.md?raw';
+import { libraryDocs } from './library-docs.js';
 import {
   renderBubbleExample,
   bubbleDefaults,
@@ -9,9 +8,7 @@ import {
 const meta = {
   title: 'Components/Bubble',
   component: 'tp-bubble',
-  parameters: {
-    docs: { description: { component: documentation }, examples: bubbleExamples },
-  },
+  parameters: { docs: libraryDocs('components/bubble') },
   args: bubbleDefaults,
   argTypes: {
     variant: {

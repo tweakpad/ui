@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
+import { libraryDocs } from './library-docs.js';
 import type { TpToast, ToastPosition, ToastSwipeDirection } from '../components/toast/index.js';
-import documentation from '../../docs/toast.md?raw';
 import { formatTime, resolveTime } from '../foundation/time/index.js';
 
 interface Args {
@@ -18,32 +18,7 @@ const meta: Meta<Args> = {
   title: 'Components/Toast',
   component: 'tp-toast',
   parameters: {
-    docs: {
-      description: { component: documentation },
-      source: {
-        language: 'html',
-        code: `<tp-button id="show-notification" variant="outline">Show notification</tp-button>
-<tp-toast id="notifications" timeout="5000" limit="3"></tp-toast>
-
-<script type="module">
-import '@tweakpad/ui/register';
-import '@tweakpad/ui/styles.css';
-import { formatTime, resolveTime } from '@tweakpad/ui';
-
-const notifications = document.querySelector('tp-toast#notifications');
-document.querySelector('tp-button#show-notification').addEventListener('click', () => {
-  notifications.add({
-    title: 'Event created',
-    description: formatTime(resolveTime('2023-12-03T09:00'), Date.now(), {
-      mode: 'absolute',
-      preset: 'full',
-    }).text,
-    type: 'success',
-  });
-});
-</script>`,
-      },
-    },
+    docs: libraryDocs('components/toast'),
   },
   args: {
     timeout: 5000,
@@ -58,17 +33,13 @@ document.querySelector('tp-button#show-notification').addEventListener('click', 
   argTypes: {
     timeout: {
       control: { type: 'number', min: 0 },
-      description: 'Provider lifetime in milliseconds; zero is persistent.',
     },
     limit: {
       control: { type: 'number', min: 0, step: 1 },
-      description:
-        'Maximum visible active notifications; oldest excess items remain limited/inert.',
     },
     priority: {
       control: 'select',
       options: ['polite', 'assertive'],
-      description: 'Library alias; the example maps it to the new ToastObject low/high priority.',
     },
     position: {
       control: 'select',
@@ -83,15 +54,12 @@ document.querySelector('tp-button#show-notification').addEventListener('click', 
     },
     swipeDirections: {
       control: 'object',
-      description:
-        'Physical directions permitted for gesture dismissal; empty array disables swiping.',
     },
-    dismissible: { control: 'boolean', description: 'Independently shows the Close control.' },
+    dismissible: { control: 'boolean' },
     showIcon: {
       control: 'boolean',
-      description: 'Independently shows status icon/loading decoration.',
     },
-    label: { control: 'text', description: 'Notification landmark accessible name.' },
+    label: { control: 'text' },
   },
   render: (args) =>
     html`<div>

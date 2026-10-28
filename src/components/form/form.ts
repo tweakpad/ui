@@ -29,6 +29,19 @@ const configurationAttributes = [
   ...nativeAttributes,
 ];
 
+/**
+ * A native form that coordinates the Fields inside it: it validates them on submit, focuses the
+ * first invalid control, shows server errors on the matching Fields and hands the named values to
+ * your submit handler. Its children move into a native form element, so controls submit and reset
+ * natively.
+ *
+ * @fires tp-submit - Cancelable, after the Fields pass validation and before the native submission;
+ * `detail.values` holds the named values, with the native `form`, `data`, `submitter` and
+ * `validationRun`.
+ * @fires tp-invalid - When a submission is blocked by an invalid Field or native constraint;
+ * `detail.form`, with the `validationRun` or the invalid `control`.
+ * @fires tp-reset - After a reset restores the controls; `detail.values` holds the restored values.
+ */
 export class TpForm extends TpElement {
   static tagName = 'tp-form';
   static override presentation = formPresentation;
@@ -55,6 +68,10 @@ export class TpForm extends TpElement {
         element.requestUpdate?.();
   }
   #errors: Record<string, string | readonly string[]> = {};
+  /**
+   * Errors from the server, keyed by Field name; each matching Field shows its messages until you
+   * replace the record.
+   */
   get errors(): Record<string, string | readonly string[]> {
     return this.#errors;
   }
@@ -64,6 +81,10 @@ export class TpForm extends TpElement {
       if (field.closest('tp-form') === this && !field.fieldSet) field.requestUpdate();
     this.#updateActions();
   }
+  /**
+   * Called with the named values on a valid submission instead of the native navigation; the second
+   * argument carries the native form, its data, the submitter and the validation run.
+   */
   onFormSubmit:
     | ((
         values: Record<string, unknown>,
@@ -76,7 +97,12 @@ export class TpForm extends TpElement {
         },
       ) => void)
     | undefined;
+  /**
+   * The Form's actions as plain functions, for passing `validate` to code that holds no reference
+   * to the element.
+   */
   readonly actions = { validate: (name?: string) => this.validate(name) };
+  /** The current values of the named Fields inside the Form; repeated names collect into a list. */
   get values(): Record<string, unknown> {
     return fieldValues(
       [...this.querySelectorAll<TpField>('tp-field')]
@@ -84,6 +110,10 @@ export class TpForm extends TpElement {
         .map((field) => ({ name: field.effectiveName, value: field.value })),
     );
   }
+  /**
+   * When the Fields inside validate unless they set their own: on submit, when a control loses
+   * focus, or on every change.
+   */
   get validationMode(): 'on-submit' | 'on-blur' | 'on-change' {
     const value = this.getAttribute('validation-mode');
     return value === 'on-blur' || value === 'on-change'
@@ -105,6 +135,7 @@ export class TpForm extends TpElement {
   #submissionValidation = false;
   #prevalidated = false;
   #policyActions = new Set<HTMLElement>();
+  /** An older name for `validationMode`, used when `validation-mode` is not set. */
   get validationTiming(): 'on-submit' | 'on-blur' | 'on-change' {
     const value = this.getAttribute('validation-timing');
     return value === 'on-blur' || value === 'on-change' ? value : 'on-submit';
@@ -112,6 +143,10 @@ export class TpForm extends TpElement {
   set validationTiming(value: 'on-submit' | 'on-blur' | 'on-change') {
     this.setAttribute('validation-timing', value);
   }
+  /**
+   * Whether the browser's own constraint bubbles may show; `suppressed` leaves error display to the
+   * Fields.
+   */
   get nativeValidation(): 'enabled' | 'suppressed' {
     return this.getAttribute('native-validation') === 'suppressed' ? 'suppressed' : 'enabled';
   }
@@ -119,6 +154,10 @@ export class TpForm extends TpElement {
     this.setAttribute('native-validation', value);
     if (this.#form) this.#form.noValidate = value === 'suppressed' || this.novalidate;
   }
+  /**
+   * When submit Buttons are disabled: never, while any Field is invalid, or while a validation is
+   * pending.
+   */
   get submissionPolicy(): 'always-enabled' | 'disable-while-invalid' | 'disable-while-pending' {
     const value = this.getAttribute('submission-policy');
     return value === 'disable-while-invalid' || value === 'disable-while-pending'
@@ -138,12 +177,14 @@ export class TpForm extends TpElement {
   set noAutofill(value: boolean) {
     this.toggleAttribute('no-autofill', value);
   }
+  /** Skips native constraint validation on submit, as on a native form. */
   get novalidate(): boolean {
     return this.hasAttribute('novalidate');
   }
   set novalidate(value: boolean) {
     this.toggleAttribute('novalidate', value);
   }
+  /** The native form element the Form renders its children into. */
   get form(): HTMLFormElement | null {
     return this.#form;
   }
@@ -215,6 +256,9 @@ export class TpForm extends TpElement {
     this.#policyActions.clear();
     super.disconnectedCallback();
   }
+  /**
+   * Validates and submits as a press on the given submit control would, including a library Button.
+   */
   requestSubmit(submitter?: HTMLElement): void {
     if (
       !this.#form ||
@@ -248,15 +292,22 @@ export class TpForm extends TpElement {
     proxy.remove();
     this.#submitter = null;
   }
+  /** Restores every control to its default value, as a native reset does. */
   reset(): void {
     this.#form?.reset();
   }
+  /** Whether every native constraint in the form is satisfied, without showing errors. */
   checkValidity(): boolean {
     return this.#form?.checkValidity() ?? true;
   }
+  /** Checks the native constraints and lets the browser report the first failure. */
   reportValidity(): boolean {
     return this.#form?.reportValidity() ?? true;
   }
+  /**
+   * Validates every Field, or only the one with the given name, and returns the run; a newer run
+   * cancels this one.
+   */
   validate(name?: string): ValidationRun {
     this.#validationRun?.cancel();
     const run = new ValidationRun(++this.#validationGeneration);

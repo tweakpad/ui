@@ -1,15 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { useArgs } from 'storybook/preview-api';
 import { html } from 'lit';
-import collapsibleDocumentation from '../../docs/collapsible.md?raw';
+import { libraryDocs } from './library-docs.js';
 import type {
   CollapsibleContentAlignment,
   CollapsibleIndicatorPosition,
 } from '../components/collapsible/collapsible.js';
 import type { TpOpenChangeEvent } from '../foundation/events.js';
-import type { MotionPolicy, TpMotionRequestEvent } from '../foundation/motion.js';
-import { plusIcon } from '../icons/plus.js';
-import { playLineByLine } from './line-by-line-motion.js';
+import type { MotionPolicy } from '../foundation/motion.js';
 
 interface CollapsibleStoryArgs {
   open: boolean;
@@ -24,28 +22,10 @@ interface CollapsibleStoryArgs {
   onOpenChange?: (event: TpOpenChangeEvent) => void;
 }
 
-interface CollapsibleFixtureOptions {
-  showLeadingContent: boolean;
-  showTrailingContent: boolean;
-  contentMotion: 'none' | 'line-by-line';
-}
-
-const defaultCollapsibleFixture: CollapsibleFixtureOptions = {
-  showLeadingContent: false,
-  showTrailingContent: false,
-  contentMotion: 'none',
-};
-
 const meta: Meta<CollapsibleStoryArgs> = {
   title: 'Components/Collapsible',
   component: 'tp-collapsible',
-  parameters: {
-    docs: {
-      description: {
-        component: collapsibleDocumentation.replace(/^# Collapsible\n/u, ''),
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/collapsible') },
   args: {
     open: false,
     defaultOpen: false,
@@ -60,33 +40,27 @@ const meta: Meta<CollapsibleStoryArgs> = {
   argTypes: {
     open: {
       control: 'boolean',
-      description: 'Current disclosure state; accepted Trigger interactions update it.',
       table: { category: 'Root', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     defaultOpen: {
       control: 'boolean',
-      description: 'Initial state when the open attribute is absent.',
       table: { category: 'Root', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     disabled: {
       control: 'boolean',
-      description: 'Prevents Trigger activation without changing the current open state.',
       table: { category: 'Root', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     keepMounted: {
       control: 'boolean',
-      description: 'Ends closed Content in the retained presence state.',
       table: { category: 'Root', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     hiddenUntilFound: {
       control: 'boolean',
-      description: 'Retains closed Content as hidden-until-found for browser search and reveal.',
       table: { category: 'Root', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     motionPolicy: {
       control: 'radio',
       options: ['inherit', 'normal', 'reduce'],
-      description: 'Resolves motion policy for this Collapsible subtree.',
       table: {
         category: 'Root',
         type: { summary: "'inherit' | 'normal' | 'reduce'" },
@@ -96,8 +70,6 @@ const meta: Meta<CollapsibleStoryArgs> = {
     contentAlignment: {
       control: 'radio',
       options: ['edge', 'label'],
-      description:
-        'Aligns ContentBody’s logical inline start to the component edge or the Label position.',
       table: {
         category: 'Root',
         type: { summary: "'edge' | 'label'" },
@@ -107,8 +79,6 @@ const meta: Meta<CollapsibleStoryArgs> = {
     indicatorPosition: {
       control: 'radio',
       options: ['leading', 'trailing'],
-      description:
-        'Logical position whose empty slot renders this Collapsible’s default disclosure indicator.',
       table: {
         category: 'Root',
         type: { summary: "'leading' | 'trailing'" },
@@ -117,7 +87,6 @@ const meta: Meta<CollapsibleStoryArgs> = {
     },
     headingLevel: {
       control: { type: 'range', min: 0, max: 6, step: 1 },
-      description: 'Optional semantic Trigger heading level; 0 omits heading semantics.',
       table: {
         category: 'Root',
         type: { summary: '0–6' },
@@ -126,7 +95,6 @@ const meta: Meta<CollapsibleStoryArgs> = {
     },
     onOpenChange: {
       control: false,
-      description: 'Property-only callback invoked after an accepted tp-open-change proposal.',
       table: {
         category: 'Root',
         type: { summary: '(event: TpOpenChangeEvent) => void' },
@@ -137,18 +105,10 @@ const meta: Meta<CollapsibleStoryArgs> = {
   render: (args) => renderCollapsible(args),
 };
 
-function renderCollapsible(
-  args: CollapsibleStoryArgs,
-  options: Partial<CollapsibleFixtureOptions> = {},
-) {
-  const fixture = { ...defaultCollapsibleFixture, ...options };
+function renderCollapsible(args: CollapsibleStoryArgs) {
   const [, updateArgs] = useArgs<CollapsibleStoryArgs>();
   const handleOpenChange = (event: TpOpenChangeEvent): void => {
     updateArgs({ open: event.detail.value });
-  };
-  const handleMotionRequest = (event: TpMotionRequestEvent): void => {
-    if (fixture.contentMotion !== 'line-by-line' || event.request.role !== 'content') return;
-    event.respondWith({ play: playLineByLine });
   };
   return html`
     <tp-collapsible
@@ -163,19 +123,8 @@ function renderCollapsible(
       .headingLevel=${args.headingLevel}
       .onOpenChange=${args.onOpenChange}
       @tp-open-change=${handleOpenChange}
-      @tp-motion-request=${handleMotionRequest}
     >
-      ${
-        fixture.showLeadingContent
-          ? html`<tp-badge slot="leading" variant="accent">New</tp-badge>`
-          : null
-      }
       <span slot="label">Project details</span>
-      ${
-        fixture.showTrailingContent
-          ? html`<tp-icon slot="trailing" .icon=${plusIcon}></tp-icon>`
-          : null
-      }
       <p>Created today and shared with three collaborators.</p>
       <p>
         Review ownership, access rules, and the longer description associated with this project
@@ -189,16 +138,3 @@ export default meta;
 type Story = StoryObj<CollapsibleStoryArgs>;
 
 export const Default: Story = {};
-
-export const LeadingContent: Story = {
-  render: (args) => renderCollapsible(args, { showLeadingContent: true }),
-};
-
-export const TrailingContent: Story = {
-  render: (args) => renderCollapsible(args, { showTrailingContent: true }),
-};
-
-export const ExternalLineByLineMotion: Story = {
-  args: { open: true },
-  render: (args) => renderCollapsible(args, { contentMotion: 'line-by-line' }),
-};

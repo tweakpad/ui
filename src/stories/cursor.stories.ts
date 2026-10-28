@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/cursor.md?raw';
-import { cursorDefaultSource, cursorExamples } from './cursor.examples.js';
+import { libraryDocs } from './library-docs.js';
 import type { CursorScope } from '../components/cursor/index.js';
 import type { MotionPolicy } from '../foundation/motion.js';
 
@@ -20,13 +19,7 @@ interface Args {
 const meta = {
   title: 'Components/Cursor',
   component: 'tp-cursor',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: cursorExamples,
-      source: { code: cursorDefaultSource, language: 'javascript' },
-    },
-  },
+  parameters: { docs: libraryDocs('components/cursor') },
   args: {
     stiffness: 170,
     damping: 26,
@@ -41,46 +34,37 @@ const meta = {
   argTypes: {
     stiffness: {
       control: { type: 'range', min: 1, max: 1000, step: 1 },
-      description: 'Spring stiffness.',
       table: { defaultValue: { summary: '170' } },
     },
     damping: {
       control: { type: 'range', min: 0, max: 100, step: 0.5 },
-      description: 'Damping coefficient; near 2√(stiffness·mass) is critical.',
       table: { defaultValue: { summary: '26' } },
     },
     mass: {
       control: { type: 'range', min: 0.1, max: 10, step: 0.1 },
-      description: 'Mass.',
       table: { defaultValue: { summary: '1' } },
     },
     restSpeed: {
       control: { type: 'number', min: 0, step: 0.5 },
-      description: 'Speed in pixels per second below which the follower settles.',
       table: { defaultValue: { summary: '1' } },
     },
     restDelta: {
       control: { type: 'number', min: 0, step: 0.05 },
-      description: 'Distance in pixels below which the follower settles.',
       table: { defaultValue: { summary: '0.1' } },
     },
     scope: {
       control: 'inline-radio',
       options: ['document', 'region'],
-      description:
-        'Follow everywhere, or only inside the parent element. The story keeps to its own region so the docs page keeps its pointer; the component default is `document`.',
       table: { defaultValue: { summary: 'document' } },
     },
     hideNative: {
       control: 'boolean',
-      description: 'Hide the host pointer while following.',
       table: { defaultValue: { summary: 'true' } },
     },
     disabled: { control: 'boolean', table: { defaultValue: { summary: 'false' } } },
     motionPolicy: {
       control: 'inline-radio',
       options: ['inherit', 'normal', 'reduce'],
-      description: 'Reduced-motion policy; `reduce` follows instantly.',
       table: { defaultValue: { summary: 'inherit' } },
     },
   },

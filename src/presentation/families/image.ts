@@ -10,24 +10,31 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'image',
+      description: 'The host, which reveal and parallax move.',
     },
     {
       name: 'image-frame',
+      description: 'The clipping frame, a fixed-ratio box when `ratio` is set.',
     },
     {
       name: 'image-media',
+      description: 'The layer that zoom and parallax transform.',
     },
     {
       name: 'image-picture',
+      description: 'The native image.',
     },
     {
       name: 'image-placeholder',
+      description: 'The surface shown while the image loads.',
     },
     {
       name: 'image-group',
+      description: 'The Image group host.',
     },
     {
       name: 'image-fallback',
+      description: 'The surface shown when the image fails.',
     },
   ],
 };

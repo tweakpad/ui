@@ -53,6 +53,19 @@ const motionState = (value: unknown): MotionValue =>
 const memberValue = (element: TabsMember): unknown =>
   element.value ?? element.getAttribute('value');
 
+/**
+ * One panel at a time from a set of peers, with native tab buttons and roving keyboard focus. Tabs
+ * and panels are the caller's own elements, matched by `value`; Tabs supplies their roles and
+ * relationships.
+ *
+ * @slot tab - The tabs, preferably native buttons, each with a unique `value`; nothing interactive
+ *   inside them.
+ * @slot panel - The panels, each with the `value` of its tab; `keep-mounted` keeps an inactive one
+ *   in the document, hidden and inert.
+ * @slot indicator - A decorative element that replaces the default selection indicator.
+ * @fires tp-value-change - Cancelable proposal of the selected tab's `value`, from a press, a key
+ *   or `setValue()`; `detail.metadata.activationDirection` says which way the selection moved.
+ */
 export class TpTabs extends TpElement {
   static tagName = 'tp-tabs';
   static override presentation = tabsPresentation;
@@ -182,14 +195,23 @@ export class TpTabs extends TpElement {
 
   #input: unknown = undefined;
   #selection: TabsSelection | undefined;
+  /** Initial selection when Tabs owns it; without one, the first enabled tab is selected. */
   defaultValue: unknown = undefined;
+  /** Called with each selection proposal before `tp-value-change` is dispatched; cancel it to keep the current tab. */
   onValueChange: ((event: TpValueChangeEvent<unknown>) => void) | undefined;
+  /** `manual` selects on Enter or Space; `automatic` selects as focus moves, for panels that are cheap to show. */
   activation: 'automatic' | 'manual' = 'manual';
+  /** Whether arrow keys wrap from the last tab to the first; set the property to `false` to stop at the ends. */
   loopFocus = true;
+  /** Shows the indicator before any tab is selected and measured. */
   renderBeforeActivation = false;
+  /** `enclosed` for tabs that switch a contained surface, `underline` for lighter page-level navigation. */
   variant: 'enclosed' | 'underline' = 'enclosed';
+  /** Accessible name of the tab list. */
   label = '';
+  /** Which way the last selection moved: `left`, `right`, `up`, `down` or `none`. */
   activationDirection: TabsActivationDirection = 'none';
+  /** The selected tab's value. Set before the first render, it makes selection controlled: write each accepted proposal back to it. */
   get value(): unknown {
     return this.#selection ? this.#selection.value : this.#input;
   }
@@ -213,6 +235,7 @@ export class TpTabs extends TpElement {
     this.requestUpdate('value', previous);
     if (this.hasUpdated) this.#sync();
   }
+  /** Shorthand for `activation="automatic"`. */
   get activateOnFocus(): boolean {
     return this.activation === 'automatic';
   }
@@ -236,13 +259,15 @@ export class TpTabs extends TpElement {
   #duplicates = new Set<HTMLElement>();
   #ids = new WeakMap<HTMLElement, string>();
 
+  /** Every panel, including inactive ones detached from the document. */
   get panels(): readonly HTMLElement[] {
     return [...this.#panels.keys()];
   }
-  /** Re-read non-reactive member properties after assigning comparable values or retention. */
+  /** Reads the tabs and panels again after their `value`, `keepMounted`, `disabled` or `nativeAction` properties change from script. */
   refresh(): void {
     this.#sync();
   }
+  /** Proposes a selection from code, as a press would; returns whether it was accepted. */
   setValue(value: unknown): boolean {
     this.#initialize();
     return this.#request(value, 'programmatic');

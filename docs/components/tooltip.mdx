@@ -1,0 +1,153 @@
+---
+title: Tooltip
+description: A brief description of a focusable control, shown on hover after a delay and on keyboard focus at once.
+tag: tp-tooltip
+---
+
+<Preview
+  code={`<tp-tooltip>
+  <tp-button slot="trigger" variant="outline" size="icon">
+    <tp-icon slot="icon-start" id="tooltip-download-icon"></tp-icon>
+    Download invoice
+  </tp-button>
+  Download invoice as PDF
+</tp-tooltip>`}
+  script={`import { downloadIcon } from '@tweakpad/ui/icons/download';
+
+document.getElementById('tooltip-download-icon').icon = downloadIcon;`}
+/>
+
+## Usage
+
+Put the control in the `trigger` slot and the description in the default slot. Hover opens it after a short delay so it does not flash as the pointer passes; keyboard focus opens it at once. The text becomes the trigger's accessible description and never its name, so an icon button still needs its own label, as the Button's hidden text gives it here. Only text, an Icon or a Key Hint belong inside: anything to press or type into belongs in a Popover.
+
+### Placement
+
+<Preview
+  code={`<tp-tooltip side="block-start"><tp-button slot="trigger" variant="outline">Above</tp-button>Shown above</tp-tooltip>
+<tp-tooltip side="inline-end"><tp-button slot="trigger" variant="outline">After</tp-button>Shown after the trigger</tp-tooltip>
+<tp-tooltip side="block-end"><tp-button slot="trigger" variant="outline">Below</tp-button>Shown below</tp-tooltip>
+<tp-tooltip side="inline-start"><tp-button slot="trigger" variant="outline">Before</tp-button>Shown before the trigger</tp-tooltip>`}
+/>
+
+A tooltip sits above its trigger unless `side` moves it, for example below a control at the top of the screen; `align` moves it along that side. Logical sides follow the writing direction, and a tooltip that would leave the viewport flips to the other side.
+
+### Shortcuts
+
+<Preview
+  code={`<tp-tooltip>
+  <tp-button slot="trigger" variant="outline">New issue</tp-button>
+  Create an issue
+  <tp-key-hint-group separator="none" platform="mac">
+    <tp-key-hint key="command"></tp-key-hint><tp-key-hint key="I"></tp-key-hint>
+  </tp-key-hint-group>
+</tp-tooltip>`}
+/>
+
+A Key Hint teaches the shortcut where people already look for help, and the tooltip restyles it for its dark surface.
+
+### Timing
+
+<Preview
+  code={`<tp-tooltip open-delay="0"><tp-button slot="trigger" variant="outline">Instant</tp-button>Opens with no delay</tp-tooltip>
+<tp-tooltip open-delay="1200" close-delay="300"><tp-button slot="trigger" variant="outline">Patient</tp-button>Waits 1.2 seconds to open</tp-tooltip>`}
+/>
+
+`open-delay` and `close-delay` tune the pointer timing in milliseconds. Keep the delay in a dense toolbar, so tooltips stay quiet as the pointer crosses it; shorten it where the description is the point.
+
+### Usage readouts
+
+<Preview
+  code={`<tp-tooltip track-cursor-axis="horizontal" side="block-start">
+  <div slot="trigger" tabindex="0" style="display:grid;place-items:center;inline-size:28rem;max-inline-size:100%;min-block-size:5rem;border:var(--tp-border-width) dashed var(--tp-border);border-radius:var(--tp-radius-lg);color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">
+    Storage: 42 GB of 100 GB used
+  </div>
+  Photos 28 GB · Documents 9 GB · Other 5 GB
+</tp-tooltip>`}
+/>
+
+Over a wide target such as a chart or a usage bar, `track-cursor-axis` keeps the tooltip at the pointer along one axis or both, so it stays next to what the reader is looking at.
+
+### Toolbar groups
+
+<Preview
+  code={`<div id="tooltip-toolbar" style="display:flex;gap:var(--tp-space-1)">
+  <tp-tooltip>
+    <tp-button slot="trigger" variant="ghost" size="icon-sm"><tp-icon slot="icon-start" id="tooltip-bold-icon"></tp-icon>Bold</tp-button>
+    Bold
+  </tp-tooltip>
+  <tp-tooltip>
+    <tp-button slot="trigger" variant="ghost" size="icon-sm"><tp-icon slot="icon-start" id="tooltip-italic-icon"></tp-icon>Italic</tp-button>
+    Italic
+  </tp-tooltip>
+  <tp-tooltip>
+    <tp-button slot="trigger" variant="ghost" size="icon-sm"><tp-icon slot="icon-start" id="tooltip-underline-icon"></tp-icon>Underline</tp-button>
+    Underline
+  </tp-tooltip>
+  <tp-tooltip>
+    <tp-button slot="trigger" variant="ghost" size="icon-sm"><tp-icon slot="icon-start" id="tooltip-link-icon"></tp-icon>Insert link</tp-button>
+    Insert link
+  </tp-tooltip>
+</div>`}
+  script={`import { TooltipProvider } from '@tweakpad/ui';
+import { boldIcon, italicIcon, underlineIcon } from '@tweakpad/ui/icons/text-formatting';
+import { linkIcon } from '@tweakpad/ui/icons/link';
+
+document.getElementById('tooltip-bold-icon').icon = boldIcon;
+document.getElementById('tooltip-italic-icon').icon = italicIcon;
+document.getElementById('tooltip-underline-icon').icon = underlineIcon;
+document.getElementById('tooltip-link-icon').icon = linkIcon;
+const provider = new TooltipProvider({ openDelay: 600, restTimeout: 400 });
+await customElements.whenDefined('tp-tooltip');
+for (const tooltip of document.querySelectorAll('#tooltip-toolbar tp-tooltip')) {
+  tooltip.provider = provider;
+}`}
+/>
+
+In a toolbar the first tooltip should wait and the next ones should not. One `TooltipProvider` shared by the toolbar's tooltips does that: once one has opened, moving to a neighbour opens its tooltip at once, until the pointer has rested away for `restTimeout`. Only one tooltip of the group is open at a time.
+
+### Team avatars
+
+<Preview
+  code={`<div id="tooltip-team" style="display:flex;gap:var(--tp-space-2)">
+  <tp-avatar fallback="MC" alt="Maya Chen" tabindex="0" data-name="Maya Chen" data-role="Design lead"></tp-avatar>
+  <tp-avatar fallback="JW" alt="Jonas Weber" tabindex="0" data-name="Jonas Weber" data-role="Backend engineer"></tp-avatar>
+  <tp-avatar fallback="PP" alt="Priya Patel" tabindex="0" data-name="Priya Patel" data-role="Product manager"></tp-avatar>
+  <tp-avatar fallback="LR" alt="Luca Rossi" tabindex="0" data-name="Luca Rossi" data-role="Support"></tp-avatar>
+</div>
+<tp-tooltip id="tooltip-team-tip"></tp-tooltip>`}
+  script={`import { createTooltipHandle } from '@tweakpad/ui';
+import { html } from 'lit';
+
+const handle = createTooltipHandle();
+const tooltip = document.getElementById('tooltip-team-tip');
+tooltip.handle = handle;
+tooltip.content = (person) =>
+  person ? html\`<span style="display:grid"><strong>\${person.name}</strong>\${person.role}</span>\` : '';
+for (const avatar of document.querySelectorAll('#tooltip-team tp-avatar')) {
+  handle.registerTrigger(avatar, {
+    identifier: avatar.dataset.name,
+    payload: { name: avatar.dataset.name, role: avatar.dataset.role },
+    openDelay: 200,
+  });
+}`}
+/>
+
+A long row of people does not need a tooltip each. One tooltip attached to a handle from `createTooltipHandle()` serves every trigger registered on it, and its `content` renders the payload of whichever trigger is active. `registerTrigger()` returns a cleanup function, and `handle.open(identifier)` opens the tooltip for one trigger from code.
+
+### Paused hints
+
+<Preview
+  code={`<tp-tooltip disabled>
+  <tp-button slot="trigger" variant="outline">Archive</tp-button>
+  Move this project to the archive
+</tp-tooltip>`}
+/>
+
+`disabled` on the Tooltip silences the description only, for example after the reader has dismissed onboarding hints; the Button it describes stays active.
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="esc" /> | Closes the tooltip and keeps focus on the trigger. |

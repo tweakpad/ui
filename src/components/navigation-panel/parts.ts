@@ -86,6 +86,12 @@ function markers(owner: NavigationPanelOwner): Record<string, unknown> {
     'data-collapse-mode': state.collapseMode,
   };
 }
+/**
+ * The page beside the navigation: the main landmark, which keeps its place as the navigation
+ * expands, collapses or moves into the Drawer.
+ *
+ * @slot - The page content.
+ */
 export class TpNavigationPanelInset extends NavigationPanelLayoutPart {
   static override styles = [
     NavigationPanelLayoutPart.styles,
@@ -105,11 +111,21 @@ export class TpNavigationPanelInset extends NavigationPanelLayoutPart {
   static override partName = 'navigation-panel-inset';
   static override nativeTag = 'main';
 }
+/**
+ * The top region of the navigation, for a team switcher or the product name.
+ *
+ * @slot - The header content.
+ */
 export class TpNavigationPanelHeader extends NavigationPanelLayoutPart {
   static tagName = 'tp-navigation-panel-header';
   static override partName = 'navigation-panel-header';
   static override nativeTag = 'header';
 }
+/**
+ * The scrolling middle region of the navigation, holding its groups.
+ *
+ * @slot - The groups and menus.
+ */
 export class TpNavigationPanelContent extends NavigationPanelLayoutPart {
   static override styles = [
     NavigationPanelLayoutPart.styles,
@@ -130,11 +146,21 @@ export class TpNavigationPanelContent extends NavigationPanelLayoutPart {
   static tagName = 'tp-navigation-panel-content';
   static override partName = 'navigation-panel-content';
 }
+/**
+ * The bottom region of the navigation, for the account menu or settings.
+ *
+ * @slot - The footer content.
+ */
 export class TpNavigationPanelFooter extends NavigationPanelLayoutPart {
   static tagName = 'tp-navigation-panel-footer';
   static override partName = 'navigation-panel-footer';
   static override nativeTag = 'footer';
 }
+/**
+ * A titled section of the navigation, such as Projects.
+ *
+ * @slot - The group label, an optional group action and the group content or menu.
+ */
 export class TpNavigationPanelGroup extends NavigationPanelLayoutPart {
   static override styles = [
     NavigationPanelLayoutPart.styles,
@@ -147,6 +173,11 @@ export class TpNavigationPanelGroup extends NavigationPanelLayoutPart {
   static tagName = 'tp-navigation-panel-group';
   static override partName = 'navigation-panel-group';
 }
+/**
+ * The title of a group; it fades out on the icon rail.
+ *
+ * @slot - The label text.
+ */
 export class TpNavigationPanelGroupLabel extends NavigationPanelLayoutPart {
   static override styles = [
     NavigationPanelLayoutPart.styles,
@@ -163,15 +194,31 @@ export class TpNavigationPanelGroupLabel extends NavigationPanelLayoutPart {
   static override partName = 'navigation-panel-group-label';
   static override nativeTag = 'span';
 }
+/**
+ * The body of a group.
+ *
+ * @slot - The menu and any other group content.
+ */
 export class TpNavigationPanelGroupContent extends NavigationPanelLayoutPart {
   static tagName = 'tp-navigation-panel-group-content';
   static override partName = 'navigation-panel-group-content';
 }
+/**
+ * The list of a group's items.
+ *
+ * @slot - The items.
+ */
 export class TpNavigationPanelMenu extends NavigationPanelLayoutPart {
   static tagName = 'tp-navigation-panel-menu';
   static override partName = 'navigation-panel-menu';
   static override nativeTag = 'ul';
 }
+/**
+ * One entry of a menu: a link or an action, with an optional badge, trailing actions or menu,
+ * and a submenu or a Collapsible of nested destinations.
+ *
+ * @slot - The link or action, then its accessories and nested destinations.
+ */
 export class TpNavigationPanelItem extends NavigationPanelLayoutPart {
   static override styles = [
     NavigationPanelLayoutPart.styles,
@@ -284,11 +331,21 @@ export class TpNavigationPanelItem extends NavigationPanelLayoutPart {
     };
   }
 }
+/**
+ * The nested list of an item's destinations.
+ *
+ * @slot - The subitems.
+ */
 export class TpNavigationPanelSubmenu extends NavigationPanelLayoutPart {
   static tagName = 'tp-navigation-panel-submenu';
   static override partName = 'navigation-panel-submenu';
   static override nativeTag = 'ul';
 }
+/**
+ * One entry of a submenu.
+ *
+ * @slot - The sublink.
+ */
 export class TpNavigationPanelSubitem extends NavigationPanelLayoutPart {
   static tagName = 'tp-navigation-panel-subitem';
   static override partName = 'navigation-panel-subitem';
@@ -340,8 +397,11 @@ export class NavigationPanelButtonPart extends TpButton {
     showOnHover: { type: Boolean, attribute: 'show-on-hover', reflect: true },
     tooltip: {},
   };
+  /** Marks the current destination, announced as the current page on a link. */
   active = false;
+  /** Shows a trailing control only while its item is hovered or focused. */
   showOnHover = false;
+  /** The tooltip shown on the icon rail, where only the icon is visible: text or a template. */
   tooltip: unknown;
   #tooltip: TpTooltip | undefined;
   #tooltipTarget: HTMLElement | undefined;
@@ -384,6 +444,10 @@ export class NavigationPanelButtonPart extends TpButton {
     super.disconnectedCallback();
   }
 }
+/**
+ * The Button that toggles the navigation: it expands or collapses the wide navigation and opens
+ * the compact Drawer. It carries the Button API, and its default name is "Toggle navigation".
+ */
 export class TpNavigationPanelTrigger extends NavigationPanelButtonPart {
   static override tagName = 'tp-navigation-panel-trigger';
   static override partName = 'navigation-panel-trigger';
@@ -394,6 +458,10 @@ export class TpNavigationPanelTrigger extends NavigationPanelButtonPart {
     this.ariaLabel = 'Toggle navigation';
   }
 }
+/**
+ * A thin Button along the edge between the navigation and the page that toggles the navigation
+ * on a pointer press; it stays out of the tab order, since the trigger already offers the toggle.
+ */
 export class TpNavigationPanelResizeRail extends NavigationPanelButtonPart {
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
@@ -410,6 +478,10 @@ export class TpNavigationPanelResizeRail extends NavigationPanelButtonPart {
     this.ariaLabel = 'Toggle navigation';
   }
 }
+/**
+ * An icon Button in the corner of a group, for a command on the whole group such as adding a
+ * project; give it a label.
+ */
 export class TpNavigationPanelGroupAction extends NavigationPanelButtonPart {
   static override styles = [
     NavigationPanelButtonPart.styles,
@@ -429,6 +501,10 @@ export class TpNavigationPanelGroupAction extends NavigationPanelButtonPart {
     this.size = 'icon-sm';
   }
 }
+/**
+ * A destination of the navigation: a Button rendered as a native link with `href`, marked
+ * `active` for the current page, with an optional tooltip on the icon rail.
+ */
 export class TpNavigationPanelLink extends NavigationPanelButtonPart {
   static override styles = [
     NavigationPanelButtonPart.styles,
@@ -446,6 +522,11 @@ export class TpNavigationPanelLink extends NavigationPanelButtonPart {
     this.variant = 'ghost';
   }
 }
+/**
+ * A command in the navigation, such as opening a menu or starting a search; a Button with the
+ * navigation's look. A second action in an item becomes a trailing control, shown on hover with
+ * `show-on-hover`.
+ */
 export class TpNavigationPanelAction extends NavigationPanelButtonPart {
   static override styles = [
     NavigationPanelButtonPart.styles,
@@ -463,6 +544,9 @@ export class TpNavigationPanelAction extends NavigationPanelButtonPart {
     this.variant = 'ghost';
   }
 }
+/**
+ * A nested destination inside a submenu: a smaller Navigation panel link.
+ */
 export class TpNavigationPanelSublink extends TpNavigationPanelLink {
   static override tagName = 'tp-navigation-panel-sublink';
   static override partName = 'navigation-panel-sublink';
@@ -472,6 +556,10 @@ export class TpNavigationPanelSublink extends TpNavigationPanelLink {
   }
 }
 // Reusable visual/field constituents retain their actual family implementation.
+/**
+ * An Input styled for the navigation, such as a filter above the groups; it keeps the whole
+ * Input API.
+ */
 export class TpNavigationPanelInput extends TpInput {
   static override presentation = inputPresentation;
   static override tagName = 'tp-navigation-panel-input';
@@ -481,6 +569,9 @@ export class TpNavigationPanelInput extends TpInput {
     return part === 'input' ? this.#member.contract(contract) : contract;
   }
 }
+/**
+ * A Badge aligned to the end of an item's row, for a count or a status.
+ */
 export class TpNavigationPanelBadge extends TpBadge {
   static override styles = [
     TpBadge.styles,
@@ -504,6 +595,11 @@ export class TpNavigationPanelBadge extends TpBadge {
       : super.renderPart(name, state, options);
   }
 }
+/**
+ * A Separator between the regions or groups of the navigation.
+ *
+ * @csspart root - The separator line.
+ */
 export class TpNavigationPanelSeparator extends TpSeparator {
   // The panel projects its recipe onto Separator's root, not a second host rule.
   static override presentation = separatorPresentation;
@@ -524,6 +620,9 @@ export class TpNavigationPanelSeparator extends TpSeparator {
       : super.renderPart(name, state, options);
   }
 }
+/**
+ * A Skeleton row standing in for a navigation item while its destinations load.
+ */
 export class TpNavigationPanelLoadingPlaceholder extends NavigationPanelLayoutPart {
   static tagName = 'tp-navigation-panel-loading-placeholder';
   /** Library elements this element renders; defining it defines them too. */
@@ -535,7 +634,9 @@ export class TpNavigationPanelLoadingPlaceholder extends NavigationPanelLayoutPa
     ...NavigationPanelLayoutPart.properties,
     showIcon: { type: Boolean, attribute: 'show-icon' },
   };
+  /** Adds an icon placeholder before the text. */
   showIcon = false;
+  /** The width of the text placeholder, varied per row and stable for its lifetime. */
   readonly textWidth = `${50 + Math.floor(Math.random() * 41)}%`;
   protected override defaultPartContent(): unknown {
     return html`${this.showIcon ? html`<tp-skeleton aria-hidden="true" ${bindPart({ style: { inlineSize: 'var(--tp-icon-size-sm)', blockSize: 'var(--tp-icon-size-sm)' } })}></tp-skeleton>` : ''}<tp-skeleton

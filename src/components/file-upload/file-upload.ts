@@ -115,9 +115,34 @@ function errorText(error: unknown): string {
 }
 
 /**
- * File upload (CL `ucl17-file-upload`, Foundation `sec-1411-file-upload`): a dashed drop surface
- * over a native file input that validates files, lists them as Attachments and optionally uploads
- * them through an application adapter.
+ * Collects files by drop, picker or paste over a native file input, validates them, lists them as
+ * Attachments, chips or image tiles, and submits them with the form. It uploads only through an
+ * adapter the application supplies.
+ *
+ * @slot - Extra content of the drop surface.
+ * @slot media - The mark of the drop surface, in place of the upload icon.
+ * @slot title - The title of the drop surface, also the input's name when no Field labels it.
+ * @slot description - Replaces the generated hint sentence.
+ * @slot hint - Replaces the generated row of Badges.
+ * @slot summary - Extra content beside the file count.
+ * @fires tp-value-change - Cancelable, before the accepted files change; `detail.value`,
+ * `detail.previousValue`, `detail.reason`, and `detail.metadata` with the added, removed and
+ * rejected files and their source. Cancelling discards the batch.
+ * @fires tp-file-reject - `{ rejections, source }` once per batch with rejected files, and after
+ * `rejectFile()`.
+ * @fires tp-upload-start - `{ item }` when an upload begins.
+ * @fires tp-upload-complete - `{ item, response }` when the upload adapter fulfills.
+ * @fires tp-upload-error - `{ item, error }` when the upload adapter fails.
+ * @fires tp-file-retry - Cancelable `{ item, sourceEvent }` when an item's Retry Button is
+ * pressed; by default the upload restarts.
+ * @fires tp-picker-cancel - `{ sourceEvent }` when the picker closes without a selection.
+ * @fires tp-field-value - After the accepted files change; an enclosing Field tracks its dirty
+ * state from it.
+ * @fires tp-field-validity - When the kept rejected files change without a value change, so an
+ * enclosing Field shows the new validity.
+ * @cssprop --tp-file-upload-icon-size - Size of the mark in the drop surface.
+ * @cssprop --tp-file-upload-tile-size - Smallest width of an image tile in the grid layout.
+ * @cssprop --tp-file-upload-progress-inset - Inline inset of the upload bar inside an item.
  */
 export class TpFileUpload extends TpFormElement<readonly File[]> {
   static tagName = 'tp-file-upload';
@@ -174,29 +199,53 @@ export class TpFileUpload extends TpFormElement<readonly File[]> {
   accept: FileAcceptInput = '';
   /** Count limit with `multiple`; `null` is unbounded. */
   maxFiles: number | null = null;
+  /** Largest accepted file, in bytes or as size text such as `10MB`. */
   maxFileSize: number | null = null;
+  /** Smallest accepted file, in bytes or as size text. */
   minFileSize: number | null = null;
+  /** Largest total size of the accepted files, in bytes or as size text. */
   maxTotalSize: number | null = null;
+  /** Accepts a file with the same name, size and modification time as one already accepted. */
   allowDuplicates = false;
+  /**
+   * Keeps rejected files as error items until they are removed; off, rejections are only announced
+   * and reported.
+   */
   keepRejected = true;
+  /** Accepts files dragged onto the drop surface. */
   allowDrop = true;
+  /** Stops a file dropped next to the drop surface from opening in the browser tab. */
   preventDocumentDrop = true;
   /**
    * Clipboard paste scope: `none`, `control` (while focus is in the control or the pointer is
    * over it) or `document` (also pastes elsewhere on the page outside editable fields).
    */
   paste: FileUploadPaste = 'none';
+  /** Picks and reads whole folders, keeping each file's relative path. */
   directory = false;
+  /** Which camera the picker prefers on mobile devices: `user` or `environment`. */
   capture: FileUploadCapture = '';
+  /** Lists files as rows (`stack`) or as image tiles with an Add tile at the end (`grid`). */
   layout: FileUploadLayout = 'stack';
+  /** Density of the drop surface. */
   size: FileUploadSize = 'default';
+  /** Density of the listed files in the stack layout; `xs` wraps them as chips. */
   itemSize: FileUploadItemSize = 'default';
+  /** Shows the accepted types and size as a sentence, as a row of Badges, or not at all. */
   hintTreatment: FileUploadHintTreatment = 'text';
+  /** Renders the list of files; turn it off to render your own from `items`. */
   showItems = true;
+  /** Shows image files as Image previews instead of a type mark. */
   showPreviews = true;
+  /**
+   * Shows a Browse Button in the drop surface, as a visual cue of the click that opens the picker.
+   */
   showTrigger = false;
+  /** Gives each file a Remove Button. */
   removable = true;
+  /** Gives each failed upload a Retry Button. */
   retryable = true;
+  /** Adds a Clear all Button beside the file count. */
   clearable = false;
   /** Application validation and metadata extraction, run after the built-in checks. */
   fileValidator: FileValidator | undefined;
@@ -204,7 +253,9 @@ export class TpFileUpload extends TpFormElement<readonly File[]> {
   getItemDescription: ((item: FileUploadItem) => string) | undefined;
   /** Optional transfer adapter; without it the control never uploads. */
   uploader: FileUploader | undefined;
+  /** Starts uploads as soon as files are accepted; off, call `upload()`. */
   autoUpload = true;
+  /** How many uploads run at once. */
   uploadConcurrency = 3;
   /** Partial text overrides; missing entries use `DEFAULT_FILE_UPLOAD_MESSAGES`. */
   messages: Partial<FileUploadMessages> = {};

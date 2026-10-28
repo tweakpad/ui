@@ -51,7 +51,7 @@ export function Preview(props) {
   );
   // The hero is the Default story above; the page's first preview is not shown twice.
   const hero = context?.hero;
-  if (hero && hero.title === props.title && hero.code === props.code) return null;
+  if (hero && hero.code === props.code) return null;
   const source = {
     code: previewSource(props.code, props.script),
     language: props.language || 'html',
@@ -59,7 +59,7 @@ export function Preview(props) {
   };
   return (
     <figure className="tp-docs-example">
-      <figcaption>{props.title}</figcaption>
+      {props.title && <figcaption>{props.title}</figcaption>}
       {props.codeOnly ? (
         <Canvas withToolbar={false} source={source} sourceState="shown" />
       ) : (
@@ -254,7 +254,7 @@ export function Api() {
       <h2 id="api">API</h2>
       <p>
         Attributes and properties of <code>&lt;{page.tag}&gt;</code> are the public properties
-        above. Every element also accepts <code>disabled</code> and <code>motion-policy</code>.
+        above.
       </p>
       <ElementApi tag={page.tag} attributes={false} />
       {page.parts.map((part) => (

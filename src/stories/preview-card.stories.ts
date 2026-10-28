@@ -1,10 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
+import { libraryDocs } from './library-docs.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
 import type { TpPreviewCard } from '../components/preview-card/index.js';
-import { sourceImports, configuredSource } from './menu-family-controls.js';
-import documentation from '../../docs/preview-card.md?raw';
 interface Args {
   open: boolean;
   disabled: boolean;
@@ -16,27 +15,12 @@ interface Args {
   keepMounted: boolean;
   disableHoverablePopup: boolean;
 }
-const source = `${sourceImports}
-<tp-preview-card label="Alex Morgan profile">
-  <tp-button slot="trigger" href="#alex-morgan" variant="link">@alexmorgan</tp-button>
-  <tp-avatar fallback="AM" alt="Alex Morgan"></tp-avatar>
-  <strong>Alex Morgan</strong>
-  <span>Design engineer building accessible interfaces.</span>
-  <tp-badge variant="secondary">Available for collaboration</tp-badge>
-</tp-preview-card>`;
 const meta = {
   title: 'Components/Preview card',
   component: 'tp-preview-card',
   parameters: {
     layout: 'centered',
-    docs: {
-      description: { component: documentation },
-      source: {
-        code: source,
-        transform: (_code: string, context: { args: Args }) =>
-          configuredSource(source, context.args, 'open'),
-      },
-    },
+    docs: libraryDocs('components/preview-card'),
   },
   args: {
     open: false,

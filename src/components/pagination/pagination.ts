@@ -13,7 +13,14 @@ import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpButton } from '../button/button.js';
 
-/** Destination navigation composed from the library's actual link Button. */
+/**
+ * Real page links with previous and next destinations, for moving through a paged result set. The
+ * application owns the current page: following a link proposes a page and never changes it here.
+ *
+ * @fires tp-value-change - Cancelable proposal of the page a link leads to; `detail.value` is the page
+ *   and `detail.sourceEvent` the click, whose default a client router prevents. Not dispatched for
+ *   modified clicks, which keep native link behavior.
+ */
 export class TpPagination extends TpElement {
   static tagName = 'tp-pagination';
   /** Library elements this element renders; defining it defines them too. */
@@ -84,18 +91,31 @@ export class TpPagination extends TpElement {
       }
     `,
   ];
+  /** The application's current page, a positive integer; update it after accepting a proposal. */
   page = 1;
+  /** Total number of pages, a positive integer. */
   pages = 1;
+  /** Accessible name of the navigation landmark. */
   label = 'Pagination';
+  /** `text` sizes numbered links to their content, for large page numbers; `icon` keeps them square. */
   pageLinkVariant: 'text' | 'icon' = 'icon';
+  /** Visible and accessible name of the previous link, for localization. */
   previousLabel = 'Previous';
+  /** Visible and accessible name of the next link, for localization. */
   nextLabel = 'Next';
+  /** Whether the previous link renders; set it to `false` from script to leave only numbered links. */
   showPrevious = true;
+  /** Whether the next link renders; set it to `false` from script to leave only numbered links. */
   showNext = true;
+  /** Whether numbered links and omitted ranges render; `false` leaves only the directions. */
   showPageLinks = true;
+  /** Whether the directions show their text; `false` keeps named arrows at every width. */
   showLabels = true;
+  /** Destination of each page's link, for path-based routes; by default the current URL with its `page` query parameter replaced. */
   hrefForPage: ((page: number) => string) | undefined;
+  /** Accessible name of each numbered link, for localization; by default "Page" and the locale-formatted number. */
   pageLabel: ((page: number) => string) | undefined;
+  /** Called with the same cancelable proposal as `tp-value-change`, before it is dispatched. */
   onPageChange: ((event: TpValueChangeEvent<number>) => void) | undefined;
   #references = new Map<
     string,

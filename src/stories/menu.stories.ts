@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
+import { libraryDocs } from './library-docs.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { navigationIcons } from '../icons/navigation.js';
 import { plusIcon } from '../icons/plus.js';
@@ -8,14 +9,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpMenu } from '../components/menu/index.js';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
-import {
-  surfaceArgs,
-  surfaceArgTypes,
-  sourceImports,
-  configuredSource,
-  type SurfaceArgs,
-} from './menu-family-controls.js';
-import documentation from '../../docs/menu.md?raw';
+import { surfaceArgs, surfaceArgTypes, type SurfaceArgs } from './menu-family-controls.js';
 interface Args extends SurfaceArgs {
   invocation: 'trigger' | 'context';
   for: string;
@@ -51,20 +45,6 @@ const menuContent = `
   </tp-menu>
   <tp-separator></tp-separator>
   <tp-menu-item value="delete" variant="destructive"><tp-icon data-menu-icon="trash"></tp-icon>Delete<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="⌫"></tp-key-hint></tp-key-hint-group></tp-menu-item>`;
-const source = `${sourceImports}
-<tp-menu label="Document actions">
-  <tp-button slot="trigger" variant="outline">Document actions</tp-button>${menuContent}
-</tp-menu>`;
-const iconSetup = `document.querySelectorAll('[data-menu-icon]').forEach((icon) => {
-    icon.icon = icon.dataset.menuIcon === 'plus' ? plusIcon : navigationIcons[icon.dataset.menuIcon];
-  });`;
-const exampleSource = (args: Args): string =>
-  configuredSource(source, args, 'open')
-    .replace(
-      "  import '@tweakpad/ui/register';",
-      "  import '@tweakpad/ui/register';\n  import { navigationIcons } from '@tweakpad/ui/icons/navigation';\n  import { plusIcon } from '@tweakpad/ui/icons/plus';",
-    )
-    .replace('</script>', `  ${iconSetup}\n</script>`);
 const setupIcons = (element: Element | undefined): void => {
   queueMicrotask(() => {
     for (const icon of element?.querySelectorAll<TpIcon>('[data-menu-icon]') ?? []) {
@@ -78,13 +58,7 @@ const meta: Meta<Args> = {
   component: 'tp-menu',
   parameters: {
     layout: 'centered',
-    docs: {
-      description: { component: documentation },
-      source: {
-        code: source,
-        transform: (_code: string, context: { args: Args }) => exampleSource(context.args),
-      },
-    },
+    docs: libraryDocs('components/menu'),
   },
   args: {
     ...surfaceArgs,
@@ -170,17 +144,5 @@ export const Default: Story = {
       >
       ${unsafeHTML(menuContent)}
     </tp-menu>`;
-  },
-};
-export const Context: Story = {
-  ...Default,
-  args: { invocation: 'context', label: 'Context actions' },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'The same Menu and command constituents, invoked from a context target. Right-click or focus the target and press Shift+F10.',
-      },
-    },
   },
 };

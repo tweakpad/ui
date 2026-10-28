@@ -1,11 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
+import { libraryDocs } from './library-docs.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpNavigationMenu } from '../components/navigation-menu/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import { sourceImports, configuredSource } from './menu-family-controls.js';
-import documentation from '../../docs/navigation-menu.md?raw';
 interface Args {
   value: string;
   disabled: boolean;
@@ -22,24 +21,12 @@ interface Args {
   preserveTabOrder: boolean;
   showBackdrop: boolean;
 }
-const source = `${sourceImports}
-<tp-navigation-menu aria-label="Resources">
-  <tp-navigation-menu-item value="learn"><tp-button slot="trigger" variant="ghost">Learn</tp-button><div slot="content"><a href="#overview" active>Overview</a><a href="#guides">Guides</a><a href="#examples" close-on-click>Examples</a></div></tp-navigation-menu-item>
-      <tp-navigation-menu-item value="tools"><tp-button slot="trigger" variant="ghost">Tools</tp-button><div slot="content"><a href="#editor">Editor</a><a href="#inspector">Inspector</a></div></tp-navigation-menu-item>
-      <tp-navigation-menu-item><a href="#documentation">Documentation</a></tp-navigation-menu-item>
-</tp-navigation-menu>`;
 const meta: Meta<Args> = {
   title: 'Components/Navigation menu',
   component: 'tp-navigation-menu',
   parameters: {
     layout: 'centered',
-    docs: {
-      description: { component: documentation },
-      source: {
-        transform: (_code: string, context: { args: Args }) =>
-          configuredSource(source, context.args, 'value'),
-      },
-    },
+    docs: libraryDocs('components/navigation-menu'),
   },
   args: {
     value: '',
@@ -125,9 +112,4 @@ export const Default: Story = {
       <tp-navigation-menu-item><a href="#documentation">Documentation</a></tp-navigation-menu-item>
     </tp-navigation-menu>`;
   },
-};
-/** Vertical navigation opens beside the list so its remaining destinations stay reachable. */
-export const Vertical: Story = {
-  ...Default,
-  args: { orientation: 'vertical', placement: 'inline-end start' },
 };

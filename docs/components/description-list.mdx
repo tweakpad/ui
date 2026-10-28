@@ -1,0 +1,96 @@
+---
+title: Description list
+description: Label and value pairs for the details of a record, with an optional Show more for the rest.
+tag: tp-description-list
+parts: [tp-description-list-item]
+---
+
+<Preview
+  code={`<tp-description-list limit="4" style="inline-size:24rem;max-inline-size:100%">
+  <tp-description-list-item label="Order">#48213</tp-description-list-item>
+  <tp-description-list-item label="Customer">Maya Chen</tp-description-list-item>
+  <tp-description-list-item label="Status"><tp-badge variant="success">Paid</tp-badge></tp-description-list-item>
+  <tp-description-list-item label="Placed"><tp-time datetime="2026-10-12T14:20:00Z" mode="absolute"></tp-time></tp-description-list-item>
+  <tp-description-list-item label="Shipping">Express, 2 business days</tp-description-list-item>
+  <tp-description-list-item label="Total">$248.00</tp-description-list-item>
+</tp-description-list>`}
+/>
+
+## Usage
+
+A Description list shows the details of one record as names and values: an order, an API key, a subscription. It renders one native description list, so assistive technology reads each label with its value. Place the items directly inside the list, in reading order; other children are not shown. In a vertical list the labels share one column, as wide as the widest label up to 40% of the list, so the values line up.
+
+### API key details
+
+<Preview
+  code={`<tp-card style="inline-size:26rem;max-inline-size:100%">
+  <h2 slot="header">Production API key</h2>
+  <p slot="description">Used by the checkout service.</p>
+  <tp-description-list>
+    <tp-description-list-item label="Key ID">
+      <span style="display:inline-flex;align-items:center;gap:var(--tp-space-1)">
+        key_7f3a92 <tp-copy-button value="key_7f3a92" label="Copy key ID" size="xs"></tp-copy-button>
+      </span>
+    </tp-description-list-item>
+    <tp-description-list-item label="Status"><tp-badge variant="success">Active</tp-badge></tp-description-list-item>
+    <tp-description-list-item label="Created"><tp-time datetime="2026-03-04T09:00:00Z" mode="absolute"></tp-time></tp-description-list-item>
+    <tp-description-list-item label="Owner">Platform team</tp-description-list-item>
+    <tp-description-list-item label="Scopes" layout="stacked">orders:read, orders:write, payments:read, refunds:write</tp-description-list-item>
+  </tp-description-list>
+</tp-card>`}
+/>
+
+A value can be any content: text, a link, or components such as a Badge, a Time or a Copy button. A long value runs under its label when its item is stacked, while the other pairs keep their columns.
+
+### Billing details
+
+<Preview
+  code={`<tp-description-list id="description-list-billing" limit="3" style="inline-size:24rem;max-inline-size:100%">
+  <tp-description-list-item label="Plan">Team, billed yearly</tp-description-list-item>
+  <tp-description-list-item label="Seats">18 of 25 used</tp-description-list-item>
+  <tp-description-list-item label="Renews"><tp-time datetime="2027-02-01" mode="absolute"></tp-time></tp-description-list-item>
+  <tp-description-list-item label="Billing email">billing@northwind.co</tp-description-list-item>
+  <tp-description-list-item label="Tax ID">DE 318 442 901</tp-description-list-item>
+  <tp-description-list-item label="Payment">Visa ending 4242</tp-description-list-item>
+</tp-description-list>`}
+  script={`await customElements.whenDefined('tp-description-list');
+document.getElementById('description-list-billing').messages = {
+  showMore: ({ hidden }) => 'Show ' + hidden + ' more billing details',
+  showLess: 'Show fewer billing details',
+};`}
+/>
+
+With a `limit`, the first items show and a Show more button below the list reveals the rest, which expand into place; the button then reads Show less. Hidden items are not shown, focusable or announced. Name the button for its list when a page has several, as the messages do here with the count of hidden items.
+
+### Service summary
+
+<Preview
+  align="stretch"
+  code={`<tp-description-list orientation="horizontal" layout="stacked" style="max-inline-size:34rem">
+  <tp-description-list-item label="Status"><tp-badge variant="warning">Degraded</tp-badge></tp-description-list-item>
+  <tp-description-list-item label="Region">eu-central-1</tp-description-list-item>
+  <tp-description-list-item label="Uptime (30d)">99.94%</tp-description-list-item>
+  <tp-description-list-item label="Last deploy"><tp-time datetime="2026-10-14T16:05:00Z" mode="absolute"></tp-time></tp-description-list-item>
+</tp-description-list>`}
+/>
+
+A horizontal list puts the pairs side by side and wraps them when space runs out; with each label above its value, it makes a summary strip above a record.
+
+### Boarding pass
+
+<Preview
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-8)">
+  <tp-description-list align="center" style="inline-size:20rem">
+    <tp-description-list-item label="Flight">LH 2034</tp-description-list-item>
+    <tp-description-list-item label="Departure">Munich, 07:15</tp-description-list-item>
+    <tp-description-list-item label="Arrival">Lisbon, 09:40</tp-description-list-item>
+    <tp-description-list-item label="Seat">14C</tp-description-list-item>
+  </tp-description-list>
+  <tp-description-list layout="stacked" style="inline-size:14rem">
+    <tp-description-list-item label="Baggage">One cabin bag, 8 kg</tp-description-list-item>
+    <tp-description-list-item label="Boarding">Gate G24, group 3</tp-description-list-item>
+  </tp-description-list>
+</div>`}
+/>
+
+Centered labels sit at the end of their column and meet their values in the middle, which suits short pairs read at a glance. In a narrow panel, a stacked list puts every label above its value.

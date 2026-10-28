@@ -1,0 +1,50 @@
+---
+title: Spinner
+description: An indeterminate activity indicator with a status label, in three sizes.
+tag: tp-spinner
+---
+
+<Preview
+  code={`<div style="display:flex;align-items:center;gap:var(--tp-space-3);color:var(--tp-muted-foreground)">
+  <tp-spinner label="Syncing workspace"></tp-spinner>
+  <span aria-hidden="true">Syncing workspace…</span>
+</div>`}
+/>
+
+## Usage
+
+A Spinner says that work is under way without saying how much is left; when the amount is known, use Progress. On its own a Spinner is a status, and its `label` is announced, so make the label describe the work. When the text around it already names the activity, an empty label keeps it decorative. For a Button that is busy, use the Button's own loading mark rather than a Spinner inside it: the Button then announces itself as busy.
+
+### Searching as you type
+
+<Preview
+  code={`<tp-field label="Teammates" description="Looking up people in your workspace." style="max-inline-size:22rem">
+  <tp-input-group>
+    <tp-spinner slot="inline-end" size="sm" label="Searching teammates"></tp-spinner>
+    <tp-input type="search" name="teammate" value="Priya" placeholder="Search by name or email"></tp-input>
+  </tp-input-group>
+</tp-field>`}
+/>
+
+A small Spinner at the end of the field shows a lookup in flight without moving the text, and its label tells a screen reader what is happening.
+
+### Status badges
+
+<Preview
+  code={`<tp-badge variant="secondary"><tp-spinner size="sm" label=""></tp-spinner> Deploying</tp-badge>
+<tp-badge variant="outline"><tp-spinner size="sm" label=""></tp-spinner> Indexing</tp-badge>`}
+/>
+
+The badge text already names the activity, so the Spinner stays decorative.
+
+### Panel that is loading
+
+<Preview
+  align="stretch"
+  code={`<tp-empty-state title="Importing contacts" description="This can take a minute for large address books." media-treatment="icon">
+  <tp-spinner slot="media" size="lg" label=""></tp-spinner>
+  <tp-button slot="actions" variant="outline">Cancel import</tp-button>
+</tp-empty-state>`}
+/>
+
+A large Spinner can stand in for the picture of an Empty state while a panel fills; the title says what is loading, so the Spinner stays decorative here too.
