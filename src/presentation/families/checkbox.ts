@@ -10,11 +10,9 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'checkbox',
-      description: 'The box with the checkbox role that receives focus and presses.',
     },
     {
       name: 'checkbox-indicator',
-      description: 'The check or mixed mark inside the box, shown while checked or mixed.',
     },
   ],
 };

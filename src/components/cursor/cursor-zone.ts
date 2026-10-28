@@ -15,14 +15,16 @@ const isCursor = (node: Node): node is Element =>
   node.nodeType === 1 && (node as Element).localName === 'tp-cursor';
 
 /**
- * A layout-neutral wrapper that gives the Cursor a state, content, appearance, attraction,
- * passthrough and physics while the pointer is inside it. Set `--tp-cursor-size`, `--tp-cursor-color`, `--tp-cursor-blend`,
+ * `tp-cursor-zone`: a layout-neutral wrapper that gives `tp-cursor` a state, content,
+ * appearance, attraction, passthrough and physics while the pointer is inside it (Foundation
+ * §18.22 `cc-zones`). Set `--tp-cursor-size`, `--tp-cursor-color`, `--tp-cursor-blend`,
  * `--tp-cursor-opacity` and `--tp-cursor-radius` on the zone to change the cursor's look; put a
  * `<template>` child in it to replace the cursor content.
  *
  * Markers: `data-hovered` while the pointer is inside.
  *
  * @slot - The wrapped content.
+ * @csspart cursor-zone - The host.
  */
 export class TpCursorZone extends TpElement implements CursorZoneLike {
   static tagName = 'tp-cursor-zone';
@@ -47,11 +49,9 @@ export class TpCursorZone extends TpElement implements CursorZoneLike {
   native = false;
   /** Pull the cursor to the zone's center, or morph it to the zone's bounds. */
   stick: CursorStick = 'none';
-  /** The cursor's stiffness while the zone is active; null keeps the cursor's value. */
+  /** Physics while the zone is active; null keeps the cursor's value. */
   stiffness: number | null = null;
-  /** The cursor's damping while the zone is active; null keeps the cursor's value. */
   damping: number | null = null;
-  /** The cursor's mass while the zone is active; null keeps the cursor's value. */
   mass: number | null = null;
 
   #registry: CursorDocument | undefined;
@@ -59,7 +59,6 @@ export class TpCursorZone extends TpElement implements CursorZoneLike {
   #hovered = false;
   #scope: CleanupScope | undefined;
 
-  /** @internal The element the cursor document tracks. */
   get element(): HTMLElement {
     return this;
   }
@@ -79,17 +78,14 @@ export class TpCursorZone extends TpElement implements CursorZoneLike {
     return this.for ? resolveOwner(this, isCursor, this.for) : null;
   }
 
-  /** @internal Called by the cursor document. */
   physics(): SpringInput {
     return { stiffness: this.stiffness, damping: this.damping, mass: this.mass };
   }
 
-  /** @internal Called by the cursor document. */
   addresses(root: CursorParticipant): boolean {
     return !this.for || this.cursor === root.element;
   }
 
-  /** @internal Called by the cursor document. */
   hoveredChanged(hovered: boolean): void {
     this.#hovered = hovered;
     this.toggleAttribute('data-hovered', hovered);

@@ -13,11 +13,6 @@ export const skeletonMotionRoles = {
   loading: ambientRole('loading'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
-/**
- * A decorative placeholder that reserves the shape of content while it loads. Layout sets its
- * size and a radius on the host its shape; it is hidden from assistive technology, so the loading
- * region carries the busy state and the name.
- */
 export class TpSkeleton extends TpElement {
   static tagName = 'tp-skeleton';
   static override presentation = skeletonPresentation;
@@ -86,11 +81,8 @@ export class TpSkeleton extends TpElement {
       }
     `,
   ];
-  /** Kept for compatibility and never announced; name the loading region instead. */
   label = 'Loading';
-  /** Set to `false` to hold this placeholder still while others keep moving. */
   animated = true;
-  /** How the placeholder moves: `pulse` fades it, `sweep` passes a highlight across it, `none` holds it still. */
   motion: 'pulse' | 'sweep' | 'none' = 'pulse';
   get #active(): boolean {
     return this.animated && this.motion !== 'none';

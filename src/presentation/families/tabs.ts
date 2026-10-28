@@ -21,27 +21,22 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'tabs',
-      description: 'The root around the tab list and the panels.',
       axes: ['orientation', 'variant'],
     },
     {
       name: 'tabs-list',
-      description: 'The tab list, which scrolls when the tabs overflow.',
       axes: ['orientation', 'variant'],
     },
     {
       name: 'tabs-trigger',
-      description: "Each tab, the caller's own element.",
       axes: ['orientation', 'variant'],
     },
     {
       name: 'tabs-indicator',
-      description: 'The default indicator that glides to the selected tab.',
       axes: ['orientation', 'variant'],
     },
     {
       name: 'tabs-content',
-      description: "Each panel, the caller's own element.",
       axes: ['orientation', 'variant'],
     },
   ],

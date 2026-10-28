@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpDialog } from '../components/dialog/index.js';
+import documentation from '../../docs/dialog.md?raw';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
 
 interface Args {
@@ -21,7 +21,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Dialog',
   component: 'tp-dialog',
-  parameters: { docs: libraryDocs('components/dialog') },
+  parameters: { docs: { description: { component: documentation } } },
   args: {
     open: false,
     label: 'Edit profile',
@@ -38,15 +38,18 @@ const meta: Meta<Args> = {
   argTypes: {
     open: {
       control: 'boolean',
+      description: 'Controlled state; this story accepts change proposals.',
     },
-    label: { control: 'text' },
-    description: { control: 'text' },
+    label: { control: 'text', description: 'Visible title fallback.' },
+    description: { control: 'text', description: 'Description fallback.' },
     modality: { control: 'select', options: ['modal', 'non-modal', 'trap-focus-only'] },
     showCloseControl: {
       control: 'boolean',
+      description: 'Corner Close; hiding requires another reachable named close action.',
     },
     closeOnOutsideInteraction: {
       control: 'boolean',
+      description: 'Outside pointer dismissal; also focus outside in non-modal mode.',
     },
     closeOnEscape: { control: 'boolean' },
     showHeader: { control: 'boolean' },

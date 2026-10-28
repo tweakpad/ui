@@ -9,12 +9,7 @@ export interface DrawerKeyboardGeometry {
   height: number;
   top: number;
 }
-/**
- * An optional ancestor that follows the on-screen keyboard, so a Drawer inside it keeps the focused
- * field visible above the keyboard. It renders no box of its own.
- *
- * @slot - The content and the Drawers it serves.
- */
+/** Optional owner-document viewport observer, shared by every descendant Drawer. */
 export class TpDrawerVirtualKeyboardProvider extends LitElement {
   static tagName = 'tp-drawer-virtual-keyboard-provider';
   static styles = css`
@@ -22,7 +17,6 @@ export class TpDrawerVirtualKeyboardProvider extends LitElement {
       display: contents;
     }
   `;
-  /** The keyboard's current inset, height and top, in pixels. */
   readonly geometry = new ObservableStore<DrawerKeyboardGeometry>({ inset: 0, height: 0, top: 0 });
   #frame = 0;
   #viewport: VisualViewport | null = null;

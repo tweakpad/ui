@@ -172,7 +172,6 @@ export class TpMediaTime extends TpMediaElement {
     else super.focus(options);
   }
 
-  /** Removes focus from the time's toggle button. */
   override blur(): void {
     const button = this.renderRoot.querySelector<HTMLElement>('tp-button');
     if (button) button.blur();

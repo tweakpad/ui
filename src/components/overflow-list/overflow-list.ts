@@ -38,12 +38,14 @@ function assign(slot: HTMLSlotElement | null, nodes: readonly Element[]): void {
 }
 
 /**
- * Wraps its children in rows and, beyond a number of items or of rows that fit the width,
- * replaces the items on one side with a count of the ones left out. The omitted items stay in the
- * page, unrendered and out of reach.
+ * Overflow list: wraps its element children in rows and, beyond `limit` Items or `max-rows`
+ * rows of the available inline size, replaces the Items on the `collapse-from` side with one
+ * Count of the omitted Items. Omitted Items stay in the DOM, inert and unrendered.
  *
  * @slot - Items: element children that are not `hidden`.
  * @slot count - A Consumer element that replaces the default Count while Items are omitted.
+ * @csspart overflow-list - The wrapping list of shown Items and the Count.
+ * @csspart overflow-list-count - The default Count Badge.
  * @fires tp-overflow-change - The omitted Items changed (not cancelable); `detail.value` is the
  *   omitted count, `detail.reason` is `initial` or `layout`.
  */

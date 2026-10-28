@@ -9,13 +9,6 @@ export interface MenuRadioMember extends HTMLElement {
   value: unknown;
   requestUpdate(): void;
 }
-/**
- * A group of Menu Radio Items that keeps exactly one choice, such as a density or a sort order.
- *
- * @slot - The Menu Radio Items, with an optional first child marked `data-menu-label` that names
- *   the group.
- * @fires tp-value-change - Cancelable proposal of the chosen item's value; `detail.value`.
- */
 export class TpMenuRadioGroup extends TpElement {
   static tagName = 'tp-menu-radio-group';
   static override properties = {
@@ -33,14 +26,12 @@ export class TpMenuRadioGroup extends TpElement {
       }
     `,
   ];
-  /** Initial choice when `value` is not set. */
   defaultValue: unknown;
   /**
    * The group's accessible name. Without it, a child carrying `data-menu-label` names the group.
    * The name goes to the semantic group, so the host carries no ARIA of its own.
    */
   label = '';
-  /** Called with each choice proposal before `tp-value-change` is dispatched. */
   onValueChange: ((event: TpValueChangeEvent<unknown>) => void) | undefined;
   #provided: unknown;
   #owner: MenuItemOwner | null = null;
@@ -50,29 +41,23 @@ export class TpMenuRadioGroup extends TpElement {
     this.#control = element;
     this.#owner?.itemChanged();
   };
-  /** @internal The rendered group element. */
   get controlElement(): HTMLElement | null {
     return this.#control;
   }
-  /** @internal The owning menu. */
   get menuOwner(): MenuItemOwner | null {
     return this.#owner;
   }
-  /** @internal The owning menu. */
   set menuOwner(owner: MenuItemOwner | null) {
     if (this.#owner === owner) return;
     this.#owner = owner;
     this.requestUpdate();
   }
-  /** @internal Presentation family of the group. */
   get presentationTagName(): string {
     return `tp-${this.#owner?.itemPartPrefix ?? 'menu'}`;
   }
-  /** @internal Presentation owner of the group. */
   get presentationOwner(): HTMLElement | null {
     return this.#owner;
   }
-  /** @internal Presentation families the group takes part in. */
   get presentationFamilyTagNames(): readonly string[] {
     return this.#owner?.presentationFamilyTagNames ?? [];
   }
@@ -89,7 +74,6 @@ export class TpMenuRadioGroup extends TpElement {
     onCommit: () => this.#members.forEach((member) => member.requestUpdate()),
     diagnostic: (message) => this.diagnose('menu-radio-state', message),
   });
-  /** The value of the chosen item; set it from the start to own the choice, writing back each accepted proposal. */
   get value(): unknown {
     return this.#state.value;
   }
@@ -99,7 +83,6 @@ export class TpMenuRadioGroup extends TpElement {
     this.requestUpdate('value', previous);
     if (this.hasUpdated) this.#state.sync();
   }
-  /** @internal Adds a radio item. */
   register(member: MenuRadioMember): () => void {
     this.#members.add(member);
     this.memberChanged();
@@ -110,11 +93,9 @@ export class TpMenuRadioGroup extends TpElement {
       this.memberChanged();
     };
   }
-  /** @internal Whether an item has a unique value. */
   isSelectable(member: MenuRadioMember): boolean {
     return this.#members.has(member) && !this.#excluded.has(member);
   }
-  /** @internal Rereads the items' values. */
   memberChanged(): void {
     const excluded = new Set(this.#excluded);
     this.#excluded.clear();
@@ -136,7 +117,6 @@ export class TpMenuRadioGroup extends TpElement {
       if (excluded.has(member) !== this.#excluded.has(member)) member.requestUpdate();
     }
   }
-  /** @internal Chooses an item. */
   select(member: MenuRadioMember, event: Event, reason: ChangeReason): boolean {
     if (this.disabled || !this.isSelectable(member)) return false;
     // Activating the selected radio remains an activation; it cannot clear the selection.

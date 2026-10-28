@@ -4,7 +4,7 @@ import { listPresentation } from '../../presentation/families/list.js';
 import { TpSeparator } from '../separator/separator.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
-/** A decorative line between two rows of a List. */
+/** A List member dividing adjacent rows: the shared decorative Separator with List presentation. */
 export class TpListSeparator extends TpElement {
   static tagName = 'tp-list-separator';
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {

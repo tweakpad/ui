@@ -1,11 +1,14 @@
 import { html } from 'lit';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
-import { libraryDocs } from './library-docs.js';
+import documentation from '../../docs/marker.md?raw';
+import { markerExamples } from './marker.examples.js';
 
 const meta = {
   title: 'Components/Marker',
   component: 'tp-marker',
-  parameters: { docs: libraryDocs('components/marker') },
+  parameters: {
+    docs: { description: { component: documentation }, examples: markerExamples },
+  },
   args: { variant: 'default', shimmer: false, label: 'Conversation compacted', tone: 'neutral' },
   argTypes: {
     variant: { control: 'select', options: ['default', 'separator', 'border'] },

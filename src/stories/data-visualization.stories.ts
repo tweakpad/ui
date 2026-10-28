@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { dataVisualizationExample } from './data-visualization.examples.js';
-import { libraryDocs } from './library-docs.js';
+import documentation from '../../docs/data-visualization.md?raw';
+import source from './data-visualization.examples.ts?raw';
+import { publishedSource } from './documentation-examples.js';
 interface Args {
   interaction: 'none' | 'focus' | 'pointer' | 'both';
   indicator: 'dot' | 'line' | 'dashed';
@@ -13,7 +15,9 @@ interface Args {
 const meta = {
   title: 'Components/Data visualization',
   component: 'tp-data-visualization',
-  parameters: { docs: libraryDocs('components/data-visualization') },
+  parameters: {
+    docs: { description: { component: documentation }, source: { code: publishedSource(source) } },
+  },
   args: {
     interaction: 'both',
     indicator: 'dot',

@@ -11,17 +11,12 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'input',
-      description: "The native input, rendered in the page's own tree.",
     },
     {
       name: 'input-prefix',
-      description:
-        'Reserved for content before the editor; the Input renders none, so such content goes in an Input group.',
     },
     {
       name: 'input-suffix',
-      description:
-        'Reserved for content after the editor; the Input renders none, so such content goes in an Input group.',
     },
   ],
 };

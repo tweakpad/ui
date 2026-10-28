@@ -3,13 +3,7 @@ import { TpHoverSurface } from '../anchored-surface/anchored-surface.js';
 import { deepActiveElement } from '../../foundation/focus.js';
 import { previewCardPresentation } from '../../presentation/families/preview-card.js';
 
-/**
- * A supplementary preview of a link or subject, opened by hover or keyboard focus after a delay.
- * It never traps focus or blocks the page, and pressing the trigger still follows the link.
- *
- * @slot - The preview content.
- * @slot trigger - The link or subject the card previews, usually a link Button.
- */
+/** Supplementary preview policy on the shared anchored/hover implementation. */
 export class TpPreviewCard extends TpHoverSurface {
   static tagName = 'tp-preview-card';
   static override presentation = previewCardPresentation;

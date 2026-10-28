@@ -1,14 +1,31 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import { breadcrumbExamples } from './breadcrumb.examples.js';
+import documentation from '../../docs/breadcrumb.md?raw';
 interface Args {
   label: string;
   separator: string;
 }
+const imports = `<script type="module">
+  import '@tweakpad/ui/register';
+  import '@tweakpad/ui/styles.css';
+</script>`;
+const source = `${imports}
+<tp-breadcrumb>
+  <a href="#home">Home</a>
+  <a href="#components">Components</a>
+  <span>Breadcrumb</span>
+</tp-breadcrumb>`;
 const meta = {
   title: 'Components/Breadcrumb',
   component: 'tp-breadcrumb',
-  parameters: { docs: libraryDocs('components/breadcrumb') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      source: { code: source },
+      examples: breadcrumbExamples,
+    },
+  },
   args: { label: 'Breadcrumb', separator: '' },
   argTypes: { label: { control: 'text' }, separator: { control: 'text' } },
   render: (args) =>

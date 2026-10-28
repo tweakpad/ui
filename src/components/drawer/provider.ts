@@ -23,12 +23,7 @@ export function nearestDrawerService<T extends HTMLElement>(
       (node.localName === tag || (tag === 'tp-drawer' && isDrawerHost(node))),
   );
 }
-/**
- * An optional common ancestor that tracks the open Drawers inside it, so Drawer Indent regions can
- * follow them. It renders no box of its own.
- *
- * @slot - The page content and the Drawers it tracks.
- */
+/** Optional registry service. Modal ownership remains entirely with Dialog. */
 export class TpDrawerProvider extends LitElement {
   static tagName = 'tp-drawer-provider';
   static styles = css`
@@ -36,16 +31,13 @@ export class TpDrawerProvider extends LitElement {
       display: contents;
     }
   `;
-  /** The state of the front drawer: whether any is open, how many, swipe progress and height. */
   readonly state = new ObservableStore<DrawerVisualState>(inactiveDrawerState());
   readonly #drawers = new Map<HTMLElement, DrawerVisualState>();
-  /** @internal Records a drawer's state. */
   updateDrawer(drawer: HTMLElement, state: DrawerVisualState): void {
     if (state.active) this.#drawers.set(drawer, state);
     else this.#drawers.delete(drawer);
     this.#publish();
   }
-  /** @internal Forgets a drawer. */
   removeDrawer(drawer: HTMLElement): void {
     this.#drawers.delete(drawer);
     this.#publish();
@@ -74,13 +66,6 @@ export class TpDrawerProvider extends LitElement {
     return html`<slot></slot>`;
   }
 }
-/**
- * A layout region inside a Drawer Provider that follows the open drawers, for pushing the page
- * back while a sheet is open. It is marked `data-active` while a drawer is open and receives
- * `--drawer-swipe-progress`, `--nested-drawers` and `--drawer-height` to style against.
- *
- * @slot - The content of the region.
- */
 export class TpDrawerIndent extends LitElement {
   static tagName = 'tp-drawer-indent';
   static styles = css`
@@ -119,7 +104,7 @@ export class TpDrawerIndent extends LitElement {
     return html`<slot></slot>`;
   }
 }
-/** A Drawer Indent for the background behind the indented page, styled from the same state. */
+/** Same provider subscription, presentation-only background region. */
 export class TpDrawerIndentBackground extends TpDrawerIndent {
   static override tagName = 'tp-drawer-indent-background';
 }

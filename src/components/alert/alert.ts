@@ -6,16 +6,7 @@ import { alertPresentation } from '../../presentation/families/alert.js';
 export type AlertSeverity = 'informational' | 'success' | 'warning' | 'danger';
 export type AlertAnnouncement = 'off' | 'polite' | 'assertive';
 
-/**
- * A persistent message in the flow of the page, with a title, a description, an optional mark and
- * actions. It never opens over content, traps focus or dismisses itself, and its words, not its
- * color, say what happened.
- *
- * @slot icon - A decorative mark before the text, usually an Icon.
- * @slot title - A rich title with emphasis, a link or a Badge; it replaces `title`.
- * @slot - The description.
- * @slot actions - Buttons for what to do next; the application owns their behavior.
- */
+/** Persistent in-flow message. Authored text must communicate the condition without color. */
 export class TpAlert extends TpElement {
   static tagName = 'tp-alert';
   static override presentation = alertPresentation;
@@ -68,11 +59,8 @@ export class TpAlert extends TpElement {
       }
     `,
   ];
-  /** The color of the message: `success`, `warning` and `danger` for those outcomes, `informational` for the rest. */
   severity: AlertSeverity = 'informational';
-  /** The title as plain text, when the `title` slot is empty. */
   override title = '';
-  /** Whether assistive technology announces the alert: `polite` for one that appears after an action, `assertive` only for urgent problems. */
   announcement: AlertAnnouncement = 'off';
 
   // Slots stay mounted so dynamic insertion/removal works without replacing composed controls.

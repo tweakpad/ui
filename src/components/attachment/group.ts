@@ -1,12 +1,6 @@
 import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { attachmentPresentation } from '../../presentation/families/attachment.js';
-/**
- * A horizontally scrolling row of Attachments with snap points, such as a composer's tray. It can
- * take focus so keyboard users can scroll it; name it with `aria-label`.
- *
- * @slot - The Attachments.
- */
 export class TpAttachmentGroup extends TpElement {
   static tagName = 'tp-attachment-group';
   static override presentation = attachmentPresentation;

@@ -1,7 +1,8 @@
 import { html } from 'lit';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
+import documentation from '../../docs/list.md?raw';
 import { fileTextIcon } from '../icons/file-text.js';
-import { libraryDocs } from './library-docs.js';
+import { listExamples } from './list.examples.js';
 
 const files = [
   ['Project notes', 'Updated today'],
@@ -12,7 +13,9 @@ const files = [
 const meta = {
   title: 'Components/List',
   component: 'tp-list',
-  parameters: { docs: libraryDocs('components/list') },
+  parameters: {
+    docs: { description: { component: documentation }, examples: listExamples },
+  },
   args: {
     label: 'Documents',
     variant: 'ghost',
@@ -21,7 +24,7 @@ const meta = {
     selected: false,
   },
   argTypes: {
-    label: { control: 'text' },
+    label: { control: 'text', description: 'Accessible name of the list (`aria-label`).' },
     variant: {
       control: 'select',
       options: ['ghost', 'outline', 'subdued'],

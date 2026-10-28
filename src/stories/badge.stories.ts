@@ -29,7 +29,12 @@ const meta = {
       ],
       table: { defaultValue: { summary: 'default' } },
     },
-    interactive: { control: 'boolean' },
+    interactive: {
+      control: 'boolean',
+      description:
+        'Declares an adopted action/link. This fixture supplies a native button when enabled.',
+      table: { defaultValue: { summary: 'false' } },
+    },
   },
   render: ({ variant, interactive }) =>
     html`<tp-badge

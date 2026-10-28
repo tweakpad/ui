@@ -6,11 +6,7 @@ import { PresentationController } from '../../presentation/controller.js';
 import type { PartPresentation } from '../../presentation/resolver.js';
 import { iconPresentation } from '../../presentation/families/icon.js';
 
-/**
- * One SVG mark drawn from a path definition, never from a name or a download. It is decorative
- * and hidden from assistive technology until `label` names it, and it strokes in the current text
- * color.
- */
+/** Non-interactive SVG presentation for a consumer-supplied icon definition. */
 export class TpIcon extends LitElement {
   static tagName = 'tp-icon';
   static presentation = iconPresentation;
@@ -46,15 +42,10 @@ export class TpIcon extends LitElement {
     }
   `;
 
-  /** The artwork: a definition imported from an icon module, such as `@tweakpad/ui/icons/plus`, or your own. */
   icon: IconDefinition | undefined;
-  /** Names the icon when it is the only signal of its meaning; leave it empty when text beside it says the same. */
   label = '';
-  /** A square extent as a CSS length; by default the icon size of the enclosing control, or the medium icon size. */
   size = '';
-  /** Presentation contributions for this Icon's parts, merged over the theme's. */
   partPresentation: PartPresentation = {};
-  /** Applies the theme's presentation and `partPresentation` to this Icon's parts. */
   readonly presentationController = new PresentationController(this);
   protected override createRenderRoot(): ShadowRoot {
     return this.presentationController.createRenderRoot();

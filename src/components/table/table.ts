@@ -13,14 +13,7 @@ const parts: Record<string, string> = {
   th: 'table-column-header',
   td: 'table-cell',
 };
-/**
- * Tabular data for reading: each constituent renders its native table element, so column layout,
- * spans and header relationships work as in plain HTML. The host is the table's focusable overflow
- * region and can pin its header, footer and edge columns while the rest scrolls. It has no grid
- * keyboard model or selection state of its own.
- *
- * @slot - The caption, header, body and footer regions, or one authored native `table`.
- */
+/** Native tabular semantics and overflow, without interactive-grid state. */
 export class TpTable extends TpElement {
   static tagName = 'tp-table';
   static override presentation = tablePresentation;
@@ -61,19 +54,12 @@ export class TpTable extends TpElement {
       }
     `,
   ];
-  /** Names the scrollable region that holds the table; a caption names the table itself. */
   label = 'Data table';
-  /** The native table layout algorithm: `fixed` sizes columns from the first row and ignores content width. */
   layout: 'automatic' | 'fixed' = 'automatic';
-  /** `row` paints rows marked `selected`; the selection itself belongs to the application. */
   selectionPresentation: 'none' | 'row' = 'none';
-  /** Pins the whole header, every header row included, to the top of the scrolling region. */
   stickyHeader = false;
-  /** Pins the footer, such as a totals row, to the bottom of the scrolling region. */
   stickyFooter = false;
-  /** How many leading columns stay pinned at the inline start while the others scroll. */
   stickyStartColumns = 0;
-  /** How many trailing columns stay pinned at the inline end; leading columns win where the counts overlap. */
   stickyEndColumns = 0;
   #native = false;
   #registrations: Array<() => void> = [];

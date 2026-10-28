@@ -20,8 +20,8 @@ const ACTIONS: Record<MapControlAction, { icon: IconDefinition; message: keyof M
 };
 
 /**
- * A button that runs one map action, such as zooming in. Place it inside a Map or anywhere with
- * `map="id"`. Composes Button and Icon; it stays focusable and
+ * A map action control (`ucl21-map` Control; behavior `sec-1812-map` map-f-controls). Place it
+ * inside `tp-map` or anywhere with `map="id"`. Composes Button and Icon; it stays focusable and
  * reports `aria-disabled` while the map is missing, disabled or not ready, and at a zoom limit.
  *
  * @slot - Replaces the default icon.
@@ -80,7 +80,6 @@ export class TpMapControl extends TpMapElement {
   /** Forwarded to the composed Button. */
   size: TpButton['size'] = 'icon';
 
-  /** The control's accessible name: its `label`, else the action's message. */
   get accessibleLabel(): string {
     const definition = ACTIONS[this.action] ?? ACTIONS['zoom-in'];
     return this.label || this.messages[definition.message];
@@ -102,7 +101,6 @@ export class TpMapControl extends TpMapElement {
     return this.renderRoot?.querySelector('tp-button') ?? null;
   }
 
-  /** Focuses the control's button. */
   override focus(options?: FocusOptions): void {
     const button = this.renderRoot.querySelector<HTMLElement>('tp-button');
     if (button) button.focus(options);

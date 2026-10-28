@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import qrCodeDocumentation from '../../docs/qr-code.md?raw';
+import { qrCodeExamples } from './qr-code.examples.js';
 
 interface QrCodeStoryArgs {
   value: string;
@@ -17,7 +18,12 @@ interface QrCodeStoryArgs {
 const meta: Meta<QrCodeStoryArgs> = {
   title: 'Components/QR code',
   component: 'tp-qr-code',
-  parameters: { docs: libraryDocs('components/qr-code') },
+  parameters: {
+    docs: {
+      examples: qrCodeExamples,
+      description: { component: qrCodeDocumentation.replace(/^# QR code\n/u, '') },
+    },
+  },
   args: {
     value: 'https://ledger.app/connect/jd-4829',
     label: 'Scan to connect your mobile device',
@@ -30,17 +36,20 @@ const meta: Meta<QrCodeStoryArgs> = {
     filename: 'qr-code',
   },
   argTypes: {
-    value: { control: 'text' },
+    value: { control: 'text', description: 'Text to encode.' },
     label: {
       control: 'text',
+      description: 'Accessible name and export title; the QR code message when empty.',
     },
     errorCorrection: {
       control: 'radio',
       options: ['L', 'M', 'Q', 'H'],
+      description: 'Error correction level.',
       table: { defaultValue: { summary: 'M' } },
     },
     quietZone: {
       control: { type: 'number', min: 0, step: 1 },
+      description: 'Light border around the modules, in modules.',
       table: { defaultValue: { summary: '4' } },
     },
     size: {
@@ -50,18 +59,22 @@ const meta: Meta<QrCodeStoryArgs> = {
     },
     copyable: {
       control: 'boolean',
+      description: 'Shows the Copy button.',
       table: { defaultValue: { summary: 'false' } },
     },
     downloadable: {
       control: 'boolean',
+      description: 'Shows the Download menu.',
       table: { defaultValue: { summary: 'false' } },
     },
     exportSize: {
       control: { type: 'number', min: 21, max: 4096, step: 1 },
+      description: 'Side of exports and of the copied image, in pixels.',
       table: { defaultValue: { summary: '1024' } },
     },
     filename: {
       control: 'text',
+      description: 'Download file name without its extension.',
       table: { defaultValue: { summary: 'qr-code' } },
     },
   },

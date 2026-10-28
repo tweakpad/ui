@@ -43,14 +43,7 @@ import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpButton } from '../button/button.js';
 
-/**
- * Transient notifications from one queue, stacked in a corner without taking focus from the current
- * task. Place one per queue, usually in the app shell, and call `add()`; the notifications render in
- * a labelled landmark that F6 reaches, and hover, focus or a blurred window pause their timers.
- *
- * @slot - The description of the declarative notification shown with `open`.
- * @fires tp-toast-queue-change - After the queue changes; `detail.toasts` lists the notifications.
- */
+/** Portal/viewport binding to the single logical Provider and notification manager. */
 export class TpToast extends TpElement {
   static tagName = 'tp-toast';
   /** Library elements this element renders; defining it defines them too. */
@@ -249,29 +242,17 @@ export class TpToast extends TpElement {
       ${hiddenStyles}
     `,
   ];
-  /** A queue from `createToastManager()` to render, so any module can raise notifications without a reference to the element. */
   toastManager: ToastManager | undefined;
-  /** Default lifetime of a notification in milliseconds; `0` keeps notifications until dismissed. */
   timeout = 5000;
-  /** How many notifications stay visible at once; older ones wait behind the newest. */
   limit = 3;
-  /** How urgently assistive technology announces the declarative notification; `assertive` interrupts. */
   priority: 'polite' | 'assertive' = 'polite';
-  /** Where the stack sits, as a block and an inline position in writing direction, such as `block-start center`. */
   position: ToastPosition = 'block-end inline-end';
-  /** The directions a swipe dismisses a notification in. */
   swipeDirections: readonly ToastSwipeDirection[] = ['down', 'right'];
-  /** The element the stack renders into, in place of the top layer. */
   container: HTMLElement | ShadowRoot | null = null;
-  /** Accessible name of the notifications landmark. */
   label = 'Notifications';
-  /** Whether notifications show a Close button. */
   dismissible = true;
-  /** Whether notifications show the icon of their type. */
   showIcon = true;
-  /** Shows the element's own content as one notification, with `title` as its heading. */
   open = false;
-  /** Heading of the declarative notification shown with `open`. */
   title = '';
   readonly #legacyIdentifier = createId('tp-toast-content');
   #provider: ToastProvider | null = null;
@@ -296,37 +277,31 @@ export class TpToast extends TpElement {
   #announcementClear: number | undefined;
   #legacyCreated = false;
   #warnings = new Set<string>();
-  /** Lifetime of a notification as `persistent` or milliseconds; an alias of `timeout`. */
   get duration(): number | 'persistent' {
     return this.timeout === 0 ? 'persistent' : this.timeout;
   }
   set duration(value: number | 'persistent' | undefined) {
     this.timeout = value === 'persistent' ? 0 : (value ?? 5000);
   }
-  /** Alias of `limit`. */
   get maximumVisible(): number {
     return this.limit;
   }
   set maximumVisible(value: number) {
     this.limit = value;
   }
-  /** The queue in use: `toastManager`, else the element's own; `manager.promise()` follows pending work. */
   get manager(): ToastManager {
     return this.#provider?.manager ?? this.toastManager ?? this.#ownedManager;
   }
-  /** @internal The provider connecting the element to its queue. */
   get provider(): ToastProvider | null {
     return this.#provider;
   }
-  /** Raises a notification with a title, description, type and options; returns its identifier, for `close()` and updates. */
+  /** Notification creation convenience; identical service model and lifecycle. */
   add(options: ToastOptions): string {
     return this.manager.add(options);
   }
-  /** Dismisses one notification by its identifier, or every notification without one. */
   close(identifier?: string, cause: ToastCause = 'programmatic'): void {
     this.manager.close(identifier, cause);
   }
-  /** Shows or hides the declarative notification. */
   setOpen(open: boolean): void {
     this.open = open;
   }

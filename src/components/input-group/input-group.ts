@@ -15,20 +15,7 @@ export function editorTrees(control: HTMLElement): Node[] {
   return control.shadowRoot ? [control, control.shadowRoot] : [control];
 }
 
-/**
- * One Input or Text area joined with text, icons, shortcuts and actions inside a single shared
- * border. The group owns the outside border and the focus and invalid ring; the editor keeps its
- * own editing, validation and form value, and the actions keep their own behavior.
- *
- * @slot - The one editor: an Input, a Text area or a native input or textarea.
- * @slot inline-start - Text, an Icon or a small control before the editor.
- * @slot inline-end - Text, an Icon, a key hint or a small control after the editor.
- * @slot block-start - A line above the editor, across the whole group.
- * @slot block-end - A line below the editor, across the whole group, such as a count and actions.
- * @slot prefix - Short text before the editor, such as a currency sign; placed at `addon-position`.
- * @slot suffix - Short text after the editor, such as a unit.
- * @slot action - Buttons right after the editor; they take the group's action size and paint.
- */
+/** Presentation composition only; the editor and actions retain their own behavior. */
 export class TpInputGroup extends TpElement {
   static tagName = 'tp-input-group';
   static override presentation = inputGroupPresentation;
@@ -117,14 +104,8 @@ export class TpInputGroup extends TpElement {
       }
     `,
   ];
-  /** The edge the `prefix` slot sits at; move it to another edge without changing the markup. */
   addonPosition: Edge = 'inline-start';
-  /**
-   * The size the Buttons in the `action` slot take unless they set their own; the `icon-*` sizes
-   * suit Icon-only actions.
-   */
   actionSize: 'xs' | 'sm' | 'icon-xs' | 'icon-sm' = 'xs';
-  /** The paint the Buttons in the `action` slot take unless they set their own. */
   actionVariant: 'ghost' | 'default' | 'secondary' | 'destructive' | 'outline' | 'link' = 'ghost';
   #control: HTMLElement | null = null;
   #native: HTMLElement | null = null;

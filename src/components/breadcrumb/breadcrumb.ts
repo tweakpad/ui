@@ -13,14 +13,7 @@ interface Item {
   originalSlot: string | null;
   currentOwned: boolean;
 }
-/**
- * The trail of ancestor pages leading to the current one, in a navigation landmark. Each child is a
- * step: the caller's own links keep their destinations and listeners, and a trailing plain element
- * is marked as the current page.
- *
- * @slot - The steps in order: ancestor links, then the current page; a Menu can stand in for
- *   collapsed ancestors.
- */
+/** Native ordered-list wrappers project original caller nodes without changing link roles. */
 export class TpBreadcrumb extends TpElement {
   static tagName = 'tp-breadcrumb';
   /** Library elements this element renders; defining it defines them too. */
@@ -61,9 +54,8 @@ export class TpBreadcrumb extends TpElement {
       }
     `,
   ];
-  /** Accessible name of the landmark; set it when the page has more than one navigation. */
   label = 'Breadcrumb';
-  /** Decorative text between steps, such as `/` for a file path; empty draws a chevron that mirrors in right-to-left layouts. */
+  /** Empty uses the shared logical chevron; nonempty supplies decorative text. */
   separator = '';
   #items: Item[] = [];
   #observer: MutationObserver | undefined;

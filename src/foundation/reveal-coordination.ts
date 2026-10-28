@@ -212,8 +212,6 @@ export interface RevealCoordinatorConfig {
   smoothing?(): number;
   /** Scrubbed progress only moves forward (by default it follows the scroll both ways). */
   scrubOnce?(): boolean;
-  /** Receives scrubbed progress; the scrubbing element dispatches it as its own event. */
-  progress?(progress: number): void;
 }
 
 /**
@@ -412,7 +410,7 @@ export class RevealCoordinator {
     const progress = this.#highest;
     if (progress === this.#progress && this.#revealed === progress > 0) return;
     this.#progress = progress;
-    this.#config.progress?.(progress);
+    this.#config.emit('tp-scroll-progress', { progress });
     if (progress > 0 && !this.#revealed) {
       this.#revealed = true;
       this.#element.toggleAttribute('data-revealed', true);

@@ -10,23 +10,18 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'alert',
-      description: 'The message surface, colored by the severity.',
     },
     {
       name: 'alert-title',
-      description: 'The title row, from the `title` slot or the `title` text.',
     },
     {
       name: 'alert-description',
-      description: 'The wrapper of the description in the default slot.',
     },
     {
       name: 'alert-action',
-      description: 'The wrapper of the `actions` slot, at the end of the message.',
     },
     {
       name: 'alert-mark',
-      description: 'The wrapper of the `icon` slot, before the text.',
     },
   ],
 };

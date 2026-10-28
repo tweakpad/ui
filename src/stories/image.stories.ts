@@ -1,15 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import { libraryDocs } from './library-docs.js';
-
-const photo = (width: number) =>
-  `https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=${width}&q=75&auto=format&fit=crop`;
-const imageDefaults = {
-  src: photo(1200),
-  srcset: [480, 800, 1200, 1600].map((width) => `${photo(width)} ${width}w`).join(', '),
-  alt: 'A bright open-plan office',
-};
+import documentation from '../../docs/image.md?raw';
+import { imageDefaults, imageDefaultSource, imageExamples } from './image.examples.js';
 
 interface Args {
   ratio: number;
@@ -32,7 +25,13 @@ interface Args {
 const meta = {
   title: 'Components/Image',
   component: 'tp-image',
-  parameters: { docs: libraryDocs('components/image') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      examples: imageExamples,
+      source: { code: imageDefaultSource },
+    },
+  },
   args: {
     ratio: 16 / 9,
     fit: 'cover',
@@ -53,39 +52,48 @@ const meta = {
   argTypes: {
     ratio: {
       control: { type: 'number', min: 0.25, max: 4, step: 0.05 },
+      description:
+        'Width ÷ height of the frame (Aspect-ratio box). Unset keeps the image’s own proportions.',
       table: { defaultValue: { summary: 'unset' } },
     },
     fit: {
       control: 'select',
       options: ['cover', 'contain', 'fill', 'none', 'scale-down'],
+      description: 'How the image fills the frame (`object-fit`).',
       table: { defaultValue: { summary: 'cover' } },
     },
     placeholder: {
       control: 'inline-radio',
       options: ['skeleton', 'spinner', 'none'],
+      description: 'Loading surface: pulsing Skeleton, Skeleton with Spinner, or none.',
       table: { defaultValue: { summary: 'skeleton' } },
     },
     loading: {
       control: 'inline-radio',
       options: ['lazy', 'eager'],
+      description: 'Native loading strategy.',
       table: { defaultValue: { summary: 'lazy' } },
     },
     sizes: {
       control: 'text',
+      description: 'Slot widths for `w` candidates. Lazy width sets default to `auto, 100vw`.',
       table: { defaultValue: { summary: 'derived' } },
     },
     fetchPriority: {
       control: 'select',
       options: ['', 'high', 'low', 'auto'],
+      description: '`fetchpriority` request hint.',
       table: { defaultValue: { summary: "''" } },
     },
     zoom: {
       control: 'inline-radio',
       options: ['none', 'in', 'out'],
+      description: 'Hover zoom direction.',
       table: { defaultValue: { summary: 'none' } },
     },
     zoomed: {
       control: 'boolean',
+      description: 'Applies the zoom state without hover, e.g. from a hovered card.',
       table: { defaultValue: { summary: 'false' } },
     },
     parallax: {
@@ -101,30 +109,41 @@ const meta = {
         'up zoom-in',
         'down zoom-out',
       ],
+      description:
+        'Scroll-linked effects: one direction (`up`, `down`, `left`, `right`) and/or a scroll zoom (`zoom-in`, `zoom-out`).',
       table: { defaultValue: { summary: 'none' } },
     },
     parallaxDepth: {
       control: { type: 'range', min: 0, max: 1, step: 0.05 },
+      description: '`parallax-depth`: enlargement and travel of the parallax image.',
       table: { defaultValue: { summary: '0.3' } },
     },
     parallaxSmoothing: {
       control: { type: 'range', min: 0, max: 0.95, step: 0.05 },
+      description:
+        '`parallax-smoothing`: how far parallax and scroll zoom trail the scroll; 0 is locked to it.',
       table: { defaultValue: { summary: '0' } },
     },
     reveal: {
       control: 'text',
+      description:
+        'Viewport-entry effect, run once: any of `fade up down left right zoom-in zoom-out`.',
       table: { defaultValue: { summary: "''" } },
     },
     revealRepeat: {
       control: 'boolean',
+      description:
+        '`reveal-repeat`: reveal again on every viewport entry instead of only the first.',
       table: { defaultValue: { summary: 'false' } },
     },
     revealHold: {
       control: 'boolean',
+      description: '`reveal-hold`: a ready reveal waits in its start state until this is cleared.',
       table: { defaultValue: { summary: 'false' } },
     },
     alt: {
       control: 'text',
+      description: 'Accessible name; empty marks the image decorative.',
       table: { defaultValue: { summary: "''" } },
     },
   },

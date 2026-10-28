@@ -41,19 +41,7 @@ export const DEFAULT_ATTACHMENT_MESSAGES: AttachmentMessages = Object.freeze({
   processingLabel: 'Processing attachment',
   error: 'This attachment could not be processed.',
 });
-/**
- * A named file or resource with its status, a media mark and independent actions. The application
- * owns uploading, retrying, previewing and removing; `status` changes only how it looks.
- *
- * @slot media - A file mark or an image; while uploading or processing without one, a Spinner shows.
- * @slot preview - Media used when no `media` content is supplied.
- * @slot title - The title, in place of `filename`; keep `filename` for the names of the generated actions.
- * @slot description - Detail or status in place of the generated description; for an error, how to recover.
- * @slot - More content about the resource, below the description.
- * @slot actions - Buttons that act on the resource, each a separate control from the trigger.
- * @slot trigger - A Button that makes the whole attachment open something, such as a preview Dialog.
- * @fires tp-remove - The Remove button was pressed; `detail.filename` names the attachment. Cancelable, and nothing is removed until the application does it.
- */
+/** File presentation only. Application code owns upload, retry, removal and navigation. */
 export class TpAttachment extends TpElement {
   static tagName = 'tp-attachment';
   /** Library elements this element renders; defining it defines them too. */
@@ -163,27 +151,17 @@ export class TpAttachment extends TpElement {
       ${hiddenStyles}
     `,
   ];
-  /** The resource's name, shown as its title and used in the names of the generated actions. */
   filename = '';
-  /** Makes the whole attachment a link to the resource. */
   href = '';
-  /** Where the link opens, as on a native link. */
   target = '';
-  /** The size in bytes, formatted for the reader's locale when there is no description. */
   fileSize = 0;
-  /** Type, size, progress or other detail under the title. */
   description = '';
-  /** What went wrong and how to recover, shown while `status` is `error`. */
   errorMessage = '';
-  /** The attachment's density. */
   size: 'xs' | 'sm' | 'default' = 'default';
-  /** The application's upload status: `idle` before upload, `uploading` and `processing` while busy. */
   status: AttachmentStatus = 'idle';
-  /** Presents the media as a file mark or as an image that fills the media area. */
   mediaTreatment: 'mark' | 'image' = 'mark';
-  /** Adds a Remove button that fires `tp-remove`. */
   removable = false;
-  /** Replacements for the generated text, such as the Remove button's name; missing entries keep the defaults. */
+  /** Partial text overrides; missing entries use `DEFAULT_ATTACHMENT_MESSAGES`. */
   messages: Partial<AttachmentMessages> = {};
   #releaseSlots: (() => void) | undefined;
   #delegates = new Map<Element, { part: string; release: () => void }>();

@@ -4,12 +4,7 @@ import { TpElement } from '../../foundation/element.js';
 import { nearestDrawerService } from './provider.js';
 import { oppositeDirection, type DrawerDirection } from './types.js';
 import type { TpDrawer } from './drawer.js';
-/**
- * A region that opens a closed Drawer with a swipe, such as a strip along the screen edge. Size and
- * place it yourself; it shares the drawer's gesture.
- *
- * @slot - Optional content of the region.
- */
+/** Optional, consumer-sized opening region. It shares the owner's gesture state. */
 export class TpDrawerSwipeArea extends TpElement {
   static tagName = 'tp-drawer-swipe-area';
   static override properties = {
@@ -26,13 +21,9 @@ export class TpDrawerSwipeArea extends TpElement {
       }
     `,
   ];
-  /** The `id` of the drawer to open, when the area is not in that drawer's `swipe-area` slot. */
   for = '';
-  /** The drawer to open, as a reference, in place of `for`. */
   owner: TpDrawer | null = null;
-  /** The direction of the opening swipe; by default the opposite of the drawer's closing direction. */
   swipeDirection: DrawerDirection | undefined;
-  /** The drawer the area opens, from `owner`, `for` or the nearest drawer. */
   get drawer(): TpDrawer | null {
     return (
       this.owner ??

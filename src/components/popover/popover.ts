@@ -11,19 +11,7 @@ import type {
 } from '../../foundation/positioning.js';
 import { popoverPresentation } from '../../presentation/families/popover.js';
 
-/**
- * Interactive content anchored to a trigger, such as a short form or a set of options. It opens on
- * press, leaves the page usable unless `modal` is set, and closes on Escape, an outside press or
- * its `close` action.
- *
- * @slot - The content of the popup.
- * @slot trigger - The control that opens the popup, usually a Button.
- * @slot anchor - An element to position the popup against instead of the trigger.
- * @slot title - The heading that names the popup.
- * @slot description - Text that describes the popup.
- * @slot header - Replaces the header that holds the title and the description.
- * @slot close - An action that closes the popup when pressed, after its own handlers.
- */
+/** Interactive Popover policy on the same surface/hover owners as Tooltip and Menu. */
 export class TpPopover extends TpHoverSurface {
   static tagName = 'tp-popover';
   static override presentation = popoverPresentation;
@@ -46,7 +34,6 @@ export class TpPopover extends TpHoverSurface {
   override align: Alignment = 'center';
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
-  /** Keeps a hover-opened popup open while the pointer moves back to the trigger, as long as focus is inside the popup. */
   preserveOnTriggerHover = false;
   #titleId = createId('tp-popover-title');
   #descriptionId = createId('tp-popover-description');

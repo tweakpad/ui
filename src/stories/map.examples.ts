@@ -13,7 +13,7 @@ import {
 } from './map-example.js';
 
 /** A custom SVG pin; it inherits the pin's `color`. */
-const pinSvg = `<svg viewBox="0 0 32 40" width="32" height="40" aria-hidden="true" focusable="false">
+export const pinSvg = `<svg viewBox="0 0 32 40" width="32" height="40" aria-hidden="true" focusable="false">
         <path d="M16 1C7.7 1 1 7.6 1 15.8 1 26.9 16 39 16 39s15-12.1 15-23.2C31 7.6 24.3 1 16 1z" fill="currentColor" stroke="white" stroke-width="2" />
         <circle cx="16" cy="15.5" r="5.5" fill="white" />
       </svg>`;
@@ -152,6 +152,52 @@ export function renderMapExample(
   </div>`;
 }
 
+const setupScript = (engine: string) => `import * as maplibregl from 'maplibre-gl';
+import maplibreCss from 'maplibre-gl/dist/maplibre-gl.css?raw';
+import { createMapLibreEngine, createGoogleMapsEngine } from '@tweakpad/ui/map';
+
+const map = document.querySelector('tp-map');
+${engine}
+
+// The list's current row follows the map selection; each row's button reveals its pin.
+const list = document.querySelector('[data-map-list]');
+map.subscribe((state) => state.selectedPin, (selected) => {
+  for (const item of list.querySelectorAll('tp-list-item')) item.selected = item.value === selected;
+});
+list.addEventListener('click', (event) => {
+  const value = event.target.closest('[data-show]')?.dataset.show;
+  if (!value) return;
+  if (map.state.selectedPin === value) map.revealPin(value);
+  else map.selectPin(value);
+});`;
+
+const copyable = (markup: string, script: string) =>
+  `${markup}\n<script type="module">\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\n${script}\n</script>`;
+
+/** Copyable source of the canonical example (MapLibre + OpenFreeMap). */
+export const mapDemoSource = () =>
+  copyable(
+    mapMarkup({ id: 'lisbon-map' }),
+    setupScript(
+      `// OpenFreeMap vector tiles through MapLibre (no API key).\nmap.engine = createMapLibreEngine(maplibregl, { css: maplibreCss });`,
+    ),
+  );
+
+/** Controls placed anywhere on the page and bound with `map="id"`. */
+export const externalControlsExample = (() => {
+  const markup = mapMarkup({ id: 'lisbon-external-map', externalControls: true });
+  return {
+    title: 'External controls',
+    description:
+      'tp-map-control elements outside the map bind to it with map="id", here in a joined Button group above the map. They behave exactly like the built-in floating controls.',
+    code: copyable(
+      markup,
+      setupScript(`map.engine = createMapLibreEngine(maplibregl, { css: maplibreCss });`),
+    ),
+    render: () => renderMapExample(markup, () => openFreeMapEngine()),
+  };
+})();
+
 /** The same composition on Google Maps. */
 export function googleMapsExample(key: string | undefined) {
   const markup = mapMarkup({
@@ -160,6 +206,15 @@ export function googleMapsExample(key: string | undefined) {
     ...(key ? {} : { status: 'Set STORYBOOK_GOOGLE_MAPS_API_KEY to load the Google Maps engine.' }),
   });
   return {
+    title: 'Google Maps engine',
+    description:
+      'The identical composition on the Google Maps engine, themed with a dark Google JSON style through the adapter styles option. Google renders Google basemaps only; OpenFreeMap vector tiles need the MapLibre engine. Set STORYBOOK_GOOGLE_MAPS_API_KEY to run it; without a key the map shows its empty status.',
+    code: copyable(
+      markup,
+      setupScript(
+        `import { setOptions, importLibrary } from '@googlemaps/js-api-loader';\nsetOptions({ key: 'YOUR_API_KEY' });\n// A JSON style themes Google basemaps (without a cloud map ID); one style for both schemes.\nconst nightStyle = ${JSON.stringify(googleNightStyle, null, 2)};\nmap.engine = createGoogleMapsEngine(importLibrary, { styles: { light: nightStyle, dark: nightStyle } });`,
+      ),
+    ),
     render: () =>
       renderMapExample(markup, () =>
         key
@@ -177,6 +232,15 @@ export const tokenThemeExample = (() => {
     style: 'color-scheme: dark',
   });
   return {
+    title: 'Token theme',
+    description:
+      'The basemap theme roles reference library tokens (`tokenMapTheme`), so the scoped `color-scheme: dark` recolors land, water, parks, roads and labels together with the pins and controls. Any CSS color works per role and per scheme.',
+    code: copyable(
+      markup,
+      setupScript(
+        `import { tokenMapTheme } from '@tweakpad/ui/map';\nmap.theme = tokenMapTheme;\nmap.engine = createMapLibreEngine(maplibregl, { css: maplibreCss, style: 'https://tiles.openfreemap.org/styles/positron' });`,
+      ),
+    ),
     render: () =>
       html`<div
         style="color-scheme: dark; background: var(--tp-background); padding: var(--tp-space-4); border-radius: var(--tp-radius-lg)"

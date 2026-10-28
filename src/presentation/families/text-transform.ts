@@ -9,16 +9,12 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'text-transform',
-      description: 'The host, which paints no surface and inherits font and color.',
     },
     {
       name: 'text-transform-value',
-      description:
-        'The presented text: a `data` element carrying the raw number for numeric input.',
     },
     {
       name: 'text-transform-description',
-      description: 'The Tooltip showing the complete text while the text is shortened.',
     },
   ],
 };

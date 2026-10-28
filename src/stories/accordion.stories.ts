@@ -1,11 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { useArgs } from 'storybook/preview-api';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import accordionDocumentation from '../../docs/accordion.md?raw';
 import type { AccordionValue, AccordionVariant } from '../components/accordion/accordion.js';
 import type { AccordionContentAlignment } from '../components/accordion/accordion-item.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import type { MotionPolicy } from '../foundation/motion.js';
+import type { MotionPolicy, TpMotionRequestEvent } from '../foundation/motion.js';
+import { playLineByLine } from './line-by-line-motion.js';
 
 interface AccordionStoryArgs {
   selectionMode: 'single' | 'multiple';
@@ -21,10 +22,27 @@ interface AccordionStoryArgs {
   onValueChange?: (event: TpValueChangeEvent<AccordionValue>) => void;
 }
 
+/** Composition choices that are not Root properties: positional content and an external driver. */
+interface AccordionFixtureOptions {
+  showLeadingContent: boolean;
+  contentMotion: 'none' | 'line-by-line';
+}
+
+const defaultAccordionFixture: AccordionFixtureOptions = {
+  showLeadingContent: false,
+  contentMotion: 'none',
+};
+
 const meta: Meta<AccordionStoryArgs> = {
   title: 'Components/Accordion',
   component: 'tp-accordion',
-  parameters: { docs: libraryDocs('components/accordion') },
+  parameters: {
+    docs: {
+      description: {
+        component: accordionDocumentation.replace(/^# Accordion\n/u, ''),
+      },
+    },
+  },
   args: {
     selectionMode: 'single',
     variant: 'plain',
@@ -41,6 +59,8 @@ const meta: Meta<AccordionStoryArgs> = {
     variant: {
       control: 'radio',
       options: ['plain', 'line', 'outline', 'separated'],
+      description:
+        'Predefined visual recipe for the Accordion container and the relationship between Items.',
       table: {
         category: 'Root',
         type: { summary: "'plain' | 'line' | 'outline' | 'separated'" },
@@ -50,6 +70,7 @@ const meta: Meta<AccordionStoryArgs> = {
     selectionMode: {
       control: 'radio',
       options: ['single', 'multiple'],
+      description: 'Whether one or several items may be open.',
       table: {
         category: 'Root',
         type: { summary: "'single' | 'multiple'" },
@@ -58,31 +79,41 @@ const meta: Meta<AccordionStoryArgs> = {
     },
     value: {
       control: 'object',
+      description:
+        'Ordered list of open item values. Interacting with the story keeps this control in sync.',
       table: { category: 'Root', type: { summary: 'string[]' }, defaultValue: { summary: '[]' } },
     },
     defaultValue: {
       control: 'object',
+      description:
+        'Initial selection when value is empty at first registration; changing it later does not reset the instance.',
       table: { category: 'Root', type: { summary: 'string[]' }, defaultValue: { summary: '[]' } },
     },
     collapsible: {
       control: 'boolean',
+      description: 'Allows the last open item to close in single mode; ignored in multiple mode.',
       table: { category: 'Root', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     disabled: {
       control: 'boolean',
+      description: 'Prevents activation of every item.',
       table: { category: 'Root', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     keepMounted: {
       control: 'boolean',
+      description: 'Ends a closed panel in the retained presence state after exit.',
       table: { category: 'Root', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     hiddenUntilFound: {
       control: 'boolean',
+      description: 'Retains closed content as hidden-until-found for browser search and reveal.',
       table: { category: 'Root', type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
     },
     motionPolicy: {
       control: 'radio',
       options: ['inherit', 'normal', 'reduce'],
+      description:
+        'Resolves motion for this Accordion subtree; inherit defers to the nearest policy boundary or environment preference.',
       table: {
         category: 'Root',
         type: { summary: "'inherit' | 'normal' | 'reduce'" },
@@ -92,6 +123,8 @@ const meta: Meta<AccordionStoryArgs> = {
     contentAlignment: {
       control: 'radio',
       options: ['edge', 'label'],
+      description:
+        'Default logical inline-start alignment for every Item’s ContentBody; label follows arbitrary Leading content.',
       table: {
         category: 'Root',
         type: { summary: "'edge' | 'label'" },
@@ -100,6 +133,7 @@ const meta: Meta<AccordionStoryArgs> = {
     },
     onValueChange: {
       control: false,
+      description: 'Property-only callback invoked after an accepted tp-value-change proposal.',
       table: {
         category: 'Root',
         type: { summary: '(event: TpValueChangeEvent<string[]>) => void' },
@@ -110,11 +144,16 @@ const meta: Meta<AccordionStoryArgs> = {
   render: (args) => renderAccordion(args),
 };
 
-function renderAccordion(args: AccordionStoryArgs) {
+function renderAccordion(args: AccordionStoryArgs, options: Partial<AccordionFixtureOptions> = {}) {
+  const fixture = { ...defaultAccordionFixture, ...options };
   const [, updateArgs] = useArgs<AccordionStoryArgs>();
   const handleValueChange = (event: TpValueChangeEvent<AccordionValue>): void => {
     updateArgs({ value: [...event.detail.value] });
     args.onValueChange?.(event);
+  };
+  const handleMotionRequest = (event: TpMotionRequestEvent): void => {
+    if (fixture.contentMotion !== 'line-by-line' || event.request.role !== 'content') return;
+    event.respondWith({ play: playLineByLine });
   };
   return html`
     <tp-accordion
@@ -129,8 +168,10 @@ function renderAccordion(args: AccordionStoryArgs) {
       .motionPolicy=${args.motionPolicy}
       .contentAlignment=${args.contentAlignment}
       @tp-value-change=${handleValueChange}
+      @tp-motion-request=${handleMotionRequest}
     >
       <tp-accordion-item value="account" heading-level="2">
+        ${fixture.showLeadingContent ? html`<span slot="leading">01</span>` : null}
         <span slot="label">Account settings</span>
         <p>Your public profile starts here.</p>
         <p>
@@ -139,11 +180,13 @@ function renderAccordion(args: AccordionStoryArgs) {
         </p>
       </tp-accordion-item>
       <tp-accordion-item value="security" heading-level="2">
+        ${fixture.showLeadingContent ? html`<span slot="leading">02</span>` : null}
         <span slot="label">Security</span>
         <p>Require a second step when signing in from a new device or location.</p>
         <p>Save your backup codes offline.</p>
       </tp-accordion-item>
       <tp-accordion-item value="billing" heading-level="2">
+        ${fixture.showLeadingContent ? html`<span slot="leading">03</span>` : null}
         <span slot="label">Billing</span>
         <p>
           Review every invoice from the current subscription, download receipts for your records,
@@ -160,3 +203,28 @@ export default meta;
 type Story = StoryObj<AccordionStoryArgs>;
 
 export const Default: Story = {};
+
+export const PositionalContent: Story = {
+  args: { variant: 'separated', contentAlignment: 'label' },
+  render: (args) => renderAccordion(args, { showLeadingContent: true }),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Adds numbered content through the generic positional slots while the built-in indicator remains in the opposite position.',
+      },
+    },
+  },
+};
+
+export const ExternalLineByLineMotion: Story = {
+  render: (args) => renderAccordion(args, { contentMotion: 'line-by-line' }),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Claims only the per-Item content role and staggers the Item paragraphs. Accordion still owns disclosure measurement, presence, and selection.',
+      },
+    },
+  },
+};

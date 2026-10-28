@@ -14,47 +14,38 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'drag-drop-list-root',
-      description: 'The host.',
       slot: 'root',
     },
     {
       name: 'drag-drop-list-list',
-      description: 'The native ordered list.',
       slot: 'list',
     },
     {
       name: 'drag-drop-list-item',
-      description: 'The list element around each row; marked while dragging, dropping or targeted.',
       slot: 'item',
     },
     {
       name: 'drag-drop-list-handle',
-      description: 'The grip Button that picks a row up.',
       slot: 'handle',
     },
     {
       name: 'drag-drop-list-placeholder',
-      description: 'The stand-in that keeps the dragged row in place.',
       slot: 'placeholder',
     },
     {
       name: 'drag-drop-list-overlay',
-      description: 'The custom overlay that follows the pointer.',
       slot: 'overlay',
     },
     {
       name: 'drag-drop-list-empty',
-      description: 'The row shown while the list has no items.',
       slot: 'empty',
     },
     {
       name: 'drag-drop-list-instructions',
-      description: 'The hidden keyboard instructions read with each handle.',
       slot: 'instructions',
     },
     {
       name: 'drag-drop-list-announcements',
-      description: 'The polite live region announcing drag operations.',
       slot: 'announcements',
     },
   ],

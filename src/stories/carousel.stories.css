@@ -38,3 +38,9 @@
 .carousel-demo--vertical .carousel-demo-card::part(card-content) {
   font-size: calc(var(--tp-text-2xl) * 1.5);
 }
+
+.carousel-data-demo {
+  inline-size: 100%;
+  max-inline-size: 32rem;
+  margin-inline: auto;
+}

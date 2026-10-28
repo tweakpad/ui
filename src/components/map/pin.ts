@@ -11,11 +11,12 @@ import { TpMapOverlay } from './overlay.js';
 export type MapPinAnchor = 'bottom' | 'center';
 
 /**
- * A positioned, selectable pin on a Map.
+ * A positioned, selectable map pin (`ucl21-map` Pin; behavior `sec-1812-map` map-f-pins,
+ * map-f-pin-keyboard, map-f-pin-semantics).
  *
- * Authored default-slot content is the pin's visual; it stays the application's DOM and inherits
- * `color` from the pin. Without content the default marker renders. A child Map overlay opens
- * anchored to the pin while it is selected.
+ * Authored default-slot content (for example an inline SVG) is the pin's visual; it stays the
+ * consumer's DOM and inherits `color` from the pin. Without content the default marker renders.
+ * A child `tp-map-overlay` opens anchored to the pin while it is selected.
  *
  * @slot - The pin visual. Defaults to the marker graphic.
  * @csspart pin - The focusable button placed at the position.
@@ -117,7 +118,6 @@ export class TpMapPin extends TpMapElement implements MapPinRecord {
   #labelDiagnosed = false;
   #settled = false;
 
-  /** The pin's position, or `null` while its coordinates are not valid numbers. */
   get position(): MapPosition | null {
     const { latitude, longitude } = this;
     return Number.isFinite(latitude) && Number.isFinite(longitude)
@@ -125,12 +125,10 @@ export class TpMapPin extends TpMapElement implements MapPinRecord {
       : null;
   }
 
-  /** Whether the pin is disabled, itself or through its map. */
   get pinDisabled(): boolean {
     return this.disabled || Boolean(this.owner?.disabled);
   }
 
-  /** The name the pin is announced by: its `label`, else the map's pin message. */
   get accessibleLabel(): string {
     return this.label.trim() || this.messages.pin;
   }
@@ -152,7 +150,6 @@ export class TpMapPin extends TpMapElement implements MapPinRecord {
     );
   }
 
-  /** Focuses the pin's button. */
   override focus(options?: FocusOptions): void {
     const control = this.control;
     if (control) control.focus(options);

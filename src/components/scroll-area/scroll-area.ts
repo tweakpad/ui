@@ -12,13 +12,6 @@ import {
 } from './types.js';
 import { scrollAreaPresentation } from '../../presentation/families/scroll-area.js';
 
-/**
- * A native scroll viewport with slim, theme-consistent scrollbars. Wheel, touch, keyboard, focus
- * and scroll anchoring stay the browser's own; only the visible tracks are replaced. Give the host
- * a constrained block or inline size; its content decides how far it scrolls.
- *
- * @slot - The scrolling content.
- */
 export class TpScrollArea extends TpElement {
   static tagName = 'tp-scroll-area';
   static override presentation = scrollAreaPresentation;
@@ -111,32 +104,23 @@ export class TpScrollArea extends TpElement {
     `,
   ];
   override orientation: 'horizontal' | 'vertical' = 'vertical';
-  /** Restricts scrolling to one axis, or shows both tracks for content that overflows both ways; takes precedence over `orientation`. */
   axis: 'x' | 'y' | 'both' | undefined;
-  /** Names the viewport as a region, which helps when it holds a lot of content. */
   label = '';
-  /** When the tracks appear: on overflow, always, only while scrolling or only on hover. */
   scrollbarVisibility: ScrollbarVisibility = 'automatic';
-  /** Keeps a track rendered when its axis does not overflow; it stays hidden unless visibility is `always`. */
   keepMounted = false;
-  /** Configures each track on its own (orientation, visibility, keep-mounted), replacing `axis` and `orientation`; an empty list keeps native scrolling with no custom tracks. */
   scrollbars: readonly ScrollbarOptions[] | undefined;
-  /** How far, in pixels, content must be hidden past an edge before that edge counts as overflowing; one number or one per edge. */
   overflowEdgeThreshold: OverflowEdgeThreshold = 0;
-  /** Renders the corner where visible horizontal and vertical tracks meet. */
   showCorner = true;
   #state = { ...initialScrollAreaState };
   #hovering = false;
   readonly #controller = new ScrollAreaController(this);
-  /** The native scrolling element, for `scrollTo`, `scrollTop` and `scroll` events; null before the first render. */
   get viewportElement(): HTMLElement | null {
     return this.renderRoot?.querySelector('.viewport') ?? null;
   }
-  /** The element wrapping the slotted content inside the viewport; null before the first render. */
   get contentElement(): HTMLElement | null {
     return this.renderRoot?.querySelector('.content') ?? null;
   }
-  /** @internal Publishes the measured scroll state; does not replace the native viewport or its contents. */
+  /** Internal state publication does not replace the native viewport or its contents. */
   setScrollState(state: ScrollAreaState): void {
     if (
       Object.keys(state).every(

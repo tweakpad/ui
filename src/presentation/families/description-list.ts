@@ -24,24 +24,14 @@ const definition: ComponentDefinition = {
     },
   ],
   parts: [
-    {
-      name: 'description-list',
-      description: 'The native description list.',
-      axes: ['orientation', 'layout', 'align'],
-    },
-    {
-      name: 'description-list-viewport',
-      description: 'The region that clips the list to the visible items while it is closed.',
-    },
-    { name: 'description-list-item', description: 'One label and value pair.' },
-    { name: 'description-list-label', description: 'A term, holding the label.' },
-    { name: 'description-list-value', description: 'A description, holding the value.' },
-    {
-      name: 'description-list-trigger',
-      description: 'The Show more Button that shows or hides the items beyond the limit.',
-    },
-    { name: 'description-list-trigger-label', description: 'The text of the Show more Button.' },
-    { name: 'description-list-indicator', description: 'The chevron of the Show more Button.' },
+    { name: 'description-list', axes: ['orientation', 'layout', 'align'] },
+    { name: 'description-list-viewport' },
+    { name: 'description-list-item' },
+    { name: 'description-list-label' },
+    { name: 'description-list-value' },
+    { name: 'description-list-trigger' },
+    { name: 'description-list-trigger-label' },
+    { name: 'description-list-indicator' },
   ],
 };
 

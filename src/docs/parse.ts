@@ -35,8 +35,7 @@ export interface DocHeading {
 }
 
 export interface DocPreview {
-  /** Names the preview where a section shows several; a section's single preview has none. */
-  readonly title?: string;
+  readonly title: string;
   readonly code: string;
   readonly script?: string;
   readonly align?: 'center' | 'start' | 'stretch';
@@ -335,6 +334,7 @@ export function parseDoc(source: string, id: string): ParsedDoc {
     };
     const title = stringAttribute('title');
     const code = stringAttribute('code');
+    if (!title) throw new DocParseError(id, line, 'Preview needs a title');
     if (code === undefined) throw new DocParseError(id, line, 'Preview needs code');
     const align = stringAttribute('align');
     if (align !== undefined && !ALIGNMENTS.has(align))
@@ -345,8 +345,7 @@ export function parseDoc(source: string, id: string): ParsedDoc {
     const viewport = stringAttribute('viewport');
     const preview: {
       -readonly [Key in keyof DocPreview]: DocPreview[Key];
-    } = { code, afterHeading: above?.slug ?? null, line };
-    if (title !== undefined) preview.title = title;
+    } = { title, code, afterHeading: above?.slug ?? null, line };
     if (script !== undefined) preview.script = script;
     if (align !== undefined) preview.align = align as NonNullable<DocPreview['align']>;
     if (language !== undefined) preview.language = language;

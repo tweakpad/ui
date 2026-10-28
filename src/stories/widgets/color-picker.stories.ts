@@ -12,7 +12,8 @@ import type {
   TpColorPicker,
 } from '../../widgets/color-picker/index.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
-import { libraryDocs } from '../library-docs.js';
+import { colorPickerExamples } from './color-picker.examples.js';
+import documentation from '../../../docs/widgets/color-picker.md?raw';
 
 interface Args {
   value: string;
@@ -36,10 +37,21 @@ interface Args {
   disabled: boolean;
   readOnly: boolean;
 }
+const sourceFor = (markup: string) =>
+  `<script type="module">\n  import '@tweakpad/ui/styles.css';\n  import '@tweakpad/ui/register';\n  import '@tweakpad/ui/register/widgets';\n</script>\n${markup}`;
+const source = sourceFor(
+  '<tp-color-picker label="Accent" name="accent" default-value="#6d5dfc"></tp-color-picker>',
+);
 const meta: Meta<Args> = {
   title: 'Widgets/Color picker',
   component: 'tp-color-picker',
-  parameters: { docs: libraryDocs('widgets/color-picker') },
+  parameters: {
+    docs: {
+      examples: colorPickerExamples,
+      description: { component: documentation },
+      source: { code: source, language: 'html' },
+    },
+  },
   args: {
     value: '#6d5dfc',
     format: 'hex',
@@ -63,14 +75,17 @@ const meta: Meta<Args> = {
     readOnly: false,
   },
   argTypes: {
-    value: { control: 'text' },
+    value: { control: 'text', description: 'Controlled CSS color; the example accepts proposals.' },
     format: {
       control: 'select',
       options: ['hex', 'rgb', 'hsl', 'hwb', 'hsv', 'lab', 'oklab', 'oklch', 'cmyk'],
     },
     alpha: { control: 'boolean' },
     picker: { control: 'select', options: ['inline', 'popup'] },
-    views: { control: 'object' },
+    views: {
+      control: 'object',
+      description: 'Ordered views: area, sliders, wheel, triangle, swatches, schemes.',
+    },
     view: {
       control: 'select',
       options: ['area', 'sliders', 'wheel', 'triangle', 'swatches', 'schemes'],
@@ -85,8 +100,11 @@ const meta: Meta<Args> = {
       control: 'select',
       options: ['none', 'complementary', 'analogous', 'triad', 'compound', 'custom'],
     },
-    swatches: { control: 'object' },
-    recent: { control: 'object' },
+    swatches: { control: 'object', description: 'Saved colors or labeled groups.' },
+    recent: {
+      control: 'object',
+      description: 'Recent colors supplied by the application (popup strip and swatches view).',
+    },
     allowWheelScrub: { control: 'boolean' },
     label: { control: 'text' },
     locale: { control: 'text' },
@@ -140,3 +158,75 @@ const meta: Meta<Args> = {
 export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
+export const Popup: Story = {
+  args: { picker: 'popup', recent: ['#e53935', '#fb8c00', '#43a047', '#039be5', '#8e24aa'] },
+  parameters: {
+    docs: {
+      source: {
+        code: sourceFor(
+          '<tp-color-picker label="Accent" picker="popup" default-value="#6d5dfc"></tp-color-picker>',
+        ),
+      },
+    },
+  },
+};
+export const ChannelSliders: Story = {
+  args: {
+    views: ['sliders'],
+    view: 'sliders',
+    format: 'oklch',
+    value: 'oklch(0.586 0.227 281.3)',
+    label: 'Surface',
+  },
+  parameters: {
+    docs: {
+      source: {
+        code: sourceFor(
+          '<tp-color-picker label="Surface" views="sliders" default-format="oklch" default-value="oklch(0.586 0.227 281.3)"></tp-color-picker>',
+        ),
+      },
+    },
+  },
+};
+export const HarmonyWheel: Story = {
+  args: { views: ['wheel'], view: 'wheel', harmony: 'triad', value: '#e53935', label: 'Palette' },
+  parameters: {
+    docs: {
+      source: {
+        code: sourceFor(
+          '<tp-color-picker label="Palette" views="wheel" default-harmony="triad" default-value="#e53935"></tp-color-picker>',
+        ),
+      },
+    },
+  },
+};
+export const HueTriangle: Story = {
+  args: { views: ['triangle'], view: 'triangle', value: '#43a047', label: 'Tint' },
+  parameters: {
+    docs: {
+      source: {
+        code: sourceFor(
+          '<tp-color-picker label="Tint" views="triangle" default-value="#43a047"></tp-color-picker>',
+        ),
+      },
+    },
+  },
+};
+export const Schemes: Story = {
+  args: {
+    views: ['area', 'swatches', 'schemes'],
+    view: 'schemes',
+    value: '#fb8c00',
+    label: 'Scheme',
+    swatches: ['#fb8c00', '#e53935', '#8e24aa', '#3949ab', '#039be5'],
+  },
+  parameters: {
+    docs: {
+      source: {
+        code: sourceFor(
+          '<tp-color-picker label="Scheme" views="area swatches schemes" default-view="schemes" default-value="#fb8c00"></tp-color-picker>',
+        ),
+      },
+    },
+  },
+};

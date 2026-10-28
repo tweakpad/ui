@@ -263,7 +263,7 @@ run(
   [
     '--input-type=module',
     '-e',
-    "import { readFileSync } from 'node:fs'; import { createRequire } from 'node:module'; import { dirname, join } from 'node:path'; const require = createRequire(import.meta.url); const { parseDoc, elementApi, relatedPages } = await import('@tweakpad/ui/docs'); const index = require('@tweakpad/ui/docs.json'); const root = dirname(require.resolve('@tweakpad/ui/package.json')); const manifest = JSON.parse(readFileSync(join(root, require('@tweakpad/ui/package.json').customElements), 'utf8')); const page = parseDoc(readFileSync(join(root, 'docs/components/badge.mdx'), 'utf8'), 'components/badge'); if (page.tag !== 'tp-badge' || !page.hero || !index.pages.some((entry) => entry.tag === 'tp-badge') || !elementApi(manifest, 'tp-badge').cssParts.length || !relatedPages(manifest, index.pages).has('components/badge')) process.exit(1);",
+    "import { readFileSync } from 'node:fs'; import { createRequire } from 'node:module'; import { dirname, join } from 'node:path'; const require = createRequire(import.meta.url); const { parseDoc, elementApi, relatedPages } = await import('@tweakpad/ui/docs'); const index = require('@tweakpad/ui/docs.json'); const root = dirname(require.resolve('@tweakpad/ui/package.json')); const manifest = JSON.parse(readFileSync(join(root, require('@tweakpad/ui/package.json').customElements), 'utf8')); const page = parseDoc(readFileSync(join(root, 'docs/components/badge.mdx'), 'utf8'), 'components/badge'); if (page.tag !== 'tp-badge' || !page.hero || index.pages[0].tag !== 'tp-badge' || !elementApi(manifest, 'tp-badge').cssParts.length || !relatedPages(manifest, index.pages).has('components/badge')) process.exit(1);",
   ],
   consumer,
 );

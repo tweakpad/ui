@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import documentation from '../../docs/overflow-list.md?raw';
+import { overflowListExamples } from './overflow-list.examples.js';
 import type { OverflowCollapseFrom } from '../index.js';
 
 interface Args {
@@ -29,7 +30,21 @@ const labels = [
 const meta = {
   title: 'Components/Overflow list',
   component: 'tp-overflow-list',
-  parameters: { docs: libraryDocs('components/overflow-list') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      examples: overflowListExamples,
+      source: {
+        code: `<tp-overflow-list limit="3">
+  <tp-badge variant="outline">Stoneware</tp-badge>
+  <tp-badge variant="outline">Matte glaze</tp-badge>
+  <tp-badge variant="outline">Hand-thrown</tp-badge>
+  <tp-badge variant="outline">Food-safe</tp-badge>
+  <tp-badge variant="outline">Speckled</tp-badge>
+</tp-overflow-list>`,
+      },
+    },
+  },
   args: {
     limit: 3,
     maxRows: undefined,
@@ -39,16 +54,19 @@ const meta = {
   },
   argTypes: {
     limit: {
+      description: 'Most items shown; a value below one means no limit.',
       control: { type: 'number', min: 0 },
       table: { type: { summary: 'number' } },
     },
     maxRows: {
       name: 'max-rows',
+      description: 'Most rows of the available width; items that do not fit are omitted.',
       control: { type: 'number', min: 1 },
       table: { type: { summary: 'number' } },
     },
     collapseFrom: {
       name: 'collapse-from',
+      description: 'Side whose items are omitted; the count takes their place.',
       control: 'inline-radio',
       options: ['end', 'start'],
       table: { defaultValue: { summary: 'end' } },

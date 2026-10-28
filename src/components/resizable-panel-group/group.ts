@@ -30,17 +30,7 @@ import type {
 import { resizablePanelGroupPresentation } from '../../presentation/families/resizable-panel-group.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
-/**
- * Adjacent panels whose sizes people change by dragging, or with the keyboard on the handles
- * between them. The group owns the layout of its direct panels and handles: pointer, keyboard and
- * code all go through the same constraints and publish every panel size at once. Handles left out
- * are generated between adjacent panels; nest another group in a panel for the other axis.
- *
- * @slot - Panels and handles, as direct children in their logical order.
- * @fires tp-value-change - Cancelable proposal of new panel sizes, in pixels and panel order, before it commits; a controlled group must publish the accepted `sizes`.
- * @fires tp-layout-change - After each committed layout, with `layout` (panel id to percentage) and `sizes` (pixels).
- * @fires tp-layout-change-complete - Once a resize settles, with the final `layout` and `sizes`; the place to save a layout.
- */
+/** One layout/proposal/input owner for authored constituents and legacy native panels. */
 export class TpResizablePanelGroup extends TpElement {
   static tagName = 'tp-resizable-panel-group';
   /** Library elements this element renders; defining it defines them too. */
@@ -77,8 +67,9 @@ export class TpResizablePanelGroup extends TpElement {
         min-block-size: 0;
       }
 
-      /* Feasible panels fill the group exactly: it clips, so a handle's hit target at an edge
-         never becomes scrollable overflow. Only infeasible bounds expose their overflow. */
+      /* Feasible panels fill the group exactly: it clips (react-resizable-panels: overflow
+         hidden), so a handle's hit target at an edge never becomes scrollable overflow. Only
+         infeasible bounds expose their overflow. */
       .group {
         position: relative;
         display: flex;
@@ -120,7 +111,6 @@ export class TpResizablePanelGroup extends TpElement {
   ];
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   #inputSizes: readonly PanelExtent[] | undefined;
-  /** The panel sizes in panel order; set it to control the layout, then publish each accepted proposal back. Numbers are pixels, unitless strings percentages. */
   get sizes(): readonly PanelExtent[] {
     return this.#inputSizes ?? this.#state.value;
   }
@@ -130,31 +120,18 @@ export class TpResizablePanelGroup extends TpElement {
     this.#state.sync();
     this.requestUpdate('sizes', old);
   }
-  /** The initial sizes in panel order, when the group owns its layout. */
   defaultSizes: readonly PanelExtent[] | undefined;
-  /** The initial layout by panel id, as percentages, when the group owns its layout; survives reordering. */
   defaultLayout: PanelLayout | undefined;
-  /** A minimum percentage for every panel that does not declare its own `min-size`. */
   min: number | undefined;
-  /** How far, in pixels, an arrow key moves a handle. */
   keyboardStep = 1;
-  /** Shows a grip on the generated handles; authored handles set their own. */
   withHandle = false;
-  /** Leaves the document cursor alone while dragging, instead of showing the resize cursor everywhere. */
   disableCursor = false;
-  /** Stops a double-click on a handle from restoring its panel's default size. */
   disableDoubleClickReset = false;
-  /** The smallest pointer target of each handle, in pixels, for fine and coarse pointers; the visible line stays thin. */
   resizeTargetMinimumSize = { fine: 10, coarse: 20 };
-  /** The key the persistence adapter saves and restores the layout under. */
   persistenceKey = '';
-  /** Your storage for the layout: `load(key)` restores it before the first commit, `save(key, layout)` stores each settled layout. Controlled groups never use it. */
   persistenceAdapter: PanelPersistenceAdapter | undefined;
-  /** Called with each size proposal, as `tp-value-change` is dispatched. */
   onSizesChange: ((event: TpValueChangeEvent<readonly number[]>) => void) | undefined;
-  /** Called with the layout after each commit, as `tp-layout-change` is dispatched. */
   onLayoutChange: ((layout: PanelLayout) => void) | undefined;
-  /** Called with the final layout once a resize settles, as `tp-layout-change-complete` is dispatched. */
   onLayoutChanged: ((layout: PanelLayout) => void) | undefined;
   #panels: HTMLElement[] = [];
   #handles: TpResizableHandle[] = [];
@@ -210,7 +187,6 @@ export class TpResizablePanelGroup extends TpElement {
     onChange: (event) => this.onSizesChange?.(event),
     onCommit: (sizes) => this.#commit(sizes),
   });
-  /** The current layout: each panel id with its size as a percentage. */
   getLayout(): PanelLayout {
     return Object.fromEntries(
       this.#panels.map((panel, i) => [
@@ -219,7 +195,6 @@ export class TpResizablePanelGroup extends TpElement {
       ]),
     );
   }
-  /** Proposes a layout by panel id, in percentages, and returns the layout actually committed after the bounds apply. */
   setLayout(layout: PanelLayout): PanelLayout {
     this.#measure();
     this.#propose(
@@ -233,22 +208,18 @@ export class TpResizablePanelGroup extends TpElement {
     this.#settle();
     return this.getLayout();
   }
-  /** A panel's current size, in pixels and as a percentage. */
   getPanelSize(panel: HTMLElement): PanelSize {
     const i = this.#panels.indexOf(panel);
     const value = this.#state.value[i] ?? 0;
     return { inPixels: value, asPercentage: this.#extent ? (value / this.#extent) * 100 : 0 };
   }
-  /** The panel with this id, if the group holds one. */
   getPanelElement(id: string): HTMLElement | undefined {
     return this.#panels.find((panel) => panel.id === id);
   }
-  /** Collapses a collapsible panel to its collapsed size. */
   collapsePanel(panel: HTMLElement): void {
     const i = this.#panels.indexOf(panel);
     if (this.#bounds[i]?.collapsible) this.resizePanel(panel, this.#bounds[i]!.collapsed);
   }
-  /** Expands a collapsed panel to its last expanded size, else its default or minimum. */
   expandPanel(panel: HTMLElement): void {
     const i = this.#panels.indexOf(panel),
       bound = this.#bounds[i];
@@ -259,7 +230,6 @@ export class TpResizablePanelGroup extends TpElement {
       bound.min;
     this.resizePanel(panel, Math.max(bound.min, value));
   }
-  /** Resizes one panel within its bounds; its neighbors absorb the difference. */
   resizePanel(panel: HTMLElement, size: PanelExtent): void {
     this.#measure();
     const i = this.#panels.indexOf(panel),
@@ -541,7 +511,6 @@ export class TpResizablePanelGroup extends TpElement {
       });
     }
   }
-  /** @internal A handle's pointer down starts a drag. */
   startResize(handle: TpResizableHandle, event: PointerEvent): void {
     if (
       this.#drag ||
@@ -569,11 +538,9 @@ export class TpResizablePanelGroup extends TpElement {
     }
     this.#updateHandles();
   }
-  /** @internal A handle's pointer move. */
   moveResize(event: PointerEvent): void {
     this.#separator.pointerMove(event);
   }
-  /** @internal A handle's pointer release or cancellation. */
   endResize(event: PointerEvent): void {
     this.#separator.pointerUp(event);
   }
@@ -596,7 +563,6 @@ export class TpResizablePanelGroup extends TpElement {
   #stop(): void {
     this.#separator.release();
   }
-  /** @internal A handle's key press. */
   handleKey(handle: TpResizableHandle, event: KeyboardEvent): void {
     if (
       this.disabled ||
@@ -644,7 +610,6 @@ export class TpResizablePanelGroup extends TpElement {
       this.#settle();
     }
   }
-  /** @internal A handle's double-click. */
   resetPanel(handle: TpResizableHandle, event: MouseEvent): void {
     if (
       this.disabled ||

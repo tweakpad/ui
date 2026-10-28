@@ -3,8 +3,8 @@ import { TpElement } from '../../foundation/element.js';
 import { descriptionListPresentation } from '../../presentation/families/description-list.js';
 
 /**
- * One label and value pair of a Description list: `label` is the term and the content is its
- * value.
+ * Description list item: one label–value pair inside a `tp-description-list`. The list presents
+ * `label` as the term and the item's content as its description.
  *
  * @slot - The value.
  */
@@ -27,9 +27,9 @@ export class TpDescriptionListItem extends TpElement {
     `,
   ];
 
-  /** The name of the value, presented as the term. */
+  /** Label text, presented as the term. */
   label = '';
-  /** Puts the label above the value (`stacked`), as for a long value, or beside it (`inline`); unset follows the list. */
+  /** Layout of this pair (`inline` or `stacked`); unset follows the list. */
   layout: 'inline' | 'stacked' | null = null;
 
   protected override render() {

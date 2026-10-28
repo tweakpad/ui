@@ -107,15 +107,7 @@ export function targetOf(element: HTMLElement, depth = 0): HTMLElement {
   return element;
 }
 
-/**
- * Shared native anchored layer used by Popover, Preview Card and Tooltip.
- *
- * @fires tp-open-change - Cancelable proposal to open or close, before the surface changes;
- *   `detail.value` is the proposed state, `detail.reason` what asked (a trigger press, hover or
- *   focus, Escape, an outside press, a close action or code) and `detail.trigger` the trigger.
- *   On a close, `detail.preventUnmountOnClose()` keeps the content mounted.
- * @fires tp-open-change-complete - After the surface finishes opening or closing; `detail.open`.
- */
+/** Shared native anchored layer used by Popover, Preview Card and Tooltip. */
 export abstract class TpAnchoredSurface extends TpElement {
   readonly [SURFACE_HOST] = true as const;
   static override properties = {

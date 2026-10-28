@@ -11,11 +11,9 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'icon',
-      description: 'The host, sized to the icon extent.',
     },
     {
       name: 'icon-graphic',
-      description: 'The SVG drawing of the artwork.',
     },
   ],
 };

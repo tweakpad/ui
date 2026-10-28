@@ -32,15 +32,10 @@ abstract class TablePart extends TpElement {
       }
     `,
   ];
-  /** How many columns a head or cell spans. */
   colSpan = 1;
-  /** How many rows a head or cell spans; zero spans the rest of its region. */
   rowSpan = 1;
-  /** Which cells a head labels: its column by default, or its row for the cell that names a row. */
   scope = 'col';
-  /** Marks a row as selected, painted when the table's `selection-presentation` is `row`. */
   selected = false;
-  /** The native table element this constituent renders. */
   get nativeElement(): HTMLElement | null {
     return this.shadowRoot?.querySelector((this.constructor as typeof TablePart).nativeTag) ?? null;
   }
@@ -66,77 +61,42 @@ abstract class TablePart extends TpElement {
     );
   }
 }
-/**
- * The header region of a Table; it renders a native `thead`.
- *
- * @slot - The header rows.
- */
 export class TpTableHeader extends TablePart {
   static tagName = 'tp-table-header';
   static override nativeTag = 'thead';
   static override partName = 'table-header';
   static override nativeRole = 'rowgroup';
 }
-/**
- * The body region of a Table; it renders a native `tbody`.
- *
- * @slot - The data rows.
- */
 export class TpTableBody extends TablePart {
   static tagName = 'tp-table-body';
   static override nativeTag = 'tbody';
   static override partName = 'table-body';
   static override nativeRole = 'rowgroup';
 }
-/**
- * The footer region of a Table, for totals and summaries; it renders a native `tfoot`.
- *
- * @slot - The footer rows.
- */
 export class TpTableFooter extends TablePart {
   static tagName = 'tp-table-footer';
   static override nativeTag = 'tfoot';
   static override partName = 'table-footer';
   static override nativeRole = 'rowgroup';
 }
-/**
- * A row of a Table region; it renders a native `tr`.
- *
- * @slot - The row's heads and cells.
- */
 export class TpTableRow extends TablePart {
   static tagName = 'tp-table-row';
   static override nativeTag = 'tr';
   static override partName = 'table-row';
   static override nativeRole = 'row';
 }
-/**
- * A header cell: a column header, or with `scope="row"` the cell that names its row. It renders a native `th`.
- *
- * @slot - The header text.
- */
 export class TpTableHead extends TablePart {
   static tagName = 'tp-table-head';
   static override nativeTag = 'th';
   static override partName = 'table-column-header';
   static override nativeRole = 'columnheader';
 }
-/**
- * A data cell; it renders a native `td`.
- *
- * @slot - The cell content: text or library controls.
- */
 export class TpTableCell extends TablePart {
   static tagName = 'tp-table-cell';
   static override nativeTag = 'td';
   static override partName = 'table-cell';
   static override nativeRole = 'cell';
 }
-/**
- * The Table's caption, which names and describes the table; it renders a native `caption`.
- *
- * @slot - The caption text.
- */
 export class TpTableCaption extends TablePart {
   static tagName = 'tp-table-caption';
   static override nativeTag = 'caption';

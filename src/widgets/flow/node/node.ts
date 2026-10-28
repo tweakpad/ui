@@ -138,18 +138,11 @@ interface NumberBinding {
 }
 
 /**
- * A node of a `tp-flow`: the positioned, focusable group that renders its node in the shape its
- * definition names (card, compact, panel or group), through a template or with authored content,
- * and holds its ports and property controls. The flow renders one for each node in view; author
- * one as a child of `tp-flow` to declare a node in markup, with the attributes `id`, `type`, `x`,
- * `y`, `width`, `height`, `parent`, `label`, `data` (JSON), `pinned`, `hidden`, and `draggable`,
- * `selectable`, `connectable`, `deletable` and `resizable` (`"false"` turns one off).
- *
- * @slot - Authored content of the node body; a library control with
- * `data-flow-property="key"` edits that key of the node's data.
- *
- * @fires tp-field-value - Reported by the node's numeric fields and stopped at the node, which
- * turns their edits into proposals of its data; it never reaches the page.
+ * A node host (Widgets 6.3 Anatomy node row): the positioned, measured, focusable group that
+ * renders its node through the definition's shape (card, compact, panel, group), a custom
+ * template or authored light-DOM content, hosts the ports and binds the property controls.
+ * Positions are written by the node layer through the object model; the host never reads the
+ * viewport. Lane events of composed controls stop here and are re-proposed on the node lane.
  */
 export class TpFlowNode extends TpElement {
   static tagName = 'tp-flow-node';
@@ -207,48 +200,27 @@ export class TpFlowNode extends TpElement {
 
   /** The model record; undefined for an authored element not yet adopted. */
   node: FlowNode | undefined;
-  /**
-   * The schema definition of the node's type, which decides its shape, ports and properties; set by
-   * the flow.
-   */
   definition: FlowNodeDefinition | undefined;
-  /** The template that replaces the node's body, from the flow's `nodeTemplates`. */
   template: FlowNodeTemplate | undefined;
-  /** The control factories for the node's properties, from the flow. */
   propertyControls: FlowPropertyControls = defaultPropertyControls;
-  /** The icon definitions the node's definition names, from the flow. */
   icons: Readonly<Record<string, IconDefinition>> = {};
   /** Tone keys per schema data type, for port paint. */
   tones: Readonly<Record<string, string>> = {};
-  /** The flow's resolved strings, for the node's accessible names. */
   strings: FlowStrings = DEFAULT_STRINGS;
-  /** The node's ports with their sides and positions, resolved by the flow. */
   ports: readonly FlowResolvedPort[] = [];
-  /** Transient states of the ports by id, such as connection candidates and their validity. */
   portStates: Readonly<Record<string, FlowPortState>> = {};
-  /** The node's run state, shown as its status. */
   status: FlowNodeRunState | undefined;
   /** Problems the widget shows on this node (validation issues and supplied ones). */
   issues: readonly FlowIssue[] = [];
-  /** The node's accessible name; its label when empty. */
   accessibleName = '';
-  /** Whether the node is selected. */
   selected = false;
-  /** Whether the node holds keyboard focus within the flow. */
   focused = false;
-  /** Whether the node is being dragged. */
   dragging = false;
-  /** Whether a connection is being drawn in the flow, which shows the ports' candidate states. */
   connecting = false;
-  /** The level of detail the node renders at; low when the flow is zoomed far out. */
   lod: FlowLod = 'high';
-  /** Whether the node's controls and resizer accept edits. */
   editable = true;
-  /** Whether the node's ports start and accept connections. */
   connectable = true;
-  /** The direction the graph is laid out in, which places the ports on its sides. */
   layoutDirection: FlowLayoutDirection = 'horizontal';
-  /** Shows each port's label beside it. */
   showPortLabels = false;
 
   readonly #numberFields = new Map<HTMLElement, NumberBinding>();
@@ -268,23 +240,19 @@ export class TpFlowNode extends TpElement {
     });
   }
 
-  /** The flow whose presentation styles the node. */
   get presentationOwner(): HTMLElement | null {
     const root = this.getRootNode();
     return root instanceof ShadowRoot ? (root.host as HTMLElement) : null;
   }
 
-  /** The id of the node in the document. */
   get nodeId(): string {
     return this.node?.id ?? this.id;
   }
 
-  /** The shape the node renders as, from its definition: card, compact, panel or group. */
   get shape(): FlowNodeShape {
     return this.definition?.shape ?? 'card';
   }
 
-  /** The node's visible label: its own, else its definition's, else its type. */
   get label(): string {
     return this.node?.label ?? this.definition?.label ?? this.node?.type ?? this.id;
   }
@@ -318,7 +286,6 @@ export class TpFlowNode extends TpElement {
     return result;
   }
 
-  /** The port element for a port id, or null. */
   portElement(portId: string): TpFlowPort | null {
     return this.renderRoot.querySelector<TpFlowPort>(
       `tp-flow-port[port-id="${CSS.escape(portId)}"]`,

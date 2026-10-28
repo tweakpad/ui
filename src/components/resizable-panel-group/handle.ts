@@ -14,13 +14,6 @@ export interface ResizeHandleState {
   disabled: boolean;
   dragging: boolean;
 }
-/**
- * The focusable separator between two panels of a Resizable panel group. People drag it or use
- * the arrow keys on it; it describes and adjusts the panel it controls, the one before it unless
- * `target` names the other neighbor.
- *
- * @fires tp-resizable-member-change - Bubbles when the handle's configuration changes, so its group lays out again.
- */
 export class TpResizableHandle extends TpElement {
   static tagName = 'tp-resizable-handle';
   static override presentation = resizablePanelGroupPresentation;
@@ -84,17 +77,11 @@ export class TpResizableHandle extends TpElement {
       }
     `,
   ];
-  /** Shows a grip on the line, a visible cue that it can be dragged. */
   withHandle = false;
-  /** The id of the adjacent panel the handle describes and adjusts with the keyboard; the preceding panel by default. */
   target = '';
-  /** The accessible name of the separator, such as "Resize sidebar". */
   label = 'Resize panels';
-  /** Stops a double-click on this handle from restoring its panel's default size. */
   disableDoubleClickReset = false;
-  /** The group a generated handle belongs to, which is not its parent; set by the group. */
   ownerGroup: TpResizablePanelGroup | undefined;
-  /** The index of the boundary between panels the handle moves; set by the group. */
   boundary = -1;
   #state: ResizeHandleState = {
     orientation: 'horizontal',
@@ -105,7 +92,6 @@ export class TpResizableHandle extends TpElement {
     disabled: true,
     dragging: false,
   };
-  /** The group the handle belongs to. */
   get group(): TpResizablePanelGroup | null {
     return (
       this.ownerGroup ??
@@ -114,14 +100,12 @@ export class TpResizableHandle extends TpElement {
         : null)
     );
   }
-  /** @internal The group publishes the separator's values and state. */
   setHandleState(state: ResizeHandleState): void {
     if (JSON.stringify(state) === JSON.stringify(this.#state)) return;
     this.#state = state;
     this.orientation = state.orientation;
     this.requestUpdate();
   }
-  /** The focusable separator element, for focusing the handle from code. */
   get separatorElement(): HTMLElement | null {
     return this.renderRoot?.querySelector('.separator') ?? null;
   }

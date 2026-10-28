@@ -10,47 +10,36 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'command-palette',
-      description: 'The root around the search field and the list.',
     },
     {
       name: 'command-palette-input-wrapper',
-      description: 'The row that holds the search field.',
     },
     {
       name: 'command-palette-input',
-      description: 'The search field.',
     },
     {
       name: 'command-palette-list',
-      description: 'The list of commands.',
     },
     {
       name: 'command-palette-group',
-      description: 'A group of commands with its label.',
     },
     {
       name: 'command-palette-item',
-      description: 'Each command.',
     },
     {
       name: 'command-palette-item-description',
-      description: 'The secondary text of a command.',
     },
     {
       name: 'command-palette-match',
-      description: 'The part of a label that matches the query.',
     },
     {
       name: 'command-palette-shortcut-hint',
-      description: 'The shortcut of a command.',
     },
     {
       name: 'command-palette-separator',
-      description: 'A divider between groups.',
     },
     {
       name: 'command-palette-empty-state',
-      description: 'The message shown when no command matches.',
     },
   ],
 };

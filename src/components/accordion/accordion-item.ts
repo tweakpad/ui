@@ -21,17 +21,7 @@ const optionalContentAlignmentConverter = {
   },
 };
 
-/**
- * One section of an Accordion: a heading with a native button trigger and the content it shows.
- * The Accordion decides whether it is open.
- *
- * @slot - The content shown when open.
- * @slot label - The trigger text.
- * @slot leading - Non-interactive content before the label, such as a step number; it replaces the
- *   chevron when the indicator sits on this side.
- * @slot trailing - Non-interactive content after the label, such as a badge; it replaces the
- *   chevron when the indicator sits on this side.
- */
+/** A public Accordion Item host. Its Root owns selection; Collapsible owns disclosure behavior. */
 export class TpAccordionItem extends TpElement {
   static tagName = 'tp-accordion-item';
   /** Library elements this element renders; defining it defines them too. */
@@ -64,45 +54,35 @@ export class TpAccordionItem extends TpElement {
     `,
   ];
 
-  /** Stable identity of the item, which the accordion's `value` lists when it is open. */
   value = '';
-  /** The side of the trigger that draws the chevron, in writing direction. */
   indicatorPosition: AccordionIndicatorPosition = 'trailing';
-  /** Overrides the accordion's content alignment for this item. */
   contentAlignment: AccordionContentAlignment | undefined = undefined;
-  /** Level of the item's heading; set it to fit the page outline. */
   headingLevel = 2;
-  /** Called after the accordion accepts a proposal to open or close this item. */
   onOpenChange: ((event: TpOpenChangeEvent) => void) | undefined;
   override orientation = 'vertical' as const;
   #inheritedContentAlignment: AccordionContentAlignment = 'edge';
 
-  /** @internal The rendered Collapsible. */
   get collapsibleElement(): TpCollapsible | null {
     return this.renderRoot.querySelector<TpCollapsible>('tp-collapsible');
   }
 
-  /** @internal The trigger button, for the owning Accordion. */
   get triggerElement(): HTMLButtonElement | null {
     return this.collapsibleElement?.triggerElement ?? null;
   }
 
-  /** @internal The content region, for the owning Accordion. */
   get panelElement(): HTMLElement | null {
     return this.collapsibleElement?.panelElement ?? null;
   }
 
-  /** @internal The inner content box, for the owning Accordion. */
   get bodyElement(): HTMLElement | null {
     return this.collapsibleElement?.bodyElement ?? null;
   }
 
-  /** Moves focus to the trigger. */
   override focus(options?: FocusOptions): void {
     this.triggerElement?.focus(options);
   }
 
-  /** @internal Supplies the owning Accordion's default without replacing an explicit Item value. */
+  /** Supplies the owning Accordion's default without replacing an explicit Item value. */
   setInheritedContentAlignment(alignment: AccordionContentAlignment): void {
     this.#inheritedContentAlignment = alignment === 'label' ? 'label' : 'edge';
     this.#syncContentAlignment();

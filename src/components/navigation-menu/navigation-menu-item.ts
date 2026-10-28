@@ -19,16 +19,7 @@ export interface NavigationMenuOwner extends HTMLElement {
   itemChanged(): void;
   closeFromLink(event: Event): void;
 }
-/**
- * One destination of a Navigation menu: a direct link, or a trigger with a panel of links. A link in
- * a panel marked `active` is the current page; one marked `close-on-click` closes the panel when
- * followed.
- *
- * @slot - A direct link, for an item without a panel.
- * @slot trigger - The Button that opens the panel.
- * @slot content - The panel: links and their layout.
- * @slot indicator - Replaces the chevron after the trigger.
- */
+/** Native navigation content stays attached to its original constituent and is never cloned. */
 export class TpNavigationMenuItem extends TpElement {
   static tagName = 'tp-navigation-menu-item';
   /** Library elements this element renders; defining it defines them too. */
@@ -79,11 +70,8 @@ export class TpNavigationMenuItem extends TpElement {
       }
     `,
   ];
-  /** Stable identity of the item, which the menu's `value` holds while its panel is open. */
   value = createId('tp-navigation-item');
-  /** Keeps the panel in the document while closed, hidden. */
   keepMounted = false;
-  /** Whether a chevron after the trigger shows that it opens a panel. */
   showIndicator = true;
   #owner: NavigationMenuOwner | null = null;
   #portal = new OwnedPortal(this, TpNavigationMenuItem.styles);
@@ -96,29 +84,23 @@ export class TpNavigationMenuItem extends TpElement {
     surface: () => this.#content,
     keepMounted: () => this.keepMounted,
   });
-  /** @internal The owning Navigation menu. */
   get navigationOwner(): NavigationMenuOwner | null {
     return this.#owner;
   }
-  /** @internal Presentation family of the item. */
   get presentationTagName(): string {
     return 'tp-navigation-menu';
   }
-  /** @internal Presentation owner of the item. */
   get presentationOwner(): HTMLElement | null {
     return this.#owner;
   }
-  /** @internal The owning Navigation menu. */
   set navigationOwner(owner: NavigationMenuOwner | null) {
     if (this.#owner === owner) return;
     this.#owner = owner;
     this.requestUpdate();
   }
-  /** Whether the item's panel is open. */
   get active(): boolean {
     return this.#owner?.value === this.value && !this.disabled && !this.#owner.disabled;
   }
-  /** @internal The element in the `trigger` slot. */
   get triggerElement(): HTMLElement | null {
     return (
       this.#portal.ownedChildren.find(
@@ -127,11 +109,9 @@ export class TpNavigationMenuItem extends TpElement {
       ) ?? null
     );
   }
-  /** @internal The rendered panel. */
   get contentElement(): HTMLElement | null {
     return this.#content;
   }
-  /** Whether the item has a panel. */
   get hasContent(): boolean {
     return this.#contentNodes.length > 0;
   }
@@ -140,7 +120,6 @@ export class TpNavigationMenuItem extends TpElement {
       (node) => node.nodeType === 1 && (node as Element).getAttribute('slot') === 'content',
     );
   }
-  /** @internal Moves the panel into the shared viewport. */
   setContentContainer(container: HTMLElement | null): void {
     if (container === this.#container) return;
     this.#container = container;

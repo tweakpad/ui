@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import { libraryDocs } from './library-docs.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import documentation from '../../docs/timeline.md?raw';
+import { timelineDefaultSource, timelineExamples } from './timeline.examples.js';
 
 interface Args {
   orientation: 'vertical' | 'horizontal' | 'responsive';
@@ -8,59 +10,55 @@ interface Args {
   value: string;
 }
 
-const steps = [
-  ['placed', 'Placed', '2026-03-18'],
-  ['confirmed', 'Confirmed', '2026-03-18'],
-  ['shipped', 'Shipped', '2026-03-19'],
-  ['transit', 'In transit', '2026-03-20'],
-  ['delivered', 'Delivered', '2026-03-21'],
-] as const;
-const values = ['', ...steps.map(([step]) => step)];
+const values = ['', 'placed', 'confirmed', 'shipped', 'transit', 'delivered'];
 
 const meta = {
   title: 'Components/Timeline',
   component: 'tp-timeline',
-  parameters: { docs: libraryDocs('components/timeline') },
+  parameters: {
+    docs: {
+      description: { component: documentation },
+      examples: timelineExamples,
+      source: { code: timelineDefaultSource },
+    },
+  },
   args: { orientation: 'vertical', align: 'end', value: 'shipped' },
   argTypes: {
     orientation: {
       control: 'inline-radio',
       options: ['vertical', 'horizontal', 'responsive'],
+      description: 'Axis direction; `responsive` is vertical below a 40rem inline size.',
       table: { defaultValue: { summary: 'vertical' } },
     },
     align: {
       control: 'inline-radio',
       options: ['start', 'end', 'alternate', 'alternate-reverse'],
+      description: 'Side of the axis holding item content.',
       table: { defaultValue: { summary: 'end' } },
     },
     value: {
       control: 'select',
       options: values,
+      description:
+        'Value of the current item: earlier items are complete, later ones upcoming. Empty derives no status.',
       table: { defaultValue: { summary: 'null' } },
     },
   },
-  render: ({ orientation, align, value }) =>
-    html`<tp-timeline
-      .value=${value || null}
-      .orientation=${orientation}
-      .align=${align}
-      aria-label="Order status"
-      style=${
-        orientation === 'vertical' && !align.startsWith('alternate')
+  render: (args) => {
+    // The default source is the composition; controls set the timeline's own properties.
+    const markup = timelineDefaultSource
+      .replace(
+        'value="shipped"',
+        `${args.value ? `value="${args.value}"` : ''} orientation="${args.orientation}" align="${args.align}"`,
+      )
+      .replace(
+        'max-inline-size: 24rem',
+        args.orientation === 'vertical' && !args.align.startsWith('alternate')
           ? 'max-inline-size: 24rem'
-          : 'max-inline-size: 44rem'
-      }
-    >
-      ${steps.map(
-        ([step, title, datetime]) =>
-          html`<tp-timeline-item value=${step}>
-            <strong>${title}</strong>
-            <div style="color: var(--tp-muted-foreground)">
-              <tp-time datetime=${datetime} mode="absolute" pattern="MMM d"></tp-time>
-            </div>
-          </tp-timeline-item>`,
-      )}
-    </tp-timeline>`,
+          : 'max-inline-size: 44rem',
+      );
+    return html`${unsafeHTML(markup)}`;
+  },
 } satisfies Meta<Args>;
 export default meta;
 type Story = StoryObj<Args>;

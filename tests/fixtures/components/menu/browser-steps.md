@@ -131,7 +131,7 @@ selected paint, contrast and source spacing. Store screenshots and conclusions.
 
 ## Docs and copy (V14)
 
-Docs IDs: `components-menu--docs` (its context menu use case),
+Docs IDs: `components-menu--docs`, `components-menu--context`,
 `components-menubar--docs`, `components-navigation-menu--docs`,
 `components-popover--docs` on Storybook localhost:6006. One canonical Default per
 component. All copied sources import Lit/register/styles and render current

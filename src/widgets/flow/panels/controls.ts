@@ -255,14 +255,14 @@ const controlsStyles = css`
 `;
 
 /**
- * A bar of flow controls: zoom, fit, the select and pan tools, undo and redo, the lock, the zoom
- * field, layout, the node library, the run stepper, run and the run summary, as listed in
- * `actions`. The flow renders its built-in bar from its own `controls`; slot one into a panel or
- * header slot of `tp-flow` for a further bar, which the flow keeps in sync and whose presses it
- * handles.
- *
- * @slot - Your own Buttons, Toggles or Button groups, after the built-in controls and in the
- * bar's arrow-key focus.
+ * The controls toolbar (Widgets 6.3 Anatomy): a Foundation toolbar of composed Buttons in a
+ * Button group, the select/pan tool pair as a Toggle group, the zoom field (an Input group with
+ * the current zoom and a Menu of fit and preset levels) and, when `run` is listed, a transport
+ * (back, play/pause, step) with a Slider over the run steps. Consumer children follow the
+ * built-in sets and join the toolbar's roving focus. The root renders one bar from `controls`;
+ * authored `tp-flow-controls` children slotted into a panel are further bars the root keeps in
+ * sync. It owns no document state: every press is reported to the root (`flow-control-action`,
+ * `flow-tool-request`, `flow-zoom-request`, `flow-run-action`).
  */
 export class TpFlowControls extends TpElement {
   static tagName = 'tp-flow-controls';
@@ -304,27 +304,18 @@ export class TpFlowControls extends TpElement {
 
   /** Actions in display order; `tool` renders the select/pan pair, `run` the transport. */
   actions: readonly FlowControlAction[] = ['zoom-in', 'zoom-out', 'fit', 'tool', 'lock'];
-  /** The pointer tool the select and pan pair shows as pressed; the flow keeps it in sync. */
   tool: FlowTool = 'select';
-  /** Whether the lock control shows the graph as locked; the flow keeps it in sync. */
   locked = false;
   /** Pressed state of the `palette` action: the node library is open. */
   paletteOpen = false;
-  /** Enables the undo control; the flow keeps it in sync with its history. */
   canUndo = false;
-  /** Enables the redo control; the flow keeps it in sync with its history. */
   canRedo = false;
-  /** Replaces the controls' labels and accessible names; the flow passes its own. */
   strings: Partial<FlowStrings> | undefined;
-  /**
-   * The run stepper's position and playback state, shown by the transport; the flow publishes it.
-   */
   runState: FlowRunTransportState | undefined;
   /** What `execute` and `run-summary` show (the root publishes it). */
   runControl: FlowRunControlState | undefined;
   /** The current zoom factor shown by the zoom field (the root publishes it). */
   zoom = 1;
-  /** Zoom levels the zoom field's menu offers, where 1 is 100%. */
   zoomPresets: readonly number[] = DEFAULT_ZOOM_PRESETS;
   override orientation: Orientation = 'vertical';
 
@@ -347,7 +338,6 @@ export class TpFlowControls extends TpElement {
     return resolveStrings(this.strings);
   }
 
-  /** Focuses the bar's first enabled control. */
   override focus(options?: FocusOptions): void {
     const target = this.renderRoot.querySelector<HTMLElement>(
       'tp-button.control:not([disabled]), tp-toggle.control',

@@ -83,22 +83,7 @@ interface Drag {
   changed: boolean;
 }
 
-/**
- * One number or an ordered range of numbers, chosen by dragging a thumb or with the keyboard. Each
- * value is a native range input inside a thumb, and the Slider submits them with the form.
- *
- * @slot - Slider Thumbs, when the thumbs need their own names, states or customization; without
- * them the Slider renders one per value.
- * @slot label - A rich visible label in place of `label`.
- * @slot value - Custom content of the value output above the track.
- * @fires tp-value-change - Cancelable proposal of new values while dragging or adjusting;
- * `detail.value`, `detail.previousValue`, `detail.reason` and `detail.metadata.activeThumbIndex`.
- * @fires tp-value-commit - After a drag is released or a keyboard change is accepted, with the
- * committed value; the moment to save or fetch.
- * @fires tp-field-value - After a value commits; an enclosing Field tracks its dirty state from it.
- * @fires tp-slider-pointer-change - `{ value, ratio }` as the pointer hovers the track without
- * dragging, `null` when it leaves; for previews such as a media timeline's thumbnail.
- */
+/** A single commit/form owner shared by generated and explicitly authored Thumbs. */
 export class TpSlider extends TpFormElement<SliderValue | undefined> implements SliderThumbOwner {
   static tagName = 'tp-slider';
   /** Library elements this element renders; defining it defines them too. */
@@ -142,46 +127,30 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     },
   };
   static override styles = [TpElement.styles, sliderStyles];
-  /**
-   * The initial value of an uncontrolled slider, restored on form reset: a number, or several for a
-   * range.
-   */
   defaultValue: SliderValue | undefined;
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
-  /** The lowest value. */
   minimum = 0;
-  /** The highest value. */
   maximum = 100;
-  /** Another name for `minimum`. */
   get min(): number {
     return this.minimum;
   }
   set min(value: number) {
     this.minimum = value;
   }
-  /** Another name for `maximum`. */
   get max(): number {
     return this.maximum;
   }
   set max(value: number) {
     this.maximum = value;
   }
-  /** The increment values snap to, counted from `minimum`. */
   step = 1;
-  /** The increment of Page Up, Page Down and arrow keys with Shift. */
   largeStep = 10;
-  /** The fewest steps kept between neighboring thumbs of a range. */
   minStepsBetweenValues = 0;
   /** `bar` paints a thumbless track; the Thumb stays as the keyboard and accessibility input. */
   variant: SliderVariant = 'default';
-  /**
-   * Whether a thumb centers on its value or stays inside the track at the ends (`edge`);
-   * `delayed-edge` centers until the first interaction.
-   */
   thumbAlignment: SliderThumbAlignment = 'center';
   #collisionBehavior: SliderThumbCollisionBehavior = 'push';
   #canonicalCollisionAuthored = false;
-  /** What a thumb dragged into its neighbor does: push it along, swap places with it, or stop. */
   get thumbCollisionBehavior(): SliderThumbCollisionBehavior {
     return this.#collisionBehavior;
   }
@@ -191,24 +160,13 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     this.#canonicalCollisionAuthored = true;
     this.requestUpdate('thumbCollisionBehavior', previous);
   }
-  /** Older name for `thumbCollisionBehavior`: `prevent` stops at the neighbor, `swap` swaps. */
   thumbCrossing: 'prevent' | 'swap' | undefined;
-  /** Visible label above the track, and the accessible name of the thumbs. */
   label = '';
-  /** Locale of the formatted values, when it differs from the page's. */
   locale = '';
-  /** Number format of the shown and announced values, such as a currency or a percent. */
   format: Intl.NumberFormatOptions | undefined;
-  /**
-   * Called with each proposed value before `tp-value-change`; a controlled owner accepts it by
-   * setting `value`.
-   */
   onValueChange: SliderValueChangeCallback | undefined;
-  /** Called with each committed value before `tp-value-commit`. */
   onValueCommitted: SliderValueCommitCallback | undefined;
-  /** Accessible name of each thumb by index, such as “Minimum price” and “Maximum price”. */
   getAccessibleLabel: ((index: number) => string) | undefined;
-  /** Announced text of a thumb's value, from the formatted value, the number and the index. */
   getAccessibleValueText: ((formatted: string, value: number, index: number) => string) | undefined;
   /** Non-semantic `[start, end]` ranges in value units, such as buffered media. */
   buffered: readonly SliderBufferedRange[] = [];
@@ -295,21 +253,17 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     if (this.hasUpdated) this.#state.sync();
     this.requestUpdate('value', previous);
   }
-  /** The current values as an array, for a single value too. */
   get values(): readonly number[] {
     return valuesOf(this.value);
   }
-  /** Each thumb's index, input ID, value, position as a percentage and disabled state. */
   get thumbMetadata(): readonly SliderThumbMetadata[] {
     return this.values
       .map((_value, index) => this.#metadataAt(index))
       .filter((metadata): metadata is SliderThumbMetadata => !!metadata);
   }
-  /** Index of the thumb being dragged or adjusted, or `-1`. */
   get activeThumbIndex(): number {
     return this.#activeIdentity === null ? -1 : this.#identities.indexOf(this.#activeIdentity);
   }
-  /** Whether a thumb is being dragged. */
   get dragging(): boolean {
     return this.#dragging;
   }
@@ -342,7 +296,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   get #focused(): boolean {
     return this.#thumbs.some((thumb) => thumb.inputElement?.matches(':focus'));
   }
-  /** Whether the application controls `value`. */
   get controlled(): boolean {
     return this.#state.controlled;
   }
@@ -451,10 +404,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     this.onValueCommitted?.(event);
     this.dispatchEvent(event);
   }
-  /**
-   * Proposes a value as if set by a thumb, optionally with a reason and a source event, and returns
-   * whether it was accepted.
-   */
   setValue(value: SliderValue, source?: Event): boolean;
   setValue(value: SliderValue, reason?: ChangeReason, source?: Event): boolean;
   setValue(
@@ -502,7 +451,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       .map((identity) => members.find((thumb) => thumb.inputId === identity))
       .filter((thumb): thumb is TpSliderThumb => !!thumb);
   }
-  /** @internal The state a Slider Thumb renders. */
   thumbState(element: HTMLElement): SliderThumbState {
     const thumb = element as TpSliderThumb;
     const index = this.#identities.indexOf(thumb.inputId);
@@ -551,7 +499,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
           : (thumb.valueText ?? valueTextResolver?.(formatted, value, index) ?? formatted),
     };
   }
-  /** @internal The part contract a Slider Thumb applies. */
   thumbContract(element: HTMLElement): ComponentPartContract {
     const thumb = element as TpSliderThumb;
     const root = this.partContracts['slider-thumb'] ?? {};
@@ -562,7 +509,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       hostProperties: mergePartProperties(root.hostProperties ?? {}, own.hostProperties ?? {}),
     };
   }
-  /** @internal The position styles of a Slider Thumb. */
   thumbPosition(element: HTMLElement): Record<string, string> {
     const thumb = element as TpSliderThumb;
     const ratio = Math.max(0, Math.min(1, this.thumbState(thumb).percentage / 100));
@@ -596,7 +542,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       ? (this.#measurements.get(thumb.inputId) ?? 0) / 2
       : 0;
   }
-  /** @internal Registers a Slider Thumb's rendered element. */
   registerThumb(element: HTMLElement, node: HTMLElement | null): void {
     const thumb = element as TpSliderThumb;
     const previous = this.#registered.get(thumb);
@@ -627,7 +572,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       this.requestUpdate();
     }
   }
-  /** @internal Tracks a Slider Thumb's focus. */
   thumbFocus(element: HTMLElement, focused: boolean): void {
     this.#syncFocusVisible(element);
     if (focused) {
@@ -650,7 +594,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     this.#syncThumbs();
     this.requestUpdate();
   }
-  /** @internal Proposes a Slider Thumb's value from its native input. */
   requestThumbValue(
     element: HTMLElement,
     value: number,
@@ -710,7 +653,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       this.#proposals = this.#proposals.filter((candidate) => candidate !== proposal);
     this.#syncThumbs();
   }
-  /** @internal Handles a key pressed on a Slider Thumb. */
   thumbKey(element: HTMLElement, event: KeyboardEvent): void {
     // A mouse-focused thumb becomes keyboard-visible once keys are used.
     this.#syncFocusVisible(element);
@@ -991,7 +933,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     this.#syncThumbs();
     this.requestUpdate();
   }
-  /** @internal Reads the Slider Thumbs again after the slot changes. */
   thumbChanged = (): void => {
     if (this.#scheduled || !this.isConnected) return;
     this.#scheduled = true;
