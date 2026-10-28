@@ -35,8 +35,13 @@ export const selectStyles = css`
     display: flex;
   }
 
+  /* An inline list layers with the page: as a flex or grid item it would keep the popup's
+     z-index and paint over the page's sticky headers. Its own layers (sticky labels, scroll
+     arrows) stay inside it. */
   .select-content[data-inline] {
     position: static;
+    z-index: auto;
+    isolation: isolate;
     visibility: visible;
     inline-size: 100%;
   }
