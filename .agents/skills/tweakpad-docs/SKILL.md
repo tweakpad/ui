@@ -51,7 +51,9 @@ it locally.
    The same tables repeat for every tag in the frontmatter `parts`.
 
 5. **Related** (generated, **website only**): the components and widgets that render this element,
-   and the patterns built from it. Storybook never shows Related.
+   and the patterns built from it. At most four cards show; the rest open from a library
+   Collapsible labelled "Show more". When nothing uses the element, the section, its heading and
+   its table-of-contents entry are left out entirely. Storybook never shows Related.
 
 [references/structure.md](references/structure.md) has the page grammar, the allowed elements and
 how each system renders each section.
