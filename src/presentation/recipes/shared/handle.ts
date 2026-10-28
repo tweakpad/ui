@@ -2,6 +2,8 @@ import { motionTransition } from '../../motion.js';
 import type { PresentationDeclarations, PresentationRule } from '../../resolver.js';
 import { focusRing } from './focus.js';
 
+export { focusRing };
+
 // Widget handle rings (the color picker's area thumb, wheel handles, ring and triangle thumbs;
 // the easing editor's control handles and points): a round marker ringed in the background
 // color over a foreground mix, with the Slider thumb's focus and active rings.

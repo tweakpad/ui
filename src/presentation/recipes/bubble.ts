@@ -1,4 +1,5 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { focusRing } from './shared/focus.js';
 
 export const bubbleAppearance: PresentationDictionary = {
   bubble: [{ selector: '&', declarations: { gap: 'var(--tp-space-2)' } }],
@@ -29,10 +30,7 @@ export const bubbleAppearance: PresentationDictionary = {
     },
     {
       selector: '&:is(button,a):focus-visible',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
-      },
+      declarations: focusRing,
     },
   ],
   'bubble-reactions': [

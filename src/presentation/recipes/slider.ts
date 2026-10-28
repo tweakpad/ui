@@ -87,10 +87,7 @@ export const sliderAppearance: PresentationDictionary = {
     {
       // The thumbless track carries keyboard focus indication.
       selector: '[part~="slider"][data-focus-visible] &',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
-      },
+      declarations: focusRing,
     },
   ],
   'slider-buffer-variant-bar': [

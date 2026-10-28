@@ -1,4 +1,5 @@
 import { css, html } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { slotOccupied } from '../shared/slots.js';
 import { TpElement } from '../../foundation/element.js';
 import { emptyStatePresentation } from '../../presentation/families/empty-state.js';
@@ -48,9 +49,7 @@ export class TpEmptyState extends TpElement {
         flex-shrink: 0;
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
   title = 'Nothing here';

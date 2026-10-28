@@ -1,4 +1,5 @@
 import { css, html } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { observeSlots, slotOccupied } from '../shared/slots.js';
 import { TpElement } from '../../foundation/element.js';
 import { listPresentation } from '../../presentation/families/list.js';
@@ -115,9 +116,7 @@ export class TpListItem extends TpElement {
         pointer-events: auto;
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
   selected = false;
