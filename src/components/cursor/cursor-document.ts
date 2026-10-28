@@ -1,6 +1,7 @@
 import { composedParent } from '../../foundation/focus.js';
 import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 import { CleanupScope } from '../../foundation/services.js';
+import { observeMediaQuery } from '../../foundation/observation.js';
 import {
   composedDepth,
   mouseLikePointer,
@@ -276,9 +277,7 @@ export class CursorDocument {
     listen(document, 'tp-open-change-complete', this.#raiseLater, { capture: true, passive: true });
     if (view) {
       listen(view, 'blur', this.#blur);
-      const media = view.matchMedia(CAPABLE_QUERY);
-      this.#capable = media.matches;
-      listen(media, 'change', this.#capability);
+      scope.add(observeMediaQuery(view, CAPABLE_QUERY, this.#capability, { immediate: true }));
     }
     // Scrolling under a still pointer (Foundation cc-innermost): boundary events only arrive
     // once the scroll ends, so every scroll signal starts a per-frame watch that re-resolves the
@@ -365,9 +364,10 @@ export class CursorDocument {
     for (const root of this.#roots) root.pointerLeft(event);
   };
 
-  readonly #capability = (event: MediaQueryListEvent): void => {
-    this.#capable = event.matches;
-    this.#notifyGate(event);
+  readonly #capability = (matches: boolean, event: MediaQueryListEvent | null): void => {
+    this.#capable = matches;
+    // The immediate read only seeds the state; a change reaches the roots.
+    if (event) this.#notifyGate(event);
   };
 
   readonly #toggle = (event: Event): void => {

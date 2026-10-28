@@ -12,6 +12,7 @@ import type { ChangeReason, ValueChangeDetail } from '../../foundation/types.js'
 import { defaultTrue } from '../../foundation/converters.js';
 import { bindPart, preventComponentHandling } from '../../foundation/part.js';
 import { CleanupScope } from '../../foundation/services.js';
+import { observeSubtree } from '../../foundation/observation.js';
 import { containNestedEvents } from '../../foundation/nested-events.js';
 import { surfaceInteraction } from '../../foundation/surface-focus.js';
 import type { TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
@@ -318,7 +319,7 @@ export class TpColorPicker extends TpFormElement<string> {
   #composition: object | undefined;
   #panel: HTMLElement | null = null;
   #authoredTrigger = false;
-  #lightObserver: MutationObserver | undefined;
+  #releaseLight: (() => void) | undefined;
   /**
    * No constituent lane event leaves this shadow root (uwg-cp-req-evt-2); the inline and popup
    * panels bind these listeners too.
@@ -512,17 +513,17 @@ export class TpColorPicker extends TpFormElement<string> {
     // Field discovers its control through this marker (Field's selector list is closed).
     this.setAttribute('data-field-control', '');
     this.#eyedropperSupported = supportsEyeDropper(this.ownerDocument.defaultView);
-    const view = this.ownerDocument.defaultView;
-    if (view) {
-      this.#lightObserver = new view.MutationObserver(() => this.requestUpdate());
-      // Light-DOM children only: host attribute writes from updated() must not re-enter.
-      this.#lightObserver.observe(this, { childList: true });
-    }
+    // Light-DOM children only: host attribute writes from updated() must not re-enter.
+    this.#releaseLight = observeSubtree(this, () => this.requestUpdate(), {
+      content: true,
+      attributes: false,
+      subtree: false,
+    });
   }
 
   override disconnectedCallback(): void {
-    this.#lightObserver?.disconnect();
-    this.#lightObserver = undefined;
+    this.#releaseLight?.();
+    this.#releaseLight = undefined;
     this.#eyedropperAbort?.abort();
     this.#eyedropperAbort = undefined;
     this.#dragSnapshot = undefined;

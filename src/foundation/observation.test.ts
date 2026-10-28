@@ -7,6 +7,7 @@ import {
   observeFonts,
   observeIntersection,
   observeLanguage,
+  observeMediaQuery,
   observeResize,
   observeScroll,
   observeSubtree,
@@ -215,6 +216,66 @@ describe('shared language observation', () => {
     expect(view.removed).toBe(1);
     view.dispatchEvent(new Event('languagechange'));
     expect(calls).toEqual(['a', 'b']);
+  });
+});
+
+describe('media query observation', () => {
+  function mediaWindow(matches = false) {
+    const lists = new Map<string, CountingTarget & { matches: boolean }>();
+    const view = {
+      matchMedia: (query: string) => {
+        let list = lists.get(query);
+        if (!list) lists.set(query, (list = Object.assign(new CountingTarget(), { matches })));
+        return list;
+      },
+    };
+    const change = (query: string, next: boolean) => {
+      const list = lists.get(query)!;
+      list.matches = next;
+      list.dispatchEvent(Object.assign(new Event('change'), { matches: next }));
+    };
+    return { view: view as unknown as Window, lists, change };
+  }
+
+  it('reports each change with its match state and releases the listener once', () => {
+    const { view, lists, change } = mediaWindow();
+    const seen: boolean[] = [];
+    const release = observeMediaQuery(view, '(hover: hover)', (matches) => seen.push(matches));
+    expect(seen).toEqual([]);
+    expect(lists.get('(hover: hover)')!.added).toBe(1);
+    change('(hover: hover)', true);
+    change('(hover: hover)', false);
+    expect(seen).toEqual([true, false]);
+    release();
+    release();
+    expect(lists.get('(hover: hover)')!.removed).toBe(1);
+    change('(hover: hover)', true);
+    expect(seen).toEqual([true, false]);
+  });
+
+  it('delivers the current state at once when asked, with no event', () => {
+    const { view, change } = mediaWindow(true);
+    const calls: [boolean, MediaQueryListEvent | null][] = [];
+    observeMediaQuery(view, '(pointer: fine)', (matches, event) => calls.push([matches, event]), {
+      immediate: true,
+    });
+    expect(calls).toEqual([[true, null]]);
+    change('(pointer: fine)', false);
+    expect(calls).toHaveLength(2);
+    expect(calls[1]![0]).toBe(false);
+    expect(calls[1]![1]).toBeInstanceOf(Event);
+  });
+
+  it('observes nothing where the view or media query matching is missing', () => {
+    const callback = vi.fn();
+    expect(() =>
+      observeMediaQuery(null, '(hover: hover)', callback, { immediate: true })(),
+    ).not.toThrow();
+    expect(() => observeMediaQuery(undefined, '(hover: hover)', callback)()).not.toThrow();
+    expect(() =>
+      observeMediaQuery({} as unknown as Window, '(hover: hover)', callback, { immediate: true })(),
+    ).not.toThrow();
+    expect(callback).not.toHaveBeenCalled();
   });
 });
 

@@ -10,6 +10,7 @@ import {
 import type { ChangeReason } from '../../foundation/types.js';
 import { defaultTrue } from '../../foundation/converters.js';
 import { resolveLocale } from '../../foundation/services.js';
+import { observeSubtree } from '../../foundation/observation.js';
 import { LiveAnnouncer } from '../../foundation/announcer.js';
 import { containNestedEvents } from '../../foundation/nested-events.js';
 import type { TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
@@ -202,7 +203,7 @@ export class TpEmojiPicker extends TpFormElement<string> {
   #composed = new WeakSet<Element>();
   #composition: object | undefined;
   #authoredTrigger = false;
-  #lightObserver: MutationObserver | undefined;
+  #releaseLight: (() => void) | undefined;
   #reportedDuplicates = '';
 
   readonly #state = new ControllableState<string>({
@@ -376,17 +377,17 @@ export class TpEmojiPicker extends TpFormElement<string> {
     this.#announcer = new LiveAnnouncer({
       root: () => (this.renderRoot instanceof ShadowRoot ? this.renderRoot : this),
     });
-    const view = this.ownerDocument.defaultView;
-    if (view) {
-      this.#lightObserver = new view.MutationObserver(() => this.requestUpdate());
-      // Light-DOM children only: host attribute writes from updated() must not re-enter.
-      this.#lightObserver.observe(this, { childList: true });
-    }
+    // Light-DOM children only: host attribute writes from updated() must not re-enter.
+    this.#releaseLight = observeSubtree(this, () => this.requestUpdate(), {
+      content: true,
+      attributes: false,
+      subtree: false,
+    });
   }
 
   override disconnectedCallback(): void {
-    this.#lightObserver?.disconnect();
-    this.#lightObserver = undefined;
+    this.#releaseLight?.();
+    this.#releaseLight = undefined;
     this.#announcer?.dispose();
     this.#announcer = undefined;
     if (this.#status === 'loading') {
