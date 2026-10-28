@@ -4,9 +4,10 @@ import {
 } from '../../widgets/text-editor/features/index.js';
 import { createEngine } from './text-editor-engine.js';
 
-/** No fixed toolbar: selecting text shows the formatting controls over it. */
+/** Selecting text shows the formatting controls over it, in place of the fixed toolbar. */
 export function setupSelectionToolbarEditor(editor) {
   editor.features = [textEditorSelectionToolbar(), textEditorLinks()];
+  // An empty list turns the fixed toolbar off.
   editor.layout = { toolbar: [] };
   editor.engine = createEngine();
 }

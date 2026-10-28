@@ -1,4 +1,4 @@
 import type { TpTextEditor } from '../../widgets/text-editor/index.js';
 
-/** The block editor: every control in the block gutter, the slash menu and the selection toolbar. */
+/** The selection toolbar editor with the block gutter, the slash menu, tables and images. */
 export function setupBlockEditor(editor: TpTextEditor): void;

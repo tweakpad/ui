@@ -1,22 +1,20 @@
 import type { TpTextEditor } from '../../widgets/text-editor/index.js';
 import { WIDGET_REGISTER_IMPORTS, moduleExample } from '../documentation-examples.js';
-import { setupBlockEditor } from './text-editor-blocks-example.js';
 import blocksSource from './text-editor-blocks-example.js?raw';
-import { setupClassicEditor } from './text-editor-classic-example.js';
 import classicSource from './text-editor-classic-example.js?raw';
 import { setupCustomBlocks } from './text-editor-custom-blocks-example.js';
 import customBlocksSource from './text-editor-custom-blocks-example.js?raw';
 import { createEngine } from './text-editor-engine.js';
 import engineSource from './text-editor-engine.js?raw';
-import { setupTextEditor } from './text-editor-example.js';
-import defaultSource from './text-editor-example.js?raw';
 import { setupNotesForm } from './text-editor-form-example.js';
 import formSource from './text-editor-form-example.js?raw';
+import { setupImageUploads } from './text-editor-images-example.js';
+import imagesSource from './text-editor-images-example.js?raw';
+import { createEngine as createLexicalEngine } from './text-editor-lexical-engine.js';
 import lexicalEngineSource from './text-editor-lexical-engine.js?raw';
 import { setupMentions } from './text-editor-mentions-example.js';
 import mentionsSource from './text-editor-mentions-example.js?raw';
 import { customBlockNotes, fieldNotes, mentionNotes } from './text-editor-samples.js';
-import { setupSelectionToolbarEditor } from './text-editor-selection-example.js';
 import selectionSource from './text-editor-selection-example.js?raw';
 
 type DocumentationExample = ReturnType<typeof moduleExample>;
@@ -85,74 +83,62 @@ function editorExample(options: {
 
 const editorIn = (id: string) => `document.querySelector('#${id} tp-text-editor')`;
 
-/** Every feature beside the fixed toolbar: the Default story. */
-const defaultExample = editorExample({
-  title: 'Field notes',
-  id: 'text-editor-notes',
-  markup: '<tp-text-editor label="Field notes" name="notes"></tp-text-editor>',
-  source: withEngine(defaultSource),
-  call: `setupTextEditor(${editorIn('text-editor-notes')});`,
-  setup: setupTextEditor,
-});
+/** The copyable code of a story, which renders its own editor. */
+const storyCode = (id: string, markup: string, source: string, setup: string): string =>
+  moduleExample({
+    title: id,
+    id,
+    markup,
+    setup: () => () => {},
+    source: withEngine(source),
+    call: `${setup}(${editorIn(id)});`,
+    registerImports: WIDGET_REGISTER_IMPORTS,
+  }).code;
 
-/**
- * The Default story's editor on the Lexical engine: only the engine module differs. The Lexical
- * story renders its own editor, so only this code is published.
- */
-const lexicalCode = moduleExample({
-  title: 'Lexical engine',
-  id: 'text-editor-lexical',
-  markup: '<tp-text-editor label="Field notes" name="notes"></tp-text-editor>',
-  setup: () => () => {},
-  source: withEngine(defaultSource, lexicalEngineSource),
-  call: `setupTextEditor(${editorIn('text-editor-lexical')});`,
-  registerImports: WIDGET_REGISTER_IMPORTS,
-}).code;
+/** The copyable code of each story, keyed by its export. */
+export const textEditorStorySources = {
+  Default: storyCode(
+    'text-editor-classic',
+    '<tp-text-editor label="Report"></tp-text-editor>',
+    classicSource,
+    'setupClassicEditor',
+  ),
+  SelectionToolbar: storyCode(
+    'text-editor-selection',
+    '<tp-text-editor label="Field notes"></tp-text-editor>',
+    selectionSource,
+    'setupSelectionToolbarEditor',
+  ),
+  BlockEditor: storyCode(
+    'text-editor-blocks',
+    '<tp-text-editor label="Field notes" placeholder="Type / for blocks"></tp-text-editor>',
+    blocksSource,
+    'setupBlockEditor',
+  ),
+} as const;
 
 const coreExample = editorExample({
   title: 'Core editor',
   id: 'text-editor-core',
   markup: '<tp-text-editor label="Plain notes"></tp-text-editor>',
-  source: withEngine('', engineSource),
+  source: withEngine(''),
   call: `${editorIn('text-editor-core')}.engine = createEngine();`,
   setup: (editor) => {
     editor.engine = createEngine();
   },
   description:
-    'No features: an engine is all the editor needs. The fixed toolbar holds history, block kinds, marks, colors and alignment.',
+    'No features: an engine is all the editor needs. The fixed toolbar holds history, block kinds, marks, colors and alignment, and the page loads none of the feature code.',
 });
 
-const classicExample = editorExample({
-  title: 'Classic toolbar',
-  id: 'text-editor-classic',
-  markup: '<tp-text-editor label="Report"></tp-text-editor>',
-  source: withEngine(classicSource),
-  call: `setupClassicEditor(${editorIn('text-editor-classic')});`,
-  setup: setupClassicEditor,
+const imagesExample = editorExample({
+  title: 'Image upload',
+  id: 'text-editor-images',
+  markup: '<tp-text-editor label="Survey photos"></tp-text-editor>',
+  source: withEngine(imagesSource),
+  call: `setupImageUploads(${editorIn('text-editor-images')});`,
+  setup: setupImageUploads,
   description:
-    'Every control in the fixed toolbar, as in a word processor: the links, tables and images features add their tools to it.',
-});
-
-const blocksExample = editorExample({
-  title: 'Block editor',
-  id: 'text-editor-blocks',
-  markup: '<tp-text-editor label="Field notes" placeholder="Type / for blocks"></tp-text-editor>',
-  source: withEngine(blocksSource),
-  call: `setupBlockEditor(${editorIn('text-editor-blocks')});`,
-  setup: setupBlockEditor,
-  description:
-    'The fixed toolbar is off (`layout: { toolbar: [] }`): the gutter beside each block inserts and drags, `/` opens the slash menu and selected text shows the selection toolbar.',
-});
-
-const selectionExample = editorExample({
-  title: 'Selection toolbar',
-  id: 'text-editor-selection',
-  markup: '<tp-text-editor label="Field notes"></tp-text-editor>',
-  source: withEngine(selectionSource),
-  call: `setupSelectionToolbarEditor(${editorIn('text-editor-selection')});`,
-  setup: setupSelectionToolbarEditor,
-  description:
-    'Only the toolbar that floats over selected text: select a few words to format them or add a link.',
+    'The images feature hands each new, pasted or dropped image file to `upload` with an abort signal and a progress callback; the image block shows the upload until the hook resolves its URL. `accept` and `maxFileSize` limit the files.',
 });
 
 const FORM_MARKUP = `<tp-form>
@@ -208,25 +194,28 @@ const mentionsExample = editorExample({
     'An inline node defined with `defineTextEditorInline`: typing `@` lists the matches of its `suggest.source` and inserts the one you choose.',
 });
 
-/** The copyable code of each story, keyed by its export. */
-export const textEditorStorySources = {
-  Default: defaultExample.code,
-  Core: coreExample.code,
-  ClassicToolbar: classicExample.code,
-  BlockEditor: blocksExample.code,
-  SelectionToolbar: selectionExample.code,
-  Lexical: lexicalCode,
-  CustomBlocks: customBlocksExample.code,
-  Mentions: mentionsExample.code,
-} as const;
+const lexicalExample = editorExample({
+  title: 'Lexical engine',
+  id: 'text-editor-lexical',
+  markup: '<tp-text-editor label="Plain notes"></tp-text-editor>',
+  source: withEngine('', lexicalEngineSource),
+  call: `${editorIn('text-editor-lexical')}.engine = createEngine();`,
+  setup: (editor) => {
+    editor.engine = createLexicalEngine();
+  },
+  description:
+    'The core editor on the Lexical adapter: only the engine module changes. Features, layouts, nodes, events and appearance are the same on either engine.',
+});
 
-/** The Docs "Usage examples": one use case each. */
+/**
+ * The Docs "Usage examples", after the Classic toolbar, Selection toolbar and Block editor stories:
+ * the common integrations first, then the smallest setups and the custom nodes.
+ */
 export const textEditorExamples: readonly DocumentationExample[] = [
-  coreExample,
-  classicExample,
-  blocksExample,
-  selectionExample,
   formExample,
+  imagesExample,
+  coreExample,
+  lexicalExample,
   customBlocksExample,
   mentionsExample,
 ];

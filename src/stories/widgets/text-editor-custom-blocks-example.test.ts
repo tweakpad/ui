@@ -130,20 +130,34 @@ describe('text editor example code', () => {
 
   it('shows only the API of each use case', () => {
     const code = Object.fromEntries(codes);
+    expect(Object.keys(code)).toEqual([
+      'In a form',
+      'Image upload',
+      'Core editor',
+      'Lexical engine',
+      'Custom blocks',
+      'Mentions',
+      'Default',
+      'SelectionToolbar',
+      'BlockEditor',
+    ]);
     expect(code['Core editor']).not.toContain('features');
-    expect(code['Classic toolbar']).toContain(
+    expect(code['Lexical engine']).not.toContain('features');
+    expect(code['Default']).toContain(
       'editor.features = [textEditorLinks(), textEditorTables(), textEditorImages({ upload })];',
     );
-    expect(code['Classic toolbar']).not.toContain('layout');
-    expect(code['Block editor']).toContain('editor.layout = { toolbar: [] };');
-    expect(code['Selection toolbar']).toContain(
+    expect(code['Default']).not.toContain('layout');
+    expect(code['BlockEditor']).toContain('editor.layout = { toolbar: [] };');
+    expect(code['SelectionToolbar']).toContain(
       'editor.features = [textEditorSelectionToolbar(), textEditorLinks()];',
     );
+    expect(code['Image upload']).toContain('onProgress(sent, total);');
+    expect(code['Image upload']).not.toMatch(/textEditor(?:Blocks|Tables|Links)\(/u);
     expect(code['Custom blocks']).not.toContain('mention');
     expect(code['Mentions']).not.toContain('defineTextEditorBlock');
-    // Only the Lexical story imports the Lexical engine, and no other story imports both engines.
+    // Only the Lexical example imports the Lexical engine, and no example imports both engines.
     for (const [title, text] of codes)
       expect(text.includes('@tiptap/core') !== text.includes("from 'lexical'"), title).toBe(true);
-    expect(textEditorStorySources.Lexical).toContain("from 'lexical'");
+    expect(code['Lexical engine']).toContain("from 'lexical'");
   });
 });
