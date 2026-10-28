@@ -1,6 +1,7 @@
 import { ambientAnimation, motionTransition, presenceMotion } from '../motion.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
-import { activeRing, focusRing, thumb } from './shared/handle.js';
+import { focusRing } from './shared/focus.js';
+import { activeRing, thumb } from './shared/handle.js';
 import { selectionFill, selectionLine } from './shared/selection.js';
 import {
   floatingToolbarAppearance,

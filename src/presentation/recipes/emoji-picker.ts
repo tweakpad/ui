@@ -1,6 +1,7 @@
 import type { PresentationDictionary } from '../resolver.js';
 import { commandPaletteAppearance } from './command-palette.js';
 import { selectAppearance } from './select.js';
+import { insetFocusRing } from './shared/focus.js';
 import { popupBorder, popupBorderColor } from './shared/surface.js';
 
 // Widgets Specification 6.4 Presentation: the surface, search, list, labels and options take
@@ -87,6 +88,11 @@ export const emojiPickerAppearance: PresentationDictionary = {
     {
       selector: '&[data-highlighted]:not([data-disabled])',
       declarations: { background: 'var(--tp-accent)', color: 'var(--tp-accent-foreground)' },
+    },
+    // The highlighted cell is where the keyboard is; its fill alone is a color-only cue.
+    {
+      selector: '&:is(:focus-visible, [data-highlighted]):not([data-disabled])',
+      declarations: insetFocusRing,
     },
     // The chosen emoji keeps a ring, distinct from the highlight fill.
     {

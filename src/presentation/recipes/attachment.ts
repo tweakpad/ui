@@ -83,6 +83,11 @@ export const attachmentAppearance: PresentationDictionary = {
           'var(--tp-border-width) solid color-mix(in oklab, var(--tp-ring) 50%, transparent)',
       },
     },
+    // Keyboard focus on the trigger or an action rings the whole card at full strength.
+    {
+      selector: '&:has(:focus-visible, [data-focus-visible])',
+      declarations: { outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)' },
+    },
   ],
   'attachment-media': [
     {

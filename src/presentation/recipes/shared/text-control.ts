@@ -1,4 +1,5 @@
 import type { PresentationRule } from '../../resolver.js';
+import { invalidFocusRing } from './focus.js';
 
 // Input and Text area share their boundary paint.
 // The library control-height token supplies the locally governed default extent.
@@ -33,6 +34,8 @@ export const control: readonly PresentationRule[] = [
   { selector: '&[data-mono]', declarations: { 'font-family': 'var(--tp-font-mono)' } },
   { selector: '&:focus-visible', declarations: fieldFocus },
   { selector: '&[aria-invalid="true"]', declarations: fieldInvalid },
+  // Equal specificity: the later invalid paint would tint the focus ring away.
+  { selector: '&[aria-invalid="true"]:focus-visible', declarations: invalidFocusRing },
   {
     selector: '&:disabled',
     declarations: { background: disabledBackground, cursor: 'not-allowed' },

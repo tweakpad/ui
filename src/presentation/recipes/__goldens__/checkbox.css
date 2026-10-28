@@ -5,7 +5,7 @@
 &:focus-visible{outline:none}
 &:focus-visible > .box{border-color:var(--tp-ring);outline:var(--tp-ring-width) var(--tp-border-style) color-mix(in oklab, var(--tp-ring) 50%, transparent);outline-offset:0}
 &[data-invalid] > .box{border-color:var(--tp-destructive)}
-&[data-invalid]:focus-visible > .box{outline-color:color-mix(in oklab, var(--tp-destructive) 20%, transparent)}
+&[data-invalid]:focus-visible > .box{outline-color:var(--tp-destructive)}
 &[data-disabled]{opacity:.5;cursor:not-allowed}
 & > .box{border-radius:min(var(--tp-radius-sm), var(--tp-space-1))}
 &[data-checked] > .box, &[data-indeterminate] > .box{background:var(--tp-primary);color:var(--tp-primary-foreground);border-color:var(--tp-primary)}

@@ -42,9 +42,7 @@ export const selectionControl: readonly PresentationRule[] = [
   { selector: '&[data-invalid] > .box', declarations: { 'border-color': 'var(--tp-destructive)' } },
   {
     selector: '&[data-invalid]:focus-visible > .box',
-    declarations: {
-      'outline-color': 'color-mix(in oklab, var(--tp-destructive) 20%, transparent)',
-    },
+    declarations: { 'outline-color': 'var(--tp-destructive)' },
   },
   { selector: '&[data-disabled]', declarations: { opacity: '.5', cursor: 'not-allowed' } },
 ];

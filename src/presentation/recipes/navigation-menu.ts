@@ -13,8 +13,7 @@ const focus: readonly PresentationRule[] = [
   {
     selector: '&:focus-visible',
     declarations: {
-      outline:
-        'var(--tp-ring-width) var(--tp-border-style) color-mix(in oklab, var(--tp-ring) 50%, transparent)',
+      outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
       'outline-offset': '0',
     },
   },

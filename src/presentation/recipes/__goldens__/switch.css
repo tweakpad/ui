@@ -6,8 +6,8 @@
 &[data-checked]::before{opacity:1}
 &[data-disabled]{cursor:not-allowed}
 &[data-readonly]:not([data-disabled]){cursor:default}
-&[data-focus-visible]:focus-visible{outline:none;border-color:var(--tp-ring);box-shadow:0 0 0 var(--tp-ring-width) color-mix(in oklab, var(--tp-ring) 50%, transparent)}
-&[data-invalid][data-focus-visible]:focus-visible{outline:none;border-color:light-dark(var(--tp-destructive), color-mix(in oklab, var(--tp-destructive) 50%, transparent));box-shadow:0 0 0 var(--tp-ring-width) light-dark(color-mix(in oklab, var(--tp-destructive) 20%, transparent), color-mix(in oklab, var(--tp-destructive) 40%, transparent))}
+&[data-focus-visible]:focus-visible{outline:var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);outline-offset:var(--tp-ring-offset);border-color:var(--tp-ring);box-shadow:0 0 0 var(--tp-ring-width) color-mix(in oklab, var(--tp-ring) 50%, transparent)}
+&[data-invalid][data-focus-visible]:focus-visible{outline-color:var(--tp-destructive);border-color:light-dark(var(--tp-destructive), color-mix(in oklab, var(--tp-destructive) 50%, transparent));box-shadow:0 0 0 var(--tp-ring-width) light-dark(color-mix(in oklab, var(--tp-destructive) 20%, transparent), color-mix(in oklab, var(--tp-destructive) 40%, transparent))}
 &[data-invalid]{border-color:light-dark(var(--tp-destructive), color-mix(in oklab, var(--tp-destructive) 50%, transparent));box-shadow:0 0 0 var(--tp-ring-width) light-dark(color-mix(in oklab, var(--tp-destructive) 20%, transparent), color-mix(in oklab, var(--tp-destructive) 40%, transparent))}
 /* switch-size-sm */
 /* switch-size-default */
